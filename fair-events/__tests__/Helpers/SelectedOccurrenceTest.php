@@ -214,6 +214,129 @@ class SelectedOccurrenceTest extends TestCase {
 	}
 
 	/**
+	 * Clear any `event_date` param a test set.
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		unset( $_GET['event_date'] );
+	}
+
+	/**
+	 * Strict dates and positive legacy ids are recognized; anything else
+	 * is invalid rather than ignored.
+	 *
+	 * @return void
+	 */
+	public function test_parse_param_classifies_dates_ids_and_malformed_values() {
+		$this->assertSame(
+			array(
+				'type'  => 'date',
+				'value' => '2026-10-06',
+			),
+			SelectedOccurrence::parse_param( '2026-10-06' )
+		);
+		$this->assertSame(
+			array(
+				'type'  => 'id',
+				'value' => 42,
+			),
+			SelectedOccurrence::parse_param( '42' )
+		);
+
+		foreach ( array( '', '0', '2026-13-40', '2026-1-6', '06-10-2026', 'tomorrow', '42abc' ) as $malformed ) {
+			$this->assertSame( 'invalid', SelectedOccurrence::parse_param( $malformed )['type'], "'$malformed' must be invalid" );
+		}
+	}
+
+	/**
+	 * A recurring page without a selection is the overview of its master,
+	 * not today's/upcoming session.
+	 *
+	 * @return void
+	 */
+	public function test_select_without_param_on_master_is_overview() {
+		$master = $this->make_row(
+			array(
+				'id'              => 5,
+				'occurrence_type' => 'master',
+			)
+		);
+
+		$selection = SelectedOccurrence::select( 10, $master );
+
+		$this->assertSame( SelectedOccurrence::OVERVIEW, $selection['state'] );
+		$this->assertSame( $master, $selection['occurrence'] );
+		$this->assertSame( $master, $selection['series'] );
+	}
+
+	/**
+	 * A single event without a selection keeps its ordinary rendering.
+	 *
+	 * @return void
+	 */
+	public function test_select_without_param_on_single_event_is_overview() {
+		$single = $this->make_row( array( 'occurrence_type' => 'single' ) );
+
+		$selection = SelectedOccurrence::select( 10, $single );
+
+		$this->assertSame( SelectedOccurrence::OVERVIEW, $selection['state'] );
+		$this->assertSame( $single, $selection['occurrence'] );
+		$this->assertNull( $selection['series'] );
+	}
+
+	/**
+	 * Malformed selections — empty, arrays, junk — are unavailable and never
+	 * fall back to another session.
+	 *
+	 * @return void
+	 */
+	public function test_select_reports_malformed_params_as_unavailable() {
+		$master = $this->make_row(
+			array(
+				'id'              => 5,
+				'occurrence_type' => 'master',
+			)
+		);
+
+		foreach ( array( '', array( '2026-10-06' ), 'not-a-date', '0' ) as $param ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$_GET['event_date'] = $param;
+
+			$selection = SelectedOccurrence::select( 10, $master );
+
+			$this->assertSame( SelectedOccurrence::UNAVAILABLE, $selection['state'] );
+			$this->assertNull( $selection['occurrence'] );
+			$this->assertSame( $master, $selection['series'] );
+		}
+	}
+
+	/**
+	 * The resolve() method keeps its fallback for consumers without an unavailable
+	 * state: a malformed selection on a single event resolves to the event.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_falls_back_to_default_for_malformed_param() {
+		$single = $this->make_row( array( 'occurrence_type' => 'single' ) );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$_GET['event_date'] = array( 'x' );
+
+		$this->assertSame( $single, SelectedOccurrence::resolve( 10, $single ) );
+	}
+
+	/**
+	 * A post without an event date has no selection.
+	 *
+	 * @return void
+	 */
+	public function test_select_returns_null_when_no_default() {
+		$this->assertNull( SelectedOccurrence::select( 999, null ) );
+	}
+
+	/**
 	 * Invoke the private pick_default_pivot() via reflection.
 	 *
 	 * @param EventDates|null $today    Today's occurrence, if any.

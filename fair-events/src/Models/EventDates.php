@@ -666,23 +666,28 @@ class EventDates {
 	 * generated occurrences), or the permalink of a post linked via the
 	 * junction table (recurring instances linked from the post editor), if
 	 * any. Generated occurrences additionally get `?event_date={Y-m-d}`
-	 * appended so the page can resolve which sibling occurrence to show
-	 * (see SelectedOccurrence); master/single rows link straight to the
-	 * plain permalink since it already resolves unambiguously.
+	 * appended so the page shows that session (see SelectedOccurrence);
+	 * master/single rows link to the plain permalink, which is the recurring
+	 * overview for a series.
 	 *
+	 * Per-session listings (calendars, feeds) pass `$as_session` so the
+	 * master, which is also the series' first session, links to that session
+	 * rather than to the overview.
+	 *
+	 * @param bool $as_session Whether a series master links to its own session.
 	 * @return string|null The display URL, or null if no link.
 	 */
-	public function get_display_url() {
+	public function get_display_url( $as_session = false ) {
 		switch ( $this->link_type ) {
 			case 'external':
 				return $this->external_url;
 			case 'post':
 				$event_id = $this->get_resolved_event_id();
-				return $event_id ? $this->with_occurrence_arg( get_permalink( $event_id ) ) : null;
+				return $event_id ? $this->with_occurrence_arg( get_permalink( $event_id ), $as_session ) : null;
 			case 'none':
 			default:
 				$linked_post_id = $this->get_primary_linked_post_id();
-				return $linked_post_id ? $this->with_occurrence_arg( get_permalink( $linked_post_id ) ) : null;
+				return $linked_post_id ? $this->with_occurrence_arg( get_permalink( $linked_post_id ), $as_session ) : null;
 		}
 	}
 
@@ -706,17 +711,22 @@ class EventDates {
 	}
 
 	/**
-	 * Append `?event_date={Y-m-d}` to a URL for generated occurrences only.
+	 * Append `?event_date={Y-m-d}` to a URL for generated occurrences, and
+	 * for the series master when it should link to its own session.
 	 *
-	 * @param string|false $url Permalink to decorate.
+	 * @param string|false $url        Permalink to decorate.
+	 * @param bool         $as_session Whether a series master links to its own session.
 	 * @return string|null Decorated URL, or null if $url was falsy.
 	 */
-	private function with_occurrence_arg( $url ) {
+	private function with_occurrence_arg( $url, $as_session = false ) {
 		if ( ! $url ) {
 			return null;
 		}
 
-		if ( 'generated' !== $this->occurrence_type ) {
+		$is_session = 'generated' === $this->occurrence_type
+			|| ( $as_session && 'master' === $this->occurrence_type && ! empty( $this->start_datetime ) );
+
+		if ( ! $is_session ) {
 			return $url;
 		}
 

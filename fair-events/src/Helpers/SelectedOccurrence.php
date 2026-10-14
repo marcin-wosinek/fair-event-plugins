@@ -15,8 +15,9 @@ defined( 'WPINC' ) || die;
  * When a recurring event page is loaded with `?event_date=<date>`, sibling
  * blocks (event-info, event-dates, calendar-button) should render data for
  * that specific occurrence instead of the master row. This helper validates
- * the URL-provided date (or, for legacy links, the numeric id) and falls
- * back to the default row otherwise.
+ * the URL-provided date (or, for legacy links, the numeric id). select()
+ * reports the overview / session / unavailable state (event-info); resolve()
+ * falls back to the default row for consumers without an unavailable state.
  *
  * This is the sanctioned single-event read path for display blocks/hooks
  * (event-info, OpenGraphHooks, AdminBarHooks) — it is not superseded by
@@ -29,7 +30,28 @@ defined( 'WPINC' ) || die;
 class SelectedOccurrence {
 
 	/**
+	 * No session selected: the page's own event (a recurring series'
+	 * overview, or an ordinary single event).
+	 */
+	const OVERVIEW = 'overview';
+
+	/**
+	 * A specific session of a recurring series: selected via `?event_date=`,
+	 * or the session a page is linked to directly.
+	 */
+	const SESSION = 'session';
+
+	/**
+	 * `?event_date=` was present but malformed, or names no session of the
+	 * page's event.
+	 */
+	const UNAVAILABLE = 'unavailable';
+
+	/**
 	 * Resolve the event-date row to display for a given post.
+	 *
+	 * Consumers that can't show an unavailable state get the page's default
+	 * occurrence (see default_pivot()) for anything but a valid session.
 	 *
 	 * @param int                  $post_id Post ID to resolve the event for.
 	 * @param EventDates|null|bool $default Optional pre-fetched default row.
@@ -39,49 +61,189 @@ class SelectedOccurrence {
 	 * @return EventDates|null
 	 */
 	public static function resolve( $post_id, $default = false ) {
-		if ( false === $default ) {
-			$default = EventDates::get_by_event_id( $post_id );
-		}
+		$selection = self::select( $post_id, $default );
 
-		if ( ! $default ) {
+		if ( ! $selection ) {
 			return null;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$raw_param = isset( $_GET['event_date'] ) ? sanitize_text_field( wp_unslash( $_GET['event_date'] ) ) : '';
-
-		if ( '' !== $raw_param ) {
-			$date = OccurrenceDateParam::parse( $raw_param );
-
-			if ( null !== $date ) {
-				$candidate = EventDates::get_by_master_id_and_date( (int) $default->id, $date );
-				// A date not in this series returns null and falls through
-				// to the no-param default below — the same anti-tampering
-				// guarantee the legacy id check gives.
-				if ( $candidate ) {
-					return self::with_master_venue_fallback( $candidate, $default );
-				}
-			} elseif ( OccurrenceDateParam::is_legacy_id( $raw_param ) ) {
-				// Legacy fallback: old `?event_date=<id>` links keep resolving.
-				$candidate_id = absint( $raw_param );
-
-				if ( $candidate_id === (int) $default->id ) {
-					return $default;
-				}
-
-				$candidate = EventDates::get_by_id( $candidate_id );
-				// Only accept candidates that belong to the same series as
-				// the default row, i.e. generated children whose master_id
-				// points to it. Prevents URL tampering from rendering an
-				// unrelated event on this post's page.
-				if ( $candidate && (int) $candidate->master_id === (int) $default->id ) {
-					return self::with_master_venue_fallback( $candidate, $default );
-				}
-			}
+		if ( self::SESSION === $selection['state'] ) {
+			return $selection['occurrence'];
 		}
 
-		// No (valid) URL param: fall back to the page's default occurrence.
-		return self::default_pivot( $default );
+		return self::default_pivot( $selection['default'] );
+	}
+
+	/**
+	 * Resolve what the current request selects on a post's event page.
+	 *
+	 * Unlike resolve(), this never substitutes another occurrence: an
+	 * explicit selection that is malformed or outside the page's event is
+	 * reported as unavailable, and a recurring page without a selection is
+	 * reported as the overview (the series master), not today's/upcoming
+	 * session.
+	 *
+	 * @param int                  $post_id Post ID to resolve the event for.
+	 * @param EventDates|null|bool $default_row Optional pre-fetched default
+	 *                                          row (same sentinel as resolve()).
+	 * @return array{state: string, occurrence: EventDates|null, series: EventDates|null, default: EventDates}|null
+	 *               `occurrence` is the row to display (null when unavailable),
+	 *               `series` the recurring series' master (null for a single
+	 *               event), `default` the post's own row. Null when the post
+	 *               has no event date.
+	 */
+	public static function select( $post_id, $default_row = false ) {
+		if ( false === $default_row ) {
+			$default_row = EventDates::get_by_event_id( $post_id );
+		}
+
+		if ( ! $default_row ) {
+			return null;
+		}
+
+		$series = self::series_master( $default_row );
+		$param  = self::read_param();
+
+		if ( null === $param ) {
+			// A page linked directly to one session shows that session.
+			if ( $series && 'generated' === $default_row->occurrence_type ) {
+				return self::selection( self::SESSION, self::with_master_venue_fallback( $default_row, $series ), $series, $default_row );
+			}
+
+			return self::selection( self::OVERVIEW, $default_row, $series, $default_row );
+		}
+
+		$candidate = self::find_member( self::parse_param( $param ), $series ? $series : $default_row );
+
+		if ( ! $candidate ) {
+			return self::selection( self::UNAVAILABLE, null, $series, $default_row );
+		}
+
+		if ( ! $series ) {
+			// A single event selecting its own date is just the event.
+			return self::selection( self::OVERVIEW, $default_row, null, $default_row );
+		}
+
+		return self::selection( self::SESSION, self::with_master_venue_fallback( $candidate, $series ), $series, $default_row );
+	}
+
+	/**
+	 * Classify a raw `event_date` param value.
+	 *
+	 * @param string $param Sanitized param value ('' when empty or malformed).
+	 * @return array{type: string, value: string|int|null} `type` is 'date'
+	 *               (value: `Y-m-d`), 'id' (value: legacy numeric id) or
+	 *               'invalid' (value: null).
+	 */
+	public static function parse_param( string $param ): array {
+		$date = OccurrenceDateParam::parse( $param );
+
+		if ( null !== $date ) {
+			return array(
+				'type'  => 'date',
+				'value' => $date,
+			);
+		}
+
+		if ( OccurrenceDateParam::is_legacy_id( $param ) && absint( $param ) > 0 ) {
+			return array(
+				'type'  => 'id',
+				'value' => absint( $param ),
+			);
+		}
+
+		return array(
+			'type'  => 'invalid',
+			'value' => null,
+		);
+	}
+
+	/**
+	 * Read the raw `event_date` param from the request.
+	 *
+	 * @return string|null Null when absent; '' for an empty or non-string
+	 *                     (e.g. array) value, which is a malformed selection.
+	 */
+	private static function read_param() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public read-only view selection.
+		if ( ! isset( $_GET['event_date'] ) ) {
+			return null;
+		}
+
+		if ( ! is_string( $_GET['event_date'] ) ) {
+			return '';
+		}
+
+		$param = sanitize_text_field( wp_unslash( $_GET['event_date'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		return $param;
+	}
+
+	/**
+	 * Find the selected session within the page's event.
+	 *
+	 * Only rows of the same event are accepted — the root itself or a
+	 * generated child whose master_id points to it — so URL tampering can't
+	 * render an unrelated event on this post's page.
+	 *
+	 * @param array      $request Parsed param (see parse_param()).
+	 * @param EventDates $root    Series master, or the single event's row.
+	 * @return EventDates|null Matching row, or null when none.
+	 */
+	private static function find_member( array $request, EventDates $root ) {
+		if ( 'date' === $request['type'] ) {
+			return EventDates::get_by_master_id_and_date( (int) $root->id, $request['value'] );
+		}
+
+		if ( 'id' !== $request['type'] ) {
+			return null;
+		}
+
+		if ( $request['value'] === (int) $root->id ) {
+			return $root;
+		}
+
+		$candidate = EventDates::get_by_id( $request['value'] );
+
+		return ( $candidate && (int) $candidate->master_id === (int) $root->id ) ? $candidate : null;
+	}
+
+	/**
+	 * The recurring series' master for a post's row.
+	 *
+	 * @param EventDates $default_row The post's row.
+	 * @return EventDates|null The master row (the row itself when it is the
+	 *                         master), or null for a single event.
+	 */
+	private static function series_master( EventDates $default_row ) {
+		if ( 'master' === $default_row->occurrence_type ) {
+			return $default_row;
+		}
+
+		if ( 'generated' === $default_row->occurrence_type && $default_row->master_id ) {
+			return EventDates::get_by_id( $default_row->master_id );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Build a select() result.
+	 *
+	 * @param string          $state       One of the state constants.
+	 * @param EventDates|null $occurrence  Row to display.
+	 * @param EventDates|null $series      Series master.
+	 * @param EventDates      $default_row The post's own row.
+	 * @return array
+	 */
+	private static function selection( $state, $occurrence, $series, EventDates $default_row ) {
+		return array(
+			'state'      => $state,
+			'occurrence' => $occurrence,
+			'series'     => $series,
+			'default'    => $default_row,
+		);
 	}
 
 	/**
