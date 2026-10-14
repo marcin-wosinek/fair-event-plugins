@@ -8,7 +8,6 @@
 namespace FairEvents\Notifications;
 
 use FairEvents\Services\EmailService;
-use FairEvents\Services\EventsWeekSummary;
 
 defined( 'WPINC' ) || die;
 
@@ -173,9 +172,7 @@ class IndividualEmailDispatcher {
 	 * @return array{start: string, end: string} Site-local 'Y-m-d' boundaries.
 	 */
 	public static function event_week( $week_scope, \DateTimeImmutable $now ) {
-		list( $year, $week ) = BulkEmailDispatcher::event_week( $week_scope, $now );
-
-		return EventsWeekSummary::iso_week_boundaries( $year, $week, 1 );
+		return BulkEmailDispatcher::event_boundaries( $week_scope, $now );
 	}
 
 	/**

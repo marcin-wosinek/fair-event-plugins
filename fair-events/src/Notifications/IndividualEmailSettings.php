@@ -7,6 +7,8 @@
 
 namespace FairEvents\Notifications;
 
+use FairEvents\Services\WeeklyEventsProvider;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -25,7 +27,7 @@ class IndividualEmailSettings {
 	 * Any other selection is an event source slug. Slugs never contain '@',
 	 * so the two cannot be confused.
 	 */
-	public const LOCAL_EVENTS = '@local';
+	public const LOCAL_EVENTS = WeeklyEventsProvider::LOCAL_EVENTS;
 
 	private const MAX_RECIPIENT_LENGTH = 254;
 

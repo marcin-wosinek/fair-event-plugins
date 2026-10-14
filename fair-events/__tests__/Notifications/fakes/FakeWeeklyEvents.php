@@ -27,7 +27,7 @@ class FakeWeeklyEvents {
 	public $error = false;
 
 	/**
-	 * Requests as [source, year, week].
+	 * Requests as [selection, week start, week end].
 	 *
 	 * @var array[]
 	 */
@@ -36,26 +36,18 @@ class FakeWeeklyEvents {
 	/**
 	 * Week of events.
 	 *
-	 * @param string $source_slug Source.
-	 * @param int    $year        ISO year.
-	 * @param int    $week        ISO week.
+	 * @param array  $week      Week boundaries.
+	 * @param string $selection Source slug.
 	 * @return array|\WP_Error
 	 */
-	public function get_week( $source_slug, $year, $week ) {
-		$this->requests[] = array( $source_slug, $year, $week );
+	public function for_notification( array $week, $selection ) {
+		$this->requests[] = array( $selection, $week['start'], $week['end'] );
 		if ( $this->error ) {
-			return new \WP_Error( 'not_found', 'Event source not found.' );
+			return new \WP_Error( 'invalid_source', 'The selected event source does not exist or is disabled.' );
 		}
 
-		$start = ( new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) )->setISODate( $year, $week );
-
 		return array(
-			'week' => array(
-				'year'  => $year,
-				'week'  => $week,
-				'start' => $start->format( 'Y-m-d' ),
-				'end'   => $start->modify( '+6 days' )->format( 'Y-m-d' ),
-			),
+			'week' => $week,
 			'days' => array(
 				array( 'events' => $this->empty ? array() : array( array( 'title' => 'Concert' ) ) ),
 			),

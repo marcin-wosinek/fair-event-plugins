@@ -8,6 +8,8 @@
 namespace FairEvents\Tests\Notifications;
 
 use FairEvents\Notifications\IndividualEmailRenderer;
+use FairEvents\Notifications\WeeklyEmailRenderer;
+use FairEvents\Services\WeeklyEventsProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -75,9 +77,25 @@ class IndividualEmailRendererTest extends TestCase {
 		);
 
 		$this->assertFalse( $email['empty'] );
-		$this->assertStringContainsString( '12–18 Oct 2026', $email['html'] );
-		$this->assertStringContainsString( '<strong>Wed, 18:30</strong> — <a href="https://example.com/concert/">Concert night</a>', $email['html'] );
-		$this->assertStringContainsString( '<strong>Fri–Sun</strong> — Festival', $email['html'] );
+		$this->assertStringContainsString( 'Wednesday, October 14</h3>', $email['html'] );
+		$this->assertStringContainsString( '<strong>18:30</strong> — <a href="https://example.com/concert/">Concert night</a>', $email['html'] );
+		$this->assertStringContainsString( 'Friday, October 16</h3>', $email['html'] );
+		$this->assertStringContainsString( '<strong>All day</strong> — Festival', $email['html'] );
+	}
+
+	/** The content is the subscribers' weekly email content for the same events. */
+	public function test_content_matches_the_shared_weekly_email() {
+		$settings    = array(
+			'subject' => 'Events {week_start}',
+			'intro'   => 'Hello',
+			'outro'   => 'Bye',
+		);
+		$occurrences = array( self::occurrence(), self::occurrence( array( 'url' => 'https://www.instagram.com/band/' ) ) );
+
+		$this->assertSame(
+			WeeklyEmailRenderer::compose( WeeklyEventsProvider::week_data( self::WEEK, $occurrences ), $settings ),
+			IndividualEmailRenderer::compose( $settings, self::WEEK, $occurrences )
+		);
 	}
 
 	/** Event titles are escaped and only web links are linked. */

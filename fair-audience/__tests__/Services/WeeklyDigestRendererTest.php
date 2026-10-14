@@ -339,4 +339,27 @@ class WeeklyDigestRendererTest extends TestCase {
 			strpos( $html, 'See you there!' )
 		);
 	}
+
+	/**
+	 * With Fair Events' renderer available, the digest content comes from it,
+	 * so subscribers get the same content as Fair Events' other weekly emails.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_render_delegates_to_fair_events_when_available() {
+		require_once __DIR__ . '/fakes/FakeSharedWeeklyEmailRenderer.php';
+
+		$week = $this->week( array( array( 'events' => array() ) ) );
+
+		$this->assertSame( 'shared subject', WeeklyDigestRenderer::render_subject( 'Events {week_start}', $week ) );
+		$this->assertSame( 'shared body', WeeklyDigestRenderer::render( $week, 'Hello', 'Bye' ) );
+		$this->assertSame(
+			array(
+				array( 'subject', array( 'Events {week_start}', $week['week'] ) ),
+				array( 'body', array( $week, 'Hello', 'Bye' ) ),
+			),
+			\FairEvents\Notifications\WeeklyEmailRenderer::$calls
+		);
+	}
 }

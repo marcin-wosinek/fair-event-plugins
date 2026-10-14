@@ -161,6 +161,37 @@ class EmailServiceTest extends TestCase {
 	}
 
 	/**
+	 * A weekly notification uses the subscribers' branded layout, narrowing on
+	 * small screens, without a personal greeting or subscription link.
+	 */
+	public function test_notification_uses_the_branded_layout(): void {
+		$GLOBALS['_fair_test_options']['blogname'] = 'Dance Club';
+		try {
+			( new EmailService() )->send_notification( 'organizer@example.test', 'Events', '<p>Concert</p>' );
+		} finally {
+			unset( $GLOBALS['_fair_test_options']['blogname'] );
+		}
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringContainsString( '<h1 style="margin: 0; font-size: 24px; font-weight: bold;">Dance Club</h1>', $message );
+		$this->assertStringContainsString( 'max-width: 600px', $message );
+		$this->assertStringContainsString( 'name="viewport"', $message );
+		$this->assertStringContainsString( 'Thanks,<br>The Dance Club Team', $message );
+		$this->assertStringContainsString( '<p style="margin: 0;">Dance Club</p>', $message );
+		$this->assertStringNotContainsString( 'Hi ', $message );
+		$this->assertStringNotContainsString( 'Manage your preferences', $message );
+	}
+
+	/**
+	 * Content handed to the layout loses scripts.
+	 */
+	public function test_notification_content_is_sanitized(): void {
+		( new EmailService() )->send_notification( 'organizer@example.test', 'Events', '<p>Concert</p><script>alert(1)</script>' );
+
+		$this->assertStringNotContainsString( '<script', $GLOBALS['_fair_test_sent_emails'][0]['message'] );
+	}
+
+	/**
 	 * The temporary HTML content-type filter is removed even when sending
 	 * throws, so later mail does not inherit it.
 	 */

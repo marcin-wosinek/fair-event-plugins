@@ -227,6 +227,10 @@ test.describe('Individual email notifications on a standalone site', () => {
 		await expect(preview.getByText(previewEvents.draftTitle)).toHaveCount(
 			0
 		);
+		// Events are listed day by day, like the subscribers' weekly email.
+		await expect(
+			preview.getByRole('heading', { level: 3 }).first()
+		).toHaveText(/^\w+, \w+ \d+$/);
 		await expect(preview.getByText('Hello team')).toBeVisible();
 		await expect(preview.getByText('See you')).toBeVisible();
 		await expect(own.getByText(RECIPIENT, { exact: false }).first()).toBeVisible();
@@ -257,6 +261,11 @@ test.describe('Individual email notifications on a standalone site', () => {
 		expect(mail[0].body).toContain(previewEvents.eventUrl);
 		expect(mail[0].body).not.toContain(previewEvents.draftTitle);
 		expect(mail[0].body).toContain('<strong>team</strong>');
+		// The subscribers' branded layout, without their greeting or link.
+		expect(mail[0].body).toMatch(/<h3\b[^>]*>\w+, \w+ \d+<\/h3>/);
+		expect(mail[0].body).toContain('max-width: 600px');
+		expect(mail[0].body).toMatch(/Thanks,<br>The .+ Team/);
+		expect(mail[0].body).not.toContain('Manage your preferences');
 		// A test is not a scheduled send.
 		expect(fixture('state')).toEqual(before);
 

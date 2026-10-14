@@ -886,7 +886,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			return new WP_Error( 'missing_source', __( 'Choose an event source and save before previewing the weekly email.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
-		$week = ( new WeeklyEventsProvider() )->get_week( $settings['source_slug'], ...BulkEmailDispatcher::event_week( $settings['week_scope'], BulkEmailDispatcher::now() ) );
+		$week = ( new WeeklyEventsProvider() )->for_notification( BulkEmailDispatcher::event_boundaries( $settings['week_scope'], BulkEmailDispatcher::now() ), $settings['source_slug'] );
 		if ( is_wp_error( $week ) ) {
 			return new WP_Error( $week->get_error_code(), $week->get_error_message(), array( 'status' => 400 ) );
 		}
