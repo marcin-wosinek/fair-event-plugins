@@ -184,10 +184,12 @@ test.describe('Fair Form submission dialogs', () => {
 		await expect(dialog).toBeHidden();
 		await expect(row).toHaveCount(0);
 
+		// Other submissions may or may not exist, so the reloaded list is
+		// either some rows or the empty state.
 		await page.reload();
-		await expect(page.locator('tbody tr').first()).toBeVisible({
-			timeout: 15000,
-		});
+		await expect(
+			page.locator('tbody tr').first().or(page.getByText('No results'))
+		).toBeVisible({ timeout: 15000 });
 		await expect(rowFor(page, seed.submissionId)).toHaveCount(0);
 	});
 });
