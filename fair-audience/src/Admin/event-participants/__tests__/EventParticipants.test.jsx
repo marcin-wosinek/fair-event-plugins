@@ -379,25 +379,319 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 		).toEqual( [ [ 2 ], [ 2 ] ] );
 	} );
 
-	it( 'keeps the invitation selection when sending fails', async () => {
-		mockApi( {
-			mutate: () => Promise.reject( { message: 'Mail server is down.' } ),
-		} );
-		render( <EventParticipants /> );
+	const isPreview = ( { path } ) => path.endsWith( '/preview' );
+	const isInvitationSend = ( { path, method } ) =>
+		method === 'POST' && path.endsWith( '/event-invitations' );
+	const PREVIEW = {
+		event_id: 9,
+		event_date_id: 5,
+		event_title: 'Weekly class',
+		group_membership_count: 0,
+		candidate_count: 1,
+		eligible_count: 1,
+		eligible_participant_ids: [ 2 ],
+		excluded: {
+			already_signed_up: 0,
+			unavailable: 0,
+			invalid_email: 0,
+			no_marketing_consent: 0,
+		},
+	};
 
+	/**
+	 * @param {Object}   answers
+	 * @param {Function} [answers.preview] Answers a preview request.
+	 * @param {Function} [answers.send]    Answers the send.
+	 * @param {Array}    [answers.groups]  Groups offered.
+	 */
+	function mockInvitationApi( {
+		preview = () => Promise.resolve( PREVIEW ),
+		send = () =>
+			Promise.resolve( {
+				success: true,
+				sent_count: 1,
+				skipped_count: 0,
+				failed: [],
+			} ),
+		groups = [],
+	} = {} ) {
+		mockApi( {
+			mutate: ( request ) =>
+				isPreview( request ) ? preview( request ) : send( request ),
+		} );
+		const base = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( request ) =>
+			request.path === '/fair-audience/v1/groups'
+				? Promise.resolve( groups )
+				: base( request )
+		);
+	}
+
+	const sends = () =>
+		apiFetch.mock.calls
+			.map( ( [ request ] ) => request )
+			.filter( isInvitationSend );
+
+	const openInvitation = async () => {
 		fireEvent.click(
 			await screen.findByRole( 'button', { name: 'Send Invitation' } )
 		);
-		const dialog = await screen.findByRole( 'dialog', {
+		return screen.findByRole( 'dialog', {
 			name: 'Send Event Invitations',
 		} );
+	};
+
+	const pickPerson = async ( dialog ) => {
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', { name: 'By Participant' } )
 		);
-		fireEvent.click( within( dialog ).getAllByRole( 'checkbox' )[ 0 ] );
+		// John Roe, the second profile.
+		fireEvent.click( within( dialog ).getAllByRole( 'checkbox' )[ 1 ] );
+	};
+
+	it( 'summarizes the event, the person and who will receive it before sending', async () => {
+		mockInvitationApi();
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		expect(
+			within( dialog ).getByText(
+				'Select who should receive the invitation.'
+			)
+		).toBeInTheDocument();
+		await pickPerson( dialog );
+
+		const summary = await within( dialog ).findByRole( 'region', {
+			name: 'Invitation summary',
+		} );
+		expect( summary ).toHaveTextContent(
+			`Invitation to Weekly class on ${ DATE }`
+		);
+		expect( summary ).toHaveTextContent( '1 person selected:' );
+		expect( summary ).toHaveTextContent( 'John Roe' );
+		expect(
+			await within( summary ).findByText(
+				'1 person will receive this invitation.'
+			)
+		).toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls
+				.map( ( [ request ] ) => request )
+				.filter( isPreview )
+				.at( -1 ).data
+		).toEqual( { participant_ids: [ 2 ] } );
+	} );
+
+	it( 'sends the reviewed recipients, not the groups, and reports the result', async () => {
+		mockInvitationApi( {
+			groups: [
+				{ id: 7, name: 'Volunteers', member_count: 3 },
+				{ id: 8, name: 'Readers', member_count: 4 },
+			],
+			preview: () =>
+				Promise.resolve( {
+					...PREVIEW,
+					group_membership_count: 7,
+					candidate_count: 5,
+					eligible_count: 2,
+					eligible_participant_ids: [ 11, 12 ],
+					excluded: {
+						already_signed_up: 1,
+						unavailable: 0,
+						invalid_email: 0,
+						no_marketing_consent: 2,
+					},
+				} ),
+			send: () =>
+				Promise.resolve( {
+					success: true,
+					sent_count: 2,
+					skipped_count: 0,
+					failed: [],
+				} ),
+		} );
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		fireEvent.click( within( dialog ).getByLabelText( /Volunteers/ ) );
+		fireEvent.click( within( dialog ).getByLabelText( /Readers/ ) );
+
+		const summary = within( dialog ).getByRole( 'region', {
+			name: 'Invitation summary',
+		} );
+		expect(
+			await within( summary ).findByText(
+				'7 group memberships in total, 5 different people selected.'
+			)
+		).toBeInTheDocument();
+		expect( summary ).toHaveTextContent(
+			'2 people will receive this invitation.'
+		);
+		expect( summary ).toHaveTextContent(
+			'1 is already signed up for this date.'
+		);
+		expect( summary ).toHaveTextContent(
+			'2 have not confirmed they want marketing emails, or opted out.'
+		);
+
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', {
-				name: 'Send to 1 Selected',
+				name: 'Send 2 invitations',
+			} )
+		);
+
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect( sends().map( ( request ) => request.data ) ).toEqual( [
+			{ participant_ids: [ 11, 12 ] },
+		] );
+		expect(
+			(
+				await screen.findAllByText(
+					'Invitations sent to 2 participants'
+				)
+			).length
+		).toBeGreaterThan( 0 );
+	} );
+
+	it( 'explains that nobody can be invited and offers no send', async () => {
+		mockInvitationApi( {
+			preview: () =>
+				Promise.resolve( {
+					...PREVIEW,
+					eligible_count: 0,
+					eligible_participant_ids: [],
+					excluded: { ...PREVIEW.excluded, no_marketing_consent: 1 },
+				} ),
+		} );
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		await pickPerson( dialog );
+
+		expect(
+			await within( dialog ).findByText(
+				'Nobody selected can be invited, so nothing will be sent.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( 'Nobody selected can be invited.' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Send Invitations' } )
+		).toBeDisabled();
+	} );
+
+	it( 'shows the summary of the latest selection only', async () => {
+		let answerFirst;
+		mockInvitationApi( {
+			preview: ( request ) =>
+				request.data.participant_ids.length === 1
+					? new Promise( ( resolve ) => {
+							answerFirst = resolve;
+					  } )
+					: Promise.resolve( {
+							...PREVIEW,
+							candidate_count: 2,
+							eligible_count: 2,
+							eligible_participant_ids: [ 1, 2 ],
+					  } ),
+		} );
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		await pickPerson( dialog );
+		fireEvent.click( within( dialog ).getAllByRole( 'checkbox' )[ 0 ] );
+
+		expect(
+			await within( dialog ).findByText(
+				'2 people will receive this invitation.'
+			)
+		).toBeInTheDocument();
+		// The answer for the earlier, one-person selection arrives late.
+		answerFirst( PREVIEW );
+		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		expect(
+			within( dialog ).getByText(
+				'2 people will receive this invitation.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Send 2 invitations',
+			} )
+		).toBeEnabled();
+	} );
+
+	it( 'sends nothing when cancelled', async () => {
+		mockInvitationApi();
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		await pickPerson( dialog );
+		await within( dialog ).findByText(
+			'1 person will receive this invitation.'
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect( sends() ).toHaveLength( 0 );
+	} );
+
+	it( 'locks the selection while sending and sends once', async () => {
+		let finishSend;
+		mockInvitationApi( {
+			send: () =>
+				new Promise( ( resolve ) => {
+					finishSend = resolve;
+				} ),
+		} );
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		await pickPerson( dialog );
+		const send = await within( dialog ).findByRole( 'button', {
+			name: 'Send 1 invitation',
+		} );
+		fireEvent.click( send );
+		fireEvent.click( send );
+
+		const sending = within( dialog ).getByRole( 'button', {
+			name: 'Sending…',
+		} );
+		expect( sending ).toBeDisabled();
+		within( dialog )
+			.getAllByRole( 'checkbox' )
+			.forEach( ( box ) => expect( box ).toBeDisabled() );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'By Group' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect( sends() ).toHaveLength( 1 );
+
+		finishSend( {
+			success: true,
+			sent_count: 1,
+			skipped_count: 0,
+			failed: [],
+		} );
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+	} );
+
+	it( 'keeps the invitation selection when sending fails', async () => {
+		mockInvitationApi( {
+			send: () => Promise.reject( { message: 'Mail server is down.' } ),
+		} );
+		render( <EventParticipants /> );
+
+		const dialog = await openInvitation();
+		await pickPerson( dialog );
+		fireEvent.click(
+			await within( dialog ).findByRole( 'button', {
+				name: 'Send 1 invitation',
 			} )
 		);
 
@@ -406,11 +700,11 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 		).toBeInTheDocument();
 		expect( window.alert ).not.toHaveBeenCalled();
 		expect(
-			within( dialog ).getAllByRole( 'checkbox' )[ 0 ]
+			within( dialog ).getAllByRole( 'checkbox' )[ 1 ]
 		).toBeChecked();
 		expect(
 			within( dialog ).getByRole( 'button', {
-				name: 'Send to 1 Selected',
+				name: 'Send 1 invitation',
 			} )
 		).toBeEnabled();
 	} );

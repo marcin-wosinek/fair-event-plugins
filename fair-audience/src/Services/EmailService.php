@@ -34,6 +34,26 @@ defined( 'WPINC' ) || die;
 class EmailService {
 
 	/**
+	 * Why an event invitation leaves someone out: already signed up to the date.
+	 */
+	const INVITATION_EXCLUDED_SIGNED_UP = 'already_signed_up';
+
+	/**
+	 * Why an event invitation leaves someone out: the participant no longer exists.
+	 */
+	const INVITATION_EXCLUDED_UNAVAILABLE = 'unavailable';
+
+	/**
+	 * Why an event invitation leaves someone out: no valid email address.
+	 */
+	const INVITATION_EXCLUDED_INVALID_EMAIL = 'invalid_email';
+
+	/**
+	 * Why an event invitation leaves someone out: no confirmed marketing consent.
+	 */
+	const INVITATION_EXCLUDED_NO_CONSENT = 'no_marketing_consent';
+
+	/**
 	 * Poll repository instance.
 	 *
 	 * @var PollRepository|null Null when fair-audience-experimental's `polls` bundle is inactive.
@@ -2281,19 +2301,6 @@ class EmailService {
 	}
 
 	/**
-	 * Send bulk event invitations to participants.
-	 *
-	 * Sends event signup link emails to the specified participants or group members.
-	 * Participants who are already signed up for the event are skipped.
-	 *
-	 * @param int    $event_id        Event ID.
-	 * @param string $custom_message  Optional custom message (unused, for future use).
-	 * @param array  $participant_ids Optional array of participant IDs to send to.
-	 * @param array  $group_ids       Optional array of group IDs to expand to participants.
-	 * @param bool   $skip_signed_up  Whether to skip participants already signed up.
-	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
-	 */
-	/**
 	 * Send event invitation to a single participant.
 	 *
 	 * This is a marketing email for participants who subscribed to updates.
@@ -2414,6 +2421,118 @@ class EmailService {
 	}
 
 	/**
+	 * Resolve who an event invitation would reach, without sending anything.
+	 *
+	 * Shared by the invitation preview and the send itself, so the summary an
+	 * organizer reviews is computed exactly as the send decides. Selected
+	 * participants and group members are deduplicated by participant ID; each
+	 * one is then either eligible or excluded for exactly one reason, checked
+	 * in this order: already signed up to the date, participant gone, no valid
+	 * email, no confirmed marketing consent.
+	 *
+	 * @param int   $event_id        Event post ID.
+	 * @param array $participant_ids Participant IDs selected directly.
+	 * @param array $group_ids       Group IDs whose members are selected.
+	 * @param bool  $skip_signed_up  Whether people already signed up are excluded.
+	 * @param int   $event_date_id   Occurrence to scope to; when 0, the event's
+	 *                               own date row is used.
+	 * @return array{event_date_id: int, group_membership_count: int, candidate_count: int, eligible: Participant[], excluded: array<int, array{reason: string, participant_id: int, participant: Participant|null}>}
+	 */
+	public function resolve_event_invitation_recipients(
+		$event_id,
+		$participant_ids = array(),
+		$group_ids = array(),
+		$skip_signed_up = true,
+		$event_date_id = 0
+	) {
+		// Collect all participant IDs.
+		$all_participant_ids    = array_map( 'intval', (array) $participant_ids );
+		$group_membership_count = 0;
+
+		// Expand group IDs to participant IDs.
+		if ( $this->group_participant_repository ) {
+			foreach ( (array) $group_ids as $group_id ) {
+				$members = $this->group_participant_repository->get_by_group( $group_id );
+				foreach ( $members as $member ) {
+					$all_participant_ids[] = (int) $member->participant_id;
+					++$group_membership_count;
+				}
+			}
+		}
+
+		// Deduplicate participant IDs.
+		$all_participant_ids = array_values( array_unique( $all_participant_ids ) );
+
+		// Resolve event_date_id once for this event when the caller didn't
+		// provide one. The fallback (event's master row) is fine for single
+		// events, but recurring series should always be invited per
+		// occurrence — the caller passes the picked event_date_id then.
+		$event_date_id = (int) $event_date_id;
+		if ( $event_date_id <= 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
+			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
+			if ( $event_dates_obj ) {
+				$event_date_id = (int) $event_dates_obj->id;
+			}
+		}
+
+		$resolved = array(
+			'event_date_id'          => $event_date_id,
+			'group_membership_count' => $group_membership_count,
+			'candidate_count'        => count( $all_participant_ids ),
+			'eligible'               => array(),
+			'excluded'               => array(),
+		);
+
+		if ( empty( $all_participant_ids ) ) {
+			return $resolved;
+		}
+
+		// Get already-signed-up participants. When we have a specific
+		// occurrence, scope the skip-list to that occurrence so a participant
+		// signed up to a different date in the same series still receives
+		// this invitation. Without an occurrence (single events / legacy
+		// callers) fall back to the event-wide list.
+		$signed_up_ids = array();
+		if ( $skip_signed_up ) {
+			if ( $event_date_id > 0 ) {
+				$event_participants = $this->event_participant_repository->get_by_event_date( $event_date_id );
+			} else {
+				$event_participants = $this->event_participant_repository->get_by_event( $event_id );
+			}
+			foreach ( $event_participants as $ep ) {
+				if ( 'signed_up' === $ep->label ) {
+					$signed_up_ids[] = (int) $ep->participant_id;
+				}
+			}
+		}
+
+		foreach ( $all_participant_ids as $participant_id ) {
+			$participant = $this->participant_repository->get_by_id( $participant_id );
+
+			if ( $skip_signed_up && in_array( $participant_id, $signed_up_ids, true ) ) {
+				$reason = self::INVITATION_EXCLUDED_SIGNED_UP;
+			} elseif ( ! $participant ) {
+				$reason = self::INVITATION_EXCLUDED_UNAVAILABLE;
+			} elseif ( ! $this->has_valid_email( $participant ) ) {
+				$reason = self::INVITATION_EXCLUDED_INVALID_EMAIL;
+			} elseif ( ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
+				$reason = self::INVITATION_EXCLUDED_NO_CONSENT;
+			} else {
+				$resolved['eligible'][] = $participant;
+				continue;
+			}
+
+			$resolved['excluded'][] = array(
+				'reason'         => $reason,
+				'participant_id' => $participant_id,
+				'participant'    => $participant ? $participant : null,
+			);
+		}
+
+		return $resolved;
+	}
+
+	/**
 	 * Send event invitations in bulk.
 	 *
 	 * @param int    $event_id Event ID.
@@ -2458,102 +2577,56 @@ class EmailService {
 			return $results;
 		}
 
-		// Collect all participant IDs.
-		$all_participant_ids = $participant_ids;
+		$recipients = $this->resolve_event_invitation_recipients(
+			$event_id,
+			$participant_ids,
+			$group_ids,
+			$skip_signed_up,
+			$event_date_id
+		);
 
-		// Expand group IDs to participant IDs.
-		if ( $this->group_participant_repository ) {
-			foreach ( $group_ids as $group_id ) {
-				$members = $this->group_participant_repository->get_by_group( $group_id );
-				foreach ( $members as $member ) {
-					$all_participant_ids[] = $member->participant_id;
-				}
+		foreach ( $recipients['excluded'] as $excluded ) {
+			$participant = $excluded['participant'];
+
+			switch ( $excluded['reason'] ) {
+				case self::INVITATION_EXCLUDED_SIGNED_UP:
+					$results['skipped'][] = array(
+						'name'   => $participant ? $participant->name : '',
+						'email'  => $participant ? $participant->email : '',
+						'reason' => __( 'Already signed up', 'fair-audience' ),
+					);
+					break;
+
+				case self::INVITATION_EXCLUDED_UNAVAILABLE:
+					$results['failed'][] = array(
+						'name'   => '',
+						'email'  => '',
+						'reason' => __( 'Participant not found.', 'fair-audience' ),
+					);
+					break;
+
+				case self::INVITATION_EXCLUDED_INVALID_EMAIL:
+					$results['failed'][] = array(
+						'name'   => $participant->name,
+						'email'  => '',
+						'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
+					);
+					break;
+
+				default:
+					$results['skipped'][] = array(
+						'name'   => $participant->name,
+						'email'  => $participant->email,
+						'reason' => $this->marketing_skip_reason( $participant ),
+					);
 			}
 		}
 
-		// Deduplicate participant IDs.
-		$all_participant_ids = array_unique( array_map( 'intval', $all_participant_ids ) );
+		$event_date_id = $recipients['event_date_id'];
 
-		if ( empty( $all_participant_ids ) ) {
-			return $results;
-		}
-
-		// Resolve event_date_id once for this event when the caller didn't
-		// provide one. The fallback (event's master row) is fine for single
-		// events, but recurring series should always be invited per
-		// occurrence — the caller passes the picked event_date_id then.
-		$event_date_id = (int) $event_date_id;
-		if ( $event_date_id <= 0 && class_exists( \FairEvents\Models\EventDates::class ) ) {
-			$event_dates_obj = \FairEvents\Models\EventDates::get_by_event_id( $event_id );
-			if ( $event_dates_obj ) {
-				$event_date_id = (int) $event_dates_obj->id;
-			}
-		}
-
-		// Get already-signed-up participants. When we have a specific
-		// occurrence, scope the skip-list to that occurrence so a participant
-		// signed up to a different date in the same series still receives
-		// this invitation. Without an occurrence (single events / legacy
-		// callers) fall back to the event-wide list.
-		$signed_up_ids = array();
-		if ( $skip_signed_up ) {
-			if ( $event_date_id > 0 ) {
-				$event_participants = $this->event_participant_repository->get_by_event_date( $event_date_id );
-			} else {
-				$event_participants = $this->event_participant_repository->get_by_event( $event_id );
-			}
-			foreach ( $event_participants as $ep ) {
-				if ( 'signed_up' === $ep->label ) {
-					$signed_up_ids[] = $ep->participant_id;
-				}
-			}
-		}
-
-		foreach ( $all_participant_ids as $participant_id ) {
-			// Skip if already signed up.
-			if ( $skip_signed_up && in_array( $participant_id, $signed_up_ids, true ) ) {
-				$participant          = $this->participant_repository->get_by_id( $participant_id );
-				$results['skipped'][] = array(
-					'name'   => $participant ? $participant->name : '',
-					'email'  => $participant ? $participant->email : '',
-					'reason' => __( 'Already signed up', 'fair-audience' ),
-				);
-				continue;
-			}
-
-			// Get participant.
-			$participant = $this->participant_repository->get_by_id( $participant_id );
-
-			if ( ! $participant ) {
-				$results['failed'][] = array(
-					'name'   => '',
-					'email'  => '',
-					'reason' => __( 'Participant not found.', 'fair-audience' ),
-				);
-				continue;
-			}
-
-			if ( ! $this->has_valid_email( $participant ) ) {
-				$results['failed'][] = array(
-					'name'   => $participant->name,
-					'email'  => '',
-					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
-				);
-				continue;
-			}
-
-			// Check if participant can receive marketing emails.
-			if ( ! $this->can_receive_email( $participant, EmailType::MARKETING ) ) {
-				$results['skipped'][] = array(
-					'name'   => $participant->name,
-					'email'  => $participant->email,
-					'reason' => $this->marketing_skip_reason( $participant ),
-				);
-				continue;
-			}
-
+		foreach ( $recipients['eligible'] as $participant ) {
 			// Generate participant token URL.
-			$token_url = ParticipantToken::get_url( $participant_id, $event_date_id, $event->ID );
+			$token_url = ParticipantToken::get_url( (int) $participant->id, $event_date_id, $event->ID );
 
 			// Send invitation email.
 			$success = $this->send_event_invitation( $event, $participant, $token_url, $custom_message );

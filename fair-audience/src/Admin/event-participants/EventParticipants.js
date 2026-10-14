@@ -16,6 +16,11 @@ import { DataViews } from '@wordpress/dataviews';
 import { formatSiteLocalDatetime } from 'fair-events-shared/src/dateTime.js';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
+import InvitationSummary, {
+	invitationBlockReason,
+	useInvitationPreview,
+} from '../components/InvitationSummary.js';
+import { personFromProfile } from '../components/participantIdentity.js';
 import RemoveParticipantModal from '../manage-event-audience-tab/RemoveParticipantModal.js';
 import { ticketShortLabel } from '../manage-event-audience-tab/ticketLabels.js';
 
@@ -591,6 +596,30 @@ export default function EventParticipants() {
 		);
 	}, [ allParticipants, inviteSearch ] );
 
+	const sortedIds = ( ids ) => Array.from( ids ).sort( ( a, b ) => a - b );
+
+	// Only the selection of the open tab is invited.
+	const invitationSelection =
+		inviteMode === 'groups'
+			? { groupIds: sortedIds( selectedGroups ) }
+			: { participantIds: sortedIds( selectedInviteParticipants ) };
+	const invitationPreview = useInvitationPreview(
+		showInvitationModal ? resolvedEventDateId : null,
+		invitationSelection
+	);
+	const invitationBlocked = invitationBlockReason( invitationPreview );
+
+	const invitedGroupsSummary =
+		inviteMode === 'groups'
+			? groups.filter( ( group ) => selectedGroups.has( group.id ) )
+			: [];
+	const invitedPeopleSummary =
+		inviteMode === 'participants'
+			? allParticipants
+					.filter( ( p ) => selectedInviteParticipants.has( p.id ) )
+					.map( personFromProfile )
+			: [];
+
 	const resetInvitationModal = () => {
 		setShowInvitationModal( false );
 		setSelectedGroups( new Set() );
@@ -607,16 +636,7 @@ export default function EventParticipants() {
 	};
 
 	const handleSendInvitations = async () => {
-		const hasGroupSelection =
-			inviteMode === 'groups' && selectedGroups.size > 0;
-		const hasParticipantSelection =
-			inviteMode === 'participants' &&
-			selectedInviteParticipants.size > 0;
-
-		if (
-			( ! hasGroupSelection && ! hasParticipantSelection ) ||
-			invitationInFlight.current
-		) {
+		if ( invitationBlocked || invitationInFlight.current ) {
 			return;
 		}
 
@@ -625,20 +645,15 @@ export default function EventParticipants() {
 		setInvitationError( null );
 
 		try {
-			const requestData =
-				inviteMode === 'groups'
-					? { group_ids: Array.from( selectedGroups ) }
-					: {
-							participant_ids: Array.from(
-								selectedInviteParticipants
-							),
-					  };
-
-			const invitationPath = `/fair-audience/v1/event-dates/${ resolvedEventDateId }/event-invitations`;
+			// Exactly the people the summary counted: the server checks each
+			// one again, but invites nobody who joined a group since.
 			const response = await apiFetch( {
-				path: invitationPath,
+				path: `/fair-audience/v1/event-dates/${ resolvedEventDateId }/event-invitations`,
 				method: 'POST',
-				data: requestData,
+				data: {
+					participant_ids:
+						invitationPreview.data.eligible_participant_ids,
+				},
 			} );
 
 			setInvitationSendResult( {
@@ -1228,6 +1243,7 @@ export default function EventParticipants() {
 						<button
 							type="button"
 							onClick={ () => setInviteMode( 'groups' ) }
+							disabled={ isSendingInvitations }
 							style={ {
 								padding: '10px 20px',
 								border: 'none',
@@ -1249,6 +1265,7 @@ export default function EventParticipants() {
 						<button
 							type="button"
 							onClick={ () => setInviteMode( 'participants' ) }
+							disabled={ isSendingInvitations }
 							style={ {
 								padding: '10px 20px',
 								border: 'none',
@@ -1314,6 +1331,9 @@ export default function EventParticipants() {
 												checked={ selectedGroups.has(
 													group.id
 												) }
+												disabled={
+													isSendingInvitations
+												}
 												onChange={ () =>
 													handleToggleGroup(
 														group.id
@@ -1339,6 +1359,7 @@ export default function EventParticipants() {
 								onChange={ ( e ) =>
 									setInviteSearch( e.target.value )
 								}
+								disabled={ isSendingInvitations }
 								style={ {
 									width: '100%',
 									padding: '8px 12px',
@@ -1396,6 +1417,9 @@ export default function EventParticipants() {
 												checked={ selectedInviteParticipants.has(
 													p.id
 												) }
+												disabled={
+													isSendingInvitations
+												}
 												onChange={ () =>
 													handleToggleInviteParticipant(
 														p.id
@@ -1437,6 +1461,18 @@ export default function EventParticipants() {
 						</>
 					) }
 
+					{ invitationPreview.status !== 'idle' && (
+						<div style={ { marginBottom: '16px' } }>
+							<InvitationSummary
+								eventTitle={ eventInfo?.title }
+								dateLabel={ eventDateLabel }
+								groups={ invitedGroupsSummary }
+								people={ invitedPeopleSummary }
+								preview={ invitationPreview }
+							/>
+						</div>
+					) }
+
 					{ invitationError && (
 						<div style={ { marginBottom: '16px' } }>
 							<Notice status="error" isDismissible={ false }>
@@ -1449,9 +1485,22 @@ export default function EventParticipants() {
 						style={ {
 							display: 'flex',
 							justifyContent: 'flex-end',
+							alignItems: 'center',
+							flexWrap: 'wrap',
 							gap: '10px',
 						} }
 					>
+						{ invitationBlocked && (
+							<span
+								className="fair-audience-invitation-block-reason"
+								style={ {
+									color: '#646970',
+									marginRight: 'auto',
+								} }
+							>
+								{ invitationBlocked }
+							</span>
+						) }
 						<Button
 							variant="secondary"
 							onClick={ handleCloseInvitationModal }
@@ -1464,24 +1513,23 @@ export default function EventParticipants() {
 							onClick={ handleSendInvitations }
 							isBusy={ isSendingInvitations }
 							disabled={
-								( inviteMode === 'groups' &&
-									selectedGroups.size === 0 ) ||
-								( inviteMode === 'participants' &&
-									selectedInviteParticipants.size === 0 ) ||
-								isSendingInvitations
+								!! invitationBlocked || isSendingInvitations
 							}
 						>
 							{ isSendingInvitations
-								? __( 'Sending...', 'fair-audience' )
-								: inviteMode === 'participants' &&
-								  selectedInviteParticipants.size > 0
+								? __( 'Sending…', 'fair-audience' )
+								: invitationPreview.status === 'ready' &&
+								  invitationPreview.data.eligible_count > 0
 								? sprintf(
-										/* translators: %d: number of selected participants */
-										__(
-											'Send to %d Selected',
+										/* translators: %d: number of invitations to send */
+										_n(
+											'Send %d invitation',
+											'Send %d invitations',
+											invitationPreview.data
+												.eligible_count,
 											'fair-audience'
 										),
-										selectedInviteParticipants.size
+										invitationPreview.data.eligible_count
 								  )
 								: __( 'Send Invitations', 'fair-audience' ) }
 						</Button>
