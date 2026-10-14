@@ -266,6 +266,8 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 
 			$data[] = array(
 				'id'                     => $submission->id,
+				'title'                  => $submission->title,
+				'form_title'             => $this->form_title( $submission ),
 				'participant_id'         => (int) $submission->participant_id,
 				'participant_name'       => $participant_name,
 				'participant_email'      => $participant_email,
@@ -411,6 +413,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 			$data[] = array(
 				'id'                => $submission->id,
 				'title'             => $submission->title,
+				'form_title'        => $this->form_title( $submission ),
 				'participant_name'  => $participant_name,
 				'participant_email' => $participant_email,
 				'event_name'        => $event_name,
@@ -506,6 +509,20 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 		) + $this->ticket_fields( $submission, true );
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Display name of the form a submission came from: the stored form title,
+	 * falling back to the legacy per-submission title.
+	 *
+	 * @param \FairForm\Models\QuestionnaireSubmission $submission Submission.
+	 * @return string Form title, or '' when neither is stored.
+	 */
+	private function form_title( $submission ) {
+		if ( ! empty( $submission->form_title ) ) {
+			return (string) $submission->form_title;
+		}
+		return (string) $submission->title;
 	}
 
 	/**

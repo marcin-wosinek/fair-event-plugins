@@ -23,4 +23,8 @@ describe( 'formatDate', () => {
 		expect( formatDate( '' ) ).toBe( '' );
 		expect( formatDate( undefined ) ).toBe( '' );
 	} );
+
+	it( 'returns an empty string for an unparseable value', () => {
+		expect( formatDate( 'not a date' ) ).toBe( '' );
+	} );
 } );

@@ -1,15 +1,18 @@
-import { __ } from '@wordpress/i18n';
-import { useState, useEffect, useMemo } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
 	CardBody,
 	Modal,
 	Button,
+	Notice,
 	SelectControl,
 	Spinner,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import SubmissionContext from '../components/SubmissionContext.js';
+import DeleteSubmissionDialog from '../components/DeleteSubmissionDialog.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -34,8 +37,14 @@ export default function FormAnswers() {
 	const [ view, setView ] = useState( DEFAULT_VIEW );
 	const [ editingItem, setEditingItem ] = useState( null );
 	const [ eventDates, setEventDates ] = useState( [] );
+	// 'idle' | 'loading' | 'loaded' | 'error'
+	const [ eventDatesStatus, setEventDatesStatus ] = useState( 'idle' );
 	const [ selectedEventDateId, setSelectedEventDateId ] = useState( '' );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ saveError, setSaveError ] = useState( null );
+	const [ deleteItem, setDeleteItem ] = useState( null );
+	// Guards against a second Save landing before the re-render disables it.
+	const savingRef = useRef( false );
 
 	useEffect( () => {
 		setIsLoading( true );
@@ -53,36 +62,49 @@ export default function FormAnswers() {
 			} );
 	}, [] );
 
-	const loadEventDates = () => {
-		if ( eventDates.length > 0 ) {
+	// Event options are loaded once, the first time the editor opens (or
+	// again after "Retry" resets the status to idle).
+	useEffect( () => {
+		if ( ! editingItem || eventDatesStatus !== 'idle' ) {
 			return;
 		}
+		setEventDatesStatus( 'loading' );
 		apiFetch( {
 			path: '/fair-form/v1/questionnaire-responses/grouped?by=event',
 		} )
 			.then( ( data ) => {
 				setEventDates( data );
+				setEventDatesStatus( 'loaded' );
 			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-console
-				console.error( 'Error loading event dates:', err );
+			.catch( () => {
+				setEventDatesStatus( 'error' );
 			} );
-	};
+	}, [ editingItem, eventDatesStatus ] );
 
 	const openEdit = ( item ) => {
 		setEditingItem( item );
 		setSelectedEventDateId(
 			item.event_date_id ? String( item.event_date_id ) : ''
 		);
-		loadEventDates();
+		setSaveError( null );
+	};
+
+	const closeEdit = () => {
+		if ( savingRef.current ) {
+			return;
+		}
+		setEditingItem( null );
+		setSaveError( null );
 	};
 
 	const handleSave = () => {
-		if ( ! editingItem ) {
+		if ( ! editingItem || savingRef.current ) {
 			return;
 		}
 
+		savingRef.current = true;
 		setIsSaving( true );
+		setSaveError( null );
 		apiFetch( {
 			path: `/fair-form/v1/questionnaire-responses/${ editingItem.id }`,
 			method: 'PUT',
@@ -107,14 +129,16 @@ export default function FormAnswers() {
 				setEditingItem( null );
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-form' ) +
-						( err.message ||
-							__( 'Failed to update submission.', 'fair-form' ) )
+				setSaveError(
+					err?.message ||
+						__(
+							'The submission could not be updated. Try again.',
+							'fair-form'
+						)
 				);
 			} )
 			.finally( () => {
+				savingRef.current = false;
 				setIsSaving( false );
 			} );
 	};
@@ -173,38 +197,6 @@ export default function FormAnswers() {
 		[ submissions.length, view.perPage ]
 	);
 
-	const handleDelete = ( item ) => {
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this submission?',
-					'fair-form'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-form/v1/questionnaire-responses/${ item.id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				setSubmissions( ( prev ) =>
-					prev.filter( ( s ) => s.id !== item.id )
-				);
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-form' ) +
-						( err.message ||
-							__( 'Failed to delete submission.', 'fair-form' ) )
-				);
-			} );
-	};
-
 	const actions = useMemo(
 		() => [
 			{
@@ -227,25 +219,44 @@ export default function FormAnswers() {
 				id: 'delete',
 				label: __( 'Delete', 'fair-form' ),
 				icon: 'trash',
-				callback: ( [ item ] ) => handleDelete( item ),
+				callback: ( [ item ] ) => setDeleteItem( item ),
 				supportsBulk: false,
 			},
 		],
 		[]
 	);
 
-	const eventDateOptions = useMemo(
-		() => [
+	const eventDateOptions = useMemo( () => {
+		const options = eventDates
+			.filter( ( ed ) => ed.event_date_id )
+			.map( ( ed ) => ( {
+				label: `${ ed.label } (${ ed.count })`,
+				value: String( ed.event_date_id ),
+			} ) );
+
+		// Keep the current assignment selectable even when the event list
+		// hasn't loaded (or failed to), so it is never silently replaced.
+		const currentId = editingItem?.event_date_id
+			? String( editingItem.event_date_id )
+			: '';
+		if ( currentId && ! options.some( ( o ) => o.value === currentId ) ) {
+			options.unshift( {
+				label:
+					editingItem.event_name ||
+					sprintf(
+						/* translators: %d: event date ID */
+						__( 'Event date #%d', 'fair-form' ),
+						editingItem.event_date_id
+					),
+				value: currentId,
+			} );
+		}
+
+		return [
 			{ label: __( '— None —', 'fair-form' ), value: '' },
-			...eventDates
-				.filter( ( ed ) => ed.event_date_id )
-				.map( ( ed ) => ( {
-					label: `${ ed.label } (${ ed.count })`,
-					value: String( ed.event_date_id ),
-				} ) ),
-		],
-		[ eventDates ]
-	);
+			...options,
+		];
+	}, [ eventDates, editingItem ] );
 
 	return (
 		<div className="wrap fair-form-form-answers-page">
@@ -267,17 +278,61 @@ export default function FormAnswers() {
 				</CardBody>
 			</Card>
 
+			{ deleteItem && (
+				<DeleteSubmissionDialog
+					key={ deleteItem.id }
+					submission={ deleteItem }
+					onCancel={ () => setDeleteItem( null ) }
+					onDeleted={ ( id ) => {
+						setSubmissions( ( prev ) =>
+							prev.filter( ( s ) => s.id !== id )
+						);
+						setDeleteItem( null );
+					} }
+				/>
+			) }
+
 			{ editingItem && (
 				<Modal
 					title={ __( 'Edit Submission', 'fair-form' ) }
-					onRequestClose={ () => setEditingItem( null ) }
+					onRequestClose={ closeEdit }
+					isDismissible={ ! isSaving }
+					shouldCloseOnEsc={ ! isSaving }
+					shouldCloseOnClickOutside={ ! isSaving }
+					style={ { maxWidth: '480px', width: '100%' } }
 				>
+					<SubmissionContext submission={ editingItem } />
 					<SelectControl
 						label={ __( 'Event', 'fair-form' ) }
 						value={ selectedEventDateId }
 						options={ eventDateOptions }
 						onChange={ setSelectedEventDateId }
+						disabled={ isSaving }
+						help={
+							eventDatesStatus === 'loading'
+								? __( 'Loading events…', 'fair-form' )
+								: undefined
+						}
 					/>
+					{ eventDatesStatus === 'error' && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
+								'The list of events could not be loaded. The current assignment is kept.',
+								'fair-form'
+							) }{ ' ' }
+							<Button
+								variant="link"
+								onClick={ () => setEventDatesStatus( 'idle' ) }
+							>
+								{ __( 'Retry', 'fair-form' ) }
+							</Button>
+						</Notice>
+					) }
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+						</Notice>
+					) }
 					<div
 						style={ {
 							marginTop: '16px',
@@ -288,7 +343,8 @@ export default function FormAnswers() {
 					>
 						<Button
 							variant="tertiary"
-							onClick={ () => setEditingItem( null ) }
+							onClick={ closeEdit }
+							disabled={ isSaving }
 						>
 							{ __( 'Cancel', 'fair-form' ) }
 						</Button>

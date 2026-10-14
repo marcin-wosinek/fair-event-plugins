@@ -9,7 +9,13 @@
  * columns and a permanently-disabled button.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import QuestionnaireResponses from '../QuestionnaireResponses.js';
 
@@ -225,5 +231,79 @@ describe( 'QuestionnaireResponses — table containment', () => {
 				'.fair-form-questionnaire-responses__table'
 			)
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'QuestionnaireResponses — delete (#1774)', () => {
+	async function openDelete( answerText ) {
+		const row = ( await screen.findByText( answerText ) ).closest( 'tr' );
+		fireEvent.click(
+			within( row ).getByRole( 'button', { name: 'Actions' } )
+		);
+		fireEvent.click(
+			await screen.findByRole( 'menuitem', { name: 'Delete' } )
+		);
+		return screen.findByRole( 'dialog' );
+	}
+
+	const deleteCalls = () =>
+		apiFetch.mock.calls.filter(
+			( [ options ] ) => options.method === 'DELETE'
+		);
+
+	it( 'identifies an anonymous submission by fallback, form, and ID; cancel sends nothing', async () => {
+		mockResponses( [
+			{ ...STANDALONE_RESPONSES[ 0 ], form_title: 'Workshop feedback' },
+		] );
+
+		render( <QuestionnaireResponses /> );
+		const dialog = await openDelete( 'Google' );
+
+		expect(
+			within( dialog ).getByText( 'Anonymous respondent' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( 'Workshop feedback' )
+		).toBeInTheDocument();
+		expect( within( dialog ).getByText( '#1' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( deleteCalls() ).toHaveLength( 0 );
+	} );
+
+	it( 'deletes only the confirmed response', async () => {
+		mockResponses( [ ...LINKED_RESPONSES, ...STANDALONE_RESPONSES ] );
+
+		render( <QuestionnaireResponses /> );
+		const dialog = await openDelete( 'Friend' );
+		expect( within( dialog ).getByText( 'Jane Doe' ) ).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( 'Untitled form' )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete submission',
+			} )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByText( 'Friend' ) ).not.toBeInTheDocument()
+		);
+		expect( screen.getByText( 'Google' ) ).toBeInTheDocument();
+		expect( deleteCalls() ).toEqual( [
+			[
+				{
+					path: '/fair-form/v1/questionnaire-responses/2',
+					method: 'DELETE',
+				},
+			],
+		] );
 	} );
 } );
