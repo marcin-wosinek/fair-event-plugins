@@ -112,9 +112,12 @@ test.describe
 	}
 
 	// The card's list items, one per held ticket.
+	// Each held ticket's markup, up to the end of the ticket list (the
+	// add-activities section after it may offer any ticket's activities).
 	const heldTickets = ( html ) =>
 		html
 			.split( '<ul class="fair-events-signed-up-tickets">' )[ 1 ]
+			.split( '<div class="fair-events-add-activities"' )[ 0 ]
 			.split( '<li><strong>' )
 			.slice( 1 );
 

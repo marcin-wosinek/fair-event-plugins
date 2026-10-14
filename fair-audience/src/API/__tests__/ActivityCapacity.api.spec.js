@@ -356,13 +356,14 @@ test.describe.serial( 'Activity capacity on audience routes', () => {
 		expect( first.body.status ).toBe( 'payment_required' );
 		expect( await taken( option.Masterclass ) ).toBe( 1 );
 
-		// The sibling's add-on finds the only place held.
+		// The sibling's add-on finds the only place held, and is told so.
 		const sibling = await addActivities( {
 			ticket_option_ids: [ option.Masterclass ],
 			ticket_id: ticketTwo,
 		} );
-		expect( sibling.status ).toBe( 400 );
-		expect( sibling.body.code ).toBe( 'no_new_activities' );
+		expect( sibling.status ).toBe( 409 );
+		expect( sibling.body.code ).toBe( 'ticket_option_full' );
+		expect( await taken( option.Masterclass ) ).toBe( 1 );
 
 		// A failed payment releases the hold at once, on that ticket only.
 		await fixture( 'fail-addon', {

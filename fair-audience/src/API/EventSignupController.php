@@ -908,13 +908,17 @@ class EventSignupController extends WP_REST_Controller {
 			return $ticket;
 		}
 
-		// Validate the requested options (exist for the event date, have capacity).
-		$requested = $this->load_valid_options( $event_date_id, $raw_option_ids, $ticket ? (int) $ticket->event_date_id : (int) $existing->event_date_id );
+		// Validate the requested options exist for the event date. Their places
+		// are checked under the capacity lock below, where the target's own
+		// hold from an unfinished checkout does not count against it.
+		$requested = $this->load_valid_options( $event_date_id, $raw_option_ids, $ticket ? (int) $ticket->event_date_id : (int) $existing->event_date_id, false );
 
-		// Drop options the target already holds — the duplicate-add guard.
+		// Drop options the target already confirmed — the duplicate-add guard.
+		// One still awaiting payment from an abandoned, failed or expired
+		// checkout can be bought again (issue #1821).
 		$already_ids = $ticket
-			? \FairEvents\Models\EventTicketActivity::get_option_ids( (int) $ticket->id )
-			: $this->get_participant_scope_option_ids( (int) $existing->id );
+			? \FairEvents\Models\EventTicketActivity::get_option_ids( (int) $ticket->id, true )
+			: $this->get_participant_scope_option_ids( (int) $existing->id, true );
 		$new_options = array_values(
 			array_filter(
 				$requested,
@@ -1488,7 +1492,9 @@ class EventSignupController extends WP_REST_Controller {
 	 * purchases and edits cannot together exceed an activity's limit. The
 	 * places are taken on the ticket's occurrence (every occurrence a
 	 * whole-series ticket covers), or on the relationship's event date for
-	 * participant-level activities.
+	 * participant-level activities. An activity the target still holds from
+	 * an earlier attempt already has its place, so it is not counted again
+	 * — even when that hold fills the activity's last place.
 	 *
 	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
 	 * @param object|null                           $ticket            Target ticket, or null for participant scope.
@@ -1503,17 +1509,29 @@ class EventSignupController extends WP_REST_Controller {
 			return $write();
 		}
 
-		$result = \FairEvents\Services\TicketCapacity::reserve(
-			array(
-				array(
-					'event_date_id'  => $ticket ? (int) $ticket->event_date_id : (int) $event_participant->event_date_id,
-					'ticket_type_id' => $ticket ? (int) $ticket->ticket_type_id : (int) $event_participant->ticket_type_id,
-					'quantity'       => 0,
-					'option_ids'     => array_map( static fn( $opt ) => (int) $opt->id, $options ),
-				),
-			),
-			$write
+		$still_held_ids = $ticket
+			? \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( (int) $ticket->id ) )
+			: $this->get_participant_scope_option_ids( (int) $event_participant->id, false, true );
+		$needed_ids     = array_values(
+			array_diff(
+				array_map( static fn( $opt ) => (int) $opt->id, $options ),
+				$still_held_ids
+			)
 		);
+
+		$result = $needed_ids
+			? \FairEvents\Services\TicketCapacity::reserve(
+				array(
+					array(
+						'event_date_id'  => $ticket ? (int) $ticket->event_date_id : (int) $event_participant->event_date_id,
+						'ticket_type_id' => $ticket ? (int) $ticket->ticket_type_id : (int) $event_participant->ticket_type_id,
+						'quantity'       => 0,
+						'option_ids'     => $needed_ids,
+					),
+				),
+				$write
+			)
+			: $write();
 
 		if ( false === $result ) {
 			return new WP_Error(
@@ -2394,19 +2412,11 @@ class EventSignupController extends WP_REST_Controller {
 		// that already lapsed released its places, which someone else may
 		// have taken since: they are taken back only if still available.
 		$remaining_options = $this->load_valid_options( $event_date_id, $remaining_ids, 0, false );
-		$still_held_ids    = $ticket_id
-			? \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) )
-			: $this->get_participant_scope_option_ids( $event_participant_id, false, true );
 		$addon_expires_at  = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 		$held              = $this->reserve_addon_places(
 			$event_participant,
 			$ticket_id ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null,
-			array_values(
-				array_filter(
-					$remaining_options,
-					static fn( $opt ) => ! in_array( (int) $opt->id, $still_held_ids, true )
-				)
-			),
+			$remaining_options,
 			function () use ( $event_participant_id, $ticket_id, $remaining_options, $addon_expires_at ) {
 				$this->hold_addon_options( $event_participant_id, $ticket_id, $remaining_options, $addon_expires_at );
 				return true;

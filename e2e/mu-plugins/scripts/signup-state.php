@@ -8,8 +8,9 @@
  * Prints a single `E2E_STATE:{json}` line with the participant's marketing
  * profile, the number of mailing-confirmation (double opt-in) tokens issued
  * to them, the event-participant label, the attached activity (ticket option)
- * ids, and the mail captured for this buyer (including the HTML body, so a
- * spec can pull a link out of it, e.g. a resume-registration URL), so the
+ * ids (all, and the confirmed ones), and the mail captured for this buyer
+ * (including the HTML body, so a spec can pull a link out of it, e.g. a
+ * resume-registration URL), so the
  * spec can assert that consent was recorded only when opted in, that payment
  * flipped the row to signed_up, that selected activities were attached, and
  * that the confirmation email was delivered.
@@ -38,6 +39,7 @@ if ( ! $participant ) {
 
 $label        = null;
 $option_ids   = array();
+$confirmed    = array();
 $signup       = null;
 $ledger_count = 0;
 if ( $event_date_id ) {
@@ -49,6 +51,7 @@ if ( $event_date_id ) {
 	$label                        = $event_participant ? $event_participant->label : null;
 	if ( $event_participant ) {
 		$option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $event_participant->id );
+		$confirmed  = $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $event_participant->id );
 		global $wpdb;
 		$ledger_count = (int) $wpdb->get_var(
 			$wpdb->prepare(
@@ -93,15 +96,16 @@ foreach ( get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
 
 echo 'E2E_STATE:' . wp_json_encode(
 	array(
-		'found'               => true,
-		'email_profile'       => $participant->email_profile,
-		'status'              => $participant->status,
-		'confirmation_tokens' => $confirmation_tokens,
-		'label'               => $label,
-		'option_ids'          => $option_ids,
-		'over_capacity'       => $signup ? (int) $signup->over_capacity : null,
-		'transaction_id'      => $signup && $signup->transaction_id ? (int) $signup->transaction_id : null,
-		'ledger_count'        => $ledger_count,
-		'mail'                => $mail,
+		'found'                => true,
+		'email_profile'        => $participant->email_profile,
+		'status'               => $participant->status,
+		'confirmation_tokens'  => $confirmation_tokens,
+		'label'                => $label,
+		'option_ids'           => $option_ids,
+		'confirmed_option_ids' => $confirmed,
+		'over_capacity'        => $signup ? (int) $signup->over_capacity : null,
+		'transaction_id'       => $signup && $signup->transaction_id ? (int) $signup->transaction_id : null,
+		'ledger_count'         => $ledger_count,
+		'mail'                 => $mail,
 	)
 ) . "\n";

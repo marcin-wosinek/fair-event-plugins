@@ -96,6 +96,10 @@ class SignupActivities {
 	 * event date, plus `addon_tickets` (id, label) when they hold several
 	 * tickets there and must choose which one receives added activities. Called from SignupHookBridge::enrich_render_context().
 	 *
+	 * Only confirmed activities count as owned: one still awaiting payment
+	 * (an abandoned, failed or expired checkout) stays addable so the viewer
+	 * can come back and buy it (issue #1821).
+	 *
 	 * @param array    $context        Render context from fair-events' base render.
 	 * @param int|null $participant_id Viewer's participant ID, or null for anonymous.
 	 * @return array Filtered context.
@@ -124,23 +128,36 @@ class SignupActivities {
 			}
 		}
 
-		$current_option_ids   = $signed_row
-			? $event_participant_repository->get_option_ids_for_event_participant( (int) $signed_row->id )
-			: array();
-		$confirmed_option_ids = $signed_row
-			? $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $signed_row->id )
-			: array();
+		// The viewer's own hold from an unfinished checkout already has its
+		// place, so the activity stays selectable for them even when that
+		// hold fills it.
+		$now                  = gmdate( 'Y-m-d H:i:s' );
+		$confirmed_option_ids = array();
+		$own_held_ids         = array();
+		foreach ( $signed_row ? $event_participant_repository->get_activity_rows( $signed_row ) : array() as $row ) {
+			if ( 'confirmed' === $row->status ) {
+				$confirmed_option_ids[] = (int) $row->ticket_option_id;
+			} elseif ( ! empty( $row->expires_at ) && (string) $row->expires_at > $now ) {
+				$own_held_ids[] = (int) $row->ticket_option_id;
+			}
+		}
+		$owned_option_ids = $confirmed_option_ids;
 
 		// Added activities go to one of the viewer's tickets. An activity is
-		// addable while at least one of those tickets lacks it; with several
-		// tickets the viewer chooses which one receives it.
+		// addable while at least one of those tickets has not confirmed it;
+		// with several tickets the viewer chooses which one receives it.
 		$addon_tickets = $signed_row ? TicketActivities::addon_tickets( (int) $signed_row->event_date_id, (int) $participant_id ) : array();
 		if ( $addon_tickets ) {
-			$held_by_ticket = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $addon_tickets, 'id' ) );
-			$held_by_all    = null;
+			$rows_by_ticket   = \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( wp_list_pluck( $addon_tickets, 'id' ) );
+			$owned_option_ids = null;
 			foreach ( $addon_tickets as $position => $ticket ) {
-				$held        = array_map( static fn( $row ) => (int) $row->ticket_option_id, $held_by_ticket[ (int) $ticket->id ] ?? array() );
-				$held_by_all = null === $held_by_all ? $held : array_values( array_intersect( $held_by_all, $held ) );
+				$confirmed = array();
+				foreach ( $rows_by_ticket[ (int) $ticket->id ] ?? array() as $row ) {
+					if ( 'confirmed' === $row->status ) {
+						$confirmed[] = (int) $row->ticket_option_id;
+					}
+				}
+				$owned_option_ids = null === $owned_option_ids ? $confirmed : array_values( array_intersect( $owned_option_ids, $confirmed ) );
 
 				if ( count( $addon_tickets ) > 1 ) {
 					$context['addon_tickets'][] = array(
@@ -149,7 +166,6 @@ class SignupActivities {
 					);
 				}
 			}
-			$current_option_ids = $held_by_all;
 		}
 
 		// One bulk call resolves every option's discount at once, instead of
@@ -167,8 +183,14 @@ class SignupActivities {
 			if ( $signed_row ) {
 				if ( in_array( (int) $option['id'], $confirmed_option_ids, true ) ) {
 					$context['current_activity_names'][] = $option['name'];
-				} elseif ( ! in_array( (int) $option['id'], $current_option_ids, true ) ) {
-					$context['addable_options'][] = $option;
+				}
+				// Confirmed on one ticket can still be addable to another.
+				if ( ! in_array( (int) $option['id'], $owned_option_ids, true ) ) {
+					$addable = $option;
+					if ( in_array( (int) $option['id'], $own_held_ids, true ) ) {
+						$addable['is_full'] = false;
+					}
+					$context['addable_options'][] = $addable;
 				}
 			}
 		}
