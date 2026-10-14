@@ -323,23 +323,65 @@ describe( 'TransactionPage — Event field', () => {
 	} );
 } );
 
-describe( 'TransactionPage — delete transaction (#1618)', () => {
-	it( 'names the transaction and states the local-only blast radius before deleting', async () => {
+const deleteCalls = () =>
+	apiFetch.mock.calls.filter(
+		( [ options ] ) => 'DELETE' === options.method
+	);
+
+function mockDeletion( { transaction = BASE_TRANSACTION, remove } ) {
+	apiFetch.mockImplementation( ( options ) => {
+		if ( options.path.endsWith( '/log' ) ) {
+			return Promise.resolve( [] );
+		}
+		if ( 'DELETE' === options.method ) {
+			return remove( options );
+		}
+		return Promise.resolve( transaction );
+	} );
+}
+
+async function openDeleteDialog() {
+	fireEvent.click(
+		await screen.findByRole( 'button', {
+			name: 'Delete local transaction',
+		} )
+	);
+	return screen.findByRole( 'dialog' );
+}
+
+describe( 'TransactionPage — delete transaction (#1618, #1773)', () => {
+	it( 'names the transaction, amount, and description and states the local-only blast radius', async () => {
+		mockApiFetch( {
+			transaction: {
+				...BASE_TRANSACTION,
+				description: 'Ticket for Summer Jam',
+			},
+		} );
+
+		render( <TransactionPage /> );
+		const dialog = await openDeleteDialog();
+
+		expect(
+			within( dialog ).getByText(
+				'Permanently delete transaction #42 for 12.50 EUR? This cannot be undone.'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( 'Description: Ticket for Summer Jam' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( /not cancelled, refunded, or deleted/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'says so when the transaction has no description', async () => {
 		mockApiFetch( { transaction: BASE_TRANSACTION } );
 
 		render( <TransactionPage /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Delete transaction',
-			} )
-		);
+		const dialog = await openDeleteDialog();
 
 		expect(
-			await screen.findByText( /Permanently delete transaction #42\?/ )
-		).toBeInTheDocument();
-		expect(
-			screen.getByText( /not cancelled, refunded, or deleted/ )
+			within( dialog ).getByText( 'This transaction has no description.' )
 		).toBeInTheDocument();
 	} );
 
@@ -347,94 +389,87 @@ describe( 'TransactionPage — delete transaction (#1618)', () => {
 		mockApiFetch( { transaction: BASE_TRANSACTION } );
 
 		render( <TransactionPage /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Delete transaction',
-			} )
-		);
-		const dialog = await screen.findByRole( 'dialog' );
+		const dialog = await openDeleteDialog();
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
 		);
 
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
-		expect(
-			apiFetch.mock.calls.some(
-				( [ options ] ) => 'DELETE' === options.method
-			)
-		).toBe( false );
+		expect( deleteCalls() ).toHaveLength( 0 );
 	} );
 
-	it( 'confirming sends a DELETE to the hardcoded transaction endpoint', async () => {
-		let deleteCalled = false;
-		apiFetch.mockImplementation( ( options ) => {
-			if ( options.path.endsWith( '/log' ) ) {
-				return Promise.resolve( [] );
-			}
-			if ( 'DELETE' === options.method ) {
-				deleteCalled = true;
-				expect( options.path ).toBe(
-					'/fair-payments-connector/v1/transactions/42'
-				);
-				return Promise.resolve( { deleted: true, id: 42 } );
-			}
-			return Promise.resolve( BASE_TRANSACTION );
+	it( 'confirming sends one DELETE to the hardcoded endpoint, however often it is clicked', async () => {
+		mockDeletion( {
+			remove: () => Promise.resolve( { deleted: true, id: 42 } ),
 		} );
 
 		render( <TransactionPage /> );
+		const dialog = await openDeleteDialog();
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete local transaction',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
 
-		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Delete transaction',
-			} )
+		await waitFor( () => expect( deleteCalls() ).toHaveLength( 1 ) );
+		expect( deleteCalls()[ 0 ][ 0 ].path ).toBe(
+			'/fair-payments-connector/v1/transactions/42'
 		);
-		const dialog = await screen.findByRole( 'dialog' );
-		fireEvent.click(
-			within( dialog ).getByRole( 'button', {
-				name: 'Delete transaction',
-			} )
-		);
-
-		await waitFor( () => expect( deleteCalled ).toBe( true ) );
 		// jsdom doesn't implement navigation, so the success redirect's
 		// `window.location.href = …` logs a documented no-op console.error.
-		expect( console ).toHaveErrored();
+		await waitFor( () => expect( console ).toHaveErrored() );
+		expect( deleteCalls() ).toHaveLength( 1 );
 	} );
 
-	it( 'keeps the transaction displayed and shows an actionable error when deletion fails', async () => {
-		apiFetch.mockImplementation( ( options ) => {
-			if ( options.path.endsWith( '/log' ) ) {
-				return Promise.resolve( [] );
-			}
-			if ( 'DELETE' === options.method ) {
-				return Promise.reject( new Error( 'Delete failed' ) );
-			}
-			return Promise.resolve( BASE_TRANSACTION );
-		} );
+	it( 'stays open and busy while the deletion runs', async () => {
+		mockDeletion( { remove: () => new Promise( () => {} ) } );
 
 		render( <TransactionPage /> );
-
-		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Delete transaction',
-			} )
-		);
-		const dialog = await screen.findByRole( 'dialog' );
+		const dialog = await openDeleteDialog();
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', {
-				name: 'Delete transaction',
+				name: 'Delete local transaction',
 			} )
 		);
 
 		expect(
-			await screen.findByText( 'Delete failed', {
+			await within( dialog ).findByRole( 'button', { name: 'Deleting…' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+	} );
+
+	it( 'keeps the transaction displayed and shows the error in the dialog when deletion fails', async () => {
+		mockDeletion( {
+			remove: () => Promise.reject( new Error( 'Delete failed' ) ),
+		} );
+
+		render( <TransactionPage /> );
+		const dialog = await openDeleteDialog();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete local transaction',
+			} )
+		);
+
+		expect(
+			await within( dialog ).findByText( 'Delete failed', {
 				selector: '.components-notice__content',
 			} )
 		).toBeInTheDocument();
-		// The transaction detail view is still showing, not an error page.
 		expect(
-			screen.getByRole( 'heading', { name: /Transaction #42/ } )
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete local transaction',
+			} )
+		).toBeEnabled();
+		// The transaction detail view is still behind the dialog, not an
+		// error page (the open modal hides it from the accessibility tree).
+		expect(
+			screen.getByRole( 'heading', {
+				name: /Transaction #42/,
+				hidden: true,
+			} )
 		).toBeInTheDocument();
 	} );
 } );

@@ -180,15 +180,44 @@ export function loadConnectionOverview() {
 }
 
 /**
- * Create a one-unit test payment and return its Mollie checkout details.
+ * Load what a test payment would be created with — amount, currency, mode,
+ * and connected account — without creating one or contacting Mollie.
  *
- * @return {Promise<Object>} Promise resolving to { checkout_url, transaction_id, mode, currency }
+ * @return {Promise<Object>} Promise resolving to { amount, amount_display, currency, mode, profile_id, organization_id }
  */
-export function createTestPayment() {
+export function loadTestPaymentContext() {
 	return apiFetch( {
 		path: '/fair-payments-connector/v1/test-payment',
-		method: 'POST',
 	} );
+}
+
+/**
+ * Create a one-unit test payment and return its Mollie checkout details.
+ *
+ * A live payment needs the context the administrator confirmed; the server
+ * creates nothing when that context is missing or no longer current.
+ *
+ * @param {Object|null} confirmed Context from loadTestPaymentContext() the administrator confirmed.
+ * @return {Promise<Object>} Promise resolving to { checkout_url, transaction_id, mode, currency }
+ */
+export function createTestPayment( confirmed = null ) {
+	const options = {
+		path: '/fair-payments-connector/v1/test-payment',
+		method: 'POST',
+	};
+
+	if ( confirmed ) {
+		options.data = {
+			confirmed: {
+				mode: confirmed.mode,
+				currency: confirmed.currency,
+				profile_id: confirmed.profile_id,
+				organization_id: confirmed.organization_id,
+			},
+		};
+	}
+
+	return apiFetch( options );
 }
 
 /**

@@ -20,6 +20,17 @@ defined( 'WPINC' ) || die;
 class ConnectionController extends \WP_REST_Controller {
 
 	/**
+	 * Amount of a test payment, in the site currency.
+	 */
+	const TEST_PAYMENT_AMOUNT = 1.0;
+
+	/**
+	 * Context fields a confirmation covers. A change to any of them between
+	 * the confirmation and the creation needs a fresh confirmation.
+	 */
+	const CONFIRMED_CONTEXT_FIELDS = array( 'mode', 'currency', 'profile_id', 'organization_id' );
+
+	/**
 	 * Register REST API routes
 	 *
 	 * @return void
@@ -65,15 +76,76 @@ class ConnectionController extends \WP_REST_Controller {
 			'fair-payments-connector/v1',
 			'/test-payment',
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'create_test_payment' ),
-				// Admin-only: this creates a real transaction (real money in live mode)
-				// with no backing block, so it must not reuse the public payment path.
-				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
-				},
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_test_payment_context' ),
+					// Read-only, but it reveals the connected account identifiers.
+					'permission_callback' => function () {
+						return current_user_can( 'manage_options' );
+					},
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'create_test_payment' ),
+					// Admin-only: this creates a real transaction (real money in live mode)
+					// with no backing block, so it must not reuse the public payment path.
+					'permission_callback' => function () {
+						return current_user_can( 'manage_options' );
+					},
+					'args'                => array(
+						'confirmed' => array(
+							'description' => __( 'The test payment context the administrator confirmed, as returned by GET /test-payment.', 'fair-payments-connector' ),
+							'type'        => 'object',
+							'properties'  => array(
+								'mode'            => array( 'type' => 'string' ),
+								'currency'        => array( 'type' => 'string' ),
+								'profile_id'      => array( 'type' => 'string' ),
+								'organization_id' => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
 			)
 		);
+	}
+
+	/**
+	 * Build the context a test payment would be created with right now.
+	 *
+	 * Reads stored settings only — it neither calls Mollie nor creates a
+	 * transaction.
+	 *
+	 * @return array{amount: string, amount_display: string, currency: string, mode: string, profile_id: string, organization_id: string}
+	 */
+	private function test_payment_context() {
+		$currency = Money::site_currency();
+
+		return array(
+			'amount'          => Money::format_value( self::TEST_PAYMENT_AMOUNT ),
+			'amount_display'  => Money::format_display( self::TEST_PAYMENT_AMOUNT, $currency ),
+			'currency'        => $currency,
+			'mode'            => get_option( 'fair_payment_mode', 'test' ),
+			'profile_id'      => (string) get_option( 'fair_payment_mollie_profile_id', '' ),
+			'organization_id' => (string) get_option( 'fair_payment_organization_id', '' ),
+		);
+	}
+
+	/**
+	 * Get the amount, currency, mode, and connected account a test payment
+	 * would use, so the administrator can confirm them before a live payment.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_test_payment_context() {
+		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return new \WP_REST_Response( $this->test_payment_context(), 200 );
 	}
 
 	/**
@@ -142,9 +214,14 @@ class ConnectionController extends \WP_REST_Controller {
 	 * status update) from the settings page, without a backing payment block.
 	 * Admin-only — see the permission callback on the route.
 	 *
+	 * A live payment needs the context the administrator confirmed; when the
+	 * mode, currency, or connected account changed since, nothing is created
+	 * and a fresh confirmation is required.
+	 *
+	 * @param \WP_REST_Request $request Incoming request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function create_test_payment() {
+	public function create_test_payment( \WP_REST_Request $request ) {
 		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
 			return new \WP_Error(
 				'not_connected',
@@ -153,8 +230,37 @@ class ConnectionController extends \WP_REST_Controller {
 			);
 		}
 
-		$currency    = Money::site_currency();
-		$mode        = get_option( 'fair_payment_mode', 'test' );
+		$context   = $this->test_payment_context();
+		$confirmed = $request->get_param( 'confirmed' );
+
+		if ( 'live' === $context['mode'] && ! is_array( $confirmed ) ) {
+			return new \WP_Error(
+				'test_payment_confirmation_required',
+				__( 'Confirm the live test payment before creating it.', 'fair-payments-connector' ),
+				array(
+					'status'  => 409,
+					'context' => $context,
+				)
+			);
+		}
+
+		if ( is_array( $confirmed ) ) {
+			foreach ( self::CONFIRMED_CONTEXT_FIELDS as $field ) {
+				if ( ! isset( $confirmed[ $field ] ) || (string) $confirmed[ $field ] !== $context[ $field ] ) {
+					return new \WP_Error(
+						'test_payment_context_changed',
+						__( 'The payment mode, currency, or connected Mollie account changed since you confirmed. No payment was created. Review the updated details and confirm again.', 'fair-payments-connector' ),
+						array(
+							'status'  => 409,
+							'context' => $context,
+						)
+					);
+				}
+			}
+		}
+
+		$currency    = $context['currency'];
+		$mode        = $context['mode'];
 		$description = __( 'Test payment (Fair Payments Connector settings)', 'fair-payments-connector' );
 
 		$transaction_id = TransactionAPI::create_transaction(
@@ -162,7 +268,7 @@ class ConnectionController extends \WP_REST_Controller {
 				array(
 					'name'     => $description,
 					'quantity' => 1,
-					'amount'   => 1.0,
+					'amount'   => self::TEST_PAYMENT_AMOUNT,
 				),
 			),
 			array(

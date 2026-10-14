@@ -123,3 +123,47 @@
 		justify-content: center;
 	}
 }
+
+.fair-payments-connector-connection__dialog {
+	width: 100%;
+	max-width: 500px;
+}
+
+.fair-payments-connector-connection__dialog .components-notice {
+	margin: 0 0 16px;
+}
+
+.fair-payments-connector-connection__details {
+	margin: 12px 0;
+}
+
+.fair-payments-connector-connection__details div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 8px;
+	margin: 4px 0;
+}
+
+.fair-payments-connector-connection__details dt {
+	color: #646970;
+}
+
+.fair-payments-connector-connection__details dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-payments-connector-connection__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+@media screen and (max-width: 782px) {
+	.fair-payments-connector-connection__buttons .components-button {
+		flex: 1 1 auto;
+		justify-content: center;
+	}
+}

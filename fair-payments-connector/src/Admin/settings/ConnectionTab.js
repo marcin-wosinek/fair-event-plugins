@@ -10,7 +10,8 @@ import {
 	Card,
 	CardBody,
 	ButtonGroup,
-	__experimentalConfirmDialog as ConfirmDialog,
+	Modal,
+	Spinner,
 } from '@wordpress/components';
 
 /**
@@ -23,10 +24,55 @@ import {
 	saveConnectorSettings,
 	testConnection,
 	createTestPayment,
+	loadTestPaymentContext,
 	fetchOAuthState,
 	buildAuthorizeUrl,
 	disconnectOAuth,
 } from './settings-api';
+
+/**
+ * Error message from an apiFetch rejection, or the fallback.
+ *
+ * @param {Object} error    Rejection value.
+ * @param {string} fallback Message when the error carries none.
+ * @return {string} Message to show
+ */
+function errorMessage( error, fallback ) {
+	return ( error && error.message ) || fallback;
+}
+
+/**
+ * Identifiers of the connected Mollie account, as definition-list rows.
+ * Only the identifiers that are known are listed.
+ *
+ * @param {Object} props                Props
+ * @param {string} props.profileName    Mollie profile name, if loaded.
+ * @param {string} props.profileId      Mollie profile ID.
+ * @param {string} props.organizationId Mollie organization ID.
+ * @return {JSX.Element|null} The account details
+ */
+function AccountDetails( { profileName, profileId, organizationId } ) {
+	const rows = [
+		[ __( 'Profile name:', 'fair-payments-connector' ), profileName ],
+		[ __( 'Profile ID:', 'fair-payments-connector' ), profileId ],
+		[ __( 'Organization ID:', 'fair-payments-connector' ), organizationId ],
+	].filter( ( [ , value ] ) => !! value );
+
+	if ( rows.length === 0 ) {
+		return null;
+	}
+
+	return (
+		<dl className="fair-payments-connector-connection__details">
+			{ rows.map( ( [ label, value ] ) => (
+				<div key={ label }>
+					<dt>{ label }</dt>
+					<dd>{ value }</dd>
+				</div>
+			) ) }
+		</dl>
+	);
+}
 
 /**
  * Connection Tab Component
@@ -54,8 +100,15 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	const [ isTestingPayment, setIsTestingPayment ] = useState( false );
 	const [ testCheckoutUrl, setTestCheckoutUrl ] = useState( null );
 	const [ pendingMode, setPendingMode ] = useState( 'test' );
-	const [ isDisconnectDialogOpen, setIsDisconnectDialogOpen ] =
-		useState( false );
+	// Disconnect dialog: null while closed, otherwise { saving, error }.
+	const [ disconnection, setDisconnection ] = useState( null );
+	// Live test payment dialog: null while closed, otherwise
+	// { context, loading, saving, error }. `context` is what the server says
+	// the payment would be created with, and what the administrator confirms.
+	const [ liveConfirmation, setLiveConfirmation ] = useState( null );
+	// Synchronous guard against a second submission before React re-renders
+	// the busy state; only one connection action runs at a time.
+	const actionInFlight = useRef( false );
 	const latestLoadId = useRef( 0 );
 	// Granted-permission status; null until loaded, and when it can't be
 	// loaded — the rest of the tab doesn't depend on it.
@@ -147,15 +200,26 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 			return;
 		}
 
+		// A response for an earlier connection or mode must not put its
+		// profile name back after a newer one.
+		let isCurrent = true;
+
+		setOverview( null );
 		setOverviewLoading( true );
 		setOverviewError( null );
 
 		loadConnectionOverview()
 			.then( ( data ) => {
+				if ( ! isCurrent ) {
+					return;
+				}
 				setOverview( data );
 				setOverviewLoading( false );
 			} )
 			.catch( ( error ) => {
+				if ( ! isCurrent ) {
+					return;
+				}
 				setOverviewError(
 					error.message ||
 						( error.data && error.data.message ) ||
@@ -166,6 +230,10 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 				);
 				setOverviewLoading( false );
 			} );
+
+		return () => {
+			isCurrent = false;
+		};
 	}, [ connected, mode ] );
 
 	/**
@@ -191,22 +259,50 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	};
 
 	/**
-	 * Open the disconnect confirmation dialog.
+	 * Start a connection action unless one is already running.
+	 *
+	 * @return {boolean} Whether the caller may proceed
 	 */
-	const handleDisconnect = () => {
-		setIsDisconnectDialogOpen( true );
+	const beginAction = () => {
+		if ( actionInFlight.current ) {
+			return false;
+		}
+		actionInFlight.current = true;
+		return true;
+	};
+
+	const endAction = () => {
+		actionInFlight.current = false;
 	};
 
 	/**
-	 * Confirm disconnect.
+	 * Open the disconnect confirmation dialog.
+	 */
+	const handleDisconnect = () => {
+		setDisconnection( { saving: false, error: null } );
+	};
+
+	const closeDisconnection = () => {
+		if ( ! actionInFlight.current ) {
+			setDisconnection( null );
+		}
+	};
+
+	/**
+	 * Confirm disconnect. The dialog stays open, busy, until the server
+	 * answers, and shows a failure in place.
 	 */
 	const handleConfirmDisconnect = () => {
-		setIsDisconnectDialogOpen( false );
-		setIsSaving( true );
+		if ( ! beginAction() ) {
+			return;
+		}
+		setDisconnection( { saving: true, error: null } );
 
 		disconnectOAuth()
 			.then( () => {
-				loadSettings();
+				endAction();
+				setDisconnection( null );
+				loadSettings( { force: true } );
 				onNotice( {
 					status: 'success',
 					message: __(
@@ -214,19 +310,32 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 						'fair-payments-connector'
 					),
 				} );
-				setIsSaving( false );
 			} )
 			.catch( ( error ) => {
-				onNotice( {
-					status: 'error',
-					message:
-						error.message ||
-						__(
-							'Failed to disconnect.',
+				endAction();
+
+				// The credentials are already gone; only the audit entry
+				// failed. Retrying would mislead, so show the new state.
+				if ( error && error.code === 'audit_log_failed' ) {
+					setDisconnection( null );
+					loadSettings( { force: true } );
+					onNotice( {
+						status: 'warning',
+						message: __(
+							'Disconnected, but the audit entry could not be recorded.',
 							'fair-payments-connector'
 						),
+					} );
+					return;
+				}
+
+				setDisconnection( {
+					saving: false,
+					error: errorMessage(
+						error,
+						__( 'Failed to disconnect.', 'fair-payments-connector' )
+					),
 				} );
-				setIsSaving( false );
 			} );
 	};
 
@@ -346,31 +455,19 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	};
 
 	/**
-	 * Handle Create test payment button click.
+	 * Create the test payment and open its Mollie checkout in a new tab.
 	 *
-	 * Creates a one-unit payment and opens the Mollie checkout in a new tab. In
-	 * live mode it confirms first, since a real payment with real money is made.
-	 * The checkout URL is also kept in state so a fallback link can be shown when
-	 * the browser blocks the popup.
+	 * The checkout URL is also kept in state so a fallback link can be shown
+	 * when the browser blocks the popup.
+	 *
+	 * @param {Object|null} confirmed Context the administrator confirmed, for a live payment.
+	 * @return {Promise} Resolves once the payment exists; rejects with the API error
 	 */
-	const handleTestPayment = () => {
-		if (
-			mode === 'live' &&
-			// eslint-disable-next-line no-alert
-			! confirm(
-				__(
-					'You are in live mode. This creates a real 1-unit payment with real money and gateway fees. Continue?',
-					'fair-payments-connector'
-				)
-			)
-		) {
-			return;
-		}
-
+	const submitTestPayment = ( confirmed ) => {
 		setIsTestingPayment( true );
 		setTestCheckoutUrl( null );
 
-		createTestPayment()
+		return createTestPayment( confirmed )
 			.then( ( response ) => {
 				setTestCheckoutUrl( response.checkout_url );
 				window.open( response.checkout_url, '_blank', 'noopener' );
@@ -381,21 +478,162 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 						'fair-payments-connector'
 					),
 				} );
-				setIsTestingPayment( false );
 			} )
+			.finally( () => setIsTestingPayment( false ) );
+	};
+
+	/**
+	 * The server answers a missing or outdated live confirmation with the
+	 * current context; show it for a fresh confirmation.
+	 *
+	 * @param {Object} error API error.
+	 * @return {Object|null} Current context, if the error carries one
+	 */
+	const contextFromError = ( error ) =>
+		error &&
+		( error.code === 'test_payment_context_changed' ||
+			error.code === 'test_payment_confirmation_required' ) &&
+		error.data &&
+		error.data.context
+			? error.data.context
+			: null;
+
+	/**
+	 * Handle Create test payment button click.
+	 *
+	 * In test mode the payment is created right away. In live mode a real
+	 * payment with real money is made, so the amount, currency, and connected
+	 * account are loaded from the server and confirmed first.
+	 */
+	const handleTestPayment = () => {
+		if ( mode === 'live' ) {
+			openLiveConfirmation();
+			return;
+		}
+
+		if ( ! beginAction() ) {
+			return;
+		}
+
+		submitTestPayment( null )
 			.catch( ( error ) => {
+				const context = contextFromError( error );
+				if ( context ) {
+					// The site switched to live mode elsewhere.
+					loadSettings( { force: true } );
+					setLiveConfirmation( {
+						context,
+						loading: false,
+						saving: false,
+						error: errorMessage( error, '' ),
+					} );
+					return;
+				}
 				onNotice( {
 					status: 'error',
-					message:
-						error.message ||
+					message: errorMessage(
+						error,
 						__(
 							'Failed to create test payment.',
 							'fair-payments-connector'
-						),
+						)
+					),
 				} );
-				setIsTestingPayment( false );
-			} );
+			} )
+			.finally( endAction );
 	};
+
+	/**
+	 * Open the live confirmation and load what the payment would be created
+	 * with. Nothing is created until the administrator confirms.
+	 */
+	const openLiveConfirmation = () => {
+		setLiveConfirmation( {
+			context: null,
+			loading: true,
+			saving: false,
+			error: null,
+		} );
+
+		loadTestPaymentContext()
+			.then( ( context ) =>
+				setLiveConfirmation( ( current ) =>
+					current ? { ...current, context, loading: false } : current
+				)
+			)
+			.catch( ( error ) =>
+				setLiveConfirmation( ( current ) =>
+					current
+						? {
+								...current,
+								loading: false,
+								error: errorMessage(
+									error,
+									__(
+										'Failed to load the test payment details.',
+										'fair-payments-connector'
+									)
+								),
+						  }
+						: current
+				)
+			);
+	};
+
+	const closeLiveConfirmation = () => {
+		if ( ! actionInFlight.current ) {
+			setLiveConfirmation( null );
+		}
+	};
+
+	/**
+	 * Create the payment with the context shown in the dialog. The dialog
+	 * stays open, busy, until the server answers, and shows a failure in
+	 * place.
+	 */
+	const handleConfirmLivePayment = () => {
+		if ( ! liveConfirmation || ! liveConfirmation.context ) {
+			return;
+		}
+		if ( ! beginAction() ) {
+			return;
+		}
+
+		const { context } = liveConfirmation;
+		setLiveConfirmation( {
+			context,
+			loading: false,
+			saving: true,
+			error: null,
+		} );
+
+		submitTestPayment( context )
+			.then( () => setLiveConfirmation( null ) )
+			.catch( ( error ) => {
+				const current = contextFromError( error );
+				if ( current ) {
+					loadSettings( { force: true } );
+				}
+				setLiveConfirmation( {
+					context: current || context,
+					loading: false,
+					saving: false,
+					error: errorMessage(
+						error,
+						__(
+							'Failed to create test payment.',
+							'fair-payments-connector'
+						)
+					),
+				} );
+			} )
+			.finally( endAction );
+	};
+
+	const isActionRunning =
+		isSaving || isTestingPayment || ( disconnection?.saving ?? false );
+
+	const profileName = overview?.profile_name || '';
 
 	const needsSettlementAccess =
 		connected &&
@@ -403,18 +641,221 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 		oauthStatus.settlementAccessRequested &&
 		! oauthStatus.settlementAccess;
 
-	if ( isLoading ) {
-		return (
-			<Card>
-				<CardBody>
+	const liveContext = liveConfirmation?.context;
+	const isLiveContext = liveContext?.mode === 'live';
+
+	// Rendered while settings reload too, so a reload triggered from a dialog
+	// doesn't close it.
+	const dialogs = (
+		<>
+			{ disconnection && (
+				<Modal
+					title={ __(
+						'Disconnect Mollie',
+						'fair-payments-connector'
+					) }
+					onRequestClose={ closeDisconnection }
+					isDismissible={ ! disconnection.saving }
+					shouldCloseOnClickOutside={ ! disconnection.saving }
+					shouldCloseOnEsc={ ! disconnection.saving }
+					className="fair-payments-connector-connection__dialog"
+				>
+					{ disconnection.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ disconnection.error }
+						</Notice>
+					) }
+					<p>
+						{ profileName
+							? sprintf(
+									/* translators: %s: Mollie profile name */
+									__(
+										'Disconnect this site from the Mollie profile "%s"?',
+										'fair-payments-connector'
+									),
+									profileName
+							  )
+							: __(
+									'Disconnect this site from the connected Mollie account?',
+									'fair-payments-connector'
+							  ) }
+					</p>
+					<AccountDetails
+						profileName={ profileName }
+						profileId={ profileId }
+						organizationId={ organizationId }
+					/>
 					<p>
 						{ __(
-							'Loading connection settings...',
+							'This site loses its Mollie connection: it cannot create new Mollie payments or receive status updates for existing ones until you reconnect. Payments already in Mollie are not cancelled or refunded.',
 							'fair-payments-connector'
 						) }
 					</p>
-				</CardBody>
-			</Card>
+					<div className="fair-payments-connector-connection__buttons">
+						<Button
+							variant="tertiary"
+							onClick={ closeDisconnection }
+							disabled={ disconnection.saving }
+						>
+							{ __( 'Cancel', 'fair-payments-connector' ) }
+						</Button>
+						<Button
+							variant="primary"
+							isDestructive
+							isBusy={ disconnection.saving }
+							disabled={ disconnection.saving }
+							onClick={ handleConfirmDisconnect }
+						>
+							{ disconnection.saving
+								? __(
+										'Disconnecting…',
+										'fair-payments-connector'
+								  )
+								: __(
+										'Disconnect Mollie',
+										'fair-payments-connector'
+								  ) }
+						</Button>
+					</div>
+				</Modal>
+			) }
+
+			{ liveConfirmation && (
+				<Modal
+					title={
+						liveContext && ! isLiveContext
+							? __(
+									'Create test payment',
+									'fair-payments-connector'
+							  )
+							: __(
+									'Create live test payment',
+									'fair-payments-connector'
+							  )
+					}
+					onRequestClose={ closeLiveConfirmation }
+					isDismissible={ ! liveConfirmation.saving }
+					shouldCloseOnClickOutside={ ! liveConfirmation.saving }
+					shouldCloseOnEsc={ ! liveConfirmation.saving }
+					className="fair-payments-connector-connection__dialog"
+				>
+					{ liveConfirmation.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ liveConfirmation.error }
+						</Notice>
+					) }
+					{ liveConfirmation.loading && (
+						<p>
+							<Spinner />{ ' ' }
+							{ __(
+								'Loading the test payment details…',
+								'fair-payments-connector'
+							) }
+						</p>
+					) }
+					{ liveContext && (
+						<>
+							<p>
+								{ isLiveContext
+									? sprintf(
+											/* translators: %s: amount with currency code, e.g. "1.00 EUR" */
+											__(
+												'Create a live test payment of %s?',
+												'fair-payments-connector'
+											),
+											liveContext.amount_display
+									  )
+									: sprintf(
+											/* translators: %s: amount with currency code, e.g. "1.00 EUR" */
+											__(
+												'Create a test-mode payment of %s?',
+												'fair-payments-connector'
+											),
+											liveContext.amount_display
+									  ) }
+							</p>
+							<AccountDetails
+								profileName={ profileName }
+								profileId={ liveContext.profile_id }
+								organizationId={ liveContext.organization_id }
+							/>
+							{ isLiveContext ? (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
+										'Live mode: this creates a real payment with real money and gateway fees.',
+										'fair-payments-connector'
+									) }
+								</Notice>
+							) : (
+								<p>
+									{ __(
+										'Test mode: no real money is charged.',
+										'fair-payments-connector'
+									) }
+								</p>
+							) }
+						</>
+					) }
+					{ ! liveConfirmation.loading && ! liveContext && (
+						<p>
+							{ __(
+								'The payment details could not be loaded, so no payment can be created. Close this dialog and try again.',
+								'fair-payments-connector'
+							) }
+						</p>
+					) }
+					<div className="fair-payments-connector-connection__buttons">
+						<Button
+							variant="tertiary"
+							onClick={ closeLiveConfirmation }
+							disabled={ liveConfirmation.saving }
+						>
+							{ __( 'Cancel', 'fair-payments-connector' ) }
+						</Button>
+						<Button
+							variant="primary"
+							isBusy={ liveConfirmation.saving }
+							disabled={
+								! liveContext || liveConfirmation.saving
+							}
+							onClick={ handleConfirmLivePayment }
+						>
+							{ liveConfirmation.saving
+								? __( 'Creating…', 'fair-payments-connector' )
+								: isLiveContext || ! liveContext
+								? __(
+										'Create live test payment',
+										'fair-payments-connector'
+								  )
+								: __(
+										'Create test payment',
+										'fair-payments-connector'
+								  ) }
+						</Button>
+					</div>
+				</Modal>
+			) }
+		</>
+	);
+
+	if ( isLoading ) {
+		return (
+			<>
+				<Card>
+					<CardBody>
+						<p>
+							{ __(
+								'Loading connection settings...',
+								'fair-payments-connector'
+							) }
+						</p>
+					</CardBody>
+				</Card>
+				{ dialogs }
+			</>
 		);
 	}
 
@@ -690,7 +1131,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 										},
 									] }
 									onChange={ setPendingMode }
-									disabled={ isSaving }
+									disabled={ isActionRunning }
 								/>
 								{ pendingMode !== mode && (
 									<div style={ { marginTop: '12px' } }>
@@ -698,7 +1139,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 											variant="primary"
 											onClick={ handleSaveMode }
 											isBusy={ isSaving }
-											disabled={ isSaving }
+											disabled={ isActionRunning }
 										>
 											{ __(
 												'Save mode',
@@ -714,17 +1155,17 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									<Button
 										isDestructive
 										onClick={ handleDisconnect }
-										disabled={ isSaving }
+										disabled={ isActionRunning }
 									>
 										{ __(
-											'Disconnect',
+											'Disconnect Mollie',
 											'fair-payments-connector'
 										) }
 									</Button>
 									<Button
 										isSecondary
 										onClick={ handleConnect }
-										disabled={ isSaving }
+										disabled={ isActionRunning }
 									>
 										{ __(
 											'Reconnect',
@@ -735,7 +1176,9 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 										isSecondary
 										onClick={ handleRefreshToken }
 										isBusy={ isRefreshing }
-										disabled={ isRefreshing }
+										disabled={
+											isRefreshing || isActionRunning
+										}
 									>
 										{ isRefreshing
 											? __(
@@ -802,7 +1245,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 							isSecondary
 							onClick={ handleTestPayment }
 							isBusy={ isTestingPayment }
-							disabled={ ! connected || isTestingPayment }
+							disabled={ ! connected || isActionRunning }
 						>
 							{ __(
 								'Create test payment',
@@ -828,23 +1271,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 				</CardBody>
 			</Card>
 
-			<ConfirmDialog
-				isOpen={ isDisconnectDialogOpen }
-				onConfirm={ handleConfirmDisconnect }
-				onCancel={ () => setIsDisconnectDialogOpen( false ) }
-				confirmButtonText={ __(
-					'Disconnect',
-					'fair-payments-connector'
-				) }
-				cancelButtonText={ __( 'Cancel', 'fair-payments-connector' ) }
-			>
-				<p>
-					{ __(
-						'Disconnect from Mollie? You will need to reconnect to accept payments.',
-						'fair-payments-connector'
-					) }
-				</p>
-			</ConfirmDialog>
+			{ dialogs }
 		</>
 	);
 }
