@@ -101,10 +101,22 @@ Translation files:
 
 ## Requirements
 
--   **WordPress**: 6.7+
+-   **WordPress**: 7.0+ for Fair Events, Fair Events Experimental, Fair
+    Audience, Fair Audience Experimental and Fair Form; 6.7+ for the other
+    plugins. Each plugin's `Requires at least` header is authoritative.
 -   **PHP**: 8.0+
--   **Node.js**: 18+
+-   **Node.js** (development only): 24.15+ (or 22.22.2+), required by
+    `@wordpress/scripts` 36
 -   **Composer**: 2.0+
+
+### WordPress compatibility
+
+The admin screens built with `@wordpress/dataviews` depend on the `wp-theme`
+script that WordPress registers from 7.0, which is why the plugins that ship
+them require 7.0. The `@wordpress/*` packages target React 19 but still
+support React 18, which every released WordPress version, including 7.1,
+ships. Builds are checked on the oldest supported core (6.7 and 7.0) and on
+the latest release.
 
 ## License
 

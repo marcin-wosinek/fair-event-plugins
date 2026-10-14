@@ -1,7 +1,7 @@
 === Fair Audience ===
 Contributors: marcinwosinek
 Tags: events, participants, audience, management
-Requires at least: 6.7
+Requires at least: 7.0
 Tested up to: 7.1
 Stable tag: 1.19.0
 Requires PHP: 8.0

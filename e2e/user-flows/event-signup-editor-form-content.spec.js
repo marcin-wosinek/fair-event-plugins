@@ -10,10 +10,14 @@
  * and became unclickable. This only reproduces with a real resolvable event
  * date — a blank `post-new.php` never renders `.fair-events-get-tickets` at
  * all, so it can't catch this class of regression.
+ *
+ * The last test reopens content saved before a WordPress package upgrade
+ * (#1815) and round-trips it through the editor, so a package major that
+ * changes serialization or block validation shows up as a failure here.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { loginAsAdmin } from '../support/wp-cli.js';
+import { loginAsAdmin, wpCli } from '../support/wp-cli.js';
 
 test.describe('Event Signup block "Form content" area in the editor', () => {
 	test('appender and nested question stay interactive while the preview stays inert', async ({
@@ -123,5 +127,95 @@ test.describe('Event Signup block "Form content" area in the editor', () => {
 		);
 		await question.waitFor();
 		await expect(question).toHaveClass(/is-selected/);
+	});
+
+	test('content saved before a package upgrade opens, edits, saves and reloads unchanged (#1815)', async ({
+		page,
+		seedEvent,
+	}) => {
+		// Markup as the editor serialized it before the WordPress package
+		// upgrade: blocks from several plugins, non-default attributes, and
+		// nested question/option blocks inside the Event Signup block.
+		const event = seedEvent('free', { block: 'saved-editor-content' });
+		const savedContent = () =>
+			wpCli(`post get ${event.eventId} --field=post_content`).trim();
+		const before = savedContent();
+
+		const validationMessages = [];
+		page.on('console', (message) => {
+			if (/block validation/i.test(message.text())) {
+				validationMessages.push(message.text());
+			}
+		});
+
+		const invalidBlocks = () =>
+			page.evaluate(() => {
+				const editor = window.wp.data.select('core/block-editor');
+				return editor
+					.getClientIdsWithDescendants()
+					.map((clientId) => editor.getBlock(clientId))
+					.filter((block) => block && false === block.isValid)
+					.map((block) => block.name);
+			});
+
+		const openEditor = async () => {
+			await page.goto(
+				`/wp-admin/post.php?post=${event.eventId}&action=edit`
+			);
+			const editorFrame = page.frameLocator('[name="editor-canvas"]');
+			await editorFrame.locator('.block-editor-iframe__body').waitFor();
+			const welcomeGuide = page.locator('.components-guide');
+			if (await welcomeGuide.isVisible().catch(() => false)) {
+				await page
+					.getByRole('button', { name: 'Close' })
+					.first()
+					.click();
+			}
+			await editorFrame
+				.locator('.wp-block-fair-events-event-signup')
+				.waitFor();
+			return editorFrame;
+		};
+
+		await loginAsAdmin(page);
+		let editorFrame = await openEditor();
+
+		expect(await invalidBlocks()).toEqual([]);
+		await expect(editorFrame.locator('.block-editor-warning')).toHaveCount(
+			0
+		);
+
+		// Edit the description, then save.
+		const description = editorFrame.locator('p.wp-block-paragraph', {
+			hasText: 'Synthetic event description.',
+		});
+		await description.click();
+		await page.keyboard.press('End');
+		await page.keyboard.type(' Edited.');
+		await page.keyboard.press('ControlOrMeta+s');
+		await page.waitForFunction(() => {
+			const editor = window.wp.data.select('core/editor');
+			return !editor.isSavingPost() && !editor.isEditedPostDirty();
+		});
+
+		// Only the edited paragraph changed: every other block keeps its
+		// attributes and nested content byte for byte.
+		const after = savedContent();
+		expect(after).toBe(
+			before.replace(
+				'Synthetic event description.',
+				'Synthetic event description. Edited.'
+			)
+		);
+
+		editorFrame = await openEditor();
+		expect(await invalidBlocks()).toEqual([]);
+		await expect(editorFrame.locator('.block-editor-warning')).toHaveCount(
+			0
+		);
+		await expect(
+			editorFrame.locator('.wp-block-fair-events-event-signup')
+		).toBeVisible();
+		expect(validationMessages).toEqual([]);
 	});
 });

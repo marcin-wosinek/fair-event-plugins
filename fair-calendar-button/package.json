@@ -33,10 +33,10 @@
 		"@fortawesome/fontawesome-svg-core": "^7.0.0",
 		"@fortawesome/free-brands-svg-icons": "^7.0.0",
 		"@fortawesome/free-solid-svg-icons": "^7.0.0",
-		"@wordpress/block-editor": "16.0.0",
-		"@wordpress/blocks": "^15.2.0",
-		"@wordpress/components": "37.0.0",
-		"@wordpress/i18n": "^6.21.0",
+		"@wordpress/block-editor": "18.1.0",
+		"@wordpress/blocks": "16.2.0",
+		"@wordpress/components": "42.0.0",
+		"@wordpress/i18n": "6.30.0",
 		"calendar-link": "^2.11.6",
 		"date-fns": "^4.1.0",
 		"fair-events-shared": "*"
@@ -47,10 +47,12 @@
 		"@babel/preset-react": "^8.0.1",
 		"@playwright/test": "^1.64.0",
 		"@testing-library/react": "^16.3.3",
-		"@wordpress/scripts": "33.0.0",
+		"@wordpress/scripts": "36.1.0",
 		"babel-jest": "^30.5.2",
 		"dotenv": "^16.3.1",
 		"jest": "^30.5.2",
+		"@wordpress/jest-preset-default": "12.51.0",
+		"jest-environment-jsdom": "^30.5.2",
 		"webpack-bundle-output": "^1.1.0"
 	}
 }

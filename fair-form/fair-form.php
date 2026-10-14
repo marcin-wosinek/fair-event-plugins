@@ -9,7 +9,7 @@
  * License: Private
  * Text Domain: fair-form
  * Domain Path: /languages
- * Requires at least: 6.7
+ * Requires at least: 7.0
  * Requires PHP: 8.0
  *
  * @package FairForm

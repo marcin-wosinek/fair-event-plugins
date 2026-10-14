@@ -167,6 +167,37 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
+} elseif ( isset( $overrides['block'] ) && 'saved-editor-content' === $overrides['block'] ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:paragraph -->',
+			'<p>Synthetic event description.</p>',
+			'<!-- /wp:paragraph -->',
+			'',
+			'<!-- wp:fair-events/event-info /-->',
+			'',
+			'<!-- wp:fair-events/event-signup {"submitButtonText":"Save my place","showKeepInformed":false} -->',
+			'<!-- wp:fair-audience/fair-form-short-text {"questionText":"Dietary needs","questionKey":"dietary","required":true} /-->',
+			'',
+			'<!-- wp:fair-audience/fair-form-radio {"questionText":"Arrival","questionKey":"arrival"} -->',
+			'<!-- wp:fair-audience/fair-form-option {"value":"Friday"} /-->',
+			'',
+			'<!-- wp:fair-audience/fair-form-option {"value":"Saturday"} /-->',
+			'<!-- /wp:fair-audience/fair-form-radio -->',
+			'<!-- /wp:fair-events/event-signup -->',
+			'',
+			'<!-- wp:buttons -->',
+			'<div class="wp-block-buttons"><!-- wp:button {"isCalendarButton":true} -->',
+			'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button">Add to calendar</a></div>',
+			'<!-- /wp:button --></div>',
+			'<!-- /wp:buttons -->',
+			'',
+			'<!-- wp:fair-events/events-list {"timeFilter":"all"} /-->',
+			'',
+			'<!-- wp:fair-audience/mailing-signup {"submitButtonText":"Keep me posted"} /-->',
+		)
+	);
 } elseif ( 'address' === $flavour ) {
 	// event-info block (renders the address/venue) + a calendar button — no
 	// signup block, since this flavour never touches the purchase path.

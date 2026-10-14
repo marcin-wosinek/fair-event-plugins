@@ -58,7 +58,8 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 - Version must match `package.json`
 - Text Domain must match plugin slug (directory name)
 - Namespace should be PascalCase version of plugin slug
-- Requires at least: 6.7, Requires PHP: 8.0
+- Requires at least: 6.7 (7.0 if the plugin ships a `@wordpress/dataviews`
+  admin screen — see README.md § WordPress compatibility), Requires PHP: 8.0
 
 ### 2. package.json
 
