@@ -21,7 +21,7 @@
 		"makemo": "wp i18n make-mo languages/",
 		"updatepo": "wp i18n update-po languages/fair-payments-connector-experimental.pot languages/",
 		"test": "npm-run-all test:js test:php",
-		"test:js": "wp-scripts test-unit-js --config jest.config.js",
+		"test:js": "wp-scripts test-unit-jest --config jest.config.js",
 		"test:php": "vendor/bin/phpunit",
 		"test:api": "playwright test src/API/__tests__/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-payments-connector-experimental svn",
@@ -33,16 +33,19 @@
 		"@babel/preset-react": "^8.0.1",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.3",
-		"@wordpress/scripts": "33.0.0",
+		"@wordpress/scripts": "36.1.0",
 		"babel-jest": "^30.5.2",
+		"@wordpress/jest-preset-default": "12.51.0",
+		"jest": "^30.5.2",
+		"jest-environment-jsdom": "^30.5.2",
 		"webpack-bundle-output": "^1.1.0"
 	},
 	"dependencies": {
-		"@wordpress/api-fetch": "^7.12.0",
-		"@wordpress/components": "37.0.0",
-		"@wordpress/dom-ready": "^4.12.0",
-		"@wordpress/element": "^8.0.0",
-		"@wordpress/i18n": "^6.21.0",
-		"@wordpress/icons": "15.2.0"
+		"@wordpress/api-fetch": "7.57.0",
+		"@wordpress/components": "42.0.0",
+		"@wordpress/dom-ready": "4.57.0",
+		"@wordpress/element": "9.0.0",
+		"@wordpress/i18n": "6.30.0",
+		"@wordpress/icons": "18.0.0"
 	}
 }

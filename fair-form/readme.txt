@@ -1,7 +1,7 @@
 === Fair Form ===
 Contributors: marcinwosinek
 Tags: form, events, fair
-Requires at least: 6.7
+Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.0
 Stable tag: 1.5.0

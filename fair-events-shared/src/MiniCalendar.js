@@ -410,7 +410,13 @@ function DayCell( { date, dateStr, day, todayStr, dayProps } ) {
 					...cellStyle,
 					cursor: props.disabled ? 'default' : 'pointer',
 					padding: 0,
-					font: 'inherit',
+					// Longhands rather than the `font` shorthand, which React
+					// warns about when mixed with `fontWeight` on rerender.
+					fontFamily: 'inherit',
+					fontSize: 'inherit',
+					fontStyle: 'inherit',
+					fontWeight: 'inherit',
+					lineHeight: 'inherit',
 				} }
 			>
 				{ day }
