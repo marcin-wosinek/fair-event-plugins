@@ -12,10 +12,10 @@
  * on the dev/test stack, so a paid add-on can never actually reach Mollie
  * here). Because of that, this suite cannot create a genuine pending-payment
  * hold on an option through HTTP requests alone (maybe_start_addon_payment()
- * only writes the hold after create_transaction() succeeds) — the DB-level
- * reserve → confirm → expire cycle, including the duplicate-guard against a
- * pending (not just confirmed) reservation, is covered instead by the WP-CLI
- * eval-file manual check described in TESTING.md (#1311).
+ * only writes the hold after create_transaction() succeeds) — the hold →
+ * confirm → expire cycle, including buying again an add-on whose checkout
+ * was abandoned, failed or expired (#1821), is covered by
+ * TicketActivities.api.spec.js against the Mollie double.
  */
 
 import { test, expect, request } from '@playwright/test';

@@ -46,6 +46,7 @@ test.describe.serial( 'Activities and attendance per ticket', () => {
 	let holderSignupId;
 	let ticketOne;
 	let ticketTwo;
+	const extraEvents = [];
 
 	async function createEvent( title, withOptions ) {
 		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
@@ -103,7 +104,9 @@ test.describe.serial( 'Activities and attendance per ticket', () => {
 							price: 0,
 						},
 					],
-					options: withOptions
+					options: Array.isArray( withOptions )
+						? withOptions
+						: withOptions
 						? [
 								{ name: 'Morning', price: 0, capacity: null },
 								{ name: 'Evening', price: 0, capacity: null },
@@ -301,7 +304,26 @@ test.describe.serial( 'Activities and attendance per ticket', () => {
 				}
 			);
 		}
-		for ( const id of [ postId, otherPostId ] ) {
+		for ( const extra of extraEvents ) {
+			const extraRes = await api.get(
+				'/wp-json/fair-events/v1/get-tickets',
+				{
+					headers: adminHeaders,
+					params: { event_date: extra.eventDateId },
+				}
+			);
+			for ( const signup of extraRes.ok() ? await extraRes.json() : [] ) {
+				await api.delete(
+					`/wp-json/fair-events/v1/get-tickets/${ signup.id }`,
+					{ headers: adminHeaders }
+				);
+			}
+		}
+		for ( const id of [
+			postId,
+			otherPostId,
+			...extraEvents.map( ( extra ) => extra.postId ),
+		] ) {
 			if ( id ) {
 				await api.delete(
 					`/wp-json/wp/v2/fair_event/${ id }?force=true`,
@@ -532,6 +554,132 @@ test.describe.serial( 'Activities and attendance per ticket', () => {
 			)
 		).toEqual( { option: option.Masterclass, status: 'confirmed' } );
 		expect( current.option_count ).toBe( 1 );
+	} );
+
+	// #1821 — an add-on whose checkout was abandoned, failed or expired is
+	// not owned: it can be bought again, each attempt holds a single place,
+	// and only a confirmed payment makes it a duplicate.
+	test( 'an unpaid add-on can be bought on a later attempt after abandoning, failing or expiring', async () => {
+		const countMasterclass = async () =>
+			( await state( { optionId: option.Masterclass } ) ).option_count;
+		const pendingOnTicketTwo = async () =>
+			activitiesOf(
+				ticketIn(
+					await state( { signupIds: [ holderSignupId ] } ),
+					ticketTwo
+				)
+			).find( ( a ) => a.option === option.Masterclass );
+		const tryMasterclass = () =>
+			addActivities( {
+				ticket_option_ids: [ option.Masterclass ],
+				ticket_id: ticketTwo,
+			} );
+
+		const baseline = await countMasterclass();
+
+		const abandoned = await tryMasterclass();
+		expect( abandoned.body.status ).toBe( 'payment_required' );
+		expect( await countMasterclass() ).toBe( baseline + 1 );
+
+		// Returning while the abandoned checkout's hold still runs starts a
+		// new attempt on the same hold instead of a second place.
+		const returned = await tryMasterclass();
+		expect( returned.status, JSON.stringify( returned.body ) ).toBe( 200 );
+		expect( returned.body.status ).toBe( 'payment_required' );
+		expect( returned.body.transaction_id ).not.toBe(
+			abandoned.body.transaction_id
+		);
+		expect( await countMasterclass() ).toBe( baseline + 1 );
+
+		// A failed payment releases the hold; the add-on stays buyable.
+		await fixture( 'fail-addon', {
+			transaction_id: returned.body.transaction_id,
+		} );
+		expect( await pendingOnTicketTwo() ).toBeUndefined();
+		expect( await countMasterclass() ).toBe( baseline );
+		const afterFailure = await tryMasterclass();
+		expect( afterFailure.body.status ).toBe( 'payment_required' );
+		expect( await countMasterclass() ).toBe( baseline + 1 );
+
+		// An expired hold, before the cleanup runs, does not block either.
+		await fixture( 'expire-addon', { ticket_id: ticketTwo } );
+		expect( await countMasterclass() ).toBe( baseline );
+		const afterExpiry = await tryMasterclass();
+		expect( afterExpiry.body.status ).toBe( 'payment_required' );
+		expect( await pendingOnTicketTwo() ).toEqual( {
+			option: option.Masterclass,
+			status: 'pending_payment',
+		} );
+		expect( await countMasterclass() ).toBe( baseline + 1 );
+
+		// The later attempt is paid and confirmed once, even when the
+		// webhook repeats.
+		await fixture( 'pay-addon', {
+			transaction_id: afterExpiry.body.transaction_id,
+		} );
+		await fixture( 'pay-addon', {
+			transaction_id: afterExpiry.body.transaction_id,
+		} );
+		expect( await pendingOnTicketTwo() ).toEqual( {
+			option: option.Masterclass,
+			status: 'confirmed',
+		} );
+		expect( await countMasterclass() ).toBe( baseline + 1 );
+
+		// Only now is it a duplicate.
+		const duplicate = await tryMasterclass();
+		expect( duplicate.status ).toBe( 400 );
+		expect( duplicate.body.code ).toBe( 'no_new_activities' );
+	} );
+
+	test( 'a returning buyer whose own hold fills the last place can start a new attempt', async () => {
+		const extra = await createEvent(
+			`Ticket activities last place ${ Date.now() }`,
+			[ { name: 'Solo', price: 10, capacity: 1 } ]
+		);
+		extraEvents.push( extra );
+		const solo = extra.options[ 0 ].id;
+
+		const purchase = await buy(
+			{
+				event_date_id: extra.eventDateId,
+				email: holderEmail,
+				ticket_type_id: extra.typeId,
+				quantity: 1,
+			},
+			adminHeaders
+		);
+		expect( purchase.status, JSON.stringify( purchase.body ) ).toBe( 200 );
+		const listRes = await api.get(
+			`/wp-json/fair-audience/v1/event-dates/${ extra.eventDateId }/participants`,
+			{
+				headers: adminHeaders,
+				params: { event_date_id: extra.eventDateId },
+			}
+		);
+		expect( listRes.ok() ).toBeTruthy();
+		const item = ( await listRes.json() ).find(
+			( p ) => p.participant_id === holderId
+		);
+		expect( item.tickets ).toHaveLength( 1 );
+
+		const tryLastPlace = () =>
+			addActivities( {
+				event_id: extra.postId,
+				event_date_id: extra.eventDateId,
+				ticket_option_ids: [ solo ],
+				ticket_id: item.tickets[ 0 ].id,
+			} );
+
+		const first = await tryLastPlace();
+		expect( first.status, JSON.stringify( first.body ) ).toBe( 200 );
+		expect( first.body.status ).toBe( 'payment_required' );
+		expect( ( await state( { optionId: solo } ) ).option_count ).toBe( 1 );
+
+		const again = await tryLastPlace();
+		expect( again.status, JSON.stringify( again.body ) ).toBe( 200 );
+		expect( again.body.status ).toBe( 'payment_required' );
+		expect( ( await state( { optionId: solo } ) ).option_count ).toBe( 1 );
 	} );
 
 	test( 'activities chosen with a purchase go to the created ticket and keep their price', async () => {
