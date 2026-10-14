@@ -237,7 +237,7 @@ class BulkEmailDispatcher {
 		);
 		$week   = null;
 		try {
-			$week = $this->events->get_week( $settings['source_slug'], ...self::event_week( $settings['week_scope'], $now ) );
+			$week = $this->events->for_notification( self::event_boundaries( $settings['week_scope'], $now ), $settings['source_slug'] );
 			if ( is_wp_error( $week ) ) {
 				$result = self::result( 'failed', 'configuration_error' );
 				return $this->record( $send_week, null, 'configuration_error', $week->get_error_message() );
@@ -290,6 +290,19 @@ class BulkEmailDispatcher {
 	public static function event_week( $week_scope, \DateTimeImmutable $now ) {
 		$day = 'next' === $week_scope ? $now->modify( '+7 days' ) : $now;
 		return array( (int) $day->format( 'o' ), (int) $day->format( 'W' ) );
+	}
+
+	/**
+	 * Monday-to-Sunday boundaries of the week an email sent at a moment lists.
+	 *
+	 * @param string             $week_scope 'current' or 'next'.
+	 * @param \DateTimeImmutable $now        Send moment, in the site timezone.
+	 * @return array{start: string, end: string} Site-local 'Y-m-d' boundaries.
+	 */
+	public static function event_boundaries( $week_scope, \DateTimeImmutable $now ) {
+		list( $year, $week ) = self::event_week( $week_scope, $now );
+
+		return \FairEvents\Services\EventsWeekSummary::iso_week_boundaries( $year, $week, 1 );
 	}
 
 	/**

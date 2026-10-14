@@ -347,6 +347,17 @@ if ( ! function_exists( 'home_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_site_url' ) ) {
+	/**
+	 * Stub of WordPress get_site_url() — the same address as home_url().
+	 *
+	 * @return string Fake site URL.
+	 */
+	function get_site_url() {
+		return home_url();
+	}
+}
+
 if ( ! function_exists( 'get_bloginfo' ) ) {
 	/**
 	 * Stub of WordPress get_bloginfo() — overridable via $GLOBALS['_fair_test_bloginfo'].

@@ -866,6 +866,7 @@ msgstr "— Brak miejsca —"
 msgid "Quick Add Event"
 msgstr "Szybkie dodanie zdarzenia"
 
+#: src/Notifications/WeeklyEmailRenderer.php:143
 #: src/Admin/calendar/components/QuickEventModal.js:371
 #: src/Admin/event-meta-box/EventEditForm.js:339
 #: src/Admin/manage-event/ManageEventApp.js:1168
@@ -1762,7 +1763,7 @@ msgstr "Jedno z wybranych zdarzeń nie jest ważne dla tego biletu."
 
 #. translators: %d: minimum number of occurrences required
 #: src/API/GetTicketsController.php:2158
-#: src/blocks/event-signup/frontend.js:2724
+#: src/blocks/event-signup/frontend.js:2777
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
@@ -1945,23 +1946,23 @@ msgstr "%d usunięto"
 msgid "Recurrence updated: %s."
 msgstr "Powtarzanie zaktualizowane: %s."
 
-#: src/blocks/event-signup/frontend.js:2682
+#: src/blocks/event-signup/frontend.js:2730
 msgid "Please fill in all required fields."
 msgstr "Proszę wypełnić wszystkie wymagane pola."
 
-#: src/blocks/event-signup/frontend.js:2695
+#: src/blocks/event-signup/frontend.js:2743
 msgid "Please enter a valid email address."
 msgstr "Proszę wpisać prawidłowy adres e-mail."
 
-#: src/blocks/event-signup/frontend.js:2744
+#: src/blocks/event-signup/frontend.js:2799
 msgid "Quantity must be between 1 and 10."
 msgstr "Ilość musi być między 1 a 10."
 
-#: src/blocks/event-signup/frontend.js:1730
+#: src/blocks/event-signup/frontend.js:1759
 msgid "Processing…"
 msgstr "Przetwarzanie…"
 
-#: src/blocks/event-signup/frontend.js:2896
+#: src/blocks/event-signup/frontend.js:2961
 msgid "Failed to submit. Please try again."
 msgstr "Nie udało się przesłać. Proszę spróbować ponownie."
 
@@ -2145,7 +2146,7 @@ msgstr "Nie można anulować daty głównego zdarzenia."
 msgid "Invalid date."
 msgstr "Nieprawidłowa data."
 
-#: src/Services/WeeklyEventsProvider.php:42
+#: src/Services/WeeklyEventsProvider.php:46
 msgid "Event source not found."
 msgstr "Źródło zdarzenia nie znalezione."
 
@@ -2625,7 +2626,7 @@ msgstr "Oś czasu okresów sprzedaży"
 
 #: src/Frontend/EventDateView.php:117
 #: src/Helpers/OccurrenceFields.php:43
-#: src/Notifications/IndividualEmailRenderer.php:108
+#: src/Notifications/WeeklyEmailRenderer.php:150
 #: src/Services/EventPublication.php:158
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
@@ -2818,7 +2819,7 @@ msgid "This payment is not manageable from this endpoint."
 msgstr "Tej płatności nie można zarządzać z tego punktu końcowego."
 
 #: src/blocks/event-signup/render.php:479
-#: src/blocks/event-signup/frontend.js:945
+#: src/blocks/event-signup/frontend.js:954
 msgid "Payment confirmed"
 msgstr "Płatność potwierdzona"
 
@@ -2835,7 +2836,7 @@ msgid "Amount paid: %s"
 msgstr "Zapłacona kwota: %s"
 
 #: src/blocks/event-signup/render.php:506
-#: src/blocks/event-signup/frontend.js:965
+#: src/blocks/event-signup/frontend.js:974
 msgid "A confirmation email is on its way. You can close this page."
 msgstr "Wiadomość potwierdzająca jest w drodze. Możesz zamknąć tę stronę."
 
@@ -2895,15 +2896,15 @@ msgid "Bundled translations moved to Settings → Fair Event Plugins."
 msgstr "Tłumaczenia pakietowe przeniesione do Ustawienia → Fair Event Plugins."
 
 #: src/Services/EmailService.php:93
-#: src/blocks/event-signup/frontend.js:951
+#: src/blocks/event-signup/frontend.js:960
 msgid "Amount paid:"
 msgstr "Kwota zapłacona:"
 
-#: src/blocks/event-signup/frontend.js:1063
+#: src/blocks/event-signup/frontend.js:1075
 msgid "Redirecting…"
 msgstr "Przekierowanie…"
 
-#: src/blocks/event-signup/frontend.js:1064
+#: src/blocks/event-signup/frontend.js:1076
 msgid "Could not start the retry. Please try again."
 msgstr "Nie można było rozpocząć ponowienia. Spróbuj ponownie."
 
@@ -2914,8 +2915,8 @@ msgstr "Wybierz zajęcia"
 #. translators: %d: minimum number of activities required
 #: src/Services/ActivitySelection.php:202
 #: src/Services/SignupFieldsetRenderer.php:241
-#: src/blocks/event-signup/frontend.js:2326
-#: src/blocks/event-signup/frontend.js:2759
+#: src/blocks/event-signup/frontend.js:2368
+#: src/blocks/event-signup/frontend.js:2817
 #, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
@@ -2926,14 +2927,14 @@ msgstr[2] "Wybierz co najmniej %d aktywności, aby się zarejestrować."
 #: src/blocks/event-signup/render.php:702
 #: src/blocks/event-signup/render.php:732
 #: src/Services/SignupFieldsetRenderer.php:264
-#: src/blocks/event-signup/frontend.js:1442
+#: src/blocks/event-signup/frontend.js:1461
 msgid "full"
 msgstr "pełne"
 
 #: src/blocks/event-signup/render.php:705
 #: src/blocks/event-signup/render.php:735
-#: src/blocks/event-signup/frontend.js:681
-#: src/blocks/event-signup/frontend.js:1445
+#: src/blocks/event-signup/frontend.js:685
+#: src/blocks/event-signup/frontend.js:1464
 msgid "already signed up"
 msgstr "już zapisany/a"
 
@@ -2985,32 +2986,32 @@ msgstr "Numer telefonu kontaktowy"
 msgid "Fix the invalid link(s) above before saving."
 msgstr "Napraw nieprawidłowe odnośniki powyżej przed zapisaniem."
 
-#: src/blocks/event-signup/frontend.js:2429
+#: src/blocks/event-signup/frontend.js:2471
 msgid "Add activities"
 msgstr "Dodaj aktywności"
 
-#: src/blocks/event-signup/frontend.js:2507
+#: src/blocks/event-signup/frontend.js:2551
 msgid "Adding…"
 msgstr "Dodawanie…"
 
-#: src/blocks/event-signup/frontend.js:2528
+#: src/blocks/event-signup/frontend.js:2572
 msgid "Your activities have been added!"
 msgstr "Twoje aktywności zostały dodane!"
 
-#: src/blocks/event-signup/frontend.js:2544
+#: src/blocks/event-signup/frontend.js:2588
 msgid "Failed to add activities. Please try again."
 msgstr "Nie udało się dodać aktywności. Spróbuj ponownie."
 
-#: src/blocks/event-signup/frontend.js:1101
-#: src/blocks/event-signup/frontend.js:2614
+#: src/blocks/event-signup/frontend.js:1118
+#: src/blocks/event-signup/frontend.js:2660
 msgid "Cancelling…"
 msgstr "Anulowanie…"
 
-#: src/blocks/event-signup/frontend.js:2625
+#: src/blocks/event-signup/frontend.js:2671
 msgid "Your signup has been cancelled."
 msgstr "Twoja rejestracja została anulowana."
 
-#: src/blocks/event-signup/frontend.js:2635
+#: src/blocks/event-signup/frontend.js:2681
 msgid "Failed to cancel signup. Please try again."
 msgstr "Nie udało się anulować rejestracji. Spróbuj ponownie."
 
@@ -3032,7 +3033,7 @@ msgid "This ticket type is not currently on sale."
 msgstr "Ten typ biletu nie jest obecnie dostępny do sprzedaży."
 
 #: src/API/GetTicketsController.php:1155
-#: src/blocks/event-signup/frontend.js:2935
+#: src/blocks/event-signup/frontend.js:3000
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr "Pomyślnie się zarejestrowałeś! Wiadomość potwierdzająca jest w drodze."
 
@@ -3103,6 +3104,7 @@ msgstr "Twoje odpowiedzi:"
 #. translators: 1: line break, 2: site name
 #: src/Services/EmailService.php:97
 #: src/Services/EmailService.php:188
+#: src/Services/EmailService.php:235
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr "Dziękujemy,%1$sZespół %2$s"
@@ -3602,7 +3604,7 @@ msgid "Maximum selections"
 msgstr "Maksymalna liczba wyborów"
 
 #. translators: %d: maximum number of activities allowed
-#: src/blocks/event-signup/frontend.js:2350
+#: src/blocks/event-signup/frontend.js:2392
 #, js-format
 msgid "You can select at most %d extension."
 msgid_plural "You can select at most %d extensions."
@@ -3674,15 +3676,15 @@ msgstr "Sprawdź status płatności ponownie"
 msgid "Latitude coordinate (e.g., 39.4878023). You can also paste a latitude, longitude pair."
 msgstr "Współrzędna szerokości geograficznej (np. 39.4878023). Możesz również wkleić parę szerokości i długości geograficznej."
 
-#: src/blocks/event-signup/frontend.js:907
+#: src/blocks/event-signup/frontend.js:916
 msgid "Payment confirmation is taking longer than expected. You can check again or cancel and start over."
 msgstr "Potwierdzenie płatności trwa dłużej niż oczekiwano. Możesz sprawdzić ponownie lub anulować i zacząć od nowa."
 
-#: src/blocks/event-signup/frontend.js:914
+#: src/blocks/event-signup/frontend.js:923
 msgid "We could not check your payment status. Please check again or cancel and start over."
 msgstr "Nie można było sprawdzić statusu twojej płatności. Sprawdź ponownie lub anuluj i zacznij od nowa."
 
-#: src/blocks/event-signup/frontend.js:1137
+#: src/blocks/event-signup/frontend.js:1154
 msgid "Could not cancel this payment. Please try again."
 msgstr "Nie można było anulować tej płatności. Spróbuj ponownie."
 
@@ -4618,12 +4620,12 @@ msgstr "Przekrocz pojemność"
 msgid "Move signup"
 msgstr "Przenieś rejestrację"
 
-#: src/blocks/event-signup/frontend.js:1871
+#: src/blocks/event-signup/frontend.js:1905
 msgid "Use the first ticket’s activities for all tickets"
 msgstr "Użyj aktywności pierwszego biletu dla wszystkich biletów"
 
 #. translators: %d: ticket number within the purchase
-#: src/blocks/event-signup/frontend.js:1907
+#: src/blocks/event-signup/frontend.js:1941
 #, js-format
 msgid "Ticket %d: select activities"
 msgstr "Bilet %d: wybierz aktywności"
@@ -4749,7 +4751,7 @@ msgstr "Bilet nie został jeszcze utworzony"
 #: src/Services/SignupFieldsetRenderer.php:61
 #: src/Admin/manage-event/EventSignups.js:505
 #: src/Admin/manage-event/SignupExportModal.js:71
-#: src/blocks/event-signup/frontend.js:1019
+#: src/blocks/event-signup/frontend.js:1028
 msgid "Ticket"
 msgstr "Bilet"
 
@@ -5191,11 +5193,11 @@ msgstr "Zewnętrzna strona, do której prowadzi to wydarzenie, nie zostanie zmie
 msgid "Your unsaved changes to the event details stay on this screen, but this action does not save them."
 msgstr "Twoje niezapisane zmiany w szczegółach wydarzenia pozostaną na tym ekranie, ale ta akcja ich nie zapisze."
 
-#: src/blocks/event-signup/frontend.js:538
+#: src/blocks/event-signup/frontend.js:540
 msgid "Welcome back — we’ve restored your answers. Review and continue below."
 msgstr "Witaj ponownie — przywróciliśmy Twoje odpowiedzi. Przejrzyj i kontynuuj poniżej."
 
-#: src/blocks/event-signup/frontend.js:2922
+#: src/blocks/event-signup/frontend.js:2987
 msgid "We recognise this email — check your inbox to continue."
 msgstr "Rozpoznajemy ten adres e-mail — sprawdź swoją skrzynkę odbiorczą, aby kontynuować."
 
@@ -5220,13 +5222,13 @@ msgstr[1] "Wybierz nie więcej niż %d rozszerzenia."
 msgstr[2] "Wybierz nie więcej niż %d rozszerzeń."
 
 #: src/blocks/event-signup/render.php:509
-#: src/blocks/event-signup/frontend.js:975
-#: src/blocks/event-signup/frontend.js:1783
+#: src/blocks/event-signup/frontend.js:984
+#: src/blocks/event-signup/frontend.js:1812
 msgid "Back to the signup form"
 msgstr "Wróć do formularza rejestracji"
 
 #: src/Services/SignupFieldsetRenderer.php:57
-#: src/blocks/event-signup/frontend.js:1011
+#: src/blocks/event-signup/frontend.js:1020
 msgid "This purchase:"
 msgstr "Ten zakup:"
 
@@ -5564,8 +5566,8 @@ msgid "Choose an event source before turning on the weekly email."
 msgstr ""
 
 #: src/API/EventNotificationsController.php:524
-#: src/Notifications/IndividualEmailEvents.php:40
-#: src/Notifications/SummaryBuilder.php:41
+#: src/Notifications/SummaryBuilder.php:43
+#: src/Services/WeeklyEventsProvider.php:219
 msgid "The selected event source does not exist or is disabled."
 msgstr "Wybrane źródło wydarzeń nie istnieje lub jest wyłączone."
 
@@ -5605,7 +5607,7 @@ msgid "Choose an event source and save before previewing the weekly email."
 msgstr ""
 
 #: src/Notifications/BulkEmailDispatcher.php:219
-#: src/Notifications/IndividualEmailDispatcher.php:223
+#: src/Notifications/IndividualEmailDispatcher.php:220
 msgid "Not sent: the scheduled week had already passed when the send ran."
 msgstr ""
 
@@ -5614,7 +5616,7 @@ msgid "Not sent: Fair Audience was not available to send the email."
 msgstr ""
 
 #: src/Notifications/BulkEmailDispatcher.php:249
-#: src/Notifications/IndividualEmailDispatcher.php:251
+#: src/Notifications/IndividualEmailDispatcher.php:248
 msgid "No events that week, so nothing was sent."
 msgstr ""
 
@@ -5629,23 +5631,23 @@ msgid "The send stopped with an error. Some emails may have been sent; it is not
 msgstr ""
 
 #: src/Notifications/BulkEmailSettings.php:64
-#: src/Notifications/IndividualEmailSettings.php:73
+#: src/Notifications/IndividualEmailSettings.php:75
 msgid "This week’s events: {week_start} – {week_end}"
 msgstr "Wydarzenia tego tygodnia: {week_start} – {week_end}"
 
-#: src/Notifications/SummaryBuilder.php:33
+#: src/Notifications/SummaryBuilder.php:35
 msgid "Update Fair Events to use weekly notifications."
 msgstr "Zaktualizuj Fair Events, aby używać powiadomień tygodniowych."
 
-#: src/Notifications/SummaryBuilder.php:37
+#: src/Notifications/SummaryBuilder.php:39
 msgid "Choose an event source."
 msgstr "Wybierz źródło wydarzeń."
 
-#: src/Notifications/SummaryBuilder.php:46
+#: src/Notifications/SummaryBuilder.php:48
 msgid "Choose the page that heads the message."
 msgstr "Wybierz stronę, która otwiera wiadomość."
 
-#: src/Notifications/SummaryBuilder.php:49
+#: src/Notifications/SummaryBuilder.php:51
 msgid "The selected page must be published and publicly visible."
 msgstr "Wybrana strona musi być opublikowana i publicznie widoczna."
 
@@ -6329,7 +6331,7 @@ msgid "Show mailing signup checkbox"
 msgstr "Pokaż pole zgody na mailingi"
 
 #: src/API/EventNotificationsController.php:277
-#: src/Notifications/IndividualEmailEvents.php:35
+#: src/Services/WeeklyEventsProvider.php:214
 msgid "Choose which events to include."
 msgstr ""
 
@@ -6346,27 +6348,27 @@ msgstr ""
 msgid "Save the email address that receives the weekly email before sending a test."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:238
+#: src/Notifications/IndividualEmailDispatcher.php:235
 msgid "Not sent: no valid email address is saved."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:256
+#: src/Notifications/IndividualEmailDispatcher.php:253
 msgid "The site could not hand the email over for delivery. It is not repeated automatically."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:260
+#: src/Notifications/IndividualEmailDispatcher.php:257
 msgid "Handed over to the site’s mail system. This does not confirm that it reached the inbox."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:264
+#: src/Notifications/IndividualEmailDispatcher.php:261
 msgid "The send stopped with an error. The email may have been sent; it is not repeated automatically."
 msgstr ""
 
 #. translators: %s: date range of a week, e.g. "12–18 Oct 2026"
-#: src/Notifications/IndividualEmailRenderer.php:84
+#: src/Notifications/WeeklyEmailRenderer.php:121
 #, php-format
 msgid "No events are scheduled for %s."
-msgstr ""
+msgstr "Brak zaplanowanych wydarzeń w terminie %s."
 
 #: src/Admin/event-notifications/EventNotifications.js:95
 msgid "There is no event source yet. Telegram and bulk email list the events of an event source, so they can only be turned on once one exists. Individual email can send all published local events without one."
@@ -6737,20 +6739,20 @@ msgstr "%s za termin"
 msgid "One date"
 msgstr "Jeden termin"
 
-#: src/blocks/event-signup/frontend.js:1509
+#: src/blocks/event-signup/frontend.js:1530
 msgid "Dates marked full have no places left and can’t be selected."
 msgstr "Terminy oznaczone jako pełne nie mają wolnych miejsc i nie można ich wybrać."
 
-#: src/blocks/event-signup/frontend.js:1533
+#: src/blocks/event-signup/frontend.js:1556
 msgid "Your ticket"
 msgstr "Twój bilet"
 
-#: src/blocks/event-signup/frontend.js:1542
+#: src/blocks/event-signup/frontend.js:1565
 msgid "This series has no upcoming dates left to cover."
 msgstr "Ten cykl nie ma już nadchodzących terminów."
 
 #. translators: %s: list of full dates
-#: src/blocks/event-signup/frontend.js:1549
+#: src/blocks/event-signup/frontend.js:1572
 #, js-format
 msgid "This ticket can’t be bought right now because a date it covers is full: %s."
 msgid_plural "This ticket can’t be bought right now because dates it covers are full: %s."
@@ -6758,12 +6760,12 @@ msgstr[0] "Tego biletu nie można teraz kupić, ponieważ zawarty w nim termin j
 msgstr[1] "Tego biletu nie można teraz kupić, ponieważ zawarte w nim terminy są pełne: %s."
 msgstr[2] "Tego biletu nie można teraz kupić, ponieważ zawarte w nim terminy są pełne: %s."
 
-#: src/blocks/event-signup/frontend.js:1574
+#: src/blocks/event-signup/frontend.js:1601
 msgid "Too few dates have places left for this ticket."
 msgstr "Za mało terminów ma jeszcze wolne miejsca dla tego biletu."
 
 #. translators: %d: minimum number of dates
-#: src/blocks/event-signup/frontend.js:1581
+#: src/blocks/event-signup/frontend.js:1608
 #, js-format
 msgid "No dates selected yet. Choose at least %d date."
 msgid_plural "No dates selected yet. Choose at least %d dates."
@@ -6772,7 +6774,7 @@ msgstr[1] "Nie wybrano jeszcze terminów. Wybierz co najmniej %d terminy."
 msgstr[2] "Nie wybrano jeszcze terminów. Wybierz co najmniej %d terminów."
 
 #. translators: %d: minimum number of dates
-#: src/blocks/event-signup/frontend.js:1592
+#: src/blocks/event-signup/frontend.js:1619
 #, js-format
 msgid "Choose at least %d date to continue."
 msgid_plural "Choose at least %d dates to continue."
@@ -6780,16 +6782,16 @@ msgstr[0] "Wybierz co najmniej %d termin, aby kontynuować."
 msgstr[1] "Wybierz co najmniej %d terminy, aby kontynuować."
 msgstr[2] "Wybierz co najmniej %d terminów, aby kontynuować."
 
-#: src/blocks/event-signup/frontend.js:1613
+#: src/blocks/event-signup/frontend.js:1640
 msgid "Every date is full."
 msgstr "Wszystkie terminy są pełne."
 
-#: src/blocks/event-signup/frontend.js:1650
+#: src/blocks/event-signup/frontend.js:1679
 msgid "Covers every upcoming date of the series. Dates that have already taken place are not included."
 msgstr "Obejmuje wszystkie nadchodzące terminy cyklu. Terminy, które już się odbyły, nie są wliczone."
 
 #. translators: 1: ticket name, 2: number of dates
-#: src/blocks/event-signup/frontend.js:1672
+#: src/blocks/event-signup/frontend.js:1701
 #, js-format
 msgid "%1$s covers %2$d date:"
 msgid_plural "%1$s covers %2$d dates:"
@@ -6798,7 +6800,7 @@ msgstr[1] "%1$s obejmuje %2$d terminy:"
 msgstr[2] "%1$s obejmuje %2$d terminów:"
 
 #. translators: %d: minimum number of dates required
-#: src/blocks/event-signup/frontend.js:2162
+#: src/blocks/event-signup/frontend.js:2204
 #, js-format
 msgid "Choose at least %d date. Each date is priced separately."
 msgid_plural "Choose at least %d dates. Each date is priced separately."
@@ -6806,7 +6808,26 @@ msgstr[0] "Wybierz co najmniej %d termin. Każdy termin jest płatny osobno."
 msgstr[1] "Wybierz co najmniej %d terminy. Każdy termin jest płatny osobno."
 msgstr[2] "Wybierz co najmniej %d terminów. Każdy termin jest płatny osobno."
 
-#: src/blocks/event-signup/frontend.js:2170
+#: src/blocks/event-signup/frontend.js:2212
 msgid "Choose one or more dates. Each date is priced separately."
+msgstr ""
 
-msgstr "Wybierz jeden lub więcej terminów. Każdy termin jest płatny osobno."
+#. translators: 1: weekday, e.g. "Wednesday", 2: month, e.g. "October", 3: day of the month
+#: src/Notifications/WeeklyEmailRenderer.php:104
+#, php-format
+msgid "%1$s, %2$s %3$s"
+msgstr "%1$s, %3$s %2$s"
+
+#. translators: %s: source host, e.g. "instagram.com".
+#. translators: %s: source domain, e.g. "example.com".
+#: src/Notifications/WeeklyEmailRenderer.php:195
+#: src/Notifications/WeeklyEmailRenderer.php:203
+#, php-format
+msgid "(by %s)"
+msgstr "(od %s)"
+
+#. translators: %s: Instagram handle, e.g. "@example".
+#: src/Notifications/WeeklyEmailRenderer.php:199
+#, php-format
+msgid "(by @%s)"
+msgstr "(od @%s)"

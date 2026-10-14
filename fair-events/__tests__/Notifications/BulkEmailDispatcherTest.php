@@ -212,7 +212,7 @@ class BulkEmailDispatcherTest extends TestCase {
 		$run = $this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:00' ) );
 
 		$this->assertSame( 'configuration_error', $run['status'] );
-		$this->assertSame( 'Event source not found.', $run['message'] );
+		$this->assertSame( 'The selected event source does not exist or is disabled.', $run['message'] );
 		$this->assertSame( array(), $this->adapter->sent );
 	}
 
@@ -225,7 +225,7 @@ class BulkEmailDispatcherTest extends TestCase {
 		$this->assertSame( array( 2027, 1 ), BulkEmailDispatcher::event_week( 'next', $now ) );
 
 		$this->process( '2026-W53', self::settings( array( 'week_scope' => 'next' ) ), $now );
-		$this->assertSame( array( 'members', 2027, 1 ), $this->events->requests[0] );
+		$this->assertSame( array( 'members', '2027-01-04', '2027-01-10' ), $this->events->requests[0] );
 		$this->assertSame( '2026-12-28', BulkEmailDispatcher::week_start( '2026-W53' ) );
 	}
 

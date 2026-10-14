@@ -875,6 +875,13 @@ test.describe( 'EventNotificationsController', () => {
 		);
 		try {
 			const seeded = fixture( `seed ${ source.termId }` );
+			// The day-by-day event listing of an email, without its own text
+			// and inline styles.
+			const eventSections = ( html ) =>
+				( html.match( /<h3\b[\s\S]*?<\/ul>/g ) || [] )
+					.join( '' )
+					.replace( / style="[^"]*"/g, '' );
+			const bulkEvents = {};
 			const page = await createPage( 'publish' );
 			const monday = new Date( `${ seeded.today }T12:00:00Z` );
 			monday.setUTCDate( monday.getUTCDate() - seeded.weekday + 1 );
@@ -952,6 +959,14 @@ test.describe( 'EventNotificationsController', () => {
 								expect( content ).not.toContain( event.title );
 							}
 						}
+						// Both emails list the same events the same way.
+						if ( key === 'bulk_email' ) {
+							bulkEvents[ scope ] = eventSections( preview.html );
+						} else if ( key === 'individual_email' ) {
+							expect( eventSections( preview.html ) ).toBe(
+								bulkEvents[ scope ]
+							);
+						}
 						fixture( 'clear' );
 						const sent = await api.post( `${ route }/test`, {
 							headers: adminHeaders,
@@ -983,6 +998,17 @@ test.describe( 'EventNotificationsController', () => {
 								eventItems( captured.mail[ 0 ].body )
 							).toEqual( eventItems( preview.html ) );
 							expect( captured.telegram ).toEqual( [] );
+						}
+						if ( key === 'individual_email' ) {
+							// The subscribers' branded layout, without their
+							// greeting or subscription link.
+							const body = captured.mail[ 0 ].body;
+							expect( body ).toContain( 'max-width: 600px' );
+							expect( body ).toMatch( /<h1\b[^>]*>[^<]+<\/h1>/ );
+							expect( body ).toContain( 'Team' );
+							expect( body ).not.toContain(
+								'Manage your preferences'
+							);
 						}
 						const after = ( await readChannels() )[ key ];
 						expect( after.next_run ).toEqual( before.next_run );
@@ -1024,6 +1050,8 @@ test.describe( 'EventNotificationsController', () => {
 				headers: adminHeaders,
 				data: { email: '' },
 			} );
+			// Earlier tests send to the same address.
+			await api.delete( MAIL_LOG, { headers: adminHeaders } );
 			const res = await save( {
 				enabled: false,
 				recipient: '',

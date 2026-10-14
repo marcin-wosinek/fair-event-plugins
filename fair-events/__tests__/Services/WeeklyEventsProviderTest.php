@@ -128,4 +128,74 @@ class WeeklyEventsProviderTest extends TestCase {
 
 		$this->assertNull( $provider->parse_iso_week( 'not-a-week' ) );
 	}
+
+	/**
+	 * Week_data() returns every day of a week across a year boundary, in
+	 * order, with the flat occurrences alongside.
+	 *
+	 * @return void
+	 */
+	public function test_week_data_lists_every_day_across_a_year_boundary() {
+		$occurrence = array(
+			'title'   => 'New Year party',
+			'start'   => '2026-12-31 22:00:00',
+			'end'     => '2027-01-01 02:00:00',
+			'all_day' => false,
+			'url'     => '',
+		);
+
+		$data = WeeklyEventsProvider::week_data(
+			array(
+				'start' => '2026-12-28',
+				'end'   => '2027-01-03',
+			),
+			array( $occurrence )
+		);
+
+		$this->assertSame(
+			array( '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31', '2027-01-01', '2027-01-02', '2027-01-03' ),
+			array_column( $data['days'], 'date' )
+		);
+		$this->assertSame( 'Thursday', $data['days'][3]['weekday'] );
+		$this->assertSame( 'December', $data['days'][3]['month_name'] );
+		$this->assertSame( 1, $data['days'][4]['day_num'] );
+		$this->assertSame( 'January', $data['days'][4]['month_name'] );
+		$this->assertSame( '22:00', $data['days'][3]['events'][0]['start_time'] );
+		$this->assertCount( 1, $data['days'][4]['events'] );
+		$this->assertSame( array( $occurrence ), $data['occurrences'] );
+		$this->assertSame(
+			array(
+				'start' => '2026-12-28',
+				'end'   => '2027-01-03',
+			),
+			$data['week']
+		);
+	}
+
+	/**
+	 * Week_data() leaves out drafts, from the flat list and from the days.
+	 *
+	 * @return void
+	 */
+	public function test_week_data_excludes_drafts() {
+		$data = WeeklyEventsProvider::week_data(
+			array(
+				'start' => '2026-10-12',
+				'end'   => '2026-10-18',
+			),
+			array(
+				array(
+					'title'    => 'Draft',
+					'start'    => '2026-10-14 18:00:00',
+					'end'      => '',
+					'all_day'  => false,
+					'url'      => '',
+					'is_draft' => true,
+				),
+			)
+		);
+
+		$this->assertSame( array(), $data['occurrences'] );
+		$this->assertSame( array(), $data['days'][2]['events'] );
+	}
 }

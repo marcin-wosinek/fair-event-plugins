@@ -15,14 +15,18 @@ use FairEvents\Helpers\DateHelper;
 defined( 'WPINC' ) || die;
 
 /**
- * Service for aggregating a source's events into a 7-day week structure.
+ * The events of a week, for weekly notifications and the weekly digest.
  *
- * Reimplemented on top of EventFeedProvider + group_by_day(); the public
- * return shape is preserved exactly since fair-audience's weekly digest
- * (WeeklyDigestHooks, WeeklyDigestController, WeeklyDigestRenderer) consumes
- * it directly.
+ * Built on EventFeedProvider + group_by_day(). for_notification() is what
+ * every notification channel reads its events from; get_week()'s return
+ * shape is preserved exactly for older consumers in other plugins.
  */
 class WeeklyEventsProvider {
+
+	/**
+	 * Selection of every published event of this site, instead of a source.
+	 */
+	public const LOCAL_EVENTS = '@local';
 
 	/**
 	 * Get the week's events for an event source.
@@ -57,44 +61,21 @@ class WeeklyEventsProvider {
 		$date->modify( '+6 days' );
 		$week_end = $date->format( 'Y-m-d' );
 
-		$start_datetime = $week_start . ' 00:00:00';
-		$end_datetime   = $week_end . ' 23:59:59';
-
-		$provider    = new EventFeedProvider();
-		$occurrences = $provider->get_occurrences(
-			$start_datetime,
-			$end_datetime,
+		$occurrences = ( new EventFeedProvider() )->get_occurrences(
+			$week_start . ' 00:00:00',
+			$week_end . ' 23:59:59',
 			array(
 				'event_source_slugs' => array( $source_slug ),
 			)
 		);
 
-		$occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $start_datetime, $end_datetime );
-
-		// Build 7-day response.
-		$days         = array();
-		$current_date = new \DateTime( $week_start, new \DateTimeZone( wp_timezone_string() ) );
-		$tz           = new \DateTimeZone( wp_timezone_string() );
-
-		for ( $i = 0; $i < 7; $i++ ) {
-			$date_string = $current_date->format( 'Y-m-d' );
-			$day_events  = array_map(
-				function ( $occurrence ) use ( $tz ) {
-					return $this->format_day_event( $occurrence, $tz );
-				},
-				$occurrences_by_date[ $date_string ] ?? array()
-			);
-
-			$days[] = array(
-				'date'       => $date_string,
-				'weekday'    => wp_date( 'l', $current_date->getTimestamp() ),
-				'day_num'    => (int) $current_date->format( 'j' ),
-				'month_name' => wp_date( 'F', $current_date->getTimestamp() ),
-				'events'     => $day_events,
-			);
-
-			$current_date->modify( '+1 day' );
-		}
+		$week_data = self::week_data(
+			array(
+				'start' => $week_start,
+				'end'   => $week_end,
+			),
+			$occurrences
+		);
 
 		return array(
 			'source' => array(
@@ -108,8 +89,137 @@ class WeeklyEventsProvider {
 				'start' => $week_start,
 				'end'   => $week_end,
 			),
-			'days'   => $days,
+			'days'   => $week_data['days'],
 		);
+	}
+
+	/**
+	 * A week's events for a notification channel.
+	 *
+	 * Every notification channel reads its events here, so a given selection
+	 * and week lists the same events whichever channel sends them. A source
+	 * that is missing or disabled is an error: the selection is never widened
+	 * to other events.
+	 *
+	 * @param array{start: string, end: string} $week      Site-local 'Y-m-d' week boundaries.
+	 * @param string                            $selection {@see self::LOCAL_EVENTS} or an event source slug.
+	 * @param string|false                      $language  Polylang language slug to translate events to,
+	 *                                                     or false to leave them untranslated.
+	 * @return array|\WP_Error {@see self::week_data()}, plus `source`: name,
+	 *     slug and page_url of the selected source, or null for local events.
+	 */
+	public function for_notification( array $week, $selection, $language = false ) {
+		$source = $this->selected_source( $selection );
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+
+		$occurrences = EventsWeekSummary::occurrences(
+			$week,
+			array(
+				'categories'         => array(),
+				'event_source_slugs' => $source ? array( $source['slug'] ) : array(),
+				'include_drafts'     => false,
+			),
+			$language ? $language : false
+		);
+
+		return array(
+			'source' => $source
+				? array(
+					'name'     => $source['name'],
+					'slug'     => $source['slug'],
+					'page_url' => $source['page_id'] ? get_permalink( $source['page_id'] ) : null,
+				)
+				: null,
+		) + self::week_data( $week, $occurrences );
+	}
+
+	/**
+	 * Check that a selection can still be resolved.
+	 *
+	 * @param string $selection {@see self::LOCAL_EVENTS} or an event source slug.
+	 * @return true|\WP_Error
+	 */
+	public function check_selection( $selection ) {
+		$source = $this->selected_source( $selection );
+		return is_wp_error( $source ) ? $source : true;
+	}
+
+	/**
+	 * A week's occurrences, both flat and grouped by day.
+	 *
+	 * @param array{start: string, end: string} $week        Site-local 'Y-m-d' week boundaries.
+	 * @param array[]                           $occurrences Occurrence DTOs from EventFeedProvider.
+	 * @return array{week: array{start: string, end: string}, occurrences: array[], days: array[]}
+	 *     `occurrences` in display order, without drafts. `days` has one entry
+	 *     per day of the week, each with date, weekday, day_num, month_name and
+	 *     the events on that day (multi-day events on each of their days).
+	 */
+	public static function week_data( array $week, array $occurrences ) {
+		$occurrences = array_values(
+			array_filter(
+				$occurrences,
+				static function ( $occurrence ) {
+					return empty( $occurrence['is_draft'] );
+				}
+			)
+		);
+
+		$tz                  = new \DateTimeZone( wp_timezone_string() );
+		$occurrences_by_date = EventFeedProvider::group_by_day( $occurrences, $week['start'] . ' 00:00:00', $week['end'] . ' 23:59:59' );
+		$days                = array();
+		$date                = $week['start'];
+
+		while ( $date <= $week['end'] ) {
+			// Midnight in the site timezone, so wp_date() names the same
+			// calendar day whatever the site's UTC offset.
+			$timestamp = DateHelper::local_to_datetime( $date . ' 00:00:00' )->getTimestamp();
+			$days[]    = array(
+				'date'       => $date,
+				'weekday'    => wp_date( 'l', $timestamp ),
+				'day_num'    => (int) substr( $date, 8, 2 ),
+				'month_name' => wp_date( 'F', $timestamp ),
+				'events'     => array_map(
+					static function ( $occurrence ) use ( $tz ) {
+						return self::format_day_event( $occurrence, $tz );
+					},
+					$occurrences_by_date[ $date ] ?? array()
+				),
+			);
+			$date      = DateHelper::next_date( $date );
+		}
+
+		return array(
+			'week'        => array(
+				'start' => $week['start'],
+				'end'   => $week['end'],
+			),
+			'occurrences' => $occurrences,
+			'days'        => $days,
+		);
+	}
+
+	/**
+	 * The event source a selection names.
+	 *
+	 * @param string $selection {@see self::LOCAL_EVENTS} or an event source slug.
+	 * @return array|null|\WP_Error The enabled source, null for local events, or an error.
+	 */
+	private function selected_source( $selection ) {
+		if ( self::LOCAL_EVENTS === $selection ) {
+			return null;
+		}
+		if ( ! is_string( $selection ) || '' === $selection || sanitize_title( $selection ) !== $selection ) {
+			return new \WP_Error( 'missing_selection', __( 'Choose which events to include.', 'fair-events' ) );
+		}
+
+		$source = ( new EventSourceRepository() )->get_by_slug( $selection );
+		if ( ! $source || empty( $source['enabled'] ) ) {
+			return new \WP_Error( 'invalid_source', __( 'The selected event source does not exist or is disabled.', 'fair-events' ) );
+		}
+
+		return $source;
 	}
 
 	/**
@@ -145,7 +255,7 @@ class WeeklyEventsProvider {
 	 * @return array Day-event shape: title, start_time, end_time, url, all_day,
 	 *               event_id, event_date_id, end_date, end_weekday.
 	 */
-	private function format_day_event( $occurrence, $tz ) {
+	private static function format_day_event( $occurrence, $tz ) {
 		$start_date = DateHelper::local_date( $occurrence['start'] );
 		$end_date   = ! empty( $occurrence['end'] ) ? DateHelper::local_date( $occurrence['end'] ) : $start_date;
 		$is_all_day = (bool) $occurrence['all_day'];
@@ -160,10 +270,10 @@ class WeeklyEventsProvider {
 			'title'         => $occurrence['title'],
 			'start_time'    => $is_all_day ? '' : DateHelper::local_time( $occurrence['start'] ),
 			'end_time'      => ( $is_all_day || empty( $occurrence['end'] ) ) ? '' : DateHelper::local_time( $occurrence['end'] ),
-			'url'           => $occurrence['url'],
+			'url'           => $occurrence['url'] ?? '',
 			'all_day'       => $is_all_day,
-			'event_id'      => $occurrence['event_id'],
-			'event_date_id' => $occurrence['event_date_id'],
+			'event_id'      => $occurrence['event_id'] ?? null,
+			'event_date_id' => $occurrence['event_date_id'] ?? null,
 			'end_date'      => $end_date !== $start_date ? $end_date : null,
 			'end_weekday'   => $end_weekday,
 		);

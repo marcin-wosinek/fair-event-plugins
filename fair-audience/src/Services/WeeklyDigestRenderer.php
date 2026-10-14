@@ -16,8 +16,27 @@ defined( 'WPINC' ) || die;
 
 /**
  * Renders and sanitizes weekly digest content.
+ *
+ * The content itself comes from Fair Events' WeeklyEmailRenderer when Fair
+ * Events provides it, so the subscribers' email lists events exactly like
+ * Fair Events' other weekly emails. The rendering kept here is the fallback
+ * for an inactive or older Fair Events.
  */
 class WeeklyDigestRenderer {
+
+	/**
+	 * Fair Events' weekly email content renderer.
+	 */
+	private const SHARED_RENDERER = '\FairEvents\Notifications\WeeklyEmailRenderer';
+
+	/**
+	 * Whether Fair Events' weekly email renderer can be used.
+	 *
+	 * @return bool
+	 */
+	private static function shared_renderer_available() {
+		return method_exists( self::SHARED_RENDERER, 'body' ) && method_exists( self::SHARED_RENDERER, 'subject' );
+	}
 
 	/**
 	 * Default digest configuration.
@@ -102,6 +121,11 @@ class WeeklyDigestRenderer {
 	 * @return string Rendered subject.
 	 */
 	public static function render_subject( $subject_template, array $week ) {
+		if ( self::shared_renderer_available() ) {
+			$renderer = self::SHARED_RENDERER;
+			return $renderer::subject( $subject_template, $week['week'] );
+		}
+
 		return str_replace(
 			array( '{week_start}', '{week_end}' ),
 			array( $week['week']['start'], $week['week']['end'] ),
@@ -187,6 +211,11 @@ class WeeklyDigestRenderer {
 	 * @return string Inner HTML content.
 	 */
 	public static function render( array $week, $intro = '', $outro = '' ) {
+		if ( self::shared_renderer_available() ) {
+			$renderer = self::SHARED_RENDERER;
+			return $renderer::body( $week, (string) $intro, (string) $outro );
+		}
+
 		$html = '';
 
 		if ( ! empty( $intro ) ) {

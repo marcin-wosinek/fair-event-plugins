@@ -13,7 +13,9 @@ defined( 'WPINC' ) || die;
  * Produces the same text as the public Events Week copy-summary action for
  * the selected source and week, plus the same content as structured data.
  *
- * The source decides which public events are listed. The selected page only
+ * The source decides which public events are listed; they come from
+ * {@see \FairEvents\Services\WeeklyEventsProvider::for_notification()}, like
+ * every other notification channel's. The selected page only
  * supplies the heading's title and link and the language, whatever its
  * content, so it must be a published, publicly visible page.
  */
@@ -74,16 +76,13 @@ class SummaryBuilder {
 		$switched = $locale && switch_to_locale( $locale );
 
 		try {
+			$week_events = ( new \FairEvents\Services\WeeklyEventsProvider() )->for_notification( $week, $settings['source_slug'], $language ? $language : false );
+			if ( is_wp_error( $week_events ) ) {
+				return $week_events;
+			}
+
 			$summary     = self::SUMMARY_API;
-			$occurrences = $summary::occurrences(
-				$week,
-				array(
-					'categories'         => array(),
-					'event_source_slugs' => array( $settings['source_slug'] ),
-					'include_drafts'     => false,
-				),
-				$language ? $language : false
-			);
+			$occurrences = $week_events['occurrences'];
 			$text        = $summary::format( $occurrences, $week, $summary::page_label( $page_id ) );
 			$range       = $summary::range_title( $week['start'], $week['end'] );
 			$events      = array_map(
