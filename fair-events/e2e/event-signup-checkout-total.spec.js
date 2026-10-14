@@ -215,3 +215,199 @@ test( 'shows one checkout total above the submit button only while it is enabled
 		} );
 	}
 } );
+
+test( 'explains each series ticket’s dates and total, and buys the choice made last (#1768)', async ( {
+	page,
+	browser,
+} ) => {
+	test.setTimeout( 90_000 );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp?.apiFetch );
+
+	const series = await apiFetch( page, {
+		path: '/fair-events/v1/event-dates',
+		method: 'POST',
+		data: {
+			title: `Series coverage e2e ${ Date.now() }`,
+			start_datetime: '2039-03-01 18:00:00',
+			end_datetime: '2039-03-01 19:30:00',
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+		},
+	} );
+	const [ first, second, third ] = [
+		series.id,
+		...series.generated_occurrences.map( ( occurrence ) => occurrence.id ),
+	];
+	let signupPage;
+	try {
+		const tickets = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ series.id }/tickets`,
+			method: 'PUT',
+			data: {
+				capacity: 1,
+				ticket_types: [
+					{
+						name: 'Drop-in',
+						minimum_activities: 0,
+						recurrence_scope: 'single_instance',
+					},
+					{
+						name: 'Class pack',
+						minimum_activities: 0,
+						recurrence_scope: 'multiple_instances',
+						minimum_instances: 2,
+					},
+					{
+						name: 'Season pass',
+						minimum_activities: 0,
+						recurrence_scope: 'whole_series',
+					},
+				],
+				sale_periods: [
+					{
+						name: 'Always',
+						sale_start: '2020-01-01 00:00:00',
+						sale_end: '2099-01-01 00:00:00',
+					},
+				],
+				prices: [
+					{ ticket_type_index: 0, sale_period_index: 0, price: 12 },
+					{ ticket_type_index: 1, sale_period_index: 0, price: 10 },
+					{ ticket_type_index: 2, sale_period_index: 0, price: 40 },
+				],
+				settings: {},
+			},
+		} );
+		// The second date's only place is held by a purchase awaiting payment.
+		await apiFetch( page, {
+			path: '/fair-events/v1/get-tickets',
+			method: 'POST',
+			data: {
+				event_date_id: second,
+				ticket_type_id: tickets.ticket_types[ 0 ].id,
+				name: 'Place Holder',
+				email: `series-holder-${ Date.now() }@example.test`,
+				quantity: 1,
+				_honeypot: '',
+			},
+		} );
+		signupPage = await apiFetch( page, {
+			path: '/wp/v2/pages',
+			method: 'POST',
+			data: {
+				title: `Series coverage page ${ Date.now() }`,
+				status: 'publish',
+				content: `<!-- wp:fair-events/event-signup {"eventDateId":${ series.id }} /-->`,
+			},
+		} );
+
+		const context = await browser.newContext( {
+			baseURL: test.info().project.use.baseURL,
+		} );
+		const visitor = await context.newPage();
+		await visitor.goto( `/?page_id=${ signupPage.id }` );
+
+		const form = visitor.locator( '.fair-events-get-tickets-form' );
+		const submit = form.locator( 'button[type="submit"]' );
+		const total = form.locator( '.fair-events-signup-checkout-total' );
+		const summary = form.locator( '.fair-events-signup-coverage-summary' );
+		const heading = summary.locator(
+			'.fair-events-signup-coverage-summary-heading'
+		);
+		const reason = summary.locator(
+			'.fair-events-signup-coverage-summary-reason'
+		);
+		const dateBox = ( id ) =>
+			form.locator( `input[name="event_date_ids[]"][value="${ id }"]` );
+
+		// Each ticket says what it covers before it is chosen.
+		const fieldset = form.locator( '.fair-events-ticket-fieldset' );
+		await expect( fieldset ).toContainText( 'One date' );
+		await expect( fieldset ).toContainText( 'Selected dates' );
+		await expect( fieldset ).toContainText( 'Whole series' );
+		await expect( fieldset ).toContainText( 'for the whole series' );
+
+		// One date: the dropdown follows the ticket choices, the full date
+		// is listed but can't be chosen.
+		await expect( submit ).toBeEnabled();
+		await expect( heading ).toHaveText( 'Drop-in covers 1 date:' );
+		await expect( total ).toHaveAttribute( 'data-amount', '12.00' );
+		const select = form.locator( 'select[name="event_date_id_single"]' );
+		await expect( select ).toBeVisible();
+		await expect(
+			select.locator( `option[value="${ second }"]` )
+		).toBeDisabled();
+		await expect(
+			select.locator( `option[value="${ second }"]` )
+		).toContainText( 'full' );
+
+		// Selected dates: the minimum is explained until it is met.
+		await visitor.getByLabel( /Class pack/ ).check();
+		await expect( reason ).toHaveText(
+			'No dates selected yet. Choose at least 2 dates.'
+		);
+		await expect( total ).toBeHidden();
+		await expect( submit ).toBeDisabled();
+		await expect( dateBox( second ) ).toBeDisabled();
+		await dateBox( first ).check();
+		await expect( reason ).toHaveText(
+			'Choose at least 2 dates to continue.'
+		);
+		await dateBox( third ).check();
+		await expect( heading ).toHaveText( 'Class pack covers 2 dates:' );
+		await expect( reason ).toBeHidden();
+		await expect( total ).toHaveAttribute( 'data-amount', '20.00' );
+		await expect( submit ).toBeEnabled();
+
+		// Whole series: every covered date is listed, and the full one
+		// blocks the purchase with its reason.
+		await visitor.getByLabel( /Season pass/ ).check();
+		await expect(
+			form.locator( '.fair-events-series-coverage li' )
+		).toHaveCount( 3 );
+		await expect( heading ).toHaveText( 'Season pass covers 3 dates:' );
+		await expect( reason ).toContainText( 'is full' );
+		await expect( total ).toBeHidden();
+		await expect( submit ).toBeDisabled();
+
+		// Back to selected dates: the purchase is the one shown last.
+		await visitor.getByLabel( /Class pack/ ).check();
+		await dateBox( first ).check();
+		await dateBox( third ).check();
+		await expect( total ).toHaveAttribute( 'data-amount', '20.00' );
+		await form.locator( 'input[name="name"]' ).fill( 'Series Buyer' );
+		await form
+			.locator( 'input[name="email"]' )
+			.fill( `series-buyer-${ Date.now() }@example.test` );
+
+		const purchase = visitor.waitForRequest(
+			( req ) =>
+				req.method() === 'POST' &&
+				/get-tickets(\?|$|&)|get-tickets%2F?$|get-tickets$/.test(
+					req.url().split( '?rest_route=' ).pop()
+				) &&
+				! /viewer-context/.test( req.url() )
+		);
+		await submit.click();
+		const sent = JSON.parse( ( await purchase ).postData() );
+		expect( sent ).toMatchObject( {
+			ticket_type_id: tickets.ticket_types[ 1 ].id,
+			event_date_ids: [ first, third ],
+			quantity: 1,
+		} );
+
+		await context.close();
+	} finally {
+		if ( signupPage?.id ) {
+			await apiFetch( page, {
+				path: `/wp/v2/pages/${ signupPage.id }?force=true`,
+				method: 'DELETE',
+			} );
+		}
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ series.id }`,
+			method: 'DELETE',
+		} );
+	}
+} );

@@ -6,21 +6,29 @@
 
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
+// Specific browser modules, not the package root: the root also exports
+// editor components, which would load on every page with this block.
 import {
 	showMessage,
 	onDomReady,
+	extractErrorMessage,
+	setButtonLoading,
+	wireNotYouButton,
+} from 'fair-events-shared/src/form-utils.js';
+import {
 	initiatePayment,
 	pollPaymentStatus,
+} from 'fair-events-shared/src/payment-flow.js';
+import {
 	computeTicketTotal,
 	formatMoney,
+} from 'fair-events-shared/src/ticket-pricing.js';
+import {
 	collectQuestionAnswers,
 	validateQuestions,
 	applyQuestionAnswers,
 	setupQuestionnaire,
-	extractErrorMessage,
-	setButtonLoading,
-	wireNotYouButton,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/questionnaire.js';
 import { createCheckoutKeyStore } from './checkout-key.js';
 import './frontend.css';
 
@@ -297,6 +305,14 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				clearTimeout( timeoutId );
 				if ( ! isCurrent() ) {
 					return;
+				}
+				// Fresh availability for every viewer, recognised or not: the
+				// page itself may come from a cache.
+				if ( form && response ) {
+					getFormState( form ).seriesRequest++;
+					if ( setSeriesCoverage( form, response.series_coverage ) ) {
+						refreshSignupState( form );
+					}
 				}
 				if ( registeringAnother ) {
 					if ( applyAnotherPersonContext( form, response ) ) {
@@ -575,7 +591,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			occurrenceSelect &&
 			payload.event_date_id &&
 			Array.from( occurrenceSelect.options ).some(
-				( option ) => option.value === String( payload.event_date_id )
+				( option ) =>
+					option.value === String( payload.event_date_id ) &&
+					! option.disabled
 			)
 		) {
 			occurrenceSelect.value = String( payload.event_date_id );
@@ -652,6 +670,18 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			return;
 		}
 		const idSet = new Set( signedUpIds.map( Number ) );
+
+		const { series } = getFormState( form );
+		if ( series ) {
+			series.dates.forEach( function ( date ) {
+				if ( idSet.has( date.id ) ) {
+					date.signedUp = true;
+				}
+			} );
+			renderSeriesDates( form );
+			return;
+		}
+
 		const suffix = ' — ' + __( 'already signed up', 'fair-events' );
 
 		const select = form.querySelector(
@@ -725,6 +755,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		// The checkout total must stay immediately before the submit row, so
 		// the slot lands ahead of it (where render.php fires the hook).
 		const anchor =
+			form.querySelector( '.fair-events-signup-coverage-summary' ) ||
 			form.querySelector( '.fair-events-signup-checkout-total' ) ||
 			form.querySelector( '.form-submit' );
 		if ( ! anchor || ! anchor.parentNode ) {
@@ -1193,12 +1224,30 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				}
 				state.processing = false;
 				renderFormState( form );
+				// A refused purchase may mean a date filled up since the page
+				// loaded: show the dates as they are now.
+				if ( outcome === 'rejected' ) {
+					refreshSeriesCoverage( form );
+				}
 			} );
 		} );
+
+		// The server's description of the series dates, read once; later
+		// changes come from viewer-context responses.
+		setSeriesCoverage( form, form.dataset.seriesCoverage || null );
 
 		wireTicketTypeInputs( form );
 		wireInstancePickerInputs( form );
 		wireTicketOptionInputs( form );
+
+		const occurrenceSelect = form.querySelector(
+			'select[name="event_date_id_single"]'
+		);
+		if ( occurrenceSelect ) {
+			occurrenceSelect.addEventListener( 'change', function () {
+				refreshSignupState( form );
+			} );
+		}
 
 		const quantityField = form.querySelector( 'input[name="quantity"]' );
 		if ( quantityField ) {
@@ -1279,6 +1328,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLFormElement} form The get-tickets form.
 	 */
 	function refreshSignupState( form ) {
+		renderSeriesDates( form );
 		updateInstancePicker( form );
 		syncTicketActivityFieldsets( form );
 		updateTicketOptions( form );
@@ -1289,7 +1339,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	/**
 	 * The form's state model, created on first use.
 	 * @param {HTMLFormElement} form The get-tickets form.
-	 * @return {Object} State: viewerContextLoading, viewerContextApplied, processing, completed, registeringAnother, submitLabel.
+	 * @return {Object} State: viewerContextLoading, viewerContextApplied, processing, completed, registeringAnother, submitLabel, series, seriesRequest.
 	 */
 	function getFormState( form ) {
 		let state = formStates.get( form );
@@ -1302,10 +1352,372 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				completed: false,
 				registeringAnother: false,
 				submitLabel: submitButton ? submitButton.textContent : '',
+				// The series' dates as the server last described them —
+				// { dates: [{ id, label, full, signedUp }], wholeSeries: [ids] }
+				// — or null when the form offers no series dates.
+				series: null,
+				// Tells the latest series-dates refresh from earlier ones.
+				seriesRequest: 0,
 			};
 			formStates.set( form, state );
 		}
 		return state;
+	}
+
+	/**
+	 * Normalize a server series-coverage payload (render.php's
+	 * data-series-coverage, or a viewer-context series_coverage).
+	 * @param {Object|string|null} raw Payload, or its JSON.
+	 * @return {Object|null} { dates, wholeSeries }, or null when there is none.
+	 */
+	function parseSeriesCoverage( raw ) {
+		let coverage = raw;
+		if ( typeof raw === 'string' ) {
+			try {
+				coverage = JSON.parse( raw );
+			} catch {
+				return null;
+			}
+		}
+		if ( ! coverage || ! Array.isArray( coverage.dates ) ) {
+			return null;
+		}
+		return {
+			dates: coverage.dates.map( ( date ) => ( {
+				id: parseInt( date.id, 10 ),
+				label: String( date.label || '' ),
+				full: !! date.full,
+				signedUp: !! date.signed_up,
+			} ) ),
+			wholeSeries: ( coverage.whole_series || [] ).map( ( id ) =>
+				parseInt( id, 10 )
+			),
+		};
+	}
+
+	/**
+	 * Replace the form's series dates with the server's latest description.
+	 * Ignored once a purchase is under way or done: the dates it was made
+	 * for stay as they were shown.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @param {Object|string}   raw  Server payload.
+	 * @return {boolean} Whether the state changed.
+	 */
+	function setSeriesCoverage( form, raw ) {
+		const state = getFormState( form );
+		const series = parseSeriesCoverage( raw );
+		if ( ! series || state.processing || state.completed ) {
+			return false;
+		}
+		state.series = series;
+		return true;
+	}
+
+	/**
+	 * Fetch the series dates again — after a rejected checkout, a date may
+	 * have filled up since the page loaded. Only the latest request applies.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function refreshSeriesCoverage( form ) {
+		const state = getFormState( form );
+		const block = form.closest( '.fair-events-get-tickets' );
+		const eventDateId = block
+			? parseInt( block.dataset.eventDateId || '0', 10 )
+			: 0;
+		if ( ! state.series || ! eventDateId ) {
+			return;
+		}
+
+		const request = ++state.seriesRequest;
+		const params = new URLSearchParams( { event_date_id: eventDateId } );
+		if ( state.registeringAnother ) {
+			params.set( 'register_another_person', '1' );
+		} else if ( form.dataset.participantToken ) {
+			params.set( 'participant_token', form.dataset.participantToken );
+		}
+		apiFetch( { path: `${ VIEWER_CONTEXT_PATH }?${ params.toString() }` } )
+			.then( function ( response ) {
+				if (
+					request === state.seriesRequest &&
+					response &&
+					setSeriesCoverage( form, response.series_coverage )
+				) {
+					refreshSignupState( form );
+				}
+			} )
+			.catch( function () {
+				// The dates shown stay; checkout keeps enforcing places.
+			} );
+	}
+
+	/**
+	 * A series date's label with what the visitor needs to know about it.
+	 * @param {Object} date Series date from the form's state.
+	 * @return {string} Label.
+	 */
+	function seriesDateLabel( date ) {
+		let label = date.label;
+		if ( date.full ) {
+			label += ' — ' + __( 'full', 'fair-events' );
+		}
+		if ( date.signedUp ) {
+			label += ' — ' + __( 'already signed up', 'fair-events' );
+		}
+		return label;
+	}
+
+	/**
+	 * Apply the form's series dates to the date controls: a full date stays
+	 * listed with its reason and cannot be chosen, and a choice that became
+	 * full is dropped.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 */
+	function renderSeriesDates( form ) {
+		const { series } = getFormState( form );
+		if ( ! series ) {
+			return;
+		}
+		const byId = new Map(
+			series.dates.map( ( date ) => [ date.id, date ] )
+		);
+
+		const select = form.querySelector(
+			'select[name="event_date_id_single"]'
+		);
+		if ( select ) {
+			Array.from( select.options ).forEach( function ( option ) {
+				const date = byId.get( parseInt( option.value, 10 ) );
+				if ( date ) {
+					option.textContent = seriesDateLabel( date );
+					option.disabled = date.full;
+				}
+			} );
+			const selected = select.options[ select.selectedIndex ];
+			if ( ! selected || selected.disabled ) {
+				const open = Array.from( select.options ).find(
+					( option ) => ! option.disabled
+				);
+				if ( open ) {
+					select.value = open.value;
+				}
+			}
+		}
+
+		form.querySelectorAll( 'input[name="event_date_ids[]"]' ).forEach(
+			function ( checkbox ) {
+				const date = byId.get( parseInt( checkbox.value, 10 ) );
+				if ( ! date ) {
+					return;
+				}
+				checkbox.disabled = date.full;
+				if ( date.full ) {
+					checkbox.checked = false;
+				}
+				const text = checkbox
+					.closest( 'label' )
+					?.querySelector( '.fair-events-instance-option-text' );
+				if ( text ) {
+					text.textContent = seriesDateLabel( date );
+				}
+			}
+		);
+
+		const hasFull = series.dates.some( ( date ) => date.full );
+		form.querySelectorAll( '.fair-events-date-picker-note' ).forEach(
+			function ( note ) {
+				note.hidden = ! hasFull;
+				note.textContent = hasFull
+					? __(
+							'Dates marked full have no places left and can’t be selected.',
+							'fair-events'
+					  )
+					: '';
+			}
+		);
+	}
+
+	/**
+	 * What the selected ticket covers, derived from the form's series dates
+	 * and the visitor's date choices, with the reason it can't be bought yet.
+	 * @param {HTMLFormElement} form The get-tickets form.
+	 * @return {Object|null} { scope, name, dates, reason }, or null when the form offers no series dates.
+	 */
+	function getSeriesCoverage( form ) {
+		const { series } = getFormState( form );
+		if ( ! series ) {
+			return null;
+		}
+		const byId = new Map(
+			series.dates.map( ( date ) => [ date.id, date ] )
+		);
+		const option = getSelectedTicketTypeOption( form );
+		const scope = option?.dataset.recurrenceScope || 'single_instance';
+		const name =
+			option?.dataset.ticketName || __( 'Your ticket', 'fair-events' );
+
+		if ( scope === 'whole_series' ) {
+			const dates = series.wholeSeries
+				.map( ( id ) => byId.get( id ) )
+				.filter( Boolean );
+			const full = dates.filter( ( date ) => date.full );
+			let reason = null;
+			if ( ! dates.length ) {
+				reason = __(
+					'This series has no upcoming dates left to cover.',
+					'fair-events'
+				);
+			} else if ( full.length ) {
+				reason = sprintf(
+					/* translators: %s: list of full dates */
+					_n(
+						'This ticket can’t be bought right now because a date it covers is full: %s.',
+						'This ticket can’t be bought right now because dates it covers are full: %s.',
+						full.length,
+						'fair-events'
+					),
+					full.map( ( date ) => date.label ).join( '; ' )
+				);
+			}
+			return { scope, name, dates, reason };
+		}
+
+		if ( scope === 'multiple_instances' ) {
+			const min = Math.max(
+				1,
+				parseInt( option.dataset.minInstances || '0', 10 )
+			);
+			const dates = Array.from(
+				form.querySelectorAll(
+					'input[name="event_date_ids[]"]:checked'
+				)
+			)
+				.map( ( checkbox ) =>
+					byId.get( parseInt( checkbox.value, 10 ) )
+				)
+				.filter( Boolean );
+			const open = series.dates.filter( ( date ) => ! date.full ).length;
+			let reason = null;
+			if ( open < min ) {
+				reason = __(
+					'Too few dates have places left for this ticket.',
+					'fair-events'
+				);
+			} else if ( ! dates.length ) {
+				reason = sprintf(
+					/* translators: %d: minimum number of dates */
+					_n(
+						'No dates selected yet. Choose at least %d date.',
+						'No dates selected yet. Choose at least %d dates.',
+						min,
+						'fair-events'
+					),
+					min
+				);
+			} else if ( dates.length < min ) {
+				reason = sprintf(
+					/* translators: %d: minimum number of dates */
+					_n(
+						'Choose at least %d date to continue.',
+						'Choose at least %d dates to continue.',
+						min,
+						'fair-events'
+					),
+					min
+				);
+			}
+			return { scope, name, dates, reason };
+		}
+
+		const select = form.querySelector(
+			'select[name="event_date_id_single"]'
+		);
+		const chosen = select
+			? byId.get( parseInt( select.value, 10 ) )
+			: undefined;
+		const dates = chosen && ! chosen.full ? [ chosen ] : [];
+		const reason = dates.length
+			? null
+			: __( 'Every date is full.', 'fair-events' );
+		return { scope, name, dates, reason };
+	}
+
+	/**
+	 * Show what the selected ticket covers: the whole-series date list beside
+	 * the ticket choices, and the summary above the total — or why the
+	 * ticket can't be bought yet.
+	 * @param {HTMLFormElement} form     The get-tickets form.
+	 * @param {Object|null}     coverage Result of getSeriesCoverage().
+	 */
+	function renderSeriesCoverage( form, coverage ) {
+		const listDates = function ( list, dates ) {
+			list.replaceChildren(
+				...dates.map( function ( date ) {
+					const item = document.createElement( 'li' );
+					item.textContent = seriesDateLabel( date );
+					return item;
+				} )
+			);
+		};
+
+		const wholeSeries = form.querySelector(
+			'.fair-events-series-coverage'
+		);
+		if ( wholeSeries ) {
+			const active = !! coverage && coverage.scope === 'whole_series';
+			wholeSeries.hidden = ! active;
+			if ( active ) {
+				listDates(
+					wholeSeries.querySelector(
+						'.fair-events-series-coverage-list'
+					),
+					coverage.dates
+				);
+				const note = wholeSeries.querySelector(
+					'.fair-events-series-coverage-note'
+				);
+				note.hidden = ! coverage.dates.length;
+				note.textContent = __(
+					'Covers every upcoming date of the series. Dates that have already taken place are not included.',
+					'fair-events'
+				);
+			}
+		}
+
+		const summary = form.querySelector(
+			'.fair-events-signup-coverage-summary'
+		);
+		if ( ! summary ) {
+			return;
+		}
+		summary.hidden = ! coverage;
+		if ( ! coverage ) {
+			return;
+		}
+		summary.querySelector(
+			'.fair-events-signup-coverage-summary-heading'
+		).textContent = coverage.dates.length
+			? sprintf(
+					/* translators: 1: ticket name, 2: number of dates */
+					_n(
+						'%1$s covers %2$d date:',
+						'%1$s covers %2$d dates:',
+						coverage.dates.length,
+						'fair-events'
+					),
+					coverage.name,
+					coverage.dates.length
+			  )
+			: coverage.name;
+		const dates = summary.querySelector(
+			'.fair-events-signup-coverage-summary-dates'
+		);
+		dates.hidden = ! coverage.dates.length;
+		listDates( dates, coverage.dates );
+		const reason = summary.querySelector(
+			'.fair-events-signup-coverage-summary-reason'
+		);
+		reason.hidden = ! coverage.reason;
+		reason.textContent = coverage.reason || '';
 	}
 
 	/**
@@ -1317,10 +1729,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 */
 	function canSubmit( form ) {
 		const state = getFormState( form );
+		const coverage = getSeriesCoverage( form );
 		return (
 			! state.viewerContextLoading &&
 			! state.processing &&
 			! state.completed &&
+			( ! coverage || ! coverage.reason ) &&
 			meetsInstanceMinimum( form ) &&
 			meetsActivityMinimum( form )
 		);
@@ -1353,6 +1767,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			totalEl.hidden = ! available;
 		}
 
+		// Coverage stays visible while the total is hidden, so the visitor
+		// sees why the purchase can't go ahead yet.
+		renderSeriesCoverage( form, getSeriesCoverage( form ) );
 		renderCompletedState( form, state );
 	}
 
@@ -1778,19 +2195,24 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			'.fair-events-instance-picker-hint'
 		);
 		if ( hint ) {
+			// The minimum is explained before the dates, so it is read
+			// before choosing.
 			hint.textContent =
-				min > 0
+				min > 1
 					? sprintf(
-							/* translators: %d: minimum number of occurrences required */
+							/* translators: %d: minimum number of dates required */
 							_n(
-								'Please select at least %d occurrence.',
-								'Please select at least %d occurrences.',
+								'Choose at least %d date. Each date is priced separately.',
+								'Choose at least %d dates. Each date is priced separately.',
 								min,
 								'fair-events'
 							),
 							min
 					  )
-					: '';
+					: __(
+							'Choose one or more dates. Each date is priced separately.',
+							'fair-events'
+					  );
 		}
 	}
 
@@ -2327,6 +2749,17 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			}
 		}
 
+		const coverage = getSeriesCoverage( form );
+		if ( coverage && coverage.reason ) {
+			showMessage(
+				messageContainer,
+				coverage.reason,
+				'error',
+				CSS_PREFIX
+			);
+			return false;
+		}
+
 		if ( isMultipleInstancesSelected( form ) ) {
 			const option = getSelectedTicketTypeOption( form );
 			const min = Math.max(
@@ -2513,7 +2946,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 	 * @param {HTMLFormElement} form         The get-tickets form.
 	 * @param {Object}          data         Request payload, including its idempotency key.
 	 * @param {Object}          checkoutKeys The form's checkout key store.
-	 * @return {Promise<string>} Settles with the request: 'redirecting' when the browser is leaving for checkout, 'completed' when the purchase is done, 'open' when the form stays for another attempt.
+	 * @return {Promise<string>} Settles with the request: 'redirecting' when the browser is leaving for checkout, 'completed' when the purchase is done, 'open' when the form stays for another attempt, 'rejected' when it stays after the server refused the purchase.
 	 */
 	function submitForm( form, data, checkoutKeys ) {
 		const messageContainer = getMessageContainer(
@@ -2575,7 +3008,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			} )
 			.catch( function () {
 				// Error already surfaced via onError.
-				return 'open';
+				return 'rejected';
 			} );
 	}
 } )();

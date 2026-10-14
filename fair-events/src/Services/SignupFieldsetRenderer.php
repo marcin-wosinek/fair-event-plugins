@@ -83,9 +83,10 @@ class SignupFieldsetRenderer {
 	 * @param bool        $show_ticket_price    Whether to show the price in each option's label.
 	 * @param bool        $payments_unavailable Whether online payments can't be collected right now.
 	 * @param string      $form_id              Unique prefix for input/label IDs.
+	 * @param bool        $is_series            Whether the form offers series dates: each option then says which dates it covers and what its price is for.
 	 * @return string HTML, or '' when there are no ticket types.
 	 */
-	public static function ticket_type_fieldset( array $ticket_types, array $price_by_type_id, $active_sale_period, $sale_period_count, $show_ticket_price, $payments_unavailable, $form_id ) {
+	public static function ticket_type_fieldset( array $ticket_types, array $price_by_type_id, $active_sale_period, $sale_period_count, $show_ticket_price, $payments_unavailable, $form_id, $is_series = false ) {
 		if ( empty( $ticket_types ) ) {
 			return '';
 		}
@@ -113,21 +114,25 @@ class SignupFieldsetRenderer {
 					$type_id          = (int) $ticket_type->id;
 					$type_price       = $price_by_type_id[ $type_id ] ?? null;
 					$type_unavailable = $payments_unavailable && null !== $type_price && $type_price > 0;
-					$label            = esc_html( $ticket_type->name );
-					if ( $show_ticket_price && null !== $type_price ) {
-						$label .= ' — ' . esc_html( \FairEventsShared\Money::format_inline( $type_price ) );
+					$label            = $ticket_type->name;
+					// A series ticket's price is explained beside its coverage
+					// below instead of in the name line.
+					if ( $show_ticket_price && null !== $type_price && ! $is_series ) {
+						$label .= ' — ' . \FairEventsShared\Money::format_inline( $type_price );
 					}
 					if ( $type_unavailable ) {
-						$label .= ' — ' . esc_html__( 'ticket sales temporarily unavailable', 'fair-events' );
+						$label .= ' — ' . __( 'ticket sales temporarily unavailable', 'fair-events' );
 					}
+					$coverage = $is_series ? self::scope_description( $ticket_type, $show_ticket_price ? $type_price : null ) : null;
 					$radio_id = $form_id . '-ticket-type-' . $type_id;
 					?>
-					<label class="fair-events-ticket-option" for="<?php echo esc_attr( $radio_id ); ?>">
+					<label class="fair-events-ticket-option<?php echo $coverage ? ' has-scope' : ''; ?>" for="<?php echo esc_attr( $radio_id ); ?>">
 						<input
 							type="radio"
 							id="<?php echo esc_attr( $radio_id ); ?>"
 							name="ticket_type_id"
 							value="<?php echo esc_attr( $type_id ); ?>"
+							data-ticket-name="<?php echo esc_attr( $ticket_type->name ); ?>"
 							data-ticket-price="<?php echo esc_attr( null !== $type_price ? \FairEventsShared\Money::format_value( $type_price ) : '' ); ?>"
 							data-recurrence-scope="<?php echo esc_attr( $ticket_type->recurrence_scope ); ?>"
 							data-min-instances="<?php echo esc_attr( (string) $ticket_type->minimum_instances ); ?>"
@@ -137,13 +142,58 @@ class SignupFieldsetRenderer {
 							<?php echo $type_unavailable ? 'disabled' : ''; ?>
 							<?php echo $type_id === $first_enabled_type_id ? 'checked' : ''; ?>
 						/>
-						<?php echo esc_html( $label ); ?>
+						<?php if ( $coverage ) : ?>
+							<span class="fair-events-ticket-option-details">
+								<span class="fair-events-ticket-option-name"><?php echo esc_html( $label ); ?></span>
+								<span class="fair-events-ticket-option-scope">
+									<strong><?php echo esc_html( $coverage['scope'] ); ?></strong>
+									<?php if ( '' !== $coverage['price'] ) : ?>
+										<span class="fair-events-ticket-option-scope-price"><?php echo esc_html( $coverage['price'] ); ?></span>
+									<?php endif; ?>
+								</span>
+							</span>
+						<?php else : ?>
+							<?php echo esc_html( $label ); ?>
+						<?php endif; ?>
 					</label>
 				<?php endforeach; ?>
 			</fieldset>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * What a series ticket covers, and what its price is for.
+	 *
+	 * @param object     $ticket_type Ticket type.
+	 * @param float|null $price       Price to explain, or null when prices are not shown.
+	 * @return array{scope: string, price: string}
+	 */
+	private static function scope_description( $ticket_type, $price ) {
+		$formatted = null !== $price ? \FairEventsShared\Money::format_inline( $price ) : null;
+
+		if ( 'whole_series' === ( $ticket_type->recurrence_scope ?? '' ) ) {
+			return array(
+				'scope' => __( 'Whole series', 'fair-events' ),
+				/* translators: %s: formatted ticket price */
+				'price' => null !== $formatted ? sprintf( __( '%s for the whole series', 'fair-events' ), $formatted ) : '',
+			);
+		}
+
+		if ( 'multiple_instances' === ( $ticket_type->recurrence_scope ?? '' ) ) {
+			return array(
+				'scope' => __( 'Selected dates', 'fair-events' ),
+				/* translators: %s: formatted ticket price */
+				'price' => null !== $formatted ? sprintf( __( '%s per date', 'fair-events' ), $formatted ) : '',
+			);
+		}
+
+		return array(
+			'scope' => __( 'One date', 'fair-events' ),
+			/* translators: %s: formatted ticket price */
+			'price' => null !== $formatted ? sprintf( __( '%s per date', 'fair-events' ), $formatted ) : '',
+		);
 	}
 
 	/**

@@ -104,4 +104,65 @@ class SignupFieldsetRendererTest extends TestCase {
 
 		$this->assertSame( '', $html );
 	}
+	/**
+	 * Render the three series ticket scopes, each priced.
+	 *
+	 * @param bool $is_series Whether the form offers series dates.
+	 * @return string
+	 */
+	private function render_series( $is_series ) {
+		$types = array();
+		foreach ( array(
+			1 => 'single_instance',
+			2 => 'multiple_instances',
+			3 => 'whole_series',
+		) as $id => $scope ) {
+			$types[] = (object) array(
+				'id'                 => $id,
+				'name'               => 'Ticket ' . $id . ' & co',
+				'recurrence_scope'   => $scope,
+				'minimum_instances'  => 0,
+				'minimum_activities' => 0,
+			);
+		}
+
+		return SignupFieldsetRenderer::ticket_type_fieldset(
+			$types,
+			array(
+				1 => 12.0,
+				2 => 10.0,
+				3 => 40.0,
+			),
+			null,
+			1,
+			true,
+			false,
+			'test-form',
+			$is_series
+		);
+	}
+
+	/** Each series ticket says what it covers and what its price is for. */
+	public function test_series_tickets_explain_their_coverage_and_price() {
+		$html = $this->render_series( true );
+
+		$this->assertStringContainsString( 'One date', $html );
+		$this->assertStringContainsString( 'Selected dates', $html );
+		$this->assertStringContainsString( 'Whole series', $html );
+		$this->assertSame( 2, substr_count( $html, ' per date' ) );
+		$this->assertSame( 1, substr_count( $html, ' for the whole series' ) );
+		$this->assertLessThan( strpos( $html, 'Selected dates' ), strpos( $html, 'One date' ) );
+		$this->assertStringContainsString( 'data-ticket-name="Ticket 3 &amp; co"', $html );
+		// The name is escaped once, not twice.
+		$this->assertStringContainsString( '>Ticket 1 &amp; co<', $html );
+	}
+
+	/** A ticket outside a series keeps its name-and-price line. */
+	public function test_non_series_tickets_keep_their_label() {
+		$html = $this->render_series( false );
+
+		$this->assertStringNotContainsString( 'fair-events-ticket-option-scope', $html );
+		$this->assertStringNotContainsString( 'Whole series', $html );
+		$this->assertStringNotContainsString( 'per date', $html );
+	}
 }

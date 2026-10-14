@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-13T07:57:46+00:00\n"
+"POT-Creation-Date: 2026-10-14T04:40:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -778,7 +778,7 @@ msgid "Too many requests. Please try again later."
 msgstr ""
 
 #: src/API/GetTicketsController.php:619
-#: src/API/GetTicketsController.php:2125
+#: src/API/GetTicketsController.php:2134
 msgid "Invalid ticket type."
 msgstr ""
 
@@ -787,14 +787,14 @@ msgid "This ticket type is no longer available."
 msgstr ""
 
 #: src/API/GetTicketsController.php:656
-#: src/API/GetTicketsController.php:2168
+#: src/API/GetTicketsController.php:2177
 msgid "This ticket type is not currently on sale."
 msgstr ""
 
 #. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:701
-#: src/API/GetTicketsController.php:2185
+#: src/API/GetTicketsController.php:2194
 #, php-format
 msgid "Ticket for %s"
 msgstr ""
@@ -806,8 +806,8 @@ msgid "Ticket for event #%d"
 msgstr ""
 
 #: src/API/GetTicketsController.php:740
-#: src/API/GetTicketsController.php:2200
-#: src/API/GetTicketsController.php:3506
+#: src/API/GetTicketsController.php:2209
+#: src/API/GetTicketsController.php:3515
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr ""
 
@@ -824,7 +824,7 @@ msgid "This purchase was already submitted with different details. Reload the pa
 msgstr ""
 
 #: src/API/GetTicketsController.php:1155
-#: src/blocks/event-signup/frontend.js:2567
+#: src/blocks/event-signup/frontend.js:2935
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr ""
 
@@ -861,22 +861,21 @@ msgstr ""
 msgid "\"%s\" is not currently on sale. Reload the page and choose again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2000
+#: src/API/GetTicketsController.php:2009
 msgid "Event Signup"
 msgstr ""
 
-#: src/API/GetTicketsController.php:2113
+#: src/API/GetTicketsController.php:2122
 msgid "Please select at least one occurrence."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2136
+#: src/API/GetTicketsController.php:2145
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr ""
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:2149
-#: src/blocks/event-signup/frontend.js:1785
-#: src/blocks/event-signup/frontend.js:2344
+#: src/API/GetTicketsController.php:2158
+#: src/blocks/event-signup/frontend.js:2724
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
@@ -884,56 +883,56 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event name
-#: src/API/GetTicketsController.php:2228
+#: src/API/GetTicketsController.php:2237
 #, php-format
 msgid "Tickets for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:2233
+#: src/API/GetTicketsController.php:2242
 #, php-format
 msgid "Tickets for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:2791
-#: src/API/GetTicketsController.php:2830
-#: src/API/GetTicketsController.php:3151
+#: src/API/GetTicketsController.php:2800
+#: src/API/GetTicketsController.php:2839
+#: src/API/GetTicketsController.php:3160
 msgid "Signup not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2799
+#: src/API/GetTicketsController.php:2808
 #: src/Admin/manage-event/EventSignups.js:887
 msgid "Failed to delete signup."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2845
+#: src/API/GetTicketsController.php:2854
 msgid "Choose either a new date or a new ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2856
+#: src/API/GetTicketsController.php:2865
 msgid "Enter a reason for going over capacity."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2884
+#: src/API/GetTicketsController.php:2893
 msgid "The chosen date is not another active date of this series."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2885
+#: src/API/GetTicketsController.php:2894
 msgid "The chosen ticket type is not available for this signup."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2926
-#: src/API/GetTicketsController.php:3209
+#: src/API/GetTicketsController.php:2935
+#: src/API/GetTicketsController.php:3218
 msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2933
+#: src/API/GetTicketsController.php:2942
 #: src/Admin/manage-event/SignupEditModal.js:208
 msgid "Failed to update signup."
 msgstr ""
 
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
-#: src/API/GetTicketsController.php:2979
+#: src/API/GetTicketsController.php:2988
 #, php-format
 #: ../fair-events-shared/src/TicketEditModal.js:100
 msgid "%1$s would have %2$d of %3$d place taken."
@@ -941,63 +940,63 @@ msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/GetTicketsController.php:3196
+#: src/API/GetTicketsController.php:3205
 msgid "Tickets in this purchase have been given their own types. Edit each ticket instead."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3228
+#: src/API/GetTicketsController.php:3237
 msgid "A whole-series ticket covers every date and cannot be moved."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3247
+#: src/API/GetTicketsController.php:3256
 msgid "This event has no other dates to move the signup to."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3278
+#: src/API/GetTicketsController.php:3287
 msgid "This signup has no ticket type to change."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3312
-#: src/API/GetTicketsController.php:3405
-#: src/API/GetTicketsController.php:3437
-#: src/API/GetTicketsController.php:3694
+#: src/API/GetTicketsController.php:3321
+#: src/API/GetTicketsController.php:3414
+#: src/API/GetTicketsController.php:3446
+#: src/API/GetTicketsController.php:3703
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3446
-#: src/API/GetTicketsController.php:3540
+#: src/API/GetTicketsController.php:3455
+#: src/API/GetTicketsController.php:3549
 msgid "This payment cannot be retried."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3455
+#: src/API/GetTicketsController.php:3464
 msgid "This payment is not retriable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3475
-#: src/API/GetTicketsController.php:3660
-#: src/API/GetTicketsController.php:3671
+#: src/API/GetTicketsController.php:3484
+#: src/API/GetTicketsController.php:3669
+#: src/API/GetTicketsController.php:3680
 msgid "This payment is missing context needed to retry."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3498
+#: src/API/GetTicketsController.php:3507
 msgid "This payment session has expired. Please start over."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3550
+#: src/API/GetTicketsController.php:3559
 msgid "Original line items could not be loaded."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3703
+#: src/API/GetTicketsController.php:3712
 msgid "This payment is not manageable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3712
-#: src/API/GetTicketsController.php:3746
+#: src/API/GetTicketsController.php:3721
 #: src/API/GetTicketsController.php:3755
+#: src/API/GetTicketsController.php:3764
 msgid "This payment could not be cancelled safely. Please try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3724
+#: src/API/GetTicketsController.php:3733
 msgid "We could not verify the payment status. Please try again."
 msgstr ""
 
@@ -1256,12 +1255,12 @@ msgid "4 hours"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:713
+#: src/blocks/event-signup/render.php:770
 msgid "Your Name"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:730
+#: src/blocks/event-signup/render.php:787
 msgid "Your Email"
 msgstr ""
 
@@ -1293,118 +1292,130 @@ msgstr ""
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:455
-#: src/blocks/event-signup/frontend.js:923
+#: src/blocks/event-signup/render.php:479
+#: src/blocks/event-signup/frontend.js:945
 msgid "Payment confirmed"
 msgstr ""
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:461
+#: src/blocks/event-signup/render.php:485
 #, php-format
 msgid "You're signed up for %s."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:471
+#: src/blocks/event-signup/render.php:495
 #, php-format
 msgid "Amount paid: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:482
-#: src/blocks/event-signup/frontend.js:943
+#: src/blocks/event-signup/render.php:506
+#: src/blocks/event-signup/frontend.js:965
 msgid "A confirmation email is on its way. You can close this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:485
-#: src/blocks/event-signup/frontend.js:953
-#: src/blocks/event-signup/frontend.js:1395
+#: src/blocks/event-signup/render.php:509
+#: src/blocks/event-signup/frontend.js:975
+#: src/blocks/event-signup/frontend.js:1783
 msgid "Back to the signup form"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:493
+#: src/blocks/event-signup/render.php:517
 msgid "Thank you for your payment!"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:495
+#: src/blocks/event-signup/render.php:519
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:501
+#: src/blocks/event-signup/render.php:525
 #, php-format
 msgid "Amount: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:508
+#: src/blocks/event-signup/render.php:532
 msgid "Check payment status again"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:512
-#: src/blocks/event-signup/render.php:539
-#: src/blocks/event-signup/render.php:573
+#: src/blocks/event-signup/render.php:536
+#: src/blocks/event-signup/render.php:563
+#: src/blocks/event-signup/render.php:597
 msgid "Cancel and start over"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:520
+#: src/blocks/event-signup/render.php:544
 msgid "Your payment is waiting."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:522
+#: src/blocks/event-signup/render.php:546
 msgid "You can pick up where you left off on the secure payment page."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:528
 #: src/blocks/event-signup/render.php:552
+#: src/blocks/event-signup/render.php:576
 #, php-format
 msgid "Amount due: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:535
+#: src/blocks/event-signup/render.php:559
 msgid "Continue payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:547
+#: src/blocks/event-signup/render.php:571
 msgid "Your payment didn't go through."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:559
-#: src/blocks/event-signup/render.php:580
+#: src/blocks/event-signup/render.php:583
+#: src/blocks/event-signup/render.php:604
 msgid "Online ticket sales for this event have closed."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:563
-#: src/blocks/event-signup/render.php:584
+#: src/blocks/event-signup/render.php:587
+#: src/blocks/event-signup/render.php:608
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:568
+#: src/blocks/event-signup/render.php:592
 msgid "Retry payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:658
+#: src/blocks/event-signup/render.php:690
 msgid "Choose a date"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:669
-#: src/blocks/event-signup/render.php:692
-#: src/blocks/event-signup/frontend.js:655
+#: src/blocks/event-signup/render.php:702
+#: src/blocks/event-signup/render.php:732
+#: src/Services/SignupFieldsetRenderer.php:264
+#: src/blocks/event-signup/frontend.js:1442
+msgid "full"
+msgstr ""
+
+#: src/blocks/event-signup/render.php:705
+#: src/blocks/event-signup/render.php:735
+#: src/blocks/event-signup/frontend.js:681
+#: src/blocks/event-signup/frontend.js:1445
 msgid "already signed up"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:682
-msgid "Choose occurrences"
+#: src/blocks/event-signup/render.php:720
+msgid "Choose your dates"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:746
+#: src/blocks/event-signup/render.php:758
+msgid "Dates included"
+msgstr ""
+
+#: src/blocks/event-signup/render.php:803
 msgid "Quantity"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:768
+#: src/blocks/event-signup/render.php:825
 msgid "Keep me informed about future events"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:829
+#: src/blocks/event-signup/render.php:897
 msgid "Total"
 msgstr ""
 
@@ -1996,7 +2007,7 @@ msgid "Extensions are not available for the selected ticket type."
 msgstr ""
 
 #: src/Services/ActivitySelection.php:144
-#: src/Services/SignupFieldsetRenderer.php:207
+#: src/Services/SignupFieldsetRenderer.php:257
 msgid "Signup is unavailable because too few extensions can currently be selected."
 msgstr ""
 
@@ -2017,9 +2028,9 @@ msgstr ""
 
 #. translators: %d: minimum number of activities required
 #: src/Services/ActivitySelection.php:202
-#: src/Services/SignupFieldsetRenderer.php:191
-#: src/blocks/event-signup/frontend.js:1946
-#: src/blocks/event-signup/frontend.js:2384
+#: src/Services/SignupFieldsetRenderer.php:241
+#: src/blocks/event-signup/frontend.js:2326
+#: src/blocks/event-signup/frontend.js:2759
 #, php-format,js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
@@ -2072,7 +2083,7 @@ msgid "Ticket type:"
 msgstr ""
 
 #: src/Services/EmailService.php:93
-#: src/blocks/event-signup/frontend.js:929
+#: src/blocks/event-signup/frontend.js:951
 msgid "Amount paid:"
 msgstr ""
 
@@ -2279,47 +2290,70 @@ msgid "The schedule was not saved. Check the marked fields and save again."
 msgstr ""
 
 #: src/Services/SignupFieldsetRenderer.php:57
-#: src/blocks/event-signup/frontend.js:989
+#: src/blocks/event-signup/frontend.js:1011
 msgid "This purchase:"
 msgstr ""
 
 #: src/Services/SignupFieldsetRenderer.php:61
 #: src/Admin/manage-event/EventSignups.js:505
 #: src/Admin/manage-event/SignupExportModal.js:71
-#: src/blocks/event-signup/frontend.js:997
+#: src/blocks/event-signup/frontend.js:1019
 msgid "Ticket"
 msgstr ""
 
-#: src/Services/SignupFieldsetRenderer.php:99
+#: src/Services/SignupFieldsetRenderer.php:100
 msgid "Choose ticket type"
 msgstr ""
 
 #. translators: %s: active ticket sale period name.
-#: src/Services/SignupFieldsetRenderer.php:105
+#: src/Services/SignupFieldsetRenderer.php:106
 #, php-format
 msgid "You’re seeing %s prices."
 msgstr ""
 
-#: src/Services/SignupFieldsetRenderer.php:121
+#: src/Services/SignupFieldsetRenderer.php:124
 msgid "ticket sales temporarily unavailable"
 msgstr ""
 
+#: src/Services/SignupFieldsetRenderer.php:178
+#: src/Admin/manage-event/EventTickets.js:2059
+#: src/Admin/manage-event/EventTickets.js:2091
+msgid "Whole series"
+msgstr ""
+
+#. translators: %s: formatted ticket price
+#: src/Services/SignupFieldsetRenderer.php:180
+#, php-format
+msgid "%s for the whole series"
+msgstr ""
+
 #: src/Services/SignupFieldsetRenderer.php:186
+msgid "Selected dates"
+msgstr ""
+
+#. translators: %s: formatted ticket price
+#: src/Services/SignupFieldsetRenderer.php:188
+#: src/Services/SignupFieldsetRenderer.php:195
+#, php-format
+msgid "%s per date"
+msgstr ""
+
+#: src/Services/SignupFieldsetRenderer.php:193
+msgid "One date"
+msgstr ""
+
+#: src/Services/SignupFieldsetRenderer.php:236
 msgid "Select activities"
 msgstr ""
 
-#: src/Services/SignupFieldsetRenderer.php:214
-msgid "full"
-msgstr ""
-
 #. translators: %s: formatted add-on price
-#: src/Services/SignupFieldsetRenderer.php:241
+#: src/Services/SignupFieldsetRenderer.php:291
 #, php-format
 msgid "+%s"
 msgstr ""
 
 #. translators: %s: formatted add-on price
-#: src/Services/SignupFieldsetRenderer.php:249
+#: src/Services/SignupFieldsetRenderer.php:299
 #, php-format
 msgid "-%s"
 msgstr ""
@@ -2964,7 +2998,7 @@ msgstr ""
 
 #: src/Admin/event-notifications/BulkEmailChannel.js:358
 #: src/Admin/event-notifications/IndividualEmailChannel.js:466
-#: src/Admin/event-notifications/TelegramChannel.js:605
+#: src/Admin/event-notifications/TelegramChannel.js:608
 msgid "Delivery status"
 msgstr ""
 
@@ -3301,52 +3335,52 @@ msgstr ""
 msgid "Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:457
+#: src/Admin/event-notifications/TelegramChannel.js:460
 msgid "Chats and channels"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:458
+#: src/Admin/event-notifications/TelegramChannel.js:461
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:471
+#: src/Admin/event-notifications/TelegramChannel.js:474
 msgid "Manage in Connectors"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:491
+#: src/Admin/event-notifications/TelegramChannel.js:494
 msgid "Save Telegram settings"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:499
+#: src/Admin/event-notifications/TelegramChannel.js:502
 msgid "Preview next Telegram message"
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:507
+#: src/Admin/event-notifications/TelegramChannel.js:510
 msgid "Send test to the saved chats"
 msgstr ""
 
 #. translators: %s: comma-separated list of Telegram chats
-#: src/Admin/event-notifications/TelegramChannel.js:514
+#: src/Admin/event-notifications/TelegramChannel.js:517
 #, js-format
 msgid "The test posts the selected week’s summary to: %s. It works while posting is off and is not recorded as a weekly send."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:520
+#: src/Admin/event-notifications/TelegramChannel.js:523
 msgid "The test posts the selected week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:530
+#: src/Admin/event-notifications/TelegramChannel.js:533
 msgid "Save your changes to preview them."
 msgstr ""
 
 #. translators: %s: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:565
+#: src/Admin/event-notifications/TelegramChannel.js:568
 #, js-format
 msgid "No events for %s, so nothing would be sent."
 msgstr ""
 
 #. translators: 1: number of Telegram messages, 2: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:573
+#: src/Admin/event-notifications/TelegramChannel.js:576
 #, js-format
 msgid "Events for %2$s, sent as %1$d message."
 msgid_plural "Events for %2$s, sent as %1$d messages."
@@ -3354,31 +3388,31 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: message number, 2: number of messages
-#: src/Admin/event-notifications/TelegramChannel.js:590
+#: src/Admin/event-notifications/TelegramChannel.js:593
 #, js-format
 msgid "Telegram message %1$d of %2$d"
 msgstr ""
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/event-notifications/TelegramChannel.js:610
+#: src/Admin/event-notifications/TelegramChannel.js:613
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:617
+#: src/Admin/event-notifications/TelegramChannel.js:620
 msgid "Nothing is scheduled. Turn on posting and save to schedule sends."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:624
+#: src/Admin/event-notifications/TelegramChannel.js:627
 msgid "No Telegram summary has been sent yet."
 msgstr ""
 
-#: src/Admin/event-notifications/TelegramChannel.js:647
+#: src/Admin/event-notifications/TelegramChannel.js:650
 msgid "Messages by chat"
 msgstr ""
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/event-notifications/TelegramChannel.js:661
+#: src/Admin/event-notifications/TelegramChannel.js:664
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr ""
@@ -4333,11 +4367,6 @@ msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:1973
 msgid "Maximum selections"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2059
-#: src/Admin/manage-event/EventTickets.js:2091
-msgid "Whole series"
 msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:2065
@@ -6036,110 +6065,178 @@ msgstr ""
 msgid "Connect this block to an event date to edit its tickets."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:184
+#: src/blocks/event-signup/frontend.js:192
 msgid "Registering another person"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:190
+#: src/blocks/event-signup/frontend.js:198
 msgid "Back to your ticket"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:368
+#: src/blocks/event-signup/frontend.js:384
 msgid "We could not prepare the form for another person. Go back to your ticket and try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:524
+#: src/blocks/event-signup/frontend.js:538
 msgid "Welcome back — we’ve restored your answers. Review and continue below."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:885
+#: src/blocks/event-signup/frontend.js:907
 msgid "Payment confirmation is taking longer than expected. You can check again or cancel and start over."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:892
+#: src/blocks/event-signup/frontend.js:914
 msgid "We could not check your payment status. Please check again or cancel and start over."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1044
+#: src/blocks/event-signup/frontend.js:1063
 msgid "Redirecting…"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1045
+#: src/blocks/event-signup/frontend.js:1064
 msgid "Could not start the retry. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1087
-#: src/blocks/event-signup/frontend.js:2238
+#: src/blocks/event-signup/frontend.js:1101
+#: src/blocks/event-signup/frontend.js:2614
 msgid "Cancelling…"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1123
+#: src/blocks/event-signup/frontend.js:1137
 msgid "Could not cancel this payment. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1345
+#: src/blocks/event-signup/frontend.js:1509
+msgid "Dates marked full have no places left and can’t be selected."
+msgstr ""
+
+#: src/blocks/event-signup/frontend.js:1533
+msgid "Your ticket"
+msgstr ""
+
+#: src/blocks/event-signup/frontend.js:1542
+msgid "This series has no upcoming dates left to cover."
+msgstr ""
+
+#. translators: %s: list of full dates
+#: src/blocks/event-signup/frontend.js:1549
+#, js-format
+msgid "This ticket can’t be bought right now because a date it covers is full: %s."
+msgid_plural "This ticket can’t be bought right now because dates it covers are full: %s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/blocks/event-signup/frontend.js:1574
+msgid "Too few dates have places left for this ticket."
+msgstr ""
+
+#. translators: %d: minimum number of dates
+#: src/blocks/event-signup/frontend.js:1581
+#, js-format
+msgid "No dates selected yet. Choose at least %d date."
+msgid_plural "No dates selected yet. Choose at least %d dates."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: minimum number of dates
+#: src/blocks/event-signup/frontend.js:1592
+#, js-format
+msgid "Choose at least %d date to continue."
+msgid_plural "Choose at least %d dates to continue."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/blocks/event-signup/frontend.js:1613
+msgid "Every date is full."
+msgstr ""
+
+#: src/blocks/event-signup/frontend.js:1650
+msgid "Covers every upcoming date of the series. Dates that have already taken place are not included."
+msgstr ""
+
+#. translators: 1: ticket name, 2: number of dates
+#: src/blocks/event-signup/frontend.js:1672
+#, js-format
+msgid "%1$s covers %2$d date:"
+msgid_plural "%1$s covers %2$d dates:"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/blocks/event-signup/frontend.js:1730
 msgid "Processing…"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:1488
+#: src/blocks/event-signup/frontend.js:1871
 msgid "Use the first ticket’s activities for all tickets"
 msgstr ""
 
 #. translators: %d: ticket number within the purchase
-#: src/blocks/event-signup/frontend.js:1524
+#: src/blocks/event-signup/frontend.js:1907
 #, js-format
 msgid "Ticket %d: select activities"
 msgstr ""
 
+#. translators: %d: minimum number of dates required
+#: src/blocks/event-signup/frontend.js:2162
+#, js-format
+msgid "Choose at least %d date. Each date is priced separately."
+msgid_plural "Choose at least %d dates. Each date is priced separately."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/blocks/event-signup/frontend.js:2170
+msgid "Choose one or more dates. Each date is priced separately."
+msgstr ""
+
 #. translators: %d: maximum number of activities allowed
-#: src/blocks/event-signup/frontend.js:1970
+#: src/blocks/event-signup/frontend.js:2350
 #, js-format
 msgid "You can select at most %d extension."
 msgid_plural "You can select at most %d extensions."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/blocks/event-signup/frontend.js:2049
+#: src/blocks/event-signup/frontend.js:2429
 msgid "Add activities"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2129
+#: src/blocks/event-signup/frontend.js:2507
 msgid "Adding…"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2150
+#: src/blocks/event-signup/frontend.js:2528
 msgid "Your activities have been added!"
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2166
+#: src/blocks/event-signup/frontend.js:2544
 msgid "Failed to add activities. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2249
+#: src/blocks/event-signup/frontend.js:2625
 msgid "Your signup has been cancelled."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2259
+#: src/blocks/event-signup/frontend.js:2635
 msgid "Failed to cancel signup. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2308
+#: src/blocks/event-signup/frontend.js:2682
 msgid "Please fill in all required fields."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2321
+#: src/blocks/event-signup/frontend.js:2695
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2366
+#: src/blocks/event-signup/frontend.js:2744
 msgid "Quantity must be between 1 and 10."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2528
+#: src/blocks/event-signup/frontend.js:2896
 msgid "Failed to submit. Please try again."
 msgstr ""
 
-#: src/blocks/event-signup/frontend.js:2554
+#: src/blocks/event-signup/frontend.js:2922
 msgid "We recognise this email — check your inbox to continue."
 msgstr ""
 

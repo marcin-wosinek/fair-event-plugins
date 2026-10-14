@@ -10,34 +10,42 @@
  */
 import apiFetch from '@wordpress/api-fetch';
 import {
-	applyQuestionAnswers,
-	initiatePayment,
-	pollPaymentStatus,
 	showMessage,
 	wireNotYouButton,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/form-utils.js';
+import {
+	initiatePayment,
+	pollPaymentStatus,
+} from 'fair-events-shared/src/payment-flow.js';
+import { applyQuestionAnswers } from 'fair-events-shared/src/questionnaire.js';
 
 jest.mock( '@wordpress/api-fetch', () => jest.fn() );
-jest.mock( 'fair-events-shared', () => ( {
+jest.mock( 'fair-events-shared/src/form-utils.js', () => ( {
 	showMessage: jest.fn(),
 	onDomReady: ( cb ) => {
 		global.__fairEventsSignupInitialize = cb;
 	},
+	extractErrorMessage: jest.fn( ( _error, fallback ) => fallback ),
+	setButtonLoading: jest.fn( () => jest.fn() ),
+	wireNotYouButton: jest.fn(),
+} ) );
+jest.mock( 'fair-events-shared/src/payment-flow.js', () => ( {
 	initiatePayment: jest.fn( () => Promise.resolve( {} ) ),
 	pollPaymentStatus: jest.fn(),
+} ) );
+jest.mock( 'fair-events-shared/src/ticket-pricing.js', () => ( {
 	computeTicketTotal: jest.fn(
 		( { unitPrice, count = 1, optionPrices = [] } ) =>
 			unitPrice * count +
 			optionPrices.reduce( ( sum, price ) => sum + price, 0 )
 	),
 	formatMoney: jest.fn( ( amount ) => String( amount ) ),
+} ) );
+jest.mock( 'fair-events-shared/src/questionnaire.js', () => ( {
 	collectQuestionAnswers: jest.fn( () => ( {} ) ),
 	validateQuestions: jest.fn( () => null ),
 	applyQuestionAnswers: jest.fn(),
 	setupQuestionnaire: jest.fn(),
-	extractErrorMessage: jest.fn( ( _error, fallback ) => fallback ),
-	setButtonLoading: jest.fn( () => jest.fn() ),
-	wireNotYouButton: jest.fn(),
 } ) );
 
 // The module registers its DOM-ready callback (captured by the onDomReady
@@ -2386,6 +2394,401 @@ describe( 'Event Signup frontend.js — registering another person (#1528)', () 
 		expect( sent[ 1 ].event_date_id ).toBe( 43 );
 		expect( sent[ 0 ].idempotency_key ).not.toBe(
 			sent[ 1 ].idempotency_key
+		);
+	} );
+} );
+
+describe( 'Event Signup frontend.js — series date coverage (#1768)', () => {
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+
+	const DATES = [
+		{ id: 51, label: 'Sat, 1 Mar', full: false, signed_up: false },
+		{ id: 52, label: 'Sat, 8 Mar', full: false, signed_up: false },
+		{ id: 53, label: 'Sat, 15 Mar', full: false, signed_up: false },
+	];
+
+	function coverage( { full = [], wholeSeries = [ 51, 52, 53 ] } = {} ) {
+		return {
+			dates: DATES.map( ( date ) => ( {
+				...date,
+				full: full.includes( date.id ),
+			} ) ),
+			whole_series: wholeSeries,
+		};
+	}
+
+	// Mirrors render.php for a series form: ticket choices, the date
+	// controls, the whole-series list, the summary and the total.
+	function seriesForm( eventDateId, seriesCoverage ) {
+		const option = ( date ) =>
+			`<option value="${ date.id }">${ date.label }</option>`;
+		const checkbox = ( date ) =>
+			`<label class="fair-events-instance-option"><input type="checkbox" name="event_date_ids[]" value="${ date.id }" /><span class="fair-events-instance-option-text">${ date.label }</span></label>`;
+		return `
+			<div class="fair-events-get-tickets" data-event-date-id="${ eventDateId }" data-currency="EUR">
+				<form class="fair-events-get-tickets-form" data-event-date-id="${ eventDateId }" data-min-activities="0" data-currency="EUR" data-series-coverage='${ JSON.stringify(
+					seriesCoverage
+				) }'>
+					<div class="form-row"><fieldset class="fair-events-ticket-fieldset">
+						<label><input type="radio" name="ticket_type_id" value="1" data-ticket-name="Drop-in" data-ticket-price="12.00" data-recurrence-scope="single_instance" data-min-instances="0" checked>Drop-in</label>
+						<label><input type="radio" name="ticket_type_id" value="2" data-ticket-name="Class pack" data-ticket-price="10.00" data-recurrence-scope="multiple_instances" data-min-instances="2">Class pack</label>
+						<label><input type="radio" name="ticket_type_id" value="3" data-ticket-name="Season pass" data-ticket-price="40.00" data-recurrence-scope="whole_series" data-min-instances="0">Season pass</label>
+					</fieldset></div>
+					<div class="form-row fair-events-occurrence-picker" style="display: none;">
+						<select name="event_date_id_single">${ DATES.map( option ).join( '' ) }</select>
+						<p class="fair-events-date-picker-note" hidden></p>
+					</div>
+					<div class="form-row fair-events-instance-picker" style="display: none;">
+						<fieldset class="fair-events-instance-fieldset">
+							<p class="fair-events-instance-picker-hint"></p>
+							${ DATES.map( checkbox ).join( '' ) }
+							<p class="fair-events-date-picker-note" hidden></p>
+						</fieldset>
+					</div>
+					<div class="form-row fair-events-series-coverage" hidden>
+						<ul class="fair-events-series-coverage-list"></ul>
+						<p class="fair-events-series-coverage-note" hidden></p>
+					</div>
+					<div class="form-row"><input type="text" name="name" value="Buyer" required /></div>
+					<div class="form-row"><input type="email" name="email" value="buyer@example.test" required /></div>
+					<div class="form-row fair-events-quantity-row">
+						<input type="number" name="quantity" value="1" min="1" max="10" />
+					</div>
+					<div class="form-row fair-events-signup-coverage-summary" hidden>
+						<p class="fair-events-signup-coverage-summary-heading"></p>
+						<ul class="fair-events-signup-coverage-summary-dates"></ul>
+						<p class="fair-events-signup-coverage-summary-reason"></p>
+					</div>
+					<div class="form-row fair-events-signup-checkout-total" data-amount="12.00" data-currency="EUR" hidden>
+						<span class="fair-events-signup-checkout-total-amount">12.00 EUR</span>
+					</div>
+					<div class="form-row form-submit"><button type="submit" class="is-disabled" disabled>Get Tickets</button></div>
+				</form>
+				<div class="message-container"></div>
+			</div>`;
+	}
+
+	async function hydrated( {
+		seriesCoverage = coverage(),
+		response = noopResponse(),
+	} = {} ) {
+		document.body.innerHTML = seriesForm( 42, seriesCoverage );
+		apiFetch.mockResolvedValue( response );
+		initialize();
+		await settle();
+		return document.querySelector( 'form' );
+	}
+
+	function choose( input, checked = true ) {
+		input.checked = checked;
+		input.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+	}
+
+	function ticket( form, value ) {
+		return form.querySelector(
+			`input[name="ticket_type_id"][value="${ value }"]`
+		);
+	}
+
+	function dateBox( form, id ) {
+		return form.querySelector(
+			`input[name="event_date_ids[]"][value="${ id }"]`
+		);
+	}
+
+	function read( form ) {
+		const summary = form.querySelector(
+			'.fair-events-signup-coverage-summary'
+		);
+		const reason = summary.querySelector(
+			'.fair-events-signup-coverage-summary-reason'
+		);
+		const total = form.querySelector(
+			'.fair-events-signup-checkout-total'
+		);
+		return {
+			summaryHidden: summary.hidden,
+			heading: summary.querySelector(
+				'.fair-events-signup-coverage-summary-heading'
+			).textContent,
+			dates: Array.from(
+				summary.querySelectorAll(
+					'.fair-events-signup-coverage-summary-dates li'
+				)
+			).map( ( item ) => item.textContent ),
+			reason: reason.hidden ? null : reason.textContent,
+			totalHidden: total.hidden,
+			amount: total.dataset.amount,
+			submitDisabled: form.querySelector( 'button[type="submit"]' )
+				.disabled,
+		};
+	}
+
+	test( 'a one-date ticket summarizes the chosen date with its total', async () => {
+		const form = await hydrated();
+		const picker = form.querySelector( '.fair-events-occurrence-picker' );
+		expect( picker.style.display ).toBe( '' );
+		expect( read( form ) ).toEqual( {
+			summaryHidden: false,
+			heading: 'Drop-in covers 1 date:',
+			dates: [ 'Sat, 1 Mar' ],
+			reason: null,
+			totalHidden: false,
+			amount: '12.00',
+			submitDisabled: false,
+		} );
+
+		const select = form.querySelector( 'select' );
+		select.value = '53';
+		select.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+		expect( read( form ).dates ).toEqual( [ 'Sat, 15 Mar' ] );
+	} );
+
+	test( 'selected dates explain the minimum, then summarize and price each date', async () => {
+		const form = await hydrated();
+		choose( ticket( form, 2 ) );
+
+		expect(
+			form.querySelector( '.fair-events-instance-picker-hint' )
+				.textContent
+		).toBe( 'Choose at least 2 dates. Each date is priced separately.' );
+		expect( read( form ) ).toMatchObject( {
+			summaryHidden: false,
+			heading: 'Class pack',
+			dates: [],
+			reason: 'No dates selected yet. Choose at least 2 dates.',
+			totalHidden: true,
+			submitDisabled: true,
+		} );
+
+		choose( dateBox( form, 51 ) );
+		expect( read( form ) ).toMatchObject( {
+			heading: 'Class pack covers 1 date:',
+			dates: [ 'Sat, 1 Mar' ],
+			reason: 'Choose at least 2 dates to continue.',
+			totalHidden: true,
+		} );
+
+		choose( dateBox( form, 53 ) );
+		expect( read( form ) ).toMatchObject( {
+			heading: 'Class pack covers 2 dates:',
+			dates: [ 'Sat, 1 Mar', 'Sat, 15 Mar' ],
+			reason: null,
+			totalHidden: false,
+			amount: '20.00',
+			submitDisabled: false,
+		} );
+	} );
+
+	test( 'a whole-series ticket lists every covered date beside the choices and in the summary', async () => {
+		const form = await hydrated( {
+			seriesCoverage: coverage( { wholeSeries: [ 52, 53 ] } ),
+		} );
+		choose( ticket( form, 3 ) );
+
+		const list = form.querySelector( '.fair-events-series-coverage' );
+		expect( list.hidden ).toBe( false );
+		expect(
+			Array.from( list.querySelectorAll( 'li' ) ).map(
+				( item ) => item.textContent
+			)
+		).toEqual( [ 'Sat, 8 Mar', 'Sat, 15 Mar' ] );
+		expect(
+			form.querySelector( '.fair-events-occurrence-picker' ).style.display
+		).toBe( 'none' );
+		expect( read( form ) ).toMatchObject( {
+			heading: 'Season pass covers 2 dates:',
+			dates: [ 'Sat, 8 Mar', 'Sat, 15 Mar' ],
+			reason: null,
+			totalHidden: false,
+			amount: '40.00',
+		} );
+	} );
+
+	test( 'changing the ticket before purchase updates the summary, total and submitted dates', async () => {
+		const form = await hydrated();
+		choose( ticket( form, 2 ) );
+		choose( dateBox( form, 51 ) );
+		choose( dateBox( form, 52 ) );
+		expect( read( form ).amount ).toBe( '20.00' );
+
+		choose( ticket( form, 3 ) );
+		expect( read( form ) ).toMatchObject( {
+			heading: 'Season pass covers 3 dates:',
+			amount: '40.00',
+		} );
+		// The date choices of the previous ticket are not kept.
+		expect( dateBox( form, 51 ).checked ).toBe( false );
+
+		choose( ticket( form, 1 ) );
+		expect( read( form ) ).toMatchObject( {
+			heading: 'Drop-in covers 1 date:',
+			dates: [ 'Sat, 1 Mar' ],
+			amount: '12.00',
+		} );
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+		const { data } = initiatePayment.mock.calls.at( -1 )[ 0 ];
+		expect( data ).toMatchObject( {
+			ticket_type_id: 1,
+			event_date_id: 51,
+			quantity: 1,
+		} );
+		expect( data ).not.toHaveProperty( 'event_date_ids' );
+	} );
+
+	test( 'a full date stays listed with its reason and cannot be chosen', async () => {
+		const form = await hydrated( {
+			seriesCoverage: coverage( { full: [ 51 ] } ),
+		} );
+
+		const select = form.querySelector( 'select' );
+		expect( select.options[ 0 ].disabled ).toBe( true );
+		expect( select.options[ 0 ].textContent ).toBe( 'Sat, 1 Mar — full' );
+		// A full default gives way to the first date with a place.
+		expect( select.value ).toBe( '52' );
+		const note = form.querySelector(
+			'.fair-events-occurrence-picker .fair-events-date-picker-note'
+		);
+		expect( note.hidden ).toBe( false );
+		expect( note.textContent ).toBe(
+			'Dates marked full have no places left and can’t be selected.'
+		);
+
+		choose( ticket( form, 2 ) );
+		expect( dateBox( form, 51 ).disabled ).toBe( true );
+		expect( dateBox( form, 51 ).closest( 'label' ).textContent ).toContain(
+			'full'
+		);
+	} );
+
+	test( 'a whole-series ticket names the full dates that block it', async () => {
+		const form = await hydrated( {
+			seriesCoverage: coverage( { full: [ 52 ] } ),
+		} );
+		choose( ticket( form, 3 ) );
+
+		expect( read( form ) ).toMatchObject( {
+			dates: [ 'Sat, 1 Mar', 'Sat, 8 Mar — full', 'Sat, 15 Mar' ],
+			reason: 'This ticket can’t be bought right now because a date it covers is full: Sat, 8 Mar.',
+			totalHidden: true,
+			submitDisabled: true,
+		} );
+	} );
+
+	test( 'every date full: a one-date ticket explains it and stays unavailable', async () => {
+		const form = await hydrated( {
+			seriesCoverage: coverage( { full: [ 51, 52, 53 ] } ),
+		} );
+		expect( read( form ) ).toMatchObject( {
+			dates: [],
+			reason: 'Every date is full.',
+			totalHidden: true,
+			submitDisabled: true,
+		} );
+	} );
+
+	test( 'viewer-context availability replaces the cached page’s and drops a choice that filled up', async () => {
+		const form = await hydrated( {
+			response: {
+				...noopResponse(),
+				series_coverage: coverage( { full: [ 53 ] } ),
+			},
+		} );
+		choose( ticket( form, 2 ) );
+		expect( dateBox( form, 53 ).disabled ).toBe( true );
+
+		// Hydration of a recognised viewer marks the dates they hold.
+		document.body.innerHTML = seriesForm( 42, coverage() );
+		apiFetch.mockResolvedValue( {
+			...noopResponse(),
+			viewer_resolved: true,
+			occurrences_signed_up: [ 52 ],
+			series_coverage: {
+				...coverage(),
+				dates: coverage().dates.map( ( date ) => ( {
+					...date,
+					signed_up: date.id === 52,
+				} ) ),
+			},
+		} );
+		initialize();
+		await settle();
+		const select = document.querySelector( 'select' );
+		expect( select.options[ 1 ].textContent ).toBe(
+			'Sat, 8 Mar — already signed up'
+		);
+		expect( select.options[ 1 ].disabled ).toBe( false );
+	} );
+
+	test( 'a rejected checkout refreshes the dates; only the latest answer applies', async () => {
+		const form = await hydrated();
+		choose( ticket( form, 2 ) );
+		choose( dateBox( form, 51 ) );
+		choose( dateBox( form, 52 ) );
+
+		let answerFirst;
+		apiFetch
+			.mockImplementationOnce(
+				() =>
+					new Promise( ( resolve ) => {
+						answerFirst = resolve;
+					} )
+			)
+			.mockResolvedValueOnce( {
+				...noopResponse(),
+				series_coverage: coverage( { full: [ 52 ] } ),
+			} );
+		initiatePayment.mockImplementation( ( { onError } ) => {
+			onError( 'The date is full.', { code: 'event_full' } );
+			return Promise.reject( new Error( 'event_full' ) );
+		} );
+
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+		await settle();
+		// The earlier refresh answers last, with stale availability.
+		answerFirst( { ...noopResponse(), series_coverage: coverage() } );
+		await settle();
+		initiatePayment.mockImplementation( () => Promise.resolve( {} ) );
+
+		expect( dateBox( form, 52 ).disabled ).toBe( true );
+		expect( dateBox( form, 52 ).checked ).toBe( false );
+		expect( read( form ) ).toMatchObject( {
+			dates: [ 'Sat, 1 Mar' ],
+			reason: 'Choose at least 2 dates to continue.',
+			submitDisabled: true,
+		} );
+	} );
+
+	test( 'two blocks on one page keep their own selection and coverage', async () => {
+		document.body.innerHTML =
+			seriesForm( 42, coverage() ) +
+			seriesForm( 43, coverage( { full: [ 51 ] } ) );
+		apiFetch.mockResolvedValue( noopResponse() );
+		initialize();
+		await settle();
+		const [ first, second ] = document.querySelectorAll( 'form' );
+
+		choose( ticket( first, 3 ) );
+		expect( read( first ).heading ).toBe( 'Season pass covers 3 dates:' );
+		expect( read( second ) ).toMatchObject( {
+			heading: 'Drop-in covers 1 date:',
+			dates: [ 'Sat, 8 Mar' ],
+		} );
+		expect( second.querySelector( 'select' ).options[ 0 ].disabled ).toBe(
+			true
+		);
+		expect( first.querySelector( 'select' ).options[ 0 ].disabled ).toBe(
+			false
 		);
 	} );
 } );

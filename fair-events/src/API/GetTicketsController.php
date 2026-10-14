@@ -1729,6 +1729,11 @@ class GetTicketsController extends WP_REST_Controller {
 		// The form for another person: the selection fieldsets at the prices
 		// and with the ticket types of a visitor nobody remembers. Nothing a
 		// companion resolved about the browser's own identity is returned.
+		// Fresh series dates for every response, anonymous ones included: a
+		// cached page can show availability that has changed since, and the
+		// companion has marked the dates the viewer already holds.
+		$series_coverage = \FairEvents\Services\SeriesCoverage::for_event_date( $event_date_id, (array) ( $context['occurrences_for_picker'] ?? array() ) );
+
 		if ( $register_another_person ) {
 			$form_id  = 'fair-events-get-tickets-viewer-' . $event_date_id;
 			$response = array(
@@ -1745,6 +1750,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'occurrences_signed_up'        => array(),
 				'prefill_name'                 => '',
 				'prefill_email'                => '',
+				'series_coverage'              => $series_coverage,
 			);
 
 			if ( ! empty( $context['ticket_types'] ) ) {
@@ -1755,7 +1761,8 @@ class GetTicketsController extends WP_REST_Controller {
 					(int) $context['sale_period_count'],
 					$show_ticket_price,
 					$payments_unavailable,
-					$form_id
+					$form_id,
+					(bool) $series_coverage
 				);
 			}
 			$response['ticket_options_fieldset_html'] = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
@@ -1794,6 +1801,7 @@ class GetTicketsController extends WP_REST_Controller {
 			'occurrences_signed_up'        => $occurrences_signed_up,
 			'prefill_name'                 => (string) ( $context['prefill_name'] ?? '' ),
 			'prefill_email'                => (string) ( $context['prefill_email'] ?? '' ),
+			'series_coverage'              => $series_coverage,
 		);
 
 		// Anonymous majority case: no viewer was recognised, so there is
@@ -1816,7 +1824,8 @@ class GetTicketsController extends WP_REST_Controller {
 				(int) $context['sale_period_count'],
 				$show_ticket_price,
 				$payments_unavailable,
-				$form_id
+				$form_id,
+				(bool) $series_coverage
 			);
 			$response['ticket_options_fieldset_html'] = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
 				$context['ticket_options'],
