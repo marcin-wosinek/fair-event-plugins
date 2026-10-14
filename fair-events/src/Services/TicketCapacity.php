@@ -892,7 +892,7 @@ class TicketCapacity {
 	 * @param int $event_date_id Event date the ticket is bought from.
 	 * @return int[]
 	 */
-	private static function get_whole_series_occurrence_ids( int $event_date_id ) {
+	public static function get_whole_series_occurrence_ids( int $event_date_id ) {
 		global $wpdb;
 
 		$event_date = self::get_event_date_row( $event_date_id );

@@ -376,6 +376,30 @@ if ( $has_occurrence_dropdown ) {
 	}
 }
 
+// Each series date's label, whether it still has a place, and the dates a
+// whole-series ticket covers — the same rules checkout applies. frontend.js
+// reads this once into the form's state and refreshes it from the
+// viewer-context response, since a cached page can hold stale availability.
+$series_coverage   = \FairEvents\Services\SeriesCoverage::for_event_date( $event_date_id, $occurrences_for_picker );
+$full_date_ids     = array();
+$first_open_index  = null;
+$series_date_index = 0;
+foreach ( $series_coverage['dates'] ?? array() as $coverage_date ) {
+	if ( $coverage_date['full'] ) {
+		$full_date_ids[] = $coverage_date['id'];
+	} elseif ( null === $first_open_index && $series_date_index < count( $occurrences_for_picker ) ) {
+		$first_open_index = $series_date_index;
+	}
+	++$series_date_index;
+}
+// A full date is listed but never preselected.
+if ( $has_occurrence_dropdown
+	&& in_array( (int) $occurrences_for_picker[ $default_occurrence_index ]['id'], $full_date_ids, true )
+	&& null !== $first_open_index
+) {
+	$default_occurrence_index = $first_open_index;
+}
+
 // Fail closed on the visitor form too: when online payments can't be
 // collected (connector missing, or installed but unconfigured), a ticket type
 // priced above 0 is not purchasable — the endpoint would reject it. Disable
@@ -613,6 +637,9 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		data-currency="<?php echo esc_attr( \FairEventsShared\Money::site_currency() ); ?>"
 		data-event-date-id="<?php echo esc_attr( $event_date_id ); ?>"
 		data-min-activities="<?php echo esc_attr( (string) $minimum_activities ); ?>"
+		<?php if ( $series_coverage ) : ?>
+			data-series-coverage="<?php echo esc_attr( wp_json_encode( $series_coverage ) ); ?>"
+		<?php endif; ?>
 	>
 		<?php
 		/**
@@ -637,7 +664,8 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			$sale_period_count,
 			$show_ticket_price,
 			$payments_unavailable,
-			$form_id
+			$form_id,
+			(bool) $series_coverage
 		);
 		$ticket_options_fieldset_html = \FairEvents\Services\SignupFieldsetRenderer::ticket_options_fieldset(
 			$ticket_options,
@@ -649,9 +677,13 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			$form_id
 		);
 		echo $ticket_type_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
-		echo $ticket_options_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
 		?>
 
+		<?php
+		// The date controls for the chosen ticket follow the ticket choices
+		// directly; frontend.js shows the one that applies. Activities stay a
+		// separate choice after them.
+		?>
 		<?php if ( $has_occurrence_dropdown ) : ?>
 			<div class="form-row fair-events-occurrence-picker" style="display: none;">
 				<label for="<?php echo esc_attr( $form_id ); ?>-occ" class="form-label">
@@ -665,48 +697,73 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 							$occ_row['end_datetime'],
 							$occ_row['all_day']
 						);
+						$occ_full  = in_array( (int) $occ_row['id'], $full_date_ids, true );
+						if ( $occ_full ) {
+							$occ_label .= ' — ' . __( 'full', 'fair-events' );
+						}
 						if ( ! empty( $occ_row['signed_up'] ) ) {
 							$occ_label .= ' — ' . __( 'already signed up', 'fair-events' );
 						}
 						?>
-						<option value="<?php echo (int) $occ_row['id']; ?>" <?php echo $occ_index === $default_occurrence_index ? 'selected' : ''; ?>>
+						<option value="<?php echo (int) $occ_row['id']; ?>" <?php echo $occ_index === $default_occurrence_index ? 'selected' : ''; ?> <?php echo $occ_full ? 'disabled' : ''; ?>>
 							<?php echo esc_html( $occ_label ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
+				<p class="fair-events-date-picker-note" hidden></p>
 			</div>
 		<?php endif; ?>
 
 		<?php if ( $has_instance_picker ) : ?>
 			<div class="form-row fair-events-instance-picker" style="display: none;">
-				<span class="form-label"><?php esc_html_e( 'Choose occurrences', 'fair-events' ); ?></span>
-				<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
-					<?php
-					$occ_label     = \FairEvents\Helpers\DateRangeFormatter::format(
-						$occ_row['start_datetime'],
-						$occ_row['end_datetime'],
-						$occ_row['all_day']
-					);
-					$occ_signed_up = ! empty( $occ_row['signed_up'] );
-					if ( $occ_signed_up ) {
-						$occ_label .= ' — ' . __( 'already signed up', 'fair-events' );
-					}
-					$checkbox_id = $form_id . '-inst-' . (int) $occ_row['id'];
-					?>
-					<label class="fair-events-instance-option" for="<?php echo esc_attr( $checkbox_id ); ?>">
-						<input
-							type="checkbox"
-							name="event_date_ids[]"
-							id="<?php echo esc_attr( $checkbox_id ); ?>"
-							value="<?php echo (int) $occ_row['id']; ?>"
-							class="form-checkbox"
-						/>
-						<?php echo esc_html( $occ_label ); ?>
-					</label>
-				<?php endforeach; ?>
-				<p class="fair-events-instance-picker-hint"></p>
+				<fieldset class="fair-events-instance-fieldset">
+					<legend class="form-label"><?php esc_html_e( 'Choose your dates', 'fair-events' ); ?></legend>
+					<p class="fair-events-instance-picker-hint"></p>
+					<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
+						<?php
+						$occ_label     = \FairEvents\Helpers\DateRangeFormatter::format(
+							$occ_row['start_datetime'],
+							$occ_row['end_datetime'],
+							$occ_row['all_day']
+						);
+						$occ_full      = in_array( (int) $occ_row['id'], $full_date_ids, true );
+						$occ_signed_up = ! empty( $occ_row['signed_up'] );
+						if ( $occ_full ) {
+							$occ_label .= ' — ' . __( 'full', 'fair-events' );
+						}
+						if ( $occ_signed_up ) {
+							$occ_label .= ' — ' . __( 'already signed up', 'fair-events' );
+						}
+						$checkbox_id = $form_id . '-inst-' . (int) $occ_row['id'];
+						?>
+						<label class="fair-events-instance-option" for="<?php echo esc_attr( $checkbox_id ); ?>">
+							<input
+								type="checkbox"
+								name="event_date_ids[]"
+								id="<?php echo esc_attr( $checkbox_id ); ?>"
+								value="<?php echo (int) $occ_row['id']; ?>"
+								class="form-checkbox"
+								<?php echo $occ_full ? 'disabled' : ''; ?>
+							/>
+							<span class="fair-events-instance-option-text"><?php echo esc_html( $occ_label ); ?></span>
+						</label>
+					<?php endforeach; ?>
+					<p class="fair-events-date-picker-note" hidden></p>
+				</fieldset>
 			</div>
 		<?php endif; ?>
+
+		<?php if ( $series_coverage ) : ?>
+			<div class="form-row fair-events-series-coverage" hidden>
+				<span class="form-label"><?php esc_html_e( 'Dates included', 'fair-events' ); ?></span>
+				<ul class="fair-events-series-coverage-list"></ul>
+				<p class="fair-events-series-coverage-note" hidden></p>
+			</div>
+		<?php endif; ?>
+
+		<?php
+		echo $ticket_options_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
+		?>
 
 		<div class="form-row">
 			<label for="<?php echo esc_attr( $form_id ); ?>-name" class="form-label">
@@ -818,6 +875,17 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		}
 		global $wp_locale;
 		?>
+		<?php if ( $series_coverage ) : ?>
+			<?php
+			// What the selected ticket covers, or why it can't be bought yet,
+			// kept current by frontend.js from the form's state.
+			?>
+			<div class="form-row fair-events-signup-coverage-summary" role="status" aria-live="polite" hidden>
+				<p class="fair-events-signup-coverage-summary-heading"></p>
+				<ul class="fair-events-signup-coverage-summary-dates"></ul>
+				<p class="fair-events-signup-coverage-summary-reason"></p>
+			</div>
+		<?php endif; ?>
 		<div
 			class="form-row fair-events-signup-checkout-total"
 			data-amount="<?php echo esc_attr( \FairEventsShared\Money::format_value( $checkout_total ) ); ?>"

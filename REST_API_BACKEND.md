@@ -629,7 +629,15 @@ sub-route) expose:
     in-form render-slot actions' captured output, HTML or `null`),
     `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`,
     and the non-secret `token_identity_validated` boolean. The token itself and
-    participant ID are never returned.
+    participant ID are never returned. Every response — anonymous and
+    register-another-person ones included — also carries `series_coverage`
+    (`SeriesCoverage::for_event_date()`, `null` outside a series): each
+    upcoming date as `{ id, label, full, signed_up }`, with `label` formatted
+    site-local, and `whole_series`, the dates a whole-series ticket bought now
+    covers (TicketCapacity's rule). render.php embeds the same payload as the
+    form's `data-series-coverage`; frontend.js reads that once into the
+    form's state and replaces it from this response, since a cached page can
+    show stale availability.
     frontend.js places `existing_signup_html` in a
     `fair-events-get-tickets-existing` wrapper just before the `<form>`,
     outside it, so none of its controls is validated or submitted with a new

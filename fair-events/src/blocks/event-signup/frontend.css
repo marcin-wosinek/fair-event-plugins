@@ -167,6 +167,123 @@
 	margin-bottom: 0;
 }
 
+/* A series ticket: its name, then what it covers and what the price is for. */
+.fair-events-get-tickets-form .fair-events-ticket-option.has-scope {
+	align-items: flex-start;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option.has-scope input {
+	margin-top: 0.3em;
+	flex-shrink: 0;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option-details {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option-scope {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 8px;
+	color: #50575e;
+	font-size: 0.9em;
+}
+
+.fair-events-get-tickets-form .fair-events-ticket-option-scope strong {
+	font-weight: 600;
+}
+
+/* Date choices for the selected series ticket. */
+.fair-events-get-tickets-form .fair-events-instance-fieldset {
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	padding: 12px 16px;
+	margin: 0;
+}
+
+.fair-events-get-tickets-form .fair-events-instance-fieldset legend {
+	padding: 0 4px;
+}
+
+.fair-events-get-tickets-form .fair-events-instance-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+	font-weight: normal;
+	cursor: pointer;
+}
+
+.fair-events-get-tickets-form .fair-events-instance-option-text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-get-tickets-form .fair-events-instance-option:has(input:disabled) {
+	color: #646970;
+	cursor: not-allowed;
+}
+
+.fair-events-get-tickets-form .fair-events-instance-picker-hint,
+.fair-events-get-tickets-form .fair-events-date-picker-note,
+.fair-events-get-tickets-form .fair-events-series-coverage-note {
+	margin: 4px 0 8px;
+	color: #50575e;
+	font-size: 0.9em;
+}
+
+.fair-events-get-tickets-form .fair-events-series-coverage-list,
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary-dates {
+	margin: 0;
+	padding-left: 1.25em;
+}
+
+.fair-events-get-tickets-form .fair-events-series-coverage-list li,
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary-dates li {
+	overflow-wrap: anywhere;
+}
+
+/* What the selected ticket covers, directly above the total. */
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary {
+	max-width: 400px;
+	padding: 12px 16px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary[hidden],
+.fair-events-get-tickets-form .fair-events-series-coverage[hidden] {
+	display: none;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary p {
+	margin: 0;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary-heading {
+	font-weight: 600;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary-dates {
+	margin: 4px 0 0;
+}
+
+.fair-events-get-tickets-form .fair-events-signup-coverage-summary-reason {
+	margin-top: 4px;
+	color: #8a2424;
+}
+
+.fair-events-get-tickets-form
+	.fair-events-signup-coverage-summary-reason[hidden],
+.fair-events-get-tickets-form
+	.fair-events-signup-coverage-summary-dates[hidden] {
+	display: none;
+}
+
 .fair-events-get-tickets-form .form-checkbox-label {
 	display: flex;
 	align-items: center;
