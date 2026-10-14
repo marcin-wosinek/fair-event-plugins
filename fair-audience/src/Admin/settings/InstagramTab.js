@@ -2,9 +2,10 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
+	Modal,
 	Notice,
 	Card,
 	CardBody,
@@ -50,6 +51,12 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 	// Test connection state.
 	const [ isTesting, setIsTesting ] = useState( false );
 	const [ testResult, setTestResult ] = useState( null );
+
+	// Disconnect confirmation state.
+	const [ confirmingDisconnect, setConfirmingDisconnect ] = useState( false );
+	const [ disconnectError, setDisconnectError ] = useState( null );
+	// Refuses a second submission before the first one re-rendered the popup.
+	const disconnectInFlight = useRef( false );
 
 	/**
 	 * Load Instagram settings from API
@@ -237,21 +244,30 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 	};
 
 	/**
-	 * Handle Disconnect button click
+	 * Ask before disconnecting, in a popup naming the account.
 	 */
 	const handleDisconnect = () => {
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to disconnect from Instagram?',
-					'fair-audience'
-				)
-			)
-		) {
+		setDisconnectError( null );
+		setConfirmingDisconnect( true );
+	};
+
+	// Closing mid-request would hide whether the account was disconnected.
+	const closeDisconnect = () => {
+		if ( ! disconnectInFlight.current ) {
+			setConfirmingDisconnect( false );
+		}
+	};
+
+	/**
+	 * Clear the stored token and connection details.
+	 */
+	const confirmDisconnect = () => {
+		if ( disconnectInFlight.current ) {
 			return;
 		}
-
+		disconnectInFlight.current = true;
 		setIsSaving( true );
+		setDisconnectError( null );
 		setTestResult( null );
 
 		saveSettings( {
@@ -262,6 +278,7 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 			fair_audience_instagram_connected: false,
 		} )
 			.then( () => {
+				setConfirmingDisconnect( false );
 				loadSettings();
 				onNotice( {
 					status: 'success',
@@ -270,16 +287,56 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 						'fair-audience'
 					),
 				} );
-				setIsSaving( false );
 			} )
-			.catch( () => {
-				onNotice( {
-					status: 'error',
-					message: __( 'Failed to disconnect.', 'fair-audience' ),
-				} );
+			.catch( ( error ) => {
+				setDisconnectError(
+					error?.message
+						? sprintf(
+								/* translators: %s: error message */
+								__(
+									'Instagram could not be disconnected: %s',
+									'fair-audience'
+								),
+								error.message
+						  )
+						: __(
+								'Instagram could not be disconnected. Try again.',
+								'fair-audience'
+						  )
+				);
+			} )
+			.finally( () => {
+				disconnectInFlight.current = false;
 				setIsSaving( false );
 			} );
 	};
+
+	// The account as the site knows it: never its access token.
+	let disconnectQuestion;
+	if ( username ) {
+		disconnectQuestion = sprintf(
+			/* translators: %s: Instagram username */
+			__(
+				'Disconnect the Instagram account @%s from this site?',
+				'fair-audience'
+			),
+			username
+		);
+	} else if ( userId ) {
+		disconnectQuestion = sprintf(
+			/* translators: %s: Instagram account ID */
+			__(
+				'Disconnect the Instagram account with ID %s from this site?',
+				'fair-audience'
+			),
+			userId
+		);
+	} else {
+		disconnectQuestion = __(
+			'Disconnect the Instagram account connected to this site? Its username and ID are not available.',
+			'fair-audience'
+		);
+	}
 
 	if ( isLoading ) {
 		return (
@@ -817,6 +874,69 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 							</Button>
 						</div>
 					</>
+				) }
+
+				{ confirmingDisconnect && (
+					<Modal
+						title={ __( 'Disconnect Instagram?', 'fair-audience' ) }
+						onRequestClose={ closeDisconnect }
+						style={ {
+							maxWidth: '520px',
+							width: '100%',
+							overflowWrap: 'anywhere',
+						} }
+					>
+						<p style={ { marginTop: 0 } }>
+							<strong>{ disconnectQuestion }</strong>
+						</p>
+						<p>
+							{ __(
+								'The access token and connection details stored on this site are removed. Until you reconnect with “Connect with Instagram” or enter a valid access token again, this site cannot publish to Instagram.',
+								'fair-audience'
+							) }
+						</p>
+						<p>
+							{ __(
+								'Posts already published on Instagram, and the post records on this site, are kept.',
+								'fair-audience'
+							) }
+						</p>
+						{ disconnectError && (
+							<div style={ { marginBottom: '16px' } }>
+								<Notice status="error" isDismissible={ false }>
+									{ disconnectError }
+								</Notice>
+							</div>
+						) }
+						<div
+							style={ {
+								display: 'flex',
+								justifyContent: 'flex-end',
+								flexWrap: 'wrap',
+								gap: '10px',
+							} }
+						>
+							<Button
+								variant="secondary"
+								onClick={ closeDisconnect }
+								disabled={ isSaving }
+							>
+								{ __( 'Keep connected', 'fair-audience' ) }
+							</Button>
+							<Button
+								variant="primary"
+								isDestructive
+								onClick={ confirmDisconnect }
+								isBusy={ isSaving }
+								disabled={ isSaving }
+							>
+								{ __(
+									'Disconnect Instagram',
+									'fair-audience'
+								) }
+							</Button>
+						</div>
+					</Modal>
 				) }
 			</CardBody>
 		</Card>

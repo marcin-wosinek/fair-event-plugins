@@ -6,6 +6,7 @@ import {
 	Button,
 	CheckboxControl,
 	Modal,
+	Notice,
 	Spinner,
 	SelectControl,
 	TextControl,
@@ -23,6 +24,10 @@ import {
 } from './ticketLabels.js';
 import AssignTicketModal, { personLabel } from './AssignTicketModal.js';
 import RemoveParticipantModal from './RemoveParticipantModal.js';
+import InvitationSummary, {
+	invitationBlockReason,
+	useInvitationPreview,
+} from '../components/InvitationSummary.js';
 import {
 	MoveTicketModal,
 	CancelTicketModal,
@@ -220,6 +225,9 @@ export default function EventAudience( {
 	const [ invitedGroups, setInvitedGroups ] = useState( [] );
 	const [ inviteModalOpen, setInviteModalOpen ] = useState( false );
 	const [ isSendingInvitations, setIsSendingInvitations ] = useState( false );
+	const [ invitationError, setInvitationError ] = useState( null );
+	// Refuses a second submission before the first one re-rendered the popup.
+	const invitationInFlight = useRef( false );
 
 	// Edit options modal state
 	const [ editingParticipant, setEditingParticipant ] = useState( null );
@@ -724,23 +732,41 @@ export default function EventAudience( {
 		}
 	};
 
-	const totalInvitees = useMemo(
-		() =>
-			invitedGroups.reduce(
-				( acc, g ) => acc + ( g.member_count || 0 ),
-				0
-			),
-		[ invitedGroups ]
+	const invitationPreview = useInvitationPreview(
+		inviteModalOpen ? eventDateId : null,
+		{ groupIds: invitedGroups.map( ( g ) => g.id ) }
 	);
+	const invitationBlocked = invitationBlockReason( invitationPreview );
+
+	const openInviteModal = () => {
+		setInvitationError( null );
+		setInviteModalOpen( true );
+	};
+
+	// Closing mid-request would hide the result of a send already under way.
+	const closeInviteModal = () => {
+		if ( ! invitationInFlight.current ) {
+			setInviteModalOpen( false );
+		}
+	};
 
 	const handleSendInvitations = async () => {
-		if ( invitedGroups.length === 0 ) return;
+		if ( invitationBlocked || invitationInFlight.current ) {
+			return;
+		}
+		invitationInFlight.current = true;
 		setIsSendingInvitations( true );
+		setInvitationError( null );
 		try {
+			// Exactly the people the summary counted: the server checks each
+			// one again, but invites nobody who joined a group since.
 			const response = await apiFetch( {
 				path: `/fair-audience/v1/event-dates/${ eventDateId }/event-invitations`,
 				method: 'POST',
-				data: { group_ids: invitedGroups.map( ( g ) => g.id ) },
+				data: {
+					participant_ids:
+						invitationPreview.data.eligible_participant_ids,
+				},
 			} );
 			setInviteModalOpen( false );
 			const sent = response.sent_count ?? 0;
@@ -749,25 +775,54 @@ export default function EventAudience( {
 				? response.failed.length
 				: 0;
 			showToast(
-				sprintf(
-					/* translators: 1: number of sent invitations, 2: number of skipped recipients, 3: number of failures */
-					__(
-						'Sent %1$d invitation(s). Skipped %2$d, failed %3$d.',
-						'fair-audience'
+				[
+					sprintf(
+						/* translators: %d: number of sent invitations */
+						_n(
+							'%d invitation sent.',
+							'%d invitations sent.',
+							sent,
+							'fair-audience'
+						),
+						sent
 					),
-					sent,
-					skipped,
-					failed
-				),
+					skipped > 0 &&
+						sprintf(
+							/* translators: %d: number of skipped recipients */
+							_n(
+								'%d skipped.',
+								'%d skipped.',
+								skipped,
+								'fair-audience'
+							),
+							skipped
+						),
+					failed > 0 &&
+						sprintf(
+							/* translators: %d: number of failed invitations */
+							_n(
+								'%d could not be sent.',
+								'%d could not be sent.',
+								failed,
+								'fair-audience'
+							),
+							failed
+						),
+				]
+					.filter( Boolean )
+					.join( ' ' ),
 				failed > 0 ? 'error' : 'success'
 			);
 		} catch ( err ) {
-			showToast(
-				__( 'Error sending invitations: ', 'fair-audience' ) +
-					err.message,
-				'error'
+			setInvitationError(
+				err?.message ||
+					__(
+						'The invitations could not be sent. Try again.',
+						'fair-audience'
+					)
 			);
 		} finally {
+			invitationInFlight.current = false;
 			setIsSendingInvitations( false );
 		}
 	};
@@ -2399,9 +2454,7 @@ export default function EventAudience( {
 									{ invitedGroups.length > 0 && (
 										<Button
 											variant="secondary"
-											onClick={ () =>
-												setInviteModalOpen( true )
-											}
+											onClick={ openInviteModal }
 										>
 											{ __(
 												'Send Invitations',
@@ -2499,53 +2552,50 @@ export default function EventAudience( {
 			{ inviteModalOpen && (
 				<Modal
 					title={ __( 'Send Invitations', 'fair-audience' ) }
-					onRequestClose={ () => setInviteModalOpen( false ) }
-					style={ { maxWidth: '480px', width: '100%' } }
+					onRequestClose={ closeInviteModal }
+					style={ {
+						maxWidth: '560px',
+						width: '100%',
+						overflowWrap: 'anywhere',
+					} }
 				>
 					<VStack spacing={ 3 }>
 						<p style={ { margin: 0 } }>
 							{ __(
-								'Send event invitation emails to members of the following groups? Participants who are already signed up will be skipped.',
+								'Members of the groups invited to this date receive an invitation email with a signup link.',
 								'fair-audience'
 							) }
 						</p>
-						<ul style={ { margin: 0, paddingLeft: '20px' } }>
-							{ invitedGroups.map( ( g ) => (
-								<li key={ g.id }>
-									<strong>{ g.name }</strong>
-									{ ' — ' }
-									{ sprintf(
-										/* translators: %d: number of group members */
-										_n(
-											'%d member',
-											'%d members',
-											g.member_count || 0,
-											'fair-audience'
-										),
-										g.member_count || 0
-									) }
-								</li>
-							) ) }
-						</ul>
-						<p style={ { margin: 0 } }>
-							<strong>
-								{ sprintf(
-									/* translators: %d: total number of potential invitees */
-									__(
-										'Total: up to %d invitations',
-										'fair-audience'
-									),
-									totalInvitees
-								) }
-							</strong>
-						</p>
+						<InvitationSummary
+							eventTitle={ eventTitle }
+							dateLabel={ currentDateLabel }
+							groups={ invitedGroups }
+							preview={ invitationPreview }
+						/>
+						{ invitationError && (
+							<Notice status="error" isDismissible={ false }>
+								{ invitationError }
+							</Notice>
+						) }
 						<HStack
 							spacing={ 3 }
+							wrap
 							style={ { justifyContent: 'flex-end' } }
 						>
+							{ invitationBlocked && (
+								<span
+									className="fair-audience-invitation-block-reason"
+									style={ {
+										color: '#646970',
+										marginRight: 'auto',
+									} }
+								>
+									{ invitationBlocked }
+								</span>
+							) }
 							<Button
 								variant="secondary"
-								onClick={ () => setInviteModalOpen( false ) }
+								onClick={ closeInviteModal }
 								disabled={ isSendingInvitations }
 							>
 								{ __( 'Cancel', 'fair-audience' ) }
@@ -2555,11 +2605,25 @@ export default function EventAudience( {
 								onClick={ handleSendInvitations }
 								isBusy={ isSendingInvitations }
 								disabled={
-									isSendingInvitations || totalInvitees === 0
+									!! invitationBlocked || isSendingInvitations
 								}
 							>
 								{ isSendingInvitations
 									? __( 'Sending…', 'fair-audience' )
+									: invitationPreview.status === 'ready' &&
+									  invitationPreview.data.eligible_count > 0
+									? sprintf(
+											/* translators: %d: number of invitations to send */
+											_n(
+												'Send %d invitation',
+												'Send %d invitations',
+												invitationPreview.data
+													.eligible_count,
+												'fair-audience'
+											),
+											invitationPreview.data
+												.eligible_count
+									  )
 									: __(
 											'Send Invitations',
 											'fair-audience'
