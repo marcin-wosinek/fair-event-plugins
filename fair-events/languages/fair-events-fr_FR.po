@@ -370,7 +370,7 @@ msgstr "Afficher la navigation des mois précédent/suivant"
 
 #: src/Admin/AdminPages.php:94
 #: src/Admin/AdminPages.php:111
-#: src/Admin/calendar/CalendarApp.js:182
+#: src/Admin/calendar/CalendarApp.js:366
 msgid "Events Calendar"
 msgstr "Calendrier des événements"
 
@@ -651,7 +651,7 @@ msgstr "Calendrier"
 #: src/Admin/AdminPages.php:165
 #: src/Admin/AdminPages.php:172
 #: src/Hooks/AdminBarHooks.php:59
-#: src/Admin/calendar/CalendarApp.js:197
+#: src/Admin/calendar/CalendarApp.js:393
 #: src/Admin/manage-event/ManageEventApp.js:1135
 #: src/Admin/manage-event/ManageEventApp.js:1555
 msgid "Manage Event"
@@ -825,12 +825,12 @@ msgstr "Numéro de page."
 msgid "Post types that can have event data"
 msgstr "Types de publications qui peuvent avoir des données d'événement"
 
-#: src/Admin/calendar/CalendarApp.js:95
+#: src/Admin/calendar/CalendarApp.js:258
 msgid "Failed to load events."
 msgstr "Échec du chargement des événements."
 
 #. translators: %s: event title
-#: src/Admin/calendar/CalendarApp.js:192
+#: src/Admin/calendar/CalendarApp.js:388
 #, js-format
 msgid "Event \"%s\" created."
 msgstr "Événement « %s » créé."
@@ -2686,7 +2686,7 @@ msgstr "Nombre d'occurrences"
 msgid "Sitewide organizer identity for structured data"
 msgstr "Identité de l'organisateur à l'échelle du site pour les données structurées"
 
-#: src/Admin/calendar/components/CalendarGrid.js:123
+#: src/Admin/calendar/components/CalendarGrid.js:131
 msgid "No events this month."
 msgstr "Aucun événement ce mois-ci."
 
@@ -3994,11 +3994,13 @@ msgstr "Copier dans le presse-papiers"
 msgid "Whether to include categories from every configured Polylang language."
 msgstr "S'il faut inclure les catégories de chaque langue Polylang configurée."
 
+#: src/Admin/calendar/CalendarApp.js:194
 #: src/blocks/components/CategorySelector.js:41
 msgid "Failed to load categories."
 msgstr "Échec du chargement des catégories."
 
 #. translators: 1: category name, 2: language name
+#: src/Admin/calendar/CalendarApp.js:111
 #: src/Admin/manage-event/ManageEventApp.js:248
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
@@ -6784,3 +6786,19 @@ msgstr "(par %s)"
 #, php-format
 msgid "(by @%s)"
 msgstr "(par @%s)"
+
+#: src/Admin/calendar/CalendarApp.js:344
+msgid "All categories"
+msgstr "Toutes les catégories"
+
+#: src/Admin/calendar/CalendarApp.js:354
+msgid "Selected category"
+msgstr "Catégorie sélectionnée"
+
+#: src/Admin/calendar/CalendarApp.js:372
+msgid "Category"
+msgstr "Catégorie"
+
+#: src/Admin/calendar/CalendarApp.js:433
+msgid "No events match this category."
+msgstr "Aucun événement ne correspond à cette catégorie."

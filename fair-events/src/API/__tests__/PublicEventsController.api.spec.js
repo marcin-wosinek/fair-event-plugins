@@ -389,3 +389,207 @@ test.describe( 'PublicEventsController — location field', () => {
 		expect( event ).not.toHaveProperty( 'location' );
 	} );
 } );
+
+// The admin calendar's category filter (#1850) relies on the `categories`
+// parameter matching exactly — every representation of an event, no
+// descendant categories — so the filtered calendar agrees with the feed.
+test.describe( 'PublicEventsController — category filter matching', () => {
+	const RANGE = 'start_date=2035-09-01&end_date=2035-09-30&per_page=500';
+	let api;
+	const categories = {};
+	const eventDateIds = {};
+	const postIds = [];
+	let seriesIds = [];
+
+	async function createCategory( key, extra = {} ) {
+		const res = await api.post( '/wp-json/wp/v2/categories', {
+			headers: adminHeaders,
+			data: {
+				name: `Calendar filter ${ key } ${ Date.now() }`,
+				...extra,
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+		categories[ key ] = await res.json();
+	}
+
+	async function createStandalone( key, day, categoryIds ) {
+		const res = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Calendar filter ${ key } ${ Date.now() }`,
+				start_datetime: `2035-09-${ day } 10:00:00`,
+				end_datetime: `2035-09-${ day } 12:00:00`,
+				link_type: 'none',
+				categories: categoryIds,
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+		eventDateIds[ key ] = ( await res.json() ).id;
+	}
+
+	async function createPostLinked( key, day, { postCategories, rrule } ) {
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Calendar filter ${ key } ${ Date.now() }`,
+				status: 'publish',
+				categories: postCategories,
+			},
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const postId = ( await postRes.json() ).id;
+		postIds.push( postId );
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title: `Calendar filter ${ key } ${ Date.now() }`,
+				link_type: 'post',
+				start_datetime: `2035-09-${ day } 18:00:00`,
+				end_datetime: `2035-09-${ day } 20:00:00`,
+			},
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		const eventDateId = ( await edRes.json() ).id;
+
+		// link_type must be repeated: the update endpoint defaults it to none.
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{
+				headers: adminHeaders,
+				data: {
+					event_id: postId,
+					link_type: 'post',
+					...( rrule ? { rrule } : {} ),
+				},
+			}
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+		eventDateIds[ key ] = eventDateId;
+		return linkRes.json();
+	}
+
+	async function feedIds( categoryKey ) {
+		const filter = categoryKey
+			? `&categories=${ categories[ categoryKey ].slug }`
+			: '';
+		const res = await api.get(
+			`/wp-json/fair-events/v1/events?${ RANGE }${ filter }`
+		);
+		expect( res.ok() ).toBeTruthy();
+		return ( await res.json() ).events.map( ( e ) => e.event_date_id );
+	}
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		await createCategory( 'music' );
+		await createCategory( 'sports' );
+		await createCategory( 'jazz', { parent: categories.music.id } );
+		await createCategory( 'empty' );
+
+		await createStandalone( 'multi', '02', [
+			categories.music.id,
+			categories.sports.id,
+		] );
+		await createStandalone( 'sportsOnly', '03', [ categories.sports.id ] );
+		await createStandalone( 'jazzOnly', '04', [ categories.jazz.id ] );
+		await createStandalone( 'uncategorized', '05', [] );
+
+		// Post-linked series: generated occurrences inherit the master's
+		// categories, which come from the linked post's terms.
+		const series = await createPostLinked( 'series', '07', {
+			postCategories: [ categories.music.id ],
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+		} );
+		expect( series.generated_occurrences.length ).toBe( 2 );
+		seriesIds = [
+			eventDateIds.series,
+			...series.generated_occurrences.map( ( o ) => o.id ),
+		];
+
+		await createPostLinked( 'sportsPost', '08', {
+			postCategories: [ categories.sports.id ],
+		} );
+	} );
+
+	test.afterAll( async () => {
+		for ( const key of [
+			'multi',
+			'sportsOnly',
+			'jazzOnly',
+			'uncategorized',
+		] ) {
+			if ( eventDateIds[ key ] ) {
+				await api.delete(
+					`/wp-json/fair-events/v1/event-dates/${ eventDateIds[ key ] }`,
+					{ headers: adminHeaders }
+				);
+			}
+		}
+		for ( const postId of postIds ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const key of [ 'jazz', 'music', 'sports', 'empty' ] ) {
+			if ( categories[ key ] ) {
+				await api.delete(
+					`/wp-json/wp/v2/categories/${ categories[ key ].id }?force=true`,
+					{ headers: adminHeaders }
+				);
+			}
+		}
+	} );
+
+	test( 'a category matches multi-category events and every series occurrence', async () => {
+		const ids = await feedIds( 'music' );
+
+		expect( ids ).toContain( eventDateIds.multi );
+		for ( const id of seriesIds ) {
+			expect( ids ).toContain( id );
+		}
+		expect( ids ).not.toContain( eventDateIds.sportsOnly );
+		expect( ids ).not.toContain( eventDateIds.sportsPost );
+		expect( ids ).not.toContain( eventDateIds.uncategorized );
+	} );
+
+	test( 'standalone and post-linked events match the same category', async () => {
+		const ids = await feedIds( 'sports' );
+
+		expect( ids ).toContain( eventDateIds.multi );
+		expect( ids ).toContain( eventDateIds.sportsOnly );
+		expect( ids ).toContain( eventDateIds.sportsPost );
+		for ( const id of seriesIds ) {
+			expect( ids ).not.toContain( id );
+		}
+	} );
+
+	test( 'a parent category does not include its descendants', async () => {
+		expect( await feedIds( 'music' ) ).not.toContain(
+			eventDateIds.jazzOnly
+		);
+		expect( await feedIds( 'jazz' ) ).toEqual( [ eventDateIds.jazzOnly ] );
+	} );
+
+	test( 'a category without events returns an empty list', async () => {
+		expect( await feedIds( 'empty' ) ).toEqual( [] );
+	} );
+
+	test( 'no filter returns every event, including uncategorized ones', async () => {
+		const ids = await feedIds( null );
+
+		for ( const id of [
+			eventDateIds.multi,
+			eventDateIds.sportsOnly,
+			eventDateIds.jazzOnly,
+			eventDateIds.uncategorized,
+			eventDateIds.sportsPost,
+			...seriesIds,
+		] ) {
+			expect( ids ).toContain( id );
+		}
+	} );
+} );
