@@ -22,9 +22,12 @@ class DateRangeFormatter {
 	 * @param string $start_datetime Naive 'Y-m-d H:i:s' start datetime in site-local time.
 	 * @param string $end_datetime   Naive 'Y-m-d H:i:s' end datetime in site-local time, or empty.
 	 * @param bool   $all_day        Whether the event is all-day.
+	 * @param bool   $always_show_year Whether to show the year even when it is
+	 *                                 the current year (e.g. for a selected
+	 *                                 session, which may be in any year).
 	 * @return string Formatted date range, or empty string if no start datetime.
 	 */
-	public static function format( $start_datetime, $end_datetime, $all_day ) {
+	public static function format( $start_datetime, $end_datetime, $all_day, $always_show_year = false ) {
 		if ( empty( $start_datetime ) ) {
 			return '';
 		}
@@ -37,10 +40,10 @@ class DateRangeFormatter {
 		$end_timestamp = $end_datetime ? DateHelper::local_to_timestamp( $end_datetime ) : null;
 
 		if ( $all_day ) {
-			return self::format_all_day( $start_timestamp, $end_timestamp );
+			return self::format_all_day( $start_timestamp, $end_timestamp, $always_show_year );
 		}
 
-		return self::format_timed( $start_timestamp, $end_timestamp );
+		return self::format_timed( $start_timestamp, $end_timestamp, $always_show_year );
 	}
 
 	/**
@@ -48,13 +51,15 @@ class DateRangeFormatter {
 	 *
 	 * @param int      $start_timestamp Start Unix timestamp.
 	 * @param int|null $end_timestamp   End Unix timestamp, or null.
+	 * @param bool     $always_show_year Whether to show the current year too.
 	 * @return string Formatted date range.
 	 */
-	private static function format_all_day( $start_timestamp, $end_timestamp ) {
-		$start_day    = wp_date( 'j', $start_timestamp );
-		$start_month  = wp_date( 'F', $start_timestamp );
-		$start_year   = wp_date( 'Y', $start_timestamp );
-		$current_year = wp_date( 'Y' );
+	private static function format_all_day( $start_timestamp, $end_timestamp, $always_show_year ) {
+		$start_day   = wp_date( 'j', $start_timestamp );
+		$start_month = wp_date( 'F', $start_timestamp );
+		$start_year  = wp_date( 'Y', $start_timestamp );
+		// No year ever equals '', so every year comparison below adds the year.
+		$current_year = $always_show_year ? '' : wp_date( 'Y' );
 
 		if ( ! $end_timestamp ) {
 			$single = $start_day . ' ' . $start_month;
@@ -104,14 +109,16 @@ class DateRangeFormatter {
 	 *
 	 * @param int      $start_timestamp Start Unix timestamp.
 	 * @param int|null $end_timestamp   End Unix timestamp, or null.
+	 * @param bool     $always_show_year Whether to show the current year too.
 	 * @return string Formatted date range.
 	 */
-	private static function format_timed( $start_timestamp, $end_timestamp ) {
-		$start_time   = wp_date( 'H:i', $start_timestamp );
-		$start_day    = wp_date( 'j', $start_timestamp );
-		$start_month  = wp_date( 'F', $start_timestamp );
-		$start_year   = wp_date( 'Y', $start_timestamp );
-		$current_year = wp_date( 'Y' );
+	private static function format_timed( $start_timestamp, $end_timestamp, $always_show_year ) {
+		$start_time  = wp_date( 'H:i', $start_timestamp );
+		$start_day   = wp_date( 'j', $start_timestamp );
+		$start_month = wp_date( 'F', $start_timestamp );
+		$start_year  = wp_date( 'Y', $start_timestamp );
+		// No year ever equals '', so every year comparison below adds the year.
+		$current_year = $always_show_year ? '' : wp_date( 'Y' );
 
 		if ( ! $end_timestamp ) {
 			$start_date_str = $start_day . ' ' . $start_month;

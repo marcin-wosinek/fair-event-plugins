@@ -19,15 +19,50 @@ if ( ! $post_id ) {
 	return '';
 }
 
-// Get event data from custom table. Honors ?event_date=<id> so a viewer
-// who picks a specific occurrence from the signup dropdown sees that
-// occurrence's date / venue here instead of the master series.
-$event_dates = \FairEvents\Helpers\SelectedOccurrence::resolve( $post_id );
+// Resolve what this request shows: the page's own event (a recurring
+// series' overview, or a single event), a selected session
+// (`?event_date=`, or a page linked to one session), or an unavailable
+// selection. Never substitutes another session for an explicit selection.
+$selection = \FairEvents\Helpers\SelectedOccurrence::select( $post_id );
 
 // Don't render if no event data.
-if ( ! $event_dates ) {
+if ( ! $selection ) {
 	return '';
 }
+
+$selection_state = $selection['state'];
+$series          = $selection['series'];
+
+// Link back to the recurring overview: the series' page without
+// `event_date`, even when this session has a page of its own.
+$overview_url = '';
+if ( $series ) {
+	$overview_post_id = $series->event_id ? $series->event_id : $series->get_primary_linked_post_id();
+	$overview_url     = $overview_post_id ? (string) get_permalink( $overview_post_id ) : '';
+} elseif ( \FairEvents\Helpers\SelectedOccurrence::UNAVAILABLE === $selection_state ) {
+	$overview_url = (string) get_permalink( $post_id );
+}
+
+if ( \FairEvents\Helpers\SelectedOccurrence::UNAVAILABLE === $selection_state ) :
+	?>
+	<div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-event-info' ) ) ); ?>>
+		<div class="wp-block-fair-events-event-info__status wp-block-fair-events-event-info__status--unavailable">
+			<?php esc_html_e( 'This session is unavailable', 'fair-events' ); ?>
+		</div>
+		<?php if ( $overview_url ) : ?>
+			<div class="wp-block-fair-events-event-info__overview-link">
+				<a href="<?php echo esc_url( $overview_url ); ?>">
+					<?php echo esc_html( $series ? __( 'View recurring event', 'fair-events' ) : __( 'View event', 'fair-events' ) ); ?>
+				</a>
+			</div>
+		<?php endif; ?>
+	</div>
+	<?php
+	return;
+endif;
+
+$event_dates = $selection['occurrence'];
+$is_session  = \FairEvents\Helpers\SelectedOccurrence::SESSION === $selection_state;
 
 $event_start   = $event_dates->start_datetime;
 $event_end     = $event_dates->end_datetime;
@@ -40,7 +75,9 @@ if ( $venue_id ) {
 	$venue = \FairEvents\Models\Venue::get_by_id( $venue_id );
 }
 
-$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day );
+// A session may be in any year (often a past one), so it always shows it.
+$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day, $is_session );
+$session_ended  = $is_session && \FairEvents\Helpers\SessionStatus::has_ended( $event_start, $event_end, $event_all_day );
 
 /**
  * Format recurrence description from an RRULE string
@@ -127,11 +164,12 @@ if ( ! function_exists( 'fair_events_format_time_range' ) ) {
 	}
 }
 
-// Determine if this is a recurring master event.
-$is_recurring    = 'master' === $event_dates->occurrence_type && ! empty( $event_dates->rrule );
+// The recurring overview describes the series' schedule from its master.
+$is_overview     = ! $is_session && 'master' === $event_dates->occurrence_type;
+$is_recurring    = $is_overview && ! empty( $event_dates->rrule );
 $next_occurrence = null;
 
-if ( $is_recurring ) {
+if ( $is_overview ) {
 	// Check if master date itself is upcoming.
 	$now             = current_time( 'mysql' );
 	$master_upcoming = $event_start >= $now;
@@ -156,21 +194,26 @@ if ( $is_recurring ) {
 		<div class="wp-block-fair-events-event-info__dates">
 			<?php echo esc_html( $recurrence_desc ); ?>
 		</div>
-		<?php if ( $next_occurrence ) : ?>
-			<?php
-			$next_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $next_occurrence->start_datetime );
-			$next_date_str  = $next_timestamp ? wp_date( 'j F', $next_timestamp ) : '';
-			?>
-			<div class="wp-block-fair-events-event-info__next-occurrence">
-				<?php
-				/* translators: %s: date of next occurrence */
-				echo esc_html( sprintf( __( 'Next: %s', 'fair-events' ), $next_date_str ) );
-				?>
-			</div>
-		<?php endif; ?>
 	<?php else : ?>
 		<div class="wp-block-fair-events-event-info__dates">
 			<?php echo esc_html( $formatted_date ); ?>
+		</div>
+	<?php endif; ?>
+	<?php if ( $next_occurrence ) : ?>
+		<?php
+		$next_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $next_occurrence->start_datetime );
+		$next_date_str  = $next_timestamp ? wp_date( 'j F', $next_timestamp ) : '';
+		?>
+		<div class="wp-block-fair-events-event-info__next-occurrence">
+			<?php
+			/* translators: %s: date of next occurrence */
+			echo esc_html( sprintf( __( 'Next: %s', 'fair-events' ), $next_date_str ) );
+			?>
+		</div>
+	<?php endif; ?>
+	<?php if ( $session_ended ) : ?>
+		<div class="wp-block-fair-events-event-info__status wp-block-fair-events-event-info__status--ended">
+			<?php esc_html_e( 'This session has ended', 'fair-events' ); ?>
 		</div>
 	<?php endif; ?>
 	<?php if ( $venue ) : ?>
@@ -210,6 +253,13 @@ if ( $is_recurring ) {
 					<?php esc_html_e( 'Join online', 'fair-events' ); ?>
 				</a>
 			<?php endif; ?>
+		</div>
+	<?php endif; ?>
+	<?php if ( $is_session && $overview_url ) : ?>
+		<div class="wp-block-fair-events-event-info__overview-link">
+			<a href="<?php echo esc_url( $overview_url ); ?>">
+				<?php esc_html_e( 'View recurring event', 'fair-events' ); ?>
+			</a>
 		</div>
 	<?php endif; ?>
 </div>

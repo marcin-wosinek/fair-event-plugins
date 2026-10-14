@@ -115,7 +115,8 @@ class EventDatesTest extends TestCase {
 	}
 
 	/**
-	 * The master row of a series doesn't get `?event_date=` appended either.
+	 * The master row of a series doesn't get `?event_date=` appended by
+	 * default: its plain permalink is the recurring overview.
 	 */
 	public function test_post_link_omits_occurrence_arg_for_master_row() {
 		$master                  = new EventDates();
@@ -125,6 +126,36 @@ class EventDatesTest extends TestCase {
 		$master->link_type       = 'post';
 
 		$this->assertSame( 'https://example.com/?p=42', $master->get_display_url() );
+	}
+
+	/**
+	 * Per-session listings link a series master — the first session — to
+	 * that session, while the plain permalink stays the recurring overview.
+	 */
+	public function test_master_row_links_to_its_session_when_listed_as_a_session() {
+		$master                  = new EventDates();
+		$master->id              = 1;
+		$master->event_id        = 42;
+		$master->occurrence_type = 'master';
+		$master->link_type       = 'post';
+		$master->start_datetime  = '2026-06-22 18:30:00';
+
+		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-22', $master->get_display_url( true ) );
+		$this->assertSame( 'https://example.com/?p=42', $master->get_display_url() );
+	}
+
+	/**
+	 * A single row stays a plain permalink even when listed as a session.
+	 */
+	public function test_single_row_ignores_session_listing() {
+		$single                  = new EventDates();
+		$single->id              = 5;
+		$single->event_id        = 99;
+		$single->occurrence_type = 'single';
+		$single->link_type       = 'post';
+		$single->start_datetime  = '2026-06-22 18:30:00';
+
+		$this->assertSame( 'https://example.com/?p=99', $single->get_display_url( true ) );
 	}
 
 	/**

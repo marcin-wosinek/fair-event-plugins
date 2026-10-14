@@ -940,13 +940,13 @@ msgstr "Fehler beim Speichern des Events."
 msgid "Event length"
 msgstr "Event-Dauer"
 
-#: src/blocks/event-info/render.php:68
+#: src/blocks/event-info/render.php:105
 #: src/Helpers/RecurrenceSummary.php:125
 #: ../fair-events-shared/src/recurrence.js:12
 msgid "Daily"
 msgstr "Täglich"
 
-#: src/blocks/event-info/render.php:87
+#: src/blocks/event-info/render.php:124
 #: ../fair-events-shared/src/recurrence.js:15
 msgid "Monthly"
 msgstr "Monatlich"
@@ -1261,47 +1261,47 @@ msgid "Filter by occurrence type."
 msgstr "Nach Vorkommen-Typ filtern."
 
 #. translators: %d: number of days
-#: src/blocks/event-info/render.php:66
+#: src/blocks/event-info/render.php:103
 #, php-format,js-format
 msgid "Every %d days"
 msgstr "Alle %d Tage"
 
 #. translators: %s: day of week
-#: src/blocks/event-info/render.php:73
+#: src/blocks/event-info/render.php:110
 #, php-format,js-format
 msgid "Every 2 weeks on %s"
 msgstr "Alle 2 Wochen am %s"
 
 #. translators: 1: number of weeks, 2: day of week
-#: src/blocks/event-info/render.php:77
+#: src/blocks/event-info/render.php:114
 #, php-format,js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Alle %1$d Wochen am %2$s"
 
 #. translators: %s: day of week
-#: src/blocks/event-info/render.php:80
+#: src/blocks/event-info/render.php:117
 #, php-format,js-format
 msgid "Every %s"
 msgstr "Jeden %s"
 
 #. translators: %d: number of months
-#: src/blocks/event-info/render.php:85
+#: src/blocks/event-info/render.php:122
 #, php-format,js-format
 msgid "Every %d months"
 msgstr "Alle %d Monate"
 
 #. translators: %d: number of years
-#: src/blocks/event-info/render.php:92
+#: src/blocks/event-info/render.php:129
 #, php-format,js-format
 msgid "Every %d years"
 msgstr "Alle %d Jahre"
 
-#: src/blocks/event-info/render.php:94
+#: src/blocks/event-info/render.php:131
 msgid "Yearly"
 msgstr "Jährlich"
 
 #. translators: %s: date of next occurrence
-#: src/blocks/event-info/render.php:167
+#: src/blocks/event-info/render.php:210
 #, php-format,js-format
 msgid "Next: %s"
 msgstr "Nächste: %s"
@@ -3030,17 +3030,17 @@ msgstr "Dieser Tickettyp ist derzeit nicht im Verkauf."
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr "Sie haben sich erfolgreich registriert! Eine Bestätigungsemail ist unterwegs."
 
-#: src/blocks/event-info/render.php:207
+#: src/blocks/event-info/render.php:250
 #: src/Admin/manage-event/EventContextHeader.js:230
 msgid "Online event"
 msgstr "Online-Veranstaltung"
 
-#: src/blocks/event-info/render.php:207
+#: src/blocks/event-info/render.php:250
 #: src/Admin/manage-event/EventContextHeader.js:235
 msgid "Hybrid event"
 msgstr "Hybrid-Veranstaltung"
 
-#: src/blocks/event-info/render.php:210
+#: src/blocks/event-info/render.php:253
 #: src/Frontend/EventDateView.php:165
 msgid "Join online"
 msgstr "Online beitreten"
@@ -6746,7 +6746,24 @@ msgstr[1] "Wählen Sie mindestens %d Termine. Jeder Termin wird einzeln berechne
 
 #: src/blocks/event-signup/frontend.js:2212
 msgid "Choose one or more dates. Each date is priced separately."
-msgstr ""
+msgstr "Wählen Sie einen oder mehrere Termine. Jeder Termin wird einzeln berechnet."
+
+#: src/blocks/event-info/render.php:50
+msgid "This session is unavailable"
+msgstr "Dieser Termin ist nicht verfügbar"
+
+#: src/blocks/event-info/render.php:55
+#: src/blocks/event-info/render.php:261
+msgid "View recurring event"
+msgstr "Wiederkehrende Veranstaltung ansehen"
+
+#: src/blocks/event-info/render.php:55
+msgid "View event"
+msgstr "Veranstaltung ansehen"
+
+#: src/blocks/event-info/render.php:216
+msgid "This session has ended"
+msgstr "Dieser Termin ist vorbei"
 
 #. translators: 1: weekday, e.g. "Wednesday", 2: month, e.g. "October", 3: day of the month
 #: src/Notifications/WeeklyEmailRenderer.php:104
