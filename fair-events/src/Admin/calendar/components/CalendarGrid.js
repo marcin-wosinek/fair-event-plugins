@@ -21,6 +21,7 @@ export default function CalendarGrid( {
 	onAddEvent,
 	manageEventUrl,
 	startOfWeek: startOfWeekProp,
+	forceGrid = false,
 } ) {
 	// Get start_of_week setting (0 = Sunday, 1 = Monday)
 	const startOfWeek =
@@ -84,13 +85,20 @@ export default function CalendarGrid( {
 	today.setHours( 0, 0, 0, 0 );
 
 	// The mobile agenda only lists current-month days that have events, so it
-	// renders nothing at all for a month like this. Grid mode hides the notice.
-	const isAgendaEmpty = ! days.some(
-		( day ) => day.isCurrentMonth && day.events.length > 0
-	);
+	// renders nothing at all for a month like this. Grid mode hides the notice,
+	// and a forced grid (an empty category filter, #1850) has its own message.
+	const isAgendaEmpty =
+		! forceGrid &&
+		! days.some( ( day ) => day.isCurrentMonth && day.events.length > 0 );
 
 	return (
-		<div className="fair-events-calendar-grid">
+		<div
+			className={
+				forceGrid
+					? 'fair-events-calendar-grid is-grid-forced'
+					: 'fair-events-calendar-grid'
+			}
+		>
 			<div className="fair-events-calendar-weekdays">
 				{ weekdayLabels.map( ( label, index ) => (
 					<div key={ index } className="fair-events-calendar-weekday">

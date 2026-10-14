@@ -33,6 +33,20 @@
 	font-weight: 600;
 }
 
+/* Category filter (#1850) */
+.fair-events-calendar-filter {
+	max-width: 320px;
+	margin-top: 8px;
+}
+
+.fair-events-calendar-no-matches {
+	margin: 0;
+	padding: 12px 16px;
+	border-bottom: 1px solid #c3c4c7;
+	color: #1d2327;
+	text-align: center;
+}
+
 /* CardBody hugs the grid edges so the grid borders align with the Card */
 .fair-events-calendar-card-body {
 	padding: 0 !important;
@@ -338,8 +352,16 @@ a.fair-events-calendar-event:visited {
 	}
 }
 
-/* Mobile: header stacks, grid collapses into an agenda list of day cards */
+/*
+ * Mobile: header stacks, grid collapses into an agenda list of day cards. A
+ * filtered month with no matches keeps the dated grid (.is-grid-forced), so
+ * the agenda rules skip it.
+ */
 @media screen and (max-width: 600px) {
+	.fair-events-calendar-filter {
+		max-width: none;
+	}
+
 	.fair-events-calendar-header {
 		flex-direction: column;
 		align-items: flex-start;
@@ -350,22 +372,24 @@ a.fair-events-calendar-event:visited {
 		flex-wrap: wrap;
 	}
 
-	.fair-events-calendar-weekdays {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-weekdays {
 		display: none;
 	}
 
-	.fair-events-calendar-days {
+	.fair-events-calendar-grid:not(.is-grid-forced) .fair-events-calendar-days {
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
 		padding: 12px;
 	}
 
-	.fair-events-calendar-day {
+	.fair-events-calendar-grid:not(.is-grid-forced) .fair-events-calendar-day {
 		display: none;
 	}
 
-	.fair-events-calendar-day.has-events {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day.has-events {
 		display: block;
 		min-height: auto;
 		overflow: visible;
@@ -374,26 +398,32 @@ a.fair-events-calendar-event:visited {
 		border-radius: 4px;
 	}
 
-	.fair-events-calendar-day.has-events.other-month {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day.has-events.other-month {
 		display: none;
 	}
 
-	.fair-events-calendar-day.has-events.today {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day.has-events.today {
 		border: 2px solid #2271b1;
 	}
 
-	.fair-events-calendar-day-header {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day-header {
 		margin: 0;
 		padding: 10px 12px;
 		background: #f6f7f7;
 		border-bottom: 1px solid #c3c4c7;
 	}
 
-	.fair-events-calendar-day.today .fair-events-calendar-day-header {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day.today
+		.fair-events-calendar-day-header {
 		background: #e7f5ff;
 	}
 
-	.fair-events-calendar-day-number {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day-number {
 		font-size: 15px;
 	}
 
@@ -402,7 +432,9 @@ a.fair-events-calendar-event:visited {
 	 * unset too: as a flex container the ::after below would be blockified
 	 * into a flex item and its leading space stripped ("15July").
 	 */
-	.fair-events-calendar-day.today .fair-events-calendar-day-number {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day.today
+		.fair-events-calendar-day-number {
 		display: block;
 		width: auto;
 		height: auto;
@@ -412,25 +444,28 @@ a.fair-events-calendar-event:visited {
 		border-radius: 0;
 	}
 
-	.fair-events-calendar-day-number::after {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day-number::after {
 		content: " " attr(data-month-name);
 		font-size: 13px;
 		font-weight: 400;
 		color: #646970;
 	}
 
-	.fair-events-calendar-day-events {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day-events {
 		gap: 6px;
 		padding: 10px 12px;
 	}
 
 	/* The agenda has room for every event, so drop the grid-mode clamp */
-	.fair-events-calendar-day-events
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-day-events
 		.fair-events-calendar-event-row:nth-child(n + 4) {
 		display: flex;
 	}
 
-	.fair-events-calendar-more {
+	.fair-events-calendar-grid:not(.is-grid-forced) .fair-events-calendar-more {
 		display: none;
 	}
 
@@ -438,7 +473,8 @@ a.fair-events-calendar-event:visited {
 		white-space: normal;
 	}
 
-	.fair-events-calendar-empty {
+	.fair-events-calendar-grid:not(.is-grid-forced)
+		.fair-events-calendar-empty {
 		display: block;
 	}
 }
