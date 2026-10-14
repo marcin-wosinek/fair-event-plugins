@@ -176,6 +176,7 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 }
 
 require_once __DIR__ . '/Fair_Test_WP_Error.php';
+require_once __DIR__ . '/Fair_Test_WP_REST.php';
 
 if ( ! function_exists( 'get_current_user_id' ) ) {
 	/**

@@ -10,9 +10,9 @@ import {
 	CardHeader,
 	CardBody,
 	Spinner,
+	Modal,
 	Notice,
 	TextControl,
-	__experimentalConfirmDialog as ConfirmDialog,
 	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
@@ -736,17 +736,32 @@ const TransactionPage = () => {
 	const [ error, setError ] = useState( null );
 	const [ syncing, setSyncing ] = useState( false );
 	const [ syncNotice, setSyncNotice ] = useState( null );
-	const [ deleting, setDeleting ] = useState( false );
-	const [ deleteError, setDeleteError ] = useState( null );
-	const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState( false );
+	// Delete dialog: null while closed, otherwise { saving, error }.
+	const [ deletion, setDeletion ] = useState( null );
+	// Synchronous guard: a second click must not send a second DELETE before
+	// React re-renders the busy button.
+	const deleteInFlight = useRef( false );
 
 	const params = new URLSearchParams( window.location.search );
 	const transactionId = params.get( 'transaction_id' );
 
+	const closeDeletion = () => {
+		if ( ! deleteInFlight.current ) {
+			setDeletion( null );
+		}
+	};
+
+	/**
+	 * Delete the local record. The dialog stays open, busy, until the server
+	 * answers; a failure is shown in place. On success the browser leaves the
+	 * page, so the guard is never released.
+	 */
 	const handleDeleteTransaction = () => {
-		setIsDeleteDialogOpen( false );
-		setDeleting( true );
-		setDeleteError( null );
+		if ( deleteInFlight.current ) {
+			return;
+		}
+		deleteInFlight.current = true;
+		setDeletion( { saving: true, error: null } );
 
 		apiFetch( {
 			path: `/fair-payments-connector/v1/transactions/${ transactionId }`,
@@ -757,14 +772,16 @@ const TransactionPage = () => {
 					'admin.php?page=fair-payments-connector-transactions&transaction_deleted=1';
 			} )
 			.catch( ( err ) => {
-				setDeleteError(
-					err.message ||
+				deleteInFlight.current = false;
+				setDeletion( {
+					saving: false,
+					error:
+						err.message ||
 						__(
 							'Failed to delete transaction.',
 							'fair-payments-connector'
-						)
-				);
-				setDeleting( false );
+						),
+				} );
 			} );
 	};
 
@@ -1317,17 +1334,6 @@ const TransactionPage = () => {
 							{ __( 'Danger Zone', 'fair-payments-connector' ) }
 						</Heading>
 					</CardHeader>
-					{ deleteError && (
-						<CardBody style={ { paddingBottom: 0 } }>
-							<Notice
-								status="error"
-								isDismissible
-								onRemove={ () => setDeleteError( null ) }
-							>
-								{ deleteError }
-							</Notice>
-						</CardBody>
-					) }
 					<CardBody>
 						<p>
 							{ __(
@@ -1338,48 +1344,95 @@ const TransactionPage = () => {
 						<Button
 							variant="secondary"
 							isDestructive
-							isBusy={ deleting }
-							disabled={ deleting }
-							onClick={ () => setIsDeleteDialogOpen( true ) }
+							disabled={ !! deletion }
+							onClick={ () =>
+								setDeletion( { saving: false, error: null } )
+							}
 						>
-							{ deleting
-								? __( 'Deleting…', 'fair-payments-connector' )
-								: __(
-										'Delete transaction',
-										'fair-payments-connector'
-								  ) }
+							{ __(
+								'Delete local transaction',
+								'fair-payments-connector'
+							) }
 						</Button>
 					</CardBody>
 				</Card>
 			</VStack>
 
-			<ConfirmDialog
-				isOpen={ isDeleteDialogOpen }
-				onConfirm={ handleDeleteTransaction }
-				onCancel={ () => setIsDeleteDialogOpen( false ) }
-				confirmButtonText={ __(
-					'Delete transaction',
-					'fair-payments-connector'
-				) }
-				cancelButtonText={ __( 'Cancel', 'fair-payments-connector' ) }
-			>
-				<p>
-					{ sprintf(
-						/* translators: %d is the transaction ID */
-						__(
-							'Permanently delete transaction #%d? This cannot be undone.',
-							'fair-payments-connector'
-						),
-						t.id
-					) }
-				</p>
-				<p>
-					{ __(
-						'Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted.',
+			{ deletion && (
+				<Modal
+					title={ __(
+						'Delete local transaction',
 						'fair-payments-connector'
 					) }
-				</p>
-			</ConfirmDialog>
+					onRequestClose={ closeDeletion }
+					isDismissible={ ! deletion.saving }
+					shouldCloseOnClickOutside={ ! deletion.saving }
+					shouldCloseOnEsc={ ! deletion.saving }
+					style={ { maxWidth: '500px' } }
+				>
+					{ deletion.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ deletion.error }
+						</Notice>
+					) }
+					<p>
+						{ sprintf(
+							/* translators: 1: transaction ID, 2: amount, e.g. "12.50", 3: currency code, e.g. "EUR" */
+							__(
+								'Permanently delete transaction #%1$d for %2$s %3$s? This cannot be undone.',
+								'fair-payments-connector'
+							),
+							t.id,
+							Number( t.amount ).toFixed( 2 ),
+							t.currency
+						) }
+					</p>
+					<p>
+						{ t.description
+							? sprintf(
+									/* translators: %s: transaction description */
+									__(
+										'Description: %s',
+										'fair-payments-connector'
+									),
+									t.description
+							  )
+							: __(
+									'This transaction has no description.',
+									'fair-payments-connector'
+							  ) }
+					</p>
+					<p>
+						{ __(
+							'Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted.',
+							'fair-payments-connector'
+						) }
+					</p>
+					<HStack justify="flex-end" spacing={ 2 } wrap>
+						<Button
+							variant="tertiary"
+							onClick={ closeDeletion }
+							disabled={ deletion.saving }
+						>
+							{ __( 'Cancel', 'fair-payments-connector' ) }
+						</Button>
+						<Button
+							variant="primary"
+							isDestructive
+							isBusy={ deletion.saving }
+							disabled={ deletion.saving }
+							onClick={ handleDeleteTransaction }
+						>
+							{ deletion.saving
+								? __( 'Deleting…', 'fair-payments-connector' )
+								: __(
+										'Delete local transaction',
+										'fair-payments-connector'
+								  ) }
+						</Button>
+					</HStack>
+				</Modal>
+			) }
 		</div>
 	);
 };

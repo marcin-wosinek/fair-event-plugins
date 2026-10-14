@@ -12,14 +12,24 @@
  *     state with no reason.
  *   - Mode change: a Save button only appears once the mode actually differs,
  *     and is enabled immediately.
- *   - Disconnect: confirming the dialog posts to oauth/disconnect (not
- *     /wp/v2/settings) with no reason.
+ *   - Disconnect (#1773): the dialog names the Mollie profile and account
+ *     (with a fallback), explains the effect, posts once to oauth/disconnect
+ *     (not /wp/v2/settings) with no reason, keeps failures in the dialog,
+ *     and treats a missing audit entry as a completed disconnect.
+ *   - Stale overview (#1773): an answer for an earlier mode never replaces
+ *     the current profile name.
  *   - Settlement access (#1693): the authorization asks for it only when the
  *     site wants it, a connection missing it offers a reconnect that never
  *     disconnects, and nothing is shown when it is granted or not wanted.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ConnectionTab from '../ConnectionTab.js';
 import { buildAuthorizeUrl } from '../settings-api.js';
@@ -148,7 +158,7 @@ describe( 'ConnectionTab — connection overview', () => {
 		// Rest of the connected view still renders.
 		expect( screen.getByText( 'Mode' ) ).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', { name: 'Disconnect' } )
+			screen.getByRole( 'button', { name: 'Disconnect Mollie' } )
 		).toBeInTheDocument();
 
 		expect( console ).toHaveLogged();
@@ -243,56 +253,275 @@ describe( 'ConnectionTab — mode change', () => {
 	} );
 } );
 
-describe( 'ConnectionTab — disconnect', () => {
-	it( 'posts to oauth/disconnect (not /wp/v2/settings) with no reason on confirm', async () => {
-		mockApiFetchFor( { connected: true, overview: OVERVIEW } );
+/**
+ * Mock apiFetch for the disconnect flow. `disconnect` decides the answer to
+ * the disconnect request; every other request answers like a connected site.
+ *
+ * @param {Object}   args
+ * @param {Function} args.disconnect Returns the disconnect response promise.
+ * @param {Object}   args.overview   Overview response, or null to fail it.
+ * @param {Object}   args.settings   Settings response.
+ */
+function mockDisconnectFlow( {
+	disconnect,
+	overview = OVERVIEW,
+	settings = CONNECTED_SETTINGS,
+} ) {
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path === '/fair-payments-connector/v1/oauth/disconnect' ) {
+			return disconnect();
+		}
+		if ( path === '/wp/v2/settings' ) {
+			return Promise.resolve( settings );
+		}
+		if ( path === '/fair-payments-connector/v1/connection/overview' ) {
+			return overview
+				? Promise.resolve( overview )
+				: Promise.reject( new Error( 'Mollie unreachable' ) );
+		}
+		return Promise.reject( new Error( 'No route' ) );
+	} );
+}
 
+const disconnectCalls = () =>
+	apiFetch.mock.calls.filter(
+		( [ options ] ) =>
+			options.path === '/fair-payments-connector/v1/oauth/disconnect'
+	);
+
+async function openDisconnectDialog() {
+	// Wait for the profile name so the dialog can name it.
+	await screen.findByText( 'Disconnect Mollie', { selector: 'button' } );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Disconnect Mollie' } )
+	);
+	return screen.findByRole( 'dialog' );
+}
+
+describe( 'ConnectionTab — disconnect', () => {
+	it( 'names the Mollie profile and account and explains the effect', async () => {
+		mockDisconnectFlow( { disconnect: () => Promise.resolve( {} ) } );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+		await screen.findByText( 'My Webshop' );
+
+		const dialog = await openDisconnectDialog();
+
+		expect(
+			within( dialog ).getByText(
+				'Disconnect this site from the Mollie profile "My Webshop"?'
+			)
+		).toBeInTheDocument();
+		expect( within( dialog ).getByText( 'pfl_123' ) ).toBeInTheDocument();
+		expect( within( dialog ).getByText( 'org_123' ) ).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText(
+				/cannot create new Mollie payments .* until you reconnect\. Payments already in Mollie are not cancelled or refunded\./
+			)
+		).toBeInTheDocument();
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'falls back to "the connected Mollie account" when no identity is known', async () => {
+		mockDisconnectFlow( {
+			disconnect: () => Promise.resolve( {} ),
+			overview: null,
+			settings: {
+				...CONNECTED_SETTINGS,
+				fair_payment_organization_id: '',
+				fair_payment_mollie_profile_id: '',
+			},
+		} );
 		render(
 			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
 		);
 
-		const disconnectButton = await screen.findByRole( 'button', {
-			name: 'Disconnect',
-		} );
-		fireEvent.click( disconnectButton );
+		const dialog = await openDisconnectDialog();
 
-		const dialogConfirmButtons = await screen.findAllByRole( 'button', {
-			name: 'Disconnect',
-		} );
-		const confirmButton =
-			dialogConfirmButtons[ dialogConfirmButtons.length - 1 ];
+		expect(
+			within( dialog ).getByText(
+				'Disconnect this site from the connected Mollie account?'
+			)
+		).toBeInTheDocument();
+		expect( within( dialog ).queryByText( 'Profile ID:' ) ).toBeNull();
 
-		fireEvent.click( confirmButton );
+		expect( console ).toHaveLogged();
+	} );
 
-		await waitFor( () => {
-			expect( apiFetch ).toHaveBeenCalledWith(
-				expect.objectContaining( {
-					path: '/fair-payments-connector/v1/oauth/disconnect',
-					method: 'POST',
-				} )
-			);
-		} );
-
-		const disconnectCall = apiFetch.mock.calls.find(
-			( [ options ] ) =>
-				options.path === '/fair-payments-connector/v1/oauth/disconnect'
+	it( 'cancelling sends nothing', async () => {
+		mockDisconnectFlow( { disconnect: () => Promise.resolve( {} ) } );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
 		);
-		expect( disconnectCall[ 0 ] ).not.toHaveProperty( 'data' );
 
-		// Disconnecting reloads settings — wait for that GET so its
-		// console.log calls have already happened before asserting on them.
-		await waitFor( () => {
-			expect( apiFetch ).toHaveBeenCalledWith(
-				expect.objectContaining( { path: '/wp/v2/settings' } )
-			);
+		const dialog = await openDisconnectDialog();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( disconnectCalls() ).toHaveLength( 0 );
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'posts once to oauth/disconnect with no reason, staying busy until it answers', async () => {
+		let resolveDisconnect;
+		const onNotice = jest.fn();
+		mockDisconnectFlow( {
+			disconnect: () =>
+				new Promise( ( resolve ) => {
+					resolveDisconnect = resolve;
+				} ),
 		} );
+		render(
+			<ConnectionTab onNotice={ onNotice } shouldReload={ false } />
+		);
 
+		const dialog = await openDisconnectDialog();
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Disconnect Mollie',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		expect(
+			await within( dialog ).findByRole( 'button', {
+				name: 'Disconnecting…',
+			} )
+		).toBeDisabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect( disconnectCalls() ).toHaveLength( 1 );
+		expect( disconnectCalls()[ 0 ][ 0 ] ).not.toHaveProperty( 'data' );
+
+		resolveDisconnect( { success: true } );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( onNotice ).toHaveBeenCalledWith( {
+			status: 'success',
+			message: 'Disconnected from Mollie.',
+		} );
 		expect( apiFetch ).not.toHaveBeenCalledWith(
 			expect.objectContaining( {
 				path: '/wp/v2/settings',
 				method: 'POST',
 			} )
 		);
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'keeps the dialog open with the error when disconnecting fails', async () => {
+		mockDisconnectFlow( {
+			disconnect: () =>
+				Promise.reject( { code: 'oops', message: 'Server exploded' } ),
+		} );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		const dialog = await openDisconnectDialog();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Disconnect Mollie',
+			} )
+		);
+
+		expect(
+			await within( dialog ).findByText( 'Server exploded' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Disconnect Mollie',
+			} )
+		).toBeEnabled();
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'reports a missing audit entry as a completed disconnect, not a retry', async () => {
+		const onNotice = jest.fn();
+		mockDisconnectFlow( {
+			disconnect: () =>
+				Promise.reject( {
+					code: 'audit_log_failed',
+					message:
+						'Disconnected, but the audit entry could not be recorded.',
+				} ),
+		} );
+		render(
+			<ConnectionTab onNotice={ onNotice } shouldReload={ false } />
+		);
+
+		const dialog = await openDisconnectDialog();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Disconnect Mollie',
+			} )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( onNotice ).toHaveBeenCalledWith( {
+			status: 'warning',
+			message: 'Disconnected, but the audit entry could not be recorded.',
+		} );
+		// Settings are reloaded to show the disconnected state.
+		await waitFor( () =>
+			expect(
+				apiFetch.mock.calls.filter(
+					( [ options ] ) => options.path === '/wp/v2/settings'
+				).length
+			).toBeGreaterThan( 1 )
+		);
+
+		expect( console ).toHaveLogged();
+	} );
+} );
+
+describe( 'ConnectionTab — stale overview', () => {
+	it( 'ignores an overview answer for an earlier mode', async () => {
+		const pending = [];
+		let mode = 'test';
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( path === '/wp/v2/settings' ) {
+				return Promise.resolve( {
+					...CONNECTED_SETTINGS,
+					fair_payment_mode: mode,
+				} );
+			}
+			if ( path === '/fair-payments-connector/v1/settings' && method ) {
+				mode = 'live';
+				return Promise.resolve( {} );
+			}
+			if ( path === '/fair-payments-connector/v1/connection/overview' ) {
+				return new Promise( ( resolve ) => pending.push( resolve ) );
+			}
+			return Promise.reject( new Error( 'No route' ) );
+		} );
+
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+
+		fireEvent.click( await screen.findByLabelText( 'Live Mode' ) );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save mode' } ) );
+		await waitFor( () => expect( pending ).toHaveLength( 2 ) );
+
+		pending[ 1 ]( { ...OVERVIEW, profile_name: 'Live profile' } );
+		expect( await screen.findByText( 'Live profile' ) ).toBeInTheDocument();
+		pending[ 0 ]( { ...OVERVIEW, profile_name: 'Old test profile' } );
+
+		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		expect( screen.queryByText( 'Old test profile' ) ).toBeNull();
+		expect( screen.getByText( 'Live profile' ) ).toBeInTheDocument();
 
 		expect( console ).toHaveLogged();
 	} );
@@ -450,7 +679,7 @@ describe( 'ConnectionTab — settlement access (#1693)', () => {
 		);
 
 		expect(
-			await screen.findByRole( 'button', { name: 'Disconnect' } )
+			await screen.findByRole( 'button', { name: 'Disconnect Mollie' } )
 		).toBeInTheDocument();
 		expect(
 			screen.queryByText( SETTLEMENT_NOTICE, NOTICE_CONTENT )
