@@ -212,15 +212,23 @@ export function formatEventDescription( description, url ) {
 }
 
 /**
- * Parse a datetime string and create a Date at UTC noon to prevent
- * timezone-related day shifts for all-day events.
+ * Reduce a datetime string to its calendar date (YYYY-MM-DD) for all-day
+ * events. calendar-link reads date-only strings as that calendar day in
+ * every timezone, whereas a Date object can be shifted by the viewer's
+ * offset (e.g. UTC noon is local midnight in UTC+12).
+ *
+ * @param {string} datetimeStr - Date or datetime string
+ * @param {number} addDays     - Days to add to the date
+ * @return {string} Date in YYYY-MM-DD format
  */
-function toUTCNoon( datetimeStr ) {
+function toCalendarDate( datetimeStr, addDays = 0 ) {
 	const [ year, month, day ] = datetimeStr
-		.split( ' ' )[ 0 ]
+		.split( /[ T]/ )[ 0 ]
 		.split( '-' )
 		.map( Number );
-	return new Date( Date.UTC( year, month - 1, day, 12, 0, 0 ) );
+	return new Date( Date.UTC( year, month - 1, day + addDays ) )
+		.toISOString()
+		.slice( 0, 10 );
 }
 
 /**
@@ -244,16 +252,14 @@ export function createEventData( attributes ) {
 	const eventData = {};
 
 	if ( start ) {
-		eventData.start = allDay ? toUTCNoon( start ) : new Date( start );
+		eventData.start = allDay ? toCalendarDate( start ) : new Date( start );
 	}
 	if ( end ) {
-		const endDate = allDay ? toUTCNoon( end ) : new Date( end );
 		// For all-day events, make the end date inclusive by adding one day
 		// This ensures multi-day all-day events include the end date
-		if ( allDay && start && end !== start ) {
-			endDate.setDate( endDate.getDate() + 1 );
-		}
-		eventData.end = endDate;
+		eventData.end = allDay
+			? toCalendarDate( end, start && end !== start ? 1 : 0 )
+			: new Date( end );
 	}
 	if ( allDay !== undefined ) eventData.allDay = allDay;
 	if ( description ) eventData.description = description;

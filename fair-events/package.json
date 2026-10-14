@@ -48,23 +48,23 @@
 		"@wordpress/element": "^8.0.0",
 		"@wordpress/i18n": "^6.21.0",
 		"@wordpress/icons": "15.2.0",
-		"calendar-link": "^2.11.0",
+		"calendar-link": "^2.11.6",
 		"fair-events-shared": "*",
 		"html2canvas": "^1.4.1",
 		"react-easy-crop": "^5.5.6",
-		"recharts": "^3.0.0"
+		"recharts": "^3.10.1"
 	},
 	"devDependencies": {
-		"@babel/core": "^8.0.1",
-		"@babel/preset-env": "^8.0.2",
+		"@babel/core": "^8.0.7",
+		"@babel/preset-env": "^8.0.7",
 		"@babel/preset-react": "^8.0.1",
-		"@playwright/test": "^1.40.0",
+		"@playwright/test": "^1.64.0",
 		"@testing-library/jest-dom": "^6.9.1",
-		"@testing-library/react": "^16.3.2",
+		"@testing-library/react": "^16.3.3",
 		"@wordpress/scripts": "33.0.0",
-		"babel-jest": "^30.4.1",
+		"babel-jest": "^30.5.2",
 		"dotenv": "^16.3.1",
-		"jest": "^30.0.0",
+		"jest": "^30.5.2",
 		"webpack-bundle-output": "^1.1.0"
 	}
 }
