@@ -101,16 +101,13 @@ test.describe( 'PublicEventsController — recurring post-linked occurrences', (
 			expect( event.url ).toBeTruthy();
 			expect( event.uid.startsWith( 'fair_event_' ) ).toBe( true );
 
-			// Canonical URL form: only generated occurrences get the
-			// `?event_date=` disambiguator, carrying a Y-m-d date (not the
-			// numeric event_date id — see OccurrenceDateParam); the master
-			// occurrence uses the plain permalink (see
+			// Canonical URL form: every session in the feed, including the
+			// master (the series' first session, #1884), carries the
+			// `?event_date=` disambiguator with a Y-m-d date (not the
+			// numeric event_date id — see OccurrenceDateParam), so the
+			// plain permalink stays the series overview (see
 			// EventDates::get_display_url()).
-			if ( 'generated' === event.occurrence_type ) {
-				expect( event.url ).toMatch( /event_date=\d{4}-\d{2}-\d{2}/ );
-			} else {
-				expect( event.url ).not.toContain( 'event_date=' );
-			}
+			expect( event.url ).toMatch( /event_date=\d{4}-\d{2}-\d{2}/ );
 		}
 	} );
 
@@ -134,7 +131,16 @@ test.describe( 'PublicEventsController — recurring post-linked occurrences', (
 			);
 
 			expect( feedEvent ).toBeTruthy();
-			expect( feedEvent.url ).toBe( eventDate.display_url );
+
+			// The master's display_url is the series overview; the feed
+			// links it to its own session instead (#1884).
+			let expectedUrl = eventDate.display_url;
+			if ( 'master' === eventDate.occurrence_type ) {
+				const url = new URL( eventDate.display_url );
+				url.searchParams.set( 'event_date', '2035-07-01' );
+				expectedUrl = url.toString();
+			}
+			expect( feedEvent.url ).toBe( expectedUrl );
 		}
 	} );
 } );
