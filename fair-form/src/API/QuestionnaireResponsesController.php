@@ -420,7 +420,7 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 				'created_at'        => $submission->created_at,
 				'post_id'           => $submission->post_id,
 				'event_date_id'     => $submission->event_date_id,
-			) + $this->ticket_fields( $submission );
+			) + $this->source_form_fields( $submission ) + $this->ticket_fields( $submission );
 		}
 
 		return new WP_REST_Response( $data, 200 );
@@ -505,8 +505,9 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 			'created_at'        => $submission->created_at,
 			'post_id'           => $submission->post_id,
 			'event_date_id'     => $submission->event_date_id,
+			'source_page'       => $this->source_page( $submission ),
 			'answers'           => $answers_data,
-		) + $this->ticket_fields( $submission, true );
+		) + $this->source_form_fields( $submission ) + $this->ticket_fields( $submission, true );
 
 		return new WP_REST_Response( $data, 200 );
 	}
@@ -523,6 +524,52 @@ class QuestionnaireResponsesController extends WP_REST_Controller {
 			return (string) $submission->form_title;
 		}
 		return (string) $submission->title;
+	}
+
+	/**
+	 * The form a submission came from, as stored when it was submitted.
+	 * Unlike form_title(), neither value falls back to the per-submission
+	 * title, so an untitled form or a legacy submission is recognisable.
+	 *
+	 * @param \FairForm\Models\QuestionnaireSubmission $submission Submission.
+	 * @return array form_id and source_form_title, each null when not stored.
+	 */
+	private function source_form_fields( $submission ) {
+		return array(
+			'form_id'           => ! empty( $submission->form_id ) ? (string) $submission->form_id : null,
+			'source_form_title' => ! empty( $submission->form_title ) ? (string) $submission->form_title : null,
+		);
+	}
+
+	/**
+	 * The page a submission was sent from, resolved to its current state.
+	 *
+	 * A URL is given only for a publicly viewable page, so the admin is never
+	 * linked into a 404. A non-public page's title is shown only to a user who
+	 * can read it; deleted, unreadable and untitled pages show "Post #ID".
+	 *
+	 * @param \FairForm\Models\QuestionnaireSubmission $submission Submission.
+	 * @return array|null id, label and url (or null), or null when no page is stored.
+	 */
+	private function source_page( $submission ) {
+		$post_id = (int) $submission->post_id;
+		if ( ! $post_id ) {
+			return null;
+		}
+
+		$post      = get_post( $post_id );
+		$is_public = $post && is_post_publicly_viewable( $post );
+		$title     = '';
+		if ( $post && ( $is_public || current_user_can( 'read_post', $post_id ) ) ) {
+			$title = $post->post_title;
+		}
+
+		return array(
+			'id'    => $post_id,
+			// translators: %d: WordPress post ID.
+			'label' => '' !== $title ? $title : sprintf( __( 'Post #%d', 'fair-form' ), $post_id ),
+			'url'   => $is_public ? get_permalink( $post ) : null,
+		);
 	}
 
 	/**

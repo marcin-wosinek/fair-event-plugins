@@ -13,6 +13,7 @@ import {
 import { DataViews } from '@wordpress/dataviews';
 import SubmissionContext from '../components/SubmissionContext.js';
 import DeleteSubmissionDialog from '../components/DeleteSubmissionDialog.js';
+import { sourceFormLabel } from '../utils/source-form.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -24,7 +25,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: [ 'participant_name', 'created_at', 'event_name' ],
+	fields: [ 'participant_name', 'source_form', 'created_at', 'event_name' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -166,10 +167,10 @@ export default function FormAnswers() {
 				getValue: ( { item } ) => item.participant_email || '',
 			},
 			{
-				id: 'title',
+				id: 'source_form',
 				label: __( 'Form', 'fair-form' ),
 				enableSorting: true,
-				getValue: ( { item } ) => item.title || '',
+				getValue: ( { item } ) => sourceFormLabel( item ),
 			},
 			{
 				id: 'event_name',

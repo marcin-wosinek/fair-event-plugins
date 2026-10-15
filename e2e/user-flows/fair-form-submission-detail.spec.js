@@ -106,6 +106,25 @@ test.describe('Fair Form submission detail', () => {
 				info.locator('tr', { hasText: 'Email' }).locator('td')
 			).toHaveText(submitterEmail);
 
+			// Source form and page (#1324): the block's form title names the
+			// submission, and the published page it came from is linked.
+			const infoRow = (label) =>
+				info.locator('tr', {
+					has: page.locator('th', {
+						hasText: new RegExp(`^${label}$`),
+					}),
+				});
+			await expect(
+				page.locator('.fair-form-submission-detail h1')
+			).toHaveText(seed.formTitle);
+			await expect(infoRow('Form').locator('td')).toHaveText(
+				seed.formTitle
+			);
+			const sourcePage = infoRow('Page').getByRole('link', {
+				name: seed.pageTitle,
+			});
+			await expect(sourcePage).toHaveAttribute('href', seed.pageUrl);
+
 			// formatDate() goes through toLocaleString(), so the exact text is
 			// locale/timezone dependent — assert only that a date rendered.
 			const dateCell = info

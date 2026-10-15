@@ -341,3 +341,39 @@ describe( 'FormAnswers — event assignment', () => {
 		);
 	} );
 } );
+
+describe( 'FormAnswers — Form column (#1324)', () => {
+	it( 'shows the source form title, then its identifier, then the legacy placeholder', async () => {
+		mockApi( {
+			'GET /fair-form/v1/questionnaire-responses/all': () =>
+				Promise.resolve( [
+					{
+						...SUBMISSIONS[ 0 ],
+						form_id: 'ff-workshop',
+						source_form_title: 'Workshop feedback',
+					},
+					{
+						...SUBMISSIONS[ 1 ],
+						form_id: 'ff-3f9a2c1e',
+						source_form_title: null,
+					},
+					{
+						...SUBMISSIONS[ 2 ],
+						title: 'Form Submission',
+						form_id: null,
+						source_form_title: null,
+					},
+				] ),
+		} );
+		render( <FormAnswers /> );
+
+		expect(
+			await screen.findByRole( 'columnheader', { name: /Form/ } )
+		).toBeInTheDocument();
+		const rows = screen.getAllByRole( 'row' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Workshop feedback' );
+		expect( rows[ 2 ] ).toHaveTextContent( 'ff-3f9a2c1e' );
+		expect( rows[ 3 ] ).toHaveTextContent( 'Legacy (no form id)' );
+		expect( screen.queryByText( 'Fair Form' ) ).not.toBeInTheDocument();
+	} );
+} );

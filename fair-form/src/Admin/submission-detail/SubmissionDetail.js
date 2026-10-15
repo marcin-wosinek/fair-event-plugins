@@ -12,6 +12,7 @@ import {
 } from '@wordpress/components';
 import { submissionToMarkdown } from '../utils/submission-markdown.js';
 import { formatDate } from '../utils/format-date.js';
+import { sourceFormLabel } from '../utils/source-form.js';
 
 /**
  * Which ticket a signup submission belongs to, and whether that link should
@@ -53,6 +54,20 @@ export function ticketLinkDescription( submission ) {
 		);
 	}
 	return label;
+}
+
+function SourcePage( { page } ) {
+	if ( ! page ) {
+		return __( 'No page', 'fair-form' );
+	}
+	if ( ! page.url ) {
+		return page.label;
+	}
+	return (
+		<a href={ page.url } target="_blank" rel="noopener noreferrer">
+			{ page.label }
+		</a>
+	);
 }
 
 function AnswerDisplay( { answer } ) {
@@ -327,7 +342,9 @@ export default function SubmissionDetail() {
 		<div className="wrap fair-form-submission-detail">
 			<div className="fair-form-submission-detail__header">
 				<h1>
-					{ submission.title || __( 'Form Submission', 'fair-form' ) }
+					{ submission.source_form_title ||
+						submission.title ||
+						__( 'Form Submission', 'fair-form' ) }
 				</h1>
 				<Button variant="secondary" onClick={ copyMarkdown }>
 					{ __( 'Copy markdown', 'fair-form' ) }
@@ -355,6 +372,18 @@ export default function SubmissionDetail() {
 						style={ { border: 'none' } }
 					>
 						<tbody>
+							<tr>
+								<th>{ __( 'Form', 'fair-form' ) }</th>
+								<td>{ sourceFormLabel( submission ) }</td>
+							</tr>
+							<tr>
+								<th>{ __( 'Page', 'fair-form' ) }</th>
+								<td>
+									<SourcePage
+										page={ submission.source_page }
+									/>
+								</td>
+							</tr>
 							<tr>
 								<th>{ __( 'Submitted by', 'fair-form' ) }</th>
 								<td>

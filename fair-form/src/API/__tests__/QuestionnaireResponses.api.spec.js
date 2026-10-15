@@ -163,3 +163,195 @@ test.describe( 'QuestionnaireResponsesController — dialog identity and deletio
 		);
 	} );
 } );
+
+test.describe( 'QuestionnaireResponsesController — source form and page (#1324)', () => {
+	test.describe.configure( { mode: 'serial' } );
+
+	let api;
+	const run = `${ Date.now() }-${ Math.floor( Math.random() * 1e6 ) }`;
+	const pages = {};
+	const submissionIds = [];
+
+	async function createPage( status ) {
+		const res = await api.post( '/wp-json/wp/v2/pages', {
+			headers: adminHeaders,
+			data: { title: `Source page ${ status } ${ run }`, status },
+		} );
+		expect( res.status() ).toBe( 201 );
+		return ( await res.json() ).id;
+	}
+
+	// Submits one answer set and returns the new submission's ID, found by
+	// the unique answer it carries.
+	async function submit( key, fields ) {
+		const marker = `source-${ key }-${ run }`;
+		const res = await api.post( '/wp-json/fair-form/v1/fair-form-submit', {
+			data: {
+				...fields,
+				questionnaire_answers: [
+					{
+						question_key: 'email',
+						question_text: 'Email?',
+						question_type: 'email',
+						answer_value: `${ marker }@example.test`,
+						display_order: 0,
+					},
+				],
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+
+		const list = await api.get(
+			'/wp-json/fair-form/v1/questionnaire-responses',
+			{
+				headers: adminHeaders,
+				params: fields.post_id ? { post_id: fields.post_id } : {},
+			}
+		);
+		expect( list.status() ).toBe( 200 );
+		const match = ( await list.json() ).find( ( s ) =>
+			s.answers.some(
+				( a ) => a.answer_value === `${ marker }@example.test`
+			)
+		);
+		expect( match ).toBeTruthy();
+		submissionIds.push( match.id );
+		return match.id;
+	}
+
+	async function getSubmission( id ) {
+		const res = await api.get(
+			`/wp-json/fair-form/v1/questionnaire-responses/${ id }`,
+			{ headers: adminHeaders }
+		);
+		expect( res.status() ).toBe( 200 );
+		return res.json();
+	}
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		for ( const status of [ 'publish', 'draft', 'private' ] ) {
+			pages[ status ] = await createPage( status );
+		}
+
+		pages.trash = await createPage( 'publish' );
+		pages.deleted = await createPage( 'publish' );
+	} );
+
+	test.afterAll( async () => {
+		for ( const id of submissionIds ) {
+			await api.delete(
+				`/wp-json/fair-form/v1/questionnaire-responses/${ id }`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const id of Object.values( pages ) ) {
+			await api.delete( `/wp-json/wp/v2/pages/${ id }`, {
+				headers: adminHeaders,
+				params: { force: true },
+			} );
+		}
+		await api.dispose();
+	} );
+
+	test( 'a titled form on a published page carries its title and a permalink', async () => {
+		const id = await submit( 'titled', {
+			post_id: pages.publish,
+			form_id: `ff-titled-${ run }`,
+			form_title: 'Workshop feedback',
+		} );
+		const submission = await getSubmission( id );
+
+		expect( submission.form_id ).toBe( `ff-titled-${ run }` );
+		expect( submission.source_form_title ).toBe( 'Workshop feedback' );
+		// Existing fields keep their meaning for current consumers.
+		expect( submission.title ).toBe( 'Fair Form' );
+		expect( submission.source_page ).toEqual( {
+			id: pages.publish,
+			label: `Source page publish ${ run }`,
+			url: expect.stringMatching( /^https?:\/\// ),
+		} );
+
+		const all = await api.get(
+			'/wp-json/fair-form/v1/questionnaire-responses/all',
+			{ headers: adminHeaders }
+		);
+		const row = ( await all.json() ).find( ( s ) => s.id === id );
+		expect( row.form_id ).toBe( `ff-titled-${ run }` );
+		expect( row.source_form_title ).toBe( 'Workshop feedback' );
+		expect( row.form_title ).toBe( 'Workshop feedback' );
+	} );
+
+	test( 'an untitled form reports its identifier and no title', async () => {
+		const id = await submit( 'untitled', {
+			post_id: pages.publish,
+			form_id: `ff-untitled-${ run }`,
+		} );
+		const submission = await getSubmission( id );
+
+		expect( submission.form_id ).toBe( `ff-untitled-${ run }` );
+		expect( submission.source_form_title ).toBeNull();
+	} );
+
+	test( 'a legacy submission without form identity or page has explicit empty states', async () => {
+		const id = await submit( 'legacy', {} );
+		const submission = await getSubmission( id );
+
+		expect( submission.form_id ).toBeNull();
+		expect( submission.source_form_title ).toBeNull();
+		expect( submission.source_page ).toBeNull();
+	} );
+
+	test( 'draft and private pages are named but not linked', async () => {
+		for ( const status of [ 'draft', 'private' ] ) {
+			const id = await submit( status, {
+				post_id: pages[ status ],
+				form_id: `ff-${ status }-${ run }`,
+			} );
+			const { source_page: page } = await getSubmission( id );
+
+			expect( page ).toEqual( {
+				id: pages[ status ],
+				label: `Source page ${ status } ${ run }`,
+				url: null,
+			} );
+		}
+	} );
+
+	test( 'trashed and deleted pages are not linked', async () => {
+		const trashedId = await submit( 'trash', {
+			post_id: pages.trash,
+			form_id: `ff-trash-${ run }`,
+		} );
+		const deletedId = await submit( 'deleted', {
+			post_id: pages.deleted,
+			form_id: `ff-deleted-${ run }`,
+		} );
+
+		await api.delete( `/wp-json/wp/v2/pages/${ pages.trash }`, {
+			headers: adminHeaders,
+		} );
+		const removed = await api.delete(
+			`/wp-json/wp/v2/pages/${ pages.deleted }`,
+			{ headers: adminHeaders, params: { force: true } }
+		);
+		expect( removed.status() ).toBe( 200 );
+
+		const trashed = ( await getSubmission( trashedId ) ).source_page;
+		expect( trashed.id ).toBe( pages.trash );
+		expect( trashed.url ).toBeNull();
+
+		expect( ( await getSubmission( deletedId ) ).source_page ).toEqual( {
+			id: pages.deleted,
+			label: `Post #${ pages.deleted }`,
+			url: null,
+		} );
+	} );
+
+	test( 'anonymous requests for a single submission are rejected', async () => {
+		const res = await api.get(
+			`/wp-json/fair-form/v1/questionnaire-responses/${ submissionIds[ 0 ] }`
+		);
+		expect( res.status() ).toBe( 401 );
+	} );
+} );
