@@ -89,6 +89,7 @@ function mockApiFetchByPath( {
 	transactions = [],
 	budgets = [ budgetA, budgetB ],
 	connectorStatus = null,
+	matchedEntries = [],
 } = {} ) {
 	apiFetch.mockImplementation( ( { path, method } ) => {
 		if ( path === '/fair-payments-connector/v1/oauth/status' ) {
@@ -104,7 +105,7 @@ function mockApiFetchByPath( {
 			return Promise.resolve( {
 				unmatched_entries: entries,
 				unmatched_transactions: transactions,
-				matched_entries: [],
+				matched_entries: matchedEntries,
 			} );
 		}
 		if ( /\/suggest-matches$/.test( path ) ) {
@@ -389,5 +390,64 @@ describe( 'ReconciliationApp — Mollie settlement access (#1693)', () => {
 		expect(
 			screen.getByRole( 'button', { name: 'Import settlement CSV' } )
 		).toBeEnabled();
+	} );
+} );
+
+describe( 'ReconciliationApp — links to the focused entry view (#1914)', () => {
+	const matchedEntry = {
+		...entry,
+		id: 4,
+		entry_date: '2026-02-03',
+		transactions: [ { ...txFromSiteA, match_amount: 10 } ],
+	};
+
+	it( 'links the unmatched entry date and keeps Select as a separate control', async () => {
+		mockApiFetchByPath();
+		await selectEntryAndOpenPanel();
+
+		const link = screen.getByRole( 'link', {
+			name: 'Entry #1, 2026-01-01',
+		} );
+		expect( link ).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-finance-entries&entry_id=1'
+		);
+		expect( link ).toHaveTextContent( '2026-01-01' );
+
+		const selectButton = within( link.closest( 'tr' ) ).getByRole(
+			'button',
+			{ name: 'Selected' }
+		);
+		expect( selectButton ).not.toContainElement( link );
+		expect( link ).not.toContainElement( selectButton );
+	} );
+
+	it( 'links the matched entry date and keeps Unmatch All working', async () => {
+		mockApiFetchByPath( { entries: [], matchedEntries: [ matchedEntry ] } );
+		render( <ReconciliationApp /> );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Matched Entries (1)',
+			} )
+		);
+
+		expect(
+			screen.getByRole( 'link', { name: 'Entry #4, 2026-02-03' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-finance-entries&entry_id=4'
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Unmatch All' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-finance/v1/financial-entries/4/match',
+				method: 'DELETE',
+			} )
+		);
 	} );
 } );

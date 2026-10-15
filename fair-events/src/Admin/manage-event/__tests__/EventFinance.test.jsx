@@ -101,16 +101,16 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
 	} );
 
-	it( 'shows the linked entry id in the Budget entry column', async () => {
+	it( 'links the entry id in the Budget entry column to the focused entry view', async () => {
 		mockApiFetchByPath( {
 			paidTransactions: [ paidTransactionWithEntry ],
 		} );
 
 		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
 
-		await waitFor( () =>
-			expect( screen.getByText( '#5' ) ).toBeInTheDocument()
-		);
+		expect(
+			await screen.findByRole( 'link', { name: '#5' } )
+		).toHaveAttribute( 'href', 'admin.php&entry_id=5' );
 	} );
 
 	it( 'shows a dash in the Budget entry column when the transaction has no linked entry', async () => {
@@ -295,5 +295,62 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 		expect(
 			screen.getByRole( 'button', { name: 'Save budget' } )
 		).toBeEnabled();
+	} );
+} );
+
+describe( 'EventFinance — links to the focused entry view (#1914)', () => {
+	it( 'links each of several entry ids on one transaction separately', async () => {
+		mockApiFetchByPath( {
+			paidTransactions: [
+				{ ...paidTransactionWithEntry, entry_ids: [ 5, 6 ] },
+			],
+		} );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		expect(
+			await screen.findByRole( 'link', { name: '#5' } )
+		).toHaveAttribute( 'href', 'admin.php&entry_id=5' );
+		expect( screen.getByRole( 'link', { name: '#6' } ) ).toHaveAttribute(
+			'href',
+			'admin.php&entry_id=6'
+		);
+		expect(
+			screen.getByRole( 'link', { name: '#5' } ).closest( 'td' )
+		).toHaveTextContent( '#5, #6' );
+	} );
+
+	it( 'links the cost entry date to the focused entry view', async () => {
+		mockApiFetchByPath( { costEntries: [ costEntry ] } );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+
+		const link = await screen.findByRole( 'link', {
+			name: 'Entry #9, 2026-07-19',
+		} );
+		expect( link ).toHaveAttribute( 'href', 'admin.php&entry_id=9' );
+		expect( link ).toHaveTextContent( '2026-07-19' );
+	} );
+
+	it( 'renders plain-text references when the entries screen is unavailable', async () => {
+		mockApiFetchByPath( {
+			paidTransactions: [ paidTransactionWithEntry ],
+			costEntries: [ costEntry ],
+		} );
+
+		render( <EventFinance eventDateId={ 42 } entriesUrl="" /> );
+
+		await screen.findByText( 'Venue rental' );
+		expect( screen.getByText( '#5' ) ).toBeInTheDocument();
+		expect( screen.getByText( '2026-07-19' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', { name: '#5' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', { name: /^Entry #/ } )
+		).not.toBeInTheDocument();
+		screen.getAllByRole( 'link' ).forEach( ( link ) => {
+			expect( link.getAttribute( 'href' ) ).not.toContain( 'entry_id=' );
+		} );
 	} );
 } );

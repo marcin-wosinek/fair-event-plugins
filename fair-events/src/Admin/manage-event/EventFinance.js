@@ -7,7 +7,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, Fragment } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -19,7 +19,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
@@ -411,7 +411,26 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 											{ costEntries.map( ( entry ) => (
 												<tr key={ entry.id }>
 													<td>
-														{ entry.entry_date }
+														{ entriesUrl ? (
+															<a
+																href={ `${ entriesUrl }&entry_id=${ entry.id }` }
+																aria-label={ sprintf(
+																	/* translators: 1: financial entry ID, 2: entry date */
+																	__(
+																		'Entry #%1$d, %2$s',
+																		'fair-events'
+																	),
+																	entry.id,
+																	entry.entry_date
+																) }
+															>
+																{
+																	entry.entry_date
+																}
+															</a>
+														) : (
+															entry.entry_date
+														) }
 													</td>
 													<td>
 														<strong
@@ -544,16 +563,31 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 														<td>
 															{ tx.entry_ids
 																?.length
-																? tx.entry_ids
-																		.map(
-																			(
-																				id
-																			) =>
-																				`#${ id }`
+																? tx.entry_ids.map(
+																		(
+																			id,
+																			index
+																		) => (
+																			<Fragment
+																				key={
+																					id
+																				}
+																			>
+																				{ index >
+																					0 &&
+																					', ' }
+																				{ entriesUrl ? (
+																					<a
+																						href={ `${ entriesUrl }&entry_id=${ id }` }
+																					>
+																						{ `#${ id }` }
+																					</a>
+																				) : (
+																					`#${ id }`
+																				) }
+																			</Fragment>
 																		)
-																		.join(
-																			', '
-																		)
+																	)
 																: '-' }
 														</td>
 													</tr>
