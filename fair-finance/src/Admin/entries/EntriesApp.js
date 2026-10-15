@@ -1,7 +1,13 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback, Fragment } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+	Fragment,
+} from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -41,7 +47,41 @@ const getEventUrlLabel = ( url ) => {
 	}
 };
 
+const DEFAULT_FILTERS = {
+	date_from: '',
+	date_to: '',
+	budget_id: '',
+	event_url: '',
+	event_date_id: '',
+	tag: '',
+	entry_type: '',
+	unmatched: false,
+};
+
+/**
+ * Read the focused entry from the `entry_id` URL parameter.
+ *
+ * @return {{id: number|null, invalid: boolean}} The focused entry ID, or
+ *     `invalid` when the parameter is present but not a positive integer.
+ */
+const readFocusFromUrl = () => {
+	const raw = new URLSearchParams( window.location.search ).get( 'entry_id' );
+	if ( raw === null ) {
+		return { id: null, invalid: false };
+	}
+	if ( ! /^[1-9]\d*$/.test( raw ) ) {
+		return { id: null, invalid: true };
+	}
+	return { id: parseInt( raw, 10 ), invalid: false };
+};
+
 const EntriesApp = () => {
+	// Focus is read before the first data request so a focused link never
+	// loads the full list first.
+	const [ focus, setFocus ] = useState( readFocusFromUrl );
+	const isFocused = focus.id !== null || focus.invalid;
+	const entriesRequestRef = useRef( 0 );
+	const totalsRequestRef = useRef( 0 );
 	const [ entries, setEntries ] = useState( [] );
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ eventUrls, setEventUrls ] = useState( [] );
@@ -58,16 +98,7 @@ const EntriesApp = () => {
 		pages: 0,
 		page: 1,
 	} );
-	const [ filters, setFilters ] = useState( {
-		date_from: '',
-		date_to: '',
-		budget_id: '',
-		event_url: '',
-		event_date_id: '',
-		tag: '',
-		entry_type: '',
-		unmatched: false,
-	} );
+	const [ filters, setFilters ] = useState( DEFAULT_FILTERS );
 	const [ sort, setSort ] = useState( {
 		orderby: 'entry_date',
 		order: 'desc',
@@ -112,10 +143,56 @@ const EntriesApp = () => {
 	}, [] );
 
 	useEffect( () => {
+		if ( focus.invalid ) {
+			setLoading( false );
+			return;
+		}
 		loadEntries();
 		loadTotals();
-		loadTagTotals();
-	}, [ filters, pagination.page, sort ] );
+		// The tag chart shows global totals, so it is hidden while focused.
+		if ( focus.id === null ) {
+			loadTagTotals();
+		}
+	}, [ filters, pagination.page, sort, focus ] );
+
+	/**
+	 * Append the active filters to request params. A focused entry takes
+	 * precedence over every ordinary filter.
+	 *
+	 * @param {URLSearchParams} params                    Params to extend.
+	 * @param {Object}          options                   Options.
+	 * @param {boolean}         options.includeEntryType  Whether to send the type filter.
+	 */
+	const appendFilterParams = ( params, { includeEntryType } ) => {
+		if ( focus.id !== null ) {
+			params.append( 'entry_id', focus.id );
+			return;
+		}
+		if ( filters.date_from )
+			params.append( 'date_from', filters.date_from );
+		if ( filters.date_to ) params.append( 'date_to', filters.date_to );
+		if ( filters.budget_id )
+			params.append( 'budget_id', filters.budget_id );
+		if ( filters.event_url )
+			params.append( 'event_url', filters.event_url );
+		if ( filters.event_date_id )
+			params.append( 'event_date_id', filters.event_date_id );
+		if ( filters.tag ) params.append( 'tag', filters.tag );
+		if ( includeEntryType && filters.entry_type )
+			params.append( 'entry_type', filters.entry_type );
+		if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+	};
+
+	const clearFocus = () => {
+		const url = new URL( window.location.href );
+		url.searchParams.delete( 'entry_id' );
+		window.history.replaceState( null, '', url.toString() );
+
+		setError( null );
+		setFilters( DEFAULT_FILTERS );
+		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
+		setFocus( { id: null, invalid: false } );
+	};
 
 	const loadBudgets = async () => {
 		try {
@@ -199,6 +276,9 @@ const EntriesApp = () => {
 	};
 
 	const loadEntries = async () => {
+		// Only the latest request may update the list, so a slow response
+		// for a previous view (e.g. before focus was cleared) is dropped.
+		const requestId = ++entriesRequestRef.current;
 		setLoading( true );
 		setError( null );
 
@@ -206,26 +286,16 @@ const EntriesApp = () => {
 			const params = new URLSearchParams();
 			params.append( 'page', pagination.page );
 			params.append( 'per_page', 50 );
-
-			if ( filters.date_from )
-				params.append( 'date_from', filters.date_from );
-			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
-			if ( filters.budget_id )
-				params.append( 'budget_id', filters.budget_id );
-			if ( filters.event_url )
-				params.append( 'event_url', filters.event_url );
-			if ( filters.event_date_id )
-				params.append( 'event_date_id', filters.event_date_id );
-			if ( filters.tag ) params.append( 'tag', filters.tag );
-			if ( filters.entry_type )
-				params.append( 'entry_type', filters.entry_type );
-			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+			appendFilterParams( params, { includeEntryType: true } );
 			params.append( 'orderby', sort.orderby );
 			params.append( 'order', sort.order );
 
 			const data = await apiFetch( {
 				path: `/fair-finance/v1/financial-entries?${ params.toString() }`,
 			} );
+			if ( requestId !== entriesRequestRef.current ) {
+				return;
+			}
 
 			setEntries( data.entries );
 			setPagination( ( prev ) => ( {
@@ -234,33 +304,33 @@ const EntriesApp = () => {
 				pages: data.pages,
 			} ) );
 		} catch ( err ) {
+			if ( requestId !== entriesRequestRef.current ) {
+				return;
+			}
+			setEntries( [] );
 			setError(
 				err.message ||
 					__( 'Failed to load entries.', 'fair-payments-connector' )
 			);
 		} finally {
-			setLoading( false );
+			if ( requestId === entriesRequestRef.current ) {
+				setLoading( false );
+			}
 		}
 	};
 
 	const loadTotals = async () => {
+		const requestId = ++totalsRequestRef.current;
 		try {
 			const params = new URLSearchParams();
-			if ( filters.date_from )
-				params.append( 'date_from', filters.date_from );
-			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
-			if ( filters.budget_id )
-				params.append( 'budget_id', filters.budget_id );
-			if ( filters.event_url )
-				params.append( 'event_url', filters.event_url );
-			if ( filters.event_date_id )
-				params.append( 'event_date_id', filters.event_date_id );
-			if ( filters.tag ) params.append( 'tag', filters.tag );
-			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+			appendFilterParams( params, { includeEntryType: false } );
 
 			const data = await apiFetch( {
 				path: `/fair-finance/v1/financial-entries/totals?${ params.toString() }`,
 			} );
+			if ( requestId !== totalsRequestRef.current ) {
+				return;
+			}
 
 			setTotals( data );
 		} catch ( err ) {
@@ -272,19 +342,7 @@ const EntriesApp = () => {
 		setExportLoading( true );
 		try {
 			const params = new URLSearchParams();
-			if ( filters.date_from )
-				params.append( 'date_from', filters.date_from );
-			if ( filters.date_to ) params.append( 'date_to', filters.date_to );
-			if ( filters.budget_id )
-				params.append( 'budget_id', filters.budget_id );
-			if ( filters.event_url )
-				params.append( 'event_url', filters.event_url );
-			if ( filters.event_date_id )
-				params.append( 'event_date_id', filters.event_date_id );
-			if ( filters.tag ) params.append( 'tag', filters.tag );
-			if ( filters.entry_type )
-				params.append( 'entry_type', filters.entry_type );
-			if ( filters.unmatched ) params.append( 'unmatched', 'true' );
+			appendFilterParams( params, { includeEntryType: true } );
 			params.append( 'orderby', sort.orderby );
 			params.append( 'order', sort.order );
 			params.append( 'per_page', 100 );
@@ -302,9 +360,12 @@ const EntriesApp = () => {
 				page++;
 			} while ( page <= totalPages );
 
-			const scope = filters.budget_id
-				? `budget-${ filters.budget_id }`
-				: 'all';
+			let scope = 'all';
+			if ( focus.id !== null ) {
+				scope = `entry-${ focus.id }`;
+			} else if ( filters.budget_id ) {
+				scope = `budget-${ filters.budget_id }`;
+			}
 			const filename = `fair-finance-entries-${ scope }.csv`;
 			downloadCsv( buildEntriesCsv( allEntries, budgets ), filename );
 		} catch ( err ) {
@@ -627,72 +688,74 @@ const EntriesApp = () => {
 		<div className="wrap fair-finance-entries-page">
 			<VStack spacing={ 4 }>
 				{ /* Totals Summary */ }
-				<Card>
-					<CardBody>
-						<HStack
-							justify="space-around"
-							className="fair-finance-entries-summary"
-						>
-							<div style={ { textAlign: 'center' } }>
-								<div
-									style={ {
-										fontSize: '24px',
-										fontWeight: 'bold',
-										color: '#d63638',
-									} }
-								>
-									{ formatAmount( totals.total_cost ) }
+				{ ! focus.invalid && (
+					<Card>
+						<CardBody>
+							<HStack
+								justify="space-around"
+								className="fair-finance-entries-summary"
+							>
+								<div style={ { textAlign: 'center' } }>
+									<div
+										style={ {
+											fontSize: '24px',
+											fontWeight: 'bold',
+											color: '#d63638',
+										} }
+									>
+										{ formatAmount( totals.total_cost ) }
+									</div>
+									<div style={ { color: '#666' } }>
+										{ __(
+											'Total Costs',
+											'fair-payments-connector'
+										) }
+									</div>
 								</div>
-								<div style={ { color: '#666' } }>
-									{ __(
-										'Total Costs',
-										'fair-payments-connector'
-									) }
+								<div style={ { textAlign: 'center' } }>
+									<div
+										style={ {
+											fontSize: '24px',
+											fontWeight: 'bold',
+											color: '#007017',
+										} }
+									>
+										{ formatAmount( totals.total_income ) }
+									</div>
+									<div style={ { color: '#666' } }>
+										{ __(
+											'Total Income',
+											'fair-payments-connector'
+										) }
+									</div>
 								</div>
-							</div>
-							<div style={ { textAlign: 'center' } }>
-								<div
-									style={ {
-										fontSize: '24px',
-										fontWeight: 'bold',
-										color: '#007017',
-									} }
-								>
-									{ formatAmount( totals.total_income ) }
+								<div style={ { textAlign: 'center' } }>
+									<div
+										style={ {
+											fontSize: '24px',
+											fontWeight: 'bold',
+											color:
+												totals.balance >= 0
+													? '#007017'
+													: '#d63638',
+										} }
+									>
+										{ formatAmount( totals.balance ) }
+									</div>
+									<div style={ { color: '#666' } }>
+										{ __(
+											'Balance',
+											'fair-payments-connector'
+										) }
+									</div>
 								</div>
-								<div style={ { color: '#666' } }>
-									{ __(
-										'Total Income',
-										'fair-payments-connector'
-									) }
-								</div>
-							</div>
-							<div style={ { textAlign: 'center' } }>
-								<div
-									style={ {
-										fontSize: '24px',
-										fontWeight: 'bold',
-										color:
-											totals.balance >= 0
-												? '#007017'
-												: '#d63638',
-									} }
-								>
-									{ formatAmount( totals.balance ) }
-								</div>
-								<div style={ { color: '#666' } }>
-									{ __(
-										'Balance',
-										'fair-payments-connector'
-									) }
-								</div>
-							</div>
-						</HStack>
-					</CardBody>
-				</Card>
+							</HStack>
+						</CardBody>
+					</Card>
+				) }
 
-				{ /* Tag Chart */ }
-				{ Object.keys( tagTotals ).length > 0 && (
+				{ /* Tag Chart (global totals, hidden while focused) */ }
+				{ ! isFocused && Object.keys( tagTotals ).length > 0 && (
 					<Card>
 						<CardBody>
 							<TagChart data={ tagTotals } />
@@ -756,182 +819,231 @@ const EntriesApp = () => {
 					</CardHeader>
 					<CardBody>
 						<VStack spacing={ 4 }>
+							{ /* Focused entry: replaces the filters */ }
+							{ isFocused && (
+								<Notice
+									status={ focus.invalid ? 'error' : 'info' }
+									isDismissible={ false }
+									actions={ [
+										{
+											label: __(
+												'Show all entries',
+												'fair-finance'
+											),
+											onClick: clearFocus,
+											variant: 'secondary',
+										},
+									] }
+								>
+									{ focus.invalid
+										? __(
+												'This entry link is not valid.',
+												'fair-finance'
+										  )
+										: sprintf(
+												/* translators: %d: financial entry ID. */
+												__(
+													'Showing entry #%d',
+													'fair-finance'
+												),
+												focus.id
+										  ) }
+								</Notice>
+							) }
+
 							{ /* Filters */ }
-							<HStack spacing={ 3 } wrap>
-								<TextControl
-									label={ __(
-										'From Date',
-										'fair-payments-connector'
-									) }
-									value={ filters.date_from }
-									onChange={ ( value ) =>
-										handleFilterChange( 'date_from', value )
-									}
-									type="date"
-								/>
-								<TextControl
-									label={ __(
-										'To Date',
-										'fair-payments-connector'
-									) }
-									value={ filters.date_to }
-									onChange={ ( value ) =>
-										handleFilterChange( 'date_to', value )
-									}
-									type="date"
-								/>
-								<SelectControl
-									label={ __(
-										'Budget',
-										'fair-payments-connector'
-									) }
-									value={ filters.budget_id }
-									options={ budgetOptions }
-									onChange={ ( value ) =>
-										handleFilterChange( 'budget_id', value )
-									}
-								/>
-								{ eventsEnabled &&
-									eventDateOptions.length > 0 && (
+							{ ! isFocused && (
+								<HStack spacing={ 3 } wrap>
+									<TextControl
+										label={ __(
+											'From Date',
+											'fair-payments-connector'
+										) }
+										value={ filters.date_from }
+										onChange={ ( value ) =>
+											handleFilterChange(
+												'date_from',
+												value
+											)
+										}
+										type="date"
+									/>
+									<TextControl
+										label={ __(
+											'To Date',
+											'fair-payments-connector'
+										) }
+										value={ filters.date_to }
+										onChange={ ( value ) =>
+											handleFilterChange(
+												'date_to',
+												value
+											)
+										}
+										type="date"
+									/>
+									<SelectControl
+										label={ __(
+											'Budget',
+											'fair-payments-connector'
+										) }
+										value={ filters.budget_id }
+										options={ budgetOptions }
+										onChange={ ( value ) =>
+											handleFilterChange(
+												'budget_id',
+												value
+											)
+										}
+									/>
+									{ eventsEnabled &&
+										eventDateOptions.length > 0 && (
+											<SelectControl
+												label={ __(
+													'Link',
+													'fair-payments-connector'
+												) }
+												value={ filters.event_date_id }
+												options={ [
+													{
+														label: __(
+															'All Links',
+															'fair-payments-connector'
+														),
+														value: '',
+													},
+													...eventDateOptions,
+												] }
+												onChange={ ( value ) =>
+													handleFilterChange(
+														'event_date_id',
+														value
+													)
+												}
+											/>
+										) }
+									{ eventsEnabled &&
+										eventDateOptions.length === 0 &&
+										eventUrls.length > 0 && (
+											<SelectControl
+												label={ __(
+													'Link',
+													'fair-payments-connector'
+												) }
+												value={ filters.event_url }
+												options={ eventUrlOptions }
+												onChange={ ( value ) =>
+													handleFilterChange(
+														'event_url',
+														value
+													)
+												}
+											/>
+										) }
+									{ tags.length > 0 && (
 										<SelectControl
 											label={ __(
-												'Link',
-												'fair-payments-connector'
+												'Tag',
+												'fair-finance'
 											) }
-											value={ filters.event_date_id }
+											value={ filters.tag }
 											options={ [
 												{
 													label: __(
-														'All Links',
-														'fair-payments-connector'
+														'All Tags',
+														'fair-finance'
 													),
 													value: '',
 												},
-												...eventDateOptions,
+												...tags.map( ( tag ) => ( {
+													label: tag,
+													value: tag,
+												} ) ),
 											] }
 											onChange={ ( value ) =>
 												handleFilterChange(
-													'event_date_id',
+													'tag',
 													value
 												)
 											}
 										/>
 									) }
-								{ eventsEnabled &&
-									eventDateOptions.length === 0 &&
-									eventUrls.length > 0 && (
-										<SelectControl
-											label={ __(
-												'Link',
-												'fair-payments-connector'
-											) }
-											value={ filters.event_url }
-											options={ eventUrlOptions }
-											onChange={ ( value ) =>
-												handleFilterChange(
-													'event_url',
-													value
-												)
-											}
-										/>
-									) }
-								{ tags.length > 0 && (
 									<SelectControl
-										label={ __( 'Tag', 'fair-finance' ) }
-										value={ filters.tag }
+										label={ __(
+											'Type',
+											'fair-payments-connector'
+										) }
+										value={ filters.entry_type }
 										options={ [
 											{
 												label: __(
-													'All Tags',
-													'fair-finance'
+													'All Types',
+													'fair-payments-connector'
 												),
 												value: '',
 											},
-											...tags.map( ( tag ) => ( {
-												label: tag,
-												value: tag,
-											} ) ),
+											{
+												label: __(
+													'Cost',
+													'fair-payments-connector'
+												),
+												value: 'cost',
+											},
+											{
+												label: __(
+													'Income',
+													'fair-payments-connector'
+												),
+												value: 'income',
+											},
+											{
+												label: __(
+													'Transfer',
+													'fair-payments-connector'
+												),
+												value: 'transfer',
+											},
 										] }
 										onChange={ ( value ) =>
-											handleFilterChange( 'tag', value )
+											handleFilterChange(
+												'entry_type',
+												value
+											)
 										}
 									/>
-								) }
-								<SelectControl
-									label={ __(
-										'Type',
-										'fair-payments-connector'
-									) }
-									value={ filters.entry_type }
-									options={ [
-										{
-											label: __(
-												'All Types',
-												'fair-payments-connector'
-											),
-											value: '',
-										},
-										{
-											label: __(
-												'Cost',
-												'fair-payments-connector'
-											),
-											value: 'cost',
-										},
-										{
-											label: __(
-												'Income',
-												'fair-payments-connector'
-											),
-											value: 'income',
-										},
-										{
-											label: __(
-												'Transfer',
-												'fair-payments-connector'
-											),
-											value: 'transfer',
-										},
-									] }
-									onChange={ ( value ) =>
-										handleFilterChange(
-											'entry_type',
-											value
-										)
-									}
-								/>
-								<SelectControl
-									label={ __(
-										'Matching',
-										'fair-payments-connector'
-									) }
-									value={
-										filters.unmatched ? 'unmatched' : ''
-									}
-									options={ [
-										{
-											label: __(
-												'All',
-												'fair-payments-connector'
-											),
-											value: '',
-										},
-										{
-											label: __(
-												'Unmatched Only',
-												'fair-payments-connector'
-											),
-											value: 'unmatched',
-										},
-									] }
-									onChange={ ( value ) =>
-										handleFilterChange(
-											'unmatched',
-											value === 'unmatched'
-										)
-									}
-								/>
-							</HStack>
+									<SelectControl
+										label={ __(
+											'Matching',
+											'fair-payments-connector'
+										) }
+										value={
+											filters.unmatched ? 'unmatched' : ''
+										}
+										options={ [
+											{
+												label: __(
+													'All',
+													'fair-payments-connector'
+												),
+												value: '',
+											},
+											{
+												label: __(
+													'Unmatched Only',
+													'fair-payments-connector'
+												),
+												value: 'unmatched',
+											},
+										] }
+										onChange={ ( value ) =>
+											handleFilterChange(
+												'unmatched',
+												value === 'unmatched'
+											)
+										}
+									/>
+								</HStack>
+							) }
 
 							{ /* Notices */ }
 							{ error && (
@@ -973,21 +1085,33 @@ const EntriesApp = () => {
 							) }
 
 							{ /* Empty State */ }
-							{ ! loading && entries.length === 0 && (
-								<div
-									style={ {
-										textAlign: 'center',
-										padding: '20px',
-									} }
-								>
-									<p>
-										{ __(
-											'No entries found. Add your first entry to start tracking costs and income.',
-											'fair-payments-connector'
-										) }
-									</p>
-								</div>
-							) }
+							{ ! loading &&
+								! error &&
+								! focus.invalid &&
+								entries.length === 0 && (
+									<div
+										style={ {
+											textAlign: 'center',
+											padding: '20px',
+										} }
+									>
+										<p>
+											{ focus.id !== null
+												? sprintf(
+														/* translators: %d: financial entry ID. */
+														__(
+															'Entry #%d was not found. It may have been deleted.',
+															'fair-finance'
+														),
+														focus.id
+												  )
+												: __(
+														'No entries found. Add your first entry to start tracking costs and income.',
+														'fair-payments-connector'
+												  ) }
+										</p>
+									</div>
+								) }
 
 							{ /* Entries Table */ }
 							{ ! loading && entries.length > 0 && (

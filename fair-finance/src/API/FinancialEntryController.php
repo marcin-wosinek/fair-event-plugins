@@ -482,6 +482,15 @@ class FinancialEntryController extends WP_REST_Controller {
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			),
+			'entry_id'      => array(
+				'description'       => __( 'Focus on a single entry by ID; other filters are ignored.', 'fair-finance' ),
+				'type'              => 'integer',
+				'minimum'           => 1,
+				// Hand-written args only run an explicit validate_callback, so
+				// the type and minimum above are enforced through it.
+				'validate_callback' => 'rest_validate_request_arg',
+				'sanitize_callback' => 'absint',
+			),
 		);
 	}
 
@@ -645,6 +654,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			'tag'           => $request->get_param( 'tag' ),
 			'entry_type'    => $request->get_param( 'entry_type' ),
 			'unmatched'     => $request->get_param( 'unmatched' ),
+			'entry_id'      => $request->get_param( 'entry_id' ),
 			'per_page'      => $request->get_param( 'per_page' ),
 			'page'          => $request->get_param( 'page' ),
 			'orderby'       => $request->get_param( 'orderby' ),
@@ -724,6 +734,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			'event_date_id' => $request->get_param( 'event_date_id' ),
 			'tag'           => $request->get_param( 'tag' ),
 			'unmatched'     => $request->get_param( 'unmatched' ),
+			'entry_id'      => $request->get_param( 'entry_id' ),
 		);
 
 		$totals = FinancialEntry::get_totals( $filters );

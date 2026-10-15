@@ -143,13 +143,19 @@ class AdminPages {
 		// Transactions page.
 		if ( 'toplevel_page_fair-payments-connector-transactions' === $hook ) {
 			$this->enqueue_admin_page_script( 'transactions' );
+			$transactions_data = array(
+				'organizationId'     => get_option( 'fair_payment_organization_id', '' ),
+				'externalUpdatesUrl' => add_query_arg( 'page', 'fair-payments-connector-external-updates', admin_url( 'admin.php' ) ),
+			);
+			// Matched entries are opened in Fair Finance, so they link only
+			// while it is active; otherwise they stay plain text.
+			if ( defined( 'FAIR_FINANCE_VERSION' ) ) {
+				$transactions_data['financeEntriesUrl'] = add_query_arg( 'page', 'fair-finance-entries', admin_url( 'admin.php' ) );
+			}
 			wp_localize_script(
 				'fair-payments-connector-transactions',
 				'fairPaymentTransactions',
-				array(
-					'organizationId'     => get_option( 'fair_payment_organization_id', '' ),
-					'externalUpdatesUrl' => add_query_arg( 'page', 'fair-payments-connector-external-updates', admin_url( 'admin.php' ) ),
-				)
+				$transactions_data
 			);
 			return;
 		}

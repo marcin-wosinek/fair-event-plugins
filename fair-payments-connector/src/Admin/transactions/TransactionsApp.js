@@ -1,7 +1,13 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+	Fragment,
+} from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -251,6 +257,9 @@ const getModeStyle = ( testmode ) => {
 };
 
 const TransactionsApp = () => {
+	// Present only while Fair Finance is active; entry references stay plain
+	// text otherwise so no link points at a missing screen.
+	const financeEntriesUrl = window.fairPaymentTransactions?.financeEntriesUrl;
 	// Draft inputs stay separate from the applied query; only Apply and
 	// Reset move them into it.
 	const [ draft, setDraft ] = useState( DEFAULT_CRITERIA );
@@ -1024,12 +1033,31 @@ const TransactionsApp = () => {
 											<td>
 												{ t.entry_ids &&
 												t.entry_ids.length > 0
-													? t.entry_ids
-															.map(
-																( entryId ) =>
-																	`#${ entryId }`
+													? t.entry_ids.map(
+															(
+																entryId,
+																index
+															) => (
+																<Fragment
+																	key={
+																		entryId
+																	}
+																>
+																	{ index >
+																		0 &&
+																		', ' }
+																	{ financeEntriesUrl ? (
+																		<a
+																			href={ `${ financeEntriesUrl }&entry_id=${ entryId }` }
+																		>
+																			{ `#${ entryId }` }
+																		</a>
+																	) : (
+																		`#${ entryId }`
+																	) }
+																</Fragment>
 															)
-															.join( ', ' )
+													  )
 													: '-' }
 											</td>
 											<td>{ t.created_at }</td>
