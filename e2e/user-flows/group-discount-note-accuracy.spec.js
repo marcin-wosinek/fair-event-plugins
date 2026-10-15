@@ -127,4 +127,41 @@ test.describe('Group discount note accuracy', () => {
 			cleanup(event);
 		}
 	});
+
+	test('an amount rule larger than an add-on shows it free and keeps the ticket total', async ({
+		page,
+	}) => {
+		// 20.00 ticket and 5.00 add-on, 10.00 off each (#1312).
+		const event = seed({
+			price: 20,
+			discountType: 'amount',
+			discountValue: 10,
+			optionPrice: 5,
+		});
+		try {
+			await page.goto(event.pageUrl);
+
+			const radio = page.locator('input[name="ticket_type_id"]');
+			await expect(radio).toHaveAttribute('data-ticket-price', '10.00');
+
+			const activity = page.locator(
+				`input[name="ticket_option_ids[]"][value="${event.optionId}"]`
+			);
+			await expect(activity).toHaveAttribute('data-option-price', '0.00');
+			// A free add-on carries no price tag — never a "-5.00" one.
+			await expect(
+				page
+					.locator('label', { has: activity })
+					.locator('.fair-events-ticket-option-addon')
+			).toHaveCount(0);
+
+			await radio.check();
+			await activity.check();
+			await expect(
+				page.locator('.fair-events-signup-checkout-total')
+			).toHaveAttribute('data-amount', '10.00');
+		} finally {
+			cleanup(event);
+		}
+	});
 });

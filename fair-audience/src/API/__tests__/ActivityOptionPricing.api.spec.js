@@ -198,6 +198,83 @@ test.describe( 'Add-on pricing through fair-audience', () => {
 		} ) );
 	}
 
+	// The activity and ticket prices the viewer is shown, read from the
+	// viewer-context request the signup form hydrates from after load.
+	async function shownPrices( seeded ) {
+		const visitor = await request.newContext( { baseURL: BASE_URL } );
+		const res = await visitor.get(
+			'/wp-json/fair-events/v1/get-tickets/viewer-context',
+			{
+				params: {
+					event_date_id: seeded.eventDateId,
+					participant_token: seeded.token,
+				},
+			}
+		);
+		const body = await res.json();
+		await visitor.dispose();
+		expect( res.ok(), JSON.stringify( body ) ).toBeTruthy();
+
+		// Numeric attribute strings, independent of the site's locale.
+		const priceIn = ( html, id, attribute ) => {
+			const match = ( html || '' ).match(
+				new RegExp( `value="${ id }"[^>]*${ attribute }="([^"]*)"` )
+			);
+			return match ? Number( match[ 1 ] ) : null;
+		};
+		const optionPrice = ( optionId ) =>
+			priceIn(
+				body.ticket_options_fieldset_html,
+				optionId,
+				'data-option-price'
+			);
+		return {
+			ticket: priceIn(
+				body.ticket_type_fieldset_html,
+				seeded.ticketTypeId,
+				'data-ticket-price'
+			),
+			option: optionPrice( seeded.optionId ),
+			extraOption: seeded.extraOptionId
+				? optionPrice( seeded.extraOptionId )
+				: null,
+		};
+	}
+
+	async function seedAmountDiscount( overrides ) {
+		return runScript(
+			'seed-group-discount-note-event.php',
+			'E2E_SEED',
+			JSON.stringify( {
+				discountType: 'amount',
+				discountValue: 10,
+				...overrides,
+			} )
+		);
+	}
+
+	async function cleanupSeeded( seeded ) {
+		await runScript(
+			'cleanup-group-discount-note-event.php',
+			'E2E_CLEANUP',
+			String( seeded.eventId ),
+			String( seeded.eventDateId ),
+			String( seeded.participantId ),
+			String( seeded.groupId ),
+			String( seeded.ruleId )
+		);
+	}
+
+	async function storedSignups( eventDateId ) {
+		return (
+			await runScript(
+				'get-tickets-state.php',
+				'E2E_GT_STATE',
+				String( eventDateId )
+			)
+		).signups;
+	}
+
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 	} );
@@ -359,6 +436,195 @@ test.describe( 'Add-on pricing through fair-audience', () => {
 				String( seeded.groupId ),
 				String( seeded.ruleId )
 			);
+		}
+	} );
+
+	test( 'a fixed discount larger than the add-on makes it free without subsidising the ticket', async () => {
+		// 20.00 ticket and 5.00 add-on, 10.00 off each: 10.00 and free, not -5.00.
+		const seeded = await seedAmountDiscount( {
+			price: 20,
+			optionPrice: 5,
+		} );
+
+		try {
+			expect( await shownPrices( seeded ) ).toMatchObject( {
+				ticket: 10,
+				option: 0,
+			} );
+
+			const email = `addon-floor-${ Date.now() }@example.test`;
+			const member = await post( '/fair-events/v1/get-tickets', {
+				name: 'Group Member',
+				email,
+				_honeypot: '',
+				event_date_id: seeded.eventDateId,
+				ticket_type_id: seeded.ticketTypeId,
+				ticket_option_ids: [ seeded.optionId ],
+				participant_token: seeded.token,
+			} );
+			expect( member.status, JSON.stringify( member.body ) ).toBe( 200 );
+			expect( member.body.status ).toBe( 'payment_required' );
+			expect( Number( member.body.amount ) ).toBe( 10 );
+
+			const items = await lineItems( member.body.transaction_id );
+			expect( items.map( ( item ) => item.amount ) ).toEqual( [ 10 ] );
+
+			const stored = ( await storedSignups( seeded.eventDateId ) ).find(
+				( row ) => row.email === email
+			);
+			expect( stored.amount ).toBe( 10 );
+		} finally {
+			await cleanupSeeded( seeded );
+		}
+	} );
+
+	test( 'a fixed discount covering the whole order confirms it free, never negative', async () => {
+		// 10.00 ticket and 5.00 add-on, 10.00 off each: both free, not -5.00.
+		const seeded = await seedAmountDiscount( {
+			price: 10,
+			optionPrice: 5,
+		} );
+
+		try {
+			expect( await shownPrices( seeded ) ).toMatchObject( {
+				ticket: 0,
+				option: 0,
+			} );
+
+			const email = `addon-free-${ Date.now() }@example.test`;
+			const member = await post( '/fair-events/v1/get-tickets', {
+				name: 'Group Member',
+				email,
+				_honeypot: '',
+				event_date_id: seeded.eventDateId,
+				ticket_type_id: seeded.ticketTypeId,
+				ticket_option_ids: [ seeded.optionId ],
+				participant_token: seeded.token,
+			} );
+			expect( member.status, JSON.stringify( member.body ) ).toBe( 200 );
+			expect( member.body.status ).toBe( 'confirmed' );
+
+			const stored = ( await storedSignups( seeded.eventDateId ) ).find(
+				( row ) => row.email === email
+			);
+			expect( stored ).toMatchObject( {
+				amount: 0,
+				status: 'confirmed',
+				transaction_id: null,
+			} );
+		} finally {
+			await cleanupSeeded( seeded );
+		}
+	} );
+
+	test( 'the signup route charges the ticket in full when a fixed discount exceeds the add-on', async () => {
+		const seeded = await seedAmountDiscount( {
+			price: 20,
+			optionPrice: 5,
+		} );
+
+		try {
+			const signup = await post( '/fair-audience/v1/event-signup', {
+				event_id: seeded.eventId,
+				event_date_id: seeded.eventDateId,
+				ticket_type_id: seeded.ticketTypeId,
+				ticket_option_ids: [ seeded.optionId ],
+				participant_token: seeded.token,
+			} );
+			expect( signup.status, JSON.stringify( signup.body ) ).toBe( 200 );
+			expect( signup.body.status ).toBe( 'payment_required' );
+			expect( Number( signup.body.amount ) ).toBe( 10 );
+			expect(
+				( await lineItems( signup.body.transaction_id ) ).map(
+					( item ) => item.amount
+				)
+			).toEqual( [ 10 ] );
+		} finally {
+			await cleanupSeeded( seeded );
+		}
+	} );
+
+	test( 'adding activities does not let a fixed discount on one subsidise another', async () => {
+		// 5.00 Dinner and 30.00 Workshop, 10.00 off each: free and 20.00.
+		const seeded = await seedAmountDiscount( {
+			price: 0,
+			optionPrice: 5,
+			extraOptionPrice: 30,
+		} );
+
+		try {
+			expect( await shownPrices( seeded ) ).toMatchObject( {
+				option: 0,
+				extraOption: 20,
+			} );
+
+			const linkRes = await api.post(
+				`/wp-json/fair-audience/v1/event-dates/${ seeded.eventDateId }/participants/batch`,
+				{
+					headers: adminHeaders,
+					data: {
+						participant_ids: [ seeded.participantId ],
+						label: 'signed_up',
+					},
+				}
+			);
+			expect( linkRes.ok(), await linkRes.text() ).toBeTruthy();
+
+			const added = await post(
+				'/fair-audience/v1/event-signup/add-activities',
+				{
+					event_id: seeded.eventId,
+					event_date_id: seeded.eventDateId,
+					ticket_option_ids: [
+						seeded.optionId,
+						seeded.extraOptionId,
+					],
+					participant_token: seeded.token,
+				}
+			);
+			expect( added.status, JSON.stringify( added.body ) ).toBe( 200 );
+			expect( added.body.status ).toBe( 'payment_required' );
+			expect( Number( added.body.amount ) ).toBe( 20 );
+			expect( await lineItems( added.body.transaction_id ) ).toEqual( [
+				{ name: 'Workshop', quantity: 1, amount: 20 },
+			] );
+		} finally {
+			await cleanupSeeded( seeded );
+		}
+	} );
+
+	test( 'adding only an add-on a fixed discount makes free adds it without payment', async () => {
+		const seeded = await seedAmountDiscount( {
+			price: 0,
+			optionPrice: 5,
+		} );
+
+		try {
+			const linkRes = await api.post(
+				`/wp-json/fair-audience/v1/event-dates/${ seeded.eventDateId }/participants/batch`,
+				{
+					headers: adminHeaders,
+					data: {
+						participant_ids: [ seeded.participantId ],
+						label: 'signed_up',
+					},
+				}
+			);
+			expect( linkRes.ok(), await linkRes.text() ).toBeTruthy();
+
+			const added = await post(
+				'/fair-audience/v1/event-signup/add-activities',
+				{
+					event_id: seeded.eventId,
+					event_date_id: seeded.eventDateId,
+					ticket_option_ids: [ seeded.optionId ],
+					participant_token: seeded.token,
+				}
+			);
+			expect( added.status, JSON.stringify( added.body ) ).toBe( 200 );
+			expect( added.body.status ).toBe( 'activities_added' );
+		} finally {
+			await cleanupSeeded( seeded );
 		}
 	} );
 } );

@@ -18,6 +18,9 @@
  *   discountValue  Discount magnitude. Required when discountType is set.
  *   optionPrice    When set, adds one flat-priced add-on ("Dinner") at this
  *                  price, returned as `optionId`.
+ *   extraOptionPrice When set, adds a second flat-priced add-on ("Workshop")
+ *                  at this price, returned as `extraOptionId` — for an order
+ *                  combining two discounted activities (#1312).
  *
  * Prints a single `E2E_SEED:{json}` line with the participant-token page URL
  * and every id `cleanup-group-discount-note-event.php` needs to tear down.
@@ -47,8 +50,11 @@ $event_date_id  = fair_e2e_add_date( $event_id );
 $sale_period_id = fair_e2e_add_sale_period( $event_date_id );
 $ticket_type_id = fair_e2e_add_ticket_type( $event_date_id, 'General Admission', null );
 fair_e2e_add_price( $ticket_type_id, $sale_period_id, $price, null );
-$option_id = isset( $overrides['optionPrice'] )
+$option_id       = isset( $overrides['optionPrice'] )
 	? fair_e2e_add_option( $event_date_id, 'Dinner', (float) $overrides['optionPrice'], 'dinner' )
+	: 0;
+$extra_option_id = isset( $overrides['extraOptionPrice'] )
+	? fair_e2e_add_option( $event_date_id, 'Workshop', (float) $overrides['extraOptionPrice'], 'workshop', 1 )
 	: 0;
 
 $participant = new \FairAudience\Models\Participant(
@@ -89,6 +95,7 @@ echo 'E2E_SEED:' . wp_json_encode(
 		'eventDateId'   => (int) $event_date_id,
 		'ticketTypeId'  => (int) $ticket_type_id,
 		'optionId'      => (int) $option_id,
+		'extraOptionId' => (int) $extra_option_id,
 		'token'         => $token,
 		'participantId' => (int) $participant->id,
 		'groupId'       => $group_id,

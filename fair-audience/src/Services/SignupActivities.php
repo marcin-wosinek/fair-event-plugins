@@ -55,7 +55,10 @@ class SignupActivities {
 	 * membership are each fetched once per render/request rather than once
 	 * per option (issue #1299). Options with a zero/negative base price are
 	 * left out of the lookup (nothing to discount) and pass through
-	 * unchanged, as do all prices for an anonymous viewer.
+	 * unchanged, as do all prices for an anonymous viewer. A discounted price
+	 * is floored at zero per option — a fixed-amount rule larger than the
+	 * activity's price makes it free, never negative, so it cannot subsidise
+	 * other items in the order (issue #1312).
 	 *
 	 * @param array<int, float> $base_price_by_option_id Base (undiscounted) option prices, keyed by option ID.
 	 * @param int               $pricing_event_date_id  Event date the discount rules belong to.
@@ -81,7 +84,7 @@ class SignupActivities {
 		$prices = array();
 		foreach ( $base_price_by_option_id as $option_id => $base_price ) {
 			$prices[ $option_id ] = isset( $resolved_by_option_id[ $option_id ] )
-				? $resolved_by_option_id[ $option_id ]['price']
+				? max( 0.0, $resolved_by_option_id[ $option_id ]['price'] )
 				: $base_price;
 		}
 
