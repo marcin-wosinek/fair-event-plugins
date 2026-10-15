@@ -273,11 +273,11 @@ export function CancelTicketModal( {
 						? __(
 								'Cancelling does not refund anything. The payment for this purchase stays as it is; if a refund is due, make it separately with your payment provider.',
 								'fair-audience'
-						  )
+							)
 						: __(
 								'This ticket is awaiting payment. Cancelling does not change the amount: if the purchaser completes the payment, they pay for the whole purchase and nothing is refunded automatically.',
 								'fair-audience'
-						  ) }
+							) }
 				</Notice>
 
 				<p style={ { margin: 0 } }>

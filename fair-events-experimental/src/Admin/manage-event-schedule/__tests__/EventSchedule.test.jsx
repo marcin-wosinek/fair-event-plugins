@@ -354,7 +354,7 @@ describe( 'EventSchedule', () => {
 								},
 							],
 						},
-				  } )
+					} )
 				: Promise.resolve( savedSchedule )
 		);
 		fireEvent.click(

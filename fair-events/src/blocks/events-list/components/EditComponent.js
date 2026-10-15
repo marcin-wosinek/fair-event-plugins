@@ -83,7 +83,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 					),
 					value: displayPattern,
 				},
-		  ];
+			];
 
 	const selectedPatternType = selectedPattern?.type;
 	const showQueryLoopSourceNotice =
@@ -145,11 +145,11 @@ export default function EditComponent( { attributes, setAttributes } ) {
 								? __(
 										'Shows events that have not started yet. A recurring series from this site appears once, at its next date, with its schedule. Events from calendar feeds and external sources are listed one date at a time.',
 										'fair-events'
-								  )
+									)
 								: __(
 										'Filter events by time relative to now',
 										'fair-events'
-								  )
+									)
 						}
 					/>
 					<CategorySelector

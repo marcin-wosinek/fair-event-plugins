@@ -231,7 +231,7 @@ const Lines = ( { title, lines, expanded, onToggle, prefix } ) => {
 															'fair-finance'
 														),
 														name
-												  )
+													)
 												: sprintf(
 														/* translators: %s: report line description */
 														__(
@@ -239,7 +239,7 @@ const Lines = ( { title, lines, expanded, onToggle, prefix } ) => {
 															'fair-finance'
 														),
 														name
-												  ) }
+													) }
 										</Button>
 									</td>
 								</tr>
@@ -441,7 +441,7 @@ export default function SettlementReport( { report, settlement } ) {
 									: formatMoney(
 											summary.net,
 											summary.currency
-									  ) }
+										) }
 							</Row>
 							<Row label={ __( 'Payout', 'fair-finance' ) }>
 								{ formatMoney(
@@ -460,7 +460,7 @@ export default function SettlementReport( { report, settlement } ) {
 									: formatMoney(
 											summary.difference,
 											summary.currency
-									  ) }
+										) }
 							</Row>
 						</dl>
 						<Agreement summary={ summary } />
@@ -477,11 +477,11 @@ export default function SettlementReport( { report, settlement } ) {
 								? __(
 										'Hide Mollie report breakdown',
 										'fair-finance'
-								  )
+									)
 								: __(
 										'Show Mollie report breakdown',
 										'fair-finance'
-								  ) }
+									) }
 						</Button>
 
 						{ showBreakdown && (

@@ -525,7 +525,7 @@ export default function EventParticipants() {
 						/* translators: %s: participant name */
 						__( '%s was removed from this date.', 'fair-audience' ),
 						removedName
-				  )
+					)
 				: sprintf(
 						/* translators: %d: number of participants */
 						_n(
@@ -535,7 +535,7 @@ export default function EventParticipants() {
 							'fair-audience'
 						),
 						removedRows.length
-				  )
+					)
 		);
 	};
 
@@ -1019,7 +1019,7 @@ export default function EventParticipants() {
 												),
 												selectedAvailableIds.length,
 												filteredAvailableParticipants.length
-										  )
+											)
 										: sprintf(
 												/* translators: %d: number of available participants */
 												__(
@@ -1027,7 +1027,7 @@ export default function EventParticipants() {
 													'fair-audience'
 												),
 												filteredAvailableParticipants.length
-										  ) }
+											) }
 								</span>
 								<Button
 									variant="secondary"
@@ -1149,7 +1149,7 @@ export default function EventParticipants() {
 													'fair-audience'
 												),
 												selectedAvailableIds.length
-										  ) }
+											) }
 								</Button>
 							</div>
 						</>
@@ -1519,19 +1519,23 @@ export default function EventParticipants() {
 							{ isSendingInvitations
 								? __( 'Sending…', 'fair-audience' )
 								: invitationPreview.status === 'ready' &&
-								  invitationPreview.data.eligible_count > 0
-								? sprintf(
-										/* translators: %d: number of invitations to send */
-										_n(
-											'Send %d invitation',
-											'Send %d invitations',
+									  invitationPreview.data.eligible_count > 0
+									? sprintf(
+											/* translators: %d: number of invitations to send */
+											_n(
+												'Send %d invitation',
+												'Send %d invitations',
+												invitationPreview.data
+													.eligible_count,
+												'fair-audience'
+											),
 											invitationPreview.data
-												.eligible_count,
+												.eligible_count
+										)
+									: __(
+											'Send Invitations',
 											'fair-audience'
-										),
-										invitationPreview.data.eligible_count
-								  )
-								: __( 'Send Invitations', 'fair-audience' ) }
+										) }
 						</Button>
 					</div>
 				</Modal>

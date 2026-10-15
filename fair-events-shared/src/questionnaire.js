@@ -772,7 +772,7 @@ function renderUrlPreview( wrapper, metadata ) {
 					__( '%1$s – %2$s', 'fair-form' ),
 					formatWhen( start ),
 					formatWhen( end )
-			  )
+				)
 			: formatWhen( start );
 		list.appendChild( li );
 	}

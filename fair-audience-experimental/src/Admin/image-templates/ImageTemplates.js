@@ -404,7 +404,7 @@ export default function ImageTemplates() {
 										: __(
 												'Select Image',
 												'fair-audience'
-										  ) }
+											) }
 								</Button>
 								{ images[ img.name ] && (
 									<Button
@@ -595,7 +595,7 @@ export default function ImageTemplates() {
 											{ template.variables.length > 0
 												? template.variables.join(
 														', '
-												  )
+													)
 												: '-' }
 										</td>
 										<td>

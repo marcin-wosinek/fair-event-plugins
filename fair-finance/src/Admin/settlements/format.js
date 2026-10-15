@@ -79,7 +79,7 @@ export const periodLabel = ( period ) =>
 				__( 'Period %1$s-%2$s', 'fair-finance' ),
 				period.year,
 				period.month
-		  )
+			)
 		: __( 'Period not stated', 'fair-finance' );
 
 /**
@@ -205,10 +205,10 @@ export const molliePaymentUrl = ( organizationId, paymentId ) => {
 	return isMollieId( organizationId, 'org_' )
 		? `https://my.mollie.com/dashboard/${ encodeURIComponent(
 				organizationId
-		  ) }/payments/${ encodeURIComponent( paymentId ) }`
+			) }/payments/${ encodeURIComponent( paymentId ) }`
 		: `https://www.mollie.com/dashboard/payments/${ encodeURIComponent(
 				paymentId
-		  ) }`;
+			) }`;
 };
 
 /**
@@ -224,7 +224,7 @@ export const mollieSettlementUrl = ( organizationId, settlementId ) =>
 	isMollieId( settlementId, 'stl_' ) && isMollieId( organizationId, 'org_' )
 		? `https://my.mollie.com/dashboard/${ encodeURIComponent(
 				organizationId
-		  ) }/reports/settlements`
+			) }/reports/settlements`
 		: null;
 
 const DECIMAL = /^(-?)(\d+)(?:\.(\d+))?$/;

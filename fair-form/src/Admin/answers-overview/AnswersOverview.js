@@ -137,8 +137,8 @@ export default function AnswersOverview() {
 							groupBy === 'page'
 								? `page-${ item.post_id }`
 								: groupBy === 'event'
-								? `event-${ item.event_date_id }`
-								: `form-${ item.form_id }`
+									? `event-${ item.event_date_id }`
+									: `form-${ item.form_id }`
 						}
 					/>
 				</CardBody>

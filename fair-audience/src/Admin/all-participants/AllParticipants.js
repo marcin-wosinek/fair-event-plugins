@@ -122,7 +122,7 @@ export default function AllParticipants() {
 							? __(
 									'Marketing — pending confirmation',
 									'fair-audience'
-							  )
+								)
 							: __( 'Marketing', 'fair-audience' );
 					}
 					if ( 'minimal' === item.email_profile ) {

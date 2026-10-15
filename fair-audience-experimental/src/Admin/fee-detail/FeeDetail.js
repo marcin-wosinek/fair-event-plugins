@@ -477,7 +477,7 @@ export default function FeeDetail() {
 			description: fee
 				? `${ fee.name } — ${ payment.participant_name || '' } ${
 						payment.participant_surname || ''
-				  }`.trim()
+					}`.trim()
 				: '',
 			source_budget_id: '',
 			target_budget_id: fee?.budget_id ? fee.budget_id.toString() : '',
@@ -717,7 +717,7 @@ export default function FeeDetail() {
 							? `, ${ failedCount } ${ __(
 									'failed',
 									'fair-audience'
-							  ) }`
+								) }`
 							: ''
 					}`,
 				} );
@@ -1096,7 +1096,7 @@ export default function FeeDetail() {
 										p.surname || ''
 									} ${ p.email || '' }`.toLowerCase();
 									return label.includes( term );
-							  } )
+								} )
 							: available;
 
 						return (
@@ -1135,11 +1135,11 @@ export default function FeeDetail() {
 												? __(
 														'All group members already have a payment for this fee.',
 														'fair-audience'
-												  )
+													)
 												: __(
 														'No matches.',
 														'fair-audience'
-												  ) }
+													) }
 										</p>
 									) : (
 										filtered.map( ( p ) => {

@@ -634,8 +634,8 @@ export default function EditPoll() {
 					{ isSaving
 						? __( 'Saving...', 'fair-audience' )
 						: pollId
-						? __( 'Update Poll', 'fair-audience' )
-						: __( 'Create Poll', 'fair-audience' ) }
+							? __( 'Update Poll', 'fair-audience' )
+							: __( 'Create Poll', 'fair-audience' ) }
 				</Button>{ ' ' }
 				<Button
 					isSecondary

@@ -302,11 +302,11 @@ export default function Import() {
 												? __(
 														'Importing...',
 														'fair-audience'
-												  )
+													)
 												: __(
 														'Import',
 														'fair-audience'
-												  ) }
+													) }
 										</Button>
 									</div>
 
@@ -347,11 +347,11 @@ export default function Import() {
 															? __(
 																	'Import Partially Complete',
 																	'fair-audience'
-															  )
+																)
 															: __(
 																	'Import Complete',
 																	'fair-audience'
-															  ) }
+																) }
 													</strong>
 												</p>
 												<ul>
@@ -671,11 +671,11 @@ export default function Import() {
 																	? __(
 																			'Resolving...',
 																			'fair-audience'
-																	  )
+																		)
 																	: __(
 																			'Create Participants',
 																			'fair-audience'
-																	  ) }
+																		) }
 															</Button>
 														</div>
 													</div>

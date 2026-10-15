@@ -92,7 +92,7 @@ export function identifyParticipants( people ) {
 							/* translators: %d: participant ID */
 							__( 'ID %d', 'fair-audience' ),
 							person.id
-					  );
+						);
 		}
 		return { id: person.id, label, detail };
 	} );

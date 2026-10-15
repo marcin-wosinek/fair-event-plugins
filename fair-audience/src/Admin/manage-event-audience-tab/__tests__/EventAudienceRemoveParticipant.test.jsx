@@ -265,7 +265,7 @@ describe( 'EventAudience — Remove participant (#1820)', () => {
 							code: 'removal_failed',
 							message:
 								'The participant could not be removed. Nothing was changed; try again.',
-					  } )
+						} )
 					: Promise.resolve( { removed: true, message: 'removed' } );
 			},
 		} );

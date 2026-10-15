@@ -720,11 +720,11 @@ const TransactionsApp = () => {
 								? __(
 										'Loading fees…',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Load missing Mollie fees',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 						<Button
 							variant="secondary"
@@ -837,11 +837,11 @@ const TransactionsApp = () => {
 								? __(
 										'No transactions found.',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'No transactions match these filters. Change them or select “Reset filters”.',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</p>
 					) }
 
@@ -966,14 +966,14 @@ const TransactionsApp = () => {
 												{ t.mollie_fee !== null
 													? `${ t.mollie_fee.toFixed(
 															2
-													  ) } ${ t.currency }`
+														) } ${ t.currency }`
 													: '-' }
 											</td>
 											<td>
 												{ t.application_fee !== null
 													? `${ t.application_fee.toFixed(
 															2
-													  ) } ${ t.currency }`
+														) } ${ t.currency }`
 													: '-' }
 											</td>
 											<td>
@@ -998,11 +998,11 @@ const TransactionsApp = () => {
 														? __(
 																'Test',
 																'fair-payments-connector'
-														  )
+															)
 														: __(
 																'Live',
 																'fair-payments-connector'
-														  ) }
+															) }
 												</span>
 											</td>
 											<td
@@ -1057,7 +1057,7 @@ const TransactionsApp = () => {
 																	) }
 																</Fragment>
 															)
-													  )
+														)
 													: '-' }
 											</td>
 											<td>{ t.created_at }</td>

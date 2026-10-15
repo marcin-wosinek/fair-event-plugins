@@ -109,7 +109,7 @@ export default function EventSchedule( {
 										title: namesById[
 											entry.ticket_option_id
 										],
-								  }
+									}
 								: entry
 						)
 					);
@@ -450,11 +450,11 @@ export default function EventSchedule( {
 											? __(
 													'Workshop from Prices',
 													'fair-events-experimental'
-											  )
+												)
 											: __(
 													'Schedule item',
 													'fair-events-experimental'
-											  ) }
+												) }
 									</span>
 									<span
 										className={
@@ -467,11 +467,11 @@ export default function EventSchedule( {
 											? __(
 													'Bookable',
 													'fair-events-experimental'
-											  )
+												)
 											: __(
 													'Not bookable',
 													'fair-events-experimental'
-											  ) }
+												) }
 									</span>
 									{ entry.location.trim() && (
 										<span className="fair-events-schedule-badge is-room">
@@ -534,7 +534,7 @@ export default function EventSchedule( {
 															),
 															entryName( other ),
 															other.location.trim()
-													  )
+														)
 													: entryName( other )
 											)
 											.join( ', ' )
@@ -610,11 +610,11 @@ export default function EventSchedule( {
 											? __(
 													'Not bookable keeps the workshop on the schedule and stops new bookings. Price and capacity stay in Prices.',
 													'fair-events-experimental'
-											  )
+												)
 											: __(
 													'A schedule item is never a ticket choice. To take bookings, add it as an add-on in Prices and use Add workshop.',
 													'fair-events-experimental'
-											  ) )
+												) )
 									}
 									disabled={ readOnly || ! isWorkshop }
 									__next40pxDefaultSize

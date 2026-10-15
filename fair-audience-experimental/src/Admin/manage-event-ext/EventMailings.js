@@ -298,7 +298,7 @@ export default function EventMailings( {
 						: __(
 								'Mailing scheduled.',
 								'fair-audience-experimental'
-						  ),
+							),
 				} );
 				resetForm();
 			} )
@@ -380,11 +380,11 @@ export default function EventMailings( {
 							? __(
 									'Edit scheduled mailing',
 									'fair-audience-experimental'
-							  )
+								)
 							: __(
 									'Schedule new mailing',
 									'fair-audience-experimental'
-							  ) }
+								) }
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -489,7 +489,7 @@ export default function EventMailings( {
 									? __(
 											'Recipient count unavailable.',
 											'fair-audience-experimental'
-									  )
+										)
 									: sprintf(
 											/* translators: %d: recipient count */
 											__(
@@ -497,7 +497,7 @@ export default function EventMailings( {
 												'fair-audience-experimental'
 											),
 											recipientCount
-									  ) }{ ' ' }
+										) }{ ' ' }
 								{ recipientList.length > 0 && (
 									<Button
 										variant="link"
@@ -509,11 +509,11 @@ export default function EventMailings( {
 											? __(
 													'Hide list',
 													'fair-audience-experimental'
-											  )
+												)
 											: __(
 													'View list',
 													'fair-audience-experimental'
-											  ) }
+												) }
 									</Button>
 								) }
 							</p>
@@ -566,11 +566,11 @@ export default function EventMailings( {
 									? __(
 											'Update mailing',
 											'fair-audience-experimental'
-									  )
+										)
 									: __(
 											'Schedule mailing',
 											'fair-audience-experimental'
-									  ) }
+										) }
 							</Button>
 							{ form.editingId && (
 								<Button
@@ -645,11 +645,11 @@ export default function EventMailings( {
 														'fair-audience-experimental'
 													),
 													m.scheduled_for
-											  )
+												)
 											: __(
 													'Send time pending',
 													'fair-audience-experimental'
-											  ) }
+												) }
 										{ m.status === 'sent' &&
 											sprintf(
 												/* translators: 1: sent, 2: failed, 3: skipped */

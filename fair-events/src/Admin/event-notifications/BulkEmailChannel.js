@@ -186,7 +186,7 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 		? __(
 				'Save your changes first — the preview and the test use the saved settings.',
 				'fair-events'
-		  )
+			)
 		: null;
 
 	return (
@@ -328,7 +328,7 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 												'fair-events'
 											),
 											preview.week_title
-									  )
+										)
 									: sprintf(
 											/* translators: %s: date range of a week */
 											__(
@@ -336,7 +336,7 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 												'fair-events'
 											),
 											preview.week_title
-									  ) }
+										) }
 							</Notice>
 						) }
 						<p>
@@ -362,11 +362,11 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 								/* translators: %s: date and time of the next send */
 								__( 'Next send: %s.', 'fair-events' ),
 								channel.next_run.time_local
-						  )
+							)
 						: __(
 								'Nothing is scheduled. Turn on the weekly email and save to schedule sends.',
 								'fair-events'
-						  ) }
+							) }
 				</p>
 				{ 0 === channel.runs.length ? (
 					<p>

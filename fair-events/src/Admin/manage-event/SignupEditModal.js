@@ -101,7 +101,7 @@ export function scopeNotes( { isMove, signup, counts } ) {
 						),
 						movable,
 						signup.event_date_label
-				  )
+					)
 				: sprintf(
 						/* translators: %s: date the purchase is registered for */
 						__(
@@ -109,7 +109,7 @@ export function scopeNotes( { isMove, signup, counts } ) {
 							'fair-events'
 						),
 						signup.event_date_label
-				  )
+					)
 		);
 		notes.push(
 			sprintf(
@@ -218,12 +218,12 @@ export default function SignupEditModal( {
 				/* translators: %s: participant name */
 				__( 'Move %s to another date', 'fair-events' ),
 				signup.name
-		  )
+			)
 		: sprintf(
 				/* translators: %s: participant name */
 				__( 'Change ticket type for %s', 'fair-events' ),
 				signup.name
-		  );
+			);
 
 	const notes = scopeNotes( { isMove, signup, counts } );
 
@@ -245,11 +245,11 @@ export default function SignupEditModal( {
 						? __(
 								'This series has no other active date to move the signup to.',
 								'fair-events'
-						  )
+							)
 						: __(
 								'No other ticket type with the same dates is available for this signup.',
 								'fair-events'
-						  ) }
+							) }
 				</p>
 			);
 		}
@@ -315,7 +315,7 @@ export default function SignupEditModal( {
 									: __(
 											'Choose a ticket type.',
 											'fair-events'
-									  ) }
+										) }
 							</span>
 						</FlexItem>
 					) }
@@ -357,7 +357,7 @@ export default function SignupEditModal( {
 									: __(
 											'Change ticket type',
 											'fair-events'
-									  ) }
+										) }
 							</Button>
 						) }
 					</FlexItem>

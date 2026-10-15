@@ -385,7 +385,7 @@ export default function MergeEventWizard( {
 									: __(
 											'items',
 											'fair-events-experimental'
-									  ) }
+										) }
 								)
 							</p>
 						) ) }

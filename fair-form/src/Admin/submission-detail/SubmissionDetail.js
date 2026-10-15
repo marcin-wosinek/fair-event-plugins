@@ -29,7 +29,7 @@ export function ticketLinkDescription( submission ) {
 				__( 'Ticket %1$d (%2$s)', 'fair-form' ),
 				ticket.position,
 				ticket.reference
-		  )
+			)
 		: '';
 	if ( link === 'inferred' ) {
 		return sprintf(

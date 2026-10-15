@@ -201,11 +201,11 @@ const ConnectedSitesPanel = ( { activeAction, onBegin, onEnd } ) => {
 									? __(
 											'Importing…',
 											'fair-payments-connector'
-									  )
+										)
 									: __(
 											'Import transactions',
 											'fair-payments-connector'
-									  ) }
+										) }
 							</Button>
 						</li>
 					);

@@ -126,7 +126,7 @@ export function activityRuleProblem( ticketType, count ) {
 			? __(
 					'The chosen ticket type does not include activities. Clear them to save.',
 					'fair-events'
-			  )
+				)
 			: null;
 	}
 	const maximum = ticketType.maximum_activities;
@@ -431,7 +431,7 @@ export default function TicketEditModal( {
 				: targetOptionLabel( {
 						label: option.name,
 						remaining: option.remaining,
-				  } );
+					} );
 		};
 
 		const save = async () => {
@@ -492,7 +492,7 @@ export default function TicketEditModal( {
 											/* translators: %s: ticket type name */
 											__( '%s (current)', 'fair-events' ),
 											type.label
-									  )
+										)
 									: targetOptionLabel( type ),
 								value: String( type.id ),
 							} ) ) }
@@ -506,11 +506,11 @@ export default function TicketEditModal( {
 								? __(
 										'No other ticket type with the same dates is available for this ticket.',
 										'fair-events'
-								  )
+									)
 								: __(
 										'The amount paid stays the same: no charge or refund is made for a price difference.',
 										'fair-events'
-								  ) }
+									) }
 						</p>
 					</>
 				) : (
@@ -645,7 +645,7 @@ export default function TicketEditModal( {
 							__( 'Edit ticket — %s', 'fair-events' ),
 							data.ticket.participant_name ||
 								__( '(no name)', 'fair-events' )
-					  )
+						)
 					: __( 'Edit ticket', 'fair-events' )
 			}
 			onRequestClose={ onClose }

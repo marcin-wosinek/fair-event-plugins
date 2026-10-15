@@ -85,7 +85,7 @@ export default function CategorySelector( {
 										__( '%1$s — %2$s', 'fair-events' ),
 										cat.name,
 										cat.language
-								  )
+									)
 								: cat.name
 						}
 						checked={ selectedCategories.includes( cat.id ) }

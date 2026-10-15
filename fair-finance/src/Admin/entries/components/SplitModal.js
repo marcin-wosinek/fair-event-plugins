@@ -184,7 +184,7 @@ const SplitModal = ( {
 					description: child.description || '',
 					event_url: child.event_url || '',
 					event_date_id: child.event_date_id || null,
-			  } ) )
+				} ) )
 			: [
 					{
 						budget_id: '',
@@ -200,7 +200,7 @@ const SplitModal = ( {
 						event_url: '',
 						event_date_id: null,
 					},
-			  ]
+				]
 	);
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
@@ -331,7 +331,7 @@ const SplitModal = ( {
 									: __(
 											'Income',
 											'fair-payments-connector'
-									  ) }
+										) }
 							</div>
 							<div>
 								<strong>
@@ -547,11 +547,11 @@ const SplitModal = ( {
 									? __(
 											'Update Split',
 											'fair-payments-connector'
-									  )
+										)
 									: __(
 											'Split Entry',
 											'fair-payments-connector'
-									  ) }
+										) }
 							</Button>
 						</HStack>
 					</HStack>

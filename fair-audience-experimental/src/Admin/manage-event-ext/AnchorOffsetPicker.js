@@ -226,11 +226,11 @@ export default function AnchorOffsetPicker( {
 								'fair-audience-experimental'
 							),
 							preview
-					  )
+						)
 					: __(
 							'Send time will be computed from the chosen date.',
 							'fair-audience-experimental'
-					  ) }
+						) }
 			</p>
 		</div>
 	);

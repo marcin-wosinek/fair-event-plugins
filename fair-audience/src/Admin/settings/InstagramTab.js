@@ -298,11 +298,11 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 									'fair-audience'
 								),
 								error.message
-						  )
+							)
 						: __(
 								'Instagram could not be disconnected. Try again.',
 								'fair-audience'
-						  )
+							)
 				);
 			} )
 			.finally( () => {
@@ -854,7 +854,7 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 																	testResult.details,
 																	null,
 																	2
-															  ) }
+																) }
 													</pre>
 												</details>
 											) }

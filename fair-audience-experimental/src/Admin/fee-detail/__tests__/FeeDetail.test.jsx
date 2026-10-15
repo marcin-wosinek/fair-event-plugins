@@ -737,7 +737,7 @@ describe( 'FeeDetail — creating a transfer', () => {
 								'rest_transfer_creation_failed',
 								'Failed to create transfer.'
 							)
-					  )
+						)
 					: Promise.resolve( { id: 501 } );
 			},
 		} );

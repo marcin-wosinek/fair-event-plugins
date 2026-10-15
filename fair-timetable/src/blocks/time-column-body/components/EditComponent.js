@@ -98,7 +98,7 @@ export default function EditComponent( { context, clientId } ) {
 							),
 						},
 					],
-			  ]
+				]
 			: [];
 
 	// Check if there's enough time for another slot (at least 0.5h)
@@ -122,7 +122,7 @@ export default function EditComponent( { context, clientId } ) {
 							onSelect={ customAppender }
 							className="block-list-appender__toggle"
 						/>
-				  )
+					)
 				: false,
 		}
 	);

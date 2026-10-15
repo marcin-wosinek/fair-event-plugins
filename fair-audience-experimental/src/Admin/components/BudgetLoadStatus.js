@@ -42,11 +42,11 @@ export default function BudgetLoadStatus( {
 				? __(
 						'Budgets are unavailable because Fair Finance is not active.',
 						'fair-audience-experimental'
-				  )
+					)
 				: __(
 						'Budgets could not be loaded.',
 						'fair-audience-experimental'
-				  );
+					);
 
 		return (
 			<Notice

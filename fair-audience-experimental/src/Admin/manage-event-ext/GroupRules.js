@@ -736,11 +736,11 @@ export default function GroupRules( { eventDateId } ) {
 													? __(
 															'e.g. 10',
 															'fair-audience-experimental'
-													  )
+														)
 													: __(
 															'e.g. 5.00',
 															'fair-audience-experimental'
-													  )
+														)
 											}
 										/>
 									</HStack>

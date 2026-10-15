@@ -119,11 +119,11 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 						? __(
 								'Auto-linked to this event page:',
 								'fair-audience'
-						  )
+							)
 						: __(
 								'This page is an event, but a different event is linked:',
 								'fair-audience'
-						  ) }
+							) }
 					<br />
 					<strong>{ autoDetected.title }</strong>
 					{ autoDetected.start_datetime && (
@@ -207,7 +207,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 						? __(
 								'Link this form to a specific event.',
 								'fair-audience'
-						  )
+							)
 						: ''
 				}
 			/>

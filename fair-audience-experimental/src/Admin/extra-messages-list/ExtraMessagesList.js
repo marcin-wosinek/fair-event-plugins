@@ -182,11 +182,11 @@ export default function ExtraMessagesList() {
 													? __(
 															'Active',
 															'fair-audience-experimental'
-													  )
+														)
 													: __(
 															'Inactive',
 															'fair-audience-experimental'
-													  ) }
+														) }
 											</Button>
 										</td>
 										<td>

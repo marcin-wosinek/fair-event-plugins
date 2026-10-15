@@ -591,11 +591,11 @@ const EntriesApp = () => {
 				? __(
 						'Transfer updated successfully.',
 						'fair-payments-connector'
-				  )
+					)
 				: __(
 						'Transfer created successfully.',
 						'fair-payments-connector'
-				  )
+					)
 		);
 		loadEntries();
 		loadTotals();
@@ -839,7 +839,7 @@ const EntriesApp = () => {
 										? __(
 												'This entry link is not valid.',
 												'fair-finance'
-										  )
+											)
 										: sprintf(
 												/* translators: %d: financial entry ID. */
 												__(
@@ -847,7 +847,7 @@ const EntriesApp = () => {
 													'fair-finance'
 												),
 												focus.id
-										  ) }
+											) }
 								</Notice>
 							) }
 
@@ -1104,11 +1104,11 @@ const EntriesApp = () => {
 															'fair-finance'
 														),
 														focus.id
-												  )
+													)
 												: __(
 														'No entries found. Add your first entry to start tracking costs and income.',
 														'fair-payments-connector'
-												  ) }
+													) }
 										</p>
 									</div>
 								) }
@@ -1211,9 +1211,9 @@ const EntriesApp = () => {
 																			color: isTransfer
 																				? '#2271b1'
 																				: entry.entry_type ===
-																				  'cost'
-																				? '#d63638'
-																				: '#007017',
+																					  'cost'
+																					? '#d63638'
+																					: '#007017',
 																			fontWeight:
 																				'bold',
 																		} }
@@ -1222,17 +1222,17 @@ const EntriesApp = () => {
 																			? __(
 																					'Transfer',
 																					'fair-payments-connector'
-																			  )
+																				)
 																			: entry.entry_type ===
-																			  'cost'
-																			? __(
-																					'Cost',
-																					'fair-payments-connector'
-																			  )
-																			: __(
-																					'Income',
-																					'fair-payments-connector'
-																			  ) }
+																				  'cost'
+																				? __(
+																						'Cost',
+																						'fair-payments-connector'
+																					)
+																				: __(
+																						'Income',
+																						'fair-payments-connector'
+																					) }
 																	</span>
 																</td>
 																<td>
@@ -1362,11 +1362,11 @@ const EntriesApp = () => {
 																				? __(
 																						'Split \u25BE',
 																						'fair-payments-connector'
-																				  )
+																					)
 																				: __(
 																						'Split \u25B8',
 																						'fair-payments-connector'
-																				  ) }
+																					) }
 																		</Button>
 																	) : (
 																		getBudgetName(
@@ -1415,11 +1415,11 @@ const EntriesApp = () => {
 																					? __(
 																							'Transfer \u25BE',
 																							'fair-payments-connector'
-																					  )
+																						)
 																					: __(
 																							'Transfer \u25B8',
 																							'fair-payments-connector'
-																					  ) }
+																						) }
 																			</Button>
 																		) : isSplit ? (
 																			<Button
@@ -1440,11 +1440,11 @@ const EntriesApp = () => {
 																					? __(
 																							'Split \u25BE',
 																							'fair-payments-connector'
-																					  )
+																						)
 																					: __(
 																							'Split \u25B8',
 																							'fair-payments-connector'
-																					  ) }
+																						) }
 																			</Button>
 																		) : (
 																			<em>
@@ -1469,7 +1469,7 @@ const EntriesApp = () => {
 																				.length >
 																			1
 																				? /* translators: %d: number of matched transactions */
-																				  sprintf(
+																					sprintf(
 																						__(
 																							'Yes (%d)',
 																							'fair-payments-connector'
@@ -1477,11 +1477,11 @@ const EntriesApp = () => {
 																						entry
 																							.transaction_ids
 																							.length
-																				  )
+																					)
 																				: __(
 																						'Yes',
 																						'fair-payments-connector'
-																				  ) }
+																					) }
 																		</span>
 																	) : (
 																		<span
@@ -1709,11 +1709,11 @@ const EntriesApp = () => {
 																						? __(
 																								'Cost',
 																								'fair-payments-connector'
-																						  )
+																							)
 																						: __(
 																								'Income',
 																								'fair-payments-connector'
-																						  ) }
+																							) }
 																				</span>
 																			</td>
 																			<td

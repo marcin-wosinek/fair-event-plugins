@@ -394,7 +394,7 @@ export default function IndividualEmailChannel( {
 										'fair-events'
 									),
 									channel.recipient
-							  )
+								)
 							: __( 'Send test email', 'fair-events' ) }
 					</Button>
 				</div>
@@ -428,7 +428,7 @@ export default function IndividualEmailChannel( {
 												'fair-events'
 											),
 											preview.week_title
-									  )
+										)
 									: sprintf(
 											/* translators: %s: date range of a week */
 											__(
@@ -436,7 +436,7 @@ export default function IndividualEmailChannel( {
 												'fair-events'
 											),
 											preview.week_title
-									  ) }
+										) }
 							</Notice>
 						) }
 						<p>
@@ -470,11 +470,11 @@ export default function IndividualEmailChannel( {
 								/* translators: %s: date and time of the next send */
 								__( 'Next send: %s.', 'fair-events' ),
 								channel.next_run.time_local
-						  )
+							)
 						: __(
 								'Nothing is scheduled. Turn on the weekly email and save to schedule sends.',
 								'fair-events'
-						  ) }
+							) }
 				</p>
 				{ 0 === channel.runs.length ? (
 					<p>

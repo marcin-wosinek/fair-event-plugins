@@ -72,7 +72,7 @@ export default function SettingsApp() {
 						? __(
 								'Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working.',
 								'fair-payments-connector'
-						  )
+							)
 						: sprintf(
 								/* translators: %s: error code reported by the authorization server */
 								__(
@@ -80,7 +80,7 @@ export default function SettingsApp() {
 									'fair-payments-connector'
 								),
 								error.replace( /[^a-z0-9_]/gi, '' )
-						  ),
+							),
 			} );
 			return;
 		}
@@ -230,7 +230,7 @@ export default function SettingsApp() {
 										'fair-payments-connector'
 									),
 								},
-						  ]
+							]
 						: [] ),
 				] }
 				onSelect={ handleTabSelect }

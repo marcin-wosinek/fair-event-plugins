@@ -23,7 +23,7 @@ function OutcomeItem( { entry } ) {
 						__( '%1$s: %2$s', 'fair-audience' ),
 						who,
 						entry.reason
-				  )
+					)
 				: who }
 		</li>
 	);

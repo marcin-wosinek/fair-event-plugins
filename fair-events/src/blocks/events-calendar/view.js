@@ -83,9 +83,8 @@ store( 'fair-events/calendar-subscribe', {
 			try {
 				const routerUrl = new URL( url );
 				routerUrl.hash = '';
-				const { actions } = yield import(
-					'@wordpress/interactivity-router'
-				);
+				const { actions } =
+					yield import( '@wordpress/interactivity-router' );
 				yield actions.navigate( routerUrl.href );
 				document
 					.getElementById( new URL( url ).hash.slice( 1 ) )

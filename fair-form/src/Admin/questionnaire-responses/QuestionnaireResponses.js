@@ -449,7 +449,7 @@ export default function QuestionnaireResponses() {
 							name: newGroupName.trim(),
 							description: newGroupDescription.trim(),
 						},
-				  } ).then( ( group ) => group.id )
+					} ).then( ( group ) => group.id )
 				: Promise.resolve( parseInt( selectedGroupId, 10 ) );
 
 		resolveGroup
@@ -663,7 +663,7 @@ export default function QuestionnaireResponses() {
 										: __(
 												'— Select a group —',
 												'fair-form'
-										  ),
+											),
 									value: '',
 								},
 								...availableGroups.map( ( group ) => ( {

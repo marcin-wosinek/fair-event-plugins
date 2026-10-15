@@ -1,52 +1,52 @@
-const defaultConfig = require("@wordpress/scripts/config/webpack.config");
-const path = require("path");
-const BundleOutputPlugin = require("webpack-bundle-output");
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
+const path = require( 'path' );
+const BundleOutputPlugin = require( 'webpack-bundle-output' );
 
 module.exports = {
-  ...defaultConfig,
-  entry: {
-    "blocks/simple-payment/index": path.resolve(
-      process.cwd(),
-      "src/blocks/simple-payment/index.js",
-    ),
-    "blocks/simple-payment/view": path.resolve(
-      process.cwd(),
-      "src/blocks/simple-payment/view.js",
-    ),
-    "admin/transactions/index": path.resolve(
-      process.cwd(),
-      "src/Admin/transactions/index.js",
-    ),
-    "admin/external-updates/index": path.resolve(
-      process.cwd(),
-      "src/Admin/external-updates/index.js",
-    ),
-    "admin/transaction/index": path.resolve(
-      process.cwd(),
-      "src/Admin/transaction/index.js",
-    ),
-    "admin/settings/index": path.resolve(
-      process.cwd(),
-      "src/Admin/settings/index.js",
-    ),
-    "admin/fee-dashboard/index": path.resolve(
-      process.cwd(),
-      "src/Admin/fee-dashboard/index.js",
-    ),
-    "admin/notifications/index": path.resolve(
-      process.cwd(),
-      "src/Admin/notifications/index.js",
-    ),
-    "payment-callback": path.resolve(
-      process.cwd(),
-      "src/payment-callback.js",
-    ),
-  },
-  plugins: [
-    ...defaultConfig.plugins,
-    new BundleOutputPlugin({
-      cwd: process.cwd(),
-      output: "map.json",
-    }),
-  ],
+	...defaultConfig,
+	entry: {
+		'blocks/simple-payment/index': path.resolve(
+			process.cwd(),
+			'src/blocks/simple-payment/index.js'
+		),
+		'blocks/simple-payment/view': path.resolve(
+			process.cwd(),
+			'src/blocks/simple-payment/view.js'
+		),
+		'admin/transactions/index': path.resolve(
+			process.cwd(),
+			'src/Admin/transactions/index.js'
+		),
+		'admin/external-updates/index': path.resolve(
+			process.cwd(),
+			'src/Admin/external-updates/index.js'
+		),
+		'admin/transaction/index': path.resolve(
+			process.cwd(),
+			'src/Admin/transaction/index.js'
+		),
+		'admin/settings/index': path.resolve(
+			process.cwd(),
+			'src/Admin/settings/index.js'
+		),
+		'admin/fee-dashboard/index': path.resolve(
+			process.cwd(),
+			'src/Admin/fee-dashboard/index.js'
+		),
+		'admin/notifications/index': path.resolve(
+			process.cwd(),
+			'src/Admin/notifications/index.js'
+		),
+		'payment-callback': path.resolve(
+			process.cwd(),
+			'src/payment-callback.js'
+		),
+	},
+	plugins: [
+		...defaultConfig.plugins,
+		new BundleOutputPlugin( {
+			cwd: process.cwd(),
+			output: 'map.json',
+		} ),
+	],
 };

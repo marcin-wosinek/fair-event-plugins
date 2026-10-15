@@ -298,11 +298,11 @@ const ImportModal = ( { onImport, onCancel } ) => {
 															? __(
 																	'Cost',
 																	'fair-payments-connector'
-															  )
+																)
 															: __(
 																	'Income',
 																	'fair-payments-connector'
-															  ) }
+																) }
 													</td>
 													<td
 														style={ {

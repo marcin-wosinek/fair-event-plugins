@@ -139,7 +139,7 @@ export default function FeaturesTab( { onNotice } ) {
 						? __(
 								'Forced by a wp-config constant — change it there.',
 								'fair-audience-experimental'
-						  )
+							)
 						: meta.description;
 
 					return (

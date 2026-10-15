@@ -279,14 +279,14 @@ export default function TelegramChannel( {
 								'Telegram accepted the test summary for every chat.',
 								'fair-events'
 							),
-					  }
+						}
 					: {
 							status: 'error',
 							message: __(
 								'The test summary did not reach every chat. See the results below.',
 								'fair-events'
 							),
-					  }
+						}
 			);
 		} catch ( error ) {
 			setNotice( {
@@ -519,11 +519,11 @@ export default function TelegramChannel( {
 									'fair-events'
 								),
 								channel.chat_ids.join( ', ' )
-						  )
+							)
 						: __(
 								'The test posts the selected week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send.',
 								'fair-events'
-						  ) }
+							) }
 				</p>
 				{ testBlockedReason && (
 					<p className="description">{ testBlockedReason }</p>
@@ -570,7 +570,7 @@ export default function TelegramChannel( {
 											'fair-events'
 										),
 										preview.week_title
-								  )
+									)
 								: sprintf(
 										/* translators: 1: number of Telegram messages, 2: date range of a week */
 										_n(
@@ -581,7 +581,7 @@ export default function TelegramChannel( {
 										),
 										preview.messages.length,
 										preview.week_title
-								  ) }
+									) }
 						</p>
 						{ 0 < preview.occurrence_count &&
 							preview.messages.map( ( message, index ) => (
@@ -616,11 +616,11 @@ export default function TelegramChannel( {
 								),
 								channel.next_run.time_local,
 								channel.next_run.week_title
-						  )
+							)
 						: __(
 								'Nothing is scheduled. Turn on posting and save to schedule sends.',
 								'fair-events'
-						  ) }
+							) }
 				</p>
 				{ 0 === channel.runs.length ? (
 					<p>

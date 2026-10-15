@@ -107,13 +107,29 @@ test.describe.serial( 'Activities and attendance per ticket', () => {
 					options: Array.isArray( withOptions )
 						? withOptions
 						: withOptions
-						? [
-								{ name: 'Morning', price: 0, capacity: null },
-								{ name: 'Evening', price: 0, capacity: null },
-								{ name: 'Masterclass', price: 10, capacity: 5 },
-								{ name: 'Legacy', price: 0, capacity: null },
-						  ]
-						: [],
+							? [
+									{
+										name: 'Morning',
+										price: 0,
+										capacity: null,
+									},
+									{
+										name: 'Evening',
+										price: 0,
+										capacity: null,
+									},
+									{
+										name: 'Masterclass',
+										price: 10,
+										capacity: 5,
+									},
+									{
+										name: 'Legacy',
+										price: 0,
+										capacity: null,
+									},
+								]
+							: [],
 					settings: {},
 				},
 			}

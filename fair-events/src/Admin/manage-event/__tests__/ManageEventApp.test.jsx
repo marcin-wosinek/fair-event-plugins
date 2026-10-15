@@ -853,7 +853,7 @@ describe( 'multilingual categories (#1636)', () => {
 							0,
 							1
 						),
-				  } )
+					} )
 				: originalFetch( options )
 		);
 

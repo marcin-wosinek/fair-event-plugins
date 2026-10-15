@@ -265,11 +265,11 @@ const ConnectedSitesApp = () => {
 					? __(
 							'Connected site disabled.',
 							'fair-payments-connector-experimental'
-					  )
+						)
 					: __(
 							'Connected site enabled.',
 							'fair-payments-connector-experimental'
-					  )
+						)
 			);
 			loadSites();
 		} catch ( err ) {
@@ -609,11 +609,11 @@ const ConnectedSitesApp = () => {
 																? __(
 																		'Disable',
 																		'fair-payments-connector-experimental'
-																  )
+																	)
 																: __(
 																		'Enable',
 																		'fair-payments-connector-experimental'
-																  ) }
+																	) }
 														</Button>
 														<Button
 															variant="tertiary"
@@ -649,11 +649,11 @@ const ConnectedSitesApp = () => {
 							? __(
 									'Edit Connected Site',
 									'fair-payments-connector-experimental'
-							  )
+								)
 							: __(
 									'Add Connected Site',
 									'fair-payments-connector-experimental'
-							  )
+								)
 					}
 					onRequestClose={ handleCloseForm }
 					style={ { maxWidth: '500px', width: '100%' } }
@@ -700,11 +700,11 @@ const ConnectedSitesApp = () => {
 										? __(
 												'Leave blank to keep the existing token.',
 												'fair-payments-connector-experimental'
-										  )
+											)
 										: __(
 												'Paste the token from the other site’s API Tokens page.',
 												'fair-payments-connector-experimental'
-										  )
+											)
 								}
 								required={ ! editingId }
 							/>
@@ -769,11 +769,11 @@ const ConnectedSitesApp = () => {
 										? __(
 												'Save',
 												'fair-payments-connector-experimental'
-										  )
+											)
 										: __(
 												'Add Site',
 												'fair-payments-connector-experimental'
-										  ) }
+											) }
 								</Button>
 							</HStack>
 						</VStack>

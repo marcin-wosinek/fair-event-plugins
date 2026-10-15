@@ -145,7 +145,7 @@ test.describe
 					? {
 							participant_token:
 								await participantToken( participantId ),
-					  }
+						}
 					: {} ),
 			},
 			headers

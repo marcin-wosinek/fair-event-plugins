@@ -338,7 +338,7 @@ export default function WordPressUsersImport() {
 									: __(
 											'Import Selected Users',
 											'fair-audience'
-									  ) + ` (${ selectedUnlinkedCount })` }
+										) + ` (${ selectedUnlinkedCount })` }
 							</Button>
 						</div>
 

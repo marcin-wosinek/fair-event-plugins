@@ -110,7 +110,7 @@ export default function LinkOptions( {
 			const date = event.start_datetime
 				? new Date(
 						event.start_datetime.replace( ' ', 'T' )
-				  ).toLocaleDateString()
+					).toLocaleDateString()
 				: '';
 			const linkedCount = event.linked_posts?.length || 0;
 			let label = event.title ? `${ event.title } - ${ date }` : date;

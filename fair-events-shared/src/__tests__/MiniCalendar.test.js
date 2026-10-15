@@ -177,7 +177,7 @@ describe( 'MiniCalendar', () => {
 						ariaPressed: false,
 						onActivate,
 						ariaLabel: 'Ten',
-				  }
+					}
 				: {};
 
 		render(
@@ -202,7 +202,7 @@ describe( 'MiniCalendar', () => {
 						ariaPressed: true,
 						onActivate,
 						ariaLabel: 'Master',
-				  }
+					}
 				: {};
 
 		render(

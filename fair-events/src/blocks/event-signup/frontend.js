@@ -1530,7 +1530,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					? __(
 							'Dates marked full have no places left and can’t be selected.',
 							'fair-events'
-					  )
+						)
 					: '';
 			}
 		);
@@ -1706,7 +1706,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 					),
 					coverage.name,
 					coverage.dates.length
-			  )
+				)
 			: coverage.name;
 		const dates = summary.querySelector(
 			'.fair-events-signup-coverage-summary-dates'
@@ -1861,7 +1861,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			? Math.max(
 					1,
 					Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
-			  )
+				)
 			: 1;
 	}
 
@@ -1940,8 +1940,9 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 							/* translators: %d: ticket number within the purchase */
 							__( 'Ticket %d: select activities', 'fair-events' ),
 							index + 1
-					  )
-					: legend?.dataset.baseText ?? fieldsetLegend.textContent;
+						)
+					: ( legend?.dataset.baseText ??
+						fieldsetLegend.textContent );
 		} );
 	}
 
@@ -2036,7 +2037,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 				? Math.max(
 						1,
 						Math.min( 10, parseInt( quantityField.value, 10 ) || 1 )
-				  )
+					)
 				: 1;
 		}
 
@@ -2050,7 +2051,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 						( input ) =>
 							parseFloat( input.dataset.optionPrice ) || 0
 					)
-			  )
+				)
 			: [];
 
 		const total = computeTicketTotal( { unitPrice, count, optionPrices } );
@@ -2208,11 +2209,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 								'fair-events'
 							),
 							min
-					  )
+						)
 					: __(
 							'Choose one or more dates. Each date is priced separately.',
 							'fair-events'
-					  );
+						);
 		}
 	}
 
@@ -2396,7 +2397,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 							'fair-events'
 						),
 						effectiveMax
-				  )
+					)
 				: '';
 			maxHint.style.display = maximumReached ? '' : 'none';
 		}
@@ -2486,8 +2487,8 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			button.textContent =
 				total > 0
 					? baseText +
-					  ' — ' +
-					  formatMoney( total, block.dataset.currency )
+						' — ' +
+						formatMoney( total, block.dataset.currency )
 					: baseText;
 		};
 
@@ -2704,7 +2705,7 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		return block
 			? block.querySelector(
 					`.message-container, .${ CSS_PREFIX }-message`
-			  )
+				)
 			: null;
 	}
 

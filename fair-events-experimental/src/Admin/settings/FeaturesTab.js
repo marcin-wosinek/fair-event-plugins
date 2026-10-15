@@ -135,7 +135,7 @@ export default function FeaturesTab( { onNotice } ) {
 						? __(
 								'Forced by a wp-config constant — change it there.',
 								'fair-events-experimental'
-						  )
+							)
 						: meta.description;
 
 					return (

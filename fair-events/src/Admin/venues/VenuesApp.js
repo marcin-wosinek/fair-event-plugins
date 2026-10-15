@@ -755,7 +755,7 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 									),
 									deleteTarget.name,
 									deleteTarget.address
-							  )
+								)
 							: sprintf(
 									/* translators: %s: venue name */
 									__(
@@ -763,7 +763,7 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 										'fair-events'
 									),
 									deleteTarget.name
-							  ) }
+								) }
 					</p>
 					<p style={ { margin: 0 } }>
 						{ __(
@@ -886,25 +886,25 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 										? __(
 												'Generating the Google Maps link…',
 												'fair-events'
-										  )
+											)
 										: coordinateError ||
-										  mapsPreviewError ||
-										  ( ! formData.address.trim() &&
-										  ! formData.latitude.trim() &&
-										  ! formData.longitude.trim()
+											mapsPreviewError ||
+											( ! formData.address.trim() &&
+											! formData.latitude.trim() &&
+											! formData.longitude.trim()
 												? __(
 														'Enter an address or coordinates to test the Google Maps link.',
 														'fair-events'
-												  )
+													)
 												: mapsPreviewUrl
-												? __(
-														'The link uses the current unsaved location values.',
-														'fair-events'
-												  )
-												: __(
-														'A Google Maps link is not available for these values.',
-														'fair-events'
-												  ) ) }
+													? __(
+															'The link uses the current unsaved location values.',
+															'fair-events'
+														)
+													: __(
+															'A Google Maps link is not available for these values.',
+															'fair-events'
+														) ) }
 								</p>
 							</div>
 							<TextControl

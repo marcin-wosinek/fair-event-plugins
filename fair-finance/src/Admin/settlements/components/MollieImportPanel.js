@@ -124,7 +124,7 @@ const completedText = ( run ) => {
 						'fair-finance'
 					),
 					skipped
-			  );
+				);
 	}
 
 	const loaded = sprintf(

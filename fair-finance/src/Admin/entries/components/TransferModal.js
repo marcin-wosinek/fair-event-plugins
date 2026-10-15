@@ -268,11 +268,11 @@ const TransferModal = ( {
 								? __(
 										'Update Transfer',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Create Transfer',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</HStack>
 				</VStack>

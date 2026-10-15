@@ -206,7 +206,7 @@ describe( 'FormAnswers — event assignment', () => {
 					: Promise.resolve( {
 							event_date_id: 876,
 							event_name: 'Autumn retreat',
-					  } );
+						} );
 			},
 		} );
 		render( <FormAnswers /> );

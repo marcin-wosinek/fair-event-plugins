@@ -15,7 +15,7 @@ const GROUP_DETAIL_URL =
 	// eslint-disable-next-line no-undef
 	typeof fairAudienceGroupsData !== 'undefined'
 		? // eslint-disable-next-line no-undef
-		  fairAudienceGroupsData.groupDetailUrl
+			fairAudienceGroupsData.groupDetailUrl
 		: 'admin.php?page=fair-audience-group-detail&group_id=';
 
 const DEFAULT_VIEW = {
@@ -164,7 +164,7 @@ export default function Groups() {
 						name: groupName.trim(),
 						description: groupDescription.trim(),
 					},
-			  } )
+				} )
 			: apiFetch( {
 					path: '/fair-audience/v1/groups',
 					method: 'POST',
@@ -172,7 +172,7 @@ export default function Groups() {
 						name: groupName.trim(),
 						description: groupDescription.trim(),
 					},
-			  } );
+				} );
 
 		request
 			.then( () => {

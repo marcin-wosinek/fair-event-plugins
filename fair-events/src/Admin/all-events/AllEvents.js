@@ -147,11 +147,11 @@ export default function AllEvents() {
 											? __(
 													'Collapse series dates',
 													'fair-events'
-											  )
+												)
 											: __(
 													'Expand series dates',
 													'fair-events'
-											  )
+												)
 									}
 									showTooltip={ false }
 								/>

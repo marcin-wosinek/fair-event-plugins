@@ -151,7 +151,7 @@ function RouteRow( { route, onChange, onRemove, onNotice } ) {
 									? __(
 											'Email address',
 											'fair-payments-connector'
-									  )
+										)
 									: __( 'Chat ID', 'fair-payments-connector' )
 							}
 							help={
@@ -159,7 +159,7 @@ function RouteRow( { route, onChange, onRemove, onNotice } ) {
 									? __(
 											'Numeric user/chat/channel ID, or @channelname.',
 											'fair-payments-connector'
-									  )
+										)
 									: undefined
 							}
 							value={ route.destination }

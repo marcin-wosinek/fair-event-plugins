@@ -14,7 +14,7 @@ const TagField = ( { value, tags, onChange } ) => {
 					( t ) =>
 						t.toLowerCase().includes( value.toLowerCase() ) &&
 						t !== value
-			  )
+				)
 			: [];
 
 	return (

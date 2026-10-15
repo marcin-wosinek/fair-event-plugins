@@ -142,8 +142,8 @@ function mockApi( participant = PARTICIPANT ) {
 					data.attended === undefined
 						? source.attended_at
 						: data.attended
-						? '2026-01-01 18:00:00'
-						: null,
+							? '2026-01-01 18:00:00'
+							: null,
 				activity_ids: activityIds,
 				activity_names: OPTIONS.filter( ( o ) =>
 					activityIds.includes( o.id )
@@ -749,7 +749,7 @@ describe( 'EventAudience — assigning a ticket (#1535)', () => {
 									'A participant with this email already exists.',
 								data: { status: 409, participant: CASEY },
 							},
-					  }
+						}
 					: { purchaser: JANE, assignee: CASEY },
 		} );
 		renderAudience();

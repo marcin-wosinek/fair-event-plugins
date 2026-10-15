@@ -148,11 +148,11 @@ const BudgetsApp = () => {
 						? __(
 								'Failed to update budget.',
 								'fair-payments-connector'
-						  )
+							)
 						: __(
 								'Failed to create budget.',
 								'fair-payments-connector'
-						  ) )
+							) )
 			);
 		} finally {
 			setIsSaving( false );
@@ -629,11 +629,11 @@ const BudgetsApp = () => {
 										? __(
 												'Update Budget',
 												'fair-payments-connector'
-										  )
+											)
 										: __(
 												'Create Budget',
 												'fair-payments-connector'
-										  ) }
+											) }
 								</Button>
 							</HStack>
 						</VStack>

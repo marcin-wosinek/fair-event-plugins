@@ -336,11 +336,11 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 												? __(
 														'Sum of online payments after Mollie and application fees.',
 														'fair-events'
-												  )
+													)
 												: __(
 														'Sum of online payments after fees, excluding transactions whose fee data has not been recorded yet.',
 														'fair-events'
-												  )
+													)
 										}
 									>
 										<div
@@ -498,7 +498,7 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 																? tx.created_at.slice(
 																		0,
 																		10
-																  )
+																	)
 																: '-' }
 														</td>
 														<td>
@@ -616,7 +616,7 @@ export default function EventFinance( { eventDateId, entriesUrl } ) {
 																? tx.created_at.slice(
 																		0,
 																		10
-																  )
+																	)
 																: '-' }
 														</td>
 														<td>

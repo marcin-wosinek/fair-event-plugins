@@ -182,7 +182,7 @@ export default function SettlementsApp() {
 						? __(
 								'This settlement is not saved on this site.',
 								'fair-finance'
-						  )
+							)
 						: view.message }
 				</Notice>
 				{ settlementId > 0 && (
@@ -270,7 +270,7 @@ export default function SettlementsApp() {
 										),
 										onClick: () => setConfirming( account ),
 									},
-							  ]
+								]
 							: []
 					}
 				>

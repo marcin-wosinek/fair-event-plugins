@@ -142,8 +142,8 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 					eventDateId:
 						formBlock?.name === 'fair-events/event-signup'
 							? formBlock.attributes?.eventDateId ||
-							  window.fairEventsSignupBlock?.postEventDateId ||
-							  0
+								window.fairEventsSignupBlock?.postEventDateId ||
+								0
 							: 0,
 				};
 			},
@@ -223,7 +223,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 		const validatedTicketTypeIds = hasCurrentTicketTypes
 			? conditionTicketTypeIds.filter( ( id ) =>
 					ticketTypes.some( ( ticketType ) => ticketType.id === id )
-			  )
+				)
 			: conditionTicketTypeIds;
 
 		useEffect( () => {
@@ -275,8 +275,8 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 		const isConfigured = isEventOption
 			? !! conditionOptionShortName
 			: isTicketType
-			? validatedTicketTypeIds.length > 0
-			: !! conditionQuestionKey;
+				? validatedTicketTypeIds.length > 0
+				: !! conditionQuestionKey;
 
 		let conditionLabel;
 		if ( ! isConfigured ) {
@@ -397,11 +397,11 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 												? [
 														...conditionTicketTypeIds,
 														ticketType.id,
-												  ]
+													]
 												: conditionTicketTypeIds.filter(
 														( id ) =>
 															id !== ticketType.id
-												  );
+													);
 											setAttributes( {
 												conditionTicketTypeIds: next,
 											} );

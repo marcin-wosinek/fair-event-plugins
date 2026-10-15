@@ -246,11 +246,11 @@ const EntryForm = ( {
 								? __(
 										'Update Entry',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Create Entry',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</HStack>
 				</VStack>

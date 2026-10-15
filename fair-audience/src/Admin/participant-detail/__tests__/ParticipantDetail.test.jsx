@@ -158,7 +158,7 @@ describe( 'ParticipantDetail — delete participant (#1775)', () => {
 				return fails
 					? Promise.reject( {
 							message: 'Failed to delete participant.',
-					  } )
+						} )
 					: Promise.resolve( {} );
 			}
 			return Promise.resolve(

@@ -57,7 +57,7 @@ function submitForm( form ) {
 				form.querySelectorAll(
 					'input[name="fair_form_mailing_categories[]"]:checked'
 				)
-		  ).map( ( cb ) => parseInt( cb.value, 10 ) )
+			).map( ( cb ) => parseInt( cb.value, 10 ) )
 		: [];
 	const questionnaireAnswers = collectQuestionAnswers( form );
 

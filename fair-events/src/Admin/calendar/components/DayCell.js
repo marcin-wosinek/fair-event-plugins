@@ -157,7 +157,7 @@ export default function DayCell( {
 						const tooltip = categoryNames.length
 							? `${ displayTitle }\n${ categoryNames.join(
 									', '
-							  ) }`
+								) }`
 							: displayTitle;
 						const eventUrl = getEventEditUrl(
 							event,

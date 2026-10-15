@@ -131,7 +131,7 @@ export default function SeriesModal( {
 		initialRrule
 			? ( cancelledDates || [] ).filter( ( d ) =>
 					generatedDatesSet.has( d )
-			  )
+				)
 			: []
 	);
 	const skippedInSchedule = useMemo(
@@ -289,7 +289,7 @@ export default function SeriesModal( {
 				? {
 						recurrence_mode: 'manual',
 						manual_dates: allManualDates,
-				  }
+					}
 				: { rrule, excluded_dates: skippedInSchedule };
 
 			const updated = await apiFetch( {
@@ -330,7 +330,7 @@ export default function SeriesModal( {
 					'fair-events'
 				),
 				confirmCount
-		  )
+			)
 		: sprintf(
 				/* translators: %d: number of dates in the series */
 				_n(
@@ -340,13 +340,13 @@ export default function SeriesModal( {
 					'fair-events'
 				),
 				confirmCount
-		  );
+			);
 
 	const confirmDisabled = saving
 		? true
 		: isManualTab
-		? hasDuplicateManualDates
-		: preview.totalCount === 0;
+			? hasDuplicateManualDates
+			: preview.totalCount === 0;
 
 	const tabs = [
 		{

@@ -519,11 +519,11 @@ const ReconciliationApp = () => {
 																? __(
 																		'Selected',
 																		'fair-payments-connector'
-																  )
+																	)
 																: __(
 																		'Select',
 																		'fair-payments-connector'
-																  ) }
+																	) }
 														</Button>
 													</td>
 												</tr>
@@ -762,11 +762,11 @@ const ReconciliationApp = () => {
 																? __(
 																		'This entry already has a budget; matching keeps it.',
 																		'fair-payments-connector'
-																  )
+																	)
 																: __(
 																		'Proposed from the selected transactions’ source; change it if needed.',
 																		'fair-payments-connector'
-																  )
+																	)
 														}
 														__nextHasNoMarginBottom
 													/>

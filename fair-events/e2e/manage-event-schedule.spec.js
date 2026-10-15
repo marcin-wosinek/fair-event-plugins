@@ -369,7 +369,7 @@ test.describe( 'Manage Event — workshop schedule', () => {
 								'The schedule could not be saved. Nothing was changed.',
 							data: { status: 500 },
 						} ),
-				  } )
+					} )
 				: route.fallback()
 		);
 		await acro.getByLabel( 'End time' ).fill( '11:45' );

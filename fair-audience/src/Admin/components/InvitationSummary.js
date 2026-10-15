@@ -220,12 +220,12 @@ export default function InvitationSummary( {
 								),
 								title,
 								dateLabel
-						  )
+							)
 						: sprintf(
 								/* translators: %s: event title */
 								__( 'Invitation to %s', 'fair-audience' ),
 								title
-						  ) }
+							) }
 				</p>
 
 				{ groups.length > 0 && (
@@ -302,11 +302,11 @@ export default function InvitationSummary( {
 											'fair-audience'
 										),
 										preview.error
-								  )
+									)
 								: __(
 										'Who can be invited could not be checked.',
 										'fair-audience'
-								  ) }
+									) }
 						</p>
 						<Button variant="secondary" onClick={ preview.reload }>
 							{ __( 'Check again', 'fair-audience' ) }

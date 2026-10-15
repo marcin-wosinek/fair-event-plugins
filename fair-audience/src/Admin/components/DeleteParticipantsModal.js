@@ -93,10 +93,10 @@ export default function DeleteParticipantsModal( {
 							err?.code === 'participant_not_found'
 								? null
 								: err?.message ||
-								  __(
+									__(
 										'The profile could not be deleted.',
 										'fair-audience'
-								  ),
+									),
 					} ) )
 			)
 		);
@@ -134,7 +134,7 @@ export default function DeleteParticipantsModal( {
 							/* translators: %s: participant name */
 							__( 'Delete participant — %s', 'fair-audience' ),
 							name
-					  )
+						)
 			}
 			onRequestClose={ close }
 			style={ MODAL_STYLE }
@@ -256,11 +256,11 @@ export default function DeleteParticipantsModal( {
 											'fair-audience'
 										),
 										people.length
-								  )
+									)
 								: __(
 										'Delete participant',
 										'fair-audience'
-								  ) ) }
+									) ) }
 					</Button>
 				</HStack>
 			</VStack>

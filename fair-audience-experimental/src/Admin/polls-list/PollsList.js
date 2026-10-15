@@ -130,7 +130,7 @@ export default function PollsList() {
 												? poll.question.substring(
 														0,
 														100
-												  ) + '...'
+													) + '...'
 												: poll.question }
 										</td>
 										<td>

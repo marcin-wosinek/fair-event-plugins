@@ -328,7 +328,7 @@ export default function ApiTokensTab() {
 											: __(
 													'Never',
 													'fair-payments-connector'
-											  ) }
+												) }
 									</td>
 									<td
 										data-label={ __(
@@ -347,11 +347,11 @@ export default function ApiTokensTab() {
 												? __(
 														'Active',
 														'fair-payments-connector'
-												  )
+													)
 												: __(
 														'Revoked',
 														'fair-payments-connector'
-												  ) }
+													) }
 										</span>
 									</td>
 									<td className="fair-payments-connector-api-tokens__actions">
@@ -429,12 +429,12 @@ export default function ApiTokensTab() {
 												? [
 														...creation.scopes,
 														scope.value,
-												  ]
+													]
 												: creation.scopes.filter(
 														( value ) =>
 															value !==
 															scope.value
-												  ),
+													),
 										} )
 									}
 									disabled={ creation.saving }
@@ -448,11 +448,11 @@ export default function ApiTokensTab() {
 									? __(
 											'Enter a label to generate the token.',
 											'fair-payments-connector'
-									  )
+										)
 									: __(
 											'Select at least one scope to generate the token.',
 											'fair-payments-connector'
-									  ) }
+										) }
 							</p>
 						) }
 						<div className="fair-payments-connector-api-tokens__buttons">
@@ -473,11 +473,11 @@ export default function ApiTokensTab() {
 									? __(
 											'Generating…',
 											'fair-payments-connector'
-									  )
+										)
 									: __(
 											'Generate token',
 											'fair-payments-connector'
-									  ) }
+										) }
 							</Button>
 						</div>
 					</form>
@@ -514,7 +514,7 @@ export default function ApiTokensTab() {
 								: __(
 										'Copy token',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 						<Button variant="primary" onClick={ closeCreation }>
 							{ __( 'Done', 'fair-payments-connector' ) }
@@ -570,7 +570,7 @@ export default function ApiTokensTab() {
 								: __(
 										'Revoke token',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</div>
 				</Modal>

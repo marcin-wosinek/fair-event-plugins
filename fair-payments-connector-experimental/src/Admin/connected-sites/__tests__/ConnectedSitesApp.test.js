@@ -373,7 +373,7 @@ describe( 'ConnectedSitesApp — connection test feedback (#1799)', () => {
 					? Promise.reject( { message: 'Nope.' } )
 					: new Promise( ( resolve ) => {
 							resolveSecondTest = resolve;
-					  } ),
+						} ),
 		} );
 
 		await renderAndTest();

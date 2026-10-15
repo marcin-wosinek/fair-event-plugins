@@ -160,7 +160,7 @@ registerBlockType( 'fair-audience/mailing-signup', {
 													categoryIds.includes(
 														cat.id
 													)
-											  )
+												)
 											: categories
 										).map( ( cat ) => (
 											<CheckboxControl

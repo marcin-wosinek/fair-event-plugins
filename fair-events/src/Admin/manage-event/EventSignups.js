@@ -318,7 +318,7 @@ export function overrideActionLabel( override ) {
 					/* translators: %s: activity name */
 					__( 'Moved (activity %s over capacity)', 'fair-events' ),
 					override.activity_name
-			  )
+				)
 			: __( 'Moved', 'fair-events' );
 	}
 	return __( 'Ticket type changed', 'fair-events' );
@@ -700,13 +700,13 @@ export default function EventSignups( {
 							symbol: extraStateSymbol( state ),
 							label: extraStateLabel( state ),
 						} )
-				  )
+					)
 				: [],
 			warning: completeRows.some( ( row ) => ! row.ticket )
 				? __(
 						'Some older registrations are still being split into individual tickets. They are listed as one row for now.',
 						'fair-events'
-				  )
+					)
 				: '',
 			lang: document.documentElement.lang || 'en',
 		} );
@@ -716,7 +716,7 @@ export default function EventSignups( {
 				: __(
 						'Could not open the print window. Allow pop-ups for this site and try again.',
 						'fair-events'
-				  )
+					)
 		);
 	};
 
@@ -960,11 +960,11 @@ export default function EventSignups( {
 							? __(
 									'No confirmed registrations yet.',
 									'fair-events'
-							  )
+								)
 							: __(
 									'Nothing to export — no registrations match the current filter.',
 									'fair-events'
-							  ) }
+								) }
 					</p>
 				) : (
 					<div style={ { overflowX: 'auto', width: '100%' } }>

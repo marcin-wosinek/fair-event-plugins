@@ -802,11 +802,11 @@ const TransactionPage = () => {
 							? __(
 									'Synced with Mollie successfully.',
 									'fair-payments-connector'
-							  )
+								)
 							: __(
 									'Mollie responded but the settlement fee could not be extracted. See Mollie response below.',
 									'fair-payments-connector'
-							  ),
+								),
 					debug: data.sync_debug || null,
 				} );
 			} )
@@ -931,11 +931,11 @@ const TransactionPage = () => {
 										? __(
 												'Syncing…',
 												'fair-payments-connector'
-										  )
+											)
 										: __(
 												'Sync with Mollie',
 												'fair-payments-connector'
-										  ) }
+											) }
 								</Button>
 							) }
 						</HStack>
@@ -1002,7 +1002,7 @@ const TransactionPage = () => {
 									{ t.mollie_fee !== null
 										? `${ t.mollie_fee.toFixed( 2 ) } ${
 												t.currency
-										  }`
+											}`
 										: '-' }
 								</DetailRow>
 								<DetailRow
@@ -1014,7 +1014,7 @@ const TransactionPage = () => {
 									{ t.application_fee !== null
 										? `${ t.application_fee.toFixed(
 												2
-										  ) } ${ t.currency }`
+											) } ${ t.currency }`
 										: '-' }
 								</DetailRow>
 								<DetailRow
@@ -1029,22 +1029,22 @@ const TransactionPage = () => {
 												? {
 														color: '#996800',
 														fontWeight: 'bold',
-												  }
+													}
 												: {
 														color: '#007017',
 														fontWeight: 'bold',
-												  }
+													}
 										}
 									>
 										{ t.testmode
 											? __(
 													'Test',
 													'fair-payments-connector'
-											  )
+												)
 											: __(
 													'Live',
 													'fair-payments-connector'
-											  ) }
+												) }
 									</span>
 								</DetailRow>
 							</tbody>
@@ -1142,7 +1142,7 @@ const TransactionPage = () => {
 													{ typeof value === 'object'
 														? JSON.stringify(
 																value
-														  )
+															)
 														: String( value ) }
 												</DetailRow>
 											)
@@ -1396,11 +1396,11 @@ const TransactionPage = () => {
 										'fair-payments-connector'
 									),
 									t.description
-							  )
+								)
 							: __(
 									'This transaction has no description.',
 									'fair-payments-connector'
-							  ) }
+								) }
 					</p>
 					<p>
 						{ __(
@@ -1428,7 +1428,7 @@ const TransactionPage = () => {
 								: __(
 										'Delete local transaction',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</HStack>
 				</Modal>

@@ -131,8 +131,8 @@ export function parseSettlementRows( rows ) {
 			typeof row[ idCol ] === 'string'
 				? row[ idCol ].trim()
 				: row[ idCol ]
-				? String( row[ idCol ] ).trim()
-				: '';
+					? String( row[ idCol ] ).trim()
+					: '';
 		const amount = parseNumber( row[ amountCol ] );
 		const status =
 			statusCol !== undefined && row[ statusCol ] !== undefined

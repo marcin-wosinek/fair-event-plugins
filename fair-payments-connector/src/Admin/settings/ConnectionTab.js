@@ -574,7 +574,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 										'fair-payments-connector'
 									)
 								),
-						  }
+							}
 						: current
 				)
 			);
@@ -674,11 +674,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 										'fair-payments-connector'
 									),
 									profileName
-							  )
+								)
 							: __(
 									'Disconnect this site from the connected Mollie account?',
 									'fair-payments-connector'
-							  ) }
+								) }
 					</p>
 					<AccountDetails
 						profileName={ profileName }
@@ -710,11 +710,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 								? __(
 										'Disconnecting…',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Disconnect Mollie',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</div>
 				</Modal>
@@ -727,11 +727,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 							? __(
 									'Create test payment',
 									'fair-payments-connector'
-							  )
+								)
 							: __(
 									'Create live test payment',
 									'fair-payments-connector'
-							  )
+								)
 					}
 					onRequestClose={ closeLiveConfirmation }
 					isDismissible={ ! liveConfirmation.saving }
@@ -764,7 +764,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 												'fair-payments-connector'
 											),
 											liveContext.amount_display
-									  )
+										)
 									: sprintf(
 											/* translators: %s: amount with currency code, e.g. "1.00 EUR" */
 											__(
@@ -772,7 +772,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 												'fair-payments-connector'
 											),
 											liveContext.amount_display
-									  ) }
+										) }
 							</p>
 							<AccountDetails
 								profileName={ profileName }
@@ -826,14 +826,14 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 							{ liveConfirmation.saving
 								? __( 'Creating…', 'fair-payments-connector' )
 								: isLiveContext || ! liveContext
-								? __(
-										'Create live test payment',
-										'fair-payments-connector'
-								  )
-								: __(
-										'Create test payment',
-										'fair-payments-connector'
-								  ) }
+									? __(
+											'Create live test payment',
+											'fair-payments-connector'
+										)
+									: __(
+											'Create test payment',
+											'fair-payments-connector'
+										) }
 						</Button>
 					</div>
 				</Modal>
@@ -1184,11 +1184,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 											? __(
 													'Refreshing...',
 													'fair-payments-connector'
-											  )
+												)
 											: __(
 													'Refresh Connection',
 													'fair-payments-connector'
-											  ) }
+												) }
 									</Button>
 								</ButtonGroup>
 							</div>
@@ -1213,11 +1213,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 								? __(
 										'Live mode: this creates a real payment with real money and gateway fees.',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Test mode: no real money is charged.',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</p>
 					) }
 

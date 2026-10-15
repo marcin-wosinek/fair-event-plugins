@@ -1,6 +1,6 @@
-const defaultConfig = require('@wordpress/scripts/config/webpack.config');
-const path = require('path');
-const BundleOutputPlugin = require('webpack-bundle-output');
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
+const path = require( 'path' );
+const BundleOutputPlugin = require( 'webpack-bundle-output' );
 
 module.exports = {
 	...defaultConfig,
@@ -16,9 +16,9 @@ module.exports = {
 	},
 	plugins: [
 		...defaultConfig.plugins,
-		new BundleOutputPlugin({
+		new BundleOutputPlugin( {
 			cwd: process.cwd(),
 			output: 'map.json',
-		}),
+		} ),
 	],
 };

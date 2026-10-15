@@ -164,11 +164,11 @@ export default function RecurringEventsCalendar( { startDate, recurrence } ) {
 								? __(
 										'Event occurs on this day (last occurrence)',
 										'fair-calendar-button'
-								  )
+									)
 								: __(
 										'Last occurrence date',
 										'fair-calendar-button'
-								  );
+									);
 						}
 
 						return (
@@ -191,12 +191,12 @@ export default function RecurringEventsCalendar( { startDate, recurrence } ) {
 							? __(
 									'1 event occurrence in this month',
 									'fair-calendar-button'
-							  )
+								)
 							: /* translators: %d: number of event occurrences */
-							  __(
+								__(
 									'%d event occurrences in this month',
 									'fair-calendar-button'
-							  ).replace( '%d', currentMonthEvents.length ) }
+								).replace( '%d', currentMonthEvents.length ) }
 					</p>
 				</div>
 			) }

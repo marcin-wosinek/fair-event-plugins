@@ -103,11 +103,11 @@ const MollieFeesPanel = ( { activeAction, onBegin, onEnd } ) => {
 								? __(
 										'Loading fees…',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Load missing Mollie fees',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</HStack>
 				</VStack>

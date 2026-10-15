@@ -52,7 +52,7 @@ export const buildEntriesCsv = ( entries, budgets ) => {
 		entry.entry_type ?? '',
 		entry.amount ?? '',
 		entry.description ?? '',
-		entry.budget_id ? budgetMap[ String( entry.budget_id ) ] ?? '' : '',
+		entry.budget_id ? ( budgetMap[ String( entry.budget_id ) ] ?? '' ) : '',
 		entry.event_date_id ?? '',
 		entry.imported_at ?? '',
 	] );

@@ -157,7 +157,7 @@ function SelectionNotice( { slot, selected } ) {
 								),
 								onClick: selected.retry,
 							},
-					  ]
+						]
 					: []
 			}
 		>

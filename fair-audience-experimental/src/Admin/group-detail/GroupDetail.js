@@ -23,7 +23,7 @@ export default function GroupDetail() {
 		// eslint-disable-next-line no-undef
 		typeof fairAudienceGroupDetailData !== 'undefined'
 			? // eslint-disable-next-line no-undef
-			  fairAudienceGroupDetailData.groupsListUrl
+				fairAudienceGroupDetailData.groupsListUrl
 			: 'admin.php?page=fair-audience-groups';
 
 	const [ group, setGroup ] = useState( null );

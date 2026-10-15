@@ -287,7 +287,7 @@ export default function MetaConversions( { onNotice } ) {
 							? __(
 									'Replace access token',
 									'fair-events-experimental'
-							  )
+								)
 							: __( 'Access token', 'fair-events-experimental' )
 					}
 					help={
@@ -295,11 +295,11 @@ export default function MetaConversions( { onNotice } ) {
 							? __(
 									'A token is configured. Leave this empty to keep it.',
 									'fair-events-experimental'
-							  )
+								)
 							: __(
 									'The token is write-only and will not be shown again.',
 									'fair-events-experimental'
-							  )
+								)
 					}
 					value={ token }
 					onChange={ setToken }
@@ -412,11 +412,11 @@ export default function MetaConversions( { onNotice } ) {
 													? __(
 															'Accepted',
 															'fair-events-experimental'
-													  )
+														)
 													: __(
 															'Rejected',
 															'fair-events-experimental'
-													  ) }
+														) }
 											</span>
 										</FlexItem>
 										<FlexItem>

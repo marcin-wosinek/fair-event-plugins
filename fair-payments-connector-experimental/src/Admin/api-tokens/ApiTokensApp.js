@@ -321,11 +321,11 @@ const ApiTokensApp = () => {
 															? __(
 																	'Active',
 																	'fair-payments-connector-experimental'
-															  )
+																)
 															: __(
 																	'Revoked',
 																	'fair-payments-connector-experimental'
-															  ) }
+																) }
 													</span>
 												</td>
 												<td>
@@ -365,11 +365,11 @@ const ApiTokensApp = () => {
 							? __(
 									'Token created',
 									'fair-payments-connector-experimental'
-							  )
+								)
 							: __(
 									'Generate API Token',
 									'fair-payments-connector-experimental'
-							  )
+								)
 					}
 					onRequestClose={ handleCloseForm }
 					style={ { maxWidth: '500px', width: '100%' } }
@@ -401,11 +401,11 @@ const ApiTokensApp = () => {
 										? __(
 												'Copied!',
 												'fair-payments-connector-experimental'
-										  )
+											)
 										: __(
 												'Copy token',
 												'fair-payments-connector-experimental'
-										  ) }
+											) }
 								</Button>
 								<Button
 									variant="primary"

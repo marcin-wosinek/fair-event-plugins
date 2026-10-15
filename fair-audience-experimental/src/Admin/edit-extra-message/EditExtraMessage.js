@@ -152,11 +152,11 @@ export default function EditExtraMessage() {
 						? __(
 								'Edit Extra Message',
 								'fair-audience-experimental'
-						  )
+							)
 						: __(
 								'Add New Extra Message',
 								'fair-audience-experimental'
-						  ) }
+							) }
 				</h1>
 				<Spinner />
 			</div>
@@ -171,7 +171,7 @@ export default function EditExtraMessage() {
 					: __(
 							'Add New Extra Message',
 							'fair-audience-experimental'
-					  ) }
+						) }
 			</h1>
 
 			{ error && (
@@ -261,8 +261,14 @@ export default function EditExtraMessage() {
 					{ isSaving
 						? __( 'Saving...', 'fair-audience-experimental' )
 						: messageId
-						? __( 'Update Message', 'fair-audience-experimental' )
-						: __( 'Create Message', 'fair-audience-experimental' ) }
+							? __(
+									'Update Message',
+									'fair-audience-experimental'
+								)
+							: __(
+									'Create Message',
+									'fair-audience-experimental'
+								) }
 				</Button>{ ' ' }
 				<Button
 					isSecondary

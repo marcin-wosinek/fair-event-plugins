@@ -123,7 +123,7 @@ export default function FormAnswers() {
 									...s,
 									event_date_id: updated.event_date_id,
 									event_name: updated.event_name || '',
-							  }
+								}
 							: s
 					)
 				);

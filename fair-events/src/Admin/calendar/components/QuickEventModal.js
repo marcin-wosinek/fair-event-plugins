@@ -459,7 +459,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 													'fair-events'
 												),
 												fetchedLocation
-										  )
+											)
 										: undefined
 								}
 							/>

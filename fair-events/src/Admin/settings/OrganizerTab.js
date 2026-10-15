@@ -231,7 +231,7 @@ export default function OrganizerTab( { onNotice } ) {
 									? __(
 											'Enter a valid URL, e.g. https://example.com.',
 											'fair-events'
-									  )
+										)
 									: undefined
 							}
 							className={
@@ -419,7 +419,7 @@ export default function OrganizerTab( { onNotice } ) {
 													? __(
 															'Enter a valid URL, e.g. https://example.com/profile.',
 															'fair-events'
-													  )
+														)
 													: undefined
 											}
 											className={
@@ -529,22 +529,22 @@ export default function OrganizerTab( { onNotice } ) {
 										'fair-events'
 									),
 									organizer.name || defaults.name
-							  )
+								)
 							: __(
 									'Remove the logo chosen for the organizer?',
 									'fair-events'
-							  ) }
+								) }
 					</p>
 					<p style={ { margin: 0 } }>
 						{ defaults.logoId
 							? __(
 									"The organizer will use the site's logo instead. The image you remove here stays in the Media Library.",
 									'fair-events'
-							  )
+								)
 							: __(
 									'The site has no logo of its own, so the organizer will have no logo. The image you remove here stays in the Media Library.',
 									'fair-events'
-							  ) }
+								) }
 					</p>
 					<p style={ { margin: 0 } }>
 						{ __(

@@ -73,7 +73,7 @@ function periodLabel( period, index ) {
 				/* translators: %s: sale period name */
 				__( '%s (automatic)', 'fair-events' ),
 				name
-		  )
+			)
 		: name;
 }
 
@@ -194,7 +194,7 @@ export default function SalePeriodsCalendar( {
 												),
 												name,
 												formatDateOnly( gap.start )
-										  )
+											)
 										: sprintf(
 												/* translators: 1: sale period name, 2: first date, 3: last date */
 												__(
@@ -204,7 +204,7 @@ export default function SalePeriodsCalendar( {
 												name,
 												formatDateOnly( gap.start ),
 												formatDateOnly( gap.end )
-										  ) }
+											) }
 								</li>
 							);
 						} ) }

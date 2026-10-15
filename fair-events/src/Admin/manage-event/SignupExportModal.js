@@ -170,7 +170,7 @@ export function ticketRowAnswers( row, indexed ) {
 						/* translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)" */
 						__( '%s (needs review)', 'fair-events' ),
 						label
-				  )
+					)
 				: label,
 		};
 	}

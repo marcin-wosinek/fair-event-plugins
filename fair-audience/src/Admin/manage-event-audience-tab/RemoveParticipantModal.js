@@ -151,7 +151,7 @@ function RemoveOneParticipantModal( {
 											name,
 											eventTitle,
 											dateLabel
-									  )
+										)
 									: sprintf(
 											/* translators: 1: participant name, 2: event title */
 											__(
@@ -160,7 +160,7 @@ function RemoveOneParticipantModal( {
 											),
 											name,
 											eventTitle
-									  ) }
+										) }
 							</p>
 							{ blockerList( blockers ) }
 						</Notice>
@@ -184,7 +184,7 @@ function RemoveOneParticipantModal( {
 										name,
 										eventTitle,
 										dateLabel
-								  )
+									)
 								: sprintf(
 										/* translators: 1: participant name, 2: event title */
 										__(
@@ -193,7 +193,7 @@ function RemoveOneParticipantModal( {
 										),
 										name,
 										eventTitle
-								  ) }
+									) }
 						</p>
 						<p style={ { margin: 0 } }>
 							{ __(
@@ -419,7 +419,7 @@ function RemoveParticipantsModal( {
 										removable.length,
 										eventTitle,
 										dateLabel
-								  )
+									)
 								: sprintf(
 										/* translators: 1: number of participants, 2: event title */
 										_n(
@@ -430,7 +430,7 @@ function RemoveParticipantsModal( {
 										),
 										removable.length,
 										eventTitle
-								  ) }
+									) }
 						</p>
 						<SelectedParticipantsList
 							label={ __(
@@ -482,7 +482,7 @@ function RemoveParticipantsModal( {
 											blocked.length,
 											eventTitle,
 											dateLabel
-									  )
+										)
 									: sprintf(
 											/* translators: 1: number of participants, 2: event title */
 											_n(
@@ -493,7 +493,7 @@ function RemoveParticipantsModal( {
 											),
 											blocked.length,
 											eventTitle
-									  ) }
+										) }
 							</p>
 							<SelectedParticipantsList
 								label={ __(
@@ -566,7 +566,7 @@ function RemoveParticipantsModal( {
 											'fair-audience'
 										),
 										removable.length
-								  ) }
+									) }
 						</Button>
 					) }
 				</HStack>

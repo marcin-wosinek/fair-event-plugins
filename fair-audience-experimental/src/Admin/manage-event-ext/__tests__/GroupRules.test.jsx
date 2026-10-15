@@ -111,7 +111,7 @@ describe( 'GroupRules load states', () => {
 			requestName( path ) === 'groups'
 				? new Promise( ( resolve ) => {
 						resolveGroups = resolve;
-				  } )
+					} )
 				: Promise.resolve( [] )
 		);
 		const { tab } = renderRules();

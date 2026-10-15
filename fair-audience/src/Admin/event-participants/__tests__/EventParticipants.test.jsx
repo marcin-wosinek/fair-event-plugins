@@ -588,13 +588,13 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 				request.data.participant_ids.length === 1
 					? new Promise( ( resolve ) => {
 							answerFirst = resolve;
-					  } )
+						} )
 					: Promise.resolve( {
 							...PREVIEW,
 							candidate_count: 2,
 							eligible_count: 2,
 							eligible_participant_ids: [ 1, 2 ],
-					  } ),
+						} ),
 		} );
 		render( <EventParticipants /> );
 

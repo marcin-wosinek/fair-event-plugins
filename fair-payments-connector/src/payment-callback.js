@@ -46,7 +46,7 @@ import './payment-callback.css';
 		const path = token
 			? `/fair-payments-connector/v1/payments/${ transactionId }/status?token=${ encodeURIComponent(
 					token
-			  ) }`
+				) }`
 			: `/fair-payments-connector/v1/payments/${ transactionId }/status`;
 
 		apiFetch( {

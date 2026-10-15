@@ -841,7 +841,7 @@ export default function EventAudience( {
 							attended_at: attended
 								? p.attended_at || new Date().toISOString()
 								: null,
-					  }
+						}
 					: p
 			)
 		);
@@ -1057,7 +1057,7 @@ export default function EventAudience( {
 												editOptionIds,
 											response.ticket_option_names ??
 												participantScopeNames( p )
-									  )
+										)
 									: p ),
 								ticket_type_id:
 									response.ticket_type_id ?? editTicketTypeId,
@@ -1070,11 +1070,15 @@ export default function EventAudience( {
 									? {
 											label: data.label,
 											payment_expires_at: null,
-									  }
+										}
 									: data.label
-									? { label: response.label ?? data.label }
-									: {} ),
-						  }
+										? {
+												label:
+													response.label ??
+													data.label,
+											}
+										: {} ),
+							}
 						: p
 				)
 			);
@@ -1086,7 +1090,7 @@ export default function EventAudience( {
 						: __(
 								'Expired signup moved to Interested.',
 								'fair-audience'
-						  )
+							)
 				);
 			}
 		} catch ( err ) {
@@ -1190,7 +1194,7 @@ export default function EventAudience( {
 				? ids.map( ( id ) => optionLabelById.get( id ) || '' )
 				: ( names || [] ).map(
 						( n ) => optionLabelByName.get( n ) || n
-				  );
+					);
 			return labels.filter( Boolean ).join( ', ' );
 		};
 
@@ -1236,8 +1240,8 @@ export default function EventAudience( {
 					p.email_profile === 'marketing'
 						? '✓'
 						: p.email_profile === 'declined'
-						? '✗'
-						: '';
+							? '✗'
+							: '';
 				const shared = `
 						<td class="num" rowspan="${ span }">${ index + 1 }</td>
 						<td class="name" rowspan="${ span }">${ escape(
@@ -1505,7 +1509,7 @@ export default function EventAudience( {
 					? __(
 							'Attendance for series-pass holders is managed on the series’ master date.',
 							'fair-audience'
-					  )
+						)
 					: undefined
 			}
 			onChange={ ( e ) => handleToggleAttended( p, e.target.checked ) }
@@ -1705,11 +1709,11 @@ export default function EventAudience( {
 				{ withTickets
 					? ticketOptions.map( ( opt ) =>
 							cell( `opt-${ opt.id }`, '', null )
-					  )
+						)
 					: activityCells(
 							p.ticket_option_ids,
 							p.ticket_option_names
-					  ) }
+						) }
 				{ cell( 'status', colStatus, null ) }
 				{ cell(
 					'shown',
@@ -1782,7 +1786,7 @@ export default function EventAudience( {
 									? __(
 											'Check-in is available once the payment is complete.',
 											'fair-audience'
-									  )
+										)
 									: undefined
 							}
 							onChange={ ( e ) =>
@@ -2405,11 +2409,11 @@ export default function EventAudience( {
 											? __(
 													'No participants yet.',
 													'fair-audience'
-											  )
+												)
 											: __(
 													'No participants match the current filters.',
 													'fair-audience'
-											  ) }
+												) }
 									</p>
 								) }
 
@@ -2524,7 +2528,7 @@ export default function EventAudience( {
 															? `&post_id=${ form.post_id }`
 															: `&title=${ encodeURIComponent(
 																	form.title
-															  ) }`
+																) }`
 													}` }
 												>
 													{ __(
@@ -2611,23 +2615,24 @@ export default function EventAudience( {
 								{ isSendingInvitations
 									? __( 'Sending…', 'fair-audience' )
 									: invitationPreview.status === 'ready' &&
-									  invitationPreview.data.eligible_count > 0
-									? sprintf(
-											/* translators: %d: number of invitations to send */
-											_n(
-												'Send %d invitation',
-												'Send %d invitations',
+										  invitationPreview.data
+												.eligible_count > 0
+										? sprintf(
+												/* translators: %d: number of invitations to send */
+												_n(
+													'Send %d invitation',
+													'Send %d invitations',
+													invitationPreview.data
+														.eligible_count,
+													'fair-audience'
+												),
 												invitationPreview.data
-													.eligible_count,
+													.eligible_count
+											)
+										: __(
+												'Send Invitations',
 												'fair-audience'
-											),
-											invitationPreview.data
-												.eligible_count
-									  )
-									: __(
-											'Send Invitations',
-											'fair-audience'
-									  ) }
+											) }
 							</Button>
 						</HStack>
 					</VStack>
@@ -2721,7 +2726,7 @@ export default function EventAudience( {
 											),
 											selectedToAdd.size,
 											filteredAvailableParticipants.length
-									  )
+										)
 									: sprintf(
 											/* translators: %d: number of available participants */
 											__(
@@ -2729,7 +2734,7 @@ export default function EventAudience( {
 												'fair-audience'
 											),
 											filteredAvailableParticipants.length
-									  ) }
+										) }
 							</div>
 
 							<div
@@ -2824,7 +2829,7 @@ export default function EventAudience( {
 													'fair-audience'
 												),
 												selectedToAdd.size
-										  ) }
+											) }
 								</Button>
 							</div>
 						</>
@@ -2980,7 +2985,7 @@ export default function EventAudience( {
 															? __(
 																	'No email — cannot add to mailing list',
 																	'fair-audience'
-															  )
+																)
 															: undefined
 													}
 												>
@@ -3055,7 +3060,7 @@ export default function EventAudience( {
 										: __(
 												'Save consent',
 												'fair-audience'
-										  ) }
+											) }
 								</Button>
 							</div>
 						</>
@@ -3104,16 +3109,16 @@ export default function EventAudience( {
 										? __(
 												'Will mark as Signed up and count toward activity capacity. Click Save to apply.',
 												'fair-audience'
-										  )
+											)
 										: editStaleDecision === 'cancel'
-										? __(
-												'Will mark as Interested and free the seat (record kept for history). Click Save to apply.',
-												'fair-audience'
-										  )
-										: __(
-												'Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go.',
-												'fair-audience'
-										  ) }
+											? __(
+													'Will mark as Interested and free the seat (record kept for history). Click Save to apply.',
+													'fair-audience'
+												)
+											: __(
+													'Pick how to resolve this expired hold, edit any other fields below, then Save to apply everything in one go.',
+													'fair-audience'
+												) }
 								</p>
 								<HStack spacing={ 2 }>
 									<Button
@@ -3169,7 +3174,7 @@ export default function EventAudience( {
 										? __(
 												'This purchase is not paid yet. The role changes to Signed up when the payment succeeds; pick a role only to decide it yourself.',
 												'fair-audience'
-										  )
+											)
 										: undefined
 								}
 								options={ [
@@ -3182,7 +3187,7 @@ export default function EventAudience( {
 													),
 													value: 'pending_payment',
 												},
-										  ]
+											]
 										: [] ),
 									{
 										label: LABEL_DISPLAY.collaborator,
@@ -3288,8 +3293,11 @@ export default function EventAudience( {
 								{ isSavingOptions
 									? __( 'Saving…', 'fair-audience' )
 									: hasTickets( editingParticipant )
-									? __( 'Save participant', 'fair-audience' )
-									: __( 'Save', 'fair-audience' ) }
+										? __(
+												'Save participant',
+												'fair-audience'
+											)
+										: __( 'Save', 'fair-audience' ) }
 							</Button>
 						</HStack>
 					</VStack>

@@ -285,7 +285,7 @@ export default function EventContextHeader( {
 							? __(
 									'Draft — hidden from public lists, calendars and feeds',
 									'fair-events'
-							  )
+								)
 							: __( 'Published', 'fair-events' ) }
 					</span>
 					{ onChangePublication && (
@@ -315,11 +315,11 @@ export default function EventContextHeader( {
 						? __(
 								'Tickets and the schedule are managed on the series —',
 								'fair-events'
-						  )
+							)
 						: __(
 								'Tickets are managed on the series —',
 								'fair-events'
-						  ) }{ ' ' }
+							) }{ ' ' }
 					<a href={ masterUrl }>
 						{ __( 'open the master event', 'fair-events' ) }
 					</a>

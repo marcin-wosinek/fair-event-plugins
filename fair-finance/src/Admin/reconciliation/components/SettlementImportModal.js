@@ -159,7 +159,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 									report.suggested_entry.entry_date
 								),
 							},
-					  ]
+						]
 					: [] ),
 				...report.alternative_entries.map( ( entry ) => ( {
 					value: String( entry.id ),
@@ -170,7 +170,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 						entry.entry_date
 					),
 				} ) ),
-		  ]
+			]
 		: [];
 
 	const selectedEntry =
@@ -233,11 +233,11 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 								? __(
 										'Parsing file…',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Matching settlement…',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</span>
 					</HStack>
 				) }

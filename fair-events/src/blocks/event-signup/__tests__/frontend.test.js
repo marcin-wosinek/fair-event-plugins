@@ -2058,7 +2058,7 @@ describe( 'Event Signup frontend.js — registering another person (#1528)', () 
 				path.includes( 'register_another_person=1' )
 					? new Promise( ( resolve ) => {
 							answer = resolve;
-					  } )
+						} )
 					: Promise.resolve( ownResponse() )
 			);
 			initialize();

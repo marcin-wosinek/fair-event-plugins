@@ -1,6 +1,6 @@
-const defaultConfig = require('@wordpress/scripts/config/webpack.config');
-const path = require('path');
-const BundleOutputPlugin = require('webpack-bundle-output');
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
+const path = require( 'path' );
+const BundleOutputPlugin = require( 'webpack-bundle-output' );
 
 const defaultEntries =
 	typeof defaultConfig.entry === 'function'
@@ -9,31 +9,31 @@ const defaultEntries =
 
 module.exports = {
 	...defaultConfig,
-	entry: () => ({
+	entry: () => ( {
 		...defaultEntries,
 		// Admin scripts
 		'admin/answers-overview/index': path.resolve(
 			process.cwd(),
-			'src/Admin/answers-overview/index.js',
+			'src/Admin/answers-overview/index.js'
 		),
 		'admin/form-answers/index': path.resolve(
 			process.cwd(),
-			'src/Admin/form-answers/index.js',
+			'src/Admin/form-answers/index.js'
 		),
 		'admin/questionnaire-responses/index': path.resolve(
 			process.cwd(),
-			'src/Admin/questionnaire-responses/index.js',
+			'src/Admin/questionnaire-responses/index.js'
 		),
 		'admin/submission-detail/index': path.resolve(
 			process.cwd(),
-			'src/Admin/submission-detail/index.js',
+			'src/Admin/submission-detail/index.js'
 		),
-	}),
+	} ),
 	plugins: [
 		...defaultConfig.plugins,
-		new BundleOutputPlugin({
+		new BundleOutputPlugin( {
 			cwd: process.cwd(),
 			output: 'map.json',
-		}),
+		} ),
 	],
 };

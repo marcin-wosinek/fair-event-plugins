@@ -210,7 +210,7 @@ const TransactionLog = ( { transactionId } ) => {
 																entry.context,
 																null,
 																2
-														  ) }
+															) }
 												</pre>
 											</details>
 										) }

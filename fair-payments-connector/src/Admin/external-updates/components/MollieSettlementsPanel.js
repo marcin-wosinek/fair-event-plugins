@@ -71,7 +71,7 @@ const completedText = ( run ) => {
 			? __(
 					'Mollie lists no settlements yet.',
 					'fair-payments-connector'
-			  )
+				)
 			: sprintf(
 					/* translators: %d: number of settlements already saved */
 					_n(
@@ -81,7 +81,7 @@ const completedText = ( run ) => {
 						'fair-payments-connector'
 					),
 					skipped
-			  );
+				);
 	}
 
 	return sprintf(
@@ -281,11 +281,11 @@ const MollieSettlementsPanel = ( { activeAction, onBegin, onEnd } ) => {
 								? __(
 										'Loading settlements…',
 										'fair-payments-connector'
-								  )
+									)
 								: __(
 										'Load new settlements',
 										'fair-payments-connector'
-								  ) }
+									) }
 						</Button>
 					</HStack>
 				</VStack>

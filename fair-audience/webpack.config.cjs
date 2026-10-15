@@ -1,6 +1,6 @@
-const defaultConfig = require('@wordpress/scripts/config/webpack.config');
-const path = require('path');
-const BundleOutputPlugin = require('webpack-bundle-output');
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
+const path = require( 'path' );
+const BundleOutputPlugin = require( 'webpack-bundle-output' );
 
 // Get default entries
 const defaultEntries =
@@ -11,50 +11,50 @@ const defaultEntries =
 // Custom configuration
 const customConfig = {
 	...defaultConfig,
-	entry: () => ({
+	entry: () => ( {
 		...defaultEntries,
 		// Admin scripts
 		'admin/all-participants/index': path.resolve(
 			process.cwd(),
-			'src/Admin/all-participants/index.js',
+			'src/Admin/all-participants/index.js'
 		),
 		'admin/events-list/index': path.resolve(
 			process.cwd(),
-			'src/Admin/events-list/index.js',
+			'src/Admin/events-list/index.js'
 		),
 		'admin/event-participants/index': path.resolve(
 			process.cwd(),
-			'src/Admin/event-participants/index.js',
+			'src/Admin/event-participants/index.js'
 		),
 		'admin/settings/index': path.resolve(
 			process.cwd(),
-			'src/Admin/settings/index.js',
+			'src/Admin/settings/index.js'
 		),
 		'admin/participant-detail/index': path.resolve(
 			process.cwd(),
-			'src/Admin/participant-detail/index.js',
+			'src/Admin/participant-detail/index.js'
 		),
 		'admin/custom-mail/index': path.resolve(
 			process.cwd(),
-			'src/Admin/custom-mail/index.js',
+			'src/Admin/custom-mail/index.js'
 		),
 		'admin/manage-event-audience-tab/index': path.resolve(
 			process.cwd(),
-			'src/Admin/manage-event-audience-tab/index.js',
+			'src/Admin/manage-event-audience-tab/index.js'
 		),
 		// Public page scripts
 		'frontend/manage-subscription/index': path.resolve(
 			process.cwd(),
-			'src/Frontend/manage-subscription/index.js',
+			'src/Frontend/manage-subscription/index.js'
 		),
-	}),
+	} ),
 	plugins: [
 		...defaultConfig.plugins,
 		// Required for translation mapping
-		new BundleOutputPlugin({
+		new BundleOutputPlugin( {
 			cwd: process.cwd(),
 			output: 'map.json',
-		}),
+		} ),
 	],
 };
 

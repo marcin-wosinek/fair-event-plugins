@@ -450,7 +450,7 @@ export default function FeesList() {
 						),
 					value: savedBudgetId,
 				},
-		  ]
+			]
 		: budgetOptions;
 	const selectedEditBudgetId = editBudgetOptions.some(
 		( option ) => option.value === editBudgetId
@@ -666,11 +666,11 @@ export default function FeesList() {
 										? __(
 												'The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another.',
 												'fair-audience-experimental'
-										  )
+											)
 										: __(
 												'Optionally link to a budget for financial tracking.',
 												'fair-audience-experimental'
-										  )
+											)
 								}
 							/>
 

@@ -237,7 +237,7 @@ describe( 'recipient preview', () => {
 				data.event_date_id === 16
 					? new Promise( ( resolve ) => {
 							resolveWorkshop = resolve;
-					  } )
+						} )
 					: [ recipient( 9, 'Felix' ) ],
 		} );
 		await renderPage();

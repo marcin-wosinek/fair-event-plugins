@@ -151,7 +151,7 @@ export default function AssignTicketModal( {
 									surname: surname.trim(),
 									email: email.trim(),
 								},
-						  },
+							},
 			} );
 			onAssigned( updated );
 		} catch ( err ) {

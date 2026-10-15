@@ -96,7 +96,7 @@ export const duplicateOption = ( items, index ) => {
 					/* translators: %s: name of the add-on being duplicated */
 					__( '%s Copy', 'fair-events' ),
 					source.name
-			  )
+				)
 			: '',
 		short_name: source.short_name ?? '',
 		price: source.price ?? 0,
@@ -1105,7 +1105,7 @@ export default function EventTickets( {
 				getPriceCell: ( type, periodIndex ) =>
 					getPrice( type, salePeriods[ periodIndex ] ),
 				respectAvailableFlag: effectiveMultiple,
-		  } )
+			} )
 		: [];
 
 	if ( loading ) {
@@ -1224,7 +1224,7 @@ export default function EventTickets( {
 															),
 															label,
 															days
-													  )
+														)
 													: sprintf(
 															/* translators: %s: formatted date */
 															__(
@@ -1232,7 +1232,7 @@ export default function EventTickets( {
 																'fair-events'
 															),
 															label
-													  );
+														);
 											}
 											return days !== null
 												? sprintf(
@@ -1245,7 +1245,7 @@ export default function EventTickets( {
 														),
 														label,
 														days
-												  )
+													)
 												: sprintf(
 														/* translators: %s: formatted date */
 														__(
@@ -1253,7 +1253,7 @@ export default function EventTickets( {
 															'fair-events'
 														),
 														label
-												  );
+													);
 										} )() }
 									</div>
 									<div>
@@ -1281,7 +1281,7 @@ export default function EventTickets( {
 															'fair-events'
 														),
 														label
-												  )
+													)
 												: sprintf(
 														/* translators: %s: formatted date */
 														__(
@@ -1289,7 +1289,7 @@ export default function EventTickets( {
 															'fair-events'
 														),
 														label
-												  );
+													);
 										} )() }
 									</div>
 								</HStack>
@@ -1361,10 +1361,11 @@ export default function EventTickets( {
 																? salePeriods[
 																		pIndex -
 																			1
-																  ]?.sale_end ||
-																  ''
+																	]
+																		?.sale_end ||
+																	''
 																: period.sale_start ||
-																  '';
+																	'';
 														const untilValue =
 															exclusiveEndToInclusiveDate(
 																period.sale_end
@@ -1374,14 +1375,14 @@ export default function EventTickets( {
 															! period.sale_end
 																? exclusiveEndToInclusiveDate(
 																		defaultSaleEnd()
-																  )
+																	)
 																: undefined;
 														const fromPlaceholder =
 															isFirst &&
 															! period.sale_start
 																? resolvedSalePeriods[ 0 ]
 																		.effectiveStart ||
-																  undefined
+																	undefined
 																: undefined;
 
 														return (
@@ -1551,7 +1552,7 @@ export default function EventTickets( {
 												salePeriods[ 0 ].sale_start
 													? undefined
 													: firstResolvedPeriod.effectiveStart ||
-													  undefined
+														undefined
 											}
 											help={
 												! salePeriods[ 0 ].sale_start &&
@@ -1559,7 +1560,7 @@ export default function EventTickets( {
 													? __(
 															'Automatically starts today while still before the sale end.',
 															'fair-events'
-													  )
+														)
 													: undefined
 											}
 											onChange={ ( v ) =>
@@ -1585,7 +1586,7 @@ export default function EventTickets( {
 													? undefined
 													: exclusiveEndToInclusiveDate(
 															defaultSaleEnd()
-													  )
+														)
 											}
 											help={
 												! salePeriods[ 0 ].sale_end &&
@@ -1593,7 +1594,7 @@ export default function EventTickets( {
 													? __(
 															'Includes the complete day of the last occurrence.',
 															'fair-events'
-													  )
+														)
 													: undefined
 											}
 											onChange={ ( v ) =>
@@ -1744,20 +1745,20 @@ export default function EventTickets( {
 													const fromValue = ! isFirst
 														? salePeriods[
 																pIndex - 1
-														  ]?.sale_end || ''
+															]?.sale_end || ''
 														: resolvedSalePeriods[
 																pIndex
-														  ].effectiveStart ||
-														  '';
+															].effectiveStart ||
+															'';
 													const untilValue = isLast
 														? exclusiveEndToInclusiveDate(
 																resolvedSalePeriods[
 																	pIndex
 																].effectiveEnd
-														  )
+															)
 														: exclusiveEndToInclusiveDate(
 																period.sale_end
-														  );
+															);
 													const dateTooltip = `${
 														fromValue || '?'
 													} → ${ untilValue || '?' }`;
@@ -1774,14 +1775,14 @@ export default function EventTickets( {
 														>
 															{ effectiveMultiple
 																? period.name ||
-																  __(
+																	__(
 																		'(unnamed)',
 																		'fair-events'
-																  )
+																	)
 																: __(
 																		'Price',
 																		'fair-events'
-																  ) }
+																	) }
 														</th>
 													);
 												}
@@ -1840,7 +1841,7 @@ export default function EventTickets( {
 																	undefined
 																	? String(
 																			type.capacity
-																	  )
+																		)
 																	: ''
 															}
 															onChange={ ( v ) =>
@@ -1851,7 +1852,7 @@ export default function EventTickets( {
 																		? parseInt(
 																				v,
 																				10
-																		  )
+																			)
 																		: null
 																)
 															}
@@ -2032,7 +2033,7 @@ export default function EventTickets( {
 																	? type.disable_at.replace(
 																			' ',
 																			'T'
-																	  )
+																		)
 																	: ''
 															}
 															onChange={ ( v ) =>
@@ -2043,7 +2044,7 @@ export default function EventTickets( {
 																		? v.replace(
 																				'T',
 																				' '
-																		  )
+																			)
 																		: null
 																)
 															}
@@ -2059,17 +2060,17 @@ export default function EventTickets( {
 																	? __(
 																			'Whole series',
 																			'fair-events'
-																	  )
+																		)
 																	: type.recurrence_scope ===
-																	  'multiple_instances'
-																	? __(
-																			'Multiple instances',
-																			'fair-events'
-																	  )
-																	: __(
-																			'This instance',
-																			'fair-events'
-																	  ) }
+																		  'multiple_instances'
+																		? __(
+																				'Multiple instances',
+																				'fair-events'
+																			)
+																		: __(
+																				'This instance',
+																				'fair-events'
+																			) }
 															</span>
 														) : (
 															<>
@@ -2141,7 +2142,7 @@ export default function EventTickets( {
 																								10
 																							) ||
 																								0
-																					  )
+																						)
 																					: 0
 																			)
 																		}
@@ -2270,11 +2271,11 @@ export default function EventTickets( {
 																		? __(
 																				'Disabled',
 																				'fair-events'
-																		  )
+																			)
 																		: __(
 																				'Enabled',
 																				'fair-events'
-																		  )
+																			)
 																}
 																checked={
 																	! type.disabled
@@ -2397,7 +2398,7 @@ export default function EventTickets( {
 														0,
 														parseInt( value, 10 ) ||
 															0
-												  ),
+													),
 									} ) )
 								}
 								__nextHasNoMarginBottom
@@ -2544,7 +2545,7 @@ export default function EventTickets( {
 																			undefined
 																				? String(
 																						option.price
-																				  )
+																					)
 																				: '0'
 																		}
 																		onChange={ (
@@ -2566,7 +2567,7 @@ export default function EventTickets( {
 																						''
 																							? parseFloat(
 																									v
-																							  )
+																								)
 																							: 0,
 																				};
 																			setOptions(
@@ -2594,7 +2595,7 @@ export default function EventTickets( {
 																			''
 																			? String(
 																					option.capacity
-																			  )
+																				)
 																			: ''
 																	}
 																	onChange={ (
@@ -2617,7 +2618,7 @@ export default function EventTickets( {
 																					: parseInt(
 																							v,
 																							10
-																					  ),
+																						),
 																		};
 																		setOptions(
 																			updated
@@ -2858,7 +2859,7 @@ export default function EventTickets( {
 									importFile.name,
 									eventTitle,
 									eventDateLabel
-							  )
+								)
 							: sprintf(
 									/* translators: %s: file name */
 									__(
@@ -2866,7 +2867,7 @@ export default function EventTickets( {
 										'fair-events'
 									),
 									importFile.name
-							  ) }
+								) }
 					</p>
 					<p style={ { margin: 0 } }>
 						{ __(
@@ -2910,7 +2911,7 @@ export default function EventTickets( {
 									),
 									salePeriods.length,
 									eventTitle
-							  )
+								)
 							: sprintf(
 									/* translators: %d: number of sale periods */
 									_n(
@@ -2920,7 +2921,7 @@ export default function EventTickets( {
 										'fair-events'
 									),
 									salePeriods.length
-							  ) }
+								) }
 					</p>
 					<p style={ { margin: 0 } }>
 						{ sprintf(

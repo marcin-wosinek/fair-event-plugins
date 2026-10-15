@@ -52,5 +52,5 @@ export const ticketLabel = ( ticket, position ) =>
 				position,
 				ticket.ticket_type_name,
 				ticket.reference
-		  )
+			)
 		: ticketShortLabel( ticket, position );

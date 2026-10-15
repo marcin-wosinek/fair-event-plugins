@@ -111,7 +111,7 @@ function getCategoryLabel( category ) {
 				__( '%1$s — %2$s', 'fair-events' ),
 				category.name,
 				category.language
-		  )
+			)
 		: category.name;
 }
 
@@ -137,7 +137,7 @@ export default function CalendarApp() {
 	const selectedCategory =
 		view.categoryId && categories.status === 'ready'
 			? categories.items.find( ( cat ) => cat.id === view.categoryId ) ||
-			  null
+				null
 			: null;
 	const selectedSlug = selectedCategory?.slug ?? null;
 	// What the events request filters by. Without a category the categories
@@ -318,7 +318,7 @@ export default function CalendarApp() {
 						currentDate.getFullYear(),
 						currentDate.getMonth(),
 						1
-				  )
+					)
 		);
 	};
 

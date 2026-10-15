@@ -248,7 +248,7 @@ export default function ManageEventApp() {
 					__( '%1$s — %2$s', 'fair-events' ),
 					category.name,
 					category.language
-			  )
+				)
 			: category.name;
 
 	const createCategory = async ( name ) => {
@@ -685,13 +685,13 @@ export default function ManageEventApp() {
 					freqLabel,
 					dateCount,
 					endLabel
-			  )
+				)
 			: sprintf(
 					/* translators: 1: frequency label (e.g. Weekly), 2: number of dates */
 					__( 'Repeats %1$s · %2$d dates', 'fair-events' ),
 					freqLabel,
 					dateCount
-			  );
+				);
 	}, [ eventDate ] );
 
 	const handleLinkModalSaved = ( updated ) => {
@@ -778,7 +778,7 @@ export default function ManageEventApp() {
 							'fair-events'
 						),
 						seriesTitle
-				  )
+					)
 				: sprintf(
 						/* translators: %s: title of the series */
 						__(
@@ -786,7 +786,7 @@ export default function ManageEventApp() {
 							'fair-events'
 						),
 						seriesTitle
-				  );
+					);
 		}
 
 		if ( eventDate.occurrence_type === 'master' ) {
@@ -803,7 +803,7 @@ export default function ManageEventApp() {
 						),
 						eventTitle,
 						dateCount
-				  )
+					)
 				: sprintf(
 						/* translators: 1: title of the series, 2: number of dates in the series */
 						_n(
@@ -814,7 +814,7 @@ export default function ManageEventApp() {
 						),
 						eventTitle,
 						dateCount
-				  );
+					);
 		}
 
 		return toDraft
@@ -825,7 +825,7 @@ export default function ManageEventApp() {
 						'fair-events'
 					),
 					eventTitle
-			  )
+				)
 			: sprintf(
 					/* translators: %s: event title */
 					__(
@@ -833,7 +833,7 @@ export default function ManageEventApp() {
 						'fair-events'
 					),
 					eventTitle
-			  );
+				);
 	}, [ eventDate, publicationTarget ] );
 
 	const handleToggleExdate = async ( date ) => {
@@ -978,7 +978,7 @@ export default function ManageEventApp() {
 						eventDate?.start_datetime
 							? formatSiteLocalDatetime(
 									eventDate.start_datetime
-							  )
+								)
 							: ''
 					}
 				/>
@@ -1030,11 +1030,11 @@ export default function ManageEventApp() {
 											? __(
 													'Open copy options for the underlying recurring event, not only this date.',
 													'fair-events'
-											  )
+												)
 											: __(
 													'Open copy options with this event selected as the source.',
 													'fair-events'
-											  ) }
+												) }
 									</p>
 									<div>
 										<Button
@@ -1755,13 +1755,13 @@ export default function ManageEventApp() {
 											'These linked pages will be moved to draft too:',
 											publicationPosts.length,
 											'fair-events'
-									  )
+										)
 									: _n(
 											'This linked page will be published too, even if it is a draft now:',
 											'These linked pages will be published too, even if they are drafts now:',
 											publicationPosts.length,
 											'fair-events'
-									  ) }
+										) }
 							</p>
 							<ul className="fair-events-publication-posts">
 								{ publicationPosts.map( ( post ) => (

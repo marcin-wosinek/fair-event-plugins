@@ -181,7 +181,7 @@ export default function SettlementDetail( {
 							: __(
 									'This settlement belongs to a different Mollie organization than the one connected, so it cannot be refreshed.',
 									'fair-finance'
-							  ) }
+								) }
 					</p>
 				) }
 
@@ -759,7 +759,7 @@ export default function SettlementDetail( {
 													? __(
 															'Not imported yet',
 															'fair-finance'
-													  )
+														)
 													: unknown ) }
 										</td>
 									</tr>

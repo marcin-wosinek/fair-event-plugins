@@ -319,7 +319,7 @@ const MollieImportPanel = ( { activeAction, onBegin, onEnd } ) => {
 											? __(
 													'Checking the current mode…',
 													'fair-payments-connector'
-											  )
+												)
 											: undefined
 									}
 									__nextHasNoMarginBottom
@@ -427,11 +427,11 @@ const MollieImportPanel = ( { activeAction, onBegin, onEnd } ) => {
 												? __(
 														'Importing…',
 														'fair-payments-connector'
-												  )
+													)
 												: __(
 														'Import selected payments',
 														'fair-payments-connector'
-												  ) }
+													) }
 										</Button>
 									</HStack>
 									{ selectedIds.length === 0 &&

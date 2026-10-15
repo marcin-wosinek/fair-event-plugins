@@ -257,7 +257,7 @@ export default function CsvImportModal( { accounts, onImported, onClose } ) {
 												'fair-finance'
 											),
 											item.label
-									  ),
+										),
 							} ) ),
 							{
 								value: NEW_ACCOUNT,
@@ -329,7 +329,7 @@ export default function CsvImportModal( { accounts, onImported, onClose } ) {
 														),
 														error.row,
 														error.message
-												  )
+													)
 												: error.message }
 										</li>
 									) ) }

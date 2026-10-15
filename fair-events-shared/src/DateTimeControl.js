@@ -183,7 +183,7 @@ export default function DateTimeControl( {
 								? __(
 										'Using a dynamic date from plugin',
 										'fair-timetable'
-								  )
+									)
 								: help
 						}
 					/>

@@ -147,16 +147,16 @@ export default function DayCell( {
 							linkType === 'post'
 								? 'dashicons-admin-post'
 								: linkType === 'instance'
-								? 'dashicons-update'
-								: linkType === 'external'
-								? 'dashicons-admin-links'
-								: 'dashicons-editor-unlink';
+									? 'dashicons-update'
+									: linkType === 'external'
+										? 'dashicons-admin-links'
+										: 'dashicons-editor-unlink';
 						const categoryNames =
 							event.categories?.map( ( c ) => c.name ) || [];
 						const tooltip = categoryNames.length
 							? `${ event.title }\n${ categoryNames.join(
 									', '
-							  ) }`
+								) }`
 							: event.title;
 						const eventUrl = getEventEditUrl(
 							event,

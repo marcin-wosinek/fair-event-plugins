@@ -199,7 +199,7 @@ export function buildSignupPrintHtml( {
 								index + 1,
 								sections.length
 							)
-					  ) }</h2>`
+						) }</h2>`
 					: '';
 			return `<section class="part">${ caption }${ sectionTable(
 				sectionColumns,

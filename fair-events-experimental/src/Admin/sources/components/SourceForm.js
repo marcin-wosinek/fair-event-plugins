@@ -88,11 +88,11 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 						? __(
 								'Failed to update event feed.',
 								'fair-events-experimental'
-						  )
+							)
 						: __(
 								'Failed to create event feed.',
 								'fair-events-experimental'
-						  ) )
+							) )
 			);
 		} finally {
 			setLoading( false );
@@ -155,11 +155,11 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 							? __(
 									'URL-friendly identifier for this event feed.',
 									'fair-events-experimental'
-							  )
+								)
 							: __(
 									'Auto-generated from name. Can be customized.',
 									'fair-events-experimental'
-							  )
+								)
 					}
 				/>
 
