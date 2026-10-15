@@ -192,6 +192,16 @@ describe( 'ParticipantDetail — delete participant (#1775)', () => {
 			'/fair-audience/v1/participants/144',
 			'/fair-audience/v1/participants/144',
 		] );
+		// The page leaves for the list; jsdom reports the navigation it
+		// cannot perform as an error.
+		expect( console ).toHaveErrored();
+		expect( console.error ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				message: expect.stringContaining(
+					'Not implemented: navigation'
+				),
+			} )
+		);
 	} );
 
 	it( 'links back to the participants list', async () => {

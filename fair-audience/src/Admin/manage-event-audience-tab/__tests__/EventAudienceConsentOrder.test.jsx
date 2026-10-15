@@ -5,7 +5,13 @@
  * the printable list, and the "Record email consent" modal (#1549).
  */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventAudience from '../EventAudience.js';
 
@@ -262,6 +268,13 @@ describe( 'EventAudience — shared participant ordering (#1549)', () => {
 				data: { marketing_ids: [ 10 ], declined_ids: [] },
 			} )
 		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			( await screen.findAllByText( /^Added \d+ to the mailing list/ ) )
+				.length
+		).toBeGreaterThan( 0 );
 	} );
 
 	it( 'disables "Yes" but keeps "No" available for a participant without an email', async () => {

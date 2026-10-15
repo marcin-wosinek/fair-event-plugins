@@ -919,11 +919,14 @@ describe( 'single-event recurrence action (#1343)', () => {
 	it( 'opens the series modal from the standalone button', async () => {
 		render( <ManageEventApp /> );
 
-		fireEvent.click(
-			await screen.findByRole( 'button', {
-				name: 'Turn into a series',
-			} )
-		);
+		const button = await screen.findByRole( 'button', {
+			name: 'Turn into a series',
+		} );
+		// The modal's tabs (ariakit) settle in effects; let them run inside
+		// act().
+		await act( async () => {
+			fireEvent.click( button );
+		} );
 
 		expect(
 			screen.getByRole( 'heading', { name: 'Turn into a series' } )

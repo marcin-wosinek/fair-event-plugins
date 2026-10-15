@@ -12,6 +12,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	render,
 	screen,
 	fireEvent,
@@ -445,8 +446,11 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', { name: 'By Participant' } )
 		);
-		// John Roe, the second profile.
-		fireEvent.click( within( dialog ).getAllByRole( 'checkbox' )[ 1 ] );
+		// John Roe, the second profile. Let the preview the selection starts
+		// settle inside act().
+		await act( async () => {
+			fireEvent.click( within( dialog ).getAllByRole( 'checkbox' )[ 1 ] );
+		} );
 	};
 
 	it( 'summarizes the event, the person and who will receive it before sending', async () => {

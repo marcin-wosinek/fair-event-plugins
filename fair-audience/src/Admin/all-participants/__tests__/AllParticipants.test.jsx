@@ -15,6 +15,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	render,
 	screen,
 	waitFor,
@@ -218,9 +219,13 @@ describe( 'AllParticipants — filters preserved', () => {
 
 		await screen.findByText( 'Jane Doe' );
 
-		fireEvent.click(
-			screen.getByRole( 'button', { name: /add filter/i } )
-		);
+		// Floating UI positions the opened menu asynchronously; let it settle
+		// inside act().
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: /add filter/i } )
+			);
+		} );
 
 		expect(
 			screen.getByRole( 'menuitem', { name: 'Email Profile' } )

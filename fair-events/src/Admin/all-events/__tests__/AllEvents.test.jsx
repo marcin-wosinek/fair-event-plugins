@@ -10,6 +10,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	render,
 	screen,
 	fireEvent,
@@ -234,9 +235,13 @@ it( 'shows Edit without Copy in the actions menu for ineligible rows', async () 
 	expect(
 		within( masterRow ).queryByRole( 'button', { name: 'Edit' } )
 	).not.toBeInTheDocument();
-	fireEvent.click(
-		within( masterRow ).getByRole( 'button', { name: 'Actions' } )
-	);
+	// Floating UI positions the opened menu asynchronously; let it settle
+	// inside act().
+	await act( async () => {
+		fireEvent.click(
+			within( masterRow ).getByRole( 'button', { name: 'Actions' } )
+		);
+	} );
 
 	expect( screen.getAllByRole( 'menuitem', { name: 'Edit' } ) ).toHaveLength(
 		1

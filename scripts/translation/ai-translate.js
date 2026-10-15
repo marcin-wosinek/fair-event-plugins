@@ -38,7 +38,7 @@ const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '../..');
 
 // Load environment variables from .env file if it exists
-dotenv.config({ path: join(rootDir, '.env') });
+dotenv.config({ path: join(rootDir, '.env'), quiet: true });
 
 /**
  * Parse CLI arguments
