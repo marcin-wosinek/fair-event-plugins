@@ -23,7 +23,13 @@
  *     untouched.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+	act,
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import { formatDateOnly } from 'fair-events-shared';
 import SeriesModal from '../SeriesModal.js';
@@ -74,8 +80,13 @@ async function renderModal( props ) {
 	return utils;
 }
 
-function openIrregularTab() {
-	fireEvent.click( screen.getByRole( 'tab', { name: 'Irregular series' } ) );
+async function openIrregularTab() {
+	// Ariakit settles the tab selection in effects; let them run inside act().
+	await act( async () => {
+		fireEvent.click(
+			screen.getByRole( 'tab', { name: 'Irregular series' } )
+		);
+	} );
 }
 
 it( 'Regular tab shows the generated dates and a compact dates summary', async () => {
@@ -357,7 +368,7 @@ describe( 'skipping dates of a regular schedule', () => {
 		await renderModal( { ...julyProps, onSaved } );
 
 		fireEvent.click( dayButton( '2026-07-15' ) );
-		openIrregularTab();
+		await openIrregularTab();
 		// The irregular picker is unaffected: only the original date is selected.
 		expect( screen.getByText( '1 dates selected' ) ).toBeInTheDocument();
 
@@ -369,7 +380,7 @@ describe( 'skipping dates of a regular schedule', () => {
 			'false'
 		);
 
-		openIrregularTab();
+		await openIrregularTab();
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Create series — 1 date' } )
 		);
@@ -429,7 +440,7 @@ it( 'seeds the calendar selection from existing generated occurrences when editi
 		onImpact: () => {},
 	} );
 
-	openIrregularTab();
+	await openIrregularTab();
 
 	const masterButton = screen.getByRole( 'button', {
 		name: fullDateLabel( '2026-07-01' ),
@@ -462,7 +473,7 @@ it( 'clicking an unselected day adds it and clicking it again removes it, keepin
 		onImpact: () => {},
 	} );
 
-	openIrregularTab();
+	await openIrregularTab();
 
 	const masterButton = screen.getByRole( 'button', {
 		name: fullDateLabel( '2026-07-01' ),
@@ -506,7 +517,7 @@ it( 'sends recurrence_mode + manual_dates on confirm from the Irregular tab', as
 		onImpact: () => {},
 	} );
 
-	openIrregularTab();
+	await openIrregularTab();
 	fireEvent.click(
 		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-15' ) } )
 	);
@@ -620,7 +631,7 @@ describe( 'stable two-month calendar', () => {
 
 	it( 'selects dates across pages in the Irregular tab without moving the view', async () => {
 		await renderModal( septemberProps );
-		openIrregularTab();
+		await openIrregularTab();
 
 		expect( monthLabels() ).toEqual( [ 'September 2026', 'October 2026' ] );
 		expect(
@@ -671,7 +682,7 @@ describe( 'stable two-month calendar', () => {
 		nextMonths();
 		expect( monthLabels() ).toEqual( [ 'November 2026', 'December 2026' ] );
 
-		openIrregularTab();
+		await openIrregularTab();
 		expect( monthLabels() ).toEqual( [ 'September 2026', 'October 2026' ] );
 		nextMonths();
 		nextMonths();
@@ -682,7 +693,7 @@ describe( 'stable two-month calendar', () => {
 		);
 		expect( monthLabels() ).toEqual( [ 'November 2026', 'December 2026' ] );
 
-		openIrregularTab();
+		await openIrregularTab();
 		expect( monthLabels() ).toEqual( [ 'January 2027', 'February 2027' ] );
 	} );
 
@@ -715,7 +726,7 @@ describe( 'stable two-month calendar', () => {
 		} );
 		const onSaved = jest.fn();
 		await renderModal( { ...septemberProps, onSaved } );
-		openIrregularTab();
+		await openIrregularTab();
 
 		fireEvent.click(
 			screen.getByRole( 'button', {

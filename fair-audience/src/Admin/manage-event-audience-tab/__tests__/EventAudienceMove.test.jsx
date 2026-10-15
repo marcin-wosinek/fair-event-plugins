@@ -167,6 +167,11 @@ describe( 'EventAudience — Move action', () => {
 				data: { target_event_date_id: 6 },
 			} )
 		);
+		expect(
+			( await screen.findAllByText( 'Signup moved successfully.' ) )
+				.length
+		).toBeGreaterThan( 0 );
+		await waitFor( () => expect( modal ).not.toBeInTheDocument() );
 	} );
 } );
 

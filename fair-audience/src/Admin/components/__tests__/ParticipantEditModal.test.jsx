@@ -11,7 +11,13 @@
  *     again, by the retry — which sends only the group change that failed.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ParticipantEditModal from '../ParticipantEditModal.js';
 
@@ -94,8 +100,11 @@ describe( 'ParticipantEditModal', () => {
 
 		fireEvent.click( screen.getByRole( 'button', { name: 'Add' } ) );
 
+		// The popup, not the screen-reader live region, shows the reason.
 		expect(
-			await screen.findByText( 'Email already exists.' )
+			await within( screen.getByRole( 'dialog' ) ).findByText(
+				'Email already exists.'
+			)
 		).toBeInTheDocument();
 		expect( window.alert ).not.toHaveBeenCalled();
 		expect( screen.getByLabelText( 'Name *' ) ).toHaveValue( 'Jane' );

@@ -209,6 +209,18 @@ async function submit( dialog ) {
 	return callsTo( FEES_PATH, 'POST' )[ 0 ][ 0 ].data;
 }
 
+/**
+ * Every failed budgets load is logged by useBudgets; jest-console fails any
+ * test that logs an error it does not assert.
+ */
+function expectBudgetsLoadErrorLogged() {
+	expect( console ).toHaveErrored();
+	expect( console.error ).toHaveBeenCalledWith(
+		'Error loading budgets:',
+		expect.anything()
+	);
+}
+
 beforeEach( () => {
 	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 	// jsdom has no CSS.supports, which the row actions menu asks for.
@@ -379,6 +391,8 @@ describe( 'FeesList — when there are no budgets or they cannot be loaded', () 
 		expect( optionLabels( budgetSelect( dialog ) ) ).toEqual( [
 			'-- No Budget --',
 		] );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'loads the budgets when Retry succeeds', async () => {
@@ -400,6 +414,8 @@ describe( 'FeesList — when there are no budgets or they cannot be loaded', () 
 			within( dialog ).queryByText( FAILURE_MESSAGE )
 		).not.toBeInTheDocument();
 		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 2 );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'still creates an unlinked fee after budgets fail to load', async () => {
@@ -416,6 +432,8 @@ describe( 'FeesList — when there are no budgets or they cannot be loaded', () 
 		await waitFor( () =>
 			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
 		);
+
+		expectBudgetsLoadErrorLogged();
 	} );
 } );
 
@@ -430,6 +448,8 @@ describe( 'FeesList — while Fair Finance is not active', () => {
 
 		await fillRequiredFields( dialog );
 		expect( ( await submit( dialog ) ).budget_id ).toBeNull();
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'leaves the budget controls out of Edit Fee and keeps the fee linked', async () => {
@@ -442,6 +462,8 @@ describe( 'FeesList — while Fair Finance is not active', () => {
 		const data = await update( dialog );
 		expect( data ).not.toHaveProperty( 'budget_id' );
 		expect( data.name ).toBe( 'Membership 2025' );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'still reports a permission failure, with Retry', async () => {
@@ -462,6 +484,8 @@ describe( 'FeesList — while Fair Finance is not active', () => {
 			within( dialog ).getByRole( 'button', { name: 'Retry' } )
 		).toBeInTheDocument();
 		expect( budgetSelect( dialog ) ).toBeInTheDocument();
+
+		expectBudgetsLoadErrorLogged();
 	} );
 } );
 
@@ -583,6 +607,8 @@ describe( 'FeesList — the budget of a fee being edited', () => {
 			name: 'Membership income',
 		} );
 		expect( budgetSelect( dialog ) ).toHaveValue( '12' );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'does not touch the budget when saving after a failed load', async () => {
@@ -596,6 +622,8 @@ describe( 'FeesList — the budget of a fee being edited', () => {
 		await within( dialog ).findByText( FAILURE_MESSAGE );
 
 		expect( await update( dialog ) ).not.toHaveProperty( 'budget_id' );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 
 	it( 'says there are no budgets yet and keeps the saved one selected', async () => {

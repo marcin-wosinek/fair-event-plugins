@@ -408,7 +408,7 @@ async function login(page, config) {
 async function main() {
 	// Load screenshot-only configuration from the repository .env regardless
 	// of the caller's working directory. Imports used by unit tests stay pure.
-	dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+	dotenv.config({ path: path.resolve(__dirname, '..', '.env'), quiet: true });
 	const config = resolveScreenshotConfig(process.env);
 	const { positional, opts } = parseArgs(process.argv.slice(2));
 	const [pagePath, dimensions, filename] = positional;

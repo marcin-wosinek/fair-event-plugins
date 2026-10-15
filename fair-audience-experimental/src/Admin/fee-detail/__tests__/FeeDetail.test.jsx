@@ -188,6 +188,18 @@ const optionLabels = ( select ) =>
 const sendButton = ( dialog ) =>
 	within( dialog ).getByRole( 'button', { name: 'Send Payment Reminder' } );
 
+/**
+ * Every failed budgets load is logged by useBudgets; jest-console fails any
+ * test that logs an error it does not assert.
+ */
+function expectBudgetsLoadErrorLogged() {
+	expect( console ).toHaveErrored();
+	expect( console.error ).toHaveBeenCalledWith(
+		'Error loading budgets:',
+		expect.anything()
+	);
+}
+
 beforeEach( () => {
 	// jsdom has no CSS.supports, which the row menu's popover calls.
 	window.CSS = { ...window.CSS, supports: jest.fn( () => false ) };
@@ -649,6 +661,8 @@ describe( 'FeeDetail — budgets in the transfer dialog', () => {
 			within( dialog ).queryByText( FAILURE_MESSAGE )
 		).not.toBeInTheDocument();
 		expect( callsTo( BUDGETS_PATH ) ).toHaveLength( 2 );
+
+		expectBudgetsLoadErrorLogged();
 	} );
 } );
 

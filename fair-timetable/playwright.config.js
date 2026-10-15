@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
-dotenv.config();
+dotenv.config( { quiet: true } );
 
 /**
  * Playwright configuration for WordPress e2e tests and screenshots

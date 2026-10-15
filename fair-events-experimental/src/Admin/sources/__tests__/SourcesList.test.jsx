@@ -88,6 +88,10 @@ describe( 'SourcesList', () => {
 		);
 
 		const dialog = screen.getByRole( 'dialog', { name: 'Add Event Feed' } );
+		// Let the categories input finish loading before the test ends.
+		await within( dialog ).findByText(
+			'No categories found. Create categories first.'
+		);
 		expect(
 			within( dialog ).getByLabelText( 'Event feed name' )
 		).toBeInTheDocument();
@@ -118,6 +122,10 @@ describe( 'SourcesList', () => {
 		const dialog = screen.getByRole( 'dialog', {
 			name: 'Edit Event Feed',
 		} );
+		// Let the categories input finish loading before the test ends.
+		await within( dialog ).findByText(
+			'No categories found. Create categories first.'
+		);
 		expect(
 			within( dialog ).getByLabelText( 'Event feed name' )
 		).toHaveValue( 'Club nights' );

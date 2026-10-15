@@ -42,6 +42,17 @@ beforeEach( () => {
 	apiFetch.mockImplementation( () => new Promise( () => {} ) );
 } );
 
+/**
+ * Opens the ⋯ menu and lets Floating UI position it inside act().
+ */
+async function openMoreActions() {
+	await act( async () => {
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'More actions' } )
+		);
+	} );
+}
+
 describe( 'sale-period calendar date conversion (#1500)', () => {
 	it( 'crosses month, year, and DST boundaries without shifting', () => {
 		expect( exclusiveEndToInclusiveDate( '2026-09-01' ) ).toBe(
@@ -217,11 +228,9 @@ describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'export/import is reachable through the ⋯ menu with zero ticket types', () => {
+	it( 'export/import is reachable through the ⋯ menu with zero ticket types', async () => {
 		renderTickets( { initialData: emptyInitialData } );
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'More actions' } )
-		);
+		await openMoreActions();
 		expect(
 			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
 		).toBeInTheDocument();
@@ -851,12 +860,10 @@ describe( 'EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'reaches Export/Import through the ⋯ menu', () => {
+	it( 'reaches Export/Import through the ⋯ menu', async () => {
 		renderTickets( { initialData: initialDataWithTicketType } );
 
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'More actions' } )
-		);
+		await openMoreActions();
 
 		expect(
 			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
@@ -1600,11 +1607,9 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', () => {
+	it( 'hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', async () => {
 		renderControlled();
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'More actions' } )
-		);
+		await openMoreActions();
 		expect(
 			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
 		).toBeInTheDocument();
@@ -2550,6 +2555,11 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 		const originalRevoke = URL.revokeObjectURL;
 		URL.createObjectURL = jest.fn( () => 'blob:tickets' );
 		URL.revokeObjectURL = jest.fn();
+		// jsdom would queue a navigation to the blob URL that fails in a
+		// later test.
+		const download = jest
+			.spyOn( HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( () => {} );
 
 		try {
 			renderTickets( { initialData: legacyData } );
@@ -2566,6 +2576,7 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 			URL.revokeObjectURL = originalRevoke;
 		}
 
+		expect( download ).toHaveBeenCalledTimes( 1 );
 		expect( blobParts ).toHaveLength( 1 );
 		const exported = JSON.parse( blobParts[ 0 ][ 0 ] );
 		expect( exported.options.map( ( option ) => option.name ) ).toEqual( [
