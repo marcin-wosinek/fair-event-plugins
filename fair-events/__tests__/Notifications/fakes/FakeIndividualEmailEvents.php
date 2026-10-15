@@ -45,7 +45,7 @@ class FakeIndividualEmailEvents extends IndividualEmailEvents {
 	public function for_week( $selection, array $week ) {
 		$this->requests[] = array( $selection, $week['start'], $week['end'] );
 		if ( $this->error ) {
-			return new \WP_Error( 'invalid_source', 'The selected event source does not exist or is disabled.' );
+			return new \WP_Error( 'invalid_source', 'The selected event feed does not exist or is disabled.' );
 		}
 		if ( $this->empty ) {
 			return array();

@@ -394,13 +394,6 @@ msgctxt "block keyword"
 msgid "grid"
 msgstr "cuadrícula"
 
-#: src/blocks/events-calendar/components/EditComponent.js:168
-#: src/blocks/events-list/components/EditComponent.js:164
-#: src/blocks/events-week/components/EditComponent.js:118
-#: ../fair-events-shared/src/EventSourceSelector.js:24
-msgid "Event Sources"
-msgstr "Fuentes de eventos"
-
 #: src/API/PublicEventsController.php:100
 msgid "Unique slug identifier for the source."
 msgstr "Identificador de slug único para la fuente."
@@ -469,19 +462,6 @@ msgstr "Colores"
 #: src/blocks/events-calendar/components/EditComponent.js:159
 msgid "Draft events will appear as outlined buttons using these colors."
 msgstr "Los eventos en borrador aparecerán como botones con contorno usando estos colores."
-
-#: src/blocks/events-calendar/components/EditComponent.js:172
-msgid "Select event sources to display in the calendar."
-msgstr "Selecciona las fuentes de eventos para mostrar en el calendario."
-
-#: src/blocks/events-calendar/components/EditComponent.js:180
-#: src/blocks/events-week/components/EditComponent.js:123
-msgid "Event sources format has changed. Please re-select your event sources."
-msgstr "El formato de las fuentes de eventos ha cambiado. Por favor, vuelve a seleccionar tus fuentes de eventos."
-
-#: src/blocks/events-list/components/EditComponent.js:168
-msgid "Select event sources to display in the list."
-msgstr "Selecciona las fuentes de eventos para mostrar en la lista."
 
 #: src/blocks/event-proposal/render.php:40
 msgid "30 minutes"
@@ -2141,10 +2121,6 @@ msgstr "No se puede excluir la fecha del evento maestro."
 msgid "Invalid date."
 msgstr "Fecha no válida."
 
-#: src/Services/WeeklyEventsProvider.php:46
-msgid "Event source not found."
-msgstr "Origen del evento no encontrado."
-
 #: src/Admin/manage-event/EventTickets.js:1152
 msgid "Set up Mollie"
 msgstr "Configurar Mollie"
@@ -2625,22 +2601,6 @@ msgstr "Cronología de períodos de venta"
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
 msgstr "(evento sin título)"
-
-#: ../fair-events-shared/src/EventSourceSelector.js:25
-msgid "Select event sources to display"
-msgstr "Selecciona las fuentes de eventos que se van a mostrar"
-
-#: ../fair-events-shared/src/EventSourceSelector.js:42
-msgid "Failed to load event sources"
-msgstr "No se han podido cargar las fuentes de eventos"
-
-#: ../fair-events-shared/src/EventSourceSelector.js:70
-msgid "No event sources configured. Create event sources in Fair Events settings."
-msgstr "No hay fuentes de eventos configuradas. Crea fuentes de eventos en los ajustes de Fair Events."
-
-#: ../fair-events-shared/src/EventSourceSelector.js:111
-msgid "Manage Event Sources"
-msgstr "Gestionar fuentes de eventos"
 
 #: ../fair-events-shared/src/MiniCalendar.js:267
 msgid "Previous months"
@@ -4116,14 +4076,6 @@ msgstr "Muestra eventos en una disposición de cuadrícula con imágenes, fechas
 msgid "Unavailable pattern (%s)"
 msgstr "Patrón no disponible (%s)"
 
-#: src/blocks/events-list/components/EditComponent.js:106
-msgid "Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every event source — standalone, calendar feed, and external."
-msgstr "Los patrones del bucle de consulta (p. ej. Lista de eventos, Cuadrícula de eventos) muestran solo eventos vinculados a WordPress. Un patrón personalizado (no creado con el bloque Consulta) puede mostrar todas las fuentes de eventos — independientes, fuentes de calendario y externos."
-
-#: src/blocks/events-list/components/EditComponent.js:113
-msgid "The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event sources will not appear — choose a custom pattern to show them."
-msgstr "El patrón seleccionado utiliza un bucle de consulta, por lo que solo puede mostrar eventos vinculados a WordPress. Los eventos de las fuentes de eventos seleccionadas no aparecerán — elige un patrón personalizado para mostrarlos."
-
 #. translators: %s: date (and time) of the next occurrence, e.g. "28 September".
 #: src/Helpers/RecurrenceSummary.php:43
 #, php-format
@@ -5519,16 +5471,6 @@ msgstr ""
 msgid "Save at least one Telegram chat or channel before sending a test message."
 msgstr "Guarda al menos un chat o canal de Telegram antes de enviar un mensaje de prueba."
 
-#: src/API/EventNotificationsController.php:523
-msgid "Choose an event source before turning on the weekly email."
-msgstr ""
-
-#: src/API/EventNotificationsController.php:524
-#: src/Notifications/SummaryBuilder.php:43
-#: src/Services/WeeklyEventsProvider.php:219
-msgid "The selected event source does not exist or is disabled."
-msgstr "La fuente de eventos seleccionada no existe o está deshabilitada."
-
 #. translators: %s: email address
 #: src/API/EventNotificationsController.php:579
 #: src/API/EventNotificationsController.php:688
@@ -5558,10 +5500,6 @@ msgstr ""
 
 #: src/API/EventNotificationsController.php:847
 msgid "Update Fair Audience to manage the weekly email here. Nothing was changed."
-msgstr ""
-
-#: src/API/EventNotificationsController.php:886
-msgid "Choose an event source and save before previewing the weekly email."
 msgstr ""
 
 #: src/Notifications/BulkEmailDispatcher.php:219
@@ -5596,10 +5534,6 @@ msgstr "Eventos de esta semana: {week_start} – {week_end}"
 #: src/Notifications/SummaryBuilder.php:35
 msgid "Update Fair Events to use weekly notifications."
 msgstr "Actualiza Fair Events para usar notificaciones semanales."
-
-#: src/Notifications/SummaryBuilder.php:39
-msgid "Choose an event source."
-msgstr "Elige una fuente de eventos."
 
 #: src/Notifications/SummaryBuilder.php:48
 msgid "Choose the page that heads the message."
@@ -5727,11 +5661,6 @@ msgstr ""
 msgid "Events to include"
 msgstr ""
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:220
-#: src/Admin/event-notifications/TelegramChannel.js:405
-msgid "The event source whose events are listed."
-msgstr ""
-
 #: src/Admin/event-notifications/BulkEmailChannel.js:230
 #: src/Admin/event-notifications/IndividualEmailChannel.js:319
 #: src/Admin/event-notifications/TelegramChannel.js:431
@@ -5851,14 +5780,6 @@ msgstr ""
 msgid "Send the week’s events automatically. Each channel has its own schedule and its own choice of events, and is saved on its own."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:101
-msgid "Create an event source"
-msgstr ""
-
-#: src/Admin/event-notifications/EventNotifications.js:104
-msgid "Event sources are created with the Fair Events Experimental plugin."
-msgstr ""
-
 #: src/Admin/event-notifications/EventNotifications.js:125
 msgid "Sends run in the site’s timezone and can be a few minutes late on low-traffic sites."
 msgstr ""
@@ -5933,11 +5854,7 @@ msgstr ""
 msgid "Configuration error"
 msgstr "Error de configuración"
 
-#: src/Admin/event-notifications/shared.js:103
-msgid "Choose an event source"
-msgstr "Elige una fuente de eventos"
-
-#. translators: %s: event source slug
+#. translators: %s: event feed slug
 #: src/Admin/event-notifications/IndividualEmailChannel.js:102
 #: src/Admin/event-notifications/shared.js:114
 #, js-format
@@ -6317,10 +6234,6 @@ msgstr ""
 #, php-format
 msgid "No events are scheduled for %s."
 msgstr "No hay eventos programados para %s."
-
-#: src/Admin/event-notifications/EventNotifications.js:95
-msgid "There is no event source yet. Telegram and bulk email list the events of an event source, so they can only be turned on once one exists. Individual email can send all published local events without one."
-msgstr ""
 
 #: src/Admin/event-notifications/IndividualEmailChannel.js:55
 msgid "Handed over for delivery"
@@ -6802,3 +6715,90 @@ msgstr "Categoría"
 #: src/Admin/calendar/CalendarApp.js:433
 msgid "No events match this category."
 msgstr "No hay eventos en esta categoría."
+
+#: src/API/EventNotificationsController.php:523
+msgid "Choose an event feed before turning on the weekly email."
+msgstr "Elige un feed de eventos antes de activar el correo semanal."
+
+#: src/API/EventNotificationsController.php:524
+#: src/Notifications/SummaryBuilder.php:43
+#: src/Services/WeeklyEventsProvider.php:219
+msgid "The selected event feed does not exist or is disabled."
+msgstr "El feed de eventos seleccionado no existe o está deshabilitado."
+
+#: src/API/EventNotificationsController.php:886
+msgid "Choose an event feed and save before previewing the weekly email."
+msgstr "Elige un feed de eventos y guarda antes de previsualizar el correo semanal."
+
+#: src/Notifications/SummaryBuilder.php:39
+msgid "Choose an event feed."
+msgstr "Elige un feed de eventos."
+
+#: src/Services/WeeklyEventsProvider.php:46
+msgid "Event feed not found."
+msgstr "No se ha encontrado el feed de eventos."
+
+#: src/Admin/event-notifications/BulkEmailChannel.js:220
+#: src/Admin/event-notifications/TelegramChannel.js:405
+msgid "The event feed whose events are listed."
+msgstr "El feed de eventos cuyos eventos se muestran."
+
+#: src/Admin/event-notifications/EventNotifications.js:95
+msgid "There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one."
+msgstr "Todavía no hay ningún feed de eventos. Telegram y el correo masivo muestran los eventos de un feed de eventos, así que solo pueden activarse cuando exista uno. El correo individual puede enviar todos los eventos locales publicados sin él."
+
+#: src/Admin/event-notifications/EventNotifications.js:101
+msgid "Create an event feed"
+msgstr "Crear un feed de eventos"
+
+#: src/Admin/event-notifications/EventNotifications.js:104
+msgid "Event feeds are created with the Fair Events Experimental plugin."
+msgstr "Los feeds de eventos se crean con el plugin Fair Events Experimental."
+
+#: src/Admin/event-notifications/shared.js:103
+msgid "Choose an event feed"
+msgstr "Elige un feed de eventos"
+
+#: src/blocks/events-calendar/components/EditComponent.js:168
+#: src/blocks/events-list/components/EditComponent.js:164
+#: src/blocks/events-week/components/EditComponent.js:118
+#: ../fair-events-shared/src/EventSourceSelector.js:24
+msgid "Event Feeds"
+msgstr "Feeds de eventos"
+
+#: src/blocks/events-calendar/components/EditComponent.js:172
+msgid "Select event feeds to display in the calendar."
+msgstr "Selecciona los feeds de eventos que se mostrarán en el calendario."
+
+#: src/blocks/events-calendar/components/EditComponent.js:180
+#: src/blocks/events-week/components/EditComponent.js:123
+msgid "Event feed format has changed. Please re-select your event feeds."
+msgstr "El formato de los feeds de eventos ha cambiado. Vuelve a seleccionar tus feeds de eventos."
+
+#: src/blocks/events-list/components/EditComponent.js:106
+msgid "Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every kind of event — standalone, calendar feed, and external."
+msgstr "Los patrones del bucle de consulta (p. ej. Lista de eventos, Cuadrícula de eventos) muestran solo eventos vinculados a WordPress. Un patrón personalizado (no creado con el bloque Consulta) puede mostrar todo tipo de eventos — independientes, de fuentes de calendario y externos."
+
+#: src/blocks/events-list/components/EditComponent.js:113
+msgid "The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event feeds will not appear — choose a custom pattern to show them."
+msgstr "El patrón seleccionado usa un bucle de consulta, así que solo puede mostrar eventos vinculados a WordPress. Los eventos de los feeds de eventos seleccionados no aparecerán — elige un patrón personalizado para mostrarlos."
+
+#: src/blocks/events-list/components/EditComponent.js:168
+msgid "Select event feeds to display in the list."
+msgstr "Selecciona los feeds de eventos que se mostrarán en la lista."
+
+#: ../fair-events-shared/src/EventSourceSelector.js:25
+msgid "Select event feeds to display"
+msgstr "Selecciona los feeds de eventos que se mostrarán"
+
+#: ../fair-events-shared/src/EventSourceSelector.js:42
+msgid "Failed to load event feeds"
+msgstr "No se han podido cargar los feeds de eventos"
+
+#: ../fair-events-shared/src/EventSourceSelector.js:70
+msgid "No event feeds configured. Create event feeds in Fair Events settings."
+msgstr "No hay feeds de eventos configurados. Crea feeds de eventos en los ajustes de Fair Events."
+
+#: ../fair-events-shared/src/EventSourceSelector.js:111
+msgid "Manage Event Feeds"
+msgstr "Gestionar feeds de eventos"

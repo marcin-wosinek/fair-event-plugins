@@ -43,7 +43,7 @@ class WeeklyEventsProvider {
 		if ( ! $source ) {
 			return new \WP_Error(
 				'not_found',
-				__( 'Event source not found.', 'fair-events' ),
+				__( 'Event feed not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -216,7 +216,7 @@ class WeeklyEventsProvider {
 
 		$source = ( new EventSourceRepository() )->get_by_slug( $selection );
 		if ( ! $source || empty( $source['enabled'] ) ) {
-			return new \WP_Error( 'invalid_source', __( 'The selected event source does not exist or is disabled.', 'fair-events' ) );
+			return new \WP_Error( 'invalid_source', __( 'The selected event feed does not exist or is disabled.', 'fair-events' ) );
 		}
 
 		return $source;

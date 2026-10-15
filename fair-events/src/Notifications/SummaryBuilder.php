@@ -36,11 +36,11 @@ class SummaryBuilder {
 		}
 
 		if ( '' === $source_slug ) {
-			return new \WP_Error( 'missing_source', __( 'Choose an event source.', 'fair-events' ) );
+			return new \WP_Error( 'missing_source', __( 'Choose an event feed.', 'fair-events' ) );
 		}
 		$source = ( new \FairEvents\Database\EventSourceRepository() )->get_by_slug( $source_slug );
 		if ( ! $source || empty( $source['enabled'] ) ) {
-			return new \WP_Error( 'invalid_source', __( 'The selected event source does not exist or is disabled.', 'fair-events' ) );
+			return new \WP_Error( 'invalid_source', __( 'The selected event feed does not exist or is disabled.', 'fair-events' ) );
 		}
 
 		$page = $page_id ? get_post( $page_id ) : null;

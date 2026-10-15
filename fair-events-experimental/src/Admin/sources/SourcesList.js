@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -46,7 +46,11 @@ const SourcesList = () => {
 			setSources( data );
 		} catch ( err ) {
 			setError(
-				err.message || __( 'Failed to load sources.', 'fair-events' )
+				err.message ||
+					__(
+						'Failed to load event feeds.',
+						'fair-events-experimental'
+					)
 			);
 		} finally {
 			setLoading( false );
@@ -67,8 +71,8 @@ const SourcesList = () => {
 		if (
 			! window.confirm(
 				__(
-					'Are you sure you want to delete this source?',
-					'fair-events'
+					'Are you sure you want to delete this event feed?',
+					'fair-events-experimental'
 				)
 			)
 		) {
@@ -83,11 +87,17 @@ const SourcesList = () => {
 				path: `/fair-events/v1/sources/${ id }`,
 				method: 'DELETE',
 			} );
-			setSuccess( __( 'Source deleted successfully.', 'fair-events' ) );
+			setSuccess(
+				__( 'Event feed deleted.', 'fair-events-experimental' )
+			);
 			loadSources();
 		} catch ( err ) {
 			setError(
-				err.message || __( 'Failed to delete source.', 'fair-events' )
+				err.message ||
+					__(
+						'Failed to delete event feed.',
+						'fair-events-experimental'
+					)
 			);
 		}
 	};
@@ -97,8 +107,8 @@ const SourcesList = () => {
 		setEditingSource( null );
 		setSuccess(
 			editingSource
-				? __( 'Source updated successfully.', 'fair-events' )
-				: __( 'Source created successfully.', 'fair-events' )
+				? __( 'Event feed updated.', 'fair-events-experimental' )
+				: __( 'Event feed created.', 'fair-events-experimental' )
 		);
 		loadSources();
 	};
@@ -111,11 +121,11 @@ const SourcesList = () => {
 	const getStatusBadge = ( enabled ) => {
 		return enabled ? (
 			<span className="source-status-badge source-status-enabled">
-				{ __( 'Enabled', 'fair-events' ) }
+				{ __( 'Enabled', 'fair-events-experimental' ) }
 			</span>
 		) : (
 			<span className="source-status-badge source-status-disabled">
-				{ __( 'Disabled', 'fair-events' ) }
+				{ __( 'Disabled', 'fair-events-experimental' ) }
 			</span>
 		);
 	};
@@ -139,9 +149,14 @@ const SourcesList = () => {
 			<Card>
 				<CardHeader>
 					<HStack justify="space-between">
-						<h1>{ __( 'Event Sources', 'fair-events' ) }</h1>
+						<h1>
+							{ __( 'Event Feeds', 'fair-events-experimental' ) }
+						</h1>
 						<Button variant="primary" onClick={ handleCreate }>
-							{ __( 'Add New Source', 'fair-events' ) }
+							{ __(
+								'Add Event Feed',
+								'fair-events-experimental'
+							) }
 						</Button>
 					</HStack>
 				</CardHeader>
@@ -172,8 +187,8 @@ const SourcesList = () => {
 								<Spinner />
 								<p>
 									{ __(
-										'Loading sources...',
-										'fair-events'
+										'Loading event feeds…',
+										'fair-events-experimental'
 									) }
 								</p>
 							</div>
@@ -183,8 +198,8 @@ const SourcesList = () => {
 							<div className="sources-empty">
 								<p>
 									{ __(
-										'No sources found. Create your first source to get started.',
-										'fair-events'
+										'No event feeds yet. Add your first event feed to get started.',
+										'fair-events-experimental'
 									) }
 								</p>
 							</div>
@@ -194,25 +209,47 @@ const SourcesList = () => {
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
-										<th>{ __( 'Name', 'fair-events' ) }</th>
-										<th>{ __( 'Slug', 'fair-events' ) }</th>
 										<th>
 											{ __(
-												'Data Sources',
-												'fair-events'
+												'Name',
+												'fair-events-experimental'
 											) }
 										</th>
 										<th>
-											{ __( 'iCal Feed', 'fair-events' ) }
+											{ __(
+												'Slug',
+												'fair-events-experimental'
+											) }
 										</th>
 										<th>
-											{ __( 'JSON API', 'fair-events' ) }
+											{ __(
+												'Feed inputs',
+												'fair-events-experimental'
+											) }
 										</th>
 										<th>
-											{ __( 'Status', 'fair-events' ) }
+											{ __(
+												'iCal Feed',
+												'fair-events-experimental'
+											) }
 										</th>
 										<th>
-											{ __( 'Actions', 'fair-events' ) }
+											{ __(
+												'JSON API',
+												'fair-events-experimental'
+											) }
+										</th>
+										<th>
+											{ __(
+												'Status',
+												'fair-events-experimental'
+											) }
+										</th>
+										<th>
+											{ __(
+												'Actions',
+												'fair-events-experimental'
+											) }
 										</th>
 									</tr>
 								</thead>
@@ -232,11 +269,17 @@ const SourcesList = () => {
 												<code>{ source.slug }</code>
 											</td>
 											<td>
-												{ source.data_sources?.length ||
-													0 }{ ' ' }
-												{ __(
-													'data source(s)',
-													'fair-events'
+												{ sprintf(
+													/* translators: %d: number of feed inputs */
+													_n(
+														'%d feed input',
+														'%d feed inputs',
+														source.data_sources
+															?.length || 0,
+														'fair-events-experimental'
+													),
+													source.data_sources
+														?.length || 0
 												) }
 											</td>
 											<td>
@@ -246,7 +289,7 @@ const SourcesList = () => {
 													) }
 													tooltip={ __(
 														'Copy iCal feed URL',
-														'fair-events'
+														'fair-events-experimental'
 													) }
 												/>
 											</td>
@@ -257,7 +300,7 @@ const SourcesList = () => {
 													) }
 													tooltip={ __(
 														'Copy JSON API URL',
-														'fair-events'
+														'fair-events-experimental'
 													) }
 												/>
 											</td>
@@ -275,7 +318,7 @@ const SourcesList = () => {
 													>
 														{ __(
 															'View',
-															'fair-events'
+															'fair-events-experimental'
 														) }
 													</Button>
 													<Button
@@ -287,7 +330,7 @@ const SourcesList = () => {
 													>
 														{ __(
 															'Edit',
-															'fair-events'
+															'fair-events-experimental'
 														) }
 													</Button>
 													<Button
@@ -302,7 +345,7 @@ const SourcesList = () => {
 													>
 														{ __(
 															'Delete',
-															'fair-events'
+															'fair-events-experimental'
 														) }
 													</Button>
 												</HStack>
@@ -320,8 +363,11 @@ const SourcesList = () => {
 				<Modal
 					title={
 						editingSource
-							? __( 'Edit Event Source', 'fair-events' )
-							: __( 'Add New Event Source', 'fair-events' )
+							? __(
+									'Edit Event Feed',
+									'fair-events-experimental'
+								)
+							: __( 'Add Event Feed', 'fair-events-experimental' )
 					}
 					onRequestClose={ handleFormCancel }
 					style={ { maxWidth: '800px', width: '100%' } }

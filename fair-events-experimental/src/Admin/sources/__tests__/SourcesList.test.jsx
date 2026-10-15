@@ -1,0 +1,133 @@
+/**
+ * @jest-environment jsdom
+ *
+ * Event Feeds management screen (#1808): the feature is presented as
+ * "Event Feeds" while admin URLs and REST routes keep their `sources` names.
+ */
+import '@testing-library/jest-dom';
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import apiFetch from '@wordpress/api-fetch';
+import SourcesList from '../SourcesList.js';
+
+jest.mock( '@wordpress/api-fetch' );
+
+const FEEDS = [
+	{
+		id: 3,
+		name: 'Club nights',
+		slug: 'club-nights',
+		enabled: true,
+		data_sources: [
+			{ source_type: 'categories', config: { category_ids: [ 1 ] } },
+			{
+				source_type: 'ical_url',
+				config: { url: 'https://x.test/a.ics' },
+			},
+		],
+	},
+	{
+		id: 4,
+		name: 'Workshops',
+		slug: 'workshops',
+		enabled: false,
+		data_sources: [ { source_type: 'categories', config: {} } ],
+	},
+];
+
+beforeEach( () => {
+	jest.spyOn( console, 'warn' ).mockImplementation( () => {} );
+	jest.spyOn( console, 'error' ).mockImplementation( () => {} );
+	apiFetch.mockImplementation( ( { path } ) =>
+		Promise.resolve( path === '/fair-events/v1/sources' ? FEEDS : [] )
+	);
+} );
+
+afterEach( () => {
+	jest.restoreAllMocks();
+	jest.clearAllMocks();
+} );
+
+describe( 'SourcesList', () => {
+	it( 'lists event feeds and keeps the existing view links', async () => {
+		render( <SourcesList /> );
+
+		expect(
+			await screen.findByRole( 'link', { name: 'Club nights' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-events-source-view&source_id=3'
+		);
+		expect(
+			screen.getByRole( 'heading', { name: 'Event Feeds' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'columnheader', { name: 'Feed inputs' } )
+		).toBeInTheDocument();
+		expect( screen.getByText( '2 feed inputs' ) ).toBeInTheDocument();
+		expect( screen.getByText( '1 feed input' ) ).toBeInTheDocument();
+	} );
+
+	it( 'explains the empty state in event feed terms', async () => {
+		apiFetch.mockResolvedValue( [] );
+
+		render( <SourcesList /> );
+
+		expect(
+			await screen.findByText(
+				'No event feeds yet. Add your first event feed to get started.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'opens the add form with feed input controls', async () => {
+		render( <SourcesList /> );
+		await screen.findByRole( 'link', { name: 'Club nights' } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Add Event Feed' } )
+		);
+
+		const dialog = screen.getByRole( 'dialog', { name: 'Add Event Feed' } );
+		expect(
+			within( dialog ).getByLabelText( 'Event feed name' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'heading', { name: 'Feed input #1' } )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByLabelText( 'Input type' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Add feed input' } )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Create event feed',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'opens the edit form for an existing event feed', async () => {
+		render( <SourcesList /> );
+		await screen.findByRole( 'link', { name: 'Club nights' } );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Edit' } )[ 0 ]
+		);
+
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Edit Event Feed',
+		} );
+		expect(
+			within( dialog ).getByLabelText( 'Event feed name' )
+		).toHaveValue( 'Club nights' );
+		expect(
+			within( dialog ).getByRole( 'heading', { name: 'Feed input #2' } )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Update event feed',
+			} )
+		).toBeInTheDocument();
+	} );
+} );

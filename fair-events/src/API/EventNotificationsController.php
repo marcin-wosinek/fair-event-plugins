@@ -520,8 +520,8 @@ class EventNotificationsController extends WP_REST_Controller {
 				return new WP_Error(
 					'invalid_source',
 					'' === $settings['source_slug']
-						? __( 'Choose an event source before turning on the weekly email.', 'fair-events' )
-						: __( 'The selected event source does not exist or is disabled.', 'fair-events' ),
+						? __( 'Choose an event feed before turning on the weekly email.', 'fair-events' )
+						: __( 'The selected event feed does not exist or is disabled.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -883,7 +883,7 @@ class EventNotificationsController extends WP_REST_Controller {
 
 		$settings = BulkEmailSettings::get();
 		if ( '' === $settings['source_slug'] ) {
-			return new WP_Error( 'missing_source', __( 'Choose an event source and save before previewing the weekly email.', 'fair-events' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_source', __( 'Choose an event feed and save before previewing the weekly email.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
 		$week = ( new WeeklyEventsProvider() )->for_notification( BulkEmailDispatcher::event_boundaries( $settings['week_scope'], BulkEmailDispatcher::now() ), $settings['source_slug'] );

@@ -98,7 +98,7 @@ function selectionOptions( sources, current ) {
 		options.push( {
 			value: current,
 			label: sprintf(
-				/* translators: %s: event source slug */
+				/* translators: %s: event feed slug */
 				__( '%s (unavailable)', 'fair-events' ),
 				current
 			),

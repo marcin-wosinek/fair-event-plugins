@@ -15,7 +15,7 @@
  * `run` executes the scheduled send's cron callback for the current send
  * week, exactly as WP-Cron would. `state` reports the schedule and history.
  * `cleanup` removes the given events. `hide-sources` disables every enabled
- * event source, so the site looks like one that never had any, and reports
+ * event feed, so the site looks like one that never had any, and reports
  * their IDs for `restore-sources`.
  *
  * Prints a single `E2E_INDIVIDUAL_EMAIL:{json}` line.

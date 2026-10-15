@@ -43,7 +43,7 @@ class FakeWeeklyEvents {
 	public function for_notification( array $week, $selection ) {
 		$this->requests[] = array( $selection, $week['start'], $week['end'] );
 		if ( $this->error ) {
-			return new \WP_Error( 'invalid_source', 'The selected event source does not exist or is disabled.' );
+			return new \WP_Error( 'invalid_source', 'The selected event feed does not exist or is disabled.' );
 		}
 
 		return array(

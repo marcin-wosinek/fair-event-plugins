@@ -93,16 +93,16 @@ export default function EventNotifications( { sourcesUrl } ) {
 			{ data && 0 === data.sources.length && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
-						'There is no event source yet. Telegram and bulk email list the events of an event source, so they can only be turned on once one exists. Individual email can send all published local events without one.',
+						'There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one.',
 						'fair-events'
 					) }{ ' ' }
 					{ sourcesUrl ? (
 						<a href={ sourcesUrl }>
-							{ __( 'Create an event source', 'fair-events' ) }
+							{ __( 'Create an event feed', 'fair-events' ) }
 						</a>
 					) : (
 						__(
-							'Event sources are created with the Fair Events Experimental plugin.',
+							'Event feeds are created with the Fair Events Experimental plugin.',
 							'fair-events'
 						)
 					) }

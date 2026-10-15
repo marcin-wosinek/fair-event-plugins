@@ -506,7 +506,7 @@ test.describe( 'EventNotificationsController', () => {
 		expect( after.runs ).toEqual( before.runs );
 	} );
 
-	test( 'refuses a bulk email preview without an event source', async () => {
+	test( 'refuses a bulk email preview without an event feed', async () => {
 		await api.post( BULK_EMAIL, {
 			headers: adminHeaders,
 			data: { enabled: false, source_slug: '' },

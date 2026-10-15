@@ -8,7 +8,7 @@
  * Fair Audience's Weekly Digest page — lead to that page, and saving the
  * Telegram section leaves the bulk email section alone. A bot token saved before the credential
  * moved to Connectors keeps working with no action. The administrator then
- * picks an event source and a plain page (no calendar block) for the heading,
+ * picks an event feed and a plain page (no calendar block) for the heading,
  * saves two chats, and sends the next week's formatted summary as a test,
  * which reaches one chat and fails for the other. In Connectors the token is
  * replaced with one Telegram rejects, a malformed one is refused, and it is

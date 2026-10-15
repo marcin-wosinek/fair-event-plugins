@@ -13,7 +13,7 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
 import CalendarHeader from '../calendar/components/CalendarHeader.js';
@@ -69,7 +69,11 @@ export default function SourceViewApp() {
 			setSource( data );
 		} catch ( err ) {
 			setError(
-				err.message || __( 'Failed to load source.', 'fair-events' )
+				err.message ||
+					__(
+						'Failed to load event feed.',
+						'fair-events-experimental'
+					)
 			);
 		} finally {
 			setLoading( false );
@@ -79,7 +83,9 @@ export default function SourceViewApp() {
 	// Fetch source details on mount.
 	useEffect( () => {
 		if ( ! sourceId ) {
-			setError( __( 'No source ID provided.', 'fair-events' ) );
+			setError(
+				__( 'No event feed ID provided.', 'fair-events-experimental' )
+			);
 			setLoading( false );
 			return;
 		}
@@ -197,7 +203,11 @@ export default function SourceViewApp() {
 			<div className="wrap">
 				<p>
 					<a href={ sourcesListUrl }>
-						&larr; { __( 'Back to Event Sources', 'fair-events' ) }
+						&larr;{ ' ' }
+						{ __(
+							'Back to Event Feeds',
+							'fair-events-experimental'
+						) }
 					</a>
 				</p>
 				<Notice status="error" isDismissible={ false }>
@@ -211,14 +221,15 @@ export default function SourceViewApp() {
 		<div className="wrap fair-events-calendar-wrap">
 			<p>
 				<a href={ sourcesListUrl }>
-					&larr; { __( 'Back to Event Sources', 'fair-events' ) }
+					&larr;{ ' ' }
+					{ __( 'Back to Event Feeds', 'fair-events-experimental' ) }
 				</a>
 			</p>
 
 			<h1>
 				{ sprintf(
-					/* translators: %s: source name */
-					__( 'Source: %s', 'fair-events' ),
+					/* translators: %s: event feed name */
+					__( 'Event feed: %s', 'fair-events-experimental' ),
 					source.name
 				) }
 			</h1>
@@ -234,55 +245,82 @@ export default function SourceViewApp() {
 			>
 				<HStack spacing={ 6 } wrap>
 					<VStack spacing={ 1 }>
-						<strong>{ __( 'Slug', 'fair-events' ) }</strong>
+						<strong>
+							{ __( 'Slug', 'fair-events-experimental' ) }
+						</strong>
 						<code>{ source.slug }</code>
 					</VStack>
 					<VStack spacing={ 1 }>
-						<strong>{ __( 'Status', 'fair-events' ) }</strong>
+						<strong>
+							{ __( 'Status', 'fair-events-experimental' ) }
+						</strong>
 						<span>
 							{ source.enabled
-								? __( 'Enabled', 'fair-events' )
-								: __( 'Disabled', 'fair-events' ) }
+								? __( 'Enabled', 'fair-events-experimental' )
+								: __( 'Disabled', 'fair-events-experimental' ) }
 						</span>
 					</VStack>
 					<VStack spacing={ 1 }>
-						<strong>{ __( 'Data Sources', 'fair-events' ) }</strong>
+						<strong>
+							{ __( 'Feed inputs', 'fair-events-experimental' ) }
+						</strong>
 						<span>
-							{ source.data_sources?.length || 0 }{ ' ' }
-							{ __( 'data source(s)', 'fair-events' ) }
+							{ sprintf(
+								/* translators: %d: number of feed inputs */
+								_n(
+									'%d feed input',
+									'%d feed inputs',
+									source.data_sources?.length || 0,
+									'fair-events-experimental'
+								),
+								source.data_sources?.length || 0
+							) }
 						</span>
 					</VStack>
 					{ source.page_url && (
 						<VStack spacing={ 1 }>
-							<strong>{ __( 'Page', 'fair-events' ) }</strong>
+							<strong>
+								{ __( 'Page', 'fair-events-experimental' ) }
+							</strong>
 							<a
 								href={ source.page_url }
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								{ source.page_title ||
-									__( 'View page', 'fair-events' ) }{ ' ' }
+									__(
+										'View page',
+										'fair-events-experimental'
+									) }{ ' ' }
 								&#8599;
 							</a>
 						</VStack>
 					) }
 					<VStack spacing={ 1 }>
-						<strong>{ __( 'Feed URLs', 'fair-events' ) }</strong>
+						<strong>
+							{ __( 'Feed URLs', 'fair-events-experimental' ) }
+						</strong>
 						<HStack spacing={ 2 }>
 							<CopyUrlButton
 								url={ getIcalUrl( source.slug ) }
-								label={ __( 'iCal', 'fair-events' ) }
+								label={ __(
+									'iCal',
+									'fair-events-experimental'
+								) }
 								tooltip={ __(
 									'Copy iCal feed URL',
-									'fair-events'
+									'fair-events-experimental'
 								) }
 							/>
 							<CopyUrlButton
 								url={ getJsonUrl( source.slug ) }
-								label={ __( 'JSON', 'fair-events' ) }
+								label={ __(
+									'JSON',
+									'fair-events-experimental'
+								) }
 								tooltip={ __(
 									'Copy JSON API URL',
-									'fair-events'
+									'fair-events-experimental'
 								) }
 							/>
 						</HStack>
@@ -292,7 +330,10 @@ export default function SourceViewApp() {
 							variant="secondary"
 							onClick={ () => setIsEditOpen( true ) }
 						>
-							{ __( 'Edit Source', 'fair-events' ) }
+							{ __(
+								'Edit event feed',
+								'fair-events-experimental'
+							) }
 						</Button>
 					</VStack>
 				</HStack>
@@ -302,7 +343,7 @@ export default function SourceViewApp() {
 					onClick={ () => setIsEditOpen( true ) }
 					style={ { alignSelf: 'flex-start', marginTop: '8px' } }
 				>
-					{ __( 'Edit Source', 'fair-events' ) }
+					{ __( 'Edit event feed', 'fair-events-experimental' ) }
 				</Button>
 			</div>
 
@@ -327,7 +368,10 @@ export default function SourceViewApp() {
 
 			{ isEditOpen && (
 				<Modal
-					title={ __( 'Edit Event Source', 'fair-events' ) }
+					title={ __(
+						'Edit Event Feed',
+						'fair-events-experimental'
+					) }
 					onRequestClose={ () => setIsEditOpen( false ) }
 					style={ { maxWidth: '800px', width: '100%' } }
 				>

@@ -7,7 +7,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-summary-fixture.php event <termId>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-summary-fixture.php cleanup <termId> <sourceId> [eventId]
  *
- * `source` creates a category and an enabled event source listing it.
+ * `source` creates a category and an enabled event feed listing it.
  * `event` publishes an event in that category, dated inside the selected week relative to today
  * under the saved Telegram notification settings. Its
  * title carries Telegram markup characters, so the spec can check they are
@@ -49,7 +49,7 @@ if ( 'source' === $fixture_step ) {
 		)
 	);
 	if ( ! $source_id ) {
-		WP_CLI::error( 'Failed to create event source.' );
+		WP_CLI::error( 'Failed to create event feed.' );
 	}
 	$out = array(
 		'termId'     => (int) $category['term_id'],

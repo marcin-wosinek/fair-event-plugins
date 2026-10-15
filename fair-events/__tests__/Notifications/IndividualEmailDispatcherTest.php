@@ -250,7 +250,7 @@ class IndividualEmailDispatcherTest extends TestCase {
 		$run = $this->process( '2026-W41', self::settings( array( 'event_selection' => 'members' ) ), self::moment( '2026-10-05 08:00' ) );
 
 		$this->assertSame( 'configuration_error', $run['status'] );
-		$this->assertSame( 'The selected event source does not exist or is disabled.', $run['message'] );
+		$this->assertSame( 'The selected event feed does not exist or is disabled.', $run['message'] );
 		$this->assertSame( 'members', $this->events->requests[0][0] );
 		$this->assertSame( array(), $this->mailer->sent );
 	}

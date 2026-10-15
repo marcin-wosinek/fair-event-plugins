@@ -84,12 +84,15 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						source
-							? 'Failed to update source.'
-							: 'Failed to create source.',
-						'fair-events'
-					)
+					( source
+						? __(
+								'Failed to update event feed.',
+								'fair-events-experimental'
+						  )
+						: __(
+								'Failed to create event feed.',
+								'fair-events-experimental'
+						  ) )
 			);
 		} finally {
 			setLoading( false );
@@ -129,41 +132,47 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 				) }
 
 				<TextControl
-					label={ __( 'Source Name', 'fair-events' ) }
+					label={ __(
+						'Event feed name',
+						'fair-events-experimental'
+					) }
 					value={ name }
 					onChange={ setName }
 					required
 					help={ __(
-						'A descriptive name for this event source.',
-						'fair-events'
+						'A descriptive name for this event feed.',
+						'fair-events-experimental'
 					) }
 				/>
 
 				<TextControl
-					label={ __( 'Slug', 'fair-events' ) }
+					label={ __( 'Slug', 'fair-events-experimental' ) }
 					value={ slug }
 					onChange={ setSlug }
 					required
 					help={
 						source
 							? __(
-									'URL-friendly identifier for this source.',
-									'fair-events'
+									'URL-friendly identifier for this event feed.',
+									'fair-events-experimental'
 							  )
 							: __(
 									'Auto-generated from name. Can be customized.',
-									'fair-events'
+									'fair-events-experimental'
 							  )
 					}
 				/>
 
 				<SelectControl
-					label={ __( 'Linked Page', 'fair-events' ) }
+					label={ __( 'Linked Page', 'fair-events-experimental' ) }
 					value={ pageId }
 					onChange={ setPageId }
 					options={ [
 						{
-							label: __( '— No page —', 'fair-events' ),
+							label: __(
+								'— No page —',
+								'fair-events-experimental'
+							),
 							value: '',
 						},
 						...pages.map( ( page ) => ( {
@@ -172,28 +181,31 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 						} ) ),
 					] }
 					help={ __(
-						'Optional page that displays events from this source.',
-						'fair-events'
+						'Optional page that displays events from this event feed.',
+						'fair-events-experimental'
 					) }
 				/>
 
 				<div>
 					<HStack justify="space-between" alignment="center">
 						<label style={ { fontWeight: 500, margin: 0 } }>
-							{ __( 'Data Sources', 'fair-events' ) }
+							{ __( 'Feed inputs', 'fair-events-experimental' ) }
 						</label>
 						<Button
 							variant="secondary"
 							size="small"
 							onClick={ handleAddDataSource }
 						>
-							{ __( 'Add Data Source', 'fair-events' ) }
+							{ __(
+								'Add feed input',
+								'fair-events-experimental'
+							) }
 						</Button>
 					</HStack>
 					<p className="description" style={ { marginTop: '8px' } }>
 						{ __(
-							'Configure one or more data sources to aggregate events from.',
-							'fair-events'
+							'Add one or more inputs whose events this event feed combines.',
+							'fair-events-experimental'
 						) }
 					</p>
 
@@ -218,12 +230,15 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 				</div>
 
 				<ToggleControl
-					label={ __( 'Enable this source', 'fair-events' ) }
+					label={ __(
+						'Enable this event feed',
+						'fair-events-experimental'
+					) }
 					checked={ enabled }
 					onChange={ setEnabled }
 					help={ __(
-						'Disabled sources will not be used for event imports.',
-						'fair-events'
+						'Disabled event feeds will not be used for event imports.',
+						'fair-events-experimental'
 					) }
 				/>
 
@@ -233,7 +248,7 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 						onClick={ onCancel }
 						disabled={ loading }
 					>
-						{ __( 'Cancel', 'fair-events' ) }
+						{ __( 'Cancel', 'fair-events-experimental' ) }
 					</Button>
 					<Button
 						variant="primary"
@@ -243,12 +258,21 @@ const SourceForm = ( { source, onSuccess, onCancel } ) => {
 						{ loading ? (
 							<>
 								<Spinner style={ { marginRight: '8px' } } />
-								{ __( 'Saving...', 'fair-events' ) }
+								{ __(
+									'Saving...',
+									'fair-events-experimental'
+								) }
 							</>
 						) : source ? (
-							__( 'Update Source', 'fair-events' )
+							__(
+								'Update event feed',
+								'fair-events-experimental'
+							)
 						) : (
-							__( 'Create Source', 'fair-events' )
+							__(
+								'Create event feed',
+								'fair-events-experimental'
+							)
 						) }
 					</Button>
 				</HStack>
