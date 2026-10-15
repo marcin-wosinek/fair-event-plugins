@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect, useCallback } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -23,6 +23,20 @@ import {
  */
 import SettlementImportModal from './components/SettlementImportModal.js';
 import { formatDateOnly } from 'fair-events-shared';
+
+const EntryDateLink = ( { entry } ) => (
+	<a
+		href={ `admin.php?page=fair-finance-entries&entry_id=${ entry.id }` }
+		aria-label={ sprintf(
+			/* translators: 1: financial entry ID, 2: entry date */
+			__( 'Entry #%1$d, %2$s', 'fair-finance' ),
+			entry.id,
+			entry.entry_date
+		) }
+	>
+		{ entry.entry_date }
+	</a>
+);
 
 const formatAmount = ( amount, currency = 'EUR' ) => {
 	return new Intl.NumberFormat( 'en-US', {
@@ -479,7 +493,9 @@ const ReconciliationApp = () => {
 													} }
 												>
 													<td>
-														{ entry.entry_date }
+														<EntryDateLink
+															entry={ entry }
+														/>
 													</td>
 													<td>
 														{ formatAmount(
@@ -976,7 +992,9 @@ const ReconciliationApp = () => {
 											<Text weight="bold">
 												{ formatAmount( entry.amount ) }{ ' ' }
 												({ entry.entry_type }) -{ ' ' }
-												{ entry.entry_date }
+												<EntryDateLink
+													entry={ entry }
+												/>
 												{ entry.description &&
 													` - ${ entry.description }` }
 											</Text>
