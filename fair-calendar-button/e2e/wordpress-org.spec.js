@@ -4,8 +4,32 @@ import { test, expect } from '@playwright/test';
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
+// Plugin-directory screenshots share one size across the plugin galleries.
+// Set it in the spec: the project's Desktop Chrome preset overrides the
+// config-level viewport.
+const VIEWPORT = { width: 1200, height: 900 };
+
+/**
+ * Assert that a locator's bounding box lies fully inside the viewport, so the
+ * captured (non-full-page) screenshot shows the whole subject.
+ *
+ * @param {import('@playwright/test').Page}    page    Current page.
+ * @param {import('@playwright/test').Locator} locator Subject to check.
+ */
+async function expectFullyInViewport( page, locator ) {
+	await expect( locator ).toBeVisible();
+	const box = await locator.boundingBox();
+	const { width, height } = page.viewportSize();
+	expect( box.x ).toBeGreaterThanOrEqual( 0 );
+	expect( box.y ).toBeGreaterThanOrEqual( 0 );
+	expect( box.x + box.width ).toBeLessThanOrEqual( width );
+	expect( box.y + box.height ).toBeLessThanOrEqual( height );
+}
+
 test.describe( 'WordPress.org Screenshot for Fair Calendar Button', () => {
 	test.beforeEach( async ( { page } ) => {
+		await page.setViewportSize( VIEWPORT );
+
 		// Login to WordPress admin
 		await page.goto( '/wp-admin' );
 		await page.fill( '#user_login', WP_ADMIN_USER );
@@ -147,6 +171,20 @@ test.describe( 'WordPress.org Screenshot for Fair Calendar Button', () => {
 			await page.waitForTimeout( 500 );
 		}
 
+		// The selected block and its settings panel must both be in frame.
+		await expectFullyInViewport(
+			page,
+			editorFrame
+				.locator( '.wp-block-fair-calendar-button-calendar-button' )
+				.first()
+		);
+		await expect(
+			page.locator( '.block-editor-block-inspector' )
+		).toBeVisible();
+		await expect(
+			page.locator( 'input[type="datetime-local"]' ).first()
+		).toBeInViewport();
+
 		// Take screenshot-1 of the editor with settings panel (full viewport)
 		await page.screenshot( {
 			path: 'assets/screenshot-1.png',
@@ -227,6 +265,11 @@ test.describe( 'WordPress.org Screenshot for Fair Calendar Button', () => {
 				await page.waitForTimeout( 2000 );
 			}
 		}
+
+		// The whole open provider dropdown must be in frame.
+		const dropdown = page.locator( '.calendar-dropdown' ).first();
+		await dropdown.scrollIntoViewIfNeeded();
+		await expectFullyInViewport( page, dropdown );
 
 		// Take screenshot-2 of the frontend view with dropdown open (full viewport)
 		await page.screenshot( {
