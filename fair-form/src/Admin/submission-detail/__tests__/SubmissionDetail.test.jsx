@@ -105,3 +105,82 @@ describe( 'ticketLinkDescription (#1609)', () => {
 		).toBeInTheDocument();
 	} );
 } );
+
+describe( 'SubmissionDetail — source form and page (#1324)', () => {
+	function formRow() {
+		return screen.getByText( 'Form', { selector: 'th' } ).closest( 'tr' );
+	}
+
+	function pageRow() {
+		return screen.getByText( 'Page', { selector: 'th' } ).closest( 'tr' );
+	}
+
+	it( 'shows the form title in the row and the heading, and links a public page', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			title: 'Fair Form',
+			form_id: 'ff-workshop',
+			source_form_title: 'Workshop feedback',
+			source_page: {
+				id: 12,
+				label: 'Workshop page',
+				url: 'https://example.test/workshop/',
+			},
+		} );
+		render( <SubmissionDetail /> );
+
+		expect(
+			await screen.findByRole( 'heading', {
+				level: 1,
+				name: 'Workshop feedback',
+			} )
+		).toBeInTheDocument();
+		expect( formRow() ).toHaveTextContent( 'Workshop feedback' );
+		expect(
+			screen.getByRole( 'link', { name: 'Workshop page' } )
+		).toHaveAttribute( 'href', 'https://example.test/workshop/' );
+	} );
+
+	it( 'falls back to the form identifier and renders a non-public page as plain text', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			title: 'Fair Form',
+			form_id: 'ff-3f9a2c1e',
+			source_form_title: null,
+			source_page: { id: 13, label: 'Draft page', url: null },
+		} );
+		render( <SubmissionDetail /> );
+
+		expect(
+			await screen.findByRole( 'heading', {
+				level: 1,
+				name: 'Fair Form',
+			} )
+		).toBeInTheDocument();
+		expect( formRow() ).toHaveTextContent( 'ff-3f9a2c1e' );
+		expect( pageRow() ).toHaveTextContent( 'Draft page' );
+		expect(
+			screen.queryByRole( 'link', { name: 'Draft page' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'shows placeholders for a legacy submission with neither form nor page', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			title: '',
+			form_id: null,
+			source_form_title: null,
+			source_page: null,
+		} );
+		render( <SubmissionDetail /> );
+
+		expect(
+			await screen.findByRole( 'heading', {
+				level: 1,
+				name: 'Form Submission',
+			} )
+		).toBeInTheDocument();
+		expect( formRow() ).toHaveTextContent( 'Legacy (no form id)' );
+		expect( pageRow() ).toHaveTextContent( 'No page' );
+	} );
+} );

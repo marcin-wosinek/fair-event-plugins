@@ -49,6 +49,16 @@
 		}
 	}
 
+	// Form titles, identifiers and page names can be long unbroken strings.
+	&__header h1,
+	.fair-form-submission-detail__info-table td {
+		overflow-wrap: anywhere;
+	}
+
+	&__header h1 {
+		min-width: 0;
+	}
+
 	.fair-form-submission-detail__info-table th {
 		width: 200px;
 	}

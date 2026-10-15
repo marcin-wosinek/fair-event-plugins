@@ -94,6 +94,7 @@ echo 'E2E_FAIR_FORM_QUESTIONS_PAGE:' . wp_json_encode(
 	array(
 		'pageId'    => (int) $page_id,
 		'pageUrl'   => get_permalink( $page_id ),
+		'pageTitle' => get_post_field( 'post_title', $page_id ),
 		'formId'    => $form_id,
 		'formTitle' => $form_title,
 		'questions' => $questions,
