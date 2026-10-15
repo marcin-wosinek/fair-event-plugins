@@ -9,11 +9,11 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * EventSourceSelector Component
  *
- * Reusable component for selecting event sources from database.
- * Fetches sources from REST API and displays as CheckboxControl list.
+ * Reusable component for selecting event feeds from database.
+ * Fetches event feeds from REST API and displays as CheckboxControl list.
  *
  * @param {Object}   props
- * @param {string[]} props.selectedSources - Array of selected source slugs
+ * @param {string[]} props.selectedSources - Array of selected event feed slugs
  * @param {Function} props.onChange         - Callback when selection changes: (slugs: string[]) => void
  * @param {string}   props.label            - Label for the control (optional)
  * @param {string}   props.help             - Help text (optional)
@@ -21,8 +21,8 @@ import apiFetch from '@wordpress/api-fetch';
 export default function EventSourceSelector( {
 	selectedSources = [],
 	onChange,
-	label = __( 'Event Sources', 'fair-events' ),
-	help = __( 'Select event sources to display', 'fair-events' ),
+	label = __( 'Event Feeds', 'fair-events' ),
+	help = __( 'Select event feeds to display', 'fair-events' ),
 } ) {
 	const [ sources, setSources ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
@@ -39,7 +39,7 @@ export default function EventSourceSelector( {
 			.catch( ( err ) => {
 				setError(
 					err.message ||
-						__( 'Failed to load event sources', 'fair-events' )
+						__( 'Failed to load event feeds', 'fair-events' )
 				);
 				setLoading( false );
 			} );
@@ -68,7 +68,7 @@ export default function EventSourceSelector( {
 		return (
 			<Notice status="info" isDismissible={ false }>
 				{ __(
-					'No event sources configured. Create event sources in Fair Events settings.',
+					'No event feeds configured. Create event feeds in Fair Events settings.',
 					'fair-events'
 				) }
 			</Notice>
@@ -108,7 +108,7 @@ export default function EventSourceSelector( {
 						fontSize: '12px',
 					} }
 				>
-					{ __( 'Manage Event Sources', 'fair-events' ) }
+					{ __( 'Manage Event Feeds', 'fair-events' ) }
 				</a>
 			</div>
 		</div>

@@ -100,7 +100,7 @@ export function Row( { children, detail } ) {
  */
 export function sourceOptions( sources, current ) {
 	const options = [
-		{ value: '', label: __( 'Choose an event source', 'fair-events' ) },
+		{ value: '', label: __( 'Choose an event feed', 'fair-events' ) },
 		...sources.map( ( source ) => ( {
 			value: source.slug,
 			label: source.name,
@@ -110,7 +110,7 @@ export function sourceOptions( sources, current ) {
 		options.push( {
 			value: current,
 			label: sprintf(
-				/* translators: %s: event source slug */
+				/* translators: %s: event feed slug */
 				__( '%s (unavailable)', 'fair-events' ),
 				current
 			),

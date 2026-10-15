@@ -165,12 +165,12 @@ const EditComponent = ( { attributes, setAttributes } ) => {
 				</PanelColorSettings>
 
 				<PanelBody
-					title={ __( 'Event Sources', 'fair-events' ) }
+					title={ __( 'Event Feeds', 'fair-events' ) }
 					initialOpen={ false }
 				>
 					<p style={ { marginBottom: '16px', color: '#666' } }>
 						{ __(
-							'Select event sources to display in the calendar.',
+							'Select event feeds to display in the calendar.',
 							'fair-events'
 						) }
 					</p>
@@ -178,7 +178,7 @@ const EditComponent = ( { attributes, setAttributes } ) => {
 					{ hasOldFormat && (
 						<Notice status="warning" isDismissible={ false }>
 							{ __(
-								'Event sources format has changed. Please re-select your event sources.',
+								'Event feed format has changed. Please re-select your event feeds.',
 								'fair-events'
 							) }
 						</Notice>

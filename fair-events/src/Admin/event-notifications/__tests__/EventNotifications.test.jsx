@@ -247,7 +247,7 @@ describe( 'EventNotifications', () => {
 	it( 'shows a failed save inside the section it belongs to', async () => {
 		await renderPage( payload(), {
 			[ `POST ${ PATH }/telegram` ]: () =>
-				Promise.reject( { message: 'Choose an event source.' } ),
+				Promise.reject( { message: 'Choose an event feed.' } ),
 		} );
 
 		const tg = within( section( 'Telegram' ) );
@@ -256,11 +256,11 @@ describe( 'EventNotifications', () => {
 		);
 
 		expect(
-			await tg.findByText( 'Choose an event source.' )
+			await tg.findByText( 'Choose an event feed.' )
 		).toBeInTheDocument();
 		expect(
 			within( section( 'Bulk email' ) ).queryByText(
-				'Choose an event source.'
+				'Choose an event feed.'
 			)
 		).not.toBeInTheDocument();
 	} );
@@ -511,13 +511,13 @@ describe( 'EventNotifications', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'says what is missing when there is no event source', async () => {
+	it( 'says what is missing when there is no event feed', async () => {
 		mockApi( { ...payload(), sources: [] } );
 		render( <EventNotifications sourcesUrl="/wp-admin/sources" /> );
 
 		expect(
 			await screen.findByRole( 'link', {
-				name: 'Create an event source',
+				name: 'Create an event feed',
 			} )
 		).toHaveAttribute( 'href', '/wp-admin/sources' );
 	} );
@@ -724,7 +724,7 @@ describe( 'Individual email', () => {
 			[ `POST ${ INDIVIDUAL }` ]: () =>
 				Promise.reject( {
 					message:
-						'The selected event source does not exist or is disabled.',
+						'The selected event feed does not exist or is disabled.',
 				} ),
 		} );
 
@@ -737,12 +737,12 @@ describe( 'Individual email', () => {
 
 		expect(
 			await own.findByText(
-				'The selected event source does not exist or is disabled.'
+				'The selected event feed does not exist or is disabled.'
 			)
 		).toBeInTheDocument();
 		expect(
 			within( section( 'Telegram' ) ).queryByText(
-				'The selected event source does not exist or is disabled.'
+				'The selected event feed does not exist or is disabled.'
 			)
 		).not.toBeInTheDocument();
 	} );
@@ -863,13 +863,13 @@ describe( 'Individual email', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'keeps an unavailable event source visible and reports it', async () => {
+	it( 'keeps an unavailable event feed visible and reports it', async () => {
 		await renderPage(
 			payload( {
 				individual_email: {
 					event_selection: 'gone',
 					configuration_error:
-						'The selected event source does not exist or is disabled.',
+						'The selected event feed does not exist or is disabled.',
 				},
 			} )
 		);
@@ -883,7 +883,7 @@ describe( 'Individual email', () => {
 		).toBeInTheDocument();
 		expect(
 			own.getByText(
-				'The selected event source does not exist or is disabled.'
+				'The selected event feed does not exist or is disabled.'
 			)
 		).toBeInTheDocument();
 	} );
@@ -942,7 +942,7 @@ describe( 'Individual email', () => {
 		).toBeEnabled();
 	} );
 
-	it( 'stays usable without an event source or Fair Audience', async () => {
+	it( 'stays usable without an event feed or Fair Audience', async () => {
 		await renderPage( {
 			...payload( {
 				bulk_email: {

@@ -154,7 +154,7 @@ describe( 'EventsList EditComponent', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'warns when a Query Loop pattern is combined with event sources', async () => {
+	it( 'warns when a Query Loop pattern is combined with event feeds', async () => {
 		const { container } = await renderBlock( {
 			displayPattern: 'fair-events/event-list',
 			eventSources: [ 'my-source' ],
@@ -167,7 +167,7 @@ describe( 'EventsList EditComponent', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'shows no compatibility warning for a per-event custom pattern with sources selected', async () => {
+	it( 'shows no compatibility warning for a per-event custom pattern with event feeds selected', async () => {
 		mockUserPatterns = [
 			{
 				id: 42,
@@ -188,7 +188,7 @@ describe( 'EventsList EditComponent', () => {
 		).toBeNull();
 	} );
 
-	it( 'shows no compatibility warning when no event sources are selected', async () => {
+	it( 'shows no compatibility warning when no event feeds are selected', async () => {
 		const { container } = await renderBlock( {
 			displayPattern: 'fair-events/event-list',
 			eventSources: [],
@@ -226,7 +226,7 @@ describe( 'EventsList EditComponent', () => {
 		).toBeNull();
 	} );
 
-	it( 'passes the current time filter, categories, and event sources to the preview', async () => {
+	it( 'passes the current time filter, categories, and event feeds to the preview', async () => {
 		const { container } = await renderBlock( {
 			timeFilter: 'past',
 			categories: [ 3 ],

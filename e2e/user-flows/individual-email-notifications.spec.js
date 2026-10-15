@@ -3,7 +3,7 @@
  * site (#1852).
  *
  * Fair Audience and Fair Events Experimental are inactive for the whole
- * spec, and the site has no event source — an administrator still
+ * spec, and the site has no event feed — an administrator still
  * configures the channel on Fair Events → Event notifications, lists all
  * published local events, previews the email, sends a test and receives the
  * scheduled email at the one configured address.
@@ -122,7 +122,7 @@ test.describe('Individual email notifications on a standalone site', () => {
 				/paused because Fair Audience is not active/
 			)
 		).toBeVisible();
-		// No event source exists and none is needed here.
+		// No event feed exists and none is needed here.
 		await expect(
 			page.getByText(
 				/Individual email can send all published local events without one\./

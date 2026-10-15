@@ -104,14 +104,14 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							setAttributes( { displayPattern: value } )
 						}
 						help={ __(
-							'Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every event source — standalone, calendar feed, and external.',
+							'Query Loop patterns (e.g. Event List, Event Grid) show WordPress-linked events only. A custom pattern (not built with the Query block) can show every kind of event — standalone, calendar feed, and external.',
 							'fair-events'
 						) }
 					/>
 					{ showQueryLoopSourceNotice && (
 						<Notice status="warning" isDismissible={ false }>
 							{ __(
-								'The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event sources will not appear — choose a custom pattern to show them.',
+								'The selected pattern uses a Query Loop, so it can only show WordPress-linked events. Events from the selected event feeds will not appear — choose a custom pattern to show them.',
 								'fair-events'
 							) }
 						</Notice>
@@ -161,12 +161,12 @@ export default function EditComponent( { attributes, setAttributes } ) {
 				</PanelBody>
 
 				<PanelBody
-					title={ __( 'Event Sources', 'fair-events' ) }
+					title={ __( 'Event Feeds', 'fair-events' ) }
 					initialOpen={ false }
 				>
 					<p style={ { marginBottom: '16px', color: '#666' } }>
 						{ __(
-							'Select event sources to display in the list.',
+							'Select event feeds to display in the list.',
 							'fair-events'
 						) }
 					</p>

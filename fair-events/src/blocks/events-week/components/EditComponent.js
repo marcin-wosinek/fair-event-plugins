@@ -115,13 +115,13 @@ const EditComponent = ( { attributes, setAttributes } ) => {
 				/>
 
 				<PanelBody
-					title={ __( 'Event Sources', 'fair-events' ) }
+					title={ __( 'Event Feeds', 'fair-events' ) }
 					initialOpen={ false }
 				>
 					{ hasOldFormat && (
 						<Notice status="warning" isDismissible={ false }>
 							{ __(
-								'Event sources format has changed. Please re-select your event sources.',
+								'Event feed format has changed. Please re-select your event feeds.',
 								'fair-events'
 							) }
 						</Notice>

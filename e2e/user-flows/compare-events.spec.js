@@ -88,7 +88,7 @@ test.describe('Compare events', () => {
 			]
 		);
 
-		// Compare events sits immediately before Event Sources in the menu.
+		// Compare events sits immediately before Event Feeds in the menu.
 		const menuItems = (
 			await page
 				.locator('#toplevel_page_fair-events-calendar .wp-submenu a')
@@ -96,7 +96,7 @@ test.describe('Compare events', () => {
 		).map((text) => text.trim());
 		expect(menuItems).toContain('Compare events');
 		expect(menuItems[menuItems.indexOf('Compare events') + 1]).toBe(
-			'Event Sources'
+			'Event Feeds'
 		);
 
 		await page.reload();

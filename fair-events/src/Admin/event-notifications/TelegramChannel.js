@@ -403,7 +403,7 @@ export default function TelegramChannel( {
 					<SelectControl
 						label={ __( 'Events to include', 'fair-events' ) }
 						help={ __(
-							'The event source whose events are listed.',
+							'The event feed whose events are listed.',
 							'fair-events'
 						) }
 						value={ form.source_slug }

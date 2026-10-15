@@ -22,17 +22,17 @@ msgstr "Fair Events Experimental"
 #. Plugin URI of the plugin
 #: fair-events-experimental.php
 msgid "https://github.com/marcin-wosinek/fair-event-plugins"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek/fair-event-plugins"
 
 #. Author of the plugin
 #: fair-events-experimental.php
 msgid "Marcin Wosinek"
-msgstr ""
+msgstr "Marcin Wosinek"
 
 #. Author URI of the plugin
 #: fair-events-experimental.php
 msgid "https://github.com/marcin-wosinek"
-msgstr ""
+msgstr "https://github.com/marcin-wosinek"
 
 #: fair-events-experimental.php:53
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
@@ -46,17 +46,6 @@ msgstr "Ajustes experimentales"
 #: src/Admin/settings/index.js:29
 msgid "Experimental"
 msgstr "Experimental"
-
-#: src/Admin/AdminPages.php:85
-#: src/Admin/AdminPages.php:86
-msgid "Event Sources"
-msgstr "Fuentes de eventos"
-
-#: src/Admin/AdminPages.php:94
-#: src/Admin/AdminPages.php:95
-#: src/Admin/AdminPages.php:101
-msgid "View Source"
-msgstr "Ver fuente"
 
 #: src/Admin/AdminPages.php:108
 #: src/Admin/AdminPages.php:109
@@ -73,10 +62,6 @@ msgstr "Duplicar evento"
 #: src/Admin/manage-event/MergeEventWizard.js:453
 msgid "Merge Event"
 msgstr "Fusionar evento"
-
-#: src/Core/Features.php:138
-msgid "Event sources & feeds"
-msgstr "Fuentes y feeds de eventos"
 
 #: src/Core/Features.php:142
 msgid "Ticketing"
@@ -189,6 +174,7 @@ msgstr "Crear duplicado"
 #: src/Admin/manage-event-schedule/EventSchedule.js:763
 #: src/Admin/manage-event/DuplicateEventWizard.js:698
 #: src/Admin/manage-event/MergeEventWizard.js:516
+#: src/Admin/sources/components/SourceForm.js:251
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -312,6 +298,7 @@ msgid "Move"
 msgstr "Mover"
 
 #: src/Admin/manage-event/MergeEventWizard.js:36
+#: src/Admin/sources/SourcesList.js:346
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -465,6 +452,7 @@ msgid "One or more bundles are forced by wp-config and cannot be toggled here."
 msgstr "Uno o más paquetes están forzados por wp-config y no se pueden activar o desactivar aquí."
 
 #: src/Admin/settings/FeaturesTab.js:174
+#: src/Admin/sources/components/SourceForm.js:261
 msgid "Saving..."
 msgstr "Guardando..."
 
@@ -945,6 +933,7 @@ msgid "Remove %s"
 msgstr "Quitar %s"
 
 #: src/Admin/manage-event-schedule/EventSchedule.js:499
+#: src/Admin/sources/components/DataSourceItem.js:254
 msgid "Remove"
 msgstr "Quitar"
 
@@ -1006,15 +995,6 @@ msgstr "El fin debe ser posterior al inicio."
 msgid "(untitled item)"
 msgstr "(elemento sin título)"
 
-#. Description of the plugin
-#: fair-events-experimental.php
-msgid "Event sources, group pricing, schedule editing, duplication, merging, comparisons and optional Meta conversions for Fair Events."
-msgstr ""
-
-#: src/Core/Features.php:139
-msgid "External event sources, Facebook import, iCal/JSON feeds, event proposals."
-msgstr ""
-
 #: src/Admin/settings/WeeklyNotificationsMoved.js:25
 msgid "Weekly Telegram notifications are now managed in Fair Events, together with the other notification channels. Your settings, bot token and delivery history moved with them."
 msgstr ""
@@ -1026,3 +1006,419 @@ msgstr ""
 #: src/Admin/settings/WeeklyNotificationsMoved.js:41
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr ""
+
+#: src/Admin/AdminPages.php:85
+#: src/Admin/AdminPages.php:86
+#: src/Admin/sources/SourcesList.js:153
+msgid "Event Feeds"
+msgstr "Feeds de eventos"
+
+#: src/Admin/AdminPages.php:94
+#: src/Admin/AdminPages.php:95
+#: src/Admin/AdminPages.php:101
+msgid "View Event Feed"
+msgstr "Ver feed de eventos"
+
+#: src/API/EventSourceController.php:64
+msgid "Fetch only enabled event feeds."
+msgstr "Obtener solo los feeds de eventos habilitados."
+
+#: src/API/EventSourceController.php:91
+#: src/API/EventSourceController.php:107
+msgid "Unique identifier for the event feed."
+msgstr "Identificador único del feed de eventos."
+
+#: src/API/EventSourceController.php:129
+msgid "Unique slug identifier for the event feed."
+msgstr "Slug único del feed de eventos."
+
+#: src/API/EventSourceController.php:166
+#: src/API/EventSourceController.php:248
+#: src/API/EventSourceController.php:309
+#: src/API/EventSourceController.php:346
+msgid "Event feed not found."
+msgstr "No se ha encontrado el feed de eventos."
+
+#: src/API/EventSourceController.php:200
+#: src/API/EventSourceController.php:265
+msgid "An event feed with this slug already exists."
+msgstr "Ya existe un feed de eventos con este slug."
+
+#: src/API/EventSourceController.php:219
+#: src/Admin/sources/components/SourceForm.js:92
+msgid "Failed to create event feed."
+msgstr "No se ha podido crear el feed de eventos."
+
+#: src/API/EventSourceController.php:284
+#: src/Admin/sources/components/SourceForm.js:88
+msgid "Failed to update event feed."
+msgstr "No se ha podido actualizar el feed de eventos."
+
+#: src/API/EventSourceController.php:319
+#: src/Admin/sources/SourcesList.js:97
+msgid "Failed to delete event feed."
+msgstr "No se ha podido eliminar el feed de eventos."
+
+#: src/API/EventSourceController.php:354
+msgid "This event feed is disabled."
+msgstr "Este feed de eventos está deshabilitado."
+
+#: src/API/EventSourceController.php:479
+msgid "Feed inputs must be an array."
+msgstr "Las entradas del feed deben ser un array."
+
+#: src/API/EventSourceController.php:487
+msgid "At least one feed input is required."
+msgstr "Se necesita al menos una entrada del feed."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:497
+#, php-format
+msgid "Feed input at index %d is missing source_type or config."
+msgstr "A la entrada del feed en el índice %d le falta source_type o config."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:525
+#, php-format
+msgid "Invalid feed input type at index %d."
+msgstr "Tipo de entrada del feed no válido en el índice %d."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:534
+#, php-format
+msgid "Config at index %d must be an object."
+msgstr "La configuración en el índice %d debe ser un objeto."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:545
+#, php-format
+msgid "Categories feed input at index %d requires category_ids array."
+msgstr "La entrada del feed de categorías en el índice %d necesita un array category_ids."
+
+#. translators: 1: Category ID, 2: Feed input index
+#: src/API/EventSourceController.php:556
+#, php-format
+msgid "Category ID %1$d does not exist (feed input index %2$d)."
+msgstr "El ID de categoría %1$d no existe (índice de entrada del feed %2$d)."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:568
+#, php-format
+msgid "iCal feed input at index %d requires url field."
+msgstr "La entrada del feed iCal en el índice %d necesita el campo url."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:578
+#: src/API/EventSourceController.php:599
+#, php-format
+msgid "Invalid URL format at index %d."
+msgstr "Formato de URL no válido en el índice %d."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:589
+#, php-format
+msgid "Fair Events API feed input at index %d requires url field."
+msgstr "La entrada del feed de la API de Fair Events en el índice %d necesita el campo url."
+
+#. translators: %d: Feed input index
+#: src/API/EventSourceController.php:613
+#, php-format
+msgid "Unknown feed input type at index %d."
+msgstr "Tipo de entrada del feed desconocido en el índice %d."
+
+#: src/Core/Features.php:138
+msgid "Event feeds"
+msgstr "Feeds de eventos"
+
+#: src/Core/Features.php:139
+msgid "Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals."
+msgstr "Feeds de eventos con salida iCal/JSON, importación de calendarios externos, importación de Facebook y propuestas de eventos."
+
+#: src/Admin/source-view/SourceViewApp.js:73
+msgid "Failed to load event feed."
+msgstr "No se ha podido cargar el feed de eventos."
+
+#: src/Admin/source-view/SourceViewApp.js:87
+msgid "No event feed ID provided."
+msgstr "No se ha indicado el ID del feed de eventos."
+
+#: src/Admin/source-view/SourceViewApp.js:207
+#: src/Admin/source-view/SourceViewApp.js:225
+msgid "Back to Event Feeds"
+msgstr "Volver a Feeds de eventos"
+
+#. translators: %s: event feed name
+#: src/Admin/source-view/SourceViewApp.js:232
+#, js-format
+msgid "Event feed: %s"
+msgstr "Feed de eventos: %s"
+
+#: src/Admin/source-view/SourceViewApp.js:249
+#: src/Admin/sources/components/SourceForm.js:149
+#: src/Admin/sources/SourcesList.js:219
+msgid "Slug"
+msgstr "Slug"
+
+#: src/Admin/source-view/SourceViewApp.js:255
+#: src/Admin/sources/SourcesList.js:243
+msgid "Status"
+msgstr "Estado"
+
+#: src/Admin/source-view/SourceViewApp.js:259
+#: src/Admin/sources/SourcesList.js:124
+msgid "Enabled"
+msgstr "Activa"
+
+#: src/Admin/source-view/SourceViewApp.js:260
+#: src/Admin/sources/SourcesList.js:128
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: src/Admin/source-view/SourceViewApp.js:265
+#: src/Admin/sources/components/SourceForm.js:192
+#: src/Admin/sources/SourcesList.js:225
+msgid "Feed inputs"
+msgstr "Entradas del feed"
+
+#. translators: %d: number of feed inputs
+#: src/Admin/source-view/SourceViewApp.js:270
+#: src/Admin/sources/SourcesList.js:274
+#, js-format
+msgid "%d feed input"
+msgid_plural "%d feed inputs"
+msgstr[0] "%d entrada del feed"
+msgstr[1] "%d entradas del feed"
+
+#: src/Admin/source-view/SourceViewApp.js:283
+msgid "Page"
+msgstr "Página"
+
+#: src/Admin/source-view/SourceViewApp.js:291
+msgid "View page"
+msgstr "Ver página"
+
+#: src/Admin/source-view/SourceViewApp.js:301
+msgid "Feed URLs"
+msgstr "URL del feed"
+
+#: src/Admin/source-view/SourceViewApp.js:306
+msgid "iCal"
+msgstr "iCal"
+
+#: src/Admin/source-view/SourceViewApp.js:310
+#: src/Admin/sources/SourcesList.js:290
+msgid "Copy iCal feed URL"
+msgstr "Copiar URL del feed iCal"
+
+#: src/Admin/source-view/SourceViewApp.js:317
+msgid "JSON"
+msgstr "JSON"
+
+#: src/Admin/source-view/SourceViewApp.js:321
+#: src/Admin/sources/SourcesList.js:301
+msgid "Copy JSON API URL"
+msgstr "Copiar URL de la API JSON"
+
+#: src/Admin/source-view/SourceViewApp.js:333
+#: src/Admin/source-view/SourceViewApp.js:346
+msgid "Edit event feed"
+msgstr "Editar feed de eventos"
+
+#: src/Admin/source-view/SourceViewApp.js:371
+#: src/Admin/sources/SourcesList.js:366
+msgid "Edit Event Feed"
+msgstr "Editar feed de eventos"
+
+#: src/Admin/sources/components/DataSourceItem.js:44
+#: src/Admin/sources/components/SourceTypeConfig.js:38
+msgid "Failed to load categories."
+msgstr "No se han podido cargar las categorías."
+
+#: src/Admin/sources/components/DataSourceItem.js:83
+msgid "Event Categories"
+msgstr "Categorías de eventos"
+
+#: src/Admin/sources/components/DataSourceItem.js:87
+msgid "iCal URL"
+msgstr "URL de iCal"
+
+#: src/Admin/sources/components/DataSourceItem.js:91
+msgid "Fair Events API"
+msgstr "API de Fair Events"
+
+#: src/Admin/sources/components/DataSourceItem.js:95
+msgid "Meetup API (Coming Soon)"
+msgstr "API de Meetup (próximamente)"
+
+#: src/Admin/sources/components/DataSourceItem.js:105
+#: src/Admin/sources/components/SourceTypeConfig.js:65
+msgid "Select Event Categories"
+msgstr "Selecciona categorías de eventos"
+
+#: src/Admin/sources/components/DataSourceItem.js:117
+#: src/Admin/sources/components/SourceTypeConfig.js:77
+msgid "Loading categories..."
+msgstr "Cargando categorías…"
+
+#: src/Admin/sources/components/DataSourceItem.js:127
+#: src/Admin/sources/components/SourceTypeConfig.js:87
+msgid "No categories found. Create categories first."
+msgstr "No se han encontrado categorías. Crea categorías primero."
+
+#: src/Admin/sources/components/DataSourceItem.js:163
+#: src/Admin/sources/components/SourceTypeConfig.js:120
+msgid "Events from these categories will be included in this event feed."
+msgstr "Los eventos de estas categorías se incluirán en este feed de eventos."
+
+#: src/Admin/sources/components/DataSourceItem.js:176
+#: src/Admin/sources/components/SourceTypeConfig.js:133
+msgid "iCal Feed URL"
+msgstr "URL del feed iCal"
+
+#: src/Admin/sources/components/DataSourceItem.js:185
+#: src/Admin/sources/components/SourceTypeConfig.js:139
+msgid "Enter the URL of the iCal feed to import events from."
+msgstr "Introduce la URL del feed iCal del que importar eventos."
+
+#: src/Admin/sources/components/DataSourceItem.js:198
+#: src/Admin/sources/components/SourceTypeConfig.js:152
+msgid "Fair Events API URL"
+msgstr "URL de la API de Fair Events"
+
+#: src/Admin/sources/components/DataSourceItem.js:207
+#: src/Admin/sources/components/SourceTypeConfig.js:161
+msgid "Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific event feed."
+msgstr "Introduce la URL de la API JSON de otro sitio con Fair Events. Usa /wp-json/fair-events/v1/events para todos los eventos o /wp-json/fair-events/v1/sources/{slug}/json para un feed de eventos concreto."
+
+#: src/Admin/sources/components/DataSourceItem.js:219
+#: src/Admin/sources/components/SourceTypeConfig.js:173
+msgid "Meetup API integration is coming soon."
+msgstr "La integración con la API de Meetup llegará pronto."
+
+#. translators: %d: position of the input in the event feed
+#: src/Admin/sources/components/DataSourceItem.js:244
+#, js-format
+msgid "Feed input #%d"
+msgstr "Entrada del feed n.º %d"
+
+#: src/Admin/sources/components/DataSourceItem.js:259
+msgid "Input type"
+msgstr "Tipo de entrada"
+
+#: src/Admin/sources/components/DataSourceItem.js:263
+msgid "Choose where this input gets its events from."
+msgstr "Elige de dónde obtiene esta entrada sus eventos."
+
+#: src/Admin/sources/components/SourceForm.js:135
+msgid "Event feed name"
+msgstr "Nombre del feed de eventos"
+
+#: src/Admin/sources/components/SourceForm.js:142
+msgid "A descriptive name for this event feed."
+msgstr "Un nombre descriptivo para este feed de eventos."
+
+#: src/Admin/sources/components/SourceForm.js:155
+msgid "URL-friendly identifier for this event feed."
+msgstr "Identificador apto para URL de este feed de eventos."
+
+#: src/Admin/sources/components/SourceForm.js:159
+msgid "Auto-generated from name. Can be customized."
+msgstr "Se genera automáticamente a partir del nombre. Se puede personalizar."
+
+#: src/Admin/sources/components/SourceForm.js:167
+msgid "Linked Page"
+msgstr "Página enlazada"
+
+#: src/Admin/sources/components/SourceForm.js:172
+msgid "— No page —"
+msgstr "— Ninguna página —"
+
+#: src/Admin/sources/components/SourceForm.js:183
+msgid "Optional page that displays events from this event feed."
+msgstr "Página opcional que muestra los eventos de este feed de eventos."
+
+#: src/Admin/sources/components/SourceForm.js:199
+msgid "Add feed input"
+msgstr "Añadir entrada del feed"
+
+#: src/Admin/sources/components/SourceForm.js:206
+msgid "Add one or more inputs whose events this event feed combines."
+msgstr "Añade una o varias entradas cuyos eventos combina este feed de eventos."
+
+#: src/Admin/sources/components/SourceForm.js:233
+msgid "Enable this event feed"
+msgstr "Habilitar este feed de eventos"
+
+#: src/Admin/sources/components/SourceForm.js:239
+msgid "Disabled event feeds will not be used for event imports."
+msgstr "Los feeds de eventos deshabilitados no se usarán para importar eventos."
+
+#: src/Admin/sources/components/SourceForm.js:267
+msgid "Update event feed"
+msgstr "Actualizar feed de eventos"
+
+#: src/Admin/sources/components/SourceForm.js:272
+msgid "Create event feed"
+msgstr "Crear feed de eventos"
+
+#: src/Admin/sources/SourcesList.js:50
+msgid "Failed to load event feeds."
+msgstr "No se han podido cargar los feeds de eventos."
+
+#: src/Admin/sources/SourcesList.js:73
+msgid "Are you sure you want to delete this event feed?"
+msgstr "¿Seguro que quieres eliminar este feed de eventos?"
+
+#: src/Admin/sources/SourcesList.js:91
+msgid "Event feed deleted."
+msgstr "Feed de eventos eliminado."
+
+#: src/Admin/sources/SourcesList.js:110
+msgid "Event feed updated."
+msgstr "Feed de eventos actualizado."
+
+#: src/Admin/sources/SourcesList.js:111
+msgid "Event feed created."
+msgstr "Feed de eventos creado."
+
+#: src/Admin/sources/SourcesList.js:156
+#: src/Admin/sources/SourcesList.js:370
+msgid "Add Event Feed"
+msgstr "Añadir feed de eventos"
+
+#: src/Admin/sources/SourcesList.js:189
+msgid "Loading event feeds…"
+msgstr "Cargando feeds de eventos…"
+
+#: src/Admin/sources/SourcesList.js:200
+msgid "No event feeds yet. Add your first event feed to get started."
+msgstr "Todavía no hay feeds de eventos. Añade tu primer feed de eventos para empezar."
+
+#: src/Admin/sources/SourcesList.js:213
+msgid "Name"
+msgstr "Nombre"
+
+#: src/Admin/sources/SourcesList.js:231
+msgid "iCal Feed"
+msgstr "Feed iCal"
+
+#: src/Admin/sources/SourcesList.js:237
+msgid "JSON API"
+msgstr "API JSON"
+
+#: src/Admin/sources/SourcesList.js:249
+msgid "Actions"
+msgstr "Acciones"
+
+#: src/Admin/sources/SourcesList.js:319
+msgid "View"
+msgstr "Ver"
+
+#: src/Admin/sources/SourcesList.js:331
+msgid "Edit"
+msgstr "Editar"
+
+#. Description of the plugin
+#: fair-events-experimental.php
+msgid "Event feeds, group pricing, schedule editing, duplication, merging, comparisons and optional Meta conversions for Fair Events."
+msgstr "Feeds de eventos, precios por grupo, edición de horarios, duplicación, fusión, comparaciones y conversiones de Meta opcionales para Fair Events."

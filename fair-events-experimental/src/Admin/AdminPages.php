@@ -78,12 +78,12 @@ class AdminPages {
 			array( $this, 'render_compare_events_page' )
 		);
 
-		// Event Sources page — `sources` bundle.
+		// Event Feeds page — `sources` bundle.
 		if ( \FairEventsExperimental\Core\Features::is_enabled( 'sources' ) ) {
 			$this->page_hooks['fair-events-sources'] = add_submenu_page(
 				$parent,
-				__( 'Event Sources', 'fair-events-experimental' ),
-				__( 'Event Sources', 'fair-events-experimental' ),
+				__( 'Event Feeds', 'fair-events-experimental' ),
+				__( 'Event Feeds', 'fair-events-experimental' ),
 				'manage_options',
 				'fair-events-sources',
 				array( $this, 'render_sources_page' )
@@ -91,14 +91,14 @@ class AdminPages {
 
 			$this->page_hooks['fair-events-source-view'] = add_submenu_page(
 				'',
-				__( 'View Source', 'fair-events-experimental' ),
-				__( 'View Source', 'fair-events-experimental' ),
+				__( 'View Event Feed', 'fair-events-experimental' ),
+				__( 'View Event Feed', 'fair-events-experimental' ),
 				'manage_options',
 				'fair-events-source-view',
 				array( $this, 'render_source_view_page' )
 			);
 
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Source', 'fair-events-experimental' ) );
+			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Event Feed', 'fair-events-experimental' ) );
 		}
 
 		// Advanced event pages — `event-tools` bundle (hidden).

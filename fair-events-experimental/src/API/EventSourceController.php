@@ -50,7 +50,7 @@ class EventSourceController extends WP_REST_Controller {
 	 */
 	public function register_routes() {
 		// GET /fair-events/v1/sources - Get all sources
-		// POST /fair-events/v1/sources - Create source
+		// POST /fair-events/v1/sources - Create source.
 		register_rest_route(
 			$this->namespace,
 			'/sources',
@@ -61,7 +61,7 @@ class EventSourceController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_items_permissions_check' ),
 					'args'                => array(
 						'enabled_only' => array(
-							'description' => __( 'Fetch only enabled sources.', 'fair-events' ),
+							'description' => __( 'Fetch only enabled event feeds.', 'fair-events-experimental' ),
 							'type'        => 'boolean',
 							'default'     => false,
 						),
@@ -77,7 +77,7 @@ class EventSourceController extends WP_REST_Controller {
 
 		// GET /fair-events/v1/sources/{id} - Get single source
 		// PUT /fair-events/v1/sources/{id} - Update source
-		// DELETE /fair-events/v1/sources/{id} - Delete source
+		// DELETE /fair-events/v1/sources/{id} - Delete source.
 		register_rest_route(
 			$this->namespace,
 			'/sources/(?P<id>\d+)',
@@ -88,7 +88,7 @@ class EventSourceController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the source.', 'fair-events' ),
+							'description' => __( 'Unique identifier for the event feed.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 						),
 					),
@@ -104,7 +104,7 @@ class EventSourceController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Unique identifier for the source.', 'fair-events' ),
+							'description' => __( 'Unique identifier for the event feed.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 						),
 					),
@@ -115,7 +115,7 @@ class EventSourceController extends WP_REST_Controller {
 		// GET /fair-events/v1/sources/categories is registered by
 		// \FairEvents\API\CategoriesController in the base plugin.
 
-		// GET /fair-events/v1/sources/{slug}/ical - Get iCal feed for source
+		// GET /fair-events/v1/sources/{slug}/ical - Get iCal feed for source.
 		register_rest_route(
 			$this->namespace,
 			'/sources/(?P<slug>[a-z0-9-]+)/ical',
@@ -123,10 +123,10 @@ class EventSourceController extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_ical_feed' ),
-					'permission_callback' => '__return_true', // Public endpoint
+					'permission_callback' => '__return_true', // Public endpoint.
 					'args'                => array(
 						'slug' => array(
-							'description' => __( 'Unique slug identifier for the source.', 'fair-events' ),
+							'description' => __( 'Unique slug identifier for the event feed.', 'fair-events-experimental' ),
 							'type'        => 'string',
 						),
 					),
@@ -163,7 +163,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $source ) {
 			return new WP_Error(
 				'rest_source_not_found',
-				__( 'Source not found.', 'fair-events' ),
+				__( 'Event feed not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -185,24 +185,24 @@ class EventSourceController extends WP_REST_Controller {
 		$data_sources = $request->get_param( 'data_sources' );
 		$enabled      = $request->get_param( 'enabled' ) ?? true;
 
-		// Generate slug from name if not provided
+		// Generate slug from name if not provided.
 		if ( empty( $slug ) ) {
 			$slug = sanitize_title( $name );
 		} else {
 			$slug = sanitize_title( $slug );
 		}
 
-		// Check if slug already exists
+		// Check if slug already exists.
 		$existing = $this->repository->get_by_slug( $slug );
 		if ( $existing ) {
 			return new WP_Error(
 				'rest_slug_exists',
-				__( 'A source with this slug already exists.', 'fair-events' ),
+				__( 'An event feed with this slug already exists.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Validate data_sources
+		// Validate data_sources.
 		$validation_error = $this->validate_data_sources( $data_sources );
 		if ( is_wp_error( $validation_error ) ) {
 			return $validation_error;
@@ -216,7 +216,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $source_id ) {
 			return new WP_Error(
 				'rest_source_creation_failed',
-				__( 'Failed to create source.', 'fair-events' ),
+				__( 'Failed to create event feed.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -240,34 +240,34 @@ class EventSourceController extends WP_REST_Controller {
 		$data_sources = $request->get_param( 'data_sources' );
 		$enabled      = $request->get_param( 'enabled' ) ?? true;
 
-		// Check if source exists
+		// Check if source exists.
 		$existing = $this->repository->get_by_id( $id );
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_source_not_found',
-				__( 'Source not found.', 'fair-events' ),
+				__( 'Event feed not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
 
-		// Generate slug from name if not provided
+		// Generate slug from name if not provided.
 		if ( empty( $slug ) ) {
 			$slug = sanitize_title( $name );
 		} else {
 			$slug = sanitize_title( $slug );
 		}
 
-		// Check if slug exists (but allow current source to keep its slug)
+		// Check if slug exists (but allow current source to keep its slug).
 		$slug_check = $this->repository->get_by_slug( $slug );
 		if ( $slug_check && (int) $slug_check['id'] !== $id ) {
 			return new WP_Error(
 				'rest_slug_exists',
-				__( 'A source with this slug already exists.', 'fair-events' ),
+				__( 'An event feed with this slug already exists.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Validate data_sources
+		// Validate data_sources.
 		$validation_error = $this->validate_data_sources( $data_sources );
 		if ( is_wp_error( $validation_error ) ) {
 			return $validation_error;
@@ -281,7 +281,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_source_update_failed',
-				__( 'Failed to update source.', 'fair-events' ),
+				__( 'Failed to update event feed.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -301,12 +301,12 @@ class EventSourceController extends WP_REST_Controller {
 	public function delete_item( $request ) {
 		$id = (int) $request->get_param( 'id' );
 
-		// Check if source exists
+		// Check if source exists.
 		$existing = $this->repository->get_by_id( $id );
 		if ( ! $existing ) {
 			return new WP_Error(
 				'rest_source_not_found',
-				__( 'Source not found.', 'fair-events' ),
+				__( 'Event feed not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -316,7 +316,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_source_delete_failed',
-				__( 'Failed to delete source.', 'fair-events' ),
+				__( 'Failed to delete event feed.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -343,7 +343,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $source ) {
 			return new WP_Error(
 				'rest_source_not_found',
-				__( 'Source not found.', 'fair-events' ),
+				__( 'Event feed not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -351,12 +351,12 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! $source['enabled'] ) {
 			return new WP_Error(
 				'rest_source_disabled',
-				__( 'This source is disabled.', 'fair-events' ),
+				__( 'This event feed is disabled.', 'fair-events-experimental' ),
 				array( 'status' => 403 )
 			);
 		}
 
-		// Collect all category IDs from data sources
+		// Collect all category IDs from data sources.
 		$category_ids = array();
 		foreach ( $source['data_sources'] as $data_source ) {
 			if ( 'categories' === $data_source['source_type'] && isset( $data_source['config']['category_ids'] ) ) {
@@ -364,7 +364,7 @@ class EventSourceController extends WP_REST_Controller {
 			}
 		}
 
-		// Query events
+		// Query events.
 		$query_args = array(
 			'post_type'      => 'fair_event',
 			'posts_per_page' => -1,
@@ -374,17 +374,17 @@ class EventSourceController extends WP_REST_Controller {
 			'order'          => 'ASC',
 		);
 
-		// Add category filter if we have categories
+		// Add category filter if we have categories.
 		if ( ! empty( $category_ids ) ) {
 			$query_args['category__in'] = array_unique( $category_ids );
 		}
 
 		$events = get_posts( $query_args );
 
-		// Generate iCal content
+		// Generate iCal content.
 		$ical = $this->generate_ical( $events, $source );
 
-		// Return with proper headers
+		// Return with proper headers.
 		$response = new WP_REST_Response( $ical, 200 );
 		$response->header( 'Content-Type', 'text/calendar; charset=utf-8' );
 		$response->header( 'Content-Disposition', 'attachment; filename="' . $slug . '.ics"' );
@@ -415,7 +415,7 @@ class EventSourceController extends WP_REST_Controller {
 				continue;
 			}
 
-			// Format dates for iCal (YYYYMMDDTHHMMSSZ)
+			// Format dates for iCal (YYYYMMDDTHHMMSSZ).
 			$dtstart = DateHelper::local_to_ical_utc( $start_date );
 			$dtend   = $end_date ? DateHelper::local_to_ical_utc( $end_date ) : gmdate( 'Ymd\THis\Z', DateHelper::local_to_timestamp( $start_date ) + 3600 );
 
@@ -476,7 +476,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! is_array( $data_sources ) ) {
 			return new WP_Error(
 				'rest_invalid_data_sources',
-				__( 'Data sources must be an array.', 'fair-events' ),
+				__( 'Feed inputs must be an array.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -484,7 +484,7 @@ class EventSourceController extends WP_REST_Controller {
 		if ( empty( $data_sources ) ) {
 			return new WP_Error(
 				'rest_empty_data_sources',
-				__( 'At least one data source is required.', 'fair-events' ),
+				__( 'At least one feed input is required.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -493,8 +493,8 @@ class EventSourceController extends WP_REST_Controller {
 			if ( ! isset( $data_source['source_type'] ) || ! isset( $data_source['config'] ) ) {
 				return new WP_Error(
 					'rest_invalid_data_source',
-					/* translators: %d: Data source index */
-					sprintf( __( 'Data source at index %d is missing source_type or config.', 'fair-events' ), $index ),
+					/* translators: %d: Feed input index */
+					sprintf( __( 'Feed input at index %d is missing source_type or config.', 'fair-events-experimental' ), $index ),
 					array( 'status' => 400 )
 				);
 			}
@@ -513,7 +513,7 @@ class EventSourceController extends WP_REST_Controller {
 	 *
 	 * @param string $source_type Source type.
 	 * @param array  $config Configuration array.
-	 * @param int    $index Data source index for error messages.
+	 * @param int    $index Feed input index for error messages.
 	 * @return true|WP_Error True if valid, WP_Error if invalid.
 	 */
 	private function validate_single_data_source( $source_type, $config, $index ) {
@@ -521,8 +521,8 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! in_array( $source_type, $valid_types, true ) ) {
 			return new WP_Error(
 				'rest_invalid_source_type',
-				/* translators: %d: Data source index */
-				sprintf( __( 'Invalid source type at index %d.', 'fair-events' ), $index ),
+				/* translators: %d: Feed input index */
+				sprintf( __( 'Invalid feed input type at index %d.', 'fair-events-experimental' ), $index ),
 				array( 'status' => 400 )
 			);
 		}
@@ -530,8 +530,8 @@ class EventSourceController extends WP_REST_Controller {
 		if ( ! is_array( $config ) ) {
 			return new WP_Error(
 				'rest_invalid_config',
-				/* translators: %d: Data source index */
-				sprintf( __( 'Config at index %d must be an object.', 'fair-events' ), $index ),
+				/* translators: %d: Feed input index */
+				sprintf( __( 'Config at index %d must be an object.', 'fair-events-experimental' ), $index ),
 				array( 'status' => 400 )
 			);
 		}
@@ -541,19 +541,19 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! isset( $config['category_ids'] ) || ! is_array( $config['category_ids'] ) ) {
 					return new WP_Error(
 						'rest_invalid_config',
-						/* translators: %d: Data source index */
-						sprintf( __( 'Categories source at index %d requires category_ids array.', 'fair-events' ), $index ),
+						/* translators: %d: Feed input index */
+						sprintf( __( 'Categories feed input at index %d requires category_ids array.', 'fair-events-experimental' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
 
-				// Validate that categories exist
+				// Validate that categories exist.
 				foreach ( $config['category_ids'] as $cat_id ) {
 					if ( ! term_exists( (int) $cat_id, 'category' ) ) {
 						return new WP_Error(
 							'rest_invalid_category',
-							/* translators: 1: Category ID, 2: Data source index */
-							sprintf( __( 'Category ID %1$d does not exist (data source index %2$d).', 'fair-events' ), $cat_id, $index ),
+							/* translators: 1: Category ID, 2: Feed input index */
+							sprintf( __( 'Category ID %1$d does not exist (feed input index %2$d).', 'fair-events-experimental' ), $cat_id, $index ),
 							array( 'status' => 400 )
 						);
 					}
@@ -564,18 +564,18 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! isset( $config['url'] ) || empty( $config['url'] ) ) {
 					return new WP_Error(
 						'rest_invalid_config',
-						/* translators: %d: Data source index */
-						sprintf( __( 'iCal source at index %d requires url field.', 'fair-events' ), $index ),
+						/* translators: %d: Feed input index */
+						sprintf( __( 'iCal feed input at index %d requires url field.', 'fair-events-experimental' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
 
-				// Validate URL format
+				// Validate URL format.
 				if ( ! filter_var( $config['url'], FILTER_VALIDATE_URL ) ) {
 					return new WP_Error(
 						'rest_invalid_url',
-						/* translators: %d: Data source index */
-						sprintf( __( 'Invalid URL format at index %d.', 'fair-events' ), $index ),
+						/* translators: %d: Feed input index */
+						sprintf( __( 'Invalid URL format at index %d.', 'fair-events-experimental' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
@@ -585,32 +585,32 @@ class EventSourceController extends WP_REST_Controller {
 				if ( ! isset( $config['url'] ) || empty( $config['url'] ) ) {
 					return new WP_Error(
 						'rest_invalid_config',
-						/* translators: %d: Data source index */
-						sprintf( __( 'Fair Events API source at index %d requires url field.', 'fair-events' ), $index ),
+						/* translators: %d: Feed input index */
+						sprintf( __( 'Fair Events API feed input at index %d requires url field.', 'fair-events-experimental' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
 
-				// Validate URL format
+				// Validate URL format.
 				if ( ! filter_var( $config['url'], FILTER_VALIDATE_URL ) ) {
 					return new WP_Error(
 						'rest_invalid_url',
-						/* translators: %d: Data source index */
-						sprintf( __( 'Invalid URL format at index %d.', 'fair-events' ), $index ),
+						/* translators: %d: Feed input index */
+						sprintf( __( 'Invalid URL format at index %d.', 'fair-events-experimental' ), $index ),
 						array( 'status' => 400 )
 					);
 				}
 				break;
 
 			case 'meetup_api':
-				// Placeholder validation - no strict requirements yet
+				// Placeholder validation - no strict requirements yet.
 				break;
 
 			default:
 				return new WP_Error(
 					'rest_invalid_source_type',
-					/* translators: %d: Data source index */
-					sprintf( __( 'Unknown source type at index %d.', 'fair-events' ), $index ),
+					/* translators: %d: Feed input index */
+					sprintf( __( 'Unknown feed input type at index %d.', 'fair-events-experimental' ), $index ),
 					array( 'status' => 400 )
 				);
 		}

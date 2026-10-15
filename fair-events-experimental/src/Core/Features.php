@@ -47,8 +47,8 @@ class Features {
 	public static function registry() {
 		return array(
 			'sources'          => array(
-				'label'       => 'Event sources & feeds',
-				'description' => 'External event sources, Facebook import, iCal/JSON feeds, event proposals.',
+				'label'       => 'Event feeds',
+				'description' => 'Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals.',
 				'default'     => true,
 			),
 			'ticketing'        => array(
@@ -135,8 +135,8 @@ class Features {
 		$out        = array();
 		$translated = array(
 			'sources'          => array(
-				'label'       => __( 'Event sources & feeds', 'fair-events-experimental' ),
-				'description' => __( 'External event sources, Facebook import, iCal/JSON feeds, event proposals.', 'fair-events-experimental' ),
+				'label'       => __( 'Event feeds', 'fair-events-experimental' ),
+				'description' => __( 'Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals.', 'fair-events-experimental' ),
 			),
 			'ticketing'        => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),

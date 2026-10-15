@@ -34,7 +34,11 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 			setCategories( data );
 		} catch ( err ) {
 			setError(
-				err.message || __( 'Failed to load categories.', 'fair-events' )
+				err.message ||
+					__(
+						'Failed to load categories.',
+						'fair-events-experimental'
+					)
 			);
 		} finally {
 			setLoadingCategories( false );
@@ -58,7 +62,10 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 		return (
 			<VStack spacing={ 2 }>
 				<label style={ { fontWeight: 500 } }>
-					{ __( 'Select Event Categories', 'fair-events' ) }
+					{ __(
+						'Select Event Categories',
+						'fair-events-experimental'
+					) }
 				</label>
 
 				{ error && <Notice status="error">{ error }</Notice> }
@@ -67,7 +74,10 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 					<div>
 						<Spinner />
 						<span style={ { marginLeft: '8px' } }>
-							{ __( 'Loading categories...', 'fair-events' ) }
+							{ __(
+								'Loading categories...',
+								'fair-events-experimental'
+							) }
 						</span>
 					</div>
 				) }
@@ -76,7 +86,7 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 					<Notice status="warning" isDismissible={ false }>
 						{ __(
 							'No categories found. Create categories first.',
-							'fair-events'
+							'fair-events-experimental'
 						) }
 					</Notice>
 				) }
@@ -108,8 +118,8 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 
 				<p className="description">
 					{ __(
-						'Events from these categories will be included in this source.',
-						'fair-events'
+						'Events from these categories will be included in this event feed.',
+						'fair-events-experimental'
 					) }
 				</p>
 			</VStack>
@@ -120,7 +130,7 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 		return (
 			<VStack spacing={ 2 }>
 				<TextControl
-					label={ __( 'iCal Feed URL', 'fair-events' ) }
+					label={ __( 'iCal Feed URL', 'fair-events-experimental' ) }
 					type="url"
 					value={ config.url || '' }
 					onChange={ handleUrlChange }
@@ -128,7 +138,7 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 					placeholder="https://example.com/events.ics"
 					help={ __(
 						'Enter the URL of the iCal feed to import events from.',
-						'fair-events'
+						'fair-events-experimental'
 					) }
 				/>
 			</VStack>
@@ -139,15 +149,18 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 		return (
 			<VStack spacing={ 2 }>
 				<TextControl
-					label={ __( 'Fair Events API URL', 'fair-events' ) }
+					label={ __(
+						'Fair Events API URL',
+						'fair-events-experimental'
+					) }
 					type="url"
 					value={ config.url || '' }
 					onChange={ handleUrlChange }
 					required
 					placeholder="https://example.com/wp-json/fair-events/v1/events"
 					help={ __(
-						'Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific source.',
-						'fair-events'
+						'Enter the JSON API URL from another Fair Events site. Use /wp-json/fair-events/v1/events for all events, or /wp-json/fair-events/v1/sources/{slug}/json for a specific event feed.',
+						'fair-events-experimental'
 					) }
 				/>
 			</VStack>
@@ -159,7 +172,7 @@ const SourceTypeConfig = ( { sourceType, config, onChange } ) => {
 			<Notice status="info" isDismissible={ false }>
 				{ __(
 					'Meetup API integration is coming soon.',
-					'fair-events'
+					'fair-events-experimental'
 				) }
 			</Notice>
 		);
