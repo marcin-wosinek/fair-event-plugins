@@ -233,6 +233,7 @@ class FinancialEntry {
 	 *     @type int    $budget_id   Filter by budget ID.
 	 *     @type string $entry_type  Filter by type: 'cost' or 'income'.
 	 *     @type bool   $unmatched   If true, only return entries without transaction_id.
+	 *     @type int    $entry_id    Focus on this entry only; every other filter is ignored.
 	 *     @type int    $per_page    Items per page (default 50).
 	 *     @type int    $page        Page number (default 1).
 	 * }
@@ -256,24 +257,44 @@ class FinancialEntry {
 			'tag'           => null,
 			'entry_type'    => null,
 			'unmatched'     => false,
+			'entry_id'      => null,
 			'per_page'      => 50,
 			'page'          => 1,
 		);
 
 		$filters = wp_parse_args( $filters, $defaults );
 
+		// A focused entry takes precedence over every other filter.
+		if ( ! empty( $filters['entry_id'] ) ) {
+			$filters = wp_parse_args(
+				array(
+					'entry_id' => $filters['entry_id'],
+					'per_page' => $filters['per_page'],
+					'page'     => $filters['page'],
+				),
+				$defaults
+			);
+		}
+
 		// Build WHERE clause.
 		$where_clauses = array();
 		$where_values  = array();
 
 		// When filtering by a specific budget, event_url, event_date_id, or tag, include child entries matching that filter.
+		// A focused entry is shown even when it is a split child.
 		// Otherwise, exclude child entries (they are shown under their parent).
 		$include_children = ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] )
 			|| ! empty( $filters['event_url'] )
 			|| ! empty( $filters['event_date_id'] )
-			|| ( ! empty( $filters['tag'] ) && 'none' !== $filters['tag'] );
+			|| ( ! empty( $filters['tag'] ) && 'none' !== $filters['tag'] )
+			|| ! empty( $filters['entry_id'] );
 		if ( ! $include_children ) {
 			$where_clauses[] = 'parent_entry_id IS NULL';
+		}
+
+		if ( ! empty( $filters['entry_id'] ) ) {
+			$where_clauses[] = 'id = %d';
+			$where_values[]  = (int) $filters['entry_id'];
 		}
 
 		if ( ! empty( $filters['date_from'] ) ) {
@@ -401,12 +422,20 @@ class FinancialEntry {
 		$table_name = self::get_table_name();
 
 		// Build WHERE clause (same as get_filtered but without pagination).
-		// Exclude parent entries that have children (to avoid double-counting).
 		$where_clauses = array();
 		$where_values  = array();
 
-		// Exclude entries that are parents (have children). Count children instead.
-		$where_clauses[] = 'id NOT IN (SELECT DISTINCT parent_entry_id FROM ' . $table_name . ' WHERE parent_entry_id IS NOT NULL)';
+		if ( ! empty( $filters['entry_id'] ) ) {
+			// A focused entry takes precedence over every other filter and is
+			// counted once by its own amount, even when it is a split parent.
+			$where_clauses[] = 'id = %d';
+			$where_values[]  = (int) $filters['entry_id'];
+			$filters         = array();
+		} else {
+			// Exclude entries that are parents (have children). Count children instead,
+			// to avoid double-counting.
+			$where_clauses[] = 'id NOT IN (SELECT DISTINCT parent_entry_id FROM ' . $table_name . ' WHERE parent_entry_id IS NOT NULL)';
+		}
 
 		if ( ! empty( $filters['date_from'] ) ) {
 			$where_clauses[] = 'entry_date >= %s';

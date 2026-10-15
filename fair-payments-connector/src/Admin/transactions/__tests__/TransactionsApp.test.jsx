@@ -1,10 +1,11 @@
 /**
- * Component test for the transactions list "Entry" column (#1290).
+ * Component test for the transactions list "Entry" column (#1290, #1291).
  *
- * The `entry_id` deep link into the entries screen never worked (no reader,
- * no filter, no model support), so instead of repairing it the link is
- * dropped: entry ids render as plain, comma-separated text and no anchor
- * points at the retired `fair-payments-connector-entries` slug.
+ * Each matched entry links to the Fair Finance entries screen focused on that
+ * entry, but only while Fair Finance is active (it localizes
+ * `financeEntriesUrl`). Without it the references stay plain text and no
+ * anchor points at a missing screen, such as the retired
+ * `fair-payments-connector-entries` slug.
  */
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -43,7 +44,34 @@ afterEach( () => {
 } );
 
 describe( 'TransactionsApp — entry column', () => {
-	it( 'renders entry ids as plain text, not a link to the retired entries slug', async () => {
+	const ENTRIES_URL =
+		'http://example.test/wp-admin/admin.php?page=fair-finance-entries';
+
+	afterEach( () => {
+		delete window.fairPaymentTransactions;
+	} );
+
+	it( 'links each entry to the focused Fair Finance entries screen when Finance is active', async () => {
+		window.fairPaymentTransactions = { financeEntriesUrl: ENTRIES_URL };
+
+		render( <TransactionsApp /> );
+
+		const first = await screen.findByRole( 'link', { name: '#12' } );
+		const second = screen.getByRole( 'link', { name: '#34' } );
+		expect( first ).toHaveAttribute(
+			'href',
+			`${ ENTRIES_URL }&entry_id=12`
+		);
+		expect( second ).toHaveAttribute(
+			'href',
+			`${ ENTRIES_URL }&entry_id=34`
+		);
+		expect( first.closest( 'td' ) ).toHaveTextContent( /^#12, #34$/ );
+	} );
+
+	it( 'renders entry ids as plain text when Finance is inactive, with no link to a missing screen', async () => {
+		window.fairPaymentTransactions = { organizationId: '' };
+
 		render( <TransactionsApp /> );
 
 		expect( await screen.findByText( '#12, #34' ) ).toBeInTheDocument();
