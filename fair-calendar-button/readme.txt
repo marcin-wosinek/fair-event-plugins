@@ -4,7 +4,7 @@ Tags: calendar, events, gutenberg, block
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: fair-calendar-button
@@ -87,6 +87,19 @@ Yes, the plugin doesn't collect, store, or transmit any personal data. Event det
 5. Block settings panel in the editor
 
 == Changelog ==
+
+## 1.5.5
+
+### Patch Changes
+
+-   9603b8d: Update the bundled calendar-link library from 2.11.4 to 2.11.6 and Recharts
+    from 3.10.0 to 3.10.1. Calendar exports and the statistics and comparison
+    charts show the same dates, values and tooltips as before.
+
+    The Fair Events calendar button now passes all-day events to the calendar
+    as plain dates, so they stay on their day in every timezone. Without this,
+    the updated library would have moved them one day later for visitors in
+    UTC+12 timezones, such as New Zealand in winter or Fiji.
 
 ## 1.5.4
 

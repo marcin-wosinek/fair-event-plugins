@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: events, participants, audience, management
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.19.0
+Stable tag: 1.20.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -40,6 +40,88 @@ WordPress 6.7 or higher.
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
 == Changelog ==
+
+## 1.20.0
+
+### Minor Changes
+
+-   8640376: **Delete My Data** on the subscription-management page now asks for confirmation in an accessible dialog instead of the browser's own confirmation box. The dialog names the profile by its email address and says what is deleted, what is kept (event signups and tickets, attendance records, consent history, payment records and the user account) and that it cannot be undone. Opening, cancelling or dismissing it changes nothing, and a confirmed deletion cannot be sent twice. Without JavaScript the same confirmation is shown as a page before anything is deleted.
+
+    Deleting now needs an explicit confirmed request carrying a short-lived proof issued for that profile, in addition to the signed link. A failed deletion is reported on the page and can be retried, and refreshing the page after a deletion no longer sends it again.
+
+-   aa7b447: Manage weekly event notifications on one page, Fair Events → Event notifications. Telegram summaries (formerly in Fair Events Experimental) and the weekly email to subscribers (formerly Fair Audience → Weekly Digest) each keep their own schedule, event source, save button, preview, test send and delivery status. Telegram now needs only Fair Events; the weekly email needs Fair Audience, which still decides who receives it, adds the unsubscribe link and sends it.
+
+    Existing settings, schedules, chats, email wording, the Telegram bot token (still in Settings → Connectors, same environment variable and constant) and the delivery history are taken over automatically. Nothing is sent and no channel is turned on by the takeover; missed sends are not replayed, and a channel that was not being sent arrives turned off. The former settings screens lead to the new page, and their REST routes (`fair-events-experimental/v1/weekly-notifications`, `fair-audience/v1/weekly-digest`) and the `fair_audience_weekly_digest` setting are retired.
+
+    Update the three plugins together. An older Fair Events Experimental or Fair Audience keeps running its own channel until it is updated, and an updated companion next to an older Fair Events pauses that channel until Fair Events is updated. Deactivating Fair Audience pauses the weekly email only; deactivating Fair Events pauses every channel.
+
+-   e12f143: Send emails to event participants from Fair Audience → Custom Mail, without Fair Audience Experimental. Pick an event date, write the subject and content, check who will receive it, exclude individual people, and send. Sent messages, including those from before this change, stay in Mail History.
+
+    An email now goes only to the people registered for the selected date. Before, picking one date of a recurring event also reached people registered for its other dates. A missing or malformed address is reported instead of being handed to the mailer, an empty subject or content is refused, and the page says which emails could not be sent and why. Deleting a history record asks for confirmation.
+
+    Sending to the whole audience stays experimental: the option appears on the same page while the Messaging feature of Fair Audience Experimental is on. Group filters and photo upload links likewise need their experimental features.
+
+    Update the two plugins together. An older Fair Audience Experimental keeps showing its own Custom Mail page until it is updated, and Fair Audience says so on its screens; an updated companion next to an older Fair Audience has no Custom Mail page until Fair Audience is updated.
+
+-   aa50d3d: **Send Invitations** on the Event Participants page and on the Manage Event Audience tab now shows a summary before anything is sent. It names the event and its date and lists the selected groups or people. Group memberships are counted separately from the number of different people selected, and the summary says how many people will receive the invitation. People who will not get it are counted by reason: already signed up for this date, no longer in the audience, no valid email address, or no confirmed consent to marketing emails. When nobody can be invited, the summary says so and sending stays disabled with the reason shown. Sending goes to exactly the people counted in the summary. Each person is checked again when sending, but nobody who joined a group after the summary was shown gets an invitation. While sending, the dialog cannot be closed and the selection cannot be changed. If sending fails, the error is shown in the dialog and the selection is kept.
+
+    **Disconnect Instagram** now asks for confirmation in an in-page dialog instead of the browser's own confirmation box. The dialog names the account by username, or by account ID when there is no username. It explains that the access token and connection details stored on the site are removed, and that publishing needs a reconnection. Posts already on Instagram and the site's post records are kept. A failure is shown in the dialog, and repeated clicks cannot disconnect twice.
+
+    The new `POST /fair-audience/v1/event-dates/{event_date_id}/event-invitations/preview` endpoint returns these counts without sending any mail. Invitation requests with non-integer participant or group IDs are now rejected with a 400 error.
+
+-   a41bfbb: Deleting participants and removing them from an event now ask in the same
+    kind of popup everywhere, instead of in browser dialogs.
+
+    -   **Deleting a profile** — from All Participants or a participant's own page —
+        names the person, or counts and lists everyone selected, and says what
+        deletion does: the profile is gone for good, while tickets, event
+        registrations and payments are not cancelled, deleted or refunded. When
+        some profiles cannot be deleted, the others are, and only the failed ones
+        stay selected for another try.
+    -   **Removing from an event** on the Event Participants page uses the popup of
+        the Manage Event Audience tab, for one participant or several. It names the
+        event and its date, lists who is removed, and says that profiles, other
+        dates and payments are kept. Participants who still hold tickets or
+        registrations are listed with what to resolve first and stay in the
+        audience; the rest are removed. Inherited series passes are no longer
+        offered for removal there, and the bulk action is reachable on phones.
+    -   **Feedback** for adding or editing a participant, adding people to an
+        event, changing a role and sending invitations appears next to the form
+        that caused it. A failure keeps what you typed or selected, a save cannot
+        be sent twice, and a profile that was created before a group change failed
+        is updated — not created again — when you retry.
+
+    Also fixed: the Event Participants page showed the event time shifted by the
+    browser's timezone, and the participant page linked back to — and returned
+    after deletion to — a page that does not exist.
+
+    The batch removal route (`DELETE
+fair-audience/v1/event-dates/{id}/participants/batch`) additionally returns
+    `failures`: the participant ID, error code, message and blockers of each
+    participant it kept.
+
+-   0b3b08b: Add a guarded "Remove participant" action to the Manage Event Audience tab. An organizer can take a person out of one event date's audience after a confirmation naming the person, the event and the date. Only their place on that date is removed, with the role, activities, check-in and comment recorded for it: the participant profile, their other dates, tickets, registrations, purchases and payments are kept. A participant who still holds tickets, has a registration, or has a payment in progress for the date is not removed; the dialog says what to resolve first (the ticket actions or the List tab), and the server applies the same check, so `DELETE fair-audience/v1/event-dates/{id}/participants/{participant_id}` and the batch route now answer 409 `removal_blocked` in those cases and 404 for a missing event date or relationship. The participants list reports `removal_blockers` per row, and a `fair_audience_event_participant_removed` action fires inside the removal's transaction.
+-   3470321: These plugins now require WordPress 7.0 or later. Their admin lists (All
+    Events, All Participants, By Event, the Fair Form answer screens, Groups,
+    Collaborators and Membership Fees) rely on scripts that WordPress only
+    provides from 7.0, so on older versions those screens stayed blank. The
+    plugins are now built with the latest WordPress editor and admin packages;
+    existing blocks and saved content keep working unchanged.
+
+### Patch Changes
+
+-   fdde512: A group discount of a fixed amount larger than an activity's price now makes
+    that activity free instead of giving it a negative price. The signup form no
+    longer shows a negative activity price or a reduced order total, and the
+    discount no longer lowers the price charged for the ticket or for other
+    activities in the same order, so a paid signup can no longer be recorded as
+    free with a negative amount.
+-   dfa226f: Update the bundled PhpSpreadsheet library from 5.9.0 to 5.10.0. Spreadsheet
+    imports read the same rows and report the same errors as before.
+-   4ac5259: An add-on that a participant started paying for but did not finish (an abandoned, failed, cancelled or expired checkout) is offered again when they come back, and they can buy it on a later attempt. Only confirmed add-ons are treated as already bought, and with several tickets an add-on confirmed on one ticket can still be added to another. A participant whose own unfinished checkout holds an activity's last place can start a new attempt, and an activity filled by someone else is now reported as full instead of being silently dropped.
+-   56dd426: The individual weekly email now looks like the weekly email to subscribers. It has the site-name header, the events grouped by day with their time and a link, a note on events from other websites, a sign-off and a site-name footer, and it fits phone screens. Both emails get their events and content from Fair Events, so the same week lists the same events in both.
+
+    The weekly email to subscribers keeps its greeting and subscription link. Its empty-week message now names the week, and a missing or disabled event source is reported in its delivery status instead of an empty email being sent. With an older Fair Events, Fair Audience keeps rendering the email itself.
 
 ## 1.19.0
 

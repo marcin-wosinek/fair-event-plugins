@@ -1,5 +1,121 @@
 # fair-events
 
+## 1.22.0
+
+### Minor Changes
+
+-   de0916a: The admin Events Calendar can now be filtered by category. A Category
+    selector above the calendar shows only the events assigned to the chosen
+    category, including recurring sessions and events in several categories.
+    The selection stays while moving between months, is kept in the page URL so
+    reloads and Back/Forward restore it, and "All categories" brings every
+    event back. A category with no events in the month keeps the calendar grid
+    and says "No events match this category." The calendar now also loads every
+    event in a busy month instead of stopping at the first 100.
+-   aa7b447: Manage weekly event notifications on one page, Fair Events → Event notifications. Telegram summaries (formerly in Fair Events Experimental) and the weekly email to subscribers (formerly Fair Audience → Weekly Digest) each keep their own schedule, event source, save button, preview, test send and delivery status. Telegram now needs only Fair Events; the weekly email needs Fair Audience, which still decides who receives it, adds the unsubscribe link and sends it.
+
+    Existing settings, schedules, chats, email wording, the Telegram bot token (still in Settings → Connectors, same environment variable and constant) and the delivery history are taken over automatically. Nothing is sent and no channel is turned on by the takeover; missed sends are not replayed, and a channel that was not being sent arrives turned off. The former settings screens lead to the new page, and their REST routes (`fair-events-experimental/v1/weekly-notifications`, `fair-audience/v1/weekly-digest`) and the `fair_audience_weekly_digest` setting are retired.
+
+    Update the three plugins together. An older Fair Events Experimental or Fair Audience keeps running its own channel until it is updated, and an updated companion next to an older Fair Events pauses that channel until Fair Events is updated. Deactivating Fair Audience pauses the weekly email only; deactivating Fair Events pauses every channel.
+
+-   07ac366: Add a "Duplicate" action to each add-on in Manage Event → Prices. It inserts
+    an editable copy right after the add-on, with its current name (suffixed
+    " Copy"), short name, price, capacity and sale-period prices, including
+    unsaved edits. The copy is saved as a new add-on by "Save tickets"; existing
+    signups stay with the original.
+-   9bb375f: Confirmations for deleting a venue, importing ticket settings, ending a series, merging sale periods and removing the organizer logo now name what they act on and say what changes: which event dates lose their venue, what an import replaces, which date of a series stays and which are deleted, which prices a merge keeps, and whether a further save is needed. Deleting a venue and importing ticket settings no longer use the browser's own confirmation box. Actions that save immediately show progress, cannot be submitted twice, and keep the dialog open with the error when they fail.
+
+    Fixed: **End series** on a repeating series reported success without ending it. It now keeps the first date as a single event and deletes the others, as the confirmation says.
+
+-   cd46f54: The Event Signup block has a **Show mailing signup checkbox** setting in its
+    Form Settings panel. Turn it off to leave the "Keep me informed about future
+    events" checkbox out of that block's form. Signing up through a form without
+    the checkbox grants no mailing consent and changes no existing subscription
+    preferences. The setting is on by default, so existing blocks look the same.
+-   ced7d99: Add an Individual email channel to Event notifications: send the week's events to one email address of your choice, on its own schedule, without Fair Audience, Fair Events Experimental or an event source.
+-   08c4f95: The List tab of an event date shows each ticket by its short reference alone,
+    such as `AE2671B5`, and no longer has the Transaction and Date columns; both
+    remain in exports. The printed List follows the same columns, so a list with
+    up to seven extras fits one table instead of spilling its date into a second
+    part. Its Mailing column prints what each participant consents to now in Fair
+    Audience — ✓ subscribed, ✗ declined, blank when unspecified — instead of the
+    answer recorded at registration. Without Fair Audience, or for a registration
+    with no participant, an opt-in at registration prints as ✓ and anything else
+    is left blank. The List on screen keeps its Yes/No and its mailing filter.
+-   673ca90: The List tab of an event date has a **Print list** button. It opens a print
+    preview naming the event and its date, with every confirmed ticket of the
+    List — one row per ticket, in the List's order and numbering, with ticket
+    type, extras, status and mailing consent — whatever screen filter is on. The
+    preview prints in landscape, repeats the table header on each page, and
+    splits a table with many extras into parts that repeat the row number and
+    ticket. Email addresses, amounts and the List's actions are left out.
+-   1e8f337: Remove collaborator assignments from add-ons. The "Collaborator(s)" column
+    and its participant selectors are gone from the Prices tab, and add-on
+    assignments are no longer saved, returned, exported or copied to a duplicated
+    event. Older ticket-settings exports still import; the assignments they carry
+    are ignored. Upgrading removes the stored assignments. Add-on prices,
+    purchases, participants and event-level collaborators are unchanged.
+-   5a895ee: Warn about sale periods with no tickets on sale in Manage Event → Prices. The
+    sale-period calendar now names each period, and its dates, on which no ticket
+    type is both enabled and priced, hatches those dates and explains the marking
+    in the legend. A free ticket counts as on sale; a missing price, an unticked
+    "Available" box, a disabled ticket type and a passed "End date" do not. The
+    warning follows unsaved edits and is advisory only: nothing about saving or
+    booking changes.
+-   c863455: **Event Signup** now explains what each series ticket covers before purchase. Every ticket of a recurring event says whether it is for one date, selected dates or the whole series, and whether its price is per date or for the whole series. The matching date control follows the ticket choices directly: a date dropdown, date checkboxes with their minimum explained, or the list of dates a whole-series ticket includes. A summary above the total names the selected ticket and the dates it covers, and updates when the ticket or dates change.
+
+    Full dates stay listed, marked full, and cannot be chosen. When a whole-series ticket cannot be bought because one of its dates is full, the summary names that date instead of leaving the button disabled without a reason. Availability is refreshed after the page loads and after a refused checkout, so a cached page never offers a date that has since filled up. Checkout keeps applying the same prices, sale periods and capacity rules as before.
+
+-   56dd426: The individual weekly email now looks like the weekly email to subscribers. It has the site-name header, the events grouped by day with their time and a link, a note on events from other websites, a sign-off and a site-name footer, and it fits phone screens. Both emails get their events and content from Fair Events, so the same week lists the same events in both.
+
+    The weekly email to subscribers keeps its greeting and subscription link. Its empty-week message now names the week, and a missing or disabled event source is reported in its delivery status instead of an empty email being sent. With an older Fair Events, Fair Audience keeps rendering the email itself.
+
+-   3470321: These plugins now require WordPress 7.0 or later. Their admin lists (All
+    Events, All Participants, By Event, the Fair Form answer screens, Groups,
+    Collaborators and Membership Fees) rely on scripts that WordPress only
+    provides from 7.0, so on older versions those screens stayed blank. The
+    plugins are now built with the latest WordPress editor and admin packages;
+    existing blocks and saved content keep working unchanged.
+
+### Patch Changes
+
+-   0f9f103: Event Info now describes the session a visitor opened. A dated link from a
+    calendar or a shared URL shows that session's own date (with the year),
+    time, venue and attendance mode, including past sessions, which also say
+    "This session has ended". Every session links back to the recurring event
+    overview, which a page without a selected date now shows instead of today's
+    or the next session. A date that doesn't belong to the event shows "This
+    session is unavailable" instead of another session's details.
+-   0e4d0c9: Explain when online ticket sales have closed. Once every sale period of an event has ended, the Event Signup block now shows a neutral notice, "Online ticket sales for this event have closed.", in place of "Ticket sales are temporarily unavailable. Please check back later.", both on the signup view and on the payment-retry view. The temporary-unavailability message stays for payment problems, sale periods that have not opened yet, gaps between periods and incomplete sale-period configuration. What can be purchased is unchanged.
+-   1dfaa7d: Financial entries on an event's Finance tab and on the Reconciliation
+    screen now link to the focused entry view. Each `#id` in the Payments
+    table's Budget entry column, the date of each cost entry, and the date of
+    each unmatched and matched reconciliation entry open that entry on the
+    Entries screen. When Fair Finance is unavailable, the event's references
+    stay plain text.
+-   4b5bcb3: The List of an event date now shows the confirmed tickets that are on that
+    date. A ticket moved on its own to another date of a recurring event leaves
+    the original date's List and appears on the new date's, with its ticket type,
+    extras and check-in, and a note saying which date the purchase is registered
+    for. Move, Change ticket type and Delete are labelled "Entire purchase" with
+    the ticket counts per date, and explain what they do to tickets on other
+    dates before anything changes. Exports list the same rows as the List, add a
+    purchase reference, and give each purchase total once, on the row of the
+    purchase's lowest confirmed ticket.
+-   a96cb64: Resolve Telegram and email notification previews and immediate tests relative to today in the site timezone, while preserving scheduled delivery weeks.
+-   9603b8d: Update the bundled calendar-link library from 2.11.4 to 2.11.6 and Recharts
+    from 3.10.0 to 3.10.1. Calendar exports and the statistics and comparison
+    charts show the same dates, values and tooltips as before.
+
+    The Fair Events calendar button now passes all-day events to the calendar
+    as plain dates, so they stay on their day in every timezone. Without this,
+    the updated library would have moved them one day later for visitors in
+    UTC+12 timezones, such as New Zealand in winter or Fiji.
+
+-   5cf5d18: **Event Sources** is now called **Event Feeds**. The admin menu entry, page headings, add/edit/delete actions, messages and help text use "event feed" and "event feeds" throughout: on the Event Feeds page, in the Events Calendar, Events Week and Events List block settings, and on the Event notifications page. The parts an event feed combines (event categories, iCal URLs, other Fair Events sites) are now called "feed inputs" instead of "data sources", and their count uses proper singular and plural forms.
+
+    This is a wording change only. Admin page URLs, REST routes and fields, error codes, iCal/JSON feed URLs, block attributes and saved selections stay the same, so existing feeds, links and block settings keep working. The Event Feeds management screens now load their translations from Fair Events Experimental's own catalog, and the German, Spanish, French and Polish translations are updated.
+
 ## 1.21.0
 
 ### Minor Changes

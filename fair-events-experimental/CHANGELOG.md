@@ -1,5 +1,60 @@
 # fair-events-experimental
 
+## 1.12.0
+
+### Minor Changes
+
+-   aa7b447: Manage weekly event notifications on one page, Fair Events → Event notifications. Telegram summaries (formerly in Fair Events Experimental) and the weekly email to subscribers (formerly Fair Audience → Weekly Digest) each keep their own schedule, event source, save button, preview, test send and delivery status. Telegram now needs only Fair Events; the weekly email needs Fair Audience, which still decides who receives it, adds the unsubscribe link and sends it.
+
+    Existing settings, schedules, chats, email wording, the Telegram bot token (still in Settings → Connectors, same environment variable and constant) and the delivery history are taken over automatically. Nothing is sent and no channel is turned on by the takeover; missed sends are not replayed, and a channel that was not being sent arrives turned off. The former settings screens lead to the new page, and their REST routes (`fair-events-experimental/v1/weekly-notifications`, `fair-audience/v1/weekly-digest`) and the `fair_audience_weekly_digest` setting are retired.
+
+    Update the three plugins together. An older Fair Events Experimental or Fair Audience keeps running its own channel until it is updated, and an updated companion next to an older Fair Events pauses that channel until Fair Events is updated. Deactivating Fair Audience pauses the weekly email only; deactivating Fair Events pauses every channel.
+
+-   1e8f337: Remove collaborator assignments from add-ons. The "Collaborator(s)" column
+    and its participant selectors are gone from the Prices tab, and add-on
+    assignments are no longer saved, returned, exported or copied to a duplicated
+    event. Older ticket-settings exports still import; the assignments they carry
+    are ignored. Upgrading removes the stored assignments. Add-on prices,
+    purchases, participants and event-level collaborators are unchanged.
+-   91f5928: Remove the Weekly Schedule admin page from Fair Audience Experimental, with its menu entry and its "Weekly schedule" feature toggle. A bookmark to the old page now gets WordPress's standard answer for a page that does not exist, and a stored `weekly-schedule` setting is ignored and dropped the next time the experimental settings are saved. The two REST routes only that page used are gone as well: `POST fair-audience/v1/instagram/upload-blob` and `GET fair-events/v1/weekly-events`. Instagram Posts, Image Templates, the weekly digest and weekly notifications work as before, and no events, participants, settings, media or Instagram records are changed.
+
+### Patch Changes
+
+-   9603b8d: Update the bundled calendar-link library from 2.11.4 to 2.11.6 and Recharts
+    from 3.10.0 to 3.10.1. Calendar exports and the statistics and comparison
+    charts show the same dates, values and tooltips as before.
+
+    The Fair Events calendar button now passes all-day events to the calendar
+    as plain dates, so they stay on their day in every timezone. Without this,
+    the updated library would have moved them one day later for visitors in
+    UTC+12 timezones, such as New Zealand in winter or Fiji.
+
+-   5cf5d18: **Event Sources** is now called **Event Feeds**. The admin menu entry, page headings, add/edit/delete actions, messages and help text use "event feed" and "event feeds" throughout: on the Event Feeds page, in the Events Calendar, Events Week and Events List block settings, and on the Event notifications page. The parts an event feed combines (event categories, iCal URLs, other Fair Events sites) are now called "feed inputs" instead of "data sources", and their count uses proper singular and plural forms.
+
+    This is a wording change only. Admin page URLs, REST routes and fields, error codes, iCal/JSON feed URLs, block attributes and saved selections stay the same, so existing feeds, links and block settings keep working. The Event Feeds management screens now load their translations from Fair Events Experimental's own catalog, and the German, Spanish, French and Polish translations are updated.
+
+-   Updated dependencies [de0916a]
+-   Updated dependencies [aa7b447]
+-   Updated dependencies [07ac366]
+-   Updated dependencies [0f9f103]
+-   Updated dependencies [0e4d0c9]
+-   Updated dependencies [9bb375f]
+-   Updated dependencies [cd46f54]
+-   Updated dependencies [ced7d99]
+-   Updated dependencies [1dfaa7d]
+-   Updated dependencies [4b5bcb3]
+-   Updated dependencies [08c4f95]
+-   Updated dependencies [a96cb64]
+-   Updated dependencies [673ca90]
+-   Updated dependencies [9603b8d]
+-   Updated dependencies [1e8f337]
+-   Updated dependencies [5cf5d18]
+-   Updated dependencies [5a895ee]
+-   Updated dependencies [c863455]
+-   Updated dependencies [56dd426]
+-   Updated dependencies [3470321]
+    -   fair-events@1.22.0
+
 ## 1.11.0
 
 ### Minor Changes

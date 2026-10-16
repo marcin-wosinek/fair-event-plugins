@@ -1,5 +1,60 @@
 # fair-payments-connector
 
+## 2.5.0
+
+### Minor Changes
+
+-   dcdef69: Loading Mollie settlements now starts with **Load new**: it brings in only
+    the settlements that are not saved yet and leaves the ones already loaded
+    from Mollie unchanged, saying so when nothing new was found. **Reload all**
+    stays available as the lesser action for retrieving every settlement again.
+
+    An import that failed or was interrupted can be continued or replaced by
+    another import. After a failed request the page reads the import back from
+    the server instead of leaving its buttons disabled, and an import the server
+    still counts as running is shown as such with a way to refresh its status.
+
+    While Fair Finance is active, the External Updates page of Fair Payments
+    Connector has a **Mollie settlements** section that loads new settlements
+    and continues an import left unfinished on either page. Settlement imports
+    appear in its operation log, one entry per import.
+
+-   8e7c2de: **Create test payment** in live mode now asks for confirmation in a dialog instead of the browser's own confirmation box. The dialog shows the actual amount and currency, the Mollie profile name, profile ID and organization ID, and the warning about real money and gateway fees. Cancelling creates no payment. If the mode, currency or connected account changes after the dialog opens, no payment is created and the dialog shows the current details for a new confirmation. Test-mode payments are still created right away.
+
+    **Disconnect Mollie** now names the connected profile and account, or says "the connected Mollie account" when they are not known. It explains that the site cannot create Mollie payments or receive status updates for existing ones until it reconnects, and that payments already in Mollie are not cancelled or refunded. If the disconnect succeeds but its audit entry cannot be recorded, the page now shows the site as disconnected instead of inviting a retry.
+
+    **Delete local transaction** now names the transaction by ID, amount and currency, and by its description when it has one. The dialog still explains that only the local record is removed.
+
+    In all three dialogs, the dialog stays open while the action runs, a failure is shown inside the dialog, and repeated clicks cannot send the action twice.
+
+-   6906403: Save Mollie settlements on your site. A new Settlements page in Fair Finance loads payouts from Mollie or from a settlement CSV export, keeps them available without a Mollie connection, and shows where the two sources agree or differ.
+-   f00414c: **Transactions** now link each matched financial entry reference to the Fair Finance **Financial Entries** screen, narrowed to that entry. This includes entries that are part of a split. The references are links only while Fair Finance is active; otherwise they stay plain text.
+
+    **Financial Entries** opened for a single entry shows "Showing entry #N" with a **Show all entries** action, hides the filters and tag chart, and limits the totals and CSV export to that entry. A split parent keeps its nested children and is counted once in the totals. A missing entry shows an explanation, and an invalid entry link shows an error instead of the full list.
+
+    `GET /fair-finance/v1/financial-entries` and `/financial-entries/totals` accept an optional `entry_id` (a positive integer). It takes precedence over the other filters.
+
+### Patch Changes
+
+-   9321736: Reorder the Fair Payments Connector menu so configuration comes last:
+    Transactions, External Updates, Dashboard, Connected Sites (with Fair Payments
+    Connector Experimental), Notifications, Settings. "Fee Dashboard" is renamed
+    to "Dashboard" in the menu and the page heading, and the page's text is now
+    translated like the other admin pages. Page addresses and permissions are
+    unchanged.
+-   e25afe2: Settlements loaded from Mollie keep the report amounts exactly as Mollie
+    states them, including fees, VAT and rounding differences with fractions of a
+    cent, which used to be saved as unknown. A saved settlement now opens with a
+    settlement summary: reported revenue, refunds, costs and adjustments, the
+    report net, the payout and the exact difference between them. The Mollie
+    report breakdown lists every line by period with its count, rates, net, VAT
+    and gross amounts and invoice reference. Settlements saved before this
+    update show "Refresh to load report details"; refreshing them from Mollie
+    loads the details.
+-   e1f6379: Fix the participant link in the sample notification sent by "Send test
+    message". It pointed at a page that does not exist; it now opens the Fair
+    Audience participants list.
+
 ## 2.4.0
 
 ### Minor Changes

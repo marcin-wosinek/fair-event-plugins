@@ -1,5 +1,0 @@
----
-"fair-audience": minor
----
-
-Add a guarded "Remove participant" action to the Manage Event Audience tab. An organizer can take a person out of one event date's audience after a confirmation naming the person, the event and the date. Only their place on that date is removed, with the role, activities, check-in and comment recorded for it: the participant profile, their other dates, tickets, registrations, purchases and payments are kept. A participant who still holds tickets, has a registration, or has a payment in progress for the date is not removed; the dialog says what to resolve first (the ticket actions or the List tab), and the server applies the same check, so `DELETE fair-audience/v1/event-dates/{id}/participants/{participant_id}` and the batch route now answer 409 `removal_blocked` in those cases and 404 for a missing event date or relationship. The participants list reports `removal_blockers` per row, and a `fair_audience_event_participant_removed` action fires inside the removal's transaction.

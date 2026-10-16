@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.6.0
+
+### Minor Changes
+
+-   9a33383: Deleting a submission from **All Answers** or **Questionnaire Responses** now asks for confirmation in the same in-page dialog instead of the browser's own confirmation box. The dialog names the respondent (or "Anonymous respondent"), the form, the submission date and its ID, so repeated submissions stay distinguishable, and says that the participant, other submissions and uploaded files are kept. A failed deletion is reported inside the dialog and can be retried, and a confirmed deletion cannot be sent twice.
+
+    The event-assignment editor on **All Answers** now shows which submission it edits. A failed save is reported inside the dialog and keeps the chosen event for a retry, and if the list of events cannot be loaded the current assignment is kept and the list can be reloaded.
+
+-   aaafc87: The Form Submission view now shows which form a submission came from and
+    the page it was sent from. The heading uses the form's title when one was
+    set, and the page links to its public address when the page is published.
+    Untitled forms show their form identifier, and older submissions without
+    form details show "Legacy (no form id)".
+
+    The Form column on All Answers is now shown by default and uses the same
+    form names, instead of the same generic label for every submission.
+
+-   3470321: These plugins now require WordPress 7.0 or later. Their admin lists (All
+    Events, All Participants, By Event, the Fair Form answer screens, Groups,
+    Collaborators and Membership Fees) rely on scripts that WordPress only
+    provides from 7.0, so on older versions those screens stayed blank. The
+    plugins are now built with the latest WordPress editor and admin packages;
+    existing blocks and saved content keep working unchanged.
+
 ## 1.5.0
 
 ### Minor Changes

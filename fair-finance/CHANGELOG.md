@@ -1,5 +1,73 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+-   dcdef69: Loading Mollie settlements now starts with **Load new**: it brings in only
+    the settlements that are not saved yet and leaves the ones already loaded
+    from Mollie unchanged, saying so when nothing new was found. **Reload all**
+    stays available as the lesser action for retrieving every settlement again.
+
+    An import that failed or was interrupted can be continued or replaced by
+    another import. After a failed request the page reads the import back from
+    the server instead of leaving its buttons disabled, and an import the server
+    still counts as running is shown as such with a way to refresh its status.
+
+    While Fair Finance is active, the External Updates page of Fair Payments
+    Connector has a **Mollie settlements** section that loads new settlements
+    and continues an import left unfinished on either page. Settlement imports
+    appear in its operation log, one entry per import.
+
+-   6906403: Save Mollie settlements on your site. A new Settlements page in Fair Finance loads payouts from Mollie or from a settlement CSV export, keeps them available without a Mollie connection, and shows where the two sources agree or differ.
+-   e25afe2: Settlements loaded from Mollie keep the report amounts exactly as Mollie
+    states them, including fees, VAT and rounding differences with fractions of a
+    cent, which used to be saved as unknown. A saved settlement now opens with a
+    settlement summary: reported revenue, refunds, costs and adjustments, the
+    report net, the payout and the exact difference between them. The Mollie
+    report breakdown lists every line by period with its count, rates, net, VAT
+    and gross amounts and invoice reference. Settlements saved before this
+    update show "Refresh to load report details"; refreshing them from Mollie
+    loads the details.
+-   f00414c: **Transactions** now link each matched financial entry reference to the Fair Finance **Financial Entries** screen, narrowed to that entry. This includes entries that are part of a split. The references are links only while Fair Finance is active; otherwise they stay plain text.
+
+    **Financial Entries** opened for a single entry shows "Showing entry #N" with a **Show all entries** action, hides the filters and tag chart, and limits the totals and CSV export to that entry. A split parent keeps its nested children and is counted once in the totals. A missing entry shows an explanation, and an invalid entry link shows an error instead of the full list.
+
+    `GET /fair-finance/v1/financial-entries` and `/financial-entries/totals` accept an optional `entry_id` (a positive integer). It takes precedence over the other filters.
+
+### Patch Changes
+
+-   1dfaa7d: Financial entries on an event's Finance tab and on the Reconciliation
+    screen now link to the focused entry view. Each `#id` in the Payments
+    table's Budget entry column, the date of each cost entry, and the date of
+    each unmatched and matched reconciliation entry open that entry on the
+    Entries screen. When Fair Finance is unavailable, the event's references
+    stay plain text.
+-   6126ba9: A saved settlement now links to the Mollie dashboard of the organization it
+    was saved under: its Mollie settlement ID opens the settlements report, and
+    the payment IDs of its movements open their payments. Refunds, captures and
+    chargebacks link the payment they belong to. The Movements table ends with a Totals row that adds up the Settled
+    column per currency, keeps deductions negative, and says when rows with an
+    unknown amount were left out.
+-   211afc8: Spreadsheet imports now read files with SheetJS 0.20.3, which fixes the
+    prototype-pollution and denial-of-service problems of the release used before.
+    Bank-entry imports (.xlsx, .xls) and Mollie settlement CSV matching give the
+    same results as before.
+
+    A file that cannot be read as a spreadsheet now shows "Failed to parse file."
+    instead of an internal error message, and an empty settlement file is reported
+    as empty. Choosing another file while an earlier one is still being matched no
+    longer lets the earlier result appear next to the new file's error.
+
+-   Updated dependencies [dcdef69]
+-   Updated dependencies [8e7c2de]
+-   Updated dependencies [9321736]
+-   Updated dependencies [6906403]
+-   Updated dependencies [e25afe2]
+-   Updated dependencies [e1f6379]
+-   Updated dependencies [f00414c]
+    -   fair-payments-connector@2.5.0
+
 ## 1.2.0
 
 ### Minor Changes
