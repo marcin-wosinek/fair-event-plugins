@@ -149,6 +149,9 @@ jobs:
             - name: Validate agent workflows
               run: npm run validate:agent-workflows
 
+            - name: Reject browser-native popups
+              run: npm run validate:native-popups
+
             - name: Run unit tests
               run: |
                   npm test

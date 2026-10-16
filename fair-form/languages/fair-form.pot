@@ -2,14 +2,14 @@
 # This file is distributed under the Private.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Form 1.5.0\n"
+"Project-Id-Version: Fair Form 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-form\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-16T04:23:21+00:00\n"
+"POT-Creation-Date: 2026-10-16T07:21:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -101,7 +101,7 @@ msgstr ""
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:309
+#: src/Admin/submission-detail/SubmissionDetail.js:332
 msgid "Submission not found."
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 #: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:166
-#: src/Admin/submission-detail/SubmissionDetail.js:403
+#: src/Admin/submission-detail/SubmissionDetail.js:426
 msgid "Email"
 msgstr ""
 
@@ -242,21 +242,21 @@ msgid "Group by"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:380
+#: src/Admin/submission-detail/SubmissionDetail.js:403
 msgid "Page"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:177
 #: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:411
+#: src/Admin/submission-detail/SubmissionDetail.js:434
 msgid "Event"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
 #: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:376
+#: src/Admin/submission-detail/SubmissionDetail.js:399
 msgid "Form"
 msgstr ""
 
@@ -274,7 +274,7 @@ msgstr ""
 
 #: src/Admin/components/DeleteSubmissionDialog.js:104
 #: src/Admin/form-answers/FormAnswers.js:350
-#: src/Admin/submission-detail/SubmissionDetail.js:252
+#: src/Admin/submission-detail/SubmissionDetail.js:270
 msgid "Cancel"
 msgstr ""
 
@@ -318,12 +318,12 @@ msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:183
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:240
-#: src/Admin/submission-detail/SubmissionDetail.js:407
+#: src/Admin/submission-detail/SubmissionDetail.js:430
 msgid "Date"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:225
+#: src/Admin/submission-detail/SubmissionDetail.js:242
 msgid "Edit"
 msgstr ""
 
@@ -338,7 +338,7 @@ msgid "Delete"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:207
+#: src/Admin/submission-detail/SubmissionDetail.js:224
 msgid "— None —"
 msgstr ""
 
@@ -363,7 +363,7 @@ msgid "Retry"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:246
+#: src/Admin/submission-detail/SubmissionDetail.js:263
 msgid "Save"
 msgstr ""
 
@@ -418,7 +418,7 @@ msgid "Failed to add participants to group."
 msgstr ""
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:527
-#: src/Admin/submission-detail/SubmissionDetail.js:272
+#: src/Admin/submission-detail/SubmissionDetail.js:295
 msgid "Clipboard not available."
 msgstr ""
 
@@ -427,7 +427,7 @@ msgid "Message copied to clipboard."
 msgstr ""
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
-#: src/Admin/submission-detail/SubmissionDetail.js:290
+#: src/Admin/submission-detail/SubmissionDetail.js:313
 msgid "Failed to copy."
 msgstr ""
 
@@ -580,55 +580,51 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:196
-msgid "Error: "
+#: src/Admin/submission-detail/SubmissionDetail.js:212
+msgid "The event could not be changed. Try again."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:198
-msgid "Failed to update."
-msgstr ""
-
-#: src/Admin/submission-detail/SubmissionDetail.js:281
+#: src/Admin/submission-detail/SubmissionDetail.js:304
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:298
+#: src/Admin/submission-detail/SubmissionDetail.js:321
 msgid "No submission ID provided."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:347
+#: src/Admin/submission-detail/SubmissionDetail.js:370
 msgid "Form Submission"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:350
+#: src/Admin/submission-detail/SubmissionDetail.js:373
 msgid "Copy markdown"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:366
+#: src/Admin/submission-detail/SubmissionDetail.js:389
 msgid "Submission Info"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:388
+#: src/Admin/submission-detail/SubmissionDetail.js:411
 msgid "Submitted by"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:419
+#: src/Admin/submission-detail/SubmissionDetail.js:442
 msgid "Ticket"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:433
+#: src/Admin/submission-detail/SubmissionDetail.js:456
 msgid "Answers"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:438
+#: src/Admin/submission-detail/SubmissionDetail.js:461
 msgid "No answers recorded."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:446
+#: src/Admin/submission-detail/SubmissionDetail.js:469
 msgid "Question"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:447
+#: src/Admin/submission-detail/SubmissionDetail.js:470
 msgid "Answer"
 msgstr ""
 

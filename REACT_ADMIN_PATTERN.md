@@ -445,8 +445,8 @@ const ResourcesPage = () => {
 		}
 	};
 
-	// Destructive actions: confirm via ConfirmDialog naming the object —
-	// never window.confirm/alert. See UI_GUIDELINES.md.
+	// Destructive actions: confirm in a dialog naming the object — never
+	// window.confirm/alert. See "Popups and confirmations" below.
 	const handleDelete = async (id) => {
 		try {
 			await apiFetch({
@@ -737,6 +737,87 @@ import {
 } from '@wordpress/components';
 ```
 
+### Popups and confirmations
+
+The policy — what a confirmation must say, bulk, pending, error,
+accessibility and public-page rules — is canonical in
+[UI_GUIDELINES.md § Popups and confirmations](./UI_GUIDELINES.md#popups-and-confirmations).
+This section covers how to build it. `npm run validate:native-popups` fails
+CI on any `confirm()`, `alert()` or `prompt()` in the core plugins' `src/`.
+
+**Choosing the component**
+
+| Situation                                                          | Use                                                                                         |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Synchronous or instant confirmation (unsaved-changes choice)       | `__experimentalConfirmDialog as ConfirmDialog`                                              |
+| Confirmation whose action is an API call that can fail             | `Modal` with your own buttons, busy state and inline `Notice` (see `ConfirmActionModal`)    |
+| Input needed (assign, edit, create)                                | `Modal` containing the form; its submit button is the named action                          |
+| Explanation only                                                   | `Popover`/`Tooltip` or help text                                                            |
+| Result of an action                                                | `Notice` near the affected content, or a snackbar for a brief success                       |
+
+Core's `ConfirmDialog` closes as soon as Confirm is clicked and has no
+pending or error state, so an API failure can only be reported after the
+dialog is gone. For a request that can fail, follow
+`fair-events/src/Admin/components/ConfirmActionModal.js` (title, named and
+optionally destructive button, `isBusy` blocking every dismissal, inline
+error that keeps the dialog open). It is a plugin-local component — copy the
+pattern into your plugin rather than importing across plugins.
+
+**State ownership**
+
+The page or parent component owns the dialog state; the dialog renders it:
+
+```javascript
+// Which target is being confirmed (null = closed), whether the request
+// runs, and the last error. Derive everything else from these.
+const [ pendingDelete, setPendingDelete ] = useState( null );
+const [ isDeleting, setIsDeleting ] = useState( false );
+const [ deleteError, setDeleteError ] = useState( null );
+
+const confirmDelete = async () => {
+	if ( isDeleting ) {
+		return; // A double click can arrive before the re-render.
+	}
+	setIsDeleting( true );
+	setDeleteError( null );
+	try {
+		await apiFetch( {
+			path: `/plugin-name/v1/resources/${ pendingDelete.id }`,
+			method: 'DELETE',
+		} );
+		setPendingDelete( null ); // Close only on success.
+		setNotice( { status: 'success', message: __( 'Resource deleted.', 'plugin-name' ) } );
+	} catch ( err ) {
+		setDeleteError(
+			err?.message ||
+				__( 'The resource could not be deleted. Try again.', 'plugin-name' )
+		);
+	} finally {
+		setIsDeleting( false );
+	}
+};
+```
+
+-   Keep the target object (not just its ID) in state when opening the dialog,
+    so the text keeps naming it even if the list reloads underneath.
+-   Use a ref (`inFlight.current`) instead of state for the duplicate guard
+    when the dialog submits several requests at once, as
+    `fair-audience/src/Admin/components/DeleteParticipantsModal.js` does.
+-   For bulk actions, track one outcome per item (`Promise.all` of per-item
+    calls that never reject), report the successes, and keep the failed items
+    with their messages.
+-   For inline editors (no dialog), the same rules apply: keep the editor open
+    with the chosen value and show an error `Notice` beside it — see
+    `fair-form/src/Admin/submission-detail/SubmissionDetail.js` (`EventField`).
+
+**Testing**
+
+Cover the dialog in a component test: it names the target, the confirming
+button is disabled and Cancel blocked while pending, a failure shows the
+message and keeps input, and a retry succeeds. Query a `Notice`'s text with
+`{ selector: '.components-notice__content' }` — the a11y speak region repeats
+it.
+
 ## Example Implementations
 
 ### fair-audience (Most Complete — canonical)
@@ -907,7 +988,7 @@ const handleSubmit = async (e) => {
 
 ## See Also
 
--   [UI_GUIDELINES.md](./UI_GUIDELINES.md) - UX rules for admin pages (labels, save model, destructive actions, dates)
+-   [UI_GUIDELINES.md](./UI_GUIDELINES.md) - UX rules for admin pages (labels, save model, popups and confirmations, dates)
 -   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend REST API integration
 -   [REST_API_BACKEND.md](./REST_API_BACKEND.md) - Backend REST API security standards
 -   [TESTING.md](./TESTING.md) - Testing architecture
