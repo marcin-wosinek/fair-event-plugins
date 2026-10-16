@@ -292,13 +292,26 @@ class ClaudeProvider extends AIProvider {
 		const userPrompt = `Translate the following WordPress plugin strings to ${
 			config.localeNames[targetLocale]
 		}.
-Return a JSON object with a "translations" array containing the translated strings in the same order.
-Each translation should be a string value.
+Return a JSON object with a "translations" object that maps "t<index>" to the
+translated string for the input with that index (e.g. "t0", "t1", ...).
+Each translation should be a single string value.
+Never put the ASCII double quote character (") inside a translation; use the
+target language's typographic quotation marks instead (e.g. „…” or „…“).
 
 Input strings:
 ${JSON.stringify(inputStrings, null, 2)}
 
-Return format: {"translations": ["translation 1", "translation 2", ...]}`;
+Return format: {"translations": {"t0": "translation 1", "t1": "translation 2", ...}}`;
+
+		// One required key per input string, so the schema itself fixes the
+		// count: a translation containing quotes can no longer be split into
+		// extra entries.
+		const translationProperties = Object.fromEntries(
+			inputStrings.map(({ index, msgid }) => [
+				`t${index}`,
+				{ type: 'string', description: msgid },
+			])
+		);
 
 		// Use tool-use (structured output) so the API returns a validated
 		// JSON object instead of free-form text. This avoids parse failures
@@ -306,19 +319,26 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 		// especially for longer locales like German.
 		const translationTool = {
 			name: 'return_translations',
+			// Strict mode makes the API enforce the schema, so
+			// `translations` always comes back as a real object rather than
+			// a stringified one with unescaped quotes.
+			strict: true,
 			description:
 				'Return the translated strings in the same order and count as the input.',
 			input_schema: {
 				type: 'object',
 				properties: {
 					translations: {
-						type: 'array',
-						items: { type: 'string' },
+						type: 'object',
+						properties: translationProperties,
+						required: Object.keys(translationProperties),
+						additionalProperties: false,
 						description:
-							'Translated strings, one per input string, in the same order.',
+							'Translated strings keyed by "t<index>" of the input string.',
 					},
 				},
 				required: ['translations'],
+				additionalProperties: false,
 			},
 		};
 
@@ -396,6 +416,35 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 				}
 
 				let translations = result.translations;
+
+				// Keyed object from the strict schema -> ordered array.
+				if (
+					translations &&
+					typeof translations === 'object' &&
+					!Array.isArray(translations)
+				) {
+					const keyed = translations;
+					translations = inputStrings.map(
+						({ index }) => keyed[`t${index}`]
+					);
+					if (translations.some((t) => typeof t !== 'string')) {
+						translations = null;
+					}
+				}
+
+				// An ASCII `"` used to close a „…” quote ends the JSON string
+				// early, leaving a translation cut off after the opening „.
+				const truncated = (translations || []).find(
+					(t) =>
+						typeof t === 'string' &&
+						(t.match(/„/g) || []).length >
+							(t.match(/[”“]/g) || []).length
+				);
+				if (truncated) {
+					throw new Error(
+						`Claude returned a truncated translation: ${truncated}`
+					);
+				}
 
 				// Claude occasionally stringifies the array (e.g. under a
 				// long system prompt) instead of returning it structurally.
