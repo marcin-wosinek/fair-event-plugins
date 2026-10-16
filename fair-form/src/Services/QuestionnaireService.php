@@ -368,10 +368,10 @@ class QuestionnaireService {
 	 * @param WP_REST_Request $request        Request object.
 	 * @param array           $answers        Questionnaire answers to update.
 	 * @param int             $event_date_id  Unused; kept so existing callers keep their argument order.
-	 * @param int             $participant_id Participant ID to set as photo author.
+	 * @param int             $participant_id Unused; kept so existing callers keep their argument order.
 	 * @return array|WP_Error Updated answers array or error.
 	 */
-	public function process_file_uploads( $request, $answers, $event_date_id = 0, $participant_id = 0 ) {
+	public function process_file_uploads( $request, $answers, $event_date_id = 0, $participant_id = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- callers still pass both.
 		$files = $request->get_file_params();
 		if ( empty( $files ) ) {
 			return $answers;
@@ -460,13 +460,6 @@ class QuestionnaireService {
 			// Generate attachment metadata (thumbnails, etc.).
 			$attachment_metadata = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
 			wp_update_attachment_metadata( $attachment_id, $attachment_metadata );
-
-			// Set participant as photo author (guarded: fair-audience-experimental's
-			// `photos` bundle may be inactive).
-			if ( $participant_id > 0 && class_exists( '\FairAudienceExperimental\Database\PhotoParticipantRepository' ) ) {
-				$photo_participant_repo = new \FairAudienceExperimental\Database\PhotoParticipantRepository();
-				$photo_participant_repo->set_author( $attachment_id, $participant_id );
-			}
 
 			// Store attachment ID as the answer value.
 			$answer['answer_value'] = (string) $attachment_id;

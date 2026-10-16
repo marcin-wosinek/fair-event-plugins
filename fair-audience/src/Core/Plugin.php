@@ -63,6 +63,9 @@ class Plugin {
 		add_action( 'template_redirect', array( $this, 'handle_manage_subscription' ) );
 		add_action( 'template_redirect', array( $this, 'handle_unsubscribe_event_interest' ) );
 
+		// Old "Upload photos" email links answer 410 Gone.
+		\FairAudience\Frontend\RetiredPhotoUploadLinks::init();
+
 		// Deferred email dispatch: confirmation emails are scheduled rather than
 		// sent inline so a slow/unreachable mail transport can't make signup
 		// requests time out. See EmailService::defer().

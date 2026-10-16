@@ -6,7 +6,8 @@
  *   wp eval-file wp-content/mu-plugins/scripts/seed-retired-gallery.php
  *
  * Creates the legacy gallery tables with a photo link, a like and an access
- * key, an attachment authored by a participant, the old `galleries` feature
+ * key, an attachment authored by a participant (in the photo authors table
+ * that a later upgrade retires, #1689), the old `galleries` feature
  * choices, and rewinds both schema versions so the next WordPress load runs
  * the gallery cleanup again.
  *
@@ -23,6 +24,7 @@ global $wpdb;
 $charset = $wpdb->get_charset_collate();
 $wpdb->query( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}fair_events_event_photos (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, event_id BIGINT UNSIGNED NOT NULL, event_date_id BIGINT UNSIGNED DEFAULT NULL, attachment_id BIGINT UNSIGNED NOT NULL, PRIMARY KEY (id)) {$charset}" );
 $wpdb->query( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}fair_events_photo_likes (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, attachment_id BIGINT UNSIGNED NOT NULL, user_id BIGINT UNSIGNED DEFAULT NULL, participant_id BIGINT UNSIGNED DEFAULT NULL, PRIMARY KEY (id)) {$charset}" );
+$wpdb->query( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}fair_audience_photo_participants (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, attachment_id BIGINT UNSIGNED NOT NULL, participant_id BIGINT UNSIGNED NOT NULL, role ENUM('author', 'tagged') NOT NULL DEFAULT 'author', PRIMARY KEY (id)) {$charset}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed test-only DDL.
 $wpdb->query( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}fair_audience_gallery_access_keys (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, event_id BIGINT UNSIGNED NOT NULL, event_date_id BIGINT UNSIGNED NOT NULL, participant_id BIGINT UNSIGNED NOT NULL, access_key CHAR(64) NOT NULL, token CHAR(32) NOT NULL, PRIMARY KEY (id)) {$charset}" );
 
 $attachment_id = wp_insert_attachment(

@@ -50,13 +50,51 @@ if ( ! function_exists( 'update_option' ) ) {
 	/**
 	 * Stub of WordPress update_option() backed by $GLOBALS['_fair_test_options'].
 	 *
+	 * A callable registered as `$GLOBALS['wp_filter']['sanitize_option_{name}']['callback']`
+	 * sanitizes the value first, as the real sanitize_option() filter would.
+	 *
 	 * @param string $name  Option name.
 	 * @param mixed  $value Value to store.
 	 * @return bool Always true.
 	 */
 	function update_option( $name, $value ) {
+		$hook = 'sanitize_option_' . $name;
+		if ( isset( $GLOBALS['wp_filter'][ $hook ]['callback'] ) ) {
+			$value = call_user_func( $GLOBALS['wp_filter'][ $hook ]['callback'], $value );
+		}
 		$GLOBALS['_fair_test_options'][ $name ] = $value;
 		return true;
+	}
+}
+
+if ( ! function_exists( 'delete_metadata' ) ) {
+	/**
+	 * Stub of WordPress delete_metadata() for user meta of every user,
+	 * backed by the `user_meta` rows of the $wpdb double. The double's
+	 * `fail_meta_delete` flag leaves the rows in place.
+	 *
+	 * @param string $meta_type  Meta type (only 'user' is supported).
+	 * @param int    $object_id  Object ID (ignored: deletes for all).
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value (ignored).
+	 * @param bool   $delete_all Whether to delete for every object.
+	 * @return bool Whether any row was deleted.
+	 */
+	function delete_metadata( $meta_type, $object_id, $meta_key, $meta_value = '', $delete_all = false ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- kept param-compatible with the real signature.
+		$db = $GLOBALS['wpdb'];
+		if ( ! empty( $db->fail_meta_delete ) ) {
+			return false;
+		}
+		$before        = count( $db->user_meta );
+		$db->user_meta = array_values(
+			array_filter(
+				$db->user_meta,
+				function ( $row ) use ( $meta_key ) {
+					return $row[1] !== $meta_key;
+				}
+			)
+		);
+		return count( $db->user_meta ) < $before;
 	}
 }
 

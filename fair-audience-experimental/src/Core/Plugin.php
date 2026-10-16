@@ -151,18 +151,13 @@ class Plugin {
 
 	/**
 	 * Initialize hook-only bundles that ride alongside admin pages or REST
-	 * routes registered elsewhere: the media library integration
-	 * (`photos`), the scheduled-message cron/reschedule hooks
-	 * (`messaging`), and the stale-attachment cleanup sweep (`instagram`).
+	 * routes registered elsewhere: the scheduled-message cron/reschedule
+	 * hooks (`messaging`) and the stale-attachment cleanup sweep
+	 * (`instagram`).
 	 *
 	 * @return void
 	 */
 	private function load_hooks() {
-		if ( Features::is_enabled( 'photos' ) ) {
-			\FairAudienceExperimental\Admin\MediaLibraryHooks::init();
-			\FairAudienceExperimental\Admin\MediaBatchActions::init();
-		}
-
 		if ( Features::is_enabled( 'messaging' ) ) {
 			\FairAudienceExperimental\Hooks\ScheduledMessageHooks::init();
 		}
@@ -286,24 +281,6 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'photos' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairAudienceExperimental\API\PhotoUploadController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairAudienceExperimental\API\PhotoTagsController();
-					$controller->register_routes();
-				}
-			);
-		}
-
 		if ( Features::is_enabled( 'messaging' ) ) {
 			add_action(
 				'rest_api_init',
@@ -343,9 +320,6 @@ class Plugin {
 				if ( Features::is_enabled( 'collaborators' ) ) {
 					$vars[] = 'collaborator_profile';
 				}
-				if ( Features::is_enabled( 'photos' ) ) {
-					$vars[] = 'photo_upload';
-				}
 				return $vars;
 			}
 		);
@@ -360,10 +334,6 @@ class Plugin {
 
 		if ( Features::is_enabled( 'collaborators' ) ) {
 			add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
-		}
-
-		if ( Features::is_enabled( 'photos' ) ) {
-			add_action( 'template_redirect', array( $this, 'handle_photo_upload' ) );
 		}
 
 		if ( Features::is_enabled( 'instagram' ) ) {
@@ -400,22 +370,6 @@ class Plugin {
 		}
 
 		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/fee-payment.php';
-		exit;
-	}
-
-	/**
-	 * Handle photo upload page requests.
-	 *
-	 * @return void
-	 */
-	public function handle_photo_upload() {
-		$photo_upload = get_query_var( 'photo_upload' );
-
-		if ( empty( $photo_upload ) ) {
-			return;
-		}
-
-		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/photo-upload.php';
 		exit;
 	}
 

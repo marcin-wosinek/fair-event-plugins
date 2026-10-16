@@ -13,11 +13,6 @@ import { Button, TextControl, Spinner } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
- * Internal dependencies
- */
-import { PHOTO_UPLOAD_PLACEHOLDER } from './mail-content.js';
-
-/**
  * Email body editor.
  *
  * Wraps the classic WordPress editor (TinyMCE, with a plain textarea when it
@@ -35,11 +30,10 @@ import { PHOTO_UPLOAD_PLACEHOLDER } from './mail-content.js';
  * @param {Function} props.onChange      Called with the next HTML.
  * @param {boolean}  props.disabled      Whether editing is locked.
  * @param {boolean}  props.eventSelected Whether an event is chosen.
- * @param {boolean}  props.photoUpload   Whether photo upload links work.
  * @return {JSX.Element} The editor.
  */
 const ContentEditor = forwardRef( function ContentEditor(
-	{ id, value, onChange, disabled, eventSelected, photoUpload },
+	{ id, value, onChange, disabled, eventSelected },
 	ref
 ) {
 	const textareaRef = useRef( null );
@@ -209,21 +203,6 @@ const ContentEditor = forwardRef( function ContentEditor(
 			/>
 
 			<div className="fair-audience-custom-mail__links">
-				{ photoUpload && (
-					<Button
-						variant="secondary"
-						size="small"
-						onClick={ () =>
-							insertPlaceholderLink(
-								PHOTO_UPLOAD_PLACEHOLDER,
-								__( 'Upload photos', 'fair-audience' )
-							)
-						}
-						disabled={ disabled }
-					>
-						{ __( 'Insert photo upload link', 'fair-audience' ) }
-					</Button>
-				) }
 				<Button
 					variant="secondary"
 					size="small"

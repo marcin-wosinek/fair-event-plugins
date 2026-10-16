@@ -14,8 +14,9 @@ defined( 'WPINC' ) || die;
  *
  * Drops the gallery access keys table and moves the stored
  * fair-audience-experimental `galleries` choice onto the `photos` bundle,
- * which carries the retained photo upload and attribution features. Photo
- * author/tag records and media attachments are kept. Every step is a no-op
+ * which carried the photo upload and attribution features until
+ * {@see PhotoCleanup} retired them. Photo author/tag records and media
+ * attachments are kept. Every step is a no-op
  * when already done, so the cleanup can be repeated after a partial failure
  * and works whether or not the companion plugin is active.
  *

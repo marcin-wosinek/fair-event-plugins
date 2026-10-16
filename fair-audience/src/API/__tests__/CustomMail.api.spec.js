@@ -5,7 +5,7 @@
  * permissions, input validation, occurrence-scoped recipient selection,
  * label filters and exclusions, consent and invalid addresses, transport
  * failures, mail history, and the rules that apply when the experimental
- * messaging, groups and photos features are off (standalone Fair Audience).
+ * messaging and groups features are off (standalone Fair Audience).
  *
  * Outgoing mail is captured, never sent, by the test-only mu-plugins in
  * `e2e/mu-plugins/` (see e2e/README.md § Capturing email).
@@ -175,7 +175,6 @@ test.describe( 'CustomMailController', () => {
 			await setFeatures( {
 				messaging: true,
 				groups: true,
-				photos: true,
 			} );
 		}
 		for ( const mail of await history() ) {
@@ -493,7 +492,6 @@ test.describe( 'CustomMailController', () => {
 			await setFeatures( {
 				messaging: false,
 				groups: false,
-				photos: false,
 			} );
 		}
 		const subject = subjectFor( 'standalone' );
@@ -516,12 +514,14 @@ test.describe( 'CustomMailController', () => {
 		expect( groupFilter.status ).toBe( 400 );
 		expect( groupFilter.body.code ).toBe( 'groups_unavailable' );
 
+		// The retired photo upload link (#1689) is dropped when sending, so
+		// a message holding nothing else is empty.
 		const photoLink = await send( {
 			...scoped,
 			content: '<p><a href="{photo_upload_url}">Upload</a></p>',
 		} );
 		expect( photoLink.status ).toBe( 400 );
-		expect( photoLink.body.code ).toBe( 'unsupported_placeholder' );
+		expect( photoLink.body.code ).toBe( 'empty_content' );
 
 		const groups = await api.get(
 			'/wp-json/fair-audience/v1/custom-mail/groups',
@@ -552,7 +552,7 @@ test.describe( 'CustomMailController', () => {
 			! companionActive,
 			'fair-audience-experimental is not active on this site'
 		);
-		await setFeatures( { messaging: true, groups: true, photos: true } );
+		await setFeatures( { messaging: true, groups: true } );
 
 		const everyone = await preview( { is_marketing: true } );
 		expect( everyone.status ).toBe( 200 );

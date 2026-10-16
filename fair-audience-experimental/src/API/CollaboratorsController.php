@@ -57,7 +57,7 @@ class CollaboratorsController extends WP_REST_Controller {
 					'orderby'  => array(
 						'type'    => 'string',
 						'default' => 'surname',
-						'enum'    => array( 'surname', 'email', 'photo_count', 'event_count' ),
+						'enum'    => array( 'surname', 'email', 'event_count' ),
 					),
 					'order'    => array(
 						'type'    => 'string',
@@ -81,7 +81,7 @@ class CollaboratorsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Get collaborators with photo and event counts.
+	 * Get collaborators with event counts.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
@@ -97,23 +97,15 @@ class CollaboratorsController extends WP_REST_Controller {
 
 		$participants_table       = $wpdb->prefix . 'fair_audience_participants';
 		$event_participants_table = $wpdb->prefix . 'fair_audience_event_participants';
-		$photo_participants_table = $wpdb->prefix . 'fair_audience_photo_participants';
 
 		// Base query to get collaborators with counts.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$base_query = "
 			SELECT p.*,
-				COUNT(DISTINCT ep.event_id) as event_count,
-				COALESCE(pc.photo_count, 0) as photo_count
+				COUNT(DISTINCT ep.event_id) as event_count
 			FROM %i p
 			INNER JOIN %i ep
 				ON p.id = ep.participant_id AND ep.label = 'collaborator'
-			LEFT JOIN (
-				SELECT pp.participant_id, COUNT(DISTINCT pp.attachment_id) as photo_count
-				FROM %i pp
-				WHERE pp.role = 'author'
-				GROUP BY pp.participant_id
-			) pc ON p.id = pc.participant_id
 		";
 
 		// Build WHERE clause for search.
@@ -130,9 +122,6 @@ class CollaboratorsController extends WP_REST_Controller {
 		switch ( $orderby ) {
 			case 'email':
 				$order_clause .= "p.email {$order}";
-				break;
-			case 'photo_count':
-				$order_clause .= "photo_count {$order}";
 				break;
 			case 'event_count':
 				$order_clause .= "event_count {$order}";
@@ -169,7 +158,7 @@ class CollaboratorsController extends WP_REST_Controller {
 		$full_query = "{$base_query} {$where_clause} GROUP BY p.id {$order_clause} LIMIT %d OFFSET %d";
 
 		$query_params = array_merge(
-			array( $participants_table, $event_participants_table, $photo_participants_table ),
+			array( $participants_table, $event_participants_table ),
 			$where_params,
 			array( $per_page, $offset )
 		);
@@ -183,13 +172,11 @@ class CollaboratorsController extends WP_REST_Controller {
 		$items = array_map(
 			function ( $row ) {
 				return array(
-					'id'                => (int) $row['id'],
-					'name'              => $row['name'],
-					'surname'           => $row['surname'],
-					'email'             => $row['email'],
-					'photo_count'       => (int) $row['photo_count'],
-					'event_count'       => (int) $row['event_count'],
-					'media_library_url' => admin_url( 'upload.php?mode=list&fair_photo_author_filter=' . (int) $row['id'] ),
+					'id'          => (int) $row['id'],
+					'name'        => $row['name'],
+					'surname'     => $row['surname'],
+					'email'       => $row['email'],
+					'event_count' => (int) $row['event_count'],
 				);
 			},
 			$results

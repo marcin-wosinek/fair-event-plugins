@@ -162,6 +162,46 @@ with `wp db import pre-gallery-removal.sql`, then set
 to `1.43.0` if the restored options do not already hold those values, and
 flush permalinks (`wp rewrite flush`) so `/event-gallery/{id}` resolves again.
 
+## Upgrade notes: photo authors, tags and upload page removal (#1689)
+
+Upgrading to fair-audience DB version `1.46.0` permanently deletes the photo
+attribution data on the first request after deploy:
+
+-   the table `{prefix}fair_audience_photo_participants` (who took and who
+    appears in each photo);
+-   the `fair_audience_bulk_upload_author` and `fair_audience_bulk_upload_tags`
+    user meta;
+-   the `photos` key of `fair_audience_experimental_features`.
+
+Media attachments and their files, posts that use them, events and
+participants are not touched. The Photos bundle no longer exists, so a
+`FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_PHOTOS` constant in `wp-config.php` has
+no effect any more and can be removed. Old "Upload photos" links
+(`?photo_upload=1`) answer 410 Gone, and a `{photo_upload_url}` link in a saved
+message is left out when it is sent.
+
+**Update fair-audience-experimental first**, then fair-audience and
+fair-form. That removes the old code that writes attribution before
+fair-audience drops its table. Either order works without errors, but an
+outdated companion keeps its media screen fields and Collaborators photo
+column, which then read a missing table, until it is updated.
+
+**Before deploying to production,** back up the database, at least the
+affected tables and options:
+
+```bash
+wp db export pre-photo-removal.sql --tables=$(wp db tables '*fair_audience_photo_participants' '*options' '*usermeta' --format=csv)
+```
+
+The cleanup is retried on every request until it succeeds, and the new DB
+version is recorded only after every step succeeded. If it keeps failing,
+check the PHP error log for the `DROP TABLE` error.
+
+**To roll back** (redeploy the previous plugin versions), restore the backup
+with `wp db import pre-photo-removal.sql`, then set
+`fair_audience_db_version` back to `1.45.0` if the restored options do not
+already hold that value.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

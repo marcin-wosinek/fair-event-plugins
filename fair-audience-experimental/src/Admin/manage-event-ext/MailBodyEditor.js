@@ -2,8 +2,8 @@
  * Mail Body Editor
  *
  * Controlled textarea for composing a scheduled-message body, with the same
- * placeholder-insertion affordances as fair-audience's custom-mail page (photo
- * upload link, manage-subscription link, tokenized page link) plus the
+ * placeholder-insertion affordances as fair-audience's custom-mail page
+ * (manage-subscription link, tokenized page link) plus the
  * per-recipient/per-message tokens scheduled mailings support.
  *
  * @package FairAudience
@@ -79,7 +79,7 @@ export default function MailBodyEditor( { value, onChange, disabled } ) {
 	/**
 	 * Insert a placeholder link, wrapping the current selection as link text.
 	 *
-	 * @param {string} placeholder Href placeholder, e.g. '{photo_upload_url}'.
+	 * @param {string} placeholder Href placeholder, e.g. '{event_page_url}'.
 	 * @param {string} defaultText Link text when nothing is selected.
 	 */
 	const insertPlaceholderLink = ( placeholder, defaultText ) => {
@@ -148,22 +148,6 @@ export default function MailBodyEditor( { value, onChange, disabled } ) {
 					gap: '8px',
 				} }
 			>
-				<Button
-					variant="secondary"
-					isSmall
-					onClick={ () =>
-						insertPlaceholderLink(
-							'{photo_upload_url}',
-							__( 'Upload photos', 'fair-audience-experimental' )
-						)
-					}
-					disabled={ disabled }
-				>
-					{ __(
-						'Insert photo upload link',
-						'fair-audience-experimental'
-					) }
-				</Button>
 				<Button
 					variant="secondary"
 					isSmall
