@@ -949,3 +949,15 @@ if ( ! function_exists( 'wp_kses_post' ) ) {
 		return (string) preg_replace( '#<script\b[^>]*>.*?</script>#is', '', (string) $content );
 	}
 }
+
+if ( ! function_exists( 'get_posts' ) ) {
+	/**
+	 * Stub of WordPress get_posts() — the test database holds no posts.
+	 *
+	 * @param array $args Query arguments.
+	 * @return array Always empty.
+	 */
+	function get_posts( $args = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- signature matches WordPress.
+		return array();
+	}
+}

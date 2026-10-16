@@ -22,9 +22,68 @@ class Installer {
 	 * @return void
 	 */
 	public static function install() {
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
+		// Classify before creating tables: afterwards every site has them.
+		$fresh_install   = self::is_fresh_install();
 		$current_version = Schema::get_db_version();
+
+		self::create_tables();
+
+		// A fresh site gets the current schema directly; there is no data for
+		// the historical migrations to upgrade, and some of them query tables
+		// that would not exist yet.
+		if ( $fresh_install ) {
+			Schema::update_db_version( Schema::DB_VERSION );
+			return;
+		}
+
+		self::run_install_migrations( $current_version );
+	}
+
+	/**
+	 * Whether this site has never had Fair Events installed.
+	 *
+	 * Conservative: a missing version option alone is not enough, because
+	 * version 0.0.0 also covers sites whose events still live in post meta
+	 * and sites whose option was removed while their tables remained.
+	 *
+	 * @return bool True when there is no version, no table and no legacy event.
+	 */
+	private static function is_fresh_install() {
+		global $wpdb;
+
+		if ( Schema::has_db_version() ) {
+			return false;
+		}
+
+		// Matches current and retired tables, both fair_event_* and fair_events_*.
+		$existing_table = $wpdb->get_var(
+			$wpdb->prepare(
+				'SHOW TABLES LIKE %s',
+				$wpdb->esc_like( $wpdb->prefix . 'fair_event' ) . '%'
+			)
+		);
+		if ( null !== $existing_table ) {
+			return false;
+		}
+
+		$legacy_event = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT ID FROM %i WHERE post_type = %s LIMIT 1',
+				$wpdb->posts,
+				'fair_event'
+			)
+		);
+
+		return null === $legacy_event;
+	}
+
+	/**
+	 * Create or update every current table with dbDelta().
+	 *
+	 * @return void
+	 */
+	private static function create_tables() {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$sql = Schema::get_event_dates_table_sql();
 		dbDelta( $sql );
@@ -96,7 +155,16 @@ class Installer {
 		// Version 3.43.0 - Schedule items table (no data migration needed, table created by dbDelta).
 		$sql = Schema::get_schedule_items_table_sql();
 		dbDelta( $sql );
+	}
 
+	/**
+	 * Run the migrations an existing installation still needs after its
+	 * tables were created or updated, then record the reached version.
+	 *
+	 * @param string $current_version Version stored before this run.
+	 * @return void
+	 */
+	private static function run_install_migrations( $current_version ) {
 		// Run migration if upgrading from pre-1.0.0.
 		if ( version_compare( $current_version, '1.0.0', '<' ) ) {
 			self::migrate_to_1_0_0();
@@ -392,6 +460,13 @@ class Installer {
 	 */
 	public static function maybe_upgrade() {
 		if ( self::needs_upgrade() ) {
+			// A fresh site has nothing to migrate, and the migrations below
+			// would run before install() creates the tables they touch.
+			if ( self::is_fresh_install() ) {
+				self::install();
+				return;
+			}
+
 			$current_version = Schema::get_db_version();
 
 			// Run migrations.
