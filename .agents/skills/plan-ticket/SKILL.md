@@ -9,7 +9,7 @@ Resolve an issue number or URL, then read the issue and all discussion. Ground t
 
 Structure the plan in implementable layers such as access/URL, frontend, backend, data, and tests. Re-check the ticket's open questions against the code, drop questions already resolved by current behavior, and add newly discovered forks. Recommend an option and explain the alternative for each real fork.
 
-End the draft with `## Read first` and list the exact applicable repository reference docs. Present the full plan in chat and resolve every fork with the user. Do not post while any decision is unresolved or before explicit approval.
+End the draft with `## Read first` and list the exact applicable repository reference docs. Present the full plan in chat and resolve every fork with the user. Open the chat presentation with the issue number and link, the issue title, and its summary (the issue's own Summary section, or a one-to-two-sentence restatement when it has none), so the user can regain context at a glance; this header is chat-only and stays out of the posted comment. Do not post while any decision is unresolved or before explicit approval.
 
 The approved GitHub comment must begin with `## Implementation plan`, contain resolved outcomes under `## Decisions`, and end with `## Read first`. Post it with a temporary body file, remove that file afterward, and do not add AI attribution.
 
