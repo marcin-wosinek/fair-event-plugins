@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-13T04:51:17+00:00\n"
+"POT-Creation-Date: 2026-10-16T04:23:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -188,7 +188,7 @@ msgid "All selected photos will be attributed to this author."
 msgstr ""
 
 #: src/Admin/MediaBatchActions.php:257
-#: src/Admin/edit-extra-message/EditExtraMessage.js:272
+#: src/Admin/edit-extra-message/EditExtraMessage.js:278
 #: src/Admin/fee-detail/FeeDetail.js:1057
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
@@ -279,20 +279,20 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: src/API/EventInvitationsController.php:107
+#: src/API/EventInvitationsController.php:139
 msgid "You do not have permission to send event invitations."
 msgstr ""
 
-#: src/API/EventInvitationsController.php:132
+#: src/API/EventInvitationsController.php:164
 #: src/API/ScheduledMessagesController.php:380
 msgid "Event date not found."
 msgstr ""
 
-#: src/API/EventInvitationsController.php:143
+#: src/API/EventInvitationsController.php:175
 msgid "Event not found."
 msgstr ""
 
-#: src/API/EventInvitationsController.php:152
+#: src/API/EventInvitationsController.php:184
 msgid "Please specify participant IDs or group IDs."
 msgstr ""
 
@@ -1297,7 +1297,7 @@ msgstr ""
 msgid "Update Message"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:265
+#: src/Admin/edit-extra-message/EditExtraMessage.js:268
 msgid "Create Message"
 msgstr ""
 

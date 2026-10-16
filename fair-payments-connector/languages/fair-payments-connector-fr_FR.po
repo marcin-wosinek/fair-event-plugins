@@ -237,7 +237,7 @@ msgstr "Nom"
 
 #: src/Admin/transaction/TransactionPage.js:1111
 #: src/Admin/transaction/TransactionPage.js:1177
-#: src/Admin/transactions/TransactionsApp.js:901
+#: src/Admin/transactions/TransactionsApp.js:910
 msgid "Description"
 msgstr "Description"
 
@@ -270,20 +270,20 @@ msgid "Event"
 msgstr "Événement"
 
 #: src/Admin/transaction/TransactionPage.js:988
-#: src/Admin/transactions/TransactionsApp.js:865
+#: src/Admin/transactions/TransactionsApp.js:874
 #: src/blocks/simple-payment/index.js:118
 msgid "Amount"
 msgstr "Montant"
 
-#: src/Admin/transactions/TransactionsApp.js:920
+#: src/Admin/transactions/TransactionsApp.js:929
 msgid "Date"
 msgstr "Date"
 
-#: src/Admin/transactions/TransactionsApp.js:725
+#: src/Admin/transactions/TransactionsApp.js:734
 msgid "Import"
 msgstr "Importer"
 
-#: src/Admin/transactions/TransactionsApp.js:349
+#: src/Admin/transactions/TransactionsApp.js:358
 msgid "Failed to load transactions."
 msgstr "Impossible de charger les transactions."
 
@@ -294,12 +294,12 @@ msgid "Remove"
 msgstr "Supprimer"
 
 #: src/Admin/settings/AuditLogTab.js:182
-#: src/Admin/transactions/TransactionsApp.js:1057
+#: src/Admin/transactions/TransactionsApp.js:1085
 msgid "Previous"
 msgstr "Précédent"
 
 #: src/Admin/settings/AuditLogTab.js:200
-#: src/Admin/transactions/TransactionsApp.js:1074
+#: src/Admin/transactions/TransactionsApp.js:1102
 msgid "Next"
 msgstr "Suivant"
 
@@ -326,8 +326,8 @@ msgstr "Passage en mode %s."
 #: src/Admin/external-updates/components/MollieImportPanel.js:301
 #: src/Admin/settings/ConnectionTab.js:358
 #: src/Admin/transaction/TransactionPage.js:1040
-#: src/Admin/transactions/TransactionsApp.js:43
-#: src/Admin/transactions/TransactionsApp.js:989
+#: src/Admin/transactions/TransactionsApp.js:49
+#: src/Admin/transactions/TransactionsApp.js:998
 msgid "Test"
 msgstr "Test"
 
@@ -335,8 +335,8 @@ msgstr "Test"
 #: src/Admin/external-updates/components/MollieImportPanel.js:308
 #: src/Admin/settings/ConnectionTab.js:359
 #: src/Admin/transaction/TransactionPage.js:1044
-#: src/Admin/transactions/TransactionsApp.js:42
-#: src/Admin/transactions/TransactionsApp.js:993
+#: src/Admin/transactions/TransactionsApp.js:48
+#: src/Admin/transactions/TransactionsApp.js:1002
 msgid "Live"
 msgstr "En direct"
 
@@ -399,8 +399,8 @@ msgstr "Le jeton expire : %s"
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
 #: src/Admin/settings/ConnectionTab.js:1112
 #: src/Admin/transaction/TransactionPage.js:1021
-#: src/Admin/transactions/TransactionsApp.js:567
-#: src/Admin/transactions/TransactionsApp.js:890
+#: src/Admin/transactions/TransactionsApp.js:576
+#: src/Admin/transactions/TransactionsApp.js:899
 msgid "Mode"
 msgstr "Mode"
 
@@ -464,12 +464,12 @@ msgid "Payment Details"
 msgstr "Détails du Paiement"
 
 #: src/Admin/transaction/TransactionPage.js:997
-#: src/Admin/transactions/TransactionsApp.js:871
+#: src/Admin/transactions/TransactionsApp.js:880
 msgid "Mollie Fee"
 msgstr "Frais Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:1009
-#: src/Admin/transactions/TransactionsApp.js:877
+#: src/Admin/transactions/TransactionsApp.js:886
 msgid "Integration Fee"
 msgstr "Frais d'Intégration"
 
@@ -480,8 +480,8 @@ msgstr "Statut et Timing"
 #: src/Admin/settings/ApiTokensTab.js:273
 #: src/Admin/settings/ApiTokensTab.js:334
 #: src/Admin/transaction/TransactionPage.js:1068
-#: src/Admin/transactions/TransactionsApp.js:554
-#: src/Admin/transactions/TransactionsApp.js:884
+#: src/Admin/transactions/TransactionsApp.js:563
+#: src/Admin/transactions/TransactionsApp.js:893
 msgid "Status"
 msgstr "Statut"
 
@@ -539,57 +539,57 @@ msgstr "URL du webhook"
 msgid "Checkout URL"
 msgstr "URL de paiement"
 
-#: src/Admin/transactions/TransactionsApp.js:27
+#: src/Admin/transactions/TransactionsApp.js:33
 msgid "All statuses"
 msgstr "Tous les statuts"
 
-#: src/Admin/transactions/TransactionsApp.js:28
+#: src/Admin/transactions/TransactionsApp.js:34
 msgid "Paid"
 msgstr "Payé"
 
-#: src/Admin/transactions/TransactionsApp.js:29
+#: src/Admin/transactions/TransactionsApp.js:35
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/transactions/TransactionsApp.js:30
+#: src/Admin/transactions/TransactionsApp.js:36
 msgid "Open"
 msgstr "Ouvert"
 
 #: src/Admin/external-updates/format.js:95
-#: src/Admin/transactions/TransactionsApp.js:31
+#: src/Admin/transactions/TransactionsApp.js:37
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/transactions/TransactionsApp.js:32
+#: src/Admin/transactions/TransactionsApp.js:38
 msgid "Canceled"
 msgstr "Annulé"
 
-#: src/Admin/transactions/TransactionsApp.js:33
+#: src/Admin/transactions/TransactionsApp.js:39
 msgid "Expired"
 msgstr "Expiré"
 
-#: src/Admin/transactions/TransactionsApp.js:34
+#: src/Admin/transactions/TransactionsApp.js:40
 msgid "Draft"
 msgstr "Brouillon"
 
-#: src/Admin/transactions/TransactionsApp.js:36
+#: src/Admin/transactions/TransactionsApp.js:42
 msgid "Pending payment"
 msgstr "Paiement en attente"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:83
-#: src/Admin/transactions/TransactionsApp.js:44
+#: src/Admin/transactions/TransactionsApp.js:50
 msgid "All modes"
 msgstr "Tous les modes"
 
-#: src/Admin/transactions/TransactionsApp.js:515
+#: src/Admin/transactions/TransactionsApp.js:524
 msgid "Payment Transactions"
 msgstr "Transactions de paiement"
 
-#: src/Admin/transactions/TransactionsApp.js:828
+#: src/Admin/transactions/TransactionsApp.js:837
 msgid "No transactions found."
 msgstr "Aucune transaction trouvée."
 
-#: src/Admin/transactions/TransactionsApp.js:858
+#: src/Admin/transactions/TransactionsApp.js:867
 msgid "ID"
 msgstr "ID"
 
@@ -621,7 +621,7 @@ msgid "Simple payment block for WordPress"
 msgstr "Bloc de paiement simple pour WordPress"
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:489
+#: src/Admin/transactions/TransactionsApp.js:498
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr "%d transaction(s) exportée(s)."
@@ -638,7 +638,7 @@ msgstr "Aucune transaction valide trouvée dans le fichier."
 msgid "Failed to import transactions."
 msgstr "Échec de l'importation des transactions."
 
-#: src/Admin/transactions/TransactionsApp.js:693
+#: src/Admin/transactions/TransactionsApp.js:702
 msgid "Export Selected"
 msgstr "Exporter la sélection"
 
@@ -691,7 +691,7 @@ msgstr "Voir la réponse Mollie"
 msgid "Participant"
 msgstr "Participant"
 
-#: src/Admin/transactions/TransactionsApp.js:907
+#: src/Admin/transactions/TransactionsApp.js:916
 msgid "Person"
 msgstr "Personne"
 
@@ -801,7 +801,7 @@ msgstr "Ajouter"
 msgid "Failed to update."
 msgstr "Échec de la mise à jour."
 
-#: src/Admin/transactions/TransactionsApp.js:913
+#: src/Admin/transactions/TransactionsApp.js:922
 msgid "Entry"
 msgstr "Entrée"
 
@@ -895,7 +895,7 @@ msgstr "Forcé par une constante wp-config — modifiez-la là."
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
-#: src/Admin/AdminPages.php:255
+#: src/Admin/AdminPages.php:261
 msgid "Set up"
 msgstr "Configurer"
 
@@ -1234,7 +1234,7 @@ msgstr "Suppression en cours…"
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
 msgstr "Seul l'enregistrement de transaction local et ses données locales exclusivement détenues sont supprimés. Le paiement dans Mollie ou tout autre service externe n'est pas annulé, remboursé ou supprimé."
 
-#: src/Admin/transactions/TransactionsApp.js:295
+#: src/Admin/transactions/TransactionsApp.js:304
 msgid "Transaction deleted. The payment in Mollie or any other external service was not changed."
 msgstr "Transaction supprimée. Le paiement dans Mollie ou tout autre service externe n'a pas été modifié."
 
@@ -1517,7 +1517,7 @@ msgid "Only paid transactions are counted, in the month they were created (UTC).
 msgstr "Seules les transactions payées sont comptées, dans le mois de leur création (UTC). Le montant calculé après frais correspond au total payé moins les commissions Fair Event et Mollie enregistrées."
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:344
-#: src/Admin/transactions/TransactionsApp.js:762
+#: src/Admin/transactions/TransactionsApp.js:771
 msgid "Try again"
 msgstr "Réessayer"
 
@@ -1785,12 +1785,12 @@ msgid "Test mode"
 msgstr "Mode test"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:103
-#: src/Admin/transactions/TransactionsApp.js:711
+#: src/Admin/transactions/TransactionsApp.js:720
 msgid "Loading fees…"
 msgstr "Chargement des frais…"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:107
-#: src/Admin/transactions/TransactionsApp.js:715
+#: src/Admin/transactions/TransactionsApp.js:724
 msgid "Load missing Mollie fees"
 msgstr "Charger les frais Mollie manquants"
 
@@ -2294,7 +2294,7 @@ msgid "Enter a valid date as YYYY-MM-DD."
 msgstr "Saisissez une date valide au format AAAA-MM-JJ."
 
 #: src/API/TransactionsController.php:1174
-#: src/Admin/transactions/TransactionsApp.js:98
+#: src/Admin/transactions/TransactionsApp.js:104
 msgid "Enter an amount of zero or more with at most two decimal places."
 msgstr "Saisissez un montant supérieur ou égal à zéro avec au plus deux décimales."
 
@@ -2302,113 +2302,113 @@ msgstr "Saisissez un montant supérieur ou égal à zéro avec au plus deux déc
 msgid "Enter a search of at most 200 characters."
 msgstr "Saisissez une recherche de 200 caractères au maximum."
 
-#: src/Admin/transactions/TransactionsApp.js:112
+#: src/Admin/transactions/TransactionsApp.js:118
 msgid "The maximum amount must not be less than the minimum amount."
 msgstr "Le montant maximum ne doit pas être inférieur au montant minimum."
 
-#: src/Admin/transactions/TransactionsApp.js:119
+#: src/Admin/transactions/TransactionsApp.js:125
 msgid "The end date must be on or after the start date."
 msgstr "La date de fin doit être postérieure ou égale à la date de début."
 
 #. translators: %s is the selected transaction status, e.g. "Paid".
-#: src/Admin/transactions/TransactionsApp.js:138
+#: src/Admin/transactions/TransactionsApp.js:144
 #, js-format
 msgid "Status: %s"
 msgstr "Statut : %s"
 
 #. translators: %s is the selected payment mode, e.g. "Live".
-#: src/Admin/transactions/TransactionsApp.js:143
+#: src/Admin/transactions/TransactionsApp.js:149
 #, js-format
 msgid "Mode: %s"
 msgstr "Mode : %s"
 
 #. translators: %s is the text the organizer searched for.
-#: src/Admin/transactions/TransactionsApp.js:152
+#: src/Admin/transactions/TransactionsApp.js:158
 #, js-format
 msgid "Search: %s"
 msgstr "Recherche : %s"
 
 #. translators: %s is a date, e.g. 2026-03-01.
-#: src/Admin/transactions/TransactionsApp.js:161
+#: src/Admin/transactions/TransactionsApp.js:167
 #, js-format
 msgid "From %s"
 msgstr "À partir du %s"
 
 #. translators: %s is a date, e.g. 2026-03-31.
-#: src/Admin/transactions/TransactionsApp.js:170
+#: src/Admin/transactions/TransactionsApp.js:176
 #, js-format
 msgid "Until %s"
 msgstr "Jusqu’au %s"
 
 #. translators: %s is an amount, e.g. 10.00.
-#: src/Admin/transactions/TransactionsApp.js:179
+#: src/Admin/transactions/TransactionsApp.js:185
 #, js-format
 msgid "Amount at least %s"
 msgstr "Montant d’au moins %s"
 
 #. translators: %s is an amount, e.g. 50.00.
-#: src/Admin/transactions/TransactionsApp.js:188
+#: src/Admin/transactions/TransactionsApp.js:194
 #, js-format
 msgid "Amount at most %s"
 msgstr "Montant d’au plus %s"
 
-#: src/Admin/transactions/TransactionsApp.js:528
+#: src/Admin/transactions/TransactionsApp.js:537
 msgid "Filter transactions"
 msgstr "Filtrer les transactions"
 
-#: src/Admin/transactions/TransactionsApp.js:537
+#: src/Admin/transactions/TransactionsApp.js:546
 msgid "Search"
 msgstr "Rechercher"
 
-#: src/Admin/transactions/TransactionsApp.js:541
+#: src/Admin/transactions/TransactionsApp.js:550
 msgid "Transaction ID, Mollie payment ID, description, or person name or email."
 msgstr "ID de transaction, ID de paiement Mollie, description, ou nom ou e-mail de la personne."
 
-#: src/Admin/transactions/TransactionsApp.js:581
+#: src/Admin/transactions/TransactionsApp.js:590
 msgid "From date"
 msgstr "Date de début"
 
-#: src/Admin/transactions/TransactionsApp.js:594
+#: src/Admin/transactions/TransactionsApp.js:603
 msgid "To date"
 msgstr "Date de fin"
 
-#: src/Admin/transactions/TransactionsApp.js:610
+#: src/Admin/transactions/TransactionsApp.js:619
 msgid "Minimum amount"
 msgstr "Montant minimum"
 
-#: src/Admin/transactions/TransactionsApp.js:626
+#: src/Admin/transactions/TransactionsApp.js:635
 msgid "Maximum amount"
 msgstr "Montant maximum"
 
-#: src/Admin/transactions/TransactionsApp.js:639
+#: src/Admin/transactions/TransactionsApp.js:648
 msgid "Dates include the whole day in the site timezone. Amounts are compared as recorded, in each transaction’s own currency, without conversion."
 msgstr "Les dates incluent la journée entière dans le fuseau horaire du site. Les montants sont comparés tels qu’enregistrés, dans la devise de chaque transaction, sans conversion."
 
-#: src/Admin/transactions/TransactionsApp.js:655
+#: src/Admin/transactions/TransactionsApp.js:664
 msgid "Apply filters"
 msgstr "Appliquer les filtres"
 
-#: src/Admin/transactions/TransactionsApp.js:665
+#: src/Admin/transactions/TransactionsApp.js:674
 msgid "Reset filters"
 msgstr "Réinitialiser les filtres"
 
-#: src/Admin/transactions/TransactionsApp.js:672
+#: src/Admin/transactions/TransactionsApp.js:681
 msgid "Filters changed. Select “Apply filters” to update the list."
 msgstr "Les filtres ont changé. Sélectionnez « Appliquer les filtres » pour mettre à jour la liste."
 
-#: src/Admin/transactions/TransactionsApp.js:776
+#: src/Admin/transactions/TransactionsApp.js:785
 msgid "Applied filters:"
 msgstr "Filtres appliqués :"
 
 #. translators: %d is the number of transactions matching the applied filters.
-#: src/Admin/transactions/TransactionsApp.js:810
+#: src/Admin/transactions/TransactionsApp.js:819
 #, js-format
 msgid "%d transaction found."
 msgid_plural "%d transactions found."
 msgstr[0] "%d transaction trouvée."
 msgstr[1] "%d transactions trouvées."
 
-#: src/Admin/transactions/TransactionsApp.js:832
+#: src/Admin/transactions/TransactionsApp.js:841
 msgid "No transactions match these filters. Change them or select “Reset filters”."
 msgstr "Aucune transaction ne correspond à ces filtres. Modifiez-les ou sélectionnez « Réinitialiser les filtres »."
 
@@ -2433,466 +2433,467 @@ msgstr "Tableau de bord"
 #: src/API/SettlementController.php:284
 #: src/Services/SettlementApiImport.php:191
 msgid "Settlement not found."
-msgstr ""
+msgstr "Règlement introuvable."
 
 #: src/API/SettlementController.php:328
 msgid "Connect Mollie before confirming which organization an account belongs to."
-msgstr ""
+msgstr "Connectez Mollie avant de confirmer l'organisation à laquelle appartient un compte."
 
 #: src/API/SettlementController.php:336
 msgid "An account can only be confirmed as the Mollie organization that is currently connected."
-msgstr ""
+msgstr "Un compte ne peut être confirmé que comme l'organisation Mollie actuellement connectée."
 
 #: src/API/SettlementController.php:383
 msgid "Choose a settlement CSV file to upload."
-msgstr ""
+msgstr "Choisissez un fichier CSV de règlement à télécharger."
 
 #: src/API/SettlementController.php:391
 #: src/Settlements/CsvParser.php:99
 msgid "The file is larger than 2 MB. Export one settlement at a time."
-msgstr ""
+msgstr "Le fichier est plus volumineux que 2 Mo. Exportez un règlement à la fois."
 
 #: src/API/SettlementController.php:413
 #: src/Services/SettlementStore.php:134
 msgid "Account not found."
-msgstr ""
+msgstr "Compte introuvable."
 
 #: src/API/SettlementController.php:425
 msgid "Choose the account this settlement belongs to, or name a new one."
-msgstr ""
+msgstr "Choisissez le compte auquel appartient ce règlement, ou nommez-en un nouveau."
 
 #: src/API/SettlementController.php:432
 msgid "Confirm that this file was exported from the selected Mollie organization."
-msgstr ""
+msgstr "Confirmez que ce fichier a été exporté de l'organisation Mollie sélectionnée."
 
 #: src/API/SettlementController.php:468
 msgid "The file could not be imported. Nothing was saved."
-msgstr ""
+msgstr "Le fichier n'a pas pu être importé. Rien n'a été enregistré."
 
 #: src/API/SettlementController.php:518
 msgid "Choose the settlement to refresh."
-msgstr ""
+msgstr "Choisissez le règlement à actualiser."
 
 #: src/Services/SettlementApiImport.php:110
 msgid "Mollie is not connected. Connect Mollie in Fair Payments Connector settings, then continue."
-msgstr ""
+msgstr "Mollie n'est pas connecté. Connectez Mollie dans les paramètres de Fair Payments Connector, puis continuez."
 
 #: src/Services/SettlementApiImport.php:111
 msgid "The Mollie connection does not have permission to read settlements. Reconnect Mollie in Fair Payments Connector settings and approve settlement access, then continue."
-msgstr ""
+msgstr "La connexion Mollie n'a pas la permission de lire les règlements. Reconnectez Mollie dans les paramètres de Fair Payments Connector et approuvez l'accès aux règlements, puis continuez."
 
 #: src/Services/SettlementApiImport.php:112
 msgid "The connected Mollie organization is not known. Reconnect Mollie in Fair Payments Connector settings."
-msgstr ""
+msgstr "L'organisation Mollie connectée est inconnue. Reconnectez Mollie dans les paramètres de Fair Payments Connector."
 
 #: src/Services/SettlementApiImport.php:113
 msgid "Mollie is now connected to a different organization than when this import started, so it was stopped. Start a new import for the connected organization."
-msgstr ""
+msgstr "Mollie est maintenant connecté à une organisation différente de celle au moment du début de cette importation, elle a donc été arrêtée. Commencez une nouvelle importation pour l'organisation connectée."
 
 #: src/Services/SettlementApiImport.php:114
 msgid "Mollie could not be reached or returned an error. Nothing already saved was changed; continue to try again."
-msgstr ""
+msgstr "Mollie n'a pas pu être atteint ou a renvoyé une erreur. Rien de ce qui a déjà été enregistré n'a été modifié ; continuez pour réessayer."
 
 #: src/Services/SettlementApiImport.php:115
 msgid "Mollie returned data that could not be read. Nothing already saved was changed."
-msgstr ""
+msgstr "Mollie a renvoyé des données qui n'ont pas pu être lues. Rien de ce qui a déjà été enregistré n'a été modifié."
 
 #: src/Services/SettlementApiImport.php:116
 msgid "The import stopped before it finished, for example because a request timed out or the page was closed. Continue to pick up where it stopped."
-msgstr ""
+msgstr "L'importation s'est arrêtée avant de se terminer, par exemple parce qu'une demande a expiré ou la page a été fermée. Continuez pour reprendre là où elle s'est arrêtée."
 
 #: src/Services/ExternalUpdateRuns.php:93
 #: src/Services/SettlementApiImport.php:117
 msgid "A newer import was started instead."
-msgstr ""
+msgstr "Une importation plus récente a été lancée à la place."
 
 #: src/Services/SettlementApiImport.php:118
 msgid "The data could not be saved. Continue to try again."
-msgstr ""
+msgstr "Les données n'ont pas pu être enregistrées. Continuez pour réessayer."
 
 #: src/Services/SettlementApiImport.php:196
 msgid "This settlement belongs to a different account than the Mollie organization that is connected, so it cannot be refreshed."
-msgstr ""
+msgstr "Ce règlement appartient à un compte différent de l'organisation Mollie connectée, il ne peut donc pas être actualisé."
 
 #: src/Services/SettlementApiImport.php:203
 msgid "This settlement was only imported from a file. Load settlements from Mollie to match it with the provider record."
-msgstr ""
+msgstr "Ce règlement n'a été importé que depuis un fichier. Chargez les règlements depuis Mollie pour le faire correspondre à l'enregistrement du fournisseur."
 
 #: src/Services/SettlementApiImport.php:262
 msgid "This import is already being continued in another request."
-msgstr ""
+msgstr "Cet import est déjà en cours de continuation dans une autre requête."
 
 #: src/API/SettlementController.php:501
 #: src/Services/SettlementApiImport.php:270
 msgid "Import not found."
-msgstr ""
+msgstr "Import non trouvé."
 
 #: src/Services/SettlementApiImport.php:275
 msgid "This import has already finished. Start a new one to load again."
-msgstr ""
+msgstr "Cet import est déjà terminé. Commencez un nouveau pour charger à nouveau."
 
 #: src/Services/SettlementApiImport.php:614
 msgid "Another settlement import is still running. Wait for it to finish, then try again."
-msgstr ""
+msgstr "Un autre import de règlement est toujours en cours. Attendez qu'il se termine, puis réessayez."
 
 #: src/Services/SettlementStore.php:65
 msgid "Another settlement import is being saved. Try again in a moment."
-msgstr ""
+msgstr "Un autre import de règlement est en cours d'enregistrement. Réessayez dans un instant."
 
 #. translators: %s: Mollie organization ID
 #: src/Services/SettlementStore.php:110
 #, php-format
 msgid "Mollie %s"
-msgstr ""
+msgstr "Mollie %s"
 
 #: src/Services/SettlementStore.php:137
 msgid "This account is already confirmed."
-msgstr ""
+msgstr "Ce compte est déjà confirmé."
 
 #: src/Services/SettlementStore.php:549
 msgid "More than one saved settlement in this account has this reference, so the file cannot be attached to one of them. Nothing was imported."
-msgstr ""
+msgstr "Plus d'un règlement enregistré dans ce compte a cette référence, le fichier ne peut donc pas être joint à l'un d'eux. Rien n'a été importé."
 
 #: src/Services/SettlementStore.php:756
 msgid "The settlement could not be saved. Nothing was changed."
-msgstr ""
+msgstr "Le règlement n'a pas pu être enregistré. Rien n'a été modifié."
 
 #: src/Services/SettlementView.php:345
 msgid "The report summary from Mollie does not add up to the payout amount."
-msgstr ""
+msgstr "Le résumé du rapport de Mollie ne correspond pas au montant du paiement."
 
 #: src/Services/SettlementView.php:353
 msgid "The uploaded file and Mollie state different settlement currencies."
-msgstr ""
+msgstr "Le fichier téléchargé et Mollie indiquent des devises de règlement différentes."
 
 #. translators: %s: Mollie reference such as tr_abc123
 #: src/Services/SettlementView.php:358
 #, php-format
 msgid "The uploaded file and Mollie state different values for %s. The value from Mollie is shown; neither was added to the other."
-msgstr ""
+msgstr "Le fichier téléchargé et Mollie indiquent des valeurs différentes pour %s. La valeur de Mollie est affichée ; aucune n'a été ajoutée à l'autre."
 
 #. translators: %d: number of movements
 #: src/Services/SettlementView.php:365
 #, php-format
 msgid "%d movement from Mollie is not in the uploaded file."
 msgid_plural "%d movements from Mollie are not in the uploaded file."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d mouvement de Mollie ne figure pas dans le fichier téléchargé."
+msgstr[1] "%d mouvements de Mollie ne figurent pas dans le fichier téléchargé."
 
 #. translators: %d: number of movements
 #: src/Services/SettlementView.php:372
 #, php-format
 msgid "%d movement in the uploaded file was not reported by Mollie."
 msgid_plural "%d movements in the uploaded file were not reported by Mollie."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d mouvement du fichier téléchargé n'a pas été signalé par Mollie."
+msgstr[1] "%d mouvements du fichier téléchargé n'ont pas été signalés par Mollie."
 
 #. translators: %d: number of movements
 #: src/Services/SettlementView.php:379
 #, php-format
 msgid "%d movement has a type or value that was not recognized."
 msgid_plural "%d movements have a type or value that was not recognized."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d mouvement a un type ou une valeur qui n'a pas été reconnu."
+msgstr[1] "%d mouvements ont un type ou une valeur qui n'ont pas été reconnus."
 
 #: src/Services/SettlementView.php:384
 msgid "A different file was uploaded for this settlement. The first accepted file is kept; the differences are listed below."
-msgstr ""
+msgstr "Un fichier différent a été téléchargé pour ce règlement. Le premier fichier accepté est conservé ; les différences sont énumérées ci-dessous."
 
 #: src/Services/SettlementView.php:387
 msgid "More than one saved settlement in this account has this reference, so they were not merged."
-msgstr ""
+msgstr "Plus d'un règlement enregistré dans ce compte a cette référence, ils n'ont donc pas été fusionnés."
 
 #: src/Services/SettlementView.php:390
 msgid "Mollie reported different data for this settlement on a later refresh. The earlier version is kept for comparison."
-msgstr ""
+msgstr "Mollie a signalé des données différentes pour ce règlement lors d'une actualisation ultérieure. La version antérieure est conservée à titre de comparaison."
 
 #: src/Services/SettlementView.php:394
 msgid "This settlement needs review."
-msgstr ""
+msgstr "Ce règlement nécessite un examen."
 
 #: src/Settlements/CsvParser.php:108
 msgid "The file is empty."
-msgstr ""
+msgstr "Le fichier est vide."
 
 #: src/Settlements/CsvParser.php:112
 msgid "The file is not UTF-8 text. Export the settlement from Mollie as CSV and upload it unchanged."
-msgstr ""
+msgstr "Le fichier n'est pas du texte UTF-8. Exportez le règlement depuis Mollie en CSV et téléchargez-le sans modification."
 
 #. translators: 1: number of columns found, 2: number of columns expected
 #: src/Settlements/CsvParser.php:133
 #, php-format
 msgid "The row has %1$d columns, but the header has %2$d."
-msgstr ""
+msgstr "La ligne a %1$d colonnes, mais l'en-tête en a %2$d."
 
 #: src/Settlements/CsvParser.php:146
 msgid "The file has a header but no settlement rows."
-msgstr ""
+msgstr "Le fichier a un en-tête mais aucune ligne de règlement."
 
 #. translators: %s: comma-separated list of column names
 #: src/Settlements/CsvParser.php:279
 #, php-format
 msgid "The file is missing required columns: %s. Export the settlement from Mollie in English or Dutch and upload it unchanged."
-msgstr ""
+msgstr "Le fichier ne contient pas les colonnes requises : %s. Exportez le règlement de Mollie en anglais ou en néerlandais et téléchargez-le sans modification."
 
 #: src/Settlements/CsvParser.php:285
 msgid "This does not look like a Mollie settlement export. Only the English and Dutch CSV exports are supported."
-msgstr ""
+msgstr "Cela ne ressemble pas à une exportation de règlement Mollie. Seules les exportations CSV en anglais et en néerlandais sont prises en charge."
 
 #: src/Settlements/CsvParser.php:328
 msgid "No settlement reference was found in the file."
-msgstr ""
+msgstr "Aucune référence de règlement n'a été trouvée dans le fichier."
 
 #: src/Settlements/CsvParser.php:332
 msgid "The file contains more than one settlement reference. Upload one settlement at a time."
-msgstr ""
+msgstr "Le fichier contient plus d'une référence de règlement. Téléchargez un seul règlement à la fois."
 
 #: src/Settlements/CsvParser.php:338
 msgid "The settlement reference is not in a recognized format."
-msgstr ""
+msgstr "La référence de règlement n'est pas dans un format reconnu."
 
 #: src/Settlements/CsvParser.php:347
 msgid "The file contains more than one settlement currency. Upload one settlement at a time."
-msgstr ""
+msgstr "Le fichier contient plus d'une devise de règlement. Téléchargez un seul règlement à la fois."
 
 #. translators: %s: value found in the currency column
 #: src/Settlements/CsvParser.php:356
 #: src/Settlements/CsvParser.php:393
 #, php-format
 msgid "\"%s\" is not a currency code."
-msgstr ""
+msgstr "\"%s\" n'est pas un code de devise."
 
 #. translators: %s: value found in the ID column
 #: src/Settlements/CsvParser.php:416
 #, php-format
 msgid "\"%s\" is not a Mollie reference."
-msgstr ""
+msgstr "\"%s\" n'est pas une référence Mollie."
 
 #. translators: %s: value found in an amount column
 #: src/Settlements/CsvParser.php:481
 #, php-format
 msgid "\"%s\" is not an amount that can be read exactly. Amounts must be plain numbers such as 12.50, without thousands separators."
-msgstr ""
+msgstr "\"%s\" n'est pas un montant qui peut être lu exactement. Les montants doivent être des nombres simples comme 12,50, sans séparateurs de milliers."
 
 #. translators: %s: exact amount with currency, such as -0.0045 EUR
 #: src/Services/SettlementView.php:348
 #, php-format
 msgid "The report from Mollie differs from the payout amount by %s."
-msgstr ""
+msgstr "Le rapport de Mollie diffère du montant du paiement de %s."
 
 #: src/Services/ExternalUpdateRuns.php:88
 msgid "The Mollie connection does not have permission to read settlements."
-msgstr ""
+msgstr "La connexion Mollie n'a pas la permission de lire les règlements."
 
 #: src/Services/ExternalUpdateRuns.php:89
 msgid "The connected Mollie organization is not known."
-msgstr ""
+msgstr "L'organisation Mollie connectée n'est pas connue."
 
 #: src/Services/ExternalUpdateRuns.php:90
 msgid "Mollie was connected to a different organization, so the import was stopped."
-msgstr ""
+msgstr "Mollie était connecté à une organisation différente, donc l'importation a été arrêtée."
 
 #: src/Services/ExternalUpdateRuns.php:91
 msgid "Mollie returned data that could not be read."
-msgstr ""
+msgstr "Mollie a renvoyé des données qui n'ont pas pu être lues."
 
 #: src/Services/ExternalUpdateRuns.php:92
 msgid "The data could not be saved."
-msgstr ""
+msgstr "Les données n'ont pas pu être enregistrées."
 
 #: src/Services/ExternalUpdateRuns.php:414
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:51
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:285
 msgid "Load new settlements"
-msgstr ""
+msgstr "Charger les nouveaux règlements"
 
 #: src/Services/ExternalUpdateRuns.php:416
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:55
 msgid "Reload all settlements"
-msgstr ""
+msgstr "Recharger tous les règlements"
 
 #: src/Services/ExternalUpdateRuns.php:418
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:53
 msgid "Refresh one settlement"
-msgstr ""
+msgstr "Actualiser un règlement"
 
 #: src/Services/ExternalUpdateRuns.php:432
 msgid "Mollie"
-msgstr ""
+msgstr "Mollie"
 
 #. translators: %d: number of settlements loaded so far
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:33
 #, js-format
 msgid "%d settlement loaded so far."
 msgid_plural "%d settlements loaded so far."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d règlement chargé jusqu'à présent."
+msgstr[1] "%d règlements chargés jusqu'à présent."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:71
 msgid "Mollie lists no settlements yet."
-msgstr ""
+msgstr "Mollie n'a pas encore de règlements."
 
 #. translators: %d: number of settlements already saved
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:77
 #, js-format
 msgid "Nothing new: the %d settlement Mollie lists is already saved."
 msgid_plural "Nothing new: all %d settlements Mollie lists are already saved."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Rien de nouveau : le %d règlement que Mollie répertorie est déjà enregistré."
+msgstr[1] "Rien de nouveau : tous les %d règlements que Mollie répertorie sont déjà enregistrés."
 
 #. translators: %d: number of settlements loaded
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:89
 #, js-format
 msgid "Loaded %d settlement from Mollie."
 msgid_plural "Loaded %d settlements from Mollie."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d règlement chargé depuis Mollie."
+msgstr[1] "%d règlements chargés depuis Mollie."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:117
 msgid "The status of the import could not be read. Try again in a moment."
-msgstr ""
+msgstr "Le statut de l'importation n'a pas pu être lu. Réessayez dans un instant."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:122
 msgid "The import could not continue. Its last known state is shown below."
-msgstr ""
+msgstr "L'importation n'a pas pu continuer. Son dernier état connu est affiché ci-dessous."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:166
 msgid "Mollie settlements"
-msgstr ""
+msgstr "Règlements Mollie"
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:172
 msgid "Load the Mollie settlements that are not saved here yet, with their payments, captures, refunds and chargebacks. Settlements already loaded from Mollie are left unchanged."
-msgstr ""
+msgstr "Chargez les règlements Mollie qui ne sont pas encore enregistrés ici, avec leurs paiements, captures, remboursements et rétrofacturations. Les règlements déjà chargés depuis Mollie restent inchangés."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:177
 msgid "Inspect or reload settlements in Fair Finance."
-msgstr ""
+msgstr "Inspectez ou rechargez les règlements dans Fair Finance."
 
 #. translators: %s: kind of import, e.g. "Load new settlements"
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:202
 #, js-format
 msgid "“%s” did not finish."
-msgstr ""
+msgstr "« %s » n'a pas été terminé."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:210
 msgid "Continue it, or start another import instead. Settlements that were fully loaded stay saved either way."
-msgstr ""
+msgstr "Continuez-le, ou commencez une autre importation à la place. Les règlements qui ont été entièrement chargés restent enregistrés de toute façon."
 
 #. translators: %s: kind of import, e.g. "Load new settlements"
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:222
 #, js-format
 msgid "“%s” is running."
-msgstr ""
+msgstr "« %s » est en cours d'exécution."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:230
 msgid "It may be running in another window. Another import can be started once this one finishes, or after it has made no progress for five minutes."
-msgstr ""
+msgstr "Il se peut qu'il s'exécute dans une autre fenêtre. Une autre importation peut être démarrée une fois celle-ci terminée, ou après qu'elle n'a fait aucun progrès pendant cinq minutes."
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:256
 msgid "Continue import"
-msgstr ""
+msgstr "Continuer l'importation"
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:268
 msgid "Refresh status"
-msgstr ""
+msgstr "Actualiser le statut"
 
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:281
 msgid "Loading settlements…"
-msgstr ""
+msgstr "Chargement des règlements…"
 
 #. translators: %d: ID of a settlement import
 #: src/Admin/external-updates/components/OperationLog.js:89
 #, js-format
 msgid "Settlement import #%d"
-msgstr ""
+msgstr "Importation de règlement n° %d"
 
 #: src/API/ConnectionController.php:97
 msgid "The test payment context the administrator confirmed, as returned by GET /test-payment."
-msgstr ""
+msgstr "Le contexte de paiement de test que l'administrateur a confirmé, tel que retourné par GET /test-payment."
 
 #: src/API/ConnectionController.php:239
 msgid "Confirm the live test payment before creating it."
-msgstr ""
+msgstr "Confirmez le paiement de test en direct avant de le créer."
 
 #: src/API/ConnectionController.php:252
 msgid "The payment mode, currency, or connected Mollie account changed since you confirmed. No payment was created. Review the updated details and confirm again."
-msgstr ""
+msgstr "Le mode de paiement, la devise ou le compte Mollie connecté a changé depuis votre confirmation. Aucun paiement n'a été créé. Vérifiez les détails mis à jour et confirmez à nouveau."
 
 #: src/Admin/settings/ConnectionTab.js:572
 msgid "Failed to load the test payment details."
-msgstr ""
+msgstr "Impossible de charger les détails du paiement de test."
 
 #: src/Admin/settings/ConnectionTab.js:653
 #: src/Admin/settings/ConnectionTab.js:714
 #: src/Admin/settings/ConnectionTab.js:1160
 msgid "Disconnect Mollie"
-msgstr ""
+msgstr "Déconnecter Mollie"
 
 #. translators: %s: Mollie profile name
 #: src/Admin/settings/ConnectionTab.js:672
 #, js-format
 msgid "Disconnect this site from the Mollie profile \"%s\"?"
-msgstr ""
+msgstr "Déconnecter ce site du profil Mollie « %s » ?"
 
 #: src/Admin/settings/ConnectionTab.js:678
 msgid "Disconnect this site from the connected Mollie account?"
-msgstr ""
+msgstr "Déconnecter ce site du compte Mollie connecté ?"
 
 #: src/Admin/settings/ConnectionTab.js:689
 msgid "This site loses its Mollie connection: it cannot create new Mollie payments or receive status updates for existing ones until you reconnect. Payments already in Mollie are not cancelled or refunded."
-msgstr ""
+msgstr "Ce site perd sa connexion Mollie : il ne peut pas créer de nouveaux paiements Mollie ou recevoir les mises à jour de statut pour les paiements existants jusqu'à ce que vous vous reconnectiez. Les paiements déjà dans Mollie ne sont pas annulés ou remboursés."
 
 #: src/Admin/settings/ConnectionTab.js:710
 msgid "Disconnecting…"
-msgstr ""
+msgstr "Déconnexion en cours…"
 
 #: src/Admin/settings/ConnectionTab.js:731
 #: src/Admin/settings/ConnectionTab.js:829
 msgid "Create live test payment"
-msgstr ""
+msgstr "Créer un paiement de test en direct"
 
 #: src/Admin/settings/ConnectionTab.js:750
 msgid "Loading the test payment details…"
-msgstr ""
+msgstr "Chargement des détails du paiement de test…"
 
 #. translators: %s: amount with currency code, e.g. "1.00 EUR"
 #: src/Admin/settings/ConnectionTab.js:762
 #, js-format
 msgid "Create a live test payment of %s?"
-msgstr ""
+msgstr "Créer un paiement de test en direct de %s ?"
 
 #. translators: %s: amount with currency code, e.g. "1.00 EUR"
 #: src/Admin/settings/ConnectionTab.js:770
 #, js-format
 msgid "Create a test-mode payment of %s?"
-msgstr ""
+msgstr "Créer un paiement en mode test de %s ?"
 
 #: src/Admin/settings/ConnectionTab.js:804
 msgid "The payment details could not be loaded, so no payment can be created. Close this dialog and try again."
-msgstr ""
+msgstr "Les détails du paiement n'ont pas pu être chargés, aucun paiement ne peut être créé. Fermez cette boîte de dialogue et réessayez."
 
 #: src/Admin/settings/ConnectionTab.js:827
 msgid "Creating…"
-msgstr ""
+msgstr "Création en cours…"
 
 #: src/Admin/transaction/TransactionPage.js:1352
 #: src/Admin/transaction/TransactionPage.js:1363
 #: src/Admin/transaction/TransactionPage.js:1428
 msgid "Delete local transaction"
-msgstr ""
+msgstr "Supprimer la transaction locale"
 
 #. translators: 1: transaction ID, 2: amount, e.g. "12.50", 3: currency code, e.g. "EUR"
 #: src/Admin/transaction/TransactionPage.js:1381
 #, js-format
 msgid "Permanently delete transaction #%1$d for %2$s %3$s? This cannot be undone."
-msgstr ""
+msgstr "Supprimer définitivement la transaction #%1$d pour %2$s %3$s ? Cette action ne peut pas être annulée."
 
 #. translators: %s: transaction description
 #: src/Admin/transaction/TransactionPage.js:1394
 #, js-format
 msgid "Description: %s"
-msgstr ""
+msgstr "Description : %s"
 
 #: src/Admin/transaction/TransactionPage.js:1400
 msgid "This transaction has no description."
-msgstr ""
+msgstr "Cette transaction n'a pas de description."
+

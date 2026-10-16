@@ -78,7 +78,7 @@ msgstr "Budget-Beschreibung."
 #: src/API/BudgetController.php:175
 #: src/API/BudgetController.php:232
 #: src/API/BudgetController.php:274
-#: src/API/FinancialEntryController.php:1019
+#: src/API/FinancialEntryController.php:1030
 msgid "Budget not found."
 msgstr "Budget nicht gefunden."
 
@@ -109,7 +109,7 @@ msgstr "Eindeutige Kennung für den Transfereintrag."
 #: src/API/FinancialEntryController.php:244
 #: src/API/FinancialEntryController.php:308
 #: src/API/FinancialEntryController.php:378
-#: src/API/FinancialEntryController.php:600
+#: src/API/FinancialEntryController.php:609
 msgid "Unique identifier for the financial entry."
 msgstr "Eindeutige Kennung für die Finanzbuchung."
 
@@ -195,240 +195,240 @@ msgstr "Nur nicht abgestimmte Einträge anzeigen."
 msgid "Filter by tag, or \"none\" for untagged."
 msgstr "Nach Tag filtern oder \"none\" für ungetaggt."
 
-#: src/API/FinancialEntryController.php:498
+#: src/API/FinancialEntryController.php:507
 msgid "Maximum number of items per page."
 msgstr "Maximale Anzahl von Elementen pro Seite."
 
-#: src/API/FinancialEntryController.php:505
+#: src/API/FinancialEntryController.php:514
 msgid "Current page number."
 msgstr "Aktuelle Seitennummer."
 
-#: src/API/FinancialEntryController.php:511
+#: src/API/FinancialEntryController.php:520
 msgid "Sort by column."
 msgstr "Nach Spalte sortieren."
 
-#: src/API/FinancialEntryController.php:518
+#: src/API/FinancialEntryController.php:527
 msgid "Sort direction."
 msgstr "Sortierrichtung."
 
-#: src/API/FinancialEntryController.php:536
+#: src/API/FinancialEntryController.php:545
 msgid "Entry amount (positive value)."
 msgstr "Eingabebetrag (positiver Wert)."
 
-#: src/API/FinancialEntryController.php:541
+#: src/API/FinancialEntryController.php:550
 msgid "Entry type: cost or income."
 msgstr "Eingabetyp: Kosten oder Einnahmen."
 
-#: src/API/FinancialEntryController.php:548
+#: src/API/FinancialEntryController.php:557
 msgid "Entry date (Y-m-d format)."
 msgstr "Eingabedatum (Format Y-m-d)."
 
-#: src/API/FinancialEntryController.php:555
+#: src/API/FinancialEntryController.php:564
 msgid "Entry description."
 msgstr "Eingabebeschreibung."
 
-#: src/API/FinancialEntryController.php:561
+#: src/API/FinancialEntryController.php:570
 msgid "Budget ID."
 msgstr "Budget-ID."
 
-#: src/API/FinancialEntryController.php:566
+#: src/API/FinancialEntryController.php:575
 msgid "Transaction ID."
 msgstr "Transaktions-ID."
 
-#: src/API/FinancialEntryController.php:571
+#: src/API/FinancialEntryController.php:580
 msgid "Link URL (local or external)."
 msgstr "Link-URL (lokal oder extern)."
 
-#: src/API/FinancialEntryController.php:579
+#: src/API/FinancialEntryController.php:588
 msgid "Linked event date ID."
 msgstr "Verknüpfte Ereignisdatum-ID."
 
-#: src/API/FinancialEntryController.php:584
-#: src/API/FinancialEntryController.php:1523
+#: src/API/FinancialEntryController.php:593
+#: src/API/FinancialEntryController.php:1534
 msgid "Optional tag label for cross-cutting categorization."
 msgstr "Optionales Tag-Label für übergreifende Kategorisierung."
 
-#: src/API/FinancialEntryController.php:604
+#: src/API/FinancialEntryController.php:613
 msgid "Array of budget allocations."
 msgstr "Array von Budget-Zuordnungen."
 
-#: src/API/FinancialEntryController.php:795
-#: src/API/FinancialEntryController.php:892
-#: src/API/FinancialEntryController.php:961
-#: src/API/FinancialEntryController.php:1001
-#: src/API/FinancialEntryController.php:1219
-#: src/API/FinancialEntryController.php:1258
-#: src/API/FinancialEntryController.php:1353
-#: src/API/FinancialEntryController.php:1447
-#: src/API/FinancialEntryController.php:1955
+#: src/API/FinancialEntryController.php:806
+#: src/API/FinancialEntryController.php:903
+#: src/API/FinancialEntryController.php:972
+#: src/API/FinancialEntryController.php:1012
+#: src/API/FinancialEntryController.php:1230
+#: src/API/FinancialEntryController.php:1269
+#: src/API/FinancialEntryController.php:1364
+#: src/API/FinancialEntryController.php:1458
+#: src/API/FinancialEntryController.php:1966
 msgid "Financial entry not found."
 msgstr "Finanzeintrag nicht gefunden."
 
-#: src/API/FinancialEntryController.php:823
-#: src/API/FinancialEntryController.php:900
-#: src/API/FinancialEntryController.php:1551
-#: src/API/FinancialEntryController.php:1653
+#: src/API/FinancialEntryController.php:834
+#: src/API/FinancialEntryController.php:911
+#: src/API/FinancialEntryController.php:1562
+#: src/API/FinancialEntryController.php:1664
 msgid "Amount must be greater than zero."
 msgstr "Der Betrag muss größer als Null sein."
 
-#: src/API/FinancialEntryController.php:831
-#: src/API/FinancialEntryController.php:908
+#: src/API/FinancialEntryController.php:842
+#: src/API/FinancialEntryController.php:919
 msgid "Entry type must be cost or income."
 msgstr "Der Eingabetyp muss Kosten oder Einnahmen sein."
 
-#: src/API/FinancialEntryController.php:839
-#: src/API/FinancialEntryController.php:916
-#: src/API/FinancialEntryController.php:1559
-#: src/API/FinancialEntryController.php:1661
+#: src/API/FinancialEntryController.php:850
+#: src/API/FinancialEntryController.php:927
+#: src/API/FinancialEntryController.php:1570
+#: src/API/FinancialEntryController.php:1672
 msgid "Entry date is required."
 msgstr "Eingabedatum ist erforderlich."
 
-#: src/API/FinancialEntryController.php:859
+#: src/API/FinancialEntryController.php:870
 msgid "Failed to create financial entry."
 msgstr "Finanzeintrag konnte nicht erstellt werden."
 
-#: src/API/FinancialEntryController.php:937
+#: src/API/FinancialEntryController.php:948
 msgid "Failed to update financial entry."
 msgstr "Finanzeintrag konnte nicht aktualisiert werden."
 
-#: src/API/FinancialEntryController.php:971
+#: src/API/FinancialEntryController.php:982
 msgid "Failed to delete financial entry."
 msgstr "Finanzeintrag konnte nicht gelöscht werden."
 
-#: src/API/FinancialEntryController.php:1034
+#: src/API/FinancialEntryController.php:1045
 msgid "Either transaction_id or transaction_ids is required."
 msgstr "Entweder transaction_id oder transaction_ids ist erforderlich."
 
 #. translators: %d: transaction ID
-#: src/API/FinancialEntryController.php:1048
+#: src/API/FinancialEntryController.php:1059
 #, php-format
 msgid "Transaction %d not found."
 msgstr "Transaktion %d nicht gefunden."
 
-#: src/API/FinancialEntryController.php:1060
+#: src/API/FinancialEntryController.php:1071
 msgid "Failed to match entry to transaction."
 msgstr "Eintrag konnte nicht mit Transaktion abgeglichen werden."
 
-#: src/API/FinancialEntryController.php:1233
+#: src/API/FinancialEntryController.php:1244
 msgid "Failed to unmatch entry from transaction."
 msgstr "Eintrag konnte nicht aus der Transaktion entfernt werden."
 
-#: src/API/FinancialEntryController.php:1267
+#: src/API/FinancialEntryController.php:1278
 msgid "Cannot split a child entry."
 msgstr "Ein untergeordneter Eintrag kann nicht aufgeteilt werden."
 
-#: src/API/FinancialEntryController.php:1276
+#: src/API/FinancialEntryController.php:1287
 msgid "Entry is already split."
 msgstr "Eintrag ist bereits aufgeteilt."
 
-#: src/API/FinancialEntryController.php:1285
-#: src/API/FinancialEntryController.php:1380
+#: src/API/FinancialEntryController.php:1296
+#: src/API/FinancialEntryController.php:1391
 msgid "At least 2 allocations are required."
 msgstr "Mindestens 2 Zuordnungen sind erforderlich."
 
-#: src/API/FinancialEntryController.php:1296
-#: src/API/FinancialEntryController.php:1391
+#: src/API/FinancialEntryController.php:1307
+#: src/API/FinancialEntryController.php:1402
 msgid "Each allocation amount must be nonzero."
 msgstr "Jeder Zuordnungsbetrag muss ungleich null sein."
 
-#: src/API/FinancialEntryController.php:1307
-#: src/API/FinancialEntryController.php:1402
+#: src/API/FinancialEntryController.php:1318
+#: src/API/FinancialEntryController.php:1413
 msgid "Total allocations must match the original entry amount."
 msgstr "Die Gesamtzuordnungen müssen dem ursprünglichen Eintragsbetrag entsprechen."
 
-#: src/API/FinancialEntryController.php:1317
+#: src/API/FinancialEntryController.php:1328
 msgid "Failed to split entry."
 msgstr "Eintrag konnte nicht aufgeteilt werden."
 
-#: src/API/FinancialEntryController.php:1362
+#: src/API/FinancialEntryController.php:1373
 msgid "Cannot update split on a child entry."
 msgstr "Die Aufteilung eines untergeordneten Eintrags kann nicht aktualisiert werden."
 
-#: src/API/FinancialEntryController.php:1371
-#: src/API/FinancialEntryController.php:1456
+#: src/API/FinancialEntryController.php:1382
+#: src/API/FinancialEntryController.php:1467
 msgid "Entry is not split."
 msgstr "Eintrag ist nicht aufgeteilt."
 
-#: src/API/FinancialEntryController.php:1412
+#: src/API/FinancialEntryController.php:1423
 msgid "Failed to update split."
 msgstr "Aufteilung konnte nicht aktualisiert werden."
 
-#: src/API/FinancialEntryController.php:1466
+#: src/API/FinancialEntryController.php:1477
 msgid "Failed to unsplit entry."
 msgstr "Eintrag konnte nicht zusammengefasst werden."
 
-#: src/API/FinancialEntryController.php:1482
+#: src/API/FinancialEntryController.php:1493
 msgid "Transfer amount (positive value)."
 msgstr "Transferbetrag (positiver Wert)."
 
-#: src/API/FinancialEntryController.php:1487
+#: src/API/FinancialEntryController.php:1498
 msgid "Transfer date (Y-m-d format)."
 msgstr "Transferdatum (Format Y-m-d)."
 
-#: src/API/FinancialEntryController.php:1494
+#: src/API/FinancialEntryController.php:1505
 msgid "Source budget ID (money comes from)."
 msgstr "Quellbudget-ID (Geld kommt von hier)."
 
-#: src/API/FinancialEntryController.php:1499
+#: src/API/FinancialEntryController.php:1510
 msgid "Target budget ID (money goes to)."
 msgstr "Zielbudget-ID (Geld geht hierhin)."
 
-#: src/API/FinancialEntryController.php:1504
+#: src/API/FinancialEntryController.php:1515
 msgid "Transfer description."
 msgstr "Transferbeschreibung."
 
-#: src/API/FinancialEntryController.php:1510
+#: src/API/FinancialEntryController.php:1521
 msgid "Event URL (local or external)."
 msgstr "Event-URL (lokal oder extern)."
 
-#: src/API/FinancialEntryController.php:1518
+#: src/API/FinancialEntryController.php:1529
 msgid "Event date ID."
 msgstr "Event-Datums-ID."
 
-#: src/API/FinancialEntryController.php:1567
-#: src/API/FinancialEntryController.php:1669
+#: src/API/FinancialEntryController.php:1578
+#: src/API/FinancialEntryController.php:1680
 msgid "Both source and target budgets are required."
 msgstr "Quell- und Zielbudgets sind erforderlich."
 
-#: src/API/FinancialEntryController.php:1575
-#: src/API/FinancialEntryController.php:1677
+#: src/API/FinancialEntryController.php:1586
+#: src/API/FinancialEntryController.php:1688
 msgid "Source and target budgets must be different."
 msgstr "Quell- und Zielbudgets müssen unterschiedlich sein."
 
-#: src/API/FinancialEntryController.php:1595
+#: src/API/FinancialEntryController.php:1606
 msgid "Failed to create transfer."
 msgstr "Übertragung konnte nicht erstellt werden."
 
-#: src/API/FinancialEntryController.php:1637
+#: src/API/FinancialEntryController.php:1648
 msgid "Transfer entry not found."
 msgstr "Übertragungseintrag nicht gefunden."
 
-#: src/API/FinancialEntryController.php:1645
+#: src/API/FinancialEntryController.php:1656
 msgid "Entry is not a transfer."
 msgstr "Eintrag ist keine Übertragung."
 
-#: src/API/FinancialEntryController.php:1698
+#: src/API/FinancialEntryController.php:1709
 msgid "Failed to update transfer."
 msgstr "Übertragung konnte nicht aktualisiert werden."
 
-#: src/API/FinancialEntryController.php:1823
+#: src/API/FinancialEntryController.php:1834
 msgid "No entries provided for import."
 msgstr "Keine Einträge zum Importieren bereitgestellt."
 
 #. translators: %d: row number
-#: src/API/FinancialEntryController.php:1839
+#: src/API/FinancialEntryController.php:1850
 #, php-format
 msgid "Row %d: Missing required fields."
 msgstr "Zeile %d: Erforderliche Felder fehlen."
 
 #. translators: %d: row number
-#: src/API/FinancialEntryController.php:1850
+#: src/API/FinancialEntryController.php:1861
 #, php-format
 msgid "Row %d: Invalid entry type."
 msgstr "Zeile %d: Ungültiger Eintragstyp."
 
 #. translators: 1: imported count, 2: skipped count
-#: src/API/FinancialEntryController.php:1881
+#: src/API/FinancialEntryController.php:1892
 #, php-format
 msgid "Imported %1$d entries, skipped %2$d (duplicates or errors)."
 msgstr "Es wurden %1$d Einträge importiert, %2$d übersprungen (Duplikate oder Fehler)."
@@ -490,7 +490,7 @@ msgid "Income"
 msgstr "Einnahmen"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:840
+#: src/Admin/entries/EntriesApp.js:945
 msgid "Tag"
 msgstr "Tag"
 
@@ -498,7 +498,7 @@ msgstr "Tag"
 msgid "e.g. venue, catering, travel"
 msgstr "z.B. Veranstaltungsort, Catering, Reisen"
 
-#: src/Admin/entries/EntriesApp.js:844
+#: src/Admin/entries/EntriesApp.js:952
 msgid "All Tags"
 msgstr "Alle Tags"
 
@@ -506,12 +506,12 @@ msgstr "Alle Tags"
 msgid "Administrator-reviewed budget to apply to the match, or null for no budget."
 msgstr "Von Administrator überprüftes Budget für die Zuordnung oder null für kein Budget."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:354
+#: src/Admin/reconciliation/ReconciliationApp.js:368
 #: src/Admin/settlements/components/MollieImportPanel.js:215
 msgid "Open Mollie connection settings"
 msgstr "Mollie-Verbindungseinstellungen öffnen"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:362
+#: src/Admin/reconciliation/ReconciliationApp.js:376
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
 msgstr "Mollie hat diese Website noch nicht autorisiert, um Abrechnungen zu lesen, daher können diese nicht automatisch abgerufen werden. Verbinden Sie sich erneut mit Mollie in den Fair Payments Connector-Einstellungen, um diese Berechtigung zu erteilen. Sie können die Abrechnungs-CSV in der Zwischenzeit weiterhin importieren."
 
@@ -522,299 +522,299 @@ msgstr "Mollie hat diese Website noch nicht autorisiert, um Abrechnungen zu lese
 #: src/Admin/settlements/SettlementsApp.js:179
 #: src/Admin/settlements/SettlementsApp.js:219
 msgid "Settlements"
-msgstr ""
+msgstr "Abrechnungen"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:318
+#: src/Admin/reconciliation/ReconciliationApp.js:332
 msgid "Saved settlements"
-msgstr ""
+msgstr "Gespeicherte Abrechnungen"
 
 #: src/Admin/settlements/components/CsvImportModal.js:37
 msgid "This settlement is already saved from Mollie. The file will be added to it as a second source; amounts are compared, never added together."
-msgstr ""
+msgstr "Diese Abrechnung wurde bereits von Mollie gespeichert. Die Datei wird als zweite Quelle hinzugefügt; Beträge werden verglichen, nie addiert."
 
 #: src/Admin/settlements/components/CsvImportModal.js:45
 msgid "This file is already saved for this settlement. Importing it again changes nothing."
-msgstr ""
+msgstr "Diese Datei wurde bereits für diese Abrechnung gespeichert. Das erneute Importieren ändert nichts."
 
 #: src/Admin/settlements/components/CsvImportModal.js:53
 msgid "A different file is already saved for this settlement. The saved data stays as it is; the differences in this file will be listed on the settlement for review."
-msgstr ""
+msgstr "Eine andere Datei wurde bereits für diese Abrechnung gespeichert. Die gespeicherten Daten bleiben wie sie sind; die Unterschiede in dieser Datei werden zur Überprüfung in der Abrechnung aufgelistet."
 
 #: src/Admin/settlements/components/CsvImportModal.js:61
 msgid "More than one saved settlement in this account has this reference, so the file cannot be attached to one of them."
-msgstr ""
+msgstr "Mehr als eine gespeicherte Abrechnung in diesem Konto hat diese Referenz, daher kann die Datei nicht an eine von ihnen angehängt werden."
 
 #: src/Admin/settlements/components/CsvImportModal.js:69
 msgid "The file is valid. A new settlement will be saved."
-msgstr ""
+msgstr "Die Datei ist gültig. Eine neue Abrechnung wird gespeichert."
 
 #: src/Admin/settlements/components/CsvImportModal.js:143
 msgid "Choose a file first."
-msgstr ""
+msgstr "Wählen Sie zunächst eine Datei aus."
 
 #: src/Admin/settlements/components/CsvImportModal.js:145
 #: src/Admin/settlements/components/CsvImportModal.js:305
 msgid "Checking the file…"
-msgstr ""
+msgstr "Datei wird überprüft…"
 
 #: src/Admin/settlements/components/CsvImportModal.js:147
 msgid "Fix the file and choose it again."
-msgstr ""
+msgstr "Beheben Sie die Datei und wählen Sie sie erneut aus."
 
 #: src/Admin/settlements/components/CsvImportModal.js:149
 msgid "This file cannot be attached to one settlement."
-msgstr ""
+msgstr "Diese Datei kann nicht an eine Abrechnung angehängt werden."
 
 #: src/Admin/settlements/components/CsvImportModal.js:154
 msgid "Name the account first."
-msgstr ""
+msgstr "Benennen Sie zunächst das Konto."
 
 #: src/Admin/settlements/components/CsvImportModal.js:156
 msgid "Confirm where the file was exported from."
-msgstr ""
+msgstr "Bestätigen Sie, von wo die Datei exportiert wurde."
 
 #: src/Admin/settlements/components/CsvImportModal.js:176
 #: src/Admin/settlements/components/CsvImportModal.js:314
 msgid "The file could not be imported."
-msgstr ""
+msgstr "Die Datei konnte nicht importiert werden."
 
 #: src/Admin/settlements/components/CsvImportModal.js:186
 #: src/Admin/settlements/SettlementsApp.js:228
 msgid "Import settlement CSV"
-msgstr ""
+msgstr "Abrechnung CSV importieren"
 
 #: src/Admin/settlements/components/CsvImportModal.js:197
 msgid "The settlement was saved."
-msgstr ""
+msgstr "Die Abrechnung wurde gespeichert."
 
 #: src/Admin/settlements/components/CsvImportModal.js:202
 msgid "Close"
-msgstr ""
+msgstr "Schließen"
 
 #: src/Admin/settlements/components/CsvImportModal.js:209
 msgid "Open settlement"
-msgstr ""
+msgstr "Abrechnung öffnen"
 
 #: src/Admin/settlements/components/CsvImportModal.js:217
 msgid "Upload a settlement exported from Mollie as CSV, in English or Dutch, one settlement per file. The file is checked before anything is saved, and it works without a Mollie connection. Consumer names and bank details in the file are not kept."
-msgstr ""
+msgstr "Laden Sie eine von Mollie als CSV exportierte Abrechnung in Englisch oder Niederländisch hoch, eine Abrechnung pro Datei. Die Datei wird vor dem Speichern überprüft und funktioniert ohne Mollie-Verbindung. Verbrauchernamen und Bankdaten in der Datei werden nicht gespeichert."
 
 #: src/Admin/settlements/components/CsvImportModal.js:228
 msgid "Settlement file"
-msgstr ""
+msgstr "Abrechnungsdatei"
 
 #: src/Admin/settlements/components/CsvImportModal.js:242
 #: src/Admin/settlements/components/SettlementDetail.js:293
 #: src/Admin/settlements/components/SettlementList.js:63
 msgid "Mollie account"
-msgstr ""
+msgstr "Mollie-Konto"
 
 #: src/Admin/settlements/components/CsvImportModal.js:243
 msgid "The file does not say which Mollie organization it was exported from."
-msgstr ""
+msgstr "Die Datei gibt nicht an, von welcher Mollie-Organisation sie exportiert wurde."
 
 #. translators: %s: account name
 #: src/Admin/settlements/components/CsvImportModal.js:255
 #, js-format
 msgid "%s (not confirmed)"
-msgstr ""
+msgstr "%s (nicht bestätigt)"
 
 #: src/Admin/settlements/components/CsvImportModal.js:264
 msgid "A new account…"
-msgstr ""
+msgstr "Ein neues Konto…"
 
 #: src/Admin/settlements/components/CsvImportModal.js:276
 msgid "Account name"
-msgstr ""
+msgstr "Kontoname"
 
 #: src/Admin/settlements/components/CsvImportModal.js:277
 msgid "For your own reference. Its settlements stay separate from those loaded from Mollie until you confirm which organization it is."
-msgstr ""
+msgstr "Nur für Ihre Referenz. Die Abrechnungen bleiben separat von denen, die von Mollie geladen werden, bis Sie bestätigen, welche Organisation es ist."
 
 #. translators: %s: account name
 #: src/Admin/settlements/components/CsvImportModal.js:290
 #, js-format
 msgid "This file was exported from %s."
-msgstr ""
+msgstr "Diese Datei wurde von %s exportiert."
 
 #. translators: 1: line number in the file, 2: what is wrong
 #: src/Admin/settlements/components/CsvImportModal.js:326
 #, js-format
 msgid "Line %1$d: %2$s"
-msgstr ""
+msgstr "Zeile %1$d: %2$s"
 
 #: src/Admin/settlements/components/CsvImportModal.js:354
 msgid "Settlement reference"
-msgstr ""
+msgstr "Abrechnungsreferenz"
 
 #: src/Admin/settlements/components/CsvImportModal.js:362
 #: src/Admin/settlements/components/SettlementDetail.js:383
 #: src/Admin/settlements/components/SettlementDetail.js:419
 msgid "Rows"
-msgstr ""
+msgstr "Zeilen"
 
 #. translators: %d: number of rows
 #: src/Admin/settlements/components/CsvImportModal.js:366
 #, js-format
 msgid "%d row"
 msgid_plural "%d rows"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Zeile"
+msgstr[1] "%d Zeilen"
 
 #. translators: 1: movement type, 2: number of rows
 #: src/Admin/settlements/components/CsvImportModal.js:382
 #: src/Admin/settlements/components/SettlementDetail.js:426
 #, js-format
 msgid "%1$s (%2$d)"
-msgstr ""
+msgstr "%1$s (%2$d)"
 
 #: src/Admin/settlements/components/CsvImportModal.js:416
 msgid "Cancel"
-msgstr ""
+msgstr "Abbrechen"
 
 #: src/Admin/settlements/components/CsvImportModal.js:424
 msgid "Import settlement"
-msgstr ""
+msgstr "Abrechnung importieren"
 
 #. translators: %d: number of settlements loaded so far
 #: src/Admin/settlements/components/MollieImportPanel.js:39
 #, js-format
 msgid "%d settlement loaded so far."
 msgid_plural "%d settlements loaded so far."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Abrechnung bisher geladen."
+msgstr[1] "%d Abrechnungen bisher geladen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:200
 msgid "Load from Mollie"
-msgstr ""
+msgstr "Von Mollie laden"
 
 #: src/Admin/settlements/components/MollieImportPanel.js:225
 msgid "Saved settlements and CSV import keep working."
-msgstr ""
+msgstr "Gespeicherte Abrechnungen und CSV-Import funktionieren weiterhin."
 
 #. translators: %d: number of settlements loaded
 #: src/Admin/settlements/components/MollieImportPanel.js:105
 #, js-format
 msgid "Loaded %d settlement from Mollie."
 msgid_plural "Loaded %d settlements from Mollie."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Abrechnung %d von Mollie geladen."
+msgstr[1] "Abrechnungen %d von Mollie geladen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:286
 msgid "Continue import"
-msgstr ""
+msgstr "Import fortsetzen"
 
 #: src/Admin/settlements/components/SettlementDetail.js:53
 msgid "This settlement has not been fully loaded from Mollie yet. What is shown may be missing movements."
-msgstr ""
+msgstr "Diese Abrechnung wurde noch nicht vollständig von Mollie geladen. Das Angezeigte könnte unvollständig sein."
 
 #: src/Admin/settlements/components/SettlementDetail.js:65
 msgid "This settlement comes from an uploaded file. The payout amount, dates and Mollie status are not in the file and stay unknown until the settlement is loaded from Mollie."
-msgstr ""
+msgstr "Diese Abrechnung stammt aus einer hochgeladenen Datei. Der Auszahlungsbetrag, die Daten und der Mollie-Status befinden sich nicht in der Datei und bleiben unbekannt, bis die Abrechnung von Mollie geladen wird."
 
 #: src/Admin/settlements/components/SettlementDetail.js:73
 msgid "Every page Mollie lists for this settlement was loaded, but Mollie gave no summary that confirms the payout amount. The movements below may not be the whole payout."
-msgstr ""
+msgstr "Jede Seite, die Mollie für diese Abrechnung auflistet, wurde geladen, aber Mollie gab keine Zusammenfassung, die den Auszahlungsbetrag bestätigt. Die Bewegungen unten sind möglicherweise nicht die gesamte Auszahlung."
 
 #: src/Admin/settlements/components/SettlementDetail.js:131
 #: src/Admin/settlements/components/SettlementList.js:149
 #: src/Admin/settlements/components/SettlementList.js:170
 #: src/Admin/settlements/format.js:31
 msgid "Unknown"
-msgstr ""
+msgstr "Unbekannt"
 
 #: src/Admin/settlements/components/SettlementDetail.js:149
 #: src/Admin/settlements/SettlementsApp.js:191
 msgid "← All settlements"
-msgstr ""
+msgstr "← Alle Abrechnungen"
 
 #. translators: %s: settlement reference
 #: src/Admin/settlements/components/SettlementDetail.js:156
 #, js-format
 msgid "Settlement %s"
-msgstr ""
+msgstr "Abrechnung %s"
 
 #: src/Admin/settlements/components/SettlementDetail.js:170
 msgid "Refresh from Mollie"
-msgstr ""
+msgstr "Von Mollie aktualisieren"
 
 #: src/Admin/settlements/components/SettlementDetail.js:181
 msgid "This settlement belongs to a different Mollie organization than the one connected, so it cannot be refreshed."
-msgstr ""
+msgstr "Diese Abrechnung gehört zu einer anderen Mollie-Organisation als der verbundenen, daher kann sie nicht aktualisiert werden."
 
 #: src/Admin/settlements/components/SettlementDetail.js:192
 msgid "Refreshing from Mollie…"
-msgstr ""
+msgstr "Von Mollie wird aktualisiert…"
 
 #: src/Admin/settlements/components/SettlementDetail.js:209
 msgid "Try again"
-msgstr ""
+msgstr "Erneut versuchen"
 
 #: src/Admin/settlements/components/SettlementDetail.js:220
 msgid "Refreshed from Mollie."
-msgstr ""
+msgstr "Von Mollie aktualisiert."
 
 #. translators: %s: date and time
 #: src/Admin/settlements/components/SettlementDetail.js:235
 #, js-format
 msgid "The last attempt to load this settlement from Mollie failed on %s."
-msgstr ""
+msgstr "Der letzte Versuch, diese Abrechnung von Mollie zu laden, ist am %s fehlgeschlagen."
 
 #: src/Admin/settlements/components/SettlementDetail.js:244
 msgid "The data below is from the last complete load."
-msgstr ""
+msgstr "Die folgenden Daten stammen aus dem letzten vollständigen Laden."
 
 #: src/Admin/settlements/components/SettlementDetail.js:253
 msgid "To review"
-msgstr ""
+msgstr "Zur Überprüfung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:266
 #: src/Admin/settlements/components/SettlementList.js:96
 #: src/Admin/settlements/components/SettlementList.js:153
 #: src/Admin/settlements/components/SettlementReport.js:446
 msgid "Payout"
-msgstr ""
+msgstr "Auszahlung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:271
 msgid "Payout reference"
-msgstr ""
+msgstr "Auszahlungsreferenz"
 
 #: src/Admin/settlements/components/SettlementDetail.js:275
 msgid "Payout amount"
-msgstr ""
+msgstr "Auszahlungsbetrag"
 
 #: src/Admin/settlements/components/SettlementDetail.js:281
 msgid "Currency"
-msgstr ""
+msgstr "Währung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:284
 #: src/Admin/settlements/components/SettlementList.js:97
 #: src/Admin/settlements/components/SettlementList.js:164
 msgid "Mollie status"
-msgstr ""
+msgstr "Mollie-Status"
 
 #: src/Admin/settlements/components/SettlementDetail.js:287
 #: src/Admin/settlements/components/SettlementList.js:95
 #: src/Admin/settlements/components/SettlementList.js:142
 msgid "Paid out"
-msgstr ""
+msgstr "Ausgezahlt"
 
 #: src/Admin/settlements/components/SettlementDetail.js:290
 msgid "Created"
-msgstr ""
+msgstr "Erstellt"
 
 #: src/Admin/settlements/components/SettlementDetail.js:300
 #: src/Admin/settlements/components/SettlementList.js:133
 msgid "Not confirmed"
-msgstr ""
+msgstr "Nicht bestätigt"
 
 #: src/Admin/settlements/components/SettlementDetail.js:309
 msgid "Mollie settlement ID"
-msgstr ""
+msgstr "Mollie-Abrechnungs-ID"
 
 #: src/Admin/settlements/components/SettlementDetail.js:327
 msgid "Mollie invoice"
-msgstr ""
+msgstr "Mollie-Rechnung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:330
 #: src/Admin/settlements/components/SettlementDetail.js:380
@@ -826,97 +826,97 @@ msgstr ""
 #: src/Admin/settlements/components/SettlementList.js:98
 #: src/Admin/settlements/components/SettlementList.js:173
 msgid "Source"
-msgstr ""
+msgstr "Quelle"
 
 #: src/Admin/settlements/components/SettlementDetail.js:334
 msgid "Last loaded from Mollie"
-msgstr ""
+msgstr "Zuletzt von Mollie geladen"
 
 #: src/Admin/settlements/components/SettlementDetail.js:341
 #: src/Admin/settlements/components/SettlementDetail.js:349
 msgid "Never"
-msgstr ""
+msgstr "Nie"
 
 #: src/Admin/settlements/components/SettlementDetail.js:345
 msgid "Last file import"
-msgstr ""
+msgstr "Letzter Dateiimport"
 
 #: src/Admin/settlements/components/SettlementDetail.js:366
 msgid "What was loaded"
-msgstr ""
+msgstr "Was wurde geladen"
 
 #: src/Admin/settlements/components/SettlementDetail.js:370
 msgid "Totals are kept per source and are never added together. The payout amount above is what Mollie reported, not a sum of these rows."
-msgstr ""
+msgstr "Summen werden pro Quelle beibehalten und nie addiert. Der oben angegebene Auszahlungsbetrag ist das, was Mollie gemeldet hat, nicht eine Summe dieser Zeilen."
 
 #: src/Admin/settlements/components/SettlementDetail.js:386
 #: src/Admin/settlements/components/SettlementDetail.js:435
 msgid "Total settled"
-msgstr ""
+msgstr "Insgesamt abgerechnet"
 
 #. translators: %d: number of payments
 #: src/Admin/settlements/components/SettlementDetail.js:455
 #, js-format
 msgid "%d payment was settled through its captures and is not counted on top of them."
 msgid_plural "%d payments were settled through their captures and are not counted on top of them."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Zahlung wurde durch ihre Erfassungen abgerechnet und wird nicht zusätzlich gezählt."
+msgstr[1] "%d Zahlungen wurden durch ihre Erfassungen abgerechnet und werden nicht zusätzlich gezählt."
 
 #. translators: %s: date and time
 #: src/Admin/settlements/components/SettlementDetail.js:478
 #, js-format
 msgid "Differences in the file uploaded on %s"
-msgstr ""
+msgstr "Unterschiede in der am %s hochgeladenen Datei"
 
 #: src/Admin/settlements/components/SettlementDetail.js:488
 msgid "This file was not applied. The saved data is unchanged."
-msgstr ""
+msgstr "Diese Datei wurde nicht angewendet. Die gespeicherten Daten sind unverändert."
 
 #. translators: 1: Mollie reference or description, 2: saved amount, 3: amount in the file
 #: src/Admin/settlements/components/SettlementDetail.js:498
 #, js-format
 msgid "%1$s: saved %2$s, file says %3$s"
-msgstr ""
+msgstr "%1$s: gespeichert %2$s, Datei sagt %3$s"
 
 #. translators: 1: Mollie reference or description, 2: amount
 #: src/Admin/settlements/components/SettlementDetail.js:515
 #, js-format
 msgid "Only in the file: %1$s (%2$s)"
-msgstr ""
+msgstr "Nur in der Datei: %1$s (%2$s)"
 
 #. translators: 1: Mollie reference or description, 2: amount
 #: src/Admin/settlements/components/SettlementDetail.js:532
 #, js-format
 msgid "Missing from the file: %1$s (%2$s)"
-msgstr ""
+msgstr "Fehlt in der Datei: %1$s (%2$s)"
 
 #: src/Admin/settlements/components/SettlementDetail.js:552
 msgid "Movements"
-msgstr ""
+msgstr "Bewegungen"
 
 #. translators: %d: number of payments
 #: src/Admin/settlements/components/SettlementDetail.js:559
 #, js-format
 msgid "%d payment is not in this site’s transactions yet. Its reference is kept and links up once the payment is imported."
 msgid_plural "%d payments are not in this site’s transactions yet. Their references are kept and link up once the payments are imported."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Zahlung befindet sich noch nicht in den Transaktionen dieser Website. Ihre Referenz wird gespeichert und verknüpft sich, sobald die Zahlung importiert wird."
+msgstr[1] "%d Zahlungen befinden sich noch nicht in den Transaktionen dieser Website. Ihre Referenzen werden gespeichert und verknüpfen sich, sobald die Zahlungen importiert werden."
 
 #: src/Admin/settlements/components/SettlementDetail.js:571
 msgid "No movements are saved for this settlement."
-msgstr ""
+msgstr "Für diese Abrechnung sind keine Bewegungen gespeichert."
 
 #: src/Admin/settlements/components/SettlementDetail.js:580
 #: src/Admin/settlements/components/SettlementDetail.js:603
 #: src/Admin/settlements/components/SettlementDetail.js:837
 #: src/Admin/settlements/components/SettlementDetail.js:849
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: src/Admin/settlements/components/SettlementDetail.js:582
 #: src/Admin/settlements/components/SettlementDetail.js:622
 msgid "Reference"
-msgstr ""
+msgstr "Referenz"
 
 #: src/Admin/settlements/components/SettlementDetail.js:585
 #: src/Admin/settlements/components/SettlementDetail.js:670
@@ -925,245 +925,245 @@ msgstr ""
 #: src/Admin/settlements/components/SettlementReport.js:122
 #: src/Admin/settlements/components/SettlementReport.js:147
 msgid "Description"
-msgstr ""
+msgstr "Beschreibung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:587
 #: src/Admin/settlements/components/SettlementDetail.js:682
 msgid "Date"
-msgstr ""
+msgstr "Datum"
 
 #: src/Admin/settlements/components/SettlementDetail.js:588
 #: src/Admin/settlements/components/SettlementDetail.js:693
 #: src/Admin/settlements/components/SettlementDetail.js:841
 #: src/Admin/settlements/components/SettlementDetail.js:869
 msgid "Amount"
-msgstr ""
+msgstr "Betrag"
 
 #: src/Admin/settlements/components/SettlementDetail.js:589
 #: src/Admin/settlements/components/SettlementDetail.js:704
 #: src/Admin/settlements/components/SettlementDetail.js:774
 msgid "Settled"
-msgstr ""
+msgstr "Abgerechnet"
 
 #: src/Admin/settlements/components/SettlementDetail.js:592
 #: src/Admin/settlements/components/SettlementDetail.js:738
 msgid "Local payment"
-msgstr ""
+msgstr "Lokale Zahlung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:613
 #: src/Admin/settlements/components/SettlementReport.js:168
 msgid "Review"
-msgstr ""
+msgstr "Überprüfung"
 
 #: src/Admin/settlements/components/SettlementDetail.js:676
 #: src/Admin/settlements/components/SettlementDetail.js:863
 #: src/Admin/settlements/components/SettlementReport.js:141
 msgid "(no description)"
-msgstr ""
+msgstr "(keine Beschreibung)"
 
 #. translators: %s: amount stated in the uploaded file
 #: src/Admin/settlements/components/SettlementDetail.js:718
 #, js-format
 msgid "File says %s"
-msgstr ""
+msgstr "Datei sagt %s"
 
 #. translators: %d: transaction ID
 #: src/Admin/settlements/components/SettlementDetail.js:749
 #, js-format
 msgid "Transaction #%d"
-msgstr ""
+msgstr "Transaktion #%d"
 
 #: src/Admin/settlements/components/SettlementDetail.js:759
 msgid "Not imported yet"
-msgstr ""
+msgstr "Noch nicht importiert"
 
 #: src/Admin/settlements/components/SettlementDetail.js:824
 msgid "Summed rows and fees"
-msgstr ""
+msgstr "Summierte Zeilen und Gebühren"
 
 #: src/Admin/settlements/components/SettlementDetail.js:829
 msgid "These rows are totals reported by the source, not single movements. They may cover the same money as the movements above, so they are shown apart and not added to them."
-msgstr ""
+msgstr "Diese Zeilen sind Gesamtsummen, die von der Quelle gemeldet werden, nicht einzelne Bewegungen. Sie können das gleiche Geld wie die obigen Bewegungen abdecken, daher werden sie separat angezeigt und nicht zu ihnen hinzugefügt."
 
 #: src/Admin/settlements/components/SettlementList.js:68
 msgid "All accounts"
-msgstr ""
+msgstr "Alle Konten"
 
 #: src/Admin/settlements/components/SettlementList.js:84
 msgid "No settlements are saved yet. Load them from Mollie or import a settlement CSV."
-msgstr ""
+msgstr "Es sind noch keine Abrechnungen gespeichert. Laden Sie diese von Mollie oder importieren Sie eine Abrechnungs-CSV."
 
 #: src/Admin/settlements/components/SettlementList.js:93
 #: src/Admin/settlements/components/SettlementList.js:110
 msgid "Settlement"
-msgstr ""
+msgstr "Abrechnung"
 
 #: src/Admin/settlements/components/SettlementList.js:94
 #: src/Admin/settlements/components/SettlementList.js:122
 msgid "Account"
-msgstr ""
+msgstr "Konto"
 
 #: src/Admin/settlements/components/SettlementList.js:99
 #: src/Admin/settlements/components/SettlementList.js:181
 msgid "Data"
-msgstr ""
+msgstr "Daten"
 
 #. translators: %d: number of points to review
 #: src/Admin/settlements/components/SettlementList.js:195
 #, js-format
 msgid "%d point to review"
 msgid_plural "%d points to review"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Punkt zur Überprüfung"
+msgstr[1] "%d Punkte zur Überprüfung"
 
 #: src/Admin/settlements/components/SettlementList.js:210
 msgid "Last load failed"
-msgstr ""
+msgstr "Letztes Laden fehlgeschlagen"
 
 #. translators: 1: current page, 2: number of pages, 3: number of settlements
 #: src/Admin/settlements/components/SettlementList.js:234
 #, js-format
 msgid "Page %1$d of %2$d (%3$d settlement)"
 msgid_plural "Page %1$d of %2$d (%3$d settlements)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Seite %1$d von %2$d (%3$d Abrechnung)"
+msgstr[1] "Seite %1$d von %2$d (%3$d Abrechnungen)"
 
 #: src/Admin/settlements/components/SettlementList.js:251
 msgid "Previous"
-msgstr ""
+msgstr "Zurück"
 
 #: src/Admin/settlements/components/SettlementList.js:258
 msgid "Next"
-msgstr ""
+msgstr "Weiter"
 
 #: src/Admin/settlements/format.js:104
 msgid "Payment"
-msgstr ""
+msgstr "Zahlung"
 
 #: src/Admin/settlements/format.js:106
 msgid "Capture"
-msgstr ""
+msgstr "Erfassung"
 
 #: src/Admin/settlements/components/SettlementReport.js:157
 #: src/Admin/settlements/format.js:108
 msgid "Refund"
-msgstr ""
+msgstr "Rückerstattung"
 
 #: src/Admin/settlements/format.js:110
 msgid "Chargeback"
-msgstr ""
+msgstr "Rückbelastung"
 
 #: src/Admin/settlements/format.js:112
 msgid "Fees"
-msgstr ""
+msgstr "Gebühren"
 
 #: src/Admin/settlements/format.js:114
 msgid "Adjustment"
-msgstr ""
+msgstr "Anpassung"
 
 #: src/Admin/settlements/format.js:116
 msgid "Revenue summary"
-msgstr ""
+msgstr "Umsatzzusammenfassung"
 
 #: src/Admin/settlements/format.js:118
 msgid "Not recognized"
-msgstr ""
+msgstr "Nicht erkannt"
 
 #: src/Admin/settlements/format.js:138
 msgid "File"
-msgstr ""
+msgstr "Datei"
 
 #: src/Admin/settlements/format.js:140
 msgid "Not loaded yet"
-msgstr ""
+msgstr "Noch nicht geladen"
 
 #: src/Admin/settlements/format.js:153
 msgid "Adds up to payout"
-msgstr ""
+msgstr "Addiert sich zum Auszahlungsbetrag"
 
 #: src/Admin/settlements/format.js:158
 msgid "Loaded, not verified"
-msgstr ""
+msgstr "Geladen, nicht verifiziert"
 
 #: src/Admin/settlements/format.js:163
 msgid "Incomplete"
-msgstr ""
+msgstr "Unvollständig"
 
 #: src/Admin/settlements/format.js:178
 msgid "(no reference)"
-msgstr ""
+msgstr "(keine Referenz)"
 
 #: src/Admin/settlements/SettlementsApp.js:94
 msgid "Settlements could not be loaded."
-msgstr ""
+msgstr "Abrechnungen konnten nicht geladen werden."
 
 #. translators: %s: account name
 #: src/Admin/settlements/SettlementsApp.js:131
 #, js-format
 msgid "%s is now confirmed. Its settlements were matched with those loaded from Mollie."
-msgstr ""
+msgstr "%s ist nun bestätigt. Seine Abrechnungen wurden mit denen von Mollie abgeglichen."
 
 #: src/Admin/settlements/SettlementsApp.js:146
 msgid "The account could not be confirmed."
-msgstr ""
+msgstr "Das Konto konnte nicht bestätigt werden."
 
 #: src/Admin/settlements/SettlementsApp.js:167
 msgid "Saved settlements are kept by Fair Payments Connector. Install and activate it, or update it to a version that saves settlements, then reload this page."
-msgstr ""
+msgstr "Gespeicherte Abrechnungen werden von Fair Payments Connector verwaltet. Installieren und aktivieren Sie es oder aktualisieren Sie es auf eine Version, die Abrechnungen speichert, und laden Sie diese Seite dann neu."
 
 #: src/Admin/settlements/SettlementsApp.js:182
 msgid "This settlement is not saved on this site."
-msgstr ""
+msgstr "Diese Abrechnung ist auf dieser Website nicht gespeichert."
 
 #: src/Admin/settlements/SettlementsApp.js:233
 msgid "Mollie payouts saved on this site, from Mollie itself or from a CSV export. Saved settlements stay available without a Mollie connection. Matching them with bank entries happens on the Reconciliation page."
-msgstr ""
+msgstr "Mollie-Auszahlungen, die auf dieser Website gespeichert sind, von Mollie selbst oder aus einem CSV-Export. Gespeicherte Abrechnungen bleiben ohne Mollie-Verbindung verfügbar. Der Abgleich mit Bankeinträgen erfolgt auf der Seite \"Abstimmung\"."
 
 #. translators: %s: Mollie organization ID
 #: src/Admin/settlements/SettlementsApp.js:265
 #, js-format
 msgid "Confirm it is %s"
-msgstr ""
+msgstr "Bestätigen Sie, dass es %s ist"
 
 #. translators: %s: account name
 #: src/Admin/settlements/SettlementsApp.js:279
 #, js-format
 msgid "Settlements imported from files into “%s” are kept apart from those loaded from Mollie, because a file does not say which Mollie organization it came from."
-msgstr ""
+msgstr "Abrechnungen, die aus Dateien in \"%s\" importiert wurden, werden von denen getrennt, die von Mollie geladen werden, da eine Datei nicht angibt, von welcher Mollie-Organisation sie stammt."
 
 #: src/Admin/settlements/SettlementsApp.js:312
 msgid "Confirm account"
-msgstr ""
+msgstr "Konto bestätigen"
 
 #. translators: 1: account name, 2: Mollie organization ID
 #: src/Admin/settlements/SettlementsApp.js:319
 #, js-format
 msgid "Confirm that every file imported into “%1$s” was exported from the connected Mollie organization %2$s? Its settlements will be matched with those loaded from Mollie by payout reference. This cannot be undone."
-msgstr ""
+msgstr "Bestätigen Sie, dass jede in \"%1$s\" importierte Datei aus der verbundenen Mollie-Organisation %2$s exportiert wurde? Seine Abrechnungen werden nach Auszahlungsreferenz mit denen von Mollie abgeglichen. Dies kann nicht rückgängig gemacht werden."
 
 #: src/Admin/settlements/format.js:300
 msgid "The import could not be started."
-msgstr ""
+msgstr "Der Import konnte nicht gestartet werden."
 
 #: src/Admin/settlements/components/SettlementDetail.js:645
 msgid "For payment <payment />"
-msgstr ""
+msgstr "Für Zahlung <payment />"
 
 #: src/Admin/settlements/components/SettlementDetail.js:771
 msgid "Totals"
-msgstr ""
+msgstr "Summen"
 
 #. translators: %d: number of rows
 #: src/Admin/settlements/components/SettlementDetail.js:792
 #, js-format
 msgid "Partial: %d row with an unknown amount is left out."
 msgid_plural "Partial: %d rows with unknown amounts are left out."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Teilweise: %d Zeile mit unbekanntem Betrag wird ausgelassen."
+msgstr[1] "Teilweise: %d Zeilen mit unbekannten Beträgen werden ausgelassen."
 
 #: src/Admin/settlements/components/SettlementDetail.js:811
 msgid "Totals add up the Settled column of the rows above. They are not the payout amount and do not confirm it."
-msgstr ""
+msgstr "Die Summen addieren die Spalte „Abgerechnet“ der obigen Zeilen. Sie entsprechen nicht dem Auszahlungsbetrag und bestätigen ihn nicht."
 
 #: src/Admin/settlements/components/SettlementReport.js:39
 #: src/Admin/settlements/components/SettlementReport.js:114
@@ -1171,280 +1171,311 @@ msgstr ""
 #: src/Admin/settlements/format.js:50
 #: src/Admin/settlements/format.js:66
 msgid "Not provided by Mollie"
-msgstr ""
+msgstr "Nicht von Mollie bereitgestellt"
 
 #: src/Admin/settlements/components/SettlementReport.js:40
 msgid "Could not be totalled"
-msgstr ""
+msgstr "Konnte nicht summiert werden"
 
 #: src/Admin/settlements/components/SettlementReport.js:67
 msgid "The report could not be compared with the payout."
-msgstr ""
+msgstr "Der Bericht konnte nicht mit der Auszahlung verglichen werden."
 
 #: src/Admin/settlements/components/SettlementReport.js:72
 msgid "The report net equals the payout exactly."
-msgstr ""
+msgstr "Der Nettobetrag des Berichts entspricht der Auszahlung genau."
 
 #. translators: %s: exact amount with currency, such as -0.0045 EUR
 #: src/Admin/settlements/components/SettlementReport.js:79
 #, js-format
 msgid "The report net differs from the payout by %s."
-msgstr ""
+msgstr "Der Nettobetrag des Berichts unterscheidet sich um %s von der Auszahlung."
 
 #: src/Admin/settlements/components/SettlementReport.js:90
 msgid "This compares Mollie’s report with the payout only. It does not confirm that every movement is listed below."
-msgstr ""
+msgstr "Dies vergleicht Mollies Bericht nur mit der Auszahlung. Es bestätigt nicht, dass jede Bewegung unten aufgeführt ist."
 
 #: src/Admin/settlements/components/SettlementReport.js:123
 #: src/Admin/settlements/components/SettlementReport.js:177
 msgid "Method"
-msgstr ""
+msgstr "Methode"
 
 #: src/Admin/settlements/components/SettlementReport.js:124
 #: src/Admin/settlements/components/SettlementReport.js:185
 msgid "Count"
-msgstr ""
+msgstr "Anzahl"
 
 #: src/Admin/settlements/components/SettlementReport.js:125
 #: src/Admin/settlements/components/SettlementReport.js:195
 #: src/Admin/settlements/components/SettlementReport.js:274
 msgid "Gross amount"
-msgstr ""
+msgstr "Bruttobetrag"
 
 #: src/Admin/settlements/components/SettlementReport.js:126
 #: src/Admin/settlements/components/SettlementReport.js:205
 msgid "Effect on payout"
-msgstr ""
+msgstr "Auswirkung auf Auszahlung"
 
 #: src/Admin/settlements/components/SettlementReport.js:129
 #: src/Admin/settlements/components/SettlementReport.js:215
 msgid "Details"
-msgstr ""
+msgstr "Details"
 
 #. translators: %s: report line description
 #: src/Admin/settlements/components/SettlementReport.js:229
 #, js-format
 msgid "Hide details of %s"
-msgstr ""
+msgstr "Details von %s ausblenden"
 
 #. translators: %s: report line description
 #: src/Admin/settlements/components/SettlementReport.js:237
 #, js-format
 msgid "Show details of %s"
-msgstr ""
+msgstr "Details von %s anzeigen"
 
 #: src/Admin/settlements/components/SettlementReport.js:254
 msgid "Net amount"
-msgstr ""
+msgstr "Nettobetrag"
 
 #: src/Admin/settlements/components/SettlementReport.js:264
 msgid "VAT"
-msgstr ""
+msgstr "MwSt."
 
 #: src/Admin/settlements/components/SettlementReport.js:284
 msgid "Fixed fee rate"
-msgstr ""
+msgstr "Festgebührensatz"
 
 #: src/Admin/settlements/components/SettlementReport.js:294
 msgid "Percentage fee rate"
-msgstr ""
+msgstr "Prozentsatzsatz für Gebühren"
 
 #: src/Admin/settlements/components/SettlementReport.js:346
 msgid "Settlement summary"
-msgstr ""
+msgstr "Abwicklungszusammenfassung"
 
 #: src/Admin/settlements/components/SettlementReport.js:350
 msgid "Source: Mollie API. Mollie’s report describes the same settlement as the movements below. It is shown apart and is not added to them."
-msgstr ""
+msgstr "Quelle: Mollie API. Mollies Bericht beschreibt die gleiche Abwicklung wie die Bewegungen unten. Er wird separat angezeigt und wird nicht zu ihnen hinzugefügt."
 
 #: src/Admin/settlements/components/SettlementReport.js:359
 msgid "Refresh to load report details"
-msgstr ""
+msgstr "Aktualisieren, um Berichtsdetails zu laden"
 
 #: src/Admin/settlements/components/SettlementReport.js:364
 msgid "This settlement was saved before Mollie’s report details were kept. Its report amounts are not available, which is not the same as zero. Use Refresh from Mollie to load them."
-msgstr ""
+msgstr "Diese Abwicklung wurde gespeichert, bevor Mollies Berichtsdetails beibehalten wurden. Die Berichtsbeträge sind nicht verfügbar, was nicht dasselbe wie Null ist. Verwenden Sie Aktualisieren von Mollie, um sie zu laden."
 
 #: src/Admin/settlements/components/SettlementReport.js:376
 msgid "Mollie sent no report for this settlement, so its income and costs cannot be summarized."
-msgstr ""
+msgstr "Mollie hat keinen Bericht für diese Abwicklung gesendet, daher können ihre Einnahmen und Kosten nicht zusammengefasst werden."
 
 #. translators: %d: number of report amounts
 #: src/Admin/settlements/components/SettlementReport.js:389
 #, js-format
 msgid "%d report amount is missing, unreadable or in another currency, so the report is not totalled."
 msgid_plural "%d report amounts are missing, unreadable or in another currency, so the report is not totalled."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Berichtsbetrag fehlt, ist unlesbar oder in einer anderen Währung, daher wird der Bericht nicht summiert."
+msgstr[1] "%d Betragsangaben fehlen, sind unlesbar oder in einer anderen Währung, daher wird der Bericht nicht summiert."
 
 #: src/Admin/settlements/components/SettlementReport.js:401
 msgid "Revenue reported"
-msgstr ""
+msgstr "Gemeldete Einnahmen"
 
 #: src/Admin/settlements/components/SettlementReport.js:413
 msgid "Refunds reported"
-msgstr ""
+msgstr "Gemeldete Rückerstattungen"
 
 #: src/Admin/settlements/components/SettlementReport.js:425
 msgid "Costs and adjustments"
-msgstr ""
+msgstr "Kosten und Anpassungen"
 
 #: src/Admin/settlements/components/SettlementReport.js:436
 msgid "Report net"
-msgstr ""
+msgstr "Netto-Bericht"
 
 #: src/Admin/settlements/components/SettlementReport.js:440
 msgid "Not totalled"
-msgstr ""
+msgstr "Nicht summiert"
 
 #: src/Admin/settlements/components/SettlementReport.js:453
 msgid "Difference from payout"
-msgstr ""
+msgstr "Differenz zur Auszahlung"
 
 #: src/Admin/settlements/components/SettlementReport.js:459
 msgid "Not available"
-msgstr ""
+msgstr "Nicht verfügbar"
 
 #: src/Admin/settlements/components/SettlementReport.js:477
 msgid "Hide Mollie report breakdown"
-msgstr ""
+msgstr "Mollie-Berichtsaufschlüsselung ausblenden"
 
 #: src/Admin/settlements/components/SettlementReport.js:481
 msgid "Show Mollie report breakdown"
-msgstr ""
+msgstr "Mollie-Berichtsaufschlüsselung anzeigen"
 
 #. translators: %s: Mollie invoice reference
 #: src/Admin/settlements/components/SettlementReport.js:500
 #, js-format
 msgid "Mollie invoice: %s"
-msgstr ""
+msgstr "Mollie-Rechnung: %s"
 
 #: src/Admin/settlements/components/SettlementReport.js:510
 msgid "Revenue"
-msgstr ""
+msgstr "Einnahmen"
 
 #: src/Admin/settlements/components/SettlementReport.js:520
 msgid "Costs"
-msgstr ""
+msgstr "Kosten"
 
 #: src/Admin/settlements/format.js:49
 msgid "Could not read amount"
-msgstr ""
+msgstr "Betrag konnte nicht gelesen werden"
 
 #. translators: %s: percentage rate as a decimal number, such as 1.8
 #: src/Admin/settlements/format.js:62
 #, js-format
 msgid "%s%%"
-msgstr ""
+msgstr "%s%%"
 
 #: src/Admin/settlements/format.js:65
 msgid "Could not read rate"
-msgstr ""
+msgstr "Kurs konnte nicht gelesen werden"
 
 #. translators: 1: four-digit year, 2: two-digit month
 #: src/Admin/settlements/format.js:79
 #, js-format
 msgid "Period %1$s-%2$s"
-msgstr ""
+msgstr "Zeitraum %1$s-%2$s"
 
 #: src/Admin/settlements/format.js:83
 msgid "Period not stated"
-msgstr ""
+msgstr "Zeitraum nicht angegeben"
 
 #: src/Admin/settlements/format.js:132
 msgid "Mollie API and file"
-msgstr ""
+msgstr "Mollie API und Datei"
 
 #: src/Admin/settlements/format.js:135
 msgid "Mollie API"
-msgstr ""
+msgstr "Mollie API"
 
 #: src/Admin/settlements/components/MollieImportPanel.js:58
 msgid "A “Load new” import did not finish."
-msgstr ""
+msgstr "Ein Import über „Neue laden“ wurde nicht abgeschlossen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:60
 msgid "A refresh of one settlement did not finish."
-msgstr ""
+msgstr "Eine Aktualisierung einer Abrechnung wurde nicht abgeschlossen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:65
 msgid "A “Reload all” import did not finish."
-msgstr ""
+msgstr "Ein Import über „Alle neu laden“ wurde nicht abgeschlossen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:81
 msgid "A “Load new” import is running."
-msgstr ""
+msgstr "Ein Import über „Neue laden“ läuft."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:83
 msgid "A refresh of one settlement is running."
-msgstr ""
+msgstr "Eine Aktualisierung einer Abrechnung wird ausgeführt."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:88
 msgid "A “Reload all” import is running."
-msgstr ""
+msgstr "Ein Import über „Alle neu laden“ läuft."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:117
 msgid "Mollie lists no settlements yet."
-msgstr ""
+msgstr "Mollie listet noch keine Abrechnungen auf."
 
 #. translators: %d: number of settlements already saved
 #: src/Admin/settlements/components/MollieImportPanel.js:120
 #, js-format
 msgid "Nothing new: the %d settlement Mollie lists is already saved."
 msgid_plural "Nothing new: all %d settlements Mollie lists are already saved."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Nichts Neues: die %d Abrechnung, die Mollie auflistet, ist bereits gespeichert."
+msgstr[1] "Nichts Neues: alle %d Abrechnungen, die Mollie auflistet, sind bereits gespeichert."
 
 #. translators: %d: number of new settlements loaded
 #: src/Admin/settlements/components/MollieImportPanel.js:132
 #, js-format
 msgid "Loaded %d new settlement from Mollie."
 msgid_plural "Loaded %d new settlements from Mollie."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Abrechnung %d neu von Mollie geladen."
+msgstr[1] "Abrechnungen %d neu von Mollie geladen."
 
 #. translators: 1: sentence saying how many settlements were loaded, 2: sentence saying how many were left unchanged
 #: src/Admin/settlements/components/MollieImportPanel.js:147
 #, js-format
 msgid "%1$s %2$s"
-msgstr ""
+msgstr "%1$s %2$s"
 
 #. translators: %d: number of settlements already saved
 #: src/Admin/settlements/components/MollieImportPanel.js:151
 #, js-format
 msgid "%d already saved was left unchanged."
 msgid_plural "%d already saved were left unchanged."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d bereits gespeichert wurde unverändert gelassen."
+msgstr[1] "%d bereits gespeichert wurden unverändert gelassen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:203
 msgid "“Load new” brings in the settlements of the connected organization that are not saved here yet, with their payments, captures, refunds and chargebacks. Settlements already loaded from Mollie are left unchanged. “Reload all” retrieves every settlement again, which takes longer and is only needed when saved data looks wrong."
-msgstr ""
+msgstr "„Neue laden“ holt die Abrechnungen der verbundenen Organisation, die hier noch nicht gespeichert sind, mit ihren Zahlungen, Erfassungen, Erstattungen und Rückbuchungen. Bereits von Mollie geladene Abrechnungen bleiben unverändert. „Alle neu laden“ ruft jede Abrechnung erneut ab, was länger dauert und nur nötig ist, wenn gespeicherte Daten falsch aussehen."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:249
 msgid "Continue it, or start another import instead. Settlements that were fully loaded stay saved either way."
-msgstr ""
+msgstr "Setzen Sie es fort, oder starten Sie stattdessen einen anderen Import. Abrechnungen, die vollständig geladen wurden, bleiben in jedem Fall gespeichert."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:260
 msgid "It may be running in another window. Another import can be started once this one finishes, or after it has made no progress for five minutes."
-msgstr ""
+msgstr "Es wird möglicherweise in einem anderen Fenster ausgeführt. Ein weiterer Import kann gestartet werden, sobald dieser abgeschlossen ist, oder nachdem er fünf Minuten lang keine Fortschritte gemacht hat."
 
 #: src/Admin/settlements/components/MollieImportPanel.js:291
 msgid "Refresh status"
-msgstr ""
+msgstr "Status aktualisieren"
 
 #: src/Admin/settlements/components/MollieImportPanel.js:300
 msgid "Load new"
-msgstr ""
+msgstr "Neue laden"
 
 #: src/Admin/settlements/components/MollieImportPanel.js:310
 msgid "Reload all"
-msgstr ""
+msgstr "Alle neu laden"
 
 #: src/Admin/settlements/format.js:302
 msgid "The status of the import could not be read. Try again in a moment."
-msgstr ""
+msgstr "Der Status des Imports konnte nicht gelesen werden. Versuchen Sie es in einem Moment erneut."
 
 #: src/Admin/settlements/format.js:307
 msgid "The import could not continue. Its last known state is shown below."
-msgstr ""
+msgstr "Der Import konnte nicht fortgesetzt werden. Sein letzter bekannter Status wird unten angezeigt."
+
+#: src/API/FinancialEntryController.php:486
+msgid "Focus on a single entry by ID; other filters are ignored."
+msgstr "Fokus auf einen einzelnen Eintrag nach ID; andere Filter werden ignoriert."
+
+#: src/Admin/entries/EntriesApp.js:829
+msgid "Show all entries"
+msgstr "Alle Einträge anzeigen"
+
+#: src/Admin/entries/EntriesApp.js:839
+msgid "This entry link is not valid."
+msgstr "Dieser Eintragslink ist nicht gültig."
+
+#. translators: %d: financial entry ID.
+#: src/Admin/entries/EntriesApp.js:845
+#, js-format
+msgid "Showing entry #%d"
+msgstr "Eintrag #%d wird angezeigt"
+
+#. translators: %d: financial entry ID.
+#: src/Admin/entries/EntriesApp.js:1102
+#, js-format
+msgid "Entry #%d was not found. It may have been deleted."
+msgstr "Eintrag #%d wurde nicht gefunden. Es könnte gelöscht worden sein."
+
+#. translators: 1: financial entry ID, 2: entry date
+#: src/Admin/reconciliation/ReconciliationApp.js:32
+#, js-format
+msgid "Entry #%1$d, %2$s"
+msgstr "Eintrag #%1$d, %2$s"
+

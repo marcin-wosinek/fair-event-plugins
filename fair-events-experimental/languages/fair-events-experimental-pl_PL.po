@@ -617,7 +617,7 @@ msgstr "Błąd: %s"
 #. translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase)
 #: src/API/MetaConversionsController.php:150
 #: src/Admin/settings/MetaConversions.js:224
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -1003,15 +1003,15 @@ msgstr "(pozycja bez tytułu)"
 
 #: src/Admin/settings/WeeklyNotificationsMoved.js:25
 msgid "Weekly Telegram notifications are now managed in Fair Events, together with the other notification channels. Your settings, bot token and delivery history moved with them."
-msgstr ""
+msgstr "Powiadomienia tygodniowe na Telegramie są teraz zarządzane w Fair Events, razem z innymi kanałami powiadomień. Twoje ustawienia, token bota i historia dostarczania zostały przeniesione wraz z nimi."
 
 #: src/Admin/settings/WeeklyNotificationsMoved.js:32
 msgid "Open Event notifications"
-msgstr ""
+msgstr "Otwórz powiadomienia o zdarzeniach"
 
 #: src/Admin/settings/WeeklyNotificationsMoved.js:41
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
-msgstr ""
+msgstr "Powiadomienia tygodniowe na Telegramie są teraz zarządzane i wysyłane przez Fair Events. Zaktualizuj Fair Events, aby je zarządzać; do tego czasu żadne powiadomienie tygodniowe nie będzie wysłane."
 
 #: src/Admin/AdminPages.php:85
 #: src/Admin/AdminPages.php:86
@@ -1429,3 +1429,4 @@ msgstr "Edytuj"
 #: fair-events-experimental.php
 msgid "Event feeds, group pricing, schedule editing, duplication, merging, comparisons and optional Meta conversions for Fair Events."
 msgstr "Kanały wydarzeń, ceny grupowe, edycja harmonogramu, duplikowanie, scalanie, porównania i opcjonalne konwersje Meta dla Fair Events."
+

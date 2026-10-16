@@ -183,7 +183,7 @@ msgid "All selected photos will be attributed to this author."
 msgstr "Todas las fotos seleccionadas se atribuirán a este autor."
 
 #: src/Admin/MediaBatchActions.php:257
-#: src/Admin/edit-extra-message/EditExtraMessage.js:272
+#: src/Admin/edit-extra-message/EditExtraMessage.js:278
 #: src/Admin/fee-detail/FeeDetail.js:1057
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
@@ -274,20 +274,20 @@ msgstr "Error al eliminar etiqueta"
 msgid "Error"
 msgstr "Error"
 
-#: src/API/EventInvitationsController.php:132
+#: src/API/EventInvitationsController.php:164
 #: src/API/ScheduledMessagesController.php:380
 msgid "Event date not found."
 msgstr "Fecha del evento no encontrada."
 
-#: src/API/EventInvitationsController.php:107
+#: src/API/EventInvitationsController.php:139
 msgid "You do not have permission to send event invitations."
 msgstr "No tienes permiso para enviar invitaciones de evento."
 
-#: src/API/EventInvitationsController.php:143
+#: src/API/EventInvitationsController.php:175
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
-#: src/API/EventInvitationsController.php:152
+#: src/API/EventInvitationsController.php:184
 msgid "Please specify participant IDs or group IDs."
 msgstr "Especifica IDs de participantes o IDs de grupos."
 
@@ -487,7 +487,7 @@ msgstr "Grupo eliminado correctamente."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (copia)"
 
@@ -1291,7 +1291,7 @@ msgstr "Los mensajes activos se añaden a los correos del sistema."
 msgid "Update Message"
 msgstr "Actualizar mensaje"
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:265
+#: src/Admin/edit-extra-message/EditExtraMessage.js:268
 msgid "Create Message"
 msgstr "Crear mensaje"
 
@@ -1910,7 +1910,7 @@ msgstr "Activa paquetes de funciones avanzadas para Fair Audience (cuotas, encue
 
 #: src/Core/Features.php:197
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
-msgstr ""
+msgstr "Correo personalizado a toda la audiencia, mensajes adicionales, mensajes programados."
 
 #: src/Admin/components/BudgetLoadStatus.js:33
 msgid "Loading budgets…"
@@ -1978,3 +1978,4 @@ msgstr "Opcionalmente, vincúlala a un presupuesto para el seguimiento financier
 #: src/Admin/fees-list/FeesList.js:681
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "La cuota conserva su presupuesto actual a menos que elijas otro."
+
