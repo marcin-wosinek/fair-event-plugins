@@ -642,6 +642,15 @@ class Schema {
 	}
 
 	/**
+	 * Whether a database version has ever been recorded
+	 *
+	 * @return bool True when the version option exists.
+	 */
+	public static function has_db_version() {
+		return false !== get_option( 'fair_events_db_version', false );
+	}
+
+	/**
 	 * Update database version
 	 *
 	 * @param string $version Version to set.
