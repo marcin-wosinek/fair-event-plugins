@@ -238,4 +238,34 @@ if ( ! function_exists( 'wp_parse_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Stub of WordPress get_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $name Transient name.
+	 * @return mixed Stored value or false.
+	 */
+	function get_transient( $name ) {
+		return $GLOBALS['_fair_test_transients'][ $name ]['value'] ?? false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * Stub of WordPress set_transient() that records the value and expiry.
+	 *
+	 * @param string $name       Transient name.
+	 * @param mixed  $value      Value.
+	 * @param int    $expiration Seconds until expiry.
+	 * @return true
+	 */
+	function set_transient( $name, $value, $expiration = 0 ) {
+		$GLOBALS['_fair_test_transients'][ $name ] = array(
+			'value'      => $value,
+			'expiration' => $expiration,
+		);
+		return true;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';

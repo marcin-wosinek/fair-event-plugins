@@ -229,7 +229,7 @@ class Plugin {
 			return;
 		}
 
-		if ( '2' !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
+		if ( \FairEventsExperimental\Meta\Outbox::DB_VERSION !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
 			\FairEventsExperimental\Meta\Outbox::install();
 		}
 		$service = new \FairEventsExperimental\Meta\Conversions();
@@ -238,6 +238,7 @@ class Plugin {
 			'rest_api_init',
 			static function () {
 				( new \FairEventsExperimental\API\MetaConversionsController() )->register_routes();
+				( new \FairEventsExperimental\API\MetaEngagementController() )->register_routes();
 			}
 		);
 		add_action(
@@ -249,9 +250,43 @@ class Plugin {
 				}
 			}
 		);
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_meta_engagement' ) );
 		if ( ! wp_next_scheduled( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
 		}
+	}
+
+	/**
+	 * Enqueue button-click capture on a public event page, bootstrapped with
+	 * the page's event and the occurrence it shows. Nothing loads until Meta
+	 * credentials are configured.
+	 *
+	 * @return void
+	 */
+	public function enqueue_meta_engagement() {
+		if ( ! is_singular() || ! \FairEventsExperimental\Meta\Conversions::configured() ) {
+			return;
+		}
+		$context = \FairEventsExperimental\Meta\Engagement::page_context( get_queried_object_id() );
+		if ( ! $context ) {
+			return;
+		}
+		$asset = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/frontend/meta-engagement.asset.php';
+		wp_enqueue_script(
+			'fair-events-experimental-meta-engagement',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/frontend/meta-engagement.js',
+			$asset['dependencies'],
+			$asset['version'],
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+		wp_add_inline_script(
+			'fair-events-experimental-meta-engagement',
+			'window.fairEventsMetaEngagement = ' . wp_json_encode( $context ) . ';',
+			'before'
+		);
 	}
 
 	/**

@@ -41,6 +41,10 @@ module.exports = {
 			process.cwd(),
 			'src/Frontend/meta-attribution.js'
 		),
+		'frontend/meta-engagement': path.resolve(
+			process.cwd(),
+			'src/Frontend/meta-engagement.js'
+		),
 	},
 	plugins: [
 		...defaultConfig.plugins,

@@ -14,6 +14,7 @@ defined( 'WPINC' ) || die;
 /** Stores and claims conversion delivery work. */
 class Outbox {
 	public const TABLE_SUFFIX = 'fair_events_meta_outbox';
+	public const DB_VERSION   = '3';
 
 	/** @return string */
 	public static function table_name() {
@@ -25,6 +26,12 @@ class Outbox {
 	 * Install or upgrade the table. `payment_mode` defaults every pre-existing
 	 * row to 'live' — the prior version could only ever enqueue live
 	 * transactions, so that default is also the historically correct value.
+	 *
+	 * Engagement rows (version 3) have no transaction: `transaction_id` is
+	 * NULL, which the `logical_conversion` key never treats as a duplicate,
+	 * and `delivery_event` keeps each Meta event ID unique instead. dbDelta
+	 * does not change a column's nullability, so the upgrade relaxes
+	 * `transaction_id` explicitly.
 	 */
 	public static function install() {
 		global $wpdb;
@@ -34,7 +41,9 @@ class Outbox {
 		dbDelta(
 			"CREATE TABLE {$table} (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				transaction_id bigint(20) unsigned NOT NULL,
+				transaction_id bigint(20) unsigned DEFAULT NULL,
+				event_post_id bigint(20) unsigned DEFAULT NULL,
+				event_date_id bigint(20) unsigned DEFAULT NULL,
 				event_name varchar(40) NOT NULL,
 				event_id char(64) NOT NULL,
 				event_time bigint(20) unsigned NOT NULL,
@@ -55,22 +64,34 @@ class Outbox {
 				updated_at datetime NOT NULL,
 				PRIMARY KEY  (id),
 				UNIQUE KEY logical_conversion (transaction_id,event_name),
+				UNIQUE KEY delivery_event (event_id),
 				KEY due (state,next_attempt_at),
 				KEY retention (updated_at)
 			) {$charset};"
 		);
-		update_option( 'fair_events_experimental_meta_db_version', '2' );
+		$column = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'transaction_id' ) );
+		if ( $column && 'NO' === $column->Null ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i MODIFY transaction_id bigint(20) unsigned DEFAULT NULL', $table ) );
+		}
+		update_option( 'fair_events_experimental_meta_db_version', self::DB_VERSION );
 	}
 
-	/** @param array $event Event data. @return bool */
+	/**
+	 * Queue an event once. Engagement events omit `transaction_id` and carry
+	 * `event_post_id`/`event_date_id`; a zero or missing ID is stored as NULL.
+	 *
+	 * @param array $event Event data. @return bool Whether a new row was queued.
+	 */
 	public function enqueue( $event ) {
 		global $wpdb;
 		$now    = current_time( 'mysql', true );
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO %i (transaction_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,state,next_attempt_at,created_at,updated_at) VALUES (%d,%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+				'INSERT IGNORE INTO %i (transaction_id,event_post_id,event_date_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,state,next_attempt_at,created_at,updated_at) VALUES (NULLIF(%d,0),NULLIF(%d,0),NULLIF(%d,0),%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
 				self::table_name(),
-				$event['transaction_id'],
+				$event['transaction_id'] ?? 0,
+				$event['event_post_id'] ?? 0,
+				$event['event_date_id'] ?? 0,
 				$event['event_name'],
 				$event['event_id'],
 				$event['event_time'],
