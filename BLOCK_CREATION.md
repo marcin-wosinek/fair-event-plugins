@@ -76,6 +76,48 @@ Register from `build/` directory in PHP:
 register_block_type(PLUGIN_DIR . 'build/blocks/block-name');
 ```
 
+## Block documentation
+
+Every block a plugin supplies ships release-matched documentation for site
+tooling and coding agents (#1682). Keep the sources next to the block:
+
+```
+src/blocks/block-name/docs/
+├── doc.json           # status, registration condition, example descriptors
+├── guide.md           # purpose, attributes, prerequisites, composition, rendering
+└── examples/
+    ├── minimal.html   # required: smallest valid serialized content
+    └── <name>.html    # complete compositions, variants
+```
+
+-   `doc.json` `status` is `authoring`, `legacy` (needs a `replacement`), or
+    `unregistered` (metadata ships but the block is not registered). Describe
+    when the block is registered in `registration` and list plugins it needs
+    at render time in `requires`.
+-   Describe every example in `doc.json` `examples` with a `title`, the
+    `context` it is inserted into (`page`, or `event` for an event post), and
+    a `frontend` selector the rendered page contains. Document placeholder
+    record IDs in `syntheticIds`.
+-   Do not repeat attribute types and defaults in `guide.md`: the generated
+    README adds a technical reference from block.json. Explain meaning,
+    prerequisites, and composition instead, and start at level-2 headings.
+-   A block whose child must sit inside a parent gets a minimal example that
+    includes the parent. Examples of static blocks must match the editor's
+    saved markup exactly; produce them in the editor.
+-   A block registered without block.json (a PHP-only alias) or a variation of
+    another block gets a `docs/` directory without block.json, with
+    `"kind": "php-block"` or `"kind": "variation"` in `doc.json`. See
+    `fair-audience/src/blocks/event-signup/docs/` and
+    `fair-events/src/blocks/calendar-button/docs/`.
+
+`npm run build` in the plugin generates the distributed `block-docs/`
+(gitignored) and fails on missing or invalid documentation. Check sources
+with `node scripts/block-docs.mjs check [plugin]`. Release checks verify the
+ZIP contents (`scripts/verify-dist-archive.cjs`); `e2e/block-docs-examples.spec.js`
+inserts, saves, and reopens every example, and
+`fair-events/src/API/__tests__/BlockDiscovery.api.spec.js` checks the index
+against live registration.
+
 ## Examples
 
 -   `fair-events/src/blocks/events-calendar/`

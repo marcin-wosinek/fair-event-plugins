@@ -1,0 +1,25 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Current month with navigation",
+			"description": "Opens on the current month with previous/next navigation and a subscribe link.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-calendar"
+		},
+		"fixed-month": {
+			"title": "A fixed month for one category",
+			"description": "Always shows September 2030, filtered to one category, without navigation or subscribe link, at wide alignment.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-calendar",
+			"syntheticIds": {
+				"categories": "Post category term IDs (Posts → Categories)."
+			}
+		}
+	}
+}

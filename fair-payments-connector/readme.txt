@@ -70,6 +70,10 @@ Every method enabled in your Mollie account, such as iDEAL, credit and debit car
 
 Yes. A small public PHP API creates and tracks transactions, and action hooks such as `fair_payment_paid` fire on status changes. See the Developer Notes below.
 
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies (the Simple Payment block is named `fair-payment/simple-payment`), with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == External services ==
 
 This plugin relies on the following third-party services. Data is only sent to a service when you enable and configure the related feature.

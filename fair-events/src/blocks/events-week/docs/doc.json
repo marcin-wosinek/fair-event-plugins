@@ -1,0 +1,22 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Current week",
+			"description": "The current week's events with previous/next navigation.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-week"
+		},
+		"with-summary": {
+			"title": "Week with a copyable text summary",
+			"description": "Full-width week view with custom chip color and a button that copies a plain-text summary of the week.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-week"
+		}
+	}
+}

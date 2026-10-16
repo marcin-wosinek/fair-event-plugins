@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Audience is active."
+	},
+	"requires": [ "fair-events" ],
+	"examples": {
+		"minimal": {
+			"title": "Interest form on an event post",
+			"description": "Optional name and required email, with default texts.",
+			"context": "event",
+			"frontend": ".wp-block-fair-audience-event-interest form"
+		}
+	}
+}

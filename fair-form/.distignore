@@ -18,6 +18,8 @@ phpcs.xml
 webpack.config.cjs
 *.md
 !CHANGELOG.md
+# Block documentation ships with the plugin (scripts/block-docs.mjs)
+!block-docs/**/*.md
 
 # Build artifacts that should be included
 !/vendor/

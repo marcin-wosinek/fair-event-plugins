@@ -1,0 +1,28 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Calendar Button is active. It does not need Fair Events."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Timed one-off event",
+			"description": "A single two-hour event. The page title and permalink become the calendar entry's title and link.",
+			"context": "page",
+			"frontend": ".wp-block-fair-calendar-button-calendar-button[data-start='2030-06-14T19:00'] .wp-block-button__link"
+		},
+		"recurring": {
+			"title": "Weekly recurring event with location",
+			"description": "Six weekly occurrences, with a description and location added to the calendar entry.",
+			"context": "page",
+			"frontend": ".wp-block-fair-calendar-button-calendar-button[data-recurring='true'][data-rrule='FREQ=WEEKLY;COUNT=6']"
+		},
+		"all-day": {
+			"title": "Multi-day all-day event",
+			"description": "An all-day event spanning three days, using date-only values.",
+			"context": "page",
+			"frontend": ".wp-block-fair-calendar-button-calendar-button[data-all-day='true']"
+		}
+	}
+}

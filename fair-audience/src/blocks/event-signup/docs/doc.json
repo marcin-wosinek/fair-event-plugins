@@ -1,0 +1,32 @@
+{
+	"kind": "php-block",
+	"name": "fair-audience/event-signup",
+	"title": "Event Signup (removed, render-only)",
+	"description": "Compatibility alias that renders content saved with the removed Fair Audience Event Signup block as fair-events/event-signup.",
+	"registeredIn": "src/Hooks/BlockHooks.php",
+	"attributes": {
+		"signupButtonText": { "type": "string" }
+	},
+	"supports": { "inserter": false },
+	"status": "legacy",
+	"replacement": "fair-events/event-signup",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered in PHP with no editor or frontend assets. Renders only while Fair Events is active (otherwise it outputs nothing)."
+	},
+	"requires": [ "fair-events" ],
+	"examples": {
+		"minimal": {
+			"title": "Saved block without questions",
+			"description": "Content saved before the block was removed; renders the Event Signup form labelled \"Sign Up\".",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets"
+		},
+		"saved-with-questions": {
+			"title": "Saved block with a nested question",
+			"description": "Custom button text and one Fair Form question, rendered in their saved order. Needs Fair Form.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets [data-question-key='dietary_requirements']"
+		}
+	}
+}

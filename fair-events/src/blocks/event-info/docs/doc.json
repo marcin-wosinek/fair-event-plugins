@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Event summary on an event post",
+			"description": "Shows dates and venue for the event linked to the current post.",
+			"context": "event",
+			"frontend": ".wp-block-fair-events-event-info"
+		}
+	}
+}

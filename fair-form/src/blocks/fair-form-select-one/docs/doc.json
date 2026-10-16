@@ -1,0 +1,19 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Form is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Select One Question with options",
+			"description": "A question with its option blocks, in a Fair Form.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form [data-question-key='experience_level']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
+		}
+	}
+}

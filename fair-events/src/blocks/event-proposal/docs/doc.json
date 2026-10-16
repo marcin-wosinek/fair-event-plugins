@@ -1,0 +1,16 @@
+{
+	"status": "unregistered",
+	"registration": {
+		"condition": "feature",
+		"detail": "Registered only when Fair Events' `sources` feature is enabled. This release's Fair Events feature registry has no `sources` key (the bundle moved to Fair Events Experimental), so the block is never registered and existing instances do not render."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Proposal form with default fields",
+			"description": "Title, date, duration, description, and category fields with the default button text.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-event-proposal.fair-events-proposal-form"
+		}
+	}
+}

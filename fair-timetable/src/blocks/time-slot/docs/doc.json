@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Timetable is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "One slot inside a timetable",
+			"description": "A slot with default times (09:00–10:00) in the smallest valid timetable.",
+			"context": "page",
+			"frontend": ".wp-block-fair-timetable-time-slot .time-annotation"
+		}
+	}
+}

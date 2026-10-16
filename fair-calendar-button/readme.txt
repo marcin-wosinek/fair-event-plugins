@@ -78,6 +78,10 @@ The plugin is designed to work with any properly coded WordPress theme. It uses 
 
 Yes, the plugin doesn't collect, store, or transmit any personal data. Event details are processed client-side and sent directly to the user's chosen calendar provider.
 
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies, with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == Screenshots ==
 
 1. Calendar button block in the Gutenberg editor

@@ -7,7 +7,8 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true",
+		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true; npm run block-docs",
+		"block-docs": "node ../scripts/block-docs.mjs generate fair-form",
 		"clean": "rm -rf build",
 		"start": "wp-scripts start --config webpack.config.cjs",
 		"format": "wp-scripts format",
@@ -24,7 +25,7 @@
 		"test:js": "wp-scripts test-unit-jest --config jest.config.js",
 		"test:api": "playwright test src/API/__tests__/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-form svn",
-		"svn:copy": "cp -r readme.txt fair-form.php composer* languages CHANGELOG.md svn/trunk"
+		"svn:copy": "cp -r readme.txt block-docs fair-form.php composer* languages CHANGELOG.md svn/trunk"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.7",

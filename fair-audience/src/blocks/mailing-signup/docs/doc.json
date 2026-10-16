@@ -1,0 +1,26 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Audience is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Newsletter signup",
+			"description": "Name and email with double opt-in, no category choice.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-mailing-signup form"
+		},
+		"with-categories": {
+			"title": "Signup with category preferences",
+			"description": "Offers two categories, one preselected.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-mailing-signup form",
+			"syntheticIds": {
+				"categoryIds": "Post category term IDs to offer (Posts → Categories).",
+				"preselectedCategoryIds": "A subset of categoryIds checked by default."
+			}
+		}
+	}
+}

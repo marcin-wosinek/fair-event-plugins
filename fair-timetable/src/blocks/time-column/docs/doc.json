@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Timetable is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "One column inside a timetable",
+			"description": "A time column can only exist inside a timetable, so the minimal example is a complete timetable.",
+			"context": "page",
+			"frontend": ".wp-block-fair-timetable-time-column h2"
+		}
+	}
+}

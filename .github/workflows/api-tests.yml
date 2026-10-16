@@ -8,6 +8,9 @@ on:
         branches: [main]
         paths:
             - '**/src/API/**'
+            - '**/src/blocks/**'
+            - '**/src/Hooks/BlockHooks.php'
+            - 'scripts/block-docs.mjs'
             - '**/playwright.config.js'
             - '.wp-env.json'
             - 'package.json'
@@ -19,6 +22,9 @@ on:
         branches: [main]
         paths:
             - '**/src/API/**'
+            - '**/src/blocks/**'
+            - '**/src/Hooks/BlockHooks.php'
+            - 'scripts/block-docs.mjs'
             - '**/playwright.config.js'
             - '.wp-env.json'
             - 'package.json'

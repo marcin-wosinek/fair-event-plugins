@@ -104,6 +104,14 @@ already-active installs:
 -   E2E: `e2e/user-flows/`, modeled on the existing phone/url signup specs,
     with a matching seed block variant in the e2e fixtures.
 
+## 8. Block documentation
+
+Add `src/blocks/fair-form-{type}/docs/` (`doc.json`, `guide.md`, and
+`examples/minimal.html` with the question inside a Fair Form), mirroring a
+sibling question, and an Event Signup example if the type is allowed there.
+The build fails without it; see
+[BLOCK_CREATION.md § Block documentation](./BLOCK_CREATION.md#block-documentation).
+
 ## Verifying step 3 didn't get skipped
 
 After wiring everything else, insert the new question block from all three

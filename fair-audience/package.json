@@ -7,7 +7,8 @@
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
-		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true",
+		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson || true; npm run block-docs",
+		"block-docs": "node ../scripts/block-docs.mjs generate fair-audience",
 		"clean": "rm -rf build",
 		"prebuild": "npm run clean",
 		"start": "wp-scripts start",
@@ -29,7 +30,7 @@
 		"playwright:run": "playwright test --headed",
 		"playwright:up": "playwright test --headed --ui",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-audience svn",
-		"svn:copy": "cp -r readme.txt fair-audience.php src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets"
+		"svn:copy": "cp -r readme.txt block-docs fair-audience.php src package* composer* languages CHANGELOG.md svn/trunk; cp assets/* svn/assets"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "7.57.0",
