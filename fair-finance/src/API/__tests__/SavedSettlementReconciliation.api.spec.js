@@ -76,6 +76,10 @@ test.describe( 'Saved settlement reconciliation', () => {
 				expect( response.ok(), await response.text() ).toBeTruthy();
 			const current = await preview();
 			expect( current.decision.current_state ).toBe( 'full' );
+			const anonymousUnmatch = await api.delete(
+				`${ ENTRIES }/${ fixture.entry_id }/match`
+			);
+			expect( anonymousUnmatch.status() ).toBe( 401 );
 			expect( current.history ).toHaveLength( 1 );
 			expect( ( await confirm( current ) ).ok() ).toBeTruthy();
 			expect( ( await preview() ).history ).toHaveLength( 1 );
