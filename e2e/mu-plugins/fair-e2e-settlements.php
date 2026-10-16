@@ -10,6 +10,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/lib/settlement-reconciliation-fixtures.php';
+
 add_action(
 	'rest_api_init',
 	static function () {
@@ -43,6 +45,7 @@ add_action(
 					$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE settlement_run_id IS NOT NULL', $wpdb->prefix . 'fair_payment_external_update_runs' ) );
 
 					delete_option( 'fair_e2e_settlements' );
+					delete_option( 'fair_e2e_reconciliation_fail' );
 					delete_option( 'fair_e2e_mollie_disconnected' );
 
 					if ( $request->get_param( 'restore' ) ) {

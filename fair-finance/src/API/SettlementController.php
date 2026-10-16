@@ -50,6 +50,7 @@ class SettlementController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
+		$this->register_saved_routes();
 		// POST /fair-finance/v1/reconciliation/settlement/preview - Match a parsed settlement.
 		register_rest_route(
 			$this->namespace,
@@ -123,6 +124,136 @@ class SettlementController extends WP_REST_Controller {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Administrator-only local saved-settlement review routes.
+	 *
+	 * @return void
+	 */
+	private function register_saved_routes() {
+		$selection = array(
+			'id'         => array(
+				'type'     => 'integer',
+				'minimum'  => 1,
+				'required' => true,
+			),
+			'entry_id'   => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+			'account_id' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+			'currency'   => array(
+				'type'              => 'string',
+				'pattern'           => '^[A-Z]{3}$',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+		);
+		foreach ( array( 'preview', 'confirm', 'candidates' ) as $operation ) {
+			$args = $selection;
+			if ( 'confirm' === $operation ) {
+				$args['fingerprint']    = array(
+					'type'     => 'string',
+					'pattern'  => '^[a-f0-9]{64}$',
+					'required' => true,
+				);
+				$args['state']          = array(
+					'type'     => 'string',
+					'enum'     => array( 'partial', 'full', 'released' ),
+					'required' => true,
+				);
+				$args['adopt_existing'] = array(
+					'type'    => 'boolean',
+					'default' => false,
+				);
+				$args['allocate']       = array(
+					'type'    => 'boolean',
+					'default' => false,
+				);
+				$args['budget_id']      = array(
+					'type'    => array( 'integer', 'null' ),
+					'minimum' => 1,
+				);
+			}
+			register_rest_route(
+				$this->namespace,
+				'/reconciliation/settlements/(?P<id>\\d+)/' . $operation,
+				array(
+					'methods'             => 'candidates' === $operation ? WP_REST_Server::READABLE : WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'saved_' . $operation ),
+					'permission_callback' => array( $this, 'preview_permissions_check' ),
+					'args'                => $args,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Service availability, including independently updated connectors.
+	 *
+	 * @return object|WP_Error
+	 */
+	private function saved_service() {
+		if ( ! class_exists( 'FairPaymentsConnector\\Database\\SettlementRepository' ) || ! method_exists( 'FairPaymentsConnector\\Settlements\\Report', 'summarize' ) || ! method_exists( 'FairPaymentsConnector\\Services\\SettlementStore', 'supports_reconciliation_guards' ) ) {
+			return new WP_Error( 'connector_required', __( 'Update and activate Fair Payments Connector to reconcile saved settlements.', 'fair-finance' ), array( 'status' => 503 ) );
+		}
+		return new \FairFinance\Services\SettlementReconciliation();
+	}
+
+	/**
+	 * Extract only declared proposal fields.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return array
+	 */
+	private function saved_proposal( $request ) {
+		$proposal = array();
+		foreach ( array( 'entry_id', 'account_id', 'currency', 'fingerprint', 'state', 'adopt_existing', 'allocate', 'budget_id' ) as $key ) {
+			if ( $request->has_param( $key ) ) {
+				$proposal[ $key ] = $request->get_param( $key );
+			}
+		}
+		return $proposal;
+	}
+
+	/**
+	 * Fresh local preview.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_preview( $request ) {
+		$service = $this->saved_service();
+		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->preview( (int) $request['id'], $this->saved_proposal( $request ) ) );
+	}
+
+	/**
+	 * Confirm reviewed local evidence.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_confirm( $request ) {
+		$service  = $this->saved_service();
+		$proposal = $this->saved_proposal( $request );
+		if ( ! empty( $proposal['budget_id'] ) && ! \FairFinance\Models\Budget::get_by_id( $proposal['budget_id'] ) ) {
+			return new WP_Error( 'invalid_budget', __( 'Budget not found.', 'fair-finance' ), array( 'status' => 400 ) );
+		}
+		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->confirm( (int) $request['id'], $proposal ) );
+	}
+
+	/**
+	 * Ranked candidates from paginated local search.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_candidates( $request ) {
+		$service = $this->saved_service();
+		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->candidates( (int) $request['id'] ) );
 	}
 
 	/**

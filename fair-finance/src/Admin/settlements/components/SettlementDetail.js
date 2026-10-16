@@ -149,6 +149,14 @@ export default function SettlementDetail( {
 					{ __( '← All settlements', 'fair-finance' ) }
 				</a>
 			</p>
+			<p>
+				<Button
+					variant="primary"
+					href={ `admin.php?page=fair-finance-reconciliation&settlement=${ settlement.id }` }
+				>
+					{ __( 'Reconcile', 'fair-finance' ) }
+				</Button>
+			</p>
 			<HStack justify="space-between" alignment="center" wrap>
 				<h1>
 					{ sprintf(

@@ -21,6 +21,9 @@ import {
 /**
  * Internal dependencies
  */
+import SavedSettlementReview, {
+	SavedSettlementSelector,
+} from './components/SavedSettlementReview.js';
 import SettlementImportModal from './components/SettlementImportModal.js';
 import { formatDateOnly } from 'fair-events-shared';
 
@@ -1132,4 +1135,39 @@ const ReconciliationApp = () => {
 	);
 };
 
-export default ReconciliationApp;
+const ReconciliationPage = () => {
+	const [ settlementId, setSettlementId ] = useState( () => {
+		const value = new URLSearchParams( window.location.search ).get(
+			'settlement'
+		);
+		return /^\d+$/.test( value || '' ) ? value : '';
+	} );
+	const select = ( value ) => {
+		setSettlementId( value );
+		const url = new URL( window.location.href );
+		if ( value ) url.searchParams.set( 'settlement', value );
+		else url.searchParams.delete( 'settlement' );
+		window.history.replaceState( null, '', url );
+	};
+	return (
+		<>
+			<div className="wrap">
+				{ settlementId && (
+					<h1>{ __( 'Reconciliation', 'fair-finance' ) }</h1>
+				) }
+				<SavedSettlementSelector
+					value={ settlementId }
+					onChange={ select }
+				/>
+				{ settlementId && (
+					<SavedSettlementReview
+						key={ settlementId }
+						settlementId={ settlementId }
+					/>
+				) }
+			</div>
+			{ ! settlementId && <ReconciliationApp /> }
+		</>
+	);
+};
+export default ReconciliationPage;

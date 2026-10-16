@@ -340,6 +340,14 @@ class FinancialEntry {
 			$where_values[]  = $filters['entry_type'];
 		}
 
+		if ( ! empty( $filters['unmatched'] ) ) {
+			$where_clauses[] = $wpdb->prepare(
+				'NOT EXISTS (SELECT 1 FROM %i d WHERE d.entry_id = %i.id)',
+				Schema::reconciliation_table( 'decisions' ),
+				$table_name
+			);
+		}
+
 		if ( ! empty( $filters['unmatched'] ) && class_exists( '\\FairPaymentsConnector\\Database\\Schema' ) ) {
 			$junction_table  = \FairPaymentsConnector\Database\Schema::get_entry_transactions_table_name();
 			$where_clauses[] = $wpdb->prepare(
@@ -473,6 +481,14 @@ class FinancialEntry {
 				$where_clauses[] = 'tag = %s';
 				$where_values[]  = $filters['tag'];
 			}
+		}
+
+		if ( ! empty( $filters['unmatched'] ) ) {
+			$where_clauses[] = $wpdb->prepare(
+				'NOT EXISTS (SELECT 1 FROM %i d WHERE d.entry_id = %i.id)',
+				Schema::reconciliation_table( 'decisions' ),
+				$table_name
+			);
 		}
 
 		if ( ! empty( $filters['unmatched'] ) && class_exists( '\\FairPaymentsConnector\\Database\\Schema' ) ) {
