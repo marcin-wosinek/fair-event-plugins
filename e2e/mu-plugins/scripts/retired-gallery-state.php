@@ -25,13 +25,7 @@ echo 'E2E_STATE:' . wp_json_encode(
 	array(
 		'tables'            => $tables,
 		'attachmentExists'  => 'attachment' === get_post_type( $attachment_id ),
-		'photoAuthorRows'   => (int) $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE attachment_id = %d',
-				$wpdb->prefix . 'fair_audience_photo_participants',
-				$attachment_id
-			)
-		),
+		'photoTableExists'  => (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'fair_audience_photo_participants' ) ),
 		'eventsDbVersion'   => get_option( 'fair_events_db_version' ),
 		'eventsDbTarget'    => \FairEvents\Database\Schema::DB_VERSION,
 		'audienceDbVersion' => get_option( 'fair_audience_db_version' ),

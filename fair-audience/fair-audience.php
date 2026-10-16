@@ -49,7 +49,6 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_poll_access_keys_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_poll_responses_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_import_resolutions_table_sql() );
-	dbDelta( \FairAudience\Database\Schema::get_photo_participants_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_groups_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_group_participants_table_sql() );
@@ -126,10 +125,7 @@ function fair_audience_maybe_upgrade_db() {
 	}
 
 	if ( version_compare( $db_version, '1.4.0', '<' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		dbDelta( \FairAudience\Database\Schema::get_photo_participants_table_sql() );
-
+		// 1.4.0 created the photo authors/tags table, retired in 1.46.0.
 		update_option( 'fair_audience_db_version', '1.4.0' );
 	}
 
@@ -383,18 +379,7 @@ function fair_audience_maybe_upgrade_db() {
 	}
 
 	if ( version_compare( $db_version, '1.22.0', '<' ) ) {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . 'fair_audience_photo_participants';
-
-		// Drop old unique key that only allows one tagged person per photo.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-		$wpdb->query( "ALTER TABLE {$table_name} DROP INDEX IF EXISTS idx_attachment_author" );
-
-		// Add new unique key that prevents duplicate tags but allows multiple tagged people.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-		$wpdb->query( "ALTER TABLE {$table_name} ADD UNIQUE INDEX idx_attachment_participant (attachment_id, participant_id)" );
-
+		// 1.22.0 re-indexed the photo authors/tags table, retired in 1.46.0.
 		update_option( 'fair_audience_db_version', '1.22.0' );
 	}
 
@@ -823,6 +808,15 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 		update_option( 'fair_audience_db_version', '1.45.0' );
 		$db_version = '1.45.0';
+	}
+
+	// Retire photo authors, photo tags and the participant photo upload
+	// page. Runs after the gallery step, which can move a legacy `galleries`
+	// choice onto `photos`. Recorded only on success, so a partial failure is
+	// retried on the next request.
+	if ( version_compare( $db_version, '1.45.0', '>=' ) && version_compare( $db_version, '1.46.0', '<' ) && \FairAudience\Database\PhotoCleanup::run() ) {
+		update_option( 'fair_audience_db_version', '1.46.0' );
+		$db_version = '1.46.0';
 	}
 
 	// Carry historical participant-level activities and attendance over to

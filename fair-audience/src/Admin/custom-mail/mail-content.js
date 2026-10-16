@@ -1,7 +1,26 @@
 /**
- * Placeholder that only resolves while the experimental photos feature is on.
+ * Placeholder of the removed participant photo upload page.
  */
-export const PHOTO_UPLOAD_PLACEHOLDER = '{photo_upload_url}';
+const RETIRED_PHOTO_UPLOAD = '{photo_upload_url}';
+
+/**
+ * Remove the retired photo upload link, as the server does when sending.
+ *
+ * A link pointing at the placeholder is dropped together with its text, and a
+ * bare placeholder is removed. Mirrors `RetiredPlaceholders::strip()`.
+ *
+ * @param {string} html Email body HTML.
+ * @return {string} HTML without the retired placeholder.
+ */
+export function stripRetiredPlaceholders( html ) {
+	if ( ! html || ! html.includes( RETIRED_PHOTO_UPLOAD ) ) {
+		return html;
+	}
+	return html
+		.replace( /<a\b[^>]*\{photo_upload_url\}[^>]*>[\s\S]*?<\/a>/gi, '' )
+		.split( RETIRED_PHOTO_UPLOAD )
+		.join( '' );
+}
 
 /**
  * Whether an HTML body has anything a recipient would see.

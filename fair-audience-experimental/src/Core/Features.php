@@ -2,8 +2,8 @@
 /**
  * Feature flag registry for Fair Audience Experimental.
  *
- * Manages the twelve advanced bundles carried by this companion: fees,
- * polls, photos, Instagram, groups, collaborators, messaging,
+ * Manages the eleven advanced bundles carried by this companion: fees,
+ * polls, Instagram, groups, collaborators, messaging,
  * image-templates, timeline, import, invitations, manage-event-ext. All default to true — installing this plugin signals
  * intent to use the full internal feature set.
  *
@@ -54,11 +54,6 @@ class Features {
 			'polls'            => array(
 				'label'       => 'Polls',
 				'description' => 'Attendee polls and responses.',
-				'default'     => true,
-			),
-			'photos'           => array(
-				'label'       => 'Photos',
-				'description' => 'Participant photo uploads, photo authors and tags, media library hooks.',
 				'default'     => true,
 			),
 			'instagram'        => array(
@@ -175,10 +170,6 @@ class Features {
 			'polls'            => array(
 				'label'       => __( 'Polls', 'fair-audience-experimental' ),
 				'description' => __( 'Attendee polls and responses.', 'fair-audience-experimental' ),
-			),
-			'photos'           => array(
-				'label'       => __( 'Photos', 'fair-audience-experimental' ),
-				'description' => __( 'Participant photo uploads, photo authors and tags, media library hooks.', 'fair-audience-experimental' ),
 			),
 			'instagram'        => array(
 				'label'       => __( 'Instagram', 'fair-audience-experimental' ),

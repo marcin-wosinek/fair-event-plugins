@@ -50,16 +50,6 @@ class CustomMailFeatures {
 	}
 
 	/**
-	 * Whether the `{photo_upload_url}` placeholder leads anywhere: the upload
-	 * page is served by the companion's `photos` bundle.
-	 *
-	 * @return bool
-	 */
-	public static function photo_upload_available() {
-		return self::companion_enabled( 'photos' );
-	}
-
-	/**
 	 * Whether an active companion predates the move and still registers its
 	 * own Custom Mail page and routes.
 	 *
@@ -82,7 +72,6 @@ class CustomMailFeatures {
 		return array(
 			'allAudience' => self::all_audience_available(),
 			'groups'      => self::groups_available(),
-			'photoUpload' => self::photo_upload_available(),
 		);
 	}
 }

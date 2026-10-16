@@ -228,31 +228,6 @@ class Schema {
 	}
 
 	/**
-	 * Get SQL for creating the photo participants table.
-	 *
-	 * @return string SQL statement.
-	 */
-	public static function get_photo_participants_table_sql() {
-		global $wpdb;
-
-		$table_name      = $wpdb->prefix . 'fair_audience_photo_participants';
-		$charset_collate = $wpdb->get_charset_collate();
-
-		return "CREATE TABLE $table_name (
-			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			attachment_id BIGINT UNSIGNED NOT NULL,
-			participant_id BIGINT UNSIGNED NOT NULL,
-			role ENUM('author', 'tagged') NOT NULL DEFAULT 'author',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY  (id),
-			UNIQUE KEY idx_attachment_participant (attachment_id, participant_id),
-			KEY idx_participant_id (participant_id),
-			KEY idx_attachment_id (attachment_id),
-			KEY idx_role (role)
-		) ENGINE=InnoDB $charset_collate;";
-	}
-
-	/**
 	 * Get SQL for creating the email confirmation tokens table.
 	 *
 	 * @return string SQL statement.

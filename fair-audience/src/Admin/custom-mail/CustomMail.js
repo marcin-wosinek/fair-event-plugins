@@ -32,9 +32,9 @@ import RecipientPreview, { isEligible } from './RecipientPreview.js';
 import SendResult from './SendResult.js';
 import MailHistory from './MailHistory.js';
 import {
-	PHOTO_UPLOAD_PLACEHOLDER,
 	hasVisibleContent,
 	isRejectedBeforeSending,
+	stripRetiredPlaceholders,
 } from './mail-content.js';
 
 const EDITOR_ID = 'custom-mail-content';
@@ -56,8 +56,8 @@ const IDLE_PREVIEW = { status: 'idle', recipients: [], error: null };
  * Custom Mail page: compose an email for the participants of one event
  * occurrence, see who would receive it, send it, and review past messages.
  *
- * Sending to the whole audience, group filters and photo upload links come
- * from the experimental companion; the page works without them.
+ * Sending to the whole audience and group filters come from the experimental
+ * companion; the page works without them.
  *
  * @return {JSX.Element} The custom mail page
  */
@@ -65,7 +65,6 @@ export default function CustomMail() {
 	const features = window.fairAudienceCustomMailData || {};
 	const allAudience = !! features.allAudience;
 	const groupsEnabled = !! features.groups;
-	const photoUpload = !! features.photoUpload;
 
 	const [ mails, setMails ] = useState( [] );
 	const [ eventDates, setEventDates ] = useState( [] );
@@ -223,14 +222,8 @@ export default function CustomMail() {
 		if ( ! draft.subject.trim() ) {
 			return __( 'Enter a subject.', 'fair-audience' );
 		}
-		if ( ! hasVisibleContent( content ) ) {
+		if ( ! hasVisibleContent( stripRetiredPlaceholders( content ) ) ) {
 			return __( 'Write the email content.', 'fair-audience' );
-		}
-		if ( ! photoUpload && content.includes( PHOTO_UPLOAD_PLACEHOLDER ) ) {
-			return __(
-				'This email contains a photo upload link, which is not available on this site. Remove the link before sending.',
-				'fair-audience'
-			);
 		}
 		if ( ! eventSelected && ! allAudience ) {
 			return __(
@@ -589,7 +582,6 @@ export default function CustomMail() {
 							}
 							disabled={ isSending }
 							eventSelected={ eventSelected }
-							photoUpload={ photoUpload }
 						/>
 
 						<RecipientPreview

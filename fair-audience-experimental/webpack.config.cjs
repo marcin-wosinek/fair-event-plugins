@@ -61,10 +61,6 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/edit-extra-message/index.js'
 		),
-		'admin/media-library-filter': path.resolve(
-			process.cwd(),
-			'src/Admin/media-library-filter.js'
-		),
 		'admin/manage-event-ext/index': path.resolve(
 			process.cwd(),
 			'src/Admin/manage-event-ext/index.js'

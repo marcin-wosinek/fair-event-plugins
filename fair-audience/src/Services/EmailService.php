@@ -740,13 +740,7 @@ class EmailService {
 	 * @return string Processed content.
 	 */
 	private function replace_placeholders( $content, $participant, $event_date_id = 0, $context = array() ) {
-		if ( false !== strpos( $content, '{photo_upload_url}' ) ) {
-			$token = ParticipantToken::generate( $participant->id, $event_date_id );
-			$url   = add_query_arg( 'participant_token', $token, home_url( '/' ) );
-			$url   = add_query_arg( 'photo_upload', '1', $url );
-
-			$content = str_replace( '{photo_upload_url}', esc_url( $url ), $content );
-		}
+		$content = RetiredPlaceholders::strip( $content );
 
 		if ( false !== strpos( $content, '{manage_subscription_url}' ) ) {
 			$url = ManageSubscriptionToken::get_url( $participant->id );

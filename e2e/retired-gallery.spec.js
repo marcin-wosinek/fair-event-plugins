@@ -3,8 +3,9 @@
  *
  * Covers the upgrade cleanup on an installation that still has gallery data
  * (including a repeated run), the 410 answer for old gallery links, the
- * retired REST routes, the removed Photos tab, and the retained photo
- * upload/tag routes of fair-audience-experimental's `photos` bundle.
+ * retired REST routes and the removed Photos tab. The `photos` bundle that
+ * inherited the stored gallery choice is itself retired (#1689), so the
+ * upgrade ends with neither; see retired-photo-upload.spec.js.
  *
  * Run: `npm run test:e2e:local -- e2e/retired-gallery.spec.js`.
  */
@@ -20,9 +21,6 @@ const RETIRED_ROUTES = [
 	'/fair-audience/v1/event-dates/1/gallery-invitations',
 	'/fair-audience/v1/event-dates/1/gallery-invitations/stats',
 ];
-
-// Probed with GET, so only readable routes of the `photos` bundle apply.
-const RETAINED_PHOTO_ROUTES = ['/fair-audience/v1/photos/1/tags'];
 
 async function routeIsRegistered(request, path) {
 	const response = await request.get(`/wp-json${path}`);
@@ -71,11 +69,13 @@ test.describe('Retired event gallery', () => {
 				fair_audience_gallery_access_keys: false,
 			});
 			expect(state.attachmentExists).toBe(true);
-			expect(state.photoAuthorRows).toBe(1);
+			// The later photo step (1.46.0) removes the authors table and the
+			// `photos` choice that inherited the gallery flag.
+			expect(state.photoTableExists).toBe(false);
 			expect(state.eventsDbVersion).toBe(state.eventsDbTarget);
-			expect(versionAtLeast(state.audienceDbVersion, '1.44.0')).toBe(true);
+			expect(versionAtLeast(state.audienceDbVersion, '1.46.0')).toBe(true);
 			expect(state.eventsFeatures).toEqual([]);
-			expect(state.audienceFeatures).toEqual({ photos: true });
+			expect(state.audienceFeatures).toEqual([]);
 
 			// Rewind the versions: the cleanup runs again over clean data.
 			wpCli('option update fair_events_db_version 3.35.0');
@@ -85,8 +85,8 @@ test.describe('Retired event gallery', () => {
 			expect(repeated.eventsDbVersion).toBe(repeated.eventsDbTarget);
 			expect(versionAtLeast(repeated.audienceDbVersion, '1.44.0')).toBe(true);
 			expect(repeated.attachmentExists).toBe(true);
-			expect(repeated.photoAuthorRows).toBe(1);
-			expect(repeated.audienceFeatures).toEqual({ photos: true });
+			expect(repeated.photoTableExists).toBe(false);
+			expect(repeated.audienceFeatures).toEqual([]);
 		} finally {
 			runScript(
 				'cleanup-retired-gallery.php',
@@ -110,20 +110,12 @@ test.describe('Retired event gallery', () => {
 		});
 	}
 
-	test('gallery REST routes are gone, photo routes remain', async ({
-		request,
-	}) => {
+	test('gallery REST routes are gone', async ({ request }) => {
 		for (const path of RETIRED_ROUTES) {
 			expect(
 				await routeIsRegistered(request, path),
 				`${path} should be unregistered`
 			).toBe(false);
-		}
-		for (const path of RETAINED_PHOTO_ROUTES) {
-			expect(
-				await routeIsRegistered(request, path),
-				`${path} should stay registered`
-			).toBe(true);
 		}
 	});
 

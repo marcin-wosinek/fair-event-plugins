@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Fair Audience Experimental
  * Plugin URI: https://github.com/marcin-wosinek/fair-event-plugins
- * Description: Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience.
+ * Description: Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience.
  * Version: 1.4.0
  * Requires at least: 7.0
  * Requires PHP: 8.0

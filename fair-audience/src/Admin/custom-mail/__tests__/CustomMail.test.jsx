@@ -3,7 +3,7 @@
  *
  * Component tests for the Custom Mail page (#1784):
  *   - standalone Fair Audience requires an event and hides the experimental
- *     integrations (all-audience sends, groups, photo upload links);
+ *     integrations (all-audience sends, groups);
  *   - the recipient preview follows the selection and ignores answers to
  *     requests the organizer has moved on from;
  *   - exclusions and validation gate the send, which fires once per click;
@@ -315,9 +315,10 @@ describe( 'validation', () => {
 		expect( sendButton() ).toBeDisabled();
 		expect( getText( 'Write the email content.' ) ).toBeInTheDocument();
 
+		// A retired photo upload link is dropped when sending (#1689).
 		writeMessage( 'Hello', '<a href="{photo_upload_url}">Upload</a>' );
 		expect( sendButton() ).toBeDisabled();
-		expect( getText( /contains a photo upload link/ ) ).toBeInTheDocument();
+		expect( getText( 'Write the email content.' ) ).toBeInTheDocument();
 
 		writeMessage( 'Hello', '<p>Text</p>' );
 		fireEvent.click(
@@ -338,11 +339,10 @@ describe( 'validation', () => {
 } );
 
 describe( 'optional integrations', () => {
-	it( 'offers all-audience sends, groups and photo links when available', async () => {
+	it( 'offers all-audience sends and groups when available', async () => {
 		window.fairAudienceCustomMailData = {
 			allAudience: true,
 			groups: true,
-			photoUpload: true,
 		};
 		mockApi( {
 			groups: [ { id: 7, name: 'Volunteers', member_count: 3 } ],
@@ -354,8 +354,8 @@ describe( 'optional integrations', () => {
 			screen.getByRole( 'option', { name: 'All audience' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', { name: 'Insert photo upload link' } )
-		).toBeInTheDocument();
+			screen.queryByRole( 'button', { name: 'Insert photo upload link' } )
+		).not.toBeInTheDocument();
 
 		// The whole audience is previewed without picking an event.
 		await findText( '1 person will receive this email.' );
@@ -370,7 +370,11 @@ describe( 'optional integrations', () => {
 			).toEqual( { is_marketing: true, group_ids: [ 7 ] } )
 		);
 
-		writeMessage( 'Hello', '<a href="{photo_upload_url}">Upload</a>' );
+		// A saved message with a retired photo upload link stays sendable.
+		writeMessage(
+			'Hello',
+			'<p>Text</p><a href="{photo_upload_url}">Upload</a>'
+		);
 		await waitFor( () => expect( sendButton() ).toBeEnabled() );
 	} );
 } );

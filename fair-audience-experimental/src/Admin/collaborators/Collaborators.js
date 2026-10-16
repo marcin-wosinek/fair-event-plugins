@@ -27,7 +27,7 @@ const DEFAULT_VIEW = {
 	},
 	search: '',
 	filters: [],
-	fields: [ 'name', 'email', 'photo_count', 'event_count' ],
+	fields: [ 'name', 'email', 'event_count' ],
 };
 
 const DEFAULT_LAYOUTS = {
@@ -70,23 +70,6 @@ export default function Collaborators() {
 				label: __( 'Email', 'fair-audience' ),
 				render: ( { item } ) => item.email || '—',
 				enableSorting: true,
-			},
-			{
-				id: 'photo_count',
-				label: __( 'Photos', 'fair-audience' ),
-				render: ( { item } ) => (
-					<div style={ { textAlign: 'right' } }>
-						{ item.photo_count > 0 ? (
-							<a href={ item.media_library_url }>
-								{ item.photo_count }
-							</a>
-						) : (
-							'0'
-						) }
-					</div>
-				),
-				enableSorting: true,
-				getValue: ( { item } ) => item.photo_count,
 			},
 			{
 				id: 'event_count',

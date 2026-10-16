@@ -43,7 +43,6 @@ function clearExperimentalFeatures() {
 const ALL_BUNDLES_ON = {
 	fees: true,
 	polls: true,
-	photos: true,
 	instagram: true,
 	groups: true,
 	collaborators: true,
@@ -58,7 +57,6 @@ const ALL_BUNDLES_ON = {
 const ALL_BUNDLES_OFF = {
 	fees: false,
 	polls: false,
-	photos: false,
 	instagram: false,
 	groups: false,
 	collaborators: false,
@@ -130,7 +128,6 @@ const BUNDLE_PROBE_ROUTES = {
 	groups: '/fair-audience/v1/groups',
 	messaging: '/fair-audience/v1/extra-messages',
 	invitations: '/fair-audience/v1/event-dates/1/event-invitations',
-	photos: '/fair-audience/v1/photos/1/tags',
 };
 
 async function expectRootMounts(page, slug, root) {

@@ -18,8 +18,6 @@ $attachment_id  = isset( $args[0] ) ? (int) $args[0] : 0;
 $participant_id = isset( $args[1] ) ? (int) $args[1] : 0;
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-$wpdb->delete( $wpdb->prefix . 'fair_audience_photo_participants', array( 'attachment_id' => $attachment_id ) );
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wpdb->delete( $wpdb->prefix . 'fair_audience_participants', array( 'id' => $participant_id ) );
 wp_delete_attachment( $attachment_id, true );
 delete_option( 'fair_events_experimental_features' );

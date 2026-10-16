@@ -11,6 +11,7 @@ use FairAudience\Database\CustomMailMessageRepository;
 use FairAudience\Models\CustomMailMessage;
 use FairAudience\Services\CustomMailFeatures;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\RetiredPlaceholders;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -407,18 +408,12 @@ class CustomMailController extends WP_REST_Controller {
 			);
 		}
 
-		if ( ! $this->has_visible_content( $content ) ) {
+		// A retired photo upload link is dropped when sending, so it does not
+		// count as content.
+		if ( ! $this->has_visible_content( RetiredPlaceholders::strip( $content ) ) ) {
 			return new WP_Error(
 				'empty_content',
 				__( 'Write the email content before sending.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		if ( false !== strpos( $content, '{photo_upload_url}' ) && ! CustomMailFeatures::photo_upload_available() ) {
-			return new WP_Error(
-				'unsupported_placeholder',
-				__( 'This email contains a photo upload link, which is not available on this site. Remove the link before sending.', 'fair-audience' ),
 				array( 'status' => 400 )
 			);
 		}
