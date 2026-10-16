@@ -35,6 +35,11 @@
  *                        master). Override {"createVenue":true} (+ optional
  *                        {"venueName":"…","venueAddress":"…"}) to attach a
  *                        venue, which must win over any address on the row.
+ *   meta-engagement      a calendar button, a ticket button designated on its
+ *                        wrapper that jumps to #tickets on the same page, and
+ *                        a ticket link designated on the link itself that
+ *                        navigates to {"purchaseUrl":"…"} (default: the home
+ *                        page). No ticket type/sale period.
  *   unified-with-options like paid-with-options, but renders the unified
  *                        fair-events/event-signup block with activities, so
  *                        the base plugin's own activities fieldset is under
@@ -78,6 +83,7 @@ $minimum_activities = isset( $overrides['minimumActivities'] ) ? (int) $override
 $omit_multi         = isset( $overrides['omitMulti'] ) && $overrides['omitMulti'];
 $address            = isset( $overrides['address'] ) ? (string) $overrides['address'] : 'Calle Mayor 1, Madrid';
 $recurring          = isset( $overrides['recurring'] ) && $overrides['recurring'];
+$purchase_url       = isset( $overrides['purchaseUrl'] ) ? (string) $overrides['purchaseUrl'] : home_url( '/' );
 $create_venue       = isset( $overrides['createVenue'] ) && $overrides['createVenue'];
 $venue_name         = isset( $overrides['venueName'] ) ? (string) $overrides['venueName'] : 'Test Hall';
 $venue_address      = isset( $overrides['venueAddress'] ) ? (string) $overrides['venueAddress'] : 'Calle Venue 1';
@@ -213,6 +219,33 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 			'<!-- /wp:buttons -->',
 		)
 	);
+} elseif ( 'meta-engagement' === $flavour ) {
+	$block_content = implode(
+		"\n",
+		array(
+			'<!-- wp:buttons -->',
+			'<div class="wp-block-buttons"><!-- wp:button {"isCalendarButton":true} -->',
+			'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button">Add to calendar</a></div>',
+			'<!-- /wp:button -->',
+			'',
+			'<!-- wp:button {"className":"fair-events-ticket-button"} -->',
+			'<div class="wp-block-button fair-events-ticket-button"><a class="wp-block-button__link wp-element-button" href="#tickets"><strong>Get tickets</strong></a></div>',
+			'<!-- /wp:button -->',
+			'',
+			'<!-- wp:button -->',
+			'<div class="wp-block-button"><a class="wp-block-button__link wp-element-button fair-events-ticket-button" href="' . esc_url( $purchase_url ) . '">Buy on the purchase page</a></div>',
+			'<!-- /wp:button --></div>',
+			'<!-- /wp:buttons -->',
+			'',
+			'<!-- wp:spacer {"height":"1500px"} -->',
+			'<div style="height:1500px" aria-hidden="true" class="wp-block-spacer"></div>',
+			'<!-- /wp:spacer -->',
+			'',
+			'<!-- wp:heading {"anchor":"tickets"} -->',
+			'<h2 class="wp-block-heading" id="tickets">Tickets</h2>',
+			'<!-- /wp:heading -->',
+		)
+	);
 }
 
 $event_id = fair_e2e_create_event( 'E2E ' . $flavour . ' Event ' . gmdate( 'YmdHis' ) . ' ' . wp_rand( 1000, 9999 ), $block_content );
@@ -242,7 +275,7 @@ if ( null !== $event_capacity ) {
 	);
 }
 // 'address' scenarios never touch the signup path — skip the sale period.
-$sale_period_id = 'address' === $flavour ? 0 : fair_e2e_add_sale_period( $event_date_id );
+$sale_period_id = in_array( $flavour, array( 'address', 'meta-engagement' ), true ) ? 0 : fair_e2e_add_sale_period( $event_date_id );
 
 switch ( $flavour ) {
 	case 'free':
@@ -342,8 +375,13 @@ switch ( $flavour ) {
 		$price   = 0.00;
 		break;
 
+	case 'meta-engagement':
+		$is_paid = false;
+		$price   = 0.00;
+		break;
+
 	default:
-		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, address, unified-with-options." );
+		WP_CLI::error( "Unknown flavour '{$flavour}'. Use one of: free, paid, paid-with-options, capacity-1, multiple-instances, three-ticket-scopes, address, meta-engagement, unified-with-options." );
 }
 
 echo 'E2E_SEED:' . wp_json_encode(

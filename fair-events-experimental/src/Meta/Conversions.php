@@ -22,6 +22,12 @@ class Conversions {
 	public const DELIVERY_HOOK     = 'fair_events_experimental_meta_deliver';
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
 
+	/** Custom engagement events by button action; distinct from checkout and purchase. */
+	public const ENGAGEMENT_EVENTS = array(
+		'calendar' => 'FairEventCalendarClick',
+		'ticket'   => 'FairEventTicketClick',
+	);
+
 	/** Register hooks. */
 	public function init() {
 		add_action( 'fair_payment_payment_initiated', array( $this, 'checkout_initiated' ), 10, 2 );
@@ -72,6 +78,19 @@ class Conversions {
 		if ( ! $event ) {
 			return false;
 		}
+		return self::queue( $event );
+	}
+
+	/** @param array $event Event from {@see build_engagement_event()}. @return bool Whether a new event was queued. */
+	public function enqueue_engagement( $event ) {
+		if ( ! self::configured() ) {
+			return false;
+		}
+		return self::queue( $event );
+	}
+
+	/** @param array $event Outbox event. @return bool */
+	private static function queue( $event ) {
 		$inserted = ( new Outbox() )->enqueue( $event );
 		if ( $inserted && ! wp_next_scheduled( self::DELIVERY_HOOK ) ) {
 			wp_schedule_single_event( time() + 1, self::DELIVERY_HOOK );
@@ -118,6 +137,48 @@ class Conversions {
 		return $event;
 	}
 
+	/**
+	 * Build the outbox row for a button-click engagement event — a pure
+	 * transformation like {@see build_event()}. It carries only the event
+	 * context and Meta identifiers: no commerce value, currency, order ID or
+	 * payment mode, and never the button's destination or text. The event ID
+	 * derives from the activation ID alone, so replaying an activation —
+	 * even under another action — cannot queue a second event.
+	 *
+	 * @param string $action        'calendar' or 'ticket'.
+	 * @param string $activation_id Browser activation UUID.
+	 * @param array  $context       {@see Engagement::event_context()} result.
+	 * @param string $fbp           Meta browser ID.
+	 * @param string $fbc           Meta click ID.
+	 * @return array|null
+	 */
+	public static function build_engagement_event( $action, $activation_id, $context, $fbp, $fbc ) {
+		$fbp = self::valid_identifier( $fbp ) ? $fbp : '';
+		$fbc = self::valid_identifier( $fbc ) ? $fbc : '';
+		if ( ! isset( self::ENGAGEMENT_EVENTS[ $action ] ) || ! self::valid_activation_id( $activation_id ) || ( '' === $fbp && '' === $fbc ) ) {
+			return null;
+		}
+		return array(
+			'event_post_id' => (int) $context['post_id'],
+			'event_date_id' => (int) $context['event_date_id'],
+			'event_name'    => self::ENGAGEMENT_EVENTS[ $action ],
+			'event_id'      => hash( 'sha256', home_url( '/' ) . '|engagement|' . strtolower( $activation_id ) ),
+			'event_time'    => time(),
+			'source_url'    => esc_url_raw( $context['source_url'] ),
+			'value'         => 0,
+			'currency'      => '',
+			'order_id'      => '',
+			'payment_mode'  => '',
+			'fbp'           => $fbp,
+			'fbc'           => $fbc,
+		);
+	}
+
+	/** @param string $value Activation ID. @return bool Whether it is a version 4 UUID. */
+	public static function valid_activation_id( $value ) {
+		return is_string( $value ) && (bool) preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value );
+	}
+
 	/** @param object $transaction Transaction. @return string 'test' or 'live'. */
 	public static function payment_mode( $transaction ) {
 		return 0 === (int) $transaction->testmode ? 'live' : 'test';
@@ -141,13 +202,22 @@ class Conversions {
 				'fbc' => $row->fbc,
 			)
 		);
-		$custom    = array(
-			'value'        => (float) $row->value,
-			'currency'     => $row->currency,
-			'payment_mode' => $row->payment_mode,
-		);
-		if ( '' !== $row->order_id ) {
-			$custom['order_id'] = $row->order_id;
+		$action    = array_search( $row->event_name, self::ENGAGEMENT_EVENTS, true );
+		if ( false !== $action ) {
+			$custom = array(
+				'post_id'       => (int) $row->event_post_id,
+				'event_date_id' => (int) $row->event_date_id,
+				'action'        => $action,
+			);
+		} else {
+			$custom = array(
+				'value'        => (float) $row->value,
+				'currency'     => $row->currency,
+				'payment_mode' => $row->payment_mode,
+			);
+			if ( '' !== $row->order_id ) {
+				$custom['order_id'] = $row->order_id;
+			}
 		}
 		return array(
 			'event_name'       => $row->event_name,

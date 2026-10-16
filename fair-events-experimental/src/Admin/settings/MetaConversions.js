@@ -69,9 +69,11 @@ function stateLabel( state ) {
 }
 
 function paymentModeLabel( mode ) {
-	return 'test' === mode
-		? __( 'Test', 'fair-events-experimental' )
-		: __( 'Live', 'fair-events-experimental' );
+	if ( 'test' === mode ) {
+		return __( 'Test', 'fair-events-experimental' );
+	}
+	// Engagement events carry no payment mode.
+	return 'live' === mode ? __( 'Live', 'fair-events-experimental' ) : '';
 }
 
 function attemptsLabel( count ) {
@@ -513,11 +515,15 @@ export default function MetaConversions( { onNotice } ) {
 														) }
 													</span>
 												</FlexItem>
-												<FlexItem>
-													{ paymentModeLabel(
-														outcome.payment_mode
-													) }
-												</FlexItem>
+												{ paymentModeLabel(
+													outcome.payment_mode
+												) && (
+													<FlexItem>
+														{ paymentModeLabel(
+															outcome.payment_mode
+														) }
+													</FlexItem>
+												) }
 												<FlexItem>
 													{ outcome.updated_at_local }
 												</FlexItem>
