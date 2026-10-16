@@ -93,7 +93,7 @@ class SettlementReconciliation {
 	 * @return mixed
 	 */
 	public static function guard_legacy_match( $result, $server, $request ) {
-		if ( null !== $result || ! preg_match( '#^/fair-finance/v1/financial-entries/(\d+)/(match|unmatch)$#', $request->get_route(), $match ) ) {
+		if ( null !== $result || ! current_user_can( 'manage_options' ) || ! preg_match( '#^/fair-finance/v1/financial-entries/(\d+)/(match|unmatch)$#', $request->get_route(), $match ) ) {
 			return $result;
 		}
 		$rows = ( new ReconciliationRepository() )->rows( 'decisions', 'entry_id', (int) $match[1] );
