@@ -5,6 +5,8 @@
  *
  * Creates per-plugin git tags after changesets version bump:
  * e.g., "fair-events@1.3.4", "fair-audience@1.3.4", "fair-platform@1.1.0"
+ *
+ * Pass --push to push the newly created tags to origin (used by CI).
  */
 
 import { readFileSync } from 'fs';
@@ -16,6 +18,7 @@ import { execSync } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
+const shouldPush = process.argv.includes('--push');
 
 const ALL_PLUGINS = [
 	'fair-events',
@@ -49,19 +52,34 @@ function tagExists(tag) {
 function createTag(tag) {
 	if (tagExists(tag)) {
 		console.log(`  ⏭️  Tag ${tag} already exists, skipping`);
-		return;
+		return false;
 	}
 	execSync(`git tag "${tag}"`, { stdio: 'inherit' });
 	console.log(`  ✅ Created tag: ${tag}`);
+	return true;
+}
+
+function pushTags(tags) {
+	const refs = tags.map((tag) => `"refs/tags/${tag}"`).join(' ');
+	execSync(`git push origin ${refs}`, { stdio: 'inherit' });
+	console.log(`\n🚀 Pushed ${tags.length} tag(s) to origin`);
 }
 
 console.log('🏷️  Creating release tags...\n');
+
+const createdTags = [];
 
 for (const plugin of ALL_PLUGINS) {
 	const version = getVersion(plugin);
 	const tag = `${plugin}@${version}`;
 	console.log(`📦 ${plugin}: ${version}`);
-	createTag(tag);
+	if (createTag(tag)) {
+		createdTags.push(tag);
+	}
+}
+
+if (shouldPush && createdTags.length > 0) {
+	pushTags(createdTags);
 }
 
 console.log('\n🎉 Tagging complete!');

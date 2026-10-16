@@ -167,6 +167,9 @@ jobs:
         steps:
             - name: Checkout Repo
               uses: actions/checkout@v6
+              with:
+                  # Full history with tags, so tag-release.js skips existing plugin tags.
+                  fetch-depth: 0
 
             - name: Setup Node.js
               uses: actions/setup-node@v6
@@ -196,6 +199,10 @@ jobs:
               uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1.7.0
               with:
                   version: npm run version-packages
+                  # Runs when no changesets are pending (after a release PR merges):
+                  # creates and pushes per-plugin tags. Nothing is published to npm.
+                  publish: npm run release -- --push
+                  createGithubReleases: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

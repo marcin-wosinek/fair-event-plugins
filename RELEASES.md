@@ -5,11 +5,16 @@ This project uses [Changesets](https://github.com/changesets/changesets) for ind
 ## 🎯 Overview
 
 Each plugin is versioned independently using semantic versioning:
+
 - `fair-payments-connector@1.2.3`
 - `fair-events@2.0.1`
 - `fair-audience@1.1.0`
 
 Changes are tracked per-plugin and releases can be made for individual plugins or multiple plugins simultaneously.
+
+### Requirements
+
+The release commands run on Changesets 3, which needs **Node.js 22.11+ (or 24+) and npm 10.9+**. CI uses Node 24. On older versions, `npm run changeset:*` and `npm run version-packages` fail on startup.
 
 ## 📝 Workflow
 
@@ -25,10 +30,13 @@ npx changeset add
 ```
 
 This will:
+
 - Ask which packages were changed
 - Ask what type of change (patch/minor/major)
 - Ask for a summary of the changes
 - Create a markdown file in `.changeset/` folder
+
+You can skip the first two prompts by passing the bump on the command line, e.g. `npx changeset add --minor fair-events --patch fair-form`.
 
 ### 2. Types of Changes
 
@@ -39,22 +47,26 @@ This will:
 ### 3. Releasing
 
 #### Option A: Automatic Release (Recommended)
+
 Push to `main` branch and the GitHub Action will:
+
 1. Create a PR with version bumps and changelog updates
-2. When you merge the PR, it will automatically create git tags like `fair-payments-connector@1.2.3`
+2. When you merge the PR, it will automatically create and push git tags like `fair-payments-connector@1.2.3` (via `npm run release -- --push`; nothing is published to npm)
 
 #### Option B: Manual Release
+
 ```bash
 # Update versions and generate changelogs (also syncs WordPress plugin headers)
 npm run version-packages
 
-# Create git tags and publish (if configured)
+# Create git tags for the current versions (add `-- --push` to push them to origin)
 npm run release
 ```
 
 ## 🏷️ Git Tags
 
 Tags are automatically created in the format:
+
 - `fair-payments-connector@1.2.3`
 - `fair-events@2.0.1`
 - `fair-audience@1.1.0`
@@ -63,21 +75,21 @@ This allows you to easily track releases for each plugin individually.
 
 ## 📚 Commands Reference
 
-| Command | Description |
-|---------|-------------|
-| `npm run changeset:add` | Add a new changeset for your changes |
-| `npm run changeset:status` | Check status of pending changes |
-| `npm run version-packages` | Update package versions based on changesets & sync WordPress headers |
-| `npm run sync-wp-versions` | Manually sync WordPress plugin header versions |
-| `npm run release` | Publish packages (creates git tags) |
+| Command                    | Description                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `npm run changeset:add`    | Add a new changeset for your changes                                                  |
+| `npm run changeset:status` | Check status of pending changes                                                       |
+| `npm run version-packages` | Update package versions based on changesets & sync WordPress headers                  |
+| `npm run sync-wp-versions` | Manually sync WordPress plugin header versions                                        |
+| `npm run release`          | Create per-plugin git tags for the current versions; `-- --push` also pushes new tags |
 
 ## 🔄 Example Workflow
 
 1. **Make changes** to `fair-events`
 2. **Add changeset**: `npm run changeset:add`
-   - Select `fair-events`
-   - Choose `minor` (new feature)
-   - Write: "Add exception dates support for recurring events"
+    - Select `fair-events`
+    - Choose `minor` (new feature)
+    - Write: "Add exception dates support for recurring events"
 3. **Commit and push** to `main`
 4. **GitHub Action** creates release PR
 5. **Merge PR** → Automatic tag creation: `fair-events@1.1.0`
@@ -102,6 +114,7 @@ Version: 1.2.0  // ← Automatically updated!
 ```
 
 ### Files Updated:
+
 - `fair-payments-connector/fair-payments-connector.php`
 - `fair-events/fair-events.php`
 - `fair-audience/fair-audience.php`
@@ -111,10 +124,12 @@ The sync runs automatically when you use `npm run version-packages`.
 ## ⚙️ Configuration
 
 Changesets is configured in `.changeset/config.json`:
+
 - **Independent versioning**: Each plugin versions separately
-- **Automatic tagging**: Git tags created on release
-- **Changelog generation**: Automatic changelog per plugin
+- **Automatic tagging**: Git tags created on release by `scripts/tag-release.js`
+- **Changelog generation**: Automatic changelog per plugin, formatted with the root `prettier` devDependency (`"format": "prettier"`)
 - **WordPress sync**: Automatic plugin header version updates
+- **Shared package**: `fair-events-shared` is private. It is versioned and gets a changelog (`privatePackages.version`), so the plugins that depend on it stay consistent, but it is never tagged or published (`privatePackages.tag: false`)
 
 ## 🔗 Cross-plugin interface changes
 
@@ -136,8 +151,8 @@ changeset frontmatter, e.g.:
 
 ```markdown
 ---
-"fair-audience": patch
-"fair-events-experimental": patch
+'fair-audience': patch
+'fair-events-experimental': patch
 ---
 ```
 
