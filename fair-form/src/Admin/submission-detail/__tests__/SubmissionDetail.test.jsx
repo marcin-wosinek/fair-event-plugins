@@ -8,7 +8,7 @@
  * selector the CSS depends on (as happened in 7331b65b).
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import SubmissionDetail, {
 	ticketLinkDescription,
@@ -182,5 +182,139 @@ describe( 'SubmissionDetail — source form and page (#1324)', () => {
 		).toBeInTheDocument();
 		expect( formRow() ).toHaveTextContent( 'Legacy (no form id)' );
 		expect( pageRow() ).toHaveTextContent( 'No page' );
+	} );
+} );
+
+describe( 'SubmissionDetail — changing the event (#1778)', () => {
+	const EVENT_DATES = [
+		{ event_date_id: 5, label: 'Workshop — May 1', count: 3 },
+		{ event_date_id: 6, label: 'Workshop — May 8', count: 1 },
+	];
+
+	function mockApi( saveResults ) {
+		const results = [ ...saveResults ];
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( method === 'PUT' ) {
+				const next = results.shift();
+				return next instanceof Error
+					? Promise.reject( next )
+					: Promise.resolve( next );
+			}
+			if ( path.includes( '/grouped' ) ) {
+				return Promise.resolve( EVENT_DATES );
+			}
+			return Promise.resolve( SUBMISSION );
+		} );
+	}
+
+	async function chooseEvent() {
+		await screen.findByText( 'Google' );
+		await act( async () => {
+			fireEvent.click( screen.getByRole( 'button', { name: 'Edit' } ) );
+		} );
+		const select = screen.getByRole( 'combobox' );
+		await screen.findByRole( 'option', { name: 'Workshop — May 8 (1)' } );
+		fireEvent.change( select, { target: { value: '6' } } );
+		return select;
+	}
+
+	function findNotice( text ) {
+		return screen.findByText( text, {
+			selector: '.components-notice__content',
+		} );
+	}
+
+	async function clickSave() {
+		await act( async () => {
+			fireEvent.click( screen.getByRole( 'button', { name: 'Save' } ) );
+		} );
+	}
+
+	it( 'shows the server error inline and keeps the chosen event', async () => {
+		const alertSpy = jest.spyOn( window, 'alert' ).mockImplementation();
+		mockApi( [ new Error( 'Event date not found.' ) ] );
+		render( <SubmissionDetail /> );
+
+		const select = await chooseEvent();
+		await clickSave();
+
+		expect(
+			await findNotice( 'Event date not found.' )
+		).toBeInTheDocument();
+		// Announced to screen readers, not only shown.
+		expect(
+			document.getElementById( 'a11y-speak-assertive' )
+		).toHaveTextContent( 'Event date not found.' );
+		expect( select ).toHaveValue( '6' );
+		expect( screen.getByRole( 'button', { name: 'Save' } ) ).toBeEnabled();
+		expect( alertSpy ).not.toHaveBeenCalled();
+	} );
+
+	it( 'falls back to a translatable message without a server message', async () => {
+		mockApi( [ new Error( '' ) ] );
+		render( <SubmissionDetail /> );
+
+		await chooseEvent();
+		await clickSave();
+
+		expect(
+			await findNotice( 'The event could not be changed. Try again.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'saves on retry, clearing the error and closing the editor', async () => {
+		mockApi( [
+			new Error( 'Temporary failure.' ),
+			{ ...SUBMISSION, event_date_id: 6, event_name: 'Workshop' },
+		] );
+		render( <SubmissionDetail /> );
+
+		await chooseEvent();
+		await clickSave();
+		await findNotice( 'Temporary failure.' );
+
+		await clickSave();
+
+		expect( await screen.findByText( 'Workshop' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Temporary failure.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'combobox' ) ).not.toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls
+				.filter( ( [ args ] ) => args.method === 'PUT' )
+				.map( ( [ args ] ) => args.data )
+		).toEqual( [ { event_date_id: 6 }, { event_date_id: 6 } ] );
+	} );
+
+	it( 'disables Save and Cancel while the change is pending', async () => {
+		let resolveSave;
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( method === 'PUT' ) {
+				return new Promise( ( resolve ) => {
+					resolveSave = resolve;
+				} );
+			}
+			if ( path.includes( '/grouped' ) ) {
+				return Promise.resolve( EVENT_DATES );
+			}
+			return Promise.resolve( SUBMISSION );
+		} );
+		render( <SubmissionDetail /> );
+
+		await chooseEvent();
+		await clickSave();
+
+		expect( screen.getByRole( 'button', { name: 'Save' } ) ).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+
+		await act( async () => {
+			resolveSave( { ...SUBMISSION, event_name: 'Workshop' } );
+		} );
+		expect( await screen.findByText( 'Workshop' ) ).toBeInTheDocument();
 	} );
 } );

@@ -153,6 +153,7 @@ function EventField( { submission, onUpdate } ) {
 		submission.event_date_id ? String( submission.event_date_id ) : ''
 	);
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ saveError, setSaveError ] = useState( null );
 
 	const loadEventDates = () => {
 		if ( eventDates.length > 0 ) {
@@ -171,11 +172,24 @@ function EventField( { submission, onUpdate } ) {
 	};
 
 	const handleEdit = () => {
+		setSaveError( null );
 		setIsEditing( true );
 		loadEventDates();
 	};
 
+	const handleCancel = () => {
+		setSaveError( null );
+		setSelectedEventDateId(
+			submission.event_date_id ? String( submission.event_date_id ) : ''
+		);
+		setIsEditing( false );
+	};
+
 	const handleSave = () => {
+		if ( isSaving ) {
+			return;
+		}
+		setSaveError( null );
 		setIsSaving( true );
 		apiFetch( {
 			path: `/fair-form/v1/questionnaire-responses/${ submission.id }`,
@@ -191,11 +205,14 @@ function EventField( { submission, onUpdate } ) {
 				setIsEditing( false );
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-form' ) +
-						( err.message ||
-							__( 'Failed to update.', 'fair-form' ) )
+				// Keep the editor open with the chosen value so the
+				// organizer can retry or cancel.
+				setSaveError(
+					err?.message ||
+						__(
+							'The event could not be changed. Try again.',
+							'fair-form'
+						)
 				);
 			} )
 			.finally( () => {
@@ -247,11 +264,17 @@ function EventField( { submission, onUpdate } ) {
 				</Button>
 				<Button
 					variant="tertiary"
-					onClick={ () => setIsEditing( false ) }
+					onClick={ handleCancel }
+					disabled={ isSaving }
 				>
 					{ __( 'Cancel', 'fair-form' ) }
 				</Button>
 			</div>
+			{ saveError && (
+				<Notice status="error" isDismissible={ false }>
+					{ saveError }
+				</Notice>
+			) }
 		</td>
 	);
 }

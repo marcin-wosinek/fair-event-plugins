@@ -77,10 +77,11 @@ msgstr "Beitrag #%d"
 msgid "No page"
 msgstr "Keine Seite"
 
+#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format, js-format
+#, php-format,js-format
 msgid "Event date #%d"
 msgstr "Veranstaltungsdatum #%d"
 
@@ -95,7 +96,7 @@ msgstr "Legacy (keine Formular-ID)"
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:309
+#: src/Admin/submission-detail/SubmissionDetail.js:332
 msgid "Submission not found."
 msgstr "Einreichung nicht gefunden."
 
@@ -165,43 +166,39 @@ msgid "Group by"
 msgstr "Gruppieren nach"
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:380
+#: src/Admin/submission-detail/SubmissionDetail.js:403
 msgid "Page"
 msgstr "Seite"
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:177
 #: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:411
+#: src/Admin/submission-detail/SubmissionDetail.js:434
 msgid "Event"
 msgstr "Ereignis"
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
 #: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:376
+#: src/Admin/submission-detail/SubmissionDetail.js:399
 msgid "Form"
 msgstr "Formular"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:196
-msgid "Error: "
-msgstr "Fehler: "
 
 #: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:166
-#: src/Admin/submission-detail/SubmissionDetail.js:403
+#: src/Admin/submission-detail/SubmissionDetail.js:426
 msgid "Email"
 msgstr "E-Mail"
 
 #: src/Admin/form-answers/FormAnswers.js:183
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:240
-#: src/Admin/submission-detail/SubmissionDetail.js:407
+#: src/Admin/submission-detail/SubmissionDetail.js:430
 msgid "Date"
 msgstr "Datum"
 
 #: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:225
+#: src/Admin/submission-detail/SubmissionDetail.js:242
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -216,7 +213,7 @@ msgid "Delete"
 msgstr "Löschen"
 
 #: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:207
+#: src/Admin/submission-detail/SubmissionDetail.js:224
 msgid "— None —"
 msgstr "— Keine —"
 
@@ -230,12 +227,12 @@ msgstr "Einreichung bearbeiten"
 
 #: src/Admin/components/DeleteSubmissionDialog.js:104
 #: src/Admin/form-answers/FormAnswers.js:350
-#: src/Admin/submission-detail/SubmissionDetail.js:252
+#: src/Admin/submission-detail/SubmissionDetail.js:270
 msgid "Cancel"
 msgstr "Abbrechen"
 
 #: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:246
+#: src/Admin/submission-detail/SubmissionDetail.js:263
 msgid "Save"
 msgstr "Speichern"
 
@@ -286,16 +283,16 @@ msgid "Questionnaire Responses"
 msgstr "Fragebogenantworten"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:527
-#: src/Admin/submission-detail/SubmissionDetail.js:272
+#: src/Admin/submission-detail/SubmissionDetail.js:295
 msgid "Clipboard not available."
 msgstr "Zwischenablage nicht verfügbar."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:281
+#: src/Admin/submission-detail/SubmissionDetail.js:304
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown in die Zwischenablage kopiert. In Google Docs einfügen."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
-#: src/Admin/submission-detail/SubmissionDetail.js:290
+#: src/Admin/submission-detail/SubmissionDetail.js:313
 msgid "Failed to copy."
 msgstr "Kopieren fehlgeschlagen."
 
@@ -375,43 +372,39 @@ msgstr "Zur Gruppe hinzufügen"
 msgid "View file"
 msgstr "Datei anzeigen"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:198
-msgid "Failed to update."
-msgstr "Aktualisierung fehlgeschlagen."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:298
+#: src/Admin/submission-detail/SubmissionDetail.js:321
 msgid "No submission ID provided."
 msgstr "Keine Einreichungs-ID angegeben."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:347
+#: src/Admin/submission-detail/SubmissionDetail.js:370
 msgid "Form Submission"
 msgstr "Formulareinreichung"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:350
+#: src/Admin/submission-detail/SubmissionDetail.js:373
 msgid "Copy markdown"
 msgstr "Markdown kopieren"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:366
+#: src/Admin/submission-detail/SubmissionDetail.js:389
 msgid "Submission Info"
 msgstr "Einreichungsinformationen"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:388
+#: src/Admin/submission-detail/SubmissionDetail.js:411
 msgid "Submitted by"
 msgstr "Eingereicht von"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:433
+#: src/Admin/submission-detail/SubmissionDetail.js:456
 msgid "Answers"
 msgstr "Antworten"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:438
+#: src/Admin/submission-detail/SubmissionDetail.js:461
 msgid "No answers recorded."
 msgstr "Keine Antworten aufgezeichnet."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:446
+#: src/Admin/submission-detail/SubmissionDetail.js:469
 msgid "Question"
 msgstr "Frage"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:447
+#: src/Admin/submission-detail/SubmissionDetail.js:470
 msgid "Answer"
 msgstr "Antwort"
 
@@ -576,7 +569,7 @@ msgstr "Kein Ticket — diese Antworten sind älter als die Antworten pro Ticket
 msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
 msgstr "Kein Ticket — das Ticket, zu dem diese Antworten gehörten, wurde entfernt. Überprüfen Sie, ob sie noch relevant sind."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:419
+#: src/Admin/submission-detail/SubmissionDetail.js:442
 msgid "Ticket"
 msgstr "Ticket"
 
@@ -642,3 +635,6 @@ msgstr "Die Veranstaltungsliste konnte nicht geladen werden. Die aktuelle Zuordn
 msgid "Retry"
 msgstr "Erneut versuchen"
 
+#: src/Admin/submission-detail/SubmissionDetail.js:212
+msgid "The event could not be changed. Try again."
+msgstr "Das Ereignis konnte nicht geändert werden. Versuche es erneut."

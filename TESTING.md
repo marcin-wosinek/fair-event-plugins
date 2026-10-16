@@ -88,6 +88,21 @@ missing `phpunit.xml` is stale.
 Examples live in `fair-events/__tests__/` and
 `fair-payments-connector/__tests__/Payment/MolliePaymentHandlerTest.php`.
 
+### Native popup check
+
+`npm run validate:native-popups` scans the production JavaScript in
+`src/` of fair-events, fair-payments-connector, fair-form and fair-audience
+for browser-native `confirm()`, `alert()` and `prompt()` — bare, or through
+`window`, `globalThis` or `self`, including computed (`window[ 'alert' ]`)
+and optional (`window?.confirm?.()`) forms. It parses each file, so comments,
+strings, object keys, methods on other objects and locally bound functions of
+the same name don't count; `__tests__/`, `*.test.*`/`*.spec.*` and `build/`
+are skipped. It reports `file:line:column`, fails on a parse error, and has
+no allowlist or baseline — replace the popup per
+[UI_GUIDELINES.md](./UI_GUIDELINES.md#popups-and-confirmations). CI runs it
+in the build job; its fixtures live in
+`scripts/__tests__/validate-native-popups.test.mjs` (part of `test:tooling`).
+
 ## Isolated WordPress test lifecycle
 
 REST API and behavioral E2E tests use the same lifecycle runner and an isolated

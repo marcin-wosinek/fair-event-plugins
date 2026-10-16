@@ -46,7 +46,7 @@ guessing which ones matter.
 | REST API — frontend                                             | [REST_API_USAGE.md](./REST_API_USAGE.md)                       |
 | REST API — backend / security ⚠️                                | [REST_API_BACKEND.md](./REST_API_BACKEND.md)                   |
 | React admin pages                                               | [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)             |
-| Admin UI / UX rules (labels, saves, dates, destructive actions) | [UI_GUIDELINES.md](./UI_GUIDELINES.md)                         |
+| Admin UI / UX rules (labels, saves, dates, popups)              | [UI_GUIDELINES.md](./UI_GUIDELINES.md)                         |
 | Testing                                                         | [TESTING.md](./TESTING.md)                                     |
 | i18n build setup (hash mapping)                                 | [I18N_SETUP.md](./I18N_SETUP.md)                               |
 | Translation tooling (`npm run translation:*`)                   | [TRANSLATIONS.md](./TRANSLATIONS.md)                           |
@@ -148,6 +148,16 @@ Frontend:
 -   Layout: `src/Admin/{page-name}/` (entry `index.js` + component), controller in
     `src/API/`, built to `build/admin/{page-name}/`.
 -   Canonical examples: **fair-audience** (most admin pages), fair-payments-connector, fair-events.
+
+### Popups — see [UI_GUIDELINES.md § Popups and confirmations](./UI_GUIDELINES.md#popups-and-confirmations)
+
+-   No browser-native `confirm()`, `alert()` or `prompt()` in any plugin; the
+    only native exception is `beforeunload` navigation protection.
+    `npm run validate:native-popups` enforces this for fair-events,
+    fair-payments-connector, fair-form and fair-audience, with no allowlist.
+-   The policy (naming the target, related data, bulk, pending/error,
+    accessibility, public pages) lives only in that section — follow it
+    rather than restating it.
 
 ### Frontend state — see [BLOCK_CREATION.md](./BLOCK_CREATION.md) & [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md)
 
