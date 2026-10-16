@@ -1,0 +1,84 @@
+.fair-finance-saved-review,
+.fair-finance-saved-selector {
+	max-width: 1100px;
+	overflow-wrap: anywhere;
+
+	.components-base-control {
+		max-width: 650px;
+		margin: 16px 0;
+	}
+
+	.components-notice {
+		margin: 16px 0;
+	}
+}
+
+.fair-finance-saved-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 16px;
+
+	dt {
+		font-weight: 600;
+	}
+
+	dd {
+		margin: 4px 0;
+	}
+}
+
+.fair-finance-saved-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 16px 0;
+}
+
+.fair-finance-saved-table {
+	overflow-x: auto;
+	margin: 16px 0;
+
+	table {
+		table-layout: fixed;
+		min-width: 550px;
+	}
+}
+
+@media (max-width: 600px) {
+	.fair-finance-saved-table {
+		table {
+			min-width: 0;
+		}
+
+		thead {
+			display: none;
+		}
+
+		tbody,
+		tr,
+		td {
+			display: block;
+		}
+
+		tr {
+			padding: 8px 0;
+			border-bottom: 1px solid #c3c4c7;
+		}
+
+		td {
+			padding: 8px 12px;
+			font-size: 13px;
+
+			&::before {
+				content: attr(data-label);
+				display: block;
+				margin-bottom: 4px;
+				font-weight: 600;
+			}
+
+			p {
+				margin: 0;
+			}
+		}
+	}
+}

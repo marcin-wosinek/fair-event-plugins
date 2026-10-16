@@ -658,4 +658,111 @@ test.describe('Fair Finance settlements', () => {
 			page.getByRole('heading', { name: 'Settlements', level: 1 })
 		).toBeVisible();
 	});
+	for (const origin of ['api', 'csv']) {
+		test(`reconciles a saved ${origin} settlement locally, completes Partial, and flags later changes`, async ({
+			page,
+		}) => {
+			const cleanup = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+			expect(cleanup.ok()).toBeTruthy();
+			const response = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { origin, missing: true },
+			});
+			const fixture = await response.json();
+			await loginAsAdmin(page);
+			await page.goto(`${PAGE}&settlement=${fixture.settlement_id}`);
+			await expect(
+				page.getByRole('link', { name: 'Reconcile', exact: true })
+			).toHaveAttribute(
+				'href',
+				`admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}`
+			);
+			const before = await mollieRequests();
+			await setConnected(false);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}`
+			);
+			await expect(
+				page.getByRole('heading', {
+					name: 'Reconcile settlement RECONCILE.2605.01',
+				})
+			).toBeVisible();
+			await page
+				.getByLabel('Bank entry', { exact: true })
+				.selectOption(String(fixture.entry_id));
+			await page.getByLabel('Bank entry currency').fill('EUR');
+			await page.getByLabel(/I confirm this bank entry/).check();
+			await page
+				.getByRole('button', { name: 'Refresh local preview' })
+				.click();
+			await expect(
+				page.getByRole('button', { name: 'Save as Partial' })
+			).toBeEnabled();
+			await expect(
+				page.getByRole('button', { name: 'Confirm Fully reconciled' })
+			).toBeDisabled();
+			await page.getByRole('button', { name: 'Save as Partial' }).click();
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save reconciliation decision' })
+				.click();
+			await expect(page.getByRole('dialog')).toHaveCount(0);
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Partial');
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'arrive' },
+			});
+			await page
+				.getByRole('button', { name: 'Refresh local preview' })
+				.click();
+			await expect(
+				page.getByRole('button', { name: 'Confirm Fully reconciled' })
+			).toBeEnabled();
+			await page
+				.getByRole('button', { name: 'Confirm Fully reconciled' })
+				.click();
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save reconciliation decision' })
+				.click();
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Fully reconciled');
+			await page.reload();
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Fully reconciled');
+			expect(await mollieRequests()).toBe(before);
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: {
+					action: 'source_change',
+					settlement_id: fixture.settlement_id,
+				},
+			});
+			await page
+				.getByRole('button', { name: 'Refresh local preview' })
+				.click();
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Needs review');
+			await page.setViewportSize({ width: 375, height: 812 });
+			expect(
+				await page.evaluate(
+					() =>
+						document.documentElement.scrollWidth <=
+						document.documentElement.clientWidth
+				)
+			).toBe(true);
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+		});
+	}
 });

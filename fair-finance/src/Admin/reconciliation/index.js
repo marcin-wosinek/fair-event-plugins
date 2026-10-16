@@ -8,6 +8,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import ReconciliationApp from './ReconciliationApp.js';
+import './style.scss';
 
 /**
  * Initialize the reconciliation page

@@ -43,6 +43,8 @@ class Schema {
 	public static function create_tables() {
 		self::create_budgets_table();
 		self::create_financial_entries_table();
+		self::create_reconciliation_tables();
+		update_option( 'fair_finance_schema_version', '2' );
 	}
 
 	/**
@@ -112,5 +114,82 @@ class Schema {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+	/**
+	 * Reconciliation table name.
+	 *
+	 * @param string $kind decisions, history, evidence or context.
+	 * @return string
+	 */
+	public static function reconciliation_table( $kind ) {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_finance_reconciliation_' . $kind;
+	}
+
+	/**
+	 * Install Finance-owned decisions separately from provider records.
+	 *
+	 * @return void
+	 */
+	public static function create_reconciliation_tables() {
+		global $wpdb;
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$collate   = $wpdb->get_charset_collate();
+		$decisions = self::reconciliation_table( 'decisions' );
+		$history   = self::reconciliation_table( 'history' );
+		$evidence  = self::reconciliation_table( 'evidence' );
+		$context   = self::reconciliation_table( 'context' );
+		dbDelta(
+			"CREATE TABLE $decisions (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			settlement_id bigint(20) UNSIGNED NOT NULL,
+			entry_id bigint(20) UNSIGNED NOT NULL,
+			state varchar(20) NOT NULL,
+			material_hash char(64) NOT NULL,
+			history_id bigint(20) UNSIGNED DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY settlement_id (settlement_id),
+			UNIQUE KEY entry_id (entry_id)
+		) $collate;"
+		);
+		dbDelta(
+			"CREATE TABLE $history (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			decision_id bigint(20) UNSIGNED NOT NULL,
+			settlement_id bigint(20) UNSIGNED NOT NULL,
+			request_hash char(64) NOT NULL,
+			state varchar(20) NOT NULL,
+			actor_id bigint(20) UNSIGNED NOT NULL,
+			confirmed_at datetime NOT NULL,
+			reviewed longtext NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY request_hash (request_hash),
+			KEY decision_id (decision_id),
+			KEY settlement_id (settlement_id)
+		) $collate;"
+		);
+		dbDelta(
+			"CREATE TABLE $evidence (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			history_id bigint(20) UNSIGNED NOT NULL,
+			revision_id bigint(20) UNSIGNED NOT NULL,
+			movement_key varchar(191) NOT NULL,
+			transaction_id bigint(20) UNSIGNED DEFAULT NULL,
+			evidence longtext NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY movement (history_id,revision_id,movement_key),
+			KEY transaction_id (transaction_id)
+		) $collate;"
+		);
+		dbDelta(
+			"CREATE TABLE $context (
+			entry_id bigint(20) UNSIGNED NOT NULL,
+			account_id bigint(20) UNSIGNED NOT NULL,
+			currency char(3) NOT NULL,
+			actor_id bigint(20) UNSIGNED NOT NULL,
+			confirmed_at datetime NOT NULL,
+			PRIMARY KEY  (entry_id)
+		) $collate;"
+		);
 	}
 }

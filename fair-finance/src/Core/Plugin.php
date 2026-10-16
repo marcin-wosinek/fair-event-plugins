@@ -47,7 +47,16 @@ class Plugin {
 	 * @return void
 	 */
 	private function init_hooks() {
+		add_action(
+			'init',
+			static function () {
+				if ( '2' !== get_option( 'fair_finance_schema_version' ) ) {
+					Schema::create_tables();
+				}
+			}
+		);
 		new \FairFinance\API\RestHooks();
+		\FairFinance\Services\SettlementReconciliation::register_guards();
 
 		// Settlement reconciliation needs to read Mollie settlements, so ask
 		// Fair Payments Connector to request that permission when connecting.

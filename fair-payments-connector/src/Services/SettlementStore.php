@@ -43,6 +43,15 @@ class SettlementStore {
 	private $repository;
 
 	/**
+	 * Advertise the account-convergence guard to independently updated Finance.
+	 *
+	 * @return bool
+	 */
+	public static function supports_reconciliation_guards() {
+		return true;
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SettlementRepository|null $repository Repository.
@@ -137,6 +146,11 @@ class SettlementStore {
 					return new WP_Error( 'settlement_account_verified', __( 'This account is already confirmed.', 'fair-payments-connector' ), array( 'status' => 409 ) );
 				}
 
+				$error = apply_filters( 'fair_payment_settlement_account_confirmation_error', null, (int) $account_id );
+				if ( is_wp_error( $error ) ) {
+					return $error;
+				}
+
 				$target = $this->repository->find_account_by_organization( $organization_id );
 				if ( ! $target ) {
 					$this->repository->update_account(
@@ -201,6 +215,7 @@ class SettlementStore {
 			}
 		}
 
+		do_action( 'fair_payment_settlement_converging', (int) $from['id'], (int) $into['id'] );
 		$this->repository->delete_settlement( (int) $from['id'] );
 		$this->recompute( (int) $into['id'] );
 	}
