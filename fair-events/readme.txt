@@ -140,6 +140,10 @@ Event times are automatically formatted using your site's date and time format s
 
 Yes! Events support standard WordPress categories and tags. You can organize your events using these taxonomies just like regular posts.
 
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies and the "Add to Calendar" variation of the core Button block, with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == Screenshots ==
 
 1. Events Calendar admin page with seeded events across the month

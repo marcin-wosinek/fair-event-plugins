@@ -81,6 +81,10 @@ The plugin is designed to work with any properly coded WordPress theme. It uses 
 
 Time slots calculate their position automatically based on the timetable's start time and the slot's start time, creating precise visual alignment in your schedule.
 
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies, with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == Screenshots ==
 
 1. Timetable container block with multiple columns in the editor

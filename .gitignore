@@ -13,6 +13,8 @@ vendor/
 */vendor/*
 */node_modules/*
 */build/*
+# Generated block documentation (scripts/block-docs.mjs, run by each plugin build)
+*/block-docs/
 node_modules
 dist
 

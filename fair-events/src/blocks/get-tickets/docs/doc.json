@@ -1,0 +1,17 @@
+{
+	"status": "legacy",
+	"replacement": "fair-events/event-signup",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered so existing content keeps rendering, but hidden from the inserter (supports.inserter: false)."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Existing legacy block",
+			"description": "How legacy content looks when saved; it renders the Event Signup form for the current event.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets"
+		}
+	}
+}

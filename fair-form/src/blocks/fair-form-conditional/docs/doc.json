@@ -1,0 +1,34 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Form is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Show a follow-up question for one answer",
+			"description": "The follow-up appears only when the radio answer is \"Yes\".",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form .fair-form-conditional[data-condition-question-key='bring_equipment']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
+		},
+		"ticket-type": {
+			"title": "Signup questions for one ticket type",
+			"description": "Inside Event Signup: asks for a student ID only when the visitor picks a given ticket type.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets",
+			"syntheticIds": {
+				"conditionTicketTypeIds": "Ticket type IDs of the event the signup belongs to (Fair Events → event → Prices tab). With IDs that do not belong to the event the section never shows."
+			}
+		},
+		"event-option": {
+			"title": "Questions for an event option",
+			"description": "Inside Event Signup: shows a menu choice only when the \"dinner\" option is selected.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets"
+		}
+	}
+}

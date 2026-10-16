@@ -1,0 +1,25 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Upcoming events",
+			"description": "Every upcoming event in the default list pattern.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-list"
+		},
+		"filtered": {
+			"title": "Past events of one category as a grid",
+			"description": "Past events in one category, most recent first, using the bundled grid pattern.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-events-list",
+			"syntheticIds": {
+				"categories": "Post category term IDs (Posts → Categories)."
+			}
+		}
+	}
+}

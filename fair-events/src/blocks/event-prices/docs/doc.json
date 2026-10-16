@@ -1,0 +1,26 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "All public prices of the current event",
+			"description": "Lists every public ticket type and sale period configured on the event's Prices tab.",
+			"context": "event",
+			"frontend": ".wp-block-fair-events-event-prices"
+		},
+		"hidden-ticket-types": {
+			"title": "Prices with a ticket type and sale period hidden",
+			"description": "Hides one ticket type and one sale period from the price table.",
+			"context": "event",
+			"frontend": ".wp-block-fair-events-event-prices",
+			"syntheticIds": {
+				"hiddenTicketTypeIds": "IDs of ticket types of this event (Fair Events → event → Prices tab; table fair_events_ticket_types).",
+				"hiddenSalePeriodIds": "IDs of sale periods of this event (same tab; table fair_events_sale_periods)."
+			}
+		}
+	}
+}

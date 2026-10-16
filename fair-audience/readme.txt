@@ -39,6 +39,10 @@ WordPress 6.7 or higher.
 
 Yes, it integrates with the fair_event post type from the Fair Events plugin.
 
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies, with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == Changelog ==
 
 ## 1.20.0

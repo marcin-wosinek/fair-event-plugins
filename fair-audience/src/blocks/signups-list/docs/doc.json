@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Audience is active."
+	},
+	"requires": [ "fair-events" ],
+	"examples": {
+		"minimal": {
+			"title": "Signups of the current event",
+			"description": "Count for anonymous visitors, names for logged-in users.",
+			"context": "event",
+			"frontend": ".wp-block-fair-audience-signups-list.audience-signups"
+		}
+	}
+}

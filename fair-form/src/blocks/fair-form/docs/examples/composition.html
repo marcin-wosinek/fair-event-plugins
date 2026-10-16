@@ -1,0 +1,31 @@
+<!-- wp:fair-audience/fair-form {"formId":"00000000-0000-4000-8000-0000000000f1","submitButtonText":"Apply","successMessage":"Thanks! We will be in touch.","formTitle":"Volunteer application","notificationEmail":"organizer@example.com"} -->
+<!-- wp:core/heading -->
+<h2 class="wp-block-heading">Volunteer application</h2>
+<!-- /wp:core/heading -->
+
+<!-- wp:core/paragraph -->
+<p>Tell us how you would like to help.</p>
+<!-- /wp:core/paragraph -->
+
+<!-- wp:fair-audience/fair-form-email {"questionText":"Email","questionKey":"email","required":true} /-->
+
+<!-- wp:fair-audience/fair-form-multiselect {"questionText":"Which tasks can you help with?","questionKey":"tasks","required":true} -->
+<!-- wp:fair-audience/fair-form-option {"value":"Setup"} /-->
+
+<!-- wp:fair-audience/fair-form-option {"value":"Front desk"} /-->
+
+<!-- wp:fair-audience/fair-form-option {"value":"Cleanup"} /-->
+<!-- /wp:fair-audience/fair-form-multiselect -->
+
+<!-- wp:fair-audience/fair-form-conditional {"conditionQuestionKey":"tasks","conditionOperator":"contains","conditionValue":"Front desk"} -->
+<!-- wp:fair-audience/fair-form-radio {"questionText":"Which shift?","questionKey":"front_desk_shift"} -->
+<!-- wp:fair-audience/fair-form-option {"value":"Morning"} /-->
+
+<!-- wp:fair-audience/fair-form-option {"value":"Evening"} /-->
+<!-- /wp:fair-audience/fair-form-radio -->
+<!-- /wp:fair-audience/fair-form-conditional -->
+
+<!-- wp:fair-audience/fair-form-consent {"questionText":"I agree to be contacted about volunteering.","questionKey":"contact_consent"} /-->
+
+<!-- wp:fair-audience/fair-form-mailing-signup /-->
+<!-- /wp:fair-audience/fair-form -->

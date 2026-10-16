@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Timetable is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Column body inside a timetable",
+			"description": "The body is only valid inside a time column, which is only valid inside a timetable.",
+			"context": "page",
+			"frontend": ".wp-block-fair-timetable-time-column-body .wp-block-fair-timetable-time-slot"
+		}
+	}
+}

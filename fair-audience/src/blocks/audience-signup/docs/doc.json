@@ -1,0 +1,22 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Audience is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Basic registration form",
+			"description": "Name, surname, email, and the keep-informed checkbox.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-audience-signup form"
+		},
+		"with-questions": {
+			"title": "Registration with Instagram and custom questions",
+			"description": "Adds the Instagram handle field, a required text question, and a multiple-choice question.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-audience-signup [name='questionnaire[interests][]'], .wp-block-fair-audience-audience-signup [name^='questionnaire[interests]']"
+		}
+	}
+}

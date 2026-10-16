@@ -1,0 +1,22 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Timetable is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Smallest valid timetable",
+			"description": "One column with one slot, all times at their defaults (09:00–17:00 grid, 09:00–10:00 slot).",
+			"context": "page",
+			"frontend": ".wp-block-fair-timetable-timetable .wp-block-fair-timetable-time-slot"
+		},
+		"composition": {
+			"title": "Two-column timetable",
+			"description": "A 10:00–14:00 grid with two columns and three slots, showing the full nesting.",
+			"context": "page",
+			"frontend": ".wp-block-fair-timetable-timetable .wp-block-fair-timetable-time-column + .wp-block-fair-timetable-time-column"
+		}
+	}
+}

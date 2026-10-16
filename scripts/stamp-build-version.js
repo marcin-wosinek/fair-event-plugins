@@ -5,13 +5,16 @@
  *
  * Replaces the Version: header in WordPress plugin PHP files with the output
  * of `git describe --tags --match="<plugin-name>@*"` (prefix stripped), e.g. "1.0.0-2-g8f0bec2".
- * Run during CI build, after `npm run build`.
+ * Run during CI build, after `npm run build`. Also rewrites the version
+ * recorded in each plugin's generated block-docs/index.json, so the shipped
+ * documentation names the stamped release version.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { refreshVersion } from './block-docs.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
@@ -112,6 +115,9 @@ for (const plugin of plugins) {
 	console.log(`📦 ${plugin.name}: ${buildVersion}`);
 	stampFile(join(rootDir, plugin.phpFile), versionRegex, buildVersion);
 	stampFile(join(rootDir, plugin.readmeFile), stableTagRegex, buildVersion);
+	if (refreshVersion(rootDir, plugin.name)) {
+		console.log(`  ✅ ${plugin.name}/block-docs/index.json`);
+	}
 	console.log('');
 }
 

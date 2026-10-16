@@ -1,0 +1,19 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Payments Connector is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Fixed-amount payment",
+			"description": "Collects 15 EUR with a short description. Give every copy of the block its own blockId.",
+			"context": "page",
+			"frontend": ".wp-block-fair-payment-simple-payment .fair-payments-connector-amount",
+			"syntheticIds": {
+				"blockId": "A UUID identifying this block instance within the post. Generate a fresh UUID (v4) for each block; it is not a database ID."
+			}
+		}
+	}
+}

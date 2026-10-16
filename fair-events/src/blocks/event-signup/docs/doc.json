@@ -1,0 +1,31 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active. Fair Audience, Fair Form, and Fair Payments Connector extend it when active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Signup for the current event",
+			"description": "Resolves the event date from the post it is placed on and shows its ticket types.",
+			"context": "event",
+			"frontend": ".wp-block-fair-events-event-signup.fair-events-get-tickets form"
+		},
+		"with-questions": {
+			"title": "Signup with Fair Form questions",
+			"description": "Adds an intro paragraph, a text question, a required single choice, a follow-up shown only for one answer, and a consent checkbox. Needs Fair Form for the question blocks.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets .fair-events-event-signup-questions [data-question-key='experience_level']"
+		},
+		"explicit-event-date": {
+			"title": "Signup for a specific event date",
+			"description": "Pins the form to one event date, for use on a page that is not linked to the event.",
+			"context": "event",
+			"frontend": ".wp-block-fair-events-event-signup.fair-events-get-tickets",
+			"syntheticIds": {
+				"eventDateId": "ID of an event date (Fair Events → Events; table fair_event_dates). 0 or omitted means: use the event date of the current post."
+			}
+		}
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Form is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Date & Time Question in a Fair Form",
+			"description": "The smallest valid placement: one question in a Fair Form.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form [data-question-type='datetime'][data-question-key='preferred_call_time']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
+		},
+		"in-event-signup": {
+			"title": "Asked during event signup",
+			"description": "The same question inside Fair Events' Event Signup, asked once per signup.",
+			"context": "event",
+			"frontend": ".fair-events-get-tickets [data-question-key='preferred_call_time']"
+		}
+	}
+}

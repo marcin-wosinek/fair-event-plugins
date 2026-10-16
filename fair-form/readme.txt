@@ -14,6 +14,12 @@ Form blocks and answer data layer for Fair Event Plugins.
 
 Fair Form provides the form block family (`fair-form*`) and the questionnaire answer storage layer for Fair Event Plugins.
 
+== Frequently Asked Questions ==
+
+= How can site tools and AI assistants discover this plugin's blocks? =
+
+Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies (its blocks use the `fair-audience/` namespace; the index records Fair Form as their owner), with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
+
 == Changelog ==
 
 ## 1.6.0

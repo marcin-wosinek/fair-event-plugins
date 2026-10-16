@@ -1,0 +1,25 @@
+{
+	"kind": "variation",
+	"block": "core/button",
+	"variation": "calendar-button",
+	"title": "Add to Calendar",
+	"description": "A core/button that adds the current event to the visitor's calendar, using the event's dates from Fair Events.",
+	"isActive": { "isCalendarButton": true },
+	"attributes": {
+		"isCalendarButton": { "type": "boolean", "default": false }
+	},
+	"status": "authoring",
+	"registration": {
+		"condition": "post-type",
+		"detail": "Fair Events adds the isCalendarButton attribute to core/button on every site. The editor offers the variation only while editing a post type enabled for events (fair_event by default)."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Calendar button on an event post",
+			"description": "A Buttons block holding one calendar button. Dates, title, link, and location come from the event.",
+			"context": "event",
+			"frontend": "a.wp-block-button__link[data-calendar-button='true']"
+		}
+	}
+}

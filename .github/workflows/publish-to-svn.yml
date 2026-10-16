@@ -131,7 +131,7 @@ jobs:
             # ZIP whose entry point requires a file the archive doesn't
             # contain (e.g. a missing vendor/ from a swallowed composer
             # failure). See #1434.
-            - name: Verify dist archive includes composer dependencies
+            - name: Verify dist archive includes composer dependencies and block docs
               run: node scripts/verify-dist-archive.cjs ${{ inputs.plugin }} dist/${{ inputs.plugin }}.${{ inputs.version }}.zip
 
             # Rebuild path: refresh trunk + assets from source. Reuse path: trunk

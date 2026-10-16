@@ -1,0 +1,39 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Form is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Form with one question",
+			"description": "A Fair Form with a single short-text question and default button.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form.fair-form form.fair-form-form",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
+		},
+		"composition": {
+			"title": "Complete application form",
+			"description": "Heading, intro, email, a multiselect with a conditional follow-up, consent, and mailing opt-in, with a title and a notification address.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form[data-form-title='Volunteer application'] .fair-form-conditional",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one.",
+				"notificationEmail": "Replace organizer@example.com with the address that should receive notifications."
+			}
+		},
+		"linked-event": {
+			"title": "Form linked to the current event",
+			"description": "On an event post, a form whose submissions are associated with an event date.",
+			"context": "event",
+			"frontend": ".wp-block-fair-audience-fair-form.fair-form",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one.",
+				"eventDateId": "ID of an event date (table fair_event_dates). 0 or omitted means none."
+			}
+		}
+	}
+}
