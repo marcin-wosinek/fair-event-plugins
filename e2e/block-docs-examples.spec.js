@@ -74,7 +74,8 @@ function collectCases() {
  *
  * @param {string} markup  Example markup.
  * @param {object} example Example descriptor from index.json.
- * @param {object} seed    Seeded event (E2E_SEED payload), or null.
+ * @param {object} seed    Seeded records: the E2E_SEED event payload and/or
+ *                         a `venueId` created for the example, or null.
  * @return {string} Markup ready to insert.
  */
 function substituteIds(markup, example, seed) {
@@ -84,6 +85,12 @@ function substituteIds(markup, example, seed) {
 			result = result.replace(
 				/"eventDateId":\d+/g,
 				`"eventDateId":${seed.eventDateId}`
+			);
+		}
+		if (attribute === 'venueId' && seed?.venueId) {
+			result = result.replace(
+				/"venueId":\d+/g,
+				`"venueId":${seed.venueId}`
 			);
 		}
 	}
@@ -262,8 +269,22 @@ test.describe('Block documentation examples', () => {
 			const content = (markup) =>
 				substituteIds(markup, item.example, seed);
 
+			let venueId = null;
+			if (item.example.syntheticIds?.venueId) {
+				const venue = await apiFetch(page, {
+					path: '/fair-events/v1/venues',
+					method: 'POST',
+					data: {
+						name: `Block docs venue ${Date.now()}`,
+						address: '1 Example Street',
+					},
+				});
+				venueId = venue.id;
+				seed = { venueId };
+			}
+
 			if (item.example.context === 'event') {
-				seed = seedEvent('paid');
+				seed = { ...seedEvent('paid'), ...seed };
 				postId = seed.eventId;
 				await apiFetch(page, {
 					path: `/wp/v2/fair_event/${postId}`,
@@ -309,10 +330,18 @@ test.describe('Block documentation examples', () => {
 					`frontend renders ${item.example.frontendSelector}`
 				).toBeAttached();
 			} finally {
-				if (createdPage) {
+				if (createdPage || venueId) {
 					await page.goto('/wp-admin/');
+				}
+				if (createdPage) {
 					await apiFetch(page, {
 						path: `/wp/v2/pages/${postId}?force=true`,
+						method: 'DELETE',
+					});
+				}
+				if (venueId) {
+					await apiFetch(page, {
+						path: `/fair-events/v1/venues/${venueId}`,
 						method: 'DELETE',
 					});
 				}

@@ -1,0 +1,19 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Details of one venue",
+			"description": "Shows a venue's name, address, and its available map, website, and social links.",
+			"context": "page",
+			"frontend": ".wp-block-fair-events-venue-info",
+			"syntheticIds": {
+				"venueId": "ID of a venue (Fair Events → Venues; table fair_event_venues)."
+			}
+		}
+	}
+}
