@@ -3,7 +3,7 @@
  */
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { ExternalLink, Notice, Spinner } from '@wordpress/components';
 
 /**
@@ -25,6 +25,29 @@ const CHANNELS = [
 ];
 
 /**
+ * Apply a read of the page payload, keeping each channel saved after the
+ * read was issued: the read may not include that save.
+ *
+ * @param {Object|null} current   Shown payload.
+ * @param {Object}      next      Payload read from the server.
+ * @param {number}      requested Number the read was issued with.
+ * @param {Object}      saved     Number of each channel's last save.
+ * @return {Object} Payload to show.
+ */
+export function mergeRead( current, next, requested, saved ) {
+	if ( ! current ) {
+		return next;
+	}
+	const channels = { ...next.channels };
+	Object.keys( saved ).forEach( ( key ) => {
+		if ( saved[ key ] > requested && current.channels[ key ] ) {
+			channels[ key ] = current.channels[ key ];
+		}
+	} );
+	return { ...next, channels };
+}
+
+/**
  * Event notifications admin page: one section per channel, each with its own
  * settings, save button, preview, test and delivery status.
  *
@@ -36,33 +59,46 @@ export default function EventNotifications( { sourcesUrl } ) {
 	const [ data, setData ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
 
-	useEffect( () => {
-		apiFetch( { path: PATH } )
-			.then( setData )
-			.catch( ( error ) =>
-				setLoadError(
-					errorMessage(
-						error,
-						__(
-							'Failed to load event notifications.',
-							'fair-events'
-						)
-					)
-				)
+	// Orders reads against saves. `issued` numbers every read and save as it
+	// happens, `applied` is the newest read shown, and `saved` the number of
+	// each channel's last save: a read issued before that save may predate it.
+	const requests = useRef( { issued: 0, applied: 0, saved: {} } );
+
+	const load = useCallback( () => {
+		const requested = ++requests.current.issued;
+		return apiFetch( { path: PATH } ).then( ( next ) => {
+			if ( requested < requests.current.applied ) {
+				return;
+			}
+			requests.current.applied = requested;
+			const { saved } = requests.current;
+			setLoadError( null );
+			setData( ( current ) =>
+				mergeRead( current, next, requested, saved )
 			);
+		} );
 	}, [] );
 
+	useEffect( () => {
+		load().catch( ( error ) =>
+			setLoadError(
+				errorMessage(
+					error,
+					__( 'Failed to load event notifications.', 'fair-events' )
+				)
+			)
+		);
+	}, [ load ] );
+
 	// Credentials and plugins are changed on other screens, usually in
-	// another tab. Coming back re-reads the status; each section keeps its
-	// own unsaved edits.
+	// another tab. Coming back re-reads availability and status; each
+	// section keeps its own unsaved edits.
 	const refresh = useCallback( () => {
 		if ( 'hidden' === document.visibilityState ) {
 			return;
 		}
-		apiFetch( { path: PATH } )
-			.then( setData )
-			.catch( () => {} );
-	}, [] );
+		load().catch( () => {} );
+	}, [ load ] );
 
 	useEffect( () => {
 		window.addEventListener( 'focus', refresh );
@@ -72,6 +108,16 @@ export default function EventNotifications( { sourcesUrl } ) {
 			document.removeEventListener( 'visibilitychange', refresh );
 		};
 	}, [ refresh ] );
+
+	// A save answers with the whole page, but only the saved channel is
+	// taken from it: the others may have changed since, on this page too.
+	const onSaved = useCallback( ( key, channel ) => {
+		requests.current.saved[ key ] = ++requests.current.issued;
+		setData( ( current ) => ( {
+			...current,
+			channels: { ...current.channels, [ key ]: channel },
+		} ) );
+	}, [] );
 
 	return (
 		<div className="wrap fair-events-notifications">
@@ -116,7 +162,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 						channel={ data.channels[ key ] }
 						sources={ data.sources }
 						pages={ data.pages }
-						onSaved={ setData }
+						onSaved={ onSaved }
 					/>
 				) ) }
 

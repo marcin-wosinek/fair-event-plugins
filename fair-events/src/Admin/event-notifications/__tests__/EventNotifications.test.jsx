@@ -3,6 +3,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	fireEvent,
 	render,
 	screen,
@@ -11,7 +12,8 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventNotifications from '../EventNotifications.js';
-import { TelegramMessage, tokenStatus } from '../TelegramChannel.js';
+import { tokenStatus } from '../TelegramChannel.js';
+import { TelegramMessage } from '../TelegramPreview.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -126,6 +128,29 @@ function calls( method, path ) {
 		( [ options ] ) =>
 			( options.method || 'GET' ) === method && options.path === path
 	);
+}
+
+function deferred() {
+	let resolve;
+	let reject;
+	const promise = new Promise( ( yes, no ) => {
+		resolve = yes;
+		reject = no;
+	} );
+	return { promise, resolve, reject };
+}
+
+// Coming back to the tab re-reads the page.
+async function returnToPage() {
+	await act( async () => {
+		window.dispatchEvent( new Event( 'focus' ) );
+	} );
+}
+
+function leavingIsGuarded() {
+	const event = new Event( 'beforeunload', { cancelable: true } );
+	window.dispatchEvent( event );
+	return event.defaultPrevented;
 }
 
 afterEach( () => {
@@ -547,6 +572,379 @@ describe( 'EventNotifications', () => {
 			window.dispatchEvent( dirtyEvent );
 			expect( dirtyEvent.defaultPrevented ).toBe( true );
 		} );
+	} );
+} );
+
+describe( 'Independent editors', () => {
+	it( 'keeps three drafts apart while one of them is saved', async () => {
+		const saved = payload( { bulk_email: { subject: 'Saved subject' } } );
+		await renderPage( payload(), {
+			[ `POST ${ PATH }/bulk-email` ]: () => Promise.resolve( saved ),
+		} );
+
+		const tg = within( section( 'Telegram' ) );
+		const mail = within( section( 'Bulk email' ) );
+		const own = within( section( 'Individual email' ) );
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '21:00' },
+		} );
+		fireEvent.change( mail.getByLabelText( 'Subject' ), {
+			target: { value: 'Saved subject' },
+		} );
+		fireEvent.change( own.getByLabelText( 'Send to' ), {
+			target: { value: 'a@example.test, b@example.test' },
+		} );
+
+		// One channel's validation blocks only its own save.
+		expect(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		).toBeDisabled();
+		expect(
+			tg.getByRole( 'button', { name: 'Save Telegram settings' } )
+		).toBeEnabled();
+		expect(
+			mail.queryByText(
+				'Enter exactly one email address, for example name@example.com.'
+			)
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			mail.getByRole( 'button', { name: 'Save bulk email settings' } )
+		);
+		expect(
+			await mail.findByText( 'Bulk email settings saved.' )
+		).toBeInTheDocument();
+
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '21:00' );
+		expect( tg.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+		expect( own.getByLabelText( 'Send to' ) ).toHaveValue(
+			'a@example.test, b@example.test'
+		);
+		expect( own.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+		expect( tg.queryByText( 'Bulk email settings saved.' ) ).toBeNull();
+		expect( leavingIsGuarded() ).toBe( true );
+	} );
+
+	it( 'keeps edits typed while a save is pending', async () => {
+		const request = deferred();
+		await renderPage( payload(), {
+			[ `POST ${ PATH }/telegram` ]: () => request.promise,
+		} );
+
+		const tg = within( section( 'Telegram' ) );
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '18:00' },
+		} );
+		const save = tg.getByRole( 'button', {
+			name: 'Save Telegram settings',
+		} );
+		fireEvent.click( save );
+		fireEvent.click( save );
+
+		// Pending: no second request, and the test waits for the save.
+		expect( calls( 'POST', `${ PATH }/telegram` ) ).toHaveLength( 1 );
+		expect( save ).toBeDisabled();
+		expect(
+			tg.getByRole( 'button', { name: 'Send test to the saved chats' } )
+		).toBeDisabled();
+
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '19:00' },
+		} );
+		await act( async () => {
+			request.resolve(
+				payload( { telegram: { time_of_day: '18:00' } } )
+			);
+		} );
+
+		expect(
+			await tg.findByText( 'Telegram settings saved.' )
+		).toBeInTheDocument();
+		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '19:00' );
+		expect( tg.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+
+		// Back to the value just saved: nothing is left unsaved.
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '18:00' },
+		} );
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps the draft after a failed save and lets it be retried', async () => {
+		let attempt = 0;
+		await renderPage( payload(), {
+			[ `POST ${ PATH }/bulk-email` ]: () =>
+				0 === attempt++
+					? Promise.reject( { message: 'Choose an event feed.' } )
+					: Promise.resolve(
+							payload( { bulk_email: { subject: 'Retry' } } )
+						),
+		} );
+
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.change( mail.getByLabelText( 'Subject' ), {
+			target: { value: 'Retry' },
+		} );
+		const save = mail.getByRole( 'button', {
+			name: 'Save bulk email settings',
+		} );
+		fireEvent.click( save );
+		expect(
+			await mail.findByText( 'Choose an event feed.' )
+		).toBeInTheDocument();
+		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue( 'Retry' );
+		expect( mail.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+		expect( save ).toBeEnabled();
+
+		fireEvent.click( save );
+		expect(
+			await mail.findByText( 'Bulk email settings saved.' )
+		).toBeInTheDocument();
+		expect(
+			mail.queryByText( 'Choose an event feed.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'updates connector availability on return without losing edits', async () => {
+		let current = payload( {
+			telegram: { token_configured: false, token_valid: false },
+		} );
+		await renderPage( current, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+		} );
+
+		const tg = within( section( 'Telegram' ) );
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '07:00' },
+		} );
+		expect(
+			tg.getByText( /No bot token is configured/ )
+		).toBeInTheDocument();
+
+		current = payload();
+		await returnToPage();
+
+		expect(
+			await tg.findByText( /A bot token is saved in Connectors/ )
+		).toBeInTheDocument();
+		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '07:00' );
+		expect( tg.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+		expect(
+			tg.queryByText(
+				'Fix the bot token in Connectors before sending a test message.'
+			)
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps unsaved edits while a channel is unavailable and restores them', async () => {
+		const paused = {
+			state: 'inactive',
+			state_message:
+				'The weekly email is paused because Fair Audience is not active.',
+		};
+		let current = payload();
+		await renderPage( current, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+		} );
+
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.change( mail.getByLabelText( 'Subject' ), {
+			target: { value: 'Kept draft' },
+		} );
+
+		current = payload( { bulk_email: paused } );
+		await returnToPage();
+		expect(
+			await mail.findByText( /paused because Fair Audience/ )
+		).toBeInTheDocument();
+		expect( mail.queryByLabelText( 'Subject' ) ).not.toBeInTheDocument();
+		expect( mail.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+		expect(
+			mail.getByText(
+				'Your unsaved changes are kept and shown again here once this channel is available.'
+			)
+		).toBeInTheDocument();
+		expect( leavingIsGuarded() ).toBe( true );
+
+		current = payload();
+		await returnToPage();
+		expect( await mail.findByLabelText( 'Subject' ) ).toHaveValue(
+			'Kept draft'
+		);
+		expect( mail.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows the saved settings once an unavailable channel becomes active', async () => {
+		let current = payload( {
+			bulk_email: {
+				state: 'inactive',
+				state_message:
+					'The weekly email is paused because Fair Audience is not active.',
+			},
+		} );
+		await renderPage( current, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+		} );
+
+		const mail = within( section( 'Bulk email' ) );
+		expect( mail.queryByLabelText( 'Subject' ) ).not.toBeInTheDocument();
+
+		current = payload( { bulk_email: { subject: 'Changed meanwhile' } } );
+		await returnToPage();
+
+		expect( await mail.findByLabelText( 'Subject' ) ).toHaveValue(
+			'Changed meanwhile'
+		);
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		expect(
+			mail.getByRole( 'button', { name: 'Save bulk email settings' } )
+		).toBeEnabled();
+	} );
+
+	it( 'follows saved settings changed elsewhere unless the form holds edits', async () => {
+		let current = payload();
+		await renderPage( current, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+		} );
+
+		const tg = within( section( 'Telegram' ) );
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.change( mail.getByLabelText( 'Subject' ), {
+			target: { value: 'My draft' },
+		} );
+
+		current = payload( {
+			telegram: { time_of_day: '12:00' },
+			bulk_email: { subject: 'Saved in another tab' },
+		} );
+		await returnToPage();
+
+		// The clean form follows the saved settings.
+		expect( await tg.findByDisplayValue( '12:00' ) ).toBeInTheDocument();
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		// The dirty one keeps its draft and warns before replacing them.
+		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue( 'My draft' );
+		expect(
+			mail.getByText(
+				'These settings were saved somewhere else, for example in another tab, after you started editing. Saving replaces them with the values shown here.'
+			)
+		).toBeInTheDocument();
+		expect(
+			tg.queryByText( /These settings were saved somewhere else/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'ignores a read that started before a save finished', async () => {
+		const read = deferred();
+		let reads = 0;
+		await renderPage( payload(), {
+			[ `GET ${ PATH }` ]: () =>
+				0 === reads++ ? Promise.resolve( payload() ) : read.promise,
+			[ `POST ${ PATH }/telegram` ]: () =>
+				Promise.resolve(
+					payload( { telegram: { time_of_day: '18:00' } } )
+				),
+		} );
+
+		const tg = within( section( 'Telegram' ) );
+		await returnToPage();
+		fireEvent.change( tg.getByLabelText( 'Send at' ), {
+			target: { value: '18:00' },
+		} );
+		fireEvent.click(
+			tg.getByRole( 'button', { name: 'Save Telegram settings' } )
+		);
+		expect(
+			await tg.findByText( 'Telegram settings saved.' )
+		).toBeInTheDocument();
+
+		// The older read still has the previous time.
+		await act( async () => {
+			read.resolve( payload() );
+		} );
+
+		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '18:00' );
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		expect(
+			tg.queryByText( /These settings were saved somewhere else/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'drops a preview that no longer matches the saved settings', async () => {
+		const preview = deferred();
+		let current = payload();
+		await renderPage( current, {
+			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+			[ `GET ${ PATH }/bulk-email/preview` ]: () => preview.promise,
+		} );
+
+		const mail = within( section( 'Bulk email' ) );
+		fireEvent.click(
+			mail.getByRole( 'button', { name: 'Preview next email' } )
+		);
+		current = payload( { bulk_email: { subject: 'Saved elsewhere' } } );
+		await returnToPage();
+		expect(
+			await mail.findByDisplayValue( 'Saved elsewhere' )
+		).toBeVisible();
+
+		await act( async () => {
+			preview.resolve( {
+				subject: 'Old subject',
+				html: '<p>Old</p>',
+				empty: false,
+				week_title: '12–18 Oct 2026',
+			} );
+		} );
+
+		expect( mail.queryByText( 'Old subject' ) ).not.toBeInTheDocument();
+		expect(
+			mail.getByRole( 'button', { name: 'Preview next email' } )
+		).toBeEnabled();
+	} );
+
+	it( 'clears a shown preview once the settings are saved', async () => {
+		await renderPage( payload(), {
+			[ `GET ${ PATH }/individual-email/preview` ]: () =>
+				Promise.resolve( {
+					recipient: 'organizer@example.test',
+					subject: 'Organizer update: 2026-10-12',
+					html: '<p>Concert night</p>',
+					empty: false,
+					skip_empty: true,
+					week_title: '12–18 Oct 2026',
+				} ),
+			[ `POST ${ PATH }/individual-email` ]: () =>
+				Promise.resolve(
+					payload( { individual_email: { subject: 'New' } } )
+				),
+		} );
+
+		const own = within( section( 'Individual email' ) );
+		fireEvent.click(
+			own.getByRole( 'button', { name: 'Preview next email' } )
+		);
+		expect(
+			await own.findByText( 'Organizer update: 2026-10-12' )
+		).toBeInTheDocument();
+
+		fireEvent.change( own.getByLabelText( 'Subject' ), {
+			target: { value: 'New' },
+		} );
+		fireEvent.click(
+			own.getByRole( 'button', {
+				name: 'Save individual email settings',
+			} )
+		);
+		expect(
+			await own.findByText( 'Individual email settings saved.' )
+		).toBeInTheDocument();
+		expect(
+			own.queryByText( 'Organizer update: 2026-10-12' )
+		).not.toBeInTheDocument();
 	} );
 } );
 

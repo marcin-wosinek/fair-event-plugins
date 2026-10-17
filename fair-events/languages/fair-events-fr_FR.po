@@ -5440,7 +5440,7 @@ msgstr "Dupliquer"
 
 #: src/Admin/AdminPages.php:144
 #: src/Admin/AdminPages.php:145
-#: src/Admin/event-notifications/EventNotifications.js:78
+#: src/Admin/event-notifications/EventNotifications.js:124
 msgid "Event notifications"
 msgstr "Notifications d'événements"
 
@@ -5549,7 +5549,7 @@ msgid "The selected page must be published and publicly visible."
 msgstr "La page sélectionnée doit être publiée et publiquement visible."
 
 #: src/Notifications/TelegramConnector.php:54
-#: src/Admin/event-notifications/TelegramChannel.js:322
+#: src/Admin/event-notifications/TelegramChannel.js:220
 msgid "Telegram"
 msgstr "Telegram"
 
@@ -5607,80 +5607,70 @@ msgstr "Aucune destination de livraison n'est activée et configurée."
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
 msgstr "Livré : %1$d. Échoué : %2$d. Résultat inconnu : %3$d."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:96
+#: src/Admin/event-notifications/BulkEmailChannel.js:53
 msgid "Bulk email settings saved."
 msgstr "Paramètres d'email en masse enregistrés."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:103
+#: src/Admin/event-notifications/BulkEmailChannel.js:54
 msgid "Failed to save the bulk email settings."
 msgstr "Échec de l'enregistrement des paramètres d'email en masse."
 
 #. translators: %s: email address the test was sent to
-#: src/Admin/event-notifications/BulkEmailChannel.js:125
+#: src/Admin/event-notifications/BulkEmailChannel.js:45
 #, js-format
 msgid "Test email sent to %s. No subscriber received it."
 msgstr "Email de test envoyé à %s. Aucun abonné ne l'a reçu."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:137
-#: src/Admin/event-notifications/IndividualEmailChannel.js:215
+#: src/Admin/event-notifications/BulkEmailChannel.js:58
+#: src/Admin/event-notifications/IndividualEmailChannel.js:140
 msgid "Failed to send the test email."
 msgstr "Échec de l'envoi de l'e-mail de test."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:154
-#: src/Admin/event-notifications/IndividualEmailChannel.js:232
-#: src/Admin/event-notifications/TelegramChannel.js:313
+#: src/Admin/event-notifications/useNotificationEditor.js:171
 msgid "Failed to build the preview."
 msgstr "Impossible de générer l'aperçu."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:163
+#: src/Admin/event-notifications/BulkEmailChannel.js:84
 msgid "Bulk email"
 msgstr "Email en masse"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:166
-#: src/Admin/event-notifications/IndividualEmailChannel.js:258
-#: src/Admin/event-notifications/TelegramChannel.js:325
+#: src/Admin/event-notifications/NotificationEditor.js:53
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:186
-#: src/Admin/event-notifications/IndividualEmailChannel.js:241
+#: src/Admin/event-notifications/BulkEmailChannel.js:102
+#: src/Admin/event-notifications/IndividualEmailChannel.js:171
 msgid "Save your changes first — the preview and the test use the saved settings."
 msgstr "Enregistrez d'abord vos modifications — l'aperçu et le test utilisent les paramètres enregistrés."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:197
+#: src/Admin/event-notifications/BulkEmailChannel.js:118
 msgid "Email the week’s events to your subscribers. Fair Audience decides who receives it: only participants who agreed to marketing emails and did not opt out of the weekly summary, each with their own unsubscribe link."
 msgstr "Envoyez par email les événements de la semaine à vos abonnés. Fair Audience décide qui les reçoit : uniquement les participants qui ont accepté les emails marketing et n'ont pas refusé le résumé hebdomadaire, chacun avec son propre lien de désinscription."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:204
+#: src/Admin/event-notifications/BulkEmailChannel.js:125
 msgid "Email the weekly summary to subscribers"
 msgstr "Envoyer le résumé hebdomadaire par email aux abonnés"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:208
-#: src/Admin/event-notifications/IndividualEmailChannel.js:281
+#: src/Admin/event-notifications/BulkEmailChannel.js:129
+#: src/Admin/event-notifications/IndividualEmailChannel.js:238
 msgid "Turning this off keeps everything below."
 msgstr "Désactiver ceci conserve tout ce qui suit."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:219
-#: src/Admin/event-notifications/IndividualEmailChannel.js:305
-#: src/Admin/event-notifications/TelegramChannel.js:404
+#: src/Admin/event-notifications/BulkEmailChannel.js:140
+#: src/Admin/event-notifications/IndividualEmailChannel.js:262
+#: src/Admin/event-notifications/TelegramChannel.js:289
 msgid "Events to include"
 msgstr "Événements à inclure"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:230
-#: src/Admin/event-notifications/IndividualEmailChannel.js:319
-#: src/Admin/event-notifications/TelegramChannel.js:431
+#: src/Admin/event-notifications/ScheduleControls.js:29
 msgid "Send on"
 msgstr "Envoyer le"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:240
-#: src/Admin/event-notifications/IndividualEmailChannel.js:329
-#: src/Admin/event-notifications/TelegramChannel.js:441
+#: src/Admin/event-notifications/ScheduleControls.js:39
 msgid "Send at"
 msgstr "Envoyer à"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:247
-#: src/Admin/event-notifications/IndividualEmailChannel.js:336
-#: src/Admin/event-notifications/TelegramChannel.js:448
+#: src/Admin/event-notifications/ScheduleControls.js:46
 msgid "Which week to include"
 msgstr "Quelle semaine inclure"
 
@@ -5709,87 +5699,79 @@ msgstr "Facultatif. Le HTML basique tel que les liens et le texte en gras est au
 msgid "Text below the list of events"
 msgstr "Texte au-dessous de la liste des événements"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:281
+#: src/Admin/event-notifications/BulkEmailChannel.js:89
 msgid "Save bulk email settings"
 msgstr "Enregistrer les paramètres d'email en masse"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:289
-#: src/Admin/event-notifications/IndividualEmailChannel.js:381
+#: src/Admin/event-notifications/BulkEmailChannel.js:90
+#: src/Admin/event-notifications/IndividualEmailChannel.js:187
 msgid "Preview next email"
 msgstr "Aperçu du prochain email"
 
 #. translators: %s: the administrator's own email address
 #. translators: %s: the saved recipient email address
-#: src/Admin/event-notifications/BulkEmailChannel.js:299
-#: src/Admin/event-notifications/IndividualEmailChannel.js:392
+#: src/Admin/event-notifications/BulkEmailChannel.js:93
+#: src/Admin/event-notifications/IndividualEmailChannel.js:192
 #, js-format
 msgid "Send test email to %s"
 msgstr "Envoyer un email de test à %s"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:305
+#: src/Admin/event-notifications/BulkEmailChannel.js:97
 msgid "The test goes to your address only, never to subscribers, and does not count as the week’s send."
 msgstr "Le test est envoyé uniquement à votre adresse, jamais aux abonnés, et ne compte pas comme l'envoi de la semaine."
 
 #. translators: %s: date range of a week
-#: src/Admin/event-notifications/BulkEmailChannel.js:326
-#: src/Admin/event-notifications/IndividualEmailChannel.js:426
+#: src/Admin/event-notifications/EmailPreview.js:40
 #, js-format
 msgid "No events for %s, so no email would be sent."
 msgstr "Aucun événement pour %s, donc aucun email ne serait envoyé."
 
 #. translators: %s: date range of a week
-#: src/Admin/event-notifications/BulkEmailChannel.js:334
-#: src/Admin/event-notifications/IndividualEmailChannel.js:434
+#: src/Admin/event-notifications/EmailPreview.js:48
 #, js-format
 msgid "No events for %s. The email below would still be sent."
 msgstr "Aucun événement pour %s. L'email ci-dessous serait quand même envoyé."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:343
-#: src/Admin/event-notifications/IndividualEmailChannel.js:451
+#: src/Admin/event-notifications/EmailPreview.js:64
 msgid "Subject:"
 msgstr "Objet :"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:349
-#: src/Admin/event-notifications/IndividualEmailChannel.js:457
+#: src/Admin/event-notifications/EmailPreview.js:70
 msgid "Email preview"
 msgstr "Aperçu de l'email"
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:358
-#: src/Admin/event-notifications/IndividualEmailChannel.js:466
-#: src/Admin/event-notifications/TelegramChannel.js:608
+#: src/Admin/event-notifications/EmailHistory.js:27
+#: src/Admin/event-notifications/TelegramHistory.js:23
 msgid "Delivery status"
 msgstr "Statut de livraison"
 
 #. translators: %s: date and time of the next send
-#: src/Admin/event-notifications/BulkEmailChannel.js:363
-#: src/Admin/event-notifications/IndividualEmailChannel.js:471
+#: src/Admin/event-notifications/EmailHistory.js:32
 #, js-format
 msgid "Next send: %s."
 msgstr "Prochain envoi : %s."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:366
-#: src/Admin/event-notifications/IndividualEmailChannel.js:474
+#: src/Admin/event-notifications/EmailHistory.js:35
 msgid "Nothing is scheduled. Turn on the weekly email and save to schedule sends."
 msgstr "Rien n'est programmé. Activez l'email hebdomadaire et enregistrez pour programmer les envois."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:373
-#: src/Admin/event-notifications/IndividualEmailChannel.js:481
+#: src/Admin/event-notifications/EmailHistory.js:42
 msgid "No weekly email has been sent yet."
 msgstr "Aucun email hebdomadaire n'a été envoyé pour le moment."
 
-#: src/Admin/event-notifications/EventNotifications.js:46
+#: src/Admin/event-notifications/EventNotifications.js:87
 msgid "Failed to load event notifications."
 msgstr "Échec du chargement des notifications d'événements."
 
-#: src/Admin/event-notifications/EventNotifications.js:80
+#: src/Admin/event-notifications/EventNotifications.js:126
 msgid "Send the week’s events automatically. Each channel has its own schedule and its own choice of events, and is saved on its own."
 msgstr "Envoyer automatiquement les événements de la semaine. Chaque canal a son propre calendrier et son propre choix d'événements, et est enregistré séparément."
 
-#: src/Admin/event-notifications/EventNotifications.js:125
+#: src/Admin/event-notifications/EventNotifications.js:171
 msgid "Sends run in the site’s timezone and can be a few minutes late on low-traffic sites."
 msgstr "Les envois s'exécutent dans le fuseau horaire du site et peuvent avoir quelques minutes de retard sur les sites à faible trafic."
 
-#: src/Admin/event-notifications/EventNotifications.js:130
+#: src/Admin/event-notifications/EventNotifications.js:176
 msgid "How WordPress schedules tasks"
 msgstr "Comment WordPress planifie les tâches"
 
@@ -5838,7 +5820,7 @@ msgid "Partly sent"
 msgstr "Partiellement envoyé"
 
 #: src/Admin/event-notifications/shared.js:27
-#: src/Admin/event-notifications/TelegramChannel.js:48
+#: src/Admin/event-notifications/TelegramPreview.js:15
 msgid "Failed"
 msgstr "Échoué"
 
@@ -5860,156 +5842,156 @@ msgid "Configuration error"
 msgstr "Erreur de configuration"
 
 #. translators: %s: event feed slug
-#: src/Admin/event-notifications/IndividualEmailChannel.js:102
+#: src/Admin/event-notifications/IndividualEmailChannel.js:86
 #: src/Admin/event-notifications/shared.js:114
 #, js-format
 msgid "%s (unavailable)"
 msgstr "%s (indisponible)"
 
-#: src/Admin/event-notifications/TelegramChannel.js:46
+#: src/Admin/event-notifications/TelegramPreview.js:13
 msgid "Sending"
 msgstr "Envoi en cours"
 
-#: src/Admin/event-notifications/TelegramChannel.js:47
+#: src/Admin/event-notifications/TelegramPreview.js:14
 msgid "Delivered"
 msgstr "Livré"
 
-#: src/Admin/event-notifications/TelegramChannel.js:49
+#: src/Admin/event-notifications/TelegramPreview.js:16
 msgid "Unknown — check the chat before resending"
 msgstr "Inconnu — vérifiez le chat avant de renvoyer"
 
-#: src/Admin/event-notifications/TelegramChannel.js:50
+#: src/Admin/event-notifications/TelegramPreview.js:17
 msgid "Not sent — an earlier part failed"
 msgstr "Non envoyé — une partie antérieure a échoué"
 
-#: src/Admin/event-notifications/TelegramChannel.js:124
+#: src/Admin/event-notifications/TelegramChannel.js:88
 msgid "No bot token is configured. Add one in Connectors to post to Telegram."
 msgstr "Aucun jeton de bot n’est configuré. Ajoutez-en un dans Connecteurs pour publier sur Telegram."
 
 #. translators: %s: environment variable name
-#: src/Admin/event-notifications/TelegramChannel.js:137
+#: src/Admin/event-notifications/TelegramChannel.js:101
 #, js-format
 msgid "The %s environment variable does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is set."
 msgstr "La variable d’environnement %s ne contient pas un jeton de bot Telegram valide, rien ne peut donc être envoyé. Corrigez-la là où elle est définie."
 
 #. translators: %s: PHP constant name
-#: src/Admin/event-notifications/TelegramChannel.js:150
+#: src/Admin/event-notifications/TelegramChannel.js:114
 #, js-format
 msgid "The %s constant does not hold a valid Telegram bot token, so nothing can be sent. Correct it where it is defined."
 msgstr "La constante %s ne contient pas un jeton de bot Telegram valide, rien ne peut donc être envoyé. Corrigez-la là où elle est définie."
 
-#: src/Admin/event-notifications/TelegramChannel.js:160
+#: src/Admin/event-notifications/TelegramChannel.js:124
 msgid "The saved bot token is not a valid Telegram bot token, so nothing can be sent. Replace it in Connectors."
 msgstr "Le jeton de bot enregistré n’est pas un jeton de bot Telegram valide, rien ne peut donc être envoyé. Remplacez-le dans Connecteurs."
 
 #. translators: %s: environment variable name
-#: src/Admin/event-notifications/TelegramChannel.js:172
+#: src/Admin/event-notifications/TelegramChannel.js:136
 #, js-format
 msgid "The bot token comes from the %s environment variable, which overrides any token saved in Connectors. Send a test to confirm Telegram accepts it."
 msgstr "Le jeton du bot provient de la variable d'environnement %s, qui remplace tout jeton enregistré dans les connecteurs. Envoyez un test pour confirmer que Telegram l'accepte."
 
 #. translators: %s: PHP constant name
-#: src/Admin/event-notifications/TelegramChannel.js:185
+#: src/Admin/event-notifications/TelegramChannel.js:149
 #, js-format
 msgid "The bot token comes from the %s constant, which overrides any token saved in Connectors. Send a test to confirm Telegram accepts it."
 msgstr "Le jeton du bot provient de la constante %s, qui remplace tout jeton enregistré dans les connecteurs. Envoyez un test pour confirmer que Telegram l'accepte."
 
-#: src/Admin/event-notifications/TelegramChannel.js:195
+#: src/Admin/event-notifications/TelegramChannel.js:159
 msgid "A bot token is saved in Connectors. It is not shown here. Send a test to confirm Telegram accepts it."
 msgstr "Un jeton de bot est enregistré dans les connecteurs. Il n'est pas affiché ici. Envoyez un test pour confirmer que Telegram l'accepte."
 
-#: src/Admin/event-notifications/TelegramChannel.js:250
+#: src/Admin/event-notifications/TelegramChannel.js:64
 msgid "Telegram settings saved."
 msgstr "Paramètres Telegram enregistrés."
 
-#: src/Admin/event-notifications/TelegramChannel.js:257
+#: src/Admin/event-notifications/TelegramChannel.js:65
 msgid "Failed to save the Telegram settings."
 msgstr "Échec de l'enregistrement des paramètres Telegram."
 
-#: src/Admin/event-notifications/TelegramChannel.js:278
+#: src/Admin/event-notifications/TelegramChannel.js:51
 msgid "Telegram accepted the test summary for every chat."
 msgstr "Telegram a accepté le résumé de test pour chaque discussion."
 
-#: src/Admin/event-notifications/TelegramChannel.js:285
+#: src/Admin/event-notifications/TelegramChannel.js:58
 msgid "The test summary did not reach every chat. See the results below."
 msgstr "Le résumé de test n'a pas atteint chaque discussion. Voir les résultats ci-dessous."
 
-#: src/Admin/event-notifications/TelegramChannel.js:296
+#: src/Admin/event-notifications/TelegramChannel.js:69
 msgid "Failed to send the test summary."
 msgstr "Échec de l'envoi du résumé de test."
 
-#: src/Admin/event-notifications/TelegramChannel.js:345
+#: src/Admin/event-notifications/TelegramChannel.js:191
 msgid "Choose a page"
 msgstr "Choisir une page"
 
-#: src/Admin/event-notifications/TelegramChannel.js:356
+#: src/Admin/event-notifications/TelegramChannel.js:202
 msgid "Fix the bot token in Connectors before sending a test message."
 msgstr "Corrigez le jeton du bot dans Connecteurs avant d’envoyer un message de test."
 
-#: src/Admin/event-notifications/TelegramChannel.js:361
+#: src/Admin/event-notifications/TelegramChannel.js:207
 msgid "Save at least one chat or channel before sending a test message."
 msgstr "Enregistrez au moins un chat ou un canal avant d’envoyer un message de test."
 
-#: src/Admin/event-notifications/TelegramChannel.js:366
+#: src/Admin/event-notifications/TelegramChannel.js:212
 msgid "Save your changes first — the test uses the saved settings."
 msgstr "Enregistrez d'abord vos modifications — le test utilise les paramètres enregistrés."
 
-#: src/Admin/event-notifications/TelegramChannel.js:377
+#: src/Admin/event-notifications/TelegramChannel.js:262
 msgid "Post the week’s events to Telegram chats and channels, in the same format as the calendar’s “Copy summary” button."
 msgstr "Publiez les événements de la semaine sur les chats et canaux Telegram, dans le même format que le bouton « Copier le résumé » du calendrier."
 
-#: src/Admin/event-notifications/TelegramChannel.js:390
+#: src/Admin/event-notifications/TelegramChannel.js:275
 msgid "Post the weekly summary to Telegram"
 msgstr "Publier le résumé hebdomadaire sur Telegram"
 
-#: src/Admin/event-notifications/TelegramChannel.js:394
+#: src/Admin/event-notifications/TelegramChannel.js:279
 msgid "Turning this off keeps the bot token in Connectors and everything below."
 msgstr "Désactiver ceci conserve le jeton du bot dans les connecteurs et tout ce qui suit."
 
-#: src/Admin/event-notifications/TelegramChannel.js:415
+#: src/Admin/event-notifications/TelegramChannel.js:300
 msgid "Page linked in the heading"
 msgstr "Page liée dans l'en-tête"
 
-#: src/Admin/event-notifications/TelegramChannel.js:419
+#: src/Admin/event-notifications/TelegramChannel.js:301
 msgid "Any published, public page. Its title and link head the message."
 msgstr "Toute page publiée et publique. Son titre et son lien en-tête du message."
 
-#: src/Admin/event-notifications/TelegramChannel.js:460
+#: src/Admin/event-notifications/TelegramChannel.js:323
 msgid "Chats and channels"
 msgstr "Chats et canaux"
 
-#: src/Admin/event-notifications/TelegramChannel.js:461
+#: src/Admin/event-notifications/TelegramChannel.js:324
 msgid "One per line: a numeric chat ID (e.g. -1001234567890) or a public @channel username. Add the bot to each chat or channel with permission to post."
 msgstr "Un par ligne : un ID de chat numérique (par exemple -1001234567890) ou un nom d'utilisateur de canal public @channel. Ajoutez le bot à chaque chat ou canal avec la permission de publier."
 
-#: src/Admin/event-notifications/TelegramChannel.js:474
+#: src/Admin/event-notifications/TelegramChannel.js:337
 msgid "Manage in Connectors"
 msgstr "Gérer dans Connecteurs"
 
-#: src/Admin/event-notifications/TelegramChannel.js:494
+#: src/Admin/event-notifications/TelegramChannel.js:225
 msgid "Save Telegram settings"
 msgstr "Enregistrer les paramètres Telegram"
 
-#: src/Admin/event-notifications/TelegramChannel.js:502
+#: src/Admin/event-notifications/TelegramChannel.js:226
 msgid "Preview next Telegram message"
 msgstr "Aperçu du prochain message Telegram"
 
-#: src/Admin/event-notifications/TelegramChannel.js:510
+#: src/Admin/event-notifications/TelegramChannel.js:230
 msgid "Send test to the saved chats"
 msgstr "Envoyer un test aux chats enregistrés"
 
-#: src/Admin/event-notifications/TelegramChannel.js:533
+#: src/Admin/event-notifications/TelegramChannel.js:249
 msgid "Save your changes to preview them."
 msgstr "Enregistrez vos modifications pour les prévisualiser."
 
 #. translators: %s: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:568
+#: src/Admin/event-notifications/TelegramPreview.js:115
 #, js-format
 msgid "No events for %s, so nothing would be sent."
 msgstr "Aucun événement pour %s, donc rien ne serait envoyé."
 
 #. translators: 1: number of Telegram messages, 2: date range of a week
-#: src/Admin/event-notifications/TelegramChannel.js:576
+#: src/Admin/event-notifications/TelegramPreview.js:123
 #, js-format
 msgid "Events for %2$s, sent as %1$d message."
 msgid_plural "Events for %2$s, sent as %1$d messages."
@@ -6017,31 +5999,31 @@ msgstr[0] "Événements pour %2$s, envoyés en tant que %1$d message."
 msgstr[1] "Événements pour %2$s, envoyés en tant que %1$d messages."
 
 #. translators: 1: message number, 2: number of messages
-#: src/Admin/event-notifications/TelegramChannel.js:593
+#: src/Admin/event-notifications/TelegramPreview.js:140
 #, js-format
 msgid "Telegram message %1$d of %2$d"
 msgstr "Message Telegram %1$d sur %2$d"
 
 #. translators: 1: date and time of the next send, 2: date range of the week it covers
-#: src/Admin/event-notifications/TelegramChannel.js:613
+#: src/Admin/event-notifications/TelegramHistory.js:28
 #, js-format
 msgid "Next send: %1$s, with events for %2$s."
 msgstr "Prochain envoi : %1$s, avec les événements pour %2$s."
 
-#: src/Admin/event-notifications/TelegramChannel.js:620
+#: src/Admin/event-notifications/TelegramHistory.js:35
 msgid "Nothing is scheduled. Turn on posting and save to schedule sends."
 msgstr "Rien n'est planifié. Activez la publication et enregistrez pour planifier les envois."
 
-#: src/Admin/event-notifications/TelegramChannel.js:627
+#: src/Admin/event-notifications/TelegramHistory.js:42
 msgid "No Telegram summary has been sent yet."
 msgstr "Aucun résumé Telegram n'a été envoyé pour le moment."
 
-#: src/Admin/event-notifications/TelegramChannel.js:650
+#: src/Admin/event-notifications/TelegramHistory.js:64
 msgid "Messages by chat"
 msgstr "Messages par conversation"
 
 #. translators: 1: message part number, 2: number of parts
-#: src/Admin/event-notifications/TelegramChannel.js:664
+#: src/Admin/event-notifications/TelegramHistory.js:77
 #, js-format
 msgid "Part %1$d of %2$d"
 msgstr "Partie %1$d sur %2$d"
@@ -6210,7 +6192,7 @@ msgid "Enter exactly one email address, for example name@example.com. Nothing wa
 msgstr "Entrez exactement une adresse e-mail, par exemple nom@exemple.com. Rien n'a été enregistré."
 
 #: src/API/EventNotificationsController.php:619
-#: src/Admin/event-notifications/IndividualEmailChannel.js:151
+#: src/Admin/event-notifications/IndividualEmailChannel.js:116
 msgid "Enter the email address that receives the weekly email before turning it on."
 msgstr "Entrez l'adresse e-mail qui reçoit l'e-mail hebdomadaire avant de l'activer."
 
@@ -6240,77 +6222,77 @@ msgstr "L'envoi s'est arrêté avec une erreur. L'e-mail peut avoir été envoy�
 msgid "No events are scheduled for %s."
 msgstr "Aucun événement n’est prévu pour %s."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:55
+#: src/Admin/event-notifications/IndividualEmailChannel.js:45
 msgid "Handed over for delivery"
 msgstr "Remis pour livraison"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:90
+#: src/Admin/event-notifications/IndividualEmailChannel.js:74
 msgid "All published local events"
 msgstr "Tous les événements locaux publiés"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:146
+#: src/Admin/event-notifications/IndividualEmailChannel.js:110
 msgid "Enter exactly one email address, for example name@example.com."
 msgstr "Entrez exactement une adresse e-mail, par exemple nom@exemple.com."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:171
+#: src/Admin/event-notifications/IndividualEmailChannel.js:135
 msgid "Individual email settings saved."
 msgstr "Paramètres d'e-mail individuel enregistrés."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:181
+#: src/Admin/event-notifications/IndividualEmailChannel.js:136
 msgid "Failed to save the individual email settings."
 msgstr "Impossible d'enregistrer les paramètres de courrier électronique individuels."
 
 #. translators: %s: email address the test was sent to
-#: src/Admin/event-notifications/IndividualEmailChannel.js:203
+#: src/Admin/event-notifications/IndividualEmailChannel.js:127
 #, js-format
 msgid "Test email handed over for delivery to %s. The schedule is unchanged."
 msgstr "E-mail de test remis pour livraison à %s. Le calendrier est inchangé."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:246
+#: src/Admin/event-notifications/IndividualEmailChannel.js:176
 msgid "Save an email address before sending a test."
 msgstr "Enregistrez une adresse e-mail avant d'envoyer un test."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:255
+#: src/Admin/event-notifications/IndividualEmailChannel.js:184
 msgid "Individual email"
 msgstr "E-mail individuel"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:264
+#: src/Admin/event-notifications/IndividualEmailChannel.js:221
 msgid "Email the week’s events to one address you enter here, for example your own inbox or a shared mailbox. Fair Events sends it on its own; no other plugin is needed."
 msgstr "Envoyez les événements de la semaine à une adresse que vous entrez ici, par exemple votre propre boîte de réception ou une boîte aux lettres partagée. Fair Events l'envoie de lui-même ; aucun autre plugin n'est nécessaire."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:277
+#: src/Admin/event-notifications/IndividualEmailChannel.js:234
 msgid "Email the weekly summary to this address"
 msgstr "Envoyer le résumé hebdomadaire à cette adresse"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:293
+#: src/Admin/event-notifications/IndividualEmailChannel.js:250
 msgid "Send to"
 msgstr "Envoyer à"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:294
+#: src/Admin/event-notifications/IndividualEmailChannel.js:251
 msgid "One email address. It does not need to belong to a user of this site."
 msgstr "Une seule adresse e-mail. Elle n'a pas besoin d'appartenir à un utilisateur de ce site."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:306
+#: src/Admin/event-notifications/IndividualEmailChannel.js:263
 msgid "Drafts and private events are never included."
 msgstr "Les brouillons et les événements privés ne sont jamais inclus."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:370
+#: src/Admin/event-notifications/IndividualEmailChannel.js:186
 msgid "Save individual email settings"
 msgstr "Enregistrer les paramètres de courrier électronique individuels"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:398
+#: src/Admin/event-notifications/IndividualEmailChannel.js:195
 msgid "Send test email"
 msgstr "Envoyer un e-mail de test"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:405
+#: src/Admin/event-notifications/IndividualEmailChannel.js:199
 msgid "The test goes to the saved address only. It works while the weekly email is off, does not count as the week’s send and does not move the next one."
 msgstr "Le test va uniquement à l'adresse enregistrée. Il fonctionne lorsque l'e-mail hebdomadaire est désactivé, ne compte pas comme l'envoi de la semaine et ne déplace pas le suivant."
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:443
+#: src/Admin/event-notifications/EmailPreview.js:58
 msgid "To:"
 msgstr "À :"
 
-#: src/Admin/event-notifications/IndividualEmailChannel.js:445
+#: src/Admin/event-notifications/EmailPreview.js:60
 msgid "No email address is saved yet."
 msgstr "Aucune adresse e-mail n'est encore enregistrée."
 
@@ -6552,22 +6534,22 @@ msgstr "Cette action est irréversible."
 msgid "There are no events in the selected week, so there is nothing to send."
 msgstr "Il n’y a aucun événement dans la semaine sélectionnée, donc rien à envoyer."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:248
-#: src/Admin/event-notifications/IndividualEmailChannel.js:337
+#: src/Admin/event-notifications/BulkEmailChannel.js:152
+#: src/Admin/event-notifications/IndividualEmailChannel.js:277
 msgid "Weeks run from Monday to Sunday. Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week."
 msgstr "Les semaines vont du lundi au dimanche. Les aperçus et les tests sélectionnent la semaine par rapport à aujourd’hui dans le fuseau horaire du site. Les envois programmés la sélectionnent par rapport à leur semaine prévue."
 
-#: src/Admin/event-notifications/TelegramChannel.js:449
+#: src/Admin/event-notifications/TelegramChannel.js:314
 msgid "Previews and tests select the week relative to today in the site timezone. Scheduled sends select it relative to their scheduled week."
 msgstr "Les aperçus et les tests sélectionnent la semaine par rapport à aujourd’hui dans le fuseau horaire du site. Les envois programmés la sélectionnent par rapport à leur semaine prévue."
 
 #. translators: %s: comma-separated list of Telegram chats
-#: src/Admin/event-notifications/TelegramChannel.js:517
+#: src/Admin/event-notifications/TelegramChannel.js:236
 #, js-format
 msgid "The test posts the selected week’s summary to: %s. It works while posting is off and is not recorded as a weekly send."
 msgstr "Le test publie le résumé de la semaine sélectionnée dans : %s. Il fonctionne même si la publication est désactivée et n’est pas enregistré comme un envoi hebdomadaire."
 
-#: src/Admin/event-notifications/TelegramChannel.js:523
+#: src/Admin/event-notifications/TelegramChannel.js:242
 msgid "The test posts the selected week’s summary to every saved chat. It works while posting is off and is not recorded as a weekly send."
 msgstr "Le test publie le résumé de la semaine sélectionnée dans tous les chats enregistrés. Il fonctionne même si la publication est désactivée et n’est pas enregistré comme un envoi hebdomadaire."
 
@@ -6743,20 +6725,20 @@ msgstr "Choisissez un flux d’événements."
 msgid "Event feed not found."
 msgstr "Flux d’événements introuvable."
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:220
-#: src/Admin/event-notifications/TelegramChannel.js:405
+#: src/Admin/event-notifications/BulkEmailChannel.js:141
+#: src/Admin/event-notifications/TelegramChannel.js:290
 msgid "The event feed whose events are listed."
 msgstr "Le flux d’événements dont les événements sont listés."
 
-#: src/Admin/event-notifications/EventNotifications.js:95
+#: src/Admin/event-notifications/EventNotifications.js:141
 msgid "There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one."
 msgstr "Il n’y a pas encore de flux d’événements. Telegram et l’e-mail groupé listent les événements d’un flux d’événements : ils ne peuvent donc être activés qu’une fois un flux créé. L’e-mail individuel peut envoyer tous les événements locaux publiés sans flux."
 
-#: src/Admin/event-notifications/EventNotifications.js:101
+#: src/Admin/event-notifications/EventNotifications.js:147
 msgid "Create an event feed"
 msgstr "Créer un flux d’événements"
 
-#: src/Admin/event-notifications/EventNotifications.js:104
+#: src/Admin/event-notifications/EventNotifications.js:150
 msgid "Event feeds are created with the Fair Events Experimental plugin."
 msgstr "Les flux d’événements sont créés avec l’extension Fair Events Experimental."
 
@@ -6986,3 +6968,11 @@ msgstr ""
 msgctxt "block keyword"
 msgid "place"
 msgstr ""
+
+#: src/Admin/event-notifications/NotificationEditor.js:69
+msgid "Your unsaved changes are kept and shown again here once this channel is available."
+msgstr "Vos modifications non enregistrées sont conservées et s’afficheront à nouveau ici dès que ce canal sera disponible."
+
+#: src/Admin/event-notifications/NotificationEditor.js:88
+msgid "These settings were saved somewhere else, for example in another tab, after you started editing. Saving replaces them with the values shown here."
+msgstr "Ces réglages ont été enregistrés ailleurs, par exemple dans un autre onglet, après que vous avez commencé à les modifier. L’enregistrement les remplacera par les valeurs affichées ici."
