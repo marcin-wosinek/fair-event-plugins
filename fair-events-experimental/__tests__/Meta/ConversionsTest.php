@@ -17,9 +17,20 @@ class ConversionsTest extends TestCase {
 		parent::setUp();
 		$GLOBALS['_fair_test_options']              = array();
 		$GLOBALS['_fair_test_remote_post_requests'] = array();
-		$GLOBALS['_fair_test_remote_post_response'] = array(
-			'response' => array( 'code' => 200 ),
-			'body'     => '{}',
+		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response( 200, array( 'events_received' => 1 ) );
+	}
+
+	/**
+	 * A simulated Meta answer.
+	 *
+	 * @param int          $status HTTP status.
+	 * @param array|string $body   Body, JSON-encoded unless already a string.
+	 * @return array
+	 */
+	private function meta_response( $status, $body ) {
+		return array(
+			'response' => array( 'code' => $status ),
+			'body'     => is_string( $body ) ? $body : wp_json_encode( $body ),
 		);
 	}
 
@@ -321,5 +332,170 @@ class ConversionsTest extends TestCase {
 		$this->configure_credentials();
 		( new Conversions() )->send_test( 'Purchase' );
 		$this->assertSame( array(), Conversions::test_history() );
+	}
+
+	/**
+	 * Successful HTTP responses that do not confirm one received event.
+	 *
+	 * @return array
+	 */
+	public static function unconfirmed_responses() {
+		return array(
+			'zero events'    => array( '{"events_received":0,"messages":[]}', 'events_received_0', 0 ),
+			'missing count'  => array( '{"messages":[]}', 'missing_events_received', null ),
+			'invalid count'  => array( '{"events_received":"one"}', 'missing_events_received', null ),
+			'malformed JSON' => array( 'not json', 'malformed_response', null ),
+			'empty object'   => array( '{}', 'missing_events_received', null ),
+			'two events'     => array( '{"events_received":2}', 'events_received_2', 2 ),
+		);
+	}
+
+	/**
+	 * HTTP success alone is never treated as received; it is unconfirmed and retryable.
+	 *
+	 * @dataProvider unconfirmed_responses
+	 * @param string   $body     Response body.
+	 * @param string   $code     Expected code.
+	 * @param int|null $received Expected events_received diagnostic.
+	 */
+	public function test_unconfirmed_success_is_not_accepted( $body, $code, $received ) {
+		$this->configure_credentials();
+		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response( 200, $body );
+		$result                                     = ( new Conversions() )->send_payload( $this->sample_event() );
+		$this->assertFalse( $result['accepted'] );
+		$this->assertTrue( $result['temporary'] );
+		$this->assertSame( 'unconfirmed', $result['outcome'] );
+		$this->assertSame( 'unconfirmed', $result['type'] );
+		$this->assertSame( $code, $result['code'] );
+		$this->assertSame( 200, $result['diagnostics']['http_status'] );
+		$this->assertSame( $received, $result['diagnostics']['events_received'] );
+	}
+
+	/** One confirmed event is received, with Meta's diagnostics kept. */
+	public function test_confirmed_event_is_received_with_diagnostics() {
+		$this->configure_credentials();
+		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response(
+			200,
+			array(
+				'events_received' => 1,
+				'messages'        => array(),
+				'fbtrace_id'      => 'AbC_trace-1',
+				'unexpected'      => 'dropped',
+			)
+		);
+		$result                                     = ( new Conversions() )->send_payload( $this->sample_event() );
+		$this->assertTrue( $result['accepted'] );
+		$this->assertSame( 'received', $result['outcome'] );
+		$this->assertSame(
+			array(
+				'http_status'     => 200,
+				'events_received' => 1,
+				'messages'        => array(),
+				'fbtrace_id'      => 'AbC_trace-1',
+			),
+			$result['diagnostics']
+		);
+	}
+
+	/** A 4xx is a permanent rejection carrying the error trace ID and redacted messages. */
+	public function test_rejection_keeps_error_trace_and_redacts_messages() {
+		$this->configure_credentials();
+		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response(
+			400,
+			array(
+				'error' => array(
+					'message'    => 'Invalid parameter token-value for fb.1.1712345678901.browser <b>bold</b>',
+					'type'       => 'OAuthException',
+					'code'       => 100,
+					'fbtrace_id' => 'ErrTrace9',
+				),
+			)
+		);
+		$result                                     = ( new Conversions() )->send_payload( $this->sample_event() );
+		$this->assertFalse( $result['accepted'] );
+		$this->assertFalse( $result['temporary'] );
+		$this->assertSame( 'rejected', $result['outcome'] );
+		$this->assertSame( '100', $result['code'] );
+		$this->assertSame( 'oauthexception', $result['type'] );
+		$this->assertSame( 400, $result['diagnostics']['http_status'] );
+		$this->assertNull( $result['diagnostics']['events_received'] );
+		$this->assertSame( 'ErrTrace9', $result['diagnostics']['fbtrace_id'] );
+		$this->assertSame( array( 'Invalid parameter [redacted] for [redacted] bold' ), $result['diagnostics']['messages'] );
+	}
+
+	/** Rate limits and server errors stay temporary; failed requests carry no HTTP diagnostics. */
+	public function test_temporary_and_transport_failures() {
+		$this->configure_credentials();
+		foreach ( array( 429, 500, 503 ) as $status ) {
+			$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response( $status, '' );
+			$result                                     = ( new Conversions() )->send_payload( $this->sample_event() );
+			$this->assertTrue( $result['temporary'], (string) $status );
+			$this->assertSame( 'temporary_error', $result['outcome'] );
+			$this->assertSame( $status, $result['diagnostics']['http_status'] );
+		}
+		$GLOBALS['_fair_test_remote_post_response'] = new \WP_Error( 'http_request_failed', 'timeout' );
+		$result                                     = ( new Conversions() )->send_payload( $this->sample_event() );
+		$this->assertTrue( $result['temporary'] );
+		$this->assertSame( 'transport', $result['outcome'] );
+		$this->assertNull( $result['diagnostics']['http_status'] );
+	}
+
+	/** Messages are bounded in count and length, non-strings become text, and a bad trace ID is dropped. */
+	public function test_diagnostics_are_bounded() {
+		$diagnostics = Conversions::diagnostics_from(
+			200,
+			array(
+				'events_received' => 1,
+				'messages'        => array_merge( array( str_repeat( 'a', 1000 ), array( 'nested' => 'x' ) ), array_fill( 0, 10, 'more' ) ),
+				'fbtrace_id'      => '<script>',
+			)
+		);
+		$this->assertCount( Conversions::MESSAGE_LIMIT, $diagnostics['messages'] );
+		$this->assertSame( Conversions::MESSAGE_LENGTH, strlen( $diagnostics['messages'][0] ) );
+		$this->assertSame( '{"nested":"x"}', $diagnostics['messages'][1] );
+		$this->assertNull( $diagnostics['fbtrace_id'] );
+	}
+
+	/** Test history keeps the diagnostics of failed sends too, never the raw body. */
+	public function test_history_records_diagnostics_for_failures() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response(
+			200,
+			array(
+				'events_received' => 0,
+				'messages'        => array( 'Dropped' ),
+				'fbtrace_id'      => 'T1',
+				'raw'             => 'secret-ish',
+			)
+		);
+		( new Conversions() )->send_test( 'PageView' );
+		$entry = Conversions::test_history()[0];
+		$this->assertFalse( $entry['accepted'] );
+		$this->assertSame( 'unconfirmed', $entry['outcome'] );
+		$this->assertSame( 0, $entry['events_received'] );
+		$this->assertSame( array( 'Dropped' ), $entry['messages'] );
+		$this->assertSame( 'T1', $entry['fbtrace_id'] );
+		$this->assertSame( 200, $entry['http_status'] );
+		$this->assertArrayNotHasKey( 'raw', $entry );
+	}
+
+	/** History written before diagnostics existed is still read, and malformed entries are skipped. */
+	public function test_legacy_history_is_still_read() {
+		$legacy = array(
+			'event_name' => 'PageView',
+			'accepted'   => true,
+			'code'       => '',
+			'type'       => '',
+			'time'       => '2025-12-01 00:00:00',
+		);
+		update_option( Conversions::TEST_LOG_OPTION, array( $legacy, 'garbage' ) );
+		$this->assertSame( array( $legacy ), Conversions::test_history() );
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		( new Conversions() )->send_test( 'PageView' );
+		$history = Conversions::test_history();
+		$this->assertCount( 2, $history );
+		$this->assertSame( $legacy, $history[1] );
 	}
 }

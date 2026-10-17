@@ -182,12 +182,16 @@ if ( ! function_exists( 'current_time' ) ) {
 
 if ( ! function_exists( 'wp_generate_uuid4' ) ) {
 	/**
-	 * Stub of WordPress wp_generate_uuid4().
+	 * Stub of WordPress wp_generate_uuid4() — a random version 4 UUID, as
+	 * core returns, so activation-ID validation accepts it.
 	 *
 	 * @return string
 	 */
 	function wp_generate_uuid4() {
-		return 'test-uuid-0000-0000-000000000000';
+		$bytes    = random_bytes( 16 );
+		$bytes[6] = chr( ( ord( $bytes[6] ) & 0x0f ) | 0x40 );
+		$bytes[8] = chr( ( ord( $bytes[8] ) & 0x3f ) | 0x80 );
+		return vsprintf( '%s%s-%s-%s-%s-%s%s%s', str_split( bin2hex( $bytes ), 4 ) );
 	}
 }
 

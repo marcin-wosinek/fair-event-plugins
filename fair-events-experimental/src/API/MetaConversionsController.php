@@ -8,6 +8,7 @@
 namespace FairEventsExperimental\API;
 
 use FairEventsExperimental\Meta\Conversions;
+use FairEventsExperimental\Meta\Engagement;
 use FairEventsExperimental\Meta\Outbox;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -70,11 +71,38 @@ class MetaConversionsController extends WP_REST_Controller {
 				'callback'            => array( $this, 'send_test' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
 				'args'                => array(
-					'event_name' => array(
+					'event_name'        => array(
 						'type'              => 'string',
 						'required'          => true,
-						'enum'              => array( 'PageView', 'InitiateCheckout', 'Purchase' ),
+						'enum'              => array( 'PageView', 'InitiateCheckout', 'Purchase', Conversions::ENGAGEMENT_EVENTS['calendar'] ),
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+					// Calendar test only: the event the activation belongs to
+					// and the administrator browser's consent and identifiers.
+					'post_id'           => array(
+						'type'              => 'integer',
+						'minimum'           => 1,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'event_date_id'     => array(
+						'type'              => 'integer',
+						'minimum'           => 1,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'marketing_consent' => array(
+						'type'              => 'boolean',
+						'default'           => false,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'meta_fbp'          => array(
+						'type'              => 'string',
+						'default'           => '',
+						'validate_callback' => array( $this, 'validate_identifier' ),
+					),
+					'meta_fbc'          => array(
+						'type'              => 'string',
+						'default'           => '',
+						'validate_callback' => array( $this, 'validate_identifier' ),
 					),
 				),
 			)
@@ -84,6 +112,11 @@ class MetaConversionsController extends WP_REST_Controller {
 	/** @return bool */
 	public function permissions_check() {
 		return current_user_can( 'manage_options' ); }
+
+	/** @param mixed $value Meta identifier, or empty. @return bool */
+	public function validate_identifier( $value ) {
+		return '' === $value || Conversions::valid_identifier( $value );
+	}
 
 	/** @param string $value Dataset ID. @return string */
 	public function sanitize_dataset_id( $value ) {
@@ -138,29 +171,80 @@ class MetaConversionsController extends WP_REST_Controller {
 		delete_option( Conversions::TOKEN_OPTION );
 		return $this->get_item(); }
 
-	/** @param \WP_REST_Request $request Request. @return \WP_REST_Response|\WP_Error */
+	/**
+	 * Send one test event and report Meta's allowlisted diagnostics on both
+	 * success and failure. The calendar test needs marketing consent, a
+	 * valid Meta identifier and a date of a public event; its source URL is
+	 * resolved here, never taken from the request.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
 	public function send_test( $request ) {
 		$event_name = (string) $request->get_param( 'event_name' );
-		$result     = ( new Conversions() )->send_test( $event_name );
+		$engagement = null;
+		if ( Conversions::ENGAGEMENT_EVENTS['calendar'] === $event_name ) {
+			$engagement = $this->calendar_test_input( $request );
+			if ( is_wp_error( $engagement ) ) {
+				return $engagement;
+			}
+		}
+		$result = ( new Conversions() )->send_test( $event_name, $engagement );
 		if ( ! $result['accepted'] ) {
-			return new \WP_Error(
-				'meta_test_failed',
-				sprintf(
-					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
+			$message = 'unconfirmed' === $result['outcome']
+				? sprintf(
+					/* translators: %s: Meta event name, such as PageView or FairEventCalendarClick */
+					__( 'Meta answered, but did not confirm receiving the %s test event.', 'fair-events-experimental' ),
+					$event_name
+				)
+				: sprintf(
+					/* translators: %s: Meta event name, such as PageView or FairEventCalendarClick */
 					__( 'Meta rejected the %s test event. Check the configuration and try again.', 'fair-events-experimental' ),
 					$event_name
-				),
+				);
+			return new \WP_Error(
+				'meta_test_failed',
+				$message,
 				array(
-					'status'   => $result['temporary'] ? 503 : 400,
-					'category' => $result['type'],
-					'code'     => $result['code'],
+					'status'      => $result['temporary'] ? 503 : 400,
+					'category'    => $result['type'],
+					'code'        => $result['code'],
+					'outcome'     => $result['outcome'],
+					'diagnostics' => $result['diagnostics'],
 				)
-			); }
+			);
+		}
 		return rest_ensure_response(
 			array(
-				'accepted'   => true,
-				'event_name' => $event_name,
+				'accepted'    => true,
+				'event_name'  => $event_name,
+				'outcome'     => $result['outcome'],
+				'diagnostics' => $result['diagnostics'],
 			)
+		);
+	}
+
+	/**
+	 * @param \WP_REST_Request $request Request.
+	 * @return array|\WP_Error Engagement input for {@see Conversions::send_test()}.
+	 */
+	private function calendar_test_input( $request ) {
+		if ( true !== $request->get_param( 'marketing_consent' ) ) {
+			return new \WP_Error( 'marketing_consent_required', __( 'Marketing consent is required.', 'fair-events-experimental' ), array( 'status' => 400 ) );
+		}
+		$fbp = (string) $request->get_param( 'meta_fbp' );
+		$fbc = (string) $request->get_param( 'meta_fbc' );
+		if ( '' === $fbp && '' === $fbc ) {
+			return new \WP_Error( 'meta_identifier_required', __( 'A Meta browser identifier is required.', 'fair-events-experimental' ), array( 'status' => 400 ) );
+		}
+		$context = Engagement::event_context( (int) $request->get_param( 'post_id' ), (int) $request->get_param( 'event_date_id' ) );
+		if ( ! $context ) {
+			return new \WP_Error( 'invalid_event', __( 'Event not found.', 'fair-events-experimental' ), array( 'status' => 404 ) );
+		}
+		return array(
+			'context' => $context,
+			'fbp'     => $fbp,
+			'fbc'     => $fbc,
 		);
 	}
 }

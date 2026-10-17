@@ -24,7 +24,7 @@
  *      source IP).
  *   5. Pre-declares a fake Meta Conversions API transport (see
  *      lib/meta-http-double.php) so fair-events-experimental's delivery
- *      outbox always talks to a canned "accepted" response instead of the
+ *      outbox always talks to a canned "received" response instead of the
  *      real graph.facebook.com.
  *   6. Intercepts the Telegram Bot API (see lib/telegram-http-double.php) so
  *      fair-events-experimental's weekly notifications never reach

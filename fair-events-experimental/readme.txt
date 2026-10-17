@@ -37,6 +37,28 @@ Each event carries the event's post ID, the event-date ID of the occurrence show
 
 To verify reporting, open Meta Events Manager for the configured dataset and check the Overview for `FairEventCalendarClick` and `FairEventTicketClick` after clicking the buttons on a public event page with marketing consent granted. In WordPress, Fair Events → Settings → Experimental lists recent deliveries and their outcomes. Events are delivered by WP-Cron, so they appear shortly after the click.
 
+= Checking that Meta receives calendar clicks =
+
+The Experimental settings tab can send one `FairEventCalendarClick` straight to Meta's Test Events, built exactly like a real "Add to calendar" click:
+
+1. Save the dataset ID, access token and the Test Events code shown in Events Manager → Test events.
+2. In the same browser, open a public event page with the Meta Pixel active and accept marketing cookies, so the browser has an `_fbp` (or `_fbc`) cookie and marketing consent. The WP Consent API plugin must be active; the settings page reads consent through it, as event pages do.
+3. Reload Fair Events → Settings → Experimental, search for an event under "Calendar click test", choose it (and a date, for a series), and select "Send FairEventCalendarClick test".
+4. In Events Manager → Test events, the event should appear as Processed, received from Server.
+
+The test uses the Test Events code and a fresh event ID. It does not create a delivery row, and routine events never carry the Test Events code.
+
+The result and the recent test sends show Meta's answer:
+
+* **Events received** — how many events Meta accepted for processing. Only `1` counts as received. `0`, a missing count or an unreadable answer is shown as "Not confirmed", even when the HTTP status is 200.
+* **Messages** — Meta's notes about the event. "Messages: none" means Meta sent an empty list; "not reported" means Meta's answer had no messages. Error messages are included, with the access token and browser identifiers removed.
+* **Trace ID** — Meta's `fbtrace_id`. Quote it when asking Meta support about a specific request.
+* **HTTP status** — the status of Meta's answer, or "No HTTP response" when the request did not reach Meta.
+
+A received event confirms that Meta accepted the payload. It does not prove that the event will appear in the Overview: Meta processes, aggregates and attributes events on its own schedule and rules, and Test Events are not shown in the Overview.
+
+Routine deliveries use the same rule. A row is "Received by Meta" only after Meta confirms one received event. An answer without that confirmation is retried with the same event ID, so Meta can deduplicate it, on the usual schedule (1 minute up to 12 hours, five retries). Deliveries finished before this check existed keep the label "Delivered (not confirmed)", because their success was only an HTTP status.
+
 Weekly Telegram summaries moved to Fair Events: they are managed in Fair Events → Event notifications, which keeps the settings, bot token and delivery history. This plugin no longer sends them; its Experimental settings tab links to the new page. Event feeds, which decide the events a notification lists, are still created here.
 
 == Changelog ==

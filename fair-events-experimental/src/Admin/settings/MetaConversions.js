@@ -14,6 +14,7 @@ import {
 	TextControl,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
+import MetaCalendarTest, { CALENDAR_EVENT } from './MetaCalendarTest.js';
 
 const PATH = '/fair-events-experimental/v1/meta-conversions';
 
@@ -36,7 +37,9 @@ const STATE_LABELS = {
 	pending: __( 'Pending', 'fair-events-experimental' ),
 	sending: __( 'Sending', 'fair-events-experimental' ),
 	retry_pending: __( 'Retrying', 'fair-events-experimental' ),
-	accepted: __( 'Delivered', 'fair-events-experimental' ),
+	received: __( 'Received by Meta', 'fair-events-experimental' ),
+	// Finished before Meta's event count was checked: HTTP success only.
+	accepted: __( 'Delivered (not confirmed)', 'fair-events-experimental' ),
 	configuration_error: __(
 		'Configuration error',
 		'fair-events-experimental'
@@ -51,7 +54,8 @@ const STATE_COLORS = {
 	pending: '#757575',
 	sending: '#757575',
 	retry_pending: '#b26200',
-	accepted: '#00a32a',
+	received: '#00a32a',
+	accepted: '#757575',
 	configuration_error: '#d63638',
 	retries_exhausted: '#d63638',
 };
@@ -100,10 +104,10 @@ function errorDetail( outcome ) {
 }
 
 /**
- * Safe failure category/code for a rejected test-send entry, or '' for an
- * accepted one — an accepted test has nothing to diagnose.
+ * Safe failure category/code for a failed test send, or '' for a successful
+ * one — a successful test has nothing to diagnose.
  *
- * @param {Object} entry A recent test-send entry from the API.
+ * @param {Object} entry A test-send entry or result.
  * @return {string} Combined type/code detail, or an empty string.
  */
 function testHistoryDetail( entry ) {
@@ -113,6 +117,175 @@ function testHistoryDetail( entry ) {
 	return [ entry.type, entry.code ].filter( Boolean ).join( ': ' );
 }
 
+/**
+ * Status of a test send. Entries recorded before Meta's event count was
+ * checked have no `outcome`; their success was an HTTP success only.
+ *
+ * @param {Object} entry A test-send entry or result.
+ * @return {Object} `label` and `color`.
+ */
+function testStatus( entry ) {
+	if ( entry.accepted ) {
+		return entry.outcome
+			? {
+					label: __( 'Received by Meta', 'fair-events-experimental' ),
+					color: STATE_COLORS.received,
+				}
+			: {
+					label: __(
+						'Accepted (not confirmed)',
+						'fair-events-experimental'
+					),
+					color: STATE_COLORS.accepted,
+				};
+	}
+	if ( 'unconfirmed' === entry.outcome ) {
+		return {
+			label: __( 'Not confirmed', 'fair-events-experimental' ),
+			color: STATE_COLORS.retry_pending,
+		};
+	}
+	return {
+		label: __( 'Rejected', 'fair-events-experimental' ),
+		color: STATE_COLORS.configuration_error,
+	};
+}
+
+/**
+ * Meta's answer to a test send: HTTP status, received event count, trace ID
+ * and messages. A field Meta did not report is shown as such, distinct from
+ * zero events or an empty message list. Renders nothing for entries
+ * recorded before these diagnostics existed.
+ *
+ * @param {Object} props
+ * @param {Object} props.diagnostics Diagnostics from the API, if any.
+ * @return {Element|null} Diagnostic details.
+ */
+export function TestDiagnostics( { diagnostics } ) {
+	if ( ! diagnostics || ! ( 'http_status' in diagnostics ) ) {
+		return null;
+	}
+	const { http_status: status, events_received: received } = diagnostics;
+	const messages = diagnostics.messages;
+	return (
+		<div style={ { marginTop: '4px', color: '#757575' } }>
+			<Flex wrap justify="flex-start" gap={ 3 }>
+				<FlexItem>
+					{ null === status
+						? __( 'No HTTP response', 'fair-events-experimental' )
+						: sprintf(
+								/* translators: %d: HTTP status code of Meta's answer */
+								__( 'HTTP %d', 'fair-events-experimental' ),
+								status
+							) }
+				</FlexItem>
+				{ null !== status && (
+					<FlexItem>
+						{ null === received || undefined === received
+							? __(
+									'Events received: not reported',
+									'fair-events-experimental'
+								)
+							: sprintf(
+									/* translators: %d: number of events Meta reported as received */
+									__(
+										'Events received: %d',
+										'fair-events-experimental'
+									),
+									received
+								) }
+					</FlexItem>
+				) }
+				{ diagnostics.fbtrace_id && (
+					<FlexItem>
+						{ sprintf(
+							/* translators: %s: Meta trace ID for support requests */
+							__( 'Trace ID: %s', 'fair-events-experimental' ),
+							diagnostics.fbtrace_id
+						) }
+					</FlexItem>
+				) }
+			</Flex>
+			{ null !== status && Array.isArray( messages ) && (
+				<>
+					{ messages.length === 0 ? (
+						<div>
+							{ __(
+								'Messages: none',
+								'fair-events-experimental'
+							) }
+						</div>
+					) : (
+						<>
+							<div>
+								{ __(
+									'Messages:',
+									'fair-events-experimental'
+								) }
+							</div>
+							<ul style={ { margin: '0 0 0 16px' } }>
+								{ messages.map( ( message, index ) => (
+									<li key={ index }>{ message }</li>
+								) ) }
+							</ul>
+						</>
+					) }
+				</>
+			) }
+			{ null !== status && ! Array.isArray( messages ) && (
+				<div>
+					{ __(
+						'Messages: not reported',
+						'fair-events-experimental'
+					) }
+				</div>
+			) }
+		</div>
+	);
+}
+
+/**
+ * One test-send result: event name, status, time and Meta's diagnostics.
+ *
+ * @param {Object} props
+ * @param {Object} props.entry Test-send entry or result.
+ * @return {Element} Result row.
+ */
+function TestResult( { entry } ) {
+	const status = testStatus( entry );
+	const detail = testHistoryDetail( entry );
+	return (
+		<>
+			<Flex wrap justify="flex-start" gap={ 3 }>
+				<FlexItem>
+					<strong>{ entry.event_name }</strong>
+				</FlexItem>
+				<FlexItem>
+					<span style={ { color: status.color, fontWeight: 600 } }>
+						{ status.label }
+					</span>
+				</FlexItem>
+				{ entry.time_local && (
+					<FlexItem>{ entry.time_local }</FlexItem>
+				) }
+			</Flex>
+			{ entry.message && (
+				<div style={ { marginTop: '4px' } }>{ entry.message }</div>
+			) }
+			{ detail && (
+				<div style={ { marginTop: '4px', color: '#757575' } }>
+					{ sprintf(
+						/* translators: %s: safe failure category/code reported by Meta */
+						__( 'Error: %s', 'fair-events-experimental' ),
+						detail
+					) }
+				</div>
+			) }
+			<TestDiagnostics diagnostics={ entry } />
+		</>
+	);
+}
+
 export default function MetaConversions( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ savedConfig, setSavedConfig ] = useState( null );
@@ -120,6 +293,8 @@ export default function MetaConversions( { onNotice } ) {
 	const [ busy, setBusy ] = useState( false );
 	const [ sendingEvent, setSendingEvent ] = useState( null );
 	const [ confirming, setConfirming ] = useState( false );
+	// The latest test result stays visible after the transient notice.
+	const [ lastResult, setLastResult ] = useState( null );
 	const load = () =>
 		apiFetch( { path: PATH } )
 			.then( ( next ) => {
@@ -199,37 +374,54 @@ export default function MetaConversions( { onNotice } ) {
 		setConfirming( false );
 		setBusy( false );
 	};
-	const sendTest = async ( eventName ) => {
+	const sendTest = async ( eventName, extra = {} ) => {
 		setSendingEvent( eventName );
 		try {
-			await apiFetch( {
+			const response = await apiFetch( {
 				path: `${ PATH }/test`,
 				method: 'POST',
-				data: { event_name: eventName },
+				data: { event_name: eventName, ...extra },
+			} );
+			setLastResult( {
+				event_name: eventName,
+				accepted: true,
+				outcome: response?.outcome,
+				...( response?.diagnostics || {} ),
 			} );
 			onNotice( {
 				status: 'success',
 				message: sprintf(
-					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
+					/* translators: %s: Meta event name, such as PageView or FairEventCalendarClick */
 					__(
-						'Meta accepted the %s test event.',
+						'Meta confirmed receiving the %s test event.',
 						'fair-events-experimental'
 					),
 					eventName
 				),
 			} );
-		} catch {
-			onNotice( {
-				status: 'error',
-				message: sprintf(
-					/* translators: %s: Meta event name (PageView, InitiateCheckout, or Purchase) */
-					__(
-						'Meta rejected the %s test event. Check the configuration and try again.',
-						'fair-events-experimental'
-					),
-					eventName
+		} catch ( error ) {
+			const fallback = sprintf(
+				/* translators: %s: Meta event name, such as PageView or FairEventCalendarClick */
+				__(
+					'Meta rejected the %s test event. Check the configuration and try again.',
+					'fair-events-experimental'
 				),
+				eventName
+			);
+			const message =
+				typeof error?.message === 'string' && error?.code
+					? error.message
+					: fallback;
+			setLastResult( {
+				event_name: eventName,
+				accepted: false,
+				outcome: error?.data?.outcome,
+				code: error?.data?.code || error?.code || '',
+				type: error?.data?.category || '',
+				message,
+				...( error?.data?.diagnostics || {} ),
 			} );
+			onNotice( { status: 'error', message } );
 		}
 		await load();
 		setSendingEvent( null );
@@ -373,6 +565,29 @@ export default function MetaConversions( { onNotice } ) {
 						) }
 					</p>
 				) }
+				<MetaCalendarTest
+					disabled={ testingDisabled }
+					sending={ sendingEvent === CALENDAR_EVENT }
+					onSend={ ( data ) => sendTest( CALENDAR_EVENT, data ) }
+				/>
+				{ lastResult && (
+					<div
+						role="status"
+						style={ {
+							border: '1px solid #e0e0e0',
+							padding: '8px 12px',
+							marginBottom: '16px',
+						} }
+					>
+						<h3 style={ { marginTop: 0 } }>
+							{ __(
+								'Latest test result',
+								'fair-events-experimental'
+							) }
+						</h3>
+						<TestResult entry={ lastResult } />
+					</div>
+				) }
 				<h3>
 					{ __( 'Recent test sends', 'fair-events-experimental' ) }
 				</h3>
@@ -385,71 +600,17 @@ export default function MetaConversions( { onNotice } ) {
 					</p>
 				) : (
 					<VStack spacing={ 3 } style={ { marginBottom: '16px' } }>
-						{ config.test_history.map( ( entry, index ) => {
-							const detail = testHistoryDetail( entry );
-							return (
-								<div
-									key={ `${ entry.time }-${ index }` }
-									style={ {
-										borderBottom: '1px solid #e0e0e0',
-										paddingBottom: '8px',
-									} }
-								>
-									<Flex wrap justify="flex-start" gap={ 3 }>
-										<FlexItem>
-											<strong>
-												{ entry.event_name }
-											</strong>
-										</FlexItem>
-										<FlexItem>
-											<span
-												style={ {
-													color: entry.accepted
-														? STATE_COLORS.accepted
-														: STATE_COLORS.configuration_error,
-													fontWeight: 600,
-												} }
-											>
-												{ entry.accepted
-													? __(
-															'Accepted',
-															'fair-events-experimental'
-														)
-													: __(
-															'Rejected',
-															'fair-events-experimental'
-														) }
-											</span>
-										</FlexItem>
-										<FlexItem>
-											{ entry.time_local }
-										</FlexItem>
-									</Flex>
-									{ detail && (
-										<Flex
-											wrap
-											justify="flex-start"
-											gap={ 3 }
-											style={ {
-												marginTop: '4px',
-												color: '#757575',
-											} }
-										>
-											<FlexItem>
-												{ sprintf(
-													/* translators: %s: safe failure category/code reported by Meta */
-													__(
-														'Error: %s',
-														'fair-events-experimental'
-													),
-													detail
-												) }
-											</FlexItem>
-										</Flex>
-									) }
-								</div>
-							);
-						} ) }
+						{ config.test_history.map( ( entry, index ) => (
+							<div
+								key={ `${ entry.time }-${ index }` }
+								style={ {
+									borderBottom: '1px solid #e0e0e0',
+									paddingBottom: '8px',
+								} }
+							>
+								<TestResult entry={ entry } />
+							</div>
+						) ) }
 					</VStack>
 				) }
 				<h3>

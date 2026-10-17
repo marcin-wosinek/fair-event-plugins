@@ -14,7 +14,10 @@
  * `fair_e2e_meta_last_request` option so a spec can assert on what was
  * actually sent (event name, `custom_data.payment_mode`, `test_event_code`)
  * without a real Meta dataset or access token. Every request is answered
- * with Meta's canned "accepted" response, so delivery always succeeds.
+ * with Meta's canned "received" response (`events_received: 1`), so
+ * delivery succeeds — unless a spec stores `{status, body}` in the
+ * `fair_e2e_meta_response` option to simulate another answer, such as zero
+ * received events or a rejection; it should delete the option afterwards.
  *
  * @package FairEventsE2E
  */
@@ -36,18 +39,22 @@ add_filter(
 		$log[] = $request;
 		update_option( 'fair_e2e_meta_requests', $log, false );
 
+		$override = get_option( 'fair_e2e_meta_response', null );
+		$status   = is_array( $override ) && isset( $override['status'] ) ? (int) $override['status'] : 200;
+		$answer   = is_array( $override ) && array_key_exists( 'body', $override )
+			? $override['body']
+			: array(
+				'events_received' => 1,
+				'messages'        => array(),
+				'fbtrace_id'      => 'E2Efbtrace00000',
+			);
+
 		return array(
 			'headers'  => array(),
-			'body'     => wp_json_encode(
-				array(
-					'events_received' => 1,
-					'messages'        => array(),
-					'fbtrace_id'      => 'E2Efbtrace00000',
-				)
-			),
+			'body'     => is_string( $answer ) ? $answer : wp_json_encode( $answer ),
 			'response' => array(
-				'code'    => 200,
-				'message' => 'OK',
+				'code'    => $status,
+				'message' => '',
 			),
 			'cookies'  => array(),
 			'filename' => null,

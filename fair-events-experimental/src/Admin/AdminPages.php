@@ -266,6 +266,13 @@ class AdminPages {
 
 		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
+		// The Meta calendar test reads this browser's marketing consent the
+		// same way event pages do; WP Consent API only loads its script on
+		// the front end by itself.
+		if ( function_exists( 'wp_consent_api_enqueue_assets' ) ) {
+			wp_consent_api_enqueue_assets();
+		}
+
 		wp_enqueue_script(
 			'fair-events-experimental-settings',
 			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/index.js',
