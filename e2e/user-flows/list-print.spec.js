@@ -9,10 +9,22 @@
  * controls, each with its short reference and the participant's current
  * mailing consent as a mark. It stays available when the filter matches
  * nobody.
+ *
+ * Test-mode purchases (#1866): a visitor pays for two tickets through the
+ * Mollie double in test mode, another buyer's payment is recorded live, and
+ * a third never completes payment. The List and its printout keep both test
+ * tickets with a "Test payment" warning each, leave the live ticket
+ * unmarked and the unfinished purchase out, and switching the integration to
+ * live mode does not change that.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { ADMIN_PASSWORD, ADMIN_USER, loginAsAdmin } from '../support/wp-cli.js';
+import {
+	ADMIN_PASSWORD,
+	ADMIN_USER,
+	loginAsAdmin,
+	runScript,
+} from '../support/wp-cli.js';
 
 const adminHeaders = {
 	Authorization:
@@ -221,5 +233,182 @@ test.describe('Print the List of an event date', () => {
 			'List · 1 ticket'
 		);
 		await popup.close();
+	});
+
+	test('lists and prints confirmed test-payment tickets with a warning on each', async ({
+		page,
+		request,
+		playwright,
+		baseURL,
+		seedEvent,
+	}) => {
+		const event = seedEvent('paid', { block: 'get-tickets' });
+		const stamp = Date.now();
+		const emails = {
+			test: `print-test-payment-${stamp}@example.test`,
+			live: `print-live-payment-${stamp}@example.test`,
+			pending: `print-pending-payment-${stamp}@example.test`,
+		};
+
+		const buy = async (name, email, quantity) => {
+			const visitor = await playwright.request.newContext({ baseURL });
+			const response = await visitor.post(
+				'/wp-json/fair-events/v1/get-tickets',
+				{
+					data: {
+						event_date_id: event.eventDateId,
+						ticket_type_id: event.ticketTypeId,
+						name,
+						email,
+						quantity,
+						_honeypot: '',
+					},
+				}
+			);
+			expect(response.ok(), await response.text()).toBeTruthy();
+			await visitor.dispose();
+		};
+		await buy('Tess Tester', emails.test, 2);
+		await buy('Liv Live', emails.live, 1);
+		await buy('Penny Pending', emails.pending, 1);
+
+		const state = runScript(
+			'get-tickets-state.php',
+			'E2E_GT_STATE',
+			String(event.eventDateId)
+		);
+		const signupOf = (email) =>
+			state.signups.find((signup) => signup.email === email);
+
+		// Tess pays through the Mollie double, in the test mode this site
+		// runs in: its webhook confirms the purchase.
+		const webhook = await request.post(
+			'/wp-json/fair-payments-connector/v1/webhook',
+			{ form: { id: signupOf(emails.test).mollie_payment_id } }
+		);
+		expect(webhook.ok()).toBe(true);
+		expect(
+			runScript(
+				'get-tickets-state.php',
+				'E2E_GT_STATE',
+				String(event.eventDateId)
+			).signups.find((signup) => signup.email === emails.test)
+		).toMatchObject({
+			status: 'confirmed',
+			transaction_testmode: true,
+		});
+
+		// Liv's payment was recorded live.
+		const transaction = await request.post(
+			'/wp-json/fair-e2e/v1/test-transactions',
+			{
+				headers: adminHeaders,
+				data: {
+					event_date_id: event.eventDateId,
+					amount: event.price,
+					status: 'paid',
+					testmode: false,
+				},
+			}
+		);
+		expect(transaction.ok()).toBeTruthy();
+		const linked = await request.post(
+			'/wp-json/fair-e2e/v1/signup-transaction',
+			{
+				headers: adminHeaders,
+				data: {
+					signup_id: signupOf(emails.live).id,
+					transaction_id: (await transaction.json()).id,
+					status: 'confirmed',
+				},
+			}
+		);
+		expect(linked.ok()).toBeTruthy();
+
+		const setMode = async (mode) => {
+			const response = await request.post(
+				'/wp-json/fair-e2e/v1/payment-mode',
+				{ headers: adminHeaders, data: { mode } }
+			);
+			expect(response.ok()).toBeTruthy();
+		};
+
+		await loginAsAdmin(page);
+		const listUrl = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${event.eventDateId}&tab=list`;
+		const listRows = page.locator('tr.fair-events-signups__ticket');
+		const ticketCells = (rows) =>
+			rows.evaluateAll((trs) =>
+				trs.map((tr) => [
+					tr.cells[1].textContent.trim(),
+					tr.cells[2].textContent.trim(),
+				])
+			);
+		const expectMarked = async (rows) => {
+			const cells = await ticketCells(rows);
+			expect(cells).toHaveLength(3);
+			expect(cells.map(([name]) => name).sort()).toEqual([
+				'Liv Live',
+				'Tess Tester',
+				'Tess Tester',
+			]);
+			for (const [name, ticket] of cells) {
+				expect(ticket).toMatch(
+					name === 'Tess Tester'
+						? /^[0-9A-F]{8}\s*Test payment$/
+						: /^[0-9A-F]{8}$/
+				);
+			}
+		};
+
+		try {
+			for (const mode of ['test', 'live']) {
+				await setMode(mode);
+				await page.goto(listUrl);
+				await expect(listRows).toHaveCount(3);
+				await expect(
+					listRows.filter({ hasText: 'Penny Pending' })
+				).toHaveCount(0);
+				await expectMarked(listRows);
+				await expect(
+					listRows.locator('.fair-events-signups__test-payment')
+				).toHaveCount(2);
+				await expect(
+					listRows.filter({ hasText: 'Tess Tester' }).first()
+				).toContainText('Confirmed');
+			}
+
+			const [popup] = await Promise.all([
+				page.waitForEvent('popup'),
+				page.getByRole('button', { name: 'Print list' }).click(),
+			]);
+			await expect(popup.locator('table')).toBeVisible();
+			await expectMarked(popup.locator('tbody tr'));
+			await expect(popup.locator('tbody .test-warning')).toHaveText([
+				'Test payment',
+				'Test payment',
+			]);
+			await expect(popup.locator('body')).not.toContainText(
+				'Penny Pending'
+			);
+			// Readable in black and white: bold and bordered, on no background.
+			await popup.emulateMedia({ media: 'print' });
+			const warningStyle = await popup
+				.locator('tbody .test-warning')
+				.first()
+				.evaluate((el) => {
+					const style = window.getComputedStyle(el);
+					return {
+						fontWeight: style.fontWeight,
+						borderStyle: style.borderTopStyle,
+						background: style.backgroundColor,
+					};
+				});
+			expect(Number(warningStyle.fontWeight)).toBeGreaterThanOrEqual(700);
+			expect(warningStyle.borderStyle).toBe('solid');
+			expect(warningStyle.background).toBe('rgba(0, 0, 0, 0)');
+			await popup.close();
+		} finally {
+			await setMode('test');
+		}
 	});
 });

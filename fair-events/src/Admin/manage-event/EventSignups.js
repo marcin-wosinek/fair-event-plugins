@@ -252,6 +252,58 @@ export function ticketRowReference( ticket ) {
 }
 
 /**
+ * Whether a registration was paid in test mode, as its transaction recorded
+ * it. Only a confirmed classification counts: an unresolved transaction is
+ * not flagged.
+ *
+ * @param {Object} signup Registration returned by the API.
+ * @return {boolean} Whether the purchase was a test payment
+ */
+export function isTestPayment( signup ) {
+	return signup?.is_test_payment === true;
+}
+
+/**
+ * Warning shown beside every ticket of a test-mode purchase, on the List and
+ * its printout.
+ *
+ * @return {string} Warning
+ */
+export function testPaymentLabel() {
+	return __( 'Test payment', 'fair-events' );
+}
+
+/**
+ * Warning beside a ticket reference of a test-mode purchase: bold, bordered
+ * text, so it does not rely on color.
+ *
+ * @return {Element} Warning
+ */
+function TestPaymentWarning() {
+	return (
+		<span
+			className="fair-events-signups__test-payment"
+			style={ {
+				display: 'block',
+				width: 'fit-content',
+				marginTop: '4px',
+				padding: '0 6px',
+				border: '2px solid #996800',
+				borderRadius: '2px',
+				background: '#fcf9e8',
+				color: '#1e1e1e',
+				fontSize: '12px',
+				fontWeight: 700,
+				lineHeight: '18px',
+				whiteSpace: 'nowrap',
+			} }
+		>
+			{ testPaymentLabel() }
+		</span>
+	);
+}
+
+/**
  * Ticket type shown on a ticket row: the ticket's own type, falling back to
  * the type the registration was bought with.
  *
@@ -589,7 +641,10 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 				text: signup.name,
 				note: registeredForNote( signup, eventDateId ),
 			},
-			ticket: { text: ticketRowReference( ticket ) },
+			ticket: {
+				text: ticketRowReference( ticket ),
+				warning: isTestPayment( signup ) ? testPaymentLabel() : '',
+			},
 			ticket_type: { text: ticketRowTypeName( row ) },
 			status: { text: signupStatusLabel( signup ) },
 			mailing: { text: printedMailingSymbol( signup ) },
@@ -820,6 +875,7 @@ export default function EventSignups( {
 				</td>
 				<td style={ { ...cellStyle, whiteSpace: 'nowrap' } }>
 					{ ticketRowReference( ticket ) }
+					{ isTestPayment( signup ) && <TestPaymentWarning /> }
 				</td>
 				<td style={ cellStyle }>{ ticketRowTypeName( row ) }</td>
 				{ ticketOptions.map( ( opt ) => (

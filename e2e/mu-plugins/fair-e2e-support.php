@@ -264,6 +264,30 @@ add_action(
 			)
 		);
 
+		// Pay a signup with a transaction from /test-transactions, setting the
+		// signup's (and its tickets') status the way a payment outcome would
+		// (#1866).
+		register_rest_route(
+			'fair-e2e/v1',
+			'/signup-transaction',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$status  = $request->get_param( 'status' );
+					$updated = \FairEvents\Models\EventSignup::update_transaction(
+						absint( $request->get_param( 'signup_id' ) ),
+						absint( $request->get_param( 'transaction_id' ) ),
+						$status ? sanitize_key( $status ) : null
+					);
+
+					return rest_ensure_response( array( 'updated' => $updated ) );
+				},
+			)
+		);
+
 		// Insert a fair-payments-connector transaction row directly, with a
 		// real local event_date_id in its own column (not just metadata) —
 		// the shape a genuine ticket purchase produces once paid, which the
@@ -315,7 +339,8 @@ add_action(
 								'application_fee'   => $request->has_param( 'application_fee' ) ? (float) $request->get_param( 'application_fee' ) : null,
 								'mollie_fee'        => $request->has_param( 'mollie_fee' ) ? (float) $request->get_param( 'mollie_fee' ) : null,
 								'status'            => $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : 'paid',
-								'testmode'          => 0,
+								// Live unless a spec asks for a test-mode payment (#1866).
+								'testmode'          => rest_sanitize_boolean( $request->get_param( 'testmode' ) ) ? 1 : 0,
 								'description'       => sanitize_text_field( (string) $request->get_param( 'description' ) ),
 								'metadata'          => $metadata,
 							),
@@ -550,7 +575,34 @@ add_filter(
 add_filter(
 	'pre_option_fair_payment_mode',
 	static function () {
-		return 'test';
+		return get_option( 'fair_e2e_payment_mode_live' ) ? 'live' : 'test';
+	}
+);
+
+// Lets a spec switch the integration to live mode and back, to check that
+// past purchases keep the mode they were paid in (#1866):
+// POST fair-e2e/v1/payment-mode { mode: 'live' | 'test' }.
+add_action(
+	'rest_api_init',
+	static function () {
+		register_rest_route(
+			'fair-e2e/v1',
+			'/payment-mode',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					if ( 'live' === $request->get_param( 'mode' ) ) {
+						update_option( 'fair_e2e_payment_mode_live', 1, false );
+					} else {
+						delete_option( 'fair_e2e_payment_mode_live' );
+					}
+					return rest_ensure_response( array( 'mode' => get_option( 'fair_payment_mode' ) ) );
+				},
+			)
+		);
 	}
 );
 
