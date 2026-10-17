@@ -54,7 +54,7 @@ async function openMoreActions() {
 }
 
 describe( 'sale-period calendar date conversion (#1500)', () => {
-	it( 'crosses month, year, and DST boundaries without shifting', () => {
+	it( 'crosses month, year, and DST boundaries without shifting', async () => {
 		expect( exclusiveEndToInclusiveDate( '2026-09-01' ) ).toBe(
 			'2026-08-31'
 		);
@@ -96,23 +96,38 @@ const initialDataWithTicketType = {
 	],
 };
 
-function renderTickets( extraProps = {} ) {
-	const onSaveRef = { current: null };
-	const { container } = render(
-		<EventTickets
-			eventDateId={ 99 }
-			onSaveRef={ onSaveRef }
-			initialData={ emptyInitialData }
-			onDataRef={ null }
-			{ ...extraProps }
-		/>
-	);
-	return { onSaveRef, container };
+async function renderTickets( {
+	initialData = emptyInitialData,
+	payloadSaveRef,
+	...extraProps
+} = {} ) {
+	const onSaveRef = payloadSaveRef || { current: null };
+	apiFetch.mockImplementationOnce( () => Promise.resolve( initialData ) );
+	let view;
+	await act( async () => {
+		view = render(
+			<EventTickets
+				eventDateId={ 99 }
+				onSaveRef={ onSaveRef }
+				{ ...extraProps }
+			/>
+		);
+	} );
+	return { onSaveRef, container: view.container };
+}
+
+function savePayload( ref ) {
+	act( () => {
+		ref.current();
+	} );
+	return apiFetch.mock.calls
+		.filter( ( [ request ] ) => request.method === 'PUT' )
+		.at( -1 )[ 0 ].data;
 }
 
 describe( 'EventTickets — extension selection rules (#1521)', () => {
-	it( 'renders enabled, minimum, and maximum controls for every ticket type', () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+	it( 'renders enabled, minimum, and maximum controls for every ticket type', async () => {
+		await renderTickets( { initialData: initialDataWithTicketType } );
 		expect(
 			screen.getByRole( 'checkbox', { name: 'Enable extensions' } )
 		).toBeChecked();
@@ -124,8 +139,8 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 		);
 	} );
 
-	it( 'retains values while disabling their inputs', () => {
-		renderTickets( {
+	it( 'retains values while disabling their inputs', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				ticket_types: [
@@ -151,8 +166,8 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 		);
 	} );
 
-	it( 'prevents saving a maximum below the minimum', () => {
-		renderTickets( {
+	it( 'prevents saving a maximum below the minimum', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				options: [ { name: 'One' }, { name: 'Two' } ],
@@ -176,13 +191,13 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 } );
 
 describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
-	it( 'renders the Prices section heading', () => {
-		renderTickets( { initialData: emptyInitialData } );
+	it( 'renders the Prices section heading', async () => {
+		await renderTickets( { initialData: emptyInitialData } );
 		expect( screen.getByText( 'Prices' ).tagName ).toBe( 'STRONG' );
 	} );
 
-	it( 'renders the full editor with zero ticket types', () => {
-		renderTickets( { initialData: emptyInitialData } );
+	it( 'renders the full editor with zero ticket types', async () => {
+		await renderTickets( { initialData: emptyInitialData } );
 		expect( screen.getByText( 'Ticket Type' ) ).toBeInTheDocument();
 		expect(
 			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
@@ -192,13 +207,13 @@ describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'does not render a Signup price field', () => {
-		renderTickets( { initialData: emptyInitialData } );
+	it( 'does not render a Signup price field', async () => {
+		await renderTickets( { initialData: emptyInitialData } );
 		expect( screen.queryByText( /Signup price/i ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'does not render a simple/advanced ticketing toggle', () => {
-		renderTickets( { initialData: emptyInitialData } );
+	it( 'does not render a simple/advanced ticketing toggle', async () => {
+		await renderTickets( { initialData: emptyInitialData } );
 		expect(
 			screen.queryByRole( 'button', {
 				name: /Switch to simple ticketing/i,
@@ -211,8 +226,11 @@ describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'clicking "+ Add Ticket Type" adds a ticket-type row without a scope modal (non-series)', () => {
-		renderTickets( { initialData: emptyInitialData, isSeries: false } );
+	it( 'clicking "+ Add Ticket Type" adds a ticket-type row without a scope modal (non-series)', async () => {
+		await renderTickets( {
+			initialData: emptyInitialData,
+			isSeries: false,
+		} );
 		const addButton = screen.getByRole( 'button', {
 			name: '+ Add Ticket Type',
 		} );
@@ -229,7 +247,7 @@ describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 	} );
 
 	it( 'export/import is reachable through the ⋯ menu with zero ticket types', async () => {
-		renderTickets( { initialData: emptyInitialData } );
+		await renderTickets( { initialData: emptyInitialData } );
 		await openMoreActions();
 		expect(
 			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
@@ -239,46 +257,38 @@ describe( 'EventTickets — empty state (no ticket types) (#1199)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'saving with zero ticket types persists no sale period', () => {
-		const onDataRef = { current: null };
-		render(
-			<EventTickets
-				eventDateId={ 99 }
-				onSaveRef={ { current: null } }
-				initialData={ emptyInitialData }
-				onDataRef={ onDataRef }
-			/>
-		);
-		expect( onDataRef.current() ).toEqual(
+	it( 'saving with zero ticket types persists no sale period', async () => {
+		const { onSaveRef } = await renderTickets();
+		expect( savePayload( onSaveRef ) ).toEqual(
 			expect.objectContaining( { sale_periods: [] } )
 		);
 	} );
 } );
 
 describe( 'EventTickets — recurrence scope selector', () => {
-	it( 'shows Scope column when isSeries is true', () => {
-		renderTickets( {
+	it( 'shows Scope column when isSeries is true', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
 		expect( screen.getByText( 'Scope' ) ).toBeInTheDocument();
 	} );
 
-	it( 'does not show Scope column when isSeries is false', () => {
-		renderTickets( {
+	it( 'does not show Scope column when isSeries is false', async () => {
+		await renderTickets( {
 			isSeries: false,
 			initialData: initialDataWithTicketType,
 		} );
 		expect( screen.queryByText( 'Scope' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'does not show Scope column when isSeries is omitted', () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+	it( 'does not show Scope column when isSeries is omitted', async () => {
+		await renderTickets( { initialData: initialDataWithTicketType } );
 		expect( screen.queryByText( 'Scope' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'new ticket type is seeded with recurrence_scope single_instance', () => {
-		renderTickets( {
+	it( 'new ticket type is seeded with recurrence_scope single_instance', async () => {
+		await renderTickets( {
 			isSeries: true,
 			// Start with a ticket type so hasAdvancedTickets = true and the
 			// "+ Add Ticket Type" button is visible in the table footer.
@@ -311,8 +321,8 @@ describe( 'EventTickets — recurrence scope selector', () => {
 		);
 	} );
 
-	it( 'changing scope selector to whole_series updates the combobox value', () => {
-		renderTickets( {
+	it( 'changing scope selector to whole_series updates the combobox value', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -330,7 +340,7 @@ describe( 'EventTickets — recurrence scope selector', () => {
 	} );
 
 	it( 'save payload includes updated recurrence_scope', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -369,8 +379,8 @@ describe( 'EventTickets — recurrence scope selector', () => {
 } );
 
 describe( 'EventTickets — multiple_instances scope (#930)', () => {
-	it( 'offers multiple_instances as a scope option', () => {
-		renderTickets( {
+	it( 'offers multiple_instances as a scope option', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -392,8 +402,8 @@ describe( 'EventTickets — multiple_instances scope (#930)', () => {
 		}
 	} );
 
-	it( 'shows a "Minimum instances" input once multiple_instances is selected', () => {
-		renderTickets( {
+	it( 'shows a "Minimum instances" input once multiple_instances is selected', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -419,7 +429,7 @@ describe( 'EventTickets — multiple_instances scope (#930)', () => {
 	} );
 
 	it( 'save payload includes the entered minimum_instances', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -462,8 +472,8 @@ describe( 'EventTickets — multiple_instances scope (#930)', () => {
 } );
 
 describe( 'EventTickets — scope-choice modal', () => {
-	it( 'opens a modal when "+ Add Ticket Type" is clicked on a recurring event', () => {
-		renderTickets( {
+	it( 'opens a modal when "+ Add Ticket Type" is clicked on a recurring event', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -477,8 +487,8 @@ describe( 'EventTickets — scope-choice modal', () => {
 		expect( screen.getByLabelText( /Whole series/i ) ).toBeInTheDocument();
 	} );
 
-	it( 'does not open a modal on a non-recurring event', () => {
-		renderTickets( {
+	it( 'does not open a modal on a non-recurring event', async () => {
+		await renderTickets( {
 			isSeries: false,
 			initialData: initialDataWithTicketType,
 		} );
@@ -492,8 +502,8 @@ describe( 'EventTickets — scope-choice modal', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'adds a whole_series ticket when that option is chosen in the modal', () => {
-		renderTickets( {
+	it( 'adds a whole_series ticket when that option is chosen in the modal', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -536,8 +546,8 @@ const initialDataWithSoldTicketType = {
 };
 
 describe( 'EventTickets — scope lock when has_sales', () => {
-	it( 'renders scope as read-only text when has_sales is true', () => {
-		renderTickets( {
+	it( 'renders scope as read-only text when has_sales is true', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithSoldTicketType,
 		} );
@@ -553,8 +563,8 @@ describe( 'EventTickets — scope lock when has_sales', () => {
 		expect( scopeSelects.length ).toBe( 0 );
 	} );
 
-	it( 'renders scope as SelectControl when has_sales is false', () => {
-		renderTickets( {
+	it( 'renders scope as SelectControl when has_sales is false', async () => {
+		await renderTickets( {
 			isSeries: true,
 			initialData: initialDataWithTicketType,
 		} );
@@ -571,15 +581,15 @@ describe( 'EventTickets — scope lock when has_sales', () => {
 } );
 
 describe( 'EventTickets — disable/enable when has_sales', () => {
-	it( 'shows Remove button when has_sales is false', () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+	it( 'shows Remove button when has_sales is false', async () => {
+		await renderTickets( { initialData: initialDataWithTicketType } );
 		expect(
 			screen.getByRole( 'button', { name: /Remove/i } )
 		).toBeInTheDocument();
 	} );
 
-	it( 'shows toggle instead of Remove when has_sales is true', () => {
-		renderTickets( { initialData: initialDataWithSoldTicketType } );
+	it( 'shows toggle instead of Remove when has_sales is true', async () => {
+		await renderTickets( { initialData: initialDataWithSoldTicketType } );
 		expect(
 			screen.queryByRole( 'button', { name: /Remove/i } )
 		).not.toBeInTheDocument();
@@ -588,7 +598,7 @@ describe( 'EventTickets — disable/enable when has_sales', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'shows disabled label when ticket type is disabled', () => {
+	it( 'shows disabled label when ticket type is disabled', async () => {
 		const disabledData = {
 			...emptyInitialData,
 			ticket_types: [
@@ -598,21 +608,21 @@ describe( 'EventTickets — disable/enable when has_sales', () => {
 				},
 			],
 		};
-		renderTickets( { initialData: disabledData } );
+		await renderTickets( { initialData: disabledData } );
 		expect(
 			screen.getByText( 'Disabled — no longer on sale' )
 		).toBeInTheDocument();
 	} );
 
-	it( 'does not show disabled label when ticket type is enabled', () => {
-		renderTickets( { initialData: initialDataWithSoldTicketType } );
+	it( 'does not show disabled label when ticket type is enabled', async () => {
+		await renderTickets( { initialData: initialDataWithSoldTicketType } );
 		expect(
 			screen.queryByText( 'Disabled — no longer on sale' )
 		).not.toBeInTheDocument();
 	} );
 
 	it( 'toggling disable updates the disabled field in the save payload', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			initialData: initialDataWithSoldTicketType,
 		} );
 		const toggle = screen.getByRole( 'checkbox', { name: 'Enabled' } );
@@ -639,8 +649,8 @@ describe( 'EventTickets — disable/enable when has_sales', () => {
 } );
 
 describe( 'EventTickets — save button and dirty tracking (#987)', () => {
-	it( 'renders its own "Save tickets" button', () => {
-		renderTickets( { initialData: emptyInitialData } );
+	it( 'renders its own "Save tickets" button', async () => {
+		await renderTickets( { initialData: emptyInitialData } );
 		expect(
 			screen.getByRole( 'button', { name: 'Save tickets' } )
 		).toBeInTheDocument();
@@ -648,7 +658,7 @@ describe( 'EventTickets — save button and dirty tracking (#987)', () => {
 
 	it( 'reports dirty once a field changes, and clean again after save', async () => {
 		const onDirtyChange = jest.fn();
-		renderTickets( {
+		await renderTickets( {
 			initialData: initialDataWithTicketType,
 			onDirtyChange,
 		} );
@@ -733,7 +743,7 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		window.fairPaymentsConnector = originalFairPaymentsConnector;
 	} );
 
-	it( 'shows the Mollie notice when the connector is active but unconfigured and a price > 0', () => {
+	it( 'shows the Mollie notice when the connector is active but unconfigured and a price > 0', async () => {
 		// wp_localize_script delivers booleans as strings ("1"/"") — feed
 		// that stringified transport form, not real booleans.
 		window.fairPaymentsConnector = {
@@ -742,7 +752,7 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithPaidTicket,
 		} );
 
@@ -758,9 +768,9 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		);
 	} );
 
-	it( 'shows the missing-plugin notice when the connector is inactive and a price > 0', () => {
+	it( 'shows the missing-plugin notice when the connector is inactive and a price > 0', async () => {
 		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithPaidTicket,
 		} );
 
@@ -773,9 +783,9 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'shows the notice for add-on-only pricing', () => {
+	it( 'shows the notice for add-on-only pricing', async () => {
 		window.fairPaymentsConnector = { connectorActive: '', currency: 'EUR' };
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithPaidAddon,
 		} );
 
@@ -796,9 +806,9 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		],
 	] )(
 		'does not show any notice when every price is 0 (%s)',
-		( _label, connectorState ) => {
+		async ( _label, connectorState ) => {
 			window.fairPaymentsConnector = connectorState;
-			const { container } = renderTickets( {
+			const { container } = await renderTickets( {
 				initialData: initialDataWithTicketType,
 			} );
 
@@ -811,9 +821,9 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		}
 	);
 
-	it( 'does not show any notice when there are no tickets yet', () => {
+	it( 'does not show any notice when there are no tickets yet', async () => {
 		window.fairPaymentsConnector = { connectorActive: '' };
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: emptyInitialData,
 		} );
 
@@ -825,7 +835,7 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'does not show any notice when payments are configured', () => {
+	it( 'does not show any notice when payments are configured', async () => {
 		// wp_localize_script delivers booleans as strings ("1"/"") — feed
 		// that stringified transport form, not real booleans. This is the
 		// green-path state the notice must correctly suppress.
@@ -835,7 +845,7 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 			settingsUrl:
 				'http://example.test/wp-admin/admin.php?page=fair-payments-connector-settings',
 		};
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithPaidTicket,
 		} );
 
@@ -849,8 +859,8 @@ describe( 'EventTickets — payments-unavailable notice (#988, #1177)', () => {
 } );
 
 describe( 'EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
-	it( 'does not show Export/Import as primary buttons', () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+	it( 'does not show Export/Import as primary buttons', async () => {
+		await renderTickets( { initialData: initialDataWithTicketType } );
 
 		expect(
 			screen.queryByRole( 'button', { name: 'Export ticket settings' } )
@@ -861,7 +871,7 @@ describe( 'EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
 	} );
 
 	it( 'reaches Export/Import through the ⋯ menu', async () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+		await renderTickets( { initialData: initialDataWithTicketType } );
 
 		await openMoreActions();
 
@@ -875,8 +885,8 @@ describe( 'EventTickets — Export/Import moved to the ⋯ menu (#988)', () => {
 } );
 
 describe( 'EventTickets — editable table renders without expanding a panel (#988)', () => {
-	it( 'shows the editable ticket type field directly', () => {
-		renderTickets( { initialData: initialDataWithTicketType } );
+	it( 'shows the editable ticket type field directly', async () => {
+		await renderTickets( { initialData: initialDataWithTicketType } );
 
 		expect( screen.getByDisplayValue( 'General' ) ).toBeInTheDocument();
 	} );
@@ -931,9 +941,9 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		settings: { multiple_pricing_periods: false },
 	};
 
-	it( 'adding the first ticket type seeds exactly one sale period and shows a single Price column with no Available checkbox', () => {
+	it( 'adding the first ticket type seeds exactly one sale period and shows a single Price column with no Available checkbox', async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets( {
+		await renderTickets( {
 			initialData: emptyInitialData,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
@@ -949,9 +959,9 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		expect( screen.queryByText( 'Available' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'adding a ticket type leaves the sale window unset (#1189) — no concrete dates are seeded', () => {
+	it( 'adding a ticket type leaves the sale window unset (#1189) — no concrete dates are seeded', async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets( {
+		await renderTickets( {
 			initialData: emptyInitialData,
 			startDatetime: '2020-01-01 10:00:00',
 			endDatetime: '2020-01-01 12:00:00',
@@ -969,8 +979,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		expect( screen.getByLabelText( 'From' ).value ).toBe( '' );
 	} );
 
-	it( 'turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', () => {
-		renderTickets( {
+	it( 'turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', async () => {
+		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -990,8 +1000,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		expect( screen.getByDisplayValue( '12' ) ).toBeInTheDocument();
 	} );
 
-	it( 'turning off "Multiple pricing periods" with several periods asks for confirmation before merging', () => {
-		renderTickets( { initialData: initialDataWithTwoPeriods } );
+	it( 'turning off "Multiple pricing periods" with several periods asks for confirmation before merging', async () => {
+		await renderTickets( { initialData: initialDataWithTwoPeriods } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /More options/i } )
@@ -1017,8 +1027,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		expect( screen.getByDisplayValue( '20' ) ).toBeInTheDocument();
 	} );
 
-	it( 'an event loaded with two stored periods renders in multi-period mode regardless of the stored toggle', () => {
-		renderTickets( { initialData: initialDataWithTwoPeriods } );
+	it( 'an event loaded with two stored periods renders in multi-period mode regardless of the stored toggle', async () => {
+		await renderTickets( { initialData: initialDataWithTwoPeriods } );
 
 		expect( screen.getByText( 'Advance ticket' ) ).toBeInTheDocument();
 		expect( screen.getByText( 'Day of event' ) ).toBeInTheDocument();
@@ -1032,8 +1042,8 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 		prices: [ { ticket_type_id: 1, sale_period_id: 701, price: '12' } ],
 	};
 
-	it( 'a single event with an unset window shows the day after the event as the default, marked as a default', () => {
-		renderTickets( {
+	it( 'a single event with an unset window shows the day after the event as the default, marked as a default', async () => {
+		await renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
@@ -1050,8 +1060,8 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 		).toBeInTheDocument();
 	} );
 
-	it( "a series with an unset window resolves the default from the last occurrence, not the master's own end", () => {
-		renderTickets( {
+	it( "a series with an unset window resolves the default from the last occurrence, not the master's own end", async () => {
+		await renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
@@ -1068,8 +1078,8 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 		).toBeInTheDocument();
 	} );
 
-	it( 'an explicit sale_end suppresses the "(default)" marker', () => {
-		renderTickets( {
+	it( 'an explicit sale_end suppresses the "(default)" marker', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				sale_periods: [
@@ -1141,13 +1151,13 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		settings: { multiple_pricing_periods: true },
 	};
 
-	it( 'turning on "Multiple pricing periods" with an unset window leaves the last period\'s end unset', () => {
-		const onDataRef = { current: null };
-		renderTickets( {
+	it( 'turning on "Multiple pricing periods" with an unset window leaves the last period\'s end unset', async () => {
+		const payloadSaveRef = { current: null };
+		await renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
-			onDataRef,
+			payloadSaveRef,
 		} );
 
 		fireEvent.click(
@@ -1159,7 +1169,7 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 			} )
 		);
 
-		const payload = onDataRef.current();
+		const payload = savePayload( payloadSaveRef );
 		expect( payload.sale_periods ).toHaveLength( 2 );
 		// Only the split boundary is stored — the trailing end stays unset.
 		expect( payload.sale_periods[ 0 ].sale_start ).toBe( '' );
@@ -1172,8 +1182,8 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		expect( payload.sale_periods[ 1 ].sale_end ).toBe( '' );
 	} );
 
-	it( 'the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', () => {
-		const { container } = renderTickets( {
+	it( 'the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', async () => {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
 			startDatetime: '2026-08-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
@@ -1200,11 +1210,11 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		expect( lastUntilInput.placeholder ).toBe( '2026-08-22' );
 	} );
 
-	it( 'merging periods restores an unset (automatic) end', () => {
-		const onDataRef = { current: null };
-		renderTickets( {
+	it( 'merging periods restores an unset (automatic) end', async () => {
+		const payloadSaveRef = { current: null };
+		await renderTickets( {
 			initialData: initialDataWithTwoPeriodsUnsetEnd,
-			onDataRef,
+			payloadSaveRef,
 		} );
 
 		fireEvent.click(
@@ -1219,18 +1229,18 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 			screen.getByRole( 'button', { name: 'Merge periods' } )
 		);
 
-		const payload = onDataRef.current();
+		const payload = savePayload( payloadSaveRef );
 		expect( payload.sale_periods ).toHaveLength( 1 );
 		expect( payload.sale_periods[ 0 ].sale_end ).toBe( '' );
 	} );
 
-	it( 'a "Reset to automatic" control clears an explicit end back to unset', () => {
-		const onDataRef = { current: null };
-		renderTickets( {
+	it( 'a "Reset to automatic" control clears an explicit end back to unset', async () => {
+		const payloadSaveRef = { current: null };
+		await renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
 			startDatetime: '2026-07-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
-			onDataRef,
+			payloadSaveRef,
 		} );
 
 		fireEvent.click(
@@ -1241,17 +1251,17 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 			screen.getByRole( 'button', { name: 'Reset to automatic' } )
 		);
 
-		const payload = onDataRef.current();
+		const payload = savePayload( payloadSaveRef );
 		expect( payload.sale_periods[ 0 ].sale_end ).toBe( '' );
 	} );
 
-	it( 'an organiser-typed sale end survives turning multiple pricing periods on', () => {
-		const onDataRef = { current: null };
-		renderTickets( {
+	it( 'an organiser-typed sale end survives turning multiple pricing periods on', async () => {
+		const payloadSaveRef = { current: null };
+		await renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
 			startDatetime: '2026-07-01 10:00:00',
 			endDatetime: '2026-08-01 12:00:00',
-			onDataRef,
+			payloadSaveRef,
 		} );
 
 		fireEvent.click(
@@ -1263,7 +1273,7 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 			} )
 		);
 
-		const payload = onDataRef.current();
+		const payload = savePayload( payloadSaveRef );
 		expect( payload.sale_periods[ 1 ].sale_end ).toBe(
 			'2026-08-02 00:00:00'
 		);
@@ -1322,7 +1332,7 @@ describe( 'EventTickets — pricing an event with no stored prices (#1175)', () 
 	}
 
 	it( 'single-period mode: a typed price is included in the save payload', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			initialData: initialDataUnpriced,
 		} );
 
@@ -1345,7 +1355,7 @@ describe( 'EventTickets — pricing an event with no stored prices (#1175)', () 
 	} );
 
 	it( 'multiple-periods mode: an unchecked cell stays excluded from the save payload', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			initialData: initialDataUnpricedMulti,
 		} );
 
@@ -1361,7 +1371,7 @@ describe( 'EventTickets — pricing an event with no stored prices (#1175)', () 
 	} );
 
 	it( 'multiple-periods mode: checking Available then typing a price includes the cell', async () => {
-		const { onSaveRef } = renderTickets( {
+		const { onSaveRef } = await renderTickets( {
 			initialData: initialDataUnpricedMulti,
 		} );
 
@@ -1401,8 +1411,8 @@ describe( 'EventTickets — Add-on collaborator discount removed (#1139)', () =>
 		],
 	};
 
-	it( 'does not render the checkbox or the Discounted price column, even for a stored discount', () => {
-		renderTickets( {
+	it( 'does not render the checkbox or the Discounted price column, even for a stored discount', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithOption,
 				settings: { activity_collaborator_discount: true },
@@ -1473,8 +1483,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		return `rgb(${ r }, ${ g }, ${ b })`;
 	}
 
-	it( 'renders a swatch per Sale Periods table row matching the calendar palette', () => {
-		renderTickets( {
+	it( 'renders a swatch per Sale Periods table row matching the calendar palette', async () => {
+		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -1496,8 +1506,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		);
 	} );
 
-	it( 'hides the calendar when Multiple pricing periods is off, with a single stored period', () => {
-		renderTickets( {
+	it( 'hides the calendar when Multiple pricing periods is off, with a single stored period', async () => {
+		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -1510,8 +1520,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect( screen.queryByText( /Event day/i ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'shows the calendar when Multiple pricing periods is on, with two stored periods', () => {
-		renderTickets( {
+	it( 'shows the calendar when Multiple pricing periods is on, with two stored periods', async () => {
+		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -1524,8 +1534,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect( screen.getByText( /Event day/i ) ).toBeInTheDocument();
 	} );
 
-	it( 'shows the calendar after turning on Multiple pricing periods from a single period', () => {
-		renderTickets( {
+	it( 'shows the calendar after turning on Multiple pricing periods from a single period', async () => {
+		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
 			startDatetime: '2026-01-10 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -1548,8 +1558,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 		expect( screen.getByText( /Event day/i ) ).toBeInTheDocument();
 	} );
 
-	it( 'hides the calendar again after confirming the merge back to a single period', () => {
-		renderTickets( {
+	it( 'hides the calendar again after confirming the merge back to a single period', async () => {
+		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
 			startDatetime: '2026-01-25 10:00:00',
 			endDatetime: '2026-02-01 12:00:00',
@@ -1576,50 +1586,12 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	} );
 } );
 
-describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event wizard, #1330)', () => {
-	function renderControlled( extraProps = {} ) {
-		const onDataRef = { current: null };
-		const { container } = render(
-			<EventTickets
-				initialData={ initialDataWithTicketType }
-				onDataRef={ onDataRef }
-				{ ...extraProps }
-			/>
-		);
-		return { onDataRef, container };
-	}
-
-	it( 'does not call the tickets endpoint on load when initialData is provided', () => {
-		renderControlled();
-		expect( apiFetch ).not.toHaveBeenCalledWith(
-			expect.objectContaining( {
-				path: expect.stringMatching(
-					/event-dates\/undefined\/tickets/
-				),
-			} )
-		);
-	} );
-
-	it( 'hides the internal "Save tickets" button — the wizard saves via onDataRef instead', () => {
-		renderControlled();
-		expect(
-			screen.queryByRole( 'button', { name: 'Save tickets' } )
-		).not.toBeInTheDocument();
-	} );
-
-	it( 'hides "Import ticket settings" but keeps "Export ticket settings" in the ⋯ menu', async () => {
-		renderControlled();
-		await openMoreActions();
-		expect(
-			screen.getByRole( 'menuitem', { name: 'Export ticket settings' } )
-		).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'menuitem', { name: 'Import ticket settings' } )
-		).not.toBeInTheDocument();
-	} );
-
-	it( 'exposes recurrence_scope on the save payload when isSeries is true', () => {
-		const { onDataRef } = renderControlled( { isSeries: true } );
+describe( 'EventTickets — persisted editing', () => {
+	it( 'exposes recurrence_scope on the save payload when isSeries is true', async () => {
+		const { onSaveRef: payloadSaveRef } = await renderTickets( {
+			isSeries: true,
+			initialData: initialDataWithTicketType,
+		} );
 		const scopeSelect = screen
 			.getAllByRole( 'combobox' )
 			.find(
@@ -1629,7 +1601,7 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 			);
 		expect( scopeSelect ).toBeTruthy();
 		fireEvent.change( scopeSelect, { target: { value: 'whole_series' } } );
-		expect( onDataRef.current() ).toEqual(
+		expect( savePayload( payloadSaveRef ) ).toEqual(
 			expect.objectContaining( {
 				ticket_types: [
 					expect.objectContaining( {
@@ -1640,9 +1612,9 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 		);
 	} );
 
-	it( 'reads currency from window.fairPaymentsConnector rather than hardcoding EUR', () => {
+	it( 'reads currency from window.fairPaymentsConnector rather than hardcoding EUR', async () => {
 		window.fairPaymentsConnector = { currency: 'PLN' };
-		renderControlled( {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				options: [
@@ -1662,8 +1634,8 @@ describe( 'EventTickets — controlled mode without eventDateId (Duplicate Event
 		delete window.fairPaymentsConnector;
 	} );
 
-	it( 'uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', () => {
-		renderControlled( {
+	it( 'uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				sale_periods: [
@@ -1708,9 +1680,9 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		prices: [ { ticket_type_id: 1, sale_period_id: 901, price: '10' } ],
 	};
 
-	it( "shows the first period's missing start as today while today precedes its end", () => {
+	it( "shows the first period's missing start as today while today precedes its end", async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets( { initialData: initialDataWithUnsetStart } );
+		await renderTickets( { initialData: initialDataWithUnsetStart } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /Sale Periods/i } )
@@ -1721,9 +1693,9 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		).toBeInTheDocument();
 	} );
 
-	it( 'shows "—" once today reaches the period\'s end — an expired period never reactivates', () => {
+	it( 'shows "—" once today reaches the period\'s end — an expired period never reactivates', async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-08-01' };
-		renderTickets( { initialData: initialDataWithUnsetStart } );
+		await renderTickets( { initialData: initialDataWithUnsetStart } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /Sale Periods/i } )
@@ -1732,9 +1704,9 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		expect( screen.getByText( '—' ) ).toBeInTheDocument();
 	} );
 
-	it( 'shows the resolved date as the "From" field placeholder without freezing a value', () => {
+	it( 'shows the resolved date as the "From" field placeholder without freezing a value', async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
-		renderTickets( { initialData: initialDataWithUnsetStart } );
+		await renderTickets( { initialData: initialDataWithUnsetStart } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /Sale Periods/i } )
@@ -1745,8 +1717,8 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		expect( fromInput.placeholder ).toBe( '2026-07-15' );
 	} );
 
-	it( 'warns when the event has no usable schedule to resolve an automatic end', () => {
-		const { container } = renderTickets( {
+	it( 'warns when the event has no usable schedule to resolve an automatic end', async () => {
+		const { container } = await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
 				sale_periods: [
@@ -1796,8 +1768,8 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 	};
 
 	// The Add-ons panel starts collapsed.
-	const renderActivities = ( extraProps = {} ) => {
-		const result = renderTickets( {
+	const renderActivities = async ( extraProps = {} ) => {
+		const result = await renderTickets( {
 			initialData: initialDataWithActivities,
 			...extraProps,
 		} );
@@ -1810,7 +1782,7 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
 		).map( ( input ) => input.value );
 
-	it( 'moveToTop keeps the other items in their relative order', () => {
+	it( 'moveToTop keeps the other items in their relative order', async () => {
 		expect( moveToTop( [ 'a', 'b', 'c', 'd' ], 2 ) ).toEqual( [
 			'c',
 			'a',
@@ -1821,8 +1793,8 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 		expect( moveToTop( items, 0 ) ).toBe( items );
 	} );
 
-	it( 'offers "Move to top" on every activity except the first', () => {
-		const { container } = renderActivities();
+	it( 'offers "Move to top" on every activity except the first', async () => {
+		const { container } = await renderActivities();
 
 		const rows = Array.from(
 			container.querySelectorAll( 'input[placeholder="Add-on name"]' )
@@ -1841,9 +1813,9 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'moves the activity first immediately, keeping unsaved edits attached', () => {
+	it( 'moves the activity first immediately, keeping unsaved edits attached', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderActivities( { onDirtyChange } );
+		const { container } = await renderActivities( { onDirtyChange } );
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 
 		// An unsaved edit on the row being moved must travel with it.
@@ -1866,9 +1838,9 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
 	} );
 
-	it( 'marks the editor dirty for a reorder alone', () => {
+	it( 'marks the editor dirty for a reorder alone', async () => {
 		const onDirtyChange = jest.fn();
-		renderActivities( { onDirtyChange } );
+		await renderActivities( { onDirtyChange } );
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 
 		const dinnerRow = screen.getByDisplayValue( 'Dinner' ).closest( 'tr' );
@@ -1880,7 +1852,7 @@ describe( 'EventTickets — move an activity to the top (#1728)', () => {
 	} );
 
 	it( 'saves the new order with unchanged activity IDs', async () => {
-		const { onSaveRef } = renderActivities();
+		const { onSaveRef } = await renderActivities();
 
 		const hikeRow = screen.getByDisplayValue( 'Hike' ).closest( 'tr' );
 		fireEvent.click(
@@ -1990,8 +1962,8 @@ describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
 		return savedPayload;
 	}
 
-	it( 'offers "Move to top" on every ticket type except the first', () => {
-		const { container } = renderTickets( {
+	it( 'offers "Move to top" on every ticket type except the first', async () => {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithTypes,
 		} );
 		const rows = typeRows( container );
@@ -2008,9 +1980,9 @@ describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'moves the type first immediately, keeping the others in order and marking the editor dirty', () => {
+	it( 'moves the type first immediately, keeping the others in order and marking the editor dirty', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: initialDataWithTypes,
 			onDirtyChange,
 		} );
@@ -2031,7 +2003,7 @@ describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
 	} );
 
 	it( 'saves the new order with unchanged IDs, configuration, and prices', async () => {
-		const { container, onSaveRef } = renderTickets( {
+		const { container, onSaveRef } = await renderTickets( {
 			initialData: initialDataWithTypes,
 		} );
 
@@ -2064,7 +2036,7 @@ describe( 'EventTickets — move a ticket type to the top (#1757)', () => {
 	} );
 
 	it( 'keeps unsaved ticket types attached to their own fields and prices', async () => {
-		const { container, onSaveRef } = renderTickets( {
+		const { container, onSaveRef } = await renderTickets( {
 			initialData: initialDataWithTypes,
 		} );
 
@@ -2178,8 +2150,8 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 	};
 
 	// The Add-ons panel starts collapsed.
-	const renderAddons = ( extraProps = {} ) => {
-		const result = renderTickets( {
+	const renderAddons = async ( extraProps = {} ) => {
+		const result = await renderTickets( {
 			initialData: initialDataWithAddons,
 			...extraProps,
 		} );
@@ -2228,8 +2200,8 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 			( [ request ] ) => request.method && request.method !== 'GET'
 		);
 
-	it( 'offers the popup only when there are at least two add-ons', () => {
-		renderTickets( {
+	it( 'offers the popup only when there are at least two add-ons', async () => {
+		await renderTickets( {
 			initialData: {
 				...initialDataWithAddons,
 				options: [ initialDataWithAddons.options[ 0 ] ],
@@ -2250,7 +2222,7 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 
 	it( 'opens and closes without saving or touching other edits', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderAddons( { onDirtyChange } );
+		const { container } = await renderAddons( { onDirtyChange } );
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 
 		const dialog = openPopup();
@@ -2290,7 +2262,7 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 
 	it( 'applies each move to the editor at once and marks Prices unsaved', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderAddons( { onDirtyChange } );
+		const { container } = await renderAddons( { onDirtyChange } );
 
 		openPopup();
 		fireEvent.click(
@@ -2314,9 +2286,9 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 		expect( writeCalls() ).toEqual( [] );
 	} );
 
-	it( 'is clean again once the add-ons are back in their saved order', () => {
+	it( 'is clean again once the add-ons are back in their saved order', async () => {
 		const onDirtyChange = jest.fn();
-		renderAddons( { onDirtyChange } );
+		await renderAddons( { onDirtyChange } );
 
 		openPopup();
 		fireEvent.click(
@@ -2330,7 +2302,7 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 	} );
 
 	it( 'keeps "Move to top" working alongside the popup', async () => {
-		const { container } = renderAddons();
+		const { container } = await renderAddons();
 
 		openPopup();
 		fireEvent.click(
@@ -2350,7 +2322,7 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 	} );
 
 	it( 'saves the new order with every add-on’s own details', async () => {
-		const { onSaveRef } = renderAddons();
+		const { onSaveRef } = await renderAddons();
 
 		// An add-on that has never been saved takes part too.
 		fireEvent.click(
@@ -2362,7 +2334,9 @@ describe( 'EventTickets — reorder add-ons in a popup (#1765)', () => {
 			.closest( 'tr' );
 		fireEvent.change(
 			within( newRow ).getByPlaceholderText( 'Add-on name' ),
-			{ target: { value: 'Sauna' } }
+			{
+				target: { value: 'Sauna' },
+			}
 		);
 		fireEvent.change(
 			within( newRow ).getByPlaceholderText( 'Unlimited' ),
@@ -2476,8 +2450,10 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 	const openAddons = () =>
 		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
 
-	it( 'shows add-ons without a collaborator column or participant selector', () => {
-		const { container } = renderTickets( { initialData: legacyData } );
+	it( 'shows add-ons without a collaborator column or participant selector', async () => {
+		const { container } = await renderTickets( {
+			initialData: legacyData,
+		} );
 		openAddons();
 
 		expect(
@@ -2494,8 +2470,8 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 		expect( screen.queryByText( '#501' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'does not request the participant list', () => {
-		renderTickets( { initialData: legacyData } );
+	it( 'does not request the participant list', async () => {
+		await renderTickets( { initialData: legacyData } );
 		openAddons();
 
 		const paths = apiFetch.mock.calls.map(
@@ -2508,7 +2484,9 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 	} );
 
 	it( 'saves legacy and new add-ons without assignments', async () => {
-		const { onSaveRef } = renderTickets( { initialData: legacyData } );
+		const { onSaveRef } = await renderTickets( {
+			initialData: legacyData,
+		} );
 		openAddons();
 		fireEvent.click(
 			screen.getByRole( 'button', { name: '+ Add Option' } )
@@ -2545,7 +2523,7 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 		);
 	} );
 
-	it( 'exports add-ons without assignments', () => {
+	it( 'exports add-ons without assignments', async () => {
 		const blobParts = [];
 		jest.spyOn( global, 'Blob' ).mockImplementation( ( parts ) => {
 			blobParts.push( parts );
@@ -2562,7 +2540,7 @@ describe( 'EventTickets — add-on collaborator assignments removed (#1793)', ()
 			.mockImplementation( () => {} );
 
 		try {
-			renderTickets( { initialData: legacyData } );
+			await renderTickets( { initialData: legacyData } );
 			fireEvent.click(
 				screen.getByRole( 'button', { name: 'More actions' } )
 			);
@@ -2601,9 +2579,9 @@ describe( 'EventTickets — workshop schedule setting (#1767)', () => {
 		window.fairEventsManageEventData = originalManageEventData;
 	} );
 
-	it( 'is not offered when no plugin provides the Schedule tab', () => {
+	it( 'is not offered when no plugin provides the Schedule tab', async () => {
 		window.fairEventsManageEventData = { enabledFeatures: {} };
-		renderTickets( { initialData: initialDataWithTicketType } );
+		await renderTickets( { initialData: initialDataWithTicketType } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /More options/i } )
@@ -2614,11 +2592,11 @@ describe( 'EventTickets — workshop schedule setting (#1767)', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'shows the saved state and can be switched on', () => {
+	it( 'shows the saved state and can be switched on', async () => {
 		window.fairEventsManageEventData = {
 			enabledFeatures: { schedule: true },
 		};
-		renderTickets( { initialData: initialDataWithTicketType } );
+		await renderTickets( { initialData: initialDataWithTicketType } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /More options/i } )
@@ -2685,8 +2663,8 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 	};
 
 	// The Add-ons panel starts collapsed.
-	const renderAddons = ( initialData, extraProps = {} ) => {
-		const result = renderTickets( { initialData, ...extraProps } );
+	const renderAddons = async ( initialData, extraProps = {} ) => {
+		const result = await renderTickets( { initialData, ...extraProps } );
 		fireEvent.click( screen.getByRole( 'button', { name: 'Add-ons' } ) );
 		return result;
 	};
@@ -2726,7 +2704,7 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 			( [ request ] ) => request.method && request.method !== 'GET'
 		);
 
-	it( 'duplicateOption inserts a configuration-only copy after the source', () => {
+	it( 'duplicateOption inserts a configuration-only copy after the source', async () => {
 		const source = {
 			id: 5,
 			name: 'Yoga',
@@ -2767,14 +2745,14 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 		expect( duplicateOption( items, 7 ) ).toBe( items );
 	} );
 
-	it( 'keeps a blank name blank instead of naming the copy "Copy"', () => {
+	it( 'keeps a blank name blank instead of naming the copy "Copy"', async () => {
 		const [ , copy ] = duplicateOption( [ { name: '', price: 0 } ], 0 );
 		expect( copy.name ).toBe( '' );
 		expect( copy.capacity ).toBeNull();
 	} );
 
-	it( 'offers "Duplicate" as a button on every add-on row', () => {
-		const { container } = renderAddons( flatData );
+	it( 'offers "Duplicate" as a button on every add-on row', async () => {
+		const { container } = await renderAddons( flatData );
 		const addonRows = rows( container );
 		expect( addonRows ).toHaveLength( 2 );
 		addonRows.forEach( ( row ) =>
@@ -2784,9 +2762,9 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 		);
 	} );
 
-	it( 'copies unsaved edits right after the source without saving', () => {
+	it( 'copies unsaved edits right after the source without saving', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderAddons( flatData, { onDirtyChange } );
+		const { container } = await renderAddons( flatData, { onDirtyChange } );
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 
 		const yogaRow = rows( container )[ 0 ];
@@ -2823,7 +2801,7 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 	} );
 
 	it( 'saves the copy as a new add-on and keeps the source ID', async () => {
-		const { container, onSaveRef } = renderAddons( flatData );
+		const { container, onSaveRef } = await renderAddons( flatData );
 
 		// Dinner: unlimited capacity and a zero price.
 		duplicate( rows( container )[ 1 ] );
@@ -2884,8 +2862,8 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 		expect( payload.options[ 3 ] ).not.toHaveProperty( 'id' );
 	} );
 
-	it( 'lets the source and the copy be edited and removed independently', () => {
-		const { container } = renderAddons( flatData );
+	it( 'lets the source and the copy be edited and removed independently', async () => {
+		const { container } = await renderAddons( flatData );
 		duplicate( rows( container )[ 0 ] );
 
 		const [ sourceRow, copyRow ] = rows( container );
@@ -2897,7 +2875,9 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 		} );
 		fireEvent.change(
 			within( sourceRow ).getAllByRole( 'spinbutton' )[ 0 ],
-			{ target: { value: '11' } }
+			{
+				target: { value: '11' },
+			}
 		);
 
 		expect( editorNames( container ) ).toEqual( [
@@ -2936,14 +2916,16 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 	} );
 
 	it( 'duplicates a newly added add-on, repeatedly', async () => {
-		const { container, onSaveRef } = renderAddons( flatData );
+		const { container, onSaveRef } = await renderAddons( flatData );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: '+ Add Option' } )
 		);
 		const newRow = rows( container )[ 2 ];
 		fireEvent.change(
 			within( newRow ).getByPlaceholderText( 'Add-on name' ),
-			{ target: { value: 'Sauna' } }
+			{
+				target: { value: 'Sauna' },
+			}
 		);
 
 		duplicate( newRow );
@@ -2981,7 +2963,7 @@ describe( 'EventTickets — duplicate an add-on (#1785)', () => {
 	} );
 
 	it( 'copies sale-period prices, including blank ones and unsaved periods', async () => {
-		const { container, onSaveRef } = renderAddons( periodData );
+		const { container, onSaveRef } = await renderAddons( periodData );
 		const yogaRow = rows( container )[ 0 ];
 		expect( within( yogaRow ).getByLabelText( 'Early' ) ).toHaveValue(
 			7.5
@@ -3087,8 +3069,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 			prices,
 		} );
 
-	const renderGaps = ( initialData, extraProps = {} ) => {
-		const result = renderTickets( {
+	const renderGaps = async ( initialData, extraProps = {} ) => {
+		const result = await renderTickets( {
 			initialData,
 			startDatetime: '2026-01-31 10:00:00',
 			endDatetime: '2026-01-31 12:00:00',
@@ -3116,8 +3098,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 	const priceInputIn = ( checkbox ) =>
 		checkbox.closest( 'td' ).querySelector( 'input[type="number"]' );
 
-	it( 'names a period without a price and marks its dates', () => {
-		renderGaps( gapData() );
+	it( 'names a period without a price and marks its dates', async () => {
+		await renderGaps( gapData() );
 
 		expect( warning( 'Day of event' ) ).toHaveTextContent(
 			/from .*15.* to .*31.*\.$/
@@ -3129,8 +3111,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( isMarked( 31 ) ).toBe( true );
 	} );
 
-	it( 'shows no warning when every period has a ticket, including a free one', () => {
-		renderGaps(
+	it( 'shows no warning when every period has a ticket, including a free one', async () => {
+		await renderGaps(
 			gapData( {
 				prices: [
 					bothPrices[ 0 ],
@@ -3143,9 +3125,9 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( isMarked( 20 ) ).toBe( false );
 	} );
 
-	it( 'removes the warning and the marking as soon as a price is added, without saving', () => {
+	it( 'removes the warning and the marking as soon as a price is added, without saving', async () => {
 		const onDirtyChange = jest.fn();
-		renderGaps( gapData(), { onDirtyChange } );
+		await renderGaps( gapData(), { onDirtyChange } );
 
 		const available = screen.getAllByRole( 'checkbox', {
 			name: 'Available',
@@ -3167,8 +3149,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		);
 	} );
 
-	it( 'warns again when a priced cell is marked unavailable', () => {
-		renderGaps( gapData( { prices: bothPrices } ) );
+	it( 'warns again when a priced cell is marked unavailable', async () => {
+		await renderGaps( gapData( { prices: bothPrices } ) );
 		expect( warning( 'Day of event' ) ).not.toBeInTheDocument();
 
 		fireEvent.click(
@@ -3178,8 +3160,10 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( warning( 'Day of event' ) ).toBeInTheDocument();
 	} );
 
-	it( 'flags every period of a manually disabled ticket until it is enabled again', () => {
-		renderGaps( withTicketType( { has_sales: true, disabled: true } ) );
+	it( 'flags every period of a manually disabled ticket until it is enabled again', async () => {
+		await renderGaps(
+			withTicketType( { has_sales: true, disabled: true } )
+		);
 
 		expect( warning( 'Advance ticket' ) ).toBeInTheDocument();
 		expect( warning( 'Day of event' ) ).toBeInTheDocument();
@@ -3189,8 +3173,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( legendEntry() ).not.toBeInTheDocument();
 	} );
 
-	it( 'marks only the dates after a scheduled cutoff, and the cutoff date itself at midnight', () => {
-		const { container } = renderGaps(
+	it( 'marks only the dates after a scheduled cutoff, and the cutoff date itself at midnight', async () => {
+		const { container } = await renderGaps(
 			withTicketType( { disable_at: '2026-01-20 15:00:00' } )
 		);
 
@@ -3210,8 +3194,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( isMarked( 20 ) ).toBe( true );
 	} );
 
-	it( 'counts a ticket type that has not been saved yet', () => {
-		renderGaps( gapData() );
+	it( 'counts a ticket type that has not been saved yet', async () => {
+		await renderGaps( gapData() );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
@@ -3229,9 +3213,9 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( warning( 'Day of event' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'follows periods that have not been saved yet, and their removal', () => {
+	it( 'follows periods that have not been saved yet, and their removal', async () => {
 		window.fairEventsManageEventData = { siteToday: '2026-01-05' };
-		renderGaps(
+		await renderGaps(
 			gapData( {
 				sale_periods: [
 					{ id: 501, name: '', sale_start: '', sale_end: '' },
@@ -3267,9 +3251,9 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( legendEntry() ).not.toBeInTheDocument();
 	} );
 
-	it( 'shows no warning while a boundary is unresolved', () => {
+	it( 'shows no warning while a boundary is unresolved', async () => {
 		// No schedule to anchor the automatic end: the calendar stays hidden.
-		renderTickets( {
+		await renderTickets( {
 			initialData: gapData( {
 				sale_periods: [
 					twoPeriods[ 0 ],

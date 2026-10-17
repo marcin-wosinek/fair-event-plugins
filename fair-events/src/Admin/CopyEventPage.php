@@ -239,6 +239,10 @@ class CopyEventPage {
 		<h1><?php esc_html_e( 'Copy Event', 'fair-events' ); ?>: <a href="<?php echo esc_url( $source_url ); ?>"><?php echo esc_html( $title ); ?></a>
 </h1>
 
+			<?php if ( 'master' === $event_dates->occurrence_type ) : ?>
+				<div class="notice notice-info inline"><p><?php esc_html_e( 'This copies the entire recurring series.', 'fair-events' ); ?></p></div>
+			<?php endif; ?>
+
 			<form method="post" action="">
 				<?php wp_nonce_field( 'copy_fair_event_submit_' . $event_dates->id, 'copy_event_nonce' ); ?>
 

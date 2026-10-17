@@ -79,11 +79,7 @@ class Plugin {
 			$admin = new \FairEventsExperimental\Admin\AdminPages();
 			$admin->init();
 
-			if ( Features::is_enabled( 'event-tools' ) ) {
-				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_ext_assets' ) );
-			}
-
-			// The Schedule tab is not part of the event-tools bundle.
+			// Keep the independent Schedule extension available.
 			if ( self::schedule_available() ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_schedule_assets' ) );
 			}
@@ -126,30 +122,6 @@ class Plugin {
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-schedule', 'fair-events-experimental', Features::script_translations_path() );
-	}
-
-	/**
-	 * Enqueue this plugin's manage-event extensions (Duplicate/Merge admin
-	 * actions) on the fair-events manage-event page.
-	 *
-	 * Declares `fair-events-manage-event` as a script dependency so its
-	 * `addFilter()` calls run before the host bundle's `domReady()`
-	 * mount, avoiding a first-render flicker where these tabs pop in late.
-	 *
-	 * @return void
-	 */
-	public function enqueue_manage_event_ext_assets() {
-		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-ext/index.asset.php';
-
-		wp_enqueue_script(
-			'fair-events-experimental-manage-event-ext',
-			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-ext/index.js',
-			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
-			$asset_file['version'],
-			true
-		);
-
-		wp_set_script_translations( 'fair-events-experimental-manage-event-ext', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**
@@ -199,24 +171,6 @@ class Plugin {
 				'rest_api_init',
 				function () {
 					$controller = new \FairEventsExperimental\API\GroupPermissionRulesController();
-					$controller->register_routes();
-				}
-			);
-		}
-
-		if ( Features::is_enabled( 'event-tools' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\EventDuplicationController();
-					$controller->register_routes();
-				}
-			);
-
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairEventsExperimental\API\EventMergeController();
 					$controller->register_routes();
 				}
 			);

@@ -5,7 +5,6 @@
 	"license": "GPL-3.0-or-later",
 	"author": "Marcin Wosinek",
 	"type": "module",
-	"main": "src/index.js",
 	"scripts": {
 		"build": "wp-scripts build --config webpack.config.cjs; npm run makejson; npm run block-docs",
 		"block-docs": "node ../scripts/block-docs.mjs generate fair-events",

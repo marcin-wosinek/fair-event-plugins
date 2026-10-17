@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { wpCli, runScript } from '../../e2e/support/wp-cli.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -96,9 +97,12 @@ async function createCopy(
 	startTime = null,
 	endTime = null
 ) {
-	await page.goto( `/wp-admin/edit.php?post_type=fair_event`, {
-		waitUntil: 'domcontentloaded',
-	} );
+	await page.goto(
+		`/wp-admin/edit.php?post_type=fair_event&orderby=ID&order=desc`,
+		{
+			waitUntil: 'domcontentloaded',
+		}
+	);
 	const row = page.locator( `#post-${ eventId }` );
 	await expect( row ).toBeVisible();
 	await row.hover();
@@ -183,7 +187,9 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 			},
 		} );
 
-		await page.goto( '/wp-admin/edit.php?post_type=page' );
+		await page.goto(
+			`/wp-admin/edit.php?post_type=page&s=${ encodeURIComponent( sourcePage.title.rendered ) }`
+		);
 		const pageRow = page.locator( `#post-${ sourcePage.id }` );
 		await pageRow.hover();
 		const pageCopyUrl = await pageRow
@@ -573,7 +579,7 @@ test( 'starts the copy workflow from the All Events row action', async ( {
 	}
 } );
 
-test( 'copies events without Experimental and keeps advanced tools isolated', async ( {
+test( 'copies with Experimental inactive and with legacy tools enabled', async ( {
 	browser,
 	page,
 } ) => {
@@ -588,6 +594,9 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		( plugin ) => plugin.plugin === EXPERIMENTAL_PLUGIN
 	);
 	const originalExperimentalStatus = experimental.status;
+	const originalFeatures = (
+		await apiFetch( page, { path: '/wp/v2/settings' } )
+	).data.fair_events_experimental_features;
 	await setPluginStatus( page, 'inactive' );
 
 	const suffix = Date.now();
@@ -929,7 +938,9 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		).data;
 		expect( unchangedCopy.ticket_types[ 0 ].name ).toBe( 'General' );
 
-		await page.goto( '/wp-admin/edit.php?post_type=fair_event' );
+		await page.goto(
+			'/wp-admin/edit.php?post_type=fair_event&orderby=ID&order=desc'
+		);
 		const copyUrl = await page
 			.locator( `#post-${ source.id } .row-actions .copy a` )
 			.getAttribute( 'href' );
@@ -977,7 +988,12 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		await restrictedContext.close();
 
 		await setPluginStatus( page, 'active' );
-		await page.goto( '/wp-admin/edit.php?post_type=fair_event' );
+		wpCli(
+			`option update fair_events_experimental_features '{"event-tools":true}' --format=json`
+		);
+		await page.goto(
+			'/wp-admin/edit.php?post_type=fair_event&orderby=ID&order=desc'
+		);
 		await expect(
 			page.locator( `#post-${ source.id } .row-actions .copy` )
 		).toHaveCount( 1 );
@@ -990,6 +1006,25 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 		expect( await experimentalCopyScreen.text() ).toContain(
 			'id="event_title"'
 		);
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ sourceDate.id }&tab=admin`
+		);
+		await expect(
+			page.getByRole( 'link', { name: 'Copy event', exact: true } )
+		).toBeVisible();
+		await expect(
+			page.getByRole( 'link', { name: 'Duplicate Event', exact: true } )
+		).toHaveCount( 0 );
+		await expect(
+			page.getByRole( 'link', { name: 'Merge Event', exact: true } )
+		).toHaveCount( 0 );
+		copiedIds.push(
+			await createCopy(
+				page,
+				source.id,
+				`Legacy settings copy ${ suffix }`
+			)
+		);
 		for ( const slug of [
 			'fair-events-duplicate-event',
 			'fair-events-merge-event',
@@ -997,8 +1032,8 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			const advancedPage = await page.request.get(
 				`/wp-admin/admin.php?page=${ slug }&event_date_id=${ sourceDate.id }`
 			);
-			expect( advancedPage.ok() ).toBe( true );
-			expect( await advancedPage.text() ).toContain(
+			expect( advancedPage.status() ).toBe( 403 );
+			expect( await advancedPage.text() ).not.toContain(
 				`id="${ slug }-root"`
 			);
 		}
@@ -1056,6 +1091,15 @@ test( 'copies events without Experimental and keeps advanced tools isolated', as
 			},
 			false
 		);
+		await apiFetch(
+			page,
+			{
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { fair_events_experimental_features: originalFeatures },
+			},
+			false
+		);
 		await setPluginStatus( page, originalExperimentalStatus ).catch(
 			() => {}
 		);
@@ -1086,6 +1130,9 @@ test( 'copies Experimental ticket options and period prices', async ( {
 		( plugin ) => plugin.plugin === EXPERIMENTAL_PLUGIN
 	);
 	const originalExperimentalStatus = experimental.status;
+	const originalFeatures = (
+		await apiFetch( page, { path: '/wp/v2/settings' } )
+	).data.fair_events_experimental_features;
 	await setPluginStatus( page, 'active' );
 
 	const suffix = Date.now();
@@ -1213,6 +1260,15 @@ test( 'copies Experimental ticket options and period prices', async ( {
 			},
 			false
 		);
+		await apiFetch(
+			page,
+			{
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { fair_events_experimental_features: originalFeatures },
+			},
+			false
+		);
 		await setPluginStatus( page, originalExperimentalStatus ).catch(
 			() => {}
 		);
@@ -1297,6 +1353,11 @@ test( 'opens copy options from managed events and recurring occurrences', async 
 			const copyUrl = await copyAction.getAttribute( 'href' );
 			await page.goto( copyUrl, { waitUntil: 'domcontentloaded' } );
 			await expect( page ).toHaveURL( /page=fair-events-copy/ );
+			await expect(
+				page.getByText( 'This copies the entire recurring series.', {
+					exact: true,
+				} )
+			).toBeVisible();
 			await expect( page.locator( 'h1' ) ).toContainText(
 				source.title.rendered
 			);
@@ -1431,4 +1492,14 @@ test( 'preserves an external destination when copying a recurring occurrence', a
 			}
 		}
 	}
+} );
+
+test( 'preserves source activity, manual series, and failed-copy cleanup', async () => {
+	const result = runScript( 'verify-event-copy.php', 'EVENT_COPY' );
+	expect( result ).toEqual( {
+		manual: true,
+		activity: true,
+		cleanup: true,
+		legacy: true,
+	} );
 } );

@@ -25,9 +25,9 @@ import { wpCli, loginAsAdmin } from './support/wp-cli.js';
 const ALL_EXPERIMENTAL_BUNDLES_ON = {
 	sources: true,
 	ticketing: true,
-	'event-tools': true,
 	// Stale key of the removed migration bundle (#1674): it must stay inert.
 	migration: true,
+	'event-tools': true,
 };
 function enableAllBundles() {
 	const json = JSON.stringify(ALL_EXPERIMENTAL_BUNDLES_ON).replace(
@@ -57,10 +57,12 @@ const PAGES = [
 	{ slug: 'fair-events-settings', root: 'fair-events-settings-root' },
 ];
 
-/** Admin pages of the removed migration tools (#1674). */
+/** Admin pages of the removed migration and event tools. */
 const RETIRED_PAGES = [
 	'fair-events-migration',
 	'fair-events-migration-summary',
+	'fair-events-duplicate-event',
+	'fair-events-merge-event',
 ];
 
 /**
@@ -91,7 +93,7 @@ const MIGRATION_LINK =
  * Assert the removed migration tools are absent from the menu and that
  * their old bookmarks no longer mount a Fair Events React root.
  */
-async function expectMigrationToolsRetired(page) {
+async function expectRetiredToolsUnavailable(page) {
 	await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
 	await expect(
 		page.locator(MIGRATION_LINK),
@@ -154,9 +156,9 @@ test.describe('Fair Events admin menu — CPT registered (regression)', () => {
 		).toHaveCount(1);
 	});
 
-	test('retired migration pages are unavailable', async ({ page }) => {
+	test('retired tool pages are unavailable', async ({ page }) => {
 		await loginAsAdmin(page);
-		await expectMigrationToolsRetired(page);
+		await expectRetiredToolsUnavailable(page);
 	});
 
 	test('every page mounts its React root', async ({ page }) => {
@@ -204,8 +206,8 @@ test.describe('Fair Events admin menu — Events post type off', () => {
 		).toHaveCount(0);
 	});
 
-	test('retired migration pages are unavailable', async ({ page }) => {
+	test('retired tool pages are unavailable', async ({ page }) => {
 		await loginAsAdmin(page);
-		await expectMigrationToolsRetired(page);
+		await expectRetiredToolsUnavailable(page);
 	});
 });

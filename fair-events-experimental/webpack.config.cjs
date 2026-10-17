@@ -21,18 +21,6 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/source-view/index.js'
 		),
-		'admin/duplicate-event/index': path.resolve(
-			process.cwd(),
-			'src/Admin/duplicate-event/index.js'
-		),
-		'admin/merge-event/index': path.resolve(
-			process.cwd(),
-			'src/Admin/merge-event/index.js'
-		),
-		'admin/manage-event-ext/index': path.resolve(
-			process.cwd(),
-			'src/Admin/manage-event-ext/index.js'
-		),
 		'admin/manage-event-schedule/index': path.resolve(
 			process.cwd(),
 			'src/Admin/manage-event-schedule/index.js'

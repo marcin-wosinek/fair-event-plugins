@@ -3,7 +3,7 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * sources, ticketing, event-tools, mailings, and Meta conversions.
+ * sources, ticketing, mailings, and Meta conversions.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials default off.
  *
@@ -54,11 +54,6 @@ class Features {
 			'ticketing'        => array(
 				'label'       => 'Ticketing',
 				'description' => 'Tickets, group pricing/permission rules. Requires fair-audience.',
-				'default'     => true,
-			),
-			'event-tools'      => array(
-				'label'       => 'Event tools',
-				'description' => 'Advanced event duplication and merge tools.',
 				'default'     => true,
 			),
 			'mailings'         => array(
@@ -141,10 +136,6 @@ class Features {
 			'ticketing'        => array(
 				'label'       => __( 'Ticketing', 'fair-events-experimental' ),
 				'description' => __( 'Tickets, group pricing/permission rules. Requires fair-audience.', 'fair-events-experimental' ),
-			),
-			'event-tools'      => array(
-				'label'       => __( 'Event tools', 'fair-events-experimental' ),
-				'description' => __( 'Advanced event duplication and merge tools.', 'fair-events-experimental' ),
 			),
 			'mailings'         => array(
 				'label'       => __( 'Mailings', 'fair-events-experimental' ),

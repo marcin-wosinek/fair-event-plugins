@@ -43,20 +43,18 @@ function clearExperimentalFeatures() {
 const ALL_BUNDLES_ON = {
 	sources: true,
 	ticketing: true,
-	'event-tools': true,
 };
 
 const ALL_BUNDLES_OFF = {
 	sources: false,
 	ticketing: false,
-	'event-tools': false,
 };
 
 /**
- * Key of the removed migration bundle (#1674). Sites that saved settings
- * before the removal may still store it; it must stay inert.
+ * Keys of the removed migration and event-tools bundles. Sites that saved
+ * settings before removal may still store them; they must stay inert.
  */
-const LEGACY_MIGRATION_ON = { migration: true };
+const LEGACY_RETIRED_FEATURES_ON = { migration: true, 'event-tools': true };
 
 /**
  * Bundle → admin page slug + React root id. Pages without a menu entry are
@@ -72,10 +70,12 @@ const BUNDLE_PAGES = {
 	],
 };
 
-/** Admin pages of the removed migration tools (#1674). */
+/** Admin pages of the removed migration and event tools. */
 const RETIRED_PAGES = [
 	'fair-events-migration',
 	'fair-events-migration-summary',
+	'fair-events-duplicate-event',
+	'fair-events-merge-event',
 ];
 
 /**
@@ -89,11 +89,14 @@ const BUNDLE_PROBE_ROUTES = {
 };
 
 /**
- * Every REST route of the removed migration tools (#1674), probed with the
+ * Every REST route of the removed tools, probed with the
  * method it used to accept: a method mismatch alone also yields
  * `rest_no_route`, so a GET probe would not prove a POST route is gone.
  */
 const RETIRED_ROUTES = [
+	{ method: 'POST', path: '/fair-events/v1/event-dates/1/clone-posts' },
+	{ method: 'GET', path: '/fair-events/v1/event-dates/1/merge-preview' },
+	{ method: 'POST', path: '/fair-events/v1/event-dates/1/merge' },
 	{ method: 'GET', path: '/fair-events/v1/migration/post-types' },
 	{ method: 'GET', path: '/fair-events/v1/migration/categories' },
 	{ method: 'GET', path: '/fair-events/v1/migration/posts' },
@@ -136,10 +139,10 @@ async function expectPageMissing(page, slug) {
 }
 
 /**
- * Assert the removed migration tools (#1674) neither render through an old
+ * Assert the removed tools neither render through an old
  * bookmark nor answer on any of their former REST routes.
  */
-async function expectMigrationToolsRetired(page, request) {
+async function expectRetiredToolsUnavailable(page, request) {
 	await loginAsAdmin(page);
 	for (const slug of RETIRED_PAGES) {
 		await expectPageMissing(page, slug);
@@ -169,7 +172,10 @@ async function routeIsRegistered(request, path, method = 'GET') {
 
 test.describe('Fair Events — simplified public build (no bundles set)', () => {
 	test.beforeAll(() => {
-		setExperimentalFeatures({ ...ALL_BUNDLES_OFF, ...LEGACY_MIGRATION_ON });
+		setExperimentalFeatures({
+			...ALL_BUNDLES_OFF,
+			...LEGACY_RETIRED_FEATURES_ON,
+		});
 	});
 
 	test.afterAll(() => {
@@ -219,11 +225,11 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 		}
 	});
 
-	test('retired migration pages and routes are unavailable', async ({
+	test('retired tool pages and routes are unavailable', async ({
 		page,
 		request,
 	}) => {
-		await expectMigrationToolsRetired(page, request);
+		await expectRetiredToolsUnavailable(page, request);
 	});
 
 	test('Settings page exposes the Features tab', async ({ page }) => {
@@ -238,7 +244,10 @@ test.describe('Fair Events — simplified public build (no bundles set)', () => 
 
 test.describe('Fair Events — full internal build (all bundles on)', () => {
 	test.beforeAll(() => {
-		setExperimentalFeatures({ ...ALL_BUNDLES_ON, ...LEGACY_MIGRATION_ON });
+		setExperimentalFeatures({
+			...ALL_BUNDLES_ON,
+			...LEGACY_RETIRED_FEATURES_ON,
+		});
 	});
 
 	test.afterAll(() => {
@@ -265,14 +274,14 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 		}
 	});
 
-	test('retired migration pages and routes stay unavailable', async ({
+	test('retired tool pages and routes stay unavailable', async ({
 		page,
 		request,
 	}) => {
-		await expectMigrationToolsRetired(page, request);
+		await expectRetiredToolsUnavailable(page, request);
 	});
 
-	test('Experimental Settings no longer offers a Migration toggle', async ({
+	test('Experimental Settings omits retired feature toggles', async ({
 		page,
 	}) => {
 		await loginAsAdmin(page);
@@ -284,6 +293,9 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 		).toBeVisible();
 		await expect(
 			page.getByRole('checkbox', { name: 'Migration', exact: true })
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('checkbox', { name: 'Event tools', exact: true })
 		).toHaveCount(0);
 	});
 
