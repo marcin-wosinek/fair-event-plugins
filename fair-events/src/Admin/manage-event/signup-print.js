@@ -133,12 +133,19 @@ function sectionTable( columns, rows ) {
 			const cells = columns
 				.map( ( column ) => {
 					const cell = row.cells[ column.key ] || {};
+					const warning = cell.warning
+						? ` <span class="test-warning">${ escapeHtml(
+								cell.warning
+							) }</span>`
+						: '';
 					const note = cell.note
 						? `<div class="note">${ escapeHtml( cell.note ) }</div>`
 						: '';
 					return `<td class="${ columnClass(
 						column
-					) }">${ escapeHtml( cell.text ) }${ note }</td>`;
+					) }">${ escapeHtml(
+						cell.text
+					) }${ warning }${ note }</td>`;
 				} )
 				.join( '' );
 			return `<tr${
@@ -156,7 +163,7 @@ function sectionTable( columns, rows ) {
  * @param {string}  args.title      Event name.
  * @param {string}  args.dateLabel  Event date, already formatted.
  * @param {Array}   args.columns    Column descriptors: `{ key, label, isExtra }`.
- * @param {Array}   args.rows       Rows: `{ cells: { [key]: { text, note } }, isGroupStart }`.
+ * @param {Array}   args.rows       Rows: `{ cells: { [key]: { text, warning, note } }, isGroupStart }`.
  * @param {Array}   args.legend     Extra-state legend entries: `{ symbol, label }`.
  * @param {string}  args.warning    Notice printed above the table, if any.
  * @param {string}  args.lang       Language of the document.
@@ -274,6 +281,13 @@ export function buildSignupPrintHtml( {
 		.extra, .col-mailing { text-align: center; }
 		th.extra { font-size: 8.5pt; hyphens: auto; }
 		td.extra, td.col-mailing { font-size: 12pt; font-weight: 600; }
+		.test-warning {
+			display: inline-block;
+			margin-top: 2px;
+			padding: 0 4px;
+			border: 2px solid #111;
+			font-weight: 700;
+		}
 		.note { color: #555; font-size: 8.5pt; font-weight: 400; }
 		.toolbar { margin-bottom: 12px; }
 		.toolbar button { padding: 6px 12px; font-size: 11pt; cursor: pointer; }

@@ -2383,6 +2383,8 @@ class GetTicketsController extends WP_REST_Controller {
 	 * ticket whose row carries the purchase total in exports.
 	 * `newsletter_consent` is the linked participant's current consent, for
 	 * the printed List; `mailing_opt_in` stays what the registration recorded.
+	 * `is_test_payment` is the mode the linked transaction was recorded in,
+	 * never the payment integration's current mode.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
@@ -2468,6 +2470,7 @@ class GetTicketsController extends WP_REST_Controller {
 		$user_names        = array();
 		$date_labels       = array();
 		$consents          = array();
+		$test_payments     = array();
 
 		foreach ( $signups as $signup ) {
 			$signup_tickets = $tickets_by_signup[ (int) $signup->id ] ?? array();
@@ -2587,6 +2590,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// Read-only, for the printed List: what the linked participant
 			// consents to now, which the historical mailing_opt_in cannot tell.
 			$signup->newsletter_consent = $this->resolve_newsletter_consent( $signup->participant_id ?? null, $consents );
+			$signup->is_test_payment    = $this->resolve_test_payment( $signup->transaction_id ?? null, $test_payments );
 		}
 
 		if ( $request->get_param( 'include_answers' ) ) {
@@ -2594,6 +2598,34 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * Whether a signup was paid in test mode, as its transaction recorded it.
+	 * The payment integration's current mode never decides: switching it does
+	 * not reclassify past purchases.
+	 *
+	 * @param int|string|null $transaction_id Transaction linked to the signup.
+	 * @param array           $cache          Test mode by transaction ID, filled
+	 *                                        as transactions are looked up.
+	 * @return bool|null False for a free registration or a live payment, true
+	 *                   for a test payment, null when the linked transaction
+	 *                   cannot be resolved.
+	 */
+	private function resolve_test_payment( $transaction_id, array &$cache ) {
+		$transaction_id = (int) $transaction_id;
+		if ( ! $transaction_id ) {
+			return false;
+		}
+
+		if ( ! array_key_exists( $transaction_id, $cache ) ) {
+			$transaction              = class_exists( \FairPaymentsConnector\Models\Transaction::class )
+				? \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id )
+				: null;
+			$cache[ $transaction_id ] = $transaction ? ! empty( $transaction->testmode ) : null;
+		}
+
+		return $cache[ $transaction_id ];
 	}
 
 	/**

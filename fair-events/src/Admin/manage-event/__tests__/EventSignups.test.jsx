@@ -2198,3 +2198,171 @@ describe( 'scopeNotes', () => {
 		] );
 	} );
 } );
+
+describe( 'EventSignups — test-payment tickets (#1866)', () => {
+	const testPurchase = {
+		...signups[ 1 ],
+		id: 5,
+		name: 'Tess Tester',
+		transaction_id: 505,
+		is_test_payment: true,
+	};
+	const livePurchase = { ...signups[ 0 ], is_test_payment: false };
+	const freeRegistration = {
+		...signupWithMissingTicketType,
+		is_test_payment: false,
+	};
+	const unresolvedPurchase = {
+		...signups[ 0 ],
+		id: 6,
+		name: 'Una Resolved',
+		transaction_id: 506,
+		is_test_payment: null,
+		tickets: [ ticket( 601, 1 ) ],
+	};
+
+	const warningIn = ( row ) =>
+		row.querySelector( '.fair-events-signups__test-payment' );
+
+	function print() {
+		const written = [];
+		jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Print list' } ) );
+		return new window.DOMParser().parseFromString(
+			written.join( '' ),
+			'text/html'
+		);
+	}
+
+	afterEach( () => {
+		jest.restoreAllMocks();
+	} );
+
+	it( 'lists confirmed test purchases and marks every one of their tickets', async () => {
+		await renderSignups( {
+			rows: [
+				testPurchase,
+				livePurchase,
+				freeRegistration,
+				unresolvedPurchase,
+			],
+		} );
+
+		const rows = bodyRows();
+		expect( rows ).toHaveLength( 5 );
+		const byRef = ( ref ) =>
+			rows.find( ( row ) => row.textContent.includes( ref ) );
+
+		[ 'REF00201', 'REF00202' ].forEach( ( ref ) => {
+			const row = byRef( ref );
+			expect( row ).toHaveTextContent( 'Tess Tester' );
+			expect( warningIn( row ) ).toHaveTextContent( 'Test payment' );
+			// The warning sits in the Ticket cell, beside the reference.
+			expect(
+				within( row ).getAllByRole( 'cell' )[ 2 ]
+			).toHaveTextContent( `${ ref }Test payment` );
+		} );
+		[ 'REF00101', 'REF00301', 'REF00601' ].forEach( ( ref ) => {
+			expect( warningIn( byRef( ref ) ) ).toBeNull();
+		} );
+	} );
+
+	it( 'keeps the confirmation and over-capacity status beside the warning', async () => {
+		await renderSignups( {
+			rows: [ { ...testPurchase, over_capacity: true } ],
+		} );
+
+		bodyRows().forEach( ( row ) => {
+			expect( warningIn( row ) ).not.toBeNull();
+			expect( row ).toHaveTextContent( 'Confirmed — over capacity' );
+		} );
+	} );
+
+	it( 'marks a confirmed test registration whose tickets are not created yet', async () => {
+		await renderSignups( {
+			rows: [ { ...testPurchase, tickets: [] } ],
+		} );
+
+		const [ row ] = bodyRows();
+		expect( row ).toHaveTextContent( 'Ticket not created yet' );
+		expect( warningIn( row ) ).toHaveTextContent( 'Test payment' );
+	} );
+
+	it( 'leaves out unsuccessful test purchases', async () => {
+		await renderSignups( {
+			rows: [
+				livePurchase,
+				...unsuccessfulSignups.map( ( row ) => ( {
+					...row,
+					is_test_payment: true,
+				} ) ),
+			],
+		} );
+
+		expect( bodyRows() ).toHaveLength( 1 );
+		expect( screen.queryByText( 'Test payment' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'prints a text warning beside every test ticket', async () => {
+		await renderSignups( {
+			rows: [ testPurchase, livePurchase, freeRegistration ],
+		} );
+
+		const doc = print();
+		const printed = Array.from( doc.querySelectorAll( 'tbody tr' ) );
+		expect( printed ).toHaveLength( 4 );
+		const ticketCells = printed.map(
+			( row ) => row.querySelectorAll( 'td' )[ 2 ]
+		);
+		expect( ticketCells.map( ( cell ) => cell.textContent ) ).toEqual( [
+			'REF00201 Test payment',
+			'REF00202 Test payment',
+			'REF00101',
+			'REF00301',
+		] );
+		expect(
+			ticketCells.map(
+				( cell ) => cell.querySelectorAll( '.test-warning' ).length
+			)
+		).toEqual( [ 1, 1, 0, 0 ] );
+		// Readable in black and white: bold, bordered, no background color.
+		const style = doc.querySelector( 'style' ).textContent;
+		const rule = style.slice(
+			style.indexOf( '.test-warning {' ),
+			style.indexOf( '}', style.indexOf( '.test-warning {' ) )
+		);
+		expect( rule ).toContain( 'font-weight: 700' );
+		expect( rule ).toContain( 'border: 2px solid #111' );
+		expect( rule ).not.toContain( 'background' );
+	} );
+
+	it( 'repeats the warning in every printed section', async () => {
+		const manyOptions = Array.from( { length: 20 }, ( _, index ) => ( {
+			id: 100 + index,
+			name: `Extra ${ index + 1 }`,
+		} ) );
+		await renderSignups( {
+			rows: [ testPurchase ],
+			ticketOptions: manyOptions,
+		} );
+
+		const doc = print();
+		const tables = Array.from( doc.querySelectorAll( 'table' ) );
+		expect( tables.length ).toBeGreaterThan( 1 );
+		tables.forEach( ( table ) => {
+			const rows = Array.from( table.querySelectorAll( 'tbody tr' ) );
+			expect( rows ).toHaveLength( 2 );
+			rows.forEach( ( row ) => {
+				expect(
+					row.querySelector( '.test-warning' )?.textContent
+				).toBe( 'Test payment' );
+			} );
+		} );
+	} );
+} );
