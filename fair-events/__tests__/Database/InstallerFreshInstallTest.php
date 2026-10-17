@@ -56,6 +56,13 @@ class Installer_Fresh_Install_WPDB {
 	public $tables = array();
 
 	/**
+	 * CREATE TABLE statements dbDelta() applied, keyed by full table name.
+	 *
+	 * @var array<string, string>
+	 */
+	public $table_sql = array();
+
+	/**
 	 * Whether a legacy fair_event post exists.
 	 *
 	 * @var bool
@@ -110,7 +117,8 @@ class Installer_Fresh_Install_WPDB {
 	 */
 	public function db_delta( $sql ) {
 		if ( preg_match( '/CREATE TABLE (\S+)/', $sql, $matches ) ) {
-			$this->tables[ $matches[1] ] = true;
+			$this->tables[ $matches[1] ]    = true;
+			$this->table_sql[ $matches[1] ] = $sql;
 		}
 	}
 
@@ -136,6 +144,12 @@ class Installer_Fresh_Install_WPDB {
 		}
 
 		$this->data_queries[] = $prepared;
+
+		// The timing backfill's completeness check: the doubled table has no rows.
+		if ( 'SELECT COUNT(*) FROM %i WHERE timing_migrated = 0' === $prepared['query'] ) {
+			return '0';
+		}
+
 		return null;
 	}
 
@@ -158,6 +172,16 @@ class Installer_Fresh_Install_WPDB {
 	 */
 	public function get_results( $prepared ) {
 		$this->data_queries[] = $prepared;
+
+		// Columns dbDelta() created exist.
+		if ( is_array( $prepared ) && 0 === strpos( $prepared['query'], 'SHOW COLUMNS FROM %i LIKE %s' ) ) {
+			$sql    = $this->table_sql[ $prepared['args'][0] ] ?? '';
+			$column = stripslashes( $prepared['args'][1] );
+			if ( preg_match( '/^\s*' . preg_quote( $column, '/' ) . '\s/m', $sql ) ) {
+				return array( (object) array( 'Field' => $column ) );
+			}
+		}
+
 		return array();
 	}
 }
