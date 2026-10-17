@@ -7,6 +7,8 @@
 
 namespace FairEvents\Models;
 
+use FairEvents\Helpers\EventTiming;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -57,6 +59,34 @@ class EventDates {
 	 * @var bool
 	 */
 	public $all_day;
+
+	/**
+	 * Site-local start date (Y-m-d), or null for an undated row.
+	 *
+	 * @var string|null
+	 */
+	public $start_date;
+
+	/**
+	 * Site-local inclusive end date (Y-m-d); the start date for a single-day event.
+	 *
+	 * @var string|null
+	 */
+	public $end_date;
+
+	/**
+	 * Site-local start time (H:i:s), or null when not specified.
+	 *
+	 * @var string|null
+	 */
+	public $start_time;
+
+	/**
+	 * Site-local end time (H:i:s), or null when not specified.
+	 *
+	 * @var string|null
+	 */
+	public $end_time;
 
 	/**
 	 * Occurrence type (single, master, generated)
@@ -252,10 +282,58 @@ class EventDates {
 		$event_dates->capacity                 = isset( $result->capacity ) && null !== $result->capacity ? (int) $result->capacity : null;
 		$event_dates->address                  = isset( $result->address ) ? $result->address : null;
 		$event_dates->recurrence_anchor        = $result->recurrence_anchor ?? null;
+		$event_dates->set_timing( EventTiming::from_row( $result ) );
 
 		self::resolve_instance( $event_dates );
 
 		return $event_dates;
+	}
+
+	/**
+	 * Canonical timing of this event date (see EventTiming).
+	 *
+	 * @return array Canonical timing.
+	 */
+	public function get_timing() {
+		return array(
+			'start_date' => $this->start_date,
+			'end_date'   => $this->end_date,
+			'start_time' => $this->start_time,
+			'end_time'   => $this->end_time,
+			'all_day'    => (bool) $this->all_day,
+		);
+	}
+
+	/**
+	 * Set the canonical timing properties.
+	 *
+	 * @param array $timing Canonical timing.
+	 * @return void
+	 */
+	private function set_timing( array $timing ) {
+		$this->start_date = $timing['start_date'];
+		$this->end_date   = $timing['end_date'];
+		$this->start_time = $timing['start_time'];
+		$this->end_time   = $timing['end_time'];
+	}
+
+	/**
+	 * Timing column values for a write: canonical keys when `$data` has any
+	 * (besides all_day), otherwise its legacy start/end datetimes.
+	 *
+	 * @param array $data Write data.
+	 * @return array<string, mixed> Column values (see EventTiming::columns()).
+	 */
+	private static function timing_columns( array $data ) {
+		$canonical = array_intersect_key( $data, array_flip( EventTiming::KEYS ) );
+
+		if ( array_diff( array_keys( $canonical ), array( 'all_day' ) ) ) {
+			return EventTiming::columns( EventTiming::merge( EventTiming::undated(), $canonical ) );
+		}
+
+		return EventTiming::columns(
+			EventTiming::from_legacy( $data['start_datetime'] ?? null, $data['end_datetime'] ?? null, ! empty( $data['all_day'] ) )
+		);
 	}
 
 	/**
@@ -424,18 +502,24 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		$data = array(
-			'event_id'          => $event_id,
-			'start_datetime'    => $start,
-			'end_datetime'      => $end,
-			'all_day'           => $all_day ? 1 : 0,
-			'occurrence_type'   => $occurrence_type,
-			'master_id'         => $master_id,
-			'recurrence_anchor' => $recurrence_anchor,
-			'status'            => $status,
+		$data = array_merge(
+			array( 'event_id' => $event_id ),
+			self::timing_columns(
+				array(
+					'start_datetime' => $start,
+					'end_datetime'   => $end,
+					'all_day'        => $all_day,
+				)
+			),
+			array(
+				'occurrence_type'   => $occurrence_type,
+				'master_id'         => $master_id,
+				'recurrence_anchor' => $recurrence_anchor,
+				'status'            => $status,
+			)
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' );
+		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s', '%d', '%s', '%s' ) );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -476,19 +560,25 @@ class EventDates {
 			$recurrence_mode = empty( $rrule ) ? 'none' : 'rule';
 		}
 
-		$data = array(
-			'event_id'        => $event_id,
-			'start_datetime'  => $start,
-			'end_datetime'    => $end,
-			'all_day'         => $all_day ? 1 : 0,
-			'occurrence_type' => $occurrence_type,
-			'master_id'       => null,
-			'rrule'           => $rrule,
-			'recurrence_mode' => $recurrence_mode,
-			'link_type'       => 'post',
+		$data = array_merge(
+			array( 'event_id' => $event_id ),
+			self::timing_columns(
+				array(
+					'start_datetime' => $start,
+					'end_datetime'   => $end,
+					'all_day'        => $all_day,
+				)
+			),
+			array(
+				'occurrence_type' => $occurrence_type,
+				'master_id'       => null,
+				'rrule'           => $rrule,
+				'recurrence_mode' => $recurrence_mode,
+				'link_type'       => 'post',
+			)
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s' );
+		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s', '%d', '%s', '%s', '%s' ) );
 
 		if ( $existing ) {
 			$result = $wpdb->update(
@@ -516,13 +606,15 @@ class EventDates {
 	/**
 	 * Save event dates (dual-write to both table and postmeta)
 	 *
-	 * @param int    $event_id Event post ID.
-	 * @param string $start    Start datetime.
-	 * @param string $end      End datetime.
-	 * @param bool   $all_day  All day flag.
+	 * @param int        $event_id Event post ID.
+	 * @param string     $start    Start datetime.
+	 * @param string     $end      End datetime.
+	 * @param bool       $all_day  All day flag.
+	 * @param array|null $timing   Canonical timing (see EventTiming); when given,
+	 *                             it is saved instead of $start, $end and $all_day.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function save( $event_id, $start, $end, $all_day ) {
+	public static function save( $event_id, $start, $end, $all_day, $timing = null ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
@@ -530,15 +622,23 @@ class EventDates {
 		// Check if record exists.
 		$existing = self::get_by_event_id( $event_id );
 
-		$data = array(
-			'event_id'       => $event_id,
-			'start_datetime' => $start,
-			'end_datetime'   => $end,
-			'all_day'        => $all_day ? 1 : 0,
-			'link_type'      => 'post',
+		$timing_columns = is_array( $timing )
+			? EventTiming::columns( $timing )
+			: self::timing_columns(
+				array(
+					'start_datetime' => $start,
+					'end_datetime'   => $end,
+					'all_day'        => $all_day,
+				)
+			);
+
+		$data = array_merge(
+			array( 'event_id' => $event_id ),
+			$timing_columns,
+			array( 'link_type' => 'post' )
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s' );
+		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s' ) );
 
 		if ( $existing ) {
 			// Update existing record.
@@ -964,7 +1064,8 @@ class EventDates {
 	 * @return string SELECT ... FROM %i ed LEFT JOIN %i m ... clause (two %i placeholders).
 	 */
 	private static function inherited_select_sql() {
-		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day, ed.occurrence_type,
+		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day,
+			ed.start_date, ed.end_date, ed.start_time, ed.end_time, ed.timing_migrated, ed.occurrence_type,
 			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.category_selection_saved, ed.created_at, ed.updated_at,
 			COALESCE( m.publication_status, ed.publication_status ) AS publication_status,
 			COALESCE( ed.title, m.title ) AS title,
@@ -1041,7 +1142,11 @@ class EventDates {
 	/**
 	 * Create a standalone event date (external or unlinked)
 	 *
-	 * @param array $data Event data with keys: start_datetime, end_datetime, all_day, title, link_type, external_url, rrule.
+	 * Timing comes from the canonical keys (start_date, end_date, start_time,
+	 * end_time, all_day) when any is given, otherwise from the legacy
+	 * start_datetime, end_datetime and all_day.
+	 *
+	 * @param array $data Event data with timing keys plus title, link_type, external_url, rrule.
 	 * @return int|false The row ID on success, false on failure.
 	 */
 	public static function create_standalone( $data ) {
@@ -1049,22 +1154,22 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		$insert_data = array(
-			'event_id'        => null,
-			'start_datetime'  => $data['start_datetime'],
-			'end_datetime'    => $data['end_datetime'] ?? null,
-			'all_day'         => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
-			'occurrence_type' => $data['occurrence_type'] ?? 'single',
-			'master_id'       => $data['master_id'] ?? null,
-			'rrule'           => $data['rrule'] ?? null,
-			'title'           => $data['title'],
-			'external_url'    => $data['external_url'] ?? null,
-			'link_type'       => $data['link_type'],
-			'attendance_mode' => $data['attendance_mode'] ?? null,
-			'joining_link'    => $data['joining_link'] ?? null,
+		$insert_data = array_merge(
+			array( 'event_id' => null ),
+			self::timing_columns( $data ),
+			array(
+				'occurrence_type' => $data['occurrence_type'] ?? 'single',
+				'master_id'       => $data['master_id'] ?? null,
+				'rrule'           => $data['rrule'] ?? null,
+				'title'           => $data['title'],
+				'external_url'    => $data['external_url'] ?? null,
+				'link_type'       => $data['link_type'],
+				'attendance_mode' => $data['attendance_mode'] ?? null,
+				'joining_link'    => $data['joining_link'] ?? null,
+			)
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' );
+		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' ) );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 
@@ -1078,6 +1183,12 @@ class EventDates {
 	/**
 	 * Update event date fields by ID
 	 *
+	 * Timing fields are applied to the row's current timing: canonical keys
+	 * (see EventTiming::merge()) when `$data` has any besides all_day,
+	 * otherwise legacy start_datetime/end_datetime (see
+	 * EventTiming::merge_legacy()). Either way both column groups are
+	 * written, so they never disagree.
+	 *
 	 * @param int   $id   Event date row ID.
 	 * @param array $data Associative array of fields to update.
 	 * @return bool True on success, false on failure.
@@ -1087,11 +1198,39 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		$timing_keys = array_flip( array_merge( EventTiming::KEYS, EventTiming::LEGACY_KEYS ) );
+		if ( array_intersect_key( $data, $timing_keys ) ) {
+			$row = $wpdb->get_row(
+				$wpdb->prepare(
+					'SELECT * FROM %i WHERE id = %d LIMIT 1',
+					$table_name,
+					$id
+				)
+			);
+
+			if ( ! $row ) {
+				return false;
+			}
+
+			$canonical = array_intersect_key( $data, array_flip( EventTiming::KEYS ) );
+			$legacy    = array_intersect_key( $data, array_flip( array( 'start_datetime', 'end_datetime', 'all_day' ) ) );
+			$timing    = array_diff( array_keys( $canonical ), array( 'all_day' ) ) || ! array_diff( array_keys( $legacy ), array( 'all_day' ) )
+				? EventTiming::merge( EventTiming::from_row( $row ), $canonical )
+				: EventTiming::merge_legacy( EventTiming::from_row( $row ), $legacy );
+
+			$data = array_merge( array_diff_key( $data, $timing_keys ), EventTiming::columns( $timing ) );
+		}
+
 		$allowed_fields = array(
 			'event_id'           => '%d',
 			'start_datetime'     => '%s',
 			'end_datetime'       => '%s',
 			'all_day'            => '%d',
+			'start_date'         => '%s',
+			'end_date'           => '%s',
+			'start_time'         => '%s',
+			'end_time'           => '%s',
+			'timing_migrated'    => '%d',
 			'occurrence_type'    => '%s',
 			'master_id'          => '%d',
 			'rrule'              => '%s',
@@ -1351,26 +1490,26 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		$insert_data = array(
-			'event_id'          => $data['event_id'] ?? null,
-			'start_datetime'    => $data['start_datetime'],
-			'end_datetime'      => $data['end_datetime'] ?? null,
-			'all_day'           => isset( $data['all_day'] ) && $data['all_day'] ? 1 : 0,
-			'occurrence_type'   => 'generated',
-			'master_id'         => $data['master_id'],
-			'rrule'             => null,
-			'title'             => $data['title'] ?? null,
-			'external_url'      => $data['external_url'] ?? null,
-			'link_type'         => $data['link_type'] ?? null,
-			'attendance_mode'   => $data['attendance_mode'] ?? null,
-			'joining_link'      => $data['joining_link'] ?? null,
-			'venue_id'          => $data['venue_id'] ?? null,
-			'address'           => $data['address'] ?? null,
-			'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
-			'status'            => $status,
+		$insert_data = array_merge(
+			array( 'event_id' => $data['event_id'] ?? null ),
+			self::timing_columns( $data ),
+			array(
+				'occurrence_type'   => 'generated',
+				'master_id'         => $data['master_id'],
+				'rrule'             => null,
+				'title'             => $data['title'] ?? null,
+				'external_url'      => $data['external_url'] ?? null,
+				'link_type'         => $data['link_type'] ?? null,
+				'attendance_mode'   => $data['attendance_mode'] ?? null,
+				'joining_link'      => $data['joining_link'] ?? null,
+				'venue_id'          => $data['venue_id'] ?? null,
+				'address'           => $data['address'] ?? null,
+				'recurrence_anchor' => $data['recurrence_anchor'] ?? null,
+				'status'            => $status,
+			)
 		);
 
-		$format = array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
+		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ) );
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 

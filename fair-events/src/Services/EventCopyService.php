@@ -9,6 +9,7 @@ namespace FairEvents\Services;
 
 defined( 'WPINC' ) || die;
 
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Models\EventDates;
 use FairEvents\Settings\Settings;
 
@@ -34,7 +35,10 @@ class EventCopyService {
 			$source = $source->master_id ? EventDates::get_by_id( (int) $source->master_id ) : null;
 		}
 
-		if ( ! $source || ! in_array( $source->occurrence_type, array( 'single', 'master' ), true ) || ! $source->start_datetime ) {
+		// Copying still works on datetimes, so an event without a start time
+		// (or a multi-day event without an end time) would be copied with
+		// invented ones; refused until copying carries optional times (#1819).
+		if ( ! $source || ! in_array( $source->occurrence_type, array( 'single', 'master' ), true ) || ! $source->start_datetime || ! EventTiming::fits_legacy( $source->get_timing() ) ) {
 			return new \WP_Error( 'event_copy_unsupported', __( 'This event has a source state that cannot be copied.', 'fair-events' ) );
 		}
 

@@ -419,8 +419,15 @@ class Installer {
 			$addon_collaborators_removed = self::migrate_to_3_44_0();
 		}
 
+		// Only record 3.45.0 once every event date has its canonical timing, so
+		// an interrupted backfill resumes on the next maybe_upgrade().
+		$timing_backfilled = true;
+		if ( version_compare( $current_version, '3.45.0', '<' ) ) {
+			$timing_backfilled = self::migrate_to_3_45_0();
+		}
+
 		// Update database version.
-		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed ) );
+		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled ) );
 	}
 
 	/**
@@ -431,14 +438,18 @@ class Installer {
 	 *
 	 * @param bool $gallery_removed             Whether the 3.36.0 cleanup succeeded.
 	 * @param bool $addon_collaborators_removed Whether the 3.44.0 cleanup succeeded.
+	 * @param bool $timing_backfilled           Whether the 3.45.0 timing backfill completed.
 	 * @return string Database version.
 	 */
-	private static function version_to_record( $gallery_removed, $addon_collaborators_removed ) {
+	private static function version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled = true ) {
 		if ( ! $gallery_removed ) {
 			return '3.35.0';
 		}
 		if ( ! $addon_collaborators_removed ) {
 			return '3.43.0';
+		}
+		if ( ! $timing_backfilled ) {
+			return '3.44.0';
 		}
 		return Schema::DB_VERSION;
 	}
@@ -2341,6 +2352,65 @@ class Installer {
 				$wpdb->prefix . 'fair_events_ticket_option_collaborators'
 			)
 		);
+	}
+
+	/**
+	 * Rows the 3.45.0 timing backfill converts per query.
+	 */
+	const TIMING_BACKFILL_BATCH = 500;
+
+	/**
+	 * Migrate to version 3.45.0 - Canonical event timing (#1819).
+	 *
+	 * Fills `start_date`, `end_date`, `start_time` and `end_time` (added by
+	 * dbDelta) from the legacy datetime columns without any timezone
+	 * conversion. Timed rows keep their times, including genuine midnight;
+	 * all-day rows keep their dates and get no times; a row without an end
+	 * keeps its same-day meaning with no end time; undated rows stay
+	 * undated. Each row is marked `timing_migrated` in the same statement,
+	 * so a rerun only touches rows not converted yet and can never restore
+	 * a time that was cleared afterwards.
+	 *
+	 * @return bool True when no unconverted row remains.
+	 */
+	private static function migrate_to_3_45_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::column_exists( $table_name, 'timing_migrated' ) ) {
+			return false;
+		}
+
+		do {
+			$converted = $wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET
+						start_date = DATE( start_datetime ),
+						end_date = CASE WHEN start_datetime IS NULL THEN NULL WHEN end_datetime IS NULL THEN DATE( start_datetime ) ELSE DATE( end_datetime ) END,
+						start_time = CASE WHEN all_day = 1 OR start_datetime IS NULL THEN NULL ELSE TIME( start_datetime ) END,
+						end_time = CASE WHEN all_day = 1 OR start_datetime IS NULL OR end_datetime IS NULL THEN NULL ELSE TIME( end_datetime ) END,
+						timing_migrated = 1
+					WHERE timing_migrated = 0
+					LIMIT %d',
+					$table_name,
+					self::TIMING_BACKFILL_BATCH
+				)
+			);
+
+			if ( false === $converted ) {
+				return false;
+			}
+		} while ( $converted > 0 );
+
+		$remaining = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE timing_migrated = 0',
+				$table_name
+			)
+		);
+
+		return null !== $remaining && 0 === (int) $remaining;
 	}
 
 	/**
