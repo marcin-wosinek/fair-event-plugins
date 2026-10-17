@@ -266,4 +266,39 @@ class EventTranslationTest extends TestCase {
 
 		$this->assertSame( array( '5:fr' ), $GLOBALS['_fair_pll_get_post_calls'] );
 	}
+
+	/**
+	 * Translated posts of every distinct event are loaded with one bulk
+	 * call before resolving titles/urls, so many translated events don't
+	 * cost a lookup each. Untranslated and non-post occurrences add nothing.
+	 *
+	 * @runInSeparateProcess
+	 */
+	public function test_primes_translated_posts_once_for_all_events() {
+		require_once __DIR__ . '/../pll-stubs.php';
+		require_once __DIR__ . '/../prime-caches-stub.php';
+
+		$GLOBALS['_fair_pll_current_language']         = 'fr';
+		$GLOBALS['_fair_pll_translated_posts']['5:fr'] = 6;
+		$GLOBALS['_fair_pll_translated_posts']['7:fr'] = 8;
+
+		$result = EventTranslation::translate_occurrences(
+			array(
+				$this->occurrence( array( 'start' => '2026-08-11 10:00:00' ) ),
+				$this->occurrence( array( 'start' => '2026-08-18 10:00:00' ) ),
+				$this->occurrence( array( 'event_id' => 7 ) ),
+				$this->occurrence( array( 'event_id' => 9 ) ),
+				$this->occurrence(
+					array(
+						'event_id' => 11,
+						'source'   => 'standalone',
+					)
+				),
+			)
+		);
+
+		$this->assertSame( array( array( 6, 8 ) ), $GLOBALS['_fair_prime_post_caches_calls'] );
+		$this->assertSame( array( '5:fr', '7:fr', '9:fr' ), $GLOBALS['_fair_pll_get_post_calls'] );
+		$this->assertSame( array( 'Post 6', 'Post 6', 'Post 8', 'Post 5', 'Post 5' ), array_column( $result, 'title' ) );
+	}
 }

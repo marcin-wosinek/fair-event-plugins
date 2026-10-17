@@ -166,6 +166,14 @@ class EventDates {
 	public $recurrence_anchor;
 
 	/**
+	 * Junction-linked post IDs loaded in bulk by preload_linked_post_ids(),
+	 * or null when they haven't been, so get_primary_linked_post_id() queries.
+	 *
+	 * @var int[]|null
+	 */
+	private $preloaded_linked_post_ids = null;
+
+	/**
 	 * Get event dates by event ID
 	 *
 	 * Checks the direct event_id column first (primary post), then falls back
@@ -272,7 +280,7 @@ class EventDates {
 			return;
 		}
 
-		if ( ! isset( self::$master_cache[ $event_dates->master_id ] ) ) {
+		if ( ! array_key_exists( $event_dates->master_id, self::$master_cache ) ) {
 			self::$master_cache[ $event_dates->master_id ] = self::get_by_id( $event_dates->master_id );
 		}
 
@@ -289,6 +297,48 @@ class EventDates {
 
 		// A series has one publication status, held by its master.
 		$event_dates->publication_status = $master->publication_status;
+	}
+
+	/**
+	 * Load the given master rows into the master cache with one query, so
+	 * resolving many instances doesn't look each master up separately. IDs
+	 * already cached are skipped; IDs with no row are cached as missing.
+	 *
+	 * @param array $master_ids Master event-date IDs (falsy values are ignored).
+	 * @return void
+	 */
+	public static function prime_master_cache( array $master_ids ) {
+		global $wpdb;
+
+		$ids = array();
+		foreach ( $master_ids as $master_id ) {
+			$master_id = (int) $master_id;
+			if ( $master_id && ! array_key_exists( $master_id, self::$master_cache ) ) {
+				$ids[ $master_id ] = $master_id;
+			}
+		}
+
+		if ( empty( $ids ) ) {
+			return;
+		}
+
+		$ids        = array_values( $ids );
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')',
+				array_merge( array( $table_name ), $ids )
+			)
+		);
+
+		foreach ( $ids as $id ) {
+			self::$master_cache[ $id ] = null;
+		}
+
+		foreach ( (array) $results as $result ) {
+			self::$master_cache[ (int) $result->id ] = self::hydrate( $result );
+		}
 	}
 
 	/**
@@ -748,7 +798,7 @@ class EventDates {
 			return null;
 		}
 
-		if ( ! isset( self::$master_cache[ $this->master_id ] ) ) {
+		if ( ! array_key_exists( $this->master_id, self::$master_cache ) ) {
 			self::$master_cache[ $this->master_id ] = self::get_by_id( $this->master_id );
 		}
 
@@ -766,10 +816,76 @@ class EventDates {
 	 * @return int|null Post ID, or null if no linked post.
 	 */
 	public function get_primary_linked_post_id() {
-		$lookup_id       = ( 'generated' === $this->occurrence_type && $this->master_id ) ? $this->master_id : $this->id;
-		$linked_post_ids = self::get_linked_post_ids( $lookup_id );
+		$linked_post_ids = null !== $this->preloaded_linked_post_ids
+			? $this->preloaded_linked_post_ids
+			: self::get_linked_post_ids( $this->get_link_owner_id() );
 
 		return ! empty( $linked_post_ids ) ? $linked_post_ids[0] : null;
+	}
+
+	/**
+	 * The event date whose junction-table links apply to this row: the
+	 * master for a generated occurrence, the row itself otherwise.
+	 *
+	 * @return int Event date ID.
+	 */
+	private function get_link_owner_id() {
+		return ( 'generated' === $this->occurrence_type && $this->master_id ) ? (int) $this->master_id : (int) $this->id;
+	}
+
+	/**
+	 * Load the junction-linked posts of many rows with one query, so
+	 * get_primary_linked_post_id() (and the display/event-page URLs built on
+	 * it) no longer query per row. Rows without links are marked as having
+	 * none.
+	 *
+	 * @param EventDates[] $rows Event date rows.
+	 * @return void
+	 */
+	public static function preload_linked_post_ids( array $rows ) {
+		$owner_ids = array();
+		foreach ( $rows as $row ) {
+			$owner_ids[] = $row->get_link_owner_id();
+		}
+
+		$linked = self::get_linked_post_ids_for( $owner_ids );
+
+		foreach ( $rows as $row ) {
+			$row->preloaded_linked_post_ids = $linked[ $row->get_link_owner_id() ] ?? array();
+		}
+	}
+
+	/**
+	 * Get the linked post IDs of many event dates with one query, in the
+	 * same per-date order as get_linked_post_ids().
+	 *
+	 * @param int[] $event_date_ids Event date IDs.
+	 * @return array<int, int[]> Post IDs keyed by event date ID; dates without
+	 *                           links are left out.
+	 */
+	public static function get_linked_post_ids_for( array $event_date_ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $event_date_ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$table_name = $wpdb->prefix . 'fair_event_date_posts';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT event_date_id, post_id FROM %i WHERE event_date_id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ') ORDER BY event_date_id ASC, post_id ASC',
+				array_merge( array( $table_name ), $ids )
+			)
+		);
+
+		$linked = array();
+		foreach ( (array) $results as $result ) {
+			$linked[ (int) $result->event_date_id ][] = (int) $result->post_id;
+		}
+
+		return $linked;
 	}
 
 	/**
@@ -825,6 +941,10 @@ class EventDates {
 		if ( ! $results ) {
 			return array();
 		}
+
+		// The query already applies inherited fields; hydrate() still needs
+		// each master, so load them all at once.
+		self::prime_master_cache( wp_list_pluck( $results, 'master_id' ) );
 
 		$dates = array();
 		foreach ( $results as $result ) {
@@ -1305,6 +1425,98 @@ class EventDates {
 		}
 
 		return array();
+	}
+
+	/**
+	 * Get the complete category selection of many event dates at once.
+	 *
+	 * Follows get_category_ids()'s rules — a saved (possibly empty)
+	 * selection, otherwise the master's, otherwise the linked post's
+	 * categories — with a fixed number of queries for the whole set. Unlike
+	 * get_category_ids(), it is read-only: the post-category fallback is
+	 * returned without being saved for the row. Post terms are read through
+	 * the object term cache, so callers prime it for the linked posts first.
+	 *
+	 * @param EventDates[] $rows Event date rows, as hydrated from the table.
+	 * @return array<int, int[]> Term IDs keyed by row ID.
+	 */
+	public static function get_category_ids_for_rows( array $rows ) {
+		global $wpdb;
+
+		$by_id = array();
+		foreach ( $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+
+		// Walk up the master chain, one query per level.
+		$pending = $rows;
+		while ( ! empty( $pending ) ) {
+			$master_ids = array();
+			foreach ( $pending as $row ) {
+				if ( $row->master_id && ! isset( $by_id[ (int) $row->master_id ] ) ) {
+					$master_ids[ (int) $row->master_id ] = (int) $row->master_id;
+				}
+			}
+
+			self::prime_master_cache( $master_ids );
+
+			$pending = array();
+			foreach ( $master_ids as $master_id ) {
+				if ( ! empty( self::$master_cache[ $master_id ] ) ) {
+					$by_id[ $master_id ] = self::$master_cache[ $master_id ];
+					$pending[]           = self::$master_cache[ $master_id ];
+				}
+			}
+		}
+
+		$saved_term_ids = array();
+		if ( ! empty( $by_id ) ) {
+			$ids        = array_keys( $by_id );
+			$table_name = $wpdb->prefix . 'fair_event_date_categories';
+
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT event_date_id, term_id FROM %i WHERE event_date_id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ') ORDER BY event_date_id ASC, term_id ASC',
+					array_merge( array( $table_name ), $ids )
+				)
+			);
+
+			foreach ( (array) $results as $result ) {
+				$saved_term_ids[ (int) $result->event_date_id ][] = (int) $result->term_id;
+			}
+		}
+
+		$resolve = static function ( $id ) use ( &$resolve, $by_id, $saved_term_ids ) {
+			if ( ! isset( $by_id[ $id ] ) ) {
+				return array();
+			}
+
+			$row = $by_id[ $id ];
+
+			if ( $row->category_selection_saved || ! empty( $saved_term_ids[ $id ] ) ) {
+				return $saved_term_ids[ $id ] ?? array();
+			}
+
+			if ( $row->master_id ) {
+				return $resolve( (int) $row->master_id );
+			}
+
+			if ( $row->event_id ) {
+				$terms = get_the_terms( $row->event_id, 'category' );
+				if ( is_array( $terms ) ) {
+					return array_map( 'intval', wp_list_pluck( $terms, 'term_id' ) );
+				}
+			}
+
+			return array();
+		};
+
+		$category_ids = array();
+		foreach ( $rows as $row ) {
+			$category_ids[ (int) $row->id ] = $resolve( (int) $row->id );
+		}
+
+		return $category_ids;
 	}
 
 	/**

@@ -32,13 +32,16 @@ class EventLocation {
 	 *
 	 * @param EventDates $event_date Event date object.
 	 * @param int|null   $post_id    Linked post ID, or null for standalone events.
+	 * @param array|null $venues     Venues already loaded in bulk (see
+	 *                               Venue::get_by_ids()), keyed by ID, or
+	 *                               null to look the venue up.
 	 * @return array|null Neutral location shape (keys: mode, name, address,
 	 *                     latitude, longitude, joining_url — all but `mode`
 	 *                     optional), or null when nothing resolves.
 	 */
-	public static function resolve( EventDates $event_date, $post_id ) {
+	public static function resolve( EventDates $event_date, $post_id, $venues = null ) {
 		$mode     = $event_date->attendance_mode ?? 'in_person';
-		$physical = self::resolve_physical( $event_date, $post_id );
+		$physical = self::resolve_physical( $event_date, $post_id, $venues );
 
 		$location = array( 'mode' => $mode );
 
@@ -67,13 +70,16 @@ class EventLocation {
 	 *
 	 * @param EventDates $event_date Event date object.
 	 * @param int|null   $post_id    Linked post ID, or null for standalone events.
+	 * @param array|null $venues     Venues loaded in bulk, keyed by ID, or null.
 	 * @return array|null Physical location shape (keys: name, address,
 	 *                     latitude, longitude), or null when nothing resolves.
 	 */
-	private static function resolve_physical( EventDates $event_date, $post_id ) {
+	private static function resolve_physical( EventDates $event_date, $post_id, $venues = null ) {
 		// 1. Venue.
 		if ( ! empty( $event_date->venue_id ) ) {
-			$venue = \FairEvents\Models\Venue::get_by_id( $event_date->venue_id );
+			$venue = is_array( $venues ) && array_key_exists( (int) $event_date->venue_id, $venues )
+				? $venues[ (int) $event_date->venue_id ]
+				: \FairEvents\Models\Venue::get_by_id( $event_date->venue_id );
 			if ( $venue ) {
 				$location = array( 'name' => $venue->name );
 

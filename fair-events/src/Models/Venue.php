@@ -123,6 +123,38 @@ class Venue {
 	}
 
 	/**
+	 * Get many venues by ID with one query.
+	 *
+	 * @param int[] $ids Venue IDs.
+	 * @return array<int, Venue|null> Venues keyed by every requested ID, null
+	 *                                where no venue exists.
+	 */
+	public static function get_by_ids( array $ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$table_name = self::get_table_name();
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')',
+				array_merge( array( $table_name ), $ids )
+			)
+		);
+
+		$venues = array_fill_keys( $ids, null );
+		foreach ( (array) $results as $result ) {
+			$venues[ (int) $result->id ] = self::hydrate( $result );
+		}
+
+		return $venues;
+	}
+
+	/**
 	 * Get all venues
 	 *
 	 * @param string $order_by Column to order by (default 'name').
