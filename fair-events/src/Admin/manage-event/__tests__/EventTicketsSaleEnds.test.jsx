@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventTickets from '../EventTickets.js';
 
@@ -42,21 +42,29 @@ beforeEach( () => {
 
 afterEach( () => jest.clearAllMocks() );
 
-function renderEditor( onDataRef = null ) {
-	const result = render(
-		<EventTickets
-			eventDateId={ 99 }
-			initialData={ initialData }
-			onSaveRef={ { current: null } }
-			onDataRef={ onDataRef }
-		/>
-	);
+async function renderEditor( onSaveRef = { current: null } ) {
+	apiFetch.mockImplementationOnce( () => Promise.resolve( initialData ) );
+	let result;
+	await act( async () => {
+		result = render(
+			<EventTickets eventDateId={ 99 } onSaveRef={ onSaveRef } />
+		);
+	} );
 	fireEvent.click( screen.getByRole( 'button', { name: /Sale Periods/i } ) );
 	return result.container.querySelectorAll( 'input[type="date"]' );
 }
 
-it( 'shows adjacent periods as distinct inclusive ranges', () => {
-	const inputs = renderEditor();
+function savePayload( ref ) {
+	act( () => {
+		ref.current();
+	} );
+	return apiFetch.mock.calls.find(
+		( [ request ] ) => request.method === 'PUT'
+	)[ 0 ].data;
+}
+
+it( 'shows adjacent periods as distinct inclusive ranges', async () => {
+	const inputs = await renderEditor();
 	expect( Array.from( inputs ).map( ( input ) => input.value ) ).toEqual( [
 		'2026-08-03',
 		'2026-08-31',
@@ -67,31 +75,31 @@ it( 'shows adjacent periods as distinct inclusive ranges', () => {
 	] );
 } );
 
-it( 'serializes an edited Until date as the following midnight', () => {
-	const onDataRef = { current: null };
-	const inputs = renderEditor( onDataRef );
+it( 'serializes an edited Until date as the following midnight', async () => {
+	const onSaveRef = { current: null };
+	const inputs = await renderEditor( onSaveRef );
 	fireEvent.change( inputs[ 3 ], { target: { value: '2026-09-27' } } );
-	const periods = onDataRef.current().sale_periods;
+	const periods = savePayload( onSaveRef ).sale_periods;
 	expect( periods[ 1 ].sale_end ).toBe( '2026-09-28 00:00:00' );
 	expect( periods[ 2 ].sale_start ).toBe( '2026-09-28 00:00:00' );
 } );
 
-it( 'changing From updates the previous displayed Until date', () => {
-	const inputs = renderEditor();
+it( 'changing From updates the previous displayed Until date', async () => {
+	const inputs = await renderEditor();
 	fireEvent.change( inputs[ 2 ], { target: { value: '2026-09-05' } } );
 	expect( inputs[ 1 ] ).toHaveValue( '2026-09-04' );
 } );
 
-it( 'preserves untouched canonical timestamps', () => {
-	const onDataRef = { current: null };
-	renderEditor( onDataRef );
+it( 'preserves untouched canonical timestamps', async () => {
+	const onSaveRef = { current: null };
+	await renderEditor( onSaveRef );
 	expect(
-		onDataRef
-			.current()
-			.sale_periods.map( ( { sale_start, sale_end } ) => ( {
+		savePayload( onSaveRef ).sale_periods.map(
+			( { sale_start, sale_end } ) => ( {
 				sale_start,
 				sale_end,
-			} ) )
+			} )
+		)
 	).toEqual(
 		initialData.sale_periods.map( ( { sale_start, sale_end } ) => ( {
 			sale_start,

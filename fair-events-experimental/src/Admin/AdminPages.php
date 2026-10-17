@@ -2,7 +2,7 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental admin pages (compare events, sources, event tools) as
+ * Registers the experimental admin pages (compare events and sources) as
  * submenus under the fair-events-calendar menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -99,31 +99,6 @@ class AdminPages {
 			);
 
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Event Feed', 'fair-events-experimental' ) );
-		}
-
-		// Advanced event pages — `event-tools` bundle (hidden).
-		if ( \FairEventsExperimental\Core\Features::is_enabled( 'event-tools' ) ) {
-			$this->page_hooks['fair-events-duplicate-event'] = add_submenu_page(
-				'',
-				__( 'Duplicate Event', 'fair-events-experimental' ),
-				__( 'Duplicate Event', 'fair-events-experimental' ),
-				'edit_posts',
-				'fair-events-duplicate-event',
-				array( $this, 'render_duplicate_event_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-duplicate-event'], __( 'Duplicate Event', 'fair-events-experimental' ) );
-
-			$this->page_hooks['fair-events-merge-event'] = add_submenu_page(
-				'',
-				__( 'Merge Event', 'fair-events-experimental' ),
-				__( 'Merge Event', 'fair-events-experimental' ),
-				'edit_posts',
-				'fair-events-merge-event',
-				array( $this, 'render_merge_event_page' )
-			);
-
-			$this->set_hidden_page_title( $this->page_hooks['fair-events-merge-event'], __( 'Merge Event', 'fair-events-experimental' ) );
 		}
 	}
 
@@ -261,65 +236,6 @@ class AdminPages {
 				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				break;
 
-			case 'fair-events-duplicate-event':
-				$asset_file = include $exp_dir . 'build/admin/duplicate-event/index.asset.php';
-				wp_enqueue_script( 'fair-events-duplicate-event', $exp_url . 'build/admin/duplicate-event/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
-				$localized     = array(
-					'eventDateId'     => $event_date_id,
-					'manageEventUrl'  => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					// Mirrors fair-events' own manage-event localization so the
-					// wizard's Tickets step can gate itself the same way.
-					'enabledFeatures' => apply_filters( 'fair_events_enabled_features_map', \FairEvents\Core\Features::public_map() ),
-				);
-				if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-					$localized['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
-				}
-				wp_localize_script( 'fair-events-duplicate-event', 'fairEventsDuplicateEventData', $localized );
-
-				// `connectorActive` is always present so the ported ticket editor
-				// can tell "connector plugin missing" apart from "installed but
-				// unconfigured", mirroring fair-events' own manage-event page.
-				$connector_active        = class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
-				$payments_connector_data = array(
-					'currency'        => get_option( 'fair_payment_currency', 'EUR' ),
-					'connectorActive' => $connector_active,
-				);
-				if ( $connector_active ) {
-					$payments_connector_data['paymentConfigured'] = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
-					$payments_connector_data['settingsUrl']       = admin_url( 'admin.php?page=fair-payments-connector-settings' );
-				}
-				wp_localize_script( 'fair-events-duplicate-event', 'fairPaymentsConnector', $payments_connector_data );
-
-				// The ported ticket editor reads the site-today default from this
-				// global regardless of which page it's mounted on.
-				wp_localize_script(
-					'fair-events-duplicate-event',
-					'fairEventsManageEventData',
-					array( 'siteToday' => wp_date( 'Y-m-d' ) )
-				);
-
-				wp_set_script_translations( 'fair-events-duplicate-event', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
-
-			case 'fair-events-merge-event':
-				$asset_file = include $exp_dir . 'build/admin/merge-event/index.asset.php';
-				wp_enqueue_script( 'fair-events-merge-event', $exp_url . 'build/admin/merge-event/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$event_date_id = isset( $_GET['event_date_id'] ) ? absint( $_GET['event_date_id'] ) : 0;
-				wp_localize_script(
-					'fair-events-merge-event',
-					'fairEventsMergeEventData',
-					array(
-						'eventDateId'    => $event_date_id,
-						'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					)
-				);
-				wp_set_script_translations( 'fair-events-merge-event', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
-				break;
 		}
 	}
 
@@ -404,28 +320,6 @@ class AdminPages {
 	public function render_source_view_page() {
 		?>
 		<div id="fair-events-source-view-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render duplicate event page
-	 *
-	 * @return void
-	 */
-	public function render_duplicate_event_page() {
-		?>
-		<div id="fair-events-duplicate-event-root"></div>
-		<?php
-	}
-
-	/**
-	 * Render merge event page
-	 *
-	 * @return void
-	 */
-	public function render_merge_event_page() {
-		?>
-		<div id="fair-events-merge-event-root"></div>
 		<?php
 	}
 }

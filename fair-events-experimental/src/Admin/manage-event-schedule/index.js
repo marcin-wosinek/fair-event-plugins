@@ -2,8 +2,7 @@
  * Manage Event Schedule tab - Entry Point
  *
  * Registers the Schedule tab with the fair-events Manage Event page via a
- * filter. Its own script, so it does not depend on the Duplicate/Merge
- * feature bundle.
+ * filter. It loads independently of the optional feature bundles.
  *
  * @package FairEventsExperimental
  */

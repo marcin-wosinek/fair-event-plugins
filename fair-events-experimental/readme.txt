@@ -8,7 +8,7 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Sources, group rules, schedules, duplicate/merge tools, comparisons and optional Meta conversions. Requires Fair Events.
+Sources, group rules, schedules, comparisons and optional Meta conversions. Requires Fair Events.
 
 == Description ==
 
@@ -16,12 +16,11 @@ Fair Events Experimental is a companion requiring Fair Events. Core Fair Events 
 
 * **Event feeds:** Configure event feeds combining local categories, external iCal feeds and Fair Events JSON feeds, preview them, and share feed-specific ICS subscriptions. Parsing and aggregation are provided by Fair Events.
 * **Group pricing and permissions:** Apply group discount and signup visibility rules using Fair Audience group and participant data.
-* **Event tools:** Duplicate events through a configurable wizard or preview and merge event dates, including linked data choices.
 * **Workshop/activity schedules:** Edit schedule rows and booking state on Manage Event. Storage, API and booking enforcement are provided by core Fair Events ticketing.
 * **Event comparisons:** Compare ticket-sales and revenue timelines for two occurrences and download chart images. Requires Fair Audience statistics.
 * **Optional Meta conversions:** Report consented checkout and purchase measurements, and clicks on event-page calendar and ticket buttons. Disabled by default; requires Fair Payments Connector and configured Meta credentials.
 
-Sources, group rules and event tools have feature toggles enabled by default. Meta conversions are opt-in. Visitor proposal submission has an API, but the public form is currently unavailable. Scheduled event mailings are supplied by Fair Audience Experimental.
+Sources and group rules have feature toggles enabled by default. Meta conversions are opt-in. Visitor proposal submission has an API, but the public form is currently unavailable. Scheduled event mailings are supplied by Fair Audience Experimental.
 
 When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, and transaction identifier to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
 

@@ -115,8 +115,6 @@ export const duplicateOption = ( items, index ) => {
 export default function EventTickets( {
 	eventDateId,
 	onSaveRef,
-	initialData,
-	onDataRef,
 	startDatetime,
 	endDatetime: endDatetimeProp,
 	lastOccurrenceDatetime,
@@ -145,7 +143,7 @@ export default function EventTickets( {
 		schedule_enabled: false,
 	} );
 	const [ options, setOptions ] = useState( [] );
-	const [ loading, setLoading ] = useState( ! initialData );
+	const [ loading, setLoading ] = useState( true );
 	const [ saving, setSaving ] = useState( false );
 	const [ importing, setImporting ] = useState( false );
 	// The file awaiting confirmation. Kept until the dialog closes so a failed
@@ -293,12 +291,8 @@ export default function EventTickets( {
 	}, [ eventDateId, populateFromData, onSavedSettingsChange ] );
 
 	useEffect( () => {
-		if ( initialData ) {
-			populateFromData( initialData );
-		} else {
-			loadTickets();
-		}
-	}, [ initialData, loadTickets, populateFromData ] );
+		loadTickets();
+	}, [ loadTickets ] );
 
 	useEffect( () => {
 		apiFetch( { path: '/fair-audience/v1/groups' } )
@@ -911,7 +905,7 @@ export default function EventTickets( {
 		return prices[ key ] || { price: '', capacity: '', enabled: true };
 	};
 
-	// Full save payload — shared by handleSave, the onDataRef consumer, and
+	// Full save payload — shared by handleSave and
 	// the dirty-state snapshot comparison.
 	const buildSavePayload = () => {
 		const pricesArray = [];
@@ -954,12 +948,6 @@ export default function EventTickets( {
 			options: options.map( ( o, i ) => serializeOptionForSave( o, i ) ),
 		};
 	};
-
-	useEffect( () => {
-		if ( onDataRef ) {
-			onDataRef.current = buildSavePayload;
-		}
-	} );
 
 	// Re-baseline the snapshot whenever populateFromData() runs (initial load
 	// or a fresh save). Gated on loadGen — a state value set in the same
@@ -1060,14 +1048,6 @@ export default function EventTickets( {
 	const scheduleAvailable =
 		!! window.fairEventsManageEventData?.enabledFeatures?.schedule;
 
-	// Controlled mode (initialData + onDataRef, e.g. the Duplicate Event
-	// wizard): the caller owns fetch/save against its own event lifecycle, so
-	// this component's internal PUT-to-`eventDateId` save and JSON import
-	// (both of which need a real, already-created event) must stay hidden.
-	// Self-load/self-save mode (eventDateId alone, e.g. Manage Event) keeps
-	// both.
-	const controlledMode = !! onDataRef;
-
 	// Display-only effective boundaries: an unset first start resolves to
 	// site-local today (while still before its end) and an unset last end
 	// resolves to the day after the event/series' final active occurrence —
@@ -1167,16 +1147,14 @@ export default function EventTickets( {
 						) }
 					</Notice>
 				) ) }
-			{ ! controlledMode && (
-				<Button
-					variant="primary"
-					onClick={ handleSave }
-					isBusy={ saving }
-					disabled={ saving || hasActivityRuleErrors }
-				>
-					{ __( 'Save tickets', 'fair-events' ) }
-				</Button>
-			) }
+			<Button
+				variant="primary"
+				onClick={ handleSave }
+				isBusy={ saving }
+				disabled={ saving || hasActivityRuleErrors }
+			>
+				{ __( 'Save tickets', 'fair-events' ) }
+			</Button>
 			<input
 				ref={ fileInputRef }
 				type="file"
@@ -1655,20 +1633,18 @@ export default function EventTickets( {
 										'fair-events'
 									) }
 								</MenuItem>
-								{ ! controlledMode && (
-									<MenuItem
-										onClick={ () => {
-											fileInputRef.current?.click();
-											onClose();
-										} }
-										disabled={ importing || saving }
-									>
-										{ __(
-											'Import ticket settings',
-											'fair-events'
-										) }
-									</MenuItem>
-								) }
+								<MenuItem
+									onClick={ () => {
+										fileInputRef.current?.click();
+										onClose();
+									} }
+									disabled={ importing || saving }
+								>
+									{ __(
+										'Import ticket settings',
+										'fair-events'
+									) }
+								</MenuItem>
 							</MenuGroup>
 						) }
 					</DropdownMenu>

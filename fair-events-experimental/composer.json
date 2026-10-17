@@ -1,6 +1,6 @@
 {
 	"name": "fair-event-plugins/fair-events-experimental",
-	"description": "Event sources, group pricing, schedule editing, duplication, merging, comparisons and optional Meta conversions for Fair Events.",
+	"description": "Event sources, group pricing, schedule editing, comparisons and optional Meta conversions for Fair Events.",
 	"type": "wordpress-plugin",
 	"license": "GPL-3.0-or-later",
 	"authors": [

@@ -313,14 +313,14 @@ class EventCopyService {
 
 		$location = get_post_meta( $source->ID, 'event_location', true );
 		if ( '' !== $location && false === update_post_meta( $new_id, 'event_location', $location ) ) {
-			wp_delete_post( $new_id, true );
+			$this->cleanup( 0, $new_id );
 			return 0;
 		}
 
 		if ( post_type_supports( $source->post_type, 'thumbnail' ) ) {
 			$thumbnail_id = get_post_thumbnail_id( $source->ID );
 			if ( $thumbnail_id && ! set_post_thumbnail( $new_id, $thumbnail_id ) ) {
-				wp_delete_post( $new_id, true );
+				$this->cleanup( 0, $new_id );
 				return 0;
 			}
 		}
@@ -328,11 +328,11 @@ class EventCopyService {
 		foreach ( get_object_taxonomies( $source->post_type ) as $taxonomy ) {
 			$terms = wp_get_object_terms( $source->ID, $taxonomy, array( 'fields' => 'ids' ) );
 			if ( is_wp_error( $terms ) ) {
-				wp_delete_post( $new_id, true );
+				$this->cleanup( 0, $new_id );
 				return 0;
 			}
 			if ( ! empty( $terms ) && is_wp_error( wp_set_object_terms( $new_id, $terms, $taxonomy ) ) ) {
-				wp_delete_post( $new_id, true );
+				$this->cleanup( 0, $new_id );
 				return 0;
 			}
 		}
@@ -405,6 +405,13 @@ class EventCopyService {
 	 * @return void
 	 */
 	private function cleanup( $event_date_id, $post_id ) {
+		// Inserting a fair_event post can ensure an undated event row before
+		// the copy reaches save_or_update_master(). Remove that row too when
+		// a post-copy operation or the first checkpoint fails.
+		if ( ! $event_date_id && $post_id ) {
+			$ensured       = EventDates::get_by_event_id( $post_id );
+			$event_date_id = $ensured ? (int) $ensured->id : 0;
+		}
 		if ( $event_date_id ) {
 			( new EventTicketConfigurationCopier() )->cleanup( $event_date_id );
 			EventDates::delete_by_id( $event_date_id );

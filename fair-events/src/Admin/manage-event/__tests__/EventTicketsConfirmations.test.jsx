@@ -83,18 +83,22 @@ afterEach( () => {
 	jest.clearAllMocks();
 } );
 
-const renderTickets = ( props = {} ) =>
-	render(
-		<EventTickets
-			eventDateId={ 99 }
-			onSaveRef={ { current: null } }
-			initialData={ emptyData }
-			onDataRef={ null }
-			eventTitle="Summer Jam"
-			eventDateLabel="July 1, 2026 6:00 pm"
-			{ ...props }
-		/>
-	);
+const renderTickets = async ( { initialData = emptyData, ...props } = {} ) => {
+	apiFetch.mockImplementationOnce( () => Promise.resolve( initialData ) );
+	let view;
+	await act( async () => {
+		view = render(
+			<EventTickets
+				eventDateId={ 99 }
+				onSaveRef={ { current: null } }
+				eventTitle="Summer Jam"
+				eventDateLabel="July 1, 2026 6:00 pm"
+				{ ...props }
+			/>
+		);
+	} );
+	return view;
+};
 
 const exportFile = ( content = { type: 'fair-events-tickets' } ) => {
 	const text =
@@ -128,7 +132,7 @@ const importButton = () =>
 
 describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 	it( 'names the event and the file, and explains what the import replaces', async () => {
-		const { container } = renderTickets();
+		const { container } = await renderTickets();
 
 		const dialog = await chooseFile( container );
 
@@ -146,7 +150,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 	} );
 
 	it( 'warns that unsaved ticket changes are replaced too', async () => {
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: { ...emptyData, ticket_types: [ ticketType ] },
 		} );
 		fireEvent.change( screen.getByDisplayValue( 'General' ), {
@@ -162,7 +166,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 
 	it( 'cancelling imports nothing and keeps unsaved edits', async () => {
 		const onDirtyChange = jest.fn();
-		const { container } = renderTickets( {
+		const { container } = await renderTickets( {
 			initialData: { ...emptyData, ticket_types: [ ticketType ] },
 			onDirtyChange,
 		} );
@@ -192,7 +196,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 					finishImport = resolve;
 				} )
 		);
-		const { container } = renderTickets();
+		const { container } = await renderTickets();
 
 		await chooseFile( container );
 		const confirm = importButton();
@@ -237,7 +241,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 			} )
 			.mockResolvedValueOnce( importedData );
 		mockImport( handler );
-		const { container } = renderTickets();
+		const { container } = await renderTickets();
 
 		const dialog = await chooseFile( container );
 		fireEvent.click( importButton() );
@@ -265,7 +269,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 		mockImport( () =>
 			Promise.reject( { message: 'Server error', data: { status: 500 } } )
 		);
-		const { container } = renderTickets();
+		const { container } = await renderTickets();
 
 		const dialog = await chooseFile( container );
 		fireEvent.click( importButton() );
@@ -282,7 +286,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 	} );
 
 	it( 'rejects a file that is not a ticket export without sending it', async () => {
-		const { container } = renderTickets();
+		const { container } = await renderTickets();
 
 		const dialog = await chooseFile(
 			container,
@@ -300,8 +304,11 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 } );
 
 describe( 'EventTickets — merge sale periods confirmation (#1772)', () => {
-	const openMergeDialog = ( props = {} ) => {
-		const view = renderTickets( { initialData: twoPeriods, ...props } );
+	const openMergeDialog = async ( props = {} ) => {
+		const view = await renderTickets( {
+			initialData: twoPeriods,
+			...props,
+		} );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /More options/i } )
 		);
@@ -318,8 +325,8 @@ describe( 'EventTickets — merge sale periods confirmation (#1772)', () => {
 		};
 	};
 
-	it( 'names the event and says which prices are kept and that a save is still needed', () => {
-		const { dialog } = openMergeDialog();
+	it( 'names the event and says which prices are kept and that a save is still needed', async () => {
+		const { dialog } = await openMergeDialog();
 
 		expect( dialog ).toHaveTextContent(
 			'Merge the 2 sale periods of Summer Jam into one sale window?'
@@ -339,8 +346,8 @@ describe( 'EventTickets — merge sale periods confirmation (#1772)', () => {
 		).toHaveClass( 'is-destructive' );
 	} );
 
-	it( 'mentions add-on prices only when add-ons are priced per sale period', () => {
-		const { dialog } = openMergeDialog( {
+	it( 'mentions add-on prices only when add-ons are priced per sale period', async () => {
+		const { dialog } = await openMergeDialog( {
 			initialData: {
 				...twoPeriods,
 				settings: {
@@ -367,9 +374,9 @@ describe( 'EventTickets — merge sale periods confirmation (#1772)', () => {
 		);
 	} );
 
-	it( 'cancelling keeps every period and price and leaves the form clean', () => {
+	it( 'cancelling keeps every period and price and leaves the form clean', async () => {
 		const onDirtyChange = jest.fn();
-		openMergeDialog( { onDirtyChange } );
+		await openMergeDialog( { onDirtyChange } );
 
 		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
 
@@ -380,9 +387,9 @@ describe( 'EventTickets — merge sale periods confirmation (#1772)', () => {
 		expect( onDirtyChange ).toHaveBeenLastCalledWith( false );
 	} );
 
-	it( 'confirming merges locally, marks the form dirty and saves nothing', () => {
+	it( 'confirming merges locally, marks the form dirty and saves nothing', async () => {
 		const onDirtyChange = jest.fn();
-		openMergeDialog( { onDirtyChange } );
+		await openMergeDialog( { onDirtyChange } );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Merge periods' } )
