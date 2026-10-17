@@ -73,14 +73,12 @@ class Conversions {
 
 	/** @param object $transaction Transaction. @param string $event_name Event name. @return bool */
 	public function enqueue_transaction( $transaction, $event_name ) {
-		if ( ! self::configured() ) {
+		if ( ! self::configured() || ! self::build_event( $transaction, $event_name ) ) {
 			return false;
 		}
-		$event = self::build_event( $transaction, $event_name );
-		if ( ! $event ) {
-			return false;
-		}
-		return self::queue( $event );
+		// Look up event context only for an eligible transaction. It is
+		// snapshotted now, so retries never depend on later event edits.
+		return self::queue( self::build_event( $transaction, $event_name, ( new PurchaseContext() )->for_transaction( $transaction ) ) );
 	}
 
 	/** @param array $event Event from {@see build_engagement_event()}. @return bool Whether a new event was queued. */
@@ -112,15 +110,19 @@ class Conversions {
 	 * report as production Meta events, distinguished only by
 	 * `custom_data.payment_mode`, so admins can verify checkout end to end.
 	 *
-	 * @param object $transaction Transaction. @param string $event_name Event name. @return array|null
+	 * `$context` is the {@see PurchaseContext} the caller resolved; it is
+	 * stored as a JSON snapshot, or as an empty string when nothing resolved.
+	 *
+	 * @param object $transaction Transaction. @param string $event_name Event name. @param array $context Event context. @return array|null
 	 */
-	public static function build_event( $transaction, $event_name ) {
+	public static function build_event( $transaction, $event_name, $context = array() ) {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
 		if ( ! is_array( $metadata ) || 'fair-events-get-tickets' !== ( $metadata['source'] ?? '' ) || empty( $metadata['meta_consent'] ) || ( empty( $metadata['meta_fbp'] ) && empty( $metadata['meta_fbc'] ) ) ) {
 			return null;
 		}
-		$time  = 'InitiateCheckout' === $event_name && ! empty( $transaction->payment_initiated_at ) ? strtotime( $transaction->payment_initiated_at . ' UTC' ) : strtotime( $transaction->updated_at . ' UTC' );
-		$event = array(
+		$context = PurchaseContext::normalize( $context );
+		$time    = 'InitiateCheckout' === $event_name && ! empty( $transaction->payment_initiated_at ) ? strtotime( $transaction->payment_initiated_at . ' UTC' ) : strtotime( $transaction->updated_at . ' UTC' );
+		$event   = array(
 			'transaction_id' => (int) $transaction->id,
 			'event_name'     => $event_name,
 			'event_id'       => self::event_id( (int) $transaction->id, $event_name ),
@@ -132,6 +134,7 @@ class Conversions {
 			'payment_mode'   => self::payment_mode( $transaction ),
 			'fbp'            => self::valid_identifier( $metadata['meta_fbp'] ?? '' ) ? $metadata['meta_fbp'] : '',
 			'fbc'            => self::valid_identifier( $metadata['meta_fbc'] ?? '' ) ? $metadata['meta_fbc'] : '',
+			'event_context'  => $context ? (string) wp_json_encode( $context ) : '',
 		);
 		if ( '' === $event['fbp'] && '' === $event['fbc'] ) {
 			return null;
@@ -220,6 +223,7 @@ class Conversions {
 			if ( '' !== $row->order_id ) {
 				$custom['order_id'] = $row->order_id;
 			}
+			$custom = array_merge( $custom, self::stored_context( $row ) );
 		}
 		return array(
 			'event_name'       => $row->event_name,
@@ -230,6 +234,19 @@ class Conversions {
 			'user_data'        => $user_data,
 			'custom_data'      => $custom,
 		);
+	}
+
+	/**
+	 * The event context snapshot of a checkout or purchase row. Rows queued
+	 * before snapshots existed, and malformed snapshots, yield no context.
+	 *
+	 * @param object $row Outbox row. @return array
+	 */
+	private static function stored_context( $row ) {
+		if ( empty( $row->event_context ) || ! is_string( $row->event_context ) ) {
+			return array();
+		}
+		return PurchaseContext::normalize( json_decode( $row->event_context, true ) );
 	}
 
 	/**
@@ -493,7 +510,9 @@ class Conversions {
 	 * Build a synthetic event for the administrator-triggered test, identified
 	 * as a test only by the Test Events code {@see send_test()} attaches when
 	 * delivering it — never by a stored transaction or order ID, so a
-	 * `Purchase` test can never be mistaken for a real payment.
+	 * `Purchase` test can never be mistaken for a real payment. Checkout and
+	 * purchase samples carry fixed, clearly synthetic event context, so the
+	 * parameter names can be inspected in Test Events.
 	 *
 	 * @param string $event_name PageView, InitiateCheckout, or Purchase. @return array
 	 */
@@ -509,8 +528,12 @@ class Conversions {
 		);
 		if ( 'InitiateCheckout' === $event_name || 'Purchase' === $event_name ) {
 			$event['custom_data'] = array(
-				'value'    => 1.0,
-				'currency' => 'USD',
+				'value'            => 1.0,
+				'currency'         => 'USD',
+				'content_name'     => 'Fair Events test event',
+				'content_ids'      => array( 'fair-events-test-event' ),
+				'event_date_id'    => 0,
+				'event_start_date' => '2000-01-01',
 			);
 		}
 		return $event;

@@ -188,6 +188,133 @@ class ConversionsTest extends TestCase {
 		$this->assertNull( Conversions::build_event( $transaction, 'Purchase' ) );
 	}
 
+	/**
+	 * A resolved event context, as PurchaseContext returns it.
+	 *
+	 * @return array
+	 */
+	private function event_context() {
+		return array(
+			'content_name'     => 'Mix & Move',
+			'content_ids'      => array( '12' ),
+			'event_date_id'    => 31,
+			'event_start_date' => '2026-11-12',
+		);
+	}
+
+	/** Checkout and purchase rows snapshot the context and keep every commerce field. */
+	public function test_build_event_snapshots_context_with_commerce_fields() {
+		foreach ( array( 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$plain = Conversions::build_event( $this->eligible_transaction(), $event_name );
+			$event = Conversions::build_event( $this->eligible_transaction(), $event_name, $this->event_context() );
+			$this->assertSame( '', $plain['event_context'] );
+			$this->assertSame( $this->event_context(), json_decode( $event['event_context'], true ) );
+			unset( $plain['event_context'], $event['event_context'] );
+			$this->assertSame( $plain, $event );
+		}
+	}
+
+	/** Malformed resolved context is reduced to its valid fields before it is stored. */
+	public function test_build_event_normalizes_context() {
+		$event = Conversions::build_event(
+			$this->eligible_transaction(),
+			'Purchase',
+			array(
+				'content_ids'      => array( '12' ),
+				'event_start_date' => 'soon',
+				'email'            => 'buyer@example.test',
+			)
+		);
+		$this->assertSame( '{"content_ids":["12"]}', $event['event_context'] );
+	}
+
+	/** Context never makes an ineligible transaction eligible. */
+	public function test_build_event_with_context_still_requires_consent() {
+		$transaction = $this->eligible_transaction( array( 'metadata' => wp_json_encode( array( 'source' => 'fair-events-get-tickets' ) ) ) );
+		$this->assertNull( Conversions::build_event( $transaction, 'Purchase', $this->event_context() ) );
+	}
+
+	/**
+	 * A queued checkout or purchase row.
+	 *
+	 * @param array $overrides Fields to override.
+	 * @return object
+	 */
+	private function commerce_row( array $overrides = array() ) {
+		$event = Conversions::build_event( $this->eligible_transaction(), 'Purchase', $this->event_context() );
+		return (object) array_merge( $event, $overrides );
+	}
+
+	/** The stored snapshot becomes Meta's standard and custom parameters, alongside commerce data. */
+	public function test_payload_maps_context_to_meta_parameters() {
+		foreach ( array( 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$payload = Conversions::payload_for( $this->commerce_row( array( 'event_name' => $event_name ) ) );
+			$this->assertSame( $event_name, $payload['event_name'] );
+			$this->assertSame( 'Mix & Move', $payload['custom_data']['content_name'] );
+			$this->assertSame( array( '12' ), $payload['custom_data']['content_ids'] );
+			$this->assertSame( 31, $payload['custom_data']['event_date_id'] );
+			$this->assertSame( '2026-11-12', $payload['custom_data']['event_start_date'] );
+			$this->assertSame( 12.5, $payload['custom_data']['value'] );
+			$this->assertSame( 'EUR', $payload['custom_data']['currency'] );
+			$this->assertSame( 'test', $payload['custom_data']['payment_mode'] );
+			$this->assertSame( array( 'fbp' => 'fb.1.1712345678901.click_ABC-2' ), $payload['user_data'] );
+		}
+	}
+
+	/** Rows queued before snapshots existed, or with a malformed one, are delivered without context. */
+	public function test_payload_without_usable_context_keeps_commerce_data() {
+		$legacy = $this->commerce_row();
+		unset( $legacy->event_context );
+		$rows = array(
+			$legacy,
+			$this->commerce_row( array( 'event_context' => null ) ),
+			$this->commerce_row( array( 'event_context' => '{not json' ) ),
+			$this->commerce_row( array( 'event_context' => '"string"' ) ),
+		);
+		foreach ( $rows as $row ) {
+			$payload = Conversions::payload_for( $row );
+			$this->assertSame( array( 'value', 'currency', 'payment_mode', 'order_id' ), array_keys( $payload['custom_data'] ) );
+		}
+	}
+
+	/** A partial snapshot sends only its valid fields. */
+	public function test_payload_with_partial_context_sends_valid_fields_only() {
+		$payload = Conversions::payload_for( $this->commerce_row( array( 'event_context' => '{"content_name":"Jam","event_date_id":"x"}' ) ) );
+		$this->assertSame( 'Jam', $payload['custom_data']['content_name'] );
+		$this->assertArrayNotHasKey( 'event_date_id', $payload['custom_data'] );
+		$this->assertArrayNotHasKey( 'content_ids', $payload['custom_data'] );
+	}
+
+	/** Routine delivery sends the context with the unchanged event ID and no Test Events code. */
+	public function test_routine_delivery_sends_context_without_test_code() {
+		$this->configure_credentials();
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$row = $this->commerce_row();
+		( new Conversions() )->send_payload( Conversions::payload_for( $row ) );
+		$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+		$this->assertArrayNotHasKey( 'test_event_code', $body );
+		$this->assertSame( Conversions::event_id( 42, 'Purchase' ), $body['data'][0]['event_id'] );
+		$this->assertSame( array( '12' ), $body['data'][0]['custom_data']['content_ids'] );
+		$this->assertSame( '42', $body['data'][0]['custom_data']['order_id'] );
+	}
+
+	/** Engagement payloads are unchanged by the commerce context. */
+	public function test_engagement_payload_has_no_commerce_context() {
+		$row     = (object) Conversions::build_engagement_event(
+			'calendar',
+			'3f2c8a4e-1b7d-4c9a-8e2f-0a1b2c3d4e5f',
+			array(
+				'post_id'       => 12,
+				'event_date_id' => 34,
+				'source_url'    => 'https://example.test/event',
+			),
+			'fb.1.1712345678901.browser',
+			''
+		);
+		$payload = Conversions::payload_for( $row );
+		$this->assertSame( array( 'post_id', 'event_date_id', 'action' ), array_keys( $payload['custom_data'] ) );
+	}
+
 	/** The payment-mode helper reads the transaction's raw testmode flag. */
 	public function test_payment_mode_helper_reads_the_transaction_flag() {
 		$this->assertSame( 'live', Conversions::payment_mode( (object) array( 'testmode' => 0 ) ) );
@@ -266,6 +393,18 @@ class ConversionsTest extends TestCase {
 			$this->assertArrayHasKey( 'value', $event['custom_data'] );
 			$this->assertArrayHasKey( 'currency', $event['custom_data'] );
 		}
+	}
+
+	/** Checkout and purchase samples carry fixed synthetic event context; PageView does not. */
+	public function test_build_test_event_includes_synthetic_event_context() {
+		foreach ( array( 'InitiateCheckout', 'Purchase' ) as $event_name ) {
+			$custom = Conversions::build_test_event( $event_name )['custom_data'];
+			$this->assertSame( 'Fair Events test event', $custom['content_name'] );
+			$this->assertSame( array( 'fair-events-test-event' ), $custom['content_ids'] );
+			$this->assertSame( 0, $custom['event_date_id'] );
+			$this->assertSame( '2000-01-01', $custom['event_start_date'] );
+		}
+		$this->assertArrayNotHasKey( 'content_name', Conversions::build_test_event( 'PageView' )['custom_data'] );
 	}
 
 	/** The synthetic test event never references a real transaction or order — only the Test Events code marks it as a test. */
