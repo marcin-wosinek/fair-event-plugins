@@ -1,118 +1,151 @@
 # fair-events
 
+## 1.23.0
+
+### Minor Changes
+
+- 68ef130: Each plugin now ships documentation of its blocks in `block-docs/`, matched
+  to the release: `index.json` lists every block the plugin supplies, with its
+  owning plugin, block.json, status, and when it is registered, and each block
+  has a usage guide and serialized examples that open in the editor without
+  validation errors. Site tooling and AI assistants can read these files from
+  the installed plugin and compare them with the blocks a site reports through
+  WordPress's authenticated `/wp/v2/block-types` endpoint.
+- 61f53da: Add a Summary button to the event List that copies ticket totals as plain text, ready to paste into a message: the number of confirmed tickets, the tickets sold per ticket type and the tickets holding each add-on, in their configured order and including zero counts. Every confirmed ticket counts, whatever the mailing filter shows, and only names and counts are copied, never participant details. Confirmed test-mode purchases are left out of these totals and counted in a separate "Test payments" section. The button explains when copying fails or when the summary could be wrong, for example while older registrations are still being split into tickets. On a date of a series, the List now shows the series' add-on columns.
+- f6e1957: Mark tickets bought with test-mode payments in the event List. Each confirmed ticket from a test payment shows a "Test payment" warning beside its reference, on screen and in the printed List, where the bold, bordered warning stays readable in black-and-white print. The warning follows the mode each payment was recorded in, so switching the payment integration between test and live mode does not change past tickets. Live payments and free registrations are unmarked, and unfinished or unsuccessful purchases stay out of the List. The admin get-tickets list now reports `is_test_payment` for each registration.
+- 036db75: New Venue Info block: pick one of your venues and the block shows its name,
+  address, and Website, Google Maps, Facebook, and Instagram links on any page
+  or post. The venue name links to the website, otherwise Google Maps,
+  otherwise Instagram. Pages always show the venue's current details, and a
+  deleted venue disappears from public pages without errors.
+
+### Patch Changes
+
+- ab7bf4a: The events calendar and week view load faster on busy sites: the database
+  work behind them no longer grows with the number of events shown, so a month
+  of daily classes costs about as much as a month with a few events. The
+  calendar shows the same events, titles, links, colours and draft markers as
+  before, including translated titles and links on multilingual sites.
+- 87b5020: Activating Fair Events on a site that never had it no longer logs database
+  errors: a fresh install creates the current tables directly instead of
+  running upgrade steps against tables that do not exist yet.
+- 76ab284: Keep Copy Event as the single copying workflow, explain recurring-series copying, and retire the experimental duplicate and merge tools and their REST operations. Existing event and activity data are preserved.
+
+    Remove the undated event row created by WordPress when a copy fails immediately after draft-post insertion.
+
 ## 1.22.0
 
 ### Minor Changes
 
--   de0916a: The admin Events Calendar can now be filtered by category. A Category
-    selector above the calendar shows only the events assigned to the chosen
-    category, including recurring sessions and events in several categories.
-    The selection stays while moving between months, is kept in the page URL so
-    reloads and Back/Forward restore it, and "All categories" brings every
-    event back. A category with no events in the month keeps the calendar grid
-    and says "No events match this category." The calendar now also loads every
-    event in a busy month instead of stopping at the first 100.
--   aa7b447: Manage weekly event notifications on one page, Fair Events → Event notifications. Telegram summaries (formerly in Fair Events Experimental) and the weekly email to subscribers (formerly Fair Audience → Weekly Digest) each keep their own schedule, event source, save button, preview, test send and delivery status. Telegram now needs only Fair Events; the weekly email needs Fair Audience, which still decides who receives it, adds the unsubscribe link and sends it.
+- de0916a: The admin Events Calendar can now be filtered by category. A Category
+  selector above the calendar shows only the events assigned to the chosen
+  category, including recurring sessions and events in several categories.
+  The selection stays while moving between months, is kept in the page URL so
+  reloads and Back/Forward restore it, and "All categories" brings every
+  event back. A category with no events in the month keeps the calendar grid
+  and says "No events match this category." The calendar now also loads every
+  event in a busy month instead of stopping at the first 100.
+- aa7b447: Manage weekly event notifications on one page, Fair Events → Event notifications. Telegram summaries (formerly in Fair Events Experimental) and the weekly email to subscribers (formerly Fair Audience → Weekly Digest) each keep their own schedule, event source, save button, preview, test send and delivery status. Telegram now needs only Fair Events; the weekly email needs Fair Audience, which still decides who receives it, adds the unsubscribe link and sends it.
 
     Existing settings, schedules, chats, email wording, the Telegram bot token (still in Settings → Connectors, same environment variable and constant) and the delivery history are taken over automatically. Nothing is sent and no channel is turned on by the takeover; missed sends are not replayed, and a channel that was not being sent arrives turned off. The former settings screens lead to the new page, and their REST routes (`fair-events-experimental/v1/weekly-notifications`, `fair-audience/v1/weekly-digest`) and the `fair_audience_weekly_digest` setting are retired.
 
     Update the three plugins together. An older Fair Events Experimental or Fair Audience keeps running its own channel until it is updated, and an updated companion next to an older Fair Events pauses that channel until Fair Events is updated. Deactivating Fair Audience pauses the weekly email only; deactivating Fair Events pauses every channel.
 
--   07ac366: Add a "Duplicate" action to each add-on in Manage Event → Prices. It inserts
-    an editable copy right after the add-on, with its current name (suffixed
-    " Copy"), short name, price, capacity and sale-period prices, including
-    unsaved edits. The copy is saved as a new add-on by "Save tickets"; existing
-    signups stay with the original.
--   9bb375f: Confirmations for deleting a venue, importing ticket settings, ending a series, merging sale periods and removing the organizer logo now name what they act on and say what changes: which event dates lose their venue, what an import replaces, which date of a series stays and which are deleted, which prices a merge keeps, and whether a further save is needed. Deleting a venue and importing ticket settings no longer use the browser's own confirmation box. Actions that save immediately show progress, cannot be submitted twice, and keep the dialog open with the error when they fail.
+- 07ac366: Add a "Duplicate" action to each add-on in Manage Event → Prices. It inserts
+  an editable copy right after the add-on, with its current name (suffixed
+  " Copy"), short name, price, capacity and sale-period prices, including
+  unsaved edits. The copy is saved as a new add-on by "Save tickets"; existing
+  signups stay with the original.
+- 9bb375f: Confirmations for deleting a venue, importing ticket settings, ending a series, merging sale periods and removing the organizer logo now name what they act on and say what changes: which event dates lose their venue, what an import replaces, which date of a series stays and which are deleted, which prices a merge keeps, and whether a further save is needed. Deleting a venue and importing ticket settings no longer use the browser's own confirmation box. Actions that save immediately show progress, cannot be submitted twice, and keep the dialog open with the error when they fail.
 
     Fixed: **End series** on a repeating series reported success without ending it. It now keeps the first date as a single event and deletes the others, as the confirmation says.
 
--   cd46f54: The Event Signup block has a **Show mailing signup checkbox** setting in its
-    Form Settings panel. Turn it off to leave the "Keep me informed about future
-    events" checkbox out of that block's form. Signing up through a form without
-    the checkbox grants no mailing consent and changes no existing subscription
-    preferences. The setting is on by default, so existing blocks look the same.
--   ced7d99: Add an Individual email channel to Event notifications: send the week's events to one email address of your choice, on its own schedule, without Fair Audience, Fair Events Experimental or an event source.
--   08c4f95: The List tab of an event date shows each ticket by its short reference alone,
-    such as `AE2671B5`, and no longer has the Transaction and Date columns; both
-    remain in exports. The printed List follows the same columns, so a list with
-    up to seven extras fits one table instead of spilling its date into a second
-    part. Its Mailing column prints what each participant consents to now in Fair
-    Audience — ✓ subscribed, ✗ declined, blank when unspecified — instead of the
-    answer recorded at registration. Without Fair Audience, or for a registration
-    with no participant, an opt-in at registration prints as ✓ and anything else
-    is left blank. The List on screen keeps its Yes/No and its mailing filter.
--   673ca90: The List tab of an event date has a **Print list** button. It opens a print
-    preview naming the event and its date, with every confirmed ticket of the
-    List — one row per ticket, in the List's order and numbering, with ticket
-    type, extras, status and mailing consent — whatever screen filter is on. The
-    preview prints in landscape, repeats the table header on each page, and
-    splits a table with many extras into parts that repeat the row number and
-    ticket. Email addresses, amounts and the List's actions are left out.
--   1e8f337: Remove collaborator assignments from add-ons. The "Collaborator(s)" column
-    and its participant selectors are gone from the Prices tab, and add-on
-    assignments are no longer saved, returned, exported or copied to a duplicated
-    event. Older ticket-settings exports still import; the assignments they carry
-    are ignored. Upgrading removes the stored assignments. Add-on prices,
-    purchases, participants and event-level collaborators are unchanged.
--   5a895ee: Warn about sale periods with no tickets on sale in Manage Event → Prices. The
-    sale-period calendar now names each period, and its dates, on which no ticket
-    type is both enabled and priced, hatches those dates and explains the marking
-    in the legend. A free ticket counts as on sale; a missing price, an unticked
-    "Available" box, a disabled ticket type and a passed "End date" do not. The
-    warning follows unsaved edits and is advisory only: nothing about saving or
-    booking changes.
--   c863455: **Event Signup** now explains what each series ticket covers before purchase. Every ticket of a recurring event says whether it is for one date, selected dates or the whole series, and whether its price is per date or for the whole series. The matching date control follows the ticket choices directly: a date dropdown, date checkboxes with their minimum explained, or the list of dates a whole-series ticket includes. A summary above the total names the selected ticket and the dates it covers, and updates when the ticket or dates change.
+- cd46f54: The Event Signup block has a **Show mailing signup checkbox** setting in its
+  Form Settings panel. Turn it off to leave the "Keep me informed about future
+  events" checkbox out of that block's form. Signing up through a form without
+  the checkbox grants no mailing consent and changes no existing subscription
+  preferences. The setting is on by default, so existing blocks look the same.
+- ced7d99: Add an Individual email channel to Event notifications: send the week's events to one email address of your choice, on its own schedule, without Fair Audience, Fair Events Experimental or an event source.
+- 08c4f95: The List tab of an event date shows each ticket by its short reference alone,
+  such as `AE2671B5`, and no longer has the Transaction and Date columns; both
+  remain in exports. The printed List follows the same columns, so a list with
+  up to seven extras fits one table instead of spilling its date into a second
+  part. Its Mailing column prints what each participant consents to now in Fair
+  Audience — ✓ subscribed, ✗ declined, blank when unspecified — instead of the
+  answer recorded at registration. Without Fair Audience, or for a registration
+  with no participant, an opt-in at registration prints as ✓ and anything else
+  is left blank. The List on screen keeps its Yes/No and its mailing filter.
+- 673ca90: The List tab of an event date has a **Print list** button. It opens a print
+  preview naming the event and its date, with every confirmed ticket of the
+  List — one row per ticket, in the List's order and numbering, with ticket
+  type, extras, status and mailing consent — whatever screen filter is on. The
+  preview prints in landscape, repeats the table header on each page, and
+  splits a table with many extras into parts that repeat the row number and
+  ticket. Email addresses, amounts and the List's actions are left out.
+- 1e8f337: Remove collaborator assignments from add-ons. The "Collaborator(s)" column
+  and its participant selectors are gone from the Prices tab, and add-on
+  assignments are no longer saved, returned, exported or copied to a duplicated
+  event. Older ticket-settings exports still import; the assignments they carry
+  are ignored. Upgrading removes the stored assignments. Add-on prices,
+  purchases, participants and event-level collaborators are unchanged.
+- 5a895ee: Warn about sale periods with no tickets on sale in Manage Event → Prices. The
+  sale-period calendar now names each period, and its dates, on which no ticket
+  type is both enabled and priced, hatches those dates and explains the marking
+  in the legend. A free ticket counts as on sale; a missing price, an unticked
+  "Available" box, a disabled ticket type and a passed "End date" do not. The
+  warning follows unsaved edits and is advisory only: nothing about saving or
+  booking changes.
+- c863455: **Event Signup** now explains what each series ticket covers before purchase. Every ticket of a recurring event says whether it is for one date, selected dates or the whole series, and whether its price is per date or for the whole series. The matching date control follows the ticket choices directly: a date dropdown, date checkboxes with their minimum explained, or the list of dates a whole-series ticket includes. A summary above the total names the selected ticket and the dates it covers, and updates when the ticket or dates change.
 
     Full dates stay listed, marked full, and cannot be chosen. When a whole-series ticket cannot be bought because one of its dates is full, the summary names that date instead of leaving the button disabled without a reason. Availability is refreshed after the page loads and after a refused checkout, so a cached page never offers a date that has since filled up. Checkout keeps applying the same prices, sale periods and capacity rules as before.
 
--   56dd426: The individual weekly email now looks like the weekly email to subscribers. It has the site-name header, the events grouped by day with their time and a link, a note on events from other websites, a sign-off and a site-name footer, and it fits phone screens. Both emails get their events and content from Fair Events, so the same week lists the same events in both.
+- 56dd426: The individual weekly email now looks like the weekly email to subscribers. It has the site-name header, the events grouped by day with their time and a link, a note on events from other websites, a sign-off and a site-name footer, and it fits phone screens. Both emails get their events and content from Fair Events, so the same week lists the same events in both.
 
     The weekly email to subscribers keeps its greeting and subscription link. Its empty-week message now names the week, and a missing or disabled event source is reported in its delivery status instead of an empty email being sent. With an older Fair Events, Fair Audience keeps rendering the email itself.
 
--   3470321: These plugins now require WordPress 7.0 or later. Their admin lists (All
-    Events, All Participants, By Event, the Fair Form answer screens, Groups,
-    Collaborators and Membership Fees) rely on scripts that WordPress only
-    provides from 7.0, so on older versions those screens stayed blank. The
-    plugins are now built with the latest WordPress editor and admin packages;
-    existing blocks and saved content keep working unchanged.
+- 3470321: These plugins now require WordPress 7.0 or later. Their admin lists (All
+  Events, All Participants, By Event, the Fair Form answer screens, Groups,
+  Collaborators and Membership Fees) rely on scripts that WordPress only
+  provides from 7.0, so on older versions those screens stayed blank. The
+  plugins are now built with the latest WordPress editor and admin packages;
+  existing blocks and saved content keep working unchanged.
 
 ### Patch Changes
 
--   0f9f103: Event Info now describes the session a visitor opened. A dated link from a
-    calendar or a shared URL shows that session's own date (with the year),
-    time, venue and attendance mode, including past sessions, which also say
-    "This session has ended". Every session links back to the recurring event
-    overview, which a page without a selected date now shows instead of today's
-    or the next session. A date that doesn't belong to the event shows "This
-    session is unavailable" instead of another session's details.
--   0e4d0c9: Explain when online ticket sales have closed. Once every sale period of an event has ended, the Event Signup block now shows a neutral notice, "Online ticket sales for this event have closed.", in place of "Ticket sales are temporarily unavailable. Please check back later.", both on the signup view and on the payment-retry view. The temporary-unavailability message stays for payment problems, sale periods that have not opened yet, gaps between periods and incomplete sale-period configuration. What can be purchased is unchanged.
--   1dfaa7d: Financial entries on an event's Finance tab and on the Reconciliation
-    screen now link to the focused entry view. Each `#id` in the Payments
-    table's Budget entry column, the date of each cost entry, and the date of
-    each unmatched and matched reconciliation entry open that entry on the
-    Entries screen. When Fair Finance is unavailable, the event's references
-    stay plain text.
--   4b5bcb3: The List of an event date now shows the confirmed tickets that are on that
-    date. A ticket moved on its own to another date of a recurring event leaves
-    the original date's List and appears on the new date's, with its ticket type,
-    extras and check-in, and a note saying which date the purchase is registered
-    for. Move, Change ticket type and Delete are labelled "Entire purchase" with
-    the ticket counts per date, and explain what they do to tickets on other
-    dates before anything changes. Exports list the same rows as the List, add a
-    purchase reference, and give each purchase total once, on the row of the
-    purchase's lowest confirmed ticket.
--   a96cb64: Resolve Telegram and email notification previews and immediate tests relative to today in the site timezone, while preserving scheduled delivery weeks.
--   9603b8d: Update the bundled calendar-link library from 2.11.4 to 2.11.6 and Recharts
-    from 3.10.0 to 3.10.1. Calendar exports and the statistics and comparison
-    charts show the same dates, values and tooltips as before.
+- 0f9f103: Event Info now describes the session a visitor opened. A dated link from a
+  calendar or a shared URL shows that session's own date (with the year),
+  time, venue and attendance mode, including past sessions, which also say
+  "This session has ended". Every session links back to the recurring event
+  overview, which a page without a selected date now shows instead of today's
+  or the next session. A date that doesn't belong to the event shows "This
+  session is unavailable" instead of another session's details.
+- 0e4d0c9: Explain when online ticket sales have closed. Once every sale period of an event has ended, the Event Signup block now shows a neutral notice, "Online ticket sales for this event have closed.", in place of "Ticket sales are temporarily unavailable. Please check back later.", both on the signup view and on the payment-retry view. The temporary-unavailability message stays for payment problems, sale periods that have not opened yet, gaps between periods and incomplete sale-period configuration. What can be purchased is unchanged.
+- 1dfaa7d: Financial entries on an event's Finance tab and on the Reconciliation
+  screen now link to the focused entry view. Each `#id` in the Payments
+  table's Budget entry column, the date of each cost entry, and the date of
+  each unmatched and matched reconciliation entry open that entry on the
+  Entries screen. When Fair Finance is unavailable, the event's references
+  stay plain text.
+- 4b5bcb3: The List of an event date now shows the confirmed tickets that are on that
+  date. A ticket moved on its own to another date of a recurring event leaves
+  the original date's List and appears on the new date's, with its ticket type,
+  extras and check-in, and a note saying which date the purchase is registered
+  for. Move, Change ticket type and Delete are labelled "Entire purchase" with
+  the ticket counts per date, and explain what they do to tickets on other
+  dates before anything changes. Exports list the same rows as the List, add a
+  purchase reference, and give each purchase total once, on the row of the
+  purchase's lowest confirmed ticket.
+- a96cb64: Resolve Telegram and email notification previews and immediate tests relative to today in the site timezone, while preserving scheduled delivery weeks.
+- 9603b8d: Update the bundled calendar-link library from 2.11.4 to 2.11.6 and Recharts
+  from 3.10.0 to 3.10.1. Calendar exports and the statistics and comparison
+  charts show the same dates, values and tooltips as before.
 
     The Fair Events calendar button now passes all-day events to the calendar
     as plain dates, so they stay on their day in every timezone. Without this,
     the updated library would have moved them one day later for visitors in
     UTC+12 timezones, such as New Zealand in winter or Fiji.
 
--   5cf5d18: **Event Sources** is now called **Event Feeds**. The admin menu entry, page headings, add/edit/delete actions, messages and help text use "event feed" and "event feeds" throughout: on the Event Feeds page, in the Events Calendar, Events Week and Events List block settings, and on the Event notifications page. The parts an event feed combines (event categories, iCal URLs, other Fair Events sites) are now called "feed inputs" instead of "data sources", and their count uses proper singular and plural forms.
+- 5cf5d18: **Event Sources** is now called **Event Feeds**. The admin menu entry, page headings, add/edit/delete actions, messages and help text use "event feed" and "event feeds" throughout: on the Event Feeds page, in the Events Calendar, Events Week and Events List block settings, and on the Event notifications page. The parts an event feed combines (event categories, iCal URLs, other Fair Events sites) are now called "feed inputs" instead of "data sources", and their count uses proper singular and plural forms.
 
     This is a wording change only. Admin page URLs, REST routes and fields, error codes, iCal/JSON feed URLs, block attributes and saved selections stay the same, so existing feeds, links and block settings keep working. The Event Feeds management screens now load their translations from Fair Events Experimental's own catalog, and the German, Spanish, French and Polish translations are updated.
 
@@ -120,7 +153,7 @@
 
 ### Minor Changes
 
--   946a907: Sell priced add-ons with Fair Events alone. Add-ons (activities) configured on an event's Tickets tab — with one flat price or a price per sale period — now appear on the signup form and are charged at checkout without Fair Audience or Fair Events Experimental. Each add-on is charged once for every ticket that selects it, and the total shown on the form is the amount charged.
+- 946a907: Sell priced add-ons with Fair Events alone. Add-ons (activities) configured on an event's Tickets tab — with one flat price or a price per sale period — now appear on the signup form and are charged at checkout without Fair Audience or Fair Events Experimental. Each add-on is charged once for every ticket that selects it, and the total shown on the form is the amount charged.
 
     An add-on that has no price for the sale period currently on sale is no longer offered, and a purchase that still selects it is refused with a message naming it instead of the add-on being given away. An add-on priced at zero stays free, and can now be combined with a paid ticket. Add-ons that are full are marked as full for every visitor.
 
@@ -128,7 +161,7 @@
 
     For developers: `TicketOption`, `TicketOptionPrice`, `ActivityOptionPriceResolver` and `ActivityOptionTranslation` moved from `FairEventsExperimental` to the matching `FairEvents` namespaces (the old names remain as aliases while Fair Events Experimental is active). Fair Events builds add-on line items itself; the `fair_events_signup_option_line_items` filter is replaced by `fair_events_signup_option_prices`, which only adjusts prices.
 
--   fbd90d6: Let a recognised participant buy another ticket for themselves. A participant who already holds a ticket for an event date now sees their tickets — each with its own ticket type and activities — and, right below, the signup form headed "Buy another ticket for yourself" with their name and email. Their identity, discounts and access to restricted tickets are kept, nothing from the earlier ticket is carried into the new purchase, and "Not you? Start fresh" stays a separate way to continue as someone else. Dates already held are marked in the date pickers and can be chosen again. Each purchase keeps its own signup, tickets and payment, and ticket and activity limits apply as for any other purchase.
+- fbd90d6: Let a recognised participant buy another ticket for themselves. A participant who already holds a ticket for an event date now sees their tickets — each with its own ticket type and activities — and, right below, the signup form headed "Buy another ticket for yourself" with their name and email. Their identity, discounts and access to restricted tickets are kept, nothing from the earlier ticket is carried into the new purchase, and "Not you? Start fresh" stays a separate way to continue as someone else. Dates already held are marked in the date pickers and can be chosen again. Each purchase keeps its own signup, tickets and payment, and ticket and activity limits apply as for any other purchase.
 
     After a purchase, the form gives way to a "Back to the signup form" link, which shows the tickets now held and a fresh form; the payment confirmation page offers the same link and lists the tickets of the purchase just paid for. Confirmation emails for free signups now list the activities chosen with that purchase.
 
@@ -136,38 +169,38 @@
 
     For developers: the signed-up card moved from `fair_events_signup_render_before_form` to the new `fair_events_signup_render_existing_signup` action, returned as `existing_signup_html` by `GET fair-events/v1/get-tickets/viewer-context` and placed before the form; `suppress_form` is no longer set for a signed-up viewer. `DELETE fair-audience/v1/event-signup` answers 409 `signup_has_tickets` for a ticket-backed signup. The payment-state response gained `tickets`.
 
--   e751903: Manage single tickets from the Audience tab. Each ticket row now offers **Move ticket** (to another date of the same recurring event, with a required reason when the target date or an activity is full), **Cancel ticket** and, once cancelled, **Delete ticket**. Every action changes only the ticket it names: the purchase, its payment and its other tickets stay as they are, nothing is refunded automatically, and the popups say so before anything changes. A participant left without tickets stays in the audience, no longer listed as signed up.
+- e751903: Manage single tickets from the Audience tab. Each ticket row now offers **Move ticket** (to another date of the same recurring event, with a required reason when the target date or an activity is full), **Cancel ticket** and, once cancelled, **Delete ticket**. Every action changes only the ticket it names: the purchase, its payment and its other tickets stay as they are, nothing is refunded automatically, and the popups say so before anything changes. A participant left without tickets stays in the audience, no longer listed as signed up.
 
     The Audience search now finds participants and tickets by purchaser, assignee, email and ticket reference and shows only the matching tickets, and **Export tickets CSV** downloads those tickets one per row with their purchaser and assignee.
 
--   a5b30c4: Let a returning participant register another person. A participant the browser remembers who already holds a ticket for an event date now finds "Register another person" below their tickets. It opens an empty signup form headed "Registering another person": no name, email, ticket choice, activities or answers are carried over, the other person's ticket types and prices are their own (no member discount or members-only ticket), and their signup, tickets and payment are recorded under their own name. The participant's own ticket and the browser's memory of them stay as they were: "Back to your ticket", completing a free registration, or reloading the page shows their ticket again; a paid registration ends on the usual payment confirmation.
+- a5b30c4: Let a returning participant register another person. A participant the browser remembers who already holds a ticket for an event date now finds "Register another person" below their tickets. It opens an empty signup form headed "Registering another person": no name, email, ticket choice, activities or answers are carried over, the other person's ticket types and prices are their own (no member discount or members-only ticket), and their signup, tickets and payment are recorded under their own name. The participant's own ticket and the browser's memory of them stay as they were: "Back to your ticket", completing a free registration, or reloading the page shows their ticket again; a paid registration ends on the usual payment confirmation.
 
     The action is not offered to someone who opened a personal signup link or is signed in to the site. "Buy another ticket for yourself" and "Not you? Start fresh" keep working as before. If the email entered for the other person already belongs to a participant, they get the usual link by email to continue.
 
     For developers: `POST fair-events/v1/get-tickets` and `GET fair-events/v1/get-tickets/viewer-context` accept `register_another_person` (400 `register_another_person_unavailable` together with a participant token or a signed-in account). Every signup hook that passes `$participant_token` now also passes a trailing `$request_context` array (`register_another_person`); see REST_API_BACKEND.md.
 
--   85e31c0: Remove the old Fair Audience Event Signup block. Pages that still contain it keep working: they now show the Event Signup form, with their button text and custom questions in the same order. A saved form that asks for a file upload shows a notice to contact the organizer instead, because the Event Signup form does not accept uploads. In the editor, old pages show the block as unsupported and it can be replaced with Event Signup.
+- 85e31c0: Remove the old Fair Audience Event Signup block. Pages that still contain it keep working: they now show the Event Signup form, with their button text and custom questions in the same order. A saved form that asks for a file upload shows a notice to contact the organizer instead, because the Event Signup form does not accept uploads. In the editor, old pages show the block as unsupported and it can be replaced with Event Signup.
 
     The Event Signup form now protects existing participants. When a visitor types the email of someone already known to the site, and is not recognised as that person, nothing is saved and a link is sent to that address. Opening the link brings back the ticket choice and answers so the signup can be finished. Signed-in members and visitors arriving from their own link continue as before.
 
--   d39f0cb: Reorder add-ons from a popup in Manage Event → Prices. The Add-ons section now has a **Reorder add-ons** button that opens a compact list of the add-ons: drag one by its handle (mouse or touch) or use its up and down arrow buttons to place it anywhere. The Prices table follows each move straight away, and the new order is saved together with the rest of the tab by **Save tickets** — closing the popup neither saves nor discards anything. The signup form lists add-ons in the saved order, and prices, capacity, collaborators and existing signups stay with their add-on. **Move to top** remains as a shortcut.
--   a80905e: Skip dates right in the series popup. In the "Turn into a series" and "Edit series" popup, click a date of a regular schedule to skip it and click it again to restore it — before the series is saved. Skipped dates stay visible, crossed out, and do not add extra dates at the end of the schedule; reopening the series shows them so they can be restored.
--   64c0160: Plan a workshop schedule in Manage Event. With Fair Events Experimental active, Manage Event → Prices → More options has a new **Workshop schedule** setting; once saved, a **Schedule** tab appears after Prices. There you add each add-on as a workshop with its date, start and end time, room or location and description — its name, price and capacity stay in Prices — and add schedule items such as breaks, which are never a ticket choice. Workshops may run at the same time, also in the same room. A workshop can be marked **Not bookable**: it stays on the schedule and leaves the signup form, and purchases that try to include it are refused. That switch is refused while tickets or reservations include the workshop, and an add-on that is on the schedule cannot be deleted or replaced by an import in Prices. A series keeps one schedule, managed on the series and shifted to each of its dates; copying an event copies its schedule. Turning the setting off hides the tab and keeps the entries and their booking status. Fair Audience no longer accepts a not-bookable workshop in its own signup routes.
+- d39f0cb: Reorder add-ons from a popup in Manage Event → Prices. The Add-ons section now has a **Reorder add-ons** button that opens a compact list of the add-ons: drag one by its handle (mouse or touch) or use its up and down arrow buttons to place it anywhere. The Prices table follows each move straight away, and the new order is saved together with the rest of the tab by **Save tickets** — closing the popup neither saves nor discards anything. The signup form lists add-ons in the saved order, and prices, capacity, collaborators and existing signups stay with their add-on. **Move to top** remains as a shortcut.
+- a80905e: Skip dates right in the series popup. In the "Turn into a series" and "Edit series" popup, click a date of a regular schedule to skip it and click it again to restore it — before the series is saved. Skipped dates stay visible, crossed out, and do not add extra dates at the end of the schedule; reopening the series shows them so they can be restored.
+- 64c0160: Plan a workshop schedule in Manage Event. With Fair Events Experimental active, Manage Event → Prices → More options has a new **Workshop schedule** setting; once saved, a **Schedule** tab appears after Prices. There you add each add-on as a workshop with its date, start and end time, room or location and description — its name, price and capacity stay in Prices — and add schedule items such as breaks, which are never a ticket choice. Workshops may run at the same time, also in the same room. A workshop can be marked **Not bookable**: it stays on the schedule and leaves the signup form, and purchases that try to include it are refused. That switch is refused while tickets or reservations include the workshop, and an add-on that is on the schedule cannot be deleted or replaced by an import in Prices. A series keeps one schedule, managed on the series and shifted to each of its dates; copying an event copies its schedule. Turning the setting off hides the tab and keeps the entries and their booking status. Fair Audience no longer accepts a not-bookable workshop in its own signup routes.
 
 ### Patch Changes
 
--   f49cee6: Show each activity on its own line in the Event Signup "Add activities" section. A registered attendee adding activities to their ticket now sees one checkbox per row, and a long activity name wraps beside its checkbox instead of running into the next option.
--   9413f36: Load the plugins' own scripts with WordPress's `defer` strategy. The Add to Calendar button script, the payment return notification script, and the admin and editor scripts of these plugins no longer pause page parsing while they download; they stay in the footer and behave as before. WordPress still loads a script the usual way where deferring would break ordering — Manage Event while a plugin adds tabs to it (Fair Audience does), and Fair Events → Settings while an extension adds a settings tab.
--   4ecd614: Hide the Event Signup checkout total while the "Get Tickets" button is disabled. The total now appears together with a usable button — once the visitor's pricing has loaded and the required activities or dates are chosen — and disappears again if a later choice makes the form incomplete or while a purchase is being processed. A free signup still shows an explicit zero. The machine-readable amount and currency on the total stay current while it is hidden, so site-level tracking is unaffected.
--   3a7b83d: Calculate signup and payment totals in one way. The amount saved with a signup, whether it is free or paid, the amount charged and the line items recorded in the finance ledger now all come from the same calculation: amounts have two decimals and are rounded half up — each unit price first, then each line, then the total. Purchases at ordinary two-decimal prices are unchanged.
+- f49cee6: Show each activity on its own line in the Event Signup "Add activities" section. A registered attendee adding activities to their ticket now sees one checkbox per row, and a long activity name wraps beside its checkbox instead of running into the next option.
+- 9413f36: Load the plugins' own scripts with WordPress's `defer` strategy. The Add to Calendar button script, the payment return notification script, and the admin and editor scripts of these plugins no longer pause page parsing while they download; they stay in the footer and behave as before. WordPress still loads a script the usual way where deferring would break ordering — Manage Event while a plugin adds tabs to it (Fair Audience does), and Fair Events → Settings while an extension adds a settings tab.
+- 4ecd614: Hide the Event Signup checkout total while the "Get Tickets" button is disabled. The total now appears together with a usable button — once the visitor's pricing has loaded and the required activities or dates are chosen — and disappears again if a later choice makes the form incomplete or while a purchase is being processed. A free signup still shows an explicit zero. The machine-readable amount and currency on the total stay current while it is hidden, so site-level tracking is unaffected.
+- 3a7b83d: Calculate signup and payment totals in one way. The amount saved with a signup, whether it is free or paid, the amount charged and the line items recorded in the finance ledger now all come from the same calculation: amounts have two decimals and are rounded half up — each unit price first, then each line, then the total. Purchases at ordinary two-decimal prices are unchanged.
 
     A price with a fraction of a cent (for example after a discount) can now differ by a cent from what one of these places showed before, and a total that rounds to zero is confirmed as free instead of being sent to payment. In a purchase for several dates, each date's signup now holds its own rounded amount.
 
     For developers: a transaction's amount is always the total of its line items. `fair_payment_before_validate_line_items` may still change the line items, which are validated again; a total changed through `fair_payment_calculated_total` or `fair_payment_before_create_transaction` without matching line items is refused. Line items may now be negative (discounts) or zero as long as the total is positive, and a quantity must be a positive whole number. `fair_payment_create_transaction()` accepts `expected_amount` to refuse a transaction whose total differs from the amount the caller decided on.
 
--   1da561f: Buyers are no longer locked out of ticket checkout after a few attempts. One email can now start 10 checkouts — up from 3 — and can check out again 15 minutes after the last one instead of an hour. Only a checkout that actually saved a signup counts: an attempt rejected because a ticket sold out, a selection was incomplete or the form had an error no longer uses up the allowance, so a buyer can correct the form and complete the purchase with the same email. Repeating a checkout that already exists still counts nothing. The separate limit of 20 attempts per hour from one IP address is unchanged.
--   c65bf49: Keep the series popup calendar at two months. The "Turn into a series" and "Edit series" popup now always shows two consecutive months with previous/next arrows, so changing the schedule or picking dates no longer adds months, widens the popup, or resets the month you were looking at.
--   c0c3d69: Keep purchases that are not paid out of the rosters. In the Audience tab, someone whose purchase awaits payment is now shown as **Payment in progress** (or **Payment not completed** once the payment failed or its hold ran out) instead of a raw status, and is counted apart from signed-up participants. Saving a comment or other details for them no longer marks them as signed up; an administrator can still pick a role on purpose. A collaborator, or someone holding a ticket another participant gave them, keeps that role when a purchase of their own fails or expires.
+- 1da561f: Buyers are no longer locked out of ticket checkout after a few attempts. One email can now start 10 checkouts — up from 3 — and can check out again 15 minutes after the last one instead of an hour. Only a checkout that actually saved a signup counts: an attempt rejected because a ticket sold out, a selection was incomplete or the form had an error no longer uses up the allowance, so a buyer can correct the form and complete the purchase with the same email. Repeating a checkout that already exists still counts nothing. The separate limit of 20 attempts per hour from one IP address is unchanged.
+- c65bf49: Keep the series popup calendar at two months. The "Turn into a series" and "Edit series" popup now always shows two consecutive months with previous/next arrows, so changing the schedule or picking dates no longer adds months, widens the popup, or resets the month you were looking at.
+- c0c3d69: Keep purchases that are not paid out of the rosters. In the Audience tab, someone whose purchase awaits payment is now shown as **Payment in progress** (or **Payment not completed** once the payment failed or its hold ran out) instead of a raw status, and is counted apart from signed-up participants. Saving a comment or other details for them no longer marks them as signed up; an administrator can still pick a role on purpose. A collaborator, or someone holding a ticket another participant gave them, keeps that role when a purchase of their own fails or expires.
 
     The List tab and its export now show only tickets that are confirmed: a cancelled ticket of an otherwise confirmed registration is no longer listed, and the registration's ticket count matches the rows shown.
 
@@ -175,380 +208,380 @@
 
 ### Minor Changes
 
--   7419f12: Organizers can reorder activities in the Tickets editor with a "Move to top" button on every activity except the first. After Save tickets, the new order shows in the editor and on the signup form. Existing signups keep the activities they selected.
--   93df554: Administrators can now give one ticket of a purchase to someone else from the Audience tab. "Assign ticket" on a ticket shows who bought it and who holds it, and lets you pick any existing participant — including the purchaser, to take it back — or add a new one in the same step. If the email you enter already belongs to someone, you are offered that person instead of a duplicate. Only the chosen ticket changes hands: the purchase, its payment and its other tickets stay with the purchaser, who keeps receiving confirmation and refund messages. The ticket then appears under its new holder with "Purchased by …", and a purchaser who has given away every ticket is listed as the purchaser rather than as attending. A checked-in ticket has to have its check-in cleared first, and tickets that failed, expired, were cancelled or refunded cannot be assigned.
--   f6f2aa4: The List and Audience tabs now open the same "Edit ticket" popup for an individual ticket. It names the participant and the ticket ("Ticket 2 (AE2671B5)"), shows its status, and lets an administrator change the ticket's type, activities and check-in in one save, without touching the other tickets of the purchase or its payment. It says that a type change makes no charge or refund, checks the type's activity rules, and shows every ticket-type and activity limit the change would pass, saving over capacity only with a reason. A failed save keeps the popup open with the edits. With Fair Audience active, the List shows each purchase's tickets with their own types; without it, the List keeps its "Change ticket type" action for the whole purchase, which is now refused once a ticket has been given its own type. Tickets awaiting payment are read-only, including their check-in.
--   296c5a0: Organizers can move an event to draft and publish it again from Manage Event. A draft event stays editable in the admin but is hidden from public event lists, calendars and feeds, and the pages linked to it are drafted and published with it. A recurring series is drafted or published as a whole.
--   064980e: Fair Events Experimental settings now live in an Experimental tab of Fair Events → Settings instead of their own menu entry. The tab holds the same feature toggles, weekly notifications and Meta Conversions settings, with their saved values unchanged, and only administrators can open it. Links to the former Experimental Settings page redirect to the new tab, and the selected tab is kept on reload and in bookmarks. Without Fair Events Experimental, the Settings page shows its other tabs as before. The Settings tabs now wrap onto a second row on narrow screens.
--   7c509c1: Show one row per ticket in the Manage Event List and its export, each with its own reference, ticket type and extras. The export gives the purchase total once per registration so it cannot be double-counted.
--   f62e157: Let a participant buy tickets again for a date they already hold a ticket for. Each purchase keeps its own signup, tickets and payment. The Event Signup form now protects against accidental repeats instead: submitting the same purchase twice, or retrying after a lost connection or a payment that could not be started, continues the first purchase and never charges twice. After an error message the form can be submitted again without reloading the page.
--   4a4d8f1: Show capacity on the Manage Event Statistics tab: places taken, capacity and remaining places for the event, each ticket type and each activity, with full and over-capacity limits marked. The figures count tickets held for payment, as ticket availability does.
--   928d9f2: Move event Statistics into Fair Events. The Statistics tab on Manage Event and the standalone Statistics page no longer need Fair Events Experimental, and the page explains when Fair Audience is missing. The statistics endpoint now lives at `/fair-events/v1/event-dates/{id}/statistics`; the former `/fair-audience/v1/...` path keeps working as an alias. Experimental's "Audience statistics" setting is retired.
--   98c6e65: Fair Form answers collected during a ticket signup now belong to a specific ticket: the purchase's first ticket, since the signup form still collects one set of answers. A second purchase by the same person keeps its own answers instead of replacing the first one's. The "Edit ticket" popup shows the answers of that ticket, the Event Participants list shows each ticket's answers under that ticket, and the signup export names the ticket each answer set belongs to. Answers collected before this change are attached to the first ticket of the person's earliest purchase for that date and flagged for review; answers with no matching ticket, or whose ticket is removed, stay with the person and are flagged for review too. Standalone Fair Form submissions are unchanged.
--   903d362: Organizers can reorder ticket types in the Tickets editor with a "Move to top" button on every ticket type except the first. After Save tickets, the new order shows in the editor and in the ticket choices on the signup form. Each ticket type keeps its settings, prices, group restrictions, and existing signups.
+- 7419f12: Organizers can reorder activities in the Tickets editor with a "Move to top" button on every activity except the first. After Save tickets, the new order shows in the editor and on the signup form. Existing signups keep the activities they selected.
+- 93df554: Administrators can now give one ticket of a purchase to someone else from the Audience tab. "Assign ticket" on a ticket shows who bought it and who holds it, and lets you pick any existing participant — including the purchaser, to take it back — or add a new one in the same step. If the email you enter already belongs to someone, you are offered that person instead of a duplicate. Only the chosen ticket changes hands: the purchase, its payment and its other tickets stay with the purchaser, who keeps receiving confirmation and refund messages. The ticket then appears under its new holder with "Purchased by …", and a purchaser who has given away every ticket is listed as the purchaser rather than as attending. A checked-in ticket has to have its check-in cleared first, and tickets that failed, expired, were cancelled or refunded cannot be assigned.
+- f6f2aa4: The List and Audience tabs now open the same "Edit ticket" popup for an individual ticket. It names the participant and the ticket ("Ticket 2 (AE2671B5)"), shows its status, and lets an administrator change the ticket's type, activities and check-in in one save, without touching the other tickets of the purchase or its payment. It says that a type change makes no charge or refund, checks the type's activity rules, and shows every ticket-type and activity limit the change would pass, saving over capacity only with a reason. A failed save keeps the popup open with the edits. With Fair Audience active, the List shows each purchase's tickets with their own types; without it, the List keeps its "Change ticket type" action for the whole purchase, which is now refused once a ticket has been given its own type. Tickets awaiting payment are read-only, including their check-in.
+- 296c5a0: Organizers can move an event to draft and publish it again from Manage Event. A draft event stays editable in the admin but is hidden from public event lists, calendars and feeds, and the pages linked to it are drafted and published with it. A recurring series is drafted or published as a whole.
+- 064980e: Fair Events Experimental settings now live in an Experimental tab of Fair Events → Settings instead of their own menu entry. The tab holds the same feature toggles, weekly notifications and Meta Conversions settings, with their saved values unchanged, and only administrators can open it. Links to the former Experimental Settings page redirect to the new tab, and the selected tab is kept on reload and in bookmarks. Without Fair Events Experimental, the Settings page shows its other tabs as before. The Settings tabs now wrap onto a second row on narrow screens.
+- 7c509c1: Show one row per ticket in the Manage Event List and its export, each with its own reference, ticket type and extras. The export gives the purchase total once per registration so it cannot be double-counted.
+- f62e157: Let a participant buy tickets again for a date they already hold a ticket for. Each purchase keeps its own signup, tickets and payment. The Event Signup form now protects against accidental repeats instead: submitting the same purchase twice, or retrying after a lost connection or a payment that could not be started, continues the first purchase and never charges twice. After an error message the form can be submitted again without reloading the page.
+- 4a4d8f1: Show capacity on the Manage Event Statistics tab: places taken, capacity and remaining places for the event, each ticket type and each activity, with full and over-capacity limits marked. The figures count tickets held for payment, as ticket availability does.
+- 928d9f2: Move event Statistics into Fair Events. The Statistics tab on Manage Event and the standalone Statistics page no longer need Fair Events Experimental, and the page explains when Fair Audience is missing. The statistics endpoint now lives at `/fair-events/v1/event-dates/{id}/statistics`; the former `/fair-audience/v1/...` path keeps working as an alias. Experimental's "Audience statistics" setting is retired.
+- 98c6e65: Fair Form answers collected during a ticket signup now belong to a specific ticket: the purchase's first ticket, since the signup form still collects one set of answers. A second purchase by the same person keeps its own answers instead of replacing the first one's. The "Edit ticket" popup shows the answers of that ticket, the Event Participants list shows each ticket's answers under that ticket, and the signup export names the ticket each answer set belongs to. Answers collected before this change are attached to the first ticket of the person's earliest purchase for that date and flagged for review; answers with no matching ticket, or whose ticket is removed, stay with the person and are flagged for review too. Standalone Fair Form submissions are unchanged.
+- 903d362: Organizers can reorder ticket types in the Tickets editor with a "Move to top" button on every ticket type except the first. After Save tickets, the new order shows in the editor and in the ticket choices on the signup form. Each ticket type keeps its settings, prices, group restrictions, and existing signups.
 
 ### Patch Changes
 
--   8ddfbc2: "Cancel and start over" now works after an Event Signup payment has failed, was canceled or expired, including when the payment provider reports the failure after the payment card was shown. The visitor gets a fresh signup form instead of an error, and the previous attempt can no longer be resumed or retried. A payment that completes while the visitor cancels stays confirmed, including one that arrives just after the reservation was released. If the attempt cannot be released safely, nothing changes, the visitor sees an error on the same card and can try again.
--   f7510c6: Show each event's link in its iCal feed description so it's visible in Google Calendar. Standalone events without a link now point to a new public page for that event date.
--   ceefad4: Weekly Telegram notifications are easier to read: the calendar title is a link, the date range has its own line, and each event is a bullet with its weekday, time and linked title instead of `*` markers and full URLs. Titles with characters such as `*`, `_` or `[` are shown exactly as written. The "Send test summary to Telegram" button now sends the next scheduled week's real summary, and the preview shows each Telegram message with its links. The Events Week "copy summary" text is unchanged.
--   e803bba: Link ticket payments to the participant who bought them. Payments show the buyer as the Person, and the purchase appears in that participant's activity, also for first-time buyers, retried payments and series purchases. Earlier ticket payments are linked where their signups clearly identify one participant.
--   da72269: Post the week's events from an event source to Telegram on a weekly schedule, in the same format as the calendar's copy-summary button. Any published, public page can head the message with its title and link; it does not need to show a calendar. The Events Week View heading now shows the right dates on sites west of UTC.
+- 8ddfbc2: "Cancel and start over" now works after an Event Signup payment has failed, was canceled or expired, including when the payment provider reports the failure after the payment card was shown. The visitor gets a fresh signup form instead of an error, and the previous attempt can no longer be resumed or retried. A payment that completes while the visitor cancels stays confirmed, including one that arrives just after the reservation was released. If the attempt cannot be released safely, nothing changes, the visitor sees an error on the same card and can try again.
+- f7510c6: Show each event's link in its iCal feed description so it's visible in Google Calendar. Standalone events without a link now point to a new public page for that event date.
+- ceefad4: Weekly Telegram notifications are easier to read: the calendar title is a link, the date range has its own line, and each event is a bullet with its weekday, time and linked title instead of `*` markers and full URLs. Titles with characters such as `*`, `_` or `[` are shown exactly as written. The "Send test summary to Telegram" button now sends the next scheduled week's real summary, and the preview shows each Telegram message with its links. The Events Week "copy summary" text is unchanged.
+- e803bba: Link ticket payments to the participant who bought them. Payments show the buyer as the Person, and the purchase appears in that participant's activity, also for first-time buyers, retried payments and series purchases. Earlier ticket payments are linked where their signups clearly identify one participant.
+- da72269: Post the week's events from an event source to Telegram on a weekly schedule, in the same format as the calendar's copy-summary button. Any published, public page can head the message with its title and link; it does not need to show a calendar. The Events Week View heading now shows the right dates on sites west of UTC.
 
 ## 1.19.0
 
 ### Minor Changes
 
--   6be67b2: Count activity places per ticket. Several tickets bought together each take their own place in the activities they select, and the signup form asks for each ticket's activities, with a button that applies the first ticket's choice to all. Every purchase, added activity, retried payment, move and admin edit checks the activity's remaining places, so buying at the same moment can no longer overbook it. On recurring events each date has its own activity places, and a whole-series ticket takes one on every date it covers. An administrator can go past an activity's limit only by giving a reason, and the change is shown as over capacity. A payment that arrives after its place was taken is still honored and flagged. A failed payment for added activities releases their places at once.
--   c41124a: Let editors choose which ticket types and sale periods each Event Prices block shows — for example, only the Full Pass during Early Bird and Regular. The settings live in the block sidebar, affect only that block, and never change what can be bought during signup. New ticket types and sale periods appear automatically, and hidden ones stay listed so they can be restored.
--   afe881c: Add an Event Prices block that displays an event's public ticket prices — enabled ticket types, sale periods, and their formatted prices — directly from the linked event's Prices tab, automatically following the visitor's selected recurring-event occurrence. Free, unavailable, and disabled tickets are shown without implying they can be purchased.
+- 6be67b2: Count activity places per ticket. Several tickets bought together each take their own place in the activities they select, and the signup form asks for each ticket's activities, with a button that applies the first ticket's choice to all. Every purchase, added activity, retried payment, move and admin edit checks the activity's remaining places, so buying at the same moment can no longer overbook it. On recurring events each date has its own activity places, and a whole-series ticket takes one on every date it covers. An administrator can go past an activity's limit only by giving a reason, and the change is shown as over capacity. A payment that arrives after its place was taken is still honored and flagged. A failed payment for added activities releases their places at once.
+- c41124a: Let editors choose which ticket types and sale periods each Event Prices block shows — for example, only the Full Pass during Early Bird and Regular. The settings live in the block sidebar, affect only that block, and never change what can be bought during signup. New ticket types and sale periods appear automatically, and hidden ones stay listed so they can be restored.
+- afe881c: Add an Event Prices block that displays an event's public ticket prices — enabled ticket types, sale periods, and their formatted prices — directly from the linked event's Prices tab, automatically following the visitor's selected recurring-event occurrence. Free, unavailable, and disabled tickets are shown without implying they can be purchased.
 
     Ticket pricing across the signup and purchase flows now treats only an explicitly stored zero price as free. A ticket type with no price row at all is unavailable rather than free by convention, matching what the new block (and the Prices tab) shows — closing a gap where a ticket that looked unavailable could previously still be purchased for free at checkout.
 
--   52ab256: Make the Events List block reliably show future events with flexible layouts. Custom patterns (not built with the Query block) can now display every occurrence source — post-linked, standalone, calendar feed (iCal), and external API events — through a shared set of `{{title}}`, `{{url}}`, `{{start}}`, `{{end}}`, `{{date_range}}`, `{{description}}`, `{{location}}`, `{{image}}`, and `{{source_type}}` placeholders, with safe fallbacks for missing titles and URLs. The Display Pattern picker no longer offers calendar/week-only patterns, keeps a deleted or unpublished pattern selection visible instead of silently switching layouts, and warns when a Query Loop pattern (which only supports WordPress-linked events) is combined with selected event sources. The block now shows a distinct message when the selected pattern is unavailable versus when a valid pattern simply has no matching events.
+- 52ab256: Make the Events List block reliably show future events with flexible layouts. Custom patterns (not built with the Query block) can now display every occurrence source — post-linked, standalone, calendar feed (iCal), and external API events — through a shared set of `{{title}}`, `{{url}}`, `{{start}}`, `{{end}}`, `{{date_range}}`, `{{description}}`, `{{location}}`, `{{image}}`, and `{{source_type}}` placeholders, with safe fallbacks for missing titles and URLs. The Display Pattern picker no longer offers calendar/week-only patterns, keeps a deleted or unpublished pattern selection visible instead of silently switching layouts, and warns when a Query Loop pattern (which only supports WordPress-linked events) is combined with selected event sources. The block now shows a distinct message when the selected pattern is unavailable versus when a valid pattern simply has no matching events.
 
     Fixed several correctness bugs in the underlying query: generated recurring occurrences now resolve their master event's linked post, cancelled/inactive event dates are excluded, a single event with several matching occurrences no longer renders as duplicate list items, and a missing end date is treated as equal to the start when deciding "past"/"ongoing" boundaries — previously such an event could never be classified as past. The bundled Event List and Event Grid patterns now also show each event's excerpt, matching their own descriptions.
 
--   3ba3169: Show each recurring series once in the Events List block's Upcoming view. The series is placed in date order by its next date, alongside single events, and its date reads as a schedule summary such as "Weekly on Mondays at 18:00; next occurrence: 28 September". This applies to post-linked and standalone series in the bundled Event List/Event Grid patterns and in custom per-event patterns. In custom patterns, `{{date_range}}` shows the combined summary, and the new `{{recurrence_summary}}` and `{{next_occurrence}}` placeholders show its two parts separately. The schedule always comes from the series rule, so a rescheduled date doesn't change the advertised weekday or time. Hand-picked dates or rules that can't be described show "Recurring event; next occurrence: …". An occurrence that already started today no longer stands in for the series' next date. Calendar feed and external API events are still listed one date at a time, and the Past, Ongoing, and All views are unchanged.
--   4d692f4: Record every purchased admission as its own ticket unit. A signup for three tickets now owns three individually identifiable tickets, each with a permanent ID, an unguessable public reference, its event date, ticket type, status, purchaser, and current holder. Ticket status follows the signup through payment, expiry, retry, failure, and checkout cancellation, and deleting a signup removes its tickets. Existing signups, including pending, expired, and failed ones, receive their tickets through a background migration that runs in small batches, can resume after an interruption, never creates duplicates, and finishes only after every signup's tickets match its quantity. When fair-audience matches existing signups to participants by email, their tickets are linked to that participant too, and deleting a participant's data removes the participant from their tickets while keeping the purchase history. Signup data and event participation records are unchanged.
--   6d00587: Add inline venue creation to the calendar event form. The venue selector on the calendar's Quick Add Event modal and the Manage Event screen now ends with an "Add new venue" option that opens a simplified name/address form right below the selector, without leaving the event workflow. Creating a venue there selects it automatically, keeps the rest of the event form untouched, and reuses the existing venues REST endpoint.
--   74f0e21: Simplify the Manage Event List tab into a registration roster. It now shows only confirmed registrations (paid or free), numbers them from 1, and adds one column per configured extra showing whether each person holds it. Email addresses and amounts paid are no longer shown in the table or its delete dialog, but remain available in exports, which cover the displayed registrations. Fair Audience's event participants endpoint now also reports `confirmed_ticket_option_ids`, excluding extras still waiting for payment; without Fair Audience the extra columns show that selections are unavailable.
--   1246f44: Remove the event photo gallery. The Photos tab of Manage Event, the public gallery page, photo likes and downloads, gallery access links, the "Send Gallery Link" action, the gallery count on Event Participants and the Images/Likes columns of By Event are gone, together with their REST routes. Old `?gallery_key=`, `?event_gallery_id=` and `/event-gallery/{id}` links now answer 410 Gone without checking the token. On upgrade, the gallery relationship, likes and access key tables are dropped; the cleanup can safely repeat and is retried until it succeeds. Media files, photo authors and tags, participant and questionnaire photo uploads, and event promotional images are kept. In fair-audience-experimental the retained photo upload and attribution features move from the `galleries` bundle to a new `photos` bundle, which inherits the stored choice. See DEPLOYMENT.md for backup and rollback steps.
--   eaa4a73: Administrators can now move a signup to another date of its series, or give it another ticket type, from the Manage Event List tab. The signup and all its tickets except cancelled or refunded ones change together, and each choice shows how many places are left. When the chosen date or ticket type is full, the change needs a reason: it is then saved, the signup is marked "Confirmed — over capacity", and a details link shows who went over capacity, when, and why. A signup flagged because its payment arrived after its hold expired says so. The amount paid never changes. Fair Audience moves or updates the participant's registration to match, so the Audience tab agrees with the List.
--   4141d59: Show one checkout total directly above the Event Signup submit button. It is always visible — including a zero amount for free signups — and updates as soon as the visitor changes the ticket type, quantity, dates, or activities, with member discounts included once they load. It replaces the separate totals that used to appear inside the date and activity sections. Site-level conversion tracking, such as a Meta event, can read the payable amount from `.fair-events-signup-checkout-total` through its `data-amount` and `data-currency` attributes; the plugin itself sends no tracking data.
--   66142ed: Store activities and check-in per ticket. A purchaser with several tickets can have different activities on each and be checked in one ticket at a time from the Audience tab. Activities added later go to the chosen ticket. Earlier participant-level activities and check-ins are moved to a ticket only when the participant holds exactly one ticket for that date. Otherwise they stay visible as participant-level history.
--   48f7df4: Event and ticket-type capacity is now counted per ticket and enforced when tickets are bought. A purchase of four tickets takes four places, and buyers who ask for more than is left are told how many places or tickets remain. Both limits are checked and the tickets saved together, so buyers purchasing at the same moment can no longer take the same last place. A paid reservation holds its places from the moment it is made until its payment window ends. A failed, cancelled or expired payment frees them. Retrying a failed payment succeeds only if its places are still free. A payment that arrives after its window ended is still honored, and the signup is flagged as over capacity when someone else took the places in the meantime. For recurring events, a ticket for one date or for chosen dates takes a place on each of those dates, and a whole-series pass takes one place on every date from its purchase on. Admissions recorded before individual tickets existed, including participants added by hand in fair-audience, keep their places and are never counted twice. The "has sales" check that protects ticket types from risky edits uses the same count and no longer needs fair-audience.
--   cec5507: Event editors (anyone with `edit_posts`, not just administrators) can now open the Venues admin page, view existing venues, create new ones, and edit and save an existing venue's details, including using the map-link preview. Deleting a venue remains restricted to administrators, and the Delete action is now hidden from anyone who cannot delete.
+- 3ba3169: Show each recurring series once in the Events List block's Upcoming view. The series is placed in date order by its next date, alongside single events, and its date reads as a schedule summary such as "Weekly on Mondays at 18:00; next occurrence: 28 September". This applies to post-linked and standalone series in the bundled Event List/Event Grid patterns and in custom per-event patterns. In custom patterns, `{{date_range}}` shows the combined summary, and the new `{{recurrence_summary}}` and `{{next_occurrence}}` placeholders show its two parts separately. The schedule always comes from the series rule, so a rescheduled date doesn't change the advertised weekday or time. Hand-picked dates or rules that can't be described show "Recurring event; next occurrence: …". An occurrence that already started today no longer stands in for the series' next date. Calendar feed and external API events are still listed one date at a time, and the Past, Ongoing, and All views are unchanged.
+- 4d692f4: Record every purchased admission as its own ticket unit. A signup for three tickets now owns three individually identifiable tickets, each with a permanent ID, an unguessable public reference, its event date, ticket type, status, purchaser, and current holder. Ticket status follows the signup through payment, expiry, retry, failure, and checkout cancellation, and deleting a signup removes its tickets. Existing signups, including pending, expired, and failed ones, receive their tickets through a background migration that runs in small batches, can resume after an interruption, never creates duplicates, and finishes only after every signup's tickets match its quantity. When fair-audience matches existing signups to participants by email, their tickets are linked to that participant too, and deleting a participant's data removes the participant from their tickets while keeping the purchase history. Signup data and event participation records are unchanged.
+- 6d00587: Add inline venue creation to the calendar event form. The venue selector on the calendar's Quick Add Event modal and the Manage Event screen now ends with an "Add new venue" option that opens a simplified name/address form right below the selector, without leaving the event workflow. Creating a venue there selects it automatically, keeps the rest of the event form untouched, and reuses the existing venues REST endpoint.
+- 74f0e21: Simplify the Manage Event List tab into a registration roster. It now shows only confirmed registrations (paid or free), numbers them from 1, and adds one column per configured extra showing whether each person holds it. Email addresses and amounts paid are no longer shown in the table or its delete dialog, but remain available in exports, which cover the displayed registrations. Fair Audience's event participants endpoint now also reports `confirmed_ticket_option_ids`, excluding extras still waiting for payment; without Fair Audience the extra columns show that selections are unavailable.
+- 1246f44: Remove the event photo gallery. The Photos tab of Manage Event, the public gallery page, photo likes and downloads, gallery access links, the "Send Gallery Link" action, the gallery count on Event Participants and the Images/Likes columns of By Event are gone, together with their REST routes. Old `?gallery_key=`, `?event_gallery_id=` and `/event-gallery/{id}` links now answer 410 Gone without checking the token. On upgrade, the gallery relationship, likes and access key tables are dropped; the cleanup can safely repeat and is retried until it succeeds. Media files, photo authors and tags, participant and questionnaire photo uploads, and event promotional images are kept. In fair-audience-experimental the retained photo upload and attribution features move from the `galleries` bundle to a new `photos` bundle, which inherits the stored choice. See DEPLOYMENT.md for backup and rollback steps.
+- eaa4a73: Administrators can now move a signup to another date of its series, or give it another ticket type, from the Manage Event List tab. The signup and all its tickets except cancelled or refunded ones change together, and each choice shows how many places are left. When the chosen date or ticket type is full, the change needs a reason: it is then saved, the signup is marked "Confirmed — over capacity", and a details link shows who went over capacity, when, and why. A signup flagged because its payment arrived after its hold expired says so. The amount paid never changes. Fair Audience moves or updates the participant's registration to match, so the Audience tab agrees with the List.
+- 4141d59: Show one checkout total directly above the Event Signup submit button. It is always visible — including a zero amount for free signups — and updates as soon as the visitor changes the ticket type, quantity, dates, or activities, with member discounts included once they load. It replaces the separate totals that used to appear inside the date and activity sections. Site-level conversion tracking, such as a Meta event, can read the payable amount from `.fair-events-signup-checkout-total` through its `data-amount` and `data-currency` attributes; the plugin itself sends no tracking data.
+- 66142ed: Store activities and check-in per ticket. A purchaser with several tickets can have different activities on each and be checked in one ticket at a time from the Audience tab. Activities added later go to the chosen ticket. Earlier participant-level activities and check-ins are moved to a ticket only when the participant holds exactly one ticket for that date. Otherwise they stay visible as participant-level history.
+- 48f7df4: Event and ticket-type capacity is now counted per ticket and enforced when tickets are bought. A purchase of four tickets takes four places, and buyers who ask for more than is left are told how many places or tickets remain. Both limits are checked and the tickets saved together, so buyers purchasing at the same moment can no longer take the same last place. A paid reservation holds its places from the moment it is made until its payment window ends. A failed, cancelled or expired payment frees them. Retrying a failed payment succeeds only if its places are still free. A payment that arrives after its window ended is still honored, and the signup is flagged as over capacity when someone else took the places in the meantime. For recurring events, a ticket for one date or for chosen dates takes a place on each of those dates, and a whole-series pass takes one place on every date from its purchase on. Admissions recorded before individual tickets existed, including participants added by hand in fair-audience, keep their places and are never counted twice. The "has sales" check that protects ticket types from risky edits uses the same count and no longer needs fair-audience.
+- cec5507: Event editors (anyone with `edit_posts`, not just administrators) can now open the Venues admin page, view existing venues, create new ones, and edit and save an existing venue's details, including using the map-link preview. Deleting a venue remains restricted to administrators, and the Delete action is now hidden from anyone who cannot delete.
 
 ### Patch Changes
 
--   9351bf8: Fix calendar and week-view navigation generating crawlable combined-date URLs when both dated event views are on the same page. Monthly navigation no longer carries a weekly selection along (and vice versa), so alternating between the two controls can no longer mint the full cross-product of month/week combinations. A legacy URL that already combines both dated selections still renders and remains accessible, but now declares the plain page URL as canonical instead of independently indexing the combination.
--   1e1d6c8: Fix signups failing with "Failed to save signup" when two people signed up at the same moment. Saving a new signup's tickets no longer locks rows the other signup needs, so simultaneous purchases both go through.
--   67f7bf6: The integration fee becomes a flat 2% of ticket sales with no monthly cap. It stays waived for transactions created before 1 January 2027 (midnight in the site timezone); from then on, each new transaction records a 2% fee. Fees already recorded on existing or imported transactions are never recalculated, and Mollie's processing fees remain separate.
+- 9351bf8: Fix calendar and week-view navigation generating crawlable combined-date URLs when both dated event views are on the same page. Monthly navigation no longer carries a weekly selection along (and vice versa), so alternating between the two controls can no longer mint the full cross-product of month/week combinations. A legacy URL that already combines both dated selections still renders and remains accessible, but now declares the plain page URL as canonical instead of independently indexing the combination.
+- 1e1d6c8: Fix signups failing with "Failed to save signup" when two people signed up at the same moment. Saving a new signup's tickets no longer locks rows the other signup needs, so simultaneous purchases both go through.
+- 67f7bf6: The integration fee becomes a flat 2% of ticket sales with no monthly cap. It stays waived for transactions created before 1 January 2027 (midnight in the site timezone); from then on, each new transaction records a 2% fee. Fees already recorded on existing or imported transactions are never recalculated, and Mollie's processing fees remain separate.
 
     The Fee Dashboard now explains the new pricing and shows only this month's payment volume and integration fees. The monthly cap meter, remaining allowance, and active-plan breakdown are gone, and the `/fair-payments-connector/v1/dashboard/monthly-summary` response no longer includes `fee_cap`, `cap_remaining`, or `plan_breakdown`. The `fair_payment_active_plugin_prices` filter has been removed. Pricing copy in both plugin readmes is updated to match.
 
--   c9df2f7: Fix ticket purchases made through the Event Signup block leaving the payment transaction without its event. New transactions now link to the purchased event, or to the series' own event for recurring purchases, so transaction views show the event title instead of a blank. This also applies to optional activities bought with the ticket and to retried payments. Existing transactions are not backfilled.
--   1161686: Show selected extras on the Manage Event List tab as a clear check mark and leave unselected extras blank, matching the Audience tab. Screen readers still announce "Selected", "Not selected", or "Selection unavailable".
--   82c3b5c: Show the Manage Event List tab when Fair Audience is active. Organizers can now review and export an event's signups from List in both plugin configurations, alongside the Audience tab. List still requires the ticketing feature and stays disabled for events that only link to another page.
--   ab5c597: Simplify the Manage Event page's recurrence section for single (non-series) events. Instead of a "Recurrence" card with a heading and "This event happens once." text, a single event now shows just the "Turn into a series" button directly below the date/time fields, with no card wrapper. Events already part of a series are unchanged — they keep the recurrence summary, "Edit series"/"End series" controls, and occurrence calendar.
+- c9df2f7: Fix ticket purchases made through the Event Signup block leaving the payment transaction without its event. New transactions now link to the purchased event, or to the series' own event for recurring purchases, so transaction views show the event title instead of a blank. This also applies to optional activities bought with the ticket and to retried payments. Existing transactions are not backfilled.
+- 1161686: Show selected extras on the Manage Event List tab as a clear check mark and leave unselected extras blank, matching the Audience tab. Screen readers still announce "Selected", "Not selected", or "Selection unavailable".
+- 82c3b5c: Show the Manage Event List tab when Fair Audience is active. Organizers can now review and export an event's signups from List in both plugin configurations, alongside the Audience tab. List still requires the ticketing feature and stays disabled for events that only link to another page.
+- ab5c597: Simplify the Manage Event page's recurrence section for single (non-series) events. Instead of a "Recurrence" card with a heading and "This event happens once." text, a single event now shows just the "Turn into a series" button directly below the date/time fields, with no card wrapper. Events already part of a series are unchanged — they keep the recurrence summary, "Edit series"/"End series" controls, and occurrence calendar.
 
 ## 1.18.0
 
 ### Minor Changes
 
--   0a5131a: Sale periods no longer require explicit outer boundaries. A first sale period with no start date is available from today while today is still before its end; a last sale period with no end date stays available through the complete final day of the event or recurring series. Interior sale periods still require explicit, chained boundaries, and an invalid sequence is rejected before it's saved.
--   7362ce4: Add a budget selector to the Manage Event Finance tab, applying to the whole event/series. When Fair Finance pre-generates a reconciliation split for a settlement transfer, or matches a bank entry to a single transaction, each allocation now preselects the budget linked to its payment's event (falling back to no budget when the event has none, is unlinked, or its budget was deleted). Organisers can still override any preselected budget before saving.
--   e3fa379: Add an "Event" field to the transaction view so an admin can search for, link, or clear the event date a transaction relates to — including linking a specific occurrence of a recurring event. The link is validated server-side against Fair Events when it's active.
--   ac6da68: Let the Events Calendar, Events Week, and Events List category picker offer categories from every configured Polylang language, distinguished by an accessible "Name — Language" label, so an editor can include same-named categories from another language in the filter.
--   aa0b8ef: Replace the Signups tab's "Download CSV" button with a configurable "Export" popup: pick all columns or handpick them, choose Markdown/CSV/one-line output, and optionally include Fair Form answers collected during signup as individually selectable columns.
--   4a91d09: Add a "Manage events" shortcut to the Events Calendar block's navigation bar, visible only to users who can edit events, linking to the corresponding month on the admin calendar.
--   2f0d149: Add a Location filter to the All Events admin screen, with a matching Location column, so staff can narrow the list to events at one venue or with no venue set.
+- 0a5131a: Sale periods no longer require explicit outer boundaries. A first sale period with no start date is available from today while today is still before its end; a last sale period with no end date stays available through the complete final day of the event or recurring series. Interior sale periods still require explicit, chained boundaries, and an invalid sequence is rejected before it's saved.
+- 7362ce4: Add a budget selector to the Manage Event Finance tab, applying to the whole event/series. When Fair Finance pre-generates a reconciliation split for a settlement transfer, or matches a bank entry to a single transaction, each allocation now preselects the budget linked to its payment's event (falling back to no budget when the event has none, is unlinked, or its budget was deleted). Organisers can still override any preselected budget before saving.
+- e3fa379: Add an "Event" field to the transaction view so an admin can search for, link, or clear the event date a transaction relates to — including linking a specific occurrence of a recurring event. The link is validated server-side against Fair Events when it's active.
+- ac6da68: Let the Events Calendar, Events Week, and Events List category picker offer categories from every configured Polylang language, distinguished by an accessible "Name — Language" label, so an editor can include same-named categories from another language in the filter.
+- aa0b8ef: Replace the Signups tab's "Download CSV" button with a configurable "Export" popup: pick all columns or handpick them, choose Markdown/CSV/one-line output, and optionally include Fair Form answers collected during signup as individually selectable columns.
+- 4a91d09: Add a "Manage events" shortcut to the Events Calendar block's navigation bar, visible only to users who can edit events, linking to the corresponding month on the admin calendar.
+- 2f0d149: Add a Location filter to the All Events admin screen, with a matching Location column, so staff can narrow the list to events at one venue or with no venue set.
 
 ### Patch Changes
 
--   d4bea94: Rename the Manage Event ticket and signup sections to Prices and List while preserving legacy admin links.
--   65b371a: Fix the Manage Event editor dropping selected categories from other Polylang languages on save. The category picker now loads every configured language and matches tokens by name and language together, so same-named categories in different languages no longer collide or disappear on an unrelated save.
--   5290dc9: Fix the Manage Event editor showing multilingual categories without their language label after loading. The saved event's category records (which carry no language) could arrive after the all-languages options fetch and overwrite the language metadata already loaded, regardless of which request finished first.
--   7318848: Rename the dedicated Events post type's labels to "Event Page" / "Event Pages" throughout the admin (submenu, list table, search, Add New/Edit screens) so it stops colliding with "Event" meaning the dated, ticketed object. The frontend admin bar on a published event page now shows distinct "Manage Event" and "Edit Event Page" links. Translated for de_DE, es_ES, fr_FR, and pl_PL.
--   c894b20: Refresh the WordPress.org screenshot set and store listing captions to match the "Event page" post type naming, replacing stale "Event Posts" imagery and "a single event post" captions.
--   1a49cff: Keep every selected event category when Polylang adjusts the linked post's terms, including after later edits and category filtering.
--   452cc30: Consolidate ticket sale-period and ticket-type availability into a single `TicketAvailability` service in fair-events, always evaluated in the WordPress site timezone. Fixes two boundary inconsistencies found while consolidating: event JSON-LD offers now respect a ticket type's scheduled end date (previously only manual disabling was checked), and the fair-audience signup form's purchase validation now also rejects a manually disabled ticket type (previously only its scheduled end date), matching what the signup form already hides.
--   1323dfa: Fix the All Events Location filter menu collapsing to an unreadably narrow popover.
--   Updated dependencies [19d0333]
-    -   fair-events-shared@0.6.2
+- d4bea94: Rename the Manage Event ticket and signup sections to Prices and List while preserving legacy admin links.
+- 65b371a: Fix the Manage Event editor dropping selected categories from other Polylang languages on save. The category picker now loads every configured language and matches tokens by name and language together, so same-named categories in different languages no longer collide or disappear on an unrelated save.
+- 5290dc9: Fix the Manage Event editor showing multilingual categories without their language label after loading. The saved event's category records (which carry no language) could arrive after the all-languages options fetch and overwrite the language metadata already loaded, regardless of which request finished first.
+- 7318848: Rename the dedicated Events post type's labels to "Event Page" / "Event Pages" throughout the admin (submenu, list table, search, Add New/Edit screens) so it stops colliding with "Event" meaning the dated, ticketed object. The frontend admin bar on a published event page now shows distinct "Manage Event" and "Edit Event Page" links. Translated for de_DE, es_ES, fr_FR, and pl_PL.
+- c894b20: Refresh the WordPress.org screenshot set and store listing captions to match the "Event page" post type naming, replacing stale "Event Posts" imagery and "a single event post" captions.
+- 1a49cff: Keep every selected event category when Polylang adjusts the linked post's terms, including after later edits and category filtering.
+- 452cc30: Consolidate ticket sale-period and ticket-type availability into a single `TicketAvailability` service in fair-events, always evaluated in the WordPress site timezone. Fixes two boundary inconsistencies found while consolidating: event JSON-LD offers now respect a ticket type's scheduled end date (previously only manual disabling was checked), and the fair-audience signup form's purchase validation now also rejects a manually disabled ticket type (previously only its scheduled end date), matching what the signup form already hides.
+- 1323dfa: Fix the All Events Location filter menu collapsing to an unreadably narrow popover.
+- Updated dependencies [19d0333]
+    - fair-events-shared@0.6.2
 
 ## 1.17.0
 
 ### Minor Changes
 
--   a6fc9d8: Add opt-in, consent-gated Meta Conversions API reporting for ticket checkout and confirmed live purchases, with write-only credentials, asynchronous delivery, bounded retries, sanitized diagnostics, and 90-day retention.
--   68a8253: Copy events backed by any enabled post type and calendar-only events while preserving recurrence and reusable configuration.
--   5336197: Add an authorized Copy action to eligible rows in the All Events list.
--   448d0e2: Add a Copy event action to the Manage Event administration tab.
--   c95e170: Allow organizers to edit start and end times while copying an event.
--   b3a74fa: Add Google Maps verification links to venue management.
--   8c56f63: Recognize participant-token links throughout the unified Event Signup flow, including personalized hydration, authoritative pricing and eligibility, and participant linkage.
--   ac04ebc: Copy complete ticket configuration and shifted availability dates when duplicating an event.
+- a6fc9d8: Add opt-in, consent-gated Meta Conversions API reporting for ticket checkout and confirmed live purchases, with write-only credentials, asynchronous delivery, bounded retries, sanitized diagnostics, and 90-day retention.
+- 68a8253: Copy events backed by any enabled post type and calendar-only events while preserving recurrence and reusable configuration.
+- 5336197: Add an authorized Copy action to eligible rows in the All Events list.
+- 448d0e2: Add a Copy event action to the Manage Event administration tab.
+- c95e170: Allow organizers to edit start and end times while copying an event.
+- b3a74fa: Add Google Maps verification links to venue management.
+- 8c56f63: Recognize participant-token links throughout the unified Event Signup flow, including personalized hydration, authoritative pricing and eligibility, and participant linkage.
+- ac04ebc: Copy complete ticket configuration and shifted availability dates when duplicating an event.
 
 ### Patch Changes
 
--   71b5b84: Show ticket sale-period end dates as inclusive calendar days while preserving exclusive midnight boundaries in storage.
--   82845f8: Keep event save feedback beside the save actions until another edit or save makes it stale.
--   a96d4f1: Keep payment recovery actions available while event signup confirmation is delayed or cannot be checked.
--   40b0d52: Keep the All Events Edit and Copy actions together in the overflow menu.
--   3d41a7c: Show localized, human-readable linked-post statuses on the All Events page.
--   66ae888: Display cleared over-capacity signup flags as confirmed without a warning.
--   adf8ba3: Prevent active payment reservations from being flagged over capacity, serialize genuinely late confirmations, and clear unreliable historical warnings during upgrade.
--   f8a2b3a: Let venue administrators paste a latitude and longitude pair into the Latitude field and keep the Google Maps preview beside both coordinate fields.
--   2971a6b: Preserve site-local event times when formatting signup emails.
--   6aec874: Keep Conditional Section ticket-type selections linked to the copied event's ticket types when copying an event.
--   Updated dependencies [a96d4f1]
-    -   fair-events-shared@0.6.1
+- 71b5b84: Show ticket sale-period end dates as inclusive calendar days while preserving exclusive midnight boundaries in storage.
+- 82845f8: Keep event save feedback beside the save actions until another edit or save makes it stale.
+- a96d4f1: Keep payment recovery actions available while event signup confirmation is delayed or cannot be checked.
+- 40b0d52: Keep the All Events Edit and Copy actions together in the overflow menu.
+- 3d41a7c: Show localized, human-readable linked-post statuses on the All Events page.
+- 66ae888: Display cleared over-capacity signup flags as confirmed without a warning.
+- adf8ba3: Prevent active payment reservations from being flagged over capacity, serialize genuinely late confirmations, and clear unreliable historical warnings during upgrade.
+- f8a2b3a: Let venue administrators paste a latitude and longitude pair into the Latitude field and keep the Google Maps preview beside both coordinate fields.
+- 2971a6b: Preserve site-local event times when formatting signup emails.
+- 6aec874: Keep Conditional Section ticket-type selections linked to the copied event's ticket types when copying an event.
+- Updated dependencies [a96d4f1]
+    - fair-events-shared@0.6.1
 
 ## 1.16.0
 
 ### Minor Changes
 
--   faf5f85: Show the active sale period beside ticket prices when an event has multiple pricing periods.
--   04cce70: Add per-ticket extension selection controls with authoritative minimum and maximum enforcement in the signup interface and API.
+- faf5f85: Show the active sale period beside ticket prices when an event has multiple pricing periods.
+- 04cce70: Add per-ticket extension selection controls with authoritative minimum and maximum enforcement in the signup interface and API.
 
 ### Patch Changes
 
--   f12c183: Repair malformed recurring event dates so active occurrences return to admin and public calendars.
--   14dd888: Interpret mailing consent as opted in only when the signup explicitly records consent.
--   bca9fd4: Combine multi-day events into one ranged line in copied weekly summaries.
--   41cdb3c: Replace registered attendees' recurring-date link lists with compact selectors that navigate to the correct public occurrence.
--   d3f3bee: Make the basic event Copy flow available without Fair Events Experimental while keeping advanced Duplicate and Merge tools experimental.
--   f45f69a: Keep the event signup cancellation button legible in every interaction state.
--   cd96441: Let cookie-recognized visitors safely forget the remembered identity from an existing signup without cancelling it.
--   47b9041: Persist and enforce audience-group ticket restrictions without requiring Fair Events Experimental.
+- f12c183: Repair malformed recurring event dates so active occurrences return to admin and public calendars.
+- 14dd888: Interpret mailing consent as opted in only when the signup explicitly records consent.
+- bca9fd4: Combine multi-day events into one ranged line in copied weekly summaries.
+- 41cdb3c: Replace registered attendees' recurring-date link lists with compact selectors that navigate to the correct public occurrence.
+- d3f3bee: Make the basic event Copy flow available without Fair Events Experimental while keeping advanced Duplicate and Merge tools experimental.
+- f45f69a: Keep the event signup cancellation button legible in every interaction state.
+- cd96441: Let cookie-recognized visitors safely forget the remembered identity from an existing signup without cancelling it.
+- 47b9041: Persist and enforce audience-group ticket restrictions without requiring Fair Events Experimental.
 
 ## 1.15.0
 
 ### Minor Changes
 
--   6f47529: Navigate calendar months and weeks in place while preserving bookmarkable URLs, browser history, accessibility feedback, and no-JavaScript fallback links.
--   7133cd9: Add an admin action to permanently delete an individual local signup without affecting related signups or payment-provider transactions.
+- 6f47529: Navigate calendar months and weeks in place while preserving bookmarkable URLs, browser history, accessibility feedback, and no-JavaScript fallback links.
+- 7133cd9: Add an admin action to permanently delete an individual local signup without affecting related signups or payment-provider transactions.
 
 ### Patch Changes
 
--   70445e4: Include the validated ticket buyer email in Mollie metadata while omitting unresolved participant and local user identifiers.
--   fd97ee2: Synchronize event post links across Polylang translation groups.
--   121db5a: Keep paid signup holds active for their full duration regardless of the WordPress site timezone.
--   3366b0b: Recover missing event details in the new-event editor without requiring a save or reload.
--   0c2aaad: Retain expired paid signups for reconciliation, safely process late payment notifications, and scrub retained signup details during participant anonymization.
--   5ce3559: Hide disabled and out-of-window ticket types from event signup.
--   2a0e856: Add HTML anchor support to the Event Signup block.
--   8d83293: Ticket purchase transaction descriptions now use the event's name (e.g. "Ticket for Dance connection") instead of its raw numeric ID (e.g. "Ticket for event #43"), matching the format other transaction types already use. Applies to both single-occurrence and recurring/multi-instance signups; falls back to the previous numeric format for event dates with no linked post. Existing transactions are unaffected.
+- 70445e4: Include the validated ticket buyer email in Mollie metadata while omitting unresolved participant and local user identifiers.
+- fd97ee2: Synchronize event post links across Polylang translation groups.
+- 121db5a: Keep paid signup holds active for their full duration regardless of the WordPress site timezone.
+- 3366b0b: Recover missing event details in the new-event editor without requiring a save or reload.
+- 0c2aaad: Retain expired paid signups for reconciliation, safely process late payment notifications, and scrub retained signup details during participant anonymization.
+- 5ce3559: Hide disabled and out-of-window ticket types from event signup.
+- 2a0e856: Add HTML anchor support to the Event Signup block.
+- 8d83293: Ticket purchase transaction descriptions now use the event's name (e.g. "Ticket for Dance connection") instead of its raw numeric ID (e.g. "Ticket for event #43"), matching the format other transaction types already use. Applies to both single-occurrence and recurring/multi-instance signups; falls back to the previous numeric format for event dates with no linked post. Existing transactions are unaffected.
 
 ## 1.14.0
 
 ### Minor Changes
 
--   049bf89: Give the events-calendar and events-week blocks' month/week views their own canonical URLs when requested within a bounded window (±3 months / ±12 weeks of today), so individual month/week pages can be indexed separately instead of collapsing into the default page's canonical.
--   990ff3e: Add a Venues admin page and REST API, promoted from Fair Events Experimental. Venues are now available by default — no experimental feature flag required — and the event edit screens show both a venue picker and a free-text address field.
--   8d9430e: Give each occurrence of a recurring event its own canonical URL (and matching Open Graph/JSON-LD `url`), so individual dates can be indexed separately instead of collapsing into one canonical page.
+- 049bf89: Give the events-calendar and events-week blocks' month/week views their own canonical URLs when requested within a bounded window (±3 months / ±12 weeks of today), so individual month/week pages can be indexed separately instead of collapsing into the default page's canonical.
+- 990ff3e: Add a Venues admin page and REST API, promoted from Fair Events Experimental. Venues are now available by default — no experimental feature flag required — and the event edit screens show both a venue picker and a free-text address field.
+- 8d9430e: Give each occurrence of a recurring event its own canonical URL (and matching Open Graph/JSON-LD `url`), so individual dates can be indexed separately instead of collapsing into one canonical page.
 
 ### Patch Changes
 
--   8e06c54: Fix calendar month view and week view resetting scroll position to the top of the page when clicking next/previous navigation.
--   6920161: Fix `GET /event-dates?event_id=<id>` returning every event date in the database instead of filtering by the given event.
--   d64b596: Fix linking/unlinking a page from a recurring event sometimes only applying to one date in the series instead of the whole series, by making the "which event is this page linked to" lookup always resolve through the series' primary date.
--   c40036a: Fix event structured data (JSON-LD) dropping all ticket offers when a sale period has no explicit end date, and add each offer's ticket option name so multiple tiers are distinguishable in rich results.
--   4d4aeae: Register activity option (ticket option) names and short names for Polylang string translation, so multilingual sites can translate them and have the translation appear on the public signup form.
--   840488b: On sites running Polylang, the Events Calendar and Events Week blocks now link each event to the translation of its linked page matching the calendar/week page's current language, falling back to the currently linked page when no matching translation exists.
--   bb63051: Fix the public events feed: a standalone external-link event with no explicit attendance mode now carries `location: { mode: 'online', joining_url: ... }` instead of omitting the `location` field entirely.
--   c8b1abf: Fix calendar and week view header wrapping letter-by-letter on mobile widths; the Previous/Next buttons now stay legible and stack full-width below the title on narrow screens.
--   6462cc8: Add spacing between the last custom question and the "Get Tickets" button in the event signup form, matching the gap used between other fields.
+- 8e06c54: Fix calendar month view and week view resetting scroll position to the top of the page when clicking next/previous navigation.
+- 6920161: Fix `GET /event-dates?event_id=<id>` returning every event date in the database instead of filtering by the given event.
+- d64b596: Fix linking/unlinking a page from a recurring event sometimes only applying to one date in the series instead of the whole series, by making the "which event is this page linked to" lookup always resolve through the series' primary date.
+- c40036a: Fix event structured data (JSON-LD) dropping all ticket offers when a sale period has no explicit end date, and add each offer's ticket option name so multiple tiers are distinguishable in rich results.
+- 4d4aeae: Register activity option (ticket option) names and short names for Polylang string translation, so multilingual sites can translate them and have the translation appear on the public signup form.
+- 840488b: On sites running Polylang, the Events Calendar and Events Week blocks now link each event to the translation of its linked page matching the calendar/week page's current language, falling back to the currently linked page when no matching translation exists.
+- bb63051: Fix the public events feed: a standalone external-link event with no explicit attendance mode now carries `location: { mode: 'online', joining_url: ... }` instead of omitting the `location` field entirely.
+- c8b1abf: Fix calendar and week view header wrapping letter-by-letter on mobile widths; the Previous/Next buttons now stay legible and stack full-width below the title on narrow screens.
+- 6462cc8: Add spacing between the last custom question and the "Get Tickets" button in the event signup form, matching the gap used between other fields.
 
 ## 1.13.0
 
 ### Minor Changes
 
--   e0ea5a6: Add an explicit in-person/online/hybrid attendance mode with a joining link on the event date, replacing the old inference from the event's link type. Structured data (JSON-LD), calendar feeds, and the public event-info block now reflect the selected mode, and the mode/link are inherited by generated series occurrences like venue and address.
--   1a85cf6: Add "Show ticket price" and "Show option prices" toggles to the Event Signup block, so organizers can hide itemized pricing from the signup form when it's communicated elsewhere. When option prices are shown, they now consistently display as an addition to the base price (e.g. "+10.00€").
--   49f2e0a: Link the event name to its page in the confirmation-family emails — signup confirmation, payment-failed, activities-added, event-interest, and mailing-list-welcome — instead of just bolding it. Falls back to the previous bold-only text when no event URL is available.
--   aeda159: Send a payment-failed email (event name, plain link back to the event page) from the standalone Event Signup block when a payment fails, is rejected, cancelled, or expires — mirroring fair-audience's own failed-payment email so buyers on fair-audience-free sites get the same notice. The shared `SignupConfirmationEmail` formatter gains an optional plain action link, reused for this new email.
--   bab5a8a: Send a baseline signup confirmation email (event name, date, and registration reference) when fair-audience isn't active, so the "check your email" promise in the event-signup block is always fulfilled. The free-signup success message now mentions the confirmation email too, matching the paid path.
--   f64745d: Move fair-audience's signup confirmation email formatting into a shared `FairEventsShared\Notifications\SignupConfirmationEmail` formatter, and use it for both plugins' confirmation emails. fair-audience's confirmation email now also shows the event date, a registration reference, and the ticket type. fair-events' standalone confirmation email (sent when fair-audience isn't active) is now built from the same branded HTML template instead of a plain-text message, and includes the ticket type and — on paid signups — the amount paid.
+- e0ea5a6: Add an explicit in-person/online/hybrid attendance mode with a joining link on the event date, replacing the old inference from the event's link type. Structured data (JSON-LD), calendar feeds, and the public event-info block now reflect the selected mode, and the mode/link are inherited by generated series occurrences like venue and address.
+- 1a85cf6: Add "Show ticket price" and "Show option prices" toggles to the Event Signup block, so organizers can hide itemized pricing from the signup form when it's communicated elsewhere. When option prices are shown, they now consistently display as an addition to the base price (e.g. "+10.00€").
+- 49f2e0a: Link the event name to its page in the confirmation-family emails — signup confirmation, payment-failed, activities-added, event-interest, and mailing-list-welcome — instead of just bolding it. Falls back to the previous bold-only text when no event URL is available.
+- aeda159: Send a payment-failed email (event name, plain link back to the event page) from the standalone Event Signup block when a payment fails, is rejected, cancelled, or expires — mirroring fair-audience's own failed-payment email so buyers on fair-audience-free sites get the same notice. The shared `SignupConfirmationEmail` formatter gains an optional plain action link, reused for this new email.
+- bab5a8a: Send a baseline signup confirmation email (event name, date, and registration reference) when fair-audience isn't active, so the "check your email" promise in the event-signup block is always fulfilled. The free-signup success message now mentions the confirmation email too, matching the paid path.
+- f64745d: Move fair-audience's signup confirmation email formatting into a shared `FairEventsShared\Notifications\SignupConfirmationEmail` formatter, and use it for both plugins' confirmation emails. fair-audience's confirmation email now also shows the event date, a registration reference, and the ticket type. fair-events' standalone confirmation email (sent when fair-audience isn't active) is now built from the same branded HTML template instead of a plain-text message, and includes the ticket type and — on paid signups — the amount paid.
 
 ### Patch Changes
 
--   4b9d893: Add "Date" and "Date & Time" question blocks (mirroring the email/phone/url questions) that render the browser's native date/date-time picker on the frontend. Values are validated server-side as real, well-formed dates and rejected with the same error conventions as other typed fields; datetime answers are stored as site-local time. Stored answers render as localized, human-readable dates in the submission-detail and questionnaire-responses admin views. Also adds the new question types to Event Signup's block inserter (fair-audience and fair-events) and their shared validation (fair-events-shared).
--   4ec1056: Add a URL question block (mirrors the email question) that renders a mobile-friendly text input on the frontend, normalizes bare domains to `https://`, and rejects non-web values server-side. Stored answers render as links in the submission-detail and questionnaire-responses admin views. Also fixes the url and email questions never appearing in the block inserter inside Event Signup (fair-audience and fair-events), and extracts the question-block allow-list into fair-events-shared so fair-form-conditional stays in sync.
--   5fa6fd6: Align nav bar spacing and "today" highlight styling between the events-calendar and events-week blocks, which had visually diverged.
--   5fe6658: Reduce the database queries issued when rendering or purchasing through the Event Signup form: the active sale period, the viewer's group memberships, and the event's discount rules are now resolved once per render/request and reused across every ticket tier and activity, instead of being re-resolved once per tier. Query count no longer scales with the number of ticket tiers; displayed and charged prices are unchanged.
--   0e27b5c: Fix the Event Signup form leaking one visitor's group-restricted ticket tiers, discounted prices, and name/email pre-fill to another visitor under full-page caching. The form now server-renders the same unrestricted, undiscounted, unfilled markup for every viewer, and fetches the actual viewer's personalization (restricted tiers, discounts, pre-fill, signed-up state) client-side after load.
--   3508d85: Require confirmation before clearing the organizer logo override, matching the confirmation pattern used for other destructive actions in the admin.
--   f62946d: Fix the ticket editor's "Save tickets" button and JSON import misfiring against a nonexistent event when the component is used in controlled mode (e.g. embedded in another plugin's wizard) instead of Manage Event's own self-load/self-save mode.
--   58e85f6: Add a "Header Background" color control to events-calendar and events-week, and rename events-calendar's ambiguous "Background"/"Text" color labels to "Event Background"/"Event Text" to match events-week.
--   1d9d738: Fix event-proposal and event-signup blocks to use the standard block wrapper markup, so their padding/margin sidebar controls now actually apply on the frontend.
--   c30daa6: Fix the event signup form's newsletter checkbox and custom question fields (short text, long text, select, radio, multiselect, consent) rendering unstyled — they now match the form's standard input styling and the newsletter checkbox drops to its own row instead of sitting inline with the quantity field.
--   0a116a2: Fix events-calendar/events-week block colors being silently ignored when the color picker returns a non-hex CSS value (e.g. `oklch(...)`, `rgb(...)`) instead of a preset slug or hex code — such values were wrongly treated as WordPress preset-color slugs, producing invalid CSS that browsers dropped.
--   c5c60b7: Fix the event Finance tab counting income twice when a bank-statement entry has been reconciliation-matched to a payment transaction: matched financial entries are now excluded from totals, so only the transaction's gross amount is counted.
--   64ffbf9: Fix the Event Signup block's "Choose a date" picker disappearing once a recurring series ages down to its last upcoming occurrence, leaving no confirmation of which date a per-occurrence ticket was signing up for.
--   09d5d55: Fix the Event Signup form listing ticket types with no pricing for the currently active sale period — they now stay out of the list entirely instead of showing unpriced and selectable. When no sale period is active at all, the ticket-type section is hidden and signup is treated as temporarily unavailable, matching the existing payments-unavailable treatment. The get-tickets purchase endpoint also now rejects an out-of-window ticket type with a 409 error instead of silently charging 0.
--   089a463: Allow an event page to be linked as a secondary alias of another event page, and allow adding another linked page to an event that already has one. Relinking a page cleanly detaches its own auto-created event date instead of the previous "already linked to another event" error.
--   b138421: Render the Previous/Next navigation links in events-calendar and events-week as standard `core/button` outline buttons, so they follow the active theme's button styling instead of hardcoded colors.
--   d51522b: Fix the event Finance tab double-counting income: Total Income now comes only from paid transactions instead of also adding fair-finance entries, which could duplicate the same money when an entry wasn't explicitly reconciliation-matched. The entries table is now cost-only, and the Payments table shows each transaction's linked budget entry (if any).
--   fc86b53: Show the ticket type name instead of its raw numeric ID in the Manage Event page's signups table and CSV export. A signup whose ticket type is missing or was later deleted now shows "—" instead of an ID or a blank field.
--   172880a: Hide the multi-period sale-periods calendar on the Tickets tab when Multiple pricing periods is off, so the single From/Until sale window isn't cluttered with chrome built for comparing several named periods.
--   7932bb2: Add an opt-in "read event details from the linked page" setting to the URL question, off by default. When enabled, the submitted address is looked up as soon as the visitor leaves the field, and any structured event data it publishes (schema.org markup, falling back to social-sharing metadata or the page title) is shown live in an info bubble beneath the field, marked as read from the page. Nothing is stored — an unreachable page, a non-HTML response, or a page with no usable data simply shows no bubble. The fetch/parse logic that powers this also moves into a shared `AbstractUrlLookupController` (fair-events-shared) that fair-events' own admin lookup now extends instead of duplicating.
--   Updated dependencies [4b9d893]
--   Updated dependencies [4ec1056]
--   Updated dependencies [49f2e0a]
--   Updated dependencies [aeda159]
--   Updated dependencies [f64745d]
--   Updated dependencies [7932bb2]
-    -   fair-events-shared@0.6.0
+- 4b9d893: Add "Date" and "Date & Time" question blocks (mirroring the email/phone/url questions) that render the browser's native date/date-time picker on the frontend. Values are validated server-side as real, well-formed dates and rejected with the same error conventions as other typed fields; datetime answers are stored as site-local time. Stored answers render as localized, human-readable dates in the submission-detail and questionnaire-responses admin views. Also adds the new question types to Event Signup's block inserter (fair-audience and fair-events) and their shared validation (fair-events-shared).
+- 4ec1056: Add a URL question block (mirrors the email question) that renders a mobile-friendly text input on the frontend, normalizes bare domains to `https://`, and rejects non-web values server-side. Stored answers render as links in the submission-detail and questionnaire-responses admin views. Also fixes the url and email questions never appearing in the block inserter inside Event Signup (fair-audience and fair-events), and extracts the question-block allow-list into fair-events-shared so fair-form-conditional stays in sync.
+- 5fa6fd6: Align nav bar spacing and "today" highlight styling between the events-calendar and events-week blocks, which had visually diverged.
+- 5fe6658: Reduce the database queries issued when rendering or purchasing through the Event Signup form: the active sale period, the viewer's group memberships, and the event's discount rules are now resolved once per render/request and reused across every ticket tier and activity, instead of being re-resolved once per tier. Query count no longer scales with the number of ticket tiers; displayed and charged prices are unchanged.
+- 0e27b5c: Fix the Event Signup form leaking one visitor's group-restricted ticket tiers, discounted prices, and name/email pre-fill to another visitor under full-page caching. The form now server-renders the same unrestricted, undiscounted, unfilled markup for every viewer, and fetches the actual viewer's personalization (restricted tiers, discounts, pre-fill, signed-up state) client-side after load.
+- 3508d85: Require confirmation before clearing the organizer logo override, matching the confirmation pattern used for other destructive actions in the admin.
+- f62946d: Fix the ticket editor's "Save tickets" button and JSON import misfiring against a nonexistent event when the component is used in controlled mode (e.g. embedded in another plugin's wizard) instead of Manage Event's own self-load/self-save mode.
+- 58e85f6: Add a "Header Background" color control to events-calendar and events-week, and rename events-calendar's ambiguous "Background"/"Text" color labels to "Event Background"/"Event Text" to match events-week.
+- 1d9d738: Fix event-proposal and event-signup blocks to use the standard block wrapper markup, so their padding/margin sidebar controls now actually apply on the frontend.
+- c30daa6: Fix the event signup form's newsletter checkbox and custom question fields (short text, long text, select, radio, multiselect, consent) rendering unstyled — they now match the form's standard input styling and the newsletter checkbox drops to its own row instead of sitting inline with the quantity field.
+- 0a116a2: Fix events-calendar/events-week block colors being silently ignored when the color picker returns a non-hex CSS value (e.g. `oklch(...)`, `rgb(...)`) instead of a preset slug or hex code — such values were wrongly treated as WordPress preset-color slugs, producing invalid CSS that browsers dropped.
+- c5c60b7: Fix the event Finance tab counting income twice when a bank-statement entry has been reconciliation-matched to a payment transaction: matched financial entries are now excluded from totals, so only the transaction's gross amount is counted.
+- 64ffbf9: Fix the Event Signup block's "Choose a date" picker disappearing once a recurring series ages down to its last upcoming occurrence, leaving no confirmation of which date a per-occurrence ticket was signing up for.
+- 09d5d55: Fix the Event Signup form listing ticket types with no pricing for the currently active sale period — they now stay out of the list entirely instead of showing unpriced and selectable. When no sale period is active at all, the ticket-type section is hidden and signup is treated as temporarily unavailable, matching the existing payments-unavailable treatment. The get-tickets purchase endpoint also now rejects an out-of-window ticket type with a 409 error instead of silently charging 0.
+- 089a463: Allow an event page to be linked as a secondary alias of another event page, and allow adding another linked page to an event that already has one. Relinking a page cleanly detaches its own auto-created event date instead of the previous "already linked to another event" error.
+- b138421: Render the Previous/Next navigation links in events-calendar and events-week as standard `core/button` outline buttons, so they follow the active theme's button styling instead of hardcoded colors.
+- d51522b: Fix the event Finance tab double-counting income: Total Income now comes only from paid transactions instead of also adding fair-finance entries, which could duplicate the same money when an entry wasn't explicitly reconciliation-matched. The entries table is now cost-only, and the Payments table shows each transaction's linked budget entry (if any).
+- fc86b53: Show the ticket type name instead of its raw numeric ID in the Manage Event page's signups table and CSV export. A signup whose ticket type is missing or was later deleted now shows "—" instead of an ID or a blank field.
+- 172880a: Hide the multi-period sale-periods calendar on the Tickets tab when Multiple pricing periods is off, so the single From/Until sale window isn't cluttered with chrome built for comparing several named periods.
+- 7932bb2: Add an opt-in "read event details from the linked page" setting to the URL question, off by default. When enabled, the submitted address is looked up as soon as the visitor leaves the field, and any structured event data it publishes (schema.org markup, falling back to social-sharing metadata or the page title) is shown live in an info bubble beneath the field, marked as read from the page. Nothing is stored — an unreachable page, a non-HTML response, or a page with no usable data simply shows no bubble. The fetch/parse logic that powers this also moves into a shared `AbstractUrlLookupController` (fair-events-shared) that fair-events' own admin lookup now extends instead of duplicating.
+- Updated dependencies [4b9d893]
+- Updated dependencies [4ec1056]
+- Updated dependencies [49f2e0a]
+- Updated dependencies [aeda159]
+- Updated dependencies [f64745d]
+- Updated dependencies [7932bb2]
+    - fair-events-shared@0.6.0
 
 ## 1.12.0
 
 ### Minor Changes
 
--   3e696d0: Move the "Bundled translations" toggle out of each plugin's own settings screen into a single shared **Settings → Fair Event Plugins** screen that lists one row per active plugin. Previously saved values keep working unchanged. fair-audience and fair-payments-connector lose their Features tab (bundled-translations was its only entry); fair-timetable loses its whole Settings page; fair-platform loses its Features submenu. fair-events keeps its Features tab for the Ticketing bundle. The experimental companion plugins (fair-events-experimental, fair-audience-experimental, fair-payments-connector-experimental) now always load their bundled translation files instead of waiting on a WordPress.org language pack that will never exist for them.
--   8fa5d96: The unified Event Signup block (`fair-events/event-signup`) no longer delegates its render to fair-audience's legacy block when fair-audience is active — it renders its own markup unconditionally, and fair-audience enriches that same render via the existing filter/render-slot hooks instead of owning a competing template. A returning participant who already holds a ticket for the date now sees a signed-up/cancel card in place of the signup form, with a "cancel signup" action; per-occurrence date pickers label dates the viewer already holds (including via a whole-series pass); a resubmitted paid-ticket purchase for a date already held is rejected instead of silently creating a second charge; the per-IP rate limit is raised to 20/hour with an added 3/hour per-email limit, so a shared venue Wi-Fi no longer blocks legitimate signups. Sites without fair-audience see no change. The legacy `fair-audience/event-signup` block, its own identity routes, and existing signup links keep working unchanged for content authored before this change; participant_token URL login and the "I have an account" resume-by-email flow are not yet available on the unified form and remain on the legacy block for now.
--   9ae94d2: The unified Event Signup form (used when fair-audience is inactive) now shows a rich outcome when a visitor returns from paying: a confirmed card (event, amount, "confirmation email on its way"), a processing card that polls and updates in place, or a resume/retry card for a failed, canceled, expired, or abandoned payment — with buttons to continue the existing checkout, retry with a new one, or cancel and start over. A visitor who navigates directly back to the event page (no return link followed) now also sees their in-progress payment, recognised via a short-lived signed cookie, within the 15-minute hold window. Payment status is reconciled with the payment provider on return so the page never misreports a payment mid-redirect. When online payments are unavailable, ticket sales still show the existing "temporarily unavailable" notice instead of a dead retry button.
--   d5ca5fa: The unified Event Signup form (used once fair-audience owns the flow, #1245) now respects group-restricted ticket types and group discount pricing: a ticket type restricted to specific groups is rejected server-side for a visitor who isn't a member, and the charged price reflects the viewer's best-matching group discount, with a note shown above the submit button. Entitlement is resolved from the signed-in/known viewer's session, never from the submitted name/email, so a crafted request can't unlock a restricted tier or a discount it isn't entitled to.
--   c69501e: The Organizer settings tab now shows the site's actual name, logo, and website as live placeholders, with a clear way to override each per-field. Added an optional contact point (email/phone), emitted as a Schema.org `ContactPoint` on the sitewide Organization block. Blank fields keep today's behaviour (site name + home URL, theme logo), so existing sites see no change until an admin opts in.
--   1c4ac34: Removed the invitation-gated ticket signup mechanism: the "invitation only" ticket type toggle, the Manage Invitations admin page and its REST routes, and the public signup form's `?invitation=` link handling and "show inviter's name" option. The gating check had silently broken (an autoloader namespace mismatch made it dead code — invitation-only ticket types were already invisible on the public form, not merely restricted), so a migration disables any ticket type that was previously marked invitation-only rather than making it suddenly public, and drops the now-unused `invitation_only` column and `fair_events_invitation_tokens` table. Group-restricted ticket types and the separate bulk "send invite emails" outreach feature are unaffected.
--   ab61aba: Fixed a PHP 8.2 dynamic-property deprecation notice that fired on nearly every event-date read (`EventDates::$signup_price`, left over from a partially-reverted merge). Rather than re-declaring the field, finished removing it: the flat per-date "simple pricing" mode and pay-what-you-can sliding scale it powered were already superseded by ticket-type pricing everywhere except the legacy fair-audience Event Signup block, which now prices signups from ticket types only. The `signup_price` column is dropped from the event dates table via migration. Also fixed the same class of deprecation notice on `FairAudienceExperimental\Models\Group::$member_count`, populated by the groups admin list.
--   8f1871d: The unified Event Signup form (used once fair-audience owns the flow, #1245) now supports selectable activities (ticket options): a participant can pick zero or more paid or free add-on activities at signup, subject to a minimum-activities requirement (global or raised by the selected ticket type), and a signed-up participant can add further activities to an existing registration. Capacity, pricing, and group discounts are all enforced server-side, so a crafted request can't buy a full activity, skip the minimum, or dodge the charge.
+- 3e696d0: Move the "Bundled translations" toggle out of each plugin's own settings screen into a single shared **Settings → Fair Event Plugins** screen that lists one row per active plugin. Previously saved values keep working unchanged. fair-audience and fair-payments-connector lose their Features tab (bundled-translations was its only entry); fair-timetable loses its whole Settings page; fair-platform loses its Features submenu. fair-events keeps its Features tab for the Ticketing bundle. The experimental companion plugins (fair-events-experimental, fair-audience-experimental, fair-payments-connector-experimental) now always load their bundled translation files instead of waiting on a WordPress.org language pack that will never exist for them.
+- 8fa5d96: The unified Event Signup block (`fair-events/event-signup`) no longer delegates its render to fair-audience's legacy block when fair-audience is active — it renders its own markup unconditionally, and fair-audience enriches that same render via the existing filter/render-slot hooks instead of owning a competing template. A returning participant who already holds a ticket for the date now sees a signed-up/cancel card in place of the signup form, with a "cancel signup" action; per-occurrence date pickers label dates the viewer already holds (including via a whole-series pass); a resubmitted paid-ticket purchase for a date already held is rejected instead of silently creating a second charge; the per-IP rate limit is raised to 20/hour with an added 3/hour per-email limit, so a shared venue Wi-Fi no longer blocks legitimate signups. Sites without fair-audience see no change. The legacy `fair-audience/event-signup` block, its own identity routes, and existing signup links keep working unchanged for content authored before this change; participant_token URL login and the "I have an account" resume-by-email flow are not yet available on the unified form and remain on the legacy block for now.
+- 9ae94d2: The unified Event Signup form (used when fair-audience is inactive) now shows a rich outcome when a visitor returns from paying: a confirmed card (event, amount, "confirmation email on its way"), a processing card that polls and updates in place, or a resume/retry card for a failed, canceled, expired, or abandoned payment — with buttons to continue the existing checkout, retry with a new one, or cancel and start over. A visitor who navigates directly back to the event page (no return link followed) now also sees their in-progress payment, recognised via a short-lived signed cookie, within the 15-minute hold window. Payment status is reconciled with the payment provider on return so the page never misreports a payment mid-redirect. When online payments are unavailable, ticket sales still show the existing "temporarily unavailable" notice instead of a dead retry button.
+- d5ca5fa: The unified Event Signup form (used once fair-audience owns the flow, #1245) now respects group-restricted ticket types and group discount pricing: a ticket type restricted to specific groups is rejected server-side for a visitor who isn't a member, and the charged price reflects the viewer's best-matching group discount, with a note shown above the submit button. Entitlement is resolved from the signed-in/known viewer's session, never from the submitted name/email, so a crafted request can't unlock a restricted tier or a discount it isn't entitled to.
+- c69501e: The Organizer settings tab now shows the site's actual name, logo, and website as live placeholders, with a clear way to override each per-field. Added an optional contact point (email/phone), emitted as a Schema.org `ContactPoint` on the sitewide Organization block. Blank fields keep today's behaviour (site name + home URL, theme logo), so existing sites see no change until an admin opts in.
+- 1c4ac34: Removed the invitation-gated ticket signup mechanism: the "invitation only" ticket type toggle, the Manage Invitations admin page and its REST routes, and the public signup form's `?invitation=` link handling and "show inviter's name" option. The gating check had silently broken (an autoloader namespace mismatch made it dead code — invitation-only ticket types were already invisible on the public form, not merely restricted), so a migration disables any ticket type that was previously marked invitation-only rather than making it suddenly public, and drops the now-unused `invitation_only` column and `fair_events_invitation_tokens` table. Group-restricted ticket types and the separate bulk "send invite emails" outreach feature are unaffected.
+- ab61aba: Fixed a PHP 8.2 dynamic-property deprecation notice that fired on nearly every event-date read (`EventDates::$signup_price`, left over from a partially-reverted merge). Rather than re-declaring the field, finished removing it: the flat per-date "simple pricing" mode and pay-what-you-can sliding scale it powered were already superseded by ticket-type pricing everywhere except the legacy fair-audience Event Signup block, which now prices signups from ticket types only. The `signup_price` column is dropped from the event dates table via migration. Also fixed the same class of deprecation notice on `FairAudienceExperimental\Models\Group::$member_count`, populated by the groups admin list.
+- 8f1871d: The unified Event Signup form (used once fair-audience owns the flow, #1245) now supports selectable activities (ticket options): a participant can pick zero or more paid or free add-on activities at signup, subject to a minimum-activities requirement (global or raised by the selected ticket type), and a signed-up participant can add further activities to an existing registration. Capacity, pricing, and group discounts are all enforced server-side, so a crafted request can't buy a full activity, skip the minimum, or dodge the charge.
 
 ### Patch Changes
 
--   7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
--   84cfda0: The Conditional Section block, when nested inside a signup form, can now show or hide its contents based on the visitor's selected ticket type (in addition to the existing question and event-option sources) — pick one or more ticket types and an "is selected" / "is not selected" operator, and the section reacts live as the visitor changes their selection. Also fixes the Conditional Section's "Event option" condition source, which failed to appear when nested inside the unified Event Signup block (it only recognized the older, hidden legacy block).
--   e1accb0: Fix iCal feed import storing the wrong time of day for timed events whose source timezone differs from the site timezone (`DateHelper::datetime_to_local()` never converted, since Sabre's iCal parser returns `DateTimeImmutable`, not `DateTime`). Also fix floating/all-day iCal values being interpreted through UTC instead of directly as site-local, which could shift an all-day event's civil date by a day on negative-offset site timezones.
--   e17ff5b: Fix the Event Signup block's "Form content" area being unclickable in the block editor (the add-block appender, and any already-nested question blocks, inherited the live preview's non-interactive styling).
--   1f9fcc1: Fix long-answer question fields rendering collapsed to a single line instead of sizing to fit their content. A long-text question nested inside a Conditional Section stayed collapsed until the respondent typed in it, because the auto-grow behavior ran on hidden textareas (always 0 height) and never re-ran once the section was revealed. Long-text fields also had no styling at all outside the plain Fair Form block (e.g. in the Event Signup blocks), and could grow without limit; they now cap at roughly 12 lines and scroll internally beyond that.
--   d18cf6a: Fix the admin events calendar on mobile: the header no longer overflows, small viewports show an agenda list of day cards instead of a squeezed 7-column grid, a month with no events says so instead of rendering a blank strip, and on touch tablets the per-day add button no longer needs a hover to appear.
--   Updated dependencies [7281a45]
--   Updated dependencies [84cfda0]
--   Updated dependencies [8d196d7]
--   Updated dependencies [9ae94d2]
--   Updated dependencies [1f9fcc1]
-    -   fair-events-shared@0.5.0
+- 7281a45: Centralize amount and currency formatting behind a shared `FairEventsShared\Money` helper (PHP) and matching `formatMoney`/`formatMoneyInline` helpers (JS), fixing the Fair Audience and Fair Events signup blocks, which previously hardcoded the € symbol regardless of the site's configured currency. A non-EUR site (e.g. PLN, CZK, HUF) now shows its real currency on ticket labels, add-on prices, and the running total — including after ticking an option, which previously reverted to €. EUR output is unchanged everywhere (signup blocks, emails, Timeline, Mollie payloads).
+- 84cfda0: The Conditional Section block, when nested inside a signup form, can now show or hide its contents based on the visitor's selected ticket type (in addition to the existing question and event-option sources) — pick one or more ticket types and an "is selected" / "is not selected" operator, and the section reacts live as the visitor changes their selection. Also fixes the Conditional Section's "Event option" condition source, which failed to appear when nested inside the unified Event Signup block (it only recognized the older, hidden legacy block).
+- e1accb0: Fix iCal feed import storing the wrong time of day for timed events whose source timezone differs from the site timezone (`DateHelper::datetime_to_local()` never converted, since Sabre's iCal parser returns `DateTimeImmutable`, not `DateTime`). Also fix floating/all-day iCal values being interpreted through UTC instead of directly as site-local, which could shift an all-day event's civil date by a day on negative-offset site timezones.
+- e17ff5b: Fix the Event Signup block's "Form content" area being unclickable in the block editor (the add-block appender, and any already-nested question blocks, inherited the live preview's non-interactive styling).
+- 1f9fcc1: Fix long-answer question fields rendering collapsed to a single line instead of sizing to fit their content. A long-text question nested inside a Conditional Section stayed collapsed until the respondent typed in it, because the auto-grow behavior ran on hidden textareas (always 0 height) and never re-ran once the section was revealed. Long-text fields also had no styling at all outside the plain Fair Form block (e.g. in the Event Signup blocks), and could grow without limit; they now cap at roughly 12 lines and scroll internally beyond that.
+- d18cf6a: Fix the admin events calendar on mobile: the header no longer overflows, small viewports show an agenda list of day cards instead of a squeezed 7-column grid, a month with no events says so instead of rendering a blank strip, and on touch tablets the per-day add button no longer needs a hover to appear.
+- Updated dependencies [7281a45]
+- Updated dependencies [84cfda0]
+- Updated dependencies [8d196d7]
+- Updated dependencies [9ae94d2]
+- Updated dependencies [1f9fcc1]
+    - fair-events-shared@0.5.0
 
 ## 1.11.0
 
 ### Minor Changes
 
--   a7c09e1: Add CSV export and a mailing opt-ins filter to the Signups tab, a From-URL tab on the Quick Add Event modal that prefills from a pasted page's schema.org/Open Graph data, an edit-tickets link on the Event Signup block sidebar, and a display-only shaded mini-calendar on the Sale Periods panel (replacing the old click-to-move-boundary interaction) whose colors now match the sale-period table. Nest generated series occurrences under their master in All Events instead of listing them as untitled top-level rows, carry event location through the public events feed and ICS mirror, and mark free RSVP/zero-priced ticket types as accessible-for-free in JSON-LD. Replace the series-modal date pickers with a shared click-to-pick MiniCalendar, give fair-events its own "Powered by" branding so attribution keeps showing without fair-audience active, and standardize remaining block buttons on core Button styles. Fix ticket sale-end dates freezing on series conversion, the editor preview order mismatching the frontend for Event Signup, a stale link_type desyncing the Manage Event context header from the actual linked post, the Tickets tab payments warning misfiring on every site, an unreadable calendar subscribe button before hover, invalid VTIMEZONE/all-day dates in the ICS feed, and drop the unused event_participants.transaction_id column and the Add-on collaborator discount ticket option.
+- a7c09e1: Add CSV export and a mailing opt-ins filter to the Signups tab, a From-URL tab on the Quick Add Event modal that prefills from a pasted page's schema.org/Open Graph data, an edit-tickets link on the Event Signup block sidebar, and a display-only shaded mini-calendar on the Sale Periods panel (replacing the old click-to-move-boundary interaction) whose colors now match the sale-period table. Nest generated series occurrences under their master in All Events instead of listing them as untitled top-level rows, carry event location through the public events feed and ICS mirror, and mark free RSVP/zero-priced ticket types as accessible-for-free in JSON-LD. Replace the series-modal date pickers with a shared click-to-pick MiniCalendar, give fair-events its own "Powered by" branding so attribution keeps showing without fair-audience active, and standardize remaining block buttons on core Button styles. Fix ticket sale-end dates freezing on series conversion, the editor preview order mismatching the frontend for Event Signup, a stale link_type desyncing the Manage Event context header from the actual linked post, the Tickets tab payments warning misfiring on every site, an unreadable calendar subscribe button before hover, invalid VTIMEZONE/all-day dates in the ICS feed, and drop the unused event_participants.transaction_id column and the Add-on collaborator discount ticket option.
 
 ### Patch Changes
 
--   Updated dependencies [a7c09e1]
-    -   fair-events-shared@0.4.0
+- Updated dependencies [a7c09e1]
+    - fair-events-shared@0.4.0
 
 ## 1.10.0
 
 ### Minor Changes
 
--   6973be8: Add a unified event-signup block (aliasing get-tickets), a subscribe link on the events-calendar block, a public ICS calendar feed endpoint, irregular (hand-picked date) recurring series, a richer Quick Add Event modal (categories, linking, recurrence), and a redesigned Manage Event header. Fill in JSON-LD/OpenGraph event markup (offers, location, eventStatus, ItemList) across calendar and week blocks, and reflect the selected occurrence in that metadata and the admin bar. Simplify ticket setup to a single sale period by default and route event feeds through a consolidated EventFeedProvider pipeline. Fix the week block to honor all start-of-week days and stop manual/irregular series from dropping an edited master date.
+- 6973be8: Add a unified event-signup block (aliasing get-tickets), a subscribe link on the events-calendar block, a public ICS calendar feed endpoint, irregular (hand-picked date) recurring series, a richer Quick Add Event modal (categories, linking, recurrence), and a redesigned Manage Event header. Fill in JSON-LD/OpenGraph event markup (offers, location, eventStatus, ItemList) across calendar and week blocks, and reflect the selected occurrence in that metadata and the admin bar. Simplify ticket setup to a single sale period by default and route event feeds through a consolidated EventFeedProvider pipeline. Fix the week block to honor all start-of-week days and stop manual/irregular series from dropping an edited master date.
 
 ## 1.9.0
 
 ### Minor Changes
 
--   612b9b0: Creating an unrecognized category in the Manage Event Categories field no longer silently drops it: unknown tokens now POST to a create-category endpoint and get linked once the term exists (issue #992). The endpoint moves from `fair-events-experimental` (behind the sources feature flag) to stable `fair-events`, since the base Manage Event page needs it regardless of which extensions are active.
--   612b9b0: Materialize cancelled recurring occurrences into real rows (new `status` and `recurrence_mode` columns) instead of a serialized exdates blob on the master, and switch inheritable instance fields (title, venue, address, link type, capacity, price) to NULL-means-inherit so an override is distinguishable from an inherited copy. Cancelling now soft-cancels instead of deleting, and a previously-cancelled occurrence restores to active if it reappears in the recurrence rule (issue #996).
--   612b9b0: Restructure the Manage Event Tickets tab so the editable price table is the primary content instead of a duplicate read-only summary, demote Export/Import into a header dropdown, and surface a direct link when payments aren't configured for a priced event (issue #988).
+- 612b9b0: Creating an unrecognized category in the Manage Event Categories field no longer silently drops it: unknown tokens now POST to a create-category endpoint and get linked once the term exists (issue #992). The endpoint moves from `fair-events-experimental` (behind the sources feature flag) to stable `fair-events`, since the base Manage Event page needs it regardless of which extensions are active.
+- 612b9b0: Materialize cancelled recurring occurrences into real rows (new `status` and `recurrence_mode` columns) instead of a serialized exdates blob on the master, and switch inheritable instance fields (title, venue, address, link type, capacity, price) to NULL-means-inherit so an override is distinguishable from an inherited copy. Cancelling now soft-cancels instead of deleting, and a previously-cancelled occurrence restores to active if it reappears in the recurrence rule (issue #996).
+- 612b9b0: Restructure the Manage Event Tickets tab so the editable price table is the primary content instead of a duplicate read-only summary, demote Export/Import into a header dropdown, and surface a direct link when payments aren't configured for a priced event (issue #988).
 
 ### Patch Changes
 
--   e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
--   a7f7373: Fix recurring standalone occurrences linked to a post via "Link Existing Event" rendering as a plain unstyled span instead of a button link in the calendar block. `get_display_url()` now falls back to the junction-linked post's permalink, and the calendar renders a link whenever a URL is available, not just for external link type.
--   b007d8a: Centralize ticket price resolution in a new `FairEvents\Services\TicketPricing` service and a shared `ticket-pricing.js` module, so the fair-events get-tickets purchase paths and the fair-audience event-signup pricing agree on price. Previously get-tickets used a closed `[sale_start, sale_end]` sale-period interval while fair-audience used a half-open `[sale_start, sale_end)` interval with a `continues_pricing_period` fallback — the two could charge different prices for the same ticket type on a sale period's end day. get-tickets now uses the half-open convention too.
--   a7f7373: Replace the generic `window.confirm()` on event delete with a `ConfirmDialog` that names the event and, for recurring masters, states the occurrence count that will be removed.
--   f92bab0: Disable the Tickets, Signups, Finance, Groups, Audience, Mailings, and Statistics tabs on the Manage Event page when the event's link type is External URL, since there is no registration behind those tabs for link-only events.
--   a7f7373: Apply the `fair_events_enabled_features_map` filter in the Gutenberg sidebar metabox localization, matching the Manage Event admin page. This was preventing extensions (e.g. fair-events-experimental) from enabling the venue-selection feature in the sidebar, which always rendered a plain address field instead of the venue dropdown.
--   612b9b0: Reject empty/whitespace-only event titles in the quick-create button and the create/update REST endpoints (update never validated title at all), and show a shared "(untitled event)" fallback label everywhere a title is rendered so legacy untitled rows stay legible (issue #990).
--   a7f7373: Only append the `event_date` query arg on calendar and week block links for events with more than one occurrence, avoiding unnecessarily long URLs for single-occurrence events.
--   0603413: Extract the weekly event aggregation logic into a stable `FairEvents\Services\WeeklyEventsProvider`, so it can be reused by the upcoming fair-audience weekly digest without depending on the experimental plugin (issue #916).
--   a7f7373: Fix All Events showing the wrong time compared to Manage Event/DB. `start_datetime` is a naive site-local string that was being formatted with `dateI18n`'s default timezone handling, shifting the displayed time whenever the browser and site timezones differ. It's now tagged as UTC and rendered with `gmdateI18n` so the wall-clock value passes through unchanged.
--   a7f7373: Fix the Sale Periods summary always rendering "1 days before event" — the days-before label now uses `_n()` so the count picks the correct plural form.
--   a7f7373: Fix untranslatable string concatenation on the Manage Event page. The linked-posts notice and the sale period label built sentences by concatenating separate `__()` fragments, which translators can't reorder for languages with different word order; both now use `_n()` and `sprintf()` for proper pluralization and ordering.
--   a7f7373: Add a context header to the Manage Event page showing the date/time, a series/occurrence badge, and link status directly under the H1, and move the recurring-occurrence notice there so it's visible without scrolling.
--   612b9b0: Move Manage Event's single global "Save Changes" button into the Event Details and Tickets tabs it actually applies to, labeled by what each saves, with per-section dirty-state tracking, a beforeunload guard, and an inline "Title is required" message instead of a silently disabled button (issue #987).
--   612b9b0: Add a Move action on the Manage Event Audience tab to re-point a participant's signup to a sibling occurrence of a recurring event in one step, instead of deleting and re-adding and losing attendance state, admin comments, ticket options, and payment status (issue #954). Adds `GET /event-dates/{id}/siblings` to fair-events and `POST .../participants/{id}/move` to fair-audience.
--   a7f7373: Fix the standalone get-tickets block (used when fair-audience is inactive) rendering an empty form for a specific occurrence of a recurring event. Ticket types, sale periods, and prices now resolve against the series master's configuration while the signup itself stays linked to the specific occurrence, mirroring the pivot fair-audience's event-signup block already does.
--   a7f7373: Remove the seats-per-ticket capacity weighting feature. It let a ticket type consume more than one capacity slot, forcing every capacity query, signup projection, and participant snapshot to carry a per-row seat weight. Capacity math now collapses back to a plain row count; the Seats column/checkbox, the `seats_per_ticket` column, and the `seats` column on `event_participant` are dropped, with a forward migration for existing installs.
--   612b9b0: Reword the Link Options card, ticket settings, add-on panel, All Events list, and transaction "Metadata" card (now "Details") to use organizer task language instead of internal data-model vocabulary (Master/Generated, "Event placeholder", "activity"), per UI_GUIDELINES.md. Display strings only — no REST field or DB value changes (issue #989).
--   a7f7373: Fix calendar events grouped by day rendering in fetch order (WordPress query, standalone query, iCal feed) instead of start time, causing mixed-source events on the same day to appear out of chronological order.
--   Updated dependencies [b007d8a]
--   Updated dependencies [612b9b0]
--   Updated dependencies [612b9b0]
-    -   fair-events-shared@0.3.0
+- e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
+- a7f7373: Fix recurring standalone occurrences linked to a post via "Link Existing Event" rendering as a plain unstyled span instead of a button link in the calendar block. `get_display_url()` now falls back to the junction-linked post's permalink, and the calendar renders a link whenever a URL is available, not just for external link type.
+- b007d8a: Centralize ticket price resolution in a new `FairEvents\Services\TicketPricing` service and a shared `ticket-pricing.js` module, so the fair-events get-tickets purchase paths and the fair-audience event-signup pricing agree on price. Previously get-tickets used a closed `[sale_start, sale_end]` sale-period interval while fair-audience used a half-open `[sale_start, sale_end)` interval with a `continues_pricing_period` fallback — the two could charge different prices for the same ticket type on a sale period's end day. get-tickets now uses the half-open convention too.
+- a7f7373: Replace the generic `window.confirm()` on event delete with a `ConfirmDialog` that names the event and, for recurring masters, states the occurrence count that will be removed.
+- f92bab0: Disable the Tickets, Signups, Finance, Groups, Audience, Mailings, and Statistics tabs on the Manage Event page when the event's link type is External URL, since there is no registration behind those tabs for link-only events.
+- a7f7373: Apply the `fair_events_enabled_features_map` filter in the Gutenberg sidebar metabox localization, matching the Manage Event admin page. This was preventing extensions (e.g. fair-events-experimental) from enabling the venue-selection feature in the sidebar, which always rendered a plain address field instead of the venue dropdown.
+- 612b9b0: Reject empty/whitespace-only event titles in the quick-create button and the create/update REST endpoints (update never validated title at all), and show a shared "(untitled event)" fallback label everywhere a title is rendered so legacy untitled rows stay legible (issue #990).
+- a7f7373: Only append the `event_date` query arg on calendar and week block links for events with more than one occurrence, avoiding unnecessarily long URLs for single-occurrence events.
+- 0603413: Extract the weekly event aggregation logic into a stable `FairEvents\Services\WeeklyEventsProvider`, so it can be reused by the upcoming fair-audience weekly digest without depending on the experimental plugin (issue #916).
+- a7f7373: Fix All Events showing the wrong time compared to Manage Event/DB. `start_datetime` is a naive site-local string that was being formatted with `dateI18n`'s default timezone handling, shifting the displayed time whenever the browser and site timezones differ. It's now tagged as UTC and rendered with `gmdateI18n` so the wall-clock value passes through unchanged.
+- a7f7373: Fix the Sale Periods summary always rendering "1 days before event" — the days-before label now uses `_n()` so the count picks the correct plural form.
+- a7f7373: Fix untranslatable string concatenation on the Manage Event page. The linked-posts notice and the sale period label built sentences by concatenating separate `__()` fragments, which translators can't reorder for languages with different word order; both now use `_n()` and `sprintf()` for proper pluralization and ordering.
+- a7f7373: Add a context header to the Manage Event page showing the date/time, a series/occurrence badge, and link status directly under the H1, and move the recurring-occurrence notice there so it's visible without scrolling.
+- 612b9b0: Move Manage Event's single global "Save Changes" button into the Event Details and Tickets tabs it actually applies to, labeled by what each saves, with per-section dirty-state tracking, a beforeunload guard, and an inline "Title is required" message instead of a silently disabled button (issue #987).
+- 612b9b0: Add a Move action on the Manage Event Audience tab to re-point a participant's signup to a sibling occurrence of a recurring event in one step, instead of deleting and re-adding and losing attendance state, admin comments, ticket options, and payment status (issue #954). Adds `GET /event-dates/{id}/siblings` to fair-events and `POST .../participants/{id}/move` to fair-audience.
+- a7f7373: Fix the standalone get-tickets block (used when fair-audience is inactive) rendering an empty form for a specific occurrence of a recurring event. Ticket types, sale periods, and prices now resolve against the series master's configuration while the signup itself stays linked to the specific occurrence, mirroring the pivot fair-audience's event-signup block already does.
+- a7f7373: Remove the seats-per-ticket capacity weighting feature. It let a ticket type consume more than one capacity slot, forcing every capacity query, signup projection, and participant snapshot to carry a per-row seat weight. Capacity math now collapses back to a plain row count; the Seats column/checkbox, the `seats_per_ticket` column, and the `seats` column on `event_participant` are dropped, with a forward migration for existing installs.
+- 612b9b0: Reword the Link Options card, ticket settings, add-on panel, All Events list, and transaction "Metadata" card (now "Details") to use organizer task language instead of internal data-model vocabulary (Master/Generated, "Event placeholder", "activity"), per UI_GUIDELINES.md. Display strings only — no REST field or DB value changes (issue #989).
+- a7f7373: Fix calendar events grouped by day rendering in fetch order (WordPress query, standalone query, iCal feed) instead of start time, causing mixed-source events on the same day to appear out of chronological order.
+- Updated dependencies [b007d8a]
+- Updated dependencies [612b9b0]
+- Updated dependencies [612b9b0]
+    - fair-events-shared@0.3.0
 
 ## 1.8.0
 
 ### Minor Changes
 
--   551e827: Add three-level email consent (Yes / missing / No): new `declined` profile value records that a participant was asked and refused, a renamed `marketing-consent` endpoint handles both upgrade and decline in one request, and the event-floor consent modal lets organizers record Yes/No per row. All-participants table, edit modal, and participant detail now display the declined state.
--   2cb0fb8: Move the Audience, Groups, and Mailings tabs out of fair-events and into fair-audience, which now owns audience-facing management for an event. fair-events registers the extension point and fair-audience renders these tabs, consolidating participant and mailing management in one plugin.
--   2cb0fb8: Add a shared payment-integration lifecycle layer in fair-events-shared that standardizes how plugins hook into payment start, completion, and failure. fair-payments-connector's simple-payment block and fair-events' get-tickets block consume the shared layer so payment side-effects are handled consistently across integrations.
--   2cb0fb8: Classify the impact of edits to recurring events and guard against destructive changes: the server categorizes how a change affects existing occurrences and surfaces that impact in the UI before saving. Occurrence reconciliation now preserves existing row IDs instead of regenerating them, and generated occurrences fall back to the master venue when they have none of their own.
--   2cb0fb8: Add recurrence scope for ticket types on recurring events: a ticket type can apply to a single occurrence or to `multiple_instances`. A scope-choice modal prompts the organizer when editing ticket types on a recurring event, the Ticket Prices table shows the active scope in parentheses, and sold ticket types are locked against scope changes. The event-signup block respects the resolved scope when listing available tickets.
--   2cb0fb8: Remove the simple ticket pricing mode; advanced ticketing is now the only pricing model. Events that used simple pricing are handled through the advanced ticket-type flow, simplifying the manage-event UI, the REST payload, and the underlying models. Organizers who relied on simple pricing will now manage prices as ticket types.
--   2cb0fb8: Add sliding-scale (pay-what-you-can) event pricing: organizers can offer a ticket type where the buyer chooses the amount within a configured range. The manage-event admin UI exposes the new pricing mode, the event-signup block lets attendees enter their own price, and the server validates the chosen amount against the configured bounds.
--   7e594d7: Add manual disable/enable for sold ticket types: a new `disabled` boolean column on ticket types lets admins hide a type from the signup form without deleting it. The admin UI replaces the Remove button with an Enable/Disable toggle when the type has sales. The server guards against deleting sold types omitted from the payload (defense in depth). The event-signup block and the GetTickets gate both respect the flag.
--   9dd9cc4: Replace the manual `google_maps_link` venue field with a computed `maps_url`: the server now generates the Google Maps URL from latitude/longitude (exact pin) or falls back to the address (approximate). The `google_maps_link` DB column is dropped via migration 3.16.0 and removed from the admin form, REST API, and frontend block.
+- 551e827: Add three-level email consent (Yes / missing / No): new `declined` profile value records that a participant was asked and refused, a renamed `marketing-consent` endpoint handles both upgrade and decline in one request, and the event-floor consent modal lets organizers record Yes/No per row. All-participants table, edit modal, and participant detail now display the declined state.
+- 2cb0fb8: Move the Audience, Groups, and Mailings tabs out of fair-events and into fair-audience, which now owns audience-facing management for an event. fair-events registers the extension point and fair-audience renders these tabs, consolidating participant and mailing management in one plugin.
+- 2cb0fb8: Add a shared payment-integration lifecycle layer in fair-events-shared that standardizes how plugins hook into payment start, completion, and failure. fair-payments-connector's simple-payment block and fair-events' get-tickets block consume the shared layer so payment side-effects are handled consistently across integrations.
+- 2cb0fb8: Classify the impact of edits to recurring events and guard against destructive changes: the server categorizes how a change affects existing occurrences and surfaces that impact in the UI before saving. Occurrence reconciliation now preserves existing row IDs instead of regenerating them, and generated occurrences fall back to the master venue when they have none of their own.
+- 2cb0fb8: Add recurrence scope for ticket types on recurring events: a ticket type can apply to a single occurrence or to `multiple_instances`. A scope-choice modal prompts the organizer when editing ticket types on a recurring event, the Ticket Prices table shows the active scope in parentheses, and sold ticket types are locked against scope changes. The event-signup block respects the resolved scope when listing available tickets.
+- 2cb0fb8: Remove the simple ticket pricing mode; advanced ticketing is now the only pricing model. Events that used simple pricing are handled through the advanced ticket-type flow, simplifying the manage-event UI, the REST payload, and the underlying models. Organizers who relied on simple pricing will now manage prices as ticket types.
+- 2cb0fb8: Add sliding-scale (pay-what-you-can) event pricing: organizers can offer a ticket type where the buyer chooses the amount within a configured range. The manage-event admin UI exposes the new pricing mode, the event-signup block lets attendees enter their own price, and the server validates the chosen amount against the configured bounds.
+- 7e594d7: Add manual disable/enable for sold ticket types: a new `disabled` boolean column on ticket types lets admins hide a type from the signup form without deleting it. The admin UI replaces the Remove button with an Enable/Disable toggle when the type has sales. The server guards against deleting sold types omitted from the payload (defense in depth). The event-signup block and the GetTickets gate both respect the flag.
+- 9dd9cc4: Replace the manual `google_maps_link` venue field with a computed `maps_url`: the server now generates the Google Maps URL from latitude/longitude (exact pin) or falls back to the address (approximate). The `google_maps_link` DB column is dropped via migration 3.16.0 and removed from the admin form, REST API, and frontend block.
 
 ### Patch Changes
 
--   2cb0fb8: Bump @wordpress/components 35→36 and @wordpress/dataviews 16→17. The DataViews upgrade can change table rendering in the admin views that use it, so the shipped bundles for these plugins are regenerated.
--   2cb0fb8: Move the Statistics, Duplicate, and Merge actions into the manage-event tab descriptor registry, and render the Statistics tab inline instead of redirecting to a separate page. fair-events exposes the tab registry extension point that fair-events-experimental registers against.
--   ce4566c: Fix paid get-tickets purchases dumping the buyer on the homepage after checkout. The redirect URL was built with `get_permalink()` inside the REST request, where there is no post context, so it always fell back to `home_url()` — a page without the block, so the buyer never saw a confirmation. The controller now resolves the return URL from the same-site referer (preserving `?event_date=` on standalone pages), falling back to the event's own page, then the homepage.
--   Updated dependencies [2cb0fb8]
-    -   fair-events-shared@0.2.0
+- 2cb0fb8: Bump @wordpress/components 35→36 and @wordpress/dataviews 16→17. The DataViews upgrade can change table rendering in the admin views that use it, so the shipped bundles for these plugins are regenerated.
+- 2cb0fb8: Move the Statistics, Duplicate, and Merge actions into the manage-event tab descriptor registry, and render the Statistics tab inline instead of redirecting to a separate page. fair-events exposes the tab registry extension point that fair-events-experimental registers against.
+- ce4566c: Fix paid get-tickets purchases dumping the buyer on the homepage after checkout. The redirect URL was built with `get_permalink()` inside the REST request, where there is no post context, so it always fell back to `home_url()` — a page without the block, so the buyer never saw a confirmation. The controller now resolves the return URL from the same-site referer (preserving `?event_date=` on standalone pages), falling back to the event's own page, then the homepage.
+- Updated dependencies [2cb0fb8]
+    - fair-events-shared@0.2.0
 
 ## 1.7.0
 
 ### Minor Changes
 
--   c60efeb: Add a `get-tickets` block for standalone ticket purchase: a server-rendered block that lets visitors buy tickets from any WordPress page without requiring fair-audience. The block resolves the target event date from the query string, a block attribute, or the post's own event date.
+- c60efeb: Add a `get-tickets` block for standalone ticket purchase: a server-rendered block that lets visitors buy tickets from any WordPress page without requiring fair-audience. The block resolves the target event date from the query string, a block attribute, or the post's own event date.
 
     Add `recurrence_scope` to ticket types, allowing each type to be scoped to a single occurrence or to the whole recurring series.
 
--   efb62fa: Move TicketSalePeriod, TicketType, and TicketPrice models from fair-events-experimental into fair-events (namespace FairEvents\Models), and refactor sale periods to half-open day ranges [sale_start, sale_end) in the site timezone with two seeded defaults (before / during the event).
+- efb62fa: Move TicketSalePeriod, TicketType, and TicketPrice models from fair-events-experimental into fair-events (namespace FairEvents\Models), and refactor sale periods to half-open day ranges [sale_start, sale_end) in the site timezone with two seeded defaults (before / during the event).
 
 ### Patch Changes
 
--   c60efeb: Fix three visual/functional regressions in the events-week block: use block palette colors for external events (not just internal ones); constrain event chips to their column width so they don't overflow; add a clipboard API fallback so the copy button works in browsers that block `navigator.clipboard` without HTTPS.
--   c60efeb: Several manage-event UI improvements: link the event title in the manage-event header to the frontend page; hide the Groups tab and group-discount fields when fair-audience is not active; use descriptive labels ("Before event" / "During event") for the two seeded default sale-period columns; remove the capacity line from the get-tickets block render.
+- c60efeb: Fix three visual/functional regressions in the events-week block: use block palette colors for external events (not just internal ones); constrain event chips to their column width so they don't overflow; add a clipboard API fallback so the copy button works in browsers that block `navigator.clipboard` without HTTPS.
+- c60efeb: Several manage-event UI improvements: link the event title in the manage-event header to the frontend page; hide the Groups tab and group-discount fields when fair-audience is not active; use descriptive labels ("Before event" / "During event") for the two seeded default sale-period columns; remove the capacity line from the get-tickets block render.
 
 ## 1.6.0
 
 ### Minor Changes
 
--   f46e6ec: Add events-week block with a copy-summary button (includes page URL in the header) and a global start-of-week plugin setting. The weekly-schedule block it replaces has been removed.
--   4363b40: Add an opt-in "Powered by Fair Event Plugins" attribution. A single toggle in the fair-events General settings (off by default) renders a subtle, translatable line under the fair-audience signup blocks and at the bottom of participant emails.
--   fb3165c: Add a site-wide default currency setting. Admins can now choose the currency (EUR, USD, GBP, CHF, DKK, NOK, SEK, PLN, CZK, HUF) in Fair Payments Connector → Settings → Currency; all new transactions, fees, and price displays across the plugins inherit this setting instead of being hard-coded to EUR.
+- f46e6ec: Add events-week block with a copy-summary button (includes page URL in the header) and a global start-of-week plugin setting. The weekly-schedule block it replaces has been removed.
+- 4363b40: Add an opt-in "Powered by Fair Event Plugins" attribution. A single toggle in the fair-events General settings (off by default) renders a subtle, translatable line under the fair-audience signup blocks and at the bottom of participant emails.
+- fb3165c: Add a site-wide default currency setting. Admins can now choose the currency (EUR, USD, GBP, CHF, DKK, NOK, SEK, PLN, CZK, HUF) in Fair Payments Connector → Settings → Currency; all new transactions, fees, and price displays across the plugins inherit this setting instead of being hard-coded to EUR.
 
 ### Patch Changes
 
--   f46e6ec: Fix calendar overflow, disable pointer events on links and buttons inside calendar/events blocks in the editor (prevents accidental navigation), and guard Venue lookup in event-info block render. Include participant email in the delete-participant confirmation dialog.
+- f46e6ec: Fix calendar overflow, disable pointer events on links and buttons inside calendar/events blocks in the editor (prevents accidental navigation), and guard Venue lookup in event-info block render. Include participant email in the delete-participant confirmation dialog.
 
 ## 1.5.0
 
 ### Minor Changes
 
--   82e6f21: Move Venue model and VenueController from fair-events to fair-events-experimental. The venues REST API (`/fair-events/v1/venues`) is now registered by the experimental plugin under its `venues` feature flag.
--   76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
+- 82e6f21: Move Venue model and VenueController from fair-events to fair-events-experimental. The venues REST API (`/fair-events/v1/venues`) is now registered by the experimental plugin under its `venues` feature flag.
+- 76c23f7: Upgrade @wordpress/dataviews from v4 to v16 for admin list views.
 
 ### Patch Changes
 
--   ead4d69: Move Duplicate Event, Merge Event, and Mailings tab to fair-events-experimental; rename linking option "No link (standalone event)" to "Event placeholder"; fix Finance tab gating behind fair-finance plugin
+- ead4d69: Move Duplicate Event, Merge Event, and Mailings tab to fair-events-experimental; rename linking option "No link (standalone event)" to "Event placeholder"; fix Finance tab gating behind fair-finance plugin
 
 ## 1.4.1
 
 ### Patch Changes
 
--   3d0e399: Fix npm dependencies
+- 3d0e399: Fix npm dependencies
 
 ## 1.4.0
 
 ### Minor Changes
 
--   d0daed8: Add optional per-ticket-type end date (disable_at) and fix undefined variable in event update
+- d0daed8: Add optional per-ticket-type end date (disable_at) and fix undefined variable in event update
 
 ## 1.3.4
 
 ### Patch Changes
 
--   02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
-    `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
-    feature flag (resolved through the same constant / master / filter / option /
-    default chain as the existing Fair Events features). The flag is exposed in
-    each plugin's Settings → Features tab (or Features submenu) and defaults to off.
+- 02cf7b6: Default to WordPress.org language packs; gate `load_plugin_textdomain()` and the
+  `wp_set_script_translations()` path behind a new per-plugin `bundled-translations`
+  feature flag (resolved through the same constant / master / filter / option /
+  default chain as the existing Fair Events features). The flag is exposed in
+  each plugin's Settings → Features tab (or Features submenu) and defaults to off.
 
 ## 1.3.3
 
 ### Patch Changes
 
--   9ffc5a8: Calendar: link each recurring instance to its own date
+- 9ffc5a8: Calendar: link each recurring instance to its own date
 
     Per-occurrence URLs now include `?event_date={id}` in the events-calendar block,
     the weekly-schedule block, and the public events REST API, so visitors land on
@@ -556,7 +589,7 @@
     distinguishes generated recurring instances visually (own icon and color) instead
     of styling them like unlinked events.
 
--   0ebaea4: Group admin menus with string positions to avoid overwriting core menus
+- 0ebaea4: Group admin menus with string positions to avoid overwriting core menus
 
     Each plugin's top-level admin menu now registers with a unique string decimal
     position (`20.1`–`20.4`) so the four menus cluster together in order without
@@ -568,167 +601,167 @@
 
 ### Patch Changes
 
--   518b6eb: Fix release tooling: sync plugin header Version with package.json so SVN tag publishing finds the dist archive
+- 518b6eb: Fix release tooling: sync plugin header Version with package.json so SVN tag publishing finds the dist archive
 
 ## 1.3.0
 
 ### Minor Changes
 
--   7f6ab85: Show net amounts in the event finance tab: net received per payment, plus a "Total Net" summary tile.
--   6b8f010: Add scheduled per-event mailings: queue an email anchored to an event date's start/end with a signed offset, sent automatically by a recurring cron, managed from a new "Mailings" tab in the event admin.
--   2ed7435: Introduce a feature-flag registry (`FairEvents\Core\Features`) that splits the
-    plugin into bundles — `venues`, `sources`, `galleries`, `ticketing`,
-    `event-tools`, `migration` — defaulting **off** for a clean public install.
-    Define `FAIR_EVENTS_INTERNAL` (or a per-bundle `FAIR_EVENTS_FEATURE_*`
-    constant) in `wp-config.php` to opt back into the full build; otherwise toggle
-    bundles from the new **Settings → Features** tab. REST controllers, admin
-    pages, blocks, frontend rewrites, and manage-event tabs all consult the
-    registry, so disabled bundles register no routes and surface no UI.
--   7f6ab85: Enhance the participant list printout with row numbers, role and ticket-type columns, and a mailing-list column pre-checked for consented participants.
--   7f6ab85: Make per-period activity pricing a global setting; activity option prices are derived from the active sale period.
--   3f8fdb4: Add an optional per-ticket-type minimum activities requirement that can raise the event-date-wide minimum (e.g. an "Early bird" ticket requiring at least 2 activities). The per-type value only ever increases the requirement; a value below the global minimum is ignored. Enforced both in the signup form (the gate updates live as the buyer switches ticket type) and server-side.
--   7f6ab85: Export questionnaire responses to Markdown, sharing one submission-markdown template between the submission detail and responses pages. Phone answers now persist in questionnaire submissions.
--   7682a28: Recurring events and sign-up management. Sign up for recurring events with synced date pickers, master-group inheritance, and orphan cleanup. New printable sign-up lists with comments, capacity limits, and in-popup role editing. Ticket settings reorganized with sales periods moved out of the ticket table. Finance tab filters failed/live transactions and deep-links to transactions and participants. Group invitations added.
+- 7f6ab85: Show net amounts in the event finance tab: net received per payment, plus a "Total Net" summary tile.
+- 6b8f010: Add scheduled per-event mailings: queue an email anchored to an event date's start/end with a signed offset, sent automatically by a recurring cron, managed from a new "Mailings" tab in the event admin.
+- 2ed7435: Introduce a feature-flag registry (`FairEvents\Core\Features`) that splits the
+  plugin into bundles — `venues`, `sources`, `galleries`, `ticketing`,
+  `event-tools`, `migration` — defaulting **off** for a clean public install.
+  Define `FAIR_EVENTS_INTERNAL` (or a per-bundle `FAIR_EVENTS_FEATURE_*`
+  constant) in `wp-config.php` to opt back into the full build; otherwise toggle
+  bundles from the new **Settings → Features** tab. REST controllers, admin
+  pages, blocks, frontend rewrites, and manage-event tabs all consult the
+  registry, so disabled bundles register no routes and surface no UI.
+- 7f6ab85: Enhance the participant list printout with row numbers, role and ticket-type columns, and a mailing-list column pre-checked for consented participants.
+- 7f6ab85: Make per-period activity pricing a global setting; activity option prices are derived from the active sale period.
+- 3f8fdb4: Add an optional per-ticket-type minimum activities requirement that can raise the event-date-wide minimum (e.g. an "Early bird" ticket requiring at least 2 activities). The per-type value only ever increases the requirement; a value below the global minimum is ignored. Enforced both in the signup form (the gate updates live as the buyer switches ticket type) and server-side.
+- 7f6ab85: Export questionnaire responses to Markdown, sharing one submission-markdown template between the submission detail and responses pages. Phone answers now persist in questionnaire submissions.
+- 7682a28: Recurring events and sign-up management. Sign up for recurring events with synced date pickers, master-group inheritance, and orphan cleanup. New printable sign-up lists with comments, capacity limits, and in-popup role editing. Ticket settings reorganized with sales periods moved out of the ticket table. Finance tab filters failed/live transactions and deep-links to transactions and participants. Group invitations added.
 
 ### Patch Changes
 
--   461b792: Stack the activity option Name and Short name inputs in a single column (one above the other) instead of two side-by-side columns, narrowing the activity options table.
--   0a4fe6c: Fit the Event meta box action buttons into the available sidebar width: "Edit Full Details" and "Unlink from event" now share one row beneath the full-width "Save Event" button, so longer translated labels no longer wrap awkwardly.
--   6f50483: Fix `payment_expires_at` being parsed as local time in the Manage Event audience tab, which falsely flagged in-progress payment holds as expired on non-UTC browsers (e.g. CEST).
--   be4ad94: Hide the per-ticket-type "Min. activities" field behind a new "Per-ticket-type minimum activities" setting in the ticket Configuración panel (off by default). When the setting is off, every ticket type uses the event-wide minimum; turning it on reveals the per-type input, which still only ever raises the global.
--   fa588db: Reorganize the Manage Event "Event details" tab into stacked full-width cards (Basics, Categorization, Recurrence) so it uses the available desktop width like the Audience tab.
--   7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
--   7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
+- 461b792: Stack the activity option Name and Short name inputs in a single column (one above the other) instead of two side-by-side columns, narrowing the activity options table.
+- 0a4fe6c: Fit the Event meta box action buttons into the available sidebar width: "Edit Full Details" and "Unlink from event" now share one row beneath the full-width "Save Event" button, so longer translated labels no longer wrap awkwardly.
+- 6f50483: Fix `payment_expires_at` being parsed as local time in the Manage Event audience tab, which falsely flagged in-progress payment holds as expired on non-UTC browsers (e.g. CEST).
+- be4ad94: Hide the per-ticket-type "Min. activities" field behind a new "Per-ticket-type minimum activities" setting in the ticket Configuración panel (off by default). When the setting is off, every ticket type uses the event-wide minimum; turning it on reveals the per-type input, which still only ever raises the global.
+- fa588db: Reorganize the Manage Event "Event details" tab into stacked full-width cards (Basics, Categorization, Recurrence) so it uses the available desktop width like the Audience tab.
+- 7f6ab85: Miscellaneous fixes: link to the event page from the admin calendar, close the payment callback popup without a page reload, integrate the confirm & save buttons in the edit popup, keep a cancelled signup registered as "interested", remove the email from the purchase message, and stop nulling transactions.
+- 7f6ab85: Update the local Docker environment and "Tested up to" headers to WordPress 7.
 
 ## 1.2.0
 
 ### Minor Changes
 
--   41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
--   41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
+- 41a295c: Improve event audience management. Edit ticket type and options on existing sign-ups via a popup, delete sign-ups, and store the chosen option name on the sign-up record. Audience table gains copy buttons, activity totals, side counter, ticket shortname, and a wider layout that shows the activity options purchased by each participant.
+- 41a295c: Link tickets to event activities. Tickets can now be assigned to specific activities by ID, with per-activity discounts (including facilitator-based discounts) applied at sign-up and at the option level. Ticket option table extended to support this.
 
 ### Patch Changes
 
--   41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
+- 41a295c: Fix free ticket error, ticket break in the editor, and price setting error.
 
 ## 1.1.1
 
 ### Patch Changes
 
--   e22779c: Add email notification to form sign up & registrations
+- e22779c: Add email notification to form sign up & registrations
 
 ## 1.1.0
 
 ### Minor Changes
 
--   51b63e5: Add photo taxonomy by events.
--   e09b50a: Add option to link the event images.
+- 51b63e5: Add photo taxonomy by events.
+- e09b50a: Add option to link the event images.
 
 ### Patch Changes
 
--   04c4196: Add migration workflow for events.
+- 04c4196: Add migration workflow for events.
 
 ## 0.7.0
 
 ### Minor Changes
 
--   cf7f5de: Add weekly schedule block.
--   27ff8bd: Add event sources & iCal feed.
+- cf7f5de: Add weekly schedule block.
+- 27ff8bd: Add event sources & iCal feed.
 
 ### Patch Changes
 
--   c806c7c: Add iCal for calendar display.
+- c806c7c: Add iCal for calendar display.
 
 ## 0.6.1
 
 ### Patch Changes
 
--   eeaccd0: Add option to show draft events on a calendar.
+- eeaccd0: Add option to show draft events on a calendar.
 
 ## 0.6.0
 
 ### Minor Changes
 
--   96a150c: Add calendar display block.
+- 96a150c: Add calendar display block.
 
 ## 0.5.2
 
 ### Patch Changes
 
--   fa15b85: Improve copy screen for events.
+- fa15b85: Improve copy screen for events.
 
 ## 0.5.1
 
 ### Patch Changes
 
--   7e7ea9c: Update version tested up to version to 6.9.
+- 7e7ea9c: Update version tested up to version to 6.9.
 
 ## 0.5.0
 
 ### Minor Changes
 
--   83743d6: Add a workflow to copy the event
+- 83743d6: Add a workflow to copy the event
 
 ### Patch Changes
 
--   3a60309: Add lenght dropdown to the event content type.
--   97fd67d: Add support for user groups.
+- 3a60309: Add lenght dropdown to the event content type.
+- 97fd67d: Add support for user groups.
 
 ## 0.4.3
 
 ### Patch Changes
 
--   9b83592: Link to RSVP confirmation if plugin is available
+- 9b83592: Link to RSVP confirmation if plugin is available
 
 ## 0.4.2
 
 ### Patch Changes
 
--   ccb5d6a: Add list of upcomming events
+- ccb5d6a: Add list of upcomming events
 
 ## 0.4.1
 
 ### Patch Changes
 
--   2ee1396: Integrate event & schedule blocks—reference event dates in block
--   1bfddd0: Fix data formating in translated date
+- 2ee1396: Integrate event & schedule blocks—reference event dates in block
+- 1bfddd0: Fix data formating in translated date
 
 ## 0.4.0
 
 ### Minor Changes
 
--   8f0db61: Move start & end dates to separate table
+- 8f0db61: Move start & end dates to separate table
 
 ## 0.3.3
 
 ### Patch Changes
 
--   4ed3721: Add location to fair-events
--   ee8bef8: Simplify showing the dates in event-dates block
--   2e270f0: Add translations for PL, DE & ES
+- 4ed3721: Add location to fair-events
+- ee8bef8: Simplify showing the dates in event-dates block
+- 2e270f0: Add translations for PL, DE & ES
 
 ## 0.3.2
 
 ### Patch Changes
 
--   8c3c2fe: Fix the category search in event-list block
--   46fbaaf: Fix the filtering in event-list block
+- 8c3c2fe: Fix the category search in event-list block
+- 46fbaaf: Fix the filtering in event-list block
 
 ## 0.3.1
 
 ### Patch Changes
 
--   c8f06d5: Fix slug setting page
+- c8f06d5: Fix slug setting page
 
 ## 0.3.0
 
 ### Minor Changes
 
--   Add slug setting
--   Improve edit UX
+- Add slug setting
+- Improve edit UX
 
 ## 0.2.0
 
 ### Minor Changes
 
--   f39c6fb: Add list view block with patterns support
+- f39c6fb: Add list view block with patterns support
