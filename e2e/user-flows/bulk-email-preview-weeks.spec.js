@@ -35,6 +35,33 @@ test('bulk email previews and tests the selected week while scheduling is off', 
 					exact: true,
 				}),
 			});
+		// An unsaved draft in another section stays apart from this one.
+		const individual = page
+			.locator('.fair-events-notifications__channel')
+			.filter({
+				has: page.getByRole('heading', {
+					name: 'Individual email',
+					exact: true,
+				}),
+			});
+		const individualSubject = individual.getByLabel('Subject', {
+			exact: true,
+		});
+		const savedIndividualSubject = await individualSubject.inputValue();
+		await individualSubject.fill('Individual draft {week_start}');
+		await expect(individual.getByText('Unsaved changes')).toBeVisible();
+
+		await channel
+			.getByLabel('Subject', { exact: true })
+			.fill('Unsaved {week_start}');
+		await expect(
+			channel.getByRole('button', { name: 'Preview next email' })
+		).toBeDisabled();
+		await expect(
+			channel.getByText(
+				'Save your changes first — the preview and the test use the saved settings.'
+			)
+		).toBeVisible();
 		await channel
 			.getByLabel('Email the weekly summary to subscribers')
 			.uncheck();
@@ -109,6 +136,16 @@ test('bulk email previews and tests the selected week while scheduling is off', 
 			}
 			expect(captured.telegram).toEqual([]);
 		}
+		// Saving bulk email twice left the individual draft unsaved and alone.
+		await expect(individualSubject).toHaveValue(
+			'Individual draft {week_start}'
+		);
+		await expect(individual.getByText('Unsaved changes')).toBeVisible();
+		await expect(
+			individual.getByText('Individual email settings saved.')
+		).toHaveCount(0);
+		await individualSubject.fill(savedIndividualSubject);
+		await expect(individual.getByText('Unsaved changes')).toHaveCount(0);
 	} finally {
 		fixture('cleanup');
 		runScript(
