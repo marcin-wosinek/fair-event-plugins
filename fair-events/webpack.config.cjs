@@ -52,6 +52,10 @@ const scriptConfig = {
 			process.cwd(),
 			'src/blocks/event-prices/editor.js'
 		),
+		'blocks/venue-info/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/venue-info/editor.js'
+		),
 		'blocks/event-signup/editor': path.resolve(
 			process.cwd(),
 			'src/blocks/event-signup/editor.js'

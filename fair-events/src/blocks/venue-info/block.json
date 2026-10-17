@@ -1,0 +1,25 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "fair-events/venue-info",
+	"version": "0.1.0",
+	"title": "Venue Info",
+	"category": "widgets",
+	"icon": "location",
+	"description": "Display a venue's name, address, map, website, and social links.",
+	"keywords": [ "venue", "location", "address", "map", "place" ],
+	"textdomain": "fair-events",
+	"attributes": {
+		"venueId": {
+			"type": "integer"
+		}
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": true
+	},
+	"editorScript": "file:./editor.js",
+	"style": "file:./style-editor.css",
+	"render": "file:./render.php"
+}
