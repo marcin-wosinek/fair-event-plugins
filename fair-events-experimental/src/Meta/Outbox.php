@@ -144,8 +144,13 @@ class Outbox {
 		);
 	}
 
-	/** @param object $row Claimed row. @param string $code Safe code. @param string $type Safe type. */
-	public function retry( $row, $code = '', $type = '' ) {
+	/**
+	 * @param object $row      Claimed row.
+	 * @param string $code     Safe code.
+	 * @param string $type     Safe type.
+	 * @param string $category `temporary_error`, or `unconfirmed` when Meta answered without confirming the event.
+	 */
+	public function retry( $row, $code = '', $type = '', $category = 'temporary_error' ) {
 		global $wpdb;
 		$delays   = array( 60, 300, 1800, 7200, 43200 );
 		$attempts = (int) $row->attempt_count + 1;
@@ -158,7 +163,7 @@ class Outbox {
 			self::table_name(),
 			array(
 				'state'           => 'retry_pending',
-				'result_category' => 'temporary_error',
+				'result_category' => $category,
 				'attempt_count'   => $attempts,
 				'next_attempt_at' => $next_attempt,
 				'meta_error_code' => sanitize_key( $code ),

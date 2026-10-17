@@ -139,7 +139,7 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 			'Purchase',
 		]);
 		for (const row of state.rows) {
-			expect(row.state).toBe('accepted');
+			expect(row.state).toBe('received');
 			// wp-env forces fair-payments-connector into Mollie test mode for
 			// every spec (fair-e2e-support.php §2) — this is the live
 			// assertion that a test-mode transaction is still delivered, and

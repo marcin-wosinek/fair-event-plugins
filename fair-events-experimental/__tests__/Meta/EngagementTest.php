@@ -19,7 +19,13 @@ class EngagementTest extends TestCase {
 	/** Reset the fake transient store before each test. */
 	protected function setUp(): void {
 		parent::setUp();
-		$GLOBALS['_fair_test_transients'] = array();
+		$GLOBALS['_fair_test_transients']           = array();
+		$GLOBALS['_fair_test_options']              = array();
+		$GLOBALS['_fair_test_remote_post_requests'] = array();
+		$GLOBALS['_fair_test_remote_post_response'] = array(
+			'response' => array( 'code' => 200 ),
+			'body'     => '{"events_received":1,"messages":[],"fbtrace_id":"T"}',
+		);
 	}
 
 	/**
@@ -143,5 +149,79 @@ class EngagementTest extends TestCase {
 		$stored = $GLOBALS['_fair_test_transients'][ 'fair_events_experimental_meta_engagement_' . md5( '203.0.113.5' ) ];
 		$this->assertSame( Engagement::RATE_LIMIT, $stored['value'] );
 		$this->assertSame( Engagement::RATE_WINDOW, $stored['expiration'] );
+	}
+
+	/** The calendar test payload is the production calendar payload with a fresh ID and no commerce data. */
+	public function test_calendar_test_uses_the_production_engagement_payload() {
+		$payload    = Conversions::build_engagement_test_event(
+			array(
+				'context' => $this->context(),
+				'fbp'     => self::FBP,
+				'fbc'     => '',
+			)
+		);
+		$production = Conversions::payload_for( (object) Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '' ) );
+		$this->assertSame( 'FairEventCalendarClick', $payload['event_name'] );
+		$this->assertSame( array_keys( $production ), array_keys( $payload ) );
+		$this->assertSame( $production['custom_data'], $payload['custom_data'] );
+		$this->assertSame( $production['user_data'], $payload['user_data'] );
+		$this->assertSame( 'https://example.test/fair-events/mix-and-move/', $payload['event_source_url'] );
+		$this->assertNotSame( $production['event_id'], $payload['event_id'], 'A test gets its own activation ID.' );
+		$this->assertArrayNotHasKey( 'value', $payload['custom_data'] );
+		$this->assertArrayNotHasKey( 'currency', $payload['custom_data'] );
+		$this->assertArrayNotHasKey( 'order_id', $payload['custom_data'] );
+	}
+
+	/** Without context or a valid identifier there is no calendar test payload. */
+	public function test_calendar_test_requires_context_and_identifier() {
+		$this->assertNull( Conversions::build_engagement_test_event( null ) );
+		$this->assertNull( Conversions::build_engagement_test_event( array( 'fbp' => self::FBP ) ) );
+		$this->assertNull(
+			Conversions::build_engagement_test_event(
+				array(
+					'context' => $this->context(),
+					'fbp'     => 'invalid',
+				)
+			)
+		);
+	}
+
+	/** The calendar test is sent with the test code and recorded; routine delivery stays free of it. */
+	public function test_calendar_test_is_sent_with_the_test_code_only() {
+		update_option( Conversions::DATASET_OPTION, '123456' );
+		update_option( Conversions::TOKEN_OPTION, 'token-value' );
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$conversions = new Conversions();
+		$result      = $conversions->send_test(
+			'FairEventCalendarClick',
+			array(
+				'context' => $this->context(),
+				'fbp'     => self::FBP,
+				'fbc'     => '',
+			)
+		);
+		$this->assertTrue( $result['accepted'] );
+		$body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][0]['args']['body'], true );
+		$this->assertSame( 'CODE123', $body['test_event_code'] );
+		$this->assertSame( 'FairEventCalendarClick', $body['data'][0]['event_name'] );
+		$this->assertSame( 'calendar', $body['data'][0]['custom_data']['action'] );
+		$this->assertSame( 'FairEventCalendarClick', Conversions::test_history()[0]['event_name'] );
+
+		$routine = Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '' );
+		$conversions->send_payload( Conversions::payload_for( (object) $routine ) );
+		$routine_body = json_decode( $GLOBALS['_fair_test_remote_post_requests'][1]['args']['body'], true );
+		$this->assertArrayNotHasKey( 'test_event_code', $routine_body );
+	}
+
+	/** An invalid calendar test context fails before any network call and is not recorded. */
+	public function test_calendar_test_without_context_fails_closed() {
+		update_option( Conversions::DATASET_OPTION, '123456' );
+		update_option( Conversions::TOKEN_OPTION, 'token-value' );
+		update_option( Conversions::TEST_CODE_OPTION, 'CODE123' );
+		$result = ( new Conversions() )->send_test( 'FairEventCalendarClick', null );
+		$this->assertFalse( $result['accepted'] );
+		$this->assertSame( 'invalid_test_context', $result['code'] );
+		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+		$this->assertSame( array(), Conversions::test_history() );
 	}
 }

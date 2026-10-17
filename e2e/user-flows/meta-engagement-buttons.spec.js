@@ -154,7 +154,7 @@ test.describe('Meta engagement button events', () => {
 		expect(state.rows).toEqual([
 			{
 				event_name: 'FairEventCalendarClick',
-				state: 'accepted',
+				state: 'received',
 				event_date_id: String(event.eventDateId),
 				transaction_id: null,
 			},

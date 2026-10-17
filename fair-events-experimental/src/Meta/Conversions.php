@@ -19,6 +19,8 @@ class Conversions {
 	public const TEST_CODE_OPTION  = 'fair_events_experimental_meta_test_event_code';
 	public const TEST_LOG_OPTION   = 'fair_events_experimental_meta_test_log';
 	public const TEST_LOG_LIMIT    = 5;
+	public const MESSAGE_LIMIT     = 5;
+	public const MESSAGE_LENGTH    = 300;
 	public const DELIVERY_HOOK     = 'fair_events_experimental_meta_deliver';
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
 
@@ -235,8 +237,14 @@ class Conversions {
 	 * mode and live mode alike — is sent once as a production Meta event, with
 	 * no `test_event_code` attached; `payment_mode` in `custom_data` remains
 	 * the only way to tell the two apart. The configured Test Events code is
-	 * reserved for the explicit administrator-triggered synthetic test in
+	 * reserved for the explicit administrator-triggered tests in
 	 * {@see send_test()} and never gates or accompanies routine delivery.
+	 *
+	 * A row is `received` only once Meta confirms the event in
+	 * `events_received`. An unconfirmed answer is retried on the same bounded
+	 * schedule as a temporary error, with the same event ID so Meta can
+	 * deduplicate it. Rows finished before confirmation was checked keep
+	 * their `accepted` state: it records an HTTP success only.
 	 */
 	public function deliver_due() {
 		$outbox = new Outbox();
@@ -244,9 +252,9 @@ class Conversions {
 		while ( $row ) {
 			$result = $this->send_payload( self::payload_for( $row ) );
 			if ( $result['accepted'] ) {
-				$outbox->finish( (int) $row->id, 'accepted' );
+				$outbox->finish( (int) $row->id, 'received' );
 			} elseif ( $result['temporary'] ) {
-				$outbox->retry( $row, $result['code'], $result['type'] );
+				$outbox->retry( $row, $result['code'], $result['type'], 'unconfirmed' === $result['outcome'] ? 'unconfirmed' : 'temporary_error' );
 			} else {
 				$outbox->finish( (int) $row->id, 'configuration_error', $result['code'], $result['type'] );
 			}
@@ -254,17 +262,23 @@ class Conversions {
 		}
 	}
 
-	/** @param array $event Event. @param string $test_code Optional explicit test code. @return array */
+	/**
+	 * Send one event and classify Meta's answer.
+	 *
+	 * `outcome` is `received` only when HTTP succeeds and the body confirms
+	 * `events_received: 1`. A successful status with zero events, a missing or
+	 * invalid count, or a malformed body is `unconfirmed` and temporary. A
+	 * 4xx is `rejected`, 408/429/5xx `temporary_error`, and a failed request
+	 * `transport`. `diagnostics` holds only the allowlisted, sanitized fields
+	 * from {@see diagnostics_from()}.
+	 *
+	 * @param array $event Event. @param string $test_code Optional explicit test code. @return array
+	 */
 	public function send_payload( $event, $test_code = '' ) {
 		$dataset = (string) get_option( self::DATASET_OPTION, '' );
 		$token   = (string) get_option( self::TOKEN_OPTION, '' );
 		if ( '' === $dataset || '' === $token ) {
-			return array(
-				'accepted'  => false,
-				'temporary' => false,
-				'code'      => 'missing_configuration',
-				'type'      => 'configuration',
-			);
+			return self::result( 'configuration', false, 'missing_configuration', 'configuration' );
 		}
 		$body = array(
 			'data'         => array( $event ),
@@ -282,65 +296,194 @@ class Conversions {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return array(
-				'accepted'  => false,
-				'temporary' => true,
-				'code'      => 'network',
-				'type'      => 'transport',
-			);
+			return self::result( 'transport', true, 'network', 'transport' );
 		}
-		$status = (int) wp_remote_retrieve_response_code( $response );
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
-		$code   = sanitize_key( (string) ( $data['error']['code'] ?? $status ) );
-		$type   = sanitize_key( (string) ( $data['error']['type'] ?? 'http' ) );
-		return array(
-			'accepted'  => $status >= 200 && $status < 300,
-			'temporary' => 408 === $status || 429 === $status || $status >= 500,
-			'code'      => $code,
-			'type'      => $type,
+		$status      = (int) wp_remote_retrieve_response_code( $response );
+		$data        = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data        = is_array( $data ) ? $data : null;
+		$diagnostics = self::diagnostics_from( $status, $data, array( $token, $test_code ) );
+		if ( $status >= 200 && $status < 300 ) {
+			if ( null === $data ) {
+				return self::result( 'unconfirmed', true, 'malformed_response', 'unconfirmed', $diagnostics );
+			}
+			if ( null === $diagnostics['events_received'] ) {
+				return self::result( 'unconfirmed', true, 'missing_events_received', 'unconfirmed', $diagnostics );
+			}
+			if ( 1 !== $diagnostics['events_received'] ) {
+				return self::result( 'unconfirmed', true, 'events_received_' . $diagnostics['events_received'], 'unconfirmed', $diagnostics );
+			}
+			return self::result( 'received', false, '', '', $diagnostics );
+		}
+		$temporary = 408 === $status || 429 === $status || $status >= 500;
+		return self::result(
+			$temporary ? 'temporary_error' : 'rejected',
+			$temporary,
+			sanitize_key( (string) ( $data['error']['code'] ?? $status ) ),
+			sanitize_key( (string) ( $data['error']['type'] ?? 'http' ) ),
+			$diagnostics
 		);
 	}
 
-	/** @param string $event_name PageView, InitiateCheckout, or Purchase. @return array */
-	public function send_test( $event_name = 'PageView' ) {
-		$code = (string) get_option( self::TEST_CODE_OPTION, '' );
-		if ( '' === $code ) {
-			return array(
-				'accepted'  => false,
-				'temporary' => false,
-				'code'      => 'missing_test_code',
-				'type'      => 'configuration',
+	/**
+	 * @param string     $outcome     received, unconfirmed, rejected, temporary_error, transport or configuration.
+	 * @param bool       $temporary   Whether a later retry may succeed.
+	 * @param string     $code        Safe code.
+	 * @param string     $type        Safe type.
+	 * @param array|null $diagnostics {@see diagnostics_from()} result, when Meta answered.
+	 * @return array
+	 */
+	private static function result( $outcome, $temporary, $code, $type, $diagnostics = null ) {
+		return array(
+			'accepted'    => 'received' === $outcome,
+			'temporary'   => $temporary,
+			'outcome'     => $outcome,
+			'code'        => $code,
+			'type'        => $type,
+			'diagnostics' => $diagnostics ? $diagnostics : self::diagnostics_from( null, null ),
+		);
+	}
+
+	/**
+	 * The allowlisted diagnostics of a Meta answer: HTTP status, the
+	 * `events_received` count, `messages` (Meta's top-level messages, plus an
+	 * error's message) and the `fbtrace_id` (or the error's trace ID). A field
+	 * Meta left out stays null, so it can be told apart from an empty list or
+	 * a zero count. Messages are bounded, stripped to plain text, and have
+	 * credentials and Meta browser identifiers redacted; nothing else from
+	 * the body is kept.
+	 *
+	 * @param int|null   $status   HTTP status, or null without a response.
+	 * @param array|null $data     Decoded body, or null when not JSON.
+	 * @param string[]   $secrets  Values to redact from messages.
+	 * @return array
+	 */
+	public static function diagnostics_from( $status, $data, $secrets = array() ) {
+		$count = $data['events_received'] ?? null;
+		if ( is_string( $count ) && ctype_digit( $count ) ) {
+			$count = (int) $count;
+		}
+		$messages = null;
+		if ( isset( $data['messages'] ) && is_array( $data['messages'] ) ) {
+			$messages = array_values( $data['messages'] );
+		}
+		if ( isset( $data['error'] ) && is_array( $data['error'] ) ) {
+			$messages = array_merge(
+				$messages ? $messages : array(),
+				array_filter( array( $data['error']['message'] ?? '', $data['error']['error_user_msg'] ?? '' ) )
 			);
 		}
-		$result = $this->send_payload( self::build_test_event( $event_name ), $code );
+		if ( null !== $messages ) {
+			$messages = array_slice(
+				array_values(
+					array_filter(
+						array_map(
+							static fn( $message ) => self::safe_message( $message, $secrets ),
+							$messages
+						)
+					)
+				),
+				0,
+				self::MESSAGE_LIMIT
+			);
+		}
+		$trace = $data['fbtrace_id'] ?? ( $data['error']['fbtrace_id'] ?? null );
+		return array(
+			'http_status'     => null === $status ? null : (int) $status,
+			'events_received' => is_int( $count ) && $count >= 0 ? $count : null,
+			'messages'        => $messages,
+			'fbtrace_id'      => is_string( $trace ) && preg_match( '/^[A-Za-z0-9_-]{1,64}$/', $trace ) ? $trace : null,
+		);
+	}
+
+	/**
+	 * @param mixed    $message Meta message; anything but a string becomes JSON text.
+	 * @param string[] $secrets Values to redact.
+	 * @return string Plain, bounded text with credentials and identifiers redacted.
+	 */
+	private static function safe_message( $message, $secrets ) {
+		$text = is_string( $message ) ? $message : (string) wp_json_encode( $message );
+		foreach ( array_filter( $secrets, 'strlen' ) as $secret ) {
+			$text = str_replace( $secret, '[redacted]', $text );
+		}
+		$text = (string) preg_replace( '/fb\.1\.\d{10,16}\.[A-Za-z0-9_-]{1,128}/', '[redacted]', $text );
+		$text = (string) preg_replace( '/access_token=[^&\s"]+/i', 'access_token=[redacted]', $text );
+		$text = sanitize_text_field( $text );
+		return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, self::MESSAGE_LENGTH ) : substr( $text, 0, self::MESSAGE_LENGTH );
+	}
+
+	/**
+	 * Send an administrator-triggered test with the saved Test Events code.
+	 * PageView, InitiateCheckout and Purchase are synthetic; the calendar
+	 * test goes through the production engagement builders with the given
+	 * context, so its payload matches a real calendar activation. No outbox
+	 * row is created either way.
+	 *
+	 * @param string     $event_name PageView, InitiateCheckout, Purchase or FairEventCalendarClick.
+	 * @param array|null $engagement For the calendar test: `context` ({@see Engagement::event_context()}), `fbp` and `fbc`.
+	 * @return array {@see send_payload()} result.
+	 */
+	public function send_test( $event_name = 'PageView', $engagement = null ) {
+		$code = (string) get_option( self::TEST_CODE_OPTION, '' );
+		if ( '' === $code ) {
+			return self::result( 'configuration', false, 'missing_test_code', 'configuration' );
+		}
+		if ( self::ENGAGEMENT_EVENTS['calendar'] === $event_name ) {
+			$event = self::build_engagement_test_event( $engagement );
+			if ( ! $event ) {
+				return self::result( 'configuration', false, 'invalid_test_context', 'configuration' );
+			}
+		} else {
+			$event = self::build_test_event( $event_name );
+		}
+		$result = $this->send_payload( $event, $code );
 		self::append_test_history( $event_name, $result );
 		return $result;
+	}
+
+	/**
+	 * The calendar test payload, built exactly like a real activation — a
+	 * fresh activation ID gives it a fresh event ID.
+	 *
+	 * @param array|null $engagement `context`, `fbp` and `fbc`.
+	 * @return array|null Meta payload, or null without valid context or identifiers.
+	 */
+	public static function build_engagement_test_event( $engagement ) {
+		if ( ! is_array( $engagement ) || empty( $engagement['context'] ) ) {
+			return null;
+		}
+		$row = self::build_engagement_event( 'calendar', wp_generate_uuid4(), $engagement['context'], (string) ( $engagement['fbp'] ?? '' ), (string) ( $engagement['fbc'] ?? '' ) );
+		return $row ? self::payload_for( (object) $row ) : null;
 	}
 
 	/** @return array Up to {@see TEST_LOG_LIMIT} most recent test-send outcomes, newest first. */
 	public static function test_history() {
 		$history = get_option( self::TEST_LOG_OPTION, array() );
-		return is_array( $history ) ? $history : array();
+		return is_array( $history ) ? array_values( array_filter( $history, 'is_array' ) ) : array();
 	}
 
 	/**
 	 * Record a test-send outcome, trimmed to {@see TEST_LOG_LIMIT} entries. Only
-	 * the safe code/type {@see send_payload()} already computed are stored —
-	 * never the raw Meta response body.
+	 * the safe code/type and the allowlisted diagnostics {@see send_payload()}
+	 * already computed are stored — never the raw Meta response body.
+	 * Entries recorded before diagnostics existed simply lack those keys.
 	 *
-	 * @param string $event_name PageView, InitiateCheckout, or Purchase.
+	 * @param string $event_name Test event name.
 	 * @param array  $result send_payload() result.
 	 */
 	private static function append_test_history( $event_name, $result ) {
 		$history = self::test_history();
 		array_unshift(
 			$history,
-			array(
-				'event_name' => $event_name,
-				'accepted'   => (bool) $result['accepted'],
-				'code'       => sanitize_key( (string) $result['code'] ),
-				'type'       => sanitize_key( (string) $result['type'] ),
-				'time'       => current_time( 'mysql', true ),
+			array_merge(
+				array(
+					'event_name' => $event_name,
+					'accepted'   => (bool) $result['accepted'],
+					'outcome'    => sanitize_key( (string) $result['outcome'] ),
+					'code'       => sanitize_key( (string) $result['code'] ),
+					'type'       => sanitize_key( (string) $result['type'] ),
+					'time'       => current_time( 'mysql', true ),
+				),
+				$result['diagnostics']
 			)
 		);
 		update_option( self::TEST_LOG_OPTION, array_slice( $history, 0, self::TEST_LOG_LIMIT ), false );
