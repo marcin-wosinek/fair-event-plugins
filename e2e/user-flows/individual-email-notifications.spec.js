@@ -214,6 +214,39 @@ test.describe('Individual email notifications on a standalone site', () => {
 			'Organizer update {week_start}'
 		);
 
+		// Saved in another tab: the draft here is kept, with a warning, and
+		// the clean Telegram section is not touched.
+		await own.getByLabel('Text below the list of events').fill('Draft');
+		const otherTab = await page.context().newPage();
+		await otherTab.goto(SETTINGS_URL);
+		const otherOwn = channel(otherTab, 'Individual email');
+		await otherOwn.getByLabel('Send at').fill('06:50');
+		await otherOwn
+			.getByRole('button', { name: 'Save individual email settings' })
+			.click();
+		await expect(
+			otherOwn.getByText('Individual email settings saved.').first()
+		).toBeVisible();
+		await otherTab.close();
+		await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+		await expect(
+			own.getByText(/These settings were saved somewhere else/)
+		).toBeVisible();
+		await expect(
+			own.getByLabel('Text below the list of events')
+		).toHaveValue('Draft');
+		await expect(own.getByLabel('Send at')).toHaveValue('06:45');
+		await expect(
+			channel(page, 'Telegram').getByText('Unsaved changes')
+		).toHaveCount(0);
+		// Undoing the edit leaves a clean form with the newer saved time.
+		await own.getByLabel('Text below the list of events').fill('See you');
+		await expect(own.getByText('Unsaved changes')).toHaveCount(0);
+		await expect(own.getByLabel('Send at')).toHaveValue('06:50');
+		await expect(
+			own.getByText(/These settings were saved somewhere else/)
+		).toHaveCount(0);
+
 		const preview = own.getByRole('group', { name: 'Email preview' });
 
 		// A published and a draft event in the previewed week.
