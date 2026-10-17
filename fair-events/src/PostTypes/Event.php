@@ -301,7 +301,8 @@ class Event {
 				$post_id,
 				$event_dates->start_datetime,
 				$event_dates->end_datetime,
-				$event_dates->all_day
+				$event_dates->all_day,
+				$event_dates->get_timing()
 			);
 
 			// Copy venue from custom table.

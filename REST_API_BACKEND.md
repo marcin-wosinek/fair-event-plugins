@@ -1336,6 +1336,52 @@ fair-audience call it behind `class_exists()` guards.
 `inferred`, `unresolved` and `ticket_removed` links are flagged for review in
 the admin views.
 
+### Event timing — optional start and end times (#1819)
+
+An event date's timing is site-local dates with independently optional
+times, held by `FairEvents\Helpers\EventTiming` and stored in the
+`start_date`, `end_date`, `start_time` and `end_time` columns of
+`fair_event_dates` (DB 3.45.0). No timezone conversion applies anywhere.
+
+-   **Fields.** `start_date` / `end_date` are `Y-m-d`; a dated event always
+    has both, the same date for a single day. `start_time` / `end_time` are
+    `H:i:s` (requests may send `H:i`), each `null` when not specified.
+    `00:00:00` is genuine midnight, never "unknown". `all_day` is explicit:
+    an all-day event has no times, and a missing time does not make an event
+    all-day. Undated rows have all four `null`.
+-   **Responses.** `event-dates` single, list, `all` (summaries and their
+    `children`), `generated_occurrences`, `master` and `siblings` carry the
+    canonical fields next to the deprecated `start_datetime` /
+    `end_datetime`.
+-   **Requests.** `POST` / `PUT …/event-dates` take the canonical fields.
+    On `PUT`, an omitted field is unchanged and `null` clears a time. A
+    create without `end_date` gets the start date. Sending a time with
+    `all_day: true` is 400; `all_day: true` alone drops the times, and
+    `all_day: false` never invents any. Invalid dates or times, an end date
+    before the start date, and an end time before the start time on the
+    same day are 400 `rest_invalid_event_timing` with `data.reason`
+    (`invalid_date`, `invalid_time`, `start_date_required`,
+    `all_day_times`, `end_date_before_start`, `end_time_before_start`). A
+    missing time never takes part in the ordering check. Only `all_day`
+    values the client sent count; a route default never changes timing.
+-   **Deprecated fields.** `start_datetime` / `end_datetime` are still
+    accepted, never together with canonical fields (400
+    `rest_mixed_timing_fields`), with their old meaning: an omitted field is
+    unchanged, an empty `end_datetime` (`null` arrives as one) means no end,
+    and a timed event without an end moves its end date with its start.
+-   **Transition.** Every write through `EventDates` keeps the deprecated
+    columns in step: a missing start time is written as `00:00:00`, a
+    missing end time as no end (or `23:59:59` on a later end date). Rows are
+    read from the canonical columns once `timing_migrated` is set, so those
+    substitutes are never read back as times. Consumers still on the
+    deprecated fields see them until they move. Until recurrence and
+    copying carry optional times, a timing the deprecated fields cannot
+    hold without a substitute (`EventTiming::fits_legacy()` — a missing
+    start time, or no end time on a multi-day event) is refused on a series
+    (rule, hand-picked dates or one of its dates) with 400
+    `rest_series_times_required`, and such an event cannot be copied. A
+    start time without an end stays allowed on both, as before.
+
 ### Event schedule and booking status
 
 `GET` / `PUT fair-events/v1/event-dates/{id}/schedule` (`edit_posts`) read and
