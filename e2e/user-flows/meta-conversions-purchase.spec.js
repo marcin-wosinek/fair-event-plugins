@@ -163,6 +163,15 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 		);
 		expect(checkoutRequest).toBeTruthy();
 		expect(checkoutRequest).not.toHaveProperty('test_event_code');
+
+		// Both events identify the purchased event and occurrence (#1941).
+		for (const request of [purchaseRequest, checkoutRequest]) {
+			const custom = request.data[0].custom_data;
+			expect(custom.content_ids).toEqual([String(event.eventId)]);
+			expect(custom.content_name).toBeTruthy();
+			expect(custom.event_date_id).toBe(event.eventDateId);
+			expect(custom.event_start_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+		}
 	});
 
 	test('a failed payment does not register a Purchase event', async ({
