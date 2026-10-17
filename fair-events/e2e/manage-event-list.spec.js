@@ -6,7 +6,9 @@
  * and extras, with and without Fair Audience, and the export has one entry
  * per ticket with the purchase total given once (#1708). Deleting a
  * registration happens only on the List tab; the Audience tab offers no
- * Delete action (#1710).
+ * Delete action (#1710). "Summary" copies the ticket and add-on counts of
+ * every confirmed ticket, whatever the mailing filter shows, and explains a
+ * refused clipboard (#1839).
  */
 
 import { readFile } from 'node:fs/promises';
@@ -419,6 +421,82 @@ test.describe( 'Manage Event — List tab', () => {
 		await expect(
 			adminPage.getByRole( 'button', { name: 'Export' } )
 		).toBeDisabled();
+	} );
+
+	test( 'copies a summary of ticket and add-on counts', async ( {
+		browser,
+	} ) => {
+		const context = await browser.newContext( {
+			permissions: [ 'clipboard-read', 'clipboard-write' ],
+		} );
+		const page = await context.newPage();
+		try {
+			await login( page );
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=list`
+			);
+			const list = page.locator( '.fair-events-signups' );
+			const summary = list.getByRole( 'button', {
+				name: 'Summary',
+				exact: true,
+			} );
+
+			// The summary counts every confirmed ticket, even those the
+			// mailing filter hides.
+			await list
+				.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+				.check();
+			await expect(
+				list.getByText(
+					'Nothing to export — no registrations match the current filter.'
+				)
+			).toBeVisible();
+			await expect( summary ).toBeEnabled();
+			await summary.click();
+			await expect(
+				list.getByText( 'Summary copied to clipboard.' )
+			).toBeVisible();
+			const copied = await page.evaluate( () =>
+				window.navigator.clipboard.readText()
+			);
+			expect( copied ).toBe(
+				[
+					'Total tickets: 4',
+					'',
+					'Ticket types:',
+					`- ${ signup.ticketType }: 4`,
+					'',
+					'Add-ons:',
+					`- ${ signup.selectedExtra }: 3`,
+					`- ${ signup.otherExtra }: 1`,
+				].join( '\n' )
+			);
+			expect( copied ).not.toContain( signup.name );
+			expect( copied ).not.toContain( group.email );
+
+			// A refused clipboard is explained, not reported as copied.
+			await page.evaluate( () => {
+				Object.defineProperty(
+					window.navigator.clipboard,
+					'writeText',
+					{
+						value: () =>
+							Promise.reject( new Error( 'NotAllowedError' ) ),
+					}
+				);
+			} );
+			await summary.click();
+			await expect(
+				list.getByText(
+					'Could not copy the summary. Allow this site to use the clipboard and try again.'
+				)
+			).toBeVisible();
+			await expect(
+				list.getByText( 'Summary copied to clipboard.' )
+			).toHaveCount( 0 );
+		} finally {
+			await context.close();
+		}
 	} );
 
 	test( 'deletes a registration from the List tab, not the Audience tab', async () => {

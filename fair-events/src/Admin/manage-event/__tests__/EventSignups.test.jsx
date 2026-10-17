@@ -20,6 +20,7 @@
  *     and the over-capacity details (#1532).
  *   - "Print list" prints the complete, unfiltered List in its own window
  *     (#1842).
+ *   - "Summary" copies ticket counts of the complete List (#1839).
  */
 import '@testing-library/jest-dom';
 import {
@@ -134,6 +135,9 @@ const options = [
  * @param {Object} config
  * @param {Array}  config.rows         get-tickets response.
  * @param {Array}  config.ticketOptions Options in the tickets response.
+ * @param {Array}  config.ticketTypes  Ticket types in the tickets response.
+ * @param {*}      config.ticketConfig Tickets response, or an Error to reject,
+ *                                     replacing the two above.
  * @param {*}      config.participants Audience roster, or an Error to reject.
  * @param {*}      config.deleteResult DELETE response, or an Error to reject.
  * @param {Object} config.targets      Targets endpoint response.
@@ -142,6 +146,8 @@ const options = [
 function mockApi( {
 	rows = signups,
 	ticketOptions = [],
+	ticketTypes = [],
+	ticketConfig = { options: ticketOptions, ticket_types: ticketTypes },
 	participants = [],
 	deleteResult = { deleted: true },
 	targets = { event_dates: [], ticket_types: [] },
@@ -172,7 +178,9 @@ function mockApi( {
 			return Promise.resolve( rows );
 		}
 		if ( path.endsWith( '/tickets' ) ) {
-			return Promise.resolve( { options: ticketOptions } );
+			return ticketConfig instanceof Error
+				? Promise.reject( ticketConfig )
+				: Promise.resolve( ticketConfig );
 		}
 		if ( path.startsWith( '/fair-audience/' ) ) {
 			return participants instanceof Error
@@ -2364,5 +2372,285 @@ describe( 'EventSignups — test-payment tickets (#1866)', () => {
 				).toBe( 'Test payment' );
 			} );
 		} );
+	} );
+} );
+
+describe( 'EventSignups — Summary (#1839)', () => {
+	const ticketTypes = [
+		{ id: 3, name: 'General' },
+		{ id: 4, name: 'VIP' },
+	];
+	const livePurchase = {
+		...signups[ 1 ],
+		is_test_payment: false,
+		mailing_opt_in: false,
+		tickets: [
+			ticket( 201, 1, { confirmed_activity_ids: [ 7 ] } ),
+			ticket( 202, 2, { confirmed_activity_ids: [ 7, 8 ] } ),
+		],
+	};
+	const optedInPurchase = {
+		...signups[ 0 ],
+		is_test_payment: false,
+		mailing_opt_in: true,
+	};
+	const testPurchase = {
+		...signups[ 0 ],
+		id: 5,
+		name: 'Tess Tester',
+		is_test_payment: true,
+		tickets: [
+			ticket( 501, 1, {
+				ticket_type_id: 4,
+				ticket_type_name: 'VIP',
+				confirmed_activity_ids: [ 8 ],
+			} ),
+		],
+	};
+	const excluded = unsuccessfulSignups.map( ( row ) => ( {
+		...row,
+		is_test_payment: false,
+	} ) );
+
+	let writeText;
+
+	beforeEach( () => {
+		writeText = jest.fn().mockResolvedValue( undefined );
+		Object.defineProperty( window.navigator, 'clipboard', {
+			value: { writeText },
+			configurable: true,
+		} );
+	} );
+
+	afterEach( () => {
+		delete window.navigator.clipboard;
+	} );
+
+	// Feedback is also spoken through a live region outside the List.
+	const inList = () =>
+		within( document.querySelector( '.fair-events-signups' ) );
+
+	const summaryButton = () =>
+		screen.getByRole( 'button', { name: /^Summary/ } );
+
+	it( 'copies the counts of every confirmed ticket, whatever the mailing filter shows', async () => {
+		await renderSignups( {
+			rows: [ optedInPurchase, livePurchase, testPurchase, ...excluded ],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			await inList().findByText( 'Summary copied to clipboard.' )
+		).toBeInTheDocument();
+		expect( writeText ).toHaveBeenCalledWith(
+			[
+				'Total tickets: 3',
+				'',
+				'Ticket types:',
+				'- General: 3',
+				'- VIP: 0',
+				'',
+				'Add-ons:',
+				'- Dinner: 2',
+				'- Afterparty: 1',
+				'',
+				'Test payments — excluded from operational totals',
+				'',
+				'Total tickets: 1',
+				'',
+				'Ticket types:',
+				'- General: 0',
+				'- VIP: 1',
+				'',
+				'Add-ons:',
+				'- Dinner: 0',
+				'- Afterparty: 1',
+			].join( '\n' )
+		);
+	} );
+
+	it( 'copies zero counts for an event without confirmed tickets', async () => {
+		await renderSignups( {
+			rows: excluded,
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		await inList().findByText( 'Summary copied to clipboard.' );
+		expect( writeText.mock.calls[ 0 ][ 0 ] ).toBe(
+			[
+				'Total tickets: 0',
+				'',
+				'Ticket types:',
+				'- General: 0',
+				'- VIP: 0',
+				'',
+				'Add-ons:',
+				'- Dinner: 0',
+				'- Afterparty: 0',
+			].join( '\n' )
+		);
+	} );
+
+	it( 'reads the ticket configuration of the series a date belongs to', async () => {
+		mockApi( {
+			rows: [ livePurchase ],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		render( <EventSignups eventDateId={ 42 } configEventDateId={ 40 } /> );
+		await screen.findAllByText( livePurchase.name );
+
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/event-dates/40/tickets',
+		} );
+		expect( apiFetch ).not.toHaveBeenCalledWith( {
+			path: '/fair-events/v1/event-dates/42/tickets',
+		} );
+	} );
+
+	it( 'explains a rejected clipboard', async () => {
+		writeText.mockRejectedValue( new Error( 'NotAllowedError' ) );
+		await renderSignups( {
+			rows: [ livePurchase ],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			await inList().findByText(
+				'Could not copy the summary. Allow this site to use the clipboard and try again.'
+			)
+		).toBeInTheDocument();
+		expect(
+			inList().queryByText( 'Summary copied to clipboard.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'explains a browser without clipboard access', async () => {
+		delete window.navigator.clipboard;
+		await renderSignups( {
+			rows: [ livePurchase ],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			inList().getByText(
+				'Could not copy the summary. Allow this site to use the clipboard and try again.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'copies nothing while registrations are still being split into tickets', async () => {
+		await renderSignups( {
+			rows: [
+				livePurchase,
+				{ ...optedInPurchase, id: 9, name: 'Legacy Row', tickets: [] },
+			],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			inList().getByText( /^The summary is unavailable while some older/ )
+		).toBeInTheDocument();
+		expect( writeText ).not.toHaveBeenCalled();
+	} );
+
+	it( 'copies nothing while a purchase’s payment mode is unknown', async () => {
+		await renderSignups( {
+			rows: [ { ...livePurchase, is_test_payment: null } ],
+			ticketOptions: options,
+			ticketTypes,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			inList().getByText(
+				'The summary is unavailable because it could not be determined whether some purchases were test payments.'
+			)
+		).toBeInTheDocument();
+		expect( writeText ).not.toHaveBeenCalled();
+	} );
+
+	it( 'copies nothing when the ticket configuration fails to load', async () => {
+		await renderSignups( {
+			rows: [ livePurchase ],
+			ticketConfig: new Error( 'Server error' ),
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+
+		fireEvent.click( summaryButton() );
+
+		expect(
+			inList().getByText(
+				/^The summary is unavailable because the ticket types and add-ons/
+			)
+		).toBeInTheDocument();
+		expect( writeText ).not.toHaveBeenCalled();
+	} );
+
+	it( 'waits for the ticket configuration and ignores a late response for another date', async () => {
+		const pending = {};
+		apiFetch.mockImplementation( ( { path } ) => {
+			if ( path.startsWith( '/fair-events/v1/get-tickets' ) ) {
+				return Promise.resolve( [ livePurchase ] );
+			}
+			return new Promise( ( resolve ) => {
+				pending[ path ] = resolve;
+			} );
+		} );
+		const { rerender } = render(
+			<EventSignups eventDateId={ 42 } configEventDateId={ 40 } />
+		);
+		await screen.findAllByText( livePurchase.name );
+		expect( summaryButton() ).toHaveAttribute( 'aria-disabled', 'true' );
+
+		rerender(
+			<EventSignups eventDateId={ 42 } configEventDateId={ 41 } />
+		);
+		await waitFor( () =>
+			expect(
+				pending[ '/fair-events/v1/event-dates/41/tickets' ]
+			).toBeDefined()
+		);
+		pending[ '/fair-events/v1/event-dates/41/tickets' ]( {
+			ticket_types: [ { id: 3, name: 'Current type' } ],
+			options,
+		} );
+		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
+		pending[ '/fair-events/v1/event-dates/40/tickets' ]( {
+			ticket_types: [ { id: 3, name: 'Stale type' } ],
+			options,
+		} );
+
+		fireEvent.click( summaryButton() );
+
+		await inList().findByText( 'Summary copied to clipboard.' );
+		expect( writeText.mock.calls[ 0 ][ 0 ] ).toContain(
+			'- Current type: 2'
+		);
 	} );
 } );
