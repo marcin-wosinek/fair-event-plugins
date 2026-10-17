@@ -961,3 +961,47 @@ if ( ! function_exists( 'get_posts' ) ) {
 		return array();
 	}
 }
+
+if ( ! function_exists( 'wp_list_pluck' ) ) {
+	/**
+	 * Stub of WordPress wp_list_pluck() for objects and arrays.
+	 *
+	 * @param array  $input_list List of objects or arrays.
+	 * @param string $field      Field to pluck.
+	 * @return array Plucked values, keys preserved.
+	 */
+	function wp_list_pluck( $input_list, $field ) {
+		$values = array();
+		foreach ( $input_list as $key => $item ) {
+			$values[ $key ] = is_object( $item ) ? $item->$field : $item[ $field ];
+		}
+		return $values;
+	}
+}
+
+if ( ! function_exists( 'get_the_terms' ) ) {
+	/**
+	 * Stub of WordPress get_the_terms() backed by
+	 * $GLOBALS['_fair_test_post_terms'][ $post_id ][ $taxonomy ] (term IDs),
+	 * recording each lookup in $GLOBALS['_fair_test_get_the_terms_calls'].
+	 *
+	 * @param int    $post_id  Post ID.
+	 * @param string $taxonomy Taxonomy.
+	 * @return object[]|false Term objects, or false when the post has none.
+	 */
+	function get_the_terms( $post_id, $taxonomy ) {
+		$GLOBALS['_fair_test_get_the_terms_calls'][] = (int) $post_id;
+
+		$term_ids = $GLOBALS['_fair_test_post_terms'][ (int) $post_id ][ $taxonomy ] ?? array();
+		if ( empty( $term_ids ) ) {
+			return false;
+		}
+
+		return array_map(
+			static function ( $term_id ) {
+				return (object) array( 'term_id' => $term_id );
+			},
+			$term_ids
+		);
+	}
+}

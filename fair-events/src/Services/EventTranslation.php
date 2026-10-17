@@ -74,6 +74,8 @@ class EventTranslation {
 			return $occurrences;
 		}
 
+		self::prime_translated_posts( $occurrences, $language );
+
 		return array_map(
 			static function ( $occurrence ) use ( $language ) {
 				return self::translate_occurrence( $occurrence, $language );
@@ -90,16 +92,7 @@ class EventTranslation {
 	 * @return array Occurrence DTO, translated if applicable.
 	 */
 	private static function translate_occurrence( array $occurrence, $language ) {
-		if ( 'post' !== $occurrence['source'] || empty( $occurrence['event_id'] ) ) {
-			return $occurrence;
-		}
-
-		// A post-linked event date can still route its title/url elsewhere
-		// (an admin-configured external URL, or a different junction-linked
-		// post) via link_type; only a plain 'post' link means title/url
-		// genuinely came from $event_id's own post, which is the only case
-		// this service knows how to swap for a translation.
-		if ( 'post' !== ( $occurrence['link_type'] ?? null ) ) {
+		if ( ! self::is_translatable( $occurrence ) ) {
 			return $occurrence;
 		}
 
@@ -124,6 +117,52 @@ class EventTranslation {
 		$occurrence['url']   = $url;
 
 		return $occurrence;
+	}
+
+	/**
+	 * Whether an occurrence's title/url come from its event's own post, the
+	 * only case this service knows how to swap for a translation.
+	 *
+	 * @param array $occurrence Occurrence DTO.
+	 * @return bool
+	 */
+	private static function is_translatable( array $occurrence ) {
+		if ( 'post' !== $occurrence['source'] || empty( $occurrence['event_id'] ) ) {
+			return false;
+		}
+
+		// A post-linked event date can still route its title/url elsewhere
+		// (an admin-configured external URL, or a different junction-linked
+		// post) via link_type; only a plain 'post' link means title/url
+		// genuinely came from $event_id's own post.
+		return 'post' === ( $occurrence['link_type'] ?? null );
+	}
+
+	/**
+	 * Load the translated posts of all translatable occurrences with one
+	 * query, so resolving each distinct event's title and permalink reads
+	 * cached posts instead of querying per event.
+	 *
+	 * @param array  $occurrences Occurrence DTOs.
+	 * @param string $language    Polylang language slug.
+	 * @return void
+	 */
+	private static function prime_translated_posts( array $occurrences, $language ) {
+		if ( ! function_exists( '_prime_post_caches' ) ) {
+			return;
+		}
+
+		$translated_ids = array();
+		foreach ( $occurrences as $occurrence ) {
+			if ( self::is_translatable( $occurrence ) ) {
+				$translated_ids[] = self::resolve_translated_id( (int) $occurrence['event_id'], $language );
+			}
+		}
+
+		$translated_ids = array_values( array_unique( array_filter( $translated_ids ) ) );
+		if ( ! empty( $translated_ids ) ) {
+			_prime_post_caches( $translated_ids, true, false );
+		}
 	}
 
 	/**

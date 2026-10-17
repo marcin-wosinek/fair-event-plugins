@@ -18,6 +18,7 @@ use FairEvents\Helpers\EventsListSeries;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
+use FairEvents\Models\Venue;
 use FairEvents\Settings\Settings;
 
 defined( 'WPINC' ) || die;
@@ -205,6 +206,7 @@ class EventFeedProvider {
 	 */
 	private function get_local_stream( $start, $end, $category_ids, $include_drafts, $include_all_statuses ) {
 		$rows               = EventDates::get_for_date_range( $start, $end, $include_all_statuses );
+		$related            = $this->load_related( $rows );
 		$enabled_post_types = Settings::get_enabled_post_types();
 		$site_host          = wp_parse_url( get_site_url(), PHP_URL_HOST );
 
@@ -221,10 +223,11 @@ class EventFeedProvider {
 					$include_drafts,
 					$include_all_statuses,
 					$category_ids,
-					$site_host
+					$site_host,
+					$related
 				);
 			} else {
-				$occurrence = $this->format_standalone_occurrence( $row, $category_ids, $site_host );
+				$occurrence = $this->format_standalone_occurrence( $row, $category_ids, $site_host, $related );
 			}
 
 			if ( null !== $occurrence ) {
@@ -233,6 +236,47 @@ class EventFeedProvider {
 		}
 
 		return $occurrences;
+	}
+
+	/**
+	 * Load what the formatters read for each row — linked posts with their
+	 * terms and meta, category selections, venues — for the whole range at
+	 * once, so the number of queries doesn't grow with the occurrences.
+	 *
+	 * Scoped to this call: the custom-table data is returned, not cached;
+	 * posts, terms and meta go to WordPress's own object cache.
+	 *
+	 * @param EventDates[] $rows Event date rows in the range.
+	 * @return array{category_ids: array<int, int[]>, venues: array<int, Venue|null>}
+	 */
+	private function load_related( array $rows ) {
+		EventDates::preload_linked_post_ids( $rows );
+
+		$post_ids  = array();
+		$venue_ids = array();
+		foreach ( $rows as $row ) {
+			$post_ids[]  = $row->get_resolved_event_id();
+			$post_ids[]  = $row->get_primary_linked_post_id();
+			$venue_ids[] = $row->venue_id;
+		}
+
+		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
+		if ( ! empty( $post_ids ) ) {
+			_prime_post_caches( $post_ids, true, true );
+		}
+
+		// Needs the post term cache primed above for the legacy fallback.
+		$category_ids = EventDates::get_category_ids_for_rows( $rows );
+
+		$term_ids = array_unique( array_merge( array(), ...array_values( $category_ids ) ) );
+		if ( ! empty( $term_ids ) ) {
+			_prime_term_caches( $term_ids, false );
+		}
+
+		return array(
+			'category_ids' => $category_ids,
+			'venues'       => Venue::get_by_ids( $venue_ids ),
+		);
 	}
 
 	/**
@@ -245,9 +289,10 @@ class EventFeedProvider {
 	 * @param bool       $include_all_statuses  Include posts of any status.
 	 * @param int[]      $category_ids          Category term IDs to filter by.
 	 * @param string     $site_host             Host for uid construction.
+	 * @param array      $related               Bulk-loaded data, see load_related().
 	 * @return array|null Occurrence DTO, or null if filtered out.
 	 */
-	private function format_post_occurrence( EventDates $row, $event_id, $enabled_post_types, $include_drafts, $include_all_statuses, $category_ids, $site_host ) {
+	private function format_post_occurrence( EventDates $row, $event_id, $enabled_post_types, $include_drafts, $include_all_statuses, $category_ids, $site_host, $related ) {
 		$post = get_post( $event_id );
 
 		if ( ! $post || ! in_array( $post->post_type, $enabled_post_types, true ) ) {
@@ -260,11 +305,9 @@ class EventFeedProvider {
 			return null;
 		}
 
-		$post_category_ids = wp_get_post_terms( $event_id, 'category', array( 'fields' => 'ids' ) );
-		if ( is_wp_error( $post_category_ids ) ) {
-			$post_category_ids = array();
-		}
-		$selected_category_ids = EventDates::get_category_ids( $row->id );
+		$post_terms            = get_the_terms( $event_id, 'category' );
+		$post_category_ids     = is_array( $post_terms ) ? wp_list_pluck( $post_terms, 'term_id' ) : array();
+		$selected_category_ids = $related['category_ids'][ $row->id ] ?? array();
 
 		if ( ! empty( $category_ids ) && empty( array_intersect( $selected_category_ids, $category_ids ) ) ) {
 			return null;
@@ -294,7 +337,7 @@ class EventFeedProvider {
 			'link_type'       => $row->link_type,
 			'is_draft'        => $is_draft || $row->is_event_draft(),
 			'source_color'    => null,
-			'location'        => EventLocation::resolve( $row, $event_id ),
+			'location'        => EventLocation::resolve( $row, $event_id, $related['venues'] ),
 		);
 	}
 
@@ -304,10 +347,11 @@ class EventFeedProvider {
 	 * @param EventDates $row          Event date row.
 	 * @param int[]      $category_ids Category term IDs to filter by.
 	 * @param string     $site_host    Host for uid construction.
+	 * @param array      $related      Bulk-loaded data, see load_related().
 	 * @return array|null Occurrence DTO, or null if filtered out.
 	 */
-	private function format_standalone_occurrence( EventDates $row, $category_ids, $site_host ) {
-		$row_category_ids = EventDates::get_category_ids( $row->id );
+	private function format_standalone_occurrence( EventDates $row, $category_ids, $site_host, $related ) {
+		$row_category_ids = $related['category_ids'][ $row->id ] ?? array();
 
 		if ( ! empty( $category_ids ) && empty( array_intersect( $row_category_ids, $category_ids ) ) ) {
 			return null;
@@ -331,7 +375,7 @@ class EventFeedProvider {
 			'attendance_mode' => $row->attendance_mode,
 			'is_draft'        => $row->is_event_draft(),
 			'source_color'    => null,
-			'location'        => EventLocation::resolve( $row, null ),
+			'location'        => EventLocation::resolve( $row, null, $related['venues'] ),
 		);
 	}
 
