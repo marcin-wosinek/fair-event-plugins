@@ -22,7 +22,24 @@ Fair Events Experimental is a companion requiring Fair Events. Core Fair Events 
 
 Sources and group rules have feature toggles enabled by default. Meta conversions are opt-in. Visitor proposal submission has an API, but the public form is currently unavailable. Scheduled event mailings are supplied by Fair Audience Experimental.
 
-When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, and transaction identifier to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
+When the optional Meta Conversions feature is enabled, the plugin processes consented Meta browser identifiers (`_fbp` and `_fbc`), the checkout source URL, purchase value, currency, transaction identifier, and the purchased event's title, identifier, occurrence and start date to report checkout and completed-purchase measurements to Meta Platforms, Inc. Delivery is asynchronous. Identifiers are cleared after delivery reaches a terminal result, and all delivery rows are deleted after 90 days. The feature requires marketing consent and administrator-supplied Meta credentials; its external service terms and privacy policy apply.
+
+= Event details in checkout and purchase events =
+
+`InitiateCheckout` and `Purchase` keep Meta's standard event names and their value, currency, order ID and `payment_mode`. They also identify the event that was bought:
+
+* `content_name` — the event's title, as plain text.
+* `content_ids` — a one-item list with the event's stable identifier: the WordPress post ID of the event page (for example `["123"]`), or `event-date:<id>` for an event without a page, where `<id>` is the event date ID of the single date or of the series' first date.
+* `event_date_id` — the event date ID of the purchased occurrence, so sessions of the same event can be told apart.
+* `event_start_date` — that occurrence's start date as `YYYY-MM-DD`, in the site's own timezone.
+
+The event comes from the purchase's registrations, never from the page address. When one checkout pays for several occurrences of a series, only the earliest-starting registered occurrence is reported; the other occurrences are not sent and there is still one event per checkout. No attendee details are added.
+
+The details are recorded when each event is queued, so later edits to the event do not change an event waiting to be sent. Any detail that cannot be found (a deleted event, a missing title or date) is left out on its own, and the event is still sent. Events queued before this version are sent without event details.
+
+To inspect the parameters, save the Test Events code and use the "Send InitiateCheckout test" or "Send Purchase test" button in Fair Events → Settings → Experimental, then open the event in Events Manager → Test events. These samples use fixed, clearly fake details (`content_name` "Fair Events test event", `content_ids` `["fair-events-test-event"]`, `event_date_id` `0`, `event_start_date` `2000-01-01`), never a real event or order. Routine checkouts and purchases are sent without the Test Events code, so they do not appear there.
+
+Meta receiving these parameters does not by itself create a breakdown by event in its reports. To group results by event or occurrence, set up custom conversions or reporting rules on these parameters in Meta.
 
 = Meta button-click events =
 

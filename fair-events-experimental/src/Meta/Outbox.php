@@ -14,7 +14,7 @@ defined( 'WPINC' ) || die;
 /** Stores and claims conversion delivery work. */
 class Outbox {
 	public const TABLE_SUFFIX = 'fair_events_meta_outbox';
-	public const DB_VERSION   = '3';
+	public const DB_VERSION   = '4';
 
 	/** @return string */
 	public static function table_name() {
@@ -32,6 +32,10 @@ class Outbox {
 	 * and `delivery_event` keeps each Meta event ID unique instead. dbDelta
 	 * does not change a column's nullability, so the upgrade relaxes
 	 * `transaction_id` explicitly.
+	 *
+	 * `event_context` (version 4) holds the JSON snapshot of a checkout or
+	 * purchase's event context; rows queued earlier keep NULL and are
+	 * delivered without it.
 	 */
 	public static function install() {
 		global $wpdb;
@@ -54,6 +58,7 @@ class Outbox {
 				payment_mode varchar(4) NOT NULL DEFAULT 'live',
 				fbp varchar(180) DEFAULT NULL,
 				fbc varchar(180) DEFAULT NULL,
+				event_context text DEFAULT NULL,
 				state varchar(32) NOT NULL DEFAULT 'pending',
 				attempt_count smallint(5) unsigned NOT NULL DEFAULT 0,
 				next_attempt_at datetime NOT NULL,
@@ -78,7 +83,8 @@ class Outbox {
 
 	/**
 	 * Queue an event once. Engagement events omit `transaction_id` and carry
-	 * `event_post_id`/`event_date_id`; a zero or missing ID is stored as NULL.
+	 * `event_post_id`/`event_date_id`; a zero or missing ID is stored as NULL,
+	 * and so is a missing or empty `event_context`.
 	 *
 	 * @param array $event Event data. @return bool Whether a new row was queued.
 	 */
@@ -87,7 +93,7 @@ class Outbox {
 		$now    = current_time( 'mysql', true );
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO %i (transaction_id,event_post_id,event_date_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,state,next_attempt_at,created_at,updated_at) VALUES (NULLIF(%d,0),NULLIF(%d,0),NULLIF(%d,0),%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+				"INSERT IGNORE INTO %i (transaction_id,event_post_id,event_date_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,event_context,state,next_attempt_at,created_at,updated_at) VALUES (NULLIF(%d,0),NULLIF(%d,0),NULLIF(%d,0),%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,NULLIF(%s,''),%s,%s,%s,%s)",
 				self::table_name(),
 				$event['transaction_id'] ?? 0,
 				$event['event_post_id'] ?? 0,
@@ -102,6 +108,7 @@ class Outbox {
 				$event['payment_mode'],
 				$event['fbp'],
 				$event['fbc'],
+				$event['event_context'] ?? '',
 				'pending',
 				$now,
 				$now,
