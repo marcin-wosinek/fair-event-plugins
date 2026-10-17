@@ -16,6 +16,14 @@
  * tickets with a "Test payment" warning each, leave the live ticket
  * unmarked and the unfinished purchase out, and switching the integration to
  * live mode does not change that.
+ *
+ * Summary with test purchases (#1839): one event holds confirmed live and
+ * free registrations, a confirmed two-ticket test purchase with add-ons, and
+ * pending, failed, expired and cancelled purchases. The copied summary counts
+ * the live and free tickets as operational totals and the test tickets in
+ * their own section, ignores the unsuccessful purchases, and stays the same
+ * in either integration mode, while the List and its printout keep their
+ * test-payment warnings.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -410,5 +418,205 @@ test.describe('Print the List of an event date', () => {
 		} finally {
 			await setMode('test');
 		}
+	});
+
+	test.describe('with clipboard access', () => {
+		test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
+		test('summarises live and free tickets apart from test purchases, whatever the integration mode', async ({
+			page,
+			request,
+			playwright,
+			baseURL,
+			seedEvent,
+		}) => {
+			const event = seedEvent('paid-with-options', {
+				block: 'get-tickets',
+				options: ['Yoga', 'Tai Chi'],
+			});
+			const [yoga, taiChi] = event.optionIds;
+			const stamp = Date.now();
+			const emailOf = (key) => `summary-${key}-${stamp}@example.test`;
+
+			const buy = async (name, key, ticketActivities) => {
+				const visitor = await playwright.request.newContext({
+					baseURL,
+				});
+				const response = await visitor.post(
+					'/wp-json/fair-events/v1/get-tickets',
+					{
+						data: {
+							event_date_id: event.eventDateId,
+							ticket_type_id: event.ticketTypeId,
+							name,
+							email: emailOf(key),
+							quantity: ticketActivities.length,
+							ticket_activities: ticketActivities,
+							_honeypot: '',
+						},
+					}
+				);
+				expect(response.ok(), await response.text()).toBeTruthy();
+				await visitor.dispose();
+			};
+			await buy('Tess Tester', 'test', [[yoga], [yoga, taiChi]]);
+			await buy('Liv Live', 'live', [[taiChi]]);
+			await buy('Fran Free', 'free', [[yoga]]);
+			for (const status of [
+				'pending',
+				'failed',
+				'expired',
+				'cancelled',
+			]) {
+				await buy(`Unsuccessful ${status}`, status, [[yoga, taiChi]]);
+			}
+
+			const signupOf = (key) =>
+				runScript(
+					'get-tickets-state.php',
+					'E2E_GT_STATE',
+					String(event.eventDateId)
+				).signups.find((signup) => signup.email === emailOf(key));
+			const setSignupTransaction = async (key, transactionId, status) => {
+				const response = await request.post(
+					'/wp-json/fair-e2e/v1/signup-transaction',
+					{
+						headers: adminHeaders,
+						data: {
+							signup_id: signupOf(key).id,
+							transaction_id: transactionId,
+							status,
+						},
+					}
+				);
+				expect(response.ok()).toBeTruthy();
+			};
+
+			// Tess pays through the Mollie double in test mode.
+			const webhook = await request.post(
+				'/wp-json/fair-payments-connector/v1/webhook',
+				{ form: { id: signupOf('test').mollie_payment_id } }
+			);
+			expect(webhook.ok()).toBe(true);
+			expect(signupOf('test')).toMatchObject({
+				status: 'confirmed',
+				transaction_testmode: true,
+			});
+
+			// Liv's payment was recorded live.
+			const transaction = await request.post(
+				'/wp-json/fair-e2e/v1/test-transactions',
+				{
+					headers: adminHeaders,
+					data: {
+						event_date_id: event.eventDateId,
+						amount: event.price,
+						status: 'paid',
+						testmode: false,
+					},
+				}
+			);
+			expect(transaction.ok()).toBeTruthy();
+			await setSignupTransaction(
+				'live',
+				(await transaction.json()).id,
+				'confirmed'
+			);
+
+			// Fran's registration is confirmed without any payment, as a free
+			// one is.
+			await setSignupTransaction('free', 0, 'confirmed');
+
+			for (const status of ['failed', 'expired', 'cancelled']) {
+				await setSignupTransaction(
+					status,
+					signupOf(status).transaction_id || 0,
+					status
+				);
+			}
+			expect(signupOf('pending').status).toBe('pending_payment');
+
+			const setMode = async (mode) => {
+				const response = await request.post(
+					'/wp-json/fair-e2e/v1/payment-mode',
+					{ headers: adminHeaders, data: { mode } }
+				);
+				expect(response.ok()).toBeTruthy();
+			};
+
+			await loginAsAdmin(page);
+			const listUrl = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${event.eventDateId}&tab=list`;
+			const list = page.locator('.fair-events-signups');
+			const listRows = page.locator('tr.fair-events-signups__ticket');
+			const summary = list.getByRole('button', {
+				name: 'Summary',
+				exact: true,
+			});
+
+			const expectedSummary = [
+				'Total tickets: 2',
+				'',
+				'Ticket types:',
+				'- General Admission: 2',
+				'',
+				'Add-ons:',
+				'- Yoga: 1',
+				'- Tai Chi: 1',
+				'',
+				'Test payments — excluded from operational totals',
+				'',
+				'Total tickets: 2',
+				'',
+				'Ticket types:',
+				'- General Admission: 2',
+				'',
+				'Add-ons:',
+				'- Yoga: 2',
+				'- Tai Chi: 1',
+			].join('\n');
+
+			try {
+				for (const mode of ['test', 'live']) {
+					await setMode(mode);
+					await page.goto(listUrl);
+
+					// The List keeps the test warnings of #1866.
+					await expect(listRows).toHaveCount(4);
+					await expect(
+						listRows.locator('.fair-events-signups__test-payment')
+					).toHaveCount(2);
+					await expect(
+						listRows.filter({ hasText: 'Unsuccessful' })
+					).toHaveCount(0);
+
+					await expect(summary).toBeEnabled();
+					await summary.click();
+					await expect(
+						list.getByText('Summary copied to clipboard.')
+					).toBeVisible();
+					expect(
+						await page.evaluate(() =>
+							window.navigator.clipboard.readText()
+						)
+					).toBe(expectedSummary);
+				}
+
+				// So does its printout.
+				const [popup] = await Promise.all([
+					page.waitForEvent('popup'),
+					page.getByRole('button', { name: 'Print list' }).click(),
+				]);
+				await expect(popup.locator('tbody .test-warning')).toHaveText([
+					'Test payment',
+					'Test payment',
+				]);
+				await expect(popup.locator('body')).not.toContainText(
+					'Unsuccessful'
+				);
+				await popup.close();
+			} finally {
+				await setMode('test');
+			}
+		});
 	});
 });

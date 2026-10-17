@@ -973,6 +973,13 @@ export default function ManageEventApp() {
 			render: () => (
 				<EventSignups
 					eventDateId={ eventDateId }
+					// A date of a series sells the series' ticket types and
+					// extras.
+					configEventDateId={
+						isGeneratedOccurrence && eventDate.master_id
+							? eventDate.master_id
+							: eventDateId
+					}
 					eventTitle={ getEventDisplayTitle( title ) }
 					eventDateLabel={
 						eventDate?.start_datetime

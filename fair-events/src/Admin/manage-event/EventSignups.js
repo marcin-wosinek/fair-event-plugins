@@ -28,6 +28,11 @@ import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
 import { buildSignupPrintHtml, openPrintWindow } from './signup-print.js';
 import {
+	buildSignupSummary,
+	formatSignupSummary,
+	signupSummaryErrorMessage,
+} from './signup-summary.js';
+import {
 	TicketEditModal,
 	ticketReferenceLabel,
 	getEventDisplayTitle,
@@ -658,14 +663,33 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 	} );
 }
 
+/**
+ * @param {Object} props
+ * @param {number} props.eventDateId       Date the List is showing.
+ * @param {number} props.configEventDateId Date holding the ticket types and
+ *                                         extras: the series for one of its
+ *                                         dates, otherwise the date itself.
+ * @param {string} props.eventTitle        Event title, for the printout.
+ * @param {string} props.eventDateLabel    Event date, for the printout.
+ * @return {Element} List
+ */
 export default function EventSignups( {
 	eventDateId,
+	configEventDateId = eventDateId,
 	eventTitle = '',
 	eventDateLabel = '',
 } ) {
 	const audienceActive = !! window.fairEventsManageEventData?.audienceUrl;
 	const [ signups, setSignups ] = useState( [] );
-	const [ ticketOptions, setTicketOptions ] = useState( [] );
+	// Ticket types and extras of the date; `status` is 'loading', 'ready' or
+	// 'error'.
+	const [ ticketConfig, setTicketConfig ] = useState( {
+		status: 'loading',
+		ticketTypes: [],
+		options: [],
+	} );
+	const ticketOptions = ticketConfig.options;
+	const [ summaryFeedback, setSummaryFeedback ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ mailingOnly, setMailingOnly ] = useState( false );
@@ -704,20 +728,43 @@ export default function EventSignups( {
 	}, [ loadSignups ] );
 
 	useEffect( () => {
-		if ( ! eventDateId ) {
+		setTicketConfig( { status: 'loading', ticketTypes: [], options: [] } );
+		setSummaryFeedback( null );
+		if ( ! configEventDateId ) {
 			return;
 		}
+		// A response for a date no longer shown must not overwrite this one.
+		let current = true;
 		// Same source, order and labels as the Audience tab's extra columns.
 		apiFetch( {
-			path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			path: `/fair-events/v1/event-dates/${ configEventDateId }/tickets`,
 		} )
-			.then( ( data ) =>
-				setTicketOptions(
-					Array.isArray( data?.options ) ? data.options : []
-				)
-			)
-			.catch( () => setTicketOptions( [] ) );
-	}, [ eventDateId ] );
+			.then( ( data ) => {
+				if ( current ) {
+					setTicketConfig( {
+						status: 'ready',
+						ticketTypes: Array.isArray( data?.ticket_types )
+							? data.ticket_types
+							: [],
+						options: Array.isArray( data?.options )
+							? data.options
+							: [],
+					} );
+				}
+			} )
+			.catch( () => {
+				if ( current ) {
+					setTicketConfig( {
+						status: 'error',
+						ticketTypes: [],
+						options: [],
+					} );
+				}
+			} );
+		return () => {
+			current = false;
+		};
+	}, [ configEventDateId ] );
 
 	if ( loading ) {
 		return <Spinner />;
@@ -773,6 +820,60 @@ export default function EventSignups( {
 						'fair-events'
 					)
 		);
+	};
+
+	// Copies from the click itself: browsers grant clipboard access only
+	// during a user gesture.
+	const handleSummary = () => {
+		if ( ticketConfig.status !== 'ready' ) {
+			setSummaryFeedback( {
+				status: 'error',
+				message: __(
+					'The summary is unavailable because the ticket types and add-ons of this event could not be loaded. Reload this page and try again.',
+					'fair-events'
+				),
+			} );
+			return;
+		}
+		// Every confirmed ticket counts, whatever the screen filters show.
+		const summary = buildSignupSummary( {
+			rows: completeRows,
+			ticketTypes: ticketConfig.ticketTypes,
+			options: ticketConfig.options,
+		} );
+		if ( summary.error ) {
+			setSummaryFeedback( {
+				status: 'error',
+				message: signupSummaryErrorMessage( summary.error ),
+			} );
+			return;
+		}
+		const clipboardError = __(
+			'Could not copy the summary. Allow this site to use the clipboard and try again.',
+			'fair-events'
+		);
+		if ( ! window.navigator.clipboard?.writeText ) {
+			setSummaryFeedback( { status: 'error', message: clipboardError } );
+			return;
+		}
+		setSummaryFeedback( null );
+		window.navigator.clipboard
+			.writeText( formatSignupSummary( summary ) )
+			.then( () =>
+				setSummaryFeedback( {
+					status: 'success',
+					message: __(
+						'Summary copied to clipboard.',
+						'fair-events'
+					),
+				} )
+			)
+			.catch( () =>
+				setSummaryFeedback( {
+					status: 'error',
+					message: clipboardError,
+				} )
+			);
 	};
 
 	const renderRegistrationActions = ( signup ) => {
@@ -971,6 +1072,21 @@ export default function EventSignups( {
 					<FlexItem>
 						<Button
 							variant="secondary"
+							onClick={ handleSummary }
+							isBusy={ ticketConfig.status === 'loading' }
+							disabled={ ticketConfig.status === 'loading' }
+							accessibleWhenDisabled
+							description={ __(
+								'Copy the number of tickets per ticket type and add-on, without participant details',
+								'fair-events'
+							) }
+						>
+							{ __( 'Summary', 'fair-events' ) }
+						</Button>
+					</FlexItem>
+					<FlexItem>
+						<Button
+							variant="secondary"
 							onClick={ () => setIsExportModalOpen( true ) }
 							disabled={ visibleRows.length === 0 }
 						>
@@ -989,6 +1105,14 @@ export default function EventSignups( {
 				</Flex>
 			</CardHeader>
 			<CardBody>
+				{ summaryFeedback && (
+					<Notice
+						status={ summaryFeedback.status }
+						onRemove={ () => setSummaryFeedback( null ) }
+					>
+						{ summaryFeedback.message }
+					</Notice>
+				) }
 				{ printError && (
 					<Notice
 						status="error"
