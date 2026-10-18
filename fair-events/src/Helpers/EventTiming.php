@@ -47,6 +47,29 @@ class EventTiming {
 	const LEGACY_KEYS = array( 'start_datetime', 'end_datetime' );
 
 	/**
+	 * Override groups of a generated occurrence's timing, keyed by group
+	 * name: each group is inherited from its series or owned by the
+	 * occurrence as a whole. Times and all_day form one group, so an
+	 * occurrence never mixes its own time with an inherited one.
+	 *
+	 * @var array<string, string[]>
+	 */
+	const OVERRIDE_GROUPS = array(
+		'dates' => array( 'start_date', 'end_date' ),
+		'times' => array( 'start_time', 'end_time', 'all_day' ),
+	);
+
+	/**
+	 * Database column holding each override group's marker.
+	 *
+	 * @var array<string, string>
+	 */
+	const OVERRIDE_COLUMNS = array(
+		'dates' => 'dates_override',
+		'times' => 'times_override',
+	);
+
+	/**
 	 * Timing of an undated row.
 	 *
 	 * @return array Canonical timing.
@@ -360,23 +383,121 @@ class EventTiming {
 	}
 
 	/**
-	 * Whether the legacy datetimes hold a timing without substitutes:
-	 * undated, all-day, or a start time with either an end time or no end
-	 * on the start date. Paths that still compute on legacy datetimes would
-	 * otherwise treat a substitute as a real time.
+	 * A timing moved to start on another date.
 	 *
-	 * @param array $timing Canonical timing.
-	 * @return bool True when to_legacy() substitutes nothing.
+	 * Keeps the calendar-day span between the start and end dates, the
+	 * times (each still optional) and the all-day flag. No duration is
+	 * computed from times, so a missing time stays missing.
+	 *
+	 * @param array  $timing Canonical timing with a start date.
+	 * @param string $date   New start date (Y-m-d).
+	 * @return array Canonical timing starting on `$date`.
 	 */
-	public static function fits_legacy( array $timing ) {
+	public static function for_date( array $timing, $date ) {
 		$timing = array_merge( self::undated(), $timing );
+		$span   = self::days_between( $timing['start_date'], $timing['end_date'] ?? $timing['start_date'] );
 
-		if ( empty( $timing['start_date'] ) || $timing['all_day'] ) {
-			return true;
+		$timing['start_date'] = $date;
+		$timing['end_date']   = self::add_days( $date, $span );
+
+		return $timing;
+	}
+
+	/**
+	 * Shift a date by a number of calendar days.
+	 *
+	 * @param string $date Date (Y-m-d).
+	 * @param int    $days Days to add; negative moves back.
+	 * @return string Shifted date (Y-m-d).
+	 */
+	public static function add_days( $date, $days ) {
+		$utc = new \DateTimeZone( 'UTC' );
+
+		return ( new \DateTimeImmutable( $date, $utc ) )->modify( sprintf( '%+d days', (int) $days ) )->format( 'Y-m-d' );
+	}
+
+	/**
+	 * Calendar days from one date to another.
+	 *
+	 * @param string $from Date (Y-m-d).
+	 * @param string $to   Date (Y-m-d).
+	 * @return int Days; negative when `$to` is earlier.
+	 */
+	public static function days_between( $from, $to ) {
+		$utc = new \DateTimeZone( 'UTC' );
+
+		return (int) ( new \DateTimeImmutable( $from, $utc ) )->diff( new \DateTimeImmutable( $to, $utc ) )->format( '%r%a' );
+	}
+
+	/**
+	 * A generated occurrence's timing: the series timing moved to the
+	 * occurrence's anchor date, with each overridden group taken from the
+	 * occurrence's own timing instead.
+	 *
+	 * @param array               $series_timing Series (master) timing.
+	 * @param string              $anchor        Anchor date (Y-m-d).
+	 * @param array               $own           The occurrence's own timing.
+	 * @param array<string, bool> $overrides     Overridden groups (see OVERRIDE_GROUPS).
+	 * @return array Canonical timing.
+	 */
+	public static function resolve_occurrence( array $series_timing, $anchor, array $own, array $overrides ) {
+		$timing = self::for_date( $series_timing, $anchor );
+		$own    = array_merge( self::undated(), $own );
+
+		foreach ( self::OVERRIDE_GROUPS as $group => $keys ) {
+			if ( ! empty( $overrides[ $group ] ) ) {
+				foreach ( $keys as $key ) {
+					$timing[ $key ] = $own[ $key ];
+				}
+			}
 		}
 
-		return null !== $timing['start_time']
-			&& ( null !== $timing['end_time'] || self::has_open_end( $timing ) );
+		if ( $timing['all_day'] ) {
+			$timing['start_time'] = null;
+			$timing['end_time']   = null;
+		}
+
+		return $timing;
+	}
+
+	/**
+	 * Override groups whose values differ between two timings.
+	 *
+	 * @param array $before Canonical timing.
+	 * @param array $after  Canonical timing.
+	 * @return array<string, bool> Whether each group (see OVERRIDE_GROUPS) changed.
+	 */
+	public static function changed_groups( array $before, array $after ) {
+		$before  = array_merge( self::undated(), $before );
+		$after   = array_merge( self::undated(), $after );
+		$changed = array();
+
+		foreach ( self::OVERRIDE_GROUPS as $group => $keys ) {
+			$changed[ $group ] = false;
+			foreach ( $keys as $key ) {
+				if ( ( 'all_day' === $key ? (bool) $before[ $key ] !== (bool) $after[ $key ] : $before[ $key ] !== $after[ $key ] ) ) {
+					$changed[ $group ] = true;
+				}
+			}
+		}
+
+		return $changed;
+	}
+
+	/**
+	 * Override markers stored on a database row.
+	 *
+	 * @param object $row Database row.
+	 * @return array<string, bool> Whether each group (see OVERRIDE_GROUPS) is overridden.
+	 */
+	public static function overrides_from_row( $row ) {
+		$overrides = array();
+
+		foreach ( self::OVERRIDE_COLUMNS as $group => $column ) {
+			$overrides[ $group ] = ! empty( $row->$column );
+		}
+
+		return $overrides;
 	}
 
 	/**

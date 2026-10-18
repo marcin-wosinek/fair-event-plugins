@@ -366,16 +366,127 @@ class EventTimingTest extends TestCase {
 	}
 
 	/**
-	 * Timings the legacy datetimes hold without substitutes: undated,
-	 * all-day, both times, or a start time with a same-day open end.
+	 * Moving a timing keeps its calendar-day span, its optional times and
+	 * its all-day flag, across month and leap-day boundaries.
 	 */
-	public function test_fits_legacy() {
-		$this->assertTrue( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-03', '18:00:00', '02:00:00' ) ) );
-		$this->assertTrue( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', null ) ) );
-		$this->assertTrue( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-04', null, null, true ) ) );
-		$this->assertTrue( EventTiming::fits_legacy( EventTiming::undated() ) );
-		$this->assertFalse( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-02', null, '20:00:00' ) ) );
-		$this->assertFalse( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-02', null, null ) ) );
-		$this->assertFalse( EventTiming::fits_legacy( $this->timing( '2026-11-02', '2026-11-04', '18:00:00', null ) ) );
+	public function test_for_date_keeps_span_and_times() {
+		$this->assertSame(
+			$this->timing( '2028-03-01', '2028-03-02', '22:00:00', null ),
+			EventTiming::for_date( $this->timing( '2028-02-28', '2028-02-29', '22:00:00', null ), '2028-03-01' )
+		);
+		$this->assertSame(
+			$this->timing( '2026-12-31', '2027-01-02', null, null, true ),
+			EventTiming::for_date( $this->timing( '2026-11-02', '2026-11-04', null, null, true ), '2026-12-31' )
+		);
+	}
+
+	/**
+	 * Calendar-day arithmetic is wall-clock, untouched by DST changes.
+	 */
+	public function test_day_arithmetic() {
+		$this->assertSame( '2026-03-30', EventTiming::add_days( '2026-03-28', 2 ) );
+		$this->assertSame( '2026-10-24', EventTiming::add_days( '2026-10-26', -2 ) );
+		$this->assertSame( 2, EventTiming::days_between( '2026-03-28', '2026-03-30' ) );
+		$this->assertSame( -7, EventTiming::days_between( '2026-11-09', '2026-11-02' ) );
+	}
+
+	/**
+	 * An occurrence takes each group from its series for its anchor date,
+	 * unless it overrides that group; overridden times include all-day.
+	 */
+	public function test_resolve_occurrence() {
+		$series = $this->timing( '2026-11-02', '2026-11-02', '18:00:00', '20:00:00' );
+		$own    = $this->timing( '2026-11-10', '2026-11-11', null, '21:00:00' );
+
+		$this->assertSame(
+			$this->timing( '2026-11-09', '2026-11-09', '18:00:00', '20:00:00' ),
+			EventTiming::resolve_occurrence(
+				$series,
+				'2026-11-09',
+				$own,
+				array(
+					'dates' => false,
+					'times' => false,
+				)
+			)
+		);
+		$this->assertSame(
+			$this->timing( '2026-11-10', '2026-11-11', '18:00:00', '20:00:00' ),
+			EventTiming::resolve_occurrence(
+				$series,
+				'2026-11-09',
+				$own,
+				array(
+					'dates' => true,
+					'times' => false,
+				)
+			)
+		);
+		$this->assertSame(
+			$this->timing( '2026-11-09', '2026-11-09', null, '21:00:00' ),
+			EventTiming::resolve_occurrence(
+				$series,
+				'2026-11-09',
+				$own,
+				array(
+					'dates' => false,
+					'times' => true,
+				)
+			)
+		);
+		$this->assertSame(
+			$this->timing( '2026-11-09', '2026-11-09', null, null, true ),
+			EventTiming::resolve_occurrence( $series, '2026-11-09', $this->timing( '2026-11-09', '2026-11-09', null, null, true ), array( 'times' => true ) )
+		);
+	}
+
+	/**
+	 * Changed groups: dates, and times together with all-day; clearing a
+	 * time is a change.
+	 */
+	public function test_changed_groups() {
+		$base = $this->timing( '2026-11-02', '2026-11-02', '18:00:00', '20:00:00' );
+
+		$this->assertSame(
+			array(
+				'dates' => false,
+				'times' => false,
+			),
+			EventTiming::changed_groups( $base, $base )
+		);
+		$this->assertSame(
+			array(
+				'dates' => true,
+				'times' => false,
+			),
+			EventTiming::changed_groups( $base, $this->timing( '2026-11-02', '2026-11-03', '18:00:00', '20:00:00' ) )
+		);
+		$this->assertSame(
+			array(
+				'dates' => false,
+				'times' => true,
+			),
+			EventTiming::changed_groups( $base, $this->timing( '2026-11-02', '2026-11-02', '18:00:00', null ) )
+		);
+		$this->assertSame(
+			array(
+				'dates' => false,
+				'times' => true,
+			),
+			EventTiming::changed_groups( $base, $this->timing( '2026-11-02', '2026-11-02', null, null, true ) )
+		);
+	}
+
+	/**
+	 * Override markers are read from their columns.
+	 */
+	public function test_overrides_from_row() {
+		$this->assertSame(
+			array(
+				'dates' => false,
+				'times' => true,
+			),
+			EventTiming::overrides_from_row( (object) array( 'times_override' => '1' ) )
+		);
 	}
 }

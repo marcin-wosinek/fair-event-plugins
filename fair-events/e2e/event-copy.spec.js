@@ -1503,3 +1503,15 @@ test( 'preserves source activity, manual series, and failed-copy cleanup', async
 		legacy: true,
 	} );
 } );
+
+test( 'copies missing times, moved dates and occurrence overrides', async () => {
+	const result = runScript(
+		'verify-event-copy-optional-times.php',
+		'EVENT_COPY_OPTIONAL_TIMES'
+	);
+	expect( result ).toEqual( {
+		manual: true,
+		rule: true,
+		shift: true,
+	} );
+} );

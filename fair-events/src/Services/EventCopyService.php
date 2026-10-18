@@ -35,10 +35,7 @@ class EventCopyService {
 			$source = $source->master_id ? EventDates::get_by_id( (int) $source->master_id ) : null;
 		}
 
-		// Copying still works on datetimes, so an event without a start time
-		// (or a multi-day event without an end time) would be copied with
-		// invented ones; refused until copying carries optional times (#1819).
-		if ( ! $source || ! in_array( $source->occurrence_type, array( 'single', 'master' ), true ) || ! $source->start_datetime || ! EventTiming::fits_legacy( $source->get_timing() ) ) {
+		if ( ! $source || ! in_array( $source->occurrence_type, array( 'single', 'master' ), true ) || ! $source->start_date ) {
 			return new \WP_Error( 'event_copy_unsupported', __( 'This event has a source state that cannot be copied.', 'fair-events' ) );
 		}
 
@@ -113,17 +110,18 @@ class EventCopyService {
 	/**
 	 * Copy an event and its reusable configuration.
 	 *
-	 * @param array  $source    Resolved source from resolve_source().
-	 * @param string $new_title Destination title.
-	 * @param string $new_start Destination start datetime.
-	 * @param string $new_end   Destination end datetime.
+	 * @param array  $source     Resolved source from resolve_source().
+	 * @param string $new_title  Destination title.
+	 * @param array  $new_timing Destination canonical timing (see EventTiming); a
+	 *                           time the source lacks stays missing.
 	 * @return array|\WP_Error Destination identifiers or an error.
 	 * @throws \RuntimeException Internally when a required copy operation fails.
 	 */
-	public function copy( $source, $new_title, $new_start, $new_end ) {
+	public function copy( $source, $new_title, array $new_timing ) {
 		$master            = $source['master'];
 		$new_post_id       = 0;
 		$new_event_date_id = 0;
+		$new_timing        = array_merge( EventTiming::undated(), $new_timing );
 
 		try {
 			if ( 'post' === $source['representation'] ) {
@@ -134,26 +132,26 @@ class EventCopyService {
 				$this->assert_checkpoint( 'post_insertion' );
 				$new_event_date_id = EventDates::save_or_update_master(
 					$new_post_id,
-					$new_start,
-					$new_end,
-					$master->all_day,
+					$new_timing,
+					null,
+					null,
 					'none' === $master->recurrence_mode ? 'single' : 'master',
 					'rule' === $master->recurrence_mode ? $master->rrule : null,
 					$master->recurrence_mode
 				);
 			} else {
 				$new_event_date_id = EventDates::create_standalone(
-					array(
-						'start_datetime'  => $new_start,
-						'end_datetime'    => $new_end,
-						'all_day'         => $master->all_day,
-						'occurrence_type' => 'none' === $master->recurrence_mode ? 'single' : 'master',
-						'rrule'           => 'rule' === $master->recurrence_mode ? $master->rrule : null,
-						'title'           => $new_title,
-						'external_url'    => $master->external_url,
-						'link_type'       => $master->link_type,
-						'attendance_mode' => $master->attendance_mode,
-						'joining_link'    => $master->joining_link,
+					array_merge(
+						$new_timing,
+						array(
+							'occurrence_type' => 'none' === $master->recurrence_mode ? 'single' : 'master',
+							'rrule'           => 'rule' === $master->recurrence_mode ? $master->rrule : null,
+							'title'           => $new_title,
+							'external_url'    => $master->external_url,
+							'link_type'       => $master->link_type,
+							'attendance_mode' => $master->attendance_mode,
+							'joining_link'    => $master->joining_link,
+						)
 					)
 				);
 			}
@@ -174,7 +172,7 @@ class EventCopyService {
 					'joining_link'      => $master->joining_link,
 					'capacity'          => $master->capacity,
 					'recurrence_mode'   => $master->recurrence_mode,
-					'recurrence_anchor' => ( new \DateTimeImmutable( $new_start, wp_timezone() ) )->format( 'Y-m-d' ),
+					'recurrence_anchor' => $new_timing['start_date'],
 				)
 			) ) {
 				throw new \RuntimeException( 'event-fields' );
@@ -188,14 +186,12 @@ class EventCopyService {
 			}
 			$this->assert_checkpoint( 'event_date_creation' );
 
-			$this->copy_recurrence( $master, $new_event_date_id, $new_post_id, $new_start, $new_end );
+			$this->copy_recurrence( $master, $new_event_date_id, $new_post_id, $new_timing );
 			$this->assert_checkpoint( 'recurrence_generation' );
 
-			$source_start = new \DateTimeImmutable( str_replace( 'T', ' ', $master->start_datetime ), wp_timezone() );
-			$copied_start = new \DateTimeImmutable( str_replace( 'T', ' ', $new_start ), wp_timezone() );
-			$date_shift   = $source_start->diff( $copied_start );
-			$copier       = new EventTicketConfigurationCopier();
-			$copy_result  = $copier->copy( $master->id, $new_event_date_id, $date_shift );
+			$date_shift  = self::get_date_shift( $master->get_timing(), $new_timing );
+			$copier      = new EventTicketConfigurationCopier();
+			$copy_result = $copier->copy( $master->id, $new_event_date_id, $date_shift );
 			if ( false === $copy_result ) {
 				throw new \RuntimeException( 'configuration' );
 			}
@@ -345,37 +341,58 @@ class EventCopyService {
 	}
 
 	/**
-	 * Copy recurrence and shifted cancellation state.
+	 * Site-local shift from a source timing to its copy.
 	 *
-	 * @param EventDates $master        Source master.
+	 * Includes the change of start time when both timings have one, so
+	 * deadlines keep their distance to the start; otherwise only whole
+	 * calendar days, so no missing time is ever invented.
+	 *
+	 * @param array $source_timing Source canonical timing.
+	 * @param array $new_timing    Destination canonical timing.
+	 * @return \DateInterval Shift.
+	 */
+	public static function get_date_shift( array $source_timing, array $new_timing ) {
+		$both_timed = null !== ( $source_timing['start_time'] ?? null ) && null !== ( $new_timing['start_time'] ?? null );
+		$source     = new \DateTimeImmutable( $source_timing['start_date'] . ' ' . ( $both_timed ? $source_timing['start_time'] : '00:00:00' ), wp_timezone() );
+		$copied     = new \DateTimeImmutable( $new_timing['start_date'] . ' ' . ( $both_timed ? $new_timing['start_time'] : '00:00:00' ), wp_timezone() );
+
+		return $source->diff( $copied );
+	}
+
+	/**
+	 * Copy recurrence, shifted cancellation state and occurrence timing
+	 * overrides.
+	 *
+	 * The copy's dates are its source's anchors moved by the same number of
+	 * days as the series start. An occurrence's own times are copied as
+	 * they are; its own dates move by that number of days too.
+	 *
+	 * @param EventDates $master         Source master.
 	 * @param int        $destination_id Destination event-date ID.
 	 * @param int        $post_id        Destination post ID, if any.
-	 * @param string     $new_start      Destination start datetime.
-	 * @param string     $new_end        Destination end datetime.
+	 * @param array      $new_timing     Destination canonical timing.
 	 * @return void
 	 * @throws \RuntimeException When recurrence cannot be recreated.
 	 */
-	private function copy_recurrence( $master, $destination_id, $post_id, $new_start, $new_end ) {
+	private function copy_recurrence( $master, $destination_id, $post_id, array $new_timing ) {
 		if ( 'none' === $master->recurrence_mode ) {
 			return;
 		}
 
-		$source_start = new \DateTimeImmutable( str_replace( 'T', ' ', $master->start_datetime ), wp_timezone() );
-		$copied_start = new \DateTimeImmutable( str_replace( 'T', ' ', $new_start ), wp_timezone() );
-		$shift        = $source_start->diff( $copied_start );
-		$source_rows  = EventDates::get_generated_by_master_id( $master->id, true );
+		$day_shift   = EventTiming::days_between( $master->start_date, $new_timing['start_date'] );
+		$source_rows = EventDates::get_generated_by_master_id( $master->id, true );
+		$shift       = static function ( $row ) use ( $day_shift ) {
+			return EventTiming::add_days( $row->recurrence_anchor ?? $row->start_date, $day_shift );
+		};
 
 		if ( 'rule' === $master->recurrence_mode ) {
-			$expected = count( RecurrenceService::generate_occurrences( $new_start, $new_end, $master->rrule ) );
+			$expected = count( RecurrenceService::generate_occurrences( $new_timing, $master->rrule ) );
 			$created  = $post_id
 				? RecurrenceService::regenerate_event_occurrences( $post_id, $master->rrule )
 				: RecurrenceService::regenerate_standalone_occurrences( $destination_id, $master->rrule );
 		} elseif ( 'manual' === $master->recurrence_mode ) {
-			$dates = array( ( new \DateTimeImmutable( $master->start_datetime, wp_timezone() ) )->add( $shift )->format( 'Y-m-d' ) );
-			foreach ( $source_rows as $row ) {
-				$dates[] = ( new \DateTimeImmutable( $row->start_datetime, wp_timezone() ) )->add( $shift )->format( 'Y-m-d' );
-			}
-			$expected = count( $dates );
+			$dates    = array_merge( array( $new_timing['start_date'] ), array_map( $shift, $source_rows ) );
+			$expected = count( array_unique( $dates ) );
 			$created  = RecurrenceService::set_manual_occurrences( $destination_id, $dates );
 		} else {
 			throw new \RuntimeException( 'recurrence-mode' );
@@ -385,18 +402,32 @@ class EventCopyService {
 			throw new \RuntimeException( 'recurrence' );
 		}
 
-		$destination_rows = EventDates::get_generated_by_master_id( $destination_id, true );
-		$by_date          = array();
-		foreach ( $destination_rows as $row ) {
-			$by_date[ substr( $row->start_datetime, 0, 10 ) ] = $row;
-		}
+		$by_anchor = EventDates::get_all_by_master_id( $destination_id );
 		foreach ( $source_rows as $row ) {
-			if ( 'cancelled' !== $row->status ) {
+			$destination = $by_anchor[ $shift( $row ) ] ?? null;
+			if ( ! $destination || (int) $destination->id === (int) $destination_id ) {
 				continue;
 			}
-			$shifted_date = ( new \DateTimeImmutable( $row->start_datetime, wp_timezone() ) )->add( $shift )->format( 'Y-m-d' );
-			if ( isset( $by_date[ $shifted_date ] ) && ! EventDates::update_by_id( $by_date[ $shifted_date ]->id, array( 'status' => 'cancelled' ) ) ) {
-				throw new \RuntimeException( 'cancellation' );
+
+			$update = array();
+			if ( 'cancelled' === $row->status ) {
+				$update['status'] = 'cancelled';
+			}
+			$own = $row->get_timing();
+			if ( $row->timing_overrides['dates'] ) {
+				$update['start_date']     = EventTiming::add_days( $own['start_date'], $day_shift );
+				$update['end_date']       = EventTiming::add_days( $own['end_date'], $day_shift );
+				$update['dates_override'] = 1;
+			}
+			if ( $row->timing_overrides['times'] ) {
+				$update['start_time']     = $own['start_time'];
+				$update['end_time']       = $own['end_time'];
+				$update['all_day']        = $own['all_day'];
+				$update['times_override'] = 1;
+			}
+
+			if ( $update && ! EventDates::update_by_id( $destination->id, $update ) ) {
+				throw new \RuntimeException( 'occurrence' );
 			}
 		}
 	}

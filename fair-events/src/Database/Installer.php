@@ -7,6 +7,8 @@
 
 namespace FairEvents\Database;
 
+use FairEvents\Helpers\EventTiming;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -426,8 +428,16 @@ class Installer {
 			$timing_backfilled = self::migrate_to_3_45_0();
 		}
 
+		// Only record 3.46.0 once every occurrence's overrides are detected, so
+		// an interrupted run resumes on the next maybe_upgrade(). Detection reads
+		// the canonical timing, so it waits for the 3.45.0 backfill.
+		$overrides_detected = true;
+		if ( version_compare( $current_version, '3.46.0', '<' ) ) {
+			$overrides_detected = $timing_backfilled && self::migrate_to_3_46_0();
+		}
+
 		// Update database version.
-		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled ) );
+		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled, $overrides_detected ) );
 	}
 
 	/**
@@ -439,9 +449,10 @@ class Installer {
 	 * @param bool $gallery_removed             Whether the 3.36.0 cleanup succeeded.
 	 * @param bool $addon_collaborators_removed Whether the 3.44.0 cleanup succeeded.
 	 * @param bool $timing_backfilled           Whether the 3.45.0 timing backfill completed.
+	 * @param bool $overrides_detected          Whether the 3.46.0 override detection completed.
 	 * @return string Database version.
 	 */
-	private static function version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled = true ) {
+	private static function version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled = true, $overrides_detected = true ) {
 		if ( ! $gallery_removed ) {
 			return '3.35.0';
 		}
@@ -450,6 +461,9 @@ class Installer {
 		}
 		if ( ! $timing_backfilled ) {
 			return '3.44.0';
+		}
+		if ( ! $overrides_detected ) {
+			return '3.45.0';
 		}
 		return Schema::DB_VERSION;
 	}
@@ -2411,6 +2425,95 @@ class Installer {
 		);
 
 		return null !== $remaining && 0 === (int) $remaining;
+	}
+
+	/**
+	 * Generated occurrences the 3.46.0 override detection reads per query.
+	 */
+	const OVERRIDE_DETECTION_BATCH = 500;
+
+	/**
+	 * Migrate to version 3.46.0 - Occurrence timing overrides (#1819).
+	 *
+	 * Series edits used to rewrite every generated occurrence's timing, so
+	 * an occurrence whose timing differs from what its series generates for
+	 * its anchor date was edited on its own. Each such difference becomes an
+	 * override marker (`dates_override`, `times_override`, added by dbDelta)
+	 * that later series edits respect. An edit that left a value equal to
+	 * the series value cannot be told apart and stays inherited.
+	 *
+	 * Rows are read in id order, after the last one checked, so a rerun only
+	 * sets markers and never clears one.
+	 *
+	 * @return bool True when every generated occurrence was checked.
+	 */
+	private static function migrate_to_3_46_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::column_exists( $table_name, 'dates_override' ) || ! self::column_exists( $table_name, 'times_override' ) ) {
+			return false;
+		}
+
+		$last_id = 0;
+		do {
+			$children = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE occurrence_type = 'generated' AND master_id IS NOT NULL AND id > %d ORDER BY id ASC LIMIT %d",
+					$table_name,
+					$last_id,
+					self::OVERRIDE_DETECTION_BATCH
+				)
+			);
+
+			if ( ! is_array( $children ) ) {
+				return false;
+			}
+
+			$master_ids = array_values( array_unique( array_map( 'intval', array_column( $children, 'master_id' ) ) ) );
+			$masters    = array();
+			if ( $master_ids ) {
+				$master_rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT * FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $master_ids ), '%d' ) ) . ')',
+						array_merge( array( $table_name ), $master_ids )
+					)
+				);
+				if ( ! is_array( $master_rows ) ) {
+					return false;
+				}
+				foreach ( $master_rows as $master_row ) {
+					$masters[ (int) $master_row->id ] = EventTiming::from_row( $master_row );
+				}
+			}
+
+			foreach ( $children as $child ) {
+				$last_id = (int) $child->id;
+				$master  = $masters[ (int) $child->master_id ] ?? null;
+				$own     = EventTiming::from_row( $child );
+				$anchor  = $child->recurrence_anchor ? $child->recurrence_anchor : $own['start_date'];
+
+				if ( ! $master || empty( $master['start_date'] ) || ! $anchor ) {
+					continue;
+				}
+
+				$changed = EventTiming::changed_groups( EventTiming::for_date( $master, $anchor ), $own );
+				$markers = array();
+				foreach ( EventTiming::OVERRIDE_COLUMNS as $group => $column ) {
+					if ( $changed[ $group ] && empty( $child->$column ) ) {
+						$markers[ $column ] = 1;
+					}
+				}
+
+				if ( $markers && false === $wpdb->update( $table_name, $markers, array( 'id' => $last_id ), array_fill( 0, count( $markers ), '%d' ), array( '%d' ) ) ) {
+					return false;
+				}
+			}
+			$batch_size = count( $children );
+		} while ( self::OVERRIDE_DETECTION_BATCH === $batch_size );
+
+		return true;
 	}
 
 	/**

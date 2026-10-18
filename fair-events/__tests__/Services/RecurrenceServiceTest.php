@@ -16,6 +16,7 @@ namespace FairEvents\Tests\Services;
 // phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited
 
 use PHPUnit\Framework\TestCase;
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\RecurrenceService;
 use ReflectionProperty;
@@ -212,31 +213,72 @@ class RecurrenceServiceTest extends TestCase {
 	}
 
 	/**
-	 * Seed a weekly standalone series starting 2035-03-01 10:00.
+	 * Canonical timing.
 	 *
-	 * @param array<string, string> $children Child status keyed by date (Y-m-d).
+	 * @param string      $start_date Start date.
+	 * @param string|null $start_time Start time.
+	 * @param string|null $end_time   End time.
+	 * @param string|null $end_date   End date; the start date when null.
+	 * @param bool        $all_day    All-day flag.
+	 * @return array Timing.
+	 */
+	private function timing( $start_date, $start_time = '10:00:00', $end_time = '12:00:00', $end_date = null, $all_day = false ) {
+		return array(
+			'start_date' => $start_date,
+			'end_date'   => $end_date ?? $start_date,
+			'start_time' => $start_time,
+			'end_time'   => $end_time,
+			'all_day'    => $all_day,
+		);
+	}
+
+	/**
+	 * Canonical columns of a seeded row.
+	 *
+	 * @param array $timing Timing.
+	 * @return array Column values.
+	 */
+	private function columns( array $timing ) {
+		return array_merge(
+			$timing,
+			array(
+				'start_datetime'  => $timing['start_date'] . ' ' . ( $timing['start_time'] ?? '00:00:00' ),
+				'all_day'         => $timing['all_day'] ? 1 : 0,
+				'timing_migrated' => 1,
+			)
+		);
+	}
+
+	/**
+	 * Seed a weekly standalone series starting 2035-03-01 10:00–12:00.
+	 *
+	 * @param array<string, string> $children  Child status keyed by date (Y-m-d).
+	 * @param array<string, array>  $overrides Child timing columns keyed by date, merged over the inherited ones.
 	 * @return array<string, int> Child row ids keyed by date; the master is id 1.
 	 */
-	private function seed_series( array $children ) {
+	private function seed_series( array $children, array $overrides = array() ) {
 		$this->db->add_row(
-			array(
-				'id'                => 1,
-				'start_datetime'    => '2035-03-01 10:00:00',
-				'end_datetime'      => '2035-03-01 12:00:00',
-				'occurrence_type'   => 'master',
-				'recurrence_anchor' => '2035-03-01',
+			array_merge(
+				$this->columns( $this->timing( '2035-03-01' ) ),
+				array(
+					'id'                => 1,
+					'occurrence_type'   => 'master',
+					'recurrence_anchor' => '2035-03-01',
+				)
 			)
 		);
 
 		$ids = array();
 		foreach ( $children as $date => $status ) {
 			$ids[ $date ] = $this->db->add_row(
-				array(
-					'start_datetime'    => $date . ' 10:00:00',
-					'end_datetime'      => $date . ' 12:00:00',
-					'master_id'         => 1,
-					'recurrence_anchor' => $date,
-					'status'            => $status,
+				array_merge(
+					$this->columns( $this->timing( $date ) ),
+					$overrides[ $date ] ?? array(),
+					array(
+						'master_id'         => 1,
+						'recurrence_anchor' => $date,
+						'status'            => $status,
+					)
 				)
 			);
 		}
@@ -246,12 +288,13 @@ class RecurrenceServiceTest extends TestCase {
 	/**
 	 * The generated children (everything after the master) of a rule.
 	 *
-	 * @param string $rrule RRULE string.
-	 * @return array Occurrences with 'start' and 'end' keys.
+	 * @param string     $rrule  RRULE string.
+	 * @param array|null $timing Series timing; 2035-03-01 10:00–12:00 by default.
+	 * @return array[] Canonical timings.
 	 */
-	private function generated( $rrule ) {
+	private function generated( $rrule, $timing = null ) {
 		return array_slice(
-			RecurrenceService::generate_occurrences( '2035-03-01 10:00:00', '2035-03-01 12:00:00', $rrule ),
+			RecurrenceService::generate_occurrences( $timing ?? $this->timing( '2035-03-01' ), $rrule ),
 			1
 		);
 	}
@@ -272,6 +315,23 @@ class RecurrenceServiceTest extends TestCase {
 		return $statuses;
 	}
 
+	/**
+	 * Canonical timing stored on a row.
+	 *
+	 * @param int $id Row id.
+	 * @return array Timing.
+	 */
+	private function stored_timing( $id ) {
+		$row = $this->db->rows[ $id ];
+		return array(
+			'start_date' => $row->start_date,
+			'end_date'   => $row->end_date,
+			'start_time' => $row->start_time,
+			'end_time'   => $row->end_time,
+			'all_day'    => (bool) $row->all_day,
+		);
+	}
+
 	// -----------------------------------------------------------------------
 	// generate_occurrences — basic invariants
 	// -----------------------------------------------------------------------
@@ -280,97 +340,113 @@ class RecurrenceServiceTest extends TestCase {
 	 * Weekly COUNT=3 produces exactly 3 occurrences on consecutive weeks.
 	 */
 	public function test_generate_weekly_count() {
-		$occurrences = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=3'
-		);
+		$occurrences = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=3' );
 
-		$this->assertCount( 3, $occurrences );
-		$this->assertSame( '2035-03-01T10:00:00', $occurrences[0]['start'] );
-		$this->assertSame( '2035-03-08T10:00:00', $occurrences[1]['start'] );
-		$this->assertSame( '2035-03-15T10:00:00', $occurrences[2]['start'] );
+		$this->assertSame(
+			array(
+				$this->timing( '2035-03-01' ),
+				$this->timing( '2035-03-08' ),
+				$this->timing( '2035-03-15' ),
+			),
+			$occurrences
+		);
 	}
 
 	/**
-	 * Anchor date (Y-m-d of the start) is invariant under time-of-day shift.
-	 *
-	 * If the master time shifts from 10:00 to 11:00, the anchor dates for a
-	 * weekly COUNT=3 series must still be 2035-03-01, 2035-03-08, 2035-03-15.
-	 * This is what lets reconcile_occurrences() match existing rows after a shift.
+	 * Every combination of missing times stays missing on every occurrence;
+	 * genuine midnight stays midnight.
+	 */
+	public function test_generate_keeps_each_time_optional() {
+		$combinations = array(
+			array( '18:00:00', '20:00:00' ),
+			array( '18:00:00', null ),
+			array( null, '20:00:00' ),
+			array( null, null ),
+			array( '00:00:00', null ),
+		);
+
+		foreach ( $combinations as list( $start_time, $end_time ) ) {
+			$occurrences = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01', $start_time, $end_time ), 'FREQ=WEEKLY;COUNT=2' );
+
+			$this->assertSame( $this->timing( '2035-03-08', $start_time, $end_time ), $occurrences[1] );
+		}
+	}
+
+	/**
+	 * A multi-day event keeps its calendar-day span, overnight or all-day,
+	 * and an all-day series gets no times.
+	 */
+	public function test_generate_keeps_the_calendar_day_span() {
+		$overnight = RecurrenceService::generate_occurrences( $this->timing( '2035-03-02', '22:00:00', '02:00:00', '2035-03-03' ), 'FREQ=WEEKLY;COUNT=2' );
+		$this->assertSame( $this->timing( '2035-03-09', '22:00:00', '02:00:00', '2035-03-10' ), $overnight[1] );
+
+		$untimed = RecurrenceService::generate_occurrences( $this->timing( '2035-03-02', null, null, '2035-03-04' ), 'FREQ=MONTHLY;COUNT=2' );
+		$this->assertSame( $this->timing( '2035-04-02', null, null, '2035-04-04' ), $untimed[1] );
+
+		$all_day = RecurrenceService::generate_occurrences( $this->timing( '2035-03-30', null, null, '2035-04-01', true ), 'FREQ=DAILY;COUNT=2' );
+		$this->assertSame( $this->timing( '2035-03-31', null, null, '2035-04-02', true ), $all_day[1] );
+	}
+
+	/**
+	 * Dates are calendar dates: a weekly series across a DST change keeps
+	 * its wall-clock times.
+	 */
+	public function test_generate_ignores_daylight_saving_changes() {
+		$occurrences = RecurrenceService::generate_occurrences( $this->timing( '2035-03-21', '18:00:00', '20:00:00' ), 'FREQ=WEEKLY;COUNT=3' );
+
+		$this->assertSame( $this->timing( '2035-04-04', '18:00:00', '20:00:00' ), $occurrences[2] );
+	}
+
+	/**
+	 * An UNTIL with a time compares against each date's start time, or the
+	 * start of the day without one; a date-only UNTIL includes its day.
+	 */
+	public function test_generate_until_uses_the_start_time_when_there_is_one() {
+		$timed   = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01', '10:00:00', null ), 'FREQ=WEEKLY;UNTIL=20350315T090000' );
+		$untimed = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01', null, null ), 'FREQ=WEEKLY;UNTIL=20350315T090000' );
+		$day     = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01', '23:00:00', null ), 'FREQ=WEEKLY;UNTIL=20350315' );
+
+		$this->assertSame( array( '2035-03-01', '2035-03-08' ), array_column( $timed, 'start_date' ) );
+		$this->assertSame( array( '2035-03-01', '2035-03-08', '2035-03-15' ), array_column( $untimed, 'start_date' ) );
+		$this->assertSame( array( '2035-03-01', '2035-03-08', '2035-03-15' ), array_column( $day, 'start_date' ) );
+	}
+
+	/**
+	 * An undated timing has no schedule.
+	 */
+	public function test_generate_needs_a_start_date() {
+		$this->assertSame( array(), RecurrenceService::generate_occurrences( EventTiming::undated(), 'FREQ=WEEKLY;COUNT=3' ) );
+	}
+
+	/**
+	 * Anchor dates are invariant under a time-of-day shift, which is what
+	 * lets reconcile_occurrences() match existing rows after a shift.
 	 */
 	public function test_anchor_dates_unchanged_by_time_shift() {
-		$before = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=3'
-		);
-		$after  = RecurrenceService::generate_occurrences(
-			'2035-03-01 11:00:00',
-			'2035-03-01 13:00:00',
-			'FREQ=WEEKLY;COUNT=3'
-		);
+		$before = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=3' );
+		$after  = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01', '11:00:00', '13:00:00' ), 'FREQ=WEEKLY;COUNT=3' );
 
-		$anchors_before = array_map(
-			fn( $occ ) => ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' ),
-			$before
-		);
-		$anchors_after  = array_map(
-			fn( $occ ) => ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' ),
-			$after
-		);
-
-		$this->assertSame( $anchors_before, $anchors_after );
+		$this->assertSame( array_column( $before, 'start_date' ), array_column( $after, 'start_date' ) );
 	}
 
 	/**
 	 * Shortening COUNT from 4 to 2 removes the last 2 anchors.
-	 *
-	 * Reconcile_occurrences() uses exactly this difference to know which rows
-	 * to delete: the anchors in the existing set but not in the desired set.
 	 */
 	public function test_shorten_rrule_drops_tail_anchors() {
-		$full  = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=4'
-		);
-		$short = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=2'
-		);
+		$full  = array_column( RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=4' ), 'start_date' );
+		$short = array_column( RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=2' ), 'start_date' );
 
-		$anchors_full  = array_map( fn( $o ) => ( new \DateTime( $o['start'] ) )->format( 'Y-m-d' ), $full );
-		$anchors_short = array_map( fn( $o ) => ( new \DateTime( $o['start'] ) )->format( 'Y-m-d' ), $short );
-
-		// Short set must be a leading subset of the full set.
-		$this->assertSame( array_slice( $anchors_full, 0, 2 ), $anchors_short );
-
-		// The anchors that would be removed are the tail.
-		$removed = array_diff( $anchors_full, $anchors_short );
-		$this->assertCount( 2, $removed );
+		$this->assertSame( array_slice( $full, 0, 2 ), $short );
+		$this->assertCount( 2, array_diff( $full, $short ) );
 	}
 
 	/**
 	 * Exdates reduce the occurrence count but keep anchor dates consistent.
 	 */
 	public function test_exdate_skips_occurrence() {
-		$occurrences = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=3',
-			null,
-			array( '2035-03-08' )
-		);
+		$occurrences = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=3', null, array( '2035-03-08' ) );
 
-		// Second occurrence excluded — only 2 returned.
-		$this->assertCount( 2, $occurrences );
-
-		$starts = array_map( fn( $o ) => substr( $o['start'], 0, 10 ), $occurrences );
-		$this->assertNotContains( '2035-03-08', $starts );
-		$this->assertContains( '2035-03-01', $starts );
-		$this->assertContains( '2035-03-15', $starts );
+		$this->assertSame( array( '2035-03-01', '2035-03-15' ), array_column( $occurrences, 'start_date' ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -379,46 +455,36 @@ class RecurrenceServiceTest extends TestCase {
 
 	/**
 	 * Dates are sorted ascending regardless of input order, each taking the
-	 * reference row's time-of-day and duration.
+	 * reference timing's span and times.
 	 */
-	public function test_build_manual_occurrences_sorts_and_applies_time_and_duration() {
+	public function test_build_manual_occurrences_sorts_and_applies_the_timing() {
 		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
+			$this->timing( '2035-03-01', null, '12:00:00' ),
 			array( '2035-03-15', '2035-03-01', '2035-03-08' )
 		);
 
-		$this->assertCount( 3, $occurrences );
-		$this->assertSame( '2035-03-01T10:00:00', $occurrences[0]['start'] );
-		$this->assertSame( '2035-03-01T12:00:00', $occurrences[0]['end'] );
-		$this->assertSame( '2035-03-08T10:00:00', $occurrences[1]['start'] );
-		$this->assertSame( '2035-03-15T10:00:00', $occurrences[2]['start'] );
+		$this->assertSame(
+			array(
+				$this->timing( '2035-03-01', null, '12:00:00' ),
+				$this->timing( '2035-03-08', null, '12:00:00' ),
+				$this->timing( '2035-03-15', null, '12:00:00' ),
+			),
+			$occurrences
+		);
 	}
 
 	/**
 	 * Duplicate dates are collapsed to a single occurrence.
 	 */
 	public function test_build_manual_occurrences_deduplicates() {
-		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			array( '2035-03-01', '2035-03-01' )
-		);
-
-		$this->assertCount( 1, $occurrences );
+		$this->assertCount( 1, RecurrenceService::build_manual_occurrences( $this->timing( '2035-03-01' ), array( '2035-03-01', '2035-03-01' ) ) );
 	}
 
 	/**
 	 * An empty date list produces no occurrences (caller falls back / no-ops).
 	 */
 	public function test_build_manual_occurrences_empty_list() {
-		$occurrences = RecurrenceService::build_manual_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			array()
-		);
-
-		$this->assertSame( array(), $occurrences );
+		$this->assertSame( array(), RecurrenceService::build_manual_occurrences( $this->timing( '2035-03-01' ), array() ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -430,35 +496,22 @@ class RecurrenceServiceTest extends TestCase {
 	 * the number: the last date is the one the full schedule ends on.
 	 */
 	public function test_excluded_dates_do_not_extend_a_count_limit() {
-		$full     = RecurrenceService::generate_occurrences( '2035-03-01 10:00:00', '2035-03-01 12:00:00', 'FREQ=WEEKLY;COUNT=10' );
-		$excluded = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;COUNT=10',
-			null,
-			array( '2035-03-08', '2035-03-22' )
-		);
+		$full     = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=10' );
+		$excluded = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=10', null, array( '2035-03-08', '2035-03-22' ) );
 
 		$this->assertCount( 10, $full );
 		$this->assertCount( 8, $excluded );
-		$this->assertSame( '2035-05-03T10:00:00', $full[9]['start'] );
-		$this->assertSame( $full[9]['start'], $excluded[7]['start'] );
+		$this->assertSame( '2035-05-03', $full[9]['start_date'] );
+		$this->assertSame( $full[9], $excluded[7] );
 	}
 
 	/**
 	 * Excluding dates of an UNTIL rule leaves the end date where it is.
 	 */
 	public function test_excluded_dates_do_not_extend_an_until_limit() {
-		$excluded = RecurrenceService::generate_occurrences(
-			'2035-03-01 10:00:00',
-			'2035-03-01 12:00:00',
-			'FREQ=WEEKLY;UNTIL=20350322',
-			null,
-			array( '2035-03-15' )
-		);
+		$excluded = RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;UNTIL=20350322', null, array( '2035-03-15' ) );
 
-		$starts = array_map( fn( $o ) => substr( $o['start'], 0, 10 ), $excluded );
-		$this->assertSame( array( '2035-03-01', '2035-03-08', '2035-03-22' ), $starts );
+		$this->assertSame( array( '2035-03-01', '2035-03-08', '2035-03-22' ), array_column( $excluded, 'start_date' ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -475,7 +528,6 @@ class RecurrenceServiceTest extends TestCase {
 		$active = RecurrenceService::reconcile_occurrences(
 			1,
 			$this->generated( 'FREQ=WEEKLY;COUNT=4' ),
-			false,
 			array( 'event_id' => null ),
 			array( '2035-03-15' )
 		);
@@ -507,7 +559,6 @@ class RecurrenceServiceTest extends TestCase {
 			RecurrenceService::reconcile_occurrences(
 				1,
 				$this->generated( 'FREQ=WEEKLY;COUNT=3' ),
-				false,
 				array( 'event_id' => null ),
 				array( '2035-03-08' )
 			);
@@ -532,7 +583,6 @@ class RecurrenceServiceTest extends TestCase {
 		$active = RecurrenceService::reconcile_occurrences(
 			1,
 			$this->generated( 'FREQ=WEEKLY;COUNT=3' ),
-			false,
 			array( 'event_id' => null ),
 			array( '2035-03-15' )
 		);
@@ -541,7 +591,7 @@ class RecurrenceServiceTest extends TestCase {
 		$this->assertSame( 'active', $this->db->rows[ $ids['2035-03-08'] ]->status );
 		$this->assertSame( 'cancelled', $this->db->rows[ $ids['2035-03-15'] ]->status );
 
-		RecurrenceService::reconcile_occurrences( 1, $this->generated( 'FREQ=WEEKLY;COUNT=3' ), false, array( 'event_id' => null ), array() );
+		RecurrenceService::reconcile_occurrences( 1, $this->generated( 'FREQ=WEEKLY;COUNT=3' ), array( 'event_id' => null ), array() );
 
 		$this->assertSame( 'active', $this->db->rows[ $ids['2035-03-15'] ]->status );
 		$this->assertCount( 3, $this->db->rows );
@@ -557,7 +607,6 @@ class RecurrenceServiceTest extends TestCase {
 		$active = RecurrenceService::reconcile_occurrences(
 			1,
 			$this->generated( 'FREQ=WEEKLY;COUNT=3' ),
-			false,
 			array( 'event_id' => null )
 		);
 
@@ -581,7 +630,6 @@ class RecurrenceServiceTest extends TestCase {
 		RecurrenceService::reconcile_occurrences(
 			1,
 			$this->generated( 'FREQ=WEEKLY;COUNT=3' ),
-			false,
 			array( 'event_id' => null ),
 			array( '2035-03-08' )
 		);
@@ -608,11 +656,103 @@ class RecurrenceServiceTest extends TestCase {
 			RecurrenceService::reconcile_occurrences(
 				1,
 				$this->generated( 'FREQ=WEEKLY;COUNT=3' ),
-				false,
 				array( 'event_id' => null ),
 				array( '2035-03-08' )
 			)
 		);
+	}
+
+	// -----------------------------------------------------------------------
+	// reconcile_occurrences — timing overrides
+	// -----------------------------------------------------------------------
+
+	/**
+	 * A series change rewrites only the timing groups an occurrence does not
+	 * override: own times survive a new series time, own dates survive a new
+	 * series span, and an inherited occurrence follows the series.
+	 */
+	public function test_reconcile_keeps_overridden_groups() {
+		$ids = $this->seed_series(
+			array(
+				'2035-03-08' => 'active',
+				'2035-03-15' => 'active',
+				'2035-03-22' => 'active',
+			),
+			array(
+				'2035-03-08' => array(
+					'start_time'     => '15:00:00',
+					'end_time'       => null,
+					'times_override' => 1,
+				),
+				'2035-03-15' => array(
+					'start_date'     => '2035-03-16',
+					'end_date'       => '2035-03-16',
+					'dates_override' => 1,
+				),
+			)
+		);
+
+		$series = $this->timing( '2035-03-01', null, '21:00:00' );
+		RecurrenceService::reconcile_occurrences( 1, $this->generated( 'FREQ=WEEKLY;COUNT=4', $series ), array( 'event_id' => null ) );
+
+		$this->assertSame( $this->timing( '2035-03-08', '15:00:00', null ), $this->stored_timing( $ids['2035-03-08'] ) );
+		$this->assertSame( $this->timing( '2035-03-16', null, '21:00:00' ), $this->stored_timing( $ids['2035-03-15'] ) );
+		$this->assertSame( $this->timing( '2035-03-22', null, '21:00:00' ), $this->stored_timing( $ids['2035-03-22'] ) );
+		$this->assertSame( 1, (int) $this->db->rows[ $ids['2035-03-08'] ]->times_override );
+		$this->assertSame( '2035-03-15', $this->db->rows[ $ids['2035-03-15'] ]->recurrence_anchor );
+	}
+
+	/**
+	 * A time cleared on an occurrence stays cleared: the override keeps the
+	 * null instead of inheriting the series time.
+	 */
+	public function test_reconcile_keeps_a_cleared_time() {
+		$ids = $this->seed_series(
+			array( '2035-03-08' => 'active' ),
+			array(
+				'2035-03-08' => array(
+					'start_time'     => null,
+					'end_time'       => null,
+					'times_override' => 1,
+				),
+			)
+		);
+
+		RecurrenceService::reconcile_occurrences( 1, $this->generated( 'FREQ=WEEKLY;COUNT=2' ), array( 'event_id' => null ) );
+
+		$this->assertSame( $this->timing( '2035-03-08', null, null ), $this->stored_timing( $ids['2035-03-08'] ) );
+	}
+
+	/**
+	 * Overnight series times on an occurrence moved to a single day are a
+	 * conflict; the same change is fine for inherited and cancelled dates.
+	 */
+	public function test_find_override_conflicts() {
+		$ids = $this->seed_series(
+			array(
+				'2035-03-08' => 'active',
+				'2035-03-15' => 'cancelled',
+				'2035-03-22' => 'active',
+			),
+			array(
+				'2035-03-08' => array( 'dates_override' => 1 ),
+				'2035-03-15' => array( 'dates_override' => 1 ),
+			)
+		);
+
+		$overnight = $this->generated( 'FREQ=WEEKLY;COUNT=4', $this->timing( '2035-03-01', '22:00:00', '02:00:00', '2035-03-02' ) );
+		$this->assertSame(
+			array(
+				array(
+					'id'         => $ids['2035-03-08'],
+					'start_date' => '2035-03-08',
+					'reason'     => 'end_time_before_start',
+				),
+			),
+			RecurrenceService::find_override_conflicts( 1, $overnight )
+		);
+
+		$this->assertSame( array(), RecurrenceService::find_override_conflicts( 1, $this->generated( 'FREQ=WEEKLY;COUNT=4', $this->timing( '2035-03-01', '09:00:00', '11:00:00' ) ) ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -637,21 +777,42 @@ class RecurrenceServiceTest extends TestCase {
 		// Weekly COUNT=5 with 03-08 newly excluded, 03-15 restored and 03-22
 		// still excluded.
 		$active = array_slice(
-			RecurrenceService::generate_occurrences(
-				'2035-03-01 10:00:00',
-				'2035-03-01 12:00:00',
-				'FREQ=WEEKLY;COUNT=5',
-				null,
-				array( '2035-03-08', '2035-03-22' )
-			),
+			RecurrenceService::generate_occurrences( $this->timing( '2035-03-01' ), 'FREQ=WEEKLY;COUNT=5', null, array( '2035-03-08', '2035-03-22' ) ),
 			1
 		);
 
 		$impact = RecurrenceService::classify_change( 1, $active );
 
 		$this->assertSame( array( $ids['2035-03-08'] ), array_column( $impact['removed'], 'id' ) );
-		$this->assertSame( array( '2035-03-15T10:00:00' ), array_column( $impact['added'], 'start_datetime' ) );
+		$this->assertSame( array( '2035-03-15' ), array_column( $impact['added'], 'start_date' ) );
+		$this->assertSame( array( '2035-03-15 10:00:00' ), array_column( $impact['added'], 'start_datetime' ) );
 		$this->assertSame( array( $ids['2035-03-29'] ), array_column( $impact['unchanged'], 'id' ) );
 		$this->assertSame( array(), $impact['shifted'] );
+	}
+
+	/**
+	 * A new series time shifts inherited dates only: a date with its own
+	 * times is unchanged.
+	 */
+	public function test_classify_change_respects_overrides() {
+		$ids = $this->seed_series(
+			array(
+				'2035-03-08' => 'active',
+				'2035-03-15' => 'active',
+			),
+			array(
+				'2035-03-08' => array(
+					'start_time'     => '15:00:00',
+					'times_override' => 1,
+				),
+			)
+		);
+
+		$impact = RecurrenceService::classify_change( 1, $this->generated( 'FREQ=WEEKLY;COUNT=3', $this->timing( '2035-03-01', null, '12:00:00' ) ) );
+
+		$this->assertSame( array( $ids['2035-03-08'] ), array_column( $impact['unchanged'], 'id' ) );
+		$this->assertSame( array( $ids['2035-03-15'] ), array_column( $impact['shifted'], 'id' ) );
+		$this->assertSame( '2035-03-15', $impact['shifted'][0]['new_start_date'] );
+		$this->assertNull( $impact['shifted'][0]['new_start_time'] );
 	}
 }

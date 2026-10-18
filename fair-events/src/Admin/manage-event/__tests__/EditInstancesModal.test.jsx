@@ -94,3 +94,28 @@ it( 'calls onClose when Close is clicked', () => {
 	fireEvent.click( closeButtons[ closeButtons.length - 1 ] );
 	expect( onClose ).toHaveBeenCalled();
 } );
+
+it( 'shows a moved occurrence on its date but toggles its scheduled date', () => {
+	const onToggleExdate = jest.fn();
+	render(
+		<EditInstancesModal
+			generatedOccurrences={ [
+				{
+					id: 2,
+					start_datetime: '2026-07-09 18:00:00',
+					recurrence_anchor: '2026-07-08',
+					status: 'active',
+				},
+			] }
+			togglingExdate={ null }
+			onToggleExdate={ onToggleExdate }
+			onClose={ () => {} }
+		/>
+	);
+
+	expect(
+		screen.getByText( instanceDateLabel( '2026-07-09' ), { exact: false } )
+	).toBeInTheDocument();
+	fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+	expect( onToggleExdate ).toHaveBeenCalledWith( '2026-07-08' );
+} );

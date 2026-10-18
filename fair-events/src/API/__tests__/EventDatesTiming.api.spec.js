@@ -5,8 +5,9 @@
  * Covers the canonical timing fields (start_date, end_date, start_time,
  * end_time): round trips of all four time combinations, genuine midnight
  * versus an absent time, all-day and multi-day events, omitted-versus-null
- * updates, validation, the deprecated datetime fields, and the temporary
- * refusal of missing times on a series.
+ * updates, validation, the deprecated datetime fields, and series with
+ * missing times. Occurrence overrides are covered in
+ * EventDatesOverrides.api.spec.js.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -343,60 +344,70 @@ test.describe( 'EventDatesController — optional event times', () => {
 		} );
 	} );
 
-	test( 'refuses series timings the datetimes cannot hold, for now', async () => {
-		const noStart = await create( {
-			start_date: '2036-06-01',
-			end_time: '19:00',
-			rrule: 'FREQ=WEEKLY;COUNT=3',
-		} );
-		expect( noStart.status() ).toBe( 400 );
-		expect( ( await noStart.json() ).code ).toBe(
-			'rest_series_times_required'
-		);
+	test( 'generates series with missing times without inventing any', async () => {
+		const series = [
+			{ start_time: null, end_time: '19:00' },
+			{ start_time: '18:00', end_time: null },
+			{ start_time: null, end_time: null },
+		];
 
-		const multiDayOpenEnd = await create( {
-			start_date: '2036-06-01',
-			end_date: '2036-06-02',
-			start_time: '18:00',
-			rrule: 'FREQ=WEEKLY;COUNT=3',
-		} );
-		expect( multiDayOpenEnd.status() ).toBe( 400 );
+		for ( const times of series ) {
+			const response = await create( {
+				start_date: '2036-06-01',
+				...times,
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			} );
+			expect( response.status() ).toBe( 201 );
+			const master = await read( ( await response.json() ).id );
+			expect( master.generated_occurrences ).toHaveLength( 2 );
+			expect( timingOf( master.generated_occurrences[ 1 ] ) ).toEqual( {
+				start_date: '2036-06-15',
+				end_date: '2036-06-15',
+				start_time: times.start_time
+					? `${ times.start_time }:00`
+					: null,
+				end_time: times.end_time ? `${ times.end_time }:00` : null,
+				all_day: false,
+			} );
+		}
 
-		// A start time without an end was always possible on a series.
-		const openEnd = await create( {
-			start_date: '2036-06-03',
-			start_time: '18:00',
-			rrule: 'FREQ=WEEKLY;COUNT=2',
-		} );
-		expect( openEnd.status() ).toBe( 201 );
-
-		const timed = await create( {
-			start_date: '2036-06-01',
-			start_time: '18:00',
-			end_time: '19:00',
-			rrule: 'FREQ=WEEKLY;COUNT=3',
-		} );
-		expect( timed.status() ).toBe( 201 );
-		const master = await timed.json();
-		expect( master.generated_occurrences ).toHaveLength( 2 );
-		expect( master.generated_occurrences[ 0 ] ).toMatchObject( {
-			start_date: '2036-06-08',
+		const multiDay = await (
+			await create( {
+				start_date: '2036-06-05',
+				end_date: '2036-06-07',
+				start_time: '18:00',
+				recurrence_mode: 'manual',
+				manual_dates: [ '2036-06-05', '2036-06-19' ],
+			} )
+		).json();
+		expect(
+			timingOf( ( await read( multiDay.id ) ).generated_occurrences[ 0 ] )
+		).toEqual( {
+			start_date: '2036-06-19',
+			end_date: '2036-06-21',
 			start_time: '18:00:00',
-			end_time: '19:00:00',
+			end_time: null,
+			all_day: false,
 		} );
 
-		const cleared = await update( master.id, { start_time: null } );
-		expect( cleared.status() ).toBe( 400 );
-		expect( ( await cleared.json() ).code ).toBe(
-			'rest_series_times_required'
-		);
-
-		const allDay = await create( {
-			start_date: '2036-06-02',
-			all_day: true,
-			rrule: 'FREQ=WEEKLY;COUNT=2',
-		} );
-		expect( allDay.status() ).toBe( 201 );
+		// Clearing the series start time clears it on every inherited date.
+		const timed = await (
+			await create( {
+				start_date: '2036-06-02',
+				start_time: '18:00',
+				end_time: '19:00',
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			} )
+		).json();
+		const cleared = await update( timed.id, { start_time: null } );
+		expect( cleared.status() ).toBe( 200 );
+		const after = await read( timed.id );
+		expect(
+			after.generated_occurrences.map( ( occ ) => occ.start_time )
+		).toEqual( [ null, null ] );
+		expect(
+			after.generated_occurrences.map( ( occ ) => occ.end_time )
+		).toEqual( [ '19:00:00', '19:00:00' ] );
 	} );
 
 	test( 'lists canonical timing in the All Events summary', async () => {
@@ -426,26 +437,7 @@ test.describe( 'EventDatesController — optional event times', () => {
 			end_time: '08:00:00',
 			all_day: false,
 		} );
-		// Copying would invent the missing start time, so it is not offered yet.
-		expect( row.copy_url ).toBeUndefined();
-
-		// A start time without an end could always be copied.
-		const openEnd = await (
-			await create( {
-				title: `${ title } open end`,
-				start_date: '2036-05-19',
-				start_time: '08:00',
-			} )
-		).json();
-		const openEndList = await api.get(
-			`/wp-json/fair-events/v1/event-dates/all?search=${ encodeURIComponent(
-				`${ title } open end`
-			) }`,
-			{ headers: adminHeaders }
-		);
-		const openEndRow = ( await openEndList.json() ).find(
-			( item ) => item.id === openEnd.id
-		);
-		expect( openEndRow.copy_url ).toMatch( /_wpnonce=/ );
+		// Copying keeps the start time missing, so it is offered.
+		expect( row.copy_url ).toMatch( /_wpnonce=/ );
 	} );
 } );

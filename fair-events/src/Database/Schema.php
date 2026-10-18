@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.45.0';
+	const DB_VERSION = '3.46.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -45,6 +45,8 @@ class Schema {
 			start_time TIME DEFAULT NULL,
 			end_time TIME DEFAULT NULL,
 			timing_migrated BOOLEAN NOT NULL DEFAULT 0,
+			dates_override BOOLEAN NOT NULL DEFAULT 0,
+			times_override BOOLEAN NOT NULL DEFAULT 0,
 			occurrence_type VARCHAR(20) NOT NULL DEFAULT 'single',
 			master_id BIGINT UNSIGNED DEFAULT NULL,
 			rrule VARCHAR(255) DEFAULT NULL,

@@ -9,6 +9,7 @@
 
 namespace FairEvents\Services;
 
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Models\EventDates;
 
 defined( 'WPINC' ) || die;
@@ -101,62 +102,59 @@ class RecurrenceService {
 	/**
 	 * Generate occurrences based on RRULE
 	 *
-	 * @param string $start_datetime Start datetime (Y-m-d H:i:s or Y-m-d\TH:i).
-	 * @param string $end_datetime   End datetime (Y-m-d H:i:s or Y-m-d\TH:i).
-	 * @param string $rrule          RRULE string.
-	 * @param int    $max            Maximum occurrences to generate.
-	 * @param array  $exdates        Array of excluded dates (Y-m-d format). Skipped dates still count toward COUNT limit.
-	 * @return array Array of occurrences with 'start' and 'end' keys.
+	 * Steps through calendar dates from the timing's start date. Every
+	 * occurrence keeps the calendar-day span, the times (each still
+	 * optional) and the all-day flag of `$timing` — no duration is derived
+	 * from times. An UNTIL limit with a time is compared against each
+	 * date's start time, or the start of that day when there is none.
+	 *
+	 * @param array  $timing  Canonical timing of the first occurrence (see EventTiming).
+	 * @param string $rrule   RRULE string.
+	 * @param int    $max     Maximum occurrences to generate.
+	 * @param array  $exdates Array of excluded dates (Y-m-d format). Skipped dates still count toward COUNT limit.
+	 * @return array[] Canonical timings, the first one starting on the timing's start date.
 	 */
-	public static function generate_occurrences( $start_datetime, $end_datetime, $rrule, $max = null, $exdates = array() ) {
+	public static function generate_occurrences( array $timing, $rrule, $max = null, $exdates = array() ) {
 		if ( null === $max ) {
 			$max = self::MAX_OCCURRENCES;
 		}
 
 		$parsed = self::parse_rrule( $rrule );
+		$timing = array_merge( EventTiming::undated(), $timing );
 
-		if ( empty( $parsed['freq'] ) ) {
+		if ( empty( $parsed['freq'] ) || empty( $timing['start_date'] ) ) {
 			return array();
 		}
 
-		// Calculate duration between start and end.
-		$start    = new \DateTime( $start_datetime );
-		$end      = new \DateTime( $end_datetime );
-		$duration = $start->diff( $end );
+		$until = $parsed['until'] ? $parsed['until']->format( 'Y-m-d H:i:s' ) : null;
+		$time  = $timing['start_time'] ?? '00:00:00';
 
 		$occurrences = array();
 
 		// First occurrence is the original date (this will be the master).
-		$current_start = clone $start;
+		$current = new \DateTime( $timing['start_date'], new \DateTimeZone( 'UTC' ) );
 
 		$count = 0;
 		$limit = $parsed['count'] ? min( $parsed['count'], $max ) : $max;
 
 		while ( $count < $limit ) {
+			$current_date = $current->format( 'Y-m-d' );
+
 			// Check UNTIL condition.
-			if ( $parsed['until'] && $current_start > $parsed['until'] ) {
+			if ( $until && $current_date . ' ' . $time > $until ) {
 				break;
 			}
 
 			// Count toward RRULE COUNT limit regardless of exclusion.
 			++$count;
 
-			$current_date = $current_start->format( 'Y-m-d' );
-
 			// Skip excluded dates but still count them.
 			if ( ! in_array( $current_date, $exdates, true ) ) {
-				// Calculate end for this occurrence.
-				$current_end = clone $current_start;
-				$current_end->add( $duration );
-
-				$occurrences[] = array(
-					'start' => $current_start->format( 'Y-m-d\TH:i:s' ),
-					'end'   => $current_end->format( 'Y-m-d\TH:i:s' ),
-				);
+				$occurrences[] = EventTiming::for_date( $timing, $current_date );
 			}
 
 			// Calculate next occurrence.
-			$current_start = self::add_interval( $current_start, $parsed['freq'], $parsed['interval'] );
+			$current = self::add_interval( $current, $parsed['freq'], $parsed['interval'] );
 		}
 
 		return $occurrences;
@@ -225,9 +223,9 @@ class RecurrenceService {
 			}
 			EventDates::save_or_update_master(
 				$event_id,
-				$master->start_datetime,
-				$master->end_datetime,
-				$master->all_day,
+				$master->get_timing(),
+				null,
+				null,
 				'single',
 				null,
 				'none'
@@ -235,23 +233,18 @@ class RecurrenceService {
 			return 1;
 		}
 
-		$occurrences = self::generate_occurrences(
-			$master->start_datetime,
-			$master->end_datetime,
-			$rrule
-		);
+		$occurrences = self::generate_occurrences( $master->get_timing(), $rrule );
 
 		if ( empty( $occurrences ) ) {
 			return 0;
 		}
 
 		// Ensure master row exists / is up to date with the new rrule and first occurrence time.
-		$first     = $occurrences[0];
 		$master_id = EventDates::save_or_update_master(
 			$event_id,
-			$first['start'],
-			$first['end'],
-			$master->all_day,
+			$occurrences[0],
+			null,
+			null,
 			'master',
 			$rrule,
 			'rule'
@@ -270,7 +263,6 @@ class RecurrenceService {
 		$reconciled = self::reconcile_occurrences(
 			$master_id,
 			$generated,
-			$master->all_day,
 			array( 'event_id' => $event_id ),
 			$excluded_dates
 		);
@@ -318,11 +310,7 @@ class RecurrenceService {
 			return 1;
 		}
 
-		$occurrences = self::generate_occurrences(
-			$master->start_datetime,
-			$master->end_datetime,
-			$rrule
-		);
+		$occurrences = self::generate_occurrences( $master->get_timing(), $rrule );
 
 		if ( empty( $occurrences ) ) {
 			return 0;
@@ -332,13 +320,14 @@ class RecurrenceService {
 		$first = $occurrences[0];
 		EventDates::update_by_id(
 			$event_date_id,
-			array(
-				'occurrence_type'   => 'master',
-				'rrule'             => $rrule,
-				'recurrence_mode'   => 'rule',
-				'start_datetime'    => $first['start'],
-				'end_datetime'      => $first['end'],
-				'recurrence_anchor' => ( new \DateTime( $first['start'] ) )->format( 'Y-m-d' ),
+			array_merge(
+				$first,
+				array(
+					'occurrence_type'   => 'master',
+					'rrule'             => $rrule,
+					'recurrence_mode'   => 'rule',
+					'recurrence_anchor' => $first['start_date'],
+				)
 			)
 		);
 
@@ -347,7 +336,6 @@ class RecurrenceService {
 		$reconciled = self::reconcile_occurrences(
 			$event_date_id,
 			$generated,
-			$master->all_day,
 			array( 'event_id' => $master->event_id ),
 			$excluded_dates
 		);
@@ -356,40 +344,23 @@ class RecurrenceService {
 	}
 
 	/**
-	 * Build the {start,end} occurrence set for a hand-picked list of dates.
+	 * Build the occurrence set for a hand-picked list of dates.
 	 *
-	 * Pure — no DB access. Each date takes the reference row's time-of-day
-	 * and duration (mirrors the RRULE path's duration handling in
-	 * generate_occurrences()). Dates are deduplicated and sorted ascending
-	 * so the first is always the earliest.
+	 * Pure — no DB access. Each date takes the reference timing's day span,
+	 * times and all-day flag, as generate_occurrences() does. Dates are
+	 * deduplicated and sorted ascending so the first is always the earliest.
 	 *
-	 * @param string   $reference_start Reference start datetime (Y-m-d H:i:s) —
-	 *                                  supplies time-of-day and duration.
-	 * @param string   $reference_end   Reference end datetime (Y-m-d H:i:s).
-	 * @param string[] $dates           Occurrence dates (Y-m-d), any order, may contain duplicates.
-	 * @return array Array of occurrences with 'start' and 'end' keys, sorted ascending.
+	 * @param array    $timing Reference canonical timing (see EventTiming).
+	 * @param string[] $dates  Occurrence dates (Y-m-d), any order, may contain duplicates.
+	 * @return array[] Canonical timings, sorted ascending.
 	 */
-	public static function build_manual_occurrences( $reference_start, $reference_end, array $dates ) {
+	public static function build_manual_occurrences( array $timing, array $dates ) {
 		$dates = array_values( array_unique( $dates ) );
 		sort( $dates );
 
-		if ( empty( $dates ) ) {
-			return array();
-		}
-
-		$start    = new \DateTime( $reference_start );
-		$end      = new \DateTime( $reference_end );
-		$duration = $start->diff( $end );
-		$time     = $start->format( 'H:i:s' );
-
 		$occurrences = array();
 		foreach ( $dates as $date ) {
-			$occ_start     = new \DateTime( $date . ' ' . $time );
-			$occ_end       = ( clone $occ_start )->add( $duration );
-			$occurrences[] = array(
-				'start' => $occ_start->format( 'Y-m-d\TH:i:s' ),
-				'end'   => $occ_end->format( 'Y-m-d\TH:i:s' ),
-			);
+			$occurrences[] = EventTiming::for_date( $timing, $date );
 		}
 
 		return $occurrences;
@@ -414,7 +385,7 @@ class RecurrenceService {
 			return 0;
 		}
 
-		$occurrences = self::build_manual_occurrences( $master->start_datetime, $master->end_datetime, $dates );
+		$occurrences = self::build_manual_occurrences( $master->get_timing(), $dates );
 
 		if ( empty( $occurrences ) ) {
 			return 0;
@@ -425,13 +396,14 @@ class RecurrenceService {
 
 		EventDates::update_by_id(
 			$master_id,
-			array(
-				'occurrence_type'   => $is_single ? 'single' : 'master',
-				'rrule'             => null,
-				'recurrence_mode'   => $is_single ? 'none' : 'manual',
-				'start_datetime'    => $first['start'],
-				'end_datetime'      => $first['end'],
-				'recurrence_anchor' => ( new \DateTime( $first['start'] ) )->format( 'Y-m-d' ),
+			array_merge(
+				$first,
+				array(
+					'occurrence_type'   => $is_single ? 'single' : 'master',
+					'rrule'             => null,
+					'recurrence_mode'   => $is_single ? 'none' : 'manual',
+					'recurrence_anchor' => $first['start_date'],
+				)
 			)
 		);
 
@@ -440,7 +412,6 @@ class RecurrenceService {
 		return 1 + self::reconcile_occurrences(
 			$master_id,
 			$generated,
-			$master->all_day,
 			array( 'event_id' => $master->event_id )
 		);
 	}
@@ -451,7 +422,10 @@ class RecurrenceService {
 	 * Matches desired occurrences to existing generated rows (active or
 	 * cancelled) by anchor date, then:
 	 * - Updates rows whose anchor matches (preserves id); a cancelled row whose
-	 *   anchor reappears in the desired set is restored to active.
+	 *   anchor reappears in the desired set is restored to active. Only the
+	 *   timing groups the row does not override are rewritten (see
+	 *   EventTiming::OVERRIDE_GROUPS), so an occurrence edited on its own
+	 *   keeps its dates or times through series changes.
 	 * - Inserts rows for new anchors.
 	 * - Keeps the desired anchors listed in $cancelled_anchors as cancelled rows
 	 *   (inserting them when missing), so a date the organizer excluded from the
@@ -466,32 +440,17 @@ class RecurrenceService {
 	 * hold NULL for them unless explicitly overridden, and resolve against the
 	 * master at read time.
 	 *
-	 * @param int           $master_id    Master event date row ID.
-	 * @param array         $desired      Desired generated occurrences — each entry has 'start' and 'end' keys.
-	 * @param bool          $all_day      All-day flag to apply to inserted/updated rows.
+	 * @param int           $master_id         Master event date row ID.
+	 * @param array[]       $desired           Desired generated occurrences — canonical timings.
 	 * @param array         $master_props      Non-inherited fields to copy onto children (currently just event_id).
 	 * @param string[]|null $cancelled_anchors Desired anchors (Y-m-d) that must be cancelled. Null means
 	 *                                         every desired anchor is active.
 	 * @return int|false Number of active generated children, or false when a row could not be written.
 	 */
-	public static function reconcile_occurrences( $master_id, $desired, $all_day, $master_props = array(), $cancelled_anchors = null ) {
-		$cancelled_anchors = array_fill_keys( (array) $cancelled_anchors, true );
-
-		// Build the desired set keyed by anchor date.
-		$desired_by_anchor = array();
-		foreach ( $desired as $occ ) {
-			$anchor                       = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' );
-			$desired_by_anchor[ $anchor ] = $occ;
-		}
-
-		// Load existing generated rows keyed by anchor.
-		$existing_by_anchor = EventDates::get_all_by_master_id( $master_id );
-		// Remove the master row itself — reconcile only touches generated children.
-		unset(
-			$existing_by_anchor[ ( new \DateTime(
-				EventDates::get_by_id( $master_id )->start_datetime
-			) )->format( 'Y-m-d' ) ]
-		);
+	public static function reconcile_occurrences( $master_id, $desired, $master_props = array(), $cancelled_anchors = null ) {
+		$cancelled_anchors  = array_fill_keys( (array) $cancelled_anchors, true );
+		$desired_by_anchor  = self::key_by_anchor( $desired );
+		$existing_by_anchor = self::get_generated_by_anchor( $master_id );
 
 		$count = 0;
 
@@ -505,11 +464,9 @@ class RecurrenceService {
 				// NULL for them unless explicitly overridden, and resolve
 				// against the master at read time.
 				$row    = $existing_by_anchor[ $anchor ];
-				$update = array(
-					'start_datetime'    => $occ['start'],
-					'end_datetime'      => $occ['end'],
-					'all_day'           => $all_day ? 1 : 0,
-					'recurrence_anchor' => $anchor,
+				$update = array_merge(
+					EventTiming::resolve_occurrence( $occ, $anchor, $row->get_timing(), $row->timing_overrides ),
+					array( 'recurrence_anchor' => $anchor )
 				);
 				if ( array_key_exists( 'event_id', $master_props ) ) {
 					$update['event_id'] = $master_props['event_id'];
@@ -528,9 +485,9 @@ class RecurrenceService {
 				if ( ! empty( $master_props['event_id'] ) ) {
 					$inserted = EventDates::save_occurrence(
 						$master_props['event_id'],
-						$occ['start'],
-						$occ['end'],
-						$all_day,
+						$occ,
+						null,
+						null,
 						'generated',
 						$master_id,
 						$anchor,
@@ -538,13 +495,13 @@ class RecurrenceService {
 					);
 				} else {
 					$inserted = EventDates::create_standalone_occurrence(
-						array(
-							'start_datetime'    => $occ['start'],
-							'end_datetime'      => $occ['end'],
-							'all_day'           => $all_day,
-							'master_id'         => $master_id,
-							'recurrence_anchor' => $anchor,
-							'status'            => $status,
+						array_merge(
+							$occ,
+							array(
+								'master_id'         => $master_id,
+								'recurrence_anchor' => $anchor,
+								'status'            => $status,
+							)
 						)
 					);
 				}
@@ -573,39 +530,101 @@ class RecurrenceService {
 	}
 
 	/**
+	 * Find active occurrences whose overrides cannot combine with a proposed
+	 * schedule.
+	 *
+	 * An occurrence overriding its dates still inherits its series' times,
+	 * and the reverse; a series change can make that combination invalid,
+	 * e.g. overnight times (22:00 to 02:00) on an occurrence moved to a
+	 * single day. Such a change must not be applied until the occurrence is
+	 * adjusted or reset.
+	 *
+	 * @param int     $master_id          Master event date row ID.
+	 * @param array[] $proposed_generated Desired generated occurrences — canonical timings.
+	 * @return array[] Conflicts, each with 'id', 'start_date' and 'reason' (an EventTiming error code).
+	 */
+	public static function find_override_conflicts( $master_id, $proposed_generated ) {
+		$existing  = self::get_generated_by_anchor( $master_id );
+		$conflicts = array();
+
+		foreach ( self::key_by_anchor( $proposed_generated ) as $anchor => $occ ) {
+			$row = $existing[ $anchor ] ?? null;
+			if ( ! $row || 'cancelled' === $row->status || ! in_array( true, $row->timing_overrides, true ) ) {
+				continue;
+			}
+
+			$error = EventTiming::validate( EventTiming::resolve_occurrence( $occ, $anchor, $row->get_timing(), $row->timing_overrides ) );
+			if ( $error ) {
+				$conflicts[] = array(
+					'id'         => (int) $row->id,
+					'start_date' => $row->start_date,
+					'reason'     => $error,
+				);
+			}
+		}
+
+		return $conflicts;
+	}
+
+	/**
+	 * Key canonical timings by their anchor (start) date.
+	 *
+	 * @param array[] $occurrences Canonical timings.
+	 * @return array<string, array> Timings keyed by start date.
+	 */
+	private static function key_by_anchor( $occurrences ) {
+		$by_anchor = array();
+		foreach ( $occurrences as $occ ) {
+			$by_anchor[ $occ['start_date'] ] = $occ;
+		}
+		return $by_anchor;
+	}
+
+	/**
+	 * A series' generated rows (active and cancelled) keyed by anchor, without
+	 * the master row itself.
+	 *
+	 * @param int $master_id Master event date row ID.
+	 * @return array<string, EventDates> Rows keyed by anchor date.
+	 */
+	private static function get_generated_by_anchor( $master_id ) {
+		return array_filter(
+			EventDates::get_all_by_master_id( $master_id ),
+			static function ( $row ) use ( $master_id ) {
+				return (int) $row->id !== (int) $master_id;
+			}
+		);
+	}
+
+	/**
 	 * Classify the impact of a proposed recurrence regeneration on generated children.
 	 *
 	 * Compares the desired generated occurrence set against existing DB rows (keyed
 	 * by anchor) and returns a partition into unchanged / shifted / added / removed.
-	 * Each entry in 'shifted' and 'removed' includes a 'dependents' count (ticket
-	 * types + active signups) and an 'is_past' flag.
+	 * A row's proposed timing keeps its overridden groups, so an occurrence
+	 * whose own times survive the change is unchanged. Each entry in
+	 * 'shifted' and 'removed' includes a 'dependents' count (ticket types +
+	 * active signups) and an 'is_past' flag.
 	 *
 	 * Only classifies generated children — the master row is always preserved.
 	 * Pass the active occurrences only: a cancelled row that becomes active again
 	 * counts as added, and one that stays out of the active set is not a change.
 	 *
-	 * @param int   $master_id         Master event date row ID.
-	 * @param array $proposed_generated Desired generated occurrences (slice after first);
-	 *                                  each entry has 'start' and 'end' keys.
+	 * Entries carry `start_date` / `start_time` (and `new_start_date` /
+	 * `new_start_time` when shifted) next to the deprecated `start_datetime`
+	 * (and `new_start_datetime`).
+	 *
+	 * @param int     $master_id          Master event date row ID.
+	 * @param array[] $proposed_generated Desired generated occurrences (slice after first) — canonical timings.
 	 * @return array {
 	 *     @type array $unchanged  Rows that would remain identical.
-	 *     @type array $shifted    Rows that would be updated in place (anchor matches, times differ).
+	 *     @type array $shifted    Rows that would be updated in place (anchor matches, timing differs).
 	 *     @type array $added      New anchors with no existing row.
 	 *     @type array $removed    Existing rows whose anchor is no longer desired.
 	 * }
 	 */
 	public static function classify_change( $master_id, $proposed_generated ) {
-		$desired_by_anchor = array();
-		foreach ( $proposed_generated as $occ ) {
-			$anchor                       = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d' );
-			$desired_by_anchor[ $anchor ] = $occ;
-		}
-
-		$all_existing  = EventDates::get_all_by_master_id( $master_id );
-		$master_row    = EventDates::get_by_id( $master_id );
-		$master_anchor = $master_row->recurrence_anchor
-			?? ( new \DateTime( $master_row->start_datetime ) )->format( 'Y-m-d' );
-		unset( $all_existing[ $master_anchor ] );
+		$all_existing = self::get_generated_by_anchor( $master_id );
 
 		$now = current_time( 'mysql' );
 
@@ -616,33 +635,40 @@ class RecurrenceService {
 			'removed'   => array(),
 		);
 
-		foreach ( $desired_by_anchor as $anchor => $occ ) {
+		foreach ( self::key_by_anchor( $proposed_generated ) as $anchor => $occ ) {
 			if ( isset( $all_existing[ $anchor ] ) && 'cancelled' !== $all_existing[ $anchor ]->status ) {
-				$row            = $all_existing[ $anchor ];
-				$existing_start = ( new \DateTime( $row->start_datetime ) )->format( 'Y-m-d\TH:i:s' );
-				$proposed_start = ( new \DateTime( $occ['start'] ) )->format( 'Y-m-d\TH:i:s' );
+				$row      = $all_existing[ $anchor ];
+				$current  = $row->get_timing();
+				$proposed = EventTiming::resolve_occurrence( $occ, $anchor, $current, $row->timing_overrides );
 
-				if ( $existing_start === $proposed_start ) {
+				if ( $proposed === $current ) {
 					$result['unchanged'][] = array(
 						'id'             => $row->id,
 						'start_datetime' => $row->start_datetime,
+						'start_date'     => $row->start_date,
+						'start_time'     => $row->start_time,
 					);
 				} else {
 					$result['shifted'][] = array(
 						'id'                 => $row->id,
 						'start_datetime'     => $row->start_datetime,
-						'new_start_datetime' => $occ['start'],
+						'start_date'         => $row->start_date,
+						'start_time'         => $row->start_time,
+						'new_start_datetime' => EventTiming::to_legacy( $proposed )['start_datetime'],
+						'new_start_date'     => $proposed['start_date'],
+						'new_start_time'     => $proposed['start_time'],
 						'is_past'            => $row->start_datetime < $now,
 						'dependents'         => self::count_dependents( $row->id ),
 					);
 				}
-				unset( $all_existing[ $anchor ] );
 			} else {
 				$result['added'][] = array(
-					'start_datetime' => $occ['start'],
+					'start_datetime' => EventTiming::to_legacy( $occ )['start_datetime'],
+					'start_date'     => $occ['start_date'],
+					'start_time'     => $occ['start_time'],
 				);
-				unset( $all_existing[ $anchor ] );
 			}
+			unset( $all_existing[ $anchor ] );
 		}
 
 		foreach ( $all_existing as $stale_row ) {
@@ -652,6 +678,8 @@ class RecurrenceService {
 			$result['removed'][] = array(
 				'id'             => $stale_row->id,
 				'start_datetime' => $stale_row->start_datetime,
+				'start_date'     => $stale_row->start_date,
+				'start_time'     => $stale_row->start_time,
 				'is_past'        => $stale_row->start_datetime < $now,
 				'dependents'     => self::count_dependents( $stale_row->id ),
 			);

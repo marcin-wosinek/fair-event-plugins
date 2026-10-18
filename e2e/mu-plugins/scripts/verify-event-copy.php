@@ -161,7 +161,17 @@ try {
 	$assert( ! is_wp_error( $source ), 'Cannot resolve source.' );
 	$source_rows = $snapshot( array( 'fair_event_dates', 'fair_event_date_posts' ) );
 	$source_post = get_post( $source_post_id )->to_array();
-	$copy        = ( new EventCopyService() )->copy( $source, 'Manual series copy', '2040-02-01 10:00:00', '2040-02-01 12:00:00' );
+	$copy        = ( new EventCopyService() )->copy(
+		$source,
+		'Manual series copy',
+		array(
+			'start_date' => '2040-02-01',
+			'end_date'   => '2040-02-01',
+			'start_time' => '10:00:00',
+			'end_time'   => '12:00:00',
+			'all_day'    => false,
+		)
+	);
 	$assert( ! is_wp_error( $copy ), 'Manual copy failed.' );
 	$assert( 'draft' === get_post_status( $copy['post_id'] ), 'Copied primary post is not draft.' );
 	$master = EventDates::get_by_id( $copy['event_date_id'] );
@@ -192,7 +202,17 @@ try {
 		};
 		add_filter( 'fair_events_event_copy_fail_at', $fail, 10, 2 );
 		try {
-			$failed = ( new EventCopyService() )->copy( $source, 'Failed copy', '2040-03-01 10:00:00', '2040-03-01 12:00:00' );
+			$failed = ( new EventCopyService() )->copy(
+				$source,
+				'Failed copy',
+				array(
+					'start_date' => '2040-03-01',
+					'end_date'   => '2040-03-01',
+					'start_time' => '10:00:00',
+					'end_time'   => '12:00:00',
+					'all_day'    => false,
+				)
+			);
 		} finally {
 			remove_filter( 'fair_events_event_copy_fail_at', $fail, 10 );
 		}

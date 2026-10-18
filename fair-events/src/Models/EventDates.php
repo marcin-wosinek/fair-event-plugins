@@ -196,6 +196,18 @@ class EventDates {
 	public $recurrence_anchor;
 
 	/**
+	 * Timing override groups of a generated occurrence (see
+	 * EventTiming::OVERRIDE_GROUPS): an overridden group keeps the
+	 * occurrence's own values when its series changes.
+	 *
+	 * @var array<string, bool>
+	 */
+	public $timing_overrides = array(
+		'dates' => false,
+		'times' => false,
+	);
+
+	/**
 	 * Junction-linked post IDs loaded in bulk by preload_linked_post_ids(),
 	 * or null when they haven't been, so get_primary_linked_post_id() queries.
 	 *
@@ -283,6 +295,7 @@ class EventDates {
 		$event_dates->address                  = isset( $result->address ) ? $result->address : null;
 		$event_dates->recurrence_anchor        = $result->recurrence_anchor ?? null;
 		$event_dates->set_timing( EventTiming::from_row( $result ) );
+		$event_dates->timing_overrides = EventTiming::overrides_from_row( $result );
 
 		self::resolve_instance( $event_dates );
 
@@ -333,6 +346,29 @@ class EventDates {
 
 		return EventTiming::columns(
 			EventTiming::from_legacy( $data['start_datetime'] ?? null, $data['end_datetime'] ?? null, ! empty( $data['all_day'] ) )
+		);
+	}
+
+	/**
+	 * Timing column values for positional timing arguments: a canonical
+	 * timing array, or legacy start/end datetimes and the all-day flag.
+	 *
+	 * @param string|array $start   Start datetime, or the canonical timing.
+	 * @param string|null  $end     End datetime (ignored with a canonical timing).
+	 * @param bool|null    $all_day All-day flag (ignored with a canonical timing).
+	 * @return array<string, mixed> Column values (see EventTiming::columns()).
+	 */
+	private static function timing_arg_columns( $start, $end, $all_day ) {
+		if ( is_array( $start ) ) {
+			return EventTiming::columns( $start );
+		}
+
+		return self::timing_columns(
+			array(
+				'start_datetime' => $start,
+				'end_datetime'   => $end,
+				'all_day'        => $all_day,
+			)
 		);
 	}
 
@@ -486,14 +522,15 @@ class EventDates {
 	/**
 	 * Save a single occurrence
 	 *
-	 * @param int         $event_id           Event post ID.
-	 * @param string      $start              Start datetime.
-	 * @param string      $end                End datetime.
-	 * @param bool        $all_day            All day flag.
-	 * @param string      $occurrence_type    Occurrence type (single, master, generated).
-	 * @param int|null    $master_id          Master occurrence ID (for generated occurrences).
-	 * @param string|null $recurrence_anchor  Anchor date (Y-m-d).
-	 * @param string      $status             Row status ('active' or 'cancelled').
+	 * @param int          $event_id           Event post ID.
+	 * @param string|array $start              Start datetime, or the canonical timing (see
+	 *                                         EventTiming), which then replaces $end and $all_day.
+	 * @param string|null  $end                End datetime.
+	 * @param bool|null    $all_day            All day flag.
+	 * @param string       $occurrence_type    Occurrence type (single, master, generated).
+	 * @param int|null     $master_id          Master occurrence ID (for generated occurrences).
+	 * @param string|null  $recurrence_anchor  Anchor date (Y-m-d).
+	 * @param string       $status             Row status ('active' or 'cancelled').
 	 * @return int|false The row ID on success, false on failure.
 	 */
 	public static function save_occurrence( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $master_id = null, $recurrence_anchor = null, $status = 'active' ) {
@@ -504,13 +541,7 @@ class EventDates {
 
 		$data = array_merge(
 			array( 'event_id' => $event_id ),
-			self::timing_columns(
-				array(
-					'start_datetime' => $start,
-					'end_datetime'   => $end,
-					'all_day'        => $all_day,
-				)
-			),
+			self::timing_arg_columns( $start, $end, $all_day ),
 			array(
 				'occurrence_type'   => $occurrence_type,
 				'master_id'         => $master_id,
@@ -533,13 +564,14 @@ class EventDates {
 	/**
 	 * Update the master occurrence (first occurrence of a recurring event)
 	 *
-	 * @param int         $event_id        Event post ID.
-	 * @param string      $start           Start datetime.
-	 * @param string      $end             End datetime.
-	 * @param bool        $all_day         All day flag.
-	 * @param string      $occurrence_type Occurrence type (single or master).
-	 * @param string|null $rrule           Recurrence rule (RRULE format).
-	 * @param string|null $recurrence_mode Explicit series shape ('none', 'rule', 'manual'). Inferred from $rrule when null.
+	 * @param int          $event_id        Event post ID.
+	 * @param string|array $start           Start datetime, or the canonical timing (see
+	 *                                      EventTiming), which then replaces $end and $all_day.
+	 * @param string|null  $end             End datetime.
+	 * @param bool|null    $all_day         All day flag.
+	 * @param string       $occurrence_type Occurrence type (single or master).
+	 * @param string|null  $rrule           Recurrence rule (RRULE format).
+	 * @param string|null  $recurrence_mode Explicit series shape ('none', 'rule', 'manual'). Inferred from $rrule when null.
 	 * @return int|false The row ID on success, false on failure.
 	 */
 	public static function save_or_update_master( $event_id, $start, $end, $all_day, $occurrence_type = 'single', $rrule = null, $recurrence_mode = null ) {
@@ -562,13 +594,7 @@ class EventDates {
 
 		$data = array_merge(
 			array( 'event_id' => $event_id ),
-			self::timing_columns(
-				array(
-					'start_datetime' => $start,
-					'end_datetime'   => $end,
-					'all_day'        => $all_day,
-				)
-			),
+			self::timing_arg_columns( $start, $end, $all_day ),
 			array(
 				'occurrence_type' => $occurrence_type,
 				'master_id'       => null,
@@ -1231,6 +1257,8 @@ class EventDates {
 			'start_time'         => '%s',
 			'end_time'           => '%s',
 			'timing_migrated'    => '%d',
+			'dates_override'     => '%d',
+			'times_override'     => '%d',
 			'occurrence_type'    => '%s',
 			'master_id'          => '%d',
 			'rrule'              => '%s',
@@ -1416,7 +1444,7 @@ class EventDates {
 	/**
 	 * Get all rows belonging to a recurring series (the master row itself plus
 	 * every generated child), keyed by recurrence_anchor (falling back to
-	 * DATE(start_datetime) for un-backfilled rows).
+	 * the start date for un-backfilled rows).
 	 *
 	 * Used by RecurrenceService::reconcile_occurrences() to match desired
 	 * occurrences against existing rows without churning IDs.
@@ -1441,7 +1469,7 @@ class EventDates {
 		$map = array();
 		foreach ( $results as $result ) {
 			$row    = self::hydrate( $result );
-			$anchor = $row->recurrence_anchor ?? ( new \DateTime( $row->start_datetime ) )->format( 'Y-m-d' );
+			$anchor = $row->recurrence_anchor ?? $row->start_date;
 
 			$map[ $anchor ] = $row;
 		}
