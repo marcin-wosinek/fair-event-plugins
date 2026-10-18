@@ -11,6 +11,7 @@ use FairEvents\Database\EventSourceRepository;
 use FairEvents\Notifications\BulkEmailAdapter;
 use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\BulkEmailSettings;
+use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\DeliveryLog;
 use FairEvents\Notifications\IndividualEmailDispatcher;
 use FairEvents\Notifications\IndividualEmailEvents;
@@ -36,10 +37,16 @@ defined( 'WPINC' ) || die;
 /**
  * Settings, preview, test and status routes for weekly event notifications.
  *
- * Every channel has its own settings, preview and test routes, so saving or
- * testing one never touches another. A channel this plugin does not run on
- * this request (its former owner still sends it, or the plugin that delivers
- * it is inactive) is read-only: its saved settings stay as they are.
+ * Every notification configuration has its own routes under
+ * `configurations/{id}`, so saving or testing one never touches another.
+ * Configurations are created here with a server-generated ID and start
+ * paused; their type never changes. The type routes (`telegram`,
+ * `bulk-email`, `individual-email`) remain for compatibility and manage only
+ * the configuration that took over that type's former single settings.
+ *
+ * A type this plugin does not run on this request (its former owner still
+ * sends it, or the plugin that delivers it is inactive) is read-only: its
+ * saved settings stay as they are and no configuration of it is added.
  *
  * The individual email is sent by this plugin alone, to one address an
  * administrator typed in. That address is only ever returned by these
@@ -71,7 +78,7 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		$schedule_args = array(
+		$schedule_args   = array(
 			'enabled'     => array( 'type' => 'boolean' ),
 			'source_slug' => array( 'type' => 'string' ),
 			'day_of_week' => array(
@@ -86,6 +93,39 @@ class EventNotificationsController extends WP_REST_Controller {
 			'week_scope'  => array(
 				'type' => 'string',
 				'enum' => TelegramSettings::WEEK_SCOPES,
+			),
+		);
+		$telegram_args   = array(
+			'page_id'  => array(
+				'type'    => 'integer',
+				'minimum' => 0,
+			),
+			'chat_ids' => array(
+				'type'  => array( 'array', 'string' ),
+				'items' => array( 'type' => 'string' ),
+			),
+		);
+		$email_args      = array(
+			'skip_empty' => array( 'type' => 'boolean' ),
+			'subject'    => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'intro'      => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'wp_kses_post',
+			),
+			'outro'      => array(
+				'type'              => 'string',
+				'sanitize_callback' => 'wp_kses_post',
+			),
+		);
+		$individual_args = array(
+			// Checked in the callback, so its message reaches the page.
+			'recipient'       => array( 'type' => 'string' ),
+			'event_selection' => array(
+				'type'              => 'string',
+				'validate_callback' => array( $this, 'validate_event_selection' ),
 			),
 		);
 
@@ -234,6 +274,79 @@ class EventNotificationsController extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
+
+		$configuration = '/' . $this->rest_base . '/configurations/(?P<id>[a-z0-9_-]{1,36})';
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/configurations',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'create_configuration' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+				'args'                => array(
+					'type' => array(
+						'type'     => 'string',
+						'enum'     => Configurations::TYPES,
+						'required' => true,
+					),
+					'name' => array( 'type' => 'string' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$configuration,
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_configuration' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_configuration' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					// Every type's fields; each type reads only its own.
+					'args'                => $schedule_args + $telegram_args + $email_args + $individual_args + array(
+						'name' => array( 'type' => 'string' ),
+						// Checked in the callback: a configuration's type never changes.
+						'type' => array( 'type' => 'string' ),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$configuration . '/preview',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'preview_configuration' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$configuration . '/test',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'test_configuration' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$configuration . '/history',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'configuration_history' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
 	}
 
 	/**
@@ -278,40 +391,330 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Read every channel's settings and delivery status.
+	 * Read every configuration's settings and delivery status.
+	 *
+	 * `channels` holds, per type, the configuration the type routes manage.
 	 *
 	 * @param WP_REST_Request|null $request Request, unused.
 	 * @return \WP_REST_Response
 	 */
 	public function get_item( $request = null ) {
 		unset( $request );
-		$telegram = TelegramSettings::get();
+
+		$configurations = array();
+		$page_ids       = array();
+		foreach ( Configurations::all() as $record ) {
+			$payload                         = $this->configuration_payload( $record );
+			$configurations[ $record['id'] ] = $payload;
+			if ( Configurations::TELEGRAM === $record['type'] && $payload['page_id'] ) {
+				$page_ids[] = $payload['page_id'];
+			}
+		}
+
+		$channels = array();
+		$types    = array();
+		foreach ( Configurations::TYPES as $type ) {
+			$id                = Configurations::legacy_id( $type );
+			$channels[ $type ] = $configurations[ $id ] ?? $this->configuration_payload(
+				array(
+					'id'   => $id,
+					'type' => $type,
+					'name' => '',
+				)
+			);
+			$state             = $this->type_state( $type );
+			$types[ $type ]    = array(
+				'state'         => $state['state'],
+				'state_message' => $state['message'],
+			);
+		}
 
 		return rest_ensure_response(
 			array(
-				'sources'  => $this->sources(),
-				'pages'    => $this->pages( $telegram['page_id'] ),
-				'channels' => array(
-					'telegram'         => $this->telegram_channel( $telegram ),
-					'bulk_email'       => $this->bulk_email_channel(),
-					'individual_email' => $this->individual_email_channel(),
-				),
+				'sources'        => $this->sources(),
+				'pages'          => $this->pages( array_unique( $page_ids ) ),
+				'types'          => $types,
+				'configurations' => array_values( $configurations ),
+				'channels'       => $channels,
 			)
 		);
 	}
 
 	/**
-	 * Save the Telegram settings.
+	 * Add a configuration. It starts paused, with the type's defaults.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function create_configuration( $request ) {
+		$type        = (string) $request->get_param( 'type' );
+		$unavailable = $this->type_unavailable( $type );
+		if ( $unavailable ) {
+			return $unavailable;
+		}
+
+		$record = Configurations::create( $type, (string) $request->get_param( 'name' ), $this->default_settings( $type ) );
+		if ( ! $record ) {
+			return new WP_Error(
+				'configuration_not_created',
+				__( 'The notification could not be added. Please try again.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$response = rest_ensure_response( $this->configuration_payload( $record ) );
+		$response->set_status( 201 );
+		return $response;
+	}
+
+	/**
+	 * Read one configuration.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function get_configuration( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+
+		return rest_ensure_response( $this->configuration_payload( $record ) );
+	}
+
+	/**
+	 * Save one configuration's name and settings.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function update_configuration( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+		if ( $request->has_param( 'type' ) && $request->get_param( 'type' ) !== $record['type'] ) {
+			return new WP_Error(
+				'configuration_type_immutable',
+				__( 'A notification’s kind cannot be changed. Add a new notification instead. Nothing was saved.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$error = $this->type_unavailable( $record['type'] );
+		if ( ! $error ) {
+			$error = $this->save_settings( $record['id'], $record['type'], $request );
+		}
+		if ( $error ) {
+			return $error;
+		}
+		if ( $request->has_param( 'name' ) ) {
+			Configurations::update( $record['id'], array( 'name' => $request->get_param( 'name' ) ) );
+		}
+
+		return rest_ensure_response( $this->configuration_payload( Configurations::get( $record['id'] ) ) );
+	}
+
+	/**
+	 * Preview what one configuration's next send would deliver.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function preview_configuration( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+
+		switch ( $record['type'] ) {
+			case Configurations::TELEGRAM:
+				return $this->preview_telegram_configuration( $record['id'] );
+			case Configurations::BULK_EMAIL:
+				return $this->preview_bulk_email_configuration( $record['id'] );
+			default:
+				return $this->preview_individual_email_configuration( $record['id'] );
+		}
+	}
+
+	/**
+	 * Send one configuration's test.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function test_configuration( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+
+		switch ( $record['type'] ) {
+			case Configurations::TELEGRAM:
+				return $this->test_telegram_configuration( $record['id'] );
+			case Configurations::BULK_EMAIL:
+				return $this->test_bulk_email_configuration( $record['id'] );
+			default:
+				return $this->test_individual_email_configuration( $record['id'] );
+		}
+	}
+
+	/**
+	 * One configuration's next send, run history and delivery records.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function configuration_history( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+		$payload = $this->configuration_payload( $record );
+
+		return rest_ensure_response(
+			array(
+				'id'         => $record['id'],
+				'next_run'   => $payload['next_run'],
+				'runs'       => $payload['runs'],
+				'deliveries' => $payload['deliveries'] ?? array(),
+			)
+		);
+	}
+
+	/**
+	 * Save the Telegram configuration the type routes manage.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	public function update_telegram( $request ) {
-		$unavailable = $this->telegram_unavailable();
-		if ( $unavailable ) {
-			return $unavailable;
+		return $this->update_legacy( Configurations::TELEGRAM, $request );
+	}
+
+	/**
+	 * Preview the Telegram configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function preview_telegram() {
+		return $this->preview_telegram_configuration( Configurations::legacy_id( Configurations::TELEGRAM ) );
+	}
+
+	/**
+	 * Test the Telegram configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function test_telegram() {
+		return $this->test_telegram_configuration( Configurations::legacy_id( Configurations::TELEGRAM ) );
+	}
+
+	/**
+	 * Save the bulk email configuration the type routes manage.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function update_bulk_email( $request ) {
+		return $this->update_legacy( Configurations::BULK_EMAIL, $request );
+	}
+
+	/**
+	 * Preview the bulk email configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function preview_bulk_email() {
+		return $this->preview_bulk_email_configuration( Configurations::legacy_id( Configurations::BULK_EMAIL ) );
+	}
+
+	/**
+	 * Test the bulk email configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function test_bulk_email() {
+		return $this->test_bulk_email_configuration( Configurations::legacy_id( Configurations::BULK_EMAIL ) );
+	}
+
+	/**
+	 * Save the individual email configuration the type routes manage.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function update_individual_email( $request ) {
+		return $this->update_legacy( Configurations::INDIVIDUAL_EMAIL, $request );
+	}
+
+	/**
+	 * Preview the individual email configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function preview_individual_email() {
+		return $this->preview_individual_email_configuration( Configurations::legacy_id( Configurations::INDIVIDUAL_EMAIL ) );
+	}
+
+	/**
+	 * Test the individual email configuration the type routes manage.
+	 *
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function test_individual_email() {
+		return $this->test_individual_email_configuration( Configurations::legacy_id( Configurations::INDIVIDUAL_EMAIL ) );
+	}
+
+	/**
+	 * Save through a type route: the type's migrated configuration only.
+	 *
+	 * @param string          $type    Notification type.
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error The whole page payload, as before configurations had IDs.
+	 */
+	private function update_legacy( $type, $request ) {
+		$error = $this->type_unavailable( $type );
+		if ( $error ) {
+			return $error;
 		}
 
+		$id = Configurations::legacy_id( $type );
+		if ( ! Configurations::exists( $id, $type ) && ! Configurations::create( $type, '', $this->default_settings( $type ), $id ) ) {
+			return new WP_Error( 'configuration_not_created', __( 'The notification could not be saved. Please try again.', 'fair-events' ), array( 'status' => 500 ) );
+		}
+
+		$error = $this->save_settings( $id, $type, $request );
+		return $error ? $error : $this->get_item();
+	}
+
+	/**
+	 * Validate and save one configuration's settings, then reschedule it when needed.
+	 *
+	 * @param string          $id      Configuration ID.
+	 * @param string          $type    Its type.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_Error|null Why nothing was saved, or null.
+	 */
+	private function save_settings( $id, $type, $request ) {
+		switch ( $type ) {
+			case Configurations::TELEGRAM:
+				return $this->save_telegram( $id, $request );
+			case Configurations::BULK_EMAIL:
+				return $this->save_bulk_email( $id, $request );
+			default:
+				return $this->save_individual_email( $id, $request );
+		}
+	}
+
+	/**
+	 * Save one Telegram configuration.
+	 *
+	 * @param string          $id      Configuration ID.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_Error|null
+	 */
+	private function save_telegram( $id, $request ) {
 		// The token lives in Connectors; never treat it as a setting here.
 		if ( $request->has_param( 'telegram_bot_token' ) || $request->has_param( 'bot_token' ) ) {
 			return new WP_Error(
@@ -321,7 +724,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			);
 		}
 
-		$settings = TelegramSettings::get();
+		$settings = TelegramSettings::get( $id );
 		$previous = $settings;
 
 		foreach ( array( 'source_slug', 'page_id', 'day_of_week', 'time_of_day', 'week_scope' ) as $field ) {
@@ -339,8 +742,8 @@ class EventNotificationsController extends WP_REST_Controller {
 			$chat_ids = TelegramSettings::parse_chat_ids( $request->get_param( 'chat_ids' ) );
 			$invalid  = array_filter(
 				$chat_ids,
-				static function ( $id ) {
-					return ! TelegramSettings::valid_chat_id( $id );
+				static function ( $chat_id ) {
+					return ! TelegramSettings::valid_chat_id( $chat_id );
 				}
 			);
 			if ( $invalid ) {
@@ -388,29 +791,132 @@ class EventNotificationsController extends WP_REST_Controller {
 			}
 		}
 
-		TelegramSettings::save( $settings );
+		TelegramSettings::save( $id, $settings );
 
-		$schedule_fields = array( 'enabled', 'day_of_week', 'time_of_day', 'week_scope' );
-		$changed         = array_filter(
-			$schedule_fields,
-			static function ( $field ) use ( $previous, $settings ) {
-				return $previous[ $field ] !== $settings[ $field ];
-			}
-		);
-		if ( $changed || ( $settings['enabled'] && ! TelegramDispatcher::next_run() ) ) {
-			TelegramDispatcher::reschedule( $settings );
+		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day', 'week_scope' ), $previous, $settings )
+			|| ( $settings['enabled'] && ! TelegramDispatcher::next_run( $id ) ) ) {
+			TelegramDispatcher::reschedule( $id, $settings );
 		}
 
-		return $this->get_item();
+		return null;
 	}
 
 	/**
-	 * Preview the selected week relative to today in the site timezone.
+	 * Save one bulk email configuration.
 	 *
+	 * @param string          $id      Configuration ID.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_Error|null
+	 */
+	private function save_bulk_email( $id, $request ) {
+		$settings = BulkEmailSettings::stored( $id );
+		$previous = $settings;
+		foreach ( array_keys( BulkEmailSettings::defaults() ) as $field ) {
+			if ( $request->has_param( $field ) ) {
+				$settings[ $field ] = $request->get_param( $field );
+			}
+		}
+		$settings = BulkEmailSettings::sanitize( $settings );
+
+		if ( $settings['enabled'] ) {
+			$source = '' !== $settings['source_slug'] ? ( new EventSourceRepository() )->get_by_slug( $settings['source_slug'] ) : null;
+			if ( ! $source || empty( $source['enabled'] ) ) {
+				return new WP_Error(
+					'invalid_source',
+					'' === $settings['source_slug']
+						? __( 'Choose an event feed before turning on the weekly email.', 'fair-events' )
+						: __( 'The selected event feed does not exist or is disabled.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		BulkEmailSettings::save( $id, $settings );
+
+		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day' ), $previous, $settings )
+			|| ( $settings['enabled'] && ! BulkEmailDispatcher::next_run( $id ) ) ) {
+			BulkEmailDispatcher::reschedule( $id, $settings );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Save one individual email configuration.
+	 *
+	 * @param string          $id      Configuration ID.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_Error|null
+	 */
+	private function save_individual_email( $id, $request ) {
+		// Refused as a whole: a list or an address with extra headers is never
+		// trimmed down to something that could be saved.
+		if ( $request->has_param( 'recipient' ) && null === IndividualEmailSettings::parse_recipient( $request->get_param( 'recipient' ) ) ) {
+			return new WP_Error(
+				'invalid_recipient',
+				__( 'Enter exactly one email address, for example name@example.com. Nothing was saved.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$settings = IndividualEmailSettings::stored( $id );
+		$previous = $settings;
+		foreach ( array_keys( IndividualEmailSettings::defaults() ) as $field ) {
+			if ( $request->has_param( $field ) ) {
+				$settings[ $field ] = $request->get_param( $field );
+			}
+		}
+		$settings = IndividualEmailSettings::sanitize( $settings );
+
+		if ( $settings['enabled'] ) {
+			if ( '' === $settings['recipient'] ) {
+				return new WP_Error(
+					'missing_recipient',
+					__( 'Enter the email address that receives the weekly email before turning it on.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			$check = ( new IndividualEmailEvents() )->check( $settings['event_selection'] );
+			if ( is_wp_error( $check ) ) {
+				return new WP_Error( $check->get_error_code(), $check->get_error_message(), array( 'status' => 400 ) );
+			}
+		}
+
+		IndividualEmailSettings::save( $id, $settings );
+
+		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day' ), $previous, $settings )
+			|| ( $settings['enabled'] && ! IndividualEmailDispatcher::next_run( $id ) ) ) {
+			IndividualEmailDispatcher::reschedule( $id, $settings );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Whether any schedule field differs between two settings arrays.
+	 *
+	 * @param string[] $fields   Schedule fields.
+	 * @param array    $previous Settings before the save.
+	 * @param array    $settings Saved settings.
+	 * @return bool
+	 */
+	private static function schedule_changed( array $fields, array $previous, array $settings ) {
+		foreach ( $fields as $field ) {
+			if ( $previous[ $field ] !== $settings[ $field ] ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Preview a Telegram configuration's week relative to today in the site timezone.
+	 *
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function preview_telegram() {
-		$summary = $this->compose_test_summary();
+	private function preview_telegram_configuration( $id ) {
+		$summary = $this->compose_test_summary( $id );
 		if ( is_wp_error( $summary ) ) {
 			return $summary;
 		}
@@ -428,15 +934,16 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send the selected week's summary to every saved Telegram chat,
-	 * with the credential currently in effect.
+	 * Send a Telegram configuration's selected week to each of its saved
+	 * chats, with the credential currently in effect.
 	 *
 	 * Test sends are not delivery records and do not affect scheduled sends.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function test_telegram() {
-		$unavailable = $this->telegram_unavailable();
+	private function test_telegram_configuration( $id ) {
+		$unavailable = $this->type_unavailable( Configurations::TELEGRAM );
 		if ( $unavailable ) {
 			return $unavailable;
 		}
@@ -448,12 +955,12 @@ class EventNotificationsController extends WP_REST_Controller {
 		}
 
 		$provider     = new TelegramProvider();
-		$destinations = $provider->destinations( TelegramSettings::get(), true );
+		$destinations = $provider->destinations( TelegramSettings::get( $id ), true );
 		if ( ! $destinations ) {
 			return new WP_Error( 'missing_chat_ids', __( 'Save at least one Telegram chat or channel before sending a test message.', 'fair-events' ), array( 'status' => 400 ) );
 		}
 
-		$summary = $this->compose_test_summary();
+		$summary = $this->compose_test_summary( $id );
 		if ( is_wp_error( $summary ) ) {
 			return $summary;
 		}
@@ -494,62 +1001,13 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Save the weekly email settings.
+	 * Preview the weekly email a bulk email configuration's next send would deliver.
 	 *
-	 * @param WP_REST_Request $request Request.
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function update_bulk_email( $request ) {
-		$unavailable = $this->bulk_email_unavailable();
-		if ( $unavailable ) {
-			return $unavailable;
-		}
-
-		$settings = BulkEmailSettings::stored();
-		$previous = $settings;
-		foreach ( array_keys( BulkEmailSettings::defaults() ) as $field ) {
-			if ( $request->has_param( $field ) ) {
-				$settings[ $field ] = $request->get_param( $field );
-			}
-		}
-		$settings = BulkEmailSettings::sanitize( $settings );
-
-		if ( $settings['enabled'] ) {
-			$source = '' !== $settings['source_slug'] ? ( new EventSourceRepository() )->get_by_slug( $settings['source_slug'] ) : null;
-			if ( ! $source || empty( $source['enabled'] ) ) {
-				return new WP_Error(
-					'invalid_source',
-					'' === $settings['source_slug']
-						? __( 'Choose an event feed before turning on the weekly email.', 'fair-events' )
-						: __( 'The selected event feed does not exist or is disabled.', 'fair-events' ),
-					array( 'status' => 400 )
-				);
-			}
-		}
-
-		BulkEmailSettings::save( $settings );
-
-		$schedule_fields = array( 'enabled', 'day_of_week', 'time_of_day' );
-		$changed         = array_filter(
-			$schedule_fields,
-			static function ( $field ) use ( $previous, $settings ) {
-				return $previous[ $field ] !== $settings[ $field ];
-			}
-		);
-		if ( $changed || ( $settings['enabled'] && ! BulkEmailDispatcher::next_run() ) ) {
-			BulkEmailDispatcher::reschedule( $settings );
-		}
-
-		return $this->get_item();
-	}
-
-	/**
-	 * Preview the weekly email the next send would deliver.
-	 *
-	 * @return \WP_REST_Response|WP_Error
-	 */
-	public function preview_bulk_email() {
-		$email = $this->compose_test_email();
+	private function preview_bulk_email_configuration( $id ) {
+		$email = $this->compose_test_email( $id );
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -558,14 +1016,15 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send the weekly email to the current administrator only.
+	 * Send a bulk email configuration's email to the current administrator only.
 	 *
 	 * A test never counts as the week's send.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function test_bulk_email() {
-		$email = $this->compose_test_email();
+	private function test_bulk_email_configuration( $id ) {
+		$email = $this->compose_test_email( $id );
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -587,68 +1046,14 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Save the individual email settings.
+	 * Preview the email an individual email configuration's next send would
+	 * deliver, and to whom.
 	 *
-	 * @param WP_REST_Request $request Request.
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function update_individual_email( $request ) {
-		// Refused as a whole: a list or an address with extra headers is never
-		// trimmed down to something that could be saved.
-		if ( $request->has_param( 'recipient' ) && null === IndividualEmailSettings::parse_recipient( $request->get_param( 'recipient' ) ) ) {
-			return new WP_Error(
-				'invalid_recipient',
-				__( 'Enter exactly one email address, for example name@example.com. Nothing was saved.', 'fair-events' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$settings = IndividualEmailSettings::stored();
-		$previous = $settings;
-		foreach ( array_keys( IndividualEmailSettings::defaults() ) as $field ) {
-			if ( $request->has_param( $field ) ) {
-				$settings[ $field ] = $request->get_param( $field );
-			}
-		}
-		$settings = IndividualEmailSettings::sanitize( $settings );
-
-		if ( $settings['enabled'] ) {
-			if ( '' === $settings['recipient'] ) {
-				return new WP_Error(
-					'missing_recipient',
-					__( 'Enter the email address that receives the weekly email before turning it on.', 'fair-events' ),
-					array( 'status' => 400 )
-				);
-			}
-			$check = ( new IndividualEmailEvents() )->check( $settings['event_selection'] );
-			if ( is_wp_error( $check ) ) {
-				return new WP_Error( $check->get_error_code(), $check->get_error_message(), array( 'status' => 400 ) );
-			}
-		}
-
-		IndividualEmailSettings::save( $settings );
-
-		$schedule_fields = array( 'enabled', 'day_of_week', 'time_of_day' );
-		$changed         = array_filter(
-			$schedule_fields,
-			static function ( $field ) use ( $previous, $settings ) {
-				return $previous[ $field ] !== $settings[ $field ];
-			}
-		);
-		if ( $changed || ( $settings['enabled'] && ! IndividualEmailDispatcher::next_run() ) ) {
-			IndividualEmailDispatcher::reschedule( $settings );
-		}
-
-		return $this->get_item();
-	}
-
-	/**
-	 * Preview the individual email the next send would deliver, and to whom.
-	 *
-	 * @return \WP_REST_Response|WP_Error
-	 */
-	public function preview_individual_email() {
-		$email = $this->compose_test_individual_email();
+	private function preview_individual_email_configuration( $id ) {
+		$email = $this->compose_test_individual_email( $id );
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -657,15 +1062,16 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send the individual email to the saved address only.
+	 * Send an individual email configuration's email to its saved address only.
 	 *
 	 * Works while the schedule is off. A test never counts as the week's
 	 * send and does not move the next scheduled one.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function test_individual_email() {
-		$email = $this->compose_test_individual_email();
+	private function test_individual_email_configuration( $id ) {
+		$email = $this->compose_test_individual_email( $id );
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
@@ -701,6 +1107,105 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * The configuration a request names.
+	 *
+	 * @param WP_REST_Request $request Request with an `id`.
+	 * @return array|WP_Error The record, or a 404.
+	 */
+	private function find_configuration( $request ) {
+		$record = Configurations::get( (string) $request->get_param( 'id' ) );
+		if ( ! $record ) {
+			return new WP_Error(
+				'unknown_configuration',
+				__( 'This notification does not exist.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+		return $record;
+	}
+
+	/**
+	 * Settings a new configuration of a type starts with: the defaults, paused.
+	 *
+	 * @param string $type Notification type.
+	 * @return array
+	 */
+	private function default_settings( $type ) {
+		switch ( $type ) {
+			case Configurations::TELEGRAM:
+				return TelegramSettings::defaults();
+			case Configurations::BULK_EMAIL:
+				return BulkEmailSettings::defaults();
+			default:
+				return IndividualEmailSettings::defaults();
+		}
+	}
+
+	/**
+	 * One configuration's settings and delivery status, with its ID, type and name.
+	 *
+	 * @param array $record Configuration record.
+	 * @return array
+	 */
+	private function configuration_payload( array $record ) {
+		switch ( $record['type'] ) {
+			case Configurations::TELEGRAM:
+				$payload = $this->telegram_channel( $record['id'] );
+				break;
+			case Configurations::BULK_EMAIL:
+				$payload = $this->bulk_email_channel( $record['id'] );
+				break;
+			default:
+				$payload = $this->individual_email_channel( $record['id'] );
+		}
+
+		return array_merge(
+			array(
+				'id'   => $record['id'],
+				'type' => $record['type'],
+				'name' => $record['name'],
+			),
+			$payload
+		);
+	}
+
+	/**
+	 * Whether this plugin runs a type on this request, and if not, why.
+	 *
+	 * @param string $type Notification type.
+	 * @return array{state: string, message: string}
+	 */
+	private function type_state( $type ) {
+		if ( Configurations::TELEGRAM === $type ) {
+			$owned = Ownership::owns( Ownership::TELEGRAM );
+			return array(
+				'state'   => $owned ? 'active' : 'update_required',
+				'message' => $owned ? '' : __( 'Telegram summaries are still sent by an older Fair Events Experimental. Update Fair Events Experimental to manage them here; until then they keep running from its settings.', 'fair-events' ),
+			);
+		}
+
+		if ( Configurations::BULK_EMAIL === $type ) {
+			$availability = ( new BulkEmailAdapter() )->availability();
+			$owned        = Ownership::owns( Ownership::BULK_EMAIL );
+			$state        = $owned || BulkEmailAdapter::ACTIVE !== $availability ? $availability : BulkEmailAdapter::UPDATE_REQUIRED;
+			$messages     = array(
+				BulkEmailAdapter::ACTIVE          => '',
+				BulkEmailAdapter::INACTIVE        => __( 'The weekly email is paused because Fair Audience is not active. Fair Audience decides who receives it and sends it. Your settings are kept and sending resumes at the next scheduled time once Fair Audience is active again.', 'fair-events' ),
+				BulkEmailAdapter::UPDATE_REQUIRED => __( 'The weekly email is still sent by an older Fair Audience. Update Fair Audience to manage it here; until then it keeps running from the Weekly Digest page.', 'fair-events' ),
+			);
+			return array(
+				'state'   => $state,
+				'message' => $messages[ $state ],
+			);
+		}
+
+		return array(
+			'state'   => 'active',
+			'message' => '',
+		);
+	}
+
+	/**
 	 * Whether Telegram summaries are turned on in a settings array.
 	 *
 	 * @param array $settings Telegram settings.
@@ -711,22 +1216,24 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Telegram channel payload.
+	 * Telegram configuration payload.
 	 *
-	 * @param array $settings Telegram settings.
+	 * @param string $id Configuration ID.
 	 * @return array
 	 */
-	private function telegram_channel( array $settings ) {
-		$owned = Ownership::owns( Ownership::TELEGRAM );
-		$token = TelegramConnector::status();
-		$check = '' !== $settings['source_slug'] || $settings['page_id']
+	private function telegram_channel( $id ) {
+		$settings = TelegramSettings::get( $id );
+		$state    = $this->type_state( Configurations::TELEGRAM );
+		$owned    = 'active' === $state['state'];
+		$token    = TelegramConnector::status();
+		$check    = '' !== $settings['source_slug'] || $settings['page_id']
 			? ( new SummaryBuilder() )->check( $settings['source_slug'], $settings['page_id'] )
 			: true;
-		$next  = $owned ? TelegramDispatcher::next_run() : null;
+		$next     = $owned ? TelegramDispatcher::next_run( $id ) : null;
 
 		return array(
-			'state'               => $owned ? 'active' : 'update_required',
-			'state_message'       => $owned ? '' : __( 'Telegram summaries are still sent by an older Fair Events Experimental. Update Fair Events Experimental to manage them here; until then they keep running from its settings.', 'fair-events' ),
+			'state'               => $state['state'],
+			'state_message'       => $state['message'],
 			'enabled'             => self::telegram_on( $settings ),
 			'source_slug'         => $settings['source_slug'],
 			'page_id'             => $settings['page_id'],
@@ -741,34 +1248,28 @@ class EventNotificationsController extends WP_REST_Controller {
 			'connectors_url'      => TelegramConnector::admin_url(),
 			'configuration_error' => is_wp_error( $check ) ? $check->get_error_message() : null,
 			'next_run'            => $next ? $this->telegram_next_run( $next ) : null,
-			'runs'                => array_map( array( $this, 'with_local_time' ), TelegramDispatcher::runs() ),
-			'deliveries'          => $owned ? ( new DeliveryLog() )->recent( TelegramProvider::ID ) : array(),
+			'runs'                => array_map( array( $this, 'with_local_time' ), TelegramDispatcher::runs( $id ) ),
+			'deliveries'          => $owned ? ( new DeliveryLog() )->recent( $id, TelegramProvider::ID ) : array(),
 		);
 	}
 
 	/**
-	 * Weekly email channel payload.
+	 * Bulk email configuration payload.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array
 	 */
-	private function bulk_email_channel() {
-		$availability = ( new BulkEmailAdapter() )->availability();
-		$owned        = Ownership::owns( Ownership::BULK_EMAIL );
-		$state        = $owned || BulkEmailAdapter::ACTIVE !== $availability ? $availability : BulkEmailAdapter::UPDATE_REQUIRED;
-		$messages     = array(
-			BulkEmailAdapter::ACTIVE          => '',
-			BulkEmailAdapter::INACTIVE        => __( 'The weekly email is paused because Fair Audience is not active. Fair Audience decides who receives it and sends it. Your settings are kept and sending resumes at the next scheduled time once Fair Audience is active again.', 'fair-events' ),
-			BulkEmailAdapter::UPDATE_REQUIRED => __( 'The weekly email is still sent by an older Fair Audience. Update Fair Audience to manage it here; until then it keeps running from the Weekly Digest page.', 'fair-events' ),
-		);
-		$next         = BulkEmailAdapter::ACTIVE === $state ? BulkEmailDispatcher::next_run() : null;
+	private function bulk_email_channel( $id ) {
+		$state = $this->type_state( Configurations::BULK_EMAIL );
+		$next  = BulkEmailAdapter::ACTIVE === $state['state'] ? BulkEmailDispatcher::next_run( $id ) : null;
 
 		return array_merge(
-			BulkEmailSettings::get(),
+			BulkEmailSettings::get( $id ),
 			array(
-				'state'          => $state,
-				'state_message'  => $messages[ $state ],
+				'state'          => $state['state'],
+				'state_message'  => $state['message'],
 				'test_recipient' => wp_get_current_user()->user_email,
-				'last_sent_week' => (string) get_option( BulkEmailDispatcher::LAST_SENT_OPTION, '' ),
+				'last_sent_week' => BulkEmailDispatcher::last_sent_week( $id ),
 				'next_run'       => $next
 					? array(
 						'timestamp'  => $next['timestamp'],
@@ -776,20 +1277,21 @@ class EventNotificationsController extends WP_REST_Controller {
 						'send_week'  => $next['send_week'],
 					)
 					: null,
-				'runs'           => array_map( array( $this, 'with_local_time' ), BulkEmailDispatcher::runs() ),
+				'runs'           => array_map( array( $this, 'with_local_time' ), BulkEmailDispatcher::runs( $id ) ),
 			)
 		);
 	}
 
 	/**
-	 * Individual email channel payload.
+	 * Individual email configuration payload.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array
 	 */
-	private function individual_email_channel() {
-		$settings = IndividualEmailSettings::get();
+	private function individual_email_channel( $id ) {
+		$settings = IndividualEmailSettings::get( $id );
 		$check    = ( new IndividualEmailEvents() )->check( $settings['event_selection'] );
-		$next     = IndividualEmailDispatcher::next_run();
+		$next     = IndividualEmailDispatcher::next_run( $id );
 
 		return array_merge(
 			$settings,
@@ -797,7 +1299,7 @@ class EventNotificationsController extends WP_REST_Controller {
 				'state'               => 'active',
 				'state_message'       => '',
 				'configuration_error' => is_wp_error( $check ) ? $check->get_error_message() : null,
-				'last_sent_week'      => (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ),
+				'last_sent_week'      => BulkEmailDispatcher::last_sent_week( $id ),
 				'next_run'            => $next
 					? array(
 						'timestamp'  => $next['timestamp'],
@@ -805,60 +1307,57 @@ class EventNotificationsController extends WP_REST_Controller {
 						'send_week'  => $next['send_week'],
 					)
 					: null,
-				'runs'                => array_map( array( $this, 'with_local_time' ), IndividualEmailDispatcher::runs() ),
+				'runs'                => array_map( array( $this, 'with_local_time' ), IndividualEmailDispatcher::runs( $id ) ),
 			)
 		);
 	}
 
 	/**
-	 * Why Telegram cannot be changed or tested on this request, if it cannot.
+	 * Why a type's configurations cannot be added, changed or tested on this request, if they cannot.
 	 *
+	 * @param string $type Notification type.
 	 * @return WP_Error|null
 	 */
-	private function telegram_unavailable() {
-		if ( Ownership::owns( Ownership::TELEGRAM ) ) {
-			return null;
+	private function type_unavailable( $type ) {
+		if ( Configurations::TELEGRAM === $type ) {
+			return Ownership::owns( Ownership::TELEGRAM )
+				? null
+				: new WP_Error(
+					'channel_update_required',
+					__( 'Update Fair Events Experimental to manage Telegram summaries here. Nothing was changed.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
 		}
 
-		return new WP_Error(
-			'channel_update_required',
-			__( 'Update Fair Events Experimental to manage Telegram summaries here. Nothing was changed.', 'fair-events' ),
-			array( 'status' => 409 )
-		);
-	}
-
-	/**
-	 * Why the weekly email cannot be changed or sent on this request, if it cannot.
-	 *
-	 * @return WP_Error|null
-	 */
-	private function bulk_email_unavailable() {
-		$availability = ( new BulkEmailAdapter() )->availability();
-		if ( BulkEmailAdapter::INACTIVE === $availability ) {
-			return new WP_Error(
-				'fair_audience_inactive',
-				__( 'Activate Fair Audience to manage and send the weekly email. Your saved settings were not changed.', 'fair-events' ),
-				array( 'status' => 409 )
-			);
-		}
-		if ( BulkEmailAdapter::ACTIVE !== $availability || ! Ownership::owns( Ownership::BULK_EMAIL ) ) {
-			return new WP_Error(
-				'channel_update_required',
-				__( 'Update Fair Audience to manage the weekly email here. Nothing was changed.', 'fair-events' ),
-				array( 'status' => 409 )
-			);
+		if ( Configurations::BULK_EMAIL === $type ) {
+			$availability = ( new BulkEmailAdapter() )->availability();
+			if ( BulkEmailAdapter::INACTIVE === $availability ) {
+				return new WP_Error(
+					'fair_audience_inactive',
+					__( 'Activate Fair Audience to manage and send the weekly email. Your saved settings were not changed.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+			}
+			if ( BulkEmailAdapter::ACTIVE !== $availability || ! Ownership::owns( Ownership::BULK_EMAIL ) ) {
+				return new WP_Error(
+					'channel_update_required',
+					__( 'Update Fair Audience to manage the weekly email here. Nothing was changed.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+			}
 		}
 
 		return null;
 	}
 
 	/**
-	 * The Telegram preview/test summary for the selected week relative to today.
+	 * A Telegram configuration's preview/test summary for the selected week relative to today.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array|WP_Error Summary with its `week`, or a 400 error.
 	 */
-	private function compose_test_summary() {
-		$settings = TelegramSettings::get();
+	private function compose_test_summary( $id ) {
+		$settings = TelegramSettings::get( $id );
 		$week     = WeekSchedule::target_week( TelegramDispatcher::now(), $settings['week_scope'], TelegramDispatcher::start_of_week() );
 		$summary  = ( new SummaryBuilder() )->build( $settings, $week );
 
@@ -871,17 +1370,18 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The weekly preview/test email for the selected week relative to today.
+	 * A bulk email configuration's preview/test email for the selected week relative to today.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array|WP_Error Subject, body and week, or an error.
 	 */
-	private function compose_test_email() {
-		$unavailable = $this->bulk_email_unavailable();
+	private function compose_test_email( $id ) {
+		$unavailable = $this->type_unavailable( Configurations::BULK_EMAIL );
 		if ( $unavailable ) {
 			return $unavailable;
 		}
 
-		$settings = BulkEmailSettings::get();
+		$settings = BulkEmailSettings::get( $id );
 		if ( '' === $settings['source_slug'] ) {
 			return new WP_Error( 'missing_source', __( 'Choose an event feed and save before previewing the weekly email.', 'fair-events' ), array( 'status' => 400 ) );
 		}
@@ -904,14 +1404,16 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The individual preview/test email for the selected week relative to today.
+	 * An individual email configuration's preview/test email for the selected
+	 * week relative to today.
 	 *
 	 * Built from the saved settings, also while the schedule is off.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array|WP_Error Recipient, subject, body and week, or an error.
 	 */
-	private function compose_test_individual_email() {
-		$settings = IndividualEmailSettings::get();
+	private function compose_test_individual_email( $id ) {
+		$settings = IndividualEmailSettings::get( $id );
 		$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], BulkEmailDispatcher::now() );
 
 		$occurrences = ( new IndividualEmailEvents() )->for_week( $settings['event_selection'], $week );
@@ -953,10 +1455,10 @@ class EventNotificationsController extends WP_REST_Controller {
 	/**
 	 * Published, publicly visible pages.
 	 *
-	 * @param int $selected_id The saved page, listed even if it no longer qualifies.
+	 * @param int[] $selected_ids Saved pages, listed even if they no longer qualify.
 	 * @return array[]
 	 */
-	private function pages( $selected_id ) {
+	private function pages( array $selected_ids ) {
 		$ids = get_posts(
 			array(
 				'post_type'      => 'page',
@@ -972,8 +1474,10 @@ class EventNotificationsController extends WP_REST_Controller {
 		);
 
 		$ids = array_map( 'intval', $ids );
-		if ( $selected_id && ! in_array( (int) $selected_id, $ids, true ) && get_post( $selected_id ) ) {
-			$ids[] = (int) $selected_id;
+		foreach ( $selected_ids as $selected_id ) {
+			if ( $selected_id && ! in_array( (int) $selected_id, $ids, true ) && get_post( $selected_id ) ) {
+				$ids[] = (int) $selected_id;
+			}
 		}
 
 		return array_map(

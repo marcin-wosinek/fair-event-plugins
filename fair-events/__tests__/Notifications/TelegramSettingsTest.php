@@ -7,6 +7,7 @@
 
 namespace FairEvents\Tests\Notifications;
 
+use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\TelegramSettings;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +27,7 @@ class TelegramSettingsTest extends TestCase {
 
 	/** Defaults send on Monday at 09:00 for the current week, with Telegram off. */
 	public function test_defaults() {
-		$settings = TelegramSettings::get();
+		$settings = TelegramSettings::get( 'telegram' );
 
 		$this->assertFalse( $settings['enabled'] );
 		$this->assertSame( 1, $settings['day_of_week'] );
@@ -54,7 +55,9 @@ class TelegramSettingsTest extends TestCase {
 
 	/** Disabling Telegram keeps its destinations. */
 	public function test_disabling_telegram_keeps_its_configuration() {
+		Configurations::create( Configurations::TELEGRAM, '', array(), 'telegram' );
 		TelegramSettings::save(
+			'telegram',
 			array(
 				'providers' => array(
 					'telegram' => array(
@@ -65,14 +68,14 @@ class TelegramSettingsTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( array( '@fair_channel' ), TelegramSettings::get()['providers']['telegram']['chat_ids'] );
+		$this->assertSame( array( '@fair_channel' ), TelegramSettings::get( 'telegram' )['providers']['telegram']['chat_ids'] );
 	}
 
 	/** The settings never include the bot token. */
 	public function test_settings_never_include_the_token() {
 		$GLOBALS['_fair_test_options'][ TelegramSettings::TOKEN_OPTION ] = '123456789:AAEabcdefghijklmnopqrstuvwxyz012345';
 
-		$this->assertStringNotContainsString( 'AAEabcdefghijklmnopqrstuvwxyz012345', json_encode( TelegramSettings::get() ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+		$this->assertStringNotContainsString( 'AAEabcdefghijklmnopqrstuvwxyz012345', json_encode( TelegramSettings::get( 'telegram' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 	}
 
 	/** Chat IDs are numeric IDs or @usernames. */

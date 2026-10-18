@@ -10,7 +10,8 @@ namespace FairEvents\Notifications;
 defined( 'WPINC' ) || die;
 
 /**
- * Stores the weekly notification schedule and provider configuration.
+ * Reads and saves one Telegram configuration's schedule and provider
+ * settings, kept by {@see Configurations}.
  *
  * The Telegram bot token lives in its own non-autoloaded option, managed in
  * Settings → Connectors and read through
@@ -20,6 +21,8 @@ defined( 'WPINC' ) || die;
  * disabled.
  */
 class TelegramSettings {
+	// Where the single Telegram configuration was saved before configurations
+	// had IDs. Read only when migrating it.
 	public const OPTION = 'fair_events_notification_telegram';
 	// The option Fair Events Experimental saved the token in. The name is kept
 	// so a saved token, and the connector that points at it, keep working.
@@ -55,23 +58,24 @@ class TelegramSettings {
 	}
 
 	/**
-	 * Saved settings, normalized onto the defaults.
+	 * A configuration's saved settings, normalized onto the defaults.
 	 *
-	 * @return array
+	 * @param string $id Configuration ID.
+	 * @return array Defaults when the configuration does not exist.
 	 */
-	public static function get() {
-		$stored = get_option( self::OPTION, array() );
-		return self::normalize( is_array( $stored ) ? $stored : array() );
+	public static function get( $id ) {
+		return self::normalize( Configurations::settings( $id ) );
 	}
 
 	/**
-	 * Save settings.
+	 * Save a configuration's settings.
 	 *
-	 * @param array $settings Settings, validated by the caller.
+	 * @param string $id       Configuration ID.
+	 * @param array  $settings Settings, validated by the caller.
 	 * @return void
 	 */
-	public static function save( array $settings ) {
-		update_option( self::OPTION, self::normalize( $settings ), false );
+	public static function save( $id, array $settings ) {
+		Configurations::update( $id, array( 'settings' => self::normalize( $settings ) ) );
 	}
 
 	/**

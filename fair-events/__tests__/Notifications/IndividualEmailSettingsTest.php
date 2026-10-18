@@ -7,6 +7,7 @@
 
 namespace FairEvents\Tests\Notifications;
 
+use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\IndividualEmailSettings;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +27,7 @@ class IndividualEmailSettingsTest extends TestCase {
 
 	/** The channel starts off, listing every local event, with no recipient. */
 	public function test_starts_disabled_without_a_recipient() {
-		$settings = IndividualEmailSettings::stored();
+		$settings = IndividualEmailSettings::stored( 'missing' );
 
 		$this->assertFalse( $settings['enabled'] );
 		$this->assertSame( '', $settings['recipient'] );
@@ -100,17 +101,24 @@ class IndividualEmailSettingsTest extends TestCase {
 		$this->assertSame( 'city-events', IndividualEmailSettings::sanitize( array( 'event_selection' => 'city-events' ) )['event_selection'] );
 	}
 
-	/** Saving this channel leaves the bulk email option alone. */
+	/** Saving one configuration writes only its own option. */
 	public function test_saving_uses_its_own_option() {
+		Configurations::create( Configurations::INDIVIDUAL_EMAIL, '', array(), 'mine' );
+		Configurations::create( Configurations::INDIVIDUAL_EMAIL, '', array(), 'other' );
+		$other = $GLOBALS['_fair_test_options']['fair_events_notification_config_other'];
+
 		IndividualEmailSettings::save(
+			'mine',
 			array(
 				'recipient'   => 'organizer@example.com',
 				'time_of_day' => '06:15',
 			)
 		);
 
-		$this->assertSame( array( IndividualEmailSettings::OPTION ), array_keys( $GLOBALS['_fair_test_options'] ) );
-		$this->assertSame( '06:15', IndividualEmailSettings::stored()['time_of_day'] );
+		$this->assertSame( $other, $GLOBALS['_fair_test_options']['fair_events_notification_config_other'] );
+		$this->assertArrayNotHasKey( IndividualEmailSettings::OPTION, $GLOBALS['_fair_test_options'] );
+		$this->assertSame( '06:15', IndividualEmailSettings::stored( 'mine' )['time_of_day'] );
+		$this->assertSame( '08:00', IndividualEmailSettings::stored( 'other' )['time_of_day'] );
 	}
 
 	/** The wording is sanitized like the bulk email's. */

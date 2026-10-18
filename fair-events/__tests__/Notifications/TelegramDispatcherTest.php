@@ -89,7 +89,7 @@ class TelegramDispatcherTest extends TestCase {
 
 	/** Every destination receives the same summary. */
 	public function test_every_destination_receives_the_summary() {
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'sent', $run['status'] );
 		$this->assertSame(
@@ -107,7 +107,7 @@ class TelegramDispatcherTest extends TestCase {
 	public function test_failure_at_one_destination_does_not_stop_others() {
 		$this->provider->states['@one'] = 'failed';
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'partial', $run['status'] );
 		$this->assertCount( 3, $this->provider->sent );
@@ -121,7 +121,7 @@ class TelegramDispatcherTest extends TestCase {
 	public function test_exception_at_one_destination_is_isolated() {
 		$this->provider->throws_for = '@two';
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'partial', $run['status'] );
 		$this->assertSame( 'uncertain', $this->log->state( '@two', 1 ) );
@@ -130,14 +130,14 @@ class TelegramDispatcherTest extends TestCase {
 
 	/** A retried or overlapping run never sends a delivered week again. */
 	public function test_repeated_runs_do_not_duplicate_deliveries() {
-		$this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
-		$first_record = get_option( TelegramDispatcher::RUNS_OPTION );
+		$this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
+		$first_record = get_option( 'fair_events_notification_config_telegram_runs' );
 
-		$second = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment( '2026-09-14 09:05' ) );
+		$second = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment( '2026-09-14 09:05' ) );
 
 		$this->assertNull( $second );
 		$this->assertCount( 3, $this->provider->sent );
-		$this->assertSame( $first_record, get_option( TelegramDispatcher::RUNS_OPTION ) );
+		$this->assertSame( $first_record, get_option( 'fair_events_notification_config_telegram_runs' ) );
 	}
 
 	/** Failed and uncertain parts are not resent automatically. */
@@ -146,10 +146,10 @@ class TelegramDispatcherTest extends TestCase {
 			'@one' => 'failed',
 			'@two' => 'uncertain',
 		);
-		$this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 		$this->provider->states = array();
 
-		$this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment( '2026-09-14 10:00' ) );
+		$this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment( '2026-09-14 10:00' ) );
 
 		$this->assertCount( 3, $this->provider->sent );
 		$this->assertSame( 'uncertain', $this->log->state( '@two', 1 ) );
@@ -162,7 +162,7 @@ class TelegramDispatcherTest extends TestCase {
 		$this->builder->result['text']   = 'first|second|third';
 
 		$this->provider->states['@one'] = 'sent';
-		$this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame(
 			array( array( '@one', 'first' ), array( '@one', 'second' ), array( '@one', 'third' ) ),
@@ -194,7 +194,7 @@ class TelegramDispatcherTest extends TestCase {
 		$this->provider                = $provider;
 		$this->builder->result['text'] = 'first|second|third';
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'failed', $run['status'] );
 		$this->assertCount( 2, $provider->sent );
@@ -210,7 +210,7 @@ class TelegramDispatcherTest extends TestCase {
 			'occurrence_count' => 0,
 		);
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'skipped_empty', $run['status'] );
 		$this->assertSame( array(), $this->provider->sent );
@@ -221,7 +221,7 @@ class TelegramDispatcherTest extends TestCase {
 	public function test_configuration_error_is_recorded() {
 		$this->builder->result = new \WP_Error( 'calendar_mismatch', 'Calendar mismatch.' );
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'configuration_error', $run['status'] );
 		$this->assertSame( 'Calendar mismatch.', $run['message'] );
@@ -230,7 +230,7 @@ class TelegramDispatcherTest extends TestCase {
 
 	/** A run arriving after its week ended sends nothing. */
 	public function test_run_after_the_week_ended_is_expired() {
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment( '2026-09-21 09:00' ) );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment( '2026-09-21 09:00' ) );
 
 		$this->assertSame( 'expired', $run['status'] );
 		$this->assertSame( array(), $this->provider->sent );
@@ -240,7 +240,7 @@ class TelegramDispatcherTest extends TestCase {
 	public function test_no_destinations_is_a_configuration_error() {
 		$this->provider->destinations = array();
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'configuration_error', $run['status'] );
 	}
@@ -250,7 +250,7 @@ class TelegramDispatcherTest extends TestCase {
 		$this->provider->destinations        = array();
 		$this->provider->configuration_error = 'No Telegram bot token is configured.';
 
-		$run = $this->dispatcher()->process( '2026-09-14', $this->settings(), $this->moment() );
+		$run = $this->dispatcher()->process( 'telegram', '2026-09-14', $this->settings(), $this->moment() );
 
 		$this->assertSame( 'configuration_error', $run['status'] );
 		$this->assertSame( 'No Telegram bot token is configured.', $run['message'] );
@@ -262,8 +262,38 @@ class TelegramDispatcherTest extends TestCase {
 	public function test_disabled_or_invalid_runs_do_nothing() {
 		$disabled = TelegramSettings::defaults();
 
-		$this->assertNull( $this->dispatcher()->process( '2026-09-14', $disabled, $this->moment() ) );
-		$this->assertNull( $this->dispatcher()->process( 'not-a-date', $this->settings(), $this->moment() ) );
+		$this->assertNull( $this->dispatcher()->process( 'telegram', '2026-09-14', $disabled, $this->moment() ) );
+		$this->assertNull( $this->dispatcher()->process( 'telegram', 'not-a-date', $this->settings(), $this->moment() ) );
 		$this->assertSame( array(), $this->provider->sent );
+	}
+
+	/** Two configurations posting to the same chat in the same week both post, once each. */
+	public function test_two_configurations_to_the_same_chat_both_post_once() {
+		$this->provider->destinations = array( '@shared' );
+
+		$this->dispatcher()->process( 'members', '2026-09-14', $this->settings(), $this->moment() );
+		$this->dispatcher()->process( 'public', '2026-09-14', $this->settings(), $this->moment() );
+		$this->assertNull( $this->dispatcher()->process( 'members', '2026-09-14', $this->settings(), $this->moment( '2026-09-14 09:05' ) ) );
+		$this->assertNull( $this->dispatcher()->process( 'public', '2026-09-14', $this->settings(), $this->moment( '2026-09-14 09:05' ) ) );
+
+		$this->assertCount( 2, $this->provider->sent );
+		$this->assertSame( 'sent', $this->log->state( '@shared', 1, 'members' ) );
+		$this->assertSame( 'sent', $this->log->state( '@shared', 1, 'public' ) );
+		$this->assertCount( 1, TelegramDispatcher::runs( 'members' ) );
+		$this->assertCount( 1, TelegramDispatcher::runs( 'public' ) );
+	}
+
+	/** Pausing one configuration removes only its queued send. */
+	public function test_pausing_one_configuration_leaves_the_others_scheduled() {
+		$GLOBALS['_fair_test_cron'] = array();
+		TelegramDispatcher::reschedule( 'members', $this->settings() );
+		TelegramDispatcher::reschedule( 'public', $this->settings() );
+		$public = TelegramDispatcher::next_run( 'public' );
+
+		TelegramDispatcher::reschedule( 'members', TelegramSettings::defaults() );
+
+		$this->assertNull( TelegramDispatcher::next_run( 'members' ) );
+		$this->assertSame( $public, TelegramDispatcher::next_run( 'public' ) );
+		$this->assertSame( array( array( $public['timestamp'], array( $public['week_start'], 'public' ) ) ), $GLOBALS['_fair_test_cron'][ TelegramDispatcher::HOOK ] );
 	}
 }

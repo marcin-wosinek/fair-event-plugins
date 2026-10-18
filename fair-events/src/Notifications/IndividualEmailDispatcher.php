@@ -12,26 +12,30 @@ use FairEvents\Services\EmailService;
 defined( 'WPINC' ) || die;
 
 /**
- * Schedules one WP-Cron event per weekly email and sends it to the one
- * configured address.
+ * Schedules one WP-Cron event per weekly email of each individual email
+ * configuration and sends it to that configuration's address.
  *
  * As for the bulk email, two weeks are kept apart: the send week the email
  * goes out in, e.g. '2026-W41', and the event week whose events it lists.
  *
- * The send week is claimed in {@see DeliveryLog} before anything is sent,
- * under a destination that does not depend on the address. Overlapping cron
+ * The send week is claimed in {@see DeliveryLog} for the configuration
+ * before anything is sent, under a destination that does not depend on the
+ * address. Overlapping cron
  * requests therefore send once, and changing the address or the schedule
  * after an attempt cannot cause a second scheduled send that week. A failed
- * or uncertain send is never retried automatically.
+ * or uncertain send is never retried automatically. Two configurations with
+ * the same address claim separately, so both send.
  */
 class IndividualEmailDispatcher {
-	public const HOOK             = 'fair_events_notification_individual_email';
-	public const NEXT_RUN_OPTION  = 'fair_events_notification_individual_email_next_run';
-	public const RUNS_OPTION      = 'fair_events_notification_individual_email_runs';
-	public const LAST_SENT_OPTION = 'fair_events_notification_individual_email_last_sent_week';
-	public const PROVIDER         = 'individual_email';
-	public const DESTINATION      = 'recipient';
-	private const RUN_HISTORY_MAX = 10;
+	public const HOOK = 'fair_events_notification_individual_email';
+	// Where the single configuration kept its state before configurations had
+	// IDs. Read only when migrating it.
+	public const LEGACY_NEXT_RUN_OPTION  = 'fair_events_notification_individual_email_next_run';
+	public const LEGACY_RUNS_OPTION      = 'fair_events_notification_individual_email_runs';
+	public const LEGACY_LAST_SENT_OPTION = 'fair_events_notification_individual_email_last_sent_week';
+	public const PROVIDER                = 'individual_email';
+	public const DESTINATION             = 'recipient';
+	private const RUN_HISTORY_MAX        = 10;
 
 	/**
 	 * Delivery record.
@@ -68,18 +72,20 @@ class IndividualEmailDispatcher {
 	}
 
 	/**
-	 * Register the cron worker and keep the next send scheduled.
+	 * Register the cron worker and keep each configuration's next send scheduled.
 	 *
 	 * @return void
 	 */
 	public static function init() {
-		add_action( self::HOOK, array( self::class, 'handle' ) );
+		add_action( self::HOOK, array( self::class, 'handle' ), 10, 2 );
 
-		$settings = IndividualEmailSettings::stored();
-		if ( $settings['enabled'] && ! self::next_run() ) {
-			// Always the next future moment: a send missed while the plugin
-			// was inactive is never replayed.
-			self::schedule_next( $settings, BulkEmailDispatcher::now() );
+		foreach ( Configurations::all( Configurations::INDIVIDUAL_EMAIL ) as $configuration ) {
+			$settings = IndividualEmailSettings::stored( $configuration['id'] );
+			if ( $settings['enabled'] && ! self::next_run( $configuration['id'] ) ) {
+				// Always the next future moment: a send missed while the plugin
+				// was inactive is never replayed.
+				self::schedule_next( $configuration['id'], $settings, BulkEmailDispatcher::now() );
+			}
 		}
 	}
 
@@ -87,62 +93,82 @@ class IndividualEmailDispatcher {
 	 * Cron callback.
 	 *
 	 * @param string $send_week ISO week the email was scheduled for, fixed at scheduling time.
+	 * @param string $config_id Configuration ID; absent on sends queued before configurations had IDs.
 	 * @return void
 	 */
-	public static function handle( $send_week ) {
-		$settings = IndividualEmailSettings::get();
+	public static function handle( $send_week, $config_id = '' ) {
+		$config_id = '' === (string) $config_id ? Configurations::legacy_id( Configurations::INDIVIDUAL_EMAIL ) : (string) $config_id;
+		if ( ! Configurations::exists( $config_id, Configurations::INDIVIDUAL_EMAIL ) ) {
+			return;
+		}
+		$settings = IndividualEmailSettings::get( $config_id );
 		$now      = BulkEmailDispatcher::now();
 
 		// Schedule the following send first, so a failure below never stops
 		// the weekly cycle.
 		if ( $settings['enabled'] ) {
-			self::schedule_next( $settings, $now );
+			self::schedule_next( $config_id, $settings, $now );
 		}
 
-		( new self() )->process( (string) $send_week, $settings, $now );
+		( new self() )->process( $config_id, (string) $send_week, $settings, $now );
 	}
 
 	/**
-	 * Replace the scheduled send after settings change.
+	 * Replace one configuration's scheduled send after its settings change.
 	 *
-	 * @param array $settings Individual email settings.
+	 * @param string $config_id Configuration ID.
+	 * @param array  $settings  Its settings.
 	 * @return void
 	 */
-	public static function reschedule( array $settings ) {
-		$next = self::next_run();
+	public static function reschedule( $config_id, array $settings ) {
+		$next = self::next_run( $config_id );
 		if ( $settings['enabled'] && $next && $next['timestamp'] <= time() ) {
 			// A due send is waiting for WP-Cron. Keep it: when it runs, it schedules the
 			// following send from the new settings.
 			return;
 		}
 
-		self::unschedule();
+		self::unschedule( $config_id );
 		if ( $settings['enabled'] ) {
-			self::schedule_next( $settings, BulkEmailDispatcher::now() );
+			self::schedule_next( $config_id, $settings, BulkEmailDispatcher::now() );
 		}
 	}
 
 	/**
-	 * Remove the scheduled send.
+	 * Remove one configuration's scheduled sends.
+	 *
+	 * @param string $config_id Configuration ID.
+	 * @return void
+	 */
+	public static function unschedule( $config_id ) {
+		ScheduledSends::clear( self::HOOK, $config_id );
+		delete_option( Configurations::option( $config_id, 'next_run' ) );
+	}
+
+	/**
+	 * Remove every configuration's scheduled sends.
 	 *
 	 * @return void
 	 */
-	public static function unschedule() {
+	public static function unschedule_all() {
 		wp_unschedule_hook( self::HOOK );
-		delete_option( self::NEXT_RUN_OPTION );
+		foreach ( Configurations::all( Configurations::INDIVIDUAL_EMAIL ) as $configuration ) {
+			delete_option( Configurations::option( $configuration['id'], 'next_run' ) );
+		}
 	}
 
 	/**
-	 * The scheduled send, if its cron event still exists.
+	 * A configuration's scheduled send, if its cron event still exists.
 	 *
+	 * @param string $config_id Configuration ID.
 	 * @return array{timestamp: int, send_week: string}|null
 	 */
-	public static function next_run() {
-		$next = get_option( self::NEXT_RUN_OPTION, null );
+	public static function next_run( $config_id ) {
+		$next = get_option( Configurations::option( $config_id, 'next_run' ), null );
 		if ( ! is_array( $next ) || empty( $next['send_week'] ) ) {
 			return null;
 		}
-		$timestamp = wp_next_scheduled( self::HOOK, array( $next['send_week'] ) );
+		$timestamp = wp_next_scheduled( self::HOOK, array( $next['send_week'], $config_id ) );
 
 		return $timestamp
 			? array(
@@ -176,22 +202,23 @@ class IndividualEmailDispatcher {
 	}
 
 	/**
-	 * Schedule the first send after a moment.
+	 * Schedule a configuration's first send after a moment.
 	 *
-	 * @param array              $settings Individual email settings.
-	 * @param \DateTimeImmutable $after    Reference moment, in the site timezone.
+	 * @param string             $config_id Configuration ID.
+	 * @param array              $settings  Its settings.
+	 * @param \DateTimeImmutable $after     Reference moment, in the site timezone.
 	 * @return void
 	 */
-	private static function schedule_next( array $settings, \DateTimeImmutable $after ) {
-		$due  = self::next_due( $settings, $after, (string) get_option( self::LAST_SENT_OPTION, '' ) );
+	private static function schedule_next( $config_id, array $settings, \DateTimeImmutable $after ) {
+		$due  = self::next_due( $settings, $after, BulkEmailDispatcher::last_sent_week( $config_id ) );
 		$week = BulkEmailDispatcher::iso_week( $due );
-		$args = array( $week );
+		$args = array( $week, $config_id );
 
 		if ( ! wp_next_scheduled( self::HOOK, $args ) ) {
 			wp_schedule_single_event( $due->getTimestamp(), self::HOOK, $args );
 		}
 		update_option(
-			self::NEXT_RUN_OPTION,
+			Configurations::option( $config_id, 'next_run' ),
 			array(
 				'timestamp' => $due->getTimestamp(),
 				'send_week' => $week,
@@ -201,14 +228,15 @@ class IndividualEmailDispatcher {
 	}
 
 	/**
-	 * Send the weekly email for a send week, at most once.
+	 * Send one configuration's weekly email for a send week, at most once.
 	 *
+	 * @param string             $config_id Configuration ID.
 	 * @param string             $send_week ISO week the email was scheduled for.
 	 * @param array              $settings  Individual email settings.
 	 * @param \DateTimeImmutable $now       Current moment, in the site timezone.
 	 * @return array|null The run record, or null when nothing ran.
 	 */
-	public function process( $send_week, array $settings, \DateTimeImmutable $now ) {
+	public function process( $config_id, $send_week, array $settings, \DateTimeImmutable $now ) {
 		$claim_date = BulkEmailDispatcher::week_start( $send_week );
 		if ( ! $claim_date || ! $settings['enabled'] ) {
 			return null;
@@ -217,56 +245,57 @@ class IndividualEmailDispatcher {
 		$recipient = (string) IndividualEmailSettings::parse_recipient( $settings['recipient'] );
 
 		if ( BulkEmailDispatcher::iso_week( $now ) !== $send_week ) {
-			return $this->record( $send_week, null, $recipient, 'expired', __( 'Not sent: the scheduled week had already passed when the send ran.', 'fair-events' ) );
+			return $this->record( $config_id, $send_week, null, $recipient, 'expired', __( 'Not sent: the scheduled week had already passed when the send ran.', 'fair-events' ) );
 		}
 
 		// From here on the send week is used up, also when the week turns out
 		// empty or the send fails: nothing is resent automatically.
-		if ( ! $this->log->claim( $claim_date, self::PROVIDER, self::DESTINATION, 1, 1 ) ) {
+		if ( ! $this->log->claim( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, 1 ) ) {
 			return null;
 		}
-		update_option( self::LAST_SENT_OPTION, $send_week, false );
+		update_option( Configurations::option( $config_id, 'last_sent_week' ), $send_week, false );
 
 		$result = self::result( 'uncertain', 'internal_error' );
 		$week   = null;
 		try {
 			if ( '' === $recipient ) {
 				$result = self::result( 'failed', 'configuration_error' );
-				return $this->record( $send_week, null, $recipient, 'configuration_error', __( 'Not sent: no valid email address is saved.', 'fair-events' ) );
+				return $this->record( $config_id, $send_week, null, $recipient, 'configuration_error', __( 'Not sent: no valid email address is saved.', 'fair-events' ) );
 			}
 
 			$week        = self::event_week( $settings['week_scope'], $now );
 			$occurrences = $this->events->for_week( $settings['event_selection'], $week );
 			if ( is_wp_error( $occurrences ) ) {
 				$result = self::result( 'failed', 'configuration_error' );
-				return $this->record( $send_week, $week, $recipient, 'configuration_error', $occurrences->get_error_message() );
+				return $this->record( $config_id, $send_week, $week, $recipient, 'configuration_error', $occurrences->get_error_message() );
 			}
 
 			$email = IndividualEmailRenderer::compose( $settings, $week, $occurrences );
 			if ( $settings['skip_empty'] && $email['empty'] ) {
 				$result = self::result( 'skipped', 'no_events' );
-				return $this->record( $send_week, $week, $recipient, 'skipped_empty', __( 'No events that week, so nothing was sent.', 'fair-events' ) );
+				return $this->record( $config_id, $send_week, $week, $recipient, 'skipped_empty', __( 'No events that week, so nothing was sent.', 'fair-events' ) );
 			}
 
 			if ( ! $this->mailer->send_notification( $recipient, $email['subject'], $email['html'] ) ) {
 				$result = self::result( 'failed', 'send_failed' );
-				return $this->record( $send_week, $week, $recipient, 'failed', __( 'The site could not hand the email over for delivery. It is not repeated automatically.', 'fair-events' ) );
+				return $this->record( $config_id, $send_week, $week, $recipient, 'failed', __( 'The site could not hand the email over for delivery. It is not repeated automatically.', 'fair-events' ) );
 			}
 
 			$result = self::result( 'sent', '' );
-			return $this->record( $send_week, $week, $recipient, 'sent', __( 'Handed over to the site’s mail system. This does not confirm that it reached the inbox.', 'fair-events' ) );
+			return $this->record( $config_id, $send_week, $week, $recipient, 'sent', __( 'Handed over to the site’s mail system. This does not confirm that it reached the inbox.', 'fair-events' ) );
 		} catch ( \Throwable $e ) {
 			// The email may have gone out before the error, so the send is
 			// not repeated.
-			return $this->record( $send_week, $week, $recipient, 'failed', __( 'The send stopped with an error. The email may have been sent; it is not repeated automatically.', 'fair-events' ) );
+			return $this->record( $config_id, $send_week, $week, $recipient, 'failed', __( 'The send stopped with an error. The email may have been sent; it is not repeated automatically.', 'fair-events' ) );
 		} finally {
-			$this->log->finish( $claim_date, self::PROVIDER, self::DESTINATION, 1, $result );
+			$this->log->finish( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, $result );
 		}
 	}
 
 	/**
 	 * Store the outcome of a run, one entry per send week.
 	 *
+	 * @param string     $config_id   Configuration ID.
 	 * @param string     $send_week   ISO week the email was scheduled for.
 	 * @param array|null $week        Event week boundaries, when they were resolved.
 	 * @param string     $destination Address the run was for.
@@ -274,7 +303,7 @@ class IndividualEmailDispatcher {
 	 * @param string     $message     Human-readable detail.
 	 * @return array The run record.
 	 */
-	private function record( $send_week, $week, $destination, $status, $message ) {
+	private function record( $config_id, $send_week, $week, $destination, $status, $message ) {
 		$run = array(
 			'send_week'   => $send_week,
 			'week_start'  => $week['start'] ?? '',
@@ -285,22 +314,24 @@ class IndividualEmailDispatcher {
 			'time'        => current_time( 'mysql', true ),
 		);
 
-		$runs = get_option( self::RUNS_OPTION, array() );
-		$runs = is_array( $runs ) ? $runs : array();
+		$option = Configurations::option( $config_id, 'runs' );
+		$runs   = get_option( $option, array() );
+		$runs   = is_array( $runs ) ? $runs : array();
 		unset( $runs[ $send_week ] );
 		$runs = array( $send_week => $run ) + $runs;
-		update_option( self::RUNS_OPTION, array_slice( $runs, 0, self::RUN_HISTORY_MAX, true ), false );
+		update_option( $option, array_slice( $runs, 0, self::RUN_HISTORY_MAX, true ), false );
 
 		return $run;
 	}
 
 	/**
-	 * Recorded runs, newest first.
+	 * A configuration's recorded runs, newest first.
 	 *
+	 * @param string $config_id Configuration ID.
 	 * @return array[]
 	 */
-	public static function runs() {
-		$runs = get_option( self::RUNS_OPTION, array() );
+	public static function runs( $config_id ) {
+		$runs = get_option( Configurations::option( $config_id, 'runs' ), array() );
 		return is_array( $runs ) ? array_values( $runs ) : array();
 	}
 

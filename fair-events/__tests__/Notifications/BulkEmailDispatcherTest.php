@@ -106,7 +106,7 @@ class BulkEmailDispatcherTest extends TestCase {
 	 * @return array|null
 	 */
 	private function process( $send_week, array $settings, $now ) {
-		return ( new BulkEmailDispatcher( $this->log, $this->adapter, $this->events ) )->process( $send_week, $settings, $now );
+		return ( new BulkEmailDispatcher( $this->log, $this->adapter, $this->events ) )->process( 'bulk_email', $send_week, $settings, $now );
 	}
 
 	/** The email goes out once, with Fair Audience's counts recorded. */
@@ -117,8 +117,8 @@ class BulkEmailDispatcherTest extends TestCase {
 		$this->assertSame( 'Sent: 12. Failed: 0. Skipped: 3.', $run['message'] );
 		$this->assertSame( '2026-10-05', $run['week_start'] );
 		$this->assertCount( 1, $this->adapter->sent );
-		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] );
-		$this->assertSame( 'sent', $this->log->rows['2026-10-05|bulk_email|subscribers|1']['state'] );
+		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options']['fair_events_notification_config_bulk_email_last_sent_week'] );
+		$this->assertSame( 'sent', $this->log->rows['bulk_email|2026-10-05|bulk_email|subscribers|1']['state'] );
 	}
 
 	/** Emails Fair Audience could not deliver show in the run's status. */
@@ -177,7 +177,7 @@ class BulkEmailDispatcherTest extends TestCase {
 
 		$this->assertSame( 'skipped_empty', $run['status'] );
 		$this->assertSame( array(), $this->adapter->sent );
-		$this->assertSame( 'skipped', $this->log->rows['2026-10-05|bulk_email|subscribers|1']['state'] );
+		$this->assertSame( 'skipped', $this->log->rows['bulk_email|2026-10-05|bulk_email|subscribers|1']['state'] );
 		$this->assertNull( $this->process( '2026-W41', self::settings(), self::moment( '2026-10-06 08:00' ) ) );
 	}
 
@@ -198,7 +198,7 @@ class BulkEmailDispatcherTest extends TestCase {
 		$run = $this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:00' ) );
 
 		$this->assertSame( 'failed', $run['status'] );
-		$this->assertSame( 'uncertain', $this->log->rows['2026-10-05|bulk_email|subscribers|1']['state'] );
+		$this->assertSame( 'uncertain', $this->log->rows['bulk_email|2026-10-05|bulk_email|subscribers|1']['state'] );
 
 		$this->adapter->throw = false;
 		$this->assertNull( $this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:05' ) ) );
@@ -262,21 +262,49 @@ class BulkEmailDispatcherTest extends TestCase {
 
 	/** Changing the schedule queues the next future send only. */
 	public function test_reschedule_queues_one_future_send() {
-		BulkEmailDispatcher::reschedule( self::settings() );
+		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings() );
 
 		$events = $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ];
 		$this->assertCount( 1, $events );
 		$this->assertGreaterThan( time(), $events[0][0] );
-		$this->assertSame( $events[0][1][0], BulkEmailDispatcher::next_run()['send_week'] );
+		$this->assertSame( $events[0][1][0], BulkEmailDispatcher::next_run( 'bulk_email' )['send_week'] );
 
-		BulkEmailDispatcher::reschedule( self::settings( array( 'enabled' => false ) ) );
-		$this->assertArrayNotHasKey( BulkEmailDispatcher::HOOK, $GLOBALS['_fair_test_cron'] );
-		$this->assertNull( BulkEmailDispatcher::next_run() );
+		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings( array( 'enabled' => false ) ) );
+		$this->assertEmpty( $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] ?? array() );
+		$this->assertNull( BulkEmailDispatcher::next_run( 'bulk_email' ) );
 	}
 
 	/** Invalid send weeks are refused. */
 	public function test_invalid_send_week_is_ignored() {
 		$this->assertNull( BulkEmailDispatcher::week_start( '2026-10-05' ) );
 		$this->assertNull( $this->process( 'nonsense', self::settings(), self::moment( '2026-10-05 08:00' ) ) );
+	}
+
+	/** Two configurations both send to subscribers in the same week, once each. */
+	public function test_two_configurations_both_send_once_in_the_same_week() {
+		$dispatcher = new BulkEmailDispatcher( $this->log, $this->adapter, $this->events );
+		$now        = self::moment( '2026-10-05 08:00' );
+
+		$this->assertSame( 'sent', $dispatcher->process( 'members', '2026-W41', self::settings(), $now )['status'] );
+		$this->assertSame( 'sent', $dispatcher->process( 'public', '2026-W41', self::settings(), $now )['status'] );
+		$this->assertNull( $dispatcher->process( 'members', '2026-W41', self::settings(), $now ) );
+		$this->assertNull( $dispatcher->process( 'public', '2026-W41', self::settings(), $now ) );
+
+		$this->assertCount( 2, $this->adapter->sent );
+		$this->assertCount( 1, BulkEmailDispatcher::runs( 'members' ) );
+		$this->assertCount( 1, BulkEmailDispatcher::runs( 'public' ) );
+	}
+
+	/** Pausing one configuration removes only its queued send. */
+	public function test_pausing_one_configuration_leaves_the_others_scheduled() {
+		BulkEmailDispatcher::reschedule( 'members', self::settings() );
+		BulkEmailDispatcher::reschedule( 'public', self::settings() );
+		$public = BulkEmailDispatcher::next_run( 'public' );
+
+		BulkEmailDispatcher::reschedule( 'members', self::settings( array( 'enabled' => false ) ) );
+
+		$this->assertNull( BulkEmailDispatcher::next_run( 'members' ) );
+		$this->assertSame( $public, BulkEmailDispatcher::next_run( 'public' ) );
+		$this->assertCount( 1, $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] );
 	}
 }

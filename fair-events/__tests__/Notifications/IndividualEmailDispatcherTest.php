@@ -22,7 +22,7 @@ require_once __DIR__ . '/fakes/FakeIndividualEmailEvents.php';
  */
 class IndividualEmailDispatcherTest extends TestCase {
 
-	private const LOG_KEY = '2026-10-05|individual_email|recipient|1';
+	private const LOG_KEY = 'individual_email|2026-10-05|individual_email|recipient|1';
 
 	/**
 	 * Delivery record.
@@ -109,7 +109,7 @@ class IndividualEmailDispatcherTest extends TestCase {
 	 * @return array|null
 	 */
 	private function process( $send_week, array $settings, $now ) {
-		return ( new IndividualEmailDispatcher( $this->log, $this->mailer, $this->events ) )->process( $send_week, $settings, $now );
+		return ( new IndividualEmailDispatcher( $this->log, $this->mailer, $this->events ) )->process( 'individual_email', $send_week, $settings, $now );
 	}
 
 	/** The email goes to the configured address only, and the run says where. */
@@ -125,7 +125,7 @@ class IndividualEmailDispatcherTest extends TestCase {
 		$this->assertSame( 'organizer@example.com', $this->mailer->sent[0][0] );
 		$this->assertSame( 'Events 2026-10-05', $this->mailer->sent[0][1] );
 		$this->assertStringContainsString( 'Concert', $this->mailer->sent[0][2] );
-		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options'][ IndividualEmailDispatcher::LAST_SENT_OPTION ] );
+		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options']['fair_events_notification_config_individual_email_last_sent_week'] );
 		$this->assertSame( 'sent', $this->log->rows[ self::LOG_KEY ]['state'] );
 		$this->assertSame( array( IndividualEmailSettings::LOCAL_EVENTS, '2026-10-05', '2026-10-11' ), $this->events->requests[0] );
 	}
@@ -208,7 +208,7 @@ class IndividualEmailDispatcherTest extends TestCase {
 		$this->assertSame( 'failed', $run['status'] );
 		$this->assertSame( 'organizer@example.com', $run['destination'] );
 		$this->assertSame( 'failed', $this->log->rows[ self::LOG_KEY ]['state'] );
-		$this->assertSame( $run, IndividualEmailDispatcher::runs()[0] );
+		$this->assertSame( $run, IndividualEmailDispatcher::runs( 'individual_email' )[0] );
 
 		$this->mailer->fail = false;
 		$this->assertNull( $this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:05' ) ) );
@@ -231,16 +231,16 @@ class IndividualEmailDispatcherTest extends TestCase {
 
 	/** A failure here leaves the other channels' state untouched. */
 	public function test_failure_does_not_touch_other_channels() {
-		$GLOBALS['_fair_test_options'][ BulkEmailDispatcher::RUNS_OPTION ]      = array( '2026-W41' => array( 'status' => 'sent' ) );
-		$GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] = '2026-W41';
-		$this->log->claim( '2026-10-05', BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1 );
+		$GLOBALS['_fair_test_options']['fair_events_notification_config_bulk_email_runs']           = array( '2026-W41' => array( 'status' => 'sent' ) );
+		$GLOBALS['_fair_test_options']['fair_events_notification_config_bulk_email_last_sent_week'] = '2026-W41';
+		$this->log->claim( 'bulk_email', '2026-10-05', BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1 );
 		$this->mailer->throw = true;
 
 		$this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:00' ) );
 
-		$this->assertSame( array( '2026-W41' => array( 'status' => 'sent' ) ), $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::RUNS_OPTION ] );
-		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] );
-		$this->assertSame( 'sending', $this->log->rows['2026-10-05|bulk_email|subscribers|1']['state'] );
+		$this->assertSame( array( '2026-W41' => array( 'status' => 'sent' ) ), $GLOBALS['_fair_test_options']['fair_events_notification_config_bulk_email_runs'] );
+		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options']['fair_events_notification_config_bulk_email_last_sent_week'] );
+		$this->assertSame( 'sending', $this->log->rows['bulk_email|2026-10-05|bulk_email|subscribers|1']['state'] );
 	}
 
 	/** A deleted or disabled source is a configuration error, never a wider selection. */
@@ -332,31 +332,31 @@ class IndividualEmailDispatcherTest extends TestCase {
 
 	/** Its schedule is its own: other channels' cron hooks are not touched. */
 	public function test_reschedule_queues_one_future_send_of_its_own() {
-		$GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] = array( array( time() + 60, array( '2026-W41' ) ) );
+		$GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] = array( array( time() + 60, array( '2026-W41', 'bulk_email' ) ) );
 
-		IndividualEmailDispatcher::reschedule( self::settings() );
+		IndividualEmailDispatcher::reschedule( 'individual_email', self::settings() );
 
 		$events = $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ];
 		$this->assertCount( 1, $events );
 		$this->assertGreaterThan( time(), $events[0][0] );
-		$this->assertSame( $events[0][1][0], IndividualEmailDispatcher::next_run()['send_week'] );
+		$this->assertSame( $events[0][1][0], IndividualEmailDispatcher::next_run( 'individual_email' )['send_week'] );
 
-		IndividualEmailDispatcher::reschedule( self::settings( array( 'enabled' => false ) ) );
-		$this->assertArrayNotHasKey( IndividualEmailDispatcher::HOOK, $GLOBALS['_fair_test_cron'] );
-		$this->assertNull( IndividualEmailDispatcher::next_run() );
+		IndividualEmailDispatcher::reschedule( 'individual_email', self::settings( array( 'enabled' => false ) ) );
+		$this->assertEmpty( $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ] ?? array() );
+		$this->assertNull( IndividualEmailDispatcher::next_run( 'individual_email' ) );
 		$this->assertCount( 1, $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] );
 	}
 
 	/** Turning the channel back on schedules a future send, not a missed one. */
 	public function test_reactivation_does_not_replay_a_missed_week() {
-		$GLOBALS['_fair_test_options'][ IndividualEmailDispatcher::LAST_SENT_OPTION ] = '2026-W30';
+		$GLOBALS['_fair_test_options']['fair_events_notification_config_individual_email_last_sent_week'] = '2026-W30';
 
-		IndividualEmailDispatcher::reschedule( self::settings() );
+		IndividualEmailDispatcher::reschedule( 'individual_email', self::settings() );
 
-		$next = IndividualEmailDispatcher::next_run();
+		$next = IndividualEmailDispatcher::next_run( 'individual_email' );
 		$this->assertGreaterThan( time(), $next['timestamp'] );
 		$this->assertSame( array(), $this->mailer->sent );
-		$this->assertSame( array(), IndividualEmailDispatcher::runs() );
+		$this->assertSame( array(), IndividualEmailDispatcher::runs( 'individual_email' ) );
 	}
 
 	/** Run history is bounded. */
@@ -366,7 +366,7 @@ class IndividualEmailDispatcherTest extends TestCase {
 			$this->process( $send_week, self::settings(), self::moment( BulkEmailDispatcher::week_start( $send_week ) . ' 08:00' ) );
 		}
 
-		$runs = IndividualEmailDispatcher::runs();
+		$runs = IndividualEmailDispatcher::runs( 'individual_email' );
 		$this->assertCount( 10, $runs );
 		$this->assertSame( '2026-W12', $runs[0]['send_week'] );
 	}
@@ -374,5 +374,57 @@ class IndividualEmailDispatcherTest extends TestCase {
 	/** Invalid send weeks are refused. */
 	public function test_invalid_send_week_is_ignored() {
 		$this->assertNull( $this->process( 'nonsense', self::settings(), self::moment( '2026-10-05 08:00' ) ) );
+	}
+
+	/** Two configurations sending to the same address in the same week both send, once each. */
+	public function test_two_configurations_to_the_same_address_both_send_once() {
+		$dispatcher = new IndividualEmailDispatcher( $this->log, $this->mailer, $this->events );
+		$now        = self::moment( '2026-10-05 08:00' );
+
+		foreach ( array( 'first', 'second', 'first', 'second' ) as $config_id ) {
+			$dispatcher->process( $config_id, '2026-W41', self::settings(), $now );
+		}
+
+		$this->assertCount( 2, $this->mailer->sent );
+		$this->assertSame( 'sent', $this->log->rows['first|2026-10-05|individual_email|recipient|1']['state'] );
+		$this->assertSame( 'sent', $this->log->rows['second|2026-10-05|individual_email|recipient|1']['state'] );
+		$this->assertCount( 1, IndividualEmailDispatcher::runs( 'first' ) );
+		$this->assertCount( 1, IndividualEmailDispatcher::runs( 'second' ) );
+		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options']['fair_events_notification_config_second_last_sent_week'] );
+	}
+
+	/** Pausing one configuration removes only its queued send. */
+	public function test_pausing_one_configuration_leaves_the_others_scheduled() {
+		IndividualEmailDispatcher::reschedule( 'first', self::settings() );
+		IndividualEmailDispatcher::reschedule( 'second', self::settings( array( 'day_of_week' => 3 ) ) );
+		$second = IndividualEmailDispatcher::next_run( 'second' );
+
+		IndividualEmailDispatcher::reschedule( 'first', self::settings( array( 'enabled' => false ) ) );
+
+		$this->assertNull( IndividualEmailDispatcher::next_run( 'first' ) );
+		$this->assertSame( $second, IndividualEmailDispatcher::next_run( 'second' ) );
+		$this->assertCount( 1, $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ] );
+		$this->assertSame( 'second', $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ][0][1][1] );
+	}
+
+	/** Rescheduling one configuration moves only its own send. */
+	public function test_rescheduling_one_configuration_leaves_the_others_unchanged() {
+		IndividualEmailDispatcher::reschedule( 'first', self::settings() );
+		IndividualEmailDispatcher::reschedule( 'second', self::settings() );
+		$second = IndividualEmailDispatcher::next_run( 'second' );
+
+		IndividualEmailDispatcher::reschedule( 'first', self::settings( array( 'time_of_day' => '21:30' ) ) );
+
+		$this->assertSame( $second, IndividualEmailDispatcher::next_run( 'second' ) );
+		$this->assertNotSame( $second['timestamp'], IndividualEmailDispatcher::next_run( 'first' )['timestamp'] );
+		$this->assertCount( 2, $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ] );
+	}
+
+	/** Every queued send carries its configuration. */
+	public function test_queued_sends_carry_the_configuration() {
+		IndividualEmailDispatcher::reschedule( 'first', self::settings() );
+
+		$args = $GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ][0][1];
+		$this->assertSame( array( IndividualEmailDispatcher::next_run( 'first' )['send_week'], 'first' ), $args );
 	}
 }

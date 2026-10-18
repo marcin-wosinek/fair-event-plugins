@@ -26,12 +26,11 @@ defined( 'WPINC' ) || die;
  *   for the channel.
  *
  * Runs under a database lock; a request that does not get the lock leaves the
- * work to the one holding it.
+ * work to the one holding it. The same run upgrades the delivery record and
+ * then gives each type's settings their configuration ID
+ * ({@see ConfigurationMigration}), also for a channel taken over later.
  */
 class Migration {
-	// MySQL rejects lock names over 64 characters; lock_name() appends 33.
-	private const LOCK = 'fair_events_notif_migration';
-
 	public const LEGACY_TELEGRAM_OPTION   = 'fair_events_experimental_weekly_notifications';
 	public const LEGACY_TELEGRAM_RUNS     = 'fair_events_experimental_weekly_notification_runs';
 	public const LEGACY_TELEGRAM_NEXT_RUN = 'fair_events_experimental_weekly_notification_next_run';
@@ -43,7 +42,8 @@ class Migration {
 	public const LEGACY_BULK_HOOK        = 'fair_audience_weekly_digest_tick';
 
 	/**
-	 * Take over every channel that is ready and not taken over yet.
+	 * Take over every channel that is ready and not taken over yet, then
+	 * migrate whatever is ready to configurations.
 	 *
 	 * @return void
 	 */
@@ -54,16 +54,24 @@ class Migration {
 				return ! Ownership::is_migrated( $channel ) && Ownership::legacy_yields( $channel );
 			}
 		);
-		if ( ! $pending || ! self::lock() ) {
+		if ( ! $pending && DeliveryLog::is_current() && ConfigurationMigration::is_complete() ) {
+			return;
+		}
+		if ( ! Lock::acquire( Lock::MIGRATION ) ) {
 			return;
 		}
 
 		try {
 			// Another request may have finished while this one waited to start.
 			wp_cache_delete( Ownership::OPTION, 'options' );
+			wp_cache_delete( ConfigurationMigration::OPTION, 'options' );
 			wp_cache_delete( 'alloptions', 'options' );
 
-			DeliveryLog::maybe_install();
+			// Claims are recorded per configuration: nothing moves until the
+			// delivery record can hold them.
+			if ( ! DeliveryLog::maybe_install() ) {
+				return;
+			}
 			foreach ( $pending as $channel ) {
 				if ( Ownership::is_migrated( $channel ) ) {
 					continue;
@@ -73,8 +81,9 @@ class Migration {
 					: self::bulk_email( new DeliveryLog() );
 				Ownership::mark_migrated( $channel, $details );
 			}
+			ConfigurationMigration::run();
 		} finally {
-			self::unlock();
+			Lock::release( Lock::MIGRATION );
 		}
 	}
 
@@ -82,7 +91,9 @@ class Migration {
 	 * Take over the weekly Telegram summary.
 	 *
 	 * The bot token and the delivery records stay where they are: this plugin
-	 * reads the same option and the same table.
+	 * reads the same option and the same table. Settings and history land
+	 * where Fair Events kept its single configuration, and move on to the
+	 * configuration in {@see ConfigurationMigration}.
 	 *
 	 * @param DeliveryLog $log Delivery record, unused: Telegram's records are already in it.
 	 * @return array What was found.
@@ -96,12 +107,12 @@ class Migration {
 		if ( is_array( $legacy ) && false === get_option( TelegramSettings::OPTION, false ) ) {
 			$settings            = TelegramSettings::normalize( $legacy );
 			$settings['enabled'] = $was_sending;
-			TelegramSettings::save( $settings );
+			update_option( TelegramSettings::OPTION, $settings, false );
 		}
 
 		$runs = get_option( self::LEGACY_TELEGRAM_RUNS, null );
-		if ( is_array( $runs ) && false === get_option( TelegramDispatcher::RUNS_OPTION, false ) ) {
-			update_option( TelegramDispatcher::RUNS_OPTION, $runs, false );
+		if ( is_array( $runs ) && false === get_option( TelegramDispatcher::LEGACY_RUNS_OPTION, false ) ) {
+			update_option( TelegramDispatcher::LEGACY_RUNS_OPTION, $runs, false );
 		}
 
 		if ( $was_enabled ) {
@@ -132,24 +143,24 @@ class Migration {
 		if ( is_array( $legacy ) && false === get_option( BulkEmailSettings::OPTION, false ) ) {
 			$settings            = BulkEmailSettings::sanitize( $legacy );
 			$settings['enabled'] = $was_sending;
-			BulkEmailSettings::save( $settings );
+			update_option( BulkEmailSettings::OPTION, $settings, false );
 		}
 
 		// The week already sent stays used up.
 		$last_sent  = (string) get_option( self::LEGACY_BULK_LAST_SENT, '' );
 		$claim_date = BulkEmailDispatcher::week_start( $last_sent );
 		if ( $claim_date ) {
-			if ( false === get_option( BulkEmailDispatcher::LAST_SENT_OPTION, false ) ) {
-				update_option( BulkEmailDispatcher::LAST_SENT_OPTION, $last_sent, false );
+			if ( false === get_option( BulkEmailDispatcher::LEGACY_LAST_SENT_OPTION, false ) ) {
+				update_option( BulkEmailDispatcher::LEGACY_LAST_SENT_OPTION, $last_sent, false );
 			}
-			$log->claim( $claim_date, BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1, 'sent', 'migrated' );
+			$log->claim( Configurations::legacy_id( Configurations::BULK_EMAIL ), $claim_date, BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1, 'sent', 'migrated' );
 		}
 
 		$result = get_option( self::LEGACY_BULK_LAST_RESULT, null );
-		if ( is_array( $result ) && ! empty( $result['status'] ) && false === get_option( BulkEmailDispatcher::RUNS_OPTION, false ) ) {
+		if ( is_array( $result ) && ! empty( $result['status'] ) && false === get_option( BulkEmailDispatcher::LEGACY_RUNS_OPTION, false ) ) {
 			$key = '' !== $last_sent ? $last_sent : 'migrated';
 			update_option(
-				BulkEmailDispatcher::RUNS_OPTION,
+				BulkEmailDispatcher::LEGACY_RUNS_OPTION,
 				array(
 					$key => array(
 						'send_week'  => $claim_date ? $last_sent : '',
@@ -204,37 +215,5 @@ class Migration {
 		return $moment
 			? $moment->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' )
 			: gmdate( 'Y-m-d H:i:s' );
-	}
-
-	/**
-	 * Take the migration lock without waiting.
-	 *
-	 * @return bool
-	 */
-	private static function lock() {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a session lock, nothing to cache.
-		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', self::lock_name() ) );
-	}
-
-	/**
-	 * Release the migration lock.
-	 *
-	 * @return void
-	 */
-	private static function unlock() {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a session lock, nothing to cache.
-		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::lock_name() ) );
-	}
-
-	/**
-	 * Lock name, unique per site on a shared database server.
-	 *
-	 * @return string
-	 */
-	private static function lock_name() {
-		global $wpdb;
-		return self::LOCK . '_' . md5( DB_NAME . $wpdb->prefix );
 	}
 }

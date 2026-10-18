@@ -18,14 +18,14 @@ $fixture_key     = 'fair_e2e_notification_weeks_fixture';
 $fixture_options = array(
 	'timezone_string',
 	'start_of_week',
-	'fair_events_notification_telegram',
-	'fair_events_notification_telegram_next_run',
-	'fair_events_notification_bulk_email',
-	'fair_events_notification_bulk_email_next_run',
-	'fair_events_notification_bulk_email_last_sent_week',
-	'fair_events_notification_individual_email',
-	'fair_events_notification_individual_email_next_run',
-	'fair_events_notification_individual_email_last_sent_week',
+	'fair_events_notification_config_telegram',
+	'fair_events_notification_config_telegram_next_run',
+	'fair_events_notification_config_bulk_email',
+	'fair_events_notification_config_bulk_email_next_run',
+	'fair_events_notification_config_bulk_email_last_sent_week',
+	'fair_events_notification_config_individual_email',
+	'fair_events_notification_config_individual_email_next_run',
+	'fair_events_notification_config_individual_email_last_sent_week',
 	'fair_events_experimental_weekly_telegram_token',
 	'fair_e2e_telegram_requests',
 	'fair_e2e_captured_mail',
@@ -83,16 +83,17 @@ if ( 'site' === $fixture_action ) {
 } elseif ( 'prior' === $fixture_action ) {
 	$week = ( new DateTimeImmutable( 'now', wp_timezone() ) )->format( 'o-\WW' );
 	foreach ( array( 'bulk_email', 'individual_email' ) as $channel ) {
-		update_option( 'fair_events_notification_' . $channel . '_last_sent_week', $week );
+		update_option( 'fair_events_notification_config_' . $channel . '_last_sent_week', $week );
 	}
 	global $wpdb;
 	$saved = get_option( $fixture_key );
 	$log   = new DeliveryLog();
 	foreach ( array( 'current', 'next' ) as $scope ) {
 		$covered = WeekSchedule::target_week( new DateTimeImmutable( 'now', wp_timezone() ), $scope, 0 );
-		if ( $log->claim( $covered['start'], 'telegram', '@e2e_week_scope', 1, 1 ) ) {
+		if ( $log->claim( 'telegram', $covered['start'], 'telegram', '@e2e_week_scope', 1, 1 ) ) {
 			$saved['deliveries'][] = (int) $wpdb->insert_id;
 			$log->finish(
+				'telegram',
 				$covered['start'],
 				'telegram',
 				'@e2e_week_scope',
@@ -141,7 +142,7 @@ if ( 'site' === $fixture_action ) {
 			'individual_email' => 'IndividualEmailDispatcher',
 		)[ $channel ];
 		$settings_class = str_replace( 'Dispatcher', 'Settings', $class );
-		$class::reschedule( $settings_class::get() );
+		$class::reschedule( $channel, $settings_class::get( $channel ) );
 	}
 	delete_option( $fixture_key );
 	$out = array( 'cleaned' => true );

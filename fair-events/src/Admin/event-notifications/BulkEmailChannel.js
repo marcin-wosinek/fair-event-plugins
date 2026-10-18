@@ -16,6 +16,7 @@ import { sourceOptions } from './shared.js';
 import useNotificationEditor from './useNotificationEditor.js';
 
 const EDITABLE_FIELDS = [
+	'name',
 	'enabled',
 	'source_slug',
 	'day_of_week',
@@ -31,8 +32,6 @@ const EDITABLE_FIELDS = [
  * What differs about bulk email: the test goes to the current administrator.
  */
 const ADAPTER = {
-	key: 'bulk_email',
-	route: 'bulk-email',
 	fields: EDITABLE_FIELDS,
 	toForm: ( channel ) =>
 		Object.fromEntries(

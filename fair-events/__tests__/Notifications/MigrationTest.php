@@ -18,6 +18,9 @@ require_once __DIR__ . '/fakes/FakeDeliveryLog.php';
 
 /**
  * Taking notification settings and history over from their former owners.
+ *
+ * The takeover writes where Fair Events kept each type's single settings;
+ * {@see ConfigurationMigrationTest} covers moving them to configurations.
  */
 class MigrationTest extends TestCase {
 	private const TOKEN = '123456789:AAEabcdefghijklmnopqrstuvwxyz012345';
@@ -85,6 +88,15 @@ class MigrationTest extends TestCase {
 		$GLOBALS['_fair_test_cron'][ Migration::LEGACY_TELEGRAM_HOOK ]        = array( array( 1, array( '2026-09-21' ) ) );
 	}
 
+	/**
+	 * Telegram settings where the takeover saved them.
+	 *
+	 * @return array
+	 */
+	private static function telegram_settings() {
+		return TelegramSettings::normalize( get_option( TelegramSettings::OPTION, array() ) );
+	}
+
 	/** A site without notifications gets no settings written. */
 	public function test_fresh_site_gets_nothing_written() {
 		Migration::telegram( $this->log );
@@ -100,7 +112,7 @@ class MigrationTest extends TestCase {
 
 		Migration::telegram( $this->log );
 
-		$settings = TelegramSettings::get();
+		$settings = self::telegram_settings();
 		$this->assertSame( 'city-events', $settings['source_slug'] );
 		$this->assertSame( 12, $settings['page_id'] );
 		$this->assertSame( 5, $settings['day_of_week'] );
@@ -108,7 +120,7 @@ class MigrationTest extends TestCase {
 		$this->assertSame( 'next', $settings['week_scope'] );
 		$this->assertSame( array( '@city_events', '-1001234567890' ), $settings['providers']['telegram']['chat_ids'] );
 		$this->assertTrue( $settings['providers']['telegram']['enabled'] );
-		$this->assertSame( 'sent', TelegramDispatcher::runs()[0]['status'] );
+		$this->assertSame( 'sent', array_values( get_option( TelegramDispatcher::LEGACY_RUNS_OPTION ) )[0]['status'] );
 		$this->assertSame( self::TOKEN, $GLOBALS['_fair_test_options'][ TelegramSettings::TOKEN_OPTION ] );
 	}
 
@@ -132,7 +144,7 @@ class MigrationTest extends TestCase {
 
 		$details = Migration::telegram( $this->log );
 
-		$this->assertFalse( TelegramSettings::get()['enabled'] );
+		$this->assertFalse( self::telegram_settings()['enabled'] );
 		$this->assertSame(
 			array(
 				'legacy_enabled' => true,
@@ -157,7 +169,7 @@ class MigrationTest extends TestCase {
 
 		Migration::telegram( new FakeDeliveryLog() );
 
-		$this->assertTrue( TelegramSettings::get()['enabled'] );
+		$this->assertTrue( self::telegram_settings()['enabled'] );
 		$this->assertFalse( $GLOBALS['_fair_test_options'][ Migration::LEGACY_TELEGRAM_OPTION ]['enabled'] );
 	}
 
@@ -166,17 +178,17 @@ class MigrationTest extends TestCase {
 		$this->seed_telegram();
 		Migration::telegram( $this->log );
 
-		$edited                = TelegramSettings::get();
+		$edited                = self::telegram_settings();
 		$edited['time_of_day'] = '18:45';
 		$edited['enabled']     = true;
-		TelegramSettings::save( $edited );
-		$GLOBALS['_fair_test_options'][ TelegramDispatcher::RUNS_OPTION ] = array();
+		update_option( TelegramSettings::OPTION, $edited );
+		$GLOBALS['_fair_test_options'][ TelegramDispatcher::LEGACY_RUNS_OPTION ] = array();
 
 		Migration::telegram( $this->log );
 
-		$this->assertSame( '18:45', TelegramSettings::get()['time_of_day'] );
-		$this->assertTrue( TelegramSettings::get()['enabled'] );
-		$this->assertSame( array(), TelegramDispatcher::runs() );
+		$this->assertSame( '18:45', self::telegram_settings()['time_of_day'] );
+		$this->assertTrue( self::telegram_settings()['enabled'] );
+		$this->assertSame( array(), get_option( TelegramDispatcher::LEGACY_RUNS_OPTION ) );
 	}
 
 	/** A takeover interrupted after the copy does not turn the channel off when it resumes. */
@@ -185,12 +197,12 @@ class MigrationTest extends TestCase {
 		// The first attempt copied the settings and switched the former sender off, then stopped.
 		$copied            = TelegramSettings::normalize( self::legacy_telegram() );
 		$copied['enabled'] = true;
-		TelegramSettings::save( $copied );
+		update_option( TelegramSettings::OPTION, $copied );
 		$GLOBALS['_fair_test_options'][ Migration::LEGACY_TELEGRAM_OPTION ]['enabled'] = false;
 
 		Migration::telegram( $this->log );
 
-		$this->assertTrue( TelegramSettings::get()['enabled'] );
+		$this->assertTrue( self::telegram_settings()['enabled'] );
 		$this->assertArrayNotHasKey( Migration::LEGACY_TELEGRAM_HOOK, $GLOBALS['_fair_test_cron'] );
 	}
 
@@ -226,7 +238,7 @@ class MigrationTest extends TestCase {
 
 		Migration::bulk_email( $this->log );
 
-		$settings = BulkEmailSettings::stored();
+		$settings = BulkEmailSettings::sanitize( get_option( BulkEmailSettings::OPTION ) );
 		$this->assertSame( 'members', $settings['source_slug'] );
 		$this->assertSame( '08:00', $settings['time_of_day'] );
 		$this->assertFalse( $settings['skip_empty'] );
@@ -241,9 +253,9 @@ class MigrationTest extends TestCase {
 
 		Migration::bulk_email( $this->log );
 
-		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] );
-		$this->assertFalse( $this->log->claim( '2026-10-05', BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1 ) );
-		$runs = BulkEmailDispatcher::runs();
+		$this->assertSame( '2026-W41', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LEGACY_LAST_SENT_OPTION ] );
+		$this->assertFalse( $this->log->claim( 'bulk_email', '2026-10-05', BulkEmailDispatcher::PROVIDER, BulkEmailDispatcher::DESTINATION, 1, 1 ) );
+		$runs = array_values( get_option( BulkEmailDispatcher::LEGACY_RUNS_OPTION ) );
 		$this->assertSame( '2026-W41', $runs[0]['send_week'] );
 		$this->assertSame( 'sent', $runs[0]['status'] );
 		$this->assertSame( 'Sent to 12, failed 0, skipped 3.', $runs[0]['message'] );
@@ -260,7 +272,7 @@ class MigrationTest extends TestCase {
 		$this->assertArrayNotHasKey( Migration::LEGACY_BULK_HOOK, $GLOBALS['_fair_test_cron'] );
 		$this->assertArrayNotHasKey( BulkEmailDispatcher::HOOK, $GLOBALS['_fair_test_cron'] );
 		// Fair Audience is not active here, so nothing was being sent.
-		$this->assertFalse( BulkEmailSettings::stored()['enabled'] );
+		$this->assertFalse( BulkEmailSettings::sanitize( get_option( BulkEmailSettings::OPTION ) )['enabled'] );
 		$this->assertFalse( $details['kept_enabled'] );
 	}
 
@@ -279,7 +291,7 @@ class MigrationTest extends TestCase {
 
 		Migration::bulk_email( new FakeDeliveryLog() );
 
-		$this->assertTrue( BulkEmailSettings::stored()['enabled'] );
+		$this->assertTrue( BulkEmailSettings::sanitize( get_option( BulkEmailSettings::OPTION ) )['enabled'] );
 	}
 
 	/** Running the takeover again keeps edits and history made since. */
@@ -287,15 +299,15 @@ class MigrationTest extends TestCase {
 		$this->seed_bulk_email();
 		Migration::bulk_email( $this->log );
 
-		$edited            = BulkEmailSettings::stored();
+		$edited            = BulkEmailSettings::sanitize( get_option( BulkEmailSettings::OPTION ) );
 		$edited['subject'] = 'New subject';
-		BulkEmailSettings::save( $edited );
-		$GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] = '2026-W42';
+		update_option( BulkEmailSettings::OPTION, $edited );
+		$GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LEGACY_LAST_SENT_OPTION ] = '2026-W42';
 
 		Migration::bulk_email( $this->log );
 
-		$this->assertSame( 'New subject', BulkEmailSettings::stored()['subject'] );
-		$this->assertSame( '2026-W42', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LAST_SENT_OPTION ] );
-		$this->assertCount( 1, BulkEmailDispatcher::runs() );
+		$this->assertSame( 'New subject', BulkEmailSettings::sanitize( get_option( BulkEmailSettings::OPTION ) )['subject'] );
+		$this->assertSame( '2026-W42', $GLOBALS['_fair_test_options'][ BulkEmailDispatcher::LEGACY_LAST_SENT_OPTION ] );
+		$this->assertCount( 1, get_option( BulkEmailDispatcher::LEGACY_RUNS_OPTION ) );
 	}
 }

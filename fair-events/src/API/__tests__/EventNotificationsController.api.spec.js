@@ -17,6 +17,10 @@
  * count as a scheduled send. Mail is captured by the test support layer
  * (e2e/mu-plugins), which can also make delivery to one address fail.
  *
+ * Configurations (#1919): several notifications of one kind, each with a
+ * server-generated ID, its own settings, schedule and history; the type
+ * routes above manage only the configuration each type started with.
+ *
  * The retired routes of the former owners
  * (Fair Events Experimental, Fair Audience) must be gone.
  *
@@ -1299,6 +1303,224 @@ test.describe( 'EventNotificationsController', () => {
 			const after = await readChannels();
 			expect( after.telegram ).toEqual( before.telegram );
 			expect( after.bulk_email ).toEqual( before.bulk_email );
+		} );
+	} );
+
+	test.describe( 'configurations', () => {
+		const CONFIGURATIONS = `${ PATH }/configurations`;
+		const SHARED = 'shared-1919-api@example.test';
+		const created = [];
+
+		const create = async ( data, headers = adminHeaders ) =>
+			api.post( CONFIGURATIONS, { headers, data } );
+
+		const createIndividual = async ( name ) => {
+			const res = await create( { type: 'individual_email', name } );
+			expect( res.status() ).toBe( 201 );
+			const configuration = await res.json();
+			created.push( configuration.id );
+			return configuration;
+		};
+
+		const update = ( id, data ) =>
+			api.post( `${ CONFIGURATIONS }/${ id }`, {
+				headers: adminHeaders,
+				data,
+			} );
+
+		const read = async ( id ) =>
+			(
+				await api.get( `${ CONFIGURATIONS }/${ id }`, {
+					headers: adminHeaders,
+				} )
+			).json();
+
+		test.afterAll( () => {
+			if ( created.length ) {
+				runScript(
+					'notification-configurations-fixture.php',
+					'E2E_NOTIFICATION_CONFIGURATIONS',
+					`remove ${ created.join( ' ' ) }`
+				);
+			}
+		} );
+
+		test( 'are managed by administrators only', async () => {
+			const anon = await request.newContext( { baseURL: BASE_URL } );
+			expect(
+				(
+					await anon.post( CONFIGURATIONS, {
+						data: { type: 'individual_email' },
+					} )
+				).status()
+			).toBe( 401 );
+			await anon.dispose();
+			expect(
+				(
+					await create(
+						{ type: 'individual_email' },
+						subscriberHeaders
+					)
+				).status()
+			).toBe( 403 );
+		} );
+
+		test( 'start paused with a server-generated ID and their own name', async () => {
+			const first = await createIndividual( 'Team inbox' );
+			const second = await createIndividual( 'Board inbox' );
+
+			expect( first.id ).toMatch( /^[a-z0-9-]{36}$/ );
+			expect( second.id ).not.toBe( first.id );
+			expect( first ).toMatchObject( {
+				type: 'individual_email',
+				name: 'Team inbox',
+				enabled: false,
+				next_run: null,
+				runs: [],
+			} );
+
+			const page = await (
+				await api.get( PATH, { headers: adminHeaders } )
+			).json();
+			const ids = page.configurations.map( ( { id } ) => id );
+			expect( ids ).toEqual(
+				expect.arrayContaining( [
+					'telegram',
+					'bulk_email',
+					'individual_email',
+					first.id,
+					second.id,
+				] )
+			);
+			expect( page.types.individual_email.state ).toBe( 'active' );
+			// The type routes keep describing the configuration each type started with.
+			expect( page.channels.individual_email.id ).toBe(
+				'individual_email'
+			);
+		} );
+
+		test( 'refuse unknown kinds, unknown IDs and changing a kind', async () => {
+			expect( ( await create( { type: 'sms' } ) ).status() ).toBe( 400 );
+			expect( ( await create( {} ) ).status() ).toBe( 400 );
+
+			const unknown = `${ CONFIGURATIONS }/00000000-0000-4000-a000-000000000000`;
+			for ( const res of [
+				await api.get( unknown, { headers: adminHeaders } ),
+				await api.post( unknown, {
+					headers: adminHeaders,
+					data: { enabled: false },
+				} ),
+				await api.get( `${ unknown }/preview`, {
+					headers: adminHeaders,
+				} ),
+				await api.post( `${ unknown }/test`, {
+					headers: adminHeaders,
+				} ),
+				await api.get( `${ unknown }/history`, {
+					headers: adminHeaders,
+				} ),
+			] ) {
+				expect( res.status() ).toBe( 404 );
+				expect( ( await res.json() ).code ).toBe(
+					'unknown_configuration'
+				);
+			}
+
+			const own = await createIndividual( 'Kind check' );
+			const res = await update( own.id, {
+				type: 'telegram',
+				recipient: SHARED,
+			} );
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe(
+				'configuration_type_immutable'
+			);
+			const kept = await read( own.id );
+			expect( kept.type ).toBe( 'individual_email' );
+			expect( kept.recipient ).toBe( '' );
+		} );
+
+		test( 'save, schedule and pause independently with the same address', async () => {
+			const first = await createIndividual( 'First' );
+			const second = await createIndividual( 'Second' );
+			const legacy = ( await readChannels() ).individual_email;
+
+			let res = await update( first.id, {
+				enabled: true,
+				recipient: SHARED,
+				time_of_day: '06:15',
+				name: 'First renamed',
+			} );
+			expect( res.status() ).toBe( 200 );
+			const savedFirst = await res.json();
+			expect( savedFirst.name ).toBe( 'First renamed' );
+			expect( savedFirst.next_run ).not.toBeNull();
+
+			res = await update( second.id, {
+				enabled: true,
+				recipient: SHARED,
+				time_of_day: '19:45',
+			} );
+			const savedSecond = await res.json();
+			expect( savedSecond.time_of_day ).toBe( '19:45' );
+			expect( savedSecond.next_run ).not.toBeNull();
+			expect( savedSecond.next_run.timestamp ).not.toBe(
+				savedFirst.next_run.timestamp
+			);
+			expect( ( await read( first.id ) ).time_of_day ).toBe( '06:15' );
+			// Neither touched the configuration the type routes manage.
+			expect( ( await readChannels() ).individual_email ).toEqual(
+				legacy
+			);
+
+			// Pausing one leaves the other scheduled.
+			res = await update( first.id, { enabled: false } );
+			expect( ( await res.json() ).next_run ).toBeNull();
+			expect( ( await read( second.id ) ).next_run ).toEqual(
+				savedSecond.next_run
+			);
+
+			// Rescheduling one leaves the other where it was.
+			res = await update( second.id, { time_of_day: '20:30' } );
+			expect( ( await res.json() ).next_run.timestamp ).not.toBe(
+				savedSecond.next_run.timestamp
+			);
+			expect( ( await read( first.id ) ).next_run ).toBeNull();
+		} );
+
+		test( 'preview, test and history use their own settings', async () => {
+			const own = await createIndividual( 'Previewed' );
+			await update( own.id, {
+				recipient: SHARED,
+				subject: 'Own subject {week_start}',
+			} );
+
+			const preview = await (
+				await api.get( `${ CONFIGURATIONS }/${ own.id }/preview`, {
+					headers: adminHeaders,
+				} )
+			).json();
+			expect( preview.recipient ).toBe( SHARED );
+			expect( preview.subject ).toContain( 'Own subject' );
+
+			const sent = await api.post(
+				`${ CONFIGURATIONS }/${ own.id }/test`,
+				{ headers: adminHeaders }
+			);
+			expect( sent.status() ).toBe( 200 );
+			expect( ( await sent.json() ).sent_to ).toBe( SHARED );
+
+			const history = await (
+				await api.get( `${ CONFIGURATIONS }/${ own.id }/history`, {
+					headers: adminHeaders,
+				} )
+			).json();
+			// A test is not a scheduled send.
+			expect( history ).toMatchObject( {
+				id: own.id,
+				next_run: null,
+				runs: [],
+			} );
 		} );
 	} );
 } );
