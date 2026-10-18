@@ -6,6 +6,11 @@ import { test, expect } from '@playwright/test';
  * (#1772). Each names its target, cancelling changes nothing, confirming has
  * the persisted effect the dialog describes, and the two that only change the
  * form still need their own save.
+ *
+ * Deleting a registration, deleting an event and changing its publication
+ * (#1933) name their target in the title, keep a failed request inside the
+ * open dialog for a retry, and only close once the request succeeded. A long
+ * title wraps inside the dialog at 375px.
  */
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -46,6 +51,25 @@ async function openApiPage( page ) {
 // The visible notice only: its text is mirrored in a screen-reader region.
 const notice = ( page, text ) =>
 	page.locator( '.components-notice' ).filter( { hasText: text } );
+
+// Fail the first matching request with a server message, let later ones
+// through. apiFetch tunnels DELETE/PUT through POST + X-HTTP-Method-Override.
+async function failOnce( page, pattern, method, message ) {
+	let failed = false;
+	await page.route( pattern, ( route ) => {
+		const request = route.request();
+		const actual =
+			request.headers()[ 'x-http-method-override' ] || request.method();
+		if ( failed || actual !== method ) {
+			return route.fallback();
+		}
+		failed = true;
+		return route.fulfill( {
+			status: 500,
+			json: { code: 'simulated_failure', message },
+		} );
+	} );
+}
 
 const manageUrl = ( id, tab = 'event-details' ) =>
 	`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ id }&tab=${ tab }`;
@@ -250,7 +274,9 @@ test.describe( 'Confirmation dialogs (#1772)', () => {
 			name: 'End series',
 			exact: true,
 		} );
-		const dialog = page.getByRole( 'dialog', { name: 'End series?' } );
+		const dialog = page.getByRole( 'dialog', {
+			name: `End series — ${ title }`,
+		} );
 
 		await endButton.click();
 		await expect( dialog ).toContainText( `End the series ${ title }?` );
@@ -445,5 +471,236 @@ test.describe( 'Confirmation dialogs (#1772)', () => {
 			path: `/wp/v2/media/${ mediaId }`,
 		} );
 		expect( media.id ).toBe( mediaId );
+	} );
+	test( 'deleting a registration names the registrant, keeps a failure in the dialog and retries', async ( {
+		page,
+	} ) => {
+		const eventDate = await createEventDate( page, {
+			title: `Registration target ${ stamp }`,
+		} );
+		const tickets = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ eventDate.id }/tickets`,
+			method: 'PUT',
+			data: {
+				ticket_types: [
+					{
+						name: 'Admission',
+						capacity: null,
+						minimum_activities: 0,
+						disable_at: null,
+						recurrence_scope: 'single_instance',
+						group_ids: [],
+					},
+				],
+				sale_periods: [
+					{
+						name: 'Always available',
+						sale_start: '2020-01-01 00:00:00',
+						sale_end: '2099-01-01 00:00:00',
+					},
+				],
+				prices: [
+					{ ticket_type_index: 0, sale_period_index: 0, price: 0 },
+				],
+				settings: {},
+				options: [],
+			},
+		} );
+		const name = `Ana Ruiz ${ stamp }`;
+		const email = `confirm-registration-${ stamp }@example.test`;
+		await apiFetch( page, {
+			path: '/fair-events/v1/get-tickets',
+			method: 'POST',
+			data: {
+				event_date_id: eventDate.id,
+				name,
+				email,
+				ticket_type_id: tickets.ticket_types[ 0 ].id,
+				quantity: 1,
+			},
+		} );
+
+		await failOnce(
+			page,
+			/get-tickets(\/|%2F)\d+/,
+			'DELETE',
+			'Simulated registration failure.'
+		);
+		await page.goto( manageUrl( eventDate.id, 'list' ) );
+		const row = page.getByRole( 'row', { name: new RegExp( name ) } );
+		await row.getByRole( 'button', { name: 'Delete' } ).click();
+		// Named with the ticket reference the List shows, never the email.
+		const dialog = page.getByRole( 'dialog', {
+			name: new RegExp(
+				`^Delete registration — ${ name } \\([0-9A-F]{8}\\)$`
+			),
+		} );
+		await expect( dialog ).toContainText(
+			`Delete the registration for ${ name }, with its 1 ticket?`
+		);
+		await expect( dialog ).not.toContainText( email );
+		const confirm = dialog.getByRole( 'button', {
+			name: 'Delete registration',
+		} );
+
+		await confirm.click();
+		await expect(
+			dialog.locator( '.components-notice__content' )
+		).toHaveText( 'Simulated registration failure.' );
+		await expect( dialog ).toBeVisible();
+
+		await confirm.click();
+		await expect( dialog ).toBeHidden();
+		await expect(
+			notice(
+				page,
+				new RegExp(
+					`Registration for ${ name } \\([0-9A-F]{8}\\) deleted\\.`
+				)
+			)
+		).toBeVisible();
+		await expect( row ).toHaveCount( 0 );
+		await expect(
+			page.getByRole( 'heading', { name: 'List' } )
+		).toBeFocused();
+		expect(
+			(
+				await apiFetch( page, {
+					path: `/fair-events/v1/get-tickets?event_date=${ eventDate.id }`,
+				} )
+			).filter( ( signup ) => signup.email === email )
+		).toHaveLength( 0 );
+	} );
+
+	test( 'deleting an event keeps a failure in the dialog, then goes to the calendar', async ( {
+		page,
+	} ) => {
+		const title = `Delete target ${ stamp }`;
+		const eventDate = await createEventDate( page, { title } );
+
+		await failOnce(
+			page,
+			new RegExp( `event-dates(\\/|%2F)${ eventDate.id }(\\?|$)` ),
+			'DELETE',
+			'Simulated event failure.'
+		);
+		await page.goto( manageUrl( eventDate.id, 'admin' ) );
+		const deleteButton = page.getByRole( 'button', {
+			name: 'Delete Event',
+		} );
+		const dialog = page.getByRole( 'dialog', {
+			name: new RegExp( `^Delete event — ${ title }, ` ),
+		} );
+
+		await deleteButton.click();
+		await expect( dialog ).toContainText( 'This cannot be undone.' );
+		await page.keyboard.press( 'Escape' );
+		await expect( dialog ).toBeHidden();
+		await expect( deleteButton ).toBeFocused();
+
+		await deleteButton.click();
+		const confirm = dialog.getByRole( 'button', { name: 'Delete event' } );
+		await confirm.click();
+		await expect(
+			dialog.locator( '.components-notice__content' )
+		).toHaveText( 'Simulated event failure.' );
+		expect(
+			(
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ eventDate.id }`,
+				} )
+			).title
+		).toBe( title );
+
+		await confirm.click();
+		await page.waitForURL( /page=fair-events-calendar/ );
+		await expect(
+			apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
+			} )
+		).rejects.toThrow();
+	} );
+
+	test( 'changing the publication keeps a failure in the dialog and returns focus after success', async ( {
+		page,
+	} ) => {
+		const title = `Publication target ${ stamp }`;
+		const eventDate = await createEventDate( page, { title } );
+		await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ eventDate.id }/publication-status`,
+			method: 'POST',
+			data: { publication_status: 'publish' },
+		} );
+
+		await failOnce(
+			page,
+			/publication-status/,
+			'POST',
+			'Simulated publication failure.'
+		);
+		await page.goto( manageUrl( eventDate.id ) );
+		const toggle = page.getByRole( 'button', { name: 'Move to draft' } );
+		await toggle.click();
+		const dialog = page.getByRole( 'dialog', {
+			name: new RegExp( `^Move to draft — ${ title }, ` ),
+		} );
+		const confirm = dialog.getByRole( 'button', { name: 'Move to draft' } );
+		await expect( confirm ).not.toHaveClass( /is-destructive/ );
+
+		await confirm.click();
+		await expect(
+			dialog.locator( '.components-notice__content' )
+		).toHaveText( 'Simulated publication failure.' );
+
+		await confirm.click();
+		await expect( dialog ).toBeHidden();
+		await expect( notice( page, 'Event moved to draft.' ) ).toBeVisible();
+		await expect(
+			page.getByRole( 'button', { name: 'Publish event' } )
+		).toBeFocused();
+		expect(
+			(
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ eventDate.id }`,
+				} )
+			).publication_status
+		).toBe( 'draft' );
+	} );
+
+	test( 'a long title wraps inside the dialog at 375px', async ( {
+		page,
+	} ) => {
+		const title = `A remarkably long workshop title that names every part of the programme ${ stamp }`;
+		const eventDate = await createEventDate( page, { title } );
+
+		await page.setViewportSize( { width: 375, height: 812 } );
+		await page.goto( manageUrl( eventDate.id, 'admin' ) );
+		await page.getByRole( 'button', { name: 'Delete Event' } ).click();
+		const dialog = page.getByRole( 'dialog' );
+		const heading = dialog.getByRole( 'heading', { level: 1 } );
+		await expect( heading ).toContainText( title );
+
+		const dialogBox = await dialog.boundingBox();
+		const headingBox = await heading.boundingBox();
+		expect( dialogBox.x ).toBeGreaterThanOrEqual( 0 );
+		expect( dialogBox.x + dialogBox.width ).toBeLessThanOrEqual( 375 );
+		// Wrapped onto several lines, all inside the dialog.
+		expect( headingBox.height ).toBeGreaterThan( 40 );
+		expect( headingBox.x + headingBox.width ).toBeLessThanOrEqual(
+			dialogBox.x + dialogBox.width
+		);
+		// The body starts below the title instead of under it.
+		const bodyBox = await dialog
+			.getByText( /This cannot be undone\./ )
+			.boundingBox();
+		expect( bodyBox.y ).toBeGreaterThanOrEqual(
+			headingBox.y + headingBox.height
+		);
+		for ( const name of [ 'Cancel', 'Delete event' ] ) {
+			const box = await dialog
+				.getByRole( 'button', { name } )
+				.boundingBox();
+			expect( box.x + box.width ).toBeLessThanOrEqual( 375 );
+		}
 	} );
 } );

@@ -10,6 +10,17 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+// Core gives the modal header a fixed height, which clips a title that names
+// a long event or person. Let it grow and wrap instead, so the target stays
+// readable at 375px. A `<style>` element keeps this with the component on
+// every admin page that uses it, none of which share a stylesheet.
+const MODAL_CSS = `
+.fair-events-confirm-action-modal .components-modal__content { margin-top: 0; }
+.fair-events-confirm-action-modal .components-modal__header { position: sticky; height: auto; min-height: 72px; margin: -4px -24px 0; width: auto; background: #fff; }
+.fair-events-confirm-action-modal .components-modal__header-heading { line-height: 1.3; overflow-wrap: anywhere; }
+.fair-events-confirm-action-modal .components-modal__content > div:not(.components-modal__header) { overflow-wrap: anywhere; }
+`;
+
 /**
  * Confirmation dialog for an action whose target and consequences need
  * spelling out. Unlike core's ConfirmDialog it carries a title, an
@@ -68,6 +79,7 @@ export default function ConfirmActionModal( {
 			size="medium"
 			className="fair-events-confirm-action-modal"
 		>
+			<style>{ MODAL_CSS }</style>
 			<VStack spacing={ 3 }>
 				{ children }
 				{ error && (
@@ -89,6 +101,10 @@ export default function ConfirmActionModal( {
 						onClick={ handleConfirm }
 						isBusy={ isBusy }
 						disabled={ isBusy || confirmDisabled }
+						// Stay focusable while pending: a truly disabled
+						// button drops focus to the page, and the dialog
+						// could then not hand it back to its trigger.
+						accessibleWhenDisabled={ isBusy }
 					>
 						{ isBusy && busyLabel ? busyLabel : confirmLabel }
 					</Button>

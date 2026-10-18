@@ -206,7 +206,7 @@ describe( 'EventTickets — ticket import confirmation (#1772)', () => {
 		const busy = await screen.findByRole( 'button', {
 			name: 'Importing…',
 		} );
-		expect( busy ).toBeDisabled();
+		expect( busy ).toHaveAttribute( 'aria-disabled', 'true' );
 		expect(
 			screen.getByRole( 'button', { name: 'Cancel' } )
 		).toBeDisabled();

@@ -2,7 +2,7 @@
  * E2E: Fair Form submission dialogs (#1774).
  *
  * Deleting a submission from either response view goes through an in-page
- * dialog that identifies the submission, and the Form Answers event editor
+ * dialog that identifies the submission in its title (#1933), and the Form Answers event editor
  * shows a failed save inline and keeps the chosen event for a retry. None of
  * these actions may open a native browser confirm/alert.
  *
@@ -76,9 +76,16 @@ test.describe('Fair Form submission dialogs', () => {
 		await expect(row).toBeVisible({ timeout: 15000 });
 
 		let dialog = await openRowAction(page, row, 'Delete');
-		await expect(dialog.getByText('Anonymous respondent')).toBeVisible();
+		await expect(dialog).toHaveAccessibleName(
+			`Delete submission #${seed.submissionId} — Anonymous respondent`
+		);
+		await expect(
+			dialog.getByText('Anonymous respondent', { exact: true })
+		).toBeVisible();
 		await expect(dialog.getByText('E2E Form')).toBeVisible();
-		await expect(dialog.getByText(`#${seed.submissionId}`)).toBeVisible();
+		await expect(
+			dialog.getByText(`#${seed.submissionId}`, { exact: true })
+		).toBeVisible();
 		await dialog.getByRole('button', { name: 'Cancel' }).click();
 		await expect(dialog).toBeHidden();
 		await expect(row).toBeVisible();
@@ -147,7 +154,9 @@ test.describe('Fair Form submission dialogs', () => {
 		await expect(row).toBeVisible({ timeout: 15000 });
 
 		const dialog = await openRowAction(page, row, 'Edit');
-		await expect(dialog.getByText(`#${seed.submissionId}`)).toBeVisible();
+		await expect(
+			dialog.getByText(`#${seed.submissionId}`, { exact: true })
+		).toBeVisible();
 		await expect(dialog.getByText('E2E Form')).toBeVisible();
 
 		const select = dialog.getByLabel('Event');
@@ -174,7 +183,9 @@ test.describe('Fair Form submission dialogs', () => {
 		await expect(row).toBeVisible({ timeout: 15000 });
 
 		const dialog = await openRowAction(page, row, 'Delete');
-		await expect(dialog.getByText(`#${seed.submissionId}`)).toBeVisible();
+		await expect(
+			dialog.getByText(`#${seed.submissionId}`, { exact: true })
+		).toBeVisible();
 		await expect(
 			dialog.getByText(
 				'This permanently deletes this submission and its answers. The participant, other submissions, and uploaded files are kept.'

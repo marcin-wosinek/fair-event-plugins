@@ -10,7 +10,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -21,7 +21,6 @@ import {
 	ToggleControl,
 	Flex,
 	FlexItem,
-	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -41,10 +40,32 @@ import SignupEditModal, {
 	ACTION_MOVE,
 	ACTION_CHANGE_TYPE,
 } from './SignupEditModal.js';
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
 
 // Override recorded when an administrator added an activity to a ticket
 // past its limit (fair-audience's Audience tab).
 const ACTION_ACTIVITY = 'activity';
+
+/**
+ * How the organizer recognizes a registration: the registrant's name with
+ * the reference of its first ticket listed here, as the List shows them in
+ * the registration's first row. Email addresses stay out of view (#1464).
+ *
+ * @param {Object} signup Registration row.
+ * @return {string} Name and ticket reference, or the name alone.
+ */
+export function signupIdentity( signup ) {
+	const reference = listedTickets( signup )[ 0 ]?.reference;
+	if ( ! reference ) {
+		return signup.name;
+	}
+	return sprintf(
+		/* translators: 1: registrant name, 2: short ticket reference */
+		__( '%1$s (%2$s)', 'fair-events' ),
+		signup.name,
+		reference
+	);
+}
 
 /**
  * Whether a signup contains an explicit mailing opt-in value.
@@ -693,8 +714,16 @@ export default function EventSignups( {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ mailingOnly, setMailingOnly ] = useState( false );
+	// Registration awaiting confirmation (null = dialog closed), whether its
+	// deletion runs, the last failure and the last success.
 	const [ selectedSignup, setSelectedSignup ] = useState( null );
+	const [ isDeleting, setIsDeleting ] = useState( false );
 	const [ deleteError, setDeleteError ] = useState( null );
+	const [ deleteNotice, setDeleteNotice ] = useState( null );
+	// Refuses a second confirmation before the first one re-rendered.
+	const deleteInFlight = useRef( false );
+	// The deleted row took its Delete button along, so focus moves here.
+	const listHeadingRef = useRef( null );
 	const [ isExportModalOpen, setIsExportModalOpen ] = useState( false );
 	const [ printError, setPrintError ] = useState( null );
 	// { signup, action } while the move / change-type modal is open.
@@ -726,6 +755,12 @@ export default function EventSignups( {
 	useEffect( () => {
 		loadSignups();
 	}, [ loadSignups ] );
+
+	useEffect( () => {
+		if ( deleteNotice ) {
+			listHeadingRef.current?.focus();
+		}
+	}, [ deleteNotice ] );
 
 	useEffect( () => {
 		setTicketConfig( { status: 'loading', ticketTypes: [], options: [] } );
@@ -932,7 +967,7 @@ export default function EventSignups( {
 					<Button
 						variant="link"
 						isDestructive
-						onClick={ () => setSelectedSignup( signup ) }
+						onClick={ () => openDelete( signup ) }
 					>
 						{ __( 'Delete', 'fair-events' ) }
 					</Button>
@@ -1024,34 +1059,65 @@ export default function EventSignups( {
 		? purchaseTicketCounts( selectedSignup )
 		: null;
 
+	const openDelete = ( signup ) => {
+		setDeleteError( null );
+		setSelectedSignup( signup );
+	};
+
+	const closeDelete = () => {
+		if ( deleteInFlight.current ) {
+			return;
+		}
+		setSelectedSignup( null );
+		setDeleteError( null );
+	};
+
 	const handleDelete = async () => {
-		if ( ! selectedSignup ) {
+		if ( ! selectedSignup || deleteInFlight.current ) {
 			return;
 		}
 
-		const signupId = selectedSignup.id;
+		const signup = selectedSignup;
+		deleteInFlight.current = true;
+		setIsDeleting( true );
 		setDeleteError( null );
+		setDeleteNotice( null );
 		try {
 			await apiFetch( {
-				path: `/fair-events/v1/get-tickets/${ signupId }`,
+				path: `/fair-events/v1/get-tickets/${ signup.id }`,
 				method: 'DELETE',
 			} );
 			setSignups( ( current ) =>
-				current.filter( ( signup ) => signup.id !== signupId )
+				current.filter( ( row ) => row.id !== signup.id )
+			);
+			setSelectedSignup( null );
+			setDeleteNotice(
+				sprintf(
+					/* translators: %s: registrant name and ticket reference */
+					__( 'Registration for %s deleted.', 'fair-events' ),
+					signupIdentity( signup )
+				)
 			);
 		} catch ( err ) {
 			setDeleteError(
-				err.message || __( 'Failed to delete signup.', 'fair-events' )
+				err?.message ||
+					__(
+						'The registration could not be deleted. Try again.',
+						'fair-events'
+					)
 			);
 		} finally {
-			setSelectedSignup( null );
+			deleteInFlight.current = false;
+			setIsDeleting( false );
 		}
 	};
 
 	return (
 		<Card className="fair-events-signups" style={ { marginTop: '16px' } }>
 			<CardHeader style={ { flexWrap: 'wrap', gap: '8px' } }>
-				<h2>{ __( 'List', 'fair-events' ) }</h2>
+				<h2 ref={ listHeadingRef } tabIndex={ -1 }>
+					{ __( 'List', 'fair-events' ) }
+				</h2>
 				<Flex
 					justify="flex-end"
 					gap={ 2 }
@@ -1121,9 +1187,12 @@ export default function EventSignups( {
 						{ printError }
 					</Notice>
 				) }
-				{ deleteError && (
-					<Notice status="error" isDismissible={ false }>
-						{ deleteError }
+				{ deleteNotice && (
+					<Notice
+						status="success"
+						onRemove={ () => setDeleteNotice( null ) }
+					>
+						{ deleteNotice }
 					</Notice>
 				) }
 				{ hasPendingTickets && (
@@ -1180,14 +1249,21 @@ export default function EventSignups( {
 					</div>
 				) }
 			</CardBody>
-			<ConfirmDialog
-				isOpen={ !! selectedSignup }
-				onConfirm={ handleDelete }
-				onCancel={ () => setSelectedSignup( null ) }
-				confirmButtonText={ __( 'Delete registration', 'fair-events' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				{ selectedSignup && (
+			{ selectedSignup && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: registrant name and ticket reference */
+						__( 'Delete registration — %s', 'fair-events' ),
+						signupIdentity( selectedSignup )
+					) }
+					confirmLabel={ __( 'Delete registration', 'fair-events' ) }
+					busyLabel={ __( 'Deleting registration…', 'fair-events' ) }
+					isDestructive
+					isBusy={ isDeleting }
+					error={ deleteError }
+					onConfirm={ handleDelete }
+					onCancel={ closeDelete }
+				>
 					<>
 						<p>
 							{ sprintf(
@@ -1239,8 +1315,8 @@ export default function EventSignups( {
 							) }
 						</p>
 					</>
-				) }
-			</ConfirmDialog>
+				</ConfirmActionModal>
+			) }
 			{ editing && (
 				<SignupEditModal
 					signup={ editing.signup }

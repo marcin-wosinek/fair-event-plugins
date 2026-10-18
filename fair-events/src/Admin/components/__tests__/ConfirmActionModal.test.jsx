@@ -70,7 +70,7 @@ test( 'a pending action cannot be submitted again or dismissed', async () => {
 	const { onConfirm, onCancel } = renderModal( { isBusy: true } );
 
 	const confirm = screen.getByRole( 'button', { name: 'Deleting…' } );
-	expect( confirm ).toBeDisabled();
+	expect( confirm ).toHaveAttribute( 'aria-disabled', 'true' );
 	expect( screen.getByRole( 'button', { name: 'Cancel' } ) ).toBeDisabled();
 	expect(
 		screen.queryByRole( 'button', { name: 'Close' } )

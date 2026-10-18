@@ -2,7 +2,13 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { Button, Card, CardBody, CardHeader } from '@wordpress/components';
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	Notice,
+} from '@wordpress/components';
 import { dateI18n, getSettings } from '@wordpress/date';
 
 /**
@@ -14,12 +20,22 @@ import { dateI18n, getSettings } from '@wordpress/date';
  * @param {string} createdAt 'YYYY-MM-DD HH:MM:SS' in UTC.
  * @return {string} Formatted date, or a dash when missing.
  */
-function formatSentAt( createdAt ) {
+export function formatSentAt( createdAt ) {
 	if ( ! createdAt ) {
 		return '—';
 	}
 	const { formats } = getSettings();
 	return dateI18n( formats.datetime, `${ createdAt.replace( ' ', 'T' ) }Z` );
+}
+
+/**
+ * A recorded message's subject, or a placeholder when it had none.
+ *
+ * @param {Object} mail History record.
+ * @return {string} Subject.
+ */
+export function subjectOf( mail ) {
+	return mail.subject || __( '(no subject)', 'fair-audience' );
 }
 
 /**
@@ -43,6 +59,9 @@ function audienceOf( mail ) {
  * @param {Function} props.onDuplicate Called with a record to reuse.
  * @param {Function} props.onDelete    Called with a record to delete.
  * @param {boolean}  props.disabled    Whether actions are locked.
+ * @param {Object}   [props.notice]    Result of the last deletion: { status, message }.
+ * @param {Function} [props.onDismissNotice] Called when the notice is dismissed.
+ * @param {Object}   [props.headingRef]  Ref for the heading, which takes focus after a deletion.
  * @return {JSX.Element} The history card.
  */
 export default function MailHistory( {
@@ -50,15 +69,30 @@ export default function MailHistory( {
 	onDuplicate,
 	onDelete,
 	disabled,
+	notice = null,
+	onDismissNotice,
+	headingRef,
 } ) {
 	return (
 		<Card>
 			<CardHeader>
-				<h2 className="fair-audience-custom-mail__card-title">
+				<h2
+					ref={ headingRef }
+					tabIndex={ -1 }
+					className="fair-audience-custom-mail__card-title"
+				>
 					{ __( 'Mail History', 'fair-audience' ) }
 				</h2>
 			</CardHeader>
 			<CardBody>
+				{ notice && (
+					<Notice
+						status={ notice.status }
+						onRemove={ onDismissNotice }
+					>
+						{ notice.message }
+					</Notice>
+				) }
 				{ mails.length === 0 ? (
 					<p className="fair-audience-custom-mail__help">
 						{ __( 'No messages sent yet.', 'fair-audience' ) }
@@ -99,11 +133,7 @@ export default function MailHistory( {
 											'fair-audience'
 										) }
 									>
-										{ mail.subject ||
-											__(
-												'(no subject)',
-												'fair-audience'
-											) }
+										{ subjectOf( mail ) }
 									</td>
 									<td
 										data-label={ __(
