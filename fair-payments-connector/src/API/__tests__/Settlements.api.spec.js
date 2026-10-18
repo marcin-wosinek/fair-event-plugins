@@ -701,6 +701,67 @@ test.describe( 'Saved settlements', () => {
 		);
 	} );
 
+	test( 'refuses payment pages that loop back and never completes the import', async () => {
+		// stl_e2e0001's third payment page links back to its second.
+		await setState( { variant: 'cycle' } );
+
+		const failed = await runImport();
+		expect( failed.status ).toBe( 'failed' );
+		expect( failed.resumable ).toBe( true );
+		expect( failed.error_code ).toBe( 'mollie_invalid_response' );
+		expect( failed.progress.settlements_done ).toBe( 2 );
+
+		const partial = await byProviderId( 'stl_e2e0001' );
+		expect( partial.completeness ).toBe( 'incomplete' );
+		expect( partial.movements ).toEqual( [] );
+		expect( partial.last_failure.code ).toBe( 'mollie_invalid_response' );
+
+		// The followed cursors are part of the saved run, so continuing does
+		// not walk the loop again, even once Mollie answers differently.
+		await setState( { variant: '' } );
+		const stillFailed = await step( failed.id );
+		expect( stillFailed.status ).toBe( 'failed' );
+		expect( stillFailed.error_code ).toBe( 'mollie_invalid_response' );
+		expect( stillFailed.progress.requests_done ).toBe(
+			failed.progress.requests_done
+		);
+
+		// A new import replaces the stopped one and loads everything once.
+		const replaced = await runImport();
+		expect( replaced.status ).toBe( 'completed' );
+		const complete = await byProviderId( 'stl_e2e0001' );
+		expect( complete.completeness ).toBe( 'verified' );
+		expect(
+			complete.movements.map( ( m ) => m.external_id ).sort()
+		).toEqual( [ 'tr_e2estl01a', 'tr_e2estl01b' ] );
+		expect( ( await list() ).total ).toBe( 3 );
+	} );
+
+	test( 'stops on a next link it cannot follow instead of treating it as the end', async () => {
+		await setState( { variant: 'bad_next' } );
+
+		const failed = await runImport();
+		expect( failed.status ).toBe( 'failed' );
+		expect( failed.error_code ).toBe( 'mollie_invalid_response' );
+		expect( failed.error_message ).not.toContain( 'E2E' );
+		expect( ( await byProviderId( 'stl_e2e0001' ) ).completeness ).toBe(
+			'incomplete'
+		);
+
+		// Nothing was skipped: continuing loads the page again and finishes.
+		await setState( { variant: '' } );
+		const resumed = await drive( await step( failed.id ) );
+		expect( resumed.status ).toBe( 'completed' );
+		expect( resumed.id ).toBe( failed.id );
+		expect( resumed.progress.settlements_done ).toBe( 3 );
+
+		const complete = await byProviderId( 'stl_e2e0001' );
+		expect( complete.completeness ).toBe( 'verified' );
+		expect(
+			complete.movements.map( ( m ) => m.external_id ).sort()
+		).toEqual( [ 'tr_e2estl01a', 'tr_e2estl01b' ] );
+	} );
+
 	test( 'continues a run whose request died', async () => {
 		const started = await startImport( { kind: 'history' } );
 		const { run } = await started.json();
@@ -1651,7 +1712,10 @@ test.describe( 'Saved settlements', () => {
 		// Only the connected organization can be confirmed.
 		const wrong = await api.post(
 			`${ ACCOUNTS }/${ localAccount.id }/confirm`,
-			{ headers: admin, data: { organization_id: 'org_e2e0009' } }
+			{
+				headers: admin,
+				data: { organization_id: 'org_e2e0009' },
+			}
 		);
 		expect( wrong.status() ).toBe( 409 );
 		expect( ( await wrong.json() ).code ).toBe(

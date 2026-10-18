@@ -19,6 +19,7 @@ use Mollie\Api\MollieApiClient;
 use Mollie\Api\Fake\MockResponse;
 use Mollie\Api\Http\Requests\CreatePaymentRequest;
 use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Exceptions\MollieException;
 
 /**
  * Unit tests for PaymentGatewayError.
@@ -77,7 +78,7 @@ class PaymentGatewayErrorTest extends TestCase {
 		$GLOBALS['_fair_test_current_user_can'] = true;
 
 		$e     = $this->api_exception( 422, 'Unprocessable Entity', 'The payment method is not activated on your account.' );
-		$error = PaymentGatewayError::from_api_exception( $e )->to_wp_error( 42 );
+		$error = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
 
 		$admin = $error->get_error_data()['admin'];
 
@@ -103,7 +104,7 @@ class PaymentGatewayErrorTest extends TestCase {
 		$GLOBALS['_fair_test_current_user_can'] = true;
 
 		$e     = $this->api_exception( 500, 'Internal Server Error', 'Something unexpected happened deep in the gateway.' );
-		$error = PaymentGatewayError::from_api_exception( $e )->to_wp_error( 42 );
+		$error = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
 
 		$admin = $error->get_error_data()['admin'];
 
@@ -111,6 +112,38 @@ class PaymentGatewayErrorTest extends TestCase {
 		$this->assertContains( 'Payment settings', $labels );
 		$this->assertContains( 'Payment log', $labels );
 		$this->assertNotContains( 'Mollie dashboard', $labels );
+	}
+
+	/**
+	 * In SDK v4 a server error is not an ApiException. It must still be
+	 * interpreted, from its status alone, without any gateway text.
+	 */
+	public function test_server_error_without_api_exception_uses_generic_cause() {
+		$GLOBALS['_fair_test_current_user_can'] = true;
+
+		$mollie = MollieApiClient::fake(
+			array( CreatePaymentRequest::class => MockResponse::error( 503, 'Service Unavailable', 'Backend secret detail' ) )
+		);
+		try {
+			$mollie->payments->create(
+				array(
+					'amount'      => array(
+						'currency' => 'EUR',
+						'value'    => '10.00',
+					),
+					'description' => 'Test',
+					'redirectUrl' => 'https://example.test',
+				)
+			);
+			$this->fail( 'Expected a Mollie exception.' );
+		} catch ( MollieException $e ) {
+			$this->assertNotInstanceOf( ApiException::class, $e );
+			$error = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
+		}
+
+		$labels = array_column( $error->get_error_data()['admin']['links'], 'label' );
+		$this->assertNotContains( 'Mollie dashboard', $labels );
+		$this->assertStringNotContainsString( 'Backend secret detail', wp_json_encode( $error->get_error_data() ) );
 	}
 
 	/**
@@ -137,11 +170,11 @@ class PaymentGatewayErrorTest extends TestCase {
 		$e = $this->api_exception( 422, 'Unprocessable Entity', 'The payment method is not activated on your account.' );
 
 		$GLOBALS['_fair_test_current_user_can'] = false;
-		$anonymous_error                        = PaymentGatewayError::from_api_exception( $e )->to_wp_error( 42 );
+		$anonymous_error                        = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
 		$this->assertArrayNotHasKey( 'admin', $anonymous_error->get_error_data() );
 
 		$GLOBALS['_fair_test_current_user_can'] = true;
-		$admin_error                            = PaymentGatewayError::from_api_exception( $e )->to_wp_error( 42 );
+		$admin_error                            = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
 		$this->assertArrayHasKey( 'admin', $admin_error->get_error_data() );
 	}
 
@@ -155,10 +188,11 @@ class PaymentGatewayErrorTest extends TestCase {
 		$e = $this->api_exception( 422, 'Unprocessable Entity', 'The payment method is not activated on your account.' );
 
 		// Sanity check: the SDK's own decorated message does contain the leak
-		// this test guards against, so the assertion below is meaningful.
-		$this->assertStringContainsString( 'Request body', $e->getMessage() );
+		// this test guards against, so the assertions below are meaningful.
+		$this->assertStringContainsString( 'Documentation:', $e->getMessage() );
+		$this->assertStringContainsString( 'Error executing API call', $e->getMessage() );
 
-		$error = PaymentGatewayError::from_api_exception( $e )->to_wp_error( 42 );
+		$error = PaymentGatewayError::from_exception( $e )->to_wp_error( 42 );
 		$dump  = wp_json_encode(
 			array(
 				$error->get_error_message(),
@@ -167,6 +201,7 @@ class PaymentGatewayErrorTest extends TestCase {
 		);
 		$this->assertStringNotContainsString( 'Request body', $dump );
 		$this->assertStringNotContainsString( 'Documentation:', $dump );
+		$this->assertStringNotContainsString( 'Error executing API call', $dump );
 		$this->assertStringNotContainsString( 'redirectUrl', $dump );
 	}
 
@@ -175,7 +210,7 @@ class PaymentGatewayErrorTest extends TestCase {
 	 * gateway cause — only `data.admin` does.
 	 */
 	public function test_public_message_is_always_the_same_generic_string() {
-		$activation_error = PaymentGatewayError::from_api_exception(
+		$activation_error = PaymentGatewayError::from_exception(
 			$this->api_exception( 422, 'Unprocessable Entity', 'The payment method is not activated on your account.' )
 		)->to_wp_error( 42 );
 

@@ -644,7 +644,7 @@ class TransactionAPI {
 					break;
 				}
 			}
-		} catch ( \Exception $e ) {
+		} catch ( \Exception | \Error $e ) {
 			$debug['error'] = $e->getMessage();
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

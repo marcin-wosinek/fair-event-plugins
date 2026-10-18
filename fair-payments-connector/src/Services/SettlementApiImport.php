@@ -174,6 +174,7 @@ class SettlementApiImport {
 
 		$state = array(
 			'list_from' => null,
+			'list_seen' => array(),
 			'list_done' => false,
 			'queue'     => array(),
 			'current'   => null,
@@ -333,15 +334,21 @@ class SettlementApiImport {
 			$current = $state['current'];
 			$part    = MollieSettlementProvider::PARTS[ (int) $current['part'] ];
 			$page    = $provider->list_movements( $current['provider_id'], $part, $current['from'], self::PAGE_LIMIT );
+			$seen    = self::follow_cursor( (array) ( $current['seen'] ?? array() ), $page['next'] );
 
 			// Saved before the cursor moves: repeating this page replaces the same rows.
-			$this->repository->save_items( (int) $current['revision_id'], $page['movements'] );
+			if ( ! $this->repository->save_items( (int) $current['revision_id'], $page['movements'] ) ) {
+				$this->fail( $run, 'not_saved' );
+				return;
+			}
 
 			if ( null !== $page['next'] ) {
 				$current['from'] = $page['next'];
+				$current['seen'] = $seen;
 			} else {
 				$current['part'] = (int) $current['part'] + 1;
 				$current['from'] = null;
+				$current['seen'] = array();
 			}
 
 			if ( $current['part'] >= count( MollieSettlementProvider::PARTS ) ) {
@@ -383,9 +390,11 @@ class SettlementApiImport {
 				'revision_id'   => (int) $revision_id,
 				'part'          => 0,
 				'from'          => null,
+				'seen'          => array(),
 			);
 		} elseif ( empty( $state['list_done'] ) ) {
-			$page = $provider->list_settlements( $state['list_from'] ?? null, self::LIST_LIMIT );
+			$page      = $provider->list_settlements( $state['list_from'] ?? null, self::LIST_LIMIT );
+			$list_seen = self::follow_cursor( (array) ( $state['list_seen'] ?? array() ), $page['next'] );
 
 			// Loading only what is new leaves a settlement with a completed
 			// API import exactly as it is saved: no facts are rewritten and
@@ -412,6 +421,7 @@ class SettlementApiImport {
 
 			$state['list_from'] = $page['next'];
 			$state['list_done'] = null === $page['next'];
+			$state['list_seen'] = $list_seen;
 		}
 
 		$finished = empty( $state['current'] ) && empty( $state['queue'] ) && ! empty( $state['list_done'] );
@@ -427,6 +437,32 @@ class SettlementApiImport {
 				'finished_at'      => $finished ? current_time( 'mysql', true ) : null,
 			)
 		);
+	}
+
+	/**
+	 * Record the next cursor of a listing, refusing one it already followed.
+	 *
+	 * A cursor that comes round again, even several pages later, would
+	 * repeat those pages forever. The history is kept in the run state, so
+	 * this also holds across a resume; a run saved before the history
+	 * existed starts one from where it stands.
+	 *
+	 * @param string[]    $seen Cursors already followed in this listing.
+	 * @param string|null $next Next cursor, or null on the last page.
+	 * @return string[] The history including $next.
+	 * @throws SettlementProviderException When $next was already followed.
+	 */
+	private static function follow_cursor( array $seen, $next ) {
+		if ( null === $next ) {
+			return $seen;
+		}
+		if ( in_array( $next, $seen, true ) ) {
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		}
+
+		$seen[] = $next;
+
+		return $seen;
 	}
 
 	/**

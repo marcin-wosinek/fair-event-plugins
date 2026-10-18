@@ -650,6 +650,276 @@ class MollieSettlementProviderTest extends TestCase {
 		}
 	}
 
+	/**
+	 * Load a page of settlement payments through a faked client.
+	 *
+	 * @param MockResponse $response Mollie's answer.
+	 * @param string|null  $from     Cursor.
+	 * @return array
+	 */
+	private function payments_page( MockResponse $response, $from = null ) {
+		$provider = new MollieSettlementProvider(
+			MollieApiClient::fake( array( GetPaginatedSettlementPaymentsRequest::class => $response ) )
+		);
+
+		return $provider->list_movements( 'stl_unit0001', 'payments', $from, 250 );
+	}
+
+	/**
+	 * Assert that a call is refused as a response that could not be read.
+	 *
+	 * @param callable $call The provider call.
+	 */
+	private function assert_invalid_response( callable $call ) {
+		try {
+			$call();
+			$this->fail( 'The response was accepted.' );
+		} catch ( SettlementProviderException $e ) {
+			$this->assertSame( SettlementProviderException::INVALID_RESPONSE, $e->get_category() );
+		}
+	}
+
+	/**
+	 * Status and method values arrive as SDK enum cases; they are stored as
+	 * Mollie's plain strings, and a value the SDK does not know is kept.
+	 */
+	public function test_enum_values_are_stored_as_plain_strings() {
+		$page = $this->payments_page(
+			$this->list_response(
+				'payments',
+				array(
+					array(
+						'resource'  => 'payment',
+						'id'        => 'tr_unit0003',
+						'mode'      => 'live',
+						'status'    => 'paid',
+						'method'    => 'ideal',
+						'createdAt' => '2026-05-01T10:00:00+00:00',
+						'paidAt'    => '2026-05-01T10:05:00+00:00',
+						'amount'    => array(
+							'value'    => '10.00',
+							'currency' => 'EUR',
+						),
+						'_links'    => array(),
+					),
+					array(
+						'resource'  => 'payment',
+						'id'        => 'tr_unit0004',
+						'mode'      => 'live',
+						'status'    => 'some_future_status',
+						'method'    => 'some_future_method',
+						'createdAt' => '2026-05-01T10:00:00+00:00',
+						'amount'    => array(
+							'value'    => '10.00',
+							'currency' => 'EUR',
+						),
+						'_links'    => array(),
+					),
+				)
+			)
+		);
+
+		$this->assertSame( 'paid', $page['movements'][0]['provider_status'] );
+		$this->assertSame( 'ideal', $page['movements'][0]['raw_type'] );
+		$this->assertSame( '2026-05-01 10:05:00', $page['movements'][0]['occurred_at'] );
+		$this->assertSame( 'some_future_status', $page['movements'][1]['provider_status'] );
+		$this->assertSame( 'some_future_method', $page['movements'][1]['raw_type'] );
+
+		$listing = ( new MollieSettlementProvider(
+			MollieApiClient::fake(
+				array(
+					GetPaginatedSettlementsRequest::class => $this->list_response(
+						'settlements',
+						array( $this->settlement( array( 'status' => 'some_future_status' ) ) )
+					),
+				)
+			)
+		) )->list_settlements( null, 50 );
+
+		$this->assertSame( 'some_future_status', $listing['settlements'][0]['status'] );
+	}
+
+	/** A refund's negative settlement amount and a zero-decimal currency are kept exactly. */
+	public function test_negative_and_fractional_amounts_are_kept_exactly() {
+		$provider = new MollieSettlementProvider(
+			MollieApiClient::fake(
+				array(
+					GetPaginatedSettlementRefundsRequest::class => $this->list_response(
+						'refunds',
+						array(
+							array(
+								'resource'         => 'refund',
+								'id'               => 're_unit0002',
+								'mode'             => 'live',
+								'paymentId'        => 'tr_parent0002',
+								'status'           => 'refunded',
+								'createdAt'        => '2026-05-01T10:00:00+00:00',
+								'amount'           => array(
+									'value'    => '1500',
+									'currency' => 'JPY',
+								),
+								'settlementAmount' => array(
+									'value'    => '-9.12',
+									'currency' => 'EUR',
+								),
+								'_links'           => array(),
+							),
+						)
+					),
+				)
+			)
+		);
+
+		$movement = $provider->list_movements( 'stl_unit0001', 'refunds', null, 250 )['movements'][0];
+
+		$this->assertSame( Movements::TYPE_REFUND, $movement['type'] );
+		$this->assertSame( 'refunded', $movement['provider_status'] );
+		$this->assertSame( 'JPY', $movement['currency'] );
+		$this->assertSame( '1500', $movement['amount'] );
+		$this->assertSame( '-9.12', $movement['settlement_amount'] );
+		$this->assertSame( 'EUR', $movement['settlement_currency'] );
+		$this->assertSame( 'tr_parent0002', $movement['payment_reference'] );
+	}
+
+	/** An empty last page is a valid end of the listing. */
+	public function test_empty_last_page_ends_the_listing() {
+		$page = $this->payments_page( $this->list_response( 'payments', array() ), 'tr_cursor0001' );
+
+		$this->assertSame( array(), $page['movements'] );
+		$this->assertNull( $page['next'] );
+	}
+
+	/**
+	 * A next link that is present but cannot be followed is refused rather
+	 * than read as the last page, which would end an import early.
+	 */
+	public function test_unreadable_next_link_is_refused() {
+		$broken_links = array(
+			'no cursor'       => array( 'href' => 'https://api.mollie.com/v2/settlements/stl_unit0001/payments?limit=250' ),
+			'invalid cursor'  => array( 'href' => 'https://api.mollie.com/v2/settlements/stl_unit0001/payments?from=tr%20bad' ),
+			'no href'         => array( 'type' => 'application/hal+json' ),
+			'href not a text' => array( 'href' => 42 ),
+		);
+
+		foreach ( $broken_links as $label => $next ) {
+			$response = new MockResponse(
+				array(
+					'count'     => 0,
+					'_embedded' => array( 'payments' => array() ),
+					'_links'    => array(
+						'self' => array( 'href' => 'https://api.mollie.com/v2/settlements/stl_unit0001/payments' ),
+						'next' => $next,
+					),
+				)
+			);
+
+			try {
+				$this->payments_page( $response );
+				$this->fail( 'Accepted a next link with ' . $label . '.' );
+			} catch ( SettlementProviderException $e ) {
+				$this->assertSame( SettlementProviderException::INVALID_RESPONSE, $e->get_category(), $label );
+			}
+		}
+	}
+
+	/** A list response without links cannot say whether it is the last page. */
+	public function test_list_without_links_is_refused() {
+		$this->assert_invalid_response(
+			function () {
+				$this->payments_page(
+					new MockResponse(
+						array(
+							'count'     => 0,
+							'_embedded' => array( 'payments' => array() ),
+							'_links'    => null,
+						)
+					)
+				);
+			}
+		);
+	}
+
+	/** A movement the SDK cannot hydrate is refused as unreadable. */
+	public function test_movement_with_wrongly_typed_fields_is_refused() {
+		$this->assert_invalid_response(
+			function () {
+				$this->payments_page(
+					$this->list_response(
+						'payments',
+						array(
+							array(
+								'resource' => 'payment',
+								'id'       => 'tr_unit0005',
+								'amount'   => array( 'value' => '10.00' ),
+								'_links'   => array(),
+							),
+						)
+					)
+				);
+			}
+		);
+	}
+
+	/** An unknown part is refused before anything is requested. */
+	public function test_unknown_part_is_refused() {
+		$provider = new MollieSettlementProvider( MollieApiClient::fake( array() ) );
+
+		$this->assert_invalid_response(
+			function () use ( $provider ) {
+				$provider->list_movements( 'stl_unit0001', 'invoices', null, 250 );
+			}
+		);
+	}
+
+	/**
+	 * A report whose structure cannot be read is refused, never read as a
+	 * settlement without a report.
+	 */
+	public function test_malformed_report_is_refused() {
+		$malformed = array(
+			'periods'  => $this->settlement( array( 'periods' => 'not a report' ) ),
+			'month'    => $this->settlement( array( 'periods' => array( '2026' => array( '05' => 'not a period' ) ) ) ),
+			'costs'    => $this->settlement( array( 'periods' => array( '2026' => array( '05' => array( 'costs' => 'not a list' ) ) ) ) ),
+			'cost row' => $this->settlement( array( 'periods' => array( '2026' => array( '05' => array( 'costs' => array( 'not a line' ) ) ) ) ) ),
+		);
+
+		foreach ( $malformed as $label => $settlement ) {
+			try {
+				$this->load( $settlement );
+				$this->fail( 'Accepted a malformed ' . $label . '.' );
+			} catch ( SettlementProviderException $e ) {
+				$this->assertSame( SettlementProviderException::INVALID_RESPONSE, $e->get_category(), $label );
+			}
+		}
+	}
+
+	/** A settlement Mollie has no report for yet stays unverified, not an error. */
+	public function test_settlement_without_report_is_unavailable() {
+		$settlement = $this->settlement();
+		unset( $settlement['periods'] );
+
+		$loaded = $this->load( $settlement );
+
+		$this->assertSame( array(), $loaded['aggregates'] );
+		$this->assertSame( 'unavailable', $loaded['summary_check'] );
+	}
+
+	/** A rejected token is an access problem, like a missing permission. */
+	public function test_unauthorized_response_is_an_access_problem() {
+		$provider = new MollieSettlementProvider(
+			MollieApiClient::fake(
+				array( GetSettlementRequest::class => MockResponse::error( 401, 'Unauthorized', 'Invalid token' ) )
+			)
+		);
+
+		try {
+			$provider->get_settlement( 'stl_unit0001' );
+			$this->fail( 'The request succeeded.' );
+		} catch ( SettlementProviderException $e ) {
+			$this->assertSame( SettlementProviderException::ACCESS_DENIED, $e->get_category() );
+		}
+	}
+
 	/** Without a connection the adapter cannot be built. */
 	public function test_requires_a_connection() {
 		$this->expectException( SettlementProviderException::class );

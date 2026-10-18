@@ -189,7 +189,7 @@ The correct URL is embedded in the button's `data-rest-url` attribute using Word
 
 ## Dependencies
 
-- `mollie/mollie-api-php`: ^2.0 - Official Mollie PHP API client
+- `mollie/mollie-api-php`: ^4.0 - Official Mollie PHP API client (requires PHP 8.2+). SDK v4 reports statuses and methods as enum cases; `MolliePaymentHandler` and `MollieSettlementProvider` convert them to Mollie's plain strings (`Payment\MollieValue`) before anything is stored, compared or passed to hooks.
 
 ## References
 

@@ -2,7 +2,7 @@
 /**
  * Fake Mollie HTTP transport for E2E tests.
  *
- * The Mollie PHP SDK v3's adapter picker instantiates CurlMollieHttpAdapter
+ * The Mollie PHP SDK's adapter picker instantiates CurlMollieHttpAdapter
  * from the Mollie\Api\Http\Adapter namespace when no HTTP client is injected.
  * By declaring that exact class here — before the vendored `final class` is
  * autoloaded — every Mollie API call is served by this double instead of
@@ -66,7 +66,7 @@ if ( class_exists( __NAMESPACE__ . '\\CurlMollieHttpAdapter', false ) ) {
 }
 
 /**
- * Drop-in stand-in for the SDK's cURL adapter (Mollie v3).
+ * Drop-in stand-in for the SDK's cURL adapter (Mollie v4).
  *
  * Implements HttpAdapterContract so the adapter picker accepts it as a valid
  * replacement. HasDefaultFactories provides the factories() method the SDK
@@ -217,8 +217,10 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 	 * payment. `variant: precise` gives stl_e2e0001 a report with fractional-cent
 	 * costs, rates, VAT, a negative rounding line and a period invoice, adding
 	 * up to a payout of 36.10; `variant: precise_residual` leaves the rounding
-	 * line out, so the report misses the payout by 0.0045. Every request is
-	 * counted in `requests`.
+	 * line out, so the report misses the payout by 0.0045. `variant: cycle`
+	 * adds a third payment page to stl_e2e0001 that links back to the second,
+	 * and `variant: bad_next` gives its first payment page a next link without
+	 * a cursor. Every request is counted in `requests`.
 	 *
 	 * @param string $path  URL path component.
 	 * @param array  $query Decoded query string.
@@ -423,11 +425,21 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 			throw new \RuntimeException( 'E2E: unsupported settlement request.' );
 		}
 
+		$payments_01 = 'tr_e2estl01b' === $from
+			? $list( 'payments', array( $movement( 'payment', 'tr_e2estl01b', '15.00', $changed ? '14.00' : '15.00' ) ), 'cycle' === $variant ? 'tr_e2estl01c' : null )
+			: $list( 'payments', array( $movement( 'payment', 'tr_e2estl01a', '25.00', '25.00' ) ), 'tr_e2estl01b' );
+		if ( 'cycle' === $variant && 'tr_e2estl01c' === $from ) {
+			// The third page links back to the second one.
+			$payments_01 = $list( 'payments', array(), 'tr_e2estl01b' );
+		}
+		if ( 'bad_next' === $variant && '' === $from ) {
+			// A next link without a cursor to follow.
+			$payments_01['_links']['next'] = array( 'href' => 'https://api.mollie.com/v2/payments?limit=250' );
+		}
+
 		$contents = array(
 			'stl_e2e0001' => array(
-				'payments' => 'tr_e2estl01b' === $from
-					? $list( 'payments', array( $movement( 'payment', 'tr_e2estl01b', '15.00', $changed ? '14.00' : '15.00' ) ) )
-					: $list( 'payments', array( $movement( 'payment', 'tr_e2estl01a', '25.00', '25.00' ) ), 'tr_e2estl01b' ),
+				'payments' => $payments_01,
 			),
 			'stl_e2e0002' => array(
 				'payments'    => $list(
