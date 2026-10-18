@@ -553,6 +553,17 @@ class EventDatesController extends WP_REST_Controller {
 			'required'    => false,
 		);
 
+		// Only a date of a series inherits timing, so update-only.
+		$args['inherit_timing'] = array(
+			'description' => __( 'Timing groups of a date of a series to reset to the series values: "dates" (start and end date) and "times" (start time, end time and all-day).', 'fair-events' ),
+			'type'        => 'array',
+			'required'    => false,
+			'items'       => array(
+				'type' => 'string',
+				'enum' => array_keys( EventTiming::OVERRIDE_GROUPS ),
+			),
+		);
+
 		// Only meaningful against an existing row's schedule, so update-only.
 		$args['excluded_dates'] = array(
 			'description'       => __( 'Complete list of dates (Y-m-d) in the regular schedule to keep cancelled. An empty list restores every date.', 'fair-events' ),
@@ -612,10 +623,10 @@ class EventDatesController extends WP_REST_Controller {
 	 * @param WP_REST_Request $request        Full data about the request.
 	 * @param EventDates      $existing       The stored row being updated.
 	 * @param string[]        $excluded_dates Requested excluded dates (Y-m-d).
-	 * @param array|null      $new_legacy     Legacy datetimes of the requested timing, or null when unchanged.
+	 * @param array           $timing         Timing the row has after the request.
 	 * @return WP_Error|null Error to return, or null when the dates are acceptable.
 	 */
-	private function get_excluded_dates_error( $request, $existing, $excluded_dates, $new_legacy = null ) {
+	private function get_excluded_dates_error( $request, $existing, $excluded_dates, array $timing ) {
 		if ( 'manual' === $request->get_param( 'recurrence_mode' ) || null !== $request->get_param( 'manual_dates' ) ) {
 			return new WP_Error(
 				'rest_excluded_dates_not_supported',
@@ -637,9 +648,7 @@ class EventDatesController extends WP_REST_Controller {
 			$rrule = $existing->rrule;
 		}
 
-		$start     = $new_legacy ? $new_legacy['start_datetime'] : $existing->start_datetime;
-		$end       = $new_legacy ? $new_legacy['end_datetime'] : $existing->end_datetime;
-		$scheduled = empty( $rrule ) ? array() : RecurrenceService::generate_occurrences( $start, $end ? $end : $start, $rrule );
+		$scheduled = empty( $rrule ) ? array() : RecurrenceService::generate_occurrences( $timing, $rrule );
 
 		if ( empty( $scheduled ) ) {
 			return new WP_Error(
@@ -649,10 +658,7 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		$anchors = array();
-		foreach ( $scheduled as $occurrence ) {
-			$anchors[] = ( new \DateTime( $occurrence['start'] ) )->format( 'Y-m-d' );
-		}
+		$anchors = array_column( $scheduled, 'start_date' );
 
 		foreach ( $excluded_dates as $date ) {
 			if ( $date === $anchors[0] ) {
@@ -877,26 +883,173 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Refuse a series timing the legacy datetimes cannot hold.
+	 * Resolve how a request changes the timing overrides of a date of a
+	 * series.
 	 *
-	 * Series dates are still generated from datetimes, which would turn a
-	 * missing start time (or the missing end time of a multi-day event) into
-	 * an invented one; refused until recurrence carries optional times
-	 * (#1819).
+	 * Each override group (see EventTiming::OVERRIDE_GROUPS) whose values
+	 * the request changes becomes the occurrence's own, including a time
+	 * cleared with null. `inherit_timing` gives a group back to the series:
+	 * its values are copied from the series for the occurrence's anchor
+	 * date. A group cannot be changed and inherited at once.
 	 *
-	 * @param array $timing       Resulting canonical timing.
-	 * @param bool  $is_recurring Whether the row is or becomes part of a series.
-	 * @return WP_Error|null Error, or null when allowed.
+	 * @param WP_REST_Request $request    Full data about the request.
+	 * @param EventDates      $existing   The stored row being updated.
+	 * @param array|null      $new_timing Requested timing, or null when unchanged.
+	 * @return array|WP_Error|null Resulting 'timing' and override 'markers'
+	 *                             (columns to write), an error, or null when
+	 *                             the overrides stay as they are.
 	 */
-	private function get_series_timing_error( array $timing, $is_recurring ) {
-		if ( ! $is_recurring || EventTiming::fits_legacy( $timing ) ) {
+	private function resolve_override_changes( $request, $existing, $new_timing ) {
+		$inherit = $request->get_param( 'inherit_timing' );
+		$inherit = is_array( $inherit ) ? array_values( array_unique( $inherit ) ) : array();
+
+		if ( 'generated' !== $existing->occurrence_type || ! $existing->master_id ) {
+			if ( $inherit ) {
+				return new WP_Error(
+					'rest_inherit_timing_not_supported',
+					__( 'Only a date of a series can inherit its timing from the series.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+			return null;
+		}
+
+		$current   = $existing->get_timing();
+		$timing    = $new_timing ?? $current;
+		$changed   = EventTiming::changed_groups( $current, $timing );
+		$overrides = $existing->timing_overrides;
+
+		foreach ( $changed as $group => $is_changed ) {
+			if ( $is_changed ) {
+				$overrides[ $group ] = true;
+			}
+		}
+
+		if ( $inherit ) {
+			foreach ( $inherit as $group ) {
+				if ( $changed[ $group ] ) {
+					return new WP_Error(
+						'rest_inherit_timing_conflict',
+						__( 'A timing group cannot be changed and reset to the series in the same request.', 'fair-events' ),
+						array(
+							'status' => 400,
+							'group'  => $group,
+						)
+					);
+				}
+				$overrides[ $group ] = false;
+			}
+
+			$master = EventDates::get_by_id( $existing->master_id );
+			if ( ! $master ) {
+				return new WP_Error(
+					'rest_event_date_not_found',
+					__( 'The series of this date could not be found.', 'fair-events' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$anchor = $existing->recurrence_anchor ?? $current['start_date'];
+			$timing = EventTiming::resolve_occurrence( $master->get_timing(), $anchor, $timing, $overrides );
+			$error  = EventTiming::validate( $timing );
+			if ( $error ) {
+				return $this->timing_error( $error );
+			}
+		}
+
+		$markers = array();
+		foreach ( EventTiming::OVERRIDE_COLUMNS as $group => $column ) {
+			if ( $overrides[ $group ] !== $existing->timing_overrides[ $group ] ) {
+				$markers[ $column ] = $overrides[ $group ] ? 1 : 0;
+			}
+		}
+
+		if ( ! $markers && ! $inherit ) {
+			return null;
+		}
+
+		return array(
+			'timing'  => $timing,
+			'markers' => $markers,
+		);
+	}
+
+	/**
+	 * Refuse a series change that dates with their own timing cannot
+	 * follow.
+	 *
+	 * Works out the schedule update_item() would produce — the same
+	 * branches it takes — and checks it with
+	 * RecurrenceService::find_override_conflicts() before anything is
+	 * written.
+	 *
+	 * @param WP_REST_Request $request        Full data about the request.
+	 * @param EventDates      $existing       The stored row being updated.
+	 * @param array|null      $new_timing     Requested timing, or null when unchanged.
+	 * @param string[]|null   $excluded_dates Requested excluded dates, or null.
+	 * @return WP_Error|null Error with status 409 listing the `conflicts`, or null.
+	 */
+	private function get_override_conflict_error( $request, $existing, $new_timing, $excluded_dates ) {
+		$master_id      = (int) $existing->id;
+		$timing         = $new_timing ?? $existing->get_timing();
+		$timing_changed = $new_timing && $new_timing !== $existing->get_timing();
+		$rrule          = $request->get_param( 'rrule' );
+		$rrule_changed  = null !== $rrule || null !== $excluded_dates;
+		$manual_dates   = $request->get_param( 'manual_dates' );
+		$proposed       = array();
+
+		if ( 'manual' === $request->get_param( 'recurrence_mode' ) && is_array( $manual_dates ) ) {
+			if ( 'generated' === $existing->occurrence_type && $existing->master_id ) {
+				$master_id = (int) $existing->master_id;
+				$master    = EventDates::get_by_id( $master_id );
+				$timing    = $master ? $master->get_timing() : null;
+			}
+			$proposed = $timing ? RecurrenceService::build_manual_occurrences( $timing, $manual_dates ) : array();
+		} elseif ( 'generated' !== $existing->occurrence_type ) {
+			if ( 'manual' === $existing->recurrence_mode && ! $rrule_changed && $timing_changed ) {
+				$proposed = RecurrenceService::build_manual_occurrences(
+					$timing,
+					array_merge( array( $timing['start_date'] ), $this->get_child_anchors( $master_id ) )
+				);
+			} elseif ( $rrule_changed || ( $timing_changed && 'master' === $existing->occurrence_type ) ) {
+				$effective_rrule = null !== $rrule ? (string) $rrule : (string) $existing->rrule;
+				$proposed        = '' === $effective_rrule
+					? array()
+					: RecurrenceService::generate_occurrences( $timing, $effective_rrule, null, (array) $excluded_dates );
+			}
+		}
+
+		if ( count( $proposed ) < 2 ) {
+			return null;
+		}
+
+		$conflicts = RecurrenceService::find_override_conflicts( $master_id, array_slice( $proposed, 1 ) );
+		if ( ! $conflicts ) {
 			return null;
 		}
 
 		return new WP_Error(
-			'rest_series_times_required',
-			__( 'Recurring events need a start time, and an end time when they last several days, unless they are all-day.', 'fair-events' ),
-			array( 'status' => 400 )
+			'rest_occurrence_override_conflict',
+			__( 'Some dates of this series have their own timing that cannot be combined with this change. Change those dates, or reset their timing to the series, first.', 'fair-events' ),
+			array(
+				'status'    => 409,
+				'conflicts' => $conflicts,
+			)
+		);
+	}
+
+	/**
+	 * Anchor dates of a series' generated rows, active and cancelled.
+	 *
+	 * @param int $master_id Master event date row ID.
+	 * @return string[] Anchor dates (Y-m-d).
+	 */
+	private function get_child_anchors( $master_id ) {
+		return array_map(
+			static function ( $child ) {
+				return $child->recurrence_anchor ?? $child->start_date;
+			},
+			EventDates::get_generated_by_master_id( $master_id, true )
 		);
 	}
 
@@ -948,13 +1101,6 @@ class EventDatesController extends WP_REST_Controller {
 				__( 'Start date/time is required.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
-		}
-
-		$is_recurring = ! empty( $request->get_param( 'rrule' ) )
-			|| ( 'manual' === $request->get_param( 'recurrence_mode' ) && ! empty( $request->get_param( 'manual_dates' ) ) );
-		$series_error = $this->get_series_timing_error( $timing, $is_recurring );
-		if ( $series_error ) {
-			return $series_error;
 		}
 
 		$data = array_merge(
@@ -1408,29 +1554,32 @@ class EventDatesController extends WP_REST_Controller {
 			return $new_timing;
 		}
 
-		$requested_rrule = $request->get_param( 'rrule' );
-		$is_recurring    = in_array( $existing->occurrence_type, array( 'master', 'generated' ), true )
-			|| ( null === $requested_rrule ? ! empty( $existing->rrule ) : ! empty( $requested_rrule ) )
-			|| ( 'manual' === $request->get_param( 'recurrence_mode' ) && ! empty( $request->get_param( 'manual_dates' ) ) );
-		$series_error    = $this->get_series_timing_error( $new_timing ?? $existing->get_timing(), $is_recurring );
-		if ( $series_error ) {
-			return $series_error;
+		// A date of a series owns each timing group the request changes, and
+		// gives back each group it asks to inherit (see EventTiming::OVERRIDE_GROUPS).
+		$override_changes = $this->resolve_override_changes( $request, $existing, $new_timing );
+		if ( is_wp_error( $override_changes ) ) {
+			return $override_changes;
 		}
-
-		// Legacy datetimes of the resulting timing, which recurrence still works on.
-		$new_legacy = $new_timing ? EventTiming::to_legacy( $new_timing ) : null;
+		if ( $override_changes ) {
+			$new_timing = $override_changes['timing'];
+		}
 
 		// Null when the request leaves exclusions alone; an array (even empty) is
 		// the complete selection for the schedule this request produces.
 		$excluded_dates = $request->get_param( 'excluded_dates' );
 		if ( is_array( $excluded_dates ) ) {
 			$excluded_dates       = array_values( array_unique( $excluded_dates ) );
-			$excluded_dates_error = $this->get_excluded_dates_error( $request, $existing, $excluded_dates, $new_legacy );
+			$excluded_dates_error = $this->get_excluded_dates_error( $request, $existing, $excluded_dates, $new_timing ?? $existing->get_timing() );
 			if ( $excluded_dates_error ) {
 				return $excluded_dates_error;
 			}
 		} else {
 			$excluded_dates = null;
+		}
+
+		$conflict_error = $this->get_override_conflict_error( $request, $existing, $new_timing, $excluded_dates );
+		if ( $conflict_error ) {
+			return $conflict_error;
 		}
 
 		$update_data       = array();
@@ -1452,6 +1601,9 @@ class EventDatesController extends WP_REST_Controller {
 		$timing_changed = $new_timing && $new_timing !== $existing->get_timing();
 		if ( $timing_changed ) {
 			$update_data = array_merge( $update_data, $new_timing );
+		}
+		if ( $override_changes ) {
+			$update_data = array_merge( $update_data, $override_changes['markers'] );
 		}
 
 		if ( $request->has_param( 'venue_id' ) ) {
@@ -1561,12 +1713,7 @@ class EventDatesController extends WP_REST_Controller {
 				// wipe the whole series (#979).
 				$existing_dates = array_merge(
 					array( $new_timing['start_date'] ),
-					array_map(
-						static function ( $child ) {
-							return ( new \DateTime( $child->start_datetime ) )->format( 'Y-m-d' );
-						},
-						EventDates::get_generated_by_master_id( $id, true )
-					)
+					$this->get_child_anchors( $id )
 				);
 				RecurrenceService::set_manual_occurrences( $id, $existing_dates );
 			} elseif ( $rrule_changed || $dates_changed_on_recurring ) {
@@ -1581,11 +1728,9 @@ class EventDatesController extends WP_REST_Controller {
 				// to guard against.
 				$recurrence_impact = null;
 				if ( ! empty( $effective_rrule ) ) {
-					$proposed_start = $timing_changed ? $new_legacy['start_datetime'] : $existing->start_datetime;
-					$proposed_end   = $timing_changed ? $new_legacy['end_datetime'] : $existing->end_datetime;
 					// Excluded dates are not part of the active schedule, so their
 					// existing rows (and dependents) are reported as removed.
-					$all_proposed = RecurrenceService::generate_occurrences( $proposed_start, $proposed_end, $effective_rrule, null, (array) $excluded_dates );
+					$all_proposed = RecurrenceService::generate_occurrences( $timing_changed ? $new_timing : $existing->get_timing(), $effective_rrule, null, (array) $excluded_dates );
 					$proposed_gen = array_slice( $all_proposed, 1 );
 
 					$classify_master_id = ( 'generated' === $existing->occurrence_type && $existing->master_id )
@@ -1644,8 +1789,7 @@ class EventDatesController extends WP_REST_Controller {
 			// only — reconcile_occurrences() soft-cancels stale rows, so
 			// there's no destructive-change guard to gate this on.
 			$manual_occurrences = RecurrenceService::build_manual_occurrences(
-				$manual_master->start_datetime,
-				$manual_master->end_datetime,
+				$manual_master->get_timing(),
 				$manual_dates
 			);
 			$recurrence_impact  = RecurrenceService::classify_change(
@@ -1959,8 +2103,7 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		// Don't allow cancelling the master's own date.
-		$master_date = ( new \DateTime( $master->start_datetime ) )->format( 'Y-m-d' );
-		if ( $date === $master_date ) {
+		if ( $date === $master->start_date ) {
 			return new WP_Error(
 				'rest_cannot_exclude_master',
 				__( 'Cannot cancel the master event date.', 'fair-events' ),
@@ -1977,26 +2120,21 @@ class EventDatesController extends WP_REST_Controller {
 		} else {
 			// No row exists for this date yet (a rule occurrence that was never
 			// materialized) — insert one directly as cancelled.
-			$master_start = new \DateTime( $master->start_datetime );
-			$master_end   = $master->end_datetime ? new \DateTime( $master->end_datetime ) : clone $master_start;
-			$duration     = $master_start->diff( $master_end );
-
-			$occ_start = \DateTime::createFromFormat( 'Y-m-d H:i:s', $date . ' ' . $master_start->format( 'H:i:s' ) );
-			if ( ! $occ_start ) {
+			if ( ! is_string( EventTiming::normalize_date( $date ) ) ) {
 				return new WP_Error(
 					'rest_invalid_date',
 					__( 'Invalid date.', 'fair-events' ),
 					array( 'status' => 400 )
 				);
 			}
-			$occ_end = ( clone $occ_start )->add( $duration );
+			$occurrence = EventTiming::for_date( $master->get_timing(), $date );
 
 			if ( $master->event_id ) {
 				EventDates::save_occurrence(
 					$master->event_id,
-					$occ_start->format( 'Y-m-d H:i:s' ),
-					$occ_end->format( 'Y-m-d H:i:s' ),
-					$master->all_day,
+					$occurrence,
+					null,
+					null,
 					'generated',
 					$id,
 					$date,
@@ -2004,13 +2142,13 @@ class EventDatesController extends WP_REST_Controller {
 				);
 			} else {
 				EventDates::create_standalone_occurrence(
-					array(
-						'start_datetime'    => $occ_start->format( 'Y-m-d H:i:s' ),
-						'end_datetime'      => $occ_end->format( 'Y-m-d H:i:s' ),
-						'all_day'           => $master->all_day,
-						'master_id'         => $id,
-						'recurrence_anchor' => $date,
-						'status'            => 'cancelled',
+					array_merge(
+						$occurrence,
+						array(
+							'master_id'         => $id,
+							'recurrence_anchor' => $date,
+							'status'            => 'cancelled',
+						)
 					)
 				);
 			}
@@ -2381,6 +2519,8 @@ class EventDatesController extends WP_REST_Controller {
 			'status'             => $event_date->status,
 			'publication_status' => $event_date->publication_status,
 			'recurrence_mode'    => $event_date->recurrence_mode,
+			'recurrence_anchor'  => $event_date->recurrence_anchor,
+			'timing_overrides'   => 'generated' === $event_date->occurrence_type ? $event_date->timing_overrides : null,
 		);
 
 		// Add master event info for generated occurrences.
@@ -2413,9 +2553,11 @@ class EventDatesController extends WP_REST_Controller {
 						),
 						$this->prepare_timing( $occ->get_timing() ),
 						array(
-							'all_day' => $occ->all_day,
-							'title'   => $occ->title,
-							'status'  => $occ->status,
+							'all_day'           => $occ->all_day,
+							'title'             => $occ->title,
+							'status'            => $occ->status,
+							'recurrence_anchor' => $occ->recurrence_anchor ?? $occ->start_date,
+							'timing_overrides'  => $occ->timing_overrides,
 						)
 					);
 				},
@@ -2424,7 +2566,7 @@ class EventDatesController extends WP_REST_Controller {
 			$data['cancelled_dates']       = array_values(
 				array_map(
 					function ( $occ ) {
-						return $occ->recurrence_anchor ?? ( new \DateTime( $occ->start_datetime ) )->format( 'Y-m-d' );
+						return $occ->recurrence_anchor ?? $occ->start_date;
 					},
 					array_filter(
 						$generated,

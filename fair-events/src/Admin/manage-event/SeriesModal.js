@@ -56,8 +56,12 @@ function dateOnly( datetime ) {
  * @return {string[]} Sorted, deduplicated Y-m-d dates, excluding the master's own date.
  */
 function seedManualDates( masterDateStr, generatedOccurrences ) {
+	// Scheduled (anchor) dates, not the shown ones: a moved occurrence keeps
+	// its row only while its anchor stays in the list.
 	const dates = ( generatedOccurrences || [] )
-		.map( ( occ ) => dateOnly( occ.start_datetime ) )
+		.map(
+			( occ ) => occ.recurrence_anchor || dateOnly( occ.start_datetime )
+		)
 		.filter( ( d ) => Boolean( d ) && d !== masterDateStr );
 
 	return [ ...new Set( dates ) ].sort();

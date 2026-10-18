@@ -9,7 +9,7 @@ namespace FairEvents\Admin;
 
 defined( 'ABSPATH' ) || die;
 
-use FairEvents\Models\EventDates;
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Services\EventCopyService;
 
 /**
@@ -52,8 +52,8 @@ class CopyEventPage {
 		}
 
 		// Calculate new dates based on selected option.
-		$new_dates = $this->calculate_new_dates( $source['master'], $date_option, $custom_date, $start_time, $end_time );
-		$result    = ( new EventCopyService() )->copy( $source, $new_title, $new_dates['start'], $new_dates['end'] );
+		$new_timing = $this->calculate_new_timing( $source['master']->get_timing(), $date_option, $custom_date, $start_time, $end_time );
+		$result     = ( new EventCopyService() )->copy( $source, $new_title, $new_timing );
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ) );
 		}
@@ -90,80 +90,59 @@ class CopyEventPage {
 	}
 
 	/**
-	 * Calculate new dates based on date option
+	 * Calculate the copy's timing based on the date option
 	 *
-	 * @param object $original_dates Original event dates object.
-	 * @param string $date_option    Date offset option ('week', 'custom').
-	 * @param string $custom_date    Custom date value (YYYY-MM-DD).
-	 * @param string $start_time     Submitted start time (HH:MM).
-	 * @param string $end_time       Submitted end time (HH:MM).
-	 * @return array Array with 'start' and 'end' datetime strings.
+	 * Keeps the source's calendar-day span and all-day flag. A time the
+	 * source has is required; a time it lacks may be left empty and then
+	 * stays missing, so the copy never gets an invented time.
+	 *
+	 * @param array  $source_timing Source canonical timing (see EventTiming).
+	 * @param string $date_option   Date offset option ('week', 'custom').
+	 * @param string $custom_date   Custom date value (YYYY-MM-DD).
+	 * @param string $start_time    Submitted start time (HH:MM), or empty.
+	 * @param string $end_time      Submitted end time (HH:MM), or empty.
+	 * @return array Canonical timing of the copy.
 	 */
-	private function calculate_new_dates( $original_dates, $date_option, $custom_date, $start_time, $end_time ) {
-		$timezone       = wp_timezone();
-		$original_start = new \DateTime( str_replace( 'T', ' ', $original_dates->start_datetime ), $timezone );
-		$original_end   = $original_dates->end_datetime ? new \DateTime( str_replace( 'T', ' ', $original_dates->end_datetime ), $timezone ) : null;
-		$day_offset     = 0;
-
-		if ( ! $original_dates->all_day ) {
-			if ( ! $this->is_valid_time( $start_time ) || ( $original_end && ! $this->is_valid_time( $end_time ) ) ) {
-				wp_die( esc_html__( 'Enter valid start and end times.', 'fair-events' ) );
-			}
-		}
-
-		if ( $original_end ) {
-			$start_day  = new \DateTimeImmutable( $original_start->format( 'Y-m-d' ), $timezone );
-			$end_day    = new \DateTimeImmutable( $original_end->format( 'Y-m-d' ), $timezone );
-			$day_offset = (int) $start_day->diff( $end_day )->format( '%r%a' );
-		}
-
-		$new_start_date = clone $original_start;
-
-		// Apply date offset.
+	private function calculate_new_timing( array $source_timing, $date_option, $custom_date, $start_time, $end_time ) {
 		switch ( $date_option ) {
 			case 'week':
-				$new_start_date->modify( '+7 days' );
+				$new_start_date = EventTiming::add_days( $source_timing['start_date'], 7 );
 				break;
 
 			case 'custom':
 				if ( empty( $custom_date ) ) {
 					wp_die( esc_html__( 'Custom date is required.', 'fair-events' ) );
 				}
-
-				$custom_datetime = \DateTime::createFromFormat( '!Y-m-d', $custom_date, $timezone );
-				$errors          = \DateTime::getLastErrors();
-				if ( ! $custom_datetime || ( is_array( $errors ) && ( $errors['warning_count'] || $errors['error_count'] ) ) || $custom_datetime->format( 'Y-m-d' ) !== $custom_date ) {
+				$new_start_date = EventTiming::normalize_date( $custom_date );
+				if ( ! is_string( $new_start_date ) ) {
 					wp_die( esc_html__( 'Enter a valid custom date.', 'fair-events' ) );
 				}
-				$new_start_date = $custom_datetime;
 				break;
 
 			default:
 				wp_die( esc_html__( 'Invalid date option selected.', 'fair-events' ) );
 		}
 
-		$new_start = new \DateTime( $new_start_date->format( 'Y-m-d' ), $timezone );
-		$new_end   = $original_end ? clone $new_start : null;
-		if ( $new_end && 0 !== $day_offset ) {
-			$new_end->modify( sprintf( '%+d days', $day_offset ) );
-		}
+		$timing = EventTiming::for_date( $source_timing, $new_start_date );
 
-		if ( ! $original_dates->all_day ) {
-			$new_start->setTime( (int) substr( $start_time, 0, 2 ), (int) substr( $start_time, 3, 2 ) );
-			if ( $new_end ) {
-				$new_end->setTime( (int) substr( $end_time, 0, 2 ), (int) substr( $end_time, 3, 2 ) );
+		if ( ! $source_timing['all_day'] ) {
+			foreach ( array(
+				'start_time' => $start_time,
+				'end_time'   => $end_time,
+			) as $key => $value ) {
+				$required = null !== $source_timing[ $key ];
+				if ( ( $required || '' !== $value ) && ! $this->is_valid_time( $value ) ) {
+					wp_die( esc_html__( 'Enter valid start and end times.', 'fair-events' ) );
+				}
+				$timing[ $key ] = '' === $value ? null : $value . ':00';
 			}
 		}
-		if ( $new_end && $new_end < $new_start ) {
+
+		if ( EventTiming::validate( $timing ) ) {
 			wp_die( esc_html__( 'End date and time must be after the start date and time.', 'fair-events' ) );
 		}
 
-		$format = $original_dates->all_day ? 'Y-m-d' : 'Y-m-d\TH:i:s';
-
-		return array(
-			'start' => $new_start->format( $format ),
-			'end'   => $new_end ? $new_end->format( $format ) : null,
-		);
+		return $timing;
 	}
 
 	/**
@@ -210,29 +189,27 @@ class CopyEventPage {
 		$duration_seconds    = 0;
 		$start_time          = '';
 		$end_time            = '';
+		$timing              = $event_dates->get_timing();
+		$has_end_date        = $timing['end_date'] !== $timing['start_date'] || null !== $timing['end_time'];
+		$start_value         = $timing['start_date'] . ( null !== $timing['start_time'] ? 'T' . $timing['start_time'] : '' );
+		$end_value           = $has_end_date ? $timing['end_date'] . ( null !== $timing['end_time'] ? 'T' . $timing['end_time'] : '' ) : '';
 		if ( $event_dates ) {
-			$start_dt = new \DateTime( $event_dates->start_datetime );
-			$end_dt   = $event_dates->end_datetime ? new \DateTime( $event_dates->end_datetime ) : null;
+			$start_dt = new \DateTime( $timing['start_date'] . ' ' . ( $timing['start_time'] ?? '00:00:00' ) );
+			$end_dt   = new \DateTime( $timing['end_date'] . ' ' . ( $timing['end_time'] ?? '00:00:00' ) );
 
-			// Calculate duration.
-			if ( $end_dt ) {
+			// Calculate duration: whole days for all-day events, otherwise only
+			// when both times are known.
+			if ( $timing['all_day'] || ( null !== $timing['start_time'] && null !== $timing['end_time'] ) ) {
 				$duration_seconds = $end_dt->getTimestamp() - $start_dt->getTimestamp();
 			}
-			$start_time = $start_dt->format( 'H:i' );
-			$end_time   = $end_dt ? $end_dt->format( 'H:i' ) : '';
+			$start_time = null !== $timing['start_time'] ? substr( $timing['start_time'], 0, 5 ) : '';
+			$end_time   = null !== $timing['end_time'] ? substr( $timing['end_time'], 0, 5 ) : '';
 
 			// Calculate default custom date (2 weeks from original start).
-			$two_weeks_later = clone $start_dt;
-			$two_weeks_later->modify( '+14 days' );
-			$default_custom_date = $two_weeks_later->format( 'Y-m-d' );
+			$default_custom_date = EventTiming::add_days( $timing['start_date'], 14 );
 
-			if ( $event_dates->all_day ) {
-				$start_date = $start_dt->format( 'F j, Y' );
-				$end_date   = $end_dt ? $end_dt->format( 'F j, Y' ) : '';
-			} else {
-				$start_date = $start_dt->format( 'F j, Y g:i a' );
-				$end_date   = $end_dt ? $end_dt->format( 'F j, Y g:i a' ) : '';
-			}
+			$start_date = $start_dt->format( '' !== $start_time ? 'F j, Y g:i a' : 'F j, Y' );
+			$end_date   = $has_end_date ? $end_dt->format( '' !== $end_time ? 'F j, Y g:i a' : 'F j, Y' ) : '';
 		}
 		?>
 		<div class="wrap">
@@ -296,11 +273,11 @@ class CopyEventPage {
 					<?php if ( ! $event_dates->all_day ) : ?>
 					<tr>
 						<th scope="row"><label for="start_time"><?php esc_html_e( 'Start time', 'fair-events' ); ?></label></th>
-						<td><input type="time" id="start_time" name="start_time" value="<?php echo esc_attr( $start_time ); ?>" required /></td>
+						<td><input type="time" id="start_time" name="start_time" value="<?php echo esc_attr( $start_time ); ?>" <?php echo '' !== $start_time ? 'required' : ''; ?> /></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="end_time"><?php esc_html_e( 'End time', 'fair-events' ); ?></label></th>
-						<td><input type="time" id="end_time" name="end_time" value="<?php echo esc_attr( $end_time ); ?>" <?php echo $event_dates->end_datetime ? 'required' : ''; ?> /></td>
+						<td><input type="time" id="end_time" name="end_time" value="<?php echo esc_attr( $end_time ); ?>" <?php echo '' !== $end_time ? 'required' : ''; ?> /></td>
 					</tr>
 					<?php endif; ?>
 				</table>
@@ -316,7 +293,7 @@ class CopyEventPage {
 							<th scope="row"><?php esc_html_e( 'Start Date', 'fair-events' ); ?></th>
 							<td id="summary-start-date"><?php echo esc_html( $start_date ); ?></td>
 						</tr>
-						<?php if ( $event_dates->end_datetime ) : ?>
+						<?php if ( $has_end_date ) : ?>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'End Date', 'fair-events' ); ?></th>
 							<td id="summary-end-date"><?php echo esc_html( $end_date ); ?></td>
@@ -375,8 +352,8 @@ class CopyEventPage {
 			(function() {
 				// Configuration from PHP
 				const config = {
-					originalStartDate: <?php echo wp_json_encode( $event_dates ? $event_dates->start_datetime : '' ); ?>,
-					originalEndDate: <?php echo wp_json_encode( $event_dates && $event_dates->end_datetime ? $event_dates->end_datetime : '' ); ?>,
+					originalStartDate: <?php echo wp_json_encode( $start_value ); ?>,
+					originalEndDate: <?php echo wp_json_encode( $end_value ); ?>,
 					durationSeconds: <?php echo absint( $duration_seconds ); ?>,
 					isAllDay: <?php echo $event_dates && $event_dates->all_day ? 'true' : 'false'; ?>,
 					defaultCustomDate: <?php echo wp_json_encode( $default_custom_date ); ?>
@@ -426,7 +403,7 @@ class CopyEventPage {
 
 				function formatDate(date, isAllDay) {
 					if (!date) return '';
-					const options = isAllDay
+					const options = isAllDay || !date.hasTime
 						? { year: 'numeric', month: 'long', day: 'numeric' }
 						: { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
 
@@ -448,7 +425,12 @@ class CopyEventPage {
 				}
 
 				function applyTime(date, input) {
-					if (!date || !input || !input.value) return date;
+					if (!date) return date;
+					date.hasTime = Boolean(input && input.value);
+					if (!date.hasTime) {
+						date.setHours(0, 0, 0, 0);
+						return date;
+					}
 					const [hours, minutes] = input.value.split(':').map(Number);
 					date.setHours(hours, minutes, 0, 0);
 					return date;
@@ -506,7 +488,7 @@ class CopyEventPage {
 					}
 
 					// Update duration
-					if (summaryDuration && newDates && newDates.end) {
+					if (summaryDuration && newDates && newDates.end && (config.isAllDay || (newDates.start.hasTime && newDates.end.hasTime))) {
 						summaryDuration.textContent = formatDuration(Math.max(0, (newDates.end - newDates.start) / 1000));
 					}
 				}

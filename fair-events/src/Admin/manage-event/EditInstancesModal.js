@@ -46,7 +46,10 @@ export default function EditInstancesModal( {
 					<p>{ __( 'No occurrences yet.', 'fair-events' ) }</p>
 				) }
 				{ occurrences.map( ( occ ) => {
-					const date = occ.start_datetime.split( ' ' )[ 0 ];
+					const shownDate = occ.start_datetime.split( ' ' )[ 0 ];
+					// Cancel/restore address the scheduled (anchor) date, which
+					// differs from the shown date once the occurrence is moved.
+					const date = occ.recurrence_anchor || shownDate;
 					const isCancelled = occ.status === 'cancelled';
 					const isToggling = togglingExdate === date;
 
@@ -59,7 +62,7 @@ export default function EditInstancesModal( {
 										: 'none',
 								} }
 							>
-								{ formatDateOnly( date, 'long' ) }
+								{ formatDateOnly( shownDate, 'long' ) }
 								{ isCancelled &&
 									` (${ __( 'Cancelled', 'fair-events' ) })` }
 							</span>

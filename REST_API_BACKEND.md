@@ -1374,13 +1374,49 @@ times, held by `FairEvents\Helpers\EventTiming` and stored in the
     missing end time as no end (or `23:59:59` on a later end date). Rows are
     read from the canonical columns once `timing_migrated` is set, so those
     substitutes are never read back as times. Consumers still on the
-    deprecated fields see them until they move. Until recurrence and
-    copying carry optional times, a timing the deprecated fields cannot
-    hold without a substitute (`EventTiming::fits_legacy()` — a missing
-    start time, or no end time on a multi-day event) is refused on a series
-    (rule, hand-picked dates or one of its dates) with 400
-    `rest_series_times_required`, and such an event cannot be copied. A
-    start time without an end stays allowed on both, as before.
+    deprecated fields see them until they move.
+-   **Series.** Rules and hand-picked dates generate calendar dates: every
+    occurrence keeps the series' calendar-day span, its times (each still
+    optional) and its all-day flag. No duration is derived from times, so a
+    missing time stays missing on every date. An `UNTIL` with a time is
+    compared with each date's start time, or the start of that day when
+    there is none. Copying shifts dates by whole days and keeps missing
+    times missing; ticket deadlines move by the change of start time only
+    when both the source and the copy have one.
+
+#### Occurrence timing overrides (DB 3.46.0)
+
+A generated occurrence owns its timing in two groups, each with a marker
+column on `fair_event_dates`: `dates_override` (`start_date`, `end_date`)
+and `times_override` (`start_time`, `end_time` and `all_day` together, so
+an occurrence never mixes its own time with an inherited one).
+
+-   **Setting.** `PUT …/event-dates/{id}` on a date of a series sets the
+    marker of each group whose values it changes. Clearing a time with
+    `null` counts: the time stays cleared and is not inherited. Sending
+    unchanged values sets nothing.
+-   **Series edits** (series timing, rule, excluded dates, hand-picked
+    dates) rewrite only the groups without a marker. `recurrence_impact`
+    reports a date whose own timing survives as `unchanged`, and its
+    entries carry `start_date` / `start_time` (and `new_start_date` /
+    `new_start_time`) next to the deprecated datetimes.
+-   **Reset.** `inherit_timing: ["dates"]`, `["times"]` or both drops the
+    marker and copies the series values for the occurrence's anchor date.
+    Sending a field of a group in the same request is 400
+    `rest_inherit_timing_conflict`; on a row that is not a date of a series
+    it is 400 `rest_inherit_timing_not_supported`.
+-   **Conflicts.** A series change that an overridden date cannot follow —
+    e.g. overnight times (22:00 to 02:00) on a date moved to a single day —
+    is 409 `rest_occurrence_override_conflict` with `data.conflicts`
+    (`id`, `start_date`, `reason`) and writes nothing.
+-   **Responses.** `timing_overrides: { dates, times }` on a date of a
+    series (`null` otherwise) and on each `generated_occurrences` entry,
+    with its `recurrence_anchor`. Cancel/restore and hand-picked dates
+    address the anchor, which stays put when an occurrence's dates move.
+-   **Migration.** 3.46.0 compares every existing occurrence with what its
+    series generates for its anchor and sets the marker of each group that
+    differs. A past edit that left a value equal to the series value cannot
+    be detected and stays inherited.
 
 ### Event schedule and booking status
 

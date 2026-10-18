@@ -163,6 +163,109 @@ class Installer_Timing_WPDB {
 }
 
 /**
+ * In-memory database double for the 3.46.0 override detection.
+ */
+class Installer_Overrides_WPDB {
+	/**
+	 * WordPress table prefix.
+	 *
+	 * @var string
+	 */
+	public $prefix = 'wp_';
+
+	/**
+	 * Event date rows keyed by id.
+	 *
+	 * @var array<int, object>
+	 */
+	public $rows = array();
+
+	/**
+	 * Whether the marker columns exist.
+	 *
+	 * @var bool
+	 */
+	public $has_marker_columns = true;
+
+	/**
+	 * Row ids requested by each batch query, in order.
+	 *
+	 * @var array<int, int>
+	 */
+	public $batch_after = array();
+
+	/**
+	 * Capture a prepared query.
+	 *
+	 * @param string $query   Query template.
+	 * @param mixed  ...$args Query arguments.
+	 * @return array Prepared query capture.
+	 */
+	public function prepare( $query, ...$args ) {
+		if ( isset( $args[0] ) && is_array( $args[0] ) ) {
+			$args = $args[0];
+		}
+		return array(
+			'query' => $query,
+			'args'  => $args,
+		);
+	}
+
+	/**
+	 * Escape a LIKE pattern (no-op double).
+	 *
+	 * @param string $text Text.
+	 * @return string Text.
+	 */
+	public function esc_like( $text ) {
+		return $text;
+	}
+
+	/**
+	 * Answer the column check, a batch of generated rows, or masters by id.
+	 *
+	 * @param array $prepared Prepared query capture.
+	 * @return array Rows.
+	 */
+	public function get_results( $prepared ) {
+		if ( 0 === strpos( $prepared['query'], 'SHOW COLUMNS' ) ) {
+			return $this->has_marker_columns ? array( (object) array( 'Field' => $prepared['args'][1] ) ) : array();
+		}
+
+		if ( false !== strpos( $prepared['query'], 'id IN' ) ) {
+			$ids = array_slice( $prepared['args'], 1 );
+			return array_values( array_intersect_key( $this->rows, array_flip( $ids ) ) );
+		}
+
+		list( , $after, $limit ) = $prepared['args'];
+		$this->batch_after[]     = $after;
+		$rows                    = array_filter(
+			$this->rows,
+			static function ( $row ) use ( $after ) {
+				return 'generated' === $row->occurrence_type && $row->id > $after;
+			}
+		);
+		ksort( $rows );
+		return array_slice( array_values( $rows ), 0, $limit );
+	}
+
+	/**
+	 * Update a row.
+	 *
+	 * @param string $table Table.
+	 * @param array  $data  Columns.
+	 * @param array  $where Row selector.
+	 * @return int Affected rows.
+	 */
+	public function update( $table, $data, $where ) {
+		foreach ( $data as $key => $value ) {
+			$this->rows[ $where['id'] ]->$key = $value;
+		}
+		return 1;
+	}
+}
+
+/**
  * Covers the 3.33.0 historical warning repair.
  */
 class InstallerMigrationTest extends TestCase {
@@ -289,5 +392,104 @@ class InstallerMigrationTest extends TestCase {
 		$GLOBALS['wpdb']              = $no_column;
 		$this->assertFalse( $method->invoke( null ) );
 		$this->assertCount( 0, $no_column->batches );
+	}
+
+	/**
+	 * Canonical row for the override detection double.
+	 *
+	 * @param int    $id    Row id.
+	 * @param string $date  Start and end date.
+	 * @param array  $extra Other columns.
+	 * @return object Row.
+	 */
+	private function override_row( $id, $date, array $extra = array() ) {
+		return (object) array_merge(
+			array(
+				'id'                => $id,
+				'occurrence_type'   => 'generated',
+				'master_id'         => 1,
+				'recurrence_anchor' => $date,
+				'start_date'        => $date,
+				'end_date'          => $date,
+				'start_time'        => '18:00:00',
+				'end_time'          => '20:00:00',
+				'all_day'           => 0,
+				'timing_migrated'   => 1,
+				'dates_override'    => 0,
+				'times_override'    => 0,
+			),
+			$extra
+		);
+	}
+
+	/**
+	 * The 3.46.0 detection marks each group that differs from what the
+	 * series generates for the occurrence's anchor, and nothing else.
+	 *
+	 * @return void
+	 */
+	public function test_3_46_0_marks_deviating_occurrences() {
+		$wpdb            = new Installer_Overrides_WPDB();
+		$wpdb->rows      = array(
+			1 => $this->override_row(
+				1,
+				'2026-11-02',
+				array(
+					'occurrence_type' => 'master',
+					'master_id'       => null,
+				)
+			),
+			2 => $this->override_row( 2, '2026-11-09' ),
+			3 => $this->override_row( 3, '2026-11-16', array( 'end_time' => null ) ),
+			4 => $this->override_row(
+				4,
+				'2026-11-23',
+				array(
+					'start_date' => '2026-11-24',
+					'end_date'   => '2026-11-24',
+				)
+			),
+			5 => $this->override_row( 5, '2026-11-30', array( 'all_day' => 1 ) ),
+		);
+		$GLOBALS['wpdb'] = $wpdb;
+
+		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_46_0' );
+		$this->assertTrue( $method->invoke( null ) );
+
+		$markers = array();
+		foreach ( array( 2, 3, 4, 5 ) as $id ) {
+			$markers[ $id ] = array( (int) $wpdb->rows[ $id ]->dates_override, (int) $wpdb->rows[ $id ]->times_override );
+		}
+		$this->assertSame(
+			array(
+				2 => array( 0, 0 ),
+				3 => array( 0, 1 ),
+				4 => array( 1, 0 ),
+				5 => array( 0, 1 ),
+			),
+			$markers
+		);
+
+		// A rerun only sets markers, so a reset made since stays reset.
+		$this->assertTrue( $method->invoke( null ) );
+		$this->assertSame( 1, (int) $wpdb->rows[3]->times_override );
+	}
+
+	/**
+	 * Without the marker columns the detection reports failure, so the
+	 * version stays below 3.46.0; that recorded version follows each step.
+	 *
+	 * @return void
+	 */
+	public function test_3_46_0_reports_missing_columns() {
+		$wpdb                     = new Installer_Overrides_WPDB();
+		$wpdb->has_marker_columns = false;
+		$GLOBALS['wpdb']          = $wpdb;
+
+		$this->assertFalse( ( new ReflectionMethod( Installer::class, 'migrate_to_3_46_0' ) )->invoke( null ) );
+
+		$record = new ReflectionMethod( Installer::class, 'version_to_record' );
+		$this->assertSame( '3.45.0', $record->invoke( null, true, true, true, false ) );
+		$this->assertSame( '3.44.0', $record->invoke( null, true, true, false, false ) );
 	}
 }

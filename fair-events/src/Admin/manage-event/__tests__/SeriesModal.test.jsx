@@ -461,6 +461,34 @@ it( 'seeds the calendar selection from existing generated occurrences when editi
 	expect( screen.getByText( '3 dates selected' ) ).toBeInTheDocument();
 } );
 
+it( 'seeds a moved occurrence by its scheduled date', async () => {
+	await renderModal( {
+		eventDateId: 1,
+		initialRrule: null,
+		initialRecurrenceMode: 'manual',
+		startDatetime: '2026-07-01 18:00:00',
+		generatedOccurrences: [
+			{
+				id: 2,
+				start_datetime: '2026-07-09 18:00:00',
+				recurrence_anchor: '2026-07-08',
+			},
+		],
+		onClose: () => {},
+		onSaved: () => {},
+		onImpact: () => {},
+	} );
+
+	await openIrregularTab();
+
+	expect(
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-08' ) } )
+	).toHaveAttribute( 'aria-pressed', 'true' );
+	expect(
+		screen.getByRole( 'button', { name: fullDateLabel( '2026-07-09' ) } )
+	).toHaveAttribute( 'aria-pressed', 'false' );
+} );
+
 it( 'clicking an unselected day adds it and clicking it again removes it, keeping the master date fixed', async () => {
 	await renderModal( {
 		eventDateId: 1,
