@@ -189,6 +189,33 @@ class SettlementController extends WP_REST_Controller {
 				)
 			);
 		}
+		register_rest_route(
+			$this->namespace,
+			'/reconciliation/entries/(?P<id>\\d+)/settlement-suggestions',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'saved_suggestions' ),
+				'permission_callback' => array( $this, 'preview_permissions_check' ),
+				'args'                => array(
+					'id'       => array(
+						'type'     => 'integer',
+						'minimum'  => 1,
+						'required' => true,
+					),
+					'page'     => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'default' => 1,
+					),
+					'per_page' => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 50,
+						'default' => 10,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -254,6 +281,17 @@ class SettlementController extends WP_REST_Controller {
 	public function saved_candidates( $request ) {
 		$service = $this->saved_service();
 		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->candidates( (int) $request['id'] ) );
+	}
+
+	/**
+	 * Ranked saved settlements for one bank entry, from local data only.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_suggestions( $request ) {
+		$service = $this->saved_service();
+		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->suggest_settlements( (int) $request['id'], (int) $request['page'], (int) $request['per_page'] ) );
 	}
 
 	/**

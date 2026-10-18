@@ -348,6 +348,136 @@ test.describe( 'Saved settlement reconciliation', () => {
 		).toBeTruthy();
 	} );
 
+	const suggestions = async ( entryId, query = '' ) =>
+		api.get(
+			`/wp-json/fair-finance/v1/reconciliation/entries/${ entryId }/settlement-suggestions${ query }`,
+			{ headers }
+		);
+
+	for ( const origin of [ 'api', 'csv' ] ) {
+		test( `suggests a saved ${ origin } settlement for its bank entry from local data`, async () => {
+			await seed( { origin } );
+			const before = await (
+				await api.get( '/wp-json/fair-e2e/v1/settlements/state', {
+					headers,
+				} )
+			).json();
+			const response = await suggestions( fixture.entry_id );
+			expect( response.ok(), await response.text() ).toBeTruthy();
+			const data = await response.json();
+			const found = data.items.find(
+				( row ) => row.id === fixture.settlement_id
+			);
+			expect( found ).toBeTruthy();
+			// A CSV-only record is compared by its supported explanation.
+			expect( found.amount ).toBe( '38.55' );
+			expect( found.state ).toBeNull();
+			expect( found.reasons ).toEqual(
+				expect.arrayContaining( [
+					'Payout reference appears in the bank description.',
+					'The amount matches exactly.',
+				] )
+			);
+			const after = await (
+				await api.get( '/wp-json/fair-e2e/v1/settlements/state', {
+					headers,
+				} )
+			).json();
+			expect( after.requests ).toBe( before.requests );
+		} );
+	}
+
+	test( 'exposes ambiguous suggestions, pages them, and hides settlements associated elsewhere', async () => {
+		const first = { ...( await seed() ) };
+		const second = { ...( await seed( { reuse_transactions: true } ) ) };
+		const ranked = await ( await suggestions( first.entry_id ) ).json();
+		const ids = ranked.items.map( ( row ) => row.id );
+		expect( ids ).toEqual(
+			expect.arrayContaining( [
+				first.settlement_id,
+				second.settlement_id,
+			] )
+		);
+		expect( ranked.ambiguous ).toBeTruthy();
+		const paged = await (
+			await suggestions( first.entry_id, '?per_page=1&page=2' )
+		).json();
+		expect( paged.items ).toHaveLength( 1 );
+		expect( paged.page ).toBe( 2 );
+		expect( paged.pages ).toBe( ranked.total );
+		expect( paged.items[ 0 ].id ).toBe( ranked.items[ 1 ].id );
+
+		fixture = first;
+		expect( ( await confirm( await preview() ) ).ok() ).toBeTruthy();
+		const remaining = await ( await suggestions( second.entry_id ) ).json();
+		expect( remaining.items.map( ( row ) => row.id ) ).not.toContain(
+			first.settlement_id
+		);
+		expect( ( await suggestions( first.entry_id ) ).status() ).toBe( 409 );
+		// A proposal never replaces an existing association.
+		const proposed = await preview( {
+			...selection(),
+			entry_id: second.entry_id,
+		} );
+		expect( proposed.can_partial ).toBeFalsy();
+		expect( proposed.bank_issues ).toContain(
+			'Release the existing bank association before selecting a different entry.'
+		);
+	} );
+
+	test( 'shows settlement associations on the overview once, with their current state', async () => {
+		await seed( { missing: true } );
+		expect(
+			( await confirm( await preview(), { state: 'partial' } ) ).ok()
+		).toBeTruthy();
+		const overview = async () =>
+			(
+				await api.get( '/wp-json/fair-finance/v1/reconciliation', {
+					headers,
+				} )
+			).json();
+		let data = await overview();
+		let rows = data.matched_entries.filter(
+			( row ) => row.id === fixture.entry_id
+		);
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].transactions ).toHaveLength( 0 );
+		expect( rows[ 0 ].settlement ).toMatchObject( {
+			id: fixture.settlement_id,
+			state: 'partial',
+			current_state: 'partial',
+		} );
+		expect( data.unmatched_entries.map( ( row ) => row.id ) ).not.toContain(
+			fixture.entry_id
+		);
+
+		await post( FIXTURE, { action: 'arrive' } );
+		data = await overview();
+		expect(
+			data.matched_entries.find( ( row ) => row.id === fixture.entry_id )
+				.settlement.current_state
+		).toBe( 'needs_review' );
+
+		expect( ( await confirm( await preview() ) ).ok() ).toBeTruthy();
+		data = await overview();
+		rows = data.matched_entries.filter(
+			( row ) => row.id === fixture.entry_id
+		);
+		// Compatibility links and the settlement association share one row.
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].transactions ).toHaveLength( 2 );
+		expect( rows[ 0 ].settlement.current_state ).toBe( 'full' );
+
+		expect(
+			( await confirm( await preview(), { state: 'released' } ) ).ok()
+		).toBeTruthy();
+		rows = ( await overview() ).matched_entries.filter(
+			( row ) => row.id === fixture.entry_id
+		);
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].settlement ).toBeNull();
+	} );
+
 	test( 'requires administrator access and validates input', async () => {
 		await seed();
 		const anonymous = await api.post(
@@ -364,5 +494,13 @@ test.describe( 'Saved settlement reconciliation', () => {
 		expect(
 			( await post( `${ ROOT }/9999999/preview`, {} ) ).status()
 		).toBe( 404 );
+		expect(
+			(
+				await api.get(
+					`/wp-json/fair-finance/v1/reconciliation/entries/${ fixture.entry_id }/settlement-suggestions`
+				)
+			).status()
+		).toBe( 401 );
+		expect( ( await suggestions( 9999999 ) ).status() ).toBe( 404 );
 	} );
 } );

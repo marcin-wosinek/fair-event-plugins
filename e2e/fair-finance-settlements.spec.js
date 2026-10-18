@@ -690,6 +690,11 @@ test.describe('Fair Finance settlements', () => {
 					name: 'Reconcile settlement RECONCILE.2605.01',
 				})
 			).toBeVisible();
+			// The default filter shows Mollie transfers; the fixture's
+			// description is matched by its payout reference instead.
+			await page
+				.getByLabel('Filter by description')
+				.fill('RECONCILE.2605.01');
 			await page
 				.getByLabel('Bank entry', { exact: true })
 				.selectOption(String(fixture.entry_id));
@@ -765,4 +770,110 @@ test.describe('Fair Finance settlements', () => {
 			});
 		});
 	}
+
+	test('suggests a saved settlement for a bank entry, reviews it with that entry, and shows the association', async ({
+		page,
+	}) => {
+		await api.post(`${HELPERS}/reconciliation`, {
+			headers: adminHeaders,
+			data: { action: 'cleanup' },
+		});
+		const response = await api.post(`${HELPERS}/reconciliation`, {
+			headers: adminHeaders,
+			data: { origin: 'csv', missing: true },
+		});
+		const fixture = await response.json();
+		// A failed step must not leave a decision behind for other tests.
+		try {
+			const before = await mollieRequests();
+			await setConnected(false);
+			await loginAsAdmin(page);
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-finance-reconciliation'
+			);
+			await page
+				.getByLabel('Filter by description')
+				.fill('Reconcile fixture RECONCILE');
+			const row = page.locator('tr', {
+				has: page.getByRole('link', {
+					name: `Entry #${fixture.entry_id}, 2026-05-02`,
+				}),
+			});
+			await row.getByRole('button', { name: 'Select' }).click();
+			const suggestion = page.locator(
+				'.fair-finance-settlement-suggestions > li',
+				{ hasText: 'RECONCILE.2605.01' }
+			);
+			await expect(suggestion).toContainText(
+				'Payout reference appears in the bank description.'
+			);
+			await expect(suggestion).toContainText('Not reconciled');
+			// The transaction workflow is still alongside.
+			await expect(page.getByText('Matching entry:')).toBeVisible();
+			await suggestion
+				.getByRole('button', { name: 'Review settlement' })
+				.click();
+			await expect(
+				page.getByRole('heading', {
+					name: 'Reconcile settlement RECONCILE.2605.01',
+				})
+			).toBeVisible();
+			await expect(page).toHaveURL(
+				new RegExp(
+					`settlement=${fixture.settlement_id}&entry_id=${fixture.entry_id}`
+				)
+			);
+			// Carried over even though the default filter hides it.
+			await expect(
+				page.getByLabel('Bank entry', { exact: true })
+			).toHaveValue(String(fixture.entry_id));
+			await page.getByLabel('Bank entry currency').fill('EUR');
+			await page.getByLabel(/I confirm this bank entry/).check();
+			await page
+				.getByRole('button', { name: 'Refresh local preview' })
+				.click();
+			await page.getByRole('button', { name: 'Save as Partial' }).click();
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save reconciliation decision' })
+				.click();
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Partial');
+
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-finance-reconciliation'
+			);
+			await page
+				.getByRole('button', { name: /^Matched Entries/ })
+				.click();
+			const matched = page
+				.locator('div', {
+					has: page.getByRole('link', {
+						name: `Entry #${fixture.entry_id}, 2026-05-02`,
+					}),
+				})
+				.last();
+			await expect(matched).toContainText(
+				'Settlement RECONCILE.2605.01 · 38.55 EUR · Partial'
+			);
+			await expect(
+				matched.getByRole('button', { name: 'Unmatch All' })
+			).toHaveCount(0);
+			await page.setViewportSize({ width: 375, height: 812 });
+			expect(
+				await page.evaluate(
+					() =>
+						document.documentElement.scrollWidth <=
+						document.documentElement.clientWidth
+				)
+			).toBe(true);
+			expect(await mollieRequests()).toBe(before);
+		} finally {
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+		}
+	});
 });

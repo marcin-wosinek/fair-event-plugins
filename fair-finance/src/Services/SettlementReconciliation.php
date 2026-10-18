@@ -354,6 +354,9 @@ class SettlementReconciliation {
 		} elseif ( $currency !== $settlement['currency'] || $account_id !== (int) $settlement['account_id'] || ( $context && ( $context['currency'] !== $currency || (int) $context['account_id'] !== $account_id ) ) ) {
 			$bank_issues[] = __( 'The bank entry’s confirmed currency or account does not match this settlement.', 'fair-finance' );
 		}
+		if ( $decision && (int) $decision['entry_id'] !== $entry_id ) {
+			$bank_issues[] = __( 'Release the existing bank association before selecting a different entry.', 'fair-finance' );
+		}
 		foreach ( $this->local->rows( 'decisions', 'entry_id', $entry_id, $lock ) as $other ) {
 			if ( (int) $other['settlement_id'] !== (int) $id ) {
 				$bank_issues[] = __( 'This bank entry is already associated with another settlement.', 'fair-finance' );
@@ -563,6 +566,62 @@ class SettlementReconciliation {
 	}
 
 	/**
+	 * Shared evidence for one settlement and one bank entry, in either direction.
+	 * Dates only support a reference or amount; they never establish a match.
+	 *
+	 * @param array       $settlement Settlement row.
+	 * @param string|null $amount Payout amount, or the supported explanation for CSV-only records.
+	 * @param array       $entry Bank entry with its confirmed context columns.
+	 * @return array
+	 */
+	public static function score( array $settlement, $amount, array $entry ) {
+		$reasons = array();
+		$score   = 0;
+		if ( $settlement['reference'] && false !== stripos( (string) $entry['description'], $settlement['reference'] ) ) {
+			$score    += 8;
+			$reasons[] = __( 'Payout reference appears in the bank description.', 'fair-finance' );
+		}
+		if ( self::equal( $amount, $entry['amount'] ) ) {
+			$score    += 4;
+			$reasons[] = __( 'The amount matches exactly.', 'fair-finance' );
+		}
+		if ( (int) $entry['context_account_id'] === (int) $settlement['account_id'] ) {
+			$score    += 4;
+			$reasons[] = __( 'The administrator-confirmed payout account matches.', 'fair-finance' );
+		}
+		if ( $entry['context_currency'] === $settlement['currency'] ) {
+			$score    += 2;
+			$reasons[] = __( 'The administrator-confirmed currency matches.', 'fair-finance' );
+		}
+		if ( $settlement['settled_at'] && abs( strtotime( $entry['entry_date'] ) - strtotime( $settlement['settled_at'] ) ) <= 7 * DAY_IN_SECONDS ) {
+			++$score;
+			$reasons[] = __( 'The bank date is within seven days of the payout.', 'fair-finance' );
+		}
+		return array(
+			'score'            => $score,
+			'reasons'          => $reasons,
+			'context_mismatch' => ( $entry['context_currency'] && $entry['context_currency'] !== $settlement['currency'] ) || ( $entry['context_account_id'] && (int) $entry['context_account_id'] !== (int) $settlement['account_id'] ),
+		);
+	}
+
+	/**
+	 * Highest score first; ties keep a stable ID order.
+	 *
+	 * @param array $rows Scored rows.
+	 * @return array
+	 */
+	private static function rank( array $rows ) {
+		usort(
+			$rows,
+			static function ( $a, $b ) {
+				$rank = $b['score'] <=> $a['score'];
+				return $rank ? $rank : ( (int) $a['id'] <=> (int) $b['id'] );
+			}
+		);
+		return $rows;
+	}
+
+	/**
 	 * Paginated local bank search, ranked with visible reasons.
 	 *
 	 * @param int $id Settlement ID.
@@ -580,43 +639,147 @@ class SettlementReconciliation {
 		do {
 			$batch = $this->local->candidates( $id, $page++ );
 			foreach ( $batch as $entry ) {
-				$reasons = array();
-				$score   = 0;
-				if ( $settlement['reference'] && false !== stripos( (string) $entry['description'], $settlement['reference'] ) ) {
-					$score    += 8;
-					$reasons[] = __( 'Payout reference appears in the bank description.', 'fair-finance' );
-				}
-				if ( self::equal( $amount, $entry['amount'] ) ) {
-					$score    += 4;
-					$reasons[] = __( 'The amount matches exactly.', 'fair-finance' );
-				}
-				if ( (int) $entry['context_account_id'] === (int) $settlement['account_id'] ) {
-					$score    += 4;
-					$reasons[] = __( 'The administrator-confirmed payout account matches.', 'fair-finance' );
-				}
-				if ( $entry['context_currency'] === $settlement['currency'] ) {
-					$score    += 2;
-					$reasons[] = __( 'The administrator-confirmed currency matches.', 'fair-finance' );
-				}
-				if ( $settlement['settled_at'] && abs( strtotime( $entry['entry_date'] ) - strtotime( $settlement['settled_at'] ) ) <= 7 * DAY_IN_SECONDS ) {
-					++$score;
-					$reasons[] = __( 'The bank date is within seven days of the payout.', 'fair-finance' );
-				}
-				$entry['score']            = $score;
-				$entry['reasons']          = $reasons;
-				$entry['context_mismatch'] = ( $entry['context_currency'] && $entry['context_currency'] !== $settlement['currency'] ) || ( $entry['context_account_id'] && (int) $entry['context_account_id'] !== (int) $settlement['account_id'] );
-				$candidates[]              = $entry;
+				$candidates[] = array_merge( $entry, self::score( $settlement, $amount, $entry ) );
 			}
 			$batch_count = count( $batch );
 		} while ( 100 === $batch_count );
-		usort(
-			$candidates,
-			static function ( $a, $b ) {
-				$rank = $b['score'] <=> $a['score'];
-				return $rank ? $rank : ( (int) $a['id'] <=> (int) $b['id'] );
+		return self::rank( $candidates );
+	}
+
+	/**
+	 * Payout amount to compare, without contacting a provider. A CSV-only
+	 * record has no provider amount, so its supported explanation is used,
+	 * as the bank candidates of that settlement use it.
+	 *
+	 * @param array $settlement Settlement row.
+	 * @return string|null
+	 */
+	private function payout_amount( array $settlement ) {
+		if ( null !== $settlement['amount'] ) {
+			return $settlement['amount'];
+		}
+		foreach ( array( 'api', 'csv' ) as $source ) {
+			if ( $settlement[ $source . '_revision_id' ] ) {
+				return self::explain( $this->provider->get_items( (int) $settlement[ $source . '_revision_id' ] ), $settlement['currency'] )['net'];
 			}
+		}
+		return null;
+	}
+
+	/**
+	 * Saved settlements that may be the payout of one bank entry, ranked with
+	 * visible reasons. Every unassociated settlement is scored before the
+	 * ranked result is paginated; a reference or exact amount is required.
+	 *
+	 * @param int $entry_id Bank entry ID.
+	 * @param int $page Result page.
+	 * @param int $per_page Result page size.
+	 * @return array|WP_Error
+	 */
+	public function suggest_settlements( $entry_id, $page = 1, $per_page = 10 ) {
+		try {
+			$entry = null;
+			foreach ( $this->local->bank( $entry_id ) as $row ) {
+				if ( (int) $row['id'] === (int) $entry_id ) {
+					$entry = $row;
+				}
+			}
+			if ( ! $entry ) {
+				return self::error( 'entry_not_found', __( 'This bank entry was not found.', 'fair-finance' ), 404 );
+			}
+			if ( $entry['parent_entry_id'] || 'income' !== $entry['entry_type'] ) {
+				return self::error( 'reconciliation_entry_ineligible', __( 'Only bank income entries can be matched to a settlement.', 'fair-finance' ) );
+			}
+			if ( $this->local->rows( 'decisions', 'entry_id', $entry_id ) ) {
+				return self::error( 'reconciliation_entry_in_use', __( 'This bank entry is already associated with a settlement.', 'fair-finance' ), 409 );
+			}
+			$context                     = $this->local->context( $entry_id );
+			$entry['context_account_id'] = $context['account_id'] ?? null;
+			$entry['context_currency']   = $context['currency'] ?? null;
+			$accounts                    = array();
+			$suggestions                 = array();
+			$batch_page                  = 1;
+			do {
+				$batch = $this->local->unassociated_settlements( $batch_page++ );
+				foreach ( $batch as $settlement ) {
+					$amount   = $this->payout_amount( $settlement );
+					$evidence = self::score( $settlement, $amount, $entry );
+					// Account context, currency and date alone are not a suggestion.
+					$referenced = $settlement['reference'] && false !== stripos( (string) $entry['description'], $settlement['reference'] );
+					if ( ! $referenced && ! self::equal( $amount, $entry['amount'] ) ) {
+						continue;
+					}
+					$account_id = (int) $settlement['account_id'];
+					if ( ! array_key_exists( $account_id, $accounts ) ) {
+						$account                 = $this->provider->get_account( $account_id );
+						$accounts[ $account_id ] = $account ? array(
+							'id'    => (int) $account['id'],
+							'label' => $account['label'],
+						) : null;
+					}
+					$suggestions[] = array_merge(
+						array(
+							'id'           => (int) $settlement['id'],
+							'reference'    => $settlement['reference'],
+							'provider_id'  => $settlement['provider_id'],
+							'account'      => $accounts[ $account_id ],
+							'amount'       => $amount,
+							'currency'     => $settlement['currency'],
+							'settled_at'   => $settlement['settled_at'],
+							'completeness' => $settlement['completeness'],
+							'state'        => null,
+						),
+						$evidence
+					);
+				}
+				$batch_count = count( $batch );
+			} while ( 100 === $batch_count );
+		} catch ( \Throwable $error ) {
+			return self::error( 'reconciliation_read_failed', __( 'The local reconciliation evidence could not be read. Try again.', 'fair-finance' ), 500 );
+		}
+		$suggestions = self::rank( $suggestions );
+		$total       = count( $suggestions );
+		$per_page    = max( 1, (int) $per_page );
+		$page        = max( 1, (int) $page );
+		return array(
+			'items'     => array_slice( $suggestions, ( $page - 1 ) * $per_page, $per_page ),
+			'total'     => $total,
+			'page'      => $page,
+			'pages'     => max( 1, (int) ceil( $total / $per_page ) ),
+			'ambiguous' => $total > 1 && $suggestions[0]['score'] === $suggestions[1]['score'],
 		);
-		return $candidates;
+	}
+
+	/**
+	 * Saved bank associations with their current state, for the overview.
+	 *
+	 * @param string|null $date_from Earliest bank entry date.
+	 * @param string|null $date_to Latest bank entry date.
+	 * @return array Keyed by bank entry ID.
+	 */
+	public function associations( $date_from = null, $date_to = null ) {
+		$associations = array();
+		foreach ( $this->local->associations( $date_from, $date_to ) as $row ) {
+			$preview = $this->preview( (int) $row['settlement_id'] );
+			if ( is_wp_error( $preview ) || ! $preview['decision'] ) {
+				continue;
+			}
+			$settlement                             = $preview['settlement'];
+			$associations[ (int) $row['entry_id'] ] = array(
+				'id'            => (int) $settlement['id'],
+				'reference'     => $settlement['reference'],
+				'provider_id'   => $settlement['provider_id'],
+				'account'       => $preview['account'] ? array(
+					'id'    => (int) $preview['account']['id'],
+					'label' => $preview['account']['label'],
+				) : null,
+				'amount'        => $settlement['amount'] ?? $preview['explanation']['net'],
+				'currency'      => $settlement['currency'],
+				'state'         => $preview['decision']['state'],
+				'current_state' => $preview['decision']['current_state'],
+			);
+		}
+		return $associations;
 	}
 
 	/**

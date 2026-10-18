@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-16T20:53:16+00:00\n"
+"POT-Creation-Date: 2026-10-18T05:35:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-finance\n"
@@ -59,7 +59,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:64
 #: src/Admin/AdminPages.php:65
-#: src/Admin/reconciliation/ReconciliationApp.js:1156
+#: src/Admin/reconciliation/ReconciliationApp.js:1388
 #: src/Admin/settlements/SettlementsApp.js:222
 msgid "Reconciliation"
 msgstr ""
@@ -90,7 +90,7 @@ msgstr ""
 #: src/API/BudgetController.php:232
 #: src/API/BudgetController.php:274
 #: src/API/FinancialEntryController.php:1030
-#: src/API/SettlementController.php:243
+#: src/API/SettlementController.php:270
 msgid "Budget not found."
 msgstr ""
 
@@ -473,19 +473,19 @@ msgstr ""
 msgid "Parsed aggregate fee rows from the settlement CSV."
 msgstr ""
 
-#: src/API/SettlementController.php:201
+#: src/API/SettlementController.php:228
 msgid "Update and activate Fair Payments Connector to reconcile saved settlements."
 msgstr ""
 
-#: src/API/SettlementController.php:279
+#: src/API/SettlementController.php:317
 msgid "Reconciliation requires the Fair Payments Connector plugin."
 msgstr ""
 
-#: src/API/SettlementController.php:293
+#: src/API/SettlementController.php:331
 msgid "Missing settlement reference. This does not look like a Mollie settlement export."
 msgstr ""
 
-#: src/API/SettlementController.php:301
+#: src/API/SettlementController.php:339
 msgid "No payment rows found. This does not look like a Mollie settlement export."
 msgstr ""
 
@@ -518,6 +518,7 @@ msgid "There is not enough saved evidence to explain this payout."
 msgstr ""
 
 #: src/Services/SettlementReconciliation.php:255
+#: src/Services/SettlementReconciliation.php:738
 msgid "The local reconciliation evidence could not be read. Try again."
 msgstr ""
 
@@ -554,119 +555,132 @@ msgstr ""
 msgid "The bank entry’s confirmed currency or account does not match this settlement."
 msgstr ""
 
-#: src/Services/SettlementReconciliation.php:359
-msgid "This bank entry is already associated with another settlement."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:371
-msgid "A movement already belongs to another saved settlement reconciliation."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:377
-msgid "Saved sources disagree about a movement."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:381
-msgid "A required payment reference is missing or matches more than one local transaction."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:385
-msgid "A required local transaction is not a paid live payment."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:388
-msgid "A local payment has a different original currency."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:391
-msgid "A payment amount differs from its local transaction."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:405
-msgid "This bank entry has an incompatible existing whole-payment match."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:408
-msgid "A payment is already matched to another bank entry."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:412
-msgid "The bank entry has an incompatible legacy payment match."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:419
-msgid "A selected source revision is not published."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:424
-msgid "The API and CSV payout explanations disagree."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:428
-msgid "Conflicting or incomplete saved sources require resolution."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:432
-msgid "The saved movements and report do not explain the provider payout exactly."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:436
-msgid "The supported payout explanation does not equal the bank entry exactly."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:526
-msgid "Existing allocations are preserved. An automatic split requires positive, cent-exact movement amounts that sum to the bank entry without allocating aggregate fees."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:561
-msgid "The reviewed movement amounts sum exactly to this bank entry. Splitting is optional."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:587
-msgid "Payout reference appears in the bank description."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:591
-msgid "The amount matches exactly."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:595
-msgid "The administrator-confirmed payout account matches."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:599
-msgid "The administrator-confirmed currency matches."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:603
-msgid "The bank date is within seven days of the payout."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:633
-msgid "Another settlement operation is running. Try again."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:650
-msgid "The reviewed data changed. Run preview again before confirming."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:655
-msgid "Resolve the blocking issues and explicitly adopt compatible existing matches before confirming."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:659
-msgid "An automatic allocation is not supported by this evidence."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:668
-msgid "There is no bank association to release."
-msgstr ""
-
-#: src/Services/SettlementReconciliation.php:673
+#: src/Services/SettlementReconciliation.php:358
+#: src/Services/SettlementReconciliation.php:836
 msgid "Release the existing bank association before selecting a different entry."
 msgstr ""
 
-#: src/Services/SettlementReconciliation.php:787
+#: src/Services/SettlementReconciliation.php:362
+msgid "This bank entry is already associated with another settlement."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:374
+msgid "A movement already belongs to another saved settlement reconciliation."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:380
+msgid "Saved sources disagree about a movement."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:384
+msgid "A required payment reference is missing or matches more than one local transaction."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:388
+msgid "A required local transaction is not a paid live payment."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:391
+msgid "A local payment has a different original currency."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:394
+msgid "A payment amount differs from its local transaction."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:408
+msgid "This bank entry has an incompatible existing whole-payment match."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:411
+msgid "A payment is already matched to another bank entry."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:415
+msgid "The bank entry has an incompatible legacy payment match."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:422
+msgid "A selected source revision is not published."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:427
+msgid "The API and CSV payout explanations disagree."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:431
+msgid "Conflicting or incomplete saved sources require resolution."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:435
+msgid "The saved movements and report do not explain the provider payout exactly."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:439
+msgid "The supported payout explanation does not equal the bank entry exactly."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:529
+msgid "Existing allocations are preserved. An automatic split requires positive, cent-exact movement amounts that sum to the bank entry without allocating aggregate fees."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:564
+msgid "The reviewed movement amounts sum exactly to this bank entry. Splitting is optional."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:582
+msgid "Payout reference appears in the bank description."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:586
+msgid "The amount matches exactly."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:590
+msgid "The administrator-confirmed payout account matches."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:594
+msgid "The administrator-confirmed currency matches."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:598
+msgid "The bank date is within seven days of the payout."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:688
+msgid "This bank entry was not found."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:691
+msgid "Only bank income entries can be matched to a settlement."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:694
+msgid "This bank entry is already associated with a settlement."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:796
+msgid "Another settlement operation is running. Try again."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:813
+msgid "The reviewed data changed. Run preview again before confirming."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:818
+msgid "Resolve the blocking issues and explicitly adopt compatible existing matches before confirming."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:822
+msgid "An automatic allocation is not supported by this evidence."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:831
+msgid "There is no bank association to release."
+msgstr ""
+
+#: src/Services/SettlementReconciliation.php:950
 msgid "Reconciliation could not be saved. Nothing was changed."
 msgstr ""
 
@@ -748,7 +762,8 @@ msgid "Not reconciled"
 msgstr ""
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:28
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:451
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:502
+#: src/Admin/reconciliation/ReconciliationApp.js:65
 #: src/Admin/settlements/components/SettlementDetail.js:131
 #: src/Admin/settlements/components/SettlementList.js:149
 #: src/Admin/settlements/components/SettlementList.js:170
@@ -756,318 +771,404 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:43
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:49
 msgid "Show the evidence reviewed for this decision"
 msgstr ""
 
 #. translators: 1: bank entry ID, 2: exact amount and currency.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:51
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:57
 #, js-format
 msgid "Bank entry #%1$d: %2$s"
 msgstr ""
 
 #. translators: %s: exact amount and currency.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:59
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:65
 #, js-format
 msgid "Reviewed payout explanation: %s"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:102
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:108
 msgid "Saved settlements could not be loaded."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:115
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:121
 msgid "Saved settlement"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:120
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:126
 msgid "Use the existing CSV and manual workflow"
 msgstr ""
 
 #. translators: %d: saved settlement ID.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:134
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:140
+#: src/Admin/reconciliation/ReconciliationApp.js:59
 #, js-format
 msgid "Settlement #%d"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:154
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:160
 msgid "Previous settlements"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:161
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:167
 msgid "Next settlements"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:235
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:268
 msgid "The settlement could not be opened."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:285
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:318
 msgid "Preview failed. Try again."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:320
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:353
 msgid "The reconciliation decision was saved."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:325
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:358
 msgid "The decision could not be saved. Try again."
 msgstr ""
 
 #. translators: %s: payout reference or settlement ID.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:357
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:408
 #, js-format
 msgid "Reconcile settlement %s"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:362
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:413
 msgid "Review saved evidence and choose the bank entry. This review uses local records only."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:382
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:433
 msgid "Payout account"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:389
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:440
 msgid "Provider payout"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:399
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:450
 msgid "Supported payout explanation"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:410
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:461
 msgid "Difference from bank entry"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:417
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:468
 msgid "Import completeness"
 msgstr ""
 
 #. translators: 1: last provider refresh time in UTC, 2: last CSV import time in UTC, or Never.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:429
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:480
 #, js-format
 msgid "Last provider refresh (UTC): %1$s · Last CSV import (UTC): %2$s"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:434
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:436
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:485
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:487
 #: src/Admin/settlements/components/SettlementDetail.js:349
 #: src/Admin/settlements/components/SettlementDetail.js:357
 msgid "Never"
 msgstr ""
 
 #. translators: 1: source name, 2: revision ID, 3: saved time in UTC.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:444
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:495
 #, js-format
 msgid "Source: %1$s · Revision: %2$d · Saved (UTC): %3$s"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:458
+#. translators: 1: bank entry ID selected on the main screen, 2: bank entry ID already associated with this settlement.
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:511
+#, js-format
+msgid "Bank entry #%1$d was not applied: this settlement is already associated with bank entry #%2$d. Release that association before choosing a different entry."
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:522
 msgid "For a CSV-only settlement, full reconciliation relies on the supported movements matching the selected bank entry exactly."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:468
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:532
 msgid "Saved settlement details"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:471
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:535
 msgid "Bank candidates"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:475
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:539
 msgid "Several bank entries have equally strong evidence. Review their references and account context before selecting one."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:482
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:546
 msgid "Suggestions are ranked by reference, confirmed account and currency, exact amount, and date. Select the entry yourself; matching amounts alone do not establish currency or account."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:488
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:552
+msgid "Filter by description"
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:555
+msgid "Type to filter…"
+msgstr ""
+
+#. translators: 1: number of bank candidates matching the filter, 2: number of all bank candidates.
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:558
+#, js-format
+msgid "Showing %1$d of %2$d bank candidates."
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:571
+msgid "Show all candidates"
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:577
+msgid "No bank candidates match this filter. Change or clear the filter to see all candidates."
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:581
+msgid "There are no eligible bank income entries."
+msgstr ""
+
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:588
 msgid "Bank entry"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:493
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:593
 msgid "Release this bank association before choosing a different entry."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:502
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:602
 msgid "Select a bank entry"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:535
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:629
 msgid "This entry has conflicting confirmed account or currency context."
 msgstr ""
 
 #. translators: 1: administrator user ID, 2: confirmation time in UTC.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:547
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:641
 #, js-format
 msgid "Bank context confirmed by administrator #%1$d on %2$s (UTC)."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:557
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:651
 msgid "Bank entry currency"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:558
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:652
 msgid "Enter the currency confirmed from your bank records, for example EUR."
 msgstr ""
 
 #. translators: %s: provider account label.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:573
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:667
 #, js-format
 msgid "I confirm this bank entry is the payout from account %s."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:596
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:690
 msgid "Refresh local preview"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:600
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:694
 msgid "Refresh the preview after changing your selection, then review the result before confirming."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:616
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:710
 msgid "Movements and local transactions"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:622
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:638
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:716
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:732
 msgid "Movement"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:623
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:652
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:717
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:746
 msgid "Original amount"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:625
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:660
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:719
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:754
 msgid "Settlement amount"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:628
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:671
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:722
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:765
 msgid "Local transactions"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:693
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:787
 #: src/Admin/settlements/components/SettlementDetail.js:767
 msgid "Not imported yet"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:697
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:791
 msgid "Settlement-level evidence"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:703
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:797
 msgid "Conflicting source values"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:716
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:810
 msgid "Allocations and existing matches"
 msgstr ""
 
 #. translators: 1: financial entry ID, 2: local transaction ID.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:727
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:821
 #, js-format
 msgid "Existing match: bank entry #%1$d and transaction #%2$d."
 msgstr ""
 
 #. translators: 1: financial entry ID, 2: exact amount, 3: budget ID or an em dash.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:744
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:838
 #, js-format
 msgid "Entry #%1$d: %2$s · Budget #%3$s"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:758
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:852
 msgid "Adopt the compatible existing payment matches shown in this preview."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:770
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:864
 msgid "Create the supported movement allocations"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:791
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:885
 msgid "Budget for new allocations"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:799
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:893
 msgid "Use each transaction’s proposed budget"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:806
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:900
 msgid "No budget"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:827
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:921
 msgid "Save as Partial"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:837
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:931
 msgid "Confirm Fully reconciled"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:848
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:942
 msgid "Release bank association"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:854
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:948
 msgid "Confirmation history"
 msgstr ""
 
 #. translators: 1: decision state, 2: administrator user ID, 3: confirmation time in UTC.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:860
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:954
 #, js-format
 msgid "%1$s · Administrator #%2$d · %3$s (UTC)"
 msgstr ""
 
 #. translators: %s: payout reference or settlement ID.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:878
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:972
 #, js-format
 msgid "Save reconciliation — %s"
 msgstr ""
 
 #. translators: 1: decision state, 2: payout reference, 3: bank entry ID.
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:894
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:988
 #, js-format
 msgid "Save %1$s for settlement %2$s and bank entry #%3$d?"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:908
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:1002
 msgid "This saves local evidence only and does not move or refund money. Existing allocations remain unless you selected the supported split. You can release the bank association later; confirmation history is retained."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:920
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:1014
 msgid "Cancel and refresh the preview before confirming again."
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:935
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:1029
 #: src/Admin/settlements/components/CsvImportModal.js:416
 msgid "Cancel"
 msgstr ""
 
-#: src/Admin/reconciliation/components/SavedSettlementReview.js:943
+#: src/Admin/reconciliation/components/SavedSettlementReview.js:1037
 msgid "Save reconciliation decision"
 msgstr ""
 
 #. translators: 1: financial entry ID, 2: entry date
-#: src/Admin/reconciliation/ReconciliationApp.js:35
+#: src/Admin/reconciliation/ReconciliationApp.js:38
 #, js-format
 msgid "Entry #%1$d, %2$s"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:335
+#: src/Admin/reconciliation/ReconciliationApp.js:83
+msgid "Finding saved settlements…"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:97
+msgid "No saved settlement has this payout reference or exact amount."
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:108
+msgid "Several saved settlements have equally strong evidence. Review their references and account context before choosing one."
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:127
+msgid "Date unknown"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:142
+msgid "This bank entry has conflicting confirmed account or currency context."
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:153
+#: src/Admin/reconciliation/ReconciliationApp.js:1229
+msgid "Review settlement"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:166
+msgid "Previous suggestions"
+msgstr ""
+
+#. translators: 1: current page, 2: number of pages.
+#: src/Admin/reconciliation/ReconciliationApp.js:171
+#, js-format
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:182
+msgid "Next suggestions"
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:345
+msgid "Saved settlement suggestions could not be loaded."
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:516
 msgid "Saved settlements"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:371
+#: src/Admin/reconciliation/ReconciliationApp.js:549
 #: src/Admin/settlements/components/MollieImportPanel.js:215
 msgid "Open Mollie connection settings"
 msgstr ""
 
-#: src/Admin/reconciliation/ReconciliationApp.js:379
+#: src/Admin/reconciliation/ReconciliationApp.js:557
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
+msgstr ""
+
+#: src/Admin/reconciliation/ReconciliationApp.js:764
+msgid "Suggested settlements"
+msgstr ""
+
+#. translators: 1: payout reference or settlement ID, 2: payout amount and currency, 3: reconciliation state.
+#: src/Admin/reconciliation/ReconciliationApp.js:1201
+#, js-format
+msgid "Settlement %1$s · %2$s · %3$s"
 msgstr ""
 
 #: src/Admin/settlements/components/CsvImportModal.js:37

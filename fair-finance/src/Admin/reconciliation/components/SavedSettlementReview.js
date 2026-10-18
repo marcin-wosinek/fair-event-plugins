@@ -16,7 +16,7 @@ import {
 	TextControl,
 } from '@wordpress/components';
 
-const stateLabel = ( state ) =>
+export const stateLabel = ( state ) =>
 	( {
 		partial: __( 'Partial', 'fair-finance' ),
 		full: __( 'Fully reconciled', 'fair-finance' ),
@@ -27,6 +27,12 @@ const money = ( amount, currency ) =>
 	amount === null || amount === undefined
 		? __( 'Unknown', 'fair-finance' )
 		: `${ amount } ${ currency || '' }`;
+
+// Matches the main screen's bank entry filter.
+export const DEFAULT_DESCRIPTION_FILTER = 'trf. stichting mollie payments';
+const matchesDescription = ( entry, filter ) =>
+	! filter ||
+	( entry.description || '' ).toLowerCase().includes( filter.toLowerCase() );
 
 function ReviewedEvidence( { entry } ) {
 	let reviewed;
@@ -171,9 +177,16 @@ export function SavedSettlementSelector( { value, onChange } ) {
 	);
 }
 
-export default function SavedSettlementReview( { settlementId } ) {
+export default function SavedSettlementReview( {
+	settlementId,
+	proposedEntryId = '',
+} ) {
 	const [ data, setData ] = useState( null );
 	const [ candidates, setCandidates ] = useState( [] );
+	const [ descriptionFilter, setDescriptionFilter ] = useState(
+		DEFAULT_DESCRIPTION_FILTER
+	);
+	const [ proposalIgnored, setProposalIgnored ] = useState( false );
 	const [ selection, setSelection ] = useState( {
 		entry_id: '',
 		currency: '',
@@ -203,11 +216,31 @@ export default function SavedSettlementReview( { settlementId } ) {
 		setPhase( 'loading' );
 		setReviewed( false );
 		setError( null );
-		Promise.all( [
+		setProposalIgnored( false );
+		const open = ( proposal ) =>
 			apiFetch( {
 				path: `/fair-finance/v1/reconciliation/settlements/${ settlementId }/preview`,
 				method: 'POST',
-			} ),
+				...( proposal ? { data: proposal } : {} ),
+			} );
+		// A bank entry chosen on the main screen is only a proposal: an
+		// existing association stays until the administrator releases it.
+		const initial = proposedEntryId
+			? open( { entry_id: Number( proposedEntryId ) } ).then(
+					( result ) => {
+						if (
+							! result.decision ||
+							String( result.decision.entry_id ) ===
+								String( proposedEntryId )
+						)
+							return result;
+						if ( active ) setProposalIgnored( true );
+						return open();
+					}
+				)
+			: open();
+		Promise.all( [
+			initial,
 			apiFetch( {
 				path: `/fair-finance/v1/reconciliation/settlements/${ settlementId }/candidates`,
 			} ),
@@ -243,7 +276,7 @@ export default function SavedSettlementReview( { settlementId } ) {
 		return () => {
 			active = false;
 		};
-	}, [ settlementId ] );
+	}, [ settlementId, proposedEntryId ] );
 	const change = ( field, value ) => {
 		setSelection( ( current ) => ( { ...current, [ field ]: value } ) );
 		setReviewed( false );
@@ -349,6 +382,24 @@ export default function SavedSettlementReview( { settlementId } ) {
 		data.settlement.provider_id ||
 		settlementId;
 	const allIssues = [ ...data.bank_issues, ...data.issues ];
+	const filteredCandidates = candidates.filter( ( entry ) =>
+		matchesDescription( entry, descriptionFilter )
+	);
+	// The selection never depends on the filter: a selected entry outside it
+	// stays listed so the reviewed proposal remains visible and valid.
+	const hiddenSelection = [
+		...candidates.filter(
+			( entry ) =>
+				String( entry.id ) === selection.entry_id &&
+				! filteredCandidates.includes( entry )
+		),
+		...( data.bank &&
+		! candidates.some(
+			( entry ) => String( entry.id ) === String( data.bank.id )
+		)
+			? [ data.bank ]
+			: [] ),
+	];
 	return (
 		<div className="fair-finance-saved-review">
 			<h2>
@@ -453,6 +504,19 @@ export default function SavedSettlementReview( { settlementId } ) {
 					</p>
 				)
 			) }
+			{ proposalIgnored && (
+				<Notice status="warning" isDismissible={ false }>
+					{ sprintf(
+						/* translators: 1: bank entry ID selected on the main screen, 2: bank entry ID already associated with this settlement. */
+						__(
+							'Bank entry #%1$d was not applied: this settlement is already associated with bank entry #%2$d. Release that association before choosing a different entry.',
+							'fair-finance'
+						),
+						Number( proposedEntryId ),
+						Number( data.decision?.entry_id )
+					) }
+				</Notice>
+			) }
 			{ ! data.revisions.api && (
 				<p>
 					{ __(
@@ -484,6 +548,42 @@ export default function SavedSettlementReview( { settlementId } ) {
 					'fair-finance'
 				) }
 			</p>
+			<TextControl
+				label={ __( 'Filter by description', 'fair-finance' ) }
+				value={ descriptionFilter }
+				onChange={ setDescriptionFilter }
+				placeholder={ __( 'Type to filter…', 'fair-finance' ) }
+				help={ sprintf(
+					/* translators: 1: number of bank candidates matching the filter, 2: number of all bank candidates. */
+					__(
+						'Showing %1$d of %2$d bank candidates.',
+						'fair-finance'
+					),
+					filteredCandidates.length,
+					candidates.length
+				) }
+			/>
+			{ descriptionFilter && (
+				<Button
+					variant="tertiary"
+					onClick={ () => setDescriptionFilter( '' ) }
+				>
+					{ __( 'Show all candidates', 'fair-finance' ) }
+				</Button>
+			) }
+			{ filteredCandidates.length === 0 && (
+				<p>
+					{ candidates.length
+						? __(
+								'No bank candidates match this filter. Change or clear the filter to see all candidates.',
+								'fair-finance'
+							)
+						: __(
+								'There are no eligible bank income entries.',
+								'fair-finance'
+							) }
+				</p>
+			) }
 			<SelectControl
 				label={ __( 'Bank entry', 'fair-finance' ) }
 				value={ selection.entry_id }
@@ -502,14 +602,8 @@ export default function SavedSettlementReview( { settlementId } ) {
 						label: __( 'Select a bank entry', 'fair-finance' ),
 						value: '',
 					},
-					...( data.bank &&
-					! candidates.some(
-						( entry ) =>
-							String( entry.id ) === String( data.bank.id )
-					)
-						? [ data.bank ]
-						: [] ),
-					...candidates,
+					...hiddenSelection,
+					...filteredCandidates,
 				].map( ( entry ) =>
 					entry.value !== undefined
 						? entry
