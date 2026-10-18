@@ -1289,3 +1289,15 @@ msgstr ""
 #: src/Admin/settings/MetaConversions.js:574
 msgid "Manage in Connectors"
 msgstr ""
+
+#: src/Admin/components/CopyUrlButton.js:21
+msgid "Copy URL"
+msgstr "Copier l'URL"
+
+#: src/Admin/components/CopyUrlButton.js:22
+msgid "Copy URL to clipboard"
+msgstr "Copier l'URL dans le presse-papiers"
+
+#: src/Admin/components/CopyUrlButton.js:23
+msgid "Copied!"
+msgstr "Copié !"
