@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
-import { parseArguments, runApiTests } from '../api-test-runner.mjs';
+import {
+	parseArguments,
+	resolveTestsPort,
+	runApiTests,
+} from '../api-test-runner.mjs';
 import { playwrightArguments } from '../workspace-e2e-runner.mjs';
 
 const workspaceConfig = {
@@ -299,4 +306,75 @@ test('cleanup failure wins only after a successful E2E run', async () => {
 		'npx wp-env stop': { code: 31 },
 	});
 	assert.equal(await run(failure, makeOptions({ suite: 'e2e' })), 29);
+});
+
+async function withConfig(files, callback) {
+	const directory = await mkdtemp(join(tmpdir(), 'wp-env-port-'));
+	try {
+		for (const [name, config] of Object.entries(files)) {
+			await writeFile(join(directory, name), JSON.stringify(config));
+		}
+		return await callback(directory);
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+}
+
+test('tests port defaults to 8889 without configuration', async () => {
+	await withConfig({ '.wp-env.json': { plugins: [] } }, async (directory) => {
+		assert.equal(await resolveTestsPort(directory, {}), 8889);
+	});
+});
+
+test('tests port follows the override file over .wp-env.json', async () => {
+	await withConfig(
+		{
+			'.wp-env.json': { testsPort: 8899 },
+			'.wp-env.override.json': { port: 8890, testsPort: 8891 },
+		},
+		async (directory) => {
+			assert.equal(await resolveTestsPort(directory, {}), 8891);
+		}
+	);
+	await withConfig(
+		{ '.wp-env.json': { testsPort: 8899 } },
+		async (directory) => {
+			assert.equal(await resolveTestsPort(directory, {}), 8899);
+		}
+	);
+});
+
+test('tests port accepts the env.tests.port form', async () => {
+	await withConfig(
+		{
+			'.wp-env.json': { testsPort: 8899 },
+			'.wp-env.override.json': { env: { tests: { port: 8893 } } },
+		},
+		async (directory) => {
+			assert.equal(await resolveTestsPort(directory, {}), 8893);
+		}
+	);
+	await withConfig(
+		{
+			'.wp-env.json': { env: { tests: { port: 8897 } } },
+			'.wp-env.override.json': { testsPort: 8891 },
+		},
+		async (directory) => {
+			assert.equal(await resolveTestsPort(directory, {}), 8897);
+		}
+	);
+});
+
+test('WP_ENV_TESTS_PORT wins over both files', async () => {
+	await withConfig(
+		{ '.wp-env.override.json': { testsPort: 8891 } },
+		async (directory) => {
+			assert.equal(
+				await resolveTestsPort(directory, {
+					WP_ENV_TESTS_PORT: '8895',
+				}),
+				8895
+			);
+		}
+	);
 });

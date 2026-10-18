@@ -115,11 +115,18 @@ instance after success, failure, or interruption.
 | Regular development    | `docker compose up` | 8080     |
 | Isolated API/E2E tests | `@wordpress/env`    | **8889** |
 
-The runner supplies `CI=1`, `WP_BASE_URL=http://localhost:8889`,
+The runner supplies `CI=1`, `WP_BASE_URL=http://localhost:<tests port>`,
 `WP_ADMIN_USER=admin`, `WP_ADMIN_PASS=password`, and
 `WP_ADMIN_PASSWORD=password`. Both password names remain available while
 existing specs use both conventions. The regular development stack is not
 started or required.
+
+The tests port is resolved the way wp-env resolves it: `WP_ENV_TESTS_PORT`
+first, then `.wp-env.override.json` merged over `.wp-env.json`
+(`env.tests.port` before `testsPort`), and 8889 by default. A second worktree
+that moves its instance in `.wp-env.override.json` (for example to
+`"port": 8890, "testsPort": 8891`) therefore tests its own site with the same
+commands, `--reuse` included.
 
 An owned run refuses to use an already-running test instance so it can never
 stop services started elsewhere. For a faster feedback loop, explicitly start
@@ -212,10 +219,10 @@ broken environment but are not: counts off by one (`Expected: 2, Received:
     (`wp-env logs` can miss these). Then rerun the failing spec on its own
     with `--retries=0`. If it passes alone, the failure came from shared state
     or an overlapping run, not from the code.
--   **Worktrees with their own ports:** the runner hard-codes
-    `WP_BASE_URL=http://localhost:8889`. A worktree whose
-    `.wp-env.override.json` moves the tests site (e.g. to 8891) must run
-    Playwright directly, or it will test the other worktree's instance:
+-   **Worktrees with their own ports:** the `:local` runner follows
+    `.wp-env.override.json`. When you run Playwright directly instead, set
+    `WP_BASE_URL` to this worktree's tests port, or the specs fall back to
+    another site:
     `CI=1 WP_BASE_URL=http://localhost:8891 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npx playwright test …`
 
 ### REST API tests

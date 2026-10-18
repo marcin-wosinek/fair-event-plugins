@@ -64,6 +64,34 @@ export async function loadWorkspaces(rootDirectory) {
 	return { workspaces: rootPackage.workspaces, suiteWorkspaces };
 }
 
+async function readJsonIfPresent(path) {
+	try {
+		return JSON.parse(await readFile(path, 'utf8'));
+	} catch (error) {
+		if (error.code === 'ENOENT') {
+			return undefined;
+		}
+		throw error;
+	}
+}
+
+// Resolve the tests port the way wp-env does, so a worktree that moves its
+// tests site in .wp-env.override.json is tested on its own instance. The
+// WP_ENV_TESTS_PORT variable wins. Otherwise the override file is merged over
+// .wp-env.json, and a merged env.tests.port takes precedence over testsPort.
+export async function resolveTestsPort(rootDirectory, env = process.env) {
+	if (env.WP_ENV_TESTS_PORT) {
+		return Number(env.WP_ENV_TESTS_PORT);
+	}
+	const base = await readJsonIfPresent(`${rootDirectory}/.wp-env.json`);
+	const override = await readJsonIfPresent(
+		`${rootDirectory}/.wp-env.override.json`
+	);
+	const envTestsPort = override?.env?.tests?.port ?? base?.env?.tests?.port;
+	const testsPort = override?.testsPort ?? base?.testsPort;
+	return Number(envTestsPort ?? testsPort ?? 8889);
+}
+
 export async function validateChromium() {
 	await access(chromium.executablePath());
 }
@@ -280,10 +308,11 @@ async function main() {
 		''
 	);
 	const workspaceConfig = await loadWorkspaces(rootDirectory);
+	const testsPort = await resolveTestsPort(rootDirectory);
 	const env = {
 		...process.env,
 		CI: '1',
-		WP_BASE_URL: 'http://localhost:8889',
+		WP_BASE_URL: `http://localhost:${testsPort}`,
 		WP_ADMIN_USER: 'admin',
 		WP_ADMIN_PASS: 'password',
 		WP_ADMIN_PASSWORD: 'password',
