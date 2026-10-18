@@ -558,11 +558,12 @@ class SettlementRepository {
 	 *
 	 * @param int     $revision_id Revision ID.
 	 * @param array[] $movements   Movements with identities.
-	 * @return void
+	 * @return bool Whether every movement was saved.
 	 */
 	public function save_items( $revision_id, array $movements ) {
 		global $wpdb;
 
+		$saved = true;
 		foreach ( $movements as $movement ) {
 			$row = array(
 				'revision_id'  => (int) $revision_id,
@@ -575,8 +576,13 @@ class SettlementRepository {
 			}
 			$row['report'] = empty( $movement['report'] ) ? null : wp_json_encode( $movement['report'] );
 
-			$wpdb->replace( Schema::get_settlement_items_table_name(), $row );
+			if ( false === $wpdb->replace( Schema::get_settlement_items_table_name(), $row ) ) {
+				$saved = false;
+				break;
+			}
 		}
+
+		return $saved;
 	}
 
 	/**

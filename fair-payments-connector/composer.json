@@ -18,8 +18,8 @@
 		}
 	],
 	"require": {
-		"php": ">=7.4",
-		"mollie/mollie-api-php": "^3.0",
+		"php": "^8.2",
+		"mollie/mollie-api-php": "^4.0",
 		"fair-events/shared": "^0.2"
 	},
 	"require-dev": {

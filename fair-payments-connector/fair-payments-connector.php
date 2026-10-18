@@ -5,6 +5,7 @@
  * Description: Mollie payments and bookkeeping for WordPress: payment block, itemized transactions, budgets, and bank reconciliation.
  * Version: 2.5.0
  * Requires at least: 6.7
+ * Requires PHP: 8.2
  * Author: Marcin Wosinek
  * Author URI: https://github.com/marcin-wosinek
  * License: GPL-2.0-or-later

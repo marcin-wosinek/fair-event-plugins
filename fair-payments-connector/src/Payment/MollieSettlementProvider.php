@@ -9,6 +9,8 @@ namespace FairPaymentsConnector\Payment;
 
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Exceptions\JsonParseException;
+use Mollie\Api\Exceptions\MollieException;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementCapturesRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementChargebacksRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementPaymentsRequest;
@@ -150,8 +152,8 @@ class MollieSettlementProvider {
 		}
 
 		// The requests are built directly: the SDK's settlementPayments
-		// helper (v3.13) drops `from` and `limit`, which would return the
-		// first page forever.
+		// helper (v3.13) dropped `from` and `limit`, which would return the
+		// first page forever. The tests pin that both reach Mollie.
 		$request = new $requests[ $part ]( $settlement_id, $from ? $from : null, $limit );
 		$page    = $this->request(
 			function () use ( $request ) {
@@ -191,6 +193,14 @@ class MollieSettlementProvider {
 				? SettlementProviderException::ACCESS_DENIED
 				: SettlementProviderException::REQUEST_FAILED;
 			throw new SettlementProviderException( $category ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		} catch ( JsonParseException $e ) {
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		} catch ( MollieException $e ) {
+			// Server errors and transport failures: worth trying again.
+			throw new SettlementProviderException( SettlementProviderException::REQUEST_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		} catch ( \Error $e ) {
+			// The SDK could not read the response into its typed resources.
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
 		} catch ( \Throwable $e ) {
 			throw new SettlementProviderException( SettlementProviderException::REQUEST_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
 		}
@@ -199,19 +209,37 @@ class MollieSettlementProvider {
 	/**
 	 * Cursor of the page after this one, as Mollie states it.
 	 *
+	 * Only an absent or null `next` link ends the listing. A link that is
+	 * present but unreadable is refused: reading it as the end would mark
+	 * an incomplete import complete.
+	 *
 	 * @param object $page SDK collection.
 	 * @return string|null
+	 * @throws SettlementProviderException When the links are malformed.
 	 */
 	private static function next_cursor( $page ) {
-		$href = $page->_links->next->href ?? null;
-		if ( ! is_string( $href ) || '' === $href ) {
+		$links = $page->_links ?? null;
+		if ( ! is_object( $links ) ) {
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		}
+
+		$next = $links->next ?? null;
+		if ( null === $next ) {
 			return null;
 		}
 
-		parse_str( (string) wp_parse_url( $href, PHP_URL_QUERY ), $query );
-		$from = $query['from'] ?? null;
+		$href = is_object( $next ) ? ( $next->href ?? null ) : null;
+		$from = null;
+		if ( is_string( $href ) && '' !== $href ) {
+			parse_str( (string) wp_parse_url( $href, PHP_URL_QUERY ), $query );
+			$from = $query['from'] ?? null;
+		}
 
-		return is_string( $from ) && 1 === preg_match( '/^[A-Za-z0-9_]{1,64}$/', $from ) ? $from : null;
+		if ( ! is_string( $from ) || 1 !== preg_match( '/^[A-Za-z0-9_]{1,64}$/', $from ) ) {
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		}
+
+		return $from;
 	}
 
 	/**
@@ -299,27 +327,28 @@ class MollieSettlementProvider {
 	 * supplied them. Both describe money that the detail movements may also
 	 * describe, so they are stored apart and never added to them.
 	 *
+	 * A settlement without a report has no rows. A report whose structure
+	 * cannot be read is refused rather than read as an empty one.
+	 *
 	 * @param mixed       $periods  Mollie `periods` object.
 	 * @param string|null $currency Settlement currency.
 	 * @return array[]
+	 * @throws SettlementProviderException When the report is malformed.
 	 */
 	private static function period_aggregates( $periods, $currency ) {
 		$aggregates = array();
-		if ( ! is_object( $periods ) && ! is_array( $periods ) ) {
-			return $aggregates;
-		}
 
-		foreach ( (array) $periods as $year => $months ) {
-			foreach ( (array) $months as $month => $period ) {
-				$period = (array) $period;
+		foreach ( self::report_part( $periods ) as $year => $months ) {
+			foreach ( self::report_part( $months ) as $month => $period ) {
+				$period = self::report_part( $period );
 				$groups = array(
 					Report::GROUP_REVENUE => Movements::TYPE_SUMMARY,
 					Report::GROUP_COSTS   => Movements::TYPE_FEE,
 				);
 
 				foreach ( $groups as $group => $type ) {
-					foreach ( (array) ( $period[ $group ] ?? array() ) as $line ) {
-						$line = (array) $line;
+					foreach ( self::report_part( $period[ $group ] ?? null ) as $line ) {
+						$line = self::report_part( $line );
 						if ( isset( $line['rate'] ) ) {
 							$line['rate'] = (array) $line['rate'];
 						}
@@ -347,6 +376,24 @@ class MollieSettlementProvider {
 		}
 
 		return Movements::assign_identities( $aggregates );
+	}
+
+	/**
+	 * One level of the report as an array.
+	 *
+	 * @param mixed $part Report object, list, or null when Mollie sent none.
+	 * @return array
+	 * @throws SettlementProviderException When the part is not a structure.
+	 */
+	private static function report_part( $part ) {
+		if ( null === $part ) {
+			return array();
+		}
+		if ( ! is_object( $part ) && ! is_array( $part ) ) {
+			throw new SettlementProviderException( SettlementProviderException::INVALID_RESPONSE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- safe category constant.
+		}
+
+		return (array) $part;
 	}
 
 	/**
@@ -397,12 +444,13 @@ class MollieSettlementProvider {
 	/**
 	 * Read an optional short text value.
 	 *
-	 * @param mixed $value  Raw value.
+	 * @param mixed $value  Raw value, or an SDK enum case.
 	 * @param int   $length Maximum length.
 	 * @return string|null
 	 */
 	private static function text( $value, $length ) {
-		if ( ! is_string( $value ) || '' === $value ) {
+		$value = MollieValue::text( $value );
+		if ( null === $value ) {
 			return null;
 		}
 

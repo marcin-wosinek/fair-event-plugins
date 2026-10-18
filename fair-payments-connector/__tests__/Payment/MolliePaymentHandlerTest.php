@@ -31,6 +31,8 @@ use Mollie\Api\Resources\MethodCollection;
 use Mollie\Api\Resources\Profile;
 use Mollie\Api\Resources\PaymentCollection;
 use Mollie\Api\Http\Requests\GetPaginatedPaymentsRequest;
+use Mollie\Api\Http\Requests\GetPaginatedBalanceTransactionRequest;
+use Mollie\Api\Resources\BalanceTransactionCollection;
 
 /**
  * Unit tests for MolliePaymentHandler's test/live mode handling.
@@ -113,6 +115,38 @@ class MolliePaymentHandlerTest extends TestCase {
 	}
 
 	/**
+	 * A Mollie payment response with the fields Mollie always sends.
+	 *
+	 * @param string $id        Payment ID.
+	 * @param string $status    Payment status.
+	 * @param array  $overrides Fields to change or add.
+	 * @return MockResponse
+	 */
+	private function payment_response( string $id, string $status, array $overrides = array() ): MockResponse {
+		return new MockResponse(
+			array_merge(
+				array(
+					'resource'    => 'payment',
+					'id'          => $id,
+					'mode'        => 'test',
+					'status'      => $status,
+					'method'      => 'ideal',
+					'description' => 'Payment',
+					'createdAt'   => '2026-09-14T10:30:00+00:00',
+					'amount'      => array(
+						'value'    => '10.00',
+						'currency' => 'EUR',
+					),
+					'_links'      => array(
+						'checkout' => array( 'href' => 'https://www.mollie.com/checkout/' . $id ),
+					),
+				),
+				$overrides
+			)
+		);
+	}
+
+	/**
 	 * `fair_payment_mode = test` must set `testmode = true` on the create request.
 	 */
 	public function test_create_payment_in_test_mode_sets_testmode_true() {
@@ -120,13 +154,7 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_test_1',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class => $this->payment_response( 'tr_test_1', 'open' ),
 			)
 		);
 
@@ -145,13 +173,7 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_live_1',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class => $this->payment_response( 'tr_live_1', 'open' ),
 			)
 		);
 
@@ -174,13 +196,7 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_test_2',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class => $this->payment_response( 'tr_test_2', 'open' ),
 			)
 		);
 
@@ -205,13 +221,7 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_oauth_1',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class => $this->payment_response( 'tr_oauth_1', 'open' ),
 			)
 		);
 
@@ -242,13 +252,7 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_uncapped_fee',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class => $this->payment_response( 'tr_uncapped_fee', 'open' ),
 			)
 		);
 
@@ -278,24 +282,20 @@ class MolliePaymentHandlerTest extends TestCase {
 
 		$mollie = MollieApiClient::fake(
 			array(
-				CreatePaymentRequest::class     => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_allowlist_1',
-							'status' => 'open',
-						)
-					)->create(),
+				CreatePaymentRequest::class     => $this->payment_response( 'tr_allowlist_1', 'open' ),
 				GetEnabledMethodsRequest::class => MockResponse::list( MethodCollection::class )
 					->add(
 						array(
 							'id'       => 'ideal',
 							'resource' => 'method',
+							'status'   => 'activated',
 						)
 					)
 					->add(
 						array(
 							'id'       => 'banktransfer',
 							'resource' => 'method',
+							'status'   => 'activated',
 						)
 					)
 					->create(),
@@ -324,13 +324,7 @@ class MolliePaymentHandlerTest extends TestCase {
 	public function test_get_payment_passes_testmode_in_query() {
 		$mollie = MollieApiClient::fake(
 			array(
-				GetPaymentRequest::class => MockResponse::resource( Payment::class )
-					->with(
-						array(
-							'id'     => 'tr_get_1',
-							'status' => 'paid',
-						)
-					)->create(),
+				GetPaymentRequest::class => $this->payment_response( 'tr_get_1', 'paid' ),
 			)
 		);
 
@@ -342,6 +336,181 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->assertTrue( $request->getTestmode() );
 		// The SDK stringifies query booleans ('true'/'false') for URL encoding.
 		$this->assertSame( 'true', $request->query()->get( 'testmode' ) );
+	}
+
+	/**
+	 * Callers compare and store status and method, and hand the payment to the
+	 * `fair_payment_*` hooks: both must be Mollie's plain strings, also for a
+	 * value the SDK has no enum case for.
+	 */
+	public function test_get_payment_returns_plain_status_and_method() {
+		$mollie  = MollieApiClient::fake(
+			array(
+				GetPaymentRequest::class => $this->payment_response( 'tr_known', 'paid' ),
+			)
+		);
+		$payment = ( new MolliePaymentHandler( $mollie ) )->get_payment( 'tr_known' );
+
+		$this->assertSame( 'paid', $payment->status );
+		$this->assertSame( 'ideal', $payment->method );
+		$this->assertSame( 'paid', sprintf( '%s', $payment->status ) );
+		// The SDK's own helpers still work on the plain values.
+		$this->assertFalse( $payment->isFailed() );
+
+		$mollie  = MollieApiClient::fake(
+			array(
+				GetPaymentRequest::class => $this->payment_response( 'tr_unknown', 'newstatus', array( 'method' => 'newmethod' ) ),
+			)
+		);
+		$payment = ( new MolliePaymentHandler( $mollie ) )->get_payment( 'tr_unknown' );
+
+		$this->assertSame( 'newstatus', $payment->status );
+		$this->assertSame( 'newmethod', $payment->method );
+	}
+
+	/**
+	 * A payment missing a field Mollie always sends is refused with a
+	 * readable error instead of failing later on an uninitialized property.
+	 */
+	public function test_get_payment_refuses_incomplete_payment() {
+		$mollie = MollieApiClient::fake(
+			array(
+				GetPaymentRequest::class => new MockResponse(
+					array(
+						'resource' => 'payment',
+						'id'       => 'tr_partial',
+						'status'   => 'paid',
+					)
+				),
+			)
+		);
+
+		$this->expectException( \Exception::class );
+		$this->expectExceptionMessage( 'Failed to retrieve payment: Mollie returned a payment that could not be read.' );
+		( new MolliePaymentHandler( $mollie ) )->get_payment( 'tr_partial' );
+	}
+
+	/** A provider error on read is a plain \Exception the callers already handle. */
+	public function test_get_payment_wraps_provider_errors() {
+		$mollie = MollieApiClient::fake(
+			array( GetPaymentRequest::class => MockResponse::error( 503, 'Service Unavailable', 'Try later' ) )
+		);
+
+		$this->expectException( \Exception::class );
+		$this->expectExceptionMessageMatches( '/^Failed to retrieve payment: /' );
+		( new MolliePaymentHandler( $mollie ) )->get_payment( 'tr_any' );
+	}
+
+	/** Creating a payment returns plain values and Mollie's checkout URL. */
+	public function test_create_payment_returns_plain_values() {
+		$mollie = MollieApiClient::fake(
+			array( CreatePaymentRequest::class => $this->payment_response( 'tr_created', 'open' ) )
+		);
+
+		$result = ( new MolliePaymentHandler( $mollie ) )->create_payment( array( 'amount' => '10.00' ) );
+
+		$this->assertSame(
+			array(
+				'mollie_payment_id' => 'tr_created',
+				'checkout_url'      => 'https://www.mollie.com/checkout/tr_created',
+				'status'            => 'open',
+			),
+			$result
+		);
+	}
+
+	/**
+	 * A server error is not an ApiException in SDK v4; it must still become
+	 * the sanitized PaymentGatewayException and be logged.
+	 */
+	public function test_create_payment_server_error_is_a_gateway_exception() {
+		$mollie = MollieApiClient::fake(
+			array( CreatePaymentRequest::class => MockResponse::error( 503, 'Service Unavailable', 'Try later' ) )
+		);
+
+		try {
+			( new MolliePaymentHandler( $mollie ) )->create_payment(
+				array(
+					'amount'   => '10.00',
+					'metadata' => array( 'transaction_id' => 9 ),
+				)
+			);
+			$this->fail( 'Expected PaymentGatewayException was not thrown.' );
+		} catch ( PaymentGatewayException $e ) {
+			$this->assertInstanceOf( PaymentGatewayError::class, $e->get_error() );
+		}
+
+		$events = array_column( $GLOBALS['wpdb']->inserted_rows, 'event' );
+		$this->assertContains( 'mollie_call_failed', $events );
+	}
+
+	/** A created payment Mollie describes incompletely is a gateway failure. */
+	public function test_create_payment_refuses_incomplete_response() {
+		$mollie = MollieApiClient::fake(
+			array(
+				CreatePaymentRequest::class => new MockResponse(
+					array(
+						'resource' => 'payment',
+						'id'       => 'tr_partial',
+					)
+				),
+			)
+		);
+
+		$this->expectException( PaymentGatewayException::class );
+		( new MolliePaymentHandler( $mollie ) )->create_payment( array( 'amount' => '10.00' ) );
+	}
+
+	/** Listed payments are normalized too, so the import compares plain statuses. */
+	public function test_list_payments_returns_plain_statuses_for_import() {
+		$mollie  = MollieApiClient::fake(
+			array(
+				GetPaginatedPaymentsRequest::class => MockResponse::list( PaymentCollection::class )
+					->add( $this->payment_response( 'tr_listed', 'paid' )->json() )
+					->create(),
+			)
+		);
+		$handler = new MolliePaymentHandler( $mollie );
+		$page    = $handler->list_payments( null, 25, true );
+		$listed  = iterator_to_array( $page )[0];
+		$mapped  = $handler->map_payment_for_import( $listed, false );
+
+		$this->assertSame( 'paid', $listed->status );
+		$this->assertSame( 'paid', $mapped['status'] );
+		$this->assertSame( 10.0, $mapped['amount'] );
+		$this->assertTrue( $mapped['testmode'] );
+	}
+
+	/**
+	 * The balance lookup passes test mode as a real bool: SDK v4 rejects the
+	 * 'true' string the query once carried.
+	 */
+	public function test_balance_transactions_iterate_in_test_mode() {
+		$mollie = MollieApiClient::fake(
+			array(
+				GetPaginatedBalanceTransactionRequest::class => MockResponse::list( BalanceTransactionCollection::class )
+					->add(
+						array(
+							'resource'   => 'balance_transaction',
+							'id'         => 'baltr_unit0001',
+							'type'       => 'payment',
+							'createdAt'  => '2026-09-14T10:30:00+00:00',
+							'context'    => array( 'paymentId' => 'tr_fee' ),
+							'deductions' => array(
+								'value'    => '-0.79',
+								'currency' => 'EUR',
+							),
+						)
+					)
+					->create(),
+			)
+		);
+
+		$transactions = iterator_to_array( ( new MolliePaymentHandler( $mollie ) )->iterate_primary_balance_transactions( true ), false );
+
+		$this->assertTrue( $this->sent_request( $mollie, GetPaginatedBalanceTransactionRequest::class )->getTestmode() );
+		$this->assertSame( 'tr_fee', $transactions[0]->context->paymentId );
+		$this->assertSame( '-0.79', $transactions[0]->deductions->value );
 	}
 
 	/**
@@ -368,6 +537,7 @@ class MolliePaymentHandlerTest extends TestCase {
 							'id'          => 'ideal',
 							'description' => 'iDEAL',
 							'resource'    => 'method',
+							'status'      => 'activated',
 						)
 					)
 					->create(),

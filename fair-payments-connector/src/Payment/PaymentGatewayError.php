@@ -8,6 +8,8 @@
 namespace FairPaymentsConnector\Payment;
 
 use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Exceptions\MollieException;
+use Mollie\Api\Exceptions\RequestException;
 use WP_Error;
 
 defined( 'WPINC' ) || die;
@@ -32,7 +34,7 @@ class PaymentGatewayError {
 	const DEFAULT_DASHBOARD_URL = 'https://my.mollie.com/dashboard';
 
 	/**
-	 * Gateway HTTP status code, or 0 when not derived from an ApiException.
+	 * Gateway HTTP status code, or 0 when the gateway gave no response.
 	 *
 	 * @var int
 	 */
@@ -66,13 +68,23 @@ class PaymentGatewayError {
 	}
 
 	/**
-	 * Build from a Mollie ApiException, capturing only stable identifiers.
+	 * Build from a Mollie SDK exception, capturing only stable identifiers.
 	 *
-	 * @param ApiException $e The caught gateway exception.
+	 * Only an ApiException carries Mollie's own error; a server error keeps
+	 * just its status, and a transport failure has neither.
+	 *
+	 * @param MollieException $e The caught gateway exception.
 	 * @return self
 	 */
-	public static function from_api_exception( ApiException $e ): self {
-		return new self( $e->getStatusCode(), $e->getPlainMessage(), $e->getDashboardUrl() );
+	public static function from_exception( MollieException $e ): self {
+		if ( $e instanceof ApiException ) {
+			return new self( $e->getStatusCode(), $e->getPlainMessage(), $e->getDashboardUrl() );
+		}
+		if ( $e instanceof RequestException ) {
+			return new self( $e->getStatusCode(), '', null );
+		}
+
+		return self::generic();
 	}
 
 	/**

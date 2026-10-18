@@ -8,7 +8,7 @@
 namespace FairPaymentsConnector\Payment;
 
 use Mollie\Api\MollieApiClient;
-use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Exceptions\MollieException;
 use FairPaymentsConnector\AuditLog\AuditLogger;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use FairPaymentsConnector\OAuth\GrantedScopes;
@@ -261,7 +261,7 @@ class MolliePaymentHandler {
 					'testmode'  => $testmode,
 				)
 			);
-		} catch ( ApiException $e ) {
+		} catch ( MollieException $e ) {
 			throw new \Exception(
 				esc_html(
 					sprintf(
@@ -271,20 +271,23 @@ class MolliePaymentHandler {
 					)
 				)
 			);
+		} catch ( \Error $e ) {
+			// The SDK could not read the response into its typed resources.
+			throw new \Exception( esc_html__( 'Failed to load Mollie connection overview: Mollie returned data that could not be read.', 'fair-payments-connector' ) );
 		}
 
 		$method_list = array();
 		foreach ( $methods as $method ) {
 			$method_list[] = array(
-				'id'          => $method->id,
-				'description' => $method->description,
+				'id'          => $method->id ?? '',
+				'description' => $method->description ?? '',
 				'image'       => isset( $method->image->size1x ) ? $method->image->size1x : '',
 			);
 		}
 
 		$overview = array(
-			'profile_name' => $profile->name,
-			'profile_id'   => $profile->id,
+			'profile_name' => $profile->name ?? '',
+			'profile_id'   => $profile->id ?? '',
 			'mode'         => $mode,
 			'methods'      => $method_list,
 		);
@@ -350,7 +353,7 @@ class MolliePaymentHandler {
 			}
 
 			// Set test mode based on settings (required for OAuth).
-			// SDK v3: testmode must go in the query/third arg, not the payload.
+			// The SDK takes testmode as the query/third arg, not in the payload.
 			$mode     = get_option( 'fair_payment_mode', 'test' );
 			$testmode = ( 'live' !== $mode );
 
@@ -389,7 +392,7 @@ class MolliePaymentHandler {
 				)
 			);
 
-			$payment = $this->mollie->payments->create( $payment_data, array(), $testmode );
+			$payment = self::normalize_payment( $this->mollie->payments->create( $payment_data, array(), $testmode ) );
 
 			$logger->log(
 				'mollie_call_succeeded',
@@ -409,7 +412,7 @@ class MolliePaymentHandler {
 				'checkout_url'      => $payment->getCheckoutUrl(),
 				'status'            => $payment->status,
 			);
-		} catch ( ApiException $e ) {
+		} catch ( MollieException | \UnexpectedValueException | \Error $e ) {
 			// At this point Mollie may or may not have created the payment — we never.
 			// got a confirmed response. Log the request payload so an admin can search.
 			// the Mollie dashboard for an orphan payment.
@@ -428,8 +431,9 @@ class MolliePaymentHandler {
 					),
 				)
 			);
+			$error = $e instanceof MollieException ? PaymentGatewayError::from_exception( $e ) : PaymentGatewayError::generic();
 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- constructor takes a PaymentGatewayError value object, not a message string; nothing here is unescaped output.
-			throw new PaymentGatewayException( PaymentGatewayError::from_api_exception( $e ) );
+			throw new PaymentGatewayException( $error );
 		}
 	}
 
@@ -459,7 +463,7 @@ class MolliePaymentHandler {
 			}
 
 			$methods = $this->mollie->methods->allEnabled( $parameters );
-		} catch ( ApiException $e ) {
+		} catch ( MollieException | \Error $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Fair Payments Connector] Failed to list Mollie methods for filter: ' . $e->getMessage() );
@@ -488,17 +492,19 @@ class MolliePaymentHandler {
 	/**
 	 * Get payment status from Mollie
 	 *
+	 * The payment's status and method are plain strings (see normalize_payment()).
+	 *
 	 * @param string $mollie_payment_id Mollie payment ID.
 	 * @param array  $options Options for retrieving payment (e.g., testmode).
 	 * @return object Payment object from Mollie.
-	 * @throws \Exception If the underlying Mollie call fails.
+	 * @throws \Exception If the underlying Mollie call fails or returns an unreadable payment.
 	 */
 	public function get_payment( $mollie_payment_id, $options = array() ) {
 		try {
 			$testmode = ! empty( $options['testmode'] );
 			unset( $options['testmode'] );
-			return $this->mollie->payments->get( $mollie_payment_id, $options, $testmode );
-		} catch ( ApiException $e ) {
+			return self::normalize_payment( $this->mollie->payments->get( $mollie_payment_id, $options, $testmode ) );
+		} catch ( MollieException $e ) {
 			throw new \Exception(
 				esc_html(
 					sprintf(
@@ -508,7 +514,36 @@ class MolliePaymentHandler {
 					)
 				)
 			);
+		} catch ( \UnexpectedValueException | \Error $e ) {
+			throw new \Exception( esc_html__( 'Failed to retrieve payment: Mollie returned a payment that could not be read.', 'fair-payments-connector' ) );
 		}
+	}
+
+	/**
+	 * Check that a Mollie payment has the fields the plugin relies on, and
+	 * bring its status and method to Mollie's plain string values.
+	 *
+	 * Callers compare and store these strings, and pass the payment on to
+	 * the `fair_payment_*` hooks, whose listeners expect them as strings.
+	 * The SDK's own helpers accept either form.
+	 *
+	 * @param object $payment Mollie payment resource.
+	 * @return object The same payment.
+	 * @throws \UnexpectedValueException When a required field is missing or unreadable.
+	 */
+	private static function normalize_payment( $payment ) {
+		$id     = $payment->id ?? null;
+		$status = MollieValue::text( $payment->status ?? null );
+		$mode   = $payment->mode ?? null;
+
+		if ( ! is_string( $id ) || '' === $id || null === $status || ! in_array( $mode, array( 'live', 'test' ), true ) || ! isset( $payment->amount->value, $payment->amount->currency ) ) {
+			throw new \UnexpectedValueException( 'Mollie returned an incomplete payment.' );
+		}
+
+		$payment->status = $status;
+		$payment->method = MollieValue::text( $payment->method ?? null );
+
+		return $payment;
 	}
 
 	/**
@@ -517,12 +552,12 @@ class MolliePaymentHandler {
 	 * @param string|null $from Cursor payment identifier.
 	 * @param int         $limit Page size.
 	 * @param bool        $testmode Whether to query test payments.
-	 * @return \Mollie\Api\Resources\PaymentCollection
-	 * @throws \Exception If Mollie cannot return the page.
+	 * @return \Mollie\Api\Resources\PaymentCollection Payments normalized like get_payment().
+	 * @throws \Exception If Mollie cannot return the page, or any payment on it is unreadable.
 	 */
 	public function list_payments( $from, $limit, $testmode ) {
 		try {
-			return $this->mollie->payments->page(
+			$page = $this->mollie->payments->page(
 				$from ? $from : null,
 				$limit,
 				array(
@@ -530,7 +565,11 @@ class MolliePaymentHandler {
 					'sort'     => 'desc',
 				)
 			);
-		} catch ( ApiException $e ) {
+			foreach ( $page as $payment ) {
+				self::normalize_payment( $payment );
+			}
+			return $page;
+		} catch ( MollieException | \UnexpectedValueException | \Error $e ) {
 			throw new \Exception( esc_html__( 'Mollie payments could not be loaded. Please try again.', 'fair-payments-connector' ) );
 		}
 	}
@@ -554,7 +593,7 @@ class MolliePaymentHandler {
 			'mollie_payment_id' => (string) $payment->id,
 			'amount'            => (float) $payment->amount->value,
 			'currency'          => (string) $payment->amount->currency,
-			'status'            => (string) $payment->status,
+			'status'            => (string) MollieValue::text( $payment->status ),
 			'description'       => (string) ( $payment->description ?? '' ),
 			'testmode'          => 'test' === $payment->mode,
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Mollie API field.
@@ -584,7 +623,7 @@ class MolliePaymentHandler {
 					break;
 				}
 			}
-		} catch ( \Exception $e ) {
+		} catch ( \Exception | \Error $e ) {
 			return null;
 		}
 
@@ -597,16 +636,18 @@ class MolliePaymentHandler {
 	 * Used to look up the real Mollie processing fee charged on a payment, which is
 	 * exposed via BalanceTransaction.deductions rather than on the Payment object.
 	 *
+	 * Pages are fetched while iterating, so a failure can also surface then, as
+	 * a MollieException.
+	 *
 	 * @param bool $testmode Whether to query the test balance.
 	 * @return \Mollie\Api\Resources\LazyCollection
 	 * @throws \Exception If the balance transactions endpoint is unreachable.
 	 */
 	public function iterate_primary_balance_transactions( $testmode = false ) {
-		$parameters = $testmode ? array( 'testmode' => 'true' ) : array();
-
 		try {
-			return $this->mollie->balanceTransactions->iteratorForPrimary( $parameters );
-		} catch ( ApiException $e ) {
+			// A real bool: the SDK rejects a 'true' string in the query.
+			return $this->mollie->balanceTransactions->iteratorForPrimary( array(), false, (bool) $testmode );
+		} catch ( MollieException $e ) {
 			throw new \Exception(
 				esc_html(
 					sprintf(

@@ -10,7 +10,7 @@
  * Text Domain: fair-platform
  * Domain Path: /languages
  * Requires at least: 6.7
- * Requires PHP: 8.0
+ * Requires PHP: 8.2
  *
  * @package FairPlatform
  */

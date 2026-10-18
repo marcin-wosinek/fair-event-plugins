@@ -309,7 +309,9 @@ class SettlementStore {
 			return self::save_failed();
 		}
 
-		$this->repository->save_items( $revision_id, $aggregates );
+		if ( ! $this->repository->save_items( $revision_id, $aggregates ) ) {
+			return self::save_failed();
+		}
 
 		return $revision_id;
 	}
@@ -616,7 +618,9 @@ class SettlementStore {
 				if ( ! $revision_id ) {
 					return self::save_failed();
 				}
-				$this->repository->save_items( $revision_id, $parsed['movements'] );
+				if ( ! $this->repository->save_items( $revision_id, $parsed['movements'] ) ) {
+					return self::save_failed();
+				}
 
 				if ( 'conflict' !== $outcome ) {
 					$update = array(
