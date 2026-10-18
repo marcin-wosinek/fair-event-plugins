@@ -2,7 +2,7 @@
  * E2E: the administrator FairEventCalendarClick test in Fair Events →
  * Settings → Experimental (#1838).
  *
- * The admin picks an event, the page reads this browser's marketing consent
+ * The admin picks an event from a searchable list, the page reads this browser's marketing consent
  * and `_fbp` cookie at send time, and the test goes to Meta with the Test
  * Events code and the production calendar payload. Meta's diagnostics stay
  * visible after the notice, also when Meta does not confirm the event.
@@ -74,10 +74,18 @@ test.describe('Meta calendar click test', () => {
 		// editor save does on a real site.
 		const title = `E2E calendar test ${event.eventId}-${Date.now()}`;
 		wpCli(`post update ${event.eventId} --post_title="${title}"`);
-		await page.getByLabel('Search events by title').fill(title);
-		const select = page.getByLabel('Event', { exact: true });
-		await expect(select.locator('option')).toHaveCount(2);
-		await select.selectOption(String(event.eventDateId));
+		const picker = page.getByRole('combobox', { name: 'Event' });
+		await picker.fill(title);
+		const option = page.getByRole('option', { name: new RegExp(title) });
+		await expect(option).toHaveCount(1);
+		await option.click();
+		await expect(picker).toHaveValue(new RegExp(`^${title}`));
+	}
+
+	function standardTests(page) {
+		return ['PageView', 'InitiateCheckout', 'Purchase'].map((name) =>
+			page.getByRole('button', { name: `Send ${name} test` })
+		);
 	}
 
 	test('sends the calendar test from the settings page and shows what Meta received', async ({
@@ -92,7 +100,18 @@ test.describe('Meta calendar click test', () => {
 			name: 'Send FairEventCalendarClick test',
 		});
 		await expect(send).toBeDisabled();
+		await expect(
+			page.getByText('Select the event the test click belongs to.')
+		).toBeVisible();
+		// The latest events are listed before typing anything.
+		await page.getByRole('combobox', { name: 'Event' }).click();
+		await expect(page.getByRole('option').first()).toBeVisible();
+		await page.keyboard.press('Escape');
+
 		await chooseEvent(page, event);
+		for (const button of standardTests(page)) {
+			await expect(button).toBeEnabled();
+		}
 		await expect(send).toBeEnabled();
 		await send.click();
 

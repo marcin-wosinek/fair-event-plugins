@@ -3,6 +3,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	fireEvent,
 	render,
 	screen,
@@ -355,9 +356,12 @@ describe( 'MetaConversions test event buttons', () => {
 			await screen.findByLabelText( 'Dataset / Pixel ID' );
 		fireEvent.change( datasetField, { target: { value: '456' } } );
 
+		// Named beside the standard tests and the calendar test.
 		expect(
-			await screen.findByText( /Save your changes before sending/ )
-		).toBeInTheDocument();
+			await screen.findAllByText(
+				/Save or discard your changes before sending/
+			)
+		).toHaveLength( 2 );
 		expect(
 			screen.getByRole( 'button', { name: 'Send PageView test' } )
 		).toBeDisabled();
@@ -558,6 +562,7 @@ describe( 'MetaConversions calendar click test', () => {
 		title: 'Mix and Move',
 		start_datetime: '2026-11-01 18:00:00',
 		occurrence_type: 'single',
+		status: 'active',
 	};
 	const series = {
 		id: 50,
@@ -565,25 +570,46 @@ describe( 'MetaConversions calendar click test', () => {
 		title: 'Weekly jam',
 		start_datetime: '2026-11-02 19:00:00',
 		occurrence_type: 'master',
-		generated_occurrences: [
-			{ id: 51, start_datetime: '2026-11-09 19:00:00', status: 'active' },
+		status: 'active',
+		children: [
+			{
+				id: 51,
+				event_id: 20,
+				start_datetime: '2026-11-09 19:00:00',
+				status: 'active',
+			},
 			{
 				id: 52,
+				event_id: 20,
 				start_datetime: '2026-11-16 19:00:00',
 				status: 'cancelled',
 			},
 		],
 	};
+	const withoutPage = {
+		id: 99,
+		event_id: null,
+		title: 'Mix without page',
+		status: 'active',
+	};
+	const cancelled = {
+		id: 77,
+		event_id: 30,
+		title: 'Mix cancelled',
+		start_datetime: '2026-11-03 18:00:00',
+		status: 'cancelled',
+	};
+	let eventList;
 	let testResponse;
+
+	function searchOf( path ) {
+		return new URLSearchParams( path.split( '?' )[ 1 ] ).get( 'search' );
+	}
 
 	function routeApi() {
 		apiFetch.mockImplementation( ( { path, method } ) => {
-			if ( path.startsWith( '/fair-events/v1/event-dates' ) ) {
-				return Promise.resolve( [
-					single,
-					series,
-					{ id: 99, event_id: null, title: 'Mix without page' },
-				] );
+			if ( path.startsWith( '/fair-events/v1/event-dates/all' ) ) {
+				return eventList( searchOf( path ), path );
 			}
 			if ( method === 'POST' ) {
 				return testResponse();
@@ -597,13 +623,21 @@ describe( 'MetaConversions calendar click test', () => {
 		document.cookie = `_fbp=${ FBP }`;
 	}
 
-	async function selectEvent( label ) {
-		fireEvent.change(
-			await screen.findByLabelText( 'Search events by title' ),
-			{ target: { value: 'Mix' } }
-		);
-		fireEvent.change( await screen.findByLabelText( 'Event' ), {
-			target: { value: label },
+	function combobox() {
+		return screen.getByRole( 'combobox', { name: 'Event' } );
+	}
+
+	async function openEvents() {
+		const input = await screen.findByRole( 'combobox', { name: 'Event' } );
+		fireEvent.focus( input );
+		return input;
+	}
+
+	async function selectEvent( name ) {
+		await openEvents();
+		const option = await screen.findByRole( 'option', { name } );
+		await act( async () => {
+			fireEvent.click( option );
 		} );
 	}
 
@@ -613,7 +647,33 @@ describe( 'MetaConversions calendar click test', () => {
 		} );
 	}
 
+	function standardButtons() {
+		return [ 'PageView', 'InitiateCheckout', 'Purchase' ].map( ( name ) =>
+			screen.getByRole( 'button', { name: `Send ${ name } test` } )
+		);
+	}
+
+	function expectStandardTestsEnabled() {
+		standardButtons().forEach( ( button ) =>
+			expect( button ).toBeEnabled()
+		);
+	}
+
+	beforeAll( () => {
+		// The open dropdown scrolls its selected option into view, which
+		// jsdom does not implement.
+		window.HTMLElement.prototype.scrollIntoView = jest.fn();
+	} );
+
 	beforeEach( () => {
+		eventList = ( search ) => {
+			const all = [ single, series, withoutPage, cancelled ];
+			return Promise.resolve(
+				search
+					? all.filter( ( item ) => item.title.includes( search ) )
+					: all
+			);
+		};
 		testResponse = () =>
 			Promise.resolve( {
 				accepted: true,
@@ -626,6 +686,7 @@ describe( 'MetaConversions calendar click test', () => {
 					fbtrace_id: 'CalTrace1',
 				},
 			} );
+		apiFetch.mockReset();
 		routeApi();
 	} );
 
@@ -634,61 +695,245 @@ describe( 'MetaConversions calendar click test', () => {
 		document.cookie = '_fbp=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 	} );
 
-	it( 'asks for an event first and lists only events with a page', async () => {
+	it( 'lists the latest events with a page without typing', async () => {
 		grantConsent();
 		render( <MetaConversions onNotice={ () => {} } /> );
 
+		await openEvents();
 		expect(
-			await screen.findByText(
-				'Select the event and date the test click belongs to.'
-			)
+			await screen.findByRole( 'option', { name: /^Mix and Move — / } )
 		).toBeInTheDocument();
-		expect( sendButton() ).toBeDisabled();
-
-		fireEvent.change( screen.getByLabelText( 'Search events by title' ), {
-			target: { value: 'Mix' },
-		} );
-		const select = await screen.findByLabelText( 'Event' );
 		expect(
-			within( select ).queryByText( /Mix without page/ )
+			screen.getByRole( 'option', { name: /^Weekly jam — / } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'option', { name: /Mix without page/ } )
 		).not.toBeInTheDocument();
 		expect(
-			within( select ).getByText( /^Mix and Move — / )
+			screen.queryByRole( 'option', { name: /Mix cancelled/ } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText( 'Select the event the test click belongs to.' )
+		).toBeInTheDocument();
+		expect( sendButton() ).toBeDisabled();
+	} );
+
+	it( 'selects an event with the keyboard', async () => {
+		grantConsent();
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const input = await openEvents();
+		await screen.findByRole( 'option', { name: /^Mix and Move — / } );
+		// The first match starts highlighted; move to the second and pick it.
+		fireEvent.keyDown( input, { code: 'ArrowDown' } );
+		await act( async () => {
+			fireEvent.keyDown( input, { code: 'Enter' } );
+		} );
+
+		await waitFor( () =>
+			expect( input.value ).toMatch( /^Weekly jam — / )
+		);
+		expect(
+			screen.getByText( 'Select a date of this series.' )
 		).toBeInTheDocument();
 	} );
 
-	it( 'explains missing consent API, consent and identifiers before sending', async () => {
+	it( 'searches by title after a pause and drops a slower earlier response', async () => {
+		grantConsent();
+		const pending = {};
+		eventList = ( search ) =>
+			search
+				? new Promise( ( resolve ) => {
+						pending[ search ] = resolve;
+					} )
+				: Promise.resolve( [ single, series ] );
 		render( <MetaConversions onNotice={ () => {} } /> );
-		await selectEvent( '34' );
+
+		const input = await openEvents();
+		fireEvent.change( input, { target: { value: 'Mix' } } );
+		await waitFor( () => expect( pending.Mix ).toBeDefined() );
+		fireEvent.change( input, { target: { value: 'Weekly' } } );
+		await waitFor( () => expect( pending.Weekly ).toBeDefined() );
+
+		await act( async () => {
+			pending.Weekly( [ series ] );
+		} );
+		await act( async () => {
+			pending.Mix( [ single ] );
+		} );
+
+		expect(
+			screen.getByRole( 'option', { name: /^Weekly jam — / } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'option', { name: /^Mix and Move — / } )
+		).not.toBeInTheDocument();
+		// One request per pause in typing, not per keystroke.
+		expect(
+			apiFetch.mock.calls.filter( ( [ { path } ] ) =>
+				path.includes( 'search=' )
+			)
+		).toHaveLength( 2 );
+	} );
+
+	it( 'keeps the selected event through later searches until it is cleared', async () => {
+		grantConsent();
+		render( <MetaConversions onNotice={ () => {} } /> );
+		await selectEvent( /^Mix and Move — / );
+
+		fireEvent.change( combobox(), { target: { value: 'Weekly' } } );
+		expect(
+			await screen.findByRole( 'option', { name: /^Weekly jam — / } )
+		).toBeInTheDocument();
+		fireEvent.keyDown( combobox(), { code: 'Escape' } );
+
+		await waitFor( () =>
+			expect( combobox().value ).toMatch( /^Mix and Move — / )
+		);
+		expect( sendButton() ).toBeEnabled();
+
+		await act( async () => {
+			fireEvent.click( screen.getByRole( 'button', { name: 'Reset' } ) );
+		} );
+		expect(
+			screen.getByText( 'Select the event the test click belongs to.' )
+		).toBeInTheDocument();
+		expect( sendButton() ).toBeDisabled();
+	} );
+
+	it( 'says when no event with a page matches the search', async () => {
+		grantConsent();
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const input = await openEvents();
+		fireEvent.change( input, { target: { value: 'Nothing like it' } } );
+
+		expect(
+			await screen.findByText(
+				'No events with an event page match “Nothing like it”.'
+			)
+		).toBeInTheDocument();
+
+		// Once the picker is left, the message no longer describes it.
+		fireEvent.blur( input );
+		expect(
+			screen.queryByText( /No events with an event page match/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'explains a failed event request and retries it', async () => {
+		grantConsent();
+		let fail = true;
+		eventList = () =>
+			fail
+				? Promise.reject( new Error( 'offline' ) )
+				: Promise.resolve( [ single ] );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Try again' } )
+		).toBeInTheDocument();
+		// The notice is also announced to screen readers.
+		expect(
+			screen.getAllByText( 'Events could not be loaded.' ).length
+		).toBeGreaterThan( 0 );
+		expectStandardTestsEnabled();
+
+		fail = false;
+		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
+		await waitFor( () =>
+			expect(
+				screen.queryByRole( 'button', { name: 'Try again' } )
+			).not.toBeInTheDocument()
+		);
+		await selectEvent( /^Mix and Move — / );
+		expect( sendButton() ).toBeEnabled();
+	} );
+
+	it( 'keeps the standard tests usable while choosing an event and while this browser is blocked', async () => {
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText( /WP Consent API is not active/ )
+		).toBeInTheDocument();
+		expectStandardTestsEnabled();
+
+		fireEvent.change( await openEvents(), { target: { value: 'Mix' } } );
+		expectStandardTestsEnabled();
+		await selectEvent( /^Mix and Move — / );
+		expectStandardTestsEnabled();
+		await act( async () => {
+			fireEvent.click( screen.getByRole( 'button', { name: 'Reset' } ) );
+		} );
+		expectStandardTestsEnabled();
+		expect( sendButton() ).toBeDisabled();
+	} );
+
+	it( 'explains missing consent API, consent and identifiers, and checks again without losing the event', async () => {
+		render( <MetaConversions onNotice={ () => {} } /> );
+		await selectEvent( /^Mix and Move — / );
 
 		expect(
 			screen.getByText( /WP Consent API is not active/ )
 		).toBeInTheDocument();
 		expect( sendButton() ).toBeDisabled();
+		const checkAgain = () =>
+			screen.getByRole( 'button', {
+				name: 'Check this browser again',
+			} );
 
 		window.wp_has_consent = () => false;
-		fireEvent.change( screen.getByLabelText( 'Search events by title' ), {
-			target: { value: 'Mix ' },
-		} );
+		fireEvent.click( checkAgain() );
 		expect(
-			await screen.findByText( /has not given marketing consent/ )
+			screen.getByText( /has not given marketing consent/ )
 		).toBeInTheDocument();
 
 		window.wp_has_consent = () => true;
-		fireEvent.change( screen.getByLabelText( 'Search events by title' ), {
-			target: { value: 'Mix' },
-		} );
+		fireEvent.click( checkAgain() );
 		expect(
-			await screen.findByText( /has no Meta browser identifier/ )
+			screen.getByText( /has no Meta browser identifier/ )
 		).toBeInTheDocument();
-		expect( sendButton() ).toBeDisabled();
+
+		window.wp_has_consent = () => {
+			throw new Error( 'banner broken' );
+		};
+		fireEvent.click( checkAgain() );
+		expect(
+			screen.getByText(
+				/marketing consent or Meta cookies could not be read/
+			)
+		).toBeInTheDocument();
+
+		grantConsent();
+		fireEvent.click( checkAgain() );
+		expect(
+			screen.queryByRole( 'button', { name: 'Check this browser again' } )
+		).not.toBeInTheDocument();
+		expect( combobox().value ).toMatch( /^Mix and Move — / );
+		expect( sendButton() ).toBeEnabled();
 	} );
 
-	it( 'sends the selected event context with this browser’s identifiers and keeps the result', async () => {
+	it( 'checks consent again at send time and does not send without it', async () => {
+		grantConsent();
+		render( <MetaConversions onNotice={ () => {} } /> );
+		await selectEvent( /^Mix and Move — / );
+
+		window.wp_has_consent = () => false;
+		fireEvent.click( sendButton() );
+
+		expect(
+			screen.getByText( /has not given marketing consent/ )
+		).toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'POST' } )
+		);
+	} );
+
+	it( 'sends the selected event context with this browser’s identifiers and keeps the result and selection', async () => {
 		grantConsent();
 		const onNotice = jest.fn();
 		render( <MetaConversions onNotice={ onNotice } /> );
-		await selectEvent( '34' );
+		await selectEvent( /^Mix and Move — / );
 
 		expect( sendButton() ).toBeEnabled();
 		fireEvent.click( sendButton() );
@@ -723,12 +968,14 @@ describe( 'MetaConversions calendar click test', () => {
 		expect(
 			within( latest ).getByText( 'Trace ID: CalTrace1' )
 		).toBeInTheDocument();
+		await waitFor( () => expect( sendButton() ).toBeEnabled() );
+		expect( combobox().value ).toMatch( /^Mix and Move — / );
 	} );
 
 	it( 'requires a date for a series and offers only dates that are not cancelled', async () => {
 		grantConsent();
 		render( <MetaConversions onNotice={ () => {} } /> );
-		await selectEvent( '50' );
+		await selectEvent( /^Weekly jam — / );
 
 		expect(
 			screen.getByText( 'Select a date of this series.' )
@@ -753,7 +1000,7 @@ describe( 'MetaConversions calendar click test', () => {
 		);
 	} );
 
-	it( 'shows Meta’s failure diagnostics and server message', async () => {
+	it( 'shows Meta’s failure diagnostics and server message and keeps the selection', async () => {
 		grantConsent();
 		testResponse = () =>
 			Promise.reject( {
@@ -773,10 +1020,9 @@ describe( 'MetaConversions calendar click test', () => {
 					},
 				},
 			} );
-		routeApi();
 		const onNotice = jest.fn();
 		render( <MetaConversions onNotice={ onNotice } /> );
-		await selectEvent( '34' );
+		await selectEvent( /^Mix and Move — / );
 		fireEvent.click( sendButton() );
 
 		const latest = await screen.findByRole( 'status' );
@@ -799,5 +1045,80 @@ describe( 'MetaConversions calendar click test', () => {
 			message:
 				'Meta answered, but did not confirm receiving the FairEventCalendarClick test event.',
 		} );
+		await waitFor( () => expect( sendButton() ).toBeEnabled() );
+		expect( combobox().value ).toMatch( /^Mix and Move — / );
+	} );
+
+	it( 'names the shared reason beside the calendar test while a test is sending', async () => {
+		grantConsent();
+		let resolveTest;
+		testResponse = () =>
+			new Promise( ( resolve ) => {
+				resolveTest = resolve;
+			} );
+		render( <MetaConversions onNotice={ () => {} } /> );
+		await selectEvent( /^Mix and Move — / );
+
+		fireEvent.click( standardButtons()[ 0 ] );
+
+		expect(
+			await screen.findAllByText(
+				'Wait until the current test event is sent.'
+			)
+		).toHaveLength( 2 );
+		expect( sendButton() ).toBeDisabled();
+		await act( async () => {
+			resolveTest( { accepted: true } );
+		} );
+		await waitFor( () => expect( sendButton() ).toBeEnabled() );
+	} );
+} );
+
+describe( 'MetaConversions settings fields', () => {
+	it( 'keeps password managers out of the access token field', async () => {
+		apiFetch.mockResolvedValue( config() );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		const token = await screen.findByLabelText( 'Replace access token' );
+		expect( token ).toHaveAttribute( 'autocomplete', 'new-password' );
+		expect( screen.getByLabelText( 'Dataset / Pixel ID' ) ).toHaveAttribute(
+			'autocomplete',
+			'off'
+		);
+	} );
+
+	it( 'discards unsaved edits, such as an autofilled token, and enables testing again', async () => {
+		apiFetch.mockResolvedValue( config() );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		fireEvent.change(
+			await screen.findByLabelText( 'Replace access token' ),
+			{
+				target: { value: 'saved-login-password' },
+			}
+		);
+		fireEvent.change( screen.getByLabelText( 'Dataset / Pixel ID' ), {
+			target: { value: '456' },
+		} );
+		expect(
+			screen.getByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Discard changes' } )
+		);
+
+		expect( screen.getByLabelText( 'Replace access token' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'Dataset / Pixel ID' ) ).toHaveValue(
+			'123'
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Send PageView test' } )
+		).toBeEnabled();
+		expect(
+			screen.queryAllByText( /Save or discard your changes/ )
+		).toHaveLength( 0 );
 	} );
 } );

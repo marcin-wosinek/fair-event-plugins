@@ -1,16 +1,23 @@
-import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
-import { useRef, useState } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { useEffect, useMemo, useState } from '@wordpress/element';
 import {
 	Button,
+	ComboboxControl,
+	Flex,
+	FlexItem,
+	Notice,
 	SelectControl,
-	Spinner,
-	TextControl,
 } from '@wordpress/components';
-import { formatSiteLocalDatetime } from 'fair-events-shared/src/dateTime.js';
+import {
+	formatDateOnly,
+	formatSiteLocalDatetime,
+} from 'fair-events-shared/src/dateTime.js';
 import { identifiers } from '../../Frontend/attribution.js';
+import useRequest from '../compare-events/useRequest.js';
 
 export const CALENDAR_EVENT = 'FairEventCalendarClick';
+
+const SEARCH_DELAY = 300;
 
 /**
  * Why this browser cannot send the calendar test, read the same way an
@@ -27,115 +34,176 @@ export function browserBlocker() {
 	}
 	if ( window.wp_has_consent( 'marketing' ) !== true ) {
 		return __(
-			'This browser has not given marketing consent. Accept marketing cookies on the site, then reload this page.',
+			'This browser has not given marketing consent. Accept marketing cookies on the site, then check again.',
 			'fair-events-experimental'
 		);
 	}
 	if ( ! identifiers().marketing_consent ) {
 		return __(
-			'This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then reload this page.',
+			'This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again.',
 			'fair-events-experimental'
 		);
 	}
 	return null;
 }
 
+/**
+ * browserBlocker() that also explains a consent API or cookie read that
+ * throws, instead of breaking the settings page.
+ *
+ * @return {string|null} Explanation, or null when the test can be sent.
+ */
+function readBrowserBlocker() {
+	try {
+		return browserBlocker();
+	} catch {
+		return __(
+			'This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again.',
+			'fair-events-experimental'
+		);
+	}
+}
+
+/**
+ * REST path of the latest events, or of a title search.
+ *
+ * @param {string} search Title to search for; empty lists the latest events.
+ * @return {string} REST path.
+ */
+export function getCalendarEventsPath( search = '' ) {
+	const params = new URLSearchParams( {
+		per_page: '100',
+		orderby: 'start_datetime',
+		order: 'desc',
+	} );
+	if ( search ) {
+		params.set( 'search', search );
+	}
+	return `/fair-events/v1/event-dates/all?${ params.toString() }`;
+}
+
+function formatStart( eventDate ) {
+	if ( ! eventDate.start_datetime ) {
+		return '';
+	}
+	return eventDate.all_day
+		? formatDateOnly( eventDate.start_datetime )
+		: formatSiteLocalDatetime( eventDate.start_datetime );
+}
+
 function eventLabel( eventDate ) {
 	const title =
 		eventDate.title || __( '(untitled event)', 'fair-events-experimental' );
-	return eventDate.start_datetime
-		? `${ title } — ${ formatSiteLocalDatetime( eventDate.start_datetime ) }`
-		: title;
+	const start = formatStart( eventDate );
+	return start ? `${ title } — ${ start }` : title;
 }
 
 /**
  * Dates a calendar activation can belong to: the event's own date and, for
- * a series, each date that is not cancelled.
+ * a series, each further date. Cancelled dates are left out.
  *
- * @param {Object} eventDate Event date from the event-dates API.
- * @return {Array} `{ id, start_datetime }` options.
+ * @param {Object} eventDate Event date from `/fair-events/v1/event-dates/all`.
+ * @return {Array} Event dates.
  */
 function occurrencesOf( eventDate ) {
-	const generated = ( eventDate.generated_occurrences || [] ).filter(
+	return [ eventDate, ...( eventDate.children || [] ) ].filter(
 		( occurrence ) => occurrence.status !== 'cancelled'
 	);
-	return [ eventDate, ...generated ];
 }
 
 /**
  * Event and date selection for the FairEventCalendarClick test. The send
- * reads consent and Meta identifiers at click time, like a real activation.
+ * reads consent and Meta identifiers again at click time, like a real
+ * activation.
  *
- * @param {Object}   props
- * @param {boolean}  props.disabled Whether the shared test rules block sending.
- * @param {boolean}  props.sending  Whether this test is in flight.
- * @param {Function} props.onSend   Receives the request data.
+ * @param {Object}      props
+ * @param {string|null} props.disabledReason Why the shared test rules block sending, if they do.
+ * @param {boolean}     props.sending        Whether this test is in flight.
+ * @param {Function}    props.onSend         Receives the request data.
  * @return {Element} Calendar test controls.
  */
-export default function MetaCalendarTest( { disabled, sending, onSend } ) {
+export default function MetaCalendarTest( {
+	disabledReason,
+	sending,
+	onSend,
+} ) {
+	const [ filter, setFilter ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
-	const [ results, setResults ] = useState( [] );
-	const [ searching, setSearching ] = useState( false );
-	const [ eventDateId, setEventDateId ] = useState( '' );
+	// Kept apart from the search results, so a later search never drops it.
+	const [ selected, setSelected ] = useState( null );
 	const [ occurrenceId, setOccurrenceId ] = useState( '' );
-	const latestSearch = useRef( 0 );
+	const [ blocker, setBlocker ] = useState( readBrowserBlocker );
+	// A search result message only describes the open picker.
+	const [ picking, setPicking ] = useState( false );
 
-	const handleSearch = async ( term ) => {
-		setSearch( term );
-		const request = ++latestSearch.current;
-		if ( term.trim().length < 2 ) {
-			setResults( [] );
-			setSearching( false );
-			return;
-		}
-		setSearching( true );
-		let next = [];
-		try {
-			const found = await apiFetch( {
-				path: `/fair-events/v1/event-dates?search=${ encodeURIComponent(
-					term
-				) }&per_page=20`,
-			} );
-			// Only dates linked to an event page can carry a calendar button.
-			next = ( found || [] ).filter( ( item ) => item.event_id );
-		} catch {
-			next = [];
-		}
-		if ( request === latestSearch.current ) {
-			setResults( next );
-			setSearching( false );
-		}
-	};
+	// Wait for a pause in typing before searching.
+	useEffect( () => {
+		const timer = setTimeout(
+			() => setSearch( filter.trim() ),
+			SEARCH_DELAY
+		);
+		return () => clearTimeout( timer );
+	}, [ filter ] );
 
-	const selected = results.find(
-		( item ) => String( item.id ) === eventDateId
+	const events = useRequest( getCalendarEventsPath( search ) );
+	const candidates = useMemo(
+		() =>
+			// Only dates linked to an event page can carry a calendar
+			// button. `link_type` is not reliable for that: older dates
+			// linked to a post leave it empty.
+			( Array.isArray( events.data ) ? events.data : [] ).filter(
+				( item ) => item.event_id && occurrencesOf( item ).length
+			),
+		[ events.data ]
 	);
+	const options = useMemo( () => {
+		const listed =
+			selected && ! candidates.some( ( item ) => item.id === selected.id )
+				? [ selected, ...candidates ]
+				: candidates;
+		return listed.map( ( item ) => ( {
+			value: String( item.id ),
+			label: eventLabel( item ),
+		} ) );
+	}, [ candidates, selected ] );
+
 	const occurrences = selected ? occurrencesOf( selected ) : [];
 	const occurrence =
 		occurrences.find( ( item ) => String( item.id ) === occurrenceId ) ||
 		( occurrences.length === 1 ? occurrences[ 0 ] : null );
 
-	const blocker = selected
-		? browserBlocker()
-		: __(
-				'Select the event and date the test click belongs to.',
+	const reasons = [
+		disabledReason,
+		! selected &&
+			__(
+				'Select the event the test click belongs to.',
 				'fair-events-experimental'
-			);
-	const missingDate =
-		selected && ! occurrence
-			? __( 'Select a date of this series.', 'fair-events-experimental' )
-			: null;
+			),
+		selected &&
+			! occurrence &&
+			__( 'Select a date of this series.', 'fair-events-experimental' ),
+	].filter( Boolean );
+
+	const select = ( value ) => {
+		setOccurrenceId( '' );
+		setSelected(
+			[ selected, ...candidates ].find(
+				( item ) => item && String( item.id ) === value
+			) || null
+		);
+	};
 
 	const send = () => {
 		// Read again at send time: consent may have changed since rendering.
-		const values = identifiers();
-		if ( ! selected || ! occurrence || ! values.marketing_consent ) {
+		const nextBlocker = readBrowserBlocker();
+		setBlocker( nextBlocker );
+		if ( nextBlocker || reasons.length ) {
 			return;
 		}
 		onSend( {
 			post_id: selected.event_id,
 			event_date_id: occurrence.id,
-			...values,
+			...identifiers(),
 		} );
 	};
 
@@ -148,48 +216,72 @@ export default function MetaCalendarTest( { disabled, sending, onSend } ) {
 					'fair-events-experimental'
 				) }
 			</p>
-			<TextControl
-				label={ __(
-					'Search events by title',
-					'fair-events-experimental'
-				) }
-				value={ search }
-				onChange={ handleSearch }
-			/>
-			{ searching && <Spinner /> }
-			{ ! searching && search.trim().length >= 2 && ! results.length && (
-				<p className="description">
-					{ __(
-						'No events with an event page match this search.',
+			<div
+				onFocus={ () => setPicking( true ) }
+				onBlur={ ( event ) =>
+					setPicking(
+						event.currentTarget.contains( event.relatedTarget )
+					)
+				}
+			>
+				<ComboboxControl
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
+					label={ __( 'Event', 'fair-events-experimental' ) }
+					value={ selected ? String( selected.id ) : null }
+					options={ options }
+					isLoading={ events.status === 'loading' }
+					onFilterValueChange={ setFilter }
+					onChange={ select }
+					help={ __(
+						'Lists the latest events with an event page. Type to search by title.',
 						'fair-events-experimental'
 					) }
-				</p>
-			) }
-			{ results.length > 0 && (
-				<SelectControl
-					label={ __( 'Event', 'fair-events-experimental' ) }
-					value={ eventDateId }
-					options={ [
+				/>
+			</div>
+			{ events.status === 'error' && (
+				<Notice
+					status="error"
+					isDismissible={ false }
+					actions={ [
 						{
 							label: __(
-								'Select an event',
+								'Try again',
 								'fair-events-experimental'
 							),
-							value: '',
+							onClick: events.retry,
 						},
-						...results.map( ( item ) => ( {
-							label: eventLabel( item ),
-							value: String( item.id ),
-						} ) ),
 					] }
-					onChange={ ( value ) => {
-						setEventDateId( value );
-						setOccurrenceId( '' );
-					} }
-				/>
+				>
+					{ __(
+						'Events could not be loaded.',
+						'fair-events-experimental'
+					) }
+				</Notice>
 			) }
+			{ events.status === 'ready' &&
+				! candidates.length &&
+				( picking || ! search ) && (
+					<p className="description">
+						{ search
+							? sprintf(
+									/* translators: %s: text typed into the event search */
+									__(
+										'No events with an event page match “%s”.',
+										'fair-events-experimental'
+									),
+									search
+								)
+							: __(
+									'There are no events with an event page yet.',
+									'fair-events-experimental'
+								) }
+					</p>
+				) }
 			{ occurrences.length > 1 && (
 				<SelectControl
+					__next40pxDefaultSize
+					__nextHasNoMarginBottom
 					label={ __( 'Date', 'fair-events-experimental' ) }
 					value={ occurrenceId }
 					options={ [
@@ -201,31 +293,53 @@ export default function MetaCalendarTest( { disabled, sending, onSend } ) {
 							value: '',
 						},
 						...occurrences.map( ( item ) => ( {
-							label: item.start_datetime
-								? formatSiteLocalDatetime( item.start_datetime )
-								: __( '(no date)', 'fair-events-experimental' ),
+							label:
+								formatStart( item ) ||
+								__( '(no date)', 'fair-events-experimental' ),
 							value: String( item.id ),
 						} ) ),
 					] }
 					onChange={ setOccurrenceId }
 				/>
 			) }
-			<p>
-				<Button
-					variant="secondary"
-					onClick={ send }
-					isBusy={ sending }
-					disabled={ disabled || !! blocker || !! missingDate }
-				>
-					{ __(
-						'Send FairEventCalendarClick test',
-						'fair-events-experimental'
-					) }
-				</Button>
-			</p>
-			{ ( missingDate || blocker ) && (
-				<p className="description">{ missingDate || blocker }</p>
-			) }
+			<Flex
+				wrap
+				justify="flex-start"
+				gap={ 2 }
+				style={ { margin: '16px 0 8px' } }
+			>
+				<FlexItem>
+					<Button
+						variant="secondary"
+						onClick={ send }
+						isBusy={ sending }
+						disabled={ !! reasons.length || !! blocker }
+					>
+						{ __(
+							'Send FairEventCalendarClick test',
+							'fair-events-experimental'
+						) }
+					</Button>
+				</FlexItem>
+				{ blocker && (
+					<FlexItem>
+						<Button
+							variant="tertiary"
+							onClick={ () => setBlocker( readBrowserBlocker() ) }
+						>
+							{ __(
+								'Check this browser again',
+								'fair-events-experimental'
+							) }
+						</Button>
+					</FlexItem>
+				) }
+			</Flex>
+			{ [ ...reasons, blocker ].filter( Boolean ).map( ( reason ) => (
+				<p key={ reason } className="description">
+					{ reason }
+				</p>
+			) ) }
 		</div>
 	);
 }

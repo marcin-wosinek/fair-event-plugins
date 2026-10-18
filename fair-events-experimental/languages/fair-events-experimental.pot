@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T16:51:08+00:00\n"
+"POT-Creation-Date: 2026-10-18T04:51:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -181,7 +181,7 @@ msgstr ""
 
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:202
-#: src/Admin/settings/MetaConversions.js:405
+#: src/Admin/settings/MetaConversions.js:430
 #, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr ""
@@ -230,7 +230,7 @@ msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr ""
 
 #: src/Core/Features.php:145
-#: src/Admin/settings/MetaConversions.js:433
+#: src/Admin/settings/MetaConversions.js:458
 msgid "Meta Conversions"
 msgstr ""
 
@@ -282,6 +282,7 @@ msgstr ""
 
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
+#: src/Admin/settings/MetaCalendarTest.js:248
 msgid "Try again"
 msgstr ""
 
@@ -639,68 +640,82 @@ msgstr ""
 msgid "Experimental"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:23
+#: src/Admin/settings/MetaCalendarTest.js:30
 msgid "This page cannot read marketing consent because the WP Consent API is not active."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:29
-msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then reload this page."
+#: src/Admin/settings/MetaCalendarTest.js:36
+msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then check again."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:35
-msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then reload this page."
+#: src/Admin/settings/MetaCalendarTest.js:42
+msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:45
+#: src/Admin/settings/MetaCalendarTest.js:60
+msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
+msgstr ""
+
+#: src/Admin/settings/MetaCalendarTest.js:96
 msgid "(untitled event)"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:120
-msgid "Select the event and date the test click belongs to."
+#: src/Admin/settings/MetaCalendarTest.js:178
+msgid "Select the event the test click belongs to."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:126
+#: src/Admin/settings/MetaCalendarTest.js:184
 msgid "Select a date of this series."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:144
+#: src/Admin/settings/MetaCalendarTest.js:212
 msgid "Calendar click test"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:146
+#: src/Admin/settings/MetaCalendarTest.js:214
 msgid "Sends one FairEventCalendarClick to Test Events, built like a real “Add to calendar” click from this browser. It does not appear in delivery outcomes or reports."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:152
-msgid "Search events by title"
-msgstr ""
-
-#: src/Admin/settings/MetaCalendarTest.js:162
-msgid "No events with an event page match this search."
-msgstr ""
-
-#: src/Admin/settings/MetaCalendarTest.js:170
+#: src/Admin/settings/MetaCalendarTest.js:230
 msgid "Event"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:174
-msgid "Select an event"
+#: src/Admin/settings/MetaCalendarTest.js:236
+msgid "Lists the latest events with an event page. Type to search by title."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:193
+#: src/Admin/settings/MetaCalendarTest.js:256
+msgid "Events could not be loaded."
+msgstr ""
+
+#. translators: %s: text typed into the event search
+#: src/Admin/settings/MetaCalendarTest.js:269
+#, js-format
+msgid "No events with an event page match “%s”."
+msgstr ""
+
+#: src/Admin/settings/MetaCalendarTest.js:275
+msgid "There are no events with an event page yet."
+msgstr ""
+
+#: src/Admin/settings/MetaCalendarTest.js:285
 msgid "Date"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:197
+#: src/Admin/settings/MetaCalendarTest.js:289
 msgid "Select a date"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:206
+#: src/Admin/settings/MetaCalendarTest.js:298
 msgid "(no date)"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:220
+#: src/Admin/settings/MetaCalendarTest.js:318
 msgid "Send FairEventCalendarClick test"
+msgstr ""
+
+#: src/Admin/settings/MetaCalendarTest.js:330
+msgid "Check this browser again"
 msgstr ""
 
 #: src/Admin/settings/MetaConversions.js:24
@@ -812,7 +827,7 @@ msgstr ""
 
 #. translators: %s: safe failure category/code reported by Meta
 #: src/Admin/settings/MetaConversions.js:279
-#: src/Admin/settings/MetaConversions.js:710
+#: src/Admin/settings/MetaConversions.js:746
 #, js-format
 msgid "Error: %s"
 msgstr ""
@@ -825,98 +840,110 @@ msgstr ""
 msgid "Loading Meta Conversions settings…"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:350
+#: src/Admin/settings/MetaConversions.js:334
+msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:339
+msgid "Save or discard your changes before sending a test event — testing now would use the previously saved configuration, not what is in the fields. A browser password manager can fill the access token field for you."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:344
+msgid "Wait until the Meta settings are saved."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:349
+msgid "Wait until the current test event is sent."
+msgstr ""
+
+#: src/Admin/settings/MetaConversions.js:375
 msgid "Meta Conversions settings saved."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:358
+#: src/Admin/settings/MetaConversions.js:383
 msgid "Failed to save Meta Conversions settings."
 msgstr ""
 
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
-#: src/Admin/settings/MetaConversions.js:395
+#: src/Admin/settings/MetaConversions.js:420
 #, js-format
 msgid "Meta confirmed receiving the %s test event."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:438
+#: src/Admin/settings/MetaConversions.js:463
 msgid "Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:446
+#: src/Admin/settings/MetaConversions.js:471
 msgid "Live checkout and purchase tracking will stay inactive until the WP Consent API is available. An existing consent banner is not enough on its own — it also needs to report marketing-consent decisions through that API."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:452
+#: src/Admin/settings/MetaConversions.js:477
 msgid "The WP Consent API is an interoperability layer, not a replacement for your consent banner: installing it does not by itself establish valid consent, and it does not affect synthetic Test Events below."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:459
+#: src/Admin/settings/MetaConversions.js:484
 msgid "Get the WP Consent API plugin"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:468
+#: src/Admin/settings/MetaConversions.js:493
 msgid "Dataset / Pixel ID"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:481
+#: src/Admin/settings/MetaConversions.js:507
 msgid "Replace access token"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:485
+#: src/Admin/settings/MetaConversions.js:511
 msgid "Access token"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:489
+#: src/Admin/settings/MetaConversions.js:515
 msgid "A token is configured. Leave this empty to keep it."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:493
+#: src/Admin/settings/MetaConversions.js:519
 msgid "The token is write-only and will not be shown again."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:508
-#: src/Admin/settings/MetaConversions.js:730
+#: src/Admin/settings/MetaConversions.js:538
+#: src/Admin/settings/MetaConversions.js:766
 msgid "Clear access token"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:515
+#: src/Admin/settings/MetaConversions.js:545
 msgid "Test Events code"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:531
+#: src/Admin/settings/MetaConversions.js:562
 msgid "Save Meta settings"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:554
-msgid "Configure the dataset ID, access token, and Test Events code before sending a test event."
+#: src/Admin/settings/MetaConversions.js:597
+msgid "Discard changes"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:562
-msgid "Save your changes before sending a test event — testing now would use the previously saved configuration, not what you just typed."
-msgstr ""
-
-#: src/Admin/settings/MetaConversions.js:583
+#: src/Admin/settings/MetaConversions.js:619
 msgid "Latest test result"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:592
+#: src/Admin/settings/MetaConversions.js:628
 msgid "Recent test sends"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:596
+#: src/Admin/settings/MetaConversions.js:632
 msgid "No test events sent yet."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:617
+#: src/Admin/settings/MetaConversions.js:653
 msgid "Recent delivery outcomes"
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:624
+#: src/Admin/settings/MetaConversions.js:660
 msgid "No delivery attempts yet."
 msgstr ""
 
-#: src/Admin/settings/MetaConversions.js:735
+#: src/Admin/settings/MetaConversions.js:771
 msgid "Clear the Meta access token? Conversion delivery will stop until a new token is saved."
 msgstr ""
 
