@@ -9,47 +9,63 @@ import { ExternalLink, Notice, Spinner } from '@wordpress/components';
 /**
  * Internal dependencies
  */
+import AddNotification from './AddNotification.js';
 import BulkEmailChannel from './BulkEmailChannel.js';
 import IndividualEmailChannel from './IndividualEmailChannel.js';
 import TelegramChannel from './TelegramChannel.js';
 import { PATH, errorMessage } from './shared.js';
 
 /**
- * The notification channels, in display order. A new channel adds its
- * section here and its payload under the same key in the REST response.
+ * The section of each notification kind. A new kind adds its section here
+ * and its configurations' `type` in the REST response.
  */
-const CHANNELS = [
-	{ key: 'telegram', Component: TelegramChannel },
-	{ key: 'bulk_email', Component: BulkEmailChannel },
-	{ key: 'individual_email', Component: IndividualEmailChannel },
-];
+const SECTIONS = {
+	telegram: TelegramChannel,
+	bulk_email: BulkEmailChannel,
+	individual_email: IndividualEmailChannel,
+};
 
 /**
- * Apply a read of the page payload, keeping each channel saved after the
- * read was issued: the read may not include that save.
+ * Apply a read of the page payload, keeping each configuration saved or
+ * added after the read was issued: the read may not include that change.
  *
  * @param {Object|null} current   Shown payload.
  * @param {Object}      next      Payload read from the server.
  * @param {number}      requested Number the read was issued with.
- * @param {Object}      saved     Number of each channel's last save.
+ * @param {Object}      saved     Number of each configuration's last save, by ID.
  * @return {Object} Payload to show.
  */
 export function mergeRead( current, next, requested, saved ) {
 	if ( ! current ) {
 		return next;
 	}
-	const channels = { ...next.channels };
-	Object.keys( saved ).forEach( ( key ) => {
-		if ( saved[ key ] > requested && current.channels[ key ] ) {
-			channels[ key ] = current.channels[ key ];
+	const newer = ( id ) => saved[ id ] > requested;
+	const shown = Object.fromEntries(
+		current.configurations.map( ( configuration ) => [
+			configuration.id,
+			configuration,
+		] )
+	);
+	const configurations = next.configurations.map( ( configuration ) =>
+		newer( configuration.id ) && shown[ configuration.id ]
+			? shown[ configuration.id ]
+			: configuration
+	);
+	current.configurations.forEach( ( configuration ) => {
+		if (
+			newer( configuration.id ) &&
+			! next.configurations.some( ( { id } ) => id === configuration.id )
+		) {
+			configurations.push( configuration );
 		}
 	} );
-	return { ...next, channels };
+	return { ...next, configurations };
 }
 
 /**
- * Event notifications admin page: one section per channel, each with its own
- * settings, save button, preview, test and delivery status.
+ * Event notifications admin page: one section per notification, each with
+ * its own name, settings, save button, preview, test and delivery status,
+ * and a section to add another one.
  *
  * @param {Object}      props
  * @param {string|null} props.sourcesUrl Event Sources admin page, when it exists.
@@ -61,7 +77,8 @@ export default function EventNotifications( { sourcesUrl } ) {
 
 	// Orders reads against saves. `issued` numbers every read and save as it
 	// happens, `applied` is the newest read shown, and `saved` the number of
-	// each channel's last save: a read issued before that save may predate it.
+	// each configuration's last save or addition, by ID: a read issued
+	// before it may predate it.
 	const requests = useRef( { issued: 0, applied: 0, saved: {} } );
 
 	const load = useCallback( () => {
@@ -109,22 +126,32 @@ export default function EventNotifications( { sourcesUrl } ) {
 		};
 	}, [ refresh ] );
 
-	// A save answers with the whole page, but only the saved channel is
-	// taken from it: the others may have changed since, on this page too.
-	const onSaved = useCallback( ( key, channel ) => {
-		requests.current.saved[ key ] = ++requests.current.issued;
+	// A save answers with the saved configuration only; an added one goes
+	// last, in creation order.
+	const onSaved = useCallback( ( id, configuration ) => {
+		requests.current.saved[ id ] = ++requests.current.issued;
 		setData( ( current ) => ( {
 			...current,
-			channels: { ...current.channels, [ key ]: channel },
+			configurations: current.configurations.some(
+				( shown ) => shown.id === id
+			)
+				? current.configurations.map( ( shown ) =>
+						shown.id === id ? configuration : shown
+					)
+				: [ ...current.configurations, configuration ],
 		} ) );
 	}, [] );
+	const onAdded = useCallback(
+		( configuration ) => onSaved( configuration.id, configuration ),
+		[ onSaved ]
+	);
 
 	return (
 		<div className="wrap fair-events-notifications">
 			<h1>{ __( 'Event notifications', 'fair-events' ) }</h1>
 			<p>
 				{ __(
-					'Send the week’s events automatically. Each channel has its own schedule and its own choice of events, and is saved on its own.',
+					'Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind.',
 					'fair-events'
 				) }
 			</p>
@@ -156,15 +183,22 @@ export default function EventNotifications( { sourcesUrl } ) {
 			) }
 
 			{ data &&
-				CHANNELS.map( ( { key, Component } ) => (
-					<Component
-						key={ key }
-						channel={ data.channels[ key ] }
-						sources={ data.sources }
-						pages={ data.pages }
-						onSaved={ onSaved }
-					/>
-				) ) }
+				data.configurations.map( ( configuration ) => {
+					const Section = SECTIONS[ configuration.type ];
+					return Section ? (
+						<Section
+							key={ configuration.id }
+							channel={ configuration }
+							sources={ data.sources }
+							pages={ data.pages }
+							onSaved={ onSaved }
+						/>
+					) : null;
+				} ) }
+
+			{ data && (
+				<AddNotification types={ data.types } onAdded={ onAdded } />
+			) }
 
 			{ data && (
 				<p className="description">

@@ -11,7 +11,7 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import EventNotifications from '../EventNotifications.js';
+import EventNotifications, { mergeRead } from '../EventNotifications.js';
 import { tokenStatus } from '../TelegramChannel.js';
 import { TelegramMessage } from '../TelegramPreview.js';
 
@@ -86,26 +86,58 @@ function individualEmail( overrides ) {
 	};
 }
 
-function payload( channels = {} ) {
+// The configuration each kind started with: its ID is the kind.
+function configuration( type, overrides ) {
+	const build = {
+		telegram,
+		bulk_email: bulkEmail,
+		individual_email: individualEmail,
+	}[ type ];
+	return { id: type, type, name: '', ...build( overrides ) };
+}
+
+function payload( channels = {}, extra = [] ) {
 	return {
 		sources: [
 			{ slug: 'city', name: 'City events' },
 			{ slug: 'members', name: 'Member events' },
 		],
 		pages: [ { id: 12, title: 'Calendar' } ],
-		channels: {
-			telegram: telegram( channels.telegram ),
-			bulk_email: bulkEmail( channels.bulk_email ),
-			individual_email: individualEmail( channels.individual_email ),
+		types: {
+			telegram: { state: 'active', state_message: '' },
+			bulk_email: { state: 'active', state_message: '' },
+			individual_email: { state: 'active', state_message: '' },
 		},
+		configurations: [
+			configuration( 'telegram', channels.telegram ),
+			configuration( 'bulk_email', channels.bulk_email ),
+			configuration( 'individual_email', channels.individual_email ),
+			...extra,
+		],
 	};
+}
+
+const SAVE_ROUTE = /\/configurations\/([a-z0-9_-]+)$/;
+
+// A save answers with the configuration it saved; handlers may describe
+// it as the whole page it belongs to.
+function savedConfiguration( response, id ) {
+	return response?.configurations
+		? response.configurations.find( ( shown ) => shown.id === id )
+		: response;
 }
 
 function mockApi( initial, handlers = {} ) {
 	apiFetch.mockImplementation( ( options ) => {
 		const key = `${ options.method || 'GET' } ${ options.path }`;
 		if ( handlers[ key ] ) {
-			return handlers[ key ]( options );
+			const result = handlers[ key ]( options );
+			const saved = options.path.match( SAVE_ROUTE );
+			return 'POST' === options.method && saved
+				? result.then( ( response ) =>
+						savedConfiguration( response, saved[ 1 ] )
+					)
+				: result;
 		}
 		return Promise.resolve( initial );
 	} );
@@ -199,7 +231,8 @@ describe( 'EventNotifications', () => {
 	it( 'saves only the Telegram section and keeps unsaved bulk email edits', async () => {
 		const saved = payload( { telegram: { time_of_day: '18:00' } } );
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/telegram` ]: () => Promise.resolve( saved ),
+			[ `POST ${ PATH }/configurations/telegram` ]: () =>
+				Promise.resolve( saved ),
 		} );
 
 		const tg = within( section( 'Telegram' ) );
@@ -220,18 +253,21 @@ describe( 'EventNotifications', () => {
 		expect(
 			await tg.findByText( 'Telegram settings saved.' )
 		).toBeInTheDocument();
-		expect( calls( 'POST', `${ PATH }/telegram` )[ 0 ][ 0 ].data ).toEqual(
-			{
-				enabled: false,
-				source_slug: 'city',
-				page_id: 12,
-				day_of_week: 5,
-				time_of_day: '18:00',
-				week_scope: 'next',
-				chat_ids: '@fair_channel',
-			}
-		);
-		expect( calls( 'POST', `${ PATH }/bulk-email` ) ).toHaveLength( 0 );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/telegram` )[ 0 ][ 0 ].data
+		).toEqual( {
+			name: '',
+			enabled: false,
+			source_slug: 'city',
+			page_id: 12,
+			day_of_week: 5,
+			time_of_day: '18:00',
+			week_scope: 'next',
+			chat_ids: '@fair_channel',
+		} );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/bulk_email` )
+		).toHaveLength( 0 );
 		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue(
 			'Draft subject'
@@ -242,7 +278,8 @@ describe( 'EventNotifications', () => {
 	it( 'saves the bulk email wording with its own button', async () => {
 		const saved = payload( { bulk_email: { outro: 'See you' } } );
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/bulk-email` ]: () => Promise.resolve( saved ),
+			[ `POST ${ PATH }/configurations/bulk_email` ]: () =>
+				Promise.resolve( saved ),
 		} );
 
 		const mail = within( section( 'Bulk email' ) );
@@ -258,7 +295,8 @@ describe( 'EventNotifications', () => {
 			await mail.findByText( 'Bulk email settings saved.' )
 		).toBeInTheDocument();
 		expect(
-			calls( 'POST', `${ PATH }/bulk-email` )[ 0 ][ 0 ].data
+			calls( 'POST', `${ PATH }/configurations/bulk_email` )[ 0 ][ 0 ]
+				.data
 		).toMatchObject( {
 			source_slug: 'members',
 			subject: 'This week: {week_start}',
@@ -266,12 +304,14 @@ describe( 'EventNotifications', () => {
 			outro: 'See you',
 			skip_empty: true,
 		} );
-		expect( calls( 'POST', `${ PATH }/telegram` ) ).toHaveLength( 0 );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/telegram` )
+		).toHaveLength( 0 );
 	} );
 
 	it( 'shows a failed save inside the section it belongs to', async () => {
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/telegram` ]: () =>
+			[ `POST ${ PATH }/configurations/telegram` ]: () =>
 				Promise.reject( { message: 'Choose an event feed.' } ),
 		} );
 
@@ -294,7 +334,7 @@ describe( 'EventNotifications', () => {
 		await renderPage(
 			payload( { telegram: { chat_ids: [ '@one', '@two' ] } } ),
 			{
-				[ `POST ${ PATH }/telegram/test` ]: () =>
+				[ `POST ${ PATH }/configurations/telegram/test` ]: () =>
 					Promise.resolve( {
 						success: false,
 						results: [
@@ -360,7 +400,7 @@ describe( 'EventNotifications', () => {
 
 	it( 'sends the bulk email test to the administrator only', async () => {
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/bulk-email/test` ]: () =>
+			[ `POST ${ PATH }/configurations/bulk_email/test` ]: () =>
 				Promise.resolve( { sent_to: 'admin@example.test' } ),
 		} );
 
@@ -380,7 +420,7 @@ describe( 'EventNotifications', () => {
 
 	it( 'previews the next email with its subject', async () => {
 		await renderPage( payload(), {
-			[ `GET ${ PATH }/bulk-email/preview` ]: () =>
+			[ `GET ${ PATH }/configurations/bulk_email/preview` ]: () =>
 				Promise.resolve( {
 					subject: 'This week: 2026-10-12',
 					html: '<p>Concert night</p>',
@@ -579,7 +619,8 @@ describe( 'Independent editors', () => {
 	it( 'keeps three drafts apart while one of them is saved', async () => {
 		const saved = payload( { bulk_email: { subject: 'Saved subject' } } );
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/bulk-email` ]: () => Promise.resolve( saved ),
+			[ `POST ${ PATH }/configurations/bulk_email` ]: () =>
+				Promise.resolve( saved ),
 		} );
 
 		const tg = within( section( 'Telegram' ) );
@@ -631,7 +672,7 @@ describe( 'Independent editors', () => {
 	it( 'keeps edits typed while a save is pending', async () => {
 		const request = deferred();
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/telegram` ]: () => request.promise,
+			[ `POST ${ PATH }/configurations/telegram` ]: () => request.promise,
 		} );
 
 		const tg = within( section( 'Telegram' ) );
@@ -645,7 +686,9 @@ describe( 'Independent editors', () => {
 		fireEvent.click( save );
 
 		// Pending: no second request, and the test waits for the save.
-		expect( calls( 'POST', `${ PATH }/telegram` ) ).toHaveLength( 1 );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/telegram` )
+		).toHaveLength( 1 );
 		expect( save ).toBeDisabled();
 		expect(
 			tg.getByRole( 'button', { name: 'Send test to the saved chats' } )
@@ -676,7 +719,7 @@ describe( 'Independent editors', () => {
 	it( 'keeps the draft after a failed save and lets it be retried', async () => {
 		let attempt = 0;
 		await renderPage( payload(), {
-			[ `POST ${ PATH }/bulk-email` ]: () =>
+			[ `POST ${ PATH }/configurations/bulk_email` ]: () =>
 				0 === attempt++
 					? Promise.reject( { message: 'Choose an event feed.' } )
 					: Promise.resolve(
@@ -843,7 +886,7 @@ describe( 'Independent editors', () => {
 		await renderPage( payload(), {
 			[ `GET ${ PATH }` ]: () =>
 				0 === reads++ ? Promise.resolve( payload() ) : read.promise,
-			[ `POST ${ PATH }/telegram` ]: () =>
+			[ `POST ${ PATH }/configurations/telegram` ]: () =>
 				Promise.resolve(
 					payload( { telegram: { time_of_day: '18:00' } } )
 				),
@@ -878,7 +921,8 @@ describe( 'Independent editors', () => {
 		let current = payload();
 		await renderPage( current, {
 			[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
-			[ `GET ${ PATH }/bulk-email/preview` ]: () => preview.promise,
+			[ `GET ${ PATH }/configurations/bulk_email/preview` ]: () =>
+				preview.promise,
 		} );
 
 		const mail = within( section( 'Bulk email' ) );
@@ -908,7 +952,7 @@ describe( 'Independent editors', () => {
 
 	it( 'clears a shown preview once the settings are saved', async () => {
 		await renderPage( payload(), {
-			[ `GET ${ PATH }/individual-email/preview` ]: () =>
+			[ `GET ${ PATH }/configurations/individual_email/preview` ]: () =>
 				Promise.resolve( {
 					recipient: 'organizer@example.test',
 					subject: 'Organizer update: 2026-10-12',
@@ -917,7 +961,7 @@ describe( 'Independent editors', () => {
 					skip_empty: true,
 					week_title: '12–18 Oct 2026',
 				} ),
-			[ `POST ${ PATH }/individual-email` ]: () =>
+			[ `POST ${ PATH }/configurations/individual_email` ]: () =>
 				Promise.resolve(
 					payload( { individual_email: { subject: 'New' } } )
 				),
@@ -949,7 +993,7 @@ describe( 'Independent editors', () => {
 } );
 
 describe( 'Individual email', () => {
-	const INDIVIDUAL = `${ PATH }/individual-email`;
+	const INDIVIDUAL = `${ PATH }/configurations/individual_email`;
 
 	it( 'has its own recipient, schedule and event selection', async () => {
 		await renderPage();
@@ -1025,6 +1069,7 @@ describe( 'Individual email', () => {
 			await own.findByText( 'Individual email settings saved.' )
 		).toBeInTheDocument();
 		expect( calls( 'POST', INDIVIDUAL )[ 0 ][ 0 ].data ).toEqual( {
+			name: '',
 			enabled: true,
 			recipient: 'team@example.test',
 			event_selection: 'city',
@@ -1036,8 +1081,12 @@ describe( 'Individual email', () => {
 			intro: 'Team,',
 			outro: '',
 		} );
-		expect( calls( 'POST', `${ PATH }/bulk-email` ) ).toHaveLength( 0 );
-		expect( calls( 'POST', `${ PATH }/telegram` ) ).toHaveLength( 0 );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/bulk_email` )
+		).toHaveLength( 0 );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/telegram` )
+		).toHaveLength( 0 );
 		expect( own.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 		expect( mail.getByLabelText( 'Subject' ) ).toHaveValue(
 			'Draft subject'
@@ -1187,9 +1236,9 @@ describe( 'Individual email', () => {
 				'Test email handed over for delivery to organizer@example.test. The schedule is unchanged.'
 			)
 		).toBeInTheDocument();
-		expect( calls( 'POST', `${ PATH }/bulk-email/test` ) ).toHaveLength(
-			0
-		);
+		expect(
+			calls( 'POST', `${ PATH }/configurations/bulk_email/test` )
+		).toHaveLength( 0 );
 	} );
 
 	it( 'explains the saved empty-week policy in the preview', async () => {
@@ -1366,6 +1415,159 @@ describe( 'Individual email', () => {
 				name: 'Save individual email settings',
 			} )
 		).toBeEnabled();
+	} );
+} );
+
+describe( 'Several notifications of one kind', () => {
+	const MEMBERS = `${ PATH }/configurations/members-id`;
+
+	function members( overrides ) {
+		return {
+			...configuration( 'telegram', {
+				source_slug: 'members',
+				chat_ids: [ '@members' ],
+				time_of_day: '07:00',
+			} ),
+			id: 'members-id',
+			name: 'Members',
+			...overrides,
+		};
+	}
+
+	it( 'shows each one under its own name and kind', async () => {
+		await renderPage( payload( {}, [ members() ] ) );
+
+		const named = within( section( 'Members' ) );
+		expect( named.getByText( 'Telegram' ) ).toBeInTheDocument();
+		expect( named.getByLabelText( 'Name' ) ).toHaveValue( 'Members' );
+		expect( named.getByLabelText( 'Send at' ) ).toHaveValue( '07:00' );
+		expect(
+			within( section( 'Telegram' ) ).getByLabelText( 'Send at' )
+		).toHaveValue( '10:30' );
+	} );
+
+	it( 'saves one by its ID and keeps the other draft of the same kind', async () => {
+		await renderPage( payload( {}, [ members() ] ), {
+			[ `POST ${ MEMBERS }` ]: ( options ) =>
+				Promise.resolve(
+					members( {
+						name: options.data.name,
+						time_of_day: options.data.time_of_day,
+					} )
+				),
+		} );
+
+		const first = within( section( 'Telegram' ) );
+		const named = within( section( 'Members' ) );
+		fireEvent.change( first.getByLabelText( 'Send at' ), {
+			target: { value: '12:00' },
+		} );
+		fireEvent.change( named.getByLabelText( 'Send at' ), {
+			target: { value: '19:15' },
+		} );
+		fireEvent.change( named.getByLabelText( 'Name' ), {
+			target: { value: 'Members only' },
+		} );
+		fireEvent.click(
+			named.getByRole( 'button', { name: 'Save Telegram settings' } )
+		);
+
+		expect(
+			await screen.findByRole( 'heading', { name: 'Members only' } )
+		).toBeInTheDocument();
+		expect( calls( 'POST', MEMBERS )[ 0 ][ 0 ].data ).toMatchObject( {
+			name: 'Members only',
+			time_of_day: '19:15',
+		} );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/telegram` )
+		).toHaveLength( 0 );
+		expect( first.getByLabelText( 'Send at' ) ).toHaveValue( '12:00' );
+		expect( first.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+	} );
+
+	it( 'adds a paused notification of the chosen kind', async () => {
+		await renderPage( payload(), {
+			[ `POST ${ PATH }/configurations` ]: ( options ) =>
+				Promise.resolve(
+					members( {
+						name: options.data.name,
+						enabled: false,
+					} )
+				),
+		} );
+
+		const add = within(
+			screen
+				.getByRole( 'heading', { name: 'Add a notification' } )
+				.closest( '.fair-events-notifications__channel' )
+		);
+		fireEvent.change( add.getByLabelText( 'Kind' ), {
+			target: { value: 'telegram' },
+		} );
+		fireEvent.change( add.getByLabelText( 'Name' ), {
+			target: { value: ' Members ' },
+		} );
+		fireEvent.click(
+			add.getByRole( 'button', { name: 'Add notification' } )
+		);
+
+		expect(
+			await screen.findByText( /“Members” was added above/ )
+		).toBeInTheDocument();
+		const named = within( section( 'Members' ) );
+		expect(
+			named.getByLabelText( 'Post the weekly summary to Telegram' )
+		).not.toBeChecked();
+		expect(
+			calls( 'POST', `${ PATH }/configurations` )[ 0 ][ 0 ].data
+		).toEqual( { type: 'telegram', name: 'Members' } );
+		expect( add.getByLabelText( 'Name' ) ).toHaveValue( '' );
+	} );
+
+	it( 'explains why a kind cannot be added now', async () => {
+		const page = payload();
+		page.types.bulk_email = {
+			state: 'inactive',
+			state_message:
+				'The weekly email is paused because Fair Audience is not active.',
+		};
+		await renderPage( page );
+
+		const add = within(
+			screen
+				.getByRole( 'heading', { name: 'Add a notification' } )
+				.closest( '.fair-events-notifications__channel' )
+		);
+		fireEvent.change( add.getByLabelText( 'Kind' ), {
+			target: { value: 'bulk_email' },
+		} );
+
+		expect(
+			add.getByRole( 'button', { name: 'Add notification' } )
+		).toBeDisabled();
+		expect(
+			add.getByText(
+				'The weekly email is paused because Fair Audience is not active.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps a notification added after a read was issued', () => {
+		const current = payload( {}, [ members() ] );
+		const read = payload();
+
+		const shown = mergeRead( current, read, 3, { 'members-id': 4 } );
+
+		expect( shown.configurations.map( ( { id } ) => id ) ).toEqual( [
+			'telegram',
+			'bulk_email',
+			'individual_email',
+			'members-id',
+		] );
+		expect(
+			mergeRead( current, read, 5, { 'members-id': 4 } ).configurations
+		).toHaveLength( 3 );
 	} );
 } );
 

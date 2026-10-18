@@ -33,6 +33,10 @@ if ( ! defined( 'MB_IN_BYTES' ) ) {
 	define( 'MB_IN_BYTES', 1048576 );
 }
 
+if ( ! defined( 'DB_NAME' ) ) {
+	define( 'DB_NAME', 'fair_test' );
+}
+
 // Minimal WordPress function stubs so pure settings logic can be unit tested
 // without a full WP bootstrap. Tests seed values via $GLOBALS['_fair_test_options'].
 if ( ! function_exists( 'sanitize_key' ) ) {
@@ -99,6 +103,50 @@ if ( ! function_exists( 'delete_option' ) ) {
 		$existed = isset( $GLOBALS['_fair_test_options'] ) && array_key_exists( $name, $GLOBALS['_fair_test_options'] );
 		unset( $GLOBALS['_fair_test_options'][ $name ] );
 		return $existed;
+	}
+}
+
+if ( ! function_exists( 'add_option' ) ) {
+	/**
+	 * Stub of WordPress add_option(): stores only an option that is not set yet.
+	 *
+	 * @param string $name     Option name.
+	 * @param mixed  $value    Value to store.
+	 * @param string $unused   Deprecated argument.
+	 * @param mixed  $autoload Ignored.
+	 * @return bool Whether the option was added.
+	 */
+	function add_option( $name, $value = '', $unused = '', $autoload = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- signature matches WordPress.
+		if ( isset( $GLOBALS['_fair_test_options'] ) && array_key_exists( $name, $GLOBALS['_fair_test_options'] ) ) {
+			return false;
+		}
+		$GLOBALS['_fair_test_options'][ $name ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_cache_delete' ) ) {
+	/**
+	 * Stub of WordPress wp_cache_delete() — there is no object cache here.
+	 *
+	 * @param string $key   Cache key.
+	 * @param string $group Cache group.
+	 * @return bool
+	 */
+	function wp_cache_delete( $key, $group = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- signature matches WordPress.
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_generate_uuid4' ) ) {
+	/**
+	 * Stub of WordPress wp_generate_uuid4().
+	 *
+	 * @return string
+	 */
+	function wp_generate_uuid4() {
+		$hex = bin2hex( random_bytes( 16 ) );
+		return sprintf( '%s-%s-4%s-a%s-%s', substr( $hex, 0, 8 ), substr( $hex, 8, 4 ), substr( $hex, 13, 3 ), substr( $hex, 17, 3 ), substr( $hex, 20, 12 ) );
 	}
 }
 
@@ -897,6 +945,44 @@ if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
 	 */
 	function wp_clear_scheduled_hook( $hook ) {
 		return wp_unschedule_hook( $hook );
+	}
+}
+
+if ( ! function_exists( '_get_cron_array' ) ) {
+	/**
+	 * Stub of WordPress _get_cron_array(), built from $GLOBALS['_fair_test_cron'].
+	 *
+	 * @return array Timestamp => hook => key => event.
+	 */
+	function _get_cron_array() {
+		$crons = array();
+		foreach ( $GLOBALS['_fair_test_cron'] ?? array() as $hook => $events ) {
+			foreach ( $events as $event ) {
+				$crons[ $event[0] ][ $hook ][ md5( serialize( $event[1] ) ) ] = array( 'args' => $event[1] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- mirrors WordPress's cron keys.
+			}
+		}
+		return $crons;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_event' ) ) {
+	/**
+	 * Stub of WordPress wp_unschedule_event().
+	 *
+	 * @param int    $timestamp When the event runs.
+	 * @param string $hook      Hook name.
+	 * @param array  $args      Hook arguments.
+	 * @return bool
+	 */
+	function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
+		foreach ( $GLOBALS['_fair_test_cron'][ $hook ] ?? array() as $index => $event ) {
+			if ( (int) $event[0] === (int) $timestamp && $event[1] === $args ) {
+				unset( $GLOBALS['_fair_test_cron'][ $hook ][ $index ] );
+				$GLOBALS['_fair_test_cron'][ $hook ] = array_values( $GLOBALS['_fair_test_cron'][ $hook ] );
+				return true;
+			}
+		}
+		return false;
 	}
 }
 

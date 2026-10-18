@@ -242,4 +242,14 @@ class Fair_Test_WPDB {
 		}
 		return $this->cols[ $prepared['table'] ][ $prepared['id'] ] ?? array();
 	}
+
+	/**
+	 * Stub of wpdb::get_var() — every session lock is granted.
+	 *
+	 * @param array|mixed $prepared Value returned by prepare().
+	 * @return string|null
+	 */
+	public function get_var( $prepared ) {
+		return is_array( $prepared ) && str_contains( $prepared['query'], '_LOCK(' ) ? '1' : null;
+	}
 }

@@ -10,12 +10,21 @@ namespace FairEvents\Notifications;
 defined( 'WPINC' ) || die;
 
 /**
- * Stores the weekly email's schedule, event selection and wording.
+ * Reads and saves one bulk email configuration's schedule, event selection
+ * and wording, kept by {@see Configurations}.
  *
  * The settings stay saved while Fair Audience, which sends the email, is
  * inactive.
  */
 class BulkEmailSettings {
+	/**
+	 * Where the single bulk email configuration was saved before
+	 * configurations had IDs. Once it is migrated, the option holds a
+	 * read-only summary of every bulk email configuration instead
+	 * ({@see self::refresh_summary()}): Fair Audience reads its `enabled` flag
+	 * to decide whether to offer the weekly-summary preference, also while
+	 * this plugin is inactive.
+	 */
 	public const OPTION       = 'fair_events_notification_bulk_email';
 	public const WEEK_SCOPES  = array( 'current', 'next' );
 	public const DEFAULT_DAY  = 1;
@@ -41,25 +50,28 @@ class BulkEmailSettings {
 	}
 
 	/**
-	 * Saved settings as stored, normalized onto the defaults.
+	 * A configuration's saved settings, normalized onto the defaults.
 	 *
 	 * Translates nothing, so it is safe before `init`.
 	 *
-	 * @return array
+	 * @param string $id Configuration ID.
+	 * @return array Defaults when the configuration does not exist.
 	 */
-	public static function stored() {
-		return self::sanitize( get_option( self::OPTION, array() ) );
+	public static function stored( $id ) {
+		return self::sanitize( Configurations::settings( $id ) );
 	}
 
 	/**
-	 * Saved settings, with the default subject where none was saved.
+	 * A configuration's saved settings, with the default subject where none
+	 * was saved.
 	 *
 	 * Call on or after `init`: the default subject is translated.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array
 	 */
-	public static function get() {
-		$settings = self::stored();
+	public static function get( $id ) {
+		$settings = self::stored( $id );
 		if ( '' === $settings['subject'] ) {
 			$settings['subject'] = __( 'This week’s events: {week_start} – {week_end}', 'fair-events' );
 		}
@@ -68,13 +80,46 @@ class BulkEmailSettings {
 	}
 
 	/**
-	 * Save settings.
+	 * Save a configuration's settings.
 	 *
-	 * @param array $settings Settings.
+	 * @param string $id       Configuration ID.
+	 * @param array  $settings Settings.
 	 * @return void
 	 */
-	public static function save( array $settings ) {
-		update_option( self::OPTION, self::sanitize( $settings ), false );
+	public static function save( $id, array $settings ) {
+		Configurations::update( $id, array( 'settings' => self::sanitize( $settings ) ) );
+		self::refresh_summary();
+	}
+
+	/**
+	 * Write the summary Fair Audience reads: whether any bulk email
+	 * configuration is on, and whether any was set up (an event feed chosen).
+	 *
+	 * One weekly-summary preference covers every bulk email configuration,
+	 * so a participant who opts out receives none of them.
+	 *
+	 * @return void
+	 */
+	public static function refresh_summary() {
+		$configurations = Configurations::all( Configurations::BULK_EMAIL );
+		$enabled        = false;
+		$configured     = false;
+		foreach ( $configurations as $configuration ) {
+			$settings   = self::sanitize( $configuration['settings'] );
+			$enabled    = $enabled || $settings['enabled'];
+			$configured = $configured || $settings['enabled'] || '' !== $settings['source_slug'];
+		}
+
+		update_option(
+			self::OPTION,
+			array(
+				'summary'        => true,
+				'enabled'        => $enabled,
+				'configured'     => $configured,
+				'configurations' => count( $configurations ),
+			),
+			false
+		);
 	}
 
 	/**

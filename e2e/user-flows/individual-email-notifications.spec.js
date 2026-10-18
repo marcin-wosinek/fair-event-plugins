@@ -35,13 +35,6 @@ const RECIPIENT = 'organizer-1852@example.test';
 const OTHER_RECIPIENT = 'second-1852@example.test';
 const OPTIONAL_PLUGINS =
 	'fair-audience-experimental fair-audience fair-events-experimental';
-const OPTIONS = [
-	'fair_events_notification_individual_email',
-	'fair_events_notification_individual_email_next_run',
-	'fair_events_notification_individual_email_runs',
-	'fair_events_notification_individual_email_last_sent_week',
-	'fair_e2e_fail_mail_to',
-];
 
 function fixture(args) {
 	return runScript(
@@ -52,16 +45,13 @@ function fixture(args) {
 }
 
 function resetState() {
-	for (const option of OPTIONS) {
-		wpCli(`option delete ${option}`, { allowFailure: true });
-	}
-	wpCli('cron event delete fair_events_notification_individual_email', {
-		allowFailure: true,
-	});
-	// A send week claimed by an earlier run would block this run's send.
-	wpCli(
-		`eval 'global $wpdb; $wpdb->delete( $wpdb->prefix . "fair_events_weekly_notification_deliveries", array( "provider" => "individual_email" ) );'`,
-		{ allowFailure: true }
+	wpCli('option delete fair_e2e_fail_mail_to', { allowFailure: true });
+	// Settings, queued sends, history and the claimed send weeks of the
+	// individual email this site started with.
+	runScript(
+		'notification-configurations-fixture.php',
+		'E2E_NOTIFICATION_CONFIGURATIONS',
+		'reset individual_email'
 	);
 	resetCapturedMail();
 }

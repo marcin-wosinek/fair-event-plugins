@@ -27,6 +27,7 @@ import useNotificationEditor from './useNotificationEditor.js';
 const LOCAL_EVENTS = '@local';
 
 const EDITABLE_FIELDS = [
+	'name',
 	'enabled',
 	'recipient',
 	'event_selection',
@@ -96,8 +97,6 @@ function selectionOptions( sources, current ) {
  * checked before a save, which is also where the test goes.
  */
 const ADAPTER = {
-	key: 'individual_email',
-	route: 'individual-email',
 	fields: EDITABLE_FIELDS,
 	toForm: ( channel ) =>
 		Object.fromEntries(

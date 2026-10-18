@@ -108,6 +108,29 @@ class WeeklyDigestMailerTest extends TestCase {
 	}
 
 	/**
+	 * With several bulk email configurations, Fair Events' summary says
+	 * whether any is on, and whether any was set up.
+	 */
+	public function test_summary_of_every_configuration_decides() {
+		$GLOBALS['_fair_test_options'][ WeeklyDigestMailer::OWNERSHIP_OPTION ] = array( 'bulk_email' => array( 'migrated_at' => '2026-10-11 12:00:00' ) );
+		$GLOBALS['_fair_test_options'][ WeeklyDigestMailer::SETTINGS_OPTION ]  = array(
+			'summary'        => true,
+			'enabled'        => false,
+			'configured'     => false,
+			'configurations' => 1,
+		);
+
+		$this->assertFalse( WeeklyDigestMailer::is_enabled() );
+		$this->assertFalse( WeeklyDigestMailer::is_configured() );
+
+		$GLOBALS['_fair_test_options'][ WeeklyDigestMailer::SETTINGS_OPTION ]['configured'] = true;
+		$GLOBALS['_fair_test_options'][ WeeklyDigestMailer::SETTINGS_OPTION ]['enabled']    = true;
+
+		$this->assertTrue( WeeklyDigestMailer::is_enabled() );
+		$this->assertTrue( WeeklyDigestMailer::is_configured() );
+	}
+
+	/**
 	 * The option names are a contract with Fair Events.
 	 */
 	public function test_option_names_match_fair_events() {

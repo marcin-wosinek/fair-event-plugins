@@ -38,17 +38,18 @@ const MISSING_STATUS =
 
 function resetState() {
 	for (const option of [
-		'fair_events_notification_telegram',
-		'fair_events_notification_telegram_next_run',
 		'fair_events_experimental_weekly_telegram_token',
 		'fair_e2e_telegram_requests',
 	]) {
 		wpCli(`option delete ${option}`, { allowFailure: true });
 	}
-	// Turning the channel on queues its next send.
-	wpCli('cron event delete fair_events_notification_telegram', {
-		allowFailure: true,
-	});
+	// Settings and queued sends of the Telegram summary this site started
+	// with: turning it on queues its next send.
+	runScript(
+		'notification-configurations-fixture.php',
+		'E2E_NOTIFICATION_CONFIGURATIONS',
+		'reset telegram'
+	);
 }
 
 function telegramRequests() {

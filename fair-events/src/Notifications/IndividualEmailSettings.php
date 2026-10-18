@@ -19,6 +19,8 @@ defined( 'WPINC' ) || die;
  * user or a Fair Audience participant.
  */
 class IndividualEmailSettings {
+	// Where the single configuration was saved before configurations had IDs.
+	// Read only when migrating it.
 	public const OPTION = 'fair_events_notification_individual_email';
 
 	/**
@@ -52,25 +54,28 @@ class IndividualEmailSettings {
 	}
 
 	/**
-	 * Saved settings as stored, normalized onto the defaults.
+	 * A configuration's saved settings, normalized onto the defaults.
 	 *
 	 * Translates nothing, so it is safe before `init`.
 	 *
-	 * @return array
+	 * @param string $id Configuration ID.
+	 * @return array Defaults when the configuration does not exist.
 	 */
-	public static function stored() {
-		return self::sanitize( get_option( self::OPTION, array() ) );
+	public static function stored( $id ) {
+		return self::sanitize( Configurations::settings( $id ) );
 	}
 
 	/**
-	 * Saved settings, with the default subject where none was saved.
+	 * A configuration's saved settings, with the default subject where none
+	 * was saved.
 	 *
 	 * Call on or after `init`: the default subject is translated.
 	 *
+	 * @param string $id Configuration ID.
 	 * @return array
 	 */
-	public static function get() {
-		$settings = self::stored();
+	public static function get( $id ) {
+		$settings = self::stored( $id );
 		if ( '' === $settings['subject'] ) {
 			$settings['subject'] = __( 'This week’s events: {week_start} – {week_end}', 'fair-events' );
 		}
@@ -79,13 +84,14 @@ class IndividualEmailSettings {
 	}
 
 	/**
-	 * Save settings.
+	 * Save a configuration's settings.
 	 *
-	 * @param array $settings Settings.
+	 * @param string $id       Configuration ID.
+	 * @param array  $settings Settings.
 	 * @return void
 	 */
-	public static function save( array $settings ) {
-		update_option( self::OPTION, self::sanitize( $settings ), false );
+	public static function save( $id, array $settings ) {
+		Configurations::update( $id, array( 'settings' => self::sanitize( $settings ) ) );
 	}
 
 	/**

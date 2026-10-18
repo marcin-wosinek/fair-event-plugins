@@ -58,7 +58,7 @@ if ( 'source' === $fixture_step ) {
 		'sourceSlug' => 'e2e-weekly-' . $suffix,
 	);
 } elseif ( 'event' === $fixture_step ) {
-	$settings    = TelegramSettings::get();
+	$settings    = TelegramSettings::get( 'telegram' );
 	$week        = WeekSchedule::target_week( TelegramDispatcher::now(), $settings['week_scope'], TelegramDispatcher::start_of_week() );
 	$event_title = 'E2E *Weekly* _Jam_ [x](y) `z` & 🎉 ' . wp_rand( 1000, 9999 );
 	$event_id    = fair_e2e_create_event( $event_title, '<!-- wp:paragraph --><p>Weekly summary fixture.</p><!-- /wp:paragraph -->' );

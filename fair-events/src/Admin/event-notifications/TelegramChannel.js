@@ -21,6 +21,7 @@ import { sourceOptions } from './shared.js';
 import useNotificationEditor from './useNotificationEditor.js';
 
 const EDITABLE_FIELDS = [
+	'name',
 	'enabled',
 	'source_slug',
 	'page_id',
@@ -35,8 +36,6 @@ const EDITABLE_FIELDS = [
  * a list, and a test reports a result per chat.
  */
 const ADAPTER = {
-	key: 'telegram',
-	route: 'telegram',
 	fields: EDITABLE_FIELDS,
 	toForm: ( channel ) => ( {
 		...Object.fromEntries(

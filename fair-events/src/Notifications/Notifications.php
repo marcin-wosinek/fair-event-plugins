@@ -10,12 +10,16 @@ namespace FairEvents\Notifications;
 defined( 'WPINC' ) || die;
 
 /**
- * Loads the weekly event notification channels this plugin owns.
+ * Loads the weekly event notification types this plugin owns.
  *
- * Each channel has its own settings, schedule, cron hook and history, so one
- * channel failing, being turned off or waiting for a plugin update never
- * affects another. A new channel adds its own classes here and a section to
- * the Event notifications page.
+ * Each type can have several configurations ({@see Configurations}), each
+ * with its own settings, schedule, history and delivery records, so one
+ * configuration failing, being turned off or waiting for a plugin update
+ * never affects another. A new type adds its own classes here and a section
+ * to the Event notifications page.
+ *
+ * A type's worker runs only once its single settings were migrated to a
+ * configuration ({@see ConfigurationMigration}).
  */
 class Notifications {
 
@@ -40,17 +44,19 @@ class Notifications {
 
 		if ( Ownership::owns( Ownership::TELEGRAM ) ) {
 			TelegramConnector::init();
-			TelegramDispatcher::init();
+			if ( ConfigurationMigration::is_migrated( Configurations::TELEGRAM ) ) {
+				TelegramDispatcher::init();
+			}
 		}
 
-		if ( Ownership::owns( Ownership::BULK_EMAIL ) ) {
+		if ( Ownership::owns( Ownership::BULK_EMAIL ) && ConfigurationMigration::is_migrated( Configurations::BULK_EMAIL ) ) {
 			BulkEmailDispatcher::init();
 		}
 
-		// Sent by this plugin alone, so there is no former owner to wait for,
-		// and no migration that would have created the delivery record.
-		DeliveryLog::maybe_install();
-		IndividualEmailDispatcher::init();
+		// Sent by this plugin alone, so there is no former owner to wait for.
+		if ( ConfigurationMigration::is_migrated( Configurations::INDIVIDUAL_EMAIL ) ) {
+			IndividualEmailDispatcher::init();
+		}
 
 		add_action(
 			'rest_api_init',
@@ -69,8 +75,8 @@ class Notifications {
 	 * @return void
 	 */
 	public static function deactivate() {
-		TelegramDispatcher::unschedule();
-		BulkEmailDispatcher::unschedule();
-		IndividualEmailDispatcher::unschedule();
+		TelegramDispatcher::unschedule_all();
+		BulkEmailDispatcher::unschedule_all();
+		IndividualEmailDispatcher::unschedule_all();
 	}
 }

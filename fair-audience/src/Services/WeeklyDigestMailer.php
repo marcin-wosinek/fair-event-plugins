@@ -25,6 +25,12 @@ class WeeklyDigestMailer {
 
 	/**
 	 * Option where Fair Events keeps the weekly email settings.
+	 *
+	 * Fair Events can have several weekly email configurations. Since it
+	 * gave them IDs, this option holds a read-only summary of all of them
+	 * (`summary`, `enabled`, `configured`) instead of one configuration's
+	 * settings; `enabled` means at least one is on. One weekly-summary
+	 * preference covers every configuration.
 	 */
 	const SETTINGS_OPTION = 'fair_events_notification_bulk_email';
 
@@ -108,8 +114,9 @@ class WeeklyDigestMailer {
 	 * Whether the weekly email is turned on, so its preference can be offered.
 	 *
 	 * Read from the stored settings, so participants keep their preference
-	 * while Fair Events is inactive. Before Fair Events took the email over,
-	 * this plugin's own former setting still says.
+	 * while Fair Events is inactive: on while any of Fair Events' weekly email
+	 * configurations is on. Before Fair Events took the email over, this
+	 * plugin's own former setting still says.
 	 *
 	 * @return bool
 	 */
@@ -127,7 +134,12 @@ class WeeklyDigestMailer {
 	 * @return bool
 	 */
 	public static function is_configured() {
-		return false !== get_option( self::SETTINGS_OPTION, false ) || false !== get_option( self::LEGACY_OPTION, false );
+		$settings = get_option( self::SETTINGS_OPTION, false );
+		if ( is_array( $settings ) && ! empty( $settings['summary'] ) ) {
+			return ! empty( $settings['configured'] ) || false !== get_option( self::LEGACY_OPTION, false );
+		}
+
+		return false !== $settings || false !== get_option( self::LEGACY_OPTION, false );
 	}
 
 	/**

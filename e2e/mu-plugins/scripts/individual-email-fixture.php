@@ -37,14 +37,14 @@ $out          = array();
 
 $fixture_state = static function () {
 	return array(
-		'nextRun'      => IndividualEmailDispatcher::next_run(),
-		'lastSentWeek' => (string) get_option( IndividualEmailDispatcher::LAST_SENT_OPTION, '' ),
-		'runs'         => IndividualEmailDispatcher::runs(),
+		'nextRun'      => IndividualEmailDispatcher::next_run( 'individual_email' ),
+		'lastSentWeek' => BulkEmailDispatcher::last_sent_week( 'individual_email' ),
+		'runs'         => IndividualEmailDispatcher::runs( 'individual_email' ),
 	);
 };
 
 if ( 'events' === $fixture_step ) {
-	$settings = IndividualEmailSettings::get();
+	$settings = IndividualEmailSettings::get( 'individual_email' );
 	$now      = BulkEmailDispatcher::now();
 	$week     = IndividualEmailDispatcher::event_week( $settings['week_scope'], $now );
 	$start    = gmdate( 'Y-m-d', strtotime( $week['start'] . ' +3 days' ) ) . ' 18:00:00';
@@ -79,7 +79,7 @@ if ( 'events' === $fixture_step ) {
 		'weekStart'  => $week['start'],
 	);
 } elseif ( 'run' === $fixture_step ) {
-	IndividualEmailDispatcher::handle( BulkEmailDispatcher::iso_week( BulkEmailDispatcher::now() ) );
+	IndividualEmailDispatcher::handle( BulkEmailDispatcher::iso_week( BulkEmailDispatcher::now() ), 'individual_email' );
 	$out = $fixture_state();
 } elseif ( 'state' === $fixture_step ) {
 	$out = $fixture_state();

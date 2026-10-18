@@ -1,25 +1,30 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import {
 	Button,
 	Card,
 	CardBody,
 	CardHeader,
 	Notice,
+	TextControl,
 } from '@wordpress/components';
 
 /**
- * Frame of one channel section: heading with the unsaved marker, notices,
- * and the save, preview and test buttons. The channel supplies its own
- * controls, explanations, results and history.
+ * Frame of one notification section: heading with its name, kind and the
+ * unsaved marker, the name field, notices, and the save, preview and test
+ * buttons. The kind supplies its own controls, explanations, results and
+ * history.
+ *
+ * A notification without a name is headed by its kind's name, so the
+ * notification each kind started with keeps its familiar heading.
  *
  * Preview and test use the saved settings, so both wait for unsaved changes;
  * the channel explains that in `notes`.
  *
  * @param {Object}      props
- * @param {string}      props.title              Channel name.
+ * @param {string}      props.title              Name of the notification's kind.
  * @param {Object}      props.editor             Result of useNotificationEditor().
  * @param {string|null} props.unavailableMessage Why the channel cannot be edited now, if it cannot.
  * @param {string}      props.saveLabel          Save button label.
@@ -44,10 +49,16 @@ export default function NotificationEditor( {
 	after,
 } ) {
 	const { dirty, pending } = editor;
+	const name = editor.saved.name || '';
 
 	const header = (
-		<CardHeader>
-			<h2>{ title }</h2>
+		<CardHeader className="fair-events-notifications__header">
+			<h2>{ name || title }</h2>
+			{ name && (
+				<span className="fair-events-notifications__kind">
+					{ title }
+				</span>
+			) }
 			{ dirty && (
 				<span className="fair-events-notifications__unsaved">
 					{ __( 'Unsaved changes', 'fair-events' ) }
@@ -81,6 +92,22 @@ export default function NotificationEditor( {
 		<Card className="fair-events-notifications__channel">
 			{ header }
 			<CardBody>
+				<TextControl
+					className="fair-events-notifications__name"
+					label={ __( 'Name', 'fair-events' ) }
+					help={ sprintf(
+						/* translators: %s: name of the notification's kind, e.g. "Telegram" */
+						__(
+							'Tells this notification apart from the others on this page. Leave it empty to show “%s”.',
+							'fair-events'
+						),
+						title
+					) }
+					value={ editor.form.name || '' }
+					onChange={ ( value ) => editor.setField( 'name', value ) }
+					maxLength={ 100 }
+				/>
+
 				{ children }
 
 				{ editor.conflict && (

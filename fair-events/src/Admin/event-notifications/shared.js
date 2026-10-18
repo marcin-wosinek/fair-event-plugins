@@ -6,6 +6,17 @@ import { useEffect } from '@wordpress/element';
 
 export const PATH = '/fair-events/v1/event-notifications';
 
+/**
+ * Notification kinds, in the order they are offered. Mirrors
+ * Configurations::TYPES; a configuration without a name is shown by its
+ * kind's name.
+ */
+export const TYPE_LABELS = {
+	telegram: __( 'Telegram', 'fair-events' ),
+	bulk_email: __( 'Bulk email', 'fair-events' ),
+	individual_email: __( 'Individual email', 'fair-events' ),
+};
+
 export const DAYS = [
 	{ value: '1', label: __( 'Monday', 'fair-events' ) },
 	{ value: '2', label: __( 'Tuesday', 'fair-events' ) },

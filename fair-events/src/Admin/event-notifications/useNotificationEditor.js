@@ -41,27 +41,29 @@ export function reconcileDraft( fields, current, saved ) {
 }
 
 /**
- * Draft, save, preview and test lifecycle of one notification channel.
+ * Draft, save, preview and test lifecycle of one notification configuration.
  *
  * Every call keeps its own state, so editing, saving or previewing one
- * channel never touches another channel's draft or requests.
+ * configuration never touches another one's draft or requests, also when
+ * both are of the same kind. Requests go to the configuration's own routes,
+ * by its ID.
  *
  * @param {Object}   props
- * @param {Object}   props.channel             Saved channel payload.
- * @param {Object}   props.adapter             What differs per channel.
- * @param {string}   props.adapter.key         Key under `channels` in the page payload.
- * @param {string}   props.adapter.route       Route below the notifications path.
+ * @param {Object}   props.channel             Saved configuration payload, with its `id`.
+ * @param {Object}   props.adapter             What differs per kind.
  * @param {Array}    props.adapter.fields      Editable fields.
  * @param {Function} props.adapter.toForm      Channel payload to editable state.
  * @param {Function} [props.adapter.toPayload] Editable state to request data.
  * @param {Function} [props.adapter.problem]   Why the draft cannot be saved, or null.
  * @param {Function} props.adapter.testNotice  Test response to a notice.
  * @param {Object}   props.adapter.messages    Save and test messages.
- * @param {Function} props.onSaved             Receives the key and the saved channel payload.
+ * @param {Function} props.onSaved             Receives the ID and the saved configuration payload.
  * @return {Object} Draft, derived state and actions.
  */
 export default function useNotificationEditor( { channel, adapter, onSaved } ) {
-	const { fields, toForm, route, messages } = adapter;
+	const { fields, toForm, messages } = adapter;
+	const { id } = channel;
+	const route = `${ PATH }/configurations/${ id }`;
 	const saved = toForm( channel );
 	const savedKey = JSON.stringify(
 		fields.map( ( field ) => saved[ field ] )
@@ -127,14 +129,13 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 		start( 'save' );
 		setNotice( null );
 		try {
-			const next = await apiFetch( {
-				path: `${ PATH }/${ route }`,
+			const savedChannel = await apiFetch( {
+				path: route,
 				method: 'POST',
 				data: adapter.toPayload
 					? adapter.toPayload( submitted )
 					: submitted,
 			} );
-			const savedChannel = next.channels[ adapter.key ];
 			const savedForm = toForm( savedChannel );
 			// Edits typed while the request ran stay in the draft.
 			setDraft( ( current ) => ( {
@@ -144,7 +145,7 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 				baseline: savedForm,
 				conflict: false,
 			} ) );
-			onSaved( adapter.key, savedChannel );
+			onSaved( id, savedChannel );
 			setNotice( { status: 'success', message: messages.saved } );
 		} catch ( error ) {
 			setNotice( {
@@ -163,7 +164,7 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 		start( 'preview' );
 		let next;
 		try {
-			next = await apiFetch( { path: `${ PATH }/${ route }/preview` } );
+			next = await apiFetch( { path: `${ route }/preview` } );
 		} catch ( error ) {
 			next = {
 				error: errorMessage(
@@ -187,7 +188,7 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 		setNotice( null );
 		try {
 			const response = await apiFetch( {
-				path: `${ PATH }/${ route }/test`,
+				path: `${ route }/test`,
 				method: 'POST',
 			} );
 			setTestResult( response );

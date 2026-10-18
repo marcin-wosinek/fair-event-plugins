@@ -13,8 +13,6 @@ const PATH = '/fair-events/v1/event-notifications';
 const FIELDS = [ 'subject', 'time_of_day' ];
 
 const ADAPTER = {
-	key: 'sample',
-	route: 'sample',
 	fields: FIELDS,
 	toForm: ( payload ) => ( {
 		subject: payload.subject,
@@ -35,7 +33,12 @@ const ADAPTER = {
 };
 
 function channel( overrides ) {
-	return { subject: 'Weekly', time_of_day: '08:00', ...overrides };
+	return {
+		id: 'sample',
+		subject: 'Weekly',
+		time_of_day: '08:00',
+		...overrides,
+	};
 }
 
 function deferred() {
@@ -125,16 +128,14 @@ describe( 'useNotificationEditor', () => {
 
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: `${ PATH }/sample`,
+			path: `${ PATH }/configurations/sample`,
 			method: 'POST',
 			data: { subject: 'Next', time_of_day: '08:00' },
 		} );
 		expect( result.current.pending.save ).toBe( true );
 
 		await act( async () => {
-			request.resolve( {
-				channels: { sample: channel( { subject: 'Next' } ) },
-			} );
+			request.resolve( channel( { subject: 'Next' } ) );
 			await first;
 		} );
 
@@ -169,7 +170,7 @@ describe( 'useNotificationEditor', () => {
 		await act( () => result.current.sendTest() );
 
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: `${ PATH }/sample/test`,
+			path: `${ PATH }/configurations/sample/test`,
 			method: 'POST',
 		} );
 		expect( result.current.notice ).toEqual( {
