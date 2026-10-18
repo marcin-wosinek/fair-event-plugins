@@ -1,6 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Fragment, useEffect, useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -329,7 +329,32 @@ export default function MetaConversions( { onNotice } ) {
 		'' !== token ||
 		config.dataset_id !== savedConfig.dataset_id ||
 		config.test_event_code !== savedConfig.test_event_code;
-	const testingDisabled = busy || !! sendingEvent || ! ready || dirty;
+	let testingBlocker = null;
+	if ( ! ready ) {
+		testingBlocker = __(
+			'Configure the dataset ID, access token, and Test Events code before sending a test event.',
+			'fair-events-experimental'
+		);
+	} else if ( dirty ) {
+		testingBlocker = __(
+			'Save or discard your changes before sending a test event — testing now would use the previously saved configuration, not what is in the fields. A browser password manager can fill the access token field for you.',
+			'fair-events-experimental'
+		);
+	} else if ( busy ) {
+		testingBlocker = __(
+			'Wait until the Meta settings are saved.',
+			'fair-events-experimental'
+		);
+	} else if ( sendingEvent ) {
+		testingBlocker = __(
+			'Wait until the current test event is sent.',
+			'fair-events-experimental'
+		);
+	}
+	const discardChanges = () => {
+		setConfig( savedConfig );
+		setToken( '' );
+	};
 	const save = async () => {
 		setBusy( true );
 		try {
@@ -470,6 +495,7 @@ export default function MetaConversions( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 					value={ config.dataset_id }
+					autoComplete="off"
 					onChange={ ( dataset_id ) =>
 						setConfig( { ...config, dataset_id } )
 					}
@@ -496,6 +522,10 @@ export default function MetaConversions( { onNotice } ) {
 								)
 					}
 					value={ token }
+					// Keep password managers from filling a saved login in.
+					autoComplete="new-password"
+					data-1p-ignore
+					data-lpignore="true"
 					onChange={ setToken }
 				/>
 				{ config.token_configured && (
@@ -517,6 +547,7 @@ export default function MetaConversions( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 					value={ config.test_event_code }
+					autoComplete="off"
 					onChange={ ( test_event_code ) =>
 						setConfig( { ...config, test_event_code } )
 					}
@@ -534,39 +565,44 @@ export default function MetaConversions( { onNotice } ) {
 						) }
 					</Button>
 				</p>
-				<p>
-					{ TEST_EVENTS.map( ( { name, label }, index ) => (
-						<Fragment key={ name }>
+				<Flex
+					wrap
+					justify="flex-start"
+					gap={ 2 }
+					style={ { marginBottom: '8px' } }
+				>
+					{ TEST_EVENTS.map( ( { name, label } ) => (
+						<FlexItem key={ name }>
 							<Button
 								variant="secondary"
 								onClick={ () => sendTest( name ) }
 								isBusy={ sendingEvent === name }
-								disabled={ testingDisabled }
+								disabled={ !! testingBlocker }
 							>
 								{ label }
 							</Button>
-							{ index < TEST_EVENTS.length - 1 && ' ' }
-						</Fragment>
+						</FlexItem>
 					) ) }
-				</p>
-				{ ! ready && (
-					<p className="description">
-						{ __(
-							'Configure the dataset ID, access token, and Test Events code before sending a test event.',
-							'fair-events-experimental'
-						) }
-					</p>
+				</Flex>
+				{ testingBlocker && (
+					<p className="description">{ testingBlocker }</p>
 				) }
-				{ ready && dirty && (
-					<p className="description">
-						{ __(
-							'Save your changes before sending a test event — testing now would use the previously saved configuration, not what you just typed.',
-							'fair-events-experimental'
-						) }
+				{ dirty && (
+					<p>
+						<Button
+							variant="secondary"
+							onClick={ discardChanges }
+							disabled={ busy || !! sendingEvent }
+						>
+							{ __(
+								'Discard changes',
+								'fair-events-experimental'
+							) }
+						</Button>
 					</p>
 				) }
 				<MetaCalendarTest
-					disabled={ testingDisabled }
+					disabledReason={ testingBlocker }
 					sending={ sendingEvent === CALENDAR_EVENT }
 					onSend={ ( data ) => sendTest( CALENDAR_EVENT, data ) }
 				/>

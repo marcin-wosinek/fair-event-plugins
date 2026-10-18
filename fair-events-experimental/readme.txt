@@ -60,8 +60,10 @@ The Experimental settings tab can send one `FairEventCalendarClick` straight to 
 
 1. Save the dataset ID, access token and the Test Events code shown in Events Manager → Test events.
 2. In the same browser, open a public event page with the Meta Pixel active and accept marketing cookies, so the browser has an `_fbp` (or `_fbc`) cookie and marketing consent. The WP Consent API plugin must be active; the settings page reads consent through it, as event pages do.
-3. Reload Fair Events → Settings → Experimental, search for an event under "Calendar click test", choose it (and a date, for a series), and select "Send FairEventCalendarClick test".
+3. Open Fair Events → Settings → Experimental. Under "Calendar click test", open the Event list, which shows the latest events with an event page, or type to search by title. Choose the event (and a date, for a series), and select "Send FairEventCalendarClick test". If consent or the Meta cookie was missing, fix it in the same browser and select "Check this browser again"; the chosen event is kept.
 4. In Events Manager → Test events, the event should appear as Processed, received from Server.
+
+A disabled test button always has its reason next to it. The PageView, InitiateCheckout and Purchase tests only need the saved configuration: choosing an event or this browser's consent never disables them. Unsaved edits do, because a test would use the saved values. Browser password managers can fill a saved login into the access token field, so if testing says there are unsaved changes you did not make, select "Discard changes".
 
 The test uses the Test Events code and a fresh event ID. It does not create a delivery row, and routine events never carry the Test Events code.
 
