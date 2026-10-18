@@ -44,7 +44,12 @@ class EventPricingSchedule {
 
 		$now         = current_time( 'mysql' );
 		$default_end = TicketAvailability::compute_default_sale_end( EventDates::get_last_occurrence_boundary( $event_date_id ) );
-		$periods     = TicketAvailability::resolve_periods( $sale_periods, $now, $default_end );
+		$periods     = TicketAvailability::resolve_periods(
+			$sale_periods,
+			$now,
+			$default_end,
+			TicketAvailability::resolve_default_sale_start( $event_date_id, $now )
+		);
 
 		return self::build_schedule( $ticket_types, $periods, $price_rows, $now );
 	}

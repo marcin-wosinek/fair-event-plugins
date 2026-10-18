@@ -158,6 +158,8 @@ test.describe( 'Fair Events JSON-LD structured data', () => {
 		expect( data.offers ).toHaveLength( 1 );
 		expect( data.offers[ 0 ].price ).toBe( '15' );
 		expect( data.offers[ 0 ].priceCurrency ).toBeTruthy();
+		// An active window's explicit start is still published (#1841).
+		expect( data.offers[ 0 ].validFrom ).toMatch( /^\d{4}-\d{2}-\d{2}T/ );
 		expect( data.isAccessibleForFree ).toBeUndefined();
 
 		// Cleanup.
@@ -303,7 +305,7 @@ test.describe( 'Fair Events JSON-LD structured data', () => {
 		} ).catch( () => {} );
 	} );
 
-	test( 'emits a free offer + isAccessibleForFree for a free RSVP ticket type with no price row', async ( {
+	test( 'emits no offer for a ticket type without a sale period or price row', async ( {
 		page,
 	} ) => {
 		test.setTimeout( 120_000 );
@@ -337,9 +339,9 @@ test.describe( 'Fair Events JSON-LD structured data', () => {
 		} );
 		const postId = post.event_id || post.post_id;
 
-		// Free RSVP/signup: a ticket type with no sale period and no price row
-		// (the "gratis" case) — nothing that get_jsonld_offers() would treat as
-		// priced, yet the event is genuinely accessible for free.
+		// A ticket type with no sale period and no price row is unavailable,
+		// not free (#1624): it is never advertised, and never makes the event
+		// accessible for free (#1841 decision).
 		await apiFetch( page, {
 			path: `/fair-events/v1/event-dates/${ eventDate.id }/tickets`,
 			method: 'PUT',
@@ -353,11 +355,8 @@ test.describe( 'Fair Events JSON-LD structured data', () => {
 		const permalink = post.link || `/?p=${ postId }`;
 		const data = await getJsonLd( page, permalink );
 
-		expect( data.offers ).toHaveLength( 1 );
-		expect( data.offers[ 0 ].price ).toBe( '0' );
-		expect( data.offers[ 0 ][ '@type' ] ).toBe( 'Offer' );
-		expect( data.offers[ 0 ].validFrom ).toBeUndefined();
-		expect( data.isAccessibleForFree ).toBe( true );
+		expect( data.offers ).toBeUndefined();
+		expect( data.isAccessibleForFree ).toBeUndefined();
 
 		// Cleanup.
 		await apiFetch( page, {

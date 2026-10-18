@@ -64,29 +64,69 @@ class TicketAvailability {
 	}
 
 	/**
+	 * Compute the lazy default sale_start: the earlier of the site-local day
+	 * the event was created and today, at 00:00:00 site time. Anchoring
+	 * to the creation day keeps the assumed start fixed as days pass, so a
+	 * past period keeps its displayed range (issue #1841). A missing or
+	 * invalid creation time falls back to today.
+	 *
+	 * @param int|null $created_timestamp Unix timestamp of the event (or series master) creation, or null.
+	 * @param string   $now               Current site datetime ('Y-m-d H:i:s').
+	 * @return string Default sale_start ('Y-m-d H:i:s'), never later than today.
+	 */
+	public static function compute_default_sale_start( $created_timestamp, $now ) {
+		$today = substr( $now, 0, 10 );
+
+		if ( empty( $created_timestamp ) || (int) $created_timestamp <= 0 ) {
+			return $today . ' 00:00:00';
+		}
+
+		$created_day = ( new \DateTimeImmutable( '@' . (int) $created_timestamp ) )
+			->setTimezone( wp_timezone() )
+			->format( 'Y-m-d' );
+
+		return min( $created_day, $today ) . ' 00:00:00';
+	}
+
+	/**
+	 * Resolve the lazy default sale_start for an event date from the database.
+	 *
+	 * @param int    $event_date_id Event date ID; a generated occurrence uses its series master's creation.
+	 * @param string $now           Current site datetime ('Y-m-d H:i:s').
+	 * @return string Default sale_start ('Y-m-d H:i:s').
+	 */
+	public static function resolve_default_sale_start( $event_date_id, $now ) {
+		return self::compute_default_sale_start( EventDates::get_creation_timestamp( $event_date_id ), $now );
+	}
+
+	/**
 	 * Resolve each period's effective sale_start/sale_end according to its
 	 * position in the sequence, without mutating the originals. Pure →
 	 * unit-testable without a database.
 	 *
-	 * Only the first period may infer a missing start: it becomes the
-	 * current site-local calendar day at midnight, and only while that day
-	 * precedes the period's effective end — an already-elapsed period never
-	 * reactivates. Only the last period may infer a missing end: it becomes
-	 * $default_end when one is available. A missing boundary anywhere else
-	 * (an interior period, or a first/last period with nothing to infer
-	 * from) is left null so pick_active_period()/pick_upcoming_period()
-	 * never select it — no historical sentinel is used, so an expired or
-	 * misconfigured period can never look active.
+	 * Only the first period may infer a missing start: it becomes
+	 * $default_start (see compute_default_sale_start()), or the current
+	 * site-local calendar day at midnight when none is given, as long as
+	 * that day precedes the period's effective end. A period that has
+	 * already ended keeps its inferred start so its range stays visible; it
+	 * is never selected as active, because its end has passed. Only the last
+	 * period may infer a missing end: it becomes $default_end when one is
+	 * available. A missing boundary anywhere else (an interior period, or a
+	 * first/last period with nothing to infer from) is left null so
+	 * pick_active_period()/pick_upcoming_period() never select it — no
+	 * historical sentinel is used, so an expired or misconfigured period can
+	 * never look active.
 	 *
-	 * @param object[]    $periods     Sale periods with sale_start/sale_end strings, in sort order.
-	 * @param string      $now         Current site datetime ('Y-m-d H:i:s'), comparable lexically.
-	 * @param string|null $default_end Lazy default sale_end for the last period ('Y-m-d H:i:s'), or null.
+	 * @param object[]    $periods       Sale periods with sale_start/sale_end strings, in sort order.
+	 * @param string      $now           Current site datetime ('Y-m-d H:i:s'), comparable lexically.
+	 * @param string|null $default_end   Lazy default sale_end for the last period ('Y-m-d H:i:s'), or null.
+	 * @param string|null $default_start Lazy default sale_start for the first period ('Y-m-d H:i:s'), or null for today.
 	 * @return object[] Periods with resolvable boundaries filled in; explicit values untouched, unresolved ones null.
 	 */
-	public static function resolve_periods( $periods, $now, $default_end ) {
+	public static function resolve_periods( $periods, $now, $default_end, $default_start = null ) {
 		$resolved   = array();
 		$last_index = count( $periods ) - 1;
-		$today      = substr( $now, 0, 10 ) . ' 00:00:00';
+		$start      = $default_start ?? substr( $now, 0, 10 ) . ' 00:00:00';
 
 		foreach ( $periods as $index => $period ) {
 			$resolved_period = clone $period;
@@ -98,9 +138,9 @@ class TicketAvailability {
 			if ( empty( $resolved_period->sale_start ) ) {
 				$can_infer_start = 0 === $index
 					&& ! empty( $resolved_period->sale_end )
-					&& $today < $resolved_period->sale_end;
+					&& $start < $resolved_period->sale_end;
 
-				$resolved_period->sale_start = $can_infer_start ? $today : null;
+				$resolved_period->sale_start = $can_infer_start ? $start : null;
 			}
 
 			$resolved[] = $resolved_period;
@@ -177,7 +217,8 @@ class TicketAvailability {
 	 * still to come, in a gap before a later period, with no periods
 	 * configured, and whenever a boundary is unresolved — a missing end, or
 	 * a missing start anywhere but on the first period, whose start is only
-	 * left unresolved once its own end has passed (see resolve_periods()).
+	 * left unresolved when its default start is not before its own end (see
+	 * resolve_periods()).
 	 * Callers keep their "temporarily unavailable" treatment for all of
 	 * those.
 	 *
@@ -212,15 +253,16 @@ class TicketAvailability {
 	 * periods. Pure — split out from resolve_sale_period_context() for unit
 	 * testing without a database.
 	 *
-	 * @param object[]    $periods     Configured sale periods.
-	 * @param string      $now         Current site datetime.
-	 * @param string|null $default_end Lazy default sale end.
-	 * @param bool        $continues   Whether the continues_pricing_period fallback is enabled.
+	 * @param object[]    $periods       Configured sale periods.
+	 * @param string      $now           Current site datetime.
+	 * @param string|null $default_end   Lazy default sale end.
+	 * @param bool        $continues     Whether the continues_pricing_period fallback is enabled.
+	 * @param string|null $default_start Lazy default sale start, or null for today.
 	 * @return array{active_period: object|null, upcoming_period: object|null, sale_period_count: int, sales_closed: bool}
 	 */
-	public static function resolve_period_context_from_periods( array $periods, $now, $default_end, $continues = false ) {
+	public static function resolve_period_context_from_periods( array $periods, $now, $default_end, $continues = false, $default_start = null ) {
 		$period_count     = count( $periods );
-		$resolved_periods = self::resolve_periods( $periods, $now, $default_end );
+		$resolved_periods = self::resolve_periods( $periods, $now, $default_end, $default_start );
 
 		return array(
 			'active_period'     => self::pick_active_period( $resolved_periods, $now, $continues ),
@@ -240,9 +282,9 @@ class TicketAvailability {
 	 *
 	 * A period with an unset sale_start/sale_end is not necessarily "closed"
 	 * — the first period's start and the last period's end resolve lazily
-	 * (today's site-local date, and the day after the event/series' final
-	 * active occurrence, respectively), computed fresh on every call so they
-	 * automatically track series changes. An unset boundary anywhere else
+	 * (the event/series' creation day capped at today, and the day after the
+	 * event/series' final active occurrence, respectively), computed fresh on
+	 * every call so they automatically track series changes. An unset boundary anywhere else
 	 * stays unresolved and is never selected as active.
 	 *
 	 * @param int  $event_date_id Event date ID.
@@ -254,7 +296,13 @@ class TicketAvailability {
 		$sale_periods = TicketSalePeriod::get_all_by_event_date_id( $event_date_id );
 		$default_end  = self::compute_default_sale_end( EventDates::get_last_occurrence_boundary( $event_date_id ) );
 
-		return self::resolve_period_context_from_periods( $sale_periods, $now, $default_end, $continues );
+		return self::resolve_period_context_from_periods(
+			$sale_periods,
+			$now,
+			$default_end,
+			$continues,
+			self::resolve_default_sale_start( $event_date_id, $now )
+		);
 	}
 
 	/**

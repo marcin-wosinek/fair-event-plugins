@@ -1717,6 +1717,86 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 		expect( fromInput.placeholder ).toBe( '2026-07-15' );
 	} );
 
+	it( "shows the event's creation day as the missing start when it precedes today (#1841)", async () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		await renderTickets( {
+			initialData: {
+				...initialDataWithUnsetStart,
+				created_date: '2026-06-01',
+			},
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect(
+			screen.getByText( /From .*\b(1 June|June 1)\b.*\(default\)/ )
+		).toBeInTheDocument();
+		const fromInput = screen.getByLabelText( 'From' );
+		expect( fromInput.value ).toBe( '' );
+		expect( fromInput.placeholder ).toBe( '2026-06-01' );
+		expect(
+			screen.getByText(
+				'Starts automatically on the day this event was created.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps showing the creation-day start after the period has ended', async () => {
+		window.fairEventsManageEventData = { siteToday: '2026-08-10' };
+		await renderTickets( {
+			initialData: {
+				...initialDataWithUnsetStart,
+				created_date: '2026-06-01',
+			},
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect(
+			screen.getByText( /From .*\b(1 June|June 1)\b.*\(default\)/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'falls back to today when the creation day is later than today', async () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		await renderTickets( {
+			initialData: {
+				...initialDataWithUnsetStart,
+				created_date: '2026-07-20',
+			},
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: /Sale Periods/i } )
+		);
+
+		expect( screen.getByLabelText( 'From' ).placeholder ).toBe(
+			'2026-07-15'
+		);
+	} );
+
+	it( 'never saves the inferred creation-day start', async () => {
+		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
+		const payloadSaveRef = { current: null };
+		apiFetch.mockImplementation( () => new Promise( () => {} ) );
+		await renderTickets( {
+			initialData: {
+				...initialDataWithUnsetStart,
+				created_date: '2026-06-01',
+			},
+			payloadSaveRef,
+		} );
+
+		const payload = savePayload( payloadSaveRef );
+
+		expect( payload.sale_periods[ 0 ].sale_start ).toBeFalsy();
+		expect( payload ).not.toHaveProperty( 'created_date' );
+	} );
+
 	it( 'warns when the event has no usable schedule to resolve an automatic end', async () => {
 		const { container } = await renderTickets( {
 			initialData: {

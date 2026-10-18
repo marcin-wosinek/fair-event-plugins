@@ -9,6 +9,7 @@ namespace FairEvents\Tests\Helpers;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Helpers\EventSchema;
+use FairEvents\Services\TicketAvailability;
 
 /**
  * Unit tests for building a Schema.org ItemList from occurrence DTOs.
@@ -555,5 +556,117 @@ class EventSchemaTest extends TestCase {
 			'https://example.com/event'
 		);
 		$this->assertArrayNotHasKey( 'name', $free_offers[0] );
+	}
+
+	/**
+	 * Build a sale period stub for offer-window selection.
+	 *
+	 * @param int         $id         Period ID.
+	 * @param string|null $sale_start Sale start datetime.
+	 * @param string|null $sale_end   Sale end datetime.
+	 * @return object Period stub.
+	 */
+	private function sale_period( $id, $sale_start, $sale_end ) {
+		return (object) array(
+			'id'         => $id,
+			'sale_start' => $sale_start,
+			'sale_end'   => $sale_end,
+		);
+	}
+
+	/**
+	 * Select the offer period from raw periods, resolved like
+	 * get_jsonld_offers() does.
+	 *
+	 * @param object[] $periods       Raw sale periods.
+	 * @param string   $now           Current site datetime.
+	 * @param string   $default_start Default first-period start.
+	 * @return object|null Selected period.
+	 */
+	private function offer_period( array $periods, $now, $default_start = '2026-03-10 00:00:00' ) {
+		return EventSchema::select_offer_period(
+			TicketAvailability::resolve_periods( $periods, $now, null, $default_start ),
+			$now
+		);
+	}
+
+	/**
+	 * An active period with an explicit start is selected with that start,
+	 * which becomes validFrom (issue #1841).
+	 */
+	public function test_select_offer_period_active_explicit_start() {
+		$selected = $this->offer_period(
+			array( $this->sale_period( 1, '2026-04-01 00:00:00', '2026-06-01 00:00:00' ) ),
+			'2026-05-20 09:00:00'
+		);
+
+		$this->assertSame( 1, $selected->id );
+		$this->assertSame( '2026-04-01 00:00:00', $selected->sale_start );
+	}
+
+	/**
+	 * Before sales open, the upcoming period keeps its explicit future start.
+	 */
+	public function test_select_offer_period_future_explicit_start() {
+		$selected = $this->offer_period(
+			array( $this->sale_period( 1, '2026-07-01 00:00:00', '2026-08-01 00:00:00' ) ),
+			'2026-05-20 09:00:00'
+		);
+
+		$this->assertSame( '2026-07-01 00:00:00', $selected->sale_start );
+	}
+
+	/**
+	 * An empty first start uses the same inferred start as the price display.
+	 */
+	public function test_select_offer_period_empty_first_start_uses_default_start() {
+		$selected = $this->offer_period(
+			array( $this->sale_period( 1, null, '2026-06-01 00:00:00' ) ),
+			'2026-05-20 09:00:00'
+		);
+
+		$this->assertSame( '2026-03-10 00:00:00', $selected->sale_start );
+	}
+
+	/**
+	 * A paid window that has closed is not selected, so no offer is emitted;
+	 * neither is anything without a sale period.
+	 */
+	public function test_select_offer_period_none_when_closed_or_unconfigured() {
+		$this->assertNull(
+			$this->offer_period(
+				array( $this->sale_period( 1, null, '2026-04-01 00:00:00' ) ),
+				'2026-05-20 09:00:00'
+			)
+		);
+		$this->assertNull( $this->offer_period( array(), '2026-05-20 09:00:00' ) );
+	}
+
+	/**
+	 * The selected start reaches every emitted offer as validFrom, with the
+	 * site's offset.
+	 */
+	public function test_valid_from_of_inferred_start_reaches_offers() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		try {
+			$offers = EventSchema::build_offers_for_types(
+				array(
+					(object) array(
+						'id'   => 1,
+						'name' => 'General',
+					),
+				),
+				array( 1 => 15.0 ),
+				\FairEvents\Helpers\DateHelper::local_to_iso8601( '2026-03-10 00:00:00' ),
+				'EUR',
+				'https://example.com/event',
+				'2026-05-20 09:00:00'
+			);
+
+			$this->assertSame( '2026-03-10T00:00:00+01:00', $offers[0]['validFrom'] );
+		} finally {
+			unset( $GLOBALS['_fair_test_timezone'] );
+		}
 	}
 }

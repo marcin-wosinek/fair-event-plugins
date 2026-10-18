@@ -193,6 +193,34 @@ test.describe( 'TicketsController — sale period boundary validation (#1582)', 
 		expect( body.sale_periods[ 1 ].sale_end ).toBeNull();
 	} );
 
+	test( 'reports the creation day and keeps an open first start unsaved (#1841)', async () => {
+		const saved = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: basePayload( [
+					{
+						name: 'Open',
+						sale_start: null,
+						sale_end: '2039-01-01 00:00:00',
+					},
+				] ),
+			}
+		);
+		const savedBody = await saved.json();
+		expect( saved.ok(), JSON.stringify( savedBody ) ).toBeTruthy();
+		expect( savedBody.created_date ).toMatch( /^\d{4}-\d{2}-\d{2}$/ );
+
+		const loaded = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{ headers: adminHeaders }
+		);
+		const body = await loaded.json();
+		expect( loaded.ok(), JSON.stringify( body ) ).toBeTruthy();
+		expect( body.created_date ).toBe( savedBody.created_date );
+		expect( body.sale_periods[ 0 ].sale_start ).toBeNull();
+	} );
+
 	test( 'rejects a missing start on an interior/last period on update', async () => {
 		const response = await api.put(
 			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
