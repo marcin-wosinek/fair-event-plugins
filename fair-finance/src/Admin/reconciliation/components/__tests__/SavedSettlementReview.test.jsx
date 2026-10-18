@@ -198,3 +198,118 @@ test( 'a stale proposal requires a new preview before retrying confirmation', as
 		} )
 	).toBeDisabled();
 } );
+
+const optionLabels = () =>
+	Array.from( screen.getByLabelText( 'Bank entry' ).options ).map(
+		( option ) => option.textContent
+	);
+
+test( 'filters bank candidates by description and keeps a hidden selection', async () => {
+	const candidates = [
+		{
+			id: 8,
+			amount: '38.55',
+			entry_date: '2026-05-02',
+			description: 'Example payout',
+			score: 13,
+			reasons: [ 'The amount matches exactly.' ],
+		},
+		{
+			id: 9,
+			amount: '38.55',
+			entry_date: '2026-05-03',
+			description: 'TRF. STICHTING MOLLIE PAYMENTS REF.2605.01',
+			score: 13,
+			reasons: [ 'The amount matches exactly.' ],
+		},
+	];
+	const fallback = apiFetch.getMockImplementation();
+	apiFetch.mockImplementation( ( request ) =>
+		request.path.endsWith( '/candidates' )
+			? Promise.resolve( candidates )
+			: fallback( request )
+	);
+	await open();
+	expect( screen.getByLabelText( 'Filter by description' ) ).toHaveValue(
+		'trf. stichting mollie payments'
+	);
+	expect(
+		screen.getByText( 'Showing 1 of 2 bank candidates.' )
+	).toBeInTheDocument();
+	// The selected entry stays listed, selected and explained.
+	expect( screen.getByLabelText( 'Bank entry' ) ).toHaveValue( '8' );
+	expect( optionLabels().join( '\n' ) ).toContain( 'Example payout' );
+	expect(
+		screen.getByText( 'The amount matches exactly.' )
+	).toBeInTheDocument();
+	// Ambiguity is judged on the whole ranking, not the filtered list.
+	expect(
+		screen.getByText( /Several bank entries have equally strong evidence/ )
+	).toBeInTheDocument();
+
+	fireEvent.change( screen.getByLabelText( 'Filter by description' ), {
+		target: { value: 'no such payout' },
+	} );
+	expect(
+		screen.getByText( /No bank candidates match this filter/ )
+	).toBeInTheDocument();
+	expect( screen.getByLabelText( 'Bank entry' ) ).toHaveValue( '8' );
+	// Filtering is not a selection change: the reviewed proposal stays valid.
+	expect(
+		screen.getByRole( 'button', { name: 'Save as Partial' } )
+	).toBeDisabled();
+	await selectAndPreview();
+	fireEvent.change( screen.getByLabelText( 'Filter by description' ), {
+		target: { value: 'mollie' },
+	} );
+	expect(
+		screen.getByRole( 'button', { name: 'Confirm Fully reconciled' } )
+	).toBeEnabled();
+
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Show all candidates' } )
+	);
+	expect( screen.getByLabelText( 'Filter by description' ) ).toHaveValue(
+		''
+	);
+	expect(
+		screen.getByText( 'Showing 2 of 2 bank candidates.' )
+	).toBeInTheDocument();
+	expect( optionLabels() ).toHaveLength( 3 );
+} );
+
+test( 'opens with the bank entry chosen on the main screen', async () => {
+	render( <SavedSettlementReview settlementId="4" proposedEntryId="8" /> );
+	await screen.findByText( 'Reconcile settlement REF.2605.01' );
+	expect( apiFetch ).toHaveBeenCalledWith( {
+		path: '/fair-finance/v1/reconciliation/settlements/4/preview',
+		method: 'POST',
+		data: { entry_id: 8 },
+	} );
+	expect( screen.getByLabelText( 'Bank entry' ) ).toHaveValue( '8' );
+	expect( screen.queryByText( /was not applied/ ) ).not.toBeInTheDocument();
+} );
+
+test( 'keeps an existing association instead of the proposed bank entry', async () => {
+	const fallback = apiFetch.getMockImplementation();
+	apiFetch.mockImplementation( ( request ) =>
+		request.path.endsWith( '/preview' )
+			? Promise.resolve( {
+					...base,
+					bank: request.data ? { id: 9, amount: '38.55' } : base.bank,
+					decision: {
+						entry_id: 8,
+						state: 'partial',
+						current_state: 'partial',
+					},
+				} )
+			: fallback( request )
+	);
+	render( <SavedSettlementReview settlementId="4" proposedEntryId="9" /> );
+	await screen.findByText( /Bank entry #9 was not applied/ );
+	expect( screen.getByLabelText( 'Bank entry' ) ).toHaveValue( '8' );
+	expect( apiFetch ).toHaveBeenCalledWith( {
+		path: '/fair-finance/v1/reconciliation/settlements/4/preview',
+		method: 'POST',
+	} );
+} );

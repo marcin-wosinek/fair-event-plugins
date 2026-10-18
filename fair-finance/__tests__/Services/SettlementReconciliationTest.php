@@ -127,4 +127,90 @@ class SettlementReconciliationTest extends TestCase {
 		$items[0]['settlement_amount'] = '39.00';
 		$this->assertNotEmpty( Reconciliation::explain( $items, 'EUR' )['issues'] );
 	}
+
+	/**
+	 * A saved settlement row for scoring.
+	 *
+	 * @param array $extra Overrides.
+	 * @return array
+	 */
+	private function settlement( array $extra = array() ) {
+		return array_merge(
+			array(
+				'reference'  => 'PAY.2605.01',
+				'account_id' => 3,
+				'currency'   => 'EUR',
+				'settled_at' => '2026-05-02 00:00:00',
+			),
+			$extra
+		);
+	}
+
+	/**
+	 * A bank entry row with its confirmed context columns.
+	 *
+	 * @param array $extra Overrides.
+	 * @return array
+	 */
+	private function entry( array $extra = array() ) {
+		return array_merge(
+			array(
+				'description'        => 'TRF. STICHTING MOLLIE PAYMENTS pay.2605.01',
+				'amount'             => '38.55',
+				'entry_date'         => '2026-05-04',
+				'context_account_id' => null,
+				'context_currency'   => null,
+			),
+			$extra
+		);
+	}
+
+	/** Reference, exact amount and date are separate, visible evidence. */
+	public function test_score_explains_reference_amount_and_date() {
+		$result = Reconciliation::score( $this->settlement(), '38.55', $this->entry() );
+		$this->assertSame( 13, $result['score'] );
+		$this->assertCount( 3, $result['reasons'] );
+		$this->assertFalse( $result['context_mismatch'] );
+	}
+
+	/** Amounts compare exactly, and a distant date adds nothing. */
+	public function test_score_requires_exact_amount_and_near_date() {
+		$result = Reconciliation::score( $this->settlement( array( 'reference' => 'OTHER' ) ), '38.56', $this->entry( array( 'entry_date' => '2026-06-01' ) ) );
+		$this->assertSame( 0, $result['score'] );
+		$this->assertSame( array(), $result['reasons'] );
+	}
+
+	/** An unknown CSV-only payout amount never matches by amount. */
+	public function test_score_with_unknown_amount() {
+		$result = Reconciliation::score( $this->settlement( array( 'reference' => null ) ), null, $this->entry() );
+		$this->assertSame( 1, $result['score'] );
+	}
+
+	/** Confirmed context adds evidence when it agrees and flags a conflict otherwise. */
+	public function test_score_confirmed_context() {
+		$agrees = Reconciliation::score(
+			$this->settlement(),
+			'38.55',
+			$this->entry(
+				array(
+					'context_account_id' => '3',
+					'context_currency'   => 'EUR',
+				)
+			)
+		);
+		$this->assertSame( 19, $agrees['score'] );
+		$this->assertFalse( $agrees['context_mismatch'] );
+		$conflict = Reconciliation::score(
+			$this->settlement(),
+			'38.55',
+			$this->entry(
+				array(
+					'context_account_id' => '4',
+					'context_currency'   => 'USD',
+				)
+			)
+		);
+		$this->assertSame( 13, $conflict['score'] );
+		$this->assertTrue( $conflict['context_mismatch'] );
+	}
 }

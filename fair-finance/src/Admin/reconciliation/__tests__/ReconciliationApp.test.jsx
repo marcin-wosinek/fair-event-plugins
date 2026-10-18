@@ -451,3 +451,202 @@ describe( 'ReconciliationApp — links to the focused entry view (#1914)', () =>
 		);
 	} );
 } );
+
+describe( 'ReconciliationApp — saved settlement suggestions (#1854)', () => {
+	const suggestion = {
+		id: 21,
+		reference: 'PAY.2605.01',
+		provider_id: null,
+		account: { id: 3, label: 'Example account' },
+		amount: '30.00',
+		currency: 'EUR',
+		settled_at: '2026-01-02 00:00:00',
+		completeness: 'unverified',
+		state: null,
+		score: 13,
+		reasons: [
+			'Payout reference appears in the bank description.',
+			'The amount matches exactly.',
+		],
+		context_mismatch: false,
+	};
+	const preview = {
+		settlement: {
+			id: 21,
+			reference: 'PAY.2605.01',
+			amount: '30.00',
+			currency: 'EUR',
+			completeness: 'unverified',
+		},
+		account: { id: 3, label: 'Example account' },
+		revisions: {},
+		fingerprint: 'abc',
+		bank: { id: 1, amount: '30.00' },
+		bank_rows: [],
+		context: null,
+		explanation: { net: '30.00' },
+		difference: '0.00',
+		movements: [],
+		issues: [],
+		bank_issues: [],
+		can_partial: false,
+		can_full: false,
+		allocation: { supported: false, rows: [], reason: '' },
+		decision: null,
+		history: [],
+	};
+
+	function mockSuggestions( respond, extra = {} ) {
+		mockApiFetchByPath( extra );
+		const fallback = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( request ) => {
+			if ( /\/settlement-suggestions\?page=\d+$/.test( request.path ) ) {
+				return respond( request );
+			}
+			if ( request.path.endsWith( '/preview' ) ) {
+				return Promise.resolve( preview );
+			}
+			if ( request.path.endsWith( '/candidates' ) ) {
+				return Promise.resolve( [] );
+			}
+			return fallback( request );
+		} );
+	}
+
+	afterEach( () => {
+		window.history.replaceState( null, '', '/' );
+	} );
+
+	it( 'suggests saved settlements for the selected bank entry and opens the review with it', async () => {
+		mockSuggestions( () =>
+			Promise.resolve( {
+				items: [ suggestion ],
+				total: 1,
+				page: 1,
+				pages: 1,
+				ambiguous: false,
+			} )
+		);
+		await selectEntryAndOpenPanel();
+
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-finance/v1/reconciliation/entries/1/settlement-suggestions?page=1',
+		} );
+		expect( await screen.findByText( 'PAY.2605.01' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Payout reference appears in the bank description.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /Example account · 30.00 EUR/ )
+		).toHaveTextContent( 'Not reconciled' );
+		// The manual transaction workflow stays alongside.
+		expect( screen.getByText( 'Matching entry:' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Review settlement' } )
+		);
+		await screen.findByText( 'Reconcile settlement PAY.2605.01' );
+		expect( window.location.search ).toBe( '?settlement=21&entry_id=1' );
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-finance/v1/reconciliation/settlements/21/preview',
+			method: 'POST',
+			data: { entry_id: 1 },
+		} );
+	} );
+
+	it( 'warns about ambiguity and context conflicts and pages through suggestions', async () => {
+		mockSuggestions( ( { path } ) =>
+			Promise.resolve( {
+				items: path.endsWith( 'page=2' )
+					? [ { ...suggestion, id: 22, reference: 'PAY.2605.02' } ]
+					: [ { ...suggestion, context_mismatch: true } ],
+				total: 2,
+				page: path.endsWith( 'page=2' ) ? 2 : 1,
+				pages: 2,
+				ambiguous: true,
+			} )
+		);
+		await selectEntryAndOpenPanel();
+
+		expect(
+			await screen.findByText(
+				/Several saved settlements have equally strong evidence/
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /conflicting confirmed account or currency/, {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Next suggestions' } )
+		);
+		expect( await screen.findByText( 'PAY.2605.02' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Page 2 of 2' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows empty and error states without blocking transaction matching', async () => {
+		mockSuggestions( () =>
+			Promise.resolve( { items: [], total: 0, page: 1, pages: 1 } )
+		);
+		await selectEntryAndOpenPanel();
+		expect(
+			await screen.findByText(
+				'No saved settlement has this payout reference or exact amount.'
+			)
+		).toBeInTheDocument();
+
+		mockSuggestions( () =>
+			Promise.reject( { message: 'Local evidence unavailable.' } )
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Selected' } ) );
+		expect(
+			await screen.findByText( 'Local evidence unavailable.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Matching entry:' ) ).toBeInTheDocument();
+	} );
+
+	it( 'shows a settlement association once and reviews it instead of offering Unmatch', async () => {
+		mockSuggestions( () => Promise.resolve( { items: [] } ), {
+			entries: [],
+			matchedEntries: [
+				{
+					...entry,
+					id: 5,
+					transactions: [],
+					settlement: {
+						id: 21,
+						reference: 'PAY.2605.01',
+						amount: '30.00',
+						currency: 'EUR',
+						state: 'full',
+						current_state: 'needs_review',
+					},
+				},
+			],
+		} );
+		render( <ReconciliationApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Matched Entries (1)',
+			} )
+		);
+		expect(
+			screen.getByText(
+				'Settlement PAY.2605.01 · 30.00 EUR · Needs review'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Unmatch All' } )
+		).not.toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Review settlement' } )
+		);
+		await screen.findByText( 'Reconcile settlement PAY.2605.01' );
+		expect( window.location.search ).toBe( '?settlement=21' );
+	} );
+} );

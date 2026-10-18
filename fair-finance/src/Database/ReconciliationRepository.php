@@ -144,6 +144,29 @@ class ReconciliationRepository {
 	}
 
 	/**
+	 * Saved settlements without a bank association, without a first-page cutoff.
+	 *
+	 * @param int $page Page number.
+	 * @return array
+	 */
+	public function unassociated_settlements( $page ) {
+		global $wpdb;
+		return $this->checked( $wpdb->get_results( $wpdb->prepare( 'SELECT s.* FROM %i s WHERE NOT EXISTS (SELECT 1 FROM %i d WHERE d.settlement_id = s.id) ORDER BY s.id ASC LIMIT 100 OFFSET %d', ConnectorSchema::get_settlements_table_name(), Schema::reconciliation_table( 'decisions' ), ( max( 1, $page ) - 1 ) * 100 ), ARRAY_A ) ) ?? array();
+	}
+
+	/**
+	 * Every saved bank association, newest bank entry first.
+	 *
+	 * @param string|null $date_from Earliest bank entry date.
+	 * @param string|null $date_to Latest bank entry date.
+	 * @return array
+	 */
+	public function associations( $date_from = null, $date_to = null ) {
+		global $wpdb;
+		return $this->checked( $wpdb->get_results( $wpdb->prepare( 'SELECT d.settlement_id, d.entry_id, d.state FROM %i d INNER JOIN %i e ON e.id = d.entry_id WHERE e.entry_date >= %s AND e.entry_date <= %s ORDER BY e.entry_date DESC, e.id DESC', Schema::reconciliation_table( 'decisions' ), Schema::get_financial_entries_table_name(), $date_from ? $date_from : '0000-00-00', $date_to ? $date_to : '9999-12-31' ), ARRAY_A ) ) ?? array();
+	}
+
+	/**
 	 * Current movement evidence in other payouts of the same provider account.
 	 * The shared provider write lock serializes membership checks/confirmation.
 	 *

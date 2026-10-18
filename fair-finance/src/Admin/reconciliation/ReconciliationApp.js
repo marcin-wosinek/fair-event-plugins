@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -22,8 +22,11 @@ import {
  * Internal dependencies
  */
 import SavedSettlementReview, {
+	DEFAULT_DESCRIPTION_FILTER,
 	SavedSettlementSelector,
+	stateLabel,
 } from './components/SavedSettlementReview.js';
+import { completenessBadge } from '../settlements/format.js';
 import SettlementImportModal from './components/SettlementImportModal.js';
 import { formatDateOnly } from 'fair-events-shared';
 
@@ -48,7 +51,147 @@ const formatAmount = ( amount, currency = 'EUR' ) => {
 	} ).format( amount );
 };
 
-const ReconciliationApp = () => {
+const settlementName = ( settlement ) =>
+	settlement.reference ||
+	settlement.provider_id ||
+	sprintf(
+		/* translators: %d: saved settlement ID. */
+		__( 'Settlement #%d', 'fair-finance' ),
+		settlement.id
+	);
+
+const settlementAmount = ( settlement ) =>
+	settlement.amount === null || settlement.amount === undefined
+		? __( 'Unknown', 'fair-finance' )
+		: `${ settlement.amount } ${ settlement.currency || '' }`;
+
+const NO_SETTLEMENT_SUGGESTIONS = {
+	phase: 'idle',
+	items: [],
+	page: 1,
+	pages: 1,
+	total: 0,
+	ambiguous: false,
+	error: null,
+};
+
+const SettlementSuggestions = ( { state, onPage, onReview } ) => {
+	if ( state.phase === 'loading' ) {
+		return (
+			<HStack justify="center">
+				<Spinner />
+				<Text>
+					{ __( 'Finding saved settlements…', 'fair-finance' ) }
+				</Text>
+			</HStack>
+		);
+	}
+	if ( state.phase === 'error' ) {
+		return (
+			<Notice status="warning" isDismissible={ false }>
+				{ state.error }
+			</Notice>
+		);
+	}
+	if ( state.items.length === 0 ) {
+		return (
+			<p>
+				{ __(
+					'No saved settlement has this payout reference or exact amount.',
+					'fair-finance'
+				) }
+			</p>
+		);
+	}
+	return (
+		<VStack spacing={ 2 }>
+			{ state.ambiguous && (
+				<Notice status="info" isDismissible={ false }>
+					{ __(
+						'Several saved settlements have equally strong evidence. Review their references and account context before choosing one.',
+						'fair-finance'
+					) }
+				</Notice>
+			) }
+			<ul className="fair-finance-settlement-suggestions">
+				{ state.items.map( ( settlement ) => (
+					<li key={ settlement.id }>
+						<Text weight="bold">
+							{ settlementName( settlement ) }
+						</Text>
+						<Text>
+							{ [
+								settlement.account?.label,
+								settlementAmount( settlement ),
+								settlement.settled_at
+									? formatDateOnly(
+											settlement.settled_at,
+											'numeric'
+										)
+									: __( 'Date unknown', 'fair-finance' ),
+								stateLabel( settlement.state ),
+								completenessBadge( settlement.completeness )
+									.label,
+							]
+								.filter( Boolean )
+								.join( ' · ' ) }
+						</Text>
+						<ul>
+							{ settlement.reasons.map( ( reason ) => (
+								<li key={ reason }>{ reason }</li>
+							) ) }
+						</ul>
+						{ settlement.context_mismatch && (
+							<Notice status="warning" isDismissible={ false }>
+								{ __(
+									'This bank entry has conflicting confirmed account or currency context.',
+									'fair-finance'
+								) }
+							</Notice>
+						) }
+						<Button
+							variant="secondary"
+							size="small"
+							onClick={ () => onReview( settlement ) }
+						>
+							{ __( 'Review settlement', 'fair-finance' ) }
+						</Button>
+					</li>
+				) ) }
+			</ul>
+			{ state.pages > 1 && (
+				<HStack justify="flex-start" wrap>
+					<Button
+						variant="tertiary"
+						size="small"
+						disabled={ state.page <= 1 }
+						onClick={ () => onPage( state.page - 1 ) }
+					>
+						{ __( 'Previous suggestions', 'fair-finance' ) }
+					</Button>
+					<Text>
+						{ sprintf(
+							/* translators: 1: current page, 2: number of pages. */
+							__( 'Page %1$d of %2$d', 'fair-finance' ),
+							state.page,
+							state.pages
+						) }
+					</Text>
+					<Button
+						variant="tertiary"
+						size="small"
+						disabled={ state.page >= state.pages }
+						onClick={ () => onPage( state.page + 1 ) }
+					>
+						{ __( 'Next suggestions', 'fair-finance' ) }
+					</Button>
+				</HStack>
+			) }
+		</VStack>
+	);
+};
+
+const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
@@ -65,8 +208,13 @@ const ReconciliationApp = () => {
 	const [ loadingSuggestions, setLoadingSuggestions ] = useState( false );
 	const [ matching, setMatching ] = useState( false );
 	const [ descriptionFilter, setDescriptionFilter ] = useState(
-		'trf. stichting mollie payments'
+		DEFAULT_DESCRIPTION_FILTER
 	);
+	const [ settlementSuggestions, setSettlementSuggestions ] = useState(
+		NO_SETTLEMENT_SUGGESTIONS
+	);
+	// Responses for an entry that is no longer selected are ignored.
+	const suggestionsFor = useRef( null );
 	const [ showSettlementModal, setShowSettlementModal ] = useState( false );
 
 	const [ budgets, setBudgets ] = useState( [] );
@@ -172,7 +320,44 @@ const ReconciliationApp = () => {
 		loadData();
 	}, [ loadData ] );
 
+	const loadSettlementSuggestions = async ( entryId, page = 1 ) => {
+		suggestionsFor.current = entryId;
+		setSettlementSuggestions( ( current ) => ( {
+			...current,
+			phase: 'loading',
+			error: null,
+		} ) );
+		try {
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/reconciliation/entries/${ entryId }/settlement-suggestions?page=${ page }`,
+			} );
+			if ( suggestionsFor.current !== entryId ) return;
+			setSettlementSuggestions( {
+				...NO_SETTLEMENT_SUGGESTIONS,
+				phase: 'ready',
+				items: data?.items || [],
+				page: data?.page || page,
+				pages: data?.pages || 1,
+				total: data?.total || 0,
+				ambiguous: Boolean( data?.ambiguous ),
+			} );
+		} catch ( err ) {
+			if ( suggestionsFor.current !== entryId ) return;
+			setSettlementSuggestions( {
+				...NO_SETTLEMENT_SUGGESTIONS,
+				phase: 'error',
+				error:
+					err.message ||
+					__(
+						'Saved settlement suggestions could not be loaded.',
+						'fair-finance'
+					),
+			} );
+		}
+	};
+
 	const handleSelectEntry = async ( entry ) => {
+		loadSettlementSuggestions( entry.id );
 		setSelectedEntry( entry );
 		setSelectedTransactionIds( [] );
 		setSuggestions( [] );
@@ -228,6 +413,8 @@ const ReconciliationApp = () => {
 				)
 			);
 			setSelectedEntry( null );
+			suggestionsFor.current = null;
+			setSettlementSuggestions( NO_SETTLEMENT_SUGGESTIONS );
 			setSelectedTransactionIds( [] );
 			setSuggestions( [] );
 			setSelectedBudgetId( '' );
@@ -403,14 +590,7 @@ const ReconciliationApp = () => {
 				</Notice>
 			) }
 
-			<div
-				style={ {
-					display: 'grid',
-					gridTemplateColumns: '1fr 1fr',
-					gap: '20px',
-					marginTop: '20px',
-				} }
-			>
+			<div className="fair-finance-reconciliation-columns">
 				{ /* Left panel: Unmatched Bank Entries */ }
 				<div>
 					<Panel>
@@ -590,6 +770,30 @@ const ReconciliationApp = () => {
 											{ selectedEntry.description &&
 												` - ${ selectedEntry.description }` }
 										</Text>
+									</div>
+
+									<div>
+										<Text weight="bold">
+											{ __(
+												'Suggested settlements',
+												'fair-finance'
+											) }
+										</Text>
+										<SettlementSuggestions
+											state={ settlementSuggestions }
+											onPage={ ( page ) =>
+												loadSettlementSuggestions(
+													selectedEntry.id,
+													page
+												)
+											}
+											onReview={ ( settlement ) =>
+												onReviewSettlement(
+													settlement.id,
+													selectedEntry.id
+												)
+											}
+										/>
 									</div>
 
 									{ /* Auto-suggest results */ }
@@ -990,7 +1194,7 @@ const ReconciliationApp = () => {
 										marginBottom: '12px',
 									} }
 								>
-									<HStack justify="space-between">
+									<HStack justify="space-between" wrap>
 										<VStack spacing={ 1 }>
 											<Text weight="bold">
 												{ formatAmount( entry.amount ) }{ ' ' }
@@ -1009,20 +1213,58 @@ const ReconciliationApp = () => {
 													'fair-payments-connector'
 												) }
 											</Text>
-										</VStack>
-										<Button
-											variant="tertiary"
-											isDestructive
-											size="small"
-											onClick={ () =>
-												handleUnmatchAll( entry.id )
-											}
-										>
-											{ __(
-												'Unmatch All',
-												'fair-payments-connector'
+											{ entry.settlement && (
+												<Text>
+													{ sprintf(
+														/* translators: 1: payout reference or settlement ID, 2: payout amount and currency, 3: reconciliation state. */
+														__(
+															'Settlement %1$s · %2$s · %3$s',
+															'fair-finance'
+														),
+														settlementName(
+															entry.settlement
+														),
+														settlementAmount(
+															entry.settlement
+														),
+														stateLabel(
+															entry.settlement
+																.current_state
+														)
+													) }
+												</Text>
 											) }
-										</Button>
+										</VStack>
+										{ entry.settlement ? (
+											<Button
+												variant="secondary"
+												size="small"
+												onClick={ () =>
+													onReviewSettlement(
+														entry.settlement.id
+													)
+												}
+											>
+												{ __(
+													'Review settlement',
+													'fair-finance'
+												) }
+											</Button>
+										) : (
+											<Button
+												variant="tertiary"
+												isDestructive
+												size="small"
+												onClick={ () =>
+													handleUnmatchAll( entry.id )
+												}
+											>
+												{ __(
+													'Unmatch All',
+													'fair-payments-connector'
+												) }
+											</Button>
+										) }
 									</HStack>
 
 									{ entry.transactions &&
@@ -1102,22 +1344,24 @@ const ReconciliationApp = () => {
 																	</code>
 																</td>
 																<td>
-																	<Button
-																		variant="tertiary"
-																		isDestructive
-																		size="small"
-																		onClick={ () =>
-																			handleUnmatchTransaction(
-																				entry.id,
-																				t.id
-																			)
-																		}
-																	>
-																		{ __(
-																			'Unmatch',
-																			'fair-payments-connector'
-																		) }
-																	</Button>
+																	{ ! entry.settlement && (
+																		<Button
+																			variant="tertiary"
+																			isDestructive
+																			size="small"
+																			onClick={ () =>
+																				handleUnmatchTransaction(
+																					entry.id,
+																					t.id
+																				)
+																			}
+																		>
+																			{ __(
+																				'Unmatch',
+																				'fair-payments-connector'
+																			) }
+																		</Button>
+																	) }
 																</td>
 															</tr>
 														)
@@ -1136,17 +1380,26 @@ const ReconciliationApp = () => {
 };
 
 const ReconciliationPage = () => {
-	const [ settlementId, setSettlementId ] = useState( () => {
-		const value = new URLSearchParams( window.location.search ).get(
-			'settlement'
-		);
+	const param = ( name ) => {
+		const value = new URLSearchParams( window.location.search ).get( name );
 		return /^\d+$/.test( value || '' ) ? value : '';
-	} );
-	const select = ( value ) => {
-		setSettlementId( value );
+	};
+	const [ settlementId, setSettlementId ] = useState( () =>
+		param( 'settlement' )
+	);
+	// A bank entry carried from the main screen into the review.
+	const [ entryId, setEntryId ] = useState( () =>
+		param( 'settlement' ) ? param( 'entry_id' ) : ''
+	);
+	const select = ( value, entry = '' ) => {
+		const next = value ? String( entry || '' ) : '';
+		setSettlementId( value ? String( value ) : '' );
+		setEntryId( next );
 		const url = new URL( window.location.href );
 		if ( value ) url.searchParams.set( 'settlement', value );
 		else url.searchParams.delete( 'settlement' );
+		if ( next ) url.searchParams.set( 'entry_id', next );
+		else url.searchParams.delete( 'entry_id' );
 		window.history.replaceState( null, '', url );
 	};
 	return (
@@ -1157,16 +1410,19 @@ const ReconciliationPage = () => {
 				) }
 				<SavedSettlementSelector
 					value={ settlementId }
-					onChange={ select }
+					onChange={ ( value ) => select( value ) }
 				/>
 				{ settlementId && (
 					<SavedSettlementReview
-						key={ settlementId }
+						key={ `${ settlementId }:${ entryId }` }
 						settlementId={ settlementId }
+						proposedEntryId={ entryId }
 					/>
 				) }
 			</div>
-			{ ! settlementId && <ReconciliationApp /> }
+			{ ! settlementId && (
+				<ReconciliationApp onReviewSettlement={ select } />
+			) }
 		</>
 	);
 };

@@ -2088,6 +2088,25 @@ class FinancialEntryController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Saved settlement associations keyed by bank entry, or none when saved
+	 * settlement reconciliation is unavailable.
+	 *
+	 * @param string|null $date_from Earliest bank entry date.
+	 * @param string|null $date_to Latest bank entry date.
+	 * @return array
+	 */
+	private static function get_settlement_associations( $date_from, $date_to ) {
+		if ( ! class_exists( 'FairPaymentsConnector\\Database\\SettlementRepository' ) || ! method_exists( 'FairPaymentsConnector\\Services\\SettlementStore', 'supports_reconciliation_guards' ) ) {
+			return array();
+		}
+		try {
+			return ( new \FairFinance\Services\SettlementReconciliation() )->associations( $date_from, $date_to );
+		} catch ( \Throwable $error ) {
+			return array();
+		}
+	}
+
+	/**
 	 * Get reconciliation data: unmatched entries, unmatched transactions, and matched entries
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
@@ -2175,29 +2194,48 @@ class FinancialEntryController extends WP_REST_Controller {
 
 		$matched_entries_result = FinancialEntry::get_filtered( $matched_filters );
 		$matched_entries        = array();
+		$with_transactions      = static function ( $entry ) {
+			$entry_data                 = $entry->to_array();
+			$entry_data['transactions'] = array();
+			foreach ( $entry->transaction_ids as $tid ) {
+				$t = Transaction::get_by_id( $tid );
+				if ( $t ) {
+					$entry_data['transactions'][] = array(
+						'id'                => (int) $t->id,
+						'mollie_payment_id' => $t->mollie_payment_id,
+						'amount'            => (float) $t->amount,
+						'currency'          => $t->currency,
+						'application_fee'   => null !== $t->application_fee ? (float) $t->application_fee : null,
+						'mollie_fee'        => null !== $t->mollie_fee ? (float) $t->mollie_fee : null,
+						'description'       => $t->description,
+						'created_at'        => $t->created_at,
+					);
+				}
+			}
+			return $entry_data;
+		};
 		foreach ( $matched_entries_result['entries'] as $entry ) {
 			if ( ! empty( $entry->transaction_ids ) ) {
-				$entry_data                 = $entry->to_array();
-				$entry_data['transactions'] = array();
-
-				foreach ( $entry->transaction_ids as $tid ) {
-					$t = Transaction::get_by_id( $tid );
-					if ( $t ) {
-						$entry_data['transactions'][] = array(
-							'id'                => (int) $t->id,
-							'mollie_payment_id' => $t->mollie_payment_id,
-							'amount'            => (float) $t->amount,
-							'currency'          => $t->currency,
-							'application_fee'   => null !== $t->application_fee ? (float) $t->application_fee : null,
-							'mollie_fee'        => null !== $t->mollie_fee ? (float) $t->mollie_fee : null,
-							'description'       => $t->description,
-							'created_at'        => $t->created_at,
-						);
-					}
-				}
-
-				$matched_entries[] = $entry_data;
+				$matched_entries[] = $with_transactions( $entry );
 			}
+		}
+
+		// Saved settlement associations need no transaction links to be shown;
+		// an entry with both appears once, carrying its settlement.
+		$associations = self::get_settlement_associations( $date_from, $date_to );
+		foreach ( $matched_entries as &$matched_entry ) {
+			$matched_entry['settlement'] = $associations[ (int) $matched_entry['id'] ] ?? null;
+			unset( $associations[ (int) $matched_entry['id'] ] );
+		}
+		unset( $matched_entry );
+		foreach ( $associations as $entry_id => $settlement ) {
+			$entry = FinancialEntry::get_by_id( $entry_id );
+			if ( ! $entry ) {
+				continue;
+			}
+			$entry_data               = $with_transactions( $entry );
+			$entry_data['settlement'] = $settlement;
+			$matched_entries[]        = $entry_data;
 		}
 
 		return new WP_REST_Response(
