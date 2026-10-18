@@ -54,6 +54,7 @@ import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
 import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import EventStatistics from '../event-statistics/EventStatistics.js';
+import { getDurationLabelConfig } from '../components/durationLabels.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../components/InlineVenueCreator.js';
@@ -350,7 +351,7 @@ export default function ManageEventApp() {
 			new DurationOptions( {
 				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 				unit: 'minutes',
-				textDomain: 'fair-events',
+				...getDurationLabelConfig(),
 			} ),
 		[]
 	);
@@ -360,7 +361,7 @@ export default function ManageEventApp() {
 			new DurationOptions( {
 				values: [ 1, 2, 3, 4, 5, 6, 7 ],
 				unit: 'days',
-				textDomain: 'fair-events',
+				...getDurationLabelConfig(),
 			} ),
 		[]
 	);

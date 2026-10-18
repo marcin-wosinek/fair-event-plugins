@@ -10,7 +10,9 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { resetLocaleData, setLocaleData } from '@wordpress/i18n';
 import EventEditForm from '../EventEditForm.js';
+import { loadFairEventsLocaleData } from '../../components/__tests__/helpers/localeData.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -264,5 +266,80 @@ describe( 'EventEditForm save feedback', () => {
 		expect(
 			within( getSaveActions() ).queryByText( 'Event saved.' )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventEditForm event length in Spanish', () => {
+	beforeEach( () => {
+		setLocaleData( loadFairEventsLocaleData( 'es_ES' ), 'fair-events' );
+	} );
+
+	afterEach( () => {
+		resetLocaleData();
+	} );
+
+	const renderSpanishForm = async ( data ) => {
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( path === '/fair-events/v1/venues' ) {
+				return Promise.resolve( [] );
+			}
+			return Promise.resolve( method ? {} : data );
+		} );
+		render(
+			<EventEditForm
+				eventDateId={ 42 }
+				manageEventUrl="/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42"
+				postId={ 1 }
+				postType="post"
+			/>
+		);
+		return screen.findByRole( 'combobox', {
+			name: 'Duración del evento',
+		} );
+	};
+
+	const optionLabels = ( select ) =>
+		within( select )
+			.getAllByRole( 'option' )
+			.map( ( option ) => option.textContent );
+
+	it( 'translates timed options, including "Other" and mixed durations', async () => {
+		const select = await renderSpanishForm( eventDate );
+
+		expect( optionLabels( select ) ).toEqual( [
+			'Otra',
+			'30 minutos',
+			'1 hora',
+			'1 hora 30 minutos',
+			'2 horas',
+			'2 horas 30 minutos',
+			'3 horas',
+			'4 horas',
+			'6 horas',
+			'8 horas',
+		] );
+		// Stored values stay numeric minutes.
+		expect( select ).toHaveValue( '60' );
+	} );
+
+	it( 'translates all-day options with singular and plural days', async () => {
+		const select = await renderSpanishForm( {
+			...eventDate,
+			all_day: true,
+			start_datetime: '2026-06-10 00:00:00',
+			end_datetime: '2026-06-12 00:00:00',
+		} );
+
+		expect( optionLabels( select ) ).toEqual( [
+			'Otra',
+			'1 día',
+			'2 días',
+			'3 días',
+			'4 días',
+			'5 días',
+			'6 días',
+			'7 días',
+		] );
+		expect( select ).toHaveValue( '3' );
 	} );
 } );

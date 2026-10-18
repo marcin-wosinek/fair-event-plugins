@@ -103,7 +103,7 @@ msgid "Event location"
 msgstr "Miejsce wydarzenia"
 
 #: src/PostTypes/Event.php:224
-#: src/Admin/manage-event/ManageEventApp.js:940
+#: src/Admin/manage-event/ManageEventApp.js:941
 msgid "Event Details"
 msgstr "Szczegóły wydarzenia"
 
@@ -200,7 +200,7 @@ msgstr "Filtruj wydarzenia według czasu względem teraźniejszości"
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:218
 #: src/Admin/calendar/components/QuickEventModal.js:482
-#: src/Admin/manage-event/ManageEventApp.js:1266
+#: src/Admin/manage-event/ManageEventApp.js:1267
 #: src/blocks/components/CategorySelector.js:60
 msgid "Categories"
 msgstr "Kategorie"
@@ -290,14 +290,14 @@ msgid "Fair Event: End Date"
 msgstr "Fair Event: Data zakończenia"
 
 #: src/Admin/CopyEventPage.php:51
-#: src/API/EventDatesController.php:1088
-#: src/API/EventDatesController.php:1594
+#: src/API/EventDatesController.php:1089
+#: src/API/EventDatesController.php:1595
 msgid "Event title is required."
 msgstr "Tytuł wydarzenia jest wymagany."
 
 #: src/Admin/CopyEventPage.php:289
 #: src/Admin/calendar/components/QuickEventModal.js:363
-#: src/Admin/manage-event/ManageEventApp.js:1168
+#: src/Admin/manage-event/ManageEventApp.js:1169
 msgid "Title"
 msgstr "Tytuł"
 
@@ -307,9 +307,9 @@ msgstr "Tytuł"
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:78
 #: src/Admin/manage-event/EventSignups.js:1188
-#: src/Admin/manage-event/ManageEventApp.js:1624
-#: src/Admin/manage-event/ManageEventApp.js:1735
-#: src/Admin/manage-event/ManageEventApp.js:1752
+#: src/Admin/manage-event/ManageEventApp.js:1625
+#: src/Admin/manage-event/ManageEventApp.js:1736
+#: src/Admin/manage-event/ManageEventApp.js:1753
 #: src/Admin/manage-event/SeriesModal.js:537
 #: src/Admin/manage-event/SignupEditModal.js:334
 #: src/Admin/venues/VenuesApp.js:966
@@ -632,33 +632,33 @@ msgstr "Kalendarz"
 #: src/Admin/AdminPages.php:172
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:393
-#: src/Admin/manage-event/ManageEventApp.js:1142
-#: src/Admin/manage-event/ManageEventApp.js:1562
+#: src/Admin/manage-event/ManageEventApp.js:1143
+#: src/Admin/manage-event/ManageEventApp.js:1563
 msgid "Manage Event"
 msgstr "Zarządzaj zdarzeniem"
 
-#: src/API/EventDatesController.php:103
-#: src/API/EventDatesController.php:120
-#: src/API/EventDatesController.php:266
-#: src/API/EventDatesController.php:277
-#: src/API/EventDatesController.php:309
+#: src/API/EventDatesController.php:104
+#: src/API/EventDatesController.php:121
+#: src/API/EventDatesController.php:267
+#: src/API/EventDatesController.php:278
+#: src/API/EventDatesController.php:310
 msgid "Unique identifier for the event date."
 msgstr "Unikalny identyfikator daty wydarzenia."
 
-#: src/API/EventDatesController.php:139
+#: src/API/EventDatesController.php:140
 msgid "Event date ID to link to."
 msgstr "ID daty wydarzenia do powiązania."
 
-#: src/API/EventDatesController.php:143
+#: src/API/EventDatesController.php:144
 msgid "Post type for the new post."
 msgstr "Typ postu dla nowego postu."
 
-#: src/API/EventDatesController.php:148
+#: src/API/EventDatesController.php:149
 msgid "Status for the new post."
 msgstr "Status dla nowego postu."
 
-#: src/API/EventDatesController.php:168
-#: src/API/EventDatesController.php:192
+#: src/API/EventDatesController.php:169
+#: src/API/EventDatesController.php:193
 #: src/API/EventScheduleController.php:48
 #: src/API/EventScheduleController.php:60
 #: src/API/TicketsController.php:57
@@ -667,69 +667,69 @@ msgstr "Status dla nowego postu."
 msgid "Event date ID."
 msgstr "ID daty wydarzenia."
 
-#: src/API/EventDatesController.php:172
+#: src/API/EventDatesController.php:173
 msgid "Post ID to link."
 msgstr "ID postu do powiązania."
 
-#: src/API/EventDatesController.php:196
+#: src/API/EventDatesController.php:197
 msgid "Post ID to unlink."
 msgstr "ID postu do odłączenia."
 
-#: src/API/EventDatesController.php:328
+#: src/API/EventDatesController.php:329
 msgid "Comma-separated list of event date IDs."
 msgstr "Rozdzielana przecinkami lista ID dat wydarzeń."
 
-#: src/API/EventDatesController.php:426
+#: src/API/EventDatesController.php:427
 msgid "Event title."
 msgstr "Tytuł wydarzenia."
 
-#: src/API/EventDatesController.php:464
+#: src/API/EventDatesController.php:465
 msgid "Whether this is an all-day event."
 msgstr "Czy jest to wydarzenie całodniowe."
 
-#: src/API/EventDatesController.php:469
+#: src/API/EventDatesController.php:470
 msgid "Venue ID."
 msgstr "ID miejsca."
 
-#: src/API/EventDatesController.php:480
+#: src/API/EventDatesController.php:481
 msgid "Link type (post, external, none)."
 msgstr "Typ łącza (post, zewnętrzny, brak)."
 
-#: src/API/EventDatesController.php:487
+#: src/API/EventDatesController.php:488
 msgid "External URL for the event."
 msgstr "Zewnętrzny adres URL dla wydarzenia."
 
-#: src/API/EventDatesController.php:551
+#: src/API/EventDatesController.php:552
 msgid "Linked post ID."
 msgstr "ID połączonego postu."
 
-#: src/API/EventDatesController.php:507
+#: src/API/EventDatesController.php:508
 msgid "Recurrence rule in RRULE format."
 msgstr "Reguła powtarzania w formacie RRULE."
 
-#: src/API/EventDatesController.php:529
+#: src/API/EventDatesController.php:530
 msgid "Category term IDs."
 msgstr "Identyfikatory terminów kategorii."
 
-#: src/API/EventDatesController.php:1101
+#: src/API/EventDatesController.php:1102
 msgid "Start date/time is required."
 msgstr "Data/godzina rozpoczęcia jest wymagana."
 
-#: src/API/EventDatesController.php:1122
+#: src/API/EventDatesController.php:1123
 msgid "Failed to create event date."
 msgstr "Nie udało się utworzyć daty wydarzenia."
 
-#: src/API/EventDatesController.php:1448
-#: src/API/EventDatesController.php:1479
-#: src/API/EventDatesController.php:1547
-#: src/API/EventDatesController.php:1847
-#: src/API/EventDatesController.php:1887
-#: src/API/EventDatesController.php:1954
-#: src/API/EventDatesController.php:1994
-#: src/API/EventDatesController.php:2092
-#: src/API/EventDatesController.php:2180
-#: src/API/EventDatesController.php:2210
-#: src/API/EventDatesController.php:2247
+#: src/API/EventDatesController.php:1449
+#: src/API/EventDatesController.php:1480
+#: src/API/EventDatesController.php:1548
+#: src/API/EventDatesController.php:1848
+#: src/API/EventDatesController.php:1888
+#: src/API/EventDatesController.php:1969
+#: src/API/EventDatesController.php:2009
+#: src/API/EventDatesController.php:2107
+#: src/API/EventDatesController.php:2195
+#: src/API/EventDatesController.php:2225
+#: src/API/EventDatesController.php:2262
 #: src/API/EventScheduleController.php:120
 #: src/API/EventScheduleController.php:140
 #: src/API/EventStatisticsController.php:143
@@ -743,26 +743,26 @@ msgstr "Nie udało się utworzyć daty wydarzenia."
 msgid "Event date not found."
 msgstr "Data wydarzenia nie znaleziona."
 
-#: src/API/EventDatesController.php:1679
+#: src/API/EventDatesController.php:1680
 msgid "Failed to update event date."
 msgstr "Nie udało się zaktualizować daty wydarzenia."
 
-#: src/API/EventDatesController.php:1857
+#: src/API/EventDatesController.php:1858
 msgid "Failed to delete event date."
 msgstr "Nie udało się usunąć datę wydarzenia."
 
-#: src/API/EventDatesController.php:1252
-#: src/API/EventDatesController.php:1897
+#: src/API/EventDatesController.php:1253
+#: src/API/EventDatesController.php:1898
 msgid "The specified post type is not enabled."
 msgstr "Określony typ postu nie jest włączony."
 
-#: src/API/EventDatesController.php:1905
+#: src/API/EventDatesController.php:1915
 #: src/Admin/event-meta-box/LinkOptions.js:52
 msgid "Untitled Event"
 msgstr "Wydarzenie bez tytułu"
 
-#: src/API/EventDatesController.php:1244
-#: src/API/EventDatesController.php:1963
+#: src/API/EventDatesController.php:1245
+#: src/API/EventDatesController.php:1978
 msgid "Post not found."
 msgstr "Post nie znaleziony."
 
@@ -829,8 +829,8 @@ msgid "Failed to create event."
 msgstr "Nie udało się utworzyć zdarzenia."
 
 #: src/Admin/calendar/components/QuickEventModal.js:246
-#: src/Admin/event-meta-box/EventEditForm.js:320
-#: src/Admin/manage-event/ManageEventApp.js:871
+#: src/Admin/event-meta-box/EventEditForm.js:321
+#: src/Admin/manage-event/ManageEventApp.js:872
 msgid "— No venue —"
 msgstr "— Brak miejsca —"
 
@@ -840,46 +840,46 @@ msgstr "Szybkie dodanie zdarzenia"
 
 #: src/Notifications/WeeklyEmailRenderer.php:143
 #: src/Admin/calendar/components/QuickEventModal.js:371
-#: src/Admin/event-meta-box/EventEditForm.js:339
-#: src/Admin/manage-event/ManageEventApp.js:1175
+#: src/Admin/event-meta-box/EventEditForm.js:340
+#: src/Admin/manage-event/ManageEventApp.js:1176
 msgid "All day"
 msgstr "Cały dzień"
 
 #: src/Admin/calendar/components/QuickEventModal.js:379
 #: src/Admin/calendar/components/QuickEventModal.js:403
-#: src/Admin/event-meta-box/EventEditForm.js:345
-#: src/Admin/manage-event/ManageEventApp.js:1183
-#: src/Admin/manage-event/ManageEventApp.js:1206
+#: src/Admin/event-meta-box/EventEditForm.js:346
+#: src/Admin/manage-event/ManageEventApp.js:1184
+#: src/Admin/manage-event/ManageEventApp.js:1207
 msgid "Start date"
 msgstr "Data rozpoczęcia"
 
 #: src/Admin/calendar/components/QuickEventModal.js:389
 #: src/Admin/calendar/components/QuickEventModal.js:425
-#: src/Admin/event-meta-box/EventEditForm.js:371
+#: src/Admin/event-meta-box/EventEditForm.js:372
 #: src/Admin/manage-event/EventTickets.js:1705
-#: src/Admin/manage-event/ManageEventApp.js:1193
-#: src/Admin/manage-event/ManageEventApp.js:1226
+#: src/Admin/manage-event/ManageEventApp.js:1194
+#: src/Admin/manage-event/ManageEventApp.js:1227
 #: ../fair-events-shared/src/RecurrenceControl.js:79
 msgid "End date"
 msgstr "Data zakończenia"
 
 #: src/Admin/CopyEventPage.php:275
 #: src/Admin/calendar/components/QuickEventModal.js:413
-#: src/Admin/event-meta-box/EventEditForm.js:353
-#: src/Admin/manage-event/ManageEventApp.js:1216
+#: src/Admin/event-meta-box/EventEditForm.js:354
+#: src/Admin/manage-event/ManageEventApp.js:1217
 msgid "Start time"
 msgstr "Godzina rozpoczęcia"
 
 #: src/Admin/CopyEventPage.php:279
 #: src/Admin/calendar/components/QuickEventModal.js:435
-#: src/Admin/event-meta-box/EventEditForm.js:379
-#: src/Admin/manage-event/ManageEventApp.js:1236
+#: src/Admin/event-meta-box/EventEditForm.js:380
+#: src/Admin/manage-event/ManageEventApp.js:1237
 msgid "End time"
 msgstr "Godzina zakończenia"
 
 #: src/Admin/calendar/components/QuickEventModal.js:449
-#: src/Admin/event-meta-box/EventEditForm.js:387
-#: src/Admin/manage-event/ManageEventApp.js:1323
+#: src/Admin/event-meta-box/EventEditForm.js:388
+#: src/Admin/manage-event/ManageEventApp.js:1324
 #: src/blocks/venue-info/components/EditComponent.js:81
 #: src/blocks/venue-info/components/EditComponent.js:194
 msgid "Venue"
@@ -897,20 +897,20 @@ msgstr "Skopiuj adres URL do schowka"
 msgid "Copied!"
 msgstr "Skopiowano!"
 
-#: src/Admin/event-meta-box/EventEditForm.js:96
+#: src/Admin/event-meta-box/EventEditForm.js:97
 msgid "Failed to load event data."
 msgstr "Nie udało się załadować danych zdarzenia."
 
-#: src/Admin/event-meta-box/EventEditForm.js:262
+#: src/Admin/event-meta-box/EventEditForm.js:263
 msgid "Event saved."
 msgstr "Zdarzenie zapisane."
 
-#: src/Admin/event-meta-box/EventEditForm.js:267
+#: src/Admin/event-meta-box/EventEditForm.js:268
 msgid "Failed to save event."
 msgstr "Nie udało się zapisać zdarzenia."
 
-#: src/Admin/event-meta-box/EventEditForm.js:361
-#: src/Admin/manage-event/ManageEventApp.js:1249
+#: src/Admin/event-meta-box/EventEditForm.js:362
+#: src/Admin/manage-event/ManageEventApp.js:1250
 msgid "Event length"
 msgstr "Długość zdarzenia"
 
@@ -925,11 +925,11 @@ msgstr "Codziennie"
 msgid "Monthly"
 msgstr "Miesięcznie"
 
-#: src/Admin/event-meta-box/EventEditForm.js:442
+#: src/Admin/event-meta-box/EventEditForm.js:443
 msgid "Save Event"
 msgstr "Zapisz wydarzenie"
 
-#: src/Admin/event-meta-box/EventEditForm.js:446
+#: src/Admin/event-meta-box/EventEditForm.js:447
 msgid "Edit Full Details"
 msgstr "Edytuj pełne szczegóły"
 
@@ -937,7 +937,7 @@ msgstr "Edytuj pełne szczegóły"
 msgid "Failed to unlink event."
 msgstr "Nie udało się odłączyć wydarzenia."
 
-#: src/Admin/event-meta-box/EventEditForm.js:457
+#: src/Admin/event-meta-box/EventEditForm.js:458
 msgid "Unlink from event"
 msgstr "Odłącz od wydarzenia"
 
@@ -1013,23 +1013,23 @@ msgstr "Brak wpisów finansowych dla tego wydarzenia."
 msgid "View All Entries"
 msgstr "Wyświetl wszystkie wpisy"
 
-#: src/Admin/manage-event/ManageEventApp.js:172
+#: src/Admin/manage-event/ManageEventApp.js:173
 msgid "No event date ID specified."
 msgstr "Nie określono identyfikatora daty wydarzenia."
 
-#: src/Admin/manage-event/ManageEventApp.js:191
+#: src/Admin/manage-event/ManageEventApp.js:192
 msgid "Failed to load event date."
 msgstr "Nie udało się załadować daty wydarzenia."
 
-#: src/Admin/manage-event/ManageEventApp.js:474
+#: src/Admin/manage-event/ManageEventApp.js:475
 msgid "Event updated successfully."
 msgstr "Wydarzenie zostało zaktualizowane pomyślnie."
 
-#: src/Admin/manage-event/ManageEventApp.js:478
+#: src/Admin/manage-event/ManageEventApp.js:479
 msgid "Failed to update event."
 msgstr "Nie udało się zaktualizować wydarzenia."
 
-#: src/Admin/manage-event/ManageEventApp.js:499
+#: src/Admin/manage-event/ManageEventApp.js:500
 msgid "Failed to delete event."
 msgstr "Nie udało się usunąć wydarzenia."
 
@@ -1045,7 +1045,7 @@ msgstr "Nie udało się odłączyć wpisu."
 msgid "Failed to link post."
 msgstr "Nie udało się połączyć wpisu."
 
-#: src/Admin/manage-event/ManageEventApp.js:1150
+#: src/Admin/manage-event/ManageEventApp.js:1151
 msgid "Back to Calendar"
 msgstr "Powrót do kalendarza"
 
@@ -1106,12 +1106,12 @@ msgstr "Wybierz..."
 msgid "Link Post"
 msgstr "Połącz post"
 
-#: src/Admin/manage-event/ManageEventApp.js:1087
+#: src/Admin/manage-event/ManageEventApp.js:1088
 msgid "Delete Event"
 msgstr "Usuń wydarzenie"
 
 #: src/Admin/manage-event/EventSignups.js:423
-#: src/Admin/manage-event/ManageEventApp.js:1162
+#: src/Admin/manage-event/ManageEventApp.js:1163
 msgid "Details"
 msgstr "Szczegóły"
 
@@ -1156,8 +1156,8 @@ msgid "General"
 msgstr "Ogólne"
 
 #: src/Admin/components/InlineVenueCreator.js:83
-#: src/Admin/event-meta-box/EventEditForm.js:394
-#: src/Admin/manage-event/ManageEventApp.js:1340
+#: src/Admin/event-meta-box/EventEditForm.js:395
+#: src/Admin/manage-event/ManageEventApp.js:1341
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:636
 #: src/Admin/venues/VenuesApp.js:801
@@ -1208,31 +1208,31 @@ msgctxt "block keyword"
 msgid "location"
 msgstr "lokalizacja"
 
-#: src/API/EventDatesController.php:349
+#: src/API/EventDatesController.php:350
 msgid "Current page of the collection."
 msgstr "Bieżąca strona kolekcji."
 
-#: src/API/EventDatesController.php:355
+#: src/API/EventDatesController.php:356
 msgid "Maximum number of items per page."
 msgstr "Maksymalna liczba elementów na stronie."
 
-#: src/API/EventDatesController.php:362
+#: src/API/EventDatesController.php:363
 msgid "Sort collection by field."
 msgstr "Sortuj kolekcję według pola."
 
-#: src/API/EventDatesController.php:368
+#: src/API/EventDatesController.php:369
 msgid "Order sort attribute ascending or descending."
 msgstr "Sortuj atrybut rosnąco lub malejąco."
 
-#: src/API/EventDatesController.php:374
+#: src/API/EventDatesController.php:375
 msgid "Limit results to those matching a string."
 msgstr "Ogranicz wyniki do tych pasujących do ciągu znaków."
 
-#: src/API/EventDatesController.php:379
+#: src/API/EventDatesController.php:380
 msgid "Filter by link type."
 msgstr "Filtruj według typu linku."
 
-#: src/API/EventDatesController.php:384
+#: src/API/EventDatesController.php:385
 msgid "Filter by occurrence type."
 msgstr "Filtruj według typu wystąpienia."
 
@@ -1303,11 +1303,11 @@ msgstr "Typ linku"
 msgid "Linked Post / URL"
 msgstr "Połączony post / URL"
 
-#: src/API/EventDatesController.php:216
+#: src/API/EventDatesController.php:217
 msgid "Master event date ID."
 msgstr "Identyfikator daty głównego wydarzenia."
 
-#: src/API/EventDatesController.php:220
+#: src/API/EventDatesController.php:221
 msgid "Date to toggle (Y-m-d format)."
 msgstr "Data do przełączenia (format Y-m-d)."
 
@@ -1316,7 +1316,7 @@ msgid "Request context. Use \"edit\" to include events linked to non-published p
 msgstr "Kontekst żądania. Użyj \"edit\", aby uwzględnić wydarzenia powiązane z nieopublikowanymi postami (wymaga możliwości edit_posts)."
 
 #: src/Admin/manage-event/EventFinance.js:271
-#: src/Admin/manage-event/ManageEventApp.js:1009
+#: src/Admin/manage-event/ManageEventApp.js:1010
 msgid "Finance"
 msgstr "Finanse"
 
@@ -1390,7 +1390,7 @@ msgstr "Nieograniczone"
 msgid "Price"
 msgstr "Cena"
 
-#: src/Admin/manage-event/ManageEventApp.js:858
+#: src/Admin/manage-event/ManageEventApp.js:859
 msgid "Failed to toggle occurrence."
 msgstr "Nie udało się przełączyć wystąpienia."
 
@@ -1398,15 +1398,15 @@ msgstr "Nie udało się przełączyć wystąpienia."
 msgid "Groups"
 msgstr "Grupy"
 
-#: src/Admin/manage-event/ManageEventApp.js:1022
+#: src/Admin/manage-event/ManageEventApp.js:1023
 msgid "Admin"
 msgstr "Administrator"
 
-#: src/Admin/manage-event/ManageEventApp.js:1028
+#: src/Admin/manage-event/ManageEventApp.js:1029
 msgid "Event Administration"
 msgstr "Administracja Wydarzeniem"
 
-#: src/Admin/manage-event/ManageEventApp.js:1074
+#: src/Admin/manage-event/ManageEventApp.js:1075
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr "Trwale usuń to wydarzenie i wszystkie powiązane dane. Tej czynności nie można cofnąć."
 
@@ -1613,7 +1613,7 @@ msgstr "Użyj typu wpisu Wydarzenia"
 msgid "Features"
 msgstr "Funkcje"
 
-#: src/Admin/manage-event/ManageEventApp.js:1411
+#: src/Admin/manage-event/ManageEventApp.js:1412
 msgid "Recurrence"
 msgstr "Powtarzanie"
 
@@ -2060,12 +2060,12 @@ msgstr "Cena dodatków na okres sprzedaży"
 msgid "Price every add-on per sale period instead of a single flat price. The Pricing column in the add-ons table becomes one input per sale period. Requires sale periods to be defined."
 msgstr "Ustal cenę każdego dodatku na okres sprzedaży zamiast jednej stałej ceny. Kolumna Cena w tabeli dodatków staje się jednym polem na okres sprzedaży. Wymaga zdefiniowania okresów sprzedaży."
 
-#: src/Admin/manage-event/ManageEventApp.js:265
+#: src/Admin/manage-event/ManageEventApp.js:266
 msgid "Failed to create category."
 msgstr "Nie udało się utworzyć kategorii."
 
 #. translators: 1: event title, 2: number of occurrences
-#: src/Admin/manage-event/ManageEventApp.js:513
+#: src/Admin/manage-event/ManageEventApp.js:514
 #, js-format
 msgid "Delete %1$s and its %2$d occurrence? This cannot be undone."
 msgid_plural "Delete %1$s and its %2$d occurrences? This cannot be undone."
@@ -2074,16 +2074,16 @@ msgstr[1] "Usunąć %1$s i jego %2$d wystąpienia? Tej czynności nie można cof
 msgstr[2] "Usunąć %1$s i jego %2$d wystąpień? Tej czynności nie można cofnąć."
 
 #. translators: 1: event title, 2: event date
-#: src/Admin/manage-event/ManageEventApp.js:526
+#: src/Admin/manage-event/ManageEventApp.js:527
 #, js-format
 msgid "Delete %1$s on %2$s? This cannot be undone."
 msgstr "Usunąć %1$s na %2$s? Nie można tego cofnąć."
 
-#: src/Admin/manage-event/ManageEventApp.js:1512
+#: src/Admin/manage-event/ManageEventApp.js:1513
 msgid "Save event details"
 msgstr "Zapisz szczegóły imprezy"
 
-#: src/Admin/manage-event/ManageEventApp.js:1516
+#: src/Admin/manage-event/ManageEventApp.js:1517
 msgid "Title is required"
 msgstr "Tytuł jest wymagany"
 
@@ -2106,19 +2106,19 @@ msgstr "Zewnętrzna strona internetowa"
 msgid "Nowhere — show details only"
 msgstr "Nigdzie — pokaż tylko szczegóły"
 
-#: src/Admin/manage-event/ManageEventApp.js:1623
+#: src/Admin/manage-event/ManageEventApp.js:1624
 msgid "Delete event"
 msgstr "Usuń wydarzenie"
 
-#: src/API/EventDatesController.php:2100
+#: src/API/EventDatesController.php:2115
 msgid "Dates can only be cancelled on master events."
 msgstr "Daty można anulować tylko dla głównych zdarzeń."
 
-#: src/API/EventDatesController.php:2109
+#: src/API/EventDatesController.php:2124
 msgid "Cannot cancel the master event date."
 msgstr "Nie można anulować daty głównego zdarzenia."
 
-#: src/API/EventDatesController.php:2126
+#: src/API/EventDatesController.php:2141
 msgid "Invalid date."
 msgstr "Nieprawidłowa data."
 
@@ -2135,33 +2135,33 @@ msgstr "Więcej akcji"
 msgid "More options"
 msgstr "Więcej opcji"
 
-#: src/API/EventDatesController.php:513
+#: src/API/EventDatesController.php:514
 msgid "Recurrence shape: none (single date), rule (RRULE-based), or manual (hand-picked dates)."
 msgstr "Kształt powtórzenia: brak (pojedyncza data), reguła (oparta na RRULE) lub ręczna (ręcznie wybrane daty)."
 
-#: src/API/EventDatesController.php:519
+#: src/API/EventDatesController.php:520
 msgid "Hand-picked occurrence dates (Y-m-d) for a manual-mode series. The earliest date becomes the master."
 msgstr "Ręcznie wybrane daty wystąpień (Y-m-d) dla serii w trybie ręcznym. Najwcześniejsza data staje się główną."
 
-#: src/API/EventDatesController.php:703
+#: src/API/EventDatesController.php:704
 msgid "manual_dates must be an array of Y-m-d dates."
 msgstr "manual_dates musi być tablicą dat w formacie Y-m-d."
 
 #. translators: %d: maximum allowed occurrence count.
-#: src/API/EventDatesController.php:713
+#: src/API/EventDatesController.php:714
 #, php-format
 msgid "A series can have at most %d dates."
 msgstr "Seria może mieć co najwyżej %d dat."
 
-#: src/API/EventDatesController.php:725
+#: src/API/EventDatesController.php:726
 msgid "Each manual date must be in Y-m-d format."
 msgstr "Każda ręczna data musi być w formacie Y-m-d."
 
-#: src/API/EventDatesController.php:734
+#: src/API/EventDatesController.php:735
 msgid "Each manual date must be a valid calendar date."
 msgstr "Każda ręczna data musi być prawidłową datą kalendarza."
 
-#: src/API/EventDatesController.php:742
+#: src/API/EventDatesController.php:743
 msgid "Manual dates must not contain duplicates — only one occurrence per day is supported."
 msgstr "Daty ręczne nie mogą zawierać duplikatów — obsługiwane jest tylko jedno wystąpienie na dzień."
 
@@ -2202,7 +2202,7 @@ msgid "Link to"
 msgstr "Połącz z"
 
 #: src/Admin/manage-event/EditInstancesModal.js:40
-#: src/Admin/manage-event/ManageEventApp.js:1480
+#: src/Admin/manage-event/ManageEventApp.js:1481
 msgid "Edit instances"
 msgstr "Edytuj instancje"
 
@@ -2258,12 +2258,12 @@ msgstr "Wyświetl stronę publiczną"
 msgid "Merge periods"
 msgstr "Połącz okresy"
 
-#: src/Admin/manage-event/ManageEventApp.js:605
+#: src/Admin/manage-event/ManageEventApp.js:606
 msgid "Failed to end the series."
 msgstr "Nie udało się zakończyć serii."
 
 #. translators: %d: number of dates in the series
-#: src/Admin/manage-event/ManageEventApp.js:649
+#: src/Admin/manage-event/ManageEventApp.js:650
 #, js-format
 msgid "Irregular series · %d date"
 msgid_plural "Irregular series · %d dates"
@@ -2272,28 +2272,28 @@ msgstr[1] "Seria nieregularna · %d daty"
 msgstr[2] "Seria nieregularna · %d dat"
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates, 3: end date
-#: src/Admin/manage-event/ManageEventApp.js:681
+#: src/Admin/manage-event/ManageEventApp.js:682
 #, js-format
 msgid "Repeats %1$s · %2$d dates · ends %3$s"
 msgstr "Powtarza się %1$s · %2$d dat · kończy się %3$s"
 
 #. translators: 1: frequency label (e.g. Weekly), 2: number of dates
-#: src/Admin/manage-event/ManageEventApp.js:691
+#: src/Admin/manage-event/ManageEventApp.js:692
 #, js-format
 msgid "Repeats %1$s · %2$d dates"
 msgstr "Powtarza się %1$s · %2$d dat"
 
-#: src/Admin/manage-event/ManageEventApp.js:1423
+#: src/Admin/manage-event/ManageEventApp.js:1424
 #: src/Admin/manage-event/SeriesModal.js:370
 msgid "Edit series"
 msgstr "Edytuj serię"
 
-#: src/Admin/manage-event/ManageEventApp.js:1433
-#: src/Admin/manage-event/ManageEventApp.js:1632
+#: src/Admin/manage-event/ManageEventApp.js:1434
+#: src/Admin/manage-event/ManageEventApp.js:1633
 msgid "End series"
 msgstr "Zakończ serię"
 
-#: src/Admin/manage-event/ManageEventApp.js:1495
+#: src/Admin/manage-event/ManageEventApp.js:1496
 #: src/Admin/manage-event/SeriesModal.js:371
 msgid "Turn into a series"
 msgstr "Zamień na serię"
@@ -2573,11 +2573,11 @@ msgstr "Pobierz CSV"
 msgid "Reset to automatic"
 msgstr "Przywróć do automatycznego"
 
-#: src/Admin/manage-event/ManageEventApp.js:1734
+#: src/Admin/manage-event/ManageEventApp.js:1735
 msgid "Save and continue"
 msgstr "Zapisz i kontynuuj"
 
-#: src/Admin/manage-event/ManageEventApp.js:1737
+#: src/Admin/manage-event/ManageEventApp.js:1738
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr "Masz niezapisane zmiany. Zapisać szczegóły zdarzenia przed skonfigurowaniem linku?"
 
@@ -2972,15 +2972,15 @@ msgstr "Twoja rejestracja została anulowana."
 msgid "Failed to cancel signup. Please try again."
 msgstr "Nie udało się anulować rejestracji. Spróbuj ponownie."
 
-#: src/API/EventDatesController.php:493
+#: src/API/EventDatesController.php:494
 msgid "Attendance mode (in_person, online, hybrid)."
 msgstr "Tryb uczestnictwa (in_person, online, hybrid)."
 
-#: src/API/EventDatesController.php:500
+#: src/API/EventDatesController.php:501
 msgid "Public joining URL for online/hybrid events. Falls back to the event page URL when empty."
 msgstr "Publiczny adres URL do dołączenia dla wydarzeń online/hybrydowych. Powraca do adresu URL strony wydarzenia, gdy jest pusty."
 
-#: src/API/EventDatesController.php:769
+#: src/API/EventDatesController.php:770
 msgid "The joining link must be a valid URL."
 msgstr "Odnośnik do dołączenia musi być prawidłowym adresem URL."
 
@@ -3098,28 +3098,28 @@ msgstr "+%s"
 msgid "-%s"
 msgstr "-%s"
 
-#: src/Admin/manage-event/ManageEventApp.js:1355
+#: src/Admin/manage-event/ManageEventApp.js:1356
 msgid "Attendance mode"
 msgstr "Tryb uczestnictwa"
 
-#: src/Admin/manage-event/ManageEventApp.js:1362
+#: src/Admin/manage-event/ManageEventApp.js:1363
 msgid "In person"
 msgstr "Osobiście"
 
 #: src/Helpers/OccurrenceFields.php:143
-#: src/Admin/manage-event/ManageEventApp.js:1369
+#: src/Admin/manage-event/ManageEventApp.js:1370
 msgid "Online"
 msgstr "Online"
 
-#: src/Admin/manage-event/ManageEventApp.js:1376
+#: src/Admin/manage-event/ManageEventApp.js:1377
 msgid "Hybrid"
 msgstr "Hybrydowy"
 
-#: src/Admin/manage-event/ManageEventApp.js:1389
+#: src/Admin/manage-event/ManageEventApp.js:1390
 msgid "Joining link"
 msgstr "Odnośnik do dołączenia"
 
-#: src/Admin/manage-event/ManageEventApp.js:1393
+#: src/Admin/manage-event/ManageEventApp.js:1394
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr "Wyświetlane publicznie. Pozostaw puste, aby zamiast tego połączyć się ze stroną wydarzenia."
 
@@ -3151,7 +3151,7 @@ msgstr "Tło nagłówka"
 msgid "Venues"
 msgstr "Miejsca"
 
-#: src/API/EventDatesController.php:474
+#: src/API/EventDatesController.php:475
 msgid "Free-text address, used as a fallback when no venue is selected."
 msgstr "Adres w postaci tekstu, używany jako rezerwowy, gdy nie wybrano żadnego miejsca."
 
@@ -3245,8 +3245,8 @@ msgstr "Długość geograficzna musi być między -180 a 180."
 msgid "Latitude and longitude must be 20 characters or fewer."
 msgstr "Szerokość i długość geograficzna muszą mieć 20 znaków lub mniej."
 
-#: src/Admin/event-meta-box/EventEditForm.js:397
-#: src/Admin/manage-event/ManageEventApp.js:1346
+#: src/Admin/event-meta-box/EventEditForm.js:398
+#: src/Admin/manage-event/ManageEventApp.js:1347
 msgid "Used as the event location only when no venue is selected above."
 msgstr "Używane jako lokalizacja wydarzenia tylko wtedy, gdy żadne miejsce nie jest wybrane powyżej."
 
@@ -3413,15 +3413,15 @@ msgstr "Potwierdzone – przekroczono pojemność"
 msgid "Confirmed"
 msgstr "Potwierdzone"
 
-#: src/API/EventDatesController.php:62
+#: src/API/EventDatesController.php:63
 msgid "Post ID that should have event data."
 msgstr "Identyfikator wpisu, który powinien zawierać dane wydarzenia."
 
-#: src/API/EventDatesController.php:1260
+#: src/API/EventDatesController.php:1261
 msgid "You do not have permission to edit this post."
 msgstr "Nie posiadasz uprawnienia do edycji tego wpisu."
 
-#: src/API/EventDatesController.php:1281
+#: src/API/EventDatesController.php:1282
 msgid "Failed to create event data."
 msgstr "Nie udało się utworzyć danych wydarzenia."
 
@@ -3569,15 +3569,15 @@ msgstr[0] "Możesz wybrać co najwyżej %d rozszerzenie."
 msgstr[1] "Możesz wybrać co najwyżej %d rozszerzenia."
 msgstr[2] "Możesz wybrać co najwyżej %d rozszerzeń."
 
-#: src/Admin/manage-event/ManageEventApp.js:1037
+#: src/Admin/manage-event/ManageEventApp.js:1038
 msgid "Open copy options for the underlying recurring event, not only this date."
 msgstr "Otwórz opcje kopiowania dla podstawowego wydarzenia cyklicznego, nie tylko dla tej daty."
 
-#: src/Admin/manage-event/ManageEventApp.js:1041
+#: src/Admin/manage-event/ManageEventApp.js:1042
 msgid "Open copy options with this event selected as the source."
 msgstr "Otwórz opcje kopiowania z tym wydarzeniem wybranym jako źródło."
 
-#: src/Admin/manage-event/ManageEventApp.js:1051
+#: src/Admin/manage-event/ManageEventApp.js:1052
 msgid "Copy event"
 msgstr "Kopiuj wydarzenie"
 
@@ -3715,21 +3715,21 @@ msgid "The event copy could not be completed, and any partial copy was removed. 
 msgstr "Nie można było ukończyć kopii wydarzenia, a każda częściowa kopia została usunięta. Spróbuj ponownie."
 
 #: src/Admin/manage-event/EventSignups.js:1054
-#: src/Admin/manage-event/ManageEventApp.js:969
+#: src/Admin/manage-event/ManageEventApp.js:970
 #: src/Admin/manage-event/signup-print.js:184
 msgid "List"
 msgstr "Lista"
 
 #: src/Admin/manage-event/EventTickets.js:1622
-#: src/Admin/manage-event/ManageEventApp.js:947
+#: src/Admin/manage-event/ManageEventApp.js:948
 msgid "Prices"
 msgstr "Ceny"
 
-#: src/API/EventDatesController.php:389
+#: src/API/EventDatesController.php:390
 msgid "Filter by venue ID, or \"none\" for events with no venue."
 msgstr "Filtruj według identyfikatora miejsca lub „none” dla wydarzeń bez miejsca."
 
-#: src/API/EventDatesController.php:413
+#: src/API/EventDatesController.php:414
 msgid "venue_id must be \"none\" or a numeric venue ID."
 msgstr "venue_id musi mieć wartość „none” lub liczbowy identyfikator miejsca."
 
@@ -3813,20 +3813,20 @@ msgstr "Brak lokalizacji"
 msgid "Register the dedicated Events post type, whose entries are the event pages describing your events. Turn off to attach event data only to the post types selected below."
 msgstr "Rejestruje dedykowany typ treści Wydarzenia, którego wpisy to strony wydarzeń opisujące twoje wydarzenia. Wyłącz, aby dane wydarzenia były przypisywane tylko do wybranych poniżej typów treści."
 
-#: src/API/EventDatesController.php:281
+#: src/API/EventDatesController.php:282
 msgid "Fair Finance budget ID to link, or null to clear."
 msgstr "Identyfikator budżetu Fair Finance do powiązania lub null, aby wyczyścić."
 
-#: src/API/EventDatesController.php:2218
-#: src/API/EventDatesController.php:2255
+#: src/API/EventDatesController.php:2233
+#: src/API/EventDatesController.php:2270
 msgid "The Fair Finance plugin is required to manage a budget link."
 msgstr "Wtyczka Fair Finance jest wymagana do zarządzania powiązaniem budżetu."
 
-#: src/API/EventDatesController.php:2265
+#: src/API/EventDatesController.php:2280
 msgid "Budget not found."
 msgstr "Budżet nie znaleziony."
 
-#: src/API/EventDatesController.php:2274
+#: src/API/EventDatesController.php:2289
 msgid "This event has no linked page, so it cannot store a budget."
 msgstr "To wydarzenie nie ma powiązanej strony, dlatego nie może przechowywać budżetu."
 
@@ -3964,13 +3964,13 @@ msgstr "Nie udało się wczytać kategorii."
 
 #. translators: 1: category name, 2: language name
 #: src/Admin/calendar/CalendarApp.js:111
-#: src/Admin/manage-event/ManageEventApp.js:248
+#: src/Admin/manage-event/ManageEventApp.js:249
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: src/Admin/manage-event/ManageEventApp.js:462
+#: src/Admin/manage-event/ManageEventApp.js:463
 msgid "Some selected categories were not saved. Please try again."
 msgstr "Niektóre wybrane kategorie nie zostały zapisane. Spróbuj ponownie."
 
@@ -4003,7 +4003,7 @@ msgid "(untitled ticket type)"
 msgstr "(bez tytułu typ biletu)"
 
 #: src/Admin/calendar/components/QuickEventModal.js:249
-#: src/Admin/manage-event/ManageEventApp.js:874
+#: src/Admin/manage-event/ManageEventApp.js:875
 msgid "Add new venue"
 msgstr "Dodaj nową salę"
 
@@ -4921,7 +4921,7 @@ msgstr "Statystyki zdarzeń wymagają wtyczki Fair Audience, która rejestruje b
 msgid "Back to Manage Event"
 msgstr "Powrót do zarządzania zdarzeniem"
 
-#: src/Admin/manage-event/ManageEventApp.js:996
+#: src/Admin/manage-event/ManageEventApp.js:997
 msgid "Statistics"
 msgstr "Statystyka"
 
@@ -4974,11 +4974,11 @@ msgstr "Pojemność według aktywności"
 msgid "This event has no activities."
 msgstr "To wydarzenie nie ma aktywności."
 
-#: src/API/EventDatesController.php:241
+#: src/API/EventDatesController.php:242
 msgid "Event date ID. A date of a series applies to the whole series."
 msgstr "Identyfikator terminu wydarzenia. Termin z serii dotyczy całej serii."
 
-#: src/API/EventDatesController.php:245
+#: src/API/EventDatesController.php:246
 msgid "Publication status to set (publish, draft)."
 msgstr "Status publikacji do ustawienia (publish, draft)."
 
@@ -5045,45 +5045,45 @@ msgid "Published"
 msgstr "Opublikowane"
 
 #: src/Admin/manage-event/EventContextHeader.js:303
-#: src/Admin/manage-event/ManageEventApp.js:1750
+#: src/Admin/manage-event/ManageEventApp.js:1751
 msgid "Publish event"
 msgstr "Opublikuj wydarzenie"
 
 #: src/Admin/manage-event/EventContextHeader.js:304
-#: src/Admin/manage-event/ManageEventApp.js:1749
+#: src/Admin/manage-event/ManageEventApp.js:1750
 msgid "Move to draft"
 msgstr "Przenieś do szkiców"
 
-#: src/Admin/manage-event/ManageEventApp.js:735
+#: src/Admin/manage-event/ManageEventApp.js:736
 msgid "Event moved to draft."
 msgstr "Wydarzenie przeniesiono do szkiców."
 
-#: src/Admin/manage-event/ManageEventApp.js:736
+#: src/Admin/manage-event/ManageEventApp.js:737
 msgid "Event published."
 msgstr "Wydarzenie opublikowano."
 
-#: src/Admin/manage-event/ManageEventApp.js:739
+#: src/Admin/manage-event/ManageEventApp.js:740
 msgid "Failed to publish the event."
 msgstr "Nie udało się opublikować wydarzenia."
 
-#: src/Admin/manage-event/ManageEventApp.js:741
+#: src/Admin/manage-event/ManageEventApp.js:742
 msgid "Failed to move the event to draft."
 msgstr "Nie udało się przenieść wydarzenia do szkiców."
 
 #. translators: %s: title of the series
-#: src/Admin/manage-event/ManageEventApp.js:776
+#: src/Admin/manage-event/ManageEventApp.js:777
 #, js-format
 msgid "This date is part of the series %s. Move the whole series to draft? All its dates will be hidden from public event lists, calendars and feeds."
 msgstr "Ten termin należy do serii %s. Przenieść całą serię do szkiców? Wszystkie jej terminy zostaną ukryte na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
 #. translators: %s: title of the series
-#: src/Admin/manage-event/ManageEventApp.js:784
+#: src/Admin/manage-event/ManageEventApp.js:785
 #, js-format
 msgid "This date is part of the series %s. Publish the whole series? All its dates will be shown in public event lists, calendars and feeds."
 msgstr "Ten termin należy do serii %s. Opublikować całą serię? Wszystkie jej terminy będą widoczne na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
 #. translators: 1: title of the series, 2: number of dates in the series
-#: src/Admin/manage-event/ManageEventApp.js:798
+#: src/Admin/manage-event/ManageEventApp.js:799
 #, js-format
 msgid "Move the whole series %1$s (%2$d date) to draft? It will be hidden from public event lists, calendars and feeds."
 msgid_plural "Move the whole series %1$s (%2$d dates) to draft? All its dates will be hidden from public event lists, calendars and feeds."
@@ -5092,7 +5092,7 @@ msgstr[1] "Przenieść całą serię %1$s (%2$d terminy) do szkiców? Wszystkie 
 msgstr[2] "Przenieść całą serię %1$s (%2$d terminów) do szkiców? Wszystkie jej terminy zostaną ukryte na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
 #. translators: 1: title of the series, 2: number of dates in the series
-#: src/Admin/manage-event/ManageEventApp.js:809
+#: src/Admin/manage-event/ManageEventApp.js:810
 #, js-format
 msgid "Publish the whole series %1$s (%2$d date)? It will be shown in public event lists, calendars and feeds."
 msgid_plural "Publish the whole series %1$s (%2$d dates)? All its dates will be shown in public event lists, calendars and feeds."
@@ -5101,25 +5101,25 @@ msgstr[1] "Opublikować całą serię %1$s (%2$d terminy)? Wszystkie jej terminy
 msgstr[2] "Opublikować całą serię %1$s (%2$d terminów)? Wszystkie jej terminy będą widoczne na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
 #. translators: %s: event title
-#: src/Admin/manage-event/ManageEventApp.js:823
+#: src/Admin/manage-event/ManageEventApp.js:824
 #, js-format
 msgid "Move %s to draft? It will be hidden from public event lists, calendars and feeds."
 msgstr "Przenieść %s do szkiców? Wydarzenie zostanie ukryte na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
 #. translators: %s: event title
-#: src/Admin/manage-event/ManageEventApp.js:831
+#: src/Admin/manage-event/ManageEventApp.js:832
 #, js-format
 msgid "Publish %s? It will be shown in public event lists, calendars and feeds."
 msgstr "Opublikować %s? Wydarzenie będzie widoczne na publicznych listach wydarzeń, w kalendarzach i kanałach."
 
-#: src/Admin/manage-event/ManageEventApp.js:1760
+#: src/Admin/manage-event/ManageEventApp.js:1761
 msgid "This linked page will be moved to draft too:"
 msgid_plural "These linked pages will be moved to draft too:"
 msgstr[0] "Ta powiązana strona też zostanie przeniesiona do szkiców:"
 msgstr[1] "Te powiązane strony też zostaną przeniesione do szkiców:"
 msgstr[2] "Te powiązane strony też zostaną przeniesione do szkiców:"
 
-#: src/Admin/manage-event/ManageEventApp.js:1766
+#: src/Admin/manage-event/ManageEventApp.js:1767
 msgid "This linked page will be published too, even if it is a draft now:"
 msgid_plural "These linked pages will be published too, even if they are drafts now:"
 msgstr[0] "Ta powiązana strona też zostanie opublikowana, nawet jeśli jest teraz szkicem:"
@@ -5128,15 +5128,15 @@ msgstr[2] "Te powiązane strony też zostaną opublikowane, nawet jeśli są ter
 
 #: src/API/EventNotificationsController.php:983
 #: src/Notifications/TelegramFormatter.php:66
-#: src/Admin/manage-event/ManageEventApp.js:1777
+#: src/Admin/manage-event/ManageEventApp.js:1778
 msgid "(no title)"
 msgstr "(bez tytułu)"
 
-#: src/Admin/manage-event/ManageEventApp.js:1786
+#: src/Admin/manage-event/ManageEventApp.js:1787
 msgid "The external page this event links to is not changed."
 msgstr "Zewnętrzna strona, do której prowadzi to wydarzenie, nie zostanie zmieniona."
 
-#: src/Admin/manage-event/ManageEventApp.js:1794
+#: src/Admin/manage-event/ManageEventApp.js:1795
 msgid "Your unsaved changes to the event details stay on this screen, but this action does not save them."
 msgstr "Twoje niezapisane zmiany w szczegółach wydarzenia pozostaną na tym ekranie, ale ta akcja ich nie zapisze."
 
@@ -5179,41 +5179,41 @@ msgstr "Wróć do formularza rejestracji"
 msgid "This purchase:"
 msgstr "Ten zakup:"
 
-#: src/API/EventDatesController.php:569
+#: src/API/EventDatesController.php:570
 msgid "Complete list of dates (Y-m-d) in the regular schedule to keep cancelled. An empty list restores every date."
 msgstr "Pełna lista dat (Y-m-d) w regularnym harmonogramie, które mają pozostać anulowane. Pusta lista przywraca każdą datę."
 
-#: src/API/EventDatesController.php:596
+#: src/API/EventDatesController.php:597
 msgid "excluded_dates must be an array of Y-m-d dates."
 msgstr "excluded_dates musi być tablicą dat w formacie Y-m-d."
 
-#: src/API/EventDatesController.php:608
+#: src/API/EventDatesController.php:609
 msgid "Each excluded date must be a valid calendar date in Y-m-d format."
 msgstr "Każda wykluczona data musi być prawidłową datą kalendarza w formacie Y-m-d."
 
-#: src/API/EventDatesController.php:633
+#: src/API/EventDatesController.php:634
 msgid "Excluded dates cannot be combined with hand-picked dates."
 msgstr "Wykluczone daty nie mogą być łączone z ręcznie wybranymi datami."
 
-#: src/API/EventDatesController.php:641
+#: src/API/EventDatesController.php:642
 msgid "Excluded dates can only be set on the series, not on one of its dates."
 msgstr "Wykluczone daty można ustawiać tylko w serii, a nie w jednej z jej dat."
 
-#: src/API/EventDatesController.php:656
+#: src/API/EventDatesController.php:657
 msgid "Excluded dates need a regular schedule."
 msgstr "Wykluczone daty wymagają regularnego harmonogramu."
 
-#: src/API/EventDatesController.php:667
+#: src/API/EventDatesController.php:668
 msgid "The original event date cannot be excluded from the series."
 msgstr "Oryginalna data wydarzenia nie może być wykluczona z serii."
 
 #. translators: %s: date in Y-m-d format.
-#: src/API/EventDatesController.php:676
+#: src/API/EventDatesController.php:677
 #, php-format
 msgid "%s is not part of this schedule."
 msgstr "%s nie jest częścią tego harmonogramu."
 
-#: src/API/EventDatesController.php:1750
+#: src/API/EventDatesController.php:1751
 msgid "Failed to save the series dates."
 msgstr "Nie udało się zapisać dat serii."
 
@@ -6440,43 +6440,43 @@ msgid "Nothing is saved until you select Save tickets."
 msgstr "Nic nie zostanie zapisane, dopóki nie wybierzesz „Zapisz bilety”."
 
 #. translators: %s: event title
-#: src/Admin/manage-event/ManageEventApp.js:564
+#: src/Admin/manage-event/ManageEventApp.js:565
 #, js-format
 msgid "Series %s ended."
 msgstr "Seria %s została zakończona."
 
 #. translators: %s: error message
-#: src/Admin/manage-event/ManageEventApp.js:600
+#: src/Admin/manage-event/ManageEventApp.js:601
 #, js-format
 msgid "The series was not ended: %s The dates listed here are the ones saved now."
 msgstr "Seria nie została zakończona: %s Widoczne tu daty to daty zapisane w tej chwili."
 
-#: src/Admin/manage-event/ManageEventApp.js:612
+#: src/Admin/manage-event/ManageEventApp.js:613
 msgid "Could not confirm whether the series was ended. Reload the page to see its current dates before trying again."
 msgstr "Nie udało się potwierdzić, czy seria została zakończona. Wczytaj stronę ponownie, aby zobaczyć jej bieżące daty, zanim spróbujesz jeszcze raz."
 
-#: src/Admin/manage-event/ManageEventApp.js:1631
+#: src/Admin/manage-event/ManageEventApp.js:1632
 msgid "End series?"
 msgstr "Zakończyć serię?"
 
-#: src/Admin/manage-event/ManageEventApp.js:1633
+#: src/Admin/manage-event/ManageEventApp.js:1634
 msgid "Ending series…"
 msgstr "Kończenie serii…"
 
 #. translators: %s: event title
-#: src/Admin/manage-event/ManageEventApp.js:1644
+#: src/Admin/manage-event/ManageEventApp.js:1645
 #, js-format
 msgid "End the series %s?"
 msgstr "Zakończyć serię %s?"
 
 #. translators: %s: date and time of the first date of the series
-#: src/Admin/manage-event/ManageEventApp.js:1651
+#: src/Admin/manage-event/ManageEventApp.js:1652
 #, js-format
 msgid "Its first date, %s, is kept as a single event."
 msgstr "Jej pierwsza data, %s, pozostaje jako pojedyncze wydarzenie."
 
 #. translators: %d: number of dates that will be deleted
-#: src/Admin/manage-event/ManageEventApp.js:1663
+#: src/Admin/manage-event/ManageEventApp.js:1664
 #, js-format
 msgid "%d other date is deleted:"
 msgid_plural "All %d other dates are deleted:"
@@ -6485,7 +6485,7 @@ msgstr[1] "Usunięte zostaną %d inne daty:"
 msgstr[2] "Usuniętych zostanie %d innych dat:"
 
 #. translators: %d: number of further dates not listed individually
-#: src/Admin/manage-event/ManageEventApp.js:1693
+#: src/Admin/manage-event/ManageEventApp.js:1694
 #, js-format
 msgid "and %d more date"
 msgid_plural "and %d more dates"
@@ -6493,15 +6493,15 @@ msgstr[0] "i jeszcze %d data"
 msgstr[1] "i jeszcze %d daty"
 msgstr[2] "i jeszcze %d dat"
 
-#: src/Admin/manage-event/ManageEventApp.js:1707
+#: src/Admin/manage-event/ManageEventApp.js:1708
 msgid "Registrations and ticket types that belong to a deleted date are not moved to the first date."
 msgstr "Rejestracje i typy biletów należące do usuniętej daty nie są przenoszone do pierwszej daty."
 
-#: src/Admin/manage-event/ManageEventApp.js:1715
+#: src/Admin/manage-event/ManageEventApp.js:1716
 msgid "The series has no other dates to delete."
 msgstr "Seria nie ma innych dat do usunięcia."
 
-#: src/Admin/manage-event/ManageEventApp.js:1722
+#: src/Admin/manage-event/ManageEventApp.js:1723
 msgid "This is saved immediately and cannot be undone."
 msgstr "Ta zmiana jest zapisywana natychmiast i nie można jej cofnąć."
 
@@ -7030,78 +7030,117 @@ msgstr "Niezapisane zmiany zostaną zachowane i ponownie pokazane tutaj, gdy ten
 msgid "These settings were saved somewhere else, for example in another tab, after you started editing. Saving replaces them with the values shown here."
 msgstr "Te ustawienia zostały zapisane w innym miejscu, na przykład w innej karcie, po rozpoczęciu edycji. Zapisanie zastąpi je wartościami widocznymi tutaj."
 
-#: src/API/EventDatesController.php:432
+#: src/API/EventDatesController.php:433
 msgid "Site-local start date (Y-m-d)."
 msgstr ""
 
-#: src/API/EventDatesController.php:437
+#: src/API/EventDatesController.php:438
 msgid "Site-local inclusive end date (Y-m-d). Defaults to the start date on create."
 msgstr ""
 
-#: src/API/EventDatesController.php:442
+#: src/API/EventDatesController.php:443
 msgid "Site-local start time (H:i or H:i:s), or null when not specified."
 msgstr ""
 
-#: src/API/EventDatesController.php:447
+#: src/API/EventDatesController.php:448
 msgid "Site-local end time (H:i or H:i:s), or null when not specified."
 msgstr ""
 
-#: src/API/EventDatesController.php:452
+#: src/API/EventDatesController.php:453
 msgid "Deprecated: start date/time (Y-m-d H:i:s format). Use start_date and start_time."
 msgstr ""
 
-#: src/API/EventDatesController.php:458
+#: src/API/EventDatesController.php:459
 msgid "Deprecated: end date/time (Y-m-d H:i:s format). Use end_date and end_time."
 msgstr ""
 
-#: src/API/EventDatesController.php:558
+#: src/API/EventDatesController.php:559
 msgid "Timing groups of a date of a series to reset to the series values: \"dates\" (start and end date) and \"times\" (start time, end time and all-day)."
 msgstr ""
 
-#: src/API/EventDatesController.php:827
+#: src/API/EventDatesController.php:828
 msgid "Send either start_date, end_date, start_time and end_time, or the deprecated start_datetime and end_datetime, not both."
 msgstr ""
 
-#: src/API/EventDatesController.php:867
+#: src/API/EventDatesController.php:868
 msgid "Dates must be valid calendar dates in YYYY-MM-DD format."
 msgstr ""
 
-#: src/API/EventDatesController.php:868
+#: src/API/EventDatesController.php:869
 msgid "Times must be valid 24-hour times in HH:MM or HH:MM:SS format."
 msgstr ""
 
-#: src/API/EventDatesController.php:869
+#: src/API/EventDatesController.php:870
 msgid "A start date is required when an end date or a time is set."
 msgstr ""
 
-#: src/API/EventDatesController.php:870
+#: src/API/EventDatesController.php:871
 msgid "All-day events cannot have a start or end time."
 msgstr ""
 
-#: src/API/EventDatesController.php:871
+#: src/API/EventDatesController.php:872
 msgid "The end date cannot be before the start date."
 msgstr ""
 
-#: src/API/EventDatesController.php:872
+#: src/API/EventDatesController.php:873
 msgid "The end time cannot be before the start time."
 msgstr ""
 
-#: src/API/EventDatesController.php:910
+#: src/API/EventDatesController.php:911
 msgid "Only a date of a series can inherit its timing from the series."
 msgstr ""
 
-#: src/API/EventDatesController.php:933
+#: src/API/EventDatesController.php:934
 msgid "A timing group cannot be changed and reset to the series in the same request."
 msgstr ""
 
-#: src/API/EventDatesController.php:947
+#: src/API/EventDatesController.php:948
 msgid "The series of this date could not be found."
 msgstr ""
 
-#: src/API/EventDatesController.php:1033
+#: src/API/EventDatesController.php:1034
 msgid "Some dates of this series have their own timing that cannot be combined with this change. Change those dates, or reset their timing to the series, first."
 msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:1543
 msgid "Starts automatically on the day this event was created."
 msgstr ""
+
+#. translators: %d: number of minutes
+#: src/Admin/components/durationLabels.js:14
+#, js-format
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minuta"
+msgstr[1] "%d minuty"
+msgstr[2] "%d minut"
+
+#. translators: %d: number of hours
+#: src/Admin/components/durationLabels.js:21
+#, js-format
+msgid "%d hour"
+msgid_plural "%d hours"
+msgstr[0] "%d godzina"
+msgstr[1] "%d godziny"
+msgstr[2] "%d godzin"
+
+#. translators: %d: number of days
+#: src/Admin/components/durationLabels.js:28
+#, js-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] "%d dzień"
+msgstr[1] "%d dni"
+msgstr[2] "%d dni"
+
+#. translators: 1: number of hours, e.g. "2 hours"; 2: number of minutes, e.g. "30 minutes"
+#: src/Admin/components/durationLabels.js:51
+#, js-format
+msgctxt "duration: hours, then minutes"
+msgid "%1$s %2$s"
+msgstr "%1$s %2$s"
+
+#: src/Admin/components/durationLabels.js:83
+msgctxt "custom duration option"
+msgid "Other"
+msgstr "Inny"

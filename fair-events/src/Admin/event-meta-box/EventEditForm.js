@@ -31,6 +31,7 @@ import {
  */
 import { STORE_NAME } from './store.js';
 import RecurrenceImpactSummary from '../manage-event/RecurrenceImpactSummary.js';
+import { getDurationLabelConfig } from '../components/durationLabels.js';
 
 /**
  * EventEditForm component
@@ -144,7 +145,7 @@ export default function EventEditForm( {
 			new DurationOptions( {
 				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 				unit: 'minutes',
-				textDomain: 'fair-events',
+				...getDurationLabelConfig(),
 			} ),
 		[]
 	);
@@ -154,7 +155,7 @@ export default function EventEditForm( {
 			new DurationOptions( {
 				values: [ 1, 2, 3, 4, 5, 6, 7 ],
 				unit: 'days',
-				textDomain: 'fair-events',
+				...getDurationLabelConfig(),
 			} ),
 		[]
 	);

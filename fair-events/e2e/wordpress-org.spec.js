@@ -36,6 +36,19 @@ if ( ASSET_SUFFIX === undefined ) {
 const COPY_BY_LOCALE = {
 	'': {
 		pageTitle: 'Upcoming Events',
+		durationLabel: 'Event length',
+		durationOptions: [
+			'Other',
+			'30 minutes',
+			'1 hour',
+			'1 hour 30 minutes',
+			'2 hours',
+			'2 hours 30 minutes',
+			'3 hours',
+			'4 hours',
+			'6 hours',
+			'8 hours',
+		],
 		addToCalendarLabel: 'Add to Calendar',
 		buttonPageIntro:
 			'Save the date — add this event to your calendar in one click.',
@@ -79,6 +92,19 @@ const COPY_BY_LOCALE = {
 	},
 	es_ES: {
 		pageTitle: 'Próximos Eventos',
+		durationLabel: 'Duración del evento',
+		durationOptions: [
+			'Otra',
+			'30 minutos',
+			'1 hora',
+			'1 hora 30 minutos',
+			'2 horas',
+			'2 horas 30 minutos',
+			'3 horas',
+			'4 horas',
+			'6 horas',
+			'8 horas',
+		],
 		addToCalendarLabel: 'Añadir al Calendario',
 		buttonPageIntro:
 			'Reserva la fecha — añade este evento a tu calendario con un clic.',
@@ -480,6 +506,12 @@ test.describe( 'WordPress.org screenshots for Fair Events', () => {
 				headlineSeed.title,
 				{ timeout: 20_000 }
 			);
+			// Every Event Length option must be in the capture's language.
+			await expect(
+				page
+					.getByRole( 'combobox', { name: COPY.durationLabel } )
+					.locator( 'option' )
+			).toHaveText( COPY.durationOptions );
 			await hideAdminChrome();
 			await page.waitForTimeout( 1200 );
 			await page.screenshot( {
