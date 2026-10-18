@@ -436,7 +436,7 @@ msgstr "Name"
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/components/CopyUrlButton.js:24
+#: src/Admin/components/CopyUrlButton.js:21
 msgid "Copy URL"
 msgstr "URL kopieren"
 
@@ -889,11 +889,11 @@ msgstr "Veranstaltungsort"
 msgid "Create Event"
 msgstr "Event erstellen"
 
-#: src/Admin/components/CopyUrlButton.js:25
+#: src/Admin/components/CopyUrlButton.js:22
 msgid "Copy URL to clipboard"
 msgstr "URL in die Zwischenablage kopieren"
 
-#: src/Admin/components/CopyUrlButton.js:56
+#: src/Admin/components/CopyUrlButton.js:23
 msgid "Copied!"
 msgstr "Kopiert!"
 

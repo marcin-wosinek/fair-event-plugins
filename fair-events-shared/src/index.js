@@ -10,6 +10,7 @@
 export * from './dateTime.js';
 export * from './calendarUtils.js';
 export * from './dynamicDateRegistry.js';
+export { default as CopyUrlButton } from './CopyUrlButton.js';
 export { default as DateTimeControl } from './DateTimeControl.js';
 export { DurationOptions } from './DurationOptions.js';
 export { default as EventSourceSelector } from './EventSourceSelector.js';
