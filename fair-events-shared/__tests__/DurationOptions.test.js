@@ -189,15 +189,40 @@ describe( 'DurationOptions constructor and getDurationOptions', () => {
 		expect( result ).toEqual( [ { label: 'Other', value: 'other' } ] );
 	} );
 
-	test( 'should use custom text domain', () => {
+	test( 'should use injected label formatter and "Other" label', () => {
+		const formatLabel = jest.fn(
+			( value, unit ) => `${ unit }:${ value }`
+		);
 		const options = new DurationOptions( {
-			values: [ 1 ],
-			unit: 'hours',
-			textDomain: 'custom-domain',
+			values: [ 30, 60 ],
+			unit: 'minutes',
+			formatLabel,
+			otherLabel: 'Otra',
 		} );
 
-		// Just verify it doesn't throw - actual i18n testing would require more setup
-		expect( () => options.getDurationOptions() ).not.toThrow();
+		expect( options.getDurationOptions() ).toEqual( [
+			{ label: 'Otra', value: 'other' },
+			{ label: 'minutes:30', value: 30 },
+			{ label: 'minutes:60', value: 60 },
+		] );
+		expect( formatLabel ).toHaveBeenCalledWith( 30, 'minutes' );
+	} );
+
+	test( 'should keep values and selection unchanged with injected labels', () => {
+		const options = new DurationOptions( {
+			values: [ 30, 60, 90 ],
+			unit: 'minutes',
+			formatLabel: ( value ) => `label ${ value }`,
+			otherLabel: 'Otra',
+		} );
+		options.setValue( 75 );
+
+		expect(
+			options.getDurationOptions().map( ( option ) => option.value )
+		).toEqual( [ 'other', 30, 60, 75, 90 ] );
+		expect( options.getDurationOptions()[ 3 ].label ).toBe( 'label 75' );
+		expect( options.getCurrentSelection( 60.001 ) ).toBe( 60 );
+		expect( options.getCurrentSelection( 45 ) ).toBe( 'other' );
 	} );
 } );
 
@@ -458,7 +483,6 @@ describe( 'DurationOptions real-world scenarios', () => {
 		const options = new DurationOptions( {
 			values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
 			unit: 'minutes',
-			textDomain: 'fair-calendar-button',
 		} );
 
 		const result = options.getDurationOptions();
@@ -476,7 +500,6 @@ describe( 'DurationOptions real-world scenarios', () => {
 		const options = new DurationOptions( {
 			values: [ 1, 2, 3 ],
 			unit: 'days',
-			textDomain: 'fair-calendar-button',
 		} );
 
 		const result = options.getDurationOptions();
@@ -492,7 +515,6 @@ describe( 'DurationOptions real-world scenarios', () => {
 		const options = new DurationOptions( {
 			values: [ 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4 ],
 			unit: 'hours',
-			textDomain: 'fair-timetable',
 		} );
 
 		const result = options.getDurationOptions();
@@ -507,7 +529,6 @@ describe( 'DurationOptions real-world scenarios', () => {
 		const options = new DurationOptions( {
 			values,
 			unit: 'hours',
-			textDomain: 'fair-timetable',
 		} );
 
 		const result = options.getDurationOptions();

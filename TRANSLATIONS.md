@@ -471,13 +471,21 @@ per-bundle JSON file; a bare filename reference resolves fine for the PHP
 `.mo` path but is silently dropped from every JS translation JSON, since the
 map lookup is a literal string match.
 
-**Dynamic text domains are not extracted.** `DurationOptions` takes its text
-domain at runtime (`new DurationOptions({ textDomain: 'fair-events', ... })`),
-so its `__( label, this.textDomain )` calls can't be statically parsed by
-`wp i18n make-pot` — the same limitation applies to any other shared component
-written this way. These strings are invisible to extraction entirely (not
-misfiled, just skipped) and must be declared as literal `__()` calls in the
-*consuming* plugin's own source if they need to be translatable.
+**Dynamic text domains are not extracted.** A call such as
+`__( label, this.textDomain )` can't be statically parsed by
+`wp i18n make-pot`, so its strings are invisible to extraction entirely (not
+misfiled, just skipped). A shared component whose labels belong to whichever
+plugin uses it should therefore take the translated labels from its consumer
+instead of a text domain. `DurationOptions` works this way: it formats
+untranslated English labels by default, and accepts `formatLabel` and
+`otherLabel` config entries. Fair Events passes them from
+`fair-events/src/Admin/components/durationLabels.js`
+(`...getDurationLabelConfig()`), where the strings are literal `fair-events`
+calls — `_n()` for the singular/plural unit labels and an `_x()` template for
+an hours-and-minutes combination — so they are extracted into its own catalog
+and routed into each admin bundle's JSON. Another plugin reusing
+`DurationOptions` supplies its own formatter under its own domain rather than
+loading the Fair Events catalog.
 
 **Only plugins that depend on `fair-events-shared`** (checked via each
 plugin's `package.json` `dependencies`) run the merge step in their `makepot`

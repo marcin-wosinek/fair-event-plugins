@@ -1,8 +1,11 @@
 /**
  * DurationOptions class for managing duration options across different units
+ *
+ * Labels are untranslated English by default. A shared module cannot declare
+ * a text domain that `wp i18n make-pot` can extract, so a consuming plugin
+ * that needs translated labels passes its own `formatLabel` and `otherLabel`
+ * built from literal `__()` / `_n()` calls under its own domain.
  */
-
-import { __ } from '@wordpress/i18n';
 
 /**
  * DurationOptions class for generating and managing duration options
@@ -12,22 +15,25 @@ export class DurationOptions {
 	/**
 	 * Constructor
 	 *
-	 * @param {Object}   config            - Configuration object
-	 * @param {number[]} config.values     - Array of duration values
-	 * @param {string}   config.unit       - Unit type: 'hours', 'minutes', or 'days'
-	 * @param {number}   config.tolerance  - Tolerance for floating point comparison (default: 0.01)
-	 * @param {string}   config.textDomain - WordPress text domain for i18n (default: 'fair-events-shared')
+	 * @param {Object}   config             - Configuration object
+	 * @param {number[]} config.values      - Array of duration values
+	 * @param {string}   config.unit        - Unit type: 'hours', 'minutes', or 'days'
+	 * @param {number}   config.tolerance   - Tolerance for floating point comparison (default: 0.01)
+	 * @param {Function} config.formatLabel - Formats a value as `( value, unit ) => string` (default: English labels)
+	 * @param {string}   config.otherLabel  - Label of the "Other" option (default: 'Other')
 	 */
 	constructor( {
 		values,
 		unit = 'hours',
 		tolerance = 0.01,
-		textDomain = 'fair-events-shared',
+		formatLabel = DurationOptions.formatDurationLabel,
+		otherLabel = 'Other',
 	} ) {
 		this.values = values;
 		this.unit = unit;
 		this.tolerance = tolerance;
-		this.textDomain = textDomain;
+		this.formatLabel = formatLabel;
+		this.otherLabel = otherLabel;
 		this.selectedValue = null;
 	}
 
@@ -152,7 +158,7 @@ export class DurationOptions {
 	getDurationOptions() {
 		const options = [
 			{
-				label: __( 'Other', this.textDomain ),
+				label: this.otherLabel,
 				value: 'other',
 			},
 		];
@@ -174,10 +180,7 @@ export class DurationOptions {
 		// Add all values as options
 		allValues.forEach( ( value ) => {
 			options.push( {
-				label: __(
-					DurationOptions.formatDurationLabel( value, this.unit ),
-					this.textDomain
-				),
+				label: this.formatLabel( value, this.unit ),
 				value: value,
 			} );
 		} );
