@@ -37,3 +37,11 @@ The button's `a.wp-block-button__link` receives `data-calendar-button="true"`
 plus `data-start`, `data-end`, `data-all-day`, `data-title`, `data-url`,
 `data-location`, `data-description`, `data-recurring`, and `data-rrule`, and
 the calendar menu script is enqueued.
+
+Only an all-day event or one with both a start and an end time is exported;
+a missing time is never guessed. When the shown date can't be exported, the
+link gets `data-calendar-available="false"` and `aria-disabled="true"`
+instead of event data, and clicking it does nothing. On a recurring event's
+overview, `data-rrule` is only set when every date of the series can be
+exported. Otherwise the button exports the next date that can be, on its
+own, and `data-url` links to that date.

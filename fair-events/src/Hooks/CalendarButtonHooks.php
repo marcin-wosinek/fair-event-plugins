@@ -12,6 +12,9 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Helpers\CalendarExport;
+use FairEvents\Helpers\EventTiming;
+use FairEvents\Helpers\OccurrenceDateParam;
 use FairEvents\Helpers\SelectedOccurrence;
 use FairEvents\Models\EventDates;
 use FairEvents\Settings\Settings;
@@ -90,14 +93,27 @@ class CalendarButtonHooks {
 		// Get event dates from database. Honors ?event_date=<id> so the
 		// calendar button reflects a viewer-picked occurrence (e.g. one
 		// specific date out of a recurring series) instead of the master.
-		$event_dates = SelectedOccurrence::resolve( $post_id );
-		if ( ! $event_dates ) {
+		$selection = SelectedOccurrence::select( $post_id );
+		if ( ! $selection ) {
 			return $content;
 		}
 
+		$export = $this->resolve_export( $selection, SelectedOccurrence::resolve( $post_id, $selection['default'] ) );
+
+		// Nothing exportable: no calendar entry may invent the missing time,
+		// so the button gets no event data and does nothing when clicked.
+		if ( ! $export ) {
+			return $this->add_link_attributes( $content, 'data-calendar-button="true" data-calendar-available="false" aria-disabled="true"' );
+		}
+
+		$event_dates = $export['row'];
+		$timing      = EventTiming::to_legacy( $event_dates->get_timing() );
+
 		// Get post data for calendar event.
 		$title       = get_the_title( $post_id );
-		$url         = get_permalink( $post_id );
+		$url         = $export['as_session']
+			? add_query_arg( 'event_date', OccurrenceDateParam::format( $event_dates ), get_permalink( $post_id ) )
+			: get_permalink( $post_id );
 		$description = get_the_excerpt( $post_id );
 
 		// Get location from venue if available, otherwise fall back to the
@@ -117,15 +133,15 @@ class CalendarButtonHooks {
 			$location = $event_dates->address;
 		}
 
-		// Get RRULE if available.
-		$rrule     = $event_dates->rrule ?? '';
+		$rrule     = $export['rrule'];
 		$recurring = ! empty( $rrule );
 
-		// Build data attributes.
+		// Build data attributes. Exportable timing has both ends, so these
+		// are its real values, never substitutes.
 		$data_attrs = sprintf(
 			'data-calendar-button="true" data-start="%s" data-end="%s" data-all-day="%s" data-title="%s" data-url="%s" data-location="%s" data-description="%s" data-recurring="%s" data-rrule="%s"',
-			esc_attr( $event_dates->start_datetime ),
-			esc_attr( $event_dates->end_datetime ?? $event_dates->start_datetime ),
+			esc_attr( $timing['start_datetime'] ),
+			esc_attr( $timing['end_datetime'] ),
 			$event_dates->all_day ? 'true' : 'false',
 			esc_attr( $title ),
 			esc_attr( $url ),
@@ -135,18 +151,85 @@ class CalendarButtonHooks {
 			esc_attr( $rrule )
 		);
 
+		return $this->add_link_attributes( $content, $data_attrs );
+	}
+
+	/**
+	 * Choose what the button exports, following the calendar export policy
+	 * (see CalendarExport): only an exportable date, and a recurrence rule
+	 * only when no date of the series is left out.
+	 *
+	 * A recurring event's overview exports what it shows (today's or the
+	 * next date, or the series with its rule) when every date of the series
+	 * is exportable. When some are not, it exports the next exportable date
+	 * that has not ended, on its own. A selected session exports itself.
+	 *
+	 * @param array      $selection Selection from SelectedOccurrence::select().
+	 * @param EventDates $shown     Row the page shows (SelectedOccurrence::resolve()).
+	 * @return array{row: EventDates, rrule: string, as_session: bool}|null
+	 *         The row to export, its rule, and whether the link should name
+	 *         that session; null when nothing is exportable.
+	 */
+	private function resolve_export( array $selection, EventDates $shown ) {
+		$series = $selection['series'];
+
+		if ( $series && SelectedOccurrence::SESSION !== $selection['state'] ) {
+			$dates = array_filter(
+				array_merge( array( $series ), EventDates::get_generated_by_master_id( (int) $series->id ) ),
+				function ( $row ) {
+					return 'active' === $row->status;
+				}
+			);
+
+			$timings = array_map(
+				function ( $row ) {
+					return $row->get_timing();
+				},
+				$dates
+			);
+
+			if ( ! CalendarExport::all_exportable( $timings ) ) {
+				$next = CalendarExport::next_exportable( $timings, current_time( 'mysql' ) );
+
+				return null === $next ? null : array(
+					'row'        => $dates[ $next ],
+					'rrule'      => '',
+					'as_session' => true,
+				);
+			}
+		}
+
+		if ( ! EventTiming::is_calendar_exportable( $shown->get_timing() ) ) {
+			return null;
+		}
+
+		return array(
+			'row'        => $shown,
+			'rrule'      => (string) ( $shown->rrule ?? '' ),
+			'as_session' => false,
+		);
+	}
+
+	/**
+	 * Add attributes to the button's link.
+	 *
+	 * @param string $content    Block HTML content.
+	 * @param string $attributes Escaped attribute markup.
+	 * @return string Modified block content.
+	 */
+	private function add_link_attributes( $content, $attributes ) {
 		// Inject data attributes into the button element.
 		// The button is an <a> tag with class wp-block-button__link.
 		$content = preg_replace(
 			'/<a\s+class="wp-block-button__link/',
-			'<a ' . $data_attrs . ' class="wp-block-button__link',
+			'<a ' . $attributes . ' class="wp-block-button__link',
 			$content
 		);
 
 		// Also handle case where class might have a prefix.
 		$content = preg_replace(
 			'/<a\s+([^>]*?)class="([^"]*?)wp-block-button__link/',
-			'<a $1' . $data_attrs . ' class="$2wp-block-button__link',
+			'<a $1' . $attributes . ' class="$2wp-block-button__link',
 			$content
 		);
 

@@ -15,6 +15,7 @@ use FairEvents\Database\EventSourceRepository;
 use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventLocation;
 use FairEvents\Helpers\EventsListSeries;
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Helpers\FairEventsApiParser;
 use FairEvents\Helpers\ICalParser;
 use FairEvents\Models\EventDates;
@@ -27,7 +28,7 @@ defined( 'WPINC' ) || die;
  * Assembles normalized occurrence DTOs for a date range.
  *
  * DTO shape: uid, event_date_id, event_id, occurrence_type, title,
- * description, start, end, all_day, url, categories, source
+ * description, start, end, all_day, timing, calendar_export, url, categories, source
  * ('post'|'standalone'|'ical'|'api'), link_type (the row's own
  * 'post'|'external'|'none', exposed for both source === 'post' — see
  * format_post_occurrence() — and source === 'standalone' — see
@@ -40,6 +41,13 @@ defined( 'WPINC' ) || die;
  * apart from an explicit 'in_person'), series_id (the master event-date ID
  * for an occurrence of a local recurring series, null for single rows and
  * external occurrences — see EventsListSeries).
+ *
+ * `timing` is the canonical timing (see EventTiming): dates with
+ * independently optional times. `calendar_export` says whether the
+ * occurrence may be exported to calendars (EventTiming::is_calendar_exportable());
+ * ineligible occurrences stay in the list, and only calendar exports drop them.
+ * External occurrences always come with both ends, so their timing is read
+ * from their datetimes.
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -331,6 +339,8 @@ class EventFeedProvider {
 			'start'           => $row->start_datetime,
 			'end'             => $row->end_datetime ? $row->end_datetime : $row->start_datetime,
 			'all_day'         => (bool) $row->all_day,
+			'timing'          => $row->get_timing(),
+			'calendar_export' => EventTiming::is_calendar_exportable( $row->get_timing() ),
 			'url'             => $row->get_display_url( true ),
 			'categories'      => $this->get_category_objects( $post_category_ids ),
 			'source'          => 'post',
@@ -368,6 +378,8 @@ class EventFeedProvider {
 			'start'           => $row->start_datetime,
 			'end'             => $row->end_datetime ? $row->end_datetime : $row->start_datetime,
 			'all_day'         => (bool) $row->all_day,
+			'timing'          => $row->get_timing(),
+			'calendar_export' => EventTiming::is_calendar_exportable( $row->get_timing() ),
 			'url'             => $row->get_display_url( true ),
 			'categories'      => $this->get_category_objects( $row_category_ids ),
 			'source'          => 'standalone',
@@ -488,8 +500,9 @@ class EventFeedProvider {
 	 * @return array Occurrence DTO.
 	 */
 	private function format_external_occurrence( array $event, $source, $color ) {
-		$start = $event['start'] ?? '';
-		$end   = ! empty( $event['end'] ) ? $event['end'] : $start;
+		$start  = $event['start'] ?? '';
+		$end    = ! empty( $event['end'] ) ? $event['end'] : $start;
+		$timing = EventTiming::from_legacy( $start, $end, ! empty( $event['all_day'] ) );
 
 		return array(
 			'uid'             => $event['uid'] ?? md5( $start . ( $event['summary'] ?? '' ) ),
@@ -502,6 +515,8 @@ class EventFeedProvider {
 			'start'           => $start,
 			'end'             => $end,
 			'all_day'         => (bool) ( $event['all_day'] ?? false ),
+			'timing'          => $timing,
+			'calendar_export' => EventTiming::is_calendar_exportable( $timing ),
 			'url'             => $event['url'] ?? '',
 			'categories'      => array(),
 			'source'          => $source,

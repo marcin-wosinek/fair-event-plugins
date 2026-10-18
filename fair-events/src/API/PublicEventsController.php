@@ -271,17 +271,25 @@ class PublicEventsController extends WP_REST_Controller {
 	 * @return array Formatted event data.
 	 */
 	private function format_for_response( array $occurrence ) {
+		// The dates with their independently optional times, and whether
+		// calendars may import the event: one with a missing time is listed
+		// here but left out of the ICS feed.
 		$response = array(
-			'uid'             => $occurrence['uid'],
-			'event_date_id'   => $occurrence['event_date_id'],
-			'occurrence_type' => $occurrence['occurrence_type'],
-			'title'           => $occurrence['title'],
-			'description'     => $occurrence['description'],
-			'start'           => ! empty( $occurrence['start'] ) ? DateHelper::local_to_iso8601( $occurrence['start'] ) : '',
-			'end'             => ! empty( $occurrence['end'] ) ? DateHelper::local_to_iso8601( $occurrence['end'] ) : '',
-			'all_day'         => $occurrence['all_day'],
-			'url'             => $occurrence['url'] ?? '',
-			'categories'      => $occurrence['categories'],
+			'uid'                      => $occurrence['uid'],
+			'event_date_id'            => $occurrence['event_date_id'],
+			'occurrence_type'          => $occurrence['occurrence_type'],
+			'title'                    => $occurrence['title'],
+			'description'              => $occurrence['description'],
+			'start'                    => ! empty( $occurrence['start'] ) ? DateHelper::local_to_iso8601( $occurrence['start'] ) : '',
+			'end'                      => ! empty( $occurrence['end'] ) ? DateHelper::local_to_iso8601( $occurrence['end'] ) : '',
+			'all_day'                  => $occurrence['all_day'],
+			'start_date'               => $occurrence['timing']['start_date'],
+			'end_date'                 => $occurrence['timing']['end_date'],
+			'start_time'               => $occurrence['timing']['start_time'],
+			'end_time'                 => $occurrence['timing']['end_time'],
+			'calendar_export_eligible' => $occurrence['calendar_export'],
+			'url'                      => $occurrence['url'] ?? '',
+			'categories'               => $occurrence['categories'],
 		);
 
 		$location = $this->format_location( $occurrence );

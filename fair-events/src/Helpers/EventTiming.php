@@ -383,6 +383,31 @@ class EventTiming {
 	}
 
 	/**
+	 * Whether a timing can be exported to calendars: ICS feeds, downloads
+	 * and calendar-service links.
+	 *
+	 * Only an explicitly all-day event or one with both times qualifies.
+	 * A missing time is never replaced by midnight, a guessed duration or
+	 * an all-day entry, so such an event is left out instead.
+	 *
+	 * @param array $timing Canonical timing.
+	 * @return bool True when the timing is exportable.
+	 */
+	public static function is_calendar_exportable( array $timing ) {
+		$timing = array_merge( self::undated(), $timing );
+
+		if ( empty( $timing['start_date'] ) ) {
+			return false;
+		}
+
+		if ( $timing['all_day'] ) {
+			return true;
+		}
+
+		return null !== $timing['start_time'] && null !== $timing['end_time'];
+	}
+
+	/**
 	 * A timing moved to start on another date.
 	 *
 	 * Keeps the calendar-day span between the start and end dates, the

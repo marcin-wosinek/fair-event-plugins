@@ -1,6 +1,7 @@
 import {
 	createEventData,
 	formatEventDescription,
+	isCalendarExportable,
 } from '../src/blocks/calendar-button/utils/calendar-handler.js';
 
 describe( 'calendar-handler', () => {
@@ -161,6 +162,59 @@ describe( 'calendar-handler', () => {
 				);
 				expect( result.allDay ).toBe( true );
 			} );
+		} );
+	} );
+
+	describe( 'isCalendarExportable', () => {
+		it( 'accepts a timed event with a start and an end', () => {
+			expect(
+				isCalendarExportable( {
+					start: '2030-06-14T19:00',
+					end: '2030-06-14T21:00',
+					allDay: false,
+				} )
+			).toBe( true );
+		} );
+
+		it( 'accepts genuine midnight as a time', () => {
+			expect(
+				isCalendarExportable( {
+					start: '2030-06-14T00:00',
+					end: '2030-06-15T00:00',
+					allDay: false,
+				} )
+			).toBe( true );
+		} );
+
+		it( 'rejects a timed event missing its start or its end', () => {
+			expect(
+				isCalendarExportable( {
+					start: '2030-06-14T19:00',
+					end: '',
+					allDay: false,
+				} )
+			).toBe( false );
+			expect(
+				isCalendarExportable( {
+					start: '',
+					end: '2030-06-14T21:00',
+					allDay: false,
+				} )
+			).toBe( false );
+			expect( isCalendarExportable( { allDay: false } ) ).toBe( false );
+		} );
+
+		it( 'accepts an all-day event with a start date', () => {
+			expect(
+				isCalendarExportable( {
+					start: '2030-06-14',
+					end: '',
+					allDay: true,
+				} )
+			).toBe( true );
+			expect( isCalendarExportable( { start: '', allDay: true } ) ).toBe(
+				false
+			);
 		} );
 	} );
 

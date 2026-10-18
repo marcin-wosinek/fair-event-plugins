@@ -1,6 +1,7 @@
 import {
 	createEventData,
 	handleCalendarClick,
+	isCalendarExportable,
 } from './utils/calendar-handler.js';
 
 // Import styles
@@ -24,21 +25,28 @@ function initializeCalendarButtons() {
 		const button = container.querySelector( '.wp-block-button__link' );
 
 		if ( button ) {
+			// Event data rendered by the server, read once per button
+			const attributes = {
+				start: container.dataset.start,
+				end: container.dataset.end,
+				description: container.dataset.description || '',
+				location: container.dataset.location || '',
+				allDay: container.dataset.allDay === 'true',
+				title: container.dataset.title,
+				recurring: container.dataset.recurring === 'true',
+				rRule: container.dataset.rrule || '',
+				url: container.dataset.url || '',
+			};
+			const exportable = isCalendarExportable( attributes );
+
 			button.addEventListener( 'click', function ( e ) {
 				e.preventDefault();
 
-				// Get event data from container data attributes
-				const attributes = {
-					start: container.dataset.start,
-					end: container.dataset.end,
-					description: container.dataset.description || '',
-					location: container.dataset.location || '',
-					allDay: container.dataset.allDay === 'true',
-					title: container.dataset.title,
-					recurring: container.dataset.recurring === 'true',
-					rRule: container.dataset.rrule || '',
-					url: container.dataset.url || '',
-				};
+				// A timed event without both a start and an end has no
+				// calendar entry
+				if ( ! exportable ) {
+					return;
+				}
 
 				// Create calendar event data and handle click
 				const eventData = createEventData( attributes );

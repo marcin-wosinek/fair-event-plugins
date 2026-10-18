@@ -73,14 +73,15 @@ class CalendarFeedControllerTest extends TestCase {
 		$GLOBALS['_fair_test_timezone'] = 'America/New_York';
 
 		$occurrence = array(
-			'uid'         => 'timed-1@example.com',
-			'title'       => 'Timed event',
-			'description' => '',
-			'start'       => '2026-06-15 12:00:00',
-			'end'         => '2026-06-15 13:00:00',
-			'all_day'     => false,
-			'url'         => '',
-			'location'    => null,
+			'uid'             => 'timed-1@example.com',
+			'title'           => 'Timed event',
+			'description'     => '',
+			'start'           => '2026-06-15 12:00:00',
+			'end'             => '2026-06-15 13:00:00',
+			'all_day'         => false,
+			'calendar_export' => true,
+			'url'             => '',
+			'location'        => null,
 		);
 
 		$ics    = $this->build_ics( array( $occurrence ) );
@@ -103,14 +104,15 @@ class CalendarFeedControllerTest extends TestCase {
 		$GLOBALS['_fair_test_timezone'] = 'America/New_York';
 
 		$occurrence = array(
-			'uid'         => 'allday-1@example.com',
-			'title'       => 'All day event',
-			'description' => '',
-			'start'       => '2026-05-01 00:00:00',
-			'end'         => '2026-05-02 00:00:00',
-			'all_day'     => true,
-			'url'         => '',
-			'location'    => null,
+			'uid'             => 'allday-1@example.com',
+			'title'           => 'All day event',
+			'description'     => '',
+			'start'           => '2026-05-01 00:00:00',
+			'end'             => '2026-05-02 00:00:00',
+			'all_day'         => true,
+			'calendar_export' => true,
+			'url'             => '',
+			'location'        => null,
 		);
 
 		$ics    = $this->build_ics( array( $occurrence ) );
@@ -133,14 +135,15 @@ class CalendarFeedControllerTest extends TestCase {
 		$GLOBALS['_fair_test_timezone'] = '+05:00';
 
 		$occurrence = array(
-			'uid'         => 'timed-2@example.com',
-			'title'       => 'Timed event',
-			'description' => '',
-			'start'       => '2026-06-15 18:00:00',
-			'end'         => '2026-06-15 19:00:00',
-			'all_day'     => false,
-			'url'         => '',
-			'location'    => null,
+			'uid'             => 'timed-2@example.com',
+			'title'           => 'Timed event',
+			'description'     => '',
+			'start'           => '2026-06-15 18:00:00',
+			'end'             => '2026-06-15 19:00:00',
+			'all_day'         => false,
+			'calendar_export' => true,
+			'url'             => '',
+			'location'        => null,
 		);
 
 		$ics    = $this->build_ics( array( $occurrence ) );
@@ -309,11 +312,12 @@ class CalendarFeedControllerTest extends TestCase {
 	 */
 	public function test_vevent_links_in_url_and_description() {
 		$base = array(
-			'title'    => 'Event',
-			'start'    => '2026-06-15 12:00:00',
-			'end'      => '2026-06-15 13:00:00',
-			'all_day'  => false,
-			'location' => null,
+			'title'           => 'Event',
+			'start'           => '2026-06-15 12:00:00',
+			'end'             => '2026-06-15 13:00:00',
+			'all_day'         => false,
+			'calendar_export' => true,
+			'location'        => null,
 		);
 
 		$ics = $this->build_ics(
@@ -352,5 +356,46 @@ class CalendarFeedControllerTest extends TestCase {
 		$unlinked = $events['unlinked@example.com'];
 		$this->assertSame( 'https://example.com/?fair_event_date=8', (string) $unlinked->{'URL'} );
 		$this->assertSame( 'https://example.com/?fair_event_date=8', (string) $unlinked->{'DESCRIPTION'} );
+	}
+
+	/**
+	 * Occurrences that are not exportable — a missing start or end time —
+	 * are left out of the ICS, while all-day and fully timed ones, including
+	 * other dates of the same series, stay.
+	 *
+	 * @return void
+	 */
+	public function test_skips_occurrences_that_are_not_exportable() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$occurrence = function ( $uid, $calendar_export, $all_day = false ) {
+			return array(
+				'uid'             => $uid,
+				'title'           => $uid,
+				'description'     => '',
+				'start'           => '2026-06-15 00:00:00',
+				'end'             => '2026-06-15 00:00:00',
+				'all_day'         => $all_day,
+				'calendar_export' => $calendar_export,
+				'url'             => '',
+				'location'        => null,
+			);
+		};
+
+		$ics = $this->build_ics(
+			array(
+				$occurrence( 'timed@example.com', true ),
+				$occurrence( 'start-only@example.com', false ),
+				$occurrence( 'all-day@example.com', true, true ),
+				$occurrence( 'no-flag@example.com', null ),
+			)
+		);
+
+		$uids = array();
+		foreach ( \Sabre\VObject\Reader::read( $ics )->select( 'VEVENT' ) as $vevent ) {
+			$uids[] = (string) $vevent->{'UID'};
+		}
+
+		$this->assertSame( array( 'timed@example.com', 'all-day@example.com' ), $uids );
 	}
 }

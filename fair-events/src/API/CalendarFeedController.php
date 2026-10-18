@@ -97,7 +97,7 @@ class CalendarFeedController extends WP_REST_Controller {
 			array( 'categories' => $this->resolve_category_ids( $categories ) )
 		);
 
-		$occurrences = array_slice( $occurrences, 0, self::MAX_EVENTS );
+		$occurrences = array_slice( self::exportable( $occurrences ), 0, self::MAX_EVENTS );
 
 		$vcalendar = $this->build_vcalendar( $occurrences );
 
@@ -108,7 +108,27 @@ class CalendarFeedController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Build the VCALENDAR component for a set of occurrences.
+	 * The occurrences that may be exported to calendars: explicitly all-day
+	 * or with both times. One with a missing time stays in the JSON feeds
+	 * but is left out here rather than given an invented time.
+	 *
+	 * @param array[] $occurrences Occurrence DTOs from EventFeedProvider.
+	 * @return array[] Exportable occurrences, in their original order.
+	 */
+	private static function exportable( array $occurrences ) {
+		return array_values(
+			array_filter(
+				$occurrences,
+				function ( $occurrence ) {
+					return ! empty( $occurrence['calendar_export'] );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Build the VCALENDAR component for a set of occurrences. Occurrences
+	 * that are not exportable (see exportable()) are skipped.
 	 *
 	 * @param array[] $occurrences Occurrence DTOs from EventFeedProvider.
 	 * @return VCalendar
@@ -124,7 +144,7 @@ class CalendarFeedController extends WP_REST_Controller {
 			$this->add_vtimezone( $vcalendar, $tz, $occurrences );
 		}
 
-		foreach ( $occurrences as $occurrence ) {
+		foreach ( self::exportable( $occurrences ) as $occurrence ) {
 			if ( empty( $occurrence['start'] ) ) {
 				continue;
 			}
