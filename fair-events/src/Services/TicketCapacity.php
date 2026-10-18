@@ -8,6 +8,8 @@
 namespace FairEvents\Services;
 
 use FairEvents\Helpers\DateRangeFormatter;
+use FairEvents\Helpers\EventTiming;
+use FairEvents\Helpers\EventTimingSql;
 use FairEvents\Models\EventDates;
 use FairEvents\Models\EventTicket;
 use FairEvents\Models\EventTicketActivity;
@@ -107,7 +109,7 @@ class TicketCapacity {
 						OR ( tt.recurrence_scope = 'whole_series' AND s.created_at <= %s AND t.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
 					)',
 					array_merge(
-						array( self::tickets_table(), self::signups_table(), self::ticket_types_table(), $now, $event_date_id, (string) $event_date->start_datetime ),
+						array( self::tickets_table(), self::signups_table(), self::ticket_types_table(), $now, $event_date_id, (string) $event_date->pass_cutoff ),
 						$series_ids
 					)
 				)
@@ -123,7 +125,7 @@ class TicketCapacity {
 						OR ( tt.recurrence_scope = 'whole_series' AND s.created_at <= %s AND s.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
 					)',
 					array_merge(
-						array( self::signups_table(), self::ticket_types_table(), $now, self::tickets_table(), $event_date_id, (string) $event_date->start_datetime ),
+						array( self::signups_table(), self::ticket_types_table(), $now, self::tickets_table(), $event_date_id, (string) $event_date->pass_cutoff ),
 						$series_ids
 					)
 				)
@@ -263,7 +265,7 @@ class TicketCapacity {
 						OR ( tt.recurrence_scope = 'whole_series' AND s.created_at <= %s AND t.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
 					)',
 					array_merge(
-						array( self::ticket_activities_table(), self::tickets_table(), self::signups_table(), self::ticket_types_table(), $ticket_option_id, $now, $now, $event_date_id, (string) $event_date->start_datetime ),
+						array( self::ticket_activities_table(), self::tickets_table(), self::signups_table(), self::ticket_types_table(), $ticket_option_id, $now, $now, $event_date_id, (string) $event_date->pass_cutoff ),
 						$series_ids
 					)
 				)
@@ -885,9 +887,10 @@ class TicketCapacity {
 	}
 
 	/**
-	 * Active occurrences of an event date's series that start now or later —
-	 * the dates a whole_series ticket bought now covers. A date outside any
-	 * series covers only itself.
+	 * Active occurrences of an event date's series that have not started —
+	 * the dates a whole_series ticket bought now covers (see
+	 * EventTiming::series_pass_cutoff()). A date outside any series covers
+	 * only itself.
 	 *
 	 * @param int $event_date_id Event date the ticket is bought from.
 	 * @return int[]
@@ -905,11 +908,14 @@ class TicketCapacity {
 			return array( $event_date_id );
 		}
 
+		$cutoff_key = EventTimingSql::pass_cutoff_key( 'ed' );
+
 		return array_map(
 			'intval',
 			$wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT id FROM %i WHERE ( id = %d OR ( master_id = %d AND occurrence_type = 'generated' ) ) AND status = 'active' AND start_datetime >= %s ORDER BY id ASC",
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $cutoff_key is a static internal template, not user input.
+					"SELECT ed.id FROM %i ed WHERE ( ed.id = %d OR ( ed.master_id = %d AND ed.occurrence_type = 'generated' ) ) AND ed.status = 'active' AND {$cutoff_key} >= %s ORDER BY ed.id ASC",
 					self::event_dates_table(),
 					$master_id,
 					$master_id,
@@ -955,7 +961,9 @@ class TicketCapacity {
 	}
 
 	/**
-	 * Read the raw event date columns capacity counting needs.
+	 * Read the raw event date columns capacity counting needs, plus
+	 * `pass_cutoff`: the latest purchase time at which a whole-series pass
+	 * covers this date (EventTiming::series_pass_cutoff()).
 	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return object|null
@@ -963,13 +971,19 @@ class TicketCapacity {
 	private static function get_event_date_row( int $event_date_id ) {
 		global $wpdb;
 
-		return $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT id, master_id, occurrence_type, start_datetime FROM %i WHERE id = %d',
+				'SELECT id, master_id, occurrence_type, start_datetime, end_datetime, all_day, start_date, end_date, start_time, end_time, timing_migrated FROM %i WHERE id = %d',
 				self::event_dates_table(),
 				$event_date_id
 			)
 		);
+
+		if ( $row ) {
+			$row->pass_cutoff = EventTiming::series_pass_cutoff( EventTiming::from_row( $row ) );
+		}
+
+		return $row;
 	}
 
 	/**

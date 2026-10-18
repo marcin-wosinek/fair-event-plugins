@@ -131,6 +131,112 @@ class EventSchemaTest extends TestCase {
 	}
 
 	/**
+	 * Canonical timing.
+	 *
+	 * @param string      $start_date Start date.
+	 * @param string      $end_date   End date.
+	 * @param string|null $start_time Start time.
+	 * @param string|null $end_time   End time.
+	 * @param bool        $all_day    All-day flag.
+	 * @return array
+	 */
+	private function timing( $start_date, $end_date, $start_time, $end_time, $all_day = false ): array {
+		return array(
+			'start_date' => $start_date,
+			'end_date'   => $end_date,
+			'start_time' => $start_time,
+			'end_time'   => $end_time,
+			'all_day'    => $all_day,
+		);
+	}
+
+	/**
+	 * A supplied time becomes a datetime with the site offset; a missing
+	 * time becomes a bare date, never midnight. A single-day event without
+	 * an end time has no end.
+	 *
+	 * @return void
+	 */
+	public function test_timing_to_dates_never_invents_a_time() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$both       = EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-15', '10:00:00', '12:00:00' ) );
+		$start_only = EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-15', '10:00:00', null ) );
+		$end_only   = EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-15', null, '12:00:00' ) );
+		$neither    = EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-15', null, null ) );
+		$midnight   = EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-16', '00:00:00', '00:00:00' ) );
+
+		unset( $GLOBALS['_fair_test_timezone'] );
+
+		$this->assertSame(
+			array(
+				'start' => '2026-07-15T10:00:00+02:00',
+				'end'   => '2026-07-15T12:00:00+02:00',
+			),
+			$both
+		);
+		$this->assertSame( array( 'start' => '2026-07-15T10:00:00+02:00' ), $start_only );
+		$this->assertSame(
+			array(
+				'start' => '2026-07-15',
+				'end'   => '2026-07-15T12:00:00+02:00',
+			),
+			$end_only
+		);
+		$this->assertSame( array( 'start' => '2026-07-15' ), $neither );
+		$this->assertSame(
+			array(
+				'start' => '2026-07-15T00:00:00+02:00',
+				'end'   => '2026-07-16T00:00:00+02:00',
+			),
+			$midnight
+		);
+	}
+
+	/**
+	 * All-day and multi-day events without times use dates at both ends.
+	 *
+	 * @return void
+	 */
+	public function test_timing_to_dates_all_day_and_multi_day() {
+		$this->assertSame(
+			array(
+				'start' => '2026-07-15',
+				'end'   => '2026-07-15',
+			),
+			EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-15', null, null, true ) )
+		);
+		$this->assertSame(
+			array(
+				'start' => '2026-07-15',
+				'end'   => '2026-07-17',
+			),
+			EventSchema::timing_to_dates( $this->timing( '2026-07-15', '2026-07-17', null, null ) )
+		);
+		$this->assertNull( EventSchema::timing_to_dates( \FairEvents\Helpers\EventTiming::undated() ) );
+	}
+
+	/**
+	 * A DTO's canonical timing wins over its legacy start/end strings.
+	 *
+	 * @return void
+	 */
+	public function test_dto_timing_gives_date_only_values() {
+		$dto = $this->make_dto(
+			array(
+				'start'  => '2026-07-15 00:00:00',
+				'end'    => '2026-07-15 00:00:00',
+				'timing' => $this->timing( '2026-07-15', '2026-07-15', null, null ),
+			)
+		);
+
+		$event = EventSchema::occurrence_to_jsonld( $dto );
+
+		$this->assertSame( '2026-07-15', $event['startDate'] );
+		$this->assertArrayNotHasKey( 'endDate', $event );
+	}
+
+	/**
 	 * A DTO with no start is dropped rather than producing a half-valid Event.
 	 *
 	 * @return void

@@ -408,6 +408,33 @@ class EventTiming {
 	}
 
 	/**
+	 * The latest purchase time at which a whole-series pass still covers a
+	 * date: passes cover the dates that had not started when they were
+	 * bought.
+	 *
+	 * A timed start is the cutoff itself, and an all-day date starts with
+	 * its day. Without a start time the date's start is not known, so a
+	 * pass bought at any time on its start date covers it; nothing assumes
+	 * the date starts at midnight.
+	 *
+	 * @param array $timing Canonical timing.
+	 * @return string|null Site-local 'Y-m-d H:i:s', or null for an undated row.
+	 */
+	public static function series_pass_cutoff( array $timing ) {
+		$timing = array_merge( self::undated(), $timing );
+
+		if ( empty( $timing['start_date'] ) ) {
+			return null;
+		}
+
+		if ( $timing['all_day'] ) {
+			return $timing['start_date'] . ' 00:00:00';
+		}
+
+		return $timing['start_date'] . ' ' . ( $timing['start_time'] ?? '23:59:59' );
+	}
+
+	/**
 	 * A timing moved to start on another date.
 	 *
 	 * Keeps the calendar-day span between the start and end dates, the

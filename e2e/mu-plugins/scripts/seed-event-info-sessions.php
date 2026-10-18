@@ -124,8 +124,16 @@ EventDates::update_by_id(
 );
 EventDates::update_by_id( $sessions[ $date_of( 14 ) ], array( 'attendance_mode' => 'online' ) );
 global $wpdb;
+// Clear both the canonical end time and its legacy datetime: status reads the former.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test fixture; update_by_id() can't write NULL.
-$wpdb->update( $wpdb->prefix . 'fair_event_dates', array( 'end_datetime' => null ), array( 'id' => $sessions[ $date_of( 0 ) ] ) );
+$wpdb->update(
+	$wpdb->prefix . 'fair_event_dates',
+	array(
+		'end_datetime' => null,
+		'end_time'     => null,
+	),
+	array( 'id' => $sessions[ $date_of( 0 ) ] )
+);
 
 // Single event.
 $single_post_id = $create_post( 'fair_event', 'E2E Session Single ' . $suffix, $block );

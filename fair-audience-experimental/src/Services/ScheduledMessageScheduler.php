@@ -41,8 +41,11 @@ class ScheduledMessageScheduler {
 	 * Compute the send time for an anchor + offset, in WP-local wall time.
 	 *
 	 * Returned string is comparable to current_time( 'mysql' ), the same frame
-	 * the cron picker uses. Returns null when the anchor row or its datetime is
-	 * missing, or the anchor type is unsupported.
+	 * the cron picker uses. Returns null when the anchor row is missing, the
+	 * anchor has no time (an event date whose start or end time is not set
+	 * yet), or the anchor type is unsupported. A null send time is never
+	 * picked up by the cron, and the next change to the event date
+	 * recomputes it.
 	 *
 	 * @param string $anchor_type    Anchor type.
 	 * @param int    $anchor_ref_id  Anchor row ID (event_date id for event_date_*).
@@ -88,11 +91,16 @@ class ScheduledMessageScheduler {
 	}
 
 	/**
-	 * Read the start/end datetime of an event date.
+	 * Read the start/end moment of an event date.
+	 *
+	 * An exact time is required: a timed event date without the anchored
+	 * time has no moment, so nothing guesses one. All-day dates keep
+	 * anchoring at the start of their first and last day, as they always
+	 * have.
 	 *
 	 * @param string $anchor_type   event_date_start or event_date_end.
 	 * @param int    $event_date_id Event date row ID.
-	 * @return string|null Datetime string, or null if not found.
+	 * @return string|null Datetime string, or null if not found or not timed.
 	 */
 	private function get_event_date_anchor_time( $anchor_type, $event_date_id ) {
 		global $wpdb;
@@ -102,7 +110,7 @@ class ScheduledMessageScheduler {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT start_datetime, end_datetime FROM %i WHERE id = %d',
+				'SELECT * FROM %i WHERE id = %d',
 				$table,
 				$event_date_id
 			),
@@ -113,6 +121,39 @@ class ScheduledMessageScheduler {
 			return null;
 		}
 
-		return 'event_date_end' === $anchor_type ? $row['end_datetime'] : $row['start_datetime'];
+		return self::anchor_time_from_row( $anchor_type, $row );
+	}
+
+	/**
+	 * The anchor moment of an event date row.
+	 *
+	 * Reads the dates and optional times of Fair Events rows that have them
+	 * (`timing_migrated`), and the start/end datetimes of older rows or
+	 * Fair Events versions.
+	 *
+	 * @param string $anchor_type event_date_start or event_date_end.
+	 * @param array  $row         Event date row.
+	 * @return string|null Site-local 'Y-m-d H:i:s', or null when there is no such time.
+	 */
+	public static function anchor_time_from_row( $anchor_type, array $row ) {
+		$is_end = 'event_date_end' === $anchor_type;
+
+		if ( empty( $row['timing_migrated'] ) ) {
+			$value = $is_end ? ( $row['end_datetime'] ?? null ) : ( $row['start_datetime'] ?? null );
+			return empty( $value ) ? null : $value;
+		}
+
+		$date = $is_end ? ( $row['end_date'] ?? null ) : ( $row['start_date'] ?? null );
+		if ( empty( $date ) ) {
+			return null;
+		}
+
+		if ( ! empty( $row['all_day'] ) ) {
+			return $date . ' 00:00:00';
+		}
+
+		$time = $is_end ? ( $row['end_time'] ?? null ) : ( $row['start_time'] ?? null );
+
+		return empty( $time ) ? null : $date . ' ' . $time;
 	}
 }

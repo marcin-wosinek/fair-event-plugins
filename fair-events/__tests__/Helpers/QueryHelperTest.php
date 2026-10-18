@@ -116,8 +116,8 @@ class QueryHelperTest extends TestCase {
 	}
 
 	/**
-	 * The "upcoming" filter (start_after) compares the raw start_datetime —
-	 * no null fallback needed since start is never missing.
+	 * The "upcoming" filter (start_after) compares the start key, and keeps
+	 * a timed date missing a time until its end key.
 	 */
 	public function test_where_upcoming_filters_by_start_after() {
 		$query = new \QueryHelperTestQuery(
@@ -127,15 +127,22 @@ class QueryHelperTest extends TestCase {
 		$where = QueryHelper::filter_by_dates( '', $query );
 
 		$this->assertStringContainsString( "wp_fair_event_dates.status = 'active'", $where );
-		$this->assertStringContainsString( "wp_fair_event_dates.start_datetime >= '2026-06-01 00:00:00'", $where );
+		$this->assertStringContainsString(
+			"CONCAT( wp_fair_event_dates.start_date, ' ', COALESCE( wp_fair_event_dates.start_time, '00:00:00' ) ) >= '2026-06-01 00:00:00'",
+			$where
+		);
+		$this->assertStringContainsString(
+			"wp_fair_event_dates.all_day = 0 AND ( wp_fair_event_dates.start_time IS NULL OR wp_fair_event_dates.end_time IS NULL ) AND CONCAT( wp_fair_event_dates.end_date, ' ', COALESCE( wp_fair_event_dates.end_time, '23:59:59' ) ) >= '2026-06-01 00:00:00'",
+			$where
+		);
+		$this->assertStringNotContainsString( 'start_datetime', $where );
 	}
 
 	/**
-	 * The "past" filter (end_before) compares the *effective* end —
-	 * COALESCE'd to start_datetime — so a single-instant event with no end
-	 * still becomes "past" once its start time passes.
+	 * The "past" filter (end_before) compares the end key, so a date with
+	 * no end time becomes "past" only once its end date is over.
 	 */
-	public function test_where_past_filter_coalesces_missing_end_to_start() {
+	public function test_where_past_filter_ends_missing_end_time_with_its_day() {
 		$query = new \QueryHelperTestQuery(
 			array( 'fair_events_date_query' => array( 'end_before' => '2026-06-01 00:00:00' ) )
 		);
@@ -143,16 +150,16 @@ class QueryHelperTest extends TestCase {
 		$where = QueryHelper::filter_by_dates( '', $query );
 
 		$this->assertStringContainsString(
-			"COALESCE( wp_fair_event_dates.end_datetime, wp_fair_event_dates.start_datetime ) < '2026-06-01 00:00:00'",
+			"CONCAT( wp_fair_event_dates.end_date, ' ', COALESCE( wp_fair_event_dates.end_time, '23:59:59' ) ) < '2026-06-01 00:00:00'",
 			$where
 		);
 	}
 
 	/**
-	 * The "ongoing" filter (start_before + end_after) also COALESCEs the end
-	 * boundary.
+	 * The "ongoing" filter (start_before + end_after) uses the same start
+	 * and end keys.
 	 */
-	public function test_where_ongoing_filter_coalesces_missing_end() {
+	public function test_where_ongoing_filter_uses_start_and_end_keys() {
 		$query = new \QueryHelperTestQuery(
 			array(
 				'fair_events_date_query' => array(
@@ -164,9 +171,12 @@ class QueryHelperTest extends TestCase {
 
 		$where = QueryHelper::filter_by_dates( '', $query );
 
-		$this->assertStringContainsString( 'wp_fair_event_dates.start_datetime <= ', $where );
 		$this->assertStringContainsString(
-			'COALESCE( wp_fair_event_dates.end_datetime, wp_fair_event_dates.start_datetime ) >= ',
+			"CONCAT( wp_fair_event_dates.start_date, ' ', COALESCE( wp_fair_event_dates.start_time, '00:00:00' ) ) <= '2026-06-01 00:00:00'",
+			$where
+		);
+		$this->assertStringContainsString(
+			"CONCAT( wp_fair_event_dates.end_date, ' ', COALESCE( wp_fair_event_dates.end_time, '23:59:59' ) ) >= '2026-06-01 00:00:00'",
 			$where
 		);
 	}
@@ -208,7 +218,7 @@ class QueryHelperTest extends TestCase {
 	public function test_orderby_ascending_uses_min_aggregate() {
 		$query = new \QueryHelperTestQuery( array( 'fair_events_order' => 'ASC' ) );
 
-		$this->assertSame( 'MIN( wp_fair_event_dates.start_datetime ) ASC', QueryHelper::order_by_dates( '', $query ) );
+		$this->assertSame( "MIN( CONCAT( wp_fair_event_dates.start_date, ' ', COALESCE( wp_fair_event_dates.start_time, '00:00:00' ) ) ) ASC", QueryHelper::order_by_dates( '', $query ) );
 	}
 
 	/**
@@ -218,6 +228,6 @@ class QueryHelperTest extends TestCase {
 	public function test_orderby_descending_uses_max_aggregate() {
 		$query = new \QueryHelperTestQuery( array( 'fair_events_order' => 'DESC' ) );
 
-		$this->assertSame( 'MAX( wp_fair_event_dates.start_datetime ) DESC', QueryHelper::order_by_dates( '', $query ) );
+		$this->assertSame( "MAX( CONCAT( wp_fair_event_dates.start_date, ' ', COALESCE( wp_fair_event_dates.start_time, '00:00:00' ) ) ) DESC", QueryHelper::order_by_dates( '', $query ) );
 	}
 }

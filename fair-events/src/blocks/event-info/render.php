@@ -77,7 +77,7 @@ if ( $venue_id ) {
 
 // A session may be in any year (often a past one), so it always shows it.
 $formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day, $is_session );
-$session_ended  = $is_session && \FairEvents\Helpers\SessionStatus::has_ended( $event_start, $event_end, $event_all_day );
+$session_ended  = $is_session && \FairEvents\Helpers\SessionStatus::has_ended( $event_dates->get_timing() );
 
 /**
  * Format recurrence description from an RRULE string
@@ -171,8 +171,7 @@ $next_occurrence = null;
 
 if ( $is_overview ) {
 	// Check if master date itself is upcoming.
-	$now             = current_time( 'mysql' );
-	$master_upcoming = $event_start >= $now;
+	$master_upcoming = \FairEvents\Helpers\SessionStatus::is_upcoming( $event_dates->get_timing() );
 
 	if ( $master_upcoming ) {
 		$next_occurrence = $event_dates;

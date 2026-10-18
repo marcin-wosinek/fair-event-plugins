@@ -736,8 +736,13 @@ class EventParticipantsController extends WP_REST_Controller {
 			return $occurrence_rows;
 		}
 
-		$master_id     = (int) $event_date->master_id;
-		$occurrence_ts = $event_date->start_datetime ? strtotime( $event_date->start_datetime ) : null;
+		$master_id = (int) $event_date->master_id;
+		// A pass covers the occurrences that had not started when it was
+		// bought; without a start time, the whole start date counts.
+		$pass_cutoff   = method_exists( $event_date, 'get_timing' ) && method_exists( \FairEvents\Helpers\EventTiming::class, 'series_pass_cutoff' )
+			? \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() )
+			: $event_date->start_datetime;
+		$occurrence_ts = $pass_cutoff ? strtotime( $pass_cutoff ) : null;
 
 		$already_listed = array();
 		foreach ( $occurrence_rows as $row ) {

@@ -33,7 +33,8 @@ class EventSchema {
 	 * @return array|null Event object (without `@context`), or null when there is no start date.
 	 */
 	public static function event_to_jsonld( EventDates $event_date, $post_id, $url = null ) {
-		if ( empty( $event_date->start_datetime ) ) {
+		$dates = self::timing_to_dates( $event_date->get_timing() );
+		if ( ! $dates ) {
 			return null;
 		}
 
@@ -42,15 +43,15 @@ class EventSchema {
 		$data = array(
 			'@type'       => 'Event',
 			'name'        => self::get_title( $post, $event_date ),
-			'startDate'   => DateHelper::local_to_iso8601( $event_date->start_datetime ),
+			'startDate'   => $dates['start'],
 			'url'         => $url ?? get_permalink( $post_id ),
 			'eventStatus' => 'cancelled' === $event_date->status
 				? 'https://schema.org/EventCancelled'
 				: 'https://schema.org/EventScheduled',
 		);
 
-		if ( ! empty( $event_date->end_datetime ) ) {
-			$data['endDate'] = DateHelper::local_to_iso8601( $event_date->end_datetime );
+		if ( isset( $dates['end'] ) ) {
+			$data['endDate'] = $dates['end'];
 		}
 
 		$description = self::get_description( $post );
@@ -94,19 +95,23 @@ class EventSchema {
 	 * @return array|null Event object, or null when the DTO has no start.
 	 */
 	public static function occurrence_to_jsonld( array $dto ) {
-		if ( empty( $dto['start'] ) ) {
+		$timing = isset( $dto['timing'] ) && is_array( $dto['timing'] )
+			? $dto['timing']
+			: EventTiming::from_legacy( $dto['start'] ?? null, $dto['end'] ?? null, ! empty( $dto['all_day'] ) );
+		$dates  = self::timing_to_dates( $timing );
+		if ( ! $dates ) {
 			return null;
 		}
 
 		$event = array(
 			'@type'     => 'Event',
 			'name'      => $dto['title'],
-			'startDate' => DateHelper::local_to_iso8601( $dto['start'] ),
+			'startDate' => $dates['start'],
 			'url'       => $dto['url'],
 		);
 
-		if ( ! empty( $dto['end'] ) ) {
-			$event['endDate'] = DateHelper::local_to_iso8601( $dto['end'] );
+		if ( isset( $dates['end'] ) ) {
+			$event['endDate'] = $dates['end'];
 		}
 
 		if ( ! empty( $dto['description'] ) ) {
@@ -118,6 +123,51 @@ class EventSchema {
 		}
 
 		return $event;
+	}
+
+	/**
+	 * Schema.org start and end values for a timing, shared with the Open
+	 * Graph event tags.
+	 *
+	 * A supplied time gives an ISO 8601 datetime with the site's offset. A
+	 * missing time, or an all-day event, gives the bare date ('Y-m-d'),
+	 * which Schema.org accepts, so no time is ever invented. The end is
+	 * omitted for a single-day timed event without an end time, as it was
+	 * for an event without an end.
+	 *
+	 * @param array $timing Canonical timing (see EventTiming).
+	 * @return array{start: string, end?: string}|null Values, or null for an undated event.
+	 */
+	public static function timing_to_dates( array $timing ) {
+		$timing = array_merge( EventTiming::undated(), $timing );
+
+		if ( empty( $timing['start_date'] ) ) {
+			return null;
+		}
+
+		$end_date = $timing['end_date'] ?? $timing['start_date'];
+		$dates    = array(
+			'start' => self::date_value( $timing['start_date'], $timing['all_day'] ? null : $timing['start_time'] ),
+		);
+
+		if ( ! $timing['all_day'] && null !== $timing['end_time'] ) {
+			$dates['end'] = self::date_value( $end_date, $timing['end_time'] );
+		} elseif ( $timing['all_day'] || $end_date !== $timing['start_date'] ) {
+			$dates['end'] = $end_date;
+		}
+
+		return $dates;
+	}
+
+	/**
+	 * A date, or a site-local datetime when the time is known.
+	 *
+	 * @param string      $date Date ('Y-m-d').
+	 * @param string|null $time Time ('H:i:s'), or null.
+	 * @return string 'Y-m-d' or an ISO 8601 datetime.
+	 */
+	private static function date_value( $date, $time ) {
+		return null === $time ? $date : DateHelper::local_to_iso8601( $date . ' ' . $time );
 	}
 
 	/**

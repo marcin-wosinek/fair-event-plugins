@@ -119,17 +119,80 @@ class FairEventsApiParser {
 		}
 
 		$end_local = ! empty( $event['end'] ) ? DateHelper::iso8601_to_local( $event['end'] ) : $start_local;
+		$all_day   = ! empty( $event['all_day'] );
 
-		return array(
+		$parsed = array(
 			'uid'         => $event['uid'] ?? md5( $event['start'] . $event['title'] ),
 			'summary'     => $event['title'],
 			'description' => $event['description'] ?? '',
 			'url'         => $event['url'] ?? '',
 			'start'       => $start_local,
 			'end'         => $end_local,
-			'all_day'     => $event['all_day'] ?? false,
+			'all_day'     => $all_day,
 			'location'    => self::parse_location( $event['location'] ?? null ),
 		);
+
+		$timing = self::parse_timing( $event, $start_local, $end_local, $all_day );
+		if ( $timing ) {
+			$legacy           = EventTiming::to_legacy( $timing );
+			$parsed['start']  = $legacy['start_datetime'];
+			$parsed['end']    = $legacy['end_datetime'] ?? $legacy['start_datetime'];
+			$parsed['timing'] = $timing;
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * Canonical timing from a feed event's dates and optional times, when
+	 * the feed provides them (newer Fair Events sites do).
+	 *
+	 * A supplied time is taken from the timezone-aware `start`/`end`
+	 * converted to site-local time. A missing time keeps the feed's date
+	 * as written, so a date-only value never shifts through a timezone
+	 * conversion and no time is invented.
+	 *
+	 * @param array  $event       Raw feed event.
+	 * @param string $start_local Site-local start from the feed's `start`.
+	 * @param string $end_local   Site-local end from the feed's `end`.
+	 * @param bool   $all_day     All-day flag.
+	 * @return array|null Canonical timing, or null when the feed has no dates or they are invalid.
+	 */
+	private static function parse_timing( array $event, $start_local, $end_local, $all_day ) {
+		if ( ! array_key_exists( 'start_date', $event ) ) {
+			return null;
+		}
+
+		$changes = EventTiming::normalize_changes(
+			array_intersect_key( $event, array_flip( array( 'start_date', 'end_date', 'start_time', 'end_time' ) ) )
+		);
+		if ( ! is_array( $changes ) || empty( $changes['start_date'] ) ) {
+			return null;
+		}
+
+		$timing = array(
+			'start_date' => $changes['start_date'],
+			'end_date'   => $changes['end_date'] ?? $changes['start_date'],
+			'start_time' => null,
+			'end_time'   => null,
+			'all_day'    => $all_day,
+		);
+
+		if ( ! $all_day && null !== ( $changes['start_time'] ?? null ) ) {
+			$timing['start_date'] = substr( $start_local, 0, 10 );
+			$timing['start_time'] = substr( $start_local, 11, 8 );
+		}
+
+		if ( ! $all_day && null !== ( $changes['end_time'] ?? null ) && $end_local ) {
+			$timing['end_date'] = substr( $end_local, 0, 10 );
+			$timing['end_time'] = substr( $end_local, 11, 8 );
+		}
+
+		if ( $timing['end_date'] < $timing['start_date'] ) {
+			$timing['end_date'] = $timing['start_date'];
+		}
+
+		return null === EventTiming::validate( $timing ) ? $timing : null;
 	}
 
 	/**

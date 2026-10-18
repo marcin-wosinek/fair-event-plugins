@@ -1303,7 +1303,7 @@ class EventDatesController extends WP_REST_Controller {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE title LIKE %s AND occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC LIMIT %d",
+				"SELECT * FROM %i WHERE title LIKE %s AND occurrence_type IN ('single', 'master') ORDER BY start_date DESC, start_time DESC LIMIT %d",
 				$table_name,
 				'%' . $wpdb->esc_like( $search ) . '%',
 				$limit
@@ -1418,7 +1418,7 @@ class EventDatesController extends WP_REST_Controller {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC",
+				"SELECT * FROM %i WHERE occurrence_type IN ('single', 'master') ORDER BY start_date DESC, start_time DESC",
 				$table_name
 			)
 		);
@@ -2403,7 +2403,7 @@ class EventDatesController extends WP_REST_Controller {
 			$children_args = array_merge( array( $table_name ), $master_ids, array( 'generated' ) );
 			$child_results = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a fixed run of %d tokens, not request input.
-				$wpdb->prepare( "SELECT * FROM %i WHERE master_id IN ($placeholders) AND occurrence_type = %s ORDER BY start_datetime ASC", ...$children_args )
+				$wpdb->prepare( "SELECT * FROM %i WHERE master_id IN ($placeholders) AND occurrence_type = %s ORDER BY start_date ASC, start_time ASC", ...$children_args )
 			);
 
 			foreach ( $child_results as $child ) {

@@ -59,10 +59,12 @@ class QueryHelper {
 	 * excluded once the custom-table join is engaged, independent of which
 	 * time filter (if any) is selected. A drafted event stays out even when
 	 * the query itself asks for draft posts; a generated occurrence follows
-	 * its master's publication status, a single or master row its own. A
-	 * missing `end_datetime` is treated as equal to `start_datetime` (a
-	 * single-instant event), so "past"/"ongoing" boundaries stay correct for
-	 * events with no explicit end.
+	 * its master's publication status, a single or master row its own.
+	 *
+	 * Boundaries follow EventTimingSql: `start_after` keeps upcoming dates
+	 * (a date missing a time stays upcoming until its end), and a date
+	 * without an end time ends with its end date, so it stays "ongoing"
+	 * through that day and is "past" from the next.
 	 *
 	 * @param string    $where WHERE clause.
 	 * @param \WP_Query $query Query object.
@@ -88,24 +90,28 @@ class QueryHelper {
 			return $where;
 		}
 
+		$start_key = EventTimingSql::start_key( $dates_table );
+		$end_key   = EventTimingSql::end_key( $dates_table );
+
 		if ( isset( $date_query['start_after'] ) ) {
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND {$dates_table}.start_datetime >= %s", $date_query['start_after'] );
+			list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( $dates_table, $date_query['start_after'] );
+      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $upcoming_sql is a static internal template holding the placeholders.
+			$where .= $wpdb->prepare( " AND {$upcoming_sql}", $upcoming_args );
 		}
 
 		if ( isset( $date_query['end_before'] ) ) {
       // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND COALESCE( {$dates_table}.end_datetime, {$dates_table}.start_datetime ) < %s", $date_query['end_before'] );
+			$where .= $wpdb->prepare( " AND {$end_key} < %s", $date_query['end_before'] );
 		}
 
 		if ( isset( $date_query['start_before'] ) ) {
       // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND {$dates_table}.start_datetime <= %s", $date_query['start_before'] );
+			$where .= $wpdb->prepare( " AND {$start_key} <= %s", $date_query['start_before'] );
 		}
 
 		if ( isset( $date_query['end_after'] ) ) {
       // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND COALESCE( {$dates_table}.end_datetime, {$dates_table}.start_datetime ) >= %s", $date_query['end_after'] );
+			$where .= $wpdb->prepare( " AND {$end_key} >= %s", $date_query['end_after'] );
 		}
 
 		return $where;
@@ -158,6 +164,6 @@ class QueryHelper {
 		$dates_table = $wpdb->prefix . 'fair_event_dates';
 		$aggregate   = ( 'DESC' === strtoupper( $order ) ) ? 'MAX' : 'MIN';
 
-		return "{$aggregate}( {$dates_table}.start_datetime ) {$order}";
+		return "{$aggregate}( " . EventTimingSql::start_key( $dates_table ) . " ) {$order}";
 	}
 }

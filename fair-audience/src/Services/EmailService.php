@@ -1943,9 +1943,13 @@ class EmailService {
 				$event_url = (string) $event_date->get_display_url();
 
 				if ( method_exists( \FairEvents\Helpers\DateHelper::class, 'format_local_datetime' ) ) {
+					// A date without a start time (or an all-day one) shows
+					// the date alone, never a midnight that was not set.
+					$has_start_time     = ! property_exists( $event_date, 'start_time' )
+						|| ( ! empty( $event_date->start_time ) && empty( $event_date->all_day ) );
 					$event_date_display = \FairEvents\Helpers\DateHelper::format_local_datetime(
-						$event_date->start_datetime,
-						get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+						! empty( $event_date->start_date ) ? $event_date->start_date . ' ' . ( $has_start_time ? $event_date->start_time : '00:00:00' ) : $event_date->start_datetime,
+						$has_start_time ? get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) : get_option( 'date_format' )
 					);
 				}
 			}

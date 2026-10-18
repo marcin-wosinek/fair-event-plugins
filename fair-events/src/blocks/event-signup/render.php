@@ -214,6 +214,7 @@ if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) )
 			'start_datetime' => $occ->start_datetime,
 			'end_datetime'   => $occ->end_datetime,
 			'all_day'        => (bool) $occ->all_day,
+			'timing'         => $occ->get_timing(),
 			// A companion plugin (fair-audience) flips this true for
 			// occurrences the recognised viewer already holds, so the
 			// pickers below can label them. They stay selectable: buying

@@ -46,8 +46,8 @@ defined( 'WPINC' ) || die;
  * independently optional times. `calendar_export` says whether the
  * occurrence may be exported to calendars (EventTiming::is_calendar_exportable());
  * ineligible occurrences stay in the list, and only calendar exports drop them.
- * External occurrences always come with both ends, so their timing is read
- * from their datetimes.
+ * External occurrences take the timing a Fair Events feed provides (see
+ * FairEventsApiParser), or read it from their datetimes.
  *
  * `start`/`end` are naive site-local 'Y-m-d H:i:s' strings — the same form
  * every other internal consumer (EventDates, WeeklyEventsProvider, blocks)
@@ -165,8 +165,15 @@ class EventFeedProvider {
 		$by_day = array();
 
 		foreach ( $occurrences as $occurrence ) {
-			$start_date = DateHelper::local_date( $occurrence['start'] );
-			$end_date   = ! empty( $occurrence['end'] ) ? DateHelper::local_date( $occurrence['end'] ) : $start_date;
+			// Place by the canonical dates, so a date without times still
+			// covers each of its days.
+			if ( ! empty( $occurrence['timing']['start_date'] ) ) {
+				$start_date = $occurrence['timing']['start_date'];
+				$end_date   = $occurrence['timing']['end_date'] ?? $start_date;
+			} else {
+				$start_date = DateHelper::local_date( $occurrence['start'] );
+				$end_date   = ! empty( $occurrence['end'] ) ? DateHelper::local_date( $occurrence['end'] ) : $start_date;
+			}
 
 			$loop_date = max( $start_date, $range_start_date );
 			$last_date = min( $end_date, $range_end_date );
@@ -502,7 +509,9 @@ class EventFeedProvider {
 	private function format_external_occurrence( array $event, $source, $color ) {
 		$start  = $event['start'] ?? '';
 		$end    = ! empty( $event['end'] ) ? $event['end'] : $start;
-		$timing = EventTiming::from_legacy( $start, $end, ! empty( $event['all_day'] ) );
+		$timing = isset( $event['timing'] ) && is_array( $event['timing'] )
+			? $event['timing']
+			: EventTiming::from_legacy( $start, $end, ! empty( $event['all_day'] ) );
 
 		return array(
 			'uid'             => $event['uid'] ?? md5( $start . ( $event['summary'] ?? '' ) ),

@@ -26,7 +26,7 @@ class OccurrenceDateParam {
 	 * @return string Date in `Y-m-d` format.
 	 */
 	public static function format( EventDates $row ): string {
-		return self::format_datetime( $row->start_datetime );
+		return $row->start_date ? (string) $row->start_date : self::format_datetime( (string) $row->start_datetime );
 	}
 
 	/**

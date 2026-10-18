@@ -8,6 +8,7 @@
 namespace FairEvents\Models;
 
 use FairEvents\Helpers\EventTiming;
+use FairEvents\Helpers\EventTimingSql;
 
 defined( 'WPINC' ) || die;
 
@@ -236,7 +237,7 @@ class EventDates {
 		// being created.
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
+				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_date IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)
@@ -251,7 +252,7 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT ed.* FROM %i ed JOIN %i edp ON ed.id = edp.event_date_id WHERE edp.post_id = %d ORDER BY ed.start_datetime IS NULL ASC, ed.id ASC LIMIT 1',
+				'SELECT ed.* FROM %i ed JOIN %i edp ON ed.id = edp.event_date_id WHERE edp.post_id = %d ORDER BY ed.start_date IS NULL ASC, ed.id ASC LIMIT 1',
 				$table_name,
 				$posts_table,
 				$event_id
@@ -478,7 +479,7 @@ class EventDates {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_id = %d ORDER BY start_datetime ASC',
+				'SELECT * FROM %i WHERE event_id = %d ORDER BY start_date ASC, start_time ASC',
 				$table_name,
 				$event_id
 			)
@@ -582,7 +583,7 @@ class EventDates {
 		// Check if a master or single occurrence exists.
 		$existing = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
+				"SELECT * FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_date IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)
@@ -616,6 +617,8 @@ class EventDates {
 			);
 
 			if ( false !== $result ) {
+				/** This action is documented in src/Models/EventDates.php (update_by_id). */
+				do_action( 'fair_events_event_date_updated', (int) $existing->id );
 				return (int) $existing->id;
 			}
 			return false;
@@ -676,6 +679,11 @@ class EventDates {
 				$format,
 				array( '%d' )
 			);
+
+			if ( false !== $result ) {
+				/** This action is documented in src/Models/EventDates.php (update_by_id). */
+				do_action( 'fair_events_event_date_updated', (int) $existing->id );
+			}
 		} else {
 			// Insert new record.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -743,7 +751,7 @@ class EventDates {
 
 		$rrule = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT rrule FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_datetime IS NULL ASC, id ASC LIMIT 1",
+				"SELECT rrule FROM %i WHERE event_id = %d AND occurrence_type IN ('single', 'master') ORDER BY start_date IS NULL ASC, id ASC LIMIT 1",
 				$table_name,
 				$event_id
 			)
@@ -900,7 +908,7 @@ class EventDates {
 		}
 
 		$is_session = 'generated' === $this->occurrence_type
-			|| ( $as_session && 'master' === $this->occurrence_type && ! empty( $this->start_datetime ) );
+			|| ( $as_session && 'master' === $this->occurrence_type && ! empty( $this->start_date ) );
 
 		if ( ! $is_session ) {
 			return $url;
@@ -1030,11 +1038,10 @@ class EventDates {
 	 * including both post-linked and standalone (external/unlinked) events.
 	 *
 	 * The WHERE clause is an inclusive overlap check (start <= $end_date AND
-	 * end >= $start_date), verified against a live DB for events landing
-	 * exactly on the 00:00:00/23:59:59 boundaries (fair-events#678): an event
-	 * exactly at $start_date or $end_date is included, one second outside
-	 * either edge is excluded. No fix needed here — this comment locks the
-	 * behavior in.
+	 * end >= $start_date, see EventTimingSql::overlaps()): an event exactly
+	 * at $start_date or $end_date is included, one second outside either
+	 * edge is excluded (fair-events#678). A date without an end time stays
+	 * in range through its whole end date.
 	 *
 	 * Events drafted in Fair Events are left out unless `$include_event_drafts`
 	 * is set; a generated occurrence follows its master's publication status.
@@ -1051,16 +1058,14 @@ class EventDates {
 
 		$publication_sql = $include_event_drafts ? '' : " AND COALESCE( m.publication_status, ed.publication_status ) = 'publish'";
 
+		list( $overlap_sql, $overlap_args ) = EventTimingSql::overlaps( 'ed', $start_date, $end_date );
+
 		$results = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- inherited_select_sql() and $publication_sql are static internal templates, not user input.
-				self::inherited_select_sql() . " WHERE ed.status = 'active'{$publication_sql} AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
-				$table_name,
-				$table_name,
-				$end_date,
-				$start_date,
-				$start_date
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- inherited_select_sql(), $publication_sql and $overlap_sql are static internal templates, not user input.
+				self::inherited_select_sql() . " WHERE ed.status = 'active'{$publication_sql} AND {$overlap_sql} ORDER BY ed.start_date ASC, ed.start_time ASC",
+				array_merge( array( $table_name, $table_name ), $overlap_args )
 			)
 		);
 
@@ -1121,6 +1126,8 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		list( $overlap_sql, $overlap_args ) = EventTimingSql::overlaps( 'ed', $start_date, $end_date );
+
 		if ( ! empty( $category_ids ) ) {
 			$cat_table = $wpdb->prefix . 'fair_event_date_categories';
 
@@ -1130,11 +1137,11 @@ class EventDates {
 				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
-					self::inherited_select_sql() . " INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) GROUP BY ed.id ORDER BY ed.start_datetime ASC",
+					self::inherited_select_sql() . " INNER JOIN %i edc ON ed.id = edc.event_date_id WHERE edc.term_id IN ($id_placeholders) AND COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND {$overlap_sql} GROUP BY ed.id ORDER BY ed.start_date ASC, ed.start_time ASC",
 					array_merge(
 						array( $table_name, $table_name, $cat_table ),
 						array_map( 'intval', $category_ids ),
-						array( $end_date, $start_date, $start_date )
+						$overlap_args
 					)
 				)
 			);
@@ -1142,13 +1149,9 @@ class EventDates {
 			$results = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- inherited_select_sql() adds 2 more %i placeholders than visible here.
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- inherited_select_sql() is a static internal template, not user input.
-					self::inherited_select_sql() . " WHERE COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND ed.start_datetime <= %s AND (ed.end_datetime >= %s OR (ed.end_datetime IS NULL AND ed.start_datetime >= %s)) ORDER BY ed.start_datetime ASC",
-					$table_name,
-					$table_name,
-					$end_date,
-					$start_date,
-					$start_date
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- inherited_select_sql() and $overlap_sql are static internal templates, not user input.
+					self::inherited_select_sql() . " WHERE COALESCE( ed.link_type, m.link_type ) != 'post' AND ed.event_id IS NULL AND ed.status = 'active' AND {$overlap_sql} ORDER BY ed.start_date ASC, ed.start_time ASC",
+					array_merge( array( $table_name, $table_name ), $overlap_args )
 				)
 			);
 		}
@@ -1388,7 +1391,7 @@ class EventDates {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE event_id IS NULL AND occurrence_type IN ('single', 'master') ORDER BY start_datetime DESC",
+				"SELECT * FROM %i WHERE event_id IS NULL AND occurrence_type IN ('single', 'master') ORDER BY start_date DESC, start_time DESC",
 				$table_name
 			)
 		);
@@ -1426,7 +1429,7 @@ class EventDates {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $status_sql is a fixed internal string, not request input.
-				"SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s {$status_sql} ORDER BY start_datetime ASC",
+				"SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s {$status_sql} ORDER BY start_date ASC, start_time ASC",
 				$table_name,
 				$master_id,
 				'generated'
@@ -1459,7 +1462,7 @@ class EventDates {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE id = %d OR master_id = %d ORDER BY start_datetime ASC',
+				'SELECT * FROM %i WHERE id = %d OR master_id = %d ORDER BY start_date ASC, start_time ASC',
 				$table_name,
 				$master_id,
 				$master_id
@@ -1854,25 +1857,26 @@ class EventDates {
 	/**
 	 * Get all upcoming occurrences for a recurring event (master + generated)
 	 *
-	 * Returns the master row (if its own start is upcoming) along with every
-	 * generated row whose start_datetime is at or after now, sorted ascending.
+	 * Returns the master row (if it is itself upcoming) along with every
+	 * upcoming generated row (see EventTimingSql::upcoming(): a date missing
+	 * a time stays upcoming until its end), sorted ascending.
 	 *
 	 * @param int $master_id Master event date ID.
-	 * @return EventDates[] Array of EventDates objects, ordered by start_datetime ASC.
+	 * @return EventDates[] Array of EventDates objects, in start order.
 	 */
 	public static function get_upcoming_by_master_id( $master_id ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
-		$now        = current_time( 'mysql' );
+
+		list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( 'ed', current_time( 'mysql' ) );
 
 		$results = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the placeholders' values are passed as one array.
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND status = 'active' AND start_datetime >= %s ORDER BY start_datetime ASC",
-				$table_name,
-				$master_id,
-				$master_id,
-				$now
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $upcoming_sql is a static internal template, not user input.
+				"SELECT ed.* FROM %i ed WHERE (ed.id = %d OR ed.master_id = %d) AND ed.status = 'active' AND {$upcoming_sql} ORDER BY ed.start_date ASC, ed.start_time ASC",
+				array_merge( array( $table_name, $master_id, $master_id ), $upcoming_args )
 			)
 		);
 
@@ -1892,8 +1896,8 @@ class EventDates {
 	 * Get the occurrence in a series that falls on a given calendar date
 	 *
 	 * Looks up the master row itself plus every generated child, taking the
-	 * earliest start_datetime on that date if more than one occurrence
-	 * shares it (rare).
+	 * earliest start on that date if more than one occurrence shares it
+	 * (rare).
 	 *
 	 * @param int    $master_id Master event date ID.
 	 * @param string $date      Date in `Y-m-d` format.
@@ -1906,7 +1910,7 @@ class EventDates {
 
 		$result = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND status = 'active' AND DATE(start_datetime) = %s ORDER BY start_datetime ASC LIMIT 1",
+				"SELECT * FROM %i WHERE (id = %d OR master_id = %d) AND status = 'active' AND start_date = %s ORDER BY start_date ASC, start_time ASC LIMIT 1",
 				$table_name,
 				$master_id,
 				$master_id,
@@ -1924,7 +1928,8 @@ class EventDates {
 	/**
 	 * Get the next upcoming generated occurrence by master ID
 	 *
-	 * Efficiently queries for the single next occurrence with start_datetime >= NOW().
+	 * Efficiently queries for the single next upcoming occurrence (see
+	 * EventTimingSql::upcoming()).
 	 *
 	 * @param int $master_id Master event date ID.
 	 * @return EventDates|null Next upcoming EventDates object or null if none.
@@ -1933,15 +1938,15 @@ class EventDates {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
-		$now        = current_time( 'mysql' );
+
+		list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( 'ed', current_time( 'mysql' ) );
 
 		$result = $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the placeholders' values are passed as one array.
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE master_id = %d AND occurrence_type = %s AND status = 'active' AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1",
-				$table_name,
-				$master_id,
-				'generated',
-				$now
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $upcoming_sql is a static internal template, not user input.
+				"SELECT ed.* FROM %i ed WHERE ed.master_id = %d AND ed.occurrence_type = %s AND ed.status = 'active' AND {$upcoming_sql} ORDER BY ed.start_date ASC, ed.start_time ASC LIMIT 1",
+				array_merge( array( $table_name, $master_id, 'generated' ), $upcoming_args )
 			)
 		);
 
@@ -1972,7 +1977,7 @@ class EventDates {
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i ORDER BY start_datetime DESC',
+				'SELECT * FROM %i ORDER BY start_date DESC, start_time DESC',
 				$table_name
 			)
 		);
@@ -2059,18 +2064,18 @@ class EventDates {
 
 	/**
 	 * Resolve the boundary that anchors the lazy default ticket sale-period
-	 * end: the final active occurrence's own end_datetime, or — when that
-	 * occurrence has no end set — its start_datetime instead, so an event
-	 * with a start but no end still gets a usable default rather than none
-	 * at all (issue #1582).
+	 * end: the final active occurrence's end date. Only the date matters
+	 * (the sale ends the day after it), so a missing end time needs no
+	 * substitute; a date without an end keeps its start date as its end
+	 * date (issue #1582).
 	 *
-	 * The "final active occurrence" is the row with the latest
-	 * start_datetime among the event date's own row and its active
-	 * ('active' status) generated children — a single/master row with no
-	 * generated children just resolves from itself.
+	 * The "final active occurrence" is the row with the latest start among
+	 * the event date's own row and its active ('active' status) generated
+	 * children — a single/master row with no generated children just
+	 * resolves from itself.
 	 *
 	 * @param int $event_date_id Event date ID (master or single row).
-	 * @return string|null End or start boundary ('Y-m-d H:i:s'), or null when the row doesn't exist or has no usable date.
+	 * @return string|null End date ('Y-m-d'), or null when the row doesn't exist or is undated.
 	 */
 	public static function get_last_occurrence_boundary( $event_date_id ) {
 		global $wpdb;
@@ -2079,10 +2084,10 @@ class EventDates {
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT start_datetime, end_datetime FROM %i
+				"SELECT start_date, end_date FROM %i
 				WHERE id = %d
 				OR ( master_id = %d AND status = 'active' )
-				ORDER BY start_datetime DESC
+				ORDER BY start_date DESC, start_time DESC
 				LIMIT 1",
 				$table_name,
 				$event_date_id,
@@ -2094,6 +2099,10 @@ class EventDates {
 			return null;
 		}
 
-		return ! empty( $row->end_datetime ) ? $row->end_datetime : $row->start_datetime;
+		if ( ! empty( $row->end_date ) ) {
+			return $row->end_date;
+		}
+
+		return ! empty( $row->start_date ) ? $row->start_date : null;
 	}
 }
