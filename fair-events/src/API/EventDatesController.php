@@ -17,6 +17,7 @@ use FairEvents\Services\EventSchedule;
 use FairEvents\Services\RecurrenceService;
 use FairEvents\Services\PostTranslationLinks;
 use FairEvents\Services\EventDateForPost;
+use FairEvents\Core\Plugin;
 use FairEvents\Database\EventSourceRepository;
 use FairEvents\Helpers\EventTiming;
 use FairEvents\Helpers\FairEventsApiParser;
@@ -1899,15 +1900,29 @@ class EventDatesController extends WP_REST_Controller {
 			);
 		}
 
-		// Create the WordPress post.
-		$post_id = wp_insert_post(
-			array(
-				'post_title'  => $event_date->title ?? __( 'Untitled Event', 'fair-events' ),
-				'post_type'   => $post_type,
-				'post_status' => $post_status,
-			),
-			true
-		);
+		// The post is linked to this event below, so suspend the automatic
+		// event creation for new fair_event posts; it would leave an empty event.
+		$auto_create = array( Plugin::instance(), 'auto_create_event_date' );
+		$priority    = has_action( 'wp_after_insert_post', $auto_create );
+		if ( false !== $priority ) {
+			remove_action( 'wp_after_insert_post', $auto_create, $priority );
+		}
+
+		try {
+			// Create the WordPress post.
+			$post_id = wp_insert_post(
+				array(
+					'post_title'  => $event_date->title ?? __( 'Untitled Event', 'fair-events' ),
+					'post_type'   => $post_type,
+					'post_status' => $post_status,
+				),
+				true
+			);
+		} finally {
+			if ( false !== $priority ) {
+				add_action( 'wp_after_insert_post', $auto_create, $priority, 3 );
+			}
+		}
 
 		if ( is_wp_error( $post_id ) ) {
 			return new WP_Error(
