@@ -182,6 +182,21 @@ function buildSeedDates() {
 	} );
 }
 
+// Every top-level event row, including undated and unlinked ones, as the All
+// Events page lists them.
+async function listAllEvents( page ) {
+	const events = [];
+	for ( let pageNumber = 1; ; pageNumber++ ) {
+		const batch = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/all?per_page=100&page=${ pageNumber }`,
+		} );
+		events.push( ...batch );
+		if ( batch.length < 100 ) {
+			return events;
+		}
+	}
+}
+
 async function login( page ) {
 	await page.goto( '/wp-admin' );
 	if ( page.url().includes( 'wp-login.php' ) ) {
@@ -251,9 +266,7 @@ test.describe( 'WordPress.org screenshots for Fair Events', () => {
 			}
 
 			// Clean prior seed data so re-runs stay deterministic.
-			const existing = await apiFetch( page, {
-				path: '/fair-events/v1/event-dates?include_linked=true&per_page=200',
-			} );
+			const existing = await listAllEvents( page );
 			for ( const ed of existing ) {
 				await apiFetch( page, {
 					path: `/fair-events/v1/event-dates/${ ed.id }`,
@@ -331,6 +344,16 @@ test.describe( 'WordPress.org screenshots for Fair Events', () => {
 				data: { post_status: 'publish' },
 			} );
 			const buttonPostId = buttonPost.event_id || buttonPost.post_id;
+
+			// Creating the pages must not leave extra empty events behind.
+			const eventsAfterPages = await listAllEvents( page );
+			expect(
+				eventsAfterPages
+					.map( ( ed ) => ed.id )
+					.sort( ( a, b ) => a - b )
+			).toEqual(
+				created.map( ( seed ) => seed.id ).sort( ( a, b ) => a - b )
+			);
 
 			// Headline post — Event Info block only.
 			await apiFetch( page, {
@@ -425,6 +448,9 @@ test.describe( 'WordPress.org screenshots for Fair Events', () => {
 			).toBeVisible( {
 				timeout: 15_000,
 			} );
+			await expect(
+				page.locator( '.dataviews-view-table tbody tr' )
+			).toHaveCount( created.length );
 			await hideAdminChrome();
 			await page.waitForTimeout( 800 );
 			await page.screenshot( {

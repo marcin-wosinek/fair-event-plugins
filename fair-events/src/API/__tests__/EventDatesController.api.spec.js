@@ -2185,6 +2185,142 @@ test.describe( 'EventDatesController — event_id propagation to generated child
 	} );
 } );
 
+test.describe( 'EventDatesController — no empty event on page creation (#1830)', () => {
+	let api;
+	let categoryId;
+	const eventDateIds = [];
+	const postIds = [];
+
+	// Every row, including undated and unlinked ones, so a stray empty event
+	// cannot escape the assertion.
+	const countAllEvents = async () => {
+		let total = 0;
+		for ( const occurrenceType of [ 'single', 'master', 'generated' ] ) {
+			const res = await api.get(
+				`/wp-json/fair-events/v1/event-dates/all?per_page=1&occurrence_type=${ occurrenceType }`,
+				{ headers: adminHeaders }
+			);
+			expect( res.ok() ).toBeTruthy();
+			total += Number( res.headers()[ 'x-wp-total' ] );
+		}
+		return total;
+	};
+
+	const eventDatesForPost = async ( postId ) => {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/event-dates?event_id=${ postId }`,
+			{ headers: adminHeaders }
+		);
+		expect( res.ok() ).toBeTruthy();
+		return res.json();
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		const catRes = await api.post( '/wp-json/wp/v2/categories', {
+			headers: adminHeaders,
+			data: { name: `Page Creation Cat ${ Date.now() }` },
+		} );
+		expect( catRes.ok() ).toBeTruthy();
+		categoryId = ( await catRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		for ( const eventDateId of [ ...new Set( eventDateIds ) ] ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const postId of postIds ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( categoryId ) {
+			await api.delete(
+				`/wp-json/wp/v2/categories/${ categoryId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'creating a page for an existing event creates no other event', async () => {
+		const title = `Existing event ${ Date.now() }`;
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				start_datetime: '2038-03-01 10:00:00',
+				end_datetime: '2038-03-01 12:00:00',
+				link_type: 'none',
+				categories: [ categoryId ],
+			},
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		const eventDateId = ( await edRes.json() ).id;
+		eventDateIds.push( eventDateId );
+
+		const before = await countAllEvents();
+
+		const createPostRes = await api.post(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/create-post`,
+			{ headers: adminHeaders, data: {} }
+		);
+		expect( createPostRes.status() ).toBe( 201 );
+		const postId = ( await createPostRes.json() ).post_id;
+		postIds.push( postId );
+
+		expect( await countAllEvents() ).toBe( before );
+
+		const linked = await eventDatesForPost( postId );
+		expect( linked.map( ( item ) => item.id ) ).toEqual( [ eventDateId ] );
+
+		const eventRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders }
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		const event = await eventRes.json();
+		expect( event.event_id ).toBe( postId );
+		expect( event.title ).toBe( title );
+		expect( event.start_datetime ).toBe( '2038-03-01 10:00:00' );
+		expect( event.end_datetime ).toBe( '2038-03-01 12:00:00' );
+		expect( event.categories.map( ( c ) => c.id ) ).toContain( categoryId );
+	} );
+
+	test( 'a new event page still gets exactly one event afterwards', async () => {
+		const before = await countAllEvents();
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: `Standalone page ${ Date.now() }`, status: 'draft' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const postId = ( await postRes.json() ).id;
+		postIds.push( postId );
+
+		expect( await countAllEvents() ).toBe( before + 1 );
+		const linked = await eventDatesForPost( postId );
+		expect( linked.length ).toBe( 1 );
+		expect( linked[ 0 ].event_id ).toBe( postId );
+		eventDateIds.push( linked[ 0 ].id );
+
+		const updateRes = await api.post(
+			`/wp-json/wp/v2/fair_event/${ postId }`,
+			{
+				headers: adminHeaders,
+				data: { title: `Standalone page updated ${ Date.now() }` },
+			}
+		);
+		expect( updateRes.ok() ).toBeTruthy();
+		expect( await countAllEvents() ).toBe( before + 1 );
+	} );
+} );
+
 test.describe( 'EventDatesController — excluded dates of a regular series (#1749)', () => {
 	let api;
 	const eventDateIds = [];
