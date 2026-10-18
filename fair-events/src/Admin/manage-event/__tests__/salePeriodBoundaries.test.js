@@ -6,6 +6,7 @@
  * unset boundary currently means.
  */
 import {
+	resolveDefaultSaleStart,
 	resolveEffectiveSalePeriods,
 	hasUsableSalePeriodRange,
 	resolveFinalOccurrenceDatetime,
@@ -93,6 +94,97 @@ describe( 'resolveEffectiveSalePeriods', () => {
 		expect( resolved[ 1 ].effectiveStart ).toBe( '2026-02-01' );
 		expect( resolved[ 1 ].effectiveEnd ).toBe( '2026-03-01' );
 		expect( resolved[ 2 ].effectiveEnd ).toBe( '2026-04-01' );
+	} );
+} );
+
+describe( 'resolveDefaultSaleStart (#1841)', () => {
+	it( 'uses a creation day before today', () => {
+		expect( resolveDefaultSaleStart( '2026-07-15', '2026-06-01' ) ).toBe(
+			'2026-06-01'
+		);
+	} );
+
+	it( 'uses today when the event was created today or later', () => {
+		expect( resolveDefaultSaleStart( '2026-07-15', '2026-07-15' ) ).toBe(
+			'2026-07-15'
+		);
+		expect( resolveDefaultSaleStart( '2026-07-15', '2026-07-16' ) ).toBe(
+			'2026-07-15'
+		);
+	} );
+
+	it( 'falls back to today for a missing or malformed creation day', () => {
+		expect( resolveDefaultSaleStart( '2026-07-15', null ) ).toBe(
+			'2026-07-15'
+		);
+		expect( resolveDefaultSaleStart( '2026-07-15', 'yesterday' ) ).toBe(
+			'2026-07-15'
+		);
+	} );
+
+	it( 'returns an empty string without a site today', () => {
+		expect( resolveDefaultSaleStart( '', '2026-06-01' ) ).toBe( '' );
+	} );
+} );
+
+describe( 'resolveEffectiveSalePeriods with a creation day (#1841)', () => {
+	it( 'infers the first missing start as the creation day', () => {
+		const [ resolved ] = resolveEffectiveSalePeriods(
+			[ { sale_start: '', sale_end: '2026-08-01' } ],
+			'2026-07-15',
+			null,
+			'2026-06-01'
+		);
+		expect( resolved.effectiveStart ).toBe( '2026-06-01' );
+		expect( resolved.isAutomaticStart ).toBe( true );
+	} );
+
+	it( 'does not move the start forward as today advances', () => {
+		[ '2026-06-01', '2026-07-01', '2026-07-31' ].forEach( ( today ) => {
+			const [ resolved ] = resolveEffectiveSalePeriods(
+				[ { sale_start: '', sale_end: '2026-08-01' } ],
+				today,
+				null,
+				'2026-06-01'
+			);
+			expect( resolved.effectiveStart ).toBe( '2026-06-01' );
+		} );
+	} );
+
+	it( 'keeps the inferred start of a period that has already ended', () => {
+		const [ resolved ] = resolveEffectiveSalePeriods(
+			[ { sale_start: '', sale_end: '2026-08-01' } ],
+			'2026-09-01',
+			null,
+			'2026-06-01'
+		);
+		expect( resolved.effectiveStart ).toBe( '2026-06-01' );
+		expect( resolved.effectiveEnd ).toBe( '2026-08-01' );
+	} );
+
+	it( 'leaves the start unresolved when the creation day is not before the end', () => {
+		const [ resolved ] = resolveEffectiveSalePeriods(
+			[ { sale_start: '', sale_end: '2026-06-01' } ],
+			'2026-07-15',
+			null,
+			'2026-06-01'
+		);
+		expect( resolved.effectiveStart ).toBeNull();
+	} );
+
+	it( 'leaves explicit starts and later periods untouched', () => {
+		const resolved = resolveEffectiveSalePeriods(
+			[
+				{ sale_start: '2026-06-10', sale_end: '2026-07-01' },
+				{ sale_start: '', sale_end: '2026-08-01' },
+			],
+			'2026-07-15',
+			null,
+			'2026-06-01'
+		);
+		expect( resolved[ 0 ].effectiveStart ).toBe( '2026-06-10' );
+		expect( resolved[ 0 ].isAutomaticStart ).toBe( false );
+		expect( resolved[ 1 ].effectiveStart ).toBeNull();
 	} );
 } );
 

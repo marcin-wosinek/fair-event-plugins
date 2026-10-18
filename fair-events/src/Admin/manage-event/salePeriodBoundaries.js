@@ -10,28 +10,52 @@
  */
 
 /**
+ * Resolve the lazy default start of the first sale period: the earlier of
+ * the site-local day the event (or its series) was created and today.
+ * Mirrors TicketAvailability::compute_default_sale_start() — a missing or
+ * malformed creation day falls back to today (#1841).
+ *
+ * @param {string}      siteToday   Site-local today's date (Y-m-d).
+ * @param {string|null} createdDate Site-local creation day (Y-m-d), or null.
+ * @return {string} Default sale start (Y-m-d), or '' without a site today.
+ */
+export function resolveDefaultSaleStart( siteToday, createdDate ) {
+	if ( ! siteToday ) {
+		return '';
+	}
+	if ( ! /^\d{4}-\d{2}-\d{2}$/.test( createdDate || '' ) ) {
+		return siteToday;
+	}
+	return createdDate < siteToday ? createdDate : siteToday;
+}
+
+/**
  * Resolve each period's effective sale_start/sale_end for display, without
  * mutating the raw saved values.
  *
- * Only the first period may infer a missing start: it becomes the
- * site-local today's date, and only while today precedes its effective
- * end — an already-elapsed period never shows as automatically reactivated.
- * Only the last period may infer a missing end: it becomes the day after
- * the event/series' final active occurrence. A missing boundary anywhere
- * else (an interior period, or a first/last period with nothing to infer
- * from) is left null.
+ * Only the first period may infer a missing start: it becomes the earlier
+ * of the event's creation day and today (see resolveDefaultSaleStart()), as
+ * long as that day precedes its effective end. A period that has already
+ * ended keeps its inferred start so its range stays visible, matching the
+ * backend. Only the last period may infer a missing end: it becomes the day
+ * after the event/series' final active occurrence. A missing boundary
+ * anywhere else (an interior period, or a first/last period with nothing to
+ * infer from) is left null.
  *
  * @param {Object[]}    periods            Raw sale periods (Y-m-d `sale_start`/`sale_end` strings, in sort order).
  * @param {string}      siteToday          Site-local today's date (Y-m-d).
  * @param {string|null} finalOccurrenceEnd Lazy default sale_end for the last period (Y-m-d, exclusive), or null/empty when unavailable.
+ * @param {string|null} createdDate        Site-local creation day of the event or its series (Y-m-d), or null.
  * @return {Object[]} Periods augmented with `effectiveStart`, `effectiveEnd`, `isAutomaticStart`, `isAutomaticEnd`.
  */
 export function resolveEffectiveSalePeriods(
 	periods,
 	siteToday,
-	finalOccurrenceEnd
+	finalOccurrenceEnd,
+	createdDate = null
 ) {
 	const lastIndex = periods.length - 1;
+	const defaultStart = resolveDefaultSaleStart( siteToday, createdDate );
 
 	return periods.map( ( period, index ) => {
 		const isFirst = index === 0;
@@ -50,10 +74,10 @@ export function resolveEffectiveSalePeriods(
 			! effectiveStart &&
 			isFirst &&
 			effectiveEnd &&
-			siteToday &&
-			siteToday < effectiveEnd
+			defaultStart &&
+			defaultStart < effectiveEnd
 		) {
-			effectiveStart = siteToday;
+			effectiveStart = defaultStart;
 			isAutomaticStart = true;
 		}
 

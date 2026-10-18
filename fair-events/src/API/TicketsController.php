@@ -774,9 +774,14 @@ class TicketsController extends WP_REST_Controller {
 			}
 		}
 
+		// The site-local day the event (or its series) was created anchors
+		// the inferred start of an empty first sale period (issue #1841).
+		$created_timestamp = EventDates::get_creation_timestamp( $event_date_id );
+
 		return array(
 			'capacity'     => $event_date->capacity,
 			'end_datetime' => $event_date->end_datetime,
+			'created_date' => $created_timestamp ? wp_date( 'Y-m-d', $created_timestamp ) : null,
 			'ticket_types' => array_map(
 				function ( $t ) use ( $restrictions ) {
 					$data              = $t->to_array();

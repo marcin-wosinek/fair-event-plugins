@@ -550,4 +550,141 @@ class TicketAvailabilityTest extends TestCase {
 		$type->disable_at = '2026-01-01 12:00:01';
 		$this->assertTrue( TicketAvailability::is_ticket_type_enabled( $type, '2026-01-01 12:00:00' ) );
 	}
+
+	/**
+	 * A creation day before today becomes the default start (issue #1841).
+	 */
+	public function test_compute_default_sale_start_uses_past_creation_day() {
+		$created = strtotime( '2026-03-10 15:45:00 UTC' );
+
+		$this->assertSame(
+			'2026-03-10 00:00:00',
+			TicketAvailability::compute_default_sale_start( $created, '2026-05-20 09:00:00' )
+		);
+	}
+
+	/**
+	 * An event created today starts today.
+	 */
+	public function test_compute_default_sale_start_creation_today_is_today() {
+		$created = strtotime( '2026-05-20 08:00:00 UTC' );
+
+		$this->assertSame(
+			'2026-05-20 00:00:00',
+			TicketAvailability::compute_default_sale_start( $created, '2026-05-20 09:00:00' )
+		);
+	}
+
+	/**
+	 * A creation time after today (clock skew) never yields a future start.
+	 */
+	public function test_compute_default_sale_start_future_creation_is_capped_at_today() {
+		$created = strtotime( '2026-06-01 08:00:00 UTC' );
+
+		$this->assertSame(
+			'2026-05-20 00:00:00',
+			TicketAvailability::compute_default_sale_start( $created, '2026-05-20 09:00:00' )
+		);
+	}
+
+	/**
+	 * A missing or invalid creation time falls back to today.
+	 */
+	public function test_compute_default_sale_start_without_creation_is_today() {
+		$this->assertSame( '2026-05-20 00:00:00', TicketAvailability::compute_default_sale_start( null, '2026-05-20 09:00:00' ) );
+		$this->assertSame( '2026-05-20 00:00:00', TicketAvailability::compute_default_sale_start( 0, '2026-05-20 09:00:00' ) );
+		$this->assertSame( '2026-05-20 00:00:00', TicketAvailability::compute_default_sale_start( -5, '2026-05-20 09:00:00' ) );
+	}
+
+	/**
+	 * The creation day is the site-local day, not the UTC one: 23:30 UTC is
+	 * already the next day in Madrid, and 22:30 UTC is still the same day.
+	 */
+	public function test_compute_default_sale_start_uses_site_timezone_day() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		try {
+			$this->assertSame(
+				'2026-03-11 00:00:00',
+				TicketAvailability::compute_default_sale_start( strtotime( '2026-03-10 23:30:00 UTC' ), '2026-05-20 09:00:00' )
+			);
+			$this->assertSame(
+				'2026-03-10 00:00:00',
+				TicketAvailability::compute_default_sale_start( strtotime( '2026-03-10 22:30:00 UTC' ), '2026-05-20 09:00:00' )
+			);
+		} finally {
+			unset( $GLOBALS['_fair_test_timezone'] );
+		}
+	}
+
+	/**
+	 * Advancing today does not move the assumed start of an existing event.
+	 */
+	public function test_default_start_stays_put_as_today_advances() {
+		$created = strtotime( '2026-03-10 12:00:00 UTC' );
+		$period  = $this->period( null, '2026-09-01 00:00:00' );
+
+		foreach ( array( '2026-03-10 18:00:00', '2026-04-01 00:00:00', '2026-08-31 23:59:59' ) as $now ) {
+			$resolved = TicketAvailability::resolve_periods(
+				array( $period ),
+				$now,
+				null,
+				TicketAvailability::compute_default_sale_start( $created, $now )
+			);
+
+			$this->assertSame( '2026-03-10 00:00:00', $resolved[0]->sale_start, $now );
+		}
+	}
+
+	/**
+	 * An expired first period keeps its inferred start for display, but is
+	 * neither active nor upcoming, and sales count as closed.
+	 */
+	public function test_expired_period_keeps_inferred_start_without_reopening() {
+		$period = $this->period( null, '2026-04-01 00:00:00' );
+		$now    = '2026-05-20 09:00:00';
+
+		$resolved = TicketAvailability::resolve_periods( array( $period ), $now, null, '2026-03-10 00:00:00' );
+		$context  = TicketAvailability::resolve_period_context_from_periods( array( $period ), $now, null, false, '2026-03-10 00:00:00' );
+
+		$this->assertSame( '2026-03-10 00:00:00', $resolved[0]->sale_start );
+		$this->assertNull( $context['active_period'] );
+		$this->assertNull( $context['upcoming_period'] );
+		$this->assertTrue( $context['sales_closed'] );
+	}
+
+	/**
+	 * A default start that is not before the period's end stays unresolved.
+	 */
+	public function test_default_start_on_or_after_end_stays_unresolved() {
+		$period = $this->period( null, '2026-03-10 00:00:00' );
+
+		$resolved = TicketAvailability::resolve_periods( array( $period ), '2026-05-20 09:00:00', null, '2026-03-10 00:00:00' );
+
+		$this->assertNull( $resolved[0]->sale_start );
+	}
+
+	/**
+	 * Explicit starts and later periods ignore the default start.
+	 */
+	public function test_default_start_leaves_explicit_and_later_periods_untouched() {
+		$first  = $this->period( '2026-04-01 00:00:00', '2026-05-01 00:00:00' );
+		$second = $this->period( null, '2026-06-01 00:00:00' );
+
+		$resolved = TicketAvailability::resolve_periods( array( $first, $second ), '2026-04-15 00:00:00', null, '2026-03-10 00:00:00' );
+
+		$this->assertSame( '2026-04-01 00:00:00', $resolved[0]->sale_start );
+		$this->assertNull( $resolved[1]->sale_start );
+	}
+
+	/**
+	 * The inferred start makes a running first period active from creation.
+	 */
+	public function test_inferred_start_period_is_active_while_running() {
+		$period  = $this->period( null, '2026-09-01 00:00:00' );
+		$context = TicketAvailability::resolve_period_context_from_periods( array( $period ), '2026-05-20 09:00:00', null, false, '2026-03-10 00:00:00' );
+
+		$this->assertSame( '2026-03-10 00:00:00', $context['active_period']->sale_start );
+		$this->assertFalse( $context['sales_closed'] );
+	}
 }

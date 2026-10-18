@@ -2007,6 +2007,57 @@ class EventDates {
 	}
 
 	/**
+	 * Creation times already looked up in this request, by event date ID.
+	 *
+	 * @var array<int, int>
+	 */
+	private static $creation_timestamps = array();
+
+	/**
+	 * Resolve when an event was created, as a Unix timestamp: the row's own
+	 * creation, or its series master's for a generated occurrence — the
+	 * anchor of the lazy default ticket sale-period start (issue #1841).
+	 *
+	 * `created_at` is filled by the database's CURRENT_TIMESTAMP in the
+	 * MySQL session timezone, not the site timezone, so MySQL converts it
+	 * with UNIX_TIMESTAMP() rather than PHP guessing its zone. Found values
+	 * are memoized per request: a row's creation time never changes.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return int|null Unix timestamp, or null when the row doesn't exist or has no usable creation time.
+	 */
+	public static function get_creation_timestamp( $event_date_id ) {
+		global $wpdb;
+
+		$event_date_id = (int) $event_date_id;
+		if ( isset( self::$creation_timestamps[ $event_date_id ] ) ) {
+			return self::$creation_timestamps[ $event_date_id ];
+		}
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$timestamp = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT UNIX_TIMESTAMP( COALESCE( m.created_at, ed.created_at ) )
+				FROM %i ed
+				LEFT JOIN %i m ON m.id = ed.master_id AND ed.occurrence_type = 'generated'
+				WHERE ed.id = %d",
+				$table_name,
+				$table_name,
+				$event_date_id
+			)
+		);
+
+		if ( null === $timestamp || (int) $timestamp <= 0 ) {
+			return null;
+		}
+
+		self::$creation_timestamps[ $event_date_id ] = (int) $timestamp;
+
+		return (int) $timestamp;
+	}
+
+	/**
 	 * Resolve the boundary that anchors the lazy default ticket sale-period
 	 * end: the final active occurrence's own end_datetime, or — when that
 	 * occurrence has no end set — its start_datetime instead, so an event

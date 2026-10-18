@@ -317,16 +317,19 @@ class EventSchema {
 	 * Sale-period resolution reuses TicketAvailability's pure primitives —
 	 * the same position-aware lazy-boundary resolution the purchase form
 	 * (event-signup/render.php, get-tickets) relies on: a missing first
-	 * start resolves to today (while still before its end) and a missing
-	 * last end resolves to the day after the event/series' final active
-	 * occurrence. When neither the event nor its series has a usable date to
+	 * start resolves to the earlier of the event/series' creation day and
+	 * today (while still before its end) and a missing last end resolves to
+	 * the day after the event/series' final active occurrence. When neither the event nor its series has a usable date to
 	 * anchor that default, the window stays unresolved and no offer is
 	 * shown — an event with no discoverable schedule must never be
 	 * advertised as having an unlimited sale window. Unlike the purchase
 	 * form, the active-period lookup here does *not* use the `continues`
 	 * fallback: JSON-LD must show no offer once a sale has genuinely closed,
 	 * even though the purchase form itself keeps such an event purchasable
-	 * (see EventSchema #1381 decision).
+	 * (see EventSchema #1381 decision). Without any sale period there is no
+	 * price row and therefore no offer. Every emitted offer carries
+	 * `validFrom`: the selected period's start, explicit or inferred
+	 * (issue #1841).
 	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
@@ -360,18 +363,14 @@ class EventSchema {
 
 		$now         = current_time( 'mysql' );
 		$default_end = TicketAvailability::compute_default_sale_end( EventDates::get_last_occurrence_boundary( $pricing_event_date_id ) );
-		$periods     = TicketAvailability::resolve_periods( $sale_periods, $now, $default_end );
+		$periods     = TicketAvailability::resolve_periods(
+			$sale_periods,
+			$now,
+			$default_end,
+			TicketAvailability::resolve_default_sale_start( $pricing_event_date_id, $now )
+		);
 
-		// continues = false: a genuinely closed sale (no lazy fallback) must
-		// show no offer in structured data, unlike the purchase form.
-		$active_period   = TicketAvailability::pick_active_period( $periods, $now, false );
-		$upcoming_period = TicketAvailability::pick_upcoming_period( $periods, $now );
-
-		// Search crawls happen outside the sale window: fall back to the
-		// nearest upcoming period's price so `offers` isn't empty just
-		// because sales haven't opened yet. When no period exists at all the
-		// event can still carry free RSVP ticket types (handled below).
-		$selected_period = $active_period ? $active_period : $upcoming_period;
+		$selected_period = self::select_offer_period( $periods, $now );
 
 		// Price for each type inside the selected window.
 		$price_by_type_id = array();
@@ -383,7 +382,8 @@ class EventSchema {
 			}
 		}
 
-		$valid_from = ( $selected_period && ! $active_period )
+		// select_offer_period() only selects a period with a resolved start.
+		$valid_from = $selected_period
 			? DateHelper::local_to_iso8601( $selected_period->sale_start )
 			: null;
 
@@ -398,13 +398,33 @@ class EventSchema {
 	}
 
 	/**
+	 * Pick the sale period whose prices JSON-LD advertises: the active one,
+	 * else the nearest upcoming one — search crawls happen outside the sale
+	 * window, so `offers` isn't empty just because sales haven't opened yet.
+	 * Without a selected period no type has a price row, so no offer is
+	 * emitted. Pure, DB-free.
+	 *
+	 * The `continues` fallback is off: a genuinely closed sale must show no
+	 * offer in structured data, unlike the purchase form.
+	 *
+	 * @param object[] $resolved_periods Sale periods, post TicketAvailability::resolve_periods().
+	 * @param string   $now              Current site datetime ('Y-m-d H:i:s').
+	 * @return object|null Selected period, always with a resolved sale_start, or null.
+	 */
+	public static function select_offer_period( array $resolved_periods, $now ) {
+		$active_period = TicketAvailability::pick_active_period( $resolved_periods, $now, false );
+
+		return $active_period ? $active_period : TicketAvailability::pick_upcoming_period( $resolved_periods, $now );
+	}
+
+	/**
 	 * Pure, DB-free per-type Offer builder, split out from get_jsonld_offers()
 	 * for unit testing without a database — mirrors how TicketAvailability
 	 * itself splits DB fetching from pure, unit-tested math.
 	 *
 	 * @param object[]    $ticket_types     TicketType objects (id, name, disabled, disable_at).
 	 * @param float[]     $price_by_type_id Ticket-type ID => price for the selected window.
-	 * @param string|null $valid_from    ISO 8601 `validFrom` for an upcoming (not yet active) window, or null.
+	 * @param string|null $valid_from       ISO 8601 `validFrom`, the selected window's start, or null.
 	 * @param string      $currency         Site currency code.
 	 * @param string      $permalink        Event permalink, used as the offer URL.
 	 * @param string|null $now              Current site datetime for scheduled disabling; defaults to current_time( 'mysql' ).

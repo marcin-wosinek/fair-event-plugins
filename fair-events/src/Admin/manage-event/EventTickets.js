@@ -132,6 +132,7 @@ export default function EventTickets( {
 	);
 	const [ ticketTypes, setTicketTypes ] = useState( [] );
 	const [ salePeriods, setSalePeriods ] = useState( [] );
+	const [ createdDate, setCreatedDate ] = useState( null );
 	const [ prices, setPrices ] = useState( {} );
 	const [ settings, setSettings ] = useState( {
 		show_ticket_type_capacity: false,
@@ -221,6 +222,8 @@ export default function EventTickets( {
 				data.end_datetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
 			);
 		}
+		// Display-only anchor of an empty first sale start; never saved.
+		setCreatedDate( data.created_date || null );
 		setTicketTypes(
 			( data.ticket_types || [] ).map( ( type ) => ( {
 				...type,
@@ -1049,8 +1052,9 @@ export default function EventTickets( {
 		!! window.fairEventsManageEventData?.enabledFeatures?.schedule;
 
 	// Display-only effective boundaries: an unset first start resolves to
-	// site-local today (while still before its end) and an unset last end
-	// resolves to the day after the event/series' final active occurrence —
+	// the earlier of the event's creation day and site-local today (while
+	// still before its end) and an unset last end resolves to the day after
+	// the event/series' final active occurrence —
 	// mirroring TicketAvailability::resolve_periods() on the backend so the
 	// editor never shows a different "automatic" window than what's actually
 	// on sale. Recomputed on every render rather than memoized — the period
@@ -1059,7 +1063,8 @@ export default function EventTickets( {
 	const resolvedSalePeriods = resolveEffectiveSalePeriods(
 		salePeriods,
 		getSiteToday(),
-		defaultSaleEnd() || null
+		defaultSaleEnd() || null,
+		createdDate
 	);
 	const firstResolvedPeriod = resolvedSalePeriods[ 0 ];
 	const lastResolvedPeriod =
@@ -1536,7 +1541,7 @@ export default function EventTickets( {
 												! salePeriods[ 0 ].sale_start &&
 												firstResolvedPeriod.effectiveStart
 													? __(
-															'Automatically starts today while still before the sale end.',
+															'Starts automatically on the day this event was created.',
 															'fair-events'
 														)
 													: undefined

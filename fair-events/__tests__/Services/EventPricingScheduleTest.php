@@ -9,6 +9,7 @@ namespace FairEvents\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Services\EventPricingSchedule;
+use FairEvents\Services\TicketAvailability;
 
 /**
  * Validates the pure per-period, per-ticket-type schedule assembly used by
@@ -212,6 +213,31 @@ class EventPricingScheduleTest extends TestCase {
 
 		$this->assertSame( array(), $result['periods'] );
 		$this->assertFalse( $result['has_prices'] );
+	}
+
+	/**
+	 * An empty first start shows the event's creation day, also once the
+	 * period has ended (issue #1841), while later periods keep their dates.
+	 */
+	public function test_empty_first_start_shows_creation_day_for_historical_period() {
+		$now      = '2026-05-20 09:00:00';
+		$periods  = array(
+			$this->period( 10, 'Early', null, '2026-04-01 00:00:00' ),
+			$this->period( 11, 'Regular', '2026-04-01 00:00:00', '2026-06-01 00:00:00' ),
+		);
+		$resolved = TicketAvailability::resolve_periods( $periods, $now, null, '2026-03-10 00:00:00' );
+
+		$result = EventPricingSchedule::build_schedule(
+			array( $this->ticket_type( 1, 'General' ) ),
+			$resolved,
+			array( $this->price( 1, 10, 10.0 ), $this->price( 1, 11, 15.0 ) ),
+			$now
+		);
+
+		$this->assertCount( 2, $result['periods'] );
+		$this->assertSame( '2026-03-10 00:00:00', $result['periods'][0]['sale_start'] );
+		$this->assertSame( '2026-04-01 00:00:00', $result['periods'][0]['sale_end'] );
+		$this->assertSame( '2026-04-01 00:00:00', $result['periods'][1]['sale_start'] );
 	}
 
 	/**
