@@ -167,6 +167,57 @@ Use the last phase heading in the output:
 -   **Cleanup**: the runner reports stop failures separately. A cleanup error
     becomes the command status only when no earlier phase failed.
 
+### Long runs: durations and one run at a time
+
+Full suites run with a single worker and take a while. Approximate figures
+(October 2026):
+
+| Suite                                       | Tests | Local                                     | CI job  |
+| ------------------------------------------- | ----- | ----------------------------------------- | ------- |
+| Root E2E (`test:e2e:local`)                 | 305   | ~30–45 min\*, plus ~5 min build and start | ~31 min |
+| fair-events API (`--workspace=fair-events`) | 439   | ~12 min with `--reuse` (measured)         | —       |
+| All API workspaces (`test:api:local`)       | ~850  | ~25 min\*                                 | ~18 min |
+
+\* Estimated from CI, where the root E2E test phase alone takes 27.6 min.
+Local API runs have been about 1.5× slower per test than CI. Workspace E2E
+suites (fair-events has 114 tests) don't run in CI. Run them with
+`--workspace` and name specs by path (see
+[End-to-end tests](#end-to-end-tests)). A regex filter can also match the
+WordPress.org screenshot spec, which then rewrites `assets/screenshot-*.png`.
+
+Every spec assumes it is the only client of the test database. Specs count
+places and tickets, read captured mail, and change site options such as the
+timezone. Two overlapping runs therefore produce failures that look like a
+broken environment but are not: counts off by one (`Expected: 2, Received:
+3`), unexpected `ticket_type_sold_out` 409s, extra captured emails, and
+`socket hang up`. To avoid them:
+
+-   **Run one Playwright process per test instance.** That includes ad-hoc
+    single-spec reruns: don't start them while a full suite is running against
+    the same port. Wait, or use another worktree's instance.
+-   **Don't change the checkout during a run.** wp-env mounts the worktree
+    live, so `git checkout`, `reset`, `rebase` or a rebuild changes the code
+    under test mid-request. The tests site then logs fatals such as
+    `Class "…" not found`. To compare against `main`, wait for the run to
+    finish first.
+-   **No output for a while doesn't mean a run has died.** The line reporter
+    prints one line per test, and seed-heavy specs (e.g.
+    `EventStatistics.api.spec.js`) spend minutes in WP-CLI fixtures. A
+    finished run ends with a summary (`N passed (12.0m)`). Until you see one,
+    check `pgrep -fl "playwright test"` before starting anything else. Send
+    each run's output to its own file so two runs never share one log.
+-   **Check the server before blaming the environment.** Read this worktree's
+    tests-site PHP log with
+    `docker logs "$(basename "$(npx wp-env status --json | jq -r .installPath)")-tests-wordpress-1" 2>&1 | grep "PHP Fatal"`
+    (`wp-env logs` can miss these). Then rerun the failing spec on its own
+    with `--retries=0`. If it passes alone, the failure came from shared state
+    or an overlapping run, not from the code.
+-   **Worktrees with their own ports:** the runner hard-codes
+    `WP_BASE_URL=http://localhost:8889`. A worktree whose
+    `.wp-env.override.json` moves the tests site (e.g. to 8891) must run
+    Playwright directly, or it will test the other worktree's instance:
+    `CI=1 WP_BASE_URL=http://localhost:8891 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npx playwright test …`
+
 ### REST API tests
 
 Use Playwright's request API for real HTTP tests of REST routes. API specs should
