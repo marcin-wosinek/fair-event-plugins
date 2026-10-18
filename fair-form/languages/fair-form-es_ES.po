@@ -19,7 +19,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:237
 #: src/Core/Plugin.php:135
-#: src/Services/QuestionnaireService.php:499
+#: src/Services/QuestionnaireService.php:492
 msgid "Fair Form"
 msgstr ""
 
@@ -225,7 +225,7 @@ msgstr "Respuestas del formulario"
 msgid "Edit Submission"
 msgstr "Editar envío"
 
-#: src/Admin/components/DeleteSubmissionDialog.js:104
+#: src/Admin/components/DeleteSubmissionDialog.js:122
 #: src/Admin/form-answers/FormAnswers.js:350
 #: src/Admin/submission-detail/SubmissionDetail.js:270
 msgid "Cancel"
@@ -573,19 +573,15 @@ msgstr "Sin entrada — la entrada a la que pertenecían estas respuestas fue el
 msgid "Ticket"
 msgstr "Entrada"
 
-#: src/Admin/components/DeleteSubmissionDialog.js:58
+#: src/Admin/components/DeleteSubmissionDialog.js:68
 msgid "The submission could not be deleted. Try again."
 msgstr "No se ha podido eliminar el envío. Inténtalo de nuevo."
 
-#: src/Admin/components/DeleteSubmissionDialog.js:68
-msgid "Delete submission?"
-msgstr "¿Eliminar el envío?"
-
-#: src/Admin/components/DeleteSubmissionDialog.js:78
+#: src/Admin/components/DeleteSubmissionDialog.js:96
 msgid "This permanently deletes this submission and its answers. The participant, other submissions, and uploaded files are kept."
 msgstr "Esto elimina de forma permanente este envío y sus respuestas. Se conservan el participante, los demás envíos y los archivos subidos."
 
-#: src/Admin/components/DeleteSubmissionDialog.js:113
+#: src/Admin/components/DeleteSubmissionDialog.js:131
 msgid "Delete submission"
 msgstr "Eliminar envío"
 
@@ -638,3 +634,9 @@ msgstr "Reintentar"
 #: src/Admin/submission-detail/SubmissionDetail.js:212
 msgid "The event could not be changed. Try again."
 msgstr "No se ha podido cambiar el evento. Inténtalo de nuevo."
+
+#. translators: 1: submission ID, e.g. "#12", 2: respondent name or email
+#: src/Admin/components/DeleteSubmissionDialog.js:82
+#, js-format
+msgid "Delete submission %1$s — %2$s"
+msgstr ""

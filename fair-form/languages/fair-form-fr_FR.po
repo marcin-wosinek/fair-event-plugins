@@ -19,7 +19,7 @@ msgstr ""
 #: src/Admin/AdminHooks.php:130
 #: src/API/FairFormController.php:237
 #: src/Core/Plugin.php:135
-#: src/Services/QuestionnaireService.php:499
+#: src/Services/QuestionnaireService.php:492
 msgid "Fair Form"
 msgstr ""
 
@@ -225,7 +225,7 @@ msgstr "Réponses du formulaire"
 msgid "Edit Submission"
 msgstr "Modifier la soumission"
 
-#: src/Admin/components/DeleteSubmissionDialog.js:104
+#: src/Admin/components/DeleteSubmissionDialog.js:122
 #: src/Admin/form-answers/FormAnswers.js:350
 #: src/Admin/submission-detail/SubmissionDetail.js:270
 msgid "Cancel"
@@ -573,19 +573,15 @@ msgstr "Aucun billet — le billet auquel ces réponses appartenaient a été su
 msgid "Ticket"
 msgstr "Billet"
 
-#: src/Admin/components/DeleteSubmissionDialog.js:58
+#: src/Admin/components/DeleteSubmissionDialog.js:68
 msgid "The submission could not be deleted. Try again."
 msgstr "La soumission n’a pas pu être supprimée. Réessayez."
 
-#: src/Admin/components/DeleteSubmissionDialog.js:68
-msgid "Delete submission?"
-msgstr "Supprimer la soumission ?"
-
-#: src/Admin/components/DeleteSubmissionDialog.js:78
+#: src/Admin/components/DeleteSubmissionDialog.js:96
 msgid "This permanently deletes this submission and its answers. The participant, other submissions, and uploaded files are kept."
 msgstr "Cette action supprime définitivement cette soumission et ses réponses. Le participant, les autres soumissions et les fichiers téléversés sont conservés."
 
-#: src/Admin/components/DeleteSubmissionDialog.js:113
+#: src/Admin/components/DeleteSubmissionDialog.js:131
 msgid "Delete submission"
 msgstr "Supprimer la soumission"
 
@@ -638,3 +634,9 @@ msgstr "Réessayer"
 #: src/Admin/submission-detail/SubmissionDetail.js:212
 msgid "The event could not be changed. Try again."
 msgstr "L’événement n’a pas pu être modifié. Réessayez."
+
+#. translators: 1: submission ID, e.g. "#12", 2: respondent name or email
+#: src/Admin/components/DeleteSubmissionDialog.js:82
+#, js-format
+msgid "Delete submission %1$s — %2$s"
+msgstr ""

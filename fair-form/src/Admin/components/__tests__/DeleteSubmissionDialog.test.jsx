@@ -1,7 +1,8 @@
 /**
  * @jest-environment jsdom
  *
- * Shared submission-deletion dialog (#1774): cancel sends nothing, confirm
+ * Shared submission-deletion dialog (#1774, #1933): the title names the
+ * submission and its respondent, cancel sends nothing, confirm
  * sends exactly one request while pending, and a failure keeps the dialog
  * open with an inline error so the user can retry.
  */
@@ -53,6 +54,16 @@ afterEach( () => {
 } );
 
 describe( 'DeleteSubmissionDialog', () => {
+	it( 'names the submission and its respondent in the title', () => {
+		renderDialog();
+
+		expect(
+			screen.getByRole( 'dialog', {
+				name: 'Delete submission #74 — Alex Demo',
+			} )
+		).toBeInTheDocument();
+	} );
+
 	it( 'identifies the submission and explains what is kept', () => {
 		const { dialog } = renderDialog();
 

@@ -107,6 +107,10 @@ export default function ManageEventApp() {
 	const [ togglingExdate, setTogglingExdate ] = useState( null );
 	const [ recurrenceImpact, setRecurrenceImpact ] = useState( null );
 	const [ deleteDialogOpen, setDeleteDialogOpen ] = useState( false );
+	const [ deletingEvent, setDeletingEvent ] = useState( false );
+	const [ deleteEventError, setDeleteEventError ] = useState( null );
+	// Refuses a second deletion before the first one re-rendered the dialog.
+	const deleteInFlightRef = useRef( false );
 	const [ seriesModalOpen, setSeriesModalOpen ] = useState( false );
 	const [ editInstancesModalOpen, setEditInstancesModalOpen ] =
 		useState( false );
@@ -120,6 +124,8 @@ export default function ManageEventApp() {
 	// Target state ('draft' | 'publish') awaiting confirmation, or null.
 	const [ publicationTarget, setPublicationTarget ] = useState( null );
 	const [ publicationSaving, setPublicationSaving ] = useState( false );
+	const [ publicationError, setPublicationError ] = useState( null );
+	const publicationInFlightRef = useRef( false );
 
 	// Dirty-state tracking (#987): snapshot the saved form/ticket state so we
 	// can warn before losing edits and mark which tab holds them.
@@ -488,26 +494,85 @@ export default function ManageEventApp() {
 		}
 	};
 
+	const openDeleteDialog = () => {
+		setDeleteEventError( null );
+		setDeleteDialogOpen( true );
+	};
+
+	const closeDeleteDialog = () => {
+		if ( deleteInFlightRef.current ) {
+			return;
+		}
+		setDeleteDialogOpen( false );
+		setDeleteEventError( null );
+	};
+
 	const confirmDelete = async () => {
+		if ( deleteInFlightRef.current ) {
+			return;
+		}
+		deleteInFlightRef.current = true;
+		setDeletingEvent( true );
+		setDeleteEventError( null );
 		try {
 			await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'DELETE',
 			} );
+			// The event is gone: stay busy until the calendar has loaded.
 			window.location.href = calendarUrl;
 		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to delete event.', 'fair-events' )
+			deleteInFlightRef.current = false;
+			setDeletingEvent( false );
+			setDeleteEventError(
+				err?.message ||
+					__(
+						'The event could not be deleted. Try again.',
+						'fair-events'
+					)
 			);
-		} finally {
-			setDeleteDialogOpen( false );
 		}
 	};
 
-	const deleteConfirmMessage = useMemo( () => {
-		const eventTitle = getEventDisplayTitle( title );
+	const isSeriesMaster = eventDate?.occurrence_type === 'master';
 
-		if ( eventDate?.occurrence_type === 'master' ) {
+	// The saved title, not the one being edited: that is what is deleted.
+	const deleteConfirmTitle = useMemo( () => {
+		if ( ! eventDate ) {
+			return '';
+		}
+		const eventTitle = getEventDisplayTitle( eventDate.title );
+
+		if ( isSeriesMaster ) {
+			const dateCount =
+				1 + ( eventDate.generated_occurrences?.length || 0 );
+			return sprintf(
+				/* translators: 1: title of the series, 2: number of dates in the series */
+				_n(
+					'Delete series — %1$s (%2$d date)',
+					'Delete series — %1$s (%2$d dates)',
+					dateCount,
+					'fair-events'
+				),
+				eventTitle,
+				dateCount
+			);
+		}
+
+		return sprintf(
+			/* translators: 1: event title, 2: event date and time */
+			__( 'Delete event — %1$s, %2$s', 'fair-events' ),
+			eventTitle,
+			eventDate.start_datetime
+				? formatSiteLocalDatetime( eventDate.start_datetime )
+				: ''
+		);
+	}, [ eventDate, isSeriesMaster ] );
+
+	const deleteConfirmMessage = useMemo( () => {
+		const eventTitle = getEventDisplayTitle( eventDate?.title );
+
+		if ( isSeriesMaster ) {
 			const count = eventDate.generated_occurrences?.length || 0;
 			return sprintf(
 				/* translators: 1: event title, 2: number of occurrences */
@@ -530,7 +595,7 @@ export default function ManageEventApp() {
 				? formatSiteLocalDatetime( eventDate.start_datetime )
 				: ''
 		);
-	}, [ title, eventDate ] );
+	}, [ eventDate, isSeriesMaster ] );
 
 	const handleSeriesSaved = ( updated ) => {
 		setEventDate( updated );
@@ -717,10 +782,27 @@ export default function ManageEventApp() {
 	// Drafting or publishing is its own action: it leaves the Event Details
 	// form (and any unsaved edits in it) alone, so only the loaded event is
 	// replaced, never the form state.
+	const openPublicationDialog = ( target ) => {
+		setPublicationError( null );
+		setPublicationTarget( target );
+	};
+
+	const closePublicationDialog = () => {
+		if ( publicationInFlightRef.current ) {
+			return;
+		}
+		setPublicationTarget( null );
+		setPublicationError( null );
+	};
+
 	const confirmPublicationChange = async () => {
 		const target = publicationTarget;
-		setPublicationTarget( null );
+		if ( ! target || publicationInFlightRef.current ) {
+			return;
+		}
+		publicationInFlightRef.current = true;
 		setPublicationSaving( true );
+		setPublicationError( null );
 		setError( null );
 		setSuccess( null );
 
@@ -731,6 +813,7 @@ export default function ManageEventApp() {
 				data: { publication_status: target },
 			} );
 			setEventDate( updated );
+			setPublicationTarget( null );
 			setSuccess(
 				target === 'draft'
 					? __( 'Event moved to draft.', 'fair-events' )
@@ -744,8 +827,9 @@ export default function ManageEventApp() {
 					'fair-events'
 				);
 			}
-			setError( err.message || fallback );
+			setPublicationError( err?.message || fallback );
 		} finally {
+			publicationInFlightRef.current = false;
 			setPublicationSaving( false );
 		}
 	};
@@ -759,6 +843,51 @@ export default function ManageEventApp() {
 			),
 		[ eventDate ]
 	);
+
+	// The action and its target. A date of a series always changes the whole
+	// series, so the series is named.
+	const publicationTitle = useMemo( () => {
+		if ( ! eventDate || ! publicationTarget ) {
+			return '';
+		}
+		const toDraft = publicationTarget === 'draft';
+		let seriesTitle = null;
+		if ( eventDate.occurrence_type === 'generated' && eventDate.master ) {
+			seriesTitle = getEventDisplayTitle( eventDate.master.title );
+		} else if ( eventDate.occurrence_type === 'master' ) {
+			seriesTitle = getEventDisplayTitle( eventDate.title );
+		}
+
+		if ( seriesTitle !== null ) {
+			return toDraft
+				? sprintf(
+						/* translators: %s: title of the series */
+						__( 'Move series to draft — %s', 'fair-events' ),
+						seriesTitle
+					)
+				: sprintf(
+						/* translators: %s: title of the series */
+						__( 'Publish series — %s', 'fair-events' ),
+						seriesTitle
+					);
+		}
+
+		const eventTitle = getEventDisplayTitle( eventDate.title );
+		const when = formatSiteLocalDatetime( eventDate.start_datetime );
+		return toDraft
+			? sprintf(
+					/* translators: 1: event title, 2: event date and time */
+					__( 'Move to draft — %1$s, %2$s', 'fair-events' ),
+					eventTitle,
+					when
+				)
+			: sprintf(
+					/* translators: 1: event title, 2: event date and time */
+					__( 'Publish event — %1$s, %2$s', 'fair-events' ),
+					eventTitle,
+					when
+				);
+	}, [ eventDate, publicationTarget ] );
 
 	// One sentence naming the event and how far the action reaches: a date of
 	// a series always changes the whole series.
@@ -1081,9 +1210,7 @@ export default function ManageEventApp() {
 									<Button
 										variant="tertiary"
 										isDestructive
-										onClick={ () =>
-											setDeleteDialogOpen( true )
-										}
+										onClick={ openDeleteDialog }
 									>
 										{ __( 'Delete Event', 'fair-events' ) }
 									</Button>
@@ -1557,7 +1684,7 @@ export default function ManageEventApp() {
 .fair-events-manage-event .components-tab-panel__tabs-item.is-active::after { height: 2px; outline: none; }
 .fair-events-manage-event .fair-events-context-badge { margin-left: 8px; padding: 2px 8px; border-radius: 12px; background: #f0f0f1; font-size: 12px; }
 .fair-events-manage-event .fair-events-context-badge.is-event-draft { background: #fcf0c3; }
-.fair-events-manage-event .fair-events-publication-posts { margin: 0; padding-left: 20px; list-style: disc; }` }
+.fair-events-publication-posts { margin: 0; padding-left: 20px; list-style: disc; max-height: 12em; overflow-y: auto; }` }
 			</style>
 			<h1>
 				{ __( 'Manage Event', 'fair-events' ) }
@@ -1572,8 +1699,7 @@ export default function ManageEventApp() {
 				venues={ venues }
 				scheduleEnabled={ ticketingEnabled && scheduleEnabled }
 				onManageLink={ handleManageLink }
-				onChangePublication={ setPublicationTarget }
-				publicationBusy={ publicationSaving }
+				onChangePublication={ openPublicationDialog }
 			/>
 
 			{ error && (
@@ -1617,19 +1743,36 @@ export default function ManageEventApp() {
 				} }
 			</TabPanel>
 
-			<ConfirmDialog
-				isOpen={ deleteDialogOpen }
-				onConfirm={ confirmDelete }
-				onCancel={ () => setDeleteDialogOpen( false ) }
-				confirmButtonText={ __( 'Delete event', 'fair-events' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				{ deleteConfirmMessage }
-			</ConfirmDialog>
+			{ deleteDialogOpen && (
+				<ConfirmActionModal
+					title={ deleteConfirmTitle }
+					confirmLabel={
+						isSeriesMaster
+							? __( 'Delete series', 'fair-events' )
+							: __( 'Delete event', 'fair-events' )
+					}
+					busyLabel={
+						isSeriesMaster
+							? __( 'Deleting series…', 'fair-events' )
+							: __( 'Deleting event…', 'fair-events' )
+					}
+					isDestructive
+					isBusy={ deletingEvent }
+					error={ deleteEventError }
+					onConfirm={ confirmDelete }
+					onCancel={ closeDeleteDialog }
+				>
+					<p style={ { margin: 0 } }>{ deleteConfirmMessage }</p>
+				</ConfirmActionModal>
+			) }
 
 			{ endSeriesDialogOpen && (
 				<ConfirmActionModal
-					title={ __( 'End series?', 'fair-events' ) }
+					title={ sprintf(
+						/* translators: %s: title of the series */
+						__( 'End series — %s', 'fair-events' ),
+						getEventDisplayTitle( eventDate.title )
+					) }
 					confirmLabel={ __( 'End series', 'fair-events' ) }
 					busyLabel={ __( 'Ending series…', 'fair-events' ) }
 					isDestructive
@@ -1741,18 +1884,24 @@ export default function ManageEventApp() {
 				) }
 			</ConfirmDialog>
 
-			<ConfirmDialog
-				isOpen={ publicationTarget !== null }
-				onConfirm={ confirmPublicationChange }
-				onCancel={ () => setPublicationTarget( null ) }
-				confirmButtonText={
-					publicationTarget === 'draft'
-						? __( 'Move to draft', 'fair-events' )
-						: __( 'Publish event', 'fair-events' )
-				}
-				cancelButtonText={ __( 'Cancel', 'fair-events' ) }
-			>
-				<VStack spacing={ 3 }>
+			{ publicationTarget !== null && (
+				<ConfirmActionModal
+					title={ publicationTitle }
+					confirmLabel={
+						publicationTarget === 'draft'
+							? __( 'Move to draft', 'fair-events' )
+							: __( 'Publish event', 'fair-events' )
+					}
+					busyLabel={
+						publicationTarget === 'draft'
+							? __( 'Moving to draft…', 'fair-events' )
+							: __( 'Publishing…', 'fair-events' )
+					}
+					isBusy={ publicationSaving }
+					error={ publicationError }
+					onConfirm={ confirmPublicationChange }
+					onCancel={ closePublicationDialog }
+				>
 					<p style={ { margin: 0 } }>{ publicationHeadline }</p>
 					{ publicationPosts.length > 0 && (
 						<>
@@ -1798,8 +1947,8 @@ export default function ManageEventApp() {
 							) }
 						</p>
 					) }
-				</VStack>
-			</ConfirmDialog>
+				</ConfirmActionModal>
+			) }
 
 			{ linkModalOpen && (
 				<EventLinkModal

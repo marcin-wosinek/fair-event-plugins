@@ -238,12 +238,46 @@ test.describe('Email the participants of an event occurrence', () => {
 
 		expect(await deliveredTo(request, subject)).toEqual([attendee.email]);
 
-		// Deleting the record asks first, naming the message.
+		// Deleting the record asks first, naming the message. A failed
+		// request stays in the dialog with the record kept for a retry.
+		let failedOnce = false;
+		await page.route(/custom-mail(\/|%2F)\d+/, (route) => {
+			const req = route.request();
+			const method =
+				req.headers()['x-http-method-override'] || req.method();
+			if (failedOnce || method !== 'DELETE') {
+				return route.fallback();
+			}
+			failedOnce = true;
+			return route.fulfill({
+				status: 500,
+				json: {
+					code: 'simulated_failure',
+					message: 'Simulated history failure.',
+				},
+			});
+		});
 		await historyRow.getByRole('button', { name: 'Delete' }).click();
-		const dialog = page.getByRole('dialog');
+		const dialog = page.getByRole('dialog', {
+			name: new RegExp(`^Delete record — “${subject}”, `),
+		});
 		await expect(dialog).toContainText(subject);
-		await dialog.getByRole('button', { name: 'Delete record' }).click();
+		const confirm = dialog.getByRole('button', { name: 'Delete record' });
+		await confirm.click();
+		await expect(dialog.locator('.components-notice__content')).toHaveText(
+			'Simulated history failure.'
+		);
+		await confirm.click();
+		await expect(dialog).toBeHidden();
+		await expect(
+			page.locator('.components-notice__content', {
+				hasText: `The record of “${subject}” was deleted.`,
+			})
+		).toBeVisible();
 		await expect(page.locator('tr', { hasText: subject })).toHaveCount(0);
+		await expect(
+			page.getByRole('heading', { name: 'Mail History' })
+		).toBeFocused();
 	});
 
 	test('with both plugins active: one page, one email per recipient', async ({

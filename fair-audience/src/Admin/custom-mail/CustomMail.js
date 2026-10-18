@@ -13,7 +13,6 @@ import {
 	CheckboxControl,
 	Notice,
 	Spinner,
-	__experimentalConfirmDialog as ConfirmDialog,
 } from '@wordpress/components';
 
 /**
@@ -30,7 +29,8 @@ import {
 import ContentEditor from './ContentEditor.js';
 import RecipientPreview, { isEligible } from './RecipientPreview.js';
 import SendResult from './SendResult.js';
-import MailHistory from './MailHistory.js';
+import MailHistory, { subjectOf } from './MailHistory.js';
+import DeleteMailRecordModal from './DeleteMailRecordModal.js';
 import {
 	hasVisibleContent,
 	isRejectedBeforeSending,
@@ -77,8 +77,17 @@ export default function CustomMail() {
 	const [ excludedIds, setExcludedIds ] = useState( new Set() );
 	const [ isSending, setIsSending ] = useState( false );
 	const [ sendResult, setSendResult ] = useState( null );
+	// History record awaiting confirmation (null = closed), whether its
+	// deletion runs, why the last attempt failed, and the outcome to report
+	// next to the history.
 	const [ mailToDelete, setMailToDelete ] = useState( null );
 	const [ isDeleting, setIsDeleting ] = useState( false );
+	const [ deleteError, setDeleteError ] = useState( null );
+	const [ historyNotice, setHistoryNotice ] = useState( null );
+	// Refuses a second confirmation before the first one re-rendered.
+	const deleteInFlight = useRef( false );
+	// The deleted row took its Delete button along, so focus moves here.
+	const historyHeadingRef = useRef( null );
 
 	const editorRef = useRef( null );
 	const previewRequest = useRef( 0 );
@@ -340,33 +349,84 @@ export default function CustomMail() {
 		window.scrollTo( { top: 0, behavior: 'smooth' } );
 	};
 
-	const confirmDelete = () => {
-		const mail = mailToDelete;
-		setIsDeleting( true );
-		deleteCustomMail( mail.id )
-			.then( () => {
-				setNotice( {
-					status: 'success',
-					message: __( 'The record was deleted.', 'fair-audience' ),
-				} );
-				return reloadHistory();
-			} )
-			.catch( ( error ) => {
-				setNotice( {
-					status: 'error',
-					message:
-						error.message ||
-						__(
-							'The record could not be deleted.',
-							'fair-audience'
-						),
-				} );
-			} )
-			.finally( () => {
-				setIsDeleting( false );
-				setMailToDelete( null );
-			} );
+	const openDelete = ( mail ) => {
+		setDeleteError( null );
+		setMailToDelete( mail );
 	};
+
+	const closeDelete = () => {
+		if ( deleteInFlight.current ) {
+			return;
+		}
+		setMailToDelete( null );
+		setDeleteError( null );
+	};
+
+	const confirmDelete = async () => {
+		const mail = mailToDelete;
+		if ( ! mail || deleteInFlight.current ) {
+			return;
+		}
+		deleteInFlight.current = true;
+		setIsDeleting( true );
+		setDeleteError( null );
+		setHistoryNotice( null );
+
+		try {
+			await deleteCustomMail( mail.id );
+		} catch ( error ) {
+			deleteInFlight.current = false;
+			setIsDeleting( false );
+			setDeleteError(
+				error?.message ||
+					__(
+						'The record could not be deleted. Try again.',
+						'fair-audience'
+					)
+			);
+			return;
+		}
+
+		// Deleted: drop the row now, so a failed refresh cannot offer the
+		// same record for deletion again.
+		setMails( ( current ) =>
+			current.filter( ( item ) => item.id !== mail.id )
+		);
+		deleteInFlight.current = false;
+		setIsDeleting( false );
+		setMailToDelete( null );
+		setHistoryNotice( {
+			status: 'success',
+			message: sprintf(
+				/* translators: %s: email subject */
+				__( 'The record of “%s” was deleted.', 'fair-audience' ),
+				subjectOf( mail )
+			),
+		} );
+
+		try {
+			const refreshed = await loadCustomMails();
+			setMails( refreshed );
+		} catch {
+			setHistoryNotice( {
+				status: 'warning',
+				message: sprintf(
+					/* translators: %s: email subject */
+					__(
+						'The record of “%s” was deleted, but Mail History could not be refreshed. Reload the page to see the current list.',
+						'fair-audience'
+					),
+					subjectOf( mail )
+				),
+			} );
+		}
+	};
+
+	useEffect( () => {
+		if ( historyNotice ) {
+			historyHeadingRef.current?.focus();
+		}
+	}, [ historyNotice ] );
 
 	if ( isLoading ) {
 		return (
@@ -624,27 +684,22 @@ export default function CustomMail() {
 			<MailHistory
 				mails={ mails }
 				onDuplicate={ handleDuplicate }
-				onDelete={ setMailToDelete }
+				onDelete={ openDelete }
 				disabled={ isSending || isDeleting }
+				notice={ historyNotice }
+				onDismissNotice={ () => setHistoryNotice( null ) }
+				headingRef={ historyHeadingRef }
 			/>
 
-			<ConfirmDialog
-				isOpen={ mailToDelete !== null }
-				onConfirm={ confirmDelete }
-				onCancel={ () => setMailToDelete( null ) }
-				confirmButtonText={ __( 'Delete record', 'fair-audience' ) }
-				cancelButtonText={ __( 'Cancel', 'fair-audience' ) }
-			>
-				{ mailToDelete &&
-					sprintf(
-						/* translators: %s: email subject */
-						__(
-							'Delete the record of “%s” from Mail History? Emails that were already sent are not affected. This cannot be undone.',
-							'fair-audience'
-						),
-						mailToDelete.subject
-					) }
-			</ConfirmDialog>
+			{ mailToDelete && (
+				<DeleteMailRecordModal
+					mail={ mailToDelete }
+					isDeleting={ isDeleting }
+					error={ deleteError }
+					onConfirm={ confirmDelete }
+					onCancel={ closeDelete }
+				/>
+			) }
 		</div>
 	);
 }

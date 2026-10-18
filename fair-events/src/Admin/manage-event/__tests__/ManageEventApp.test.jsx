@@ -4,6 +4,10 @@
  * Tests for the tab registry mechanism in ManageEventApp (#919).
  *
  * Exercises:
+ *   - Deleting the event and changing its publication name the action and
+ *     the saved event (or series) in the dialog title, block dismissal and a
+ *     second request while pending, and keep a failure inside the dialog
+ *     for a retry (#1933).
  *   - Built-in tabs render after the event loads.
  *   - A tab registered via addFilter('fairEvents.manageEvent.tabs') appears.
  *   - A descriptor with isVisible:false is omitted from the tab bar.
@@ -1035,7 +1039,9 @@ describe( 'end series confirmation (#1772)', () => {
 		fireEvent.click(
 			await screen.findByRole( 'button', { name: 'End series' } )
 		);
-		return screen.findByRole( 'dialog', { name: 'End series?' } );
+		return screen.findByRole( 'dialog', {
+			name: 'End series — Weekly Jam',
+		} );
 	};
 
 	const confirmButton = ( dialog ) =>
@@ -1130,7 +1136,7 @@ describe( 'end series confirmation (#1772)', () => {
 		const busy = await within( dialog ).findByRole( 'button', {
 			name: 'Ending series…',
 		} );
-		expect( busy ).toBeDisabled();
+		expect( busy ).toHaveAttribute( 'aria-disabled', 'true' );
 		expect(
 			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
 		).toBeDisabled();
@@ -1277,6 +1283,154 @@ describe( 'delete confirmation dialog (#991)', () => {
 				'Delete Test Event and its 9 occurrences? This cannot be undone.'
 			)
 		).toBeInTheDocument();
+	} );
+
+	const deferred = () => {
+		let resolve;
+		let reject;
+		const promise = new Promise( ( res, rej ) => {
+			resolve = res;
+			reject = rej;
+		} );
+		return { promise, resolve, reject };
+	};
+
+	const mockDelete = ( onDelete, eventDate = mockEventDate ) =>
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.method === 'DELETE' ) {
+				return onDelete( opts );
+			}
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( eventDate );
+			}
+			return Promise.resolve( [] );
+		} );
+
+	const deleteCalls = () =>
+		apiFetch.mock.calls.filter( ( [ o ] ) => o.method === 'DELETE' );
+
+	const openDialog = async () => {
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Delete Event' } )
+		);
+		return screen.getByRole( 'dialog' );
+	};
+
+	it( 'names the saved event and its date in a destructive dialog', async () => {
+		mockDelete( () => Promise.resolve( { deleted: true } ) );
+		const dialog = await openDialog();
+
+		expect( dialog ).toHaveAccessibleName(
+			`Delete event — Test Event, ${ formatSiteLocalDatetime(
+				mockEventDate.start_datetime
+			) }`
+		);
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Delete event' } )
+		).toHaveClass( 'is-destructive' );
+	} );
+
+	it( 'names a series with its date count', async () => {
+		mockDelete( () => Promise.resolve( { deleted: true } ), {
+			...mockEventDate,
+			title: 'Weekly Jam',
+			occurrence_type: 'master',
+			generated_occurrences: [
+				{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+				{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+			],
+		} );
+		const dialog = await openDialog();
+
+		expect( dialog ).toHaveAccessibleName(
+			'Delete series — Weekly Jam (3 dates)'
+		);
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Delete series' } )
+		).toHaveClass( 'is-destructive' );
+	} );
+
+	it( 'blocks dismissal and a second request, then goes to the calendar', async () => {
+		window.fairEventsManageEventData.calendarUrl = '#calendar';
+		const request = deferred();
+		mockDelete( () => request.promise );
+		const dialog = await openDialog();
+
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete event',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Deleting event…' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect( deleteCalls() ).toHaveLength( 1 );
+
+		await act( async () => {
+			request.resolve( { deleted: true } );
+		} );
+		await waitFor( () =>
+			expect( window.location.hash ).toBe( '#calendar' )
+		);
+		// Still busy while the calendar loads.
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Deleting event…' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+	} );
+
+	it( 'keeps a failure in the dialog, clears it on retry and on close', async () => {
+		const results = [ { message: 'Event is locked.' }, {} ];
+		mockDelete( () => Promise.reject( results.shift() ) );
+		let dialog = await openDialog();
+		const errorText = ( text ) =>
+			screen.queryByText( text, {
+				selector: '.components-notice__content',
+			} );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Delete event' } )
+		);
+		expect(
+			await within( dialog ).findByText( 'Event is locked.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Delete event' } )
+		);
+		expect( errorText( 'Event is locked.' ) ).not.toBeInTheDocument();
+		expect(
+			await within( dialog ).findByText(
+				'The event could not be deleted. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Delete Event' } )
+		);
+		dialog = screen.getByRole( 'dialog' );
+		expect(
+			errorText( 'The event could not be deleted. Try again.' )
+		).not.toBeInTheDocument();
+		expect( deleteCalls() ).toHaveLength( 2 );
 	} );
 } );
 
@@ -1688,6 +1842,14 @@ describe( 'draft and publish (#1692)', () => {
 		);
 
 		const dialog = screen.getByRole( 'dialog' );
+		expect( dialog ).toHaveAccessibleName(
+			`Move to draft — Test Event, ${ formatSiteLocalDatetime(
+				mockEventDate.start_datetime
+			) }`
+		);
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Move to draft' } )
+		).not.toHaveClass( 'is-destructive' );
 		expect(
 			within( dialog ).getByText(
 				'Move Test Event to draft? It will be hidden from public event lists, calendars and feeds.'
@@ -1787,6 +1949,9 @@ describe( 'draft and publish (#1692)', () => {
 				'Move the whole series Test Event (3 dates) to draft? All its dates will be hidden from public event lists, calendars and feeds.'
 			)
 		).toBeInTheDocument();
+		expect( screen.getByRole( 'dialog' ) ).toHaveAccessibleName(
+			'Move series to draft — Test Event'
+		);
 		unmount();
 
 		mockEvent(
@@ -1808,6 +1973,9 @@ describe( 'draft and publish (#1692)', () => {
 				'This date is part of the series Weekly class. Move the whole series to draft? All its dates will be hidden from public event lists, calendars and feeds.'
 			)
 		).toBeInTheDocument();
+		expect( screen.getByRole( 'dialog' ) ).toHaveAccessibleName(
+			'Move series to draft — Weekly class'
+		);
 	} );
 
 	it( 'says an external page is not changed', async () => {
@@ -1855,34 +2023,111 @@ describe( 'draft and publish (#1692)', () => {
 		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
 	} );
 
-	it( 'shows the API error and keeps the saved state when the change is refused', async () => {
-		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+	it( 'shows the API error in the dialog and keeps the saved state when the change is refused', async () => {
+		const results = [
 			Promise.reject( {
 				message:
 					'“Shared page” is also linked to another event (Other event). Nothing was changed.',
-			} )
+			} ),
+			Promise.reject( {} ),
+			Promise.resolve( {
+				...mockEventDate,
+				publication_status: 'draft',
+			} ),
+		];
+		results.slice( 0, 2 ).forEach( ( result ) => result.catch( () => {} ) );
+		mockEvent( { ...mockEventDate, publication_status: 'publish' }, () =>
+			results.shift()
 		);
 
 		render( <ManageEventApp /> );
 		fireEvent.click(
 			await screen.findByRole( 'button', { name: 'Move to draft' } )
 		);
-		fireEvent.click(
-			within( screen.getByRole( 'dialog' ) ).getByRole( 'button', {
-				name: 'Move to draft',
-			} )
-		);
+		const dialog = screen.getByRole( 'dialog' );
+		const confirm = () =>
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', {
+					name: 'Move to draft',
+				} )
+			);
+		confirm();
 
 		expect(
-			await screen.findByText(
+			await within( dialog ).findByText(
 				'“Shared page” is also linked to another event (Other event). Nothing was changed.',
 				notice
 			)
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Published' ) ).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', { name: 'Move to draft' } )
+			within( dialog ).getByRole( 'button', { name: 'Move to draft' } )
 		).not.toBeDisabled();
+
+		// Without a server message, a translated fallback; a retry clears it.
+		confirm();
+		expect(
+			await within( dialog ).findByText(
+				'Failed to move the event to draft.',
+				notice
+			)
+		).toBeInTheDocument();
+		confirm();
+		expect(
+			screen.queryByText( 'Failed to move the event to draft.', notice )
+		).not.toBeInTheDocument();
+		expect(
+			await screen.findByText( 'Event moved to draft.', notice )
+		).toBeInTheDocument();
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( publicationCalls() ).toHaveLength( 3 );
+	} );
+
+	it( 'blocks dismissal and a second request while the change runs', async () => {
+		let finish;
+		mockEvent(
+			{ ...mockEventDate, publication_status: 'publish' },
+			() =>
+				new Promise( ( resolve ) => {
+					finish = resolve;
+				} )
+		);
+
+		render( <ManageEventApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Move to draft' } )
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Move to draft',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Moving to draft…' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect( publicationCalls() ).toHaveLength( 1 );
+
+		await act( async () => {
+			finish( { ...mockEventDate, publication_status: 'draft' } );
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			screen.getByText( 'Event moved to draft.', notice )
+		).toBeInTheDocument();
 	} );
 
 	it( 'keeps unsaved event details and says they are not saved', async () => {

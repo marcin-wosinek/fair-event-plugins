@@ -133,3 +133,23 @@
 		font-weight: 600;
 	}
 }
+
+/* Core gives the modal header a fixed height, which clips a long subject in
+   the title. Let it grow and wrap so the record stays identifiable at 375px. */
+.fair-audience-delete-mail-record .components-modal__content {
+	margin-top: 0;
+}
+
+.fair-audience-delete-mail-record .components-modal__header {
+	position: sticky;
+	height: auto;
+	min-height: 72px;
+	margin: -4px -24px 0;
+	width: auto;
+	background: #fff;
+}
+
+.fair-audience-delete-mail-record .components-modal__header-heading {
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}

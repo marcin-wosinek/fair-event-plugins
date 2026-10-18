@@ -1,8 +1,18 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Button, Modal, Notice } from '@wordpress/components';
-import SubmissionContext from './SubmissionContext.js';
+import SubmissionContext, { describeSubmission } from './SubmissionContext.js';
+
+// Core gives the modal header a fixed height, which clips a long respondent
+// name in the title. Let it grow and wrap so the submission stays
+// identifiable at 375px. Both response pages use this dialog, so the rule
+// travels with it.
+const MODAL_CSS = `
+.fair-form-delete-submission-dialog .components-modal__content { margin-top: 0; }
+.fair-form-delete-submission-dialog .components-modal__header { position: sticky; height: auto; min-height: 72px; margin: -4px -24px 0; width: auto; background: #fff; }
+.fair-form-delete-submission-dialog .components-modal__header-heading { line-height: 1.3; overflow-wrap: anywhere; }
+`;
 
 /**
  * Confirms and performs the deletion of one submission.
@@ -63,9 +73,16 @@ export default function DeleteSubmissionDialog( {
 			} );
 	};
 
+	const { respondent, id } = describeSubmission( submission );
+
 	return (
 		<Modal
-			title={ __( 'Delete submission?', 'fair-form' ) }
+			title={ sprintf(
+				/* translators: 1: submission ID, e.g. "#12", 2: respondent name or email */
+				__( 'Delete submission %1$s — %2$s', 'fair-form' ),
+				id,
+				respondent
+			) }
 			onRequestClose={ handleCancel }
 			isDismissible={ ! isDeleting }
 			shouldCloseOnEsc={ ! isDeleting }
@@ -73,6 +90,7 @@ export default function DeleteSubmissionDialog( {
 			className="fair-form-delete-submission-dialog"
 			style={ { maxWidth: '480px', width: '100%' } }
 		>
+			<style>{ MODAL_CSS }</style>
 			<SubmissionContext submission={ submission } />
 			<p>
 				{ __(

@@ -15,7 +15,10 @@
  *   - Ticket rows are numbered from 1 after filtering.
  *   - Each configured extra gets a column with a selected / not selected /
  *     unavailable indicator per ticket; no extras means no extra columns.
- *   - Mailing opt-ins filter, empty states, and delete.
+ *   - Mailing opt-ins filter, empty states, and delete: the dialog names the
+ *     registrant and ticket reference, blocks dismissal and a second request
+ *     while pending, keeps a failure inside the dialog for a retry, and
+ *     reports success next to the List (#1933).
  *   - Move and Change ticket type, including the over-capacity reason step,
  *     and the over-capacity details (#1532).
  *   - "Print list" prints the complete, unfiltered List in its own window
@@ -29,6 +32,7 @@ import {
 	fireEvent,
 	waitFor,
 	within,
+	act,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventSignups, { expandTicketRows } from '../EventSignups.js';
@@ -794,8 +798,14 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 			screen.getAllByRole( 'button', { name: 'Delete' } )[ 1 ]
 		);
 
-		const dialog = screen.getByRole( 'dialog' );
-		expect( dialog ).toHaveTextContent( 'Bob, Jr.' );
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Delete registration — Bob, Jr. (REF00201)',
+		} );
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Delete registration',
+			} )
+		).toHaveClass( 'is-destructive' );
 		expect( dialog ).not.toHaveTextContent( 'bob@example.com' );
 		expect( dialog ).not.toHaveTextContent( '40.00' );
 		expect( dialog ).toHaveTextContent( 'confirmed' );
@@ -851,30 +861,149 @@ describe( 'EventSignups — delete signup (#1464)', () => {
 			path: '/fair-events/v1/get-tickets/1',
 			method: 'DELETE',
 		} );
+		expect(
+			screen.getByText(
+				'Registration for Ada Lovelace (REF00101) deleted.',
+				{
+					selector: '.components-notice__content',
+				}
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		// The deleted row took its Delete button along; focus lands on the List.
+		expect( screen.getByRole( 'heading', { name: 'List' } ) ).toHaveFocus();
 	} );
 
-	it( 'preserves the row and shows a persistent error when deletion fails', async () => {
-		await renderSignups( {
-			deleteResult: new Error( 'Database refused deletion.' ),
-		} );
+	it( 'blocks dismissal and a second request while deleting', async () => {
+		await renderSignups();
+		let finish;
+		const route = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.method === 'DELETE'
+				? new Promise( ( resolve ) => {
+						finish = resolve;
+					} )
+				: route( options )
+		);
 
 		fireEvent.click(
 			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
 		);
+		const dialog = screen.getByRole( 'dialog' );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete registration',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		expect(
+			within( dialog ).getByRole( 'button', {
+				name: 'Deleting registration…',
+			} )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls.filter(
+				( [ options ] ) => options.method === 'DELETE'
+			)
+		).toHaveLength( 1 );
+
+		await act( async () => {
+			finish( { deleted: true } );
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+	} );
+
+	it( 'keeps the registration and the error in the dialog after a failure, then retries', async () => {
+		await renderSignups();
+		const results = [
+			new Error( 'Database refused deletion.' ),
+			{},
+			{ deleted: true },
+		];
+		const route = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.method !== 'DELETE' ) {
+				return route( options );
+			}
+			const result = results.shift();
+			return result instanceof Error || ! result.deleted
+				? Promise.reject( result )
+				: Promise.resolve( result );
+		} );
+		const errorText = ( text ) =>
+			screen.queryByText( text, {
+				selector: '.components-notice__content',
+			} );
+
 		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Delete registration' } )
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		let dialog = screen.getByRole( 'dialog' );
+		const confirm = () =>
+			fireEvent.click(
+				within( screen.getByRole( 'dialog' ) ).getByRole( 'button', {
+					name: 'Delete registration',
+				} )
+			);
+
+		confirm();
+		expect(
+			await within( dialog ).findByText( 'Database refused deletion.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( dialog ).toHaveTextContent(
+			'Delete the registration for Ada Lovelace'
+		);
+		expect( screen.getAllByText( 'Ada Lovelace' ).length ).toBeGreaterThan(
+			0
 		);
 
+		// Cancelling clears the error; reopening starts clean.
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		dialog = screen.getByRole( 'dialog' );
+		expect(
+			errorText( 'Database refused deletion.' )
+		).not.toBeInTheDocument();
+
+		// Without a server message, a full-sentence fallback.
+		confirm();
+		expect(
+			await within( dialog ).findByText(
+				'The registration could not be deleted. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+
+		// Retrying clears the stale error, and success closes the dialog.
+		confirm();
+		expect(
+			errorText( 'The registration could not be deleted. Try again.' )
+		).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
 		await waitFor( () =>
 			expect(
-				document.querySelector( '.components-notice__content' )
-			).toHaveTextContent( 'Database refused deletion.' )
+				screen.queryByText( 'Ada Lovelace' )
+			).not.toBeInTheDocument()
 		);
-		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
-		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
-		expect(
-			document.querySelector( '.components-notice' )
-		).not.toHaveClass( 'is-dismissible' );
 	} );
 } );
 

@@ -9,7 +9,10 @@
  *   - exclusions and validation gate the send, which fires once per click;
  *   - partial, total and uncertain failures are reported distinctly, as is a
  *     message that was sent but not saved to history;
- *   - deleting a history record goes through a confirmation dialog.
+ *   - deleting a history record goes through a confirmation dialog that
+ *     names the record, blocks every dismissal while pending, sends one
+ *     request, keeps the record after a failure for a retry, and reports a
+ *     failed refresh separately from the deletion (#1933).
  */
 import '@testing-library/jest-dom';
 import {
@@ -104,13 +107,28 @@ function mockApi( handlers = {} ) {
 			);
 		}
 		if ( path === '/fair-audience/v1/custom-mail' ) {
+			if ( typeof handlers.history === 'function' ) {
+				return handlers.history();
+			}
 			return Promise.resolve( handlers.history || HISTORY );
 		}
 		if ( method === 'DELETE' ) {
-			return Promise.resolve( { success: true } );
+			return handlers.delete
+				? handlers.delete( path )
+				: Promise.resolve( { success: true } );
 		}
 		return Promise.resolve( [] );
 	} );
+}
+
+function deferred() {
+	let resolve;
+	let reject;
+	const promise = new Promise( ( res, rej ) => {
+		resolve = res;
+		reject = rej;
+	} );
+	return { promise, resolve, reject };
 }
 
 function callsTo( path, method = 'GET' ) {
@@ -572,10 +590,15 @@ describe( 'mail history', () => {
 		await renderPage();
 
 		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
-		const dialog = await screen.findByRole( 'dialog' );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: /^Delete record — “What to bring”, /,
+		} );
 		expect(
 			within( dialog ).getByText( /Delete the record of “What to bring”/ )
 		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Delete record' } )
+		).toHaveClass( 'is-destructive' );
 
 		fireEvent.click(
 			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
@@ -590,9 +613,152 @@ describe( 'mail history', () => {
 				name: 'Delete record',
 			} )
 		);
-		await findText( 'The record was deleted.' );
+		await findText( 'The record of “What to bring” was deleted.' );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		expect(
 			callsTo( '/fair-audience/v1/custom-mail/5', 'DELETE' )
 		).toHaveLength( 1 );
+		// The deleted row's button is gone, so focus lands on its list.
+		expect(
+			screen.getByRole( 'heading', { name: 'Mail History' } )
+		).toHaveFocus();
+	} );
+
+	it( 'blocks dismissal and repeated confirmation while deleting', async () => {
+		const request = deferred();
+		mockApi( { delete: () => request.promise } );
+		await renderPage();
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete record',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+
+		const busy = within( dialog ).getByRole( 'button', {
+			name: 'Deleting record…',
+		} );
+		expect( busy ).toBeDisabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect(
+			callsTo( '/fair-audience/v1/custom-mail/5', 'DELETE' )
+		).toHaveLength( 1 );
+
+		await act( async () => {
+			request.resolve( { success: true } );
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+	} );
+
+	it( 'keeps the record after a failure and deletes it on retry', async () => {
+		let attempts = 0;
+		mockApi( {
+			delete: () => {
+				attempts++;
+				if ( attempts === 1 ) {
+					return Promise.reject( {
+						message: 'The record is locked.',
+					} );
+				}
+				if ( attempts === 2 ) {
+					return Promise.reject( {} );
+				}
+				return Promise.resolve( { success: true } );
+			},
+		} );
+		await renderPage();
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		let dialog = await screen.findByRole( 'dialog' );
+		const confirm = () =>
+			fireEvent.click(
+				within( screen.getByRole( 'dialog' ) ).getByRole( 'button', {
+					name: 'Delete record',
+				} )
+			);
+
+		confirm();
+		expect(
+			await within( dialog ).findByText( 'The record is locked.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText( /Delete the record of “What to bring”/ )
+		).toBeInTheDocument();
+
+		// Cancelling clears the error; reopening starts clean.
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		dialog = await screen.findByRole( 'dialog' );
+		expect(
+			within( dialog ).queryByText( 'The record is locked.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+
+		confirm();
+		expect(
+			await within( dialog ).findByText(
+				'The record could not be deleted. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+
+		confirm();
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			screen.queryByText( 'The record could not be deleted. Try again.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+		expect(
+			callsTo( '/fair-audience/v1/custom-mail/5', 'DELETE' )
+		).toHaveLength( 3 );
+	} );
+
+	it( 'reports a failed refresh without offering the deleted record again', async () => {
+		let historyLoads = 0;
+		mockApi( {
+			history: () => {
+				historyLoads++;
+				return historyLoads === 1
+					? Promise.resolve( HISTORY )
+					: Promise.reject( { message: 'Timeout' } );
+			},
+		} );
+		await renderPage();
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		fireEvent.click(
+			within( await screen.findByRole( 'dialog' ) ).getByRole( 'button', {
+				name: 'Delete record',
+			} )
+		);
+
+		await findText(
+			'The record of “What to bring” was deleted, but Mail History could not be refreshed. Reload the page to see the current list.'
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'What to bring' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Delete' } )
+		).not.toBeInTheDocument();
 	} );
 } );

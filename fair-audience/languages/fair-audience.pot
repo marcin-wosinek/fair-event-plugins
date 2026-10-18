@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Audience 1.19.0\n"
+"Project-Id-Version: Fair Audience 1.20.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-audience\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-16T04:23:08+00:00\n"
+"POT-Creation-Date: 2026-10-18T19:58:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -18,7 +18,7 @@ msgstr ""
 #: fair-audience.php
 #: src/Admin/AdminHooks.php:137
 #: src/Admin/AdminHooks.php:138
-#: src/Core/Plugin.php:141
+#: src/Core/Plugin.php:144
 msgid "Fair Audience"
 msgstr ""
 
@@ -55,8 +55,8 @@ msgstr ""
 
 #: src/Admin/AdminHooks.php:177
 #: src/Admin/AdminHooks.php:178
-#: src/Admin/custom-mail/CustomMail.js:381
-#: src/Admin/custom-mail/CustomMail.js:425
+#: src/Admin/custom-mail/CustomMail.js:434
+#: src/Admin/custom-mail/CustomMail.js:478
 msgid "Custom Mail"
 msgstr ""
 
@@ -124,16 +124,16 @@ msgstr ""
 msgid "Audience Signup"
 msgstr ""
 
-#: src/API/CustomMailController.php:259
+#: src/API/CustomMailController.php:260
 msgid "You do not have permission to manage custom mail."
 msgstr ""
 
-#: src/API/CustomMailController.php:304
-#: src/Admin/custom-mail/CustomMail.js:236
+#: src/API/CustomMailController.php:305
+#: src/Admin/custom-mail/CustomMail.js:238
 msgid "Select the event whose participants should receive this email."
 msgstr ""
 
-#: src/API/CustomMailController.php:336
+#: src/API/CustomMailController.php:337
 #: src/API/EventParticipantsController.php:557
 #: src/API/EventParticipantsController.php:1044
 #: src/API/EventParticipantsController.php:2268
@@ -145,40 +145,35 @@ msgstr ""
 msgid "Event date not found."
 msgstr ""
 
-#: src/API/CustomMailController.php:359
-#: src/Admin/custom-mail/CustomMail.js:242
+#: src/API/CustomMailController.php:360
+#: src/Admin/custom-mail/CustomMail.js:244
 msgid "Select at least one audience type."
 msgstr ""
 
-#: src/API/CustomMailController.php:367
+#: src/API/CustomMailController.php:368
 msgid "Filtering by group is not available on this site."
 msgstr ""
 
-#: src/API/CustomMailController.php:405
+#: src/API/CustomMailController.php:406
 msgid "Enter a subject for the email."
 msgstr ""
 
-#: src/API/CustomMailController.php:413
+#: src/API/CustomMailController.php:416
 msgid "Write the email content before sending."
 msgstr ""
 
-#: src/API/CustomMailController.php:421
-#: src/Admin/custom-mail/CustomMail.js:230
-msgid "This email contains a photo upload link, which is not available on this site. Remove the link before sending."
-msgstr ""
-
-#: src/API/CustomMailController.php:560
+#: src/API/CustomMailController.php:555
 msgid "Custom mail message not found."
 msgstr ""
 
-#: src/API/CustomMailController.php:613
+#: src/API/CustomMailController.php:608
 #: src/Admin/components/InvitationSummary.js:196
 msgid "(untitled event)"
 msgstr ""
 
 #. translators: 1: event title, 2: event date and time
 #. translators: 1: person's name, 2: their email address
-#: src/API/CustomMailController.php:622
+#: src/API/CustomMailController.php:617
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:41
 #, php-format,js-format
 msgid "%1$s (%2$s)"
@@ -197,7 +192,7 @@ msgid "Invalid or expired unsubscribe link."
 msgstr ""
 
 #: src/API/EventInterestController.php:266
-#: src/Core/Plugin.php:318
+#: src/Core/Plugin.php:321
 msgid "You will no longer receive updates about this event."
 msgstr ""
 
@@ -214,14 +209,14 @@ msgstr ""
 #: src/API/EventSignupController.php:2344
 #: src/API/EventSignupController.php:2505
 #: src/Services/EmailService.php:344
-#: src/Services/EmailService.php:1081
-#: src/Services/EmailService.php:2575
+#: src/Services/EmailService.php:1075
+#: src/Services/EmailService.php:2569
 msgid "Event not found."
 msgstr ""
 
 #: src/API/EventParticipantsController.php:954
 #: src/API/EventSignupController.php:1639
-#: src/Services/EmailService.php:1980
+#: src/Services/EmailService.php:1974
 msgid "Event Signup"
 msgstr ""
 
@@ -235,9 +230,9 @@ msgstr ""
 #: src/API/ParticipantsController.php:762
 #: src/API/ParticipantsController.php:789
 #: src/Services/EmailService.php:368
-#: src/Services/EmailService.php:1106
-#: src/Services/EmailService.php:1512
-#: src/Services/EmailService.php:2604
+#: src/Services/EmailService.php:1100
+#: src/Services/EmailService.php:1506
+#: src/Services/EmailService.php:2598
 #: src/Admin/participant-detail/ParticipantDetail.js:93
 msgid "Participant not found."
 msgstr ""
@@ -746,7 +741,7 @@ msgstr ""
 #: src/blocks/audience-signup/render.php:217
 #: src/blocks/event-interest/render.php:122
 #: src/blocks/mailing-signup/render.php:125
-#: src/Services/EmailService.php:1603
+#: src/Services/EmailService.php:1597
 #: src/Admin/all-participants/AllParticipants.js:112
 #: src/Admin/components/ParticipantEditModal.js:268
 #: src/Admin/custom-mail/RecipientPreview.js:159
@@ -796,7 +791,7 @@ msgid "This block can only be used on event pages."
 msgstr ""
 
 #: src/blocks/event-interest/render.php:135
-#: src/Services/EmailService.php:1599
+#: src/Services/EmailService.php:1593
 #: src/Admin/all-participants/AllParticipants.js:97
 #: src/Admin/custom-mail/RecipientPreview.js:158
 #: src/Admin/custom-mail/RecipientPreview.js:204
@@ -850,33 +845,41 @@ msgid "Bundled translations"
 msgstr ""
 
 #: src/Core/Features.php:120
-#: src/Core/Plugin.php:142
+#: src/Core/Plugin.php:145
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr ""
 
-#: src/Core/Plugin.php:136
+#: src/Core/Plugin.php:139
 msgid "Translations"
 msgstr ""
 
-#: src/Core/Plugin.php:145
+#: src/Core/Plugin.php:148
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
-#: src/Core/Plugin.php:291
+#: src/Core/Plugin.php:294
 msgid "Missing unsubscribe token."
 msgstr ""
 
-#: src/Core/Plugin.php:292
-#: src/Core/Plugin.php:302
+#: src/Core/Plugin.php:295
+#: src/Core/Plugin.php:305
 msgid "Unsubscribe"
 msgstr ""
 
-#: src/Core/Plugin.php:301
+#: src/Core/Plugin.php:304
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: src/Core/Plugin.php:319
+#: src/Core/Plugin.php:322
 msgid "Unsubscribed"
+msgstr ""
+
+#: src/Frontend/RetiredPhotoUploadLinks.php:65
+msgid "Photo uploads are no longer available."
+msgstr ""
+
+#: src/Frontend/RetiredPhotoUploadLinks.php:66
+msgid "Photo upload removed"
 msgstr ""
 
 #: src/Hooks/BlockHooks.php:129
@@ -1025,17 +1028,17 @@ msgstr ""
 #: src/Services/EmailService.php:452
 #: src/Services/EmailService.php:560
 #: src/Services/EmailService.php:670
-#: src/Services/EmailService.php:832
-#: src/Services/EmailService.php:1007
-#: src/Services/EmailService.php:1281
-#: src/Services/EmailService.php:1392
-#: src/Services/EmailService.php:1876
-#: src/Services/EmailService.php:2012
-#: src/Services/EmailService.php:2112
-#: src/Services/EmailService.php:2232
-#: src/Services/EmailService.php:2356
-#: src/Services/EmailService.php:2719
-#: src/Services/EmailService.php:2813
+#: src/Services/EmailService.php:826
+#: src/Services/EmailService.php:1001
+#: src/Services/EmailService.php:1275
+#: src/Services/EmailService.php:1386
+#: src/Services/EmailService.php:1870
+#: src/Services/EmailService.php:2006
+#: src/Services/EmailService.php:2106
+#: src/Services/EmailService.php:2226
+#: src/Services/EmailService.php:2350
+#: src/Services/EmailService.php:2713
+#: src/Services/EmailService.php:2807
 #, php-format
 msgid "Hi %s,"
 msgstr ""
@@ -1059,11 +1062,11 @@ msgstr ""
 #: src/Services/EmailService.php:478
 #: src/Services/EmailService.php:582
 #: src/Services/EmailService.php:700
-#: src/Services/EmailService.php:842
-#: src/Services/EmailService.php:1019
-#: src/Services/EmailService.php:1293
-#: src/Services/EmailService.php:1437
-#: src/Services/EmailService.php:1892
+#: src/Services/EmailService.php:836
+#: src/Services/EmailService.php:1013
+#: src/Services/EmailService.php:1287
+#: src/Services/EmailService.php:1431
+#: src/Services/EmailService.php:1886
 #, php-format
 msgid "Thanks,%1$sThe %2$s Team"
 msgstr ""
@@ -1072,8 +1075,8 @@ msgstr ""
 #: src/Services/EmailService.php:490
 #: src/Services/EmailService.php:594
 #: src/Services/EmailService.php:712
-#: src/Services/EmailService.php:1452
-#: src/Services/EmailService.php:2402
+#: src/Services/EmailService.php:1446
+#: src/Services/EmailService.php:2396
 msgid "If the button above doesn't work, copy and paste this link:"
 msgstr ""
 
@@ -1082,18 +1085,18 @@ msgid "Poll not found."
 msgstr ""
 
 #: src/Services/EmailService.php:377
-#: src/Services/EmailService.php:1125
-#: src/Services/EmailService.php:1202
-#: src/Services/EmailService.php:1521
-#: src/Services/EmailService.php:2612
+#: src/Services/EmailService.php:1119
+#: src/Services/EmailService.php:1196
+#: src/Services/EmailService.php:1515
+#: src/Services/EmailService.php:2606
 msgid "Participant has no valid email address."
 msgstr ""
 
 #: src/Services/EmailService.php:395
-#: src/Services/EmailService.php:1149
-#: src/Services/EmailService.php:1226
-#: src/Services/EmailService.php:1547
-#: src/Services/EmailService.php:2640
+#: src/Services/EmailService.php:1143
+#: src/Services/EmailService.php:1220
+#: src/Services/EmailService.php:1541
+#: src/Services/EmailService.php:2634
 msgid "wp_mail() failed to send."
 msgstr ""
 
@@ -1162,104 +1165,104 @@ msgid "If you didn't try to register, you can safely ignore this email."
 msgstr ""
 
 #: src/Services/EmailService.php:718
-#: src/Services/EmailService.php:2408
+#: src/Services/EmailService.php:2402
 msgid "Don't want to receive event invitations?"
 msgstr ""
 
 #: src/Services/EmailService.php:719
-#: src/Services/EmailService.php:853
-#: src/Services/EmailService.php:1032
-#: src/Services/EmailService.php:1306
-#: src/Services/EmailService.php:2409
+#: src/Services/EmailService.php:847
+#: src/Services/EmailService.php:1026
+#: src/Services/EmailService.php:1300
+#: src/Services/EmailService.php:2403
 msgid "Manage your preferences"
 msgstr ""
 
-#: src/Services/EmailService.php:852
-#: src/Services/EmailService.php:1031
-#: src/Services/EmailService.php:1305
+#: src/Services/EmailService.php:846
+#: src/Services/EmailService.php:1025
+#: src/Services/EmailService.php:1299
 msgid "Don't want to receive these emails?"
 msgstr ""
 
-#: src/Services/EmailService.php:1116
-#: src/Services/EmailService.php:1193
+#: src/Services/EmailService.php:1110
+#: src/Services/EmailService.php:1187
 msgid "Manually skipped."
 msgstr ""
 
 #. translators: %s: fee name
-#: src/Services/EmailService.php:1363
+#: src/Services/EmailService.php:1357
 #, php-format
 msgid "Payment reminder: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1398
+#: src/Services/EmailService.php:1392
 msgid "This is a friendly reminder about a pending payment:"
 msgstr ""
 
-#: src/Services/EmailService.php:1403
+#: src/Services/EmailService.php:1397
 msgid "Fee:"
 msgstr ""
 
-#: src/Services/EmailService.php:1407
-#: src/Services/EmailService.php:2204
+#: src/Services/EmailService.php:1401
+#: src/Services/EmailService.php:2198
 msgid "Amount:"
 msgstr ""
 
-#: src/Services/EmailService.php:1414
+#: src/Services/EmailService.php:1408
 msgid "Due Date:"
 msgstr ""
 
-#: src/Services/EmailService.php:1428
+#: src/Services/EmailService.php:1422
 msgid "Pay Now"
 msgstr ""
 
-#: src/Services/EmailService.php:1498
+#: src/Services/EmailService.php:1492
 msgid "Fee not found."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1593
+#: src/Services/EmailService.php:1587
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:1614
+#: src/Services/EmailService.php:1608
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1642
+#: src/Services/EmailService.php:1636
 msgid "A new form submission has been received."
 msgstr ""
 
-#: src/Services/EmailService.php:1724
+#: src/Services/EmailService.php:1718
 msgid "[Test email — real sends to subscribers include a \"Manage your preferences\" unsubscribe link here.]"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:1823
+#: src/Services/EmailService.php:1817
 #, php-format
 msgid "Your submission — %s"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/EmailService.php:1834
+#: src/Services/EmailService.php:1828
 #, php-format
 msgid "Form: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1844
+#: src/Services/EmailService.php:1838
 msgid "Here are the answers you submitted:"
 msgstr ""
 
-#: src/Services/EmailService.php:1882
+#: src/Services/EmailService.php:1876
 msgid "Thank you for your submission! We have received your response."
 msgstr ""
 
-#: src/Services/EmailService.php:1938
-#: src/Services/EmailService.php:2047
-#: src/Services/EmailService.php:2177
-#: src/Admin/custom-mail/CustomMail.js:451
+#: src/Services/EmailService.php:1932
+#: src/Services/EmailService.php:2041
+#: src/Services/EmailService.php:2171
+#: src/Admin/custom-mail/CustomMail.js:504
 #: src/Admin/events-list/EventsList.js:37
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1174
 #: src/Admin/participant-detail/ParticipantDetail.js:270
@@ -1268,174 +1271,174 @@ msgid "Event"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1942
+#: src/Services/EmailService.php:1936
 #, php-format
 msgid "Signup confirmed — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1993
+#: src/Services/EmailService.php:1987
 #, php-format
 msgid "Your signup for %s has been confirmed and your payment has been received."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:1995
+#: src/Services/EmailService.php:1989
 #, php-format
 msgid "Your signup for %s has been confirmed."
 msgstr ""
 
-#: src/Services/EmailService.php:2014
+#: src/Services/EmailService.php:2008
 msgid "Event date:"
 msgstr ""
 
-#: src/Services/EmailService.php:2015
+#: src/Services/EmailService.php:2009
 msgid "Registration reference:"
 msgstr ""
 
-#: src/Services/EmailService.php:2016
+#: src/Services/EmailService.php:2010
 msgid "Ticket type:"
 msgstr ""
 
-#: src/Services/EmailService.php:2017
-#: src/Services/EmailService.php:2071
+#: src/Services/EmailService.php:2011
+#: src/Services/EmailService.php:2065
 msgid "Amount paid:"
 msgstr ""
 
-#: src/Services/EmailService.php:2018
+#: src/Services/EmailService.php:2012
 msgid "Selected options:"
 msgstr ""
 
-#: src/Services/EmailService.php:2019
+#: src/Services/EmailService.php:2013
 msgid "Your answers:"
 msgstr ""
 
 #. translators: 1: line break, 2: site name
-#: src/Services/EmailService.php:2021
-#: src/Services/EmailService.php:2132
-#: src/Services/EmailService.php:2390
+#: src/Services/EmailService.php:2015
+#: src/Services/EmailService.php:2126
+#: src/Services/EmailService.php:2384
 #, php-format
 msgid "See you there!%1$sThe %2$s Team"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2059
+#: src/Services/EmailService.php:2053
 #, php-format
 msgid "Activities added — %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2084
+#: src/Services/EmailService.php:2078
 msgid "Activities added:"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2120
+#: src/Services/EmailService.php:2114
 #, php-format
 msgid "The following activities have been added to your signup for %s."
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2192
+#: src/Services/EmailService.php:2186
 #, php-format
 msgid "Payment didn’t go through — %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2240
+#: src/Services/EmailService.php:2234
 #, php-format
 msgid "Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below."
 msgstr ""
 
-#: src/Services/EmailService.php:2249
+#: src/Services/EmailService.php:2243
 msgid "Resume payment"
 msgstr ""
 
-#: src/Services/EmailService.php:2254
+#: src/Services/EmailService.php:2248
 msgid "If the button doesn’t work, copy and paste this link into your browser:"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2261
+#: src/Services/EmailService.php:2255
 #, php-format
 msgid "See you soon,%1$sThe %2$s Team"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2327
+#: src/Services/EmailService.php:2321
 #, php-format
 msgid "You're invited: %s"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2364
+#: src/Services/EmailService.php:2358
 #, php-format
 msgid "We have a new event coming up: %s."
 msgstr ""
 
-#: src/Services/EmailService.php:2378
+#: src/Services/EmailService.php:2372
 msgid "Would you like to join? Click the button below to sign up:"
 msgstr ""
 
-#: src/Services/EmailService.php:2383
+#: src/Services/EmailService.php:2377
 msgid "Sign Up Now"
 msgstr ""
 
-#: src/Services/EmailService.php:2596
+#: src/Services/EmailService.php:2590
 msgid "Already signed up"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2693
+#: src/Services/EmailService.php:2687
 #, php-format
 msgid "Thanks for your interest in %s"
 msgstr ""
 
-#: src/Services/EmailService.php:2697
-#: src/Services/EmailService.php:2776
+#: src/Services/EmailService.php:2691
+#: src/Services/EmailService.php:2770
 msgid "there"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Services/EmailService.php:2724
+#: src/Services/EmailService.php:2718
 #, php-format
 msgid "Thanks for registering your interest in %s. We will let you know when there are updates."
 msgstr ""
 
-#: src/Services/EmailService.php:2727
+#: src/Services/EmailService.php:2721
 msgid "If you didn't register your interest, you can safely ignore this email."
 msgstr ""
 
-#: src/Services/EmailService.php:2732
+#: src/Services/EmailService.php:2726
 msgid "No longer interested?"
 msgstr ""
 
-#: src/Services/EmailService.php:2733
+#: src/Services/EmailService.php:2727
 msgid "Unsubscribe from updates about this event"
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2772
+#: src/Services/EmailService.php:2766
 #, php-format
 msgid "Welcome to the %s mailing list"
 msgstr ""
 
 #. translators: 1: site name, 2: event title
-#: src/Services/EmailService.php:2781
+#: src/Services/EmailService.php:2775
 #, php-format
 msgid "You've been added to the %1$s mailing list following the consent you gave at %2$s. We'll keep you posted about upcoming events and news."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/EmailService.php:2788
+#: src/Services/EmailService.php:2782
 #, php-format
 msgid "You've been added to the %s mailing list following the consent you gave. We'll keep you posted about upcoming events and news."
 msgstr ""
 
-#: src/Services/EmailService.php:2821
+#: src/Services/EmailService.php:2815
 msgid "Changed your mind?"
 msgstr ""
 
-#: src/Services/EmailService.php:2822
+#: src/Services/EmailService.php:2816
 msgid "Manage your subscription or unsubscribe"
 msgstr ""
 
@@ -1745,7 +1748,7 @@ msgstr ""
 #: templates/manage-subscription.php:104
 #: templates/manage-subscription.php:108
 #: src/Admin/components/DeleteParticipantsModal.js:238
-#: src/Admin/custom-mail/CustomMail.js:644
+#: src/Admin/custom-mail/DeleteMailRecordModal.js:89
 #: src/Admin/event-participants/EventParticipants.js:1132
 #: src/Admin/event-participants/EventParticipants.js:1208
 #: src/Admin/event-participants/EventParticipants.js:1509
@@ -1874,7 +1877,7 @@ msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:218
 #: src/Admin/components/ParticipantEditModal.js:329
-#: src/Admin/custom-mail/CustomMail.js:525
+#: src/Admin/custom-mail/CustomMail.js:578
 msgid "Groups"
 msgstr ""
 
@@ -1937,7 +1940,7 @@ msgid "Resend mailing confirmation email"
 msgstr ""
 
 #: src/Admin/all-participants/AllParticipants.js:516
-#: src/Admin/custom-mail/MailHistory.js:177
+#: src/Admin/custom-mail/MailHistory.js:207
 #: src/blocks/audience-signup/QuestionBuilder.js:128
 msgid "Delete"
 msgstr ""
@@ -2288,132 +2291,132 @@ msgstr ""
 msgid "ID %d"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:200
+#: src/Admin/custom-mail/ContentEditor.js:194
 msgid "Content"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:219
-msgid "Upload photos"
-msgstr ""
-
-#: src/Admin/custom-mail/ContentEditor.js:224
-msgid "Insert photo upload link"
-msgstr ""
-
-#: src/Admin/custom-mail/ContentEditor.js:233
+#: src/Admin/custom-mail/ContentEditor.js:212
 msgid "Open event page"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:241
+#: src/Admin/custom-mail/ContentEditor.js:220
 msgid "Insert event page link"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:245
+#: src/Admin/custom-mail/ContentEditor.js:224
 msgid "Page to link to"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:247
+#: src/Admin/custom-mail/ContentEditor.js:226
 msgid "Search page…"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:271
+#: src/Admin/custom-mail/ContentEditor.js:250
 #: src/Admin/participant-detail/ParticipantDetail.js:298
 msgid "(untitled)"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:291
+#: src/Admin/custom-mail/ContentEditor.js:270
 msgid "Insert personal page link"
 msgstr ""
 
-#: src/Admin/custom-mail/ContentEditor.js:300
+#: src/Admin/custom-mail/ContentEditor.js:279
 msgid "Select an event to insert a link to its page."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:120
+#: src/Admin/custom-mail/CustomMail.js:128
 msgid "The page data could not be loaded."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:224
+#: src/Admin/custom-mail/CustomMail.js:232
 msgid "Enter a subject."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:227
+#: src/Admin/custom-mail/CustomMail.js:235
 msgid "Write the email content."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:245
+#: src/Admin/custom-mail/CustomMail.js:247
 #: src/Admin/custom-mail/RecipientPreview.js:93
 msgid "Loading recipients…"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:248
+#: src/Admin/custom-mail/CustomMail.js:250
 msgid "No one would receive this email."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:309
+#: src/Admin/custom-mail/CustomMail.js:311
 msgid "The email was not sent."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:315
+#: src/Admin/custom-mail/CustomMail.js:317
 msgid "The request did not finish, so some emails may already have been sent. Check Mail History before sending this email again."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:357
-msgid "The record was deleted."
+#: src/Admin/custom-mail/CustomMail.js:382
+msgid "The record could not be deleted. Try again."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:366
-msgid "The record could not be deleted."
+#. translators: %s: email subject
+#: src/Admin/custom-mail/CustomMail.js:402
+#, js-format
+msgid "The record of “%s” was deleted."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:389
+#. translators: %s: email subject
+#: src/Admin/custom-mail/CustomMail.js:415
+#, js-format
+msgid "The record of “%s” was deleted, but Mail History could not be refreshed. Reload the page to see the current list."
+msgstr ""
+
+#: src/Admin/custom-mail/CustomMail.js:442
 msgid "Only the people registered for this date receive the email."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:394
+#: src/Admin/custom-mail/CustomMail.js:447
 msgid "Everyone in your audience receives the email."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:399
+#: src/Admin/custom-mail/CustomMail.js:452
 msgid "There are no published events yet. Publish an event to email its participants."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:404
+#: src/Admin/custom-mail/CustomMail.js:457
 msgid "Choose the event date whose participants should receive the email."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:413
-#: src/Admin/custom-mail/MailHistory.js:33
+#: src/Admin/custom-mail/CustomMail.js:466
+#: src/Admin/custom-mail/MailHistory.js:49
 msgid "All audience"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:414
+#: src/Admin/custom-mail/CustomMail.js:467
 msgid "Select an event…"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:445
+#: src/Admin/custom-mail/CustomMail.js:498
 msgid "Write an email"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:466
+#: src/Admin/custom-mail/CustomMail.js:519
 #: src/Admin/custom-mail/RecipientPreview.js:161
 #: src/Admin/custom-mail/RecipientPreview.js:217
 #: src/Admin/manage-event-audience-tab/index.js:30
 msgid "Audience"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:469
+#: src/Admin/custom-mail/CustomMail.js:522
 #: src/Admin/events-list/EventsList.js:64
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:273
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2185
 msgid "Participants"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:486
+#: src/Admin/custom-mail/CustomMail.js:539
 msgid "Collaborators"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:503
+#: src/Admin/custom-mail/CustomMail.js:556
 #: src/Admin/custom-mail/RecipientPreview.js:43
 #: src/Admin/event-participants/EventParticipants.js:701
 #: src/Admin/event-participants/EventParticipants.js:1174
@@ -2424,104 +2427,114 @@ msgstr ""
 msgid "Interested"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:528
+#: src/Admin/custom-mail/CustomMail.js:581
 msgid "If selected, only sends to members of these groups."
 msgstr ""
 
 #. translators: 1: group name, 2: number of members
-#: src/Admin/custom-mail/CustomMail.js:538
+#: src/Admin/custom-mail/CustomMail.js:591
 #, js-format
 msgid "%1$s (%2$d)"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:559
+#: src/Admin/custom-mail/CustomMail.js:612
 msgid "Marketing email"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:564
+#: src/Admin/custom-mail/CustomMail.js:617
 msgid "If checked, only sends to participants who consented to marketing communications."
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:573
-#: src/Admin/custom-mail/MailHistory.js:71
-#: src/Admin/custom-mail/MailHistory.js:97
+#: src/Admin/custom-mail/CustomMail.js:626
+#: src/Admin/custom-mail/MailHistory.js:105
+#: src/Admin/custom-mail/MailHistory.js:131
 msgid "Subject"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:616
+#: src/Admin/custom-mail/CustomMail.js:668
 #: src/Admin/event-participants/EventParticipants.js:1520
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2616
 msgid "Sending…"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:617
+#: src/Admin/custom-mail/CustomMail.js:669
 msgid "Send email"
 msgstr ""
 
-#: src/Admin/custom-mail/CustomMail.js:643
-msgid "Delete record"
+#. translators: 1: email subject, 2: date and time the email was sent
+#: src/Admin/custom-mail/DeleteMailRecordModal.js:55
+#, js-format
+msgid "Delete record — “%1$s”, %2$s"
 msgstr ""
 
 #. translators: %s: email subject
-#: src/Admin/custom-mail/CustomMail.js:649
+#: src/Admin/custom-mail/DeleteMailRecordModal.js:70
 #, js-format
 msgid "Delete the record of “%s” from Mail History? Emails that were already sent are not affected. This cannot be undone."
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:35
+#: src/Admin/custom-mail/DeleteMailRecordModal.js:100
+msgid "Deleting record…"
+msgstr ""
+
+#: src/Admin/custom-mail/DeleteMailRecordModal.js:101
+msgid "Delete record"
+msgstr ""
+
+#: src/Admin/custom-mail/MailHistory.js:38
+msgid "(no subject)"
+msgstr ""
+
+#: src/Admin/custom-mail/MailHistory.js:51
 msgid "(deleted event)"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:58
+#: src/Admin/custom-mail/MailHistory.js:84
 msgid "Mail History"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:64
+#: src/Admin/custom-mail/MailHistory.js:98
 msgid "No messages sent yet."
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:74
-#: src/Admin/custom-mail/MailHistory.js:109
+#: src/Admin/custom-mail/MailHistory.js:108
+#: src/Admin/custom-mail/MailHistory.js:139
 msgid "Sent to"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:77
-#: src/Admin/custom-mail/MailHistory.js:117
+#: src/Admin/custom-mail/MailHistory.js:111
+#: src/Admin/custom-mail/MailHistory.js:147
 msgid "Sent"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:80
-#: src/Admin/custom-mail/MailHistory.js:125
+#: src/Admin/custom-mail/MailHistory.js:114
+#: src/Admin/custom-mail/MailHistory.js:155
 #: src/Admin/participant-detail/ParticipantDetail.js:47
 msgid "Failed"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:83
-#: src/Admin/custom-mail/MailHistory.js:133
+#: src/Admin/custom-mail/MailHistory.js:117
+#: src/Admin/custom-mail/MailHistory.js:163
 msgid "Skipped"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:86
-#: src/Admin/custom-mail/MailHistory.js:141
+#: src/Admin/custom-mail/MailHistory.js:120
+#: src/Admin/custom-mail/MailHistory.js:171
 #: src/Admin/events-list/EventsList.js:51
 #: src/Admin/participant-detail/ParticipantDetail.js:271
 #: src/blocks/audience-signup/QuestionBuilder.js:19
 msgid "Date"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:89
-#: src/Admin/custom-mail/MailHistory.js:149
+#: src/Admin/custom-mail/MailHistory.js:123
+#: src/Admin/custom-mail/MailHistory.js:179
 #: src/Admin/manage-event-audience-tab/EventAudience.js:1685
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2049
 #: src/Admin/manage-event-audience-tab/EventAudience.js:2510
 msgid "Actions"
 msgstr ""
 
-#: src/Admin/custom-mail/MailHistory.js:103
-msgid "(no subject)"
-msgstr ""
-
-#: src/Admin/custom-mail/MailHistory.js:163
+#: src/Admin/custom-mail/MailHistory.js:193
 msgid "Duplicate"
 msgstr ""
 
