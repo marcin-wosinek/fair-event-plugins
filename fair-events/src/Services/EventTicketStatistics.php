@@ -148,7 +148,8 @@ class EventTicketStatistics {
 
 	/**
 	 * Describe which stored event dates an occurrence's admissions can come
-	 * from.
+	 * from. `start` is the latest purchase time at which a whole-series pass
+	 * covers the occurrence (EventTiming::series_pass_cutoff()).
 	 *
 	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
 	 * @return array{event_date_id: int, series_ids: int[], start: string}
@@ -175,7 +176,7 @@ class EventTicketStatistics {
 		return array(
 			'event_date_id' => (int) $event_date->id,
 			'series_ids'    => $series_ids,
-			'start'         => (string) $event_date->start_datetime,
+			'start'         => (string) \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() ),
 		);
 	}
 

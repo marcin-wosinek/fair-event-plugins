@@ -577,7 +577,7 @@ class CustomMailController extends WP_REST_Controller {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT ed.id, p.ID AS event_id, ed.start_datetime, p.post_title
+				'SELECT ed.*, p.ID AS event_id, p.post_title
 				FROM %i ed
 				LEFT JOIN %i m ON ed.master_id = m.id
 				INNER JOIN %i p ON COALESCE( ed.event_id, m.event_id ) = p.ID
@@ -593,10 +593,18 @@ class CustomMailController extends WP_REST_Controller {
 
 		$data = array_map(
 			function ( $row ) {
-				// start_datetime is a naive site-local string: format it as
-				// written, without shifting it by the site's UTC offset.
+				// Stored values are naive site-local strings: format them as
+				// written, without shifting them by the site's UTC offset. A
+				// date without a start time (or an all-day one) shows the date
+				// alone, never a midnight that was not set.
 				$date_display = '';
-				if ( ! empty( $row['start_datetime'] ) ) {
+				if ( ! empty( $row['timing_migrated'] ) && ! empty( $row['start_date'] ) ) {
+					$has_time     = empty( $row['all_day'] ) && ! empty( $row['start_time'] );
+					$date_display = date_i18n(
+						$has_time ? get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) : get_option( 'date_format' ),
+						strtotime( $row['start_date'] . ' ' . ( $has_time ? $row['start_time'] : '00:00:00' ) )
+					);
+				} elseif ( ! empty( $row['start_datetime'] ) ) {
 					$date_display = date_i18n(
 						get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
 						strtotime( $row['start_datetime'] )

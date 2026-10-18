@@ -765,9 +765,13 @@ class TransactionAPI {
 			return array();
 		}
 
+		// Working days are counted to the start date; its time, when the
+		// event has one, does not matter, so a missing time needs none.
+		$start = ! empty( $event_date->start_date ) ? $event_date->start_date : $event_date->start_datetime;
+
 		$tz = wp_timezone();
 		try {
-			$key_date = new \DateTimeImmutable( $event_date->start_datetime, $tz );
+			$key_date = new \DateTimeImmutable( $start, $tz );
 		} catch ( \Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

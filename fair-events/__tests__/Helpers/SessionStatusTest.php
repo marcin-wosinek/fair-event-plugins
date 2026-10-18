@@ -8,6 +8,7 @@
 namespace FairEvents\Tests\Helpers;
 
 use PHPUnit\Framework\TestCase;
+use FairEvents\Helpers\EventTiming;
 use FairEvents\Helpers\SessionStatus;
 
 /**
@@ -46,6 +47,38 @@ class SessionStatusTest extends TestCase {
 	}
 
 	/**
+	 * Canonical timing for legacy datetime values, as the old rows held them.
+	 *
+	 * @param string|null $start   Legacy start.
+	 * @param string|null $end     Legacy end.
+	 * @param bool        $all_day All-day flag.
+	 * @return array
+	 */
+	private function legacy( $start, $end, $all_day ): array {
+		return EventTiming::from_legacy( $start, $end, $all_day );
+	}
+
+	/**
+	 * Canonical timing.
+	 *
+	 * @param string      $start_date Start date.
+	 * @param string      $end_date   End date.
+	 * @param string|null $start_time Start time.
+	 * @param string|null $end_time   End time.
+	 * @param bool        $all_day    All-day flag.
+	 * @return array
+	 */
+	private function timing( $start_date, $end_date, $start_time, $end_time, $all_day = false ): array {
+		return array(
+			'start_date' => $start_date,
+			'end_date'   => $end_date,
+			'start_time' => $start_time,
+			'end_time'   => $end_time,
+			'all_day'    => $all_day,
+		);
+	}
+
+	/**
 	 * A timed session with an end has ended exactly at its end.
 	 *
 	 * @return void
@@ -54,8 +87,8 @@ class SessionStatusTest extends TestCase {
 		$start = '2026-07-14 19:00:00';
 		$end   = '2026-07-14 20:30:00';
 
-		$this->assertFalse( SessionStatus::has_ended( $start, $end, false, $this->instant( '2026-07-14T20:29:59+02:00' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( $start, $end, false, $this->instant( '2026-07-14T20:30:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( $start, $end, false ), $this->instant( '2026-07-14T20:29:59+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( $start, $end, false ), $this->instant( '2026-07-14T20:30:00+02:00' ) ) );
 	}
 
 	/**
@@ -64,7 +97,7 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_ongoing_session_is_not_ended() {
-		$this->assertFalse( SessionStatus::has_ended( '2026-07-14 19:00:00', '2026-07-14 20:30:00', false, $this->instant( '2026-07-14T19:30:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( '2026-07-14 19:00:00', '2026-07-14 20:30:00', false ), $this->instant( '2026-07-14T19:30:00+02:00' ) ) );
 	}
 
 	/**
@@ -76,8 +109,8 @@ class SessionStatusTest extends TestCase {
 		$start = '2026-07-14 22:00:00';
 		$end   = '2026-07-15 03:00:00';
 
-		$this->assertFalse( SessionStatus::has_ended( $start, $end, false, $this->instant( '2026-07-15T01:00:00+02:00' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( $start, $end, false, $this->instant( '2026-07-15T03:00:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( $start, $end, false ), $this->instant( '2026-07-15T01:00:00+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( $start, $end, false ), $this->instant( '2026-07-15T03:00:00+02:00' ) ) );
 	}
 
 	/**
@@ -89,9 +122,9 @@ class SessionStatusTest extends TestCase {
 	public function test_timed_session_without_end_lasts_until_midnight() {
 		$start = '2026-07-14 19:00:00';
 
-		$this->assertFalse( SessionStatus::has_ended( $start, null, false, $this->instant( '2026-07-14T19:00:00+02:00' ) ) );
-		$this->assertFalse( SessionStatus::has_ended( $start, '', false, $this->instant( '2026-07-14T23:59:59+02:00' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( $start, null, false, $this->instant( '2026-07-15T00:00:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( $start, null, false ), $this->instant( '2026-07-14T19:00:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( $start, '', false ), $this->instant( '2026-07-14T23:59:59+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( $start, null, false ), $this->instant( '2026-07-15T00:00:00+02:00' ) ) );
 	}
 
 	/**
@@ -104,8 +137,8 @@ class SessionStatusTest extends TestCase {
 		$start = '2026-07-10 00:00:00';
 		$end   = '2026-07-12 00:00:00';
 
-		$this->assertFalse( SessionStatus::has_ended( $start, $end, true, $this->instant( '2026-07-12T23:59:59+02:00' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( $start, $end, true, $this->instant( '2026-07-13T00:00:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( $start, $end, true ), $this->instant( '2026-07-12T23:59:59+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( $start, $end, true ), $this->instant( '2026-07-13T00:00:00+02:00' ) ) );
 	}
 
 	/**
@@ -114,8 +147,8 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_all_day_session_without_end_ends_after_start_date() {
-		$this->assertFalse( SessionStatus::has_ended( '2026-07-10 00:00:00', null, true, $this->instant( '2026-07-10T12:00:00+02:00' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( '2026-07-10 00:00:00', null, true, $this->instant( '2026-07-11T00:00:00+02:00' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( '2026-07-10 00:00:00', null, true ), $this->instant( '2026-07-10T12:00:00+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( '2026-07-10 00:00:00', null, true ), $this->instant( '2026-07-11T00:00:00+02:00' ) ) );
 	}
 
 	/**
@@ -126,11 +159,11 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_midnight_boundary_across_spring_dst_change() {
-		$boundary = SessionStatus::end_boundary( '2026-03-29 10:00:00', null, false );
+		$boundary = SessionStatus::end_boundary( $this->legacy( '2026-03-29 10:00:00', null, false ) );
 
 		$this->assertSame( '2026-03-30T00:00:00+02:00', $boundary->format( 'c' ) );
-		$this->assertFalse( SessionStatus::has_ended( '2026-03-29 10:00:00', null, false, $this->instant( '2026-03-29T21:59:59Z' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( '2026-03-29 10:00:00', null, false, $this->instant( '2026-03-29T22:00:00Z' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( '2026-03-29 10:00:00', null, false ), $this->instant( '2026-03-29T21:59:59Z' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( '2026-03-29 10:00:00', null, false ), $this->instant( '2026-03-29T22:00:00Z' ) ) );
 	}
 
 	/**
@@ -141,11 +174,11 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_midnight_boundary_across_autumn_dst_change() {
-		$boundary = SessionStatus::end_boundary( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true );
+		$boundary = SessionStatus::end_boundary( $this->legacy( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true ) );
 
 		$this->assertSame( '2026-10-26T00:00:00+01:00', $boundary->format( 'c' ) );
-		$this->assertFalse( SessionStatus::has_ended( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true, $this->instant( '2026-10-25T22:59:59Z' ) ) );
-		$this->assertTrue( SessionStatus::has_ended( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true, $this->instant( '2026-10-25T23:00:00Z' ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true ), $this->instant( '2026-10-25T22:59:59Z' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $this->legacy( '2026-10-25 00:00:00', '2026-10-25 00:00:00', true ), $this->instant( '2026-10-25T23:00:00Z' ) ) );
 	}
 
 	/**
@@ -155,7 +188,7 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_timed_end_on_autumn_dst_day_uses_site_local_time() {
-		$boundary = SessionStatus::end_boundary( '2026-10-25 10:00:00', '2026-10-25 12:00:00', false );
+		$boundary = SessionStatus::end_boundary( $this->legacy( '2026-10-25 10:00:00', '2026-10-25 12:00:00', false ) );
 
 		$this->assertSame( '2026-10-25T12:00:00+01:00', $boundary->format( 'c' ) );
 	}
@@ -167,7 +200,74 @@ class SessionStatusTest extends TestCase {
 	 * @return void
 	 */
 	public function test_missing_start_is_not_ended() {
-		$this->assertNull( SessionStatus::end_boundary( null, null, false ) );
-		$this->assertFalse( SessionStatus::has_ended( '', null, false ) );
+		$this->assertNull( SessionStatus::end_boundary( $this->legacy( null, null, false ) ) );
+		$this->assertFalse( SessionStatus::has_ended( $this->legacy( '', null, false ) ) );
+	}
+
+	/**
+	 * Every time combination without an end time ends with its end date;
+	 * an end time ends it exactly, whether or not there is a start time.
+	 *
+	 * @return void
+	 */
+	public function test_missing_times_end_with_the_end_date() {
+		$before = $this->instant( '2026-07-14T23:59:59+02:00' );
+		$after  = $this->instant( '2026-07-15T00:00:00+02:00' );
+
+		foreach ( array( array( null, null ), array( '19:00:00', null ) ) as $times ) {
+			$timing = $this->timing( '2026-07-14', '2026-07-14', $times[0], $times[1] );
+			$this->assertFalse( SessionStatus::has_ended( $timing, $before ) );
+			$this->assertTrue( SessionStatus::has_ended( $timing, $after ) );
+		}
+
+		$end_only = $this->timing( '2026-07-14', '2026-07-14', null, '20:30:00' );
+		$this->assertFalse( SessionStatus::has_ended( $end_only, $this->instant( '2026-07-14T20:29:59+02:00' ) ) );
+		$this->assertTrue( SessionStatus::has_ended( $end_only, $this->instant( '2026-07-14T20:30:00+02:00' ) ) );
+	}
+
+	/**
+	 * A multi-day session without an end time stays current through its
+	 * end date, not just its start date.
+	 *
+	 * @return void
+	 */
+	public function test_multi_day_session_without_end_time_lasts_through_end_date() {
+		$timing = $this->timing( '2026-07-14', '2026-07-16', '19:00:00', null );
+
+		$this->assertSame( '2026-07-17T00:00:00+02:00', SessionStatus::end_boundary( $timing )->format( 'c' ) );
+		$this->assertFalse( SessionStatus::has_ended( $timing, $this->instant( '2026-07-16T23:59:59+02:00' ) ) );
+	}
+
+	/**
+	 * Genuine midnight is an end time like any other.
+	 *
+	 * @return void
+	 */
+	public function test_midnight_end_time_is_a_real_end() {
+		$timing = $this->timing( '2026-07-14', '2026-07-15', '22:00:00', '00:00:00' );
+
+		$this->assertSame( '2026-07-15T00:00:00+02:00', SessionStatus::end_boundary( $timing )->format( 'c' ) );
+	}
+
+	/**
+	 * Upcoming: fully timed and all-day sessions until they start; a timed
+	 * session missing a time until it ends.
+	 *
+	 * @return void
+	 */
+	public function test_is_upcoming() {
+		$now = '2026-07-14 12:00:00';
+
+		$this->assertTrue( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', '12:00:00', '13:00:00' ), $now ) );
+		$this->assertFalse( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', '11:00:00', '13:00:00' ), $now ) );
+		$this->assertFalse( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', null, null, true ), $now ) );
+		$this->assertTrue( SessionStatus::is_upcoming( $this->timing( '2026-07-15', '2026-07-15', null, null, true ), $now ) );
+
+		$this->assertTrue( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', null, null ), $now ) );
+		$this->assertTrue( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', '09:00:00', null ), $now ) );
+		$this->assertTrue( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', null, '13:00:00' ), $now ) );
+		$this->assertFalse( SessionStatus::is_upcoming( $this->timing( '2026-07-14', '2026-07-14', null, '11:00:00' ), $now ) );
+		$this->assertFalse( SessionStatus::is_upcoming( $this->timing( '2026-07-13', '2026-07-13', '09:00:00', null ), $now ) );
+		$this->assertFalse( SessionStatus::is_upcoming( EventTiming::undated(), $now ) );
 	}
 }

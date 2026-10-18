@@ -138,7 +138,8 @@ class EventDatesTest extends TestCase {
 		$master->event_id        = 42;
 		$master->occurrence_type = 'master';
 		$master->link_type       = 'post';
-		$master->start_datetime  = '2026-06-22 18:30:00';
+		$master->start_date      = '2026-06-22';
+		$master->start_time      = '18:30:00';
 
 		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-22', $master->get_display_url( true ) );
 		$this->assertSame( 'https://example.com/?p=42', $master->get_display_url() );

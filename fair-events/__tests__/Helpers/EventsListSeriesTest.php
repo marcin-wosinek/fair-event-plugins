@@ -121,6 +121,39 @@ class EventsListSeriesTest extends TestCase {
 	}
 
 	/**
+	 * An occurrence missing a time stays upcoming until it ends, even after
+	 * its day or its start time has begun; a fully timed one does not.
+	 *
+	 * @return void
+	 */
+	public function test_occurrence_missing_a_time_stays_upcoming_until_it_ends() {
+		$timing = static function ( $start_time, $end_time ) {
+			return array(
+				'start_date' => '2040-10-01',
+				'end_date'   => '2040-10-01',
+				'start_time' => $start_time,
+				'end_time'   => $end_time,
+				'all_day'    => false,
+			);
+		};
+
+		$result = EventsListSeries::upcoming(
+			array(
+				$this->occurrence( 'neither', '2040-10-01 00:00:00', null, array( 'timing' => $timing( null, null ) ) ),
+				$this->occurrence( 'start-only', '2040-10-01 17:00:00', null, array( 'timing' => $timing( '17:00:00', null ) ) ),
+				$this->occurrence( 'end-only-ended', '2040-10-01 00:00:00', null, array( 'timing' => $timing( null, '17:30:00' ) ) ),
+				$this->occurrence( 'running', '2040-10-01 17:00:00', null, array( 'timing' => $timing( '17:00:00', '20:00:00' ) ) ),
+			),
+			self::NOW,
+			static function () {
+				return null;
+			}
+		);
+
+		$this->assertSame( array( 'neither', 'start-only' ), array_column( $result, 'uid' ) );
+	}
+
+	/**
 	 * Distinct series with the same title stay separate: grouping is by
 	 * series ID, never by title. External occurrences are never grouped.
 	 */

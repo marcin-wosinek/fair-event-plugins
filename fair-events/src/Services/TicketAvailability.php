@@ -48,7 +48,8 @@ class TicketAvailability {
 	 * at 00:00:00 site time, preserving the half-open [start, end) range so
 	 * the final day stays purchasable.
 	 *
-	 * @param string|null $last_occurrence_end Latest end_datetime across the event/series ('Y-m-d H:i:s'), or null.
+	 * @param string|null $last_occurrence_end End date of the final occurrence ('Y-m-d', see
+	 *                                         EventDates::get_last_occurrence_boundary()), or null.
 	 * @return string|null Default sale_end ('Y-m-d H:i:s'), or null when there's no occurrence to anchor to.
 	 */
 	public static function compute_default_sale_end( $last_occurrence_end ) {

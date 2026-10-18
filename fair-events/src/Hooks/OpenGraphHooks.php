@@ -12,7 +12,6 @@
 namespace FairEvents\Hooks;
 
 use FairEvents\Helpers\CanonicalUrl;
-use FairEvents\Helpers\DateHelper;
 use FairEvents\Helpers\EventSchema;
 use FairEvents\Helpers\SelectedOccurrence;
 use FairEvents\Settings\Settings;
@@ -63,11 +62,13 @@ class OpenGraphHooks {
 		// Event-specific tags — only emitted together, and only when there is a
 		// start date, so we never print half-valid event markup (matches the
 		// JSON-LD guard below).
-		if ( ! empty( $event_date->start_datetime ) ) {
-			$this->output_meta_tag( 'event:start_time', DateHelper::local_to_iso8601( $event_date->start_datetime ) );
+		// Same values as the JSON-LD: a bare date where a time is missing.
+		$dates = EventSchema::timing_to_dates( $event_date->get_timing() );
+		if ( $dates ) {
+			$this->output_meta_tag( 'event:start_time', $dates['start'] );
 
-			if ( ! empty( $event_date->end_datetime ) ) {
-				$this->output_meta_tag( 'event:end_time', DateHelper::local_to_iso8601( $event_date->end_datetime ) );
+			if ( isset( $dates['end'] ) ) {
+				$this->output_meta_tag( 'event:end_time', $dates['end'] );
 			}
 
 			$location = $this->get_location( $event_date, $post_id );

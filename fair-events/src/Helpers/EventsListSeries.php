@@ -67,13 +67,16 @@ class EventsListSeries {
 	}
 
 	/**
-	 * The Upcoming view's entries: occurrences starting at or after `$now`,
-	 * with each local recurring series collapsed to its next one.
+	 * The Upcoming view's entries: upcoming occurrences (see
+	 * SessionStatus::is_upcoming(): starting at or after `$now`, or missing a
+	 * time and not yet ended), with each local recurring series collapsed to
+	 * its next one.
 	 *
 	 * EventFeedProvider's range is an overlap check, so for an open range
-	 * starting at `$now` it also returns occurrences that started earlier and
-	 * are still running — those belong to the Ongoing filter and are dropped
-	 * here, before grouping, so a series is represented by its next start.
+	 * starting at `$now` it also returns fully timed occurrences that started
+	 * earlier and are still running — those belong to the Ongoing filter and
+	 * are dropped here, before grouping, so a series is represented by its
+	 * next start.
 	 *
 	 * @param array[]       $occurrences   Occurrence DTOs sorted by start ASC.
 	 * @param string        $now           Naive site-local 'Y-m-d H:i:s' boundary (inclusive).
@@ -84,6 +87,10 @@ class EventsListSeries {
 		$starting = array_filter(
 			$occurrences,
 			function ( $occurrence ) use ( $now ) {
+				if ( isset( $occurrence['timing'] ) && is_array( $occurrence['timing'] ) ) {
+					return SessionStatus::is_upcoming( $occurrence['timing'], $now );
+				}
+
 				return ( $occurrence['start'] ?? '' ) >= $now;
 			}
 		);
@@ -230,9 +237,9 @@ class EventsListSeries {
 	}
 
 	/**
-	 * Earliest active row starting at or after `$now` that QueryHelper's join
-	 * matches to this post: rows linked directly, plus generated rows whose
-	 * master is linked to it.
+	 * Earliest upcoming active row (see EventTimingSql::upcoming()) that
+	 * QueryHelper's join matches to this post: rows linked directly, plus
+	 * generated rows whose master is linked to it.
 	 *
 	 * @param int    $post_id Post ID.
 	 * @param string $now     Naive site-local 'Y-m-d H:i:s' boundary.
@@ -243,21 +250,21 @@ class EventsListSeries {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
+		list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( 'ed', $now );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $upcoming_sql is a static internal template; its values are passed in the one array.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- per-render lookup on the plugin's own table, same as EventDates.
 		$row_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT ed.id FROM %i ed
-				WHERE ed.status = 'active' AND ed.start_datetime >= %s
+				WHERE ed.status = 'active' AND {$upcoming_sql}
 				AND ( ed.event_id = %d OR ( ed.event_id IS NULL AND ed.master_id IN ( SELECT m.id FROM %i m WHERE m.event_id = %d ) ) )
-				ORDER BY ed.start_datetime ASC, ed.id ASC
+				ORDER BY ed.start_date ASC, ed.start_time ASC, ed.id ASC
 				LIMIT 1",
-				$table_name,
-				$now,
-				$post_id,
-				$table_name,
-				$post_id
+				array_merge( array( $table_name ), $upcoming_args, array( $post_id, $table_name, $post_id ) )
 			)
 		);
+		// phpcs:enable
 
 		return $row_id ? EventDates::get_by_id( (int) $row_id ) : null;
 	}

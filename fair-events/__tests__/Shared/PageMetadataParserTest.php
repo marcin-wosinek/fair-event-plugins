@@ -76,6 +76,28 @@ class PageMetadataParserTest extends TestCase {
 
 		$this->assertSame( '2026-09-12 00:00:00', $result['start_datetime'] );
 		$this->assertTrue( $result['all_day'] );
+		$this->assertSame( '2026-09-12', $result['start_date'] );
+		$this->assertNull( $result['start_time'] );
+	}
+
+	/**
+	 * The canonical dates and times keep a supplied time and leave a
+	 * date-only end without one, instead of an invented midnight.
+	 *
+	 * @return void
+	 */
+	public function test_canonical_values_never_invent_a_time() {
+		$html = '<script type="application/ld+json">
+			{ "@type": "Event", "name": "Fair", "startDate": "2026-09-12T18:00:00+00:00", "endDate": "2026-09-14" }
+		</script>';
+
+		$result = PageMetadataParser::parse( $html );
+
+		$this->assertFalse( $result['all_day'] );
+		$this->assertSame( '2026-09-12', $result['start_date'] );
+		$this->assertSame( '18:00:00', $result['start_time'] );
+		$this->assertSame( '2026-09-14', $result['end_date'] );
+		$this->assertNull( $result['end_time'] );
 	}
 
 	/**

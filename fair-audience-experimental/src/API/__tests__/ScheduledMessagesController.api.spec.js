@@ -13,8 +13,8 @@
  * WP_ADMIN_PASSWORD) and torn down at the end of the suite.
  *
  * Out of HTTP scope (validated by design / manually): the 5-minute cron tick
- * (claim-and-send idempotency) and reschedule-on-event-date-move, which require
- * triggering WP-Cron and editing event-date times outside this controller.
+ * (claim-and-send idempotency). Rescheduling when the anchored time is
+ * cleared or restored is covered through the fair-events event-dates API.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -382,5 +382,55 @@ test.describe( 'ScheduledMessagesController', () => {
 		expect( message.status ).toBe( 'canceled' );
 
 		await deleteEvent( api, tempEventId );
+	} );
+
+	test( 'a cleared anchor time leaves the message without a send time until it returns', async () => {
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+		const setTiming = async ( data ) => {
+			const res = await api.put(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: authHeaders, data }
+			);
+			expect( res.ok(), await res.text() ).toBeTruthy();
+		};
+		const readMessage = async ( id ) => {
+			const res = await api.get(
+				`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/scheduled-messages`,
+				{ headers: authHeaders }
+			);
+			expect( res.ok() ).toBeTruthy();
+			return ( await res.json() ).find( ( m ) => m.id === id );
+		};
+
+		const createRes = await api.post(
+			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/scheduled-messages`,
+			{ headers: authHeaders, data: baseMessage( eventDateId ) }
+		);
+		expect( createRes.ok() ).toBeTruthy();
+		const created = await createRes.json();
+		expect( created.scheduled_for ).toBe( '2035-06-01 09:00:00' );
+
+		// No start time: no guessed send time, so the cron never picks it up.
+		await setTiming( { start_time: null } );
+		let message = await readMessage( created.id );
+		expect( message.status ).toBe( 'scheduled' );
+		expect( message.scheduled_for ).toBeNull();
+
+		// Midnight is a real time, not a missing one.
+		await setTiming( { start_time: '00:00' } );
+		message = await readMessage( created.id );
+		expect( message.scheduled_for ).toBe( '2035-05-31 23:00:00' );
+
+		await setTiming( { start_time: '10:00' } );
+		message = await readMessage( created.id );
+		expect( message.scheduled_for ).toBe( '2035-06-01 09:00:00' );
+
+		await api.delete(
+			`/wp-json/fair-audience/v1/scheduled-messages/${ created.id }`,
+			{ headers: authHeaders }
+		);
 	} );
 } );

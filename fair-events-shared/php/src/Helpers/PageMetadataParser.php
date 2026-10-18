@@ -26,6 +26,10 @@ class PageMetadataParser {
 	 *     @type string|null $start_datetime Site-local 'Y-m-d H:i:s'.
 	 *     @type string|null $end_datetime   Site-local 'Y-m-d H:i:s'.
 	 *     @type bool        $all_day        Whether the source gave date-only values.
+	 *     @type string|null $start_date     Site-local 'Y-m-d' start date.
+	 *     @type string|null $start_time     Site-local 'H:i:s' start time, null when the source gave a date only.
+	 *     @type string|null $end_date       Site-local 'Y-m-d' end date.
+	 *     @type string|null $end_time       Site-local 'H:i:s' end time, null when the source gave a date only.
 	 *     @type string|null $location       Free-text location/venue name.
 	 *     @type string|null $source         'schema', 'opengraph', or 'title'.
 	 *     @type string[]    $found          Which of title/start/end/location were found.
@@ -37,6 +41,10 @@ class PageMetadataParser {
 			'start_datetime' => null,
 			'end_datetime'   => null,
 			'all_day'        => false,
+			'start_date'     => null,
+			'start_time'     => null,
+			'end_date'       => null,
+			'end_time'       => null,
 			'location'       => null,
 			'source'         => null,
 		);
@@ -55,6 +63,8 @@ class PageMetadataParser {
 				if ( $start ) {
 					$result['start_datetime'] = $start['datetime'];
 					$result['all_day']        = $start['all_day'];
+					$result['start_date']     = $start['date'];
+					$result['start_time']     = $start['time'];
 				}
 			}
 
@@ -62,6 +72,8 @@ class PageMetadataParser {
 				$end = self::parse_schema_date( $event['endDate'] );
 				if ( $end ) {
 					$result['end_datetime'] = $end['datetime'];
+					$result['end_date']     = $end['date'];
+					$result['end_time']     = $result['all_day'] ? null : $end['time'];
 				}
 			}
 
@@ -207,16 +219,19 @@ class PageMetadataParser {
 	 * Parse a schema.org date/datetime string into site-local time.
 	 *
 	 * @param string $value ISO 8601 date or datetime string.
-	 * @return array{datetime: string, all_day: bool}|null
+	 * @return array{datetime: string, all_day: bool, date: string, time: string|null}|null
 	 */
 	private static function parse_schema_date( $value ) {
 		$value = trim( $value );
 
-		// Date-only value (no time component) — treat as all-day.
+		// Date-only value (no time component) — treat as all-day. Its date
+		// is kept as written, with no time.
 		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
 			return array(
 				'datetime' => $value . ' 00:00:00',
 				'all_day'  => true,
+				'date'     => $value,
+				'time'     => null,
 			);
 		}
 
@@ -229,6 +244,8 @@ class PageMetadataParser {
 		return array(
 			'datetime' => $local,
 			'all_day'  => false,
+			'date'     => substr( $local, 0, 10 ),
+			'time'     => substr( $local, 11, 8 ),
 		);
 	}
 

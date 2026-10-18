@@ -27,11 +27,11 @@ $current_time = current_time( 'Y-m-d H:i:s' );
 
 // Time filter → [ range_start, range_end ] for the per-event provider path,
 // and the equivalent fair_events_date_query args for the Query Loop path.
-// Both share the same boundary rules: "upcoming" is start >= now, "ongoing"
-// is start <= now <= effective end, "past" is effective end < now, and a
-// missing end is treated as equal to start (QueryHelper::filter_by_dates()
-// and EventFeedProvider's underlying EventDates::get_for_date_range() both
-// apply that same fallback).
+// Both read the canonical timing through EventTimingSql: "upcoming" is
+// start >= now, "ongoing" is start <= now <= end, "past" is end < now. A date
+// without an end time ends with its end date, so it stays current through
+// that day, and the Query Loop's "upcoming" keeps a date missing a time
+// until then too.
 switch ( $time_filter ) {
 	case 'upcoming':
 		$range_start            = $current_time;
@@ -133,9 +133,21 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 		)
 	);
 
-	// The provider sorts ascending; 'past' displays most recent first.
+	// The provider sorts ascending; 'past' displays most recent first. Its
+	// range is an overlap check, so it also returns dates that have started
+	// but not ended; those are not past yet (SessionStatus::has_ended()).
 	if ( 'past' === $time_filter ) {
-		$occurrences = array_reverse( $occurrences );
+		$now         = new \DateTimeImmutable( $current_time, wp_timezone() );
+		$occurrences = array_reverse(
+			array_values(
+				array_filter(
+					$occurrences,
+					static function ( $occurrence ) use ( $now ) {
+						return empty( $occurrence['timing'] ) || \FairEvents\Helpers\SessionStatus::has_ended( $occurrence['timing'], $now );
+					}
+				)
+			)
+		);
 	}
 
 	if ( 'upcoming' === $time_filter ) {

@@ -1637,6 +1637,7 @@ class GetTicketsController extends WP_REST_Controller {
 					'start_datetime' => $occ->start_datetime,
 					'end_datetime'   => $occ->end_datetime,
 					'all_day'        => (bool) $occ->all_day,
+					'timing'         => $occ->get_timing(),
 					'signed_up'      => false,
 				);
 			}

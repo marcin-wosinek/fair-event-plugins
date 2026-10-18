@@ -144,12 +144,12 @@ class EventStatisticsController extends WP_REST_Controller {
 		}
 
 		$timezone = wp_timezone();
-		$start    = DateTimeImmutable::createFromFormat( '!Y-m-d', substr( (string) $event_date->start_datetime, 0, 10 ), $timezone );
+		$start    = DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $event_date->start_date, $timezone );
 		if ( ! $start ) {
 			return new WP_Error( 'invalid_event_date', __( 'The event start date is invalid.', 'fair-events' ), array( 'status' => 500 ) );
 		}
 
-		$end = DateTimeImmutable::createFromFormat( '!Y-m-d', substr( (string) $event_date->end_datetime, 0, 10 ), $timezone );
+		$end = DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $event_date->end_date, $timezone );
 		if ( ! $end || $end < $start ) {
 			$end = $start;
 		}
@@ -262,7 +262,8 @@ class EventStatisticsController extends WP_REST_Controller {
 		}
 
 		$participant_ids = array_fill_keys( array_map( 'intval', wp_list_pluck( $rows, 'participant_id' ) ), true );
-		$occurrence_time = strtotime( $event_date->start_datetime );
+		// A pass covers the occurrences that had not started when it was bought.
+		$occurrence_time = strtotime( (string) \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() ) );
 		foreach ( $this->event_participant_repo->get_confirmed_sales_rows( (int) $event_date->master_id ) as $row ) {
 			$participant_id = (int) $row['participant_id'];
 			if ( isset( $participant_ids[ $participant_id ] ) || empty( $row['ticket_type_id'] ) ) {

@@ -93,10 +93,48 @@ class ScheduledMessageHooks {
 		$email_service = new EmailService();
 		$resolver      = new RecipientResolver();
 		$participants  = new ParticipantRepository();
+		$scheduler     = new ScheduledMessageScheduler();
 
 		foreach ( $claimed as $message ) {
+			if ( ! self::is_still_due( $message, $scheduler ) ) {
+				continue;
+			}
 			self::send_message( $message, $email_service, $resolver, $participants );
 		}
+	}
+
+	/**
+	 * Recheck a claimed message's anchor right before sending.
+	 *
+	 * The event date may have changed without the update hook (another
+	 * plugin version, a direct write): when its anchored time is no longer
+	 * set, or now lies later, the message goes back to waiting with the
+	 * recomputed send time instead of being sent at a guessed time.
+	 *
+	 * @param ScheduledMessage          $message   Claimed message (status='sending').
+	 * @param ScheduledMessageScheduler $scheduler Scheduler.
+	 * @return bool True when the message should be sent now.
+	 */
+	private static function is_still_due( ScheduledMessage $message, ScheduledMessageScheduler $scheduler ) {
+		if ( ! ScheduledMessageScheduler::is_supported_anchor( $message->anchor_type ) ) {
+			return true;
+		}
+
+		$scheduled_for = $scheduler->compute_scheduled_for(
+			$message->anchor_type,
+			$message->anchor_ref_id,
+			$message->offset_minutes
+		);
+
+		if ( null !== $scheduled_for && $scheduled_for <= current_time( 'mysql' ) ) {
+			return true;
+		}
+
+		$message->scheduled_for = $scheduled_for;
+		$message->status        = 'scheduled';
+		$message->save();
+
+		return false;
 	}
 
 	/**
@@ -183,13 +221,20 @@ class ScheduledMessageHooks {
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$row = $wpdb->get_row(
-				$wpdb->prepare( 'SELECT start_datetime, event_id FROM %i WHERE id = %d', $table, $message->event_date_id ),
+				$wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $message->event_date_id ),
 				ARRAY_A
 			);
 
 			if ( $row ) {
-				if ( ! empty( $row['start_datetime'] ) ) {
-					$event_date = wp_date( 'Y-m-d H:i', strtotime( $row['start_datetime'] ) );
+				// Stored values are site-local wall-clock, so they are shown
+				// as written; a date without a start time shows no time.
+				$start = ScheduledMessageScheduler::anchor_time_from_row( 'event_date_start', $row );
+				if ( $start && ! empty( $row['all_day'] ) ) {
+					$event_date = substr( $start, 0, 10 );
+				} elseif ( $start ) {
+					$event_date = substr( $start, 0, 16 );
+				} elseif ( ! empty( $row['start_date'] ) ) {
+					$event_date = $row['start_date'];
 				}
 
 				// Resolve the event name from the date's linked post, when present.
