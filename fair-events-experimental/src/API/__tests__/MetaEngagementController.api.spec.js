@@ -119,8 +119,9 @@ test.describe( 'MetaEngagementController', () => {
 				},
 			} );
 			if ( ! originalConfig.token_configured ) {
-				await api.delete( `${ CONFIG_PATH }/token`, {
+				await api.post( SETTINGS_PATH, {
 					headers: adminHeaders,
+					data: { fair_events_experimental_meta_access_token: '' },
 				} );
 			}
 		}
@@ -222,11 +223,19 @@ test.describe( 'MetaEngagementController', () => {
 			headers: adminHeaders,
 			data: {
 				dataset_id: '1234567890123456',
-				access_token: 'e2e-meta-access-token',
 				test_event_code: originalConfig.test_event_code,
 			},
 		} );
 		expect( configRes.ok() ).toBeTruthy();
+		// The credential is written the way Settings → Connectors writes it.
+		const tokenRes = await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: {
+				fair_events_experimental_meta_access_token:
+					'e2e-meta-access-token',
+			},
+		} );
+		expect( tokenRes.ok() ).toBeTruthy();
 
 		const calendar = await anon.post( PATH, {
 			data: body( { action: 'calendar' } ),

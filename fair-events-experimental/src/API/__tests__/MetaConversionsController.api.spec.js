@@ -25,6 +25,7 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 
 const PATH = '/wp-json/fair-events-experimental/v1/meta-conversions';
 const SETTINGS_PATH = '/wp-json/wp/v2/settings';
+const TOKEN_OPTION = 'fair_events_experimental_meta_access_token';
 
 const adminHeaders = {
 	Authorization:
@@ -33,6 +34,19 @@ const adminHeaders = {
 			'base64'
 		),
 };
+
+/** Run WP-CLI on the tests instance without blocking the event loop. */
+async function wp( ...args ) {
+	const { stdout } = await promisify( execFile )(
+		'npx',
+		[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
+		{
+			cwd: new URL( '../../../../', import.meta.url ),
+			encoding: 'utf8',
+		}
+	);
+	return stdout;
+}
 
 test.describe( 'MetaConversionsController', () => {
 	let api;
@@ -131,6 +145,9 @@ test.describe( 'MetaConversionsController', () => {
 		const body = await res.json();
 		expect( body ).toHaveProperty( 'dataset_id' );
 		expect( body ).toHaveProperty( 'token_configured' );
+		expect( body ).toHaveProperty( 'token_source' );
+		expect( body.connectors_url ).toMatch( /options-connectors\.php$/ );
+		expect( body ).not.toHaveProperty( 'access_token' );
 		expect( body ).toHaveProperty( 'test_event_code' );
 		expect( body ).toHaveProperty( 'diagnostics' );
 		expect( body ).toHaveProperty( 'test_history' );
@@ -212,19 +229,6 @@ test.describe( 'MetaConversionsController calendar test', () => {
 	let event;
 	let otherEvent;
 	const events = [];
-
-	/** Run WP-CLI on the tests instance without blocking the event loop. */
-	async function wp( ...args ) {
-		const { stdout } = await promisify( execFile )(
-			'npx',
-			[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
-			{
-				cwd: new URL( '../../../../', import.meta.url ),
-				encoding: 'utf8',
-			}
-		);
-		return stdout;
-	}
 
 	async function metaAnswers( status, body ) {
 		await wp(
@@ -308,7 +312,10 @@ test.describe( 'MetaConversionsController calendar test', () => {
 			},
 		} );
 		if ( ! originalConfig.token_configured ) {
-			await api.delete( `${ PATH }/token`, { headers: adminHeaders } );
+			await api.post( SETTINGS_PATH, {
+				headers: adminHeaders,
+				data: { [ TOKEN_OPTION ]: '' },
+			} );
 		}
 		await api.post( SETTINGS_PATH, {
 			headers: adminHeaders,
@@ -377,10 +384,18 @@ test.describe( 'MetaConversionsController calendar test', () => {
 			headers: adminHeaders,
 			data: {
 				dataset_id: '1234567890123456',
-				access_token: 'e2e-meta-access-token',
 				test_event_code: 'TEST12345',
 			},
 		} );
+		// The credential is written the way Settings → Connectors writes it.
+		expect(
+			(
+				await api.post( SETTINGS_PATH, {
+					headers: adminHeaders,
+					data: { [ TOKEN_OPTION ]: 'e2e-meta-access-token' },
+				} )
+			).ok()
+		).toBeTruthy();
 
 		const res = await api.post( `${ PATH }/test`, {
 			headers: adminHeaders,
@@ -481,5 +496,204 @@ test.describe( 'MetaConversionsController calendar test', () => {
 			'e2e-meta-access-token'
 		);
 		await wp( 'option', 'delete', 'fair_e2e_meta_response' );
+	} );
+} );
+
+/**
+ * The access token moved to Settings → Connectors (#1953). Connectors writes
+ * it through `/wp/v2/settings`; the Meta settings route no longer accepts it.
+ * The suite saves whatever raw token the instance had on entry and restores
+ * it afterwards, reading and writing it only through WP-CLI.
+ */
+test.describe( 'Meta access token in Connectors', () => {
+	test.describe.configure( { mode: 'serial' } );
+
+	const TOKEN = 'e2e-meta-connector-token-0123456789';
+	const REPLACEMENT = 'e2e-meta-connector-replacement-9876543210';
+	let api;
+	let originalToken;
+	let originalFeatureEnabled;
+	let subscriberId;
+	let subscriberHeaders;
+
+	async function storedToken() {
+		const out = await wp( 'option', 'get', TOKEN_OPTION ).catch( () => '' );
+		return out.trim();
+	}
+
+	async function saveToken( value ) {
+		// `option update` fails when the value is unchanged.
+		await wp( 'option', 'delete', TOKEN_OPTION ).catch( () => {} );
+		await wp( 'option', 'add', TOKEN_OPTION, value, '--autoload=no' );
+	}
+
+	async function config() {
+		return ( await api.get( PATH, { headers: adminHeaders } ) ).json();
+	}
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const settings = await (
+			await api.get( SETTINGS_PATH, { headers: adminHeaders } )
+		).json();
+		originalFeatureEnabled = Boolean(
+			settings.fair_events_experimental_features?.[ 'meta-conversions' ]
+		);
+		await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: {
+				fair_events_experimental_features: { 'meta-conversions': true },
+			},
+		} );
+		originalToken = await storedToken();
+
+		const userLogin = `meta-connector-${ Date.now() }`;
+		const userRes = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminHeaders,
+			data: {
+				username: userLogin,
+				email: `${ userLogin }@example.com`,
+				password: 'Test-password-1953!',
+				roles: [ 'subscriber' ],
+			},
+		} );
+		expect( userRes.ok() ).toBeTruthy();
+		subscriberId = ( await userRes.json() ).id;
+		subscriberHeaders = {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ userLogin }:Test-password-1953!` ).toString(
+					'base64'
+				),
+		};
+	} );
+
+	test.beforeEach( async () => {
+		// A token saved before the move, exactly as the old screen stored it.
+		await saveToken( TOKEN );
+	} );
+
+	test.afterAll( async () => {
+		if ( originalToken ) {
+			await saveToken( originalToken );
+		} else {
+			await wp( 'option', 'delete', TOKEN_OPTION ).catch( () => {} );
+		}
+		await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: {
+				fair_events_experimental_features: {
+					'meta-conversions': originalFeatureEnabled,
+				},
+			},
+		} );
+		if ( subscriberId ) {
+			await api.delete(
+				`/wp-json/wp/v2/users/${ subscriberId }?force=true&reassign=1`,
+				{ headers: adminHeaders }
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'reports a pre-upgrade token as configured without exposing it', async () => {
+		const body = await config();
+		expect( body.token_configured ).toBe( true );
+		expect( JSON.stringify( body ) ).not.toContain( TOKEN );
+
+		const settingsRes = await api.get( SETTINGS_PATH, {
+			headers: adminHeaders,
+		} );
+		const settings = await settingsRes.json();
+		expect( settings ).toHaveProperty( TOKEN_OPTION );
+		expect( JSON.stringify( settings ) ).not.toContain( TOKEN );
+	} );
+
+	test( 'refuses a token on the Meta settings route and changes nothing', async () => {
+		const before = await config();
+		const res = await api.post( PATH, {
+			headers: adminHeaders,
+			data: {
+				dataset_id: '999999',
+				test_event_code: 'CHANGED',
+				access_token: REPLACEMENT,
+			},
+		} );
+		expect( res.status() ).toBe( 400 );
+		const error = await res.json();
+		expect( error.code ).toBe( 'token_managed_in_connectors' );
+		expect( JSON.stringify( error ) ).not.toContain( REPLACEMENT );
+		expect( await storedToken() ).toBe( TOKEN );
+
+		const after = await config();
+		expect( after.dataset_id ).toBe( before.dataset_id );
+		expect( after.test_event_code ).toBe( before.test_event_code );
+	} );
+
+	test( 'no longer offers the token removal route', async () => {
+		const res = await api.delete( `${ PATH }/token`, {
+			headers: adminHeaders,
+		} );
+		expect( res.status() ).toBe( 404 );
+		expect( await storedToken() ).toBe( TOKEN );
+	} );
+
+	test( 'saving other Meta settings keeps the token', async () => {
+		const res = await api.post( PATH, {
+			headers: adminHeaders,
+			data: { dataset_id: '', test_event_code: '' },
+		} );
+		expect( res.status() ).toBe( 200 );
+		expect( ( await res.json() ).token_configured ).toBe( true );
+		expect( await storedToken() ).toBe( TOKEN );
+	} );
+
+	test( 'refuses token changes from anyone but an administrator', async () => {
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		const anonRes = await anon.post( SETTINGS_PATH, {
+			data: { [ TOKEN_OPTION ]: REPLACEMENT },
+		} );
+		expect( anonRes.status() ).toBe( 401 );
+		await anon.dispose();
+
+		const subscriberRes = await api.post( SETTINGS_PATH, {
+			headers: subscriberHeaders,
+			data: { [ TOKEN_OPTION ]: '' },
+		} );
+		expect( subscriberRes.status() ).toBe( 403 );
+		expect( await storedToken() ).toBe( TOKEN );
+	} );
+
+	test( 'refuses a malformed token and keeps the saved one', async () => {
+		const res = await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: { [ TOKEN_OPTION ]: 'not a token' },
+		} );
+		expect( res.status() ).toBe( 400 );
+		const error = await res.json();
+		expect( error.code ).toBe( 'invalid_access_token' );
+		expect( JSON.stringify( error ) ).not.toContain( 'not a token' );
+		expect( await storedToken() ).toBe( TOKEN );
+	} );
+
+	test( 'an administrator replaces and removes the token', async () => {
+		const replaced = await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: { [ TOKEN_OPTION ]: REPLACEMENT },
+		} );
+		expect( replaced.status() ).toBe( 200 );
+		expect( await replaced.text() ).not.toContain( REPLACEMENT );
+		expect( await storedToken() ).toBe( REPLACEMENT );
+		expect( ( await config() ).token_source ).toBe( 'database' );
+
+		const removed = await api.post( SETTINGS_PATH, {
+			headers: adminHeaders,
+			data: { [ TOKEN_OPTION ]: '' },
+		} );
+		expect( removed.status() ).toBe( 200 );
+		expect( await storedToken() ).toBe( '' );
+		const body = await config();
+		expect( body.token_configured ).toBe( false );
+		expect( body.token_source ).toBe( 'none' );
 	} );
 } );

@@ -7,6 +7,7 @@
 
 namespace FairEventsExperimental\API;
 
+use FairEventsExperimental\Meta\Connector;
 use FairEventsExperimental\Meta\Conversions;
 use FairEventsExperimental\Meta\Engagement;
 use FairEventsExperimental\Meta\Outbox;
@@ -17,7 +18,12 @@ defined( 'WPINC' ) || die;
 
 // phpcs:disable Generic.Commenting.DocComment.MissingShort,Squiz.Commenting.FunctionComment.ParamCommentFullStop,Squiz.Commenting.VariableComment.Missing
 
-/** Manages write-only Meta credentials and safe diagnostics. */
+/**
+ * Meta settings, test events and safe diagnostics.
+ *
+ * The access token is managed in Settings → Connectors. Responses report only
+ * whether one is configured and where it comes from.
+ */
 class MetaConversionsController extends WP_REST_Controller {
 	protected $namespace = 'fair-events-experimental/v1';
 	protected $rest_base = 'meta-conversions';
@@ -42,25 +48,12 @@ class MetaConversionsController extends WP_REST_Controller {
 							'type'              => 'string',
 							'sanitize_callback' => array( $this, 'sanitize_dataset_id' ),
 						),
-						'access_token'    => array(
-							'type'              => 'string',
-							'sanitize_callback' => 'sanitize_text_field',
-						),
 						'test_event_code' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
 				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/token',
-			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'clear_token' ),
-				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
 		register_rest_route(
@@ -130,10 +123,14 @@ class MetaConversionsController extends WP_REST_Controller {
 	 */
 	public function get_item( $request = null ) {
 		unset( $request );
+		$token = Connector::status();
 		return rest_ensure_response(
 			array(
 				'dataset_id'            => (string) get_option( Conversions::DATASET_OPTION, '' ),
-				'token_configured'      => '' !== (string) get_option( Conversions::TOKEN_OPTION, '' ),
+				'token_configured'      => $token['configured'],
+				'token_source'          => $token['source'],
+				'token_override_name'   => Connector::CREDENTIAL_NAME,
+				'connectors_url'        => Connector::admin_url(),
 				'test_event_code'       => (string) get_option( Conversions::TEST_CODE_OPTION, '' ),
 				'diagnostics'           => ( new Outbox() )->diagnostics(),
 				'test_history'          => array_map( array( $this, 'with_local_time' ), Conversions::test_history() ),
@@ -156,20 +153,26 @@ class MetaConversionsController extends WP_REST_Controller {
 		return $entry;
 	}
 
-	/** @param \WP_REST_Request $request Request. @return \WP_REST_Response */
+	/**
+	 * Save the dataset ID and Test Events code. The access token is never
+	 * written here.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
 	public function update_item( $request ) {
+		// The token moved to Connectors; refuse it rather than appear to save it.
+		if ( $request->has_param( 'access_token' ) ) {
+			return new \WP_Error(
+				'token_managed_in_connectors',
+				__( 'The Meta access token is managed in Settings → Connectors. Nothing was saved.', 'fair-events-experimental' ),
+				array( 'status' => 400 )
+			);
+		}
 		update_option( Conversions::DATASET_OPTION, (string) $request->get_param( 'dataset_id' ), false );
 		update_option( Conversions::TEST_CODE_OPTION, (string) $request->get_param( 'test_event_code' ), false );
-		$token = (string) $request->get_param( 'access_token' );
-		if ( '' !== $token ) {
-			update_option( Conversions::TOKEN_OPTION, $token, false ); }
 		return $this->get_item();
 	}
-
-	/** @return \WP_REST_Response */
-	public function clear_token() {
-		delete_option( Conversions::TOKEN_OPTION );
-		return $this->get_item(); }
 
 	/**
 	 * Send one test event and report Meta's allowlisted diagnostics on both

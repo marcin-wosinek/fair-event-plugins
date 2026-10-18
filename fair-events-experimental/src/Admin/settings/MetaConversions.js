@@ -1,12 +1,11 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import {
 	Button,
 	Card,
 	CardBody,
 	CardHeader,
-	__experimentalConfirmDialog as ConfirmDialog,
 	ExternalLink,
 	Flex,
 	FlexItem,
@@ -286,13 +285,67 @@ function TestResult( { entry } ) {
 	);
 }
 
+/**
+ * What the administrator should know about the access token: whether one is
+ * configured and where it comes from. A configured token is not proof that
+ * Meta accepts it.
+ *
+ * @param {Object} config Meta Conversions settings payload.
+ * @return {{status: string, message: string}} Notice status and text.
+ */
+export function tokenStatus( config ) {
+	const name = config.token_override_name;
+	if ( ! config.token_configured ) {
+		return {
+			status: 'warning',
+			message: __(
+				'No access token is configured, so no conversions are delivered to Meta. Add one in Connectors.',
+				'fair-events-experimental'
+			),
+		};
+	}
+	if ( 'env' === config.token_source ) {
+		return {
+			status: 'info',
+			message: sprintf(
+				/* translators: %s: environment variable name */
+				__(
+					'The access token comes from the %s environment variable, which overrides any token saved in Connectors. Removing a token in Connectors does not stop delivery while it is set. Send a test event to confirm Meta accepts it.',
+					'fair-events-experimental'
+				),
+				name
+			),
+		};
+	}
+	if ( 'constant' === config.token_source ) {
+		return {
+			status: 'info',
+			message: sprintf(
+				/* translators: %s: PHP constant name */
+				__(
+					'The access token comes from the %s constant, which overrides any token saved in Connectors. Removing a token in Connectors does not stop delivery while it is defined. Send a test event to confirm Meta accepts it.',
+					'fair-events-experimental'
+				),
+				name
+			),
+		};
+	}
+	return {
+		status: 'info',
+		message: __(
+			'An access token is saved in Connectors. It is not shown here. Send a test event to confirm Meta accepts it.',
+			'fair-events-experimental'
+		),
+	};
+}
+
+const TOKEN_FIELDS = [ 'token_configured', 'token_source' ];
+
 export default function MetaConversions( { onNotice } ) {
 	const [ config, setConfig ] = useState( null );
 	const [ savedConfig, setSavedConfig ] = useState( null );
-	const [ token, setToken ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const [ sendingEvent, setSendingEvent ] = useState( null );
-	const [ confirming, setConfirming ] = useState( false );
 	// The latest test result stays visible after the transient notice.
 	const [ lastResult, setLastResult ] = useState( null );
 	const load = () =>
@@ -313,6 +366,34 @@ export default function MetaConversions( { onNotice } ) {
 	useEffect( () => {
 		load();
 	}, [] );
+	// The token is managed in Connectors, usually in another tab. Coming
+	// back re-reads only its status, so unsaved edits here are kept.
+	const refreshToken = useCallback( () => {
+		if ( 'hidden' === document.visibilityState ) {
+			return;
+		}
+		apiFetch( { path: PATH } )
+			.then( ( next ) => {
+				const token = Object.fromEntries(
+					TOKEN_FIELDS.map( ( field ) => [ field, next[ field ] ] )
+				);
+				setConfig( ( current ) =>
+					current ? { ...current, ...token } : current
+				);
+				setSavedConfig( ( current ) =>
+					current ? { ...current, ...token } : current
+				);
+			} )
+			.catch( () => {} );
+	}, [] );
+	useEffect( () => {
+		window.addEventListener( 'focus', refreshToken );
+		document.addEventListener( 'visibilitychange', refreshToken );
+		return () => {
+			window.removeEventListener( 'focus', refreshToken );
+			document.removeEventListener( 'visibilitychange', refreshToken );
+		};
+	}, [ refreshToken ] );
 	if ( ! config ) {
 		return (
 			<p>
@@ -323,21 +404,23 @@ export default function MetaConversions( { onNotice } ) {
 			</p>
 		);
 	}
-	const ready =
-		config.dataset_id && config.token_configured && config.test_event_code;
 	const dirty =
-		'' !== token ||
 		config.dataset_id !== savedConfig.dataset_id ||
 		config.test_event_code !== savedConfig.test_event_code;
 	let testingBlocker = null;
-	if ( ! ready ) {
+	if ( ! config.token_configured ) {
 		testingBlocker = __(
-			'Configure the dataset ID, access token, and Test Events code before sending a test event.',
+			'Add a Meta access token in Connectors before sending a test event.',
+			'fair-events-experimental'
+		);
+	} else if ( ! savedConfig.dataset_id || ! savedConfig.test_event_code ) {
+		testingBlocker = __(
+			'Save the dataset ID and Test Events code before sending a test event.',
 			'fair-events-experimental'
 		);
 	} else if ( dirty ) {
 		testingBlocker = __(
-			'Save or discard your changes before sending a test event — testing now would use the previously saved configuration, not what is in the fields. A browser password manager can fill the access token field for you.',
+			'Save or discard your changes before sending a test event — testing now would use the previously saved configuration, not what is in the fields.',
 			'fair-events-experimental'
 		);
 	} else if ( busy ) {
@@ -351,10 +434,8 @@ export default function MetaConversions( { onNotice } ) {
 			'fair-events-experimental'
 		);
 	}
-	const discardChanges = () => {
-		setConfig( savedConfig );
-		setToken( '' );
-	};
+	const discardChanges = () => setConfig( savedConfig );
+	const token = tokenStatus( config );
 	const save = async () => {
 		setBusy( true );
 		try {
@@ -364,12 +445,10 @@ export default function MetaConversions( { onNotice } ) {
 				data: {
 					dataset_id: config.dataset_id,
 					test_event_code: config.test_event_code,
-					access_token: token,
 				},
 			} );
 			setConfig( next );
 			setSavedConfig( next );
-			setToken( '' );
 			onNotice( {
 				status: 'success',
 				message: __(
@@ -386,17 +465,6 @@ export default function MetaConversions( { onNotice } ) {
 				),
 			} );
 		}
-		setBusy( false );
-	};
-	const clearToken = async () => {
-		setBusy( true );
-		const next = await apiFetch( {
-			path: `${ PATH }/token`,
-			method: 'DELETE',
-		} );
-		setConfig( next );
-		setSavedConfig( next );
-		setConfirming( false );
 		setBusy( false );
 	};
 	const sendTest = async ( eventName, extra = {} ) => {
@@ -500,47 +568,15 @@ export default function MetaConversions( { onNotice } ) {
 						setConfig( { ...config, dataset_id } )
 					}
 				/>
-				<TextControl
-					type="password"
-					label={
-						config.token_configured
-							? __(
-									'Replace access token',
-									'fair-events-experimental'
-								)
-							: __( 'Access token', 'fair-events-experimental' )
-					}
-					help={
-						config.token_configured
-							? __(
-									'A token is configured. Leave this empty to keep it.',
-									'fair-events-experimental'
-								)
-							: __(
-									'The token is write-only and will not be shown again.',
-									'fair-events-experimental'
-								)
-					}
-					value={ token }
-					// Keep password managers from filling a saved login in.
-					autoComplete="new-password"
-					data-1p-ignore
-					data-lpignore="true"
-					onChange={ setToken }
-				/>
-				{ config.token_configured && (
-					<Button
-						isDestructive
-						variant="secondary"
-						onClick={ () => setConfirming( true ) }
-						disabled={ busy || !! sendingEvent }
-					>
+				<Notice status={ token.status } isDismissible={ false }>
+					{ token.message }{ ' ' }
+					<ExternalLink href={ config.connectors_url }>
 						{ __(
-							'Clear access token',
+							'Manage in Connectors',
 							'fair-events-experimental'
 						) }
-					</Button>
-				) }
+					</ExternalLink>
+				</Notice>
 				<TextControl
 					label={ __(
 						'Test Events code',
@@ -758,21 +794,6 @@ export default function MetaConversions( { onNotice } ) {
 							) }
 						</VStack>
 					</>
-				) }
-				{ confirming && (
-					<ConfirmDialog
-						onConfirm={ clearToken }
-						onCancel={ () => setConfirming( false ) }
-						confirmButtonText={ __(
-							'Clear access token',
-							'fair-events-experimental'
-						) }
-					>
-						{ __(
-							'Clear the Meta access token? Conversion delivery will stop until a new token is saved.',
-							'fair-events-experimental'
-						) }
-					</ConfirmDialog>
 				) }
 			</CardBody>
 		</Card>
