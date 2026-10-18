@@ -150,10 +150,42 @@ stale posts/pages/events that never get cleaned up. That can flake unrelated
 specs that count or list all items of a type, with confusing failures like
 `wp.apiFetch is not a function` or a test timing out well past what the
 assertion itself should take. A plain `test:wp-env:stop` + `test:wp-env:start`
-does **not** clear this — the database volume persists across a restart; only
-`wp-env destroy` resets it. If a full-suite run surfaces failures unrelated to
-the change you're testing, check whether they reproduce in isolation
-(`-- path/to/spec.js`) before treating them as a regression.
+does **not** clear this, because the database volume persists across a
+restart. Reset it as described below. If a full-suite run surfaces failures
+unrelated to the change you're testing, check whether they reproduce in
+isolation (`--grep` for API specs, a spec path for E2E) before treating them as
+a regression.
+
+#### Resetting leftover test data
+
+Signs that the tests database needs a reset:
+
+-   Local query counts far above the hosted baseline (e.g. `listings` at 1,341
+    queries locally against 60 hosted).
+-   A spec that looks for its row on the first screen of an admin list times
+    out because dozens of leftover posts or pages come first.
+-   A spec that expects an empty site (no event sources, no events in a week)
+    fails on its first assertion.
+
+CI starts from an empty database every time, so failures caused by leftovers
+pass there.
+
+To reset:
+
+1. Check that no run is using the instance: `pgrep -fl "playwright test"`.
+2. Run `npx wp-env reset tests`. It takes about 20 seconds and empties only the
+   tests database. The development site and its data are untouched. WordPress
+   is reinstalled, the plugins listed in `.wp-env.json` are activated again
+   (their tables are recreated), and the `e2e/mu-plugins` support layer,
+   Basic Auth included, keeps working because it is mounted from disk.
+3. Restore pretty permalinks, which the reset sets back to the default:
+   `npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard`.
+   Owned `:local` runs do this themselves; `--reuse` runs don't.
+
+Use `wp-env destroy` only when the containers themselves are broken. It also
+deletes the Docker images, so the next start rebuilds everything. The
+`cleanup-*.php` scripts in `e2e/mu-plugins/scripts/` remove one spec's
+fixtures; they are not a general reset.
 
 The raw `test:api` and `test:e2e` scripts remain available for CI and advanced
 debugging with a manually managed environment. Prefer the `:local` commands for
