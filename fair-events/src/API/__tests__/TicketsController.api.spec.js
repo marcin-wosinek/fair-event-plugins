@@ -1378,3 +1378,203 @@ test.describe( 'TicketsController — add-on collaborator assignments removed (#
 		} );
 	}
 } );
+
+test.describe( 'TicketsController — core-owned routes and permissions (#1848)', () => {
+	let api;
+	let eventDateId;
+	let ticketsPath;
+	let originalExperimentalStatus;
+	const users = {};
+
+	const setExperimentalStatus = async ( status ) => {
+		const res = await api.put(
+			`/wp-json/wp/v2/plugins/${ FAIR_EVENTS_EXPERIMENTAL_PLUGIN }`,
+			{ headers: adminHeaders, data: { status } }
+		);
+		expect( res.ok() ).toBeTruthy();
+	};
+
+	const createUser = async ( role ) => {
+		const login = `tickets-${ role }-${ Date.now() }`;
+		const password = 'Test-password-1848!';
+		const res = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminHeaders,
+			data: {
+				username: login,
+				email: `${ login }@example.com`,
+				password,
+				roles: [ role ],
+			},
+		} );
+		expect( res.ok() ).toBeTruthy();
+		return {
+			id: ( await res.json() ).id,
+			headers: {
+				Authorization:
+					'Basic ' +
+					Buffer.from( `${ login }:${ password }` ).toString(
+						'base64'
+					),
+			},
+		};
+	};
+
+	const config = ( name ) => ( {
+		capacity: 30,
+		ticket_types: [
+			{ name, capacity: 20, minimum_activities: 0, group_ids: [] },
+		],
+		sale_periods: [ { name: 'Regular', sale_start: null, sale_end: null } ],
+		prices: [
+			{
+				ticket_type_index: 0,
+				sale_period_index: 0,
+				price: 15,
+				capacity: null,
+			},
+		],
+		settings: {},
+		options: [ { name: 'Lunch', short_name: 'L', price: 8 } ],
+	} );
+
+	const summary = ( body ) => ( {
+		capacity: body.capacity === null ? null : Number( body.capacity ),
+		types: body.ticket_types.map( ( type ) => type.name ),
+		periods: body.sale_periods.map( ( period ) => period.name ),
+		prices: body.prices.map( ( price ) => Number( price.price ) ),
+		options: body.options.map( ( option ) => option.name ),
+	} );
+
+	const readSummary = async () => {
+		const res = await api.get( ticketsPath, { headers: adminHeaders } );
+		expect( res.ok() ).toBeTruthy();
+		return summary( await res.json() );
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
+			headers: adminHeaders,
+		} );
+		expect( pluginsRes.ok() ).toBeTruthy();
+		const experimental = ( await pluginsRes.json() ).find(
+			( plugin ) => plugin.plugin === FAIR_EVENTS_EXPERIMENTAL_PLUGIN
+		);
+		expect( experimental ).toBeTruthy();
+		originalExperimentalStatus = experimental.status;
+
+		// "contributor" has edit_posts, the capability the routes require.
+		users.contributor = await createUser( 'contributor' );
+		users.subscriber = await createUser( 'subscriber' );
+
+		const eventRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: `Core ticket routes ${ Date.now() }`,
+					start_datetime: '2037-04-01 10:00:00',
+					end_datetime: '2037-04-01 12:00:00',
+				},
+			}
+		);
+		expect( eventRes.ok() ).toBeTruthy();
+		eventDateId = ( await eventRes.json() ).id;
+		ticketsPath = `/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`;
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const user of Object.values( users ) ) {
+			await api.delete(
+				`/wp-json/wp/v2/users/${ user.id }?force=true&reassign=1`,
+				{ headers: adminHeaders }
+			);
+		}
+		if ( originalExperimentalStatus ) {
+			await setExperimentalStatus( originalExperimentalStatus );
+		}
+		await api.dispose();
+	} );
+
+	for ( const status of [ 'active', 'inactive' ] ) {
+		test( `reads, saves, and imports configuration (experimental ${ status })`, async () => {
+			await setExperimentalStatus( status );
+
+			const saveRes = await api.put( ticketsPath, {
+				headers: adminHeaders,
+				data: config( `Saved ${ status }` ),
+			} );
+			const saved = await saveRes.json();
+			expect( saveRes.ok(), JSON.stringify( saved ) ).toBeTruthy();
+			const expectedSaved = {
+				capacity: 30,
+				types: [ `Saved ${ status }` ],
+				periods: [ 'Regular' ],
+				prices: [ 15 ],
+				options: [ 'Lunch' ],
+			};
+			expect( summary( saved ) ).toEqual( expectedSaved );
+			expect( await readSummary() ).toEqual( expectedSaved );
+
+			const importRes = await api.post( `${ ticketsPath }/import`, {
+				headers: adminHeaders,
+				data: {
+					version: 1,
+					type: 'fair-events-tickets',
+					...config( `Imported ${ status }` ),
+				},
+			} );
+			const imported = await importRes.json();
+			expect( importRes.ok(), JSON.stringify( imported ) ).toBeTruthy();
+			const expectedImported = {
+				...expectedSaved,
+				types: [ `Imported ${ status }` ],
+			};
+			expect( summary( imported ) ).toEqual( expectedImported );
+			expect( await readSummary() ).toEqual( expectedImported );
+
+			// The contributor boundary: edit_posts is enough to read.
+			const contributorRes = await api.get( ticketsPath, {
+				headers: users.contributor.headers,
+			} );
+			expect( contributorRes.status() ).toBe( 200 );
+		} );
+
+		test( `rejects anonymous and subscriber requests without changes (experimental ${ status })`, async () => {
+			await setExperimentalStatus( status );
+			const before = await readSummary();
+
+			for ( const [ headers, expected ] of [
+				[ {}, 401 ],
+				[ users.subscriber.headers, 403 ],
+			] ) {
+				const getRes = await api.get( ticketsPath, { headers } );
+				expect( getRes.status() ).toBe( expected );
+
+				const putRes = await api.put( ticketsPath, {
+					headers,
+					data: config( 'Unauthorized save' ),
+				} );
+				expect( putRes.status() ).toBe( expected );
+
+				const importRes = await api.post( `${ ticketsPath }/import`, {
+					headers,
+					data: {
+						version: 1,
+						type: 'fair-events-tickets',
+						...config( 'Unauthorized import' ),
+					},
+				} );
+				expect( importRes.status() ).toBe( expected );
+			}
+
+			expect( await readSummary() ).toEqual( before );
+		} );
+	}
+} );
