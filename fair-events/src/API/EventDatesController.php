@@ -1057,14 +1057,16 @@ class EventDatesController extends WP_REST_Controller {
 	 * Canonical timing fields for a response.
 	 *
 	 * @param array $timing Canonical timing.
-	 * @return array start_date, end_date, start_time and end_time.
+	 * @return array start_date, end_date, start_time, end_time and
+	 *               calendar_export_eligible.
 	 */
 	private function prepare_timing( array $timing ) {
 		return array(
-			'start_date' => $timing['start_date'],
-			'end_date'   => $timing['end_date'],
-			'start_time' => $timing['start_time'],
-			'end_time'   => $timing['end_time'],
+			'start_date'               => $timing['start_date'],
+			'end_date'                 => $timing['end_date'],
+			'start_time'               => $timing['start_time'],
+			'end_time'                 => $timing['end_time'],
+			'calendar_export_eligible' => EventTiming::is_calendar_exportable( $timing ),
 		);
 	}
 
@@ -2496,31 +2498,32 @@ class EventDatesController extends WP_REST_Controller {
 	 */
 	private function prepare_event_date( $event_date ) {
 		$data = array(
-			'id'                 => $event_date->id,
-			'event_id'           => $event_date->event_id,
-			'title'              => $event_date->title,
-			'start_datetime'     => $event_date->start_datetime,
-			'end_datetime'       => $event_date->end_datetime,
-			'start_date'         => $event_date->start_date,
-			'end_date'           => $event_date->end_date,
-			'start_time'         => $event_date->start_time,
-			'end_time'           => $event_date->end_time,
-			'all_day'            => $event_date->all_day,
-			'occurrence_type'    => $event_date->occurrence_type,
-			'master_id'          => $event_date->master_id,
-			'venue_id'           => $event_date->venue_id,
-			'address'            => $event_date->address,
-			'link_type'          => $event_date->link_type,
-			'external_url'       => $event_date->external_url,
-			'attendance_mode'    => $event_date->attendance_mode ?? 'in_person',
-			'joining_link'       => $event_date->joining_link,
-			'display_url'        => $event_date->get_display_url(),
-			'rrule'              => $event_date->rrule,
-			'status'             => $event_date->status,
-			'publication_status' => $event_date->publication_status,
-			'recurrence_mode'    => $event_date->recurrence_mode,
-			'recurrence_anchor'  => $event_date->recurrence_anchor,
-			'timing_overrides'   => 'generated' === $event_date->occurrence_type ? $event_date->timing_overrides : null,
+			'id'                       => $event_date->id,
+			'event_id'                 => $event_date->event_id,
+			'title'                    => $event_date->title,
+			'start_datetime'           => $event_date->start_datetime,
+			'end_datetime'             => $event_date->end_datetime,
+			'start_date'               => $event_date->start_date,
+			'end_date'                 => $event_date->end_date,
+			'start_time'               => $event_date->start_time,
+			'end_time'                 => $event_date->end_time,
+			'calendar_export_eligible' => EventTiming::is_calendar_exportable( $event_date->get_timing() ),
+			'all_day'                  => $event_date->all_day,
+			'occurrence_type'          => $event_date->occurrence_type,
+			'master_id'                => $event_date->master_id,
+			'venue_id'                 => $event_date->venue_id,
+			'address'                  => $event_date->address,
+			'link_type'                => $event_date->link_type,
+			'external_url'             => $event_date->external_url,
+			'attendance_mode'          => $event_date->attendance_mode ?? 'in_person',
+			'joining_link'             => $event_date->joining_link,
+			'display_url'              => $event_date->get_display_url(),
+			'rrule'                    => $event_date->rrule,
+			'status'                   => $event_date->status,
+			'publication_status'       => $event_date->publication_status,
+			'recurrence_mode'          => $event_date->recurrence_mode,
+			'recurrence_anchor'        => $event_date->recurrence_anchor,
+			'timing_overrides'         => 'generated' === $event_date->occurrence_type ? $event_date->timing_overrides : null,
 		);
 
 		// Add master event info for generated occurrences.

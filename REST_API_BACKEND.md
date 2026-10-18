@@ -1384,6 +1384,27 @@ times, held by `FairEvents\Helpers\EventTiming` and stored in the
     times missing; ticket deadlines move by the change of start time only
     when both the source and the copy have one.
 
+-   **Calendar export.** An event date is exportable to calendars only when
+    it is explicitly all-day or has both a start and an end time
+    (`EventTiming::is_calendar_exportable()`). Nothing substitutes midnight,
+    a guessed duration or an all-day entry for a missing time. Responses
+    that carry the canonical fields (`event-dates` single, list, `all`,
+    `generated_occurrences`, `master`) and the public `GET /events` feed
+    report it as `calendar_export_eligible`; the public feed also carries
+    the canonical `start_date`, `end_date`, `start_time` and `end_time`
+    next to its `start` / `end`. The JSON feeds keep events that are not
+    exportable. `calendar.ics` leaves them out, deciding per occurrence
+    after overrides, and exports every date of a series as its own event
+    with a stable `UID`, never with a recurrence rule.
+-   **Calendar buttons.** The Fair Events calendar button exports a
+    series with its `RRULE` only when every active date of the series is
+    exportable. A series that mixes both exports the next exportable date
+    that has not ended, on its own and linked to that date with
+    `?event_date=`. A selected date exports only itself. When nothing is
+    exportable the link gets `data-calendar-available="false"` and
+    `aria-disabled="true"`, no event data, and clicking it does nothing.
+    Fair Calendar Button applies the same rule to its own attributes.
+
 #### Occurrence timing overrides (DB 3.46.0)
 
 A generated occurrence owns its timing in two groups, each with a marker

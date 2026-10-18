@@ -205,6 +205,22 @@ export function formatEventDescription( description, url ) {
 }
 
 /**
+ * Whether event attributes can be exported to a calendar: an all-day event
+ * with a start date, or a timed event with both a start and an end. A
+ * missing time is never replaced by a guessed one, so such an event gets no
+ * calendar link or download.
+ *
+ * @param {Object}  attributes        - Block attributes
+ * @param {string}  attributes.start  - Start date or datetime
+ * @param {string}  attributes.end    - End date or datetime
+ * @param {boolean} attributes.allDay - Whether the event is all-day
+ * @return {boolean} True when the event can be exported
+ */
+export function isCalendarExportable( { start, end, allDay } ) {
+	return allDay ? Boolean( start ) : Boolean( start && end );
+}
+
+/**
  * Convert block attributes to calendar event data
  *
  * @param {Object} attributes - Block attributes

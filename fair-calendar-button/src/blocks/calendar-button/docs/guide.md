@@ -51,8 +51,9 @@ The saved markup (a `wp-block-buttons` container with the inner button) is
 re-wrapped server-side with `data-start`, `data-end`, `data-all-day`,
 `data-description`, `data-location`, `data-recurring`, `data-rrule`,
 `data-title`, and `data-url` attributes, which the frontend script reads to
-build the menu. A block with no `start` still renders the button, but the
-calendar entry will have no date.
+build the menu. A timed event needs both `start` and `end`, and an all-day
+event needs `start`: otherwise the button still renders, but clicking it
+does nothing rather than adding an entry with a guessed time.
 
 ## Related
 

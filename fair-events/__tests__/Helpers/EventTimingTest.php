@@ -366,6 +366,24 @@ class EventTimingTest extends TestCase {
 	}
 
 	/**
+	 * Only explicitly all-day or fully timed events are exportable to
+	 * calendars, single- and multi-day; genuine midnight counts as a time.
+	 */
+	public function test_is_calendar_exportable() {
+		foreach ( array( '2026-11-02', '2026-11-04' ) as $end_date ) {
+			$this->assertTrue( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, '18:00:00', '20:00:00' ) ) );
+			$this->assertFalse( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, '18:00:00', null ) ) );
+			$this->assertFalse( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, null, '20:00:00' ) ) );
+			$this->assertFalse( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, null, null ) ) );
+			$this->assertTrue( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, null, null, true ) ) );
+		}
+		$this->assertTrue( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', '2026-11-03', '00:00:00', '00:00:00' ) ) );
+		$this->assertTrue( EventTiming::is_calendar_exportable( EventTiming::from_legacy( '2026-11-02 00:00:00', '2026-11-02 23:00:00', false ) ) );
+		$this->assertFalse( EventTiming::is_calendar_exportable( EventTiming::from_legacy( '2026-11-02 18:00:00', null, false ) ) );
+		$this->assertFalse( EventTiming::is_calendar_exportable( EventTiming::undated() ) );
+	}
+
+	/**
 	 * Moving a timing keeps its calendar-day span, its optional times and
 	 * its all-day flag, across month and leap-day boundaries.
 	 */

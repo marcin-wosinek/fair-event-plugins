@@ -7,7 +7,10 @@
  */
 
 import { google, ics, outlook, yahoo } from 'calendar-link';
-import { createEventData } from '../utils/calendar-handler.js';
+import {
+	createEventData,
+	isCalendarExportable,
+} from '../utils/calendar-handler.js';
 
 describe( 'createEventData', () => {
 	describe( 'all-day events in a UTC+12 timezone', () => {
@@ -72,5 +75,51 @@ describe( 'createEventData', () => {
 		expect( google( eventData ) ).toContain(
 			'dates=20260715T100000Z%2F20260715T113000Z'
 		);
+	} );
+} );
+
+describe( 'isCalendarExportable', () => {
+	it( 'accepts an event with both times, including genuine midnight', () => {
+		expect(
+			isCalendarExportable( {
+				start: '2026-07-15 18:00:00',
+				end: '2026-07-15 20:00:00',
+				allDay: false,
+			} )
+		).toBe( true );
+		expect(
+			isCalendarExportable( {
+				start: '2026-07-15 00:00:00',
+				end: '2026-07-16 00:00:00',
+				allDay: false,
+			} )
+		).toBe( true );
+	} );
+
+	it( 'rejects a timed event without a start or an end', () => {
+		expect(
+			isCalendarExportable( {
+				start: '2026-07-15 18:00:00',
+				end: '',
+				allDay: false,
+			} )
+		).toBe( false );
+		expect(
+			isCalendarExportable( {
+				start: undefined,
+				end: undefined,
+				allDay: false,
+			} )
+		).toBe( false );
+	} );
+
+	it( 'accepts an all-day event with dates', () => {
+		expect(
+			isCalendarExportable( {
+				start: '2026-07-15 00:00:00',
+				end: '2026-07-15 00:00:00',
+				allDay: true,
+			} )
+		).toBe( true );
 	} );
 } );

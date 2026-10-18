@@ -8,6 +8,7 @@
 import {
 	createEventData,
 	handleCalendarClick,
+	isCalendarExportable,
 } from './utils/calendar-handler.js';
 
 // Import styles
@@ -33,21 +34,27 @@ import './frontend.css';
 		);
 
 		calendarButtons.forEach( ( button ) => {
+			// Event data rendered by the server, read once per button
+			const attributes = {
+				start: button.dataset.start,
+				end: button.dataset.end,
+				description: button.dataset.description || '',
+				location: button.dataset.location || '',
+				allDay: button.dataset.allDay === 'true',
+				title: button.dataset.title,
+				recurring: button.dataset.recurring === 'true',
+				rRule: button.dataset.rrule || '',
+				url: button.dataset.url || '',
+			};
+			const exportable = isCalendarExportable( attributes );
+
 			button.addEventListener( 'click', function ( e ) {
 				e.preventDefault();
 
-				// Get event data from button data attributes
-				const attributes = {
-					start: button.dataset.start,
-					end: button.dataset.end,
-					description: button.dataset.description || '',
-					location: button.dataset.location || '',
-					allDay: button.dataset.allDay === 'true',
-					title: button.dataset.title,
-					recurring: button.dataset.recurring === 'true',
-					rRule: button.dataset.rrule || '',
-					url: button.dataset.url || '',
-				};
+				// An event without both times has no calendar entry
+				if ( ! exportable ) {
+					return;
+				}
 
 				// Create calendar event data and handle click
 				const eventData = createEventData( attributes );
