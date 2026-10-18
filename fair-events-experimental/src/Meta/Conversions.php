@@ -39,9 +39,9 @@ class Conversions {
 		add_filter( 'fair_payment_before_initiate_payment', array( $this, 'remove_provider_attribution' ) );
 	}
 
-	/** @return bool */
+	/** Whether a dataset ID and an access token from {@see Connector} are in effect. @return bool */
 	public static function configured() {
-		return '' !== (string) get_option( self::DATASET_OPTION, '' ) && '' !== (string) get_option( self::TOKEN_OPTION, '' );
+		return '' !== (string) get_option( self::DATASET_OPTION, '' ) && '' !== Connector::token();
 	}
 
 	/** @param array $args Provider args. @return array */
@@ -293,7 +293,7 @@ class Conversions {
 	 */
 	public function send_payload( $event, $test_code = '' ) {
 		$dataset = (string) get_option( self::DATASET_OPTION, '' );
-		$token   = (string) get_option( self::TOKEN_OPTION, '' );
+		$token   = Connector::token();
 		if ( '' === $dataset || '' === $token ) {
 			return self::result( 'configuration', false, 'missing_configuration', 'configuration' );
 		}

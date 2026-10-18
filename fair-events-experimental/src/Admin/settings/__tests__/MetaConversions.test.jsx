@@ -19,6 +19,9 @@ function config( overrides ) {
 	return {
 		dataset_id: '123',
 		token_configured: true,
+		token_source: 'database',
+		token_override_name: 'FAIR_EVENTS_EXPERIMENTAL_META_ACCESS_TOKEN',
+		connectors_url: 'http://example.test/wp-admin/options-connectors.php',
 		test_event_code: 'TEST12345',
 		diagnostics: { counts: {}, recent: [] },
 		test_history: [],
@@ -1074,32 +1077,156 @@ describe( 'MetaConversions calendar click test', () => {
 	} );
 } );
 
-describe( 'MetaConversions settings fields', () => {
-	it( 'keeps password managers out of the access token field', async () => {
+describe( 'MetaConversions access token', () => {
+	it( 'shows that a saved token is configured without showing it, and links to Connectors', async () => {
 		apiFetch.mockResolvedValue( config() );
 		render( <MetaConversions onNotice={ () => {} } /> );
 
-		const token = await screen.findByLabelText( 'Replace access token' );
-		expect( token ).toHaveAttribute( 'autocomplete', 'new-password' );
-		expect( screen.getByLabelText( 'Dataset / Pixel ID' ) ).toHaveAttribute(
-			'autocomplete',
-			'off'
+		// Notice also announces its text in a live region.
+		expect(
+			(
+				await screen.findAllByText(
+					/An access token is saved in Connectors\. It is not shown here\./
+				)
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: /Manage in Connectors/ } )
+		).toHaveAttribute(
+			'href',
+			'http://example.test/wp-admin/options-connectors.php'
 		);
+		expect( screen.queryByLabelText( /access token/i ) ).toBeNull();
+		expect(
+			screen.queryByRole( 'button', { name: /Clear access token/ } )
+		).toBeNull();
 	} );
 
-	it( 'discards unsaved edits, such as an autofilled token, and enables testing again', async () => {
+	it( 'says delivery is stopped and blocks testing without a token', async () => {
+		apiFetch.mockResolvedValue(
+			config( { token_configured: false, token_source: 'none' } )
+		);
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			(
+				await screen.findAllByText(
+					/No access token is configured, so no conversions are delivered to Meta\./
+				)
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+		expect(
+			screen.getAllByText(
+				'Add a Meta access token in Connectors before sending a test event.'
+			).length
+		).toBeGreaterThan( 0 );
+	} );
+
+	it.each( [
+		[
+			'env',
+			/environment variable.*does not stop delivery while it is set/,
+		],
+		[ 'constant', /constant.*does not stop delivery while it is defined/ ],
+	] )(
+		'explains that removing the Connectors token keeps a %s token in use',
+		async ( source, message ) => {
+			apiFetch.mockResolvedValue( config( { token_source: source } ) );
+			render( <MetaConversions onNotice={ () => {} } /> );
+
+			const [ notice ] = await screen.findAllByText( message );
+			expect( notice ).toHaveTextContent(
+				'FAIR_EVENTS_EXPERIMENTAL_META_ACCESS_TOKEN'
+			);
+		}
+	);
+
+	it( 'saves the other settings without a token', async () => {
 		apiFetch.mockResolvedValue( config() );
 		render( <MetaConversions onNotice={ () => {} } /> );
 
 		fireEvent.change(
-			await screen.findByLabelText( 'Replace access token' ),
+			await screen.findByLabelText( 'Dataset / Pixel ID' ),
 			{
-				target: { value: 'saved-login-password' },
+				target: { value: '456' },
 			}
 		);
-		fireEvent.change( screen.getByLabelText( 'Dataset / Pixel ID' ), {
-			target: { value: '456' },
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save Meta settings' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-events-experimental/v1/meta-conversions',
+				method: 'POST',
+				data: { dataset_id: '456', test_event_code: 'TEST12345' },
+			} )
+		);
+	} );
+
+	it( 'refreshes the token status on return from Connectors and keeps unsaved edits', async () => {
+		apiFetch.mockResolvedValue(
+			config( { token_configured: false, token_source: 'none' } )
+		);
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		fireEvent.change(
+			await screen.findByLabelText( 'Dataset / Pixel ID' ),
+			{
+				target: { value: '456' },
+			}
+		);
+
+		apiFetch.mockResolvedValue(
+			config( { dataset_id: '999', test_event_code: 'OTHER' } )
+		);
+		await act( async () => {
+			window.dispatchEvent( new Event( 'focus' ) );
 		} );
+
+		expect(
+			(
+				await screen.findAllByText(
+					/An access token is saved in Connectors/
+				)
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Dataset / Pixel ID' ) ).toHaveValue(
+			'456'
+		);
+		expect( screen.getByLabelText( 'Test Events code' ) ).toHaveValue(
+			'TEST12345'
+		);
+		// The refreshed token does not make the unsaved edit look saved.
+		expect(
+			screen.getByRole( 'button', { name: 'Send PageView test' } )
+		).toBeDisabled();
+	} );
+} );
+
+describe( 'MetaConversions settings fields', () => {
+	it( 'keeps autocomplete out of the settings fields', async () => {
+		apiFetch.mockResolvedValue( config() );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByLabelText( 'Dataset / Pixel ID' )
+		).toHaveAttribute( 'autocomplete', 'off' );
+	} );
+
+	it( 'discards unsaved edits and enables testing again', async () => {
+		apiFetch.mockResolvedValue( config() );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		fireEvent.change(
+			await screen.findByLabelText( 'Dataset / Pixel ID' ),
+			{
+				target: { value: '456' },
+			}
+		);
 		expect(
 			screen.getByRole( 'button', { name: 'Send PageView test' } )
 		).toBeDisabled();
@@ -1108,9 +1235,6 @@ describe( 'MetaConversions settings fields', () => {
 			screen.getByRole( 'button', { name: 'Discard changes' } )
 		);
 
-		expect( screen.getByLabelText( 'Replace access token' ) ).toHaveValue(
-			''
-		);
 		expect( screen.getByLabelText( 'Dataset / Pixel ID' ) ).toHaveValue(
 			'123'
 		);

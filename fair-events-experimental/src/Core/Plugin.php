@@ -53,6 +53,10 @@ class Plugin {
 		$this->load_rest_api();
 		$this->load_meta_conversions();
 
+		// Registered with every bundle, so the Meta credential stays
+		// manageable in Connectors while delivery is off or unavailable.
+		\FairEventsExperimental\Meta\Connector::init();
+
 		// Merge experimental feature states into the manage-event enabledFeatures map
 		// so the React UI can show ticketing tabs when active.
 		add_filter(

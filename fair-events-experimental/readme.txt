@@ -54,16 +54,27 @@ Each event carries the event's post ID, the event-date ID of the occurrence show
 
 To verify reporting, open Meta Events Manager for the configured dataset and check the Overview for `FairEventCalendarClick` and `FairEventTicketClick` after clicking the buttons on a public event page with marketing consent granted. In WordPress, Fair Events → Settings → Experimental lists recent deliveries and their outcomes. Events are delivered by WP-Cron, so they appear shortly after the click.
 
+= Setting up Meta conversions =
+
+1. Turn on Meta conversions in Fair Events → Settings → Experimental. Fair Payments Connector must be active for delivery.
+2. In Meta Events Manager, generate a Conversions API access token for the dataset.
+3. In WordPress, open Settings → Connectors, choose "Set up" on the Meta Conversions API connector, paste the token as the API key and save. To change it later, choose "Edit", then "Remove and replace". A value that cannot be a token, such as one with spaces, is refused and the saved token stays in place. Connectors does not contact Meta; a test event is what confirms that Meta accepts the token.
+4. In Fair Events → Settings → Experimental, enter the dataset ID and, for testing, the Test Events code, then save. This tab shows whether a token is configured and links to Connectors; it does not show or edit the token.
+
+Removing the token in Connectors stops conversion delivery until another token is saved. An access token saved in an earlier version keeps working and appears in Connectors as connected; nothing needs to be entered again.
+
+The token can also be supplied outside the database, as an environment variable or a PHP constant, both named `FAIR_EVENTS_EXPERIMENTAL_META_ACCESS_TOKEN`. The environment variable is used first, then the constant, then the token saved in Connectors. The Experimental tab says which one is in use. While an environment variable or constant supplies the token, removing the token saved in Connectors does not stop delivery.
+
 = Checking that Meta receives calendar clicks =
 
 The Experimental settings tab can send one `FairEventCalendarClick` straight to Meta's Test Events, built exactly like a real "Add to calendar" click:
 
-1. Save the dataset ID, access token and the Test Events code shown in Events Manager → Test events.
+1. Save the access token in Settings → Connectors, then save the dataset ID and the Test Events code shown in Events Manager → Test events in the Experimental tab.
 2. In the same browser, open a public event page with the Meta Pixel active and accept marketing cookies, so the browser has an `_fbp` (or `_fbc`) cookie and marketing consent. The WP Consent API plugin must be active; the settings page reads consent through it, as event pages do.
 3. Open Fair Events → Settings → Experimental. Under "Calendar click test", open the Event list, which shows the latest events with an event page, or type to search by title. Choose the event (and a date, for a series), and select "Send FairEventCalendarClick test". If consent or the Meta cookie was missing, fix it in the same browser and select "Check this browser again"; the chosen event is kept.
 4. In Events Manager → Test events, the event should appear as Processed, received from Server.
 
-A disabled test button always has its reason next to it. The PageView, InitiateCheckout and Purchase tests only need the saved configuration: choosing an event or this browser's consent never disables them. Unsaved edits do, because a test would use the saved values. Browser password managers can fill a saved login into the access token field, so if testing says there are unsaved changes you did not make, select "Discard changes".
+A disabled test button always has its reason next to it. The PageView, InitiateCheckout and Purchase tests only need the saved configuration: choosing an event or this browser's consent never disables them. Unsaved edits do, because a test would use the saved values; select "Discard changes" to restore them. Without an access token in Connectors, every test is disabled.
 
 The test uses the Test Events code and a fresh event ID. It does not create a delivery row, and routine events never carry the Test Events code.
 
