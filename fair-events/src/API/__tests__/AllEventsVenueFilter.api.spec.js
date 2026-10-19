@@ -47,7 +47,8 @@ test.describe( 'EventDatesController — venue_id filter', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Venue filter placed event ${ Date.now() }`,
-					start_datetime: '2037-04-01 10:00:00',
+					start_date: '2037-04-01',
+					start_time: '10:00:00',
 					venue_id: venueId,
 				},
 			}
@@ -62,8 +63,10 @@ test.describe( 'EventDatesController — venue_id filter', () => {
 				headers: adminHeaders,
 				data: {
 					title: placedSeriesTitle,
-					start_datetime: '2037-04-08 10:00:00',
-					end_datetime: '2037-04-08 12:00:00',
+					start_date: '2037-04-08',
+					start_time: '10:00:00',
+					end_date: '2037-04-08',
+					end_time: '12:00:00',
 					venue_id: venueId,
 					rrule: 'FREQ=WEEKLY;COUNT=3',
 				},
@@ -80,7 +83,8 @@ test.describe( 'EventDatesController — venue_id filter', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Venue filter unplaced event ${ Date.now() }`,
-					start_datetime: '2037-04-15 10:00:00',
+					start_date: '2037-04-15',
+					start_time: '10:00:00',
 				},
 			}
 		);

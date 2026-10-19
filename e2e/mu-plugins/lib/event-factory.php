@@ -112,7 +112,7 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 	 * @param int $event_id Event post ID (must already have one occurrence, see
 	 *                      fair_e2e_add_date()).
 	 * @param int $count    Number of occurrences in the series (including the master).
-	 * @return int[] Occurrence event_date ids, ordered by start_datetime (master first).
+	 * @return int[] Occurrence event_date ids, ordered by start (master first).
 	 */
 	function fair_e2e_add_series( $event_id, $count = 3 ) {
 		$rrule = 'FREQ=WEEKLY;COUNT=' . (int) $count;
@@ -124,7 +124,7 @@ if ( ! function_exists( 'fair_e2e_create_event' ) ) {
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 		$ids        = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT id FROM {$table_name} WHERE event_id = %d AND start_datetime IS NOT NULL ORDER BY start_datetime", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id FROM {$table_name} WHERE event_id = %d AND start_date IS NOT NULL ORDER BY start_date, start_time", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$event_id
 			)
 		);

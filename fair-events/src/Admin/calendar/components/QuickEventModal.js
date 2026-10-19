@@ -131,15 +131,15 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				setTitle( metadata.title );
 			}
 
-			if ( metadata.start_datetime ) {
+			if ( metadata.start_date ) {
 				setAllDay( Boolean( metadata.all_day ) );
-				setStartDate( metadata.start_datetime.slice( 0, 10 ) );
-				setStartTime( metadata.start_datetime.slice( 11, 16 ) );
+				setStartDate( metadata.start_date );
+				setStartTime( ( metadata.start_time || '' ).slice( 0, 5 ) );
 			}
 
-			if ( metadata.end_datetime ) {
-				setEndDate( metadata.end_datetime.slice( 0, 10 ) );
-				setEndTime( metadata.end_datetime.slice( 11, 16 ) );
+			if ( metadata.end_date ) {
+				setEndDate( metadata.end_date );
+				setEndTime( ( metadata.end_time || '' ).slice( 0, 5 ) );
 			}
 
 			setFetchedLocation( metadata.location || null );
@@ -183,13 +183,10 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 		setIsSaving( true );
 		setError( null );
 
-		const startDatetime = allDay
-			? `${ startDate } 00:00:00`
-			: `${ startDate } ${ startTime }:00`;
-
-		const endDatetime = allDay
-			? `${ endDate } 00:00:00`
-			: `${ endDate } ${ endTime }:00`;
+		// An empty time field is sent as null (not set), and an all-day
+		// event has no times.
+		const timeValue = ( time ) =>
+			! allDay && time ? `${ time }:00` : null;
 
 		try {
 			const eventDate = await apiFetch( {
@@ -197,8 +194,10 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				method: 'POST',
 				data: {
 					title,
-					start_datetime: startDatetime,
-					end_datetime: endDatetime,
+					start_date: startDate,
+					end_date: endDate || startDate,
+					start_time: timeValue( startTime ),
+					end_time: timeValue( endTime ),
 					all_day: allDay,
 					venue_id: venueId ? parseInt( venueId, 10 ) : undefined,
 					link_type: linkType === 'post' ? 'none' : linkType,

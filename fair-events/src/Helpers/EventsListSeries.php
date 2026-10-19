@@ -169,10 +169,10 @@ class EventsListSeries {
 	 * @return array Series metadata (see RecurrenceSummary).
 	 */
 	public static function series_from_master( EventDates $master ) {
-		$anchor_start = $master->start_datetime;
-		if ( $master->recurrence_anchor && $master->start_datetime ) {
-			$anchor_start = $master->recurrence_anchor . ' ' . DateHelper::local_time_full( $master->start_datetime );
-		}
+		$timing       = $master->get_timing();
+		$anchor_start = EventTiming::range_keys(
+			$master->recurrence_anchor && $timing['start_date'] ? EventTiming::for_date( $timing, $master->recurrence_anchor ) : $timing
+		)['start'];
 
 		return array(
 			'id'              => (int) $master->id,
@@ -193,6 +193,10 @@ class EventsListSeries {
 	public static function date_text( array $occurrence ) {
 		if ( ! empty( $occurrence['series'] ) ) {
 			return RecurrenceSummary::format( $occurrence['series'], $occurrence );
+		}
+
+		if ( isset( $occurrence['timing'] ) && is_array( $occurrence['timing'] ) ) {
+			return DateRangeFormatter::format_timing( $occurrence['timing'] );
 		}
 
 		return DateRangeFormatter::format(
@@ -219,10 +223,12 @@ class EventsListSeries {
 			return null;
 		}
 
+		$range      = EventTiming::range_keys( $row->get_timing() );
 		$occurrence = array(
-			'start'   => $row->start_datetime,
-			'end'     => $row->end_datetime,
+			'start'   => $range['start'],
+			'end'     => $range['end'],
 			'all_day' => (bool) $row->all_day,
+			'timing'  => $row->get_timing(),
 		);
 
 		$series_id = self::series_id_for_row( $row );

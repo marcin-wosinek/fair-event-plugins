@@ -50,8 +50,10 @@ test.describe( 'GetTicketsController — irregular (manual) series whole_series 
 			data: {
 				title: `Get-tickets irregular series test ${ Date.now() }`,
 				link_type: 'post',
-				start_datetime: '2035-07-01 10:00:00',
-				end_datetime: '2035-07-01 12:00:00',
+				start_date: '2035-07-01',
+				start_time: '10:00:00',
+				end_date: '2035-07-01',
+				end_time: '12:00:00',
 				recurrence_mode: 'manual',
 				manual_dates: [ '2035-07-01', '2035-07-10', '2035-07-20' ],
 			},

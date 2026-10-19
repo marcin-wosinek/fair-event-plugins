@@ -16,7 +16,7 @@ import { createInterpolateElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { dateI18n, getSettings } from '@wordpress/date';
 import {
-	formatSiteLocalDatetime,
+	formatTimingStart,
 	formatSiteLocalTime,
 	getEventDisplayTitle,
 } from 'fair-events-shared';
@@ -43,12 +43,15 @@ export default function EventContextHeader( {
 } ) {
 	if ( ! eventDate ) return null;
 
-	const dateLine = eventDate.start_datetime
-		? formatSiteLocalDatetime( eventDate.start_datetime )
-		: '—';
-	const timeRangeLine = eventDate.end_datetime
-		? `${ dateLine } – ${ formatSiteLocalTime( eventDate.end_datetime ) }`
-		: dateLine;
+	// Only supplied times are shown: the end time joins the line when the
+	// date has one.
+	const dateLine = formatTimingStart( eventDate ) || '—';
+	const timeRangeLine =
+		eventDate.start_date && ! eventDate.all_day && eventDate.end_time
+			? `${ dateLine } – ${ formatSiteLocalTime(
+					`${ eventDate.end_date } ${ eventDate.end_time }`
+				) }`
+			: dateLine;
 
 	const venue = venues.find( ( v ) => v.id === eventDate.venue_id );
 	const venueLine = venue?.name || eventDate.address || null;
@@ -170,13 +173,13 @@ export default function EventContextHeader( {
 
 	let calendarLinkLabel = __( 'Calendar', 'fair-events' );
 	let calendarHref = calendarUrl;
-	if ( calendarUrl && eventDate.start_datetime ) {
-		const month = eventDate.start_datetime.slice( 0, 7 );
+	if ( calendarUrl && eventDate.start_date ) {
+		const month = eventDate.start_date.slice( 0, 7 );
 		calendarHref = `${ calendarUrl }&month=${ month }`;
 		const { formats } = getSettings();
 		const monthLabel = dateI18n(
 			formats.month || 'F Y',
-			`${ eventDate.start_datetime.replace( ' ', 'T' ) }Z`,
+			`${ eventDate.start_date }T00:00:00Z`,
 			true
 		);
 		calendarLinkLabel = sprintf(

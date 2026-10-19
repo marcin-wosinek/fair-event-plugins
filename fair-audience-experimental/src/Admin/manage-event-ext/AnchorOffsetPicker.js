@@ -56,10 +56,12 @@ export function fromOffsetMinutes( offsetMinutes ) {
 }
 
 /**
- * Compute the send time for a preview (best-effort, treats the stored datetime
- * as wall-clock time — the server recomputes authoritatively).
+ * Compute the send time for a preview (best-effort, treats the stored date
+ * and time as wall-clock time — the server recomputes authoritatively).
+ * Like the server, an all-day date anchors at the start of its day, and a
+ * date without the anchor's time has no send time.
  *
- * @param {Object} eventDate     Event date row with start_datetime/end_datetime.
+ * @param {Object} eventDate     Event date with start_date/start_time, end_date/end_time and all_day.
  * @param {string} anchorType    'event_date_start' | 'event_date_end'.
  * @param {number} offsetMinutes Signed offset in minutes.
  * @return {string} Formatted local datetime, or '' when unavailable.
@@ -68,14 +70,16 @@ export function computeScheduledFor( eventDate, anchorType, offsetMinutes ) {
 	if ( ! eventDate ) {
 		return '';
 	}
-	const base =
-		anchorType === 'event_date_end'
-			? eventDate.end_datetime
-			: eventDate.start_datetime;
-	if ( ! base ) {
+	const isEnd = anchorType === 'event_date_end';
+	const date = isEnd ? eventDate.end_date : eventDate.start_date;
+	let time = isEnd ? eventDate.end_time : eventDate.start_time;
+	if ( eventDate.all_day ) {
+		time = '00:00:00';
+	}
+	if ( ! date || ! time ) {
 		return '';
 	}
-	const dt = new Date( base.replace( ' ', 'T' ) );
+	const dt = new Date( `${ date }T${ time }` );
 	if ( Number.isNaN( dt.getTime() ) ) {
 		return '';
 	}

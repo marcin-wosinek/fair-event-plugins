@@ -403,8 +403,10 @@ test.describe( 'multiple_instances ticket types — pick-N signup semantics (#93
 			headers: authHeaders,
 			data: {
 				title,
-				start_datetime: '2035-04-02 10:00:00',
-				end_datetime: '2035-04-02 12:00:00',
+				start_date: '2035-04-02',
+				start_time: '10:00:00',
+				end_date: '2035-04-02',
+				end_time: '12:00:00',
 				rrule,
 			},
 		} );

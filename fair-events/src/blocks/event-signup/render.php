@@ -210,17 +210,15 @@ if ( $series_master_id && class_exists( \FairEvents\Models\EventDates::class ) )
 	$upcoming = \FairEvents\Models\EventDates::get_upcoming_by_master_id( $series_master_id );
 	foreach ( $upcoming as $occ ) {
 		$occurrences_for_picker[] = array(
-			'id'             => (int) $occ->id,
-			'start_datetime' => $occ->start_datetime,
-			'end_datetime'   => $occ->end_datetime,
-			'all_day'        => (bool) $occ->all_day,
-			'timing'         => $occ->get_timing(),
+			'id'        => (int) $occ->id,
+			'all_day'   => (bool) $occ->all_day,
+			'timing'    => $occ->get_timing(),
 			// A companion plugin (fair-audience) flips this true for
 			// occurrences the recognised viewer already holds, so the
 			// pickers below can label them. They stay selectable: buying
 			// another ticket for a date already held is a purchase of its
 			// own.
-			'signed_up'      => false,
+			'signed_up' => false,
 		);
 	}
 }
@@ -693,11 +691,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 				<select id="<?php echo esc_attr( $form_id ); ?>-occ" name="event_date_id_single" class="form-input fair-events-occurrence-select">
 					<?php foreach ( $occurrences_for_picker as $occ_index => $occ_row ) : ?>
 						<?php
-						$occ_label = \FairEvents\Helpers\DateRangeFormatter::format(
-							$occ_row['start_datetime'],
-							$occ_row['end_datetime'],
-							$occ_row['all_day']
-						);
+						$occ_label = \FairEvents\Helpers\DateRangeFormatter::format_timing( $occ_row['timing'] );
 						$occ_full  = in_array( (int) $occ_row['id'], $full_date_ids, true );
 						if ( $occ_full ) {
 							$occ_label .= ' — ' . __( 'full', 'fair-events' );
@@ -722,11 +716,7 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 					<p class="fair-events-instance-picker-hint"></p>
 					<?php foreach ( $occurrences_for_picker as $occ_row ) : ?>
 						<?php
-						$occ_label     = \FairEvents\Helpers\DateRangeFormatter::format(
-							$occ_row['start_datetime'],
-							$occ_row['end_datetime'],
-							$occ_row['all_day']
-						);
+						$occ_label     = \FairEvents\Helpers\DateRangeFormatter::format_timing( $occ_row['timing'] );
 						$occ_full      = in_array( (int) $occ_row['id'], $full_date_ids, true );
 						$occ_signed_up = ! empty( $occ_row['signed_up'] );
 						if ( $occ_full ) {

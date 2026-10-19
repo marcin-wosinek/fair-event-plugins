@@ -12,6 +12,7 @@ import {
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 import DeleteParticipantsModal from '../components/DeleteParticipantsModal.js';
 import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
+import { formatTimingStart } from 'fair-events-shared/src/dateTime.js';
 
 // The All Participants page, which is the plugin's top-level menu page.
 const ALL_PARTICIPANTS_URL = 'admin.php?page=fair-audience';
@@ -24,15 +25,9 @@ function formatDateTime( dateString ) {
 	return date.toLocaleString();
 }
 
-function formatEventDate( dateString ) {
-	if ( ! dateString ) {
-		return '—';
-	}
-	const date = new Date( dateString.replace( ' ', 'T' ) );
-	if ( Number.isNaN( date.getTime() ) ) {
-		return dateString;
-	}
-	return date.toLocaleString();
+// An event's date, with its start time only when one is set.
+function formatEventDate( timing ) {
+	return formatTimingStart( timing ) || '—';
 }
 
 const LABEL_DISPLAY = {
@@ -304,11 +299,7 @@ export default function ParticipantDetail() {
 													ev.event_title || '—'
 												) }
 											</td>
-											<td>
-												{ formatEventDate(
-													ev.start_datetime
-												) }
-											</td>
+											<td>{ formatEventDate( ev ) }</td>
 											<td>
 												{ LABEL_DISPLAY[ ev.label ] ||
 													ev.label }

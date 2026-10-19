@@ -84,8 +84,10 @@ test.describe( 'EventInvitationsController preview', () => {
 		).id;
 		const series = await post( '/fair-events/v1/event-dates', {
 			title: `Invitation Preview ${ stamp }`,
-			start_datetime: '2037-05-02 18:30:00',
-			end_datetime: '2037-05-02 20:30:00',
+			start_date: '2037-05-02',
+			start_time: '18:30:00',
+			end_date: '2037-05-02',
+			end_time: '20:30:00',
 			rrule: 'FREQ=WEEKLY;COUNT=2',
 		} );
 		created.seriesId = series.id;

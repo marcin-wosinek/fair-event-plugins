@@ -62,8 +62,10 @@ test.describe( 'Remove a participant from an event date (#1820)', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2035-11-03 10:00:00',
-				end_datetime: '2035-11-03 12:00:00',
+				start_date: '2035-11-03',
+				start_time: '10:00:00',
+				end_date: '2035-11-03',
+				end_time: '12:00:00',
 			},
 		} );
 		const edBody = await edRes.json();

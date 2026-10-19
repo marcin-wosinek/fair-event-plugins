@@ -63,8 +63,10 @@ addFilter(
 				render: () => (
 					<EventMailings
 						eventDateId={ eventDateId }
-						startDatetime={ eventDate.start_datetime }
-						endDatetime={ eventDate.end_datetime }
+						startDate={ eventDate.start_date }
+						startTime={ eventDate.start_time }
+						endDate={ eventDate.end_date }
+						endTime={ eventDate.end_time }
 						allDay={ eventDate.all_day }
 					/>
 				),

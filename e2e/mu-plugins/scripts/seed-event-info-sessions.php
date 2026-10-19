@@ -101,7 +101,7 @@ $master_id = (int) EventDates::get_by_event_id( $series_post_id )->id;
 
 $sessions = array();
 foreach ( EventDates::get_all_by_master_id( $master_id ) as $row ) {
-	$sessions[ substr( $row->start_datetime, 0, 10 ) ] = (int) $row->id;
+	$sessions[ $row->start_date ] = (int) $row->id;
 }
 
 $date_of = static function ( $days ) use ( $today ) {
@@ -117,23 +117,16 @@ foreach ( array( -14, -7, 0, 7, 14 ) as $days ) {
 EventDates::update_by_id(
 	$sessions[ $date_of( 7 ) ],
 	array(
-		'start_datetime' => $local( $today, 7, '20:00' ),
-		'end_datetime'   => $local( $today, 7, '21:30' ),
-		'address'        => 'Calle Cambio 2, Madrid',
+		'start_date' => $date_of( 7 ),
+		'end_date'   => $date_of( 7 ),
+		'start_time' => '20:00:00',
+		'end_time'   => '21:30:00',
+		'address'    => 'Calle Cambio 2, Madrid',
 	)
 );
 EventDates::update_by_id( $sessions[ $date_of( 14 ) ], array( 'attendance_mode' => 'online' ) );
-global $wpdb;
-// Clear both the canonical end time and its legacy datetime: status reads the former.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test fixture; update_by_id() can't write NULL.
-$wpdb->update(
-	$wpdb->prefix . 'fair_event_dates',
-	array(
-		'end_datetime' => null,
-		'end_time'     => null,
-	),
-	array( 'id' => $sessions[ $date_of( 0 ) ] )
-);
+// Today's session has no end time.
+EventDates::update_by_id( $sessions[ $date_of( 0 ) ], array( 'end_time' => null ) );
 
 // Single event.
 $single_post_id = $create_post( 'fair_event', 'E2E Session Single ' . $suffix, $block );

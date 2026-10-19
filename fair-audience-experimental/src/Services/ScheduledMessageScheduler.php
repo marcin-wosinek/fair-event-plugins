@@ -127,9 +127,9 @@ class ScheduledMessageScheduler {
 	/**
 	 * The anchor moment of an event date row.
 	 *
-	 * Reads the dates and optional times of Fair Events rows that have them
-	 * (`timing_migrated`), and the start/end datetimes of older rows or
-	 * Fair Events versions.
+	 * Reads the row's date and optional time: an all-day date anchors at the
+	 * start of its day, and a timed date without the needed time has no
+	 * anchor moment.
 	 *
 	 * @param string $anchor_type event_date_start or event_date_end.
 	 * @param array  $row         Event date row.
@@ -137,11 +137,6 @@ class ScheduledMessageScheduler {
 	 */
 	public static function anchor_time_from_row( $anchor_type, array $row ) {
 		$is_end = 'event_date_end' === $anchor_type;
-
-		if ( empty( $row['timing_migrated'] ) ) {
-			$value = $is_end ? ( $row['end_datetime'] ?? null ) : ( $row['start_datetime'] ?? null );
-			return empty( $value ) ? null : $value;
-		}
 
 		$date = $is_end ? ( $row['end_date'] ?? null ) : ( $row['start_date'] ?? null );
 		if ( empty( $date ) ) {

@@ -69,7 +69,8 @@ test.describe( 'Retired event tools with legacy settings', () => {
 			{
 				data: {
 					title: 'Retired tools source',
-					start_datetime: '2040-01-01 10:00:00',
+					start_date: '2040-01-01',
+					start_time: '10:00:00',
 					link_type: 'none',
 				},
 			}

@@ -28,6 +28,20 @@ defined( 'WPINC' ) || die;
 class ParticipantsController extends WP_REST_Controller {
 
 	/**
+	 * Timing fields of an entry without a (known) event date, in Fair
+	 * Events' canonical shape.
+	 *
+	 * @var array
+	 */
+	const UNDATED_TIMING = array(
+		'start_date' => null,
+		'end_date'   => null,
+		'start_time' => null,
+		'end_time'   => null,
+		'all_day'    => false,
+	);
+
+	/**
 	 * REST API namespace.
 	 *
 	 * @var string
@@ -399,29 +413,33 @@ class ParticipantsController extends WP_REST_Controller {
 			: array();
 
 		foreach ( $relationships as $rel ) {
-			$event_title    = $rel->event_id ? get_the_title( (int) $rel->event_id ) : '';
-			$start_datetime = '';
+			$event_title = $rel->event_id ? get_the_title( (int) $rel->event_id ) : '';
+			$timing      = self::UNDATED_TIMING;
 			if ( $has_event_dates && $rel->event_date_id ) {
 				$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $rel->event_date_id );
 				if ( $event_date ) {
-					$start_datetime = $event_date->start_datetime;
+					$timing = $event_date->get_timing();
 				}
 			}
 
 			$transaction_id = $latest_transaction_ids_by_ep[ (int) $rel->id ] ?? null;
 
-			$events[] = array(
-				'id'                 => (int) $rel->id,
-				'event_id'           => (int) $rel->event_id,
-				'event_date_id'      => (int) $rel->event_date_id,
-				'event_title'        => $event_title,
-				'start_datetime'     => $start_datetime,
-				'label'              => $rel->label,
-				'created_at'         => $rel->created_at,
-				'transaction_id'     => $transaction_id,
-				'transaction_status' => $transaction_id
-					? $this->normalize_transaction_status( $statuses[ $transaction_id ] ?? null )
-					: null,
+			$events[] = array_merge(
+				array(
+					'id'            => (int) $rel->id,
+					'event_id'      => (int) $rel->event_id,
+					'event_date_id' => (int) $rel->event_date_id,
+					'event_title'   => $event_title,
+				),
+				$timing,
+				array(
+					'label'              => $rel->label,
+					'created_at'         => $rel->created_at,
+					'transaction_id'     => $transaction_id,
+					'transaction_status' => $transaction_id
+						? $this->normalize_transaction_status( $statuses[ $transaction_id ] ?? null )
+						: null,
+				)
 			);
 		}
 
@@ -431,28 +449,30 @@ class ParticipantsController extends WP_REST_Controller {
 			? ( new \FairForm\Database\QuestionnaireSubmissionRepository() )->get_by_participant( $id )
 			: array();
 		foreach ( $rows as $row ) {
-			$page_title     = $row->post_id ? get_the_title( (int) $row->post_id ) : '';
-			$event_title    = '';
-			$start_datetime = '';
+			$page_title  = $row->post_id ? get_the_title( (int) $row->post_id ) : '';
+			$event_title = '';
+			$timing      = self::UNDATED_TIMING;
 			if ( $has_event_dates && $row->event_date_id ) {
 				$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $row->event_date_id );
 				if ( $event_date ) {
-					$start_datetime = $event_date->start_datetime;
+					$timing = $event_date->get_timing();
 					if ( $event_date->event_id ) {
 						$event_title = get_the_title( (int) $event_date->event_id );
 					}
 				}
 			}
 
-			$submissions[] = array(
-				'id'             => (int) $row->id,
-				'title'          => $row->title,
-				'post_id'        => (int) $row->post_id,
-				'page_title'     => $page_title,
-				'event_date_id'  => (int) $row->event_date_id,
-				'event_title'    => $event_title,
-				'start_datetime' => $start_datetime,
-				'created_at'     => $row->created_at,
+			$submissions[] = array_merge(
+				array(
+					'id'            => (int) $row->id,
+					'title'         => $row->title,
+					'post_id'       => (int) $row->post_id,
+					'page_title'    => $page_title,
+					'event_date_id' => (int) $row->event_date_id,
+					'event_title'   => $event_title,
+				),
+				$timing,
+				array( 'created_at' => $row->created_at )
 			);
 		}
 

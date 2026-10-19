@@ -60,8 +60,10 @@ test.describe( 'EventParticipantsController — move', () => {
 			headers: authHeaders,
 			data: {
 				title: `Move test ${ Date.now() }`,
-				start_datetime: '2036-06-01 10:00:00',
-				end_datetime: '2036-06-01 12:00:00',
+				start_date: '2036-06-01',
+				start_time: '10:00:00',
+				end_date: '2036-06-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		} );
@@ -100,8 +102,10 @@ test.describe( 'EventParticipantsController — move', () => {
 				headers: authHeaders,
 				data: {
 					title: `Unrelated event ${ Date.now() }`,
-					start_datetime: '2036-06-15 10:00:00',
-					end_datetime: '2036-06-15 12:00:00',
+					start_date: '2036-06-15',
+					start_time: '10:00:00',
+					end_date: '2036-06-15',
+					end_time: '12:00:00',
 				},
 			}
 		);

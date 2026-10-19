@@ -30,7 +30,11 @@ class PurchaseContextTest extends TestCase {
 			/** @var int */
 			public $id;
 			/** @var string|null */
-			public $start_datetime;
+			public $start_date;
+			/** @var string|null */
+			public $start_time;
+			/** @var bool */
+			public $all_day = false;
 			/** @var string */
 			public $occurrence_type;
 			/** @var int|null */
@@ -50,7 +54,8 @@ class PurchaseContextTest extends TestCase {
 			 */
 			public function __construct( $id, $start, $post_id, $title, $type, $master ) {
 				$this->id              = $id;
-				$this->start_datetime  = $start;
+				$this->start_date      = $start ? substr( $start, 0, 10 ) : null;
+				$this->start_time      = $start ? substr( $start, 11, 8 ) : null;
 				$this->post_id         = $post_id;
 				$this->title           = $title;
 				$this->occurrence_type = $type;

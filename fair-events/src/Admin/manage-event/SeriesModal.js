@@ -59,9 +59,7 @@ function seedManualDates( masterDateStr, generatedOccurrences ) {
 	// Scheduled (anchor) dates, not the shown ones: a moved occurrence keeps
 	// its row only while its anchor stays in the list.
 	const dates = ( generatedOccurrences || [] )
-		.map(
-			( occ ) => occ.recurrence_anchor || dateOnly( occ.start_datetime )
-		)
+		.map( ( occ ) => occ.recurrence_anchor || occ.start_date )
 		.filter( ( d ) => Boolean( d ) && d !== masterDateStr );
 
 	return [ ...new Set( dates ) ].sort();

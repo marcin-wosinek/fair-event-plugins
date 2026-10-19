@@ -37,14 +37,15 @@ import {
 	calculateDuration,
 	isLinkOnlyEvent,
 	formatDateOnly,
-	formatSiteLocalDatetime,
+	formatTimingStart,
+	timingStartKey,
 	getEventDisplayTitle,
 	parseRRule,
 	RECURRENCE_FREQUENCIES,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
 import EventTickets from './EventTickets.js';
-import { resolveFinalOccurrenceDatetime } from './salePeriodBoundaries.js';
+import { resolveFinalOccurrenceDate } from './salePeriodBoundaries.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
 import RecurrenceImpactSummary from './RecurrenceImpactSummary.js';
 import SeriesModal from './SeriesModal.js';
@@ -291,16 +292,12 @@ export default function ManageEventApp() {
 		setCategories( data.categories?.map( ( c ) => c.id ) || [] );
 		mergeCategories( data.categories || [] );
 
-		if ( data.start_datetime ) {
-			const [ sDate, sTime ] = data.start_datetime.split( ' ' );
-			setStartDate( sDate || '' );
-			setStartTime( sTime ? sTime.substring( 0, 5 ) : '' );
-		}
-		if ( data.end_datetime ) {
-			const [ eDate, eTime ] = data.end_datetime.split( ' ' );
-			setEndDate( eDate || '' );
-			setEndTime( eTime ? eTime.substring( 0, 5 ) : '' );
-		}
+		setStartDate( data.start_date || '' );
+		setStartTime(
+			data.start_time ? data.start_time.substring( 0, 5 ) : ''
+		);
+		setEndDate( data.end_date || '' );
+		setEndTime( data.end_time ? data.end_time.substring( 0, 5 ) : '' );
 	};
 
 	// Plain-object snapshot of every Event Details field, used to detect
@@ -427,13 +424,10 @@ export default function ManageEventApp() {
 		setError( null );
 		setSuccess( null );
 
-		const startDatetime = allDay
-			? `${ startDate } 00:00:00`
-			: `${ startDate } ${ startTime }:00`;
-
-		const endDatetime = allDay
-			? `${ endDate } 00:00:00`
-			: `${ endDate } ${ endTime }:00`;
+		// Dates with independently optional times: an empty time field is
+		// sent as null (not set), and an all-day event has no times.
+		const timeValue = ( time ) =>
+			! allDay && startDate && time ? `${ time }:00` : null;
 
 		try {
 			const updated = await apiFetch( {
@@ -441,8 +435,10 @@ export default function ManageEventApp() {
 				method: 'PUT',
 				data: {
 					title,
-					start_datetime: startDatetime,
-					end_datetime: endDatetime,
+					start_date: startDate || null,
+					end_date: startDate ? endDate || startDate : null,
+					start_time: timeValue( startTime ),
+					end_time: timeValue( endTime ),
 					all_day: allDay,
 					venue_id: venueId ? parseInt( venueId, 10 ) : null,
 					address,
@@ -563,9 +559,7 @@ export default function ManageEventApp() {
 			/* translators: 1: event title, 2: event date and time */
 			__( 'Delete event — %1$s, %2$s', 'fair-events' ),
 			eventTitle,
-			eventDate.start_datetime
-				? formatSiteLocalDatetime( eventDate.start_datetime )
-				: ''
+			formatTimingStart( eventDate )
 		);
 	}, [ eventDate, isSeriesMaster ] );
 
@@ -591,9 +585,7 @@ export default function ManageEventApp() {
 			/* translators: 1: event title, 2: event date */
 			__( 'Delete %1$s on %2$s? This cannot be undone.', 'fair-events' ),
 			eventTitle,
-			eventDate?.start_datetime
-				? formatSiteLocalDatetime( eventDate.start_datetime )
-				: ''
+			formatTimingStart( eventDate )
 		);
 	}, [ eventDate, isSeriesMaster ] );
 
@@ -694,15 +686,14 @@ export default function ManageEventApp() {
 	const isSeries =
 		!! eventDate?.rrule || eventDate?.recurrence_mode === 'manual';
 
-	// The event/series' final active occurrence's own end_datetime — or, when
-	// that occurrence has no end set, its start_datetime instead — mirroring
+	// The event/series' final active occurrence's own end date — mirroring
 	// EventDates::get_last_occurrence_boundary() so the ticket editor's
 	// lazily-resolved default sale end (day after the last occurrence) agrees
 	// with runtime availability even when an occurrence never had an end
 	// date. Recomputed from eventDate so it tracks series edits (add/remove/
 	// extend occurrences, cancellations) automatically.
-	const lastOccurrenceDatetime = useMemo(
-		() => resolveFinalOccurrenceDatetime( eventDate ),
+	const lastOccurrenceDate = useMemo(
+		() => resolveFinalOccurrenceDate( eventDate ),
 		[ eventDate ]
 	);
 
@@ -737,7 +728,7 @@ export default function ManageEventApp() {
 			const occurrences = eventDate.generated_occurrences || [];
 			const last = occurrences[ occurrences.length - 1 ];
 			if ( last ) {
-				endLabel = formatDateOnly( last.start_datetime, 'short' );
+				endLabel = formatDateOnly( last.start_date, 'short' );
 			}
 		}
 
@@ -873,7 +864,7 @@ export default function ManageEventApp() {
 		}
 
 		const eventTitle = getEventDisplayTitle( eventDate.title );
-		const when = formatSiteLocalDatetime( eventDate.start_datetime );
+		const when = formatTimingStart( eventDate );
 		return toDraft
 			? sprintf(
 					/* translators: 1: event title, 2: event date and time */
@@ -1081,14 +1072,12 @@ export default function ManageEventApp() {
 			render: () => (
 				<EventTickets
 					eventDateId={ eventDateId }
-					startDatetime={ eventDate.start_datetime }
-					endDatetime={ eventDate.end_datetime }
-					lastOccurrenceDatetime={ lastOccurrenceDatetime }
+					startDate={ eventDate.start_date }
+					endDate={ eventDate.end_date }
+					lastOccurrenceDate={ lastOccurrenceDate }
 					isSeries={ isSeries }
 					eventTitle={ getEventDisplayTitle( eventDate.title ) }
-					eventDateLabel={ formatSiteLocalDatetime(
-						eventDate.start_datetime
-					) }
+					eventDateLabel={ formatTimingStart( eventDate ) }
 					onDirtyChange={ handleTicketsDirtyChange }
 					onSavedSettingsChange={ handleSavedTicketSettings }
 				/>
@@ -1111,13 +1100,7 @@ export default function ManageEventApp() {
 							: eventDateId
 					}
 					eventTitle={ getEventDisplayTitle( title ) }
-					eventDateLabel={
-						eventDate?.start_datetime
-							? formatSiteLocalDatetime(
-									eventDate.start_datetime
-								)
-							: ''
-					}
+					eventDateLabel={ formatTimingStart( eventDate ) }
 				/>
 			),
 		},
@@ -1578,9 +1561,7 @@ export default function ManageEventApp() {
 													eventDate.cancelled_dates
 												}
 												masterDate={
-													eventDate.start_datetime?.split(
-														' '
-													)[ 0 ]
+													eventDate.start_date
 												}
 												manageEventUrl={
 													manageEventUrl
@@ -1796,7 +1777,7 @@ export default function ManageEventApp() {
 								'Its first date, %s, is kept as a single event.',
 								'fair-events'
 							),
-							formatSiteLocalDatetime( eventDate.start_datetime )
+							formatTimingStart( eventDate )
 						) }
 					</p>
 					{ endSeriesRemovedDates.length > 0 ? (
@@ -1824,9 +1805,7 @@ export default function ManageEventApp() {
 									.slice( 0, END_SERIES_LISTED_DATES )
 									.map( ( occurrence ) => (
 										<li key={ occurrence.id }>
-											{ formatSiteLocalDatetime(
-												occurrence.start_datetime
-											) }
+											{ formatTimingStart( occurrence ) }
 										</li>
 									) ) }
 								{ endSeriesRemovedDates.length >
@@ -1965,7 +1944,7 @@ export default function ManageEventApp() {
 					eventDateId={ eventDateId }
 					initialRrule={ eventDate.rrule }
 					initialRecurrenceMode={ eventDate.recurrence_mode }
-					startDatetime={ eventDate.start_datetime }
+					startDatetime={ timingStartKey( eventDate ) }
 					generatedOccurrences={ eventDate.generated_occurrences }
 					cancelledDates={ eventDate.cancelled_dates }
 					onClose={ () => setSeriesModalOpen( false ) }

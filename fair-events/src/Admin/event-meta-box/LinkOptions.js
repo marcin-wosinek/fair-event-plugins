@@ -10,6 +10,7 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { formatDateOnly } from 'fair-events-shared';
 
 /**
  * LinkOptions component
@@ -62,7 +63,8 @@ export default function LinkOptions( {
 				method: 'POST',
 				data: {
 					title: postTitle,
-					start_datetime: defaultStart,
+					start_date: defaultStart.slice( 0, 10 ),
+					start_time: defaultStart.slice( 11 ),
 					link_type: 'none',
 				},
 			} );
@@ -107,11 +109,7 @@ export default function LinkOptions( {
 	const eventOptions = [
 		{ label: __( 'Select an event...', 'fair-events' ), value: '' },
 		...allEvents.map( ( event ) => {
-			const date = event.start_datetime
-				? new Date(
-						event.start_datetime.replace( ' ', 'T' )
-					).toLocaleDateString()
-				: '';
+			const date = formatDateOnly( event.start_date, 'numeric' );
 			const linkedCount = event.linked_posts?.length || 0;
 			let label = event.title ? `${ event.title } - ${ date }` : date;
 			if ( linkedCount > 0 ) {

@@ -107,40 +107,43 @@ class FairEventsApiParser {
 	 * @return array|null Parsed event data or null if invalid.
 	 */
 	private static function parse_event( $event ) {
-		// Required fields: title and start
-		if ( empty( $event['title'] ) || empty( $event['start'] ) ) {
+		// Required fields: a title, and a start datetime or (on newer sites,
+		// which send `start` only with a start time or for all-day events) a
+		// start date.
+		if ( empty( $event['title'] ) || ( empty( $event['start'] ) && empty( $event['start_date'] ) ) ) {
 			return null;
 		}
 
 		// Parse dates — convert ISO 8601 (any tz) to site-local time.
-		$start_local = DateHelper::iso8601_to_local( $event['start'] );
-		if ( null === $start_local ) {
+		$start_local = ! empty( $event['start'] ) ? DateHelper::iso8601_to_local( $event['start'] ) : null;
+		if ( null === $start_local && ! empty( $event['start'] ) ) {
 			return null;
 		}
 
 		$end_local = ! empty( $event['end'] ) ? DateHelper::iso8601_to_local( $event['end'] ) : $start_local;
 		$all_day   = ! empty( $event['all_day'] );
 
-		$parsed = array(
-			'uid'         => $event['uid'] ?? md5( $event['start'] . $event['title'] ),
+		$timing = self::parse_timing( $event, $start_local, $end_local, $all_day );
+		if ( ! $timing ) {
+			if ( null === $start_local ) {
+				return null;
+			}
+			$timing = EventTiming::from_datetimes( $start_local, $end_local, $all_day );
+		}
+
+		$range = EventTiming::range_keys( $timing );
+
+		return array(
+			'uid'         => $event['uid'] ?? md5( ( $event['start'] ?? $event['start_date'] ) . $event['title'] ),
 			'summary'     => $event['title'],
 			'description' => $event['description'] ?? '',
 			'url'         => $event['url'] ?? '',
-			'start'       => $start_local,
-			'end'         => $end_local,
+			'start'       => $range['start'],
+			'end'         => $range['end'],
 			'all_day'     => $all_day,
 			'location'    => self::parse_location( $event['location'] ?? null ),
+			'timing'      => $timing,
 		);
-
-		$timing = self::parse_timing( $event, $start_local, $end_local, $all_day );
-		if ( $timing ) {
-			$legacy           = EventTiming::to_legacy( $timing );
-			$parsed['start']  = $legacy['start_datetime'];
-			$parsed['end']    = $legacy['end_datetime'] ?? $legacy['start_datetime'];
-			$parsed['timing'] = $timing;
-		}
-
-		return $parsed;
 	}
 
 	/**
@@ -152,10 +155,10 @@ class FairEventsApiParser {
 	 * as written, so a date-only value never shifts through a timezone
 	 * conversion and no time is invented.
 	 *
-	 * @param array  $event       Raw feed event.
-	 * @param string $start_local Site-local start from the feed's `start`.
-	 * @param string $end_local   Site-local end from the feed's `end`.
-	 * @param bool   $all_day     All-day flag.
+	 * @param array       $event       Raw feed event.
+	 * @param string|null $start_local Site-local start from the feed's `start`, if sent.
+	 * @param string|null $end_local   Site-local end from the feed's `end`, if sent.
+	 * @param bool        $all_day     All-day flag.
 	 * @return array|null Canonical timing, or null when the feed has no dates or they are invalid.
 	 */
 	private static function parse_timing( array $event, $start_local, $end_local, $all_day ) {
@@ -178,7 +181,7 @@ class FairEventsApiParser {
 			'all_day'    => $all_day,
 		);
 
-		if ( ! $all_day && null !== ( $changes['start_time'] ?? null ) ) {
+		if ( ! $all_day && null !== ( $changes['start_time'] ?? null ) && $start_local ) {
 			$timing['start_date'] = substr( $start_local, 0, 10 );
 			$timing['start_time'] = substr( $start_local, 11, 8 );
 		}

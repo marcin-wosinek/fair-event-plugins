@@ -15,6 +15,7 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { timingFields } from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -38,8 +39,7 @@ async function createEventWithUnsetWindow(
 ) {
 	const data = {
 		title: `Unset sale-period test ${ Date.now() }-${ Math.random() }`,
-		start_datetime: startDatetime,
-		end_datetime: endDatetime,
+		...timingFields( startDatetime, endDatetime ),
 	};
 	if ( rrule ) data.rrule = rrule;
 
@@ -157,17 +157,17 @@ test.describe( 'GetTicketsController — lazy default sale-period resolution', (
 		expect( res.ok() ).toBeTruthy();
 	} );
 
-	test( 'an event with no end_datetime resolves the default sale end from its own start date (#1582)', async () => {
-		// No end_datetime at all — EventDates::get_last_occurrence_boundary()
-		// must fall back to the event's own start_datetime rather than
-		// leaving the automatic window unresolved.
+	test( 'an event with no end resolves the default sale end from its own start date (#1582)', async () => {
+		// No end at all — EventDates::get_last_occurrence_boundary() must
+		// fall back to the event's own start date rather than leaving the
+		// automatic window unresolved.
 		const eventRes = await api.post(
 			'/wp-json/fair-events/v1/event-dates',
 			{
 				headers: adminHeaders,
 				data: {
 					title: `No end datetime ${ Date.now() }-${ Math.random() }`,
-					start_datetime: tomorrow( 1, '10:00:00' ),
+					...timingFields( tomorrow( 1, '10:00:00' ) ),
 				},
 			}
 		);

@@ -40,8 +40,10 @@ test.describe( 'TicketsController — extension rule validation (#1521)', () => 
 				headers: adminHeaders,
 				data: {
 					title: `Extension rules ${ Date.now() }`,
-					start_datetime: '2038-01-01 10:00:00',
-					end_datetime: '2038-01-01 12:00:00',
+					start_date: '2038-01-01',
+					start_time: '10:00:00',
+					end_date: '2038-01-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -139,8 +141,10 @@ test.describe( 'TicketsController — sale period boundary validation (#1582)', 
 				headers: adminHeaders,
 				data: {
 					title: `Sale period validation ${ Date.now() }`,
-					start_datetime: '2039-01-01 10:00:00',
-					end_datetime: '2039-01-01 12:00:00',
+					start_date: '2039-01-01',
+					start_time: '10:00:00',
+					end_date: '2039-01-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -442,8 +446,10 @@ test.describe( 'TicketsController — stable group restrictions', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Stable restriction ${ Date.now() }`,
-					start_datetime: '2037-01-01 10:00:00',
-					end_datetime: '2037-01-01 12:00:00',
+					start_date: '2037-01-01',
+					start_time: '10:00:00',
+					end_date: '2037-01-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -546,8 +552,10 @@ test.describe( 'TicketsController — recurrence_scope preserved when type has s
 			headers: adminHeaders,
 			data: {
 				title: `Scope-lock test ${ Date.now() }`,
-				start_datetime: '2030-06-01 10:00:00',
-				end_datetime: '2030-06-01 12:00:00',
+				start_date: '2030-06-01',
+				start_time: '10:00:00',
+				end_date: '2030-06-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -670,8 +678,10 @@ test.describe( 'TicketsController — disabled flag and delete guard', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Disabled-flag test ${ Date.now() }`,
-				start_datetime: '2030-07-01 10:00:00',
-				end_datetime: '2030-07-01 12:00:00',
+				start_date: '2030-07-01',
+				start_time: '10:00:00',
+				end_date: '2030-07-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -794,8 +804,10 @@ test.describe( 'TicketsController — retired pricing-period settings (#1138)', 
 			headers: adminHeaders,
 			data: {
 				title: `Retired-settings test ${ Date.now() }`,
-				start_datetime: '2030-08-01 10:00:00',
-				end_datetime: '2030-08-01 12:00:00',
+				start_date: '2030-08-01',
+				start_time: '10:00:00',
+				end_date: '2030-08-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -913,8 +925,10 @@ test.describe( 'TicketsController — discounted_price dropped from add-on optio
 			headers: adminHeaders,
 			data: {
 				title: `Discounted-price test ${ Date.now() }`,
-				start_datetime: '2030-08-01 10:00:00',
-				end_datetime: '2030-08-01 12:00:00',
+				start_date: '2030-08-01',
+				start_time: '10:00:00',
+				end_date: '2030-08-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -1064,8 +1078,10 @@ test.describe( 'TicketsController — add-on order from the reorder popup (#1765
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2036-06-01 10:00:00',
-				end_datetime: '2036-06-01 12:00:00',
+				start_date: '2036-06-01',
+				start_time: '10:00:00',
+				end_date: '2036-06-01',
+				end_time: '12:00:00',
 			},
 		} );
 		const edBody = await edRes.json();
@@ -1318,8 +1334,10 @@ test.describe( 'TicketsController — add-on collaborator assignments removed (#
 				headers: adminHeaders,
 				data: {
 					title: `Legacy assignments ${ Date.now() }`,
-					start_datetime: '2037-03-01 10:00:00',
-					end_datetime: '2037-03-01 12:00:00',
+					start_date: '2037-03-01',
+					start_time: '10:00:00',
+					end_date: '2037-03-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -1501,8 +1519,10 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 				headers: adminHeaders,
 				data: {
 					title: `Core ticket routes ${ Date.now() }`,
-					start_datetime: '2037-04-01 10:00:00',
-					end_datetime: '2037-04-01 12:00:00',
+					start_date: '2037-04-01',
+					start_time: '10:00:00',
+					end_date: '2037-04-01',
+					end_time: '12:00:00',
 				},
 			}
 		);

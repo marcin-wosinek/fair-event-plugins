@@ -90,7 +90,13 @@ export const entryFromItem = ( item ) => {
  * @return {Object} Editor entry.
  */
 export const newEntry = ( eventDate, option = null ) => {
-	const start = splitDatetime( eventDate?.start_datetime );
+	const start = {
+		date: eventDate?.start_date || '',
+		time:
+			! eventDate?.all_day && eventDate?.start_time
+				? eventDate.start_time.slice( 0, 5 )
+				: '',
+	};
 	const startTime = start.time || '09:00';
 	const end = start.date
 		? addMinutes( start.date, startTime, 60 )

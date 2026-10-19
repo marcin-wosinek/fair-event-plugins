@@ -21,15 +21,25 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { formatTimingStart } from 'fair-events-shared';
 import EventAudience from '../EventAudience.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
 const SIBLINGS = [
-	{ id: 5, start_datetime: '2026-01-01 10:00:00', occurrence_type: 'single' },
+	{
+		id: 5,
+		start_date: '2026-01-01',
+		start_time: '10:00:00',
+		occurrence_type: 'single',
+	},
 ];
 
-const DATE_LABEL = new Date( '2026-01-01T10:00:00' ).toLocaleString();
+// The date as the site formats it, with its start time.
+const DATE_LABEL = formatTimingStart( {
+	start_date: '2026-01-01',
+	start_time: '10:00:00',
+} );
 
 const GROUPS = [
 	{ id: 7, name: 'Volunteers', member_count: 3 },

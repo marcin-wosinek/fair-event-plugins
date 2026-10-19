@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -83,12 +84,10 @@ test.describe( 'Admin calendar — category filter', () => {
 						method: 'POST',
 						data: {
 							title,
-							start_datetime: `${
-								month || MONTH
-							}-${ day } 10:00:00`,
-							end_datetime: `${
-								month || MONTH
-							}-${ day } 12:00:00`,
+							...timingFields(
+								`${ month || MONTH }-${ day } 10:00:00`,
+								`${ month || MONTH }-${ day } 12:00:00`
+							),
 							link_type: 'none',
 							categories: categoryIds,
 						},

@@ -36,8 +36,10 @@ jest.mock( '@wordpress/data', () => {
 
 const eventDate = {
 	id: 42,
-	start_datetime: '2026-06-10 10:00:00',
-	end_datetime: '2026-06-10 11:00:00',
+	start_date: '2026-06-10',
+	start_time: '10:00:00',
+	end_date: '2026-06-10',
+	end_time: '11:00:00',
 	all_day: false,
 	venue_id: null,
 	rrule: null,
@@ -326,8 +328,10 @@ describe( 'EventEditForm event length in Spanish', () => {
 		const select = await renderSpanishForm( {
 			...eventDate,
 			all_day: true,
-			start_datetime: '2026-06-10 00:00:00',
-			end_datetime: '2026-06-12 00:00:00',
+			start_date: '2026-06-10',
+			start_time: '00:00:00',
+			end_date: '2026-06-12',
+			end_time: '00:00:00',
 		} );
 
 		expect( optionLabels( select ) ).toEqual( [

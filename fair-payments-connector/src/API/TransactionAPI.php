@@ -761,13 +761,13 @@ class TransactionAPI {
 		}
 
 		$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $transaction->event_date_id );
-		if ( ! $event_date || empty( $event_date->start_datetime ) ) {
+		if ( ! $event_date || empty( $event_date->start_date ) ) {
 			return array();
 		}
 
 		// Working days are counted to the start date; its time, when the
 		// event has one, does not matter, so a missing time needs none.
-		$start = ! empty( $event_date->start_date ) ? $event_date->start_date : $event_date->start_datetime;
+		$start = $event_date->start_date;
 
 		$tz = wp_timezone();
 		try {
@@ -775,7 +775,7 @@ class TransactionAPI {
 		} catch ( \Exception $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[Fair Payments Connector] Invalid event start_datetime for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
+				error_log( '[Fair Payments Connector] Invalid event start_date for event_date #' . (int) $transaction->event_date_id . ': ' . $e->getMessage() );
 			}
 			return array();
 		}

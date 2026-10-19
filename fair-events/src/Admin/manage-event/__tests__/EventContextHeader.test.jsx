@@ -8,7 +8,7 @@
  *     count badge), generated (occurrence badge + "view series" link +
  *     tickets-on-series note).
  *   - Link-status variants: post, external, none.
- *   - Breadcrumb calendar link carries &month=YYYY-MM from start_datetime.
+ *   - Breadcrumb calendar link carries &month=YYYY-MM from start_date.
  *   - Link-state actions: placeholder (single "set up" button), internal
  *     (view + edit + change link), external (open link + change link) — each
  *     firing onManageLink.
@@ -23,8 +23,10 @@ const calendarUrl = '/wp-admin/admin.php?page=fair-events-calendar';
 const baseEventDate = {
 	id: 1,
 	title: 'Test Event',
-	start_datetime: '2026-07-15 18:00:00',
-	end_datetime: '2026-07-15 20:00:00',
+	start_date: '2026-07-15',
+	start_time: '18:00:00',
+	end_date: '2026-07-15',
+	end_time: '20:00:00',
 	venue_id: null,
 	address: null,
 	link_type: 'none',
@@ -84,7 +86,8 @@ it( 'generated occurrence: shows occurrence badge, view-series link, and tickets
 		master: {
 			id: 9,
 			title: 'Master Event',
-			start_datetime: '2026-07-01 18:00:00',
+			start_date: '2026-07-01',
+			start_time: '18:00:00',
 		},
 	};
 	render(
@@ -196,7 +199,7 @@ it( 'link status: none shows the fallback chip', () => {
 	expect( screen.getByText( /No public page yet/i ) ).toBeInTheDocument();
 } );
 
-it( 'breadcrumb calendar link carries &month=YYYY-MM from start_datetime', () => {
+it( 'breadcrumb calendar link carries &month=YYYY-MM from start_date', () => {
 	render(
 		<EventContextHeader
 			eventDate={ baseEventDate }
@@ -458,7 +461,8 @@ it( 'generated occurrence with a schedule: the note covers the schedule too (#17
 				master: {
 					id: 9,
 					title: 'Master Event',
-					start_datetime: '2026-07-01 18:00:00',
+					start_date: '2026-07-01',
+					start_time: '18:00:00',
 				},
 			} }
 			manageEventUrl={ manageEventUrl }

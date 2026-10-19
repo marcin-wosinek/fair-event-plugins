@@ -432,8 +432,8 @@ it( 'seeds the calendar selection from existing generated occurrences when editi
 		initialRecurrenceMode: 'manual',
 		startDatetime: '2026-07-01 18:00:00',
 		generatedOccurrences: [
-			{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-			{ id: 3, start_datetime: '2026-07-20 18:00:00' },
+			{ id: 2, start_date: '2026-07-08', start_time: '18:00:00' },
+			{ id: 3, start_date: '2026-07-20', start_time: '18:00:00' },
 		],
 		onClose: () => {},
 		onSaved: () => {},
@@ -470,7 +470,8 @@ it( 'seeds a moved occurrence by its scheduled date', async () => {
 		generatedOccurrences: [
 			{
 				id: 2,
-				start_datetime: '2026-07-09 18:00:00',
+				start_date: '2026-07-09',
+				start_time: '18:00:00',
 				recurrence_anchor: '2026-07-08',
 			},
 		],

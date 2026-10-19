@@ -83,8 +83,10 @@ test.describe( 'Manage Event — move a signup over capacity', () => {
 			data: {
 				title: `Move e2e ${ stamp }`,
 				link_type: 'post',
-				start_datetime: '2036-03-03 10:00:00',
-				end_datetime: '2036-03-03 12:00:00',
+				start_date: '2036-03-03',
+				start_time: '10:00:00',
+				end_date: '2036-03-03',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=2',
 			},
 		} );

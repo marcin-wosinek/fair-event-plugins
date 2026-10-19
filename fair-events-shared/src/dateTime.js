@@ -123,3 +123,52 @@ export function formatMonthLabel( value ) {
 		year: 'numeric',
 	} );
 }
+
+/**
+ * Format a site-local date (Y-m-d) in the site's date format, without
+ * re-applying the site timezone offset.
+ *
+ * @param {string} date Date string, e.g. "2026-09-01".
+ * @return {string} Formatted date in the site's format.
+ */
+export function formatSiteLocalDate( date ) {
+	const { formats } = getSettings();
+	return dateI18n( formats.date, `${ date }T00:00:00Z`, true );
+}
+
+/**
+ * Format the start of an event date from its canonical timing: the date
+ * and start time when a start time is set, the date alone for an all-day
+ * date or one without a start time. A missing time is never shown as
+ * midnight.
+ *
+ * @param {Object|null|undefined} timing Object with `start_date`, `start_time` and `all_day`.
+ * @return {string} Formatted start, or '' for an undated timing.
+ */
+export function formatTimingStart( timing ) {
+	if ( ! timing?.start_date ) {
+		return '';
+	}
+	if ( ! timing.all_day && timing.start_time ) {
+		return formatSiteLocalDatetime(
+			`${ timing.start_date } ${ timing.start_time }`
+		);
+	}
+	return formatSiteLocalDate( timing.start_date );
+}
+
+/**
+ * Sortable key for the start of an event date's canonical timing: a date
+ * without a start time sorts first on its day. Not a time to display.
+ *
+ * @param {Object|null|undefined} timing Object with `start_date` and `start_time`.
+ * @return {string} "Y-m-d H:i:s" key, or '' for an undated timing.
+ */
+export function timingStartKey( timing ) {
+	if ( ! timing?.start_date ) {
+		return '';
+	}
+	return `${ timing.start_date } ${
+		( ! timing.all_day && timing.start_time ) || '00:00:00'
+	}`;
+}

@@ -28,7 +28,7 @@ class SeriesCoverage {
 	 * Coverage for the form of one event date.
 	 *
 	 * @param int     $event_date_id          Event date the form signs up for.
-	 * @param array[] $occurrences_for_picker Upcoming series dates (id, start_datetime, end_datetime, all_day, signed_up), as the render context holds them.
+	 * @param array[] $occurrences_for_picker Upcoming series dates (id, timing, signed_up), as the render context holds them.
 	 * @return array{dates: array[], whole_series: int[]}|null Null when the form offers no series dates.
 	 */
 	public static function for_event_date( int $event_date_id, array $occurrences_for_picker ) {
@@ -40,9 +40,7 @@ class SeriesCoverage {
 		foreach ( $occurrences_for_picker as $occurrence ) {
 			$dates[] = self::describe(
 				(int) $occurrence['id'],
-				$occurrence['start_datetime'],
-				$occurrence['end_datetime'],
-				! empty( $occurrence['all_day'] ),
+				$occurrence['timing'],
 				! empty( $occurrence['signed_up'] )
 			);
 		}
@@ -57,13 +55,7 @@ class SeriesCoverage {
 			}
 			$event_date = EventDates::get_by_id( $covered_id );
 			if ( $event_date ) {
-				$dates[] = self::describe(
-					$covered_id,
-					$event_date->start_datetime,
-					$event_date->end_datetime,
-					(bool) $event_date->all_day,
-					false
-				);
+				$dates[] = self::describe( $covered_id, $event_date->get_timing(), false );
 			}
 		}
 
@@ -108,17 +100,15 @@ class SeriesCoverage {
 	/**
 	 * One date's label and availability.
 	 *
-	 * @param int    $id             Event date ID.
-	 * @param string $start_datetime Site-local start.
-	 * @param string $end_datetime   Site-local end.
-	 * @param bool   $all_day        Whether it is an all-day date.
-	 * @param bool   $signed_up      Whether the viewer already holds it.
+	 * @param int   $id        Event date ID.
+	 * @param array $timing    Canonical timing (see EventTiming).
+	 * @param bool  $signed_up Whether the viewer already holds it.
 	 * @return array
 	 */
-	private static function describe( $id, $start_datetime, $end_datetime, $all_day, $signed_up ) {
+	private static function describe( $id, array $timing, $signed_up ) {
 		return array(
 			'id'        => $id,
-			'label'     => DateRangeFormatter::format( $start_datetime, $end_datetime, $all_day ),
+			'label'     => DateRangeFormatter::format_timing( $timing ),
 			'full'      => 0 === TicketCapacity::remaining_for_event_date( $id ),
 			'signed_up' => $signed_up,
 		);

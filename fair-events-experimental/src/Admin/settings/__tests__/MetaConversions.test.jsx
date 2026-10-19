@@ -563,7 +563,8 @@ describe( 'MetaConversions calendar click test', () => {
 		id: 34,
 		event_id: 12,
 		title: 'Mix and Move',
-		start_datetime: '2026-11-01 18:00:00',
+		start_date: '2026-11-01',
+		start_time: '18:00:00',
 		occurrence_type: 'single',
 		status: 'active',
 	};
@@ -571,20 +572,23 @@ describe( 'MetaConversions calendar click test', () => {
 		id: 50,
 		event_id: 20,
 		title: 'Weekly jam',
-		start_datetime: '2026-11-02 19:00:00',
+		start_date: '2026-11-02',
+		start_time: '19:00:00',
 		occurrence_type: 'master',
 		status: 'active',
 		children: [
 			{
 				id: 51,
 				event_id: 20,
-				start_datetime: '2026-11-09 19:00:00',
+				start_date: '2026-11-09',
+				start_time: '19:00:00',
 				status: 'active',
 			},
 			{
 				id: 52,
 				event_id: 20,
-				start_datetime: '2026-11-16 19:00:00',
+				start_date: '2026-11-16',
+				start_time: '19:00:00',
 				status: 'cancelled',
 			},
 		],
@@ -599,7 +603,8 @@ describe( 'MetaConversions calendar click test', () => {
 		id: 77,
 		event_id: 30,
 		title: 'Mix cancelled',
-		start_datetime: '2026-11-03 18:00:00',
+		start_date: '2026-11-03',
+		start_time: '18:00:00',
 		status: 'cancelled',
 	};
 	let eventList;

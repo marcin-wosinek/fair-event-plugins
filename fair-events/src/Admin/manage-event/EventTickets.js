@@ -115,9 +115,9 @@ export const duplicateOption = ( items, index ) => {
 export default function EventTickets( {
 	eventDateId,
 	onSaveRef,
-	startDatetime,
-	endDatetime: endDatetimeProp,
-	lastOccurrenceDatetime,
+	startDate,
+	endDate,
+	lastOccurrenceDate,
 	isSeries,
 	eventTitle,
 	eventDateLabel,
@@ -125,11 +125,7 @@ export default function EventTickets( {
 	onSavedSettingsChange,
 } ) {
 	const [ capacity, setCapacity ] = useState( '' );
-	const [ endDatetime, setEndDatetime ] = useState(
-		endDatetimeProp
-			? endDatetimeProp.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
-			: ''
-	);
+	const [ eventEndDate, setEventEndDate ] = useState( endDate || '' );
 	const [ ticketTypes, setTicketTypes ] = useState( [] );
 	const [ salePeriods, setSalePeriods ] = useState( [] );
 	const [ createdDate, setCreatedDate ] = useState( null );
@@ -217,10 +213,8 @@ export default function EventTickets( {
 				? String( data.capacity )
 				: ''
 		);
-		if ( data.end_datetime ) {
-			setEndDatetime(
-				data.end_datetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
-			);
+		if ( data.end_date ) {
+			setEventEndDate( data.end_date );
 		}
 		// Display-only anchor of an empty first sale start; never saved.
 		setCreatedDate( data.created_date || null );
@@ -566,10 +560,8 @@ export default function EventTickets( {
 	// default sale end when the window is left unset. Falls back to the
 	// single event's own end when there's no series data (e.g. still loading).
 	const defaultSaleEnd = () => {
-		const anchor = lastOccurrenceDatetime || endDatetime;
-		return anchor
-			? dayAfterDate( anchor.split( ' ' )[ 0 ].split( 'T' )[ 0 ] )
-			: '';
+		const anchor = lastOccurrenceDate || eventEndDate;
+		return anchor ? dayAfterDate( anchor ) : '';
 	};
 
 	const formatSaleDateLabel = ( dateStr ) => {
@@ -584,9 +576,7 @@ export default function EventTickets( {
 	};
 
 	const daysBeforeEvent = ( dateStr ) => {
-		const eventStart = startDatetime
-			? startDatetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
-			: null;
+		const eventStart = startDate || null;
 		if ( ! eventStart || ! dateStr ) return null;
 		const eventDay = new Date( eventStart + 'T00:00:00' );
 		const saleDay = new Date( dateStr + 'T00:00:00' );
@@ -596,9 +586,7 @@ export default function EventTickets( {
 		return diff > 0 ? diff : null;
 	};
 
-	const eventDay = startDatetime
-		? startDatetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
-		: '';
+	const eventDay = startDate || '';
 
 	// Seeds a single default sale period row so prices have somewhere to
 	// attach, but leaves sale_start/sale_end unset: the effective window is
@@ -782,9 +770,7 @@ export default function EventTickets( {
 		if ( value ) {
 			if ( salePeriods.length <= 1 ) {
 				const base = salePeriods[ 0 ];
-				const eventFirstDay = startDatetime
-					? startDatetime.split( ' ' )[ 0 ].split( 'T' )[ 0 ]
-					: getSiteToday();
+				const eventFirstDay = startDate || getSiteToday();
 				// Only the split boundary (eventFirstDay) needs a stored date.
 				// The outer start/end stay unset unless the organiser already
 				// typed one — an unset value must not be frozen here, or the

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 /**
  * Event Info: calendar → selected session → recurring overview (#1884).
@@ -81,8 +82,10 @@ test( 'a calendar session opens that session, which links back to the recurring 
 		path: `/fair-events/v1/event-dates/${ ensured.id }`,
 		method: 'PUT',
 		data: {
-			start_datetime: `${ day( 3 ) } 18:00:00`,
-			end_datetime: `${ day( 3 ) } 20:00:00`,
+			...timingFields(
+				`${ day( 3 ) } 18:00:00`,
+				`${ day( 3 ) } 20:00:00`
+			),
 			all_day: false,
 			rrule: 'FREQ=WEEKLY;COUNT=3',
 		},

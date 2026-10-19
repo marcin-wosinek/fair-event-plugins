@@ -46,8 +46,10 @@ test( 'shows one checkout total above the submit button only while it is enabled
 		method: 'POST',
 		data: {
 			title: `Checkout total e2e ${ Date.now() }`,
-			start_datetime: '2039-01-01 10:00:00',
-			end_datetime: '2039-01-01 12:00:00',
+			start_date: '2039-01-01',
+			start_time: '10:00:00',
+			end_date: '2039-01-01',
+			end_time: '12:00:00',
 		},
 	} );
 	let signupPage;
@@ -230,8 +232,10 @@ test( 'explains each series ticket’s dates and total, and buys the choice made
 		method: 'POST',
 		data: {
 			title: `Series coverage e2e ${ Date.now() }`,
-			start_datetime: '2039-03-01 18:00:00',
-			end_datetime: '2039-03-01 19:30:00',
+			start_date: '2039-03-01',
+			start_time: '18:00:00',
+			end_date: '2039-03-01',
+			end_time: '19:30:00',
 			rrule: 'FREQ=WEEKLY;COUNT=3',
 		},
 	} );

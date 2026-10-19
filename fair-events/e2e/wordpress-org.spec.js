@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -202,8 +203,10 @@ function buildSeedDates() {
 		return {
 			...e,
 			day,
-			start_datetime: `${ dateStr } ${ e.start_time }:00`,
-			end_datetime: `${ dateStr } ${ e.end_time }:00`,
+			...timingFields(
+				`${ dateStr } ${ e.start_time }:00`,
+				`${ dateStr } ${ e.end_time }:00`
+			),
 		};
 	} );
 }
@@ -336,8 +339,10 @@ test.describe( 'WordPress.org screenshots for Fair Events', () => {
 					method: 'POST',
 					data: {
 						title: seed.title,
-						start_datetime: seed.start_datetime,
-						end_datetime: seed.end_datetime,
+						start_date: seed.start_date,
+						end_date: seed.end_date,
+						start_time: seed.start_time,
+						end_time: seed.end_time,
 						all_day: false,
 					},
 				} );

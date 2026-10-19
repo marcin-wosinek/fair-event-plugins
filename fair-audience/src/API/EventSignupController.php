@@ -666,9 +666,9 @@ class EventSignupController extends WP_REST_Controller {
 		// list (see FairEventsShared\LineItemTotals).
 		$line_items = array();
 		foreach ( $pending_occurrences as $occ ) {
-			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
-				: $occ->start_datetime;
+			$occ_label    = method_exists( \FairEvents\Helpers\DateRangeFormatter::class, 'format_timing' )
+				? \FairEvents\Helpers\DateRangeFormatter::format_timing( $occ->get_timing() )
+				: (string) $occ->start_date;
 			$line_items[] = array(
 				'name'     => sprintf(
 					/* translators: %s: event title or occurrence date/time label */

@@ -106,4 +106,63 @@ class DateRangeFormatterTest extends TestCase {
 			DateRangeFormatter::format( $this->year . '-10-31 00:00:00', $this->year . '-11-02 00:00:00', true, true )
 		);
 	}
+
+	/**
+	 * Canonical timing for the format_timing() cases.
+	 *
+	 * @param string      $start_date Start date (month-day, current year).
+	 * @param string      $end_date   End date (month-day, current year).
+	 * @param string|null $start_time Start time.
+	 * @param string|null $end_time   End time.
+	 * @param bool        $all_day    All-day flag.
+	 * @return array Timing.
+	 */
+	private function timing( $start_date, $end_date, $start_time, $end_time, $all_day = false ) {
+		return array(
+			'start_date' => $this->year . '-' . $start_date,
+			'end_date'   => $this->year . '-' . $end_date,
+			'start_time' => $start_time,
+			'end_time'   => $end_time,
+			'all_day'    => $all_day,
+		);
+	}
+
+	/**
+	 * Only supplied times are shown, for each of the four combinations,
+	 * and genuine midnight is a time like any other.
+	 *
+	 * @return void
+	 */
+	public function test_format_timing_shows_only_supplied_times() {
+		$this->assertSame( '19:30—21:30, 15 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-15', '19:30:00', '21:30:00' ) ) );
+		$this->assertSame( '19:30, 15 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-15', '19:30:00', null ) ) );
+		$this->assertSame( '15 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-15', null, '21:30:00' ) ) );
+		$this->assertSame( '15 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-15', null, null ) ) );
+		$this->assertSame( '00:00—02:00, 15 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-15', '00:00:00', '02:00:00' ) ) );
+	}
+
+	/**
+	 * Multi-day and all-day timings read as date ranges; an undated timing
+	 * has no label.
+	 *
+	 * @return void
+	 */
+	public function test_format_timing_multi_day_all_day_and_undated() {
+		$this->assertSame( '15–17 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-17', null, null ) ) );
+		$this->assertSame( '19:30, 15–17 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-17', '19:30:00', null ) ) );
+		$this->assertSame( '22:00 15 October—03:00 16 October', DateRangeFormatter::format_timing( $this->timing( '10-15', '10-16', '22:00:00', '03:00:00' ) ) );
+		$this->assertSame( '31 October—2 November', DateRangeFormatter::format_timing( $this->timing( '10-31', '11-02', null, null, true ) ) );
+		$this->assertSame(
+			'',
+			DateRangeFormatter::format_timing(
+				array(
+					'start_date' => null,
+					'end_date'   => null,
+					'start_time' => null,
+					'end_time'   => null,
+					'all_day'    => false,
+				)
+			)
+		);
+	}
 }

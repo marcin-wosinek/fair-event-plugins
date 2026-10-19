@@ -265,6 +265,21 @@ class PublicEventsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * ISO 8601 timestamp for a site-local date and time.
+	 *
+	 * @param string|null $date Date (Y-m-d).
+	 * @param string|null $time Time (H:i:s).
+	 * @return string|null Timestamp with the site offset, or null when either part is missing.
+	 */
+	private static function boundary_iso8601( $date, $time ) {
+		if ( empty( $date ) || null === $time ) {
+			return null;
+		}
+
+		return DateHelper::local_to_iso8601( $date . ' ' . $time );
+	}
+
+	/**
 	 * Format a provider occurrence DTO for the public JSON response.
 	 *
 	 * @param array $occurrence Occurrence DTO from EventFeedProvider.
@@ -273,15 +288,19 @@ class PublicEventsController extends WP_REST_Controller {
 	private function format_for_response( array $occurrence ) {
 		// The dates with their independently optional times, and whether
 		// calendars may import the event: one with a missing time is listed
-		// here but left out of the ICS feed.
+		// here but left out of the ICS feed. `start` and `end` are full
+		// timestamps only for a supplied time (or an all-day day boundary),
+		// otherwise null; a missing time is never sent as midnight.
+		$timing   = $occurrence['timing'];
+		$end_date = $timing['end_date'] ?? $timing['start_date'];
 		$response = array(
 			'uid'                      => $occurrence['uid'],
 			'event_date_id'            => $occurrence['event_date_id'],
 			'occurrence_type'          => $occurrence['occurrence_type'],
 			'title'                    => $occurrence['title'],
 			'description'              => $occurrence['description'],
-			'start'                    => ! empty( $occurrence['start'] ) ? DateHelper::local_to_iso8601( $occurrence['start'] ) : '',
-			'end'                      => ! empty( $occurrence['end'] ) ? DateHelper::local_to_iso8601( $occurrence['end'] ) : '',
+			'start'                    => self::boundary_iso8601( $timing['start_date'], $timing['all_day'] ? '00:00:00' : $timing['start_time'] ),
+			'end'                      => self::boundary_iso8601( $end_date, $timing['all_day'] ? '00:00:00' : $timing['end_time'] ),
 			'all_day'                  => $occurrence['all_day'],
 			'start_date'               => $occurrence['timing']['start_date'],
 			'end_date'                 => $occurrence['timing']['end_date'],

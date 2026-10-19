@@ -945,8 +945,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
 		await renderTickets( {
 			initialData: emptyInitialData,
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
 		} );
 
 		fireEvent.click(
@@ -963,8 +963,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 		window.fairEventsManageEventData = { siteToday: '2026-07-15' };
 		await renderTickets( {
 			initialData: emptyInitialData,
-			startDatetime: '2020-01-01 10:00:00',
-			endDatetime: '2020-01-01 12:00:00',
+			startDate: '2020-01-01',
+			endDate: '2020-01-01',
 		} );
 
 		fireEvent.click(
@@ -982,8 +982,8 @@ describe( 'EventTickets — single pricing period by default (#1138)', () => {
 	it( 'turning on "Multiple pricing periods" splits the window into Advance ticket / Day of event and migrates the price', async () => {
 		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
-			startDatetime: '2026-01-10 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-10',
+			endDate: '2026-02-01',
 		} );
 
 		fireEvent.click(
@@ -1045,8 +1045,8 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 	it( 'a single event with an unset window shows the day after the event as the default, marked as a default', async () => {
 		await renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
 		} );
 
 		fireEvent.click(
@@ -1063,9 +1063,9 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 	it( "a series with an unset window resolves the default from the last occurrence, not the master's own end", async () => {
 		await renderTickets( {
 			initialData: initialDataWithUnsetPeriod,
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
-			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
+			lastOccurrenceDate: '2026-08-22',
 			isSeries: true,
 		} );
 
@@ -1094,9 +1094,9 @@ describe( 'EventTickets — unset sale window shows the resolved default (#1189)
 					{ ticket_type_id: 1, sale_period_id: 702, price: '12' },
 				],
 			},
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
-			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
+			lastOccurrenceDate: '2026-08-22',
 		} );
 
 		fireEvent.click(
@@ -1155,8 +1155,8 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		const payloadSaveRef = { current: null };
 		await renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
 			payloadSaveRef,
 		} );
 
@@ -1185,9 +1185,9 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 	it( 'the last period\'s "Until" field shows the resolved default as a placeholder, not a frozen value', async () => {
 		const { container } = await renderTickets( {
 			initialData: initialDataWithUnsetSinglePeriod,
-			startDatetime: '2026-08-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
-			lastOccurrenceDatetime: '2026-08-22 12:00:00',
+			startDate: '2026-08-01',
+			endDate: '2026-08-01',
+			lastOccurrenceDate: '2026-08-22',
 		} );
 
 		fireEvent.click(
@@ -1238,8 +1238,8 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		const payloadSaveRef = { current: null };
 		await renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
-			startDatetime: '2026-07-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
+			startDate: '2026-07-01',
+			endDate: '2026-08-01',
 			payloadSaveRef,
 		} );
 
@@ -1259,8 +1259,8 @@ describe( 'EventTickets — sale end tracks the series across conversion (#1203)
 		const payloadSaveRef = { current: null };
 		await renderTickets( {
 			initialData: initialDataWithSetSinglePeriod,
-			startDatetime: '2026-07-01 10:00:00',
-			endDatetime: '2026-08-01 12:00:00',
+			startDate: '2026-07-01',
+			endDate: '2026-08-01',
 			payloadSaveRef,
 		} );
 
@@ -1486,8 +1486,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	it( 'renders a swatch per Sale Periods table row matching the calendar palette', async () => {
 		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
-			startDatetime: '2026-01-25 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-25',
+			endDate: '2026-02-01',
 		} );
 
 		const toggle = screen.getByRole( 'button', { name: /Sale Periods/i } );
@@ -1509,8 +1509,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	it( 'hides the calendar when Multiple pricing periods is off, with a single stored period', async () => {
 		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
-			startDatetime: '2026-01-10 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-10',
+			endDate: '2026-02-01',
 		} );
 
 		fireEvent.click(
@@ -1523,8 +1523,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	it( 'shows the calendar when Multiple pricing periods is on, with two stored periods', async () => {
 		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
-			startDatetime: '2026-01-25 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-25',
+			endDate: '2026-02-01',
 		} );
 
 		fireEvent.click(
@@ -1537,8 +1537,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	it( 'shows the calendar after turning on Multiple pricing periods from a single period', async () => {
 		await renderTickets( {
 			initialData: initialDataWithOnePeriod,
-			startDatetime: '2026-01-10 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-10',
+			endDate: '2026-02-01',
 		} );
 
 		fireEvent.click(
@@ -1561,8 +1561,8 @@ describe( 'EventTickets — SalePeriodsCalendar wiring (#1197)', () => {
 	it( 'hides the calendar again after confirming the merge back to a single period', async () => {
 		await renderTickets( {
 			initialData: initialDataWithTwoPeriods,
-			startDatetime: '2026-01-25 10:00:00',
-			endDatetime: '2026-02-01 12:00:00',
+			startDate: '2026-01-25',
+			endDate: '2026-02-01',
 		} );
 
 		fireEvent.click(
@@ -1634,7 +1634,7 @@ describe( 'EventTickets — persisted editing', () => {
 		delete window.fairPaymentsConnector;
 	} );
 
-	it( 'uses a lazily-resolved default sale end from lastOccurrenceDatetime rather than a fixed value', async () => {
+	it( 'uses a lazily-resolved default sale end from lastOccurrenceDate rather than a fixed value', async () => {
 		await renderTickets( {
 			initialData: {
 				...initialDataWithTicketType,
@@ -1648,15 +1648,15 @@ describe( 'EventTickets — persisted editing', () => {
 					},
 				],
 			},
-			startDatetime: '2026-01-10 10:00:00',
-			lastOccurrenceDatetime: '2026-01-10 12:00:00',
+			startDate: '2026-01-10',
+			lastOccurrenceDate: '2026-01-10',
 		} );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: /Sale Periods/i } )
 		);
 
-		// The day after lastOccurrenceDatetime (2026-01-11), not endDatetime
+		// The day after lastOccurrenceDate (2026-01-11), not endDate
 		// (unset here) — formatSaleDateLabel() renders a locale-formatted
 		// weekday/day/month, so assert on the marker and month.
 		expect(
@@ -1813,7 +1813,7 @@ describe( 'EventTickets — automatic first start from site-local today (#1582)'
 					{ ticket_type_id: 1, sale_period_id: 902, price: '10' },
 				],
 			},
-			// No startDatetime/endDatetime/lastOccurrenceDatetime supplied —
+			// No startDate/endDate/lastOccurrenceDate supplied —
 			// nothing to anchor a default end to.
 		} );
 
@@ -3152,8 +3152,8 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 	const renderGaps = async ( initialData, extraProps = {} ) => {
 		const result = await renderTickets( {
 			initialData,
-			startDatetime: '2026-01-31 10:00:00',
-			endDatetime: '2026-01-31 12:00:00',
+			startDate: '2026-01-31',
+			endDate: '2026-01-31',
 			...extraProps,
 		} );
 		fireEvent.click(

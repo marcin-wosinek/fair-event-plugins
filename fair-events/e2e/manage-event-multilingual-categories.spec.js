@@ -64,8 +64,10 @@ test( 'editor retains categories from both languages after save and reopen', asy
 		} );
 		date = await api( '/fair-events/v1/event-dates', 'POST', {
 			title: `Editor event ${ suffix }`,
-			start_datetime: '2031-02-01 10:00:00',
-			end_datetime: '2031-02-01 12:00:00',
+			start_date: '2031-02-01',
+			start_time: '10:00:00',
+			end_date: '2031-02-01',
+			end_time: '12:00:00',
 		} );
 		await api( `/fair-events/v1/event-dates/${ date.id }`, 'PUT', {
 			event_id: post.id,

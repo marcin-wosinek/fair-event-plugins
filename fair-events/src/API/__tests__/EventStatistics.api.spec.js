@@ -7,6 +7,7 @@
 import { test, expect, request } from '@playwright/test';
 import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
+import { timingFields, startOf } from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -205,8 +206,10 @@ test.describe( 'EventStatisticsController', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Statistics ${ name } date`,
-				start_datetime: `${ addDays( today, startOffset ) } 10:00:00`,
-				end_datetime: `${ addDays( today, endOffset ) } 22:00:00`,
+				...timingFields(
+					`${ addDays( today, startOffset ) } 10:00:00`,
+					`${ addDays( today, endOffset ) } 22:00:00`
+				),
 			},
 		} );
 		expect( date.ok() ).toBeTruthy();
@@ -680,7 +683,7 @@ test.describe( 'EventStatisticsController', () => {
 				{ headers: adminHeaders }
 			);
 			expect( response.ok() ).toBeTruthy();
-			starts[ id ] = ( await response.json() ).start_datetime;
+			starts[ id ] = startOf( await response.json() );
 		}
 		const [ wholeSeriesTypeId ] = series.extraTypeIds;
 		const hourAfter = ( datetime ) =>

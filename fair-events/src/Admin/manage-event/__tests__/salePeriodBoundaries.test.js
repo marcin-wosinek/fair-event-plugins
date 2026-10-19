@@ -9,7 +9,7 @@ import {
 	resolveDefaultSaleStart,
 	resolveEffectiveSalePeriods,
 	hasUsableSalePeriodRange,
-	resolveFinalOccurrenceDatetime,
+	resolveFinalOccurrenceDate,
 } from '../salePeriodBoundaries.js';
 
 describe( 'resolveEffectiveSalePeriods', () => {
@@ -212,80 +212,116 @@ describe( 'hasUsableSalePeriodRange', () => {
 	} );
 } );
 
-describe( 'resolveFinalOccurrenceDatetime', () => {
+describe( 'resolveFinalOccurrenceDate', () => {
 	it( 'returns null for a null event date', () => {
-		expect( resolveFinalOccurrenceDatetime( null ) ).toBeNull();
+		expect( resolveFinalOccurrenceDate( null ) ).toBeNull();
 	} );
 
-	it( "uses the event's own end when there are no generated occurrences", () => {
+	it( "uses the event's own end date when there are no generated occurrences", () => {
 		const eventDate = {
-			start_datetime: '2026-01-01 10:00:00',
-			end_datetime: '2026-01-01 12:00:00',
+			start_date: '2026-01-01',
+			start_time: '10:00:00',
+			end_date: '2026-01-01',
+			end_time: '12:00:00',
 			generated_occurrences: [],
 		};
-		expect( resolveFinalOccurrenceDatetime( eventDate ) ).toBe(
-			'2026-01-01 12:00:00'
-		);
+		expect( resolveFinalOccurrenceDate( eventDate ) ).toBe( '2026-01-01' );
 	} );
 
-	it( 'falls back to the start when the final occurrence has no end', () => {
+	it( 'falls back to the start date when the final occurrence has no end date', () => {
 		const eventDate = {
-			start_datetime: '2026-01-01 10:00:00',
-			end_datetime: '2026-01-01 12:00:00',
+			start_date: '2026-01-01',
+			start_time: '10:00:00',
+			end_date: '2026-01-01',
+			end_time: '12:00:00',
 			generated_occurrences: [
 				{
-					start_datetime: '2026-02-01 10:00:00',
-					end_datetime: null,
+					start_date: '2026-02-01',
+					start_time: '10:00:00',
+					end_date: null,
+					end_time: null,
 					status: 'active',
 				},
 			],
 		};
-		expect( resolveFinalOccurrenceDatetime( eventDate ) ).toBe(
-			'2026-02-01 10:00:00'
-		);
+		expect( resolveFinalOccurrenceDate( eventDate ) ).toBe( '2026-02-01' );
+	} );
+
+	it( 'orders a date without a start time by its date', () => {
+		const eventDate = {
+			start_date: '2026-01-01',
+			start_time: '10:00:00',
+			end_date: '2026-01-01',
+			end_time: '12:00:00',
+			generated_occurrences: [
+				{
+					start_date: '2026-02-03',
+					start_time: null,
+					end_date: '2026-02-04',
+					end_time: null,
+					status: 'active',
+				},
+				{
+					start_date: '2026-02-01',
+					start_time: '10:00:00',
+					end_date: '2026-02-01',
+					end_time: '12:00:00',
+					status: 'active',
+				},
+			],
+		};
+		expect( resolveFinalOccurrenceDate( eventDate ) ).toBe( '2026-02-04' );
 	} );
 
 	it( 'picks the chronologically final active occurrence, not the last end in the list', () => {
 		const eventDate = {
-			start_datetime: '2026-01-01 10:00:00',
-			end_datetime: '2026-01-01 12:00:00',
+			start_date: '2026-01-01',
+			start_time: '10:00:00',
+			end_date: '2026-01-01',
+			end_time: '12:00:00',
 			generated_occurrences: [
 				{
-					start_datetime: '2026-03-01 10:00:00',
-					end_datetime: '2026-03-01 12:00:00',
+					start_date: '2026-03-01',
+					start_time: '10:00:00',
+					end_date: '2026-03-01',
+					end_time: '12:00:00',
 					status: 'active',
 				},
 				{
-					start_datetime: '2026-02-01 10:00:00',
-					end_datetime: '2026-02-01 12:00:00',
+					start_date: '2026-02-01',
+					start_time: '10:00:00',
+					end_date: '2026-02-01',
+					end_time: '12:00:00',
 					status: 'active',
 				},
 			],
 		};
-		expect( resolveFinalOccurrenceDatetime( eventDate ) ).toBe(
-			'2026-03-01 12:00:00'
-		);
+		expect( resolveFinalOccurrenceDate( eventDate ) ).toBe( '2026-03-01' );
 	} );
 
 	it( 'ignores cancelled occurrences', () => {
 		const eventDate = {
-			start_datetime: '2026-01-01 10:00:00',
-			end_datetime: '2026-01-01 12:00:00',
+			start_date: '2026-01-01',
+			start_time: '10:00:00',
+			end_date: '2026-01-01',
+			end_time: '12:00:00',
 			generated_occurrences: [
 				{
-					start_datetime: '2026-03-01 10:00:00',
-					end_datetime: '2026-03-01 12:00:00',
+					start_date: '2026-03-01',
+					start_time: '10:00:00',
+					end_date: '2026-03-01',
+					end_time: '12:00:00',
 					status: 'cancelled',
 				},
 				{
-					start_datetime: '2026-02-01 10:00:00',
-					end_datetime: '2026-02-01 12:00:00',
+					start_date: '2026-02-01',
+					start_time: '10:00:00',
+					end_date: '2026-02-01',
+					end_time: '12:00:00',
 					status: 'active',
 				},
 			],
 		};
-		expect( resolveFinalOccurrenceDatetime( eventDate ) ).toBe(
-			'2026-02-01 12:00:00'
-		);
+		expect( resolveFinalOccurrenceDate( eventDate ) ).toBe( '2026-02-01' );
 	} );
 } );

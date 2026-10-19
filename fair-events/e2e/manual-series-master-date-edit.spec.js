@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { startOf } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
 /**
  * Regression for #979: editing an irregular (manual) series' master event
- * only through its own start_datetime — the "Event Details" start-date field,
+ * only through its own start date and time — the "Event Details" start-date field,
  * not the "Edit series" modal — used to fall into the rrule-regenerate path
  * in EventDatesController::update_item(), which treated the manual master's
  * null rrule as "series ended" and wiped every hand-picked date.
@@ -49,7 +50,7 @@ async function login( page ) {
 }
 
 test.describe( 'Manual (irregular) series survives editing the master date', () => {
-	test( 'PUT with only start_datetime keeps recurrence_mode=manual and the other dates', async ( {
+	test( 'PUT with only the start and end keeps recurrence_mode=manual and the other dates', async ( {
 		page,
 	} ) => {
 		await login( page );
@@ -61,8 +62,10 @@ test.describe( 'Manual (irregular) series survives editing the master date', () 
 			method: 'POST',
 			data: {
 				title: 'Manual series master-date-edit regression',
-				start_datetime: '2026-08-01 18:00:00',
-				end_datetime: '2026-08-01 20:00:00',
+				start_date: '2026-08-01',
+				start_time: '18:00:00',
+				end_date: '2026-08-01',
+				end_time: '20:00:00',
 				all_day: false,
 			},
 		} );
@@ -89,8 +92,10 @@ test.describe( 'Manual (irregular) series survives editing the master date', () 
 				path: `/fair-events/v1/event-dates/${ master.id }`,
 				method: 'PUT',
 				data: {
-					start_datetime: '2026-08-01 19:00:00',
-					end_datetime: '2026-08-01 21:00:00',
+					start_date: '2026-08-01',
+					start_time: '19:00:00',
+					end_date: '2026-08-01',
+					end_time: '21:00:00',
 				},
 			} );
 
@@ -100,11 +105,11 @@ test.describe( 'Manual (irregular) series survives editing the master date', () 
 
 			expect( afterEdit.recurrence_mode ).toBe( 'manual' );
 			expect( afterEdit.occurrence_type ).toBe( 'master' );
-			expect( afterEdit.start_datetime ).toBe( '2026-08-01 19:00:00' );
+			expect( startOf( afterEdit ) ).toBe( '2026-08-01 19:00:00' );
 			expect( afterEdit.generated_occurrences ).toHaveLength( 2 );
 
 			const dates = afterEdit.generated_occurrences
-				.map( ( occ ) => occ.start_datetime )
+				.map( ( occ ) => startOf( occ ) )
 				.sort();
 			expect( dates ).toEqual( [
 				'2026-08-15 19:00:00',

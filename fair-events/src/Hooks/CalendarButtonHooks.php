@@ -107,7 +107,7 @@ class CalendarButtonHooks {
 		}
 
 		$event_dates = $export['row'];
-		$timing      = EventTiming::to_legacy( $event_dates->get_timing() );
+		$timing      = EventTiming::range_keys( $event_dates->get_timing() );
 
 		// Get post data for calendar event.
 		$title       = get_the_title( $post_id );
@@ -140,8 +140,8 @@ class CalendarButtonHooks {
 		// are its real values, never substitutes.
 		$data_attrs = sprintf(
 			'data-calendar-button="true" data-start="%s" data-end="%s" data-all-day="%s" data-title="%s" data-url="%s" data-location="%s" data-description="%s" data-recurring="%s" data-rrule="%s"',
-			esc_attr( $timing['start_datetime'] ),
-			esc_attr( $timing['end_datetime'] ),
+			esc_attr( $timing['start'] ),
+			esc_attr( $timing['end'] ),
 			$event_dates->all_day ? 'true' : 'false',
 			esc_attr( $title ),
 			esc_attr( $url ),

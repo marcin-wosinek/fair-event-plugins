@@ -115,22 +115,12 @@ export default function EventEditForm( {
 		setVenueId( data.venue_id ? String( data.venue_id ) : '' );
 		setAddress( data.address || '' );
 
-		if ( data.start_datetime ) {
-			const [ sDate, sTime ] = data.start_datetime.split( ' ' );
-			setStartDate( sDate || '' );
-			setStartTime( sTime ? sTime.substring( 0, 5 ) : '' );
-		} else {
-			setStartDate( '' );
-			setStartTime( '' );
-		}
-		if ( data.end_datetime ) {
-			const [ eDate, eTime ] = data.end_datetime.split( ' ' );
-			setEndDate( eDate || '' );
-			setEndTime( eTime ? eTime.substring( 0, 5 ) : '' );
-		} else {
-			setEndDate( '' );
-			setEndTime( '' );
-		}
+		setStartDate( data.start_date || '' );
+		setStartTime(
+			data.start_time ? data.start_time.substring( 0, 5 ) : ''
+		);
+		setEndDate( data.end_date || '' );
+		setEndTime( data.end_time ? data.end_time.substring( 0, 5 ) : '' );
 
 		if ( data.rrule ) {
 			setRecurrence( { enabled: true, ...parseRRule( data.rrule ) } );
@@ -223,30 +213,32 @@ export default function EventEditForm( {
 		}
 	};
 
+	// The form's dates with independently optional times: an empty time
+	// field is null (not set), and an all-day event has no times.
+	const buildTiming = () => {
+		const timeValue = ( time ) =>
+			! allDay && startDate && time ? `${ time }:00` : null;
+
+		return {
+			start_date: startDate || null,
+			end_date: startDate ? endDate || startDate : null,
+			start_time: timeValue( startTime ),
+			end_time: timeValue( endTime ),
+		};
+	};
+
 	const handleSave = async () => {
 		setSaving( true );
 		setError( null );
 		setSuccess( null );
 		const savedRevision = formRevision.current;
 
-		const startDatetime = allDay
-			? `${ startDate } 00:00:00`
-			: `${ startDate } ${ startTime }:00`;
-
-		const endDatetime =
-			endDate && ( allDay || endTime )
-				? allDay
-					? `${ endDate } 00:00:00`
-					: `${ endDate } ${ endTime }:00`
-				: null;
-
 		try {
 			const updated = await apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }`,
 				method: 'PUT',
 				data: {
-					start_datetime: startDate ? startDatetime : null,
-					end_datetime: endDatetime,
+					...buildTiming(),
 					all_day: allDay,
 					venue_id: venueId ? parseInt( venueId, 10 ) : null,
 					address,
@@ -282,24 +274,9 @@ export default function EventEditForm( {
 	useEffect( () => {
 		if ( loading ) return;
 
-		const startDatetime =
-			startDate && ( allDay || startTime )
-				? allDay
-					? `${ startDate } 00:00:00`
-					: `${ startDate } ${ startTime }:00`
-				: null;
-
-		const endDatetime =
-			endDate && ( allDay || endTime )
-				? allDay
-					? `${ endDate } 00:00:00`
-					: `${ endDate } ${ endTime }:00`
-				: null;
-
 		setEventData( {
 			id: eventDateId,
-			start_datetime: startDatetime,
-			end_datetime: endDatetime,
+			...buildTiming(),
 			all_day: allDay,
 			venue_id: venueId ? parseInt( venueId, 10 ) : null,
 			address,

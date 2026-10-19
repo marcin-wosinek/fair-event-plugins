@@ -48,7 +48,7 @@ class EventDatesTest extends TestCase {
 		$occurrence->master_id       = 1;
 		$occurrence->occurrence_type = 'generated';
 		$occurrence->link_type       = 'post';
-		$occurrence->start_datetime  = '2026-06-29 18:30:00';
+		$occurrence->start_date      = '2026-06-29';
 
 		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-29', $occurrence->get_display_url() );
 	}
@@ -154,7 +154,7 @@ class EventDatesTest extends TestCase {
 		$single->event_id        = 99;
 		$single->occurrence_type = 'single';
 		$single->link_type       = 'post';
-		$single->start_datetime  = '2026-06-22 18:30:00';
+		$single->start_date      = '2026-06-22';
 
 		$this->assertSame( 'https://example.com/?p=99', $single->get_display_url( true ) );
 	}
@@ -271,8 +271,10 @@ class EventDatesTest extends TestCase {
 		$row                    = new \stdClass();
 		$row->id                = 1;
 		$row->event_id          = 42;
-		$row->start_datetime    = '2026-06-29 18:30:00';
-		$row->end_datetime      = '2026-06-29 20:00:00';
+		$row->start_date        = '2026-06-29';
+		$row->end_date          = '2026-06-29';
+		$row->start_time        = '18:30:00';
+		$row->end_time          = '20:00:00';
 		$row->all_day           = 0;
 		$row->occurrence_type   = 'single';
 		$row->master_id         = null;
@@ -311,8 +313,10 @@ class EventDatesTest extends TestCase {
 		$row                    = new \stdClass();
 		$row->id                = 1;
 		$row->event_id          = null;
-		$row->start_datetime    = '2026-06-29 18:30:00';
-		$row->end_datetime      = null;
+		$row->start_date        = '2026-06-29';
+		$row->end_date          = '2026-06-29';
+		$row->start_time        = '18:30:00';
+		$row->end_time          = null;
 		$row->all_day           = 0;
 		$row->occurrence_type   = 'single';
 		$row->master_id         = null;
@@ -499,7 +503,7 @@ class EventDatesTest extends TestCase {
 		$occurrence->master_id       = 1;
 		$occurrence->occurrence_type = 'generated';
 		$occurrence->link_type       = 'none';
-		$occurrence->start_datetime  = '2026-06-29 18:30:00';
+		$occurrence->start_date      = '2026-06-29';
 
 		$this->assertSame( 'https://example.com/?p=42&event_date=2026-06-29', $occurrence->get_event_page_url() );
 	}

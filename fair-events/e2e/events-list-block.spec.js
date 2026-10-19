@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 /**
  * Events List block: Query Loop layouts (post-backed events only), per-event
@@ -122,11 +123,9 @@ test.describe( 'Events List block', () => {
 			method: 'PUT',
 			data: {
 				title: 'Events List Query Loop Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 2 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 3 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 2 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 3 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 			},
@@ -207,11 +206,9 @@ test.describe( 'Events List block', () => {
 			method: 'POST',
 			data: {
 				title: 'Events List Standalone Fixture Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 2 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 3 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 2 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 3 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 				categories: [ category.id ],
@@ -352,11 +349,9 @@ test.describe( 'Events List block', () => {
 			method: 'POST',
 			data: {
 				title: 'Events List Matching Category Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 2 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 3 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 2 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 3 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 				categories: [ category.id ],
@@ -368,11 +363,9 @@ test.describe( 'Events List block', () => {
 			method: 'POST',
 			data: {
 				title: 'Events List Non Matching Category Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 2 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 3 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 2 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 3 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 			},
@@ -458,8 +451,7 @@ test.describe( 'Events List block', () => {
 			method: 'POST',
 			data: {
 				title: `Weekly Series Fixture ${ suffix }`,
-				start_datetime: at( 2 ),
-				end_datetime: at( 2, 1 ),
+				...timingFields( at( 2 ), at( 2, 1 ) ),
 				all_day: false,
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 				categories: [ category.id ],
@@ -472,8 +464,7 @@ test.describe( 'Events List block', () => {
 			method: 'POST',
 			data: {
 				title: `Single Fixture ${ suffix }`,
-				start_datetime: at( 3 ),
-				end_datetime: at( 3, 1 ),
+				...timingFields( at( 3 ), at( 3, 1 ) ),
 				all_day: false,
 				categories: [ category.id ],
 			},
@@ -498,8 +489,7 @@ test.describe( 'Events List block', () => {
 			path: `/fair-events/v1/event-dates/${ ensured.id }`,
 			method: 'PUT',
 			data: {
-				start_datetime: at( 4 ),
-				end_datetime: at( 4, 1 ),
+				...timingFields( at( 4 ), at( 4, 1 ) ),
 				all_day: false,
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},

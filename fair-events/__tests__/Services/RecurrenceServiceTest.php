@@ -66,7 +66,6 @@ class Recurrence_Test_WPDB {
 		$this->rows[ $id ] = (object) array_merge(
 			array(
 				'event_id'        => null,
-				'end_datetime'    => null,
 				'all_day'         => 0,
 				'occurrence_type' => 'generated',
 				'master_id'       => null,
@@ -114,7 +113,7 @@ class Recurrence_Test_WPDB {
 			$this->rows,
 			fn( $row ) => $row->id === $master_id || (int) $row->master_id === $master_id
 		);
-		usort( $rows, fn( $a, $b ) => strcmp( $a->start_datetime, $b->start_datetime ) );
+		usort( $rows, fn( $a, $b ) => strcmp( $a->start_date . ' ' . $a->start_time, $b->start_date . ' ' . $b->start_time ) );
 		return $rows;
 	}
 
@@ -242,9 +241,7 @@ class RecurrenceServiceTest extends TestCase {
 		return array_merge(
 			$timing,
 			array(
-				'start_datetime'  => $timing['start_date'] . ' ' . ( $timing['start_time'] ?? '00:00:00' ),
-				'all_day'         => $timing['all_day'] ? 1 : 0,
-				'timing_migrated' => 1,
+				'all_day' => $timing['all_day'] ? 1 : 0,
 			)
 		);
 	}
@@ -785,7 +782,7 @@ class RecurrenceServiceTest extends TestCase {
 
 		$this->assertSame( array( $ids['2035-03-08'] ), array_column( $impact['removed'], 'id' ) );
 		$this->assertSame( array( '2035-03-15' ), array_column( $impact['added'], 'start_date' ) );
-		$this->assertSame( array( '2035-03-15 10:00:00' ), array_column( $impact['added'], 'start_datetime' ) );
+		$this->assertSame( array( '10:00:00' ), array_column( $impact['added'], 'start_time' ) );
 		$this->assertSame( array( $ids['2035-03-29'] ), array_column( $impact['unchanged'], 'id' ) );
 		$this->assertSame( array(), $impact['shifted'] );
 	}

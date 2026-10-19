@@ -6,8 +6,11 @@
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { dateI18n, getSettings } from '@wordpress/date';
-import { getEventDisplayTitle } from 'fair-events-shared';
+import {
+	formatTimingStart,
+	getEventDisplayTitle,
+	timingStartKey,
+} from 'fair-events-shared';
 import { toFilenamePart } from 'fair-events/src/Admin/event-statistics/exportChartImage.js';
 
 export const SLOTS = [ 'current', 'comparison' ];
@@ -73,29 +76,21 @@ export function writeSelection( search, slot, id ) {
  * Format an occurrence's start as a site-local date, with the time unless the
  * event lasts all day.
  *
- * The stored value is already wall-clock site time, so it is formatted as UTC
- * to keep dateI18n from applying the site offset a second time.
+ * The stored values are already wall-clock site time; the start time is
+ * shown only when one is set.
  *
- * @param {Object} event Event date with `start_datetime` and `all_day`.
+ * @param {Object} event Event date with `start_date`, `start_time` and `all_day`.
  * @return {string} Formatted date, or '' when the event has no start.
  */
 export function formatEventStart( event ) {
-	if ( ! event?.start_datetime ) {
-		return '';
-	}
-	const { formats } = getSettings();
-	return dateI18n(
-		event.all_day ? formats.date : formats.datetime,
-		`${ String( event.start_datetime ).replace( ' ', 'T' ) }Z`,
-		true
-	);
+	return formatTimingStart( event );
 }
 
 /**
  * Name one occurrence: its title and start, so two dates of the same series
  * stay distinguishable.
  *
- * @param {Object} event Event date with `title`, `start_datetime`, `all_day`.
+ * @param {Object} event Event date with `title`, `start_date`, `start_time`, `all_day`.
  * @return {string} Label such as "Yoga retreat — October 12, 2026 6:00 pm".
  */
 export function getEventLabel( event ) {
@@ -132,9 +127,7 @@ export function flattenOccurrences( items ) {
 	return occurrences
 		.filter( ( occurrence ) => occurrence.status !== 'cancelled' )
 		.sort( ( a, b ) =>
-			String( b.start_datetime ).localeCompare(
-				String( a.start_datetime )
-			)
+			timingStartKey( b ).localeCompare( timingStartKey( a ) )
 		);
 }
 

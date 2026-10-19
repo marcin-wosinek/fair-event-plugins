@@ -150,8 +150,8 @@ class EventSchedule {
 
 		if ( $is_occurrence ) {
 			$master = EventDates::get_by_id( $config_id );
-			if ( $master && $master->start_datetime && $event_date->start_datetime ) {
-				$date_shift = self::to_datetime( $master->start_datetime )->diff( self::to_datetime( $event_date->start_datetime ) );
+			if ( $master && $master->start_date && $event_date->start_date ) {
+				$date_shift = EventCopyService::get_date_shift( $master->get_timing(), $event_date->get_timing() );
 			}
 		}
 
@@ -596,18 +596,16 @@ class EventSchedule {
 	 *
 	 * @param string $start      Entry start.
 	 * @param string $end        Entry end.
-	 * @param object $event_date Event date (needs start_datetime, end_datetime).
+	 * @param object $event_date Event date (needs start_date, end_date).
 	 * @return bool
 	 */
 	private static function is_outside_event( $start, $end, $event_date ) {
-		if ( empty( $event_date->start_datetime ) ) {
+		if ( empty( $event_date->start_date ) ) {
 			return false;
 		}
 
-		$first_day = substr( str_replace( 'T', ' ', $event_date->start_datetime ), 0, 10 );
-		$last_day  = ! empty( $event_date->end_datetime )
-			? substr( str_replace( 'T', ' ', $event_date->end_datetime ), 0, 10 )
-			: $first_day;
+		$first_day = $event_date->start_date;
+		$last_day  = ! empty( $event_date->end_date ) ? $event_date->end_date : $first_day;
 
 		return substr( $start, 0, 10 ) < $first_day || substr( $end, 0, 10 ) > max( $first_day, $last_day );
 	}

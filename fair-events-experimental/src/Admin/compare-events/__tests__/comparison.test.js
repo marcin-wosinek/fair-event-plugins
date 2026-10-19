@@ -62,7 +62,8 @@ describe( 'event labels', () => {
 		expect(
 			getEventLabel( {
 				title: ' Spring Ball ',
-				start_datetime: '2026-04-11 20:00:00',
+				start_date: '2026-04-11',
+				start_time: '20:00:00',
 				all_day: false,
 			} )
 		).toBe( 'Spring Ball — April 11, 2026 8:00 pm' );
@@ -72,7 +73,8 @@ describe( 'event labels', () => {
 		expect(
 			getEventLabel( {
 				title: '',
-				start_datetime: '2026-04-11 00:00:00',
+				start_date: '2026-04-11',
+				start_time: '00:00:00',
 				all_day: true,
 			} )
 		).toBe( '(untitled event) — April 11, 2026' );
@@ -85,26 +87,30 @@ describe( 'flattenOccurrences', () => {
 			{
 				id: 1,
 				title: 'Single',
-				start_datetime: '2026-05-01 10:00:00',
+				start_date: '2026-05-01',
+				start_time: '10:00:00',
 				status: 'active',
 			},
 			{
 				id: 2,
 				title: 'Weekly class',
-				start_datetime: '2026-06-01 10:00:00',
+				start_date: '2026-06-01',
+				start_time: '10:00:00',
 				status: 'active',
 				occurrence_type: 'master',
 				children: [
 					{
 						id: 3,
 						title: null,
-						start_datetime: '2026-06-08 10:00:00',
+						start_date: '2026-06-08',
+						start_time: '10:00:00',
 						status: 'active',
 					},
 					{
 						id: 4,
 						title: null,
-						start_datetime: '2026-06-15 10:00:00',
+						start_date: '2026-06-15',
+						start_time: '10:00:00',
 						status: 'cancelled',
 					},
 				],

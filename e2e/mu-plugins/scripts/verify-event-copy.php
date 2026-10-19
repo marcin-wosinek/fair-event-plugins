@@ -180,7 +180,7 @@ try {
 	$assert(
 		array( '2040-02-10', '2040-02-20' ) === array_map(
 			static function ( $row ) {
-				return substr( $row->start_datetime, 0, 10 );
+				return $row->start_date;
 			},
 			$rows
 		),

@@ -741,7 +741,7 @@ class EventParticipantsController extends WP_REST_Controller {
 		// bought; without a start time, the whole start date counts.
 		$pass_cutoff   = method_exists( $event_date, 'get_timing' ) && method_exists( \FairEvents\Helpers\EventTiming::class, 'series_pass_cutoff' )
 			? \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() )
-			: $event_date->start_datetime;
+			: null;
 		$occurrence_ts = $pass_cutoff ? strtotime( $pass_cutoff ) : null;
 
 		$already_listed = array();
@@ -2834,17 +2834,6 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		// Get event date metadata. Prefer the authoritative start_datetime from
-		// the fair_event_dates row; fall back to legacy post meta for events
-		// whose meta predates the event-dates table.
-		$event_date = $event_date_obj->start_datetime;
-		if ( empty( $event_date ) ) {
-			$event_date = get_post_meta( $event_id, 'event_start', true );
-		}
-		if ( empty( $event_date ) ) {
-			$event_date = get_post_meta( $event_id, 'event_date', true );
-		}
-
 		// Get participant counts by label.
 		$counts = $this->event_participant_repo->get_label_counts_for_event_date( $event_date_id );
 
@@ -2852,17 +2841,23 @@ class EventParticipantsController extends WP_REST_Controller {
 		$collaborators = $counts['collaborator'] ?? 0;
 		$interested    = $counts['interested'] ?? 0;
 
-		$response_data = array(
-			'event_id'         => $event_id,
-			'event_date_id'    => $event_date_id,
-			'title'            => $event->post_title,
-			'link'             => get_permalink( $event_id ),
-			'edit_url'         => get_edit_post_link( $event_id, 'raw' ),
-			'event_date'       => $event_date,
-			'signed_up'        => $signed_up,
-			'collaborators'    => $collaborators,
-			'interested'       => $interested,
-			'manage_event_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_date_id ),
+		// The event date's canonical timing: dates with independently
+		// optional times.
+		$response_data = array_merge(
+			array(
+				'event_id'      => $event_id,
+				'event_date_id' => $event_date_id,
+				'title'         => $event->post_title,
+				'link'          => get_permalink( $event_id ),
+				'edit_url'      => get_edit_post_link( $event_id, 'raw' ),
+			),
+			$event_date_obj->get_timing(),
+			array(
+				'signed_up'        => $signed_up,
+				'collaborators'    => $collaborators,
+				'interested'       => $interested,
+				'manage_event_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_date_id ),
+			)
 		);
 
 		return rest_ensure_response( $response_data );

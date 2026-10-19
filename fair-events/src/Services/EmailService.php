@@ -46,10 +46,7 @@ class EmailService {
 
 			$event_url = (string) $event_date->get_display_url();
 
-			$event_date_display = DateHelper::format_local_datetime(
-				$event_date->start_datetime,
-				get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
-			);
+			$event_date_display = self::format_event_start( $event_date );
 		}
 
 		$ticket_type_name = '';
@@ -135,10 +132,7 @@ class EmailService {
 				$inline_link_url = $display_url;
 			}
 
-			$event_date_display = DateHelper::format_local_datetime(
-				$event_date->start_datetime,
-				get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
-			);
+			$event_date_display = self::format_event_start( $event_date );
 		}
 
 		$ticket_type_name = '';
@@ -274,5 +268,25 @@ class EmailService {
 			// Also when sending throws: later mail must not inherit the type.
 			remove_filter( 'wp_mail_content_type', $content_type );
 		}
+	}
+
+	/**
+	 * An event date's start for an email: the date and start time, or the
+	 * date alone for an all-day date or one without a start time.
+	 *
+	 * @param \FairEvents\Models\EventDates $event_date Event date.
+	 * @return string Formatted start, or empty string when undated.
+	 */
+	private static function format_event_start( $event_date ) {
+		if ( empty( $event_date->start_date ) ) {
+			return '';
+		}
+
+		$has_time = ! $event_date->all_day && null !== $event_date->start_time;
+
+		return DateHelper::format_local_datetime(
+			$event_date->start_date . ' ' . ( $has_time ? $event_date->start_time : '00:00:00' ),
+			$has_time ? get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) : get_option( 'date_format' )
+		);
 	}
 }

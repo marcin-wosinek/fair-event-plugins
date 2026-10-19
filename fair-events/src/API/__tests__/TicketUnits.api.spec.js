@@ -157,16 +157,20 @@ test.describe( 'Ticket units', () => {
 
 		const single = await createPostLinkedEventDate( {
 			title: `Ticket units ${ Date.now() }`,
-			start_datetime: '2035-08-01 10:00:00',
-			end_datetime: '2035-08-01 12:00:00',
+			start_date: '2035-08-01',
+			start_time: '10:00:00',
+			end_date: '2035-08-01',
+			end_time: '12:00:00',
 		} );
 		eventPostId = single.postId;
 		eventDateId = single.eventDate.id;
 
 		const series = await createPostLinkedEventDate( {
 			title: `Ticket units series ${ Date.now() }`,
-			start_datetime: '2035-09-01 10:00:00',
-			end_datetime: '2035-09-01 12:00:00',
+			start_date: '2035-09-01',
+			start_time: '10:00:00',
+			end_date: '2035-09-01',
+			end_time: '12:00:00',
 			rrule: 'FREQ=WEEKLY;COUNT=3',
 		} );
 		seriesPostId = series.postId;

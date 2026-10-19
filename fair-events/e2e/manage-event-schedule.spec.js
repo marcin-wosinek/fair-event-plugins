@@ -114,8 +114,10 @@ test.describe( 'Manage Event — workshop schedule', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2039-05-14 09:00:00',
-				end_datetime: '2039-05-15 18:00:00',
+				start_date: '2039-05-14',
+				start_time: '09:00:00',
+				end_date: '2039-05-15',
+				end_time: '18:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;

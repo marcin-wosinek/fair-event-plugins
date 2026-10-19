@@ -79,11 +79,32 @@ class Installer_Timing_WPDB {
 	public $prefix = 'wp_';
 
 	/**
-	 * Whether the timing marker column exists.
+	 * Existing legacy timing columns: the datetimes and the marker.
+	 *
+	 * @var string[]
+	 */
+	public $columns = array( 'start_datetime', 'end_datetime', 'timing_migrated' );
+
+	/**
+	 * Result of each ALTER TABLE; false simulates a database error.
 	 *
 	 * @var bool
 	 */
-	public $has_marker_column = true;
+	public $alter_result = true;
+
+	/**
+	 * Executed ALTER TABLE statements.
+	 *
+	 * @var array<int, array>
+	 */
+	public $alters = array();
+
+	/**
+	 * Executed statements marking rows that already have a start date.
+	 *
+	 * @var array<int, array>
+	 */
+	public $marks = array();
 
 	/**
 	 * Results of successive backfill batches; false simulates a database error.
@@ -137,16 +158,29 @@ class Installer_Timing_WPDB {
 	 * @return array Matching columns.
 	 */
 	public function get_results( $prepared ) {
-		return $this->has_marker_column ? array( (object) array( 'Field' => $prepared['args'][1] ) ) : array();
+		return in_array( $prepared['args'][1], $this->columns, true ) ? array( (object) array( 'Field' => $prepared['args'][1] ) ) : array();
 	}
 
 	/**
-	 * Run one backfill batch.
+	 * Run an ALTER TABLE, a marking statement or one backfill batch.
 	 *
 	 * @param array $prepared Prepared query capture.
-	 * @return int|false Converted rows.
+	 * @return int|bool Affected rows, or the ALTER result.
 	 */
 	public function query( $prepared ) {
+		if ( 0 === strpos( $prepared['query'], 'ALTER TABLE' ) ) {
+			$this->alters[] = $prepared;
+			if ( $this->alter_result && false !== strpos( $prepared['query'], 'ADD COLUMN timing_migrated' ) ) {
+				$this->columns[] = 'timing_migrated';
+			}
+			return $this->alter_result;
+		}
+
+		if ( false === strpos( $prepared['query'], 'LIMIT' ) ) {
+			$this->marks[] = $prepared;
+			return 0;
+		}
+
 		$this->batches[] = $prepared;
 		return array_shift( $this->batch_results ) ?? 0;
 	}
@@ -343,11 +377,15 @@ class InstallerMigrationTest extends TestCase {
 		$this->assertTrue( version_compare( '3.43.0', '3.44.0', '<' ) );
 		$this->assertSame( '3.44.0', $method->invoke( null, true, true, false ) );
 		$this->assertSame( '3.43.0', $method->invoke( null, true, false, false ) );
+		$this->assertSame( '3.46.0', $method->invoke( null, true, true, true, true, false ) );
+		$this->assertSame( '3.45.0', $method->invoke( null, true, true, true, false, false ) );
 	}
 
 	/**
 	 * The 3.45.0 backfill converts unmarked rows in batches until none is
-	 * left, marking each row in the same statement.
+	 * left, marking each row in the same statement. Rows that already have
+	 * a start date (written by code that no longer fills the legacy
+	 * columns) are only marked, never converted.
 	 *
 	 * @return void
 	 */
@@ -359,6 +397,8 @@ class InstallerMigrationTest extends TestCase {
 		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_45_0' );
 
 		$this->assertTrue( $method->invoke( null ) );
+		$this->assertCount( 1, $wpdb->marks );
+		$this->assertSame( 'UPDATE %i SET timing_migrated = 1 WHERE timing_migrated = 0 AND start_date IS NOT NULL', $wpdb->marks[0]['query'] );
 		$this->assertCount( 3, $wpdb->batches );
 		$query = $wpdb->batches[0]['query'];
 		$this->assertStringContainsString( 'WHERE timing_migrated = 0', $query );
@@ -387,11 +427,83 @@ class InstallerMigrationTest extends TestCase {
 		$GLOBALS['wpdb']      = $left_over;
 		$this->assertFalse( $method->invoke( null ) );
 
-		$no_column                    = new Installer_Timing_WPDB();
-		$no_column->has_marker_column = false;
-		$GLOBALS['wpdb']              = $no_column;
+		$failed_marker               = new Installer_Timing_WPDB();
+		$failed_marker->columns      = array( 'start_datetime', 'end_datetime' );
+		$failed_marker->alter_result = false;
+		$GLOBALS['wpdb']             = $failed_marker;
 		$this->assertFalse( $method->invoke( null ) );
-		$this->assertCount( 0, $no_column->batches );
+		$this->assertCount( 0, $failed_marker->batches );
+	}
+
+	/**
+	 * A site upgrading past 3.45.0 at once no longer gets the marker column
+	 * from dbDelta, so the backfill adds it; a table without the legacy
+	 * columns has nothing to convert.
+	 *
+	 * @return void
+	 */
+	public function test_3_45_0_backfill_adds_its_marker_or_skips_without_legacy_columns() {
+		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_45_0' );
+
+		$no_marker          = new Installer_Timing_WPDB();
+		$no_marker->columns = array( 'start_datetime', 'end_datetime' );
+		$GLOBALS['wpdb']    = $no_marker;
+		$this->assertTrue( $method->invoke( null ) );
+		$this->assertStringContainsString( 'ADD COLUMN timing_migrated BOOLEAN NOT NULL DEFAULT 0', $no_marker->alters[0]['query'] );
+		$this->assertCount( 1, $no_marker->batches );
+
+		$no_legacy          = new Installer_Timing_WPDB();
+		$no_legacy->columns = array();
+		$GLOBALS['wpdb']    = $no_legacy;
+		$this->assertTrue( $method->invoke( null ) );
+		$this->assertCount( 0, $no_legacy->batches );
+		$this->assertCount( 0, $no_legacy->alters );
+	}
+
+	/**
+	 * 3.47.0 drops the legacy columns, with their indexes, once the
+	 * backfill (rerun first) reports every row converted.
+	 *
+	 * @return void
+	 */
+	public function test_3_47_0_drops_legacy_columns_after_backfill() {
+		$wpdb            = new Installer_Timing_WPDB();
+		$GLOBALS['wpdb'] = $wpdb;
+
+		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_47_0' );
+
+		$this->assertTrue( $method->invoke( null ) );
+		$this->assertCount( 1, $wpdb->batches );
+		$this->assertCount( 1, $wpdb->alters );
+		$this->assertSame( 'ALTER TABLE %i DROP COLUMN start_datetime, DROP COLUMN end_datetime, DROP COLUMN timing_migrated', $wpdb->alters[0]['query'] );
+		$this->assertSame( array( 'wp_fair_event_dates' ), $wpdb->alters[0]['args'] );
+	}
+
+	/**
+	 * 3.47.0 keeps the legacy columns while rows are unconverted or the
+	 * drop fails, and has nothing to do once they are gone.
+	 *
+	 * @return void
+	 */
+	public function test_3_47_0_keeps_columns_until_safe() {
+		$method = new ReflectionMethod( Installer::class, 'migrate_to_3_47_0' );
+
+		$left_over            = new Installer_Timing_WPDB();
+		$left_over->remaining = '2';
+		$GLOBALS['wpdb']      = $left_over;
+		$this->assertFalse( $method->invoke( null ) );
+		$this->assertCount( 0, $left_over->alters );
+
+		$failed_drop               = new Installer_Timing_WPDB();
+		$failed_drop->alter_result = false;
+		$GLOBALS['wpdb']           = $failed_drop;
+		$this->assertFalse( $method->invoke( null ) );
+
+		$retired          = new Installer_Timing_WPDB();
+		$retired->columns = array();
+		$GLOBALS['wpdb']  = $retired;
+		$this->assertTrue( $method->invoke( null ) );
+		$this->assertCount( 0, $retired->alters );
 	}
 
 	/**
@@ -414,7 +526,6 @@ class InstallerMigrationTest extends TestCase {
 				'start_time'        => '18:00:00',
 				'end_time'          => '20:00:00',
 				'all_day'           => 0,
-				'timing_migrated'   => 1,
 				'dates_override'    => 0,
 				'times_override'    => 0,
 			),

@@ -21,7 +21,7 @@ const SEARCH_DELAY = 300;
 export function getEventListPath( search = '' ) {
 	const params = new URLSearchParams( {
 		per_page: '100',
-		orderby: 'start_datetime',
+		orderby: 'start_date',
 		order: 'desc',
 	} );
 	if ( search ) {

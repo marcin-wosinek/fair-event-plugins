@@ -60,8 +60,10 @@ test( 'a buyer completes a checkout with the same email after repeated rejection
 		method: 'POST',
 		data: {
 			title: `Rejected checkout e2e ${ Date.now() }`,
-			start_datetime: '2039-02-01 10:00:00',
-			end_datetime: '2039-02-01 12:00:00',
+			start_date: '2039-02-01',
+			start_time: '10:00:00',
+			end_date: '2039-02-01',
+			end_time: '12:00:00',
 		},
 	} );
 	let signupPage;

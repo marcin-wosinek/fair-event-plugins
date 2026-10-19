@@ -26,15 +26,15 @@ class OccurrenceDateParam {
 	 * @return string Date in `Y-m-d` format.
 	 */
 	public static function format( EventDates $row ): string {
-		return $row->start_date ? (string) $row->start_date : self::format_datetime( (string) $row->start_datetime );
+		return (string) $row->start_date;
 	}
 
 	/**
 	 * Format a raw naive start datetime for use as the public URL param.
 	 *
 	 * Same rule as format(), for callers (e.g. EventTranslation) that only
-	 * have an occurrence DTO's `start` string, not the EventDates row it
-	 * came from.
+	 * have an occurrence DTO's `start` key, not the EventDates row it came
+	 * from; the key's date part is the start date.
 	 *
 	 * @param string $start_datetime Naive 'Y-m-d H:i:s' datetime.
 	 * @return string Date in `Y-m-d` format.

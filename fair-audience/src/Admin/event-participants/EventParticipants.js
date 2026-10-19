@@ -13,7 +13,7 @@ import {
 	CardBody,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
-import { formatSiteLocalDatetime } from 'fair-events-shared/src/dateTime.js';
+import { formatTimingStart } from 'fair-events-shared/src/dateTime.js';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
 import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
 import InvitationSummary, {
@@ -766,10 +766,9 @@ export default function EventParticipants() {
 	);
 
 	// The stored date is the site's wall-clock time: shown as it is, in
-	// the header and in the removal popup alike.
-	const eventDateLabel = eventInfo?.event_date
-		? formatSiteLocalDatetime( eventInfo.event_date )
-		: '';
+	// the header and in the removal popup alike, with the start time only
+	// when one is set.
+	const eventDateLabel = formatTimingStart( eventInfo );
 
 	if ( isLoading ) {
 		return (

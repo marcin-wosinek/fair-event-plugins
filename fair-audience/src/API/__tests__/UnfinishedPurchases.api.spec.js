@@ -171,8 +171,10 @@ test.describe.serial( 'Purchases awaiting payment and the rosters', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2035-11-06 10:00:00',
-				end_datetime: '2035-11-06 12:00:00',
+				start_date: '2035-11-06',
+				start_time: '10:00:00',
+				end_date: '2035-11-06',
+				end_time: '12:00:00',
 			},
 		} );
 		const edBody = await edRes.json();

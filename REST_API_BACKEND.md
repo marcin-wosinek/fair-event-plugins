@@ -1342,6 +1342,8 @@ An event date's timing is site-local dates with independently optional
 times, held by `FairEvents\Helpers\EventTiming` and stored in the
 `start_date`, `end_date`, `start_time` and `end_time` columns of
 `fair_event_dates` (DB 3.45.0). No timezone conversion applies anywhere.
+This replaced the `start_datetime` / `end_datetime` contract, which is
+retired (DB 3.47.0).
 
 -   **Fields.** `start_date` / `end_date` are `Y-m-d`; a dated event always
     has both, the same date for a single day. `start_time` / `end_time` are
@@ -1349,10 +1351,15 @@ times, held by `FairEvents\Helpers\EventTiming` and stored in the
     `00:00:00` is genuine midnight, never "unknown". `all_day` is explicit:
     an all-day event has no times, and a missing time does not make an event
     all-day. Undated rows have all four `null`.
--   **Responses.** `event-dates` single, list, `all` (summaries and their
-    `children`), `generated_occurrences`, `master` and `siblings` carry the
-    canonical fields next to the deprecated `start_datetime` /
-    `end_datetime`.
+-   **Responses.** `event-dates` single, list, search, `batch`, `all`
+    (summaries and their `children`), `generated_occurrences`, `master` and
+    `siblings` carry the canonical fields and `all_day`, never
+    `start_datetime` / `end_datetime`. `all` sorts by `orderby=start_date`
+    (the default; start time breaks ties); `orderby=start_datetime` is 400.
+    Companion responses built from an event date use the same fields:
+    fair-audience's event header and participant detail, the payment
+    event summary (`fair_payment_prepare_event`) and the tickets
+    configuration (`end_date`).
 -   **Requests.** `POST` / `PUT …/event-dates` take the canonical fields.
     On `PUT`, an omitted field is unchanged and `null` clears a time. A
     create without `end_date` gets the start date. Sending a time with
@@ -1364,17 +1371,45 @@ times, held by `FairEvents\Helpers\EventTiming` and stored in the
     `all_day_times`, `end_date_before_start`, `end_time_before_start`). A
     missing time never takes part in the ordering check. Only `all_day`
     values the client sent count; a route default never changes timing.
--   **Deprecated fields.** `start_datetime` / `end_datetime` are still
-    accepted, never together with canonical fields (400
-    `rest_mixed_timing_fields`), with their old meaning: an omitted field is
-    unchanged, an empty `end_datetime` (`null` arrives as one) means no end,
-    and a timed event without an end moves its end date with its start.
--   **Transition.** Every write through `EventDates` keeps the deprecated
-    columns in step: a missing start time is written as `00:00:00`, a
-    missing end time as no end (or `23:59:59` on a later end date). Rows are
-    read from the canonical columns once `timing_migrated` is set, so those
-    substitutes are never read back as times. Consumers still on the
-    deprecated fields see them until they move.
+-   **Retired fields.** A request sending `start_datetime` or
+    `end_datetime` — even `null`, even with canonical fields — is 400
+    `rest_retired_timing_fields` with `data.fields`, and changes nothing.
+-   **Migration.** 3.45.0 filled the canonical columns from the datetimes;
+    3.47.0 reruns that backfill for any row it missed and, once every row is
+    converted, drops `start_datetime`, `end_datetime` and the
+    `timing_migrated` marker. Until then the columns stay and the next
+    upgrade retries. Code from 3.47.0 on writes only the canonical columns;
+    the backfill marks a row that already has a start date without
+    converting it, so a date written during the upgrade is never overwritten
+    from its stale datetimes. PHP callers may still pass naive datetimes to
+    `EventDates::save()`, `save_or_update_master()` and `save_occurrence()`;
+    they are converted with `EventTiming::from_datetimes()`.
+
+Creating a weekly evening class whose end time is not known yet:
+
+```text
+POST /wp-json/fair-events/v1/event-dates
+{ "title": "Salsa class", "start_date": "2026-11-04", "start_time": "19:30",
+  "rrule": "FREQ=WEEKLY;COUNT=8" }
+```
+
+```json
+{ "id": 812, "title": "Salsa class", "start_date": "2026-11-04",
+  "end_date": "2026-11-04", "start_time": "19:30:00", "end_time": null,
+  "all_day": false, "calendar_export_eligible": false,
+  "occurrence_type": "master", "timing_overrides": null, "…": "…" }
+```
+
+Setting the end time later, and clearing one date's start time on its own:
+
+```text
+PUT /wp-json/fair-events/v1/event-dates/812   { "end_time": "21:00" }
+PUT /wp-json/fair-events/v1/event-dates/815   { "start_time": null }
+```
+
+The second request sets `timing_overrides.times` on that date, so later
+series edits leave its times alone until
+`PUT …/event-dates/815 { "inherit_timing": ["times"] }` gives them back.
 -   **Series.** Rules and hand-picked dates generate calendar dates: every
     occurrence keeps the series' calendar-day span, its times (each still
     optional) and its all-day flag. No duration is derived from times, so a
@@ -1391,9 +1426,13 @@ times, held by `FairEvents\Helpers\EventTiming` and stored in the
     that carry the canonical fields (`event-dates` single, list, `all`,
     `generated_occurrences`, `master`) and the public `GET /events` feed
     report it as `calendar_export_eligible`; the public feed also carries
-    the canonical `start_date`, `end_date`, `start_time` and `end_time`
-    next to its `start` / `end`. The JSON feeds keep events that are not
-    exportable. `calendar.ics` leaves them out, deciding per occurrence
+    the canonical `start_date`, `end_date`, `start_time` and `end_time`.
+    Its `start` / `end` are ISO 8601 timestamps with the site offset only
+    for a supplied time, or the day boundary of an all-day date, and `null`
+    otherwise: a missing time is never sent as midnight. Fair Events sites
+    importing such a feed read the dates and times; an event without
+    `start` is imported when it has a `start_date`. The JSON feeds keep
+    events that are not exportable. `calendar.ics` leaves them out, deciding per occurrence
     after overrides, and exports every date of a series as its own event
     with a stable `UID`, never with a recurrence rule.
 -   **Calendar buttons.** The Fair Events calendar button exports a
@@ -1420,7 +1459,8 @@ an occurrence never mixes its own time with an inherited one).
     dates) rewrite only the groups without a marker. `recurrence_impact`
     reports a date whose own timing survives as `unchanged`, and its
     entries carry `start_date` / `start_time` (and `new_start_date` /
-    `new_start_time`) next to the deprecated datetimes.
+    `new_start_time`). A shifted or removed date is `is_past` once it is
+    no longer upcoming (`SessionStatus::is_upcoming()`).
 -   **Reset.** `inherit_timing: ["dates"]`, `["times"]` or both drops the
     marker and copies the series values for the occurrence's anchor date.
     Sending a field of a group in the same request is 400

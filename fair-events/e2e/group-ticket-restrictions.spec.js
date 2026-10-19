@@ -66,8 +66,10 @@ test( 'organizer restrictions survive reload and control public availability', a
 			method: 'POST',
 			data: {
 				title: `Group restriction e2e ${ Date.now() }`,
-				start_datetime: '2037-02-01 10:00:00',
-				end_datetime: '2037-02-01 12:00:00',
+				start_date: '2037-02-01',
+				start_time: '10:00:00',
+				end_date: '2037-02-01',
+				end_time: '12:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;
@@ -134,8 +136,10 @@ test( 'organizer restrictions survive reload and control public availability', a
 			method: 'POST',
 			data: {
 				title: 'Group restriction identity event',
-				start_datetime: '2037-01-01 10:00:00',
-				end_datetime: '2037-01-01 12:00:00',
+				start_date: '2037-01-01',
+				start_time: '10:00:00',
+				end_date: '2037-01-01',
+				end_time: '12:00:00',
 			},
 		} );
 		identityEventDateId = identityEventDate.id;

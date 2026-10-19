@@ -30,8 +30,7 @@ export default function RecurrenceCalendar( {
 	const occurrenceByDate = useMemo( () => {
 		const map = {};
 		occurrences.forEach( ( occ ) => {
-			const date = occ.start_datetime.split( ' ' )[ 0 ];
-			map[ date ] = occ;
+			map[ occ.start_date ] = occ;
 		} );
 		return map;
 	}, [ occurrences ] );
@@ -45,7 +44,7 @@ export default function RecurrenceCalendar( {
 	const allDates = useMemo( () => {
 		const dates = [];
 		occurrences.forEach( ( occ ) => {
-			dates.push( occ.start_datetime.split( ' ' )[ 0 ] );
+			dates.push( occ.start_date );
 		} );
 		cancelledDatesList.forEach( ( d ) => dates.push( d ) );
 		if ( masterDate ) {

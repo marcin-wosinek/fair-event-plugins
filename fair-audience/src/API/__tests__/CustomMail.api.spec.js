@@ -127,8 +127,10 @@ test.describe( 'CustomMailController', () => {
 		// One event, two occurrences: recipients must not leak between them.
 		const series = await adminPost( '/fair-events/v1/event-dates', {
 			title: `Custom mail event ${ RUN }`,
-			start_datetime: '2037-03-01 10:00:00',
-			end_datetime: '2037-03-01 12:00:00',
+			start_date: '2037-03-01',
+			start_time: '10:00:00',
+			end_date: '2037-03-01',
+			end_time: '12:00:00',
 			rrule: 'FREQ=WEEKLY;COUNT=2',
 		} );
 		occurrenceA = series.id;

@@ -51,8 +51,8 @@ class EventTimingSql {
 
 	/**
 	 * ORDER BY terms putting dates in start order: by start date, then
-	 * start time with untimed dates first. Undated rows sort as a NULL
-	 * start_datetime did: first ascending, last descending.
+	 * start time with untimed dates first. Undated rows sort first
+	 * ascending, last descending.
 	 *
 	 * @param string $alias     Table alias, or '' for the bare columns.
 	 * @param string $direction 'ASC' or 'DESC'.

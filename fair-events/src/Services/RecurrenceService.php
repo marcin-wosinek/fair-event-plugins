@@ -10,6 +10,7 @@
 namespace FairEvents\Services;
 
 use FairEvents\Helpers\EventTiming;
+use FairEvents\Helpers\SessionStatus;
 use FairEvents\Models\EventDates;
 
 defined( 'WPINC' ) || die;
@@ -611,8 +612,8 @@ class RecurrenceService {
 	 * counts as added, and one that stays out of the active set is not a change.
 	 *
 	 * Entries carry `start_date` / `start_time` (and `new_start_date` /
-	 * `new_start_time` when shifted) next to the deprecated `start_datetime`
-	 * (and `new_start_datetime`).
+	 * `new_start_time` when shifted). A row is past once it is no longer
+	 * upcoming (see SessionStatus::is_upcoming()).
 	 *
 	 * @param int     $master_id          Master event date row ID.
 	 * @param array[] $proposed_generated Desired generated occurrences (slice after first) — canonical timings.
@@ -643,29 +644,25 @@ class RecurrenceService {
 
 				if ( $proposed === $current ) {
 					$result['unchanged'][] = array(
-						'id'             => $row->id,
-						'start_datetime' => $row->start_datetime,
-						'start_date'     => $row->start_date,
-						'start_time'     => $row->start_time,
+						'id'         => $row->id,
+						'start_date' => $row->start_date,
+						'start_time' => $row->start_time,
 					);
 				} else {
 					$result['shifted'][] = array(
-						'id'                 => $row->id,
-						'start_datetime'     => $row->start_datetime,
-						'start_date'         => $row->start_date,
-						'start_time'         => $row->start_time,
-						'new_start_datetime' => EventTiming::to_legacy( $proposed )['start_datetime'],
-						'new_start_date'     => $proposed['start_date'],
-						'new_start_time'     => $proposed['start_time'],
-						'is_past'            => $row->start_datetime < $now,
-						'dependents'         => self::count_dependents( $row->id ),
+						'id'             => $row->id,
+						'start_date'     => $row->start_date,
+						'start_time'     => $row->start_time,
+						'new_start_date' => $proposed['start_date'],
+						'new_start_time' => $proposed['start_time'],
+						'is_past'        => ! SessionStatus::is_upcoming( $current, $now ),
+						'dependents'     => self::count_dependents( $row->id ),
 					);
 				}
 			} else {
 				$result['added'][] = array(
-					'start_datetime' => EventTiming::to_legacy( $occ )['start_datetime'],
-					'start_date'     => $occ['start_date'],
-					'start_time'     => $occ['start_time'],
+					'start_date' => $occ['start_date'],
+					'start_time' => $occ['start_time'],
 				);
 			}
 			unset( $all_existing[ $anchor ] );
@@ -676,12 +673,11 @@ class RecurrenceService {
 				continue;
 			}
 			$result['removed'][] = array(
-				'id'             => $stale_row->id,
-				'start_datetime' => $stale_row->start_datetime,
-				'start_date'     => $stale_row->start_date,
-				'start_time'     => $stale_row->start_time,
-				'is_past'        => $stale_row->start_datetime < $now,
-				'dependents'     => self::count_dependents( $stale_row->id ),
+				'id'         => $stale_row->id,
+				'start_date' => $stale_row->start_date,
+				'start_time' => $stale_row->start_time,
+				'is_past'    => ! SessionStatus::is_upcoming( $stale_row->get_timing(), $now ),
+				'dependents' => self::count_dependents( $stale_row->id ),
 			);
 		}
 
