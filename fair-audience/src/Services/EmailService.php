@@ -173,6 +173,29 @@ class EmailService {
 	}
 
 	/**
+	 * Machine-readable counterpart of {@see marketing_skip_reason()}.
+	 *
+	 * @param Participant $participant The skipped participant.
+	 * @param string      $email_type  EmailType constant used for the consent check.
+	 * @return string
+	 */
+	private function marketing_skip_code( Participant $participant, string $email_type = EmailType::MARKETING ): string {
+		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
+			return 'consent_pending';
+		}
+
+		if ( EmailType::WEEKLY_SUMMARY === $email_type
+			&& 'marketing' === $participant->email_profile
+			&& 'confirmed' === $participant->status
+			&& $participant->weekly_summary_opt_out
+		) {
+			return 'weekly_summary_opt_out';
+		}
+
+		return 'marketing_opt_out';
+	}
+
+	/**
 	 * Check if a participant has a valid email address.
 	 *
 	 * @param Participant $participant The participant to check.
@@ -1151,15 +1174,17 @@ class EmailService {
 	/**
 	 * Send bulk custom mail to all audience members.
 	 *
-	 * @param string $subject      Email subject.
-	 * @param string $content      Email content (HTML).
-	 * @param bool   $is_marketing         Whether to filter by marketing consent.
-	 * @param array  $skip_participant_ids  Participant IDs to skip.
-	 * @param array  $group_ids    Group IDs to filter by.
-	 * @param string $email_type   EmailType constant used for the consent check (defaults to MARKETING).
+	 * @param string        $subject      Email subject.
+	 * @param string        $content      Email content (HTML).
+	 * @param bool          $is_marketing         Whether to filter by marketing consent.
+	 * @param array         $skip_participant_ids  Participant IDs to skip.
+	 * @param array         $group_ids    Group IDs to filter by.
+	 * @param string        $email_type   EmailType constant used for the consent check (defaults to MARKETING).
+	 * @param callable|null $observer Optional; told about each participant as it is
+	 *                                processed: see {@see WeeklyDigestMailer::send_to_subscribers_reporting()}.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array(), $email_type = EmailType::MARKETING ) {
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array(), $email_type = EmailType::MARKETING, $observer = null ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1172,6 +1197,20 @@ class EmailService {
 		$participants          = $this->participant_repository->get_all();
 		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
 		$deliver_email_type    = $is_marketing ? $email_type : EmailType::MINIMAL;
+		$report                = static function ( $event, $participant, $reason = '' ) use ( $observer ) {
+			if ( null === $observer ) {
+				return;
+			}
+			$recipient = array(
+				'id'    => (int) $participant->id,
+				'name'  => (string) $participant->name,
+				'email' => (string) $participant->email,
+			);
+			if ( '' !== $reason ) {
+				$recipient['reason'] = $reason;
+			}
+			call_user_func( $observer, $event, $recipient );
+		};
 
 		foreach ( $participants as $participant ) {
 			// Filter by group membership.
@@ -1186,6 +1225,7 @@ class EmailService {
 					'email'  => $participant->email,
 					'reason' => __( 'Manually skipped.', 'fair-audience' ),
 				);
+				$report( 'skipped', $participant, 'manually_skipped' );
 				continue;
 			}
 
@@ -1195,6 +1235,7 @@ class EmailService {
 					'email'  => '',
 					'reason' => __( 'Participant has no valid email address.', 'fair-audience' ),
 				);
+				$report( 'rejected', $participant, 'invalid_address' );
 				continue;
 			}
 
@@ -1205,11 +1246,14 @@ class EmailService {
 					'email'  => $participant->email,
 					'reason' => $this->marketing_skip_reason( $participant, $email_type ),
 				);
+				$report( 'skipped', $participant, $this->marketing_skip_code( $participant, $email_type ) );
 				continue;
 			}
 
 			// Send custom mail (no event context).
+			$report( 'sending', $participant );
 			$success = $this->send_custom_mail_without_event( $participant, $subject, $content, $deliver_email_type );
+			$report( $success ? 'sent' : 'failed', $participant );
 
 			if ( $success ) {
 				$results['sent'][] = $participant->email;

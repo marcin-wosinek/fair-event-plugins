@@ -57,16 +57,25 @@ class BulkEmailDispatcher {
 	private $events;
 
 	/**
+	 * Execution history.
+	 *
+	 * @var ExecutionHistory
+	 */
+	private $history;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DeliveryLog|null                               $log     Delivery record.
 	 * @param BulkEmailAdapter|null                          $adapter Fair Audience adapter.
 	 * @param \FairEvents\Services\WeeklyEventsProvider|null $events  Provider of a week's events.
+	 * @param ExecutionHistory|null                          $history Execution history.
 	 */
-	public function __construct( $log = null, $adapter = null, $events = null ) {
+	public function __construct( $log = null, $adapter = null, $events = null, $history = null ) {
 		$this->log     = $log ? $log : new DeliveryLog();
 		$this->adapter = $adapter ? $adapter : new BulkEmailAdapter();
 		$this->events  = $events ? $events : new \FairEvents\Services\WeeklyEventsProvider();
+		$this->history = $history ? $history : new ExecutionHistory();
 	}
 
 	/**
@@ -254,19 +263,26 @@ class BulkEmailDispatcher {
 			return null;
 		}
 
+		$recorder = HistoryRecorder::scheduled( $this->history, $config_id, Configurations::BULK_EMAIL, $send_week );
+
 		if ( self::iso_week( $now ) !== $send_week ) {
+			$recorder->finish( HistoryOutcome::SKIPPED, 'expired' );
 			return $this->record( $config_id, $send_week, null, 'expired', __( 'Not sent: the scheduled week had already passed when the send ran.', 'fair-events' ) );
 		}
 
-		if ( BulkEmailAdapter::ACTIVE !== $this->adapter->availability() ) {
+		$availability = $this->adapter->availability();
+		if ( BulkEmailAdapter::ACTIVE !== $availability ) {
+			$recorder->finish( HistoryOutcome::SKIPPED, 'fair_audience_' . $availability );
 			return $this->record( $config_id, $send_week, null, 'suspended', __( 'Not sent: Fair Audience was not available to send the email.', 'fair-events' ) );
 		}
 
 		// From here on the send week is used up, also when the week turns out
 		// empty or the send fails: nothing is resent automatically.
 		if ( ! $this->log->claim( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, 1 ) ) {
+			$recorder->lost_claim();
 			return null;
 		}
+		$recorder->claimed();
 		update_option( Configurations::option( $config_id, 'last_sent_week' ), $send_week, false );
 
 		$result = array(
@@ -279,17 +295,21 @@ class BulkEmailDispatcher {
 			$week = $this->events->for_notification( self::event_boundaries( $settings['week_scope'], $now ), $settings['source_slug'] );
 			if ( is_wp_error( $week ) ) {
 				$result = self::result( 'failed', 'configuration_error' );
+				$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
 				return $this->record( $config_id, $send_week, null, 'configuration_error', $week->get_error_message() );
 			}
+			$recorder->cover( $week['week'] );
 
 			$email = $this->adapter->compose( $week, $settings );
 			if ( $settings['skip_empty'] && ! empty( $email['empty'] ) ) {
 				$result = self::result( 'skipped', 'no_events' );
+				$recorder->finish( HistoryOutcome::SKIPPED, 'no_events' );
 				return $this->record( $config_id, $send_week, $week, 'skipped_empty', __( 'No events that week, so nothing was sent.', 'fair-events' ) );
 			}
 
-			$counts = $this->adapter->send( $email['subject'], $email['html'] );
+			$counts = $this->adapter->send( $email['subject'], $email['html'], $recorder->recipient_observer() );
 			$result = self::result( 'sent', '' );
+			$recorder->finish( HistoryOutcome::SKIPPED, 'no_recipients' );
 
 			if ( 0 === $counts['failed'] ) {
 				$status = 'sent';
@@ -313,7 +333,9 @@ class BulkEmailDispatcher {
 			);
 		} catch ( \Throwable $e ) {
 			// Some emails may have gone out before the error, so the send is
-			// not repeated.
+			// not repeated. Recipients reported so far keep their outcome.
+			$recorder->interrupt_pending( 'internal_error' );
+			$recorder->finish( HistoryOutcome::FAILURE, 'internal_error' );
 			return $this->record( $config_id, $send_week, $week, 'failed', __( 'The send stopped with an error. Some emails may have been sent; it is not repeated automatically.', 'fair-events' ) );
 		} finally {
 			$this->log->finish( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, $result );

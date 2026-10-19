@@ -29,6 +29,8 @@ defined( 'WPINC' ) || die;
  * work to the one holding it. The same run upgrades the delivery record and
  * then gives each type's settings their configuration ID
  * ({@see ConfigurationMigration}), also for a channel taken over later.
+ * Last, it creates the execution history and imports each migrated type's
+ * earlier history into it ({@see HistoryMigration}).
  */
 class Migration {
 	public const LEGACY_TELEGRAM_OPTION   = 'fair_events_experimental_weekly_notifications';
@@ -54,7 +56,7 @@ class Migration {
 				return ! Ownership::is_migrated( $channel ) && Ownership::legacy_yields( $channel );
 			}
 		);
-		if ( ! $pending && DeliveryLog::is_current() && ConfigurationMigration::is_complete() ) {
+		if ( ! $pending && DeliveryLog::is_current() && ConfigurationMigration::is_complete() && HistoryTables::is_current() && HistoryMigration::is_complete() ) {
 			return;
 		}
 		if ( ! Lock::acquire( Lock::MIGRATION ) ) {
@@ -82,6 +84,9 @@ class Migration {
 				Ownership::mark_migrated( $channel, $details );
 			}
 			ConfigurationMigration::run();
+			if ( HistoryTables::maybe_install() ) {
+				HistoryMigration::run();
+			}
 		} finally {
 			Lock::release( Lock::MIGRATION );
 		}

@@ -22,6 +22,7 @@ defined( 'WPINC' ) || die;
  * configuration ({@see ConfigurationMigration}).
  */
 class Notifications {
+	public const HISTORY_CLEANUP_HOOK = 'fair_events_notification_history_cleanup';
 
 	/**
 	 * Start once every plugin had the chance to say whether it hands over.
@@ -58,12 +59,30 @@ class Notifications {
 			IndividualEmailDispatcher::init();
 		}
 
+		// Whatever channels are on: history is kept for every type.
+		add_action( self::HISTORY_CLEANUP_HOOK, array( self::class, 'clean_up_history' ) );
+		if ( ! wp_next_scheduled( self::HISTORY_CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::HISTORY_CLEANUP_HOOK );
+		}
+
 		add_action(
 			'rest_api_init',
 			static function () {
 				( new \FairEvents\API\EventNotificationsController() )->register_routes();
+				( new \FairEvents\API\NotificationHistoryController() )->register_routes();
 			}
 		);
+	}
+
+	/**
+	 * Daily: close executions abandoned mid-run and delete history past its retention.
+	 *
+	 * @return void
+	 */
+	public static function clean_up_history() {
+		$history = new ExecutionHistory();
+		$history->reconcile();
+		$history->cleanup();
 	}
 
 	/**
@@ -78,5 +97,6 @@ class Notifications {
 		TelegramDispatcher::unschedule_all();
 		BulkEmailDispatcher::unschedule_all();
 		IndividualEmailDispatcher::unschedule_all();
+		wp_unschedule_hook( self::HISTORY_CLEANUP_HOOK );
 	}
 }

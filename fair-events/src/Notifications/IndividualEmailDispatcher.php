@@ -59,16 +59,25 @@ class IndividualEmailDispatcher {
 	private $events;
 
 	/**
+	 * Execution history.
+	 *
+	 * @var ExecutionHistory
+	 */
+	private $history;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param DeliveryLog|null           $log    Delivery record.
-	 * @param EmailService|null          $mailer Mail transport.
-	 * @param IndividualEmailEvents|null $events Provider of a week's events.
+	 * @param DeliveryLog|null           $log     Delivery record.
+	 * @param EmailService|null          $mailer  Mail transport.
+	 * @param IndividualEmailEvents|null $events  Provider of a week's events.
+	 * @param ExecutionHistory|null      $history Execution history.
 	 */
-	public function __construct( $log = null, $mailer = null, $events = null ) {
-		$this->log    = $log ? $log : new DeliveryLog();
-		$this->mailer = $mailer ? $mailer : new EmailService();
-		$this->events = $events ? $events : new IndividualEmailEvents();
+	public function __construct( $log = null, $mailer = null, $events = null, $history = null ) {
+		$this->log     = $log ? $log : new DeliveryLog();
+		$this->mailer  = $mailer ? $mailer : new EmailService();
+		$this->events  = $events ? $events : new IndividualEmailEvents();
+		$this->history = $history ? $history : new ExecutionHistory();
 	}
 
 	/**
@@ -243,49 +252,69 @@ class IndividualEmailDispatcher {
 		}
 
 		$recipient = (string) IndividualEmailSettings::parse_recipient( $settings['recipient'] );
+		$recorder  = HistoryRecorder::scheduled( $this->history, $config_id, Configurations::INDIVIDUAL_EMAIL, $send_week );
 
 		if ( BulkEmailDispatcher::iso_week( $now ) !== $send_week ) {
+			$recorder->finish( HistoryOutcome::SKIPPED, 'expired' );
 			return $this->record( $config_id, $send_week, null, $recipient, 'expired', __( 'Not sent: the scheduled week had already passed when the send ran.', 'fair-events' ) );
 		}
 
 		// From here on the send week is used up, also when the week turns out
 		// empty or the send fails: nothing is resent automatically.
 		if ( ! $this->log->claim( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, 1 ) ) {
+			$recorder->lost_claim();
 			return null;
 		}
+		$recorder->claimed();
 		update_option( Configurations::option( $config_id, 'last_sent_week' ), $send_week, false );
 
-		$result = self::result( 'uncertain', 'internal_error' );
-		$week   = null;
+		$result   = self::result( 'uncertain', 'internal_error' );
+		$week     = null;
+		$delivery = 0;
 		try {
 			if ( '' === $recipient ) {
 				$result = self::result( 'failed', 'configuration_error' );
+				$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
 				return $this->record( $config_id, $send_week, null, $recipient, 'configuration_error', __( 'Not sent: no valid email address is saved.', 'fair-events' ) );
 			}
 
-			$week        = self::event_week( $settings['week_scope'], $now );
+			$week = self::event_week( $settings['week_scope'], $now );
+			$recorder->cover( $week );
 			$occurrences = $this->events->for_week( $settings['event_selection'], $week );
 			if ( is_wp_error( $occurrences ) ) {
 				$result = self::result( 'failed', 'configuration_error' );
+				$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
 				return $this->record( $config_id, $send_week, $week, $recipient, 'configuration_error', $occurrences->get_error_message() );
 			}
 
 			$email = IndividualEmailRenderer::compose( $settings, $week, $occurrences );
 			if ( $settings['skip_empty'] && $email['empty'] ) {
 				$result = self::result( 'skipped', 'no_events' );
+				$recorder->finish( HistoryOutcome::SKIPPED, 'no_events' );
 				return $this->record( $config_id, $send_week, $week, $recipient, 'skipped_empty', __( 'No events that week, so nothing was sent.', 'fair-events' ) );
 			}
 
+			$delivery = $recorder->attempt( $recipient );
 			if ( ! $this->mailer->send_notification( $recipient, $email['subject'], $email['html'] ) ) {
 				$result = self::result( 'failed', 'send_failed' );
+				$recorder->settle( $delivery, HistoryOutcome::FAILED, 'send_failed' );
+				$delivery = 0;
+				$recorder->finish();
 				return $this->record( $config_id, $send_week, $week, $recipient, 'failed', __( 'The site could not hand the email over for delivery. It is not repeated automatically.', 'fair-events' ) );
 			}
 
 			$result = self::result( 'sent', '' );
+			$recorder->settle( $delivery, HistoryOutcome::ACCEPTED );
+			$delivery = 0;
+			$recorder->finish();
 			return $this->record( $config_id, $send_week, $week, $recipient, 'sent', __( 'Handed over to the site’s mail system. This does not confirm that it reached the inbox.', 'fair-events' ) );
 		} catch ( \Throwable $e ) {
 			// The email may have gone out before the error, so the send is
 			// not repeated.
+			if ( $delivery ) {
+				$recorder->settle( $delivery, HistoryOutcome::UNKNOWN, 'internal_error' );
+			}
+			$recorder->finish( HistoryOutcome::FAILURE, 'internal_error' );
 			return $this->record( $config_id, $send_week, $week, $recipient, 'failed', __( 'The send stopped with an error. The email may have been sent; it is not repeated automatically.', 'fair-events' ) );
 		} finally {
 			$this->log->finish( $config_id, $claim_date, self::PROVIDER, self::DESTINATION, 1, $result );

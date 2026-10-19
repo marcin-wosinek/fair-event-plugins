@@ -99,6 +99,33 @@ class WeeklyDigestMailer {
 	}
 
 	/**
+	 * Send the email to every participant who may receive the weekly
+	 * summary, reporting each one to an observer as it is processed.
+	 *
+	 * The observer is called with an event and the recipient:
+	 * 'sending' before the email is handed to the mail system, then 'sent'
+	 * or 'failed'; 'rejected' for a participant without a valid address and
+	 * 'skipped' for one excluded by consent or opt-out, both with a safe
+	 * `reason` code. The recipient array holds the participant's `id`,
+	 * `name` and `email` only. Results reported before an error stay
+	 * reported.
+	 *
+	 * @param string   $subject  Email subject.
+	 * @param string   $html     Email content (HTML).
+	 * @param callable $observer Called as `$observer( string $event, array $recipient )`.
+	 * @return array{sent: int, failed: int, skipped: int} Number of participants per outcome.
+	 */
+	public static function send_to_subscribers_reporting( $subject, $html, callable $observer ) {
+		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY, $observer );
+
+		return array(
+			'sent'    => count( $results['sent'] ),
+			'failed'  => count( $results['failed'] ),
+			'skipped' => count( $results['skipped'] ),
+		);
+	}
+
+	/**
 	 * Send the email to one address as a test, outside any participant.
 	 *
 	 * @param string $email   Recipient address.
