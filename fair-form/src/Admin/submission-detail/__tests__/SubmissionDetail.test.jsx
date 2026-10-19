@@ -10,6 +10,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { getSettings, setSettings } from '@wordpress/date';
 import SubmissionDetail, {
 	ticketLinkDescription,
 } from '../SubmissionDetail.js';
@@ -64,6 +65,84 @@ describe( 'SubmissionDetail', () => {
 			screen.getByRole( 'columnheader', { name: 'Question' } )
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Submitted by' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'SubmissionDetail — date answers (#1937)', () => {
+	let originalSettings;
+
+	beforeEach( () => {
+		originalSettings = getSettings();
+		// A non-UTC site offset: stored datetime answers are site-local wall
+		// clock values, so the offset must not shift what is displayed.
+		setSettings( {
+			...originalSettings,
+			formats: { ...originalSettings.formats, datetime: 'Y-m-d H:i' },
+			timezone: { ...originalSettings.timezone, offset: 9, string: '' },
+		} );
+	} );
+
+	afterEach( () => {
+		setSettings( originalSettings );
+	} );
+
+	function answerCell( questionText ) {
+		return screen
+			.getByText( questionText, { selector: 'strong' } )
+			.closest( 'tr' )
+			.querySelectorAll( 'td' )[ 1 ];
+	}
+
+	it( 'renders populated and empty date and date & time answers alongside other answers', async () => {
+		apiFetch.mockResolvedValue( {
+			...SUBMISSION,
+			answers: [
+				{
+					question_key: 'birthday',
+					question_text: 'Birthday',
+					question_type: 'date',
+					answer_value: '2026-07-08',
+				},
+				{
+					question_key: 'arrival',
+					question_text: 'Arrival',
+					question_type: 'datetime',
+					answer_value: '2026-07-08 23:30:00',
+				},
+				{
+					question_key: 'empty-date',
+					question_text: 'Departure day',
+					question_type: 'date',
+					answer_value: '',
+				},
+				{
+					question_key: 'empty-datetime',
+					question_text: 'Pickup time',
+					question_type: 'datetime',
+					answer_value: '',
+				},
+				...SUBMISSION.answers,
+			],
+		} );
+		render( <SubmissionDetail /> );
+
+		await screen.findByText( 'Google' );
+
+		expect( answerCell( 'Birthday' ) ).toHaveTextContent(
+			new Date( '2026-07-08T00:00:00' ).toLocaleDateString( undefined, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			} )
+		);
+		expect( answerCell( 'Arrival' ) ).toHaveTextContent(
+			'2026-07-08 23:30'
+		);
+		expect( answerCell( 'Departure day' ) ).toHaveTextContent( '—' );
+		expect( answerCell( 'Pickup time' ) ).toHaveTextContent( '—' );
+		expect( answerCell( 'How did you hear about us?' ) ).toHaveTextContent(
+			'Google'
+		);
 	} );
 } );
 
