@@ -5,9 +5,9 @@
 	"license": "GPL-3.0-or-later",
 	"require": {
 		"php": ">=8.4.1",
-		"phpcompatibility/php-compatibility": "10.0.0-alpha2",
-		"phpcompatibility/phpcompatibility-paragonie": "2.0.0-alpha2",
-		"phpcompatibility/phpcompatibility-wp": "3.0.0-alpha2",
+		"phpcompatibility/php-compatibility": "^10.0@alpha",
+		"phpcompatibility/phpcompatibility-paragonie": "^2.0@alpha",
+		"phpcompatibility/phpcompatibility-wp": "^3.0@alpha",
 		"phpunit/phpunit": "^13.4"
 	},
 	"config": {
