@@ -13,7 +13,23 @@
 		}
 	],
 	"require": {
-		"stripe/stripe-php": "12.1.0",
+		"php": ">=8.0",
+		"ext-curl": "*",
+		"ext-json": "*",
+		"ext-mbstring": "*",
+		"stripe/stripe-php": "^22.0",
 		"vlucas/phpdotenv": "^5.6"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.6"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"MarcinWosinek\\FairEventPluginsCom\\Tests\\": "__tests__/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit",
+		"smoke:stripe-test": "@php bin/stripe-test-smoke.php"
 	}
 }
