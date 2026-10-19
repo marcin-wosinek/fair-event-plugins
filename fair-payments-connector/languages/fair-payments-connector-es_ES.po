@@ -251,22 +251,22 @@ msgstr "El estado de la transacción debe ser «borrador» para iniciar el pago.
 msgid "Mollie is not connected. Please connect your Mollie account in settings."
 msgstr "Mollie no está conectado. Conecta tu cuenta de Mollie en los ajustes."
 
-#: src/Payment/MolliePaymentHandler.php:309
+#: src/Payment/MolliePaymentHandler.php:312
 msgid "Payment"
 msgstr "Pago"
 
-#: src/Payment/MolliePaymentHandler.php:342
+#: src/Payment/MolliePaymentHandler.php:345
 msgid "Application fee"
 msgstr "Comisión de la aplicación"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:506
+#: src/Payment/MolliePaymentHandler.php:512
 #, php-format
 msgid "Failed to retrieve payment: %s"
 msgstr "Error al recuperar el pago: %s"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:614
+#: src/Payment/MolliePaymentHandler.php:655
 #, php-format
 msgid "Failed to list balance transactions: %s"
 msgstr "Error al listar las transacciones de saldo: %s"
@@ -996,27 +996,27 @@ msgstr "No se pudo cargar la descripción general de la conexión de Mollie: el 
 msgid "Failed to load Mollie connection overview: %s"
 msgstr "No se pudo cargar la descripción general de la conexión de Mollie: %s"
 
-#: src/Payment/PaymentGatewayError.php:107
+#: src/Payment/PaymentGatewayError.php:119
 msgid "The payment could not be started. Please try again later or contact the organizer."
 msgstr "No se pudo iniciar el pago. Inténtalo de nuevo más tarde o contacta con el organizador."
 
-#: src/Payment/PaymentGatewayError.php:121
+#: src/Payment/PaymentGatewayError.php:133
 msgid "Payment settings"
 msgstr "Ajustes de pago"
 
-#: src/Payment/PaymentGatewayError.php:128
+#: src/Payment/PaymentGatewayError.php:140
 msgid "Payment log"
 msgstr "Registro de pagos"
 
-#: src/Payment/PaymentGatewayError.php:135
+#: src/Payment/PaymentGatewayError.php:147
 msgid "Mollie dashboard"
 msgstr "Escritorio de Mollie"
 
-#: src/Payment/PaymentGatewayError.php:140
+#: src/Payment/PaymentGatewayError.php:152
 msgid "The connected Mollie profile has no suitable payment method enabled."
 msgstr "El perfil de Mollie conectado no tiene ningún método de pago adecuado activado."
 
-#: src/Payment/PaymentGatewayError.php:146
+#: src/Payment/PaymentGatewayError.php:158
 msgid "The payment gateway rejected the request. See the payment log for technical details."
 msgstr "La pasarela de pago rechazó la solicitud. Consulta el registro de pagos para obtener detalles técnicos."
 
@@ -1111,7 +1111,7 @@ msgid "This block shared its identifier with another Simple Payment block on thi
 msgstr "Este bloque compartió su identificador con otro bloque de pago simple en esta página, lo que podría causar que se cobre a los compradores un precio incorrecto. Se asignó un nuevo identificador — guarda o actualiza la entrada ahora."
 
 #: src/API/TransactionsController.php:651
-#: src/Payment/MolliePaymentHandler.php:534
+#: src/Payment/MolliePaymentHandler.php:573
 #: src/Admin/external-updates/components/MollieImportPanel.js:129
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr "No se pudieron cargar los pagos de Mollie. Por favor, inténtalo de nuevo."
@@ -1725,7 +1725,7 @@ msgstr "Configuración de rutas de notificación"
 msgid "The import request did not complete. Check the operation log for its outcome."
 msgstr "La solicitud de importación no se completó. Comprueba el registro de operaciones para ver su resultado."
 
-#: src/Services/SettlementApiImport.php:245
+#: src/Services/SettlementApiImport.php:246
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:103
 #: src/Admin/external-updates/components/MollieImportPanel.js:194
 #: src/Admin/external-updates/components/MollieSettlementsPanel.js:112
@@ -2420,7 +2420,7 @@ msgstr "El total de los artículos de línea debe ser positivo."
 msgid "The price of this purchase changed while it was being prepared. Please try again."
 msgstr "El precio de esta compra cambió mientras se estaba preparando. Por favor, intenta de nuevo."
 
-#: src/API/TransactionAPI.php:811
+#: src/API/TransactionAPI.php:815
 msgid "The transaction amount does not match its line items."
 msgstr "El importe de la transacción no coincide con sus artículos de línea."
 
@@ -2431,7 +2431,7 @@ msgid "Dashboard"
 msgstr "Panel"
 
 #: src/API/SettlementController.php:284
-#: src/Services/SettlementApiImport.php:191
+#: src/Services/SettlementApiImport.php:192
 msgid "Settlement not found."
 msgstr "Liquidación no encontrada."
 
@@ -2453,7 +2453,7 @@ msgid "The file is larger than 2 MB. Export one settlement at a time."
 msgstr "El archivo es mayor que 2 MB. Exporta una liquidación a la vez."
 
 #: src/API/SettlementController.php:413
-#: src/Services/SettlementStore.php:134
+#: src/Services/SettlementStore.php:143
 msgid "Account not found."
 msgstr "Cuenta no encontrada."
 
@@ -2510,50 +2510,50 @@ msgstr "Se inició una importación más reciente en su lugar."
 msgid "The data could not be saved. Continue to try again."
 msgstr "Los datos no se pudieron guardar. Continúa para intentar de nuevo."
 
-#: src/Services/SettlementApiImport.php:196
+#: src/Services/SettlementApiImport.php:197
 msgid "This settlement belongs to a different account than the Mollie organization that is connected, so it cannot be refreshed."
 msgstr "Esta liquidación pertenece a una cuenta diferente a la organización de Mollie que está conectada, por lo que no se puede actualizar."
 
-#: src/Services/SettlementApiImport.php:203
+#: src/Services/SettlementApiImport.php:204
 msgid "This settlement was only imported from a file. Load settlements from Mollie to match it with the provider record."
 msgstr "Este acuerdo solo se importó desde un archivo. Carga acuerdos desde Mollie para hacerlo coincidir con el registro del proveedor."
 
-#: src/Services/SettlementApiImport.php:262
+#: src/Services/SettlementApiImport.php:263
 msgid "This import is already being continued in another request."
 msgstr "Esta importación ya se está continuando en otra solicitud."
 
 #: src/API/SettlementController.php:501
-#: src/Services/SettlementApiImport.php:270
+#: src/Services/SettlementApiImport.php:271
 msgid "Import not found."
 msgstr "Importación no encontrada."
 
-#: src/Services/SettlementApiImport.php:275
+#: src/Services/SettlementApiImport.php:276
 msgid "This import has already finished. Start a new one to load again."
 msgstr "Esta importación ya ha finalizado. Inicia una nueva para cargar de nuevo."
 
-#: src/Services/SettlementApiImport.php:614
+#: src/Services/SettlementApiImport.php:650
 msgid "Another settlement import is still running. Wait for it to finish, then try again."
 msgstr "Otra importación de acuerdo aún se está ejecutando. Espera a que finalice e intenta de nuevo."
 
-#: src/Services/SettlementStore.php:65
+#: src/Services/SettlementStore.php:74
 msgid "Another settlement import is being saved. Try again in a moment."
 msgstr "Otra importación de acuerdo se está guardando. Intenta de nuevo en un momento."
 
 #. translators: %s: Mollie organization ID
-#: src/Services/SettlementStore.php:110
+#: src/Services/SettlementStore.php:119
 #, php-format
 msgid "Mollie %s"
 msgstr "Mollie %s"
 
-#: src/Services/SettlementStore.php:137
+#: src/Services/SettlementStore.php:146
 msgid "This account is already confirmed."
 msgstr "Esta cuenta ya está confirmada."
 
-#: src/Services/SettlementStore.php:549
+#: src/Services/SettlementStore.php:566
 msgid "More than one saved settlement in this account has this reference, so the file cannot be attached to one of them. Nothing was imported."
 msgstr "Más de un acuerdo guardado en esta cuenta tiene esta referencia, por lo que el archivo no se puede adjuntar a uno de ellos. No se importó nada."
 
-#: src/Services/SettlementStore.php:756
+#: src/Services/SettlementStore.php:775
 msgid "The settlement could not be saved. Nothing was changed."
 msgstr "El acuerdo no se pudo guardar. No se cambió nada."
 
@@ -2896,4 +2896,12 @@ msgstr "Descripción: %s"
 #: src/Admin/transaction/TransactionPage.js:1400
 msgid "This transaction has no description."
 msgstr "Esta transacción no tiene descripción."
+
+#: src/Payment/MolliePaymentHandler.php:276
+msgid "Failed to load Mollie connection overview: Mollie returned data that could not be read."
+msgstr "No se pudo cargar la descripción general de la conexión de Mollie: Mollie devolvió datos que no se pudieron leer."
+
+#: src/Payment/MolliePaymentHandler.php:518
+msgid "Failed to retrieve payment: Mollie returned a payment that could not be read."
+msgstr "No se pudo recuperar el pago: Mollie devolvió un pago que no se pudo leer."
 

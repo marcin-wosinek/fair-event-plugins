@@ -53,7 +53,7 @@ msgstr "Aktywność"
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Core/Features.php:192
+#: src/Core/Features.php:183
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
 msgstr "Współpracownicy"
@@ -71,13 +71,13 @@ msgstr "Szczegóły opłaty"
 
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
-#: src/Core/Features.php:208
+#: src/Core/Features.php:199
 msgid "Import"
 msgstr "Import"
 
 #: src/Admin/AdminPages.php:130
 #: src/Admin/AdminPages.php:131
-#: src/Core/Features.php:176
+#: src/Core/Features.php:171
 msgid "Polls"
 msgstr "Ankiety"
 
@@ -99,7 +99,7 @@ msgstr "Szablony obrazów"
 
 #: src/Admin/AdminPages.php:177
 #: src/Admin/AdminPages.php:178
-#: src/Core/Features.php:188
+#: src/Core/Features.php:179
 #: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
@@ -127,63 +127,6 @@ msgstr "Dodatkowe wiadomości"
 msgid "Edit Extra Message"
 msgstr "Edytuj dodatkową wiadomość"
 
-#: src/Admin/MediaBatchActions.php:38
-#: src/Admin/MediaBatchActions.php:84
-#: src/Admin/MediaBatchActions.php:85
-#: src/Admin/MediaBatchActions.php:193
-msgid "Set Photo Author"
-msgstr "Ustaw autora zdjęcia"
-
-#: src/Admin/MediaBatchActions.php:108
-#: src/Admin/MediaBatchActions.php:171
-msgid "Security check failed."
-msgstr "Sprawdzenie bezpieczeństwa nie powiodło się."
-
-#: src/Admin/MediaBatchActions.php:113
-#: src/Admin/MediaBatchActions.php:176
-msgid "You do not have permission to access this page."
-msgstr "Nie masz uprawnień dostępu do tej strony."
-
-#: src/Admin/MediaBatchActions.php:120
-msgid "Please select an author."
-msgstr "Proszę wybrać autora."
-
-#: src/Admin/MediaBatchActions.php:127
-msgid "Invalid author selected."
-msgstr "Wybrany autor jest nieprawidłowy."
-
-#: src/Admin/MediaBatchActions.php:135
-msgid "No photos to assign."
-msgstr "Brak zdjęć do przypisania."
-
-#: src/Admin/MediaBatchActions.php:184
-msgid "No photos selected."
-msgstr "Nie wybrano żadnych zdjęć."
-
-#. translators: %d: number of photos
-#: src/Admin/MediaBatchActions.php:204
-#, php-format
-msgid "%d photo selected:"
-msgid_plural "%d photos selected:"
-msgstr[0] "%d zdjęcie wybrane:"
-msgstr[1] "%d zdjęcia wybrane:"
-msgstr[2] "%d zdjęć wybranych:"
-
-#: src/Admin/MediaBatchActions.php:237
-msgid "Author"
-msgstr "Autor"
-
-#: src/Admin/MediaBatchActions.php:241
-#: src/Admin/MediaLibraryHooks.php:90
-#: src/Admin/MediaLibraryHooks.php:321
-msgid "— Select Author —"
-msgstr "— Wybierz autora —"
-
-#: src/Admin/MediaBatchActions.php:249
-msgid "All selected photos will be attributed to this author."
-msgstr "Wszystkie wybrane zdjęcia będą przypisane temu autorowi."
-
-#: src/Admin/MediaBatchActions.php:257
 #: src/Admin/edit-extra-message/EditExtraMessage.js:278
 #: src/Admin/fee-detail/FeeDetail.js:1057
 #: src/Admin/group-detail/GroupDetail.js:501
@@ -194,87 +137,10 @@ msgstr "Wszystkie wybrane zdjęcia będą przypisane temu autorowi."
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: src/Admin/MediaBatchActions.php:260
-msgid "Set Author"
-msgstr "Ustaw autora"
-
-#. translators: 1: number of photos, 2: author name
-#: src/Admin/MediaBatchActions.php:287
-#, php-format
-msgid "%1$d photo assigned to \"%2$s\"."
-msgid_plural "%1$d photos assigned to \"%2$s\"."
-msgstr[0] "%1$d zdjęcie przypisane do \"%2$s\"."
-msgstr[1] "%1$d zdjęcia przypisane do \"%2$s\"."
-msgstr[2] "%1$d zdjęć przypisanych do \"%2$s\"."
-
-#: src/Admin/MediaLibraryHooks.php:102
-#: src/Admin/MediaLibraryHooks.php:276
-msgid "Photo Author"
-msgstr "Autor zdjęcia"
-
-#: src/Admin/MediaLibraryHooks.php:110
-msgid "Who took this photo"
-msgstr "Kto zrobił to zdjęcie"
-
-#: src/Admin/MediaLibraryHooks.php:173
-#: src/Admin/MediaLibraryHooks.php:351
-msgid "— Add Person —"
-msgstr "— Dodaj osobę —"
-
-#: src/Admin/MediaLibraryHooks.php:194
-msgid "Tagged People"
-msgstr "Oznaczeni ludzie"
-
-#: src/Admin/MediaLibraryHooks.php:197
-msgid "People in this photo"
-msgstr "Osoby na tym zdjęciu"
-
-#: src/Admin/MediaLibraryHooks.php:229
-#: src/Admin/MediaLibraryHooks.php:766
-msgid "All Authors"
-msgstr "Wszyscy autorzy"
-
-#: src/Admin/MediaLibraryHooks.php:318
-msgid "Photo Author:"
-msgstr "Autor zdjęcia:"
-
-#: src/Admin/MediaLibraryHooks.php:348
-msgid "Tag People:"
-msgstr "Oznacz osoby:"
-
-#: src/Admin/MediaLibraryHooks.php:403
-#: src/Admin/MediaLibraryHooks.php:441
-#: src/Admin/MediaLibraryHooks.php:676
 #: src/Admin/edit-extra-message/EditExtraMessage.js:262
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr "Zapisywanie..."
-
-#: src/Admin/MediaLibraryHooks.php:412
-#: src/Admin/MediaLibraryHooks.php:455
-#: src/Admin/MediaLibraryHooks.php:691
-msgid "Saved."
-msgstr "Zapisano."
-
-#: src/Admin/MediaLibraryHooks.php:417
-#: src/Admin/MediaLibraryHooks.php:457
-msgid "Error saving selection"
-msgstr "Błąd podczas zapisywania wyboru"
-
-#: src/Admin/MediaLibraryHooks.php:420
-#: src/Admin/MediaLibraryHooks.php:461
-msgid "Error:"
-msgstr "Błąd:"
-
-#: src/Admin/MediaLibraryHooks.php:482
-msgid "Error removing tag"
-msgstr "Błąd podczas usuwania tagu"
-
-#: src/Admin/MediaLibraryHooks.php:694
-#: src/Admin/MediaLibraryHooks.php:698
-#: src/Admin/MediaLibraryHooks.php:722
-msgid "Error"
-msgstr "Błąd"
 
 #: src/API/EventInvitationsController.php:164
 #: src/API/ScheduledMessagesController.php:380
@@ -503,7 +369,6 @@ msgid "Group duplicated successfully."
 msgstr "Grupa zduplikowana pomyślnie."
 
 #: src/API/GroupsController.php:474
-#: src/API/PhotoUploadController.php:123
 msgid "Participant not found."
 msgstr "Uczestnik nie znaleziony."
 
@@ -561,7 +426,6 @@ msgstr "Podano nieprawidłowy identyfikator zdarzenia."
 
 #: src/API/ImportController.php:166
 #: src/API/ImportController.php:490
-#: src/API/PhotoUploadController.php:206
 msgid "File upload failed."
 msgstr "Przesyłanie pliku nie powiodło się."
 
@@ -723,30 +587,6 @@ msgstr "Załącznik nie jest prawidłowym obrazem."
 msgid "Attachment file not found."
 msgstr "Plik załącznika nie znaleziony."
 
-#: src/API/PhotoTagsController.php:196
-msgid "Failed to tag participant."
-msgstr "Nie udało się oznaczyć uczestnika."
-
-#: src/API/PhotoUploadController.php:109
-msgid "Invalid or expired link."
-msgstr "Nieprawidłowy lub wygasły link."
-
-#: src/API/PhotoUploadController.php:138
-msgid "No files uploaded."
-msgstr "Nie przesłano żadnych plików."
-
-#: src/API/PhotoUploadController.php:214
-msgid "File is too large."
-msgstr "Plik jest zbyt duży."
-
-#: src/API/PhotoUploadController.php:223
-msgid "Only image files are allowed (JPEG, PNG, GIF, WebP)."
-msgstr "Dozwolone są tylko pliki obrazów (JPEG, PNG, GIF, WebP)."
-
-#: src/API/PhotoUploadController.php:255
-msgid "Failed to save uploaded file."
-msgstr "Nie udało się zapisać przesłanego pliku."
-
 #: src/API/PollResponseController.php:227
 msgid "Too many submission attempts. Please try again later."
 msgstr "Zbyt wiele prób przesłania. Spróbuj ponownie później."
@@ -902,72 +742,72 @@ msgstr[0] "%1$d sprzedaż biletów na %2$s"
 msgstr[1] "%1$d sprzedaże biletów na %2$s"
 msgstr[2] "%1$d sprzedaży biletów na %2$s"
 
-#: src/Core/Features.php:172
+#: src/Core/Features.php:167
 msgid "Fees"
 msgstr "Opłaty"
 
-#: src/Core/Features.php:173
+#: src/Core/Features.php:168
 msgid "Event fees, fee payments, fee audit log."
 msgstr "Opłaty za imprezy, płatności opłat, dziennik audytu opłat."
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:172
 msgid "Attendee polls and responses."
 msgstr "Ankiety uczestników i odpowiedzi."
 
-#: src/Core/Features.php:184
+#: src/Core/Features.php:175
 #: templates/collaborator-profile.php:331
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Core/Features.php:185
+#: src/Core/Features.php:176
 msgid "Instagram post import and scheduled posting."
 msgstr "Import postów Instagram i zaplanowane publikowanie."
 
-#: src/Core/Features.php:189
+#: src/Core/Features.php:180
 msgid "Participant groups."
 msgstr "Grupy uczestników."
 
-#: src/Core/Features.php:193
+#: src/Core/Features.php:184
 msgid "Event collaborators."
 msgstr "Współpracownicy imprezy."
 
-#: src/Core/Features.php:196
+#: src/Core/Features.php:187
 msgid "Messaging"
 msgstr "Wiadomości"
 
-#: src/Core/Features.php:200
+#: src/Core/Features.php:191
 msgid "Image templates"
 msgstr "Szablony obrazów"
 
-#: src/Core/Features.php:201
+#: src/Core/Features.php:192
 msgid "Generated image templates."
 msgstr "Wygenerowane szablony obrazów."
 
-#: src/Core/Features.php:204
+#: src/Core/Features.php:195
 msgid "Timeline"
 msgstr "Oś czasu"
 
-#: src/Core/Features.php:205
+#: src/Core/Features.php:196
 msgid "Participant activity timeline."
 msgstr "Oś czasu aktywności uczestników."
 
-#: src/Core/Features.php:209
+#: src/Core/Features.php:200
 msgid "Bulk participant import."
 msgstr "Zbiorcze importowanie uczestników."
 
-#: src/Core/Features.php:212
+#: src/Core/Features.php:203
 msgid "Invitations"
 msgstr "Zaproszenia"
 
-#: src/Core/Features.php:213
+#: src/Core/Features.php:204
 msgid "Event invitations, consumed by fair-events-experimental ticketing."
 msgstr "Zaproszenia na imprezy, wykorzystywane przez fair-events-experimental ticketing."
 
-#: src/Core/Features.php:216
+#: src/Core/Features.php:207
 msgid "Manage-event extensions"
 msgstr "Rozszerzenia Manage-event"
 
-#: src/Core/Features.php:217
+#: src/Core/Features.php:208
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "Karta Mailings w interfejsie administracyjnym manage-event."
 
@@ -1214,26 +1054,18 @@ msgid "Content"
 msgstr "Treść"
 
 #: src/Admin/manage-event-ext/MailBodyEditor.js:157
-msgid "Upload photos"
-msgstr "Prześlij zdjęcia"
-
-#: src/Admin/manage-event-ext/MailBodyEditor.js:162
-msgid "Insert photo upload link"
-msgstr "Wstaw link do przesyłania zdjęć"
-
-#: src/Admin/manage-event-ext/MailBodyEditor.js:173
 msgid "Open event page"
 msgstr "Otwórz stronę wydarzenia"
 
-#: src/Admin/manage-event-ext/MailBodyEditor.js:181
+#: src/Admin/manage-event-ext/MailBodyEditor.js:165
 msgid "Insert event page link"
 msgstr "Wstaw link do strony wydarzenia"
 
-#: src/Admin/manage-event-ext/MailBodyEditor.js:196
+#: src/Admin/manage-event-ext/MailBodyEditor.js:180
 msgid "Search page…"
 msgstr "Szukaj strony…"
 
-#: src/Admin/manage-event-ext/MailBodyEditor.js:261
+#: src/Admin/manage-event-ext/MailBodyEditor.js:245
 msgid "Insert token link"
 msgstr "Wstaw link tokenu"
 
@@ -1781,7 +1613,7 @@ msgstr "Anuluj subskrypcję"
 msgid "Body"
 msgstr "Treść"
 
-#: src/Admin/manage-event-ext/MailBodyEditor.js:279
+#: src/Admin/manage-event-ext/MailBodyEditor.js:263
 msgid "Insert token:"
 msgstr "Wstaw token:"
 
@@ -1824,14 +1656,6 @@ msgstr "Zapisz funkcje"
 #: src/Admin/settings/SettingsApp.js:26
 msgid "Fair Audience Experimental Settings"
 msgstr "Ustawienia eksperymentalne Fair Audience"
-
-#: src/Core/Features.php:180
-msgid "Photos"
-msgstr "Zdjęcia"
-
-#: src/Core/Features.php:181
-msgid "Participant photo uploads, photo authors and tags, media library hooks."
-msgstr "Przesyłanie zdjęć uczestników, autorzy zdjęć i tagi, haki biblioteki mediów."
 
 #: src/Admin/components/BudgetLoadStatus.js:57
 #: src/Admin/manage-event-ext/GroupRules.js:465
@@ -1908,12 +1732,7 @@ msgstr "Ten członek nie ma adresu e-mail, dlatego nie można wysłać przypomni
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Przypomnienia są wysyłane do wszystkich członków z oczekującymi płatnościami. Poczekaj, aż to się skończy, zanim wyślesz to."
 
-#. Description of the plugin
-#: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, photos, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
-msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, zdjęcia, Instagram, grupy, współpracownicy, wiadomości, szablony obrazków, oś czasu, import, zaproszenia, manage-event-ext). Wymaga fair-audience."
-
-#: src/Core/Features.php:197
+#: src/Core/Features.php:188
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr "Niestandardowa wiadomość e-mail dla całej publiczności, dodatkowe wiadomości, zaplanowane wiadomości."
 
@@ -1983,4 +1802,9 @@ msgstr "Opcjonalnie powiąż z budżetem, aby śledzić finanse."
 #: src/Admin/fees-list/FeesList.js:681
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "Opłata zachowuje obecny budżet, dopóki nie wybierzesz innego."
+
+#. Description of the plugin
+#: fair-audience-experimental.php
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
+msgstr "Włącza zaawansowane pakiety funkcji dla Fair Audience (opłaty, ankiety, Instagram, grupy, współpracownicy, wiadomości, szablony obrazków, oś czasu, import, zaproszenia, manage-event-ext). Wymaga fair-audience."
 

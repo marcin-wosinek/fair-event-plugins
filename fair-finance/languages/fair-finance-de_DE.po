@@ -1494,739 +1494,740 @@ msgstr "Eintrag #%1$d, %2$s"
 
 #: src/API/SettlementController.php:224
 msgid "Update and activate Fair Payments Connector to reconcile saved settlements."
-msgstr ""
+msgstr "Fair Payments Connector aktualisieren und aktivieren, um gespeicherte Abrechnungen abzustimmen."
 
 #: src/Services/SettlementReconciliation.php:84
 msgid "This account has saved reconciliation decisions. Release their bank associations in Reconciliation before confirming the account. Confirmation history is retained."
-msgstr ""
+msgstr "Dieses Konto hat gespeicherte Abstimmungsentscheidungen. Geben Sie ihre Bankverbindungen in der Abstimmung frei, bevor Sie das Konto bestätigen. Der Bestätigungsverlauf wird beibehalten."
 
 #: src/Services/SettlementReconciliation.php:100
 msgid "This entry belongs to a saved settlement reconciliation. Review or release its bank association in Reconciliation first."
-msgstr ""
+msgstr "Dieser Eintrag gehört zu einer gespeicherten Abrechnungsabstimmung. Überprüfen oder geben Sie seine Bankverbindung zunächst in der Abstimmung frei."
 
 #: src/Services/SettlementReconciliation.php:161
 msgid "An unknown movement or value needs review."
-msgstr ""
+msgstr "Eine unbekannte Bewegung oder ein unbekannter Wert erfordert eine Überprüfung."
 
 #: src/Services/SettlementReconciliation.php:187
 msgid "A movement has an unknown settlement amount or a different settlement currency."
-msgstr ""
+msgstr "Eine Bewegung hat einen unbekannten Abrechnungsbetrag oder eine andere Abrechnungswährung."
 
 #: src/Services/SettlementReconciliation.php:200
 msgid "Aggregate amounts disagree with their detailed movements."
-msgstr ""
+msgstr "Gesamtbeträge stimmen nicht mit ihren detaillierten Bewegungen überein."
 
 #: src/Services/SettlementReconciliation.php:217
 msgid "The report revenue is not fully covered by the listed movements."
-msgstr ""
+msgstr "Der Berichtsumsatz wird nicht vollständig durch die aufgelisteten Bewegungen abgedeckt."
 
 #: src/Services/SettlementReconciliation.php:231
 msgid "There is not enough saved evidence to explain this payout."
-msgstr ""
+msgstr "Es gibt nicht genug gespeicherte Nachweise, um diese Auszahlung zu erklären."
 
 #: src/Services/SettlementReconciliation.php:255
 #: src/Services/SettlementReconciliation.php:891
 msgid "The local reconciliation evidence could not be read. Try again."
-msgstr ""
+msgstr "Die lokalen Abstimmungsnachweise konnten nicht gelesen werden. Bitte versuchen Sie es erneut."
 
 #: src/Services/SettlementReconciliation.php:301
 msgid "Saved movement counts disagree with the API coverage record."
-msgstr ""
+msgstr "Gespeicherte Bewegungszahlen stimmen nicht mit dem API-Abdeckungsdatensatz überein."
 
 #: src/Services/SettlementReconciliation.php:304
 msgid "The saved API revision does not establish coverage of every movement type."
-msgstr ""
+msgstr "Die gespeicherte API-Version deckt nicht alle Bewegungstypen ab."
 
 #: src/Services/SettlementReconciliation.php:309
 msgid "The API import has not finished."
-msgstr ""
+msgstr "Der API-Import wurde nicht abgeschlossen."
 
 #: src/Services/SettlementReconciliation.php:347
 msgid "The settlement’s payout account is missing."
-msgstr ""
+msgstr "Das Auszahlungskonto der Abrechnung fehlt."
 
 #: src/Services/SettlementReconciliation.php:350
 msgid "Select an eligible bank income entry."
-msgstr ""
+msgstr "Wählen Sie einen berechtigten Bankeinnahmeeintrag aus."
 
 #: src/Services/SettlementReconciliation.php:353
 msgid "Confirm the bank entry’s currency and payout account explicitly."
-msgstr ""
+msgstr "Bestätigen Sie die Währung und das Auszahlungskonto des Bankeintrags explizit."
 
 #: src/Services/SettlementReconciliation.php:355
 msgid "The bank entry’s confirmed currency or account does not match this settlement."
-msgstr ""
+msgstr "Die bestätigte Währung oder das Konto des Bankeintrags stimmt nicht mit dieser Abrechnung überein."
 
 #: src/Services/SettlementReconciliation.php:358
 #: src/Services/SettlementReconciliation.php:989
 msgid "Release the existing bank association before selecting a different entry."
-msgstr ""
+msgstr "Geben Sie die vorhandene Bankverbindung frei, bevor Sie einen anderen Eintrag auswählen."
 
 #: src/Services/SettlementReconciliation.php:362
 msgid "This bank entry is already associated with another settlement."
-msgstr ""
+msgstr "Dieser Bankeintrag ist bereits mit einer anderen Abrechnung verknüpft."
 
 #: src/Services/SettlementReconciliation.php:374
 msgid "A movement already belongs to another saved settlement reconciliation."
-msgstr ""
+msgstr "Eine Bewegung gehört bereits zu einer anderen gespeicherten Abrechnungsabstimmung."
 
 #: src/Services/SettlementReconciliation.php:380
 msgid "Saved sources disagree about a movement."
-msgstr ""
+msgstr "Gespeicherte Quellen stimmen nicht über eine Bewegung überein."
 
 #: src/Services/SettlementReconciliation.php:384
 msgid "A required payment reference is missing or matches more than one local transaction."
-msgstr ""
+msgstr "Eine erforderliche Zahlungsreferenz fehlt oder entspricht mehr als einer lokalen Transaktion."
 
 #: src/Services/SettlementReconciliation.php:388
 msgid "A required local transaction is not a paid live payment."
-msgstr ""
+msgstr "Eine erforderliche lokale Transaktion ist keine bezahlte Live-Zahlung."
 
 #: src/Services/SettlementReconciliation.php:391
 msgid "A local payment has a different original currency."
-msgstr ""
+msgstr "Eine lokale Zahlung hat eine andere ursprüngliche Währung."
 
 #: src/Services/SettlementReconciliation.php:394
 msgid "A payment amount differs from its local transaction."
-msgstr ""
+msgstr "Ein Zahlungsbetrag unterscheidet sich von seiner lokalen Transaktion."
 
 #: src/Services/SettlementReconciliation.php:408
 msgid "This bank entry has an incompatible existing whole-payment match."
-msgstr ""
+msgstr "Dieser Bankeintrag hat eine inkompatible vorhandene Gesamtzahlungsübereinstimmung."
 
 #: src/Services/SettlementReconciliation.php:411
 msgid "A payment is already matched to another bank entry."
-msgstr ""
+msgstr "Eine Zahlung ist bereits einem anderen Bankeintrag zugeordnet."
 
 #: src/Services/SettlementReconciliation.php:415
 msgid "The bank entry has an incompatible legacy payment match."
-msgstr ""
+msgstr "Der Bankeintrag hat eine inkompatible Legacy-Zahlungsübereinstimmung."
 
 #: src/Services/SettlementReconciliation.php:422
 msgid "A selected source revision is not published."
-msgstr ""
+msgstr "Eine ausgewählte Quellrevision ist nicht veröffentlicht."
 
 #: src/Services/SettlementReconciliation.php:427
 msgid "The API and CSV payout explanations disagree."
-msgstr ""
+msgstr "Die API- und CSV-Auszahlungserklärungen stimmen nicht überein."
 
 #: src/Services/SettlementReconciliation.php:431
 msgid "Conflicting or incomplete saved sources require resolution."
-msgstr ""
+msgstr "Widersprüchliche oder unvollständige gespeicherte Quellen erfordern eine Auflösung."
 
 #: src/Services/SettlementReconciliation.php:435
 msgid "The saved movements and report do not explain the provider payout exactly."
-msgstr ""
+msgstr "Die gespeicherten Bewegungen und der Bericht erklären die Anbieterauszahlung nicht genau."
 
 #: src/Services/SettlementReconciliation.php:439
 msgid "The supported payout explanation does not equal the bank entry exactly."
-msgstr ""
+msgstr "Die unterstützte Auszahlungserklärung entspricht nicht genau dem Bankeintrag."
 
 #: src/Services/SettlementReconciliation.php:735
 msgid "Payout reference appears in the bank description."
-msgstr ""
+msgstr "Auszahlungsreferenz erscheint in der Bankbeschreibung."
 
 #: src/Services/SettlementReconciliation.php:739
 msgid "The amount matches exactly."
-msgstr ""
+msgstr "Der Betrag stimmt genau überein."
 
 #: src/Services/SettlementReconciliation.php:743
 msgid "The administrator-confirmed payout account matches."
-msgstr ""
+msgstr "Das vom Administrator bestätigte Auszahlungskonto stimmt überein."
 
 #: src/Services/SettlementReconciliation.php:747
 msgid "The administrator-confirmed currency matches."
-msgstr ""
+msgstr "Die vom Administrator bestätigte Währung stimmt überein."
 
 #: src/Services/SettlementReconciliation.php:751
 msgid "The bank date is within seven days of the payout."
-msgstr ""
+msgstr "Das Bankdatum liegt innerhalb von sieben Tagen der Auszahlung."
 
 #: src/Services/SettlementReconciliation.php:841
 msgid "This bank entry was not found."
-msgstr ""
+msgstr "Dieser Bankeintrag wurde nicht gefunden."
 
 #: src/Services/SettlementReconciliation.php:844
 msgid "Only bank income entries can be matched to a settlement."
-msgstr ""
+msgstr "Nur Bankeinzahlungseinträge können einer Abrechnung zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:847
 msgid "This bank entry is already associated with a settlement."
-msgstr ""
+msgstr "Dieser Bankeintrag ist bereits einer Abrechnung zugeordnet."
 
 #: src/Services/SettlementReconciliation.php:949
 msgid "Another settlement operation is running. Try again."
-msgstr ""
+msgstr "Ein anderer Abwicklungsvorgang wird ausgeführt. Versuchen Sie es später erneut."
 
 #: src/Services/SettlementReconciliation.php:966
 msgid "The reviewed data changed. Run preview again before confirming."
-msgstr ""
+msgstr "Die überprüften Daten haben sich geändert. Führen Sie die Vorschau erneut aus, bevor Sie bestätigen."
 
 #: src/Services/SettlementReconciliation.php:971
 msgid "Resolve the blocking issues and explicitly adopt compatible existing matches before confirming."
-msgstr ""
+msgstr "Beheben Sie die blockierenden Probleme und übernehmen Sie explizit kompatible vorhandene Übereinstimmungen, bevor Sie bestätigen."
 
 #: src/Services/SettlementReconciliation.php:984
 msgid "There is no bank association to release."
-msgstr ""
+msgstr "Es gibt keine Bankverbindung zum Freigeben."
 
 #: src/Services/SettlementReconciliation.php:1096
 msgid "Reconciliation could not be saved. Nothing was changed."
-msgstr ""
+msgstr "Die Abstimmung konnte nicht gespeichert werden. Es wurden keine Änderungen vorgenommen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:22
 msgid "Partial"
-msgstr ""
+msgstr "Teilweise"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:23
 msgid "Fully reconciled"
-msgstr ""
+msgstr "Vollständig abgestimmt"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:24
 msgid "Needs review"
-msgstr ""
+msgstr "Überprüfung erforderlich"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:25
 msgid "Released"
-msgstr ""
+msgstr "Freigegeben"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:26
 msgid "Not reconciled"
-msgstr ""
+msgstr "Nicht abgestimmt"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:50
 msgid "Show the evidence reviewed for this decision"
-msgstr ""
+msgstr "Die für diese Entscheidung überprüften Nachweise anzeigen"
 
 #. translators: 1: bank entry ID, 2: exact amount and currency.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:58
 #, js-format
 msgid "Bank entry #%1$d: %2$s"
-msgstr ""
+msgstr "Bankeintrag #%1$d: %2$s"
 
 #. translators: %s: exact amount and currency.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:66
 #, js-format
 msgid "Reviewed payout explanation: %s"
-msgstr ""
+msgstr "Überprüfte Auszahlungserklärung: %s"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:109
 msgid "Saved settlements could not be loaded."
-msgstr ""
+msgstr "Gespeicherte Abwicklungen konnten nicht geladen werden."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:122
 msgid "Saved settlement"
-msgstr ""
+msgstr "Gespeicherte Abwicklung"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:127
 msgid "Use the existing CSV and manual workflow"
-msgstr ""
+msgstr "Verwenden Sie den vorhandenen CSV und manuellen Workflow"
 
 #. translators: %d: saved settlement ID.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:141
 #: src/Admin/reconciliation/ReconciliationApp.js:62
 #, js-format
 msgid "Settlement #%d"
-msgstr ""
+msgstr "Abwicklung #%d"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:161
 msgid "Previous settlements"
-msgstr ""
+msgstr "Vorherige Abwicklungen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:168
 msgid "Next settlements"
-msgstr ""
+msgstr "Nächste Abwicklungen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:268
 msgid "The settlement could not be opened."
-msgstr ""
+msgstr "Die Abwicklung konnte nicht geöffnet werden."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:316
 msgid "Preview failed. Try again."
-msgstr ""
+msgstr "Vorschau fehlgeschlagen. Versuchen Sie es erneut."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:349
 msgid "The reconciliation decision was saved."
-msgstr ""
+msgstr "Die Abstimmungsentscheidung wurde gespeichert."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:354
 msgid "The decision could not be saved. Try again."
-msgstr ""
+msgstr "Die Entscheidung konnte nicht gespeichert werden. Versuchen Sie es erneut."
 
 #. translators: %s: payout reference or settlement ID.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:407
 #, js-format
 msgid "Reconcile settlement %s"
-msgstr ""
+msgstr "Abrechnung %s abstimmen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:412
 msgid "Review saved evidence and choose the bank entry. This review uses local records only."
-msgstr ""
+msgstr "Überprüfen Sie die gespeicherten Nachweise und wählen Sie den Bankposten aus. Diese Überprüfung verwendet nur lokale Datensätze."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:432
 msgid "Payout account"
-msgstr ""
+msgstr "Auszahlungskonto"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:439
 msgid "Provider payout"
-msgstr ""
+msgstr "Anbieterauszahlung"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:449
 msgid "Supported payout explanation"
-msgstr ""
+msgstr "Erklärung zur unterstützten Auszahlung"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:460
 msgid "Difference from bank entry"
-msgstr ""
+msgstr "Differenz zum Bankposten"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:467
 msgid "Import completeness"
-msgstr ""
+msgstr "Vollständigkeit des Imports"
 
 #. translators: 1: last provider refresh time in UTC, 2: last CSV import time in UTC, or Never.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:479
 #, js-format
 msgid "Last provider refresh (UTC): %1$s · Last CSV import (UTC): %2$s"
-msgstr ""
+msgstr "Letzte Anbieteraktualisierung (UTC): %1$s · Letzter CSV-Import (UTC): %2$s"
 
 #. translators: 1: source name, 2: revision ID, 3: saved time in UTC.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:494
 #, js-format
 msgid "Source: %1$s · Revision: %2$d · Saved (UTC): %3$s"
-msgstr ""
+msgstr "Quelle: %1$s · Revision: %2$d · Gespeichert (UTC): %3$s"
 
 #. translators: 1: bank entry ID selected on the main screen, 2: bank entry ID already associated with this settlement.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:510
 #, js-format
 msgid "Bank entry #%1$d was not applied: this settlement is already associated with bank entry #%2$d. Release that association before choosing a different entry."
-msgstr ""
+msgstr "Bankposten #%1$d wurde nicht angewendet: Diese Abrechnung ist bereits mit Bankposten #%2$d verknüpft. Heben Sie diese Verknüpfung auf, bevor Sie einen anderen Posten auswählen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:521
 msgid "For a CSV-only settlement, full reconciliation relies on the supported movements matching the selected bank entry exactly."
-msgstr ""
+msgstr "Bei einer reinen CSV-Abrechnung hängt die vollständige Abstimmung davon ab, dass die unterstützten Bewegungen genau mit dem ausgewählten Bankposten übereinstimmen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:531
 msgid "Saved settlement details"
-msgstr ""
+msgstr "Gespeicherte Abrechnungsdetails"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:534
 msgid "Bank candidates"
-msgstr ""
+msgstr "Bankkandidaten"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:538
 msgid "Several bank entries have equally strong evidence. Review their references and account context before selecting one."
-msgstr ""
+msgstr "Mehrere Bankposten haben gleich starke Nachweise. Überprüfen Sie deren Referenzen und Kontextinformationen, bevor Sie einen auswählen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:545
 msgid "Suggestions are ranked by reference, confirmed account and currency, exact amount, and date. Select the entry yourself; matching amounts alone do not establish currency or account."
-msgstr ""
+msgstr "Vorschläge werden nach Referenz, bestätigtem Konto und Währung, exaktem Betrag und Datum eingestuft. Wählen Sie den Posten selbst aus; übereinstimmende Beträge allein begründen keine Währung oder kein Konto."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:551
 msgid "Filter by description"
-msgstr ""
+msgstr "Nach Beschreibung filtern"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:554
 msgid "Type to filter…"
-msgstr ""
+msgstr "Zum Filtern eingeben…"
 
 #. translators: 1: number of bank candidates matching the filter, 2: number of all bank candidates.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:557
 #, js-format
 msgid "Showing %1$d of %2$d bank candidates."
-msgstr ""
+msgstr "Zeige %1$d von %2$d Bankkonten-Kandidaten."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:570
 msgid "Show all candidates"
-msgstr ""
+msgstr "Alle Kandidaten anzeigen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:576
 msgid "No bank candidates match this filter. Change or clear the filter to see all candidates."
-msgstr ""
+msgstr "Keine Bankkonten-Kandidaten entsprechen diesem Filter. Ändern oder löschen Sie den Filter, um alle Kandidaten anzuzeigen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:580
 msgid "There are no eligible bank income entries."
-msgstr ""
+msgstr "Es gibt keine berechtigten Bankeinträge."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:587
 msgid "Bank entry"
-msgstr ""
+msgstr "Bankeintrag"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:592
 msgid "Release this bank association before choosing a different entry."
-msgstr ""
+msgstr "Geben Sie diese Bankverbindung frei, bevor Sie einen anderen Eintrag auswählen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:601
 msgid "Select a bank entry"
-msgstr ""
+msgstr "Bankeintrag auswählen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:628
 msgid "This entry has conflicting confirmed account or currency context."
-msgstr ""
+msgstr "Dieser Eintrag hat einen widersprüchlichen bestätigten Konto- oder Währungskontext."
 
 #. translators: 1: administrator user ID, 2: confirmation time in UTC.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:640
 #, js-format
 msgid "Bank context confirmed by administrator #%1$d on %2$s (UTC)."
-msgstr ""
+msgstr "Bankkontext bestätigt durch Administrator #%1$d am %2$s (UTC)."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:650
 msgid "Bank entry currency"
-msgstr ""
+msgstr "Bankeintrag-Währung"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:651
 msgid "Enter the currency confirmed from your bank records, for example EUR."
-msgstr ""
+msgstr "Geben Sie die von Ihren Bankaufzeichnungen bestätigte Währung ein, z. B. EUR."
 
 #. translators: %s: provider account label.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:666
 #, js-format
 msgid "I confirm this bank entry is the payout from account %s."
-msgstr ""
+msgstr "Ich bestätige, dass dieser Bankeintrag die Auszahlung vom Konto %s ist."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:689
 msgid "Refresh local preview"
-msgstr ""
+msgstr "Lokale Vorschau aktualisieren"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:693
 msgid "Refresh the preview after changing your selection, then review the result before confirming."
-msgstr ""
+msgstr "Aktualisieren Sie die Vorschau nach dem Ändern Ihrer Auswahl, überprüfen Sie dann das Ergebnis, bevor Sie bestätigen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:709
 msgid "Movements and local transactions"
-msgstr ""
+msgstr "Bewegungen und lokale Transaktionen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:715
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:731
 msgid "Movement"
-msgstr ""
+msgstr "Bewegung"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:716
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:745
 msgid "Original amount"
-msgstr ""
+msgstr "Ursprünglicher Betrag"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:718
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:753
 msgid "Settlement amount"
-msgstr ""
+msgstr "Abwicklungsbetrag"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:721
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:764
 msgid "Local transactions"
-msgstr ""
+msgstr "Lokale Transaktionen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:790
 msgid "Settlement-level evidence"
-msgstr ""
+msgstr "Abwicklungs-Nachweis"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:796
 msgid "Conflicting source values"
-msgstr ""
+msgstr "Widersprüchliche Quellwerte"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:809
 msgid "Allocations and existing matches"
-msgstr ""
+msgstr "Zuordnungen und vorhandene Übereinstimmungen"
 
 #. translators: 1: financial entry ID, 2: local transaction ID.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:857
 #, js-format
 msgid "Existing match: bank entry #%1$d and transaction #%2$d."
-msgstr ""
+msgstr "Vorhandene Übereinstimmung: Bankeintrag #%1$d und Transaktion #%2$d."
 
 #. translators: 1: financial entry ID, 2: exact amount, 3: budget ID or an em dash.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:874
 #, js-format
 msgid "Entry #%1$d: %2$s · Budget #%3$s"
-msgstr ""
+msgstr "Eintrag #%1$d: %2$s · Budget #%3$s"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:888
 msgid "Adopt the compatible existing payment matches shown in this preview."
-msgstr ""
+msgstr "Übernehmen Sie die kompatiblen vorhandenen Zahlungsübereinstimmungen, die in dieser Vorschau angezeigt werden."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:827
 msgid "Budget for new allocations"
-msgstr ""
+msgstr "Budget für neue Zuordnungen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:832
 msgid "Use each transaction’s proposed budget"
-msgstr ""
+msgstr "Verwenden Sie das vorgeschlagene Budget jeder Transaktion"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:33
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:839
 msgid "No budget"
-msgstr ""
+msgstr "Kein Budget"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:926
 msgid "Save as Partial"
-msgstr ""
+msgstr "Als Teilweise speichern"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:936
 msgid "Confirm Fully reconciled"
-msgstr ""
+msgstr "Vollständig abgestimmt bestätigen"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:947
 msgid "Release bank association"
-msgstr ""
+msgstr "Bankverbindung freigeben"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:953
 msgid "Confirmation history"
-msgstr ""
+msgstr "Bestätigungsverlauf"
 
 #. translators: 1: decision state, 2: administrator user ID, 3: confirmation time in UTC.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:959
 #, js-format
 msgid "%1$s · Administrator #%2$d · %3$s (UTC)"
-msgstr ""
+msgstr "%1$s · Administrator #%2$d · %3$s (UTC)"
 
 #. translators: %s: payout reference or settlement ID.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:977
 #, js-format
 msgid "Save reconciliation — %s"
-msgstr ""
+msgstr "Abstimmung speichern — %s"
 
 #. translators: 1: decision state, 2: payout reference, 3: bank entry ID.
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:993
 #, js-format
 msgid "Save %1$s for settlement %2$s and bank entry #%3$d?"
-msgstr ""
+msgstr "Speichern Sie %1$s für Abrechnung %2$s und Bankeintrag #%3$d?"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1030
 msgid "Cancel and refresh the preview before confirming again."
-msgstr ""
+msgstr "Brechen Sie ab und aktualisieren Sie die Vorschau, bevor Sie erneut bestätigen."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1053
 msgid "Save reconciliation decision"
-msgstr ""
+msgstr "Abstimmungsentscheidung speichern"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:87
 msgid "Finding saved settlements…"
-msgstr ""
+msgstr "Gespeicherte Abrechnungen werden gesucht…"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:102
 msgid "No saved settlement has this payout reference or exact amount."
-msgstr ""
+msgstr "Keine gespeicherte Abrechnung hat diese Auszahlungsreferenz oder den genauen Betrag."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:113
 msgid "Several saved settlements have equally strong evidence. Review their references and account context before choosing one."
-msgstr ""
+msgstr "Mehrere gespeicherte Abrechnungen haben gleich starke Belege. Überprüfen Sie deren Referenzen und Kontextinformationen, bevor Sie eine auswählen."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:134
 msgid "Date unknown"
-msgstr ""
+msgstr "Datum unbekannt"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:149
 msgid "This bank entry has conflicting confirmed account or currency context."
-msgstr ""
+msgstr "Dieser Bankeintrag hat einen widersprüchlichen bestätigten Konto- oder Währungskontext."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:160
 #: src/Admin/reconciliation/ReconciliationApp.js:1280
 msgid "Review settlement"
-msgstr ""
+msgstr "Abrechnung überprüfen"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:173
 msgid "Previous suggestions"
-msgstr ""
+msgstr "Vorherige Vorschläge"
 
 #. translators: 1: current page, 2: number of pages.
 #: src/Admin/reconciliation/ReconciliationApp.js:178
 #, js-format
 msgid "Page %1$d of %2$d"
-msgstr ""
+msgstr "Seite %1$d von %2$d"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:189
 msgid "Next suggestions"
-msgstr ""
+msgstr "Nächste Vorschläge"
 
 #: src/Admin/reconciliation/ReconciliationApp.js:375
 msgid "Saved settlement suggestions could not be loaded."
-msgstr ""
+msgstr "Gespeicherte Abrechnungsvorschläge konnten nicht geladen werden."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:801
 msgid "Suggested settlements"
-msgstr ""
+msgstr "Vorgeschlagene Abrechnungen"
 
 #. translators: 1: payout reference or settlement ID, 2: payout amount and currency, 3: reconciliation state.
 #: src/Admin/reconciliation/ReconciliationApp.js:1252
 #, js-format
 msgid "Settlement %1$s · %2$s · %3$s"
-msgstr ""
+msgstr "Abrechnung %1$s · %2$s · %3$s"
 
 #: src/Admin/settlements/components/SettlementDetail.js:157
 msgid "Reconcile"
-msgstr ""
+msgstr "Abgleichen"
 
 #: src/Services/AllocationPlanner.php:173
 msgid "This bank entry is already split. Its existing allocations are preserved."
-msgstr ""
+msgstr "Dieser Bankeintrag ist bereits aufgeteilt. Seine bestehenden Zuordnungen bleiben erhalten."
 
 #: src/Services/AllocationPlanner.php:176
 msgid "A split allocation cannot be split again."
-msgstr ""
+msgstr "Eine aufgeteilte Zuordnung kann nicht erneut aufgeteilt werden."
 
 #: src/Services/AllocationPlanner.php:184
 msgid "An amount has fractions of a cent, so it cannot be stored exactly. Allocate this entry manually."
-msgstr ""
+msgstr "Ein Betrag hat Bruchteile eines Cents, daher kann er nicht exakt gespeichert werden. Ordnen Sie diesen Eintrag manuell zu."
 
 #: src/Services/AllocationPlanner.php:207
 #: src/Services/AllocationPlanner.php:224
 msgid "There is no supported evidence to allocate."
-msgstr ""
+msgstr "Es gibt keine unterstützten Belege zum Zuordnen."
 
 #. translators: 1: exact allocation total, 2: bank entry amount.
 #: src/Services/AllocationPlanner.php:215
 #, php-format
 msgid "The supported amounts total %1$s, which does not equal the bank entry amount of %2$s. No split was proposed and no balancing amount is invented."
-msgstr ""
+msgstr "Die unterstützten Beträge summieren sich auf %1$s, was nicht dem Bankeintragsbetrag von %2$s entspricht. Es wurde keine Aufteilung vorgeschlagen und kein Ausgleichsbetrag erfunden."
 
 #: src/Services/AllocationPlanner.php:223
 msgid "One transaction explains this bank entry, so no split is needed."
-msgstr ""
+msgstr "Eine Transaktion erklärt diesen Bankeintrag, daher ist keine Aufteilung erforderlich."
 
 #: src/Services/AllocationPlanner.php:228
 msgid "This bank entry already has a budget, event, tag or participant. It is kept as it is; split it manually if needed."
-msgstr ""
+msgstr "Dieser Bankeintrag hat bereits ein Budget, Ereignis, Tag oder Teilnehmer. Er wird so beibehalten; teilen Sie ihn manuell auf, falls erforderlich."
 
 #: src/Services/AllocationPlanner.php:230
 msgid "Confirming creates one allocation per supported movement. Their amounts sum exactly to this bank entry."
-msgstr ""
+msgstr "Das Bestätigen erstellt eine Zuordnung pro unterstützte Bewegung. Ihre Beträge summieren sich genau zu diesem Bankeintrag."
 
 #: src/Services/ReconciliationAllocation.php:89
 msgid "Update Fair Payments Connector to allocate matched transactions."
-msgstr ""
+msgstr "Aktualisieren Sie Fair Payments Connector, um abgeglichene Transaktionen zuzuordnen."
 
 #: src/Services/ReconciliationAllocation.php:106
 msgid "A transaction fee has fractions of a cent, so its net amount cannot be stored exactly."
-msgstr ""
+msgstr "Eine Transaktionsgebühr hat Bruchteile eines Cents, daher kann ihr Nettobetrag nicht exakt gespeichert werden."
 
 #: src/Services/ReconciliationAllocation.php:230
 msgid "Failed to match entry to transaction. Nothing was changed."
-msgstr ""
+msgstr "Eintrag konnte nicht mit Transaktion abgeglichen werden. Nichts wurde geändert."
 
 #: src/Services/SettlementReconciliation.php:537
 msgid "Select a bank entry to see its proposed allocation."
-msgstr ""
+msgstr "Wählen Sie einen Bankeintrag aus, um die vorgeschlagene Zuordnung anzuzeigen."
 
 #. translators: %s: transaction description.
 #: src/Services/SettlementReconciliation.php:563
 #, php-format
 msgid "Refund: %s"
-msgstr ""
+msgstr "Rückerstattung: %s"
 
 #. translators: %s: transaction description.
 #: src/Services/SettlementReconciliation.php:565
 #, php-format
 msgid "Chargeback: %s"
-msgstr ""
+msgstr "Rückbuchung: %s"
 
 #: src/Services/SettlementReconciliation.php:568
 msgid "Payments are only reported as totals, so they cannot be allocated per transaction."
-msgstr ""
+msgstr "Zahlungen werden nur als Gesamtsummen gemeldet, daher können sie nicht pro Transaktion zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:569
 msgid "A movement has no single matching local transaction, so it cannot be allocated yet."
-msgstr ""
+msgstr "Eine Bewegung hat keine einzelne übereinstimmende lokale Transaktion, daher kann sie noch nicht zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:570
 msgid "A movement has an unknown settlement amount or a different currency, so it cannot be allocated."
-msgstr ""
+msgstr "Eine Bewegung hat einen unbekannten Abrechnungsbetrag oder eine andere Währung, daher kann sie nicht zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:608
 msgid "There are no payment movements to allocate."
-msgstr ""
+msgstr "Es gibt keine Zahlungsbewegungen zum Zuordnen."
 
 #: src/Services/SettlementReconciliation.php:643
 msgid "The report costs are incomplete, so they cannot be allocated."
-msgstr ""
+msgstr "Die Berichtskosten sind unvollständig, daher können sie nicht zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:650
 msgid "Mollie costs from the settlement report"
-msgstr ""
+msgstr "Mollie-Kosten aus dem Abrechungsbericht"
 
 #: src/Services/SettlementReconciliation.php:664
 msgid "A fee or adjustment has an unknown amount or a different currency, so it cannot be allocated."
-msgstr ""
+msgstr "Eine Gebühr oder Anpassung hat einen unbekannten Betrag oder eine andere Währung, daher kann sie nicht zugeordnet werden."
 
 #: src/Services/SettlementReconciliation.php:669
 msgid "Settlement fees"
-msgstr ""
+msgstr "Abrechnungsgebühren"
 
 #: src/Services/SettlementReconciliation.php:669
 msgid "Settlement adjustment"
-msgstr ""
+msgstr "Abrechnungsanpassung"
 
 #: src/Services/SettlementReconciliation.php:678
 msgid "Settlement fees have fractions of a cent, so they cannot be stored exactly. Allocate this entry manually."
-msgstr ""
+msgstr "Abrechnungsgebühren haben Bruchteile eines Cents, daher können sie nicht exakt gespeichert werden. Ordnen Sie diesen Eintrag manuell zu."
 
 #: src/Services/SettlementReconciliation.php:682
 msgid "Settlement fees and adjustments"
-msgstr ""
+msgstr "Abrechnungsgebühren und Anpassungen"
 
 #. translators: %d: budget ID.
 #: src/Admin/reconciliation/components/AllocationProposal.js:41
 #, js-format
 msgid "Budget #%d"
-msgstr ""
+msgstr "Budget #%d"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:61
 #: src/Admin/reconciliation/components/AllocationProposal.js:71
 msgid "Allocation"
-msgstr ""
+msgstr "Zuordnung"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:63
 #: src/Admin/reconciliation/components/AllocationProposal.js:103
 msgid "Event"
-msgstr ""
+msgstr "Veranstaltung"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:64
 #: src/Admin/reconciliation/components/AllocationProposal.js:120
 msgid "Budget"
-msgstr ""
+msgstr "Budget"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:77
 msgid "No description"
-msgstr ""
+msgstr "Keine Beschreibung"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:85
 msgid "Settlement-level fee or adjustment"
-msgstr ""
+msgstr "Gebühr oder Anpassung auf Abrechnungsebene"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:113
 msgid "No event link"
-msgstr ""
+msgstr "Kein Ereignislink"
 
 #. translators: %d: number of allocations created.
 #: src/Admin/reconciliation/components/AllocationProposal.js:153
 #, js-format
 msgid "Transactions matched and the entry was split into %d allocations."
-msgstr ""
+msgstr "Transaktionen abgeglichen und der Eintrag wurde in %d Zuordnungen aufgeteilt."
 
 #. translators: %s: why no split was created.
 #: src/Admin/reconciliation/components/AllocationProposal.js:163
 #, js-format
 msgid "Transactions matched. The allocation still needs review: %s"
-msgstr ""
+msgstr "Transaktionen abgeglichen. Die Zuordnung benötigt noch eine Überprüfung: %s"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:819
 msgid "The reconciliation evidence is complete, so the bank association can be confirmed. The allocation still needs review: no split is created."
-msgstr ""
+msgstr "Die Abstimmungsnachweise sind vollständig, daher kann die Bankverbindung bestätigt werden. Die Zuordnung benötigt noch eine Überprüfung: Es wird keine Aufteilung erstellt."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:900
 msgid "This settlement is fully reconciled, but its bank entry was not split. Applying the split keeps the bank association and records it in the confirmation history."
-msgstr ""
+msgstr "Diese Abrechnung ist vollständig abgestimmt, aber ihr Bankeintrag wurde nicht aufgeteilt. Das Anwenden der Aufteilung behält die Bankverbindung bei und zeichnet sie im Bestätigungsverlauf auf."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:913
 msgid "Apply the proposed split"
-msgstr ""
+msgstr "Vorgeschlagene Aufteilung anwenden"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1007
 msgid "This saves local evidence only and does not move or refund money. You can release the bank association later; confirmation history is retained."
-msgstr ""
+msgstr "Dies speichert nur lokale Nachweise und bewegt oder erstattet kein Geld. Sie können die Bankverbindung später freigeben; der Bestätigungsverlauf bleibt erhalten."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1014
 msgid "The bank entry is also split into the proposed allocations shown in the review. Existing allocations are never replaced."
-msgstr ""
+msgstr "Der Bankeintrag wird auch in die vorgeschlagenen Zuordnungen aufgeteilt, die in der Überprüfung angezeigt werden. Vorhandene Zuordnungen werden nie ersetzt."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1018
 msgid "Existing allocations are not changed."
-msgstr ""
+msgstr "Vorhandene Zuordnungen werden nicht geändert."
+

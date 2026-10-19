@@ -73,15 +73,14 @@ msgid "Post #%d"
 msgstr "Entrada #%d"
 
 #: src/API/QuestionnaireResponsesController.php:327
-#: src/Admin/submission-detail/SubmissionDetail.js:61
+#: src/Admin/submission-detail/SubmissionDetail.js:62
 msgid "No page"
 msgstr "Sin página"
 
-#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format,js-format
+#, php-format, js-format
 msgid "Event date #%d"
 msgstr "Fecha del evento #%d"
 
@@ -96,7 +95,7 @@ msgstr "Heredado (sin ID de formulario)"
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:332
+#: src/Admin/submission-detail/SubmissionDetail.js:333
 msgid "Submission not found."
 msgstr "Envío no encontrado."
 
@@ -166,39 +165,39 @@ msgid "Group by"
 msgstr "Agrupar por"
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:403
+#: src/Admin/submission-detail/SubmissionDetail.js:404
 msgid "Page"
 msgstr "Página"
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:177
 #: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:434
+#: src/Admin/submission-detail/SubmissionDetail.js:435
 msgid "Event"
 msgstr "Evento"
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
 #: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:399
+#: src/Admin/submission-detail/SubmissionDetail.js:400
 msgid "Form"
 msgstr "Formulario"
 
 #: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:166
-#: src/Admin/submission-detail/SubmissionDetail.js:426
+#: src/Admin/submission-detail/SubmissionDetail.js:427
 msgid "Email"
 msgstr "Correo electrónico"
 
 #: src/Admin/form-answers/FormAnswers.js:183
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:240
-#: src/Admin/submission-detail/SubmissionDetail.js:430
+#: src/Admin/submission-detail/SubmissionDetail.js:431
 msgid "Date"
 msgstr "Fecha"
 
 #: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:242
+#: src/Admin/submission-detail/SubmissionDetail.js:243
 msgid "Edit"
 msgstr "Editar"
 
@@ -213,7 +212,7 @@ msgid "Delete"
 msgstr "Eliminar"
 
 #: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:224
+#: src/Admin/submission-detail/SubmissionDetail.js:225
 msgid "— None —"
 msgstr "— Ninguno —"
 
@@ -227,12 +226,12 @@ msgstr "Editar envío"
 
 #: src/Admin/components/DeleteSubmissionDialog.js:122
 #: src/Admin/form-answers/FormAnswers.js:350
-#: src/Admin/submission-detail/SubmissionDetail.js:270
+#: src/Admin/submission-detail/SubmissionDetail.js:271
 msgid "Cancel"
 msgstr "Cancelar"
 
 #: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:263
+#: src/Admin/submission-detail/SubmissionDetail.js:264
 msgid "Save"
 msgstr "Guardar"
 
@@ -283,16 +282,16 @@ msgid "Questionnaire Responses"
 msgstr "Respuestas del cuestionario"
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:527
-#: src/Admin/submission-detail/SubmissionDetail.js:295
+#: src/Admin/submission-detail/SubmissionDetail.js:296
 msgid "Clipboard not available."
 msgstr "Portapapeles no disponible."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:304
+#: src/Admin/submission-detail/SubmissionDetail.js:305
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr "Markdown copiado al portapapeles. Pégalo en Google Docs."
 
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
-#: src/Admin/submission-detail/SubmissionDetail.js:313
+#: src/Admin/submission-detail/SubmissionDetail.js:314
 msgid "Failed to copy."
 msgstr "Error al copiar."
 
@@ -368,51 +367,51 @@ msgstr "Crear grupo y añadir"
 msgid "Add to group"
 msgstr "Añadir al grupo"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:92
+#: src/Admin/submission-detail/SubmissionDetail.js:93
 msgid "View file"
 msgstr "Ver archivo"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:321
+#: src/Admin/submission-detail/SubmissionDetail.js:322
 msgid "No submission ID provided."
 msgstr "No se proporcionó ID de envío."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:370
+#: src/Admin/submission-detail/SubmissionDetail.js:371
 msgid "Form Submission"
 msgstr "Envío de formulario"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:373
+#: src/Admin/submission-detail/SubmissionDetail.js:374
 msgid "Copy markdown"
 msgstr "Copiar markdown"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:389
+#: src/Admin/submission-detail/SubmissionDetail.js:390
 msgid "Submission Info"
 msgstr "Información del envío"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:411
+#: src/Admin/submission-detail/SubmissionDetail.js:412
 msgid "Submitted by"
 msgstr "Enviado por"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:456
+#: src/Admin/submission-detail/SubmissionDetail.js:457
 msgid "Answers"
 msgstr "Respuestas"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:461
+#: src/Admin/submission-detail/SubmissionDetail.js:462
 msgid "No answers recorded."
 msgstr "No hay respuestas registradas."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:469
+#: src/Admin/submission-detail/SubmissionDetail.js:470
 msgid "Question"
 msgstr "Pregunta"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:470
+#: src/Admin/submission-detail/SubmissionDetail.js:471
 msgid "Answer"
 msgstr "Respuesta"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:132
+#: src/Admin/submission-detail/SubmissionDetail.js:133
 msgid "Yes"
 msgstr "Sí"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:133
+#: src/Admin/submission-detail/SubmissionDetail.js:134
 msgid "No"
 msgstr "No"
 
@@ -550,26 +549,26 @@ msgid "File"
 msgstr "Archivo"
 
 #. translators: 1: number of the ticket within its purchase, 2: short ticket reference
-#: src/Admin/submission-detail/SubmissionDetail.js:29
+#: src/Admin/submission-detail/SubmissionDetail.js:30
 #, js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Entrada %1$d (%2$s)"
 
 #. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
-#: src/Admin/submission-detail/SubmissionDetail.js:37
+#: src/Admin/submission-detail/SubmissionDetail.js:38
 #, js-format
 msgid "%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket."
 msgstr "%s — adjuntado automáticamente porque las respuestas son anteriores a las respuestas por entrada. Verifica que pertenezcan a esta entrada."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:45
+#: src/Admin/submission-detail/SubmissionDetail.js:46
 msgid "No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to."
 msgstr "Sin entrada — estas respuestas son anteriores a las respuestas por entrada y no se encontró ninguna entrada coincidente. Verifica a qué entrada pertenecen."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:51
+#: src/Admin/submission-detail/SubmissionDetail.js:52
 msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
 msgstr "Sin entrada — la entrada a la que pertenecían estas respuestas fue eliminada. Verifica si siguen siendo aplicables."
 
-#: src/Admin/submission-detail/SubmissionDetail.js:442
+#: src/Admin/submission-detail/SubmissionDetail.js:443
 msgid "Ticket"
 msgstr "Entrada"
 
@@ -631,7 +630,7 @@ msgstr "No se ha podido cargar la lista de eventos. Se mantiene la asignación a
 msgid "Retry"
 msgstr "Reintentar"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:212
+#: src/Admin/submission-detail/SubmissionDetail.js:213
 msgid "The event could not be changed. Try again."
 msgstr "No se ha podido cambiar el evento. Inténtalo de nuevo."
 
@@ -639,4 +638,5 @@ msgstr "No se ha podido cambiar el evento. Inténtalo de nuevo."
 #: src/Admin/components/DeleteSubmissionDialog.js:82
 #, js-format
 msgid "Delete submission %1$s — %2$s"
-msgstr ""
+msgstr "Eliminar envío %1$s — %2$s"
+

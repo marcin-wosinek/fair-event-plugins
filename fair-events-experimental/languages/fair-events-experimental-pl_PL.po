@@ -250,7 +250,7 @@ msgstr "Błąd: %s"
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:205
 #: src/Admin/settings/MetaConversions.js:498
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -1048,254 +1048,254 @@ msgstr "Edytuj"
 #. Description of the plugin
 #: fair-events-experimental.php
 msgid "Event feeds, group pricing, schedule editing, comparisons and optional Meta conversions for Fair Events."
-msgstr ""
+msgstr "Kanały wydarzeń, ceny grupowe, edycja harmonogramu, porównania i opcjonalne konwersje Meta dla Fair Events."
 
 #: src/API/MetaConversionsController.php:236
 #: src/API/MetaEngagementController.php:101
 msgid "Marketing consent is required."
-msgstr ""
+msgstr "Wymagana jest zgoda marketingowa."
 
 #: src/API/MetaConversionsController.php:241
 #: src/API/MetaEngagementController.php:106
 msgid "A Meta browser identifier is required."
-msgstr ""
+msgstr "Wymagany jest identyfikator przeglądarki Meta."
 
 #: src/API/MetaEngagementController.php:109
 msgid "Too many requests. Try again later."
-msgstr ""
+msgstr "Zbyt wiele żądań. Spróbuj ponownie później."
 
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:200
 #, php-format
 msgid "Meta answered, but did not confirm receiving the %s test event."
-msgstr ""
+msgstr "Meta odpowiedziała, ale nie potwierdziła odebrania zdarzenia testowego %s."
 
 #: src/Admin/settings/MetaCalendarTest.js:30
 msgid "This page cannot read marketing consent because the WP Consent API is not active."
-msgstr ""
+msgstr "Ta strona nie może odczytać zgody marketingowej, ponieważ interfejs API WP Consent nie jest aktywny."
 
 #: src/Admin/settings/MetaCalendarTest.js:96
 msgid "(untitled event)"
-msgstr ""
+msgstr "(wydarzenie bez tytułu)"
 
 #: src/Admin/settings/MetaCalendarTest.js:184
 msgid "Select a date of this series."
-msgstr ""
+msgstr "Wybierz termin tej serii."
 
 #: src/Admin/settings/MetaCalendarTest.js:212
 msgid "Calendar click test"
-msgstr ""
+msgstr "Test kliknięcia kalendarza"
 
 #: src/Admin/settings/MetaCalendarTest.js:214
 msgid "Sends one FairEventCalendarClick to Test Events, built like a real “Add to calendar” click from this browser. It does not appear in delivery outcomes or reports."
-msgstr ""
+msgstr "Wysyła jedno zdarzenie FairEventCalendarClick do zdarzeń testowych, zbudowane jak prawdziwe kliknięcie „Dodaj do kalendarza” z tej przeglądarki. Nie pojawia się w wynikach dostarczenia ani w raportach."
 
 #: src/Admin/settings/MetaCalendarTest.js:230
 msgid "Event"
-msgstr ""
+msgstr "Wydarzenie"
 
 #: src/Admin/settings/MetaCalendarTest.js:285
 msgid "Date"
-msgstr ""
+msgstr "Data"
 
 #: src/Admin/settings/MetaCalendarTest.js:289
 msgid "Select a date"
-msgstr ""
+msgstr "Wybierz datę"
 
 #: src/Admin/settings/MetaCalendarTest.js:298
 msgid "(no date)"
-msgstr ""
+msgstr "(brak daty)"
 
 #: src/Admin/settings/MetaCalendarTest.js:318
 msgid "Send FairEventCalendarClick test"
-msgstr ""
+msgstr "Wyślij testowe FairEventCalendarClick"
 
 #: src/Admin/settings/MetaConversions.js:39
 #: src/Admin/settings/MetaConversions.js:130
 msgid "Received by Meta"
-msgstr ""
+msgstr "Odebrane przez Meta"
 
 #: src/Admin/settings/MetaConversions.js:41
 msgid "Delivered (not confirmed)"
-msgstr ""
+msgstr "Dostarczone (niepotwierdzone)"
 
 #: src/Admin/settings/MetaConversions.js:134
 msgid "Accepted (not confirmed)"
-msgstr ""
+msgstr "Przyjęte (niepotwierdzone)"
 
 #: src/Admin/settings/MetaConversions.js:143
 msgid "Not confirmed"
-msgstr ""
+msgstr "Niepotwierdzone"
 
 #: src/Admin/settings/MetaConversions.js:174
 msgid "No HTTP response"
-msgstr ""
+msgstr "Brak odpowiedzi HTTP"
 
 #. translators: %d: HTTP status code of Meta's answer
 #: src/Admin/settings/MetaConversions.js:177
 #, js-format
 msgid "HTTP %d"
-msgstr ""
+msgstr "HTTP %d"
 
 #: src/Admin/settings/MetaConversions.js:184
 msgid "Events received: not reported"
-msgstr ""
+msgstr "Odebrane zdarzenia: nie zgłoszono"
 
 #. translators: %d: number of events Meta reported as received
 #: src/Admin/settings/MetaConversions.js:190
 #, js-format
 msgid "Events received: %d"
-msgstr ""
+msgstr "Odebrane zdarzenia: %d"
 
 #. translators: %s: Meta trace ID for support requests
 #: src/Admin/settings/MetaConversions.js:202
 #, js-format
 msgid "Trace ID: %s"
-msgstr ""
+msgstr "Identyfikator śledzenia: %s"
 
 #: src/Admin/settings/MetaConversions.js:212
 msgid "Messages: none"
-msgstr ""
+msgstr "Komunikaty: brak"
 
 #: src/Admin/settings/MetaConversions.js:220
 msgid "Messages:"
-msgstr ""
+msgstr "Komunikaty:"
 
 #: src/Admin/settings/MetaConversions.js:236
 msgid "Messages: not reported"
-msgstr ""
+msgstr "Komunikaty: nie zgłoszono"
 
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/Admin/settings/MetaConversions.js:488
 #, js-format
 msgid "Meta confirmed receiving the %s test event."
-msgstr ""
+msgstr "Meta potwierdziła odebranie zdarzenia testowego %s."
 
 #: src/Admin/settings/MetaConversions.js:655
 msgid "Latest test result"
-msgstr ""
+msgstr "Najnowszy wynik testu"
 
 #: src/Admin/settings/MetaCalendarTest.js:36
 msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then check again."
-msgstr ""
+msgstr "Ta przeglądarka nie wyraziła zgody marketingowej. Zaakceptuj marketingowe pliki cookie w witrynie, a następnie sprawdź ponownie."
 
 #: src/Admin/settings/MetaCalendarTest.js:42
 msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again."
-msgstr ""
+msgstr "Ta przeglądarka nie ma identyfikatora przeglądarki Meta (pliku cookie _fbp lub _fbc). Otwórz stronę wydarzenia z aktywnym pikselem Meta, a następnie sprawdź ponownie."
 
 #: src/Admin/settings/MetaCalendarTest.js:60
 msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
-msgstr ""
+msgstr "Nie udało się odczytać zgody marketingowej ani plików cookie Meta tej przeglądarki. Sprawdź baner zgody, a następnie sprawdź ponownie."
 
 #: src/Admin/settings/MetaCalendarTest.js:178
 msgid "Select the event the test click belongs to."
-msgstr ""
+msgstr "Wybierz wydarzenie, którego dotyczy testowe kliknięcie."
 
 #: src/Admin/settings/MetaCalendarTest.js:236
 msgid "Lists the latest events with an event page. Type to search by title."
-msgstr ""
+msgstr "Wyświetla najnowsze wydarzenia ze stroną wydarzenia. Zacznij pisać, aby wyszukać po tytule."
 
 #: src/Admin/settings/MetaCalendarTest.js:256
 msgid "Events could not be loaded."
-msgstr ""
+msgstr "Nie udało się wczytać wydarzeń."
 
 #. translators: %s: text typed into the event search
 #: src/Admin/settings/MetaCalendarTest.js:269
 #, js-format
 msgid "No events with an event page match “%s”."
-msgstr ""
+msgstr "Żadne wydarzenie ze stroną wydarzenia nie pasuje do „%s”."
 
 #: src/Admin/settings/MetaCalendarTest.js:275
 msgid "There are no events with an event page yet."
-msgstr ""
+msgstr "Nie ma jeszcze wydarzeń ze stroną wydarzenia."
 
 #: src/Admin/settings/MetaCalendarTest.js:330
 msgid "Check this browser again"
-msgstr ""
+msgstr "Sprawdź tę przeglądarkę ponownie"
 
 #: src/Admin/settings/MetaConversions.js:427
 msgid "Wait until the Meta settings are saved."
-msgstr ""
+msgstr "Poczekaj, aż ustawienia Meta zostaną zapisane."
 
 #: src/Admin/settings/MetaConversions.js:432
 msgid "Wait until the current test event is sent."
-msgstr ""
+msgstr "Poczekaj, aż bieżące zdarzenie testowe zostanie wysłane."
 
 #: src/Admin/settings/MetaConversions.js:633
 msgid "Discard changes"
-msgstr ""
+msgstr "Anuluj zmiany"
 
 #: src/API/MetaConversionsController.php:168
 msgid "The Meta access token is managed in Settings → Connectors. Nothing was saved."
-msgstr ""
+msgstr "Token dostępu Meta jest zarządzany w Ustawieniach → Łączniki. Nic nie zostało zapisane."
 
 #: src/Meta/Connector.php:54
 msgid "Meta Conversions API"
-msgstr ""
+msgstr "Meta Conversions API"
 
 #: src/Meta/Connector.php:69
 msgid "Report consented checkouts, purchases and event-page button clicks to Meta. Removing the access token stops conversion delivery until another token is saved."
-msgstr ""
+msgstr "Raportuj zgody na kasy, zakupy i kliknięcia przycisków na stronach zdarzeń do Meta. Usunięcie tokenu dostępu zatrzymuje dostarczanie konwersji do czasu zapisania innego tokenu."
 
 #. translators: %s: environment variable name
 #: src/Meta/Connector.php:73
 #, php-format
 msgid "The token in use comes from the %s environment variable, so removing a saved token here does not stop delivery."
-msgstr ""
+msgstr "Token w użyciu pochodzi ze zmiennej środowiskowej %s, dlatego usunięcie zapisanego tokenu tutaj nie zatrzyma dostarczania."
 
 #. translators: %s: PHP constant name
 #: src/Meta/Connector.php:76
 #, php-format
 msgid "The token in use comes from the %s constant, so removing a saved token here does not stop delivery."
-msgstr ""
+msgstr "Token w użyciu pochodzi ze stałej %s, dlatego usunięcie zapisanego tokenu tutaj nie zatrzyma dostarczania."
 
 #: src/Meta/Connector.php:93
 msgid "Meta access token"
-msgstr ""
+msgstr "Token dostępu Meta"
 
 #: src/Meta/Connector.php:94
 msgid "Access token for the Meta Conversions API."
-msgstr ""
+msgstr "Token dostępu do Meta Conversions API."
 
 #: src/Meta/Connector.php:178
 msgid "That does not look like a Meta access token. Paste the full token generated in Events Manager, without spaces. The saved token was not changed."
-msgstr ""
+msgstr "To nie wygląda jak token dostępu Meta. Wklej pełny token wygenerowany w Menedżerze zdarzeń, bez spacji. Zapisany token nie został zmieniony."
 
 #: src/Admin/settings/MetaConversions.js:301
 msgid "No access token is configured, so no conversions are delivered to Meta. Add one in Connectors."
-msgstr ""
+msgstr "Żaden token dostępu nie jest skonfigurowany, dlatego żadne konwersje nie są dostarczane do Meta. Dodaj jeden w Łącznikach."
 
 #. translators: %s: environment variable name
 #: src/Admin/settings/MetaConversions.js:312
 #, js-format
 msgid "The access token comes from the %s environment variable, which overrides any token saved in Connectors. Removing a token in Connectors does not stop delivery while it is set. Send a test event to confirm Meta accepts it."
-msgstr ""
+msgstr "Token dostępu pochodzi ze zmiennej środowiskowej %s, która zastępuje każdy token zapisany w Łącznikach. Usunięcie tokenu w Łącznikach nie zatrzyma dostarczania, dopóki jest ustawiony. Wyślij zdarzenie testowe, aby potwierdzić, że Meta je akceptuje."
 
 #. translators: %s: PHP constant name
 #: src/Admin/settings/MetaConversions.js:325
 #, js-format
 msgid "The access token comes from the %s constant, which overrides any token saved in Connectors. Removing a token in Connectors does not stop delivery while it is defined. Send a test event to confirm Meta accepts it."
-msgstr ""
+msgstr "Token dostępu pochodzi ze stałej %s, która zastępuje każdy token zapisany w Łącznikach. Usunięcie tokenu w Łącznikach nie zatrzyma dostarczania, dopóki jest zdefiniowany. Wyślij zdarzenie testowe, aby potwierdzić, że Meta je akceptuje."
 
 #: src/Admin/settings/MetaConversions.js:335
 msgid "An access token is saved in Connectors. It is not shown here. Send a test event to confirm Meta accepts it."
-msgstr ""
+msgstr "Token dostępu jest zapisany w Łącznikach. Nie jest tu wyświetlany. Wyślij zdarzenie testowe, aby potwierdzić, że Meta je akceptuje."
 
 #: src/Admin/settings/MetaConversions.js:412
 msgid "Add a Meta access token in Connectors before sending a test event."
-msgstr ""
+msgstr "Dodaj token dostępu Meta w Łącznikach przed wysłaniem zdarzenia testowego."
 
 #: src/Admin/settings/MetaConversions.js:417
 msgid "Save the dataset ID and Test Events code before sending a test event."
-msgstr ""
+msgstr "Zapisz identyfikator zestawu danych i kod zdarzeń testowych przed wysłaniem zdarzenia testowego."
 
 #: src/Admin/settings/MetaConversions.js:422
 msgid "Save or discard your changes before sending a test event — testing now would use the previously saved configuration, not what is in the fields."
-msgstr ""
+msgstr "Zapisz lub anuluj zmiany przed wysłaniem zdarzenia testowego – testowanie teraz będzie używać poprzednio zapisaną konfigurację, a nie to, co znajduje się w polach."
 
 #: src/Admin/settings/MetaConversions.js:574
 msgid "Manage in Connectors"
-msgstr ""
+msgstr "Zarządzaj w Łącznikach"
 
 #: src/Admin/components/CopyUrlButton.js:21
 msgid "Copy URL"
@@ -1308,3 +1308,4 @@ msgstr "Skopiuj adres URL do schowka"
 #: src/Admin/components/CopyUrlButton.js:23
 msgid "Copied!"
 msgstr "Skopiowano!"
+
