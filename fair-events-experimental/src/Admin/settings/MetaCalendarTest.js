@@ -62,21 +62,18 @@ function readBrowserBlocker() {
 }
 
 /**
- * REST path of the latest events, or of a title search.
+ * REST path of the latest events the calendar test can be sent for, or of a
+ * title search among them. The server decides eligibility.
  *
  * @param {string} search Title to search for; empty lists the latest events.
  * @return {string} REST path.
  */
 export function getCalendarEventsPath( search = '' ) {
-	const params = new URLSearchParams( {
-		per_page: '100',
-		orderby: 'start_date',
-		order: 'desc',
-	} );
+	const params = new URLSearchParams( { per_page: '100' } );
 	if ( search ) {
 		params.set( 'search', search );
 	}
-	return `/fair-events/v1/event-dates/all?${ params.toString() }`;
+	return `/fair-events-experimental/v1/meta-conversions/calendar-events?${ params.toString() }`;
 }
 
 function formatStart( eventDate ) {
@@ -91,16 +88,14 @@ function eventLabel( eventDate ) {
 }
 
 /**
- * Dates a calendar activation can belong to: the event's own date and, for
- * a series, each further date. Cancelled dates are left out.
+ * Dates of an event the calendar test can be sent for. The server lists
+ * only eligible, non-cancelled dates.
  *
- * @param {Object} eventDate Event date from `/fair-events/v1/event-dates/all`.
+ * @param {Object} event Event from the calendar-events endpoint.
  * @return {Array} Event dates.
  */
-function occurrencesOf( eventDate ) {
-	return [ eventDate, ...( eventDate.children || [] ) ].filter(
-		( occurrence ) => occurrence.status !== 'cancelled'
-	);
+function occurrencesOf( event ) {
+	return event.occurrences || [];
 }
 
 /**
@@ -139,13 +134,7 @@ export default function MetaCalendarTest( {
 
 	const events = useRequest( getCalendarEventsPath( search ) );
 	const candidates = useMemo(
-		() =>
-			// Only dates linked to an event page can carry a calendar
-			// button. `link_type` is not reliable for that: older dates
-			// linked to a post leave it empty.
-			( Array.isArray( events.data ) ? events.data : [] ).filter(
-				( item ) => item.event_id && occurrencesOf( item ).length
-			),
+		() => ( Array.isArray( events.data ) ? events.data : [] ),
 		[ events.data ]
 	);
 	const options = useMemo( () => {
@@ -226,7 +215,7 @@ export default function MetaCalendarTest( {
 					onFilterValueChange={ setFilter }
 					onChange={ select }
 					help={ __(
-						'Lists the latest events with an event page. Type to search by title.',
+						'Lists the latest events whose page is published and publicly accessible. Type to search by title.',
 						'fair-events-experimental'
 					) }
 				/>
@@ -259,13 +248,13 @@ export default function MetaCalendarTest( {
 							? sprintf(
 									/* translators: %s: text typed into the event search */
 									__(
-										'No events with an event page match “%s”.',
+										'No events with a publicly accessible page match “%s”.',
 										'fair-events-experimental'
 									),
 									search
 								)
 							: __(
-									'There are no events with an event page yet.',
+									'There are no events with a publicly accessible page yet.',
 									'fair-events-experimental'
 								) }
 					</p>

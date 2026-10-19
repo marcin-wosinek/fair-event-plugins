@@ -71,8 +71,10 @@ The Experimental settings tab can send one `FairEventCalendarClick` straight to 
 
 1. Save the access token in Settings → Connectors, then save the dataset ID and the Test Events code shown in Events Manager → Test events in the Experimental tab.
 2. In the same browser, open a public event page with the Meta Pixel active and accept marketing cookies, so the browser has an `_fbp` (or `_fbc`) cookie and marketing consent. The WP Consent API plugin must be active; the settings page reads consent through it, as event pages do.
-3. Open Fair Events → Settings → Experimental. Under "Calendar click test", open the Event list, which shows the latest events with an event page, or type to search by title. Choose the event (and a date, for a series), and select "Send FairEventCalendarClick test". If consent or the Meta cookie was missing, fix it in the same browser and select "Check this browser again"; the chosen event is kept.
+3. Open Fair Events → Settings → Experimental. Under "Calendar click test", open the Event list, which shows the latest events whose page is published and publicly accessible, or type to search by title. Draft, private, scheduled, trashed and password-protected pages, pages of post types without events, and cancelled dates are not listed. Choose the event (and a date, for a series), and select "Send FairEventCalendarClick test". If consent or the Meta cookie was missing, fix it in the same browser and select "Check this browser again"; the chosen event is kept.
 4. In Events Manager → Test events, the event should appear as Processed, received from Server.
+
+The event is checked again when the test is sent. If its page was unpublished or its dates changed after it was chosen, the result says "Test not sent", nothing reaches Meta, and the Event list starts over with the events that can still be tested.
 
 A disabled test button always has its reason next to it. The PageView, InitiateCheckout and Purchase tests only need the saved configuration: choosing an event or this browser's consent never disables them. Unsaved edits do, because a test would use the saved values; select "Discard changes" to restore them. Without an access token in Connectors, every test is disabled.
 
