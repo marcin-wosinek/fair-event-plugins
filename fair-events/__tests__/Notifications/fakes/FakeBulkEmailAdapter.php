@@ -40,6 +40,20 @@ class FakeBulkEmailAdapter extends BulkEmailAdapter {
 	);
 
 	/**
+	 * Recipients reported to the observer as [event, recipient], in order.
+	 *
+	 * @var array[]
+	 */
+	public $reports = array();
+
+	/**
+	 * Throw after reporting this many recipients; -1 never.
+	 *
+	 * @var int
+	 */
+	public $throw_after_reports = -1;
+
+	/**
 	 * Sent emails as [subject, html].
 	 *
 	 * @var array[]
@@ -73,14 +87,23 @@ class FakeBulkEmailAdapter extends BulkEmailAdapter {
 	/**
 	 * Send.
 	 *
-	 * @param string $subject Subject.
-	 * @param string $html    Body.
+	 * @param string        $subject  Subject.
+	 * @param string        $html     Body.
+	 * @param callable|null $observer Recipient observer.
 	 * @return array
 	 * @throws \RuntimeException When told to.
 	 */
-	public function send( $subject, $html ) {
+	public function send( $subject, $html, $observer = null ) {
 		if ( $this->throw ) {
 			throw new \RuntimeException( 'mailer down' );
+		}
+		foreach ( $this->reports as $index => list( $event, $recipient ) ) {
+			if ( $index === $this->throw_after_reports ) {
+				throw new \RuntimeException( 'mailer down' );
+			}
+			if ( $observer ) {
+				$observer( $event, $recipient );
+			}
 		}
 		$this->sent[] = array( $subject, $html );
 

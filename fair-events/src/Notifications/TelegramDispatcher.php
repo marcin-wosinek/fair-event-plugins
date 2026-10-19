@@ -49,16 +49,25 @@ class TelegramDispatcher {
 	private $builder;
 
 	/**
+	 * Execution history.
+	 *
+	 * @var ExecutionHistory
+	 */
+	private $history;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param DeliveryLog|null    $log       Delivery record.
-	 * @param Provider[]|null     $providers Providers keyed by ID.
-	 * @param SummaryBuilder|null $builder   Summary builder.
+	 * @param DeliveryLog|null      $log       Delivery record.
+	 * @param Provider[]|null       $providers Providers keyed by ID.
+	 * @param SummaryBuilder|null   $builder   Summary builder.
+	 * @param ExecutionHistory|null $history   Execution history.
 	 */
-	public function __construct( $log = null, $providers = null, $builder = null ) {
+	public function __construct( $log = null, $providers = null, $builder = null, $history = null ) {
 		$this->log       = $log ? $log : new DeliveryLog();
 		$this->providers = null !== $providers ? $providers : Providers::all();
 		$this->builder   = $builder ? $builder : new SummaryBuilder();
+		$this->history   = $history ? $history : new ExecutionHistory();
 	}
 
 	/**
@@ -210,17 +219,21 @@ class TelegramDispatcher {
 		if ( ! $week || ! $settings['enabled'] ) {
 			return null;
 		}
+		$recorder = HistoryRecorder::scheduled( $this->history, $config_id, Configurations::TELEGRAM, $week['start'], $week );
 
 		if ( WeekSchedule::has_ended( $week, $now ) ) {
+			$recorder->finish( HistoryOutcome::SKIPPED, 'expired' );
 			return $this->record( $config_id, $week, 'expired', __( 'Not sent: the week had already ended when the scheduled send ran.', 'fair-events' ) );
 		}
 
 		$summary = $this->builder->build( $settings, $week );
 		if ( is_wp_error( $summary ) ) {
+			$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
 			return $this->record( $config_id, $week, 'configuration_error', $summary->get_error_message() );
 		}
 
 		if ( 0 === $summary['occurrence_count'] ) {
+			$recorder->finish( HistoryOutcome::SKIPPED, 'no_events' );
 			return $this->record( $config_id, $week, 'skipped_empty', __( 'No events this week, so nothing was sent.', 'fair-events' ) );
 		}
 
@@ -232,16 +245,18 @@ class TelegramDispatcher {
 		);
 		foreach ( $this->providers as $provider ) {
 			foreach ( $provider->destinations( $settings ) as $destination ) {
-				++$counts[ $this->deliver( $config_id, $provider, (string) $destination, $week['start'], $summary ) ];
+				++$counts[ $this->deliver( $config_id, $provider, (string) $destination, $week['start'], $summary, $recorder ) ];
 			}
 		}
 
 		$attempted = $counts['sent'] + $counts['failed'] + $counts['uncertain'];
 		if ( 0 === $attempted && $counts['duplicate'] > 0 ) {
 			// An overlapping run already handled every destination; its record stands.
+			$recorder->finish( HistoryOutcome::SKIPPED, 'already_claimed' );
 			return null;
 		}
 		if ( 0 === $attempted ) {
+			$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
 			foreach ( $this->providers as $provider ) {
 				$error = $provider->configuration_error( $settings );
 				if ( '' !== $error ) {
@@ -251,6 +266,7 @@ class TelegramDispatcher {
 			return $this->record( $config_id, $week, 'configuration_error', __( 'No delivery destination is enabled and configured.', 'fair-events' ) );
 		}
 
+		$recorder->finish();
 		if ( $counts['sent'] === $attempted ) {
 			$status = 'sent';
 		} elseif ( $counts['sent'] > 0 ) {
@@ -280,17 +296,21 @@ class TelegramDispatcher {
 	 * Only the run that claims part 1 sends to the destination. After a part
 	 * fails or has an unknown outcome, the remaining parts are recorded as
 	 * skipped rather than sent out of order; nothing is resent automatically.
+	 * Each part is a delivery in the execution history.
 	 *
-	 * @param string   $config_id   Configuration ID.
-	 * @param Provider $provider    Provider.
-	 * @param string   $destination Destination identifier.
-	 * @param string   $week_start  First day of the covered week.
-	 * @param array    $summary     Summary from the builder.
+	 * @param string          $config_id   Configuration ID.
+	 * @param Provider        $provider    Provider.
+	 * @param string          $destination Destination identifier.
+	 * @param string          $week_start  First day of the covered week.
+	 * @param array           $summary     Summary from the builder.
+	 * @param HistoryRecorder $recorder    Execution history.
 	 * @return string 'sent', 'failed', 'uncertain' or 'duplicate'.
 	 */
-	private function deliver( $config_id, Provider $provider, $destination, $week_start, array $summary ) {
+	private function deliver( $config_id, Provider $provider, $destination, $week_start, array $summary, HistoryRecorder $recorder ) {
 		$provider_id = $provider->id();
 		$claimed     = 0;
+		$delivery    = 0;
+		$count       = 1;
 
 		try {
 			$parts = $provider->split( $summary );
@@ -304,15 +324,20 @@ class TelegramDispatcher {
 				if ( $part > 1 && ! $this->log->claim( $config_id, $week_start, $provider_id, $destination, $part, $count ) ) {
 					continue;
 				}
-				$claimed = $part;
+				$claimed  = $part;
+				$delivery = $recorder->attempt( $destination, $part, $count );
 
 				$result = $provider->send( $destination, $message );
 				$this->log->finish( $config_id, $week_start, $provider_id, $destination, $part, $result );
-				$claimed = 0;
+				$recorder->settle( $delivery, HistoryOutcome::from_state( $result['state'] ), $result['code'] );
+				$claimed  = 0;
+				$delivery = 0;
 
 				if ( 'sent' !== $result['state'] ) {
 					for ( $rest = $part + 1; $rest <= $count; $rest++ ) {
-						$this->log->claim( $config_id, $week_start, $provider_id, $destination, $rest, $count, 'skipped', 'previous_part_not_sent' );
+						if ( $this->log->claim( $config_id, $week_start, $provider_id, $destination, $rest, $count, 'skipped', 'previous_part_not_sent' ) ) {
+							$recorder->note( $destination, HistoryOutcome::SKIPPED, 'previous_part_not_sent', $rest, $count );
+						}
 					}
 					return $result['state'];
 				}
@@ -329,8 +354,9 @@ class TelegramDispatcher {
 			);
 			if ( $claimed ) {
 				$this->log->finish( $config_id, $week_start, $provider_id, $destination, $claimed, $result );
-			} else {
-				$this->log->claim( $config_id, $week_start, $provider_id, $destination, 1, 1, 'failed', 'internal_error' );
+				$recorder->settle( $delivery, HistoryOutcome::UNKNOWN, 'internal_error' );
+			} elseif ( $this->log->claim( $config_id, $week_start, $provider_id, $destination, 1, 1, 'failed', 'internal_error' ) ) {
+				$recorder->note( $destination, HistoryOutcome::FAILED, 'internal_error', 1, $count );
 			}
 			return $result['state'];
 		}

@@ -26,17 +26,43 @@ class BulkEmailAdapter {
 	/**
 	 * Whether Fair Audience can send the email on this request.
 	 *
+	 * Fair Audience must report each recipient's outcome, for the
+	 * notification history ({@see HistoryRecorder::recipient_observer()}).
+	 *
 	 * @return string ACTIVE, INACTIVE (Fair Audience is not active) or
-	 *     UPDATE_REQUIRED (an older Fair Audience still sends it itself).
+	 *     UPDATE_REQUIRED (an older Fair Audience still sends it itself, or
+	 *     cannot report each recipient).
 	 */
 	public function availability() {
 		if ( ! Ownership::legacy_active( Ownership::BULK_EMAIL ) ) {
 			return self::INACTIVE;
 		}
 
-		return Ownership::legacy_yields( Ownership::BULK_EMAIL ) && method_exists( self::MAILER, 'send_to_subscribers' )
+		return Ownership::legacy_yields( Ownership::BULK_EMAIL ) && method_exists( self::MAILER, 'send_to_subscribers' ) && self::reports_recipients()
 			? self::ACTIVE
 			: self::UPDATE_REQUIRED;
+	}
+
+	/**
+	 * Whether Fair Audience handed the email over but must be updated to
+	 * report each recipient before this plugin sends it again.
+	 *
+	 * @return bool
+	 */
+	public function needs_reporting_update() {
+		return Ownership::legacy_active( Ownership::BULK_EMAIL )
+			&& Ownership::legacy_yields( Ownership::BULK_EMAIL )
+			&& method_exists( self::MAILER, 'send_to_subscribers' )
+			&& ! self::reports_recipients();
+	}
+
+	/**
+	 * Whether Fair Audience reports each recipient's outcome while sending.
+	 *
+	 * @return bool
+	 */
+	public static function reports_recipients() {
+		return method_exists( self::MAILER, 'send_to_subscribers_reporting' );
 	}
 
 	/**
@@ -54,13 +80,16 @@ class BulkEmailAdapter {
 	/**
 	 * Send the email to every eligible subscriber.
 	 *
-	 * @param string $subject Subject.
-	 * @param string $html    Body.
+	 * @param string        $subject  Subject.
+	 * @param string        $html     Body.
+	 * @param callable|null $observer Told about each recipient as it is processed.
 	 * @return array{sent: int, failed: int, skipped: int}
 	 */
-	public function send( $subject, $html ) {
+	public function send( $subject, $html, $observer = null ) {
 		$mailer = self::MAILER;
-		return $mailer::send_to_subscribers( $subject, $html );
+		return null !== $observer
+			? $mailer::send_to_subscribers_reporting( $subject, $html, $observer )
+			: $mailer::send_to_subscribers( $subject, $html );
 	}
 
 	/**

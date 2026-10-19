@@ -13,6 +13,9 @@ use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\BulkEmailSettings;
 use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\DeliveryLog;
+use FairEvents\Notifications\ExecutionHistory;
+use FairEvents\Notifications\HistoryOutcome;
+use FairEvents\Notifications\HistoryRecorder;
 use FairEvents\Notifications\IndividualEmailDispatcher;
 use FairEvents\Notifications\IndividualEmailEvents;
 use FairEvents\Notifications\IndividualEmailRenderer;
@@ -938,44 +941,53 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * chats, with the credential currently in effect.
 	 *
 	 * Test sends are not delivery records and do not affect scheduled sends.
+	 * Each is an execution of its own in the notification history.
 	 *
 	 * @param string $id Configuration ID.
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	private function test_telegram_configuration( $id ) {
+		$recorder    = HistoryRecorder::test( new ExecutionHistory(), $id, Configurations::TELEGRAM );
 		$unavailable = $this->type_unavailable( Configurations::TELEGRAM );
 		if ( $unavailable ) {
-			return $unavailable;
+			return $this->test_refused( $recorder, $unavailable );
 		}
 
 		// Refused before anything is built or sent, so no request reaches Telegram.
 		$problem = TelegramConnector::problem();
 		if ( $problem ) {
-			return new WP_Error( $problem['code'], $problem['message'], array( 'status' => 400 ) );
+			return $this->test_refused( $recorder, new WP_Error( $problem['code'], $problem['message'], array( 'status' => 400 ) ) );
 		}
 
 		$provider     = new TelegramProvider();
 		$destinations = $provider->destinations( TelegramSettings::get( $id ), true );
 		if ( ! $destinations ) {
-			return new WP_Error( 'missing_chat_ids', __( 'Save at least one Telegram chat or channel before sending a test message.', 'fair-events' ), array( 'status' => 400 ) );
+			return $this->test_refused( $recorder, new WP_Error( 'missing_chat_ids', __( 'Save at least one Telegram chat or channel before sending a test message.', 'fair-events' ), array( 'status' => 400 ) ) );
 		}
 
 		$summary = $this->compose_test_summary( $id );
 		if ( is_wp_error( $summary ) ) {
-			return $summary;
+			return $this->test_refused( $recorder, $summary );
 		}
+		$recorder->cover( $summary['week'] );
 		if ( 0 === $summary['occurrence_count'] ) {
-			return new WP_Error( 'no_events', __( 'There are no events in the selected week, so there is nothing to send.', 'fair-events' ), array( 'status' => 400 ) );
+			return $this->test_refused( $recorder, new WP_Error( 'no_events', __( 'There are no events in the selected week, so there is nothing to send.', 'fair-events' ), array( 'status' => 400 ) ) );
 		}
 
 		$messages = $provider->split( $summary );
+		$count    = count( $messages );
 		$results  = array();
 		foreach ( $destinations as $destination ) {
 			// Stop at the first part that is not sent, so parts never arrive out of order.
 			$result = array();
-			foreach ( $messages as $message ) {
-				$result = $provider->send( $destination, $message );
+			foreach ( $messages as $index => $message ) {
+				$delivery = $recorder->attempt( $destination, $index + 1, $count );
+				$result   = $provider->send( $destination, $message );
+				$recorder->settle( $delivery, HistoryOutcome::from_state( $result['state'] ), $result['code'] );
 				if ( 'sent' !== $result['state'] ) {
+					for ( $rest = $index + 2; $rest <= $count; $rest++ ) {
+						$recorder->note( $destination, HistoryOutcome::SKIPPED, 'previous_part_not_sent', $rest, $count );
+					}
 					break;
 				}
 			}
@@ -985,6 +997,7 @@ class EventNotificationsController extends WP_REST_Controller {
 				'message'     => $result['message'],
 			);
 		}
+		$recorder->finish();
 
 		return rest_ensure_response(
 			array(
@@ -1024,13 +1037,24 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	private function test_bulk_email_configuration( $id ) {
-		$email = $this->compose_test_email( $id );
+		$recorder = HistoryRecorder::test( new ExecutionHistory(), $id, Configurations::BULK_EMAIL );
+		$email    = $this->compose_test_email( $id );
 		if ( is_wp_error( $email ) ) {
-			return $email;
+			return $this->test_refused( $recorder, $email );
 		}
+		$recorder->cover(
+			array(
+				'start' => $email['week_start'],
+				'end'   => $email['week_end'],
+			)
+		);
 
 		$recipient = wp_get_current_user()->user_email;
-		if ( ! ( new BulkEmailAdapter() )->send_test( $recipient, $email['subject'], $email['html'] ) ) {
+		$delivery  = $recorder->attempt( $recipient );
+		$sent      = ( new BulkEmailAdapter() )->send_test( $recipient, $email['subject'], $email['html'] );
+		$recorder->settle( $delivery, $sent ? HistoryOutcome::ACCEPTED : HistoryOutcome::FAILED, $sent ? '' : 'send_failed' );
+		$recorder->finish();
+		if ( ! $sent ) {
 			return new WP_Error(
 				'send_failed',
 				sprintf(
@@ -1071,21 +1095,33 @@ class EventNotificationsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|WP_Error
 	 */
 	private function test_individual_email_configuration( $id ) {
-		$email = $this->compose_test_individual_email( $id );
+		$recorder = HistoryRecorder::test( new ExecutionHistory(), $id, Configurations::INDIVIDUAL_EMAIL );
+		$email    = $this->compose_test_individual_email( $id );
 		if ( is_wp_error( $email ) ) {
-			return $email;
+			return $this->test_refused( $recorder, $email );
 		}
+		$recorder->cover(
+			array(
+				'start' => $email['week_start'],
+				'end'   => $email['week_end'],
+			)
+		);
 
 		$recipient = $email['recipient'];
 		if ( '' === $recipient ) {
-			return new WP_Error( 'missing_recipient', __( 'Save the email address that receives the weekly email before sending a test.', 'fair-events' ), array( 'status' => 400 ) );
+			return $this->test_refused( $recorder, new WP_Error( 'missing_recipient', __( 'Save the email address that receives the weekly email before sending a test.', 'fair-events' ), array( 'status' => 400 ) ) );
 		}
 
+		$delivery = $recorder->attempt( $recipient );
 		try {
 			$sent = ( new EmailService() )->send_notification( $recipient, $email['subject'], $email['html'] );
+			$recorder->settle( $delivery, $sent ? HistoryOutcome::ACCEPTED : HistoryOutcome::FAILED, $sent ? '' : 'send_failed' );
 		} catch ( \Throwable $e ) {
+			// The email may have gone out before the error.
 			$sent = false;
+			$recorder->settle( $delivery, HistoryOutcome::UNKNOWN, 'internal_error' );
 		}
+		$recorder->finish();
 		if ( ! $sent ) {
 			return new WP_Error(
 				'send_failed',
@@ -1104,6 +1140,21 @@ class EventNotificationsController extends WP_REST_Controller {
 				'empty'   => $email['empty'],
 			)
 		);
+	}
+
+	/**
+	 * Record a test that stopped before anything was sent, and return why.
+	 *
+	 * A week without events is a skip; anything else is a failure.
+	 *
+	 * @param HistoryRecorder $recorder Test execution.
+	 * @param WP_Error        $error    Why the test stopped.
+	 * @return WP_Error
+	 */
+	private function test_refused( HistoryRecorder $recorder, WP_Error $error ) {
+		$code = (string) $error->get_error_code();
+		$recorder->finish( 'no_events' === $code ? HistoryOutcome::SKIPPED : HistoryOutcome::FAILURE, $code );
+		return $error;
 	}
 
 	/**
@@ -1193,6 +1244,9 @@ class EventNotificationsController extends WP_REST_Controller {
 				BulkEmailAdapter::INACTIVE        => __( 'The weekly email is paused because Fair Audience is not active. Fair Audience decides who receives it and sends it. Your settings are kept and sending resumes at the next scheduled time once Fair Audience is active again.', 'fair-events' ),
 				BulkEmailAdapter::UPDATE_REQUIRED => __( 'The weekly email is still sent by an older Fair Audience. Update Fair Audience to manage it here; until then it keeps running from the Weekly Digest page.', 'fair-events' ),
 			);
+			if ( BulkEmailAdapter::UPDATE_REQUIRED === $state && ( new BulkEmailAdapter() )->needs_reporting_update() ) {
+				$messages[ $state ] = __( 'The weekly email is paused until Fair Audience is updated: this version of Fair Events records whether each subscriber’s email was sent, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update.', 'fair-events' );
+			}
 			return array(
 				'state'   => $state,
 				'message' => $messages[ $state ],
