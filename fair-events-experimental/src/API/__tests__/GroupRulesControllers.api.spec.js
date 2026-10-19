@@ -5,13 +5,15 @@
  *
  * Covers reading existing rules, the mutations the tab performs, the
  * `edit_posts` permission check, and that the routes exist only while the
- * experimental `ticketing` bundle is on — the state in which the tab is
- * offered. Rules written while the bundle was on must still be there once it
- * is turned back on.
+ * ticketing extensions are available (#1849): core Fair Events ticketing and
+ * Experimental's own `ticketing` setting both on, and Fair Audience active.
+ * Rules written while the routes were available must still be there once
+ * they are available again.
  *
  * Groups come from Fair Audience Experimental, so the suite skips when that
- * plugin is inactive. The bundle is toggled through the plugin's registered
- * setting and restored to the value the suite found.
+ * plugin is inactive. Both settings are toggled through their registered
+ * settings and restored to the values the suite found; plugins switched off
+ * are switched back on.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -21,6 +23,12 @@ const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 
 const FEATURES_OPTION = 'fair_events_experimental_features';
+const CORE_FEATURES_OPTION = 'fair_events_features';
+// Dependents first: fair-audience-experimental requires fair-audience.
+const AUDIENCE_PLUGINS = [
+	'fair-audience-experimental/fair-audience-experimental',
+	'fair-audience/fair-audience',
+];
 const SUBSCRIBER_PASSWORD = 'Test-password-1716!';
 
 const basicAuth = ( user, password ) => ( {
@@ -38,6 +46,7 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 	let api;
 	let groupsActive = false;
 	let ticketingWasEnabled = true;
+	let coreTicketingWasEnabled = true;
 	let eventId;
 	let eventDateId;
 	let groupId;
@@ -57,6 +66,43 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		expect( res.ok(), await res.text() ).toBeTruthy();
 	};
 
+	const setCoreTicketing = async ( enabled ) => {
+		const res = await api.post( '/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+			data: { [ CORE_FEATURES_OPTION ]: { ticketing: enabled } },
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+	};
+
+	const setPluginStatus = async ( plugin, status ) => {
+		const res = await api.put( `/wp-json/wp/v2/plugins/${ plugin }`, {
+			headers: adminHeaders,
+			data: { status },
+		} );
+		expect( res.ok(), plugin ).toBeTruthy();
+	};
+
+	const expectRoutes = async ( registered, label ) => {
+		for ( const path of [ pricingPath(), permissionPath() ] ) {
+			const res = await api.get( path, { headers: adminHeaders } );
+			if ( registered ) {
+				expect( res.status(), `${ label }: ${ path }` ).toBe( 200 );
+			} else {
+				expect( res.status(), `${ label }: ${ path }` ).toBe( 404 );
+				expect(
+					( await res.json() ).code,
+					`${ label }: ${ path }`
+				).toBe( 'rest_no_route' );
+			}
+		}
+	};
+
+	const ruleIds = async ( path ) => {
+		const res = await api.get( path, { headers: adminHeaders } );
+		expect( res.status() ).toBe( 200 );
+		return ( await res.json() ).map( ( rule ) => rule.id );
+	};
+
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 
@@ -73,15 +119,18 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 			return;
 		}
 
-		// A stored `false` is the only way the bundle is off: it defaults on.
+		// A stored `false` is the only way either setting is off: both
+		// default on.
 		const settingsRes = await api.get( '/wp-json/wp/v2/settings', {
 			headers: adminHeaders,
 		} );
 		expect( settingsRes.ok() ).toBeTruthy();
-		ticketingWasEnabled =
-			( await settingsRes.json() )[ FEATURES_OPTION ]?.ticketing !==
-			false;
+		const settings = await settingsRes.json();
+		ticketingWasEnabled = settings[ FEATURES_OPTION ]?.ticketing !== false;
+		coreTicketingWasEnabled =
+			settings[ CORE_FEATURES_OPTION ]?.ticketing !== false;
 		await setTicketing( true );
+		await setCoreTicketing( true );
 
 		const eventRes = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
@@ -126,7 +175,11 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 	test.afterAll( async () => {
 		if ( groupsActive ) {
 			// Routes must be registered for the rule cleanup below.
+			for ( const plugin of [ ...AUDIENCE_PLUGINS ].reverse() ) {
+				await setPluginStatus( plugin, 'active' );
+			}
 			await setTicketing( true );
+			await setCoreTicketing( true );
 
 			for ( const path of [ pricingPath(), permissionPath() ] ) {
 				const res = await api.get( path, { headers: adminHeaders } );
@@ -157,6 +210,7 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 			}
 
 			await setTicketing( ticketingWasEnabled );
+			await setCoreTicketing( coreTicketingWasEnabled );
 		}
 		await api.dispose();
 	} );
@@ -302,7 +356,7 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		}
 	} );
 
-	test( 'routes exist only while experimental ticketing is on, and rules survive the toggle', async () => {
+	test( 'routes exist only while both ticketing settings are on, and rules survive the toggles', async () => {
 		const pricingRes = await api.post( pricingPath(), {
 			headers: adminHeaders,
 			data: {
@@ -321,33 +375,50 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		expect( permissionRes.status() ).toBe( 201 );
 		const permissionRule = await permissionRes.json();
 
-		await setTicketing( false );
 		try {
-			for ( const path of [ pricingPath(), permissionPath() ] ) {
-				const res = await api.get( path, { headers: adminHeaders } );
-				expect( res.status(), path ).toBe( 404 );
-				expect( ( await res.json() ).code, path ).toBe(
-					'rest_no_route'
+			for ( const [ core, experimental ] of [
+				[ false, false ],
+				[ false, true ],
+				[ true, false ],
+				[ true, true ],
+			] ) {
+				await setCoreTicketing( core );
+				await setTicketing( experimental );
+				await expectRoutes(
+					core && experimental,
+					`core ${ core }, experimental ${ experimental }`
 				);
 			}
 		} finally {
+			await setCoreTicketing( true );
 			await setTicketing( true );
 		}
 
-		const pricingAfter = await api.get( pricingPath(), {
-			headers: adminHeaders,
-		} );
-		expect( pricingAfter.status() ).toBe( 200 );
-		expect(
-			( await pricingAfter.json() ).map( ( rule ) => rule.id )
-		).toEqual( [ pricingRule.id ] );
+		expect( await ruleIds( pricingPath() ) ).toEqual( [ pricingRule.id ] );
+		expect( await ruleIds( permissionPath() ) ).toEqual( [
+			permissionRule.id,
+		] );
+	} );
 
-		const permissionAfter = await api.get( permissionPath(), {
+	test( 'routes are unregistered without Fair Audience, and rules survive', async () => {
+		const permissionRes = await api.post( permissionPath(), {
 			headers: adminHeaders,
+			data: { group_id: groupId, permission_type: 'view_signups' },
 		} );
-		expect( permissionAfter.status() ).toBe( 200 );
-		expect(
-			( await permissionAfter.json() ).map( ( rule ) => rule.id )
-		).toEqual( [ permissionRule.id ] );
+		expect( permissionRes.status() ).toBe( 201 );
+		const before = await ruleIds( permissionPath() );
+
+		try {
+			for ( const plugin of AUDIENCE_PLUGINS ) {
+				await setPluginStatus( plugin, 'inactive' );
+			}
+			await expectRoutes( false, 'without Fair Audience' );
+		} finally {
+			for ( const plugin of [ ...AUDIENCE_PLUGINS ].reverse() ) {
+				await setPluginStatus( plugin, 'active' );
+			}
+		}
+
+		expect( await ruleIds( permissionPath() ) ).toEqual( before );
 	} );
 } );

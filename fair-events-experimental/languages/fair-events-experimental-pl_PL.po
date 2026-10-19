@@ -47,10 +47,6 @@ msgstr "Ustawienia eksperymentalne"
 msgid "Experimental"
 msgstr "Eksperymentalne"
 
-#: src/Core/Features.php:137
-msgid "Ticketing"
-msgstr "Sprzedaż biletów"
-
 #: src/Core/Features.php:141
 msgid "Mailings"
 msgstr "Wysyłki"
@@ -137,10 +133,6 @@ msgstr "Zapisywanie..."
 #: src/Admin/settings/FeaturesTab.js:175
 msgid "Save Features"
 msgstr "Zapisz funkcje"
-
-#: src/Core/Features.php:138
-msgid "Tickets, group pricing/permission rules. Requires fair-audience."
-msgstr "Bilety, zasady cenowe/uprawnień dla grup. Wymaga fair-audience."
 
 #: src/Core/Features.php:145
 #: src/Admin/settings/MetaConversions.js:526
@@ -250,7 +242,7 @@ msgstr "Błąd: %s"
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:205
 #: src/Admin/settings/MetaConversions.js:498
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -332,7 +324,7 @@ msgstr "Nie można było wczytać statystyk sprzedaży wydarzenia."
 
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
-#: src/Admin/settings/MetaCalendarTest.js:248
+#: src/Admin/settings/MetaCalendarTest.js:240
 msgid "Try again"
 msgstr "Spróbuj ponownie"
 
@@ -426,13 +418,13 @@ msgid "The list of events could not be loaded."
 msgstr "Nie można było wczytać listy wydarzeń."
 
 #. translators: 1: event name, 2: event start date.
-#: src/Admin/compare-events/comparison.js:109
+#: src/Admin/compare-events/comparison.js:104
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:173
+#: src/Admin/compare-events/comparison.js:166
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
@@ -440,12 +432,12 @@ msgstr[0] "%d dzień przed wydarzeniem"
 msgstr[1] "%d dni przed wydarzeniem"
 msgstr[2] "%d dni przed wydarzeniem"
 
-#: src/Admin/compare-events/comparison.js:183
+#: src/Admin/compare-events/comparison.js:176
 msgid "Day of the event"
 msgstr "Dzień wydarzenia"
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:187
+#: src/Admin/compare-events/comparison.js:180
 #, js-format
 msgid "Day %d of the event"
 msgstr "Dzień %d wydarzenia"
@@ -601,23 +593,23 @@ msgstr "Opis"
 msgid "Remove from schedule"
 msgstr "Usuń z harmonogramu"
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:164
+#: src/Admin/manage-event-schedule/scheduleModel.js:170
 msgid "Enter a title."
 msgstr "Podaj tytuł."
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:171
+#: src/Admin/manage-event-schedule/scheduleModel.js:177
 msgid "Enter a valid start date and time."
 msgstr "Podaj prawidłową datę i godzinę rozpoczęcia."
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:181
+#: src/Admin/manage-event-schedule/scheduleModel.js:187
 msgid "Enter a valid end date and time."
 msgstr "Podaj prawidłową datę i godzinę zakończenia."
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:193
+#: src/Admin/manage-event-schedule/scheduleModel.js:199
 msgid "The end must be after the start."
 msgstr "Zakończenie musi być późniejsze niż rozpoczęcie."
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:262
+#: src/Admin/manage-event-schedule/scheduleModel.js:268
 msgid "(untitled item)"
 msgstr "(pozycja bez tytułu)"
 
@@ -1070,43 +1062,43 @@ msgstr "Zbyt wiele żądań. Spróbuj ponownie później."
 msgid "Meta answered, but did not confirm receiving the %s test event."
 msgstr "Meta odpowiedziała, ale nie potwierdziła odebrania zdarzenia testowego %s."
 
-#: src/Admin/settings/MetaCalendarTest.js:30
+#: src/Admin/settings/MetaCalendarTest.js:27
 msgid "This page cannot read marketing consent because the WP Consent API is not active."
 msgstr "Ta strona nie może odczytać zgody marketingowej, ponieważ interfejs API WP Consent nie jest aktywny."
 
-#: src/Admin/settings/MetaCalendarTest.js:96
+#: src/Admin/settings/MetaCalendarTest.js:88
 msgid "(untitled event)"
 msgstr "(wydarzenie bez tytułu)"
 
-#: src/Admin/settings/MetaCalendarTest.js:184
+#: src/Admin/settings/MetaCalendarTest.js:176
 msgid "Select a date of this series."
 msgstr "Wybierz termin tej serii."
 
-#: src/Admin/settings/MetaCalendarTest.js:212
+#: src/Admin/settings/MetaCalendarTest.js:204
 msgid "Calendar click test"
 msgstr "Test kliknięcia kalendarza"
 
-#: src/Admin/settings/MetaCalendarTest.js:214
+#: src/Admin/settings/MetaCalendarTest.js:206
 msgid "Sends one FairEventCalendarClick to Test Events, built like a real “Add to calendar” click from this browser. It does not appear in delivery outcomes or reports."
 msgstr "Wysyła jedno zdarzenie FairEventCalendarClick do zdarzeń testowych, zbudowane jak prawdziwe kliknięcie „Dodaj do kalendarza” z tej przeglądarki. Nie pojawia się w wynikach dostarczenia ani w raportach."
 
-#: src/Admin/settings/MetaCalendarTest.js:230
+#: src/Admin/settings/MetaCalendarTest.js:222
 msgid "Event"
 msgstr "Wydarzenie"
 
-#: src/Admin/settings/MetaCalendarTest.js:285
+#: src/Admin/settings/MetaCalendarTest.js:277
 msgid "Date"
 msgstr "Data"
 
-#: src/Admin/settings/MetaCalendarTest.js:289
+#: src/Admin/settings/MetaCalendarTest.js:281
 msgid "Select a date"
 msgstr "Wybierz datę"
 
-#: src/Admin/settings/MetaCalendarTest.js:298
+#: src/Admin/settings/MetaCalendarTest.js:290
 msgid "(no date)"
 msgstr "(brak daty)"
 
-#: src/Admin/settings/MetaCalendarTest.js:318
+#: src/Admin/settings/MetaCalendarTest.js:310
 msgid "Send FairEventCalendarClick test"
 msgstr "Wyślij testowe FairEventCalendarClick"
 
@@ -1175,41 +1167,41 @@ msgstr "Meta potwierdziła odebranie zdarzenia testowego %s."
 msgid "Latest test result"
 msgstr "Najnowszy wynik testu"
 
-#: src/Admin/settings/MetaCalendarTest.js:36
+#: src/Admin/settings/MetaCalendarTest.js:33
 msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then check again."
 msgstr "Ta przeglądarka nie wyraziła zgody marketingowej. Zaakceptuj marketingowe pliki cookie w witrynie, a następnie sprawdź ponownie."
 
-#: src/Admin/settings/MetaCalendarTest.js:42
+#: src/Admin/settings/MetaCalendarTest.js:39
 msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again."
 msgstr "Ta przeglądarka nie ma identyfikatora przeglądarki Meta (pliku cookie _fbp lub _fbc). Otwórz stronę wydarzenia z aktywnym pikselem Meta, a następnie sprawdź ponownie."
 
-#: src/Admin/settings/MetaCalendarTest.js:60
+#: src/Admin/settings/MetaCalendarTest.js:57
 msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
 msgstr "Nie udało się odczytać zgody marketingowej ani plików cookie Meta tej przeglądarki. Sprawdź baner zgody, a następnie sprawdź ponownie."
 
-#: src/Admin/settings/MetaCalendarTest.js:178
+#: src/Admin/settings/MetaCalendarTest.js:170
 msgid "Select the event the test click belongs to."
 msgstr "Wybierz wydarzenie, którego dotyczy testowe kliknięcie."
 
-#: src/Admin/settings/MetaCalendarTest.js:236
+#: src/Admin/settings/MetaCalendarTest.js:228
 msgid "Lists the latest events with an event page. Type to search by title."
 msgstr "Wyświetla najnowsze wydarzenia ze stroną wydarzenia. Zacznij pisać, aby wyszukać po tytule."
 
-#: src/Admin/settings/MetaCalendarTest.js:256
+#: src/Admin/settings/MetaCalendarTest.js:248
 msgid "Events could not be loaded."
 msgstr "Nie udało się wczytać wydarzeń."
 
 #. translators: %s: text typed into the event search
-#: src/Admin/settings/MetaCalendarTest.js:269
+#: src/Admin/settings/MetaCalendarTest.js:261
 #, js-format
 msgid "No events with an event page match “%s”."
 msgstr "Żadne wydarzenie ze stroną wydarzenia nie pasuje do „%s”."
 
-#: src/Admin/settings/MetaCalendarTest.js:275
+#: src/Admin/settings/MetaCalendarTest.js:267
 msgid "There are no events with an event page yet."
 msgstr "Nie ma jeszcze wydarzeń ze stroną wydarzenia."
 
-#: src/Admin/settings/MetaCalendarTest.js:330
+#: src/Admin/settings/MetaCalendarTest.js:322
 msgid "Check this browser again"
 msgstr "Sprawdź tę przeglądarkę ponownie"
 
@@ -1309,3 +1301,10 @@ msgstr "Skopiuj adres URL do schowka"
 msgid "Copied!"
 msgstr "Skopiowano!"
 
+#: src/Core/Features.php:137
+msgid "Ticketing extensions"
+msgstr "Rozszerzenia sprzedaży biletów"
+
+#: src/Core/Features.php:138
+msgid "Group pricing and group permission rules for tickets. Requires Ticketing in the Fair Events features and Fair Audience. Turning this off keeps base ticketing and stored rules."
+msgstr "Ceny grupowe i reguły uprawnień grup dla biletów. Wymaga włączenia Sprzedaży biletów w funkcjach Fair Events oraz wtyczki Fair Audience. Wyłączenie zachowuje podstawową sprzedaż biletów i zapisane reguły."

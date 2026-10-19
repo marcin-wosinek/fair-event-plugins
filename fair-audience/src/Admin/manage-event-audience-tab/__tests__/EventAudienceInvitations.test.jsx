@@ -11,6 +11,7 @@
  *   - Nobody eligible: the popup says so and offers no send.
  *   - Cancel sends nothing; a failure stays in the popup and can be retried.
  *   - A failed check of the recipients can be repeated.
+ *   - Without the group rule routes (#1849), invited groups are not requested.
  */
 import '@testing-library/jest-dom';
 import {
@@ -116,13 +117,14 @@ function mockApiFetchFor( {
 const requests = ( match ) =>
 	apiFetch.mock.calls.map( ( [ request ] ) => request ).filter( match );
 
-function renderAudience() {
+function renderAudience( { groupRulesAvailable = true } = {} ) {
 	render(
 		<EventAudience
 			eventId={ 1 }
 			eventDateId={ 5 }
 			audienceUrl="admin.php?page=fair-audience&event_date_id="
 			eventTitle="Weekly class"
+			groupRulesAvailable={ groupRulesAvailable }
 		/>
 	);
 }
@@ -311,5 +313,26 @@ describe( 'EventAudience — Send Invitations (#1776)', () => {
 				name: 'Send 2 invitations',
 			} )
 		).toBeEnabled();
+	} );
+
+	it( 'does not request invited groups while group rules are unavailable', async () => {
+		mockApiFetchFor();
+		renderAudience( { groupRulesAvailable: false } );
+
+		await waitFor( () =>
+			expect(
+				requests( ( r ) => r.path?.endsWith( '/participants' ) )
+			).not.toHaveLength( 0 )
+		);
+		expect(
+			requests(
+				( r ) =>
+					r.path?.includes( '/group-permission-rules' ) ||
+					r.path === '/fair-audience/v1/groups'
+			)
+		).toEqual( [] );
+		expect(
+			screen.queryByRole( 'button', { name: 'Send Invitations' } )
+		).not.toBeInTheDocument();
 	} );
 } );

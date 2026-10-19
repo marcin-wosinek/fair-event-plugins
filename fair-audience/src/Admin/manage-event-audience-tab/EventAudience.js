@@ -199,6 +199,7 @@ export default function EventAudience( {
 	eventDateId,
 	audienceUrl,
 	eventTitle,
+	groupRulesAvailable = false,
 } ) {
 	const [ participants, setParticipants ] = useState( [] );
 	const [ loadingParticipants, setLoadingParticipants ] = useState( true );
@@ -347,7 +348,12 @@ export default function EventAudience( {
 	}, [ eventDateId ] );
 
 	useEffect( () => {
-		if ( ! eventDateId ) return;
+		// Invited groups come from the group rule routes, which exist only
+		// while the Experimental ticketing extensions are available.
+		if ( ! eventDateId || ! groupRulesAvailable ) {
+			setInvitedGroups( [] );
+			return;
+		}
 		Promise.all( [
 			apiFetch( {
 				path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`,
@@ -365,7 +371,7 @@ export default function EventAudience( {
 				);
 			} )
 			.catch( () => setInvitedGroups( [] ) );
-	}, [ eventDateId ] );
+	}, [ eventDateId, groupRulesAvailable ] );
 
 	// Single ordering shared by the Audience table, the printable list, and the
 	// email-consent modal, so all three walk participants in the same relative

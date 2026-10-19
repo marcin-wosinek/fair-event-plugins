@@ -14,16 +14,18 @@
  *   4. The retired migration tools (#1674) stay unavailable in both branches,
  *      even with a stale `migration: true` left in the stored option.
  *
- * Sibling-plugin dependencies (`fair-audience` for `ticketing`) are not
- * required for these assertions — the ticketing REST routes register on the
- * flag alone; controller-level dependency checks (e.g.
- * GroupPricingRulesController guarding on FAIR_AUDIENCE_PLUGIN_DIR) are
- * orthogonal and unit-tested elsewhere.
+ * The Experimental `ticketing` probe (group pricing rules) registers only
+ * while core Fair Events ticketing is on and Fair Audience is active, both of
+ * which hold on the tests site by default.
+ *
+ * A final block covers the ticketing availability rules (#1849): core
+ * ticketing alone decides base ticket configuration, Experimental's setting
+ * only its extensions, with conflicting settings and Experimental inactive.
  *
  * Run: `npm run test:e2e -- fair-events-feature-flags`.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './support/fixtures.js';
 import { wpCli, loginAsAdmin } from './support/wp-cli.js';
 
 /** Set the `fair_events_experimental_features` option to a `{bundle: bool}` map. */
@@ -289,7 +291,10 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 			'/wp-admin/admin.php?page=fair-events-settings&tab=experimental'
 		);
 		await expect(
-			page.getByRole('checkbox', { name: 'Ticketing', exact: true })
+			page.getByRole('checkbox', {
+				name: 'Ticketing extensions',
+				exact: true,
+			})
 		).toBeVisible();
 		await expect(
 			page.getByRole('checkbox', { name: 'Migration', exact: true })
@@ -303,5 +308,134 @@ test.describe('Fair Events — full internal build (all bundles on)', () => {
 		await loginAsAdmin(page);
 		await page.goto('/wp-admin/admin.php?page=fair-events-settings');
 		await expect(page.getByRole('tab', { name: 'Features' })).toBeVisible();
+	});
+});
+
+/** Core ticket configuration route; Experimental's group pricing route. */
+const CORE_TICKETS_ROUTE = '/fair-events/v1/event-dates/1/tickets';
+const GROUP_RULES_ROUTE = BUNDLE_PROBE_ROUTES.ticketing;
+
+/** Set the core `fair_events_features` option to a `{bundle: bool}` map. */
+function setCoreFeatures(map) {
+	const json = JSON.stringify(map).replace(/'/g, "'\\''");
+	wpCli(`option update fair_events_features '${json}' --format=json`);
+}
+
+/**
+ * Open Manage Event for an event date and wait for its tab list.
+ *
+ * @param {import('@playwright/test').Page} page        Playwright page.
+ * @param {number}                          eventDateId Event date ID.
+ */
+async function openManageEvent(page, eventDateId) {
+	await page.goto(
+		`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}&tab=prices`
+	);
+	await expect(
+		page.getByRole('tab', { name: 'Event Details' })
+	).toBeVisible();
+}
+
+/**
+ * Add an add-on on the Prices tab and save the base ticket configuration.
+ *
+ * @param {import('@playwright/test').Page} page Playwright page.
+ */
+async function saveBaseConfiguration(page) {
+	await page.getByRole('tab', { name: 'Prices' }).click();
+	await page.getByRole('button', { name: 'Add-ons', exact: true }).click();
+	await page.getByRole('button', { name: '+ Add Option' }).click();
+	await page.getByPlaceholder('Add-on name').last().fill('Dinner');
+	await page.getByRole('button', { name: 'Save tickets' }).click();
+	await expect(
+		page
+			.locator('.components-notice__content')
+			.getByText('Tickets saved successfully.')
+	).toBeVisible();
+}
+
+test.describe('Ticketing availability across core and Experimental (#1849)', () => {
+	let originalCoreFeatures;
+
+	test.beforeAll(() => {
+		const stored = wpCli('option get fair_events_features --format=json', {
+			allowFailure: true,
+		}).trim();
+		originalCoreFeatures = stored.startsWith('{') ? stored : null;
+	});
+
+	test.afterAll(() => {
+		wpCli('plugin activate fair-events-experimental');
+		if (originalCoreFeatures) {
+			wpCli(
+				`option update fair_events_features '${originalCoreFeatures}' --format=json`
+			);
+		} else {
+			wpCli('option delete fair_events_features', {
+				allowFailure: true,
+			});
+		}
+		clearExperimentalFeatures();
+	});
+
+	test('core off wins over Experimental on', async ({
+		page,
+		request,
+		seedEvent,
+	}) => {
+		setCoreFeatures({ ticketing: false });
+		setExperimentalFeatures({ ticketing: true });
+		const event = seedEvent('paid');
+
+		expect(await routeIsRegistered(request, CORE_TICKETS_ROUTE)).toBe(
+			false
+		);
+		expect(await routeIsRegistered(request, GROUP_RULES_ROUTE)).toBe(false);
+
+		await loginAsAdmin(page);
+		await openManageEvent(page, event.eventDateId);
+		await expect(
+			page.getByRole('tab', { name: 'Event Details' })
+		).toHaveAttribute('aria-selected', 'true');
+		for (const name of ['Prices', 'List', 'Groups']) {
+			await expect(page.getByRole('tab', { name })).toHaveCount(0);
+		}
+	});
+
+	test('Experimental off keeps base ticketing and hides only its extensions', async ({
+		page,
+		request,
+		seedEvent,
+	}) => {
+		setCoreFeatures({ ticketing: true });
+		setExperimentalFeatures({ ticketing: false });
+		const event = seedEvent('paid');
+
+		expect(await routeIsRegistered(request, CORE_TICKETS_ROUTE)).toBe(true);
+		expect(await routeIsRegistered(request, GROUP_RULES_ROUTE)).toBe(false);
+
+		await loginAsAdmin(page);
+		await openManageEvent(page, event.eventDateId);
+		await expect(page.getByRole('tab', { name: 'List' })).toBeVisible();
+		await expect(page.getByRole('tab', { name: 'Groups' })).toHaveCount(0);
+		await saveBaseConfiguration(page);
+	});
+
+	test('base ticketing works with Experimental inactive', async ({
+		page,
+		request,
+		seedEvent,
+	}) => {
+		setCoreFeatures({ ticketing: true });
+		wpCli('plugin deactivate fair-events-experimental');
+		const event = seedEvent('paid');
+
+		expect(await routeIsRegistered(request, CORE_TICKETS_ROUTE)).toBe(true);
+		expect(await routeIsRegistered(request, GROUP_RULES_ROUTE)).toBe(false);
+
+		await loginAsAdmin(page);
+		await openManageEvent(page, event.eventDateId);
+		await expect(page.getByRole('tab', { name: 'List' })).toBeVisible();
+		await saveBaseConfiguration(page);
 	});
 });

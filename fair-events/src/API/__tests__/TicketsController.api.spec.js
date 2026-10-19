@@ -27,6 +27,7 @@ const adminHeaders = {
 
 const FAIR_EVENTS_EXPERIMENTAL_PLUGIN =
 	'fair-events-experimental/fair-events-experimental';
+const EXPERIMENTAL_FEATURES_OPTION = 'fair_events_experimental_features';
 
 test.describe( 'TicketsController — extension rule validation (#1521)', () => {
 	let api;
@@ -1430,6 +1431,7 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 	let eventDateId;
 	let ticketsPath;
 	let originalExperimentalStatus;
+	let originalExperimentalTicketing;
 	const users = {};
 
 	const setExperimentalStatus = async ( status ) => {
@@ -1438,6 +1440,30 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 			{ headers: adminHeaders, data: { status } }
 		);
 		expect( res.ok() ).toBeTruthy();
+	};
+
+	// Experimental's own `ticketing` setting only controls its extensions
+	// (#1849); it is registered while the plugin is active.
+	const setExperimentalTicketing = async ( enabled ) => {
+		const res = await api.post( '/wp-json/wp/v2/settings', {
+			headers: adminHeaders,
+			data: { [ EXPERIMENTAL_FEATURES_OPTION ]: { ticketing: enabled } },
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+	};
+
+	/**
+	 * Experimental active with its ticketing setting on or off, or inactive.
+	 * Core ticketing stays on throughout, so base configuration must work in
+	 * every state.
+	 */
+	const setExperimentalState = async ( state ) => {
+		if ( 'inactive' === state ) {
+			await setExperimentalStatus( 'inactive' );
+			return;
+		}
+		await setExperimentalStatus( 'active' );
+		await setExperimentalTicketing( 'active' === state );
 	};
 
 	const createUser = async ( role ) => {
@@ -1508,6 +1534,16 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 		);
 		expect( experimental ).toBeTruthy();
 		originalExperimentalStatus = experimental.status;
+		if ( 'active' === originalExperimentalStatus ) {
+			const settingsRes = await api.get( '/wp-json/wp/v2/settings', {
+				headers: adminHeaders,
+			} );
+			expect( settingsRes.ok() ).toBeTruthy();
+			// A stored `false` is the only way the setting is off.
+			originalExperimentalTicketing =
+				( await settingsRes.json() )[ EXPERIMENTAL_FEATURES_OPTION ]
+					?.ticketing !== false;
+		}
 
 		// "contributor" has edit_posts, the capability the routes require.
 		users.contributor = await createUser( 'contributor' );
@@ -1545,14 +1581,18 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 			);
 		}
 		if ( originalExperimentalStatus ) {
+			if ( undefined !== originalExperimentalTicketing ) {
+				await setExperimentalStatus( 'active' );
+				await setExperimentalTicketing( originalExperimentalTicketing );
+			}
 			await setExperimentalStatus( originalExperimentalStatus );
 		}
 		await api.dispose();
 	} );
 
-	for ( const status of [ 'active', 'inactive' ] ) {
+	for ( const status of [ 'active', 'active, ticketing off', 'inactive' ] ) {
 		test( `reads, saves, and imports configuration (experimental ${ status })`, async () => {
-			await setExperimentalStatus( status );
+			await setExperimentalState( status );
 
 			const saveRes = await api.put( ticketsPath, {
 				headers: adminHeaders,
@@ -1595,7 +1635,7 @@ test.describe( 'TicketsController — core-owned routes and permissions (#1848)'
 		} );
 
 		test( `rejects anonymous and subscriber requests without changes (experimental ${ status })`, async () => {
-			await setExperimentalStatus( status );
+			await setExperimentalState( status );
 			const before = await readSummary();
 
 			for ( const [ headers, expected ] of [

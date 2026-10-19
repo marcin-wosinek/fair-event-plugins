@@ -135,6 +135,29 @@ describe( 'tab registration', () => {
 		);
 	} );
 
+	it( 'follows core ticketing, not the Experimental ticketing extensions (#1849)', () => {
+		expect(
+			scheduleTab(
+				ctx( {
+					enabledFeatures: {
+						ticketing: true,
+						ticketingExtensions: false,
+					},
+				} )
+			).isVisible
+		).toBe( true );
+		expect(
+			scheduleTab(
+				ctx( {
+					enabledFeatures: {
+						ticketing: false,
+						ticketingExtensions: true,
+					},
+				} )
+			).isVisible
+		).toBe( false );
+	} );
+
 	it( 'is disabled where Prices is: dates of a series and link-only events', () => {
 		expect(
 			scheduleTab(
