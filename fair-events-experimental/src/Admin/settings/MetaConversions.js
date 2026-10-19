@@ -47,6 +47,35 @@ const STATE_LABELS = {
 		'Failed — retries exhausted',
 		'fair-events-experimental'
 	),
+	// Button clicks are sent once, immediately, and never retried.
+	immediate_sending: __(
+		'Sent immediately — no result recorded',
+		'fair-events-experimental'
+	),
+	immediate_received: __(
+		'Received by Meta (sent immediately)',
+		'fair-events-experimental'
+	),
+	immediate_unconfirmed: __(
+		'Not confirmed (sent immediately, not retried)',
+		'fair-events-experimental'
+	),
+	immediate_rejected: __(
+		'Rejected by Meta (sent immediately)',
+		'fair-events-experimental'
+	),
+	immediate_temporary_error: __(
+		'Meta error (sent immediately, not retried)',
+		'fair-events-experimental'
+	),
+	immediate_transport: __(
+		'Could not reach Meta (sent immediately, not retried)',
+		'fair-events-experimental'
+	),
+	immediate_configuration: __(
+		'Configuration error (sent immediately)',
+		'fair-events-experimental'
+	),
 };
 
 const STATE_COLORS = {
@@ -57,6 +86,13 @@ const STATE_COLORS = {
 	accepted: '#757575',
 	configuration_error: '#d63638',
 	retries_exhausted: '#d63638',
+	immediate_sending: '#757575',
+	immediate_received: '#00a32a',
+	immediate_unconfirmed: '#b26200',
+	immediate_rejected: '#d63638',
+	immediate_temporary_error: '#d63638',
+	immediate_transport: '#d63638',
+	immediate_configuration: '#d63638',
 };
 
 // Only these states carry a safe failure category/code worth surfacing —
@@ -65,6 +101,11 @@ const ERROR_DETAIL_STATES = new Set( [
 	'retry_pending',
 	'configuration_error',
 	'retries_exhausted',
+	'immediate_unconfirmed',
+	'immediate_rejected',
+	'immediate_temporary_error',
+	'immediate_transport',
+	'immediate_configuration',
 ] );
 
 function stateLabel( state ) {
@@ -157,10 +198,10 @@ function testStatus( entry ) {
 }
 
 /**
- * Meta's answer to a test send: HTTP status, received event count, trace ID
- * and messages. A field Meta did not report is shown as such, distinct from
- * zero events or an empty message list. Renders nothing for entries
- * recorded before these diagnostics existed.
+ * Meta's answer to a test send or delivery: HTTP status, received event
+ * count, trace ID and messages. A field Meta did not report is shown as
+ * such, distinct from zero events or an empty message list. Renders nothing
+ * for entries recorded before these diagnostics existed.
  *
  * @param {Object} props
  * @param {Object} props.diagnostics Diagnostics from the API, if any.
@@ -803,6 +844,9 @@ export default function MetaConversions( { onNotice } ) {
 													</FlexItem>
 												) }
 											</Flex>
+											<TestDiagnostics
+												diagnostics={ outcome }
+											/>
 										</div>
 									);
 								}

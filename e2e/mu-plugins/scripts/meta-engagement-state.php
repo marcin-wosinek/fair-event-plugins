@@ -8,7 +8,8 @@
  *
  * Prints a single `E2E_META_ENGAGEMENT:{json}` line: `rows` (one entry per
  * outbox row for the post, oldest first — event_name, state, event_date_id,
- * transaction_id) and `requests` (every decoded body captured by
+ * transaction_id, the stored Meta identifiers fbp/fbc and the decoded
+ * meta_diagnostics) and `requests` (every decoded body captured by
  * lib/meta-http-double.php across the whole run, oldest first).
  *
  * @package FairEventsE2E
@@ -26,13 +27,16 @@ if ( ! $event_post_id ) {
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off state dump for the spec, no cache to honour.
 $rows = $wpdb->get_results(
 	$wpdb->prepare(
-		'SELECT event_name, state, event_date_id, transaction_id FROM %i WHERE event_post_id = %d ORDER BY id ASC',
+		'SELECT event_name, state, event_date_id, transaction_id, fbp, fbc, meta_diagnostics FROM %i WHERE event_post_id = %d ORDER BY id ASC',
 		$wpdb->prefix . 'fair_events_meta_outbox',
 		$event_post_id
 	),
 	ARRAY_A
 );
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+foreach ( $rows ? $rows : array() as $index => $row ) {
+	$rows[ $index ]['meta_diagnostics'] = null === $row['meta_diagnostics'] ? null : json_decode( $row['meta_diagnostics'], true );
+}
 
 echo 'E2E_META_ENGAGEMENT:' . wp_json_encode(
 	array(

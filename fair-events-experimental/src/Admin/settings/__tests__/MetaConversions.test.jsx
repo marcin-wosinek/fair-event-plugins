@@ -205,6 +205,112 @@ describe( 'MetaConversions recent delivery outcomes', () => {
 		expect( screen.getByText( 'Retrying: 1' ) ).toBeInTheDocument();
 	} );
 
+	it( 'distinguishes immediate click outcomes and shows their diagnostics', async () => {
+		apiFetch.mockResolvedValue(
+			config( {
+				diagnostics: {
+					counts: {
+						immediate_received: 1,
+						immediate_unconfirmed: 1,
+						immediate_rejected: 1,
+						immediate_transport: 1,
+					},
+					recent: [
+						outcome( {
+							event_name: 'FairEventTicketClick',
+							state: 'immediate_received',
+							payment_mode: '',
+							http_status: 200,
+							events_received: 1,
+							messages: [],
+							fbtrace_id: 'ImmTrace1',
+						} ),
+						outcome( {
+							event_name: 'FairEventTicketClick',
+							state: 'immediate_unconfirmed',
+							payment_mode: '',
+							meta_error_type: 'unconfirmed',
+							meta_error_code: 'events_received_0',
+							http_status: 200,
+							events_received: 0,
+							messages: [],
+							fbtrace_id: null,
+						} ),
+						outcome( {
+							event_name: 'FairEventCalendarClick',
+							state: 'immediate_rejected',
+							payment_mode: '',
+							meta_error_type: 'oauthexception',
+							meta_error_code: '190',
+							http_status: 400,
+							events_received: null,
+							messages: [ 'Invalid token' ],
+							fbtrace_id: 'ImmTrace2',
+						} ),
+						outcome( {
+							event_name: 'FairEventCalendarClick',
+							state: 'immediate_transport',
+							payment_mode: '',
+							meta_error_type: 'transport',
+							meta_error_code: 'network',
+							http_status: null,
+							events_received: null,
+							messages: null,
+							fbtrace_id: null,
+						} ),
+					],
+				},
+			} )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText( 'Received by Meta (sent immediately)' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Trace ID: ImmTrace1' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Not confirmed (sent immediately, not retried)' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Events received: 0' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Rejected by Meta (sent immediately)' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'HTTP 400' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Invalid token' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Error: oauthexception: 190' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Could not reach Meta (sent immediately, not retried)'
+			)
+		).toBeInTheDocument();
+		expect( screen.getByText( 'No HTTP response' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Received by Meta (sent immediately): 1' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a delivery recorded before diagnostics without them', async () => {
+		apiFetch.mockResolvedValue(
+			config( {
+				diagnostics: {
+					counts: { received: 1 },
+					recent: [ outcome() ],
+				},
+			} )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		await screen.findByText( 'Purchase' );
+		expect( screen.queryByText( /^HTTP / ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'No HTTP response' )
+		).not.toBeInTheDocument();
+	} );
+
 	it( 'shows an empty state when there are no recent results', async () => {
 		apiFetch.mockResolvedValue( config() );
 
