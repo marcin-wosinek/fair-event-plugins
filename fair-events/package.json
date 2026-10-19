@@ -51,7 +51,6 @@
 		"calendar-link": "^2.11.6",
 		"fair-events-shared": "*",
 		"html2canvas": "^1.4.1",
-		"react-easy-crop": "^5.5.6",
 		"recharts": "^3.10.1"
 	},
 	"devDependencies": {
