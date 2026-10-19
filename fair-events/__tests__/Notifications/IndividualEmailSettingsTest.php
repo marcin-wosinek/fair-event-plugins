@@ -10,6 +10,7 @@ namespace FairEvents\Tests\Notifications;
 use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\IndividualEmailSettings;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Recipient and selection validation, and the stored defaults.
@@ -48,9 +49,9 @@ class IndividualEmailSettingsTest extends TestCase {
 	/**
 	 * Lists, display names and header injection are refused, not repaired.
 	 *
-	 * @dataProvider invalid_recipients
 	 * @param mixed $value Recipient.
 	 */
+	#[DataProvider( 'invalid_recipients' )]
 	public function test_refuses_anything_but_one_address( $value ) {
 		$this->assertNull( IndividualEmailSettings::parse_recipient( $value ) );
 	}

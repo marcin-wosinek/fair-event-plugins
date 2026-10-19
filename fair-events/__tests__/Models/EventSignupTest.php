@@ -10,6 +10,7 @@ namespace FairEvents\Tests\Models;
 use FairEvents\Models\EventSignup;
 use FairEvents\Hooks\PaymentHooks;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Verifies paid signup holds use UTC at the database boundary.
@@ -28,10 +29,9 @@ class EventSignupTest extends TestCase {
 	/**
 	 * UTC expiry writes are invariant across representative site timezones.
 	 *
-	 * @dataProvider timezone_provider
-	 *
 	 * @param string $timezone Timezone under test.
 	 */
+	#[DataProvider( 'timezone_provider' )]
 	public function test_transaction_expiry_is_written_as_utc( string $timezone ): void {
 		$GLOBALS['_fair_test_timezone'] = $timezone;
 		$before                         = time() + 15 * MINUTE_IN_SECONDS;
@@ -238,13 +238,12 @@ class EventSignupTest extends TestCase {
 	 * A confirmed row, a row of another transaction, a missing row, or an
 	 * unexpected status leaves every row untouched.
 	 *
-	 * @dataProvider unreleasable_provider
-	 *
 	 * @param string $status         Second row's status.
 	 * @param int    $transaction_id Second row's transaction.
 	 * @param bool   $seeded         Whether the second row exists.
 	 * @param string $outcome        Expected outcome.
 	 */
+	#[DataProvider( 'unreleasable_provider' )]
 	public function test_release_for_restart_changes_nothing_when_unreleasable( string $status, int $transaction_id, bool $seeded, string $outcome ): void {
 		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 60 );
 		$this->seed_signup( 10, 'pending_payment', 40, $expires_at );
@@ -263,7 +262,7 @@ class EventSignupTest extends TestCase {
 	 *
 	 * @return array<string, array{string, int, bool, string}>
 	 */
-	public function unreleasable_provider(): array {
+	public static function unreleasable_provider(): array {
 		return array(
 			'confirmed row'         => array( 'confirmed', 40, true, 'confirmed' ),
 			'other transaction'     => array( 'pending_payment', 41, true, 'unsafe' ),
@@ -324,7 +323,7 @@ class EventSignupTest extends TestCase {
 	 *
 	 * @return array<string, array{string}>
 	 */
-	public function timezone_provider(): array {
+	public static function timezone_provider(): array {
 		return array(
 			'UTC'             => array( 'UTC' ),
 			'positive DST'    => array( 'Europe/Brussels' ),

@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\API;
 
 use FairPaymentsConnector\API\TransactionAPI;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * TransactionAPI::resume_payment() must never start a second provider
@@ -120,9 +121,9 @@ class TransactionAPIResumePaymentTest extends TestCase {
 	/**
 	 * A payment that is over, or in flight at the bank, cannot be continued.
 	 *
-	 * @dataProvider closed_statuses
 	 * @param string $status Transaction status.
 	 */
+	#[DataProvider( 'closed_statuses' )]
 	public function test_refuses_a_payment_that_is_over( $status ) {
 		$result = $this->resume(
 			array(

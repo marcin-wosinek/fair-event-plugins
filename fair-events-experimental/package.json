@@ -22,7 +22,7 @@
 		"updatepo": "wp i18n update-po languages/fair-events-experimental.pot languages/",
 		"test": "npm-run-all test:js test:php",
 		"test:js": "jest --passWithNoTests",
-		"test:php": "vendor/bin/phpunit",
+		"test:php": "node ../scripts/php-test-runner.mjs",
 		"test:api": "playwright test src/API/__tests__/ --pass-with-no-tests"
 	},
 	"dependencies": {

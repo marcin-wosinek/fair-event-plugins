@@ -9,6 +9,7 @@ namespace FairEvents\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Services\ActivityOptionTranslation;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Covers the fallback behavior available in this process (Polylang absent)
@@ -81,9 +82,8 @@ class ActivityOptionTranslationTest extends TestCase {
 	 * Registration and translation both go through Polylang when it's
 	 * present. Defines local `pll_register_string()`/`pll__()` stubs that
 	 * record calls, so this must run isolated from the rest of the suite.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_register_calls_pll_register_string_with_stable_name_and_group() {
 		require_once __DIR__ . '/../pll-string-stubs.php';
 
@@ -110,9 +110,8 @@ class ActivityOptionTranslationTest extends TestCase {
 
 	/**
 	 * An empty short_name is never registered.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_register_does_not_register_empty_short_name() {
 		require_once __DIR__ . '/../pll-string-stubs.php';
 
@@ -129,9 +128,8 @@ class ActivityOptionTranslationTest extends TestCase {
 	/**
 	 * A changed value re-registers under the same stable string name,
 	 * rather than a new one.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_register_reuses_the_same_string_name_when_value_changes() {
 		require_once __DIR__ . '/../pll-string-stubs.php';
 
@@ -147,9 +145,8 @@ class ActivityOptionTranslationTest extends TestCase {
 	/**
 	 * `translate_name()` resolves through `pll__()` when Polylang is
 	 * present.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_translate_name_resolves_through_pll() {
 		require_once __DIR__ . '/../pll-string-stubs.php';
 
@@ -184,9 +181,8 @@ class ActivityOptionTranslationTest extends TestCase {
 	/**
 	 * Register() must register a name/short_name of "0" — it's a real
 	 * value, not an empty one.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_register_registers_the_string_zero_as_a_real_value() {
 		require_once __DIR__ . '/../pll-string-stubs.php';
 

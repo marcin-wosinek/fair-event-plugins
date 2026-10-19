@@ -35,6 +35,7 @@ use Mollie\Api\Resources\PaymentCollection;
 use Mollie\Api\Http\Requests\GetPaginatedPaymentsRequest;
 use Mollie\Api\Http\Requests\GetPaginatedBalanceTransactionRequest;
 use Mollie\Api\Resources\BalanceTransactionCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for MolliePaymentHandler's test/live mode handling.
@@ -598,11 +599,10 @@ class MolliePaymentHandlerTest extends TestCase {
 	 * service, and the connection is not marked lost — restoring encryption
 	 * support or the keys recovers it without a reconnect.
 	 *
-	 * @dataProvider unreadable_credentials_provider
-	 *
 	 * @param callable $make_unreadable Turns the stored tokens unreadable.
 	 * @param string   $message         Expected part of the error message.
 	 */
+	#[DataProvider( 'unreadable_credentials_provider' )]
 	public function test_unreadable_credentials_neither_refresh_nor_disconnect( $make_unreadable, $message ) {
 		$this->seed_encrypted_expired_connection();
 		$stored = $GLOBALS['_fair_test_options'];
@@ -625,7 +625,7 @@ class MolliePaymentHandlerTest extends TestCase {
 	 *
 	 * @return array
 	 */
-	public function unreadable_credentials_provider() {
+	public static function unreadable_credentials_provider() {
 		return array(
 			'encryption support lost' => array(
 				static function () {

@@ -10,6 +10,8 @@ namespace FairEvents\Tests\Notifications;
 use FairEvents\Notifications\TelegramSettings;
 use FairEvents\Notifications\TelegramConnector;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Tests credential resolution, source precedence and write validation.
@@ -105,10 +107,9 @@ class TelegramConnectorTest extends TestCase {
 
 	/**
 	 * The constant overrides the saved token, and the environment variable overrides the constant.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_constant_sits_between_environment_and_database() {
 		self::save( self::SAVED );
 		define( TelegramConnector::CREDENTIAL_NAME, self::OVERRIDE );

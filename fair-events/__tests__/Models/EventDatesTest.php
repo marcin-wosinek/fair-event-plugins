@@ -12,6 +12,7 @@ use FairEvents\Models\EventDates;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Tests for EventDates::get_display_url()
@@ -457,9 +458,9 @@ class EventDatesTest extends TestCase {
 	 * link_type — including 'external', where get_display_url() would
 	 * return the unrelated external_url instead.
 	 *
-	 * @dataProvider linkTypeProvider
 	 * @param string $link_type link_type value under test.
 	 */
+	#[DataProvider( 'linkTypeProvider' )]
 	public function test_event_page_url_resolves_regardless_of_link_type( $link_type ) {
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
@@ -480,7 +481,7 @@ class EventDatesTest extends TestCase {
 	 *
 	 * @return array<string, array{0: string}>
 	 */
-	public function linkTypeProvider(): array {
+	public static function linkTypeProvider(): array {
 		return array(
 			'none'     => array( 'none' ),
 			'post'     => array( 'post' ),

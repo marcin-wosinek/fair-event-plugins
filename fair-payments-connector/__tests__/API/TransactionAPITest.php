@@ -24,9 +24,6 @@ class TransactionAPITest extends TestCase {
 	 */
 	private function metadata( $transaction, $id ) {
 		$method = new ReflectionMethod( TransactionAPI::class, 'prepare_payment_metadata' );
-		if ( PHP_VERSION_ID < 80100 ) {
-			$method->setAccessible( true );
-		}
 		return $method->invoke( null, $transaction, $id );
 	}
 

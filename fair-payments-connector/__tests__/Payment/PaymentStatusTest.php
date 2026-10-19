@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\Payment;
 
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Payment\PaymentStatus;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for the raw-transaction-status → canonical-lifecycle-status mapper.
@@ -18,11 +19,10 @@ class PaymentStatusTest extends TestCase {
 	/**
 	 * Assert each raw status maps to its canonical lifecycle status.
 	 *
-	 * @dataProvider raw_status_provider
-	 *
 	 * @param string $raw_status Raw transaction status.
 	 * @param string $expected   Expected canonical lifecycle status.
 	 */
+	#[DataProvider( 'raw_status_provider' )]
 	public function test_from_raw_status_maps_correctly( string $raw_status, string $expected ): void {
 		$this->assertSame( $expected, PaymentStatus::from_raw_status( $raw_status ) );
 	}
@@ -32,7 +32,7 @@ class PaymentStatusTest extends TestCase {
 	 *
 	 * @return array<string, array{0: string, 1: string}>
 	 */
-	public function raw_status_provider(): array {
+	public static function raw_status_provider(): array {
 		return array(
 			'paid maps to confirmed'                  => array( 'paid', PaymentStatus::CONFIRMED ),
 			'failed maps to failed'                   => array( 'failed', PaymentStatus::FAILED ),

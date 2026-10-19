@@ -14,6 +14,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Models\Transaction;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for Transaction::calculate_application_fee() and create().
@@ -40,7 +41,7 @@ class TransactionFeeTest extends TestCase {
 	 *
 	 * @return array<string,array{string}>
 	 */
-	public function timezones(): array {
+	public static function timezones(): array {
 		return array(
 			'UTC'           => array( 'UTC' ),
 			'Europe/Madrid' => array( 'Europe/Madrid' ),
@@ -61,9 +62,9 @@ class TransactionFeeTest extends TestCase {
 	/**
 	 * One second before local midnight is still waived.
 	 *
-	 * @dataProvider timezones
 	 * @param string $timezone Site timezone.
 	 */
+	#[DataProvider( 'timezones' )]
 	public function test_fee_is_waived_immediately_before_the_cutoff( string $timezone ) {
 		$fee = Transaction::calculate_application_fee( 100, $this->moment( '2026-12-31 23:59:59', $timezone ), new DateTimeZone( $timezone ) );
 		$this->assertSame( 0.0, $fee );
@@ -72,9 +73,9 @@ class TransactionFeeTest extends TestCase {
 	/**
 	 * Local midnight on 1 January 2027 is charged.
 	 *
-	 * @dataProvider timezones
 	 * @param string $timezone Site timezone.
 	 */
+	#[DataProvider( 'timezones' )]
 	public function test_fee_is_charged_exactly_at_the_cutoff( string $timezone ) {
 		$fee = Transaction::calculate_application_fee( 100, $this->moment( '2027-01-01 00:00:00', $timezone ), new DateTimeZone( $timezone ) );
 		$this->assertSame( 2.0, $fee );
@@ -83,9 +84,9 @@ class TransactionFeeTest extends TestCase {
 	/**
 	 * Later transactions are charged 2%.
 	 *
-	 * @dataProvider timezones
 	 * @param string $timezone Site timezone.
 	 */
+	#[DataProvider( 'timezones' )]
 	public function test_fee_is_charged_after_the_cutoff( string $timezone ) {
 		$fee = Transaction::calculate_application_fee( 250, $this->moment( '2027-06-15 12:00:00', $timezone ), new DateTimeZone( $timezone ) );
 		$this->assertSame( 5.0, $fee );

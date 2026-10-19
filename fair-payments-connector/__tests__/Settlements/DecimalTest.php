@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\Settlements;
 
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Settlements\Decimal;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for Decimal.
@@ -20,7 +21,7 @@ class DecimalTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function valid_amounts() {
+	public static function valid_amounts() {
 		return array(
 			'plain'                   => array( '12.5', 'EUR', '12.50' ),
 			'comma decimal'           => array( '12,50', 'EUR', '12.50' ),
@@ -39,12 +40,11 @@ class DecimalTest extends TestCase {
 	/**
 	 * A valid amount keeps its exact value.
 	 *
-	 * @dataProvider valid_amounts
-	 *
 	 * @param mixed       $raw      Raw value.
 	 * @param string|null $currency Currency.
 	 * @param string      $expected Canonical value.
 	 */
+	#[DataProvider( 'valid_amounts' )]
 	public function test_normalize_accepts_exact_amounts( $raw, $currency, $expected ) {
 		$this->assertSame( $expected, Decimal::normalize( $raw, $currency ) );
 	}
@@ -54,7 +54,7 @@ class DecimalTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function invalid_amounts() {
+	public static function invalid_amounts() {
 		return array(
 			'thousands separator'      => array( '1,234', 'EUR' ),
 			'both separators'          => array( '1.234,56', 'EUR' ),
@@ -71,11 +71,10 @@ class DecimalTest extends TestCase {
 	/**
 	 * An ambiguous or malformed amount is refused, never turned into zero.
 	 *
-	 * @dataProvider invalid_amounts
-	 *
 	 * @param mixed       $raw      Raw value.
 	 * @param string|null $currency Currency.
 	 */
+	#[DataProvider( 'invalid_amounts' )]
 	public function test_normalize_refuses_ambiguous_amounts( $raw, $currency ) {
 		$this->assertNull( Decimal::normalize( $raw, $currency ) );
 	}

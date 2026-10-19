@@ -18,6 +18,9 @@
 		"preferred-install": "dist",
 		"allow-plugins": {
 			"composer/installers": true
+		},
+		"platform": {
+			"php": "8.0"
 		}
 	},
 	"repositories": [

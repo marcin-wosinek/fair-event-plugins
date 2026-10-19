@@ -9,6 +9,7 @@ namespace FairAudience\Tests\Database;
 
 use FairAudience\Database\EventParticipantRepository;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 require_once __DIR__ . '/ExpiryWPDB.php';
 
@@ -36,10 +37,9 @@ class EventParticipantRepositoryTest extends TestCase {
 	/**
 	 * Capacity comparisons remain UTC in all representative site timezones.
 	 *
-	 * @dataProvider timezone_provider
-	 *
 	 * @param string $timezone Timezone under test.
 	 */
+	#[DataProvider( 'timezone_provider' )]
 	public function test_capacity_comparison_uses_utc( string $timezone ): void {
 		$GLOBALS['_fair_test_timezone'] = $timezone;
 		$this->database->rows[1]        = (object) array(
@@ -96,7 +96,7 @@ class EventParticipantRepositoryTest extends TestCase {
 	 *
 	 * @return array<string, array{string}>
 	 */
-	public function timezone_provider(): array {
+	public static function timezone_provider(): array {
 		return array(
 			'UTC'             => array( 'UTC' ),
 			'positive DST'    => array( 'Europe/Brussels' ),

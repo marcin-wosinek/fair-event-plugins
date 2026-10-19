@@ -42,7 +42,6 @@ class CalendarFeedControllerTest extends TestCase {
 	private function build_ics( array $occurrences ) {
 		$controller = new CalendarFeedController();
 		$method     = new \ReflectionMethod( CalendarFeedController::class, 'build_vcalendar' );
-		$method->setAccessible( true );
 
 		return $method->invoke( $controller, $occurrences )->serialize();
 	}
@@ -163,7 +162,6 @@ class CalendarFeedControllerTest extends TestCase {
 	private function build_location_line( $location ) {
 		$controller = new CalendarFeedController();
 		$method     = new \ReflectionMethod( CalendarFeedController::class, 'build_location_line' );
-		$method->setAccessible( true );
 
 		return $method->invoke( $controller, $location );
 	}
@@ -245,7 +243,6 @@ class CalendarFeedControllerTest extends TestCase {
 	private function build_description( $description, $url ) {
 		$controller = new CalendarFeedController();
 		$method     = new \ReflectionMethod( CalendarFeedController::class, 'build_description' );
-		$method->setAccessible( true );
 
 		return $method->invoke( $controller, $description, $url );
 	}

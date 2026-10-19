@@ -4,7 +4,7 @@ Tags: events, participants, audience, management
 Requires at least: 7.0
 Tested up to: 7.1
 Stable tag: 1.20.0
-Requires PHP: 8.0
+Requires PHP: 8.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 

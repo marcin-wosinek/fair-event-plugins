@@ -26,5 +26,10 @@
 		"psr-4": {
 			"FairForm\\": "src/"
 		}
+	},
+	"config": {
+		"platform": {
+			"php": "8.0"
+		}
 	}
 }

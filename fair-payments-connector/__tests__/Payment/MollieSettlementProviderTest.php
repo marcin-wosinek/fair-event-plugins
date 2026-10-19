@@ -24,6 +24,7 @@ use Mollie\Api\Http\Requests\GetPaginatedSettlementPaymentsRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementCapturesRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementRefundsRequest;
 use Mollie\Api\Http\Requests\GetPaginatedSettlementChargebacksRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for MollieSettlementProvider.
@@ -512,7 +513,7 @@ class MollieSettlementProviderTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function parts() {
+	public static function parts() {
 		return array(
 			'payments'    => array( 'payments', GetPaginatedSettlementPaymentsRequest::class, 'payments', Movements::TYPE_PAYMENT, 'tr_unit0001' ),
 			'captures'    => array( 'captures', GetPaginatedSettlementCapturesRequest::class, 'captures', Movements::TYPE_CAPTURE, 'cpt_unit0001' ),
@@ -524,14 +525,13 @@ class MollieSettlementProviderTest extends TestCase {
 	/**
 	 * Payments, captures, refunds and chargebacks are each loaded and typed.
 	 *
-	 * @dataProvider parts
-	 *
 	 * @param string $part          Part name.
 	 * @param string $request_class Request class.
 	 * @param string $key           Embedded collection key.
 	 * @param string $type          Expected movement type.
 	 * @param string $id            Resource ID.
 	 */
+	#[DataProvider( 'parts' )]
 	public function test_list_movements_loads_each_part( $part, $request_class, $key, $type, $id ) {
 		$resource = array(
 			'resource'         => rtrim( $key, 's' ),

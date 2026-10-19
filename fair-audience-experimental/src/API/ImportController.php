@@ -525,7 +525,7 @@ class ImportController extends WP_REST_Controller {
 				);
 			}
 
-			$headers = fgetcsv( $handle );
+			$headers = fgetcsv( $handle, 0, ',', '"', '\\' );
 			if ( false === $headers || empty( $headers ) ) {
 				fclose( $handle );
 				return new WP_Error(
@@ -561,7 +561,7 @@ class ImportController extends WP_REST_Controller {
 			);
 
 			$row_number = 1;
-			while ( false !== ( $row = fgetcsv( $handle ) ) ) {
+			while ( false !== ( $row = fgetcsv( $handle, 0, ',', '"', '\\' ) ) ) {
 				++$row_number;
 
 				$name  = ( false !== $name_col && isset( $row[ $name_col ] ) ) ? trim( (string) $row[ $name_col ] ) : '';

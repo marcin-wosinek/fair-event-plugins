@@ -9,16 +9,17 @@ namespace FairEvents\Tests\Notifications;
 
 use FairEvents\Notifications\BulkEmailAdapter;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Group emails need a Fair Audience that reports each recipient.
  *
  * Each case loads its own Fair Audience stand-in, so each runs in a
  * separate process.
- *
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
  */
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState( false )]
 class BulkEmailAdapterTest extends TestCase {
 
 	/**

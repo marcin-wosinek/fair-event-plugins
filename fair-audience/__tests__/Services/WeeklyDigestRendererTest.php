@@ -9,6 +9,8 @@ namespace FairAudience\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use FairAudience\Services\WeeklyDigestRenderer;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Validates the pure config-sanitizing and HTML-shaping logic. Live WP
@@ -343,10 +345,9 @@ class WeeklyDigestRendererTest extends TestCase {
 	/**
 	 * With Fair Events' renderer available, the digest content comes from it,
 	 * so subscribers get the same content as Fair Events' other weekly emails.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_render_delegates_to_fair_events_when_available() {
 		require_once __DIR__ . '/fakes/FakeSharedWeeklyEmailRenderer.php';
 

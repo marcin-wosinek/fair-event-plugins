@@ -45,3 +45,6 @@ e2e/screenshots/output/
 deployment-config.txt
 fair-platform-deployment-config.txt
 .env
+
+# PHPUnit result cache
+.phpunit.cache/

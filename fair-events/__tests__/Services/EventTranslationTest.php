@@ -9,6 +9,7 @@ namespace FairEvents\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Services\EventTranslation;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Covers the fallback behavior available in this process (Polylang absent)
@@ -52,9 +53,8 @@ class EventTranslationTest extends TestCase {
 	 * Non-post-linked occurrences (standalone/external) are left alone even
 	 * when Polylang is present, since resolving a translation only makes
 	 * sense for a linked WordPress post.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_non_post_source_is_left_unchanged() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -79,9 +79,8 @@ class EventTranslationTest extends TestCase {
 	 * external URL (`link_type: 'external'`) is left unchanged, even though
 	 * `event_id`/`source: 'post'` are set — the event's own CPT post having
 	 * a translation is irrelevant, since the occurrence doesn't link there.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_external_link_type_is_left_unchanged() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -106,9 +105,8 @@ class EventTranslationTest extends TestCase {
 	 * different junction-linked post (`link_type: 'none'`) is left
 	 * unchanged for the same reason — url/title didn't come from
 	 * `event_id`'s own post.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_none_link_type_is_left_unchanged() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -132,9 +130,8 @@ class EventTranslationTest extends TestCase {
 	/**
 	 * No translation mapped for the current language: falls back to the
 	 * original title/url unchanged.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_falls_back_when_no_translation_exists() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -149,9 +146,8 @@ class EventTranslationTest extends TestCase {
 
 	/**
 	 * A published translation swaps in the translated post's title/url.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_swaps_in_published_translation() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -167,9 +163,8 @@ class EventTranslationTest extends TestCase {
 	/**
 	 * A `generated` occurrence keeps its `?event_date=` disambiguation arg,
 	 * appended to the translated post's permalink.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_generated_occurrence_keeps_event_date_arg_on_translated_url() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -191,9 +186,8 @@ class EventTranslationTest extends TestCase {
 	/**
 	 * A non-`generated` occurrence's translated url has no `event_date` arg
 	 * appended.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_single_occurrence_translated_url_has_no_event_date_arg() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -208,9 +202,8 @@ class EventTranslationTest extends TestCase {
 	/**
 	 * A translation that resolves to an unpublished post is treated as "no
 	 * translation" — falls back to the original occurrence.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_falls_back_when_translation_is_not_published() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -229,9 +222,8 @@ class EventTranslationTest extends TestCase {
 	 * `pll_get_post()` resolving the original post id itself (Polylang's
 	 * documented behavior when no translation exists) is treated the same
 	 * as "no translation".
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_falls_back_when_translation_resolves_to_the_same_post() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -248,9 +240,8 @@ class EventTranslationTest extends TestCase {
 	/**
 	 * The same event_id repeated across occurrences (a recurring series)
 	 * only resolves the Polylang translation once per render.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_caches_translation_lookup_across_occurrences() {
 		require_once __DIR__ . '/../pll-stubs.php';
 
@@ -271,9 +262,8 @@ class EventTranslationTest extends TestCase {
 	 * Translated posts of every distinct event are loaded with one bulk
 	 * call before resolving titles/urls, so many translated events don't
 	 * cost a lookup each. Untranslated and non-post occurrences add nothing.
-	 *
-	 * @runInSeparateProcess
 	 */
+	#[RunInSeparateProcess]
 	public function test_primes_translated_posts_once_for_all_events() {
 		require_once __DIR__ . '/../pll-stubs.php';
 		require_once __DIR__ . '/../prime-caches-stub.php';

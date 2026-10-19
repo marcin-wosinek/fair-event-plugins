@@ -43,7 +43,6 @@ class WeeklyEventsProviderTest extends TestCase {
 	private function format_day_event( array $occurrence, \DateTimeZone $tz ) {
 		$provider = new WeeklyEventsProvider();
 		$method   = new \ReflectionMethod( WeeklyEventsProvider::class, 'format_day_event' );
-		$method->setAccessible( true );
 
 		return $method->invoke( $provider, $occurrence, $tz );
 	}

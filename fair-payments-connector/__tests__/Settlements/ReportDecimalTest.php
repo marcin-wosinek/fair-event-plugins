@@ -10,6 +10,7 @@ namespace FairPaymentsConnector\Tests\Settlements;
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Settlements\Decimal;
 use FairPaymentsConnector\Settlements\ReportDecimal;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for ReportDecimal.
@@ -21,7 +22,7 @@ class ReportDecimalTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function valid_values() {
+	public static function valid_values() {
 		return array(
 			'fractional cents'        => array( '0.7545', '0.7545' ),
 			'negative rounding line'  => array( '-0.0045', '-0.0045' ),
@@ -41,11 +42,10 @@ class ReportDecimalTest extends TestCase {
 	/**
 	 * A report value keeps the sign and scale it was supplied with.
 	 *
-	 * @dataProvider valid_values
-	 *
 	 * @param mixed  $raw      Raw value.
 	 * @param string $expected Kept value.
 	 */
+	#[DataProvider( 'valid_values' )]
 	public function test_parse_keeps_the_supplied_precision( $raw, $expected ) {
 		$this->assertSame( $expected, ReportDecimal::parse( $raw ) );
 	}
@@ -55,29 +55,28 @@ class ReportDecimalTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function invalid_values() {
+	public static function invalid_values() {
 		return array(
-			'more decimals than bounded'  => array( '0.123456789' ),
-			'more digits than bounded'    => array( '1000000000000000.00' ),
-			'comma decimal'               => array( '0,7545' ),
-			'thousands separator'         => array( '1,234.50' ),
-			'exponent'                    => array( '1e3' ),
-			'text'                        => array( 'ten' ),
-			'empty'                       => array( '' ),
-			'trailing separator'          => array( '1.' ),
-			'float'                       => array( 0.7545 ),
-			'null'                        => array( null ),
-			'array'                       => array( array( '1.00' ) ),
+			'more decimals than bounded' => array( '0.123456789' ),
+			'more digits than bounded'   => array( '1000000000000000.00' ),
+			'comma decimal'              => array( '0,7545' ),
+			'thousands separator'        => array( '1,234.50' ),
+			'exponent'                   => array( '1e3' ),
+			'text'                       => array( 'ten' ),
+			'empty'                      => array( '' ),
+			'trailing separator'         => array( '1.' ),
+			'float'                      => array( 0.7545 ),
+			'null'                       => array( null ),
+			'array'                      => array( array( '1.00' ) ),
 		);
 	}
 
 	/**
 	 * An unreadable value is refused, never truncated.
 	 *
-	 * @dataProvider invalid_values
-	 *
 	 * @param mixed $raw Raw value.
 	 */
+	#[DataProvider( 'invalid_values' )]
 	public function test_parse_refuses_what_it_cannot_keep_exactly( $raw ) {
 		$this->assertNull( ReportDecimal::parse( $raw ) );
 	}
