@@ -32,7 +32,8 @@
 		"@wordpress/dataviews": "20.0.0",
 		"@wordpress/dom-ready": "4.57.0",
 		"@wordpress/element": "9.0.0",
-		"@wordpress/i18n": "6.30.0"
+		"@wordpress/i18n": "6.30.0",
+		"react-easy-crop": "^6.2.4"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.7",
