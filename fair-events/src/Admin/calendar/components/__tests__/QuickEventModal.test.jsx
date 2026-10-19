@@ -541,3 +541,149 @@ describe( 'inline venue creation (#1622)', () => {
 		expect( createCall[ 0 ].data.venue_id ).toBe( 42 );
 	} );
 } );
+
+describe( 'optional times (#1851)', () => {
+	const createData = () =>
+		apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		)[ 0 ].data;
+
+	const setTime = ( label, value ) =>
+		fireEvent.change( screen.getByLabelText( label ), {
+			target: { value },
+		} );
+
+	it( 'keeps the 10:00–12:00 defaults and marks both times optional', async () => {
+		await renderModal();
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'10:00'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'12:00'
+		);
+		expect(
+			screen.getByLabelText( 'Start time (optional)' )
+		).not.toBeRequired();
+	} );
+
+	it.each( [
+		[ 'no times', '', '', null, null ],
+		[ 'a start time only', '10:00', '', '10:00:00', null ],
+		[ 'an end time only', '', '12:00', null, '12:00:00' ],
+		[ 'both times', '10:00', '12:00', '10:00:00', '12:00:00' ],
+	] )(
+		'creates a dated event with %s and without all day',
+		async ( _label, start, end, sentStart, sentEnd ) => {
+			const { onSuccess } = await renderModal();
+			fillTitle();
+			setTime( 'Start time (optional)', start );
+			setTime( 'End time (optional)', end );
+
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Create Event' } )
+			);
+			await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+			expect( createData() ).toMatchObject( {
+				start_date: '2026-06-10',
+				end_date: '2026-06-10',
+				start_time: sentStart,
+				end_time: sentEnd,
+				all_day: false,
+			} );
+		}
+	);
+
+	it( 'creates a multi-day event without times', async () => {
+		const { onSuccess } = await renderModal();
+		fillTitle();
+		fireEvent.change( screen.getByLabelText( 'End date' ), {
+			target: { value: '2026-06-12' },
+		} );
+		setTime( 'Start time (optional)', '' );
+		setTime( 'End time (optional)', '' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createData() ).toMatchObject( {
+			start_date: '2026-06-10',
+			end_date: '2026-06-12',
+			start_time: null,
+			end_time: null,
+			all_day: false,
+		} );
+	} );
+
+	it( 'explains an invalid range and blocks creation', async () => {
+		await renderModal();
+		fillTitle();
+		fireEvent.change( screen.getByLabelText( 'End date' ), {
+			target: { value: '2026-06-09' },
+		} );
+		expect(
+			document.querySelector( '.components-notice.is-error' )
+		).toHaveTextContent( 'The end date is before the start date.' );
+		expect(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		).toBeDisabled();
+
+		fireEvent.change( screen.getByLabelText( 'End date' ), {
+			target: { value: '2026-06-10' },
+		} );
+		setTime( 'Start time (optional)', '12:00' );
+		setTime( 'End time (optional)', '10:00' );
+		expect(
+			document.querySelector( '.components-notice.is-error' )
+		).toHaveTextContent(
+			'The end time is before the start time on the same day.'
+		);
+
+		// Without a start time, nothing is compared.
+		setTime( 'Start time (optional)', '' );
+		expect(
+			document.querySelector( '.components-notice.is-error' )
+		).toBeNull();
+		expect(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		).toBeEnabled();
+	} );
+
+	it( 'keeps a looked-up start-only time without inventing an end', async () => {
+		lookupResponse = {
+			title: 'Fetched Event',
+			start_date: '2026-07-01',
+			start_time: '18:00:00',
+			end_date: null,
+			end_time: null,
+			all_day: false,
+			location: null,
+			source: 'schema',
+			found: [ 'title', 'start' ],
+		};
+
+		await renderModal();
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: 'https://example.com/event' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Fetched Event'
+			)
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'18:00'
+		);
+		expect( screen.getByLabelText( 'End date' ) ).toHaveValue(
+			'2026-07-01'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+	} );
+} );

@@ -15,11 +15,8 @@ import { Button, __experimentalHStack as HStack } from '@wordpress/components';
 import { createInterpolateElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { dateI18n, getSettings } from '@wordpress/date';
-import {
-	formatTimingStart,
-	formatSiteLocalTime,
-	getEventDisplayTitle,
-} from 'fair-events-shared';
+import { formatTimingStart, getEventDisplayTitle } from 'fair-events-shared';
+import { formatEventTiming } from '../components/eventTiming.js';
 
 /**
  * @param {Object}      props
@@ -43,15 +40,8 @@ export default function EventContextHeader( {
 } ) {
 	if ( ! eventDate ) return null;
 
-	// Only supplied times are shown: the end time joins the line when the
-	// date has one.
-	const dateLine = formatTimingStart( eventDate ) || '—';
-	const timeRangeLine =
-		eventDate.start_date && ! eventDate.all_day && eventDate.end_time
-			? `${ dateLine } – ${ formatSiteLocalTime(
-					`${ eventDate.end_date } ${ eventDate.end_time }`
-				) }`
-			: dateLine;
+	// Only supplied times are shown, and an end-only time reads as the end.
+	const timeRangeLine = formatEventTiming( eventDate ) || '—';
 
 	const venue = venues.find( ( v ) => v.id === eventDate.venue_id );
 	const venueLine = venue?.name || eventDate.address || null;
@@ -258,7 +248,7 @@ export default function EventContextHeader( {
 							/* translators: 1: master event title, 2: occurrence date */
 							__( 'Occurrence of %1$s on %2$s —', 'fair-events' ),
 							eventDate.master.title,
-							dateLine
+							formatTimingStart( eventDate )
 						) }{ ' ' }
 						<a href={ masterUrl }>
 							{ __( 'view series', 'fair-events' ) }

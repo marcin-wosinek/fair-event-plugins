@@ -41,7 +41,10 @@ the calendar menu script is enqueued.
 Only an all-day event or one with both a start and an end time is exported;
 a missing time is never guessed. When the shown date can't be exported, the
 link gets `data-calendar-available="false"` and `aria-disabled="true"`
-instead of event data, and clicking it does nothing. On a recurring event's
+instead of event data, loses any `href`, and clicking it does nothing. A
+visible `p.fair-events-calendar-unavailable` note after the link, referenced
+by its `aria-describedby`, explains that both start and end times are
+required. On a recurring event's
 overview, `data-rrule` is only set when every date of the series can be
 exported. Otherwise the button exports the next date that can be, on its
 own, and `data-url` links to that date.

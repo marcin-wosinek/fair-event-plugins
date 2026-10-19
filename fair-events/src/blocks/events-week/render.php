@@ -43,6 +43,37 @@ if ( ! function_exists( 'fair_events_convert_color_to_css' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fair_events_week_time_label' ) ) {
+	/**
+	 * Time shown with an event in the week view: its start time, or on its
+	 * last day the end time, labelled as the end, when only that is known.
+	 * Empty without a time: a missing time is never shown as midnight.
+	 *
+	 * @param array $occ Occurrence DTO from EventFeedProvider::group_by_day().
+	 * @return string Time label, or empty string.
+	 */
+	function fair_events_week_time_label( array $occ ) {
+		if ( ! isset( $occ['timing'] ) ) {
+			return DateHelper::local_time( $occ['start'] );
+		}
+
+		$timing = $occ['timing'];
+		if ( ! empty( $timing['start_time'] ) ) {
+			return substr( $timing['start_time'], 0, 5 );
+		}
+
+		if ( ! empty( $timing['end_time'] ) && ! empty( $occ['is_last_day'] ) ) {
+			return sprintf(
+				/* translators: %s: end time of an event without a start time, e.g. "21:30" */
+				__( 'Ends %s', 'fair-events' ),
+				substr( $timing['end_time'], 0, 5 )
+			);
+		}
+
+		return '';
+	}
+}
+
 // Resolve which week to show — URL param takes precedence over current week.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $url_week_param = isset( $_GET['week_view'] ) ? sanitize_text_field( wp_unslash( $_GET['week_view'] ) ) : '';
@@ -103,7 +134,7 @@ foreach ( $occurrences_by_date as $date => $day_occurrences ) {
 				'title'      => $occ['title'],
 				'permalink'  => $occ['url'],
 				'all_day'    => $occ['all_day'],
-				'start_time' => $occ['all_day'] ? '' : DateHelper::local_time( $occ['start'] ),
+				'start_time' => $occ['all_day'] ? '' : fair_events_week_time_label( $occ ),
 				'is_ical'    => $is_external,
 				'is_draft'   => $occ['is_draft'],
 				'color'      => $occ['source_color'],

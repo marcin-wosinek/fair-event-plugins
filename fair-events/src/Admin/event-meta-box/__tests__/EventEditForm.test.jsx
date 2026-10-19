@@ -347,3 +347,73 @@ describe( 'EventEditForm event length in Spanish', () => {
 		expect( select ).toHaveValue( '3' );
 	} );
 } );
+
+describe( 'optional times (#1851)', () => {
+	const putData = () =>
+		apiFetch.mock.calls.find( ( [ opts ] ) => opts.method === 'PUT' )[ 0 ]
+			.data;
+
+	it( 'reopens an end-only date without filling the start time', async () => {
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( path === '/fair-events/v1/venues' ) {
+				return Promise.resolve( [] );
+			}
+			if ( ! method ) {
+				return Promise.resolve( {
+					...eventDate,
+					start_time: null,
+					end_time: '12:00:00',
+				} );
+			}
+			return Promise.resolve( eventDate );
+		} );
+		await renderForm();
+
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'12:00'
+		);
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save Event' } ) );
+		await waitFor( () => expect( putData() ).toBeDefined() );
+		expect( putData() ).toMatchObject( {
+			start_time: null,
+			end_time: '12:00:00',
+			all_day: false,
+		} );
+	} );
+
+	it( 'clears one time on its own and keeps the other', async () => {
+		await renderForm();
+
+		fireEvent.change( screen.getByLabelText( 'End time (optional)' ), {
+			target: { value: '' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save Event' } ) );
+		await waitFor( () => expect( putData() ).toBeDefined() );
+		expect( putData() ).toMatchObject( {
+			start_date: '2026-06-10',
+			end_date: '2026-06-10',
+			start_time: '10:00:00',
+			end_time: null,
+		} );
+	} );
+
+	it( 'blocks saving a reversed range and says why', async () => {
+		await renderForm();
+
+		fireEvent.change( screen.getByLabelText( 'End time (optional)' ), {
+			target: { value: '09:00' },
+		} );
+		expect(
+			screen.getByRole( 'button', { name: 'Save Event' } )
+		).toBeDisabled();
+		expect(
+			document.querySelector( '.components-notice.is-error' )
+		).toHaveTextContent(
+			'The end time is before the start time on the same day.'
+		);
+	} );
+} );

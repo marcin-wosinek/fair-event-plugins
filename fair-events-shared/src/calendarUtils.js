@@ -60,30 +60,47 @@ export const calculateLeadingDays = ( firstDayOfMonth, startOfWeek = 1 ) => {
 /**
  * Group events by date for calendar display
  *
- * @param {Array} events - Array of events with start/end properties
+ * Events with canonical dates (`start_date`/`end_date`, site-local Y-m-d)
+ * are placed by those dates, so a date without times still appears on each
+ * of its days and no browser timezone conversion moves it. Events without
+ * them (e.g. external feeds) fall back to their `start`/`end` timestamps.
+ *
+ * @param {Array} events - Array of events with start_date/end_date or start/end properties
  * @return {Object} Object mapping date strings (YYYY-MM-DD) to arrays of events
  */
 export const groupEventsByDate = ( events ) => {
 	const eventsByDate = {};
 
 	events.forEach( ( event ) => {
-		const startDate = event.start ? new Date( event.start ) : null;
-		const endDate = event.end ? new Date( event.end ) : startDate;
+		let loopDate;
+		let endLoop;
 
-		if ( ! startDate ) return;
+		if ( event.start_date ) {
+			const [ sy, sm, sd ] = event.start_date.split( '-' ).map( Number );
+			const [ ey, em, ed ] = ( event.end_date || event.start_date )
+				.split( '-' )
+				.map( Number );
+			loopDate = new Date( sy, sm - 1, sd );
+			endLoop = new Date( ey, em - 1, ed );
+		} else {
+			const startDate = event.start ? new Date( event.start ) : null;
+			const endDate = event.end ? new Date( event.end ) : startDate;
+
+			if ( ! startDate ) return;
+
+			loopDate = new Date(
+				startDate.getFullYear(),
+				startDate.getMonth(),
+				startDate.getDate()
+			);
+			endLoop = new Date(
+				endDate.getFullYear(),
+				endDate.getMonth(),
+				endDate.getDate()
+			);
+		}
 
 		// Add event to all days it spans
-		let loopDate = new Date(
-			startDate.getFullYear(),
-			startDate.getMonth(),
-			startDate.getDate()
-		);
-		const endLoop = new Date(
-			endDate.getFullYear(),
-			endDate.getMonth(),
-			endDate.getDate()
-		);
-
 		while ( loopDate <= endLoop ) {
 			const dateKey = formatLocalDate( loopDate );
 			if ( ! eventsByDate[ dateKey ] ) {

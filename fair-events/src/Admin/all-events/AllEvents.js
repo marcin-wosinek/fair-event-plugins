@@ -9,6 +9,7 @@ import {
 	timingStartKey,
 	getEventDisplayTitle,
 } from 'fair-events-shared';
+import { formatEventTiming } from '../components/eventTiming.js';
 
 const { manageEventUrl } = window.fairEventsAllEventsData || {};
 
@@ -185,7 +186,7 @@ export default function AllEvents() {
 			{
 				id: 'start_date',
 				label: __( 'Date', 'fair-events' ),
-				render: ( { item } ) => formatTimingStart( item ) || '—',
+				render: ( { item } ) => formatEventTiming( item ) || '—',
 				enableSorting: true,
 				getValue: ( { item } ) => timingStartKey( item ),
 			},
