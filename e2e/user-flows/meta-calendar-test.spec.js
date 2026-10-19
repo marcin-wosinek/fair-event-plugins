@@ -5,7 +5,9 @@
  * The admin picks an event from a searchable list, the page reads this browser's marketing consent
  * and `_fbp` cookie at send time, and the test goes to Meta with the Test
  * Events code and the production calendar payload. Meta's diagnostics stay
- * visible after the notice, also when Meta does not confirm the event.
+ * visible after the notice, also when Meta does not confirm the event. Only
+ * events whose page is public are offered; one that stops being public
+ * after it was picked is reported as not sent and the picker starts over.
  *
  * Consent is stubbed like the other Meta specs: `window.wp_has_consent` plus
  * a synthetic `_fbp` cookie. lib/meta-http-double.php answers the Graph API;
@@ -68,12 +70,16 @@ test.describe('Meta calendar click test', () => {
 		await page.goto(SETTINGS_URL);
 	}
 
-	async function chooseEvent(page, event) {
+	function retitle(event) {
 		// Seeded dates are created after their post, so re-save the post to
 		// sync its title onto the date row the event search matches, as an
 		// editor save does on a real site.
 		const title = `E2E calendar test ${event.eventId}-${Date.now()}`;
 		wpCli(`post update ${event.eventId} --post_title="${title}"`);
+		return title;
+	}
+
+	async function chooseEvent(page, event, title = retitle(event)) {
 		const picker = page.getByRole('combobox', { name: 'Event' });
 		await picker.fill(title);
 		const option = page.getByRole('option', { name: new RegExp(title) });
@@ -168,5 +174,71 @@ test.describe('Meta calendar click test', () => {
 		await expect(latest.getByText('Event was not processed')).toBeVisible();
 		await expect(latest.getByText('Trace ID: ZeroTrace1')).toBeVisible();
 		wpCli('option delete fair_e2e_meta_response');
+	});
+
+	test('offers only events whose page is public', async ({
+		page,
+		baseURL,
+		seedEvent,
+	}) => {
+		const event = seedEvent('meta-engagement');
+		const title = retitle(event);
+		wpCli(`post update ${event.eventId} --post_status=draft`);
+		await openSettingsWithConsent(page, baseURL);
+
+		await page.getByRole('combobox', { name: 'Event' }).fill(title);
+		await expect(
+			page.getByText(
+				`No events with a publicly accessible page match “${title}”.`
+			)
+		).toBeVisible();
+		await expect(
+			page.getByRole('option', { name: new RegExp(title) })
+		).toHaveCount(0);
+	});
+
+	test('reports a test not sent when the event stops being public after it was picked, and recovers', async ({
+		page,
+		baseURL,
+		seedEvent,
+	}) => {
+		const event = seedEvent('meta-engagement');
+		const title = retitle(event);
+		await openSettingsWithConsent(page, baseURL);
+		await chooseEvent(page, event, title);
+
+		wpCli('option delete fair_e2e_meta_last_request', {
+			allowFailure: true,
+		});
+		wpCli(`post update ${event.eventId} --post_status=draft`);
+		const send = page.getByRole('button', {
+			name: 'Send FairEventCalendarClick test',
+		});
+		await send.click();
+
+		const latest = page.getByRole('status').filter({
+			hasText: 'Latest test result',
+		});
+		await expect(latest.getByText('Test not sent')).toBeVisible();
+		await expect(latest.getByText(/nothing was sent to Meta/)).toBeVisible();
+		// Nothing reached the Graph API double.
+		expect(
+			wpCli('option get fair_e2e_meta_last_request', {
+				allowFailure: true,
+			})
+		).not.toContain('FairEventCalendarClick');
+		// The stale selection is gone, so it cannot be sent again.
+		await expect(page.getByRole('combobox', { name: 'Event' })).toHaveValue(
+			''
+		);
+		await expect(send).toBeDisabled();
+		for (const button of standardTests(page)) {
+			await expect(button).toBeEnabled();
+		}
+
+		wpCli(`post update ${event.eventId} --post_status=publish`);
+		await chooseEvent(page, event, title);
+		await send.click();
+		await expect(latest.getByText('Received by Meta')).toBeVisible();
 	});
 });

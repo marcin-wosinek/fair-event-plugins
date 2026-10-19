@@ -138,6 +138,12 @@ function testStatus( entry ) {
 					color: STATE_COLORS.accepted,
 				};
 	}
+	if ( 'not_sent' === entry.outcome ) {
+		return {
+			label: __( 'Test not sent', 'fair-events-experimental' ),
+			color: STATE_COLORS.retry_pending,
+		};
+	}
 	if ( 'unconfirmed' === entry.outcome ) {
 		return {
 			label: __( 'Not confirmed', 'fair-events-experimental' ),
@@ -348,6 +354,8 @@ export default function MetaConversions( { onNotice } ) {
 	const [ sendingEvent, setSendingEvent ] = useState( null );
 	// The latest test result stays visible after the transient notice.
 	const [ lastResult, setLastResult ] = useState( null );
+	// Bumped to reset the calendar picker and reload its events.
+	const [ calendarPicker, setCalendarPicker ] = useState( 0 );
 	const load = () =>
 		apiFetch( { path: PATH } )
 			.then( ( next ) => {
@@ -505,10 +513,16 @@ export default function MetaConversions( { onNotice } ) {
 				typeof error?.message === 'string' && error?.code
 					? error.message
 					: fallback;
+			// The event or date the calendar test was built for is no longer
+			// eligible: nothing reached Meta, and the picker starts over.
+			const notSent = error?.code === 'invalid_event';
+			if ( notSent ) {
+				setCalendarPicker( ( count ) => count + 1 );
+			}
 			setLastResult( {
 				event_name: eventName,
 				accepted: false,
-				outcome: error?.data?.outcome,
+				outcome: notSent ? 'not_sent' : error?.data?.outcome,
 				code: error?.data?.code || error?.code || '',
 				type: error?.data?.category || '',
 				message,
@@ -638,6 +652,7 @@ export default function MetaConversions( { onNotice } ) {
 					</p>
 				) }
 				<MetaCalendarTest
+					key={ calendarPicker }
 					disabledReason={ testingBlocker }
 					sending={ sendingEvent === CALENDAR_EVENT }
 					onSend={ ( data ) => sendTest( CALENDAR_EVENT, data ) }

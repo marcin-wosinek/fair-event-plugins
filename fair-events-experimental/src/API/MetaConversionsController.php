@@ -28,6 +28,12 @@ class MetaConversionsController extends WP_REST_Controller {
 	protected $namespace = 'fair-events-experimental/v1';
 	protected $rest_base = 'meta-conversions';
 
+	/** Most events one calendar-events page returns. */
+	public const CALENDAR_EVENTS_PER_PAGE = 100;
+
+	/** Candidate rows read per query while filling a calendar-events page. */
+	private const CALENDAR_EVENTS_BATCH = 200;
+
 	/** Register routes. */
 	public function register_routes() {
 		register_rest_route(
@@ -52,6 +58,38 @@ class MetaConversionsController extends WP_REST_Controller {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/calendar-events',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_calendar_events' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+				'args'                => array(
+					'search'   => array(
+						'type'              => 'string',
+						'default'           => '',
+						'maxLength'         => 200,
+						'validate_callback' => 'rest_validate_request_arg',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'page'     => array(
+						'type'              => 'integer',
+						'default'           => 1,
+						'minimum'           => 1,
+						'maximum'           => 1000,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'per_page' => array(
+						'type'              => 'integer',
+						'default'           => self::CALENDAR_EVENTS_PER_PAGE,
+						'minimum'           => 1,
+						'maximum'           => self::CALENDAR_EVENTS_PER_PAGE,
+						'validate_callback' => 'rest_validate_request_arg',
 					),
 				),
 			)
@@ -228,6 +266,122 @@ class MetaConversionsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Events the calendar test can be sent for, newest first: each linked
+	 * event with the dates {@see Engagement::event_context()} accepts for its
+	 * page, cancelled dates left out. A series is one group with its dates.
+	 * Eligibility is applied before paging, so ineligible rows never take a
+	 * page's places.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_calendar_events( $request ) {
+		global $wpdb;
+		$post_types = class_exists( \FairEvents\Settings\Settings::class ) ? \FairEvents\Settings\Settings::get_enabled_post_types() : array();
+		if ( empty( $post_types ) ) {
+			return rest_ensure_response( array() );
+		}
+		$per_page = (int) $request->get_param( 'per_page' );
+		$skip     = ( (int) $request->get_param( 'page' ) - 1 ) * $per_page;
+		$search   = (string) $request->get_param( 'search' );
+		$dates    = $wpdb->prefix . 'fair_event_dates';
+
+		// Narrow candidates to rows linked to a published, unprotected post of
+		// an event type; event_context() still decides eligibility.
+		$where  = "d.occurrence_type IN ('single', 'master') AND p.post_status = 'publish' AND p.post_password = ''";
+		$where .= ' AND p.post_type IN (' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ')';
+		$values = $post_types;
+		if ( '' !== $search ) {
+			$where   .= ' AND d.title LIKE %s';
+			$values[] = '%' . $wpdb->esc_like( $search ) . '%';
+		}
+
+		$needed = $skip + $per_page;
+		$groups = array();
+		$offset = 0;
+		do {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where holds only fixed SQL and placeholders, filled by the spread values.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT d.* FROM %i d JOIN %i p ON p.ID = d.event_id WHERE $where ORDER BY d.start_date DESC, d.start_time DESC, d.id DESC LIMIT %d OFFSET %d",
+					$dates,
+					$wpdb->posts,
+					...array_merge( $values, array( self::CALENDAR_EVENTS_BATCH, $offset ) )
+				)
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			$groups  = array_merge( $groups, $this->calendar_groups( $rows ) );
+			$offset += self::CALENDAR_EVENTS_BATCH;
+			$more    = count( $rows ) === self::CALENDAR_EVENTS_BATCH && count( $groups ) < $needed;
+		} while ( $more );
+		return rest_ensure_response( array_slice( $groups, $skip, $per_page ) );
+	}
+
+	/**
+	 * @param array $rows Top-level event date rows linked to a post.
+	 * @return array Groups with at least one eligible, non-cancelled date.
+	 */
+	private function calendar_groups( array $rows ) {
+		global $wpdb;
+		$master_ids = array();
+		foreach ( $rows as $row ) {
+			if ( 'master' === $row->occurrence_type ) {
+				$master_ids[] = (int) $row->id;
+			}
+		}
+		$children = array();
+		if ( $master_ids ) {
+			$placeholders = implode( ', ', array_fill( 0, count( $master_ids ), '%d' ) );
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is a fixed run of %d tokens, one per spread ID.
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE master_id IN ($placeholders) AND occurrence_type = 'generated' ORDER BY start_date ASC, start_time ASC",
+					$wpdb->prefix . 'fair_event_dates',
+					...$master_ids
+				)
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			foreach ( $results as $child ) {
+				$children[ (int) $child->master_id ][] = $child;
+			}
+		}
+
+		$groups = array();
+		foreach ( $rows as $row ) {
+			$occurrences = array_filter(
+				array_merge( array( $row ), $children[ (int) $row->id ] ?? array() ),
+				static function ( $date ) {
+					return 'cancelled' !== $date->status;
+				}
+			);
+			$eligible    = Engagement::eligible_dates( (int) $row->event_id, $occurrences );
+			if ( ! $eligible ) {
+				continue;
+			}
+			$groups[] = array_merge(
+				$this->calendar_date( $row ),
+				array(
+					'event_id'    => (int) $row->event_id,
+					'title'       => (string) $row->title,
+					'occurrences' => array_map( array( $this, 'calendar_date' ), $eligible ),
+				)
+			);
+		}
+		return $groups;
+	}
+
+	/** @param object $row Event date row. @return array The picker's fields of a date. */
+	private function calendar_date( $row ) {
+		$all_day = ! empty( $row->all_day );
+		return array(
+			'id'         => (int) $row->id,
+			'start_date' => $row->start_date ? (string) $row->start_date : null,
+			'start_time' => ! $all_day && $row->start_time ? (string) $row->start_time : null,
+			'all_day'    => $all_day,
+		);
+	}
+
+	/**
 	 * @param \WP_REST_Request $request Request.
 	 * @return array|\WP_Error Engagement input for {@see Conversions::send_test()}.
 	 */
@@ -242,7 +396,12 @@ class MetaConversionsController extends WP_REST_Controller {
 		}
 		$context = Engagement::event_context( (int) $request->get_param( 'post_id' ), (int) $request->get_param( 'event_date_id' ) );
 		if ( ! $context ) {
-			return new \WP_Error( 'invalid_event', __( 'Event not found.', 'fair-events-experimental' ), array( 'status' => 404 ) );
+			// Publication or dates may have changed since the event was picked.
+			return new \WP_Error(
+				'invalid_event',
+				__( 'The selected event page or date can no longer receive calendar clicks, so nothing was sent to Meta. Select an event from the list again.', 'fair-events-experimental' ),
+				array( 'status' => 404 )
+			);
 		}
 		return array(
 			'context' => $context,

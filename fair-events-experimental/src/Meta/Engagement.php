@@ -48,6 +48,52 @@ class Engagement {
 	 *                    `source_url`, or null when they do not match.
 	 */
 	public static function event_context( $post_id, $event_date_id ) {
+		$dates = self::event_dates( $post_id );
+		if ( ! $dates ) {
+			return null;
+		}
+		list( $own, $root ) = $dates;
+		$date               = (int) $own->id === (int) $event_date_id ? $own : \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
+		if ( ! $date || ! self::belongs( $date, $own, $root ) ) {
+			return null;
+		}
+		return array(
+			'post_id'       => (int) $post_id,
+			'event_date_id' => (int) $date->id,
+			'source_url'    => (string) get_permalink( (int) $post_id ),
+		);
+	}
+
+	/**
+	 * The dates {@see event_context()} accepts for a post, checked against
+	 * one lookup of the post's dates instead of one per date.
+	 *
+	 * @param int   $post_id Source post ID.
+	 * @param array $dates   Event date rows or models with `id` and `master_id`.
+	 * @return array The accepted dates, in the order given.
+	 */
+	public static function eligible_dates( $post_id, array $dates ) {
+		$event_dates = self::event_dates( $post_id );
+		if ( ! $event_dates ) {
+			return array();
+		}
+		list( $own, $root ) = $event_dates;
+		return array_values(
+			array_filter(
+				$dates,
+				static function ( $date ) use ( $own, $root ) {
+					return self::belongs( $date, $own, $root );
+				}
+			)
+		);
+	}
+
+	/**
+	 * @param int $post_id Source post ID.
+	 * @return array|null The post's own date and its series root, or null
+	 *                    when the post is not a public event post.
+	 */
+	private static function event_dates( $post_id ) {
 		if ( ! class_exists( \FairEvents\Models\EventDates::class ) || ! self::public_event_post( $post_id ) ) {
 			return null;
 		}
@@ -60,20 +106,13 @@ class Engagement {
 			$master = \FairEvents\Models\EventDates::get_by_id( (int) $own->master_id );
 			$root   = $master ? $master : $own;
 		}
-		$date = (int) $own->id === (int) $event_date_id ? $own : \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
-		if ( ! $date ) {
-			return null;
-		}
-		$belongs = in_array( (int) $date->id, array( (int) $own->id, (int) $root->id ), true )
+		return array( $own, $root );
+	}
+
+	/** @param object $date Event date. @param object $own The post's own date. @param object $root Its series root. @return bool */
+	private static function belongs( $date, $own, $root ) {
+		return in_array( (int) $date->id, array( (int) $own->id, (int) $root->id ), true )
 			|| ( 'master' === $root->occurrence_type && (int) $date->master_id === (int) $root->id );
-		if ( ! $belongs ) {
-			return null;
-		}
-		return array(
-			'post_id'       => (int) $post_id,
-			'event_date_id' => (int) $date->id,
-			'source_url'    => (string) get_permalink( (int) $post_id ),
-		);
 	}
 
 	/** @param int $post_id Post ID. @return bool Whether it is a published, unprotected post of an event-enabled type. */

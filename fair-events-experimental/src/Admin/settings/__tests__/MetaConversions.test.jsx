@@ -559,14 +559,23 @@ describe( 'MetaConversions recent test sends', () => {
 
 describe( 'MetaConversions calendar click test', () => {
 	const FBP = 'fb.1.1712345678901.adminbrowser';
+	// Shaped like the calendar-events endpoint: only eligible events, each
+	// with its eligible, non-cancelled dates.
 	const single = {
 		id: 34,
 		event_id: 12,
 		title: 'Mix and Move',
 		start_date: '2026-11-01',
 		start_time: '18:00:00',
-		occurrence_type: 'single',
-		status: 'active',
+		all_day: false,
+		occurrences: [
+			{
+				id: 34,
+				start_date: '2026-11-01',
+				start_time: '18:00:00',
+				all_day: false,
+			},
+		],
 	};
 	const series = {
 		id: 50,
@@ -574,39 +583,24 @@ describe( 'MetaConversions calendar click test', () => {
 		title: 'Weekly jam',
 		start_date: '2026-11-02',
 		start_time: '19:00:00',
-		occurrence_type: 'master',
-		status: 'active',
-		children: [
+		all_day: false,
+		occurrences: [
 			{
-				id: 51,
-				event_id: 20,
-				start_date: '2026-11-09',
+				id: 50,
+				start_date: '2026-11-02',
 				start_time: '19:00:00',
-				status: 'active',
+				all_day: false,
 			},
 			{
-				id: 52,
-				event_id: 20,
-				start_date: '2026-11-16',
+				id: 51,
+				start_date: '2026-11-09',
 				start_time: '19:00:00',
-				status: 'cancelled',
+				all_day: false,
 			},
 		],
 	};
-	const withoutPage = {
-		id: 99,
-		event_id: null,
-		title: 'Mix without page',
-		status: 'active',
-	};
-	const cancelled = {
-		id: 77,
-		event_id: 30,
-		title: 'Mix cancelled',
-		start_date: '2026-11-03',
-		start_time: '18:00:00',
-		status: 'cancelled',
-	};
+	const CALENDAR_EVENTS =
+		'/fair-events-experimental/v1/meta-conversions/calendar-events';
 	let eventList;
 	let testResponse;
 
@@ -616,7 +610,7 @@ describe( 'MetaConversions calendar click test', () => {
 
 	function routeApi() {
 		apiFetch.mockImplementation( ( { path, method } ) => {
-			if ( path.startsWith( '/fair-events/v1/event-dates/all' ) ) {
+			if ( path.startsWith( CALENDAR_EVENTS ) ) {
 				return eventList( searchOf( path ), path );
 			}
 			if ( method === 'POST' ) {
@@ -675,7 +669,7 @@ describe( 'MetaConversions calendar click test', () => {
 
 	beforeEach( () => {
 		eventList = ( search ) => {
-			const all = [ single, series, withoutPage, cancelled ];
+			const all = [ single, series ];
 			return Promise.resolve(
 				search
 					? all.filter( ( item ) => item.title.includes( search ) )
@@ -703,7 +697,7 @@ describe( 'MetaConversions calendar click test', () => {
 		document.cookie = '_fbp=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 	} );
 
-	it( 'lists the latest events with a page without typing', async () => {
+	it( 'lists the latest eligible events from the Meta endpoint without typing', async () => {
 		grantConsent();
 		render( <MetaConversions onNotice={ () => {} } /> );
 
@@ -714,12 +708,15 @@ describe( 'MetaConversions calendar click test', () => {
 		expect(
 			screen.getByRole( 'option', { name: /^Weekly jam — / } )
 		).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: `${ CALENDAR_EVENTS }?per_page=100`,
+		} );
+		// Eligibility is the server's: nothing else is asked for.
 		expect(
-			screen.queryByRole( 'option', { name: /Mix without page/ } )
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'option', { name: /Mix cancelled/ } )
-		).not.toBeInTheDocument();
+			apiFetch.mock.calls.some( ( [ { path } ] ) =>
+				path.startsWith( '/fair-events/' )
+			)
+		).toBe( false );
 		expect(
 			screen.getByText( 'Select the event the test click belongs to.' )
 		).toBeInTheDocument();
@@ -809,7 +806,20 @@ describe( 'MetaConversions calendar click test', () => {
 		expect( sendButton() ).toBeDisabled();
 	} );
 
-	it( 'says when no event with a page matches the search', async () => {
+	it( 'says when there are no eligible events', async () => {
+		grantConsent();
+		eventList = () => Promise.resolve( [] );
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText(
+				'There are no events with a publicly accessible page yet.'
+			)
+		).toBeInTheDocument();
+		expect( sendButton() ).toBeDisabled();
+	} );
+
+	it( 'says when no eligible event matches the search', async () => {
 		grantConsent();
 		render( <MetaConversions onNotice={ () => {} } /> );
 
@@ -818,14 +828,16 @@ describe( 'MetaConversions calendar click test', () => {
 
 		expect(
 			await screen.findByText(
-				'No events with an event page match “Nothing like it”.'
+				'No events with a publicly accessible page match “Nothing like it”.'
 			)
 		).toBeInTheDocument();
 
 		// Once the picker is left, the message no longer describes it.
 		fireEvent.blur( input );
 		expect(
-			screen.queryByText( /No events with an event page match/ )
+			screen.queryByText(
+				/No events with a publicly accessible page match/
+			)
 		).not.toBeInTheDocument();
 	} );
 
@@ -980,7 +992,7 @@ describe( 'MetaConversions calendar click test', () => {
 		expect( combobox().value ).toMatch( /^Mix and Move — / );
 	} );
 
-	it( 'requires a date for a series and offers only dates that are not cancelled', async () => {
+	it( 'requires a date for a series and offers the dates the server lists', async () => {
 		grantConsent();
 		render( <MetaConversions onNotice={ () => {} } /> );
 		await selectEvent( /^Weekly jam — / );
@@ -990,6 +1002,7 @@ describe( 'MetaConversions calendar click test', () => {
 		).toBeInTheDocument();
 		expect( sendButton() ).toBeDisabled();
 		const dates = screen.getByLabelText( 'Date' );
+		// "Select a date" plus the two listed dates.
 		expect( within( dates ).getAllByRole( 'option' ) ).toHaveLength( 3 );
 
 		fireEvent.change( dates, { target: { value: '51' } } );
@@ -1055,6 +1068,55 @@ describe( 'MetaConversions calendar click test', () => {
 		} );
 		await waitFor( () => expect( sendButton() ).toBeEnabled() );
 		expect( combobox().value ).toMatch( /^Mix and Move — / );
+	} );
+
+	it( 'reports a no longer eligible event as not sent and starts the picker over', async () => {
+		grantConsent();
+		testResponse = () =>
+			Promise.reject( {
+				code: 'invalid_event',
+				message:
+					'The selected event page or date can no longer receive calendar clicks, so nothing was sent to Meta. Select an event from the list again.',
+				data: { status: 404 },
+			} );
+		const onNotice = jest.fn();
+		render( <MetaConversions onNotice={ onNotice } /> );
+		await selectEvent( /^Mix and Move — / );
+		const listed = () =>
+			apiFetch.mock.calls.filter( ( [ { path } ] ) =>
+				path.startsWith( CALENDAR_EVENTS )
+			).length;
+		const before = listed();
+		// Unpublished since it was listed.
+		eventList = () => Promise.resolve( [ series ] );
+		fireEvent.click( sendButton() );
+
+		const latest = await screen.findByRole( 'status' );
+		expect(
+			within( latest ).getByText( 'Test not sent' )
+		).toBeInTheDocument();
+		expect(
+			within( latest ).getByText( /nothing was sent to Meta/ )
+		).toBeInTheDocument();
+		expect( onNotice ).toHaveBeenCalledWith( {
+			status: 'error',
+			message: expect.stringMatching( /nothing was sent to Meta/ ),
+		} );
+		await waitFor( () => expect( listed() ).toBeGreaterThan( before ) );
+		await waitFor( () => expect( combobox().value ).toBe( '' ) );
+		expect(
+			screen.getByText( 'Select the event the test click belongs to.' )
+		).toBeInTheDocument();
+		expect( sendButton() ).toBeDisabled();
+		expectStandardTestsEnabled();
+
+		await openEvents();
+		expect(
+			await screen.findByRole( 'option', { name: /^Weekly jam — / } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'option', { name: /^Mix and Move — / } )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'names the shared reason beside the calendar test while a test is sending', async () => {
