@@ -21,7 +21,6 @@ import {
 	Spinner,
 	Notice,
 	TextControl,
-	CheckboxControl,
 	SelectControl,
 	FormTokenField,
 	TabPanel,
@@ -33,8 +32,6 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import {
-	DurationOptions,
-	calculateDuration,
 	isLinkOnlyEvent,
 	formatDateOnly,
 	formatTimingStart,
@@ -55,7 +52,9 @@ import EventSignups from './EventSignups.js';
 import EventContextHeader from './EventContextHeader.js';
 import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import EventStatistics from '../event-statistics/EventStatistics.js';
-import { getDurationLabelConfig } from '../components/durationLabels.js';
+import EventTimingFields from '../components/EventTimingFields.js';
+import { getTimingError } from '../components/eventTiming.js';
+import EventTimingStatus from './EventTimingStatus.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../components/InlineVenueCreator.js';
@@ -107,6 +106,9 @@ export default function ManageEventApp() {
 
 	const [ togglingExdate, setTogglingExdate ] = useState( null );
 	const [ recurrenceImpact, setRecurrenceImpact ] = useState( null );
+	// 'dates' | 'times' while a series-timing reset runs, else null.
+	const [ inheritingTiming, setInheritingTiming ] = useState( null );
+	const [ inheritTimingError, setInheritTimingError ] = useState( null );
 	const [ deleteDialogOpen, setDeleteDialogOpen ] = useState( false );
 	const [ deletingEvent, setDeletingEvent ] = useState( false );
 	const [ deleteEventError, setDeleteEventError ] = useState( null );
@@ -348,74 +350,55 @@ export default function ManageEventApp() {
 			window.removeEventListener( 'beforeunload', handleBeforeUnload );
 	}, [ detailsDirty, ticketsDirty, anyExtensionDirty ] );
 
-	// Duration options
-	const timedDurationOptions = useMemo(
-		() =>
-			new DurationOptions( {
-				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
-				unit: 'minutes',
-				...getDurationLabelConfig(),
-			} ),
-		[]
-	);
-
-	const allDayDurationOptions = useMemo(
-		() =>
-			new DurationOptions( {
-				values: [ 1, 2, 3, 4, 5, 6, 7 ],
-				unit: 'days',
-				...getDurationLabelConfig(),
-			} ),
-		[]
-	);
-
-	const getCurrentDuration = () => {
-		if ( allDay ) {
-			if ( ! startDate || ! endDate ) return 'other';
-			const start = new Date( startDate );
-			const end = new Date( endDate );
-			const diffDays =
-				Math.ceil( ( end - start ) / ( 1000 * 60 * 60 * 24 ) ) + 1;
-			return allDayDurationOptions.getCurrentSelection( diffDays );
-		}
-		if ( ! startDate || ! startTime || ! endDate || ! endTime )
-			return 'other';
-		const startIso = `${ startDate }T${ startTime }`;
-		const endIso = `${ endDate }T${ endTime }`;
-		const minutes = calculateDuration( startIso, endIso );
-		if ( minutes === null ) return 'other';
-		return timedDurationOptions.getCurrentSelection( minutes );
+	const timingSetters = {
+		allDay: setAllDay,
+		startDate: setStartDate,
+		startTime: setStartTime,
+		endDate: setEndDate,
+		endTime: setEndTime,
 	};
 
-	const durationValue = getCurrentDuration();
+	const handleTimingChange = ( patch ) => {
+		Object.entries( patch ).forEach( ( [ field, next ] ) =>
+			timingSetters[ field ]( next )
+		);
+	};
 
-	const durationOptions = allDay
-		? allDayDurationOptions.getDurationOptions()
-		: timedDurationOptions.getDurationOptions();
+	const timingError = getTimingError( {
+		startDate,
+		endDate,
+		startTime,
+		endTime,
+		allDay,
+	} );
 
-	const handleDurationChange = ( value ) => {
-		if ( value === 'other' || ! startDate ) return;
-		if ( allDay ) {
-			const days = parseInt( value, 10 );
-			const start = new Date( startDate );
-			const end = new Date( start );
-			end.setDate( start.getDate() + days - 1 );
-			const year = end.getFullYear();
-			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
-			const day = String( end.getDate() ).padStart( 2, '0' );
-			setEndDate( `${ year }-${ month }-${ day }` );
-		} else {
-			if ( ! startTime ) return;
-			const minutes = parseInt( value, 10 );
-			const start = new Date( `${ startDate }T${ startTime }` );
-			const end = new Date( start.getTime() + minutes * 60000 );
-			const year = end.getFullYear();
-			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
-			const day = String( end.getDate() ).padStart( 2, '0' );
-			const hours = String( end.getHours() ).padStart( 2, '0' );
-			const mins = String( end.getMinutes() ).padStart( 2, '0' );
-			setEndDate( `${ year }-${ month }-${ day }` );
-			setEndTime( `${ hours }:${ mins }` );
+	// Gives a date of a series back the series' dates or times (#1819):
+	// `group` is 'dates' or 'times'. Only offered without unsaved detail
+	// edits, so reloading the form from the response loses nothing.
+	const handleInheritTiming = async ( group ) => {
+		if ( inheritingTiming ) {
+			return;
+		}
+		setInheritingTiming( group );
+		setInheritTimingError( null );
+		try {
+			const updated = await apiFetch( {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
+				method: 'PUT',
+				data: { inherit_timing: [ group ] },
+			} );
+			setEventDate( updated );
+			populateForm( updated );
+		} catch ( err ) {
+			setInheritTimingError(
+				err.message ||
+					__(
+						'The series timing could not be restored. Please try again.',
+						'fair-events'
+					)
+			);
+		} finally {
+			setInheritingTiming( null );
 		}
 	};
 
@@ -1282,93 +1265,25 @@ export default function ManageEventApp() {
 									required
 								/>
 
-								<CheckboxControl
-									label={ __( 'All day', 'fair-events' ) }
-									checked={ allDay }
-									onChange={ setAllDay }
+								<EventTimingFields
+									value={ {
+										allDay,
+										startDate,
+										startTime,
+										endDate,
+										endTime,
+									} }
+									onChange={ handleTimingChange }
+									error={ timingError }
+									withDuration
 								/>
 
-								{ allDay ? (
-									<HStack spacing={ 4 } alignment="top" wrap>
-										<TextControl
-											label={ __(
-												'Start date',
-												'fair-events'
-											) }
-											type="date"
-											value={ startDate }
-											onChange={ setStartDate }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'End date',
-												'fair-events'
-											) }
-											type="date"
-											value={ endDate }
-											onChange={ setEndDate }
-											required
-										/>
-									</HStack>
-								) : (
-									<HStack spacing={ 4 } alignment="top" wrap>
-										<TextControl
-											label={ __(
-												'Start date',
-												'fair-events'
-											) }
-											type="date"
-											value={ startDate }
-											onChange={ setStartDate }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'Start time',
-												'fair-events'
-											) }
-											type="time"
-											value={ startTime }
-											onChange={ setStartTime }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'End date',
-												'fair-events'
-											) }
-											type="date"
-											value={ endDate }
-											onChange={ setEndDate }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'End time',
-												'fair-events'
-											) }
-											type="time"
-											value={ endTime }
-											onChange={ setEndTime }
-											required
-										/>
-									</HStack>
-								) }
-
-								<SelectControl
-									label={ __(
-										'Event length',
-										'fair-events'
-									) }
-									value={ String( durationValue ) }
-									options={ durationOptions.map(
-										( opt ) => ( {
-											label: opt.label,
-											value: String( opt.value ),
-										} )
-									) }
-									onChange={ handleDurationChange }
+								<EventTimingStatus
+									eventDate={ eventDate }
+									detailsDirty={ detailsDirty }
+									inheriting={ inheritingTiming }
+									error={ inheritTimingError }
+									onInherit={ handleInheritTiming }
 								/>
 							</VStack>
 
@@ -1616,7 +1531,7 @@ export default function ManageEventApp() {
 					variant="primary"
 					onClick={ handleSave }
 					isBusy={ saving }
-					disabled={ saving || ! title.trim() }
+					disabled={ saving || ! title.trim() || !! timingError }
 				>
 					{ __( 'Save event details', 'fair-events' ) }
 				</Button>

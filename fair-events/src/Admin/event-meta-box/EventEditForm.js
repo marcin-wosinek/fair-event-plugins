@@ -1,13 +1,12 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Button,
 	Spinner,
 	Notice,
 	TextControl,
-	CheckboxControl,
 	SelectControl,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
@@ -18,20 +17,15 @@ import { useDispatch } from '@wordpress/data';
 /**
  * Fair Events Shared dependencies
  */
-import {
-	DurationOptions,
-	calculateDuration,
-	parseRRule,
-	buildRRule,
-	RecurrenceControl,
-} from 'fair-events-shared';
+import { parseRRule, buildRRule, RecurrenceControl } from 'fair-events-shared';
 
 /**
  * Internal dependencies
  */
 import { STORE_NAME } from './store.js';
 import RecurrenceImpactSummary from '../manage-event/RecurrenceImpactSummary.js';
-import { getDurationLabelConfig } from '../components/durationLabels.js';
+import EventTimingFields from '../components/EventTimingFields.js';
+import { getTimingError } from '../components/eventTiming.js';
 
 /**
  * EventEditForm component
@@ -129,51 +123,6 @@ export default function EventEditForm( {
 		}
 	};
 
-	// Duration options.
-	const timedDurationOptions = useMemo(
-		() =>
-			new DurationOptions( {
-				values: [ 30, 60, 90, 120, 150, 180, 240, 360, 480 ],
-				unit: 'minutes',
-				...getDurationLabelConfig(),
-			} ),
-		[]
-	);
-
-	const allDayDurationOptions = useMemo(
-		() =>
-			new DurationOptions( {
-				values: [ 1, 2, 3, 4, 5, 6, 7 ],
-				unit: 'days',
-				...getDurationLabelConfig(),
-			} ),
-		[]
-	);
-
-	const getCurrentDuration = () => {
-		if ( allDay ) {
-			if ( ! startDate || ! endDate ) return 'other';
-			const start = new Date( startDate );
-			const end = new Date( endDate );
-			const diffDays =
-				Math.ceil( ( end - start ) / ( 1000 * 60 * 60 * 24 ) ) + 1;
-			return allDayDurationOptions.getCurrentSelection( diffDays );
-		}
-		if ( ! startDate || ! startTime || ! endDate || ! endTime )
-			return 'other';
-		const startIso = `${ startDate }T${ startTime }`;
-		const endIso = `${ endDate }T${ endTime }`;
-		const minutes = calculateDuration( startIso, endIso );
-		if ( minutes === null ) return 'other';
-		return timedDurationOptions.getCurrentSelection( minutes );
-	};
-
-	const durationValue = getCurrentDuration();
-
-	const durationOptions = allDay
-		? allDayDurationOptions.getDurationOptions()
-		: timedDurationOptions.getDurationOptions();
-
 	const markFormChanged = () => {
 		formRevision.current += 1;
 		setError( null );
@@ -185,33 +134,28 @@ export default function EventEditForm( {
 		setter( value );
 	};
 
-	const handleDurationChange = ( value ) => {
-		if ( value === 'other' || ! startDate ) return;
-		if ( allDay ) {
-			const days = parseInt( value, 10 );
-			const start = new Date( startDate );
-			const end = new Date( start );
-			end.setDate( start.getDate() + days - 1 );
-			const year = end.getFullYear();
-			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
-			const day = String( end.getDate() ).padStart( 2, '0' );
-			markFormChanged();
-			setEndDate( `${ year }-${ month }-${ day }` );
-		} else {
-			if ( ! startTime ) return;
-			const minutes = parseInt( value, 10 );
-			const start = new Date( `${ startDate }T${ startTime }` );
-			const end = new Date( start.getTime() + minutes * 60000 );
-			const year = end.getFullYear();
-			const month = String( end.getMonth() + 1 ).padStart( 2, '0' );
-			const day = String( end.getDate() ).padStart( 2, '0' );
-			const hours = String( end.getHours() ).padStart( 2, '0' );
-			const mins = String( end.getMinutes() ).padStart( 2, '0' );
-			markFormChanged();
-			setEndDate( `${ year }-${ month }-${ day }` );
-			setEndTime( `${ hours }:${ mins }` );
-		}
+	const timingSetters = {
+		allDay: setAllDay,
+		startDate: setStartDate,
+		startTime: setStartTime,
+		endDate: setEndDate,
+		endTime: setEndTime,
 	};
+
+	const handleTimingChange = ( patch ) => {
+		markFormChanged();
+		Object.entries( patch ).forEach( ( [ field, next ] ) =>
+			timingSetters[ field ]( next )
+		);
+	};
+
+	const timingError = getTimingError( {
+		startDate,
+		endDate,
+		startTime,
+		endTime,
+		allDay,
+	} );
 
 	// The form's dates with independently optional times: an empty time
 	// field is null (not set), and an all-day event has no times.
@@ -313,53 +257,12 @@ export default function EventEditForm( {
 				/>
 			) }
 
-			<CheckboxControl
-				label={ __( 'All day', 'fair-events' ) }
-				checked={ allDay }
-				onChange={ updateField( setAllDay ) }
+			<EventTimingFields
+				value={ { allDay, startDate, startTime, endDate, endTime } }
+				onChange={ handleTimingChange }
+				error={ timingError }
+				withDuration
 			/>
-
-			<TextControl
-				label={ __( 'Start date', 'fair-events' ) }
-				type="date"
-				value={ startDate }
-				onChange={ updateField( setStartDate ) }
-			/>
-
-			{ ! allDay && (
-				<TextControl
-					label={ __( 'Start time', 'fair-events' ) }
-					type="time"
-					value={ startTime }
-					onChange={ updateField( setStartTime ) }
-				/>
-			) }
-
-			<SelectControl
-				label={ __( 'Event length', 'fair-events' ) }
-				value={ String( durationValue ) }
-				options={ durationOptions.map( ( opt ) => ( {
-					label: opt.label,
-					value: String( opt.value ),
-				} ) ) }
-				onChange={ handleDurationChange }
-			/>
-
-			<TextControl
-				label={ __( 'End date', 'fair-events' ) }
-				type="date"
-				value={ endDate }
-				onChange={ updateField( setEndDate ) }
-			/>
-
-			{ ! allDay && (
-				<TextControl
-					label={ __( 'End time', 'fair-events' ) }
-					type="time"
-					value={ endTime }
-					onChange={ updateField( setEndTime ) }
-				/>
-			) }
 
 			<SelectControl
 				label={ __( 'Venue', 'fair-events' ) }
@@ -415,7 +318,7 @@ export default function EventEditForm( {
 						variant="primary"
 						onClick={ handleSave }
 						isBusy={ saving }
-						disabled={ saving || unlinking }
+						disabled={ saving || unlinking || !! timingError }
 					>
 						{ __( 'Save Event', 'fair-events' ) }
 					</Button>

@@ -25,6 +25,7 @@ import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import { formatSiteLocalDatetime, formatTimingStart } from 'fair-events-shared';
 import ManageEventApp from '../ManageEventApp.js';
+import { formatEventTiming } from '../../components/eventTiming.js';
 import { ADD_NEW_VENUE_VALUE } from '../../components/InlineVenueCreator.js';
 
 jest.mock( '@wordpress/api-fetch' );
@@ -569,7 +570,7 @@ describe( 'context header (#986)', () => {
 		expect(
 			screen.getByText(
 				new RegExp(
-					formatTimingStart( mockEventDate ).replace(
+					formatEventTiming( mockEventDate ).replace(
 						/[.*+?^${}()|[\]\\]/g,
 						'\\$&'
 					)
@@ -2389,5 +2390,133 @@ describe( 'extension tabs: schedule state, unsaved changes and drafts (#1767)', 
 		const stillLeaving = new Event( 'beforeunload', { cancelable: true } );
 		window.dispatchEvent( stillLeaving );
 		expect( stillLeaving.defaultPrevented ).toBe( false );
+	} );
+} );
+
+describe( 'optional times on Event Details (#1851)', () => {
+	beforeEach( () => {
+		window.history.replaceState( {}, '', '?tab=event-details' );
+	} );
+
+	const occurrence = {
+		...mockEventDate,
+		id: 7,
+		occurrence_type: 'generated',
+		master: { id: 1, title: 'Weekly class' },
+		recurrence_anchor: '2026-07-01',
+		start_time: '18:00:00',
+		end_time: null,
+		timing_overrides: { dates: false, times: true },
+	};
+
+	const mockEventDateResponses = ( loaded, afterPut = loaded ) => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve(
+					opts.method === 'PUT' ? afterPut : loaded
+				);
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const putCalls = () =>
+		apiFetch.mock.calls
+			.filter( ( [ options ] ) => options.method === 'PUT' )
+			.map( ( [ options ] ) => options.data );
+
+	it( 'reopens a date-only event with empty times and saves them as unset', async () => {
+		mockEventDateResponses( {
+			...mockEventDate,
+			start_time: null,
+			end_time: null,
+		} );
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByLabelText( 'Start time (optional)' )
+		).toHaveValue( '' );
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'All day' ) ).not.toBeChecked();
+
+		fireEvent.change( screen.getByLabelText( 'Start time (optional)' ), {
+			target: { value: '19:00' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+		await waitFor( () => expect( putCalls() ).toHaveLength( 1 ) );
+		expect( putCalls()[ 0 ] ).toMatchObject( {
+			start_time: '19:00:00',
+			end_time: null,
+			all_day: false,
+		} );
+	} );
+
+	it( 'explains that calendar export needs both times', async () => {
+		mockEventDateResponses( { ...mockEventDate, end_time: null } );
+		render( <ManageEventApp /> );
+
+		// Scoped to the notice: its live-region copy outlives the test.
+		await screen.findByLabelText( 'Start time (optional)' );
+		expect(
+			document.querySelector( '.fair-events-timing-status' )
+		).toHaveTextContent( /both start and end times are required/ );
+	} );
+
+	it( 'does not explain export for a fully timed event', async () => {
+		render( <ManageEventApp /> );
+		await screen.findByLabelText( 'Start time (optional)' );
+		expect(
+			document.querySelector( '.fair-events-timing-status' )
+		).toBeNull();
+	} );
+
+	it( 'shows that an occurrence has its own times and gives them back to the series', async () => {
+		const inherited = {
+			...occurrence,
+			end_time: '20:00:00',
+			timing_overrides: { dates: false, times: false },
+		};
+		mockEventDateResponses( occurrence, inherited );
+		window.fairEventsManageEventData.eventDateId = '7';
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText( /This date has its own times/ )
+		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Use the series times' } )
+		);
+
+		await waitFor( () =>
+			expect( putCalls() ).toEqual( [ { inherit_timing: [ 'times' ] } ] )
+		);
+		expect(
+			await screen.findByText( /The times follow the series/ )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'20:00'
+		);
+	} );
+
+	it( 'asks to save edits before restoring the series times', async () => {
+		mockEventDateResponses( occurrence );
+		window.fairEventsManageEventData.eventDateId = '7';
+		render( <ManageEventApp /> );
+
+		fireEvent.change( await screen.findByLabelText( 'Title' ), {
+			target: { value: 'Edited' },
+		} );
+		expect(
+			screen.getByRole( 'button', { name: 'Use the series times' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			screen.getByText(
+				'Save your changes before restoring the series timing.'
+			)
+		).toBeInTheDocument();
 	} );
 } );

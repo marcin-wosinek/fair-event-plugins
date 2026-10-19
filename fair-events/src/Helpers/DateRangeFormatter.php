@@ -50,8 +50,10 @@ class DateRangeFormatter {
 	 * Format an event date range from its canonical timing (see EventTiming).
 	 *
 	 * Only supplied times are shown: a date without times reads like an
-	 * all-day range, and a start time without an end time precedes the
-	 * dates. Nothing substitutes a missing time.
+	 * all-day range, a start time precedes its start date, and an end time
+	 * without a start time is labelled as the end and follows the start
+	 * date or precedes a later end date. Nothing substitutes a missing time,
+	 * and genuine midnight is shown.
 	 *
 	 * @param array $timing           Canonical timing.
 	 * @param bool  $always_show_year Whether to show the current year too.
@@ -77,10 +79,53 @@ class DateRangeFormatter {
 			return self::format_timed( $start_timestamp, $end_timestamp ? $end_timestamp : null, $always_show_year );
 		}
 
-		$end_timestamp = $end_date !== $timing['start_date'] ? DateHelper::local_to_timestamp( $end_date . ' 00:00:00' ) : null;
-		$dates         = self::format_all_day( $start_timestamp, $end_timestamp ? $end_timestamp : null, $always_show_year );
+		$multi_day     = $end_date !== $timing['start_date'];
+		$end_timestamp = $multi_day ? DateHelper::local_to_timestamp( $end_date . ' ' . ( $end_time ?? '00:00:00' ) ) : null;
+		$current_year  = $always_show_year ? '' : wp_date( 'Y' );
 
-		return null !== $start_time ? wp_date( 'H:i', $start_timestamp ) . ', ' . $dates : $dates;
+		if ( null !== $start_time ) {
+			if ( ! $end_timestamp ) {
+				return wp_date( 'H:i', $start_timestamp ) . ', ' . self::format_all_day( $start_timestamp, null, $always_show_year );
+			}
+			// "19:30 15 October—17 October": the time belongs to the first day.
+			return wp_date( 'H:i', $start_timestamp ) . ' ' . self::date_label( $start_timestamp, $current_year ) . '—' . self::date_label( $end_timestamp, $current_year );
+		}
+
+		if ( null !== $end_time ) {
+			if ( ! $end_timestamp ) {
+				$end_on_day = DateHelper::local_to_timestamp( $timing['start_date'] . ' ' . $end_time );
+				return sprintf(
+					/* translators: 1: end time, 2: date. The event has no start time. */
+					__( 'Ends %1$s, %2$s', 'fair-events' ),
+					wp_date( 'H:i', $end_on_day ? $end_on_day : $start_timestamp ),
+					self::format_all_day( $start_timestamp, null, $always_show_year )
+				);
+			}
+			return sprintf(
+				/* translators: 1: start date, 2: end time, 3: end date. The event has no start time. */
+				__( '%1$s—ends %2$s %3$s', 'fair-events' ),
+				self::date_label( $start_timestamp, $current_year ),
+				wp_date( 'H:i', $end_timestamp ),
+				self::date_label( $end_timestamp, $current_year )
+			);
+		}
+
+		return self::format_all_day( $start_timestamp, $end_timestamp ? $end_timestamp : null, $always_show_year );
+	}
+
+	/**
+	 * Format a single day as "15 October", adding the year when it differs
+	 * from the current one.
+	 *
+	 * @param int    $timestamp    Unix timestamp.
+	 * @param string $current_year Current year, or '' to always add the year.
+	 * @return string Day label.
+	 */
+	private static function date_label( $timestamp, $current_year ) {
+		$label = wp_date( 'j', $timestamp ) . ' ' . wp_date( 'F', $timestamp );
+		$year  = wp_date( 'Y', $timestamp );
+
+		return $year !== $current_year ? $label . ' ' . $year : $label;
 	}
 
 	/**

@@ -43,13 +43,18 @@ const calendarButtonAttributes = ( html ) => {
 	expect( tag ).toBeTruthy();
 
 	const attributes = {};
+	const repeated = [];
 	for ( const [ , name, value ] of tag[ 0 ].matchAll(
 		/([a-z-]+)="([^"]*)"/g
 	) ) {
-		if ( ! ( name in attributes ) ) {
+		if ( name in attributes ) {
+			repeated.push( name );
+		} else {
 			attributes[ name ] = value.replace( /&amp;/g, '&' );
 		}
 	}
+	// Each attribute is injected once (#1851).
+	expect( repeated ).toEqual( [] );
 	return attributes;
 };
 
@@ -337,6 +342,46 @@ test.describe( 'Calendar export eligibility', () => {
 		expect( allDayButton[ 'data-all-day' ] ).toBe( 'true' );
 		expect( allDayButton[ 'data-start' ] ).toBe( '2039-06-03 00:00:00' );
 		expect( allDayButton[ 'data-end' ] ).toBe( '2039-06-04 00:00:00' );
+	} );
+
+	test( 'an unavailable calendar button explains why, without a link (#1851)', async () => {
+		const postResponse = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title: `Unavailable button ${ Date.now() }`,
+				status: 'publish',
+				content: BUTTON_CONTENT.replace(
+					'<a class="wp-block-button__link wp-element-button">',
+					'<a class="wp-block-button__link wp-element-button" href="https://example.com/add">'
+				),
+			},
+		} );
+		expect( postResponse.ok() ).toBeTruthy();
+		const post = await postResponse.json();
+		postIds.push( post.id );
+		const eventDate = await createEventDate( {
+			link_type: 'post',
+			external_url: undefined,
+			start_date: '2039-06-05',
+			end_time: '20:00',
+		} );
+		await updateEventDate( eventDate.id, { event_id: post.id } );
+
+		const response = await api.get( post.link );
+		expect( response.ok() ).toBeTruthy();
+		const html = await response.text();
+		const button = calendarButtonAttributes( html );
+
+		expect( button[ 'data-calendar-available' ] ).toBe( 'false' );
+		expect( button.href ).toBeUndefined();
+		const note = html.match(
+			/<p class="fair-events-calendar-unavailable" id="([^"]+)">([^<]+)<\/p>/
+		);
+		expect( note ).toBeTruthy();
+		expect( button[ 'aria-describedby' ] ).toBe( note[ 1 ] );
+		expect( note[ 2 ] ).toBe(
+			'Both start and end times are required to add this event to a calendar.'
+		);
 	} );
 
 	test( 'the calendar button keeps the rule only when every date is exportable', async () => {

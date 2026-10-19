@@ -92,9 +92,9 @@ class CopyEventPage {
 	/**
 	 * Calculate the copy's timing based on the date option
 	 *
-	 * Keeps the source's calendar-day span and all-day flag. A time the
-	 * source has is required; a time it lacks may be left empty and then
-	 * stays missing, so the copy never gets an invented time.
+	 * Keeps the source's calendar-day span and all-day flag. Either time may
+	 * be left empty, also one the source has, and then stays missing, so the
+	 * copy never gets an invented time.
 	 *
 	 * @param array  $source_timing Source canonical timing (see EventTiming).
 	 * @param string $date_option   Date offset option ('week', 'custom').
@@ -130,8 +130,7 @@ class CopyEventPage {
 				'start_time' => $start_time,
 				'end_time'   => $end_time,
 			) as $key => $value ) {
-				$required = null !== $source_timing[ $key ];
-				if ( ( $required || '' !== $value ) && ! $this->is_valid_time( $value ) ) {
+				if ( '' !== $value && ! $this->is_valid_time( $value ) ) {
 					wp_die( esc_html__( 'Enter valid start and end times.', 'fair-events' ) );
 				}
 				$timing[ $key ] = '' === $value ? null : $value . ':00';
@@ -272,12 +271,15 @@ class CopyEventPage {
 					</tr>
 					<?php if ( ! $event_dates->all_day ) : ?>
 					<tr>
-						<th scope="row"><label for="start_time"><?php esc_html_e( 'Start time', 'fair-events' ); ?></label></th>
-						<td><input type="time" id="start_time" name="start_time" value="<?php echo esc_attr( $start_time ); ?>" <?php echo '' !== $start_time ? 'required' : ''; ?> /></td>
+						<th scope="row"><label for="start_time"><?php esc_html_e( 'Start time (optional)', 'fair-events' ); ?></label></th>
+						<td><input type="time" id="start_time" name="start_time" value="<?php echo esc_attr( $start_time ); ?>" aria-describedby="copy-event-times-help" /></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="end_time"><?php esc_html_e( 'End time', 'fair-events' ); ?></label></th>
-						<td><input type="time" id="end_time" name="end_time" value="<?php echo esc_attr( $end_time ); ?>" <?php echo '' !== $end_time ? 'required' : ''; ?> /></td>
+						<th scope="row"><label for="end_time"><?php esc_html_e( 'End time (optional)', 'fair-events' ); ?></label></th>
+						<td>
+							<input type="time" id="end_time" name="end_time" value="<?php echo esc_attr( $end_time ); ?>" aria-describedby="copy-event-times-help" />
+							<p class="description" id="copy-event-times-help"><?php esc_html_e( 'Leave a time empty until it is known. Visitors see only the times you enter.', 'fair-events' ); ?></p>
+						</td>
 					</tr>
 					<?php endif; ?>
 				</table>

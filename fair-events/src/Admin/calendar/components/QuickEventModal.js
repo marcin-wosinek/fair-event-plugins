@@ -10,7 +10,6 @@ import { useState, useEffect } from '@wordpress/element';
 import {
 	Modal,
 	TextControl,
-	CheckboxControl,
 	SelectControl,
 	RadioControl,
 	FormTokenField,
@@ -29,6 +28,8 @@ import {
 	RecurrenceControl,
 	buildRRule,
 } from 'fair-events-shared';
+import EventTimingFields from '../../components/EventTimingFields.js';
+import { getTimingError } from '../../components/eventTiming.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../../components/InlineVenueCreator.js';
@@ -135,10 +136,9 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				setAllDay( Boolean( metadata.all_day ) );
 				setStartDate( metadata.start_date );
 				setStartTime( ( metadata.start_time || '' ).slice( 0, 5 ) );
-			}
-
-			if ( metadata.end_date ) {
-				setEndDate( metadata.end_date );
+				// The page's own end, or none: the popup's default end must
+				// not stand in for a time the page didn't give.
+				setEndDate( metadata.end_date || metadata.start_date );
 				setEndTime( ( metadata.end_time || '' ).slice( 0, 5 ) );
 			}
 
@@ -172,11 +172,34 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 		}
 	};
 
+	const timingSetters = {
+		allDay: setAllDay,
+		startDate: setStartDate,
+		startTime: setStartTime,
+		endDate: setEndDate,
+		endTime: setEndTime,
+	};
+
+	const handleTimingChange = ( patch ) => {
+		Object.entries( patch ).forEach( ( [ field, next ] ) =>
+			timingSetters[ field ]( next )
+		);
+	};
+
+	const timingError = getTimingError(
+		{ startDate, endDate, startTime, endTime, allDay },
+		{ requireDate: true }
+	);
+
 	const handleSubmit = async ( e ) => {
 		e.preventDefault();
 
 		if ( ! title.trim() ) {
 			setError( __( 'Title is required.', 'fair-events' ) );
+			return;
+		}
+
+		if ( timingError ) {
 			return;
 		}
 
@@ -366,83 +389,18 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								autoFocus
 							/>
 
-							<CheckboxControl
-								label={ __( 'All day', 'fair-events' ) }
-								checked={ allDay }
-								onChange={ setAllDay }
+							<EventTimingFields
+								value={ {
+									allDay,
+									startDate,
+									startTime,
+									endDate,
+									endTime,
+								} }
+								onChange={ handleTimingChange }
+								error={ timingError }
+								datesRequired
 							/>
-
-							{ allDay ? (
-								<HStack spacing={ 4 } alignment="top">
-									<TextControl
-										label={ __(
-											'Start date',
-											'fair-events'
-										) }
-										type="date"
-										value={ startDate }
-										onChange={ setStartDate }
-										required
-									/>
-									<TextControl
-										label={ __(
-											'End date',
-											'fair-events'
-										) }
-										type="date"
-										value={ endDate }
-										onChange={ setEndDate }
-										required
-									/>
-								</HStack>
-							) : (
-								<>
-									<HStack spacing={ 4 } alignment="top">
-										<TextControl
-											label={ __(
-												'Start date',
-												'fair-events'
-											) }
-											type="date"
-											value={ startDate }
-											onChange={ setStartDate }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'Start time',
-												'fair-events'
-											) }
-											type="time"
-											value={ startTime }
-											onChange={ setStartTime }
-											required
-										/>
-									</HStack>
-									<HStack spacing={ 4 } alignment="top">
-										<TextControl
-											label={ __(
-												'End date',
-												'fair-events'
-											) }
-											type="date"
-											value={ endDate }
-											onChange={ setEndDate }
-											required
-										/>
-										<TextControl
-											label={ __(
-												'End time',
-												'fair-events'
-											) }
-											type="time"
-											value={ endTime }
-											onChange={ setEndTime }
-											required
-										/>
-									</HStack>
-								</>
-							) }
 
 							<SelectControl
 								label={ __( 'Venue', 'fair-events' ) }
@@ -618,7 +576,9 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								variant="primary"
 								type="submit"
 								isBusy={ isSaving }
-								disabled={ isSaving || ! title.trim() }
+								disabled={
+									isSaving || ! title.trim() || !! timingError
+								}
 							>
 								{ __( 'Create Event', 'fair-events' ) }
 							</Button>

@@ -103,7 +103,7 @@ class CalendarButtonHooks {
 		// Nothing exportable: no calendar entry may invent the missing time,
 		// so the button gets no event data and does nothing when clicked.
 		if ( ! $export ) {
-			return $this->add_link_attributes( $content, 'data-calendar-button="true" data-calendar-available="false" aria-disabled="true"' );
+			return $this->render_unavailable( $content );
 		}
 
 		$event_dates = $export['row'];
@@ -211,6 +211,39 @@ class CalendarButtonHooks {
 	}
 
 	/**
+	 * Show the button as unavailable, with the reason next to it.
+	 *
+	 * The link loses its destination and points at a visible explanation
+	 * through `aria-describedby`, so the reason is read out and shown
+	 * without hovering.
+	 *
+	 * @param string $content Block HTML content.
+	 * @return string Modified block content.
+	 */
+	private function render_unavailable( $content ) {
+		$note_id = wp_unique_id( 'fair-events-calendar-unavailable-' );
+
+		// Drop the link's destination: nothing to open or download.
+		$content = preg_replace( '/(<a\s[^>]*?)\shref="[^"]*"/', '$1', $content, 1 );
+
+		$content = $this->add_link_attributes(
+			$content,
+			sprintf(
+				'data-calendar-button="true" data-calendar-available="false" aria-disabled="true" aria-describedby="%s"',
+				esc_attr( $note_id )
+			)
+		);
+
+		$note = sprintf(
+			'<p class="fair-events-calendar-unavailable" id="%s">%s</p>',
+			esc_attr( $note_id ),
+			esc_html__( 'Both start and end times are required to add this event to a calendar.', 'fair-events' )
+		);
+
+		return preg_replace( '/<\/a>/', '</a>' . $note, $content, 1 );
+	}
+
+	/**
 	 * Add attributes to the button's link.
 	 *
 	 * @param string $content    Block HTML content.
@@ -218,22 +251,15 @@ class CalendarButtonHooks {
 	 * @return string Modified block content.
 	 */
 	private function add_link_attributes( $content, $attributes ) {
-		// Inject data attributes into the button element.
-		// The button is an <a> tag with class wp-block-button__link.
-		$content = preg_replace(
-			'/<a\s+class="wp-block-button__link/',
-			'<a ' . $attributes . ' class="wp-block-button__link',
-			$content
-		);
-
-		// Also handle case where class might have a prefix.
-		$content = preg_replace(
+		// The button is an <a> tag with the wp-block-button__link class,
+		// possibly after other attributes and classes. Only the first link
+		// is the button's.
+		return preg_replace(
 			'/<a\s+([^>]*?)class="([^"]*?)wp-block-button__link/',
 			'<a $1' . $attributes . ' class="$2wp-block-button__link',
-			$content
+			$content,
+			1
 		);
-
-		return $content;
 	}
 
 	/**

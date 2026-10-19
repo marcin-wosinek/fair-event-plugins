@@ -103,3 +103,16 @@
 .calendar-dropdown-option[data-provider="ics"]:hover {
 	background: linear-gradient(135deg, rgba(102, 102, 102, 0.05), rgba(102, 102, 102, 0.02));
 }
+
+/* Unavailable: the event lacks a start or end time (#1851). The reason is
+   shown below the button, not only on hover. */
+.wp-block-button__link[data-calendar-available="false"] {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.fair-events-calendar-unavailable {
+	margin: 0.5em 0 0;
+	font-size: 0.875em;
+	max-width: 32em;
+}

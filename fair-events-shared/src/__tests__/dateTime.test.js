@@ -11,6 +11,8 @@ import {
 	formatMonthLabel,
 	formatSiteLocalDate,
 	formatSiteLocalDatetime,
+	formatSiteLocalTime,
+	formatTimingParts,
 	formatTimingStart,
 	timingStartKey,
 } from '../dateTime.js';
@@ -155,5 +157,51 @@ describe( 'timingStartKey (#1819)', () => {
 
 	test( 'is empty for an undated timing', () => {
 		expect( timingStartKey( {} ) ).toBe( '' );
+	} );
+} );
+
+describe( 'formatTimingParts (#1851)', () => {
+	test( 'returns only the supplied times and a later end date', () => {
+		expect(
+			formatTimingParts( {
+				start_date: '2026-10-18',
+				end_date: '2026-10-18',
+				start_time: null,
+				end_time: '12:00:00',
+				all_day: false,
+			} )
+		).toEqual( {
+			startDate: formatSiteLocalDate( '2026-10-18' ),
+			endDate: null,
+			startTime: null,
+			endTime: formatSiteLocalTime( '2026-10-18 12:00:00' ),
+		} );
+		expect(
+			formatTimingParts( {
+				start_date: '2026-10-18',
+				end_date: '2026-10-20',
+				start_time: '00:00:00',
+				end_time: null,
+				all_day: false,
+			} )
+		).toEqual( {
+			startDate: formatSiteLocalDate( '2026-10-18' ),
+			endDate: formatSiteLocalDate( '2026-10-20' ),
+			startTime: formatSiteLocalTime( '2026-10-18 00:00:00' ),
+			endTime: null,
+		} );
+	} );
+
+	test( 'drops times of an all-day date and is null when undated', () => {
+		expect(
+			formatTimingParts( {
+				start_date: '2026-10-18',
+				end_date: '2026-10-18',
+				start_time: '10:00:00',
+				end_time: '12:00:00',
+				all_day: true,
+			} )
+		).toMatchObject( { startTime: null, endTime: null } );
+		expect( formatTimingParts( { start_date: null } ) ).toBeNull();
 	} );
 } );

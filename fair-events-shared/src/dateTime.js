@@ -158,6 +158,38 @@ export function formatTimingStart( timing ) {
 }
 
 /**
+ * The formatted pieces of an event date's canonical timing, for composing a
+ * translated summary in the consuming plugin. Only supplied times are
+ * returned (an all-day date has none), `endDate` only when the date spans
+ * several days, and genuine midnight is kept. No string is composed here,
+ * so each plugin words the summary under its own text domain.
+ *
+ * @param {Object|null|undefined} timing Object with `start_date`, `end_date`, `start_time`, `end_time` and `all_day`.
+ * @return {{startDate: string, endDate: string|null, startTime: string|null, endTime: string|null}|null}
+ *         Formatted parts, or null for an undated timing.
+ */
+export function formatTimingParts( timing ) {
+	if ( ! timing?.start_date ) {
+		return null;
+	}
+	const endDate =
+		timing.end_date && timing.end_date !== timing.start_date
+			? timing.end_date
+			: null;
+	const time = ( value, date ) =>
+		! timing.all_day && value
+			? formatSiteLocalTime( `${ date } ${ value }` )
+			: null;
+
+	return {
+		startDate: formatSiteLocalDate( timing.start_date ),
+		endDate: endDate ? formatSiteLocalDate( endDate ) : null,
+		startTime: time( timing.start_time, timing.start_date ),
+		endTime: time( timing.end_time, endDate || timing.start_date ),
+	};
+}
+
+/**
  * Sortable key for the start of an event date's canonical timing: a date
  * without a start time sorts first on its day. Not a time to display.
  *

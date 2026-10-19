@@ -140,12 +140,17 @@ if ( ! function_exists( 'fair_events_format_recurrence_description' ) ) {
  *
  * @param string|null $start_time Start time (H:i:s), or null.
  * @param string|null $end_time   End time (H:i:s), or null.
- * @return string Formatted time range (e.g. "19:30—21:30"), empty without a start time.
+ * @return string Formatted time range (e.g. "19:30—21:30", or "ends 21:30"
+ *                without a start time), empty without any time.
  */
 if ( ! function_exists( 'fair_events_format_time_range' ) ) {
 	function fair_events_format_time_range( $start_time, $end_time ) {
 		if ( null === $start_time ) {
-			return '';
+			return null === $end_time ? '' : sprintf(
+				/* translators: %s: end time of an event without a start time, e.g. "21:30" */
+				__( 'ends %s', 'fair-events' ),
+				substr( $end_time, 0, 5 )
+			);
 		}
 
 		$range = substr( $start_time, 0, 5 );

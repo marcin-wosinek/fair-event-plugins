@@ -14,7 +14,8 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { formatDateOnly, timingStartKey } from 'fair-events-shared';
+import { timingStartKey } from 'fair-events-shared';
+import { formatEventTiming } from '../components/eventTiming.js';
 
 /**
  * @param {Object}   props
@@ -46,10 +47,12 @@ export default function EditInstancesModal( {
 					<p>{ __( 'No occurrences yet.', 'fair-events' ) }</p>
 				) }
 				{ occurrences.map( ( occ ) => {
-					const shownDate = occ.start_date;
 					// Cancel/restore address the scheduled (anchor) date, which
 					// differs from the shown date once the occurrence is moved.
-					const date = occ.recurrence_anchor || shownDate;
+					const date = occ.recurrence_anchor || occ.start_date;
+					const ownTiming =
+						occ.timing_overrides?.dates ||
+						occ.timing_overrides?.times;
 					const isCancelled = occ.status === 'cancelled';
 					const isToggling = togglingExdate === date;
 
@@ -62,7 +65,9 @@ export default function EditInstancesModal( {
 										: 'none',
 								} }
 							>
-								{ formatDateOnly( shownDate, 'long' ) }
+								{ formatEventTiming( occ ) }
+								{ ownTiming &&
+									` (${ __( 'own timing', 'fair-events' ) })` }
 								{ isCancelled &&
 									` (${ __( 'Cancelled', 'fair-events' ) })` }
 							</span>
