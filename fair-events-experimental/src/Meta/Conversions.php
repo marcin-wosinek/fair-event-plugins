@@ -11,7 +11,7 @@ defined( 'WPINC' ) || die;
 
 // phpcs:disable Generic.Commenting.DocComment.MissingShort,Squiz.Commenting.FunctionComment.ParamCommentFullStop,Squiz.Commenting.FunctionComment.MissingParamTag
 
-/** Coordinates conversion capture, payloads and asynchronous delivery. */
+/** Coordinates conversion capture, payloads and delivery. */
 class Conversions {
 	public const GRAPH_API_VERSION = 'v26.0';
 	public const DATASET_OPTION    = 'fair_events_experimental_meta_dataset_id';
@@ -23,6 +23,8 @@ class Conversions {
 	public const MESSAGE_LENGTH    = 300;
 	public const DELIVERY_HOOK     = 'fair_events_experimental_meta_deliver';
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
+	public const QUEUED_TIMEOUT    = 10;
+	public const IMMEDIATE_TIMEOUT = 3;
 
 	/** Custom engagement events by button action; distinct from checkout and purchase. */
 	public const ENGAGEMENT_EVENTS = array(
@@ -81,12 +83,27 @@ class Conversions {
 		return self::queue( self::build_event( $transaction, $event_name, ( new PurchaseContext() )->for_transaction( $transaction ) ) );
 	}
 
-	/** @param array $event Event from {@see build_engagement_event()}. @return bool Whether a new event was queued. */
-	public function enqueue_engagement( $event ) {
-		if ( ! self::configured() ) {
+	/**
+	 * Send a button-click engagement event to Meta now, in the request that
+	 * captured it, instead of queuing it. The event is reserved in the outbox
+	 * first, so a duplicate request — or a replay of an activation queued
+	 * before immediate delivery — sends nothing. It is one bounded attempt
+	 * with no retry: a failure loses the measurement, which keeps
+	 * best-effort click tracking independent of background scheduling.
+	 * Like queued delivery, it is a production event without
+	 * `test_event_code`.
+	 *
+	 * @param array $event Event from {@see build_engagement_event()}.
+	 * @return bool Whether Meta confirmed receiving the event.
+	 */
+	public function deliver_engagement( $event ) {
+		$outbox = new Outbox();
+		if ( ! self::configured() || ! $outbox->reserve_immediate( $event ) ) {
 			return false;
 		}
-		return self::queue( $event );
+		$result = $this->send_payload( self::payload_for( (object) $event ), '', self::IMMEDIATE_TIMEOUT );
+		$outbox->finish_immediate( $event['event_id'], $result );
+		return $result['accepted'];
 	}
 
 	/** @param array $event Outbox event. @return bool */
@@ -250,10 +267,11 @@ class Conversions {
 	}
 
 	/**
-	 * Deliver queued rows without affecting payment state. Every event — test
-	 * mode and live mode alike — is sent once as a production Meta event, with
-	 * no `test_event_code` attached; `payment_mode` in `custom_data` remains
-	 * the only way to tell the two apart. The configured Test Events code is
+	 * Deliver queued rows — checkout, purchase, and engagement clicks queued
+	 * before immediate delivery — without affecting payment state. Every
+	 * event — test mode and live mode alike — is sent once as a production
+	 * Meta event, with no `test_event_code` attached; `payment_mode` in
+	 * `custom_data` remains the only way to tell the two apart. The configured Test Events code is
 	 * reserved for the explicit administrator-triggered tests in
 	 * {@see send_test()} and never gates or accompanies routine delivery.
 	 *
@@ -269,11 +287,11 @@ class Conversions {
 		while ( $row ) {
 			$result = $this->send_payload( self::payload_for( $row ) );
 			if ( $result['accepted'] ) {
-				$outbox->finish( (int) $row->id, 'received' );
+				$outbox->finish( (int) $row->id, 'received', '', '', $result['diagnostics'] );
 			} elseif ( $result['temporary'] ) {
-				$outbox->retry( $row, $result['code'], $result['type'], 'unconfirmed' === $result['outcome'] ? 'unconfirmed' : 'temporary_error' );
+				$outbox->retry( $row, $result['code'], $result['type'], 'unconfirmed' === $result['outcome'] ? 'unconfirmed' : 'temporary_error', $result['diagnostics'] );
 			} else {
-				$outbox->finish( (int) $row->id, 'configuration_error', $result['code'], $result['type'] );
+				$outbox->finish( (int) $row->id, 'configuration_error', $result['code'], $result['type'], $result['diagnostics'] );
 			}
 			$row = $outbox->claim_due();
 		}
@@ -289,9 +307,9 @@ class Conversions {
 	 * `transport`. `diagnostics` holds only the allowlisted, sanitized fields
 	 * from {@see diagnostics_from()}.
 	 *
-	 * @param array $event Event. @param string $test_code Optional explicit test code. @return array
+	 * @param array $event Event. @param string $test_code Optional explicit test code. @param int $timeout Request timeout in seconds. @return array
 	 */
-	public function send_payload( $event, $test_code = '' ) {
+	public function send_payload( $event, $test_code = '', $timeout = self::QUEUED_TIMEOUT ) {
 		$dataset = (string) get_option( self::DATASET_OPTION, '' );
 		$token   = Connector::token();
 		if ( '' === $dataset || '' === $token ) {
@@ -307,7 +325,7 @@ class Conversions {
 		$response = wp_remote_post(
 			'https://graph.facebook.com/' . self::GRAPH_API_VERSION . '/' . rawurlencode( $dataset ) . '/events',
 			array(
-				'timeout' => 10,
+				'timeout' => $timeout,
 				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode( $body ),
 			)

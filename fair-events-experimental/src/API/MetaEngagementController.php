@@ -17,7 +17,7 @@ defined( 'WPINC' ) || die;
 
 // phpcs:disable Generic.Commenting.DocComment.MissingShort,Squiz.Commenting.FunctionComment.ParamCommentFullStop,Squiz.Commenting.VariableComment.Missing
 
-/** Queues consented calendar and ticket button clicks for Meta delivery. */
+/** Sends consented calendar and ticket button clicks to Meta. */
 class MetaEngagementController extends WP_REST_Controller {
 	protected $namespace = 'fair-events-experimental/v1';
 	protected $rest_base = 'meta-engagement';
@@ -89,9 +89,11 @@ class MetaEngagementController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Queue one engagement event. Answers 202 when queued and 200 with
-	 * `queued: false` for a replayed activation or missing Meta credentials,
-	 * so capture stays best effort for the page.
+	 * Send one engagement event to Meta immediately. Answers 200 with only
+	 * `received`: whether Meta confirmed it. A replayed activation, missing
+	 * Meta credentials, or a failed send are all `received: false`, so
+	 * capture stays best effort for the page; the detailed outcome is in the
+	 * administrator diagnostics.
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|WP_Error
@@ -113,9 +115,7 @@ class MetaEngagementController extends WP_REST_Controller {
 			return new WP_Error( 'invalid_event', __( 'Event not found.', 'fair-events-experimental' ), array( 'status' => 404 ) );
 		}
 		$event    = Conversions::build_engagement_event( (string) $request->get_param( 'action' ), (string) $request->get_param( 'activation_id' ), $context, $fbp, $fbc );
-		$queued   = $event ? ( new Conversions() )->enqueue_engagement( $event ) : false;
-		$response = rest_ensure_response( array( 'queued' => $queued ) );
-		$response->set_status( $queued ? 202 : 200 );
-		return $response;
+		$received = $event ? ( new Conversions() )->deliver_engagement( $event ) : false;
+		return rest_ensure_response( array( 'received' => $received ) );
 	}
 }

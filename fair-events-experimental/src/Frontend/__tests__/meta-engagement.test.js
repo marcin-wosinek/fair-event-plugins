@@ -64,7 +64,7 @@ const sent = () => apiFetch.mock.calls.map( ( [ options ] ) => options );
 describe( 'Meta engagement capture', () => {
 	beforeEach( () => {
 		apiFetch.mockReset();
-		apiFetch.mockResolvedValue( { queued: true } );
+		apiFetch.mockResolvedValue( { received: true } );
 		renderButtons();
 	} );
 

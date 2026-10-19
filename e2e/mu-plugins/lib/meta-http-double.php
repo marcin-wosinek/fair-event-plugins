@@ -2,8 +2,8 @@
 /**
  * Fake Meta Conversions API transport for E2E tests.
  *
- * Fair-events-experimental's outbox delivers queued conversions with
- * wp_remote_post() straight to graph.facebook.com. WordPress routes every
+ * Fair-events-experimental delivers queued conversions, and sends button
+ * clicks immediately, with wp_remote_post() straight to graph.facebook.com. WordPress routes every
  * outbound HTTP request through the `pre_http_request` filter before it ever
  * reaches a transport, so short-circuiting requests aimed at that host here
  * is enough to keep the real request building, response parsing, and outbox
@@ -18,6 +18,8 @@
  * delivery succeeds — unless a spec stores `{status, body}` in the
  * `fair_e2e_meta_response` option to simulate another answer, such as zero
  * received events or a rejection; it should delete the option afterwards.
+ * `{transport: true}` fails the request like a network error, and `delay`
+ * (seconds, up to 5) answers slowly.
  *
  * @package FairEventsE2E
  */
@@ -40,8 +42,14 @@ add_filter(
 		update_option( 'fair_e2e_meta_requests', $log, false );
 
 		$override = get_option( 'fair_e2e_meta_response', null );
-		$status   = is_array( $override ) && isset( $override['status'] ) ? (int) $override['status'] : 200;
-		$answer   = is_array( $override ) && array_key_exists( 'body', $override )
+		if ( is_array( $override ) && ! empty( $override['delay'] ) ) {
+			sleep( min( 5, (int) $override['delay'] ) );
+		}
+		if ( is_array( $override ) && ! empty( $override['transport'] ) ) {
+			return new WP_Error( 'http_request_failed', 'E2E simulated network failure' );
+		}
+		$status = is_array( $override ) && isset( $override['status'] ) ? (int) $override['status'] : 200;
+		$answer = is_array( $override ) && array_key_exists( 'body', $override )
 			? $override['body']
 			: array(
 				'events_received' => 1,

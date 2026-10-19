@@ -1,18 +1,20 @@
 /**
- * E2E: Meta engagement events for event-page buttons (#1838).
+ * E2E: Meta engagement events for event-page buttons (#1838, #1970).
  *
  * A consented visitor who activates the calendar button or a designated
  * ticket button (class `fair-events-ticket-button`, on the link or its
- * wrapper) queues one `FairEventCalendarClick` / `FairEventTicketClick`
+ * wrapper) sends one `FairEventCalendarClick` / `FairEventTicketClick`
  * event carrying the event post and date — never the button's destination.
- * Capture must not change what the button does: the calendar dropdown still
- * opens, a same-page ticket link still jumps, and a link to another purchase
- * page still navigates, also when capture fails.
+ * WordPress sends it to Meta immediately, in the capture request, without
+ * WP-Cron. Capture must not change what the button does: the calendar
+ * dropdown still opens, a same-page ticket link still jumps, and a link to
+ * another purchase page still navigates, also when capture or Meta is slow
+ * or fails.
  *
  * Consent is stubbed the same way as meta-conversions-purchase.spec.js:
  * `window.wp_has_consent` plus a synthetic `_fbp` cookie. lib/meta-http-double.php
- * answers every Graph API request; delivery runs on WP-Cron, flushed with
- * `wp cron event run --due-now`.
+ * answers every Graph API request; the `fair_e2e_meta_response` option makes
+ * it slow or failing. Cron is never run.
  *
  * Run: `npm run test:e2e:local -- e2e/user-flows/meta-engagement-buttons.spec.js`.
  */
@@ -52,13 +54,12 @@ async function grantMarketingConsent(page, pageUrl) {
 }
 
 /**
- * Deliver queued events and read the post's outbox rows and Graph requests.
+ * Read the post's outbox rows and the Graph requests sent for it.
  *
  * @param {number} postId Event post ID.
  * @return {{rows: Array, requests: Array}} State.
  */
 function deliveredState(postId) {
-	wpCli('cron event run --due-now');
 	const state = runScript(
 		'meta-engagement-state.php',
 		'E2E_META_ENGAGEMENT',
@@ -119,9 +120,18 @@ test.describe('Meta engagement button events', () => {
 
 	test.beforeEach(() => {
 		wpCli('option delete fair_e2e_meta_requests', { allowFailure: true });
+		wpCli('option delete fair_e2e_meta_response', { allowFailure: true });
+		// Delivery must not depend on scheduling: drop any queued worker run.
+		wpCli('cron event delete fair_events_experimental_meta_deliver', {
+			allowFailure: true,
+		});
 	});
 
-	test('the calendar button queues one calendar event and still opens the dropdown', async ({
+	test.afterEach(() => {
+		wpCli('option delete fair_e2e_meta_response', { allowFailure: true });
+	});
+
+	test('the calendar button sends one calendar event and still opens the dropdown', async ({
 		page,
 		seedEvent,
 	}) => {
@@ -134,7 +144,9 @@ test.describe('Meta engagement button events', () => {
 
 		const response = page.waitForResponse(CAPTURE);
 		await page.getByText('Add to calendar').click();
-		expect((await response).status()).toBe(202);
+		const answer = await response;
+		expect(answer.status()).toBe(200);
+		expect(await answer.json()).toEqual({ received: true });
 		await expect(page.locator('.calendar-dropdown')).toBeVisible();
 
 		// A provider choice inside the dropdown is not counted again.
@@ -154,11 +166,20 @@ test.describe('Meta engagement button events', () => {
 		expect(state.rows).toEqual([
 			{
 				event_name: 'FairEventCalendarClick',
-				state: 'received',
+				state: 'immediate_received',
 				event_date_id: String(event.eventDateId),
 				transaction_id: null,
+				fbp: '',
+				fbc: '',
+				meta_diagnostics: {
+					http_status: 200,
+					events_received: 1,
+					messages: [],
+					fbtrace_id: 'E2Efbtrace00000',
+				},
 			},
 		]);
+		expect(state.requests[0]).not.toHaveProperty('test_event_code');
 		expect(state.requests).toHaveLength(1);
 		expect(state.requests[0].custom_data).toEqual({
 			post_id: event.eventId,
@@ -168,7 +189,7 @@ test.describe('Meta engagement button events', () => {
 		expect(state.requests[0].event_source_url).toBe(event.pageUrl);
 	});
 
-	test('a keyboard-activated same-page ticket jump queues one ticket event and still jumps', async ({
+	test('a keyboard-activated same-page ticket jump sends one ticket event and still jumps', async ({
 		page,
 		seedEvent,
 	}) => {
@@ -180,7 +201,7 @@ test.describe('Meta engagement button events', () => {
 		const response = page.waitForResponse(CAPTURE);
 		await page.getByRole('link', { name: 'Get tickets' }).focus();
 		await page.keyboard.press('Enter');
-		expect((await response).status()).toBe(202);
+		expect((await response).status()).toBe(200);
 		await expect(page).toHaveURL(/#tickets$/);
 		await expect(page.locator('#tickets')).toBeInViewport();
 		expect(captures).toHaveLength(1);
@@ -243,6 +264,79 @@ test.describe('Meta engagement button events', () => {
 		await expect(page).toHaveURL(/e2e-purchase-page=1/);
 
 		expect(deliveredState(event.eventId).rows).toEqual([]);
+	});
+
+	test('slow Meta delivery never holds up the buttons', async ({
+		page,
+		seedEvent,
+	}) => {
+		const event = seedEvent('meta-engagement', {
+			purchaseUrl: PURCHASE_PATH,
+		});
+		wpCli(
+			`option update fair_e2e_meta_response '${JSON.stringify({ delay: 3 })}' --format=json`
+		);
+		await grantMarketingConsent(page, event.pageUrl);
+		await page.goto(event.pageUrl);
+
+		// Each button reacts well before Meta's three-second answer.
+		await page.getByText('Add to calendar').click();
+		await expect(page.locator('.calendar-dropdown')).toBeVisible({
+			timeout: 1500,
+		});
+		await closeCalendarDropdown(page);
+
+		await page.getByRole('link', { name: 'Get tickets' }).click();
+		await expect(page).toHaveURL(/#tickets$/, { timeout: 1500 });
+
+		await page
+			.getByRole('link', { name: 'Buy on the purchase page' })
+			.click();
+		await expect(page).toHaveURL(/e2e-purchase-page=1/, {
+			timeout: 1500,
+		});
+
+		// Each send is reserved at once and finishes when Meta answers.
+		await expect
+			.poll(
+				() =>
+					deliveredState(event.eventId).rows.map((row) => row.state),
+				{ timeout: 20000 }
+			)
+			.toEqual([
+				'immediate_received',
+				'immediate_received',
+				'immediate_received',
+			]);
+	});
+
+	test('a failed Meta delivery is recorded once and leaves the buttons working', async ({
+		page,
+		seedEvent,
+	}) => {
+		const event = seedEvent('meta-engagement');
+		wpCli(
+			`option update fair_e2e_meta_response '${JSON.stringify({ transport: true })}' --format=json`
+		);
+		await grantMarketingConsent(page, event.pageUrl);
+		await page.goto(event.pageUrl);
+
+		const response = page.waitForResponse(CAPTURE);
+		await page.getByText('Add to calendar').click();
+		const answer = await response;
+		expect(answer.status()).toBe(200);
+		expect(await answer.json()).toEqual({ received: false });
+		await expect(page.locator('.calendar-dropdown')).toBeVisible();
+
+		const state = deliveredState(event.eventId);
+		expect(state.rows.map((row) => row.state)).toEqual([
+			'immediate_transport',
+		]);
+		expect(state.requests).toHaveLength(1);
+
+		// The worker never retries an immediate send.
+		wpCli('cron event run --due-now');
+		expect(deliveredState(event.eventId).requests).toHaveLength(1);
 	});
 
 	test('without marketing consent nothing is sent', async ({
