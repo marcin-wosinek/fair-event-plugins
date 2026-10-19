@@ -10,6 +10,7 @@ namespace FairEventsExperimental\Tests\Meta;
 use FairEventsExperimental\Meta\Conversions;
 use FairEventsExperimental\Meta\Outbox;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 // phpcs:disable Generic.Commenting.DocComment.MissingShort,Squiz.Commenting.FunctionComment.ParamCommentFullStop,Squiz.Commenting.FunctionComment.MissingParamTag
 
@@ -205,10 +206,10 @@ class ImmediateEngagementTest extends TestCase {
 	/**
 	 * A failed send is stored once with its outcome and never retried.
 	 *
-	 * @dataProvider failures
 	 * @param mixed  $response Meta answer.
 	 * @param string $state    Expected stored state.
 	 */
+	#[DataProvider( 'failures' )]
 	public function test_failure_is_stored_without_retry( $response, $state ) {
 		$GLOBALS['_fair_test_remote_post_response'] = $response;
 		$this->assertFalse( ( new Conversions() )->deliver_engagement( $this->event() ) );
