@@ -13,6 +13,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+import { matchOutcome } from './AllocationProposal.js';
 
 /**
  * Internal dependencies
@@ -113,15 +114,18 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		setIsConfirming( true );
 		setError( null );
 		try {
-			await apiFetch( {
+			const matched = await apiFetch( {
 				path: `/fair-finance/v1/financial-entries/${ selectedEntryId }/match`,
 				method: 'POST',
 				data: { transaction_ids: report.resolved_transaction_ids },
 			} );
 			setSuccess(
-				__(
-					'Settlement matched successfully.',
-					'fair-payments-connector'
+				matchOutcome(
+					matched?.allocation,
+					__(
+						'Settlement matched successfully.',
+						'fair-payments-connector'
+					)
 				)
 			);
 			setTimeout( () => {

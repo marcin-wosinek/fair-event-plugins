@@ -169,10 +169,6 @@ class SettlementController extends WP_REST_Controller {
 					'type'    => 'boolean',
 					'default' => false,
 				);
-				$args['allocate']       = array(
-					'type'    => 'boolean',
-					'default' => false,
-				);
 				$args['budget_id']      = array(
 					'type'    => array( 'integer', 'null' ),
 					'minimum' => 1,
@@ -238,7 +234,7 @@ class SettlementController extends WP_REST_Controller {
 	 */
 	private function saved_proposal( $request ) {
 		$proposal = array();
-		foreach ( array( 'entry_id', 'account_id', 'currency', 'fingerprint', 'state', 'adopt_existing', 'allocate', 'budget_id' ) as $key ) {
+		foreach ( array( 'entry_id', 'account_id', 'currency', 'fingerprint', 'state', 'adopt_existing', 'budget_id' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$proposal[ $key ] = $request->get_param( $key );
 			}

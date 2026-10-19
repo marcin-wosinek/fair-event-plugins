@@ -15,6 +15,7 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
+import AllocationProposal from './AllocationProposal.js';
 
 export const stateLabel = ( state ) =>
 	( {
@@ -197,7 +198,6 @@ export default function SavedSettlementReview( {
 	const [ success, setSuccess ] = useState( null );
 	const [ reviewed, setReviewed ] = useState( false );
 	const [ adopt, setAdopt ] = useState( false );
-	const [ allocate, setAllocate ] = useState( false );
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ budgetId, setBudgetId ] = useState( 'auto' );
 	const [ confirming, setConfirming ] = useState( null );
@@ -282,7 +282,6 @@ export default function SavedSettlementReview( {
 		setReviewed( false );
 		setSuccess( null );
 		setAdopt( false );
-		setAllocate( false );
 	};
 	const preview = async () => {
 		if ( busy.current ) return;
@@ -311,7 +310,6 @@ export default function SavedSettlementReview( {
 				} );
 			setReviewed( true );
 			setAdopt( false );
-			setAllocate( false );
 		} catch ( err ) {
 			setError(
 				err.message ||
@@ -337,9 +335,8 @@ export default function SavedSettlementReview( {
 					fingerprint: data.fingerprint,
 					state: confirming,
 					adopt_existing: adopt,
-					allocate: confirming === 'full' && allocate,
 					...( confirming === 'full' &&
-					allocate &&
+					data.allocation.status === 'proposed' &&
 					budgetId !== 'auto'
 						? { budget_id: budgetId ? Number( budgetId ) : null }
 						: {} ),
@@ -347,7 +344,6 @@ export default function SavedSettlementReview( {
 			} );
 			setData( result );
 			setConfirming( null );
-			setAllocate( false );
 			setAdopt( false );
 			setSuccess(
 				__( 'The reconciliation decision was saved.', 'fair-finance' )
@@ -382,6 +378,9 @@ export default function SavedSettlementReview( {
 		data.settlement.provider_id ||
 		settlementId;
 	const allIssues = [ ...data.bank_issues, ...data.issues ];
+	const splitProposed = data.allocation.status === 'proposed';
+	// A full decision saved before supported splits were automatic.
+	const repairable = splitProposed && data.decision?.state === 'full';
 	const filteredCandidates = candidates.filter( ( entry ) =>
 		matchesDescription( entry, descriptionFilter )
 	);
@@ -809,7 +808,44 @@ export default function SavedSettlementReview( {
 			<h3>
 				{ __( 'Allocations and existing matches', 'fair-finance' ) }
 			</h3>
-			<p>{ data.allocation.reason }</p>
+			<AllocationProposal
+				allocation={ data.allocation }
+				budgets={ budgets }
+				currency={ data.settlement.currency }
+				reviewedBudget={ budgetId === 'auto' ? undefined : budgetId }
+			/>
+			{ data.allocation.status === 'unsupported' && data.can_full && (
+				<p>
+					{ __(
+						'The reconciliation evidence is complete, so the bank association can be confirmed. The allocation still needs review: no split is created.',
+						'fair-finance'
+					) }
+				</p>
+			) }
+			{ splitProposed && (
+				<SelectControl
+					label={ __( 'Budget for new allocations', 'fair-finance' ) }
+					value={ budgetId }
+					onChange={ setBudgetId }
+					options={ [
+						{
+							label: __(
+								'Use each transaction’s proposed budget',
+								'fair-finance'
+							),
+							value: 'auto',
+						},
+						{
+							label: __( 'No budget', 'fair-finance' ),
+							value: '',
+						},
+						...budgets.map( ( budget ) => ( {
+							label: budget.name,
+							value: String( budget.id ),
+						} ) ),
+					] }
+				/>
+			) }
 			{ data.links?.length > 0 && (
 				<ul>
 					{ data.links.map( ( link ) => (
@@ -858,56 +894,25 @@ export default function SavedSettlementReview( {
 					disabled={ ! ready }
 				/>
 			) }
-			{ data.allocation.supported && (
-				<>
-					<CheckboxControl
-						label={ __(
-							'Create the supported movement allocations',
+			{ repairable && (
+				<div className="fair-finance-saved-repair">
+					<p>
+						{ __(
+							'This settlement is fully reconciled, but its bank entry was not split. Applying the split keeps the bank association and records it in the confirmation history.',
 							'fair-finance'
 						) }
-						checked={ allocate }
-						onChange={ setAllocate }
+					</p>
+					<Button
+						variant="primary"
 						disabled={ ! ready || ! data.can_full }
-					/>
-					<ul>
-						{ data.allocation.rows.map( ( row ) => (
-							<li key={ row.movement_key }>
-								{ row.description }{ ' ' }
-								{ money(
-									row.amount,
-									data.settlement.currency
-								) }
-							</li>
-						) ) }
-					</ul>
-					{ allocate && (
-						<SelectControl
-							label={ __(
-								'Budget for new allocations',
-								'fair-finance'
-							) }
-							value={ budgetId }
-							onChange={ setBudgetId }
-							options={ [
-								{
-									label: __(
-										'Use each transaction’s proposed budget',
-										'fair-finance'
-									),
-									value: 'auto',
-								},
-								{
-									label: __( 'No budget', 'fair-finance' ),
-									value: '',
-								},
-								...budgets.map( ( budget ) => ( {
-									label: budget.name,
-									value: String( budget.id ),
-								} ) ),
-							] }
-						/>
-					) }
-				</>
+						onClick={ () => {
+							setError( null );
+							setConfirming( 'full' );
+						} }
+					>
+						{ __( 'Apply the proposed split', 'fair-finance' ) }
+					</Button>
+				</div>
 			) }
 			<div className="fair-finance-saved-actions">
 				<Button
@@ -1000,9 +1005,20 @@ export default function SavedSettlementReview( {
 					</p>
 					<p>
 						{ __(
-							'This saves local evidence only and does not move or refund money. Existing allocations remain unless you selected the supported split. You can release the bank association later; confirmation history is retained.',
+							'This saves local evidence only and does not move or refund money. You can release the bank association later; confirmation history is retained.',
 							'fair-finance'
 						) }
+					</p>
+					<p>
+						{ confirming === 'full' && splitProposed
+							? __(
+									'The bank entry is also split into the proposed allocations shown in the review. Existing allocations are never replaced.',
+									'fair-finance'
+								)
+							: __(
+									'Existing allocations are not changed.',
+									'fair-finance'
+								) }
 					</p>
 					{ error && (
 						<Notice status="error" isDismissible={ false }>

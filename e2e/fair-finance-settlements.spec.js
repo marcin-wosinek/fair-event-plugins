@@ -771,6 +771,141 @@ test.describe('Fair Finance settlements', () => {
 		});
 	}
 
+	test('splits a fee-bearing payout alike from settlement review and from the bank-transfer screen', async ({
+		page,
+	}) => {
+		const seed = async () => {
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+			// Another saved settlement listing the same payments would make
+			// the manual match's settlement evidence ambiguous.
+			await api.post(`${HELPERS}/reset`, {
+				headers: adminHeaders,
+				data: {},
+			});
+			const res = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { origin: 'csv' },
+			});
+			expect(res.ok()).toBeTruthy();
+			return res.json();
+		};
+		const children = async (entryId) => {
+			const res = await api.get(
+				'/wp-json/fair-finance/v1/financial-entries?per_page=100',
+				{ headers: adminHeaders }
+			);
+			const parent = (await res.json()).entries.find(
+				(entry) => entry.id === entryId
+			);
+			return (parent.children || []).map((child) => [
+				child.amount,
+				child.description,
+				child.budget_id,
+				child.event_url,
+			]);
+		};
+		try {
+			let fixture = await seed();
+			await loginAsAdmin(page);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}&entry_id=${fixture.entry_id}`
+			);
+			await page.getByLabel('Bank entry currency').fill('EUR');
+			await page.getByLabel(/I confirm this bank entry/).check();
+			await page
+				.getByRole('button', { name: 'Refresh local preview' })
+				.click();
+			const proposal = page.locator('.fair-finance-allocation-proposal');
+			const fee = proposal.locator('tr', {
+				hasText: 'Reconcile fixture aggregate fees',
+			});
+			await expect(fee).toContainText('-1.45 EUR');
+			await expect(fee).toContainText(
+				'Settlement-level fee or adjustment'
+			);
+			await expect(
+				page.getByLabel('Create the supported movement allocations')
+			).toHaveCount(0);
+			await page
+				.getByRole('button', { name: 'Confirm Fully reconciled' })
+				.click();
+			await expect(page.getByRole('dialog')).toContainText(
+				'also split into the proposed allocations'
+			);
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save reconciliation decision' })
+				.click();
+			await expect(
+				page.locator('.fair-finance-saved-review > p strong')
+			).toHaveText('Fully reconciled');
+			await expect(proposal).toContainText(
+				'This bank entry is already split.'
+			);
+			const fromSettlement = await children(fixture.entry_id);
+			expect(fromSettlement.map(([amount]) => amount)).toEqual([
+				25, 15, -1.45,
+			]);
+
+			fixture = await seed();
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-finance-reconciliation'
+			);
+			await page
+				.getByLabel('Filter by description')
+				.fill('Reconcile fixture RECONCILE');
+			await page
+				.locator('tr', {
+					has: page.getByRole('link', {
+						name: `Entry #${fixture.entry_id}, 2026-05-02`,
+					}),
+				})
+				.getByRole('button', { name: 'Select' })
+				.click();
+			for (const description of [
+				'Reconcile fixture payment 1',
+				'Reconcile fixture payment 2',
+			]) {
+				await page
+					.locator('tr', { hasText: description })
+					.getByRole('checkbox')
+					.check();
+			}
+			await expect(
+				page
+					.locator('.fair-finance-allocation-proposal tr', {
+						hasText: 'Reconcile fixture aggregate fees',
+					})
+					.first()
+			).toContainText('-1.45 EUR');
+			await page.getByRole('button', { name: 'Confirm Match' }).click();
+			await expect(
+				page
+					.locator('.components-notice__content')
+					.getByText(
+						'Transactions matched and the entry was split into 3 allocations.'
+					)
+			).toBeVisible();
+			expect(await children(fixture.entry_id)).toEqual(fromSettlement);
+			await page.setViewportSize({ width: 375, height: 812 });
+			expect(
+				await page.evaluate(
+					() =>
+						document.documentElement.scrollWidth <=
+						document.documentElement.clientWidth
+				)
+			).toBe(true);
+		} finally {
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+		}
+	});
+
 	test('suggests a saved settlement for a bank entry, reviews it with that entry, and shows the association', async ({
 		page,
 	}) => {

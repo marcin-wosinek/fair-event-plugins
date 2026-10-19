@@ -326,16 +326,30 @@ test.describe('Fair Finance spreadsheet imports', () => {
 		);
 
 		await confirmButton.click();
+		// Unsaved CSV fees are not stored evidence, and 25 + 15 does not
+		// equal 38.13: the match is kept without an unbalanced split.
 		await expect(
-			dialog.getByText('Settlement matched successfully.')
+			dialog
+				.locator('.components-notice__content')
+				.getByText(
+					/^Transactions matched\. The allocation still needs review/
+				)
 		).toBeVisible();
 
 		const matched = await api.get(`${ENTRIES_API}/${entryId}`, {
 			headers: adminHeaders,
 		});
 		expect(matched.ok(), await matched.text()).toBeTruthy();
-		expect(
-			((await matched.json()).transaction_ids || []).map(Number).sort()
-		).toEqual([...transactionIds].sort());
+		const entry = await matched.json();
+		expect((entry.transaction_ids || []).map(Number).sort()).toEqual(
+			[...transactionIds].sort()
+		);
+		const listed = await api.get(`${ENTRIES_API}?per_page=100`, {
+			headers: adminHeaders,
+		});
+		const parent = (await listed.json()).entries.find(
+			(row) => row.id === entryId
+		);
+		expect(parent.children || []).toHaveLength(0);
 	});
 });

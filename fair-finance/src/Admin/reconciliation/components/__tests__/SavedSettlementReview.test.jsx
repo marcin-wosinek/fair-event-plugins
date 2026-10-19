@@ -35,7 +35,9 @@ const base = {
 	can_partial: true,
 	can_full: true,
 	allocation: {
+		status: 'unsupported',
 		supported: false,
+		method: null,
 		rows: [],
 		reason: 'Existing allocations are preserved.',
 	},
@@ -312,4 +314,156 @@ test( 'keeps an existing association instead of the proposed bank entry', async 
 		path: '/fair-finance/v1/reconciliation/settlements/4/preview',
 		method: 'POST',
 	} );
+} );
+
+const proposed = {
+	status: 'proposed',
+	supported: true,
+	method: 'settlement_deductions',
+	reason: 'Confirming creates one allocation per supported movement.',
+	rows: [
+		{
+			kind: 'transaction',
+			amount: '25.00',
+			description: 'Workshop ticket',
+			event_url: null,
+			budget_id: null,
+			movement_key: 'payment:tr_1#1',
+		},
+		{
+			kind: 'transaction',
+			amount: '15.00',
+			description: 'Class ticket',
+			event_url: null,
+			budget_id: null,
+			movement_key: 'payment:tr_2#1',
+		},
+		{
+			kind: 'settlement',
+			amount: '-1.45',
+			description: 'Settlement fees',
+			event_url: null,
+			budget_id: null,
+			movement_key: 'agg:fee#1',
+		},
+	],
+};
+const club = { id: 3, name: 'Acroyoga club' };
+const confirmedContext = {
+	context: { currency: 'EUR', account_id: 2 },
+};
+const serve = ( preview ) => {
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path.endsWith( '/confirm' ) ) return submit();
+		if ( path.endsWith( '/preview' ) )
+			return Promise.resolve( { ...base, ...preview } );
+		if ( path.endsWith( '/candidates' ) ) return Promise.resolve( [] );
+		if ( path === '/fair-finance/v1/budgets' )
+			return Promise.resolve( [ club ] );
+		throw new Error( `Unexpected path ${ path }` );
+	} );
+};
+const save = async () => {
+	const dialog = screen.getByRole( 'dialog' );
+	fireEvent.click(
+		within( dialog ).getByRole( 'button', {
+			name: 'Save reconciliation decision',
+		} )
+	);
+	await waitFor( () =>
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+	);
+	return submit.mock.calls.length;
+};
+const confirmedWith = () =>
+	apiFetch.mock.calls
+		.map( ( [ request ] ) => request )
+		.filter( ( request ) => request.path.endsWith( '/confirm' ) )
+		.pop().data;
+
+test( 'a supported split is part of full confirmation, with the reviewed budget', async () => {
+	serve( { ...confirmedContext, allocation: proposed } );
+	await open();
+	expect(
+		screen.queryByLabelText( 'Create the supported movement allocations' )
+	).not.toBeInTheDocument();
+	const fee = screen.getByText( 'Settlement fees' ).closest( 'tr' );
+	expect( fee ).toHaveTextContent( '-1.45 EUR' );
+	expect( fee ).toHaveTextContent( 'Settlement-level fee or adjustment' );
+	fireEvent.change( screen.getByLabelText( 'Budget for new allocations' ), {
+		target: { value: String( club.id ) },
+	} );
+	expect( fee ).toHaveTextContent( club.name );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Confirm Fully reconciled' } )
+	);
+	expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+		'The bank entry is also split into the proposed allocations'
+	);
+	await save();
+	const data = confirmedWith();
+	expect( data ).toEqual(
+		expect.objectContaining( { state: 'full', budget_id: club.id } )
+	);
+	expect( data ).not.toHaveProperty( 'allocate' );
+} );
+
+test( 'a Partial save never sends a budget for allocations', async () => {
+	serve( { ...confirmedContext, allocation: proposed } );
+	await open();
+	fireEvent.change( screen.getByLabelText( 'Budget for new allocations' ), {
+		target: { value: '' },
+	} );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Save as Partial' } )
+	);
+	expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+		'Existing allocations are not changed.'
+	);
+	await save();
+	expect( confirmedWith() ).not.toHaveProperty( 'budget_id' );
+} );
+
+test( 'repairs a fully reconciled settlement whose bank entry was not split', async () => {
+	serve( {
+		...confirmedContext,
+		allocation: proposed,
+		decision: {
+			entry_id: 8,
+			state: 'full',
+			current_state: 'full',
+		},
+	} );
+	await open();
+	expect(
+		screen.getByText( /fully reconciled, but its bank entry was not split/ )
+	).toBeInTheDocument();
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Apply the proposed split' } )
+	);
+	await save();
+	expect( confirmedWith() ).toEqual(
+		expect.objectContaining( { state: 'full', entry_id: 8 } )
+	);
+} );
+
+test( 'complete evidence with an unsupported allocation says no split is created', async () => {
+	serve( confirmedContext );
+	await open();
+	expect(
+		screen.getByText( 'Existing allocations are preserved.', {
+			selector: '.components-notice__content',
+		} )
+	).toBeInTheDocument();
+	expect(
+		screen.getByText(
+			/The allocation still needs review: no split is created/
+		)
+	).toBeInTheDocument();
+	expect(
+		screen.queryByLabelText( 'Budget for new allocations' )
+	).not.toBeInTheDocument();
+	expect(
+		screen.queryByRole( 'button', { name: 'Apply the proposed split' } )
+	).not.toBeInTheDocument();
 } );

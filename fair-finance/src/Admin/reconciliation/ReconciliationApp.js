@@ -28,6 +28,9 @@ import SavedSettlementReview, {
 } from './components/SavedSettlementReview.js';
 import { completenessBadge } from '../settlements/format.js';
 import SettlementImportModal from './components/SettlementImportModal.js';
+import AllocationProposal, {
+	matchOutcome,
+} from './components/AllocationProposal.js';
 import { formatDateOnly } from 'fair-events-shared';
 
 const EntryDateLink = ( { entry } ) => (
@@ -216,6 +219,10 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 	// Responses for an entry that is no longer selected are ignored.
 	const suggestionsFor = useRef( null );
 	const [ showSettlementModal, setShowSettlementModal ] = useState( false );
+	// The server's allocation proposal for the current selection; responses
+	// for an earlier selection are ignored.
+	const [ matchPlan, setMatchPlan ] = useState( null );
+	const matchPlanFor = useRef( 0 );
 
 	const [ budgets, setBudgets ] = useState( [] );
 	// '' means "no budget"; kept as a string throughout so it maps directly
@@ -280,6 +287,23 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 		selectedEntry,
 		budgetOverridden,
 	] );
+
+	useEffect( () => {
+		const request = ++matchPlanFor.current;
+		setMatchPlan( null );
+		if ( ! selectedEntry || selectedTransactionIds.length === 0 ) return;
+		apiFetch( {
+			path: `/fair-finance/v1/financial-entries/${ selectedEntry.id }/match-preview`,
+			method: 'POST',
+			data: { transaction_ids: selectedTransactionIds },
+		} )
+			.then( ( plan ) => {
+				if ( request === matchPlanFor.current ) setMatchPlan( plan );
+			} )
+			.catch( () => {
+				if ( request === matchPlanFor.current ) setMatchPlan( null );
+			} );
+	}, [ selectedEntry, selectedTransactionIds ] );
 
 	const handleBudgetChange = ( value ) => {
 		setSelectedBudgetId( value );
@@ -396,7 +420,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 		setMatching( true );
 		setError( null );
 		try {
-			await apiFetch( {
+			const matched = await apiFetch( {
 				path: `/fair-finance/v1/financial-entries/${ selectedEntry.id }/match`,
 				method: 'POST',
 				data: {
@@ -406,12 +430,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 						: null,
 				},
 			} );
-			setSuccess(
-				__(
-					'Transactions matched successfully.',
-					'fair-payments-connector'
-				)
-			);
+			setSuccess( matchOutcome( matched?.allocation ) );
 			setSelectedEntry( null );
 			suggestionsFor.current = null;
 			setSettlementSuggestions( NO_SETTLEMENT_SUGGESTIONS );
@@ -498,6 +517,11 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 				parseFloat( t.mollie_fee || 0 );
 			return sum + net;
 		}, 0 );
+
+	const selectedCurrency =
+		unmatchedTransactions.find( ( t ) =>
+			selectedTransactionIds.includes( t.id )
+		)?.currency || '';
 
 	if ( loading ) {
 		return (
@@ -1008,6 +1032,14 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 													</Button>
 												</VStack>
 											</HStack>
+											<AllocationProposal
+												allocation={ matchPlan }
+												budgets={ budgets }
+												currency={ selectedCurrency }
+												reviewedBudget={
+													selectedBudgetId
+												}
+											/>
 										</div>
 									) }
 

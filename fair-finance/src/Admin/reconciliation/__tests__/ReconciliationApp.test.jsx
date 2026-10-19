@@ -84,12 +84,42 @@ const txNoSource = {
 	source_budget_id: null,
 };
 
+// Notices are also announced to a shared live region; query the visible one.
+const NOTICE = { selector: '.components-notice__content' };
+
+const proposedSplit = {
+	status: 'proposed',
+	supported: true,
+	method: 'settlement_deductions',
+	reason: 'Confirming creates one allocation per supported movement. Their amounts sum exactly to this bank entry.',
+	rows: [
+		{
+			kind: 'transaction',
+			amount: '10.00',
+			description: 'Workshop ticket',
+			event_url: 'https://example.test/workshop/',
+			budget_id: budgetA.id,
+			movement_key: 'payment:tr_1#1',
+		},
+		{
+			kind: 'settlement',
+			amount: '-0.45',
+			description: 'Settlement fees',
+			event_url: null,
+			budget_id: null,
+			movement_key: 'agg:fee#1',
+		},
+	],
+};
+
 function mockApiFetchByPath( {
 	entries = [ entry ],
 	transactions = [],
 	budgets = [ budgetA, budgetB ],
 	connectorStatus = null,
 	matchedEntries = [],
+	matchPlan = proposedSplit,
+	matched = { ...entry, budget_id: null },
 } = {} ) {
 	apiFetch.mockImplementation( ( { path, method } ) => {
 		if ( path === '/fair-payments-connector/v1/oauth/status' ) {
@@ -111,8 +141,11 @@ function mockApiFetchByPath( {
 		if ( /\/suggest-matches$/.test( path ) ) {
 			return Promise.resolve( [] );
 		}
+		if ( /\/match-preview$/.test( path ) ) {
+			return Promise.resolve( matchPlan );
+		}
 		if ( /\/match$/.test( path ) && method === 'POST' ) {
-			return Promise.resolve( { ...entry, budget_id: null } );
+			return Promise.resolve( matched );
 		}
 		return Promise.resolve( {} );
 	} );
@@ -212,6 +245,9 @@ describe( 'ReconciliationApp — Connected Site budget proposal (#1612)', () => 
 		// Adding another transaction would otherwise re-propose budgetA.
 		fireEvent.click( checkboxForRow( 'Also from site A' ) );
 		expect( screen.getByLabelText( 'Budget' ).value ).toBe( '' );
+		expect(
+			await screen.findByText( proposedSplit.reason, NOTICE )
+		).toBeInTheDocument();
 	} );
 
 	it( 'disables the selector and explains when the entry already has a budget', async () => {
@@ -648,5 +684,89 @@ describe( 'ReconciliationApp — saved settlement suggestions (#1854)', () => {
 		);
 		await screen.findByText( 'Reconcile settlement PAY.2605.01' );
 		expect( window.location.search ).toBe( '?settlement=21' );
+	} );
+} );
+
+describe( 'ReconciliationApp — shared allocation proposal (#1854)', () => {
+	it( 'shows the server proposal, with the reviewed budget, before matching', async () => {
+		mockApiFetchByPath( { transactions: [ txFromSiteA ] } );
+		await selectEntryAndOpenPanel();
+
+		fireEvent.click( checkboxForRow( 'From site A' ) );
+
+		expect(
+			await screen.findByText( proposedSplit.reason, NOTICE )
+		).toBeInTheDocument();
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-finance/v1/financial-entries/1/match-preview',
+			method: 'POST',
+			data: { transaction_ids: [ txFromSiteA.id ] },
+		} );
+		const fee = screen.getByText( 'Settlement fees' ).closest( 'tr' );
+		expect( within( fee ).getByText( '-0.45 EUR' ) ).toBeInTheDocument();
+		expect(
+			within( fee ).getByText( 'Settlement-level fee or adjustment' )
+		).toBeInTheDocument();
+		// The reviewed budget applies to every allocation it creates.
+		expect( within( fee ).getByText( budgetA.name ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', {
+				name: 'https://example.test/workshop/',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'explains an unsupported allocation and reports it after matching', async () => {
+		const unsupported = {
+			status: 'unsupported',
+			supported: false,
+			method: null,
+			rows: [],
+			reason: 'The supported amounts total 40, which does not equal the bank entry amount of 30.00.',
+		};
+		mockApiFetchByPath( {
+			transactions: [ txFromSiteA ],
+			matchPlan: unsupported,
+			matched: { ...entry, allocation: unsupported },
+		} );
+		await selectEntryAndOpenPanel();
+
+		fireEvent.click( checkboxForRow( 'From site A' ) );
+		expect(
+			await screen.findByText( unsupported.reason, NOTICE )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Confirm Match' } )
+		);
+		expect(
+			await screen.findByText(
+				`Transactions matched. The allocation still needs review: ${ unsupported.reason }`,
+				NOTICE
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'reports the split a match created', async () => {
+		mockApiFetchByPath( {
+			transactions: [ txFromSiteA ],
+			matched: {
+				...entry,
+				allocation: { ...proposedSplit, allocation_ids: [ 4, 5 ] },
+			},
+		} );
+		await selectEntryAndOpenPanel();
+
+		fireEvent.click( checkboxForRow( 'From site A' ) );
+		await screen.findByText( proposedSplit.reason, NOTICE );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Confirm Match' } )
+		);
+		expect(
+			await screen.findByText(
+				'Transactions matched and the entry was split into 2 allocations.',
+				NOTICE
+			)
+		).toBeInTheDocument();
 	} );
 } );
