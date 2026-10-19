@@ -162,6 +162,93 @@ test.describe('Fair Form submission detail', () => {
 		}
 	});
 
+	test.describe('date answers (#1937)', () => {
+		// A browser timezone far from the site's: date answers are calendar
+		// dates and date & time answers site-local wall clock values, so
+		// neither offset may shift what is displayed.
+		test.use({ timezoneId: 'America/Los_Angeles', locale: 'en-US' });
+
+		const SITE_TIMEZONE = 'Asia/Tokyo';
+		const DATE_TEXT = 'July 8, 2026';
+		const DATETIME_TEXT = 'July 8, 2026 11:30 pm';
+
+		test('renders populated and empty date answers like the responses view', async ({
+			page,
+		}) => {
+			const pageErrors = [];
+			page.on('pageerror', (err) => pageErrors.push(err.message));
+
+			let seed;
+			let previous;
+
+			try {
+				previous = runScript(
+					'set-site-timezone.php',
+					'E2E_SITE_TIMEZONE',
+					SITE_TIMEZONE
+				);
+				seed = runScript(
+					'seed-fair-form-date-answers.php',
+					'E2E_FAIR_FORM_DATE_ANSWERS'
+				);
+
+				await loginAsAdmin(page);
+				await page.goto(
+					`${DETAIL_PAGE}&submission_id=${seed.submissionId}`
+				);
+
+				const answers = page.locator(
+					'.fair-form-submission-detail__answers-table'
+				);
+				const answerCell = (question) =>
+					answers
+						.locator('tr', { hasText: question })
+						.locator('td')
+						.nth(1);
+
+				await expect(answerCell('E2E Birthday')).toHaveText(DATE_TEXT);
+				await expect(answerCell('E2E Arrival')).toHaveText(
+					DATETIME_TEXT
+				);
+				await expect(answerCell('E2E Departure day')).toHaveText('—');
+				await expect(answerCell('E2E Pickup time')).toHaveText('—');
+				await expect(answerCell('E2E Dietary needs')).toHaveText(
+					'Vegetarian'
+				);
+
+				// The questionnaire responses view formats the same answers.
+				await page.goto(
+					`/wp-admin/admin.php?page=fair-form-questionnaire-responses&post_id=${seed.pageId}`
+				);
+				const row = page.locator('tr', { hasText: 'Vegetarian' });
+				await expect(row).toBeVisible({ timeout: 15000 });
+				await expect(
+					row.getByRole('cell', { name: DATE_TEXT, exact: true })
+				).toBeVisible();
+				await expect(
+					row.getByRole('cell', { name: DATETIME_TEXT, exact: true })
+				).toBeVisible();
+
+				expect(pageErrors).toEqual([]);
+			} finally {
+				if (seed) {
+					runScript(
+						'cleanup-fair-form-notification-page.php',
+						'E2E_FAIR_FORM_NOTIFICATION_CLEANUP',
+						`${seed.pageId}`
+					);
+				}
+				if (previous) {
+					runScript(
+						'set-site-timezone.php',
+						'E2E_SITE_TIMEZONE',
+						`${previous.timezoneString || '-'} ${previous.gmtOffset}`
+					);
+				}
+			}
+		});
+	});
+
 	test('shows a not-found notice for an unknown submission id', async ({
 		page,
 	}) => {
