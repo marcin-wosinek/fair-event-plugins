@@ -129,13 +129,18 @@ export function buildAuthorizeUrl( { state, requestSettlementAccess } ) {
 /**
  * Load the connection status and the permissions Mollie granted.
  *
- * @return {Promise<Object>} Promise resolving to { connected, settlementAccess, settlementAccessRequested }
+ * `credentialStatus` says whether the stored Mollie tokens can be used:
+ * 'available', 'encryption_unavailable' (temporarily, until the server's
+ * encryption support is restored) or 'unrecoverable' (reconnect needed).
+ *
+ * @return {Promise<Object>} Promise resolving to { connected, credentialStatus, settlementAccess, settlementAccessRequested }
  */
 export function loadOAuthStatus() {
 	return apiFetch( {
 		path: '/fair-payments-connector/v1/oauth/status',
 	} ).then( ( status ) => ( {
 		connected: status.connected === true,
+		credentialStatus: status.credential_status || 'available',
 		settlementAccess: status.settlement_access === true,
 		settlementAccessRequested: status.settlement_access_requested === true,
 	} ) );

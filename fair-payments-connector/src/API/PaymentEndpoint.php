@@ -7,6 +7,7 @@
 
 namespace FairPaymentsConnector\API;
 
+use FairPaymentsConnector\Payment\MollieCredentials;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Payment\PaymentStatus;
 use FairPaymentsConnector\Models\Transaction;
@@ -270,6 +271,26 @@ class PaymentEndpoint extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// Connected, but the stored credentials cannot be read right now.
+		if ( ! MolliePaymentHandler::is_configured() && get_option( 'fair_payment_mollie_connected', false ) ) {
+			$logger->log(
+				'payment_validation_failed',
+				array(
+					'level'   => 'error',
+					'message' => 'Mollie credentials unavailable',
+					'context' => array(
+						'reason'            => 'mollie_credentials_unavailable',
+						'credential_status' => MollieCredentials::status(),
+					),
+				)
+			);
+			return new WP_Error(
+				'payments_unavailable',
+				__( 'Online payment is temporarily unavailable. Please try again later or contact the organizer.', 'fair-payments-connector' ),
+				array( 'status' => 503 )
+			);
+		}
 
 		// Check if Mollie is configured.
 		if ( ! MolliePaymentHandler::is_configured() ) {

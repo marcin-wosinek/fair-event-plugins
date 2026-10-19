@@ -40,6 +40,11 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// Encrypt the Mollie tokens at rest. Registered on every request,
+		// not only in the admin: a visitor's checkout can refresh them.
+		\FairPaymentsConnector\Payment\MollieCredentials::protect();
+		add_action( 'init', array( \FairPaymentsConnector\Payment\MollieCredentials::class, 'maybe_convert' ) );
+
 		// Default: rely on WordPress.org language packs. The `bundled-translations`
 		// feature flag opts into loading the .mo files we ship in `languages/`.
 		add_action(

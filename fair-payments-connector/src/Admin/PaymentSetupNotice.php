@@ -52,7 +52,10 @@ class PaymentSetupNotice {
 
 		$settings_url = add_query_arg( 'page', 'fair-payments-connector-settings', admin_url( 'admin.php' ) );
 
-		if ( 'not_connected' === $state ) {
+		if ( 'credentials_unavailable' === $state ) {
+			/* translators: %s: link to the Fair Payments Connector settings page */
+			$message = __( 'Fair Payments Connector <strong>cannot read the stored Mollie connection</strong> — paid flows cannot accept payments until it is restored. <a href="%s">Review the connection</a>.', 'fair-payments-connector' );
+		} elseif ( 'not_connected' === $state ) {
 			/* translators: %s: link to the Fair Payments Connector settings page */
 			$message = __( 'Fair Payments Connector is <strong>not connected to Mollie</strong> — paid flows cannot accept real payments until a Mollie account is connected. <a href="%s">Connect Mollie</a>.', 'fair-payments-connector' );
 		} else {
@@ -85,11 +88,15 @@ class PaymentSetupNotice {
 	 * request. Test mode never accepts real payments, so a connected profile
 	 * that is still in test mode counts as incomplete, not ready.
 	 *
-	 * @return string One of 'not_connected', 'incomplete', 'ready'.
+	 * @return string One of 'not_connected', 'credentials_unavailable', 'incomplete', 'ready'.
 	 */
 	public static function readiness_state() {
-		if ( ! MolliePaymentHandler::is_configured() ) {
+		if ( ! get_option( 'fair_payment_mollie_connected', false ) ) {
 			return 'not_connected';
+		}
+
+		if ( ! MolliePaymentHandler::is_configured() ) {
+			return 'credentials_unavailable';
 		}
 
 		$profile_id = get_option( 'fair_payment_mollie_profile_id', '' );

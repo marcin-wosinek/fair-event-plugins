@@ -114,6 +114,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	// loaded — the rest of the tab doesn't depend on it.
 	const [ oauthStatus, setOauthStatus ] = useState( null );
 
+	// Whether the stored tokens can be used. A connection whose tokens can't
+	// be read stays connected, but payments and connection checks pause.
+	const credentialStatus = oauthStatus?.credentialStatus ?? 'available';
+	const credentialsUsable = connected && credentialStatus === 'available';
+
 	/**
 	 * Load connection settings from API
 	 */
@@ -194,7 +199,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	 * enabled methods differ between test and live mode.
 	 */
 	useEffect( () => {
-		if ( ! connected ) {
+		if ( ! connected || credentialStatus !== 'available' ) {
 			setOverview( null );
 			setOverviewError( null );
 			return;
@@ -234,7 +239,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 		return () => {
 			isCurrent = false;
 		};
-	}, [ connected, mode ] );
+	}, [ connected, mode, credentialStatus ] );
 
 	/**
 	 * Handle Connect and Reconnect — fetches a CSRF state token first, then
@@ -886,12 +891,51 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 						</>
 					) : (
 						<>
-							<Notice status="success" isDismissible={ false }>
-								{ __(
-									'Connected to Mollie',
-									'fair-payments-connector'
-								) }
-							</Notice>
+							{ credentialStatus === 'encryption_unavailable' && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
+										'Payments are paused: the Mollie connection is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; the connection then resumes without reconnecting.',
+										'fair-payments-connector'
+									) }
+								</Notice>
+							) }
+
+							{ credentialStatus === 'unrecoverable' && (
+								<Notice
+									status="error"
+									isDismissible={ false }
+									actions={ [
+										{
+											label: __(
+												'Reconnect to Mollie',
+												'fair-payments-connector'
+											),
+											onClick: handleConnect,
+											variant: 'primary',
+										},
+									] }
+								>
+									{ __(
+										'Payments are paused: the stored Mollie connection can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Reconnect to Mollie to resume payments.',
+										'fair-payments-connector'
+									) }
+								</Notice>
+							) }
+
+							{ credentialsUsable && (
+								<Notice
+									status="success"
+									isDismissible={ false }
+								>
+									{ __(
+										'Connected to Mollie',
+										'fair-payments-connector'
+									) }
+								</Notice>
+							) }
 
 							{ needsSettlementAccess && (
 								<Notice
@@ -1165,7 +1209,11 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 									<Button
 										isSecondary
 										onClick={ handleConnect }
-										disabled={ isActionRunning }
+										disabled={
+											isActionRunning ||
+											credentialStatus ===
+												'encryption_unavailable'
+										}
 									>
 										{ __(
 											'Reconnect',
@@ -1177,7 +1225,9 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 										onClick={ handleRefreshToken }
 										isBusy={ isRefreshing }
 										disabled={
-											isRefreshing || isActionRunning
+											isRefreshing ||
+											isActionRunning ||
+											! credentialsUsable
 										}
 									>
 										{ isRefreshing
@@ -1191,6 +1241,21 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 												) }
 									</Button>
 								</ButtonGroup>
+								{ credentialStatus ===
+									'encryption_unavailable' && (
+									<p
+										style={ {
+											fontSize: '0.9em',
+											color: '#666',
+											marginTop: '0.5rem',
+										} }
+									>
+										{ __(
+											'Reconnect and Refresh Connection are unavailable until encryption support is restored. Disconnecting stays possible.',
+											'fair-payments-connector'
+										) }
+									</p>
+								) }
 							</div>
 						</>
 					) }
@@ -1245,7 +1310,7 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 							isSecondary
 							onClick={ handleTestPayment }
 							isBusy={ isTestingPayment }
-							disabled={ ! connected || isActionRunning }
+							disabled={ ! credentialsUsable || isActionRunning }
 						>
 							{ __(
 								'Create test payment',
@@ -1253,6 +1318,21 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 							) }
 						</Button>
 					</div>
+
+					{ connected && ! credentialsUsable && (
+						<p
+							style={ {
+								fontSize: '0.9em',
+								color: '#666',
+								marginTop: '0.5rem',
+							} }
+						>
+							{ __(
+								'Test payments are paused until the stored Mollie connection can be read again.',
+								'fair-payments-connector'
+							) }
+						</p>
+					) }
 
 					{ ! connected && (
 						<p

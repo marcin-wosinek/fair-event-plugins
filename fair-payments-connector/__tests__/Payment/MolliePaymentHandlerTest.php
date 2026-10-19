@@ -19,6 +19,8 @@ use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use FairPaymentsConnector\OAuth\GrantedScopes;
+use FairEventsShared\Security\ProtectedOptions;
+use FairEventsShared\Security\SecretBox;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Fake\MockResponse;
 use Mollie\Api\Http\PendingRequest;
@@ -91,6 +93,15 @@ class MolliePaymentHandlerTest extends TestCase {
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
 		PaymentLogRepository::reset_request_id();
+	}
+
+	/**
+	 * Drop option filters, encryption-support overrides and key changes.
+	 */
+	protected function tearDown(): void {
+		unset( $GLOBALS['_fair_test_option_filters'], $GLOBALS['_fair_test_salt'] );
+		$GLOBALS['_fair_test_filters'] = array();
+		parent::tearDown();
 	}
 
 	/**
@@ -580,6 +591,107 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->expectExceptionMessageMatches( '/not connected/' );
 
 		new MolliePaymentHandler();
+	}
+
+	/**
+	 * #1318: tokens that cannot be read are never sent to the refresh
+	 * service, and the connection is not marked lost — restoring encryption
+	 * support or the keys recovers it without a reconnect.
+	 *
+	 * @dataProvider unreadable_credentials_provider
+	 *
+	 * @param callable $make_unreadable Turns the stored tokens unreadable.
+	 * @param string   $message         Expected part of the error message.
+	 */
+	public function test_unreadable_credentials_neither_refresh_nor_disconnect( $make_unreadable, $message ) {
+		$this->seed_encrypted_expired_connection();
+		$stored = $GLOBALS['_fair_test_options'];
+		$make_unreadable();
+
+		try {
+			new MolliePaymentHandler();
+			$this->fail( 'Expected the handler to refuse unreadable credentials.' );
+		} catch ( \Exception $e ) {
+			$this->assertStringContainsString( $message, $e->getMessage() );
+		}
+
+		$this->assertSame( array(), $GLOBALS['_fair_test_remote_requests'] );
+		$this->assertSame( $stored, $GLOBALS['_fair_test_options'] );
+		$this->assertFalse( MolliePaymentHandler::is_configured() );
+	}
+
+	/**
+	 * Ways the stored tokens become unreadable.
+	 *
+	 * @return array
+	 */
+	public function unreadable_credentials_provider() {
+		return array(
+			'encryption support lost' => array(
+				static function () {
+					$GLOBALS['_fair_test_filters'][ ProtectedOptions::SUPPORT_FILTER ] = static function () {
+						return false;
+					};
+				},
+				'Sodium',
+			),
+			'security keys changed'   => array(
+				static function () {
+					$GLOBALS['_fair_test_salt'] = 'rotated-security-keys';
+				},
+				'Reconnect',
+			),
+		);
+	}
+
+	/**
+	 * #1318: encrypted tokens refresh like plaintext ones — the refresh
+	 * service receives the plaintext refresh token, never an envelope — and
+	 * the rotated tokens are stored encrypted again.
+	 */
+	public function test_encrypted_credentials_refresh_and_stay_encrypted() {
+		$this->seed_encrypted_expired_connection( 'refresh_new' );
+
+		new MolliePaymentHandler();
+
+		$this->assertSame( 'refresh_old', $GLOBALS['_fair_test_remote_requests'][0]['args']['body']['refresh_token'] );
+
+		$raw = $GLOBALS['_fair_test_options'];
+		$this->assertTrue( SecretBox::is_envelope( $raw['fair_payment_mollie_access_token'] ) );
+		$this->assertTrue( SecretBox::is_envelope( $raw['fair_payment_mollie_refresh_token'] ) );
+		$this->assertSame( 'access_new', get_option( 'fair_payment_mollie_access_token' ) );
+		$this->assertSame( 'refresh_new', get_option( 'fair_payment_mollie_refresh_token' ) );
+		$this->assertTrue( MolliePaymentHandler::is_configured() );
+	}
+
+	/**
+	 * An expired connection whose tokens are stored encrypted, with option
+	 * reads and writes going through ProtectedOptions.
+	 *
+	 * @param string $rotated_refresh_token Refresh token the platform rotates to, if any.
+	 * @return void
+	 */
+	private function seed_encrypted_expired_connection( $rotated_refresh_token = '' ) {
+		$refresh = array(
+			'access_token' => 'access_new',
+			'expires_in'   => 3600,
+		);
+		if ( '' !== $rotated_refresh_token ) {
+			$refresh['refresh_token'] = $rotated_refresh_token;
+		}
+		$this->seed_expired_connection( $refresh );
+
+		$GLOBALS['_fair_test_option_filters'] = array(
+			'read'  => array( ProtectedOptions::class, 'filter_read' ),
+			'write' => static function ( $value, $name ) {
+				return in_array( $name, array( 'fair_payment_mollie_access_token', 'fair_payment_mollie_refresh_token' ), true )
+					? ProtectedOptions::filter_write( $value, $name )
+					: $value;
+			},
+		);
+		update_option( 'fair_payment_mollie_access_token', 'access_old' );
+		update_option( 'fair_payment_mollie_refresh_token', 'refresh_old' );
+		$GLOBALS['_fair_test_remote_requests'] = array();
 	}
 
 	/**

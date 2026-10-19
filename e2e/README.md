@@ -23,6 +23,7 @@ e2e/
 └── mu-plugins/                           # mounted into wp-env only (see .wp-env.json)
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
     ├── fair-e2e-settlements.php          # resets saved settlements and steers the double's settlement responses
+    ├── fair-e2e-mollie-credentials.php   # stored (encrypted) Mollie tokens, encryption on/off, token-refresh double
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
@@ -91,6 +92,17 @@ Canned behaviour, enough to complete a purchase:
 `fair-e2e-support.php` also forces `fair_payment_mode = test` and supplies a
 syntactically valid dummy API key via `pre_option_*` filters, so the real
 `MolliePaymentHandler` validates and runs against the double.
+
+The credential encryption specs (#1318) need the real stored tokens instead.
+`fair-e2e-mollie-credentials.php` exposes `fair-e2e/v1/mollie-credentials`:
+`POST { stored: true }` stops forcing the access token and its expiry, so the
+connector reads, refreshes and rewrites the stored, encrypted options;
+`supported: false` switches encryption support off through
+`fair_events_shared_encryption_supported`; `plaintext`, `tokens`, `expires`
+and `foreign_key` seed the stored values. While stored mode is on, the plugin
+also answers `https://fair-event-plugins.com/oauth/refresh` with a rotated
+token pair and records each refresh token it received. `GET` returns the raw
+stored values, their read status and the recorded refresh requests.
 
 ### How a test purchase flows end to end
 

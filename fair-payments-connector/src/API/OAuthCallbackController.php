@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\AuditLog\AuditLogger;
 use FairPaymentsConnector\OAuth\GrantedScopes;
+use FairPaymentsConnector\Payment\MollieCredentials;
 
 defined( 'WPINC' ) || die;
 
@@ -159,6 +160,16 @@ class OAuthCallbackController extends \WP_REST_Controller {
 			);
 		}
 
+		// Encrypted tokens are never replaced by plaintext: while encryption
+		// support is missing, the stored connection waits for its return.
+		if ( ! MollieCredentials::can_store() ) {
+			return new \WP_Error(
+				'mollie_credentials_locked',
+				__( 'The Mollie connection cannot be replaced while this server lacks the Sodium encryption support needed to store it. Ask your host to restore PHP Sodium support; the existing connection then resumes without reconnecting.', 'fair-payments-connector' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// An organization ID from a prior connection is our signal that this
 		// is a reconnect rather than a first-ever connection, independent of
 		// the current fair_payment_mollie_connected flag (which is also
@@ -173,6 +184,16 @@ class OAuthCallbackController extends \WP_REST_Controller {
 		update_option( 'fair_payment_mollie_profile_id', $request->get_param( 'profile_id' ) );
 		update_option( 'fair_payment_mollie_connected', true );
 		update_option( 'fair_payment_mode', $mode );
+
+		// A failed encryption keeps the previous tokens rather than storing
+		// plaintext; report it instead of claiming a connection.
+		if ( MollieCredentials::last_write_failed() ) {
+			return new \WP_Error(
+				'mollie_credentials_not_stored',
+				__( 'The Mollie authorization could not be stored securely. Please try connecting again.', 'fair-payments-connector' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		// The scopes belong to these tokens: record what Mollie granted, or
 		// forget the previous connection's when none were reported.

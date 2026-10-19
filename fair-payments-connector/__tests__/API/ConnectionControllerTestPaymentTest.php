@@ -114,6 +114,33 @@ class ConnectionControllerTestPaymentTest extends TestCase {
 	}
 
 	/**
+	 * #1318: with stored tokens that cannot be read, the preview, the test
+	 * payment and the status all say so, before any transaction exists; the
+	 * connection itself is kept, and the tokens never appear in the status.
+	 */
+	public function test_unreadable_credentials_are_refused_before_a_transaction() {
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_access_token']  = \FairEventsShared\Security\SecretBox::PREFIX . 'corrupted';
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_refresh_token'] = 'refresh_plain';
+
+		$controller = new ConnectionController();
+		$confirmed  = new \WP_REST_Request( array( 'confirmed' => $this->current_context() ) );
+
+		foreach ( array( $controller->get_test_payment_context(), $controller->create_test_payment( $confirmed ) ) as $result ) {
+			$this->assertInstanceOf( \WP_Error::class, $result );
+			$this->assertSame( 'mollie_credentials_unavailable', $result->get_error_code() );
+			$this->assertSame( 409, $result->get_error_data()['status'] );
+			$this->assertSame( 'unrecoverable', $result->get_error_data()['credential_status'] );
+		}
+
+		$status = $controller->get_oauth_status()->data;
+		$this->assertTrue( $status['connected'] );
+		$this->assertSame( 'unrecoverable', $status['credential_status'] );
+		$this->assertFalse( $status['payments_available'] );
+		$this->assertStringNotContainsString( 'corrupted', wp_json_encode( $status ) );
+		$this->assertStringNotContainsString( 'refresh_plain', wp_json_encode( $status ) );
+	}
+
+	/**
 	 * A live payment without a confirmation is refused, with the current
 	 * context for the dialog.
 	 */
