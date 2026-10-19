@@ -42,7 +42,7 @@ signUpButton.onclick = async () => {
 			document
 				.getElementById('creating-connected-account')
 				.classList.add('hidden');
-			document.getElementById('title').classList.add('hidden');
+			document.getElementById('title')?.classList.add('hidden');
 			document.getElementById('subtitle').classList.add('hidden');
 			document
 				.getElementById('add-information-title')
@@ -95,7 +95,7 @@ const parts = path.split('/');
 const route = parts[1];
 
 if (route === 'return') {
-	document.getElementById('title').classList.add('hidden');
+	document.getElementById('title')?.classList.add('hidden');
 	document.getElementById('subtitle').classList.add('hidden');
 	document.getElementById('sign-up-button').classList.add('hidden');
 	document

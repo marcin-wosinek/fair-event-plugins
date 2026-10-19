@@ -1,38 +1,17 @@
 <?php
+/**
+ * POST `{ account }`: create a Stripe onboarding link. Responds with `{ url }` or `{ error }`.
+ *
+ * @package MarcinWosinek\FairEventPluginsCom
+ */
 
-require_once './vendor/autoload.php';
-require_once './secrets.php';
+use MarcinWosinek\FairEventPluginsCom\Config;
+use MarcinWosinek\FairEventPluginsCom\Onboarding;
 
-header( 'Content-Type: application/json' );
+require_once __DIR__ . '/vendor/autoload.php';
 
-$stripe = new \Stripe\StripeClient(
-	array(
-		// This is your test secret API key.
-		'api_key' => $stripeSecretKey,
-	)
-);
-
-try {
-	$json               = file_get_contents( 'php://input' );
-	$data               = json_decode( $json );
-	$connectedAccountId = $data->account;
-
-	$account_link = $stripe->accountLinks->create(
-		array(
-			'account'     => $connectedAccountId,
-			'return_url'  => sprintf( 'http://localhost:4242/return/%s', $connectedAccountId ),
-			'refresh_url' => sprintf( 'http://localhost:4242/refresh/%s', $connectedAccountId ),
-			'type'        => 'account_onboarding',
-		)
-	);
-
-	echo json_encode(
-		array(
-			'url' => $account_link->url,
-		)
-	);
-} catch ( Exception $e ) {
-	error_log( "An error occurred when calling the Stripe API to create an account link: {$e->getMessage()}" );
-	http_response_code( 500 );
-	echo json_encode( array( 'error' => $e->getMessage() ) );
-}
+Onboarding::create_account_link(
+	$_SERVER['REQUEST_METHOD'] ?? '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared against a literal.
+	(string) file_get_contents( 'php://input' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Raw request body; validated by Onboarding.
+	Config::from_environment( __DIR__ )
+)->send();
