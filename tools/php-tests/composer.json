@@ -1,0 +1,22 @@
+{
+	"name": "fair-event-plugins/php-tests",
+	"description": "Isolated PHP test tooling shared by the Fair Event Plugins workspaces",
+	"type": "project",
+	"license": "GPL-3.0-or-later",
+	"require": {
+		"php": ">=8.4.1",
+		"phpcompatibility/php-compatibility": "10.0.0-alpha2",
+		"phpcompatibility/phpcompatibility-paragonie": "2.0.0-alpha2",
+		"phpcompatibility/phpcompatibility-wp": "3.0.0-alpha2",
+		"phpunit/phpunit": "^13.4"
+	},
+	"config": {
+		"platform": {
+			"php": "8.4.1"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"sort-packages": true
+	}
+}

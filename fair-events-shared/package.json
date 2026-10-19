@@ -7,7 +7,8 @@
 	"private": true,
 	"scripts": {
 		"format": "wp-scripts format",
-		"test": "jest"
+		"test": "jest",
+		"test:js": "jest"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.7",

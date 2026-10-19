@@ -9,6 +9,8 @@ namespace FairEvents\Tests\Notifications;
 
 use FairEvents\Notifications\Ownership;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Who runs each notification channel, for every legacy-plugin state.
@@ -61,10 +63,9 @@ class OwnershipTest extends TestCase {
 
 	/**
 	 * An active release without the handoff suspends an owned channel.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_an_older_legacy_release_suspends_its_channel_only() {
 		Ownership::mark_migrated( Ownership::TELEGRAM );
 		Ownership::mark_migrated( Ownership::BULK_EMAIL );

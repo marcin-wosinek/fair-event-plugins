@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\API;
 
 use FairPaymentsConnector\API\ConnectionController;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * A test payment in live mode is created only for the context the
@@ -156,11 +157,10 @@ class ConnectionControllerTestPaymentTest extends TestCase {
 	/**
 	 * Each confirmed field that no longer matches refuses the payment.
 	 *
-	 * @dataProvider changed_fields
-	 *
 	 * @param string $field Field that changed since the confirmation.
 	 * @param string $value Value the administrator confirmed.
 	 */
+	#[DataProvider( 'changed_fields' )]
 	public function test_changed_context_is_refused( $field, $value ) {
 		$confirmed           = $this->current_context();
 		$confirmed[ $field ] = $value;

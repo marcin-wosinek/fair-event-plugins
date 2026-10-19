@@ -24,7 +24,7 @@
 		"test:api": "playwright test src/API/__tests__/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-finance svn",
 		"svn:copy": "cp -r readme.txt fair-finance.php composer* languages CHANGELOG.md svn/trunk",
-		"test:php": "vendor/bin/phpunit"
+		"test:php": "node ../scripts/php-test-runner.mjs"
 	},
 	"devDependencies": {
 		"@babel/core": "^8.0.7",

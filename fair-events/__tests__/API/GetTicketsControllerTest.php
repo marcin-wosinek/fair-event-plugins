@@ -10,6 +10,7 @@ namespace FairEvents\Tests\API;
 use FairEvents\API\GetTicketsController;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Regression coverage for persisted signup email recovery.
@@ -23,10 +24,7 @@ class GetTicketsControllerTest extends TestCase {
 	 */
 	private function resolve_email( $emails ) {
 		$method = new ReflectionMethod( GetTicketsController::class, 'resolve_retry_buyer_email' );
-		if ( PHP_VERSION_ID < 80100 ) {
-			$method->setAccessible( true );
-		}
-		$rows = array_map(
+		$rows   = array_map(
 			static function ( $email ) {
 				return (object) array( 'email' => $email );
 			},
@@ -49,9 +47,9 @@ class GetTicketsControllerTest extends TestCase {
 	/**
 	 * Missing, invalid, sanitized-different, and inconsistent emails fail safe.
 	 *
-	 * @dataProvider invalid_email_sets
 	 * @param string[] $emails Invalid signup email values.
 	 */
+	#[DataProvider( 'invalid_email_sets' )]
 	public function test_rejects_unreliable_retry_email_context( $emails ) {
 		$result = $this->resolve_email( $emails );
 
@@ -67,10 +65,7 @@ class GetTicketsControllerTest extends TestCase {
 	public function test_reports_no_newsletter_consent_without_fair_audience() {
 		$this->assertFalse( class_exists( \FairAudience\Database\ParticipantRepository::class ) );
 
-		$method = new ReflectionMethod( GetTicketsController::class, 'resolve_newsletter_consent' );
-		if ( PHP_VERSION_ID < 80100 ) {
-			$method->setAccessible( true );
-		}
+		$method     = new ReflectionMethod( GetTicketsController::class, 'resolve_newsletter_consent' );
 		$cache      = array();
 		$controller = new GetTicketsController();
 

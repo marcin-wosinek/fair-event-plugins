@@ -2,9 +2,9 @@
 
 The deployment workflow uses a reusable workflow architecture:
 
--   **`.github/workflows/continuous-integration.yml`** - Builds all plugin ZIPs, runs tests, and creates the Changesets release PR / GitHub release
--   **`.github/workflows/deploy-from-release.yml`** - Triggered when a `build-X.Y.Z` release is published (or manually via workflow_dispatch); has one job per target site that calls the reusable workflow
--   **`.github/workflows/deploy-to-environment.yml`** - Reusable workflow containing all deployment logic
+- **`.github/workflows/continuous-integration.yml`** - Builds all plugin ZIPs, runs tests, and creates the Changesets release PR / GitHub release. The release jobs wait for the build, the PHPUnit matrix (`php-tests`) and the minimum-PHP checks (`php-runtime`); see [TESTING.md § PHP versions](./TESTING.md#php-versions)
+- **`.github/workflows/deploy-from-release.yml`** - Triggered when a `build-X.Y.Z` release is published (or manually via workflow_dispatch); has one job per target site that calls the reusable workflow
+- **`.github/workflows/deploy-to-environment.yml`** - Reusable workflow containing all deployment logic
 
 It uses GitHub Environments to configure deployment targets.
 
@@ -12,16 +12,16 @@ It uses GitHub Environments to configure deployment targets.
 
 You need to configure environments in GitHub:
 
--   **Settings** → **Environments** → **New environment**
+- **Settings** → **Environments** → **New environment**
 
 ### Required variables (all environments)
 
--   `PLUGINS_TO_DEPLOY` — `all` or a comma-separated list (e.g. `fair-events,fair-payments-connector`)
--   `SSH_HOST` — SSH hostname
--   `SSH_PORT` — SSH port (e.g. `22`)
--   `SSH_KNOWN_HOSTS` — SSH known hosts entry for the server
--   `SSH_USER` — SSH username
--   `WORDPRESS_PLUGINS_PATH` — absolute path to the WordPress plugins directory
+- `PLUGINS_TO_DEPLOY` — `all` or a comma-separated list (e.g. `fair-events,fair-payments-connector`)
+- `SSH_HOST` — SSH hostname
+- `SSH_PORT` — SSH port (e.g. `22`)
+- `SSH_KNOWN_HOSTS` — SSH known hosts entry for the server
+- `SSH_USER` — SSH username
+- `WORDPRESS_PLUGINS_PATH` — absolute path to the WordPress plugins directory
 
 ### Optional variable: `AUTO_DEPLOY_ON_RELEASE`
 
@@ -33,7 +33,7 @@ Leave this variable unset (or set it to any value other than `true`) on client s
 
 ### Secrets (all environments)
 
--   `SSH_PRIVATE_KEY` — SSH private key for deployment
+- `SSH_PRIVATE_KEY` — SSH private key for deployment
 
 ### Per-environment notes
 
@@ -47,26 +47,26 @@ Leave this variable unset (or set it to any value other than `true`) on client s
 
 ### 1. Automatic Deployment (on release publish)
 
--   Merging the Changesets release PR publishes a `build-X.Y.Z` GitHub release
-    (see [RELEASES.md](./RELEASES.md))
--   `deploy-from-release.yml` runs; environments with
-    `AUTO_DEPLOY_ON_RELEASE=true` deploy automatically, in parallel
--   Each environment deploys only the plugins specified in `PLUGINS_TO_DEPLOY`
+- Merging the Changesets release PR publishes a `build-X.Y.Z` GitHub release
+  (see [RELEASES.md](./RELEASES.md))
+- `deploy-from-release.yml` runs; environments with
+  `AUTO_DEPLOY_ON_RELEASE=true` deploy automatically, in parallel
+- Each environment deploys only the plugins specified in `PLUGINS_TO_DEPLOY`
 
 ### 2. Manual Deployment (workflow_dispatch)
 
--   Go to **Actions** → **Deploy from release** → **Run workflow**
--   Enter the release tag to deploy (e.g. `build-1.0.0`) and tick the checkbox
-    for each target site
--   Uses the same `PLUGINS_TO_DEPLOY` configuration from each environment
+- Go to **Actions** → **Deploy from release** → **Run workflow**
+- Enter the release tag to deploy (e.g. `build-1.0.0`) and tick the checkbox
+  for each target site
+- Uses the same `PLUGINS_TO_DEPLOY` configuration from each environment
 
 ### 3. Plugin Selection
 
--   Set `PLUGINS_TO_DEPLOY` variable in each environment
--   Use `all` to deploy every deployable plugin, or a comma-separated list
-    (e.g. `fair-events,fair-payments-connector`); spaces are trimmed
--   The authoritative `all` list lives in
-    `.github/workflows/deploy-to-environment.yml` (the `PLUGINS=` default)
+- Set `PLUGINS_TO_DEPLOY` variable in each environment
+- Use `all` to deploy every deployable plugin, or a comma-separated list
+  (e.g. `fair-events,fair-payments-connector`); spaces are trimmed
+- The authoritative `all` list lives in
+  `.github/workflows/deploy-to-environment.yml` (the `PLUGINS=` default)
 
 ## Workflow Architecture
 
@@ -133,12 +133,12 @@ Upgrading to fair-events DB version `3.36.0` and fair-audience DB version
 `1.44.0` permanently deletes the retired event gallery's data on the first
 request after deploy:
 
--   tables `{prefix}fair_events_event_photos`, `{prefix}fair_events_photo_likes`
-    and `{prefix}fair_audience_gallery_access_keys`;
--   the `fair_events_bulk_upload_event` user meta;
--   the `galleries` key of `fair_events_experimental_features`, and of
-    `fair_audience_experimental_features` (its value moves to the new
-    `photos` key).
+- tables `{prefix}fair_events_event_photos`, `{prefix}fair_events_photo_likes`
+  and `{prefix}fair_audience_gallery_access_keys`;
+- the `fair_events_bulk_upload_event` user meta;
+- the `galleries` key of `fair_events_experimental_features`, and of
+  `fair_audience_experimental_features` (its value moves to the new
+  `photos` key).
 
 Media attachments and files, `{prefix}fair_audience_photo_participants`
 (photo authors/tags), events and participants are not touched. A site that
@@ -167,11 +167,11 @@ flush permalinks (`wp rewrite flush`) so `/event-gallery/{id}` resolves again.
 Upgrading to fair-audience DB version `1.46.0` permanently deletes the photo
 attribution data on the first request after deploy:
 
--   the table `{prefix}fair_audience_photo_participants` (who took and who
-    appears in each photo);
--   the `fair_audience_bulk_upload_author` and `fair_audience_bulk_upload_tags`
-    user meta;
--   the `photos` key of `fair_audience_experimental_features`.
+- the table `{prefix}fair_audience_photo_participants` (who took and who
+  appears in each photo);
+- the `fair_audience_bulk_upload_author` and `fair_audience_bulk_upload_tags`
+  user meta;
+- the `photos` key of `fair_audience_experimental_features`.
 
 Media attachments and their files, posts that use them, events and
 participants are not touched. The Photos bundle no longer exists, so a
@@ -210,9 +210,9 @@ The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release o
 
 Manual only — **Actions → Publish to WordPress.org SVN → Run workflow**. Inputs:
 
--   `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
--   `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
--   `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
+- `plugin` — one of `fair-events`, `fair-audience`, `fair-timetable`.
+- `version` — semver string (e.g. `1.2.3`). Validated against `^[0-9]+\.[0-9]+\.[0-9]+$`; the workflow fails fast on anything else.
+- `dry_run` — defaults to `true`. When `true`, the workflow performs every step except the final `svn ci` and prints `svn status` so you can confirm the staged changes.
 
 The workflow checks out the matching git tag (`<plugin>@<version>`) so the build matches the released commit, not whatever is on `main`.
 
@@ -220,8 +220,8 @@ The workflow checks out the matching git tag (`<plugin>@<version>`) so the build
 
 Configure these as **repository secrets** (Settings → Secrets and variables → Actions):
 
--   `WPORG_SVN_USERNAME` — WordPress.org committer username.
--   `WPORG_SVN_PASSWORD` — committer password (or app password, if configured on wordpress.org).
+- `WPORG_SVN_USERNAME` — WordPress.org committer username.
+- `WPORG_SVN_PASSWORD` — committer password (or app password, if configured on wordpress.org).
 
 The password is only exposed as an env var on the `svn ci` step; it is never passed through workflow `with:` inputs.
 

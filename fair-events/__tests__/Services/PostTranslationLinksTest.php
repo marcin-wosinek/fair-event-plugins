@@ -9,6 +9,8 @@ namespace FairEvents\Tests\Services;
 
 use FairEvents\Services\PostTranslationLinks;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Covers defensive Polylang translation-group resolution.
@@ -27,10 +29,10 @@ class PostTranslationLinksTest extends TestCase {
 	/**
 	 * Normalizes IDs, removes duplicates, and keeps the request first.
 	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 * @return void
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_resolve_group_normalizes_complete_polylang_result() {
 		require dirname( __DIR__ ) . '/pll-stubs.php';
 		$GLOBALS['_fair_pll_translation_groups'][42] = array(
@@ -47,10 +49,10 @@ class PostTranslationLinksTest extends TestCase {
 	/**
 	 * Missing and malformed Polylang results retain singleton behavior.
 	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 * @return void
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_resolve_group_handles_malformed_or_incomplete_results() {
 		require dirname( __DIR__ ) . '/pll-stubs.php';
 		$GLOBALS['_fair_pll_translation_groups'][42] = false;
@@ -66,10 +68,10 @@ class PostTranslationLinksTest extends TestCase {
 	/**
 	 * An already-active group returns before attempting any link mutations.
 	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 * @return void
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_saved_post_sync_has_group_reentrancy_protection() {
 		require dirname( __DIR__ ) . '/pll-stubs.php';
 		$GLOBALS['_fair_pll_posts'][42]              = (object) array(
@@ -82,9 +84,6 @@ class PostTranslationLinksTest extends TestCase {
 		);
 
 		$syncing = new \ReflectionProperty( PostTranslationLinks::class, 'syncing' );
-		if ( PHP_VERSION_ID < 80100 ) {
-			$syncing->setAccessible( true );
-		}
 		$syncing->setValue( null, array( '42:43' => true ) );
 
 		PostTranslationLinks::sync_saved_post( 42 );

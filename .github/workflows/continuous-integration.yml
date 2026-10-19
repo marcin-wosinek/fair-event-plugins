@@ -46,9 +46,9 @@ jobs:
                       ./fair-audience-experimental/vendor
                       ./fair-calendar-button/vendor
                       ./vendor
-                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                  key: ${{ runner.os }}-php8.3-${{ hashFiles('**/composer.lock', '**/composer.json', '!**/vendor/**', '!**/node_modules/**') }}
                   restore-keys: |
-                      ${{ runner.os }}-php-
+                      ${{ runner.os }}-php8.3-
 
             - name: Setup Node.js
               uses: actions/setup-node@v6
@@ -152,9 +152,15 @@ jobs:
             - name: Reject browser-native popups
               run: npm run validate:native-popups
 
-            - name: Run unit tests
+            - name: Check PHP compatibility declarations
+              run: npm run validate:php-compat
+
+            # PHPUnit runs in the php-tests matrix, so the JavaScript suites
+            # and artifacts are produced only once.
+            - name: Run JavaScript and tooling tests
               run: |
-                  npm test
+                  npm run test:js
+                  npm run test:tooling
 
             - name: Upload plugins
               uses: actions/upload-artifact@v6
@@ -164,10 +170,102 @@ jobs:
                   retention-days: 7
                   if-no-files-found: error
 
+    php-tests:
+        name: PHP tests (PHP ${{ matrix.php }})
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                # PHPUnit 13 requires PHP 8.4+; see TESTING.md § PHP versions.
+                php: ['8.4', '8.5']
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
+              with:
+                  php-version: ${{ matrix.php }}
+                  extensions: mbstring, intl, zip, gd, pcntl
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+
+            - name: Get Composer cache directory
+              id: composer-cache-dir
+              run: echo "dir=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache Composer downloads
+              uses: actions/cache@v5
+              with:
+                  path: ${{ steps.composer-cache-dir.outputs.dir }}
+                  key: ${{ runner.os }}-composer-php${{ matrix.php }}-${{ hashFiles('**/composer.lock', '**/composer.json', '!**/vendor/**', '!**/node_modules/**') }}
+                  restore-keys: |
+                      ${{ runner.os }}-composer-php${{ matrix.php }}-
+
+            - name: Validate PHP test tooling
+              run: composer validate --strict --working-dir=tools/php-tests
+
+            - name: Install PHP test tooling
+              run: npm run test:php:install
+
+            - name: Install PHP dependencies in all plugins
+              run: npm run composer:install
+
+            - name: Run PHP tests
+              run: npm run test:php
+
+            # Static analysis, independent of the PHP running it: one leg is enough.
+            - name: Check shipped PHP against declared minimums
+              if: matrix.php == '8.4'
+              run: npm run test:php:compat
+
+    php-runtime:
+        name: PHP ${{ matrix.php }} runtime compatibility
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                # One leg per minimum in scripts/php-compat.mjs POLICY.
+                php: ['7.4', '8.0', '8.2']
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@fcafdd6392932010c2bd5094439b8e33be2a8a09 # 2.37.0
+              with:
+                  php-version: ${{ matrix.php }}
+                  extensions: mbstring, intl, zip, gd
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+
+            - name: Get Composer cache directory
+              id: composer-cache-dir
+              run: echo "dir=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache Composer downloads
+              uses: actions/cache@v5
+              with:
+                  path: ${{ steps.composer-cache-dir.outputs.dir }}
+                  key: ${{ runner.os }}-composer-php${{ matrix.php }}-${{ hashFiles('**/composer.lock', '**/composer.json', '!**/vendor/**', '!**/node_modules/**') }}
+                  restore-keys: |
+                      ${{ runner.os }}-composer-php${{ matrix.php }}-
+
+            - name: Install, platform-check, lint and autoload production code
+              run: node scripts/php-compat.mjs runtime --minimum=${{ matrix.php }}
+
     release:
         name: Create Release PR
         runs-on: ubuntu-latest
-        needs: [build]
+        needs: [build, php-tests, php-runtime]
         if: github.ref == 'refs/heads/main'
         permissions:
             contents: write
@@ -217,7 +315,7 @@ jobs:
     general-release:
         name: General release
         runs-on: ubuntu-latest
-        needs: [build]
+        needs: [build, php-tests, php-runtime]
         if: github.ref == 'refs/heads/main'
         permissions:
             contents: write

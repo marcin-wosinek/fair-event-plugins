@@ -55,6 +55,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/fair-audience.php`
 
 **Key points:**
+
 - Version must match `package.json`
 - Text Domain must match plugin slug (directory name)
 - Namespace should be PascalCase version of plugin slug
@@ -66,6 +67,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/package.json`
 
 **Key points:**
+
 - `"type": "module"` is required for ES modules
 - `build` script must run `makejson` after building for translation JSON files
 - `makejson` requires `--use-map=build/map.json` for correct translation hashes
@@ -77,15 +79,22 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/composer.json`
 
 **Key points:**
+
 - PSR-4 autoloading: `FairPluginName\\` → `src/`
 - Namespace must match directory names (case-sensitive on Linux)
-- PHP version requirement should match main plugin file
+- `require.php` and `config.platform.php` match the plugin's PHP minimum, and
+  the plugin has an entry in `POLICY` in `scripts/php-compat.mjs`
+  (`npm run validate:php-compat` checks them; see
+  [PHP_PATTERNS.md § Supported PHP Versions](./PHP_PATTERNS.md#supported-php-versions))
+- No `phpunit/phpunit` in `require-dev`: PHP suites use the shared
+  `tools/php-tests` install (see [TESTING.md](./TESTING.md#php-unit-tests))
 
 ### 4. webpack.config.cjs
 
 **Reference**: `fair-audience/webpack.config.cjs`
 
 **Key points:**
+
 - Extends `@wordpress/scripts` default configuration
 - Add custom entries for admin pages
 - `BundleOutputPlugin` is **required** for translation system
@@ -94,6 +103,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 ### 5. .gitignore and .distignore
 
 **References**:
+
 - `fair-audience/.gitignore`
 - `fair-audience/.distignore`
 
@@ -104,6 +114,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/readme.txt`
 
 **Key points:**
+
 - `Stable tag` must match version in `package.json` and main PHP file
 - Use Markdown formatting for readability
 - Keep synchronization with `CHANGELOG.md`
@@ -113,6 +124,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/CHANGELOG.md`
 
 **Key points:**
+
 - Follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
 - Version headers must be `## [X.Y.Z]` format
 - Synced to readme.txt via `npm run sync-wp-versions`
@@ -122,6 +134,7 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 **Reference**: `fair-audience/src/Core/Plugin.php`
 
 **Key points:**
+
 - Singleton pattern for main plugin class
 - Register hooks in `init()` method
 - Namespace: `FairPluginName\Core`
@@ -129,11 +142,13 @@ The `fair-audience` plugin contains every required file, so it is the reference 
 ### 9. Test Configuration Files
 
 **References**:
+
 - `fair-audience/jest.config.js` - Jest configuration
 - `fair-audience/__tests__/example.test.js` - Example test file
 - `fair-audience/playwright.config.js` - Playwright configuration
 
 **Key points for Jest:**
+
 - Use `@wordpress/jest-preset-default` preset (included with `@wordpress/scripts`)
 - Set `setupFilesAfterEnv: []` (empty array, not referencing a setup file)
 - Configure `testMatch` to find test files in `__tests__/` directories
@@ -147,6 +162,7 @@ See [TESTING.md](./TESTING.md) for complete testing architecture.
 When adding a new plugin, you must update these files in the monorepo root:
 
 **Quick reference** - files to update:
+
 1. `/package.json` - Add to workspaces, scripts (start, format:php, dist-archive, svn:tag, svn:rm)
 2. `/.github/workflows/continuous-integration.yml` - Add vendor cache path
 3. `/.github/workflows/deploy-to-environment.yml` - Add to deployment plugin list (if applicable)
@@ -159,6 +175,7 @@ When adding a new plugin, you must update these files in the monorepo root:
 **Location**: `/package.json`
 
 Add plugin to:
+
 - `workspaces` array (line ~961-974)
 - `start` script - append `& npm run start --workspace=fair-plugin-name` (line ~27)
 - `format:php` script - append plugin path (line ~30)
@@ -189,6 +206,7 @@ Add the plugin to the default `PLUGINS` list (line ~75) **only if** the plugin s
 **Location**: `/compose.yml`
 
 Add plugin volume mount to **both** services:
+
 - `wordpress` service (line ~14-24)
 - `wpcli` service (line ~52-64)
 
@@ -353,6 +371,7 @@ svn commit -m "Tagging version 0.1.0"
 Use this checklist when adding a new plugin:
 
 ### Plugin Files
+
 - [ ] Create plugin directory: `fair-plugin-name/`
 - [ ] Copy and adapt files from `fair-audience/` reference plugin
 - [ ] Update all instances of "fair-audience" to "fair-plugin-name"
@@ -361,6 +380,7 @@ Use this checklist when adding a new plugin:
 - [ ] Set up directory structure (`src/`, `languages/`, `assets/`, `__tests__/`, `e2e/`)
 
 ### Root Monorepo Updates
+
 - [ ] Add to `/package.json` workspaces array
 - [ ] Add to `/package.json` start script
 - [ ] Add to `/package.json` format:php script
@@ -375,6 +395,7 @@ Use this checklist when adding a new plugin:
 - [ ] Add to `/scripts/sync-changelog.js` plugins array
 
 ### Build and Translation
+
 - [ ] Run `npm install` in root directory
 - [ ] Run `composer install` in plugin directory
 - [ ] Run `npm run build --workspace=fair-plugin-name`
@@ -385,17 +406,20 @@ Use this checklist when adding a new plugin:
 - [ ] Verify `build/languages/*.json` files are generated
 
 ### Testing
+
 - [ ] Create `__tests__/example.test.js` with basic passing test (copy from `fair-audience`)
 - [ ] Run `npm test --workspace=fair-plugin-name`
 - [ ] Verify test passes successfully
 
 ### Version Control
+
 - [ ] Create initial changeset: `npx changeset`
 - [ ] Commit all files to git
 - [ ] Verify `.gitignore` excludes `build/`, `vendor/`, `node_modules/`, `svn/`
 - [ ] Push to repository
 
 ### WordPress.org (when ready)
+
 - [ ] Create plugin on WordPress.org
 - [ ] Run `npm run svn:checkout`
 - [ ] Run `npm run svn:copy`
@@ -410,6 +434,7 @@ Use this checklist when adding a new plugin:
 **Problem**: PSR-4 autoloading works on macOS but fails on Linux.
 
 **Solution**: Ensure namespace casing matches directory structure:
+
 - Namespace: `FairPluginName\API\ResourceController`
 - Directory: `src/API/ResourceController.php` (uppercase "API")
 
@@ -418,6 +443,7 @@ Use this checklist when adding a new plugin:
 **Problem**: JavaScript translations don't load (hash mismatch).
 
 **Solution**:
+
 1. Add `webpack-bundle-output` plugin to webpack config (see `fair-audience/webpack.config.cjs`)
 2. Use `--use-map=build/map.json` in `makejson` script (see `fair-audience/package.json`)
 3. Run `npm run build` after updating translations
@@ -427,6 +453,7 @@ Use this checklist when adding a new plugin:
 **Problem**: `vendor/` or `node_modules/` not included in distribution.
 
 **Solution**:
+
 1. Run `npm run composer:install:prod` before `dist-archive`
 2. Run `npm run build` before `dist-archive`
 3. Verify `.distignore` includes `!/build/` and `!/vendor/` (negated patterns)
@@ -449,6 +476,7 @@ add_action( 'admin_menu', array( $this, 'register_admin_pages' ), 11 );
 **Problem**: Custom endpoints (OAuth, REST API) return 404.
 
 **Solution**:
+
 1. Flush rewrite rules on activation: `flush_rewrite_rules()`
 2. Deactivate and reactivate plugin in WordPress admin
 3. Check rewrite rules: `wp rewrite list` (via WP-CLI)

@@ -13,6 +13,8 @@ use FairEvents\Notifications\Migration;
 use FairEvents\Notifications\TelegramDispatcher;
 use FairEvents\Notifications\TelegramSettings;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 require_once __DIR__ . '/fakes/FakeDeliveryLog.php';
 
@@ -156,10 +158,9 @@ class MigrationTest extends TestCase {
 
 	/**
 	 * A summary an active, updated Fair Events Experimental was sending stays on.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_telegram_that_was_running_stays_on() {
 		define( 'FAIR_EVENTS_EXPERIMENTAL_VERSION', '1.12.0' );
 		define( 'FAIR_EVENTS_EXPERIMENTAL_NOTIFICATIONS_HANDOFF', true );
@@ -278,10 +279,9 @@ class MigrationTest extends TestCase {
 
 	/**
 	 * A weekly email an active, updated Fair Audience was sending stays on.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_bulk_email_that_was_running_stays_on() {
 		define( 'FAIR_AUDIENCE_VERSION', '1.20.0' );
 		define( 'FAIR_AUDIENCE_EVENT_NOTIFICATIONS_HANDOFF', true );

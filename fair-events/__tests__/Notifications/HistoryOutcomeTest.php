@@ -9,6 +9,7 @@ namespace FairEvents\Tests\Notifications;
 
 use FairEvents\Notifications\HistoryOutcome;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * How an execution's outcome follows from its deliveries.
@@ -38,7 +39,7 @@ class HistoryOutcomeTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function cases() {
+	public static function cases() {
 		return array(
 			'all accepted'                        => array( self::counts( 3, 0, 0, 0 ), HistoryOutcome::SUCCESS ),
 			'accepted with consent exclusions'    => array( self::counts( 3, 0, 5, 0 ), HistoryOutcome::SUCCESS ),
@@ -55,10 +56,10 @@ class HistoryOutcomeTest extends TestCase {
 	/**
 	 * Aggregation.
 	 *
-	 * @dataProvider cases
 	 * @param array  $counts   Counts.
 	 * @param string $expected Outcome.
 	 */
+	#[DataProvider( 'cases' )]
 	public function test_aggregate( array $counts, $expected ) {
 		$this->assertSame( $expected, HistoryOutcome::aggregate( $counts ) );
 	}

@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\API;
 
 use FairPaymentsConnector\API\TransactionAPI;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * TransactionAPI::create_transaction() charges the canonical total of its
@@ -177,7 +178,7 @@ class TransactionAPILineItemsTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function non_positive_totals(): array {
+	public static function non_positive_totals(): array {
 		return array(
 			'exact cancellation' => array(
 				array(
@@ -217,10 +218,9 @@ class TransactionAPILineItemsTest extends TestCase {
 	/**
 	 * Zero and negative totals are refused: nothing is written.
 	 *
-	 * @dataProvider non_positive_totals
-	 *
 	 * @param array[] $line_items Line items.
 	 */
+	#[DataProvider( 'non_positive_totals' )]
 	public function test_refuses_non_positive_totals( $line_items ) {
 		$this->assertRefused( 'invalid_transaction_total', TransactionAPI::create_transaction( $line_items ) );
 	}
@@ -230,7 +230,7 @@ class TransactionAPILineItemsTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function invalid_quantities(): array {
+	public static function invalid_quantities(): array {
 		return array(
 			'zero'         => array( 0 ),
 			'negative'     => array( -1 ),
@@ -242,10 +242,9 @@ class TransactionAPILineItemsTest extends TestCase {
 	/**
 	 * A quantity is a positive whole number.
 	 *
-	 * @dataProvider invalid_quantities
-	 *
 	 * @param mixed $quantity Quantity to refuse.
 	 */
+	#[DataProvider( 'invalid_quantities' )]
 	public function test_refuses_invalid_quantities( $quantity ) {
 		$this->assertRefused(
 			'invalid_line_item_quantity',
@@ -289,7 +288,7 @@ class TransactionAPILineItemsTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function invalid_amounts(): array {
+	public static function invalid_amounts(): array {
 		return array(
 			'infinite'          => array( INF ),
 			'negative infinite' => array( -INF ),
@@ -303,10 +302,9 @@ class TransactionAPILineItemsTest extends TestCase {
 	/**
 	 * An amount is a finite number.
 	 *
-	 * @dataProvider invalid_amounts
-	 *
 	 * @param mixed $amount Amount to refuse.
 	 */
+	#[DataProvider( 'invalid_amounts' )]
 	public function test_refuses_non_finite_amounts( $amount ) {
 		$this->assertRefused(
 			'invalid_line_item_amount',

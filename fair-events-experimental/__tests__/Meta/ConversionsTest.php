@@ -9,6 +9,7 @@ namespace FairEventsExperimental\Tests\Meta;
 
 use FairEventsExperimental\Meta\Conversions;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /** Covers privacy-sensitive pure conversion transformations. */
 class ConversionsTest extends TestCase {
@@ -492,11 +493,11 @@ class ConversionsTest extends TestCase {
 	/**
 	 * HTTP success alone is never treated as received; it is unconfirmed and retryable.
 	 *
-	 * @dataProvider unconfirmed_responses
 	 * @param string   $body     Response body.
 	 * @param string   $code     Expected code.
 	 * @param int|null $received Expected events_received diagnostic.
 	 */
+	#[DataProvider( 'unconfirmed_responses' )]
 	public function test_unconfirmed_success_is_not_accepted( $body, $code, $received ) {
 		$this->configure_credentials();
 		$GLOBALS['_fair_test_remote_post_response'] = $this->meta_response( 200, $body );

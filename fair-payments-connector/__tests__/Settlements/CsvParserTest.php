@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Settlements\CsvParser;
 use FairPaymentsConnector\Settlements\CsvValidationException;
 use FairPaymentsConnector\Settlements\Movements;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for CsvParser.
@@ -200,7 +201,7 @@ class CsvParserTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function invalid_files() {
+	public static function invalid_files() {
 		$row = ',ideal,EUR,10.00,paid,tr_invalid0001,Ticket,EUR,10.00,REF.1';
 
 		return array(
@@ -224,12 +225,11 @@ class CsvParserTest extends TestCase {
 	/**
 	 * An invalid file is refused with an actionable problem and its row.
 	 *
-	 * @dataProvider invalid_files
-	 *
 	 * @param string   $contents File contents.
 	 * @param string   $code     Expected problem code.
 	 * @param int|null $row      Expected row, when the problem is in one row.
 	 */
+	#[DataProvider( 'invalid_files' )]
 	public function test_invalid_file_is_refused( $contents, $code, $row ) {
 		$errors = $this->errors_for( $contents );
 

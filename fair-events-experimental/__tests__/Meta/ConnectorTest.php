@@ -10,6 +10,8 @@ namespace FairEventsExperimental\Tests\Meta;
 use FairEventsExperimental\Meta\Connector;
 use FairEventsExperimental\Meta\Conversions;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 /**
  * Tests credential resolution, source precedence, write validation and the
@@ -127,10 +129,9 @@ class ConnectorTest extends TestCase {
 
 	/**
 	 * The constant overrides the saved token, and the environment variable overrides the constant.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
 	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_constant_sits_between_environment_and_database() {
 		self::save( self::SAVED );
 		define( Connector::CREDENTIAL_NAME, self::OVERRIDE );

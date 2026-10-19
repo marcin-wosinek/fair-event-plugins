@@ -209,9 +209,6 @@ class EventInvitationRecipientsTest extends TestCase {
 	 */
 	private function set_private( $target, $name, $value ) {
 		$property = new \ReflectionProperty( EmailService::class, $name );
-		if ( PHP_VERSION_ID < 80100 ) {
-			$property->setAccessible( true );
-		}
 		$property->setValue( $target, $value );
 	}
 

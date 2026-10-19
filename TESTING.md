@@ -18,14 +18,14 @@ supporting workflows rather than additional test types.
 
 ### Naming and placement
 
--   Match unit and component test names to their source files.
--   Use uppercase `API/` for REST controllers and keep API specs beside them in
-    `src/API/__tests__/`.
--   Put browser tests in `e2e/`; use subdirectories when they make a suite easier
-    to navigate.
--   Use `.api.spec.js` only for REST API specs and `.spec.js` for E2E specs. This
-    keeps Playwright discovery unambiguous.
--   Shared helpers may live in a nearby `__tests__/helpers/` directory.
+- Match unit and component test names to their source files.
+- Use uppercase `API/` for REST controllers and keep API specs beside them in
+  `src/API/__tests__/`.
+- Put browser tests in `e2e/`; use subdirectories when they make a suite easier
+  to navigate.
+- Use `.api.spec.js` only for REST API specs and `.spec.js` for E2E specs. This
+  keeps Playwright discovery unambiguous.
+- Shared helpers may live in a nearby `__tests__/helpers/` directory.
 
 ## Unit and component tests
 
@@ -67,26 +67,91 @@ database. It is also useful for regression tests at boundaries that are hard or
 unsafe to reach through an API spec, such as arguments passed to a third-party
 SDK client.
 
-The repository uses plain PHPUnit: no Brain Monkey, WP_Mock, or Mockery. A
-workspace with PHP tests follows this convention:
+The repository uses plain PHPUnit 13: no Brain Monkey, WP_Mock, or Mockery.
+PHPUnit is installed once, in the isolated Composer project
+`tools/php-tests/`, and never in a workspace's `require-dev`. Each suite
+still loads only its own workspace's production autoloader, so plugin
+dependency graphs stay separate.
 
--   `phpunit.xml` points to `__tests__/bootstrap.php` and discovers
-    `__tests__/**/*Test.php`.
--   Tests use a `Fair…\Tests\…` namespace mirroring the namespace under `src/`.
--   The bootstrap loads Composer, defines `WPINC`, and provides only the small
-    WordPress function stubs needed by the code under test.
--   If the subject uses `$wpdb`, provide the smallest useful fake rather than
-    adding a database library.
--   `npm run test:php` invokes `vendor/bin/phpunit`; `composer test` may provide
-    the same entry point.
+```bash
+npm run test:php:install                          # once, and after tools/php-tests/composer.lock changes
+(cd fair-events && composer install)              # each workspace you test
+npm run test:php                                  # every PHP suite
+npm run test:php -- --workspace=fair-events       # one suite (repeatable)
+npm run test:php -w fair-events -- --filter Signup # from npm's workspace flag, PHPUnit options after --
+PHP_BINARY=/path/to/php8.4 npm run test:php       # a specific PHP binary
+```
+
+The runner (`scripts/php-test-runner.mjs`) runs the suite of the workspace
+it is started from, or every suite when started from the repository root.
+
+A workspace with PHP tests follows this convention:
+
+- `phpunit.xml` references the `tools/php-tests` schema, points to
+  `__tests__/bootstrap.php`, and discovers `__tests__/**/*Test.php`. It sets
+  `failOnWarning`, `failOnNotice`, `failOnDeprecation` and
+  `failOnPhpunitDeprecation`. Fix what they report instead of suppressing
+  it.
+- Tests use a `Fair…\Tests\…` namespace mirroring the namespace under `src/`.
+- Use attributes, not docblock annotations, which PHPUnit 12+ ignores:
+  `#[DataProvider( 'cases' )]` with a `public static` provider,
+  `#[RunInSeparateProcess]` and `#[PreserveGlobalState( false )]`.
+- The bootstrap loads Composer, defines `WPINC`, and provides only the small
+  WordPress function stubs needed by the code under test.
+- If the subject uses `$wpdb`, provide the smallest useful fake rather than
+  adding a database library.
+- The workspace's `test:php` script is `node ../scripts/php-test-runner.mjs`.
 
 When a workspace has a PHP suite, its `test` script must run `test:php` after
-`test:js`, because the root `npm test` delegates to workspace `test` scripts.
-Omit `test:php` entirely when no PHP suite exists; a script pointing at a
-missing `phpunit.xml` is stale.
+`test:js`. The root `npm test` runs every workspace `test:js`, then
+`test:php`, then `test:tooling`. Omit `test:php` entirely when no PHP suite
+exists; a script pointing at a missing `phpunit.xml` is stale.
+`npm run validate:php-compat` enforces both rules.
 
 Examples live in `fair-events/__tests__/` and
 `fair-payments-connector/__tests__/Payment/MolliePaymentHandlerTest.php`.
+
+### PHP versions
+
+Two version ranges apply, and they are deliberately different:
+
+| What                       | PHP                                      | Checked by            |
+| -------------------------- | ---------------------------------------- | --------------------- |
+| Plugin runtime (shipped)   | 7.4, 8.0 or 8.2 minimum per plugin       | `php-runtime` CI jobs |
+| PHPUnit suites and tooling | 8.4 and 8.5 (PHPUnit 13 requires 8.4.1+) | `php-tests` CI jobs   |
+
+Per-plugin minimums and the rules for changing them are in
+[PHP_PATTERNS.md § Supported PHP Versions](./PHP_PATTERNS.md#supported-php-versions).
+PHPUnit 13 receives bugfixes until February 2028
+(<https://phpunit.de/supported-versions.html>). Plan the next major before
+then.
+
+Contributors need PHP 8.4+ with `dom`, `json`, `libxml`, `mbstring`, `xml`,
+`xmlwriter` and `tokenizer` for PHPUnit. `pcntl` is needed for
+fair-timetable's time limits (PHPUnit warns without it). `gd`, `zip` and
+`intl` are needed for fair-audience's spreadsheet dependency. The plugins
+themselves keep supporting older PHP. Don't use 8.4+ syntax in `src/`
+because the tests happen to run there.
+
+CI covers the runtime minimums in three ways, since PHPUnit cannot run on
+them:
+
+- `php-runtime` (PHP 7.4, 8.0, 8.2): for each workspace at that minimum,
+  `node scripts/php-compat.mjs runtime --minimum=<version>` installs the
+  locked production dependencies, runs `composer check-platform-reqs
+--no-dev`, lints every shipped PHP file with `php -l`, and loads
+  `vendor/autoload.php` (including Composer's platform check).
+- `npm run test:php:compat` (in the PHP 8.4 `php-tests` job) runs
+  PHPCompatibilityWP over shipped PHP with `testVersion <minimum>-`. This
+  catches newer functions and APIs that `php -l` accepts. It uses the
+  PHPCompatibility 10 alpha, the only line that knows PHP 8.x, which needs
+  PHPCS 4. That is why it lives in `tools/php-tests/` and not beside the
+  root PHPCS 3 install.
+- `npm run validate:php-compat` (build job) checks the declarations.
+
+Run the runtime check locally against an older PHP with Docker, for example
+`docker run --rm -v "$PWD":/app -w /app/fair-events php:7.4-cli php -l fair-events.php`.
+The CI job is the authoritative check.
 
 ### Native popup check
 
@@ -160,12 +225,12 @@ a regression.
 
 Signs that the tests database needs a reset:
 
--   Local query counts far above the hosted baseline (e.g. `listings` at 1,341
-    queries locally against 60 hosted).
--   A spec that looks for its row on the first screen of an admin list times
-    out because dozens of leftover posts or pages come first.
--   A spec that expects an empty site (no event sources, no events in a week)
-    fails on its first assertion.
+- Local query counts far above the hosted baseline (e.g. `listings` at 1,341
+  queries locally against 60 hosted).
+- A spec that looks for its row on the first screen of an admin list times
+  out because dozens of leftover posts or pages come first.
+- A spec that expects an empty site (no event sources, no events in a week)
+  fails on its first assertion.
 
 CI starts from an empty database every time, so failures caused by leftovers
 pass there.
@@ -195,16 +260,16 @@ normal development.
 
 Use the last phase heading in the output:
 
--   **Browser validation**: install Chromium with
-    `npx playwright install chromium`. Host-library or launch errors remain
-    visible in Playwright output.
--   **Preparation**: inspect workspace build or production Composer output.
--   **Startup/readiness**: inspect Docker, `wp-env`, permalink, and WordPress
-    readiness output.
--   **API/E2E execution**: the environment is ready; a non-zero result comes
-    from Playwright discovery, startup, or an assertion.
--   **Cleanup**: the runner reports stop failures separately. A cleanup error
-    becomes the command status only when no earlier phase failed.
+- **Browser validation**: install Chromium with
+  `npx playwright install chromium`. Host-library or launch errors remain
+  visible in Playwright output.
+- **Preparation**: inspect workspace build or production Composer output.
+- **Startup/readiness**: inspect Docker, `wp-env`, permalink, and WordPress
+  readiness output.
+- **API/E2E execution**: the environment is ready; a non-zero result comes
+  from Playwright discovery, startup, or an assertion.
+- **Cleanup**: the runner reports stop failures separately. A cleanup error
+  becomes the command status only when no earlier phase failed.
 
 ### Long runs: durations and one run at a time
 
@@ -231,31 +296,31 @@ broken environment but are not: counts off by one (`Expected: 2, Received:
 3`), unexpected `ticket_type_sold_out` 409s, extra captured emails, and
 `socket hang up`. To avoid them:
 
--   **Run one Playwright process per test instance.** That includes ad-hoc
-    single-spec reruns: don't start them while a full suite is running against
-    the same port. Wait, or use another worktree's instance.
--   **Don't change the checkout during a run.** wp-env mounts the worktree
-    live, so `git checkout`, `reset`, `rebase` or a rebuild changes the code
-    under test mid-request. The tests site then logs fatals such as
-    `Class "…" not found`. To compare against `main`, wait for the run to
-    finish first.
--   **No output for a while doesn't mean a run has died.** The line reporter
-    prints one line per test, and seed-heavy specs (e.g.
-    `EventStatistics.api.spec.js`) spend minutes in WP-CLI fixtures. A
-    finished run ends with a summary (`N passed (12.0m)`). Until you see one,
-    check `pgrep -fl "playwright test"` before starting anything else. Send
-    each run's output to its own file so two runs never share one log.
--   **Check the server before blaming the environment.** Read this worktree's
-    tests-site PHP log with
-    `docker logs "$(basename "$(npx wp-env status --json | jq -r .installPath)")-tests-wordpress-1" 2>&1 | grep "PHP Fatal"`
-    (`wp-env logs` can miss these). Then rerun the failing spec on its own
-    with `--retries=0`. If it passes alone, the failure came from shared state
-    or an overlapping run, not from the code.
--   **Worktrees with their own ports:** the `:local` runner follows
-    `.wp-env.override.json`. When you run Playwright directly instead, set
-    `WP_BASE_URL` to this worktree's tests port, or the specs fall back to
-    another site:
-    `CI=1 WP_BASE_URL=http://localhost:8891 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npx playwright test …`
+- **Run one Playwright process per test instance.** That includes ad-hoc
+  single-spec reruns: don't start them while a full suite is running against
+  the same port. Wait, or use another worktree's instance.
+- **Don't change the checkout during a run.** wp-env mounts the worktree
+  live, so `git checkout`, `reset`, `rebase` or a rebuild changes the code
+  under test mid-request. The tests site then logs fatals such as
+  `Class "…" not found`. To compare against `main`, wait for the run to
+  finish first.
+- **No output for a while doesn't mean a run has died.** The line reporter
+  prints one line per test, and seed-heavy specs (e.g.
+  `EventStatistics.api.spec.js`) spend minutes in WP-CLI fixtures. A
+  finished run ends with a summary (`N passed (12.0m)`). Until you see one,
+  check `pgrep -fl "playwright test"` before starting anything else. Send
+  each run's output to its own file so two runs never share one log.
+- **Check the server before blaming the environment.** Read this worktree's
+  tests-site PHP log with
+  `docker logs "$(basename "$(npx wp-env status --json | jq -r .installPath)")-tests-wordpress-1" 2>&1 | grep "PHP Fatal"`
+  (`wp-env logs` can miss these). Then rerun the failing spec on its own
+  with `--retries=0`. If it passes alone, the failure came from shared state
+  or an overlapping run, not from the code.
+- **Worktrees with their own ports:** the `:local` runner follows
+  `.wp-env.override.json`. When you run Playwright directly instead, set
+  `WP_BASE_URL` to this worktree's tests port, or the specs fall back to
+  another site:
+  `CI=1 WP_BASE_URL=http://localhost:8891 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npx playwright test …`
 
 ### REST API tests
 
@@ -340,12 +405,12 @@ requests and uploads the HTML report and traces after failures.
 
 Workspaces expose only the scripts supported by their tests:
 
--   Define `test:js` when the workspace has a JavaScript suite.
--   Define `test:php` and chain it from `test` only when a PHP suite exists.
--   Define `test:api` only when API specs exist.
--   Define `test:e2e` only when workspace E2E specs exist.
--   Keep `test:api` and `test:e2e` out of plain `npm test`; both require live
-    WordPress and remain opt-in.
+- Define `test:js` when the workspace has a JavaScript suite.
+- Define `test:php` and chain it from `test` only when a PHP suite exists.
+- Define `test:api` only when API specs exist.
+- Define `test:e2e` only when workspace E2E specs exist.
+- Keep `test:api` and `test:e2e` out of plain `npm test`; both require live
+  WordPress and remain opt-in.
 
 The root lifecycle validates workspace names against the root `package.json`,
 which is the authoritative workspace list.
@@ -408,11 +473,11 @@ For PR embedding, add `--upload github`. It shells out to the
 already-authenticated `gh` CLI (no new API key) and uploads the PNG as a
 GitHub attachment after writing the local file:
 
--   With no open PR for the checked-out branch, `--issue <n>` attaches it to a
-    ticket comment marked with the branch and filename. A later upload of the
-    same filename from the same branch supersedes that comment only.
--   Once the branch has an open PR (or with `--pr <n>`), it attaches it to the
-    PR and updates the description's `![<filename>](...)` reference.
+- With no open PR for the checked-out branch, `--issue <n>` attaches it to a
+  ticket comment marked with the branch and filename. A later upload of the
+  same filename from the same branch supersedes that comment only.
+- Once the branch has an open PR (or with `--pr <n>`), it attaches it to the
+  PR and updates the description's `![<filename>](...)` reference.
 
 `npm run screenshot:attach -- --pr <n> <file>...` attaches already-captured
 PNGs to a PR in one go (fetching any missing before image from its issue
@@ -440,12 +505,12 @@ by default, and imgbb accepts 60–15552000 seconds, while `0` disables expiry.
 wp-env tests instance and reports complete-scan error and warning counts for
 each Fair Event plugin.
 
--   Start the instance with `npm run test:e2e:setup` first.
--   The first run needs network access to fetch Plugin Check.
--   The suite reports findings but fails only when Plugin Check cannot run or
-    its output cannot be parsed.
--   Full scans are slow. Dependencies are excluded by Plugin Check defaults;
-    `build/` is included because it ships.
+- Start the instance with `npm run test:e2e:setup` first.
+- The first run needs network access to fetch Plugin Check.
+- The suite reports findings but fails only when Plugin Check cannot run or
+  its output cannot be parsed.
+- Full scans are slow. Dependencies are excluded by Plugin Check defaults;
+  `build/` is included because it ships.
 
 ### Manual WordPress integration checks
 

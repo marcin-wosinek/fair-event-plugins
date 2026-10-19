@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\Shared;
 
 use PHPUnit\Framework\TestCase;
 use FairEventsShared\LineItemTotals;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for the shared line-item calculator: two decimals, half up,
@@ -46,7 +47,7 @@ class LineItemTotalsTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function half_cent_boundaries(): array {
+	public static function half_cent_boundaries(): array {
 		return array(
 			'just below half a cent'     => array( 0.004, 0.0 ),
 			'half a cent'                => array( 0.005, 0.01 ),
@@ -64,11 +65,10 @@ class LineItemTotalsTest extends TestCase {
 	/**
 	 * Halves round up — away from zero — and everything below them down.
 	 *
-	 * @dataProvider half_cent_boundaries
-	 *
 	 * @param float $amount   Raw amount.
 	 * @param float $expected Normalized amount.
 	 */
+	#[DataProvider( 'half_cent_boundaries' )]
 	public function test_rounds_half_up( $amount, $expected ): void {
 		$this->assertSame( $expected, LineItemTotals::normalize_amount( $amount ) );
 	}

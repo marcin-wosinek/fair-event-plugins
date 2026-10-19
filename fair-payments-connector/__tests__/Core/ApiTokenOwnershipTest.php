@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\Tests\Core;
 
 use PHPUnit\Framework\TestCase;
 use FairPaymentsConnector\Core\ApiTokenOwnership;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Exactly one plugin serves API tokens for every combination of installed
@@ -75,12 +76,11 @@ class ApiTokenOwnershipTest extends TestCase {
 	 * unless Fair Payments Connector declares it does"; a release from before
 	 * the handoff always serves them.
 	 *
-	 * @dataProvider release_pairings
-	 *
 	 * @param bool        $connector_declares Whether this plugin's release defines OWNS_CONSTANT.
 	 * @param string|null $experimental       Experimental release: null (inactive), 'old' or 'new'.
 	 * @param string      $expected_owner     'connector' or 'experimental'.
 	 */
+	#[DataProvider( 'release_pairings' )]
 	public function test_every_release_pairing_has_exactly_one_owner( $connector_declares, $experimental, $expected_owner ) {
 		$connector_owns = $connector_declares
 			&& ApiTokenOwnership::resolve( null !== $experimental, 'new' === $experimental );
@@ -101,7 +101,7 @@ class ApiTokenOwnershipTest extends TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function release_pairings() {
+	public static function release_pairings() {
 		return array(
 			'connector only'                  => array( true, null, 'connector' ),
 			'new connector, old experimental' => array( true, 'old', 'experimental' ),

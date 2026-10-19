@@ -2,6 +2,48 @@
 
 Reusable PHP patterns and best practices for WordPress plugin development in this monorepo.
 
+## Supported PHP Versions
+
+Each plugin declares the oldest PHP version its shipped code and locked
+production dependencies run on. These minimums only change deliberately,
+with a changeset that tells site owners to upgrade first. Upgrading test
+tooling is never a reason to raise one.
+
+| Workspace                                             | Minimum PHP |
+| ----------------------------------------------------- | ----------: |
+| fair-events, fair-events-shared (`php/` package)      |         7.4 |
+| fair-audience, fair-payments-connector, fair-platform |         8.2 |
+| Every other plugin                                    |         8.0 |
+
+The minimum is written down in four places, and they must agree:
+
+1. `require.php` in the workspace `composer.json`, whose lower bound is the
+   minimum (e.g. `>=7.4 <9.0` or `^8.2`).
+2. `config.platform.php` in the same file, so Composer resolves the lockfile
+   for the oldest supported runtime instead of the contributor's PHP. The
+   shared package has no dependencies and omits it.
+3. `Requires PHP:` in the main plugin file header.
+4. `Requires PHP:` in `readme.txt`.
+
+`scripts/php-compat.mjs` holds the table above as `POLICY`. `npm run
+validate:php-compat` fails when any declaration disagrees with it, and CI
+runs it on every pull request. A new workspace needs a `POLICY` entry.
+
+Shared code must run on the lowest minimum of any plugin that bundles it.
+The shared package therefore stays on PHP 7.4 syntax and APIs.
+
+When a dependency update needs a newer PHP than a plugin supports, update
+only that package to a release that still supports the minimum (`composer
+update vendor/package` keeps the existing constraint). Never install with
+`--ignore-platform-req(s)` to get past the conflict. If no compatible release
+exists, raising that plugin's minimum is a separate, documented decision.
+fair-audience moved from PHP 8.0 to 8.2 this way: PhpSpreadsheet 5 needs 8.2.
+
+CI checks every minimum on the real runtime (see
+[TESTING.md § PHP versions](./TESTING.md#php-versions)). Contributors still
+need PHP 8.4+ to run the PHPUnit suites, which is separate from what the
+plugins support.
+
 ## Database Query Patterns
 
 ### Using `wpdb::prepare()` with Table Names
@@ -285,9 +327,9 @@ The `%i` identifier placeholder was introduced in **WordPress 6.2**. This projec
 
 ### References
 
--   [wpdb::prepare() Official Documentation](https://developer.wordpress.org/reference/classes/wpdb/prepare/)
--   [esc_sql() Limitations](https://developer.wordpress.org/reference/functions/esc_sql/)
--   [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+- [wpdb::prepare() Official Documentation](https://developer.wordpress.org/reference/classes/wpdb/prepare/)
+- [esc_sql() Limitations](https://developer.wordpress.org/reference/functions/esc_sql/)
+- [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
 
 ## Additional PHP Patterns
 
@@ -312,14 +354,14 @@ defined( 'WPINC' ) || die;
 
 **Namespace to Directory Mapping**:
 
--   Namespace: `FairAudience\API\EventParticipantsController`
--   File path: `fair-audience/src/API/EventParticipantsController.php`
+- Namespace: `FairAudience\API\EventParticipantsController`
+- File path: `fair-audience/src/API/EventParticipantsController.php`
 
 **Rules**:
 
--   Use uppercase for acronyms in directories: `src/API/` (not `src/Api/`)
--   Match namespace casing exactly to directory names
--   Case-sensitive on Linux (production) even though macOS (development) is case-insensitive
+- Use uppercase for acronyms in directories: `src/API/` (not `src/Api/`)
+- Match namespace casing exactly to directory names
+- Case-sensitive on Linux (production) even though macOS (development) is case-insensitive
 
 ### Nonce Verification
 
@@ -430,9 +472,9 @@ ini_set( 'display_errors', 1 );
 
 **Why?**
 
--   Unconditional `error_log()` calls run in production and can fill logs with debug messages
--   Modifying `error_reporting()` or `ini_set()` in plugins interferes with site-wide debugging configuration
--   Debug logs can contain sensitive information and should only be used in development
+- Unconditional `error_log()` calls run in production and can fill logs with debug messages
+- Modifying `error_reporting()` or `ini_set()` in plugins interferes with site-wide debugging configuration
+- Debug logs can contain sensitive information and should only be used in development
 
 #### Recommended wp-config.php Setup
 
@@ -453,8 +495,8 @@ define( 'WP_DEBUG', false );
 
 #### References
 
--   [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
--   [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+- [Debugging in WordPress – Advanced Administration Handbook](https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/)
+- [WordPress Plugin Security: Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
 
 ## Shared Package (`fair-events-shared`)
 
@@ -485,7 +527,7 @@ composer:update:shared`** (runs `composer update fair-events/shared` in every
 consumer workspace) before committing. `composer install` only re-mirrors a
 `path`-type dependency when the lock file's version/reference for that
 package changes — if the version isn't bumped, consumers' vendor copies
-(including CI's restored vendor cache) silently keep the *old* shared code
+(including CI's restored vendor cache) silently keep the _old_ shared code
 even though the source changed, with no install error to flag it. This broke
 CI once already (class-not-found on a plugin whose cached vendor still had
 the pre-edit copy). If you scaffold a new plugin that consumes the shared
@@ -499,13 +541,13 @@ Every amount derived from a list of quantities and unit amounts goes through
 `FairEventsShared\LineItemTotals` — never a hand-written `$price * $quantity`
 or a bare `round()`:
 
--   `normalize_amount( $amount )` — two decimals, rounded **half up**
-    (`PHP_ROUND_HALF_UP`: a value exactly halfway moves away from zero, so
-    `0.005` → `0.01` and `-0.005` → `-0.01`).
--   `line_total( $quantity, $unit_amount )` — the unit amount is normalized
-    first, then the extended total.
--   `total( $line_items )` — the sum of the normalized line totals, normalized.
--   `amounts_match( $a, $b )` — compares whole cents, never raw floats.
+- `normalize_amount( $amount )` — two decimals, rounded **half up**
+  (`PHP_ROUND_HALF_UP`: a value exactly halfway moves away from zero, so
+  `0.005` → `0.01` and `-0.005` → `-0.01`).
+- `line_total( $quantity, $unit_amount )` — the unit amount is normalized
+  first, then the extended total.
+- `total( $line_items )` — the sum of the normalized line totals, normalized.
+- `amounts_match( $a, $b )` — compares whole cents, never raw floats.
 
 Quantities are integers (a line without one counts once); negative amounts
 are kept, so a discount is an ordinary line. Two decimals apply to every
@@ -582,43 +624,43 @@ whichever field registers first for that section's title wins).
 
 **Version-skew rules**:
 
--   Only ever push plain arrays through the filter — never call a method on
-    `FairEventsShared\Admin\SettingsPage` directly, and never assume a
-    specific version's shape beyond the fields documented above.
--   Guard `SettingsPage::boot()` behind `class_exists()` so a plugin whose own
-    bundled copy predates this feature doesn't fatal.
--   Storage stays per-plugin (`fair_{plugin}_features` etc.) — the shared
-    screen never introduces a new option of its own.
--   A plugin registering a field must attach its option's `sanitize_callback`
-    (via `register_setting()`) on `admin_init`, not only `rest_api_init` —
-    the shared screen saves through a plain admin POST, outside REST, so a
-    `sanitize_option_{$option}` filter that's only wired to `rest_api_init`
-    never runs for that write path. See `register_feature_settings()` in
-    fair-audience's and fair-payments-connector's `Settings.php` for the
-    pattern: the features-option registration is split out of the REST-only
-    `register_settings()` method and hooked on both `rest_api_init` and
-    `admin_init`.
+- Only ever push plain arrays through the filter — never call a method on
+  `FairEventsShared\Admin\SettingsPage` directly, and never assume a
+  specific version's shape beyond the fields documented above.
+- Guard `SettingsPage::boot()` behind `class_exists()` so a plugin whose own
+  bundled copy predates this feature doesn't fatal.
+- Storage stays per-plugin (`fair_{plugin}_features` etc.) — the shared
+  screen never introduces a new option of its own.
+- A plugin registering a field must attach its option's `sanitize_callback`
+  (via `register_setting()`) on `admin_init`, not only `rest_api_init` —
+  the shared screen saves through a plain admin POST, outside REST, so a
+  `sanitize_option_{$option}` filter that's only wired to `rest_api_init`
+  never runs for that write path. See `register_feature_settings()` in
+  fair-audience's and fair-payments-connector's `Settings.php` for the
+  pattern: the features-option registration is split out of the REST-only
+  `register_settings()` method and hooked on both `rest_api_init` and
+  `admin_init`.
 
 **No translatable strings in the shared package itself** — but that splits
 into three distinct sources on the rendered screen:
 
--   Row strings (`label`, `description`, `locked_note`) come from the
-    registering plugin's own textdomain. This sidesteps the
-    just-in-time-textdomain trap ([I18N_SETUP.md](./I18N_SETUP.md)) — filter
-    callbacks run at render time (after `init`), so a plugin's own `__()`
-    calls inside `register_shared_settings_fields()` are safe.
--   Chrome strings (`Settings saved.`, the "Sorry, you are not allowed to
-    access this page." 403 message, `submit_button()`'s "Save Changes") are
-    wrapped in domain-less `__()`/`esc_html__()` calls, which resolve against
-    WordPress core's own **default** textdomain — every locale gets them for
-    free, with no textdomain of its own for the shared package.
--   The page/menu title, "Fair Event Plugins", is left untranslated on
-    purpose: it's a brand name, not UI copy.
+- Row strings (`label`, `description`, `locked_note`) come from the
+  registering plugin's own textdomain. This sidesteps the
+  just-in-time-textdomain trap ([I18N_SETUP.md](./I18N_SETUP.md)) — filter
+  callbacks run at render time (after `init`), so a plugin's own `__()`
+  calls inside `register_shared_settings_fields()` are safe.
+- Chrome strings (`Settings saved.`, the "Sorry, you are not allowed to
+  access this page." 403 message, `submit_button()`'s "Save Changes") are
+  wrapped in domain-less `__()`/`esc_html__()` calls, which resolve against
+  WordPress core's own **default** textdomain — every locale gets them for
+  free, with no textdomain of its own for the shared package.
+- The page/menu title, "Fair Event Plugins", is left untranslated on
+  purpose: it's a brand name, not UI copy.
 
 ## See Also
 
--   [CLAUDE.md](./CLAUDE.md) - Main project documentation
--   [REST_API_BACKEND.md](./REST_API_BACKEND.md) - REST API security patterns
--   [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend API usage patterns
--   [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) - React admin page patterns
--   [TESTING.md](./TESTING.md) - Testing architecture and patterns
+- [CLAUDE.md](./CLAUDE.md) - Main project documentation
+- [REST_API_BACKEND.md](./REST_API_BACKEND.md) - REST API security patterns
+- [REST_API_USAGE.md](./REST_API_USAGE.md) - Frontend API usage patterns
+- [REACT_ADMIN_PATTERN.md](./REACT_ADMIN_PATTERN.md) - React admin page patterns
+- [TESTING.md](./TESTING.md) - Testing architecture and patterns
