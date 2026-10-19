@@ -49,6 +49,16 @@ class PaymentSetupNoticeTest extends TestCase {
 		$this->assertSame( 'incomplete', PaymentSetupNotice::readiness_state() );
 	}
 
+	/** #1318: a connection whose stored tokens cannot be read has its own state. */
+	public function test_readiness_state_credentials_unavailable_when_tokens_unreadable() {
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_connected']    = true;
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_profile_id']   = 'pfl_test123';
+		$GLOBALS['_fair_test_options']['fair_payment_mode']                = 'live';
+		$GLOBALS['_fair_test_options']['fair_payment_mollie_access_token'] = \FairEventsShared\Security\SecretBox::PREFIX . 'corrupted';
+
+		$this->assertSame( 'credentials_unavailable', PaymentSetupNotice::readiness_state() );
+	}
+
 	/** Connected, with a profile ID, in live mode is ready — no warning. */
 	public function test_readiness_state_ready_when_connected_with_profile_in_live_mode() {
 		$GLOBALS['_fair_test_options']['fair_payment_mollie_connected']  = true;

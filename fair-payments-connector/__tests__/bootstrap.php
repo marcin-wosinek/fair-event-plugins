@@ -15,7 +15,9 @@ if ( ! defined( 'WPINC' ) ) {
 
 // Minimal WordPress function stubs so MolliePaymentHandler::create_payment() can be
 // driven black-box through its public API without a full WP bootstrap. Tests seed
-// option values via $GLOBALS['_fair_test_options'].
+// option values via $GLOBALS['_fair_test_options'] (raw stored values), and may
+// set $GLOBALS['_fair_test_option_filters'] = array( 'read' => …, 'write' => … )
+// to run option read/write filters the way WordPress would.
 if ( ! function_exists( 'get_option' ) ) {
 	/**
 	 * Stub of WordPress get_option() backed by $GLOBALS['_fair_test_options'].
@@ -26,7 +28,13 @@ if ( ! function_exists( 'get_option' ) ) {
 	 */
 	function get_option( $name, $default_value = false ) {
 		$options = isset( $GLOBALS['_fair_test_options'] ) ? $GLOBALS['_fair_test_options'] : array();
-		return array_key_exists( $name, $options ) ? $options[ $name ] : $default_value;
+		if ( ! array_key_exists( $name, $options ) ) {
+			return $default_value;
+		}
+		// Optional `option_{$name}` stand-in, e.g. ProtectedOptions::filter_read.
+		return isset( $GLOBALS['_fair_test_option_filters']['read'] )
+			? call_user_func( $GLOBALS['_fair_test_option_filters']['read'], $options[ $name ], $name )
+			: $options[ $name ];
 	}
 }
 
@@ -39,6 +47,10 @@ if ( ! function_exists( 'update_option' ) ) {
 	 * @return true
 	 */
 	function update_option( $name, $value ) {
+		// Optional `sanitize_option_{$name}` stand-in, e.g. ProtectedOptions::filter_write.
+		if ( isset( $GLOBALS['_fair_test_option_filters']['write'] ) ) {
+			$value = call_user_func( $GLOBALS['_fair_test_option_filters']['write'], $value, $name );
+		}
 		$GLOBALS['_fair_test_options'][ $name ] = $value;
 		return true;
 	}
@@ -172,6 +184,30 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 	 */
 	function wp_timezone() {
 		return new DateTimeZone( isset( $GLOBALS['_fair_test_timezone'] ) ? $GLOBALS['_fair_test_timezone'] : 'UTC' );
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt() backed by $GLOBALS['_fair_test_salt'], so a
+	 * test can change the site's security keys.
+	 *
+	 * @param string $scheme Salt scheme.
+	 * @return string
+	 */
+	function wp_salt( $scheme = 'auth' ) {
+		return ( isset( $GLOBALS['_fair_test_salt'] ) ? $GLOBALS['_fair_test_salt'] : 'test-security-keys' ) . '|' . $scheme;
+	}
+}
+
+if ( ! function_exists( 'wp_cache_delete' ) ) {
+	/**
+	 * Stub of WordPress wp_cache_delete() — there is no object cache in tests.
+	 *
+	 * @return bool
+	 */
+	function wp_cache_delete() {
+		return true;
 	}
 }
 

@@ -80,8 +80,17 @@ class MolliePaymentHandler {
 	 * Returns a valid access token, automatically refreshing if expired.
 	 *
 	 * @return string|false Valid access token or false if unavailable.
+	 * @throws \Exception If the stored tokens cannot be read.
 	 */
 	private function get_valid_access_token() {
+		// Neither authenticate nor refresh with tokens that cannot be read.
+		// The connection itself stays in place, so restoring encryption
+		// support recovers it without a reconnect.
+		$credentials = MollieCredentials::status();
+		if ( MollieCredentials::AVAILABLE !== $credentials ) {
+			throw new \Exception( esc_html( MollieCredentials::admin_message( $credentials ) ) );
+		}
+
 		$token   = get_option( 'fair_payment_mollie_access_token' );
 		$expires = get_option( 'fair_payment_mollie_token_expires', 0 );
 
@@ -663,9 +672,10 @@ class MolliePaymentHandler {
 	/**
 	 * Check if API is configured
 	 *
-	 * @return bool True if the site has an OAuth Mollie connection.
+	 * @return bool True if the site has an OAuth Mollie connection whose
+	 *              stored tokens can be used.
 	 */
 	public static function is_configured() {
-		return (bool) get_option( 'fair_payment_mollie_connected', false );
+		return (bool) get_option( 'fair_payment_mollie_connected', false ) && MollieCredentials::is_available();
 	}
 }

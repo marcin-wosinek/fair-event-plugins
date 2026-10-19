@@ -9,6 +9,7 @@ namespace FairPaymentsConnector\API;
 
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Models\LineItem;
+use FairPaymentsConnector\Payment\MollieCredentials;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
@@ -212,6 +213,40 @@ class TransactionAPI {
 		$can_initiate = Transaction::can_initiate_payment( $transaction_id );
 		if ( is_wp_error( $can_initiate ) ) {
 			return $can_initiate;
+		}
+
+		// Stored Mollie tokens that cannot be read: refuse before any Mollie
+		// request, with a visitor-safe message. The cause is for the admin.
+		$credentials = MollieCredentials::status();
+		if ( MollieCredentials::AVAILABLE !== $credentials ) {
+			( new PaymentLogRepository() )->log(
+				'mollie_payment_failed',
+				array(
+					'level'          => 'error',
+					'transaction_id' => (int) $transaction_id,
+					'message'        => 'Payment initiation refused: the stored Mollie credentials cannot be read.',
+					'context'        => array( 'credential_status' => $credentials ),
+				)
+			);
+
+			$data = array( 'status' => 503 );
+			if ( current_user_can( 'manage_options' ) ) {
+				$data['admin'] = array(
+					'cause' => MollieCredentials::admin_message( $credentials ),
+					'links' => array(
+						array(
+							'label' => __( 'Payment settings', 'fair-payments-connector' ),
+							'url'   => admin_url( 'admin.php?page=fair-payments-connector-settings' ),
+						),
+					),
+				);
+			}
+
+			return new \WP_Error(
+				'payments_unavailable',
+				__( 'Online payment is temporarily unavailable. Please try again later or contact the organizer.', 'fair-payments-connector' ),
+				$data
+			);
 		}
 
 		// 3. Validate arguments.

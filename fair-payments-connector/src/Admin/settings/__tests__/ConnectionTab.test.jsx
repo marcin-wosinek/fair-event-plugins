@@ -688,3 +688,138 @@ describe( 'ConnectionTab — settlement access (#1693)', () => {
 		expect( console ).toHaveLogged();
 	} );
 } );
+
+describe( 'ConnectionTab — stored credentials that cannot be read (#1318)', () => {
+	const SUPPORT_LOST =
+		'Payments are paused: the Mollie connection is stored encrypted';
+	const UNRECOVERABLE =
+		'Payments are paused: the stored Mollie connection can no longer be read';
+	// Notices repeat their text in an a11y live region; match the notice.
+	const IN_NOTICE = {
+		exact: false,
+		selector: '.components-notice__content',
+	};
+
+	function renderWithCredentialStatus( credentialStatus ) {
+		mockApiFetchFor( {
+			connected: true,
+			overview: OVERVIEW,
+			oauthStatus: {
+				connected: true,
+				credential_status: credentialStatus,
+				settlement_access: false,
+				settlement_access_requested: false,
+			},
+		} );
+		render(
+			<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+		);
+	}
+
+	function overviewRequests() {
+		return apiFetch.mock.calls.filter(
+			( [ { path } ] ) =>
+				path === '/fair-payments-connector/v1/connection/overview'
+		);
+	}
+
+	it( 'explains lost encryption support and pauses actions that need the tokens', async () => {
+		renderWithCredentialStatus( 'encryption_unavailable' );
+
+		expect(
+			await screen.findByText( SUPPORT_LOST, IN_NOTICE )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Connected to Mollie', IN_NOTICE )
+		).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect( screen.queryByText( 'My Webshop' ) ).not.toBeInTheDocument()
+		);
+
+		expect(
+			screen.getByRole( 'button', { name: 'Create test payment' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Refresh Connection' } )
+		).toBeDisabled();
+		// Reconnecting would store plaintext over the encrypted tokens.
+		expect(
+			screen.getByRole( 'button', { name: 'Reconnect' } )
+		).toBeDisabled();
+		expect(
+			screen.getByText(
+				'Reconnect and Refresh Connection are unavailable until encryption support is restored.',
+				{ exact: false }
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Test payments are paused until the stored Mollie connection can be read again.'
+			)
+		).toBeInTheDocument();
+		// Disconnecting stays possible.
+		expect(
+			screen.getByRole( 'button', { name: 'Disconnect Mollie' } )
+		).toBeEnabled();
+
+		expect( console ).toHaveLogged();
+	} );
+
+	it( 'offers a reconnect for an unrecoverable connection', async () => {
+		renderWithCredentialStatus( 'unrecoverable' );
+
+		const notice = (
+			await screen.findByText( UNRECOVERABLE, IN_NOTICE )
+		).closest( '.components-notice' );
+		expect(
+			screen.getByRole( 'button', { name: 'Create test payment' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Refresh Connection' } )
+		).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Reconnect' } )
+		).toBeEnabled();
+
+		fireEvent.click(
+			within( notice ).getByRole( 'button', {
+				name: 'Reconnect to Mollie',
+			} )
+		);
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					path: '/fair-payments-connector/v1/oauth/state',
+				} )
+			)
+		);
+		// Reconnecting never disconnects first.
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-payments-connector/v1/oauth/disconnect',
+			} )
+		);
+
+		expect( console ).toHaveLogged();
+		// jsdom can't follow the redirect to the authorization page.
+		expect( console ).toHaveErrored();
+	} );
+
+	it( 'shows the usual connected state when the tokens are available', async () => {
+		renderWithCredentialStatus( 'available' );
+
+		expect( await screen.findByText( 'My Webshop' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Connected to Mollie', IN_NOTICE )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( SUPPORT_LOST, IN_NOTICE )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Create test payment' } )
+		).toBeEnabled();
+		expect( overviewRequests().length ).toBeGreaterThan( 0 );
+
+		expect( console ).toHaveLogged();
+	} );
+} );

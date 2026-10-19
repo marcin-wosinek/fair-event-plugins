@@ -48,12 +48,23 @@ test.describe( 'ConnectionController', () => {
 
 			expect( Object.keys( body ).sort() ).toEqual( [
 				'connected',
+				'credential_status',
+				'credentials_encrypted',
 				'granted_scopes',
+				'payments_available',
 				'scopes_known',
 				'settlement_access',
 				'settlement_access_requested',
 			] );
 			expect( typeof body.connected ).toBe( 'boolean' );
+			// #1318: whether the stored tokens can be used, never the tokens.
+			expect( [
+				'available',
+				'encryption_unavailable',
+				'unrecoverable',
+			] ).toContain( body.credential_status );
+			expect( typeof body.credentials_encrypted ).toBe( 'boolean' );
+			expect( typeof body.payments_available ).toBe( 'boolean' );
 			expect( typeof body.scopes_known ).toBe( 'boolean' );
 			expect( Array.isArray( body.granted_scopes ) ).toBe( true );
 			expect( typeof body.settlement_access ).toBe( 'boolean' );

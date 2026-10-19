@@ -7,6 +7,7 @@
 
 namespace FairPaymentsConnector\API;
 
+use FairPaymentsConnector\Payment\MollieCredentials;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\OAuth\GrantedScopes;
 use FairPaymentsConnector\Models\Transaction;
@@ -110,6 +111,29 @@ class ConnectionController extends \WP_REST_Controller {
 	}
 
 	/**
+	 * Error for a connection whose stored tokens cannot be used, before any
+	 * Mollie request or transaction is attempted.
+	 *
+	 * @return \WP_Error|null Null when the tokens are usable.
+	 */
+	private function credentials_unavailable() {
+		$status = MollieCredentials::status();
+
+		if ( MollieCredentials::AVAILABLE === $status ) {
+			return null;
+		}
+
+		return new \WP_Error(
+			'mollie_credentials_unavailable',
+			MollieCredentials::admin_message( $status ),
+			array(
+				'status'            => 409,
+				'credential_status' => $status,
+			)
+		);
+	}
+
+	/**
 	 * Build the context a test payment would be created with right now.
 	 *
 	 * Reads stored settings only — it neither calls Mollie nor creates a
@@ -145,6 +169,11 @@ class ConnectionController extends \WP_REST_Controller {
 			);
 		}
 
+		$unavailable = $this->credentials_unavailable();
+		if ( $unavailable ) {
+			return $unavailable;
+		}
+
 		return new \WP_REST_Response( $this->test_payment_context(), 200 );
 	}
 
@@ -156,14 +185,23 @@ class ConnectionController extends \WP_REST_Controller {
 	 * scopes were recorded reports `scopes_known: false` and has to be
 	 * reconnected before settlements can be read.
 	 *
+	 * `credential_status` says whether the stored tokens can be used (see
+	 * MollieCredentials): a connection whose tokens are temporarily or
+	 * permanently unreadable stays `connected`, with `payments_available`
+	 * false. The tokens themselves are never part of the response.
+	 *
 	 * @return \WP_REST_Response
 	 */
 	public function get_oauth_status() {
-		$scopes = GrantedScopes::get();
+		$scopes            = GrantedScopes::get();
+		$credential_status = MollieCredentials::status();
 
 		return new \WP_REST_Response(
 			array(
 				'connected'                   => (bool) get_option( 'fair_payment_mollie_connected', false ),
+				'credential_status'           => $credential_status,
+				'credentials_encrypted'       => MollieCredentials::is_encrypted(),
+				'payments_available'          => MolliePaymentHandler::is_configured(),
 				'scopes_known'                => null !== $scopes,
 				'granted_scopes'              => null === $scopes ? array() : $scopes,
 				'settlement_access'           => GrantedScopes::has_settlement_access(),
@@ -185,6 +223,11 @@ class ConnectionController extends \WP_REST_Controller {
 				__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		$unavailable = $this->credentials_unavailable();
+		if ( $unavailable ) {
+			return $unavailable;
 		}
 
 		try {
@@ -228,6 +271,11 @@ class ConnectionController extends \WP_REST_Controller {
 				__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		$unavailable = $this->credentials_unavailable();
+		if ( $unavailable ) {
+			return $unavailable;
 		}
 
 		$context   = $this->test_payment_context();
@@ -345,6 +393,11 @@ class ConnectionController extends \WP_REST_Controller {
 					__( 'Mollie is not connected. Please connect your Mollie account first.', 'fair-payments-connector' ),
 					array( 'status' => 400 )
 				);
+			}
+
+			$unavailable = $this->credentials_unavailable();
+			if ( $unavailable ) {
+				return $unavailable;
 			}
 
 			// Get current token expiration.

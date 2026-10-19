@@ -560,16 +560,18 @@ add_filter(
 		return 'pfl_e2e0000000';
 	}
 );
+// fair-e2e-mollie-credentials.php switches these two off, so the encryption
+// specs exercise the stored tokens (false falls through to the option).
 add_filter(
 	'pre_option_fair_payment_mollie_access_token',
 	static function () {
-		return 'access_e2e_' . str_repeat( 'e', 30 );
+		return get_option( 'fair_e2e_mollie_stored_credentials' ) ? false : 'access_e2e_' . str_repeat( 'e', 30 );
 	}
 );
 add_filter(
 	'pre_option_fair_payment_mollie_token_expires',
 	static function () {
-		return time() + YEAR_IN_SECONDS;
+		return get_option( 'fair_e2e_mollie_stored_credentials' ) ? false : time() + YEAR_IN_SECONDS;
 	}
 );
 add_filter(

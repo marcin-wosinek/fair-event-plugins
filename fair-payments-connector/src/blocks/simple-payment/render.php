@@ -42,6 +42,8 @@ if ( $is_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::cl
 
 // Check if Mollie is configured.
 $is_configured = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
+// Connected, but the stored credentials cannot be read right now.
+$credentials_unavailable = ! $is_configured && get_option( 'fair_payment_mollie_connected', false );
 
 // DOM id for the wrapper only. Must NOT reuse $block_id: the payment endpoint
 // derives the authoritative amount by matching the saved blockId attribute in
@@ -105,6 +107,10 @@ $wrapper_id = 'fair-payments-connector-' . wp_unique_id();
 					<?php esc_html_e( 'Processing payment...', 'fair-payments-connector' ); ?>
 				</div>
 				<div class="fair-payments-connector-error" style="display: none; color: red;"></div>
+			<?php elseif ( $credentials_unavailable ) : ?>
+				<p class="fair-payments-connector-not-configured">
+					<em><?php esc_html_e( 'Online payment is temporarily unavailable. Please try again later or contact the organizer.', 'fair-payments-connector' ); ?></em>
+				</p>
 			<?php else : ?>
 				<p class="fair-payments-connector-not-configured">
 					<em><?php esc_html_e( 'Payment gateway is not configured. Please configure your Mollie API keys.', 'fair-payments-connector' ); ?></em>
