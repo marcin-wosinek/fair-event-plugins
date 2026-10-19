@@ -9,6 +9,11 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import {
+	timingFields,
+	startOf,
+	endOf,
+} from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -116,8 +121,8 @@ test.describe( 'EventDatesController — ensure event date for post', () => {
 		const firstBody = await first.json();
 		const firstId = firstBody.id;
 		eventDateIds.push( firstId );
-		expect( firstBody.start_datetime ).toBeNull();
-		expect( firstBody.end_datetime ).toBeNull();
+		expect( firstBody.start_date ).toBeNull();
+		expect( firstBody.end_date ).toBeNull();
 
 		const repeated = await ensure();
 		expect( ( await repeated.json() ).id ).toBe( firstId );
@@ -140,8 +145,8 @@ test.describe( 'EventDatesController — ensure event date for post', () => {
 		expect( linkedDates.map( ( eventDate ) => eventDate.id ) ).toEqual( [
 			firstId,
 		] );
-		expect( linkedDates[ 0 ].start_datetime ).toBeNull();
-		expect( linkedDates[ 0 ].end_datetime ).toBeNull();
+		expect( linkedDates[ 0 ].start_date ).toBeNull();
+		expect( linkedDates[ 0 ].end_date ).toBeNull();
 	} );
 
 	test( 'rejects missing posts, invalid post types, and insufficient permission', async () => {
@@ -207,8 +212,10 @@ test.describe( 'EventDatesController — standalone category copy on first link'
 			headers: adminHeaders,
 			data: {
 				title: `Standalone ${ Date.now() }`,
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 				categories: [ categoryId ],
 			},
 		} );
@@ -353,8 +360,10 @@ test.describe( 'EventDatesController — categories from multiple languages (#16
 			headers: adminHeaders,
 			data: {
 				title: `Multilingual event ${ Date.now() }`,
-				start_datetime: '2031-01-01 10:00:00',
-				end_datetime: '2031-01-01 12:00:00',
+				start_date: '2031-01-01',
+				start_time: '10:00:00',
+				end_date: '2031-01-01',
+				end_time: '12:00:00',
 				event_id: postId,
 				categories: categoryIds,
 			},
@@ -467,7 +476,8 @@ test.describe( 'EventDatesController — Polylang category assignment', () => {
 			headers: adminHeaders,
 			data: {
 				title: 'Mixed language event',
-				start_datetime: '2031-01-01 10:00:00',
+				start_date: '2031-01-01',
+				start_time: '10:00:00',
 			},
 		} );
 		expect( created.ok() ).toBeTruthy();
@@ -619,7 +629,8 @@ test.describe( 'EventDatesController — Polylang link synchronization', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Polylang target ${ Date.now() }`,
-					start_datetime: '2038-01-01 10:00:00',
+					start_date: '2038-01-01',
+					start_time: '10:00:00',
 				},
 			}
 		);
@@ -715,7 +726,8 @@ test.describe( 'EventDatesController — link_post detach-then-link (#1429)', ()
 			headers: adminHeaders,
 			data: {
 				title: `Link ED A ${ Date.now() }`,
-				start_datetime: '2031-01-01 10:00:00',
+				start_date: '2031-01-01',
+				start_time: '10:00:00',
 			},
 		} );
 		expect( edARes.ok() ).toBeTruthy();
@@ -730,7 +742,8 @@ test.describe( 'EventDatesController — link_post detach-then-link (#1429)', ()
 			headers: adminHeaders,
 			data: {
 				title: `Link ED B ${ Date.now() }`,
-				start_datetime: '2031-02-01 10:00:00',
+				start_date: '2031-02-01',
+				start_time: '10:00:00',
 			},
 		} );
 		expect( edBRes.ok() ).toBeTruthy();
@@ -862,8 +875,10 @@ test.describe( 'EventDatesController — relink resolves to series, not a genera
 			headers: adminHeaders,
 			data: {
 				title: `Series Relink ${ Date.now() }`,
-				start_datetime: '2038-01-01 10:00:00',
-				end_datetime: '2038-01-01 12:00:00',
+				start_date: '2038-01-01',
+				start_time: '10:00:00',
+				end_date: '2038-01-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		} );
@@ -905,7 +920,8 @@ test.describe( 'EventDatesController — relink resolves to series, not a genera
 			headers: adminHeaders,
 			data: {
 				title: `Series Relink Target ${ Date.now() }`,
-				start_datetime: '2038-06-01 10:00:00',
+				start_date: '2038-06-01',
+				start_time: '10:00:00',
 			},
 		} );
 		expect( edBRes.ok() ).toBeTruthy();
@@ -999,8 +1015,10 @@ test.describe( 'EventDatesController — create_item with categories + rrule (qu
 			headers: adminHeaders,
 			data: {
 				title: `Quick add ${ Date.now() }`,
-				start_datetime: '2036-01-01 10:00:00',
-				end_datetime: '2036-01-01 12:00:00',
+				start_date: '2036-01-01',
+				start_time: '10:00:00',
+				end_date: '2036-01-01',
+				end_time: '12:00:00',
 				link_type: 'none',
 				categories: [ categoryId ],
 				rrule: 'FREQ=WEEKLY;COUNT=3',
@@ -1074,8 +1092,10 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Recurrence test ${ Date.now() }`,
-				start_datetime: start,
-				end_datetime: start.replace( '10:00:00', '12:00:00' ),
+				...timingFields(
+					start,
+					start.replace( '10:00:00', '12:00:00' )
+				),
 				rrule,
 			},
 		} );
@@ -1112,8 +1132,10 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 			{
 				headers: adminHeaders,
 				data: {
-					start_datetime: '2035-03-01 11:00:00',
-					end_datetime: '2035-03-01 13:00:00',
+					start_date: '2035-03-01',
+					start_time: '11:00:00',
+					end_date: '2035-03-01',
+					end_time: '13:00:00',
 				},
 			}
 		);
@@ -1127,9 +1149,7 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 
 		expect( idsAfter ).toEqual( idsBefore );
 
-		const starts = after.generated_occurrences.map(
-			( o ) => o.start_datetime
-		);
+		const starts = after.generated_occurrences.map( ( o ) => startOf( o ) );
 		expect( starts.every( ( s ) => s.includes( '11:00:00' ) ) ).toBe(
 			true
 		);
@@ -1225,8 +1245,7 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 
 		const invalidOccurrence = created.generated_occurrences[ 0 ];
 		const cancelledOccurrence = created.generated_occurrences[ 1 ];
-		const cancelledDate =
-			cancelledOccurrence.start_datetime.split( ' ' )[ 0 ];
+		const cancelledDate = cancelledOccurrence.start_date;
 		const cancelRes = await localApi.post(
 			`/wp-json/fair-events/v1/event-dates/${ masterEventDateId }/toggle-exdate`,
 			{ headers: adminHeaders, data: { date: cancelledDate } }
@@ -1287,8 +1306,10 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 			{
 				headers: adminHeaders,
 				data: {
-					start_datetime: '2035-03-01 14:00:00',
-					end_datetime: '2035-03-01 16:00:00',
+					start_date: '2035-03-01',
+					start_time: '14:00:00',
+					end_date: '2035-03-01',
+					end_time: '16:00:00',
 				},
 			}
 		);
@@ -1297,9 +1318,7 @@ test.describe( 'EventDatesController — recurrence reconciliation', () => {
 		const after = await getMaster( localApi, masterEventDateId );
 		expect( after.generated_occurrences.length ).toBe( 2 );
 
-		const starts = after.generated_occurrences.map(
-			( o ) => o.start_datetime
-		);
+		const starts = after.generated_occurrences.map( ( o ) => startOf( o ) );
 		expect( starts.every( ( s ) => s.includes( '14:00:00' ) ) ).toBe(
 			true
 		);
@@ -1351,8 +1370,10 @@ test.describe( 'EventDatesController — ending a series', () => {
 			headers: adminHeaders,
 			data: {
 				title: `End series test ${ Date.now() }`,
-				start_datetime: start,
-				end_datetime: start.replace( '10:00:00', '12:00:00' ),
+				...timingFields(
+					start,
+					start.replace( '10:00:00', '12:00:00' )
+				),
 				rrule,
 			},
 		} );
@@ -1420,7 +1441,7 @@ test.describe( 'EventDatesController — ending a series', () => {
 
 		const after = await getMaster( localApi, masterEventDateId );
 		expect( after.event_id ).toBe( eventPostId );
-		expect( after.start_datetime ).toBe( master.start_datetime );
+		expect( startOf( after ) ).toBe( startOf( master ) );
 		expect( after.occurrence_type ).toBe( 'single' );
 		expect( after.generated_occurrences ?? [] ).toHaveLength( 0 );
 
@@ -1441,8 +1462,10 @@ test.describe( 'EventDatesController — ending a series', () => {
 				headers: adminHeaders,
 				data: {
 					title: `End irregular series test ${ Date.now() }`,
-					start_datetime: '2035-04-01 10:00:00',
-					end_datetime: '2035-04-01 12:00:00',
+					start_date: '2035-04-01',
+					start_time: '10:00:00',
+					end_date: '2035-04-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -1473,7 +1496,7 @@ test.describe( 'EventDatesController — ending a series', () => {
 		const after = await getMaster( localApi, masterEventDateId );
 		expect( after.recurrence_mode ).toBe( 'none' );
 		expect( after.occurrence_type ).toBe( 'single' );
-		expect( after.start_datetime ).toBe( manual.start_datetime );
+		expect( startOf( after ) ).toBe( startOf( manual ) );
 		expect( after.generated_occurrences ?? [] ).toHaveLength( 0 );
 	} );
 
@@ -1548,8 +1571,10 @@ test.describe( 'EventDatesController — cancel/restore via toggle-exdate', () =
 				data: {
 					event_id: eventPostId,
 					title: `Toggle series test ${ Date.now() }`,
-					start_datetime: '2035-09-03 10:00:00',
-					end_datetime: '2035-09-03 12:00:00',
+					start_date: '2035-09-03',
+					start_time: '10:00:00',
+					end_date: '2035-09-03',
+					end_time: '12:00:00',
 					rrule: 'FREQ=WEEKLY;COUNT=3',
 				},
 			}
@@ -1574,7 +1599,7 @@ test.describe( 'EventDatesController — cancel/restore via toggle-exdate', () =
 			return;
 		}
 
-		const targetDate = targetOccurrence.start_datetime.split( ' ' )[ 0 ];
+		const targetDate = targetOccurrence.start_date;
 
 		// Cancel.
 		const cancelRes = await localApi.post(
@@ -1650,8 +1675,10 @@ test.describe( 'EventDatesController — impact classification (PR 2)', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Impact test ${ Date.now() }`,
-				start_datetime: '2035-06-01 10:00:00',
-				end_datetime: '2035-06-01 12:00:00',
+				start_date: '2035-06-01',
+				start_time: '10:00:00',
+				end_date: '2035-06-01',
+				end_time: '12:00:00',
 				rrule,
 			},
 		} );
@@ -1674,7 +1701,7 @@ test.describe( 'EventDatesController — impact classification (PR 2)', () => {
 		const occurrences = await occRes.json();
 		// Sort ascending and pick the last generated occurrence.
 		const sorted = [ ...occurrences ].sort( ( a, b ) =>
-			a.start_datetime < b.start_datetime ? -1 : 1
+			startOf( a ) < startOf( b ) ? -1 : 1
 		);
 		const lastOccurrence = sorted[ sorted.length - 1 ];
 
@@ -1714,8 +1741,10 @@ test.describe( 'EventDatesController — impact classification (PR 2)', () => {
 				data: {
 					event_id: eventPostId,
 					title: `Shift impact test ${ Date.now() }`,
-					start_datetime: '2035-07-01 10:00:00',
-					end_datetime: '2035-07-01 12:00:00',
+					start_date: '2035-07-01',
+					start_time: '10:00:00',
+					end_date: '2035-07-01',
+					end_time: '12:00:00',
 					rrule: 'FREQ=WEEKLY;COUNT=3',
 				},
 			}
@@ -1729,8 +1758,10 @@ test.describe( 'EventDatesController — impact classification (PR 2)', () => {
 			{
 				headers: adminHeaders,
 				data: {
-					start_datetime: '2035-07-01 11:00:00',
-					end_datetime: '2035-07-01 13:00:00',
+					start_date: '2035-07-01',
+					start_time: '11:00:00',
+					end_date: '2035-07-01',
+					end_time: '13:00:00',
 				},
 			}
 		);
@@ -1824,8 +1855,10 @@ test.describe( 'EventDatesController — impact classification (PR 2)', () => {
 				data: {
 					event_id: eventPostId,
 					title: `Safe shorten ${ Date.now() }`,
-					start_datetime: '2035-08-01 10:00:00',
-					end_datetime: '2035-08-01 12:00:00',
+					start_date: '2035-08-01',
+					start_time: '10:00:00',
+					end_date: '2035-08-01',
+					end_time: '12:00:00',
 					rrule: 'FREQ=WEEKLY;COUNT=3',
 				},
 			}
@@ -1885,8 +1918,10 @@ test.describe( 'EventDatesController — title validation', () => {
 			headers: adminHeaders,
 			data: {
 				title: '',
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( res.status() ).toBe( 400 );
@@ -1897,8 +1932,10 @@ test.describe( 'EventDatesController — title validation', () => {
 			headers: adminHeaders,
 			data: {
 				title: '   ',
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( res.status() ).toBe( 400 );
@@ -1911,8 +1948,10 @@ test.describe( 'EventDatesController — title validation', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Title Validation ${ Date.now() }`,
-					start_datetime: '2030-01-01 10:00:00',
-					end_datetime: '2030-01-01 12:00:00',
+					start_date: '2030-01-01',
+					start_time: '10:00:00',
+					end_date: '2030-01-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -1953,8 +1992,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 			headers: adminHeaders,
 			data: {
 				title: `Attendance Mode Default ${ Date.now() }`,
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( res.ok() ).toBeTruthy();
@@ -1970,8 +2011,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 			headers: adminHeaders,
 			data: {
 				title: `Online Event ${ Date.now() }`,
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 				attendance_mode: 'online',
 				joining_link: 'https://example.com/meet',
 			},
@@ -1991,8 +2034,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 				headers: adminHeaders,
 				data: {
 					title: `Hybrid Event Update ${ Date.now() }`,
-					start_datetime: '2030-01-01 10:00:00',
-					end_datetime: '2030-01-01 12:00:00',
+					start_date: '2030-01-01',
+					start_time: '10:00:00',
+					end_date: '2030-01-01',
+					end_time: '12:00:00',
 				},
 			}
 		);
@@ -2021,8 +2066,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 			headers: adminHeaders,
 			data: {
 				title: `Invalid Joining Link ${ Date.now() }`,
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 				attendance_mode: 'online',
 				joining_link: 'not-a-url',
 			},
@@ -2035,8 +2082,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 			headers: adminHeaders,
 			data: {
 				title: `Invalid Attendance Mode ${ Date.now() }`,
-				start_datetime: '2030-01-01 10:00:00',
-				end_datetime: '2030-01-01 12:00:00',
+				start_date: '2030-01-01',
+				start_time: '10:00:00',
+				end_date: '2030-01-01',
+				end_time: '12:00:00',
 				attendance_mode: 'not-a-mode',
 			},
 		} );
@@ -2050,8 +2099,10 @@ test.describe( 'EventDatesController — attendance mode + joining link', () => 
 				headers: adminHeaders,
 				data: {
 					title: `Series Inheritance ${ Date.now() }`,
-					start_datetime: '2030-02-03 10:00:00',
-					end_datetime: '2030-02-03 12:00:00',
+					start_date: '2030-02-03',
+					start_time: '10:00:00',
+					end_date: '2030-02-03',
+					end_time: '12:00:00',
 					attendance_mode: 'online',
 					joining_link: 'https://example.com/series-meet',
 					rrule: 'FREQ=WEEKLY;COUNT=3',
@@ -2112,8 +2163,10 @@ test.describe( 'EventDatesController — event_id propagation to generated child
 			headers: adminHeaders,
 			data: {
 				title: `Create-post propagation ${ Date.now() }`,
-				start_datetime: '2037-01-01 10:00:00',
-				end_datetime: '2037-01-01 12:00:00',
+				start_date: '2037-01-01',
+				start_time: '10:00:00',
+				end_date: '2037-01-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		} );
@@ -2156,8 +2209,10 @@ test.describe( 'EventDatesController — event_id propagation to generated child
 			headers: adminHeaders,
 			data: {
 				title: `Link-post propagation ${ Date.now() }`,
-				start_datetime: '2037-02-01 10:00:00',
-				end_datetime: '2037-02-01 12:00:00',
+				start_date: '2037-02-01',
+				start_time: '10:00:00',
+				end_date: '2037-02-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		} );
@@ -2254,8 +2309,10 @@ test.describe( 'EventDatesController — no empty event on page creation (#1830)
 			headers: adminHeaders,
 			data: {
 				title,
-				start_datetime: '2038-03-01 10:00:00',
-				end_datetime: '2038-03-01 12:00:00',
+				start_date: '2038-03-01',
+				start_time: '10:00:00',
+				end_date: '2038-03-01',
+				end_time: '12:00:00',
 				link_type: 'none',
 				categories: [ categoryId ],
 			},
@@ -2287,8 +2344,8 @@ test.describe( 'EventDatesController — no empty event on page creation (#1830)
 		const event = await eventRes.json();
 		expect( event.event_id ).toBe( postId );
 		expect( event.title ).toBe( title );
-		expect( event.start_datetime ).toBe( '2038-03-01 10:00:00' );
-		expect( event.end_datetime ).toBe( '2038-03-01 12:00:00' );
+		expect( startOf( event ) ).toBe( '2038-03-01 10:00:00' );
+		expect( endOf( event ) ).toBe( '2038-03-01 12:00:00' );
 		expect( event.categories.map( ( c ) => c.id ) ).toContain( categoryId );
 	} );
 
@@ -2337,7 +2394,7 @@ test.describe( 'EventDatesController — excluded dates of a regular series (#17
 	const rowsByDate = ( body ) =>
 		Object.fromEntries(
 			body.generated_occurrences.map( ( occ ) => [
-				occ.start_datetime.slice( 0, 10 ),
+				occ.start_date,
 				{ id: occ.id, status: occ.status },
 			] )
 		);
@@ -2348,8 +2405,10 @@ test.describe( 'EventDatesController — excluded dates of a regular series (#17
 			headers: adminHeaders,
 			data: {
 				title: `Excluded dates ${ Date.now() }`,
-				start_datetime: '2035-03-01 10:00:00',
-				end_datetime: '2035-03-01 12:00:00',
+				start_date: '2035-03-01',
+				start_time: '10:00:00',
+				end_date: '2035-03-01',
+				end_time: '12:00:00',
 				...extra,
 			},
 		} );

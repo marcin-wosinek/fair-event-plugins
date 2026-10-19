@@ -297,13 +297,7 @@ class Event {
 		$event_location = get_post_meta( $origin_id, 'event_location', true );
 
 		if ( $event_dates ) {
-			\FairEvents\Models\EventDates::save(
-				$post_id,
-				$event_dates->start_datetime,
-				$event_dates->end_datetime,
-				$event_dates->all_day,
-				$event_dates->get_timing()
-			);
+			\FairEvents\Models\EventDates::save( $post_id, null, null, false, $event_dates->get_timing() );
 
 			// Copy venue from custom table.
 			if ( $event_dates->venue_id ) {
@@ -371,9 +365,9 @@ class Event {
 	public static function render_admin_column( $column, $post_id ) {
 		if ( 'event_datetime' === $column ) {
 			$event_dates = \FairEvents\Models\EventDates::get_by_event_id( $post_id );
-			if ( $event_dates && $event_dates->start_datetime ) {
-				$start = self::format_event_datetime( $event_dates->start_datetime, $event_dates->all_day );
-				$end   = $event_dates->end_datetime ? self::format_event_datetime( $event_dates->end_datetime, $event_dates->all_day ) : '';
+			if ( $event_dates && $event_dates->start_date ) {
+				$start = self::format_event_datetime( $event_dates->start_date, $event_dates->all_day ? null : $event_dates->start_time );
+				$end   = self::format_event_datetime( $event_dates->end_date, $event_dates->all_day ? null : $event_dates->end_time );
 
 				if ( $end && $end !== $start ) {
 					echo esc_html( $start . ' – ' . $end );
@@ -387,32 +381,25 @@ class Event {
 	}
 
 	/**
-	 * Format event datetime for display
+	 * Format an event date, with its time when one is supplied.
 	 *
-	 * @param string $datetime Datetime string.
-	 * @param bool   $all_day  Whether event is all-day.
-	 * @return string Formatted datetime.
+	 * @param string|null $date Site-local date (Y-m-d).
+	 * @param string|null $time Site-local time (H:i:s), or null for none.
+	 * @return string Formatted date (and time).
 	 */
-	private static function format_event_datetime( $datetime, $all_day = false ) {
-		if ( empty( $datetime ) ) {
+	private static function format_event_datetime( $date, $time = null ) {
+		if ( empty( $date ) ) {
 			return '';
 		}
 
-		$timestamp = strtotime( $datetime );
-		if ( false === $timestamp ) {
-			return $datetime;
+		$format = get_option( 'date_format' );
+		if ( null !== $time ) {
+			$format .= ' ' . get_option( 'time_format' );
 		}
 
-		$date_format = get_option( 'date_format' );
+		$formatted = \FairEvents\Helpers\DateHelper::format_local_datetime( $date . ' ' . ( $time ?? '00:00:00' ), $format );
 
-		if ( $all_day ) {
-			// All-day events: show date only
-			return wp_date( $date_format, $timestamp );
-		} else {
-			// Timed events: show date and time
-			$time_format = get_option( 'time_format' );
-			return wp_date( $date_format . ' ' . $time_format, $timestamp );
-		}
+		return '' !== $formatted ? $formatted : $date;
 	}
 
 	/**
@@ -447,7 +434,7 @@ class Event {
 	}
 
 	/**
-	 * Modify query clauses to sort by event start datetime from custom table
+	 * Modify query clauses to sort by event start date and time from custom table
 	 *
 	 * @param array     $clauses Query clauses.
 	 * @param \WP_Query $query   The query object.
@@ -469,7 +456,7 @@ class Event {
 		$order = $query->get( 'order' ) ?: 'ASC';
 		$order = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 
-		$clauses['orderby'] = "COALESCE(fed.start_datetime, fed2.start_datetime) {$order}";
+		$clauses['orderby'] = "COALESCE(fed.start_date, fed2.start_date) {$order}, COALESCE(fed.start_time, fed2.start_time) {$order}";
 
 		// Remove this filter after first use to avoid affecting other queries.
 		remove_filter( 'posts_clauses', array( __CLASS__, 'sort_by_event_date_clauses' ), 10 );

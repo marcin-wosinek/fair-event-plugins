@@ -16,7 +16,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { TicketEditModal } from 'fair-events-shared';
+import { TicketEditModal, formatTimingStart } from 'fair-events-shared';
 import {
 	ticketLabel,
 	ticketShortLabel,
@@ -169,8 +169,17 @@ const isAssignedAway = ( ticket ) =>
 	ticket.purchaser.participant_id !== ticket.assignee.participant_id;
 
 // A date of the recurring event, as the move popups name it.
-const occurrenceLabel = ( occurrence ) =>
-	new Date( occurrence.start_datetime.replace( ' ', 'T' ) ).toLocaleString();
+const occurrenceLabel = ( occurrence ) => formatTimingStart( occurrence );
+
+// A date's stored site-local start: its date, with the start time when set.
+const occurrenceStart = ( occurrence ) => {
+	if ( ! occurrence?.start_date ) {
+		return '';
+	}
+	return occurrence.start_time && ! occurrence.all_day
+		? `${ occurrence.start_date } ${ occurrence.start_time }`
+		: occurrence.start_date;
+};
 
 const holdsOption = ( ids, names, opt ) =>
 	( ids || [] ).includes( opt.id ) || ( names || [] ).includes( opt.name );
@@ -531,7 +540,7 @@ export default function EventAudience( {
 		const current = siblings.find(
 			( s ) => Number( s.id ) === Number( eventDateId )
 		);
-		return current?.start_datetime ? occurrenceLabel( current ) : '';
+		return current ? occurrenceLabel( current ) : '';
 	}, [ siblings, eventDateId ] );
 
 	const ticketMoveTargets = useMemo(
@@ -956,12 +965,13 @@ export default function EventAudience( {
 
 	const handleExportTicketsCsv = () => {
 		const startByDateId = new Map(
-			siblings.map( ( s ) => [ Number( s.id ), s.start_datetime ] )
+			siblings.map( ( s ) => [ Number( s.id ), occurrenceStart( s ) ] )
 		);
 		downloadCsvFile(
 			buildTicketsCsv( {
 				tickets: shownTickets,
-				// Stored site-local date and time, as the event shows it.
+				// Stored site-local date (and start time, when set), as the
+				// event shows it.
 				eventDate: ( id ) =>
 					startByDateId.get( Number( id ) ) ||
 					startByDateId.get( Number( eventDateId ) ) ||

@@ -111,8 +111,10 @@ test.describe( 'Sale periods — empty first start uses the creation day', () =>
 			data: {
 				title: `Sale start from creation e2e ${ stamp }`,
 				link_type: 'post',
-				start_datetime: '2036-05-10 18:00:00',
-				end_datetime: '2036-05-10 22:00:00',
+				start_date: '2036-05-10',
+				start_time: '18:00:00',
+				end_date: '2036-05-10',
+				end_time: '22:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;
@@ -305,8 +307,10 @@ test.describe( 'Sale periods — empty first start uses the creation day', () =>
 			method: 'POST',
 			data: {
 				title: `Sale start series e2e ${ stamp }`,
-				start_datetime: '2036-06-03 18:00:00',
-				end_datetime: '2036-06-03 20:00:00',
+				start_date: '2036-06-03',
+				start_time: '18:00:00',
+				end_date: '2036-06-03',
+				end_time: '20:00:00',
 			},
 		} );
 

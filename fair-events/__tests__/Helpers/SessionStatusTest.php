@@ -55,7 +55,7 @@ class SessionStatusTest extends TestCase {
 	 * @return array
 	 */
 	private function legacy( $start, $end, $all_day ): array {
-		return EventTiming::from_legacy( $start, $end, $all_day );
+		return EventTiming::from_datetimes( $start, $end, $all_day );
 	}
 
 	/**

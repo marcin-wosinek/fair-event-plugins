@@ -130,12 +130,26 @@ namespace {
 				return $date_string;
 			}
 
-			// Resolve based on format.
+			// Resolve based on format. These are exact moments, so a timed
+			// event without the needed time stays unresolved; an all-day
+			// event resolves to the start of its start or end date.
+			$timing = $event_dates->get_timing();
+			if ( empty( $timing['start_date'] ) ) {
+				return $date_string;
+			}
+			$end_date = $timing['end_date'] ?? $timing['start_date'];
+
 			switch ( $date_string ) {
 				case 'fair-event:start':
-					return $event_dates->start_datetime ?? $date_string;
+					if ( $timing['all_day'] ) {
+						return $timing['start_date'] . ' 00:00:00';
+					}
+					return null !== $timing['start_time'] ? $timing['start_date'] . ' ' . $timing['start_time'] : $date_string;
 				case 'fair-event:end':
-					return $event_dates->end_datetime ?? $date_string;
+					if ( $timing['all_day'] ) {
+						return $end_date . ' 00:00:00';
+					}
+					return null !== $timing['end_time'] ? $end_date . ' ' . $timing['end_time'] : $date_string;
 				default:
 					return $date_string;
 			}

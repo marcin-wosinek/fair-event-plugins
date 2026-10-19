@@ -26,8 +26,10 @@ const eventDate = {
 	id: 7,
 	occurrence_type: 'single',
 	link_type: 'post',
-	start_datetime: '2027-05-15 09:00:00',
-	end_datetime: '2027-05-16 18:00:00',
+	start_date: '2027-05-15',
+	start_time: '09:00:00',
+	end_date: '2027-05-16',
+	end_time: '18:00:00',
 };
 
 const savedSchedule = {

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -119,11 +120,9 @@ test.describe( 'Fair Events calendar/week block ItemList JSON-LD', () => {
 			method: 'POST',
 			data: {
 				title: 'ItemList JSON-LD Single Day Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 2 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 3 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 2 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 3 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 			},
@@ -136,11 +135,9 @@ test.describe( 'Fair Events calendar/week block ItemList JSON-LD', () => {
 			method: 'POST',
 			data: {
 				title: 'ItemList JSON-LD Multi Day Event',
-				start_datetime: iso(
-					new Date( now.getTime() + 4 * 60 * 60 * 1000 )
-				),
-				end_datetime: iso(
-					new Date( now.getTime() + 28 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( new Date( now.getTime() + 4 * 60 * 60 * 1000 ) ),
+					iso( new Date( now.getTime() + 28 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 			},

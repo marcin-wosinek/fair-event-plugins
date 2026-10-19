@@ -112,7 +112,8 @@ describe( 'TransactionPage — Event field', () => {
 			event: {
 				id: 7,
 				title: 'Spring Meetup',
-				start_datetime: '2027-03-01 10:00:00',
+				start_date: '2027-03-01',
+				start_time: '10:00:00',
 				manage_url:
 					'admin.php?page=fair-events-manage-event&event_date_id=7',
 			},
@@ -151,7 +152,8 @@ describe( 'TransactionPage — Event field', () => {
 				event: {
 					id: data.event_date_id,
 					title: 'Weekly Standup',
-					start_datetime: '2027-04-08 09:00:00',
+					start_date: '2027-04-08',
+					start_time: '09:00:00',
 					manage_url: `admin.php?page=fair-events-manage-event&event_date_id=${ data.event_date_id }`,
 				},
 			} )
@@ -165,13 +167,15 @@ describe( 'TransactionPage — Event field', () => {
 					{
 						id: 6,
 						title: 'Weekly Standup',
-						start_datetime: '2027-04-01 09:00:00',
+						start_date: '2027-04-01',
+						start_time: '09:00:00',
 						occurrence_type: 'generated',
 					},
 					{
 						id: 7,
 						title: 'Weekly Standup',
-						start_datetime: '2027-04-08 09:00:00',
+						start_date: '2027-04-08',
+						start_time: '09:00:00',
 						occurrence_type: 'generated',
 					},
 				],
@@ -215,7 +219,8 @@ describe( 'TransactionPage — Event field', () => {
 			event: {
 				id: 7,
 				title: 'Spring Meetup',
-				start_datetime: '2027-03-01 10:00:00',
+				start_date: '2027-03-01',
+				start_time: '10:00:00',
 				manage_url:
 					'admin.php?page=fair-events-manage-event&event_date_id=7',
 			},

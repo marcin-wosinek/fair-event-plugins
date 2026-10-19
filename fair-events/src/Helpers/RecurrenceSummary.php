@@ -31,7 +31,7 @@ class RecurrenceSummary {
 	 * generic "Recurring event" line when the schedule can't be described.
 	 *
 	 * @param array $series     Series metadata (see class docblock).
-	 * @param array $occurrence Selected occurrence: start, end, all_day.
+	 * @param array $occurrence Selected occurrence: start, end, all_day, optionally timing.
 	 * @return string Plain (unescaped) text.
 	 */
 	public static function format( array $series, array $occurrence ) {
@@ -92,7 +92,7 @@ class RecurrenceSummary {
 	 * schedule) the full date range is shown.
 	 *
 	 * @param array $series     Series metadata (see class docblock).
-	 * @param array $occurrence Selected occurrence: start, end, all_day.
+	 * @param array $occurrence Selected occurrence: start, end, all_day, optionally timing.
 	 * @return string Plain text.
 	 */
 	public static function format_next( array $series, array $occurrence ) {
@@ -106,6 +106,10 @@ class RecurrenceSummary {
 
 		if ( $single_day && $at_regular_time && '' !== self::format_schedule( $series ) ) {
 			return DateRangeFormatter::format( $start, '', true );
+		}
+
+		if ( isset( $occurrence['timing'] ) && is_array( $occurrence['timing'] ) ) {
+			return DateRangeFormatter::format_timing( $occurrence['timing'] );
 		}
 
 		return DateRangeFormatter::format( $start, $end, $all_day );

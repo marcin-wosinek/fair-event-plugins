@@ -182,10 +182,24 @@ export default function EditComponent( { context } ) {
 				};
 			}
 
+			// Without a start time the preview shows dates only, as an
+			// all-day range does; a missing time is never shown as midnight.
+			const timed = ! eventData.all_day && !! eventData.start_time;
+			let eventEnd = '';
+			if ( timed && eventData.end_time ) {
+				eventEnd = `${ eventData.end_date }T${ eventData.end_time }`;
+			} else if ( ! timed && eventData.end_date ) {
+				eventEnd = `${ eventData.end_date }T00:00:00`;
+			}
+
 			return {
-				eventStart: eventData.start_datetime || '',
-				eventEnd: eventData.end_datetime || '',
-				eventAllDay: eventData.all_day || false,
+				eventStart: eventData.start_date
+					? `${ eventData.start_date }T${
+							timed ? eventData.start_time : '00:00:00'
+						}`
+					: '',
+				eventEnd,
+				eventAllDay: ! timed,
 			};
 		},
 		[ isEventContext, postId ]

@@ -112,19 +112,16 @@ class SignupHookBridge {
 	 * The latest purchase time at which a whole-series pass still covers an
 	 * event date (fair-events' EventTiming::series_pass_cutoff(): a date
 	 * without a start time is covered by a pass bought on its start date).
-	 * Falls back to the start datetime with Fair Events versions that
-	 * predate optional times.
 	 *
-	 * @param array|null  $timing         Canonical timing, when known.
-	 * @param string|null $start_datetime Legacy start datetime.
-	 * @return string|null Site-local 'Y-m-d H:i:s', or null when undated.
+	 * @param array|null $timing Canonical timing, when known.
+	 * @return string|null Site-local 'Y-m-d H:i:s', or null when undated or unknown.
 	 */
-	private static function series_pass_cutoff( $timing, $start_datetime ) {
+	private static function series_pass_cutoff( $timing ) {
 		if ( is_array( $timing ) && method_exists( \FairEvents\Helpers\EventTiming::class, 'series_pass_cutoff' ) ) {
 			return \FairEvents\Helpers\EventTiming::series_pass_cutoff( $timing );
 		}
 
-		return empty( $start_datetime ) ? null : $start_datetime;
+		return null;
 	}
 
 	/**
@@ -354,7 +351,7 @@ class SignupHookBridge {
 				}
 			}
 
-			$pass_cutoff      = $event_date_row ? self::series_pass_cutoff( method_exists( $event_date_row, 'get_timing' ) ? $event_date_row->get_timing() : null, $event_date_row->start_datetime ) : null;
+			$pass_cutoff      = $event_date_row ? self::series_pass_cutoff( method_exists( $event_date_row, 'get_timing' ) ? $event_date_row->get_timing() : null ) : null;
 			$pass_covers_date = $series_pass && $pass_cutoff
 				&& strtotime( $pass_cutoff ) >= strtotime( $series_pass->created_at );
 			if ( $pass_covers_date ) {
@@ -396,7 +393,7 @@ class SignupHookBridge {
 				foreach ( $context['occurrences_for_picker'] as $idx => $occ_row ) {
 					$rel           = $event_participant_repository->get_by_event_date_and_participant( (int) $occ_row['id'], $participant_id );
 					$occ_signed_up = ( $rel && 'signed_up' === $rel->label );
-					$occ_cutoff    = self::series_pass_cutoff( $occ_row['timing'] ?? null, $occ_row['start_datetime'] ?? null );
+					$occ_cutoff    = self::series_pass_cutoff( $occ_row['timing'] ?? null );
 					if ( ! $occ_signed_up && $series_pass && $occ_cutoff ) {
 						$occ_signed_up = strtotime( $occ_cutoff ) >= strtotime( $series_pass->created_at );
 					}
@@ -537,9 +534,9 @@ class SignupHookBridge {
 				if ( ! $public_url ) {
 					continue;
 				}
-				$occ_label = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-					? \FairEvents\Helpers\DateRangeFormatter::format( $occ_row['start_datetime'], $occ_row['end_datetime'], $occ_row['all_day'] )
-					: $occ_row['start_datetime'];
+				$occ_label = method_exists( \FairEvents\Helpers\DateRangeFormatter::class, 'format_timing' )
+					? \FairEvents\Helpers\DateRangeFormatter::format_timing( $occ_row['timing'] )
+					: (string) ( $occ_row['timing']['start_date'] ?? '' );
 				if ( ! empty( $occ_row['signed_up'] ) ) {
 					$occ_label .= ' — ' . __( 'already signed up', 'fair-audience' );
 				}

@@ -152,8 +152,10 @@ test.describe( 'Manage Event — reorder add-ons in a popup', () => {
 			data: {
 				title: `Add-on order e2e ${ stamp }`,
 				link_type: 'post',
-				start_datetime: '2039-04-04 10:00:00',
-				end_datetime: '2039-04-04 12:00:00',
+				start_date: '2039-04-04',
+				start_time: '10:00:00',
+				end_date: '2039-04-04',
+				end_time: '12:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;

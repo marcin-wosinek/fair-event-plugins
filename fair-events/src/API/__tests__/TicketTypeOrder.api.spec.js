@@ -94,8 +94,10 @@ test.describe( 'Tickets — ticket type order (#1757)', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2035-12-02 10:00:00',
-				end_datetime: '2035-12-02 12:00:00',
+				start_date: '2035-12-02',
+				start_time: '10:00:00',
+				end_date: '2035-12-02',
+				end_time: '12:00:00',
 			},
 		} );
 		const edBody = await edRes.json();

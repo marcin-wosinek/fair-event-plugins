@@ -14,8 +14,18 @@ import { formatDateOnly } from 'fair-events-shared';
 import EditInstancesModal from '../EditInstancesModal.js';
 
 const generatedOccurrences = [
-	{ id: 2, start_datetime: '2026-07-08 18:00:00', status: 'active' },
-	{ id: 3, start_datetime: '2026-07-15 18:00:00', status: 'cancelled' },
+	{
+		id: 2,
+		start_date: '2026-07-08',
+		start_time: '18:00:00',
+		status: 'active',
+	},
+	{
+		id: 3,
+		start_date: '2026-07-15',
+		start_time: '18:00:00',
+		status: 'cancelled',
+	},
 ];
 
 // Matches the date formatting in EditInstancesModal.
@@ -102,7 +112,8 @@ it( 'shows a moved occurrence on its date but toggles its scheduled date', () =>
 			generatedOccurrences={ [
 				{
 					id: 2,
-					start_datetime: '2026-07-09 18:00:00',
+					start_date: '2026-07-09',
+					start_time: '18:00:00',
 					recurrence_anchor: '2026-07-08',
 					status: 'active',
 				},

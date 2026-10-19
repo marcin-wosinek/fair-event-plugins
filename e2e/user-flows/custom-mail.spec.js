@@ -89,8 +89,10 @@ test.describe('Email the participants of an event occurrence', () => {
 		).id;
 		const series = await post(request, '/fair-events/v1/event-dates', {
 			title: eventTitle,
-			start_datetime: '2037-05-02 10:00:00',
-			end_datetime: '2037-05-02 12:00:00',
+			start_date: '2037-05-02',
+			start_time: '10:00:00',
+			end_date: '2037-05-02',
+			end_time: '12:00:00',
 			rrule: 'FREQ=WEEKLY;COUNT=2',
 		});
 		created.occurrenceId = series.id;

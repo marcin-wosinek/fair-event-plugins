@@ -23,7 +23,7 @@ import {
 } from '@testing-library/react';
 import { addFilter, removeFilter } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
-import { formatSiteLocalDatetime } from 'fair-events-shared';
+import { formatSiteLocalDatetime, formatTimingStart } from 'fair-events-shared';
 import ManageEventApp from '../ManageEventApp.js';
 import { ADD_NEW_VENUE_VALUE } from '../../components/InlineVenueCreator.js';
 
@@ -65,8 +65,10 @@ jest.mock( '../../event-statistics/EventStatistics.js', () => {
 const mockEventDate = {
 	id: 1,
 	title: 'Test Event',
-	start_datetime: '2026-07-01 18:00:00',
-	end_datetime: '2026-07-01 20:00:00',
+	start_date: '2026-07-01',
+	start_time: '18:00:00',
+	end_date: '2026-07-01',
+	end_time: '20:00:00',
 	all_day: false,
 	occurrence_type: 'single',
 	link_type: 'none',
@@ -527,9 +529,10 @@ describe( 'context header (#986)', () => {
 		expect(
 			screen.getByText(
 				new RegExp(
-					formatSiteLocalDatetime(
-						mockEventDate.start_datetime
-					).replace( /[.*+?^${}()|[\]\\]/g, '\\$&' )
+					formatTimingStart( mockEventDate ).replace(
+						/[.*+?^${}()|[\]\\]/g,
+						'\\$&'
+					)
 				)
 			)
 		).toBeInTheDocument();
@@ -547,8 +550,16 @@ describe( 'context header (#986)', () => {
 					occurrence_type: 'master',
 					rrule: 'FREQ=WEEKLY',
 					generated_occurrences: [
-						{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-						{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+						{
+							id: 2,
+							start_date: '2026-07-08',
+							start_time: '18:00:00',
+						},
+						{
+							id: 3,
+							start_date: '2026-07-15',
+							start_time: '18:00:00',
+						},
 					],
 				} );
 			}
@@ -576,7 +587,8 @@ describe( 'context header (#986)', () => {
 					master: {
 						id: 1,
 						title: 'Master Event',
-						start_datetime: '2026-07-01 18:00:00',
+						start_date: '2026-07-01',
+						start_time: '18:00:00',
 					},
 				} );
 			}
@@ -624,12 +636,14 @@ describe( 'edit instances modal (#981 Part 3)', () => {
 					generated_occurrences: [
 						{
 							id: 2,
-							start_datetime: '2026-07-08 18:00:00',
+							start_date: '2026-07-08',
+							start_time: '18:00:00',
 							status: 'active',
 						},
 						{
 							id: 3,
-							start_datetime: '2026-07-15 18:00:00',
+							start_date: '2026-07-15',
+							start_time: '18:00:00',
 							status: 'cancelled',
 						},
 					],
@@ -825,6 +839,38 @@ describe( 'multilingual categories (#1636)', () => {
 		).toBeInTheDocument();
 	} );
 
+	it( 'saves the dates and optional times, never the retired datetimes (#1819)', async () => {
+		mockMultilingualCategories();
+
+		render( <ManageEventApp /> );
+		const titleInput = await screen.findByLabelText( 'Title' );
+		fireEvent.change( titleInput, { target: { value: 'Edited title' } } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					method: 'PUT',
+					data: expect.objectContaining( {
+						start_date: '2026-07-01',
+						end_date: '2026-07-01',
+						start_time: '18:00:00',
+						end_time: '20:00:00',
+						all_day: false,
+					} ),
+				} )
+			)
+		);
+		const saved = apiFetch.mock.calls.find(
+			( [ options ] ) => options.method === 'PUT'
+		)[ 0 ].data;
+		expect( saved ).not.toHaveProperty( 'start_datetime' );
+		expect( saved ).not.toHaveProperty( 'end_datetime' );
+	} );
+
 	it( 'preserves every language on an unrelated save', async () => {
 		mockMultilingualCategories();
 
@@ -945,7 +991,11 @@ describe( 'single-event recurrence action (#1343)', () => {
 					occurrence_type: 'master',
 					rrule: 'FREQ=WEEKLY',
 					generated_occurrences: [
-						{ id: 2, start_datetime: '2026-07-08 18:00:00' },
+						{
+							id: 2,
+							start_date: '2026-07-08',
+							start_time: '18:00:00',
+						},
 					],
 				} );
 			}
@@ -1004,8 +1054,8 @@ describe( 'end series confirmation (#1772)', () => {
 		recurrence_mode: 'rule',
 		rrule: 'FREQ=WEEKLY;COUNT=3',
 		generated_occurrences: [
-			{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-			{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+			{ id: 2, start_date: '2026-07-08', start_time: '18:00:00' },
+			{ id: 3, start_date: '2026-07-15', start_time: '18:00:00' },
 		],
 	};
 	const endedSeries = {
@@ -1086,10 +1136,8 @@ describe( 'end series confirmation (#1772)', () => {
 					{ length: 9 },
 					( _, i ) => ( {
 						id: i + 2,
-						start_datetime: `2026-07-${ String( i + 2 ).padStart(
-							2,
-							'0'
-						) } 18:00:00`,
+						start_date: `2026-07-${ String( i + 2 ).padStart( 2, '0' ) }`,
+						start_time: '18:00:00',
 					} )
 				),
 			} ),
@@ -1242,9 +1290,7 @@ describe( 'delete confirmation dialog (#991)', () => {
 
 		expect(
 			screen.getByText(
-				`Delete Test Event on ${ formatSiteLocalDatetime(
-					mockEventDate.start_datetime
-				) }? This cannot be undone.`
+				`Delete Test Event on ${ formatTimingStart( mockEventDate ) }? This cannot be undone.`
 			)
 		).toBeInTheDocument();
 	} );
@@ -1259,7 +1305,8 @@ describe( 'delete confirmation dialog (#991)', () => {
 						{ length: 9 },
 						( _, i ) => ( {
 							id: i + 2,
-							start_datetime: '2026-07-08 18:00:00',
+							start_date: '2026-07-08',
+							start_time: '18:00:00',
 						} )
 					),
 				} );
@@ -1322,9 +1369,7 @@ describe( 'delete confirmation dialog (#991)', () => {
 		const dialog = await openDialog();
 
 		expect( dialog ).toHaveAccessibleName(
-			`Delete event — Test Event, ${ formatSiteLocalDatetime(
-				mockEventDate.start_datetime
-			) }`
+			`Delete event — Test Event, ${ formatTimingStart( mockEventDate ) }`
 		);
 		expect(
 			within( dialog ).getByRole( 'button', { name: 'Delete event' } )
@@ -1337,8 +1382,8 @@ describe( 'delete confirmation dialog (#991)', () => {
 			title: 'Weekly Jam',
 			occurrence_type: 'master',
 			generated_occurrences: [
-				{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-				{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+				{ id: 2, start_date: '2026-07-08', start_time: '18:00:00' },
+				{ id: 3, start_date: '2026-07-15', start_time: '18:00:00' },
 			],
 		} );
 		const dialog = await openDialog();
@@ -1843,9 +1888,7 @@ describe( 'draft and publish (#1692)', () => {
 
 		const dialog = screen.getByRole( 'dialog' );
 		expect( dialog ).toHaveAccessibleName(
-			`Move to draft — Test Event, ${ formatSiteLocalDatetime(
-				mockEventDate.start_datetime
-			) }`
+			`Move to draft — Test Event, ${ formatTimingStart( mockEventDate ) }`
 		);
 		expect(
 			within( dialog ).getByRole( 'button', { name: 'Move to draft' } )
@@ -1933,8 +1976,8 @@ describe( 'draft and publish (#1692)', () => {
 				publication_status: 'publish',
 				occurrence_type: 'master',
 				generated_occurrences: [
-					{ id: 2, start_datetime: '2026-07-08 18:00:00' },
-					{ id: 3, start_datetime: '2026-07-15 18:00:00' },
+					{ id: 2, start_date: '2026-07-08', start_time: '18:00:00' },
+					{ id: 3, start_date: '2026-07-15', start_time: '18:00:00' },
 				],
 			},
 			() => Promise.resolve( mockEventDate )

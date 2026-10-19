@@ -47,6 +47,43 @@ class DateRangeFormatter {
 	}
 
 	/**
+	 * Format an event date range from its canonical timing (see EventTiming).
+	 *
+	 * Only supplied times are shown: a date without times reads like an
+	 * all-day range, and a start time without an end time precedes the
+	 * dates. Nothing substitutes a missing time.
+	 *
+	 * @param array $timing           Canonical timing.
+	 * @param bool  $always_show_year Whether to show the current year too.
+	 * @return string Formatted date range, or empty string for an undated timing.
+	 */
+	public static function format_timing( array $timing, $always_show_year = false ) {
+		$timing = array_merge( EventTiming::undated(), $timing );
+		if ( empty( $timing['start_date'] ) ) {
+			return '';
+		}
+
+		$end_date   = $timing['end_date'] ?? $timing['start_date'];
+		$start_time = $timing['all_day'] ? null : $timing['start_time'];
+		$end_time   = $timing['all_day'] ? null : $timing['end_time'];
+
+		$start_timestamp = DateHelper::local_to_timestamp( $timing['start_date'] . ' ' . ( $start_time ?? '00:00:00' ) );
+		if ( false === $start_timestamp ) {
+			return $timing['start_date'];
+		}
+
+		if ( null !== $start_time && null !== $end_time ) {
+			$end_timestamp = DateHelper::local_to_timestamp( $end_date . ' ' . $end_time );
+			return self::format_timed( $start_timestamp, $end_timestamp ? $end_timestamp : null, $always_show_year );
+		}
+
+		$end_timestamp = $end_date !== $timing['start_date'] ? DateHelper::local_to_timestamp( $end_date . ' 00:00:00' ) : null;
+		$dates         = self::format_all_day( $start_timestamp, $end_timestamp ? $end_timestamp : null, $always_show_year );
+
+		return null !== $start_time ? wp_date( 'H:i', $start_timestamp ) . ', ' . $dates : $dates;
+	}
+
+	/**
 	 * Format an all-day event date range.
 	 *
 	 * @param int      $start_timestamp Start Unix timestamp.

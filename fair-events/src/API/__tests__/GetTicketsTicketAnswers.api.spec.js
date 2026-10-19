@@ -181,8 +181,10 @@ test.describe( 'Fair Form answers per ticket', () => {
 			data: {
 				title: `Ticket answers test ${ Date.now() }`,
 				link_type: 'post',
-				start_datetime: '2036-03-01 10:00:00',
-				end_datetime: '2036-03-01 12:00:00',
+				start_date: '2036-03-01',
+				start_time: '10:00:00',
+				end_date: '2036-03-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -243,8 +245,10 @@ test.describe( 'Fair Form answers per ticket', () => {
 				data: {
 					title: `Ticket answers other date ${ Date.now() }`,
 					link_type: 'post',
-					start_datetime: '2036-03-08 10:00:00',
-					end_datetime: '2036-03-08 12:00:00',
+					start_date: '2036-03-08',
+					start_time: '10:00:00',
+					end_date: '2036-03-08',
+					end_time: '12:00:00',
 				},
 			}
 		);

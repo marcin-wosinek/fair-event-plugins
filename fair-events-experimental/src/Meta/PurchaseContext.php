@@ -83,8 +83,8 @@ class PurchaseContext {
 		usort(
 			$occurrences,
 			static function ( $a, $b ) {
-				$a_start = (string) ( $a->start_datetime ?? '' );
-				$b_start = (string) ( $b->start_datetime ?? '' );
+				$a_start = self::start_key( $a );
+				$b_start = self::start_key( $b );
 				if ( $a_start !== $b_start ) {
 					if ( '' === $a_start || '' === $b_start ) {
 						return '' === $a_start ? 1 : -1;
@@ -95,6 +95,20 @@ class PurchaseContext {
 			}
 		);
 		return $occurrences ? $occurrences[0] : null;
+	}
+
+	/**
+	 * Sortable start of an occurrence: its start date and time, a date
+	 * without a start time first on its day.
+	 *
+	 * @param object $occurrence Occurrence. @return string '' when undated.
+	 */
+	private static function start_key( $occurrence ) {
+		if ( empty( $occurrence->start_date ) ) {
+			return '';
+		}
+		$time = empty( $occurrence->all_day ) && ! empty( $occurrence->start_time ) ? (string) $occurrence->start_time : '00:00:00';
+		return $occurrence->start_date . ' ' . $time;
 	}
 
 	/**
@@ -124,7 +138,7 @@ class PurchaseContext {
 				'content_name'     => $title,
 				'content_ids'      => array( $event_id ),
 				'event_date_id'    => (int) $occurrence->id,
-				'event_start_date' => substr( (string) ( $occurrence->start_datetime ?? '' ), 0, 10 ),
+				'event_start_date' => (string) ( $occurrence->start_date ?? '' ),
 			)
 		);
 	}

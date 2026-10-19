@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -98,9 +99,9 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 			method: 'POST',
 			data: {
 				title: 'Organizer JSON-LD Test Event',
-				start_datetime: iso( start ),
-				end_datetime: iso(
-					new Date( start.getTime() + 2 * 60 * 60 * 1000 )
+				...timingFields(
+					iso( start ),
+					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
 				),
 				all_day: false,
 			},

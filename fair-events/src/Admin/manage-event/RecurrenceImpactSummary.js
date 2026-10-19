@@ -47,7 +47,7 @@ export default function RecurrenceImpactSummary( {
 				<ul style={ { margin: 0, paddingLeft: '20px' } }>
 					{ blockedRemovals.map( ( r ) => (
 						<li key={ r.id }>
-							{ formatDateOnly( r.start_datetime ) }
+							{ formatDateOnly( r.start_date ) }
 							{ r.dependents > 0 && (
 								<>
 									{ ' — ' }

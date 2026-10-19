@@ -112,7 +112,11 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 	];
 	const EVENT = {
 		title: 'Weekly class',
-		event_date: '2036-05-10 18:00:00',
+		start_date: '2036-05-10',
+		start_time: '18:00:00',
+		end_date: '2036-05-10',
+		end_time: null,
+		all_day: false,
 		manage_event_url:
 			'admin.php?page=fair-events-manage-event&event_date_id=5',
 		signed_up: 0,

@@ -194,8 +194,10 @@ test.describe( 'GetTicketsController — cancel-payment on an owned attempt', ()
 			headers: adminHeaders,
 			data: {
 				title: 'Cancel payment',
-				start_datetime: '2035-10-01 10:00:00',
-				end_datetime: '2035-10-01 12:00:00',
+				start_date: '2035-10-01',
+				start_time: '10:00:00',
+				end_date: '2035-10-01',
+				end_time: '12:00:00',
 				link_type: 'post',
 			},
 		} );

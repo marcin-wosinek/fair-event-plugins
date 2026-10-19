@@ -362,8 +362,8 @@ class EventDatesController extends WP_REST_Controller {
 						'orderby'         => array(
 							'description' => __( 'Sort collection by field.', 'fair-events' ),
 							'type'        => 'string',
-							'default'     => 'start_datetime',
-							'enum'        => array( 'id', 'title', 'start_datetime', 'link_type', 'occurrence_type' ),
+							'default'     => 'start_date',
+							'enum'        => array( 'id', 'title', 'start_date', 'link_type', 'occurrence_type' ),
 						),
 						'order'           => array(
 							'description' => __( 'Order sort attribute ascending or descending.', 'fair-events' ),
@@ -448,18 +448,6 @@ class EventDatesController extends WP_REST_Controller {
 				'description' => __( 'Site-local end time (H:i or H:i:s), or null when not specified.', 'fair-events' ),
 				'type'        => array( 'string', 'null' ),
 				'required'    => false,
-			),
-			'start_datetime'  => array(
-				'description'       => __( 'Deprecated: start date/time (Y-m-d H:i:s format). Use start_date and start_time.', 'fair-events' ),
-				'type'              => array( 'string', 'null' ),
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
-			),
-			'end_datetime'    => array(
-				'description'       => __( 'Deprecated: end date/time (Y-m-d H:i:s format). Use end_date and end_time.', 'fair-events' ),
-				'type'              => array( 'string', 'null' ),
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
 			),
 			'all_day'         => array(
 				'description' => __( 'Whether this is an all-day event.', 'fair-events' ),
@@ -794,16 +782,21 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Request fields of the retired datetime contract (#1819). A request
+	 * that sends any of them is rejected instead of silently ignored.
+	 *
+	 * @var string[]
+	 */
+	const RETIRED_TIMING_FIELDS = array( 'start_datetime', 'end_datetime' );
+
+	/**
 	 * Resolve the timing a create or update request asks for.
 	 *
-	 * Accepts either the canonical fields (start_date, end_date, start_time,
-	 * end_time) or the deprecated datetime fields, never both. Canonical
-	 * fields follow update semantics — an omitted field keeps its value and
-	 * an explicit null clears it. Deprecated fields keep what first-party
-	 * clients send them for: an omitted field leaves its part unchanged, an
-	 * empty end_datetime (null arrives as one, after sanitizing) means "no
-	 * end", and an empty start_datetime is ignored. all_day combines with
-	 * either; sending a time for an all-day event is an error.
+	 * Takes the canonical fields (start_date, end_date, start_time,
+	 * end_time) with update semantics: an omitted field keeps its value and
+	 * an explicit null clears it. all_day combines with them; sending a
+	 * time for an all-day event is an error. The retired datetime fields
+	 * are rejected.
 	 *
 	 * @param WP_REST_Request $request  Full data about the request.
 	 * @param array           $current  Current canonical timing (undated for a create).
@@ -812,23 +805,25 @@ class EventDatesController extends WP_REST_Controller {
 	 *                             request leaves the timing alone.
 	 */
 	private function resolve_request_timing( $request, array $current, $creating ) {
-		$sent      = $this->get_sent_params( $request );
-		$canonical = array_intersect_key( $sent, array_flip( array( 'start_date', 'end_date', 'start_time', 'end_time' ) ) );
-		$legacy    = array_filter(
-			array_intersect_key( $sent, array_flip( EventTiming::LEGACY_KEYS ) ),
-			static function ( $value ) {
-				return null !== $value;
-			}
-		);
-		$all_day   = isset( $sent['all_day'] ) ? array( 'all_day' => (bool) $request->get_param( 'all_day' ) ) : array();
-
-		if ( $canonical && $legacy ) {
+		$sent    = $this->get_sent_params( $request );
+		$retired = array_intersect( array_keys( $sent ), self::RETIRED_TIMING_FIELDS );
+		if ( $retired ) {
 			return new WP_Error(
-				'rest_mixed_timing_fields',
-				__( 'Send either start_date, end_date, start_time and end_time, or the deprecated start_datetime and end_datetime, not both.', 'fair-events' ),
-				array( 'status' => 400 )
+				'rest_retired_timing_fields',
+				sprintf(
+					/* translators: %s: comma-separated list of request field names. */
+					__( 'These fields are no longer supported: %s. Send start_date, end_date, start_time and end_time instead.', 'fair-events' ),
+					implode( ', ', $retired )
+				),
+				array(
+					'status' => 400,
+					'fields' => array_values( $retired ),
+				)
 			);
 		}
+
+		$canonical = array_intersect_key( $sent, array_flip( array( 'start_date', 'end_date', 'start_time', 'end_time' ) ) );
+		$all_day   = isset( $sent['all_day'] ) ? array( 'all_day' => (bool) $request->get_param( 'all_day' ) ) : array();
 
 		if ( $canonical ) {
 			$changes = EventTiming::normalize_changes( $canonical );
@@ -846,8 +841,8 @@ class EventDatesController extends WP_REST_Controller {
 			}
 
 			$timing = EventTiming::merge( $current, array_merge( $changes, $all_day ) );
-		} elseif ( $legacy || $all_day ) {
-			$timing = EventTiming::merge_legacy( $current, array_merge( $legacy, $all_day ) );
+		} elseif ( $all_day ) {
+			$timing = EventTiming::merge( $current, $all_day );
 		} else {
 			return null;
 		}
@@ -1101,7 +1096,7 @@ class EventDatesController extends WP_REST_Controller {
 		if ( ! $timing || empty( $timing['start_date'] ) ) {
 			return new WP_Error(
 				'rest_invalid_start',
-				__( 'Start date/time is required.', 'fair-events' ),
+				__( 'A start date is required.', 'fair-events' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1359,11 +1354,20 @@ class EventDatesController extends WP_REST_Controller {
 
 					$local_urls[ $url ] = true;
 
-					$results[] = array(
-						'id'             => 'source_' . ( $event['uid'] ?? md5( $url ) ),
-						'title'          => $title,
-						'start_datetime' => $event['start'] ?? '',
-						'display_url'    => $url,
+					$timing = isset( $event['timing'] ) && is_array( $event['timing'] )
+						? $event['timing']
+						: EventTiming::from_datetimes( $event['start'] ?? null, $event['end'] ?? null, ! empty( $event['all_day'] ) );
+
+					$results[] = array_merge(
+						array(
+							'id'    => 'source_' . ( $event['uid'] ?? md5( $url ) ),
+							'title' => $title,
+						),
+						$this->prepare_timing( $timing ),
+						array(
+							'all_day'     => (bool) $timing['all_day'],
+							'display_url' => $url,
+						)
 					);
 				}
 			}
@@ -1494,9 +1498,11 @@ class EventDatesController extends WP_REST_Controller {
 		foreach ( $siblings as $sibling ) {
 			$items[] = array(
 				'id'              => $sibling->id,
-				'start_datetime'  => $sibling->start_datetime,
 				'start_date'      => $sibling->start_date,
 				'start_time'      => $sibling->start_time,
+				'end_date'        => $sibling->end_date,
+				'end_time'        => $sibling->end_time,
+				'all_day'         => (bool) $sibling->all_day,
 				'occurrence_type' => $sibling->occurrence_type,
 			);
 		}
@@ -1522,11 +1528,14 @@ class EventDatesController extends WP_REST_Controller {
 		foreach ( $ids as $id ) {
 			$event_date = EventDates::get_by_id( $id );
 			if ( $event_date ) {
-				$results[] = array(
-					'id'             => (int) $event_date->id,
-					'title'          => $event_date->get_display_title(),
-					'display_url'    => $event_date->get_display_url(),
-					'start_datetime' => $event_date->start_datetime,
+				$results[] = array_merge(
+					array(
+						'id'          => (int) $event_date->id,
+						'title'       => $event_date->get_display_title(),
+						'display_url' => $event_date->get_display_url(),
+					),
+					$this->prepare_timing( $event_date->get_timing() ),
+					array( 'all_day' => (bool) $event_date->all_day )
 				);
 			}
 		}
@@ -1778,7 +1787,7 @@ class EventDatesController extends WP_REST_Controller {
 		// Set a hand-picked (manual) occurrence list. Not folded into the
 		// $update_data block above since recurrence_mode/manual_dates can be
 		// sent without any other field changing, and the manual path reads
-		// the master's (already-updated) start_datetime/end_datetime itself
+		// the master's (already-updated) timing itself
 		// rather than needing them threaded through here.
 		$recurrence_mode = $request->get_param( 'recurrence_mode' );
 		$manual_dates    = $request->get_param( 'manual_dates' );
@@ -2356,13 +2365,15 @@ class EventDatesController extends WP_REST_Controller {
 		}
 
 		// Whitelist orderby to prevent SQL injection.
-		$allowed_orderby = array( 'id', 'title', 'start_datetime', 'link_type', 'occurrence_type' );
+		$allowed_orderby = array( 'id', 'title', 'start_date', 'link_type', 'occurrence_type' );
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
-			$orderby = 'start_datetime';
+			$orderby = 'start_date';
 		}
 		if ( 'ASC' !== $order ) {
 			$order = 'DESC';
 		}
+		// Dates order by their time within a day too.
+		$orderby_sql = 'start_date' === $orderby ? "`start_date` $order, `start_time`" : "`$orderby`";
 
 		// Count total items.
 		if ( ! empty( $where_clauses ) ) {
@@ -2376,7 +2387,7 @@ class EventDatesController extends WP_REST_Controller {
 		$offset      = ( $page - 1 ) * $per_page;
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$order_sql = "ORDER BY `$orderby` $order LIMIT %d OFFSET %d";
+		$order_sql = "ORDER BY $orderby_sql $order LIMIT %d OFFSET %d";
 
 		if ( ! empty( $where_clauses ) ) {
 			$select_args = array_merge( array( $table_name ), $where_values, array( $per_page, $offset ) );
@@ -2443,11 +2454,9 @@ class EventDatesController extends WP_REST_Controller {
 	private function prepare_event_date_summary( $result ) {
 		$data = array_merge(
 			array(
-				'id'             => (int) $result->id,
-				'event_id'       => $result->event_id ? (int) $result->event_id : null,
-				'title'          => $result->title,
-				'start_datetime' => $result->start_datetime,
-				'end_datetime'   => $result->end_datetime,
+				'id'       => (int) $result->id,
+				'event_id' => $result->event_id ? (int) $result->event_id : null,
+				'title'    => $result->title,
 			),
 			$this->prepare_timing( EventTiming::from_row( $result ) ),
 			array(
@@ -2516,8 +2525,6 @@ class EventDatesController extends WP_REST_Controller {
 			'id'                       => $event_date->id,
 			'event_id'                 => $event_date->event_id,
 			'title'                    => $event_date->title,
-			'start_datetime'           => $event_date->start_datetime,
-			'end_datetime'             => $event_date->end_datetime,
 			'start_date'               => $event_date->start_date,
 			'end_date'                 => $event_date->end_date,
 			'start_time'               => $event_date->start_time,
@@ -2547,9 +2554,8 @@ class EventDatesController extends WP_REST_Controller {
 			if ( $master ) {
 				$data['master'] = array_merge(
 					array(
-						'id'             => $master->id,
-						'title'          => $master->title,
-						'start_datetime' => $master->start_datetime,
+						'id'    => $master->id,
+						'title' => $master->title,
 					),
 					$this->prepare_timing( $master->get_timing() )
 				);
@@ -2564,11 +2570,7 @@ class EventDatesController extends WP_REST_Controller {
 			$data['generated_occurrences'] = array_map(
 				function ( $occ ) {
 					return array_merge(
-						array(
-							'id'             => $occ->id,
-							'start_datetime' => $occ->start_datetime,
-							'end_datetime'   => $occ->end_datetime,
-						),
+						array( 'id' => $occ->id ),
 						$this->prepare_timing( $occ->get_timing() ),
 						array(
 							'all_day'           => $occ->all_day,

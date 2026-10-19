@@ -119,8 +119,10 @@ test.describe( 'Event length options — translations', () => {
 			method: 'POST',
 			data: {
 				title: `Duration translations e2e ${ stamp }`,
-				start_datetime: '2036-05-10 18:00:00',
-				end_datetime: '2036-05-10 22:00:00',
+				start_date: '2036-05-10',
+				start_time: '18:00:00',
+				end_date: '2036-05-10',
+				end_time: '22:00:00',
 				all_day: false,
 			},
 		} );

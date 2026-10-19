@@ -36,55 +36,55 @@ class EventTimingTest extends TestCase {
 	}
 
 	/**
-	 * Legacy timed values keep their times, including genuine midnight.
+	 * Timed values keep their times, including genuine midnight.
 	 */
-	public function test_from_legacy_keeps_times_and_genuine_midnight() {
+	public function test_from_datetimes_keeps_times_and_genuine_midnight() {
 		$this->assertSame(
 			$this->timing( '2026-11-02', '2026-11-02', '00:00:00', '02:30:00' ),
-			EventTiming::from_legacy( '2026-11-02 00:00:00', '2026-11-02 02:30:00', false )
+			EventTiming::from_datetimes( '2026-11-02 00:00:00', '2026-11-02 02:30:00', false )
 		);
 	}
 
 	/**
-	 * A legacy all-day row keeps its inclusive dates and loses its placeholder times.
+	 * All-day values keep their inclusive dates and lose their placeholder times.
 	 */
-	public function test_from_legacy_all_day_has_dates_without_times() {
+	public function test_from_datetimes_all_day_has_dates_without_times() {
 		$this->assertSame(
 			$this->timing( '2026-11-02', '2026-11-04', null, null, true ),
-			EventTiming::from_legacy( '2026-11-02 00:00:00', '2026-11-04 00:00:00', true )
+			EventTiming::from_datetimes( '2026-11-02 00:00:00', '2026-11-04 00:00:00', true )
 		);
 	}
 
 	/**
-	 * A legacy row without an end keeps its same-day meaning with no end time.
+	 * A start without an end means the same day with no end time.
 	 */
-	public function test_from_legacy_without_end_is_same_day_without_end_time() {
+	public function test_from_datetimes_without_end_is_same_day_without_end_time() {
 		$this->assertSame(
 			$this->timing( '2026-11-02', '2026-11-02', '19:00:00', null ),
-			EventTiming::from_legacy( '2026-11-02T19:00:00', null, false )
+			EventTiming::from_datetimes( '2026-11-02T19:00:00', null, false )
 		);
 	}
 
 	/**
-	 * A legacy row without a start stays undated.
+	 * Values without a readable start are undated.
 	 */
-	public function test_from_legacy_without_start_is_undated() {
-		$this->assertSame( EventTiming::undated(), EventTiming::from_legacy( null, null, false ) );
-		$this->assertSame( EventTiming::undated(), EventTiming::from_legacy( 'not a date', '2026-11-02 10:00:00', false ) );
+	public function test_from_datetimes_without_start_is_undated() {
+		$this->assertSame( EventTiming::undated(), EventTiming::from_datetimes( null, null, false ) );
+		$this->assertSame( EventTiming::undated(), EventTiming::from_datetimes( 'not a date', '2026-11-02 10:00:00', false ) );
 	}
 
 	/**
 	 * Wall-clock values never shift, even on a daylight-saving transition day
 	 * in a non-UTC default timezone.
 	 */
-	public function test_from_legacy_does_not_shift_dates_on_dst_boundary() {
+	public function test_from_datetimes_does_not_shift_dates_on_dst_boundary() {
 		$previous = date_default_timezone_get();
 		date_default_timezone_set( 'Europe/Madrid' ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- the test asserts nothing depends on the PHP default timezone.
 
 		try {
 			$this->assertSame(
 				$this->timing( '2026-03-29', '2026-03-30', '23:30:00', '02:30:00' ),
-				EventTiming::from_legacy( '2026-03-29 23:30:00', '2026-03-30 02:30:00', false )
+				EventTiming::from_datetimes( '2026-03-29 23:30:00', '2026-03-30 02:30:00', false )
 			);
 		} finally {
 			date_default_timezone_set( $previous ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set -- restores the default changed above.
@@ -92,135 +92,109 @@ class EventTimingTest extends TestCase {
 	}
 
 	/**
-	 * Legacy values for each of the four time combinations.
+	 * Range keys for each of the four time combinations: a missing start
+	 * time sorts at the start of its day, a missing end ends with the start.
 	 */
-	public function test_to_legacy_covers_all_four_time_combinations() {
+	public function test_range_keys_cover_all_four_time_combinations() {
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 18:00:00',
-				'end_datetime'   => '2026-11-02 20:00:00',
+				'start' => '2026-11-02 18:00:00',
+				'end'   => '2026-11-02 20:00:00',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', '20:00:00' ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', '20:00:00' ) )
 		);
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 18:00:00',
-				'end_datetime'   => null,
+				'start' => '2026-11-02 18:00:00',
+				'end'   => '2026-11-02 18:00:00',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', null ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', null ) )
 		);
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 00:00:00',
-				'end_datetime'   => '2026-11-02 20:00:00',
+				'start' => '2026-11-02 00:00:00',
+				'end'   => '2026-11-02 20:00:00',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-02', null, '20:00:00' ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-02', null, '20:00:00' ) )
 		);
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 00:00:00',
-				'end_datetime'   => null,
+				'start' => '2026-11-02 00:00:00',
+				'end'   => '2026-11-02 00:00:00',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-02', null, null ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-02', null, null ) )
 		);
 	}
 
 	/**
-	 * A multi-day event without an end time keeps its whole last day for
-	 * legacy date-range readers; all-day rows use the legacy convention.
+	 * A multi-day event without an end time keeps its whole last day in
+	 * range checks; all-day dates use day boundaries.
 	 */
-	public function test_to_legacy_multi_day_and_all_day() {
+	public function test_range_keys_multi_day_and_all_day() {
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 18:00:00',
-				'end_datetime'   => '2026-11-04 23:59:59',
+				'start' => '2026-11-02 18:00:00',
+				'end'   => '2026-11-04 23:59:59',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-04', '18:00:00', null ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-04', '18:00:00', null ) )
 		);
 		$this->assertSame(
 			array(
-				'start_datetime' => '2026-11-02 00:00:00',
-				'end_datetime'   => '2026-11-04 00:00:00',
+				'start' => '2026-11-02 00:00:00',
+				'end'   => '2026-11-04 00:00:00',
 			),
-			EventTiming::to_legacy( $this->timing( '2026-11-02', '2026-11-04', null, null, true ) )
+			EventTiming::range_keys( $this->timing( '2026-11-02', '2026-11-04', null, null, true ) )
 		);
 		$this->assertSame(
 			array(
-				'start_datetime' => null,
-				'end_datetime'   => null,
+				'start' => '',
+				'end'   => '',
 			),
-			EventTiming::to_legacy( EventTiming::undated() )
+			EventTiming::range_keys( EventTiming::undated() )
 		);
 	}
 
 	/**
-	 * A migrated row is read from its canonical columns, so the legacy
-	 * substitute never refills an absent time.
+	 * A row is read from its canonical columns; an absent time stays absent.
 	 */
-	public function test_from_row_reads_migrated_row_from_canonical_columns() {
+	public function test_from_row_reads_canonical_columns() {
 		$row = (object) array(
-			'timing_migrated' => '1',
-			'start_datetime'  => '2026-11-02 00:00:00',
-			'end_datetime'    => null,
-			'all_day'         => '0',
-			'start_date'      => '2026-11-02',
-			'end_date'        => '2026-11-02',
-			'start_time'      => null,
-			'end_time'        => null,
+			'all_day'    => '0',
+			'start_date' => '2026-11-02',
+			'end_date'   => '2026-11-02',
+			'start_time' => null,
+			'end_time'   => null,
 		);
 
 		$this->assertSame( $this->timing( '2026-11-02', '2026-11-02', null, null ), EventTiming::from_row( $row ) );
 	}
 
 	/**
-	 * A migrated row with a time at midnight keeps genuine midnight.
+	 * A row with a time at midnight keeps genuine midnight.
 	 */
 	public function test_from_row_keeps_genuine_midnight() {
 		$row = (object) array(
-			'timing_migrated' => '1',
-			'all_day'         => '0',
-			'start_date'      => '2026-11-02',
-			'end_date'        => '2026-11-03',
-			'start_time'      => '00:00:00',
-			'end_time'        => '00:00:00',
+			'all_day'    => '0',
+			'start_date' => '2026-11-02',
+			'end_date'   => '2026-11-03',
+			'start_time' => '00:00:00',
+			'end_time'   => '00:00:00',
 		);
 
 		$this->assertSame( $this->timing( '2026-11-02', '2026-11-03', '00:00:00', '00:00:00' ), EventTiming::from_row( $row ) );
 	}
 
 	/**
-	 * A row written before the timing columns existed is read from its
-	 * legacy columns.
+	 * Columns carry the canonical values only.
 	 */
-	public function test_from_row_reads_unmigrated_row_from_legacy_columns() {
-		$row = (object) array(
-			'timing_migrated' => '0',
-			'start_datetime'  => '2026-11-02 18:00:00',
-			'end_datetime'    => '2026-11-02 20:00:00',
-			'all_day'         => '0',
-			'start_date'      => null,
-			'end_date'        => null,
-			'start_time'      => null,
-			'end_time'        => null,
-		);
-
-		$this->assertSame( $this->timing( '2026-11-02', '2026-11-02', '18:00:00', '20:00:00' ), EventTiming::from_row( $row ) );
-	}
-
-	/**
-	 * Columns carry the canonical values, the legacy values in step and the marker.
-	 */
-	public function test_columns_write_both_groups_and_marker() {
+	public function test_columns_write_canonical_values() {
 		$this->assertSame(
 			array(
-				'start_date'      => '2026-11-02',
-				'end_date'        => '2026-11-02',
-				'start_time'      => null,
-				'end_time'        => '20:00:00',
-				'all_day'         => 0,
-				'start_datetime'  => '2026-11-02 00:00:00',
-				'end_datetime'    => '2026-11-02 20:00:00',
-				'timing_migrated' => 1,
+				'start_date' => '2026-11-02',
+				'end_date'   => '2026-11-02',
+				'start_time' => null,
+				'end_time'   => '20:00:00',
+				'all_day'    => 0,
 			),
 			EventTiming::columns( $this->timing( '2026-11-02', '2026-11-02', null, '20:00:00' ) )
 		);
@@ -254,54 +228,6 @@ class EventTimingTest extends TestCase {
 		$this->assertSame(
 			$this->timing( '2026-11-02', '2026-11-02', null, null ),
 			EventTiming::merge( $all_day, array( 'all_day' => false ) )
-		);
-	}
-
-	/**
-	 * A legacy start-only update moves a same-day open end with its start,
-	 * as a null legacy end did.
-	 */
-	public function test_merge_legacy_open_end_follows_start() {
-		$current = $this->timing( '2026-11-02', '2026-11-02', '18:00:00', null );
-
-		$this->assertSame(
-			$this->timing( '2026-11-09', '2026-11-09', '19:00:00', null ),
-			EventTiming::merge_legacy( $current, array( 'start_datetime' => '2026-11-09 19:00:00' ) )
-		);
-	}
-
-	/**
-	 * A legacy start-only update keeps a real end unchanged.
-	 */
-	public function test_merge_legacy_keeps_explicit_end() {
-		$current = $this->timing( '2026-11-02', '2026-11-03', '18:00:00', '02:00:00' );
-
-		$this->assertSame(
-			$this->timing( '2026-11-01', '2026-11-03', '18:00:00', '02:00:00' ),
-			EventTiming::merge_legacy( $current, array( 'start_datetime' => '2026-11-01 18:00:00' ) )
-		);
-	}
-
-	/**
-	 * An empty legacy end means "no end"; legacy all-day values lose their times.
-	 */
-	public function test_merge_legacy_empty_end_and_all_day() {
-		$current = $this->timing( '2026-11-02', '2026-11-03', '18:00:00', '02:00:00' );
-
-		$this->assertSame(
-			$this->timing( '2026-11-02', '2026-11-02', '18:00:00', null ),
-			EventTiming::merge_legacy( $current, array( 'end_datetime' => '' ) )
-		);
-		$this->assertSame(
-			$this->timing( '2026-11-05', '2026-11-06', null, null, true ),
-			EventTiming::merge_legacy(
-				$current,
-				array(
-					'start_datetime' => '2026-11-05 00:00:00',
-					'end_datetime'   => '2026-11-06 00:00:00',
-					'all_day'        => true,
-				)
-			)
 		);
 	}
 
@@ -378,8 +304,8 @@ class EventTimingTest extends TestCase {
 			$this->assertTrue( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', $end_date, null, null, true ) ) );
 		}
 		$this->assertTrue( EventTiming::is_calendar_exportable( $this->timing( '2026-11-02', '2026-11-03', '00:00:00', '00:00:00' ) ) );
-		$this->assertTrue( EventTiming::is_calendar_exportable( EventTiming::from_legacy( '2026-11-02 00:00:00', '2026-11-02 23:00:00', false ) ) );
-		$this->assertFalse( EventTiming::is_calendar_exportable( EventTiming::from_legacy( '2026-11-02 18:00:00', null, false ) ) );
+		$this->assertTrue( EventTiming::is_calendar_exportable( EventTiming::from_datetimes( '2026-11-02 00:00:00', '2026-11-02 23:00:00', false ) ) );
+		$this->assertFalse( EventTiming::is_calendar_exportable( EventTiming::from_datetimes( '2026-11-02 18:00:00', null, false ) ) );
 		$this->assertFalse( EventTiming::is_calendar_exportable( EventTiming::undated() ) );
 	}
 

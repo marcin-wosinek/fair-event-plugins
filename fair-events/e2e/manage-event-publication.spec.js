@@ -11,6 +11,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { timingFields } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -133,8 +134,7 @@ test.describe( 'Manage Event — draft and publish an event', () => {
 				method: 'PUT',
 				data: {
 					title,
-					start_datetime: iso( 2 ),
-					end_datetime: iso( 3 ),
+					...timingFields( iso( 2 ), iso( 3 ) ),
 					all_day: false,
 					categories: [ category.id ],
 				},
@@ -154,8 +154,7 @@ test.describe( 'Manage Event — draft and publish an event', () => {
 			method: 'POST',
 			data: {
 				title: titles.calendarOnly,
-				start_datetime: iso( 2 ),
-				end_datetime: iso( 3 ),
+				...timingFields( iso( 2 ), iso( 3 ) ),
 				all_day: false,
 				categories: [ category.id ],
 			},

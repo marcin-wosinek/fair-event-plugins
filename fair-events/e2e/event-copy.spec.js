@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { wpCli, runScript } from '../../e2e/support/wp-cli.js';
+import { startOf, endOf } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -170,8 +171,10 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 				method: 'POST',
 				data: {
 					title: sourcePage.title.rendered,
-					start_datetime: '2040-02-01 10:00:00',
-					end_datetime: '2040-02-01 12:00:00',
+					start_date: '2040-02-01',
+					start_time: '10:00:00',
+					end_date: '2040-02-01',
+					end_time: '12:00:00',
 					link_type: 'external',
 					external_url: pageExternalUrl,
 				},
@@ -227,12 +230,8 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 				path: `/fair-events/v1/event-dates?event_id=${ copiedPageId }&include_linked=true`,
 			} )
 		).data;
-		expect( copiedPageDates[ 0 ].start_datetime ).toBe(
-			'2040-02-08 08:15:00'
-		);
-		expect( copiedPageDates[ 0 ].end_datetime ).toBe(
-			'2040-02-08 13:45:00'
-		);
+		expect( startOf( copiedPageDates[ 0 ] ) ).toBe( '2040-02-08 08:15:00' );
+		expect( endOf( copiedPageDates[ 0 ] ) ).toBe( '2040-02-08 13:45:00' );
 		expect( copiedPageDates[ 0 ].link_type ).toBe( 'external' );
 		expect( copiedPageDates[ 0 ].external_url ).toBe( pageExternalUrl );
 
@@ -242,8 +241,10 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 				method: 'POST',
 				data: {
 					title: `Calendar copy source ${ suffix }`,
-					start_datetime: '2040-03-01 09:00:00',
-					end_datetime: '2040-03-01 11:30:00',
+					start_date: '2040-03-01',
+					start_time: '09:00:00',
+					end_date: '2040-03-01',
+					end_time: '11:30:00',
 					link_type: 'external',
 					external_url: calendarExternalUrl,
 					attendance_mode: 'online',
@@ -283,8 +284,8 @@ test( 'copies an enabled page and a calendar-only event in place', async ( {
 		expect( copiedCalendar.title ).toBe(
 			`Copied calendar event ${ suffix }`
 		);
-		expect( copiedCalendar.start_datetime ).toBe( '2040-04-10 09:00:00' );
-		expect( copiedCalendar.end_datetime ).toBe( '2040-04-10 11:30:00' );
+		expect( startOf( copiedCalendar ) ).toBe( '2040-04-10 09:00:00' );
+		expect( endOf( copiedCalendar ) ).toBe( '2040-04-10 11:30:00' );
 		expect( copiedCalendar.attendance_mode ).toBe( 'online' );
 		expect( copiedCalendar.link_type ).toBe( 'external' );
 		expect( copiedCalendar.external_url ).toBe( calendarExternalUrl );
@@ -374,8 +375,10 @@ test( 'edits copied times and keeps all-day copies date-only', async ( {
 				method: 'POST',
 				data: {
 					title: `Timed copy source ${ suffix }`,
-					start_datetime: '2041-05-10 22:30:00',
-					end_datetime: '2041-05-12 01:15:00',
+					start_date: '2041-05-10',
+					start_time: '22:30:00',
+					end_date: '2041-05-12',
+					end_time: '01:15:00',
 					all_day: false,
 					link_type: 'none',
 				},
@@ -412,8 +415,8 @@ test( 'edits copied times and keeps all-day copies date-only', async ( {
 				path: `/fair-events/v1/event-dates/${ timedCopyId }`,
 			} )
 		).data;
-		expect( timedCopy.start_datetime ).toBe( '2041-06-20 20:45:00' );
-		expect( timedCopy.end_datetime ).toBe( '2041-06-22 02:30:00' );
+		expect( startOf( timedCopy ) ).toBe( '2041-06-20 20:45:00' );
+		expect( endOf( timedCopy ) ).toBe( '2041-06-22 02:30:00' );
 
 		const copyScreenHtml = await (
 			await page.request.get( timedCopyUrl )
@@ -450,8 +453,10 @@ test( 'edits copied times and keeps all-day copies date-only', async ( {
 				method: 'POST',
 				data: {
 					title: `All-day copy source ${ suffix }`,
-					start_datetime: '2041-07-01',
-					end_datetime: '2041-07-03',
+					start_date: '2041-07-01',
+					start_time: null,
+					end_date: '2041-07-03',
+					end_time: null,
 					all_day: true,
 					link_type: 'none',
 				},
@@ -485,8 +490,8 @@ test( 'edits copied times and keeps all-day copies date-only', async ( {
 			} )
 		).data;
 		expect( allDayCopy.all_day ).toBe( true );
-		expect( allDayCopy.start_datetime ).toBe( '2041-07-08 00:00:00' );
-		expect( allDayCopy.end_datetime ).toBe( '2041-07-10 00:00:00' );
+		expect( startOf( allDayCopy ) ).toBe( '2041-07-08' );
+		expect( endOf( allDayCopy ) ).toBe( '2041-07-10' );
 	} finally {
 		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
 		await page.waitForFunction( () => window.wp?.apiFetch );
@@ -527,7 +532,8 @@ test( 'starts the copy workflow from the All Events row action', async ( {
 			method: 'POST',
 			data: {
 				title: source.title.rendered,
-				start_datetime: '2039-03-26 18:30:00',
+				start_date: '2039-03-26',
+				start_time: '18:30:00',
 				link_type: 'post',
 			},
 		} )
@@ -663,8 +669,10 @@ test( 'copies with Experimental inactive and with legacy tools enabled', async (
 			method: 'POST',
 			data: {
 				title: source.title.rendered,
-				start_datetime: '2036-03-26 18:30:00',
-				end_datetime: '2036-03-26 21:00:00',
+				start_date: '2036-03-26',
+				start_time: '18:30:00',
+				end_date: '2036-03-26',
+				end_time: '21:00:00',
 				all_day: false,
 				venue_id: venue.id,
 				link_type: 'post',
@@ -835,10 +843,10 @@ test( 'copies with Experimental inactive and with legacy tools enabled', async (
 			expect( copiedDates ).toHaveLength( 1 );
 			expect( copiedDates[ 0 ].venue_id ).toBe( venue.id );
 			expect( copiedDates[ 0 ].all_day ).toBe( false );
-			expect( copiedDates[ 0 ].end_datetime ).toBe(
+			expect( endOf( copiedDates[ 0 ] ) ).toBe(
 				0 === index ? '2036-04-02 21:00:00' : '2036-05-20 21:00:00'
 			);
-			expect( copiedDates[ 0 ].start_datetime ).toBe(
+			expect( startOf( copiedDates[ 0 ] ) ).toBe(
 				0 === index ? '2036-04-02 18:30:00' : '2036-05-20 18:30:00'
 			);
 			expect( copiedTickets.capacity ).toBe( 120 );
@@ -1152,8 +1160,10 @@ test( 'copies Experimental ticket options and period prices', async ( {
 			method: 'POST',
 			data: {
 				title: source.title.rendered,
-				start_datetime: '2038-06-01 18:00:00',
-				end_datetime: '2038-06-01 20:00:00',
+				start_date: '2038-06-01',
+				start_time: '18:00:00',
+				end_date: '2038-06-01',
+				end_time: '20:00:00',
 			},
 		} )
 	).data;
@@ -1300,8 +1310,10 @@ test( 'opens copy options from managed events and recurring occurrences', async 
 			method: 'POST',
 			data: {
 				title: source.title.rendered,
-				start_datetime: '2036-04-10 18:30:00',
-				end_datetime: '2036-04-10 21:00:00',
+				start_date: '2036-04-10',
+				start_time: '18:30:00',
+				end_date: '2036-04-10',
+				end_time: '21:00:00',
 				all_day: false,
 				link_type: 'post',
 				rrule: 'FREQ=WEEKLY;COUNT=2',
@@ -1325,8 +1337,10 @@ test( 'opens copy options from managed events and recurring occurrences', async 
 			method: 'POST',
 			data: {
 				title: `Calendar only ${ suffix }`,
-				start_datetime: '2036-06-10 18:30:00',
-				end_datetime: '2036-06-10 21:00:00',
+				start_date: '2036-06-10',
+				start_time: '18:30:00',
+				end_date: '2036-06-10',
+				end_time: '21:00:00',
 				all_day: false,
 				link_type: 'none',
 			},
@@ -1428,8 +1442,10 @@ test( 'preserves an external destination when copying a recurring occurrence', a
 				method: 'POST',
 				data: {
 					title: `External copy source ${ suffix }`,
-					start_datetime: '2037-04-10 18:30:00',
-					end_datetime: '2037-04-10 21:00:00',
+					start_date: '2037-04-10',
+					start_time: '18:30:00',
+					end_date: '2037-04-10',
+					end_time: '21:00:00',
 					link_type: 'external',
 					external_url: externalUrl,
 					attendance_mode: 'hybrid',

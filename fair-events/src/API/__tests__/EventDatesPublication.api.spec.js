@@ -106,8 +106,10 @@ test.describe( 'EventDatesController — draft and publish an event', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Publication ${ label } ${ run }`,
-					start_datetime: '2037-03-10 10:00:00',
-					end_datetime: '2037-03-10 12:00:00',
+					start_date: '2037-03-10',
+					start_time: '10:00:00',
+					end_date: '2037-03-10',
+					end_time: '12:00:00',
 					...data,
 				},
 			}
@@ -570,8 +572,10 @@ test.describe( 'EventDatesController — draft and publish an event', () => {
 
 	test( 'keeps cancellation, event details, recurrence and signups', async () => {
 		const master = await createEvent( 'preserved', {
-			start_datetime: '2037-03-03 18:00:00',
-			end_datetime: '2037-03-03 20:00:00',
+			start_date: '2037-03-03',
+			start_time: '18:00:00',
+			end_date: '2037-03-03',
+			end_time: '20:00:00',
 		} );
 		const withSeries = await api.put(
 			`/wp-json/fair-events/v1/event-dates/${ master.id }`,
@@ -657,8 +661,10 @@ test.describe( 'EventDatesController — draft and publish an event', () => {
 
 		const pickPreserved = ( eventDate ) => ( {
 			title: eventDate.title,
-			start_datetime: eventDate.start_datetime,
-			end_datetime: eventDate.end_datetime,
+			start_date: eventDate.start_date,
+			end_date: eventDate.end_date,
+			start_time: eventDate.start_time,
+			end_time: eventDate.end_time,
 			address: eventDate.address,
 			rrule: eventDate.rrule,
 			recurrence_mode: eventDate.recurrence_mode,

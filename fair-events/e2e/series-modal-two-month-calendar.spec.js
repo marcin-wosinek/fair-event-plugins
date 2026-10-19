@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startOf } from '../../e2e/support/event-timing.js';
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
@@ -73,8 +74,10 @@ test.describe( 'Series popup calendar', () => {
 			method: 'POST',
 			data: {
 				title: 'Series popup two-month calendar regression',
-				start_datetime: '2026-09-01 18:00:00',
-				end_datetime: '2026-09-01 20:00:00',
+				start_date: '2026-09-01',
+				start_time: '18:00:00',
+				end_date: '2026-09-01',
+				end_time: '20:00:00',
 				all_day: false,
 			},
 		} );
@@ -195,7 +198,7 @@ test.describe( 'Series popup calendar', () => {
 			} );
 			expect( saved.rrule ).toBe( 'FREQ=WEEKLY;COUNT=10' );
 			const dates = saved.generated_occurrences
-				.map( ( occ ) => occ.start_datetime )
+				.map( ( occ ) => startOf( occ ) )
 				.sort();
 			expect( dates ).toHaveLength( 9 );
 			expect( dates[ 0 ] ).toBe( '2026-09-08 18:00:00' );
@@ -241,8 +244,10 @@ test.describe( 'Series popup calendar — skipping dates', () => {
 			data: {
 				title: 'Series popup skipped dates',
 				// Late evening: the next day already in UTC+1/+2 terms.
-				start_datetime: '2026-09-01 23:30:00',
-				end_datetime: '2026-09-02 00:30:00',
+				start_date: '2026-09-01',
+				start_time: '23:30:00',
+				end_date: '2026-09-02',
+				end_time: '00:30:00',
 				all_day: false,
 			},
 		} );
@@ -306,7 +311,7 @@ test.describe( 'Series popup calendar — skipping dates', () => {
 			expect( saved.cancelled_dates ).toEqual( [ '2026-09-15' ] );
 			const savedRows = Object.fromEntries(
 				saved.generated_occurrences.map( ( occ ) => [
-					occ.start_datetime,
+					startOf( occ ),
 					occ,
 				] )
 			);
@@ -346,7 +351,7 @@ test.describe( 'Series popup calendar — skipping dates', () => {
 			} );
 			expect( restored.cancelled_dates ).toEqual( [] );
 			const restoredRow = restored.generated_occurrences.find(
-				( occ ) => occ.start_datetime === '2026-09-15 23:30:00'
+				( occ ) => startOf( occ ) === '2026-09-15 23:30:00'
 			);
 			expect( restoredRow.id ).toBe(
 				savedRows[ '2026-09-15 23:30:00' ].id

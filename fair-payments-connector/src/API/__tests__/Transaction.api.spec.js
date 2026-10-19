@@ -577,7 +577,8 @@ test.describe( 'Transaction — event link', () => {
 			headers: adminAuth(),
 			data: {
 				title: `E2E Event Link Test ${ Date.now() }`,
-				start_datetime: '2027-03-01 10:00:00',
+				start_date: '2027-03-01',
+				start_time: '10:00:00',
 			},
 		} );
 		expect( eventRes.status() ).toBe( 201 );

@@ -65,8 +65,10 @@ test.describe('Review event invitations before sending', () => {
 		created.dateId = (
 			await post(request, '/fair-events/v1/event-dates', {
 				title: eventTitle,
-				start_datetime: '2037-05-02 18:30:00',
-				end_datetime: '2037-05-02 20:30:00',
+				start_date: '2037-05-02',
+				start_time: '18:30:00',
+				end_date: '2037-05-02',
+				end_time: '20:30:00',
 			})
 		).id;
 		const link = await request.put(
@@ -248,10 +250,10 @@ test.describe('Disconnect Instagram', () => {
 			? await request.post('/wp-json/wp/v2/settings', {
 					headers: adminHeaders,
 					data,
-			  })
+				})
 			: await request.get('/wp-json/wp/v2/settings', {
 					headers: adminHeaders,
-			  });
+				});
 		expect(res.ok()).toBeTruthy();
 		return res.json();
 	};

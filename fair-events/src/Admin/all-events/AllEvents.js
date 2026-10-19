@@ -5,7 +5,8 @@ import { Button, Card, CardBody } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { chevronRight, chevronDown } from '@wordpress/icons';
 import {
-	formatSiteLocalDatetime,
+	formatTimingStart,
+	timingStartKey,
 	getEventDisplayTitle,
 } from 'fair-events-shared';
 
@@ -28,7 +29,7 @@ const DEFAULT_VIEW = {
 	perPage: 25,
 	page: 1,
 	sort: {
-		field: 'start_datetime',
+		field: 'start_date',
 		direction: 'desc',
 	},
 	search: '',
@@ -36,7 +37,7 @@ const DEFAULT_VIEW = {
 	showLevels: true,
 	fields: [
 		'title',
-		'start_datetime',
+		'start_date',
 		'venue_id',
 		'categories',
 		'link_type',
@@ -109,8 +110,8 @@ export default function AllEvents() {
 						item.occurrence_type === 'generated' &&
 						item.master_id
 					) {
-						const label = item.start_datetime
-							? formatSiteLocalDatetime( item.start_datetime )
+						const label = item.start_date
+							? formatTimingStart( item )
 							: getEventDisplayTitle( item.title );
 						if ( item.status === 'cancelled' ) {
 							return (
@@ -182,16 +183,11 @@ export default function AllEvents() {
 				getValue: ( { item } ) => ( item.title || '' ).toLowerCase(),
 			},
 			{
-				id: 'start_datetime',
+				id: 'start_date',
 				label: __( 'Date', 'fair-events' ),
-				render: ( { item } ) => {
-					if ( ! item.start_datetime ) {
-						return '—';
-					}
-					return formatSiteLocalDatetime( item.start_datetime );
-				},
+				render: ( { item } ) => formatTimingStart( item ) || '—',
 				enableSorting: true,
-				getValue: ( { item } ) => item.start_datetime || '',
+				getValue: ( { item } ) => timingStartKey( item ),
 			},
 			{
 				id: 'venue_id',

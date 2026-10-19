@@ -124,8 +124,10 @@ test.describe( 'Event Signup — cache-safe baseline + viewer-context hydration'
 			data: {
 				title: 'Viewer-context e2e',
 				link_type: 'post',
-				start_datetime: '2036-01-01 10:00:00',
-				end_datetime: '2036-01-01 12:00:00',
+				start_date: '2036-01-01',
+				start_time: '10:00:00',
+				end_date: '2036-01-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=10',
 			},
 		} );

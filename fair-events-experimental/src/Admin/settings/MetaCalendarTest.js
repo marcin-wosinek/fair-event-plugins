@@ -8,10 +8,7 @@ import {
 	Notice,
 	SelectControl,
 } from '@wordpress/components';
-import {
-	formatDateOnly,
-	formatSiteLocalDatetime,
-} from 'fair-events-shared/src/dateTime.js';
+import { formatTimingStart } from 'fair-events-shared/src/dateTime.js';
 import { identifiers } from '../../Frontend/attribution.js';
 import useRequest from '../compare-events/useRequest.js';
 
@@ -73,7 +70,7 @@ function readBrowserBlocker() {
 export function getCalendarEventsPath( search = '' ) {
 	const params = new URLSearchParams( {
 		per_page: '100',
-		orderby: 'start_datetime',
+		orderby: 'start_date',
 		order: 'desc',
 	} );
 	if ( search ) {
@@ -83,12 +80,7 @@ export function getCalendarEventsPath( search = '' ) {
 }
 
 function formatStart( eventDate ) {
-	if ( ! eventDate.start_datetime ) {
-		return '';
-	}
-	return eventDate.all_day
-		? formatDateOnly( eventDate.start_datetime )
-		: formatSiteLocalDatetime( eventDate.start_datetime );
+	return formatTimingStart( eventDate );
 }
 
 function eventLabel( eventDate ) {

@@ -944,7 +944,8 @@ function mockOperationsApi( { cancelError = null } = {} ) {
 			return Promise.resolve( [
 				{
 					id: 5,
-					start_datetime: '2026-01-01 10:00:00',
+					start_date: '2026-01-01',
+					start_time: '10:00:00',
 					occurrence_type: 'master',
 				},
 			] );

@@ -117,11 +117,7 @@ class EventDateView {
 			$title = __( '(untitled event)', 'fair-events' );
 		}
 
-		$date_text = DateRangeFormatter::format(
-			$event_date->start_datetime,
-			(string) $event_date->end_datetime,
-			$event_date->all_day
-		);
+		$date_text = DateRangeFormatter::format_timing( $event_date->get_timing() );
 
 		$location      = EventLocation::resolve( $event_date, null );
 		$location_text = implode(

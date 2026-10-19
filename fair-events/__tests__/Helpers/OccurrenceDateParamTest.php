@@ -17,13 +17,14 @@ use FairEvents\Models\EventDates;
 class OccurrenceDateParamTest extends TestCase {
 
 	/**
-	 * Format() derives Y-m-d from a row's start_datetime.
+	 * Format() returns a row's start date.
 	 *
 	 * @return void
 	 */
-	public function test_format_returns_y_m_d_from_start_datetime() {
-		$row                 = new EventDates();
-		$row->start_datetime = '2026-06-29 18:30:00';
+	public function test_format_returns_the_start_date() {
+		$row             = new EventDates();
+		$row->start_date = '2026-06-29';
+		$row->start_time = '18:30:00';
 
 		$this->assertSame( '2026-06-29', OccurrenceDateParam::format( $row ) );
 	}

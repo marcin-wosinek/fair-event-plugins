@@ -164,7 +164,7 @@ class PaymentHooks {
 	 *
 	 * @param array|null $prepared       Current value (null if not yet prepared).
 	 * @param int|null   $event_date_id  Event date ID.
-	 * @return array|null Summary with id, title, start_datetime, manage_url — or null.
+	 * @return array|null Summary with id, title, timing (start_date, end_date, start_time, end_time, all_day), manage_url — or null.
 	 */
 	public static function prepare_event( $prepared, $event_date_id ) {
 		if ( null !== $prepared || empty( $event_date_id ) ) {
@@ -177,11 +177,15 @@ class PaymentHooks {
 			return null;
 		}
 
-		return array(
-			'id'             => (int) $event_date->id,
-			'title'          => $event_date->get_display_title(),
-			'start_datetime' => $event_date->start_datetime,
-			'manage_url'     => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . (int) $event_date->id ),
+		return array_merge(
+			array(
+				'id'    => (int) $event_date->id,
+				'title' => $event_date->get_display_title(),
+			),
+			$event_date->get_timing(),
+			array(
+				'manage_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . (int) $event_date->id ),
+			)
 		);
 	}
 

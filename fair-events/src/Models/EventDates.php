@@ -41,20 +41,6 @@ class EventDates {
 	public $category_selection_saved = false;
 
 	/**
-	 * Start datetime
-	 *
-	 * @var string
-	 */
-	public $start_datetime;
-
-	/**
-	 * End datetime
-	 *
-	 * @var string|null
-	 */
-	public $end_datetime;
-
-	/**
 	 * All day flag
 	 *
 	 * @var bool
@@ -277,8 +263,6 @@ class EventDates {
 		$event_dates->id                       = (int) $result->id;
 		$event_dates->event_id                 = $result->event_id ? (int) $result->event_id : null;
 		$event_dates->category_selection_saved = ! empty( $result->category_selection_saved );
-		$event_dates->start_datetime           = $result->start_datetime;
-		$event_dates->end_datetime             = $result->end_datetime;
 		$event_dates->all_day                  = (bool) $result->all_day;
 		$event_dates->occurrence_type          = $result->occurrence_type ?? 'single';
 		$event_dates->master_id                = $result->master_id ? (int) $result->master_id : null;
@@ -332,27 +316,22 @@ class EventDates {
 	}
 
 	/**
-	 * Timing column values for a write: canonical keys when `$data` has any
-	 * (besides all_day), otherwise its legacy start/end datetimes.
+	 * Timing column values for a write from its canonical keys (start_date,
+	 * end_date, start_time, end_time, all_day); absent keys are empty.
 	 *
 	 * @param array $data Write data.
 	 * @return array<string, mixed> Column values (see EventTiming::columns()).
 	 */
 	private static function timing_columns( array $data ) {
-		$canonical = array_intersect_key( $data, array_flip( EventTiming::KEYS ) );
-
-		if ( array_diff( array_keys( $canonical ), array( 'all_day' ) ) ) {
-			return EventTiming::columns( EventTiming::merge( EventTiming::undated(), $canonical ) );
-		}
-
 		return EventTiming::columns(
-			EventTiming::from_legacy( $data['start_datetime'] ?? null, $data['end_datetime'] ?? null, ! empty( $data['all_day'] ) )
+			EventTiming::merge( EventTiming::undated(), array_intersect_key( $data, array_flip( EventTiming::KEYS ) ) )
 		);
 	}
 
 	/**
 	 * Timing column values for positional timing arguments: a canonical
-	 * timing array, or legacy start/end datetimes and the all-day flag.
+	 * timing array, or site-local start/end datetimes and the all-day flag
+	 * (see EventTiming::from_datetimes()).
 	 *
 	 * @param string|array $start   Start datetime, or the canonical timing.
 	 * @param string|null  $end     End datetime (ignored with a canonical timing).
@@ -364,13 +343,7 @@ class EventDates {
 			return EventTiming::columns( $start );
 		}
 
-		return self::timing_columns(
-			array(
-				'start_datetime' => $start,
-				'end_datetime'   => $end,
-				'all_day'        => $all_day,
-			)
-		);
+		return EventTiming::columns( EventTiming::from_datetimes( $start, $end, ! empty( $all_day ) ) );
 	}
 
 	/**
@@ -651,15 +624,7 @@ class EventDates {
 		// Check if record exists.
 		$existing = self::get_by_event_id( $event_id );
 
-		$timing_columns = is_array( $timing )
-			? EventTiming::columns( $timing )
-			: self::timing_columns(
-				array(
-					'start_datetime' => $start,
-					'end_datetime'   => $end,
-					'all_day'        => $all_day,
-				)
-			);
+		$timing_columns = self::timing_arg_columns( is_array( $timing ) ? $timing : $start, $end, $all_day );
 
 		$data = array_merge(
 			array( 'event_id' => $event_id ),
@@ -1095,8 +1060,8 @@ class EventDates {
 	 * @return string SELECT ... FROM %i ed LEFT JOIN %i m ... clause (two %i placeholders).
 	 */
 	private static function inherited_select_sql() {
-		return 'SELECT ed.id, ed.event_id, ed.start_datetime, ed.end_datetime, ed.all_day,
-			ed.start_date, ed.end_date, ed.start_time, ed.end_time, ed.timing_migrated, ed.occurrence_type,
+		return 'SELECT ed.id, ed.event_id, ed.all_day,
+			ed.start_date, ed.end_date, ed.start_time, ed.end_time, ed.occurrence_type,
 			ed.master_id, ed.rrule, ed.recurrence_anchor, ed.status, ed.recurrence_mode, ed.category_selection_saved, ed.created_at, ed.updated_at,
 			COALESCE( m.publication_status, ed.publication_status ) AS publication_status,
 			COALESCE( ed.title, m.title ) AS title,
@@ -1172,8 +1137,7 @@ class EventDates {
 	 * Create a standalone event date (external or unlinked)
 	 *
 	 * Timing comes from the canonical keys (start_date, end_date, start_time,
-	 * end_time, all_day) when any is given, otherwise from the legacy
-	 * start_datetime, end_datetime and all_day.
+	 * end_time, all_day).
 	 *
 	 * @param array $data Event data with timing keys plus title, link_type, external_url, rrule.
 	 * @return int|false The row ID on success, false on failure.
@@ -1212,11 +1176,9 @@ class EventDates {
 	/**
 	 * Update event date fields by ID
 	 *
-	 * Timing fields are applied to the row's current timing: canonical keys
-	 * (see EventTiming::merge()) when `$data` has any besides all_day,
-	 * otherwise legacy start_datetime/end_datetime (see
-	 * EventTiming::merge_legacy()). Either way both column groups are
-	 * written, so they never disagree.
+	 * Timing keys are applied to the row's current timing (see
+	 * EventTiming::merge()): an omitted key keeps its value and an explicit
+	 * null clears it.
 	 *
 	 * @param int   $id   Event date row ID.
 	 * @param array $data Associative array of fields to update.
@@ -1227,7 +1189,7 @@ class EventDates {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		$timing_keys = array_flip( array_merge( EventTiming::KEYS, EventTiming::LEGACY_KEYS ) );
+		$timing_keys = array_flip( EventTiming::KEYS );
 		if ( array_intersect_key( $data, $timing_keys ) ) {
 			$row = $wpdb->get_row(
 				$wpdb->prepare(
@@ -1241,25 +1203,18 @@ class EventDates {
 				return false;
 			}
 
-			$canonical = array_intersect_key( $data, array_flip( EventTiming::KEYS ) );
-			$legacy    = array_intersect_key( $data, array_flip( array( 'start_datetime', 'end_datetime', 'all_day' ) ) );
-			$timing    = array_diff( array_keys( $canonical ), array( 'all_day' ) ) || ! array_diff( array_keys( $legacy ), array( 'all_day' ) )
-				? EventTiming::merge( EventTiming::from_row( $row ), $canonical )
-				: EventTiming::merge_legacy( EventTiming::from_row( $row ), $legacy );
+			$timing = EventTiming::merge( EventTiming::from_row( $row ), array_intersect_key( $data, $timing_keys ) );
 
 			$data = array_merge( array_diff_key( $data, $timing_keys ), EventTiming::columns( $timing ) );
 		}
 
 		$allowed_fields = array(
 			'event_id'           => '%d',
-			'start_datetime'     => '%s',
-			'end_datetime'       => '%s',
 			'all_day'            => '%d',
 			'start_date'         => '%s',
 			'end_date'           => '%s',
 			'start_time'         => '%s',
 			'end_time'           => '%s',
-			'timing_migrated'    => '%d',
 			'dates_override'     => '%d',
 			'times_override'     => '%d',
 			'occurrence_type'    => '%s',
@@ -1380,7 +1335,7 @@ class EventDates {
 	 * Get unlinked event dates (no linked post)
 	 *
 	 * Returns event dates where event_id IS NULL and occurrence_type is
-	 * 'single' or 'master', ordered by start_datetime descending.
+	 * 'single' or 'master', latest start first.
 	 *
 	 * @return EventDates[] Array of EventDates objects.
 	 */

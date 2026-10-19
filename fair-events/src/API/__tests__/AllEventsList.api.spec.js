@@ -8,6 +8,7 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { startOf } from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -39,8 +40,10 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 				headers: adminHeaders,
 				data: {
 					title: seriesTitle,
-					start_datetime: '2037-02-01 10:00:00',
-					end_datetime: '2037-02-01 12:00:00',
+					start_date: '2037-02-01',
+					start_time: '10:00:00',
+					end_date: '2037-02-01',
+					end_time: '12:00:00',
 					rrule: 'FREQ=WEEKLY;COUNT=3',
 				},
 			}
@@ -72,7 +75,8 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Nesting single test ${ Date.now() }`,
-					start_datetime: '2037-03-01 10:00:00',
+					start_date: '2037-03-01',
+					start_time: '10:00:00',
 				},
 			}
 		);
@@ -122,10 +126,8 @@ test.describe( 'EventDatesController — grouped all-events list', () => {
 		expect( master.children_count ).toBe( 2 );
 		expect( master.children.map( ( c ) => c.id ) ).toEqual( generatedIds );
 		expect(
-			new Date( master.children[ 0 ].start_datetime ).getTime()
-		).toBeLessThan(
-			new Date( master.children[ 1 ].start_datetime ).getTime()
-		);
+			new Date( startOf( master.children[ 0 ] ) ).getTime()
+		).toBeLessThan( new Date( startOf( master.children[ 1 ] ) ).getTime() );
 		expect( master.copy_url ).toMatch(
 			new RegExp(
 				`/wp-admin/admin\\.php\\?page=fair-events-copy&event_date_id=${ masterEventDateId }&_wpnonce=[^&]+`

@@ -27,7 +27,7 @@ describe( 'groups/mailings tab registration', () => {
 		delete window.fairEventsManageEventData;
 	} );
 
-	const eventDate = { event_id: 1, start_datetime: '', end_datetime: '' };
+	const eventDate = { event_id: 1, start_date: null, end_date: null };
 
 	it( 'disables Groups and Mailings tabs for external-URL events', () => {
 		const { applyFilters } = loadModuleWithData( {

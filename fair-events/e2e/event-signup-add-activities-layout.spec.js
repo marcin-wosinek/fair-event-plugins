@@ -139,8 +139,10 @@ test.describe( 'Event Signup — add-activities rows', () => {
 			data: {
 				title: `Add rows e2e ${ stamp }`,
 				link_type: 'post',
-				start_datetime: '2039-03-03 10:00:00',
-				end_datetime: '2039-03-03 12:00:00',
+				start_date: '2039-03-03',
+				start_time: '10:00:00',
+				end_date: '2039-03-03',
+				end_time: '12:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;

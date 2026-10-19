@@ -41,7 +41,8 @@ class SelectedOccurrenceTest extends TestCase {
 		$row->master_id       = $props['master_id'] ?? null;
 		$row->venue_id        = $props['venue_id'] ?? null;
 		$row->address         = $props['address'] ?? null;
-		$row->start_datetime  = $props['start_datetime'] ?? '2026-07-01 10:00:00';
+		$row->start_date      = $props['start_date'] ?? '2026-07-01';
+		$row->start_time      = $props['start_time'] ?? '10:00:00';
 		return $row;
 	}
 

@@ -228,8 +228,10 @@ describe( 'QuickEventModal', () => {
 	it( 'prefills the manual form and switches tabs on a successful lookup', async () => {
 		lookupResponse = {
 			title: 'Fetched Event',
-			start_datetime: '2026-07-01 18:00:00',
-			end_datetime: '2026-07-01 20:00:00',
+			start_date: '2026-07-01',
+			start_time: '18:00:00',
+			end_date: '2026-07-01',
+			end_time: '20:00:00',
 			all_day: false,
 			location: 'The Venue',
 			source: 'schema',
@@ -284,8 +286,10 @@ describe( 'QuickEventModal', () => {
 	it( 'shows a missing-fields notice for partial lookup results', async () => {
 		lookupResponse = {
 			title: 'Fetched Event',
-			start_datetime: null,
-			end_datetime: null,
+			start_date: null,
+			start_time: null,
+			end_date: null,
+			end_time: null,
 			all_day: false,
 			location: null,
 			source: 'title',

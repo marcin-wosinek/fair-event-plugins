@@ -16,9 +16,19 @@ import { formatDateOnly } from 'fair-events-shared';
 import RecurrenceCalendar from '../RecurrenceCalendar.js';
 
 const generatedOccurrences = [
-	{ id: 2, start_datetime: '2026-07-08 18:00:00', status: 'active' },
-	{ id: 3, start_datetime: '2026-07-15 18:00:00', status: 'cancelled' },
-	{ id: 4, start_datetime: '2026-07-22 18:00:00', status: '' },
+	{
+		id: 2,
+		start_date: '2026-07-08',
+		start_time: '18:00:00',
+		status: 'active',
+	},
+	{
+		id: 3,
+		start_date: '2026-07-15',
+		start_time: '18:00:00',
+		status: 'cancelled',
+	},
+	{ id: 4, start_date: '2026-07-22', start_time: '18:00:00', status: '' },
 ];
 
 // Matches the aria-label built in RecurrenceCalendar's MiniMonth.

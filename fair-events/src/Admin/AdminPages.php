@@ -901,14 +901,17 @@ class AdminPages {
 		$clauses['join'] .= " LEFT JOIN {$posts_table} AS fedp_upcoming ON {$wpdb->posts}.ID = fedp_upcoming.post_id";
 		$clauses['join'] .= " LEFT JOIN {$table_name} AS fed2_upcoming ON (fedp_upcoming.event_date_id = fed2_upcoming.id AND fed2_upcoming.occurrence_type IN ('single', 'master'))";
 
-		// WHERE: start_datetime >= now (from either join path).
-		$clauses['where'] .= $wpdb->prepare(
-			' AND COALESCE(fed_upcoming.start_datetime, fed2_upcoming.start_datetime) >= %s',
-			$current_datetime
+		// WHERE: the date is upcoming (from either join path).
+		list( $direct_sql, $direct_args ) = \FairEvents\Helpers\EventTimingSql::upcoming( 'fed_upcoming', $current_datetime );
+		list( $linked_sql, $linked_args ) = \FairEvents\Helpers\EventTimingSql::upcoming( 'fed2_upcoming', $current_datetime );
+		$clauses['where']                .= $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- EventTimingSql fragments over fixed aliases hold the placeholders, values bound below.
+			" AND ( ( fed_upcoming.id IS NOT NULL AND {$direct_sql} ) OR ( fed_upcoming.id IS NULL AND {$linked_sql} ) )",
+			array_merge( $direct_args, $linked_args )
 		);
 
-		// ORDER BY start_datetime ASC.
-		$clauses['orderby'] = 'COALESCE(fed_upcoming.start_datetime, fed2_upcoming.start_datetime) ASC';
+		// ORDER BY start date and time.
+		$clauses['orderby'] = 'COALESCE(fed_upcoming.start_date, fed2_upcoming.start_date) ASC, COALESCE(fed_upcoming.start_time, fed2_upcoming.start_time) ASC';
 
 		// Remove this filter after first use.
 		remove_filter( 'posts_clauses', array( $this, 'upcoming_events_clauses' ), 10 );

@@ -234,10 +234,11 @@ specific behaviour, not certification that each satisfies every rule above.
 
 ## Dates and times: one interpretation, everywhere
 
-- Stored datetimes (`start_datetime` etc.) are naive site-local strings. Every
-  view must format them with the same convention — `dateI18n` converts assuming
-  UTC by default, which double-converts and shifts the displayed time (issue
-  #993). Pass explicit timezone handling and verify all consumers of the same
+- Stored dates and times (`start_date`, `start_time` etc.) are naive site-local
+  values; show a time only when one is set (`formatTimingStart()` in
+  fair-events-shared). Every view must format them with the same convention —
+  `dateI18n` converts assuming UTC by default, which double-converts and shifts
+  the displayed time (issue #993). Pass explicit timezone handling and verify all consumers of the same
   field show the same wall-clock time.
 - Test date display with a site timezone ≠ UTC (e.g. Europe/Madrid) — the
   default UTC dev site hides this whole bug class.

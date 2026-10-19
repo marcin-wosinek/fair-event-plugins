@@ -14,7 +14,7 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { formatDateOnly } from 'fair-events-shared';
+import { formatDateOnly, timingStartKey } from 'fair-events-shared';
 
 /**
  * @param {Object}   props
@@ -31,7 +31,7 @@ export default function EditInstancesModal( {
 } ) {
 	const occurrences = useMemo( () => {
 		return [ ...( generatedOccurrences || [] ) ].sort( ( a, b ) =>
-			a.start_datetime.localeCompare( b.start_datetime )
+			timingStartKey( a ).localeCompare( timingStartKey( b ) )
 		);
 	}, [ generatedOccurrences ] );
 
@@ -46,7 +46,7 @@ export default function EditInstancesModal( {
 					<p>{ __( 'No occurrences yet.', 'fair-events' ) }</p>
 				) }
 				{ occurrences.map( ( occ ) => {
-					const shownDate = occ.start_datetime.split( ' ' )[ 0 ];
+					const shownDate = occ.start_date;
 					// Cancel/restore address the scheduled (anchor) date, which
 					// differs from the shown date once the occurrence is moved.
 					const date = occ.recurrence_anchor || shownDate;

@@ -780,7 +780,7 @@ class TicketsController extends WP_REST_Controller {
 
 		return array(
 			'capacity'     => $event_date->capacity,
-			'end_datetime' => $event_date->end_datetime,
+			'end_date'     => $event_date->end_date,
 			'created_date' => $created_timestamp ? wp_date( 'Y-m-d', $created_timestamp ) : null,
 			'ticket_types' => array_map(
 				function ( $t ) use ( $restrictions ) {

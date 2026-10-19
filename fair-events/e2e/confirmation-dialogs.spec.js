@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { startOf } from '../../e2e/support/event-timing.js';
 
 /**
  * E2E: the confirmations for deleting a venue, importing ticket settings,
@@ -121,8 +122,10 @@ test.describe( 'Confirmation dialogs (#1772)', () => {
 			path: '/fair-events/v1/event-dates',
 			method: 'POST',
 			data: {
-				start_datetime: '2035-05-03T18:00:00',
-				end_datetime: '2035-05-03T20:00:00',
+				start_date: '2035-05-03',
+				start_time: '18:00:00',
+				end_date: '2035-05-03',
+				end_time: '20:00:00',
 				...data,
 			},
 		} );
@@ -308,7 +311,7 @@ test.describe( 'Confirmation dialogs (#1772)', () => {
 		} );
 		expect( after.rrule ).toBeNull();
 		expect( after.recurrence_mode ).toBe( 'none' );
-		expect( after.start_datetime ).toBe( series.start_datetime );
+		expect( startOf( after ) ).toBe( startOf( series ) );
 		await expect(
 			apiFetch( page, {
 				path: `/fair-events/v1/event-dates/${ series.generated_occurrences[ 0 ].id }`,

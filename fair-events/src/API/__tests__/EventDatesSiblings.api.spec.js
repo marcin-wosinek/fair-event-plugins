@@ -41,8 +41,10 @@ test.describe( 'EventDatesController — siblings', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Siblings test ${ Date.now() }`,
-				start_datetime: '2036-04-01 10:00:00',
-				end_datetime: '2036-04-01 12:00:00',
+				start_date: '2036-04-01',
+				start_time: '10:00:00',
+				end_date: '2036-04-01',
+				end_time: '12:00:00',
 				rrule: 'FREQ=WEEKLY;COUNT=3',
 			},
 		} );
@@ -58,7 +60,8 @@ test.describe( 'EventDatesController — siblings', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Standalone sibling test ${ Date.now() }`,
-					start_datetime: '2036-05-01 10:00:00',
+					start_date: '2036-05-01',
+					start_time: '10:00:00',
 				},
 			}
 		);

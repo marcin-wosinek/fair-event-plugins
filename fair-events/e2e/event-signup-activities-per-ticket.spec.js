@@ -82,8 +82,10 @@ test.describe( 'Event Signup — activities for each ticket', () => {
 			data: {
 				title: `Per ticket e2e ${ stamp }`,
 				link_type: 'post',
-				start_datetime: '2039-02-02 10:00:00',
-				end_datetime: '2039-02-02 12:00:00',
+				start_date: '2039-02-02',
+				start_time: '10:00:00',
+				end_date: '2039-02-02',
+				end_time: '12:00:00',
 			},
 		} );
 		eventDateId = eventDate.id;

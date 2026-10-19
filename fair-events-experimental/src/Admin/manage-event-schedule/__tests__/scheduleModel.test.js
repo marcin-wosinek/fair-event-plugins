@@ -61,7 +61,7 @@ describe( 'entryFromItem / toPayload', () => {
 } );
 
 describe( 'newEntry', () => {
-	const eventDate = { start_datetime: '2027-05-15 09:00:00' };
+	const eventDate = { start_date: '2027-05-15', start_time: '09:00:00' };
 
 	it( 'starts a program item with the event, not bookable', () => {
 		expect( newEntry( eventDate ) ).toMatchObject( {
@@ -83,6 +83,17 @@ describe( 'newEntry', () => {
 			ticket_option_id: 102,
 			bookable: true,
 			title: 'Juggling',
+		} );
+	} );
+
+	it( 'starts at 09:00 on the event date when the event has no start time', () => {
+		expect(
+			newEntry( { start_date: '2027-05-15', start_time: null } )
+		).toMatchObject( {
+			startDate: '2027-05-15',
+			startTime: '09:00',
+			endDate: '2027-05-15',
+			endTime: '10:00',
 		} );
 	} );
 

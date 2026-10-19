@@ -64,8 +64,7 @@ endif;
 $event_dates = $selection['occurrence'];
 $is_session  = \FairEvents\Helpers\SelectedOccurrence::SESSION === $selection_state;
 
-$event_start   = $event_dates->start_datetime;
-$event_end     = $event_dates->end_datetime;
+$event_timing  = $event_dates->get_timing();
 $event_all_day = $event_dates->all_day;
 $venue_id      = $event_dates->venue_id;
 
@@ -76,22 +75,22 @@ if ( $venue_id ) {
 }
 
 // A session may be in any year (often a past one), so it always shows it.
-$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day, $is_session );
-$session_ended  = $is_session && \FairEvents\Helpers\SessionStatus::has_ended( $event_dates->get_timing() );
+$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format_timing( $event_timing, $is_session );
+$session_ended  = $is_session && \FairEvents\Helpers\SessionStatus::has_ended( $event_timing );
 
 /**
  * Format recurrence description from an RRULE string
  *
- * @param string $rrule          RRULE string (e.g. "FREQ=WEEKLY;COUNT=10").
- * @param string $start_datetime Start datetime to derive day-of-week.
+ * @param string      $rrule      RRULE string (e.g. "FREQ=WEEKLY;COUNT=10").
+ * @param string|null $start_date Start date (Y-m-d) to derive day-of-week.
  * @return string Recurrence description (e.g. "Every Wednesday").
  */
 if ( ! function_exists( 'fair_events_format_recurrence_description' ) ) {
-	function fair_events_format_recurrence_description( $rrule, $start_datetime ) {
+	function fair_events_format_recurrence_description( $rrule, $start_date ) {
 		$parsed = \FairEvents\Services\RecurrenceService::parse_rrule( $rrule );
 		$freq   = $parsed['freq'] ?? 'WEEKLY';
 
-		$start_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $start_datetime );
+		$start_timestamp = $start_date ? \FairEvents\Helpers\DateHelper::local_to_timestamp( $start_date . ' 00:00:00' ) : false;
 		$day_name        = $start_timestamp ? wp_date( 'l', $start_timestamp ) : '';
 
 		$interval = $parsed['interval'] ?? 1;
@@ -139,28 +138,22 @@ if ( ! function_exists( 'fair_events_format_recurrence_description' ) ) {
 /**
  * Format time range for recurring events (without the date portion)
  *
- * @param string $start_datetime Start datetime string.
- * @param string $end_datetime   End datetime string.
- * @return string Formatted time range (e.g. "19:30—21:30").
+ * @param string|null $start_time Start time (H:i:s), or null.
+ * @param string|null $end_time   End time (H:i:s), or null.
+ * @return string Formatted time range (e.g. "19:30—21:30"), empty without a start time.
  */
 if ( ! function_exists( 'fair_events_format_time_range' ) ) {
-	function fair_events_format_time_range( $start_datetime, $end_datetime ) {
-		$start_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $start_datetime );
-		if ( false === $start_timestamp ) {
+	function fair_events_format_time_range( $start_time, $end_time ) {
+		if ( null === $start_time ) {
 			return '';
 		}
 
-		$start_time = wp_date( 'H:i', $start_timestamp );
-
-		if ( $end_datetime ) {
-			$end_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $end_datetime );
-			if ( $end_timestamp ) {
-				$end_time = wp_date( 'H:i', $end_timestamp );
-				return $start_time . '—' . $end_time;
-			}
+		$range = substr( $start_time, 0, 5 );
+		if ( null !== $end_time ) {
+			$range .= '—' . substr( $end_time, 0, 5 );
 		}
 
-		return $start_time;
+		return $range;
 	}
 }
 
@@ -184,9 +177,9 @@ if ( $is_overview ) {
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-event-info' ) ) ); ?>>
 	<?php if ( $is_recurring ) : ?>
 		<?php
-		$recurrence_desc = fair_events_format_recurrence_description( $event_dates->rrule, $event_start );
-		if ( ! $event_all_day ) {
-			$time_range      = fair_events_format_time_range( $event_start, $event_end );
+		$recurrence_desc = fair_events_format_recurrence_description( $event_dates->rrule, $event_timing['start_date'] );
+		$time_range      = $event_all_day ? '' : fair_events_format_time_range( $event_timing['start_time'], $event_timing['end_time'] );
+		if ( '' !== $time_range ) {
 			$recurrence_desc = $recurrence_desc . ', ' . $time_range;
 		}
 		?>
@@ -200,7 +193,7 @@ if ( $is_overview ) {
 	<?php endif; ?>
 	<?php if ( $next_occurrence ) : ?>
 		<?php
-		$next_timestamp = \FairEvents\Helpers\DateHelper::local_to_timestamp( $next_occurrence->start_datetime );
+		$next_timestamp = $next_occurrence->start_date ? \FairEvents\Helpers\DateHelper::local_to_timestamp( $next_occurrence->start_date . ' 00:00:00' ) : false;
 		$next_date_str  = $next_timestamp ? wp_date( 'j F', $next_timestamp ) : '';
 		?>
 		<div class="wp-block-fair-events-event-info__next-occurrence">

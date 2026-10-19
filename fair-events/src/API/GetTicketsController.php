@@ -1633,12 +1633,10 @@ class GetTicketsController extends WP_REST_Controller {
 			$upcoming = \FairEvents\Models\EventDates::get_upcoming_by_master_id( $series_master_id );
 			foreach ( $upcoming as $occ ) {
 				$occurrences_for_picker[] = array(
-					'id'             => (int) $occ->id,
-					'start_datetime' => $occ->start_datetime,
-					'end_datetime'   => $occ->end_datetime,
-					'all_day'        => (bool) $occ->all_day,
-					'timing'         => $occ->get_timing(),
-					'signed_up'      => false,
+					'id'        => (int) $occ->id,
+					'all_day'   => (bool) $occ->all_day,
+					'timing'    => $occ->get_timing(),
+					'signed_up' => false,
 				);
 			}
 		}
@@ -2186,9 +2184,7 @@ class GetTicketsController extends WP_REST_Controller {
 		// FairEventsShared\LineItemTotals).
 		$line_items = array();
 		foreach ( $occurrences as $occ ) {
-			$occ_label    = class_exists( \FairEvents\Helpers\DateRangeFormatter::class )
-				? \FairEvents\Helpers\DateRangeFormatter::format( $occ->start_datetime, $occ->end_datetime, (bool) $occ->all_day )
-				: $occ->start_datetime;
+			$occ_label    = \FairEvents\Helpers\DateRangeFormatter::format_timing( $occ->get_timing() );
 			$line_items[] = array(
 				'name'     => sprintf(
 					/* translators: %s: occurrence date/time label */
@@ -2481,7 +2477,7 @@ class GetTicketsController extends WP_REST_Controller {
 			if ( ! array_key_exists( $own_date_id, $date_labels ) ) {
 				$own_date                    = \FairEvents\Models\EventDates::get_by_id( $own_date_id );
 				$date_labels[ $own_date_id ] = $own_date
-					? \FairEvents\Helpers\DateRangeFormatter::format( $own_date->start_datetime, $own_date->end_datetime, (bool) $own_date->all_day )
+					? \FairEvents\Helpers\DateRangeFormatter::format_timing( $own_date->get_timing() )
 					: '';
 			}
 
@@ -3204,7 +3200,7 @@ class GetTicketsController extends WP_REST_Controller {
 					static function ( $event_date ) {
 						return array(
 							'id'        => (int) $event_date->id,
-							'label'     => \FairEvents\Helpers\DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day ),
+							'label'     => \FairEvents\Helpers\DateRangeFormatter::format_timing( $event_date->get_timing() ),
 							'capacity'  => $event_date->capacity,
 							'remaining' => \FairEvents\Services\TicketCapacity::remaining_for_event_date( (int) $event_date->id ),
 						);

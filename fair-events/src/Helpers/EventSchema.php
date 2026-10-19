@@ -97,7 +97,7 @@ class EventSchema {
 	public static function occurrence_to_jsonld( array $dto ) {
 		$timing = isset( $dto['timing'] ) && is_array( $dto['timing'] )
 			? $dto['timing']
-			: EventTiming::from_legacy( $dto['start'] ?? null, $dto['end'] ?? null, ! empty( $dto['all_day'] ) );
+			: EventTiming::from_datetimes( $dto['start'] ?? null, $dto['end'] ?? null, ! empty( $dto['all_day'] ) );
 		$dates  = self::timing_to_dates( $timing );
 		if ( ! $dates ) {
 			return null;

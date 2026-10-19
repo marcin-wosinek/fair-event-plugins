@@ -328,6 +328,7 @@ class EventFeedProvider {
 			return null;
 		}
 
+		$range       = EventTiming::range_keys( $row->get_timing() );
 		$description = '';
 		if ( has_excerpt( $event_id ) ) {
 			$description = get_the_excerpt( $event_id );
@@ -343,8 +344,8 @@ class EventFeedProvider {
 			'series_id'       => EventsListSeries::series_id_for_row( $row ),
 			'title'           => $row->get_display_title(),
 			'description'     => $description,
-			'start'           => $row->start_datetime,
-			'end'             => $row->end_datetime ? $row->end_datetime : $row->start_datetime,
+			'start'           => $range['start'],
+			'end'             => $range['end'],
 			'all_day'         => (bool) $row->all_day,
 			'timing'          => $row->get_timing(),
 			'calendar_export' => EventTiming::is_calendar_exportable( $row->get_timing() ),
@@ -374,6 +375,8 @@ class EventFeedProvider {
 			return null;
 		}
 
+		$range = EventTiming::range_keys( $row->get_timing() );
+
 		return array(
 			'uid'             => 'standalone_' . $row->id . '@' . $site_host,
 			'event_date_id'   => (int) $row->id,
@@ -382,8 +385,8 @@ class EventFeedProvider {
 			'series_id'       => EventsListSeries::series_id_for_row( $row ),
 			'title'           => $row->get_display_title(),
 			'description'     => '',
-			'start'           => $row->start_datetime,
-			'end'             => $row->end_datetime ? $row->end_datetime : $row->start_datetime,
+			'start'           => $range['start'],
+			'end'             => $range['end'],
 			'all_day'         => (bool) $row->all_day,
 			'timing'          => $row->get_timing(),
 			'calendar_export' => EventTiming::is_calendar_exportable( $row->get_timing() ),
@@ -511,7 +514,7 @@ class EventFeedProvider {
 		$end    = ! empty( $event['end'] ) ? $event['end'] : $start;
 		$timing = isset( $event['timing'] ) && is_array( $event['timing'] )
 			? $event['timing']
-			: EventTiming::from_legacy( $start, $end, ! empty( $event['all_day'] ) );
+			: EventTiming::from_datetimes( $start, $end, ! empty( $event['all_day'] ) );
 
 		return array(
 			'uid'             => $event['uid'] ?? md5( $start . ( $event['summary'] ?? '' ) ),

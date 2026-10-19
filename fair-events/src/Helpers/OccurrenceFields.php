@@ -100,6 +100,10 @@ class OccurrenceFields {
 			return RecurrenceSummary::format_next( $occurrence['series'], $occurrence );
 		}
 
+		if ( isset( $occurrence['timing'] ) && is_array( $occurrence['timing'] ) ) {
+			return DateRangeFormatter::format_timing( $occurrence['timing'] );
+		}
+
 		return DateRangeFormatter::format(
 			$occurrence['start'] ?? '',
 			$occurrence['end'] ?? '',

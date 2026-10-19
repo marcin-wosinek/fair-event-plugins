@@ -240,7 +240,9 @@ class EventsListSeriesTest extends TestCase {
 		$master                    = new EventDates();
 		$master->id                = 5;
 		$master->occurrence_type   = 'master';
-		$master->start_datetime    = '2040-01-04 18:00:00';
+		$master->start_date        = '2040-01-04';
+		$master->end_date          = '2040-01-04';
+		$master->start_time        = '18:00:00';
 		$master->recurrence_anchor = '2040-01-02';
 		$master->rrule             = 'FREQ=WEEKLY';
 		$master->recurrence_mode   = 'rule';

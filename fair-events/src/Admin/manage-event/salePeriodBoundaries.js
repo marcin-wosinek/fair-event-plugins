@@ -9,6 +9,8 @@
  * @package FairEvents
  */
 
+import { timingStartKey } from 'fair-events-shared/src/dateTime.js';
+
 /**
  * Resolve the lazy default start of the first sale period: the earlier of
  * the site-local day the event (or its series) was created and today.
@@ -92,43 +94,35 @@ export function resolveEffectiveSalePeriods(
 }
 
 /**
- * Resolve the event/series' final active occurrence's own end_datetime — or,
- * when that occurrence has no end set, its start_datetime instead — mirroring
+ * Resolve the event/series' final active occurrence's end date, mirroring
  * EventDates::get_last_occurrence_boundary() on the backend. Used as the
  * anchor for the ticket editor's lazily-resolved default sale end (day after
- * the last occurrence), so an occurrence with a start but no end still
- * yields a usable default.
+ * the last occurrence). The final occurrence is the one starting last.
  *
- * @param {Object|null} eventDate Event date object with `start_datetime`, `end_datetime`, and `generated_occurrences` (each with `start_datetime`, `end_datetime`, `status`).
- * @return {string|null} The final active occurrence's end (or start) datetime, or null when there's nothing to anchor to.
+ * @param {Object|null} eventDate Event date object with `start_date`, `start_time`, `end_date`, and `generated_occurrences` (each with the same fields and `status`).
+ * @return {string|null} The final active occurrence's end date (Y-m-d), or null when there's nothing to anchor to.
  */
-export function resolveFinalOccurrenceDatetime( eventDate ) {
+export function resolveFinalOccurrenceDate( eventDate ) {
 	if ( ! eventDate ) {
 		return null;
 	}
 
 	const occurrences = [
-		{
-			start_datetime: eventDate.start_datetime,
-			end_datetime: eventDate.end_datetime,
-		},
-		...( eventDate.generated_occurrences || [] )
-			.filter( ( o ) => o.status !== 'cancelled' )
-			.map( ( o ) => ( {
-				start_datetime: o.start_datetime,
-				end_datetime: o.end_datetime,
-			} ) ),
-	].filter( ( o ) => o.start_datetime );
+		eventDate,
+		...( eventDate.generated_occurrences || [] ).filter(
+			( o ) => o.status !== 'cancelled'
+		),
+	].filter( ( o ) => o.start_date );
 
 	if ( ! occurrences.length ) {
 		return null;
 	}
 
 	const final = occurrences.sort( ( a, b ) =>
-		a.start_datetime < b.start_datetime ? 1 : -1
+		timingStartKey( a ) < timingStartKey( b ) ? 1 : -1
 	)[ 0 ];
 
-	return final.end_datetime || final.start_datetime;
+	return final.end_date || final.start_date;
 }
 
 /**

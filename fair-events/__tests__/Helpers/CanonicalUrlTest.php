@@ -23,9 +23,10 @@ class CanonicalUrlTest extends TestCase {
 	 * @return EventDates
 	 */
 	private function make_row( array $props ): EventDates {
-		$row                 = new EventDates();
-		$row->id             = $props['id'] ?? 1;
-		$row->start_datetime = $props['start_datetime'] ?? '2026-07-01 10:00:00';
+		$row             = new EventDates();
+		$row->id         = $props['id'] ?? 1;
+		$row->start_date = $props['start_date'] ?? '2026-07-01';
+		$row->start_time = $props['start_time'] ?? '10:00:00';
 		return $row;
 	}
 
@@ -53,14 +54,14 @@ class CanonicalUrlTest extends TestCase {
 	public function test_non_default_occurrence_gets_event_date_param() {
 		$pivot    = $this->make_row(
 			array(
-				'id'             => 5,
-				'start_datetime' => '2026-07-01 10:00:00',
+				'id'         => 5,
+				'start_date' => '2026-07-01',
 			)
 		);
 		$selected = $this->make_row(
 			array(
-				'id'             => 6,
-				'start_datetime' => '2026-07-08 10:00:00',
+				'id'         => 6,
+				'start_date' => '2026-07-08',
 			)
 		);
 
@@ -72,28 +73,28 @@ class CanonicalUrlTest extends TestCase {
 	/**
 	 * A legacy-id-resolved row and a date-resolved row pointing at the same
 	 * occurrence produce an identical canonical URL, since both share the
-	 * same id/start_datetime once resolved.
+	 * same id/start_date once resolved.
 	 *
 	 * @return void
 	 */
 	public function test_legacy_and_date_resolved_rows_produce_identical_canonical() {
 		$pivot = $this->make_row(
 			array(
-				'id'             => 5,
-				'start_datetime' => '2026-07-01 10:00:00',
+				'id'         => 5,
+				'start_date' => '2026-07-01',
 			)
 		);
 
 		$via_legacy_id  = $this->make_row(
 			array(
-				'id'             => 6,
-				'start_datetime' => '2026-07-08 10:00:00',
+				'id'         => 6,
+				'start_date' => '2026-07-08',
 			)
 		);
 		$via_date_param = $this->make_row(
 			array(
-				'id'             => 6,
-				'start_datetime' => '2026-07-08 10:00:00',
+				'id'         => 6,
+				'start_date' => '2026-07-08',
 			)
 		);
 

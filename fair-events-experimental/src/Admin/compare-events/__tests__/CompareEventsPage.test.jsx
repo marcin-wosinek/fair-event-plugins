@@ -69,21 +69,24 @@ const EVENTS = {
 	5: {
 		id: 5,
 		title: 'Spring Ball',
-		start_datetime: '2026-03-03 20:00:00',
+		start_date: '2026-03-03',
+		start_time: '20:00:00',
 		all_day: false,
 		status: 'active',
 	},
 	7: {
 		id: 7,
 		title: 'Autumn Ball',
-		start_datetime: '2026-09-10 20:00:00',
+		start_date: '2026-09-10',
+		start_time: '20:00:00',
 		all_day: false,
 		status: 'active',
 	},
 	8: {
 		id: 8,
 		title: 'Winter Ball',
-		start_datetime: '2026-12-05 20:00:00',
+		start_date: '2026-12-05',
+		start_time: '20:00:00',
 		all_day: false,
 		status: 'active',
 	},
@@ -91,7 +94,8 @@ const EVENTS = {
 	99: {
 		id: 99,
 		title: 'Archive Gala',
-		start_datetime: '2019-01-19 19:00:00',
+		start_date: '2019-01-19',
+		start_time: '19:00:00',
 		all_day: false,
 		status: 'active',
 	},
@@ -581,7 +585,7 @@ describe( 'CompareEventsPage', () => {
 
 	it( 'leaves cancelled events out of the choices', async () => {
 		overrides[
-			`${ LIST_PATH }?per_page=100&orderby=start_datetime&order=desc`
+			`${ LIST_PATH }?per_page=100&orderby=start_date&order=desc`
 		] = () =>
 			Promise.resolve( [
 				EVENTS[ 5 ],
@@ -631,7 +635,7 @@ describe( 'CompareEventsPage', () => {
 
 	it( 'reports a failed event list without hiding the restored comparison', async () => {
 		overrides[
-			`${ LIST_PATH }?per_page=100&orderby=start_datetime&order=desc`
+			`${ LIST_PATH }?per_page=100&orderby=start_date&order=desc`
 		] = () => Promise.reject( {} );
 		open( '&current_event_date_id=5&comparison_event_date_id=7' );
 

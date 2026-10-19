@@ -17,7 +17,7 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import { formatSiteLocalDatetime } from 'fair-events-shared';
+import { formatTimingStart } from 'fair-events-shared';
 import TransactionLog from './TransactionLog.js';
 
 // A recurring master never appears as a selectable result on its own — only
@@ -578,16 +578,14 @@ const EventField = ( { event, eventDateId, onSave } ) => {
 									} }
 								>
 									<strong>{ occurrence.title }</strong>
-									{ occurrence.start_datetime && (
+									{ occurrence.start_date && (
 										<span
 											style={ {
 												color: '#646970',
 												marginLeft: '8px',
 											} }
 										>
-											{ formatSiteLocalDatetime(
-												occurrence.start_datetime
-											) }
+											{ formatTimingStart( occurrence ) }
 										</span>
 									) }
 								</button>
@@ -606,12 +604,10 @@ const EventField = ( { event, eventDateId, onSave } ) => {
 					{ event ? (
 						<a href={ event.manage_url }>
 							{ event.title }
-							{ event.start_datetime && (
+							{ event.start_date && (
 								<>
 									{ ' — ' }
-									{ formatSiteLocalDatetime(
-										event.start_datetime
-									) }
+									{ formatTimingStart( event ) }
 								</>
 							) }
 						</a>

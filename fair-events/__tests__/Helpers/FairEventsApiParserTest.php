@@ -136,8 +136,8 @@ class FairEventsApiParserTest extends TestCase {
 	}
 
 	/**
-	 * A feed without the canonical fields is read from its datetimes, as
-	 * before.
+	 * A feed without the canonical fields (an older Fair Events site) is
+	 * read from its datetimes.
 	 *
 	 * @return void
 	 */
@@ -153,7 +153,16 @@ class FairEventsApiParserTest extends TestCase {
 			)
 		);
 
-		$this->assertArrayNotHasKey( 'timing', $events[0] );
+		$this->assertSame(
+			array(
+				'start_date' => '2026-07-15',
+				'end_date'   => '2026-07-15',
+				'start_time' => '10:00:00',
+				'end_time'   => '12:00:00',
+				'all_day'    => false,
+			),
+			$events[0]['timing']
+		);
 		$this->assertSame( '2026-07-15 10:00:00', $events[0]['start'] );
 		$this->assertSame( '2026-07-15 12:00:00', $events[0]['end'] );
 	}

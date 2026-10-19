@@ -165,12 +165,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 											color: '#666',
 										} }
 									>
-										{ event.start_datetime?.split(
-											'T'
-										)[ 0 ] ||
-											event.start_datetime?.split(
-												' '
-											)[ 0 ] }
+										{ event.start_date }
 									</div>
 								</div>
 							) ) }

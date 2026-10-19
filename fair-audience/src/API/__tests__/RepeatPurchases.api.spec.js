@@ -127,8 +127,10 @@ test.describe.serial( 'A participant buys again for the same date', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: '2035-11-05 10:00:00',
-				end_datetime: '2035-11-05 12:00:00',
+				start_date: '2035-11-05',
+				start_time: '10:00:00',
+				end_date: '2035-11-05',
+				end_time: '12:00:00',
 			},
 		} );
 		const edBody = await edRes.json();

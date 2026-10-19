@@ -26,7 +26,7 @@ describe( 'audience tab registration', () => {
 		delete window.fairEventsManageEventData;
 	} );
 
-	const eventDate = { event_id: 1, start_datetime: '', end_datetime: '' };
+	const eventDate = { event_id: 1, start_date: null, end_date: null };
 
 	it( 'disables the Audience tab for external-URL events', () => {
 		const { applyFilters } = loadModuleWithData( {

@@ -6,6 +6,7 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { timingFields } from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -97,8 +98,7 @@ test.describe( 'Event schedule', () => {
 			data: {
 				title,
 				link_type: 'post',
-				start_datetime: start,
-				end_datetime: end,
+				...timingFields( start, end ),
 				...( rrule ? { rrule } : {} ),
 			},
 		} );

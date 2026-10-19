@@ -45,11 +45,7 @@ if ( ! $event_dates ) {
 	return '';
 }
 
-$event_start   = $event_dates->start_datetime;
-$event_end     = $event_dates->end_datetime;
-$event_all_day = $event_dates->all_day;
-
-$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format( $event_start, $event_end, $event_all_day );
+$formatted_date = \FairEvents\Helpers\DateRangeFormatter::format_timing( $event_dates->get_timing() );
 ?>
 
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'event-dates' ) ) ); ?>>

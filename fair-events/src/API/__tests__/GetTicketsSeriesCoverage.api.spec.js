@@ -75,8 +75,10 @@ for ( const audienceActive of [ true, false ] ) {
 					data: {
 						title,
 						link_type: 'post',
-						start_datetime: '2036-02-07 10:00:00',
-						end_datetime: '2036-02-07 12:00:00',
+						start_date: '2036-02-07',
+						start_time: '10:00:00',
+						end_date: '2036-02-07',
+						end_time: '12:00:00',
 						...( rrule ? { rrule } : {} ),
 					},
 				}

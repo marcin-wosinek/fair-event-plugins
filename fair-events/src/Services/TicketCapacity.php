@@ -669,7 +669,7 @@ class TicketCapacity {
 			if ( ! $event_date ) {
 				return null;
 			}
-			$label    = DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day );
+			$label    = DateRangeFormatter::format_timing( $event_date->get_timing() );
 			$capacity = $event_date->capacity;
 			$taken    = self::count_event_date( $id );
 		}
@@ -728,7 +728,7 @@ class TicketCapacity {
 							/* translators: 1: activity name, 2: event date and time */
 							__( '%1$s on %2$s', 'fair-events' ),
 							$label,
-							DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day )
+							DateRangeFormatter::format_timing( $event_date->get_timing() )
 						);
 					}
 				}
@@ -813,7 +813,7 @@ class TicketCapacity {
 			$option_name = self::ticket_option_name( (int) $shortage['id'] );
 			$event_date  = $name_the_date ? EventDates::get_by_id( (int) ( $shortage['event_date_id'] ?? 0 ) ) : null;
 			if ( $event_date ) {
-				$date_label = DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day );
+				$date_label = DateRangeFormatter::format_timing( $event_date->get_timing() );
 				$message    = 0 === $remaining
 					? sprintf(
 						/* translators: 1: activity name, 2: event date and time */
@@ -860,7 +860,7 @@ class TicketCapacity {
 
 		$event_date = $name_the_date ? EventDates::get_by_id( (int) $shortage['id'] ) : null;
 		if ( $event_date ) {
-			$date_label = DateRangeFormatter::format( $event_date->start_datetime, $event_date->end_datetime, (bool) $event_date->all_day );
+			$date_label = DateRangeFormatter::format_timing( $event_date->get_timing() );
 			$message    = 0 === $remaining
 				? sprintf(
 					/* translators: %s: event date and time */
@@ -973,7 +973,7 @@ class TicketCapacity {
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT id, master_id, occurrence_type, start_datetime, end_datetime, all_day, start_date, end_date, start_time, end_time, timing_migrated FROM %i WHERE id = %d',
+				'SELECT id, master_id, occurrence_type, all_day, start_date, end_date, start_time, end_time FROM %i WHERE id = %d',
 				self::event_dates_table(),
 				$event_date_id
 			)

@@ -436,8 +436,16 @@ class Installer {
 			$overrides_detected = $timing_backfilled && self::migrate_to_3_46_0();
 		}
 
+		// Only record 3.47.0 once the legacy datetime columns are gone, so a
+		// failed drop is retried by the next maybe_upgrade(). The drop waits
+		// for every earlier timing step.
+		$legacy_timing_retired = true;
+		if ( version_compare( $current_version, '3.47.0', '<' ) ) {
+			$legacy_timing_retired = $timing_backfilled && $overrides_detected && self::migrate_to_3_47_0();
+		}
+
 		// Update database version.
-		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled, $overrides_detected ) );
+		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled, $overrides_detected, $legacy_timing_retired ) );
 	}
 
 	/**
@@ -450,9 +458,10 @@ class Installer {
 	 * @param bool $addon_collaborators_removed Whether the 3.44.0 cleanup succeeded.
 	 * @param bool $timing_backfilled           Whether the 3.45.0 timing backfill completed.
 	 * @param bool $overrides_detected          Whether the 3.46.0 override detection completed.
+	 * @param bool $legacy_timing_retired       Whether the 3.47.0 legacy column removal completed.
 	 * @return string Database version.
 	 */
-	private static function version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled = true, $overrides_detected = true ) {
+	private static function version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled = true, $overrides_detected = true, $legacy_timing_retired = true ) {
 		if ( ! $gallery_removed ) {
 			return '3.35.0';
 		}
@@ -464,6 +473,9 @@ class Installer {
 		}
 		if ( ! $overrides_detected ) {
 			return '3.45.0';
+		}
+		if ( ! $legacy_timing_retired ) {
+			return '3.46.0';
 		}
 		return Schema::DB_VERSION;
 	}
@@ -752,13 +764,11 @@ class Installer {
 
 		$wpdb->insert(
 			$table_name,
-			array(
-				'event_id'       => $event_id,
-				'start_datetime' => $start,
-				'end_datetime'   => $end,
-				'all_day'        => $all_day ? 1 : 0,
+			array_merge(
+				array( 'event_id' => $event_id ),
+				EventTiming::columns( EventTiming::from_datetimes( $start, $end, $all_day ) )
 			),
-			array( '%d', '%s', '%s', '%d' )
+			array_merge( array( '%d' ), EventTiming::column_formats() )
 		);
 	}
 
@@ -1725,10 +1735,14 @@ class Installer {
 			);
 		}
 
-		// Backfill anchor for existing master/generated rows from their stored start date.
+		// Backfill anchor for existing master/generated rows from their stored
+		// start date: the legacy column on tables that still have it, the
+		// canonical one on tables created after 3.47.0.
+		$start_sql = self::column_exists( $table_name, 'start_datetime' ) ? 'DATE(start_datetime)' : 'start_date';
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE %i SET recurrence_anchor = DATE(start_datetime) WHERE recurrence_anchor IS NULL AND occurrence_type IN ('master', 'generated')",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $start_sql is one of two fixed expressions.
+				"UPDATE %i SET recurrence_anchor = {$start_sql} WHERE recurrence_anchor IS NULL AND occurrence_type IN ('master', 'generated')",
 				$table_name
 			)
 		);
@@ -2385,6 +2399,12 @@ class Installer {
 	 * so a rerun only touches rows not converted yet and can never restore
 	 * a time that was cleared afterwards.
 	 *
+	 * Code from 3.47.0 on writes only the canonical columns and leaves the
+	 * marker at 0, so a row that already has a start date is marked without
+	 * conversion. The marker column itself is added here when dbDelta no
+	 * longer does, and a table without the legacy columns has nothing to
+	 * convert.
+	 *
 	 * @return bool True when no unconverted row remains.
 	 */
 	private static function migrate_to_3_45_0() {
@@ -2392,7 +2412,28 @@ class Installer {
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
-		if ( ! self::column_exists( $table_name, 'timing_migrated' ) ) {
+		if ( ! self::column_exists( $table_name, 'start_datetime' ) ) {
+			return true;
+		}
+
+		if ( ! self::column_exists( $table_name, 'timing_migrated' )
+			&& false === $wpdb->query(
+				$wpdb->prepare(
+					'ALTER TABLE %i ADD COLUMN timing_migrated BOOLEAN NOT NULL DEFAULT 0',
+					$table_name
+				)
+			)
+		) {
+			return false;
+		}
+
+		$current = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET timing_migrated = 1 WHERE timing_migrated = 0 AND start_date IS NOT NULL',
+				$table_name
+			)
+		);
+		if ( false === $current ) {
 			return false;
 		}
 
@@ -2514,6 +2555,46 @@ class Installer {
 		} while ( self::OVERRIDE_DETECTION_BATCH === $batch_size );
 
 		return true;
+	}
+
+	/**
+	 * Migrate to version 3.47.0 - Retire the legacy event datetimes (#1819).
+	 *
+	 * Drops `start_datetime`, `end_datetime` and the `timing_migrated`
+	 * marker (MySQL drops their indexes with them). The drop happens only
+	 * once the 3.45.0 backfill, rerun first for rows written since, reports
+	 * every row converted; otherwise the columns stay for the next run.
+	 *
+	 * @return bool True when no legacy timing column remains.
+	 */
+	private static function migrate_to_3_47_0() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		if ( ! self::migrate_to_3_45_0() ) {
+			return false;
+		}
+
+		$drops = array();
+		foreach ( array( 'start_datetime', 'end_datetime', 'timing_migrated' ) as $column ) {
+			if ( self::column_exists( $table_name, $column ) ) {
+				$drops[] = 'DROP COLUMN ' . $column;
+			}
+		}
+
+		if ( ! $drops ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared here; the column names come from the fixed list above.
+		return false !== $wpdb->query(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- column names come from the fixed list above.
+				'ALTER TABLE %i ' . implode( ', ', $drops ),
+				$table_name
+			)
+		);
 	}
 
 	/**

@@ -33,7 +33,8 @@ it( 'renders nothing when blocked and no problematic removals', () => {
 		removed: [
 			{
 				id: 1,
-				start_datetime: '2030-01-01 18:00:00',
+				start_date: '2030-01-01',
+				start_time: '18:00:00',
 				is_past: false,
 				dependents: 0,
 			},
@@ -51,7 +52,8 @@ it( 'blocked=true: shows occurrences with dependents', () => {
 		removed: [
 			{
 				id: 5,
-				start_datetime: '2026-08-15 18:00:00',
+				start_date: '2026-08-15',
+				start_time: '18:00:00',
 				is_past: false,
 				dependents: 3,
 			},
@@ -73,7 +75,8 @@ it( 'blocked=true: shows past occurrences', () => {
 		removed: [
 			{
 				id: 6,
-				start_datetime: '2025-03-10 10:00:00',
+				start_date: '2025-03-10',
+				start_time: '10:00:00',
 				is_past: true,
 				dependents: 0,
 			},
@@ -98,17 +101,21 @@ it( 'blocked=false with no changes renders nothing', () => {
 
 it( 'blocked=false: shows shifted/added/removed counts', () => {
 	const impact = {
-		unchanged: [ { id: 1, start_datetime: '2026-07-01 18:00:00' } ],
+		unchanged: [
+			{ id: 1, start_date: '2026-07-01', start_time: '18:00:00' },
+		],
 		shifted: [
 			{
 				id: 2,
-				start_datetime: '2026-07-08 18:00:00',
-				new_start_datetime: '2026-07-08 19:00:00',
+				start_date: '2026-07-08',
+				start_time: '18:00:00',
+				new_start_date: '2026-07-08',
+				start_time: '19:00:00',
 				is_past: false,
 				dependents: 1,
 			},
 		],
-		added: [ { start_datetime: '2026-09-01 18:00:00' } ],
+		added: [ { start_date: '2026-09-01', start_time: '18:00:00' } ],
 		removed: [],
 	};
 	const { container } = render(
@@ -130,7 +137,8 @@ it( 'calls onDismiss when the notice is dismissed', () => {
 		removed: [
 			{
 				id: 7,
-				start_datetime: '2026-08-01 18:00:00',
+				start_date: '2026-08-01',
+				start_time: '18:00:00',
 				is_past: false,
 				dependents: 2,
 			},

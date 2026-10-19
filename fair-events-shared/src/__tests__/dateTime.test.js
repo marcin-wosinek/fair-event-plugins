@@ -6,7 +6,14 @@
  * the "output unchanged" regression guard holds regardless of which locale
  * the environment's ICU resolves `undefined` to.
  */
-import { formatDateOnly, formatMonthLabel } from '../dateTime.js';
+import {
+	formatDateOnly,
+	formatMonthLabel,
+	formatSiteLocalDate,
+	formatSiteLocalDatetime,
+	formatTimingStart,
+	timingStartKey,
+} from '../dateTime.js';
 
 describe( 'formatDateOnly', () => {
 	test( 'long style matches EditInstancesModal/MiniCalendar', () => {
@@ -92,5 +99,61 @@ describe( 'formatMonthLabel', () => {
 		expect( formatMonthLabel( '' ) ).toBe( '' );
 		expect( formatMonthLabel( null ) ).toBe( '' );
 		expect( formatMonthLabel( undefined ) ).toBe( '' );
+	} );
+} );
+
+describe( 'formatTimingStart (#1819)', () => {
+	test( 'shows the start time only when one is set', () => {
+		expect(
+			formatTimingStart( {
+				start_date: '2026-07-08',
+				start_time: '18:30:00',
+			} )
+		).toBe( formatSiteLocalDatetime( '2026-07-08 18:30:00' ) );
+		expect(
+			formatTimingStart( { start_date: '2026-07-08', start_time: null } )
+		).toBe( formatSiteLocalDate( '2026-07-08' ) );
+	} );
+
+	test( 'keeps genuine midnight and drops times of all-day dates', () => {
+		expect(
+			formatTimingStart( {
+				start_date: '2026-07-08',
+				start_time: '00:00:00',
+			} )
+		).toBe( formatSiteLocalDatetime( '2026-07-08 00:00:00' ) );
+		expect(
+			formatTimingStart( {
+				start_date: '2026-07-08',
+				start_time: '18:30:00',
+				all_day: true,
+			} )
+		).toBe( formatSiteLocalDate( '2026-07-08' ) );
+	} );
+
+	test( 'is empty for an undated timing', () => {
+		expect( formatTimingStart( { start_date: null } ) ).toBe( '' );
+		expect( formatTimingStart( null ) ).toBe( '' );
+	} );
+} );
+
+describe( 'timingStartKey (#1819)', () => {
+	test( 'sorts a date without a start time first on its day', () => {
+		const keys = [
+			{ start_date: '2026-07-08', start_time: '09:00:00' },
+			{ start_date: '2026-07-08', start_time: null },
+			{ start_date: '2026-07-07', start_time: '23:00:00' },
+		]
+			.map( timingStartKey )
+			.sort();
+		expect( keys ).toEqual( [
+			'2026-07-07 23:00:00',
+			'2026-07-08 00:00:00',
+			'2026-07-08 09:00:00',
+		] );
+	} );
+
+	test( 'is empty for an undated timing', () => {
+		expect( timingStartKey( {} ) ).toBe( '' );
 	} );
 } );

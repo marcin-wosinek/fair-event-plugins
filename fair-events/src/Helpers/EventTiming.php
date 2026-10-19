@@ -23,12 +23,6 @@ defined( 'WPINC' ) || die;
  *
  * Dates and times are wall-clock values, so nothing here converts between
  * timezones.
- *
- * The `start_datetime` / `end_datetime` columns and API fields are the legacy
- * contract, kept in step with the canonical timing until every consumer has
- * moved (see #1819). The legacy conventions are: all-day rows store
- * 00:00:00 on the start date and the inclusive end date; a timed row without
- * an end stores a null end.
  */
 class EventTiming {
 
@@ -38,13 +32,6 @@ class EventTiming {
 	 * @var string[]
 	 */
 	const KEYS = array( 'start_date', 'end_date', 'start_time', 'end_time', 'all_day' );
-
-	/**
-	 * Legacy timing keys.
-	 *
-	 * @var string[]
-	 */
-	const LEGACY_KEYS = array( 'start_datetime', 'end_datetime' );
 
 	/**
 	 * Override groups of a generated occurrence's timing, keyed by group
@@ -85,19 +72,19 @@ class EventTiming {
 	}
 
 	/**
-	 * Canonical timing for legacy datetime values.
+	 * Canonical timing for a pair of site-local datetimes, as calendar
+	 * files, imported feeds and datetime-based PHP callers provide them.
 	 *
-	 * Lossless for every value the legacy contract could store: a timed
-	 * start at 00:00:00 stays genuine midnight, a missing end becomes the
-	 * start date with no end time, and all-day rows lose their placeholder
-	 * times.
+	 * A start at 00:00:00 stays genuine midnight, a missing end becomes the
+	 * start date with no end time, and all-day values lose their
+	 * placeholder times.
 	 *
-	 * @param string|null $start_datetime Legacy start ('Y-m-d H:i:s', 'Y-m-d\TH:i:s' or 'Y-m-d').
-	 * @param string|null $end_datetime   Legacy end, or empty.
+	 * @param string|null $start_datetime Start ('Y-m-d H:i:s', 'Y-m-d\TH:i:s' or 'Y-m-d').
+	 * @param string|null $end_datetime   End, or empty.
 	 * @param bool        $all_day        All-day flag.
 	 * @return array Canonical timing (undated when the start is missing or unreadable).
 	 */
-	public static function from_legacy( $start_datetime, $end_datetime, $all_day ) {
+	public static function from_datetimes( $start_datetime, $end_datetime, $all_day ) {
 		$all_day = (bool) $all_day;
 		$start   = self::split_datetime( $start_datetime );
 
@@ -119,24 +106,25 @@ class EventTiming {
 	}
 
 	/**
-	 * Legacy datetime values for a canonical timing.
+	 * Ordering and range keys for a timing, as internal feed occurrences
+	 * carry them in `start` and `end` (site-local 'Y-m-d H:i:s').
 	 *
-	 * Transitional: legacy readers still need a value where the canonical
-	 * timing has none. A missing start time is written as 00:00:00, and a
-	 * missing end time on a multi-day event as 23:59:59 on the end date so
-	 * date-range filtering keeps the whole last day. Nothing reads these
-	 * substitutes back: see from_row().
+	 * A missing start time sorts at the start of its day, and a missing end
+	 * time ends with the start on a single day or at the last second of a
+	 * later end date, so range checks keep the whole last day. These keys
+	 * are never event times: anything shown, exported or serialized reads
+	 * the timing itself.
 	 *
 	 * @param array $timing Canonical timing.
-	 * @return array{start_datetime: string|null, end_datetime: string|null} Legacy values.
+	 * @return array{start: string, end: string} Keys, empty for an undated timing.
 	 */
-	public static function to_legacy( array $timing ) {
+	public static function range_keys( array $timing ) {
 		$timing = array_merge( self::undated(), $timing );
 
 		if ( empty( $timing['start_date'] ) ) {
 			return array(
-				'start_datetime' => null,
-				'end_datetime'   => null,
+				'start' => '',
+				'end'   => '',
 			);
 		}
 
@@ -144,8 +132,8 @@ class EventTiming {
 
 		if ( $timing['all_day'] ) {
 			return array(
-				'start_datetime' => $timing['start_date'] . ' 00:00:00',
-				'end_datetime'   => $end_date . ' 00:00:00',
+				'start' => $timing['start_date'] . ' 00:00:00',
+				'end'   => $end_date . ' 00:00:00',
 			);
 		}
 
@@ -156,32 +144,23 @@ class EventTiming {
 		} elseif ( $end_date !== $timing['start_date'] ) {
 			$end = $end_date . ' 23:59:59';
 		} else {
-			$end = null;
+			$end = $start;
 		}
 
 		return array(
-			'start_datetime' => $start,
-			'end_datetime'   => $end,
+			'start' => $start,
+			'end'   => $end,
 		);
 	}
 
 	/**
 	 * Canonical timing stored on a database row.
 	 *
-	 * Rows written before the timing columns existed (`timing_migrated` = 0)
-	 * are read from their legacy columns, so an unmigrated row never reads
-	 * as undated and a migrated row's absent time is never refilled from
-	 * the legacy substitute.
-	 *
 	 * @param object $row Database row.
 	 * @return array Canonical timing.
 	 */
 	public static function from_row( $row ) {
 		$all_day = ! empty( $row->all_day );
-
-		if ( empty( $row->timing_migrated ) ) {
-			return self::from_legacy( $row->start_datetime ?? null, $row->end_datetime ?? null, $all_day );
-		}
 
 		return array(
 			'start_date' => self::nullable( $row->start_date ?? null ),
@@ -193,25 +172,20 @@ class EventTiming {
 	}
 
 	/**
-	 * Database column values for a canonical timing: the canonical columns,
-	 * the legacy columns kept in step, and the migration marker.
+	 * Database column values for a canonical timing.
 	 *
 	 * @param array $timing Canonical timing.
 	 * @return array<string, mixed> Column values.
 	 */
 	public static function columns( array $timing ) {
 		$timing = array_merge( self::undated(), $timing );
-		$legacy = self::to_legacy( $timing );
 
 		return array(
-			'start_date'      => $timing['start_date'],
-			'end_date'        => $timing['start_date'] ? ( $timing['end_date'] ?? $timing['start_date'] ) : null,
-			'start_time'      => $timing['all_day'] ? null : $timing['start_time'],
-			'end_time'        => $timing['all_day'] ? null : $timing['end_time'],
-			'all_day'         => $timing['all_day'] ? 1 : 0,
-			'start_datetime'  => $legacy['start_datetime'],
-			'end_datetime'    => $legacy['end_datetime'],
-			'timing_migrated' => 1,
+			'start_date' => $timing['start_date'],
+			'end_date'   => $timing['start_date'] ? ( $timing['end_date'] ?? $timing['start_date'] ) : null,
+			'start_time' => $timing['all_day'] ? null : $timing['start_time'],
+			'end_time'   => $timing['all_day'] ? null : $timing['end_time'],
+			'all_day'    => $timing['all_day'] ? 1 : 0,
 		);
 	}
 
@@ -221,7 +195,7 @@ class EventTiming {
 	 * @return string[] Formats.
 	 */
 	public static function column_formats() {
-		return array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d' );
+		return array( '%s', '%s', '%s', '%s', '%d' );
 	}
 
 	/**
@@ -250,54 +224,6 @@ class EventTiming {
 		}
 
 		return $timing;
-	}
-
-	/**
-	 * Apply a legacy datetime update to a timing.
-	 *
-	 * An absent field leaves its part unchanged; a present empty (or null)
-	 * end means "no end", and an unreadable start is ignored. A timed event
-	 * without an end keeps following its start date, as a null legacy end
-	 * did. REST callers drop null fields first, since there null has always
-	 * meant "unchanged".
-	 *
-	 * @param array $timing Current canonical timing.
-	 * @param array $legacy Legacy fields: any of start_datetime, end_datetime, all_day.
-	 * @return array Updated timing.
-	 */
-	public static function merge_legacy( array $timing, array $legacy ) {
-		$timing  = array_merge( self::undated(), $timing );
-		$changes = array();
-		$all_day = isset( $legacy['all_day'] ) ? (bool) $legacy['all_day'] : $timing['all_day'];
-
-		if ( isset( $legacy['all_day'] ) ) {
-			$changes['all_day'] = $all_day;
-		}
-
-		$start_date = $timing['start_date'];
-		if ( array_key_exists( 'start_datetime', $legacy ) ) {
-			$start = self::split_datetime( $legacy['start_datetime'] );
-			if ( $start ) {
-				$start_date            = $start['date'];
-				$changes['start_date'] = $start['date'];
-				$changes['start_time'] = $all_day ? null : $start['time'];
-			}
-		}
-
-		if ( array_key_exists( 'end_datetime', $legacy ) ) {
-			$end = self::split_datetime( $legacy['end_datetime'] );
-			if ( $end ) {
-				$changes['end_date'] = $end['date'];
-				$changes['end_time'] = $all_day ? null : $end['time'];
-			} else {
-				$changes['end_date'] = $start_date;
-				$changes['end_time'] = null;
-			}
-		} elseif ( isset( $changes['start_date'] ) && self::has_open_end( $timing ) ) {
-			$changes['end_date'] = $start_date;
-		}
-
-		return self::merge( $timing, $changes );
 	}
 
 	/**
@@ -553,19 +479,6 @@ class EventTiming {
 	}
 
 	/**
-	 * Whether a timing is a timed event without an end time on its start
-	 * date — what a null legacy end meant.
-	 *
-	 * @param array $timing Canonical timing.
-	 * @return bool True for a same-day open end.
-	 */
-	private static function has_open_end( array $timing ) {
-		return ! $timing['all_day']
-			&& null === $timing['end_time']
-			&& ( null === $timing['end_date'] || $timing['end_date'] === $timing['start_date'] );
-	}
-
-	/**
 	 * Normalize a date value.
 	 *
 	 * @param mixed $value Raw value.
@@ -604,9 +517,9 @@ class EventTiming {
 	}
 
 	/**
-	 * Split a legacy datetime into its date and time.
+	 * Split a datetime into its date and time.
 	 *
-	 * @param mixed $value Legacy value.
+	 * @param mixed $value Datetime value.
 	 * @return array{date: string, time: string}|null Parts, or null when empty or unreadable.
 	 */
 	private static function split_datetime( $value ) {

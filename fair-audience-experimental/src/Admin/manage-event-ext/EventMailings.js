@@ -83,17 +83,21 @@ const emptyForm = ( defaultAnchorRefId ) => ( {
  * Mailings are scoped to the single event date being managed; the anchor is
  * always that date (start or end), so there is no cross-date picker.
  *
- * @param {Object} props               Component props.
- * @param {number} props.eventDateId    The event date being managed.
- * @param {string} props.startDatetime  The date's start datetime (for the send-time preview).
- * @param {string} props.endDatetime    The date's end datetime (for the send-time preview).
- * @param {boolean} props.allDay         Whether the date is all-day.
+ * @param {Object}  props             Component props.
+ * @param {number}  props.eventDateId The event date being managed.
+ * @param {string}  props.startDate   The date's start date (for the send-time preview).
+ * @param {?string} props.startTime   The date's start time, or null when not set.
+ * @param {string}  props.endDate     The date's end date.
+ * @param {?string} props.endTime     The date's end time, or null when not set.
+ * @param {boolean} props.allDay      Whether the date is all-day.
  * @return {JSX.Element} The tab.
  */
 export default function EventMailings( {
 	eventDateId,
-	startDatetime,
-	endDatetime,
+	startDate,
+	startTime,
+	endDate,
+	endTime,
 	allDay,
 } ) {
 	const [ messages, setMessages ] = useState( [] );
@@ -109,12 +113,14 @@ export default function EventMailings( {
 		() => [
 			{
 				id: eventDateId,
-				start_datetime: startDatetime,
-				end_datetime: endDatetime,
+				start_date: startDate,
+				start_time: startTime,
+				end_date: endDate,
+				end_time: endTime,
 				all_day: allDay,
 			},
 		],
-		[ eventDateId, startDatetime, endDatetime, allDay ]
+		[ eventDateId, startDate, startTime, endDate, endTime, allDay ]
 	);
 
 	const [ form, setForm ] = useState( emptyForm( eventDateId ) );

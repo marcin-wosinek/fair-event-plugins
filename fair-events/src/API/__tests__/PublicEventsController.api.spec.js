@@ -9,6 +9,7 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { timingFields } from '../../../../e2e/support/event-timing.js';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -45,8 +46,10 @@ test.describe( 'PublicEventsController — recurring post-linked occurrences', (
 			data: {
 				title: `Public feed recurring post-link test ${ Date.now() }`,
 				link_type: 'post',
-				start_datetime: '2035-07-01 10:00:00',
-				end_datetime: '2035-07-01 12:00:00',
+				start_date: '2035-07-01',
+				start_time: '10:00:00',
+				end_date: '2035-07-01',
+				end_time: '12:00:00',
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();
@@ -172,8 +175,10 @@ test.describe( 'PublicEventsController — standalone events', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Public feed standalone test ${ Date.now() }`,
-				start_datetime: '2035-08-01 10:00:00',
-				end_datetime: '2035-08-01 12:00:00',
+				start_date: '2035-08-01',
+				start_time: '10:00:00',
+				end_date: '2035-08-01',
+				end_time: '12:00:00',
 				link_type: 'external',
 				external_url: 'https://example.com/standalone-test',
 				categories: [ categoryId ],
@@ -306,8 +311,10 @@ test.describe( 'PublicEventsController — location field', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Public feed address test ${ Date.now() }`,
-					start_datetime: '2035-08-10 10:00:00',
-					end_datetime: '2035-08-10 12:00:00',
+					start_date: '2035-08-10',
+					start_time: '10:00:00',
+					end_date: '2035-08-10',
+					end_time: '12:00:00',
 					link_type: 'none',
 				},
 			}
@@ -333,8 +340,10 @@ test.describe( 'PublicEventsController — location field', () => {
 				headers: adminHeaders,
 				data: {
 					title: `Public feed no-location test ${ Date.now() }`,
-					start_datetime: '2035-08-11 10:00:00',
-					end_datetime: '2035-08-11 12:00:00',
+					start_date: '2035-08-11',
+					start_time: '10:00:00',
+					end_date: '2035-08-11',
+					end_time: '12:00:00',
 					link_type: 'none',
 				},
 			}
@@ -418,8 +427,10 @@ test.describe( 'PublicEventsController — category filter matching', () => {
 			headers: adminHeaders,
 			data: {
 				title: `Calendar filter ${ key } ${ Date.now() }`,
-				start_datetime: `2035-09-${ day } 10:00:00`,
-				end_datetime: `2035-09-${ day } 12:00:00`,
+				...timingFields(
+					`2035-09-${ day } 10:00:00`,
+					`2035-09-${ day } 12:00:00`
+				),
 				link_type: 'none',
 				categories: categoryIds,
 			},
@@ -446,8 +457,10 @@ test.describe( 'PublicEventsController — category filter matching', () => {
 			data: {
 				title: `Calendar filter ${ key } ${ Date.now() }`,
 				link_type: 'post',
-				start_datetime: `2035-09-${ day } 18:00:00`,
-				end_datetime: `2035-09-${ day } 20:00:00`,
+				...timingFields(
+					`2035-09-${ day } 18:00:00`,
+					`2035-09-${ day } 20:00:00`
+				),
 			},
 		} );
 		expect( edRes.ok() ).toBeTruthy();

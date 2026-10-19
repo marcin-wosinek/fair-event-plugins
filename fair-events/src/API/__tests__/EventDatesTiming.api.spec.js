@@ -281,67 +281,99 @@ test.describe( 'EventDatesController — optional event times', () => {
 		expect( response.status() ).toBe( 201 );
 	} );
 
-	test( 'refuses mixing canonical and deprecated fields', async () => {
-		const response = await create( {
-			start_date: '2036-05-16',
-			start_datetime: '2036-05-16 10:00:00',
-		} );
-		expect( response.status() ).toBe( 400 );
-		expect( ( await response.json() ).code ).toBe(
-			'rest_mixed_timing_fields'
-		);
-	} );
-
-	test( 'still accepts the deprecated datetime fields', async () => {
-		const response = await create( {
+	test( 'rejects the retired datetime fields', async () => {
+		const legacy = await create( {
 			start_datetime: '2036-05-17 19:00:00',
 			end_datetime: '2036-05-17 21:00:00',
 		} );
-		expect( response.status() ).toBe( 201 );
-		const created = await response.json();
-		expect( timingOf( created ) ).toEqual( {
+		expect( legacy.status() ).toBe( 400 );
+		const legacyBody = await legacy.json();
+		expect( legacyBody.code ).toBe( 'rest_retired_timing_fields' );
+		expect( legacyBody.data.fields ).toEqual( [
+			'start_datetime',
+			'end_datetime',
+		] );
+
+		const mixed = await create( {
+			start_date: '2036-05-16',
+			start_time: '10:00:00',
+			end_datetime: '2036-05-16 12:00:00',
+		} );
+		expect( mixed.status() ).toBe( 400 );
+		expect( ( await mixed.json() ).code ).toBe(
+			'rest_retired_timing_fields'
+		);
+
+		// Even a null retired field is refused rather than ignored, and the
+		// date stays as it was.
+		const created = await (
+			await create( {
+				start_date: '2036-05-17',
+				start_time: '19:00',
+				end_time: '21:00',
+			} )
+		).json();
+		const cleared = await update( created.id, { end_datetime: null } );
+		expect( cleared.status() ).toBe( 400 );
+		expect( ( await cleared.json() ).code ).toBe(
+			'rest_retired_timing_fields'
+		);
+		expect( timingOf( await read( created.id ) ) ).toEqual( {
 			start_date: '2036-05-17',
 			end_date: '2036-05-17',
 			start_time: '19:00:00',
 			end_time: '21:00:00',
 			all_day: false,
 		} );
-		expect( created.start_datetime ).toBe( '2036-05-17 19:00:00' );
-		expect( created.end_datetime ).toBe( '2036-05-17 21:00:00' );
-
-		// An empty deprecated start is ignored; a null (or empty) end is
-		// what the event form sends for "no end time".
-		const noEnd = await update( created.id, {
-			start_datetime: null,
-			end_datetime: null,
-		} );
-		expect( noEnd.ok() ).toBeTruthy();
-		expect( timingOf( await noEnd.json() ) ).toEqual( {
-			start_date: '2036-05-17',
-			end_date: '2036-05-17',
-			start_time: '19:00:00',
-			end_time: null,
-			all_day: false,
-		} );
 	} );
 
-	test( 'moves an open end with a deprecated start-only update', async () => {
+	test( 'returns no retired datetime fields', async () => {
+		const title = `Timing retired ${ Date.now() }`;
 		const created = await (
-			await create( { start_datetime: '2036-05-18 19:00:00' } )
+			await create( {
+				title,
+				start_date: '2036-05-18',
+				start_time: '19:00',
+				rrule: 'FREQ=WEEKLY;COUNT=2',
+			} )
 		).json();
-		expect( created.end_datetime ).toBeNull();
+		expect( created ).not.toHaveProperty( 'start_datetime' );
+		expect( created ).not.toHaveProperty( 'end_datetime' );
 
-		const response = await update( created.id, {
-			start_datetime: '2036-05-25 19:00:00',
-		} );
-		expect( response.ok() ).toBeTruthy();
-		expect( timingOf( await response.json() ) ).toEqual( {
-			start_date: '2036-05-25',
-			end_date: '2036-05-25',
-			start_time: '19:00:00',
-			end_time: null,
-			all_day: false,
-		} );
+		const master = await read( created.id );
+		expect( master.generated_occurrences.length ).toBeGreaterThan( 0 );
+		for ( const occurrence of master.generated_occurrences ) {
+			expect( occurrence ).not.toHaveProperty( 'start_datetime' );
+			expect( occurrence ).toHaveProperty( 'start_date' );
+		}
+
+		const siblings = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ created.id }/siblings`,
+			{ headers: adminHeaders }
+		);
+		expect( siblings.ok() ).toBeTruthy();
+		for ( const sibling of await siblings.json() ) {
+			expect( sibling ).not.toHaveProperty( 'start_datetime' );
+			expect( sibling.start_time ).toBe( '19:00:00' );
+		}
+
+		// The list sorts by start date; the retired sort key is refused.
+		const list = await api.get(
+			`/wp-json/fair-events/v1/event-dates/all?orderby=start_date&order=asc&search=${ encodeURIComponent(
+				title
+			) }`,
+			{ headers: adminHeaders }
+		);
+		expect( list.ok() ).toBeTruthy();
+		const [ row ] = await list.json();
+		expect( row ).not.toHaveProperty( 'start_datetime' );
+		expect( row.children[ 0 ] ).not.toHaveProperty( 'start_datetime' );
+
+		const retiredSort = await api.get(
+			'/wp-json/fair-events/v1/event-dates/all?orderby=start_datetime',
+			{ headers: adminHeaders }
+		);
+		expect( retiredSort.status() ).toBe( 400 );
 	} );
 
 	test( 'generates series with missing times without inventing any', async () => {

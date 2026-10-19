@@ -582,7 +582,7 @@ class CustomMailController extends WP_REST_Controller {
 				LEFT JOIN %i m ON ed.master_id = m.id
 				INNER JOIN %i p ON COALESCE( ed.event_id, m.event_id ) = p.ID
 				WHERE p.post_status = %s
-				ORDER BY ed.start_datetime DESC',
+				ORDER BY ed.start_date DESC, ed.start_time DESC',
 				$event_dates_table,
 				$event_dates_table,
 				$posts_table,
@@ -598,16 +598,11 @@ class CustomMailController extends WP_REST_Controller {
 				// date without a start time (or an all-day one) shows the date
 				// alone, never a midnight that was not set.
 				$date_display = '';
-				if ( ! empty( $row['timing_migrated'] ) && ! empty( $row['start_date'] ) ) {
+				if ( ! empty( $row['start_date'] ) ) {
 					$has_time     = empty( $row['all_day'] ) && ! empty( $row['start_time'] );
 					$date_display = date_i18n(
 						$has_time ? get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) : get_option( 'date_format' ),
 						strtotime( $row['start_date'] . ' ' . ( $has_time ? $row['start_time'] : '00:00:00' ) )
-					);
-				} elseif ( ! empty( $row['start_datetime'] ) ) {
-					$date_display = date_i18n(
-						get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-						strtotime( $row['start_datetime'] )
 					);
 				}
 
@@ -616,11 +611,12 @@ class CustomMailController extends WP_REST_Controller {
 					: __( '(untitled event)', 'fair-audience' );
 
 				return array(
-					'id'             => (int) $row['id'],
-					'event_id'       => (int) $row['event_id'],
-					'title'          => $title,
-					'start_datetime' => $row['start_datetime'],
-					'display_label'  => $date_display
+					'id'            => (int) $row['id'],
+					'event_id'      => (int) $row['event_id'],
+					'title'         => $title,
+					'start_date'    => $row['start_date'],
+					'start_time'    => empty( $row['all_day'] ) ? $row['start_time'] : null,
+					'display_label' => $date_display
 						/* translators: 1: event title, 2: event date and time */
 						? sprintf( __( '%1$s (%2$s)', 'fair-audience' ), $title, $date_display )
 						: $title,

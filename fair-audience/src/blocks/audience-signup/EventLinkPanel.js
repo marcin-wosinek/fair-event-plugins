@@ -3,6 +3,7 @@ import { useSelect } from '@wordpress/data';
 import { Button, TextControl, Spinner, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { formatDateOnly } from 'fair-events-shared/src/dateTime.js';
 
 function EventLinkPanel( { eventDateId, onChange } ) {
 	const [ search, setSearch ] = useState( '' );
@@ -38,7 +39,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 					setAutoDetected( {
 						id: match.id,
 						title: match.title,
-						start_datetime: match.start_datetime,
+						start_date: match.start_date,
 					} );
 				}
 			} )
@@ -61,7 +62,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 				setLinkedEvent( {
 					id: data.id,
 					title: data.title,
-					start_datetime: data.start_datetime,
+					start_date: data.start_date,
 				} );
 			} )
 			.catch( () => {
@@ -92,15 +93,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 			.finally( () => setSearching( false ) );
 	}, [ search ] );
 
-	const formatDate = ( datetime ) => {
-		if ( ! datetime ) return '';
-		const date = new Date( datetime );
-		return date.toLocaleDateString( undefined, {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		} );
-	};
+	const formatDate = ( date ) => formatDateOnly( date, 'short' );
 
 	const isAutoLinked =
 		autoDetected && ( ! eventDateId || eventDateId === autoDetected.id );
@@ -126,8 +119,8 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 							) }
 					<br />
 					<strong>{ autoDetected.title }</strong>
-					{ autoDetected.start_datetime && (
-						<> ({ formatDate( autoDetected.start_datetime ) })</>
+					{ autoDetected.start_date && (
+						<> ({ formatDate( autoDetected.start_date ) })</>
 					) }
 					{ ! isAutoLinked && (
 						<div style={ { marginTop: '8px' } }>
@@ -161,13 +154,11 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 								</strong>
 								<br />
 								{ linkedEvent.title }
-								{ linkedEvent.start_datetime && (
+								{ linkedEvent.start_date && (
 									<>
 										{ ' ' }
 										(
-										{ formatDate(
-											linkedEvent.start_datetime
-										) }
+										{ formatDate( linkedEvent.start_date ) }
 										)
 									</>
 								) }
@@ -227,11 +218,8 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 								} }
 							>
 								{ event.title }
-								{ event.start_datetime && (
-									<>
-										{ ' ' }
-										({ formatDate( event.start_datetime ) })
-									</>
+								{ event.start_date && (
+									<> ({ formatDate( event.start_date ) })</>
 								) }
 							</Button>
 						</li>
