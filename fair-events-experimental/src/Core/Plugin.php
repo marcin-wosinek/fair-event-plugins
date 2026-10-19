@@ -57,14 +57,20 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
-		// Merge experimental feature states into the manage-event enabledFeatures map
-		// so the React UI can show ticketing tabs when active.
+		// Merge experimental feature states into the manage-event enabledFeatures map.
+		// Core owns `ticketing` (base ticket configuration); this plugin's own
+		// `ticketing` setting only controls its extensions, published under a
+		// key of their own so it can never overwrite core's decision.
 		add_filter(
 			'fair_events_enabled_features_map',
 			function ( $map ) {
 				foreach ( array_keys( Features::registry() ) as $key ) {
+					if ( 'ticketing' === $key ) {
+						continue;
+					}
 					$map[ $key ] = Features::is_enabled( $key );
 				}
+				$map['ticketingExtensions'] = self::ticketing_extensions_available();
 				// Not a bundle of its own: Prices offers "Workshop schedule"
 				// whenever this plugin can show the tab it enables.
 				$map['schedule'] = self::schedule_available();
@@ -88,6 +94,25 @@ class Plugin {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_schedule_assets' ) );
 			}
 		}
+	}
+
+	/**
+	 * Whether the ticketing extensions (group pricing and group permission
+	 * rules) are available.
+	 *
+	 * They build on base ticketing, so core Fair Events' `ticketing` feature
+	 * must be on as well as this plugin's own `ticketing` setting, and the
+	 * groups they target come from Fair Audience. Turning either setting off
+	 * only hides the extensions; stored rules are kept. See
+	 * docs/ticketing-availability.md.
+	 *
+	 * @return bool
+	 */
+	public static function ticketing_extensions_available() {
+		return Features::is_enabled( 'ticketing' )
+			&& class_exists( \FairEvents\Core\Features::class )
+			&& \FairEvents\Core\Features::is_enabled( 'ticketing' )
+			&& defined( 'FAIR_AUDIENCE_PLUGIN_DIR' );
 	}
 
 	/**
@@ -162,7 +187,7 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'ticketing' ) ) {
+		if ( self::ticketing_extensions_available() ) {
 			add_action(
 				'rest_api_init',
 				function () {

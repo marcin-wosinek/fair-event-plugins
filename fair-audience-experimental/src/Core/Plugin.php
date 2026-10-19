@@ -62,9 +62,9 @@ class Plugin {
 	/**
 	 * Add the `groupRulesAvailable` flag to the manage-event feature map.
 	 *
-	 * A dedicated key rather than `ticketing`: core fair-events and
-	 * fair-events-experimental both write `ticketing`, so it does not say
-	 * whether the experimental group rule routes are registered.
+	 * A dedicated key rather than `ticketing`: core fair-events owns
+	 * `ticketing` (base ticket configuration), which does not say whether the
+	 * experimental group rule routes are registered.
 	 *
 	 * @param array<string,bool> $map Resolved feature map.
 	 * @return array<string,bool>
@@ -78,20 +78,38 @@ class Plugin {
 	 * Whether group rule management can work on this site.
 	 *
 	 * The Groups tab reads the group pricing and permission rule routes that
-	 * fair-events-experimental registers with its `ticketing` bundle (and only
-	 * while fair-audience is active), plus this plugin's `groups` routes. Its
-	 * script ships with the `manage-event-ext` bundle.
+	 * fair-events-experimental registers while its ticketing extensions are
+	 * available (both ticketing settings on and fair-audience active), plus
+	 * this plugin's `groups` routes. Its script ships with the
+	 * `manage-event-ext` bundle.
 	 *
 	 * @return bool
 	 */
 	public static function group_rules_available() {
 		return defined( 'FAIR_EVENTS_VERSION' )
-			&& defined( 'FAIR_AUDIENCE_PLUGIN_DIR' )
 			&& defined( 'FAIR_EVENTS_EXPERIMENTAL_VERSION' )
-			&& class_exists( \FairEventsExperimental\Core\Features::class )
-			&& \FairEventsExperimental\Core\Features::is_enabled( 'ticketing' )
+			&& self::ticketing_extensions_available()
 			&& Features::is_enabled( 'groups' )
 			&& Features::is_enabled( 'manage-event-ext' );
+	}
+
+	/**
+	 * Whether fair-events-experimental registers its group rule routes.
+	 *
+	 * Older fair-events-experimental releases lack the shared helper; mirror
+	 * its rule there so the tab never reads unregistered routes.
+	 *
+	 * @return bool
+	 */
+	private static function ticketing_extensions_available() {
+		$plugin = \FairEventsExperimental\Core\Plugin::class;
+		if ( method_exists( $plugin, 'ticketing_extensions_available' ) ) {
+			return $plugin::ticketing_extensions_available();
+		}
+
+		return defined( 'FAIR_AUDIENCE_PLUGIN_DIR' )
+			&& class_exists( \FairEventsExperimental\Core\Features::class )
+			&& \FairEventsExperimental\Core\Features::is_enabled( 'ticketing' );
 	}
 
 	/**

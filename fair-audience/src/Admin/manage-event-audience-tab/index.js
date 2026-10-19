@@ -18,7 +18,7 @@ const { audienceUrl = '' } = window.fairEventsManageEventData || {};
 addFilter(
 	'fairEvents.manageEvent.tabs',
 	'fair-audience/audience-tab',
-	( tabs, { eventDate, eventDateId, eventTitle } ) => {
+	( tabs, { eventDate, eventDateId, eventTitle, enabledFeatures = {} } ) => {
 		if ( ! audienceUrl ) {
 			return tabs;
 		}
@@ -37,6 +37,9 @@ addFilter(
 						eventDateId={ eventDateId }
 						audienceUrl={ audienceUrl }
 						eventTitle={ eventTitle }
+						groupRulesAvailable={
+							!! enabledFeatures.groupRulesAvailable
+						}
 					/>
 				),
 			},

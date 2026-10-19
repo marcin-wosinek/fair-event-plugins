@@ -485,11 +485,9 @@ class AdminPages {
 				$localized_data['copyEventUrl'] = $copy_url;
 			}
 
-			// Audience-dependent URLs require both the sibling plugin AND the
-			// ticketing bundle.
+			// Audience-dependent URLs require the sibling plugin.
 			if ( defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
-				$localized_data['audienceUrl']         = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
-				$localized_data['groupPricingEnabled'] = \FairEvents\Core\Features::is_enabled( 'ticketing' );
+				$localized_data['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 			}
 
 			// The Statistics tab mirrors its REST route: administrators only,

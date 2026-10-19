@@ -427,6 +427,46 @@ describe.each( [
 			).not.toBeInTheDocument();
 		} );
 
+		// #1849: core `ticketing` alone decides base ticket configuration;
+		// Experimental publishes its extensions under `ticketingExtensions`.
+		it.each( [ 'prices', 'list' ] )(
+			'keeps %s hidden when only the Experimental extensions are on',
+			async ( tab ) => {
+				window.fairEventsManageEventData.enabledFeatures = {
+					ticketing: false,
+					ticketingExtensions: true,
+				};
+				window.history.replaceState( {}, '', `?tab=${ tab }` );
+				render( <ManageEventApp /> );
+
+				expect(
+					await screen.findByRole( 'tab', { name: 'Event Details' } )
+				).toHaveAttribute( 'aria-selected', 'true' );
+				expect(
+					screen.queryByRole( 'tab', { name: 'Prices' } )
+				).not.toBeInTheDocument();
+				expect(
+					screen.queryByRole( 'tab', { name: 'List' } )
+				).not.toBeInTheDocument();
+			}
+		);
+
+		it( 'keeps Prices and List when the Experimental extensions are off', async () => {
+			window.fairEventsManageEventData.enabledFeatures = {
+				ticketing: true,
+				ticketingExtensions: false,
+			};
+			window.history.replaceState( {}, '', '?tab=prices' );
+			render( <ManageEventApp /> );
+
+			expect(
+				await screen.findByText( /Prices content/ )
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole( 'tab', { name: 'List' } )
+			).toBeInTheDocument();
+		} );
+
 		it( 'keeps List disabled for link-only events and falls back on direct navigation', async () => {
 			mockEventDateWith( { link_type: 'external' } );
 			window.history.replaceState( {}, '', '?tab=list' );

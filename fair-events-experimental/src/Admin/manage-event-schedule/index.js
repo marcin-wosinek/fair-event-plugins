@@ -36,6 +36,8 @@ addFilter(
 			order: 22,
 			// Absent until the organizer enables it in Prices. An older
 			// fair-events never sets scheduleEnabled, so the tab stays out.
+			// `ticketing` is core's base ticketing; the Experimental
+			// `ticketingExtensions` setting does not affect the schedule.
 			isVisible: !! enabledFeatures.ticketing && !! scheduleEnabled,
 			// Same restrictions as Prices: a series is edited on the series,
 			// and a link-only event has nothing to book.

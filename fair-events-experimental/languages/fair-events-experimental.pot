@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T06:51:03+00:00\n"
+"POT-Creation-Date: 2026-10-19T11:34:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -218,11 +218,11 @@ msgid "Event feeds with iCal/JSON output, external calendar imports, Facebook im
 msgstr ""
 
 #: src/Core/Features.php:137
-msgid "Ticketing"
+msgid "Ticketing extensions"
 msgstr ""
 
 #: src/Core/Features.php:138
-msgid "Tickets, group pricing/permission rules. Requires fair-audience."
+msgid "Group pricing and group permission rules for tickets. Requires Ticketing in the Fair Events features and Fair Audience. Turning this off keeps base ticketing and stored rules."
 msgstr ""
 
 #: src/Core/Features.php:141
@@ -318,7 +318,7 @@ msgstr ""
 
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
-#: src/Admin/settings/MetaCalendarTest.js:248
+#: src/Admin/settings/MetaCalendarTest.js:240
 msgid "Try again"
 msgstr ""
 
@@ -409,25 +409,25 @@ msgid "The list of events could not be loaded."
 msgstr ""
 
 #. translators: 1: event name, 2: event start date.
-#: src/Admin/compare-events/comparison.js:109
+#: src/Admin/compare-events/comparison.js:104
 #, js-format
 msgid "%1$s — %2$s"
 msgstr ""
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:173
+#: src/Admin/compare-events/comparison.js:166
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/compare-events/comparison.js:183
+#: src/Admin/compare-events/comparison.js:176
 msgid "Day of the event"
 msgstr ""
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:187
+#: src/Admin/compare-events/comparison.js:180
 #, js-format
 msgid "Day %d of the event"
 msgstr ""
@@ -623,23 +623,23 @@ msgstr ""
 msgid "Schedule"
 msgstr ""
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:164
+#: src/Admin/manage-event-schedule/scheduleModel.js:170
 msgid "Enter a title."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:171
+#: src/Admin/manage-event-schedule/scheduleModel.js:177
 msgid "Enter a valid start date and time."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:181
+#: src/Admin/manage-event-schedule/scheduleModel.js:187
 msgid "Enter a valid end date and time."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:193
+#: src/Admin/manage-event-schedule/scheduleModel.js:199
 msgid "The end must be after the start."
 msgstr ""
 
-#: src/Admin/manage-event-schedule/scheduleModel.js:262
+#: src/Admin/manage-event-schedule/scheduleModel.js:268
 msgid "(untitled item)"
 msgstr ""
 
@@ -688,81 +688,81 @@ msgstr ""
 msgid "Experimental"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:30
+#: src/Admin/settings/MetaCalendarTest.js:27
 msgid "This page cannot read marketing consent because the WP Consent API is not active."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:36
+#: src/Admin/settings/MetaCalendarTest.js:33
 msgid "This browser has not given marketing consent. Accept marketing cookies on the site, then check again."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:42
+#: src/Admin/settings/MetaCalendarTest.js:39
 msgid "This browser has no Meta browser identifier (the _fbp or _fbc cookie). Open an event page with the Meta Pixel active, then check again."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:60
+#: src/Admin/settings/MetaCalendarTest.js:57
 msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:96
+#: src/Admin/settings/MetaCalendarTest.js:88
 msgid "(untitled event)"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:178
+#: src/Admin/settings/MetaCalendarTest.js:170
 msgid "Select the event the test click belongs to."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:184
+#: src/Admin/settings/MetaCalendarTest.js:176
 msgid "Select a date of this series."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:212
+#: src/Admin/settings/MetaCalendarTest.js:204
 msgid "Calendar click test"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:214
+#: src/Admin/settings/MetaCalendarTest.js:206
 msgid "Sends one FairEventCalendarClick to Test Events, built like a real “Add to calendar” click from this browser. It does not appear in delivery outcomes or reports."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:230
+#: src/Admin/settings/MetaCalendarTest.js:222
 msgid "Event"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:236
+#: src/Admin/settings/MetaCalendarTest.js:228
 msgid "Lists the latest events with an event page. Type to search by title."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:256
+#: src/Admin/settings/MetaCalendarTest.js:248
 msgid "Events could not be loaded."
 msgstr ""
 
 #. translators: %s: text typed into the event search
-#: src/Admin/settings/MetaCalendarTest.js:269
+#: src/Admin/settings/MetaCalendarTest.js:261
 #, js-format
 msgid "No events with an event page match “%s”."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:275
+#: src/Admin/settings/MetaCalendarTest.js:267
 msgid "There are no events with an event page yet."
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:285
+#: src/Admin/settings/MetaCalendarTest.js:277
 msgid "Date"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:289
+#: src/Admin/settings/MetaCalendarTest.js:281
 msgid "Select a date"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:298
+#: src/Admin/settings/MetaCalendarTest.js:290
 msgid "(no date)"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:318
+#: src/Admin/settings/MetaCalendarTest.js:310
 msgid "Send FairEventCalendarClick test"
 msgstr ""
 
-#: src/Admin/settings/MetaCalendarTest.js:330
+#: src/Admin/settings/MetaCalendarTest.js:322
 msgid "Check this browser again"
 msgstr ""
 
