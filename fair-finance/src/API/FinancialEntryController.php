@@ -13,7 +13,7 @@ use FairPaymentsConnector\Models\EntryTransaction;
 use FairFinance\Models\Budget;
 use FairFinance\Models\FinancialEntry;
 use FairFinance\Services\ConnectedSiteBudgetResolver;
-use FairFinance\Services\EventBudgetResolver;
+use FairFinance\Services\ReconciliationAllocation;
 use FairPaymentsConnector\Models\Transaction;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -248,6 +248,29 @@ class FinancialEntryController extends WP_REST_Controller {
 							'description' => __( 'Specific transaction ID to unmatch. If omitted, unmatches all.', 'fair-finance' ),
 							'type'        => 'integer',
 						),
+					),
+				),
+			)
+		);
+
+		// POST /fair-finance/v1/financial-entries/{id}/match-preview - Allocation a match would create.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/(?P<id>\d+)/match-preview',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'preview_match' ),
+				'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				'args'                => array(
+					'id'              => array(
+						'description' => __( 'Unique identifier for the financial entry.', 'fair-finance' ),
+						'type'        => 'integer',
+					),
+					'transaction_ids' => array(
+						'description' => __( 'Array of transaction IDs to match.', 'fair-finance' ),
+						'type'        => 'array',
+						'items'       => array( 'type' => 'integer' ),
+						'required'    => true,
 					),
 				),
 			)
@@ -1047,8 +1070,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		// Verify all transactions exist, keeping the loaded objects so the
-		// allocation-building below doesn't fetch each one a second time.
+		// Verify all transactions exist, keeping the loaded rows so the
+		// allocation planning doesn't fetch each one a second time.
 		$transactions_by_id = array();
 		foreach ( $ids_to_match as $tid ) {
 			$transaction = Transaction::get_by_id( $tid );
@@ -1060,138 +1083,55 @@ class FinancialEntryController extends WP_REST_Controller {
 					array( 'status' => 404 )
 				);
 			}
-			$transactions_by_id[ $tid ] = $transaction;
+			$transactions_by_id[ $tid ] = (array) $transaction;
 		}
 
-		$success = FinancialEntry::match_transactions( $id, $ids_to_match );
+		$allocation = ( new ReconciliationAllocation() )->match(
+			$id,
+			array_values( $transactions_by_id ),
+			$has_reviewed_budget ? array( 'budget_id' => $reviewed_budget_id ) : null
+		);
 
-		if ( ! $success ) {
-			return new WP_Error(
-				'rest_match_failed',
-				__( 'Failed to match entry to transaction.', 'fair-finance' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		// Auto-split the entry into one child per matched transaction so the
-		// user can later assign budgets per transaction. Only do this when the
-		// entry isn't already split and there are at least two transactions.
-		if ( count( $ids_to_match ) >= 2 && ! FinancialEntry::has_children( $id ) ) {
-			$budget_resolver = new EventBudgetResolver();
-			$allocations     = array();
-			foreach ( $ids_to_match as $tid ) {
-				$transaction = $transactions_by_id[ $tid ];
-
-				$net = (float) $transaction->amount
-					- (float) ( $transaction->application_fee ?? 0 )
-					- (float) ( $transaction->mollie_fee ?? 0 );
-
-				$link = self::get_transaction_link( $transaction );
-
-				$allocations[] = array(
-					'amount'        => $net,
-					'description'   => $transaction->description ?? '',
-					// An administrator-reviewed budget (typically because
-					// every selected transaction shares one Connected Site)
-					// applies uniformly to every generated allocation;
-					// otherwise each allocation resolves independently
-					// through its own event link (null when either is
-					// missing), unchanged from before this feature existed.
-					'budget_id'     => $has_reviewed_budget ? $reviewed_budget_id : $budget_resolver->resolve( $link['event_date_id'] ),
-					'event_url'     => $link['event_url'],
-					'event_date_id' => $link['event_date_id'],
-				);
-			}
-
-			if ( count( $allocations ) >= 2 ) {
-				FinancialEntry::split_entry( $id, $allocations );
-			}
-		} elseif ( 1 === count( $ids_to_match ) ) {
-			// Single-transaction match: seed entry's link (if it doesn't
-			// already have one) and, only while the entry is still
-			// unbudgeted, its budget — from the reviewed selection when the
-			// administrator made one, otherwise from the transaction's event
-			// link, exactly as before this feature existed. An entry that
-			// already has a budget, or a link, keeps it untouched.
-			$transaction = $transactions_by_id[ $ids_to_match[0] ];
-			$link        = self::get_transaction_link( $transaction );
-
-			$update_data   = array();
-			$update_format = array();
-
-			if ( empty( $entry->event_url ) && ( '' !== $link['event_url'] || null !== $link['event_date_id'] ) ) {
-				$update_data['event_url']     = '' !== $link['event_url'] ? $link['event_url'] : null;
-				$update_data['event_date_id'] = $link['event_date_id'];
-				$update_format[]              = '%s';
-				$update_format[]              = '%d';
-			}
-
-			if ( empty( $entry->budget_id ) ) {
-				$budget_to_apply = $has_reviewed_budget
-					? $reviewed_budget_id
-					: ( new EventBudgetResolver() )->resolve( $link['event_date_id'] );
-
-				if ( $budget_to_apply ) {
-					$update_data['budget_id'] = $budget_to_apply;
-					$update_format[]          = '%d';
-				}
-			}
-
-			if ( ! empty( $update_data ) ) {
-				global $wpdb;
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- writing a back-link onto our own table; no caching layer.
-				$wpdb->update(
-					\FairFinance\Database\Schema::get_financial_entries_table_name(),
-					$update_data,
-					array( 'id' => $id ),
-					$update_format,
-					array( '%d' )
-				);
-			}
+		if ( is_wp_error( $allocation ) ) {
+			return $allocation;
 		}
 
 		$entry = FinancialEntry::get_by_id( $id );
 
-		return new WP_REST_Response( $entry->to_array(), 200 );
+		return new WP_REST_Response( array_merge( $entry->to_array(), array( 'allocation' => $allocation ) ), 200 );
 	}
 
 	/**
-	 * Resolve the link (URL + event_date_id) for a transaction.
+	 * Preview the allocation a match would create, without writing.
 	 *
-	 * Local transactions carry a real event_date_id whose permalink we can
-	 * derive; imported transactions (from another site) carry the link in
-	 * metadata.detail_url and the source side's event_date_id is not a valid
-	 * local FK, so only event_url is reused.
-	 *
-	 * @param object $transaction Transaction row.
-	 * @return array{event_url:string,event_date_id:?int}
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
 	 */
-	private static function get_transaction_link( $transaction ) {
-		$event_url     = '';
-		$event_date_id = null;
-
-		if ( ! empty( $transaction->event_date_id ) && class_exists( '\\FairEvents\\Models\\EventDates' ) ) {
-			$event_date = \FairEvents\Models\EventDates::get_by_id( (int) $transaction->event_date_id );
-			if ( $event_date && ! empty( $event_date->event_id ) ) {
-				$permalink = get_permalink( (int) $event_date->event_id );
-				if ( $permalink ) {
-					$event_url     = $permalink;
-					$event_date_id = (int) $transaction->event_date_id;
-				}
-			}
+	public function preview_match( $request ) {
+		$id = (int) $request->get_param( 'id' );
+		if ( ! FinancialEntry::get_by_id( $id ) ) {
+			return new WP_Error(
+				'rest_entry_not_found',
+				__( 'Financial entry not found.', 'fair-finance' ),
+				array( 'status' => 404 )
+			);
 		}
 
-		if ( '' === $event_url && ! empty( $transaction->metadata ) ) {
-			$meta = json_decode( (string) $transaction->metadata, true );
-			if ( is_array( $meta ) && ! empty( $meta['detail_url'] ) ) {
-				$event_url = (string) $meta['detail_url'];
+		$transactions = array();
+		foreach ( array_map( 'intval', (array) $request->get_param( 'transaction_ids' ) ) as $tid ) {
+			$transaction = Transaction::get_by_id( $tid );
+			if ( ! $transaction ) {
+				return new WP_Error(
+					'rest_transaction_not_found',
+					/* translators: %d: transaction ID */
+					sprintf( __( 'Transaction %d not found.', 'fair-finance' ), $tid ),
+					array( 'status' => 404 )
+				);
 			}
+			$transactions[] = (array) $transaction;
 		}
 
-		return array(
-			'event_url'     => $event_url,
-			'event_date_id' => $event_date_id,
-		);
+		return new WP_REST_Response( ( new ReconciliationAllocation() )->plan_match( $id, $transactions ), 200 );
 	}
 
 	/**

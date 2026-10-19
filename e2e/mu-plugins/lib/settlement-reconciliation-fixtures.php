@@ -127,6 +127,20 @@ add_action(
 							)
 						);
 					}
+					if ( 'fractional' === $variant ) {
+						$payout = '38.55';
+						foreach ( array( '-0.725', '-0.725' ) as $index => $fee ) {
+							$items[] = \FairPaymentsConnector\Settlements\Movements::make(
+								array(
+									'type'                => 'fee',
+									'is_aggregate'        => true,
+									'settlement_amount'   => $fee,
+									'settlement_currency' => 'EUR',
+									'description'         => 'Reconcile fixture fractional fees ' . ( $index + 1 ),
+								)
+							);
+						}
+					}
 					if ( 'unknown' === $variant ) {
 						$items[] = \FairPaymentsConnector\Settlements\Movements::make(
 							array(
@@ -206,7 +220,9 @@ add_action(
 								'currency'          => 'EUR',
 								'status'            => 'paid',
 								'testmode'          => 0,
-								'description'       => 'Reconcile fixture payment',
+								'description'       => 'Reconcile fixture payment ' . ( $index + 1 ),
+								// Transaction-attributed fees that explain the payout.
+								'mollie_fee'        => $request->get_param( 'transaction_fees' ) ? array( '0.90', '0.55' )[ $index ] : null,
 							)
 						);
 						$ids[] = (int) $wpdb->insert_id;

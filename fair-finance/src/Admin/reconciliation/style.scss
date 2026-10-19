@@ -120,3 +120,32 @@
 		margin: 0;
 	}
 }
+
+.fair-finance-allocation-proposal {
+	overflow-wrap: anywhere;
+
+	.components-notice {
+		margin: 8px 0;
+	}
+
+	.fair-finance-saved-table {
+		margin: 8px 0;
+
+		// The proposal also sits in the bank-transfer screen's narrow column.
+		table {
+			min-width: 0;
+		}
+	}
+
+	.fair-finance-amount {
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 600px) {
+	.fair-finance-allocation-proposal .fair-finance-amount {
+		text-align: left;
+	}
+}

@@ -113,6 +113,24 @@ class ReconciliationRepository {
 	}
 
 	/**
+	 * Saved settlements whose published revisions list any of these payments.
+	 *
+	 * @param array $references Provider payment references.
+	 * @return int[] Settlement IDs.
+	 */
+	public function settlements_with_references( array $references ) {
+		global $wpdb;
+		$ids = array();
+		foreach ( array_chunk( array_values( array_unique( $references ) ), 200 ) as $batch ) {
+			$placeholders = implode( ',', array_fill( 0, count( $batch ), '%s' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- generated placeholders only.
+			$found = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT s.id FROM %i s INNER JOIN %i i ON i.revision_id IN (s.api_revision_id, s.csv_revision_id) WHERE i.payment_reference IN ($placeholders) ORDER BY s.id ASC", array_merge( array( ConnectorSchema::get_settlements_table_name(), ConnectorSchema::get_settlement_items_table_name() ), $batch ) ) );
+			$ids   = array_merge( $ids, array_map( 'intval', $this->checked( $found ) ?? array() ) );
+		}
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
 	 * Existing links touching a bank entry or a resolved transaction.
 	 *
 	 * @param array $ids Transaction IDs.

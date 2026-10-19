@@ -970,8 +970,6 @@ class FinancialEntry {
 	public static function split_entry( $id, $allocations ) {
 		global $wpdb;
 
-		$table_name = self::get_table_name();
-
 		// Validate the entry exists.
 		$entry = self::get_by_id( $id );
 		if ( ! $entry ) {
@@ -988,12 +986,41 @@ class FinancialEntry {
 			return false;
 		}
 
-		// Start transaction.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
+		$child_ids = self::write_split( $entry, $allocations );
+
+		if ( false === $child_ids ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'COMMIT' );
+
+		return $child_ids;
+	}
+
+	/**
+	 * Write a split inside the caller's database transaction.
+	 *
+	 * Issues no START TRANSACTION or COMMIT of its own, so a reconciliation
+	 * can roll the split back together with its links and history. The
+	 * caller validates that the entry is an unsplit parent.
+	 *
+	 * @param FinancialEntry $entry       Parent entry.
+	 * @param array          $allocations Allocations, each with amount, description, budget_id, event_url, event_date_id and tag.
+	 * @return int[]|false New child entry IDs, or false when any write failed.
+	 */
+	public static function write_split( $entry, $allocations ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
 		// Clear budget, event_url, event_date_id, and tag on parent — they are now on the children.
-		$wpdb->update(
+		$cleared = $wpdb->update(
 			$table_name,
 			array(
 				'budget_id'     => null,
@@ -1001,10 +1028,14 @@ class FinancialEntry {
 				'event_date_id' => null,
 				'tag'           => null,
 			),
-			array( 'id' => $id ),
+			array( 'id' => $entry->id ),
 			array( '%d', '%s', '%d', '%s' ),
 			array( '%d' )
 		);
+
+		if ( false === $cleared ) {
+			return false;
+		}
 
 		$child_ids = array();
 
@@ -1016,7 +1047,7 @@ class FinancialEntry {
 				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
 				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
 				'transaction_id'  => $entry->transaction_id,
-				'parent_entry_id' => $id,
+				'parent_entry_id' => $entry->id,
 				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
 				'event_date_id'   => ! empty( $allocation['event_date_id'] ) ? (int) $allocation['event_date_id'] : null,
 				'tag'             => ! empty( $allocation['tag'] ) ? sanitize_text_field( $allocation['tag'] ) : $entry->tag,
@@ -1024,19 +1055,12 @@ class FinancialEntry {
 
 			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%d', '%s' );
 
-			$result = $wpdb->insert( $table_name, $data, $format );
-
-			if ( ! $result ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->query( 'ROLLBACK' );
+			if ( ! $wpdb->insert( $table_name, $data, $format ) ) {
 				return false;
 			}
 
-			$child_ids[] = $wpdb->insert_id;
+			$child_ids[] = (int) $wpdb->insert_id;
 		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query( 'COMMIT' );
 
 		return $child_ids;
 	}

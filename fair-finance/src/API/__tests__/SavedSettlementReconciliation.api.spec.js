@@ -41,6 +41,16 @@ test.describe( 'Saved settlement reconciliation', () => {
 			state: 'full',
 			...extra,
 		} );
+	const allocations = ( data ) =>
+		data.bank_rows
+			.filter( ( row ) => Number( row.id ) !== fixture.entry_id )
+			.map( ( row ) => ( {
+				amount: row.amount,
+				description: row.description,
+				budget_id: row.budget_id,
+				event_url: row.event_url,
+				event_date_id: row.event_date_id,
+			} ) );
 	const cleanup = async () => {
 		await post( FIXTURE, { action: 'cleanup' } );
 		await post( '/wp-json/fair-e2e/v1/settlements/reset', {} );
@@ -67,7 +77,17 @@ test.describe( 'Saved settlement reconciliation', () => {
 			const data = await preview();
 			expect( data.can_full ).toBeTruthy();
 			expect( data.explanation.net ).toBe( '38.55' );
-			expect( data.allocation.supported ).toBeFalsy();
+			// An aggregate fee no longer prevents a split: it becomes an
+			// explicit settlement-level row instead of being attributed.
+			expect( data.allocation.status ).toBe( 'proposed' );
+			expect( data.allocation.method ).toBe( 'settlement_deductions' );
+			expect(
+				data.allocation.rows.map( ( row ) => [ row.kind, row.amount ] )
+			).toEqual( [
+				[ 'transaction', '25.00' ],
+				[ 'transaction', '15.00' ],
+				[ 'settlement', '-1.45' ],
+			] );
 			const responses = await Promise.all( [
 				confirm( data ),
 				confirm( data ),
@@ -86,7 +106,25 @@ test.describe( 'Saved settlement reconciliation', () => {
 			expect(
 				current.movements.filter( ( row ) => row.transaction_id )
 			).toHaveLength( 2 );
-			expect( current.bank_rows ).toHaveLength( 1 );
+			expect( allocations( current ) ).toEqual( [
+				expect.objectContaining( {
+					amount: '25.00',
+					description: 'Reconcile fixture payment 1',
+				} ),
+				expect.objectContaining( {
+					amount: '15.00',
+					description: 'Reconcile fixture payment 2',
+				} ),
+				expect.objectContaining( {
+					amount: '-1.45',
+					description: 'Reconcile fixture aggregate fees',
+					budget_id: null,
+				} ),
+			] );
+			expect( current.allocation.status ).toBe( 'allocated' );
+			expect(
+				JSON.parse( current.history[ 0 ].reviewed ).allocation_ids
+			).toHaveLength( 3 );
 			const unmatched = await (
 				await api.get( `${ ENTRIES }?unmatched=true&per_page=100`, {
 					headers,
@@ -194,7 +232,9 @@ test.describe( 'Saved settlement reconciliation', () => {
 		expect( match.ok(), await match.text() ).toBeTruthy();
 		const data = await preview();
 		expect( data.adoption_required ).toBeTruthy();
-		expect( data.bank_rows ).toHaveLength( 3 );
+		// The manual match used the saved settlement's evidence for its split.
+		expect( data.bank_rows ).toHaveLength( 4 );
+		expect( data.allocation.status ).toBe( 'allocated' );
 		expect( ( await confirm( data ) ).status() ).toBe( 409 );
 		expect(
 			( await confirm( data, { adopt_existing: true } ) ).ok()
@@ -210,21 +250,143 @@ test.describe( 'Saved settlement reconciliation', () => {
 	test( 'allocates only exact supported amounts and rolls back every write on failure', async () => {
 		await seed( { variant: 'plain' } );
 		const data = await preview();
-		expect( data.allocation.supported ).toBeTruthy();
+		expect( data.allocation.status ).toBe( 'proposed' );
+		expect( data.allocation.method ).toBe( 'transaction_net' );
 		await post( FIXTURE, { action: 'fail_write', enabled: true } );
-		expect( ( await confirm( data, { allocate: true } ) ).status() ).toBe(
-			500
-		);
+		expect( ( await confirm( data ) ).status() ).toBe( 500 );
 		await post( FIXTURE, { action: 'fail_write', enabled: false } );
 		const unchanged = await preview();
 		expect( unchanged.decision ).toBeNull();
 		expect( unchanged.history ).toHaveLength( 0 );
 		expect( unchanged.bank_rows ).toHaveLength( 1 );
 		expect( unchanged.links ).toHaveLength( 0 );
-		expect(
-			( await confirm( unchanged, { allocate: true } ) ).ok()
-		).toBeTruthy();
+		expect( ( await confirm( unchanged ) ).ok() ).toBeTruthy();
 		expect( ( await preview() ).bank_rows ).toHaveLength( 3 );
+	} );
+
+	test( 'a fee-bearing payout splits equivalently from settlement review and manual matching', async () => {
+		await seed();
+		const reviewed = await preview();
+		expect( ( await confirm( reviewed ) ).ok() ).toBeTruthy();
+		const fromSettlement = allocations( await preview() );
+		await cleanup();
+		await seed();
+		// The bank-transfer screen and legacy CSV review both match through
+		// this endpoint, with the selected or resolved transactions.
+		const planned = await post(
+			`${ ENTRIES }/${ fixture.entry_id }/match-preview`,
+			{ transaction_ids: fixture.transaction_ids }
+		);
+		expect( ( await planned.json() ).status ).toBe( 'proposed' );
+		const match = await post( `${ ENTRIES }/${ fixture.entry_id }/match`, {
+			transaction_ids: fixture.transaction_ids,
+		} );
+		expect( match.ok(), await match.text() ).toBeTruthy();
+		const matched = await match.json();
+		expect( matched.allocation.allocation_ids ).toHaveLength( 3 );
+		expect( allocations( await preview() ) ).toEqual( fromSettlement );
+		expect(
+			(
+				await post( `${ ENTRIES }/${ fixture.entry_id }/match`, {
+					transaction_ids: fixture.transaction_ids,
+				} )
+			).ok()
+		).toBeTruthy();
+		expect( allocations( await preview() ) ).toEqual( fromSettlement );
+	} );
+
+	test( 'a manual match the evidence cannot explain stays unsplit with a reason', async () => {
+		await seed();
+		const created = await post( ENTRIES, {
+			amount: 50,
+			entry_type: 'income',
+			entry_date: '2026-05-02',
+			description: 'Reconcile fixture unexplained payout',
+		} );
+		const entryId = ( await created.json() ).id;
+		const match = await post( `${ ENTRIES }/${ entryId }/match`, {
+			transaction_ids: fixture.transaction_ids,
+		} );
+		expect( match.ok(), await match.text() ).toBeTruthy();
+		const { allocation, transaction_ids: linked } = await match.json();
+		expect( allocation.status ).toBe( 'unsupported' );
+		expect( allocation.reason ).toContain( '40.00' );
+		expect( allocation.allocation_ids ).toEqual( [] );
+		expect( linked.sort() ).toEqual(
+			[ ...fixture.transaction_ids ].sort()
+		);
+		const entries = await (
+			await api.get( `${ ENTRIES }?per_page=100`, { headers } )
+		).json();
+		expect(
+			entries.entries.find( ( entry ) => entry.id === entryId )
+				.children ?? []
+		).toHaveLength( 0 );
+	} );
+
+	test( 'transaction-attributed fees explain the payout without subtracting the aggregate fee again', async () => {
+		await seed( { transaction_fees: true } );
+		const data = await preview();
+		expect( data.allocation.method ).toBe( 'transaction_net' );
+		expect( ( await confirm( data ) ).ok() ).toBeTruthy();
+		expect(
+			allocations( await preview() ).map( ( row ) => row.amount )
+		).toEqual( [ '24.10', '14.45' ] );
+	} );
+
+	test( 'fractional-cent fees are allocated only as their exact whole-cent total', async () => {
+		await seed( { variant: 'fractional' } );
+		const data = await preview();
+		expect( data.can_full ).toBeTruthy();
+		expect( data.allocation.rows.map( ( row ) => row.amount ) ).toEqual( [
+			'25.00',
+			'15.00',
+			'-1.45',
+		] );
+	} );
+
+	test( 'a refund in the payout is a signed allocation of its own payment', async () => {
+		await seed( { variant: 'refund' } );
+		const data = await preview();
+		expect( data.can_full ).toBeTruthy();
+		expect( ( await confirm( data ) ).ok() ).toBeTruthy();
+		expect( allocations( await preview() ) ).toEqual( [
+			expect.objectContaining( { amount: '25.00' } ),
+			expect.objectContaining( {
+				amount: '-15.00',
+				description: 'Refund: Reconcile fixture payment 2',
+			} ),
+		] );
+	} );
+
+	test( 'an already-confirmed unsplit entry is repaired once, keeping its association', async () => {
+		await seed();
+		expect( ( await confirm( await preview() ) ).ok() ).toBeTruthy();
+		const unsplit = await api.delete(
+			`${ ENTRIES }/${ fixture.entry_id }/split`,
+			{ headers }
+		);
+		expect( unsplit.ok(), await unsplit.text() ).toBeTruthy();
+		const missing = await preview();
+		expect( missing.decision.state ).toBe( 'full' );
+		expect( missing.allocation.status ).toBe( 'proposed' );
+		const repairs = await Promise.all( [
+			confirm( missing ),
+			confirm( missing ),
+		] );
+		for ( const response of repairs )
+			expect( response.ok(), await response.text() ).toBeTruthy();
+		const repaired = await preview();
+		expect( repaired.decision.current_state ).toBe( 'full' );
+		expect( repaired.bank_rows ).toHaveLength( 4 );
+		expect( repaired.history ).toHaveLength( 2 );
+		expect(
+			JSON.parse( repaired.history[ 1 ].reviewed ).allocation
+		).toEqual(
+			expect.objectContaining( { repair: true, status: 'proposed' } )
+		);
+		expect( ( await confirm( repaired ) ).ok() ).toBeTruthy();
+		expect( ( await preview() ).bank_rows ).toHaveLength( 4 );
 	} );
 
 	test( 'detects bank edits and deletion of linked transactions', async () => {

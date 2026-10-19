@@ -440,7 +440,8 @@ class SettlementReconciliation {
 		}
 		$issues      = array_values( array_unique( $issues ) );
 		$bank_issues = array_values( array_unique( $bank_issues ) );
-		$allocation  = $this->allocation( $merged, $transactions, $bank_rows, $bank );
+		$source      = isset( $explanations['api'] ) ? 'api' : 'csv';
+		$allocation  = $this->allocation( $merged, $transactions, $bank_rows, $bank, $items[ $source ], $explanations[ $source ] ?? null, $settlement['currency'] );
 		// Material fingerprints exclude source IDs and refresh timestamps. History
 		// retains those IDs separately, so refreshing identical facts is harmless.
 		$material_revisions = array();
@@ -514,55 +515,207 @@ class SettlementReconciliation {
 	}
 
 	/**
-	 * Offer only justified positive, cent-exact, whole-movement allocations.
+	 * Allocation proposal from this settlement's movement-level evidence.
 	 *
-	 * @param array      $movements Merged movements.
+	 * Transaction rows follow movements: a payment settled through captures
+	 * is allocated through those captures, and refunds and chargebacks are
+	 * signed rows of their own payment. Recorded transaction fees are tried
+	 * first; otherwise settlement-level fees and adjustments become explicit
+	 * signed rows, never attributed to a payment.
+	 *
+	 * @param array      $movements Merged movements with resolved transactions.
 	 * @param array      $transactions Local payments.
 	 * @param array      $bank_rows Existing entry and allocations.
 	 * @param array|null $bank Selected bank entry.
+	 * @param array      $items Movements of the source that explains the payout.
+	 * @param array|null $explanation That source's explanation.
+	 * @param string     $currency Settlement currency.
 	 * @return array
 	 */
-	private function allocation( array $movements, array $transactions, array $bank_rows, ?array $bank ) {
-		$unavailable = array(
-			'supported' => false,
-			'rows'      => array(),
-			'reason'    => __( 'Existing allocations are preserved. An automatic split requires positive, cent-exact movement amounts that sum to the bank entry without allocating aggregate fees.', 'fair-finance' ),
-		);
-		if ( ! $bank || count( $bank_rows ) > 1 || $bank['budget_id'] || $bank['event_url'] || $bank['event_date_id'] || $bank['tag'] || $bank['participant_id'] ) {
-			return $unavailable;
+	private function allocation( array $movements, array $transactions, array $bank_rows, ?array $bank, array $items, $explanation, $currency ) {
+		if ( ! $bank ) {
+			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, __( 'Select a bank entry to see its proposed allocation.', 'fair-finance' ) );
 		}
-		$by_id  = array_column( $transactions, null, 'id' );
-		$rows   = array();
-		$values = array();
-		$sites  = new ConnectedSiteBudgetResolver();
-		$events = new EventBudgetResolver();
+		$children = array_values(
+			array_filter(
+				$bank_rows,
+				static function ( $row ) use ( $bank ) {
+					return (int) $row['id'] !== (int) $bank['id'];
+				}
+			)
+		);
+		$planner  = new AllocationPlanner();
+		if ( $children ) {
+			return $planner->plan( $bank, $children, array(), null );
+		}
+		$by_id    = array_column( $transactions, null, 'id' );
+		$captured = array();
 		foreach ( $movements as $item ) {
-			if ( $item['report'] || 'summary' === $item['type'] ) {
+			if ( Movements::TYPE_CAPTURE === $item['type'] ) {
+				$captured[ (string) $item['payment_reference'] ] = true;
+			}
+		}
+		$gross   = array();
+		$net     = array();
+		$net_ok  = true;
+		$labels  = array(
+			/* translators: %s: transaction description. */
+			Movements::TYPE_REFUND     => __( 'Refund: %s', 'fair-finance' ),
+			/* translators: %s: transaction description. */
+			Movements::TYPE_CHARGEBACK => __( 'Chargeback: %s', 'fair-finance' ),
+		);
+		$reasons = array(
+			'aggregate' => __( 'Payments are only reported as totals, so they cannot be allocated per transaction.', 'fair-finance' ),
+			'reference' => __( 'A movement has no single matching local transaction, so it cannot be allocated yet.', 'fair-finance' ),
+			'amount'    => __( 'A movement has an unknown settlement amount or a different currency, so it cannot be allocated.', 'fair-finance' ),
+		);
+		foreach ( $movements as $item ) {
+			if ( $item['report'] || ! in_array( $item['type'], array( 'payment', 'capture', 'refund', 'chargeback' ), true ) ) {
 				continue;
 			}
-			$amount = $item['settlement_amount'];
-			if ( $item['is_aggregate'] || 'payment' !== $item['type'] || ! $item['transaction_id'] || null === $amount || ! preg_match( '/^\d{1,8}(?:\.\d{1,2})?$/', $amount ) || Exact::is_zero( $amount ) ) {
-				return $unavailable;
+			if ( Movements::TYPE_PAYMENT === $item['type'] && isset( $captured[ (string) $item['external_id'] ] ) ) {
+				continue;
+			}
+			if ( $item['is_aggregate'] ) {
+				return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $reasons['aggregate'] );
+			}
+			if ( ! $item['transaction_id'] || ! isset( $by_id[ $item['transaction_id'] ] ) ) {
+				return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $reasons['reference'] );
+			}
+			if ( null === $item['settlement_amount'] || $currency !== $item['settlement_currency'] ) {
+				return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $reasons['amount'] );
 			}
 			$transaction = $by_id[ $item['transaction_id'] ];
-			$metadata    = (array) json_decode( (string) $transaction['metadata'], true );
-			$budget      = $sites->resolve( $metadata['connected_site_id'] ?? null ) ?? $events->resolve( empty( $metadata['connected_site_id'] ) ? ( $transaction['event_date_id'] ?? null ) : null );
-			$rows[]      = array(
-				'amount'       => $amount,
-				'description'  => $item['description'],
-				'budget_id'    => $budget,
+			$description = (string) ( $transaction['description'] ? $transaction['description'] : $item['description'] );
+			$row         = array(
+				'kind'         => 'transaction',
+				'amount'       => $item['settlement_amount'],
+				'description'  => isset( $labels[ $item['type'] ] ) ? sprintf( $labels[ $item['type'] ], $description ) : $description,
+				'transaction'  => $transaction,
 				'movement_key' => $item['identity_key'],
 			);
-			$values[]    = $amount;
+			$gross[]     = $row;
+			if ( Movements::TYPE_PAYMENT === $item['type'] ) {
+				// Recorded fees describe the whole payment only.
+				$net_ok = $net_ok && self::equal( $item['settlement_amount'], $transaction['amount'] ) && $transaction['currency'] === $currency;
+				if ( $net_ok ) {
+					$row['amount'] = AllocationPlanner::net( $transaction ) ?? $item['settlement_amount'];
+				}
+			}
+			$net[] = $row;
 		}
-		if ( count( $rows ) < 2 || ! self::equal( Exact::sum( $values ), $bank['amount'] ) ) {
-			return $unavailable;
+		if ( ! $gross ) {
+			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, __( 'There are no payment movements to allocate.', 'fair-finance' ) );
 		}
-		return array(
-			'supported' => true,
-			'rows'      => $rows,
-			'reason'    => __( 'The reviewed movement amounts sum exactly to this bank entry. Splitting is optional.', 'fair-finance' ),
-		);
+		if ( $net_ok ) {
+			$plan = $planner->plan( $bank, array(), $net, 'transaction_net' );
+			if ( in_array( $plan['status'], array( AllocationPlanner::PROPOSED, AllocationPlanner::SINGLE ), true ) ) {
+				return $plan;
+			}
+		}
+		$deductions = self::deductions( $items, $explanation, $currency );
+		if ( is_string( $deductions ) ) {
+			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $deductions );
+		}
+		return $planner->plan( $bank, array(), array_merge( $gross, $deductions ), 'settlement_deductions' );
+	}
+
+	/**
+	 * Settlement-level fees and adjustments as explicit signed rows.
+	 *
+	 * A report's costs are taken as its exact costs total. Otherwise detail
+	 * rows of each type are preferred over the aggregate that sums them. Rows
+	 * with fractions of a cent are combined only when their exact total is
+	 * whole cents; nothing is prorated or rounded.
+	 *
+	 * @param array      $items Movements of the explaining source.
+	 * @param array|null $explanation Its explanation.
+	 * @param string     $currency Settlement currency.
+	 * @return array|string Rows, or the reason they cannot be stated.
+	 */
+	private static function deductions( array $items, $explanation, $currency ) {
+		if ( ! empty( $explanation['report'] ) ) {
+			$costs = $explanation['report']['costs'];
+			if ( ! $costs['lines'] ) {
+				return array();
+			}
+			if ( null === $costs['amount'] ) {
+				return __( 'The report costs are incomplete, so they cannot be allocated.', 'fair-finance' );
+			}
+			// Report contributions already carry the sign of a deduction.
+			$rows = array(
+				array(
+					'kind'        => 'settlement',
+					'amount'      => $costs['amount'],
+					'description' => __( 'Mollie costs from the settlement report', 'fair-finance' ),
+				),
+			);
+		} else {
+			$by_type = array();
+			foreach ( $items as $item ) {
+				if ( ! $item['report'] && in_array( $item['type'], array( Movements::TYPE_FEE, Movements::TYPE_ADJUSTMENT ), true ) ) {
+					$by_type[ $item['type'] ][ $item['is_aggregate'] ? 'aggregate' : 'detail' ][] = $item;
+				}
+			}
+			$rows = array();
+			foreach ( $by_type as $type => $groups ) {
+				foreach ( $groups['detail'] ?? $groups['aggregate'] as $item ) {
+					if ( null === $item['settlement_amount'] || $currency !== $item['settlement_currency'] ) {
+						return __( 'A fee or adjustment has an unknown amount or a different currency, so it cannot be allocated.', 'fair-finance' );
+					}
+					$rows[] = array(
+						'kind'         => 'settlement',
+						'amount'       => $item['settlement_amount'],
+						'description'  => '' !== (string) $item['description'] ? $item['description'] : ( Movements::TYPE_FEE === $type ? __( 'Settlement fees', 'fair-finance' ) : __( 'Settlement adjustment', 'fair-finance' ) ),
+						'movement_key' => $item['identity_key'],
+					);
+				}
+			}
+		}
+		foreach ( $rows as $row ) {
+			if ( null === AllocationPlanner::cents( $row['amount'] ) ) {
+				$total = Exact::sum( array_column( $rows, 'amount' ) );
+				return null === AllocationPlanner::cents( $total ) ? __( 'Settlement fees have fractions of a cent, so they cannot be stored exactly. Allocate this entry manually.', 'fair-finance' ) : array(
+					array(
+						'kind'        => 'settlement',
+						'amount'      => $total,
+						'description' => __( 'Settlement fees and adjustments', 'fair-finance' ),
+					),
+				);
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * This settlement's proposal for a bank entry matched by hand, used only
+	 * when its evidence is complete and covers exactly the matched payments.
+	 *
+	 * @param int   $id Settlement ID.
+	 * @param int   $entry_id Bank entry ID.
+	 * @param int[] $transaction_ids Matched transactions.
+	 * @return array|null
+	 */
+	public function plan_for_transactions( $id, $entry_id, array $transaction_ids ) {
+		$preview = $this->preview( $id, array( 'entry_id' => $entry_id ) );
+		if ( is_wp_error( $preview ) || $preview['issues'] || $preview['decision'] ) {
+			return null;
+		}
+		$covered = array();
+		foreach ( $preview['movements'] as $movement ) {
+			if ( ! $movement['is_aggregate'] && in_array( $movement['type'], array( 'payment', 'capture', 'refund', 'chargeback' ), true ) ) {
+				$covered[] = (int) $movement['transaction_id'];
+			}
+		}
+		$covered = array_values( array_unique( $covered ) );
+		sort( $covered );
+		sort( $transaction_ids );
+		if ( $covered !== $transaction_ids ) {
+			return null;
+		}
+		$plan               = $preview['allocation'];
+		$plan['settlement'] = (int) $id;
+		return $plan;
 	}
 
 	/**
@@ -817,12 +970,12 @@ class SettlementReconciliation {
 				$this->provider->rollback();
 				return self::error( 'reconciliation_ineligible', __( 'Resolve the blocking issues and explicitly adopt compatible existing matches before confirming.', 'fair-finance' ), 409 );
 			}
-			if ( ! empty( $proposal['allocate'] ) && ( 'full' !== $state || ! $preview['allocation']['supported'] ) ) {
-				$this->provider->rollback();
-				return self::error( 'reconciliation_allocation_unsupported', __( 'An automatic allocation is not supported by this evidence.', 'fair-finance' ), 409 );
-			}
 			$decision = $preview['decision'];
-			if ( $decision && $decision['state'] === $state && $decision['material_hash'] === $preview['material_hash'] && empty( $proposal['allocate'] ) ) {
+			// Supported splits are part of full reconciliation, so an
+			// unchanged full decision still applies a missing split.
+			$allocate = 'full' === $state && in_array( $preview['allocation']['status'], array( AllocationPlanner::PROPOSED, AllocationPlanner::SINGLE ), true );
+			$repair   = $decision && 'full' === $decision['state'] && AllocationPlanner::PROPOSED === $preview['allocation']['status'];
+			if ( $decision && $decision['state'] === $state && $decision['material_hash'] === $preview['material_hash'] && ! $repair ) {
 				$this->provider->rollback();
 				return $preview;
 			}
@@ -855,27 +1008,9 @@ class SettlementReconciliation {
 				$this->local->save( 'context', $context );
 			}
 			$allocation_ids = array();
-			if ( ! empty( $proposal['allocate'] ) ) {
-				foreach ( $preview['allocation']['rows'] as $row ) {
-					if ( array_key_exists( 'budget_id', $proposal ) ) {
-						$row['budget_id'] = $proposal['budget_id'] ? $proposal['budget_id'] : null;
-					}
-					$result = $wpdb->insert(
-						Schema::get_financial_entries_table_name(),
-						array(
-							'amount'          => $row['amount'],
-							'entry_type'      => $preview['bank']['entry_type'],
-							'entry_date'      => $preview['bank']['entry_date'],
-							'description'     => $row['description'],
-							'budget_id'       => $row['budget_id'],
-							'parent_entry_id' => $entry_id,
-						)
-					);
-					if ( false === $result ) {
-						throw new \RuntimeException( 'Allocation write failed.' );
-					}
-					$allocation_ids[] = (int) $wpdb->insert_id;
-				}
+			if ( $allocate ) {
+				$reviewed_budget = array_key_exists( 'budget_id', $proposal ) ? array( 'budget_id' => $proposal['budget_id'] ? (int) $proposal['budget_id'] : null ) : null;
+				$allocation_ids  = ( new ReconciliationAllocation() )->apply( $entry_id, $preview['allocation'], $reviewed_budget );
 			}
 			// Movement evidence remains authoritative. Only whole-payment evidence
 			// may add compatibility links, and only on full confirmation.
@@ -890,6 +1025,17 @@ class SettlementReconciliation {
 				'preview'            => $preview,
 				'proposal'           => $proposal,
 				'allocation_ids'     => $allocation_ids,
+				'allocation'         => array(
+					'status'    => $allocate ? $preview['allocation']['status'] : null,
+					'method'    => $preview['allocation']['method'],
+					'repair'    => $repair,
+					'revisions' => array_map(
+						static function ( $revision ) {
+							return (int) $revision['id'];
+						},
+						$preview['revisions']
+					),
+				),
 				'context_provenance' => 'administrator',
 			);
 			// Do not recursively copy the preceding history into every history row.
