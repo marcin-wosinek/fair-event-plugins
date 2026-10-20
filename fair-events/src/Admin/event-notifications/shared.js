@@ -129,3 +129,29 @@ export function sourceOptions( sources, current ) {
 	}
 	return options;
 }
+
+/**
+ * A notification's name with its kind, which is left out when the name
+ * already is the kind's name.
+ *
+ * @param {Object} props
+ * @param {string} props.name Name shown.
+ * @param {string} props.type Notification kind.
+ * @return {JSX.Element} The name.
+ */
+export function NameWithKind( { name, type } ) {
+	const kind = TYPE_LABELS[ type ] || type;
+	return (
+		<>
+			{ name }
+			{ name !== kind && (
+				<>
+					{ ' ' }
+					<span className="fair-events-notifications__kind">
+						{ kind }
+					</span>
+				</>
+			) }
+		</>
+	);
+}

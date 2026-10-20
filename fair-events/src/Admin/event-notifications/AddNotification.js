@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { useRef, useState } from '@wordpress/element';
 import {
 	Button,
@@ -20,8 +20,8 @@ import {
 import { PATH, TYPE_LABELS, errorMessage } from './shared.js';
 
 /**
- * Add a notification of any kind. It starts paused with the kind's defaults
- * and appears above this section, where it is set up and turned on.
+ * Add a notification of any kind. It starts paused with the kind's defaults;
+ * `onAdded` opens its editor, where it is set up and turned on.
  *
  * A kind this plugin cannot manage right now (an older plugin still sends
  * it, or the plugin that sends it is inactive) cannot be added; the reason
@@ -67,19 +67,9 @@ export default function AddNotification( { types, onAdded } ) {
 				method: 'POST',
 				data: { type, name: name.trim() },
 			} );
+			busy.current = false;
 			onAdded( configuration );
-			setName( '' );
-			setNotice( {
-				status: 'success',
-				message: sprintf(
-					/* translators: %s: name of the added notification */
-					__(
-						'“%s” was added above. It is paused: set it up, turn it on and save it when it is ready.',
-						'fair-events'
-					),
-					configuration.name || TYPE_LABELS[ configuration.type ]
-				),
-			} );
+			return;
 		} catch ( error ) {
 			setNotice( {
 				status: 'error',

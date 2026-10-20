@@ -429,6 +429,41 @@ class ExecutionHistory {
 	}
 
 	/**
+	 * The newest execution of each configuration, in one query.
+	 *
+	 * @param string[] $config_ids Configuration IDs.
+	 * @return array[] Execution rows by configuration ID; a configuration
+	 *     without any execution is left out.
+	 */
+	public function latest( array $config_ids ) {
+		$config_ids = array_values( array_unique( array_map( 'strval', $config_ids ) ) );
+		if ( ! $config_ids || ! HistoryTables::is_current() ) {
+			return array();
+		}
+		global $wpdb;
+		$this->reconcile();
+
+		$placeholders = implode( ', ', array_fill( 0, count( $config_ids ), '%s' ) );
+		// The newest row is the one no other row of its configuration
+		// started after, ties broken by ID as in query().
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT e.* FROM %i e WHERE e.config_id IN ( {$placeholders} ) AND NOT EXISTS ( SELECT 1 FROM %i n WHERE n.config_id = e.config_id AND ( n.started_at > e.started_at OR ( n.started_at = e.started_at AND n.id > e.id ) ) )",
+				array_merge( array( self::table_name() ), $config_ids, array( self::table_name() ) )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		$latest = array();
+		foreach ( $rows ? $rows : array() as $row ) {
+			$latest[ $row['config_id'] ] = $this->hydrate( $row );
+		}
+		return $latest;
+	}
+
+	/**
 	 * One execution.
 	 *
 	 * @param int $id Execution ID.

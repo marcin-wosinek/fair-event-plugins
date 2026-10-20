@@ -27,29 +27,40 @@ test('bulk email previews and tests the selected week while scheduling is off', 
 		await page.goto(
 			'/wp-admin/admin.php?page=fair-events-event-notifications'
 		);
-		const channel = page
-			.locator('.fair-events-notifications__channel')
-			.filter({
-				has: page.getByRole('heading', {
-					name: 'Bulk email',
-					exact: true,
-				}),
+		// One notification is open at a time, reached through the list.
+		const view = page.locator('.fair-events-notifications');
+		const open = async (name) => {
+			const back = page.getByRole('link', {
+				name: '← All notifications',
 			});
-		// An unsaved draft in another section stays apart from this one.
-		const individual = page
-			.locator('.fair-events-notifications__channel')
-			.filter({
-				has: page.getByRole('heading', {
-					name: 'Individual email',
-					exact: true,
-				}),
+			if (await back.count()) {
+				await back.click();
+			}
+			await page
+				.getByRole('table')
+				.getByRole('link', { name, exact: true })
+				.click();
+			await expect(
+				page.getByRole('navigation', { name: 'Notification sections' })
+			).toBeVisible();
+		};
+		const listRow = (name) =>
+			page.getByRole('row').filter({
+				has: page.getByRole('link', { name, exact: true }),
 			});
-		const individualSubject = individual.getByLabel('Subject', {
+
+		// An unsaved draft of another notification stays apart from this one,
+		// also while other views are open.
+		await open('Individual email');
+		const individualSubject = view.getByLabel('Subject', {
 			exact: true,
 		});
 		const savedIndividualSubject = await individualSubject.inputValue();
 		await individualSubject.fill('Individual draft {week_start}');
-		await expect(individual.getByText('Unsaved changes')).toBeVisible();
+		await expect(view.getByText('Unsaved changes')).toBeVisible();
+
+		await open('Bulk email');
+		const channel = view;
 
 		await channel
 			.getByLabel('Subject', { exact: true })
@@ -137,15 +148,20 @@ test('bulk email previews and tests the selected week while scheduling is off', 
 			expect(captured.telegram).toEqual([]);
 		}
 		// Saving bulk email twice left the individual draft unsaved and alone.
+		await page.getByRole('link', { name: '← All notifications' }).click();
+		await expect(
+			listRow('Individual email').getByText('Unsaved changes')
+		).toBeVisible();
+		await open('Individual email');
 		await expect(individualSubject).toHaveValue(
 			'Individual draft {week_start}'
 		);
-		await expect(individual.getByText('Unsaved changes')).toBeVisible();
+		await expect(view.getByText('Unsaved changes')).toBeVisible();
 		await expect(
-			individual.getByText('Individual email settings saved.')
+			view.getByText('Individual email settings saved.')
 		).toHaveCount(0);
 		await individualSubject.fill(savedIndividualSubject);
-		await expect(individual.getByText('Unsaved changes')).toHaveCount(0);
+		await expect(view.getByText('Unsaved changes')).toHaveCount(0);
 	} finally {
 		fixture('cleanup');
 		runScript(

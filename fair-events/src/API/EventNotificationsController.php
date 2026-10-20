@@ -406,10 +406,9 @@ class EventNotificationsController extends WP_REST_Controller {
 
 		$configurations = array();
 		$page_ids       = array();
-		foreach ( Configurations::all() as $record ) {
-			$payload                         = $this->configuration_payload( $record );
-			$configurations[ $record['id'] ] = $payload;
-			if ( Configurations::TELEGRAM === $record['type'] && $payload['page_id'] ) {
+		foreach ( $this->summarized( Configurations::all() ) as $payload ) {
+			$configurations[ $payload['id'] ] = $payload;
+			if ( Configurations::TELEGRAM === $payload['type'] && $payload['page_id'] ) {
 				$page_ids[] = $payload['page_id'];
 			}
 		}
@@ -465,7 +464,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			);
 		}
 
-		$response = rest_ensure_response( $this->configuration_payload( $record ) );
+		$response = rest_ensure_response( $this->summarized( array( $record ) )[0] );
 		$response->set_status( 201 );
 		return $response;
 	}
@@ -482,7 +481,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			return $record;
 		}
 
-		return rest_ensure_response( $this->configuration_payload( $record ) );
+		return rest_ensure_response( $this->summarized( array( $record ) )[0] );
 	}
 
 	/**
@@ -515,7 +514,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			Configurations::update( $record['id'], array( 'name' => $request->get_param( 'name' ) ) );
 		}
 
-		return rest_ensure_response( $this->configuration_payload( Configurations::get( $record['id'] ) ) );
+		return rest_ensure_response( $this->summarized( array( Configurations::get( $record['id'] ) ) )[0] );
 	}
 
 	/**
@@ -1217,6 +1216,35 @@ class EventNotificationsController extends WP_REST_Controller {
 				'name' => $record['name'],
 			),
 			$payload
+		);
+	}
+
+	/**
+	 * Configuration payloads with each one's newest execution, read in one
+	 * query for all of them.
+	 *
+	 * `latest_execution` is shaped like an execution of the history routes,
+	 * or null before the first one. It comes from the unified history only.
+	 *
+	 * @param array[] $records Configuration records.
+	 * @return array[]
+	 */
+	private function summarized( array $records ) {
+		$latest  = ( new ExecutionHistory() )->latest( array_column( $records, 'id' ) );
+		$history = new NotificationHistoryController();
+
+		return array_map(
+			function ( $record ) use ( $latest, $history ) {
+				return array_merge(
+					$this->configuration_payload( $record ),
+					array(
+						'latest_execution' => isset( $latest[ $record['id'] ] )
+							? $history->execution_payload( $latest[ $record['id'] ] )
+							: null,
+					)
+				);
+			},
+			$records
 		);
 	}
 

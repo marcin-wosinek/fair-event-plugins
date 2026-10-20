@@ -3,11 +3,12 @@
  */
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useContext, useEffect, useRef, useState } from '@wordpress/element';
 
 /**
  * Internal dependencies
  */
+import { DraftsContext } from './drafts.js';
 import { PATH, errorMessage, useUnsavedWarning } from './shared.js';
 
 function sameForm( fields, a, b ) {
@@ -48,6 +49,11 @@ export function reconcileDraft( fields, current, saved ) {
  * both are of the same kind. Requests go to the configuration's own routes,
  * by its ID.
  *
+ * Inside a DraftsContext the draft outlives the editor: it is kept there by
+ * ID and taken up again, reconciled with the saved settings, when the
+ * editor is opened next. Leaving the page is then guarded for every draft
+ * by the page, not by this editor.
+ *
  * @param {Object}   props
  * @param {Object}   props.channel             Saved configuration payload, with its `id`.
  * @param {Object}   props.adapter             What differs per kind.
@@ -71,11 +77,15 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 	const latestSaved = useRef( saved );
 	latestSaved.current = saved;
 
-	const [ draft, setDraft ] = useState( () => ( {
-		form: saved,
-		baseline: saved,
-		conflict: false,
-	} ) );
+	const drafts = useContext( DraftsContext );
+	const [ draft, setDraft ] = useState(
+		() =>
+			drafts?.get( id ) || {
+				form: saved,
+				baseline: saved,
+				conflict: false,
+			}
+	);
 	const [ notice, setNotice ] = useState( null );
 	const [ pending, setPending ] = useState( {
 		save: false,
@@ -100,7 +110,11 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 
 	const dirty = ! sameForm( fields, draft.form, draft.baseline );
 	const problem = adapter.problem ? adapter.problem( draft.form ) : null;
-	useUnsavedWarning( dirty );
+	useUnsavedWarning( dirty && ! drafts );
+
+	useEffect( () => {
+		drafts?.set( id, draft, dirty );
+	}, [ drafts, id, draft, dirty ] );
 
 	const start = ( action ) => {
 		busy.current[ action ] = true;
