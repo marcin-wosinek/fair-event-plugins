@@ -105,7 +105,7 @@ language pack is installed.
 ## Opt-in: `bundled-translations` feature flag
 
 Each plugin (`fair-events`, `fair-payments-connector`, `fair-audience`, `fair-platform`,
-`fair-timetable`, `fair-form`) exposes a `bundled-translations` flag through its
+`fair-timetable`, `fair-form`, `fair-finance`) exposes a `bundled-translations` flag through its
 `Features` registry. The toggle for it lives on a single central screen —
 **Settings → Fair Event Plugins**, registered once by
 `FairEventsShared\Admin\SettingsPage` (see
@@ -153,5 +153,17 @@ WordPress.org, so there is no language pack for them to wait on. Each calls
 `Features::script_translations_path()` always returns the bundled
 `build/languages/` path (no flag, no `null` case). They don't get a row on
 the central Settings → Fair Event Plugins screen — there's nothing to toggle.
+
+## Checking text domains
+
+A plugin split out of a parent can keep the parent's text domain without
+anything failing: the string renders, but never translated.
+`npm run validate:text-domains` (run in CI) checks that each enforced
+plugin's gettext calls (JS and PHP), `block.json` `textdomain`,
+`wp_set_script_translations()` / `load_plugin_textdomain()` calls and plugin
+header use the plugin's **own** domain; a missing or non-literal domain fails
+too, since `wp i18n make-pot` can't extract it. Enforced plugins are listed in
+`TEXT_DOMAIN_OWNERS` in `scripts/validate-text-domains.mjs` — add a plugin
+there once its source is clean.
 
 **Reference**: [I18n improvements in WordPress 6.7](https://make.wordpress.org/core/2024/10/21/i18n-improvements-6-7/)

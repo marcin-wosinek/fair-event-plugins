@@ -61,7 +61,7 @@ const TransferModal = ( {
 
 	const budgetOptions = [
 		{
-			label: __( '-- Select Budget --', 'fair-payments-connector' ),
+			label: __( '-- Select Budget --', 'fair-finance' ),
 			value: '',
 		},
 		...budgets.map( ( budget ) => ( {
@@ -108,8 +108,7 @@ const TransferModal = ( {
 			onSave();
 		} catch ( err ) {
 			setError(
-				err.message ||
-					__( 'Failed to save transfer.', 'fair-payments-connector' )
+				err.message || __( 'Failed to save transfer.', 'fair-finance' )
 			);
 		} finally {
 			setIsSaving( false );
@@ -120,8 +119,8 @@ const TransferModal = ( {
 		<Modal
 			title={
 				isEditMode
-					? __( 'Edit Transfer', 'fair-payments-connector' )
-					: __( 'New Transfer', 'fair-payments-connector' )
+					? __( 'Edit Transfer', 'fair-finance' )
+					: __( 'New Transfer', 'fair-finance' )
 			}
 			onRequestClose={ onCancel }
 			style={ { maxWidth: '500px', width: '100%' } }
@@ -138,7 +137,7 @@ const TransferModal = ( {
 					) }
 
 					<TextControl
-						label={ __( 'Amount', 'fair-payments-connector' ) }
+						label={ __( 'Amount', 'fair-finance' ) }
 						value={ formData.amount }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, amount: value } )
@@ -147,14 +146,11 @@ const TransferModal = ( {
 						step="0.01"
 						min="0.01"
 						required
-						help={ __(
-							'Enter amount in EUR',
-							'fair-payments-connector'
-						) }
+						help={ __( 'Enter amount in EUR', 'fair-finance' ) }
 					/>
 
 					<TextControl
-						label={ __( 'Date', 'fair-payments-connector' ) }
+						label={ __( 'Date', 'fair-finance' ) }
 						value={ formData.entry_date }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, entry_date: value } )
@@ -164,22 +160,19 @@ const TransferModal = ( {
 					/>
 
 					<TextareaControl
-						label={ __( 'Description', 'fair-payments-connector' ) }
+						label={ __( 'Description', 'fair-finance' ) }
 						value={ formData.description }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, description: value } )
 						}
 						help={ __(
 							'Optional description for this transfer',
-							'fair-payments-connector'
+							'fair-finance'
 						) }
 					/>
 
 					<SelectControl
-						label={ __(
-							'From Budget (Source)',
-							'fair-payments-connector'
-						) }
+						label={ __( 'From Budget (Source)', 'fair-finance' ) }
 						value={ formData.source_budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
@@ -191,10 +184,7 @@ const TransferModal = ( {
 					/>
 
 					<SelectControl
-						label={ __(
-							'To Budget (Target)',
-							'fair-payments-connector'
-						) }
+						label={ __( 'To Budget (Target)', 'fair-finance' ) }
 						value={ formData.target_budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
@@ -212,7 +202,7 @@ const TransferModal = ( {
 						>
 							{ __(
 								'Source and target budgets must be different.',
-								'fair-payments-connector'
+								'fair-finance'
 							) }
 						</div>
 					) }
@@ -249,7 +239,7 @@ const TransferModal = ( {
 							onClick={ onCancel }
 							disabled={ isSaving }
 						>
-							{ __( 'Cancel', 'fair-payments-connector' ) }
+							{ __( 'Cancel', 'fair-finance' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -265,14 +255,8 @@ const TransferModal = ( {
 							}
 						>
 							{ isEditMode
-								? __(
-										'Update Transfer',
-										'fair-payments-connector'
-									)
-								: __(
-										'Create Transfer',
-										'fair-payments-connector'
-									) }
+								? __( 'Update Transfer', 'fair-finance' )
+								: __( 'Create Transfer', 'fair-finance' ) }
 						</Button>
 					</HStack>
 				</VStack>

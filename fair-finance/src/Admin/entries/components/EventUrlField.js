@@ -58,7 +58,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 		return (
 			<div>
 				<div style={ { marginBottom: '4px', fontWeight: '600' } }>
-					{ __( 'Link', 'fair-payments-connector' ) }
+					{ __( 'Link', 'fair-finance' ) }
 				</div>
 				<HStack spacing={ 2 }>
 					<a
@@ -75,7 +75,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 						isDestructive
 						onClick={ () => onChange( '', null ) }
 					>
-						{ __( 'Clear', 'fair-payments-connector' ) }
+						{ __( 'Clear', 'fair-finance' ) }
 					</Button>
 				</HStack>
 			</div>
@@ -85,7 +85,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 	return (
 		<div>
 			<div style={ { marginBottom: '4px', fontWeight: '600' } }>
-				{ __( 'Link', 'fair-payments-connector' ) }
+				{ __( 'Link', 'fair-finance' ) }
 			</div>
 			{ mode === 'search' && (
 				<div>
@@ -94,7 +94,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 						onChange={ setSearchTerm }
 						placeholder={ __(
 							'Search events or paste a URL...',
-							'fair-payments-connector'
+							'fair-finance'
 						) }
 						autoComplete="off"
 					/>
@@ -108,7 +108,7 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 								setSearchTerm( '' );
 							} }
 						>
-							{ __( 'Use this URL', 'fair-payments-connector' ) }
+							{ __( 'Use this URL', 'fair-finance' ) }
 						</Button>
 					) }
 					{ isSearching && <Spinner /> }

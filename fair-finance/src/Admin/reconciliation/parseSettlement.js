@@ -90,10 +90,7 @@ function findHeader( rows ) {
 export function parseSettlementRows( rows ) {
 	if ( ! Array.isArray( rows ) || rows.length === 0 ) {
 		throw new Error(
-			__(
-				'The file is empty or could not be read.',
-				'fair-payments-connector'
-			)
+			__( 'The file is empty or could not be read.', 'fair-finance' )
 		);
 	}
 
@@ -102,7 +99,7 @@ export function parseSettlementRows( rows ) {
 		throw new Error(
 			__(
 				'This does not look like a Mollie settlement export (missing expected columns).',
-				'fair-payments-connector'
+				'fair-finance'
 			)
 		);
 	}
@@ -190,17 +187,14 @@ export function parseSettlementRows( rows ) {
 
 	if ( references.size === 0 ) {
 		throw new Error(
-			__(
-				'No settlement reference found in the file.',
-				'fair-payments-connector'
-			)
+			__( 'No settlement reference found in the file.', 'fair-finance' )
 		);
 	}
 	if ( references.size > 1 ) {
 		throw new Error(
 			__(
 				'The file contains multiple settlement references. Upload one settlement at a time.',
-				'fair-payments-connector'
+				'fair-finance'
 			)
 		);
 	}
@@ -208,7 +202,7 @@ export function parseSettlementRows( rows ) {
 		throw new Error(
 			__(
 				'The file contains multiple currencies. Upload one settlement at a time.',
-				'fair-payments-connector'
+				'fair-finance'
 			)
 		);
 	}
@@ -217,7 +211,7 @@ export function parseSettlementRows( rows ) {
 		throw new Error(
 			__(
 				'No payment rows found in the settlement file.',
-				'fair-payments-connector'
+				'fair-finance'
 			)
 		);
 	}

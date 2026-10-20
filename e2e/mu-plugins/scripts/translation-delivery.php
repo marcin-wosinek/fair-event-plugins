@@ -1,9 +1,12 @@
 <?php
 /**
- * Switch the site language and how Fair Events translations reach it.
+ * Switch the site language and how a plugin's translations reach it.
  *
  * Run via WP-CLI against the wp-env tests instance:
- *   wp eval-file wp-content/mu-plugins/scripts/translation-delivery.php <mode> [locale]
+ *   wp eval-file wp-content/mu-plugins/scripts/translation-delivery.php <mode> [locale] [plugin]
+ *
+ * The plugin defaults to fair-events; it must have a bundled-translations
+ * flag stored in its `fair_{plugin}_features` option.
  *
  * Modes:
  *   language-pack  Copy the plugin's own .mo and build/languages JSON for the
@@ -25,22 +28,31 @@
 
 $delivery_mode = isset( $args[0] ) ? $args[0] : '';
 $target_locale = isset( $args[1] ) ? $args[1] : 'es_ES';
+$plugin_slug   = isset( $args[2] ) ? $args[2] : 'fair-events';
+
+$feature_options = array(
+	'fair-events'  => 'fair_events_features',
+	'fair-finance' => 'fair_finance_features',
+);
 
 if ( ! in_array( $delivery_mode, array( 'language-pack', 'bundled', 'reset' ), true ) ) {
-	WP_CLI::error( 'Usage: translation-delivery.php <language-pack|bundled|reset> [locale]' );
+	WP_CLI::error( 'Usage: translation-delivery.php <language-pack|bundled|reset> [locale] [plugin]' );
+}
+if ( ! isset( $feature_options[ $plugin_slug ] ) ) {
+	WP_CLI::error( 'Unsupported plugin: ' . $plugin_slug );
 }
 if ( ! preg_match( '/^[a-z]{2,3}(_[A-Z]{2})?$/', $target_locale ) ) {
 	WP_CLI::error( 'Invalid locale.' );
 }
 
-$plugin_dir = WP_PLUGIN_DIR . '/fair-events';
+$plugin_dir = WP_PLUGIN_DIR . '/' . $plugin_slug;
 $pack_dir   = WP_LANG_DIR . '/plugins';
 
 // Remove files copied by an earlier language-pack run, for any locale.
 $removed = 0;
 $copies  = array_merge(
-	(array) glob( $pack_dir . '/fair-events-*.mo' ),
-	(array) glob( $pack_dir . '/fair-events-*.json' )
+	(array) glob( $pack_dir . "/{$plugin_slug}-*.mo" ),
+	(array) glob( $pack_dir . "/{$plugin_slug}-*.json" )
 );
 foreach ( $copies as $file ) {
 	if ( wp_delete_file( $file ) || ! file_exists( $file ) ) {
@@ -52,8 +64,8 @@ $copied = 0;
 if ( 'language-pack' === $delivery_mode ) {
 	wp_mkdir_p( $pack_dir );
 	$sources = array_merge(
-		array( $plugin_dir . "/languages/fair-events-{$target_locale}.mo" ),
-		(array) glob( $plugin_dir . "/build/languages/fair-events-{$target_locale}-*.json" )
+		array( $plugin_dir . "/languages/{$plugin_slug}-{$target_locale}.mo" ),
+		(array) glob( $plugin_dir . "/build/languages/{$plugin_slug}-{$target_locale}-*.json" )
 	);
 	foreach ( $sources as $source ) {
 		if ( is_file( $source ) && copy( $source, $pack_dir . '/' . basename( $source ) ) ) {
@@ -65,13 +77,14 @@ if ( 'language-pack' === $delivery_mode ) {
 	}
 }
 
-$features                         = (array) get_option( 'fair_events_features', array() );
+$features                         = (array) get_option( $feature_options[ $plugin_slug ], array() );
 $features['bundled-translations'] = ( 'bundled' === $delivery_mode );
-update_option( 'fair_events_features', $features );
+update_option( $feature_options[ $plugin_slug ], $features );
 update_option( 'WPLANG', 'reset' === $delivery_mode ? '' : $target_locale );
 
 echo 'E2E_TRANSLATIONS:' . wp_json_encode(
 	array(
+		'plugin'  => $plugin_slug,
 		'mode'    => $delivery_mode,
 		'locale'  => 'reset' === $delivery_mode ? '' : $target_locale,
 		'copied'  => $copied,

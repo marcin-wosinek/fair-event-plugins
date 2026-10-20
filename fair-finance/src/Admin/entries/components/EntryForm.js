@@ -91,8 +91,7 @@ const EntryForm = ( {
 			onSave();
 		} catch ( err ) {
 			setError(
-				err.message ||
-					__( 'Failed to save entry.', 'fair-payments-connector' )
+				err.message || __( 'Failed to save entry.', 'fair-finance' )
 			);
 		} finally {
 			setIsSaving( false );
@@ -101,7 +100,7 @@ const EntryForm = ( {
 
 	const budgetOptions = [
 		{
-			label: __( '-- No Budget --', 'fair-payments-connector' ),
+			label: __( '-- No Budget --', 'fair-finance' ),
 			value: '',
 		},
 		...budgets.map( ( budget ) => ( {
@@ -114,8 +113,8 @@ const EntryForm = ( {
 		<Modal
 			title={
 				entry
-					? __( 'Edit Financial Entry', 'fair-payments-connector' )
-					: __( 'Add Financial Entry', 'fair-payments-connector' )
+					? __( 'Edit Financial Entry', 'fair-finance' )
+					: __( 'Add Financial Entry', 'fair-finance' )
 			}
 			onRequestClose={ onCancel }
 			style={ { maxWidth: '500px', width: '100%' } }
@@ -132,18 +131,15 @@ const EntryForm = ( {
 					) }
 
 					<SelectControl
-						label={ __( 'Type', 'fair-payments-connector' ) }
+						label={ __( 'Type', 'fair-finance' ) }
 						value={ formData.entry_type }
 						options={ [
 							{
-								label: __( 'Cost', 'fair-payments-connector' ),
+								label: __( 'Cost', 'fair-finance' ),
 								value: 'cost',
 							},
 							{
-								label: __(
-									'Income',
-									'fair-payments-connector'
-								),
+								label: __( 'Income', 'fair-finance' ),
 								value: 'income',
 							},
 						] }
@@ -153,7 +149,7 @@ const EntryForm = ( {
 					/>
 
 					<TextControl
-						label={ __( 'Amount', 'fair-payments-connector' ) }
+						label={ __( 'Amount', 'fair-finance' ) }
 						value={ formData.amount }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, amount: value } )
@@ -162,14 +158,11 @@ const EntryForm = ( {
 						step="0.01"
 						min="0.01"
 						required
-						help={ __(
-							'Enter amount in EUR',
-							'fair-payments-connector'
-						) }
+						help={ __( 'Enter amount in EUR', 'fair-finance' ) }
 					/>
 
 					<TextControl
-						label={ __( 'Date', 'fair-payments-connector' ) }
+						label={ __( 'Date', 'fair-finance' ) }
 						value={ formData.entry_date }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, entry_date: value } )
@@ -179,22 +172,19 @@ const EntryForm = ( {
 					/>
 
 					<TextareaControl
-						label={ __( 'Description', 'fair-payments-connector' ) }
+						label={ __( 'Description', 'fair-finance' ) }
 						value={ formData.description }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, description: value } )
 						}
 						help={ __(
 							'Optional description for this entry',
-							'fair-payments-connector'
+							'fair-finance'
 						) }
 					/>
 
 					<SelectControl
-						label={ __(
-							'Budget Category',
-							'fair-payments-connector'
-						) }
+						label={ __( 'Budget Category', 'fair-finance' ) }
 						value={ formData.budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
@@ -230,7 +220,7 @@ const EntryForm = ( {
 							onClick={ onCancel }
 							disabled={ isSaving }
 						>
-							{ __( 'Cancel', 'fair-payments-connector' ) }
+							{ __( 'Cancel', 'fair-finance' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -243,14 +233,8 @@ const EntryForm = ( {
 							}
 						>
 							{ entry
-								? __(
-										'Update Entry',
-										'fair-payments-connector'
-									)
-								: __(
-										'Create Entry',
-										'fair-payments-connector'
-									) }
+								? __( 'Update Entry', 'fair-finance' )
+								: __( 'Create Entry', 'fair-finance' ) }
 						</Button>
 					</HStack>
 				</VStack>

@@ -31,7 +31,7 @@ import SettlementImportModal from './components/SettlementImportModal.js';
 import AllocationProposal, {
 	matchOutcome,
 } from './components/AllocationProposal.js';
-import { formatDateOnly } from 'fair-events-shared';
+import { formatDateOnly } from 'fair-events-shared/src/dateTime.js';
 
 const EntryDateLink = ( { entry } ) => (
 	<a
@@ -330,10 +330,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to load reconciliation data.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to load reconciliation data.', 'fair-finance' )
 			);
 		} finally {
 			setLoading( false );
@@ -442,10 +439,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to match transactions.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to match transactions.', 'fair-finance' )
 			);
 		} finally {
 			setMatching( false );
@@ -461,19 +455,13 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 				data: { transaction_id: transactionId },
 			} );
 			setSuccess(
-				__(
-					'Transaction unmatched successfully.',
-					'fair-payments-connector'
-				)
+				__( 'Transaction unmatched successfully.', 'fair-finance' )
 			);
 			await loadData();
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to unmatch transaction.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to unmatch transaction.', 'fair-finance' )
 			);
 		}
 	};
@@ -486,19 +474,13 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 				method: 'DELETE',
 			} );
 			setSuccess(
-				__(
-					'All transactions unmatched successfully.',
-					'fair-payments-connector'
-				)
+				__( 'All transactions unmatched successfully.', 'fair-finance' )
 			);
 			await loadData();
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to unmatch transactions.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to unmatch transactions.', 'fair-finance' )
 			);
 		}
 	};
@@ -526,7 +508,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 	if ( loading ) {
 		return (
 			<div className="wrap">
-				<h1>{ __( 'Reconciliation', 'fair-payments-connector' ) }</h1>
+				<h1>{ __( 'Reconciliation', 'fair-finance' ) }</h1>
 				<div style={ { textAlign: 'center', padding: '40px' } }>
 					<Spinner />
 				</div>
@@ -537,7 +519,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 	return (
 		<div className="wrap">
 			<HStack justify="space-between" alignment="center" wrap>
-				<h1>{ __( 'Reconciliation', 'fair-payments-connector' ) }</h1>
+				<h1>{ __( 'Reconciliation', 'fair-finance' ) }</h1>
 				<HStack justify="flex-end" expanded={ false } wrap>
 					<Button
 						variant="tertiary"
@@ -549,10 +531,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 						variant="secondary"
 						onClick={ () => setShowSettlementModal( true ) }
 					>
-						{ __(
-							'Import settlement CSV',
-							'fair-payments-connector'
-						) }
+						{ __( 'Import settlement CSV', 'fair-finance' ) }
 					</Button>
 				</HStack>
 			</HStack>
@@ -564,7 +543,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 						setSuccess(
 							__(
 								'Settlement matched successfully.',
-								'fair-payments-connector'
+								'fair-finance'
 							)
 						);
 						loadData();
@@ -620,10 +599,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 					<Panel>
 						<PanelBody
 							title={
-								__(
-									'Unmatched Bank Entries',
-									'fair-payments-connector'
-								) +
+								__( 'Unmatched Bank Entries', 'fair-finance' ) +
 								` (${ filteredUnmatchedEntries.length }/${ unmatchedEntries.length })`
 							}
 							initialOpen={ true }
@@ -631,20 +607,20 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 							<TextControl
 								label={ __(
 									'Filter by description',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 								value={ descriptionFilter }
 								onChange={ setDescriptionFilter }
 								placeholder={ __(
 									'Type to filter…',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 							/>
 							{ filteredUnmatchedEntries.length === 0 ? (
 								<p>
 									{ __(
 										'All bank entries are matched.',
-										'fair-payments-connector'
+										'fair-finance'
 									) }
 								</p>
 							) : (
@@ -655,33 +631,27 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 									<thead>
 										<tr>
 											<th>
-												{ __(
-													'Date',
-													'fair-payments-connector'
-												) }
+												{ __( 'Date', 'fair-finance' ) }
 											</th>
 											<th>
 												{ __(
 													'Amount',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</th>
 											<th>
-												{ __(
-													'Type',
-													'fair-payments-connector'
-												) }
+												{ __( 'Type', 'fair-finance' ) }
 											</th>
 											<th>
 												{ __(
 													'Description',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</th>
 											<th style={ { width: '80px' } }>
 												{ __(
 													'Action',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</th>
 										</tr>
@@ -717,7 +687,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 															<em>
 																{ __(
 																	'No description',
-																	'fair-payments-connector'
+																	'fair-finance'
 																) }
 															</em>
 														) }
@@ -741,11 +711,11 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 															entry.id
 																? __(
 																		'Selected',
-																		'fair-payments-connector'
+																		'fair-finance'
 																	)
 																: __(
 																		'Select',
-																		'fair-payments-connector'
+																		'fair-finance'
 																	) }
 														</Button>
 													</td>
@@ -766,7 +736,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 							<PanelBody
 								title={ __(
 									'Match Transactions',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 								initialOpen={ true }
 							>
@@ -783,7 +753,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 											<strong>
 												{ __(
 													'Matching entry:',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</strong>{ ' ' }
 											{ formatAmount(
@@ -827,7 +797,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 											<Text>
 												{ __(
 													'Finding suggestions...',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</Text>
 										</HStack>
@@ -839,7 +809,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 												<Text weight="bold">
 													{ __(
 														'Suggestions:',
-														'fair-payments-connector'
+														'fair-finance'
 													) }
 												</Text>
 												{ suggestions.map(
@@ -868,12 +838,12 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 																}{ ' ' }
 																{ __(
 																	'transactions',
-																	'fair-payments-connector'
+																	'fair-finance'
 																) }
 																{ ' — ' }
 																{ __(
 																	'Net:',
-																	'fair-payments-connector'
+																	'fair-finance'
 																) }{ ' ' }
 																{ formatAmount(
 																	suggestion.net_amount
@@ -881,7 +851,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 																{ ' (' }
 																{ __(
 																	'diff:',
-																	'fair-payments-connector'
+																	'fair-finance'
 																) }{ ' ' }
 																{ formatAmount(
 																	suggestion.difference
@@ -899,7 +869,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 															>
 																{ __(
 																	'Apply',
-																	'fair-payments-connector'
+																	'fair-finance'
 																) }
 															</Button>
 														</div>
@@ -924,7 +894,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														<strong>
 															{ __(
 																'Selected:',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</strong>{ ' ' }
 														{
@@ -932,14 +902,14 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														}{ ' ' }
 														{ __(
 															'transactions',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</Text>
 													<Text>
 														<strong>
 															{ __(
 																'Gross total:',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</strong>{ ' ' }
 														{ formatAmount(
@@ -950,7 +920,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														<strong>
 															{ __(
 																'Net total (after fees):',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</strong>{ ' ' }
 														{ formatAmount(
@@ -961,7 +931,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														<strong>
 															{ __(
 																'Difference from entry:',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</strong>{ ' ' }
 														{ formatAmount(
@@ -974,7 +944,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 													<SelectControl
 														label={ __(
 															'Budget',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 														value={
 															selectedBudgetId
@@ -986,7 +956,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 															{
 																label: __(
 																	'No budget',
-																	'fair-payments-connector'
+																	'fair-finance'
 																),
 																value: '',
 															},
@@ -1008,11 +978,11 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 															selectedEntry.budget_id
 																? __(
 																		'This entry already has a budget; matching keeps it.',
-																		'fair-payments-connector'
+																		'fair-finance'
 																	)
 																: __(
 																		'Proposed from the selected transactions’ source; change it if needed.',
-																		'fair-payments-connector'
+																		'fair-finance'
 																	)
 														}
 														__nextHasNoMarginBottom
@@ -1027,7 +997,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 													>
 														{ __(
 															'Confirm Match',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</Button>
 												</VStack>
@@ -1048,7 +1018,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 										<p>
 											{ __(
 												'No unmatched transactions found.',
-												'fair-payments-connector'
+												'fair-finance'
 											) }
 										</p>
 									) : (
@@ -1066,31 +1036,31 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 													<th>
 														{ __(
 															'Date',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</th>
 													<th>
 														{ __(
 															'Amount',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</th>
 													<th>
 														{ __(
 															'Net',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</th>
 													<th>
 														{ __(
 															'Description',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</th>
 													<th>
 														{ __(
 															'Mollie ID',
-															'fair-payments-connector'
+															'fair-finance'
 														) }
 													</th>
 												</tr>
@@ -1148,7 +1118,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 																		<em>
 																			{ __(
 																				'No description',
-																				'fair-payments-connector'
+																				'fair-finance'
 																			) }
 																		</em>
 																	) }
@@ -1182,14 +1152,14 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 							<PanelBody
 								title={ __(
 									'Match Transactions',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 								initialOpen={ true }
 							>
 								<p>
 									{ __(
 										'Select a bank entry from the left panel to start matching.',
-										'fair-payments-connector'
+										'fair-finance'
 									) }
 								</p>
 							</PanelBody>
@@ -1203,7 +1173,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 				<Panel>
 					<PanelBody
 						title={
-							__( 'Matched Entries', 'fair-payments-connector' ) +
+							__( 'Matched Entries', 'fair-finance' ) +
 							` (${ matchedEntries.length })`
 						}
 						initialOpen={ false }
@@ -1212,7 +1182,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 							<p>
 								{ __(
 									'No matched entries yet.',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 							</p>
 						) : (
@@ -1242,7 +1212,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 													0 }{ ' ' }
 												{ __(
 													'matched transactions',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</Text>
 											{ entry.settlement && (
@@ -1293,7 +1263,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 											>
 												{ __(
 													'Unmatch All',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</Button>
 										) }
@@ -1310,25 +1280,25 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														<th>
 															{ __(
 																'Date',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</th>
 														<th>
 															{ __(
 																'Amount',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</th>
 														<th>
 															{ __(
 																'Description',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</th>
 														<th>
 															{ __(
 																'Mollie ID',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</th>
 														<th
@@ -1338,7 +1308,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 														>
 															{ __(
 																'Action',
-																'fair-payments-connector'
+																'fair-finance'
 															) }
 														</th>
 													</tr>
@@ -1390,7 +1360,7 @@ const ReconciliationApp = ( { onReviewSettlement = () => {} } ) => {
 																		>
 																			{ __(
 																				'Unmatch',
-																				'fair-payments-connector'
+																				'fair-finance'
 																			) }
 																		</Button>
 																	) }

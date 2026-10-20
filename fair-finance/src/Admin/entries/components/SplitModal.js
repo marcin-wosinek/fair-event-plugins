@@ -71,7 +71,7 @@ const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
 					isDestructive
 					onClick={ () => onChange( '', null ) }
 				>
-					{ __( 'Clear', 'fair-payments-connector' ) }
+					{ __( 'Clear', 'fair-finance' ) }
 				</Button>
 			</HStack>
 		);
@@ -84,7 +84,7 @@ const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
 				onChange={ setSearchTerm }
 				placeholder={ __(
 					'Search events or paste a URL...',
-					'fair-payments-connector'
+					'fair-finance'
 				) }
 				autoComplete="off"
 			/>
@@ -98,7 +98,7 @@ const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
 						setSearchTerm( '' );
 					} }
 				>
-					{ __( 'Use this URL', 'fair-payments-connector' ) }
+					{ __( 'Use this URL', 'fair-finance' ) }
 				</Button>
 			) }
 			{ isSearching && <Spinner /> }
@@ -206,7 +206,7 @@ const SplitModal = ( {
 
 	const budgetOptions = [
 		{
-			label: __( '-- No Budget --', 'fair-payments-connector' ),
+			label: __( '-- No Budget --', 'fair-finance' ),
 			value: '',
 		},
 		...budgets.map( ( budget ) => ( {
@@ -276,8 +276,7 @@ const SplitModal = ( {
 			onSplit();
 		} catch ( err ) {
 			setError(
-				err.message ||
-					__( 'Failed to split entry.', 'fair-payments-connector' )
+				err.message || __( 'Failed to split entry.', 'fair-finance' )
 			);
 		} finally {
 			setIsSaving( false );
@@ -295,8 +294,8 @@ const SplitModal = ( {
 		<Modal
 			title={
 				isEditMode
-					? __( 'Edit Split', 'fair-payments-connector' )
-					: __( 'Split Entry', 'fair-payments-connector' )
+					? __( 'Edit Split', 'fair-finance' )
+					: __( 'Split Entry', 'fair-finance' )
 			}
 			onRequestClose={ onCancel }
 			style={ { maxWidth: '640px', width: '100%' } }
@@ -314,27 +313,21 @@ const SplitModal = ( {
 						<HStack spacing={ 4 }>
 							<div>
 								<strong>
-									{ __(
-										'Amount:',
-										'fair-payments-connector'
-									) }
+									{ __( 'Amount:', 'fair-finance' ) }
 								</strong>{ ' ' }
 								{ formatAmount( entry.amount ) }
 							</div>
 							<div>
 								<strong>
-									{ __( 'Type:', 'fair-payments-connector' ) }
+									{ __( 'Type:', 'fair-finance' ) }
 								</strong>{ ' ' }
 								{ entry.entry_type === 'cost'
-									? __( 'Cost', 'fair-payments-connector' )
-									: __(
-											'Income',
-											'fair-payments-connector'
-										) }
+									? __( 'Cost', 'fair-finance' )
+									: __( 'Income', 'fair-finance' ) }
 							</div>
 							<div>
 								<strong>
-									{ __( 'Date:', 'fair-payments-connector' ) }
+									{ __( 'Date:', 'fair-finance' ) }
 								</strong>{ ' ' }
 								{ entry.entry_date }
 							</div>
@@ -342,10 +335,7 @@ const SplitModal = ( {
 						{ entry.description && (
 							<div style={ { marginTop: '4px' } }>
 								<strong>
-									{ __(
-										'Description:',
-										'fair-payments-connector'
-									) }
+									{ __( 'Description:', 'fair-finance' ) }
 								</strong>{ ' ' }
 								{ entry.description }
 							</div>
@@ -379,10 +369,7 @@ const SplitModal = ( {
 									} }
 								>
 									<SelectControl
-										label={ __(
-											'Budget',
-											'fair-payments-connector'
-										) }
+										label={ __( 'Budget', 'fair-finance' ) }
 										value={ allocation.budget_id }
 										options={ budgetOptions }
 										onChange={ ( value ) =>
@@ -396,10 +383,7 @@ const SplitModal = ( {
 								</div>
 								<div style={ { width: '120px' } }>
 									<TextControl
-										label={ __(
-											'Amount',
-											'fair-payments-connector'
-										) }
+										label={ __( 'Amount', 'fair-finance' ) }
 										value={ allocation.amount }
 										onChange={ ( value ) =>
 											updateAllocation(
@@ -421,19 +405,13 @@ const SplitModal = ( {
 											size="small"
 											onClick={ () => removeRow( index ) }
 										>
-											{ __(
-												'Remove',
-												'fair-payments-connector'
-											) }
+											{ __( 'Remove', 'fair-finance' ) }
 										</Button>
 									</div>
 								) }
 							</HStack>
 							<TextareaControl
-								label={ __(
-									'Description',
-									'fair-payments-connector'
-								) }
+								label={ __( 'Description', 'fair-finance' ) }
 								value={ allocation.description }
 								onChange={ ( value ) =>
 									updateAllocation(
@@ -453,10 +431,7 @@ const SplitModal = ( {
 											fontSize: '13px',
 										} }
 									>
-										{ __(
-											'Link',
-											'fair-payments-connector'
-										) }
+										{ __( 'Link', 'fair-finance' ) }
 									</div>
 									<SplitEventUrlField
 										value={ allocation.event_url }
@@ -479,7 +454,7 @@ const SplitModal = ( {
 					) ) }
 
 					<Button variant="secondary" onClick={ addRow }>
-						{ __( '+ Add Row', 'fair-payments-connector' ) }
+						{ __( '+ Add Row', 'fair-finance' ) }
 					</Button>
 
 					{ /* Running total */ }
@@ -491,7 +466,7 @@ const SplitModal = ( {
 							fontWeight: 'bold',
 						} }
 					>
-						{ __( 'Allocated:', 'fair-payments-connector' ) }{ ' ' }
+						{ __( 'Allocated:', 'fair-finance' ) }{ ' ' }
 						{ formatAmount( totalAllocated ) } /{ ' ' }
 						{ formatAmount( entry.amount ) }
 						{ ! isBalanced && (
@@ -501,10 +476,7 @@ const SplitModal = ( {
 									color: '#d63638',
 								} }
 							>
-								{ __(
-									'Remaining:',
-									'fair-payments-connector'
-								) }{ ' ' }
+								{ __( 'Remaining:', 'fair-finance' ) }{ ' ' }
 								{ formatAmount( remaining ) }
 							</span>
 						) }
@@ -521,7 +493,7 @@ const SplitModal = ( {
 								onClick={ onUnsplit }
 								disabled={ isSaving }
 							>
-								{ __( 'Unsplit', 'fair-payments-connector' ) }
+								{ __( 'Unsplit', 'fair-finance' ) }
 							</Button>
 						) }
 						<HStack justify="flex-end" spacing={ 2 }>
@@ -530,7 +502,7 @@ const SplitModal = ( {
 								onClick={ onCancel }
 								disabled={ isSaving }
 							>
-								{ __( 'Cancel', 'fair-payments-connector' ) }
+								{ __( 'Cancel', 'fair-finance' ) }
 							</Button>
 							<Button
 								variant="primary"
@@ -543,14 +515,8 @@ const SplitModal = ( {
 								}
 							>
 								{ isEditMode
-									? __(
-											'Update Split',
-											'fair-payments-connector'
-										)
-									: __(
-											'Split Entry',
-											'fair-payments-connector'
-										) }
+									? __( 'Update Split', 'fair-finance' )
+									: __( 'Split Entry', 'fair-finance' ) }
 							</Button>
 						</HStack>
 					</HStack>

@@ -12,7 +12,7 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { formatDateOnly } from 'fair-events-shared';
+import { formatDateOnly } from 'fair-events-shared/src/dateTime.js';
 
 const MatchModal = ( { entry, onMatch, onCancel } ) => {
 	const [ transactions, setTransactions ] = useState( [] );
@@ -43,10 +43,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to load transactions.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to load transactions.', 'fair-finance' )
 			);
 		} finally {
 			setLoading( false );
@@ -73,10 +70,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to search transactions.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to search transactions.', 'fair-finance' )
 			);
 		} finally {
 			setLoading( false );
@@ -100,10 +94,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to match transaction.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to match transaction.', 'fair-finance' )
 			);
 			setMatching( false );
 		}
@@ -118,7 +109,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 
 	return (
 		<Modal
-			title={ __( 'Match to Transaction', 'fair-payments-connector' ) }
+			title={ __( 'Match to Transaction', 'fair-finance' ) }
 			onRequestClose={ onCancel }
 			style={ { maxWidth: '640px', width: '100%' } }
 		>
@@ -131,9 +122,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 					} }
 				>
 					<p style={ { margin: 0 } }>
-						<strong>
-							{ __( 'Entry:', 'fair-payments-connector' ) }
-						</strong>{ ' ' }
+						<strong>{ __( 'Entry:', 'fair-finance' ) }</strong>{ ' ' }
 						{ formatAmount( entry.amount ) } ({ entry.entry_type })
 						- { entry.entry_date }
 						{ entry.description && ` - ${ entry.description }` }
@@ -142,12 +131,12 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 
 				<HStack>
 					<TextControl
-						label={ __( 'Search', 'fair-payments-connector' ) }
+						label={ __( 'Search', 'fair-finance' ) }
 						value={ searchTerm }
 						onChange={ setSearchTerm }
 						placeholder={ __(
 							'Search by description or Mollie ID...',
-							'fair-payments-connector'
+							'fair-finance'
 						) }
 						style={ { flex: 1 } }
 					/>
@@ -157,7 +146,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 						disabled={ loading }
 						style={ { marginTop: '24px' } }
 					>
-						{ __( 'Search', 'fair-payments-connector' ) }
+						{ __( 'Search', 'fair-finance' ) }
 					</Button>
 				</HStack>
 
@@ -174,10 +163,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 					<div style={ { textAlign: 'center', padding: '20px' } }>
 						<Spinner />
 						<p>
-							{ __(
-								'Loading transactions...',
-								'fair-payments-connector'
-							) }
+							{ __( 'Loading transactions...', 'fair-finance' ) }
 						</p>
 					</div>
 				) }
@@ -187,7 +173,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 						<p>
 							{ __(
 								'No matching transactions found. Try adjusting your search.',
-								'fair-payments-connector'
+								'fair-finance'
 							) }
 						</p>
 					</div>
@@ -200,32 +186,12 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 					>
 						<thead>
 							<tr>
-								<th>
-									{ __( 'Date', 'fair-payments-connector' ) }
-								</th>
-								<th>
-									{ __(
-										'Amount',
-										'fair-payments-connector'
-									) }
-								</th>
-								<th>
-									{ __(
-										'Description',
-										'fair-payments-connector'
-									) }
-								</th>
-								<th>
-									{ __(
-										'Mollie ID',
-										'fair-payments-connector'
-									) }
-								</th>
+								<th>{ __( 'Date', 'fair-finance' ) }</th>
+								<th>{ __( 'Amount', 'fair-finance' ) }</th>
+								<th>{ __( 'Description', 'fair-finance' ) }</th>
+								<th>{ __( 'Mollie ID', 'fair-finance' ) }</th>
 								<th style={ { width: '100px' } }>
-									{ __(
-										'Action',
-										'fair-payments-connector'
-									) }
+									{ __( 'Action', 'fair-finance' ) }
 								</th>
 							</tr>
 						</thead>
@@ -249,7 +215,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 											<em>
 												{ __(
 													'No description',
-													'fair-payments-connector'
+													'fair-finance'
 												) }
 											</em>
 										) }
@@ -269,10 +235,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 											disabled={ matching }
 											isBusy={ matching }
 										>
-											{ __(
-												'Match',
-												'fair-payments-connector'
-											) }
+											{ __( 'Match', 'fair-finance' ) }
 										</Button>
 									</td>
 								</tr>
@@ -287,7 +250,7 @@ const MatchModal = ( { entry, onMatch, onCancel } ) => {
 						onClick={ onCancel }
 						disabled={ matching }
 					>
-						{ __( 'Cancel', 'fair-payments-connector' ) }
+						{ __( 'Cancel', 'fair-finance' ) }
 					</Button>
 				</HStack>
 			</VStack>
