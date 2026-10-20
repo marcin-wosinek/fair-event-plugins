@@ -70,6 +70,7 @@
 			"default": false
 		}
 	},
+	"usesContext": [ "postId", "postType" ],
 	"providesContext": {
 		"fair-calendar-button/eventData": "attributes"
 	},

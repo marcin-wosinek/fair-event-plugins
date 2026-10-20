@@ -31,18 +31,38 @@ location. It works on any post or page and does not need Fair Events.
 - `recurrence` — the editor's own representation of the rule
   (`frequency`, `count`, `until`) used to rebuild its controls. Keep it
   consistent with `rRule` when generating content; the frontend ignores it.
-- `syncWithEvent` — when the block is placed on a Fair Events event post
-  (`fair_event`), the editor enables this and copies the event's start, end,
-  all-day flag, and location into the attributes whenever they change in the
-  editor. It has no effect elsewhere and no effect at render time: the saved
-  attribute values are what visitors get.
+- `syncWithEvent` — on a Fair Events event post (`fair_event`), take the
+  start, end, all-day setting, and location from the event instead of the
+  attributes. See [Synchronizing with Fair Events](#synchronizing-with-fair-events).
+  It has no effect on other posts.
 
 The calendar entry's **title** and **link** are always the current post's
 title and permalink; they are not attributes.
 
+## Synchronizing with Fair Events
+
+A button inserted on an event post with no dates starts synchronized. The
+editor reads the event from Fair Events (including unsaved changes in the
+Event Details panel), copies its values into the attributes, and locks the
+date, all-day, and location controls. The recurrence stays manual.
+
+On the site, a synchronized button reads the event's current data on every
+render, so changes to the event show without saving the post again. The
+event is the post's primary event date; its location is the venue's name and
+address, or the event's own address when no venue is selected.
+
+When the event data can't be used — Fair Events is inactive, the event has
+no dates, or a timed event lacks a start or an end time — the editor shows a
+notice and keeps the last values, and the rendered button gets no event data
+and `data-calendar-available="false"`, so clicking it does nothing. Fix the
+event, or turn off **Keep in sync with event data**: the controls unlock
+with the latest values, and the button uses them from then on. Buttons whose
+dates were set by hand stay manual.
+
 ## Prerequisites
 
-Only Fair Calendar Button. No site records are referenced. If the Plausible
+Only Fair Calendar Button. No site records are referenced, except by a
+synchronized button, which needs Fair Events. If the Plausible
 Analytics plugin is active, clicks are tagged as a Plausible event.
 
 ## Rendering
@@ -51,7 +71,8 @@ The saved markup (a `wp-block-buttons` container with the inner button) is
 re-wrapped server-side with `data-start`, `data-end`, `data-all-day`,
 `data-description`, `data-location`, `data-recurring`, `data-rrule`,
 `data-title`, and `data-url` attributes, which the frontend script reads to
-build the menu. A timed event needs both `start` and `end`, and an all-day
+build the menu. A synchronized button takes these values from its event
+(see above). A timed event needs both `start` and `end`, and an all-day
 event needs `start`: otherwise the button still renders, but clicking it
 does nothing rather than adding an entry with a guessed time.
 
