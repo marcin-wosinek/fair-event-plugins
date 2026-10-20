@@ -13,11 +13,9 @@ import {
  * Internal dependencies
  */
 import EmailContentControls from './EmailContentControls.js';
-import EmailHistory from './EmailHistory.js';
 import EmailPreview from './EmailPreview.js';
 import NotificationEditor from './NotificationEditor.js';
 import ScheduleControls from './ScheduleControls.js';
-import { RUN_STATUS_LABELS } from './shared.js';
 import useNotificationEditor from './useNotificationEditor.js';
 
 /**
@@ -39,12 +37,6 @@ const EDITABLE_FIELDS = [
 	'intro',
 	'outro',
 ];
-
-// Sending succeeded only as far as this site can tell.
-const STATUS_LABELS = {
-	...RUN_STATUS_LABELS,
-	sent: __( 'Handed over for delivery', 'fair-events' ),
-};
 
 /**
  * Whether a value is one plain email address. The server has the final say;
@@ -207,11 +199,6 @@ export default function IndividualEmailChannel( {
 						preview={ editor.preview }
 						skipEmpty={ editor.preview?.skip_empty }
 						showRecipient
-					/>
-					<EmailHistory
-						channel={ channel }
-						statusLabels={ STATUS_LABELS }
-						showDestination
 					/>
 				</>
 			}

@@ -8,7 +8,6 @@ import { SelectControl, ToggleControl } from '@wordpress/components';
  * Internal dependencies
  */
 import EmailContentControls from './EmailContentControls.js';
-import EmailHistory from './EmailHistory.js';
 import EmailPreview from './EmailPreview.js';
 import NotificationEditor from './NotificationEditor.js';
 import ScheduleControls from './ScheduleControls.js';
@@ -109,7 +108,6 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 						preview={ editor.preview }
 						skipEmpty={ editor.saved.skip_empty }
 					/>
-					<EmailHistory channel={ channel } />
 				</>
 			}
 		>

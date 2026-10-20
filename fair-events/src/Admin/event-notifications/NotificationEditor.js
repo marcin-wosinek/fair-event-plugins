@@ -6,19 +6,15 @@ import {
 	Button,
 	Card,
 	CardBody,
-	CardHeader,
 	Notice,
 	TextControl,
 } from '@wordpress/components';
 
 /**
- * Frame of one notification section: heading with its name, kind and the
- * unsaved marker, the name field, notices, and the save, preview and test
- * buttons. The kind supplies its own controls, explanations, results and
- * history.
- *
- * A notification without a name is headed by its kind's name, so the
- * notification each kind started with keeps its familiar heading.
+ * Frame of one notification's editor: the name field, notices, and the
+ * save, preview and test buttons. The kind supplies its own controls,
+ * explanations and results. The view it is shown in heads it with the
+ * notification's name and marks unsaved changes.
  *
  * Preview and test use the saved settings, so both wait for unsaved changes;
  * the channel explains that in `notes`.
@@ -49,28 +45,10 @@ export default function NotificationEditor( {
 	after,
 } ) {
 	const { dirty, pending } = editor;
-	const name = editor.saved.name || '';
-
-	const header = (
-		<CardHeader className="fair-events-notifications__header">
-			<h2>{ name || title }</h2>
-			{ name && (
-				<span className="fair-events-notifications__kind">
-					{ title }
-				</span>
-			) }
-			{ dirty && (
-				<span className="fair-events-notifications__unsaved">
-					{ __( 'Unsaved changes', 'fair-events' ) }
-				</span>
-			) }
-		</CardHeader>
-	);
 
 	if ( unavailableMessage ) {
 		return (
 			<Card className="fair-events-notifications__channel">
-				{ header }
 				<CardBody>
 					<Notice status="warning" isDismissible={ false }>
 						{ unavailableMessage }
@@ -90,7 +68,6 @@ export default function NotificationEditor( {
 
 	return (
 		<Card className="fair-events-notifications__channel">
-			{ header }
 			<CardBody>
 				<TextControl
 					className="fair-events-notifications__name"
@@ -98,7 +75,7 @@ export default function NotificationEditor( {
 					help={ sprintf(
 						/* translators: %s: name of the notification's kind, e.g. "Telegram" */
 						__(
-							'Tells this notification apart from the others on this page. Leave it empty to show “%s”.',
+							'Tells this notification apart from the others in the list. Leave it empty to show “%s”.',
 							'fair-events'
 						),
 						title

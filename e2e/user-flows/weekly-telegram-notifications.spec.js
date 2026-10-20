@@ -6,7 +6,7 @@
  * Drives Fair Events → Event notifications and Settings → Connectors as an
  * administrator. The former entry points — the Experimental settings tab and
  * Fair Audience's Weekly Digest page — lead to that page, and saving the
- * Telegram section leaves the bulk email section alone. A bot token saved before the credential
+ * Telegram notification leaves the bulk email notification alone. A bot token saved before the credential
  * moved to Connectors keeps working with no action. The administrator then
  * picks an event feed and a plain page (no calendar block) for the heading,
  * saves two chats, and sends the next week's formatted summary as a test,
@@ -50,6 +50,11 @@ function resetState() {
 		'E2E_NOTIFICATION_CONFIGURATIONS',
 		'reset telegram'
 	);
+	runScript(
+		'notification-history-fixture.php',
+		'E2E_NOTIFICATION_HISTORY',
+		'clear telegram'
+	);
 }
 
 function telegramRequests() {
@@ -79,16 +84,28 @@ function storedTokenIs(expected) {
  * @return {import('@playwright/test').Locator} Connector card.
  */
 /**
- * A channel's section on the Event notifications page.
+ * The open notification's view on the Event notifications page: one
+ * notification is open at a time.
  *
  * @param {import('@playwright/test').Page} page Playwright page.
- * @param {string}                          name Section heading.
- * @return {import('@playwright/test').Locator} Section.
+ * @return {import('@playwright/test').Locator} View.
  */
-function channel(page, name) {
-	return page
-		.locator('.fair-events-notifications__channel')
-		.filter({ has: page.getByRole('heading', { name, exact: true }) });
+function channel(page) {
+	return page.locator('.fair-events-notifications');
+}
+
+/**
+ * Open a notification's editor, or its history, by its ID.
+ *
+ * @param {import('@playwright/test').Page} page Playwright page.
+ * @param {string}                          id   Configuration ID.
+ * @param {string}                          tab  'history' for its history.
+ * @return {Promise} Navigation.
+ */
+function openChannel(page, id, tab = '') {
+	return page.goto(
+		`${SETTINGS_URL}&configuration=${id}${tab ? `&tab=${tab}` : ''}`
+	);
 }
 
 function telegramConnector(page) {
@@ -170,11 +187,16 @@ test.describe('Weekly Telegram notifications', () => {
 		await expect(
 			page.getByRole('heading', { name: 'Event notifications' })
 		).toBeVisible();
-		const telegram = channel(page, 'Telegram');
-		const bulkEmail = channel(page, 'Bulk email');
-		await expect(telegram).toBeVisible();
-		await expect(bulkEmail).toBeVisible();
-		const bulkEmailTime = await bulkEmail.getByLabel('Send at').inputValue();
+		await expect(
+			page.getByRole('link', { name: 'Telegram', exact: true })
+		).toBeVisible();
+		const telegram = channel(page);
+		await openChannel(page, 'bulk_email');
+		const bulkEmailTime = await telegram.getByLabel('Send at').inputValue();
+		await openChannel(page, 'telegram');
+		await expect(
+			telegram.getByRole('heading', { name: 'Telegram' })
+		).toBeVisible();
 
 		await telegram
 			.getByLabel('Events to include')
@@ -208,11 +230,6 @@ test.describe('Weekly Telegram notifications', () => {
 		// Saving schedules the next send; nothing is sent by saving.
 		await expect(telegram.getByText(/^Next send: /)).toBeVisible();
 		expect(telegramRequests()).toEqual([]);
-		// The bulk email keeps its own schedule.
-		await expect(bulkEmail.getByLabel('Send at')).toHaveValue(
-			bulkEmailTime
-		);
-
 		// Saving notification settings leaves the token alone (#1733).
 		expect(storedTokenIs(TOKEN)).toBe(true);
 		await page.reload();
@@ -223,10 +240,13 @@ test.describe('Weekly Telegram notifications', () => {
 		await expect(telegram.getByLabel('Chats and channels')).toHaveValue(
 			'@e2e_channel\n@e2e_missing_chat'
 		);
-		await expect(bulkEmail.getByLabel('Send at')).toHaveValue(
+		expect(await page.content()).not.toContain(TOKEN);
+		// The bulk email keeps its own schedule.
+		await openChannel(page, 'bulk_email');
+		await expect(channel(page).getByLabel('Send at')).toHaveValue(
 			bulkEmailTime
 		);
-		expect(await page.content()).not.toContain(TOKEN);
+		await openChannel(page, 'telegram');
 
 		// An event in the selected week relative to today.
 		event = runScript(
@@ -306,13 +326,18 @@ test.describe('Weekly Telegram notifications', () => {
 			]);
 		}
 
-		// A test send never creates a scheduled-delivery record.
-		await page.reload();
+		// The test is in its history as a test, never as a scheduled send.
+		await openChannel(page, 'telegram', 'history');
+		const history = telegram.getByRole('table');
+		await expect(history.getByRole('row')).toHaveCount(2);
 		await expect(
-			telegram.getByText('No Telegram summary has been sent yet.')
+			history.getByRole('cell', { name: 'Test', exact: true })
 		).toBeVisible();
 		await expect(
-			telegram.getByRole('heading', { name: 'Messages by chat' })
+			history.getByRole('cell', { name: 'Partly accepted' })
+		).toBeVisible();
+		await expect(
+			history.getByRole('cell', { name: 'Scheduled', exact: true })
 		).toHaveCount(0);
 
 		// Replace the token in Connectors with one Telegram rejects.
@@ -346,7 +371,7 @@ test.describe('Weekly Telegram notifications', () => {
 		wpCli('option delete fair_e2e_telegram_requests', {
 			allowFailure: true,
 		});
-		await page.goto(SETTINGS_URL);
+		await openChannel(page, 'telegram');
 		await expect(page.getByText(SAVED_STATUS).first()).toBeVisible();
 		await page
 			.getByRole('button', { name: 'Send test to the saved chats' })
@@ -359,14 +384,15 @@ test.describe('Weekly Telegram notifications', () => {
 				.first()
 		).toBeVisible();
 		await expect(page.getByText('Unauthorized')).toHaveCount(2);
-		// A failing Telegram test leaves the bulk email section usable.
+		expect(await page.content()).not.toContain(REJECTED_TOKEN);
+		expect(telegramRequests().map((r) => r.rejected)).toEqual([true, true]);
+		// A failing Telegram test leaves the bulk email usable.
+		await openChannel(page, 'bulk_email');
 		await expect(
-			channel(page, 'Bulk email').getByRole('button', {
+			channel(page).getByRole('button', {
 				name: 'Save bulk email settings',
 			})
 		).toBeEnabled();
-		expect(await page.content()).not.toContain(REJECTED_TOKEN);
-		expect(telegramRequests().map((r) => r.rejected)).toEqual([true, true]);
 
 		// Remove the token in Connectors.
 		await page.goto(CONNECTORS_URL);
@@ -386,7 +412,7 @@ test.describe('Weekly Telegram notifications', () => {
 		wpCli('option delete fair_e2e_telegram_requests', {
 			allowFailure: true,
 		});
-		await page.goto(SETTINGS_URL);
+		await openChannel(page, 'telegram');
 		await expect(page.getByText(MISSING_STATUS).first()).toBeVisible();
 		await expect(
 			page.getByRole('button', { name: 'Send test to the saved chats' })

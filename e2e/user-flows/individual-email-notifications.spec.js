@@ -11,11 +11,11 @@
  * Covered: the channel starts off; a missing or invalid address blocks
  * turning it on, with a message; the wording is editable; preview and test
  * name their destination and use the saved settings; a test goes only to
- * the configured address and leaves the schedule and history alone; the
- * scheduled send lists published events only, reaches only that address and
- * is not repeated for the same week, also after the address changes; a mail
- * failure is shown in the delivery status; turning the channel off stops
- * scheduled sends.
+ * the configured address and leaves the schedule alone; the scheduled send
+ * lists published events only, reaches only that address and is not
+ * repeated for the same week, also after the address changes; the
+ * notification's own history shows each send and test with its recipient,
+ * including a mail failure; turning the channel off stops scheduled sends.
  *
  * No mail leaves the host: fair-e2e-support.php captures wp_mail(), and
  * fair-e2e-fee-reminders.php makes it fail for one address on request.
@@ -53,6 +53,11 @@ function resetState() {
 		'E2E_NOTIFICATION_CONFIGURATIONS',
 		'reset individual_email'
 	);
+	runScript(
+		'notification-history-fixture.php',
+		'E2E_NOTIFICATION_HISTORY',
+		'clear individual_email'
+	);
 	resetCapturedMail();
 }
 
@@ -67,10 +72,21 @@ function recipients(mail) {
 	return mail.flatMap((entry) => [].concat(entry.to));
 }
 
-function channel(page, name) {
+// The open notification's view: one notification is open at a time.
+function channel(page) {
+	return page.locator('.fair-events-notifications');
+}
+
+function openChannel(page, id, tab = '') {
+	return page.goto(
+		`${SETTINGS_URL}&configuration=${id}${tab ? `&tab=${tab}` : ''}`
+	);
+}
+
+function listRow(page, name) {
 	return page
-		.locator('.fair-events-notifications__channel')
-		.filter({ has: page.getByRole('heading', { name, exact: true }) });
+		.getByRole('row')
+		.filter({ has: page.getByRole('link', { name, exact: true }) });
 }
 
 test.describe('Individual email notifications on a standalone site', () => {
@@ -104,19 +120,26 @@ test.describe('Individual email notifications on a standalone site', () => {
 		await loginAsAdmin(page);
 		await page.goto(SETTINGS_URL);
 
-		const own = channel(page, 'Individual email');
-		await expect(own).toBeVisible();
 		// Fair Audience is inactive: bulk email is paused, this channel is not.
 		await expect(
-			channel(page, 'Bulk email').getByText(
+			listRow(page, 'Bulk email').getByText(
 				/paused because Fair Audience is not active/
 			)
 		).toBeVisible();
 		// No event feed exists and none is needed here.
 		await expect(
-			page.getByText(
+			page.locator('.components-notice').getByText(
 				/Individual email can send all published local events without one\./
 			)
+		).toBeVisible();
+
+		await listRow(page, 'Individual email')
+			.getByRole('link', { name: 'Edit' })
+			.click();
+		await expect(page).toHaveURL(/configuration=individual_email/);
+		const own = channel(page);
+		await expect(
+			own.getByRole('heading', { name: 'Individual email' })
 		).toBeVisible();
 
 		const toggle = own.getByLabel(
@@ -204,12 +227,11 @@ test.describe('Individual email notifications on a standalone site', () => {
 			'Organizer update {week_start}'
 		);
 
-		// Saved in another tab: the draft here is kept, with a warning, and
-		// the clean Telegram section is not touched.
+		// Saved in another tab: the draft here is kept, with a warning.
 		await own.getByLabel('Text below the list of events').fill('Draft');
 		const otherTab = await page.context().newPage();
-		await otherTab.goto(SETTINGS_URL);
-		const otherOwn = channel(otherTab, 'Individual email');
+		await openChannel(otherTab, 'individual_email');
+		const otherOwn = channel(otherTab);
 		await otherOwn.getByLabel('Send at').fill('06:50');
 		await otherOwn
 			.getByRole('button', { name: 'Save individual email settings' })
@@ -226,9 +248,6 @@ test.describe('Individual email notifications on a standalone site', () => {
 			own.getByLabel('Text below the list of events')
 		).toHaveValue('Draft');
 		await expect(own.getByLabel('Send at')).toHaveValue('06:45');
-		await expect(
-			channel(page, 'Telegram').getByText('Unsaved changes')
-		).toHaveCount(0);
 		// Undoing the edit leaves a clean form with the newer saved time.
 		await own.getByLabel('Text below the list of events').fill('See you');
 		await expect(own.getByText('Unsaved changes')).toHaveCount(0);
@@ -332,22 +351,36 @@ test.describe('Individual email notifications on a standalone site', () => {
 		expect(state.runs).toHaveLength(1);
 		expect(recipients(capturedMail())).toEqual([RECIPIENT]);
 
-		// The delivery status names the week, outcome and destination.
-		await page.reload();
-		await expect(own.getByText('Handed over for delivery')).toBeVisible();
+		// Its own history lists the scheduled send and the test, and the
+		// send's details name the week, outcome and recipient.
+		await openChannel(page, 'individual_email', 'history');
+		const history = own.getByRole('table');
+		await expect(history.getByRole('row')).toHaveCount(3);
+		const scheduled = history
+			.getByRole('row')
+			.filter({ has: page.getByRole('cell', { name: 'Scheduled', exact: true }) });
 		await expect(
-			own.getByText(/does not confirm that it reached the inbox/)
+			scheduled.getByText('Accepted', { exact: true })
 		).toBeVisible();
 		await expect(
-			own
-				.locator('.fair-events-notifications__row')
-				.getByText(RECIPIENT)
+			history.getByRole('row').filter({ has: page.getByRole('cell', { name: 'Test', exact: true }) })
+		).toHaveCount(1);
+		await expect(
+			own.getByText(/does not confirm that anyone received it/)
 		).toBeVisible();
+		await scheduled.getByRole('link').click();
+		await expect(page).toHaveURL(/execution=\d+/);
+		await expect(own.getByText('Accepted by the provider')).toBeVisible();
+		await expect(
+			own.getByRole('table').getByText(RECIPIENT)
+		).toBeVisible();
+		await own.getByRole('link', { name: '← Back to the history' }).click();
+		await expect(history.getByRole('row')).toHaveCount(3);
 
 		// A mail failure is visible, and Telegram stays usable.
 		resetState();
 		wpCli(`option update fair_e2e_fail_mail_to ${RECIPIENT}`);
-		await page.reload();
+		await openChannel(page, 'individual_email');
 		await own.getByLabel('Send to').fill(RECIPIENT);
 		await own
 			.getByLabel('Skip the email when the week has no events')
@@ -370,20 +403,28 @@ test.describe('Individual email notifications on a standalone site', () => {
 			status: 'failed',
 			destination: RECIPIENT,
 		});
-		await page.reload();
-		await expect(own.getByText('Failed', { exact: true })).toBeVisible();
+		await openChannel(page, 'individual_email', 'history');
+		const failed = own
+			.getByRole('table')
+			.getByRole('row')
+			.filter({ has: page.getByRole('cell', { name: 'Scheduled', exact: true }) });
 		await expect(
-			own.getByText(/could not hand the email over for delivery/)
+			failed.getByText('Failed', { exact: true })
 		).toBeVisible();
+		await failed.getByRole('link').click();
 		await expect(
-			channel(page, 'Telegram').getByRole('button', {
+			own.getByText('The mail system refused the message.')
+		).toBeVisible();
+		await openChannel(page, 'telegram');
+		await expect(
+			channel(page).getByRole('button', {
 				name: 'Save Telegram settings',
 			})
 		).toBeEnabled();
 
 		// Turned off, a queued send does nothing and nothing stays scheduled.
 		resetState();
-		await page.reload();
+		await openChannel(page, 'individual_email');
 		await own.getByLabel('Send to').fill(RECIPIENT);
 		await toggle.check();
 		await saveButton.click();

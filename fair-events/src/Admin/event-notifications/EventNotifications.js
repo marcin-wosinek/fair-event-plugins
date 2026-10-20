@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { ExternalLink, Notice, Spinner } from '@wordpress/components';
 
@@ -10,20 +10,17 @@ import { ExternalLink, Notice, Spinner } from '@wordpress/components';
  * Internal dependencies
  */
 import AddNotification from './AddNotification.js';
-import BulkEmailChannel from './BulkEmailChannel.js';
-import IndividualEmailChannel from './IndividualEmailChannel.js';
-import TelegramChannel from './TelegramChannel.js';
-import { PATH, errorMessage } from './shared.js';
-
-/**
- * The section of each notification kind. A new kind adds its section here
- * and its configurations' `type` in the REST response.
- */
-const SECTIONS = {
-	telegram: TelegramChannel,
-	bulk_email: BulkEmailChannel,
-	individual_email: IndividualEmailChannel,
-};
+import ConfigurationView from './ConfigurationView.js';
+import HistoryView from './HistoryView.js';
+import NotificationList from './NotificationList.js';
+import { DraftsContext, useDraftStore } from './drafts.js';
+import { linkTo, useLocationState } from './navigation.js';
+import {
+	PATH,
+	TYPE_LABELS,
+	errorMessage,
+	useUnsavedWarning,
+} from './shared.js';
 
 /**
  * Apply a read of the page payload, keeping each configuration saved or
@@ -63,9 +60,13 @@ export function mergeRead( current, next, requested, saved ) {
 }
 
 /**
- * Event notifications admin page: one section per notification, each with
- * its own name, settings, save button, preview, test and delivery status,
- * and a section to add another one.
+ * Event notifications admin page: the list of notifications, each one's
+ * editor and history, and the history of all of them. The view is kept in
+ * the URL.
+ *
+ * Each notification keeps its unsaved draft while other views are open, by
+ * its ID, until the page is left; leaving it with unsaved drafts is warned
+ * about.
  *
  * @param {Object}      props
  * @param {string|null} props.sourcesUrl Event Sources admin page, when it exists.
@@ -74,6 +75,10 @@ export function mergeRead( current, next, requested, saved ) {
 export default function EventNotifications( { sourcesUrl } ) {
 	const [ data, setData ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
+	const [ location, navigate ] = useLocationState();
+	const [ flash, setFlash ] = useState( null );
+	const { store, dirty } = useDraftStore();
+	useUnsavedWarning( dirty.length > 0 );
 
 	// Orders reads against saves. `issued` numbers every read and save as it
 	// happens, `applied` is the newest read shown, and `saved` the number of
@@ -96,7 +101,8 @@ export default function EventNotifications( { sourcesUrl } ) {
 		} );
 	}, [] );
 
-	useEffect( () => {
+	const initialLoad = useCallback( () => {
+		setLoadError( null );
 		load().catch( ( error ) =>
 			setLoadError(
 				errorMessage(
@@ -106,6 +112,30 @@ export default function EventNotifications( { sourcesUrl } ) {
 			)
 		);
 	}, [ load ] );
+
+	useEffect( () => {
+		initialLoad();
+	}, [ initialLoad ] );
+
+	// The list shows each notification's latest send, which a test sent
+	// from its editor may have changed.
+	const { view } = location;
+	const previousView = useRef( view );
+	useEffect( () => {
+		if ( 'list' === view && 'list' !== previousView.current ) {
+			load().catch( () => {} );
+		}
+		previousView.current = view;
+	}, [ view, load ] );
+
+	// A message about how the view was reached lasts until the next view.
+	const shownFlash = useRef( null );
+	useEffect( () => {
+		if ( shownFlash.current && shownFlash.current !== location ) {
+			setFlash( null );
+		}
+		shownFlash.current = location;
+	}, [ location ] );
 
 	// Credentials and plugins are changed on other screens, usually in
 	// another tab. Coming back re-reads availability and status; each
@@ -142,65 +172,111 @@ export default function EventNotifications( { sourcesUrl } ) {
 		} ) );
 	}, [] );
 	const onAdded = useCallback(
-		( configuration ) => onSaved( configuration.id, configuration ),
-		[ onSaved ]
+		( configuration ) => {
+			onSaved( configuration.id, configuration );
+			shownFlash.current = null;
+			setFlash(
+				sprintf(
+					/* translators: %s: name of the added notification */
+					__(
+						'“%s” was added. It is paused: set it up, turn it on and save it when it is ready.',
+						'fair-events'
+					),
+					configuration.name || TYPE_LABELS[ configuration.type ]
+				)
+			);
+			navigate( {
+				view: 'configuration',
+				configuration: configuration.id,
+				tab: 'editor',
+			} );
+		},
+		[ onSaved, navigate ]
 	);
 
-	return (
-		<div className="wrap fair-events-notifications">
-			<h1>{ __( 'Event notifications', 'fair-events' ) }</h1>
-			<p>
-				{ __(
-					'Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind.',
+	const noFeed = data && 0 === data.sources.length && (
+		<Notice status="warning" isDismissible={ false }>
+			{ __(
+				'There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one.',
+				'fair-events'
+			) }{ ' ' }
+			{ sourcesUrl ? (
+				<a href={ sourcesUrl }>
+					{ __( 'Create an event feed', 'fair-events' ) }
+				</a>
+			) : (
+				__(
+					'Event feeds are created with the Fair Events Experimental plugin.',
 					'fair-events'
-				) }
-			</p>
-
-			{ loadError && (
-				<Notice status="error" isDismissible={ false }>
-					{ loadError }
-				</Notice>
+				)
 			) }
-			{ ! data && ! loadError && <Spinner /> }
+		</Notice>
+	);
 
-			{ data && 0 === data.sources.length && (
-				<Notice status="warning" isDismissible={ false }>
+	let content = null;
+	if ( data && 'configuration' === view ) {
+		content = (
+			<>
+				{ noFeed }
+				<ConfigurationView
+					data={ data }
+					dirty={ dirty }
+					location={ location }
+					navigate={ navigate }
+					onSaved={ onSaved }
+					flash={ flash }
+				/>
+			</>
+		);
+	} else if ( data && 'history' === view ) {
+		content = (
+			<>
+				<p className="fair-events-notifications__breadcrumbs">
+					<a { ...linkTo( navigate, { view: 'list' } ) }>
+						{ __( '← All notifications', 'fair-events' ) }
+					</a>
+				</p>
+				<h2>{ __( 'All notification history', 'fair-events' ) }</h2>
+				<p>
 					{ __(
-						'There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one.',
+						'Every scheduled send and test of every notification, newest first. Open an entry to see each recipient or chat.',
 						'fair-events'
-					) }{ ' ' }
-					{ sourcesUrl ? (
-						<a href={ sourcesUrl }>
-							{ __( 'Create an event feed', 'fair-events' ) }
-						</a>
-					) : (
-						__(
-							'Event feeds are created with the Fair Events Experimental plugin.',
-							'fair-events'
-						)
 					) }
-				</Notice>
-			) }
-
-			{ data &&
-				data.configurations.map( ( configuration ) => {
-					const Section = SECTIONS[ configuration.type ];
-					return Section ? (
-						<Section
-							key={ configuration.id }
-							channel={ configuration }
-							sources={ data.sources }
-							pages={ data.pages }
-							onSaved={ onSaved }
-						/>
-					) : null;
-				} ) }
-
-			{ data && (
+				</p>
+				<HistoryView
+					configurations={ data.configurations }
+					location={ location }
+					navigate={ navigate }
+				/>
+			</>
+		);
+	} else if ( data ) {
+		content = (
+			<>
+				<p>
+					{ __(
+						'Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind.',
+						'fair-events'
+					) }
+				</p>
+				{ noFeed }
+				<p className="fair-events-notifications__breadcrumbs">
+					<a
+						{ ...linkTo( navigate, {
+							view: 'history',
+							filters: {},
+						} ) }
+					>
+						{ __( 'All notification history', 'fair-events' ) }
+					</a>
+				</p>
+				<NotificationList
+					configurations={ data.configurations }
+					dirty={ dirty }
+					location={ location }
+					navigate={ navigate }
+				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
-			) }
-
-			{ data && (
 				<p className="description">
 					{ __(
 						'Sends run in the site’s timezone and can be a few minutes late on low-traffic sites.',
@@ -210,7 +286,40 @@ export default function EventNotifications( { sourcesUrl } ) {
 						{ __( 'How WordPress schedules tasks', 'fair-events' ) }
 					</ExternalLink>
 				</p>
-			) }
-		</div>
+			</>
+		);
+	}
+
+	return (
+		<DraftsContext.Provider value={ store }>
+			<div className="wrap fair-events-notifications">
+				<h1>{ __( 'Event notifications', 'fair-events' ) }</h1>
+
+				{ loadError && (
+					<Notice
+						status="error"
+						isDismissible={ false }
+						actions={
+							data
+								? []
+								: [
+										{
+											label: __(
+												'Try again',
+												'fair-events'
+											),
+											onClick: initialLoad,
+										},
+									]
+						}
+					>
+						{ loadError }
+					</Notice>
+				) }
+				{ ! data && ! loadError && <Spinner /> }
+
+				{ content }
+			</div>
+		</DraftsContext.Provider>
 	);
 }

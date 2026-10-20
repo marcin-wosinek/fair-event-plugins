@@ -487,6 +487,53 @@ test.describe( 'NotificationHistoryController', () => {
 		).toBe( 200 );
 	} );
 
+	test( 'summarizes each configuration with its own newest execution', async () => {
+		const own = await createConfiguration( 'individual_email', 'Latest', {
+			recipient: RECIPIENT,
+		} );
+		const other = await createConfiguration(
+			'individual_email',
+			'Untouched',
+			{ recipient: RECIPIENT }
+		);
+		expect( ( await sendTest( own.id ) ).status() ).toBe( 200 );
+		await api.post( MAIL_FAILURE, {
+			headers: adminHeaders,
+			data: { email: RECIPIENT },
+		} );
+		expect( ( await sendTest( own.id ) ).status() ).toBe( 500 );
+		await api.post( MAIL_FAILURE, {
+			headers: adminHeaders,
+			data: { email: '' },
+		} );
+		const [ newest ] = ( await executionsOf( own.id ) ).items;
+
+		const page = await api.get( PATH, { headers: adminHeaders } );
+		expect( page.status() ).toBe( 200 );
+		const { configurations } = await page.json();
+		const shown = ( id ) =>
+			configurations.find( ( configuration ) => configuration.id === id );
+		// Shaped like the history routes' executions, from the same history.
+		expect( shown( own.id ).latest_execution ).toEqual( newest );
+		expect( shown( own.id ).latest_execution ).toMatchObject( {
+			origin: 'test',
+			outcome: 'failure',
+		} );
+		expect( shown( other.id ).latest_execution ).toBeNull();
+
+		const single = await api.get( `${ CONFIGURATIONS }/${ own.id }`, {
+			headers: adminHeaders,
+		} );
+		expect( ( await single.json() ).latest_execution.id ).toBe( newest.id );
+		// Saving keeps the summary in the response.
+		const saved = await api.post( `${ CONFIGURATIONS }/${ own.id }`, {
+			headers: adminHeaders,
+			data: { name: 'Latest renamed' },
+		} );
+		expect( saved.status() ).toBe( 200 );
+		expect( ( await saved.json() ).latest_execution.id ).toBe( newest.id );
+	} );
+
 	test( 'keeps history readable after its configuration changes or is removed', async () => {
 		const own = await createConfiguration( 'individual_email', 'Before', {
 			recipient: RECIPIENT,

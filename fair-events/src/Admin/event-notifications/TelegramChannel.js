@@ -15,7 +15,6 @@ import {
  */
 import NotificationEditor from './NotificationEditor.js';
 import ScheduleControls from './ScheduleControls.js';
-import TelegramHistory from './TelegramHistory.js';
 import TelegramPreview, { TelegramTestResults } from './TelegramPreview.js';
 import { sourceOptions } from './shared.js';
 import useNotificationEditor from './useNotificationEditor.js';
@@ -253,7 +252,6 @@ export default function TelegramChannel( {
 						results={ editor.testResult?.results }
 					/>
 					<TelegramPreview preview={ editor.preview } />
-					<TelegramHistory channel={ channel } />
 				</>
 			}
 		>

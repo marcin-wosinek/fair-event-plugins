@@ -1377,6 +1377,7 @@ test.describe( 'EventNotificationsController', () => {
 				enabled: false,
 				next_run: null,
 				runs: [],
+				latest_execution: null,
 			} );
 
 			const page = await (
@@ -1505,7 +1506,9 @@ test.describe( 'EventNotificationsController', () => {
 
 			const sent = await api.post(
 				`${ CONFIGURATIONS }/${ own.id }/test`,
-				{ headers: adminHeaders }
+				{
+					headers: adminHeaders,
+				}
 			);
 			expect( sent.status() ).toBe( 200 );
 			expect( ( await sent.json() ).sent_to ).toBe( SHARED );
