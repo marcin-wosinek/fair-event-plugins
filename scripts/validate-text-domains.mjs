@@ -35,6 +35,7 @@ const traverse = traverseModule.default ?? traverseModule;
  * Plugin directory => the text domain its own source must use.
  */
 export const TEXT_DOMAIN_OWNERS = {
+	'fair-audience-experimental': 'fair-audience-experimental',
 	'fair-finance': 'fair-finance',
 };
 

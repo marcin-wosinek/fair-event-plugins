@@ -6,7 +6,9 @@
  *   wp eval-file wp-content/mu-plugins/scripts/translation-delivery.php <mode> [locale] [plugin]
  *
  * The plugin defaults to fair-events; it must have a bundled-translations
- * flag stored in its `fair_{plugin}_features` option.
+ * flag stored in its `fair_{plugin}_features` option, or be an experimental
+ * companion, which always loads its bundled catalog and so only supports
+ * `bundled` (the locale switch) and `reset`.
  *
  * Modes:
  *   language-pack  Copy the plugin's own .mo and build/languages JSON for the
@@ -32,16 +34,21 @@ $delivery_mode = isset( $args[0] ) ? $args[0] : '';
 $target_locale = isset( $args[1] ) ? $args[1] : 'es_ES';
 $plugin_slug   = isset( $args[2] ) ? $args[2] : 'fair-events';
 
+// Null: an experimental companion without a bundled-translations flag.
 $feature_options = array(
-	'fair-events'  => 'fair_events_features',
-	'fair-finance' => 'fair_finance_features',
+	'fair-events'                => 'fair_events_features',
+	'fair-finance'               => 'fair_finance_features',
+	'fair-audience-experimental' => null,
 );
 
 if ( ! in_array( $delivery_mode, array( 'language-pack', 'bundled', 'reset' ), true ) ) {
 	WP_CLI::error( 'Usage: translation-delivery.php <language-pack|bundled|reset> [locale] [plugin]' );
 }
-if ( ! isset( $feature_options[ $plugin_slug ] ) ) {
+if ( ! array_key_exists( $plugin_slug, $feature_options ) ) {
 	WP_CLI::error( 'Unsupported plugin: ' . $plugin_slug );
+}
+if ( null === $feature_options[ $plugin_slug ] && 'language-pack' === $delivery_mode ) {
+	WP_CLI::error( $plugin_slug . ' always loads its bundled catalog; use bundled or reset.' );
 }
 if ( ! preg_match( '/^[a-z]{2,3}(_[A-Z]{2})?$/', $target_locale ) ) {
 	WP_CLI::error( 'Invalid locale.' );
@@ -79,9 +86,11 @@ if ( 'language-pack' === $delivery_mode ) {
 	}
 }
 
-$features                         = (array) get_option( $feature_options[ $plugin_slug ], array() );
-$features['bundled-translations'] = ( 'bundled' === $delivery_mode );
-update_option( $feature_options[ $plugin_slug ], $features );
+if ( null !== $feature_options[ $plugin_slug ] ) {
+	$features                         = (array) get_option( $feature_options[ $plugin_slug ], array() );
+	$features['bundled-translations'] = ( 'bundled' === $delivery_mode );
+	update_option( $feature_options[ $plugin_slug ], $features );
+}
 // No core language pack is installed on the tests site; keep the locale anyway.
 $keep_locale = static function ( $value, $option, $original_value ) {
 	return $original_value;

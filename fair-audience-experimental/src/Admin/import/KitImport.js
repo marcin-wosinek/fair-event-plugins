@@ -43,7 +43,10 @@ export default function KitImport() {
 	const handleImport = async () => {
 		if ( ! file ) {
 			setError(
-				__( 'Please select a file to import.', 'fair-audience' )
+				__(
+					'Please select a file to import.',
+					'fair-audience-experimental'
+				)
 			);
 			return;
 		}
@@ -72,7 +75,10 @@ export default function KitImport() {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__( 'Import failed. Please try again.', 'fair-audience' )
+					__(
+						'Import failed. Please try again.',
+						'fair-audience-experimental'
+					)
 			);
 		} finally {
 			setIsUploading( false );
@@ -82,27 +88,35 @@ export default function KitImport() {
 	return (
 		<Card>
 			<CardBody>
-				<h2>{ __( 'Import from Kit.com', 'fair-audience' ) }</h2>
+				<h2>
+					{ __(
+						'Import from Kit.com',
+						'fair-audience-experimental'
+					) }
+				</h2>
 				<p>
 					{ __(
 						'Upload a Kit.com CSV export file to import subscribers as participants.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 				</p>
 
 				<div style={ { marginTop: '20px' } }>
 					<SelectControl
-						label={ __( 'Group (Optional)', 'fair-audience' ) }
+						label={ __(
+							'Group (Optional)',
+							'fair-audience-experimental'
+						) }
 						value={ selectedGroupId }
 						onChange={ setSelectedGroupId }
 						disabled={ isLoadingGroups || isUploading }
 						help={ __(
 							'Select a group to add imported participants to it.',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					>
 						<option value="">
-							{ __( 'No group', 'fair-audience' ) }
+							{ __( 'No group', 'fair-audience-experimental' ) }
 						</option>
 						{ groups.map( ( group ) => (
 							<option key={ group.id } value={ group.id }>
@@ -114,17 +128,23 @@ export default function KitImport() {
 
 				<div style={ { marginTop: '20px' } }>
 					<SelectControl
-						label={ __( 'Mailing', 'fair-audience' ) }
+						label={ __( 'Mailing', 'fair-audience-experimental' ) }
 						value={ emailProfile }
 						onChange={ setEmailProfile }
 						disabled={ isUploading }
 						options={ [
 							{
-								label: __( 'Minimal', 'fair-audience' ),
+								label: __(
+									'Minimal',
+									'fair-audience-experimental'
+								),
 								value: 'minimal',
 							},
 							{
-								label: __( 'Marketing', 'fair-audience' ),
+								label: __(
+									'Marketing',
+									'fair-audience-experimental'
+								),
 								value: 'marketing',
 							},
 						] }
@@ -145,7 +165,10 @@ export default function KitImport() {
 					<div style={ { marginTop: '10px' } }>
 						<p>
 							<strong>
-								{ __( 'Selected file:', 'fair-audience' ) }
+								{ __(
+									'Selected file:',
+									'fair-audience-experimental'
+								) }
 							</strong>{ ' ' }
 							{ file.name }
 						</p>
@@ -159,8 +182,8 @@ export default function KitImport() {
 						disabled={ ! file || isUploading }
 					>
 						{ isUploading
-							? __( 'Importing...', 'fair-audience' )
-							: __( 'Import', 'fair-audience' ) }
+							? __( 'Importing...', 'fair-audience-experimental' )
+							: __( 'Import', 'fair-audience-experimental' ) }
 					</Button>
 				</div>
 
@@ -183,19 +206,25 @@ export default function KitImport() {
 						<Notice status="success" isDismissible={ false }>
 							<p>
 								<strong>
-									{ __( 'Import Complete', 'fair-audience' ) }
+									{ __(
+										'Import Complete',
+										'fair-audience-experimental'
+									) }
 								</strong>
 							</p>
 							<ul>
 								<li>
-									{ __( 'Imported:', 'fair-audience' ) }{ ' ' }
+									{ __(
+										'Imported:',
+										'fair-audience-experimental'
+									) }{ ' ' }
 									{ results.imported }
 								</li>
 								{ results.added_to_group > 0 && (
 									<li>
 										{ __(
 											'Added to group:',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }{ ' ' }
 										{ results.added_to_group }
 									</li>
@@ -203,7 +232,7 @@ export default function KitImport() {
 								<li>
 									{ __(
 										'Skipped (already exists):',
-										'fair-audience'
+										'fair-audience-experimental'
 									) }{ ' ' }
 									{ results.skipped }
 								</li>
@@ -218,7 +247,10 @@ export default function KitImport() {
 							>
 								<p>
 									<strong>
-										{ __( 'Errors:', 'fair-audience' ) }
+										{ __(
+											'Errors:',
+											'fair-audience-experimental'
+										) }
 									</strong>
 								</p>
 								<ul>

@@ -128,19 +128,30 @@ export default function EditPoll() {
 	const handleSubmit = async () => {
 		// Validate
 		if ( ! formData.event_id ) {
-			alert( __( 'Please select an event.', 'fair-audience' ) );
+			alert(
+				__( 'Please select an event.', 'fair-audience-experimental' )
+			);
 			return;
 		}
 		if ( ! formData.title ) {
-			alert( __( 'Please enter a title.', 'fair-audience' ) );
+			alert(
+				__( 'Please enter a title.', 'fair-audience-experimental' )
+			);
 			return;
 		}
 		if ( ! formData.question ) {
-			alert( __( 'Please enter a question.', 'fair-audience' ) );
+			alert(
+				__( 'Please enter a question.', 'fair-audience-experimental' )
+			);
 			return;
 		}
 		if ( formData.options.length === 0 ) {
-			alert( __( 'Please add at least one option.', 'fair-audience' ) );
+			alert(
+				__(
+					'Please add at least one option.',
+					'fair-audience-experimental'
+				)
+			);
 			return;
 		}
 		// Check all options have text
@@ -151,7 +162,7 @@ export default function EditPoll() {
 			alert(
 				__(
 					'Please fill in all option texts or remove empty options.',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			);
 			return;
@@ -191,7 +202,7 @@ export default function EditPoll() {
 			! confirm(
 				__(
 					'Send poll invitations to all event participants who have not yet responded?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -246,8 +257,8 @@ export default function EditPoll() {
 
 			// Prepare table headers
 			const headers = [
-				__( 'Name', 'fair-audience' ),
-				__( 'Surname', 'fair-audience' ),
+				__( 'Name', 'fair-audience-experimental' ),
+				__( 'Surname', 'fair-audience-experimental' ),
 			];
 
 			// Add option names as columns
@@ -256,7 +267,7 @@ export default function EditPoll() {
 			} );
 
 			// Add Comments column at the end
-			headers.push( __( 'Comments', 'fair-audience' ) );
+			headers.push( __( 'Comments', 'fair-audience-experimental' ) );
 
 			// Prepare table data
 			const rows = resultsData.participants.map( ( participant ) => {
@@ -267,7 +278,11 @@ export default function EditPoll() {
 					const isSelected = participant.selected_options.includes(
 						option.id
 					);
-					row.push( isSelected ? __( 'Yes', 'fair-audience' ) : '' );
+					row.push(
+						isSelected
+							? __( 'Yes', 'fair-audience-experimental' )
+							: ''
+					);
 				} );
 
 				// Add empty Comments column
@@ -320,8 +335,8 @@ export default function EditPoll() {
 			<div className="wrap">
 				<h1>
 					{ pollId
-						? __( 'Edit Poll', 'fair-audience' )
-						: __( 'Add New Poll', 'fair-audience' ) }
+						? __( 'Edit Poll', 'fair-audience-experimental' )
+						: __( 'Add New Poll', 'fair-audience-experimental' ) }
 				</h1>
 				<Spinner />
 			</div>
@@ -332,8 +347,8 @@ export default function EditPoll() {
 		<div className="wrap">
 			<h1>
 				{ pollId
-					? __( 'Edit Poll', 'fair-audience' )
-					: __( 'Add New Poll', 'fair-audience' ) }
+					? __( 'Edit Poll', 'fair-audience-experimental' )
+					: __( 'Add New Poll', 'fair-audience-experimental' ) }
 			</h1>
 
 			{ error && (
@@ -359,7 +374,10 @@ export default function EditPoll() {
 					} }
 				>
 					<h3 style={ { marginTop: 0 } }>
-						{ __( 'Poll Statistics', 'fair-audience' ) }
+						{ __(
+							'Poll Statistics',
+							'fair-audience-experimental'
+						) }
 					</h3>
 					<div
 						style={ {
@@ -386,7 +404,10 @@ export default function EditPoll() {
 								{ pollStats.responded }
 							</div>
 							<div style={ { fontSize: '14px', color: '#666' } }>
-								{ __( 'Answered', 'fair-audience' ) }
+								{ __(
+									'Answered',
+									'fair-audience-experimental'
+								) }
 							</div>
 						</div>
 						<div
@@ -407,7 +428,10 @@ export default function EditPoll() {
 								{ pollStats.sent }
 							</div>
 							<div style={ { fontSize: '14px', color: '#666' } }>
-								{ __( 'Received Email', 'fair-audience' ) }
+								{ __(
+									'Received Email',
+									'fair-audience-experimental'
+								) }
 							</div>
 						</div>
 						<div
@@ -430,7 +454,7 @@ export default function EditPoll() {
 							<div style={ { fontSize: '14px', color: '#666' } }>
 								{ __(
 									'Did Not Receive Email',
-									'fair-audience'
+									'fair-audience-experimental'
 								) }
 							</div>
 						</div>
@@ -446,8 +470,11 @@ export default function EditPoll() {
 						disabled={ isSendingInvitations || isSaving }
 					>
 						{ isSendingInvitations
-							? __( 'Sending...', 'fair-audience' )
-							: __( 'Send Poll Invitations', 'fair-audience' ) }
+							? __( 'Sending...', 'fair-audience-experimental' )
+							: __(
+									'Send Poll Invitations',
+									'fair-audience-experimental'
+								) }
 					</Button>{ ' ' }
 					<Button
 						isSecondary
@@ -455,13 +482,19 @@ export default function EditPoll() {
 						disabled={ isGeneratingPDF || isSaving }
 					>
 						{ isGeneratingPDF
-							? __( 'Generating PDF...', 'fair-audience' )
-							: __( 'Download Results PDF', 'fair-audience' ) }
+							? __(
+									'Generating PDF...',
+									'fair-audience-experimental'
+								)
+							: __(
+									'Download Results PDF',
+									'fair-audience-experimental'
+								) }
 					</Button>
 					<p className="description" style={ { marginTop: '10px' } }>
 						{ __(
 							'Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped.',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					</p>
 				</div>
@@ -478,14 +511,17 @@ export default function EditPoll() {
 				} }
 			>
 				<SelectControl
-					label={ __( 'Event', 'fair-audience' ) }
+					label={ __( 'Event', 'fair-audience-experimental' ) }
 					value={ formData.event_id }
 					onChange={ ( value ) =>
 						setFormData( { ...formData, event_id: value } )
 					}
 					options={ [
 						{
-							label: __( 'Select an event...', 'fair-audience' ),
+							label: __(
+								'Select an event...',
+								'fair-audience-experimental'
+							),
 							value: '',
 						},
 						...events.map( ( event ) => ( {
@@ -493,7 +529,7 @@ export default function EditPoll() {
 								/* translators: %1$s: event title, %2$d: number of participants */
 								__(
 									'%1$s (%2$d participants)',
-									'fair-audience'
+									'fair-audience-experimental'
 								),
 								event.title,
 								event.participant_counts.signed_up || 0
@@ -505,35 +541,38 @@ export default function EditPoll() {
 				/>
 
 				<TextControl
-					label={ __( 'Poll Title (Internal)', 'fair-audience' ) }
+					label={ __(
+						'Poll Title (Internal)',
+						'fair-audience-experimental'
+					) }
 					value={ formData.title }
 					onChange={ ( value ) =>
 						setFormData( { ...formData, title: value } )
 					}
 					help={ __(
 						'Internal reference for this poll.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 				/>
 
 				<TextareaControl
-					label={ __( 'Question', 'fair-audience' ) }
+					label={ __( 'Question', 'fair-audience-experimental' ) }
 					value={ formData.question }
 					onChange={ ( value ) =>
 						setFormData( { ...formData, question: value } )
 					}
 					help={ __(
 						'The question shown to participants.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 					rows={ 3 }
 				/>
 
-				<h3>{ __( 'Options', 'fair-audience' ) }</h3>
+				<h3>{ __( 'Options', 'fair-audience-experimental' ) }</h3>
 				<p>
 					{ __(
 						'Add the multiple-choice options for participants to select from.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 				</p>
 
@@ -555,7 +594,10 @@ export default function EditPoll() {
 								}
 								placeholder={ sprintf(
 									/* translators: %d: option number (1, 2, 3, etc.) */
-									__( 'Option %d', 'fair-audience' ),
+									__(
+										'Option %d',
+										'fair-audience-experimental'
+									),
 									index + 1
 								) }
 							/>
@@ -571,7 +613,10 @@ export default function EditPoll() {
 								icon="arrow-up-alt2"
 								onClick={ () => handleMoveUp( index ) }
 								disabled={ index === 0 }
-								label={ __( 'Move up', 'fair-audience' ) }
+								label={ __(
+									'Move up',
+									'fair-audience-experimental'
+								) }
 							/>
 							<Button
 								icon="arrow-down-alt2"
@@ -579,13 +624,19 @@ export default function EditPoll() {
 								disabled={
 									index === formData.options.length - 1
 								}
-								label={ __( 'Move down', 'fair-audience' ) }
+								label={ __(
+									'Move down',
+									'fair-audience-experimental'
+								) }
 							/>
 							<Button
 								icon="trash"
 								onClick={ () => handleRemoveOption( index ) }
 								disabled={ formData.options.length === 1 }
-								label={ __( 'Remove', 'fair-audience' ) }
+								label={ __(
+									'Remove',
+									'fair-audience-experimental'
+								) }
 								style={ { color: '#b32d2e' } }
 							/>
 						</div>
@@ -593,33 +644,42 @@ export default function EditPoll() {
 				) ) }
 
 				<Button isSecondary onClick={ handleAddOption }>
-					{ __( 'Add Option', 'fair-audience' ) }
+					{ __( 'Add Option', 'fair-audience-experimental' ) }
 				</Button>
 
 				<div style={ { marginTop: '20px' } }>
 					<SelectControl
-						label={ __( 'Status', 'fair-audience' ) }
+						label={ __( 'Status', 'fair-audience-experimental' ) }
 						value={ formData.status }
 						onChange={ ( value ) =>
 							setFormData( { ...formData, status: value } )
 						}
 						options={ [
 							{
-								label: __( 'Draft', 'fair-audience' ),
+								label: __(
+									'Draft',
+									'fair-audience-experimental'
+								),
 								value: 'draft',
 							},
 							{
-								label: __( 'Active', 'fair-audience' ),
+								label: __(
+									'Active',
+									'fair-audience-experimental'
+								),
 								value: 'active',
 							},
 							{
-								label: __( 'Closed', 'fair-audience' ),
+								label: __(
+									'Closed',
+									'fair-audience-experimental'
+								),
 								value: 'closed',
 							},
 						] }
 						help={ __(
 							'Active polls can receive responses. Closed polls do not accept new responses.',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					/>
 				</div>
@@ -632,17 +692,20 @@ export default function EditPoll() {
 					disabled={ isSaving }
 				>
 					{ isSaving
-						? __( 'Saving...', 'fair-audience' )
+						? __( 'Saving...', 'fair-audience-experimental' )
 						: pollId
-							? __( 'Update Poll', 'fair-audience' )
-							: __( 'Create Poll', 'fair-audience' ) }
+							? __( 'Update Poll', 'fair-audience-experimental' )
+							: __(
+									'Create Poll',
+									'fair-audience-experimental'
+								) }
 				</Button>{ ' ' }
 				<Button
 					isSecondary
 					href="admin.php?page=fair-audience-polls"
 					disabled={ isSaving }
 				>
-					{ __( 'Cancel', 'fair-audience' ) }
+					{ __( 'Cancel', 'fair-audience-experimental' ) }
 				</Button>
 			</div>
 		</div>

@@ -71,7 +71,7 @@ export default function Timeline() {
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Activity', 'fair-audience' ) }</h1>
+			<h1>{ __( 'Activity', 'fair-audience-experimental' ) }</h1>
 
 			{ isLoading && (
 				<div
@@ -86,7 +86,9 @@ export default function Timeline() {
 			) }
 
 			{ ! isLoading && items.length === 0 && (
-				<p>{ __( 'No activity yet.', 'fair-audience' ) }</p>
+				<p>
+					{ __( 'No activity yet.', 'fair-audience-experimental' ) }
+				</p>
 			) }
 
 			{ ! isLoading && items.length > 0 && (
@@ -109,8 +111,14 @@ export default function Timeline() {
 								disabled={ isLoadingMore }
 							>
 								{ isLoadingMore
-									? __( 'Loading…', 'fair-audience' )
-									: __( 'Load more', 'fair-audience' ) }
+									? __(
+											'Loading…',
+											'fair-audience-experimental'
+										)
+									: __(
+											'Load more',
+											'fair-audience-experimental'
+										) }
 							</Button>
 						</div>
 					) }

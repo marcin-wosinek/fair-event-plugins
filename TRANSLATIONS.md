@@ -351,6 +351,7 @@ npm run translation:validate -- --all
 Fully translated (`.po` files exist for all locales):
 
 - `fair-audience`
+- `fair-audience-experimental`
 - `fair-events`
 - `fair-finance`
 - `fair-payments-connector`

@@ -51,10 +51,10 @@ function StatusBadge( { status } ) {
 	};
 
 	const labels = {
-		pending: __( 'Pending', 'fair-audience' ),
-		publishing: __( 'Publishing', 'fair-audience' ),
-		published: __( 'Published', 'fair-audience' ),
-		failed: __( 'Failed', 'fair-audience' ),
+		pending: __( 'Pending', 'fair-audience-experimental' ),
+		publishing: __( 'Publishing', 'fair-audience-experimental' ),
+		published: __( 'Published', 'fair-audience-experimental' ),
+		failed: __( 'Failed', 'fair-audience-experimental' ),
 	};
 
 	return (
@@ -107,7 +107,10 @@ export default function InstagramPosts() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to load posts.', 'fair-audience' ),
+						__(
+							'Failed to load posts.',
+							'fair-audience-experimental'
+						),
 				} );
 				setIsLoading( false );
 			} );
@@ -126,9 +129,12 @@ export default function InstagramPosts() {
 	const openMediaLibrary = () => {
 		if ( ! mediaFrameRef.current ) {
 			mediaFrameRef.current = wp.media( {
-				title: __( 'Select Image for Instagram', 'fair-audience' ),
+				title: __(
+					'Select Image for Instagram',
+					'fair-audience-experimental'
+				),
 				button: {
-					text: __( 'Use this image', 'fair-audience' ),
+					text: __( 'Use this image', 'fair-audience-experimental' ),
 				},
 				multiple: false,
 				library: {
@@ -171,7 +177,10 @@ export default function InstagramPosts() {
 		if ( ! imageUrl.trim() ) {
 			setNotice( {
 				status: 'error',
-				message: __( 'Please select an image.', 'fair-audience' ),
+				message: __(
+					'Please select an image.',
+					'fair-audience-experimental'
+				),
 			} );
 			return;
 		}
@@ -179,7 +188,10 @@ export default function InstagramPosts() {
 		if ( ! caption.trim() ) {
 			setNotice( {
 				status: 'error',
-				message: __( 'Please enter a caption.', 'fair-audience' ),
+				message: __(
+					'Please enter a caption.',
+					'fair-audience-experimental'
+				),
 			} );
 			return;
 		}
@@ -204,7 +216,10 @@ export default function InstagramPosts() {
 					status: 'success',
 					message:
 						result.message ||
-						__( 'Post published successfully!', 'fair-audience' ),
+						__(
+							'Post published successfully!',
+							'fair-audience-experimental'
+						),
 				} );
 				setAttachmentId( null );
 				setImageUrl( '' );
@@ -222,7 +237,10 @@ export default function InstagramPosts() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to publish post.', 'fair-audience' ),
+						__(
+							'Failed to publish post.',
+							'fair-audience-experimental'
+						),
 				} );
 				loadPosts();
 				setIsPosting( false );
@@ -252,7 +270,7 @@ export default function InstagramPosts() {
 			! confirm(
 				__(
 					'Are you sure you want to delete this post?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -263,7 +281,10 @@ export default function InstagramPosts() {
 			.then( () => {
 				setNotice( {
 					status: 'success',
-					message: __( 'Post deleted.', 'fair-audience' ),
+					message: __(
+						'Post deleted.',
+						'fair-audience-experimental'
+					),
 				} );
 				loadPosts();
 			} )
@@ -276,7 +297,10 @@ export default function InstagramPosts() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to delete post.', 'fair-audience' ),
+						__(
+							'Failed to delete post.',
+							'fair-audience-experimental'
+						),
 				} );
 			} );
 	};
@@ -310,7 +334,7 @@ export default function InstagramPosts() {
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Instagram Posts', 'fair-audience' ) }</h1>
+			<h1>{ __( 'Instagram Posts', 'fair-audience-experimental' ) }</h1>
 
 			{ notice && (
 				<Notice
@@ -327,7 +351,10 @@ export default function InstagramPosts() {
 			<Card style={ { marginBottom: '2rem' } }>
 				<CardHeader>
 					<h2 style={ { margin: 0 } }>
-						{ __( 'Create New Post', 'fair-audience' ) }
+						{ __(
+							'Create New Post',
+							'fair-audience-experimental'
+						) }
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -340,7 +367,7 @@ export default function InstagramPosts() {
 									fontWeight: 500,
 								} }
 							>
-								{ __( 'Image', 'fair-audience' ) }
+								{ __( 'Image', 'fair-audience-experimental' ) }
 							</label>
 							{ imagePreview ? (
 								<div style={ { marginBottom: '8px' } }>
@@ -363,7 +390,7 @@ export default function InstagramPosts() {
 									>
 										{ __(
 											'Replace Image',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</Button>
 									<Button
@@ -374,7 +401,7 @@ export default function InstagramPosts() {
 									>
 										{ __(
 											'Remove Image',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</Button>
 								</div>
@@ -386,7 +413,7 @@ export default function InstagramPosts() {
 								>
 									{ __(
 										'Select from Media Library',
-										'fair-audience'
+										'fair-audience-experimental'
 									) }
 								</Button>
 							) }
@@ -400,18 +427,21 @@ export default function InstagramPosts() {
 							>
 								{ __(
 									'Must be a publicly accessible URL.',
-									'fair-audience'
+									'fair-audience-experimental'
 								) }
 							</p>
 						</div>
 
 						<TextareaControl
-							label={ __( 'Caption', 'fair-audience' ) }
+							label={ __(
+								'Caption',
+								'fair-audience-experimental'
+							) }
 							value={ caption }
 							onChange={ setCaption }
 							placeholder={ __(
 								'Write your caption here...',
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 							rows={ 4 }
 							disabled={ isPosting }
@@ -424,8 +454,14 @@ export default function InstagramPosts() {
 							isBusy={ isPosting }
 						>
 							{ isPosting
-								? __( 'Posting...', 'fair-audience' )
-								: __( 'Post to Instagram', 'fair-audience' ) }
+								? __(
+										'Posting...',
+										'fair-audience-experimental'
+									)
+								: __(
+										'Post to Instagram',
+										'fair-audience-experimental'
+									) }
 						</Button>
 					</form>
 				</CardBody>
@@ -435,7 +471,7 @@ export default function InstagramPosts() {
 			<Card>
 				<CardHeader>
 					<h2 style={ { margin: 0 } }>
-						{ __( 'Post History', 'fair-audience' ) }
+						{ __( 'Post History', 'fair-audience-experimental' ) }
 					</h2>
 				</CardHeader>
 				<CardBody>
@@ -453,7 +489,7 @@ export default function InstagramPosts() {
 						<p style={ { color: '#666' } }>
 							{ __(
 								'No posts yet. Create your first post above!',
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 						</p>
 					) : (
@@ -464,16 +500,28 @@ export default function InstagramPosts() {
 							<thead>
 								<tr>
 									<th style={ { width: '40%' } }>
-										{ __( 'Caption', 'fair-audience' ) }
+										{ __(
+											'Caption',
+											'fair-audience-experimental'
+										) }
 									</th>
 									<th style={ { width: '15%' } }>
-										{ __( 'Status', 'fair-audience' ) }
+										{ __(
+											'Status',
+											'fair-audience-experimental'
+										) }
 									</th>
 									<th style={ { width: '20%' } }>
-										{ __( 'Created', 'fair-audience' ) }
+										{ __(
+											'Created',
+											'fair-audience-experimental'
+										) }
 									</th>
 									<th style={ { width: '15%' } }>
-										{ __( 'Actions', 'fair-audience' ) }
+										{ __(
+											'Actions',
+											'fair-audience-experimental'
+										) }
 									</th>
 								</tr>
 							</thead>
@@ -538,7 +586,7 @@ export default function InstagramPosts() {
 											>
 												{ __(
 													'Duplicate',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 											</Button>
 											<Button
@@ -550,7 +598,7 @@ export default function InstagramPosts() {
 											>
 												{ __(
 													'Delete',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 											</Button>
 										</td>
