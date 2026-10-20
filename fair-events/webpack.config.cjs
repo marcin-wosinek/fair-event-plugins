@@ -48,6 +48,10 @@ const scriptConfig = {
 			process.cwd(),
 			'src/blocks/event-info/editor.js'
 		),
+		'blocks/other-sessions/editor': path.resolve(
+			process.cwd(),
+			'src/blocks/other-sessions/editor.js'
+		),
 		'blocks/event-prices/editor': path.resolve(
 			process.cwd(),
 			'src/blocks/event-prices/editor.js'

@@ -39,6 +39,7 @@ Fair Events provides event publishing, calendars, ticket configuration and signu
 * 📋 **Events List** - Filterable list of upcoming or past events
 * 🗓 **Events Week** - Seven-day overview of the current week
 * ℹ️ **Event Info** - Date, time, and venue of a single event
+* 🔁 **Other Sessions** - Upcoming sessions of a recurring event, each linking to its own page
 * ⏰ **Event Dates** - Start and end times in your site's format
 * 💶 **Event Prices** - Display configured ticket prices
 * ➕ **Add to Calendar** - A core Button variation for saving events to personal calendars; the separate Fair Calendar Button plugin provides a standalone block

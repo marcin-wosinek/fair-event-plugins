@@ -47,7 +47,13 @@ const DEFAULT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const STATUSES = ['authoring', 'legacy', 'unregistered'];
 const KINDS = ['block', 'php-block', 'variation'];
-const EXAMPLE_CONTEXTS = ['page', 'event'];
+const EXAMPLE_CONTEXTS = ['page', 'event', 'recurring-event'];
+const EXAMPLE_CONTEXT_LABELS = {
+	page: 'any post or page',
+	event: 'an event post (a post with a Fair Events event date)',
+	'recurring-event':
+		'a recurring event post (a post linked to a Fair Events series)',
+};
 
 /**
  * Attributes every block accepts through WordPress core supports or the
@@ -768,9 +774,7 @@ export function renderBlockReadme(entry, pluginName) {
 			'',
 			...(descriptor.description ? [descriptor.description, ''] : []),
 			`Insert into: ${
-				descriptor.context === 'event'
-					? 'an event post (a post with a Fair Events event date)'
-					: 'any post or page'
+				EXAMPLE_CONTEXT_LABELS[descriptor.context]
 			}. Renders \`${descriptor.frontend}\` when its prerequisites are met.`,
 			'',
 			...Object.entries(descriptor.syntheticIds || {}).flatMap(

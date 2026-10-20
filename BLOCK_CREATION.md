@@ -95,8 +95,9 @@ src/blocks/block-name/docs/
     when the block is registered in `registration` and list plugins it needs
     at render time in `requires`.
 -   Describe every example in `doc.json` `examples` with a `title`, the
-    `context` it is inserted into (`page`, or `event` for an event post), and
-    a `frontend` selector the rendered page contains. Document placeholder
+    `context` it is inserted into (`page`, `event` for an event post, or
+    `recurring-event` for a post linked to a series with upcoming sessions),
+    and a `frontend` selector the rendered page contains. Document placeholder
     record IDs in `syntheticIds`.
 -   Do not repeat attribute types and defaults in `guide.md`: the generated
     README adds a technical reference from block.json. Explain meaning,
