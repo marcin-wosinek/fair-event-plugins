@@ -38,13 +38,13 @@ export const buildEntriesCsv = ( entries, budgets ) => {
 	);
 
 	const headers = [
-		__( 'Date', 'fair-payments-connector' ),
-		__( 'Type', 'fair-payments-connector' ),
-		__( 'Amount', 'fair-payments-connector' ),
-		__( 'Description', 'fair-payments-connector' ),
-		__( 'Budget', 'fair-payments-connector' ),
-		__( 'Event Date', 'fair-payments-connector' ),
-		__( 'Imported', 'fair-payments-connector' ),
+		__( 'Date', 'fair-finance' ),
+		__( 'Type', 'fair-finance' ),
+		__( 'Amount', 'fair-finance' ),
+		__( 'Description', 'fair-finance' ),
+		__( 'Budget', 'fair-finance' ),
+		__( 'Event Date', 'fair-finance' ),
+		__( 'Imported', 'fair-finance' ),
 	];
 
 	const rows = entries.map( ( entry ) => [

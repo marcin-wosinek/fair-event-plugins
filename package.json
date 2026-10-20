@@ -37,6 +37,7 @@
 		"screenshot:verify": "node scripts/pr-assets.mjs verify",
 		"lint:docs": "node scripts/lint-docs.js",
 		"validate:native-popups": "node scripts/validate-native-popups.mjs",
+		"validate:text-domains": "node scripts/validate-text-domains.mjs",
 		"validate:php-compat": "node scripts/php-compat.mjs check",
 		"validate:agent-workflows": "node scripts/validate-agent-workflows.mjs && node --test scripts/__tests__/agent-hook.test.mjs scripts/__tests__/validate-agent-workflows.test.mjs",
 		"build": "npm run build --workspaces --if-present",

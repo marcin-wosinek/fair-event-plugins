@@ -88,7 +88,7 @@ const ParticipantField = ( { participantId, participant, onChange } ) => {
 						textTransform: 'uppercase',
 					} }
 				>
-					{ __( 'Participant', 'fair-payments-connector' ) }
+					{ __( 'Participant', 'fair-finance' ) }
 				</label>
 				<HStack spacing={ 2 }>
 					<span>
@@ -106,7 +106,7 @@ const ParticipantField = ( { participantId, participant, onChange } ) => {
 						isDestructive
 						onClick={ handleClear }
 					>
-						{ __( 'Remove', 'fair-payments-connector' ) }
+						{ __( 'Remove', 'fair-finance' ) }
 					</Button>
 				</HStack>
 			</div>
@@ -116,16 +116,13 @@ const ParticipantField = ( { participantId, participant, onChange } ) => {
 	return (
 		<div ref={ wrapperRef } style={ { position: 'relative' } }>
 			<TextControl
-				label={ __( 'Participant', 'fair-payments-connector' ) }
+				label={ __( 'Participant', 'fair-finance' ) }
 				value={ search }
 				onChange={ setSearch }
-				placeholder={ __(
-					'Search by name or email…',
-					'fair-payments-connector'
-				) }
+				placeholder={ __( 'Search by name or email…', 'fair-finance' ) }
 				help={ __(
 					'Link this transfer to a participant',
-					'fair-payments-connector'
+					'fair-finance'
 				) }
 				autoComplete="off"
 			/>
@@ -197,10 +194,7 @@ const ParticipantField = ( { participantId, participant, onChange } ) => {
 						boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
 					} }
 				>
-					{ __(
-						'No participants found.',
-						'fair-payments-connector'
-					) }
+					{ __( 'No participants found.', 'fair-finance' ) }
 				</div>
 			) }
 		</div>

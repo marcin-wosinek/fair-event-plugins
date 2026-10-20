@@ -29,9 +29,7 @@ export function readWorkbookRows( data ) {
 		// An empty file reads as one blank row.
 		return rows.some( ( row ) => row.length > 0 ) ? rows : [];
 	} catch ( err ) {
-		throw new Error(
-			__( 'Failed to parse file.', 'fair-payments-connector' )
-		);
+		throw new Error( __( 'Failed to parse file.', 'fair-finance' ) );
 	}
 }
 
@@ -56,11 +54,7 @@ export function readSpreadsheetFile( file ) {
 		};
 
 		reader.onerror = () => {
-			reject(
-				new Error(
-					__( 'Failed to read file.', 'fair-payments-connector' )
-				)
-			);
+			reject( new Error( __( 'Failed to read file.', 'fair-finance' ) ) );
 		};
 
 		reader.readAsArrayBuffer( file );

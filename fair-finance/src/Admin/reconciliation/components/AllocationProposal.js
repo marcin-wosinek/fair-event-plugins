@@ -141,10 +141,7 @@ export default function AllocationProposal( {
 // What a confirmed match did to the bank entry's allocation.
 export const matchOutcome = (
 	allocation,
-	matched = __(
-		'Transactions matched successfully.',
-		'fair-payments-connector'
-	)
+	matched = __( 'Transactions matched successfully.', 'fair-finance' )
 ) => {
 	const created = allocation?.allocation_ids?.length || 0;
 	if ( created > 0 ) {

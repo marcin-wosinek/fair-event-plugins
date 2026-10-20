@@ -152,6 +152,9 @@ jobs:
             - name: Reject browser-native popups
               run: npm run validate:native-popups
 
+            - name: Check translation text domains
+              run: npm run validate:text-domains
+
             - name: Check PHP compatibility declarations
               run: npm run validate:php-compat
 

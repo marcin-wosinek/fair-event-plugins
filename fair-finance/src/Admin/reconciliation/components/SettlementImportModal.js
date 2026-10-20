@@ -70,8 +70,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 			// A file chosen in the meantime owns the preview now.
 			if ( selection === selectionRef.current ) {
 				setError(
-					err.message ||
-						__( 'Failed to parse file.', 'fair-payments-connector' )
+					err.message || __( 'Failed to parse file.', 'fair-finance' )
 				);
 				setIsParsing( false );
 			}
@@ -95,7 +94,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		} catch ( err ) {
 			previewError =
 				err.message ||
-				__( 'Failed to match settlement.', 'fair-payments-connector' );
+				__( 'Failed to match settlement.', 'fair-finance' );
 		}
 
 		if ( selection !== selectionRef.current ) {
@@ -122,10 +121,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 			setSuccess(
 				matchOutcome(
 					matched?.allocation,
-					__(
-						'Settlement matched successfully.',
-						'fair-payments-connector'
-					)
+					__( 'Settlement matched successfully.', 'fair-finance' )
 				)
 			);
 			setTimeout( () => {
@@ -134,10 +130,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__(
-						'Failed to match transactions.',
-						'fair-payments-connector'
-					)
+					__( 'Failed to match transactions.', 'fair-finance' )
 			);
 		} finally {
 			setIsConfirming( false );
@@ -154,7 +147,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 									/* translators: 1: amount, 2: date */
 									__(
 										'%1$s — %2$s (suggested)',
-										'fair-payments-connector'
+										'fair-finance'
 									),
 									formatAmount(
 										report.suggested_entry.amount,
@@ -169,7 +162,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 					value: String( entry.id ),
 					label: sprintf(
 						/* translators: 1: amount, 2: date */
-						__( '%1$s — %2$s', 'fair-payments-connector' ),
+						__( '%1$s — %2$s', 'fair-finance' ),
 						formatAmount( entry.amount, report.currency ),
 						entry.entry_date
 					),
@@ -193,10 +186,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 
 	return (
 		<Modal
-			title={ __(
-				'Import Mollie Settlement CSV',
-				'fair-payments-connector'
-			) }
+			title={ __( 'Import Mollie Settlement CSV', 'fair-finance' ) }
 			onRequestClose={ onCancel }
 			style={ { maxWidth: '720px', width: '100%' } }
 		>
@@ -217,7 +207,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 					<p>
 						{ __(
 							'Select a Mollie settlement export (.csv). Payment rows are matched to transactions by their Mollie payment ID, and the payout is matched to a bank entry.',
-							'fair-payments-connector'
+							'fair-finance'
 						) }
 					</p>
 					<input
@@ -234,14 +224,8 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 						<Spinner />
 						<span>
 							{ isParsing
-								? __(
-										'Parsing file…',
-										'fair-payments-connector'
-									)
-								: __(
-										'Matching settlement…',
-										'fair-payments-connector'
-									) }
+								? __( 'Parsing file…', 'fair-finance' )
+								: __( 'Matching settlement…', 'fair-finance' ) }
 						</span>
 					</HStack>
 				) }
@@ -257,28 +241,19 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 						<h4 style={ { marginTop: 0 } }>
 							{ sprintf(
 								/* translators: %s: settlement reference */
-								__(
-									'Settlement %s',
-									'fair-payments-connector'
-								),
+								__( 'Settlement %s', 'fair-finance' ),
 								report.settlement_reference
 							) }
 						</h4>
 						<p>
 							<strong>
-								{ __(
-									'Payments matched:',
-									'fair-payments-connector'
-								) }
+								{ __( 'Payments matched:', 'fair-finance' ) }
 							</strong>{ ' ' }
 							{ report.matched.length } / { report.payment_count }
 						</p>
 						<p>
 							<strong>
-								{ __(
-									'Settlement total:',
-									'fair-payments-connector'
-								) }
+								{ __( 'Settlement total:', 'fair-finance' ) }
 							</strong>{ ' ' }
 							{ formatAmount(
 								report.settlement_total,
@@ -287,10 +262,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 						</p>
 						<p>
 							<strong>
-								{ __(
-									'Fees total:',
-									'fair-payments-connector'
-								) }
+								{ __( 'Fees total:', 'fair-finance' ) }
 							</strong>{ ' ' }
 							{ formatAmount(
 								report.fees_total,
@@ -303,7 +275,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 										/* translators: %s: amount difference */
 										__(
 											'(differs from recorded fees by %s)',
-											'fair-payments-connector'
+											'fair-finance'
 										),
 										formatAmount( feeDiff, report.currency )
 									) }
@@ -315,7 +287,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 							<SelectControl
 								label={ __(
 									'Match to bank entry',
-									'fair-payments-connector'
+									'fair-finance'
 								) }
 								value={ selectedEntryId }
 								options={ [
@@ -323,7 +295,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 										value: '',
 										label: __(
 											'— Select a bank entry —',
-											'fair-payments-connector'
+											'fair-finance'
 										),
 									},
 									...entryOptions,
@@ -340,7 +312,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 										/* translators: 1: entry amount, 2: settlement total */
 										__(
 											'Selected entry (%1$s) does not equal the settlement total (%2$s).',
-											'fair-payments-connector'
+											'fair-finance'
 										),
 										formatAmount(
 											selectedEntry.amount,
@@ -362,7 +334,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 										/* translators: %d: count */
 										__(
 											'%d payment row(s) had no matching transaction:',
-											'fair-payments-connector'
+											'fair-finance'
 										),
 										report.unmatched_csv_rows.length
 									) }
@@ -392,7 +364,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 										/* translators: %d: count */
 										__(
 											'%d unmatched transaction(s) in this date window are absent from the CSV:',
-											'fair-payments-connector'
+											'fair-finance'
 										),
 										report.transactions_without_csv.length
 									) }
@@ -419,7 +391,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 
 				<HStack justify="flex-end" spacing={ 2 }>
 					<Button variant="tertiary" onClick={ onCancel }>
-						{ __( 'Cancel', 'fair-payments-connector' ) }
+						{ __( 'Cancel', 'fair-finance' ) }
 					</Button>
 					<Button
 						variant="primary"
@@ -435,7 +407,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 							success
 						}
 					>
-						{ __( 'Confirm Match', 'fair-payments-connector' ) }
+						{ __( 'Confirm Match', 'fair-finance' ) }
 					</Button>
 				</HStack>
 			</VStack>

@@ -148,6 +148,12 @@ class AdminPages {
 			)
 		);
 
+		wp_set_script_translations(
+			'fair-finance-' . $page,
+			'fair-finance',
+			\FairFinance\Core\Features::script_translations_path()
+		);
+
 		wp_enqueue_style( 'wp-components' );
 
 		// Enqueue the page's stylesheet when one was emitted by the build.

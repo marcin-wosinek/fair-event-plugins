@@ -6,7 +6,7 @@ import { __, sprintf } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { formatSiteLocalDatetime } from 'fair-events-shared';
+import { formatSiteLocalDatetime } from 'fair-events-shared/src/dateTime.js';
 
 export const LIST_URL = 'admin.php?page=fair-finance-settlements';
 

@@ -40,10 +40,7 @@ export function parseEntryRows( rows ) {
 
 	if ( headerRowIndex === -1 ) {
 		throw new Error(
-			__(
-				'Could not find header row in the file.',
-				'fair-payments-connector'
-			)
+			__( 'Could not find header row in the file.', 'fair-finance' )
 		);
 	}
 
@@ -81,10 +78,7 @@ export function parseEntryRows( rows ) {
 
 	if ( entries.length === 0 ) {
 		throw new Error(
-			__(
-				'No valid entries found in the file.',
-				'fair-payments-connector'
-			)
+			__( 'No valid entries found in the file.', 'fair-finance' )
 		);
 	}
 
