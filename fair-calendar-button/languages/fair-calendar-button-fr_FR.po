@@ -68,141 +68,141 @@ msgctxt "block description"
 msgid "A Gutenberg block for calendar integration"
 msgstr "Un bloc Gutenberg pour l'intégration de calendrier"
 
-#: src/blocks/calendar-button/components/EditComponent.js:157
-#: src/blocks/calendar-button/components/EditComponent.js:177
+#: src/blocks/calendar-button/components/EditComponent.js:129
+#: src/blocks/calendar-button/components/EditComponent.js:149
 msgid "Other"
 msgstr "Autre"
 
-#: src/blocks/calendar-button/components/EditComponent.js:158
+#: src/blocks/calendar-button/components/EditComponent.js:130
 msgid "30 minutes"
 msgstr "30 minutes"
 
-#: src/blocks/calendar-button/components/EditComponent.js:159
+#: src/blocks/calendar-button/components/EditComponent.js:131
 msgid "1 hour"
 msgstr "1 heure"
 
-#: src/blocks/calendar-button/components/EditComponent.js:161
+#: src/blocks/calendar-button/components/EditComponent.js:133
 msgid "1 hour 30 minutes"
 msgstr "1 heure 30 minutes"
 
-#: src/blocks/calendar-button/components/EditComponent.js:164
+#: src/blocks/calendar-button/components/EditComponent.js:136
 msgid "2 hours"
 msgstr "2 heures"
 
-#: src/blocks/calendar-button/components/EditComponent.js:166
+#: src/blocks/calendar-button/components/EditComponent.js:138
 msgid "2 hours 30 minutes"
 msgstr "2 heures 30 minutes"
 
-#: src/blocks/calendar-button/components/EditComponent.js:169
+#: src/blocks/calendar-button/components/EditComponent.js:141
 msgid "3 hours"
 msgstr "3 heures"
 
-#: src/blocks/calendar-button/components/EditComponent.js:170
+#: src/blocks/calendar-button/components/EditComponent.js:142
 msgid "4 hours"
 msgstr "4 heures"
 
-#: src/blocks/calendar-button/components/EditComponent.js:171
+#: src/blocks/calendar-button/components/EditComponent.js:143
 msgid "6 hours"
 msgstr "6 heures"
 
-#: src/blocks/calendar-button/components/EditComponent.js:172
+#: src/blocks/calendar-button/components/EditComponent.js:144
 msgid "8 hours"
 msgstr "8 heures"
 
-#: src/blocks/calendar-button/components/EditComponent.js:178
+#: src/blocks/calendar-button/components/EditComponent.js:150
 msgid "1 day"
 msgstr "1 jour"
 
-#: src/blocks/calendar-button/components/EditComponent.js:179
+#: src/blocks/calendar-button/components/EditComponent.js:151
 msgid "2 days"
 msgstr "2 jours"
 
-#: src/blocks/calendar-button/components/EditComponent.js:180
+#: src/blocks/calendar-button/components/EditComponent.js:152
 msgid "3 days"
 msgstr "3 jours"
 
-#: src/blocks/calendar-button/components/EditComponent.js:372
+#: src/blocks/calendar-button/components/EditComponent.js:344
 msgid "Add to Calendar"
 msgstr "Ajouter au calendrier"
 
-#: src/blocks/calendar-button/components/EditComponent.js:397
+#: src/blocks/calendar-button/components/EditComponent.js:369
 msgid "Calendar Button Settings"
 msgstr "Paramètres du bouton calendrier"
 
-#: src/blocks/calendar-button/components/EditComponent.js:419
+#: src/blocks/calendar-button/components/EditComponent.js:405
 msgid "All Day Event"
 msgstr "Événement toute la journée"
 
-#: src/blocks/calendar-button/components/EditComponent.js:427
+#: src/blocks/calendar-button/components/EditComponent.js:413
 msgid "Start Date"
 msgstr "Date de début"
 
-#: src/blocks/calendar-button/components/EditComponent.js:428
+#: src/blocks/calendar-button/components/EditComponent.js:414
 msgid "Start Date/Time"
 msgstr "Date/Heure de début"
 
-#: src/blocks/calendar-button/components/EditComponent.js:440
-#: src/blocks/calendar-button/components/EditComponent.js:452
+#: src/blocks/calendar-button/components/EditComponent.js:426
+#: src/blocks/calendar-button/components/EditComponent.js:438
 msgid "Event Length"
 msgstr "Durée de l'événement"
 
-#: src/blocks/calendar-button/components/EditComponent.js:465
+#: src/blocks/calendar-button/components/EditComponent.js:451
 msgid "End Date"
 msgstr "Date de fin"
 
-#: src/blocks/calendar-button/components/EditComponent.js:466
+#: src/blocks/calendar-button/components/EditComponent.js:452
 msgid "End Date/Time"
 msgstr "Date/Heure de fin"
 
-#: src/blocks/calendar-button/components/EditComponent.js:494
+#: src/blocks/calendar-button/components/EditComponent.js:480
 msgid "Description"
 msgstr "Description"
 
-#: src/blocks/calendar-button/components/EditComponent.js:486
+#: src/blocks/calendar-button/components/EditComponent.js:472
 msgid "Location"
 msgstr "Lieu"
 
-#: src/blocks/calendar-button/components/EditComponent.js:501
+#: src/blocks/calendar-button/components/EditComponent.js:487
 msgid "Recurring Event"
 msgstr "Événement récurrent"
 
-#: src/blocks/calendar-button/components/EditComponent.js:509
+#: src/blocks/calendar-button/components/EditComponent.js:495
 msgid "Enable this to set up a recurring event with an iCal recurrence rule."
 msgstr "Activez cette option pour configurer un événement récurrent avec une règle de récurrence iCal."
 
-#: src/blocks/calendar-button/components/EditComponent.js:517
+#: src/blocks/calendar-button/components/EditComponent.js:503
 msgid "Frequency"
 msgstr "Fréquence"
 
-#: src/blocks/calendar-button/components/EditComponent.js:524
+#: src/blocks/calendar-button/components/EditComponent.js:510
 msgid "Daily"
 msgstr "Quotidien"
 
-#: src/blocks/calendar-button/components/EditComponent.js:531
+#: src/blocks/calendar-button/components/EditComponent.js:517
 msgid "Weekly"
 msgstr "Hebdomadaire"
 
-#: src/blocks/calendar-button/components/EditComponent.js:538
+#: src/blocks/calendar-button/components/EditComponent.js:524
 msgid "Biweekly"
 msgstr "Bihebdomadaire"
 
-#: src/blocks/calendar-button/components/EditComponent.js:546
+#: src/blocks/calendar-button/components/EditComponent.js:532
 msgid "How often the event repeats."
 msgstr "À quelle fréquence l'événement se répète."
 
-#: src/blocks/calendar-button/components/EditComponent.js:552
+#: src/blocks/calendar-button/components/EditComponent.js:538
 msgid "Number of Repetitions"
 msgstr "Nombre de répétitions"
 
-#: src/blocks/calendar-button/components/EditComponent.js:559
+#: src/blocks/calendar-button/components/EditComponent.js:545
 msgid "Leave empty for unlimited repetitions, or set \"Until Date\" below."
 msgstr "Laissez vide pour des répétitions illimitées, ou définissez une \"Date de fin\" ci-dessous."
 
-#: src/blocks/calendar-button/components/EditComponent.js:566
+#: src/blocks/calendar-button/components/EditComponent.js:552
 msgid "Until Date"
 msgstr "Date de fin"
 
-#: src/blocks/calendar-button/components/EditComponent.js:573
+#: src/blocks/calendar-button/components/EditComponent.js:559
 msgid "Leave empty for unlimited repetitions, or set \"Number of Repetitions\" above."
 msgstr "Laissez vide pour des répétitions illimitées, ou définissez un \"Nombre de répétitions\" ci-dessus."
 
@@ -276,10 +276,36 @@ msgstr "Modifier l'événement calendrier"
 msgid "Download ICS"
 msgstr "Télécharger ICS"
 
-#: src/blocks/calendar-button/components/EditComponent.js:404
+#: src/blocks/calendar-button/components/EditComponent.js:376
 msgid "Keep in sync with event data"
 msgstr "Rester synchronisé avec les données de l'événement"
 
-#: src/blocks/calendar-button/components/EditComponent.js:412
-msgid "Automatically use start date, end date, and all-day setting from the event."
-msgstr "Utiliser automatiquement la date de début, la date de fin et le paramètre tout au long de la journée de l'événement."
+#: src/blocks/calendar-button/components/EditComponent.js:384
+msgid "Automatically use the start, end, all-day setting, and location from the event."
+msgstr "Utiliser automatiquement le début, la fin, le réglage « toute la journée » et le lieu de l’événement."
+
+#: src/blocks/calendar-button/components/EditComponent.js:393
+msgid "Loading event details…"
+msgstr "Chargement des détails de l’événement…"
+
+#: src/blocks/calendar-button/components/EditComponent.js:588
+msgid "Fair Events is not active, so this button can’t read the event’s dates. Visitors can’t add the event to their calendar until Fair Events is active again or you turn off syncing and enter the dates here."
+msgstr "Fair Events n’est pas actif : ce bouton ne peut donc pas lire les dates de l’événement. Les visiteurs ne pourront pas ajouter l’événement à leur agenda tant que Fair Events ne sera pas réactivé ou que vous n’aurez pas désactivé la synchronisation pour saisir les dates ici."
+
+#: src/blocks/calendar-button/components/EditComponent.js:593
+msgid "This event has no dates yet. Visitors can’t add it to their calendar until you set its dates in the Event Details panel or turn off syncing and enter them here."
+msgstr "Cet événement n’a pas encore de dates. Les visiteurs ne pourront pas l’ajouter à leur agenda tant que vous n’aurez pas défini ses dates dans le panneau Détails de l’événement ou désactivé la synchronisation pour les saisir ici."
+
+#: src/blocks/calendar-button/components/EditComponent.js:598
+msgid "Visitors can’t add this event to their calendar until it has both a start and an end time, or is all-day. Complete its times in the Event Details panel, or turn off syncing and enter them here."
+msgstr "Les visiteurs ne pourront pas ajouter cet événement à leur agenda tant qu’il n’aura pas d’heure de début et de fin, ou ne sera pas sur toute la journée. Complétez ses heures dans le panneau Détails de l’événement, ou désactivez la synchronisation pour les saisir ici."
+
+#. translators: %s: error message from the server.
+#: src/blocks/calendar-button/components/EditComponent.js:606
+#, js-format
+msgid "The event’s details could not be loaded (%s). Visitors can’t add the event to their calendar until they load. Reload the editor to try again, or turn off syncing and enter the dates here."
+msgstr "Impossible de charger les détails de l’événement (%s). Les visiteurs ne pourront pas ajouter l’événement à leur agenda tant qu’ils ne seront pas chargés. Rechargez l’éditeur pour réessayer, ou désactivez la synchronisation pour saisir les dates ici."
+
+#: src/blocks/calendar-button/components/EditComponent.js:612
+msgid "The event’s details could not be loaded. Visitors can’t add the event to their calendar until they load. Reload the editor to try again, or turn off syncing and enter the dates here."
+msgstr "Impossible de charger les détails de l’événement. Les visiteurs ne pourront pas ajouter l’événement à leur agenda tant qu’ils ne seront pas chargés. Rechargez l’éditeur pour réessayer, ou désactivez la synchronisation pour saisir les dates ici."

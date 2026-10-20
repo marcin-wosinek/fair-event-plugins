@@ -8,15 +8,17 @@ import {
 	ToggleControl,
 	TextareaControl,
 	SelectControl,
+	Notice,
+	Spinner,
 } from '@wordpress/components';
 import {
 	useBlockProps,
 	InspectorControls,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useSelect } from '@wordpress/data';
 import { calculateDuration } from 'fair-events-shared';
 import {
 	calculateEndTime,
@@ -28,6 +30,7 @@ import {
 } from '../utils/dateTime.js';
 import { rruleManager } from '../utils/rruleManager.js';
 import RecurringEventsCalendar from './RecurringEventsCalendar.js';
+import { useEventSync } from '../utils/useEventSync.js';
 
 /**
  * Edit component for the Calendar Button Block
@@ -35,9 +38,14 @@ import RecurringEventsCalendar from './RecurringEventsCalendar.js';
  * @param {Object}   props               - Block props
  * @param {Object}   props.attributes    - Block attributes
  * @param {Function} props.setAttributes - Function to set attributes
+ * @param {Object}   props.context       - Block context (postId, postType)
  * @return {JSX.Element} The edit component
  */
-export default function EditComponent( { attributes, setAttributes } ) {
+export default function EditComponent( {
+	attributes,
+	setAttributes,
+	context,
+} ) {
 	const blockProps = useBlockProps();
 
 	const {
@@ -51,31 +59,22 @@ export default function EditComponent( { attributes, setAttributes } ) {
 		syncWithEvent,
 	} = attributes;
 
-	// State to track metadata updates
-	const [ metaUpdateCounter, setMetaUpdateCounter ] = useState( 0 );
-
-	// Detect if we're on a fair_event post type
-	const { postType, eventMeta } = useSelect(
+	// Detect if we're on a fair_event post type. The block's post context
+	// names the post it renders for, which differs from the edited post
+	// only when the block sits in a query loop.
+	const { postType, postId, isCurrentPost } = useSelect(
 		( select ) => {
-			const { getCurrentPostType } = select( 'core/editor' );
-			const { getEditedPostAttribute } = select( 'core/editor' );
+			const editor = select( 'core/editor' );
+			const currentPostId = editor?.getCurrentPostId();
+			const contextPostId = context?.postId ?? currentPostId;
 
 			return {
-				postType: getCurrentPostType(),
-				eventMeta: {
-					event_start:
-						getEditedPostAttribute( 'meta' )?.event_start || '',
-					event_end:
-						getEditedPostAttribute( 'meta' )?.event_end || '',
-					event_all_day:
-						getEditedPostAttribute( 'meta' )?.event_all_day ||
-						false,
-					event_location:
-						getEditedPostAttribute( 'meta' )?.event_location || '',
-				},
+				postType: context?.postType ?? editor?.getCurrentPostType(),
+				postId: contextPostId,
+				isCurrentPost: contextPostId === currentPostId,
 			};
 		},
-		[ metaUpdateCounter ]
+		[ context?.postId, context?.postType ]
 	);
 
 	const isOnFairEvent = postType === 'fair_event';
@@ -88,60 +87,33 @@ export default function EditComponent( { attributes, setAttributes } ) {
 		}
 	}, [ isOnFairEvent ] );
 
-	// Subscribe to metadata changes when sync is enabled
+	const sync = useEventSync( {
+		enabled: syncWithEvent && isOnFairEvent,
+		postId,
+		isCurrentPost,
+	} );
+	// Synchronized fields follow the event and can't be edited here, also
+	// while the event data is unavailable: turning sync off unlocks them
+	// with the latest values.
+	const fieldsLocked = sync.status !== 'off';
+	const syncNotice = getSyncNotice( sync );
+
+	// Copy the event's values into the attributes whenever they change.
 	useEffect( () => {
-		if ( ! syncWithEvent || ! isOnFairEvent ) {
+		if ( sync.status !== 'synced' ) {
 			return;
 		}
 
-		const { subscribe } = wp.data;
-		let previousMeta = { ...eventMeta };
-
-		// Subscribe to store changes
-		const unsubscribe = subscribe( () => {
-			const editor = wp.data.select( 'core/editor' );
-			const currentMeta = editor.getEditedPostAttribute( 'meta' );
-
-			// Check if metadata has changed
-			if (
-				currentMeta?.event_start !== previousMeta.event_start ||
-				currentMeta?.event_end !== previousMeta.event_end ||
-				currentMeta?.event_all_day !== previousMeta.event_all_day ||
-				currentMeta?.event_location !== previousMeta.event_location
-			) {
-				previousMeta = {
-					event_start: currentMeta?.event_start || '',
-					event_end: currentMeta?.event_end || '',
-					event_all_day: currentMeta?.event_all_day || false,
-					event_location: currentMeta?.event_location || '',
-				};
-
-				// Trigger a re-render by updating the counter
-				setMetaUpdateCounter( ( prev ) => prev + 1 );
-			}
-		} );
-
-		return unsubscribe;
-	}, [ syncWithEvent, isOnFairEvent ] );
-
-	// Sync with event data when toggle is enabled
-	useEffect( () => {
-		if ( syncWithEvent && isOnFairEvent && eventMeta.event_start ) {
-			setAttributes( {
-				start: eventMeta.event_start,
-				end: eventMeta.event_end,
-				allDay: eventMeta.event_all_day,
-				location: eventMeta.event_location,
-			} );
+		const { values } = sync;
+		if (
+			values.start !== start ||
+			values.end !== end ||
+			values.allDay !== allDay ||
+			values.location !== location
+		) {
+			setAttributes( values );
 		}
-	}, [
-		syncWithEvent,
-		isOnFairEvent,
-		eventMeta.event_start,
-		eventMeta.event_end,
-		eventMeta.event_all_day,
-		eventMeta.event_location,
-	] );
+	}, [ sync ] );
 
 	// Extract recurrence values with defaults
 	const frequency = recurrence?.frequency || 'WEEKLY';
@@ -410,16 +382,30 @@ export default function EditComponent( { attributes, setAttributes } ) {
 								setAttributes( { syncWithEvent: value } )
 							}
 							help={ __(
-								'Automatically use start date, end date, and all-day setting from the event.',
+								'Automatically use the start, end, all-day setting, and location from the event.',
 								'fair-calendar-button'
 							) }
 						/>
+					) }
+					{ sync.status === 'loading' && (
+						<p className="fair-calendar-button-sync-loading">
+							<Spinner />
+							{ __(
+								'Loading event details…',
+								'fair-calendar-button'
+							) }
+						</p>
+					) }
+					{ syncNotice && (
+						<Notice status="warning" isDismissible={ false }>
+							{ syncNotice }
+						</Notice>
 					) }
 					<ToggleControl
 						label={ __( 'All Day Event', 'fair-calendar-button' ) }
 						checked={ allDay }
 						onChange={ handleAllDayToggle }
-						disabled={ syncWithEvent && isOnFairEvent }
+						disabled={ fieldsLocked }
 					/>
 					<TextControl
 						label={
@@ -433,7 +419,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 						value={ start }
 						onChange={ handleStartTimeChange }
 						type={ allDay ? 'date' : 'datetime-local' }
-						disabled={ syncWithEvent && isOnFairEvent }
+						disabled={ fieldsLocked }
 					/>
 					{ allDay && (
 						<SelectControl
@@ -444,7 +430,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							value={ getCurrentAllDayLengthSelection() }
 							options={ allDayLengthOptions }
 							onChange={ handleAllDayLengthChange }
-							disabled={ syncWithEvent && isOnFairEvent }
+							disabled={ fieldsLocked }
 						/>
 					) }
 					{ ! allDay && (
@@ -456,7 +442,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							value={ getCurrentDurationSelection() }
 							options={ durationOptions }
 							onChange={ handleDurationChange }
-							disabled={ syncWithEvent && isOnFairEvent }
+							disabled={ fieldsLocked }
 						/>
 					) }
 					<TextControl
@@ -470,7 +456,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							setAttributes( { end: value } )
 						}
 						type={ allDay ? 'date' : 'datetime-local' }
-						disabled={ syncWithEvent && isOnFairEvent }
+						disabled={ fieldsLocked }
 						className={
 							! dateTimeValidation.isValid
 								? 'has-error'
@@ -488,7 +474,7 @@ export default function EditComponent( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { location: value } )
 						}
-						disabled={ syncWithEvent && isOnFairEvent }
+						disabled={ fieldsLocked }
 					/>
 					<TextareaControl
 						label={ __( 'Description', 'fair-calendar-button' ) }
@@ -587,4 +573,47 @@ export default function EditComponent( { attributes, setAttributes } ) {
 			<div { ...innerBlocksProps } />
 		</>
 	);
+}
+
+/**
+ * Explain why a synchronized button has no event data to use, and how to
+ * recover.
+ *
+ * @param {Object} sync State from useEventSync().
+ * @return {string} Notice text, empty when there is nothing to report.
+ */
+function getSyncNotice( sync ) {
+	switch ( sync.status ) {
+		case 'unavailable':
+			return __(
+				'Fair Events is not active, so this button can’t read the event’s dates. Visitors can’t add the event to their calendar until Fair Events is active again or you turn off syncing and enter the dates here.',
+				'fair-calendar-button'
+			);
+		case 'missing':
+			return __(
+				'This event has no dates yet. Visitors can’t add it to their calendar until you set its dates in the Event Details panel or turn off syncing and enter them here.',
+				'fair-calendar-button'
+			);
+		case 'incomplete':
+			return __(
+				'Visitors can’t add this event to their calendar until it has both a start and an end time, or is all-day. Complete its times in the Event Details panel, or turn off syncing and enter them here.',
+				'fair-calendar-button'
+			);
+		case 'error':
+			return sync.errorMessage
+				? sprintf(
+						/* translators: %s: error message from the server. */
+						__(
+							'The event’s details could not be loaded (%s). Visitors can’t add the event to their calendar until they load. Reload the editor to try again, or turn off syncing and enter the dates here.',
+							'fair-calendar-button'
+						),
+						sync.errorMessage
+					)
+				: __(
+						'The event’s details could not be loaded. Visitors can’t add the event to their calendar until they load. Reload the editor to try again, or turn off syncing and enter the dates here.',
+						'fair-calendar-button'
+					);
+		default:
+			return '';
+	}
 }

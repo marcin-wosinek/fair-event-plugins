@@ -2,6 +2,17 @@
  * Calendar Button Block editor styles (editor only)
  */
 
+/* Event data synchronization */
+.fair-calendar-button-sync-loading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.fair-calendar-button-sync-loading .components-spinner {
+	margin: 0;
+}
+
 /* Recurring Events Calendar Styles */
 .recurring-events-calendar {
 	margin-top: 20px;
