@@ -60,7 +60,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -72,18 +72,18 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id'              => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'group_id'        => array(
-							'description'       => __( 'Group ID.', 'fair-events' ),
+							'description'       => __( 'Group ID.', 'fair-events-experimental' ),
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
 						'permission_type' => array(
-							'description'       => __( 'Permission type.', 'fair-events' ),
+							'description'       => __( 'Permission type.', 'fair-events-experimental' ),
 							'type'              => 'string',
 							'required'          => true,
 							'enum'              => self::VALID_PERMISSION_TYPES,
@@ -105,12 +105,12 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id'      => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'rule_id' => array(
-							'description' => __( 'Rule ID.', 'fair-events' ),
+							'description' => __( 'Rule ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -143,7 +143,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 		if ( ! $event_date ) {
 			return new WP_Error(
 				'rest_event_date_not_found',
-				__( 'Event date not found.', 'fair-events' ),
+				__( 'Event date not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -180,7 +180,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 		if ( ! $event_date ) {
 			return new WP_Error(
 				'rest_event_date_not_found',
-				__( 'Event date not found.', 'fair-events' ),
+				__( 'Event date not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -193,7 +193,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 		if ( ! $rule_id ) {
 			return new WP_Error(
 				'rest_create_failed',
-				__( 'Failed to create permission rule. The group may already have this permission for this event.', 'fair-events' ),
+				__( 'Failed to create permission rule. The group may already have this permission for this event.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -218,7 +218,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 		if ( ! $rule || $rule->event_date_id !== $event_date_id ) {
 			return new WP_Error(
 				'rest_rule_not_found',
-				__( 'Permission rule not found.', 'fair-events' ),
+				__( 'Permission rule not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -228,7 +228,7 @@ class GroupPermissionRulesController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_delete_failed',
-				__( 'Failed to delete permission rule.', 'fair-events' ),
+				__( 'Failed to delete permission rule.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}

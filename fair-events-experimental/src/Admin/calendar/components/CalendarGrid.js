@@ -12,7 +12,7 @@ import {
 	getWeekdayLabels,
 	calculateLeadingDays,
 	groupEventsByDate,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/calendarUtils.js';
 
 export default function CalendarGrid( {
 	currentDate,

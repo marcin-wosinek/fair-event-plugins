@@ -353,13 +353,13 @@ Fully translated (`.po` files exist for all locales):
 - `fair-audience`
 - `fair-audience-experimental`
 - `fair-events`
+- `fair-events-experimental`
 - `fair-finance`
 - `fair-payments-connector`
 - `fair-platform`
 
 POT only (translations not started yet):
 
-- `fair-events-experimental`
 - `fair-payments-connector-experimental`
 - `fair-timetable`
 

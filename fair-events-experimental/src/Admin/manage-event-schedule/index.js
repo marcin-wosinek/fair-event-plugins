@@ -9,7 +9,7 @@
 
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
-import { isLinkOnlyEvent } from 'fair-events-shared';
+import { isLinkOnlyEvent } from 'fair-events-shared/src/event-utils.js';
 import EventSchedule from './EventSchedule.js';
 import './schedule.css';
 

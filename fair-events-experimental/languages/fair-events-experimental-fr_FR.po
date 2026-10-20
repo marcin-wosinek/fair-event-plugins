@@ -5,9 +5,9 @@ msgstr ""
 "Last-Translator: Marcin Wosinek <marcin.wosinek@gmail.com>\n"
 "Language-Team: French\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T12:52:27+00:00\n"
+"POT-Creation-Date: 2026-10-20T12:30:07+00:00\n"
 "PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "Language: fr_FR\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -65,6 +65,72 @@ msgstr "Flux d’événements"
 #: src/Admin/AdminPages.php:101
 msgid "View Event Feed"
 msgstr "Voir le flux d’événements"
+
+#: src/API/EventProposalController.php:105
+msgid "Name and email are required for anonymous submissions."
+msgstr "Le nom et l'e-mail sont requis pour les soumissions anonymes."
+
+#: src/API/EventProposalController.php:114
+msgid "Please provide a valid email address."
+msgstr "Veuillez fournir une adresse e-mail valide."
+
+#: src/API/EventProposalController.php:125
+msgid "Event start date must be in the future."
+msgstr "La date de début de l'événement doit être dans le futur."
+
+#: src/API/EventProposalController.php:157
+msgid "Failed to create event proposal."
+msgstr "Échec de la création de la proposition d'événement."
+
+#: src/API/EventProposalController.php:195
+msgid "Event proposal submitted successfully."
+msgstr "Proposition d'événement soumise avec succès."
+
+#: src/API/EventProposalController.php:226
+msgid "Event title"
+msgstr "Titre de l'événement"
+
+#: src/API/EventProposalController.php:234
+msgid "Event start date and time in ISO 8601 format"
+msgstr "Date et heure de début de l'événement au format ISO 8601"
+
+#: src/API/EventProposalController.php:240
+msgid "Event duration in minutes"
+msgstr "Durée de l'événement en minutes"
+
+#: src/API/EventProposalController.php:247
+msgid "Event location"
+msgstr "Lieu de l'événement"
+
+#: src/API/EventProposalController.php:255
+msgid "Array of category IDs"
+msgstr "Tableau d'identifiants de catégories"
+
+#: src/API/EventProposalController.php:263
+msgid "Event description"
+msgstr "Description de l'événement"
+
+#: src/API/EventProposalController.php:270
+msgid "Submitter name (required for anonymous users)"
+msgstr "Nom du demandeur (requis pour les utilisateurs anonymes)"
+
+#: src/API/EventProposalController.php:277
+msgid "Submitter email (required for anonymous users)"
+msgstr "E-mail du demandeur (requis pour les utilisateurs anonymes)"
+
+#: src/API/EventProposalController.php:283
+msgid "Honeypot field (must be empty)"
+msgstr "Champ piège à robots (doit être vide)"
+
+#: src/API/EventProposalController.php:303
+msgid "Your submission could not be processed. Please try again."
+msgstr "Votre soumission n'a pas pu être traitée. Veuillez réessayer."
+
+#. translators: %d is the number of seconds to wait.
+#: src/API/EventProposalController.php:331
+#, php-format
+msgid "Please wait %d seconds before submitting another proposal."
+msgstr "Veuillez attendre %d secondes avant de soumettre une autre proposition."
 
 #: src/API/EventSourceController.php:64
 msgid "Fetch only enabled event feeds."
@@ -173,6 +239,81 @@ msgstr "L’entrée du flux de l’API Fair Events à l’index %d nécessite le
 msgid "Unknown feed input type at index %d."
 msgstr "Type d’entrée du flux inconnu à l’index %d."
 
+#: src/API/GroupPermissionRulesController.php:63
+#: src/API/GroupPermissionRulesController.php:75
+#: src/API/GroupPermissionRulesController.php:108
+#: src/API/GroupPricingRulesController.php:56
+#: src/API/GroupPricingRulesController.php:68
+#: src/API/GroupPricingRulesController.php:109
+#: src/API/GroupPricingRulesController.php:139
+msgid "Event date ID."
+msgstr "ID de la date de l'événement."
+
+#: src/API/GroupPermissionRulesController.php:80
+#: src/API/GroupPricingRulesController.php:73
+msgid "Group ID."
+msgstr "ID du groupe."
+
+#: src/API/GroupPermissionRulesController.php:86
+msgid "Permission type."
+msgstr "Type de permission."
+
+#: src/API/GroupPermissionRulesController.php:113
+#: src/API/GroupPricingRulesController.php:114
+#: src/API/GroupPricingRulesController.php:144
+msgid "Rule ID."
+msgstr "ID de la règle."
+
+#: src/API/GroupPermissionRulesController.php:146
+#: src/API/GroupPermissionRulesController.php:183
+#: src/API/GroupPricingRulesController.php:177
+#: src/API/GroupPricingRulesController.php:207
+msgid "Event date not found."
+msgstr "Date d'événement non trouvée."
+
+#: src/API/GroupPermissionRulesController.php:196
+msgid "Failed to create permission rule. The group may already have this permission for this event."
+msgstr "Impossible de créer la règle de permission. Le groupe peut déjà avoir cette permission pour cet événement."
+
+#: src/API/GroupPermissionRulesController.php:221
+msgid "Permission rule not found."
+msgstr "Règle de permission non trouvée."
+
+#: src/API/GroupPermissionRulesController.php:231
+msgid "Failed to delete permission rule."
+msgstr "Impossible de supprimer la règle de permission."
+
+#: src/API/GroupPricingRulesController.php:79
+#: src/API/GroupPricingRulesController.php:119
+msgid "Discount type."
+msgstr "Type de remise."
+
+#: src/API/GroupPricingRulesController.php:86
+#: src/API/GroupPricingRulesController.php:125
+msgid "Discount value."
+msgstr "Valeur de la remise."
+
+#: src/API/GroupPricingRulesController.php:221
+msgid "Failed to create pricing rule. The group may already have a rule for this event."
+msgstr "Impossible de créer la règle de tarification. Le groupe a peut-être déjà une règle pour cet événement."
+
+#: src/API/GroupPricingRulesController.php:248
+#: src/API/GroupPricingRulesController.php:305
+msgid "Pricing rule not found."
+msgstr "Règle de tarification introuvable."
+
+#: src/API/GroupPricingRulesController.php:268
+msgid "No data to update."
+msgstr "Aucune donnée à mettre à jour."
+
+#: src/API/GroupPricingRulesController.php:278
+msgid "Failed to update pricing rule."
+msgstr "Impossible de mettre à jour la règle de tarification."
+
+#: src/API/GroupPricingRulesController.php:315
+msgid "Failed to delete pricing rule."
+msgstr "Impossible de supprimer la règle de tarification."
+
 #: src/API/MetaConversionsController.php:206
 msgid "The Meta access token is managed in Settings → Connectors. Nothing was saved."
 msgstr "Le jeton d'accès Meta est géré dans Paramètres → Connecteurs. Rien n'a été enregistré."
@@ -280,6 +421,32 @@ msgstr "Cela ne ressemble pas à un jeton d'accès Meta. Collez le jeton complet
 #: src/Settings/Settings.php:36
 msgid "Per-bundle feature toggles for experimental features"
 msgstr "Bascules de fonctionnalités par bundle pour les fonctionnalités expérimentales"
+
+#: src/Admin/calendar/components/CalendarHeader.js:26
+msgid "Previous"
+msgstr "Précédent"
+
+#: src/Admin/calendar/components/CalendarHeader.js:29
+msgid "Today"
+msgstr "Aujourd'hui"
+
+#: src/Admin/calendar/components/CalendarHeader.js:32
+msgid "Next"
+msgstr "Suivant"
+
+#: src/Admin/calendar/components/DayCell.js:135
+msgid "Add event"
+msgstr "Ajouter un événement"
+
+#: src/Admin/calendar/components/DayCell.js:206
+msgid "Open link destination"
+msgstr "Ouvrir la destination du lien"
+
+#. translators: %d: number of additional events
+#: src/Admin/calendar/components/DayCell.js:232
+#, js-format
+msgid "+%d more"
+msgstr "+%d plus"
 
 #: src/Admin/compare-events/CompareEventsPage.js:36
 #: src/Admin/compare-events/ComparisonChart.js:41
@@ -411,26 +578,31 @@ msgstr "Voyez comment les ventes de billets de deux événements ont progressé 
 msgid "The list of events could not be loaded."
 msgstr "La liste des événements n'a pas pu être chargée."
 
+#: src/Admin/compare-events/comparison.js:98
+#: src/Admin/settings/MetaCalendarTest.js:85
+msgid "(untitled event)"
+msgstr "(événement sans titre)"
+
 #. translators: 1: event name, 2: event start date.
-#: src/Admin/compare-events/comparison.js:104
+#: src/Admin/compare-events/comparison.js:105
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
 #. translators: %d: number of calendar days before the event.
-#: src/Admin/compare-events/comparison.js:166
+#: src/Admin/compare-events/comparison.js:167
 #, js-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
 msgstr[0] "%d jour avant l'événement"
 msgstr[1] "%d jours avant l'événement"
 
-#: src/Admin/compare-events/comparison.js:176
+#: src/Admin/compare-events/comparison.js:177
 msgid "Day of the event"
 msgstr "Jour de l'événement"
 
 #. translators: %d: event-day number, counting the first day as 1.
-#: src/Admin/compare-events/comparison.js:180
+#: src/Admin/compare-events/comparison.js:181
 #, js-format
 msgid "Day %d of the event"
 msgstr "Jour %d de l'événement"
@@ -707,10 +879,6 @@ msgstr "Ce navigateur n'a pas d'identifiant de navigateur Meta (cookie _fbp ou _
 msgid "This browser’s marketing consent or Meta cookies could not be read. Check the consent banner, then check again."
 msgstr "Le consentement marketing ou les cookies Meta de ce navigateur n'ont pas pu être lus. Vérifiez la banneau de consentement, puis réessayez."
 
-#: src/Admin/settings/MetaCalendarTest.js:85
-msgid "(untitled event)"
-msgstr "(événement sans titre)"
-
 #: src/Admin/settings/MetaCalendarTest.js:159
 msgid "Select the event the test click belongs to."
 msgstr "Sélectionnez l'événement auquel appartient le clic de test."
@@ -809,6 +977,34 @@ msgstr "Erreur de configuration"
 #: src/Admin/settings/MetaConversions.js:46
 msgid "Failed — retries exhausted"
 msgstr "Échec — tentatives épuisées"
+
+#: src/Admin/settings/MetaConversions.js:51
+msgid "Sent immediately — no result recorded"
+msgstr "Envoyé immédiatement — aucun résultat enregistré"
+
+#: src/Admin/settings/MetaConversions.js:55
+msgid "Received by Meta (sent immediately)"
+msgstr "Reçu par Meta (envoyé immédiatement)"
+
+#: src/Admin/settings/MetaConversions.js:59
+msgid "Not confirmed (sent immediately, not retried)"
+msgstr "Non confirmé (envoyé immédiatement, sans nouvel essai)"
+
+#: src/Admin/settings/MetaConversions.js:63
+msgid "Rejected by Meta (sent immediately)"
+msgstr "Refusé par Meta (envoyé immédiatement)"
+
+#: src/Admin/settings/MetaConversions.js:67
+msgid "Meta error (sent immediately, not retried)"
+msgstr "Erreur Meta (envoyé immédiatement, sans nouvel essai)"
+
+#: src/Admin/settings/MetaConversions.js:71
+msgid "Could not reach Meta (sent immediately, not retried)"
+msgstr "Meta injoignable (envoyé immédiatement, sans nouvel essai)"
+
+#: src/Admin/settings/MetaConversions.js:75
+msgid "Configuration error (sent immediately)"
+msgstr "Erreur de configuration (envoyé immédiatement)"
 
 #: src/Admin/settings/MetaConversions.js:117
 msgid "Test"
@@ -1021,54 +1217,54 @@ msgstr "Ouvrir les notifications d'événements"
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr "Les notifications Telegram hebdomadaires sont désormais gérées et envoyées par Fair Events. Mettez à jour Fair Events pour les gérer ; en attendant, aucune notification hebdomadaire n'est envoyée."
 
-#: src/Admin/source-view/SourceViewApp.js:73
+#: src/Admin/source-view/SourceViewApp.js:76
 msgid "Failed to load event feed."
 msgstr "Impossible de charger le flux d’événements."
 
-#: src/Admin/source-view/SourceViewApp.js:87
+#: src/Admin/source-view/SourceViewApp.js:90
 msgid "No event feed ID provided."
 msgstr "Aucun ID de flux d’événements fourni."
 
-#: src/Admin/source-view/SourceViewApp.js:207
-#: src/Admin/source-view/SourceViewApp.js:225
+#: src/Admin/source-view/SourceViewApp.js:210
+#: src/Admin/source-view/SourceViewApp.js:228
 msgid "Back to Event Feeds"
 msgstr "Retour aux flux d’événements"
 
 #. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:232
+#: src/Admin/source-view/SourceViewApp.js:235
 #, js-format
 msgid "Event feed: %s"
 msgstr "Flux d’événements : %s"
 
-#: src/Admin/source-view/SourceViewApp.js:249
+#: src/Admin/source-view/SourceViewApp.js:252
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr "Slug"
 
-#: src/Admin/source-view/SourceViewApp.js:255
+#: src/Admin/source-view/SourceViewApp.js:258
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/source-view/SourceViewApp.js:259
+#: src/Admin/source-view/SourceViewApp.js:262
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr "Activé"
 
-#: src/Admin/source-view/SourceViewApp.js:260
+#: src/Admin/source-view/SourceViewApp.js:263
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr "Désactivé"
 
-#: src/Admin/source-view/SourceViewApp.js:265
+#: src/Admin/source-view/SourceViewApp.js:268
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr "Entrées du flux"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:270
+#: src/Admin/source-view/SourceViewApp.js:273
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1076,42 +1272,42 @@ msgid_plural "%d feed inputs"
 msgstr[0] "%d entrée du flux"
 msgstr[1] "%d entrées du flux"
 
-#: src/Admin/source-view/SourceViewApp.js:283
+#: src/Admin/source-view/SourceViewApp.js:286
 msgid "Page"
 msgstr "Page"
 
-#: src/Admin/source-view/SourceViewApp.js:291
+#: src/Admin/source-view/SourceViewApp.js:294
 msgid "View page"
 msgstr "Voir la page"
 
-#: src/Admin/source-view/SourceViewApp.js:301
+#: src/Admin/source-view/SourceViewApp.js:304
 msgid "Feed URLs"
 msgstr "URL du flux"
 
-#: src/Admin/source-view/SourceViewApp.js:306
+#: src/Admin/source-view/SourceViewApp.js:309
 msgid "iCal"
 msgstr "iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:310
+#: src/Admin/source-view/SourceViewApp.js:313
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr "Copier l’URL du flux iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:317
+#: src/Admin/source-view/SourceViewApp.js:320
 msgid "JSON"
 msgstr "JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:321
+#: src/Admin/source-view/SourceViewApp.js:324
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr "Copier l’URL de l’API JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:333
-#: src/Admin/source-view/SourceViewApp.js:346
+#: src/Admin/source-view/SourceViewApp.js:336
+#: src/Admin/source-view/SourceViewApp.js:349
 msgid "Edit event feed"
 msgstr "Modifier le flux d’événements"
 
-#: src/Admin/source-view/SourceViewApp.js:371
+#: src/Admin/source-view/SourceViewApp.js:374
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr "Modifier le flux d’événements"
@@ -1308,31 +1504,3 @@ msgstr "Modifier"
 #: src/Admin/sources/SourcesList.js:346
 msgid "Delete"
 msgstr "Supprimer"
-
-#: src/Admin/settings/MetaConversions.js:51
-msgid "Sent immediately — no result recorded"
-msgstr "Envoyé immédiatement — aucun résultat enregistré"
-
-#: src/Admin/settings/MetaConversions.js:55
-msgid "Received by Meta (sent immediately)"
-msgstr "Reçu par Meta (envoyé immédiatement)"
-
-#: src/Admin/settings/MetaConversions.js:59
-msgid "Not confirmed (sent immediately, not retried)"
-msgstr "Non confirmé (envoyé immédiatement, sans nouvel essai)"
-
-#: src/Admin/settings/MetaConversions.js:63
-msgid "Rejected by Meta (sent immediately)"
-msgstr "Refusé par Meta (envoyé immédiatement)"
-
-#: src/Admin/settings/MetaConversions.js:67
-msgid "Meta error (sent immediately, not retried)"
-msgstr "Erreur Meta (envoyé immédiatement, sans nouvel essai)"
-
-#: src/Admin/settings/MetaConversions.js:71
-msgid "Could not reach Meta (sent immediately, not retried)"
-msgstr "Meta injoignable (envoyé immédiatement, sans nouvel essai)"
-
-#: src/Admin/settings/MetaConversions.js:75
-msgid "Configuration error (sent immediately)"
-msgstr "Erreur de configuration (envoyé immédiatement)"

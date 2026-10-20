@@ -15,7 +15,10 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
+import {
+	formatLocalDate,
+	calculateLeadingDays,
+} from 'fair-events-shared/src/calendarUtils.js';
 import CalendarHeader from '../calendar/components/CalendarHeader.js';
 import CalendarGrid from '../calendar/components/CalendarGrid.js';
 import CopyUrlButton from '../components/CopyUrlButton.js';
