@@ -187,6 +187,10 @@ test.describe('Meta engagement button events', () => {
 			action: 'calendar',
 		});
 		expect(state.requests[0].event_source_url).toBe(event.pageUrl);
+		// The visitor's own browser, read from the tracking request.
+		expect(state.requests[0].user_data.client_user_agent).toBe(
+			await page.evaluate(() => navigator.userAgent)
+		);
 	});
 
 	test('a keyboard-activated same-page ticket jump sends one ticket event and still jumps', async ({
@@ -279,7 +283,7 @@ test.describe('Meta engagement button events', () => {
 		await grantMarketingConsent(page, event.pageUrl);
 		await page.goto(event.pageUrl);
 
-		// Each button reacts well before Meta's three-second answer.
+		// Each button reacts well before the double answers, three seconds later.
 		await page.getByText('Add to calendar').click();
 		await expect(page.locator('.calendar-dropdown')).toBeVisible({
 			timeout: 1500,

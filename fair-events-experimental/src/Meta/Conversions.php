@@ -24,7 +24,7 @@ class Conversions {
 	public const DELIVERY_HOOK     = 'fair_events_experimental_meta_deliver';
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
 	public const QUEUED_TIMEOUT    = 10;
-	public const IMMEDIATE_TIMEOUT = 3;
+	public const IMMEDIATE_TIMEOUT = 10;
 
 	/** Custom engagement events by button action; distinct from checkout and purchase. */
 	public const ENGAGEMENT_EVENTS = array(
@@ -163,7 +163,9 @@ class Conversions {
 	 * Build the outbox row for a button-click engagement event — a pure
 	 * transformation like {@see build_event()}. It carries only the event
 	 * context and Meta identifiers: no commerce value, currency, order ID or
-	 * payment mode, and never the button's destination or text. The event ID
+	 * payment mode, and never the button's destination or text. The
+	 * browser User-Agent, normalized by {@see Engagement::user_agent()}, is
+	 * carried for the send only; the outbox never stores it. The event ID
 	 * derives from the activation ID alone, so replaying an activation —
 	 * even under another action — cannot queue a second event.
 	 *
@@ -172,27 +174,29 @@ class Conversions {
 	 * @param array  $context       {@see Engagement::event_context()} result.
 	 * @param string $fbp           Meta browser ID.
 	 * @param string $fbc           Meta click ID.
+	 * @param mixed  $user_agent    Browser User-Agent header, or ''.
 	 * @return array|null
 	 */
-	public static function build_engagement_event( $action, $activation_id, $context, $fbp, $fbc ) {
+	public static function build_engagement_event( $action, $activation_id, $context, $fbp, $fbc, $user_agent = '' ) {
 		$fbp = self::valid_identifier( $fbp ) ? $fbp : '';
 		$fbc = self::valid_identifier( $fbc ) ? $fbc : '';
 		if ( ! isset( self::ENGAGEMENT_EVENTS[ $action ] ) || ! self::valid_activation_id( $activation_id ) || ( '' === $fbp && '' === $fbc ) ) {
 			return null;
 		}
 		return array(
-			'event_post_id' => (int) $context['post_id'],
-			'event_date_id' => (int) $context['event_date_id'],
-			'event_name'    => self::ENGAGEMENT_EVENTS[ $action ],
-			'event_id'      => hash( 'sha256', home_url( '/' ) . '|engagement|' . strtolower( $activation_id ) ),
-			'event_time'    => time(),
-			'source_url'    => esc_url_raw( $context['source_url'] ),
-			'value'         => 0,
-			'currency'      => '',
-			'order_id'      => '',
-			'payment_mode'  => '',
-			'fbp'           => $fbp,
-			'fbc'           => $fbc,
+			'event_post_id'     => (int) $context['post_id'],
+			'event_date_id'     => (int) $context['event_date_id'],
+			'event_name'        => self::ENGAGEMENT_EVENTS[ $action ],
+			'event_id'          => hash( 'sha256', home_url( '/' ) . '|engagement|' . strtolower( $activation_id ) ),
+			'event_time'        => time(),
+			'source_url'        => esc_url_raw( $context['source_url'] ),
+			'value'             => 0,
+			'currency'          => '',
+			'order_id'          => '',
+			'payment_mode'      => '',
+			'fbp'               => $fbp,
+			'fbc'               => $fbc,
+			'client_user_agent' => Engagement::user_agent( $user_agent ),
 		);
 	}
 
@@ -220,8 +224,10 @@ class Conversions {
 	public static function payload_for( $row ) {
 		$user_data = array_filter(
 			array(
-				'fbp' => $row->fbp,
-				'fbc' => $row->fbc,
+				'fbp'               => $row->fbp,
+				'fbc'               => $row->fbc,
+				// Only an in-memory engagement event has it; stored rows never do.
+				'client_user_agent' => $row->client_user_agent ?? '',
 			)
 		);
 		$action    = array_search( $row->event_name, self::ENGAGEMENT_EVENTS, true );
@@ -454,7 +460,7 @@ class Conversions {
 	 * row is created either way.
 	 *
 	 * @param string     $event_name PageView, InitiateCheckout, Purchase or FairEventCalendarClick.
-	 * @param array|null $engagement For the calendar test: `context` ({@see Engagement::event_context()}), `fbp` and `fbc`.
+	 * @param array|null $engagement For the calendar test: `context` ({@see Engagement::event_context()}), `fbp`, `fbc` and `user_agent`.
 	 * @return array {@see send_payload()} result.
 	 */
 	public function send_test( $event_name = 'PageView', $engagement = null ) {
@@ -479,14 +485,14 @@ class Conversions {
 	 * The calendar test payload, built exactly like a real activation — a
 	 * fresh activation ID gives it a fresh event ID.
 	 *
-	 * @param array|null $engagement `context`, `fbp` and `fbc`.
+	 * @param array|null $engagement `context`, `fbp`, `fbc` and `user_agent`.
 	 * @return array|null Meta payload, or null without valid context or identifiers.
 	 */
 	public static function build_engagement_test_event( $engagement ) {
 		if ( ! is_array( $engagement ) || empty( $engagement['context'] ) ) {
 			return null;
 		}
-		$row = self::build_engagement_event( 'calendar', wp_generate_uuid4(), $engagement['context'], (string) ( $engagement['fbp'] ?? '' ), (string) ( $engagement['fbc'] ?? '' ) );
+		$row = self::build_engagement_event( 'calendar', wp_generate_uuid4(), $engagement['context'], (string) ( $engagement['fbp'] ?? '' ), (string) ( $engagement['fbc'] ?? '' ), $engagement['user_agent'] ?? '' );
 		return $row ? self::payload_for( (object) $row ) : null;
 	}
 

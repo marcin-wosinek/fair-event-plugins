@@ -114,7 +114,7 @@ class MetaEngagementController extends WP_REST_Controller {
 		if ( ! $context ) {
 			return new WP_Error( 'invalid_event', __( 'Event not found.', 'fair-events-experimental' ), array( 'status' => 404 ) );
 		}
-		$event    = Conversions::build_engagement_event( (string) $request->get_param( 'action' ), (string) $request->get_param( 'activation_id' ), $context, $fbp, $fbc );
+		$event    = Conversions::build_engagement_event( (string) $request->get_param( 'action' ), (string) $request->get_param( 'activation_id' ), $context, $fbp, $fbc, $request->get_header( 'user_agent' ) );
 		$received = $event ? ( new Conversions() )->deliver_engagement( $event ) : false;
 		return rest_ensure_response( array( 'received' => $received ) );
 	}

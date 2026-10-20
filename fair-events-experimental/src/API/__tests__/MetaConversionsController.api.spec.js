@@ -223,6 +223,9 @@ test.describe( 'MetaConversionsController calendar test', () => {
 	test.describe.configure( { mode: 'serial' } );
 
 	const FBP = 'fb.1.1712345678901.apicalendartest';
+	// The administrator's browser, sent on as `client_user_agent`.
+	const USER_AGENT =
+		'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 E2ECalendarTest';
 	let api;
 	let originalConfig;
 	let originalFeatureEnabled;
@@ -248,6 +251,12 @@ test.describe( 'MetaConversionsController calendar test', () => {
 			'--format=json'
 		);
 		return JSON.parse( out.slice( out.indexOf( '{' ) ) );
+	}
+
+	async function lastMetaTimeout() {
+		return Number(
+			( await wp( 'option', 'get', 'fair_e2e_meta_last_timeout' ) ).trim()
+		);
 	}
 
 	async function createEvent( title ) {
@@ -398,11 +407,13 @@ test.describe( 'MetaConversionsController calendar test', () => {
 		).toBeTruthy();
 
 		const res = await api.post( `${ PATH }/test`, {
-			headers: adminHeaders,
+			headers: { ...adminHeaders, 'User-Agent': USER_AGENT },
 			data: body(),
 		} );
 		expect( res.status() ).toBe( 200 );
-		expect( await res.json() ).toEqual( {
+		const answer = await res.json();
+		expect( JSON.stringify( answer ) ).not.toContain( USER_AGENT );
+		expect( answer ).toEqual( {
 			accepted: true,
 			event_name: 'FairEventCalendarClick',
 			outcome: 'received',
@@ -416,10 +427,15 @@ test.describe( 'MetaConversionsController calendar test', () => {
 
 		const sent = await lastMetaRequest();
 		expect( sent.test_event_code ).toBe( 'TEST12345' );
+		// Same user_data as a production click: identifiers and the browser.
+		expect( sent.data[ 0 ].user_data ).toEqual( {
+			fbp: FBP,
+			client_user_agent: USER_AGENT,
+		} );
+		expect( await lastMetaTimeout() ).toBe( 10 );
 		expect( sent.data[ 0 ] ).toMatchObject( {
 			event_name: 'FairEventCalendarClick',
 			action_source: 'website',
-			user_data: { fbp: FBP },
 			custom_data: {
 				post_id: event.id,
 				event_date_id: event.eventDateId,
@@ -431,6 +447,7 @@ test.describe( 'MetaConversionsController calendar test', () => {
 		const config = await (
 			await api.get( PATH, { headers: adminHeaders } )
 		).json();
+		expect( JSON.stringify( config ) ).not.toContain( USER_AGENT );
 		expect( config.test_history[ 0 ] ).toMatchObject( {
 			event_name: 'FairEventCalendarClick',
 			accepted: true,

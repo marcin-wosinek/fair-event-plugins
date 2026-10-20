@@ -113,7 +113,7 @@ class Outbox {
 	 * duplicate — including a replay of an activation queued before
 	 * immediate delivery existed — inserts nothing, so only one request ever
 	 * sends. The row is never pending work, and Meta browser identifiers
-	 * stay in memory: none are stored.
+	 * and the browser User-Agent stay in memory: none are stored.
 	 *
 	 * @param array $event {@see Conversions::build_engagement_event()} result.
 	 * @return bool Whether this request reserved the event and may send it.
@@ -121,6 +121,7 @@ class Outbox {
 	public function reserve_immediate( $event ) {
 		$event['fbp'] = '';
 		$event['fbc'] = '';
+		unset( $event['client_user_agent'] );
 		return $this->insert( $event, self::IMMEDIATE_SENDING );
 	}
 

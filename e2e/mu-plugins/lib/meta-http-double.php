@@ -13,7 +13,10 @@
  * The decoded body of the most recent matching request is captured into the
  * `fair_e2e_meta_last_request` option so a spec can assert on what was
  * actually sent (event name, `custom_data.payment_mode`, `test_event_code`)
- * without a real Meta dataset or access token. Every request is answered
+ * without a real Meta dataset or access token. Each request's `timeout`
+ * argument is captured alongside, into `fair_e2e_meta_last_timeout` and the
+ * `fair_e2e_meta_timeouts` log, in the same order as the request log.
+ * Every request is answered
  * with Meta's canned "received" response (`events_received: 1`), so
  * delivery succeeds — unless a spec stores `{status, body}` in the
  * `fair_e2e_meta_response` option to simulate another answer, such as zero
@@ -40,6 +43,12 @@ add_filter(
 		$log   = get_option( 'fair_e2e_meta_requests', array() );
 		$log[] = $request;
 		update_option( 'fair_e2e_meta_requests', $log, false );
+
+		$timeout = isset( $parsed_args['timeout'] ) ? (float) $parsed_args['timeout'] : null;
+		update_option( 'fair_e2e_meta_last_timeout', $timeout, false );
+		$timeouts   = get_option( 'fair_e2e_meta_timeouts', array() );
+		$timeouts[] = $timeout;
+		update_option( 'fair_e2e_meta_timeouts', $timeouts, false );
 
 		$override = get_option( 'fair_e2e_meta_response', null );
 		if ( is_array( $override ) && ! empty( $override['delay'] ) ) {

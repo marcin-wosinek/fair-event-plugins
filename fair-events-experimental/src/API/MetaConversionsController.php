@@ -404,9 +404,10 @@ class MetaConversionsController extends WP_REST_Controller {
 			);
 		}
 		return array(
-			'context' => $context,
-			'fbp'     => $fbp,
-			'fbc'     => $fbc,
+			'context'    => $context,
+			'fbp'        => $fbp,
+			'fbc'        => $fbc,
+			'user_agent' => $request->get_header( 'user_agent' ),
 		);
 	}
 }

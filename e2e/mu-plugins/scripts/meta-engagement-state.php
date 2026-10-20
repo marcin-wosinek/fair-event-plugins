@@ -10,7 +10,8 @@
  * outbox row for the post, oldest first — event_name, state, event_date_id,
  * transaction_id, the stored Meta identifiers fbp/fbc and the decoded
  * meta_diagnostics) and `requests` (every decoded body captured by
- * lib/meta-http-double.php across the whole run, oldest first).
+ * lib/meta-http-double.php across the whole run, oldest first) with the
+ * matching request `timeouts`.
  *
  * @package FairEventsE2E
  */
@@ -42,5 +43,6 @@ echo 'E2E_META_ENGAGEMENT:' . wp_json_encode(
 	array(
 		'rows'     => $rows ? $rows : array(),
 		'requests' => get_option( 'fair_e2e_meta_requests', array() ),
+		'timeouts' => get_option( 'fair_e2e_meta_timeouts', array() ),
 	)
 ) . "\n";
