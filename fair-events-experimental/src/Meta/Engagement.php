@@ -13,8 +13,9 @@ defined( 'WPINC' ) || die;
 
 /** Resolves which public event a click belongs to and limits capture per visitor. */
 class Engagement {
-	public const RATE_LIMIT  = 60;
-	public const RATE_WINDOW = 3600;
+	public const RATE_LIMIT        = 60;
+	public const RATE_WINDOW       = 3600;
+	public const USER_AGENT_LENGTH = 1024;
 
 	/**
 	 * The event context an event page bootstraps its click capture with.
@@ -126,6 +127,27 @@ class Engagement {
 			&& '' === (string) $post->post_password
 			&& is_post_publicly_viewable( $post )
 			&& in_array( $post->post_type, \FairEvents\Settings\Settings::get_enabled_post_types(), true );
+	}
+
+	/**
+	 * The visitor's browser User-Agent, as Meta's `client_user_agent`. It is
+	 * sent unhashed and never stored. A missing, oversized or malformed
+	 * header — not a string, invalid UTF-8, or containing control
+	 * characters — yields '', so the field is omitted rather than invented.
+	 *
+	 * @param mixed $value Raw User-Agent header.
+	 * @return string The trimmed User-Agent, or ''.
+	 */
+	public static function user_agent( $value ) {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		// Checked before trimming, which would silently drop NUL and newlines.
+		if ( preg_match( '/[\x00-\x1F\x7F]/', $value ) || ! preg_match( '//u', $value ) ) {
+			return '';
+		}
+		$value = trim( $value, ' ' );
+		return strlen( $value ) > self::USER_AGENT_LENGTH ? '' : $value;
 	}
 
 	/**

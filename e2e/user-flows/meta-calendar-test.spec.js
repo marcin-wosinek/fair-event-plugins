@@ -142,6 +142,10 @@ test.describe('Meta calendar click test', () => {
 			},
 			event_source_url: event.pageUrl,
 		});
+		// The administrator's browser, as a real calendar click carries it.
+		expect(sent.data[0].user_data.client_user_agent).toBe(
+			await page.evaluate(() => navigator.userAgent)
+		);
 	});
 
 	test('keeps an unconfirmed answer visible with Meta’s messages', async ({
@@ -220,7 +224,9 @@ test.describe('Meta calendar click test', () => {
 			hasText: 'Latest test result',
 		});
 		await expect(latest.getByText('Test not sent')).toBeVisible();
-		await expect(latest.getByText(/nothing was sent to Meta/)).toBeVisible();
+		await expect(
+			latest.getByText(/nothing was sent to Meta/)
+		).toBeVisible();
 		// Nothing reached the Graph API double.
 		expect(
 			wpCli('option get fair_e2e_meta_last_request', {

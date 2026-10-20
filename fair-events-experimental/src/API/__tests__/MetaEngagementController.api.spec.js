@@ -27,6 +27,9 @@ const PATH = '/wp-json/fair-events-experimental/v1/meta-engagement';
 const CONFIG_PATH = '/wp-json/fair-events-experimental/v1/meta-conversions';
 const SETTINGS_PATH = '/wp-json/wp/v2/settings';
 const FBP = 'fb.1.1712345678901.apiengagement';
+// The anonymous visitor's browser; Meta gets it as `client_user_agent`.
+const USER_AGENT =
+	'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 E2EEngagement';
 
 const adminHeaders = {
 	Authorization:
@@ -64,6 +67,7 @@ async function resetMetaDouble() {
 	for ( const option of [
 		'fair_e2e_meta_response',
 		'fair_e2e_meta_requests',
+		'fair_e2e_meta_timeouts',
 	] ) {
 		await wp( 'option', 'delete', option ).catch( () => {} );
 	}
@@ -77,7 +81,10 @@ async function resetRateLimits() {
 	);
 }
 
-/** Outbox rows for a post and the Graph API events sent for it. */
+/**
+ * Outbox rows for a post and the Graph API events sent for it, each request
+ * paired with its HTTP timeout in `timeouts`.
+ */
 async function engagementState( postId ) {
 	const out = await wp(
 		'eval-file',
@@ -87,11 +94,15 @@ async function engagementState( postId ) {
 	const state = JSON.parse(
 		out.match( /E2E_META_ENGAGEMENT:(\{.*\})/ )[ 1 ]
 	);
+	const ours = state.requests
+		.map( ( sent, index ) => [ sent, state.timeouts[ index ] ] )
+		.filter(
+			( [ sent ] ) => sent?.data?.[ 0 ]?.custom_data?.post_id === postId
+		);
 	return {
 		rows: state.rows,
-		requests: state.requests.filter(
-			( sent ) => sent?.data?.[ 0 ]?.custom_data?.post_id === postId
-		),
+		requests: ours.map( ( [ sent ] ) => sent ),
+		timeouts: ours.map( ( [ , timeout ] ) => timeout ),
 	};
 }
 
@@ -158,7 +169,10 @@ test.describe( 'MetaEngagementController', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
-		anon = await request.newContext( { baseURL: BASE_URL } );
+		anon = await request.newContext( {
+			baseURL: BASE_URL,
+			userAgent: USER_AGENT,
+		} );
 
 		const settings = await (
 			await api.get( SETTINGS_PATH, { headers: adminHeaders } )
@@ -347,8 +361,16 @@ test.describe( 'MetaEngagementController', () => {
 			expect( state.requests ).toHaveLength( 2 );
 			for ( const sent of state.requests ) {
 				expect( sent ).not.toHaveProperty( 'test_event_code' );
-				expect( sent.data[ 0 ].user_data ).toEqual( { fbp: FBP } );
+				// The browser's own User-Agent, unhashed, only in user_data.
+				expect( sent.data[ 0 ].user_data ).toEqual( {
+					fbp: FBP,
+					client_user_agent: USER_AGENT,
+				} );
+				expect(
+					JSON.stringify( sent.data[ 0 ].custom_data )
+				).not.toContain( USER_AGENT );
 			}
+			expect( state.timeouts ).toEqual( [ 10, 10 ] );
 			expect(
 				state.requests.map( ( sent ) => sent.data[ 0 ].event_name )
 			).toEqual( [ 'FairEventCalendarClick', 'FairEventTicketClick' ] );
@@ -389,6 +411,25 @@ test.describe( 'MetaEngagementController', () => {
 				fbtrace_id: 'E2Efbtrace00000',
 			} );
 			expect( JSON.stringify( config.diagnostics ) ).not.toContain( FBP );
+			expect( JSON.stringify( config.diagnostics ) ).not.toContain(
+				USER_AGENT
+			);
+			expect( JSON.stringify( state.rows ) ).not.toContain( USER_AGENT );
+		} );
+
+		test( 'omits a missing or malformed User-Agent instead of inventing one', async () => {
+			for ( const userAgent of [ '', 'x'.repeat( 1025 ) ] ) {
+				const res = await anon.post( PATH, {
+					data: body(),
+					headers: { 'User-Agent': userAgent },
+				} );
+				expect( await res.json() ).toEqual( { received: true } );
+			}
+			const state = await engagementState( event.id );
+			expect( state.requests ).toHaveLength( 2 );
+			for ( const sent of state.requests ) {
+				expect( sent.data[ 0 ].user_data ).toEqual( { fbp: FBP } );
+			}
 		} );
 
 		for ( const [ name, answer, expectedState, diagnostics ] of [

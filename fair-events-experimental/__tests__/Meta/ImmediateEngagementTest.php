@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 /** Covers the outbox reservation, the single bounded send and its stored outcome. */
 class ImmediateEngagementTest extends TestCase {
+	private const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36';
+
 	/** @var mixed Original $wpdb. */
 	private $original_wpdb;
 
@@ -40,7 +42,7 @@ class ImmediateEngagementTest extends TestCase {
 		$GLOBALS['wpdb']                            = new class() { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test fake, restored in tearDown().
 			/** @var string */
 			public $prefix = 'wp_';
-			/** @var array[] Inserted rows by event ID: `state`, `fbp`, `fbc`. */
+			/** @var array[] Inserted rows by event ID: `state`, `fbp`, `fbc` and all `args`. */
 			public $rows = array();
 			/** @var array[] Prepared UPDATE statements. */
 			public $updates = array();
@@ -66,7 +68,7 @@ class ImmediateEngagementTest extends TestCase {
 					if ( isset( $this->rows[ $event_id ] ) ) {
 						return 0;
 					}
-					$this->rows[ $event_id ] = compact( 'state', 'fbp', 'fbc' );
+					$this->rows[ $event_id ] = compact( 'state', 'fbp', 'fbc', 'args' );
 					return 1;
 				}
 				$this->updates[] = $prepared;
@@ -96,7 +98,8 @@ class ImmediateEngagementTest extends TestCase {
 				'source_url'    => 'https://example.test/event',
 			),
 			'fb.1.1712345678901.browser',
-			''
+			'',
+			self::USER_AGENT
 		);
 	}
 
@@ -108,18 +111,25 @@ class ImmediateEngagementTest extends TestCase {
 		return array_combine( array( 'table', 'state', 'category', 'code', 'type', 'diagnostics', 'updated_at', 'event_id', 'from_state' ), $args );
 	}
 
-	/** One confirmed send: production payload, short timeout, stored as received with diagnostics. */
+	/** One confirmed send: production payload, bounded timeout, stored as received with diagnostics. */
 	public function test_confirmed_send_is_stored_as_received() {
 		$event = $this->event();
 		$this->assertTrue( ( new Conversions() )->deliver_engagement( $event ) );
 
 		$requests = $GLOBALS['_fair_test_remote_post_requests'];
 		$this->assertCount( 1, $requests );
+		$this->assertSame( 10, Conversions::IMMEDIATE_TIMEOUT );
 		$this->assertSame( Conversions::IMMEDIATE_TIMEOUT, $requests[0]['args']['timeout'] );
 		$body = json_decode( $requests[0]['args']['body'], true );
 		$this->assertArrayNotHasKey( 'test_event_code', $body );
 		$this->assertSame( 'FairEventTicketClick', $body['data'][0]['event_name'] );
-		$this->assertSame( array( 'fbp' => 'fb.1.1712345678901.browser' ), $body['data'][0]['user_data'] );
+		$this->assertSame(
+			array(
+				'fbp'               => 'fb.1.1712345678901.browser',
+				'client_user_agent' => self::USER_AGENT,
+			),
+			$body['data'][0]['user_data']
+		);
 
 		$outcome = $this->stored_outcome();
 		$this->assertSame( 'immediate_received', $outcome['state'] );
@@ -136,19 +146,18 @@ class ImmediateEngagementTest extends TestCase {
 		);
 	}
 
-	/** The reservation is never pending work and stores no browser identifiers. */
+	/** The reservation is never pending work and stores no browser identifiers or User-Agent. */
 	public function test_reservation_is_not_queued_and_keeps_no_identifiers() {
 		$event = $this->event();
 		( new Conversions() )->deliver_engagement( $event );
-		$this->assertSame(
-			array(
-				'state' => Outbox::IMMEDIATE_SENDING,
-				'fbp'   => '',
-				'fbc'   => '',
-			),
-			$GLOBALS['wpdb']->rows[ $event['event_id'] ]
-		);
-		$this->assertStringNotContainsString( 'fb.1.', (string) $this->stored_outcome()['diagnostics'] );
+		$row = $GLOBALS['wpdb']->rows[ $event['event_id'] ];
+		$this->assertSame( Outbox::IMMEDIATE_SENDING, $row['state'] );
+		$this->assertSame( '', $row['fbp'] );
+		$this->assertSame( '', $row['fbc'] );
+		$this->assertNotContains( self::USER_AGENT, $row['args'] );
+		$outcome = $this->stored_outcome();
+		$this->assertStringNotContainsString( 'fb.1.', (string) $outcome['diagnostics'] );
+		$this->assertNotContains( self::USER_AGENT, $outcome );
 	}
 
 	/** A duplicate activation — also one already queued earlier — sends nothing. */

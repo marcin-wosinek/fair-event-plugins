@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 class EngagementTest extends TestCase {
 	private const ACTIVATION = '3f2c8a4e-1b7d-4c9a-8e2f-0a1b2c3d4e5f';
 	private const FBP        = 'fb.1.1712345678901.browser';
+	private const USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 [FBAN/FBIOS;FBAV/480.0]';
 
 	/** Reset the fake transient store before each test. */
 	protected function setUp(): void {
@@ -151,16 +152,51 @@ class EngagementTest extends TestCase {
 		$this->assertSame( Engagement::RATE_WINDOW, $stored['expiration'] );
 	}
 
+	/** A real User-Agent is kept as sent; a missing or malformed one is dropped, never invented. */
+	public function test_user_agent_normalization() {
+		$this->assertSame( self::USER_AGENT, Engagement::user_agent( self::USER_AGENT ) );
+		$this->assertSame( self::USER_AGENT, Engagement::user_agent( ' ' . self::USER_AGENT . ' ' ) );
+		$this->assertSame( '', Engagement::user_agent( null ) );
+		$this->assertSame( '', Engagement::user_agent( array( self::USER_AGENT ) ) );
+		$this->assertSame( '', Engagement::user_agent( '' ) );
+		$this->assertSame( '', Engagement::user_agent( "Mozilla/5.0\r\nX-Injected: 1" ) );
+		$this->assertSame( '', Engagement::user_agent( "Mozilla/5.0\x00" ) );
+		$this->assertSame( '', Engagement::user_agent( "Mozilla/5.0 \xC3\x28" ), 'Invalid UTF-8 is dropped.' );
+		$this->assertSame( '', Engagement::user_agent( str_repeat( 'a', Engagement::USER_AGENT_LENGTH + 1 ) ) );
+		$this->assertSame( Engagement::USER_AGENT_LENGTH, strlen( Engagement::user_agent( str_repeat( 'a', Engagement::USER_AGENT_LENGTH ) ) ) );
+	}
+
+	/** The User-Agent goes unhashed into user_data, next to the identifiers, and only when valid. */
+	public function test_engagement_payload_carries_the_user_agent() {
+		$event   = Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '', self::USER_AGENT );
+		$payload = Conversions::payload_for( (object) $event );
+		$this->assertSame(
+			array(
+				'fbp'               => self::FBP,
+				'client_user_agent' => self::USER_AGENT,
+			),
+			$payload['user_data']
+		);
+		$this->assertArrayNotHasKey( 'client_user_agent', $payload['custom_data'] );
+
+		$invalid = Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '', "bad\nagent" );
+		$this->assertSame( array( 'fbp' => self::FBP ), Conversions::payload_for( (object) $invalid )['user_data'] );
+		$missing = Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '' );
+		$this->assertSame( array( 'fbp' => self::FBP ), Conversions::payload_for( (object) $missing )['user_data'] );
+	}
+
 	/** The calendar test payload is the production calendar payload with a fresh ID and no commerce data. */
 	public function test_calendar_test_uses_the_production_engagement_payload() {
 		$payload    = Conversions::build_engagement_test_event(
 			array(
-				'context' => $this->context(),
-				'fbp'     => self::FBP,
-				'fbc'     => '',
+				'context'    => $this->context(),
+				'fbp'        => self::FBP,
+				'fbc'        => '',
+				'user_agent' => self::USER_AGENT,
 			)
 		);
-		$production = Conversions::payload_for( (object) Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '' ) );
+		$production = Conversions::payload_for( (object) Conversions::build_engagement_event( 'calendar', self::ACTIVATION, $this->context(), self::FBP, '', self::USER_AGENT ) );
+		$this->assertSame( self::USER_AGENT, $payload['user_data']['client_user_agent'] );
 		$this->assertSame( 'FairEventCalendarClick', $payload['event_name'] );
 		$this->assertSame( array_keys( $production ), array_keys( $payload ) );
 		$this->assertSame( $production['custom_data'], $payload['custom_data'] );
