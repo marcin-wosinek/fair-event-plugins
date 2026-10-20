@@ -19,7 +19,9 @@
  *
  * The locale is set through the WPLANG option, which core reads without a
  * core language pack, so admin chrome stays English while plugin strings
- * follow the selected delivery path.
+ * follow the selected delivery path. Saving the option still runs core's
+ * sanitizer, which drops a locale missing from get_available_languages(),
+ * so the script keeps the requested value for this one save.
  *
  * Prints a single `E2E_TRANSLATIONS:{json}` line.
  *
@@ -80,7 +82,13 @@ if ( 'language-pack' === $delivery_mode ) {
 $features                         = (array) get_option( $feature_options[ $plugin_slug ], array() );
 $features['bundled-translations'] = ( 'bundled' === $delivery_mode );
 update_option( $feature_options[ $plugin_slug ], $features );
+// No core language pack is installed on the tests site; keep the locale anyway.
+$keep_locale = static function ( $value, $option, $original_value ) {
+	return $original_value;
+};
+add_filter( 'sanitize_option_WPLANG', $keep_locale, 10, 3 );
 update_option( 'WPLANG', 'reset' === $delivery_mode ? '' : $target_locale );
+remove_filter( 'sanitize_option_WPLANG', $keep_locale, 10 );
 
 echo 'E2E_TRANSLATIONS:' . wp_json_encode(
 	array(
