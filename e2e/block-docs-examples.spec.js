@@ -283,8 +283,16 @@ test.describe('Block documentation examples', () => {
 				seed = { venueId };
 			}
 
-			if (item.example.context === 'event') {
-				seed = { ...seedEvent('paid'), ...seed };
+			if (
+				item.example.context === 'event' ||
+				item.example.context === 'recurring-event'
+			) {
+				// A recurring example needs a series with upcoming sessions.
+				const flavour =
+					item.example.context === 'recurring-event'
+						? 'multiple-instances'
+						: 'paid';
+				seed = { ...seedEvent(flavour), ...seed };
 				postId = seed.eventId;
 				await apiFetch(page, {
 					path: `/wp/v2/fair_event/${postId}`,

@@ -104,6 +104,28 @@ class EventTimingSql {
 	}
 
 	/**
+	 * WHERE fragment: the date has not ended at a moment, as
+	 * SessionStatus::has_ended() decides it — so it is upcoming or ongoing.
+	 *
+	 * A date with an end time (and not all-day) ends exactly then. A date
+	 * without one, and an all-day date, stays listed through its end date
+	 * and is past from the following day.
+	 *
+	 * Compares naive site-local values, so during the hour repeated when
+	 * daylight saving ends it can differ from SessionStatus by up to an hour.
+	 *
+	 * @param string $alias  Table alias.
+	 * @param string $moment Moment ('Y-m-d H:i:s').
+	 * @return array{0: string, 1: string[]} SQL with %s placeholders, and their values.
+	 */
+	public static function not_ended( $alias, $moment ) {
+		$sql = "( ( {$alias}.all_day = 0 AND {$alias}.end_time IS NOT NULL AND CONCAT( {$alias}.end_date, ' ', {$alias}.end_time ) > %s )"
+			. " OR ( ( {$alias}.all_day = 1 OR {$alias}.end_time IS NULL ) AND {$alias}.end_date >= %s ) )";
+
+		return array( $sql, array( $moment, substr( $moment, 0, 10 ) ) );
+	}
+
+	/**
 	 * The series-pass cutoff key, as EventTiming::series_pass_cutoff():
 	 * the start time, the beginning of the day for all-day dates, and the
 	 * end of the start date when there is no start time.

@@ -303,7 +303,7 @@ class SelectedOccurrence {
 	 * @param EventDates $master Master occurrence (already loaded).
 	 * @return EventDates The child, with venue fields copied from master if absent.
 	 */
-	private static function with_master_venue_fallback( EventDates $child, EventDates $master ): EventDates {
+	public static function with_master_venue_fallback( EventDates $child, EventDates $master ): EventDates {
 		if ( 'generated' !== $child->occurrence_type ) {
 			return $child;
 		}

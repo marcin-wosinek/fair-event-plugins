@@ -860,6 +860,25 @@ class EventDates {
 	}
 
 	/**
+	 * Get this session's dated page on this site.
+	 *
+	 * Like the recurring overview link of the Event Info block, this is the
+	 * event's own local page (its post, else the first junction-linked
+	 * post), never a configured external destination. A series' sessions,
+	 * the master included as its first session, get `?event_date=`.
+	 *
+	 * @return string|null The session page URL, or null if no post is linked.
+	 */
+	public function get_session_page_url() {
+		$post_id = $this->get_resolved_event_id();
+		if ( ! $post_id ) {
+			$post_id = $this->get_primary_linked_post_id();
+		}
+
+		return $post_id ? $this->with_occurrence_arg( get_permalink( $post_id ), true ) : null;
+	}
+
+	/**
 	 * Append `?event_date={Y-m-d}` to a URL for generated occurrences, and
 	 * for the series master when it should link to its own session.
 	 *
@@ -1841,6 +1860,47 @@ class EventDates {
 
 		$dates = array();
 		foreach ( $results as $result ) {
+			$dates[] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
+	 * Get a bounded list of a series' sessions that have not ended
+	 *
+	 * Covers the master (the series' first session) and its generated
+	 * children, active and dated only, ongoing ones included (see
+	 * EventTimingSql::not_ended()). The exclusion and the end boundary
+	 * apply before the limit. Sorted by start date, start time (untimed
+	 * first) and ID.
+	 *
+	 * @param int    $master_id  Master event date ID.
+	 * @param int    $exclude_id Session ID to leave out (0 for none).
+	 * @param int    $limit      Maximum number of sessions.
+	 * @param string $moment     Site-local 'Y-m-d H:i:s'; defaults to now.
+	 * @return EventDates[] Sessions in start order.
+	 */
+	public static function get_unended_sessions_by_master_id( $master_id, $exclude_id, $limit, $moment = null ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		list( $not_ended_sql, $not_ended_args ) = EventTimingSql::not_ended( 'ed', $moment ?? current_time( 'mysql' ) );
+
+		$order_sql = EventTimingSql::order_by( 'ed' );
+
+		$results = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the placeholders' values are passed as one array.
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_ended_sql and $order_sql are static internal templates, not user input.
+				"SELECT ed.* FROM %i ed WHERE ( ed.id = %d OR ( ed.master_id = %d AND ed.occurrence_type = 'generated' ) ) AND ed.id <> %d AND ed.status = 'active' AND ed.start_date IS NOT NULL AND {$not_ended_sql} ORDER BY {$order_sql}, ed.id ASC LIMIT %d",
+				array_merge( array( $table_name, $master_id, $master_id, (int) $exclude_id ), $not_ended_args, array( (int) $limit ) )
+			)
+		);
+
+		$dates = array();
+		foreach ( (array) $results as $result ) {
 			$dates[] = self::hydrate( $result );
 		}
 

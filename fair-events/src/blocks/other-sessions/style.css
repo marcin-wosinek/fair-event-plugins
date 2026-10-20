@@ -1,0 +1,48 @@
+.wp-block-fair-events-other-sessions {
+	overflow-wrap: anywhere;
+}
+
+.wp-block-fair-events-other-sessions__status,
+.wp-block-fair-events-other-sessions__empty {
+	margin: 0 0 0.5em;
+}
+
+.wp-block-fair-events-other-sessions__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wp-block-fair-events-other-sessions__item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.25em 0.75em;
+	padding: 0.5em 0;
+}
+
+.wp-block-fair-events-other-sessions__item
+	+ .wp-block-fair-events-other-sessions__item {
+	border-top: 1px solid currentcolor;
+	border-top-color: color-mix( in srgb, currentcolor 20%, transparent );
+}
+
+.wp-block-fair-events-other-sessions__date {
+	font-weight: 600;
+}
+
+/* A comfortable touch target that still reads as a list of dates. */
+a.wp-block-fair-events-other-sessions__date {
+	display: inline-block;
+	padding: 0.25em 0;
+}
+
+a.wp-block-fair-events-other-sessions__date:focus-visible {
+	outline: 2px solid currentcolor;
+	outline-offset: 2px;
+}
+
+.wp-block-fair-events-other-sessions__editor-placeholder {
+	font-style: italic;
+	color: #757575;
+}

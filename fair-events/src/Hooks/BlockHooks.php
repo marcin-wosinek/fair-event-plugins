@@ -35,6 +35,7 @@ class BlockHooks {
 		register_block_type( __DIR__ . '/../../build/blocks/events-calendar' );
 		register_block_type( __DIR__ . '/../../build/blocks/events-week' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-info' );
+		register_block_type( __DIR__ . '/../../build/blocks/other-sessions' );
 		register_block_type( __DIR__ . '/../../build/blocks/event-prices' );
 		register_block_type( __DIR__ . '/../../build/blocks/venue-info' );
 
@@ -110,6 +111,13 @@ class BlockHooks {
 		// Event info block editor script.
 		wp_set_script_translations(
 			'fair-events-event-info-editor-script',
+			'fair-events',
+			\FairEvents\Core\Features::script_translations_path()
+		);
+
+		// Other sessions block editor script.
+		wp_set_script_translations(
+			'fair-events-other-sessions-editor-script',
 			'fair-events',
 			\FairEvents\Core\Features::script_translations_path()
 		);

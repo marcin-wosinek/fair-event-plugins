@@ -1,0 +1,16 @@
+{
+	"status": "authoring",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Events is active."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Upcoming sessions on a recurring event post",
+			"description": "Lists up to five upcoming sessions of the recurring event linked to the current post, each linking to its dated session page.",
+			"context": "recurring-event",
+			"frontend": ".wp-block-fair-events-other-sessions"
+		}
+	}
+}
