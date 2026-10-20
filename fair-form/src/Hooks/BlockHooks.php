@@ -26,8 +26,8 @@ class BlockHooks {
 	 *
 	 * Block names (fair-audience/fair-form*) are kept unchanged — they are
 	 * stored in post content and cannot change without a data migration.
-	 * Script handles change from fair-audience-fair-form-* to
-	 * fair-form-fair-form-* because the build now lives in fair-form.
+	 * WordPress derives the script handles from them
+	 * (fair-audience-fair-form-*), while the text domain is Fair Form's own.
 	 *
 	 * @return void
 	 */
@@ -51,23 +51,22 @@ class BlockHooks {
 
 		$translations_path = \FairForm\Core\Features::script_translations_path();
 
-		// block.json textdomain stays 'fair-audience' (block names are fair-audience/*).
-		wp_set_script_translations( 'fair-form-fair-form-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-view-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-short-text-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-long-text-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-email-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-phone-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-url-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-date-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-datetime-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-select-one-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-multiselect-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-radio-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-option-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-file-upload-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-consent-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-conditional-editor-script', 'fair-audience', $translations_path );
-		wp_set_script_translations( 'fair-form-fair-form-mailing-signup-editor-script', 'fair-audience', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-view-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-short-text-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-long-text-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-email-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-phone-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-url-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-date-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-datetime-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-select-one-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-multiselect-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-radio-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-option-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-file-upload-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-consent-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-conditional-editor-script', 'fair-form', $translations_path );
+		wp_set_script_translations( 'fair-audience-fair-form-mailing-signup-editor-script', 'fair-form', $translations_path );
 	}
 }

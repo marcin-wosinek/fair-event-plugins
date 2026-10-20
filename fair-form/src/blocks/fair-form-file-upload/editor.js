@@ -9,7 +9,8 @@ import {
 	__experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
+import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
+import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
 
 registerBlockType( 'fair-audience/fair-form-file-upload', {
 	edit: ( { attributes, setAttributes } ) => {
@@ -39,46 +40,38 @@ registerBlockType( 'fair-audience/fair-form-file-upload', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody
-						title={ __( 'Question Settings', 'fair-audience' ) }
-					>
+					<PanelBody title={ __( 'Question Settings', 'fair-form' ) }>
 						<TextControl
-							label={ __( 'Question Key', 'fair-audience' ) }
+							label={ __( 'Question Key', 'fair-form' ) }
 							value={ questionKey }
 							onChange={ ( value ) =>
 								setAttributes( { questionKey: value } )
 							}
 							help={ __(
 								'A unique identifier for this question (e.g. "photo_upload"). Used internally.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<ToggleControl
-							label={ __( 'Required', 'fair-audience' ) }
+							label={ __( 'Required', 'fair-form' ) }
 							checked={ required }
 							onChange={ ( value ) =>
 								setAttributes( { required: value } )
 							}
 						/>
 						<TextControl
-							label={ __(
-								'Accepted File Types',
-								'fair-audience'
-							) }
+							label={ __( 'Accepted File Types', 'fair-form' ) }
 							value={ acceptedTypes }
 							onChange={ ( value ) =>
 								setAttributes( { acceptedTypes: value } )
 							}
 							help={ __(
 								'MIME types or extensions (e.g. "image/*", ".pdf,.doc", "image/png,image/jpeg").',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<NumberControl
-							label={ __(
-								'Max File Size (MB)',
-								'fair-audience'
-							) }
+							label={ __( 'Max File Size (MB)', 'fair-form' ) }
 							value={ maxFileSize }
 							onChange={ ( value ) =>
 								setAttributes( {
@@ -104,7 +97,7 @@ registerBlockType( 'fair-audience/fair-form-file-upload', {
 								} }
 								placeholder={ __(
 									'Enter your question...',
-									'fair-audience'
+									'fair-form'
 								) }
 								className="fair-form-question-label-input"
 							/>
@@ -113,7 +106,7 @@ registerBlockType( 'fair-audience/fair-form-file-upload', {
 						<br />
 						<input type="file" disabled />
 						<span className="fair-form-file-upload-help">
-							{ __( 'Max file size:', 'fair-audience' ) }{ ' ' }
+							{ __( 'Max file size:', 'fair-form' ) }{ ' ' }
 							{ maxFileSize } MB
 						</span>
 					</p>

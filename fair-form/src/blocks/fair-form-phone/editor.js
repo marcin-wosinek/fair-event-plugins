@@ -5,11 +5,9 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { getSettings } from '@wordpress/date';
-import {
-	autosizeTextarea,
-	generateQuestionKey,
-	resolvePhonePlaceholder,
-} from 'fair-events-shared';
+import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
+import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { resolvePhonePlaceholder } from 'fair-events-shared/src/phone-placeholder.js';
 
 registerBlockType( 'fair-audience/fair-form-phone', {
 	transforms: {
@@ -52,29 +50,27 @@ registerBlockType( 'fair-audience/fair-form-phone', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody
-						title={ __( 'Question Settings', 'fair-audience' ) }
-					>
+					<PanelBody title={ __( 'Question Settings', 'fair-form' ) }>
 						<TextControl
-							label={ __( 'Question Key', 'fair-audience' ) }
+							label={ __( 'Question Key', 'fair-form' ) }
 							value={ questionKey }
 							onChange={ ( value ) =>
 								setAttributes( { questionKey: value } )
 							}
 							help={ __(
 								'A unique identifier for this question (e.g. "mobile_phone"). Used internally.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<ToggleControl
-							label={ __( 'Required', 'fair-audience' ) }
+							label={ __( 'Required', 'fair-form' ) }
 							checked={ required }
 							onChange={ ( value ) =>
 								setAttributes( { required: value } )
 							}
 						/>
 						<TextControl
-							label={ __( 'Placeholder', 'fair-audience' ) }
+							label={ __( 'Placeholder', 'fair-form' ) }
 							value={ placeholder }
 							onChange={ ( value ) =>
 								setAttributes( { placeholder: value } )
@@ -82,7 +78,7 @@ registerBlockType( 'fair-audience/fair-form-phone', {
 							placeholder={ derivedPlaceholder }
 							help={ __(
 								'Must include country code with leading "+" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 					</PanelBody>
@@ -101,7 +97,7 @@ registerBlockType( 'fair-audience/fair-form-phone', {
 								} }
 								placeholder={ __(
 									'Enter your question...',
-									'fair-audience'
+									'fair-form'
 								) }
 								className="fair-form-question-label-input"
 							/>

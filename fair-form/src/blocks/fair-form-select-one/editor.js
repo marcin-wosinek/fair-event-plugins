@@ -9,7 +9,8 @@ import {
 } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { autosizeTextarea, generateQuestionKey } from 'fair-events-shared';
+import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
+import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
 
 const ALLOWED_BLOCKS = [ 'fair-audience/fair-form-option' ];
 
@@ -69,22 +70,20 @@ registerBlockType( 'fair-audience/fair-form-select-one', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody
-						title={ __( 'Question Settings', 'fair-audience' ) }
-					>
+					<PanelBody title={ __( 'Question Settings', 'fair-form' ) }>
 						<TextControl
-							label={ __( 'Question Key', 'fair-audience' ) }
+							label={ __( 'Question Key', 'fair-form' ) }
 							value={ questionKey }
 							onChange={ ( value ) =>
 								setAttributes( { questionKey: value } )
 							}
 							help={ __(
 								'A unique identifier for this question. Used internally.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<ToggleControl
-							label={ __( 'Required', 'fair-audience' ) }
+							label={ __( 'Required', 'fair-form' ) }
 							checked={ required }
 							onChange={ ( value ) =>
 								setAttributes( { required: value } )
@@ -106,7 +105,7 @@ registerBlockType( 'fair-audience/fair-form-select-one', {
 								} }
 								placeholder={ __(
 									'Enter your question...',
-									'fair-audience'
+									'fair-form'
 								) }
 								className="fair-form-question-label-input"
 							/>

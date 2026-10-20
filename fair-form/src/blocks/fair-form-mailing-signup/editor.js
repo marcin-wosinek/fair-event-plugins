@@ -54,12 +54,12 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 			<>
 				<InspectorControls>
 					<PanelBody
-						title={ __( 'Category Preferences', 'fair-audience' ) }
+						title={ __( 'Category Preferences', 'fair-form' ) }
 					>
 						<ToggleControl
 							label={ __(
 								'Show category preferences',
-								'fair-audience'
+								'fair-form'
 							) }
 							checked={ showCategories }
 							onChange={ ( value ) =>
@@ -67,7 +67,7 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 							}
 							help={ __(
 								'Let subscribers choose which categories of content they want to receive.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						{ showCategories && isLoading && <Spinner /> }
@@ -78,14 +78,14 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 									<p className="components-base-control__help">
 										{ __(
 											'Select which categories to show in the form. If none are selected, all categories will be shown.',
-											'fair-audience'
+											'fair-form'
 										) }
 									</p>
 									<fieldset className="fair-audience-category-fieldset">
 										<legend className="components-base-control__label">
 											{ __(
 												'Available categories',
-												'fair-audience'
+												'fair-form'
 											) }
 										</legend>
 										{ categories.map( ( cat ) => (
@@ -109,13 +109,13 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 										<legend className="components-base-control__label">
 											{ __(
 												'Preselected categories',
-												'fair-audience'
+												'fair-form'
 											) }
 										</legend>
 										<p className="components-base-control__help">
 											{ __(
 												'Categories checked by default when the form loads.',
-												'fair-audience'
+												'fair-form'
 											) }
 										</p>
 										{ ( categoryIds.length > 0
@@ -153,7 +153,7 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 							<input type="checkbox" disabled checked />
 							{ __(
 								'Sign me up for the mailing list',
-								'fair-audience'
+								'fair-form'
 							) }
 						</label>
 					</p>
@@ -162,7 +162,7 @@ registerBlockType( 'fair-audience/fair-form-mailing-signup', {
 							<em>
 								{ __(
 									'Category preferences will be shown here',
-									'fair-audience'
+									'fair-form'
 								) }
 							</em>
 						</p>

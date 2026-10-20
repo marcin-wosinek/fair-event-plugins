@@ -8,7 +8,7 @@
 	"icon": "calendar-alt",
 	"description": "A date input question using the browser's native date picker for Fair Form",
 	"keywords": [ "question", "date", "input" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
 		"fair-audience/event-signup",

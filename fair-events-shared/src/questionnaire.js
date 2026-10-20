@@ -466,7 +466,7 @@ export function validateQuestions( form ) {
 		if ( ! hasValue ) {
 			const questionText = el.dataset.questionText || '';
 			return (
-				__( 'Please answer the required question: ', 'fair-audience' ) +
+				__( 'Please answer the required question: ', 'fair-form' ) +
 				questionText
 			);
 		}
@@ -491,7 +491,7 @@ export function validateQuestions( form ) {
 				/* translators: %s: question text */
 				__(
 					'Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s',
-					'fair-audience'
+					'fair-form'
 				),
 				questionText
 			);
@@ -514,10 +514,8 @@ export function validateQuestions( form ) {
 		if ( ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( value ) ) {
 			const questionText = el.dataset.questionText || '';
 			return (
-				__(
-					'Please enter a valid email address for: ',
-					'fair-audience'
-				) + questionText
+				__( 'Please enter a valid email address for: ', 'fair-form' ) +
+				questionText
 			);
 		}
 	}
@@ -550,10 +548,7 @@ export function validateQuestions( form ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
-				__(
-					'Please enter a valid web address for: %s',
-					'fair-audience'
-				),
+				__( 'Please enter a valid web address for: %s', 'fair-form' ),
 				questionText
 			);
 		}
@@ -577,7 +572,7 @@ export function validateQuestions( form ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
-				__( 'Please enter a valid date for: %s', 'fair-audience' ),
+				__( 'Please enter a valid date for: %s', 'fair-form' ),
 				questionText
 			);
 		}
@@ -601,10 +596,7 @@ export function validateQuestions( form ) {
 			const questionText = el.dataset.questionText || '';
 			return sprintf(
 				/* translators: %s: question text */
-				__(
-					'Please enter a valid date and time for: %s',
-					'fair-audience'
-				),
+				__( 'Please enter a valid date and time for: %s', 'fair-form' ),
 				questionText
 			);
 		}
@@ -632,7 +624,7 @@ export function validateQuestions( form ) {
 			return (
 				questionText +
 				': ' +
-				__( 'File is too large. Maximum size is ', 'fair-audience' ) +
+				__( 'File is too large. Maximum size is ', 'fair-form' ) +
 				maxSizeMB +
 				' MB.'
 			);

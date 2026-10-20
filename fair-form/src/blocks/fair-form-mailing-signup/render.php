@@ -59,13 +59,13 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				name="fair_form_mailing_signup"
 				value="1"
 			/>
-			<?php echo esc_html__( 'Sign me up for the mailing list', 'fair-audience' ); ?>
+			<?php echo esc_html__( 'Sign me up for the mailing list', 'fair-form' ); ?>
 		</label>
 	</p>
 
 	<?php if ( $show_categories && ! empty( $categories ) ) : ?>
 	<fieldset class="fair-form-mailing-signup-categories">
-		<legend><?php echo esc_html__( 'I am interested in:', 'fair-audience' ); ?></legend>
+		<legend><?php echo esc_html__( 'I am interested in:', 'fair-form' ); ?></legend>
 		<?php foreach ( $categories as $category ) : ?>
 		<label class="fair-form-mailing-signup-category-label">
 			<input

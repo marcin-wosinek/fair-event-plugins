@@ -35,7 +35,7 @@ jest.mock( '@wordpress/components', () => ( {
 	),
 } ) );
 
-jest.mock( 'fair-events-shared', () => ( {
+jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
 	generateQuestionKey: ( text ) =>
 		text
 			.toLowerCase()

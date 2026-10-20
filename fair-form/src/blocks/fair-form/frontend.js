@@ -46,7 +46,7 @@ function submitForm( form ) {
 
 	const restoreButton = setButtonLoading(
 		submitButton,
-		__( 'Submitting...', 'fair-audience' )
+		__( 'Submitting...', 'fair-form' )
 	);
 
 	const mailingSignup =
@@ -135,7 +135,7 @@ function submitForm( form ) {
 			const successMessage =
 				wrapper?.dataset.successMessage ||
 				response.message ||
-				__( 'Thank you for your submission!', 'fair-audience' );
+				__( 'Thank you for your submission!', 'fair-form' );
 			showMessage(
 				messageContainer,
 				successMessage,
@@ -150,7 +150,7 @@ function submitForm( form ) {
 		.catch( ( error ) => {
 			const msg = extractErrorMessage(
 				error,
-				__( 'An error occurred. Please try again.', 'fair-audience' )
+				__( 'An error occurred. Please try again.', 'fair-form' )
 			);
 			showMessage( messageContainer, msg, 'error', 'fair-form' );
 		} )

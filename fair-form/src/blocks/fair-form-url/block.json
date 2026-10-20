@@ -8,7 +8,7 @@
 	"icon": "admin-links",
 	"description": "A URL input question with built-in web-address validation for Fair Form",
 	"keywords": [ "question", "url", "link", "website" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
 		"fair-audience/event-signup",

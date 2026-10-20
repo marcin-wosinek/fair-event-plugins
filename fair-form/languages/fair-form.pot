@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-19T06:51:04+00:00\n"
+"POT-Creation-Date: 2026-10-20T18:42:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -63,6 +63,9 @@ msgid "Failed to process submission. Please try again."
 msgstr ""
 
 #: src/API/FairFormController.php:271
+#: src/blocks/fair-form/render.php:18
+#: src/blocks/fair-form/editor.js:165
+#: src/blocks/fair-form/frontend.js:138
 msgid "Thank you for your submission!"
 msgstr ""
 
@@ -78,7 +81,7 @@ msgid "Post #%d"
 msgstr ""
 
 #: src/API/QuestionnaireResponsesController.php:327
-#: src/Admin/submission-detail/SubmissionDetail.js:62
+#: src/Admin/submission-detail/SubmissionDetail.js:65
 msgid "No page"
 msgstr ""
 
@@ -101,7 +104,7 @@ msgstr ""
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:333
+#: src/Admin/submission-detail/SubmissionDetail.js:336
 msgid "Submission not found."
 msgstr ""
 
@@ -125,8 +128,33 @@ msgstr ""
 msgid "Too many preview requests. Please try again later."
 msgstr ""
 
+#. translators: %d: maximum file size in megabytes
+#: src/blocks/fair-form-file-upload/render.php:67
+#, php-format
+msgid "Max file size: %d MB"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/render.php:62
+#: src/blocks/fair-form-mailing-signup/editor.js:154
+msgid "Sign me up for the mailing list"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/render.php:68
+msgid "I am interested in:"
+msgstr ""
+
 #: src/blocks/fair-form-phone/render.php:47
 msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
+msgstr ""
+
+#: src/blocks/fair-form-select-one/render.php:66
+msgid "Select an option..."
+msgstr ""
+
+#: src/blocks/fair-form/render.php:17
+#: src/blocks/fair-form/editor.js:157
+#: src/blocks/fair-form/editor.js:222
+msgid "Submit"
 msgstr ""
 
 #: src/Core/Plugin.php:130
@@ -149,8 +177,8 @@ msgstr ""
 
 #: src/Services/FormNotificationService.php:217
 #: src/Admin/form-answers/FormAnswers.js:165
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:166
-#: src/Admin/submission-detail/SubmissionDetail.js:427
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:169
+#: src/Admin/submission-detail/SubmissionDetail.js:430
 msgid "Email"
 msgstr ""
 
@@ -173,24 +201,28 @@ msgstr ""
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:210
 #, php-format
+#: ../fair-events-shared/src/questionnaire.js:492
 msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
 msgstr ""
 
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:226
 #, php-format
+#: ../fair-events-shared/src/questionnaire.js:551
 msgid "Please enter a valid web address for: %s"
 msgstr ""
 
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:242
 #, php-format
+#: ../fair-events-shared/src/questionnaire.js:575
 msgid "Please enter a valid date for: %s"
 msgstr ""
 
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:258
 #, php-format
+#: ../fair-events-shared/src/questionnaire.js:599
 msgid "Please enter a valid date and time for: %s"
 msgstr ""
 
@@ -212,8 +244,8 @@ msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:54
 #: src/Admin/form-answers/FormAnswers.js:151
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:148
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:681
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:151
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
 msgid "Name"
 msgstr ""
 
@@ -242,21 +274,22 @@ msgid "Group by"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:404
+#: src/Admin/submission-detail/SubmissionDetail.js:407
 msgid "Page"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:177
 #: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:435
+#: src/Admin/submission-detail/SubmissionDetail.js:438
+#: src/blocks/fair-form/editor.js:92
 msgid "Event"
 msgstr ""
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
 #: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:400
+#: src/Admin/submission-detail/SubmissionDetail.js:403
 msgid "Form"
 msgstr ""
 
@@ -276,7 +309,7 @@ msgstr ""
 
 #: src/Admin/components/DeleteSubmissionDialog.js:122
 #: src/Admin/form-answers/FormAnswers.js:350
-#: src/Admin/submission-detail/SubmissionDetail.js:271
+#: src/Admin/submission-detail/SubmissionDetail.js:274
 msgid "Cancel"
 msgstr ""
 
@@ -307,6 +340,7 @@ msgid "Respondent"
 msgstr ""
 
 #: src/Admin/components/SubmissionContext.js:42
+#: src/Admin/utils/submission-markdown.js:53
 msgid "Submitted"
 msgstr ""
 
@@ -319,28 +353,29 @@ msgid "The submission could not be updated. Try again."
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:183
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:240
-#: src/Admin/submission-detail/SubmissionDetail.js:431
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:243
+#: src/Admin/submission-detail/SubmissionDetail.js:434
 msgid "Date"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:243
+#: src/Admin/submission-detail/SubmissionDetail.js:246
 msgid "Edit"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:212
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:372
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:375
 msgid "View"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:221
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:381
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:384
 msgid "Delete"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:225
+#: src/Admin/submission-detail/SubmissionDetail.js:228
+#: src/blocks/fair-form/editor.js:83
 msgid "— None —"
 msgstr ""
 
@@ -365,268 +400,271 @@ msgid "Retry"
 msgstr ""
 
 #: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:264
+#: src/Admin/submission-detail/SubmissionDetail.js:267
 msgid "Save"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:172
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:175
 msgid "Status"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:187
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:180
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
 msgid "Pending"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:178
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:181
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:193
 msgid "Confirmed"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:197
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:200
 msgid "Mailing"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:202
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:212
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:205
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
 msgid "Minimal"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:203
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:206
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:218
 msgid "Marketing"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:222
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:225
 msgid "Subscribed Categories"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:280
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:283
 msgid "Photo"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:281
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:284
 msgid "File"
 msgstr ""
 
 #. translators: 1: number added, 2: number already in group
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:462
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:465
 #, js-format
 msgid "%1$d participant(s) added, %2$d already in group."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:476
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:479
 msgid "Failed to add participants to group."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:527
-#: src/Admin/submission-detail/SubmissionDetail.js:296
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:530
+#: src/Admin/submission-detail/SubmissionDetail.js:299
 msgid "Clipboard not available."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:536
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:539
 msgid "Message copied to clipboard."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
-#: src/Admin/submission-detail/SubmissionDetail.js:314
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:545
+#: src/Admin/submission-detail/SubmissionDetail.js:317
 msgid "Failed to copy."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:566
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:569
 msgid "Questionnaire Responses"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:570
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:573
 msgid "Back to Answers Overview"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:578
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:581
 msgid "Event edit page"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:586
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:589
 msgid "Post entry"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:595
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:623
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:598
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:626
 msgid "Add participants to group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:603
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:740
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:606
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:743
 msgid "Export"
 msgstr ""
 
 #. translators: %d: number of unique participants
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:630
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:633
 #, js-format
 msgid "%d unique participant(s) will be added."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:639
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:642
 msgid "Target group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:643
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:646
 msgid "Use existing group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:647
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:650
 msgid "Create new group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:656
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:659
 msgid "Group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:662
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:665
 msgid "Loading..."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:663
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:666
 msgid "— Select a group —"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:687
 msgid "Enter group name..."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:690
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
 msgid "Description"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:696
 msgid "Enter group description (optional)..."
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:722
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:815
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:725
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:818
 msgid "Close"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:731
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:734
 msgid "Create group and add"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:732
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:735
 msgid "Add to group"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:745
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:748
 msgid "Columns"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:749
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:752
 msgid "All columns"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:753
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:756
 msgid "Handpicked columns"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:778
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:781
 msgid "Format"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:782
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
 msgid "Markdown"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:788
 msgid "CSV"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:787
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:790
 msgid "One line per person"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:823
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:826
 msgid "Download CSV"
 msgstr ""
 
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:831
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:834
 msgid "Copy to clipboard"
 msgstr ""
 
 #. translators: 1: number of the ticket within its purchase, 2: short ticket reference
-#: src/Admin/submission-detail/SubmissionDetail.js:30
+#: src/Admin/submission-detail/SubmissionDetail.js:33
 #, js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr ""
 
 #. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
-#: src/Admin/submission-detail/SubmissionDetail.js:38
+#: src/Admin/submission-detail/SubmissionDetail.js:41
 #, js-format
 msgid "%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:46
+#: src/Admin/submission-detail/SubmissionDetail.js:49
 msgid "No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:52
+#: src/Admin/submission-detail/SubmissionDetail.js:55
 msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:93
+#: src/Admin/submission-detail/SubmissionDetail.js:96
 msgid "View file"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:133
+#: src/Admin/submission-detail/SubmissionDetail.js:136
+#: src/Admin/utils/submission-markdown.js:40
 msgid "Yes"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:134
+#: src/Admin/submission-detail/SubmissionDetail.js:137
+#: src/Admin/utils/submission-markdown.js:41
 msgid "No"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:213
+#: src/Admin/submission-detail/SubmissionDetail.js:216
 msgid "The event could not be changed. Try again."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:305
+#: src/Admin/submission-detail/SubmissionDetail.js:308
 msgid "Markdown copied to clipboard. Paste into Google Docs."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:322
+#: src/Admin/submission-detail/SubmissionDetail.js:325
 msgid "No submission ID provided."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:371
+#: src/Admin/submission-detail/SubmissionDetail.js:374
 msgid "Form Submission"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:374
+#: src/Admin/submission-detail/SubmissionDetail.js:377
 msgid "Copy markdown"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:390
+#: src/Admin/submission-detail/SubmissionDetail.js:393
 msgid "Submission Info"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:412
+#: src/Admin/submission-detail/SubmissionDetail.js:415
 msgid "Submitted by"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:443
+#: src/Admin/submission-detail/SubmissionDetail.js:446
 msgid "Ticket"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:457
+#: src/Admin/submission-detail/SubmissionDetail.js:460
 msgid "Answers"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:462
+#: src/Admin/submission-detail/SubmissionDetail.js:465
 msgid "No answers recorded."
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:470
+#: src/Admin/submission-detail/SubmissionDetail.js:473
+#: src/blocks/fair-form-conditional/editor.js:46
 msgid "Question"
 msgstr ""
 
-#: src/Admin/submission-detail/SubmissionDetail.js:471
+#: src/Admin/submission-detail/SubmissionDetail.js:474
 msgid "Answer"
 msgstr ""
 
@@ -634,11 +672,727 @@ msgstr ""
 msgid "Submission date"
 msgstr ""
 
-#: ../fair-events-shared/src/questionnaire.js:756
+#: src/blocks/fair-form-conditional/editor.js:31
+msgid "equals"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:32
+msgid "not equals"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:33
+msgid "contains"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:34
+msgid "is not empty"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:41
+#: src/blocks/fair-form-conditional/editor.js:288
+#: src/blocks/fair-form-conditional/editor.js:303
+msgid "is selected"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:42
+#: src/blocks/fair-form-conditional/editor.js:287
+#: src/blocks/fair-form-conditional/editor.js:302
+msgid "is not selected"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:47
+msgid "Event option"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:51
+msgid "Ticket type"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:254
+msgid "— Select a question —"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:283
+msgid "No condition set"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:333
+msgid "Condition Settings"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:337
+msgid "Condition source"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:357
+msgid "Option short name"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:367
+msgid "Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time."
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:373
+#: src/blocks/fair-form-conditional/editor.js:409
+#: src/blocks/fair-form-conditional/editor.js:447
+msgid "Operator"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:422
+msgid "Show when question"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:459
+#: src/blocks/fair-form-conditional/editor.js:484
+msgid "Value"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:463
+msgid "— Select a value —"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/editor.js:491
+msgid "The value to compare against."
+msgstr ""
+
+#: src/blocks/fair-form-consent/editor.js:32
+#: src/blocks/fair-form-date/editor.js:31
+#: src/blocks/fair-form-datetime/editor.js:31
+#: src/blocks/fair-form-email/editor.js:31
+#: src/blocks/fair-form-file-upload/editor.js:43
+#: src/blocks/fair-form-long-text/editor.js:52
+#: src/blocks/fair-form-multiselect/editor.js:73
+#: src/blocks/fair-form-phone/editor.js:53
+#: src/blocks/fair-form-radio/editor.js:73
+#: src/blocks/fair-form-select-one/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:66
+#: src/blocks/fair-form-url/editor.js:51
+msgid "Question Settings"
+msgstr ""
+
+#: src/blocks/fair-form-consent/editor.js:34
+#: src/blocks/fair-form-date/editor.js:33
+#: src/blocks/fair-form-datetime/editor.js:33
+#: src/blocks/fair-form-email/editor.js:33
+#: src/blocks/fair-form-file-upload/editor.js:45
+#: src/blocks/fair-form-long-text/editor.js:54
+#: src/blocks/fair-form-multiselect/editor.js:75
+#: src/blocks/fair-form-phone/editor.js:55
+#: src/blocks/fair-form-radio/editor.js:75
+#: src/blocks/fair-form-select-one/editor.js:75
+#: src/blocks/fair-form-short-text/editor.js:68
+#: src/blocks/fair-form-url/editor.js:53
+msgid "Question Key"
+msgstr ""
+
+#: src/blocks/fair-form-consent/editor.js:39
+#: src/blocks/fair-form-short-text/editor.js:73
+msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-consent/editor.js:45
+#: src/blocks/fair-form-date/editor.js:44
+#: src/blocks/fair-form-datetime/editor.js:44
+#: src/blocks/fair-form-email/editor.js:44
+#: src/blocks/fair-form-file-upload/editor.js:56
+#: src/blocks/fair-form-long-text/editor.js:65
+#: src/blocks/fair-form-multiselect/editor.js:86
+#: src/blocks/fair-form-phone/editor.js:66
+#: src/blocks/fair-form-radio/editor.js:86
+#: src/blocks/fair-form-select-one/editor.js:86
+#: src/blocks/fair-form-short-text/editor.js:79
+#: src/blocks/fair-form-url/editor.js:64
+msgid "Required"
+msgstr ""
+
+#: src/blocks/fair-form-consent/editor.js:66
+msgid "I have read and accept the terms and conditions"
+msgstr ""
+
+#: src/blocks/fair-form-date/editor.js:38
+msgid "A unique identifier for this question (e.g. \"birthdate\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-date/editor.js:51
+#: src/blocks/fair-form-datetime/editor.js:51
+#: src/blocks/fair-form-email/editor.js:51
+#: src/blocks/fair-form-long-text/editor.js:72
+#: src/blocks/fair-form-phone/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:86
+#: src/blocks/fair-form-url/editor.js:71
+msgid "Placeholder"
+msgstr ""
+
+#: src/blocks/fair-form-date/editor.js:68
+#: src/blocks/fair-form-datetime/editor.js:68
+#: src/blocks/fair-form-email/editor.js:68
+#: src/blocks/fair-form-file-upload/editor.js:98
+#: src/blocks/fair-form-long-text/editor.js:101
+#: src/blocks/fair-form-multiselect/editor.js:106
+#: src/blocks/fair-form-phone/editor.js:98
+#: src/blocks/fair-form-radio/editor.js:106
+#: src/blocks/fair-form-select-one/editor.js:106
+#: src/blocks/fair-form-short-text/editor.js:106
+#: src/blocks/fair-form-url/editor.js:102
+msgid "Enter your question..."
+msgstr ""
+
+#: src/blocks/fair-form-datetime/editor.js:38
+msgid "A unique identifier for this question (e.g. \"appointment_slot\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-email/editor.js:38
+msgid "A unique identifier for this question (e.g. \"email\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-email/editor.js:81
+msgid "your@email.com"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/editor.js:50
+msgid "A unique identifier for this question (e.g. \"photo_upload\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/editor.js:63
+msgid "Accepted File Types"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/editor.js:68
+msgid "MIME types or extensions (e.g. \"image/*\", \".pdf,.doc\", \"image/png,image/jpeg\")."
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/editor.js:74
+msgid "Max File Size (MB)"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/editor.js:109
+msgid "Max file size:"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/editor.js:59
+msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-long-text/editor.js:79
+msgid "Rows"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/editor.js:115
+#: src/blocks/fair-form-short-text/editor.js:120
+msgid "Type your answer..."
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:57
+msgid "Category Preferences"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:60
+msgid "Show category preferences"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:68
+msgid "Let subscribers choose which categories of content they want to receive."
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:79
+msgid "Select which categories to show in the form. If none are selected, all categories will be shown."
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:86
+msgid "Available categories"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:110
+msgid "Preselected categories"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:116
+msgid "Categories checked by default when the form loads."
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/editor.js:163
+msgid "Category preferences will be shown here"
+msgstr ""
+
+#: src/blocks/fair-form-multiselect/editor.js:80
+#: src/blocks/fair-form-radio/editor.js:80
+#: src/blocks/fair-form-select-one/editor.js:80
+msgid "A unique identifier for this question. Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-option/editor.js:21
+msgid "Enter option text..."
+msgstr ""
+
+#: src/blocks/fair-form-phone/editor.js:60
+msgid "A unique identifier for this question (e.g. \"mobile_phone\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-phone/editor.js:79
+msgid "Must include country code with leading \"+\" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone."
+msgstr ""
+
+#: src/blocks/fair-form-url/editor.js:58
+msgid "A unique identifier for this question (e.g. \"website\"). Used internally."
+msgstr ""
+
+#: src/blocks/fair-form-url/editor.js:78
+msgid "Read event details from the linked page"
+msgstr ""
+
+#: src/blocks/fair-form-url/editor.js:82
+msgid "Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored."
+msgstr ""
+
+#: src/blocks/fair-form-url/editor.js:115
+msgid "https://example.com"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:96
+msgid "Optional. Link this form to a specific event."
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:150
+msgid "Form Settings"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:152
+msgid "Submit Button Text"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:160
+msgid "Success Message"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:169
+msgid "Message shown after successful form submission."
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:181
+msgid "Notification Email"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:190
+msgid "Send a notification to this email when someone submits the form. Leave empty to disable."
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:196
+msgid "Form Title"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:201
+msgid "e.g. Volunteer signup"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:205
+msgid "Internal label for grouping submissions by form. Does not appear on the frontend."
+msgstr ""
+
+#: src/blocks/fair-form/frontend.js:49
+msgid "Submitting..."
+msgstr ""
+
+#: src/blocks/fair-form/frontend.js:153
+msgid "An error occurred. Please try again."
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block title"
+msgid "Conditional Section"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block description"
+msgid "Show or hide a group of fields based on an answer to a previous question"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "conditional"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "show"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "hide"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "section"
+msgstr ""
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "logic"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block title"
+msgid "Consent Checkbox Question"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block description"
+msgid "A single consent checkbox question for Fair Form (e.g. terms and conditions)"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+#: src/blocks/fair-form-email/block.json
+#: src/blocks/fair-form-file-upload/block.json
+#: src/blocks/fair-form-long-text/block.json
+#: src/blocks/fair-form-multiselect/block.json
+#: src/blocks/fair-form-phone/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+#: src/blocks/fair-form-short-text/block.json
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "question"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "checkbox"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block keyword"
+msgid "consent"
+msgstr ""
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block keyword"
+msgid "terms"
+msgstr ""
+
+#: src/blocks/fair-form-date/block.json
+msgctxt "block title"
+msgid "Date Question"
+msgstr ""
+
+#: src/blocks/fair-form-date/block.json
+msgctxt "block description"
+msgid "A date input question using the browser's native date picker for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "date"
+msgstr ""
+
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+#: src/blocks/fair-form-email/block.json
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "input"
+msgstr ""
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block title"
+msgid "Date & Time Question"
+msgstr ""
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block description"
+msgid "A date-and-time input question using the browser's native date/time picker for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "time"
+msgstr ""
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "datetime"
+msgstr ""
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block title"
+msgid "Email Question"
+msgstr ""
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block description"
+msgid "An email input question with built-in format validation for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block keyword"
+msgid "email"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block title"
+msgid "File Upload Question"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block description"
+msgid "A file upload question for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "file"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "upload"
+msgstr ""
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "image"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block title"
+msgid "Long Text Question"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block description"
+msgid "A long text (textarea) question for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "textarea"
+msgstr ""
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "long text"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block title"
+msgid "Mailing Sign Up"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block description"
+msgid "Add mailing list signup with category preferences to a Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "mailing"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "newsletter"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "signup"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "subscribe"
+msgstr ""
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "categories"
+msgstr ""
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block title"
+msgid "Multiselect Question"
+msgstr ""
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block description"
+msgid "A multiple-choice checkbox question for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiselect"
+msgstr ""
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiple"
+msgstr ""
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block title"
+msgid "Form Option"
+msgstr ""
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block description"
+msgid "An option for select or multiselect questions"
+msgstr ""
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block keyword"
+msgid "option"
+msgstr ""
+
+#: src/blocks/fair-form-option/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "choice"
+msgstr ""
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block title"
+msgid "Phone Question"
+msgstr ""
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block description"
+msgid "A phone number input question with enforced country code for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block keyword"
+msgid "phone"
+msgstr ""
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block keyword"
+msgid "tel"
+msgstr ""
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block title"
+msgid "Radio Button Question"
+msgstr ""
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block description"
+msgid "A single-choice radio button question for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "radio"
+msgstr ""
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block keyword"
+msgid "button"
+msgstr ""
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block title"
+msgid "Select One Question"
+msgstr ""
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block description"
+msgid "A single-choice question (select or radio) for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "select"
+msgstr ""
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block title"
+msgid "Short Text Question"
+msgstr ""
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block description"
+msgid "A short text input question for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "text"
+msgstr ""
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block title"
+msgid "URL Question"
+msgstr ""
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block description"
+msgid "A URL input question with built-in web-address validation for Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "url"
+msgstr ""
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "link"
+msgstr ""
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "website"
+msgstr ""
+
+#: src/blocks/fair-form/block.json
+msgctxt "block title"
+msgid "Fair Form"
+msgstr ""
+
+#: src/blocks/fair-form/block.json
+msgctxt "block description"
+msgid "A composable questionnaire form with nested question blocks"
+msgstr ""
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "form"
+msgstr ""
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "questionnaire"
+msgstr ""
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "survey"
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:469
+msgid "Please answer the required question: "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:517
+msgid "Please enter a valid email address for: "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:627
+msgid "File is too large. Maximum size is "
+msgstr ""
+
+#: ../fair-events-shared/src/questionnaire.js:748
 msgid "Read from the linked page:"
 msgstr ""
 
-#: ../fair-events-shared/src/questionnaire.js:772
+#: ../fair-events-shared/src/questionnaire.js:764
 msgid "%1$s – %2$s"
 msgstr ""
 

@@ -355,6 +355,7 @@ Fully translated (`.po` files exist for all locales):
 - `fair-events`
 - `fair-events-experimental`
 - `fair-finance`
+- `fair-form`
 - `fair-payments-connector`
 - `fair-platform`
 

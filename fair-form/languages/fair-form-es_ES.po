@@ -7,7 +7,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-25T10:53:24+00:00\n"
+"POT-Creation-Date: 2026-10-20T18:42:50+00:00\n"
 "PO-Revision-Date: 2026-06-25 00:00+0000\n"
 "Language: es_ES\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 #: src/Core/Plugin.php:135
 #: src/Services/QuestionnaireService.php:492
 msgid "Fair Form"
-msgstr ""
+msgstr "Fair Form"
 
 #. Plugin URI of the plugin
 #: fair-form.php
@@ -62,8 +62,15 @@ msgid "Failed to process submission. Please try again."
 msgstr "No se pudo procesar el envío. Inténtalo de nuevo."
 
 #: src/API/FairFormController.php:271
+#: src/blocks/fair-form/render.php:18
+#: src/blocks/fair-form/editor.js:165
+#: src/blocks/fair-form/frontend.js:138
 msgid "Thank you for your submission!"
 msgstr "¡Gracias por tu envío!"
+
+#: src/API/FairFormController.php:290
+msgid "Guest"
+msgstr "Invitado"
 
 #. translators: %d: WordPress post ID.
 #: src/API/QuestionnaireResponsesController.php:324
@@ -73,14 +80,15 @@ msgid "Post #%d"
 msgstr "Entrada #%d"
 
 #: src/API/QuestionnaireResponsesController.php:327
-#: src/Admin/submission-detail/SubmissionDetail.js:62
+#: src/Admin/submission-detail/SubmissionDetail.js:65
 msgid "No page"
 msgstr "Sin página"
 
+#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format, js-format
+#, php-format,js-format
 msgid "Event date #%d"
 msgstr "Fecha del evento #%d"
 
@@ -95,7 +103,7 @@ msgstr "Heredado (sin ID de formulario)"
 
 #: src/API/QuestionnaireResponsesController.php:449
 #: src/API/QuestionnaireResponsesController.php:621
-#: src/Admin/submission-detail/SubmissionDetail.js:333
+#: src/Admin/submission-detail/SubmissionDetail.js:336
 msgid "Submission not found."
 msgstr "Envío no encontrado."
 
@@ -111,11 +119,111 @@ msgstr "No se pudo actualizar el envío."
 msgid "Response not found."
 msgstr "Respuesta no encontrada."
 
+#: src/API/UrlPreviewController.php:60
+msgid "URL of the linked page to preview."
+msgstr "URL de la página vinculada para previsualizar."
+
+#: src/API/UrlPreviewController.php:93
+msgid "Too many preview requests. Please try again later."
+msgstr "Demasiadas solicitudes de previsualización. Por favor, inténtalo más tarde."
+
+#. translators: %d: maximum file size in megabytes
+#: src/blocks/fair-form-file-upload/render.php:67
+#, php-format
+msgid "Max file size: %d MB"
+msgstr "Tamaño máximo de archivo: %d MB"
+
+#: src/blocks/fair-form-mailing-signup/render.php:62
+#: src/blocks/fair-form-mailing-signup/editor.js:154
+msgid "Sign me up for the mailing list"
+msgstr "Suscríbeme a la lista de correo"
+
+#: src/blocks/fair-form-mailing-signup/render.php:68
+msgid "I am interested in:"
+msgstr "Me interesa:"
+
+#: src/blocks/fair-form-phone/render.php:47
+msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
+msgstr "Incluye el código de país, comenzando con «+» — los espacios, guiones y paréntesis están permitidos (por ejemplo +49 170 123 45 67)."
+
+#: src/blocks/fair-form-select-one/render.php:66
+msgid "Select an option..."
+msgstr "Selecciona una opción..."
+
+#: src/blocks/fair-form/render.php:17
+#: src/blocks/fair-form/editor.js:157
+#: src/blocks/fair-form/editor.js:222
+msgid "Submit"
+msgstr "Enviar"
+
+#: src/Core/Plugin.php:130
+msgid "Translations"
+msgstr "Traducciones"
+
+#: src/Core/Plugin.php:136
+msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs."
+msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idiomas de WordPress.org."
+
+#: src/Core/Plugin.php:139
+msgid "Forced by a wp-config constant — change it there."
+msgstr "Forzado por una constante wp-config — cámbialo allí."
+
+#. translators: %s: site name
+#: src/Services/FormNotificationService.php:210
+#, php-format
+msgid "New form submission — %s"
+msgstr "Nuevo envío de formulario — %s"
+
+#: src/Services/FormNotificationService.php:217
+#: src/Admin/form-answers/FormAnswers.js:165
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:169
+#: src/Admin/submission-detail/SubmissionDetail.js:430
+msgid "Email"
+msgstr "Correo electrónico"
+
+#. translators: %s: page title
+#: src/Services/FormNotificationService.php:229
+#, php-format
+msgid "Page: %s"
+msgstr "Página: %s"
+
+#: src/Services/FormNotificationService.php:257
+msgid "A new form submission has been received."
+msgstr "Se ha recibido un nuevo envío de formulario."
+
 #. translators: %s: question text
 #: src/Services/QuestionnaireService.php:195
 #, php-format
 msgid "Please enter a valid email address for: %s"
 msgstr "Introduce una dirección de correo válida para: %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:210
+#: ../fair-events-shared/src/questionnaire.js:492
+#, php-format
+msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
+msgstr "Introduce un número de teléfono válido con código de país (por ejemplo +49 170 123 45 67) para: %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:226
+#: ../fair-events-shared/src/questionnaire.js:551
+#, php-format
+msgid "Please enter a valid web address for: %s"
+msgstr "Por favor, introduce una dirección web válida para: %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:242
+#: ../fair-events-shared/src/questionnaire.js:575
+#, php-format
+msgid "Please enter a valid date for: %s"
+msgstr "Por favor, introduce una fecha válida para: %s"
+
+#. translators: %s: question text
+#: src/Services/QuestionnaireService.php:258
+#: ../fair-events-shared/src/questionnaire.js:599
+#, php-format
+msgid "Please enter a valid date and time for: %s"
+msgstr "Por favor, introduce una fecha y hora válidas para: %s"
 
 #: src/Services/QuestionnaireService.php:402
 msgid "File upload failed. Please try again."
@@ -135,8 +243,8 @@ msgstr "No se pudo guardar el archivo cargado."
 
 #: src/Admin/answers-overview/AnswersOverview.js:54
 #: src/Admin/form-answers/FormAnswers.js:151
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:148
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:681
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:151
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
 msgid "Name"
 msgstr "Nombre"
 
@@ -165,420 +273,44 @@ msgid "Group by"
 msgstr "Agrupar por"
 
 #: src/Admin/answers-overview/AnswersOverview.js:109
-#: src/Admin/submission-detail/SubmissionDetail.js:404
+#: src/Admin/submission-detail/SubmissionDetail.js:407
 msgid "Page"
 msgstr "Página"
 
 #: src/Admin/answers-overview/AnswersOverview.js:113
 #: src/Admin/form-answers/FormAnswers.js:177
 #: src/Admin/form-answers/FormAnswers.js:307
-#: src/Admin/submission-detail/SubmissionDetail.js:435
+#: src/Admin/submission-detail/SubmissionDetail.js:438
+#: src/blocks/fair-form/editor.js:92
 msgid "Event"
 msgstr "Evento"
 
 #: src/Admin/answers-overview/AnswersOverview.js:117
 #: src/Admin/components/SubmissionContext.js:41
 #: src/Admin/form-answers/FormAnswers.js:171
-#: src/Admin/submission-detail/SubmissionDetail.js:400
+#: src/Admin/submission-detail/SubmissionDetail.js:403
 msgid "Form"
 msgstr "Formulario"
-
-#: src/Services/FormNotificationService.php:217
-#: src/Admin/form-answers/FormAnswers.js:165
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:166
-#: src/Admin/submission-detail/SubmissionDetail.js:427
-msgid "Email"
-msgstr "Correo electrónico"
-
-#: src/Admin/form-answers/FormAnswers.js:183
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:240
-#: src/Admin/submission-detail/SubmissionDetail.js:431
-msgid "Date"
-msgstr "Fecha"
-
-#: src/Admin/form-answers/FormAnswers.js:205
-#: src/Admin/submission-detail/SubmissionDetail.js:243
-msgid "Edit"
-msgstr "Editar"
-
-#: src/Admin/form-answers/FormAnswers.js:212
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:372
-msgid "View"
-msgstr "Ver"
-
-#: src/Admin/form-answers/FormAnswers.js:221
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:381
-msgid "Delete"
-msgstr "Eliminar"
-
-#: src/Admin/form-answers/FormAnswers.js:257
-#: src/Admin/submission-detail/SubmissionDetail.js:225
-msgid "— None —"
-msgstr "— Ninguno —"
-
-#: src/Admin/form-answers/FormAnswers.js:264
-msgid "Form Answers"
-msgstr "Respuestas del formulario"
-
-#: src/Admin/form-answers/FormAnswers.js:298
-msgid "Edit Submission"
-msgstr "Editar envío"
-
-#: src/Admin/components/DeleteSubmissionDialog.js:122
-#: src/Admin/form-answers/FormAnswers.js:350
-#: src/Admin/submission-detail/SubmissionDetail.js:271
-msgid "Cancel"
-msgstr "Cancelar"
-
-#: src/Admin/form-answers/FormAnswers.js:361
-#: src/Admin/submission-detail/SubmissionDetail.js:264
-msgid "Save"
-msgstr "Guardar"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:172
-msgid "Status"
-msgstr "Estado"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:177
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:187
-msgid "Pending"
-msgstr "Pendiente"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:178
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
-msgid "Confirmed"
-msgstr "Confirmado"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:197
-msgid "Mailing"
-msgstr "Correo"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:202
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:212
-msgid "Minimal"
-msgstr "Mínimo"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:203
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
-msgid "Marketing"
-msgstr "Marketing"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:222
-msgid "Subscribed Categories"
-msgstr "Categorías suscritas"
-
-#. translators: 1: number added, 2: number already in group
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:462
-#, js-format
-msgid "%1$d participant(s) added, %2$d already in group."
-msgstr "%1$d participante(s) añadido(s), %2$d ya en el grupo."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:476
-msgid "Failed to add participants to group."
-msgstr "No se pudieron añadir participantes al grupo."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:566
-msgid "Questionnaire Responses"
-msgstr "Respuestas del cuestionario"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:527
-#: src/Admin/submission-detail/SubmissionDetail.js:296
-msgid "Clipboard not available."
-msgstr "Portapapeles no disponible."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:305
-msgid "Markdown copied to clipboard. Paste into Google Docs."
-msgstr "Markdown copiado al portapapeles. Pégalo en Google Docs."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:542
-#: src/Admin/submission-detail/SubmissionDetail.js:314
-msgid "Failed to copy."
-msgstr "Error al copiar."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:570
-msgid "Back to Answers Overview"
-msgstr "Volver a descripción general de respuestas"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:578
-msgid "Event edit page"
-msgstr "Página de edición del evento"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:586
-msgid "Post entry"
-msgstr "Entrada de entrada"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:595
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:623
-msgid "Add participants to group"
-msgstr "Añadir participantes al grupo"
-
-#. translators: %d: number of unique participants
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:630
-#, js-format
-msgid "%d unique participant(s) will be added."
-msgstr "%d participante(s) único(s) será(n) añadido(s)."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:639
-msgid "Target group"
-msgstr "Grupo destino"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:643
-msgid "Use existing group"
-msgstr "Usar grupo existente"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:647
-msgid "Create new group"
-msgstr "Crear nuevo grupo"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:656
-msgid "Group"
-msgstr "Grupo"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:662
-msgid "Loading..."
-msgstr "Cargando..."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:663
-msgid "— Select a group —"
-msgstr "— Selecciona un grupo —"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:684
-msgid "Enter group name..."
-msgstr "Introduce el nombre del grupo..."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:690
-msgid "Description"
-msgstr "Descripción"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
-msgid "Enter group description (optional)..."
-msgstr "Introduce la descripción del grupo (opcional)..."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:722
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:815
-msgid "Close"
-msgstr "Cerrar"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:731
-msgid "Create group and add"
-msgstr "Crear grupo y añadir"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:732
-msgid "Add to group"
-msgstr "Añadir al grupo"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:93
-msgid "View file"
-msgstr "Ver archivo"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:322
-msgid "No submission ID provided."
-msgstr "No se proporcionó ID de envío."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:371
-msgid "Form Submission"
-msgstr "Envío de formulario"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:374
-msgid "Copy markdown"
-msgstr "Copiar markdown"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:390
-msgid "Submission Info"
-msgstr "Información del envío"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:412
-msgid "Submitted by"
-msgstr "Enviado por"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:457
-msgid "Answers"
-msgstr "Respuestas"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:462
-msgid "No answers recorded."
-msgstr "No hay respuestas registradas."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:470
-msgid "Question"
-msgstr "Pregunta"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:471
-msgid "Answer"
-msgstr "Respuesta"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:133
-msgid "Yes"
-msgstr "Sí"
-
-#: src/Admin/submission-detail/SubmissionDetail.js:134
-msgid "No"
-msgstr "No"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:536
-msgid "Message copied to clipboard."
-msgstr "Mensaje copiado al portapapeles."
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:603
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:740
-msgid "Export"
-msgstr "Exportar"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:745
-msgid "Columns"
-msgstr "Columnas"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:749
-msgid "All columns"
-msgstr "Todas las columnas"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:753
-msgid "Handpicked columns"
-msgstr "Columnas seleccionadas"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:778
-msgid "Format"
-msgstr "Formato"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:782
-msgid "Markdown"
-msgstr "Markdown"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
-msgid "CSV"
-msgstr "CSV"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:787
-msgid "One line per person"
-msgstr "Una línea por persona"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:823
-msgid "Download CSV"
-msgstr "Descargar CSV"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:831
-msgid "Copy to clipboard"
-msgstr "Copiar al portapapeles"
-
-#: src/blocks/fair-form-phone/render.php:47
-msgid "Include the country code, starting with \"+\" — spaces, dashes and brackets are fine (for example +49 170 123 45 67)."
-msgstr "Incluye el código de país, comenzando con «+» — los espacios, guiones y paréntesis están permitidos (por ejemplo +49 170 123 45 67)."
-
-#. translators: %s: question text
-#: src/Services/QuestionnaireService.php:210
-#, php-format
-msgid "Enter a valid phone number with country code (for example +49 170 123 45 67) for: %s"
-msgstr "Introduce un número de teléfono válido con código de país (por ejemplo +49 170 123 45 67) para: %s"
-
-#. translators: %s: site name
-#: src/Services/FormNotificationService.php:210
-#, php-format
-msgid "New form submission — %s"
-msgstr "Nuevo envío de formulario — %s"
-
-#. translators: %s: page title
-#: src/Services/FormNotificationService.php:229
-#, php-format
-msgid "Page: %s"
-msgstr "Página: %s"
-
-#: src/Services/FormNotificationService.php:257
-msgid "A new form submission has been received."
-msgstr "Se ha recibido un nuevo envío de formulario."
-
-#: src/API/FairFormController.php:290
-msgid "Guest"
-msgstr "Invitado"
-
-#: src/Core/Plugin.php:130
-msgid "Translations"
-msgstr "Traducciones"
-
-#: src/Core/Plugin.php:136
-msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs."
-msgstr "Carga archivos .mo/.json incluidos en el plugin en lugar de depender de los paquetes de idiomas de WordPress.org."
-
-#: src/Core/Plugin.php:139
-msgid "Forced by a wp-config constant — change it there."
-msgstr "Forzado por una constante wp-config — cámbialo allí."
-
-#: src/API/UrlPreviewController.php:60
-msgid "URL of the linked page to preview."
-msgstr "URL de la página vinculada para previsualizar."
-
-#: src/API/UrlPreviewController.php:93
-msgid "Too many preview requests. Please try again later."
-msgstr "Demasiadas solicitudes de previsualización. Por favor, inténtalo más tarde."
-
-#. translators: %s: question text
-#: src/Services/QuestionnaireService.php:226
-#, php-format
-msgid "Please enter a valid web address for: %s"
-msgstr "Por favor, introduce una dirección web válida para: %s"
-
-#. translators: %s: question text
-#: src/Services/QuestionnaireService.php:242
-#, php-format
-msgid "Please enter a valid date for: %s"
-msgstr "Por favor, introduce una fecha válida para: %s"
-
-#. translators: %s: question text
-#: src/Services/QuestionnaireService.php:258
-#, php-format
-msgid "Please enter a valid date and time for: %s"
-msgstr "Por favor, introduce una fecha y hora válidas para: %s"
-
-#: ../fair-events-shared/src/questionnaire.js:756
-msgid "Read from the linked page:"
-msgstr "Leer desde la página vinculada:"
-
-#: ../fair-events-shared/src/questionnaire.js:772
-msgid "%1$s – %2$s"
-msgstr "%1$s – %2$s"
-
-#: src/Admin/utils/export-format.js:62
-msgid "Submission date"
-msgstr "Fecha de envío"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:280
-msgid "Photo"
-msgstr "Foto"
-
-#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:281
-msgid "File"
-msgstr "Archivo"
-
-#. translators: 1: number of the ticket within its purchase, 2: short ticket reference
-#: src/Admin/submission-detail/SubmissionDetail.js:30
-#, js-format
-msgid "Ticket %1$d (%2$s)"
-msgstr "Entrada %1$d (%2$s)"
-
-#. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
-#: src/Admin/submission-detail/SubmissionDetail.js:38
-#, js-format
-msgid "%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket."
-msgstr "%s — adjuntado automáticamente porque las respuestas son anteriores a las respuestas por entrada. Verifica que pertenezcan a esta entrada."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:46
-msgid "No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to."
-msgstr "Sin entrada — estas respuestas son anteriores a las respuestas por entrada y no se encontró ninguna entrada coincidente. Verifica a qué entrada pertenecen."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:52
-msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
-msgstr "Sin entrada — la entrada a la que pertenecían estas respuestas fue eliminada. Verifica si siguen siendo aplicables."
-
-#: src/Admin/submission-detail/SubmissionDetail.js:443
-msgid "Ticket"
-msgstr "Entrada"
 
 #: src/Admin/components/DeleteSubmissionDialog.js:68
 msgid "The submission could not be deleted. Try again."
 msgstr "No se ha podido eliminar el envío. Inténtalo de nuevo."
 
+#. translators: 1: submission ID, e.g. "#12", 2: respondent name or email
+#: src/Admin/components/DeleteSubmissionDialog.js:82
+#, js-format
+msgid "Delete submission %1$s — %2$s"
+msgstr "Eliminar envío %1$s — %2$s"
+
 #: src/Admin/components/DeleteSubmissionDialog.js:96
 msgid "This permanently deletes this submission and its answers. The participant, other submissions, and uploaded files are kept."
 msgstr "Esto elimina de forma permanente este envío y sus respuestas. Se conservan el participante, los demás envíos y los archivos subidos."
+
+#: src/Admin/components/DeleteSubmissionDialog.js:122
+#: src/Admin/form-answers/FormAnswers.js:350
+#: src/Admin/submission-detail/SubmissionDetail.js:274
+msgid "Cancel"
+msgstr "Cancelar"
 
 #: src/Admin/components/DeleteSubmissionDialog.js:131
 msgid "Delete submission"
@@ -607,6 +339,7 @@ msgid "Respondent"
 msgstr "Persona"
 
 #: src/Admin/components/SubmissionContext.js:42
+#: src/Admin/utils/submission-markdown.js:53
 msgid "Submitted"
 msgstr "Enviado"
 
@@ -617,6 +350,41 @@ msgstr "ID del envío"
 #: src/Admin/form-answers/FormAnswers.js:135
 msgid "The submission could not be updated. Try again."
 msgstr "No se ha podido actualizar el envío. Inténtalo de nuevo."
+
+#: src/Admin/form-answers/FormAnswers.js:183
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:243
+#: src/Admin/submission-detail/SubmissionDetail.js:434
+msgid "Date"
+msgstr "Fecha"
+
+#: src/Admin/form-answers/FormAnswers.js:205
+#: src/Admin/submission-detail/SubmissionDetail.js:246
+msgid "Edit"
+msgstr "Editar"
+
+#: src/Admin/form-answers/FormAnswers.js:212
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:375
+msgid "View"
+msgstr "Ver"
+
+#: src/Admin/form-answers/FormAnswers.js:221
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:384
+msgid "Delete"
+msgstr "Eliminar"
+
+#: src/Admin/form-answers/FormAnswers.js:257
+#: src/Admin/submission-detail/SubmissionDetail.js:228
+#: src/blocks/fair-form/editor.js:83
+msgid "— None —"
+msgstr "— Ninguno —"
+
+#: src/Admin/form-answers/FormAnswers.js:264
+msgid "Form Answers"
+msgstr "Respuestas del formulario"
+
+#: src/Admin/form-answers/FormAnswers.js:298
+msgid "Edit Submission"
+msgstr "Editar envío"
 
 #: src/Admin/form-answers/FormAnswers.js:314
 msgid "Loading events…"
@@ -630,13 +398,999 @@ msgstr "No se ha podido cargar la lista de eventos. Se mantiene la asignación a
 msgid "Retry"
 msgstr "Reintentar"
 
-#: src/Admin/submission-detail/SubmissionDetail.js:213
+#: src/Admin/form-answers/FormAnswers.js:361
+#: src/Admin/submission-detail/SubmissionDetail.js:267
+msgid "Save"
+msgstr "Guardar"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:175
+msgid "Status"
+msgstr "Estado"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:180
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:190
+msgid "Pending"
+msgstr "Pendiente"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:181
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:193
+msgid "Confirmed"
+msgstr "Confirmado"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:200
+msgid "Mailing"
+msgstr "Correo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:205
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:215
+msgid "Minimal"
+msgstr "Mínimo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:206
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:218
+msgid "Marketing"
+msgstr "Marketing"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:225
+msgid "Subscribed Categories"
+msgstr "Categorías suscritas"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:283
+msgid "Photo"
+msgstr "Foto"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:284
+msgid "File"
+msgstr "Archivo"
+
+#. translators: 1: number added, 2: number already in group
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:465
+#, js-format
+msgid "%1$d participant(s) added, %2$d already in group."
+msgstr "%1$d participante(s) añadido(s), %2$d ya en el grupo."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:479
+msgid "Failed to add participants to group."
+msgstr "No se pudieron añadir participantes al grupo."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:530
+#: src/Admin/submission-detail/SubmissionDetail.js:299
+msgid "Clipboard not available."
+msgstr "Portapapeles no disponible."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:539
+msgid "Message copied to clipboard."
+msgstr "Mensaje copiado al portapapeles."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:545
+#: src/Admin/submission-detail/SubmissionDetail.js:317
+msgid "Failed to copy."
+msgstr "Error al copiar."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:569
+msgid "Questionnaire Responses"
+msgstr "Respuestas del cuestionario"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:573
+msgid "Back to Answers Overview"
+msgstr "Volver a descripción general de respuestas"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:581
+msgid "Event edit page"
+msgstr "Página de edición del evento"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:589
+msgid "Post entry"
+msgstr "Entrada de entrada"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:598
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:626
+msgid "Add participants to group"
+msgstr "Añadir participantes al grupo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:606
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:743
+msgid "Export"
+msgstr "Exportar"
+
+#. translators: %d: number of unique participants
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:633
+#, js-format
+msgid "%d unique participant(s) will be added."
+msgstr "%d participante(s) único(s) será(n) añadido(s)."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:642
+msgid "Target group"
+msgstr "Grupo destino"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:646
+msgid "Use existing group"
+msgstr "Usar grupo existente"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:650
+msgid "Create new group"
+msgstr "Crear nuevo grupo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:659
+msgid "Group"
+msgstr "Grupo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:665
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:666
+msgid "— Select a group —"
+msgstr "— Selecciona un grupo —"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:687
+msgid "Enter group name..."
+msgstr "Introduce el nombre del grupo..."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:693
+msgid "Description"
+msgstr "Descripción"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:696
+msgid "Enter group description (optional)..."
+msgstr "Introduce la descripción del grupo (opcional)..."
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:725
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:818
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:734
+msgid "Create group and add"
+msgstr "Crear grupo y añadir"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:735
+msgid "Add to group"
+msgstr "Añadir al grupo"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:748
+msgid "Columns"
+msgstr "Columnas"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:752
+msgid "All columns"
+msgstr "Todas las columnas"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:756
+msgid "Handpicked columns"
+msgstr "Columnas seleccionadas"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:781
+msgid "Format"
+msgstr "Formato"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:785
+msgid "Markdown"
+msgstr "Markdown"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:788
+msgid "CSV"
+msgstr "CSV"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:790
+msgid "One line per person"
+msgstr "Una línea por persona"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:826
+msgid "Download CSV"
+msgstr "Descargar CSV"
+
+#: src/Admin/questionnaire-responses/QuestionnaireResponses.js:834
+msgid "Copy to clipboard"
+msgstr "Copiar al portapapeles"
+
+#. translators: 1: number of the ticket within its purchase, 2: short ticket reference
+#: src/Admin/submission-detail/SubmissionDetail.js:33
+#, js-format
+msgid "Ticket %1$d (%2$s)"
+msgstr "Entrada %1$d (%2$s)"
+
+#. translators: %s: ticket label, e.g. "Ticket 1 (AE2671B5)"
+#: src/Admin/submission-detail/SubmissionDetail.js:41
+#, js-format
+msgid "%s — attached automatically because the answers predate per-ticket answers. Check that they belong to this ticket."
+msgstr "%s — adjuntado automáticamente porque las respuestas son anteriores a las respuestas por entrada. Verifica que pertenezcan a esta entrada."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:49
+msgid "No ticket — these answers predate per-ticket answers and no matching ticket was found. Check which ticket they belong to."
+msgstr "Sin entrada — estas respuestas son anteriores a las respuestas por entrada y no se encontró ninguna entrada coincidente. Verifica a qué entrada pertenecen."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:55
+msgid "No ticket — the ticket these answers belonged to was removed. Check whether they still apply."
+msgstr "Sin entrada — la entrada a la que pertenecían estas respuestas fue eliminada. Verifica si siguen siendo aplicables."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:96
+msgid "View file"
+msgstr "Ver archivo"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:136
+#: src/Admin/utils/submission-markdown.js:40
+msgid "Yes"
+msgstr "Sí"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:137
+#: src/Admin/utils/submission-markdown.js:41
+msgid "No"
+msgstr "No"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:216
 msgid "The event could not be changed. Try again."
 msgstr "No se ha podido cambiar el evento. Inténtalo de nuevo."
 
-#. translators: 1: submission ID, e.g. "#12", 2: respondent name or email
-#: src/Admin/components/DeleteSubmissionDialog.js:82
-#, js-format
-msgid "Delete submission %1$s — %2$s"
-msgstr "Eliminar envío %1$s — %2$s"
+#: src/Admin/submission-detail/SubmissionDetail.js:308
+msgid "Markdown copied to clipboard. Paste into Google Docs."
+msgstr "Markdown copiado al portapapeles. Pégalo en Google Docs."
 
+#: src/Admin/submission-detail/SubmissionDetail.js:325
+msgid "No submission ID provided."
+msgstr "No se proporcionó ID de envío."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:374
+msgid "Form Submission"
+msgstr "Envío de formulario"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:377
+msgid "Copy markdown"
+msgstr "Copiar markdown"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:393
+msgid "Submission Info"
+msgstr "Información del envío"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:415
+msgid "Submitted by"
+msgstr "Enviado por"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:446
+msgid "Ticket"
+msgstr "Entrada"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:460
+msgid "Answers"
+msgstr "Respuestas"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:465
+msgid "No answers recorded."
+msgstr "No hay respuestas registradas."
+
+#: src/Admin/submission-detail/SubmissionDetail.js:473
+#: src/blocks/fair-form-conditional/editor.js:46
+msgid "Question"
+msgstr "Pregunta"
+
+#: src/Admin/submission-detail/SubmissionDetail.js:474
+msgid "Answer"
+msgstr "Respuesta"
+
+#: src/Admin/utils/export-format.js:62
+msgid "Submission date"
+msgstr "Fecha de envío"
+
+#: src/blocks/fair-form-conditional/editor.js:31
+msgid "equals"
+msgstr "es igual a"
+
+#: src/blocks/fair-form-conditional/editor.js:32
+msgid "not equals"
+msgstr "no es igual a"
+
+#: src/blocks/fair-form-conditional/editor.js:33
+msgid "contains"
+msgstr "contiene"
+
+#: src/blocks/fair-form-conditional/editor.js:34
+msgid "is not empty"
+msgstr "no está vacío"
+
+#: src/blocks/fair-form-conditional/editor.js:41
+#: src/blocks/fair-form-conditional/editor.js:288
+#: src/blocks/fair-form-conditional/editor.js:303
+msgid "is selected"
+msgstr "está seleccionado"
+
+#: src/blocks/fair-form-conditional/editor.js:42
+#: src/blocks/fair-form-conditional/editor.js:287
+#: src/blocks/fair-form-conditional/editor.js:302
+msgid "is not selected"
+msgstr "no está seleccionado"
+
+#: src/blocks/fair-form-conditional/editor.js:47
+msgid "Event option"
+msgstr "Opción de evento"
+
+#: src/blocks/fair-form-conditional/editor.js:51
+msgid "Ticket type"
+msgstr "Tipo de entrada"
+
+#: src/blocks/fair-form-conditional/editor.js:254
+msgid "— Select a question —"
+msgstr "— Selecciona una pregunta —"
+
+#: src/blocks/fair-form-conditional/editor.js:283
+msgid "No condition set"
+msgstr "Sin condición establecida"
+
+#: src/blocks/fair-form-conditional/editor.js:333
+msgid "Condition Settings"
+msgstr "Configuración de condición"
+
+#: src/blocks/fair-form-conditional/editor.js:337
+msgid "Condition source"
+msgstr "Origen de la condición"
+
+#: src/blocks/fair-form-conditional/editor.js:357
+msgid "Option short name"
+msgstr "Nombre corto de la opción"
+
+#: src/blocks/fair-form-conditional/editor.js:367
+msgid "Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time."
+msgstr "Introduce el nombre corto de la opción (configúralo en la pestaña Entradas del evento). Las opciones no se pueden listar aquí porque provienen de la fecha del evento seleccionada en el momento de renderización."
+
+#: src/blocks/fair-form-conditional/editor.js:373
+#: src/blocks/fair-form-conditional/editor.js:409
+#: src/blocks/fair-form-conditional/editor.js:447
+msgid "Operator"
+msgstr "Operador"
+
+#: src/blocks/fair-form-conditional/editor.js:422
+msgid "Show when question"
+msgstr "Mostrar cuando"
+
+#: src/blocks/fair-form-conditional/editor.js:459
+#: src/blocks/fair-form-conditional/editor.js:484
+msgid "Value"
+msgstr "Valor"
+
+#: src/blocks/fair-form-conditional/editor.js:463
+msgid "— Select a value —"
+msgstr "— Seleccionar un valor —"
+
+#: src/blocks/fair-form-conditional/editor.js:491
+msgid "The value to compare against."
+msgstr "El valor a comparar."
+
+#: src/blocks/fair-form-consent/editor.js:32
+#: src/blocks/fair-form-date/editor.js:31
+#: src/blocks/fair-form-datetime/editor.js:31
+#: src/blocks/fair-form-email/editor.js:31
+#: src/blocks/fair-form-file-upload/editor.js:43
+#: src/blocks/fair-form-long-text/editor.js:52
+#: src/blocks/fair-form-multiselect/editor.js:73
+#: src/blocks/fair-form-phone/editor.js:53
+#: src/blocks/fair-form-radio/editor.js:73
+#: src/blocks/fair-form-select-one/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:66
+#: src/blocks/fair-form-url/editor.js:51
+msgid "Question Settings"
+msgstr "Configuración de la pregunta"
+
+#: src/blocks/fair-form-consent/editor.js:34
+#: src/blocks/fair-form-date/editor.js:33
+#: src/blocks/fair-form-datetime/editor.js:33
+#: src/blocks/fair-form-email/editor.js:33
+#: src/blocks/fair-form-file-upload/editor.js:45
+#: src/blocks/fair-form-long-text/editor.js:54
+#: src/blocks/fair-form-multiselect/editor.js:75
+#: src/blocks/fair-form-phone/editor.js:55
+#: src/blocks/fair-form-radio/editor.js:75
+#: src/blocks/fair-form-select-one/editor.js:75
+#: src/blocks/fair-form-short-text/editor.js:68
+#: src/blocks/fair-form-url/editor.js:53
+msgid "Question Key"
+msgstr "Clave de la pregunta"
+
+#: src/blocks/fair-form-consent/editor.js:39
+#: src/blocks/fair-form-short-text/editor.js:73
+msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"favorite_color\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-consent/editor.js:45
+#: src/blocks/fair-form-date/editor.js:44
+#: src/blocks/fair-form-datetime/editor.js:44
+#: src/blocks/fair-form-email/editor.js:44
+#: src/blocks/fair-form-file-upload/editor.js:56
+#: src/blocks/fair-form-long-text/editor.js:65
+#: src/blocks/fair-form-multiselect/editor.js:86
+#: src/blocks/fair-form-phone/editor.js:66
+#: src/blocks/fair-form-radio/editor.js:86
+#: src/blocks/fair-form-select-one/editor.js:86
+#: src/blocks/fair-form-short-text/editor.js:79
+#: src/blocks/fair-form-url/editor.js:64
+msgid "Required"
+msgstr "Requerido"
+
+#: src/blocks/fair-form-consent/editor.js:66
+msgid "I have read and accept the terms and conditions"
+msgstr "He leído y acepto los términos y condiciones"
+
+#: src/blocks/fair-form-date/editor.js:38
+msgid "A unique identifier for this question (e.g. \"birthdate\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"birthdate\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-date/editor.js:51
+#: src/blocks/fair-form-datetime/editor.js:51
+#: src/blocks/fair-form-email/editor.js:51
+#: src/blocks/fair-form-long-text/editor.js:72
+#: src/blocks/fair-form-phone/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:86
+#: src/blocks/fair-form-url/editor.js:71
+msgid "Placeholder"
+msgstr "Marcador de posición"
+
+#: src/blocks/fair-form-date/editor.js:68
+#: src/blocks/fair-form-datetime/editor.js:68
+#: src/blocks/fair-form-email/editor.js:68
+#: src/blocks/fair-form-file-upload/editor.js:98
+#: src/blocks/fair-form-long-text/editor.js:101
+#: src/blocks/fair-form-multiselect/editor.js:106
+#: src/blocks/fair-form-phone/editor.js:98
+#: src/blocks/fair-form-radio/editor.js:106
+#: src/blocks/fair-form-select-one/editor.js:106
+#: src/blocks/fair-form-short-text/editor.js:106
+#: src/blocks/fair-form-url/editor.js:102
+msgid "Enter your question..."
+msgstr "Ingresa tu pregunta..."
+
+#: src/blocks/fair-form-datetime/editor.js:38
+msgid "A unique identifier for this question (e.g. \"appointment_slot\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"appointment_slot\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-email/editor.js:38
+msgid "A unique identifier for this question (e.g. \"email\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"email\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-email/editor.js:81
+msgid "your@email.com"
+msgstr "tu@correo.com"
+
+#: src/blocks/fair-form-file-upload/editor.js:50
+msgid "A unique identifier for this question (e.g. \"photo_upload\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"photo_upload\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-file-upload/editor.js:63
+msgid "Accepted File Types"
+msgstr "Tipos de archivo aceptados"
+
+#: src/blocks/fair-form-file-upload/editor.js:68
+msgid "MIME types or extensions (e.g. \"image/*\", \".pdf,.doc\", \"image/png,image/jpeg\")."
+msgstr "Tipos MIME o extensiones (p. ej. \"image/*\", \".pdf,.doc\", \"image/png,image/jpeg\")."
+
+#: src/blocks/fair-form-file-upload/editor.js:74
+msgid "Max File Size (MB)"
+msgstr "Tamaño máximo de archivo (MB)"
+
+#: src/blocks/fair-form-file-upload/editor.js:109
+msgid "Max file size:"
+msgstr "Tamaño máximo de archivo:"
+
+#: src/blocks/fair-form-long-text/editor.js:59
+msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"comments\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-long-text/editor.js:79
+msgid "Rows"
+msgstr "Filas"
+
+#: src/blocks/fair-form-long-text/editor.js:115
+#: src/blocks/fair-form-short-text/editor.js:120
+msgid "Type your answer..."
+msgstr "Escribe tu respuesta..."
+
+#: src/blocks/fair-form-mailing-signup/editor.js:57
+msgid "Category Preferences"
+msgstr "Preferencias de categoría"
+
+#: src/blocks/fair-form-mailing-signup/editor.js:60
+msgid "Show category preferences"
+msgstr "Mostrar preferencias de categoría"
+
+#: src/blocks/fair-form-mailing-signup/editor.js:68
+msgid "Let subscribers choose which categories of content they want to receive."
+msgstr "Permite que los suscriptores elijan qué categorías de contenido desean recibir."
+
+#: src/blocks/fair-form-mailing-signup/editor.js:79
+msgid "Select which categories to show in the form. If none are selected, all categories will be shown."
+msgstr "Selecciona qué categorías mostrar en el formulario. Si no se selecciona ninguna, se mostrarán todas las categorías."
+
+#: src/blocks/fair-form-mailing-signup/editor.js:86
+msgid "Available categories"
+msgstr "Categorías disponibles"
+
+#: src/blocks/fair-form-mailing-signup/editor.js:110
+msgid "Preselected categories"
+msgstr "Categorías preseleccionadas"
+
+#: src/blocks/fair-form-mailing-signup/editor.js:116
+msgid "Categories checked by default when the form loads."
+msgstr "Categorías marcadas por defecto cuando se carga el formulario."
+
+#: src/blocks/fair-form-mailing-signup/editor.js:163
+msgid "Category preferences will be shown here"
+msgstr "Las preferencias de categoría se mostrarán aquí"
+
+#: src/blocks/fair-form-multiselect/editor.js:80
+#: src/blocks/fair-form-radio/editor.js:80
+#: src/blocks/fair-form-select-one/editor.js:80
+msgid "A unique identifier for this question. Used internally."
+msgstr "Un identificador único para esta pregunta. Se utiliza internamente."
+
+#: src/blocks/fair-form-option/editor.js:21
+msgid "Enter option text..."
+msgstr "Ingresa el texto de la opción..."
+
+#: src/blocks/fair-form-phone/editor.js:60
+msgid "A unique identifier for this question (e.g. \"mobile_phone\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"mobile_phone\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-phone/editor.js:79
+msgid "Must include country code with leading \"+\" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone."
+msgstr "Debe incluir el código de país con el signo «+» al principio (p. ej. +49 170 123 45 67). Déjalo vacío para usar el ejemplo de la zona horaria de tu sitio."
+
+#: src/blocks/fair-form-url/editor.js:58
+msgid "A unique identifier for this question (e.g. \"website\"). Used internally."
+msgstr "Un identificador único para esta pregunta (p. ej. \"website\"). Se utiliza internamente."
+
+#: src/blocks/fair-form-url/editor.js:78
+msgid "Read event details from the linked page"
+msgstr "Lee los detalles del evento desde la página vinculada"
+
+#: src/blocks/fair-form-url/editor.js:82
+msgid "Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored."
+msgstr "Cuando el visitante abandona el campo, se muestran los detalles del evento que publica el enlace (título, fechas, ubicación) justo debajo; no se almacena nada."
+
+#: src/blocks/fair-form-url/editor.js:115
+msgid "https://example.com"
+msgstr ""
+
+#: src/blocks/fair-form/editor.js:96
+msgid "Optional. Link this form to a specific event."
+msgstr "Opcional. Vincula este formulario a un evento específico."
+
+#: src/blocks/fair-form/editor.js:150
+msgid "Form Settings"
+msgstr "Configuración del Formulario"
+
+#: src/blocks/fair-form/editor.js:152
+msgid "Submit Button Text"
+msgstr "Texto del Botón de Envío"
+
+#: src/blocks/fair-form/editor.js:160
+msgid "Success Message"
+msgstr "Mensaje de Éxito"
+
+#: src/blocks/fair-form/editor.js:169
+msgid "Message shown after successful form submission."
+msgstr "Mensaje mostrado después del envío exitoso del formulario."
+
+#: src/blocks/fair-form/editor.js:181
+msgid "Notification Email"
+msgstr "Correo de Notificación"
+
+#: src/blocks/fair-form/editor.js:190
+msgid "Send a notification to this email when someone submits the form. Leave empty to disable."
+msgstr "Enviar una notificación a este correo cuando alguien envíe el formulario. Dejar vacío para desactivar."
+
+#: src/blocks/fair-form/editor.js:196
+msgid "Form Title"
+msgstr "Título del formulario"
+
+#: src/blocks/fair-form/editor.js:201
+msgid "e.g. Volunteer signup"
+msgstr "p. ej. Inscripción de voluntarios"
+
+#: src/blocks/fair-form/editor.js:205
+msgid "Internal label for grouping submissions by form. Does not appear on the frontend."
+msgstr "Etiqueta interna para agrupar los envíos por formulario. No aparece en el frontend."
+
+#: src/blocks/fair-form/frontend.js:49
+msgid "Submitting..."
+msgstr "Enviando..."
+
+#: src/blocks/fair-form/frontend.js:153
+msgid "An error occurred. Please try again."
+msgstr "Ocurrió un error. Por favor, inténtalo de nuevo."
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block title"
+msgid "Conditional Section"
+msgstr "Sección Condicional"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block description"
+msgid "Show or hide a group of fields based on an answer to a previous question"
+msgstr "Mostrar u ocultar un grupo de campos basado en la respuesta a una pregunta anterior"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "conditional"
+msgstr "condicional"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "show"
+msgstr "mostrar"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "hide"
+msgstr "ocultar"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "section"
+msgstr "sección"
+
+#: src/blocks/fair-form-conditional/block.json
+msgctxt "block keyword"
+msgid "logic"
+msgstr "lógica"
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block title"
+msgid "Consent Checkbox Question"
+msgstr "Pregunta de casilla de consentimiento"
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block description"
+msgid "A single consent checkbox question for Fair Form (e.g. terms and conditions)"
+msgstr "Una pregunta de casilla de consentimiento para Fair Form (p. ej. términos y condiciones)"
+
+#: src/blocks/fair-form-consent/block.json
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+#: src/blocks/fair-form-email/block.json
+#: src/blocks/fair-form-file-upload/block.json
+#: src/blocks/fair-form-long-text/block.json
+#: src/blocks/fair-form-multiselect/block.json
+#: src/blocks/fair-form-phone/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+#: src/blocks/fair-form-short-text/block.json
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "question"
+msgstr "pregunta"
+
+#: src/blocks/fair-form-consent/block.json
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "checkbox"
+msgstr "casilla de verificación"
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block keyword"
+msgid "consent"
+msgstr "consentimiento"
+
+#: src/blocks/fair-form-consent/block.json
+msgctxt "block keyword"
+msgid "terms"
+msgstr "términos"
+
+#: src/blocks/fair-form-date/block.json
+msgctxt "block title"
+msgid "Date Question"
+msgstr "Pregunta de fecha"
+
+#: src/blocks/fair-form-date/block.json
+msgctxt "block description"
+msgid "A date input question using the browser's native date picker for Fair Form"
+msgstr "Una pregunta de entrada de fecha que utiliza el selector de fecha nativo del navegador para Fair Form"
+
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "date"
+msgstr "fecha"
+
+#: src/blocks/fair-form-date/block.json
+#: src/blocks/fair-form-datetime/block.json
+#: src/blocks/fair-form-email/block.json
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "input"
+msgstr "entrada"
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block title"
+msgid "Date & Time Question"
+msgstr "Pregunta de fecha y hora"
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block description"
+msgid "A date-and-time input question using the browser's native date/time picker for Fair Form"
+msgstr "Una pregunta de fecha y hora que utiliza el selector nativo de fecha/hora del navegador para Fair Form"
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "time"
+msgstr "hora"
+
+#: src/blocks/fair-form-datetime/block.json
+msgctxt "block keyword"
+msgid "datetime"
+msgstr "fecha y hora"
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block title"
+msgid "Email Question"
+msgstr "Pregunta de correo electrónico"
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block description"
+msgid "An email input question with built-in format validation for Fair Form"
+msgstr "Una pregunta de entrada de correo electrónico con validación de formato integrada para Fair Form"
+
+#: src/blocks/fair-form-email/block.json
+msgctxt "block keyword"
+msgid "email"
+msgstr "correo electrónico"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block title"
+msgid "File Upload Question"
+msgstr "Pregunta de Carga de Archivo"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block description"
+msgid "A file upload question for Fair Form"
+msgstr "Una pregunta de carga de archivo para Fair Form"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "file"
+msgstr "archivo"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "upload"
+msgstr "cargar"
+
+#: src/blocks/fair-form-file-upload/block.json
+msgctxt "block keyword"
+msgid "image"
+msgstr "imagen"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block title"
+msgid "Long Text Question"
+msgstr "Pregunta de Texto Largo"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block description"
+msgid "A long text (textarea) question for Fair Form"
+msgstr "Una pregunta de texto largo (textarea) para Fair Form"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "textarea"
+msgstr "textarea"
+
+#: src/blocks/fair-form-long-text/block.json
+msgctxt "block keyword"
+msgid "long text"
+msgstr "texto largo"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block title"
+msgid "Mailing Sign Up"
+msgstr "Suscripción a Lista de Correo"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block description"
+msgid "Add mailing list signup with category preferences to a Fair Form"
+msgstr "Añadir suscripción a lista de correo con preferencias de categorías a un Fair Form"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "mailing"
+msgstr "correo"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "newsletter"
+msgstr "boletín"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "signup"
+msgstr "registro"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "subscribe"
+msgstr "suscribirse"
+
+#: src/blocks/fair-form-mailing-signup/block.json
+msgctxt "block keyword"
+msgid "categories"
+msgstr "categorías"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block title"
+msgid "Multiselect Question"
+msgstr "Pregunta de Selección Múltiple"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block description"
+msgid "A multiple-choice checkbox question for Fair Form"
+msgstr "Una pregunta de opción múltiple con casillas de verificación para Fair Form"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiselect"
+msgstr "selección múltiple"
+
+#: src/blocks/fair-form-multiselect/block.json
+msgctxt "block keyword"
+msgid "multiple"
+msgstr "múltiple"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block title"
+msgid "Form Option"
+msgstr "Opción de Formulario"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block description"
+msgid "An option for select or multiselect questions"
+msgstr "Una opción para preguntas de selección o selección múltiple"
+
+#: src/blocks/fair-form-option/block.json
+msgctxt "block keyword"
+msgid "option"
+msgstr "opción"
+
+#: src/blocks/fair-form-option/block.json
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "choice"
+msgstr "elección"
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block title"
+msgid "Phone Question"
+msgstr "Pregunta de Teléfono"
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block description"
+msgid "A phone number input question with enforced country code for Fair Form"
+msgstr "Una pregunta de entrada de número de teléfono con código de país obligatorio para Fair Form"
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block keyword"
+msgid "phone"
+msgstr "teléfono"
+
+#: src/blocks/fair-form-phone/block.json
+msgctxt "block keyword"
+msgid "tel"
+msgstr "tel"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block title"
+msgid "Radio Button Question"
+msgstr "Pregunta de Botón de Radio"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block description"
+msgid "A single-choice radio button question for Fair Form"
+msgstr "Una pregunta de opción única con botón de radio para Fair Form"
+
+#: src/blocks/fair-form-radio/block.json
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "radio"
+msgstr "radio"
+
+#: src/blocks/fair-form-radio/block.json
+msgctxt "block keyword"
+msgid "button"
+msgstr "botón"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block title"
+msgid "Select One Question"
+msgstr "Seleccionar una pregunta"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block description"
+msgid "A single-choice question (select or radio) for Fair Form"
+msgstr "Una pregunta de opción única (selección o radio) para Fair Form"
+
+#: src/blocks/fair-form-select-one/block.json
+msgctxt "block keyword"
+msgid "select"
+msgstr "seleccionar"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block title"
+msgid "Short Text Question"
+msgstr "Pregunta de texto corto"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block description"
+msgid "A short text input question for Fair Form"
+msgstr "Una pregunta de entrada de texto corto para Fair Form"
+
+#: src/blocks/fair-form-short-text/block.json
+msgctxt "block keyword"
+msgid "text"
+msgstr "texto"
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block title"
+msgid "URL Question"
+msgstr "Pregunta de URL"
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block description"
+msgid "A URL input question with built-in web-address validation for Fair Form"
+msgstr "Una pregunta de entrada de URL con validación de dirección web integrada para Fair Form"
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "url"
+msgstr "URL"
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "link"
+msgstr "enlace"
+
+#: src/blocks/fair-form-url/block.json
+msgctxt "block keyword"
+msgid "website"
+msgstr "sitio web"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block title"
+msgid "Fair Form"
+msgstr "Fair Form"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block description"
+msgid "A composable questionnaire form with nested question blocks"
+msgstr "Un formulario de cuestionario componible con bloques de preguntas anidados"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "form"
+msgstr "formulario"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "questionnaire"
+msgstr "cuestionario"
+
+#: src/blocks/fair-form/block.json
+msgctxt "block keyword"
+msgid "survey"
+msgstr "encuesta"
+
+#: ../fair-events-shared/src/questionnaire.js:469
+msgid "Please answer the required question: "
+msgstr "Por favor, responde la pregunta requerida: "
+
+#: ../fair-events-shared/src/questionnaire.js:517
+msgid "Please enter a valid email address for: "
+msgstr "Por favor, introduce una dirección de correo electrónico válida para: "
+
+#: ../fair-events-shared/src/questionnaire.js:627
+msgid "File is too large. Maximum size is "
+msgstr "El archivo es demasiado grande. El tamaño máximo es "
+
+#: ../fair-events-shared/src/questionnaire.js:748
+msgid "Read from the linked page:"
+msgstr "Leer desde la página vinculada:"
+
+#: ../fair-events-shared/src/questionnaire.js:764
+msgid "%1$s – %2$s"
+msgstr "%1$s – %2$s"

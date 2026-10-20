@@ -8,7 +8,7 @@
 	"icon": "marker",
 	"description": "An option for select or multiselect questions",
 	"keywords": [ "option", "choice" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"parent": [
 		"fair-audience/fair-form-select-one",
 		"fair-audience/fair-form-multiselect",

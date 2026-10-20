@@ -14,7 +14,7 @@
 		"subscribe",
 		"categories"
 	],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"parent": [
 		"fair-audience/fair-form",
 		"fair-audience/fair-form-conditional"

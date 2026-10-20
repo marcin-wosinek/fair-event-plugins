@@ -38,6 +38,7 @@ $plugin_slug   = isset( $args[2] ) ? $args[2] : 'fair-events';
 $feature_options = array(
 	'fair-events'                => 'fair_events_features',
 	'fair-finance'               => 'fair_finance_features',
+	'fair-form'                  => 'fair_form_features',
 	'fair-audience-experimental' => null,
 	'fair-events-experimental'   => null,
 );
