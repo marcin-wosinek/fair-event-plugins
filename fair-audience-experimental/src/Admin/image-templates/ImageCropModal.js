@@ -42,7 +42,7 @@ export default function ImageCropModal( {
 		<Modal
 			title={ `${ __(
 				'Crop image',
-				'fair-audience'
+				'fair-audience-experimental'
 			) } (${ width }\u00D7${ height })` }
 			onRequestClose={ onClose }
 			isFullScreen
@@ -70,14 +70,14 @@ export default function ImageCropModal( {
 				style={ { marginTop: '16px' } }
 			>
 				<Button variant="tertiary" onClick={ onClose }>
-					{ __( 'Cancel', 'fair-audience' ) }
+					{ __( 'Cancel', 'fair-audience-experimental' ) }
 				</Button>
 				<Button
 					variant="primary"
 					onClick={ handleCrop }
 					disabled={ ! croppedAreaPixels }
 				>
-					{ __( 'Crop', 'fair-audience' ) }
+					{ __( 'Crop', 'fair-audience-experimental' ) }
 				</Button>
 			</HStack>
 		</Modal>

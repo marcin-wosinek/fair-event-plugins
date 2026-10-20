@@ -21,7 +21,9 @@ export default function PollResponse() {
 		const key = root ? root.dataset.accessKey : '';
 
 		if ( ! key ) {
-			setError( __( 'Invalid poll link.', 'fair-audience' ) );
+			setError(
+				__( 'Invalid poll link.', 'fair-audience-experimental' )
+			);
 			setIsLoading( false );
 			return;
 		}
@@ -40,7 +42,10 @@ export default function PollResponse() {
 
 			if ( ! response.valid ) {
 				setError(
-					__( 'Invalid or expired poll link.', 'fair-audience' )
+					__(
+						'Invalid or expired poll link.',
+						'fair-audience-experimental'
+					)
 				);
 				setIsLoading( false );
 				return;
@@ -57,7 +62,7 @@ export default function PollResponse() {
 				setError(
 					__(
 						'This poll is no longer accepting responses.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 				);
 				setIsLoading( false );
@@ -69,7 +74,8 @@ export default function PollResponse() {
 			setIsLoading( false );
 		} catch ( err ) {
 			setError(
-				err.message || __( 'Failed to load poll.', 'fair-audience' )
+				err.message ||
+					__( 'Failed to load poll.', 'fair-audience-experimental' )
 			);
 			setIsLoading( false );
 		}
@@ -87,7 +93,10 @@ export default function PollResponse() {
 	const handleSubmit = async () => {
 		if ( selectedOptions.length === 0 ) {
 			alert(
-				__( 'Please select at least one option.', 'fair-audience' )
+				__(
+					'Please select at least one option.',
+					'fair-audience-experimental'
+				)
 			);
 			return;
 		}
@@ -111,7 +120,7 @@ export default function PollResponse() {
 				err.message ||
 					__(
 						'Failed to submit your response. Please try again.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 			);
 			setIsSubmitting( false );
@@ -140,7 +149,7 @@ export default function PollResponse() {
 					color: '#721c24',
 				} }
 			>
-				<h2>{ __( 'Error', 'fair-audience' ) }</h2>
+				<h2>{ __( 'Error', 'fair-audience-experimental' ) }</h2>
 				<p>{ error }</p>
 			</div>
 		);
@@ -158,7 +167,10 @@ export default function PollResponse() {
 				} }
 			>
 				<h2>
-					{ __( 'Thank you for your response!', 'fair-audience' ) }
+					{ __(
+						'Thank you for your response!',
+						'fair-audience-experimental'
+					) }
 				</h2>
 				<p>
 					{ participantName && (
@@ -166,7 +178,7 @@ export default function PollResponse() {
 							{ participantName },{ ' ' }
 							{ __(
 								"you've already submitted your response to this poll.",
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 						</>
 					) }
@@ -174,7 +186,7 @@ export default function PollResponse() {
 						<>
 							{ __(
 								"You've already submitted your response to this poll.",
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 						</>
 					) }
@@ -195,12 +207,15 @@ export default function PollResponse() {
 				} }
 			>
 				<h2>
-					{ __( 'Thank you for your response!', 'fair-audience' ) }
+					{ __(
+						'Thank you for your response!',
+						'fair-audience-experimental'
+					) }
 				</h2>
 				<p>
 					{ __(
 						'Your response has been recorded successfully.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 				</p>
 			</div>
@@ -215,7 +230,8 @@ export default function PollResponse() {
 		<div className="poll-response-container">
 			{ participantName && (
 				<p style={ { marginBottom: '20px' } }>
-					{ __( 'Hi', 'fair-audience' ) } { participantName }!
+					{ __( 'Hi', 'fair-audience-experimental' ) }{ ' ' }
+					{ participantName }!
 				</p>
 			) }
 
@@ -257,8 +273,8 @@ export default function PollResponse() {
 				disabled={ isSubmitting }
 			>
 				{ isSubmitting
-					? __( 'Submitting...', 'fair-audience' )
-					: __( 'Submit Response', 'fair-audience' ) }
+					? __( 'Submitting...', 'fair-audience-experimental' )
+					: __( 'Submit Response', 'fair-audience-experimental' ) }
 			</Button>
 
 			{ error && (

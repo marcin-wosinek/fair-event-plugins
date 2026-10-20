@@ -11,7 +11,7 @@
 
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
-import { isLinkOnlyEvent } from 'fair-events-shared';
+import { isLinkOnlyEvent } from 'fair-events-shared/src/event-utils.js';
 import GroupRules from './GroupRules.js';
 import EventMailings from './EventMailings.js';
 

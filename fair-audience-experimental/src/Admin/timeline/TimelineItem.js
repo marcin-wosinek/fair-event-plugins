@@ -61,22 +61,22 @@ function getRelativeTime( dateString ) {
 	const diffDays = Math.floor( diffMs / 86400000 );
 
 	if ( diffMinutes < 1 ) {
-		return __( 'just now', 'fair-audience' );
+		return __( 'just now', 'fair-audience-experimental' );
 	}
 	if ( diffMinutes < 60 ) {
 		return diffMinutes === 1
-			? __( '1 minute ago', 'fair-audience' )
-			: `${ diffMinutes } ${ __( 'minutes ago', 'fair-audience' ) }`;
+			? __( '1 minute ago', 'fair-audience-experimental' )
+			: `${ diffMinutes } ${ __( 'minutes ago', 'fair-audience-experimental' ) }`;
 	}
 	if ( diffHours < 24 ) {
 		return diffHours === 1
-			? __( '1 hour ago', 'fair-audience' )
-			: `${ diffHours } ${ __( 'hours ago', 'fair-audience' ) }`;
+			? __( '1 hour ago', 'fair-audience-experimental' )
+			: `${ diffHours } ${ __( 'hours ago', 'fair-audience-experimental' ) }`;
 	}
 	if ( diffDays < 30 ) {
 		return diffDays === 1
-			? __( 'yesterday', 'fair-audience' )
-			: `${ diffDays } ${ __( 'days ago', 'fair-audience' ) }`;
+			? __( 'yesterday', 'fair-audience-experimental' )
+			: `${ diffDays } ${ __( 'days ago', 'fair-audience-experimental' ) }`;
 	}
 
 	return date.toLocaleDateString();
@@ -123,19 +123,22 @@ function FormSubmissionContent( { item } ) {
 		<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
 			{ pageTitle ? (
 				<>
-					{ nameNode } { __( 'submitted', 'fair-audience' ) } &quot;
-					{ formName }&quot; { __( 'on', 'fair-audience' ) } &quot;
+					{ nameNode }{ ' ' }
+					{ __( 'submitted', 'fair-audience-experimental' ) } &quot;
+					{ formName }&quot;{ ' ' }
+					{ __( 'on', 'fair-audience-experimental' ) } &quot;
 					{ pageNode }&quot;
 				</>
 			) : (
 				<>
-					{ nameNode } { __( 'submitted', 'fair-audience' ) } &quot;
+					{ nameNode }{ ' ' }
+					{ __( 'submitted', 'fair-audience-experimental' ) } &quot;
 					{ formName }&quot;
 				</>
 			) }
 			{ ' — ' }
 			<a href={ submissionUrl }>
-				{ __( 'View answers', 'fair-audience' ) }
+				{ __( 'View answers', 'fair-audience-experimental' ) }
 			</a>
 		</div>
 	);
@@ -159,7 +162,7 @@ function NewParticipantContent( { item } ) {
 	if ( Array.isArray( participants ) && participants.length > 1 ) {
 		return (
 			<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
-				{ __( 'New participants:', 'fair-audience' ) }{ ' ' }
+				{ __( 'New participants:', 'fair-audience-experimental' ) }{ ' ' }
 				{ participants.map( ( p, index ) => (
 					<span key={ p.participant_id }>
 						{ index > 0 && ', ' }
@@ -192,7 +195,7 @@ function NewParticipantContent( { item } ) {
 
 	return (
 		<div style={ { fontSize: '13px', lineHeight: '1.5' } }>
-			{ __( 'New participant:', 'fair-audience' ) }{ ' ' }
+			{ __( 'New participant:', 'fair-audience-experimental' ) }{ ' ' }
 			<a href={ participantUrl }>{ displayName }</a>
 			{ count > 1 && ` (${ count })` }
 		</div>
@@ -213,18 +216,19 @@ function FeeContent( { item } ) {
 	return (
 		<div style={ { fontSize: '13px', lineHeight: '1.6' } }>
 			<div>
-				{ __( 'Created membership fee', 'fair-audience' ) }{ ' ' }
+				{ __( 'Created membership fee', 'fair-audience-experimental' ) }{ ' ' }
 				<a href={ feeUrl }>
 					<strong>{ details.fee_name }</strong>
 				</a>
-				. { __( 'Total amount:', 'fair-audience' ) }{ ' ' }
+				. { __( 'Total amount:', 'fair-audience-experimental' ) }{ ' ' }
 				{ Number( details.total_amount ).toFixed( 2 ) }{ ' ' }
 				{ details.currency }.
 			</div>
 			<div>
-				{ __( 'Already paid:', 'fair-audience' ) }{ ' ' }
+				{ __( 'Already paid:', 'fair-audience-experimental' ) }{ ' ' }
 				{ Number( details.total_paid ).toFixed( 2 ) }{ ' ' }
-				{ details.currency }. { __( 'Pending:', 'fair-audience' ) }{ ' ' }
+				{ details.currency }.{ ' ' }
+				{ __( 'Pending:', 'fair-audience-experimental' ) }{ ' ' }
 				{ details.pending_text }
 			</div>
 		</div>
@@ -253,12 +257,15 @@ function FeePaymentsDayContent( { item } ) {
 				<strong>
 					{ count }{ ' ' }
 					{ count === 1
-						? __( 'fee payment on', 'fair-audience' )
-						: __( 'fee payments on', 'fair-audience' ) }{ ' ' }
+						? __( 'fee payment on', 'fair-audience-experimental' )
+						: __(
+								'fee payments on',
+								'fair-audience-experimental'
+							) }{ ' ' }
 					{ day }
 				</strong>
 				{ ' — ' }
-				{ __( 'total:', 'fair-audience' ) }{ ' ' }
+				{ __( 'total:', 'fair-audience-experimental' ) }{ ' ' }
 				{ Number( totalAmount ).toFixed( 2 ) } { currency }
 			</div>
 			<ul style={ { margin: '4px 0 0 18px', padding: 0 } }>
@@ -317,12 +324,15 @@ function TicketSalesDayContent( { item } ) {
 				<strong>
 					{ count }{ ' ' }
 					{ count === 1
-						? __( 'ticket sale on', 'fair-audience' )
-						: __( 'ticket sales on', 'fair-audience' ) }{ ' ' }
+						? __( 'ticket sale on', 'fair-audience-experimental' )
+						: __(
+								'ticket sales on',
+								'fair-audience-experimental'
+							) }{ ' ' }
 					{ day }
 				</strong>
 				{ ' — ' }
-				{ __( 'total:', 'fair-audience' ) }{ ' ' }
+				{ __( 'total:', 'fair-audience-experimental' ) }{ ' ' }
 				{ Number( totalAmount ).toFixed( 2 ) } { currency }
 			</div>
 			<ul style={ { margin: '4px 0 0 18px', padding: 0 } }>
@@ -379,7 +389,10 @@ function TicketSalesDayContent( { item } ) {
 											padding: '0 3px',
 										} }
 									>
-										{ __( 'Test', 'fair-audience' ) }
+										{ __(
+											'Test',
+											'fair-audience-experimental'
+										) }
 									</span>
 								</>
 							) }

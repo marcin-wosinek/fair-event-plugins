@@ -82,7 +82,10 @@ export default function ImageTemplates() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to load templates.', 'fair-audience' ),
+						__(
+							'Failed to load templates.',
+							'fair-audience-experimental'
+						),
 				} );
 				setIsLoading( false );
 			} );
@@ -94,8 +97,8 @@ export default function ImageTemplates() {
 
 	const handleAddTemplate = () => {
 		openMediaPicker( {
-			title: __( 'Select SVG Template', 'fair-audience' ),
-			button: __( 'Use as Template', 'fair-audience' ),
+			title: __( 'Select SVG Template', 'fair-audience-experimental' ),
+			button: __( 'Use as Template', 'fair-audience-experimental' ),
 			type: 'image/svg+xml',
 			onSelect( attachment ) {
 				if ( attachment.mime !== 'image/svg+xml' ) {
@@ -103,7 +106,7 @@ export default function ImageTemplates() {
 						status: 'error',
 						message: __(
 							'Please select an SVG file.',
-							'fair-audience'
+							'fair-audience-experimental'
 						),
 					} );
 					return;
@@ -115,7 +118,7 @@ export default function ImageTemplates() {
 							status: 'success',
 							message: __(
 								'Template registered successfully.',
-								'fair-audience'
+								'fair-audience-experimental'
 							),
 						} );
 						fetchTemplates();
@@ -127,7 +130,7 @@ export default function ImageTemplates() {
 								error.message ||
 								__(
 									'Failed to register template.',
-									'fair-audience'
+									'fair-audience-experimental'
 								),
 						} );
 					} );
@@ -140,7 +143,7 @@ export default function ImageTemplates() {
 			! confirm(
 				__(
 					'Are you sure you want to remove this template?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -151,7 +154,10 @@ export default function ImageTemplates() {
 			.then( () => {
 				setNotice( {
 					status: 'success',
-					message: __( 'Template removed.', 'fair-audience' ),
+					message: __(
+						'Template removed.',
+						'fair-audience-experimental'
+					),
 				} );
 				if ( activeTemplate && activeTemplate.id === id ) {
 					setActiveTemplate( null );
@@ -164,7 +170,10 @@ export default function ImageTemplates() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to remove template.', 'fair-audience' ),
+						__(
+							'Failed to remove template.',
+							'fair-audience-experimental'
+						),
 				} );
 			} );
 	};
@@ -197,8 +206,8 @@ export default function ImageTemplates() {
 
 	const handlePickImage = ( imagePlaceholder ) => {
 		openMediaPicker( {
-			title: __( 'Select Image', 'fair-audience' ),
-			button: __( 'Use Image', 'fair-audience' ),
+			title: __( 'Select Image', 'fair-audience-experimental' ),
+			button: __( 'Use Image', 'fair-audience-experimental' ),
 			type: 'image',
 			onSelect( attachment ) {
 				const name = imagePlaceholder.name;
@@ -282,7 +291,10 @@ export default function ImageTemplates() {
 					status: 'error',
 					message:
 						error.message ||
-						__( 'Failed to render template.', 'fair-audience' ),
+						__(
+							'Failed to render template.',
+							'fair-audience-experimental'
+						),
 				} );
 				setIsRendering( false );
 			} );
@@ -310,7 +322,10 @@ export default function ImageTemplates() {
 				status: 'error',
 				message:
 					error.message ||
-					__( 'Failed to convert to PNG.', 'fair-audience' ),
+					__(
+						'Failed to convert to PNG.',
+						'fair-audience-experimental'
+					),
 			} );
 		}
 	};
@@ -330,7 +345,7 @@ export default function ImageTemplates() {
 						onClick={ handleBack }
 						style={ { marginRight: '8px' } }
 					>
-						&larr; { __( 'Back', 'fair-audience' ) }
+						&larr; { __( 'Back', 'fair-audience-experimental' ) }
 					</Button>
 					{ activeTemplate.title }
 				</h1>
@@ -349,7 +364,10 @@ export default function ImageTemplates() {
 				<Card style={ { marginBottom: '2rem' } }>
 					<CardHeader>
 						<h2 style={ { margin: 0 } }>
-							{ __( 'Template Variables', 'fair-audience' ) }
+							{ __(
+								'Template Variables',
+								'fair-audience-experimental'
+							) }
 						</h2>
 					</CardHeader>
 					<CardBody>
@@ -358,7 +376,7 @@ export default function ImageTemplates() {
 								<p style={ { color: '#666' } }>
 									{ __(
 										'This template has no placeholders.',
-										'fair-audience'
+										'fair-audience-experimental'
 									) }
 								</p>
 							) }
@@ -403,7 +421,7 @@ export default function ImageTemplates() {
 										? imageNames[ img.name ]
 										: __(
 												'Select Image',
-												'fair-audience'
+												'fair-audience-experimental'
 											) }
 								</Button>
 								{ images[ img.name ] && (
@@ -425,12 +443,18 @@ export default function ImageTemplates() {
 											} ) );
 										} }
 									>
-										{ __( 'Clear', 'fair-audience' ) }
+										{ __(
+											'Clear',
+											'fair-audience-experimental'
+										) }
 									</Button>
 								) }
 								{ imageCrops[ img.name ] && (
 									<span style={ { color: '#666' } }>
-										{ __( 'Cropped', 'fair-audience' ) }
+										{ __(
+											'Cropped',
+											'fair-audience-experimental'
+										) }
 									</span>
 								) }
 							</div>
@@ -450,8 +474,14 @@ export default function ImageTemplates() {
 								disabled={ isRendering }
 							>
 								{ isRendering
-									? __( 'Rendering...', 'fair-audience' )
-									: __( 'Preview', 'fair-audience' ) }
+									? __(
+											'Rendering...',
+											'fair-audience-experimental'
+										)
+									: __(
+											'Preview',
+											'fair-audience-experimental'
+										) }
 							</Button>
 						</div>
 					</CardBody>
@@ -461,7 +491,10 @@ export default function ImageTemplates() {
 					<Card>
 						<CardHeader>
 							<h2 style={ { margin: 0 } }>
-								{ __( 'Preview', 'fair-audience' ) }
+								{ __(
+									'Preview',
+									'fair-audience-experimental'
+								) }
 							</h2>
 						</CardHeader>
 						<CardBody>
@@ -485,13 +518,19 @@ export default function ImageTemplates() {
 									variant="secondary"
 									onClick={ handleDownloadSvg }
 								>
-									{ __( 'Download SVG', 'fair-audience' ) }
+									{ __(
+										'Download SVG',
+										'fair-audience-experimental'
+									) }
 								</Button>
 								<Button
 									variant="secondary"
 									onClick={ handleDownloadPng }
 								>
-									{ __( 'Download PNG', 'fair-audience' ) }
+									{ __(
+										'Download PNG',
+										'fair-audience-experimental'
+									) }
 								</Button>
 							</div>
 						</CardBody>
@@ -514,7 +553,7 @@ export default function ImageTemplates() {
 	// List view.
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Image Templates', 'fair-audience' ) }</h1>
+			<h1>{ __( 'Image Templates', 'fair-audience-experimental' ) }</h1>
 
 			{ notice && (
 				<Notice
@@ -536,10 +575,10 @@ export default function ImageTemplates() {
 					} }
 				>
 					<h2 style={ { margin: 0 } }>
-						{ __( 'Templates', 'fair-audience' ) }
+						{ __( 'Templates', 'fair-audience-experimental' ) }
 					</h2>
 					<Button variant="primary" onClick={ handleAddTemplate }>
-						{ __( 'Add Template', 'fair-audience' ) }
+						{ __( 'Add Template', 'fair-audience-experimental' ) }
 					</Button>
 				</CardHeader>
 				<CardBody>
@@ -557,7 +596,7 @@ export default function ImageTemplates() {
 						<p style={ { color: '#666' } }>
 							{ __(
 								'No templates yet. Upload an SVG file with {{variable}} placeholders to get started.',
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 						</p>
 					) : (
@@ -568,22 +607,28 @@ export default function ImageTemplates() {
 							<thead>
 								<tr>
 									<th style={ { width: '30%' } }>
-										{ __( 'Name', 'fair-audience' ) }
+										{ __(
+											'Name',
+											'fair-audience-experimental'
+										) }
 									</th>
 									<th style={ { width: '25%' } }>
 										{ __(
 											'Text Placeholders',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</th>
 									<th style={ { width: '25%' } }>
 										{ __(
 											'Image Placeholders',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</th>
 									<th style={ { width: '20%' } }>
-										{ __( 'Actions', 'fair-audience' ) }
+										{ __(
+											'Actions',
+											'fair-audience-experimental'
+										) }
 									</th>
 								</tr>
 							</thead>
@@ -626,7 +671,7 @@ export default function ImageTemplates() {
 												>
 													{ __(
 														'Use',
-														'fair-audience'
+														'fair-audience-experimental'
 													) }
 												</Button>
 												<Button
@@ -640,7 +685,7 @@ export default function ImageTemplates() {
 												>
 													{ __(
 														'Delete',
-														'fair-audience'
+														'fair-audience-experimental'
 													) }
 												</Button>
 											</div>

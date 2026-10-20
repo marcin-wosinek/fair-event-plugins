@@ -48,18 +48,22 @@ msgstr "Experimental"
 
 #: src/Admin/AdminPages.php:71
 #: src/Admin/AdminPages.php:72
+#: src/Admin/timeline/Timeline.js:74
 msgid "Activity"
 msgstr "Actividad"
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
 #: src/Core/Features.php:183
+#: src/Admin/collaborators/Collaborators.js:409
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
 msgstr "Colaboradores"
 
 #: src/Admin/AdminPages.php:95
 #: src/Admin/AdminPages.php:96
+#: src/Admin/fee-detail/FeeDetail.js:832
+#: src/Admin/fees-list/FeesList.js:465
 msgid "Membership Fees"
 msgstr "Cuotas de membresía"
 
@@ -72,28 +76,38 @@ msgstr "Detalle de cuota"
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
 #: src/Core/Features.php:199
+#: src/Admin/collaborators/Collaborators.js:423
+#: src/Admin/import/Import.js:306
+#: src/Admin/import/KitImport.js:163
 msgid "Import"
 msgstr "Importación"
 
 #: src/Admin/AdminPages.php:130
 #: src/Admin/AdminPages.php:131
 #: src/Core/Features.php:171
+#: src/Admin/polls-list/PollsList.js:67
+#: src/Admin/polls-list/PollsList.js:76
+#: src/Admin/polls-list/PollsList.js:87
 msgid "Polls"
 msgstr "Encuestas"
 
 #: src/Admin/AdminPages.php:139
 #: src/Admin/AdminPages.php:140
 #: src/Admin/AdminPages.php:146
+#: src/Admin/edit-poll/EditPoll.js:323
+#: src/Admin/edit-poll/EditPoll.js:335
 msgid "Edit Poll"
 msgstr "Editar encuesta"
 
 #: src/Admin/AdminPages.php:153
 #: src/Admin/AdminPages.php:154
+#: src/Admin/instagram-posts/InstagramPosts.js:313
 msgid "Instagram Posts"
 msgstr "Publicaciones de Instagram"
 
 #: src/Admin/AdminPages.php:165
 #: src/Admin/AdminPages.php:166
+#: src/Admin/image-templates/ImageTemplates.js:517
 msgid "Image Templates"
 msgstr "Plantillas de imagen"
 
@@ -127,17 +141,27 @@ msgstr "Mensajes adicionales"
 msgid "Edit Extra Message"
 msgstr "Editar mensaje adicional"
 
+#: src/Admin/collaborators/Collaborators.js:587
 #: src/Admin/edit-extra-message/EditExtraMessage.js:278
+#: src/Admin/edit-poll/EditPoll.js:645
+#: src/Admin/fee-detail/FeeDetail.js:760
 #: src/Admin/fee-detail/FeeDetail.js:1057
+#: src/Admin/fee-detail/FeeDetail.js:1214
+#: src/Admin/fee-detail/FeeDetail.js:1288
+#: src/Admin/fee-detail/FeeDetail.js:1589
+#: src/Admin/fees-list/FeesList.js:582
+#: src/Admin/fees-list/FeesList.js:708
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
-#: src/Admin/manage-event-ext/EventMailings.js:693
+#: src/Admin/image-templates/ImageCropModal.js:73
+#: src/Admin/manage-event-ext/EventMailings.js:699
 #: src/Admin/manage-event-ext/GroupRules.js:565
 msgid "Cancel"
 msgstr "Cancelar"
 
 #: src/Admin/edit-extra-message/EditExtraMessage.js:262
+#: src/Admin/edit-poll/EditPoll.js:635
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr "Guardando..."
@@ -221,6 +245,7 @@ msgid "Amount must be a positive number."
 msgstr "El importe debe ser un número positivo."
 
 #: src/API/FeesController.php:403
+#: src/Admin/fees-list/FeesList.js:283
 msgid "Failed to create fee."
 msgstr "Error al crear la cuota."
 
@@ -229,6 +254,7 @@ msgid "Fee created successfully."
 msgstr "Cuota creada correctamente."
 
 #: src/API/FeesController.php:459
+#: src/Admin/fees-list/FeesList.js:338
 msgid "Failed to update fee."
 msgstr "Error al actualizar la cuota."
 
@@ -237,6 +263,7 @@ msgid "Fee updated successfully."
 msgstr "Cuota actualizada correctamente."
 
 #: src/API/FeesController.php:493
+#: src/Admin/fees-list/FeesList.js:372
 msgid "Failed to delete fee."
 msgstr "Error al eliminar la cuota."
 
@@ -270,6 +297,7 @@ msgid "Participant added manually."
 msgstr "Participante añadido manualmente."
 
 #: src/API/FeesController.php:625
+#: src/Admin/fee-detail/FeeDetail.js:452
 msgid "Participant added to fee."
 msgstr "Participante añadido a la cuota."
 
@@ -290,14 +318,17 @@ msgid "Failed to mark payment as paid."
 msgstr "No se pudo marcar el pago como pagado."
 
 #: src/API/FeesController.php:722
+#: src/Admin/fee-detail/FeeDetail.js:299
 msgid "Payment marked as paid."
 msgstr "Pago marcado como pagado."
 
 #: src/API/FeesController.php:745
+#: src/Admin/fee-detail/FeeDetail.js:335
 msgid "Failed to cancel payment."
 msgstr "No se pudo cancelar el pago."
 
 #: src/API/FeesController.php:760
+#: src/Admin/fee-detail/FeeDetail.js:327
 msgid "Payment canceled."
 msgstr "Pago cancelado."
 
@@ -355,7 +386,7 @@ msgstr "Grupo eliminado correctamente."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:204
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copia)"
 
@@ -564,6 +595,7 @@ msgid "Failed to create post record."
 msgstr "No se pudo crear el registro de la entrada."
 
 #: src/API/InstagramPostsController.php:263
+#: src/Admin/instagram-posts/InstagramPosts.js:207
 msgid "Post published successfully!"
 msgstr "¡Entrada publicada correctamente!"
 
@@ -572,6 +604,7 @@ msgid "Post not found."
 msgstr "Entrada no encontrada."
 
 #: src/API/InstagramPostsController.php:299
+#: src/Admin/instagram-posts/InstagramPosts.js:279
 msgid "Failed to delete post."
 msgstr "No se pudo eliminar la entrada."
 
@@ -609,10 +642,12 @@ msgid "Poll not found."
 msgstr "Encuesta no encontrada."
 
 #: src/API/PollResponseController.php:271
+#: src/public/poll-response/PollResponse.js:58
 msgid "This poll is no longer accepting responses."
 msgstr "Esta encuesta ya no acepta respuestas."
 
 #: src/API/PollResponseController.php:280
+#: src/public/poll-response/PollResponse.js:90
 msgid "Please select at least one option."
 msgstr "Selecciona al menos una opción."
 
@@ -625,6 +660,8 @@ msgid "Failed to save your response. Please try again."
 msgstr "No se pudo guardar tu respuesta. Inténtalo de nuevo."
 
 #: src/API/PollResponseController.php:322
+#: src/public/poll-response/PollResponse.js:161
+#: src/public/poll-response/PollResponse.js:198
 msgid "Thank you for your response!"
 msgstr "¡Gracias por tu respuesta!"
 
@@ -704,7 +741,7 @@ msgstr[1] "%1$d personas se registraron %2$s"
 
 #: src/API/TimelineController.php:165
 msgid "Fair Form"
-msgstr ""
+msgstr "Fair Form"
 
 #. translators: 1: participant name, 2: form name, 3: page title
 #: src/API/TimelineController.php:173
@@ -828,6 +865,7 @@ msgstr "Error al conectar con la API de Instagram: %s"
 
 #: src/Services/InstagramPostingService.php:194
 #: src/Services/InstagramPostingService.php:348
+#: src/Admin/import/WordPressUsersImport.js:128
 msgid "Unknown error"
 msgstr "Error desconocido"
 
@@ -915,20 +953,32 @@ msgid "Register your profile information."
 msgstr "Registra tu información de perfil."
 
 #: templates/collaborator-profile.php:290
+#: src/Admin/collaborators/Collaborators.js:61
+#: src/Admin/edit-poll/EditPoll.js:249
+#: src/Admin/fee-detail/FeeDetail.js:173
+#: src/Admin/fees-list/FeesList.js:78
+#: src/Admin/fees-list/FeesList.js:497
+#: src/Admin/fees-list/FeesList.js:612
 #: src/Admin/group-detail/GroupDetail.js:327
 #: src/Admin/group-detail/GroupDetail.js:467
 #: src/Admin/groups/Groups.js:62
 #: src/Admin/groups/Groups.js:364
+#: src/Admin/image-templates/ImageTemplates.js:571
+#: src/Admin/import/WordPressUsersImport.js:229
 #: src/Admin/manage-event-ext/MailBodyEditor.js:24
 msgid "Name"
 msgstr "Nombre"
 
 #: templates/collaborator-profile.php:305
+#: src/Admin/edit-poll/EditPoll.js:250
 msgid "Surname"
 msgstr "Apellido"
 
 #: templates/collaborator-profile.php:318
+#: src/Admin/collaborators/Collaborators.js:70
+#: src/Admin/fee-detail/FeeDetail.js:183
 #: src/Admin/group-detail/GroupDetail.js:333
+#: src/Admin/import/WordPressUsersImport.js:230
 msgid "Email"
 msgstr "Correo electrónico"
 
@@ -1010,6 +1060,7 @@ msgid "Your payment is being processed..."
 msgstr "Tu pago se está procesando..."
 
 #: templates/fee-payment.php:464
+#: src/Admin/fee-detail/FeeDetail.js:895
 msgid "Due Date:"
 msgstr "Fecha de vencimiento:"
 
@@ -1037,11 +1088,11 @@ msgstr "%d omitidos (ya se han registrado u optaron por no recibir marketing)."
 msgid "Failed to send to:"
 msgstr "No se pudo enviar a:"
 
-#: src/Admin/manage-event-ext/EventMailings.js:244
+#: src/Admin/manage-event-ext/EventMailings.js:250
 msgid "Please enter a subject."
 msgstr "Por favor, introduce un asunto."
 
-#: src/Admin/manage-event-ext/EventMailings.js:393
+#: src/Admin/manage-event-ext/EventMailings.js:399
 msgid "Subject"
 msgstr "Asunto"
 
@@ -1070,23 +1121,38 @@ msgstr "Insertar enlace de token"
 msgid "Interested"
 msgstr "Interesados"
 
+#: src/Admin/edit-poll/EditPoll.js:601
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:143
+#: src/Admin/fee-detail/FeeDetail.js:200
+#: src/Admin/fees-list/FeesList.js:139
+#: src/Admin/fees-list/FeesList.js:631
+#: src/Admin/import/WordPressUsersImport.js:232
+#: src/Admin/instagram-posts/InstagramPosts.js:470
+#: src/Admin/polls-list/PollsList.js:113
 msgid "Status"
 msgstr "Estado"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:149
 #: src/Admin/group-detail/GroupDetail.js:339
+#: src/Admin/image-templates/ImageTemplates.js:586
+#: src/Admin/instagram-posts/InstagramPosts.js:476
+#: src/Admin/polls-list/PollsList.js:118
 msgid "Actions"
 msgstr "Acciones"
 
 #: src/Admin/groups/Groups.js:299
 #: src/Admin/groups/Groups.js:457
-#: src/Admin/manage-event-ext/EventMailings.js:722
+#: src/Admin/instagram-posts/InstagramPosts.js:539
+#: src/Admin/manage-event-ext/EventMailings.js:728
 msgid "Duplicate"
 msgstr "Duplicar"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:212
+#: src/Admin/fees-list/FeesList.js:398
 #: src/Admin/groups/Groups.js:306
+#: src/Admin/image-templates/ImageTemplates.js:641
+#: src/Admin/instagram-posts/InstagramPosts.js:551
+#: src/Admin/polls-list/PollsList.js:176
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1113,7 +1179,9 @@ msgid "Limit this message to events in a specific category, or leave as \"All ca
 msgstr "Limita este mensaje a eventos en una categoría específica, o déjalo como «Todas las categorías» para todos los eventos."
 
 #: src/Admin/edit-extra-message/EditExtraMessage.js:242
+#: src/Admin/edit-poll/EditPoll.js:612
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:182
+#: src/Admin/fees-list/FeesList.js:639
 msgid "Active"
 msgstr "Activo"
 
@@ -1133,18 +1201,30 @@ msgstr "Crear mensaje"
 msgid "Are you sure you want to delete this extra message?"
 msgstr "¿Estás seguro de que deseas eliminar este mensaje adicional?"
 
+#: src/Admin/collaborators/Collaborators.js:270
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:49
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:69
+#: src/Admin/fee-detail/FeeDetail.js:272
+#: src/Admin/fee-detail/FeeDetail.js:305
+#: src/Admin/fee-detail/FeeDetail.js:333
+#: src/Admin/fee-detail/FeeDetail.js:399
+#: src/Admin/fee-detail/FeeDetail.js:458
+#: src/Admin/fee-detail/FeeDetail.js:730
+#: src/Admin/fees-list/FeesList.js:281
+#: src/Admin/fees-list/FeesList.js:336
+#: src/Admin/fees-list/FeesList.js:370
 #: src/Admin/group-detail/GroupDetail.js:161
 #: src/Admin/group-detail/GroupDetail.js:197
 #: src/Admin/group-detail/GroupDetail.js:237
 #: src/Admin/groups/Groups.js:185
 #: src/Admin/groups/Groups.js:231
 #: src/Admin/groups/Groups.js:268
+#: src/Admin/polls-list/PollsList.js:48
 msgid "Error: "
 msgstr "Error: "
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:114
+#: src/Admin/polls-list/PollsList.js:93
 msgid "Add New"
 msgstr "Añadir nuevo"
 
@@ -1161,10 +1241,12 @@ msgid "Inactive"
 msgstr "Inactivo"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:197
+#: src/Admin/fees-list/FeesList.js:391
 #: src/Admin/group-detail/GroupDetail.js:298
 #: src/Admin/groups/Groups.js:292
-#: src/Admin/manage-event-ext/EventMailings.js:680
+#: src/Admin/manage-event-ext/EventMailings.js:686
 #: src/Admin/manage-event-ext/GroupRules.js:592
+#: src/Admin/polls-list/PollsList.js:163
 msgid "Edit"
 msgstr "Editar"
 
@@ -1196,10 +1278,12 @@ msgid "No members in this group."
 msgstr "No hay miembros en este grupo."
 
 #: src/Admin/fee-detail/FeeDetail.js:987
+#: src/Admin/fee-detail/FeeDetail.js:1169
 #: src/Admin/group-detail/GroupDetail.js:357
 msgid "(unnamed)"
 msgstr "(sin nombre)"
 
+#: src/Admin/edit-poll/EditPoll.js:588
 #: src/Admin/group-detail/GroupDetail.js:374
 #: src/Admin/manage-event-ext/GroupRules.js:607
 msgid "Remove"
@@ -1232,6 +1316,9 @@ msgstr "Editar grupo"
 msgid "Enter group name..."
 msgstr "Introduce el nombre del grupo..."
 
+#: src/Admin/fee-detail/FeeDetail.js:1484
+#: src/Admin/fees-list/FeesList.js:507
+#: src/Admin/fees-list/FeesList.js:618
 #: src/Admin/group-detail/GroupDetail.js:477
 #: src/Admin/groups/Groups.js:73
 #: src/Admin/groups/Groups.js:374
@@ -1243,6 +1330,7 @@ msgstr "Descripción"
 msgid "Enter group description (optional)..."
 msgstr "Introduce la descripción del grupo (opcional)..."
 
+#: src/Admin/fees-list/FeesList.js:716
 #: src/Admin/group-detail/GroupDetail.js:509
 #: src/Admin/groups/Groups.js:407
 msgid "Update"
@@ -1253,7 +1341,7 @@ msgid "Are you sure you want to delete this group?"
 msgstr "¿Estás seguro de que quieres eliminar este grupo?"
 
 #: src/Admin/groups/Groups.js:283
-#: src/Admin/manage-event-ext/EventMailings.js:710
+#: src/Admin/manage-event-ext/EventMailings.js:716
 msgid "View"
 msgstr "Ver"
 
@@ -1262,6 +1350,7 @@ msgstr "Ver"
 msgid "Create Group"
 msgstr "Crear grupo"
 
+#: src/Admin/fees-list/FeesList.js:595
 #: src/Admin/groups/Groups.js:408
 msgid "Create"
 msgstr "Crear"
@@ -1274,57 +1363,57 @@ msgstr "Duplicar grupo"
 msgid "New group name"
 msgstr "Nombre del nuevo grupo"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:126
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:130
 msgid "Anchor"
 msgstr "Anclaje"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:130
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:134
 msgid "Event date start"
 msgstr "Fecha de inicio del evento"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:137
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:141
 msgid "Event date end"
 msgstr "Fecha de fin del evento"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:151
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:155
 msgid "Which date"
 msgstr "Qué fecha"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:171
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:175
 msgid "Offset"
 msgstr "Desplazamiento"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:181
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:185
 msgid "Unit"
 msgstr "Unidad"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:185
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:189
 msgid "minutes"
 msgstr "minutos"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:192
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:196
 msgid "hours"
 msgstr "horas"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:196
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:200
 msgid "days"
 msgstr "días"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:208
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:212
 msgid "before"
 msgstr "antes"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:212
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:216
 msgid "after"
 msgstr "después"
 
 #. translators: %s: computed send date/time
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:224
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:228
 #, js-format
 msgid "Will send around: %s"
 msgstr "Se enviará alrededor de: %s"
 
-#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:230
+#: src/Admin/manage-event-ext/AnchorOffsetPicker.js:234
 msgid "Send time will be computed from the chosen date."
 msgstr "La hora de envío se calculará a partir de la fecha elegida."
 
@@ -1336,150 +1425,150 @@ msgstr "Guardar"
 msgid "Registered"
 msgstr "Registrado"
 
-#: src/Admin/manage-event-ext/EventMailings.js:155
+#: src/Admin/manage-event-ext/EventMailings.js:161
 msgid "Could not load mailings."
 msgstr "No se pudieron cargar los envíos."
 
-#: src/Admin/manage-event-ext/EventMailings.js:254
+#: src/Admin/manage-event-ext/EventMailings.js:260
 msgid "Please enter a body."
 msgstr "Por favor, introduce un cuerpo."
 
-#: src/Admin/manage-event-ext/EventMailings.js:264
+#: src/Admin/manage-event-ext/EventMailings.js:270
 msgid "Please select at least one recipient type."
 msgstr "Por favor, selecciona al menos un tipo de destinatario."
 
-#: src/Admin/manage-event-ext/EventMailings.js:297
+#: src/Admin/manage-event-ext/EventMailings.js:303
 msgid "Mailing updated."
 msgstr "Envío actualizado."
 
-#: src/Admin/manage-event-ext/EventMailings.js:298
+#: src/Admin/manage-event-ext/EventMailings.js:304
 msgid "Mailing scheduled."
 msgstr "Envío programado."
 
-#: src/Admin/manage-event-ext/EventMailings.js:310
+#: src/Admin/manage-event-ext/EventMailings.js:316
 msgid "Could not save the mailing."
 msgstr "No se pudo guardar el envío."
 
-#: src/Admin/manage-event-ext/EventMailings.js:327
+#: src/Admin/manage-event-ext/EventMailings.js:333
 msgid "Mailing canceled."
 msgstr "Envío cancelado."
 
-#: src/Admin/manage-event-ext/EventMailings.js:336
+#: src/Admin/manage-event-ext/EventMailings.js:342
 msgid "Could not cancel the mailing."
 msgstr "No se pudo cancelar el envío."
 
-#: src/Admin/manage-event-ext/EventMailings.js:380
+#: src/Admin/manage-event-ext/EventMailings.js:386
 msgid "Edit scheduled mailing"
 msgstr "Editar envío programado"
 
-#: src/Admin/manage-event-ext/EventMailings.js:384
+#: src/Admin/manage-event-ext/EventMailings.js:390
 msgid "Schedule new mailing"
 msgstr "Programar nuevo envío"
 
-#: src/Admin/manage-event-ext/EventMailings.js:426
+#: src/Admin/manage-event-ext/EventMailings.js:432
 msgid "Recipients"
 msgstr "Destinatarios"
 
-#: src/Admin/manage-event-ext/EventMailings.js:452
+#: src/Admin/manage-event-ext/EventMailings.js:458
 msgid "Limit to groups (optional)"
 msgstr "Limitar a grupos (opcional)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:475
+#: src/Admin/manage-event-ext/EventMailings.js:481
 msgid "Marketing email (respect opt-out)"
 msgstr "Correo de marketing (respetar exclusión)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:489
+#: src/Admin/manage-event-ext/EventMailings.js:495
 msgid "Recipient count unavailable."
 msgstr "Número de destinatarios no disponible."
 
 #. translators: %d: recipient count
-#: src/Admin/manage-event-ext/EventMailings.js:495
+#: src/Admin/manage-event-ext/EventMailings.js:501
 #, js-format
 msgid "%d recipient(s) match right now."
 msgstr "%d destinatario(s) coincide(n) ahora."
 
-#: src/Admin/manage-event-ext/EventMailings.js:509
+#: src/Admin/manage-event-ext/EventMailings.js:515
 msgid "Hide list"
 msgstr "Ocultar lista"
 
-#: src/Admin/manage-event-ext/EventMailings.js:513
+#: src/Admin/manage-event-ext/EventMailings.js:519
 msgid "View list"
 msgstr "Ver lista"
 
-#: src/Admin/manage-event-ext/EventMailings.js:535
+#: src/Admin/manage-event-ext/EventMailings.js:541
 msgid "no email"
 msgstr "sin correo"
 
-#: src/Admin/manage-event-ext/EventMailings.js:541
+#: src/Admin/manage-event-ext/EventMailings.js:547
 msgid "will skip (opted out)"
 msgstr "se omitirá (rechazado)"
 
-#: src/Admin/manage-event-ext/EventMailings.js:552
+#: src/Admin/manage-event-ext/EventMailings.js:558
 msgid "Scheduled mailings send automatically at the computed time. There is no per-send skip list or immediate send here — use the Custom Mail page for ad-hoc sends."
 msgstr "Los envíos programados se envían automáticamente a la hora calculada. No hay una lista de omisión por envío ni envío inmediato aquí — usa la página Correo personalizado para envíos puntuales."
 
-#: src/Admin/manage-event-ext/EventMailings.js:566
+#: src/Admin/manage-event-ext/EventMailings.js:572
 msgid "Update mailing"
 msgstr "Actualizar envío"
 
-#: src/Admin/manage-event-ext/EventMailings.js:570
+#: src/Admin/manage-event-ext/EventMailings.js:576
 msgid "Schedule mailing"
 msgstr "Programar envío"
 
-#: src/Admin/manage-event-ext/EventMailings.js:581
+#: src/Admin/manage-event-ext/EventMailings.js:587
 msgid "Cancel edit"
 msgstr "Cancelar edición"
 
-#: src/Admin/manage-event-ext/EventMailings.js:596
+#: src/Admin/manage-event-ext/EventMailings.js:602
 msgid "Scheduled & past mailings"
 msgstr "Envíos programados y pasados"
 
-#: src/Admin/manage-event-ext/EventMailings.js:605
+#: src/Admin/manage-event-ext/EventMailings.js:611
 msgid "No mailings yet."
 msgstr "Sin envíos aún."
 
 #. translators: %s: send date/time
-#: src/Admin/manage-event-ext/EventMailings.js:643
+#: src/Admin/manage-event-ext/EventMailings.js:649
 #, js-format
 msgid "Sends: %s"
 msgstr "Envíos: %s"
 
-#: src/Admin/manage-event-ext/EventMailings.js:649
+#: src/Admin/manage-event-ext/EventMailings.js:655
 msgid "Send time pending"
 msgstr "Hora de envío pendiente"
 
 #. translators: 1: sent, 2: failed, 3: skipped
-#: src/Admin/manage-event-ext/EventMailings.js:656
+#: src/Admin/manage-event-ext/EventMailings.js:662
 #, js-format
 msgid " · sent %1$d, failed %2$d, skipped %3$d"
 msgstr " · enviados %1$d, fallidos %2$d, omitidos %3$d"
 
-#: src/Admin/manage-event-ext/EventMailings.js:738
+#: src/Admin/manage-event-ext/EventMailings.js:744
 msgid "Cancel mailing?"
 msgstr "¿Cancelar envío?"
 
 #. translators: %s: mailing subject
-#: src/Admin/manage-event-ext/EventMailings.js:747
+#: src/Admin/manage-event-ext/EventMailings.js:753
 #, js-format
 msgid "Cancel the scheduled mailing \"%s\"? It will not be sent."
 msgstr "¿Cancelar el envío programado «%s»? No se enviará."
 
-#: src/Admin/manage-event-ext/EventMailings.js:759
+#: src/Admin/manage-event-ext/EventMailings.js:765
 msgid "Keep it"
 msgstr "Mantenerlo"
 
-#: src/Admin/manage-event-ext/EventMailings.js:766
+#: src/Admin/manage-event-ext/EventMailings.js:772
 msgid "Cancel mailing"
 msgstr "Cancelar envío"
 
 #. translators: 1: status, 2: send time
-#: src/Admin/manage-event-ext/EventMailings.js:783
+#: src/Admin/manage-event-ext/EventMailings.js:789
 #, js-format
 msgid "Status: %1$s · %2$s"
 msgstr "Estado: %1$s · %2$s"
 
 #. translators: 1: sent, 2: failed, 3: skipped
-#: src/Admin/manage-event-ext/EventMailings.js:797
+#: src/Admin/manage-event-ext/EventMailings.js:803
 #, js-format
 msgid "Sent %1$d · failed %2$d · skipped %3$d"
 msgstr "Enviados %1$d · fallidos %2$d · omitidos %3$d"
@@ -1566,10 +1655,13 @@ msgstr "Aún no hay reglas de grupo. Añade una a continuación."
 msgid "Add Group"
 msgstr "Añadir grupo"
 
+#: src/Admin/fees-list/FeesList.js:91
+#: src/Admin/fees-list/FeesList.js:517
 #: src/Admin/manage-event-ext/GroupRules.js:694
 msgid "Group"
 msgstr "Grupo"
 
+#: src/Admin/fees-list/FeesList.js:416
 #: src/Admin/manage-event-ext/GroupRules.js:701
 msgid "Select a group..."
 msgstr "Selecciona un grupo..."
@@ -1582,6 +1674,7 @@ msgstr "p. ej. 10"
 msgid "e.g. 5.00"
 msgstr "p. ej. 5.00"
 
+#: src/Admin/fee-detail/FeeDetail.js:1226
 #: src/Admin/manage-event-ext/GroupRules.js:785
 msgid "Add"
 msgstr "Añadir"
@@ -1784,6 +1877,8 @@ msgstr "Presupuesto de Fair Finance al que está vinculada la cuota, o null si n
 msgid "Budget #%d"
 msgstr "Presupuesto n.º %d"
 
+#: src/Admin/fees-list/FeesList.js:97
+#: src/Admin/fees-list/FeesList.js:543
 #: src/Admin/fees-list/FeesList.js:655
 msgid "Budget"
 msgstr "Presupuesto"
@@ -1792,6 +1887,7 @@ msgstr "Presupuesto"
 msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
 msgstr "El presupuesto al que está vinculada esta cuota no aparece en la lista. La cuota sigue vinculada a él a menos que elijas otro."
 
+#: src/Admin/fees-list/FeesList.js:548
 #: src/Admin/fees-list/FeesList.js:670
 msgid "Optionally link to a budget for financial tracking."
 msgstr "Opcionalmente, vincúlala a un presupuesto para el seguimiento financiero."
@@ -1805,3 +1901,1105 @@ msgstr "La cuota conserva su presupuesto actual a menos que elijas otro."
 msgid "Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
 msgstr "Activa paquetes de funciones avanzadas para Fair Audience (cuotas, encuestas, Instagram, grupos, colaboradores, mensajería, plantillas de imagen, cronología, importación, invitaciones, manage-event-ext). Requiere fair-audience."
 
+#: src/Admin/collaborators/Collaborators.js:76
+msgid "Events"
+msgstr "Eventos"
+
+#: src/Admin/collaborators/Collaborators.js:282
+msgid "Add to event"
+msgstr "Agregar al evento"
+
+#: src/Admin/collaborators/Collaborators.js:289
+msgid "Export"
+msgstr "Exportar"
+
+#. translators: %d is the number of exported collaborators
+#: src/Admin/collaborators/Collaborators.js:329
+#, js-format
+msgid "%d collaborator(s) exported."
+msgstr "%d colaborador(es) exportado(s)."
+
+#: src/Admin/collaborators/Collaborators.js:354
+msgid "Invalid file format. Expected a JSON array."
+msgstr "Formato de archivo inválido. Se esperaba un array JSON."
+
+#. translators: %d is the number of imported collaborators
+#: src/Admin/collaborators/Collaborators.js:383
+#, js-format
+msgid "%d collaborator(s) imported."
+msgstr "%d colaborador(es) importado(s)."
+
+#: src/Admin/collaborators/Collaborators.js:394
+msgid "Failed to import collaborators."
+msgstr "Error al importar colaboradores."
+
+#: src/Admin/collaborators/Collaborators.js:437
+msgid "Registration form:"
+msgstr "Formulario de registro:"
+
+#: src/Admin/collaborators/Collaborators.js:480
+msgid "Add to Event"
+msgstr "Agregar al Evento"
+
+#: src/Admin/collaborators/Collaborators.js:485
+msgid "Select events to add this collaborator to:"
+msgstr "Seleccione los eventos para agregar este colaborador:"
+
+#: src/Admin/collaborators/Collaborators.js:500
+msgid "Search events..."
+msgstr "Buscar eventos..."
+
+#: src/Admin/collaborators/Collaborators.js:519
+msgid "No available events found."
+msgstr "No se encontraron eventos disponibles."
+
+#: src/Admin/collaborators/Collaborators.js:558
+msgid "View Participants"
+msgstr "Ver participantes"
+
+#: src/Admin/collaborators/Collaborators.js:597
+msgid "Add to Events"
+msgstr "Añadir a Eventos"
+
+#: src/Admin/edit-poll/EditPoll.js:131
+msgid "Please select an event."
+msgstr "Por favor, selecciona un evento."
+
+#: src/Admin/edit-poll/EditPoll.js:135
+msgid "Please enter a title."
+msgstr "Por favor, introduce un título."
+
+#: src/Admin/edit-poll/EditPoll.js:139
+msgid "Please enter a question."
+msgstr "Por favor, introduce una pregunta."
+
+#: src/Admin/edit-poll/EditPoll.js:143
+msgid "Please add at least one option."
+msgstr "Por favor, añade al menos una opción."
+
+#: src/Admin/edit-poll/EditPoll.js:152
+msgid "Please fill in all option texts or remove empty options."
+msgstr "Por favor, completa todos los textos de las opciones o elimina las opciones vacías."
+
+#: src/Admin/edit-poll/EditPoll.js:192
+msgid "Send poll invitations to all event participants who have not yet responded?"
+msgstr "¿Enviar invitaciones de la encuesta a todos los participantes del evento que aún no han respondido?"
+
+#: src/Admin/edit-poll/EditPoll.js:259
+msgid "Comments"
+msgstr "Comentarios"
+
+#: src/Admin/edit-poll/EditPoll.js:270
+msgid "Yes"
+msgstr "Sí"
+
+#: src/Admin/edit-poll/EditPoll.js:324
+#: src/Admin/edit-poll/EditPoll.js:336
+msgid "Add New Poll"
+msgstr "Añadir Nueva Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:362
+msgid "Poll Statistics"
+msgstr "Estadísticas de la Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:389
+msgid "Answered"
+msgstr "Respondido"
+
+#: src/Admin/edit-poll/EditPoll.js:410
+msgid "Received Email"
+msgstr "Correo Electrónico Recibido"
+
+#: src/Admin/edit-poll/EditPoll.js:431
+msgid "Did Not Receive Email"
+msgstr "Correo Electrónico No Recibido"
+
+#: src/Admin/edit-poll/EditPoll.js:449
+msgid "Sending..."
+msgstr "Enviando..."
+
+#: src/Admin/edit-poll/EditPoll.js:450
+msgid "Send Poll Invitations"
+msgstr "Enviar Invitaciones de Encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:458
+msgid "Generating PDF..."
+msgstr "Generando PDF..."
+
+#: src/Admin/edit-poll/EditPoll.js:459
+msgid "Download Results PDF"
+msgstr "Descargar PDF de Resultados"
+
+#: src/Admin/edit-poll/EditPoll.js:462
+msgid "Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped."
+msgstr "Envíe esta encuesta a todos los participantes del evento que aún no han respondido. Los participantes que ya han respondido serán omitidos."
+
+#: src/Admin/edit-poll/EditPoll.js:481
+msgid "Event"
+msgstr "Evento"
+
+#: src/Admin/edit-poll/EditPoll.js:488
+msgid "Select an event..."
+msgstr "Seleccione un evento..."
+
+#. translators: %1$s: event title, %2$d: number of participants
+#: src/Admin/edit-poll/EditPoll.js:494
+#, js-format
+msgid "%1$s (%2$d participants)"
+msgstr "%1$s (%2$d participantes)"
+
+#: src/Admin/edit-poll/EditPoll.js:508
+msgid "Poll Title (Internal)"
+msgstr "Título de la Encuesta (Interno)"
+
+#: src/Admin/edit-poll/EditPoll.js:513
+msgid "Internal reference for this poll."
+msgstr "Referencia interna para esta encuesta."
+
+#: src/Admin/edit-poll/EditPoll.js:520
+#: src/Admin/polls-list/PollsList.js:111
+msgid "Question"
+msgstr "Pregunta"
+
+#: src/Admin/edit-poll/EditPoll.js:525
+msgid "The question shown to participants."
+msgstr "La pregunta mostrada a los participantes."
+
+#: src/Admin/edit-poll/EditPoll.js:532
+msgid "Options"
+msgstr "Opciones"
+
+#: src/Admin/edit-poll/EditPoll.js:534
+msgid "Add the multiple-choice options for participants to select from."
+msgstr "Agregue las opciones de opción múltiple para que los participantes seleccionen."
+
+#. translators: %d: option number (1, 2, 3, etc.)
+#: src/Admin/edit-poll/EditPoll.js:558
+#, js-format
+msgid "Option %d"
+msgstr "Opción %d"
+
+#: src/Admin/edit-poll/EditPoll.js:574
+msgid "Move up"
+msgstr "Mover arriba"
+
+#: src/Admin/edit-poll/EditPoll.js:582
+msgid "Move down"
+msgstr "Mover abajo"
+
+#: src/Admin/edit-poll/EditPoll.js:596
+msgid "Add Option"
+msgstr "Agregar opción"
+
+#: src/Admin/edit-poll/EditPoll.js:608
+#: src/Admin/fees-list/FeesList.js:635
+msgid "Draft"
+msgstr "Borrador"
+
+#: src/Admin/edit-poll/EditPoll.js:616
+#: src/Admin/fees-list/FeesList.js:643
+msgid "Closed"
+msgstr "Cerrado"
+
+#: src/Admin/edit-poll/EditPoll.js:620
+msgid "Active polls can receive responses. Closed polls do not accept new responses."
+msgstr "Las encuestas activas pueden recibir respuestas. Las encuestas cerradas no aceptan nuevas respuestas."
+
+#: src/Admin/edit-poll/EditPoll.js:637
+msgid "Update Poll"
+msgstr "Actualizar encuesta"
+
+#: src/Admin/edit-poll/EditPoll.js:638
+msgid "Create Poll"
+msgstr "Crear encuesta"
+
+#: src/Admin/fee-detail/FeeDetail.js:189
+#: src/Admin/fee-detail/FeeDetail.js:1192
+#: src/Admin/fee-detail/FeeDetail.js:1458
+#: src/Admin/fees-list/FeesList.js:103
+#: src/Admin/fees-list/FeesList.js:524
+msgid "Amount"
+msgstr "Cantidad"
+
+#: src/Admin/fee-detail/FeeDetail.js:222
+msgid "Paid At"
+msgstr "Pagado en"
+
+#: src/Admin/fee-detail/FeeDetail.js:228
+msgid "Reminder Sent"
+msgstr "Recordatorio enviado"
+
+#: src/Admin/fee-detail/FeeDetail.js:263
+msgid "Amount adjusted successfully."
+msgstr "Cantidad ajustada correctamente."
+
+#: src/Admin/fee-detail/FeeDetail.js:274
+msgid "Failed to adjust amount."
+msgstr "Error al ajustar la cantidad."
+
+#: src/Admin/fee-detail/FeeDetail.js:286
+msgid "Mark this payment as paid?"
+msgstr "¿Marcar este pago como pagado?"
+
+#: src/Admin/fee-detail/FeeDetail.js:307
+msgid "Failed to mark as paid."
+msgstr "Error al marcar como pagado."
+
+#: src/Admin/fee-detail/FeeDetail.js:315
+msgid "Cancel this payment?"
+msgstr "¿Cancelar este pago?"
+
+#: src/Admin/fee-detail/FeeDetail.js:389
+msgid "Payment link copied to clipboard."
+msgstr "Enlace de pago copiado al portapapeles."
+
+#: src/Admin/fee-detail/FeeDetail.js:401
+msgid "Failed to get payment link."
+msgstr "Error al obtener el enlace de pago."
+
+#: src/Admin/fee-detail/FeeDetail.js:460
+msgid "Failed to add participant."
+msgstr "Error al añadir participante."
+
+#: src/Admin/fee-detail/FeeDetail.js:561
+msgid "Transfer created and payment marked as paid."
+msgstr "Transferencia creada y pago marcado como pagado."
+
+#: src/Admin/fee-detail/FeeDetail.js:691
+msgid "Send payment reminders to all members with pending payments?"
+msgstr "¿Enviar recordatorios de pago a todos los miembros con pagos pendientes?"
+
+#: src/Admin/fee-detail/FeeDetail.js:712
+msgid "reminders sent"
+msgstr "recordatorios enviados"
+
+#: src/Admin/fee-detail/FeeDetail.js:717
+msgid "failed"
+msgstr "fallido"
+
+#: src/Admin/fee-detail/FeeDetail.js:732
+msgid "Failed to send reminders."
+msgstr "Error al enviar los recordatorios."
+
+#: src/Admin/fee-detail/FeeDetail.js:745
+#: src/Admin/fee-detail/FeeDetail.js:1238
+msgid "Adjust Amount"
+msgstr "Ajustar Cantidad"
+
+#: src/Admin/fee-detail/FeeDetail.js:752
+msgid "Mark as Paid"
+msgstr "Marcar como Pagado"
+
+#: src/Admin/fee-detail/FeeDetail.js:779
+msgid "Copy Payment Link"
+msgstr "Copiar Enlace de Pago"
+
+#: src/Admin/fee-detail/FeeDetail.js:787
+msgid "View Payment Attempts"
+msgstr "Ver Intentos de Pago"
+
+#: src/Admin/fee-detail/FeeDetail.js:795
+#: src/Admin/fee-detail/FeeDetail.js:1441
+#: src/Admin/fee-detail/FeeDetail.js:1605
+msgid "Create Transfer"
+msgstr "Crear Transferencia"
+
+#: src/Admin/fee-detail/FeeDetail.js:803
+msgid "View Audit Log"
+msgstr "Ver Registro de Auditoría"
+
+#: src/Admin/fee-detail/FeeDetail.js:823
+msgid "No fee ID specified."
+msgstr "No se especificó ID de cuota."
+
+#: src/Admin/fee-detail/FeeDetail.js:853
+msgid "Fee Summary"
+msgstr "Resumen de Cuota"
+
+#: src/Admin/fee-detail/FeeDetail.js:867
+msgid "Name:"
+msgstr "Nombre:"
+
+#: src/Admin/fee-detail/FeeDetail.js:873
+msgid "Group:"
+msgstr "Grupo:"
+
+#: src/Admin/fee-detail/FeeDetail.js:888
+msgid "Default Amount:"
+msgstr "Cantidad Predeterminada:"
+
+#: src/Admin/fee-detail/FeeDetail.js:901
+msgid "Status:"
+msgstr "Estado:"
+
+#: src/Admin/fee-detail/FeeDetail.js:926
+msgid "Send Reminders"
+msgstr "Enviar Recordatorios"
+
+#: src/Admin/fee-detail/FeeDetail.js:933
+msgid "Add Participant"
+msgstr "Agregar Participante"
+
+#: src/Admin/fee-detail/FeeDetail.js:1081
+msgid "Add Participant to Fee"
+msgstr "Añadir participante a cuota"
+
+#: src/Admin/fee-detail/FeeDetail.js:1107
+msgid "Search group members..."
+msgstr "Buscar miembros del grupo..."
+
+#: src/Admin/fee-detail/FeeDetail.js:1135
+msgid "All group members already have a payment for this fee."
+msgstr "Todos los miembros del grupo ya tienen un pago para esta cuota."
+
+#: src/Admin/fee-detail/FeeDetail.js:1139
+msgid "No matches."
+msgstr "Sin coincidencias."
+
+#: src/Admin/fee-detail/FeeDetail.js:1246
+msgid "Current amount:"
+msgstr "Cantidad actual:"
+
+#: src/Admin/fee-detail/FeeDetail.js:1255
+msgid "New Amount"
+msgstr "Nuevo Monto"
+
+#: src/Admin/fee-detail/FeeDetail.js:1264
+msgid "Reason (required)"
+msgstr "Razón (requerida)"
+
+#: src/Admin/fee-detail/FeeDetail.js:1267
+msgid "Explain why the amount is being adjusted..."
+msgstr "Explica por qué se está ajustando el monto..."
+
+#: src/Admin/fee-detail/FeeDetail.js:1296
+msgid "Adjust"
+msgstr "Ajustar"
+
+#: src/Admin/fee-detail/FeeDetail.js:1305
+msgid "Payment Attempts"
+msgstr "Intentos de Pago"
+
+#: src/Admin/fee-detail/FeeDetail.js:1313
+msgid "No payment attempts found."
+msgstr "No se encontraron intentos de pago."
+
+#: src/Admin/fee-detail/FeeDetail.js:1359
+msgid "unknown"
+msgstr "desconocido"
+
+#: src/Admin/fee-detail/FeeDetail.js:1379
+msgid "Transaction:"
+msgstr "Transacción:"
+
+#: src/Admin/fee-detail/FeeDetail.js:1406
+msgid "Initiated:"
+msgstr "Iniciado:"
+
+#: src/Admin/fee-detail/FeeDetail.js:1432
+#: src/Admin/fee-detail/FeeDetail.js:1715
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/Admin/fee-detail/FeeDetail.js:1449
+msgid "Participant:"
+msgstr "Participante:"
+
+#: src/Admin/fee-detail/FeeDetail.js:1472
+msgid "Date"
+msgstr "Fecha"
+
+#: src/Admin/fee-detail/FeeDetail.js:1509
+msgid "From Budget (Source)"
+msgstr "Desde Presupuesto (Origen)"
+
+#: src/Admin/fee-detail/FeeDetail.js:1513
+#: src/Admin/fee-detail/FeeDetail.js:1538
+msgid "-- Select Budget --"
+msgstr "-- Seleccionar Presupuesto --"
+
+#: src/Admin/fee-detail/FeeDetail.js:1534
+msgid "To Budget (Target)"
+msgstr "Al Presupuesto (Destino)"
+
+#: src/Admin/fee-detail/FeeDetail.js:1563
+msgid "Source and target budgets must be different."
+msgstr "Los presupuestos de origen y destino deben ser diferentes."
+
+#: src/Admin/fee-detail/FeeDetail.js:1614
+msgid "Audit Log"
+msgstr "Registro de Auditoría"
+
+#: src/Admin/fee-detail/FeeDetail.js:1622
+msgid "No audit log entries found."
+msgstr "No se encontraron entradas en el registro de auditoría."
+
+#: src/Admin/fee-detail/FeeDetail.js:1695
+msgid "By:"
+msgstr "Por:"
+
+#: src/Admin/fees-list/FeesList.js:133
+#: src/Admin/fees-list/FeesList.js:534
+#: src/Admin/fees-list/FeesList.js:624
+msgid "Due Date"
+msgstr "Fecha de Vencimiento"
+
+#: src/Admin/fees-list/FeesList.js:158
+#: src/Admin/instagram-posts/InstagramPosts.js:54
+msgid "Pending"
+msgstr "Pendiente"
+
+#: src/Admin/fees-list/FeesList.js:169
+msgid "Paid"
+msgstr "Pagado"
+
+#: src/Admin/fees-list/FeesList.js:351
+msgid "Are you sure you want to delete this fee? All payment records will also be deleted."
+msgstr "¿Está seguro de que desea eliminar esta tarifa? Todos los registros de pago también se eliminarán."
+
+#: src/Admin/fees-list/FeesList.js:382
+msgid "View Details"
+msgstr "Ver Detalles"
+
+#: src/Admin/fees-list/FeesList.js:421
+msgid "-- No Budget --"
+msgstr "-- Sin presupuesto --"
+
+#: src/Admin/fees-list/FeesList.js:471
+#: src/Admin/fees-list/FeesList.js:492
+msgid "Create Fee"
+msgstr "Crear tarifa"
+
+#: src/Admin/fees-list/FeesList.js:500
+msgid "Enter fee name..."
+msgstr "Ingrese el nombre de la tarifa..."
+
+#: src/Admin/fees-list/FeesList.js:510
+msgid "Enter description (optional)..."
+msgstr "Ingrese la descripción (opcional)..."
+
+#: src/Admin/fees-list/FeesList.js:604
+msgid "Edit Fee"
+msgstr "Editar tarifa"
+
+#: src/Admin/image-templates/ImageCropModal.js:43
+msgid "Crop image"
+msgstr "Recortar imagen"
+
+#: src/Admin/image-templates/ImageCropModal.js:80
+msgid "Crop"
+msgstr "Recortar"
+
+#: src/Admin/image-templates/ImageTemplates.js:85
+msgid "Failed to load templates."
+msgstr "Error al cargar las plantillas."
+
+#: src/Admin/image-templates/ImageTemplates.js:97
+msgid "Select SVG Template"
+msgstr "Seleccionar plantilla SVG"
+
+#: src/Admin/image-templates/ImageTemplates.js:98
+msgid "Use as Template"
+msgstr "Usar como plantilla"
+
+#: src/Admin/image-templates/ImageTemplates.js:104
+msgid "Please select an SVG file."
+msgstr "Por favor, seleccione un archivo SVG."
+
+#: src/Admin/image-templates/ImageTemplates.js:116
+msgid "Template registered successfully."
+msgstr "Plantilla registrada correctamente."
+
+#: src/Admin/image-templates/ImageTemplates.js:128
+msgid "Failed to register template."
+msgstr "Error al registrar la plantilla."
+
+#: src/Admin/image-templates/ImageTemplates.js:141
+msgid "Are you sure you want to remove this template?"
+msgstr "¿Está seguro de que desea eliminar esta plantilla?"
+
+#: src/Admin/image-templates/ImageTemplates.js:154
+msgid "Template removed."
+msgstr "Plantilla eliminada."
+
+#: src/Admin/image-templates/ImageTemplates.js:167
+msgid "Failed to remove template."
+msgstr "Error al eliminar la plantilla."
+
+#: src/Admin/image-templates/ImageTemplates.js:200
+#: src/Admin/image-templates/ImageTemplates.js:404
+msgid "Select Image"
+msgstr "Seleccionar imagen"
+
+#: src/Admin/image-templates/ImageTemplates.js:201
+msgid "Use Image"
+msgstr "Usar imagen"
+
+#: src/Admin/image-templates/ImageTemplates.js:285
+msgid "Failed to render template."
+msgstr "Error al renderizar la plantilla."
+
+#: src/Admin/image-templates/ImageTemplates.js:313
+msgid "Failed to convert to PNG."
+msgstr "Error al convertir a PNG."
+
+#: src/Admin/image-templates/ImageTemplates.js:333
+msgid "Back"
+msgstr "Atrás"
+
+#: src/Admin/image-templates/ImageTemplates.js:352
+msgid "Template Variables"
+msgstr "Variables de plantilla"
+
+#: src/Admin/image-templates/ImageTemplates.js:359
+msgid "This template has no placeholders."
+msgstr "Esta plantilla no tiene marcadores de posición."
+
+#: src/Admin/image-templates/ImageTemplates.js:428
+msgid "Clear"
+msgstr "Limpiar"
+
+#: src/Admin/image-templates/ImageTemplates.js:433
+msgid "Cropped"
+msgstr "Recortado"
+
+#: src/Admin/image-templates/ImageTemplates.js:453
+msgid "Rendering..."
+msgstr "Renderizando..."
+
+#: src/Admin/image-templates/ImageTemplates.js:454
+#: src/Admin/image-templates/ImageTemplates.js:464
+msgid "Preview"
+msgstr "Vista previa"
+
+#: src/Admin/image-templates/ImageTemplates.js:488
+msgid "Download SVG"
+msgstr "Descargar SVG"
+
+#: src/Admin/image-templates/ImageTemplates.js:494
+msgid "Download PNG"
+msgstr "Descargar PNG"
+
+#: src/Admin/image-templates/ImageTemplates.js:539
+msgid "Templates"
+msgstr "Plantillas"
+
+#: src/Admin/image-templates/ImageTemplates.js:542
+msgid "Add Template"
+msgstr "Añadir plantilla"
+
+#: src/Admin/image-templates/ImageTemplates.js:558
+msgid "No templates yet. Upload an SVG file with {{variable}} placeholders to get started."
+msgstr "Sin plantillas aún. Carga un archivo SVG con marcadores de posición {{variable}} para comenzar."
+
+#: src/Admin/image-templates/ImageTemplates.js:574
+msgid "Text Placeholders"
+msgstr "Marcadores de posición de texto"
+
+#: src/Admin/image-templates/ImageTemplates.js:580
+msgid "Image Placeholders"
+msgstr "Marcadores de posición de imagen"
+
+#: src/Admin/image-templates/ImageTemplates.js:627
+msgid "Use"
+msgstr "Usar"
+
+#: src/Admin/import/Import.js:52
+#: src/Admin/import/KitImport.js:46
+msgid "Please select a file to import."
+msgstr "Por favor, seleccione un archivo para importar."
+
+#: src/Admin/import/Import.js:101
+#: src/Admin/import/KitImport.js:75
+msgid "Import failed. Please try again."
+msgstr "Importación fallida. Inténtelo de nuevo."
+
+#: src/Admin/import/Import.js:152
+msgid "No participants to create. Please provide email addresses or select skip."
+msgstr "No hay participantes para crear. Por favor, proporcione direcciones de correo electrónico o seleccione omitir."
+
+#: src/Admin/import/Import.js:188
+msgid "Failed to resolve duplicates. Please try again."
+msgstr "Error al resolver duplicados. Inténtelo de nuevo."
+
+#: src/Admin/import/Import.js:200
+msgid "Import Participants"
+msgstr "Importar Participantes"
+
+#: src/Admin/import/Import.js:208
+msgid "Entradium"
+msgstr "Entradium"
+
+#: src/Admin/import/Import.js:212
+msgid "WordPress Users"
+msgstr "Usuarios de WordPress"
+
+#: src/Admin/import/Import.js:216
+msgid "Kit.com"
+msgstr "Kit.com"
+
+#: src/Admin/import/Import.js:226
+msgid "Import from Entradium"
+msgstr "Importar desde Entradium"
+
+#: src/Admin/import/Import.js:232
+msgid "Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email."
+msgstr "Suba un archivo de Excel de Entradium (.xlsx) para importar participantes. El archivo debe contener las columnas: Nombre, Apellidos y Email."
+
+#: src/Admin/import/Import.js:240
+msgid "Related Event (Optional)"
+msgstr "Evento Relacionado (Opcional)"
+
+#: src/Admin/import/Import.js:249
+msgid "Select an event to associate imported participants with it. Leave empty to import without event association."
+msgstr "Seleccione un evento para asociar los participantes importados. Déjelo vacío para importar sin asociación de evento."
+
+#: src/Admin/import/Import.js:255
+msgid "No event association"
+msgstr "Sin asociación de evento"
+
+#: src/Admin/import/Import.js:285
+#: src/Admin/import/KitImport.js:148
+msgid "Selected file:"
+msgstr "Archivo seleccionado:"
+
+#: src/Admin/import/Import.js:302
+#: src/Admin/import/KitImport.js:162
+#: src/Admin/import/WordPressUsersImport.js:337
+msgid "Importing..."
+msgstr "Importando..."
+
+#: src/Admin/import/Import.js:347
+msgid "Import Partially Complete"
+msgstr "Importación Parcialmente Completada"
+
+#: src/Admin/import/Import.js:351
+#: src/Admin/import/KitImport.js:186
+#: src/Admin/import/WordPressUsersImport.js:363
+msgid "Import Complete"
+msgstr "Importación Completada"
+
+#: src/Admin/import/Import.js:359
+#: src/Admin/import/KitImport.js:191
+#: src/Admin/import/WordPressUsersImport.js:368
+msgid "Imported:"
+msgstr "Importado:"
+
+#: src/Admin/import/Import.js:368
+msgid "Existing linked to event:"
+msgstr "Existente vinculado al evento:"
+
+#: src/Admin/import/Import.js:379
+msgid "Set to marketing profile (Newsletter):"
+msgstr "Establecer en perfil de marketing (Boletín):"
+
+#: src/Admin/import/Import.js:391
+msgid "Auto-resolved from previous imports:"
+msgstr "Resuelto automáticamente de importaciones anteriores:"
+
+#: src/Admin/import/Import.js:401
+#: src/Admin/import/KitImport.js:204
+msgid "Skipped (already exists):"
+msgstr "Omitido (ya existe):"
+
+#: src/Admin/import/Import.js:411
+msgid "Duplicates requiring resolution:"
+msgstr "Duplicados que requieren resolución:"
+
+#: src/Admin/import/Import.js:438
+msgid "Resolve Duplicate Emails"
+msgstr "Resolver Correos Electrónicos Duplicados"
+
+#: src/Admin/import/Import.js:444
+msgid "The following people have duplicate email addresses. Please provide a unique email for each person or skip them."
+msgstr "Las siguientes personas tienen direcciones de correo electrónico duplicadas. Por favor, proporcione un correo electrónico único para cada persona o omítalas."
+
+#: src/Admin/import/Import.js:473
+msgid "Original Email:"
+msgstr "Correo Electrónico Original:"
+
+#: src/Admin/import/Import.js:542
+msgid "New Email:"
+msgstr "Correo Electrónico Nuevo:"
+
+#: src/Admin/import/Import.js:570
+msgid "Enter new email"
+msgstr "Introduzca un nuevo correo electrónico"
+
+#: src/Admin/import/Import.js:589
+msgid "Use Gmail Alias"
+msgstr "Usar Alias de Gmail"
+
+#: src/Admin/import/Import.js:605
+msgid "Use Original Email"
+msgstr "Usar correo original"
+
+#: src/Admin/import/Import.js:641
+msgid "Skip this person"
+msgstr "Omitir esta persona"
+
+#: src/Admin/import/Import.js:671
+msgid "Resolving..."
+msgstr "Resolviendo..."
+
+#: src/Admin/import/Import.js:675
+msgid "Create Participants"
+msgstr "Crear Participantes"
+
+#: src/Admin/import/Import.js:695
+#: src/Admin/import/KitImport.js:221
+#: src/Admin/import/WordPressUsersImport.js:388
+msgid "Errors:"
+msgstr "Errores:"
+
+#: src/Admin/import/KitImport.js:85
+msgid "Import from Kit.com"
+msgstr "Importar desde Kit.com"
+
+#: src/Admin/import/KitImport.js:87
+msgid "Upload a Kit.com CSV export file to import subscribers as participants."
+msgstr "Carga un archivo CSV exportado de Kit.com para importar suscriptores como participantes."
+
+#: src/Admin/import/KitImport.js:95
+msgid "Group (Optional)"
+msgstr "Grupo (Opcional)"
+
+#: src/Admin/import/KitImport.js:99
+msgid "Select a group to add imported participants to it."
+msgstr "Selecciona un grupo para añadir los participantes importados a él."
+
+#: src/Admin/import/KitImport.js:105
+msgid "No group"
+msgstr "Sin grupo"
+
+#: src/Admin/import/KitImport.js:117
+msgid "Mailing"
+msgstr "Correo"
+
+#: src/Admin/import/KitImport.js:123
+msgid "Minimal"
+msgstr "Mínimo"
+
+#: src/Admin/import/KitImport.js:127
+msgid "Marketing"
+msgstr "Marketing"
+
+#: src/Admin/import/KitImport.js:196
+msgid "Added to group:"
+msgstr "Añadido al grupo:"
+
+#: src/Admin/import/WordPressUsersImport.js:52
+msgid "Failed to load data. Please try again."
+msgstr "No se pudieron cargar los datos. Por favor, inténtelo de nuevo."
+
+#: src/Admin/import/WordPressUsersImport.js:90
+msgid "No users selected for import."
+msgstr "No se han seleccionado usuarios para importar."
+
+#: src/Admin/import/WordPressUsersImport.js:155
+msgid "Import from WordPress Users"
+msgstr "Importar desde Usuarios de WordPress"
+
+#: src/Admin/import/WordPressUsersImport.js:158
+msgid "Create audience members from existing WordPress users. Users who already have a linked participant will be shown but cannot be imported again."
+msgstr "Crear miembros de audiencia a partir de usuarios de WordPress existentes. Los usuarios que ya tienen un participante vinculado se mostrarán, pero no podrán importarse de nuevo."
+
+#: src/Admin/import/WordPressUsersImport.js:167
+msgid "Loading users..."
+msgstr "Cargando usuarios..."
+
+#: src/Admin/import/WordPressUsersImport.js:181
+msgid "No WordPress users found."
+msgstr "No se encontraron usuarios de WordPress."
+
+#: src/Admin/import/WordPressUsersImport.js:201
+msgid "Select All Unlinked"
+msgstr "Seleccionar todos los no vinculados"
+
+#: src/Admin/import/WordPressUsersImport.js:211
+msgid "Deselect All"
+msgstr "Deseleccionar todo"
+
+#: src/Admin/import/WordPressUsersImport.js:216
+msgid "Selected:"
+msgstr "Seleccionados:"
+
+#: src/Admin/import/WordPressUsersImport.js:218
+msgid "unlinked users"
+msgstr "usuarios no vinculados"
+
+#: src/Admin/import/WordPressUsersImport.js:231
+msgid "Role"
+msgstr "Rol"
+
+#: src/Admin/import/WordPressUsersImport.js:299
+msgid "Already linked"
+msgstr "Ya vinculado"
+
+#: src/Admin/import/WordPressUsersImport.js:315
+msgid "Available"
+msgstr "Disponible"
+
+#: src/Admin/import/WordPressUsersImport.js:338
+msgid "Import Selected Users"
+msgstr "Importar usuarios seleccionados"
+
+#: src/Admin/import/WordPressUsersImport.js:373
+msgid "Failed:"
+msgstr "Error:"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:55
+msgid "Publishing"
+msgstr "Publicando"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:56
+msgid "Published"
+msgstr "Publicado"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:57
+msgid "Failed"
+msgstr "Fallido"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:110
+msgid "Failed to load posts."
+msgstr "Error al cargar las publicaciones."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:129
+msgid "Select Image for Instagram"
+msgstr "Seleccionar imagen para Instagram"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:131
+msgid "Use this image"
+msgstr "Usar esta imagen"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:174
+msgid "Please select an image."
+msgstr "Por favor, selecciona una imagen."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:182
+msgid "Please enter a caption."
+msgstr "Por favor, introduce un pie de foto."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:225
+msgid "Failed to publish post."
+msgstr "Error al publicar la entrada."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:253
+msgid "Are you sure you want to delete this post?"
+msgstr "¿Estás seguro de que deseas eliminar esta entrada?"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:266
+msgid "Post deleted."
+msgstr "Entrada eliminada."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:330
+msgid "Create New Post"
+msgstr "Crear nueva entrada"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:343
+msgid "Image"
+msgstr "Imagen"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:364
+msgid "Replace Image"
+msgstr "Reemplazar imagen"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:375
+msgid "Remove Image"
+msgstr "Eliminar imagen"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:387
+msgid "Select from Media Library"
+msgstr "Seleccionar de la biblioteca de medios"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:401
+msgid "Must be a publicly accessible URL."
+msgstr "Debe ser una URL accesible públicamente."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:409
+#: src/Admin/instagram-posts/InstagramPosts.js:467
+msgid "Caption"
+msgstr "Pie de foto"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:412
+msgid "Write your caption here..."
+msgstr "Escribe tu pie de foto aquí..."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:427
+msgid "Posting..."
+msgstr "Publicando..."
+
+#: src/Admin/instagram-posts/InstagramPosts.js:428
+msgid "Post to Instagram"
+msgstr "Publicar en Instagram"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:438
+msgid "Post History"
+msgstr "Historial de entradas"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:454
+msgid "No posts yet. Create your first post above!"
+msgstr "Sin entradas aún. ¡Crea tu primera entrada arriba!"
+
+#: src/Admin/instagram-posts/InstagramPosts.js:473
+#: src/Admin/polls-list/PollsList.js:115
+msgid "Created"
+msgstr "Creado"
+
+#: src/Admin/polls-list/PollsList.js:31
+msgid "Are you sure you want to delete this poll?"
+msgstr "¿Está seguro de que desea eliminar esta encuesta?"
+
+#: src/Admin/polls-list/PollsList.js:100
+msgid "No polls found. Create your first poll to get started."
+msgstr "No se encontraron encuestas. Cree su primera encuesta para comenzar."
+
+#: src/Admin/polls-list/PollsList.js:109
+msgid "Title"
+msgstr "Título"
+
+#: src/Admin/timeline/Timeline.js:89
+msgid "No activity yet."
+msgstr "Sin actividad aún."
+
+#: src/Admin/timeline/Timeline.js:112
+msgid "Loading…"
+msgstr "Cargando…"
+
+#: src/Admin/timeline/Timeline.js:113
+msgid "Load more"
+msgstr "Cargar más"
+
+#: src/Admin/timeline/TimelineItem.js:64
+msgid "just now"
+msgstr "hace un momento"
+
+#: src/Admin/timeline/TimelineItem.js:68
+msgid "1 minute ago"
+msgstr "hace 1 minuto"
+
+#: src/Admin/timeline/TimelineItem.js:69
+msgid "minutes ago"
+msgstr "minutos atrás"
+
+#: src/Admin/timeline/TimelineItem.js:73
+msgid "1 hour ago"
+msgstr "hace 1 hora"
+
+#: src/Admin/timeline/TimelineItem.js:74
+msgid "hours ago"
+msgstr "horas atrás"
+
+#: src/Admin/timeline/TimelineItem.js:78
+msgid "yesterday"
+msgstr "ayer"
+
+#: src/Admin/timeline/TimelineItem.js:79
+msgid "days ago"
+msgstr "días atrás"
+
+#: src/Admin/timeline/TimelineItem.js:126
+#: src/Admin/timeline/TimelineItem.js:132
+msgid "submitted"
+msgstr "enviado"
+
+#: src/Admin/timeline/TimelineItem.js:127
+msgid "on"
+msgstr "en"
+
+#: src/Admin/timeline/TimelineItem.js:138
+msgid "View answers"
+msgstr "Ver respuestas"
+
+#: src/Admin/timeline/TimelineItem.js:162
+msgid "New participants:"
+msgstr "Nuevos participantes:"
+
+#: src/Admin/timeline/TimelineItem.js:195
+msgid "New participant:"
+msgstr "Nuevo participante:"
+
+#: src/Admin/timeline/TimelineItem.js:216
+msgid "Created membership fee"
+msgstr "Cuota de membresía creada"
+
+#: src/Admin/timeline/TimelineItem.js:220
+msgid "Total amount:"
+msgstr "Cantidad total:"
+
+#: src/Admin/timeline/TimelineItem.js:225
+msgid "Already paid:"
+msgstr "Ya pagado:"
+
+#: src/Admin/timeline/TimelineItem.js:227
+msgid "Pending:"
+msgstr "Pendiente:"
+
+#: src/Admin/timeline/TimelineItem.js:256
+msgid "fee payment on"
+msgstr "pago de cuota en"
+
+#: src/Admin/timeline/TimelineItem.js:257
+msgid "fee payments on"
+msgstr "pagos de cuota en"
+
+#: src/Admin/timeline/TimelineItem.js:261
+#: src/Admin/timeline/TimelineItem.js:325
+msgid "total:"
+msgstr "total:"
+
+#: src/Admin/timeline/TimelineItem.js:320
+msgid "ticket sale on"
+msgstr "venta de entradas en"
+
+#: src/Admin/timeline/TimelineItem.js:321
+msgid "ticket sales on"
+msgstr "ventas de entradas en"
+
+#: src/Admin/timeline/TimelineItem.js:382
+msgid "Test"
+msgstr "Prueba"
+
+#: src/public/poll-response/PollResponse.js:24
+msgid "Invalid poll link."
+msgstr "Enlace de encuesta no válido."
+
+#: src/public/poll-response/PollResponse.js:43
+msgid "Invalid or expired poll link."
+msgstr "Enlace de encuesta no válido o caducado."
+
+#: src/public/poll-response/PollResponse.js:72
+msgid "Failed to load poll."
+msgstr "No se pudo cargar la encuesta."
+
+#: src/public/poll-response/PollResponse.js:112
+msgid "Failed to submit your response. Please try again."
+msgstr "No se pudo enviar su respuesta. Inténtelo de nuevo."
+
+#: src/public/poll-response/PollResponse.js:143
+msgid "Error"
+msgstr "Error"
+
+#: src/public/poll-response/PollResponse.js:167
+msgid "you've already submitted your response to this poll."
+msgstr "Ya has enviado tu respuesta a esta encuesta."
+
+#: src/public/poll-response/PollResponse.js:175
+msgid "You've already submitted your response to this poll."
+msgstr "Ya has enviado tu respuesta a esta encuesta."
+
+#: src/public/poll-response/PollResponse.js:201
+msgid "Your response has been recorded successfully."
+msgstr "Tu respuesta ha sido registrada con éxito."
+
+#: src/public/poll-response/PollResponse.js:218
+msgid "Hi"
+msgstr "Hola"
+
+#: src/public/poll-response/PollResponse.js:260
+msgid "Submitting..."
+msgstr "Enviando..."
+
+#: src/public/poll-response/PollResponse.js:261
+msgid "Submit Response"
+msgstr "Enviar Respuesta"

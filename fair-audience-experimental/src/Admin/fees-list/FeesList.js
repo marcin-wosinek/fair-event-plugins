@@ -75,7 +75,7 @@ export default function FeesList() {
 		() => [
 			{
 				id: 'name',
-				label: __( 'Name', 'fair-audience' ),
+				label: __( 'Name', 'fair-audience-experimental' ),
 				render: ( { item } ) => (
 					<a
 						href={ `admin.php?page=fair-audience-fee-detail&fee_id=${ item.id }` }
@@ -88,19 +88,19 @@ export default function FeesList() {
 			},
 			{
 				id: 'group_name',
-				label: __( 'Group', 'fair-audience' ),
+				label: __( 'Group', 'fair-audience-experimental' ),
 				render: ( { item } ) => item.group_name || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'budget_name',
-				label: __( 'Budget', 'fair-audience' ),
+				label: __( 'Budget', 'fair-audience-experimental' ),
 				render: ( { item } ) => item.budget_name || '—',
 				enableSorting: false,
 			},
 			{
 				id: 'amount',
-				label: __( 'Amount', 'fair-audience' ),
+				label: __( 'Amount', 'fair-audience-experimental' ),
 				render: ( { item } ) => {
 					const amountText = `${ parseFloat( item.amount ).toFixed(
 						2
@@ -130,13 +130,13 @@ export default function FeesList() {
 			},
 			{
 				id: 'due_date',
-				label: __( 'Due Date', 'fair-audience' ),
+				label: __( 'Due Date', 'fair-audience-experimental' ),
 				render: ( { item } ) => item.due_date || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'status',
-				label: __( 'Status', 'fair-audience' ),
+				label: __( 'Status', 'fair-audience-experimental' ),
 				render: ( { item } ) => {
 					const colors = {
 						draft: '#888',
@@ -155,7 +155,7 @@ export default function FeesList() {
 			},
 			{
 				id: 'pending_count',
-				label: __( 'Pending', 'fair-audience' ),
+				label: __( 'Pending', 'fair-audience-experimental' ),
 				render: ( { item } ) => (
 					<div style={ { textAlign: 'right' } }>
 						{ item.pending_count }
@@ -166,7 +166,7 @@ export default function FeesList() {
 			},
 			{
 				id: 'paid_count',
-				label: __( 'Paid', 'fair-audience' ),
+				label: __( 'Paid', 'fair-audience-experimental' ),
 				render: ( { item } ) => (
 					<div style={ { textAlign: 'right' } }>
 						{ item.paid_count }
@@ -278,9 +278,12 @@ export default function FeesList() {
 			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__( 'Error: ', 'fair-audience' ) +
+					__( 'Error: ', 'fair-audience-experimental' ) +
 						( err.message ||
-							__( 'Failed to create fee.', 'fair-audience' ) )
+							__(
+								'Failed to create fee.',
+								'fair-audience-experimental'
+							) )
 				);
 			} )
 			.finally( () => {
@@ -333,9 +336,12 @@ export default function FeesList() {
 			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__( 'Error: ', 'fair-audience' ) +
+					__( 'Error: ', 'fair-audience-experimental' ) +
 						( err.message ||
-							__( 'Failed to update fee.', 'fair-audience' ) )
+							__(
+								'Failed to update fee.',
+								'fair-audience-experimental'
+							) )
 				);
 			} )
 			.finally( () => {
@@ -350,7 +356,7 @@ export default function FeesList() {
 			! confirm(
 				__(
 					'Are you sure you want to delete this fee? All payment records will also be deleted.',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -367,9 +373,12 @@ export default function FeesList() {
 			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
 				alert(
-					__( 'Error: ', 'fair-audience' ) +
+					__( 'Error: ', 'fair-audience-experimental' ) +
 						( err.message ||
-							__( 'Failed to delete fee.', 'fair-audience' ) )
+							__(
+								'Failed to delete fee.',
+								'fair-audience-experimental'
+							) )
 				);
 			} );
 	};
@@ -379,7 +388,7 @@ export default function FeesList() {
 		() => [
 			{
 				id: 'view-details',
-				label: __( 'View Details', 'fair-audience' ),
+				label: __( 'View Details', 'fair-audience-experimental' ),
 				icon: 'visibility',
 				callback: ( [ item ] ) => {
 					window.location.href = `admin.php?page=fair-audience-fee-detail&fee_id=${ item.id }`;
@@ -388,14 +397,14 @@ export default function FeesList() {
 			},
 			{
 				id: 'edit',
-				label: __( 'Edit', 'fair-audience' ),
+				label: __( 'Edit', 'fair-audience-experimental' ),
 				icon: 'edit',
 				callback: ( [ item ] ) => openEditModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'delete',
-				label: __( 'Delete', 'fair-audience' ),
+				label: __( 'Delete', 'fair-audience-experimental' ),
 				icon: 'trash',
 				callback: ( [ item ] ) => handleDeleteFee( item ),
 				supportsBulk: false,
@@ -413,12 +422,18 @@ export default function FeesList() {
 	);
 
 	const groupOptions = [
-		{ label: __( 'Select a group...', 'fair-audience' ), value: '' },
+		{
+			label: __( 'Select a group...', 'fair-audience-experimental' ),
+			value: '',
+		},
 		...groups.map( ( g ) => ( { label: g.name, value: String( g.id ) } ) ),
 	];
 
 	const budgetOptions = [
-		{ label: __( '-- No Budget --', 'fair-audience' ), value: '' },
+		{
+			label: __( '-- No Budget --', 'fair-audience-experimental' ),
+			value: '',
+		},
 		...budgets.map( ( b ) => ( { label: b.name, value: String( b.id ) } ) ),
 	];
 
@@ -462,13 +477,13 @@ export default function FeesList() {
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Membership Fees', 'fair-audience' ) }</h1>
+			<h1>{ __( 'Membership Fees', 'fair-audience-experimental' ) }</h1>
 
 			<Card>
 				<CardBody>
 					<div style={ { marginBottom: '16px' } }>
 						<Button variant="primary" onClick={ openCreateModal }>
-							{ __( 'Create Fee', 'fair-audience' ) }
+							{ __( 'Create Fee', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 
@@ -489,39 +504,42 @@ export default function FeesList() {
 			{ /* Create Fee Modal */ }
 			{ isCreateModalOpen && (
 				<Modal
-					title={ __( 'Create Fee', 'fair-audience' ) }
+					title={ __( 'Create Fee', 'fair-audience-experimental' ) }
 					onRequestClose={ () => setIsCreateModalOpen( false ) }
 					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={ __( 'Name', 'fair-audience' ) }
+						label={ __( 'Name', 'fair-audience-experimental' ) }
 						value={ feeName }
 						onChange={ setFeeName }
 						placeholder={ __(
 							'Enter fee name...',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					/>
 
 					<TextareaControl
-						label={ __( 'Description', 'fair-audience' ) }
+						label={ __(
+							'Description',
+							'fair-audience-experimental'
+						) }
 						value={ feeDescription }
 						onChange={ setFeeDescription }
 						placeholder={ __(
 							'Enter description (optional)...',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					/>
 
 					<SelectControl
-						label={ __( 'Group', 'fair-audience' ) }
+						label={ __( 'Group', 'fair-audience-experimental' ) }
 						value={ feeGroupId }
 						options={ groupOptions }
 						onChange={ setFeeGroupId }
 					/>
 
 					<TextControl
-						label={ __( 'Amount', 'fair-audience' ) }
+						label={ __( 'Amount', 'fair-audience-experimental' ) }
 						type="number"
 						value={ feeAmount }
 						onChange={ setFeeAmount }
@@ -531,7 +549,7 @@ export default function FeesList() {
 					/>
 
 					<TextControl
-						label={ __( 'Due Date', 'fair-audience' ) }
+						label={ __( 'Due Date', 'fair-audience-experimental' ) }
 						type="date"
 						value={ feeDueDate }
 						onChange={ setFeeDueDate }
@@ -540,14 +558,17 @@ export default function FeesList() {
 					{ ! budgetsUnavailable && (
 						<>
 							<SelectControl
-								label={ __( 'Budget', 'fair-audience' ) }
+								label={ __(
+									'Budget',
+									'fair-audience-experimental'
+								) }
 								value={ selectedBudgetId }
 								options={ budgetOptions }
 								onChange={ setFeeBudgetId }
 								disabled={ budgetsStatus === 'loading' }
 								help={ __(
 									'Optionally link to a budget for financial tracking.',
-									'fair-audience'
+									'fair-audience-experimental'
 								) }
 							/>
 
@@ -579,7 +600,7 @@ export default function FeesList() {
 							variant="secondary"
 							onClick={ () => setIsCreateModalOpen( false ) }
 						>
-							{ __( 'Cancel', 'fair-audience' ) }
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -592,7 +613,7 @@ export default function FeesList() {
 							}
 							isBusy={ isSaving }
 						>
-							{ __( 'Create', 'fair-audience' ) }
+							{ __( 'Create', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 				</Modal>
@@ -601,7 +622,7 @@ export default function FeesList() {
 			{ /* Edit Fee Modal */ }
 			{ isEditModalOpen && editingFee && (
 				<Modal
-					title={ __( 'Edit Fee', 'fair-audience' ) }
+					title={ __( 'Edit Fee', 'fair-audience-experimental' ) }
 					onRequestClose={ () => {
 						setIsEditModalOpen( false );
 						setEditingFee( null );
@@ -609,38 +630,50 @@ export default function FeesList() {
 					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<TextControl
-						label={ __( 'Name', 'fair-audience' ) }
+						label={ __( 'Name', 'fair-audience-experimental' ) }
 						value={ feeName }
 						onChange={ setFeeName }
 					/>
 
 					<TextareaControl
-						label={ __( 'Description', 'fair-audience' ) }
+						label={ __(
+							'Description',
+							'fair-audience-experimental'
+						) }
 						value={ feeDescription }
 						onChange={ setFeeDescription }
 					/>
 
 					<TextControl
-						label={ __( 'Due Date', 'fair-audience' ) }
+						label={ __( 'Due Date', 'fair-audience-experimental' ) }
 						type="date"
 						value={ feeDueDate }
 						onChange={ setFeeDueDate }
 					/>
 
 					<SelectControl
-						label={ __( 'Status', 'fair-audience' ) }
+						label={ __( 'Status', 'fair-audience-experimental' ) }
 						value={ editingFee.status }
 						options={ [
 							{
-								label: __( 'Draft', 'fair-audience' ),
+								label: __(
+									'Draft',
+									'fair-audience-experimental'
+								),
 								value: 'draft',
 							},
 							{
-								label: __( 'Active', 'fair-audience' ),
+								label: __(
+									'Active',
+									'fair-audience-experimental'
+								),
 								value: 'active',
 							},
 							{
-								label: __( 'Closed', 'fair-audience' ),
+								label: __(
+									'Closed',
+									'fair-audience-experimental'
+								),
 								value: 'closed',
 							},
 						] }
@@ -705,7 +738,7 @@ export default function FeesList() {
 								setEditingFee( null );
 							} }
 						>
-							{ __( 'Cancel', 'fair-audience' ) }
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -713,7 +746,7 @@ export default function FeesList() {
 							disabled={ ! feeName.trim() || isSaving }
 							isBusy={ isSaving }
 						>
-							{ __( 'Update', 'fair-audience' ) }
+							{ __( 'Update', 'fair-audience-experimental' ) }
 						</Button>
 					</div>
 				</Modal>

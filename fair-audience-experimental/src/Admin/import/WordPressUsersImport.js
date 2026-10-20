@@ -51,7 +51,7 @@ export default function WordPressUsersImport() {
 				err.message ||
 					__(
 						'Failed to load data. Please try again.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 			);
 		} finally {
@@ -87,7 +87,12 @@ export default function WordPressUsersImport() {
 		);
 
 		if ( usersToImport.length === 0 ) {
-			setError( __( 'No users selected for import.', 'fair-audience' ) );
+			setError(
+				__(
+					'No users selected for import.',
+					'fair-audience-experimental'
+				)
+			);
 			return;
 		}
 
@@ -125,7 +130,8 @@ export default function WordPressUsersImport() {
 			} catch ( err ) {
 				importResults.failed++;
 				const errorMessage =
-					err.message || __( 'Unknown error', 'fair-audience' );
+					err.message ||
+					__( 'Unknown error', 'fair-audience-experimental' );
 				importResults.errors.push(
 					`${ user.name }: ${ errorMessage }`
 				);
@@ -152,19 +158,27 @@ export default function WordPressUsersImport() {
 		<Card>
 			<CardBody>
 				<h2>
-					{ __( 'Import from WordPress Users', 'fair-audience' ) }
+					{ __(
+						'Import from WordPress Users',
+						'fair-audience-experimental'
+					) }
 				</h2>
 				<p>
 					{ __(
 						'Create audience members from existing WordPress users. Users who already have a linked participant will be shown but cannot be imported again.',
-						'fair-audience'
+						'fair-audience-experimental'
 					) }
 				</p>
 
 				{ isLoading && (
 					<div style={ { marginTop: '20px', textAlign: 'center' } }>
 						<Spinner />
-						<p>{ __( 'Loading users...', 'fair-audience' ) }</p>
+						<p>
+							{ __(
+								'Loading users...',
+								'fair-audience-experimental'
+							) }
+						</p>
 					</div>
 				) }
 
@@ -178,7 +192,10 @@ export default function WordPressUsersImport() {
 
 				{ ! isLoading && ! error && users.length === 0 && (
 					<Notice status="info" isDismissible={ false }>
-						{ __( 'No WordPress users found.', 'fair-audience' ) }
+						{ __(
+							'No WordPress users found.',
+							'fair-audience-experimental'
+						) }
 					</Notice>
 				) }
 
@@ -198,7 +215,10 @@ export default function WordPressUsersImport() {
 								onClick={ handleSelectAllUnlinked }
 								disabled={ isImporting || unlinkedCount === 0 }
 							>
-								{ __( 'Select All Unlinked', 'fair-audience' ) }{ ' ' }
+								{ __(
+									'Select All Unlinked',
+									'fair-audience-experimental'
+								) }{ ' ' }
 								({ unlinkedCount })
 							</Button>
 							<Button
@@ -208,14 +228,23 @@ export default function WordPressUsersImport() {
 									isImporting || selectedUsers.length === 0
 								}
 							>
-								{ __( 'Deselect All', 'fair-audience' ) }
+								{ __(
+									'Deselect All',
+									'fair-audience-experimental'
+								) }
 							</Button>
 							<span
 								style={ { marginLeft: 'auto', color: '#666' } }
 							>
-								{ __( 'Selected:', 'fair-audience' ) }{ ' ' }
+								{ __(
+									'Selected:',
+									'fair-audience-experimental'
+								) }{ ' ' }
 								{ selectedUnlinkedCount } / { unlinkedCount }{ ' ' }
-								{ __( 'unlinked users', 'fair-audience' ) }
+								{ __(
+									'unlinked users',
+									'fair-audience-experimental'
+								) }
 							</span>
 						</div>
 
@@ -226,10 +255,30 @@ export default function WordPressUsersImport() {
 							<thead>
 								<tr>
 									<th style={ { width: '40px' } }></th>
-									<th>{ __( 'Name', 'fair-audience' ) }</th>
-									<th>{ __( 'Email', 'fair-audience' ) }</th>
-									<th>{ __( 'Role', 'fair-audience' ) }</th>
-									<th>{ __( 'Status', 'fair-audience' ) }</th>
+									<th>
+										{ __(
+											'Name',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Email',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Role',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Status',
+											'fair-audience-experimental'
+										) }
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -298,7 +347,7 @@ export default function WordPressUsersImport() {
 													>
 														{ __(
 															'Already linked',
-															'fair-audience'
+															'fair-audience-experimental'
 														) }
 													</span>
 												) : (
@@ -314,7 +363,7 @@ export default function WordPressUsersImport() {
 													>
 														{ __(
 															'Available',
-															'fair-audience'
+															'fair-audience-experimental'
 														) }
 													</span>
 												) }
@@ -334,10 +383,13 @@ export default function WordPressUsersImport() {
 								}
 							>
 								{ isImporting
-									? __( 'Importing...', 'fair-audience' )
+									? __(
+											'Importing...',
+											'fair-audience-experimental'
+										)
 									: __(
 											'Import Selected Users',
-											'fair-audience'
+											'fair-audience-experimental'
 										) + ` (${ selectedUnlinkedCount })` }
 							</Button>
 						</div>
@@ -360,17 +412,26 @@ export default function WordPressUsersImport() {
 						>
 							<p>
 								<strong>
-									{ __( 'Import Complete', 'fair-audience' ) }
+									{ __(
+										'Import Complete',
+										'fair-audience-experimental'
+									) }
 								</strong>
 							</p>
 							<ul>
 								<li>
-									{ __( 'Imported:', 'fair-audience' ) }{ ' ' }
+									{ __(
+										'Imported:',
+										'fair-audience-experimental'
+									) }{ ' ' }
 									{ results.imported }
 								</li>
 								{ results.failed > 0 && (
 									<li>
-										{ __( 'Failed:', 'fair-audience' ) }{ ' ' }
+										{ __(
+											'Failed:',
+											'fair-audience-experimental'
+										) }{ ' ' }
 										{ results.failed }
 									</li>
 								) }
@@ -385,7 +446,10 @@ export default function WordPressUsersImport() {
 							>
 								<p>
 									<strong>
-										{ __( 'Errors:', 'fair-audience' ) }
+										{ __(
+											'Errors:',
+											'fair-audience-experimental'
+										) }
 									</strong>
 								</p>
 								<ul>

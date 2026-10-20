@@ -58,7 +58,7 @@ export default function Collaborators() {
 		() => [
 			{
 				id: 'name',
-				label: __( 'Name', 'fair-audience' ),
+				label: __( 'Name', 'fair-audience-experimental' ),
 				render: ( { item } ) => `${ item.name } ${ item.surname }`,
 				enableSorting: true,
 				enableHiding: false,
@@ -67,13 +67,13 @@ export default function Collaborators() {
 			},
 			{
 				id: 'email',
-				label: __( 'Email', 'fair-audience' ),
+				label: __( 'Email', 'fair-audience-experimental' ),
 				render: ( { item } ) => item.email || '—',
 				enableSorting: true,
 			},
 			{
 				id: 'event_count',
-				label: __( 'Events', 'fair-audience' ),
+				label: __( 'Events', 'fair-audience-experimental' ),
 				render: ( { item } ) => (
 					<div style={ { textAlign: 'right' } }>
 						{ item.event_count }
@@ -267,7 +267,9 @@ export default function Collaborators() {
 			} )
 			.catch( ( err ) => {
 				// eslint-disable-next-line no-undef
-				alert( __( 'Error: ', 'fair-audience' ) + err.message );
+				alert(
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
+				);
 			} )
 			.finally( () => {
 				setIsSubmitting( false );
@@ -279,14 +281,14 @@ export default function Collaborators() {
 		() => [
 			{
 				id: 'add-to-event',
-				label: __( 'Add to event', 'fair-audience' ),
+				label: __( 'Add to event', 'fair-audience-experimental' ),
 				icon: 'calendar-alt',
 				callback: ( [ item ] ) => openAddToEventModal( item ),
 				supportsBulk: false,
 			},
 			{
 				id: 'export',
-				label: __( 'Export', 'fair-audience' ),
+				label: __( 'Export', 'fair-audience-experimental' ),
 				icon: 'download',
 				callback: ( items ) => handleExport( items ),
 				supportsBulk: true,
@@ -328,7 +330,7 @@ export default function Collaborators() {
 			// translators: %d is the number of exported collaborators
 			message: __(
 				'%d collaborator(s) exported.',
-				'fair-audience'
+				'fair-audience-experimental'
 			).replace( '%d', dataToExport.length ),
 		} );
 	};
@@ -353,7 +355,7 @@ export default function Collaborators() {
 				throw new Error(
 					__(
 						'Invalid file format. Expected a JSON array.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 				);
 			}
@@ -382,7 +384,7 @@ export default function Collaborators() {
 				// translators: %d is the number of imported collaborators
 				message: __(
 					'%d collaborator(s) imported.',
-					'fair-audience'
+					'fair-audience-experimental'
 				).replace( '%d', created ),
 			} );
 			loadCollaborators();
@@ -391,7 +393,10 @@ export default function Collaborators() {
 				status: 'error',
 				message:
 					err.message ||
-					__( 'Failed to import collaborators.', 'fair-audience' ),
+					__(
+						'Failed to import collaborators.',
+						'fair-audience-experimental'
+					),
 			} );
 		} finally {
 			setIsImporting( false );
@@ -406,7 +411,7 @@ export default function Collaborators() {
 	return (
 		<div className="wrap">
 			<HStack justify="space-between" align="center">
-				<h1>{ __( 'Collaborators', 'fair-audience' ) }</h1>
+				<h1>{ __( 'Collaborators', 'fair-audience-experimental' ) }</h1>
 				<HStack spacing={ 2 } expanded={ false }>
 					<Button
 						variant="secondary"
@@ -420,7 +425,7 @@ export default function Collaborators() {
 						isBusy={ isImporting }
 						disabled={ isImporting }
 					>
-						{ __( 'Import', 'fair-audience' ) }
+						{ __( 'Import', 'fair-audience-experimental' ) }
 					</Button>
 					<input
 						id="fair-audience-collaborator-import"
@@ -434,7 +439,7 @@ export default function Collaborators() {
 
 			{ window.fairAudienceCollaboratorsData?.collaboratorProfileUrl && (
 				<p>
-					{ __( 'Registration form:', 'fair-audience' ) }{ ' ' }
+					{ __( 'Registration form:', 'fair-audience-experimental' ) }{ ' ' }
 					<ExternalLink
 						href={
 							window.fairAudienceCollaboratorsData
@@ -477,14 +482,14 @@ export default function Collaborators() {
 
 			{ isModalOpen && selectedCollaborator && (
 				<Modal
-					title={ __( 'Add to Event', 'fair-audience' ) }
+					title={ __( 'Add to Event', 'fair-audience-experimental' ) }
 					onRequestClose={ () => setIsModalOpen( false ) }
 					style={ { maxWidth: '500px', width: '100%' } }
 				>
 					<p>
 						{ __(
 							'Select events to add this collaborator to:',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					</p>
 					<p>
@@ -499,7 +504,7 @@ export default function Collaborators() {
 						onChange={ handleEventSearchChange }
 						placeholder={ __(
 							'Search events...',
-							'fair-audience'
+							'fair-audience-experimental'
 						) }
 					/>
 
@@ -518,7 +523,7 @@ export default function Collaborators() {
 							<p>
 								{ __(
 									'No available events found.',
-									'fair-audience'
+									'fair-audience-experimental'
 								) }
 							</p>
 						) : (
@@ -557,7 +562,7 @@ export default function Collaborators() {
 												rel="noopener noreferrer"
 												title={ __(
 													'View Participants',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 												style={ {
 													color: '#2271b1',
@@ -584,7 +589,7 @@ export default function Collaborators() {
 							variant="secondary"
 							onClick={ () => setIsModalOpen( false ) }
 						>
-							{ __( 'Cancel', 'fair-audience' ) }
+							{ __( 'Cancel', 'fair-audience-experimental' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -594,7 +599,10 @@ export default function Collaborators() {
 							}
 							isBusy={ isSubmitting }
 						>
-							{ __( 'Add to Events', 'fair-audience' ) }
+							{ __(
+								'Add to Events',
+								'fair-audience-experimental'
+							) }
 						</Button>
 					</div>
 				</Modal>

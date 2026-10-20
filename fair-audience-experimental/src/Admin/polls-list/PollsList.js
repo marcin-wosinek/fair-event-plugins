@@ -30,7 +30,7 @@ export default function PollsList() {
 			! confirm(
 				__(
 					'Are you sure you want to delete this poll?',
-					'fair-audience'
+					'fair-audience-experimental'
 				)
 			)
 		) {
@@ -45,7 +45,9 @@ export default function PollsList() {
 				loadPolls();
 			} )
 			.catch( ( err ) => {
-				alert( __( 'Error: ', 'fair-audience' ) + err.message );
+				alert(
+					__( 'Error: ', 'fair-audience-experimental' ) + err.message
+				);
 			} );
 	};
 
@@ -64,7 +66,7 @@ export default function PollsList() {
 	if ( isLoading ) {
 		return (
 			<div className="wrap">
-				<h1>{ __( 'Polls', 'fair-audience' ) }</h1>
+				<h1>{ __( 'Polls', 'fair-audience-experimental' ) }</h1>
 				<Spinner />
 			</div>
 		);
@@ -73,7 +75,7 @@ export default function PollsList() {
 	if ( error ) {
 		return (
 			<div className="wrap">
-				<h1>{ __( 'Polls', 'fair-audience' ) }</h1>
+				<h1>{ __( 'Polls', 'fair-audience-experimental' ) }</h1>
 				<div className="notice notice-error">
 					<p>{ error }</p>
 				</div>
@@ -84,13 +86,13 @@ export default function PollsList() {
 	return (
 		<div className="wrap">
 			<h1 className="wp-heading-inline">
-				{ __( 'Polls', 'fair-audience' ) }
+				{ __( 'Polls', 'fair-audience-experimental' ) }
 			</h1>
 			<a
 				href="admin.php?page=fair-audience-edit-poll"
 				className="page-title-action"
 			>
-				{ __( 'Add New', 'fair-audience' ) }
+				{ __( 'Add New', 'fair-audience-experimental' ) }
 			</a>
 
 			<Card style={ { marginTop: '20px' } }>
@@ -99,23 +101,42 @@ export default function PollsList() {
 						<p>
 							{ __(
 								'No polls found. Create your first poll to get started.',
-								'fair-audience'
+								'fair-audience-experimental'
 							) }
 						</p>
 					) : (
 						<table className="wp-list-table widefat fixed striped">
 							<thead>
 								<tr>
-									<th>{ __( 'Title', 'fair-audience' ) }</th>
 									<th>
-										{ __( 'Question', 'fair-audience' ) }
-									</th>
-									<th>{ __( 'Status', 'fair-audience' ) }</th>
-									<th>
-										{ __( 'Created', 'fair-audience' ) }
+										{ __(
+											'Title',
+											'fair-audience-experimental'
+										) }
 									</th>
 									<th>
-										{ __( 'Actions', 'fair-audience' ) }
+										{ __(
+											'Question',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Status',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Created',
+											'fair-audience-experimental'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Actions',
+											'fair-audience-experimental'
+										) }
 									</th>
 								</tr>
 							</thead>
@@ -162,7 +183,7 @@ export default function PollsList() {
 											>
 												{ __(
 													'Edit',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 											</Button>
 											{ ' | ' }
@@ -175,7 +196,7 @@ export default function PollsList() {
 											>
 												{ __(
 													'Delete',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 											</Button>
 										</td>

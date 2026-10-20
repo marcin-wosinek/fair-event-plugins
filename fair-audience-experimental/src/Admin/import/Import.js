@@ -49,7 +49,10 @@ export default function Import() {
 	const handleImport = async () => {
 		if ( ! file ) {
 			setError(
-				__( 'Please select a file to import.', 'fair-audience' )
+				__(
+					'Please select a file to import.',
+					'fair-audience-experimental'
+				)
 			);
 			return;
 		}
@@ -98,7 +101,10 @@ export default function Import() {
 		} catch ( err ) {
 			setError(
 				err.message ||
-					__( 'Import failed. Please try again.', 'fair-audience' )
+					__(
+						'Import failed. Please try again.',
+						'fair-audience-experimental'
+					)
 			);
 		} finally {
 			setIsUploading( false );
@@ -151,7 +157,7 @@ export default function Import() {
 				setError(
 					__(
 						'No participants to create. Please provide email addresses or select skip.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 				);
 				setIsResolvingDuplicates( false );
@@ -187,7 +193,7 @@ export default function Import() {
 				err.message ||
 					__(
 						'Failed to resolve duplicates. Please try again.',
-						'fair-audience'
+						'fair-audience-experimental'
 					)
 			);
 		} finally {
@@ -197,7 +203,9 @@ export default function Import() {
 
 	return (
 		<div className="wrap">
-			<h1>{ __( 'Import Participants', 'fair-audience' ) }</h1>
+			<h1>
+				{ __( 'Import Participants', 'fair-audience-experimental' ) }
+			</h1>
 
 			<TabPanel
 				className="fair-audience-import-tabs"
@@ -205,15 +213,18 @@ export default function Import() {
 				tabs={ [
 					{
 						name: 'entradium',
-						title: __( 'Entradium', 'fair-audience' ),
+						title: __( 'Entradium', 'fair-audience-experimental' ),
 					},
 					{
 						name: 'wordpress-users',
-						title: __( 'WordPress Users', 'fair-audience' ),
+						title: __(
+							'WordPress Users',
+							'fair-audience-experimental'
+						),
 					},
 					{
 						name: 'kit',
-						title: __( 'Kit.com', 'fair-audience' ),
+						title: __( 'Kit.com', 'fair-audience-experimental' ),
 					},
 				] }
 			>
@@ -225,13 +236,13 @@ export default function Import() {
 									<h2>
 										{ __(
 											'Import from Entradium',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</h2>
 									<p>
 										{ __(
 											'Upload an Entradium Excel file (.xlsx) to import participants. The file must contain columns: Nombre, Apellidos, and Email.',
-											'fair-audience'
+											'fair-audience-experimental'
 										) }
 									</p>
 
@@ -239,7 +250,7 @@ export default function Import() {
 										<SelectControl
 											label={ __(
 												'Related Event (Optional)',
-												'fair-audience'
+												'fair-audience-experimental'
 											) }
 											value={ selectedEventId }
 											onChange={ setSelectedEventId }
@@ -248,13 +259,13 @@ export default function Import() {
 											}
 											help={ __(
 												'Select an event to associate imported participants with it. Leave empty to import without event association.',
-												'fair-audience'
+												'fair-audience-experimental'
 											) }
 										>
 											<option value="">
 												{ __(
 													'No event association',
-													'fair-audience'
+													'fair-audience-experimental'
 												) }
 											</option>
 											{ events.map( ( event ) => (
@@ -284,7 +295,7 @@ export default function Import() {
 												<strong>
 													{ __(
 														'Selected file:',
-														'fair-audience'
+														'fair-audience-experimental'
 													) }
 												</strong>{ ' ' }
 												{ file.name }
@@ -301,11 +312,11 @@ export default function Import() {
 											{ isUploading
 												? __(
 														'Importing...',
-														'fair-audience'
+														'fair-audience-experimental'
 													)
 												: __(
 														'Import',
-														'fair-audience'
+														'fair-audience-experimental'
 													) }
 										</Button>
 									</div>
@@ -346,11 +357,11 @@ export default function Import() {
 															.length > 0
 															? __(
 																	'Import Partially Complete',
-																	'fair-audience'
+																	'fair-audience-experimental'
 																)
 															: __(
 																	'Import Complete',
-																	'fair-audience'
+																	'fair-audience-experimental'
 																) }
 													</strong>
 												</p>
@@ -358,7 +369,7 @@ export default function Import() {
 													<li>
 														{ __(
 															'Imported:',
-															'fair-audience'
+															'fair-audience-experimental'
 														) }{ ' ' }
 														{ results.imported }
 													</li>
@@ -367,7 +378,7 @@ export default function Import() {
 														<li>
 															{ __(
 																'Existing linked to event:',
-																'fair-audience'
+																'fair-audience-experimental'
 															) }{ ' ' }
 															{
 																results.existing_linked
@@ -378,7 +389,7 @@ export default function Import() {
 														<li>
 															{ __(
 																'Set to marketing profile (Newsletter):',
-																'fair-audience'
+																'fair-audience-experimental'
 															) }{ ' ' }
 															{
 																results.marketing
@@ -390,7 +401,7 @@ export default function Import() {
 														<li>
 															{ __(
 																'Auto-resolved from previous imports:',
-																'fair-audience'
+																'fair-audience-experimental'
 															) }{ ' ' }
 															{
 																results.auto_resolved
@@ -400,7 +411,7 @@ export default function Import() {
 													<li>
 														{ __(
 															'Skipped (already exists):',
-															'fair-audience'
+															'fair-audience-experimental'
 														) }{ ' ' }
 														{ results.skipped }
 													</li>
@@ -410,7 +421,7 @@ export default function Import() {
 															<li>
 																{ __(
 																	'Duplicates requiring resolution:',
-																	'fair-audience'
+																	'fair-audience-experimental'
 																) }{ ' ' }
 																{ results.duplicates.reduce(
 																	(
@@ -437,13 +448,13 @@ export default function Import() {
 														<h3>
 															{ __(
 																'Resolve Duplicate Emails',
-																'fair-audience'
+																'fair-audience-experimental'
 															) }
 														</h3>
 														<p>
 															{ __(
 																'The following people have duplicate email addresses. Please provide a unique email for each person or skip them.',
-																'fair-audience'
+																'fair-audience-experimental'
 															) }
 														</p>
 
@@ -472,7 +483,7 @@ export default function Import() {
 																		<strong>
 																			{ __(
 																				'Original Email:',
-																				'fair-audience'
+																				'fair-audience-experimental'
 																			) }
 																		</strong>{ ' ' }
 																		{
@@ -541,7 +552,7 @@ export default function Import() {
 																						<label>
 																							{ __(
 																								'New Email:',
-																								'fair-audience'
+																								'fair-audience-experimental'
 																							) }
 																							<input
 																								type="email"
@@ -569,7 +580,7 @@ export default function Import() {
 																								} }
 																								placeholder={ __(
 																									'Enter new email',
-																									'fair-audience'
+																									'fair-audience-experimental'
 																								) }
 																							/>
 																						</label>
@@ -588,7 +599,7 @@ export default function Import() {
 																							>
 																								{ __(
 																									'Use Gmail Alias',
-																									'fair-audience'
+																									'fair-audience-experimental'
 																								) }
 																							</Button>
 																						) }
@@ -604,7 +615,7 @@ export default function Import() {
 																						>
 																							{ __(
 																								'Use Original Email',
-																								'fair-audience'
+																								'fair-audience-experimental'
 																							) }
 																						</Button>
 
@@ -640,7 +651,7 @@ export default function Import() {
 																							/>
 																							{ __(
 																								'Skip this person',
-																								'fair-audience'
+																								'fair-audience-experimental'
 																							) }
 																						</label>
 																					</div>
@@ -670,11 +681,11 @@ export default function Import() {
 																{ isResolvingDuplicates
 																	? __(
 																			'Resolving...',
-																			'fair-audience'
+																			'fair-audience-experimental'
 																		)
 																	: __(
 																			'Create Participants',
-																			'fair-audience'
+																			'fair-audience-experimental'
 																		) }
 															</Button>
 														</div>
@@ -694,7 +705,7 @@ export default function Import() {
 															<strong>
 																{ __(
 																	'Errors:',
-																	'fair-audience'
+																	'fair-audience-experimental'
 																) }
 															</strong>
 														</p>

@@ -19,7 +19,7 @@ $site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 </head>
 <body <?php body_class(); ?>>
 
-<div id="fair-audience-poll-root" data-access-key="<?php echo esc_attr( $_GET['poll_key'] ); ?>"></div>
+<div id="fair-audience-poll-root" data-access-key="<?php echo esc_attr( get_query_var( 'poll_key' ) ); ?>"></div>
 
 <?php
 // Enqueue the poll response script and styles.
@@ -32,6 +32,8 @@ wp_enqueue_script(
 	$asset_file['version'],
 	true
 );
+
+wp_set_script_translations( 'fair-audience-poll-response', 'fair-audience-experimental', \FairAudienceExperimental\Core\Features::script_translations_path() );
 
 wp_enqueue_style(
 	'fair-audience-poll-response',
