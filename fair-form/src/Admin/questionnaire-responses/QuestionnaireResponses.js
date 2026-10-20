@@ -15,7 +15,10 @@ import {
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { formatDate } from '../utils/format-date.js';
-import { formatSiteLocalDatetime, formatDateOnly } from 'fair-events-shared';
+import {
+	formatSiteLocalDatetime,
+	formatDateOnly,
+} from 'fair-events-shared/src/dateTime.js';
 import { buildBulkExportText } from '../utils/export-format.js';
 import DeleteSubmissionDialog from '../components/DeleteSubmissionDialog.js';
 

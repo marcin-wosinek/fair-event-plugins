@@ -37,8 +37,8 @@ function answerToMarkdownLines( answer ) {
 	} else if ( answer.question_type === 'checkbox' ) {
 		lines.push(
 			answer.answer_value === '1'
-				? __( 'Yes', 'fair-audience' )
-				: __( 'No', 'fair-audience' )
+				? __( 'Yes', 'fair-form' )
+				: __( 'No', 'fair-form' )
 		);
 	} else {
 		lines.push( answer.answer_value || '' );
@@ -50,7 +50,7 @@ function answerToMarkdownLines( answer ) {
 // One submission → markdown block (## respondent, submitted date, answers).
 // No leading `---` separator; callers add that when listing multiple.
 export function submissionToMarkdown( submission ) {
-	const submittedLabel = __( 'Submitted', 'fair-audience' );
+	const submittedLabel = __( 'Submitted', 'fair-form' );
 	const adminBase = `${ window.location.origin }${ window.location.pathname }`;
 
 	const respondent =

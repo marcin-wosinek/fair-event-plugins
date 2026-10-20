@@ -18,7 +18,7 @@ import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared';
+import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -28,27 +28,27 @@ const ALLOWED_BLOCKS = [
 ];
 
 const OPERATOR_OPTIONS = [
-	{ label: __( 'equals', 'fair-audience' ), value: 'equals' },
-	{ label: __( 'not equals', 'fair-audience' ), value: 'not_equals' },
-	{ label: __( 'contains', 'fair-audience' ), value: 'contains' },
-	{ label: __( 'is not empty', 'fair-audience' ), value: 'not_empty' },
+	{ label: __( 'equals', 'fair-form' ), value: 'equals' },
+	{ label: __( 'not equals', 'fair-form' ), value: 'not_equals' },
+	{ label: __( 'contains', 'fair-form' ), value: 'contains' },
+	{ label: __( 'is not empty', 'fair-form' ), value: 'not_empty' },
 ];
 
 // Event options and ticket types are boolean per checkbox/radio, so they
 // share a dedicated selected/not-selected operator pair rather than reusing
 // equals/contains.
 const SELECTED_OPERATOR_OPTIONS = [
-	{ label: __( 'is selected', 'fair-audience' ), value: 'selected' },
-	{ label: __( 'is not selected', 'fair-audience' ), value: 'not_selected' },
+	{ label: __( 'is selected', 'fair-form' ), value: 'selected' },
+	{ label: __( 'is not selected', 'fair-form' ), value: 'not_selected' },
 ];
 
 const SOURCE_OPTIONS = [
-	{ label: __( 'Question', 'fair-audience' ), value: 'question' },
-	{ label: __( 'Event option', 'fair-audience' ), value: 'eventOption' },
+	{ label: __( 'Question', 'fair-form' ), value: 'question' },
+	{ label: __( 'Event option', 'fair-form' ), value: 'eventOption' },
 ];
 
 const TICKET_TYPE_SOURCE_OPTION = {
-	label: __( 'Ticket type', 'fair-audience' ),
+	label: __( 'Ticket type', 'fair-form' ),
 	value: 'ticketType',
 };
 
@@ -251,7 +251,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 
 		const questionSelectOptions = [
 			{
-				label: __( '— Select a question —', 'fair-audience' ),
+				label: __( '— Select a question —', 'fair-form' ),
 				value: '',
 			},
 			...questionOptions.map( ( q ) => ( {
@@ -280,12 +280,12 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 
 		let conditionLabel;
 		if ( ! isConfigured ) {
-			conditionLabel = __( 'No condition set', 'fair-audience' );
+			conditionLabel = __( 'No condition set', 'fair-form' );
 		} else if ( isEventOption ) {
 			conditionLabel = `${ conditionOptionShortName } ${
 				selectedOperator === 'not_selected'
-					? __( 'is not selected', 'fair-audience' )
-					: __( 'is selected', 'fair-audience' )
+					? __( 'is not selected', 'fair-form' )
+					: __( 'is selected', 'fair-form' )
 			}`;
 		} else if ( isTicketType ) {
 			const names = validatedTicketTypeIds
@@ -299,8 +299,8 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 					: validatedTicketTypeIds.join( ', ' )
 			} ${
 				selectedOperator === 'not_selected'
-					? __( 'is not selected', 'fair-audience' )
-					: __( 'is selected', 'fair-audience' )
+					? __( 'is not selected', 'fair-form' )
+					: __( 'is selected', 'fair-form' )
 			}`;
 		} else {
 			conditionLabel = `${ conditionQuestionKey } ${ conditionOperator }${
@@ -330,14 +330,11 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 			<>
 				<InspectorControls>
 					<PanelBody
-						title={ __( 'Condition Settings', 'fair-audience' ) }
+						title={ __( 'Condition Settings', 'fair-form' ) }
 					>
 						{ isEventSignup && (
 							<SelectControl
-								label={ __(
-									'Condition source',
-									'fair-audience'
-								) }
+								label={ __( 'Condition source', 'fair-form' ) }
 								value={ source }
 								options={ sourceOptions }
 								onChange={ ( value ) =>
@@ -359,7 +356,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 								<TextControl
 									label={ __(
 										'Option short name',
-										'fair-audience'
+										'fair-form'
 									) }
 									value={ conditionOptionShortName }
 									onChange={ ( value ) =>
@@ -369,11 +366,11 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 									}
 									help={ __(
 										"Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time.",
-										'fair-audience'
+										'fair-form'
 									) }
 								/>
 								<SelectControl
-									label={ __( 'Operator', 'fair-audience' ) }
+									label={ __( 'Operator', 'fair-form' ) }
 									value={ selectedOperator }
 									options={ SELECTED_OPERATOR_OPTIONS }
 									onChange={ ( value ) =>
@@ -409,7 +406,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 									/>
 								) ) }
 								<SelectControl
-									label={ __( 'Operator', 'fair-audience' ) }
+									label={ __( 'Operator', 'fair-form' ) }
 									value={ selectedOperator }
 									options={ SELECTED_OPERATOR_OPTIONS }
 									onChange={ ( value ) =>
@@ -424,7 +421,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 								<SelectControl
 									label={ __(
 										'Show when question',
-										'fair-audience'
+										'fair-form'
 									) }
 									value={ conditionQuestionKey }
 									options={ questionSelectOptions }
@@ -447,7 +444,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 									} }
 								/>
 								<SelectControl
-									label={ __( 'Operator', 'fair-audience' ) }
+									label={ __( 'Operator', 'fair-form' ) }
 									value={ conditionOperator }
 									options={ OPERATOR_OPTIONS }
 									onChange={ ( value ) =>
@@ -459,16 +456,13 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 								{ conditionOperator !== 'not_empty' &&
 									( hasOptions ? (
 										<SelectControl
-											label={ __(
-												'Value',
-												'fair-audience'
-											) }
+											label={ __( 'Value', 'fair-form' ) }
 											value={ conditionValue }
 											options={ [
 												{
 													label: __(
 														'— Select a value —',
-														'fair-audience'
+														'fair-form'
 													),
 													value: '',
 												},
@@ -487,10 +481,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 										/>
 									) : (
 										<TextControl
-											label={ __(
-												'Value',
-												'fair-audience'
-											) }
+											label={ __( 'Value', 'fair-form' ) }
 											value={ conditionValue }
 											onChange={ ( value ) =>
 												setAttributes( {
@@ -499,7 +490,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 											}
 											help={ __(
 												'The value to compare against.',
-												'fair-audience'
+												'fair-form'
 											) }
 										/>
 									) ) }

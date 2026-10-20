@@ -64,7 +64,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<?php
 		printf(
 			/* translators: %d: maximum file size in megabytes */
-			esc_html__( 'Max file size: %d MB', 'fair-audience' ),
+			esc_html__( 'Max file size: %d MB', 'fair-form' ),
 			(int) $max_file_size
 		);
 		?>

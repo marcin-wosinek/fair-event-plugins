@@ -18,10 +18,7 @@ registerBlockType( 'fair-audience/fair-form-option', {
 					onChange={ ( e ) =>
 						setAttributes( { value: e.target.value } )
 					}
-					placeholder={ __(
-						'Enter option text...',
-						'fair-audience'
-					) }
+					placeholder={ __( 'Enter option text...', 'fair-form' ) }
 					className="fair-form-option-input"
 				/>
 			</div>

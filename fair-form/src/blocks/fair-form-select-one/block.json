@@ -8,7 +8,7 @@
 	"icon": "yes",
 	"description": "A single-choice question (select or radio) for Fair Form",
 	"keywords": [ "question", "select", "radio", "choice" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
 		"fair-audience/event-signup",

@@ -20,10 +20,8 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
-import {
-	generateUuid,
-	FAIR_FORM_QUESTION_BLOCK_NAMES,
-} from 'fair-events-shared';
+import { generateUuid } from 'fair-events-shared/src/uuid.js';
+import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -82,7 +80,7 @@ function EventDateSelect( { eventDateId, onChange } ) {
 	}
 
 	const options = [
-		{ label: __( '— None —', 'fair-audience' ), value: '' },
+		{ label: __( '— None —', 'fair-form' ), value: '' },
 		...eventDates.map( ( ed ) => ( {
 			label: ed.display_label,
 			value: String( ed.id ),
@@ -91,13 +89,13 @@ function EventDateSelect( { eventDateId, onChange } ) {
 
 	return (
 		<SelectControl
-			label={ __( 'Event', 'fair-audience' ) }
+			label={ __( 'Event', 'fair-form' ) }
 			value={ eventDateId ? String( eventDateId ) : '' }
 			options={ options }
 			onChange={ ( value ) => onChange( parseInt( value, 10 ) || 0 ) }
 			help={ __(
 				'Optional. Link this form to a specific event.',
-				'fair-audience'
+				'fair-form'
 			) }
 		/>
 	);
@@ -149,31 +147,28 @@ registerBlockType( 'fair-audience/fair-form', {
 		return (
 			<>
 				<InspectorControls>
-					<PanelBody title={ __( 'Form Settings', 'fair-audience' ) }>
+					<PanelBody title={ __( 'Form Settings', 'fair-form' ) }>
 						<TextControl
-							label={ __(
-								'Submit Button Text',
-								'fair-audience'
-							) }
+							label={ __( 'Submit Button Text', 'fair-form' ) }
 							value={ submitButtonText }
 							onChange={ ( value ) =>
 								setAttributes( { submitButtonText: value } )
 							}
-							placeholder={ __( 'Submit', 'fair-audience' ) }
+							placeholder={ __( 'Submit', 'fair-form' ) }
 						/>
 						<TextareaControl
-							label={ __( 'Success Message', 'fair-audience' ) }
+							label={ __( 'Success Message', 'fair-form' ) }
 							value={ successMessage }
 							onChange={ ( value ) =>
 								setAttributes( { successMessage: value } )
 							}
 							placeholder={ __(
 								'Thank you for your submission!',
-								'fair-audience'
+								'fair-form'
 							) }
 							help={ __(
 								'Message shown after successful form submission.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<EventDateSelect
@@ -183,10 +178,7 @@ registerBlockType( 'fair-audience/fair-form', {
 							}
 						/>
 						<TextControl
-							label={ __(
-								'Notification Email',
-								'fair-audience'
-							) }
+							label={ __( 'Notification Email', 'fair-form' ) }
 							value={ notificationEmail }
 							onChange={ ( value ) =>
 								setAttributes( {
@@ -197,22 +189,22 @@ registerBlockType( 'fair-audience/fair-form', {
 							placeholder="admin@example.com"
 							help={ __(
 								'Send a notification to this email when someone submits the form. Leave empty to disable.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 						<TextControl
-							label={ __( 'Form Title', 'fair-audience' ) }
+							label={ __( 'Form Title', 'fair-form' ) }
 							value={ formTitle }
 							onChange={ ( value ) =>
 								setAttributes( { formTitle: value } )
 							}
 							placeholder={ __(
 								'e.g. Volunteer signup',
-								'fair-audience'
+								'fair-form'
 							) }
 							help={ __(
 								'Internal label for grouping submissions by form. Does not appear on the frontend.',
-								'fair-audience'
+								'fair-form'
 							) }
 						/>
 					</PanelBody>
@@ -227,7 +219,7 @@ registerBlockType( 'fair-audience/fair-form', {
 								disabled
 							>
 								{ submitButtonText ||
-									__( 'Submit', 'fair-audience' ) }
+									__( 'Submit', 'fair-form' ) }
 							</button>
 						</div>
 					</div>

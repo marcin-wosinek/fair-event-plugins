@@ -8,7 +8,7 @@
 	"icon": "feedback",
 	"description": "A composable questionnaire form with nested question blocks",
 	"keywords": [ "form", "questionnaire", "survey", "signup" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"supports": {
 		"html": false,
 		"align": [ "wide", "full" ],

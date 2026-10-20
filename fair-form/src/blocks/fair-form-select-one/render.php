@@ -63,7 +63,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			required
 		<?php endif; ?>
 	>
-		<option value=""><?php echo esc_html__( 'Select an option...', 'fair-audience' ); ?></option>
+		<option value=""><?php echo esc_html__( 'Select an option...', 'fair-form' ); ?></option>
 		<?php foreach ( $options as $option ) : ?>
 			<option value="<?php echo esc_attr( $option ); ?>">
 				<?php echo esc_html( $option ); ?>

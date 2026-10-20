@@ -8,7 +8,7 @@
 	"icon": "editor-paragraph",
 	"description": "A long text (textarea) question for Fair Form",
 	"keywords": [ "question", "textarea", "long text" ],
-	"textdomain": "fair-audience",
+	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
 		"fair-audience/event-signup",

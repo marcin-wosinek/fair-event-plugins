@@ -38,6 +38,7 @@ export const TEXT_DOMAIN_OWNERS = {
 	'fair-audience-experimental': 'fair-audience-experimental',
 	'fair-events-experimental': 'fair-events-experimental',
 	'fair-finance': 'fair-finance',
+	'fair-form': 'fair-form',
 };
 
 /**

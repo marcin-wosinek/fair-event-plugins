@@ -14,8 +14,8 @@
 
 defined( 'WPINC' ) || die;
 
-$submit_text      = ! empty( $attributes['submitButtonText'] ) ? $attributes['submitButtonText'] : __( 'Submit', 'fair-audience' );
-$success_message  = ! empty( $attributes['successMessage'] ) ? $attributes['successMessage'] : __( 'Thank you for your submission!', 'fair-audience' );
+$submit_text      = ! empty( $attributes['submitButtonText'] ) ? $attributes['submitButtonText'] : __( 'Submit', 'fair-form' );
+$success_message  = ! empty( $attributes['successMessage'] ) ? $attributes['successMessage'] : __( 'Thank you for your submission!', 'fair-form' );
 $event_date_id    = (int) ( $attributes['eventDateId'] ?? 0 );
 $block_form_id    = ! empty( $attributes['formId'] ) ? sanitize_text_field( $attributes['formId'] ) : '';
 $block_form_title = ! empty( $attributes['formTitle'] ) ? sanitize_text_field( $attributes['formTitle'] ) : '';

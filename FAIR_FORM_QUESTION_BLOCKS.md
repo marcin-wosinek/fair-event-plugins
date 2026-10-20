@@ -31,7 +31,9 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
 ## 2. Block registration (`fair-form/src/Hooks/BlockHooks.php`)
 
 -   `register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-{type}' )`
--   `wp_set_script_translations( 'fair-form-fair-form-{type}-editor-script', 'fair-audience', $translations_path )`
+-   `wp_set_script_translations( 'fair-audience-fair-form-{type}-editor-script', 'fair-form', $translations_path )` —
+    WordPress derives the handle from the block name, and the domain is
+    Fair Form's own (see [I18N_SETUP.md](./I18N_SETUP.md))
 
 ## 3. The step that's easy to miss: parent `ALLOWED_BLOCKS`
 
