@@ -132,7 +132,7 @@ export default function DayCell( {
 					<Button
 						className="fair-events-calendar-add-btn"
 						onClick={ handleAddClick }
-						label={ __( 'Add event', 'fair-events' ) }
+						label={ __( 'Add event', 'fair-events-experimental' ) }
 						icon="plus"
 						size="small"
 					/>
@@ -205,7 +205,7 @@ export default function DayCell( {
 										className="fair-events-calendar-destination-link"
 										title={ __(
 											'Open link destination',
-											'fair-events'
+											'fair-events-experimental'
 										) }
 										target={
 											linkType === 'external'
@@ -229,7 +229,7 @@ export default function DayCell( {
 						<span className="fair-events-calendar-more">
 							{ sprintf(
 								/* translators: %d: number of additional events */
-								__( '+%d more', 'fair-events' ),
+								__( '+%d more', 'fair-events-experimental' ),
 								hiddenCount
 							) }
 						</span>

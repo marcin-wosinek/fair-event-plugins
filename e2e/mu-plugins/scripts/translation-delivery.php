@@ -39,6 +39,7 @@ $feature_options = array(
 	'fair-events'                => 'fair_events_features',
 	'fair-finance'               => 'fair_finance_features',
 	'fair-audience-experimental' => null,
+	'fair-events-experimental'   => null,
 );
 
 if ( ! in_array( $delivery_mode, array( 'language-pack', 'bundled', 'reset' ), true ) ) {

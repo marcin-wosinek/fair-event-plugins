@@ -8,7 +8,7 @@
 
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { formatMonthLabel } from 'fair-events-shared';
+import { formatMonthLabel } from 'fair-events-shared/src/dateTime.js';
 
 export default function CalendarHeader( {
 	currentDate,
@@ -23,13 +23,13 @@ export default function CalendarHeader( {
 			<h2 className="fair-events-calendar-title">{ monthYear }</h2>
 			<div className="fair-events-calendar-nav">
 				<Button variant="secondary" onClick={ onPrevMonth }>
-					{ __( 'Previous', 'fair-events' ) }
+					{ __( 'Previous', 'fair-events-experimental' ) }
 				</Button>
 				<Button variant="primary" onClick={ onToday }>
-					{ __( 'Today', 'fair-events' ) }
+					{ __( 'Today', 'fair-events-experimental' ) }
 				</Button>
 				<Button variant="secondary" onClick={ onNextMonth }>
-					{ __( 'Next', 'fair-events' ) }
+					{ __( 'Next', 'fair-events-experimental' ) }
 				</Button>
 			</div>
 		</>

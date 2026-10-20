@@ -8,9 +8,8 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import {
 	formatTimingStart,
-	getEventDisplayTitle,
 	timingStartKey,
-} from 'fair-events-shared';
+} from 'fair-events-shared/src/dateTime.js';
 import { toFilenamePart } from 'fair-events/src/Admin/event-statistics/exportChartImage.js';
 
 export const SLOTS = [ 'current', 'comparison' ];
@@ -94,7 +93,9 @@ export function formatEventStart( event ) {
  * @return {string} Label such as "Yoga retreat — October 12, 2026 6:00 pm".
  */
 export function getEventLabel( event ) {
-	const title = getEventDisplayTitle( event?.title );
+	const title =
+		event?.title?.trim() ||
+		__( '(untitled event)', 'fair-events-experimental' );
 	const start = formatEventStart( event );
 	if ( ! start ) {
 		return title;

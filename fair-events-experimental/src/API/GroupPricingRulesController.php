@@ -53,7 +53,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id' => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -65,25 +65,25 @@ class GroupPricingRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id'             => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'group_id'       => array(
-							'description'       => __( 'Group ID.', 'fair-events' ),
+							'description'       => __( 'Group ID.', 'fair-events-experimental' ),
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						),
 						'discount_type'  => array(
-							'description'       => __( 'Discount type.', 'fair-events' ),
+							'description'       => __( 'Discount type.', 'fair-events-experimental' ),
 							'type'              => 'string',
 							'required'          => true,
 							'enum'              => array( 'percentage', 'amount' ),
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'discount_value' => array(
-							'description'       => __( 'Discount value.', 'fair-events' ),
+							'description'       => __( 'Discount value.', 'fair-events-experimental' ),
 							'type'              => 'number',
 							'required'          => true,
 							'sanitize_callback' => function ( $value ) {
@@ -106,23 +106,23 @@ class GroupPricingRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id'             => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'rule_id'        => array(
-							'description' => __( 'Rule ID.', 'fair-events' ),
+							'description' => __( 'Rule ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'discount_type'  => array(
-							'description'       => __( 'Discount type.', 'fair-events' ),
+							'description'       => __( 'Discount type.', 'fair-events-experimental' ),
 							'type'              => 'string',
 							'enum'              => array( 'percentage', 'amount' ),
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'discount_value' => array(
-							'description'       => __( 'Discount value.', 'fair-events' ),
+							'description'       => __( 'Discount value.', 'fair-events-experimental' ),
 							'type'              => 'number',
 							'sanitize_callback' => function ( $value ) {
 								return floatval( $value );
@@ -136,12 +136,12 @@ class GroupPricingRulesController extends WP_REST_Controller {
 					'permission_callback' => array( $this, 'items_permissions_check' ),
 					'args'                => array(
 						'id'      => array(
-							'description' => __( 'Event date ID.', 'fair-events' ),
+							'description' => __( 'Event date ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
 						'rule_id' => array(
-							'description' => __( 'Rule ID.', 'fair-events' ),
+							'description' => __( 'Rule ID.', 'fair-events-experimental' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -174,7 +174,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $event_date ) {
 			return new WP_Error(
 				'rest_event_date_not_found',
-				__( 'Event date not found.', 'fair-events' ),
+				__( 'Event date not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -204,7 +204,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $event_date ) {
 			return new WP_Error(
 				'rest_event_date_not_found',
-				__( 'Event date not found.', 'fair-events' ),
+				__( 'Event date not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -218,7 +218,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $rule_id ) {
 			return new WP_Error(
 				'rest_create_failed',
-				__( 'Failed to create pricing rule. The group may already have a rule for this event.', 'fair-events' ),
+				__( 'Failed to create pricing rule. The group may already have a rule for this event.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -245,7 +245,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $rule || $rule->event_date_id !== $event_date_id ) {
 			return new WP_Error(
 				'rest_rule_not_found',
-				__( 'Pricing rule not found.', 'fair-events' ),
+				__( 'Pricing rule not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -265,7 +265,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( empty( $update_data ) ) {
 			return new WP_Error(
 				'rest_no_data',
-				__( 'No data to update.', 'fair-events' ),
+				__( 'No data to update.', 'fair-events-experimental' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -275,7 +275,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_update_failed',
-				__( 'Failed to update pricing rule.', 'fair-events' ),
+				__( 'Failed to update pricing rule.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -302,7 +302,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $rule || $rule->event_date_id !== $event_date_id ) {
 			return new WP_Error(
 				'rest_rule_not_found',
-				__( 'Pricing rule not found.', 'fair-events' ),
+				__( 'Pricing rule not found.', 'fair-events-experimental' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -312,7 +312,7 @@ class GroupPricingRulesController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_delete_failed',
-				__( 'Failed to delete pricing rule.', 'fair-events' ),
+				__( 'Failed to delete pricing rule.', 'fair-events-experimental' ),
 				array( 'status' => 500 )
 			);
 		}
