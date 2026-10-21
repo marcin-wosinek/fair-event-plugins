@@ -171,10 +171,14 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 					'now'         => $current_time,
 				)
 			);
+			// Load the date rows of the posts the layout's Query Loop renders
+			// together, instead of once per post.
+			add_filter( 'the_posts', array( EventsListSeries::class, 'preload_for_query' ), 10, 2 );
 			$parsed_blocks = parse_blocks( $resolved['content'] );
 			foreach ( $parsed_blocks as $parsed_block ) {
 				echo wp_kses_post( render_block( $parsed_block ) );
 			}
+			remove_filter( 'the_posts', array( EventsListSeries::class, 'preload_for_query' ), 10 );
 			EventsListSeries::pop_context();
 			?>
 		<?php else : ?>

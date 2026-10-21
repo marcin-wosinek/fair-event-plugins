@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
-import { createProcessExecutor } from './api-test-runner.mjs';
+import { createProcessExecutor, resolveTestsPort } from './api-test-runner.mjs';
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
 
@@ -28,6 +28,8 @@ export function parseArguments(args) {
 	let scenario;
 	let outFile;
 	let jsonOut;
+	let eventsListScaling = false;
+	let sizes;
 
 	for (const argument of args) {
 		if (argument === '--reuse') {
@@ -40,6 +42,13 @@ export function parseArguments(args) {
 			outFile = argument.slice('--out='.length);
 		} else if (argument.startsWith('--json-out=')) {
 			jsonOut = argument.slice('--json-out='.length);
+		} else if (argument === '--events-list-scaling') {
+			eventsListScaling = true;
+		} else if (argument.startsWith('--sizes=')) {
+			sizes = argument
+				.slice('--sizes='.length)
+				.split(',')
+				.map((size) => (size.trim() === '' ? NaN : Number(size)));
 		} else {
 			throw new Error(`Unknown argument "${argument}".`);
 		}
@@ -49,7 +58,43 @@ export function parseArguments(args) {
 		throw new Error('The --samples option must be a positive integer.');
 	}
 
-	return { reuse, samples, scenario, outFile, jsonOut };
+	if (sizes !== undefined) {
+		if (!eventsListScaling) {
+			throw new Error(
+				'The --sizes option applies only with --events-list-scaling.'
+			);
+		}
+		const valid =
+			sizes.length > 0 &&
+			sizes.every(
+				(size, index) =>
+					Number.isInteger(size) &&
+					size >= 0 &&
+					size !== 1 &&
+					(index === 0 || size > sizes[index - 1])
+			);
+		if (!valid) {
+			throw new Error(
+				'The --sizes option must list increasing integers of 0 or 2 and more, e.g. --sizes=0,10,50,200.'
+			);
+		}
+	}
+
+	if (eventsListScaling && scenario) {
+		throw new Error(
+			'The --scenario option does not apply with --events-list-scaling, which measures fair-events alone.'
+		);
+	}
+
+	return {
+		reuse,
+		samples,
+		scenario,
+		outFile,
+		jsonOut,
+		eventsListScaling,
+		sizes,
+	};
 }
 
 /** Parse the docblock header of a WordPress plugin entry file. */
@@ -278,7 +323,7 @@ export function formatMarkdownReport({
 						? formatDelta(
 								comparison.deltaTransferBytes / 1024,
 								'KB'
-						  )
+							)
 						: '—'
 				} |`
 			);
@@ -390,40 +435,201 @@ export function findSeedProblems(seed, eventFixtures) {
 	return problems;
 }
 
+const EVENTS_LIST_SEED_SCRIPT =
+	'wp-content/mu-plugins/scripts/seed-events-list-fixtures.php';
+
 /**
- * Run the full audit: provision (unless reused), snapshot and later restore
- * plugin activation state, create fixtures, sweep the comparison matrix, and
- * always clean up — including on a thrown error or SIGINT/SIGTERM.
+ * The events list scaling sweep (`--events-list-scaling`), seeded size by
+ * size by seed-events-list-fixtures.php. See PERFORMANCE.md § Events list
+ * scaling. A recurring series needs at least two occurrences, so no size is
+ * 1, and holds at most RecurrenceService::MAX_OCCURRENCES, which caps the
+ * recurring sweep's sizes (see sweepSizes()).
+ */
+export const EVENTS_LIST_SCALING = {
+	requiredPlugin: 'fair-events',
+	sizes: [0, 10, 50, 200],
+	maxSeriesOccurrences: 100,
+	sweeps: ['events', 'recurring'],
+	pages: ['control', 'bundled-query-loop', 'scaled-query-loop', 'per-event'],
+	bundledLimit: 10,
+};
+
+/** The sizes one sweep measures: the recurring sweep stops at the series cap. */
+export function sweepSizes(sweep, sizes, scaling) {
+	if (sweep !== 'recurring') {
+		return sizes;
+	}
+	return [
+		...new Set(
+			sizes.map((size) => Math.min(size, scaling.maxSeriesOccurrences))
+		),
+	];
+}
+
+/**
+ * How many entries a page must render: none on the control page; in the
+ * events sweep every event, except that the bundled pattern stops at its
+ * limit; in the recurring sweep the one series, which the Upcoming view
+ * groups into a single entry.
+ */
+export function expectedRenderedCount(sweep, page, size, scaling) {
+	if (page === 'control' || size === 0) {
+		return 0;
+	}
+	if (sweep === 'recurring') {
+		return 1;
+	}
+	return page === 'bundled-query-loop'
+		? Math.min(size, scaling.bundledLimit)
+		: size;
+}
+
+/**
+ * Count the entries an events list rendered in a page's HTML: Query Loop
+ * posts (`li.wp-block-post`) and per-event entries (`.event-list-item`).
+ * The fixture pages hold at most one list and the theme's page template
+ * renders no other post list, so the whole page can be counted.
+ */
+export function countRenderedEntries(html) {
+	const queryLoop = html.match(/<li\b[^>]*\bclass="[^"]*\bwp-block-post\b/g);
+	const perEvent = html.match(/\bclass="event-list-item\b/g);
+	return (queryLoop?.length ?? 0) + (perEvent?.length ?? 0);
+}
+
+/** Read the `PERF_EVENTS_LIST:{json}` line seed-events-list-fixtures.php prints. */
+export function parseEventsListSeedOutput(stdout) {
+	const line = stdout
+		.split('\n')
+		.find((candidate) => candidate.startsWith('PERF_EVENTS_LIST:'));
+	if (!line) {
+		return null;
+	}
+	try {
+		return JSON.parse(line.slice('PERF_EVENTS_LIST:'.length));
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Check that a sweep's seed holds exactly what it claims to measure, and
+ * that no other event shares the site: leftover events from other runs
+ * would add to every list and to the stored counts.
+ */
+export function findEventsListSeedProblems(seed, sweep, size, scaling) {
+	if (!seed) {
+		return ['the seed script printed no PERF_EVENTS_LIST result'];
+	}
+	const problems = [];
+	const expected = {
+		storedEvents: sweep === 'events' ? size : Math.min(size, 1),
+		storedSeries: sweep === 'recurring' ? Math.min(size, 1) : 0,
+		upcomingOccurrences: size,
+	};
+	for (const [key, value] of Object.entries(expected)) {
+		if (seed[key] !== value) {
+			problems.push(`expected ${key} ${value}, got ${seed[key]}`);
+		}
+	}
+	if (seed.foreignOccurrences !== 0) {
+		problems.push(
+			`the site holds ${seed.foreignOccurrences} upcoming occurrences that are not fixtures; measure on a freshly reset tests database`
+		);
+	}
+	for (const page of scaling.pages) {
+		if (!seed.pages?.[page]) {
+			problems.push(`no URL for the ${page} page`);
+		}
+	}
+	return problems;
+}
+
+/**
+ * Reduce one recorded query to its shape, so the same lookup made for
+ * different rows groups together: literals become `?`, IN lists `(…)`.
+ */
+export function normalizeQuery(sql) {
+	return sql
+		.replace(/'(?:[^'\\]|\\.)*'/g, '?')
+		.replace(/\b\d+(?:\.\d+)?\b/g, '?')
+		.replace(/\(\s*\?(?:\s*,\s*\?)*\s*\)/g, '(…)')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+/**
+ * The code that issued a recorded query: the last two frames of the call
+ * stack wpdb records (wpdb's own frames are already left out), so a shared
+ * model lookup is told apart by its caller.
+ */
+export function queryCaller(callstack) {
+	const frames = String(callstack)
+		.split(', ')
+		.map((frame) => frame.trim())
+		.filter(Boolean);
+	return frames.slice(-2).join(' → ');
+}
+
+/**
+ * Group a list render's recorded queries by caller and query shape, with a
+ * count for each group.
+ */
+export function summarizeProfile(recorded) {
+	const groups = new Map();
+	for (const query of recorded) {
+		const caller = queryCaller(query.caller);
+		const shape = normalizeQuery(query.sql);
+		const key = `${caller}\n${shape}`;
+		const group = groups.get(key) ?? { caller, shape, count: 0 };
+		group.count++;
+		groups.set(key, group);
+	}
+	return [...groups.values()].sort((a, b) => b.count - a.count);
+}
+
+/** Read the `FAIR_PERF_PROFILE` comment the instrumentation appends on a profile request. */
+export function parseProfileComment(html) {
+	const match = /<!-- FAIR_PERF_PROFILE:(.*?) -->\s*$/s.exec(html);
+	if (!match) {
+		return null;
+	}
+	try {
+		return JSON.parse(match[1]);
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Own the audit's environment around `run`: provision it (unless reused),
+ * snapshot the plugin activation state, remove fixtures an earlier run left
+ * behind, and afterwards always remove the fixtures, restore the activation
+ * state and stop an owned environment — including on a thrown error or
+ * SIGINT/SIGTERM.
  *
- * Measurement has two phases. The fixture pages are measured first, in every
- * scenario, while the site holds no events, so their numbers stay comparable
- * with earlier runs. Only then are the event fixtures seeded and their pages
- * measured, in the scenarios `scenarioMeasuresEventPages()` accepts.
+ * `run` receives `{ wpCli, activateOnly, phase, interrupted }` and returns
+ * the outcome (`{ code, ... }`). `interrupted()` is the signal received so
+ * far, if any; a run that sees one stops measuring and returns
+ * `{ code: SIGNAL_EXIT_CODES[signal] }`.
  *
- * Cleanup removes the fixtures before restoring the activation state, and a
- * cleanup step that fails turns an otherwise successful run into a failed
+ * A cleanup step that fails turns an otherwise successful run into a failed
  * one.
  */
-export async function runPerformanceAudit({
-	options,
-	executor,
-	plugins,
-	matrix,
-	fixtures,
-	eventFixtures,
-	baseUrl,
-	measureBackend,
-	measureFrontend,
-	logger = console.log,
-	signalSource = process,
-}) {
+export async function withAuditEnvironment(
+	{
+		options,
+		executor,
+		plugins,
+		logger = console.log,
+		signalSource = process,
+	},
+	run
+) {
 	const allSlugs = plugins.map((p) => p.slug);
 	let ownsEnvironment = false;
 	let capturedState = false;
 	let originalActivePlugins = [];
 	let interruptedSignal;
-	const results = [];
-	const skipped = [];
 
 	const onSignal = (signal) => {
 		interruptedSignal ??= signal;
@@ -454,22 +660,7 @@ export async function runPerformanceAudit({
 		return activate.code;
 	}
 
-	async function measurePage(scenario, pageKey, url) {
-		const samples = [];
-		for (let i = 0; i < options.samples + 1; i++) {
-			samples.push(await measureBackend(url));
-		}
-		const metrics = aggregateSamples(samples);
-		const frontend = await measureFrontend(url);
-		results.push({
-			scenario: scenario.name,
-			page: pageKey,
-			metrics,
-			frontend,
-		});
-	}
-
-	async function measure() {
+	async function prepare() {
 		if (!options.reuse) {
 			const status = await executor.run(
 				'npx',
@@ -549,130 +740,7 @@ export async function runPerformanceAudit({
 			return { code: recover.code };
 		}
 
-		phase('Creating synthetic fixture pages');
-		const createdPages = {};
-		for (const [pageKey, fixture] of Object.entries(fixtures)) {
-			const create = await wpCli(
-				[
-					'post',
-					'create',
-					'--post_type=page',
-					'--post_status=publish',
-					`--post_title=${fixture.title}`,
-					`--post_name=${fixture.slug}`,
-					`--post_content=${fixture.content}`,
-					`--meta_input=${JSON.stringify({
-						[FIXTURE_MARKER_META]: '1',
-					})}`,
-					'--porcelain',
-				],
-				{ capture: true }
-			);
-			if (create.code !== 0) {
-				return { code: create.code };
-			}
-			createdPages[pageKey] = create.stdout.trim();
-		}
-
-		const scenarios = options.scenario
-			? matrix.filter((s) => s.name === options.scenario)
-			: matrix;
-		if (options.scenario && scenarios.length === 0) {
-			logger(`Unknown scenario "${options.scenario}".`);
-			return { code: 2 };
-		}
-
-		for (const scenario of scenarios) {
-			if (interruptedSignal) {
-				break;
-			}
-
-			phase(`Measuring scenario: ${scenario.name}`);
-			const code = await activateOnly(scenario.plugins);
-			if (code !== 0) {
-				return { code };
-			}
-
-			for (const [pageKey, pageId] of Object.entries(createdPages)) {
-				await measurePage(scenario, pageKey, `${baseUrl}/?p=${pageId}`);
-			}
-		}
-
-		const eventScenarios = eventFixtures
-			? scenarios.filter((s) =>
-					scenarioMeasuresEventPages(s, eventFixtures)
-			  )
-			: [];
-
-		if (eventFixtures) {
-			for (const scenario of scenarios) {
-				if (eventScenarios.includes(scenario)) {
-					continue;
-				}
-				for (const page of eventFixtures.pages) {
-					skipped.push({
-						scenario: scenario.name,
-						page,
-						status: 'n/a',
-						reason: `not measured where ${eventFixtures.requiredPlugin} is inactive — the page's blocks would render empty.`,
-					});
-				}
-			}
-		}
-
-		if (eventScenarios.length && !interruptedSignal) {
-			phase('Seeding event fixtures');
-			const code = await activateOnly([eventFixtures.requiredPlugin]);
-			if (code !== 0) {
-				return { code };
-			}
-			const seedResult = await wpCli(
-				[
-					'eval-file',
-					SEED_SCRIPT,
-					JSON.stringify(eventFixtures.config),
-				],
-				{ capture: true }
-			);
-			if (seedResult.code !== 0) {
-				return { code: seedResult.code };
-			}
-			const seed = parseSeedOutput(seedResult.stdout);
-			const problems = findSeedProblems(seed, eventFixtures);
-			if (problems.length) {
-				logger(
-					`Event fixtures are incomplete: ${problems.join('; ')}.`
-				);
-				return { code: 1 };
-			}
-
-			for (const scenario of eventScenarios) {
-				if (interruptedSignal) {
-					break;
-				}
-
-				phase(`Measuring event pages in scenario: ${scenario.name}`);
-				const activateCode = await activateOnly(scenario.plugins);
-				if (activateCode !== 0) {
-					return { code: activateCode };
-				}
-
-				for (const page of eventFixtures.pages) {
-					await measurePage(
-						scenario,
-						page,
-						`${baseUrl}${seed.pages[page]}`
-					);
-				}
-			}
-		}
-
-		if (interruptedSignal) {
-			return { code: SIGNAL_EXIT_CODES[interruptedSignal] };
-		}
-
-		const comparisons = compareToBaseline(results, matrix[0].name);
-		return { code: 0, results, comparisons, skipped };
+		return null;
 	}
 
 	/** Undo everything the run changed; returns a description of each step that failed. */
@@ -706,7 +774,14 @@ export async function runPerformanceAudit({
 	let outcome;
 	let cleanupFailures;
 	try {
-		outcome = await measure();
+		outcome =
+			(await prepare()) ??
+			(await run({
+				wpCli,
+				activateOnly,
+				phase,
+				interrupted: () => interruptedSignal,
+			}));
 	} finally {
 		signalSource.off('SIGINT', onSigint);
 		signalSource.off('SIGTERM', onSigterm);
@@ -721,6 +796,463 @@ export async function runPerformanceAudit({
 		return { ...outcome, code: 1 };
 	}
 	return outcome;
+}
+
+/**
+ * Run the full audit within withAuditEnvironment(): create the fixture
+ * pages and sweep the comparison matrix.
+ *
+ * Measurement has two phases. The fixture pages are measured first, in every
+ * scenario, while the site holds no events, so their numbers stay comparable
+ * with earlier runs. Only then are the event fixtures seeded and their pages
+ * measured, in the scenarios `scenarioMeasuresEventPages()` accepts.
+ */
+export async function runPerformanceAudit({
+	options,
+	executor,
+	plugins,
+	matrix,
+	fixtures,
+	eventFixtures,
+	baseUrl,
+	measureBackend,
+	measureFrontend,
+	logger = console.log,
+	signalSource = process,
+}) {
+	const results = [];
+	const skipped = [];
+
+	async function measurePage(scenario, pageKey, url) {
+		const samples = [];
+		for (let i = 0; i < options.samples + 1; i++) {
+			samples.push(await measureBackend(url));
+		}
+		const metrics = aggregateSamples(samples);
+		const frontend = await measureFrontend(url);
+		results.push({
+			scenario: scenario.name,
+			page: pageKey,
+			metrics,
+			frontend,
+		});
+	}
+
+	return withAuditEnvironment(
+		{ options, executor, plugins, logger, signalSource },
+		async ({ wpCli, activateOnly, phase, interrupted }) => {
+			phase('Creating synthetic fixture pages');
+			const createdPages = {};
+			for (const [pageKey, fixture] of Object.entries(fixtures)) {
+				const create = await wpCli(
+					[
+						'post',
+						'create',
+						'--post_type=page',
+						'--post_status=publish',
+						`--post_title=${fixture.title}`,
+						`--post_name=${fixture.slug}`,
+						`--post_content=${fixture.content}`,
+						`--meta_input=${JSON.stringify({
+							[FIXTURE_MARKER_META]: '1',
+						})}`,
+						'--porcelain',
+					],
+					{ capture: true }
+				);
+				if (create.code !== 0) {
+					return { code: create.code };
+				}
+				createdPages[pageKey] = create.stdout.trim();
+			}
+
+			const scenarios = options.scenario
+				? matrix.filter((s) => s.name === options.scenario)
+				: matrix;
+			if (options.scenario && scenarios.length === 0) {
+				logger(`Unknown scenario "${options.scenario}".`);
+				return { code: 2 };
+			}
+
+			for (const scenario of scenarios) {
+				if (interrupted()) {
+					break;
+				}
+
+				phase(`Measuring scenario: ${scenario.name}`);
+				const code = await activateOnly(scenario.plugins);
+				if (code !== 0) {
+					return { code };
+				}
+
+				for (const [pageKey, pageId] of Object.entries(createdPages)) {
+					await measurePage(
+						scenario,
+						pageKey,
+						`${baseUrl}/?p=${pageId}`
+					);
+				}
+			}
+
+			const eventScenarios = eventFixtures
+				? scenarios.filter((s) =>
+						scenarioMeasuresEventPages(s, eventFixtures)
+					)
+				: [];
+
+			if (eventFixtures) {
+				for (const scenario of scenarios) {
+					if (eventScenarios.includes(scenario)) {
+						continue;
+					}
+					for (const page of eventFixtures.pages) {
+						skipped.push({
+							scenario: scenario.name,
+							page,
+							status: 'n/a',
+							reason: `not measured where ${eventFixtures.requiredPlugin} is inactive — the page's blocks would render empty.`,
+						});
+					}
+				}
+			}
+
+			if (eventScenarios.length && !interrupted()) {
+				phase('Seeding event fixtures');
+				const code = await activateOnly([eventFixtures.requiredPlugin]);
+				if (code !== 0) {
+					return { code };
+				}
+				const seedResult = await wpCli(
+					[
+						'eval-file',
+						SEED_SCRIPT,
+						JSON.stringify(eventFixtures.config),
+					],
+					{ capture: true }
+				);
+				if (seedResult.code !== 0) {
+					return { code: seedResult.code };
+				}
+				const seed = parseSeedOutput(seedResult.stdout);
+				const problems = findSeedProblems(seed, eventFixtures);
+				if (problems.length) {
+					logger(
+						`Event fixtures are incomplete: ${problems.join('; ')}.`
+					);
+					return { code: 1 };
+				}
+
+				for (const scenario of eventScenarios) {
+					if (interrupted()) {
+						break;
+					}
+
+					phase(
+						`Measuring event pages in scenario: ${scenario.name}`
+					);
+					const activateCode = await activateOnly(scenario.plugins);
+					if (activateCode !== 0) {
+						return { code: activateCode };
+					}
+
+					for (const page of eventFixtures.pages) {
+						await measurePage(
+							scenario,
+							page,
+							`${baseUrl}${seed.pages[page]}`
+						);
+					}
+				}
+			}
+
+			if (interrupted()) {
+				return { code: SIGNAL_EXIT_CODES[interrupted()] };
+			}
+
+			const comparisons = compareToBaseline(results, matrix[0].name);
+			return { code: 0, results, comparisons, skipped };
+		}
+	);
+}
+
+/**
+ * Run the events list scaling sweep within withAuditEnvironment(): with
+ * fair-events alone active, seed each sweep at each fixture size, measure
+ * the control page and the three list pages, and profile each list page
+ * once with query recording.
+ *
+ * Every measured response must render the expected number of entries
+ * (expectedRenderedCount()) with exactly one events list on a list page;
+ * a mismatch fails the run, since a fixture that rendered less would only
+ * read as a cheaper list. Profile requests are separate and their timing is
+ * never reported.
+ */
+export async function runEventsListScaling({
+	options,
+	executor,
+	plugins,
+	scaling = EVENTS_LIST_SCALING,
+	baseUrl,
+	measureBackend,
+	logger = console.log,
+	signalSource = process,
+}) {
+	const sizes = Object.fromEntries(
+		scaling.sweeps.map((sweep) => [
+			sweep,
+			sweepSizes(sweep, options.sizes ?? scaling.sizes, scaling),
+		])
+	);
+	const results = [];
+
+	return withAuditEnvironment(
+		{ options, executor, plugins, logger, signalSource },
+		async ({ wpCli, activateOnly, phase, interrupted }) => {
+			phase(`Activating ${scaling.requiredPlugin} alone`);
+			const activateCode = await activateOnly([scaling.requiredPlugin]);
+			if (activateCode !== 0) {
+				return { code: activateCode };
+			}
+
+			let environment;
+
+			for (const sweep of scaling.sweeps) {
+				for (const size of sizes[sweep]) {
+					if (interrupted()) {
+						return { code: SIGNAL_EXIT_CODES[interrupted()] };
+					}
+
+					phase(`Seeding the ${sweep} sweep at size ${size}`);
+					const clear = await wpCli(['eval-file', CLEANUP_SCRIPT]);
+					if (clear.code !== 0) {
+						return { code: clear.code };
+					}
+					const seedResult = await wpCli(
+						[
+							'eval-file',
+							EVENTS_LIST_SEED_SCRIPT,
+							JSON.stringify({ sweep, size }),
+						],
+						{ capture: true }
+					);
+					if (seedResult.code !== 0) {
+						return { code: seedResult.code };
+					}
+					const seed = parseEventsListSeedOutput(seedResult.stdout);
+					const problems = findEventsListSeedProblems(
+						seed,
+						sweep,
+						size,
+						scaling
+					);
+					if (problems.length) {
+						logger(
+							`Events list fixtures are wrong (${sweep} sweep, size ${size}): ${problems.join(
+								'; '
+							)}.`
+						);
+						return { code: 1 };
+					}
+
+					for (const page of scaling.pages) {
+						const url = `${baseUrl}${seed.pages[page]}`;
+						const expected = expectedRenderedCount(
+							sweep,
+							page,
+							size,
+							scaling
+						);
+						const expectedLists = page === 'control' ? 0 : 1;
+						const samples = [];
+						for (let i = 0; i < options.samples + 1; i++) {
+							const sample = await measureBackend(url);
+							const rendered = countRenderedEntries(sample.body);
+							if (
+								rendered !== expected ||
+								sample.list.count !== expectedLists
+							) {
+								logger(
+									`${url} rendered ${rendered} entries in ${sample.list.count} events lists; expected ${expected} in ${expectedLists} (${sweep} sweep, size ${size}).`
+								);
+								return { code: 1 };
+							}
+							samples.push(sample);
+						}
+						environment ??= samples[0].environment;
+
+						const warm = samples.slice(1);
+						const result = {
+							sweep,
+							size,
+							page,
+							storedEvents: seed.storedEvents,
+							storedSeries: seed.storedSeries,
+							upcomingOccurrences: seed.upcomingOccurrences,
+							rendered: expected,
+							metrics: aggregateSamples(samples),
+							list: {
+								queryCount: median(
+									warm.map((sample) => sample.list.queryCount)
+								),
+								durationMs: median(
+									warm.map((sample) => sample.list.durationMs)
+								),
+							},
+						};
+
+						if (page !== 'control') {
+							const profiled = await measureBackend(url, {
+								profile: true,
+							});
+							result.profile = summarizeProfile(
+								profiled.recorded ?? []
+							);
+						}
+
+						results.push(result);
+					}
+				}
+			}
+
+			return { code: 0, scaling: results, environment, sizes };
+		}
+	);
+}
+
+/**
+ * Query groups of one sweep/page whose count changes across the non-empty
+ * sizes, each with its count per size (0 where the group did not occur).
+ * Comparing only non-empty sizes leaves out the one-off queries a list makes
+ * as soon as it has anything to render; with fewer than two non-empty sizes
+ * every change counts.
+ */
+export function growingQueryGroups(results, sweep, page, sizes) {
+	const groups = new Map();
+	for (const result of results) {
+		if (result.sweep !== sweep || result.page !== page) {
+			continue;
+		}
+		for (const group of result.profile ?? []) {
+			const key = `${group.caller}\n${group.shape}`;
+			const entry = groups.get(key) ?? {
+				caller: group.caller,
+				shape: group.shape,
+				counts: Object.fromEntries(sizes.map((size) => [size, 0])),
+			};
+			entry.counts[result.size] = group.count;
+			groups.set(key, entry);
+		}
+	}
+	const nonEmpty = sizes.filter((size) => size > 0);
+	const compared = nonEmpty.length >= 2 ? nonEmpty : sizes;
+	return [...groups.values()]
+		.filter(
+			(group) =>
+				new Set(compared.map((size) => group.counts[size])).size > 1
+		)
+		.sort((a, b) => b.counts[sizes.at(-1)] - a.counts[sizes.at(-1)]);
+}
+
+function truncate(text, length) {
+	return text.length > length ? `${text.slice(0, length - 1)}…` : text;
+}
+
+const SWEEP_TITLES = {
+	events: 'events sweep: distinct events, one date each',
+	recurring: 'recurring sweep: one weekly series',
+};
+
+/**
+ * Render the scaling sweep as markdown: the environment it ran in, one
+ * table per sweep with every size and page, and, per list page, the query
+ * groups whose count changes with the size. `sizes` maps each sweep to the
+ * sizes it measured.
+ */
+export function formatScalingReport({
+	scaling,
+	environment,
+	sizes,
+	samples,
+	generatedAt = new Date().toISOString(),
+}) {
+	const lines = [
+		'# Events list scaling results',
+		'',
+		`Generated: ${generatedAt}`,
+		'',
+	];
+
+	if (environment) {
+		lines.push(
+			`Environment: WordPress ${environment.wordpress}, PHP ${environment.php}, database ${environment.database}, theme ${environment.theme}, active plugins: ${environment.plugins}. Persistent object cache: ${environment.objectCache}; OPcache: ${environment.opcache}.`,
+			''
+		);
+	}
+	lines.push(
+		`Sampling: one discarded warm-up request and ${samples} measured requests per page and size; medians. Each list page is profiled with one more request whose timing is not used.`,
+		''
+	);
+
+	const pages = [...new Set(scaling.map((r) => r.page))];
+
+	for (const sweep of [...new Set(scaling.map((r) => r.sweep))]) {
+		lines.push(`## ${SWEEP_TITLES[sweep] ?? sweep}`, '');
+		lines.push(
+			'| Size | Page | Stored events | Series | Upcoming occurrences | Rendered | Queries | List queries | Duration (ms) | List duration (ms) | Peak memory (MB) |'
+		);
+		lines.push(
+			'| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+		);
+		for (const result of scaling.filter((r) => r.sweep === sweep)) {
+			lines.push(
+				`| ${result.size} | ${result.page} | ${result.storedEvents} | ${
+					result.storedSeries
+				} | ${result.upcomingOccurrences} | ${result.rendered} | ${
+					result.metrics.queryCount
+				} | ${result.list.queryCount} | ${result.metrics.durationMs.toFixed(
+					1
+				)} | ${result.list.durationMs.toFixed(1)} | ${(
+					result.metrics.memoryBytes /
+					(1024 * 1024)
+				).toFixed(2)} |`
+			);
+		}
+		lines.push('');
+
+		for (const page of pages.filter((p) => p !== 'control')) {
+			const growing = growingQueryGroups(
+				scaling,
+				sweep,
+				page,
+				sizes[sweep]
+			);
+			lines.push(`### ${sweep} sweep, ${page}: queries that grow`, '');
+			if (!growing.length) {
+				lines.push(
+					'No recorded query group changes its count across the sizes.',
+					''
+				);
+				continue;
+			}
+			lines.push(
+				`| Caller | Query | ${sizes[sweep].join(' | ')} |`,
+				`| --- | --- | ${sizes[sweep].map(() => '---').join(' | ')} |`
+			);
+			for (const group of growing) {
+				lines.push(
+					`| \`${group.caller}\` | \`${truncate(
+						group.shape,
+						90
+					).replace(/\|/g, '\\|')}\` | ${sizes[sweep]
+						.map((size) => group.counts[size])
+						.join(' | ')} |`
+				);
+			}
+			lines.push('');
+		}
+	}
+
+	return lines.join('\n');
 }
 
 const PLAIN_PAGE_CONTENT =
@@ -748,11 +1280,14 @@ const FIXTURES = {
 	},
 };
 
-async function realMeasureBackend(url) {
+async function realMeasureBackend(url, { profile = false } = {}) {
 	const response = await fetch(url, {
-		headers: { 'X-Fair-Performance-Audit': '1' },
+		headers: {
+			'X-Fair-Performance-Audit': '1',
+			...(profile ? { 'X-Fair-Performance-Profile': '1' } : {}),
+		},
 	});
-	await response.arrayBuffer();
+	const body = await response.text();
 
 	// An error page is fast and cheap, so it must never pass as a measurement.
 	if (!response.ok) {
@@ -775,7 +1310,25 @@ async function realMeasureBackend(url) {
 		);
 	}
 
-	return { durationMs, memoryBytes, queryCount };
+	const environmentHeader = response.headers.get('x-fair-perf-environment');
+
+	return {
+		durationMs,
+		memoryBytes,
+		queryCount,
+		list: {
+			count: Number(response.headers.get('x-fair-perf-list-count')),
+			queryCount: Number(
+				response.headers.get('x-fair-perf-list-query-count')
+			),
+			durationMs: Number(
+				response.headers.get('x-fair-perf-list-duration-ms')
+			),
+		},
+		environment: environmentHeader ? JSON.parse(environmentHeader) : null,
+		body,
+		recorded: profile ? parseProfileComment(body) : undefined,
+	};
 }
 
 async function createFrontendMeasurer() {
@@ -833,11 +1386,53 @@ async function main() {
 	);
 	const plugins = await loadPluginCatalog(rootDirectory);
 	const matrix = buildComparisonMatrix(plugins);
-	const baseUrl = 'http://localhost:8889';
+	const baseUrl = `http://localhost:${await resolveTestsPort(rootDirectory)}`;
 	const executor = createProcessExecutor({
 		cwd: rootDirectory,
 		env: { ...process.env, CI: '1' },
 	});
+
+	if (options.eventsListScaling) {
+		const outcome = await runEventsListScaling({
+			options,
+			executor,
+			plugins,
+			baseUrl,
+			measureBackend: realMeasureBackend,
+		});
+		if (outcome.scaling) {
+			const report = formatScalingReport({
+				scaling: outcome.scaling,
+				environment: outcome.environment,
+				sizes: outcome.sizes,
+				samples: options.samples,
+			});
+			console.log(`\n${report}`);
+			if (options.outFile) {
+				await writeFile(options.outFile, report);
+				console.log(`\nReport written to ${options.outFile}`);
+			}
+			if (options.jsonOut) {
+				await writeFile(
+					options.jsonOut,
+					JSON.stringify(
+						{
+							generatedAt: new Date().toISOString(),
+							mode: 'events-list-scaling',
+							environment: outcome.environment,
+							sizes: outcome.sizes,
+							results: outcome.scaling,
+						},
+						null,
+						2
+					)
+				);
+				console.log(`JSON report written to ${options.jsonOut}`);
+			}
+		}
+		process.exitCode = outcome.code;
+		return;
+	}
 
 	const frontendMeasurer = await createFrontendMeasurer();
 	let outcome;

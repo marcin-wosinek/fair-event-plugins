@@ -604,4 +604,141 @@ test.describe( 'Events List block', () => {
 			await cleanupPage( page, listPage );
 		}
 	} );
+
+	test( 'gives each post in an Upcoming Query Loop the next date the per-event layout shows', async ( {
+		page,
+	} ) => {
+		test.setTimeout( 120_000 );
+
+		const now = new Date();
+		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+		const at = ( days ) =>
+			iso( new Date( now.getTime() + days * 24 * 60 * 60 * 1000 ) );
+		const suffix = Date.now();
+
+		const category = await apiFetch( page, {
+			path: '/wp/v2/categories',
+			method: 'POST',
+			data: { name: `Events List Next Date Category ${ suffix }` },
+		} );
+
+		// The Query Loop looks up every rendered post's next date together
+		// (#1669): a single event, a series whose next date is a generated
+		// occurrence (its master has passed), a series starting later, and
+		// a past event that must not be listed.
+		const fixtures = [
+			{ name: 'Single', start: 3 },
+			{ name: 'Started Series', start: -6, rrule: 'FREQ=WEEKLY;COUNT=3' },
+			{ name: 'Later Series', start: 5, rrule: 'FREQ=WEEKLY;COUNT=3' },
+			{ name: 'Past', start: -2 },
+		];
+		const created = [];
+
+		const pattern = await apiFetch( page, {
+			path: '/wp/v2/blocks',
+			method: 'POST',
+			data: {
+				title: `Events List Next Date Pattern ${ suffix }`,
+				status: 'publish',
+				content:
+					'<!-- wp:html --><p class="next-date-fixture">{{title}} | {{date_range}}</p><!-- /wp:html -->',
+			},
+		} );
+		let listPage;
+
+		try {
+			for ( const fixture of fixtures ) {
+				const title = `Next Date ${ fixture.name } ${ suffix }`;
+				const event = await apiFetch( page, {
+					path: '/wp/v2/fair_event',
+					method: 'POST',
+					data: {
+						title,
+						status: 'publish',
+						categories: [ category.id ],
+					},
+				} );
+				const ensured = await apiFetch( page, {
+					path: '/fair-events/v1/event-dates/ensure-for-post',
+					method: 'POST',
+					data: { post_id: event.id },
+				} );
+				created.push( { event, ensured, title } );
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ ensured.id }`,
+					method: 'PUT',
+					data: {
+						...timingFields(
+							at( fixture.start ),
+							at( fixture.start + 1 / 24 )
+						),
+						all_day: false,
+						...( fixture.rrule ? { rrule: fixture.rrule } : {} ),
+					},
+				} );
+			}
+
+			listPage = await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Events List Next Date Page ${ suffix }`,
+					status: 'publish',
+					content:
+						`<!-- wp:fair-events/events-list {"displayPattern":"wp_block:${ pattern.id }","categories":[${ category.id }],"className":"list-per-event"} /-->` +
+						`<!-- wp:fair-events/events-list {"displayPattern":"fair-events/event-list","categories":[${ category.id }],"className":"list-query-loop"} /-->`,
+				},
+			} );
+
+			await page.goto( listPage.link );
+
+			// Both layouts list the three upcoming events in date order. The
+			// per-event row's date is the list's own occurrence selection,
+			// which the Query Loop's dates block must match.
+			const perEventDates = (
+				await page
+					.locator( '.list-per-event .next-date-fixture' )
+					.allTextContents()
+			).map( ( row ) => row.split( ' | ' )[ 1 ].trim() );
+			expect( perEventDates ).toHaveLength( 3 );
+
+			const queryLoopPosts = page.locator(
+				'.list-query-loop li.wp-block-post'
+			);
+			await expect( queryLoopPosts ).toHaveCount( 3 );
+			const titles = [ 1, 0, 2 ].map(
+				( index ) => created[ index ].title
+			);
+			for ( const [ index, title ] of titles.entries() ) {
+				const post = queryLoopPosts.nth( index );
+				await expect( post ).toContainText( title );
+				await expect( post.locator( '.event-dates' ) ).toHaveText(
+					perEventDates[ index ]
+				);
+			}
+			await expect(
+				page.locator( '.list-query-loop .event-dates' ).first()
+			).toContainText( /next occurrence: / );
+		} finally {
+			for ( const { event, ensured } of created ) {
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ ensured.id }`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+				await apiFetch( page, {
+					path: `/wp/v2/fair_event/${ event.id }?force=true`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+			}
+			await apiFetch( page, {
+				path: `/wp/v2/blocks/${ pattern.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/categories/${ category.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await cleanupPage( page, listPage );
+		}
+	} );
 } );
