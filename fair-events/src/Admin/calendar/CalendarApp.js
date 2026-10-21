@@ -15,9 +15,14 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { formatLocalDate, calculateLeadingDays } from 'fair-events-shared';
-import CalendarHeader from './components/CalendarHeader.js';
-import CalendarGrid from './components/CalendarGrid.js';
+import { formatLocalDate } from 'fair-events-shared/src/calendarUtils.js';
+import {
+	CalendarHeader,
+	CalendarGrid,
+	addMonths,
+	getVisibleRange,
+} from 'fair-events-shared/src/calendar/index.js';
+import { getCalendarLabels } from './calendarLabels.js';
 import CalendarLegend from './components/CalendarLegend.js';
 import QuickEventModal from './components/QuickEventModal.js';
 import {
@@ -44,32 +49,9 @@ function viewUrl( view ) {
 	);
 }
 
-/**
- * Date range of the visible grid, including adjacent-month days.
- *
- * @param {Date} month Any date in the displayed month.
- * @return {{startDate: Date, endDate: Date}} Inclusive range.
- */
-function getVisibleRange( month ) {
-	const year = month.getFullYear();
-	const monthIndex = month.getMonth();
-	const firstDayOfMonth = new Date( year, monthIndex, 1 );
-	const lastDayOfMonth = new Date( year, monthIndex + 1, 0 );
-
-	// Get start_of_week setting (0 = Sunday, 1 = Monday)
-	const startOfWeek = window.fairEventsCalendarData?.startOfWeek ?? 1;
-
-	const leadingDays = calculateLeadingDays( firstDayOfMonth, startOfWeek );
-	const totalCells = leadingDays + lastDayOfMonth.getDate();
-	const trailingDays = totalCells % 7 === 0 ? 0 : 7 - ( totalCells % 7 );
-
-	const startDate = new Date( firstDayOfMonth );
-	startDate.setDate( startDate.getDate() - leadingDays );
-
-	const endDate = new Date( lastDayOfMonth );
-	endDate.setDate( endDate.getDate() + trailingDays );
-
-	return { startDate, endDate };
+// Get start_of_week setting (0 = Sunday, 1 = Monday)
+function getStartOfWeek() {
+	return window.fairEventsCalendarData?.startOfWeek ?? 1;
 }
 
 /**
@@ -236,7 +218,10 @@ export default function CalendarApp() {
 		}
 
 		setEventsState( { status: 'loading', events: [], error: null } );
-		const { startDate, endDate } = getVisibleRange( currentDate );
+		const { startDate, endDate } = getVisibleRange(
+			currentDate,
+			getStartOfWeek()
+		);
 
 		fetchAllEvents( startDate, endDate, selectedSlug )
 			.then( ( events ) => {
@@ -273,25 +258,11 @@ export default function CalendarApp() {
 	};
 
 	const handlePrevMonth = () => {
-		navigate( {
-			...view,
-			month: new Date(
-				currentDate.getFullYear(),
-				currentDate.getMonth() - 1,
-				1
-			),
-		} );
+		navigate( { ...view, month: addMonths( currentDate, -1 ) } );
 	};
 
 	const handleNextMonth = () => {
-		navigate( {
-			...view,
-			month: new Date(
-				currentDate.getFullYear(),
-				currentDate.getMonth() + 1,
-				1
-			),
-		} );
+		navigate( { ...view, month: addMonths( currentDate, 1 ) } );
 	};
 
 	const handleToday = () => {
@@ -356,6 +327,8 @@ export default function CalendarApp() {
 		} );
 	}
 
+	const calendarLabels = getCalendarLabels();
+
 	const hasNoMatches =
 		eventsState.status === 'success' &&
 		!! selectedCategory &&
@@ -416,6 +389,7 @@ export default function CalendarApp() {
 						onNextMonth={ handleNextMonth }
 						onToday={ handleToday }
 						onAddEvent={ handleHeaderAddEvent }
+						labels={ calendarLabels }
 					/>
 				</CardHeader>
 				<CardBody className="fair-events-calendar-card-body">
@@ -439,12 +413,17 @@ export default function CalendarApp() {
 							<CalendarGrid
 								currentDate={ currentDate }
 								events={ eventsState.events }
+								startOfWeek={ getStartOfWeek() }
 								onAddEvent={ handleAddEvent }
 								manageEventUrl={
 									window.fairEventsCalendarData
 										?.manageEventUrl
 								}
 								forceGrid={ hasNoMatches }
+								showEmptyMessage={
+									eventsState.status === 'success'
+								}
+								labels={ calendarLabels }
 							/>
 							<CalendarLegend />
 						</>

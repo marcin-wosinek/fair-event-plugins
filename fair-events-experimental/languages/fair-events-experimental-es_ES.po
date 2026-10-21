@@ -422,31 +422,29 @@ msgstr "Eso no parece un token de acceso de Meta. Pega el token completo generad
 msgid "Per-bundle feature toggles for experimental features"
 msgstr "Controles de funcionalidad por paquete para funciones experimentales"
 
-#: src/Admin/calendar/components/CalendarHeader.js:26
+#: src/Admin/source-view/calendarLabels.js:17
 msgid "Previous"
 msgstr "Anterior"
 
-#: src/Admin/calendar/components/CalendarHeader.js:29
+#: src/Admin/source-view/calendarLabels.js:18
 msgid "Today"
 msgstr "Hoy"
 
-#: src/Admin/calendar/components/CalendarHeader.js:32
+#: src/Admin/source-view/calendarLabels.js:19
 msgid "Next"
 msgstr "Siguiente"
 
-#: src/Admin/calendar/components/DayCell.js:135
-msgid "Add event"
-msgstr "Añadir evento"
-
-#: src/Admin/calendar/components/DayCell.js:206
+#: src/Admin/source-view/calendarLabels.js:21
 msgid "Open link destination"
 msgstr "Abrir destino del enlace"
 
 #. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:232
+#: src/Admin/source-view/calendarLabels.js:29
 #, js-format
 msgid "+%d more"
-msgstr "+%d más"
+msgid_plural "+%d more"
+msgstr[0] "+%d más"
+msgstr[1] "+%d más"
 
 #: src/Admin/compare-events/CompareEventsPage.js:36
 #: src/Admin/compare-events/ComparisonChart.js:41
@@ -580,6 +578,7 @@ msgstr "No se pudo cargar la lista de eventos."
 
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/settings/MetaCalendarTest.js:85
+#: src/Admin/source-view/calendarLabels.js:20
 msgid "(untitled event)"
 msgstr "(evento sin título)"
 
@@ -1217,54 +1216,54 @@ msgstr "Abrir notificaciones de eventos"
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr "Las notificaciones semanales de Telegram ahora se gestionan y envían mediante Fair Events. Actualiza Fair Events para gestionarlas; hasta entonces no se enviará ninguna notificación semanal."
 
-#: src/Admin/source-view/SourceViewApp.js:76
+#: src/Admin/source-view/SourceViewApp.js:81
 msgid "Failed to load event feed."
 msgstr "No se ha podido cargar el feed de eventos."
 
-#: src/Admin/source-view/SourceViewApp.js:90
+#: src/Admin/source-view/SourceViewApp.js:95
 msgid "No event feed ID provided."
 msgstr "No se ha indicado el ID del feed de eventos."
 
-#: src/Admin/source-view/SourceViewApp.js:210
-#: src/Admin/source-view/SourceViewApp.js:228
+#: src/Admin/source-view/SourceViewApp.js:231
+#: src/Admin/source-view/SourceViewApp.js:249
 msgid "Back to Event Feeds"
 msgstr "Volver a Feeds de eventos"
 
 #. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:235
+#: src/Admin/source-view/SourceViewApp.js:256
 #, js-format
 msgid "Event feed: %s"
 msgstr "Feed de eventos: %s"
 
-#: src/Admin/source-view/SourceViewApp.js:252
+#: src/Admin/source-view/SourceViewApp.js:273
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr "Slug"
 
-#: src/Admin/source-view/SourceViewApp.js:258
+#: src/Admin/source-view/SourceViewApp.js:279
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/source-view/SourceViewApp.js:262
+#: src/Admin/source-view/SourceViewApp.js:283
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr "Activa"
 
-#: src/Admin/source-view/SourceViewApp.js:263
+#: src/Admin/source-view/SourceViewApp.js:284
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr "Desactivado"
 
-#: src/Admin/source-view/SourceViewApp.js:268
+#: src/Admin/source-view/SourceViewApp.js:289
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr "Entradas del feed"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:273
+#: src/Admin/source-view/SourceViewApp.js:294
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1272,42 +1271,42 @@ msgid_plural "%d feed inputs"
 msgstr[0] "%d entrada del feed"
 msgstr[1] "%d entradas del feed"
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/SourceViewApp.js:307
 msgid "Page"
 msgstr "Página"
 
-#: src/Admin/source-view/SourceViewApp.js:294
+#: src/Admin/source-view/SourceViewApp.js:315
 msgid "View page"
 msgstr "Ver página"
 
-#: src/Admin/source-view/SourceViewApp.js:304
+#: src/Admin/source-view/SourceViewApp.js:325
 msgid "Feed URLs"
 msgstr "URL del feed"
 
-#: src/Admin/source-view/SourceViewApp.js:309
+#: src/Admin/source-view/SourceViewApp.js:330
 msgid "iCal"
 msgstr "iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:313
+#: src/Admin/source-view/SourceViewApp.js:334
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr "Copiar URL del feed iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:320
+#: src/Admin/source-view/SourceViewApp.js:341
 msgid "JSON"
 msgstr "JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:324
+#: src/Admin/source-view/SourceViewApp.js:345
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr "Copiar URL de la API JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:336
-#: src/Admin/source-view/SourceViewApp.js:349
+#: src/Admin/source-view/SourceViewApp.js:357
+#: src/Admin/source-view/SourceViewApp.js:370
 msgid "Edit event feed"
 msgstr "Editar feed de eventos"
 
-#: src/Admin/source-view/SourceViewApp.js:374
+#: src/Admin/source-view/SourceViewApp.js:411
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr "Editar feed de eventos"
@@ -1504,3 +1503,11 @@ msgstr "Editar"
 #: src/Admin/sources/SourcesList.js:346
 msgid "Delete"
 msgstr "Eliminar"
+
+#: src/Admin/source-view/calendarLabels.js:25
+msgid "No events this month."
+msgstr "No hay eventos este mes."
+
+#: src/Admin/source-view/SourceViewApp.js:166
+msgid "Failed to load events."
+msgstr "Error al cargar los eventos."

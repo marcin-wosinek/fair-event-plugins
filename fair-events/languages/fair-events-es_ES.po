@@ -329,13 +329,13 @@ msgstr "Copiar"
 
 #: src/blocks/events-calendar/render.php:373
 #: src/blocks/events-week/render.php:225
-#: src/Admin/calendar/components/CalendarHeader.js:27
+#: src/Admin/calendar/calendarLabels.js:16
 msgid "Previous"
 msgstr "Anterior"
 
 #: src/blocks/events-calendar/render.php:383
 #: src/blocks/events-week/render.php:233
-#: src/Admin/calendar/components/CalendarHeader.js:33
+#: src/Admin/calendar/calendarLabels.js:18
 msgid "Next"
 msgstr "Siguiente"
 
@@ -370,7 +370,7 @@ msgstr "Mostrar navegación de mes anterior/siguiente"
 
 #: src/Admin/AdminPages.php:94
 #: src/Admin/AdminPages.php:111
-#: src/Admin/calendar/CalendarApp.js:366
+#: src/Admin/calendar/CalendarApp.js:339
 msgid "Events Calendar"
 msgstr "Calendario de eventos"
 
@@ -636,7 +636,7 @@ msgstr "Calendario"
 #: src/Admin/AdminPages.php:165
 #: src/Admin/AdminPages.php:172
 #: src/Hooks/AdminBarHooks.php:59
-#: src/Admin/calendar/CalendarApp.js:393
+#: src/Admin/calendar/CalendarApp.js:366
 #: src/Admin/manage-event/ManageEventApp.js:1236
 #: src/Admin/manage-event/ManageEventApp.js:1586
 msgid "Manage Event"
@@ -798,31 +798,32 @@ msgstr "Número de página."
 msgid "Post types that can have event data"
 msgstr "Tipos de publicación que pueden tener datos de evento"
 
-#: src/Admin/calendar/CalendarApp.js:258
+#: src/Admin/calendar/CalendarApp.js:243
 msgid "Failed to load events."
 msgstr "Error al cargar los eventos."
 
 #. translators: %s: event title
-#: src/Admin/calendar/CalendarApp.js:388
+#: src/Admin/calendar/CalendarApp.js:361
 #, js-format
 msgid "Event \"%s\" created."
 msgstr "Evento «%s» creado."
 
-#: src/Admin/calendar/components/CalendarHeader.js:30
+#: src/Admin/calendar/calendarLabels.js:17
 msgid "Today"
 msgstr "Hoy"
 
-#: src/Admin/calendar/components/CalendarHeader.js:36
-#: src/Admin/calendar/components/DayCell.js:140
+#: src/Admin/calendar/calendarLabels.js:19
 #: src/Admin/calendar/components/QuickEventModal.js:305
 msgid "Add event"
 msgstr "Añadir evento"
 
 #. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:233
+#: src/Admin/calendar/calendarLabels.js:26
 #, js-format
 msgid "+%d more"
-msgstr "+%d más"
+msgid_plural "+%d more"
+msgstr[0] "+%d más"
+msgstr[1] "+%d más"
 
 #: src/Admin/calendar/components/QuickEventModal.js:260
 #: src/Admin/event-meta-box/LinkOptions.js:82
@@ -1489,7 +1490,7 @@ msgstr "+ Agregar período"
 msgid "Short name"
 msgstr "Nombre corto"
 
-#: src/Admin/calendar/components/DayCell.js:207
+#: src/Admin/calendar/calendarLabels.js:21
 msgid "Open link destination"
 msgstr "Abrir destino del enlace"
 
@@ -1966,7 +1967,7 @@ msgstr "Fecha de la serie"
 msgid "Title is required."
 msgstr "El título es obligatorio."
 
-#: src/Admin/calendar/components/linkTypes.js:59
+#: src/Admin/calendar/components/linkTypes.js:39
 #: src/Admin/manage-event/EventContextHeader.js:91
 msgid "No public page yet"
 msgstr "Sin página pública aún"
@@ -2149,15 +2150,15 @@ msgstr "Los calendarios suscritos se actualizan según el horario de tu aplicaci
 msgid "Copy feed URL"
 msgstr "Copiar URL del feed"
 
-#: src/Admin/calendar/components/linkTypes.js:44
+#: src/Admin/calendar/components/linkTypes.js:24
 msgid "Public page"
 msgstr "Página pública"
 
-#: src/Admin/calendar/components/linkTypes.js:49
+#: src/Admin/calendar/components/linkTypes.js:29
 msgid "Series occurrence"
 msgstr "Ocurrencia de serie"
 
-#: src/Admin/calendar/components/linkTypes.js:54
+#: src/Admin/calendar/components/linkTypes.js:34
 msgid "External page"
 msgstr "Página externa"
 
@@ -2567,6 +2568,7 @@ msgstr "Cronología de períodos de venta"
 #: src/Helpers/OccurrenceFields.php:43
 #: src/Notifications/WeeklyEmailRenderer.php:150
 #: src/Services/EventPublication.php:158
+#: src/Admin/calendar/calendarLabels.js:20
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
 msgstr "(evento sin título)"
@@ -2615,7 +2617,7 @@ msgstr "Número de ocurrencias"
 msgid "Sitewide organizer identity for structured data"
 msgstr "Identidad del organizador en todo el sitio para datos estructurados"
 
-#: src/Admin/calendar/components/CalendarGrid.js:131
+#: src/Admin/calendar/calendarLabels.js:22
 msgid "No events this month."
 msgstr "No hay eventos este mes."
 
@@ -3921,13 +3923,13 @@ msgstr "Copiar al portapapeles"
 msgid "Whether to include categories from every configured Polylang language."
 msgstr "Si incluir categorías de todos los idiomas de Polylang configurados."
 
-#: src/Admin/calendar/CalendarApp.js:194
+#: src/Admin/calendar/CalendarApp.js:176
 #: src/blocks/components/CategorySelector.js:41
 msgid "Failed to load categories."
 msgstr "No se han podido cargar las categorías."
 
 #. translators: 1: category name, 2: language name
-#: src/Admin/calendar/CalendarApp.js:111
+#: src/Admin/calendar/CalendarApp.js:93
 #: src/Admin/manage-event/ManageEventApp.js:258
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
@@ -6618,19 +6620,19 @@ msgstr "(por %s)"
 msgid "(by @%s)"
 msgstr "(por @%s)"
 
-#: src/Admin/calendar/CalendarApp.js:344
+#: src/Admin/calendar/CalendarApp.js:315
 msgid "All categories"
 msgstr "Todas las categorías"
 
-#: src/Admin/calendar/CalendarApp.js:354
+#: src/Admin/calendar/CalendarApp.js:325
 msgid "Selected category"
 msgstr "Categoría seleccionada"
 
-#: src/Admin/calendar/CalendarApp.js:372
+#: src/Admin/calendar/CalendarApp.js:345
 msgid "Category"
 msgstr "Categoría"
 
-#: src/Admin/calendar/CalendarApp.js:433
+#: src/Admin/calendar/CalendarApp.js:407
 msgid "No events match this category."
 msgstr "No hay eventos en esta categoría."
 

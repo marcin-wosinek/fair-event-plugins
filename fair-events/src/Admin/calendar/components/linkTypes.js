@@ -1,34 +1,14 @@
 /**
- * Event Link Type Metadata
+ * Event Link Type Legend Metadata
  *
- * Shared source of truth for the four link-type variants shown as event
- * pills on the calendar grid (DayCell) and explained in the legend
- * (CalendarLegend).
+ * Labels for the four link-type variants shown as event pills on the shared
+ * calendar grid, with their icons from fair-events-shared.
  *
  * @package FairEvents
  */
 
 import { __ } from '@wordpress/i18n';
-
-/**
- * Get the dashicon class for a link type.
- *
- * @param {string} linkType 'post', 'instance', 'external', or 'unlinked'.
- * @return {string} Dashicon class name.
- */
-export function getLinkTypeIcon( linkType ) {
-	switch ( linkType ) {
-		case 'instance':
-			return 'dashicons-update';
-		case 'external':
-			return 'dashicons-admin-links';
-		case 'unlinked':
-			return 'dashicons-editor-unlink';
-		case 'post':
-		default:
-			return 'dashicons-admin-post';
-	}
-}
+import { getLinkTypeIcon } from 'fair-events-shared/src/calendar/eventLinks.js';
 
 /**
  * Get the list of link-type variants with their icon and user-facing label,

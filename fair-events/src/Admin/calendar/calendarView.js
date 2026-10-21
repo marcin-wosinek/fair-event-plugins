@@ -8,28 +8,13 @@
  * @package FairEvents
  */
 
-/**
- * First day of the month containing `date`.
- *
- * @param {Date} date Any date.
- * @return {Date} Local midnight on the 1st of that month.
- */
-export function startOfMonth( date ) {
-	return new Date( date.getFullYear(), date.getMonth(), 1 );
-}
+import {
+	startOfMonth,
+	formatMonthParam,
+	parseMonthParam,
+} from 'fair-events-shared/src/calendar/month.js';
 
-/**
- * Format a view's month as the `month` URL value (YYYY-MM).
- *
- * @param {Date} date Any date in the month.
- * @return {string} YYYY-MM.
- */
-export function formatMonthParam( date ) {
-	return `${ date.getFullYear() }-${ String( date.getMonth() + 1 ).padStart(
-		2,
-		'0'
-	) }`;
-}
+export { startOfMonth, formatMonthParam };
 
 /**
  * Parse a `category` URL value into a term ID. Anything other than a positive
@@ -54,16 +39,9 @@ export function parseCategoryParam( value ) {
  */
 export function parseView( search, today = new Date() ) {
 	const params = new URLSearchParams( search );
-	let month = startOfMonth( today );
-	const monthMatch = /^(\d{4})-(\d{2})$/.exec( params.get( 'month' ) || '' );
-	if ( monthMatch ) {
-		const mon = Number( monthMatch[ 2 ] );
-		if ( mon >= 1 && mon <= 12 ) {
-			month = new Date( Number( monthMatch[ 1 ] ), mon - 1, 1 );
-		}
-	}
 	return {
-		month,
+		month:
+			parseMonthParam( params.get( 'month' ) ) || startOfMonth( today ),
 		categoryId: parseCategoryParam( params.get( 'category' ) ),
 	};
 }

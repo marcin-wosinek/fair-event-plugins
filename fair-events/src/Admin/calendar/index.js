@@ -7,6 +7,7 @@
 import domReady from '@wordpress/dom-ready';
 import { createRoot } from '@wordpress/element';
 import CalendarApp from './CalendarApp.js';
+import 'fair-events-shared/src/calendar/style.css';
 import './style.css';
 
 domReady( () => {

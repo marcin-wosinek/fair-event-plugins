@@ -216,10 +216,10 @@ class AdminPages {
 				break;
 
 			case 'fair-events-source-view':
-				$asset_file     = include $exp_dir . 'build/admin/source-view/index.asset.php';
-				$calendar_asset = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/calendar/index.asset.php';
+				$asset_file = include $exp_dir . 'build/admin/source-view/index.asset.php';
 				wp_enqueue_script( 'fair-events-source-view', $exp_url . 'build/admin/source-view/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_enqueue_style( 'fair-events-calendar', FAIR_EVENTS_PLUGIN_URL . 'build/admin/calendar/style-index.css', array( 'wp-components' ), $calendar_asset['version'] );
+				// The shared calendar styles are bundled from fair-events-shared.
+				wp_enqueue_style( 'fair-events-source-view', $exp_url . 'build/admin/source-view/style-index.css', array( 'wp-components' ), $asset_file['version'] );
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$source_id = isset( $_GET['source_id'] ) ? absint( $_GET['source_id'] ) : 0;
 				wp_localize_script(

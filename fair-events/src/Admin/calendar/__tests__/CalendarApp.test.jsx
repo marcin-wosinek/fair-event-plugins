@@ -347,6 +347,43 @@ it( 'does not show the no-matches message for an empty unfiltered month', async 
 	).not.toBeInTheDocument();
 } );
 
+it( 'does not report a failed request as an empty month', async () => {
+	eventsResponder = () => Promise.reject( new Error( 'Server error' ) );
+	render( <CalendarApp /> );
+
+	expect( await screen.findByText( 'Server error' ) ).toBeInTheDocument();
+	expect(
+		document.querySelector( '.fair-events-calendar-grid' )
+	).toBeInTheDocument();
+	expect(
+		screen.queryByText( 'No events this month.' )
+	).not.toBeInTheDocument();
+} );
+
+it( 'keeps creation actions and management links on the shared calendar', async () => {
+	window.fairEventsCalendarData = {
+		startOfWeek: 1,
+		manageEventUrl: '/wp-admin/admin.php?page=fair-events-manage-event',
+	};
+	eventsBySlug[ '' ] = [
+		{ ...makeEvent( 'Concert', 10 ), uid: 'standalone_42@example.com' },
+		{ ...makeEvent( '', 11 ), uid: 'standalone_43@example.com' },
+	];
+	await renderApp();
+
+	expect(
+		await screen.findByRole( 'link', { name: /Concert/ } )
+	).toHaveAttribute(
+		'href',
+		'/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=42'
+	);
+	expect( screen.getByText( '(untitled event)' ) ).toBeInTheDocument();
+	// The header's Add event button plus one per visible day.
+	expect(
+		screen.getAllByRole( 'button', { name: 'Add event' } )
+	).toHaveLength( 36 );
+} );
+
 it( 'ignores an obsolete response that arrives after a newer selection', async () => {
 	const pending = {};
 	eventsResponder = ( params ) => {
