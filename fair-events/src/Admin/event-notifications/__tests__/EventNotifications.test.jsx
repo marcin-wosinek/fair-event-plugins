@@ -418,7 +418,11 @@ describe( 'EventNotifications', () => {
 		expect(
 			calls( 'POST', `${ PATH }/configurations/bulk_email` )
 		).toHaveLength( 0 );
-		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				tg.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 
 		// The list marks the draft left behind, and it is there on return.
 		fireEvent.click(
@@ -775,7 +779,11 @@ describe( 'Independent editors', () => {
 		expect(
 			await mail.findByText( 'Bulk email settings saved.' )
 		).toBeInTheDocument();
-		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				mail.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 
 		const tg = await openNotification( 'Telegram' );
 		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '21:00' );
@@ -833,7 +841,11 @@ describe( 'Independent editors', () => {
 		fireEvent.change( tg.getByLabelText( 'Send at' ), {
 			target: { value: '18:00' },
 		} );
-		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				tg.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 	} );
 
 	it( 'keeps the draft after a failed save and lets it be retried', async () => {
@@ -980,7 +992,11 @@ describe( 'Independent editors', () => {
 		expect( await mail.findByLabelText( 'Subject' ) ).toHaveValue(
 			'Changed meanwhile'
 		);
-		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				mail.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 		expect(
 			mail.getByRole( 'button', { name: 'Save bulk email settings' } )
 		).toBeEnabled();
@@ -1018,7 +1034,11 @@ describe( 'Independent editors', () => {
 		// A clean one follows the saved settings.
 		const tg = await openNotification( 'Telegram' );
 		expect( await tg.findByDisplayValue( '12:00' ) ).toBeInTheDocument();
-		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				tg.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 		expect(
 			tg.queryByText( /These settings were saved somewhere else/ )
 		).not.toBeInTheDocument();
@@ -1054,7 +1074,11 @@ describe( 'Independent editors', () => {
 		} );
 
 		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '18:00' );
-		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				tg.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 		expect(
 			tg.queryByText( /These settings were saved somewhere else/ )
 		).not.toBeInTheDocument();
@@ -1244,7 +1268,11 @@ describe( 'Individual email', () => {
 		expect(
 			calls( 'POST', `${ PATH }/configurations/telegram` )
 		).toHaveLength( 0 );
-		expect( own.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				own.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 	} );
 
 	it( 'edits its wording without changing the bulk email wording', async () => {
@@ -1271,7 +1299,11 @@ describe( 'Individual email', () => {
 		expect(
 			mail.getByLabelText( 'Skip the email when the week has no events' )
 		).toBeChecked();
-		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
+		await waitFor( () =>
+			expect(
+				mail.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument()
+		);
 	} );
 
 	it( 'starts off and cannot be turned on without a recipient', async () => {
