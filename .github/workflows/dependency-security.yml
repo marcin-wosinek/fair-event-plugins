@@ -1,0 +1,126 @@
+name: Dependency security
+
+# Required on main (DEPENDENCY_SECURITY.md § Required checks). Job names are
+# the required check names: rename them only together with branch protection.
+#
+# Every pull request runs every job, with no path or actor filters, so the
+# required checks never stay pending. `edited` covers a changed base branch.
+# Nothing here installs dependencies, runs lifecycle scripts or Composer
+# plugins, or reads secrets.
+
+permissions:
+    contents: read
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, edited]
+
+jobs:
+    dependency-review:
+        name: Dependency review
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            # Fails on any severity in every scope, and errors (fails) when
+            # the dependency graph can't provide review data.
+            - uses: actions/dependency-review-action@v5
+              with:
+                  fail-on-severity: low
+                  fail-on-scopes: runtime, development, unknown
+                  vulnerability-check: true
+                  license-check: false
+                  warn-only: false
+                  comment-summary-in-pr: never
+
+    npm-audit:
+        name: npm audit
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            # Vulnerability exceptions come from the base branch, so a pull
+            # request can't approve its own findings.
+            - name: Check out the base branch's dependency policy
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ github.event.pull_request.base.sha }}
+                  path: base
+                  persist-credentials: false
+                  sparse-checkout: .github/dependency-policy.json
+                  sparse-checkout-cone-mode: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Audit npm lockfiles
+              run: node scripts/dependency-security.mjs audit-npm --policy-file base/.github/dependency-policy.json
+
+    composer-audit:
+        name: Composer audit
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            - name: Check out the base branch's dependency policy
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ github.event.pull_request.base.sha }}
+                  path: base
+                  persist-credentials: false
+                  sparse-checkout: .github/dependency-policy.json
+                  sparse-checkout-cone-mode: false
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # 2.37.0
+              with:
+                  php-version: '8.4'
+                  tools: composer
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Audit Composer lockfiles
+              run: node scripts/dependency-security.mjs audit-composer --policy-file base/.github/dependency-policy.json
+
+    dependency-policy:
+        name: Dependency policy
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            # Package approvals come from the base branch: a pull request
+            # can't approve the packages it adds.
+            - name: Check out the base branch's dependency policy
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ github.event.pull_request.base.sha }}
+                  path: base
+                  persist-credentials: false
+                  sparse-checkout: .github/dependency-policy.json
+                  sparse-checkout-cone-mode: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Check direct dependencies against the policy
+              run: node scripts/dependency-security.mjs policy --policy-file base/.github/dependency-policy.json
