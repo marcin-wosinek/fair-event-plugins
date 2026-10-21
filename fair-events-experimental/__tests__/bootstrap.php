@@ -306,4 +306,53 @@ if ( ! function_exists( 'add_action' ) ) {
 	}
 }
 
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+	define( 'DAY_IN_SECONDS', 86400 );
+}
+
+if ( ! defined( 'ARRAY_A' ) ) {
+	define( 'ARRAY_A', 'ARRAY_A' );
+}
+
+if ( ! function_exists( 'wp_date' ) ) {
+	/**
+	 * Stub of WordPress wp_date() — formats in UTC.
+	 *
+	 * @param string $format    Date format.
+	 * @param int    $timestamp Unix timestamp.
+	 * @return string
+	 */
+	function wp_date( $format, $timestamp = null ) {
+		return gmdate( $format, null === $timestamp ? time() : $timestamp );
+	}
+}
+
+// Cron stubs: scheduled single events are recorded in
+// $GLOBALS['_fair_test_scheduled'] as hook name => timestamp.
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	/**
+	 * Stub of WordPress wp_next_scheduled().
+	 *
+	 * @param string $hook Hook name.
+	 * @return int|false
+	 */
+	function wp_next_scheduled( $hook ) {
+		return $GLOBALS['_fair_test_scheduled'][ $hook ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+	/**
+	 * Stub of WordPress wp_schedule_single_event().
+	 *
+	 * @param int    $timestamp Run time.
+	 * @param string $hook      Hook name.
+	 * @return true
+	 */
+	function wp_schedule_single_event( $timestamp, $hook ) {
+		$GLOBALS['_fair_test_scheduled'][ $hook ] = $timestamp;
+		return true;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';

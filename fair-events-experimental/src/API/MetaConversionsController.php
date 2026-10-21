@@ -9,6 +9,7 @@ namespace FairEventsExperimental\API;
 
 use FairEventsExperimental\Meta\Connector;
 use FairEventsExperimental\Meta\Conversions;
+use FairEventsExperimental\Meta\DeliveryAttempts;
 use FairEventsExperimental\Meta\Engagement;
 use FairEventsExperimental\Meta\Outbox;
 use WP_REST_Controller;
@@ -33,6 +34,9 @@ class MetaConversionsController extends WP_REST_Controller {
 
 	/** Candidate rows read per query while filling a calendar-events page. */
 	private const CALENDAR_EVENTS_BATCH = 200;
+
+	/** Most sent-request log entries one page returns. */
+	public const ATTEMPTS_PER_PAGE = 50;
 
 	/** Register routes. */
 	public function register_routes() {
@@ -89,6 +93,43 @@ class MetaConversionsController extends WP_REST_Controller {
 						'default'           => self::CALENDAR_EVENTS_PER_PAGE,
 						'minimum'           => 1,
 						'maximum'           => self::CALENDAR_EVENTS_PER_PAGE,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/attempts',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_attempts' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+				'args'                => array(
+					'page'       => array(
+						'type'              => 'integer',
+						'default'           => 1,
+						'minimum'           => 1,
+						'maximum'           => 1000,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'per_page'   => array(
+						'type'              => 'integer',
+						'default'           => 20,
+						'minimum'           => 1,
+						'maximum'           => self::ATTEMPTS_PER_PAGE,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'origin'     => array(
+						'type'              => 'string',
+						'default'           => '',
+						'enum'              => array_merge( array( '' ), DeliveryAttempts::ORIGINS ),
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'event_name' => array(
+						'type'              => 'string',
+						'default'           => '',
+						'pattern'           => '^([A-Za-z][A-Za-z0-9_]{0,63})?$',
 						'validate_callback' => 'rest_validate_request_arg',
 					),
 				),
@@ -178,6 +219,33 @@ class MetaConversionsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Sent requests, newest first, each paired with Meta's answer. Only
+	 * sanitized snapshots and allowlisted diagnostics are returned; attempts
+	 * past the retention period are never listed.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_attempts( $request ) {
+		$per_page = (int) $request->get_param( 'per_page' );
+		$page     = ( new DeliveryAttempts() )->query(
+			array(
+				'page'       => (int) $request->get_param( 'page' ),
+				'per_page'   => $per_page,
+				'origin'     => (string) $request->get_param( 'origin' ),
+				'event_name' => (string) $request->get_param( 'event_name' ),
+			)
+		);
+		return rest_ensure_response(
+			array(
+				'items'       => $page['items'],
+				'total'       => $page['total'],
+				'total_pages' => max( 1, (int) ceil( $page['total'] / $per_page ) ),
+			)
+		);
+	}
+
+	/**
 	 * Add a site-local, formatted display time alongside the raw UTC `time`.
 	 *
 	 * @param array $entry Test history entry with a UTC `time`.
@@ -213,8 +281,9 @@ class MetaConversionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Send one test event and report Meta's allowlisted diagnostics on both
-	 * success and failure. The calendar test needs marketing consent, a
+	 * Send one test event and report Meta's allowlisted diagnostics and the
+	 * sanitized request snapshot on both success and failure; `request` is
+	 * null when nothing was sent. The calendar test needs marketing consent, a
 	 * valid Meta identifier and a date of a public event; its source URL is
 	 * resolved here, never taken from the request.
 	 *
@@ -252,6 +321,7 @@ class MetaConversionsController extends WP_REST_Controller {
 					'code'        => $result['code'],
 					'outcome'     => $result['outcome'],
 					'diagnostics' => $result['diagnostics'],
+					'request'     => $result['request'],
 				)
 			);
 		}
@@ -261,6 +331,7 @@ class MetaConversionsController extends WP_REST_Controller {
 				'event_name'  => $event_name,
 				'outcome'     => $result['outcome'],
 				'diagnostics' => $result['diagnostics'],
+				'request'     => $result['request'],
 			)
 		);
 	}
