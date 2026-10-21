@@ -54,6 +54,7 @@ guessing which ones matter.
 | Block creation                                     | [BLOCK_CREATION.md](./BLOCK_CREATION.md)                       |
 | Fair Form question blocks (field types)            | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
 | Deployment / releases                              | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
+| Adding/updating dependencies, audits, exceptions   | [DEPENDENCY_SECURITY.md](./DEPENDENCY_SECURITY.md)             |
 
 ## Formatting & Build
 
