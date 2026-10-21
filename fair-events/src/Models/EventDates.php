@@ -2001,6 +2001,41 @@ class EventDates {
 	}
 
 	/**
+	 * Get many event dates by ID with one query (plus one for the masters of
+	 * generated rows), hydrated exactly as get_by_id() would.
+	 *
+	 * @param int[] $ids Event date IDs.
+	 * @return array<int, EventDates> Event dates keyed by ID; missing IDs are left out.
+	 */
+	public static function get_by_ids( array $ids ) {
+		global $wpdb;
+
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$table_name = $wpdb->prefix . 'fair_event_dates';
+
+		$results = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')',
+				array_merge( array( $table_name ), $ids )
+			)
+		);
+
+		// hydrate() resolves each generated row against its master.
+		self::prime_master_cache( wp_list_pluck( $results, 'master_id' ) );
+
+		$dates = array();
+		foreach ( $results as $result ) {
+			$dates[ (int) $result->id ] = self::hydrate( $result );
+		}
+
+		return $dates;
+	}
+
+	/**
 	 * Get an event date by ID.
 	 *
 	 * @param int $id Event date ID.

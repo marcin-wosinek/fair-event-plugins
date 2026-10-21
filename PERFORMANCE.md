@@ -15,7 +15,8 @@ why.
 The audit runs against the same isolated `@wordpress/env` `tests` instance
 used by `test:api:local`/`test:e2e:local` (see
 [TESTING.md](./TESTING.md#isolated-wordpress-test-lifecycle)), on port
-**8889**, built from production Composer dependencies
+**8889** (or the tests port a worktree sets in `WP_ENV_TESTS_PORT` or
+`.wp-env.override.json`, resolved like the API runner does), built from production Composer dependencies
 (`composer:install:prod`). Unless `--reuse` is passed, the runner owns the
 instance: it builds, starts, provisions, measures, and stops it, exactly like
 the API/E2E lifecycle runner.
@@ -520,6 +521,213 @@ Run sequentially on the local isolated instance at `271b6125`:
     that the Spanish messages of the Event Signup script reach an anonymous
     visitor on the event page.
 
+## Events list scaling
+
+`npm run performance -- --events-list-scaling` measures how the
+`fair-events/events-list` block grows with the number of events
+([#1669](https://github.com/marcin-wosinek/fair-event-plugins/issues/1669)).
+It replaces the activation matrix with its own sweep and shares the rest of
+the runner: the owned or `--reuse`d environment, the warm-up and medians of
+`--samples`, the fixture cleanup, and the restored activation state.
+
+### What it measures
+
+Only `fair-events` is active, and nothing reaches an external source.
+`e2e/mu-plugins/scripts/seed-events-list-fixtures.php` seeds one sweep at
+one size, and the runner removes it before the next. There are two sweeps,
+each at an empty size and three non-empty ones:
+
+-   **events** — 0, 10, 50 and 200 distinct published events, each with
+    one upcoming date. Event N starts N days after the first, which starts
+    seven days after the run. Each event has an excerpt, a meta value, and
+    one of three synthetic categories (on the post and on its date) and
+    venues.
+-   **recurring** — one published event whose weekly series has 0, 10, 50
+    or 100 occurrences, master included. A series holds at most 100
+    (`RecurrenceService::MAX_OCCURRENCES`), so `--sizes` above 100 are
+    capped for this sweep. The Upcoming view groups the series into one
+    entry, so this sweep separates stored occurrences from rendered
+    entries.
+
+At each size the runner measures four pages, all with default block
+settings (Upcoming, no category or event source filter):
+
+| Page | Layout | Renders |
+| --- | --- | --- |
+| `control` | a paragraph, no Fair Event blocks | nothing |
+| `bundled-query-loop` | the bundled `fair-events/event-list` Query Loop pattern | at most 10 posts (its `perPage`) |
+| `scaled-query-loop` | a synced copy of that pattern with `perPage` set to the size | every event |
+| `per-event` | a synced per-event pattern (title link, `{{date_range}}`, `{{location}}`, `{{description}}`) | every eligible occurrence |
+
+Limits belong to Query Loop patterns, not to the block, so the scaled
+pattern is benchmark-only and no production setting was added. The bundled
+pattern at a growing size tells stored events apart from rendered ones.
+
+### Checks and instrumentation
+
+The seed reports stored events, series and upcoming feed occurrences, and
+the runner fails the run unless they match the size. It also fails if the
+site holds **any other upcoming occurrence**: leftovers of E2E runs add to
+every list. Run it on a freshly reset tests database
+(`npx wp-env reset tests`, then
+`npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard` before
+a `--reuse` run).
+
+Every measured response is checked too. The runner counts the rendered
+entries (`li.wp-block-post` and `.event-list-item`) in the HTML and the
+lists the instrumentation saw, and fails on an error page or on any other
+count than expected. A fixture that rendered less would only read as a
+cheaper list.
+
+`fair-performance-instrumentation.php` adds these headers to opted-in
+requests:
+
+| Header | Meaning |
+| --- | --- |
+| `X-Fair-Perf-List-Count` | Events lists rendered (outermost only) |
+| `X-Fair-Perf-List-Query-Count` | Queries made inside their render, nested blocks included |
+| `X-Fair-Perf-List-Duration-Ms` | Wall-clock time inside their render |
+| `X-Fair-Perf-Environment` | WordPress, PHP and database versions, theme, active plugins, persistent object cache and OPcache state |
+
+Page queries minus list queries is the fixed page/bootstrap cost, and
+the `control` page measures that cost on its own. For attribution, each
+list page gets one more request with `X-Fair-Performance-Profile: 1`. That
+request turns on `SAVEQUERIES` and appends the list's queries, with their
+callers, to the page as an HTML comment. The runner groups them by the last
+two caller frames and the query shape (literals as `?`). It then reports the
+groups whose count changes across the non-empty sizes. Recording slows
+every query, so those requests are never timed.
+
+**Cache conditions.** There is no persistent object cache, so every request
+starts with an empty object cache. Data cached during a request lives only
+for that request. OPcache is on, and the discarded warm-up request leaves
+PHP's opcode cache and the database buffers warm for the measured requests.
+
+```bash
+npm run performance -- --events-list-scaling                # owns the environment
+npm run performance -- --reuse --events-list-scaling         # against a reset, running instance
+npm run performance -- --reuse --events-list-scaling --sizes=0,20,100
+```
+
+### Results (2026-10-21)
+
+Measured locally against this worktree's wp-env `tests` instance, at
+`78422b86` before and with the batching below after. Each run used a freshly
+reset database, the default sizes, and 5 samples after a discarded warm-up.
+The environment was WordPress 7.1.3, PHP 8.3.35, MariaDB 12.3.3 and
+Twenty Twenty-Five, with only `fair-events/fair-events.php` active, no
+persistent object cache and OPcache on. These are local numbers: query
+counts are exact, but durations vary between runs (the `control` page took
+43–77 ms within one run).
+
+**Before**, the profile of `scaled-query-loop` in the events sweep showed two
+queries per rendered post. No other list page and no recurring size had a
+growing query group.
+
+| Caller | Query | 0 | 10 | 50 | 200 |
+| --- | --- | --- | --- | --- | --- |
+| `FairEvents\Helpers\EventsListSeries::upcoming_date_text_for_post → FairEvents\Helpers\EventsListSeries::get_next_row_for_post` | `SELECT ed.id FROM `wp_fair_event_dates` ed WHERE ed.status = ? AND ( CONCAT( ed.start_dat…` | 0 | 10 | 50 | 200 |
+| `FairEvents\Helpers\EventsListSeries::get_next_row_for_post → FairEvents\Models\EventDates::get_by_id` | `SELECT * FROM `wp_fair_event_dates` WHERE id = ? LIMIT ?` | 0 | 10 | 50 | 200 |
+
+Both come from `EventsListSeries::upcoming_date_text_for_post()`, which the
+`fair-events/event-dates` block inside a Query Loop layout calls for each
+post. It looks up the post's next upcoming row, then loads it. The bundled
+pattern pays the same 20 queries for its 10 posts.
+
+**Change.** While a Query Loop layout renders, a `the_posts` filter hands the
+posts its query returned to `EventsListSeries::preload_next_rows()`. That
+call loads every post's next row with two queries in all: the row IDs, then
+`EventDates::get_by_ids()`. The lookup selects the same rows in the same
+order as before, so the output is unchanged.
+
+Before → after for the events sweep, from the two JSON reports (list
+duration is a median of local runs, so read it as a trend):
+
+| Size | Page | Rendered | Page queries | List queries | List duration (ms) |
+| --- | --- | --- | --- | --- | --- |
+| 10 | bundled-query-loop | 10 | 57 → 39 | 26 → 8 | 21.4 → 14.3 |
+| 10 | scaled-query-loop | 10 | 58 → 40 | 27 → 9 | 12.4 → 7.1 |
+| 10 | per-event | 10 | 40 → 40 | 9 → 9 | 5.6 → 6.1 |
+| 50 | bundled-query-loop | 10 | 57 → 39 | 26 → 8 | 22.0 → 16.2 |
+| 50 | scaled-query-loop | 50 | 138 → 40 | 107 → 9 | 42.0 → 20.0 |
+| 50 | per-event | 50 | 40 → 40 | 9 → 9 | 20.6 → 21.6 |
+| 200 | bundled-query-loop | 10 | 57 → 39 | 26 → 8 | 26.1 → 22.8 |
+| 200 | scaled-query-loop | 200 | 438 → 40 | 407 → 9 | 129.9 → 80.4 |
+| 200 | per-event | 200 | 40 → 40 | 9 → 9 | 75.6 → 80.5 |
+
+The full report of the run after the change, generated by
+`npm run performance -- --reuse --events-list-scaling`:
+
+#### events sweep: distinct events, one date each
+
+| Size | Page | Stored events | Series | Upcoming occurrences | Rendered | Queries | List queries | Duration (ms) | List duration (ms) | Peak memory (MB) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | control | 0 | 0 | 0 | 0 | 31 | 0 | 60.2 | 0.0 | 8.00 |
+| 0 | bundled-query-loop | 0 | 0 | 0 | 0 | 32 | 1 | 95.3 | 12.2 | 8.00 |
+| 0 | scaled-query-loop | 0 | 0 | 0 | 0 | 33 | 2 | 50.6 | 1.3 | 8.00 |
+| 0 | per-event | 0 | 0 | 0 | 0 | 33 | 2 | 43.3 | 0.6 | 8.00 |
+| 10 | control | 10 | 0 | 10 | 0 | 31 | 0 | 42.6 | 0.0 | 8.00 |
+| 10 | bundled-query-loop | 10 | 0 | 10 | 10 | 39 | 8 | 59.0 | 14.3 | 8.00 |
+| 10 | scaled-query-loop | 10 | 0 | 10 | 10 | 40 | 9 | 60.0 | 7.1 | 8.00 |
+| 10 | per-event | 10 | 0 | 10 | 10 | 40 | 9 | 58.0 | 6.1 | 8.00 |
+| 50 | control | 50 | 0 | 50 | 0 | 31 | 0 | 68.5 | 0.0 | 8.00 |
+| 50 | bundled-query-loop | 50 | 0 | 50 | 10 | 39 | 8 | 66.0 | 16.2 | 8.00 |
+| 50 | scaled-query-loop | 50 | 0 | 50 | 50 | 40 | 9 | 74.9 | 20.0 | 8.00 |
+| 50 | per-event | 50 | 0 | 50 | 50 | 40 | 9 | 73.2 | 21.6 | 8.00 |
+| 200 | control | 200 | 0 | 200 | 0 | 31 | 0 | 76.3 | 0.0 | 8.00 |
+| 200 | bundled-query-loop | 200 | 0 | 200 | 10 | 39 | 8 | 76.9 | 22.8 | 10.00 |
+| 200 | scaled-query-loop | 200 | 0 | 200 | 200 | 40 | 9 | 168.0 | 80.4 | 10.00 |
+| 200 | per-event | 200 | 0 | 200 | 200 | 40 | 9 | 134.4 | 80.5 | 10.00 |
+
+#### recurring sweep: one weekly series
+
+| Size | Page | Stored events | Series | Upcoming occurrences | Rendered | Queries | List queries | Duration (ms) | List duration (ms) | Peak memory (MB) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | control | 0 | 0 | 0 | 0 | 31 | 0 | 57.5 | 0.0 | 8.00 |
+| 0 | bundled-query-loop | 0 | 0 | 0 | 0 | 32 | 1 | 56.1 | 9.6 | 8.00 |
+| 0 | scaled-query-loop | 0 | 0 | 0 | 0 | 33 | 2 | 72.0 | 1.3 | 8.00 |
+| 0 | per-event | 0 | 0 | 0 | 0 | 33 | 2 | 52.8 | 0.9 | 8.00 |
+| 10 | control | 1 | 1 | 10 | 0 | 31 | 0 | 50.1 | 0.0 | 8.00 |
+| 10 | bundled-query-loop | 1 | 1 | 10 | 1 | 40 | 9 | 58.0 | 11.9 | 8.00 |
+| 10 | scaled-query-loop | 1 | 1 | 10 | 1 | 41 | 10 | 75.6 | 4.3 | 8.00 |
+| 10 | per-event | 1 | 1 | 10 | 1 | 42 | 11 | 52.0 | 3.2 | 8.00 |
+| 50 | control | 1 | 1 | 50 | 0 | 31 | 0 | 76.8 | 0.0 | 8.00 |
+| 50 | bundled-query-loop | 1 | 1 | 50 | 1 | 40 | 9 | 101.5 | 16.4 | 8.00 |
+| 50 | scaled-query-loop | 1 | 1 | 50 | 1 | 41 | 10 | 54.8 | 3.7 | 8.00 |
+| 50 | per-event | 1 | 1 | 50 | 1 | 42 | 11 | 51.0 | 5.2 | 8.00 |
+| 100 | control | 1 | 1 | 100 | 0 | 31 | 0 | 72.3 | 0.0 | 8.00 |
+| 100 | bundled-query-loop | 1 | 1 | 100 | 1 | 40 | 9 | 66.8 | 14.0 | 8.00 |
+| 100 | scaled-query-loop | 1 | 1 | 100 | 1 | 41 | 10 | 54.8 | 4.7 | 8.00 |
+| 100 | per-event | 1 | 1 | 100 | 1 | 42 | 11 | 86.2 | 6.8 | 8.00 |
+
+No query group grows on any list page after the change.
+
+### What this shows, and what it does not
+
+-   **Established and fixed:** two queries per rendered post in Query Loop
+    layouts. These were the only queries that grew with the event count.
+-   **Established, no repeated lookups:** the per-event layout makes 9 list
+    queries at every size up to 200 occurrences.
+    `EventFeedProvider::load_related()` already loads posts, meta, terms,
+    categories and venues for the whole range. One recurring series with up
+    to 100 occurrences costs the same queries at every size in all layouts.
+-   **Remaining growth is rendering time, not queries.** With every event
+    rendered, the list takes about 80 ms at 200 entries in both layouts,
+    against 6–7 ms at 10. That time goes into rendering the blocks of each
+    entry. It was not profiled further.
+-   **Stored events behind a fixed limit.** The bundled pattern renders 10
+    posts at every size. Its query count stays flat. Its list duration (14 →
+    23 ms) and peak memory (8 → 10 MB) grow slightly from 10 to 200 stored
+    events. By reading the code, this is likely the block's own
+    `WP_Query` with `posts_per_page => -1`, which only checks that any event
+    matches. It still loads every matching post. This was measured but not
+    attributed by profiling and not changed.
+-   **Not tested:** more than 200 events or 100 occurrences per series;
+    several series in one list (`EventsListSeries::load_series()` makes one
+    query per distinct series shown, which this sweep never grows); category
+    and event-source filters; the Past, Ongoing and All views; a persistent
+    object cache; and the hosted runner.
+
 ## Findings
 
 Ranked by measured impact; each was verified past the aggregate table before
@@ -578,11 +786,15 @@ being written up here (see the linked issue for the verification detail).
    coverage has since added per-occurrence queries to both forms; see
    finding 2.
 
-5. **The events list block's query cost on an empty site is now +6 queries**
-   (feature page, `fair-events`), down from the +18 of the first baseline.
-   How it grows with the number of events is still open in
-   [#1669](https://github.com/marcin-wosinek/fair-event-plugins/issues/1669);
-   the `listings` page gives that work a number to compare against.
+5. **Fixed: Query Loop layouts of the events list queried twice per
+   rendered post — query-count cost.** The block's empty-site cost is +6
+   queries (feature page, `fair-events`). The
+   [scaling sweep](#events-list-scaling) found two queries per post rendered
+   through a Query Loop layout: 407 list queries for 200 posts, and 26 for
+   the bundled pattern's 10. They now take two queries in all (9 and 8). The
+   per-event layout and a recurring series up to 100 occurrences had no
+   growing query
+   ([#1669](https://github.com/marcin-wosinek/fair-event-plugins/issues/1669)).
 
 6. **Running the whole stack costs ~2 MB of peak memory and up to 14 extra
    queries on the plain page — global bootstrap cost.** No single plugin

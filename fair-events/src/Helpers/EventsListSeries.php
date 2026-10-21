@@ -48,6 +48,14 @@ class EventsListSeries {
 	private static $series_cache = array();
 
 	/**
+	 * Next upcoming rows already loaded during this request, keyed by the
+	 * list's boundary and then by post ID (null when the post has none).
+	 *
+	 * @var array<string, array<int, EventDates|null>>
+	 */
+	private static $next_row_cache = array();
+
+	/**
 	 * Series identity for an event-date row: the master's ID for a master or
 	 * generated row, null for a single (non-recurring) row.
 	 *
@@ -254,6 +262,10 @@ class EventsListSeries {
 	private static function get_next_row_for_post( $post_id, $now ) {
 		global $wpdb;
 
+		if ( isset( self::$next_row_cache[ $now ] ) && array_key_exists( (int) $post_id, self::$next_row_cache[ $now ] ) ) {
+			return self::$next_row_cache[ $now ][ (int) $post_id ];
+		}
+
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
 		list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( 'ed', $now );
@@ -273,6 +285,100 @@ class EventsListSeries {
 		// phpcs:enable
 
 		return $row_id ? EventDates::get_by_id( (int) $row_id ) : null;
+	}
+
+	/**
+	 * Load the next upcoming row (see get_next_row_for_post()) of many posts
+	 * at once, so a Query Loop layout doesn't look each one up on its own:
+	 * two queries in all instead of two per rendered post.
+	 *
+	 * @param int[]  $post_ids Post IDs.
+	 * @param string $now      Naive site-local 'Y-m-d H:i:s' boundary.
+	 * @return void
+	 */
+	public static function preload_next_rows( array $post_ids, $now ) {
+		global $wpdb;
+
+		$cached   = self::$next_row_cache[ $now ] ?? array();
+		$post_ids = array_values(
+			array_filter(
+				array_unique( array_map( 'intval', $post_ids ) ),
+				function ( $post_id ) use ( $cached ) {
+					return $post_id > 0 && ! array_key_exists( $post_id, $cached );
+				}
+			)
+		);
+
+		if ( empty( $post_ids ) ) {
+			return;
+		}
+
+		$table_name   = $wpdb->prefix . 'fair_event_dates';
+		$placeholders = implode( ', ', array_fill( 0, count( $post_ids ), '%d' ) );
+
+		list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( 'ed', $now );
+
+		// The same rows and order as get_next_row_for_post(), for every post
+		// at once: a generated row with no event_id of its own belongs to
+		// its master's post.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $upcoming_sql is a static internal template and $placeholders a list of %d; their values are passed in the one array.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- per-render lookup on the plugin's own table, same as EventDates.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ed.id, COALESCE( ed.event_id, m.event_id ) AS post_id FROM %i ed
+				LEFT JOIN %i m ON ed.event_id IS NULL AND m.id = ed.master_id
+				WHERE ed.status = 'active' AND {$upcoming_sql}
+				AND ( ed.event_id IN ( {$placeholders} ) OR ( ed.event_id IS NULL AND m.event_id IN ( {$placeholders} ) ) )
+				ORDER BY ed.start_date ASC, ed.start_time ASC, ed.id ASC",
+				array_merge( array( $table_name, $table_name ), $upcoming_args, $post_ids, $post_ids )
+			)
+		);
+		// phpcs:enable
+
+		$next_ids = array();
+		foreach ( (array) $rows as $row ) {
+			$row_post_id = (int) $row->post_id;
+			if ( ! isset( $next_ids[ $row_post_id ] ) ) {
+				$next_ids[ $row_post_id ] = (int) $row->id;
+			}
+		}
+
+		$dates = EventDates::get_by_ids( array_values( $next_ids ) );
+
+		foreach ( $post_ids as $post_id ) {
+			self::$next_row_cache[ $now ][ $post_id ] = isset( $next_ids[ $post_id ] ) ? ( $dates[ $next_ids[ $post_id ] ] ?? null ) : null;
+		}
+	}
+
+	/**
+	 * `the_posts` callback for an Upcoming Query Loop layout: preload the
+	 * next rows of the posts a Query Loop inside the list is about to
+	 * render. Other queries, and lists in other modes, pass through.
+	 *
+	 * @param \WP_Post[] $posts Queried posts.
+	 * @param \WP_Query  $query The query.
+	 * @return \WP_Post[] Unchanged posts.
+	 */
+	public static function preload_for_query( $posts, $query ) {
+		$context = self::current_context();
+
+		if (
+			is_array( $posts ) && $posts
+			&& $context && self::MODE_QUERY_LOOP === $context['mode'] && 'upcoming' === ( $context['time_filter'] ?? '' )
+			&& $query instanceof \WP_Query && $query->get( 'fair_events_date_query' )
+		) {
+			self::preload_next_rows(
+				array_map(
+					function ( $post ) {
+						return is_object( $post ) ? (int) $post->ID : (int) $post;
+					},
+					$posts
+				),
+				$context['now']
+			);
+		}
+
+		return $posts;
 	}
 
 	/**

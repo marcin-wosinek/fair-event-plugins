@@ -3,19 +3,32 @@ import { EventEmitter } from 'node:events';
 import test from 'node:test';
 
 import {
+	EVENTS_LIST_SCALING,
 	EVENT_FIXTURES,
 	aggregateSamples,
 	buildComparisonMatrix,
 	compareToBaseline,
+	countRenderedEntries,
+	expectedRenderedCount,
+	findEventsListSeedProblems,
 	findSeedProblems,
 	formatJsonReport,
 	formatMarkdownReport,
+	formatScalingReport,
+	growingQueryGroups,
 	median,
+	normalizeQuery,
 	parseArguments,
+	parseEventsListSeedOutput,
 	parsePluginHeader,
+	parseProfileComment,
 	parseSeedOutput,
+	queryCaller,
+	runEventsListScaling,
+	sweepSizes,
 	runPerformanceAudit,
 	scenarioMeasuresEventPages,
+	summarizeProfile,
 } from '../performance-runner.mjs';
 
 test('parseArguments defaults and flags', () => {
@@ -25,6 +38,8 @@ test('parseArguments defaults and flags', () => {
 		scenario: undefined,
 		outFile: undefined,
 		jsonOut: undefined,
+		eventsListScaling: false,
+		sizes: undefined,
 	});
 	assert.deepEqual(
 		parseArguments([
@@ -40,7 +55,31 @@ test('parseArguments defaults and flags', () => {
 			scenario: 'fair-events',
 			outFile: 'report.md',
 			jsonOut: 'report.json',
+			eventsListScaling: false,
+			sizes: undefined,
 		}
+	);
+});
+
+test('parseArguments reads the events list scaling mode and its sizes', () => {
+	assert.equal(
+		parseArguments(['--events-list-scaling']).eventsListScaling,
+		true
+	);
+	assert.deepEqual(
+		parseArguments(['--events-list-scaling', '--sizes=0,2,30']).sizes,
+		[0, 2, 30]
+	);
+	for (const sizes of ['', '0,1', '10,5', '0,a', '-2,4', '3,3']) {
+		assert.throws(
+			() => parseArguments(['--events-list-scaling', `--sizes=${sizes}`]),
+			undefined,
+			`rejects --sizes=${sizes}`
+		);
+	}
+	assert.throws(() => parseArguments(['--sizes=0,10']));
+	assert.throws(() =>
+		parseArguments(['--events-list-scaling', '--scenario=fair-events'])
 	);
 });
 
@@ -929,4 +968,404 @@ test('cleanup behavior: a cleanup failure never replaces an earlier failure stat
 		},
 	});
 	assert.equal((await run).code, 2);
+});
+
+test('expectedRenderedCount follows each page and sweep', () => {
+	const expected = (sweep, page, size) =>
+		expectedRenderedCount(sweep, page, size, EVENTS_LIST_SCALING);
+	assert.equal(expected('events', 'control', 50), 0);
+	assert.equal(expected('events', 'bundled-query-loop', 0), 0);
+	assert.equal(expected('events', 'bundled-query-loop', 50), 10);
+	assert.equal(expected('events', 'bundled-query-loop', 5), 5);
+	assert.equal(expected('events', 'scaled-query-loop', 200), 200);
+	assert.equal(expected('events', 'per-event', 200), 200);
+	assert.equal(expected('recurring', 'per-event', 200), 1);
+	assert.equal(expected('recurring', 'scaled-query-loop', 0), 0);
+});
+
+test('countRenderedEntries counts Query Loop posts and per-event entries', () => {
+	const queryLoop =
+		'<ul class="wp-block-post-template"><li class="wp-block-post post-1 fair_event"></li><li class="wp-block-post post-2"></li></ul>';
+	assert.equal(countRenderedEntries(queryLoop), 2);
+	assert.equal(
+		countRenderedEntries(
+			'<div class="event-list-item is-wordpress"></div><div class="event-list-item is-standalone"></div><div class="event-list-items"></div>'
+		),
+		2
+	);
+	assert.equal(
+		countRenderedEntries('<p class="no-events">No events found.</p>'),
+		0
+	);
+});
+
+const SCALING_PAGES = Object.fromEntries(
+	EVENTS_LIST_SCALING.pages.map((page) => [page, `/${page}/`])
+);
+
+function scalingSeed(sweep, size, overrides = {}) {
+	return {
+		sweep,
+		size,
+		pages: SCALING_PAGES,
+		storedEvents: sweep === 'events' ? size : Math.min(size, 1),
+		storedSeries: sweep === 'recurring' ? Math.min(size, 1) : 0,
+		upcomingOccurrences: size,
+		foreignOccurrences: 0,
+		...overrides,
+	};
+}
+
+test('findEventsListSeedProblems accepts an exact seed and names every mismatch', () => {
+	for (const [sweep, size] of [
+		['events', 0],
+		['events', 50],
+		['recurring', 0],
+		['recurring', 50],
+	]) {
+		assert.deepEqual(
+			findEventsListSeedProblems(
+				scalingSeed(sweep, size),
+				sweep,
+				size,
+				EVENTS_LIST_SCALING
+			),
+			[]
+		);
+	}
+
+	assert.deepEqual(
+		findEventsListSeedProblems(null, 'events', 10, EVENTS_LIST_SCALING),
+		['the seed script printed no PERF_EVENTS_LIST result']
+	);
+
+	const problems = findEventsListSeedProblems(
+		scalingSeed('events', 10, {
+			upcomingOccurrences: 9,
+			foreignOccurrences: 16,
+			pages: { control: '/control/' },
+		}),
+		'events',
+		10,
+		EVENTS_LIST_SCALING
+	);
+	assert.ok(problems.includes('expected upcomingOccurrences 10, got 9'));
+	assert.ok(
+		problems.some((problem) =>
+			problem.startsWith('the site holds 16 upcoming occurrences')
+		)
+	);
+	assert.ok(problems.includes('no URL for the per-event page'));
+	assert.equal(
+		parseEventsListSeedOutput(
+			`noise\nPERF_EVENTS_LIST:${JSON.stringify({ size: 3 })}\n`
+		).size,
+		3
+	);
+	assert.equal(parseEventsListSeedOutput('PERF_EVENTS_LIST:{oops'), null);
+});
+
+test('profiling groups queries by caller and query shape', () => {
+	assert.equal(
+		normalizeQuery(
+			"SELECT * FROM `wp_fair_event_dates`\n\tWHERE id = 42 AND title = 'It\\'s' AND x IN (1, 2, 3)"
+		),
+		'SELECT * FROM `wp_fair_event_dates` WHERE id = ? AND title = ? AND x IN (…)'
+	);
+	assert.equal(
+		queryCaller(
+			"require('wp-blog-header.php'), render_block, A::outer, B::inner"
+		),
+		'A::outer → B::inner'
+	);
+
+	const summary = summarizeProfile([
+		{ sql: 'SELECT 1 FROM t WHERE id = 1', caller: 'x, A::get' },
+		{ sql: 'SELECT 1 FROM t WHERE id = 2', caller: 'x, A::get' },
+		{ sql: 'SELECT 1 FROM t WHERE id = 3', caller: 'y, B::get' },
+	]);
+	assert.deepEqual(summary, [
+		{
+			caller: 'x → A::get',
+			shape: 'SELECT ? FROM t WHERE id = ?',
+			count: 2,
+		},
+		{
+			caller: 'y → B::get',
+			shape: 'SELECT ? FROM t WHERE id = ?',
+			count: 1,
+		},
+	]);
+
+	assert.deepEqual(
+		parseProfileComment(
+			'<html></html>\n<!-- FAIR_PERF_PROFILE:[{"sql":"SELECT \\u002d\\u002d","caller":"a"}] -->'
+		),
+		[{ sql: 'SELECT --', caller: 'a' }]
+	);
+	assert.equal(parseProfileComment('<html></html>'), null);
+});
+
+test('growingQueryGroups leaves out queries that only appear once a list is non-empty', () => {
+	const profile = (perRow, size) => [
+		{ caller: 'fixed', shape: 'SELECT fixed', count: size ? 1 : 0 },
+		{ caller: 'row', shape: 'SELECT row', count: perRow * size },
+	];
+	const results = [0, 10, 50].map((size) => ({
+		sweep: 'events',
+		page: 'per-event',
+		size,
+		profile: profile(2, size).filter((group) => group.count),
+	}));
+	assert.deepEqual(
+		growingQueryGroups(results, 'events', 'per-event', [0, 10, 50]),
+		[
+			{
+				caller: 'row',
+				shape: 'SELECT row',
+				counts: { 0: 0, 10: 20, 50: 100 },
+			},
+		]
+	);
+	assert.equal(
+		growingQueryGroups(results.slice(0, 2), 'events', 'per-event', [0, 10])
+			.length,
+		2,
+		'with one non-empty size every change counts'
+	);
+});
+
+const SCALING_PLUGINS = [
+	{ slug: 'fair-events', requiresPlugins: [], experimental: false },
+	{ slug: 'fair-audience', requiresPlugins: [], experimental: false },
+];
+const SCALING = { ...EVENTS_LIST_SCALING, sizes: [0, 10] };
+const scalingSeedCommand = (sweep, size) =>
+	`wp-env run tests-cli wp eval-file wp-content/mu-plugins/scripts/seed-events-list-fixtures.php ${JSON.stringify(
+		{ sweep, size }
+	)}`;
+
+/**
+ * Run the scaling sweep against a fake executor and a fake backend that
+ * renders what each page should, unless `render` says otherwise.
+ */
+function runScaling({
+	seeds = {},
+	render,
+	measureBackend,
+	options = {},
+	signalSource = new EventEmitter(),
+} = {}) {
+	const timeline = [];
+	const responses = {
+		[PLUGIN_LIST_KEY]: { code: 0, stdout: 'fair-audience\n' },
+	};
+	for (const sweep of SCALING.sweeps) {
+		for (const size of SCALING.sizes) {
+			const seed = seeds[`${sweep}:${size}`] ?? scalingSeed(sweep, size);
+			responses[`npx ${scalingSeedCommand(sweep, size)}`] = {
+				code: 0,
+				stdout: `PERF_EVENTS_LIST:${JSON.stringify({
+					...seed,
+					pages: Object.fromEntries(
+						Object.entries(seed.pages).map(([page, path]) => [
+							page,
+							`/${sweep}-${size}${path}`,
+						])
+					),
+				})}\n`,
+			};
+		}
+	}
+	const executor = createExecutor(responses, (call) =>
+		timeline.push(call.args.join(' '))
+	);
+	const run = runEventsListScaling({
+		options: baseOptions({ samples: 2, ...options }),
+		executor,
+		plugins: SCALING_PLUGINS,
+		scaling: SCALING,
+		baseUrl: BASE_URL,
+		measureBackend: async (url, { profile = false } = {}) => {
+			timeline.push(`${profile ? 'profile' : 'measure'} ${url}`);
+			await measureBackend?.(url);
+			const [, sweep, size, page] = /\/(\w+)-(\d+)\/([\w-]+)\/$/.exec(
+				url
+			);
+			const entries =
+				render?.(sweep, Number(size), page) ??
+				expectedRenderedCount(sweep, page, Number(size), SCALING);
+			return {
+				durationMs: 2,
+				memoryBytes: 8 * 1024 * 1024,
+				queryCount: 30 + entries,
+				list: {
+					count: page === 'control' ? 0 : 1,
+					queryCount: entries,
+					durationMs: 1,
+				},
+				environment: { wordpress: '7.1', php: '8.3' },
+				body: '<div class="event-list-item"></div>'.repeat(entries),
+				recorded: profile
+					? Array.from({ length: entries }, (_, id) => ({
+							sql: `SELECT * FROM t WHERE id = ${id}`,
+							caller: 'x, EventsListSeries::row',
+						}))
+					: undefined,
+			};
+		},
+		logger() {},
+		signalSource,
+	});
+	return { run, timeline };
+}
+
+test('the scaling sweep seeds each size after removing the last one, with fair-events alone', async () => {
+	const { run, timeline } = runScaling();
+	const outcome = await run;
+	assert.equal(outcome.code, 0);
+
+	const seeds = SCALING.sweeps.flatMap((sweep) =>
+		SCALING.sizes.map((size) => scalingSeedCommand(sweep, size))
+	);
+	const seedIndexes = seeds.map((command) => timeline.indexOf(command));
+	assert.ok(
+		seedIndexes.every((index, i) => index > (seedIndexes[i - 1] ?? -1))
+	);
+	for (const index of seedIndexes) {
+		assert.equal(
+			timeline[index - 1],
+			CLEANUP_COMMAND,
+			'removes the previous size before seeding the next'
+		);
+	}
+	assert.ok(
+		timeline.indexOf(
+			'wp-env run tests-cli wp plugin activate fair-events'
+		) < seedIndexes[0]
+	);
+
+	assert.equal(outcome.scaling.length, 4 * SCALING.pages.length);
+	assert.deepEqual(outcome.sizes, { events: [0, 10], recurring: [0, 10] });
+	assert.deepEqual(outcome.environment, { wordpress: '7.1', php: '8.3' });
+
+	const measuresPerPage = timeline.filter(
+		(entry) => entry === `measure ${BASE_URL}/events-10/per-event/`
+	).length;
+	assert.equal(measuresPerPage, 3, 'one warm-up plus the samples');
+	assert.ok(
+		!timeline.includes(`profile ${BASE_URL}/events-10/control/`),
+		'the control page is not profiled'
+	);
+
+	const perEvent = outcome.scaling.find(
+		(r) => r.sweep === 'events' && r.size === 10 && r.page === 'per-event'
+	);
+	assert.equal(perEvent.rendered, 10);
+	assert.equal(perEvent.list.queryCount, 10);
+	assert.deepEqual(perEvent.profile, [
+		{
+			caller: 'x → EventsListSeries::row',
+			shape: 'SELECT * FROM t WHERE id = ?',
+			count: 10,
+		},
+	]);
+
+	assert.ok(
+		timeline.lastIndexOf(CLEANUP_COMMAND) <
+			timeline.lastIndexOf(
+				'wp-env run tests-cli wp plugin activate fair-audience'
+			),
+		'removes the fixtures, then restores the activation state'
+	);
+
+	const report = formatScalingReport({
+		scaling: outcome.scaling,
+		environment: outcome.environment,
+		sizes: outcome.sizes,
+		samples: 2,
+		generatedAt: 'now',
+	});
+	assert.match(report, /## events sweep: distinct events, one date each/);
+	assert.match(
+		report,
+		/\| 10 \| per-event \| 10 \| 0 \| 10 \| 10 \| 40 \| 10 \|/
+	);
+	assert.match(report, /### events sweep, per-event: queries that grow/);
+	assert.match(
+		report,
+		/\| `x → EventsListSeries::row` \| `SELECT \* FROM t WHERE id = \?` \| 0 \| 10 \|/
+	);
+	assert.match(report, /WordPress 7\.1, PHP 8\.3/);
+});
+
+test('the scaling sweep fails on a rendered count that does not match the fixture, and cleans up', async () => {
+	const { run, timeline } = runScaling({
+		render: (sweep, size, page) =>
+			page === 'bundled-query-loop' && size === 10 ? 9 : undefined,
+	});
+	const outcome = await run;
+	assert.equal(outcome.code, 1);
+	assert.equal(outcome.scaling, undefined);
+	assert.ok(!timeline.includes(scalingSeedCommand('recurring', 0)));
+	assert.equal(
+		timeline.at(-1),
+		'wp-env run tests-cli wp plugin activate fair-audience'
+	);
+});
+
+test('the scaling sweep refuses a site with foreign events, and cleans up', async () => {
+	const { run, timeline } = runScaling({
+		seeds: {
+			'events:0': scalingSeed('events', 0, { foreignOccurrences: 3 }),
+		},
+	});
+	assert.equal((await run).code, 1);
+	assert.ok(!timeline.some((entry) => entry.startsWith('measure ')));
+	assert.equal(
+		timeline.at(-3),
+		CLEANUP_COMMAND,
+		'removes the fixtures, then deactivates and restores the plugins'
+	);
+});
+
+test('the scaling sweep cleans up after a failed request and after a signal', async () => {
+	const failing = runScaling({
+		measureBackend: async () => {
+			throw new Error('HTTP 500');
+		},
+	});
+	await assert.rejects(failing.run, /HTTP 500/);
+	assert.equal(
+		failing.timeline.at(-1),
+		'wp-env run tests-cli wp plugin activate fair-audience'
+	);
+
+	const signalSource = new EventEmitter();
+	const interrupted = runScaling({
+		signalSource,
+		measureBackend: async () => signalSource.emit('SIGTERM'),
+	});
+	const outcome = await interrupted.run;
+	assert.equal(outcome.code, 143);
+	assert.ok(
+		!interrupted.timeline.includes(scalingSeedCommand('events', 10)),
+		'stops before seeding the next size'
+	);
+	assert.equal(interrupted.timeline.at(-3), CLEANUP_COMMAND);
+});
+
+test('sweepSizes caps the recurring sweep at the occurrences one series can hold', () => {
+	assert.deepEqual(
+		sweepSizes('events', [0, 10, 50, 200], EVENTS_LIST_SCALING),
+		[0, 10, 50, 200]
+	);
+	assert.deepEqual(
+		sweepSizes('recurring', [0, 10, 50, 200], EVENTS_LIST_SCALING),
+		[0, 10, 50, 100]
+	);
+	assert.deepEqual(
+		sweepSizes('recurring', [0, 150, 200], EVENTS_LIST_SCALING),
+		[0, 100]
+	);
 });

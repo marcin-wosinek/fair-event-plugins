@@ -9,8 +9,11 @@
  * seed-performance-fixtures.php write together with each post, so this
  * removes whatever exists — a complete set, a partially seeded one, or
  * leftovers of an earlier run that never reached its own cleanup. For event
- * posts it also removes the dates, sale periods, ticket types, options and
- * prices hanging off them.
+ * posts it also removes the dates (generated occurrences included), date
+ * categories, sale periods, ticket types, options and prices hanging off
+ * them. Venues and categories have no post meta, so the seed scripts record
+ * their IDs in the `fair_performance_fixture_records` option, which this
+ * removes together with them.
  *
  * It uses plain queries rather than the fair-events models because the
  * runner calls it in any activation state, including with fair-events
@@ -35,6 +38,9 @@ $prices_table        = $wpdb->prefix . 'fair_events_ticket_prices';
 $options_table       = $wpdb->prefix . 'fair_events_ticket_options';
 $option_prices_table = $wpdb->prefix . 'fair_events_ticket_option_prices';
 $settings_table      = $wpdb->prefix . 'fair_events_event_date_settings';
+$categories_table    = $wpdb->prefix . 'fair_event_date_categories';
+$venues_table        = $wpdb->prefix . 'fair_event_venues';
+$records_option      = 'fair_performance_fixture_records';
 
 $deleted  = array(
 	'option_prices' => 0,
@@ -43,7 +49,10 @@ $deleted  = array(
 	'ticket_types'  => 0,
 	'sale_periods'  => 0,
 	'settings'      => 0,
+	'categories'    => 0,
 	'event_dates'   => 0,
+	'venues'        => 0,
+	'terms'         => 0,
 	'posts'         => 0,
 );
 $failures = array();
@@ -80,12 +89,13 @@ if ( $post_ids && $has_event_tables ) {
 	$post_placeholders = implode( ', ', array_fill( 0, count( $post_ids ), '%d' ) );
 
 	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the interpolated placeholder lists are safe lists of %d.
+	// Generated occurrences may not carry the event_id of their master.
 	$event_date_ids = array_map(
 		'intval',
 		$wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT id FROM %i WHERE event_id IN ({$post_placeholders})",
-				array_merge( array( $dates_table ), $post_ids )
+				"SELECT id FROM %i WHERE event_id IN ({$post_placeholders}) OR master_id IN ( SELECT m.id FROM %i m WHERE m.event_id IN ({$post_placeholders}) )",
+				array_merge( array( $dates_table ), $post_ids, array( $dates_table ), $post_ids )
 			)
 		)
 	);
@@ -114,6 +124,7 @@ if ( $post_ids && $has_event_tables ) {
 				'ticket_types' => $types_table,
 				'sale_periods' => $sale_periods_table,
 				'settings'     => $settings_table,
+				'categories'   => $categories_table,
 			) as $key => $table
 		) {
 			$run(
@@ -136,6 +147,31 @@ if ( $post_ids && $has_event_tables ) {
 	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 }
 
+$records = get_option( $records_option, array() );
+$records = is_array( $records ) ? $records : array();
+
+$venue_ids = array_values( array_filter( array_map( 'intval', $records['venues'] ?? array() ) ) );
+if ( $venue_ids && $has_event_tables ) {
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the interpolated placeholder list is a safe list of %d.
+	$run(
+		'venues',
+		$wpdb->prepare(
+			'DELETE FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $venue_ids ), '%d' ) ) . ')',
+			array_merge( array( $venues_table ), $venue_ids )
+		)
+	);
+	// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+}
+
+foreach ( array_filter( array_map( 'intval', $records['terms'] ?? array() ) ) as $term_id ) {
+	$term_result = wp_delete_term( $term_id, 'category' );
+	if ( is_wp_error( $term_result ) ) {
+		$failures[] = 'terms: ' . $term_result->get_error_message();
+	} elseif ( true === $term_result ) {
+		++$deleted['terms'];
+	}
+}
+
 foreach ( $post_ids as $owned_post_id ) {
 	if ( wp_delete_post( $owned_post_id, true ) ) {
 		++$deleted['posts'];
@@ -148,6 +184,10 @@ $remaining = (int) $wpdb->get_var(
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 echo 'PERF_CLEANUP:' . wp_json_encode( $deleted ) . "\n";
+
+if ( ! $failures ) {
+	delete_option( $records_option );
+}
 
 if ( $remaining ) {
 	$failures[] = $remaining . ' owned post(s) could not be deleted';
