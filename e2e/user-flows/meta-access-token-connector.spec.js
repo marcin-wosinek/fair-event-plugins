@@ -3,10 +3,10 @@
  * Connectors (#1953).
  *
  * An access token saved before the credential moved keeps working: the
- * Experimental settings tab reports it as configured, links to Connectors
- * instead of editing it, and a test event goes out with it. In Connectors the
+ * Meta page reports it as configured, links to Connectors instead of
+ * editing it, and a test event goes out with it. In Connectors the
  * token is removed, a malformed one is refused, and a replacement is saved;
- * each change shows in the Experimental tab and in what a test event sends.
+ * each change shows on the Meta page and in what a test event sends.
  * Removing it leaves testing blocked with the reason. No request reaches
  * Meta — lib/meta-http-double.php answers graph.facebook.com and records
  * each request body.
@@ -20,8 +20,7 @@ import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
 const TOKEN = 'e2e-meta-legacy-token-0123456789';
 const REPLACEMENT = 'e2e-meta-replacement-token-9876543210';
 const TOKEN_OPTION = 'fair_events_experimental_meta_access_token';
-const SETTINGS_URL =
-	'/wp-admin/admin.php?page=fair-events-settings&tab=experimental';
+const SETTINGS_URL = '/wp-admin/admin.php?page=fair-events-meta';
 const CONNECTORS_URL = '/wp-admin/options-connectors.php';
 const SAVED_STATUS =
 	'An access token is saved in Connectors. It is not shown here. Send a test event to confirm Meta accepts it.';
@@ -58,7 +57,7 @@ function metaConnector(page) {
 }
 
 /**
- * Send the PageView test from the Experimental tab and wait for Meta's answer.
+ * Send the PageView test from the Meta page and wait for Meta's answer.
  *
  * @param {import('@playwright/test').Page} page Playwright page.
  */
@@ -160,7 +159,7 @@ test.describe('Meta access token in Connectors', () => {
 		expect(lastSentToken()).toBe(REPLACEMENT);
 		expect(await page.content()).not.toContain(REPLACEMENT);
 
-		// Remove it again: the Experimental tab says delivery has stopped and
+		// Remove it again: the Meta page says delivery has stopped and
 		// testing is unavailable, while the other settings stay.
 		await page.goto(CONNECTORS_URL);
 		await metaConnector(page).getByRole('button', { name: 'Edit' }).click();

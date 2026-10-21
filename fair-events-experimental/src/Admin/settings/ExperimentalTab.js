@@ -2,13 +2,14 @@
  * Internal dependencies
  */
 import FeaturesTab from './FeaturesTab.js';
-import MetaConversions from './MetaConversions.js';
+import MetaMoved from './MetaMoved.js';
 import WeeklyNotificationsMoved from './WeeklyNotificationsMoved.js';
 
 /**
  * Experimental tab of the Fair Events Settings page.
  *
- * Renders the feature toggles and the settings of enabled integrations.
+ * Renders the feature toggles, plus links to the integrations that moved to
+ * their own pages.
  *
  * @param {Object}   props          Props
  * @param {Function} props.onNotice Handler for displaying page-level notices
@@ -16,6 +17,7 @@ import WeeklyNotificationsMoved from './WeeklyNotificationsMoved.js';
  */
 export default function ExperimentalTab( { onNotice } ) {
 	const features = window.fairEventsExperimentalSettingsData?.features;
+	const metaUrl = window.fairEventsExperimentalSettingsData?.metaUrl;
 
 	return (
 		<div className="fair-events-experimental-settings">
@@ -26,8 +28,8 @@ export default function ExperimentalTab( { onNotice } ) {
 						?.eventNotificationsUrl || null
 				}
 			/>
-			{ features?.[ 'meta-conversions' ]?.enabled && (
-				<MetaConversions onNotice={ onNotice } />
+			{ features?.[ 'meta-conversions' ]?.enabled && metaUrl && (
+				<MetaMoved url={ metaUrl } />
 			) }
 		</div>
 	);

@@ -8,6 +8,10 @@ import ExperimentalTab from '../ExperimentalTab.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
+beforeEach( () => {
+	apiFetch.mockClear();
+} );
+
 function setFeatureRegistry( features ) {
 	window.fairEventsExperimentalSettingsData = { features };
 }
@@ -17,13 +21,7 @@ beforeEach( () => {
 		if ( path === '/wp/v2/settings' ) {
 			return Promise.resolve( {} );
 		}
-		return Promise.resolve( {
-			dataset_id: '',
-			token_configured: false,
-			test_event_code: '',
-			diagnostics: { counts: {}, recent: [] },
-			consent_api_available: true,
-		} );
+		return Promise.reject( new Error( `Unexpected request: ${ path }` ) );
 	} );
 } );
 
@@ -31,11 +29,17 @@ afterEach( () => {
 	delete window.fairEventsExperimentalSettingsData;
 } );
 
-describe( 'ExperimentalTab Meta Conversions gating', () => {
-	it( 'does not mount the Meta Conversions card when the feature is disabled', async () => {
-		setFeatureRegistry( {
-			'meta-conversions': { enabled: false, label: 'Meta Conversions' },
-		} );
+describe( 'ExperimentalTab Meta link', () => {
+	it( 'shows no Meta card when the feature is disabled', async () => {
+		window.fairEventsExperimentalSettingsData = {
+			features: {
+				'meta-conversions': {
+					enabled: false,
+					label: 'Meta Conversions',
+				},
+			},
+			metaUrl: null,
+		};
 
 		render( <ExperimentalTab onNotice={ jest.fn() } /> );
 
@@ -44,18 +48,41 @@ describe( 'ExperimentalTab Meta Conversions gating', () => {
 		expect(
 			screen.queryByRole( 'heading', { name: 'Meta Conversions' } )
 		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', { name: 'Open Meta' } )
+		).not.toBeInTheDocument();
 	} );
 
-	it( 'mounts the Meta Conversions card when the feature is enabled', async () => {
-		setFeatureRegistry( {
-			'meta-conversions': { enabled: true, label: 'Meta Conversions' },
-		} );
+	it( 'links to the Meta page instead of mounting its controls when enabled', async () => {
+		window.fairEventsExperimentalSettingsData = {
+			features: {
+				'meta-conversions': {
+					enabled: true,
+					label: 'Meta Conversions',
+				},
+			},
+			metaUrl: '/wp-admin/admin.php?page=fair-events-meta',
+		};
 
 		render( <ExperimentalTab onNotice={ jest.fn() } /> );
 
 		expect(
-			await screen.findByRole( 'heading', { name: 'Meta Conversions' } )
-		).toBeInTheDocument();
+			await screen.findByRole( 'link', { name: 'Open Meta' } )
+		).toHaveAttribute(
+			'href',
+			'/wp-admin/admin.php?page=fair-events-meta'
+		);
+		expect(
+			screen.queryByRole( 'textbox', { name: 'Dataset / Pixel ID' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Save Meta settings' } )
+		).not.toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: expect.stringContaining( 'meta-conversions' ),
+			} )
+		);
 	} );
 } );
 

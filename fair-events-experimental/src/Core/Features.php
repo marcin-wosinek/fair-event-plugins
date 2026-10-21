@@ -63,7 +63,7 @@ class Features {
 			),
 			'meta-conversions' => array(
 				'label'       => 'Meta Conversions',
-				'description' => 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.',
+				'description' => 'Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector.',
 				'default'     => false,
 			),
 		);
@@ -143,7 +143,7 @@ class Features {
 			),
 			'meta-conversions' => array(
 				'label'       => __( 'Meta Conversions', 'fair-events-experimental' ),
-				'description' => __( 'Consent-gated server-side Meta checkout and purchase measurement. Requires Fair Payments Connector and explicit credentials.', 'fair-events-experimental' ),
+				'description' => __( 'Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector.', 'fair-events-experimental' ),
 			),
 		);
 

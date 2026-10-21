@@ -32,13 +32,24 @@ class Conversions {
 		'ticket'   => 'FairEventTicketClick',
 	);
 
-	/** Register hooks. */
+	/**
+	 * Register hooks. Delivery and cleanup always run; checkout and purchase
+	 * measurement is wired only when Fair Payments Connector is available.
+	 */
 	public function init() {
-		add_action( 'fair_payment_payment_initiated', array( $this, 'checkout_initiated' ), 10, 2 );
-		add_action( 'fair_payment_paid', array( $this, 'payment_paid' ), 10, 2 );
 		add_action( self::DELIVERY_HOOK, array( $this, 'deliver_due' ) );
 		add_action( self::CLEANUP_HOOK, array( $this, 'cleanup' ) );
+		if ( ! self::payments_available() ) {
+			return;
+		}
+		add_action( 'fair_payment_payment_initiated', array( $this, 'checkout_initiated' ), 10, 2 );
+		add_action( 'fair_payment_paid', array( $this, 'payment_paid' ), 10, 2 );
 		add_filter( 'fair_payment_before_initiate_payment', array( $this, 'remove_provider_attribution' ) );
+	}
+
+	/** Whether Fair Payments Connector's transactions can be read. @return bool */
+	public static function payments_available() {
+		return class_exists( \FairPaymentsConnector\Models\Transaction::class );
 	}
 
 	/** Whether a dataset ID and an access token from {@see Connector} are in effect. @return bool */
@@ -56,6 +67,9 @@ class Conversions {
 
 	/** @param int $transaction_id Transaction ID. */
 	public function checkout_initiated( $transaction_id ) {
+		if ( ! self::payments_available() ) {
+			return;
+		}
 		$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( $transaction_id );
 		if ( ! $transaction || empty( $transaction->checkout_url ) ) {
 			return;
@@ -66,6 +80,9 @@ class Conversions {
 	/** @param object $payment Provider payment. @param object $transaction Transaction. */
 	public function payment_paid( $payment, $transaction ) {
 		unset( $payment );
+		if ( ! self::payments_available() ) {
+			return;
+		}
 		$fresh = \FairPaymentsConnector\Models\Transaction::get_by_id( (int) $transaction->id );
 		if ( ! $fresh || 'paid' !== (string) $fresh->status ) {
 			return;

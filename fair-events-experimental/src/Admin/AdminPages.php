@@ -2,8 +2,8 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental admin pages (compare events and sources) as
- * submenus under the fair-events-calendar menu. The experimental
+ * Registers the experimental admin pages (compare events, sources and Meta)
+ * as submenus under the fair-events-calendar menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
  *
@@ -99,6 +99,19 @@ class AdminPages {
 			);
 
 			$this->set_hidden_page_title( $this->page_hooks['fair-events-source-view'], __( 'View Event Feed', 'fair-events-experimental' ) );
+		}
+
+		// Meta page — `meta-conversions` bundle. Not registered while the
+		// bundle is off, so its URL is refused like any unknown page.
+		if ( \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' ) ) {
+			$this->page_hooks['fair-events-meta'] = add_submenu_page(
+				$parent,
+				__( 'Meta', 'fair-events-experimental' ),
+				__( 'Meta', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-meta',
+				array( $this, 'render_meta_page' )
+			);
 		}
 	}
 
@@ -236,6 +249,18 @@ class AdminPages {
 				wp_set_script_translations( 'fair-events-source-view', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				break;
 
+			case 'fair-events-meta':
+				// The calendar test reads this browser's marketing consent
+				// the same way event pages do; WP Consent API only loads its
+				// script on the front end by itself.
+				if ( function_exists( 'wp_consent_api_enqueue_assets' ) ) {
+					wp_consent_api_enqueue_assets();
+				}
+				$asset_file = include $exp_dir . 'build/admin/meta/index.asset.php';
+				wp_enqueue_script( 'fair-events-meta', $exp_url . 'build/admin/meta/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-meta', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				wp_enqueue_style( 'wp-components' );
+				break;
 		}
 	}
 
@@ -266,13 +291,6 @@ class AdminPages {
 
 		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/settings/index.asset.php';
 
-		// The Meta calendar test reads this browser's marketing consent the
-		// same way event pages do; WP Consent API only loads its script on
-		// the front end by itself.
-		if ( function_exists( 'wp_consent_api_enqueue_assets' ) ) {
-			wp_consent_api_enqueue_assets();
-		}
-
 		wp_enqueue_script(
 			'fair-events-experimental-settings',
 			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/index.js',
@@ -290,6 +308,11 @@ class AdminPages {
 				// active Fair Events is too old to have the page.
 				'eventNotificationsUrl' => defined( 'FAIR_EVENTS_OWNS_EVENT_NOTIFICATIONS' )
 					? admin_url( 'admin.php?page=fair-events-event-notifications' )
+					: null,
+				// Meta settings moved to their own page; null while the
+				// bundle is off and the page is not registered.
+				'metaUrl'               => \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' )
+					? admin_url( 'admin.php?page=fair-events-meta' )
 					: null,
 			)
 		);
@@ -316,6 +339,17 @@ class AdminPages {
 	public function render_sources_page() {
 		?>
 		<div id="fair-events-sources-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render Meta page
+	 *
+	 * @return void
+	 */
+	public function render_meta_page() {
+		?>
+		<div id="fair-events-meta-root"></div>
 		<?php
 	}
 
