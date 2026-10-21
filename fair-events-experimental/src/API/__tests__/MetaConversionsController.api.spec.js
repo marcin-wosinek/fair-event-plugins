@@ -154,6 +154,44 @@ test.describe( 'MetaConversionsController', () => {
 		expect( body ).toHaveProperty( 'consent_api_available' );
 	} );
 
+	test( 'restricts the sent-request log to administrators', async () => {
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		expect( ( await anon.get( `${ PATH }/attempts` ) ).status() ).toBe(
+			401
+		);
+		await anon.dispose();
+		expect(
+			(
+				await api.get( `${ PATH }/attempts`, {
+					headers: subscriberHeaders,
+				} )
+			).status()
+		).toBe( 403 );
+		const res = await api.get( `${ PATH }/attempts`, {
+			headers: adminHeaders,
+		} );
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( Array.isArray( body.items ) ).toBe( true );
+		expect( typeof body.total ).toBe( 'number' );
+		expect( body.total_pages ).toBeGreaterThanOrEqual( 1 );
+	} );
+
+	test( 'rejects out-of-range paging and unknown filters on the sent-request log', async () => {
+		for ( const params of [
+			{ per_page: 51 },
+			{ page: 0 },
+			{ origin: 'everyone' },
+			{ event_name: 'Purchase; DROP' },
+		] ) {
+			const res = await api.get( `${ PATH }/attempts`, {
+				headers: adminHeaders,
+				params,
+			} );
+			expect( res.status(), JSON.stringify( params ) ).toBe( 400 );
+		}
+	} );
+
 	test( 'rejects an unauthenticated test-event send', async () => {
 		const anon = await request.newContext( { baseURL: BASE_URL } );
 		const res = await anon.post( `${ PATH }/test`, {
@@ -423,6 +461,11 @@ test.describe( 'MetaConversionsController calendar test', () => {
 				messages: [],
 				fbtrace_id: 'E2Efbtrace00000',
 			},
+			request: expect.objectContaining( {
+				method: 'POST',
+				dataset_id: '1234567890123456',
+				test_events_code: true,
+			} ),
 		} );
 
 		const sent = await lastMetaRequest();
@@ -455,6 +498,123 @@ test.describe( 'MetaConversionsController calendar test', () => {
 			events_received: 1,
 			fbtrace_id: 'E2Efbtrace00000',
 		} );
+	} );
+
+	test( 'logs the sanitized request paired with Meta’s answer', async () => {
+		test.skip( originalConfig.token_configured, 'Needs test credentials.' );
+		const res = await api.post( `${ PATH }/test`, {
+			headers: { ...adminHeaders, 'User-Agent': USER_AGENT },
+			data: body(),
+		} );
+		expect( res.status() ).toBe( 200 );
+		const sent = await lastMetaRequest();
+
+		const log = await (
+			await api.get( `${ PATH }/attempts`, {
+				headers: adminHeaders,
+				params: { origin: 'admin_test', per_page: 1 },
+			} )
+		).json();
+		const [ attempt ] = log.items;
+		expect( attempt ).toMatchObject( {
+			origin: 'admin_test',
+			delivery_path: 'test',
+			event_name: 'FairEventCalendarClick',
+			test_events: true,
+			outcome: 'received',
+			response: { http_status: 200, fbtrace_id: 'E2Efbtrace00000' },
+			request: {
+				dataset_id: '1234567890123456',
+				api_version: expect.stringMatching( /^v\d+\.\d+$/ ),
+				test_events_code: true,
+			},
+		} );
+		const fields = Object.fromEntries(
+			attempt.request.fields.map( ( field ) => [ field.path, field ] )
+		);
+		// Every field that was sent is listed, with safe values intact.
+		expect( fields[ 'data[0].custom_data.post_id' ] ).toMatchObject( {
+			state: 'value',
+			value: sent.data[ 0 ].custom_data.post_id,
+		} );
+		expect( fields[ 'data[0].user_data.fbp' ] ).toMatchObject( {
+			state: 'redacted',
+			check: 'valid',
+		} );
+		expect( fields[ 'data[0].user_data.fbc' ] ).toBeUndefined();
+		expect( fields[ 'data[0].event_source_url' ].url.same_site ).toBe(
+			true
+		);
+
+		const json = JSON.stringify( log );
+		for ( const secret of [
+			'e2e-meta-access-token',
+			'TEST12345',
+			FBP,
+			USER_AGENT,
+			sent.data[ 0 ].event_id,
+			sent.data[ 0 ].event_source_url,
+		] ) {
+			expect( json ).not.toContain( secret );
+		}
+	} );
+
+	test( 'keeps the request when Meta cannot be reached', async () => {
+		test.skip( originalConfig.token_configured, 'Needs test credentials.' );
+		await wp(
+			'option',
+			'update',
+			'fair_e2e_meta_response',
+			JSON.stringify( { transport: true } ),
+			'--format=json'
+		);
+		const res = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: body(),
+		} );
+		await wp( 'option', 'delete', 'fair_e2e_meta_response' );
+		expect( res.status() ).toBe( 503 );
+		const error = await res.json();
+		expect( error.data.outcome ).toBe( 'transport' );
+		expect( error.data.request.fields.length ).toBeGreaterThan( 0 );
+		const [ attempt ] = (
+			await (
+				await api.get( `${ PATH }/attempts`, {
+					headers: adminHeaders,
+					params: { per_page: 1 },
+				} )
+			).json()
+		).items;
+		expect( attempt.outcome ).toBe( 'transport' );
+		expect( attempt.response.http_status ).toBeNull();
+		expect( attempt.request.fields.length ).toBeGreaterThan( 0 );
+	} );
+
+	test( 'reports entries without a stored request or result as unavailable', async () => {
+		await wp(
+			'eval',
+			`global $wpdb; $wpdb->insert( \\FairEventsExperimental\\Meta\\DeliveryAttempts::table_name(), array( 'origin' => 'production', 'delivery_path' => 'immediate', 'event_name' => 'FairEventTicketClick', 'created_at' => gmdate( 'Y-m-d H:i:s' ) ) );`
+		);
+		const [ attempt ] = (
+			await (
+				await api.get( `${ PATH }/attempts`, {
+					headers: adminHeaders,
+					params: { per_page: 1 },
+				} )
+			).json()
+		).items;
+		expect( attempt ).toMatchObject( {
+			event_name: 'FairEventTicketClick',
+			outcome: null,
+			request: null,
+			response: null,
+		} );
+		const config = await (
+			await api.get( PATH, { headers: adminHeaders } )
+		).json();
+		for ( const outcome of config.diagnostics.recent ) {
+			expect( typeof outcome.logged_attempts ).toBe( 'number' );
+		}
 	} );
 
 	test( 'does not report zero received events as success', async () => {

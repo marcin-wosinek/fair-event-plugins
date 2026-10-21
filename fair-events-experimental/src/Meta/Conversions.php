@@ -118,7 +118,16 @@ class Conversions {
 		if ( ! self::configured() || ! $outbox->reserve_immediate( $event ) ) {
 			return false;
 		}
-		$result = $this->send_payload( self::payload_for( (object) $event ), '', self::IMMEDIATE_TIMEOUT );
+		$result = $this->send_payload(
+			self::payload_for( (object) $event ),
+			'',
+			self::IMMEDIATE_TIMEOUT,
+			array(
+				'origin'        => 'production',
+				'delivery_path' => 'immediate',
+				'outbox_id'     => $outbox->inserted_id(),
+			)
+		);
 		$outbox->finish_immediate( $event['event_id'], $result );
 		return $result['accepted'];
 	}
@@ -308,7 +317,17 @@ class Conversions {
 		$outbox = new Outbox();
 		$row    = $outbox->claim_due();
 		while ( $row ) {
-			$result = $this->send_payload( self::payload_for( $row ) );
+			$result = $this->send_payload(
+				self::payload_for( $row ),
+				'',
+				self::QUEUED_TIMEOUT,
+				array(
+					'origin'         => 'production',
+					'delivery_path'  => 'queued',
+					'outbox_id'      => (int) $row->id,
+					'attempt_number' => (int) $row->attempt_count + 1,
+				)
+			);
 			if ( $result['accepted'] ) {
 				$outbox->finish( (int) $row->id, 'received', '', '', $result['diagnostics'] );
 			} elseif ( $result['temporary'] ) {
@@ -330,9 +349,21 @@ class Conversions {
 	 * `transport`. `diagnostics` holds only the allowlisted, sanitized fields
 	 * from {@see diagnostics_from()}.
 	 *
-	 * @param array $event Event. @param string $test_code Optional explicit test code. @param int $timeout Request timeout in seconds. @return array
+	 * The final request is snapshotted by {@see RequestDiagnostics} just
+	 * before it is sent and returned as `request`, also when Meta rejects it
+	 * or cannot be reached; `request` is null when nothing was sent. The
+	 * snapshot and Meta's answer are logged as one {@see DeliveryAttempts}
+	 * row, best effort: logging never changes what is sent or how the
+	 * answer is classified.
+	 *
+	 * @param array  $event     Event.
+	 * @param string $test_code Optional explicit test code.
+	 * @param int    $timeout   Request timeout in seconds.
+	 * @param array  $attempt   Log context: `origin`, `delivery_path`, and
+	 *                          optional `outbox_id` and `attempt_number`.
+	 * @return array
 	 */
-	public function send_payload( $event, $test_code = '', $timeout = self::QUEUED_TIMEOUT ) {
+	public function send_payload( $event, $test_code = '', $timeout = self::QUEUED_TIMEOUT, $attempt = array() ) {
 		$dataset = (string) get_option( self::DATASET_OPTION, '' );
 		$token   = Connector::token();
 		if ( '' === $dataset || '' === $token ) {
@@ -345,21 +376,53 @@ class Conversions {
 		if ( '' !== $test_code ) {
 			$body['test_event_code'] = $test_code;
 		}
-		$response = wp_remote_post(
-			'https://graph.facebook.com/' . self::GRAPH_API_VERSION . '/' . rawurlencode( $dataset ) . '/events',
-			array(
-				'timeout' => $timeout,
-				'headers' => array( 'Content-Type' => 'application/json' ),
-				'body'    => wp_json_encode( $body ),
-			)
+		$request              = RequestDiagnostics::capture( $body, $dataset, self::GRAPH_API_VERSION );
+		$attempts             = new DeliveryAttempts();
+		$attempt_id           = $attempts->start(
+			array_merge(
+				array(
+					'origin'        => 'production',
+					'delivery_path' => 'queued',
+				),
+				$attempt,
+				array(
+					'event_name'   => $event['event_name'] ?? '',
+					'payment_mode' => $event['custom_data']['payment_mode'] ?? '',
+					'test_events'  => '' !== $test_code,
+				)
+			),
+			$request
 		);
+		$result               = $this->classify(
+			wp_remote_post(
+				'https://graph.facebook.com/' . self::GRAPH_API_VERSION . '/' . rawurlencode( $dataset ) . '/events',
+				array(
+					'timeout' => $timeout,
+					'headers' => array( 'Content-Type' => 'application/json' ),
+					'body'    => wp_json_encode( $body ),
+				)
+			),
+			array_merge( array( $token, $test_code ), RequestDiagnostics::secrets( $body ) )
+		);
+		$result['request']    = $request;
+		$result['attempt_id'] = $attempt_id;
+		$attempts->finish( $attempt_id, $result );
+		return $result;
+	}
+
+	/**
+	 * @param array|\WP_Error $response {@see wp_remote_post()} result.
+	 * @param string[]        $secrets  Values to redact from Meta's messages.
+	 * @return array {@see result()}.
+	 */
+	private function classify( $response, $secrets ) {
 		if ( is_wp_error( $response ) ) {
 			return self::result( 'transport', true, 'network', 'transport' );
 		}
 		$status      = (int) wp_remote_retrieve_response_code( $response );
 		$data        = json_decode( wp_remote_retrieve_body( $response ), true );
 		$data        = is_array( $data ) ? $data : null;
-		$diagnostics = self::diagnostics_from( $status, $data, array( $token, $test_code ) );
+		$diagnostics = self::diagnostics_from( $status, $data, $secrets );
 		if ( $status >= 200 && $status < 300 ) {
 			if ( null === $data ) {
 				return self::result( 'unconfirmed', true, 'malformed_response', 'unconfirmed', $diagnostics );
@@ -398,6 +461,8 @@ class Conversions {
 			'code'        => $code,
 			'type'        => $type,
 			'diagnostics' => $diagnostics ? $diagnostics : self::diagnostics_from( null, null ),
+			'request'     => null,
+			'attempt_id'  => 0,
 		);
 	}
 
@@ -407,8 +472,9 @@ class Conversions {
 	 * error's message) and the `fbtrace_id` (or the error's trace ID). A field
 	 * Meta left out stays null, so it can be told apart from an empty list or
 	 * a zero count. Messages are bounded, stripped to plain text, and have
-	 * credentials and Meta browser identifiers redacted; nothing else from
-	 * the body is kept.
+	 * credentials, Meta browser identifiers, SHA-256 hashes and every
+	 * redacted value of the sent request redacted — Meta may echo them;
+	 * nothing else from the body is kept.
 	 *
 	 * @param int|null   $status   HTTP status, or null without a response.
 	 * @param array|null $data     Decoded body, or null when not JSON.
@@ -459,11 +525,15 @@ class Conversions {
 	 * @return string Plain, bounded text with credentials and identifiers redacted.
 	 */
 	private static function safe_message( $message, $secrets ) {
-		$text = is_string( $message ) ? $message : (string) wp_json_encode( $message );
-		foreach ( array_filter( $secrets, 'strlen' ) as $secret ) {
+		$text    = is_string( $message ) ? $message : (string) wp_json_encode( $message );
+		$secrets = array_filter( array_map( 'strval', $secrets ), 'strlen' );
+		// Longest first, so a value inside another cannot leave part of it.
+		usort( $secrets, static fn( $a, $b ) => strlen( $b ) - strlen( $a ) );
+		foreach ( $secrets as $secret ) {
 			$text = str_replace( $secret, '[redacted]', $text );
 		}
 		$text = (string) preg_replace( '/fb\.1\.\d{10,16}\.[A-Za-z0-9_-]{1,128}/', '[redacted]', $text );
+		$text = (string) preg_replace( '/\b[a-f0-9]{64}\b/i', '[redacted]', $text );
 		$text = (string) preg_replace( '/access_token=[^&\s"]+/i', 'access_token=[redacted]', $text );
 		$text = sanitize_text_field( $text );
 		return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, self::MESSAGE_LENGTH ) : substr( $text, 0, self::MESSAGE_LENGTH );
@@ -493,7 +563,15 @@ class Conversions {
 		} else {
 			$event = self::build_test_event( $event_name );
 		}
-		$result = $this->send_payload( $event, $code );
+		$result = $this->send_payload(
+			$event,
+			$code,
+			self::QUEUED_TIMEOUT,
+			array(
+				'origin'        => 'admin_test',
+				'delivery_path' => 'test',
+			)
+		);
 		self::append_test_history( $event_name, $result );
 		return $result;
 	}
@@ -523,7 +601,9 @@ class Conversions {
 	 * Record a test-send outcome, trimmed to {@see TEST_LOG_LIMIT} entries. Only
 	 * the safe code/type and the allowlisted diagnostics {@see send_payload()}
 	 * already computed are stored — never the raw Meta response body.
-	 * Entries recorded before diagnostics existed simply lack those keys.
+	 * Entries recorded before diagnostics existed simply lack those keys;
+	 * `request_logged` says whether the sent request is in
+	 * {@see DeliveryAttempts}, and entries recorded before that lack it.
 	 *
 	 * @param string $event_name Test event name.
 	 * @param array  $result send_payload() result.
@@ -534,12 +614,13 @@ class Conversions {
 			$history,
 			array_merge(
 				array(
-					'event_name' => $event_name,
-					'accepted'   => (bool) $result['accepted'],
-					'outcome'    => sanitize_key( (string) $result['outcome'] ),
-					'code'       => sanitize_key( (string) $result['code'] ),
-					'type'       => sanitize_key( (string) $result['type'] ),
-					'time'       => current_time( 'mysql', true ),
+					'event_name'     => $event_name,
+					'accepted'       => (bool) $result['accepted'],
+					'outcome'        => sanitize_key( (string) $result['outcome'] ),
+					'code'           => sanitize_key( (string) $result['code'] ),
+					'type'           => sanitize_key( (string) $result['type'] ),
+					'time'           => current_time( 'mysql', true ),
+					'request_logged' => $result['attempt_id'] > 0,
 				),
 				$result['diagnostics']
 			)
@@ -580,7 +661,9 @@ class Conversions {
 		return $event;
 	}
 
-	/** Purge retained delivery rows. */
+	/** Purge retained delivery rows and expired request log entries. */
 	public function cleanup() {
-		( new Outbox() )->cleanup(); }
+		( new Outbox() )->cleanup();
+		( new DeliveryAttempts() )->prune();
+	}
 }

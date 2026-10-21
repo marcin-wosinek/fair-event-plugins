@@ -14,7 +14,7 @@ defined( 'WPINC' ) || die;
 /** Stores and claims conversion delivery work. */
 class Outbox {
 	public const TABLE_SUFFIX = 'fair_events_meta_outbox';
-	public const DB_VERSION   = '5';
+	public const DB_VERSION   = '6';
 
 	/**
 	 * State of a reserved immediate send that has not finished — or never
@@ -25,6 +25,9 @@ class Outbox {
 
 	/** Allowlisted keys of the stored `meta_diagnostics` JSON. */
 	private const DIAGNOSTIC_KEYS = array( 'http_status', 'events_received', 'messages', 'fbtrace_id' );
+
+	/** @var int ID of the row the last {@see insert()} added, or 0. */
+	private $inserted_id = 0;
 
 	/** @return string */
 	public static function table_name() {
@@ -50,6 +53,8 @@ class Outbox {
 	 * `meta_diagnostics` (version 5) holds the allowlisted, sanitized
 	 * {@see Conversions::diagnostics_from()} JSON of a finished attempt; rows
 	 * finished earlier keep NULL and are shown without diagnostics.
+	 *
+	 * Version 6 adds the {@see DeliveryAttempts} table of sent requests.
 	 */
 	public static function install() {
 		global $wpdb;
@@ -93,6 +98,7 @@ class Outbox {
 		if ( $column && 'NO' === $column->Null ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
 			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i MODIFY transaction_id bigint(20) unsigned DEFAULT NULL', $table ) );
 		}
+		DeliveryAttempts::install();
 		update_option( 'fair_events_experimental_meta_db_version', self::DB_VERSION );
 	}
 
@@ -158,8 +164,8 @@ class Outbox {
 	 */
 	private function insert( $event, $state ) {
 		global $wpdb;
-		$now    = current_time( 'mysql', true );
-		$result = $wpdb->query(
+		$now               = current_time( 'mysql', true );
+		$result            = $wpdb->query(
 			$wpdb->prepare(
 				"INSERT IGNORE INTO %i (transaction_id,event_post_id,event_date_id,event_name,event_id,event_time,source_url,value,currency,order_id,payment_mode,fbp,fbc,event_context,state,next_attempt_at,created_at,updated_at) VALUES (NULLIF(%d,0),NULLIF(%d,0),NULLIF(%d,0),%s,%s,%d,%s,%f,%s,%s,%s,%s,%s,NULLIF(%s,''),%s,%s,%s,%s)",
 				self::table_name(),
@@ -183,7 +189,14 @@ class Outbox {
 				$now
 			)
 		);
-		return false !== $result && $result > 0;
+		$inserted          = false !== $result && $result > 0;
+		$this->inserted_id = $inserted && isset( $wpdb->insert_id ) ? (int) $wpdb->insert_id : 0;
+		return $inserted;
+	}
+
+	/** @return int ID of the row this instance last queued or reserved, or 0. */
+	public function inserted_id() {
+		return $this->inserted_id;
 	}
 
 	/** Atomically claim the next due row. @return object|null */
@@ -262,10 +275,17 @@ class Outbox {
 		global $wpdb;
 		$table  = self::table_name();
 		$counts = $wpdb->get_results( $wpdb->prepare( 'SELECT state, COUNT(*) AS total FROM %i GROUP BY state', $table ), OBJECT_K );
-		$recent = $wpdb->get_results( $wpdb->prepare( 'SELECT event_name,state,result_category,attempt_count,meta_error_code,meta_error_type,meta_diagnostics,payment_mode,updated_at FROM %i ORDER BY updated_at DESC LIMIT 20', $table ), ARRAY_A );
+		$recent = $wpdb->get_results( $wpdb->prepare( 'SELECT id,event_name,state,result_category,attempt_count,meta_error_code,meta_error_type,meta_diagnostics,payment_mode,updated_at FROM %i ORDER BY updated_at DESC LIMIT 20', $table ), ARRAY_A );
+		$recent = $recent ? $recent : array();
+		$logged = ( new DeliveryAttempts() )->counts_for_outbox( array_column( $recent, 'id' ) );
+		foreach ( $recent as &$row ) {
+			$row['logged_attempts'] = $logged[ (int) $row['id'] ] ?? 0;
+			unset( $row['id'] );
+		}
+		unset( $row );
 		return array(
 			'counts' => array_map( static fn( $row ) => (int) $row->total, $counts ? $counts : array() ),
-			'recent' => array_map( array( $this, 'with_local_time' ), $recent ? $recent : array() ),
+			'recent' => array_map( array( $this, 'with_local_time' ), $recent ),
 		);
 	}
 

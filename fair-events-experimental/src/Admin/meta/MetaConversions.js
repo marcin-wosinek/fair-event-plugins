@@ -14,6 +14,10 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import MetaCalendarTest, { CALENDAR_EVENT } from './MetaCalendarTest.js';
+import { TestDiagnostics } from './TestDiagnostics.js';
+import SentRequests, { RequestDetails } from './SentRequests.js';
+
+export { TestDiagnostics };
 
 const PATH = '/fair-events-experimental/v1/meta-conversions';
 
@@ -198,106 +202,78 @@ function testStatus( entry ) {
 }
 
 /**
- * Meta's answer to a test send or delivery: HTTP status, received event
- * count, trace ID and messages. A field Meta did not report is shown as
- * such, distinct from zero events or an empty message list. Renders nothing
- * for entries recorded before these diagnostics existed.
+ * Whether the request behind a history entry or delivery outcome is in the
+ * sent-request log. Entries recorded before requests were logged — and
+ * those whose log entry failed or expired — say their details are
+ * unavailable.
  *
  * @param {Object} props
- * @param {Object} props.diagnostics Diagnostics from the API, if any.
- * @return {Element|null} Diagnostic details.
+ * @param {number} props.logged Logged requests for the entry.
+ * @return {Element} Note.
  */
-export function TestDiagnostics( { diagnostics } ) {
-	if ( ! diagnostics || ! ( 'http_status' in diagnostics ) ) {
-		return null;
-	}
-	const { http_status: status, events_received: received } = diagnostics;
-	const messages = diagnostics.messages;
+function LoggedRequestNote( { logged } ) {
 	return (
 		<div style={ { marginTop: '4px', color: '#757575' } }>
-			<Flex wrap justify="flex-start" gap={ 3 }>
-				<FlexItem>
-					{ null === status
-						? __( 'No HTTP response', 'fair-events-experimental' )
-						: sprintf(
-								/* translators: %d: HTTP status code of Meta's answer */
-								__( 'HTTP %d', 'fair-events-experimental' ),
-								status
-							) }
-				</FlexItem>
-				{ null !== status && (
-					<FlexItem>
-						{ null === received || undefined === received
-							? __(
-									'Events received: not reported',
-									'fair-events-experimental'
-								)
-							: sprintf(
-									/* translators: %d: number of events Meta reported as received */
-									__(
-										'Events received: %d',
-										'fair-events-experimental'
-									),
-									received
-								) }
-					</FlexItem>
-				) }
-				{ diagnostics.fbtrace_id && (
-					<FlexItem>
-						{ sprintf(
-							/* translators: %s: Meta trace ID for support requests */
-							__( 'Trace ID: %s', 'fair-events-experimental' ),
-							diagnostics.fbtrace_id
-						) }
-					</FlexItem>
-				) }
-			</Flex>
-			{ null !== status && Array.isArray( messages ) && (
-				<>
-					{ messages.length === 0 ? (
-						<div>
-							{ __(
-								'Messages: none',
-								'fair-events-experimental'
-							) }
-						</div>
-					) : (
-						<>
-							<div>
-								{ __(
-									'Messages:',
-									'fair-events-experimental'
-								) }
-							</div>
-							<ul style={ { margin: '0 0 0 16px' } }>
-								{ messages.map( ( message, index ) => (
-									<li key={ index }>{ message }</li>
-								) ) }
-							</ul>
-						</>
-					) }
-				</>
-			) }
-			{ null !== status && ! Array.isArray( messages ) && (
-				<div>
-					{ __(
-						'Messages: not reported',
+			{ logged > 0
+				? sprintf(
+						/* translators: %d: number of logged requests for a delivery or test */
+						_n(
+							'%d sent request is listed under Sent requests.',
+							'%d sent requests are listed under Sent requests.',
+							logged,
+							'fair-events-experimental'
+						),
+						logged
+					)
+				: __(
+						'Sent request details are unavailable for this entry.',
 						'fair-events-experimental'
 					) }
-				</div>
-			) }
 		</div>
 	);
 }
 
 /**
- * One test-send result: event name, status, time and Meta's diagnostics.
+ * The sanitized request of the latest test, behind a toggle. A test that
+ * was not sent says so instead.
  *
  * @param {Object} props
- * @param {Object} props.entry Test-send entry or result.
+ * @param {Object} props.entry Latest test result.
+ * @return {Element} Request details.
+ */
+function LatestRequest( { entry } ) {
+	const [ open, setOpen ] = useState( false );
+	const notSent = [ 'not_sent', 'configuration' ].includes( entry.outcome );
+	if ( notSent ) {
+		return <RequestDetails notSent />;
+	}
+	return (
+		<>
+			<Button
+				variant="link"
+				aria-expanded={ open }
+				onClick={ () => setOpen( ! open ) }
+			>
+				{ open
+					? __( 'Hide sent request', 'fair-events-experimental' )
+					: __( 'Show sent request', 'fair-events-experimental' ) }
+			</Button>
+			{ open && <RequestDetails request={ entry.request } /> }
+		</>
+	);
+}
+
+/**
+ * One test-send result: event name, status, time and Meta's diagnostics.
+ * The latest result also shows its sent request; a history entry says
+ * whether its request was logged.
+ *
+ * @param {Object}  props
+ * @param {Object}  props.entry  Test-send entry or result.
+ * @param {boolean} props.latest Whether this is the result just received.
  * @return {Element} Result row.
  */
-function TestResult( { entry } ) {
+function TestResult( { entry, latest = false } ) {
 	const status = testStatus( entry );
 	const detail = testHistoryDetail( entry );
 	return (
@@ -328,6 +304,11 @@ function TestResult( { entry } ) {
 				</div>
 			) }
 			<TestDiagnostics diagnostics={ entry } />
+			{ latest ? (
+				<LatestRequest entry={ entry } />
+			) : (
+				<LoggedRequestNote logged={ entry.request_logged ? 1 : 0 } />
+			) }
 		</>
 	);
 }
@@ -397,6 +378,8 @@ export default function MetaConversions( { onNotice } ) {
 	const [ lastResult, setLastResult ] = useState( null );
 	// Bumped to reset the calendar picker and reload its events.
 	const [ calendarPicker, setCalendarPicker ] = useState( 0 );
+	// Bumped after each test send so an open sent-request log reloads.
+	const [ sentRequests, setSentRequests ] = useState( 0 );
 	const load = () =>
 		apiFetch( { path: PATH } )
 			.then( ( next ) => {
@@ -529,6 +512,7 @@ export default function MetaConversions( { onNotice } ) {
 				accepted: true,
 				outcome: response?.outcome,
 				...( response?.diagnostics || {} ),
+				request: response?.request ?? null,
 			} );
 			onNotice( {
 				status: 'success',
@@ -568,10 +552,12 @@ export default function MetaConversions( { onNotice } ) {
 				type: error?.data?.category || '',
 				message,
 				...( error?.data?.diagnostics || {} ),
+				request: error?.data?.request ?? null,
 			} );
 			onNotice( { status: 'error', message } );
 		}
 		await load();
+		setSentRequests( ( count ) => count + 1 );
 		setSendingEvent( null );
 	};
 	return (
@@ -584,7 +570,7 @@ export default function MetaConversions( { onNotice } ) {
 			<CardBody>
 				<p>
 					{ __(
-						'Send consented event-button clicks and checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days.',
+						'Send consented event-button clicks and checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days. Sent requests are logged without credentials or personal identifiers and kept for 30 days.',
 						'fair-events-experimental'
 					) }
 				</p>
@@ -713,7 +699,7 @@ export default function MetaConversions( { onNotice } ) {
 								'fair-events-experimental'
 							) }
 						</h3>
-						<TestResult entry={ lastResult } />
+						<TestResult entry={ lastResult } latest />
 					</div>
 				) }
 				<h3>
@@ -847,6 +833,11 @@ export default function MetaConversions( { onNotice } ) {
 											<TestDiagnostics
 												diagnostics={ outcome }
 											/>
+											<LoggedRequestNote
+												logged={
+													outcome.logged_attempts || 0
+												}
+											/>
 										</div>
 									);
 								}
@@ -854,6 +845,7 @@ export default function MetaConversions( { onNotice } ) {
 						</VStack>
 					</>
 				) }
+				<SentRequests refreshKey={ sentRequests } />
 			</CardBody>
 		</Card>
 	);
