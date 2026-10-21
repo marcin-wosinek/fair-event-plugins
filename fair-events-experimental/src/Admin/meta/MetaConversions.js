@@ -584,7 +584,7 @@ export default function MetaConversions( { onNotice } ) {
 			<CardBody>
 				<p>
 					{ __(
-						'Send consented checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days.',
+						'Send consented event-button clicks and checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days.',
 						'fair-events-experimental'
 					) }
 				</p>

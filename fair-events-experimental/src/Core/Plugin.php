@@ -206,9 +206,14 @@ class Plugin {
 		}
 	}
 
-	/** Load the opt-in Meta integration when its connector dependency exists. */
+	/**
+	 * Load the opt-in Meta integration. It works without Fair Payments
+	 * Connector: settings, diagnostics, delivery and event-button tracking
+	 * load whenever the bundle is on; only checkout and purchase measurement
+	 * waits for payments (see Conversions::init()).
+	 */
 	private function load_meta_conversions() {
-		if ( ! Features::is_enabled( 'meta-conversions' ) || ! class_exists( \FairPaymentsConnector\Models\Transaction::class ) ) {
+		if ( ! Features::is_enabled( 'meta-conversions' ) ) {
 			return;
 		}
 

@@ -272,4 +272,38 @@ if ( ! function_exists( 'set_transient' ) ) {
 	}
 }
 
+// Hook registration stubs: every add_action()/add_filter() call is recorded
+// in $GLOBALS['_fair_test_hooks'] as hook name => callbacks.
+if ( ! function_exists( 'add_filter' ) ) {
+	/**
+	 * Stub of WordPress add_filter() that records the registration.
+	 *
+	 * @param string   $hook          Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority (unused).
+	 * @param int      $accepted_args Accepted args (unused).
+	 * @return true
+	 */
+	function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+		unset( $priority, $accepted_args );
+		$GLOBALS['_fair_test_hooks'][ $hook ][] = $callback;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'add_action' ) ) {
+	/**
+	 * Stub of WordPress add_action() that records the registration.
+	 *
+	 * @param string   $hook          Hook name.
+	 * @param callable $callback      Callback.
+	 * @param int      $priority      Priority.
+	 * @param int      $accepted_args Accepted args.
+	 * @return true
+	 */
+	function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+		return add_filter( $hook, $callback, $priority, $accepted_args );
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';

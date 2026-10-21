@@ -1,6 +1,6 @@
 /**
- * E2E: the administrator FairEventCalendarClick test in Fair Events →
- * Settings → Experimental (#1838).
+ * E2E: the administrator FairEventCalendarClick test on the Fair Events →
+ * Meta page (#1838, #2003).
  *
  * The admin picks an event from a searchable list, the page reads this browser's marketing consent
  * and `_fbp` cookie at send time, and the test goes to Meta with the Test
@@ -19,8 +19,7 @@
 import { test, expect } from '../support/fixtures.js';
 import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
 
-const SETTINGS_URL =
-	'/wp-admin/admin.php?page=fair-events-settings&tab=experimental';
+const SETTINGS_URL = '/wp-admin/admin.php?page=fair-events-meta';
 const FBP = `fb.1.${Date.now()}.e2ecalendartest`;
 
 /** Read the decoded body of the last Graph API request. */
@@ -94,7 +93,7 @@ test.describe('Meta calendar click test', () => {
 		);
 	}
 
-	test('sends the calendar test from the settings page and shows what Meta received', async ({
+	test('sends the calendar test from the Meta page and shows what Meta received', async ({
 		page,
 		baseURL,
 		seedEvent,
