@@ -2,8 +2,9 @@
  * API Tokens as a tab of Fair Payments Connector's Settings page (#1747).
  *
  * Covers the token-management flow with only Fair Payments Connector active,
- * and that an updated Fair Payments Connector Experimental adds no second
- * place to manage tokens.
+ * that the creation dialog can't be dismissed while the token is generated
+ * (#1942), and that an updated Fair Payments Connector Experimental adds no
+ * second place to manage tokens.
  *
  * Run: `npm run test:e2e:local -- e2e/fair-payments-connector-api-tokens.spec.js`.
  */
@@ -115,6 +116,73 @@ test.describe('API Tokens settings tab (#1747)', () => {
 			{ headers: { Authorization: `Bearer ${plaintext}` } }
 		);
 		expect(rejected.status()).toBe(401);
+	});
+
+	test('keeps the creation dialog open until a slow token generation finishes', async ({
+		page,
+	}) => {
+		setExperimental(false);
+		await loginAsAdmin(page);
+		await openApiTokensTab(page);
+
+		// Hold the creation request until the dismissal attempts are done;
+		// then let it reach the server unchanged.
+		const label = `e2e-tokens-1942-${Date.now()}.example.test`;
+		let release;
+		const released = new Promise((resolve) => {
+			release = resolve;
+		});
+		let posts = 0;
+		await page.route(
+			(url) => decodeURIComponent(url.href).includes(TOKENS_PATH),
+			async (route) => {
+				if (route.request().method() !== 'POST') {
+					return route.continue();
+				}
+				posts += 1;
+				await released;
+				return route.continue();
+			}
+		);
+
+		await page.getByRole('button', { name: 'Generate token' }).click();
+		const form = page.getByRole('dialog', { name: 'Generate API token' });
+		await form.getByLabel('Label').fill(label);
+		await form.getByRole('button', { name: 'Generate token' }).click();
+
+		await expect(
+			form.getByRole('button', { name: 'Generating…' })
+		).toBeDisabled();
+		await expect(
+			form.getByRole('button', { name: 'Cancel' })
+		).toBeDisabled();
+		await expect(form.getByRole('button', { name: 'Close' })).toHaveCount(
+			0
+		);
+
+		await page.keyboard.press('Escape');
+		await page.mouse.click(5, 5);
+		await expect(form).toBeVisible();
+		expect(posts).toBe(1);
+
+		release();
+		const created = page.getByRole('dialog', { name: 'Token created' });
+		await expect(created).toBeVisible();
+		const plaintext = (await created.locator('code').innerText()).trim();
+		expect(plaintext).toMatch(/^[A-Za-z0-9]{40}$/);
+		expect(posts).toBe(1);
+
+		await created.getByRole('button', { name: 'Done' }).click();
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+
+		// Revoke the token so it doesn't outlive the test.
+		const row = page.locator('tr', { hasText: label });
+		await row.getByRole('button', { name: 'Revoke' }).click();
+		await page
+			.getByRole('dialog', { name: 'Revoke API token' })
+			.getByRole('button', { name: 'Revoke token' })
+			.click();
+		await expect(row).toContainText('Revoked');
 	});
 
 	test('stays usable on a phone-sized screen', async ({ page }) => {
