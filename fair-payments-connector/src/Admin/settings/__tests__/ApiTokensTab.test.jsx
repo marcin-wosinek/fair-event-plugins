@@ -8,10 +8,14 @@
  *     token is shown once and is gone after the dialog closes.
  *   - Validation: a missing label or scope disables the submit and says why.
  *   - Errors: load, create and revoke failures are reported in place.
+ *   - Pending creation (#1942): the dialog can't be dismissed and a repeated
+ *     submission can't issue a second token while the token is generated;
+ *     a failure keeps the input for a retry and stale errors are cleared.
  *   - Revocation: a dialog names the token and what revoking breaks.
  */
 import '@testing-library/jest-dom';
 import {
+	act,
 	render,
 	screen,
 	waitFor,
@@ -61,6 +65,54 @@ function callsWith( method ) {
 	return apiFetch.mock.calls
 		.map( ( [ options ] ) => options )
 		.filter( ( options ) => ( options.method || 'GET' ) === method );
+}
+
+/**
+ * A promise the test settles by hand, to hold a request in flight.
+ *
+ * @return {{promise: Promise, resolve: Function, reject: Function}} Deferred
+ */
+function deferred() {
+	const handle = {};
+	handle.promise = new Promise( ( resolve, reject ) => {
+		handle.resolve = resolve;
+		handle.reject = reject;
+	} );
+	return handle;
+}
+
+/**
+ * Press and release the primary button on the overlay around a modal. jsdom
+ * has no PointerEvent, so mouse events carry the button the modal checks.
+ *
+ * @param {HTMLElement} dialog The dialog element.
+ */
+function pressOutside( dialog ) {
+	const overlay = dialog.closest( '.components-modal__screen-overlay' );
+	act( () => {
+		for ( const type of [ 'pointerdown', 'pointerup' ] ) {
+			overlay.dispatchEvent(
+				new window.MouseEvent( type, { bubbles: true, button: 0 } )
+			);
+		}
+	} );
+}
+
+/**
+ * Try every way of dismissing a modal: Escape, its close button when it has
+ * one, and a press on the overlay outside it.
+ *
+ * @param {HTMLElement} dialog The dialog element.
+ */
+async function tryToDismiss( dialog ) {
+	fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+	const close = within( dialog ).queryByRole( 'button', { name: 'Close' } );
+	if ( close ) {
+		fireEvent.click( close );
+	}
+	pressOutside( dialog );
+	// The modal closes after its exit animation promise settles.
+	await act( async () => {} );
 }
 
 async function openCreateDialog() {
@@ -337,6 +389,187 @@ describe( 'ApiTokensTab', () => {
 		expect(
 			within( dialog ).getByRole( 'button', { name: 'Generate token' } )
 		).toBeEnabled();
+	} );
+
+	it( 'can be dismissed from outside before generation starts', async () => {
+		mockApi();
+
+		render( <ApiTokensTab /> );
+		const dialog = await openCreateDialog();
+		pressOutside( dialog );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+	} );
+
+	it( 'stays open and busy while the token is generated, then shows it', async () => {
+		const request = deferred();
+		mockApi( { POST: () => request.promise } );
+
+		render( <ApiTokensTab /> );
+		const dialog = await openCreateDialog();
+		fireEvent.change( within( dialog ).getByLabelText( 'Label' ), {
+			target: { value: 'satellite.example' },
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Generate token' } )
+		);
+
+		const busy = within( dialog ).getByRole( 'button', {
+			name: 'Generating…',
+		} );
+		expect( busy ).toBeDisabled();
+		expect( busy ).toHaveClass( 'is-busy' );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		expect( within( dialog ).getByLabelText( 'Label' ) ).toBeDisabled();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		await tryToDismiss( dialog );
+
+		expect(
+			screen.getByRole( 'dialog', { name: 'Generate API token' } )
+		).toBeInTheDocument();
+
+		await act( async () => {
+			request.resolve( { ...ACTIVE, token: PLAINTEXT } );
+		} );
+
+		const result = await screen.findByRole( 'dialog', {
+			name: 'Token created',
+		} );
+		expect( within( result ).getByText( PLAINTEXT ) ).toBeInTheDocument();
+		expect( callsWith( 'POST' ) ).toHaveLength( 1 );
+
+		// The token stays until the organizer dismisses the completed dialog.
+		await act( async () => {} );
+		expect( screen.getByText( PLAINTEXT ) ).toBeInTheDocument();
+		fireEvent.click(
+			within( result ).getByRole( 'button', { name: 'Done' } )
+		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( screen.queryByText( PLAINTEXT ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'sends one request when the form is submitted repeatedly before a re-render', async () => {
+		const request = deferred();
+		mockApi( { POST: () => request.promise } );
+
+		render( <ApiTokensTab /> );
+		const dialog = await openCreateDialog();
+		fireEvent.change( within( dialog ).getByLabelText( 'Label' ), {
+			target: { value: 'satellite.example' },
+		} );
+		const submit = within( dialog ).getByRole( 'button', {
+			name: 'Generate token',
+		} );
+		const form = submit.closest( 'form' );
+
+		// Within one act React doesn't re-render between the events, so each
+		// handler still sees the idle form, as with a fast double click or
+		// a repeated Enter.
+		act( () => {
+			fireEvent.click( submit );
+			fireEvent.click( submit );
+			fireEvent.submit( form );
+		} );
+
+		expect( callsWith( 'POST' ) ).toHaveLength( 1 );
+
+		await act( async () => {
+			request.resolve( { ...ACTIVE, token: PLAINTEXT } );
+		} );
+		expect( await screen.findByText( PLAINTEXT ) ).toBeInTheDocument();
+		expect( callsWith( 'POST' ) ).toHaveLength( 1 );
+	} );
+
+	it( 'keeps the input after failures, clears stale errors and retries', async () => {
+		const attempts = [
+			() => Promise.reject( new Error( 'Invalid parameter(s): scopes' ) ),
+			() => second.promise,
+			() => Promise.resolve( { ...ACTIVE, token: PLAINTEXT } ),
+		];
+		const second = deferred();
+		mockApi( { POST: () => attempts.shift()() } );
+
+		render( <ApiTokensTab /> );
+		let dialog = await openCreateDialog();
+		fireEvent.change( within( dialog ).getByLabelText( 'Label' ), {
+			target: { value: 'satellite.example' },
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Generate token' } )
+		);
+
+		expect(
+			await within( dialog ).findByText( 'Invalid parameter(s): scopes', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( within( dialog ).getByLabelText( 'Label' ) ).toHaveValue(
+			'satellite.example'
+		);
+		expect(
+			within( dialog ).getByRole( 'checkbox', {
+				name: 'Read transactions',
+			} )
+		).toBeChecked();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeEnabled();
+
+		// Retrying clears the previous error while the new attempt runs.
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Generate token' } )
+		);
+		expect(
+			within( dialog ).queryByText( 'Invalid parameter(s): scopes', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+
+		// Without a server message, a translated fallback is shown.
+		await act( async () => {
+			second.reject( {} );
+		} );
+		expect(
+			await within( dialog ).findByText( 'Failed to create API token.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+
+		// Cancelling after a failure is allowed; reopening starts clean.
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		dialog = await openCreateDialog();
+		expect(
+			within( dialog ).queryByText( 'Failed to create API token.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+		expect( within( dialog ).getByLabelText( 'Label' ) ).toHaveValue( '' );
+
+		fireEvent.change( within( dialog ).getByLabelText( 'Label' ), {
+			target: { value: 'satellite.example' },
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Generate token' } )
+		);
+		expect( await screen.findByText( PLAINTEXT ) ).toBeInTheDocument();
+		expect( callsWith( 'POST' ) ).toHaveLength( 3 );
 	} );
 
 	it( 'confirms a revoke by naming the token and what stops working', async () => {

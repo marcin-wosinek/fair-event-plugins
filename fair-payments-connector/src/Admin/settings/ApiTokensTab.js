@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
 	Card,
 	CardHeader,
@@ -73,6 +73,9 @@ export default function ApiTokensTab() {
 	const [ creation, setCreation ] = useState( null );
 	// Revoke dialog: null while closed, otherwise the token being revoked.
 	const [ revocation, setRevocation ] = useState( null );
+	// Synchronous guard against a second submission before React re-renders
+	// the busy state; a duplicate request would issue a second token.
+	const creationInFlight = useRef( false );
 
 	const load = useCallback( () => {
 		setLoading( true );
@@ -110,8 +113,14 @@ export default function ApiTokensTab() {
 		} );
 	};
 
-	// Closing drops the plaintext token for good.
-	const closeCreation = () => setCreation( null );
+	// Closing drops the plaintext token for good. While the token is being
+	// generated the dialog stays open: dismissing it would lose a token that
+	// the server may still create.
+	const closeCreation = () => {
+		if ( ! creationInFlight.current ) {
+			setCreation( null );
+		}
+	};
 
 	const updateCreation = ( changes ) =>
 		setCreation( ( current ) =>
@@ -121,13 +130,18 @@ export default function ApiTokensTab() {
 	const labelMissing = creation ? creation.label.trim() === '' : false;
 	const scopesMissing = creation ? creation.scopes.length === 0 : false;
 	const canCreate =
-		!! creation && ! creation.saving && ! labelMissing && ! scopesMissing;
+		!! creation &&
+		! creation.saving &&
+		! creation.token &&
+		! labelMissing &&
+		! scopesMissing;
 
 	const handleCreate = ( event ) => {
 		event.preventDefault();
-		if ( ! canCreate ) {
+		if ( ! canCreate || creationInFlight.current ) {
 			return;
 		}
+		creationInFlight.current = true;
 
 		updateCreation( { saving: true, error: null } );
 
@@ -136,10 +150,12 @@ export default function ApiTokensTab() {
 			scopes: creation.scopes,
 		} )
 			.then( ( response ) => {
+				creationInFlight.current = false;
 				updateCreation( { saving: false, token: response.token } );
 				load();
 			} )
 			.catch( ( err ) => {
+				creationInFlight.current = false;
 				updateCreation( {
 					saving: false,
 					error:
@@ -390,6 +406,9 @@ export default function ApiTokensTab() {
 						'fair-payments-connector'
 					) }
 					onRequestClose={ closeCreation }
+					isDismissible={ ! creation.saving }
+					shouldCloseOnClickOutside={ ! creation.saving }
+					shouldCloseOnEsc={ ! creation.saving }
 					className="fair-payments-connector-api-tokens__dialog"
 				>
 					<form onSubmit={ handleCreate }>
