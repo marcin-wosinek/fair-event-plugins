@@ -4,7 +4,9 @@
  * another type, an activity and a check-in in one save, going over the new
  * type's limit with a reason. The sibling ticket keeps its own state, the
  * List shows each ticket's own type, and the Audience tab's editor shows the
- * same ticket the same way.
+ * same ticket the same way. While a save runs, the editor cannot be
+ * dismissed; Escape closes an idle editor and focus returns to its trigger
+ * from either tab (#1934).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -311,5 +313,83 @@ test.describe( 'Manage Event — one ticket editor for List and Audience', () =>
 			dialog.getByRole( 'checkbox', { name: 'Checked in' } )
 		).not.toBeChecked();
 		await dialog.getByRole( 'button', { name: 'Cancel' } ).click();
+	} );
+
+	test( 'blocks dismissal while saving and returns focus to the trigger, from List and Audience', async () => {
+		await openList();
+		const rows = await ticketRows();
+		const trigger = rows
+			.nth( 0 )
+			.getByRole( 'button', { name: /^Edit Ticket 1 \(/ } );
+		const dialog = adminPage.getByRole( 'dialog', {
+			name: `Edit ticket — ${ buyer }`,
+		} );
+
+		// Escape dismisses an idle editor and focus returns to its trigger.
+		await trigger.click();
+		await expect( dialog.getByText( 'Status: Confirmed' ) ).toBeVisible();
+		await adminPage.keyboard.press( 'Escape' );
+		await expect( dialog ).toBeHidden();
+		await expect( trigger ).toBeFocused();
+
+		// Hold the save to look at the pending editor.
+		let release;
+		const released = new Promise( ( resolve ) => {
+			release = resolve;
+		} );
+		const saveRoute = /event-dates(\/|%2F)\d+(\/|%2F)tickets(\/|%2F)\d+/;
+		await adminPage.route( saveRoute, async ( route ) => {
+			const request = route.request();
+			const isSave =
+				request.method() === 'PUT' ||
+				request.headers()[ 'x-http-method-override' ] === 'PUT';
+			if ( isSave ) {
+				await released;
+			}
+			await route.continue();
+		} );
+
+		await trigger.click();
+		const checkedIn = dialog.getByRole( 'checkbox', {
+			name: 'Checked in',
+		} );
+		await checkedIn.check();
+		await dialog.getByRole( 'button', { name: 'Save ticket' } ).click();
+		await expect(
+			dialog.getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		await expect( checkedIn ).toBeDisabled();
+		await expect(
+			dialog.getByRole( 'button', { name: 'Close' } )
+		).toHaveCount( 0 );
+		await adminPage.keyboard.press( 'Escape' );
+		await expect( dialog ).toBeVisible();
+
+		release();
+		await expect( dialog ).toBeHidden();
+		await adminPage.unroute( saveRoute );
+		await expect(
+			adminPage
+				.locator( '.components-notice__content' )
+				.getByText( 'Ticket saved.' )
+		).toBeVisible();
+		await expect( trigger ).toBeFocused();
+
+		await adminPage.goto(
+			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=audience`
+		);
+		const group = adminPage.locator( 'tbody', {
+			has: adminPage.getByRole( 'link', { name: buyer } ),
+		} );
+		const audienceTrigger = group.getByRole( 'button', {
+			name: /^Edit Ticket 1 — Regular/,
+		} );
+		await audienceTrigger.click();
+		await expect(
+			dialog.getByRole( 'checkbox', { name: 'Checked in' } )
+		).toBeChecked();
+		await adminPage.keyboard.press( 'Escape' );
+		await expect( dialog ).toBeHidden();
+		await expect( audienceTrigger ).toBeFocused();
 	} );
 } );

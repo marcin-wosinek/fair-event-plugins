@@ -259,7 +259,7 @@ msgstr "Razem"
 #: src/Admin/transaction/TransactionPage.js:281
 #: src/Admin/transaction/TransactionPage.js:505
 #: src/Admin/transaction/TransactionPage.js:1413
-#: src/Admin/transactions/components/ImportTransactionsModal.js:157
+#: src/Admin/transactions/components/ImportTransactionsModal.js:243
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -626,17 +626,13 @@ msgstr "Blok prostej płatności dla WordPress"
 msgid "%d transaction(s) exported."
 msgstr "%d transakcja(e) wyeksportowana(e)."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:62
+#: src/Admin/transactions/components/ImportTransactionsModal.js:109
 msgid "Invalid file format. Expected a JSON array."
 msgstr "Nieprawidłowy format pliku. Oczekiwana tablica JSON."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:74
+#: src/Admin/transactions/components/ImportTransactionsModal.js:121
 msgid "No valid transactions found in the file."
 msgstr "Nie znaleziono prawidłowych transakcji w pliku."
-
-#: src/Admin/transactions/components/ImportTransactionsModal.js:91
-msgid "Failed to import transactions."
-msgstr "Nie udało się zaimportować transakcji."
 
 #: src/Admin/transactions/TransactionsApp.js:702
 msgid "Export Selected"
@@ -813,17 +809,17 @@ msgstr "Nie udało się załadować połączonych witryn."
 msgid "Loading sites…"
 msgstr "Ładowanie witryn…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:119
+#: src/Admin/transactions/components/ImportTransactionsModal.js:181
 msgid "Select a JSON file exported from another site, or a Mollie payments CSV export."
 msgstr "Wybierz plik JSON wyeksportowany z innej witryny lub eksport CSV płatności Mollie."
 
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:201
 #: src/Admin/external-updates/components/MollieImportPanel.js:427
-#: src/Admin/transactions/components/ImportTransactionsModal.js:135
+#: src/Admin/transactions/components/ImportTransactionsModal.js:212
 msgid "Importing…"
 msgstr "Importowanie…"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:103
+#: src/Admin/transactions/components/ImportTransactionsModal.js:162
 msgid "Import Transactions"
 msgstr "Importuj transakcje"
 
@@ -2050,11 +2046,11 @@ msgstr "Dodaj trasę"
 msgid "Save settings"
 msgstr "Zapisz ustawienia"
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:140
+#: src/Admin/transactions/components/ImportTransactionsModal.js:217
 msgid "To import from Mollie or a connected site, use External Updates."
 msgstr "Aby importować z Mollie lub połączonej witryny, użyj funkcji Aktualizacje zewnętrzne."
 
-#: src/Admin/transactions/components/ImportTransactionsModal.js:145
+#: src/Admin/transactions/components/ImportTransactionsModal.js:231
 msgid "Open External Updates"
 msgstr "Otwórz Aktualizacje zewnętrzne"
 
@@ -2971,3 +2967,24 @@ msgstr ""
 #: src/Admin/notifications/NotificationsTab.js:417
 msgid "From @BotFather. Stored encrypted in the site database when the server supports it; administrators can still view it here."
 msgstr ""
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:75
+msgid "The transactions could not be imported. Try again."
+msgstr "Nie udało się zaimportować transakcji. Spróbuj ponownie."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:132
+msgid "The file could not be read. Choose another file."
+msgstr "Nie udało się odczytać pliku. Wybierz inny plik."
+
+#. translators: 1: file name, 2: number of transactions
+#: src/Admin/transactions/components/ImportTransactionsModal.js:197
+#, js-format
+msgid "%1$s: %2$d transaction is ready to import again."
+msgid_plural "%1$s: %2$d transactions are ready to import again."
+msgstr[0] "%1$s: %2$d transakcja jest gotowa do ponownego importu."
+msgstr[1] "%1$s: %2$d transakcje są gotowe do ponownego importu."
+msgstr[2] "%1$s: %2$d transakcji jest gotowych do ponownego importu."
+
+#: src/Admin/transactions/components/ImportTransactionsModal.js:255
+msgid "Retry import"
+msgstr "Ponów import"

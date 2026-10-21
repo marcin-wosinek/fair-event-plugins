@@ -9,7 +9,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Modal,
 	Button,
@@ -22,7 +22,12 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { targetOptionLabel, projectionMessage } from 'fair-events-shared';
+import {
+	targetOptionLabel,
+	projectionMessage,
+	WrappingModalStyle,
+	WRAPPING_MODAL_CLASS,
+} from 'fair-events-shared';
 
 export const ACTION_MOVE = 'move';
 export const ACTION_CHANGE_TYPE = 'change_type';
@@ -158,6 +163,8 @@ export default function SignupEditModal( {
 	const [ reason, setReason ] = useState( '' );
 	const [ saving, setSaving ] = useState( false );
 	const [ saveError, setSaveError ] = useState( null );
+	// Refuses a second submission before the first one re-rendered the popup.
+	const inFlight = useRef( false );
 
 	useEffect( () => {
 		apiFetch( {
@@ -184,6 +191,10 @@ export default function SignupEditModal( {
 	};
 
 	const save = async () => {
+		if ( inFlight.current ) {
+			return;
+		}
+		inFlight.current = true;
 		setSaving( true );
 		setSaveError( null );
 		const data = isMove
@@ -209,7 +220,15 @@ export default function SignupEditModal( {
 				);
 			}
 		} finally {
+			inFlight.current = false;
 			setSaving( false );
+		}
+	};
+
+	// The outcome of a dismissed request would be unknown to the user.
+	const close = () => {
+		if ( ! saving ) {
+			onClose();
 		}
 	};
 
@@ -275,6 +294,7 @@ export default function SignupEditModal( {
 						} ) ),
 					] }
 					onChange={ handleTargetChange }
+					disabled={ saving }
 				/>
 				{ ! isMove && (
 					<p className="description">
@@ -303,10 +323,17 @@ export default function SignupEditModal( {
 							) }
 							value={ reason }
 							onChange={ setReason }
+							disabled={ saving }
 						/>
 					</>
 				) }
-				<Flex justify="flex-end" gap={ 2 } style={ { marginTop: 16 } }>
+				<Flex
+					justify="flex-end"
+					align="center"
+					gap={ 2 }
+					wrap
+					style={ { marginTop: 16 } }
+				>
 					{ ! targetId && (
 						<FlexItem>
 							<span>
@@ -330,7 +357,11 @@ export default function SignupEditModal( {
 						</FlexItem>
 					) }
 					<FlexItem>
-						<Button variant="tertiary" onClick={ onClose }>
+						<Button
+							variant="tertiary"
+							onClick={ close }
+							disabled={ saving }
+						>
 							{ __( 'Cancel', 'fair-events' ) }
 						</Button>
 					</FlexItem>
@@ -341,6 +372,9 @@ export default function SignupEditModal( {
 								isDestructive
 								isBusy={ saving }
 								disabled={ saving || reasonMissing }
+								// Stay focusable while pending, so focus can
+								// still return to the trigger afterwards.
+								accessibleWhenDisabled={ saving }
 								onClick={ save }
 							>
 								{ __( 'Exceed capacity', 'fair-events' ) }
@@ -350,6 +384,7 @@ export default function SignupEditModal( {
 								variant="primary"
 								isBusy={ saving }
 								disabled={ saving || ! targetId }
+								accessibleWhenDisabled={ saving }
 								onClick={ save }
 							>
 								{ isMove
@@ -367,7 +402,16 @@ export default function SignupEditModal( {
 	};
 
 	return (
-		<Modal title={ title } onRequestClose={ onClose }>
+		<Modal
+			title={ title }
+			onRequestClose={ close }
+			isDismissible={ ! saving }
+			shouldCloseOnEsc={ ! saving }
+			shouldCloseOnClickOutside={ ! saving }
+			size="medium"
+			className={ WRAPPING_MODAL_CLASS }
+		>
+			<WrappingModalStyle />
 			{ notes.map( ( note ) => (
 				<p key={ note }>{ note }</p>
 			) ) }

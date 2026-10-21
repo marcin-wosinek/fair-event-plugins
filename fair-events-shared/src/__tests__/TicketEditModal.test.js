@@ -2,7 +2,8 @@
  * @jest-environment jsdom
  *
  * Component tests for the shared ticket editor (#1709), opened from both the
- * List tab and the Audience tab.
+ * List tab and the Audience tab, including its pending, failure and retry
+ * behaviour (#1934).
  */
 import '@testing-library/jest-dom';
 import {
@@ -11,6 +12,7 @@ import {
 	fireEvent,
 	waitFor,
 	within,
+	act,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import TicketEditModal, { activityRuleProblem } from '../TicketEditModal.js';
@@ -322,6 +324,110 @@ describe( 'TicketEditModal', () => {
 		).toBeChecked();
 		expect( onSaved ).not.toHaveBeenCalled();
 		expect( onClose ).not.toHaveBeenCalled();
+	} );
+
+	it( 'blocks dismissal, Cancel, the fields and a second request while saving', async () => {
+		mockApi();
+		let finish;
+		const route = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( args ) =>
+			args.method === 'PUT'
+				? new Promise( ( resolve ) => {
+						finish = resolve;
+					} )
+				: route( args )
+		);
+		const { modal, onSaved, onClose } = await renderModal();
+
+		fireEvent.click(
+			within( modal ).getByRole( 'checkbox', { name: 'Checked in' } )
+		);
+		const save = within( modal ).getByRole( 'button', {
+			name: 'Save ticket',
+		} );
+		// Both clicks land before React re-renders the popup.
+		act( () => {
+			save.click();
+			save.click();
+		} );
+
+		expect( puts() ).toHaveLength( 1 );
+		expect( save ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( save ).toHaveClass( 'is-busy' );
+		expect(
+			within( modal ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect(
+			within( modal ).getByRole( 'checkbox', { name: 'Checked in' } )
+		).toBeDisabled();
+		expect(
+			within( modal ).getByRole( 'checkbox', { name: 'Dinner' } )
+		).toBeDisabled();
+		expect(
+			within( modal ).getByRole( 'combobox', { name: 'Ticket type' } )
+		).toBeDisabled();
+		expect(
+			within( modal ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( modal, { key: 'Escape', code: 'Escape' } );
+		expect( onClose ).not.toHaveBeenCalled();
+
+		await act( async () => {
+			finish( { id: 12 } );
+		} );
+		expect( onSaved ).toHaveBeenCalledTimes( 1 );
+		expect( puts() ).toHaveLength( 1 );
+	} );
+
+	it( 'keeps the edits and the reason after a failed override, shows a fallback and retries', async () => {
+		mockApi( response(), [ capacityError(), new Error( '' ), { id: 12 } ] );
+		const { modal, onSaved, onClose } = await renderModal();
+
+		fireEvent.change(
+			within( modal ).getByRole( 'combobox', { name: 'Ticket type' } ),
+			{ target: { value: '2' } }
+		);
+		fireEvent.click(
+			within( modal ).getByRole( 'checkbox', { name: 'Pottery' } )
+		);
+		fireEvent.click(
+			within( modal ).getByRole( 'button', { name: 'Save ticket' } )
+		);
+		const reason = await within( modal ).findByRole( 'textbox', {
+			name: 'Reason for going over capacity',
+		} );
+		fireEvent.change( reason, { target: { value: 'Speaker guest' } } );
+		const override = within( modal ).getByRole( 'button', {
+			name: 'Save over capacity',
+		} );
+
+		fireEvent.click( override );
+		expect(
+			await within( modal ).findByText( 'Failed to save the ticket.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( modal ).getByRole( 'combobox', { name: 'Ticket type' } )
+		).toHaveValue( '2' );
+		expect(
+			within( modal ).getByRole( 'checkbox', { name: 'Pottery' } )
+		).not.toBeChecked();
+		expect( reason ).toHaveValue( 'Speaker guest' );
+		expect( override ).toBeEnabled();
+		expect( onClose ).not.toHaveBeenCalled();
+
+		// Retrying clears the stale error and sends the same override.
+		fireEvent.click( override );
+		expect(
+			within( modal ).queryByText( 'Failed to save the ticket.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+		await waitFor( () => expect( onSaved ).toHaveBeenCalled() );
+		expect( puts() ).toHaveLength( 3 );
+		expect( puts()[ 2 ].data ).toEqual( puts()[ 1 ].data );
+		expect( puts()[ 2 ].data.override_reason ).toBe( 'Speaker guest' );
 	} );
 
 	it( 'explains why saving is unavailable when the activities break the chosen type’s rules', async () => {
