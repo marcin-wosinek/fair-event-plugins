@@ -12,6 +12,7 @@ use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Payment\PaymentStatus;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairPaymentsConnector\Services\PublicEndpointRateLimiter;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -54,6 +55,7 @@ class PaymentEndpoint extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_nonce' ),
 					// Public — generates a nonce for anonymous payment forms; reads no data.
+					// Throttled per IP in get_nonce().
 					'permission_callback' => '__return_true',
 				),
 			)
@@ -66,6 +68,8 @@ class PaymentEndpoint extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_payment' ),
+					// Public — anonymous visitors pay through the Simple Payment block.
+					// Throttled per IP in create_payment().
 					'permission_callback' => '__return_true',
 					'args'                => array(
 						'amount'      => array(
@@ -136,9 +140,14 @@ class PaymentEndpoint extends WP_REST_Controller {
 	/**
 	 * Return a fresh nonce for the payment form.
 	 *
-	 * @return WP_REST_Response
+	 * @return WP_REST_Response|WP_Error Response object, or a 429 error once the caller's limit is reached.
 	 */
 	public function get_nonce() {
+		$limited = ( new PublicEndpointRateLimiter() )->attempt( PublicEndpointRateLimiter::BUCKET_NONCE );
+		if ( $limited ) {
+			return $limited;
+		}
+
 		return new WP_REST_Response( array( 'nonce' => wp_create_nonce( 'fpc_payment_form' ) ) );
 	}
 
@@ -181,6 +190,14 @@ class PaymentEndpoint extends WP_REST_Controller {
 		// - Logged-in users: Track in user profile.
 		// - Anonymous users: Require email.
 		// See: REST_API_BACKEND.md for implementation guidance.
+
+		// Throttle before any work: every attempt past this point may write
+		// transaction and log rows and call Mollie. Applies to signed-in
+		// callers too, since the route is public either way.
+		$limited = ( new PublicEndpointRateLimiter() )->attempt( PublicEndpointRateLimiter::BUCKET_PAYMENT );
+		if ( $limited ) {
+			return $limited;
+		}
 
 		// Manual nonce check — apiFetch nonce auto-verification only applies to authenticated
 		// requests; public endpoints must verify manually. See REST_API_BACKEND.md.

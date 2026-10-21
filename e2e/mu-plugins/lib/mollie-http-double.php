@@ -23,7 +23,8 @@
  *                                 set-mollie-status.php — see #1244), so the
  *                                 callback page's sync pulls that status and
  *                                 the real fair_payment_paid/fair_payment_failed
- *                                 chain fires accordingly.
+ *                                 chain fires accordingly. Each one is counted
+ *                                 in `fair_e2e_mollie_get_count`.
  *   - GET  /v2/methods         -> empty list (method allowlist stays unset).
  *   - GET  /v2/balances...     -> empty list (fee capture finds nothing).
  *   - GET  /v2/settlements...  -> three canned settlements over two pages, with
@@ -163,6 +164,8 @@ class CurlMollieHttpAdapter implements HttpAdapterContract {
 		// set-mollie-status.php so a spec can drive the return-and-retry flow
 		// (default "paid" keeps every pre-existing spec's assumption intact).
 		if ( \preg_match( '#/payments/([^/]+)$#', $path, $m ) ) {
+			// Counted so a spec can show a request never reached Mollie.
+			\update_option( 'fair_e2e_mollie_get_count', (int) \get_option( 'fair_e2e_mollie_get_count', 0 ) + 1, false );
 			$status = (string) \get_option( 'fair_e2e_mollie_get_status', 'paid' );
 			if ( 'tr_e2emanualimport' === $m[1] ) {
 				return $this->payment_response(
