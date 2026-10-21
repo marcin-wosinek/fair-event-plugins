@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-20T19:27:26+00:00\n"
+"POT-Creation-Date: 2026-10-21T03:23:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -51,7 +51,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:94
 #: src/Admin/AdminPages.php:111
-#: src/Admin/calendar/CalendarApp.js:366
+#: src/Admin/calendar/CalendarApp.js:339
 msgid "Events Calendar"
 msgstr ""
 
@@ -95,7 +95,7 @@ msgstr ""
 #: src/Admin/AdminPages.php:165
 #: src/Admin/AdminPages.php:172
 #: src/Hooks/AdminBarHooks.php:59
-#: src/Admin/calendar/CalendarApp.js:393
+#: src/Admin/calendar/CalendarApp.js:366
 #: src/Admin/manage-event/ManageEventApp.js:1236
 #: src/Admin/manage-event/ManageEventApp.js:1586
 msgid "Manage Event"
@@ -1545,13 +1545,13 @@ msgstr ""
 
 #: src/blocks/events-calendar/render.php:373
 #: src/blocks/events-week/render.php:225
-#: src/Admin/calendar/components/CalendarHeader.js:27
+#: src/Admin/calendar/calendarLabels.js:16
 msgid "Previous"
 msgstr ""
 
 #: src/blocks/events-calendar/render.php:383
 #: src/blocks/events-week/render.php:233
-#: src/Admin/calendar/components/CalendarHeader.js:33
+#: src/Admin/calendar/calendarLabels.js:18
 msgid "Next"
 msgstr ""
 
@@ -1688,6 +1688,7 @@ msgstr ""
 #: src/Helpers/OccurrenceFields.php:43
 #: src/Notifications/WeeklyEmailRenderer.php:150
 #: src/Services/EventPublication.php:158
+#: src/Admin/calendar/calendarLabels.js:20
 #: ../fair-events-shared/src/event-utils.js:31
 msgid "(untitled event)"
 msgstr ""
@@ -2796,81 +2797,82 @@ msgid "Edit"
 msgstr ""
 
 #. translators: 1: category name, 2: language name
-#: src/Admin/calendar/CalendarApp.js:111
+#: src/Admin/calendar/CalendarApp.js:93
 #: src/Admin/manage-event/ManageEventApp.js:258
 #: src/blocks/components/CategorySelector.js:85
 #, js-format
 msgid "%1$s — %2$s"
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:194
+#: src/Admin/calendar/CalendarApp.js:176
 #: src/blocks/components/CategorySelector.js:41
 msgid "Failed to load categories."
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:258
+#: src/Admin/calendar/CalendarApp.js:243
 msgid "Failed to load events."
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:344
+#: src/Admin/calendar/CalendarApp.js:315
 msgid "All categories"
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:354
+#: src/Admin/calendar/CalendarApp.js:325
 msgid "Selected category"
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:372
+#: src/Admin/calendar/CalendarApp.js:345
 msgid "Category"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Admin/calendar/CalendarApp.js:388
+#: src/Admin/calendar/CalendarApp.js:361
 #, js-format
 msgid "Event \"%s\" created."
 msgstr ""
 
-#: src/Admin/calendar/CalendarApp.js:433
+#: src/Admin/calendar/CalendarApp.js:407
 msgid "No events match this category."
 msgstr ""
 
-#: src/Admin/calendar/components/CalendarGrid.js:131
-msgid "No events this month."
-msgstr ""
-
-#: src/Admin/calendar/components/CalendarHeader.js:30
+#: src/Admin/calendar/calendarLabels.js:17
 msgid "Today"
 msgstr ""
 
-#: src/Admin/calendar/components/CalendarHeader.js:36
-#: src/Admin/calendar/components/DayCell.js:140
+#: src/Admin/calendar/calendarLabels.js:19
 #: src/Admin/calendar/components/QuickEventModal.js:305
 msgid "Add event"
 msgstr ""
 
-#: src/Admin/calendar/components/DayCell.js:207
+#: src/Admin/calendar/calendarLabels.js:21
 msgid "Open link destination"
 msgstr ""
 
-#. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:233
-#, js-format
-msgid "+%d more"
+#: src/Admin/calendar/calendarLabels.js:22
+msgid "No events this month."
 msgstr ""
 
-#: src/Admin/calendar/components/linkTypes.js:44
+#. translators: %d: number of additional events
+#: src/Admin/calendar/calendarLabels.js:26
+#, js-format
+msgid "+%d more"
+msgid_plural "+%d more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/calendar/components/linkTypes.js:24
 msgid "Public page"
 msgstr ""
 
-#: src/Admin/calendar/components/linkTypes.js:49
+#: src/Admin/calendar/components/linkTypes.js:29
 msgid "Series occurrence"
 msgstr ""
 
-#: src/Admin/calendar/components/linkTypes.js:54
+#: src/Admin/calendar/components/linkTypes.js:34
 msgid "External page"
 msgstr ""
 
-#: src/Admin/calendar/components/linkTypes.js:59
+#: src/Admin/calendar/components/linkTypes.js:39
 #: src/Admin/manage-event/EventContextHeader.js:91
 msgid "No public page yet"
 msgstr ""

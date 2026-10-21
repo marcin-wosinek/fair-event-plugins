@@ -7,6 +7,7 @@
 import domReady from '@wordpress/dom-ready';
 import { createRoot } from '@wordpress/element';
 import SourceViewApp from './SourceViewApp.js';
+import 'fair-events-shared/src/calendar/style.css';
 
 domReady( () => {
 	const container = document.getElementById( 'fair-events-source-view-root' );

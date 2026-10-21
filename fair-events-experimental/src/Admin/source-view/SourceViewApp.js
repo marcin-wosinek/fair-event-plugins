@@ -7,6 +7,9 @@
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
 	Button,
+	Card,
+	CardHeader,
+	CardBody,
 	Modal,
 	Spinner,
 	Notice,
@@ -15,12 +18,17 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { formatLocalDate } from 'fair-events-shared/src/calendarUtils.js';
 import {
-	formatLocalDate,
-	calculateLeadingDays,
-} from 'fair-events-shared/src/calendarUtils.js';
-import CalendarHeader from '../calendar/components/CalendarHeader.js';
-import CalendarGrid from '../calendar/components/CalendarGrid.js';
+	CalendarHeader,
+	CalendarGrid,
+	addMonths,
+	startOfMonth,
+	formatMonthParam,
+	parseMonthParam,
+	getVisibleRange,
+} from 'fair-events-shared/src/calendar/index.js';
+import { getCalendarLabels } from './calendarLabels.js';
 import CopyUrlButton from '../components/CopyUrlButton.js';
 import SourceForm from '../sources/components/SourceForm.js';
 
@@ -32,37 +40,36 @@ const {
 	jsonUrlTemplate,
 } = window.fairEventsSourceViewData || {};
 
-function getInitialDate() {
+function currentUrlMonth() {
 	const params = new URLSearchParams( window.location.search );
-	const month = params.get( 'month' );
-	if ( month ) {
-		const [ year, mon ] = month.split( '-' ).map( Number );
-		if ( year && mon ) {
-			return new Date( year, mon - 1, 1 );
-		}
-	}
-	return new Date();
+	return (
+		parseMonthParam( params.get( 'month' ) ) || startOfMonth( new Date() )
+	);
 }
 
-function updateUrlMonth( date ) {
+// The month URL for a view, preserving unrelated query parameters.
+function monthUrl( month ) {
 	const params = new URLSearchParams( window.location.search );
-	const month = `${ date.getFullYear() }-${ String(
-		date.getMonth() + 1
-	).padStart( 2, '0' ) }`;
-	params.set( 'month', month );
-	const newUrl = `${ window.location.pathname }?${ params.toString() }`;
-	window.history.pushState( { month }, '', newUrl );
+	params.set( 'month', formatMonthParam( month ) );
+	return `${ window.location.pathname }?${ params.toString() }`;
 }
 
 export default function SourceViewApp() {
 	const [ source, setSource ] = useState( null );
-	const [ events, setEvents ] = useState( [] );
-	const [ currentDate, setCurrentDate ] = useState( getInitialDate );
-	const isPopState = useRef( false );
+	const [ currentDate, setCurrentDate ] = useState( currentUrlMonth );
+	const [ eventsState, setEventsState ] = useState( {
+		status: 'loading',
+		events: [],
+		error: null,
+	} );
+	const [ refreshKey, setRefreshKey ] = useState( 0 );
+	const latestRequest = useRef( 0 );
 	const [ loading, setLoading ] = useState( true );
-	const [ eventsLoading, setEventsLoading ] = useState( false );
 	const [ error, setError ] = useState( null );
 	const [ isEditOpen, setIsEditOpen ] = useState( false );
+
+	const monthKey = formatMonthParam( currentDate );
+	const sourceSlug = source?.slug;
 
 	const fetchSource = useCallback( async () => {
 		try {
@@ -96,83 +103,97 @@ export default function SourceViewApp() {
 		fetchSource();
 	}, [ fetchSource ] );
 
-	// Fetch events for current month
-	const fetchEvents = useCallback( async () => {
-		if ( ! source ) return;
-
-		setEventsLoading( true );
-
-		const year = currentDate.getFullYear();
-		const month = currentDate.getMonth();
-
-		const firstDayOfMonth = new Date( year, month, 1 );
-		const lastDayOfMonth = new Date( year, month + 1, 0 );
-
-		const sow = startOfWeek ?? 1;
-		const leadingDays = calculateLeadingDays( firstDayOfMonth, sow );
-
-		const totalCells = leadingDays + lastDayOfMonth.getDate();
-		const trailingDays = totalCells % 7 === 0 ? 0 : 7 - ( totalCells % 7 );
-
-		const startDate = new Date( firstDayOfMonth );
-		startDate.setDate( startDate.getDate() - leadingDays );
-
-		const endDate = new Date( lastDayOfMonth );
-		endDate.setDate( endDate.getDate() + trailingDays );
-
-		try {
-			const response = await apiFetch( {
-				path: `/fair-events/v1/sources/${
-					source.slug
-				}/json?start_date=${ formatLocalDate(
-					startDate
-				) }&end_date=${ formatLocalDate( endDate ) }`,
-			} );
-			setEvents( response.events || [] );
-		} catch ( err ) {
-			setEvents( [] );
-		} finally {
-			setEventsLoading( false );
-		}
-	}, [ source, currentDate ] );
-
+	// Normalize the initial URL (missing or malformed month) in place.
 	useEffect( () => {
-		fetchEvents();
-	}, [ fetchEvents ] );
+		window.history.replaceState(
+			window.history.state,
+			'',
+			monthUrl( currentUrlMonth() )
+		);
+	}, [] );
 
-	// Sync URL when currentDate changes (skip for popstate-triggered changes)
-	useEffect( () => {
-		if ( isPopState.current ) {
-			isPopState.current = false;
-			return;
-		}
-		updateUrlMonth( currentDate );
-	}, [ currentDate ] );
-
-	// Listen for browser back/forward
+	// Browser back/forward restores the month without a new entry.
 	useEffect( () => {
 		const handlePopState = () => {
-			isPopState.current = true;
-			setCurrentDate( getInitialDate() );
+			const restored = currentUrlMonth();
+			window.history.replaceState(
+				window.history.state,
+				'',
+				monthUrl( restored )
+			);
+			setCurrentDate( restored );
 		};
 		window.addEventListener( 'popstate', handlePopState );
 		return () => window.removeEventListener( 'popstate', handlePopState );
 	}, [] );
 
-	const handlePrevMonth = () => {
-		setCurrentDate(
-			new Date( currentDate.getFullYear(), currentDate.getMonth() - 1, 1 )
+	useEffect( () => {
+		if ( ! sourceSlug ) {
+			return;
+		}
+
+		// Every run supersedes earlier requests, so a late response can't
+		// overwrite the current month.
+		const requestId = ++latestRequest.current;
+		setEventsState( { status: 'loading', events: [], error: null } );
+
+		const { startDate, endDate } = getVisibleRange(
+			currentDate,
+			startOfWeek ?? 1
 		);
+		const params = new URLSearchParams( {
+			start_date: formatLocalDate( startDate ),
+			end_date: formatLocalDate( endDate ),
+		} );
+
+		apiFetch( {
+			path: `/fair-events/v1/sources/${ sourceSlug }/json?${ params.toString() }`,
+		} )
+			.then( ( response ) => {
+				if ( requestId === latestRequest.current ) {
+					setEventsState( {
+						status: 'success',
+						events: response.events || [],
+						error: null,
+					} );
+				}
+			} )
+			.catch( ( err ) => {
+				if ( requestId === latestRequest.current ) {
+					setEventsState( {
+						status: 'error',
+						events: [],
+						error:
+							err.message ||
+							__(
+								'Failed to load events.',
+								'fair-events-experimental'
+							),
+					} );
+				}
+			} );
+		// currentDate is represented by monthKey.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ sourceSlug, monthKey, refreshKey ] );
+
+	const navigate = ( month ) => {
+		if ( formatMonthParam( month ) === monthKey ) {
+			return;
+		}
+		window.history.pushState( null, '', monthUrl( month ) );
+		setCurrentDate( month );
+	};
+
+	const handlePrevMonth = () => {
+		navigate( addMonths( currentDate, -1 ) );
 	};
 
 	const handleNextMonth = () => {
-		setCurrentDate(
-			new Date( currentDate.getFullYear(), currentDate.getMonth() + 1, 1 )
-		);
+		navigate( addMonths( currentDate, 1 ) );
 	};
 
 	const handleToday = () => {
-		setCurrentDate( new Date() );
+		navigate( startOfMonth( new Date() ) );
 	};
 
 	const getIcalUrl = ( slug ) => {
@@ -190,8 +211,10 @@ export default function SourceViewApp() {
 	const handleEditSuccess = () => {
 		setIsEditOpen( false );
 		fetchSource();
-		fetchEvents();
+		setRefreshKey( ( key ) => key + 1 );
 	};
+
+	const calendarLabels = getCalendarLabels();
 
 	if ( loading ) {
 		return (
@@ -350,24 +373,40 @@ export default function SourceViewApp() {
 				</Button>
 			</div>
 
-			<CalendarHeader
-				currentDate={ currentDate }
-				onPrevMonth={ handlePrevMonth }
-				onNextMonth={ handleNextMonth }
-				onToday={ handleToday }
-			/>
-
-			{ eventsLoading ? (
-				<div className="fair-events-calendar-loading">
-					<Spinner />
-				</div>
-			) : (
-				<CalendarGrid
-					currentDate={ currentDate }
-					events={ events }
-					startOfWeek={ startOfWeek }
-				/>
+			{ eventsState.error && (
+				<Notice status="error" isDismissible={ false }>
+					{ eventsState.error }
+				</Notice>
 			) }
+
+			<Card style={ { marginTop: '16px' } }>
+				<CardHeader>
+					<CalendarHeader
+						currentDate={ currentDate }
+						onPrevMonth={ handlePrevMonth }
+						onNextMonth={ handleNextMonth }
+						onToday={ handleToday }
+						labels={ calendarLabels }
+					/>
+				</CardHeader>
+				<CardBody className="fair-events-calendar-card-body">
+					{ eventsState.status === 'loading' ? (
+						<div className="fair-events-calendar-loading">
+							<Spinner />
+						</div>
+					) : (
+						<CalendarGrid
+							currentDate={ currentDate }
+							events={ eventsState.events }
+							startOfWeek={ startOfWeek ?? 1 }
+							showEmptyMessage={
+								eventsState.status === 'success'
+							}
+							labels={ calendarLabels }
+						/>
+					) }
+				</CardBody>
+			</Card>
 
 			{ isEditOpen && (
 				<Modal

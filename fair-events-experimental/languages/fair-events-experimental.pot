@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-20T12:30:07+00:00\n"
+"POT-Creation-Date: 2026-10-21T03:23:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -422,32 +422,6 @@ msgstr ""
 msgid "Per-bundle feature toggles for experimental features"
 msgstr ""
 
-#: src/Admin/calendar/components/CalendarHeader.js:26
-msgid "Previous"
-msgstr ""
-
-#: src/Admin/calendar/components/CalendarHeader.js:29
-msgid "Today"
-msgstr ""
-
-#: src/Admin/calendar/components/CalendarHeader.js:32
-msgid "Next"
-msgstr ""
-
-#: src/Admin/calendar/components/DayCell.js:135
-msgid "Add event"
-msgstr ""
-
-#: src/Admin/calendar/components/DayCell.js:206
-msgid "Open link destination"
-msgstr ""
-
-#. translators: %d: number of additional events
-#: src/Admin/calendar/components/DayCell.js:232
-#, js-format
-msgid "+%d more"
-msgstr ""
-
 #: src/Admin/compare-events/CompareEventsPage.js:36
 #: src/Admin/compare-events/ComparisonChart.js:41
 msgid "Current event"
@@ -580,6 +554,7 @@ msgstr ""
 
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/settings/MetaCalendarTest.js:85
+#: src/Admin/source-view/calendarLabels.js:20
 msgid "(untitled event)"
 msgstr ""
 
@@ -1217,54 +1192,86 @@ msgstr ""
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:76
+#: src/Admin/source-view/calendarLabels.js:17
+msgid "Previous"
+msgstr ""
+
+#: src/Admin/source-view/calendarLabels.js:18
+msgid "Today"
+msgstr ""
+
+#: src/Admin/source-view/calendarLabels.js:19
+msgid "Next"
+msgstr ""
+
+#: src/Admin/source-view/calendarLabels.js:21
+msgid "Open link destination"
+msgstr ""
+
+#: src/Admin/source-view/calendarLabels.js:25
+msgid "No events this month."
+msgstr ""
+
+#. translators: %d: number of additional events
+#: src/Admin/source-view/calendarLabels.js:29
+#, js-format
+msgid "+%d more"
+msgid_plural "+%d more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/source-view/SourceViewApp.js:81
 msgid "Failed to load event feed."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:90
+#: src/Admin/source-view/SourceViewApp.js:95
 msgid "No event feed ID provided."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:210
-#: src/Admin/source-view/SourceViewApp.js:228
+#: src/Admin/source-view/SourceViewApp.js:166
+msgid "Failed to load events."
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:231
+#: src/Admin/source-view/SourceViewApp.js:249
 msgid "Back to Event Feeds"
 msgstr ""
 
 #. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:235
+#: src/Admin/source-view/SourceViewApp.js:256
 #, js-format
 msgid "Event feed: %s"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:252
+#: src/Admin/source-view/SourceViewApp.js:273
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:258
+#: src/Admin/source-view/SourceViewApp.js:279
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:262
+#: src/Admin/source-view/SourceViewApp.js:283
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:263
+#: src/Admin/source-view/SourceViewApp.js:284
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:268
+#: src/Admin/source-view/SourceViewApp.js:289
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr ""
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:273
+#: src/Admin/source-view/SourceViewApp.js:294
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1272,42 +1279,42 @@ msgid_plural "%d feed inputs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/SourceViewApp.js:307
 msgid "Page"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:294
+#: src/Admin/source-view/SourceViewApp.js:315
 msgid "View page"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:304
+#: src/Admin/source-view/SourceViewApp.js:325
 msgid "Feed URLs"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:309
+#: src/Admin/source-view/SourceViewApp.js:330
 msgid "iCal"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:313
+#: src/Admin/source-view/SourceViewApp.js:334
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:320
+#: src/Admin/source-view/SourceViewApp.js:341
 msgid "JSON"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:324
+#: src/Admin/source-view/SourceViewApp.js:345
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:336
-#: src/Admin/source-view/SourceViewApp.js:349
+#: src/Admin/source-view/SourceViewApp.js:357
+#: src/Admin/source-view/SourceViewApp.js:370
 msgid "Edit event feed"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:374
+#: src/Admin/source-view/SourceViewApp.js:411
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr ""

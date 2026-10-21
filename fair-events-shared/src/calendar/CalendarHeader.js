@@ -1,14 +1,13 @@
 /**
  * Calendar Header Component
  *
- * Navigation header with month/year display and navigation buttons.
+ * Month/year title with Previous, Today, Next and an optional Add event button.
  *
- * @package FairEvents
+ * @package FairEventsShared
  */
 
 import { Button } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
-import { formatMonthLabel } from 'fair-events-shared';
+import { formatMonthLabel } from '../dateTime.js';
 
 export default function CalendarHeader( {
 	currentDate,
@@ -16,25 +15,28 @@ export default function CalendarHeader( {
 	onNextMonth,
 	onToday,
 	onAddEvent,
+	labels,
 } ) {
-	const monthYear = formatMonthLabel( currentDate );
-
 	return (
 		<div className="fair-events-calendar-header">
-			<h2 className="fair-events-calendar-title">{ monthYear }</h2>
+			<h2 className="fair-events-calendar-title">
+				{ formatMonthLabel( currentDate ) }
+			</h2>
 			<div className="fair-events-calendar-nav">
 				<Button variant="secondary" onClick={ onPrevMonth }>
-					{ __( 'Previous', 'fair-events' ) }
+					{ labels.previous }
 				</Button>
 				<Button variant="primary" onClick={ onToday }>
-					{ __( 'Today', 'fair-events' ) }
+					{ labels.today }
 				</Button>
 				<Button variant="secondary" onClick={ onNextMonth }>
-					{ __( 'Next', 'fair-events' ) }
+					{ labels.next }
 				</Button>
-				<Button variant="primary" onClick={ onAddEvent }>
-					{ __( 'Add event', 'fair-events' ) }
-				</Button>
+				{ onAddEvent && (
+					<Button variant="primary" onClick={ onAddEvent }>
+						{ labels.addEvent }
+					</Button>
+				) }
 			</div>
 		</div>
 	);
