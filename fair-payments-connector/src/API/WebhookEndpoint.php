@@ -10,6 +10,7 @@ namespace FairPaymentsConnector\API;
 use FairPaymentsConnector\Payment\MolliePaymentHandler;
 use FairPaymentsConnector\Models\Transaction;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairPaymentsConnector\Services\PublicEndpointRateLimiter;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -38,6 +39,11 @@ class WebhookEndpoint extends WP_REST_Controller {
 	protected $rest_base = 'webhook';
 
 	/**
+	 * Shape of an acceptable Mollie payment ID.
+	 */
+	const PAYMENT_ID_PATTERN = '/^[A-Za-z0-9_]{1,64}$/';
+
+	/**
 	 * Register REST API routes
 	 *
 	 * @return void
@@ -50,6 +56,9 @@ class WebhookEndpoint extends WP_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'handle_webhook' ),
+					// Public — Mollie calls it without credentials. Requests with
+					// a missing, malformed or unknown payment ID are throttled
+					// per IP in handle_webhook().
 					'permission_callback' => '__return_true',
 				),
 			)
@@ -63,54 +72,76 @@ class WebhookEndpoint extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function handle_webhook( WP_REST_Request $request ) {
-		$logger = new PaymentLogRepository();
+		$logger  = new PaymentLogRepository();
+		$limiter = new PublicEndpointRateLimiter();
 
 		// Get payment ID from webhook.
-		$mollie_payment_id = $request->get_param( 'id' );
+		$raw_id = $request->get_param( 'id' );
 
-		$logger->log(
-			'webhook_received',
-			array(
-				'level'   => 'info',
-				'message' => sprintf( 'Webhook received for Mollie %s', $mollie_payment_id ? $mollie_payment_id : '(empty)' ),
-				'context' => array( 'mollie_payment_id' => $mollie_payment_id ),
-			)
-		);
-
-		if ( empty( $mollie_payment_id ) ) {
-			$logger->log(
-				'webhook_failed',
+		if ( empty( $raw_id ) ) {
+			return $this->reject_invalid_webhook(
+				$limiter,
+				$logger,
+				null,
 				array(
 					'level'   => 'warning',
 					'message' => 'Webhook missing payment ID',
+				),
+				new WP_Error(
+					'missing_payment_id',
+					__( 'Payment ID is missing from webhook.', 'fair-payments-connector' ),
+					array( 'status' => 400 )
 				)
 			);
-			return new WP_Error(
-				'missing_payment_id',
-				__( 'Payment ID is missing from webhook.', 'fair-payments-connector' ),
-				array( 'status' => 400 )
+		}
+
+		// Mollie payment IDs are short alphanumeric strings such as
+		// "tr_WDqYK6vllg". Anything else is refused before it reaches the
+		// database or the log.
+		if ( ! is_scalar( $raw_id ) || ! preg_match( self::PAYMENT_ID_PATTERN, (string) $raw_id ) ) {
+			return $this->reject_invalid_webhook(
+				$limiter,
+				$logger,
+				null,
+				array(
+					'level'   => 'warning',
+					'message' => 'Webhook payment ID is malformed',
+				),
+				new WP_Error(
+					'invalid_payment_id',
+					__( 'Payment ID in webhook is invalid.', 'fair-payments-connector' ),
+					array( 'status' => 400 )
+				)
 			);
 		}
+
+		$mollie_payment_id = (string) $raw_id;
 
 		try {
 			// Get transaction from database first to determine testmode.
 			$transaction = Transaction::get_by_mollie_id( $mollie_payment_id );
 
+			// Unknown IDs never reach Mollie, and count against the caller's
+			// invalid-webhook budget so they can't flood the log either.
 			if ( ! $transaction ) {
-				$logger->log(
-					'webhook_failed',
+				return $this->reject_invalid_webhook(
+					$limiter,
+					$logger,
+					$mollie_payment_id,
 					array(
 						'level'   => 'error',
 						'message' => sprintf( 'Webhook for unknown Mollie payment %s (orphan)', $mollie_payment_id ),
 						'context' => array( 'mollie_payment_id' => $mollie_payment_id ),
+					),
+					new WP_Error(
+						'transaction_not_found',
+						__( 'Transaction not found in database.', 'fair-payments-connector' ),
+						array( 'status' => 404 )
 					)
 				);
-				return new WP_Error(
-					'transaction_not_found',
-					__( 'Transaction not found in database.', 'fair-payments-connector' ),
-					array( 'status' => 404 )
-				);
 			}
+
+			$this->log_received( $logger, $mollie_payment_id );
 
 			// Skip terminal-state transactions — re-processing would re-fire hooks and
 			// re-run the balance fee scan. `authorized` is excluded: it can still move
@@ -249,6 +280,54 @@ class WebhookEndpoint extends WP_REST_Controller {
 				200
 			);
 		}
+	}
+
+	/**
+	 * Answer a webhook with a missing, malformed or unknown payment ID.
+	 *
+	 * Below the caller's invalid-webhook limit the request is counted, logged
+	 * and answered with its own error. Past the limit it gets a 429 and is not
+	 * logged, so repeated bogus calls can't flood the payment log. Valid
+	 * webhooks never consult this budget, so a noisy source cannot hold up
+	 * Mollie's notifications for real payments.
+	 *
+	 * @param PublicEndpointRateLimiter $limiter     Rate limiter.
+	 * @param PaymentLogRepository      $logger      Payment logger.
+	 * @param string|null               $logged_id   Payment ID to log; null when it is missing or malformed.
+	 * @param array                     $failure_log Arguments of the webhook_failed log entry.
+	 * @param WP_Error                  $error       Error returned below the limit.
+	 * @return WP_Error
+	 */
+	private function reject_invalid_webhook( PublicEndpointRateLimiter $limiter, PaymentLogRepository $logger, $logged_id, array $failure_log, WP_Error $error ) {
+		$limited = $limiter->check( PublicEndpointRateLimiter::BUCKET_INVALID_WEBHOOK );
+		if ( $limited ) {
+			return $limited;
+		}
+
+		$limiter->record( PublicEndpointRateLimiter::BUCKET_INVALID_WEBHOOK );
+
+		$this->log_received( $logger, $logged_id );
+		$logger->log( 'webhook_failed', $failure_log );
+
+		return $error;
+	}
+
+	/**
+	 * Log that a webhook arrived.
+	 *
+	 * @param PaymentLogRepository $logger            Payment logger.
+	 * @param string|null          $mollie_payment_id Payment ID; null when it is missing or malformed.
+	 * @return void
+	 */
+	private function log_received( PaymentLogRepository $logger, $mollie_payment_id ) {
+		$logger->log(
+			'webhook_received',
+			array(
+				'level'   => 'info',
+				'message' => sprintf( 'Webhook received for Mollie %s', null !== $mollie_payment_id ? $mollie_payment_id : '(empty)' ),
+				'context' => array( 'mollie_payment_id' => $mollie_payment_id ),
+			)
+		);
 	}
 
 	/**

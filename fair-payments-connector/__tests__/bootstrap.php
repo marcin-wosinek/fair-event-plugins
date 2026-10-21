@@ -297,11 +297,14 @@ if ( ! function_exists( 'set_transient' ) ) {
 	 *
 	 * @param string $key        Transient key.
 	 * @param mixed  $value      Value to store.
-	 * @param int    $expiration Expiration in seconds (unused; test transients never expire).
+	 * @param int    $expiration Expiration in seconds. Recorded in
+	 *                           $GLOBALS['_fair_test_transient_ttls'];
+	 *                           test transients never expire on their own.
 	 * @return true
 	 */
-	function set_transient( $key, $value, $expiration = 0 ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		$GLOBALS['_fair_test_transients'][ $key ] = $value;
+	function set_transient( $key, $value, $expiration = 0 ) {
+		$GLOBALS['_fair_test_transients'][ $key ]     = $value;
+		$GLOBALS['_fair_test_transient_ttls'][ $key ] = $expiration;
 		return true;
 	}
 }
