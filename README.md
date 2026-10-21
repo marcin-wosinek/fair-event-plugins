@@ -81,6 +81,7 @@ npm run build    # Build this plugin only
 
 -   **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Automated deployment setup
 -   **[RELEASES.md](./RELEASES.md)** - Release process and versioning
+-   **[DEPENDENCY_SECURITY.md](./DEPENDENCY_SECURITY.md)** - Required dependency audits, package approval and exceptions
 
 ## Translation
 
