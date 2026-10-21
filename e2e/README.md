@@ -24,6 +24,7 @@ e2e/
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
     ├── fair-e2e-settlements.php          # resets saved settlements and steers the double's settlement responses
     ├── fair-e2e-mollie-credentials.php   # stored (encrypted) Mollie tokens, encryption on/off, token-refresh double
+    ├── fair-e2e-protected-credentials.php # stored (encrypted) Instagram and Telegram tokens, Instagram API double
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
@@ -103,6 +104,19 @@ and `foreign_key` seed the stored values. While stored mode is on, the plugin
 also answers `https://fair-event-plugins.com/oauth/refresh` with a rotated
 token pair and records each refresh token it received. `GET` returns the raw
 stored values, their read status and the recorded refresh requests.
+
+The Instagram and Telegram credential specs (#1319) use
+`fair-e2e-protected-credentials.php` and its `fair-e2e/v1/protected-credentials`
+route. `POST` seeds each token (`instagram` / `telegram`) as `plaintext` (with
+the one-time conversion still to run), as a `token` written through the option
+API, encrypted under another site's keys (`foreign_key`), or `delete`s it;
+`supported: false` switches encryption support off (through the filter
+registered by `fair-e2e-mollie-credentials.php`), `instagram_feature` toggles
+the experimental Instagram bundle, and `refresh_instagram: true` runs the
+daily token refresh. The plugin answers `graph.instagram.com` and the
+Instagram token refresh service, and records the token every Instagram and
+Telegram request carried (the tokens are synthetic). `GET` returns the raw
+stored values, their read status, the conversion flags and those requests.
 
 ### How a test purchase flows end to end
 

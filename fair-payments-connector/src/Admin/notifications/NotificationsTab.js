@@ -253,15 +253,39 @@ function RouteRow( { route, onChange, onRemove, onNotice } ) {
  */
 export default function NotificationsTab( { onNotice } ) {
 	const [ botToken, setBotToken ] = useState( '' );
+	// The token as last loaded or saved. A stored token that can't be
+	// decrypted loads as empty; saving the routes then leaves it alone unless
+	// a new token was entered.
+	const [ savedBotToken, setSavedBotToken ] = useState( '' );
+	const [ credentials, setCredentials ] = useState( {
+		status: 'missing',
+		message: '',
+	} );
 	const [ routes, setRoutes ] = useState( [] );
 	const [ isLoading, setIsLoading ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
 
+	const loadCredentials = () =>
+		apiFetch( {
+			path: '/fair-payments-connector/v1/telegram/credentials',
+		} ).then( ( status ) =>
+			setCredentials( {
+				status: status.credential_status || 'missing',
+				message: status.message || '',
+			} )
+		);
+
 	useEffect( () => {
 		setIsLoading( true );
-		apiFetch( { path: '/wp/v2/settings' } )
-			.then( ( settings ) => {
-				setBotToken( settings.fair_payment_telegram_bot_token || '' );
+		// The token's status only adds a notice; settings load without it.
+		Promise.all( [
+			apiFetch( { path: '/wp/v2/settings' } ),
+			loadCredentials().catch( () => {} ),
+		] )
+			.then( ( [ settings ] ) => {
+				const token = settings.fair_payment_telegram_bot_token || '';
+				setBotToken( token );
+				setSavedBotToken( token );
 				setRoutes( settings.fair_payment_notification_routes || [] );
 				setIsLoading( false );
 			} )
@@ -283,15 +307,26 @@ export default function NotificationsTab( { onNotice } ) {
 
 	const handleSave = () => {
 		setIsSaving( true );
+		const tokenChanged = botToken !== savedBotToken;
+		const tokenUnreadable = [
+			'encryption_unavailable',
+			'unrecoverable',
+		].includes( credentials.status );
 		apiFetch( {
 			path: '/wp/v2/settings',
 			method: 'POST',
 			data: {
-				fair_payment_telegram_bot_token: botToken,
+				...( ( tokenChanged || ! tokenUnreadable ) && {
+					fair_payment_telegram_bot_token: botToken,
+				} ),
 				fair_payment_notification_routes: routes,
 			},
 		} )
 			.then( () => {
+				if ( tokenChanged ) {
+					setSavedBotToken( botToken );
+					loadCredentials().catch( () => {} );
+				}
 				onNotice( {
 					status: 'success',
 					message: __(
@@ -361,12 +396,26 @@ export default function NotificationsTab( { onNotice } ) {
 							'fair-payments-connector'
 						) }
 					</p>
+					{ credentials.message && (
+						<div style={ { marginBottom: '1rem' } }>
+							<Notice
+								status={
+									credentials.status === 'unrecoverable'
+										? 'error'
+										: 'warning'
+								}
+								isDismissible={ false }
+							>
+								{ credentials.message }
+							</Notice>
+						</div>
+					) }
 					<TextControl
 						__nextHasNoMarginBottom
 						__next40pxDefaultSize
 						label={ __( 'Bot token', 'fair-payments-connector' ) }
 						help={ __(
-							'From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it.',
+							'From @BotFather. Stored encrypted in the site database when the server supports it; administrators can still view it here.',
 							'fair-payments-connector'
 						) }
 						type="password"

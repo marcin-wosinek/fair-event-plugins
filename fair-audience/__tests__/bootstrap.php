@@ -480,12 +480,53 @@ if ( ! function_exists( 'add_query_arg' ) ) {
 if ( ! function_exists( 'wp_salt' ) ) {
 	/**
 	 * Stub of WordPress wp_salt() — a fixed value, sufficient for deterministic
-	 * HMAC signing in tests.
+	 * HMAC signing in tests. $GLOBALS['_fair_test_salt'] stands in for changed
+	 * security keys.
 	 *
 	 * @param string $scheme Salt scheme (ignored).
 	 * @return string Fake salt.
 	 */
 	function wp_salt( $scheme = 'auth' ) {
-		return 'test-salt';
+		return isset( $GLOBALS['_fair_test_salt'] ) ? $GLOBALS['_fair_test_salt'] : 'test-salt';
+	}
+}
+
+if ( ! function_exists( 'apply_filters' ) ) {
+	/**
+	 * Stub of WordPress apply_filters() running the single callable a test put
+	 * in $GLOBALS['_fair_test_filters'][ $hook_name ], if any.
+	 *
+	 * @param string $hook_name Hook name.
+	 * @param mixed  $value     Value to filter.
+	 * @param mixed  ...$args   Extra arguments.
+	 * @return mixed
+	 */
+	function apply_filters( $hook_name, $value, ...$args ) {
+		$filters = isset( $GLOBALS['_fair_test_filters'] ) ? $GLOBALS['_fair_test_filters'] : array();
+		return isset( $filters[ $hook_name ] ) ? $filters[ $hook_name ]( $value, ...$args ) : $value;
+	}
+}
+
+if ( ! function_exists( 'delete_option' ) ) {
+	/**
+	 * Stub of WordPress delete_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name Option name.
+	 * @return true
+	 */
+	function delete_option( $name ) {
+		unset( $GLOBALS['_fair_test_options'][ $name ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_cache_delete' ) ) {
+	/**
+	 * Stub of WordPress wp_cache_delete() — there is no object cache in tests.
+	 *
+	 * @return bool
+	 */
+	function wp_cache_delete() {
+		return true;
 	}
 }

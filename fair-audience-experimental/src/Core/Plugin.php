@@ -413,6 +413,15 @@ class Plugin {
 	 * @return void
 	 */
 	public function refresh_instagram_token() {
+		$credentials = \FairAudience\Settings\InstagramCredentials::class;
+
+		// An unreadable stored token stays in place; the settings screen
+		// explains how to recover it.
+		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
+			error_log( 'Fair Audience Experimental: Instagram token refresh skipped: the stored access token cannot be read.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			return;
+		}
+
 		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
 		$expires      = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
 
@@ -455,6 +464,14 @@ class Plugin {
 
 		if ( ! empty( $new_token ) ) {
 			update_option( 'fair_audience_instagram_access_token', $new_token );
+
+			// The previous token was kept: leave its expiry as it was, so the
+			// refresh is tried again.
+			if ( class_exists( $credentials ) && $credentials::last_write_failed() ) {
+				error_log( 'Fair Audience Experimental: Instagram token refresh could not store the new token encrypted; the previous token was kept.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				return;
+			}
+
 			update_option( 'fair_audience_instagram_token_expires', time() + $expires_in );
 			error_log( 'Fair Audience Experimental: Instagram token refreshed successfully.' );
 		}

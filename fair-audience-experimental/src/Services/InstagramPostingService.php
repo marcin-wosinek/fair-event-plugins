@@ -50,6 +50,16 @@ class InstagramPostingService {
 	 * @return bool|WP_Error True if configured, WP_Error otherwise.
 	 */
 	public function is_configured() {
+		$credentials = \FairAudience\Settings\InstagramCredentials::class;
+
+		// Checked before the token itself, which reads as empty when unreadable.
+		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
+			return new WP_Error(
+				'instagram_credentials_unavailable',
+				$credentials::admin_message( $credentials::status() )
+			);
+		}
+
 		$user_id      = $this->get_user_id();
 		$access_token = $this->get_access_token();
 

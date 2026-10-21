@@ -158,6 +158,178 @@ describe( 'NotificationsTab', () => {
 		} );
 	} );
 
+	describe( 'stored bot token encrypted at rest (#1319)', () => {
+		const CREDENTIALS = '/fair-payments-connector/v1/telegram/credentials';
+		const UNRECOVERABLE_MESSAGE =
+			'Telegram notifications are paused: the stored bot token can no longer be read.';
+		const ROUTE = {
+			id: 'route-1',
+			enabled: true,
+			channel: 'telegram',
+			destination: '99999',
+			frequency: 'immediate',
+			include_pii: true,
+		};
+
+		function mockLoad( settings, credentials ) {
+			apiFetch.mockImplementation( ( opts ) => {
+				if ( opts.path === CREDENTIALS ) {
+					return Promise.resolve( credentials );
+				}
+				if ( opts.path === '/wp/v2/settings' && ! opts.method ) {
+					return Promise.resolve( {
+						fair_payment_notification_routes: [ ROUTE ],
+						...settings,
+					} );
+				}
+				return Promise.resolve( {} );
+			} );
+		}
+
+		function saveCall() {
+			return apiFetch.mock.calls.find(
+				( [ opts ] ) =>
+					opts.method === 'POST' && opts.path === '/wp/v2/settings'
+			);
+		}
+
+		test( 'reads the decrypted token back into the field, without a notice', async () => {
+			mockLoad(
+				{ fair_payment_telegram_bot_token: '123456:decrypted' },
+				{
+					credential_status: 'available',
+					credentials_encrypted: true,
+					message: '',
+				}
+			);
+
+			render( <NotificationsTab onNotice={ () => {} } /> );
+
+			await waitFor( () =>
+				expect(
+					screen.getByDisplayValue( '123456:decrypted' )
+				).toBeInTheDocument()
+			);
+			expect(
+				apiFetch.mock.calls.some(
+					( [ opts ] ) => opts.path === CREDENTIALS
+				)
+			).toBe( true );
+			expect(
+				document.querySelector( '.components-notice' )
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByText( /Stored encrypted in the site database/ )
+			).toBeInTheDocument();
+		} );
+
+		test( 'saving the routes leaves an unreadable token alone', async () => {
+			mockLoad(
+				{ fair_payment_telegram_bot_token: '' },
+				{
+					credential_status: 'unrecoverable',
+					message: UNRECOVERABLE_MESSAGE,
+				}
+			);
+
+			render( <NotificationsTab onNotice={ () => {} } /> );
+
+			await waitFor( () =>
+				expect(
+					document.querySelector( '.components-notice.is-error' )
+				).toHaveTextContent( UNRECOVERABLE_MESSAGE )
+			);
+
+			fireEvent.click( screen.getByText( 'Save settings' ) );
+
+			await waitFor( () => expect( saveCall() ).toBeTruthy() );
+			expect( saveCall()[ 0 ].data ).toEqual( {
+				fair_payment_notification_routes: [ ROUTE ],
+			} );
+		} );
+
+		test( 'a token entered over an unreadable one is saved', async () => {
+			mockLoad(
+				{ fair_payment_telegram_bot_token: '' },
+				{
+					credential_status: 'unrecoverable',
+					message: UNRECOVERABLE_MESSAGE,
+				}
+			);
+			const onNotice = jest.fn();
+
+			render( <NotificationsTab onNotice={ onNotice } /> );
+
+			await waitFor( () =>
+				expect(
+					document.querySelector( '.components-notice.is-error' )
+				).toBeInTheDocument()
+			);
+
+			fireEvent.change( screen.getByLabelText( 'Bot token' ), {
+				target: { value: '123456:replacement' },
+			} );
+			mockLoad( {}, { credential_status: 'available', message: '' } );
+			fireEvent.click( screen.getByText( 'Save settings' ) );
+
+			await waitFor( () =>
+				expect( onNotice ).toHaveBeenCalledWith( {
+					status: 'success',
+					message: 'Notification settings saved.',
+				} )
+			);
+			expect( saveCall()[ 0 ].data ).toEqual( {
+				fair_payment_telegram_bot_token: '123456:replacement',
+				fair_payment_notification_routes: [ ROUTE ],
+			} );
+			// The status is reloaded, so the notice goes away.
+			await waitFor( () =>
+				expect(
+					document.querySelector( '.components-notice' )
+				).not.toBeInTheDocument()
+			);
+		} );
+
+		test( 'explains a temporary encryption outage as a warning', async () => {
+			mockLoad(
+				{ fair_payment_telegram_bot_token: '' },
+				{
+					credential_status: 'encryption_unavailable',
+					message: 'Telegram notifications are paused.',
+				}
+			);
+
+			render( <NotificationsTab onNotice={ () => {} } /> );
+
+			await waitFor( () =>
+				expect(
+					document.querySelector( '.components-notice.is-warning' )
+				).toHaveTextContent( 'Telegram notifications are paused.' )
+			);
+		} );
+
+		test( 'loads the settings when the token status cannot be loaded', async () => {
+			apiFetch.mockImplementation( ( opts ) =>
+				opts.path === CREDENTIALS
+					? Promise.reject( new Error( 'Not found' ) )
+					: Promise.resolve( {
+							fair_payment_telegram_bot_token: 'BOT:abc',
+							fair_payment_notification_routes: [],
+						} )
+			);
+			const onNotice = jest.fn();
+
+			render( <NotificationsTab onNotice={ onNotice } /> );
+
+			await waitFor( () =>
+				expect(
+					screen.getByDisplayValue( 'BOT:abc' )
+				).toBeInTheDocument()
+			);
+			expect( onNotice ).not.toHaveBeenCalled();
+		} );
+	} );
+
 	test( 'Send test calls the notifications test endpoint', async () => {
 		mockInitialLoad( {
 			fair_payment_notification_routes: [

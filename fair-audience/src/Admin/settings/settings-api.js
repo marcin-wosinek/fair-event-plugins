@@ -6,12 +6,23 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Load Instagram connection settings from WordPress REST API
  *
+ * `connected` is the stored connection flag. `credentialStatus` says whether
+ * the stored access token can be used: 'available', 'encryption_unavailable'
+ * (temporarily, until the server's encryption support is restored) or
+ * 'unrecoverable' (reconnect needed), explained by `credentialMessage`. The
+ * access token itself is never returned.
+ *
  * @return {Promise<Object>} Promise resolving to connection settings
  */
 export function loadInstagramSettings() {
-	return apiFetch( { path: '/wp/v2/settings' } ).then( ( settings ) => {
+	return Promise.all( [
+		apiFetch( { path: '/wp/v2/settings' } ),
+		apiFetch( { path: '/fair-audience/v1/instagram/credentials' } ),
+	] ).then( ( [ settings, credentials ] ) => {
 		return {
 			connected: settings.fair_audience_instagram_connected || false,
+			credentialStatus: credentials.credential_status || 'available',
+			credentialMessage: credentials.message || '',
 			username: settings.fair_audience_instagram_username || '',
 			userId: settings.fair_audience_instagram_user_id || '',
 			tokenExpires:

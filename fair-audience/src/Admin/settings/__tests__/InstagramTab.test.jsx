@@ -175,3 +175,112 @@ describe( 'InstagramTab — disconnect confirmation (#1776)', () => {
 		).toBeEnabled();
 	} );
 } );
+
+describe( 'InstagramTab — unreadable stored token (#1319)', () => {
+	const UNRECOVERABLE_MESSAGE =
+		'Instagram needs to be reconnected: the stored access token can no longer be read.';
+	const PAUSED_MESSAGE =
+		'Instagram is paused: the access token is stored encrypted.';
+
+	function renderWith( settings ) {
+		loadInstagramSettings.mockResolvedValue( settings );
+		const onNotice = jest.fn();
+		render( <InstagramTab onNotice={ onNotice } shouldReload={ false } /> );
+		return { onNotice };
+	}
+
+	it( 'offers reconnection and manual entry when the token is unrecoverable', async () => {
+		saveSettings.mockResolvedValue( {} );
+		const { onNotice } = renderWith( {
+			...CONNECTED,
+			credentialStatus: 'unrecoverable',
+			credentialMessage: UNRECOVERABLE_MESSAGE,
+		} );
+
+		// Notice also announces its text in a live region.
+		expect(
+			await screen.findAllByText( UNRECOVERABLE_MESSAGE )
+		).not.toHaveLength( 0 );
+		expect(
+			screen.queryByText( 'Connected to Instagram' )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Connect with Instagram' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Disconnect' } )
+		).toBeInTheDocument();
+
+		fireEvent.change( screen.getByLabelText( 'Access Token' ), {
+			target: { value: ' new-token ' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save Token' } ) );
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'success',
+				message: 'Instagram token saved successfully.',
+			} )
+		);
+		expect( saveSettings ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				fair_audience_instagram_access_token: 'new-token',
+				fair_audience_instagram_connected: true,
+			} )
+		);
+	} );
+
+	it( 'disconnects an unrecoverable token through the confirmation popup', async () => {
+		saveSettings.mockResolvedValue( {} );
+		renderWith( {
+			...CONNECTED,
+			credentialStatus: 'unrecoverable',
+			credentialMessage: UNRECOVERABLE_MESSAGE,
+		} );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Disconnect' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Disconnect Instagram?',
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', {
+				name: 'Disconnect Instagram',
+			} )
+		);
+
+		await waitFor( () => expect( dialog ).not.toBeInTheDocument() );
+		expect( saveSettings ).toHaveBeenCalledWith( CLEARED );
+	} );
+
+	it( 'explains a temporary encryption outage without offering a new token', async () => {
+		renderWith( {
+			...CONNECTED,
+			credentialStatus: 'encryption_unavailable',
+			credentialMessage: PAUSED_MESSAGE,
+		} );
+
+		expect( await screen.findAllByText( PAUSED_MESSAGE ) ).not.toHaveLength(
+			0
+		);
+		expect(
+			screen.queryByText( 'Connected to Instagram' )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Save Token' } )
+		).not.toBeInTheDocument();
+		expect( screen.getByText( '@fair_demo_studio' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Disconnect' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a readable connection as connected', async () => {
+		renderWith( { ...CONNECTED, credentialStatus: 'available' } );
+
+		expect(
+			await screen.findAllByText( 'Connected to Instagram' )
+		).not.toHaveLength( 0 );
+	} );
+} );

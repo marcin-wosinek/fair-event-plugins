@@ -59,6 +59,20 @@ class InstagramController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function test_connection( $request ) {
+		$credentials = \FairAudience\Settings\InstagramCredentials::class;
+
+		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
+			$status = $credentials::status();
+			return new WP_Error(
+				'instagram_credentials_unavailable',
+				$credentials::admin_message( $status ),
+				array(
+					'status'            => 409,
+					'credential_status' => $status,
+				)
+			);
+		}
+
 		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
 
 		if ( empty( $access_token ) ) {

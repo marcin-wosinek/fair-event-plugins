@@ -76,6 +76,11 @@ class Plugin {
 			2
 		);
 
+		// Encrypt the Instagram access token at rest. Registered on every
+		// request, whatever the experimental companion's state: its daily
+		// token refresh rewrites the token outside the admin.
+		\FairAudience\Settings\InstagramCredentials::init();
+
 		// Initialize settings.
 		$settings = new \FairAudience\Settings\Settings();
 		$settings->init();
@@ -174,6 +179,9 @@ class Plugin {
 
 		$event_interest_controller = new \FairAudience\API\EventInterestController();
 		$event_interest_controller->register_routes();
+
+		$instagram_credentials_controller = new \FairAudience\API\InstagramCredentialsController();
+		$instagram_credentials_controller->register_routes();
 
 		// An outdated companion still registers the Custom Mail routes itself;
 		// leave them alone so each send is processed once.

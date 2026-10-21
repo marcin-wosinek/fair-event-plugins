@@ -368,55 +368,55 @@ msgstr "Połączenie Mollie"
 msgid "Connect your Mollie account to accept payments. This uses secure OAuth authentication."
 msgstr "Połącz swoje konto Mollie, aby akceptować płatności. Używa to bezpiecznego uwierzytelniania OAuth."
 
-#: src/Admin/settings/ConnectionTab.js:927
+#: src/Admin/settings/ConnectionTab.js:933
 msgid "Connected to Mollie"
 msgstr "Połączono z Mollie"
 
 #: src/Admin/settings/ConnectionTab.js:58
-#: src/Admin/settings/ConnectionTab.js:975
+#: src/Admin/settings/ConnectionTab.js:981
 msgid "Organization ID:"
 msgstr "Identyfikator organizacji:"
 
 #: src/Admin/settings/ConnectionTab.js:57
-#: src/Admin/settings/ConnectionTab.js:988
+#: src/Admin/settings/ConnectionTab.js:994
 msgid "Profile ID:"
 msgstr "Identyfikator profilu:"
 
-#: src/Admin/settings/ConnectionTab.js:997
+#: src/Admin/settings/ConnectionTab.js:1003
 msgid "Missing (required for payments)"
 msgstr "Brakuje (wymagane do płatności)"
 
-#: src/Admin/settings/ConnectionTab.js:1012
+#: src/Admin/settings/ConnectionTab.js:1018
 msgid "Please reconnect to Mollie to fetch the profile ID."
 msgstr "Ponownie połącz się z Mollie, aby pobrać identyfikator profilu."
 
 #. translators: %s: expiration date
-#: src/Admin/settings/ConnectionTab.js:1136
+#: src/Admin/settings/ConnectionTab.js:1142
 #, js-format
 msgid "Token expires: %s"
 msgstr "Token wygasa: %s"
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
-#: src/Admin/settings/ConnectionTab.js:1150
+#: src/Admin/settings/ConnectionTab.js:1156
 #: src/Admin/transaction/TransactionPage.js:1017
 #: src/Admin/transactions/TransactionsApp.js:576
 #: src/Admin/transactions/TransactionsApp.js:899
 msgid "Mode"
 msgstr "Tryb"
 
-#: src/Admin/settings/ConnectionTab.js:1157
+#: src/Admin/settings/ConnectionTab.js:1163
 msgid "Test Mode"
 msgstr "Tryb testowy"
 
-#: src/Admin/settings/ConnectionTab.js:1164
+#: src/Admin/settings/ConnectionTab.js:1170
 msgid "Live Mode"
 msgstr "Tryb na żywo"
 
-#: src/Admin/settings/ConnectionTab.js:1228
+#: src/Admin/settings/ConnectionTab.js:1234
 msgid "Refreshing..."
 msgstr "Odświeżanie..."
 
-#: src/Admin/settings/ConnectionTab.js:1232
+#: src/Admin/settings/ConnectionTab.js:1238
 msgid "Refresh Connection"
 msgstr "Odśwież połączenie"
 
@@ -835,7 +835,7 @@ msgstr "Żadne opłacone transakcje nie brakuje danych opłat Mollie."
 #: fair-payments-connector.php
 #: src/Admin/AdminPages.php:46
 #: src/Admin/AdminPages.php:47
-#: src/Core/Plugin.php:139
+#: src/Core/Plugin.php:143
 msgid "Fair Payments Connector"
 msgstr ""
 
@@ -871,7 +871,7 @@ msgid "Bundled translations"
 msgstr "Tłumaczenia w pakiecie"
 
 #: src/Core/Features.php:127
-#: src/Core/Plugin.php:140
+#: src/Core/Plugin.php:144
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Załaduj pliki .mo/.json dostarczone z wtyczką zamiast polegać na pakietach językowych WordPress.org. Przydatne, gdy lokalizacja jest poniżej progu 90% na translate.wordpress.org lub dla ciągów w trakcie opracowania."
 
@@ -887,7 +887,7 @@ msgstr "Nie udało się załadować danych pulpitu."
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Tryb testowy — te liczby odzwierciedlają tylko transakcje testowe."
 
-#: src/Core/Plugin.php:143
+#: src/Core/Plugin.php:147
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Wymuszony przez stałą wp-config — zmień go tam."
 
@@ -1034,64 +1034,64 @@ msgstr "Testowa płatność została utworzona. Ukończ lub anuluj checkout w no
 msgid "Failed to create test payment."
 msgstr "Nie udało się utworzyć testowej płatności."
 
-#: src/Admin/settings/ConnectionTab.js:1028
+#: src/Admin/settings/ConnectionTab.js:1034
 msgid "Loading payment methods…"
 msgstr "Ładowanie metod płatności…"
 
 #: src/Admin/settings/ConnectionTab.js:56
-#: src/Admin/settings/ConnectionTab.js:1048
+#: src/Admin/settings/ConnectionTab.js:1054
 msgid "Profile name:"
 msgstr "Nazwa profilu:"
 
-#: src/Admin/settings/ConnectionTab.js:1062
+#: src/Admin/settings/ConnectionTab.js:1068
 msgid "Enabled payment methods:"
 msgstr "Włączone metody płatności:"
 
-#: src/Admin/settings/ConnectionTab.js:1103
+#: src/Admin/settings/ConnectionTab.js:1109
 msgid "No payment methods are currently enabled."
 msgstr "Żadne metody płatności nie są obecnie włączone."
 
-#: src/Admin/settings/ConnectionTab.js:1116
+#: src/Admin/settings/ConnectionTab.js:1122
 msgid "Manage payment methods in Mollie"
 msgstr "Zarządzaj metodami płatności w Mollie"
 
-#: src/Admin/settings/ConnectionTab.js:1261
+#: src/Admin/settings/ConnectionTab.js:1267
 msgid "Test payment"
 msgstr "Testowa płatność"
 
-#: src/Admin/settings/ConnectionTab.js:1263
+#: src/Admin/settings/ConnectionTab.js:1269
 msgid "Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish."
 msgstr "Dokonaj małej płatności (jedną jednostkę Twojej waluty, np. 1 €), aby sprawdzić, czy checkout i potwierdzenie działają od początku do końca."
 
 #: src/Admin/settings/ConnectionTab.js:792
-#: src/Admin/settings/ConnectionTab.js:1272
+#: src/Admin/settings/ConnectionTab.js:1278
 msgid "Live mode: this creates a real payment with real money and gateway fees."
 msgstr "Tryb na żywo: tworzy rzeczywistą płatność z rzeczywistymi pieniędzmi i opłatami bramy."
 
 #: src/Admin/settings/ConnectionTab.js:799
-#: src/Admin/settings/ConnectionTab.js:1276
+#: src/Admin/settings/ConnectionTab.js:1282
 msgid "Test mode: no real money is charged."
 msgstr "Tryb testowy: nie są pobierane rzeczywiste pieniądze."
 
-#: src/Admin/settings/ConnectionTab.js:1285
+#: src/Admin/settings/ConnectionTab.js:1291
 msgid "Test payment created. If the checkout did not open in a new tab, "
 msgstr "Płatność testowa utworzona. Jeśli kasa nie otworzyła się w nowej karcie, "
 
-#: src/Admin/settings/ConnectionTab.js:1294
+#: src/Admin/settings/ConnectionTab.js:1300
 msgid "open it here."
 msgstr "otwórz ją tutaj."
 
 #: src/Admin/settings/ConnectionTab.js:732
 #: src/Admin/settings/ConnectionTab.js:838
-#: src/Admin/settings/ConnectionTab.js:1309
+#: src/Admin/settings/ConnectionTab.js:1315
 msgid "Create test payment"
 msgstr "Utwórz płatność testową"
 
-#: src/Admin/settings/ConnectionTab.js:1339
+#: src/Admin/settings/ConnectionTab.js:1345
 msgid "Connect Mollie first to run a test payment."
 msgstr "Najpierw połącz Mollie, aby uruchomić płatność testową."
 
-#: src/Core/Plugin.php:134
+#: src/Core/Plugin.php:138
 msgid "Translations"
 msgstr "Tłumaczenia"
 
@@ -1440,7 +1440,7 @@ msgstr "Powód"
 msgid "Page %1$d of %2$d"
 msgstr "Strona %1$d z %2$d"
 
-#: src/Admin/settings/ConnectionTab.js:1182
+#: src/Admin/settings/ConnectionTab.js:1188
 msgid "Save mode"
 msgstr "Tryb zapisu"
 
@@ -1549,41 +1549,42 @@ msgstr "Wybierz tryb na żywo, testowy lub wszystkie."
 msgid "Connected sites are not available. Activate Fair Payments Connector Experimental to import from them."
 msgstr "Połączone witryny nie są dostępne. Włącz Fair Payments Connector Experimental, aby importować z nich."
 
-#: src/API/NotificationsController.php:78
+#: src/API/NotificationsController.php:79
 msgid "Destination is required."
 msgstr "Miejsce docelowe jest wymagane."
 
-#: src/API/NotificationsController.php:88
+#: src/API/NotificationsController.php:89
 #: src/Services/TelegramService.php:38
+#: src/Settings/TelegramCredentials.php:169
 msgid "Telegram bot token is not configured."
 msgstr "Token bota Telegram nie jest skonfigurowany."
 
-#: src/API/NotificationsController.php:102
+#: src/API/NotificationsController.php:113
 msgid "Unknown notification channel."
 msgstr "Nieznany kanał powiadomień."
 
-#: src/API/NotificationsController.php:112
+#: src/API/NotificationsController.php:123
 msgid "Test notification failed to send."
 msgstr "Nie udało się wysłać powiadomienia testowego."
 
-#: src/API/NotificationsController.php:120
+#: src/API/NotificationsController.php:131
 #: src/Admin/notifications/NotificationsTab.js:89
 msgid "Test notification sent."
 msgstr "Powiadomienie testowe zostało wysłane."
 
-#: src/API/TelegramSettingsController.php:100
+#: src/API/TelegramSettingsController.php:143
 msgid "Bot token is required."
 msgstr "Token bota jest wymagany."
 
-#: src/API/TelegramSettingsController.php:109
+#: src/API/TelegramSettingsController.php:152
 msgid "At least one chat ID is required."
 msgstr "Wymagany jest co najmniej jeden identyfikator czatu."
 
-#: src/API/TelegramSettingsController.php:142
+#: src/API/TelegramSettingsController.php:185
 msgid "Telegram test message failed for all chat IDs."
 msgstr "Wiadomość testowa Telegram nie powiodła się dla wszystkich identyfikatorów czatu."
 
-#: src/API/TelegramSettingsController.php:153
+#: src/API/TelegramSettingsController.php:196
 msgid "Telegram test message sent."
 msgstr "Wiadomość testowa Telegram została wysłana."
 
@@ -2005,51 +2006,47 @@ msgstr "Imię i adres e-mail w wiadomościach."
 msgid "Send test"
 msgstr "Wyślij test"
 
-#: src/Admin/notifications/NotificationsTab.js:275
+#: src/Admin/notifications/NotificationsTab.js:299
 msgid "Failed to load notification settings."
 msgstr "Nie można było wczytać ustawień powiadomień."
 
-#: src/Admin/notifications/NotificationsTab.js:297
+#: src/Admin/notifications/NotificationsTab.js:332
 msgid "Notification settings saved."
 msgstr "Ustawienia powiadomień zostały zapisane."
 
-#: src/Admin/notifications/NotificationsTab.js:312
+#: src/Admin/notifications/NotificationsTab.js:347
 msgid "Failed to save notification settings: "
 msgstr "Nie można było zapisać ustawień powiadomień: "
 
-#: src/Admin/notifications/NotificationsTab.js:338
+#: src/Admin/notifications/NotificationsTab.js:373
 msgid "Loading notification settings…"
 msgstr "Wczytywanie ustawień powiadomień…"
 
-#: src/Admin/notifications/NotificationsTab.js:353
+#: src/Admin/notifications/NotificationsTab.js:388
 msgid "Telegram Bot Token"
 msgstr "Token bota Telegram"
 
-#: src/Admin/notifications/NotificationsTab.js:359
+#: src/Admin/notifications/NotificationsTab.js:394
 msgid "Required for any Telegram notification routes."
 msgstr "Wymagane dla dowolnych tras powiadomień Telegram."
 
-#: src/Admin/notifications/NotificationsTab.js:367
+#: src/Admin/notifications/NotificationsTab.js:416
 msgid "Bot token"
 msgstr "Token bota"
 
-#: src/Admin/notifications/NotificationsTab.js:368
-msgid "From @BotFather. Stored as plain text in wp_options — anyone with admin access can read it."
-msgstr "Od @BotFather. Przechowywany jako zwykły tekst w wp_options — każdy z dostępem administratora może go przeczytać."
-
-#: src/Admin/notifications/NotificationsTab.js:380
+#: src/Admin/notifications/NotificationsTab.js:429
 msgid "Notification Routes"
 msgstr "Trasy powiadomień"
 
-#: src/Admin/notifications/NotificationsTab.js:382
+#: src/Admin/notifications/NotificationsTab.js:431
 msgid "Each route sends a notification on a transaction paid event. Immediate routes fire at once; digest routes batch transactions into a single periodic message."
 msgstr "Każda trasa wysyła powiadomienie na zdarzenie opłaconej transakcji. Trasy natychmiastowe uruchamiają się od razu; trasy podsumowania grupują transakcje w jedną okresową wiadomość."
 
-#: src/Admin/notifications/NotificationsTab.js:402
+#: src/Admin/notifications/NotificationsTab.js:451
 msgid "Add route"
 msgstr "Dodaj trasę"
 
-#: src/Admin/notifications/NotificationsTab.js:410
+#: src/Admin/notifications/NotificationsTab.js:459
 msgid "Save settings"
 msgstr "Zapisz ustawienia"
 
@@ -2065,20 +2062,20 @@ msgstr "Otwórz Aktualizacje zewnętrzne"
 msgid "The Mollie authorization response was incomplete. Please try connecting again."
 msgstr "Odpowiedź autoryzacji Mollie była niekompletna. Spróbuj połączyć się ponownie."
 
-#: src/Admin/settings/ConnectionTab.js:909
-#: src/Admin/settings/ConnectionTab.js:940
+#: src/Admin/settings/ConnectionTab.js:912
+#: src/Admin/settings/ConnectionTab.js:946
 msgid "Reconnect to Mollie"
 msgstr "Połącz się ponownie z Mollie"
 
-#: src/Admin/settings/ConnectionTab.js:949
+#: src/Admin/settings/ConnectionTab.js:955
 msgid "Mollie has not authorized this site to read settlements yet. Reconnect to grant that permission. Payments keep working in the meantime."
 msgstr "Mollie nie udzielił jeszcze tej witrynie dostępu do odczytu rozliczeń. Połącz się ponownie, aby udzielić tego uprawnienia. Płatności będą działać w międzyczasie."
 
-#: src/Admin/settings/ConnectionTab.js:964
+#: src/Admin/settings/ConnectionTab.js:970
 msgid "Settlement access: authorized"
 msgstr "Dostęp do rozliczeń: autoryzowany"
 
-#: src/Admin/settings/ConnectionTab.js:1212
+#: src/Admin/settings/ConnectionTab.js:1218
 msgid "Reconnect"
 msgstr "Połącz się ponownie"
 
@@ -2840,7 +2837,7 @@ msgstr "Nie można było wczytać szczegółów płatności testowej."
 
 #: src/Admin/settings/ConnectionTab.js:658
 #: src/Admin/settings/ConnectionTab.js:719
-#: src/Admin/settings/ConnectionTab.js:1198
+#: src/Admin/settings/ConnectionTab.js:1204
 msgid "Disconnect Mollie"
 msgstr "Rozłącz Mollie"
 
@@ -2942,19 +2939,35 @@ msgid "Online payment is temporarily unavailable. Please try again later or cont
 msgstr ""
 
 #: src/Payment/MollieCredentials.php:207
-#: src/Admin/settings/ConnectionTab.js:896
+#: src/Admin/settings/ConnectionTab.js:899
 msgid "Payments are paused: the Mollie connection is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; the connection then resumes without reconnecting."
 msgstr ""
 
 #: src/Payment/MollieCredentials.php:211
-#: src/Admin/settings/ConnectionTab.js:918
+#: src/Admin/settings/ConnectionTab.js:921
 msgid "Payments are paused: the stored Mollie connection can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Reconnect to Mollie to resume payments."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1247
+#: src/Admin/settings/ConnectionTab.js:1253
 msgid "Reconnect and Refresh Connection are unavailable until encryption support is restored. Disconnecting stays possible."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1324
+#: src/Admin/settings/ConnectionTab.js:1330
 msgid "Test payments are paused until the stored Mollie connection can be read again."
+msgstr ""
+
+#: src/Settings/TelegramCredentials.php:173
+msgid "Telegram notifications are paused: the bot token is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; notifications then resume without entering the token again."
+msgstr ""
+
+#: src/Settings/TelegramCredentials.php:177
+msgid "Telegram notifications are paused: the stored bot token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Enter the bot token again and save the settings."
+msgstr ""
+
+#: src/Settings/TelegramCredentials.php:225
+msgid "The Telegram bot token could not be stored encrypted, so the previous token was kept. Try again."
+msgstr ""
+
+#: src/Admin/notifications/NotificationsTab.js:417
+msgid "From @BotFather. Stored encrypted in the site database when the server supports it; administrators can still view it here."
 msgstr ""
