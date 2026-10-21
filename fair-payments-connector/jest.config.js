@@ -10,6 +10,7 @@ module.exports = {
 		'/vendor/',
 		'/build/',
 		'/e2e/',
+		'/__tests__/helpers/',
 		'\\.api\\.spec\\.js$',
 	],
 	transformIgnorePatterns: [
