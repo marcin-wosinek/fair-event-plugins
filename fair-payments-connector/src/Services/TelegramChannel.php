@@ -7,6 +7,8 @@
 
 namespace FairPaymentsConnector\Services;
 
+use FairPaymentsConnector\Settings\TelegramCredentials;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -40,8 +42,13 @@ class TelegramChannel implements NotificationChannel {
 	 * @return bool
 	 */
 	public function send( string $destination, string $text ): bool {
-		$bot_token = (string) get_option( 'fair_payment_telegram_bot_token', '' );
-		if ( '' === trim( $bot_token ) ) {
+		$bot_token = TelegramCredentials::token();
+		if ( '' === $bot_token ) {
+			$status = TelegramCredentials::status();
+			if ( TelegramCredentials::MISSING !== $status && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( '[Fair Payments Connector] Telegram send skipped: ' . TelegramCredentials::admin_message( $status ) );
+			}
 			return false;
 		}
 		$result = $this->telegram->send( $bot_token, $destination, $text );

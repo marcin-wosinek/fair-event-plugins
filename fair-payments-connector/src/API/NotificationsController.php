@@ -10,6 +10,7 @@ namespace FairPaymentsConnector\API;
 use FairPaymentsConnector\Hooks\NotificationHooks;
 use FairPaymentsConnector\Services\TelegramService;
 use FairPaymentsConnector\Settings\NotificationSettings;
+use FairPaymentsConnector\Settings\TelegramCredentials;
 
 defined( 'WPINC' ) || die;
 
@@ -81,12 +82,22 @@ class NotificationsController extends \WP_REST_Controller {
 		}
 
 		if ( 'telegram' === $channel ) {
-			$bot_token = (string) get_option( NotificationSettings::BOT_TOKEN_OPTION, '' );
-			if ( '' === trim( $bot_token ) ) {
+			$credential_status = TelegramCredentials::status();
+			if ( TelegramCredentials::MISSING === $credential_status ) {
 				return new \WP_Error(
 					'fair_payment_telegram_missing_token',
 					__( 'Telegram bot token is not configured.', 'fair-payments-connector' ),
 					array( 'status' => 400 )
+				);
+			}
+			if ( TelegramCredentials::AVAILABLE !== $credential_status ) {
+				return new \WP_Error(
+					'fair_payment_telegram_credentials_unavailable',
+					TelegramCredentials::admin_message( $credential_status ),
+					array(
+						'status'            => 409,
+						'credential_status' => $credential_status,
+					)
 				);
 			}
 		}

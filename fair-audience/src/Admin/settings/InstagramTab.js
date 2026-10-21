@@ -35,6 +35,10 @@ import {
  */
 export default function InstagramTab( { onNotice, shouldReload } ) {
 	const [ connected, setConnected ] = useState( false );
+	// Whether the stored access token can be used, and why not. A connection
+	// whose token can't be read stays connected until it is replaced.
+	const [ credentialStatus, setCredentialStatus ] = useState( 'available' );
+	const [ credentialMessage, setCredentialMessage ] = useState( '' );
 	const [ username, setUsername ] = useState( '' );
 	const [ userId, setUserId ] = useState( '' );
 	const [ tokenExpires, setTokenExpires ] = useState( null );
@@ -69,6 +73,8 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 		loadInstagramSettings()
 			.then( ( settings ) => {
 				setConnected( settings.connected );
+				setCredentialStatus( settings.credentialStatus );
+				setCredentialMessage( settings.credentialMessage );
 				setUsername( settings.username );
 				setUserId( settings.userId );
 				setManualUserId( settings.userId );
@@ -338,6 +344,19 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 		);
 	}
 
+	const needsReconnect = connected && credentialStatus === 'unrecoverable';
+	const isPaused = connected && credentialStatus === 'encryption_unavailable';
+
+	const disconnectButton = (
+		<Button
+			isDestructive
+			onClick={ handleDisconnect }
+			disabled={ isSaving }
+		>
+			{ __( 'Disconnect', 'fair-audience' ) }
+		</Button>
+	);
+
 	if ( isLoading ) {
 		return (
 			<Card>
@@ -358,8 +377,14 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 			<CardBody>
 				<h2>{ __( 'Instagram Connection', 'fair-audience' ) }</h2>
 
-				{ ! connected ? (
+				{ ! connected || needsReconnect ? (
 					<>
+						{ needsReconnect && (
+							<Notice status="error" isDismissible={ false }>
+								{ credentialMessage }
+							</Notice>
+						) }
+
 						<p>
 							{ __(
 								'Connect your Instagram account to access your media and followers.',
@@ -436,12 +461,45 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 								) }
 							</Button>
 						</div>
+
+						{ needsReconnect && (
+							<div
+								style={ {
+									borderTop: '1px solid #ddd',
+									marginTop: '1.5rem',
+									paddingTop: '1.5rem',
+								} }
+							>
+								<p
+									style={ {
+										fontSize: '0.9em',
+										color: '#666',
+										marginBottom: '1rem',
+									} }
+								>
+									{ __(
+										'Or disconnect to remove the unreadable token from this site.',
+										'fair-audience'
+									) }
+								</p>
+								{ disconnectButton }
+							</div>
+						) }
 					</>
 				) : (
 					<>
-						<Notice status="success" isDismissible={ false }>
-							{ __( 'Connected to Instagram', 'fair-audience' ) }
-						</Notice>
+						{ isPaused ? (
+							<Notice status="warning" isDismissible={ false }>
+								{ credentialMessage }
+							</Notice>
+						) : (
+							<Notice status="success" isDismissible={ false }>
+								{ __(
+									'Connected to Instagram',
+									'fair-audience'
+								) }
+							</Notice>
+						) }
 
 						{ username && (
 							<div style={ { marginTop: '1rem' } }>
@@ -865,13 +923,7 @@ export default function InstagramTab( { onNotice, shouldReload } ) {
 						</div>
 
 						<div style={ { marginTop: '1.5rem' } }>
-							<Button
-								isDestructive
-								onClick={ handleDisconnect }
-								disabled={ isSaving }
-							>
-								{ __( 'Disconnect', 'fair-audience' ) }
-							</Button>
+							{ disconnectButton }
 						</div>
 					</>
 				) }

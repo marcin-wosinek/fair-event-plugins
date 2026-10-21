@@ -10,6 +10,7 @@ namespace FairPaymentsConnector\API;
 use FairPaymentsConnector\Hooks\NotificationHooks;
 use FairPaymentsConnector\Services\TelegramService;
 use FairPaymentsConnector\Settings\NotificationSettings;
+use FairPaymentsConnector\Settings\TelegramCredentials;
 
 defined( 'WPINC' ) || die;
 
@@ -17,9 +18,9 @@ defined( 'WPINC' ) || die;
  * REST endpoints for the Telegram notification settings.
  *
  * Settings themselves are stored as discrete options and read/written through
- * the standard `/wp/v2/settings` endpoint. This controller adds the one
- * operation that doesn't fit there: a "send test message" action that
- * exercises the bot token + chat IDs against the real Telegram API.
+ * the standard `/wp/v2/settings` endpoint. This controller adds what doesn't
+ * fit there: a "send test message" action that exercises the bot token +
+ * chat IDs against the real Telegram API, and the stored token's status.
  *
  * Routes are registered under fair-payments-connector/v1 so TelegramTab.js
  * in fair-payments-connector does not need to change.
@@ -32,6 +33,18 @@ class TelegramSettingsController extends \WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'fair-payments-connector/v1',
+			'/telegram/credentials',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_credential_status' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
 		register_rest_route(
 			'fair-payments-connector/v1',
 			'/telegram/test',
@@ -66,6 +79,25 @@ class TelegramSettingsController extends \WP_REST_Controller {
 	}
 
 	/**
+	 * Whether a bot token is stored and can be used. The token itself is never
+	 * part of the response; the settings screen reads it from /wp/v2/settings.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_credential_status() {
+		$status = TelegramCredentials::status();
+
+		return new \WP_REST_Response(
+			array(
+				'credential_status'     => $status,
+				'credentials_encrypted' => TelegramCredentials::is_encrypted(),
+				'message'               => TelegramCredentials::AVAILABLE === $status || TelegramCredentials::MISSING === $status ? '' : TelegramCredentials::admin_message( $status ),
+			),
+			200
+		);
+	}
+
+	/**
 	 * Send a test message to all configured (or supplied) chat IDs.
 	 *
 	 * @param \WP_REST_Request $request Incoming request.
@@ -74,7 +106,18 @@ class TelegramSettingsController extends \WP_REST_Controller {
 	public function send_test_message( $request ) {
 		$bot_token = $request->get_param( 'bot_token' );
 		if ( null === $bot_token || '' === $bot_token ) {
-			$bot_token = (string) get_option( 'fair_payment_telegram_bot_token', '' );
+			$credential_status = TelegramCredentials::status();
+			if ( TelegramCredentials::ENCRYPTION_UNAVAILABLE === $credential_status || TelegramCredentials::UNRECOVERABLE === $credential_status ) {
+				return new \WP_Error(
+					'fair_payment_telegram_credentials_unavailable',
+					TelegramCredentials::admin_message( $credential_status ),
+					array(
+						'status'            => 409,
+						'credential_status' => $credential_status,
+					)
+				);
+			}
+			$bot_token = TelegramCredentials::token();
 		}
 
 		$chat_ids_raw = $request->get_param( 'chat_ids' );

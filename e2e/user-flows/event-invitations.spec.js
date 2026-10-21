@@ -308,7 +308,17 @@ test.describe('Disconnect Instagram', () => {
 
 		const after = await settings(request);
 		expect(after.fair_audience_instagram_connected).toBeFalsy();
-		expect(after.fair_audience_instagram_access_token).toBe('');
+		// The token is write-only over REST (#1319); the status endpoint
+		// reports the connection as gone.
+		expect(after).not.toHaveProperty('fair_audience_instagram_access_token');
+		const status = await request.get(
+			'/wp-json/fair-audience/v1/instagram/credentials',
+			{ headers: adminHeaders }
+		);
+		expect(await status.json()).toMatchObject({
+			connected: false,
+			usable: false,
+		});
 		expect(nativeDialog).toBe(false);
 	});
 });
