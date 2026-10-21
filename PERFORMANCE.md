@@ -551,8 +551,7 @@ being written up here (see the linked issue for the verification detail).
    `EventDates::get_by_id()` once per occurrence, called from
    `SeriesCoverage::describe()`. That is one query per occurrence per form:
    a real page with one form and 48 occurrences pays about 48, and
-   occurrences with a capacity also count their signups. No follow-up is
-   filed yet.
+   occurrences with a capacity also count their signups. Follow-up: [#1996](https://github.com/marcin-wosinek/fair-event-plugins/issues/1996).
 
 3. **The events calendar and week blocks query per displayed occurrence —
    query-count cost.** The `listings` page costs 60 queries with
