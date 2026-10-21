@@ -20,7 +20,9 @@
  *     while pending, keeps a failure inside the dialog for a retry, and
  *     reports success next to the List (#1933).
  *   - Move and Change ticket type, including the over-capacity reason step,
- *     and the over-capacity details (#1532).
+ *     and the over-capacity details (#1532); pending, failure and retry
+ *     behaviour of the move popup, and success notices beside the List
+ *     (#1934).
  *   - "Print list" prints the complete, unfiltered List in its own window
  *     (#1842).
  *   - "Summary" copies ticket counts of the complete List (#1839).
@@ -1226,6 +1228,135 @@ describe( 'EventSignups — move and change ticket type (#1532)', () => {
 		} );
 	} );
 
+	it( 'blocks dismissal, Cancel and a second request while moving, then confirms beside the List', async () => {
+		await renderSignups( { rows: [ movable ], targets } );
+		let finish;
+		const route = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.method === 'PUT'
+				? new Promise( ( resolve ) => {
+						finish = resolve;
+					} )
+				: route( options )
+		);
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		const select = await within( dialog ).findByLabelText( 'New date' );
+		fireEvent.change( select, { target: { value: '52' } } );
+		const move = within( dialog ).getByRole( 'button', {
+			name: 'Move signup',
+		} );
+		// Both clicks land before React re-renders the popup.
+		act( () => {
+			move.click();
+			move.click();
+		} );
+
+		expect( move ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( move ).toHaveClass( 'is-busy' );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		expect( select ).toBeDisabled();
+		expect(
+			within( dialog ).queryByRole( 'button', { name: 'Close' } )
+		).not.toBeInTheDocument();
+		fireEvent.keyDown( dialog, { key: 'Escape', code: 'Escape' } );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect(
+			apiFetch.mock.calls.filter(
+				( [ options ] ) => options.method === 'PUT'
+			)
+		).toHaveLength( 1 );
+
+		await act( async () => {
+			finish( { signup: {} } );
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			screen.getByText(
+				'Registration for Ada Lovelace (REF00101) moved to another date.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the date and the reason after a failed override, then retries', async () => {
+		const failure = new Error( '' );
+		await renderSignups( {
+			rows: [ movable ],
+			targets,
+			putResults: [
+				capacityError(),
+				failure,
+				capacityError(),
+				{ signup: {} },
+			],
+		} );
+		const errorText = ( dialog, text ) =>
+			within( dialog ).queryByText( text, {
+				selector: '.components-notice__content',
+			} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Move' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		const select = await within( dialog ).findByLabelText( 'New date' );
+		fireEvent.change( select, { target: { value: '51' } } );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Move signup' } )
+		);
+		const reason = await within( dialog ).findByLabelText( 'Reason' );
+		fireEvent.change( reason, {
+			target: { value: 'Friend of the organizer' },
+		} );
+		const exceed = within( dialog ).getByRole( 'button', {
+			name: 'Exceed capacity',
+		} );
+
+		// Without a server message, the translated fallback; nothing is lost.
+		fireEvent.click( exceed );
+		expect(
+			await within( dialog ).findByText( 'Failed to update signup.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+		expect( select ).toHaveValue( '51' );
+		expect( reason ).toHaveValue( 'Friend of the organizer' );
+		expect( exceed ).toBeEnabled();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeEnabled();
+
+		// A conflict on retry clears the stale error and keeps the reason.
+		fireEvent.click( exceed );
+		expect(
+			errorText( dialog, 'Failed to update signup.' )
+		).not.toBeInTheDocument();
+		await waitFor( () => expect( exceed ).toBeEnabled() );
+		expect(
+			within( dialog ).getByText(
+				'Tue 7 Oct would have 21 of 20 places taken.'
+			)
+		).toBeInTheDocument();
+		expect( reason ).toHaveValue( 'Friend of the organizer' );
+
+		fireEvent.click( exceed );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		const puts = apiFetch.mock.calls.filter(
+			( [ options ] ) => options.method === 'PUT'
+		);
+		expect( puts ).toHaveLength( 4 );
+		expect( puts[ 3 ][ 0 ].data ).toEqual( {
+			event_date_id: 51,
+			override_reason: 'Friend of the organizer',
+		} );
+	} );
+
 	it( 'shows every override behind an over-capacity signup', async () => {
 		await renderSignups( {
 			rows: [
@@ -1435,6 +1566,11 @@ describe( 'EventSignups — edit individual tickets (#1709)', () => {
 				args.path === '/fair-events/v1/get-tickets?event_date=42'
 		);
 		expect( listLoads ).toHaveLength( 2 );
+		expect(
+			screen.getByText( 'Ticket saved.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
 	} );
 
 	it( 'keeps the registration-wide type change and ticket rows, without the editor, without Fair Audience', async () => {

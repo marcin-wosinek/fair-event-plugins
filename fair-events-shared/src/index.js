@@ -25,6 +25,8 @@ export {
 	activityRuleProblem,
 	formatAnswerValue,
 	TicketAnswers,
+	WrappingModalStyle,
+	WRAPPING_MODAL_CLASS,
 } from './TicketEditModal.js';
 export * from './recurrence.js';
 export * from './questionnaire.js';

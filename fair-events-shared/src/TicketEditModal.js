@@ -11,7 +11,7 @@
  * @package FairEventsShared
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import {
 	Modal,
 	Button,
@@ -236,6 +236,32 @@ export function TicketAnswers( { answers, needsReview } ) {
 	);
 }
 
+/**
+ * Class name for a Modal whose title names a person. Render
+ * WrappingModalStyle inside the Modal along with it.
+ */
+export const WRAPPING_MODAL_CLASS = 'fair-events-wrapping-modal';
+
+// Core gives the modal header a fixed height, which clips a title that names
+// a long participant name. Let it grow and wrap instead, so the title stays
+// readable at 375px. A `<style>` element keeps this with the component on
+// every admin page that uses it, none of which share a stylesheet.
+const WRAPPING_MODAL_CSS = `
+.${ WRAPPING_MODAL_CLASS } .components-modal__content { margin-top: 0; }
+.${ WRAPPING_MODAL_CLASS } .components-modal__header { position: sticky; height: auto; min-height: 72px; margin: -4px -24px 0; width: auto; background: #fff; }
+.${ WRAPPING_MODAL_CLASS } .components-modal__header-heading { line-height: 1.3; overflow-wrap: anywhere; }
+.${ WRAPPING_MODAL_CLASS } .components-modal__content > div:not(.components-modal__header) { overflow-wrap: anywhere; }
+`;
+
+/**
+ * Styles that let the title of a WRAPPING_MODAL_CLASS Modal wrap.
+ *
+ * @return {Element} Style element
+ */
+export function WrappingModalStyle() {
+	return <style>{ WRAPPING_MODAL_CSS }</style>;
+}
+
 const sameIds = ( a, b ) =>
 	a.length === b.length && a.every( ( id ) => b.includes( id ) );
 
@@ -270,6 +296,8 @@ export default function TicketEditModal( {
 	const [ reason, setReason ] = useState( '' );
 	const [ saving, setSaving ] = useState( false );
 	const [ saveError, setSaveError ] = useState( null );
+	// Refuses a second submission before the first one re-rendered the popup.
+	const inFlight = useRef( false );
 
 	useEffect( () => {
 		apiFetch( {
@@ -288,6 +316,13 @@ export default function TicketEditModal( {
 				)
 			);
 	}, [ eventDateId, ticketId ] );
+
+	// The outcome of a dismissed request would be unknown to the user.
+	const close = () => {
+		if ( ! saving ) {
+			onClose();
+		}
+	};
 
 	const edited = ( apply ) => ( value ) => {
 		apply( value );
@@ -435,6 +470,10 @@ export default function TicketEditModal( {
 		};
 
 		const save = async () => {
+			if ( inFlight.current ) {
+				return;
+			}
+			inFlight.current = true;
 			setSaving( true );
 			setSaveError( null );
 			const payload = {};
@@ -472,6 +511,7 @@ export default function TicketEditModal( {
 					);
 				}
 			} finally {
+				inFlight.current = false;
 				setSaving( false );
 			}
 		};
@@ -499,7 +539,7 @@ export default function TicketEditModal( {
 							onChange={ edited( ( value ) =>
 								setTypeId( Number( value ) )
 							) }
-							disabled={ ticketTypes.length < 2 }
+							disabled={ saving || ticketTypes.length < 2 }
 						/>
 						<p className="description" style={ mutedStyle }>
 							{ ticketTypes.length < 2
@@ -545,8 +585,11 @@ export default function TicketEditModal( {
 										option.id
 									) }
 									disabled={
-										! activitiesAllowed &&
-										! activityIds.includes( option.id )
+										saving ||
+										( ! activitiesAllowed &&
+											! activityIds.includes(
+												option.id
+											) )
 									}
 									onChange={ () =>
 										toggleActivity( option.id )
@@ -562,6 +605,7 @@ export default function TicketEditModal( {
 						label={ __( 'Checked in', 'fair-events' ) }
 						checked={ attended }
 						onChange={ edited( setAttended ) }
+						disabled={ saving }
 					/>
 				</div>
 				{ answers }
@@ -594,6 +638,7 @@ export default function TicketEditModal( {
 							) }
 							value={ reason }
 							onChange={ setReason }
+							disabled={ saving }
 						/>
 					</>
 				) }
@@ -612,7 +657,7 @@ export default function TicketEditModal( {
 					<FlexItem>
 						<Button
 							variant="tertiary"
-							onClick={ onClose }
+							onClick={ close }
 							disabled={ saving }
 						>
 							{ __( 'Cancel', 'fair-events' ) }
@@ -624,6 +669,9 @@ export default function TicketEditModal( {
 							isDestructive={ !! projections }
 							isBusy={ saving }
 							disabled={ saving || !! blockedBy }
+							// Stay focusable while pending, so focus can
+							// still return to the trigger afterwards.
+							accessibleWhenDisabled={ saving }
 							onClick={ save }
 						>
 							{ projections
@@ -648,9 +696,14 @@ export default function TicketEditModal( {
 						)
 					: __( 'Edit ticket', 'fair-events' )
 			}
-			onRequestClose={ onClose }
+			onRequestClose={ close }
+			isDismissible={ ! saving }
+			shouldCloseOnEsc={ ! saving }
+			shouldCloseOnClickOutside={ ! saving }
 			size="medium"
+			className={ WRAPPING_MODAL_CLASS }
 		>
+			<WrappingModalStyle />
 			{ renderBody() }
 		</Modal>
 	);

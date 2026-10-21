@@ -730,6 +730,9 @@ export default function EventSignups( {
 	const [ editing, setEditing ] = useState( null );
 	// Ticket ID while the ticket editor is open.
 	const [ editingTicketId, setEditingTicketId ] = useState( null );
+	// The last move, type change or ticket edit that went through:
+	// { message, leftList } where leftList says the edited row is gone.
+	const [ editNotice, setEditNotice ] = useState( null );
 
 	const loadSignups = useCallback( () => {
 		if ( ! eventDateId ) {
@@ -757,10 +760,15 @@ export default function EventSignups( {
 	}, [ loadSignups ] );
 
 	useEffect( () => {
-		if ( deleteNotice ) {
+		if ( deleteNotice || editNotice?.leftList ) {
 			listHeadingRef.current?.focus();
 		}
-	}, [ deleteNotice ] );
+	}, [ deleteNotice, editNotice ] );
+
+	const showEditNotice = ( message, leftList = false ) => {
+		setDeleteNotice( null );
+		setEditNotice( { message, leftList } );
+	};
 
 	useEffect( () => {
 		setTicketConfig( { status: 'loading', ticketTypes: [], options: [] } );
@@ -1082,6 +1090,7 @@ export default function EventSignups( {
 		setIsDeleting( true );
 		setDeleteError( null );
 		setDeleteNotice( null );
+		setEditNotice( null );
 		try {
 			await apiFetch( {
 				path: `/fair-events/v1/get-tickets/${ signup.id }`,
@@ -1193,6 +1202,14 @@ export default function EventSignups( {
 						onRemove={ () => setDeleteNotice( null ) }
 					>
 						{ deleteNotice }
+					</Notice>
+				) }
+				{ editNotice && (
+					<Notice
+						status="success"
+						onRemove={ () => setEditNotice( null ) }
+					>
+						{ editNotice.message }
 					</Notice>
 				) }
 				{ hasPendingTickets && (
@@ -1324,7 +1341,29 @@ export default function EventSignups( {
 					counts={ purchaseTicketCounts( editing.signup ) }
 					onClose={ () => setEditing( null ) }
 					onSaved={ () => {
+						const { signup, action } = editing;
 						setEditing( null );
+						// A moved registration leaves this date's list.
+						showEditNotice(
+							action === ACTION_MOVE
+								? sprintf(
+										/* translators: %s: registrant name and ticket reference */
+										__(
+											'Registration for %s moved to another date.',
+											'fair-events'
+										),
+										signupIdentity( signup )
+									)
+								: sprintf(
+										/* translators: %s: registrant name and ticket reference */
+										__(
+											'Ticket type changed for %s.',
+											'fair-events'
+										),
+										signupIdentity( signup )
+									),
+							action === ACTION_MOVE
+						);
 						loadSignups();
 					} }
 				/>
@@ -1336,6 +1375,7 @@ export default function EventSignups( {
 					onClose={ () => setEditingTicketId( null ) }
 					onSaved={ () => {
 						setEditingTicketId( null );
+						showEditNotice( __( 'Ticket saved.', 'fair-events' ) );
 						loadSignups();
 					} }
 				/>
