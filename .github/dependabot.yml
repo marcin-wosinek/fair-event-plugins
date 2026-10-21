@@ -1,0 +1,95 @@
+# Dependabot configuration.
+#
+# Options reference:
+# https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
+#
+# Policy:
+#
+# - Version updates run weekly (Monday, GitHub's default time) and wait
+#   three days after a release is published before proposing it
+#   (`cooldown.default-days: 3`). The waiting period reduces exposure to
+#   newly published compromised releases; it does not guarantee safety.
+# - Security updates are the deliberate exception: Dependabot applies
+#   neither the cooldown nor the weekly schedule to them, so known
+#   vulnerabilities get fixes as soon as an advisory is published.
+# - Minor and patch version updates are grouped into one PR per ecosystem
+#   (Composer's group spans every listed directory). Major upgrades are
+#   left ungrouped and arrive as individual PRs.
+# - `fair-events/shared` is a local Composer path package; it stays on the
+#   existing workflow (bump its version, then `npm run composer:update:shared`).
+# - Composer resolves against each manifest's `config.platform.php`, so
+#   updates respect the declared PHP minimums (PHP_PATTERNS.md § Supported
+#   PHP Versions). Never raise a minimum to accept a dependency update.
+# - Action SHA pinning and WordPress.org release hardening are out of scope.
+
+version: 2
+
+updates:
+    # Root manifest, every workspace in package.json, and the shared lockfile.
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+      cooldown:
+          default-days: 3
+      groups:
+          npm-minor-and-patch:
+              applies-to: version-updates
+              patterns:
+                  - '*'
+              update-types:
+                  - minor
+                  - patch
+
+    # Every maintained Composer dependency set, including the website and
+    # PHP test tooling.
+    - package-ecosystem: composer
+      directories:
+          - /
+          - /fair-audience
+          - /fair-audience-experimental
+          - /fair-calendar-button
+          - /fair-event-plugins.com
+          - /fair-events
+          - /fair-events-experimental
+          - /fair-events-shared/php
+          - /fair-finance
+          - /fair-form
+          - /fair-payments-connector
+          - /fair-payments-connector-experimental
+          - /fair-platform
+          - /fair-timetable
+          - /tools/php-tests
+      schedule:
+          interval: weekly
+          day: monday
+      cooldown:
+          default-days: 3
+      ignore:
+          - dependency-name: fair-events/shared
+      groups:
+          composer-minor-and-patch:
+              applies-to: version-updates
+              patterns:
+                  - '*'
+              update-types:
+                  - minor
+                  - patch
+
+    # Workflows under .github/workflows/.
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+      cooldown:
+          default-days: 3
+      groups:
+          github-actions-minor-and-patch:
+              applies-to: version-updates
+              patterns:
+                  - '*'
+              update-types:
+                  - minor
+                  - patch
