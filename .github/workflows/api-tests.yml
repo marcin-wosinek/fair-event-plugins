@@ -48,7 +48,7 @@ jobs:
                   coverage: none
 
             - name: Cache Composer packages
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: |
                       ./fair-payments-connector/vendor
@@ -72,7 +72,7 @@ jobs:
 
             - name: Cache node_modules
               id: npm-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: |
                       ./node_modules
@@ -107,7 +107,7 @@ jobs:
 
             - name: Cache Docker images
               id: docker-cache
-              uses: actions/cache@v5
+              uses: actions/cache@v6
               with:
                   path: /tmp/docker-images.tar
                   key: ${{ runner.os }}-docker-v2-${{ hashFiles('.wp-env.json') }}
