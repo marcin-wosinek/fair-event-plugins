@@ -124,7 +124,7 @@
 		"@wordpress/block-serialization-default-parser": "^5.57.0",
 		"@wordpress/env": "^11.17.0",
 		"baseline-browser-mapping": "^2.9.19",
-		"dotenv": "^17.2.3",
+		"dotenv": "^18.0.8",
 		"prettier": "3.9.10"
 	}
 }
