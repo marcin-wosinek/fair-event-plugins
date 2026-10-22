@@ -24,7 +24,7 @@
 .wp-block-fair-events-other-sessions__item
 	+ .wp-block-fair-events-other-sessions__item {
 	border-top: 1px solid currentcolor;
-	border-top-color: color-mix( in srgb, currentcolor 20%, transparent );
+	border-top-color: color-mix(in srgb, currentcolor 20%, transparent);
 }
 
 .wp-block-fair-events-other-sessions__date {
