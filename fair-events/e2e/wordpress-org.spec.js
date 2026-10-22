@@ -229,6 +229,9 @@ async function listAllEvents( page ) {
 async function login( page ) {
 	await page.goto( '/wp-admin' );
 	if ( page.url().includes( 'wp-login.php' ) ) {
+		// wp-login.php focuses and selects #user_login 200ms after load;
+		// filling earlier lets that focus steal the password keystrokes.
+		await expect( page.locator( '#user_login' ) ).toBeFocused();
 		await page.fill( '#user_login', WP_ADMIN_USER );
 		await page.fill( '#user_pass', WP_ADMIN_PASS );
 		await page.click( '#wp-submit' );

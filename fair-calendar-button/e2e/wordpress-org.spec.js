@@ -32,6 +32,9 @@ test.describe( 'WordPress.org Screenshot for Fair Calendar Button', () => {
 
 		// Login to WordPress admin
 		await page.goto( '/wp-admin' );
+		// wp-login.php focuses and selects #user_login 200ms after load;
+		// filling earlier lets that focus steal the password keystrokes.
+		await expect( page.locator( '#user_login' ) ).toBeFocused();
 		await page.fill( '#user_login', WP_ADMIN_USER );
 		await page.fill( '#user_pass', WP_ADMIN_PASS );
 		await page.click( '#wp-submit' );
