@@ -273,6 +273,12 @@ Use the last phase heading in the output:
 
 ### Long runs: durations and one run at a time
 
+**Full API and E2E suites run in CI, not locally.** `api-tests.yml` and
+`e2e.yml` run them on every PR; together they take about 70 minutes, which is
+no use as a local feedback loop. Locally, run individual tests (`--grep`) or at
+most one whole spec file, then push and let CI cover the rest. Don't block
+on, or wait for, a local full-suite run.
+
 Full suites run with a single worker and take a while. Approximate figures
 (October 2026):
 

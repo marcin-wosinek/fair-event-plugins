@@ -86,8 +86,10 @@ Before declaring a task finished (and before any commit), all of these hold:
    staged.
 3. `vendor/bin/phpcs` is clean for changed PHP files.
 4. The relevant tests ran and pass: `npm run test:js` for JS/component changes,
-   `npm run test:api` for REST controllers, `npm run test:e2e` when a user flow
-   changed (see [TESTING.md](./TESTING.md)).
+   the affected API specs for REST controllers, the affected E2E specs when a
+   user flow changed (see [TESTING.md](./TESTING.md)). Locally, run only
+   individual tests or at most one whole spec file. **Never run the full API or
+   E2E suites locally** (~70 min); CI runs them on the PR.
 5. New/changed UI strings follow the i18n rules
    ([UI_GUIDELINES.md](./UI_GUIDELINES.md)); translation catalogs regenerated
    when a wording pass touched them.
