@@ -311,9 +311,9 @@ msgstr "Tytuł"
 #: src/Admin/manage-event/EditInstancesModal.js:83
 #: src/Admin/manage-event/ManageEventApp.js:1773
 #: src/Admin/manage-event/SeriesModal.js:535
-#: src/Admin/manage-event/SignupEditModal.js:367
+#: src/Admin/manage-event/SignupEditModal.js:365
 #: src/Admin/venues/VenuesApp.js:966
-#: ../fair-events-shared/src/TicketEditModal.js:637
+#: ../fair-events-shared/src/TicketEditModal.js:663
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -1213,37 +1213,37 @@ msgstr "Filtruj według typu wystąpienia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:102
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Co %d dni"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:109
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Co 2 tygodnie w %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:113
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Co %1$d tygodni w %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:116
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Co %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:121
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Co %d miesięcy"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:128
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Co %d lat"
 
@@ -1253,7 +1253,7 @@ msgstr "Rocznie"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:207
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Następnie: %s"
 
@@ -1262,7 +1262,7 @@ msgid "External"
 msgstr "Zewnętrzny"
 
 #: src/Admin/all-events/AllEvents.js:19
-#: ../fair-events-shared/src/TicketEditModal.js:386
+#: ../fair-events-shared/src/TicketEditModal.js:412
 msgid "None"
 msgstr "Brak"
 
@@ -1715,7 +1715,7 @@ msgstr "Jedno z wybranych zdarzeń nie jest ważne dla tego biletu."
 #. translators: %d: minimum number of occurrences required
 #: src/API/GetTicketsController.php:2157
 #: src/blocks/event-signup/frontend.js:2778
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Proszę wybrać co najmniej %d wystąpienie."
@@ -1728,7 +1728,6 @@ msgstr[2] "Proszę wybrać co najmniej %d wystąpień."
 msgid "Tickets for event #%d"
 msgstr "Bilety do wydarzenia #%d"
 
-#. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:701
 #: src/API/GetTicketsController.php:2191
@@ -1774,12 +1773,12 @@ msgid "Mailing"
 msgstr "Mailing"
 
 #: src/Admin/manage-event/EventSignups.js:625
-#: ../fair-events-shared/src/TicketEditModal.js:391
+#: ../fair-events-shared/src/TicketEditModal.js:417
 msgid "Yes"
 msgstr "Tak"
 
 #: src/Admin/manage-event/EventSignups.js:626
-#: ../fair-events-shared/src/TicketEditModal.js:392
+#: ../fair-events-shared/src/TicketEditModal.js:418
 msgid "No"
 msgstr "Nie"
 
@@ -2192,8 +2191,8 @@ msgstr "Przywróć"
 #: src/Admin/manage-event/EditInstancesModal.js:92
 #: src/Admin/manage-event/EventLinkModal.js:401
 #: src/Admin/manage-event/SignupExportModal.js:495
-#: ../fair-events-shared/src/TicketEditModal.js:316
-#: ../fair-events-shared/src/TicketEditModal.js:398
+#: ../fair-events-shared/src/TicketEditModal.js:342
+#: ../fair-events-shared/src/TicketEditModal.js:424
 msgid "Close"
 msgstr "Zamknij"
 
@@ -2849,7 +2848,7 @@ msgstr "Wybierz zajęcia"
 #: src/Services/SignupFieldsetRenderer.php:241
 #: src/blocks/event-signup/frontend.js:2369
 #: src/blocks/event-signup/frontend.js:2818
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Wybierz co najmniej %d aktywność, aby się zarejestrować."
@@ -3960,11 +3959,10 @@ msgstr "Blok Ceny wydarzenia jest wyłączony — żadne wydarzenie nie jest pow
 msgid "Event Prices block is disabled — no public prices are configured for this event."
 msgstr "Blok Ceny wydarzenia jest wyłączony — dla tego wydarzenia nie są skonfigurowane żadne publiczne ceny."
 
-#. translators: 1: sale period start date, 2: sale period end date
 #. translators: 1: start date, 2: end date
 #: src/blocks/event-prices/render.php:117
 #: src/Admin/components/eventTiming.js:86
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s – %2$s"
 msgstr "%1$s – %2$s"
 
@@ -4027,8 +4025,8 @@ msgstr "cennik"
 msgid "The selected display pattern is no longer available. Choose a different pattern to display these events."
 msgstr "Wybrany wzorzec wyświetlania nie jest już dostępny. Wybierz inny wzorzec, aby wyświetlić te wydarzenia."
 
-#: src/blocks/events-list/render.php:182
-#: src/blocks/events-list/render.php:187
+#: src/blocks/events-list/render.php:186
+#: src/blocks/events-list/render.php:191
 msgid "No events found."
 msgstr "Nie znaleziono żadnych wydarzeń."
 
@@ -4285,14 +4283,14 @@ msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr "Tylko potwierdzone rejestracje mogą być przenoszone lub otrzymać inny typ biletu."
 
 #: src/API/GetTicketsController.php:2971
-#: src/Admin/manage-event/SignupEditModal.js:221
+#: src/Admin/manage-event/SignupEditModal.js:219
 msgid "Failed to update signup."
 msgstr "Nie udało się zaktualizować rejestracji."
 
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
 #: src/API/GetTicketsController.php:3017
 #: ../fair-events-shared/src/TicketEditModal.js:100
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s miałby zajęte %2$d z %3$d miejsca."
@@ -4462,7 +4460,7 @@ msgid "Move"
 msgstr "Przenieś"
 
 #: src/Admin/manage-event/EventSignups.js:972
-#: src/Admin/manage-event/SignupEditModal.js:394
+#: src/Admin/manage-event/SignupEditModal.js:392
 msgid "Change ticket type"
 msgstr "Zmień typ biletu"
 
@@ -4479,74 +4477,74 @@ msgstr[0] "%1$s – zostało %2$d miejsce"
 msgstr[1] "%1$s – zostały %2$d miejsca"
 msgstr[2] "%1$s – zostało %2$d miejsc"
 
-#: src/Admin/manage-event/SignupEditModal.js:183
+#: src/Admin/manage-event/SignupEditModal.js:181
 msgid "Failed to load the choices."
 msgstr "Nie udało się wczytać opcji."
 
 #. translators: %s: participant name
-#: src/Admin/manage-event/SignupEditModal.js:240
+#: src/Admin/manage-event/SignupEditModal.js:238
 #, js-format
 msgid "Move %s to another date"
 msgstr "Przenieś %s na inny termin"
 
 #. translators: %s: participant name
-#: src/Admin/manage-event/SignupEditModal.js:245
+#: src/Admin/manage-event/SignupEditModal.js:243
 #, js-format
 msgid "Change ticket type for %s"
 msgstr "Zmień typ biletu dla %s"
 
-#: src/Admin/manage-event/SignupEditModal.js:266
+#: src/Admin/manage-event/SignupEditModal.js:264
 msgid "This series has no other active date to move the signup to."
 msgstr "Ta seria nie ma innego aktywnego terminu, na który można przenieść rejestrację."
 
-#: src/Admin/manage-event/SignupEditModal.js:270
+#: src/Admin/manage-event/SignupEditModal.js:268
 msgid "No other ticket type with the same dates is available for this signup."
 msgstr "Brak innego typu biletu z tymi samymi datami dostępnego dla tej rejestracji."
 
-#: src/Admin/manage-event/SignupEditModal.js:287
+#: src/Admin/manage-event/SignupEditModal.js:285
 msgid "New date"
 msgstr "Nowa data"
 
-#: src/Admin/manage-event/SignupEditModal.js:288
+#: src/Admin/manage-event/SignupEditModal.js:286
 msgid "New ticket type"
 msgstr "Nowy typ biletu"
 
-#: src/Admin/manage-event/SignupEditModal.js:292
+#: src/Admin/manage-event/SignupEditModal.js:290
 msgid "Choose…"
 msgstr "Wybierz…"
 
-#: src/Admin/manage-event/SignupEditModal.js:303
-#: ../fair-events-shared/src/TicketEditModal.js:524
+#: src/Admin/manage-event/SignupEditModal.js:301
+#: ../fair-events-shared/src/TicketEditModal.js:550
 msgid "The amount paid stays the same: no charge or refund is made for a price difference."
 msgstr "Kwota zapłacona pozostaje taka sama: nie jest pobierana ani zwracana żadna różnica ceny."
 
-#: src/Admin/manage-event/SignupEditModal.js:321
+#: src/Admin/manage-event/SignupEditModal.js:319
 msgid "Reason"
 msgstr "Powód"
 
-#: src/Admin/manage-event/SignupEditModal.js:322
-#: ../fair-events-shared/src/TicketEditModal.js:609
+#: src/Admin/manage-event/SignupEditModal.js:320
+#: ../fair-events-shared/src/TicketEditModal.js:635
 msgid "Required to go over capacity. It is kept with the signup."
 msgstr "Wymagane do przekroczenia pojemności. Jest przechowywane wraz z rejestracją."
 
-#: src/Admin/manage-event/SignupEditModal.js:343
+#: src/Admin/manage-event/SignupEditModal.js:341
 msgid "Choose a date."
 msgstr "Wybierz datę."
 
-#: src/Admin/manage-event/SignupEditModal.js:344
+#: src/Admin/manage-event/SignupEditModal.js:342
 msgid "Choose a ticket type."
 msgstr "Wybierz typ biletu."
 
-#: src/Admin/manage-event/SignupEditModal.js:354
-#: ../fair-events-shared/src/TicketEditModal.js:416
+#: src/Admin/manage-event/SignupEditModal.js:352
+#: ../fair-events-shared/src/TicketEditModal.js:442
 msgid "Enter a reason to go over capacity."
 msgstr "Wpisz powód, aby przekroczyć pojemność."
 
-#: src/Admin/manage-event/SignupEditModal.js:382
+#: src/Admin/manage-event/SignupEditModal.js:380
 msgid "Exceed capacity"
 msgstr "Przekrocz pojemność"
 
-#: src/Admin/manage-event/SignupEditModal.js:393
+#: src/Admin/manage-event/SignupEditModal.js:391
 msgid "Move signup"
 msgstr "Przenieś rejestrację"
 
@@ -4575,7 +4573,7 @@ msgid "Edit %s"
 msgstr "Edytuj %s"
 
 #: src/Admin/manage-event/EventSignups.js:1057
-#: ../fair-events-shared/src/TicketEditModal.js:671
+#: ../fair-events-shared/src/TicketEditModal.js:697
 msgid "Edit ticket"
 msgstr "Edytuj bilet"
 
@@ -4599,78 +4597,78 @@ msgstr "Wybierz co najwyżej %d zajęcie dla tego typu biletu."
 msgid "Choose at least %d activity for this ticket type."
 msgstr "Wybierz co najmniej %d zajęcie dla tego typu biletu."
 
-#: ../fair-events-shared/src/TicketEditModal.js:289
+#: ../fair-events-shared/src/TicketEditModal.js:315
 msgid "Failed to load the ticket."
 msgstr "Nie można było wczytać biletu."
 
-#: ../fair-events-shared/src/TicketEditModal.js:359
+#: ../fair-events-shared/src/TicketEditModal.js:385
 msgid "Status: %s"
 msgstr "Status: %s"
 
-#: ../fair-events-shared/src/TicketEditModal.js:374
+#: ../fair-events-shared/src/TicketEditModal.js:400
 msgid "This ticket is awaiting payment. It can be edited once the payment is complete."
 msgstr "Ten bilet oczekuje na płatność. Będzie można go edytować po zakończeniu płatności."
 
-#: ../fair-events-shared/src/TicketEditModal.js:380
-#: ../fair-events-shared/src/TicketEditModal.js:501
+#: ../fair-events-shared/src/TicketEditModal.js:406
+#: ../fair-events-shared/src/TicketEditModal.js:527
 msgid "Ticket type"
 msgstr "Typ biletu"
 
-#: ../fair-events-shared/src/TicketEditModal.js:382
-#: ../fair-events-shared/src/TicketEditModal.js:542
+#: ../fair-events-shared/src/TicketEditModal.js:408
+#: ../fair-events-shared/src/TicketEditModal.js:568
 msgid "Activities"
 msgstr "Zajęcia"
 
-#: ../fair-events-shared/src/TicketEditModal.js:388
-#: ../fair-events-shared/src/TicketEditModal.js:579
+#: ../fair-events-shared/src/TicketEditModal.js:414
+#: ../fair-events-shared/src/TicketEditModal.js:605
 msgid "Checked in"
 msgstr "Zaznaczony"
 
-#: ../fair-events-shared/src/TicketEditModal.js:412
+#: ../fair-events-shared/src/TicketEditModal.js:438
 msgid "No unsaved changes."
 msgstr "Brak niezapisanych zmian."
 
-#: ../fair-events-shared/src/TicketEditModal.js:433
+#: ../fair-events-shared/src/TicketEditModal.js:459
 msgid "%s — over capacity"
 msgstr "%s — przekroczono pojemność"
 
-#: ../fair-events-shared/src/TicketEditModal.js:484
+#: ../fair-events-shared/src/TicketEditModal.js:510
 msgid "Failed to save the ticket."
 msgstr "Nie można było zapisać biletu."
 
-#: ../fair-events-shared/src/TicketEditModal.js:507
+#: ../fair-events-shared/src/TicketEditModal.js:533
 msgid "%s (current)"
 msgstr "%s (bieżący)"
 
-#: ../fair-events-shared/src/TicketEditModal.js:520
+#: ../fair-events-shared/src/TicketEditModal.js:546
 msgid "No other ticket type with the same dates is available for this ticket."
 msgstr "Dla tego biletu nie jest dostępny żaden inny typ biletu z tymi samymi datami."
 
-#: ../fair-events-shared/src/TicketEditModal.js:534
+#: ../fair-events-shared/src/TicketEditModal.js:560
 msgid "Ticket type: %s"
 msgstr "Typ biletu: %s"
 
-#: ../fair-events-shared/src/TicketEditModal.js:546
+#: ../fair-events-shared/src/TicketEditModal.js:572
 msgid "This ticket type does not include activities."
 msgstr "Ten typ biletu nie obejmuje zajęć."
 
-#: ../fair-events-shared/src/TicketEditModal.js:605
+#: ../fair-events-shared/src/TicketEditModal.js:631
 msgid "Reason for going over capacity"
 msgstr "Powód przekroczenia pojemności"
 
-#: ../fair-events-shared/src/TicketEditModal.js:652
+#: ../fair-events-shared/src/TicketEditModal.js:678
 msgid "Save over capacity"
 msgstr "Zapisz przekroczenie pojemności"
 
-#: ../fair-events-shared/src/TicketEditModal.js:653
+#: ../fair-events-shared/src/TicketEditModal.js:679
 msgid "Save ticket"
 msgstr "Zapisz bilet"
 
-#: ../fair-events-shared/src/TicketEditModal.js:667
+#: ../fair-events-shared/src/TicketEditModal.js:693
 msgid "Edit ticket — %s"
 msgstr "Edytuj bilet — %s"
 
-#: ../fair-events-shared/src/TicketEditModal.js:669
+#: ../fair-events-shared/src/TicketEditModal.js:695
 msgid "(no name)"
 msgstr "(bez nazwy)"
 
@@ -4703,7 +4701,7 @@ msgstr[1] "Usunąć rejestrację dla %1$s ze wszystkimi %2$d biletami? Jej obecn
 msgstr[2] "Usunąć rejestrację dla %1$s ze wszystkimi %2$d biletami? Jej obecny status płatności to %3$s."
 
 #. translators: %d: number of tickets in the registration
-#: src/Admin/manage-event/SignupEditModal.js:89
+#: src/Admin/manage-event/SignupEditModal.js:87
 #, js-format
 msgid "This moves the whole registration, with its %d ticket."
 msgid_plural "This moves the whole registration, with all %d of its tickets."
@@ -4712,7 +4710,7 @@ msgstr[1] "To przenosi całą rejestrację ze wszystkimi %d biletami."
 msgstr[2] "To przenosi całą rejestrację ze wszystkimi %d biletami."
 
 #. translators: %d: number of tickets in the registration
-#: src/Admin/manage-event/SignupEditModal.js:62
+#: src/Admin/manage-event/SignupEditModal.js:60
 #, js-format
 msgid "This changes the type of the whole registration, with its %d ticket."
 msgid_plural "This changes the type of the whole registration, with all %d of its tickets."
@@ -4827,7 +4825,6 @@ msgstr "Nie można było pobrać obrazu wykresu. Spróbuj ponownie."
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr "Niektóre płatności zostały wykluczone, ponieważ używają różnych walut: %s."
 
-#. translators: %d: number of confirmed tickets.
 #. translators: %d: number of tickets on the printed list
 #: src/Admin/event-statistics/EventStatistics.js:378
 #: src/Admin/manage-event/signup-print.js:187
@@ -5726,7 +5723,6 @@ msgstr "Zapisz ustawienia masowej wiadomości e-mail"
 msgid "Preview next email"
 msgstr "Podejrzyj następną wiadomość e-mail"
 
-#. translators: %s: the administrator's own email address
 #. translators: %s: the saved recipient email address
 #: src/Admin/event-notifications/BulkEmailChannel.js:91
 #: src/Admin/event-notifications/IndividualEmailChannel.js:183
@@ -6072,7 +6068,7 @@ msgstr[1] "Usuwa to także %d anulowane lub w inny sposób nieaktywne bilety z t
 msgstr[2] "Usuwa to także %d anulowanych lub w inny sposób nieaktywnych biletów z tego zakupu."
 
 #. translators: %d: number of tickets of the purchase on other dates
-#: src/Admin/manage-event/SignupEditModal.js:75
+#: src/Admin/manage-event/SignupEditModal.js:73
 #, js-format
 msgid "That includes %d ticket on another date."
 msgid_plural "That includes %d tickets on other dates."
@@ -6081,7 +6077,7 @@ msgstr[1] "Obejmuje to %d bilety w innych terminach."
 msgstr[2] "Obejmuje to %d biletów w innych terminach."
 
 #. translators: 1: number of tickets that move, 2: date the purchase is registered for
-#: src/Admin/manage-event/SignupEditModal.js:103
+#: src/Admin/manage-event/SignupEditModal.js:101
 #, js-format
 msgid "This moves the purchase and the %1$d ticket still on the date it is registered for (%2$s)."
 msgid_plural "This moves the purchase and the %1$d tickets still on the date it is registered for (%2$s)."
@@ -6090,13 +6086,13 @@ msgstr[1] "To przenosi zakup i %1$d bilety, które nadal są w terminie, na któ
 msgstr[2] "To przenosi zakup i %1$d biletów, które nadal są w terminie, na który zakup jest zarejestrowany (%2$s)."
 
 #. translators: %s: date the purchase is registered for
-#: src/Admin/manage-event/SignupEditModal.js:114
+#: src/Admin/manage-event/SignupEditModal.js:112
 #, js-format
 msgid "No ticket of this purchase is still on the date it is registered for (%s), so no ticket moves: only the date the purchase is registered for changes."
 msgstr "Żaden bilet z tego zakupu nie jest już w terminie, na który zakup jest zarejestrowany (%s), więc żaden bilet nie zostanie przeniesiony: zmieni się tylko termin, na który zakup jest zarejestrowany."
 
 #. translators: %d: number of tickets moved individually to other dates
-#: src/Admin/manage-event/SignupEditModal.js:124
+#: src/Admin/manage-event/SignupEditModal.js:122
 #, js-format
 msgid "%d ticket was moved on its own to another date and stays where it is, unless that is the new date, which it then shares with the purchase."
 msgid_plural "%d tickets were moved on their own to other dates and stay where they are; any already on the new date stay there with the purchase."
@@ -6105,7 +6101,7 @@ msgstr[1] "%d bilety zostały przeniesione osobno na inne terminy i pozostają t
 msgstr[2] "%d biletów zostało przeniesionych osobno na inne terminy i pozostają tam, gdzie są; te, które już są w nowym terminie, pozostają tam razem z zakupem."
 
 #. translators: %d: number of cancelled or otherwise inactive tickets
-#: src/Admin/manage-event/SignupEditModal.js:139
+#: src/Admin/manage-event/SignupEditModal.js:137
 #, js-format
 msgid "%d cancelled or otherwise inactive ticket is left as it is."
 msgid_plural "%d cancelled or otherwise inactive tickets are left as they are."
@@ -6671,7 +6667,6 @@ msgstr "Ten termin już się zakończył"
 msgid "%1$s, %2$s %3$s"
 msgstr "%1$s, %3$s %2$s"
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Notifications/WeeklyEmailRenderer.php:195
 #: src/Notifications/WeeklyEmailRenderer.php:203
@@ -7128,7 +7123,6 @@ msgstr "Dodaj powiadomienie"
 msgid "Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind."
 msgstr "Wysyłaj automatycznie wydarzenia z danego tygodnia. Każde powiadomienie ma własny harmonogram, własny wybór wydarzeń i własną historię, i jest zapisywane osobno. Możesz mieć więcej niż jedno powiadomienie każdego rodzaju."
 
-#. translators: 1: notification name, 2: its kind, e.g. "Telegram"
 #. translators: 1: registrant name, 2: short ticket reference
 #: src/Admin/event-notifications/HistoryView.js:65
 #: src/Admin/manage-event/EventSignups.js:64
@@ -7244,31 +7238,31 @@ msgstr "Zostaw godzinę pustą, dopóki jej nie znasz. Odwiedzający widzą tylk
 #: src/API/EventDatesController.php:815
 #, php-format
 msgid "These fields are no longer supported: %s. Send start_date, end_date, start_time and end_time instead."
-msgstr ""
+msgstr "Te pola nie są już obsługiwane: %s. Zamiast nich wyślij start_date, end_date, start_time i end_time."
 
 #: src/API/EventDatesController.php:1099
 msgid "A start date is required."
-msgstr ""
+msgstr "Data rozpoczęcia jest wymagana."
 
 #: src/API/EventNotificationsController.php:1276
 msgid "The weekly email is paused until Fair Audience is updated: this version of Fair Events records whether each subscriber’s email was sent, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update."
-msgstr ""
+msgstr "Cotygodniowy e-mail jest wstrzymany do czasu aktualizacji Fair Audience: ta wersja Fair Events zapisuje, czy e-mail do każdego subskrybenta został wysłany, co wymaga nowszej wersji Fair Audience. Twoje ustawienia zostają zachowane, a wysyłka wznowi się o następnej zaplanowanej porze po aktualizacji."
 
 #: src/API/NotificationHistoryController.php:97
 msgid "Executions that started at or after this time; without a timezone it is UTC."
-msgstr ""
+msgstr "Wykonania rozpoczęte w tym momencie lub później; bez strefy czasowej przyjmowany jest UTC."
 
 #: src/API/NotificationHistoryController.php:102
 msgid "Executions that started before this time; without a timezone it is UTC."
-msgstr ""
+msgstr "Wykonania rozpoczęte przed tym momentem; bez strefy czasowej przyjmowany jest UTC."
 
 #: src/API/NotificationHistoryController.php:193
 msgid "You do not have permission to read the notification history."
-msgstr ""
+msgstr "Nie masz uprawnień do odczytu historii powiadomień."
 
 #: src/API/NotificationHistoryController.php:268
 msgid "This notification history entry does not exist."
-msgstr ""
+msgstr "Ten wpis historii powiadomień nie istnieje."
 
 #. translators: %s: end time of an event without a start time, e.g. "21:30"
 #: src/blocks/event-info/render.php:151
@@ -7316,8 +7310,6 @@ msgstr "%1$s, %2$s – %3$s"
 msgid "%1$s %2$s – %3$s"
 msgstr "%1$s %2$s – %3$s"
 
-#. translators: 1: date, 2: start time
-#. translators: 1: notification name, 2: date and time the send or test started
 #. translators: 1: "Scheduled" or "Test", 2: date and time it started
 #: src/Admin/components/eventTiming.js:60
 #: src/Admin/event-notifications/ExecutionDetails.js:148
@@ -7404,90 +7396,90 @@ msgstr "Nie udało się przywrócić terminów cyklu. Spróbuj ponownie."
 
 #: src/blocks/other-sessions/render.php:37
 msgid "Other Sessions block is disabled — the event linked to this post is not recurring."
-msgstr ""
+msgstr "Blok „Inne sesje” jest wyłączony – wydarzenie powiązane z tym wpisem nie jest cykliczne."
 
 #: src/blocks/other-sessions/render.php:38
 #: src/blocks/other-sessions/components/EditComponent.js:55
 msgid "Other Sessions block is disabled — no event is linked to this post."
-msgstr ""
+msgstr "Blok „Inne sesje” jest wyłączony – z tym wpisem nie jest powiązane żadne wydarzenie."
 
 #: src/blocks/other-sessions/render.php:44
 msgid "Other Sessions block is hidden from visitors — this recurring event is a draft."
-msgstr ""
+msgstr "Blok „Inne sesje” jest ukryty przed odwiedzającymi – to cykliczne wydarzenie jest szkicem."
 
 #: src/blocks/other-sessions/render.php:52
 msgid "Other upcoming sessions"
-msgstr ""
+msgstr "Inne nadchodzące sesje"
 
 #: src/blocks/other-sessions/render.php:52
 msgid "Upcoming sessions"
-msgstr ""
+msgstr "Nadchodzące sesje"
 
 #: src/blocks/other-sessions/render.php:53
 msgid "There are no other upcoming sessions."
-msgstr ""
+msgstr "Nie ma innych nadchodzących sesji."
 
 #: src/blocks/other-sessions/render.php:53
 msgid "There are no upcoming sessions."
-msgstr ""
+msgstr "Nie ma nadchodzących sesji."
 
 #: src/blocks/other-sessions/render.php:58
 msgid "The selected session is unavailable."
-msgstr ""
+msgstr "Wybrana sesja jest niedostępna."
 
 #: src/Admin/event-notifications/ConfigurationView.js:58
 #: src/Admin/event-notifications/EventNotifications.js:236
 msgid "← All notifications"
-msgstr ""
+msgstr "← Wszystkie powiadomienia"
 
 #: src/Admin/event-notifications/ConfigurationView.js:61
 #: src/Admin/event-notifications/EventNotifications.js:239
 #: src/Admin/event-notifications/EventNotifications.js:270
 msgid "All notification history"
-msgstr ""
+msgstr "Cała historia powiadomień"
 
 #: src/Admin/event-notifications/ConfigurationView.js:71
 msgid "This notification does not exist. It may have been removed, or the link is incomplete."
-msgstr ""
+msgstr "To powiadomienie nie istnieje. Mogło zostać usunięte albo odnośnik jest niekompletny."
 
 #: src/Admin/event-notifications/ConfigurationView.js:122
 msgid "Nothing is scheduled. Turn it on and save to schedule sends."
-msgstr ""
+msgstr "Nic nie jest zaplanowane. Włącz powiadomienie i zapisz, aby zaplanować wysyłki."
 
 #: src/Admin/event-notifications/ConfigurationView.js:135
 msgid "Notification sections"
-msgstr ""
+msgstr "Sekcje powiadomienia"
 
 #: src/Admin/event-notifications/ConfigurationView.js:138
 #: src/Admin/event-notifications/NotificationList.js:232
 msgid "History"
-msgstr ""
+msgstr "Historia"
 
 #. translators: %s: name of the added notification
 #: src/Admin/event-notifications/EventNotifications.js:181
 #, js-format
 msgid "“%s” was added. It is paused: set it up, turn it on and save it when it is ready."
-msgstr ""
+msgstr "Dodano „%s”. Powiadomienie jest wstrzymane: skonfiguruj je, włącz i zapisz, gdy będzie gotowe."
 
 #: src/Admin/event-notifications/EventNotifications.js:241
 msgid "Every scheduled send and test of every notification, newest first. Open an entry to see each recipient or chat."
-msgstr ""
+msgstr "Każda zaplanowana wysyłka i każdy test wszystkich powiadomień, od najnowszych. Otwórz wpis, aby zobaczyć każdego odbiorcę lub czat."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:72
 msgid "Failed to load this history entry."
-msgstr ""
+msgstr "Nie udało się wczytać tego wpisu historii."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:77
 msgid "Failed to load the messages of this history entry."
-msgstr ""
+msgstr "Nie udało się wczytać wiadomości tego wpisu historii."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:91
 msgid "← Back to the history"
-msgstr ""
+msgstr "← Powrót do historii"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:110
 msgid "This history entry does not exist here. It may belong to another notification, or it was removed after a year."
-msgstr ""
+msgstr "Ten wpis historii tu nie istnieje. Może należeć do innego powiadomienia albo został usunięty po roku."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:155
 #: src/Admin/event-notifications/HistoryView.js:86
@@ -7496,52 +7488,52 @@ msgstr ""
 #: src/Admin/event-notifications/NotificationList.js:156
 #: src/Admin/event-notifications/NotificationList.js:179
 msgid "Notification"
-msgstr ""
+msgstr "Powiadomienie"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:162
 msgid "This notification no longer exists."
-msgstr ""
+msgstr "To powiadomienie już nie istnieje."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:170
 msgid "The name was taken from the notification when older history was imported; it may not be the name it had then."
-msgstr ""
+msgstr "Nazwę pobrano z powiadomienia podczas importu starszej historii; może nie być to nazwa, którą miało wtedy."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:177
 #: src/Admin/event-notifications/HistoryView.js:120
 #: src/Admin/event-notifications/HistoryView.js:309
 #: src/Admin/event-notifications/HistoryView.js:357
 msgid "Scheduled or test"
-msgstr ""
+msgstr "Zaplanowana czy test"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:180
 msgid "Week of events"
-msgstr ""
+msgstr "Tydzień wydarzeń"
 
 #. translators: 1: first day of the week, 2: last day of the week
 #: src/Admin/event-notifications/ExecutionDetails.js:184
 #, js-format
 msgid "%1$s to %2$s"
-msgstr ""
+msgstr "%1$s – %2$s"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:188
 #: src/Admin/event-notifications/ExecutionDetails.js:300
 msgid "Not recorded"
-msgstr ""
+msgstr "Nie zarejestrowano"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:190
 #: src/Admin/event-notifications/HistoryView.js:301
 #: src/Admin/event-notifications/HistoryView.js:323
 msgid "Started"
-msgstr ""
+msgstr "Rozpoczęto"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:193
 #: src/Admin/event-notifications/historyFormat.js:52
 msgid "Finished"
-msgstr ""
+msgstr "Zakończono"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:200
 msgid "Progress"
-msgstr ""
+msgstr "Postęp"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:204
 #: src/Admin/event-notifications/ExecutionDetails.js:283
@@ -7550,382 +7542,382 @@ msgstr ""
 #: src/Admin/event-notifications/HistoryView.js:312
 #: src/Admin/event-notifications/HistoryView.js:366
 msgid "Outcome"
-msgstr ""
+msgstr "Wynik"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:215
 #: src/Admin/event-notifications/HistoryView.js:315
 #: src/Admin/event-notifications/HistoryView.js:388
 msgid "Messages"
-msgstr ""
+msgstr "Wiadomości"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:221
 #: src/Admin/event-notifications/HistoryView.js:292
 msgid "“Accepted” means the mail system or Telegram took the message over. It does not confirm that anyone received it."
-msgstr ""
+msgstr "„Zaakceptowano” oznacza, że system pocztowy lub Telegram przejął wiadomość. Nie potwierdza to, że ktokolwiek ją otrzymał."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:229
 msgid "Recorded before this history existed. Only what was kept then is shown, so some details are missing."
-msgstr ""
+msgstr "Zarejestrowano przed utworzeniem tej historii. Wyświetlane są tylko dane, które zostały wówczas zachowane, dlatego brakuje niektórych szczegółów."
 
 #. translators: %s: status the older history recorded, e.g. "Sent"
 #: src/Admin/event-notifications/ExecutionDetails.js:238
 #, js-format
 msgid "Recorded status: %s."
-msgstr ""
+msgstr "Zarejestrowany status: %s."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:248
 msgid "Recipients and chats"
-msgstr ""
+msgstr "Odbiorcy i czaty"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:268
 msgid "No recipient or chat was recorded for this entry."
-msgstr ""
+msgstr "Dla tego wpisu nie zarejestrowano odbiorcy ani czatu."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:280
 #: src/Admin/event-notifications/ExecutionDetails.js:294
 msgid "Sent to"
-msgstr ""
+msgstr "Wysłano do"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:286
 #: src/Admin/event-notifications/ExecutionDetails.js:358
 msgid "Attempted"
-msgstr ""
+msgstr "Próba"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:350
 msgid "Imported from the older history."
-msgstr ""
+msgstr "Zaimportowano ze starszej historii."
 
 #: src/Admin/event-notifications/ExecutionDetails.js:367
 msgid "Not attempted"
-msgstr ""
+msgstr "Nie próbowano"
 
 #: src/Admin/event-notifications/ExecutionDetails.js:379
 msgid "Recipient pages"
-msgstr ""
+msgstr "Strony odbiorcy"
 
 #: src/Admin/event-notifications/historyFormat.js:21
 msgid "Accepted"
-msgstr ""
+msgstr "Zaakceptowano"
 
 #: src/Admin/event-notifications/historyFormat.js:22
 msgid "Partly accepted"
-msgstr ""
+msgstr "Częściowo zaakceptowano"
 
 #: src/Admin/event-notifications/historyFormat.js:24
 #: src/Admin/event-notifications/historyFormat.js:31
 msgid "Skipped"
-msgstr ""
+msgstr "Pominięto"
 
 #: src/Admin/event-notifications/historyFormat.js:25
 #: src/Admin/event-notifications/historyFormat.js:32
 msgid "Outcome unknown"
-msgstr ""
+msgstr "Wynik nieznany"
 
 #: src/Admin/event-notifications/historyFormat.js:29
 msgid "Accepted by the provider"
-msgstr ""
+msgstr "Zaakceptowano przez dostawcę"
 
 #: src/Admin/event-notifications/historyFormat.js:46
 msgid "Scheduled"
-msgstr ""
+msgstr "Zaplanowano"
 
 #: src/Admin/event-notifications/historyFormat.js:47
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 #: src/Admin/event-notifications/historyFormat.js:51
 msgid "Running"
-msgstr ""
+msgstr "Uruchomione"
 
 #: src/Admin/event-notifications/historyFormat.js:53
 msgid "Stopped before it finished"
-msgstr ""
+msgstr "Zatrzymane przed zakończeniem"
 
 #: src/Admin/event-notifications/historyFormat.js:57
 msgid "There were no events that week."
-msgstr ""
+msgstr "W tym tygodniu nie było żadnych zdarzeń."
 
 #: src/Admin/event-notifications/historyFormat.js:58
 msgid "The week ended before it could be sent."
-msgstr ""
+msgstr "Tydzień zakończył się przed wysłaniem."
 
 #: src/Admin/event-notifications/historyFormat.js:59
 msgid "The notification was paused."
-msgstr ""
+msgstr "Powiadomienie zostało wstrzymane."
 
 #: src/Admin/event-notifications/historyFormat.js:60
 msgid "The settings could not be used, for example a missing event feed or bot token."
-msgstr ""
+msgstr "Nie można było użyć ustawień, na przykład brakuje kanału zdarzeń lub tokenu bota."
 
 #: src/Admin/event-notifications/historyFormat.js:64
 msgid "Nobody was eligible to receive it."
-msgstr ""
+msgstr "Nikt nie był uprawniony do jego otrzymania."
 
 #: src/Admin/event-notifications/historyFormat.js:65
 msgid "Sending stopped before the outcome was recorded."
-msgstr ""
+msgstr "Wysyłanie zostało zatrzymane przed zarejestrowaniem wyniku."
 
 #: src/Admin/event-notifications/historyFormat.js:69
 msgid "An error on this site stopped the send."
-msgstr ""
+msgstr "Błąd na tej witrynie zatrzymał wysyłanie."
 
 #: src/Admin/event-notifications/historyFormat.js:73
 msgid "The mail system refused the message."
-msgstr ""
+msgstr "System poczty odrzucił wiadomość."
 
 #: src/Admin/event-notifications/historyFormat.js:74
 msgid "The address could not be sent to."
-msgstr ""
+msgstr "Nie można było wysłać na ten adres."
 
 #: src/Admin/event-notifications/historyFormat.js:75
 msgid "Not eligible, for example without consent to marketing emails."
-msgstr ""
+msgstr "Brak uprawnień, na przykład bez zgody na wiadomości e-mail marketingowe."
 
 #: src/Admin/event-notifications/historyFormat.js:79
 msgid "An earlier part of the message was not sent."
-msgstr ""
+msgstr "Wcześniejsza część wiadomości nie została wysłana."
 
 #: src/Admin/event-notifications/historyFormat.js:83
 msgid "Recorded before this history existed; the details were not kept."
-msgstr ""
+msgstr "Zarejestrowano przed utworzeniem tej historii; szczegóły nie zostały zachowane."
 
 #. translators: %s: reason code recorded with a notification send
 #: src/Admin/event-notifications/historyFormat.js:104
 #, js-format
 msgid "Reason code: %s"
-msgstr ""
+msgstr "Kod przyczyny: %s"
 
 #: src/Admin/event-notifications/historyFormat.js:133
 msgid "The number of messages was not recorded."
-msgstr ""
+msgstr "Liczba wiadomości nie została zarejestrowana."
 
 #: src/Admin/event-notifications/historyFormat.js:137
 msgid "not recorded"
-msgstr ""
+msgstr "nie zarejestrowano"
 
 #. translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count
 #: src/Admin/event-notifications/historyFormat.js:145
 #, js-format
 msgid "Message parts: %1$s accepted, %2$s failed, %3$s skipped, %4$s unknown."
-msgstr ""
+msgstr "Części wiadomości: %1$s zaakceptowanych, %2$s nieudanych, %3$s pominięto, %4$s nieznanych."
 
 #. translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count
 #: src/Admin/event-notifications/historyFormat.js:157
 #, js-format
 msgid "Recipients: %1$s accepted, %2$s failed, %3$s skipped, %4$s unknown."
-msgstr ""
+msgstr "Odbiorcy: %1$s zaakceptowanych, %2$s nieudanych, %3$s pominięto, %4$s nieznanych."
 
 #. translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count
 #: src/Admin/event-notifications/historyFormat.js:169
 #, js-format
 msgid "Chats: %1$s accepted, %2$s failed, %3$s skipped, %4$s unknown."
-msgstr ""
+msgstr "Czaty: %1$s zaakceptowanych, %2$s nieudanych, %3$s pominięto, %4$s nieznanych."
 
 #. translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count
 #: src/Admin/event-notifications/historyFormat.js:181
 #, js-format
 msgid "%1$s accepted, %2$s failed, %3$s skipped, %4$s unknown."
-msgstr ""
+msgstr "%1$s zaakceptowanych, %2$s nieudanych, %3$s pominięto, %4$s nieznanych."
 
 #. translators: %d: number of notification sends and tests
 #: src/Admin/event-notifications/historyFormat.js:202
 #, js-format
 msgid "%d entry."
 msgid_plural "%d entries."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%d wpis."
+msgstr[1] "%d wpisy."
+msgstr[2] "%d wpisów."
 
 #: src/Admin/event-notifications/HistoryView.js:59
 msgid "All notifications"
-msgstr ""
+msgstr "Wszystkie powiadomienia"
 
 #: src/Admin/event-notifications/HistoryView.js:78
 msgid "A notification that no longer exists"
-msgstr ""
+msgstr "Powiadomienie, które już nie istnieje"
 
 #: src/Admin/event-notifications/HistoryView.js:97
 msgid "All kinds"
-msgstr ""
+msgstr "Wszystkie rodzaje"
 
 #: src/Admin/event-notifications/HistoryView.js:109
 msgid "All outcomes"
-msgstr ""
+msgstr "Wszystkie wyniki"
 
 #: src/Admin/event-notifications/HistoryView.js:123
 msgid "Scheduled sends and tests"
-msgstr ""
+msgstr "Zaplanowane wysyłki i testy"
 
 #: src/Admin/event-notifications/HistoryView.js:126
 msgid "Scheduled sends only"
-msgstr ""
+msgstr "Tylko zaplanowane wysyłki"
 
 #: src/Admin/event-notifications/HistoryView.js:128
 msgid "Tests only"
-msgstr ""
+msgstr "Tylko testy"
 
 #: src/Admin/event-notifications/HistoryView.js:134
 msgid "Started on or after"
-msgstr ""
+msgstr "Rozpoczęte w dniu lub po"
 
 #: src/Admin/event-notifications/HistoryView.js:140
 msgid "Started on or before"
-msgstr ""
+msgstr "Rozpoczęte w dniu lub przed"
 
 #: src/Admin/event-notifications/HistoryView.js:203
 msgid "Failed to load the notification history."
-msgstr ""
+msgstr "Nie udało się wczytać historii powiadomień."
 
 #: src/Admin/event-notifications/HistoryView.js:246
 msgid "Clear filters"
-msgstr ""
+msgstr "Wyczyść filtry"
 
 #: src/Admin/event-notifications/HistoryView.js:252
 msgid "The first day is after the last day. Change one of them to see the history."
-msgstr ""
+msgstr "Pierwszy dzień jest po ostatnim dniu. Zmień jeden z nich, aby zobaczyć historię."
 
 #: src/Admin/event-notifications/HistoryView.js:277
 msgid "Nothing in the history matches these filters."
-msgstr ""
+msgstr "Nic w historii nie pasuje do tych filtrów."
 
 #: src/Admin/event-notifications/HistoryView.js:281
 msgid "Nothing has been sent or tested yet."
-msgstr ""
+msgstr "Nic jeszcze nie zostało wysłane ani przetestowane."
 
 #: src/Admin/event-notifications/HistoryView.js:402
 msgid "History pages"
-msgstr ""
+msgstr "Strony historii"
 
 #. translators: %s: name of the notification's kind, e.g. "Telegram"
 #: src/Admin/event-notifications/NotificationEditor.js:77
 #, js-format
 msgid "Tells this notification apart from the others in the list. Leave it empty to show “%s”."
-msgstr ""
+msgstr "Odróżnia to powiadomienie od innych na liście. Pozostaw puste, aby wyświetlić „%s”."
 
 #: src/Admin/event-notifications/NotificationList.js:34
 msgid "No chat or channel yet"
-msgstr ""
+msgstr "Brak czatu lub kanału"
 
 #: src/Admin/event-notifications/NotificationList.js:37
 msgid "Subscribers who agreed to marketing emails, chosen by Fair Audience"
-msgstr ""
+msgstr "Subskrybenci, którzy zgodzili się na e-maile marketingowe, wybrani przez Fair Audience"
 
 #: src/Admin/event-notifications/NotificationList.js:42
 msgid "No address yet"
-msgstr ""
+msgstr "Brak adresu"
 
 #: src/Admin/event-notifications/NotificationList.js:124
 msgid "Search notifications"
-msgstr ""
+msgstr "Szukaj powiadomień"
 
 #: src/Admin/event-notifications/NotificationList.js:125
 msgid "By name, kind, address or chat."
-msgstr ""
+msgstr "Według nazwy, rodzaju, adresu lub czatu."
 
 #. translators: %s: the typed search
 #: src/Admin/event-notifications/NotificationList.js:140
 #, js-format
 msgid "No notification matches “%s”."
-msgstr ""
+msgstr "Żadne powiadomienie nie pasuje do „%s”."
 
 #: src/Admin/event-notifications/NotificationList.js:146
 msgid "There is no notification yet. Add one below."
-msgstr ""
+msgstr "Nie ma jeszcze żadnego powiadomienia. Dodaj je poniżej."
 
 #: src/Admin/event-notifications/NotificationList.js:159
 #: src/Admin/event-notifications/NotificationList.js:240
 msgid "Sends to"
-msgstr ""
+msgstr "Wysyła do"
 
 #: src/Admin/event-notifications/NotificationList.js:165
 #: src/Admin/event-notifications/NotificationList.js:276
 msgid "Next send"
-msgstr ""
+msgstr "Następne wysłanie"
 
 #: src/Admin/event-notifications/NotificationList.js:168
 #: src/Admin/event-notifications/NotificationList.js:289
 msgid "Latest send or test"
-msgstr ""
+msgstr "Ostatnie wysłanie lub test"
 
 #: src/Admin/event-notifications/NotificationList.js:256
 msgid "On"
-msgstr ""
+msgstr "Włączone"
 
 #: src/Admin/event-notifications/NotificationList.js:263
 msgid "Paused"
-msgstr ""
+msgstr "Wstrzymane"
 
 #: src/Admin/event-notifications/NotificationList.js:283
 msgid "Not scheduled"
-msgstr ""
+msgstr "Nie zaplanowane"
 
 #: src/Admin/event-notifications/NotificationList.js:319
 msgid "Nothing sent yet"
-msgstr ""
+msgstr "Nic jeszcze nie wysłano"
 
 #: src/Admin/event-notifications/NotificationList.js:349
 msgid "Notification pages"
-msgstr ""
+msgstr "Strony powiadomień"
 
 #: src/Admin/event-notifications/Pagination.js:32
 msgid "Previous page"
-msgstr ""
+msgstr "Poprzednia strona"
 
 #. translators: 1: current page number, 2: number of pages
 #: src/Admin/event-notifications/Pagination.js:37
 #, js-format
 msgid "Page %1$d of %2$d"
-msgstr ""
+msgstr "Strona %1$d z %2$d"
 
 #: src/Admin/event-notifications/Pagination.js:47
 msgid "Next page"
-msgstr ""
+msgstr "Następna strona"
 
 #: src/blocks/other-sessions/components/EditComponent.js:26
 msgid "Loading upcoming sessions…"
-msgstr ""
+msgstr "Wczytywanie nadchodzących sesji…"
 
 #: src/blocks/other-sessions/components/EditComponent.js:39
 msgid "Could not load the preview of upcoming sessions. Reload the editor to try again."
-msgstr ""
+msgstr "Nie można było wczytać podglądu nadchodzących sesji. Przeładuj edytor, aby spróbować ponownie."
 
 #: src/blocks/other-sessions/components/EditComponent.js:87
 msgid "Maximum sessions"
-msgstr ""
+msgstr "Maksymalna liczba sesji"
 
 #: src/blocks/other-sessions/components/EditComponent.js:88
 msgid "How many upcoming sessions to list, soonest first."
-msgstr ""
+msgstr "Ile nadchodzących sesji wyświetlić, najpierw najbliższe."
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block title"
 msgid "Other Sessions"
-msgstr ""
+msgstr "Inne sesje"
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block description"
 msgid "List the upcoming sessions of a recurring event, each linking to its own page."
-msgstr ""
+msgstr "Wyświetl nadchodzące sesje powtarzającego się wydarzenia, każdą z odnośnikiem do jej własnej strony."
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block keyword"
 msgid "sessions"
-msgstr ""
+msgstr "sesje"
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block keyword"
 msgid "recurring"
-msgstr ""
+msgstr "powtarzające się"
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block keyword"
 msgid "series"
-msgstr ""
+msgstr "seria"
 
 #: src/blocks/other-sessions/block.json
 msgctxt "block keyword"
 msgid "dates"
-msgstr ""
+msgstr "daty"
 
 #. translators: %s: registrant name and ticket reference
 #: src/Admin/manage-event/EventSignups.js:1351
@@ -7942,3 +7934,4 @@ msgstr "Zmieniono rodzaj biletu dla %s."
 #: src/Admin/manage-event/EventSignups.js:1378
 msgid "Ticket saved."
 msgstr "Bilet zapisany."
+
