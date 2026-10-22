@@ -14,9 +14,12 @@
 	width: 90%;
 	padding: 1rem 3rem 1rem 1.5rem;
 	border-radius: 4px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
-		Cantarell, 'Helvetica Neue', sans-serif;
+	box-shadow:
+		0 4px 6px rgba(0, 0, 0, 0.1),
+		0 2px 4px rgba(0, 0, 0, 0.06);
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+		Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 	font-size: 14px;
 	line-height: 1.5;
 	animation: fair-payment-slide-in 0.3s ease-out;

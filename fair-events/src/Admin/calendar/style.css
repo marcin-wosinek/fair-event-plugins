@@ -32,7 +32,7 @@
 	cursor: default;
 }
 
-@media screen and ( max-width: 600px ) {
+@media screen and (max-width: 600px) {
 	.fair-events-calendar-filter {
 		max-width: none;
 	}

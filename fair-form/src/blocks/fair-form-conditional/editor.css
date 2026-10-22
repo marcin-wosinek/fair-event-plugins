@@ -30,6 +30,7 @@
 	border-color: #cc1818;
 }
 
-.fair-form-conditional-editor--unconfigured .fair-form-conditional-editor-label {
+.fair-form-conditional-editor--unconfigured
+	.fair-form-conditional-editor-label {
 	color: #cc1818;
 }
