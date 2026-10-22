@@ -28,7 +28,7 @@
 	"dependencies": {
 		"@wordpress/components": "42.0.0",
 		"@wordpress/date": "5.57.0",
-		"@wordpress/scripts": "36.1.0",
+		"@wordpress/scripts": "37.0.0",
 		"date-fns": "^4.0.0"
 	}
 }
