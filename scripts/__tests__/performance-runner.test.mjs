@@ -639,6 +639,37 @@ test('owned run builds, starts, provisions, and stops the environment', async ()
 	assert.ok(commands.at(-1) === 'npx wp-env stop');
 });
 
+test('a failed owned start is returned and cleans up the partial start', async () => {
+	const executor = createExecutor({
+		...stoppedStatus(),
+		'npx wp-env start': { code: 19 },
+	});
+	const outcome = await runPerformanceAudit({
+		options: baseOptions({ reuse: false }),
+		executor,
+		plugins: TEST_PLUGINS,
+		matrix: TEST_MATRIX,
+		fixtures: TEST_FIXTURES,
+		baseUrl: 'http://localhost:8889',
+		measureBackend: async () => ({
+			durationMs: 1,
+			memoryBytes: 1,
+			queryCount: 1,
+		}),
+		measureFrontend: async () => ({ requestCount: 0, transferBytes: 0 }),
+		logger() {},
+		signalSource: new EventEmitter(),
+	});
+	assert.equal(outcome.code, 19);
+	const commands = executor.calls.map((c) =>
+		[c.command, ...c.args].join(' ')
+	);
+	assert.deepEqual(commands.slice(-2), [
+		'npx wp-env start',
+		'npx wp-env stop',
+	]);
+});
+
 test('an already-running environment is refused when not reusing', async () => {
 	const executor = createExecutor({
 		'npx wp-env status --json': {

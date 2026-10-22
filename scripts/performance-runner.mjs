@@ -689,11 +689,13 @@ export async function withAuditEnvironment(
 			}
 
 			phase('Starting isolated WordPress test environment');
+			// The instance was not running, so anything a failed or interrupted
+			// start leaves behind belongs to this run and is stopped too.
+			ownsEnvironment = true;
 			const start = await executor.run('npx', ['wp-env', 'start']);
 			if (start.code !== 0) {
 				return { code: start.code };
 			}
-			ownsEnvironment = true;
 
 			const rewrite = await wpCli([
 				'rewrite',

@@ -173,7 +173,11 @@ in the build job; its fixtures live in
 REST API and behavioral E2E tests use the same lifecycle runner and an isolated
 `@wordpress/env` `tests` instance. The normal commands own the instance they
 start, wait for WordPress readiness, run the selected suite, and stop the
-instance after success, failure, or interruption.
+instance after success, failure, or interruption. That includes a
+`wp-env start` that fails or is interrupted part-way: whatever containers it
+brought up are stopped too. An interrupt that arrives between steps starts no
+further steps. `@wordpress/env` 12 needs Node.js 22.13 or later; the
+repository's Node.js minimum already covers that.
 
 | Environment            | Tool                | Port     |
 | ---------------------- | ------------------- | -------- |
