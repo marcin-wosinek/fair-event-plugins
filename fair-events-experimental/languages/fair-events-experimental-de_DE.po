@@ -327,7 +327,7 @@ msgstr "Meta hat geantwortet, aber den Empfang des Test-Ereignisses %s nicht bes
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta hat das %s-Test-Event abgelehnt. Überprüfen Sie die Konfiguration und versuchen Sie es erneut."
 
@@ -1532,357 +1532,358 @@ msgstr "Meta öffnen"
 #, js-format
 msgid "%d sent request is listed under Sent requests."
 msgid_plural "%d sent requests are listed under Sent requests."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d gesendete Anfrage wird unter Gesendete Anfragen aufgelistet."
+msgstr[1] "%d gesendete Anfragen werden unter Gesendete Anfragen aufgelistet."
 
 #: src/Admin/meta/MetaConversions.js:228
 msgid "Sent request details are unavailable for this entry."
-msgstr ""
+msgstr "Anforderungsdetails sind für diesen Eintrag nicht verfügbar."
 
 #: src/Admin/meta/MetaConversions.js:258
 msgid "Hide sent request"
-msgstr ""
+msgstr "Gesendete Anforderung ausblenden"
 
 #: src/Admin/meta/MetaConversions.js:259
 msgid "Show sent request"
-msgstr ""
+msgstr "Gesendete Anforderung anzeigen"
 
 #: src/Admin/meta/MetaConversions.js:572
 msgid "Send consented event-button clicks and checkout and purchase measurements to Meta. Matching identifiers are removed when delivery finishes and records are deleted after 90 days. Sent requests are logged without credentials or personal identifiers and kept for 30 days."
-msgstr ""
+msgstr "Sende zugestimmte Event-Button-Klicks und Checkout- und Kaufmessungen an Meta. Übereinstimmende Identifikatoren werden entfernt, wenn die Zustellung abgeschlossen ist, und Datensätze werden nach 90 Tagen gelöscht. Gesendete Anforderungen werden ohne Anmeldedaten oder persönliche Identifikatoren protokolliert und 30 Tage lang aufbewahrt."
 
 #: src/Admin/meta/SentRequests.js:37
 msgid "Rejected by Meta"
-msgstr ""
+msgstr "Von Meta abgelehnt"
 
 #: src/Admin/meta/SentRequests.js:41
 msgid "Meta error"
-msgstr ""
+msgstr "Meta-Fehler"
 
 #: src/Admin/meta/SentRequests.js:45
 msgid "Could not reach Meta"
-msgstr ""
+msgstr "Meta konnte nicht erreicht werden"
 
 #: src/Admin/meta/SentRequests.js:51
 msgid "valid Meta browser ID"
-msgstr ""
+msgstr "gültige Meta-Browser-ID"
 
 #: src/Admin/meta/SentRequests.js:52
 msgid "not a valid Meta browser ID"
-msgstr ""
+msgstr "keine gültige Meta-Browser-ID"
 
 #: src/Admin/meta/SentRequests.js:53
 msgid "SHA-256 hash"
-msgstr ""
+msgstr "SHA-256-Hash"
 
 #: src/Admin/meta/SentRequests.js:54
 msgid "not a SHA-256 hash"
-msgstr ""
+msgstr "kein SHA-256-Hash"
 
 #: src/Admin/meta/SentRequests.js:55
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 #: src/Admin/meta/SentRequests.js:56
 msgid "neither a hash nor a UUID"
-msgstr ""
+msgstr "weder ein Hash noch eine UUID"
 
 #: src/Admin/meta/SentRequests.js:71
 msgid "Result unavailable"
-msgstr ""
+msgstr "Ergebnis nicht verfügbar"
 
 #: src/Admin/meta/SentRequests.js:93
 msgid "Administrator test"
-msgstr ""
+msgstr "Administrator-Test"
 
 #: src/Admin/meta/SentRequests.js:94
 #: src/Admin/meta/SentRequests.js:774
 msgid "Production"
-msgstr ""
+msgstr "Produktion"
 
 #: src/Admin/meta/SentRequests.js:96
 msgid "Sent to Test Events"
-msgstr ""
+msgstr "An Test-Events gesendet"
 
 #: src/Admin/meta/SentRequests.js:97
 msgid "Not sent to Test Events"
-msgstr ""
+msgstr "Nicht an Test-Events gesendet"
 
 #: src/Admin/meta/SentRequests.js:100
 msgid "Payment test mode"
-msgstr ""
+msgstr "Zahlungs-Testmodus"
 
 #: src/Admin/meta/SentRequests.js:102
 msgid "Payment live mode"
-msgstr ""
+msgstr "Zahlungs-Live-Modus"
 
 #: src/Admin/meta/SentRequests.js:105
 msgid "Sent immediately"
-msgstr ""
+msgstr "Sofort versendet"
 
 #. translators: %d: delivery attempt number of a queued event
 #: src/Admin/meta/SentRequests.js:110
 #, js-format
 msgid "Queued, attempt %d"
-msgstr ""
+msgstr "In der Warteschlange, Versuch %d"
 
 #: src/Admin/meta/SentRequests.js:129
 msgid "null"
-msgstr ""
+msgstr "null"
 
 #: src/Admin/meta/SentRequests.js:132
 msgid "Empty list"
-msgstr ""
+msgstr "Leere Liste"
 
 #: src/Admin/meta/SentRequests.js:135
 msgid "Empty object"
-msgstr ""
+msgstr "Leeres Objekt"
 
 #: src/Admin/meta/SentRequests.js:136
 msgid "Empty text"
-msgstr ""
+msgstr "Leerer Text"
 
 #. translators: %d: number of items in a list
 #: src/Admin/meta/SentRequests.js:141
 #, js-format
 msgid "List of %d item"
 msgid_plural "List of %d items"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Liste von %d Element"
+msgstr[1] "Liste von %d Elementen"
 
 #. translators: %d: number of fields in an object
 #: src/Admin/meta/SentRequests.js:151
 #, js-format
 msgid "Object with %d field"
 msgid_plural "Object with %d fields"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Objekt mit %d Feld"
+msgstr[1] "Objekt mit %d Feldern"
 
 #: src/Admin/meta/SentRequests.js:161
 msgid "Redacted"
-msgstr ""
+msgstr "Redigiert"
 
 #. translators: %d: length of a redacted value
 #: src/Admin/meta/SentRequests.js:164
 #, js-format
 msgid "Redacted, %d character"
 msgid_plural "Redacted, %d characters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Redigiert, %d Zeichen"
+msgstr[1] "Redigiert, %d Zeichen"
 
 #. translators: %s: scheme and host of a URL, such as https://example.com
 #: src/Admin/meta/SentRequests.js:193
 #, js-format
 msgid "Site: %s"
-msgstr ""
+msgstr "Website: %s"
 
 #: src/Admin/meta/SentRequests.js:200
 msgid "this site"
-msgstr ""
+msgstr "diese Website"
 
 #: src/Admin/meta/SentRequests.js:201
 msgid "not this site"
-msgstr ""
+msgstr "nicht diese Website"
 
 #: src/Admin/meta/SentRequests.js:204
 msgid "has a path"
-msgstr ""
+msgstr "hat einen Pfad"
 
 #. translators: %d: number of query parameters in a URL
 #: src/Admin/meta/SentRequests.js:210
 #, js-format
 msgid "%d query parameter"
 msgid_plural "%d query parameters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Abfrageparameter"
+msgstr[1] "%d Abfrageparameter"
 
 #: src/Admin/meta/SentRequests.js:221
 msgid "has a fragment"
-msgstr ""
+msgstr "hat ein Fragment"
 
 #: src/Admin/meta/SentRequests.js:225
 msgid "shortened"
-msgstr ""
+msgstr "gekürzt"
 
 #: src/Admin/meta/SentRequests.js:232
 msgid "Missing"
-msgstr ""
+msgstr "Fehlend"
 
 #: src/Admin/meta/SentRequests.js:281
 msgid "No request was sent to Meta."
-msgstr ""
+msgstr "Es wurde keine Anfrage an Meta gesendet."
 
 #: src/Admin/meta/SentRequests.js:291
 msgid "Request details are unavailable for this entry."
-msgstr ""
+msgstr "Anforderungsdetails sind für diesen Eintrag nicht verfügbar."
 
 #. translators: 1: HTTP method, 2: Meta dataset ID, 3: Graph API version such as v26.0
 #: src/Admin/meta/SentRequests.js:303
 #, js-format
 msgid "%1$s to dataset %2$s, Graph API %3$s"
-msgstr ""
+msgstr "%1$s zu Datensatz %2$s, Graph API %3$s"
 
 #: src/Admin/meta/SentRequests.js:314
 #: src/Admin/meta/SentRequests.js:478
 msgid "Test Events code included"
-msgstr ""
+msgstr "Test Events-Code enthalten"
 
 #: src/Admin/meta/SentRequests.js:318
 #: src/Admin/meta/SentRequests.js:482
 msgid "No Test Events code"
-msgstr ""
+msgstr "Kein Test Events-Code"
 
 #: src/Admin/meta/SentRequests.js:322
 msgid "Some values or fields were shortened to keep this record small."
-msgstr ""
+msgstr "Einige Werte oder Felder wurden gekürzt, um diesen Datensatz klein zu halten."
 
 #: src/Admin/meta/SentRequests.js:330
 msgid "Sent request fields"
-msgstr ""
+msgstr "Gesendete Anfragfelder"
 
 #: src/Admin/meta/SentRequests.js:392
 msgid "The request was logged, but its result was not recorded."
-msgstr ""
+msgstr "Die Anfrage wurde protokolliert, aber ihr Ergebnis wurde nicht aufgezeichnet."
 
 #: src/Admin/meta/SentRequests.js:402
 msgid "No response was received from Meta."
-msgstr ""
+msgstr "Keine Antwort von Meta erhalten."
 
 #: src/Admin/meta/SentRequests.js:427
 msgid "Response details are unavailable."
-msgstr ""
+msgstr "Antwortdetails sind nicht verfügbar."
 
 #: src/Admin/meta/SentRequests.js:444
 msgid "(unnamed event)"
-msgstr ""
+msgstr "(unbenanntes Ereignis)"
 
 #: src/Admin/meta/SentRequests.js:487
 msgid "Unavailable"
-msgstr ""
+msgstr "Nicht verfügbar"
 
 #: src/Admin/meta/SentRequests.js:490
 msgid "Sent"
-msgstr ""
+msgstr "Gesendet"
 
 #: src/Admin/meta/SentRequests.js:500
 msgid "Routing"
-msgstr ""
+msgstr "Routing"
 
 #: src/Admin/meta/SentRequests.js:504
 msgid "Destination"
-msgstr ""
+msgstr "Ziel"
 
 #: src/Admin/meta/SentRequests.js:526
 msgid "(different)"
-msgstr ""
+msgstr "(unterschiedlich)"
 
 #: src/Admin/meta/SentRequests.js:534
 msgid "Request comparison"
-msgstr ""
+msgstr "Anfragevergleich"
 
 #: src/Admin/meta/SentRequests.js:545
 msgid "Comparing two sent requests"
-msgstr ""
+msgstr "Vergleich von zwei gesendeten Anfragen"
 
 #: src/Admin/meta/SentRequests.js:563
 msgid "Request details are unavailable for at least one of these requests, so their fields cannot be compared."
-msgstr ""
+msgstr "Anfragdetails sind für mindestens eine dieser Anfragen nicht verfügbar, daher können ihre Felder nicht verglichen werden."
 
 #: src/Admin/meta/SentRequests.js:573
 msgid "Show only differences"
-msgstr ""
+msgstr "Nur Unterschiede anzeigen"
 
 #: src/Admin/meta/SentRequests.js:583
 msgid "The two requests have the same fields, types and safe values."
-msgstr ""
+msgstr "Die beiden Anfragen haben die gleichen Felder, Typen und sicheren Werte."
 
 #: src/Admin/meta/SentRequests.js:701
 msgid "Each request sent to Meta — administrator tests, immediate clicks and every queued retry — with Meta’s answer. Credentials and personal identifiers are removed before a request is logged; entries are kept for 30 days, up to 1,000 requests."
-msgstr ""
+msgstr "Jede an Meta gesendete Anfrage – Administratortests, sofortige Klicks und jeder in die Warteschlange eingereihte Wiederholungsversuch – mit Metas Antwort. Anmeldedaten und persönliche Identifikatoren werden vor der Protokollierung einer Anfrage entfernt; Einträge werden 30 Tage lang aufbewahrt, bis zu 1.000 Anfragen."
 
 #: src/Admin/meta/SentRequests.js:711
 #: src/Admin/meta/SentRequests.js:748
 msgid "Sent requests"
-msgstr ""
+msgstr "Gesendete Anfragen"
 
 #: src/Admin/meta/SentRequests.js:718
 msgid "Show sent requests"
-msgstr ""
+msgstr "Gesendete Anfragen anzeigen"
 
 #: src/Admin/meta/SentRequests.js:730
 msgid "Select two requests to compare them."
-msgstr ""
+msgstr "Wählen Sie zwei Anfragen aus, um sie zu vergleichen."
 
 #: src/Admin/meta/SentRequests.js:735
 msgid "Select one more request to compare."
-msgstr ""
+msgstr "Wählen Sie eine weitere Anfrage zum Vergleichen aus."
 
 #: src/Admin/meta/SentRequests.js:740
 msgid "Two requests are selected. Clear one to choose another."
-msgstr ""
+msgstr "Zwei Anfragen sind ausgewählt. Löschen Sie eine, um eine andere auszuwählen."
 
 #: src/Admin/meta/SentRequests.js:755
 msgid "Sent by"
-msgstr ""
+msgstr "Gesendet von"
 
 #: src/Admin/meta/SentRequests.js:760
 msgid "Everyone"
-msgstr ""
+msgstr "Alle"
 
 #: src/Admin/meta/SentRequests.js:767
 msgid "Administrator tests"
-msgstr ""
+msgstr "Administrator-Tests"
 
 #: src/Admin/meta/SentRequests.js:795
 msgid "All events"
-msgstr ""
+msgstr "Alle Veranstaltungen"
 
 #: src/Admin/meta/SentRequests.js:824
 msgid "The sent requests could not be loaded."
-msgstr ""
+msgstr "Die gesendeten Anfragen konnten nicht geladen werden."
 
 #: src/Admin/meta/SentRequests.js:832
 msgid "Loading sent requests…"
-msgstr ""
+msgstr "Gesendete Anfragen werden geladen…"
 
 #: src/Admin/meta/SentRequests.js:841
 msgid "No sent requests match these filters."
-msgstr ""
+msgstr "Keine gesendeten Anfragen entsprechen diesen Filtern."
 
 #: src/Admin/meta/SentRequests.js:845
 msgid "No requests have been sent to Meta in the last 30 days."
-msgstr ""
+msgstr "In den letzten 30 Tagen wurden keine Anfragen an Meta gesendet."
 
 #: src/Admin/meta/SentRequests.js:870
 msgid "Compare"
-msgstr ""
+msgstr "Vergleichen"
 
 #: src/Admin/meta/SentRequests.js:892
 msgid "Hide details"
-msgstr ""
+msgstr "Details ausblenden"
 
 #: src/Admin/meta/SentRequests.js:896
 msgid "Show details"
-msgstr ""
+msgstr "Details anzeigen"
 
 #: src/Admin/meta/SentRequests.js:915
 msgid "Sent request"
-msgstr ""
+msgstr "Gesendete Anfrage"
 
 #: src/Admin/meta/SentRequests.js:926
 msgid "Meta’s answer"
-msgstr ""
+msgstr "Antwort von Meta"
 
 #: src/Admin/meta/SentRequests.js:947
 msgid "Newer"
-msgstr ""
+msgstr "Neuer"
 
 #. translators: 1: current page number, 2: number of pages
 #: src/Admin/meta/SentRequests.js:953
 #, js-format
 msgid "Page %1$d of %2$d"
-msgstr ""
+msgstr "Seite %1$d von %2$d"
 
 #: src/Admin/meta/SentRequests.js:967
 msgid "Older"
-msgstr ""
+msgstr "Älter"
+

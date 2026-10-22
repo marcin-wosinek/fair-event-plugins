@@ -303,7 +303,7 @@ msgstr "Pregunta rápida sobre %s"
 #: src/Services/EmailService.php:2397
 #: src/Services/EmailService.php:2760
 #: src/Services/EmailService.php:2854
-#, php-format,js-format
+#, php-format, js-format
 msgid "Hi %s,"
 msgstr "Hola %s,"
 
@@ -388,8 +388,8 @@ msgstr "Agregar opción"
 msgid "Status"
 msgstr "Estado"
 
-#: src/Admin/settings/InstagramTab.js:424
-#: src/Admin/settings/InstagramTab.js:591
+#: src/Admin/settings/InstagramTab.js:428
+#: src/Admin/settings/InstagramTab.js:595
 msgid "Saving..."
 msgstr "Guardando..."
 
@@ -1152,7 +1152,7 @@ msgid "Instagram OAuth Access Token"
 msgstr "Token de acceso OAuth de Instagram"
 
 #: src/Settings/Settings.php:63
-#: src/Admin/settings/InstagramTab.js:543
+#: src/Admin/settings/InstagramTab.js:547
 msgid "Instagram User ID"
 msgstr "ID de usuario de Instagram"
 
@@ -1278,135 +1278,135 @@ msgstr "Error al guardar el ID de usuario."
 msgid "Disconnected from Instagram."
 msgstr "Desconectado de Instagram."
 
-#: src/Admin/settings/InstagramTab.js:361
+#: src/Admin/settings/InstagramTab.js:365
 msgid "Loading Instagram settings..."
 msgstr "Cargando configuración de Instagram..."
 
-#: src/Admin/settings/InstagramTab.js:374
+#: src/Admin/settings/InstagramTab.js:378
 msgid "Instagram Connection"
 msgstr "Conexión de Instagram"
 
-#: src/Admin/settings/InstagramTab.js:385
+#: src/Admin/settings/InstagramTab.js:389
 msgid "Connect your Instagram account to access your media and followers."
 msgstr "Conecta tu cuenta de Instagram para acceder a tus medios y seguidores."
 
-#: src/Admin/settings/InstagramTab.js:393
+#: src/Admin/settings/InstagramTab.js:397
 msgid "Manual Token Entry"
 msgstr "Entrada Manual de Token"
 
-#: src/Admin/settings/InstagramTab.js:402
+#: src/Admin/settings/InstagramTab.js:406
 msgid "Enter your Instagram access token manually. You can obtain this from the Meta Developer Portal."
 msgstr "Ingresa tu token de acceso de Instagram manualmente. Puedes obtenerlo desde el Portal de Desarrolladores de Meta."
 
-#: src/Admin/settings/InstagramTab.js:408
+#: src/Admin/settings/InstagramTab.js:412
 msgid "Access Token"
 msgstr "Token de Acceso"
 
-#: src/Admin/settings/InstagramTab.js:411
+#: src/Admin/settings/InstagramTab.js:415
 msgid "Enter Instagram access token..."
 msgstr "Ingresa el token de acceso de Instagram..."
 
-#: src/Admin/settings/InstagramTab.js:425
+#: src/Admin/settings/InstagramTab.js:429
 msgid "Save Token"
 msgstr "Guardar Token"
 
-#: src/Admin/settings/InstagramTab.js:436
+#: src/Admin/settings/InstagramTab.js:440
 msgid "OAuth Connection"
 msgstr "Conexión OAuth"
 
-#: src/Admin/settings/InstagramTab.js:445
+#: src/Admin/settings/InstagramTab.js:449
 msgid "Or connect automatically via OAuth (requires server configuration)."
 msgstr "O conéctate automáticamente a través de OAuth (requiere configuración del servidor)."
 
-#: src/Admin/settings/InstagramTab.js:454
+#: src/Admin/settings/InstagramTab.js:458
 msgid "Connect with Instagram"
 msgstr "Conectar con Instagram"
 
-#: src/Admin/settings/InstagramTab.js:493
+#: src/Admin/settings/InstagramTab.js:497
 msgid "Connected to Instagram"
 msgstr "Conectado a Instagram"
 
-#: src/Admin/settings/InstagramTab.js:504
-#: src/Admin/settings/InstagramTab.js:680
+#: src/Admin/settings/InstagramTab.js:508
+#: src/Admin/settings/InstagramTab.js:684
 msgid "Username:"
 msgstr "Nombre de usuario:"
 
 #. translators: %s: expiration date
-#: src/Admin/settings/InstagramTab.js:521
+#: src/Admin/settings/InstagramTab.js:525
 #, js-format
 msgid "Token expires: %s"
 msgstr "Token expira: %s"
 
-#: src/Admin/settings/InstagramTab.js:552
+#: src/Admin/settings/InstagramTab.js:556
 msgid "Set the Instagram User ID manually. This is required for posting to Instagram. You can find it by testing the connection above."
 msgstr "Establece el ID de usuario de Instagram manualmente. Esto es necesario para publicar en Instagram. Puedes encontrarlo probando la conexión anterior."
 
-#: src/Admin/settings/InstagramTab.js:560
+#: src/Admin/settings/InstagramTab.js:564
 msgid "Current User ID:"
 msgstr "ID de usuario actual:"
 
-#: src/Admin/settings/InstagramTab.js:569
+#: src/Admin/settings/InstagramTab.js:573
 msgid "User ID"
 msgstr "ID de usuario"
 
-#: src/Admin/settings/InstagramTab.js:572
+#: src/Admin/settings/InstagramTab.js:576
 msgid "Enter Instagram User ID..."
 msgstr "Introduce el ID de usuario de Instagram..."
 
-#: src/Admin/settings/InstagramTab.js:577
+#: src/Admin/settings/InstagramTab.js:581
 msgid "The numeric ID of your Instagram account (e.g., 17841400123456789)"
 msgstr "El ID numérico de tu cuenta de Instagram (p. ej., 17841400123456789)"
 
-#: src/Admin/settings/InstagramTab.js:592
+#: src/Admin/settings/InstagramTab.js:596
 msgid "Save User ID"
 msgstr "Guardar ID de usuario"
 
-#: src/Admin/settings/InstagramTab.js:606
-#: src/Admin/settings/InstagramTab.js:633
+#: src/Admin/settings/InstagramTab.js:610
+#: src/Admin/settings/InstagramTab.js:637
 msgid "Test Connection"
 msgstr "Probar conexión"
 
-#: src/Admin/settings/InstagramTab.js:615
+#: src/Admin/settings/InstagramTab.js:619
 msgid "Verify your Instagram connection is working correctly."
 msgstr "Verifica que tu conexión a Instagram funciona correctamente."
 
-#: src/Admin/settings/InstagramTab.js:630
+#: src/Admin/settings/InstagramTab.js:634
 msgid "Testing..."
 msgstr "Probando..."
 
-#: src/Admin/settings/InstagramTab.js:667
+#: src/Admin/settings/InstagramTab.js:671
 msgid "Account Details"
 msgstr "Detalles de la cuenta"
 
-#: src/Admin/settings/InstagramTab.js:714
+#: src/Admin/settings/InstagramTab.js:718
 msgid "Token Info"
 msgstr "Información del token"
 
-#: src/Admin/settings/InstagramTab.js:727
+#: src/Admin/settings/InstagramTab.js:731
 msgid "Expires:"
 msgstr "Expira:"
 
-#: src/Admin/settings/InstagramTab.js:751
+#: src/Admin/settings/InstagramTab.js:755
 msgid "Scopes:"
 msgstr "Permisos:"
 
-#: src/Admin/settings/InstagramTab.js:785
+#: src/Admin/settings/InstagramTab.js:789
 msgid "Available Instagram Accounts"
 msgstr "Cuentas de Instagram disponibles"
 
-#: src/Admin/settings/InstagramTab.js:837
+#: src/Admin/settings/InstagramTab.js:841
 msgid "(Active)"
 msgstr "(Activo)"
 
-#: src/Admin/settings/InstagramTab.js:852
+#: src/Admin/settings/InstagramTab.js:856
 msgid "User ID:"
 msgstr "ID de usuario:"
 
-#: src/Admin/settings/InstagramTab.js:891
+#: src/Admin/settings/InstagramTab.js:895
 msgid "Details"
 msgstr "Detalles"
 
-#: src/Admin/settings/InstagramTab.js:352
+#: src/Admin/settings/InstagramTab.js:356
 msgid "Disconnect"
 msgstr "Desconectar"
 
@@ -2353,7 +2353,7 @@ msgstr "Una de las fechas seleccionadas no es válida para esta entrada."
 
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:610
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Selecciona al menos %d ocurrencia."
@@ -2892,7 +2892,6 @@ msgstr "Revertido a mínimo: la suscripción de marketing nunca fue confirmada e
 msgid "Opted out of the weekly summary."
 msgstr "Ha rechazado el resumen semanal."
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:189
 #: src/Services/WeeklyDigestRenderer.php:199
@@ -2969,11 +2968,10 @@ msgstr "Una de las actividades seleccionadas no pertenece a este evento."
 msgid "Enter a reason for going over capacity."
 msgstr "Introduce un motivo para exceder la capacidad."
 
-#. translators: 1: ticket type or activity name, 2: places taken after the change, 3: capacity
 #. translators: 1: event date or activity name, 2: places taken after the move, 3: capacity
 #: src/API/EventParticipantsController.php:1611
 #: src/Services/TicketOperations.php:218
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s tendría %2$d de %3$d lugar ocupado."
@@ -3003,19 +3001,17 @@ msgstr "Esa entrada no puede recibir actividades."
 msgid "Choose which ticket to add the activities to."
 msgstr "Elige a qué entrada añadir las actividades."
 
-#. translators: 1: ticket number among the participant's tickets, 2: ticket type name, 3: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: ticket type name, 3: short ticket reference
 #: src/Services/TicketActivities.php:188
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:51
-#, php-format,js-format
+#, php-format, js-format
 msgid "Ticket %1$d — %2$s (%3$s)"
 msgstr "Entrada %1$d — %2$s (%3$s)"
 
-#. translators: 1: ticket number among the participant's tickets, 2: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: short ticket reference
 #: src/Services/TicketActivities.php:195
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:35
-#, php-format,js-format
+#, php-format, js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Entrada %1$d (%2$s)"
 
@@ -3161,11 +3157,10 @@ msgstr "Introduce una dirección de correo electrónico válida."
 msgid "Failed to assign the ticket."
 msgstr "Error al asignar la entrada."
 
-#. translators: 1: event title, 2: event date and time
 #. translators: 1: person's name, 2: their email address
 #: src/API/CustomMailController.php:621
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:41
-#, js-format,php-format
+#, js-format, php-format
 msgid "%1$s (%2$s)"
 msgstr "%1$s (%2$s)"
 
@@ -4515,23 +4510,23 @@ msgstr "¿Desconectar la cuenta de Instagram con ID %s de este sitio?"
 msgid "Disconnect the Instagram account connected to this site? Its username and ID are not available."
 msgstr "¿Desconectar la cuenta de Instagram conectada a este sitio? Su nombre de usuario y su ID no están disponibles."
 
-#: src/Admin/settings/InstagramTab.js:929
+#: src/Admin/settings/InstagramTab.js:933
 msgid "Disconnect Instagram?"
 msgstr "¿Desconectar Instagram?"
 
-#: src/Admin/settings/InstagramTab.js:941
+#: src/Admin/settings/InstagramTab.js:945
 msgid "The access token and connection details stored on this site are removed. Until you reconnect with “Connect with Instagram” or enter a valid access token again, this site cannot publish to Instagram."
 msgstr "Se eliminan el token de acceso y los datos de conexión guardados en este sitio. Hasta que vuelvas a conectar con «Conectar con Instagram» o introduzcas de nuevo un token de acceso válido, este sitio no podrá publicar en Instagram."
 
-#: src/Admin/settings/InstagramTab.js:947
+#: src/Admin/settings/InstagramTab.js:951
 msgid "Posts already published on Instagram, and the post records on this site, are kept."
 msgstr "Las publicaciones ya publicadas en Instagram y los registros de publicaciones de este sitio se conservan."
 
-#: src/Admin/settings/InstagramTab.js:972
+#: src/Admin/settings/InstagramTab.js:976
 msgid "Keep connected"
 msgstr "Mantener conectado"
 
-#: src/Admin/settings/InstagramTab.js:981
+#: src/Admin/settings/InstagramTab.js:985
 msgid "Disconnect Instagram"
 msgstr "Desconectar Instagram"
 
@@ -4571,16 +4566,17 @@ msgstr "Eliminando registro…"
 
 #: src/Settings/InstagramCredentials.php:180
 msgid "Instagram is paused: the access token is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; Instagram then resumes without reconnecting."
-msgstr ""
+msgstr "Instagram está en pausa: el token de acceso se almacena cifrado, pero este servidor ya no proporciona la compatibilidad con cifrado Sodium necesaria para leerlo. Pide a tu proveedor de alojamiento que restaure la compatibilidad con PHP Sodium; Instagram se reanudará sin necesidad de reconectar."
 
 #: src/Settings/InstagramCredentials.php:184
 msgid "Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect with Instagram or enter a new access token."
-msgstr ""
+msgstr "Instagram necesita ser reconectado: el token de acceso almacenado ya no se puede leer. Esto ocurre cuando cambian las claves de seguridad del sitio o la base de datos se traslada a otro sitio. Conecta con Instagram o introduce un nuevo token de acceso."
 
 #: src/Settings/InstagramCredentials.php:253
 msgid "The Instagram access token could not be stored encrypted, so the previous token was kept. Try again."
-msgstr ""
+msgstr "El token de acceso de Instagram no se pudo almacenar cifrado, por lo que se mantuvo el token anterior. Inténtalo de nuevo."
 
-#: src/Admin/settings/InstagramTab.js:476
+#: src/Admin/settings/InstagramTab.js:480
 msgid "Or disconnect to remove the unreadable token from this site."
-msgstr ""
+msgstr "O desconecta para eliminar el token ilegible de este sitio."
+

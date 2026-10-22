@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T03:41:38+00:00\n"
+"POT-Creation-Date: 2026-10-22T06:26:56+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience\n"
@@ -1669,7 +1669,7 @@ msgid "Instagram OAuth Access Token"
 msgstr ""
 
 #: src/Settings/Settings.php:63
-#: src/Admin/settings/InstagramTab.js:543
+#: src/Admin/settings/InstagramTab.js:547
 msgid "Instagram User ID"
 msgstr ""
 
@@ -4002,164 +4002,164 @@ msgstr ""
 msgid "Disconnect the Instagram account connected to this site? Its username and ID are not available."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:352
+#: src/Admin/settings/InstagramTab.js:356
 msgid "Disconnect"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:361
+#: src/Admin/settings/InstagramTab.js:365
 msgid "Loading Instagram settings..."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:374
+#: src/Admin/settings/InstagramTab.js:378
 msgid "Instagram Connection"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:385
+#: src/Admin/settings/InstagramTab.js:389
 msgid "Connect your Instagram account to access your media and followers."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:393
+#: src/Admin/settings/InstagramTab.js:397
 msgid "Manual Token Entry"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:402
+#: src/Admin/settings/InstagramTab.js:406
 msgid "Enter your Instagram access token manually. You can obtain this from the Meta Developer Portal."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:408
+#: src/Admin/settings/InstagramTab.js:412
 msgid "Access Token"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:411
+#: src/Admin/settings/InstagramTab.js:415
 msgid "Enter Instagram access token..."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:424
-#: src/Admin/settings/InstagramTab.js:591
+#: src/Admin/settings/InstagramTab.js:428
+#: src/Admin/settings/InstagramTab.js:595
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:425
+#: src/Admin/settings/InstagramTab.js:429
 msgid "Save Token"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:436
+#: src/Admin/settings/InstagramTab.js:440
 msgid "OAuth Connection"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:445
+#: src/Admin/settings/InstagramTab.js:449
 msgid "Or connect automatically via OAuth (requires server configuration)."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:454
+#: src/Admin/settings/InstagramTab.js:458
 msgid "Connect with Instagram"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:476
+#: src/Admin/settings/InstagramTab.js:480
 msgid "Or disconnect to remove the unreadable token from this site."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:493
+#: src/Admin/settings/InstagramTab.js:497
 msgid "Connected to Instagram"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:504
-#: src/Admin/settings/InstagramTab.js:680
+#: src/Admin/settings/InstagramTab.js:508
+#: src/Admin/settings/InstagramTab.js:684
 msgid "Username:"
 msgstr ""
 
 #. translators: %s: expiration date
-#: src/Admin/settings/InstagramTab.js:521
+#: src/Admin/settings/InstagramTab.js:525
 #, js-format
 msgid "Token expires: %s"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:552
+#: src/Admin/settings/InstagramTab.js:556
 msgid "Set the Instagram User ID manually. This is required for posting to Instagram. You can find it by testing the connection above."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:560
+#: src/Admin/settings/InstagramTab.js:564
 msgid "Current User ID:"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:569
+#: src/Admin/settings/InstagramTab.js:573
 msgid "User ID"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:572
+#: src/Admin/settings/InstagramTab.js:576
 msgid "Enter Instagram User ID..."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:577
+#: src/Admin/settings/InstagramTab.js:581
 msgid "The numeric ID of your Instagram account (e.g., 17841400123456789)"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:592
+#: src/Admin/settings/InstagramTab.js:596
 msgid "Save User ID"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:606
-#: src/Admin/settings/InstagramTab.js:633
+#: src/Admin/settings/InstagramTab.js:610
+#: src/Admin/settings/InstagramTab.js:637
 msgid "Test Connection"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:615
+#: src/Admin/settings/InstagramTab.js:619
 msgid "Verify your Instagram connection is working correctly."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:630
+#: src/Admin/settings/InstagramTab.js:634
 msgid "Testing..."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:667
+#: src/Admin/settings/InstagramTab.js:671
 msgid "Account Details"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:714
+#: src/Admin/settings/InstagramTab.js:718
 msgid "Token Info"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:727
+#: src/Admin/settings/InstagramTab.js:731
 msgid "Expires:"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:751
+#: src/Admin/settings/InstagramTab.js:755
 msgid "Scopes:"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:785
+#: src/Admin/settings/InstagramTab.js:789
 msgid "Available Instagram Accounts"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:837
+#: src/Admin/settings/InstagramTab.js:841
 msgid "(Active)"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:852
+#: src/Admin/settings/InstagramTab.js:856
 msgid "User ID:"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:891
+#: src/Admin/settings/InstagramTab.js:895
 msgid "Details"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:929
+#: src/Admin/settings/InstagramTab.js:933
 msgid "Disconnect Instagram?"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:941
+#: src/Admin/settings/InstagramTab.js:945
 msgid "The access token and connection details stored on this site are removed. Until you reconnect with “Connect with Instagram” or enter a valid access token again, this site cannot publish to Instagram."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:947
+#: src/Admin/settings/InstagramTab.js:951
 msgid "Posts already published on Instagram, and the post records on this site, are kept."
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:972
+#: src/Admin/settings/InstagramTab.js:976
 msgid "Keep connected"
 msgstr ""
 
-#: src/Admin/settings/InstagramTab.js:981
+#: src/Admin/settings/InstagramTab.js:985
 msgid "Disconnect Instagram"
 msgstr ""
 

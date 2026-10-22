@@ -58,8 +58,8 @@ msgstr "Test de connexion réussi. Le jeton est toujours valide."
 msgid "Connection test failed: %s"
 msgstr "Échec du test de connexion : %s"
 
-#: src/API/PaymentEndpoint.php:468
-#: src/API/PaymentEndpoint.php:509
+#: src/API/PaymentEndpoint.php:485
+#: src/API/PaymentEndpoint.php:526
 #: src/API/TransactionAPI.php:208
 #: src/API/TransactionAPI.php:379
 #: src/API/TransactionsController.php:427
@@ -70,16 +70,16 @@ msgstr "Échec du test de connexion : %s"
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
-#: src/API/PaymentEndpoint.php:307
+#: src/API/PaymentEndpoint.php:324
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "La passerelle de paiement Mollie n'est pas configurée. Veuillez configurer vos clés API dans les paramètres."
 
-#: src/API/PaymentEndpoint.php:327
+#: src/API/PaymentEndpoint.php:344
 msgid "Invalid payment amount."
 msgstr "Montant de paiement invalide."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:335
+#: src/API/PaymentEndpoint.php:352
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Paiement de %1$s %2$s"
@@ -138,15 +138,15 @@ msgstr "L'élément de ligne à l'index %d a un champ « montant » invalide."
 msgid "Line item at index %d must have positive quantity."
 msgstr "L'élément de ligne à l'index %d doit avoir une quantité positive."
 
-#: src/API/WebhookEndpoint.php:90
+#: src/API/WebhookEndpoint.php:92
 msgid "Payment ID is missing from webhook."
 msgstr "L'ID de paiement est manquant du webhook."
 
-#: src/API/WebhookEndpoint.php:110
+#: src/API/WebhookEndpoint.php:138
 msgid "Transaction not found in database."
 msgstr "Transaction introuvable dans la base de données."
 
-#: src/API/WebhookEndpoint.php:196
+#: src/API/WebhookEndpoint.php:227
 msgid "Failed to update transaction status."
 msgstr "Échec de la mise à jour du statut de la transaction."
 
@@ -251,8 +251,8 @@ msgstr "Modifier"
 msgid "Total"
 msgstr "Total"
 
-#: src/Admin/settings/ApiTokensTab.js:464
-#: src/Admin/settings/ApiTokensTab.js:559
+#: src/Admin/settings/ApiTokensTab.js:483
+#: src/Admin/settings/ApiTokensTab.js:578
 #: src/Admin/settings/ConnectionTab.js:705
 #: src/Admin/settings/ConnectionTab.js:821
 #: src/Admin/transaction/TransactionPage.js:151
@@ -477,16 +477,16 @@ msgstr "Frais d'Intégration"
 msgid "Status & Timing"
 msgstr "Statut et Timing"
 
-#: src/Admin/settings/ApiTokensTab.js:273
-#: src/Admin/settings/ApiTokensTab.js:334
+#: src/Admin/settings/ApiTokensTab.js:289
+#: src/Admin/settings/ApiTokensTab.js:350
 #: src/Admin/transaction/TransactionPage.js:1064
 #: src/Admin/transactions/TransactionsApp.js:563
 #: src/Admin/transactions/TransactionsApp.js:893
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/settings/ApiTokensTab.js:261
-#: src/Admin/settings/ApiTokensTab.js:313
+#: src/Admin/settings/ApiTokensTab.js:277
+#: src/Admin/settings/ApiTokensTab.js:329
 #: src/Admin/transaction/TransactionPage.js:1075
 msgid "Created"
 msgstr "Créé"
@@ -899,17 +899,17 @@ msgstr "Configurer"
 msgid "Invalid or expired OAuth state. Please try connecting again."
 msgstr "État OAuth invalide ou expiré. Veuillez essayer de vous reconnecter."
 
-#: src/API/PaymentEndpoint.php:190
+#: src/API/PaymentEndpoint.php:207
 msgid "Invalid request."
 msgstr "Demande invalide."
 
-#: src/API/PaymentEndpoint.php:208
-#: src/API/PaymentEndpoint.php:218
-#: src/API/PaymentEndpoint.php:229
+#: src/API/PaymentEndpoint.php:225
+#: src/API/PaymentEndpoint.php:235
+#: src/API/PaymentEndpoint.php:246
 msgid "Block not found."
 msgstr "Bloc non trouvé."
 
-#: src/API/PaymentEndpoint.php:253
+#: src/API/PaymentEndpoint.php:270
 msgid "Amount does not match block configuration."
 msgstr "Le montant ne correspond pas à la configuration du bloc."
 
@@ -1099,7 +1099,7 @@ msgstr "Ce bloc est dépourvu d'un identifiant et les paiements échoueront jusq
 msgid "Your stored Mollie API key was removed. Complete the guided connection to keep accepting payments."
 msgstr "Votre clé API Mollie stockée a été supprimée. Complétez la connexion guidée pour continuer à accepter les paiements."
 
-#: src/API/PaymentEndpoint.php:241
+#: src/API/PaymentEndpoint.php:258
 msgid "This payment option is misconfigured. Please contact the site owner."
 msgstr "Cette option de paiement est mal configurée. Veuillez contacter le propriétaire du site."
 
@@ -2095,7 +2095,7 @@ msgid "At least one valid scope is required."
 msgstr "Au moins une portée valide est requise."
 
 #: src/API/ApiTokensController.php:147
-#: src/Admin/settings/ApiTokensTab.js:147
+#: src/Admin/settings/ApiTokensTab.js:163
 msgid "Failed to create API token."
 msgstr "Impossible de créer le jeton API."
 
@@ -2121,138 +2121,138 @@ msgstr "Lire les transactions"
 msgid "%s UTC"
 msgstr "%s UTC"
 
-#: src/Admin/settings/ApiTokensTab.js:88
+#: src/Admin/settings/ApiTokensTab.js:91
 msgid "Failed to load API tokens."
 msgstr "Impossible de charger les jetons API."
 
 #. translators: %s: token label
-#: src/Admin/settings/ApiTokensTab.js:179
+#: src/Admin/settings/ApiTokensTab.js:195
 #, js-format
 msgid "API token \"%s\" revoked."
 msgstr "Jeton d’API « %s » révoqué."
 
-#: src/Admin/settings/ApiTokensTab.js:194
+#: src/Admin/settings/ApiTokensTab.js:210
 msgid "Failed to revoke API token."
 msgstr "Échec de la révocation du jeton API."
 
-#: src/Admin/settings/ApiTokensTab.js:206
+#: src/Admin/settings/ApiTokensTab.js:222
 #: src/Admin/settings/SettingsApp.js:228
 msgid "API Tokens"
 msgstr "Jetons API"
 
-#: src/Admin/settings/ApiTokensTab.js:209
-#: src/Admin/settings/ApiTokensTab.js:477
+#: src/Admin/settings/ApiTokensTab.js:225
+#: src/Admin/settings/ApiTokensTab.js:496
 msgid "Generate token"
 msgstr "Générer un jeton"
 
-#: src/Admin/settings/ApiTokensTab.js:214
+#: src/Admin/settings/ApiTokensTab.js:230
 msgid "Issue tokens so other sites can read this site's transactions over the data sharing API."
 msgstr "Émettez des jetons pour que d’autres sites puissent lire les transactions de ce site via l’API de partage de données."
 
-#: src/Admin/settings/ApiTokensTab.js:240
+#: src/Admin/settings/ApiTokensTab.js:256
 msgid "No API tokens yet. Generate one to share transactions with another site."
 msgstr "Aucun jeton d’API pour le moment. Générez-en un pour partager des transactions avec un autre site."
 
-#: src/Admin/settings/ApiTokensTab.js:252
-#: src/Admin/settings/ApiTokensTab.js:290
-#: src/Admin/settings/ApiTokensTab.js:402
+#: src/Admin/settings/ApiTokensTab.js:268
+#: src/Admin/settings/ApiTokensTab.js:306
+#: src/Admin/settings/ApiTokensTab.js:421
 msgid "Label"
 msgstr "Étiquette"
 
-#: src/Admin/settings/ApiTokensTab.js:255
-#: src/Admin/settings/ApiTokensTab.js:304
-#: src/Admin/settings/ApiTokensTab.js:417
+#: src/Admin/settings/ApiTokensTab.js:271
+#: src/Admin/settings/ApiTokensTab.js:320
+#: src/Admin/settings/ApiTokensTab.js:436
 msgid "Scopes"
 msgstr "Portées"
 
-#: src/Admin/settings/ApiTokensTab.js:267
-#: src/Admin/settings/ApiTokensTab.js:321
+#: src/Admin/settings/ApiTokensTab.js:283
+#: src/Admin/settings/ApiTokensTab.js:337
 msgid "Last used"
 msgstr "Dernière utilisation"
 
-#: src/Admin/settings/ApiTokensTab.js:279
+#: src/Admin/settings/ApiTokensTab.js:295
 msgid "Actions"
 msgstr "Actions"
 
-#: src/Admin/settings/ApiTokensTab.js:297
+#: src/Admin/settings/ApiTokensTab.js:313
 msgid "(no label)"
 msgstr "(sans libellé)"
 
-#: src/Admin/settings/ApiTokensTab.js:328
+#: src/Admin/settings/ApiTokensTab.js:344
 msgid "Never"
 msgstr "Jamais"
 
-#: src/Admin/settings/ApiTokensTab.js:347
+#: src/Admin/settings/ApiTokensTab.js:363
 msgid "Active"
 msgstr "Actif"
 
-#: src/Admin/settings/ApiTokensTab.js:351
+#: src/Admin/settings/ApiTokensTab.js:367
 msgid "Revoked"
 msgstr "Révoqué"
 
-#: src/Admin/settings/ApiTokensTab.js:372
+#: src/Admin/settings/ApiTokensTab.js:388
 msgid "Revoke"
 msgstr "Révoquer"
 
-#: src/Admin/settings/ApiTokensTab.js:388
+#: src/Admin/settings/ApiTokensTab.js:404
 msgid "Generate API token"
 msgstr "Générer un jeton d’API"
 
-#: src/Admin/settings/ApiTokensTab.js:407
+#: src/Admin/settings/ApiTokensTab.js:426
 msgid "A name to identify who this token is for, e.g. the address of the site that will use it."
 msgstr "Un nom pour identifier à qui ce jeton est destiné, par exemple l’adresse du site qui l’utilisera."
 
-#: src/Admin/settings/ApiTokensTab.js:448
+#: src/Admin/settings/ApiTokensTab.js:467
 msgid "Enter a label to generate the token."
 msgstr "Saisissez un libellé pour générer le jeton."
 
-#: src/Admin/settings/ApiTokensTab.js:452
+#: src/Admin/settings/ApiTokensTab.js:471
 msgid "Select at least one scope to generate the token."
 msgstr "Sélectionnez au moins une portée pour générer le jeton."
 
-#: src/Admin/settings/ApiTokensTab.js:473
+#: src/Admin/settings/ApiTokensTab.js:492
 msgid "Generating…"
 msgstr "Génération…"
 
-#: src/Admin/settings/ApiTokensTab.js:489
+#: src/Admin/settings/ApiTokensTab.js:508
 msgid "Token created"
 msgstr "Jeton créé"
 
-#: src/Admin/settings/ApiTokensTab.js:494
+#: src/Admin/settings/ApiTokensTab.js:513
 msgid "Copy this token now. For security it will not be shown again."
 msgstr "Copiez ce jeton maintenant. Pour des raisons de sécurité, il ne sera plus affiché."
 
-#: src/Admin/settings/ApiTokensTab.js:504
+#: src/Admin/settings/ApiTokensTab.js:523
 msgid "Copying failed. Select the token above and copy it manually."
 msgstr "La copie a échoué. Sélectionnez le jeton ci-dessus et copiez-le manuellement."
 
-#: src/Admin/settings/ApiTokensTab.js:513
+#: src/Admin/settings/ApiTokensTab.js:532
 msgid "Copied!"
 msgstr "Copié !"
 
-#: src/Admin/settings/ApiTokensTab.js:514
+#: src/Admin/settings/ApiTokensTab.js:533
 msgid "Copy token"
 msgstr "Copier le jeton"
 
-#: src/Admin/settings/ApiTokensTab.js:520
+#: src/Admin/settings/ApiTokensTab.js:539
 msgid "Done"
 msgstr "Terminé"
 
-#: src/Admin/settings/ApiTokensTab.js:528
+#: src/Admin/settings/ApiTokensTab.js:547
 msgid "Revoke API token"
 msgstr "Révoquer le jeton d’API"
 
 #. translators: %s: token label
-#: src/Admin/settings/ApiTokensTab.js:546
+#: src/Admin/settings/ApiTokensTab.js:565
 #, js-format
 msgid "Revoke the API token \"%s\"? Every site connected with it loses access to this site's transactions immediately. This cannot be undone."
 msgstr "Révoquer le jeton d’API « %s » ? Tous les sites connectés avec lui perdent immédiatement l’accès aux transactions de ce site. Cette action est irréversible."
 
-#: src/Admin/settings/ApiTokensTab.js:569
+#: src/Admin/settings/ApiTokensTab.js:588
 msgid "Revoking…"
 msgstr "Révocation…"
 
-#: src/Admin/settings/ApiTokensTab.js:570
+#: src/Admin/settings/ApiTokensTab.js:589
 msgid "Revoke token"
 msgstr "Révoquer le jeton"
 
@@ -2904,55 +2904,55 @@ msgstr "Impossible de récupérer le paiement : Mollie a renvoyé un paiement qu
 #: src/Admin/PaymentSetupNotice.php:57
 #, php-format
 msgid "Fair Payments Connector <strong>cannot read the stored Mollie connection</strong> — paid flows cannot accept payments until it is restored. <a href=\"%s\">Review the connection</a>."
-msgstr ""
+msgstr "Fair Payments Connector <strong>ne peut pas lire la connexion Mollie stockée</strong> — les flux payants ne peuvent pas accepter les paiements tant qu'elle n'est pas restaurée. <a href=\"%s\">Vérifier la connexion</a>."
 
 #: src/API/OAuthCallbackController.php:168
 msgid "The Mollie connection cannot be replaced while this server lacks the Sodium encryption support needed to store it. Ask your host to restore PHP Sodium support; the existing connection then resumes without reconnecting."
-msgstr ""
+msgstr "La connexion Mollie ne peut pas être remplacée tant que ce serveur ne dispose pas du support de chiffrement Sodium nécessaire pour la stocker. Demandez à votre hébergeur de restaurer le support PHP Sodium ; la connexion existante reprendra alors sans reconnexion."
 
 #: src/API/OAuthCallbackController.php:193
 msgid "The Mollie authorization could not be stored securely. Please try connecting again."
-msgstr ""
+msgstr "L'autorisation Mollie n'a pas pu être stockée de manière sécurisée. Veuillez réessayer de vous connecter."
 
-#: src/API/PaymentEndpoint.php:290
+#: src/API/PaymentEndpoint.php:307
 #: src/API/TransactionAPI.php:247
 #: src/blocks/simple-payment/render.php:112
 msgid "Online payment is temporarily unavailable. Please try again later or contact the organizer."
-msgstr ""
+msgstr "Le paiement en ligne est temporairement indisponible. Veuillez réessayer plus tard ou contacter l'organisateur."
 
 #: src/Payment/MollieCredentials.php:207
 #: src/Admin/settings/ConnectionTab.js:899
 msgid "Payments are paused: the Mollie connection is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; the connection then resumes without reconnecting."
-msgstr ""
+msgstr "Les paiements sont en pause : la connexion Mollie est stockée chiffrée, mais ce serveur ne fournit plus le support de chiffrement Sodium nécessaire pour la lire. Demandez à votre hébergeur de restaurer le support PHP Sodium ; la connexion reprendra alors sans reconnexion."
 
 #: src/Payment/MollieCredentials.php:211
 #: src/Admin/settings/ConnectionTab.js:921
 msgid "Payments are paused: the stored Mollie connection can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Reconnect to Mollie to resume payments."
-msgstr ""
+msgstr "Les paiements sont en pause : la connexion Mollie stockée ne peut plus être lue. Cela se produit lorsque les clés de sécurité du site changent ou que la base de données est déplacée vers un autre site. Reconnectez-vous à Mollie pour reprendre les paiements."
 
 #: src/Admin/settings/ConnectionTab.js:1253
 msgid "Reconnect and Refresh Connection are unavailable until encryption support is restored. Disconnecting stays possible."
-msgstr ""
+msgstr "Reconnecter et Actualiser la connexion ne sont pas disponibles tant que le support de chiffrement n'est pas restauré. La déconnexion reste possible."
 
 #: src/Admin/settings/ConnectionTab.js:1330
 msgid "Test payments are paused until the stored Mollie connection can be read again."
-msgstr ""
+msgstr "Les paiements de test sont en pause jusqu'à ce que la connexion Mollie stockée puisse être relue."
 
 #: src/Settings/TelegramCredentials.php:173
 msgid "Telegram notifications are paused: the bot token is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; notifications then resume without entering the token again."
-msgstr ""
+msgstr "Les notifications Telegram sont en pause : le jeton du bot est stocké chiffré, mais ce serveur ne fournit plus le support de chiffrement Sodium nécessaire pour le lire. Demandez à votre hébergeur de restaurer le support PHP Sodium ; les notifications reprendront alors sans entrer à nouveau le jeton."
 
 #: src/Settings/TelegramCredentials.php:177
 msgid "Telegram notifications are paused: the stored bot token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Enter the bot token again and save the settings."
-msgstr ""
+msgstr "Les notifications Telegram sont en pause : le jeton du bot stocké ne peut plus être lu. Cela se produit lorsque les clés de sécurité du site changent ou que la base de données est déplacée vers un autre site. Entrez à nouveau le jeton du bot et enregistrez les paramètres."
 
 #: src/Settings/TelegramCredentials.php:225
 msgid "The Telegram bot token could not be stored encrypted, so the previous token was kept. Try again."
-msgstr ""
+msgstr "Le jeton du bot Telegram n'a pas pu être stocké chiffré, donc le jeton précédent a été conservé. Réessayez."
 
 #: src/Admin/notifications/NotificationsTab.js:417
 msgid "From @BotFather. Stored encrypted in the site database when the server supports it; administrators can still view it here."
-msgstr ""
+msgstr "De @BotFather. Stocké chiffré dans la base de données du site lorsque le serveur le supporte ; les administrateurs peuvent toujours le consulter ici."
 
 #: src/Admin/transactions/components/ImportTransactionsModal.js:75
 msgid "The transactions could not be imported. Try again."
@@ -2973,3 +2973,16 @@ msgstr[1] "%1$s : %2$d transactions sont prêtes à être importées à nouveau.
 #: src/Admin/transactions/components/ImportTransactionsModal.js:255
 msgid "Retry import"
 msgstr "Réessayer l’importation"
+
+#: src/API/WebhookEndpoint.php:112
+msgid "Payment ID in webhook is invalid."
+msgstr "L'ID de paiement dans le webhook est invalide."
+
+#. translators: %d: number of seconds to wait
+#: src/Services/PublicEndpointRateLimiter.php:227
+#, php-format
+msgid "Too many requests. Please try again in %d second."
+msgid_plural "Too many requests. Please try again in %d seconds."
+msgstr[0] "Trop de requêtes. Veuillez réessayer dans %d seconde."
+msgstr[1] "Trop de requêtes. Veuillez réessayer dans %d secondes."
+

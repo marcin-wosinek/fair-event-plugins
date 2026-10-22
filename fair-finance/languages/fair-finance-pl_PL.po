@@ -42,7 +42,7 @@ msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
 #: src/Admin/AdminPages.php:45
-#: src/Admin/entries/EntriesApp.js:771
+#: src/Admin/entries/EntriesApp.js:741
 msgid "Financial Entries"
 msgstr "Wpisy finansowe"
 
@@ -51,7 +51,7 @@ msgid "Entries"
 msgstr "Wpisy"
 
 #: src/Admin/AdminPages.php:54
-#: src/Admin/budgets/BudgetsApp.js:263
+#: src/Admin/budgets/BudgetsApp.js:244
 msgid "Budget Categories"
 msgstr "Kategorie budżetu"
 
@@ -61,9 +61,9 @@ msgstr "Budżety"
 
 #: src/Admin/AdminPages.php:64
 #: src/Admin/AdminPages.php:65
-#: src/Admin/reconciliation/ReconciliationApp.js:529
-#: src/Admin/reconciliation/ReconciliationApp.js:540
-#: src/Admin/reconciliation/ReconciliationApp.js:1441
+#: src/Admin/reconciliation/ReconciliationApp.js:511
+#: src/Admin/reconciliation/ReconciliationApp.js:522
+#: src/Admin/reconciliation/ReconciliationApp.js:1411
 #: src/Admin/settlements/SettlementsApp.js:222
 msgid "Reconciliation"
 msgstr "Uzgodnianie"
@@ -95,17 +95,17 @@ msgid "Budget name is required."
 msgstr "Nazwa budżetu jest wymagana."
 
 #: src/API/BudgetController.php:206
-#: src/Admin/budgets/BudgetsApp.js:152
+#: src/Admin/budgets/BudgetsApp.js:139
 msgid "Failed to create budget."
 msgstr "Nie udało się utworzyć budżetu."
 
 #: src/API/BudgetController.php:250
-#: src/Admin/budgets/BudgetsApp.js:148
+#: src/Admin/budgets/BudgetsApp.js:138
 msgid "Failed to update budget."
 msgstr "Nie udało się zaktualizować budżetu."
 
 #: src/API/BudgetController.php:284
-#: src/Admin/budgets/BudgetsApp.js:105
+#: src/Admin/budgets/BudgetsApp.js:101
 msgid "Failed to delete budget."
 msgstr "Nie udało się usunąć budżetu."
 
@@ -348,7 +348,7 @@ msgid "Total allocations must match the original entry amount."
 msgstr "Całkowite alokacje muszą odpowiadać pierwotnej kwocie wpisu."
 
 #: src/API/FinancialEntryController.php:1268
-#: src/Admin/entries/components/SplitModal.js:280
+#: src/Admin/entries/components/SplitModal.js:279
 msgid "Failed to split entry."
 msgstr "Nie udało się podzielić wpisu."
 
@@ -366,7 +366,7 @@ msgid "Failed to update split."
 msgstr "Nie udało się zaktualizować podziału."
 
 #: src/API/FinancialEntryController.php:1417
-#: src/Admin/entries/EntriesApp.js:571
+#: src/Admin/entries/EntriesApp.js:556
 msgid "Failed to unsplit entry."
 msgstr "Nie udało się podzielić wpisu."
 
@@ -405,7 +405,7 @@ msgstr "Wymagane są zarówno budżety źródłowe, jak i docelowe."
 
 #: src/API/FinancialEntryController.php:1526
 #: src/API/FinancialEntryController.php:1628
-#: src/Admin/entries/components/TransferModal.js:213
+#: src/Admin/entries/components/TransferModal.js:203
 msgid "Source and target budgets must be different."
 msgstr "Budżety źródłowy i docelowy muszą być różne."
 
@@ -495,28 +495,28 @@ msgstr "koszt"
 msgid "income"
 msgstr "przychód"
 
-#: src/Admin/entries/components/EntryForm.js:139
-#: src/Admin/entries/components/ImportModal.js:298
-#: src/Admin/entries/components/SplitModal.js:329
+#: src/Admin/entries/components/EntryForm.js:138
+#: src/Admin/entries/components/ImportModal.js:275
+#: src/Admin/entries/components/SplitModal.js:325
 #: src/Admin/entries/components/TagChart.js:134
-#: src/Admin/entries/EntriesApp.js:986
-#: src/Admin/entries/EntriesApp.js:1228
-#: src/Admin/entries/EntriesApp.js:1709
+#: src/Admin/entries/EntriesApp.js:935
+#: src/Admin/entries/EntriesApp.js:1177
+#: src/Admin/entries/EntriesApp.js:1658
 msgid "Cost"
 msgstr "Koszt"
 
-#: src/Admin/entries/components/EntryForm.js:143
-#: src/Admin/entries/components/ImportModal.js:302
-#: src/Admin/entries/components/SplitModal.js:330
+#: src/Admin/entries/components/EntryForm.js:142
+#: src/Admin/entries/components/ImportModal.js:279
+#: src/Admin/entries/components/SplitModal.js:326
 #: src/Admin/entries/components/TagChart.js:150
-#: src/Admin/entries/EntriesApp.js:993
-#: src/Admin/entries/EntriesApp.js:1232
-#: src/Admin/entries/EntriesApp.js:1713
+#: src/Admin/entries/EntriesApp.js:942
+#: src/Admin/entries/EntriesApp.js:1181
+#: src/Admin/entries/EntriesApp.js:1662
 msgid "Income"
 msgstr "Przychód"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:945
+#: src/Admin/entries/EntriesApp.js:897
 msgid "Tag"
 msgstr "Tag"
 
@@ -524,7 +524,7 @@ msgstr "Tag"
 msgid "e.g. venue, catering, travel"
 msgstr "np. miejsce, catering, podróż"
 
-#: src/Admin/entries/EntriesApp.js:952
+#: src/Admin/entries/EntriesApp.js:904
 msgid "All Tags"
 msgstr "Wszystkie tagi"
 
@@ -532,12 +532,12 @@ msgstr "Wszystkie tagi"
 msgid "Administrator-reviewed budget to apply to the match, or null for no budget."
 msgstr "Budżet zatwierdzony przez administratora do zastosowania do dopasowania, lub null, jeśli nie ma budżetu."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:582
+#: src/Admin/reconciliation/ReconciliationApp.js:561
 #: src/Admin/settlements/components/MollieImportPanel.js:215
 msgid "Open Mollie connection settings"
 msgstr "Otwórz ustawienia połączenia Mollie"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:590
+#: src/Admin/reconciliation/ReconciliationApp.js:569
 msgid "Mollie has not authorized this site to read settlements yet, so they cannot be retrieved automatically. Reconnect to Mollie in the Fair Payments Connector settings to grant that permission. You can keep importing the settlement CSV in the meantime."
 msgstr "Mollie nie udzielił jeszcze tej witrynie uprawnień do odczytywania rozliczeń, dlatego nie mogą być pobierane automatycznie. Ponownie połącz się z Mollie w ustawieniach Fair Payments Connector, aby udzielić tego uprawnienia. W międzyczasie możesz importować plik CSV rozliczenia."
 
@@ -550,7 +550,7 @@ msgstr "Mollie nie udzielił jeszcze tej witrynie uprawnień do odczytywania roz
 msgid "Settlements"
 msgstr "Rozliczenia"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:546
+#: src/Admin/reconciliation/ReconciliationApp.js:528
 msgid "Saved settlements"
 msgstr "Zapisane rozliczenia"
 
@@ -604,7 +604,7 @@ msgstr "Potwierdź, skąd plik został wyeksportowany."
 msgid "The file could not be imported."
 msgstr "Nie można było zaimportować pliku."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:552
+#: src/Admin/reconciliation/ReconciliationApp.js:534
 #: src/Admin/settlements/components/CsvImportModal.js:186
 #: src/Admin/settlements/SettlementsApp.js:228
 msgid "Import settlement CSV"
@@ -696,14 +696,14 @@ msgstr[2] "%d wierszy"
 msgid "%1$s (%2$d)"
 msgstr "%1$s (%2$d)"
 
-#: src/Admin/budgets/BudgetsApp.js:617
-#: src/Admin/entries/components/EntryForm.js:233
-#: src/Admin/entries/components/ImportModal.js:340
-#: src/Admin/entries/components/MatchModal.js:290
-#: src/Admin/entries/components/SplitModal.js:533
-#: src/Admin/entries/components/TransferModal.js:252
+#: src/Admin/budgets/BudgetsApp.js:583
+#: src/Admin/entries/components/EntryForm.js:223
+#: src/Admin/entries/components/ImportModal.js:317
+#: src/Admin/entries/components/MatchModal.js:253
+#: src/Admin/entries/components/SplitModal.js:505
+#: src/Admin/entries/components/TransferModal.js:242
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1045
-#: src/Admin/reconciliation/components/SettlementImportModal.js:422
+#: src/Admin/reconciliation/components/SettlementImportModal.js:394
 #: src/Admin/settlements/components/CsvImportModal.js:416
 msgid "Cancel"
 msgstr "Anuluj"
@@ -770,7 +770,7 @@ msgid "← All settlements"
 msgstr "← Wszystkie rozliczenia"
 
 #. translators: %s: settlement reference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:260
+#: src/Admin/reconciliation/components/SettlementImportModal.js:244
 #: src/Admin/settlements/components/SettlementDetail.js:164
 #, js-format
 msgid "Settlement %s"
@@ -952,12 +952,12 @@ msgstr[2] "%d płatności nie znajduje się jeszcze w transakcjach tej witryny. 
 msgid "No movements are saved for this settlement."
 msgstr "Dla tego rozliczenia nie są zapisane żadne ruchy."
 
-#: src/Admin/entries/components/EntryForm.js:135
-#: src/Admin/entries/components/ImportModal.js:259
-#: src/Admin/entries/EntriesApp.js:972
-#: src/Admin/entries/EntriesApp.js:1130
+#: src/Admin/entries/components/EntryForm.js:134
+#: src/Admin/entries/components/ImportModal.js:239
+#: src/Admin/entries/EntriesApp.js:924
+#: src/Admin/entries/EntriesApp.js:1079
 #: src/Admin/entries/exportEntriesCsv.js:42
-#: src/Admin/reconciliation/ReconciliationApp.js:670
+#: src/Admin/reconciliation/ReconciliationApp.js:643
 #: src/Admin/settlements/components/SettlementDetail.js:588
 #: src/Admin/settlements/components/SettlementDetail.js:611
 #: src/Admin/settlements/components/SettlementDetail.js:845
@@ -970,20 +970,20 @@ msgstr "Typ"
 msgid "Reference"
 msgstr "Odnośnik"
 
-#: src/Admin/budgets/BudgetsApp.js:332
-#: src/Admin/budgets/BudgetsApp.js:369
-#: src/Admin/budgets/BudgetsApp.js:475
-#: src/Admin/budgets/BudgetsApp.js:595
-#: src/Admin/entries/components/EntryForm.js:182
-#: src/Admin/entries/components/ImportModal.js:273
-#: src/Admin/entries/components/MatchModal.js:213
-#: src/Admin/entries/components/SplitModal.js:433
-#: src/Admin/entries/components/TransferModal.js:167
-#: src/Admin/entries/EntriesApp.js:1142
+#: src/Admin/budgets/BudgetsApp.js:304
+#: src/Admin/budgets/BudgetsApp.js:341
+#: src/Admin/budgets/BudgetsApp.js:447
+#: src/Admin/budgets/BudgetsApp.js:564
+#: src/Admin/entries/components/EntryForm.js:175
+#: src/Admin/entries/components/ImportModal.js:250
+#: src/Admin/entries/components/MatchModal.js:191
+#: src/Admin/entries/components/SplitModal.js:414
+#: src/Admin/entries/components/TransferModal.js:163
+#: src/Admin/entries/EntriesApp.js:1091
 #: src/Admin/entries/exportEntriesCsv.js:44
-#: src/Admin/reconciliation/ReconciliationApp.js:676
-#: src/Admin/reconciliation/ReconciliationApp.js:1085
-#: src/Admin/reconciliation/ReconciliationApp.js:1323
+#: src/Admin/reconciliation/ReconciliationApp.js:646
+#: src/Admin/reconciliation/ReconciliationApp.js:1055
+#: src/Admin/reconciliation/ReconciliationApp.js:1293
 #: src/Admin/settlements/components/SettlementDetail.js:593
 #: src/Admin/settlements/components/SettlementDetail.js:678
 #: src/Admin/settlements/components/SettlementDetail.js:847
@@ -993,32 +993,32 @@ msgstr "Odnośnik"
 msgid "Description"
 msgstr "Opis"
 
-#: src/Admin/entries/components/EntryForm.js:172
-#: src/Admin/entries/components/ImportModal.js:253
-#: src/Admin/entries/components/MatchModal.js:204
-#: src/Admin/entries/components/TransferModal.js:157
-#: src/Admin/entries/EntriesApp.js:1124
+#: src/Admin/entries/components/EntryForm.js:165
+#: src/Admin/entries/components/ImportModal.js:236
+#: src/Admin/entries/components/MatchModal.js:189
+#: src/Admin/entries/components/TransferModal.js:153
+#: src/Admin/entries/EntriesApp.js:1073
 #: src/Admin/entries/exportEntriesCsv.js:41
-#: src/Admin/reconciliation/ReconciliationApp.js:658
-#: src/Admin/reconciliation/ReconciliationApp.js:1067
-#: src/Admin/reconciliation/ReconciliationApp.js:1311
+#: src/Admin/reconciliation/ReconciliationApp.js:634
+#: src/Admin/reconciliation/ReconciliationApp.js:1037
+#: src/Admin/reconciliation/ReconciliationApp.js:1281
 #: src/Admin/settlements/components/SettlementDetail.js:595
 #: src/Admin/settlements/components/SettlementDetail.js:690
 msgid "Date"
 msgstr "Data"
 
-#: src/Admin/entries/components/EntryForm.js:156
-#: src/Admin/entries/components/ImportModal.js:267
-#: src/Admin/entries/components/MatchModal.js:207
-#: src/Admin/entries/components/SplitModal.js:399
-#: src/Admin/entries/components/TransferModal.js:141
-#: src/Admin/entries/EntriesApp.js:1136
+#: src/Admin/entries/components/EntryForm.js:152
+#: src/Admin/entries/components/ImportModal.js:244
+#: src/Admin/entries/components/MatchModal.js:190
+#: src/Admin/entries/components/SplitModal.js:386
+#: src/Admin/entries/components/TransferModal.js:140
+#: src/Admin/entries/EntriesApp.js:1085
 #: src/Admin/entries/exportEntriesCsv.js:43
 #: src/Admin/reconciliation/components/AllocationProposal.js:62
 #: src/Admin/reconciliation/components/AllocationProposal.js:94
-#: src/Admin/reconciliation/ReconciliationApp.js:664
-#: src/Admin/reconciliation/ReconciliationApp.js:1073
-#: src/Admin/reconciliation/ReconciliationApp.js:1317
+#: src/Admin/reconciliation/ReconciliationApp.js:637
+#: src/Admin/reconciliation/ReconciliationApp.js:1043
+#: src/Admin/reconciliation/ReconciliationApp.js:1287
 #: src/Admin/settlements/components/SettlementDetail.js:596
 #: src/Admin/settlements/components/SettlementDetail.js:701
 #: src/Admin/settlements/components/SettlementDetail.js:849
@@ -1118,12 +1118,12 @@ msgstr[0] "Strona %1$d z %2$d (%3$d osada)"
 msgstr[1] "Strona %1$d z %2$d (%3$d osady)"
 msgstr[2] "Strona %1$d z %2$d (%3$d osad)"
 
-#: src/Admin/entries/EntriesApp.js:1885
+#: src/Admin/entries/EntriesApp.js:1834
 #: src/Admin/settlements/components/SettlementList.js:251
 msgid "Previous"
 msgstr "Poprzednia"
 
-#: src/Admin/entries/EntriesApp.js:1916
+#: src/Admin/entries/EntriesApp.js:1865
 #: src/Admin/settlements/components/SettlementList.js:258
 msgid "Next"
 msgstr "Następna"
@@ -1551,22 +1551,22 @@ msgstr "Import nie mógł być kontynuowany. Poniżej pokazany jest jego ostatni
 msgid "Focus on a single entry by ID; other filters are ignored."
 msgstr "Skoncentruj się na pojedynczym wpisie według identyfikatora; inne filtry są ignorowane."
 
-#: src/Admin/entries/EntriesApp.js:829
+#: src/Admin/entries/EntriesApp.js:784
 msgid "Show all entries"
 msgstr "Pokaż wszystkie wpisy"
 
-#: src/Admin/entries/EntriesApp.js:839
+#: src/Admin/entries/EntriesApp.js:794
 msgid "This entry link is not valid."
 msgstr "Ten odnośnik wpisu nie jest prawidłowy."
 
 #. translators: %d: financial entry ID.
-#: src/Admin/entries/EntriesApp.js:845
+#: src/Admin/entries/EntriesApp.js:800
 #, js-format
 msgid "Showing entry #%d"
 msgstr "Wyświetlanie wpisu #%d"
 
 #. translators: %d: financial entry ID.
-#: src/Admin/entries/EntriesApp.js:1102
+#: src/Admin/entries/EntriesApp.js:1051
 #, js-format
 msgid "Entry #%d was not found. It may have been deleted."
 msgstr "Wpis #%d nie został znaleziony. Może został usunięty."
@@ -1907,12 +1907,12 @@ msgid "Suggestions are ranked by reference, confirmed account and currency, exac
 msgstr "Sugestie są uszeregowane według referencji, potwierdzonego konta i waluty, dokładnej kwoty i daty. Wybierz wpis sam; samo dopasowanie kwot nie ustanawia waluty ani konta."
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:551
-#: src/Admin/reconciliation/ReconciliationApp.js:632
+#: src/Admin/reconciliation/ReconciliationApp.js:608
 msgid "Filter by description"
 msgstr "Filtruj po opisie"
 
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:554
-#: src/Admin/reconciliation/ReconciliationApp.js:638
+#: src/Admin/reconciliation/ReconciliationApp.js:614
 msgid "Type to filter…"
 msgstr "Wpisz, aby filtrować…"
 
@@ -2040,7 +2040,7 @@ msgstr "Użyj proponowanego budżetu każdej transakcji"
 
 #: src/Admin/reconciliation/components/AllocationProposal.js:33
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:839
-#: src/Admin/reconciliation/ReconciliationApp.js:987
+#: src/Admin/reconciliation/ReconciliationApp.js:957
 msgid "No budget"
 msgstr "Brak budżetu"
 
@@ -2107,7 +2107,7 @@ msgid "This bank entry has conflicting confirmed account or currency context."
 msgstr "Ten wpis bankowy ma konfliktowy potwierdzony kontekst konta lub waluty."
 
 #: src/Admin/reconciliation/ReconciliationApp.js:160
-#: src/Admin/reconciliation/ReconciliationApp.js:1280
+#: src/Admin/reconciliation/ReconciliationApp.js:1250
 msgid "Review settlement"
 msgstr "Przejrzyj rozliczenie"
 
@@ -2116,7 +2116,7 @@ msgid "Previous suggestions"
 msgstr "Poprzednie sugestie"
 
 #. translators: 1: current page, 2: number of pages.
-#: src/Admin/entries/EntriesApp.js:1891
+#: src/Admin/entries/EntriesApp.js:1840
 #: src/Admin/reconciliation/ReconciliationApp.js:178
 #, js-format
 msgid "Page %1$d of %2$d"
@@ -2126,16 +2126,16 @@ msgstr "Strona %1$d z %2$d"
 msgid "Next suggestions"
 msgstr "Następne sugestie"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:375
+#: src/Admin/reconciliation/ReconciliationApp.js:372
 msgid "Saved settlement suggestions could not be loaded."
 msgstr "Zapisane sugestie rozliczenia nie mogły zostać wczytane."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:801
+#: src/Admin/reconciliation/ReconciliationApp.js:771
 msgid "Suggested settlements"
 msgstr "Sugerowane rozliczenia"
 
 #. translators: 1: payout reference or settlement ID, 2: payout amount and currency, 3: reconciliation state.
-#: src/Admin/reconciliation/ReconciliationApp.js:1252
+#: src/Admin/reconciliation/ReconciliationApp.js:1222
 #, js-format
 msgid "Settlement %1$s · %2$s · %3$s"
 msgstr "Rozliczenie %1$s · %2$s · %3$s"
@@ -2267,21 +2267,21 @@ msgstr "Alokacja"
 msgid "Event"
 msgstr "Wydarzenie"
 
-#: src/Admin/entries/components/SplitModal.js:382
-#: src/Admin/entries/EntriesApp.js:886
-#: src/Admin/entries/EntriesApp.js:1148
+#: src/Admin/entries/components/SplitModal.js:372
+#: src/Admin/entries/EntriesApp.js:841
+#: src/Admin/entries/EntriesApp.js:1097
 #: src/Admin/entries/exportEntriesCsv.js:45
 #: src/Admin/reconciliation/components/AllocationProposal.js:64
 #: src/Admin/reconciliation/components/AllocationProposal.js:120
-#: src/Admin/reconciliation/ReconciliationApp.js:975
+#: src/Admin/reconciliation/ReconciliationApp.js:945
 msgid "Budget"
 msgstr "Budżet"
 
-#: src/Admin/budgets/BudgetsApp.js:376
-#: src/Admin/entries/components/MatchModal.js:250
+#: src/Admin/budgets/BudgetsApp.js:348
+#: src/Admin/entries/components/MatchModal.js:216
 #: src/Admin/reconciliation/components/AllocationProposal.js:77
-#: src/Admin/reconciliation/ReconciliationApp.js:718
-#: src/Admin/reconciliation/ReconciliationApp.js:1149
+#: src/Admin/reconciliation/ReconciliationApp.js:688
+#: src/Admin/reconciliation/ReconciliationApp.js:1119
 msgid "No description"
 msgstr "Brak opisu"
 
@@ -2294,13 +2294,13 @@ msgid "No event link"
 msgstr "Brak odnośnika do wydarzenia"
 
 #. translators: %d: number of allocations created.
-#: src/Admin/reconciliation/components/AllocationProposal.js:153
+#: src/Admin/reconciliation/components/AllocationProposal.js:150
 #, js-format
 msgid "Transactions matched and the entry was split into %d allocations."
 msgstr "Transakcje dopasowane i wpis został podzielony na %d alokacji."
 
 #. translators: %s: why no split was created.
-#: src/Admin/reconciliation/components/AllocationProposal.js:163
+#: src/Admin/reconciliation/components/AllocationProposal.js:160
 #, js-format
 msgid "Transactions matched. The allocation still needs review: %s"
 msgstr "Transakcje dopasowane. Alokacja wymaga przeglądu: %s"
@@ -2341,159 +2341,159 @@ msgstr "Wczytuj pliki .mo/.json dołączone do wtyczki zamiast polegać na pakie
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Wymuszony przez stałą wp-config — zmień go tam."
 
-#: src/Admin/budgets/BudgetsApp.js:53
+#: src/Admin/budgets/BudgetsApp.js:52
 msgid "Failed to load budgets."
 msgstr "Nie udało się załadować budżetów."
 
-#: src/Admin/budgets/BudgetsApp.js:81
+#: src/Admin/budgets/BudgetsApp.js:80
 msgid "Are you sure you want to delete this budget? Financial entries will be unlinked but not deleted."
 msgstr "Czy na pewno chcesz usunąć ten budżet? Wpisy finansowe zostaną odłączone, ale nie usunięte."
 
-#: src/Admin/budgets/BudgetsApp.js:99
+#: src/Admin/budgets/BudgetsApp.js:97
 msgid "Budget deleted successfully."
 msgstr "Budżet został pomyślnie usunięty."
 
-#: src/Admin/budgets/BudgetsApp.js:123
+#: src/Admin/budgets/BudgetsApp.js:119
 msgid "Budget updated successfully."
 msgstr "Budżet został pomyślnie zaktualizowany."
 
-#: src/Admin/budgets/BudgetsApp.js:135
+#: src/Admin/budgets/BudgetsApp.js:128
 msgid "Budget created successfully."
 msgstr "Budżet został pomyślnie utworzony."
 
-#: src/Admin/budgets/BudgetsApp.js:229
+#: src/Admin/budgets/BudgetsApp.js:213
 msgid "Unbudgeted Costs"
 msgstr "Koszty bez budżetu"
 
-#: src/Admin/budgets/BudgetsApp.js:247
+#: src/Admin/budgets/BudgetsApp.js:228
 msgid "Unbudgeted Income"
 msgstr "Dochód bez budżetu"
 
-#: src/Admin/budgets/BudgetsApp.js:269
-#: src/Admin/budgets/BudgetsApp.js:576
+#: src/Admin/budgets/BudgetsApp.js:247
+#: src/Admin/budgets/BudgetsApp.js:548
 msgid "Add New Budget"
 msgstr "Dodaj nowy budżet"
 
-#: src/Admin/budgets/BudgetsApp.js:302
+#: src/Admin/budgets/BudgetsApp.js:277
 msgid "Loading budgets..."
 msgstr "Ładowanie budżetów..."
 
-#: src/Admin/budgets/BudgetsApp.js:313
+#: src/Admin/budgets/BudgetsApp.js:288
 msgid "No budget categories found. Create your first budget category to organize your costs and income."
 msgstr "Nie znaleziono kategorii budżetu. Utwórz pierwszą kategorię budżetu, aby zorganizować swoje koszty i przychody."
 
-#: src/Admin/budgets/BudgetsApp.js:326
-#: src/Admin/budgets/BudgetsApp.js:359
-#: src/Admin/budgets/BudgetsApp.js:462
-#: src/Admin/budgets/BudgetsApp.js:584
+#: src/Admin/budgets/BudgetsApp.js:301
+#: src/Admin/budgets/BudgetsApp.js:331
+#: src/Admin/budgets/BudgetsApp.js:434
+#: src/Admin/budgets/BudgetsApp.js:556
 msgid "Name"
 msgstr "Nazwa"
 
-#: src/Admin/budgets/BudgetsApp.js:338
-#: src/Admin/budgets/BudgetsApp.js:384
-#: src/Admin/budgets/BudgetsApp.js:488
-#: src/Admin/entries/EntriesApp.js:746
+#: src/Admin/budgets/BudgetsApp.js:310
+#: src/Admin/budgets/BudgetsApp.js:356
+#: src/Admin/budgets/BudgetsApp.js:460
+#: src/Admin/entries/EntriesApp.js:719
 msgid "Balance"
 msgstr "Saldo"
 
-#: src/Admin/budgets/BudgetsApp.js:344
-#: src/Admin/budgets/BudgetsApp.js:406
-#: src/Admin/budgets/BudgetsApp.js:509
-#: src/Admin/entries/EntriesApp.js:1174
+#: src/Admin/budgets/BudgetsApp.js:316
+#: src/Admin/budgets/BudgetsApp.js:378
+#: src/Admin/budgets/BudgetsApp.js:481
+#: src/Admin/entries/EntriesApp.js:1123
 msgid "Actions"
 msgstr "Akcje"
 
-#: src/Admin/budgets/BudgetsApp.js:420
-#: src/Admin/budgets/BudgetsApp.js:519
+#: src/Admin/budgets/BudgetsApp.js:392
+#: src/Admin/budgets/BudgetsApp.js:491
 msgid "View"
 msgstr "Wyświetl"
 
-#: src/Admin/budgets/BudgetsApp.js:434
-#: src/Admin/entries/EntriesApp.js:1548
-#: src/Admin/entries/EntriesApp.js:1587
+#: src/Admin/budgets/BudgetsApp.js:406
+#: src/Admin/entries/EntriesApp.js:1497
+#: src/Admin/entries/EntriesApp.js:1536
 msgid "Edit"
 msgstr "Edytuj"
 
-#: src/Admin/budgets/BudgetsApp.js:449
-#: src/Admin/entries/EntriesApp.js:1563
-#: src/Admin/entries/EntriesApp.js:1671
+#: src/Admin/budgets/BudgetsApp.js:421
+#: src/Admin/entries/EntriesApp.js:1512
+#: src/Admin/entries/EntriesApp.js:1620
 msgid "Delete"
 msgstr "Usuń"
 
-#: src/Admin/budgets/BudgetsApp.js:468
-#: src/Admin/entries/EntriesApp.js:676
+#: src/Admin/budgets/BudgetsApp.js:440
+#: src/Admin/entries/EntriesApp.js:655
 msgid "Unbudgeted"
 msgstr "Bez budżetu"
 
-#: src/Admin/budgets/BudgetsApp.js:481
+#: src/Admin/budgets/BudgetsApp.js:453
 msgid "Entries without a budget category"
 msgstr "Wpisy bez kategorii budżetu"
 
-#: src/Admin/budgets/BudgetsApp.js:535
-#: src/Admin/budgets/BudgetsApp.js:541
+#: src/Admin/budgets/BudgetsApp.js:507
+#: src/Admin/budgets/BudgetsApp.js:513
 msgid "Total"
 msgstr "Razem"
 
-#: src/Admin/budgets/BudgetsApp.js:575
+#: src/Admin/budgets/BudgetsApp.js:547
 msgid "Edit Budget"
 msgstr "Edytuj budżet"
 
-#: src/Admin/budgets/BudgetsApp.js:606
+#: src/Admin/budgets/BudgetsApp.js:572
 msgid "Optional description for this budget category"
 msgstr "Opcjonalny opis dla tej kategorii budżetu"
 
-#: src/Admin/budgets/BudgetsApp.js:629
+#: src/Admin/budgets/BudgetsApp.js:592
 msgid "Update Budget"
 msgstr "Zaktualizuj budżet"
 
-#: src/Admin/budgets/BudgetsApp.js:633
+#: src/Admin/budgets/BudgetsApp.js:593
 msgid "Create Budget"
 msgstr "Utwórz budżet"
 
-#: src/Admin/entries/components/EntryForm.js:95
+#: src/Admin/entries/components/EntryForm.js:94
 msgid "Failed to save entry."
 msgstr "Nie udało się zapisać wpisu."
 
-#: src/Admin/entries/components/EntryForm.js:104
+#: src/Admin/entries/components/EntryForm.js:103
 #: src/Admin/entries/components/SplitModal.js:209
 msgid "-- No Budget --"
 msgstr "-- Brak budżetu --"
 
-#: src/Admin/entries/components/EntryForm.js:117
+#: src/Admin/entries/components/EntryForm.js:116
 msgid "Edit Financial Entry"
 msgstr "Edytuj wpis finansowy"
 
-#: src/Admin/entries/components/EntryForm.js:118
+#: src/Admin/entries/components/EntryForm.js:117
 msgid "Add Financial Entry"
 msgstr "Dodaj wpis finansowy"
 
-#: src/Admin/entries/components/EntryForm.js:165
-#: src/Admin/entries/components/TransferModal.js:150
+#: src/Admin/entries/components/EntryForm.js:161
+#: src/Admin/entries/components/TransferModal.js:149
 msgid "Enter amount in EUR"
 msgstr "Wpisz kwotę w EUR"
 
-#: src/Admin/entries/components/EntryForm.js:187
+#: src/Admin/entries/components/EntryForm.js:180
 msgid "Optional description for this entry"
 msgstr "Opcjonalny opis tego wpisu"
 
-#: src/Admin/entries/components/EntryForm.js:194
+#: src/Admin/entries/components/EntryForm.js:187
 msgid "Budget Category"
 msgstr "Kategoria budżetu"
 
-#: src/Admin/entries/components/EntryForm.js:246
+#: src/Admin/entries/components/EntryForm.js:236
 msgid "Update Entry"
 msgstr "Zaktualizuj wpis"
 
-#: src/Admin/entries/components/EntryForm.js:250
+#: src/Admin/entries/components/EntryForm.js:237
 msgid "Create Entry"
 msgstr "Utwórz wpis"
 
 #: src/Admin/entries/components/EventUrlField.js:61
 #: src/Admin/entries/components/EventUrlField.js:88
-#: src/Admin/entries/components/SplitModal.js:456
-#: src/Admin/entries/EntriesApp.js:902
-#: src/Admin/entries/EntriesApp.js:929
-#: src/Admin/entries/EntriesApp.js:1155
+#: src/Admin/entries/components/SplitModal.js:434
+#: src/Admin/entries/EntriesApp.js:854
+#: src/Admin/entries/EntriesApp.js:881
+#: src/Admin/entries/EntriesApp.js:1104
 msgid "Link"
 msgstr "Link"
 
@@ -2512,58 +2512,58 @@ msgstr "Wyszukaj wydarzenia lub wklej adres URL..."
 msgid "Use this URL"
 msgstr "Użyj tego adresu URL"
 
-#: src/Admin/entries/components/ImportModal.js:55
-#: src/Admin/readSpreadsheet.js:33
-#: src/Admin/reconciliation/components/SettlementImportModal.js:74
+#: src/Admin/entries/components/ImportModal.js:54
+#: src/Admin/readSpreadsheet.js:32
+#: src/Admin/reconciliation/components/SettlementImportModal.js:73
 msgid "Failed to parse file."
 msgstr "Nie udało się przeanalizować pliku."
 
-#: src/Admin/entries/components/ImportModal.js:98
+#: src/Admin/entries/components/ImportModal.js:96
 msgid "Failed to import entries."
 msgstr "Nie udało się zaimportować wpisów."
 
-#: src/Admin/entries/components/ImportModal.js:123
+#: src/Admin/entries/components/ImportModal.js:121
 msgid "Import Financial Entries"
 msgstr "Importuj wpisy finansowe"
 
-#: src/Admin/entries/components/ImportModal.js:148
+#: src/Admin/entries/components/ImportModal.js:143
 msgid "Select an Excel file (.xlsx) to import financial entries. The file should have columns for date, description, and amount."
 msgstr "Wybierz plik Excel (.xlsx) do importu wpisów finansowych. Plik powinien zawierać kolumny dla daty, opisu i kwoty."
 
-#: src/Admin/entries/components/ImportModal.js:155
+#: src/Admin/entries/components/ImportModal.js:150
 msgid "Note: Duplicate entries will be automatically skipped."
 msgstr "Uwaga: Zduplikowane wpisy będą automatycznie pomijane."
 
-#: src/Admin/entries/components/ImportModal.js:177
+#: src/Admin/entries/components/ImportModal.js:171
 msgid "Parsing file..."
 msgstr "Analizowanie pliku..."
 
-#: src/Admin/entries/components/ImportModal.js:194
+#: src/Admin/entries/components/ImportModal.js:184
 msgid "Preview"
 msgstr "Podgląd"
 
-#: src/Admin/entries/components/ImportModal.js:198
+#: src/Admin/entries/components/ImportModal.js:188
 msgid "Total entries:"
 msgstr "Łączna liczba wpisów:"
 
-#: src/Admin/entries/components/ImportModal.js:207
+#: src/Admin/entries/components/ImportModal.js:193
 msgid "Costs:"
 msgstr "Koszty:"
 
-#: src/Admin/entries/components/ImportModal.js:214
+#: src/Admin/entries/components/ImportModal.js:198
 msgid "Income:"
 msgstr "Przychody:"
 
-#: src/Admin/entries/components/ImportModal.js:221
+#: src/Admin/entries/components/ImportModal.js:204
 msgid "Balance:"
 msgstr "Saldo:"
 
-#: src/Admin/entries/components/ImportModal.js:238
+#: src/Admin/entries/components/ImportModal.js:221
 msgid "Entries to import:"
 msgstr "Wpisy do importu:"
 
-#: src/Admin/entries/components/ImportModal.js:353
-#: src/Admin/entries/EntriesApp.js:799
+#: src/Admin/entries/components/ImportModal.js:330
+#: src/Admin/entries/EntriesApp.js:760
 msgid "Import"
 msgstr "Importuj"
 
@@ -2571,53 +2571,53 @@ msgstr "Importuj"
 msgid "Failed to load transactions."
 msgstr "Nie udało się załadować transakcji."
 
-#: src/Admin/entries/components/MatchModal.js:76
+#: src/Admin/entries/components/MatchModal.js:73
 msgid "Failed to search transactions."
 msgstr "Nie udało się wyszukać transakcji."
 
-#: src/Admin/entries/components/MatchModal.js:103
+#: src/Admin/entries/components/MatchModal.js:97
 msgid "Failed to match transaction."
 msgstr "Nie udało się dopasować transakcji."
 
-#: src/Admin/entries/components/MatchModal.js:121
+#: src/Admin/entries/components/MatchModal.js:112
 msgid "Match to Transaction"
 msgstr "Dopasuj do transakcji"
 
-#: src/Admin/entries/components/MatchModal.js:135
+#: src/Admin/entries/components/MatchModal.js:125
 msgid "Entry:"
 msgstr "Wpis:"
 
-#: src/Admin/entries/components/MatchModal.js:145
-#: src/Admin/entries/components/MatchModal.js:160
+#: src/Admin/entries/components/MatchModal.js:134
+#: src/Admin/entries/components/MatchModal.js:149
 msgid "Search"
 msgstr "Szukaj"
 
-#: src/Admin/entries/components/MatchModal.js:148
+#: src/Admin/entries/components/MatchModal.js:137
 msgid "Search by description or Mollie ID..."
 msgstr "Wyszukaj po opisie lub ID Mollie..."
 
-#: src/Admin/entries/components/MatchModal.js:177
+#: src/Admin/entries/components/MatchModal.js:166
 msgid "Loading transactions..."
 msgstr "Ładowanie transakcji..."
 
-#: src/Admin/entries/components/MatchModal.js:188
+#: src/Admin/entries/components/MatchModal.js:174
 msgid "No matching transactions found. Try adjusting your search."
 msgstr "Nie znaleziono pasujących transakcji. Spróbuj dostosować wyszukiwanie."
 
-#: src/Admin/entries/components/MatchModal.js:219
-#: src/Admin/reconciliation/ReconciliationApp.js:1091
-#: src/Admin/reconciliation/ReconciliationApp.js:1329
+#: src/Admin/entries/components/MatchModal.js:192
+#: src/Admin/reconciliation/ReconciliationApp.js:1061
+#: src/Admin/reconciliation/ReconciliationApp.js:1299
 msgid "Mollie ID"
 msgstr "ID Mollie"
 
-#: src/Admin/entries/components/MatchModal.js:225
-#: src/Admin/reconciliation/ReconciliationApp.js:682
-#: src/Admin/reconciliation/ReconciliationApp.js:1339
+#: src/Admin/entries/components/MatchModal.js:194
+#: src/Admin/reconciliation/ReconciliationApp.js:652
+#: src/Admin/reconciliation/ReconciliationApp.js:1309
 msgid "Action"
 msgstr "Akcja"
 
-#: src/Admin/entries/components/MatchModal.js:272
-#: src/Admin/entries/EntriesApp.js:1652
+#: src/Admin/entries/components/MatchModal.js:238
+#: src/Admin/entries/EntriesApp.js:1601
 msgid "Match"
 msgstr "Dopasuj"
 
@@ -2627,7 +2627,7 @@ msgid "Participant"
 msgstr "Uczestnik"
 
 #: src/Admin/entries/components/ParticipantField.js:109
-#: src/Admin/entries/components/SplitModal.js:424
+#: src/Admin/entries/components/SplitModal.js:408
 msgid "Remove"
 msgstr "Usuń"
 
@@ -2635,58 +2635,58 @@ msgstr "Usuń"
 msgid "Search by name or email…"
 msgstr "Szukaj po nazwie lub e-mailu…"
 
-#: src/Admin/entries/components/ParticipantField.js:126
+#: src/Admin/entries/components/ParticipantField.js:123
 msgid "Link this transfer to a participant"
 msgstr "Powiąż ten transfer z uczestnikiem"
 
-#: src/Admin/entries/components/ParticipantField.js:200
+#: src/Admin/entries/components/ParticipantField.js:197
 msgid "No participants found."
 msgstr "Nie znaleziono uczestników."
 
-#: src/Admin/entries/components/SplitModal.js:298
-#: src/Admin/entries/EntriesApp.js:1527
-#: src/Admin/entries/EntriesApp.js:1602
+#: src/Admin/entries/components/SplitModal.js:297
+#: src/Admin/entries/EntriesApp.js:1476
+#: src/Admin/entries/EntriesApp.js:1551
 msgid "Edit Split"
 msgstr "Edytuj podział"
 
-#: src/Admin/entries/components/SplitModal.js:299
-#: src/Admin/entries/components/SplitModal.js:550
+#: src/Admin/entries/components/SplitModal.js:298
+#: src/Admin/entries/components/SplitModal.js:519
 msgid "Split Entry"
 msgstr "Podziel wpis"
 
-#: src/Admin/entries/components/SplitModal.js:317
+#: src/Admin/entries/components/SplitModal.js:316
 msgid "Amount:"
 msgstr "Kwota:"
 
-#: src/Admin/entries/components/SplitModal.js:326
+#: src/Admin/entries/components/SplitModal.js:322
 msgid "Type:"
 msgstr "Typ:"
 
-#: src/Admin/entries/components/SplitModal.js:337
+#: src/Admin/entries/components/SplitModal.js:330
 msgid "Date:"
 msgstr "Data:"
 
-#: src/Admin/entries/components/SplitModal.js:345
+#: src/Admin/entries/components/SplitModal.js:338
 msgid "Description:"
 msgstr "Opis:"
 
-#: src/Admin/entries/components/SplitModal.js:482
+#: src/Admin/entries/components/SplitModal.js:457
 msgid "+ Add Row"
 msgstr "+ Dodaj wiersz"
 
-#: src/Admin/entries/components/SplitModal.js:494
+#: src/Admin/entries/components/SplitModal.js:469
 msgid "Allocated:"
 msgstr "Przydzielono:"
 
-#: src/Admin/entries/components/SplitModal.js:504
+#: src/Admin/entries/components/SplitModal.js:479
 msgid "Remaining:"
 msgstr "Pozostało:"
 
-#: src/Admin/entries/components/SplitModal.js:524
+#: src/Admin/entries/components/SplitModal.js:496
 msgid "Unsplit"
 msgstr "Cofnij podział"
 
-#: src/Admin/entries/components/SplitModal.js:546
+#: src/Admin/entries/components/SplitModal.js:518
 msgid "Update Split"
 msgstr "Aktualizuj podział"
 
@@ -2694,223 +2694,223 @@ msgstr "Aktualizuj podział"
 msgid "-- Select Budget --"
 msgstr "-- Wybierz budżet --"
 
-#: src/Admin/entries/components/TransferModal.js:112
+#: src/Admin/entries/components/TransferModal.js:111
 msgid "Failed to save transfer."
 msgstr "Nie udało się zapisać transferu."
 
-#: src/Admin/entries/components/TransferModal.js:123
+#: src/Admin/entries/components/TransferModal.js:122
 msgid "Edit Transfer"
 msgstr "Edytuj transfer"
 
-#: src/Admin/entries/components/TransferModal.js:124
+#: src/Admin/entries/components/TransferModal.js:123
 msgid "New Transfer"
 msgstr "Nowy transfer"
 
-#: src/Admin/entries/components/TransferModal.js:172
+#: src/Admin/entries/components/TransferModal.js:168
 msgid "Optional description for this transfer"
 msgstr "Opcjonalny opis tego transferu"
 
-#: src/Admin/entries/components/TransferModal.js:179
+#: src/Admin/entries/components/TransferModal.js:175
 msgid "From Budget (Source)"
 msgstr "Z budżetu (źródło)"
 
-#: src/Admin/entries/components/TransferModal.js:194
+#: src/Admin/entries/components/TransferModal.js:187
 msgid "To Budget (Target)"
 msgstr "Do budżetu (cel)"
 
-#: src/Admin/entries/components/TransferModal.js:268
+#: src/Admin/entries/components/TransferModal.js:258
 msgid "Update Transfer"
 msgstr "Zaktualizuj transfer"
 
-#: src/Admin/entries/components/TransferModal.js:272
+#: src/Admin/entries/components/TransferModal.js:259
 msgid "Create Transfer"
 msgstr "Utwórz transfer"
 
-#: src/Admin/entries/EntriesApp.js:313
+#: src/Admin/entries/EntriesApp.js:312
 msgid "Failed to load entries."
 msgstr "Nie udało się załadować wpisów."
 
-#: src/Admin/entries/EntriesApp.js:374
+#: src/Admin/entries/EntriesApp.js:372
 msgid "Failed to export entries."
 msgstr "Nie udało się wyeksportować wpisów."
 
-#: src/Admin/entries/EntriesApp.js:394
+#: src/Admin/entries/EntriesApp.js:392
 msgid "Are you sure you want to delete this entry?"
 msgstr "Czy na pewno chcesz usunąć ten wpis?"
 
-#: src/Admin/entries/EntriesApp.js:412
+#: src/Admin/entries/EntriesApp.js:409
 msgid "Entry deleted successfully."
 msgstr "Wpis został pomyślnie usunięty."
 
-#: src/Admin/entries/EntriesApp.js:423
+#: src/Admin/entries/EntriesApp.js:418
 msgid "Failed to delete entry."
 msgstr "Nie udało się usunąć wpisu."
 
-#: src/Admin/entries/EntriesApp.js:433
+#: src/Admin/entries/EntriesApp.js:428
 msgid "Entry updated successfully."
 msgstr "Wpis został pomyślnie zaktualizowany."
 
-#: src/Admin/entries/EntriesApp.js:434
+#: src/Admin/entries/EntriesApp.js:429
 msgid "Entry created successfully."
 msgstr "Wpis został pomyślnie utworzony."
 
-#: src/Admin/entries/EntriesApp.js:457
+#: src/Admin/entries/EntriesApp.js:452
 msgid "Are you sure you want to unmatch this entry from its transaction?"
 msgstr "Czy na pewno chcesz odłączyć ten wpis od jego transakcji?"
 
-#: src/Admin/entries/EntriesApp.js:472
+#: src/Admin/entries/EntriesApp.js:466
 msgid "Entry unmatched successfully."
 msgstr "Wpis został pomyślnie odłączony."
 
-#: src/Admin/entries/EntriesApp.js:478
+#: src/Admin/entries/EntriesApp.js:470
 msgid "Failed to unmatch entry."
 msgstr "Nie udało się odłączyć wpisu."
 
-#: src/Admin/entries/EntriesApp.js:486
+#: src/Admin/entries/EntriesApp.js:477
 msgid "Entry matched to transaction."
 msgstr "Wpis został dopasowany do transakcji."
 
-#: src/Admin/entries/EntriesApp.js:502
+#: src/Admin/entries/EntriesApp.js:491
 msgid "Entries imported successfully."
 msgstr "Wpisy zostały pomyślnie zaimportowane."
 
-#: src/Admin/entries/EntriesApp.js:526
+#: src/Admin/entries/EntriesApp.js:514
 msgid "Split updated successfully."
 msgstr "Podział został pomyślnie zaktualizowany."
 
-#: src/Admin/entries/EntriesApp.js:527
+#: src/Admin/entries/EntriesApp.js:515
 msgid "Entry split successfully."
 msgstr "Wpis został pomyślnie podzielony."
 
-#: src/Admin/entries/EntriesApp.js:544
+#: src/Admin/entries/EntriesApp.js:532
 msgid "Are you sure you want to unsplit this entry? All child allocations will be deleted."
 msgstr "Czy na pewno chcesz rozdzielić ten wpis? Wszystkie przydzielenia podrzędne zostaną usunięte."
 
-#: src/Admin/entries/EntriesApp.js:560
+#: src/Admin/entries/EntriesApp.js:547
 msgid "Entry unsplit successfully."
 msgstr "Wpis rozdzielony pomyślnie."
 
-#: src/Admin/entries/EntriesApp.js:591
+#: src/Admin/entries/EntriesApp.js:576
 msgid "Transfer updated successfully."
 msgstr "Transfer zaktualizowany pomyślnie."
 
-#: src/Admin/entries/EntriesApp.js:595
+#: src/Admin/entries/EntriesApp.js:577
 msgid "Transfer created successfully."
 msgstr "Transfer utworzony pomyślnie."
 
-#: src/Admin/entries/EntriesApp.js:671
+#: src/Admin/entries/EntriesApp.js:650
 msgid "All Budgets"
 msgstr "Wszystkie budżety"
 
-#: src/Admin/entries/EntriesApp.js:680
-#: src/Admin/entries/EntriesApp.js:909
+#: src/Admin/entries/EntriesApp.js:659
+#: src/Admin/entries/EntriesApp.js:861
 msgid "All Links"
 msgstr "Wszystkie linki"
 
-#: src/Admin/entries/EntriesApp.js:709
+#: src/Admin/entries/EntriesApp.js:688
 msgid "Total Costs"
 msgstr "Całkowite koszty"
 
-#: src/Admin/entries/EntriesApp.js:726
+#: src/Admin/entries/EntriesApp.js:702
 msgid "Total Income"
 msgstr "Całkowity dochód"
 
-#: src/Admin/entries/EntriesApp.js:781
+#: src/Admin/entries/EntriesApp.js:748
 msgid "Add Entry"
 msgstr "Dodaj wpis"
 
-#: src/Admin/entries/EntriesApp.js:790
-#: src/Admin/entries/EntriesApp.js:1000
-#: src/Admin/entries/EntriesApp.js:1222
+#: src/Admin/entries/EntriesApp.js:754
+#: src/Admin/entries/EntriesApp.js:949
+#: src/Admin/entries/EntriesApp.js:1171
 msgid "Transfer"
 msgstr "Transfer"
 
-#: src/Admin/entries/EntriesApp.js:812
+#: src/Admin/entries/EntriesApp.js:770
 msgid "Export CSV"
 msgstr "Eksportuj CSV"
 
-#: src/Admin/entries/EntriesApp.js:858
+#: src/Admin/entries/EntriesApp.js:813
 msgid "From Date"
 msgstr "Od daty"
 
-#: src/Admin/entries/EntriesApp.js:872
+#: src/Admin/entries/EntriesApp.js:827
 msgid "To Date"
 msgstr "Do daty"
 
-#: src/Admin/entries/EntriesApp.js:979
+#: src/Admin/entries/EntriesApp.js:928
 msgid "All Types"
 msgstr "Wszystkie typy"
 
-#: src/Admin/entries/EntriesApp.js:1015
+#: src/Admin/entries/EntriesApp.js:964
 msgid "Matching"
 msgstr "Dopasowanie"
 
-#: src/Admin/entries/EntriesApp.js:1024
+#: src/Admin/entries/EntriesApp.js:973
 msgid "All"
 msgstr "Wszystkie"
 
-#: src/Admin/entries/EntriesApp.js:1031
+#: src/Admin/entries/EntriesApp.js:980
 msgid "Unmatched Only"
 msgstr "Tylko niedopasowane"
 
-#: src/Admin/entries/EntriesApp.js:1079
+#: src/Admin/entries/EntriesApp.js:1028
 msgid "Loading entries..."
 msgstr "Ładowanie wpisów..."
 
-#: src/Admin/entries/EntriesApp.js:1108
+#: src/Admin/entries/EntriesApp.js:1057
 msgid "No entries found. Add your first entry to start tracking costs and income."
 msgstr "Nie znaleziono wpisów. Dodaj swój pierwszy wpis, aby rozpocząć śledzenie kosztów i dochodów."
 
-#: src/Admin/entries/EntriesApp.js:1162
+#: src/Admin/entries/EntriesApp.js:1111
 msgid "Matched"
 msgstr "Dopasowany"
 
-#: src/Admin/entries/EntriesApp.js:1168
+#: src/Admin/entries/EntriesApp.js:1117
 #: src/Admin/entries/exportEntriesCsv.js:47
 msgid "Imported"
 msgstr "Zaimportowany"
 
-#: src/Admin/entries/EntriesApp.js:1254
+#: src/Admin/entries/EntriesApp.js:1203
 msgid "(split)"
 msgstr "(podziel)"
 
-#: src/Admin/entries/EntriesApp.js:1362
-#: src/Admin/entries/EntriesApp.js:1440
+#: src/Admin/entries/EntriesApp.js:1311
+#: src/Admin/entries/EntriesApp.js:1389
 msgid "Split ▾"
 msgstr "Podziel ▾"
 
-#: src/Admin/entries/EntriesApp.js:1366
-#: src/Admin/entries/EntriesApp.js:1444
+#: src/Admin/entries/EntriesApp.js:1315
+#: src/Admin/entries/EntriesApp.js:1393
 msgid "Split ▸"
 msgstr "Podziel ▸"
 
-#: src/Admin/entries/EntriesApp.js:1415
+#: src/Admin/entries/EntriesApp.js:1364
 msgid "Transfer ▾"
 msgstr "Przenieś ▾"
 
-#: src/Admin/entries/EntriesApp.js:1419
+#: src/Admin/entries/EntriesApp.js:1368
 msgid "Transfer ▸"
 msgstr "Przenieś ▸"
 
-#: src/Admin/entries/EntriesApp.js:1473
+#: src/Admin/entries/EntriesApp.js:1422
 #, js-format
 msgid "Yes (%d)"
 msgstr "Tak (%d)"
 
-#: src/Admin/entries/EntriesApp.js:1481
+#: src/Admin/entries/EntriesApp.js:1430
 msgid "Yes"
 msgstr "Tak"
 
-#: src/Admin/entries/EntriesApp.js:1492
+#: src/Admin/entries/EntriesApp.js:1441
 msgid "No"
 msgstr "Nie"
 
-#: src/Admin/entries/EntriesApp.js:1617
+#: src/Admin/entries/EntriesApp.js:1566
 msgid "Split"
 msgstr "Podziel"
 
-#: src/Admin/entries/EntriesApp.js:1637
-#: src/Admin/reconciliation/ReconciliationApp.js:1391
+#: src/Admin/entries/EntriesApp.js:1586
+#: src/Admin/reconciliation/ReconciliationApp.js:1361
 msgid "Unmatch"
 msgstr "Cofnij dopasowanie"
 
@@ -2922,11 +2922,11 @@ msgstr "Data wydarzenia"
 msgid "Could not find header row in the file."
 msgstr "Nie można znaleźć wiersza nagłówka w pliku."
 
-#: src/Admin/entries/parseEntries.js:84
+#: src/Admin/entries/parseEntries.js:81
 msgid "No valid entries found in the file."
 msgstr "Nie znaleziono prawidłowych wpisów w pliku."
 
-#: src/Admin/readSpreadsheet.js:61
+#: src/Admin/readSpreadsheet.js:57
 msgid "Failed to read file."
 msgstr "Nie udało się odczytać pliku."
 
@@ -2934,94 +2934,94 @@ msgstr "Nie udało się odczytać pliku."
 msgid "Transactions matched successfully."
 msgstr "Transakcje dopasowane pomyślnie."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:98
+#: src/Admin/reconciliation/components/SettlementImportModal.js:97
 msgid "Failed to match settlement."
 msgstr "Nie udało się dopasować rozliczenia."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:125
-#: src/Admin/reconciliation/ReconciliationApp.js:565
+#: src/Admin/reconciliation/components/SettlementImportModal.js:124
+#: src/Admin/reconciliation/ReconciliationApp.js:544
 msgid "Settlement matched successfully."
 msgstr "Rozliczenie zostało pomyślnie dopasowane."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:137
-#: src/Admin/reconciliation/ReconciliationApp.js:445
+#: src/Admin/reconciliation/components/SettlementImportModal.js:133
+#: src/Admin/reconciliation/ReconciliationApp.js:442
 msgid "Failed to match transactions."
 msgstr "Nie udało się dopasować transakcji."
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:155
+#: src/Admin/reconciliation/components/SettlementImportModal.js:148
 #, js-format
 msgid "%1$s — %2$s (suggested)"
 msgstr "%1$s — %2$s (sugerowane)"
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:172
+#: src/Admin/reconciliation/components/SettlementImportModal.js:165
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:196
+#: src/Admin/reconciliation/components/SettlementImportModal.js:189
 msgid "Import Mollie Settlement CSV"
 msgstr "Importuj plik CSV rozliczenia Mollie"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:218
+#: src/Admin/reconciliation/components/SettlementImportModal.js:208
 msgid "Select a Mollie settlement export (.csv). Payment rows are matched to transactions by their Mollie payment ID, and the payout is matched to a bank entry."
 msgstr "Wybierz eksport rozliczenia Mollie (.csv). Wiersze płatności są dopasowywane do transakcji na podstawie ich identyfikatora płatności Mollie, a wypłata jest dopasowywana do wpisu bankowego."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:237
+#: src/Admin/reconciliation/components/SettlementImportModal.js:227
 msgid "Parsing file…"
 msgstr "Analizowanie pliku…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:241
+#: src/Admin/reconciliation/components/SettlementImportModal.js:228
 msgid "Matching settlement…"
 msgstr "Dopasowywanie rozliczenia…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:269
+#: src/Admin/reconciliation/components/SettlementImportModal.js:250
 msgid "Payments matched:"
 msgstr "Dopasowane płatności:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:278
+#: src/Admin/reconciliation/components/SettlementImportModal.js:256
 msgid "Settlement total:"
 msgstr "Razem rozliczenie:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:290
+#: src/Admin/reconciliation/components/SettlementImportModal.js:265
 msgid "Fees total:"
 msgstr "Razem opłaty:"
 
 #. translators: %s: amount difference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:304
+#: src/Admin/reconciliation/components/SettlementImportModal.js:276
 #, js-format
 msgid "(differs from recorded fees by %s)"
 msgstr "(różni się od zarejestrowanych opłat o %s)"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:316
+#: src/Admin/reconciliation/components/SettlementImportModal.js:288
 msgid "Match to bank entry"
 msgstr "Dopasuj do wpisu bankowego"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:324
+#: src/Admin/reconciliation/components/SettlementImportModal.js:296
 msgid "— Select a bank entry —"
 msgstr "— Wybierz wpis bankowy —"
 
 #. translators: 1: entry amount, 2: settlement total
-#: src/Admin/reconciliation/components/SettlementImportModal.js:341
+#: src/Admin/reconciliation/components/SettlementImportModal.js:313
 #, js-format
 msgid "Selected entry (%1$s) does not equal the settlement total (%2$s)."
 msgstr "Wybrany wpis (%1$s) nie równa się sumie rozliczenia (%2$s)."
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:363
+#: src/Admin/reconciliation/components/SettlementImportModal.js:335
 #, js-format
 msgid "%d payment row(s) had no matching transaction:"
 msgstr "%d wiersz(y) płatności nie miał(y) pasującej transakcji:"
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:393
+#: src/Admin/reconciliation/components/SettlementImportModal.js:365
 #, js-format
 msgid "%d unmatched transaction(s) in this date window are absent from the CSV:"
 msgstr "%d niedopasowana(e) transakcja(e) w tym oknie czasowym brakuje w pliku CSV:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:438
-#: src/Admin/reconciliation/ReconciliationApp.js:1028
+#: src/Admin/reconciliation/components/SettlementImportModal.js:410
+#: src/Admin/reconciliation/ReconciliationApp.js:998
 msgid "Confirm Match"
 msgstr "Potwierdź dopasowanie"
 
@@ -3029,23 +3029,23 @@ msgstr "Potwierdź dopasowanie"
 msgid "The file is empty or could not be read."
 msgstr "Plik jest pusty lub nie można go odczytać."
 
-#: src/Admin/reconciliation/parseSettlement.js:103
+#: src/Admin/reconciliation/parseSettlement.js:100
 msgid "This does not look like a Mollie settlement export (missing expected columns)."
 msgstr "To nie wygląda na eksport rozliczenia Mollie (brakuje oczekiwanych kolumn)."
 
-#: src/Admin/reconciliation/parseSettlement.js:193
+#: src/Admin/reconciliation/parseSettlement.js:190
 msgid "No settlement reference found in the file."
 msgstr "Nie znaleziono numeru referencyjnego rozliczenia w pliku."
 
-#: src/Admin/reconciliation/parseSettlement.js:201
+#: src/Admin/reconciliation/parseSettlement.js:195
 msgid "The file contains multiple settlement references. Upload one settlement at a time."
 msgstr "Plik zawiera wiele numerów referencyjnych rozliczenia. Przesyłaj jedno rozliczenie naraz."
 
-#: src/Admin/reconciliation/parseSettlement.js:209
+#: src/Admin/reconciliation/parseSettlement.js:203
 msgid "The file contains multiple currencies. Upload one settlement at a time."
 msgstr "Plik zawiera wiele walut. Przesyłaj jedno rozliczenie naraz."
 
-#: src/Admin/reconciliation/parseSettlement.js:218
+#: src/Admin/reconciliation/parseSettlement.js:212
 msgid "No payment rows found in the settlement file."
 msgstr "Nie znaleziono wierszy płatności w pliku rozliczenia."
 
@@ -3053,121 +3053,120 @@ msgstr "Nie znaleziono wierszy płatności w pliku rozliczenia."
 msgid "Failed to load reconciliation data."
 msgstr "Nie udało się załadować danych uzgodnienia."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:464
+#: src/Admin/reconciliation/ReconciliationApp.js:458
 msgid "Transaction unmatched successfully."
 msgstr "Transakcja usunięta z dopasowania pomyślnie."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:473
+#: src/Admin/reconciliation/ReconciliationApp.js:464
 msgid "Failed to unmatch transaction."
 msgstr "Nie udało się usunąć dopasowania transakcji."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:489
+#: src/Admin/reconciliation/ReconciliationApp.js:477
 msgid "All transactions unmatched successfully."
 msgstr "Wszystkie transakcje usunięte z dopasowania pomyślnie."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:498
+#: src/Admin/reconciliation/ReconciliationApp.js:483
 msgid "Failed to unmatch transactions."
 msgstr "Nie udało się usunąć dopasowania transakcji."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:623
+#: src/Admin/reconciliation/ReconciliationApp.js:602
 msgid "Unmatched Bank Entries"
 msgstr "Niedopasowane wpisy bankowe"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:645
+#: src/Admin/reconciliation/ReconciliationApp.js:621
 msgid "All bank entries are matched."
 msgstr "Wszystkie wpisy bankowe są dopasowane."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:742
+#: src/Admin/reconciliation/ReconciliationApp.js:712
 msgid "Selected"
 msgstr "Wybrane"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:746
+#: src/Admin/reconciliation/ReconciliationApp.js:716
 msgid "Select"
 msgstr "Wybierz"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:767
-#: src/Admin/reconciliation/ReconciliationApp.js:1183
+#: src/Admin/reconciliation/ReconciliationApp.js:737
+#: src/Admin/reconciliation/ReconciliationApp.js:1153
 msgid "Match Transactions"
 msgstr "Dopasuj transakcje"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:784
+#: src/Admin/reconciliation/ReconciliationApp.js:754
 msgid "Matching entry:"
 msgstr "Dopasowywany wpis:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:828
+#: src/Admin/reconciliation/ReconciliationApp.js:798
 msgid "Finding suggestions..."
 msgstr "Szukanie sugestii..."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:840
+#: src/Admin/reconciliation/ReconciliationApp.js:810
 msgid "Suggestions:"
 msgstr "Sugestie:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:869
-#: src/Admin/reconciliation/ReconciliationApp.js:933
+#: src/Admin/reconciliation/ReconciliationApp.js:839
+#: src/Admin/reconciliation/ReconciliationApp.js:903
 msgid "transactions"
 msgstr "transakcje"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:874
+#: src/Admin/reconciliation/ReconciliationApp.js:844
 msgid "Net:"
 msgstr "Netto:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:882
+#: src/Admin/reconciliation/ReconciliationApp.js:852
 msgid "diff:"
 msgstr "różnica:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:900
+#: src/Admin/reconciliation/ReconciliationApp.js:870
 msgid "Apply"
 msgstr "Zastosuj"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:925
+#: src/Admin/reconciliation/ReconciliationApp.js:895
 msgid "Selected:"
 msgstr "Wybrane:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:940
+#: src/Admin/reconciliation/ReconciliationApp.js:910
 msgid "Gross total:"
 msgstr "Suma brutto:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:951
+#: src/Admin/reconciliation/ReconciliationApp.js:921
 msgid "Net total (after fees):"
 msgstr "Suma netto (po opłatach):"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:962
+#: src/Admin/reconciliation/ReconciliationApp.js:932
 msgid "Difference from entry:"
 msgstr "Różnica od wpisu:"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1009
+#: src/Admin/reconciliation/ReconciliationApp.js:979
 msgid "This entry already has a budget; matching keeps it."
 msgstr "Ten wpis ma już budżet; dopasowanie go zachowuje."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1013
+#: src/Admin/reconciliation/ReconciliationApp.js:983
 msgid "Proposed from the selected transactions’ source; change it if needed."
 msgstr "Zaproponowany na podstawie źródła wybranych transakcji; zmień go, jeśli trzeba."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1049
+#: src/Admin/reconciliation/ReconciliationApp.js:1019
 msgid "No unmatched transactions found."
 msgstr "Nie znaleziono niedopasowanych transakcji."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1079
+#: src/Admin/reconciliation/ReconciliationApp.js:1049
 msgid "Net"
 msgstr "Netto"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1190
+#: src/Admin/reconciliation/ReconciliationApp.js:1160
 msgid "Select a bank entry from the left panel to start matching."
 msgstr "Wybierz wpis bankowy z lewego panelu, aby rozpocząć dopasowywanie."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1206
+#: src/Admin/reconciliation/ReconciliationApp.js:1176
 msgid "Matched Entries"
 msgstr "Dopasowane wpisy"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1213
+#: src/Admin/reconciliation/ReconciliationApp.js:1183
 msgid "No matched entries yet."
 msgstr "Brak jeszcze dopasowanych wpisów."
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1243
+#: src/Admin/reconciliation/ReconciliationApp.js:1213
 msgid "matched transactions"
 msgstr "dopasowane transakcje"
 
-#: src/Admin/reconciliation/ReconciliationApp.js:1294
+#: src/Admin/reconciliation/ReconciliationApp.js:1264
 msgid "Unmatch All"
 msgstr "Usuń wszystkie dopasowania"
-

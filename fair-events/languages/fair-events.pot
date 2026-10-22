@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-21T04:55:45+00:00\n"
+"POT-Creation-Date: 2026-10-22T06:26:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -272,9 +272,9 @@ msgstr ""
 #: src/Admin/manage-event/EditInstancesModal.js:83
 #: src/Admin/manage-event/ManageEventApp.js:1773
 #: src/Admin/manage-event/SeriesModal.js:535
-#: src/Admin/manage-event/SignupEditModal.js:367
+#: src/Admin/manage-event/SignupEditModal.js:365
 #: src/Admin/venues/VenuesApp.js:966
-#: ../fair-events-shared/src/TicketEditModal.js:637
+#: ../fair-events-shared/src/TicketEditModal.js:663
 msgid "Cancel"
 msgstr ""
 
@@ -1008,7 +1008,7 @@ msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr ""
 
 #: src/API/GetTicketsController.php:2971
-#: src/Admin/manage-event/SignupEditModal.js:221
+#: src/Admin/manage-event/SignupEditModal.js:219
 msgid "Failed to update signup."
 msgstr ""
 
@@ -1592,8 +1592,8 @@ msgstr ""
 msgid "The selected display pattern is no longer available. Choose a different pattern to display these events."
 msgstr ""
 
-#: src/blocks/events-list/render.php:182
-#: src/blocks/events-list/render.php:187
+#: src/blocks/events-list/render.php:186
+#: src/blocks/events-list/render.php:191
 msgid "No events found."
 msgstr ""
 
@@ -2715,7 +2715,7 @@ msgid "External"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:19
-#: ../fair-events-shared/src/TicketEditModal.js:386
+#: ../fair-events-shared/src/TicketEditModal.js:412
 msgid "None"
 msgstr ""
 
@@ -4409,8 +4409,8 @@ msgstr ""
 #: src/Admin/manage-event/EditInstancesModal.js:92
 #: src/Admin/manage-event/EventLinkModal.js:401
 #: src/Admin/manage-event/SignupExportModal.js:495
-#: ../fair-events-shared/src/TicketEditModal.js:316
-#: ../fair-events-shared/src/TicketEditModal.js:398
+#: ../fair-events-shared/src/TicketEditModal.js:342
+#: ../fair-events-shared/src/TicketEditModal.js:424
 msgid "Close"
 msgstr ""
 
@@ -4808,12 +4808,12 @@ msgid "Purchase registered for %s"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:625
-#: ../fair-events-shared/src/TicketEditModal.js:391
+#: ../fair-events-shared/src/TicketEditModal.js:417
 msgid "Yes"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:626
-#: ../fair-events-shared/src/TicketEditModal.js:392
+#: ../fair-events-shared/src/TicketEditModal.js:418
 msgid "No"
 msgstr ""
 
@@ -4859,7 +4859,7 @@ msgid "Move"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:972
-#: src/Admin/manage-event/SignupEditModal.js:394
+#: src/Admin/manage-event/SignupEditModal.js:392
 msgid "Change ticket type"
 msgstr ""
 
@@ -4875,7 +4875,7 @@ msgid "Edit %s"
 msgstr ""
 
 #: src/Admin/manage-event/EventSignups.js:1057
-#: ../fair-events-shared/src/TicketEditModal.js:671
+#: ../fair-events-shared/src/TicketEditModal.js:697
 msgid "Edit ticket"
 msgstr ""
 
@@ -6179,7 +6179,7 @@ msgid "Test payments — excluded from operational totals"
 msgstr ""
 
 #. translators: %d: number of tickets in the registration
-#: src/Admin/manage-event/SignupEditModal.js:62
+#: src/Admin/manage-event/SignupEditModal.js:60
 #, js-format
 msgid "This changes the type of the whole registration, with its %d ticket."
 msgid_plural "This changes the type of the whole registration, with all %d of its tickets."
@@ -6187,7 +6187,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tickets of the purchase on other dates
-#: src/Admin/manage-event/SignupEditModal.js:75
+#: src/Admin/manage-event/SignupEditModal.js:73
 #, js-format
 msgid "That includes %d ticket on another date."
 msgid_plural "That includes %d tickets on other dates."
@@ -6195,7 +6195,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tickets in the registration
-#: src/Admin/manage-event/SignupEditModal.js:89
+#: src/Admin/manage-event/SignupEditModal.js:87
 #, js-format
 msgid "This moves the whole registration, with its %d ticket."
 msgid_plural "This moves the whole registration, with all %d of its tickets."
@@ -6203,7 +6203,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of tickets that move, 2: date the purchase is registered for
-#: src/Admin/manage-event/SignupEditModal.js:103
+#: src/Admin/manage-event/SignupEditModal.js:101
 #, js-format
 msgid "This moves the purchase and the %1$d ticket still on the date it is registered for (%2$s)."
 msgid_plural "This moves the purchase and the %1$d tickets still on the date it is registered for (%2$s)."
@@ -6211,13 +6211,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: date the purchase is registered for
-#: src/Admin/manage-event/SignupEditModal.js:114
+#: src/Admin/manage-event/SignupEditModal.js:112
 #, js-format
 msgid "No ticket of this purchase is still on the date it is registered for (%s), so no ticket moves: only the date the purchase is registered for changes."
 msgstr ""
 
 #. translators: %d: number of tickets moved individually to other dates
-#: src/Admin/manage-event/SignupEditModal.js:124
+#: src/Admin/manage-event/SignupEditModal.js:122
 #, js-format
 msgid "%d ticket was moved on its own to another date and stays where it is, unless that is the new date, which it then shares with the purchase."
 msgid_plural "%d tickets were moved on their own to other dates and stay where they are; any already on the new date stay there with the purchase."
@@ -6225,81 +6225,81 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of cancelled or otherwise inactive tickets
-#: src/Admin/manage-event/SignupEditModal.js:139
+#: src/Admin/manage-event/SignupEditModal.js:137
 #, js-format
 msgid "%d cancelled or otherwise inactive ticket is left as it is."
 msgid_plural "%d cancelled or otherwise inactive tickets are left as they are."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/SignupEditModal.js:183
+#: src/Admin/manage-event/SignupEditModal.js:181
 msgid "Failed to load the choices."
 msgstr ""
 
 #. translators: %s: participant name
-#: src/Admin/manage-event/SignupEditModal.js:240
+#: src/Admin/manage-event/SignupEditModal.js:238
 #, js-format
 msgid "Move %s to another date"
 msgstr ""
 
 #. translators: %s: participant name
-#: src/Admin/manage-event/SignupEditModal.js:245
+#: src/Admin/manage-event/SignupEditModal.js:243
 #, js-format
 msgid "Change ticket type for %s"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:266
+#: src/Admin/manage-event/SignupEditModal.js:264
 msgid "This series has no other active date to move the signup to."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:270
+#: src/Admin/manage-event/SignupEditModal.js:268
 msgid "No other ticket type with the same dates is available for this signup."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:287
+#: src/Admin/manage-event/SignupEditModal.js:285
 msgid "New date"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:288
+#: src/Admin/manage-event/SignupEditModal.js:286
 msgid "New ticket type"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:292
+#: src/Admin/manage-event/SignupEditModal.js:290
 msgid "Choose…"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:303
-#: ../fair-events-shared/src/TicketEditModal.js:524
+#: src/Admin/manage-event/SignupEditModal.js:301
+#: ../fair-events-shared/src/TicketEditModal.js:550
 msgid "The amount paid stays the same: no charge or refund is made for a price difference."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:321
+#: src/Admin/manage-event/SignupEditModal.js:319
 msgid "Reason"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:322
-#: ../fair-events-shared/src/TicketEditModal.js:609
+#: src/Admin/manage-event/SignupEditModal.js:320
+#: ../fair-events-shared/src/TicketEditModal.js:635
 msgid "Required to go over capacity. It is kept with the signup."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:343
+#: src/Admin/manage-event/SignupEditModal.js:341
 msgid "Choose a date."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:344
+#: src/Admin/manage-event/SignupEditModal.js:342
 msgid "Choose a ticket type."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:354
-#: ../fair-events-shared/src/TicketEditModal.js:416
+#: src/Admin/manage-event/SignupEditModal.js:352
+#: ../fair-events-shared/src/TicketEditModal.js:442
 msgid "Enter a reason to go over capacity."
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:382
+#: src/Admin/manage-event/SignupEditModal.js:380
 msgid "Exceed capacity"
 msgstr ""
 
-#: src/Admin/manage-event/SignupEditModal.js:393
+#: src/Admin/manage-event/SignupEditModal.js:391
 msgid "Move signup"
 msgstr ""
 
@@ -7793,78 +7793,78 @@ msgstr ""
 msgid "View file"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:289
+#: ../fair-events-shared/src/TicketEditModal.js:315
 msgid "Failed to load the ticket."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:359
+#: ../fair-events-shared/src/TicketEditModal.js:385
 msgid "Status: %s"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:374
+#: ../fair-events-shared/src/TicketEditModal.js:400
 msgid "This ticket is awaiting payment. It can be edited once the payment is complete."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:380
-#: ../fair-events-shared/src/TicketEditModal.js:501
+#: ../fair-events-shared/src/TicketEditModal.js:406
+#: ../fair-events-shared/src/TicketEditModal.js:527
 msgid "Ticket type"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:382
-#: ../fair-events-shared/src/TicketEditModal.js:542
+#: ../fair-events-shared/src/TicketEditModal.js:408
+#: ../fair-events-shared/src/TicketEditModal.js:568
 msgid "Activities"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:388
-#: ../fair-events-shared/src/TicketEditModal.js:579
+#: ../fair-events-shared/src/TicketEditModal.js:414
+#: ../fair-events-shared/src/TicketEditModal.js:605
 msgid "Checked in"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:412
+#: ../fair-events-shared/src/TicketEditModal.js:438
 msgid "No unsaved changes."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:433
+#: ../fair-events-shared/src/TicketEditModal.js:459
 msgid "%s — over capacity"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:484
+#: ../fair-events-shared/src/TicketEditModal.js:510
 msgid "Failed to save the ticket."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:507
+#: ../fair-events-shared/src/TicketEditModal.js:533
 msgid "%s (current)"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:520
+#: ../fair-events-shared/src/TicketEditModal.js:546
 msgid "No other ticket type with the same dates is available for this ticket."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:534
+#: ../fair-events-shared/src/TicketEditModal.js:560
 msgid "Ticket type: %s"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:546
+#: ../fair-events-shared/src/TicketEditModal.js:572
 msgid "This ticket type does not include activities."
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:605
+#: ../fair-events-shared/src/TicketEditModal.js:631
 msgid "Reason for going over capacity"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:652
+#: ../fair-events-shared/src/TicketEditModal.js:678
 msgid "Save over capacity"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:653
+#: ../fair-events-shared/src/TicketEditModal.js:679
 msgid "Save ticket"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:667
+#: ../fair-events-shared/src/TicketEditModal.js:693
 msgid "Edit ticket — %s"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:669
+#: ../fair-events-shared/src/TicketEditModal.js:695
 msgid "(no name)"
 msgstr ""
 
