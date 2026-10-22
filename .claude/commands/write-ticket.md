@@ -1,6 +1,6 @@
 ---
 description: Draft, approve, and file a GitHub issue into a sprint
-argument-hint: [current|next] <ticket topic>
+argument-hint: '[current|next] <ticket topic>'
 ---
 
 Workflow input: `$ARGUMENTS`

@@ -55,14 +55,6 @@ guessing which ones matter.
 | Fair Form question blocks (field types)            | [FAIR_FORM_QUESTION_BLOCKS.md](./FAIR_FORM_QUESTION_BLOCKS.md) |
 | Deployment / releases                              | [DEPLOYMENT.md](./DEPLOYMENT.md), [RELEASES.md](./RELEASES.md) |
 
-## Development Commands
-
-```bash
-# WordPress environment
-docker compose up                                   # WP :8080, MySQL, phpMyAdmin :8081
-docker compose --profile cli run wpcli wp --help    # WP-CLI
-```
-
 ## Formatting & Build
 
 - **Formatting is automatic.** Platform PostToolUse hooks call the shared
@@ -196,12 +188,8 @@ and [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md).
   `load_plugin_textdomain()`. Call
   `wp_set_script_translations( $handle, '{slug}' )` without a path argument so
   core resolves JSON from `wp-content/languages/plugins/`.
-- **Opt-in (`bundled-translations` feature flag):** when the flag is on, gate
-  `load_plugin_textdomain( '{slug}', false, '{slug}/languages' )` behind
-  `Features::is_enabled( 'bundled-translations' )` and pass
-  `Features::script_translations_path()` as the third argument of
-  `wp_set_script_translations()` — it returns the bundled `build/languages/`
-  path when on, `null` when off.
+- **Opt-in (`bundled-translations` feature flag):** see
+  [I18N_SETUP.md](./I18N_SETUP.md).
 
 ### Testing — see [TESTING.md](./TESTING.md)
 
