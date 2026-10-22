@@ -101,15 +101,65 @@ test('readiness failure remains non-zero and cleans up an owned environment', as
 	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
 });
 
-test('startup failure is returned without claiming ownership or cleanup', async () => {
+test('startup failure is returned and cleans up a partial start', async () => {
 	const executor = createExecutor({
 		...stoppedStatus(),
 		'npx wp-env start': { code: 19 },
 	});
 	assert.equal(await run(executor), 19);
-	assert.equal(
-		executor.calls.some((call) => call.args.join(' ') === 'wp-env stop'),
-		false
+	assert.deepEqual(
+		executor.calls
+			.slice(-2)
+			.map((call) => [call.command, ...call.args].join(' ')),
+		['npx wp-env start', 'npx wp-env stop']
+	);
+});
+
+test('startup failure keeps its status when cleanup also fails', async () => {
+	const executor = createExecutor({
+		...stoppedStatus(),
+		'npx wp-env start': { code: 19 },
+		'npx wp-env stop': { code: 31 },
+	});
+	assert.equal(await run(executor), 19);
+	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
+});
+
+test('interrupted startup cleans up and returns signal status', async () => {
+	const signalSource = new EventEmitter();
+	const executor = createExecutor(
+		{
+			...stoppedStatus(),
+			'npx wp-env start': { code: 130 },
+		},
+		(call) => {
+			if (call.args.join(' ') === 'wp-env start') {
+				signalSource.emit('SIGINT');
+			}
+		}
+	);
+	assert.equal(await run(executor, makeOptions(), signalSource), 130);
+	assert.deepEqual(executor.terminations, ['SIGINT']);
+	assert.deepEqual(
+		executor.calls
+			.slice(-2)
+			.map((call) => [call.command, ...call.args].join(' ')),
+		['npx wp-env start', 'npx wp-env stop']
+	);
+});
+
+test('interrupt between steps starts no further steps', async () => {
+	const signalSource = new EventEmitter();
+	// The build exits cleanly, as if the signal arrived just after it.
+	const executor = createExecutor(stoppedStatus(), (call) => {
+		if (call.args.join(' ') === 'run build') {
+			signalSource.emit('SIGTERM');
+		}
+	});
+	assert.equal(await run(executor, makeOptions(), signalSource), 143);
+	assert.deepEqual(
+		executor.calls.map((call) => [call.command, ...call.args].join(' ')),
+		['npx wp-env status --json', 'npm run build']
 	);
 });
 

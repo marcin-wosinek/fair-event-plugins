@@ -168,6 +168,14 @@ export async function runTests({
 	const onSigterm = () => onSignal('SIGTERM');
 	signalSource.on('SIGINT', onSigint);
 	signalSource.on('SIGTERM', onSigterm);
+	// A signal that lands between steps has no child to terminate, so later
+	// steps are skipped instead of started.
+	const runStep = async (command, args, runOptions) => {
+		if (interruptedSignal) {
+			return { code: SIGNAL_EXIT_CODES[interruptedSignal], stdout: '' };
+		}
+		return executor.run(command, args, runOptions);
+	};
 
 	try {
 		if (options.suite === 'e2e') {
@@ -183,7 +191,7 @@ export async function runTests({
 		}
 
 		if (!options.reuse) {
-			const status = await executor.run(
+			const status = await runStep(
 				'npx',
 				['wp-env', 'status', '--json'],
 				{
@@ -209,18 +217,21 @@ export async function runTests({
 				['run', 'build'],
 				['run', 'composer:install:prod'],
 			]) {
-				const result = await executor.run('npm', args);
+				const result = await runStep('npm', args);
 				if (result.code !== 0) {
 					return result.code;
 				}
 			}
 
 			phase('Starting isolated WordPress test environment', logger);
-			const start = await executor.run('npx', ['wp-env', 'start']);
-			if (start.code !== 0) {
-				return start.code;
-			}
+			// The instance was not running, so anything a failed or interrupted
+			// start leaves behind belongs to this run and is stopped too.
 			ownsEnvironment = true;
+			const start = await runStep('npx', ['wp-env', 'start']);
+			if (start.code !== 0) {
+				primaryResult = start.code;
+				return primaryResult;
+			}
 		} else {
 			phase(
 				'Reusing explicitly managed WordPress test environment',
@@ -251,7 +262,7 @@ export async function runTests({
 			'is-installed',
 		]);
 		for (const args of readinessCommands) {
-			const result = await executor.run('npx', args);
+			const result = await runStep('npx', args);
 			if (result.code !== 0) {
 				primaryResult = result.code;
 				return primaryResult;
@@ -269,7 +280,7 @@ export async function runTests({
 		if (options.forwarded.length) {
 			testArgs.push('--', ...options.forwarded);
 		}
-		primaryResult = (await executor.run('npm', testArgs)).code;
+		primaryResult = (await runStep('npm', testArgs)).code;
 		return primaryResult;
 	} finally {
 		signalSource.off('SIGINT', onSigint);
