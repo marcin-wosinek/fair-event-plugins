@@ -307,11 +307,13 @@ jobs:
             - name: Create Release Pull Request
               uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
               with:
-                  version: npm run version-packages
+                  version-script: npm run version-packages
                   # Runs when no changesets are pending (after a release PR merges):
                   # creates and pushes per-plugin tags. Nothing is published to npm.
-                  publish: npm run release -- --push
-                  createGithubReleases: false
+                  publish-script: npm run release -- --push
+                  create-github-releases: false
+                  # tag-release.js pushes its own tags.
+                  push-git-tags: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
