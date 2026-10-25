@@ -19,7 +19,6 @@
 			"jest",
 			"jest-environment-jsdom",
 			"npm-run-all2",
-			"react-easy-crop",
 			"webpack-bundle-output",
 			"workspace:fair-events-shared"
 		],

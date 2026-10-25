@@ -247,16 +247,6 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'image-templates' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairAudienceExperimental\API\ImageTemplatesController();
-					$controller->register_routes();
-				}
-			);
-		}
-
 		if ( Features::is_enabled( 'timeline' ) ) {
 			add_action(
 				'rest_api_init',

@@ -168,7 +168,9 @@ test.describe('Retired photo authors, tags and upload page', () => {
 				'/wp-admin/admin.php?page=fair-audience-experimental-settings'
 			);
 			// Another bundle's toggle proves the list rendered.
-			await expect(page.getByLabel('Image templates')).toBeVisible();
+			await expect(
+				page.getByLabel('Timeline', { exact: true })
+			).toBeVisible();
 			await expect(
 				page.getByLabel('Photos', { exact: true })
 			).toHaveCount(0);

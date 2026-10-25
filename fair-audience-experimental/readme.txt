@@ -8,7 +8,7 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Activates advanced feature bundles for Fair Audience: fees, polls, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext.
+Activates advanced feature bundles for Fair Audience: fees, polls, Instagram, groups, collaborators, messaging, timeline, import, invitations, manage-event-ext.
 
 == Description ==
 
@@ -20,7 +20,6 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 * **Groups** — Participant groups.
 * **Collaborators** — Event collaborators.
 * **Messaging** — Custom mail to the whole audience, extra messages, scheduled messages.
-* **Image templates** — Generated image templates.
 * **Timeline** — Participant activity timeline.
 * **Import** — Bulk participant import.
 * **Invitations** — Event invitations (consumed by fair-events-experimental ticketing).

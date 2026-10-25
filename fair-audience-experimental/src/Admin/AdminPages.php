@@ -158,18 +158,6 @@ class AdminPages {
 			);
 		}
 
-		// Image Templates — `image-templates` bundle.
-		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'image-templates' ) ) {
-			$this->page_hooks['fair-audience-image-templates'] = add_submenu_page(
-				$parent,
-				__( 'Image Templates', 'fair-audience-experimental' ),
-				__( 'Image Templates', 'fair-audience-experimental' ),
-				'manage_options',
-				'fair-audience-image-templates',
-				array( $this, 'render_image_templates_page' )
-			);
-		}
-
 		// Groups — `groups` bundle.
 		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'groups' ) ) {
 			$this->page_hooks['fair-audience-groups'] = add_submenu_page(
@@ -324,11 +312,6 @@ class AdminPages {
 				$this->enqueue_page_script( 'instagram-posts', $exp_url, $exp_dir );
 				break;
 
-			case 'fair-audience-image-templates':
-				wp_enqueue_media();
-				$this->enqueue_page_script( 'image-templates', $exp_url, $exp_dir );
-				break;
-
 			case 'fair-audience-groups':
 				$this->enqueue_page_script( 'groups', $exp_url, $exp_dir );
 				wp_localize_script(
@@ -475,16 +458,6 @@ class AdminPages {
 	 */
 	public function render_instagram_posts_page() {
 		$page = new \FairAudienceExperimental\Admin\InstagramPostsPage();
-		$page->render();
-	}
-
-	/**
-	 * Render Image Templates page.
-	 *
-	 * @return void
-	 */
-	public function render_image_templates_page() {
-		$page = new \FairAudienceExperimental\Admin\ImageTemplatesPage();
 		$page->render();
 	}
 
