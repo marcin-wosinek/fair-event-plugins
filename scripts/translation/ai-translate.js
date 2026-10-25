@@ -31,6 +31,11 @@ import dotenv from 'dotenv';
 import { parsePOFile, isUntranslated } from './lib/po-parser.js';
 import { writePOFile } from './lib/po-writer.js';
 import { getProvider } from './lib/ai-providers.js';
+import {
+	applyTranslations,
+	formatFailures,
+	translateEntries,
+} from './lib/translate-runner.js';
 import { config } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -231,76 +236,40 @@ async function aiTranslate(options) {
 	const singularEntries = untranslated.filter((e) => !e.msgidPlural);
 	const pluralEntries = untranslated.filter((e) => e.msgidPlural);
 
-	const batchSize = config.ai.batchSize;
-	const results = [];
-	let totalCost = 0;
-	let aborted = false;
-
-	/**
-	 * Run one kind of entry through the provider in batches.
-	 *
-	 * @param {Array<Object>} entries - Entries to translate
-	 * @param {string} kind - 'string' or 'plural' (for logging)
-	 * @param {Function} translate - provider method returning { translations, usage }
-	 */
-	const processBatches = async (entries, kind, translate) => {
-		for (let i = 0; i < entries.length && !aborted; i += batchSize) {
-			const batch = entries.slice(i, i + batchSize);
-			const batchNum = Math.floor(i / batchSize) + 1;
-			const totalBatches = Math.ceil(entries.length / batchSize);
-
-			console.error(
-				`🔄 Processing ${kind} batch ${batchNum}/${totalBatches} (${batch.length} strings)...`
-			);
-
-			try {
-				const result = await translate(batch);
-
-				for (let j = 0; j < batch.length; j++) {
-					results.push({
-						entry: batch[j],
-						translation: result.translations[j],
-					});
-				}
-
-				totalCost += result.usage.cost;
-				console.error(
-					`   ✅ Done (cost: $${result.usage.cost.toFixed(
-						4
-					)}, tokens: ${result.usage.totalTokens})`
-				);
-			} catch (error) {
-				console.error(`   ❌ Error: ${error.message}`);
-
-				// Ask if should continue (unless --yes flag is used)
-				if (!options.yes) {
-					const cont = await confirm(
-						'Continue with remaining batches?'
-					);
-					if (!cont) {
-						aborted = true;
-					}
-				}
-			}
-		}
+	const runOptions = {
+		batchSize: config.ai.batchSize,
+		log: (line) => console.error(line),
 	};
+	const singular = await translateEntries(singularEntries, {
+		...runOptions,
+		kind: 'string',
+		translate: (batch) => provider.translateBatch(batch, options.locale),
+	});
+	const plural = await translateEntries(pluralEntries, {
+		...runOptions,
+		kind: 'plural',
+		translate: (batch) =>
+			provider.translatePluralBatch(batch, options.locale),
+	});
 
-	await processBatches(singularEntries, 'string', (batch) =>
-		provider.translateBatch(batch, options.locale, {})
+	const translated = [...singular.translated, ...plural.translated];
+	const failures = [...singular.failures, ...plural.failures].map(
+		(failure) => ({
+			...failure,
+			plugin: options.plugin,
+			locale: options.locale,
+		})
 	);
-	await processBatches(pluralEntries, 'plural', (batch) =>
-		provider.translatePluralBatch(batch, options.locale)
-	);
+	const totalCost = singular.cost + plural.cost;
 
 	console.error(`\n💰 Total cost: $${totalCost.toFixed(4)}`);
 	console.error(
-		`📊 Translated: ${results.length}/${untranslated.length} strings\n`
+		`📊 Translated: ${translated.length}/${untranslated.length} strings\n`
 	);
+	formatFailures(failures).forEach((line) => console.error(line));
 
 	// Update PO file
-	for (const result of results) {
-		result.entry.msgstr = result.translation;
-	}
+	applyTranslations(translated);
 
 	await writePOFile(poFilePath, parsed);
 	console.error(`✅ Updated ${poFilePath}`);
@@ -311,9 +280,10 @@ async function aiTranslate(options) {
 	// Return results for multi-locale processing
 	return {
 		locale: options.locale,
-		translatedCount: results.length,
+		translatedCount: translated.length,
 		totalCount: untranslated.length,
 		cost: totalCost,
+		failures,
 	};
 }
 
@@ -456,6 +426,10 @@ async function processPlugin(options) {
 			console.error(
 				`   📝 Total translated: ${totalTranslated} strings\n`
 			);
+			const allFailures = translationResults.flatMap(
+				(result) => result.failures
+			);
+			formatFailures(allFailures).forEach((line) => console.error(line));
 			console.error(`${'='.repeat(60)}\n`);
 		} else {
 			// Process single locale

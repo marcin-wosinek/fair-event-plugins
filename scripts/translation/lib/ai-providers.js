@@ -2,9 +2,34 @@
  * AI Translation Providers
  *
  * Integrations with OpenAI and Claude APIs for automated translation.
+ *
+ * Both translate methods return `{ results, usage }`, where `results[i]` is
+ * `{ ok: true, translation }` or `{ ok: false, reason }` for the i-th input,
+ * so one bad entry never discards its siblings. A thrown error means the
+ * whole response was unusable; `error.usage` holds what it cost when the
+ * provider reported it. Providers make one request per call: retries are
+ * owned by the caller (see translate-runner.js).
  */
 
 import { config } from '../config.js';
+import {
+	markerInstructions,
+	prepareEntries,
+	restorePluralQuotes,
+	restoreQuotes,
+} from './quote-markers.js';
+
+/**
+ * Attach usage info to an error thrown after a billed response.
+ *
+ * @param {Error} error - Error to throw
+ * @param {Object|null} usage - Usage info
+ * @returns {Error} The same error
+ */
+function withUsage(error, usage) {
+	if (usage) error.usage = usage;
+	return error;
+}
 
 /**
  * Base AI Provider class
@@ -31,11 +56,31 @@ class AIProvider {
 	 *
 	 * @param {Array<Object>} strings - Array of translation entries
 	 * @param {string} targetLocale - Target locale code
-	 * @param {Object} context - Additional context
-	 * @returns {Promise<Object>} Object with translations array and usage info
+	 * @returns {Promise<Object>} { results, usage }; each successful result
+	 *   holds the translated string
 	 */
-	async translateBatch(strings, targetLocale, context) {
-		throw new Error('translateBatch must be implemented by subclass');
+	async translateBatch(strings, targetLocale) {
+		const prepared = prepareEntries(strings, targetLocale);
+		const { translations, usage } = await this.requestTranslations(
+			prepared,
+			strings,
+			targetLocale
+		);
+
+		return {
+			results: prepared.items.map((item, idx) => {
+				const restored = restoreQuotes(
+					translations[idx],
+					item.msgid,
+					targetLocale,
+					prepared.style
+				);
+				return restored.ok
+					? { ok: true, translation: restored.text }
+					: restored;
+			}),
+			usage,
+		};
 	}
 
 	/**
@@ -43,10 +88,56 @@ class AIProvider {
 	 *
 	 * @param {Array<Object>} strings - Entries with msgid + msgidPlural
 	 * @param {string} targetLocale - Target locale code
-	 * @returns {Promise<Object>} { translations: string[][], usage } where
-	 *   each inner array holds the locale's plural forms for one entry
+	 * @returns {Promise<Object>} { results, usage }; each successful result
+	 *   holds the locale's plural forms for one entry
 	 */
 	async translatePluralBatch(strings, targetLocale) {
+		const pluralForm = config.pluralForms[targetLocale] || {
+			nplurals: 2,
+			forms: ['singular', 'plural'],
+		};
+		const prepared = prepareEntries(strings, targetLocale);
+		const { translations, usage } = await this.requestPluralTranslations(
+			prepared,
+			strings,
+			targetLocale,
+			pluralForm
+		);
+
+		return {
+			results: prepared.items.map((item, idx) => {
+				const restored = restorePluralQuotes(
+					translations[idx],
+					item,
+					pluralForm.nplurals,
+					targetLocale,
+					prepared.style
+				);
+				return restored.ok
+					? { ok: true, translation: restored.forms }
+					: restored;
+			}),
+			usage,
+		};
+	}
+
+	/**
+	 * Send one singular request.
+	 *
+	 * @returns {Promise<Object>} { translations, usage } with one raw value
+	 *   per input, in input order
+	 */
+	async requestTranslations(prepared, strings, targetLocale) {
+		throw new Error('requestTranslations must be implemented by subclass');
+	}
+
+	/**
+	 * Send one plural request.
+	 *
+	 * @returns {Promise<Object>} { translations, usage } with one raw forms
+	 *   value per input, in input order
+	 */
+	async requestPluralTranslations(prepared, strings, targetLocale) {
 		throw new Error(
 			`Plural translation is not supported by the ${this.config.model} provider`
 		);
@@ -69,6 +160,38 @@ class AIProvider {
 }
 
 /**
+ * Format the user-prompt input for singular strings.
+ */
+function singularInput(prepared, strings) {
+	return prepared.items.map((item, idx) => ({
+		index: idx,
+		msgid: item.msgid.text,
+		context: strings[idx].msgctxt || null,
+		reference: strings[idx].references?.[0] || null,
+	}));
+}
+
+/**
+ * Format the user-prompt input for plural strings.
+ */
+function pluralInput(prepared, strings) {
+	return prepared.items.map((item, idx) => ({
+		index: idx,
+		singular: item.msgid.text,
+		plural: item.msgidPlural?.text ?? strings[idx].msgidPlural,
+		context: strings[idx].msgctxt || null,
+	}));
+}
+
+/**
+ * Prompt suffix with the marker rules, or '' for locales without markers.
+ */
+function markerNote(targetLocale, prepared) {
+	const note = markerInstructions(targetLocale, prepared.style);
+	return note ? `\n${note}\n` : '';
+}
+
+/**
  * OpenAI Provider (GPT-4o-mini)
  */
 class OpenAIProvider extends AIProvider {
@@ -76,29 +199,104 @@ class OpenAIProvider extends AIProvider {
 		super('openai');
 	}
 
-	async translateBatch(strings, targetLocale, context) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
-
-		// Format input for the AI
-		const inputStrings = strings.map((s, idx) => ({
-			index: idx,
-			msgid: s.msgid,
-			context: s.msgctxt || null,
-			reference: s.references?.[0] || null,
-		}));
+	async requestTranslations(prepared, strings, targetLocale) {
+		const inputStrings = singularInput(prepared, strings);
 
 		const userPrompt = `Translate the following WordPress plugin strings to ${
 			config.localeNames[targetLocale]
 		}.
 Return a JSON object with a "translations" array containing the translated strings in the same order.
 Each translation should be a string value.
-
+${markerNote(targetLocale, prepared)}
 Input strings:
 ${JSON.stringify(inputStrings, null, 2)}
 
 Return format: {"translations": ["translation 1", "translation 2", ...]}`;
+
+		const { result, usage } = await this.request(targetLocale, userPrompt);
+		const translations = result.translations;
+
+		if (
+			!Array.isArray(translations) ||
+			translations.length !== strings.length
+		) {
+			throw withUsage(
+				new Error(
+					`OpenAI returned invalid response: expected ${
+						strings.length
+					} translations, got ${
+						Array.isArray(translations)
+							? translations.length
+							: typeof translations
+					}`
+				),
+				usage
+			);
+		}
+
+		return { translations, usage };
+	}
+
+	async requestPluralTranslations(
+		prepared,
+		strings,
+		targetLocale,
+		pluralForm
+	) {
+		const nplurals = pluralForm.nplurals;
+		const inputStrings = pluralInput(prepared, strings);
+
+		const formGuide = pluralForm.forms
+			.map((f, i) => `   [${i}] used when ${f}`)
+			.join('\n');
+
+		const userPrompt = `Translate the following WordPress plural strings to ${
+			config.localeNames[targetLocale]
+		}.
+This language has ${nplurals} plural forms. For each input string return an
+array of exactly ${nplurals} translations, one per form, in this order:
+${formGuide}
+Preserve every printf placeholder (%d, %s, %1$d, etc.) in all forms.
+${markerNote(targetLocale, prepared)}
+Input strings (each has the English singular and plural):
+${JSON.stringify(inputStrings, null, 2)}
+
+Return a JSON object: {"translations": [["form 0", "form 1", ...], ...]} with
+one inner array of exactly ${nplurals} strings per input string, in order.`;
+
+		const { result, usage } = await this.request(targetLocale, userPrompt);
+		const translations = result.translations;
+
+		if (
+			!Array.isArray(translations) ||
+			translations.length !== strings.length
+		) {
+			throw withUsage(
+				new Error(
+					`OpenAI returned invalid response: expected ${
+						strings.length
+					} entries, got ${
+						Array.isArray(translations)
+							? translations.length
+							: typeof translations
+					}`
+				),
+				usage
+			);
+		}
+
+		return { translations, usage };
+	}
+
+	/**
+	 * Send one chat completion and parse its JSON object.
+	 *
+	 * @returns {Promise<Object>} { result, usage }
+	 */
+	async request(targetLocale, userPrompt) {
+		const systemPrompt = config.ai.systemPrompt(targetLocale, {
+			localeName: config.localeNames[targetLocale],
+		});
 
 		const response = await fetch(this.config.apiEndpoint, {
 			method: 'POST',
@@ -129,165 +327,48 @@ Return format: {"translations": ["translation 1", "translation 2", ...]}`;
 		}
 
 		const data = await response.json();
-		const result = JSON.parse(data.choices[0].message.content);
-		let translations = result.translations;
+		const usage = data.usage
+			? {
+					inputTokens: data.usage.prompt_tokens,
+					outputTokens: data.usage.completion_tokens,
+					totalTokens: data.usage.total_tokens,
+					cost: this.estimateCost(
+						data.usage.prompt_tokens,
+						data.usage.completion_tokens
+					),
+				}
+			: null;
 
-		if (
-			!Array.isArray(translations) ||
-			translations.length !== strings.length
-		) {
-			throw new Error(
-				`OpenAI returned invalid response: expected ${
-					strings.length
-				} translations, got ${translations?.length || 0}`
+		let result;
+		try {
+			result = JSON.parse(data.choices?.[0]?.message?.content);
+		} catch (e) {
+			throw withUsage(
+				new Error(`OpenAI returned invalid JSON: ${e.message}`),
+				usage
+			);
+		}
+		if (!result || typeof result !== 'object') {
+			throw withUsage(
+				new Error('OpenAI returned a non-object response'),
+				usage
 			);
 		}
 
-		// Normalize translations to strings (in case AI returns objects)
-		translations = translations.map((t) => {
-			if (typeof t === 'string') return t;
-			if (typeof t === 'object' && t !== null) {
-				// If it's an object, try to extract the translation field
-				return t.translation || t.msgstr || String(t);
-			}
-			return String(t);
-		});
-
-		return {
-			translations,
-			usage: {
-				inputTokens: data.usage.prompt_tokens,
-				outputTokens: data.usage.completion_tokens,
-				totalTokens: data.usage.total_tokens,
-				cost: this.estimateCost(
-					data.usage.prompt_tokens,
-					data.usage.completion_tokens
-				),
-			},
-		};
-	}
-
-	async translatePluralBatch(strings, targetLocale) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
-
-		const pluralForm = config.pluralForms[targetLocale] || {
-			nplurals: 2,
-			forms: ['singular', 'plural'],
-		};
-		const nplurals = pluralForm.nplurals;
-
-		const inputStrings = strings.map((s, idx) => ({
-			index: idx,
-			singular: s.msgid,
-			plural: s.msgidPlural,
-			context: s.msgctxt || null,
-		}));
-
-		const formGuide = pluralForm.forms
-			.map((f, i) => `   [${i}] used when ${f}`)
-			.join('\n');
-
-		const userPrompt = `Translate the following WordPress plural strings to ${
-			config.localeNames[targetLocale]
-		}.
-This language has ${nplurals} plural forms. For each input string return an
-array of exactly ${nplurals} translations, one per form, in this order:
-${formGuide}
-Preserve every printf placeholder (%d, %s, %1$d, etc.) in all forms.
-
-Input strings (each has the English singular and plural):
-${JSON.stringify(inputStrings, null, 2)}
-
-Return a JSON object: {"translations": [["form 0", "form 1", ...], ...]} with
-one inner array of exactly ${nplurals} strings per input string, in order.`;
-
-		const response = await fetch(this.config.apiEndpoint, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${this.apiKey}`,
-			},
-			body: JSON.stringify({
-				model: this.config.model,
-				messages: [
-					{ role: 'system', content: systemPrompt },
-					{ role: 'user', content: userPrompt },
-				],
-				response_format: { type: 'json_object' },
-				temperature: 0.3,
-			}),
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(
-				`OpenAI API error (${response.status}): ${errorText}`
-			);
-		}
-
-		const data = await response.json();
-		const result = JSON.parse(data.choices[0].message.content);
-		const translations = result.translations;
-
-		if (
-			!Array.isArray(translations) ||
-			translations.length !== strings.length
-		) {
-			throw new Error(
-				`OpenAI returned invalid response: expected ${
-					strings.length
-				} entries, got ${translations?.length || 0}`
-			);
-		}
-		for (const forms of translations) {
-			if (!Array.isArray(forms) || forms.length !== nplurals) {
-				throw new Error(
-					`Expected ${nplurals} plural forms per string, got ${
-						Array.isArray(forms) ? forms.length : typeof forms
-					}`
-				);
-			}
-		}
-
-		return {
-			translations: translations.map((forms) =>
-				forms.map((f) => String(f))
-			),
-			usage: {
-				inputTokens: data.usage.prompt_tokens,
-				outputTokens: data.usage.completion_tokens,
-				totalTokens: data.usage.total_tokens,
-				cost: this.estimateCost(
-					data.usage.prompt_tokens,
-					data.usage.completion_tokens
-				),
-			},
-		};
+		return { result, usage };
 	}
 }
 
 /**
- * Claude Provider (Claude 3.5 Haiku)
+ * Claude Provider (Claude Haiku)
  */
 class ClaudeProvider extends AIProvider {
 	constructor() {
 		super('claude');
 	}
 
-	async translateBatch(strings, targetLocale, context) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
-
-		// Format input for the AI
-		const inputStrings = strings.map((s, idx) => ({
-			index: idx,
-			msgid: s.msgid,
-			context: s.msgctxt || null,
-			reference: s.references?.[0] || null,
-		}));
+	async requestTranslations(prepared, strings, targetLocale) {
+		const inputStrings = singularInput(prepared, strings);
 
 		const userPrompt = `Translate the following WordPress plugin strings to ${
 			config.localeNames[targetLocale]
@@ -295,9 +376,10 @@ class ClaudeProvider extends AIProvider {
 Return a JSON object with a "translations" object that maps "t<index>" to the
 translated string for the input with that index (e.g. "t0", "t1", ...).
 Each translation should be a single string value.
-Never put the ASCII double quote character (") inside a translation; use the
-target language's typographic quotation marks instead (e.g. „…” or „…“).
-
+Never put the ASCII double quote character (") inside a translation unless the
+input already contains it; use the target language's typographic quotation
+marks instead.
+${markerNote(targetLocale, prepared)}
 Input strings:
 ${JSON.stringify(inputStrings, null, 2)}
 
@@ -305,7 +387,7 @@ Return format: {"translations": {"t0": "translation 1", "t1": "translation 2", .
 
 		// One required key per input string, so the schema itself fixes the
 		// count: a translation containing quotes can no longer be split into
-		// extra entries.
+		// extra entries. The description carries the marked source text.
 		const translationProperties = Object.fromEntries(
 			inputStrings.map(({ index, msgid }) => [
 				`t${index}`,
@@ -342,184 +424,38 @@ Return format: {"translations": {"t0": "translation 1", "t1": "translation 2", .
 			},
 		};
 
-		// Claude occasionally returns a malformed or wrong-shaped response
-		// (e.g. translations as one concatenated string). Retry a few times
-		// before giving up — each attempt re-samples the model.
-		const maxAttempts = 3;
-		let lastError;
-		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-			try {
-				const response = await fetch(this.config.apiEndpoint, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'x-api-key': this.apiKey,
-						'anthropic-version': '2023-06-01',
-					},
-					body: JSON.stringify({
-						model: this.config.model,
-						max_tokens: 8192,
-						system: systemPrompt,
-						messages: [{ role: 'user', content: userPrompt }],
-						temperature: 0.3,
-						tools: [translationTool],
-						tool_choice: {
-							type: 'tool',
-							name: 'return_translations',
-						},
-					}),
-				});
+		const { result, usage } = await this.request(
+			targetLocale,
+			userPrompt,
+			translationTool
+		);
+		const keyed = result.translations;
 
-				if (!response.ok) {
-					const errorText = await response.text();
-					throw new Error(
-						`Claude API error (${response.status}): ${errorText}\n\n` +
-							`   💡 To fix:\n` +
-							`      1. Check your API key is valid\n` +
-							`      2. Check your API quota: https://console.anthropic.com/\n` +
-							`      3. If rate limited, wait a few minutes and retry`
-					);
-				}
-
-				const data = await response.json();
-
-				// Prefer the structured tool_use output (parsed JSON object).
-				let result;
-				const toolUse = data.content?.find(
-					(b) => b.type === 'tool_use'
-				);
-				if (toolUse && toolUse.input) {
-					result = toolUse.input;
-				} else {
-					// Fallback: parse JSON from a text block (older behavior).
-					const contentText =
-						data.content?.find((b) => b.type === 'text')?.text ||
-						'';
-					try {
-						result = JSON.parse(contentText);
-					} catch (e) {
-						// Sometimes Claude wraps JSON in markdown code blocks
-						const jsonMatch = contentText.match(
-							/```(?:json)?\s*([\s\S]*?)\s*```/
-						);
-						if (jsonMatch) {
-							result = JSON.parse(jsonMatch[1]);
-						} else {
-							throw new Error(
-								`Claude returned invalid JSON: ${contentText.substring(
-									0,
-									200
-								)}...`
-							);
-						}
-					}
-				}
-
-				let translations = result.translations;
-
-				// Keyed object from the strict schema -> ordered array.
-				if (
-					translations &&
-					typeof translations === 'object' &&
-					!Array.isArray(translations)
-				) {
-					const keyed = translations;
-					translations = inputStrings.map(
-						({ index }) => keyed[`t${index}`]
-					);
-					if (translations.some((t) => typeof t !== 'string')) {
-						translations = null;
-					}
-				}
-
-				// An ASCII `"` used to close a „…” quote ends the JSON string
-				// early, leaving a translation cut off after the opening „.
-				const truncated = (translations || []).find(
-					(t) =>
-						typeof t === 'string' &&
-						(t.match(/„/g) || []).length >
-							(t.match(/[”“]/g) || []).length
-				);
-				if (truncated) {
-					throw new Error(
-						`Claude returned a truncated translation: ${truncated}`
-					);
-				}
-
-				// Claude occasionally stringifies the array (e.g. under a
-				// long system prompt) instead of returning it structurally.
-				if (typeof translations === 'string') {
-					try {
-						translations = JSON.parse(translations);
-					} catch (e) {
-						// leave as-is; the length check below will report it
-					}
-				}
-
-				if (
-					!Array.isArray(translations) ||
-					translations.length !== strings.length
-				) {
-					throw new Error(
-						`Claude returned invalid response: expected ${
-							strings.length
-						} translations, got ${translations?.length || 0}`
-					);
-				}
-
-				// Normalize translations to strings (AI may return objects)
-				translations = translations.map((t) => {
-					if (typeof t === 'string') return t;
-					if (typeof t === 'object' && t !== null) {
-						// If it's an object, extract the translation field
-						return t.translation || t.msgstr || String(t);
-					}
-					return String(t);
-				});
-
-				return {
-					translations,
-					usage: {
-						inputTokens: data.usage.input_tokens,
-						outputTokens: data.usage.output_tokens,
-						totalTokens:
-							data.usage.input_tokens + data.usage.output_tokens,
-						cost: this.estimateCost(
-							data.usage.input_tokens,
-							data.usage.output_tokens
-						),
-					},
-				};
-			} catch (error) {
-				lastError = error;
-				if (attempt < maxAttempts) {
-					console.error(
-						`   ⚠️  Attempt ${attempt}/${maxAttempts} failed (${error.message}); retrying...`
-					);
-				}
-			}
+		if (!keyed || typeof keyed !== 'object' || Array.isArray(keyed)) {
+			throw withUsage(
+				new Error(
+					`Claude returned invalid response: expected a "translations" object, got ${
+						Array.isArray(keyed) ? 'array' : typeof keyed
+					}`
+				),
+				usage
+			);
 		}
 
-		throw lastError;
+		return {
+			translations: inputStrings.map(({ index }) => keyed[`t${index}`]),
+			usage,
+		};
 	}
 
-	async translatePluralBatch(strings, targetLocale) {
-		const systemPrompt = config.ai.systemPrompt(targetLocale, {
-			localeName: config.localeNames[targetLocale],
-		});
-
-		const pluralForm = config.pluralForms[targetLocale] || {
-			nplurals: 2,
-			forms: ['singular', 'plural'],
-		};
+	async requestPluralTranslations(
+		prepared,
+		strings,
+		targetLocale,
+		pluralForm
+	) {
 		const nplurals = pluralForm.nplurals;
-
-		const inputStrings = strings.map((s, idx) => ({
-			index: idx,
-			singular: s.msgid,
-			plural: s.msgidPlural,
-			context: s.msgctxt || null,
-		}));
+		const inputStrings = pluralInput(prepared, strings);
 
 		const formGuide = pluralForm.forms
 			.map((f, i) => `   [${i}] used when ${f}`)
@@ -532,7 +468,7 @@ This language has ${nplurals} plural forms. For each input string return an
 array of exactly ${nplurals} translations, one per form, in this order:
 ${formGuide}
 Preserve every printf placeholder (%d, %s, %1$d, etc.) in all forms.
-
+${markerNote(targetLocale, prepared)}
 Input strings (each has the English singular and plural):
 ${JSON.stringify(inputStrings, null, 2)}
 
@@ -558,95 +494,132 @@ string, and each entry is an array of exactly ${nplurals} translated strings.`;
 			},
 		};
 
-		const maxAttempts = 3;
-		let lastError;
-		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-			try {
-				const response = await fetch(this.config.apiEndpoint, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'x-api-key': this.apiKey,
-						'anthropic-version': '2023-06-01',
-					},
-					body: JSON.stringify({
-						model: this.config.model,
-						max_tokens: 8192,
-						system: systemPrompt,
-						messages: [{ role: 'user', content: userPrompt }],
-						temperature: 0.3,
-						tools: [translationTool],
-						tool_choice: {
-							type: 'tool',
-							name: 'return_plural_translations',
-						},
-					}),
-				});
+		const { result, usage } = await this.request(
+			targetLocale,
+			userPrompt,
+			translationTool,
+			{ textFallback: false }
+		);
+		const translations = result.translations;
 
-				if (!response.ok) {
-					const errorText = await response.text();
-					throw new Error(
-						`Claude API error (${response.status}): ${errorText}`
-					);
-				}
-
-				const data = await response.json();
-				const toolUse = data.content?.find(
-					(b) => b.type === 'tool_use'
-				);
-				if (!toolUse || !toolUse.input) {
-					throw new Error('Claude returned no structured output');
-				}
-
-				const translations = toolUse.input.translations;
-				if (
-					!Array.isArray(translations) ||
-					translations.length !== strings.length
-				) {
-					throw new Error(
-						`Claude returned invalid response: expected ${
-							strings.length
-						} entries, got ${translations?.length || 0}`
-					);
-				}
-				for (const forms of translations) {
-					if (!Array.isArray(forms) || forms.length !== nplurals) {
-						throw new Error(
-							`Expected ${nplurals} plural forms per string, got ${
-								Array.isArray(forms)
-									? forms.length
-									: typeof forms
-							}`
-						);
-					}
-				}
-
-				return {
-					translations: translations.map((forms) =>
-						forms.map((f) => String(f))
-					),
-					usage: {
-						inputTokens: data.usage.input_tokens,
-						outputTokens: data.usage.output_tokens,
-						totalTokens:
-							data.usage.input_tokens + data.usage.output_tokens,
-						cost: this.estimateCost(
-							data.usage.input_tokens,
-							data.usage.output_tokens
-						),
-					},
-				};
-			} catch (error) {
-				lastError = error;
-				if (attempt < maxAttempts) {
-					console.error(
-						`   ⚠️  Attempt ${attempt}/${maxAttempts} failed (${error.message}); retrying...`
-					);
-				}
-			}
+		if (
+			!Array.isArray(translations) ||
+			translations.length !== strings.length
+		) {
+			throw withUsage(
+				new Error(
+					`Claude returned invalid response: expected ${
+						strings.length
+					} entries, got ${
+						Array.isArray(translations)
+							? translations.length
+							: typeof translations
+					}`
+				),
+				usage
+			);
 		}
 
-		throw lastError;
+		return { translations, usage };
+	}
+
+	/**
+	 * Send one message forcing the given tool and return its input.
+	 *
+	 * @param {string} targetLocale - Target locale code
+	 * @param {string} userPrompt - User prompt
+	 * @param {Object} tool - Tool definition to force
+	 * @param {Object} options - { textFallback } parses JSON from a text
+	 *   block when no tool_use block came back
+	 * @returns {Promise<Object>} { result, usage }
+	 */
+	async request(
+		targetLocale,
+		userPrompt,
+		tool,
+		{ textFallback = true } = {}
+	) {
+		const systemPrompt = config.ai.systemPrompt(targetLocale, {
+			localeName: config.localeNames[targetLocale],
+		});
+
+		const response = await fetch(this.config.apiEndpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'x-api-key': this.apiKey,
+				'anthropic-version': '2023-06-01',
+			},
+			body: JSON.stringify({
+				model: this.config.model,
+				max_tokens: 8192,
+				system: systemPrompt,
+				messages: [{ role: 'user', content: userPrompt }],
+				temperature: 0.3,
+				tools: [tool],
+				tool_choice: { type: 'tool', name: tool.name },
+			}),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(
+				`Claude API error (${response.status}): ${errorText}\n\n` +
+					`   💡 To fix:\n` +
+					`      1. Check your API key is valid\n` +
+					`      2. Check your API quota: https://console.anthropic.com/\n` +
+					`      3. If rate limited, wait a few minutes and retry`
+			);
+		}
+
+		const data = await response.json();
+		const usage = data.usage
+			? {
+					inputTokens: data.usage.input_tokens,
+					outputTokens: data.usage.output_tokens,
+					totalTokens:
+						data.usage.input_tokens + data.usage.output_tokens,
+					cost: this.estimateCost(
+						data.usage.input_tokens,
+						data.usage.output_tokens
+					),
+				}
+			: null;
+
+		// Prefer the structured tool_use output (parsed JSON object).
+		const toolUse = data.content?.find((b) => b.type === 'tool_use');
+		if (toolUse?.input && typeof toolUse.input === 'object') {
+			return { result: toolUse.input, usage };
+		}
+		if (!textFallback) {
+			throw withUsage(
+				new Error('Claude returned no structured output'),
+				usage
+			);
+		}
+
+		// Fallback: parse JSON from a text block (older behavior), which
+		// Claude sometimes wraps in a markdown code block.
+		const contentText =
+			data.content?.find((b) => b.type === 'text')?.text || '';
+		const jsonMatch = contentText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+		try {
+			const result = JSON.parse(jsonMatch ? jsonMatch[1] : contentText);
+			if (!result || typeof result !== 'object') {
+				throw new Error('not an object');
+			}
+			return { result, usage };
+		} catch (e) {
+			throw withUsage(
+				new Error(
+					`Claude returned invalid JSON: ${contentText.substring(
+						0,
+						200
+					)}...`
+				),
+				usage
+			);
+		}
 	}
 }
 
