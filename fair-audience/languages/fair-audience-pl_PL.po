@@ -18,7 +18,7 @@ msgstr ""
 #: fair-audience.php
 #: src/Admin/AdminHooks.php:137
 #: src/Admin/AdminHooks.php:138
-#: src/Core/Plugin.php:149
+#: src/Core/Plugin.php:152
 msgid "Fair Audience"
 msgstr ""
 
@@ -303,7 +303,7 @@ msgstr "Szybkie pytanie o %s"
 #: src/Services/EmailService.php:2397
 #: src/Services/EmailService.php:2760
 #: src/Services/EmailService.php:2854
-#, php-format, js-format
+#, php-format,js-format
 msgid "Hi %s,"
 msgstr "Cześć %s,"
 
@@ -2063,7 +2063,7 @@ msgid "Invalid or expired unsubscribe link."
 msgstr "Nieprawidłowy lub wygasły link do anulowania subskrypcji."
 
 #: src/API/EventInterestController.php:266
-#: src/Core/Plugin.php:329
+#: src/Core/Plugin.php:332
 msgid "You will no longer receive updates about this event."
 msgstr "Nie będziesz już otrzymywać aktualizacji dotyczących tego wydarzenia."
 
@@ -2145,20 +2145,20 @@ msgstr "Twój bilet: %s"
 msgid "Your activities:"
 msgstr "Twoje aktywności:"
 
-#: src/Core/Plugin.php:302
+#: src/Core/Plugin.php:305
 msgid "Missing unsubscribe token."
 msgstr "Brakuje tokenu rezygnacji z subskrypcji."
 
-#: src/Core/Plugin.php:303
-#: src/Core/Plugin.php:313
+#: src/Core/Plugin.php:306
+#: src/Core/Plugin.php:316
 msgid "Unsubscribe"
 msgstr "Rezygnuj z subskrypcji"
 
-#: src/Core/Plugin.php:312
+#: src/Core/Plugin.php:315
 msgid "This unsubscribe link is invalid or has expired."
 msgstr "Ten link rezygnacji z subskrypcji jest nieprawidłowy lub wygasł."
 
-#: src/Core/Plugin.php:330
+#: src/Core/Plugin.php:333
 msgid "Unsubscribed"
 msgstr "Zrezygnowano z subskrypcji"
 
@@ -2318,7 +2318,7 @@ msgid "Bundled translations"
 msgstr "Dołączone tłumaczenia"
 
 #: src/Core/Features.php:120
-#: src/Core/Plugin.php:150
+#: src/Core/Plugin.php:153
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Załaduj pliki .mo/.json dostarczone z wtyczką zamiast polegać na paczkach językowych WordPress.org. Przydatne, gdy lokalizacja jest poniżej progu 90% na translate.wordpress.org lub dla ciągów w trakcie opracowania."
 
@@ -2326,7 +2326,7 @@ msgstr "Załaduj pliki .mo/.json dostarczone z wtyczką zamiast polegać na pacz
 msgid "Per-bundle feature toggles"
 msgstr "Przełączniki funkcji dla każdej paczki"
 
-#: src/Core/Plugin.php:153
+#: src/Core/Plugin.php:156
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Wymuszono przez stałą wp-config — zmień ją tam."
 
@@ -2357,7 +2357,7 @@ msgstr "Jedno z wybranych wystąpień nie jest ważne dla tego biletu."
 
 #. translators: %d: minimum number of occurrences required
 #: src/API/EventSignupController.php:610
-#, php-format, js-format
+#, php-format,js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Proszę wybrać co najmniej %d wystąpienie."
@@ -2899,6 +2899,7 @@ msgstr "Przywrócono do minimalnego: subskrypcja marketingowa nie została potwi
 msgid "Opted out of the weekly summary."
 msgstr "Zrezygnowano z cotygodniowego podsumowania."
 
+#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Services/WeeklyDigestRenderer.php:189
 #: src/Services/WeeklyDigestRenderer.php:199
@@ -2934,7 +2935,7 @@ msgstr "Subskrybowany"
 msgid "%1$s discount applied (%2$s)"
 msgstr "Zastosowana zniżka %1$s (%2$s)"
 
-#: src/Core/Plugin.php:144
+#: src/Core/Plugin.php:147
 msgid "Translations"
 msgstr "Tłumaczenia"
 
@@ -2975,10 +2976,11 @@ msgstr "Jedno z wybranych zajęć nie należy do tego wydarzenia."
 msgid "Enter a reason for going over capacity."
 msgstr "Wpisz powód przekroczenia pojemności."
 
+#. translators: 1: ticket type or activity name, 2: places taken after the change, 3: capacity
 #. translators: 1: event date or activity name, 2: places taken after the move, 3: capacity
 #: src/API/EventParticipantsController.php:1611
 #: src/Services/TicketOperations.php:218
-#, php-format, js-format
+#, php-format,js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s miałby %2$d z %3$d miejsca zajęte."
@@ -3009,17 +3011,19 @@ msgstr "Ten bilet nie może otrzymać zajęć."
 msgid "Choose which ticket to add the activities to."
 msgstr "Wybierz, do którego biletu dodać zajęcia."
 
+#. translators: 1: ticket number among the participant's tickets, 2: ticket type name, 3: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: ticket type name, 3: short ticket reference
 #: src/Services/TicketActivities.php:188
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:51
-#, php-format, js-format
+#, php-format,js-format
 msgid "Ticket %1$d — %2$s (%3$s)"
 msgstr "Bilet %1$d — %2$s (%3$s)"
 
+#. translators: 1: ticket number among the participant's tickets, 2: short ticket reference
 #. translators: 1: ticket number within its purchase, 2: short ticket reference
 #: src/Services/TicketActivities.php:195
 #: src/Admin/manage-event-audience-tab/ticketLabels.js:35
-#, php-format, js-format
+#, php-format,js-format
 msgid "Ticket %1$d (%2$s)"
 msgstr "Bilet %1$d (%2$s)"
 
@@ -3166,10 +3170,11 @@ msgstr "Podaj prawidłowy adres e-mail."
 msgid "Failed to assign the ticket."
 msgstr "Nie udało się przypisać biletu."
 
+#. translators: 1: event title, 2: event date and time
 #. translators: 1: person's name, 2: their email address
 #: src/API/CustomMailController.php:621
 #: src/Admin/manage-event-audience-tab/AssignTicketModal.js:41
-#, js-format, php-format
+#, js-format,php-format
 msgid "%1$s (%2$s)"
 msgstr "%1$s (%2$s)"
 
@@ -4626,3 +4631,10 @@ msgstr "Nie można było zaszyfrować tokenu dostępu do Instagrama, dlatego pop
 msgid "Or disconnect to remove the unreadable token from this site."
 msgstr "Lub rozłącz się, aby usunąć nieczytelny token z tej witryny."
 
+#: src/Frontend/RetiredCollaboratorRegistrationLinks.php:65
+msgid "Collaborator registration is no longer available."
+msgstr "Rejestracja współpracowników nie jest już dostępna."
+
+#: src/Frontend/RetiredCollaboratorRegistrationLinks.php:66
+msgid "Collaborator registration removed"
+msgstr "Rejestracja współpracowników usunięta"

@@ -237,16 +237,6 @@ class Plugin {
 			);
 		}
 
-		if ( Features::is_enabled( 'collaborators' ) ) {
-			add_action(
-				'rest_api_init',
-				function () {
-					$controller = new \FairAudienceExperimental\API\CollaboratorsController();
-					$controller->register_routes();
-				}
-			);
-		}
-
 		if ( Features::is_enabled( 'timeline' ) ) {
 			add_action(
 				'rest_api_init',
@@ -310,8 +300,9 @@ class Plugin {
 
 	/**
 	 * Load frontend `template_redirect` handlers and query vars for the
-	 * companion's public-facing pages (poll response, fee payment,
-	 * collaborator profile).
+	 * companion's public-facing pages (poll response, fee payment).
+	 * Retired collaborator registration links are answered by core
+	 * fair-audience.
 	 *
 	 * @return void
 	 */
@@ -325,9 +316,6 @@ class Plugin {
 				if ( Features::is_enabled( 'fees' ) ) {
 					$vars[] = 'fee_payment';
 				}
-				if ( Features::is_enabled( 'collaborators' ) ) {
-					$vars[] = 'collaborator_profile';
-				}
 				return $vars;
 			}
 		);
@@ -338,10 +326,6 @@ class Plugin {
 
 		if ( Features::is_enabled( 'fees' ) ) {
 			add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
-		}
-
-		if ( Features::is_enabled( 'collaborators' ) ) {
-			add_action( 'template_redirect', array( $this, 'handle_collaborator_profile' ) );
 		}
 
 		if ( Features::is_enabled( 'instagram' ) ) {
@@ -378,22 +362,6 @@ class Plugin {
 		}
 
 		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/fee-payment.php';
-		exit;
-	}
-
-	/**
-	 * Handle collaborator profile registration page requests.
-	 *
-	 * @return void
-	 */
-	public function handle_collaborator_profile() {
-		$value = get_query_var( 'collaborator_profile' );
-
-		if ( empty( $value ) ) {
-			return;
-		}
-
-		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/collaborator-profile.php';
 		exit;
 	}
 

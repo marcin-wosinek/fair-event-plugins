@@ -2,9 +2,9 @@
 /**
  * Feature flag registry for Fair Audience Experimental.
  *
- * Manages the ten advanced bundles carried by this companion: fees,
- * polls, Instagram, groups, collaborators, messaging,
- * timeline, import, invitations, manage-event-ext. All default to true — installing this plugin signals
+ * Manages the nine advanced bundles carried by this companion: fees,
+ * polls, Instagram, groups, messaging, timeline, import, invitations,
+ * manage-event-ext. All default to true — installing this plugin signals
  * intent to use the full internal feature set.
  *
  * Resolution order (first match wins):
@@ -64,11 +64,6 @@ class Features {
 			'groups'           => array(
 				'label'       => 'Groups',
 				'description' => 'Participant groups.',
-				'default'     => true,
-			),
-			'collaborators'    => array(
-				'label'       => 'Collaborators',
-				'description' => 'Event collaborators.',
 				'default'     => true,
 			),
 			'messaging'        => array(
@@ -173,10 +168,6 @@ class Features {
 			'groups'           => array(
 				'label'       => __( 'Groups', 'fair-audience-experimental' ),
 				'description' => __( 'Participant groups.', 'fair-audience-experimental' ),
-			),
-			'collaborators'    => array(
-				'label'       => __( 'Collaborators', 'fair-audience-experimental' ),
-				'description' => __( 'Event collaborators.', 'fair-audience-experimental' ),
 			),
 			'messaging'        => array(
 				'label'       => __( 'Messaging', 'fair-audience-experimental' ),

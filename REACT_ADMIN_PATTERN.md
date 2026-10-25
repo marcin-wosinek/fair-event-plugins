@@ -823,7 +823,7 @@ it.
 ### fair-audience (Most Complete — canonical)
 
 -   **Location**: `fair-audience/src/Admin/` (events-list, event-participants,
-    all-participants, fees-list, collaborators, custom-mail, and more)
+    all-participants, custom-mail, and more)
 -   **REST API**: `fair-audience/src/API/` (EventParticipantsController,
     FeesController, …)
 -   **Features**: Pagination, filtering, inline editing, shared components in
