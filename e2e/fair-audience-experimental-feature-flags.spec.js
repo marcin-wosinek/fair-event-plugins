@@ -18,13 +18,23 @@
  *
  * The removed Weekly Schedule bundle (#1809) has its own block: its menu
  * entry, settings toggle and bookmarked page stay absent, whatever a stale
- * option, a filter or a constant says.
+ * option, a filter or a constant says. The removed Image Templates bundle
+ * (#1985) gets the same coverage, plus its REST routes being gone and its
+ * media and template metadata being left intact.
  *
  * Run: `npm run test:e2e -- fair-audience-experimental-feature-flags`.
  */
 
-import { test, expect } from '@playwright/test';
-import { wpCli, loginAsAdmin, runScript } from './support/wp-cli.js';
+import { test, expect, request as playwrightRequest } from '@playwright/test';
+import {
+	ADMIN_USER,
+	ADMIN_PASSWORD,
+	wpCli,
+	loginAsAdmin,
+	runScript,
+} from './support/wp-cli.js';
+
+const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8889';
 
 /** Set the `fair_audience_experimental_features` option to a `{bundle: bool}` map. */
 function setExperimentalFeatures(map) {
@@ -47,7 +57,6 @@ const ALL_BUNDLES_ON = {
 	groups: true,
 	collaborators: true,
 	messaging: true,
-	'image-templates': true,
 	timeline: true,
 	import: true,
 	invitations: true,
@@ -61,7 +70,6 @@ const ALL_BUNDLES_OFF = {
 	groups: false,
 	collaborators: false,
 	messaging: false,
-	'image-templates': false,
 	timeline: false,
 	import: false,
 	invitations: false,
@@ -87,12 +95,6 @@ const BUNDLE_PAGES = {
 		{
 			slug: 'fair-audience-collaborators',
 			root: 'fair-audience-collaborators-root',
-		},
-	],
-	'image-templates': [
-		{
-			slug: 'fair-audience-image-templates',
-			root: 'fair-audience-image-templates-root',
 		},
 	],
 	timeline: [
@@ -122,7 +124,6 @@ const BUNDLE_PROBE_ROUTES = {
 	polls: '/fair-audience/v1/polls',
 	instagram: '/fair-audience/v1/instagram/posts',
 	collaborators: '/fair-audience/v1/collaborators',
-	'image-templates': '/fair-audience/v1/image-templates',
 	timeline: '/fair-audience/v1/timeline',
 	import: '/fair-audience/v1/import/entradium',
 	groups: '/fair-audience/v1/groups',
@@ -312,7 +313,11 @@ test.describe('Fair Audience Experimental — all bundles on', () => {
 test.describe('Fair Audience Experimental — removed Weekly Schedule', () => {
 	const SLUG = 'fair-audience-weekly-schedule';
 	const state = (mode) =>
-		runScript('retired-weekly-schedule-state.php', 'E2E_STATE', mode);
+		runScript(
+			'retired-experimental-bundle-state.php',
+			'E2E_STATE',
+			`weekly-schedule ${mode}`
+		);
 
 	test.afterAll(() => {
 		clearExperimentalFeatures();
@@ -330,10 +335,10 @@ test.describe('Fair Audience Experimental — removed Weekly Schedule', () => {
 			'/wp-admin/admin.php?page=fair-audience-experimental-settings'
 		);
 		// Another bundle's toggle and menu entry prove both lists rendered.
-		await expect(page.getByLabel('Image templates')).toBeVisible();
+		await expect(page.getByLabel('Timeline', { exact: true })).toBeVisible();
 		await expect(page.getByLabel('Weekly schedule')).toHaveCount(0);
 		await expect(
-			page.locator('#adminmenu a[href*="fair-audience-image-templates"]')
+			page.locator('#adminmenu a[href*="fair-audience-timeline"]')
 		).toHaveCount(1);
 		await expect(page.locator(`#adminmenu a[href*="${SLUG}"]`)).toHaveCount(
 			0
@@ -360,6 +365,136 @@ test.describe('Fair Audience Experimental — removed Weekly Schedule', () => {
 		const resaved = state('resave');
 		expect(resaved.stored).not.toHaveProperty('weekly-schedule');
 		expect(resaved.stored.fees).toBe(true);
-		expect(resaved.stored['image-templates']).toBe(true);
+		expect(resaved.stored.timeline).toBe(true);
+	});
+});
+
+test.describe('Fair Audience Experimental — removed Image Templates', () => {
+	test.describe.configure({ mode: 'serial' });
+
+	const SLUG = 'fair-audience-image-templates';
+	const ROUTES = [
+		['GET', '/fair-audience/v1/image-templates'],
+		['POST', '/fair-audience/v1/image-templates'],
+		['DELETE', '/fair-audience/v1/image-templates/1'],
+		['POST', '/fair-audience/v1/image-templates/1/render'],
+	];
+	const state = (mode) =>
+		runScript(
+			'retired-experimental-bundle-state.php',
+			'E2E_STATE',
+			`image-templates ${mode}`
+		);
+	const media = (mode, ids = []) =>
+		runScript(
+			'retired-image-templates-media.php',
+			'E2E_MEDIA',
+			[mode, ...ids].join(' ')
+		);
+
+	let api;
+	let mediaIds = [];
+
+	test.beforeAll(async () => {
+		// Authenticated as an administrator, so a still-registered route would
+		// answer instead of failing its permission check.
+		api = await playwrightRequest.newContext({
+			baseURL: BASE_URL,
+			extraHTTPHeaders: {
+				Authorization:
+					'Basic ' +
+					Buffer.from(`${ADMIN_USER}:${ADMIN_PASSWORD}`).toString(
+						'base64'
+					),
+			},
+		});
+	});
+
+	test.afterAll(async () => {
+		if (mediaIds.length) {
+			media('cleanup', mediaIds);
+		}
+		clearExperimentalFeatures();
+		await api?.dispose();
+	});
+
+	test('a stale enabled option does not bring it back', async ({ page }) => {
+		const seeded = state('seed');
+		expect(seeded.stored['image-templates']).toBe(true);
+		expect(seeded.enabled).toBe(false);
+		expect(seeded.inSnapshot).toBe(false);
+
+		await loginAsAdmin(page);
+		await page.goto(
+			'/wp-admin/admin.php?page=fair-audience-experimental-settings'
+		);
+		// Another bundle's toggle and menu entry prove both lists rendered.
+		await expect(page.getByLabel('Timeline', { exact: true })).toBeVisible();
+		await expect(page.getByLabel('Image templates')).toHaveCount(0);
+		await expect(
+			page.locator('#adminmenu a[href*="fair-audience-timeline"]')
+		).toHaveCount(1);
+		await expect(page.locator(`#adminmenu a[href*="${SLUG}"]`)).toHaveCount(
+			0
+		);
+
+		// The bookmarked page gets WordPress's answer for an unregistered page.
+		const response = await page.goto(`/wp-admin/admin.php?page=${SLUG}`);
+		expect(response.status()).toBe(403);
+		await expect(page.locator(`#${SLUG}-root`)).toHaveCount(0);
+		await expect(
+			page.getByRole('heading', { name: 'Image Templates' })
+		).toHaveCount(0);
+	});
+
+	test('a constant and a filter cannot revive it', () => {
+		const revived = state('revive');
+		expect(revived.enabled).toBe(false);
+		expect(revived.forced).toBe(false);
+		expect(revived.inSnapshot).toBe(false);
+	});
+
+	test('saving settings discards the obsolete key and keeps the rest', () => {
+		state('seed');
+		const resaved = state('resave');
+		expect(resaved.stored).not.toHaveProperty('image-templates');
+		expect(resaved.stored.fees).toBe(true);
+		expect(resaved.stored.timeline).toBe(true);
+	});
+
+	test('every removed route and method answers rest_no_route', async () => {
+		for (const [method, path] of ROUTES) {
+			const response = await api.fetch(`/wp-json${path}`, { method });
+			expect(response.status(), `${method} ${path}`).toBe(404);
+			expect((await response.json()).code, `${method} ${path}`).toBe(
+				'rest_no_route'
+			);
+		}
+	});
+
+	test('template media and metadata are left intact', async () => {
+		const seeded = media('seed');
+		mediaIds = seeded.media.map(({ id }) => id);
+		const [templateId] = mediaIds;
+
+		// The old "remove template" call must not reach anything.
+		const response = await api.delete(
+			`/wp-json/fair-audience/v1/image-templates/${templateId}`
+		);
+		expect(response.status()).toBe(404);
+
+		const { media: after, expectedVariables, expectedImages } = media(
+			'check',
+			mediaIds
+		);
+		for (const item of after) {
+			expect(item.exists, `attachment ${item.id}`).toBe(true);
+			expect(item.fileExists, `file of attachment ${item.id}`).toBe(true);
+		}
+		const [template, generated] = after;
+		expect(template.isTemplate).toBe('1');
+		expect(template.variables).toEqual(expectedVariables);
+		expect(template.images).toEqual(expectedImages);
+		expect(generated.isTemplate).toBe('');
 	});
 });

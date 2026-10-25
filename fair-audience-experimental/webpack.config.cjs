@@ -33,10 +33,6 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/instagram-posts/index.js'
 		),
-		'admin/image-templates/index': path.resolve(
-			process.cwd(),
-			'src/Admin/image-templates/index.js'
-		),
 		'admin/fees-list/index': path.resolve(
 			process.cwd(),
 			'src/Admin/fees-list/index.js'

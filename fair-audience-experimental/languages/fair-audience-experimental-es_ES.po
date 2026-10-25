@@ -54,7 +54,7 @@ msgstr "Actividad"
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Core/Features.php:183
+#: src/Core/Features.php:178
 #: src/Admin/collaborators/Collaborators.js:414
 #: src/Admin/manage-event-ext/EventMailings.js:54
 msgid "Collaborators"
@@ -75,7 +75,7 @@ msgstr "Detalle de cuota"
 
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
-#: src/Core/Features.php:199
+#: src/Core/Features.php:190
 #: src/Admin/collaborators/Collaborators.js:428
 #: src/Admin/import/Import.js:317
 #: src/Admin/import/KitImport.js:186
@@ -84,7 +84,7 @@ msgstr "Importación"
 
 #: src/Admin/AdminPages.php:130
 #: src/Admin/AdminPages.php:131
-#: src/Core/Features.php:171
+#: src/Core/Features.php:166
 #: src/Admin/polls-list/PollsList.js:69
 #: src/Admin/polls-list/PollsList.js:78
 #: src/Admin/polls-list/PollsList.js:89
@@ -107,35 +107,29 @@ msgstr "Publicaciones de Instagram"
 
 #: src/Admin/AdminPages.php:165
 #: src/Admin/AdminPages.php:166
-#: src/Admin/image-templates/ImageTemplates.js:556
-msgid "Image Templates"
-msgstr "Plantillas de imagen"
-
-#: src/Admin/AdminPages.php:177
-#: src/Admin/AdminPages.php:178
-#: src/Core/Features.php:179
+#: src/Core/Features.php:174
 #: src/Admin/groups/Groups.js:325
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
 msgstr "Grupos"
 
-#: src/Admin/AdminPages.php:186
-#: src/Admin/AdminPages.php:187
-#: src/Admin/AdminPages.php:193
+#: src/Admin/AdminPages.php:174
+#: src/Admin/AdminPages.php:175
+#: src/Admin/AdminPages.php:181
 msgid "Group Detail"
 msgstr "Detalle de grupo"
 
-#: src/Admin/AdminPages.php:201
-#: src/Admin/AdminPages.php:202
+#: src/Admin/AdminPages.php:189
+#: src/Admin/AdminPages.php:190
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:85
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:96
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:108
 msgid "Extra Messages"
 msgstr "Mensajes adicionales"
 
-#: src/Admin/AdminPages.php:210
-#: src/Admin/AdminPages.php:211
-#: src/Admin/AdminPages.php:217
+#: src/Admin/AdminPages.php:198
+#: src/Admin/AdminPages.php:199
+#: src/Admin/AdminPages.php:205
 #: src/Admin/edit-extra-message/EditExtraMessage.js:152
 #: src/Admin/edit-extra-message/EditExtraMessage.js:170
 msgid "Edit Extra Message"
@@ -154,7 +148,6 @@ msgstr "Editar mensaje adicional"
 #: src/Admin/group-detail/GroupDetail.js:501
 #: src/Admin/groups/Groups.js:398
 #: src/Admin/groups/Groups.js:449
-#: src/Admin/image-templates/ImageCropModal.js:73
 #: src/Admin/manage-event-ext/EventMailings.js:699
 #: src/Admin/manage-event-ext/GroupRules.js:565
 msgid "Cancel"
@@ -422,28 +415,6 @@ msgstr "El participante no es miembro de este grupo."
 #: src/API/GroupsController.php:536
 msgid "Participant removed from group successfully."
 msgstr "Participante eliminado del grupo correctamente."
-
-#: src/API/ImageTemplatesController.php:189
-msgid "Invalid attachment ID."
-msgstr "ID de adjunto inválido."
-
-#: src/API/ImageTemplatesController.php:198
-msgid "Only SVG files can be used as image templates."
-msgstr "Solo se pueden usar archivos SVG como plantillas de imagen."
-
-#: src/API/ImageTemplatesController.php:208
-#: src/API/ImageTemplatesController.php:286
-msgid "Could not read SVG file."
-msgstr "No se pudo leer el archivo SVG."
-
-#: src/API/ImageTemplatesController.php:240
-#: src/API/ImageTemplatesController.php:267
-msgid "Template not found."
-msgstr "Plantilla no encontrada."
-
-#: src/API/ImageTemplatesController.php:276
-msgid "Attachment is not registered as a template."
-msgstr "El adjunto no está registrado como plantilla."
 
 #: src/API/ImportController.php:138
 #: src/API/ImportController.php:480
@@ -776,72 +747,64 @@ msgid_plural "%1$d ticket sales on %2$s"
 msgstr[0] "%1$d venta de entrada en %2$s"
 msgstr[1] "%1$d ventas de entrada en %2$s"
 
-#: src/Core/Features.php:167
+#: src/Core/Features.php:162
 msgid "Fees"
 msgstr "Cuotas"
 
-#: src/Core/Features.php:168
+#: src/Core/Features.php:163
 msgid "Event fees, fee payments, fee audit log."
 msgstr "Cuotas de evento, pagos de cuotas, registro de auditoría de cuotas."
 
-#: src/Core/Features.php:172
+#: src/Core/Features.php:167
 msgid "Attendee polls and responses."
 msgstr "Encuestas de asistentes y respuestas."
 
-#: src/Core/Features.php:175
+#: src/Core/Features.php:170
 #: templates/collaborator-profile.php:331
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Core/Features.php:176
+#: src/Core/Features.php:171
 msgid "Instagram post import and scheduled posting."
 msgstr "Importación de publicaciones de Instagram y publicación programada."
 
-#: src/Core/Features.php:180
+#: src/Core/Features.php:175
 msgid "Participant groups."
 msgstr "Grupos de participantes."
 
-#: src/Core/Features.php:184
+#: src/Core/Features.php:179
 msgid "Event collaborators."
 msgstr "Colaboradores del evento."
 
-#: src/Core/Features.php:187
+#: src/Core/Features.php:182
 msgid "Messaging"
 msgstr "Mensajería"
 
-#: src/Core/Features.php:191
-msgid "Image templates"
-msgstr "Plantillas de imagen"
-
-#: src/Core/Features.php:192
-msgid "Generated image templates."
-msgstr "Plantillas de imagen generadas."
-
-#: src/Core/Features.php:195
+#: src/Core/Features.php:186
 msgid "Timeline"
 msgstr "Cronología"
 
-#: src/Core/Features.php:196
+#: src/Core/Features.php:187
 msgid "Participant activity timeline."
 msgstr "Cronología de actividad de participantes."
 
-#: src/Core/Features.php:200
+#: src/Core/Features.php:191
 msgid "Bulk participant import."
 msgstr "Importación masiva de participantes."
 
-#: src/Core/Features.php:203
+#: src/Core/Features.php:194
 msgid "Invitations"
 msgstr "Invitaciones"
 
-#: src/Core/Features.php:204
+#: src/Core/Features.php:195
 msgid "Event invitations, consumed by fair-events-experimental ticketing."
 msgstr "Invitaciones de evento, consumidas por la emisión de entradas fair-events-experimental."
 
-#: src/Core/Features.php:207
+#: src/Core/Features.php:198
 msgid "Manage-event extensions"
 msgstr "Extensiones de gestión de eventos"
 
-#: src/Core/Features.php:208
+#: src/Core/Features.php:199
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "La pestaña «Envíos» en la interfaz de administración de gestión de eventos."
 
@@ -963,7 +926,6 @@ msgstr "Registra tu información de perfil."
 #: src/Admin/group-detail/GroupDetail.js:467
 #: src/Admin/groups/Groups.js:62
 #: src/Admin/groups/Groups.js:364
-#: src/Admin/image-templates/ImageTemplates.js:610
 #: src/Admin/import/WordPressUsersImport.js:259
 #: src/Admin/manage-event-ext/MailBodyEditor.js:24
 msgid "Name"
@@ -1134,7 +1096,6 @@ msgstr "Estado"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:149
 #: src/Admin/group-detail/GroupDetail.js:339
-#: src/Admin/image-templates/ImageTemplates.js:628
 #: src/Admin/instagram-posts/InstagramPosts.js:521
 #: src/Admin/polls-list/PollsList.js:136
 msgid "Actions"
@@ -1150,7 +1111,6 @@ msgstr "Duplicar"
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:212
 #: src/Admin/fees-list/FeesList.js:407
 #: src/Admin/groups/Groups.js:306
-#: src/Admin/image-templates/ImageTemplates.js:686
 #: src/Admin/instagram-posts/InstagramPosts.js:599
 #: src/Admin/polls-list/PollsList.js:197
 msgid "Delete"
@@ -1822,7 +1782,7 @@ msgstr "Este miembro no tiene dirección de correo, por lo que no se puede envia
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Se están enviando recordatorios a todos los miembros con pagos pendientes. Espera a que termine antes de enviar este."
 
-#: src/Core/Features.php:188
+#: src/Core/Features.php:183
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr "Correo personalizado a toda la audiencia, mensajes adicionales, mensajes programados."
 
@@ -1895,11 +1855,6 @@ msgstr "Opcionalmente, vincúlala a un presupuesto para el seguimiento financier
 #: src/Admin/fees-list/FeesList.js:714
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "La cuota conserva su presupuesto actual a menos que elijas otro."
-
-#. Description of the plugin
-#: fair-audience-experimental.php
-msgid "Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, collaborators, messaging, image templates, timeline, import, invitations, manage-event-ext). Requires fair-audience."
-msgstr "Activa paquetes de funciones avanzadas para Fair Audience (cuotas, encuestas, Instagram, grupos, colaboradores, mensajería, plantillas de imagen, cronología, importación, invitaciones, manage-event-ext). Requiere fair-audience."
 
 #: src/Admin/collaborators/Collaborators.js:76
 msgid "Events"
@@ -2381,128 +2336,6 @@ msgstr "Ingrese la descripción (opcional)..."
 #: src/Admin/fees-list/FeesList.js:625
 msgid "Edit Fee"
 msgstr "Editar tarifa"
-
-#: src/Admin/image-templates/ImageCropModal.js:43
-msgid "Crop image"
-msgstr "Recortar imagen"
-
-#: src/Admin/image-templates/ImageCropModal.js:80
-msgid "Crop"
-msgstr "Recortar"
-
-#: src/Admin/image-templates/ImageTemplates.js:85
-msgid "Failed to load templates."
-msgstr "Error al cargar las plantillas."
-
-#: src/Admin/image-templates/ImageTemplates.js:100
-msgid "Select SVG Template"
-msgstr "Seleccionar plantilla SVG"
-
-#: src/Admin/image-templates/ImageTemplates.js:101
-msgid "Use as Template"
-msgstr "Usar como plantilla"
-
-#: src/Admin/image-templates/ImageTemplates.js:107
-msgid "Please select an SVG file."
-msgstr "Por favor, seleccione un archivo SVG."
-
-#: src/Admin/image-templates/ImageTemplates.js:119
-msgid "Template registered successfully."
-msgstr "Plantilla registrada correctamente."
-
-#: src/Admin/image-templates/ImageTemplates.js:131
-msgid "Failed to register template."
-msgstr "Error al registrar la plantilla."
-
-#: src/Admin/image-templates/ImageTemplates.js:144
-msgid "Are you sure you want to remove this template?"
-msgstr "¿Está seguro de que desea eliminar esta plantilla?"
-
-#: src/Admin/image-templates/ImageTemplates.js:157
-msgid "Template removed."
-msgstr "Plantilla eliminada."
-
-#: src/Admin/image-templates/ImageTemplates.js:173
-msgid "Failed to remove template."
-msgstr "Error al eliminar la plantilla."
-
-#: src/Admin/image-templates/ImageTemplates.js:209
-#: src/Admin/image-templates/ImageTemplates.js:422
-msgid "Select Image"
-msgstr "Seleccionar imagen"
-
-#: src/Admin/image-templates/ImageTemplates.js:210
-msgid "Use Image"
-msgstr "Usar imagen"
-
-#: src/Admin/image-templates/ImageTemplates.js:294
-msgid "Failed to render template."
-msgstr "Error al renderizar la plantilla."
-
-#: src/Admin/image-templates/ImageTemplates.js:325
-msgid "Failed to convert to PNG."
-msgstr "Error al convertir a PNG."
-
-#: src/Admin/image-templates/ImageTemplates.js:348
-msgid "Back"
-msgstr "Atrás"
-
-#: src/Admin/image-templates/ImageTemplates.js:367
-msgid "Template Variables"
-msgstr "Variables de plantilla"
-
-#: src/Admin/image-templates/ImageTemplates.js:377
-msgid "This template has no placeholders."
-msgstr "Esta plantilla no tiene marcadores de posición."
-
-#: src/Admin/image-templates/ImageTemplates.js:446
-msgid "Clear"
-msgstr "Limpiar"
-
-#: src/Admin/image-templates/ImageTemplates.js:454
-msgid "Cropped"
-msgstr "Recortado"
-
-#: src/Admin/image-templates/ImageTemplates.js:477
-msgid "Rendering..."
-msgstr "Renderizando..."
-
-#: src/Admin/image-templates/ImageTemplates.js:481
-#: src/Admin/image-templates/ImageTemplates.js:494
-msgid "Preview"
-msgstr "Vista previa"
-
-#: src/Admin/image-templates/ImageTemplates.js:521
-msgid "Download SVG"
-msgstr "Descargar SVG"
-
-#: src/Admin/image-templates/ImageTemplates.js:530
-msgid "Download PNG"
-msgstr "Descargar PNG"
-
-#: src/Admin/image-templates/ImageTemplates.js:578
-msgid "Templates"
-msgstr "Plantillas"
-
-#: src/Admin/image-templates/ImageTemplates.js:581
-msgid "Add Template"
-msgstr "Añadir plantilla"
-
-#: src/Admin/image-templates/ImageTemplates.js:597
-msgid "No templates yet. Upload an SVG file with {{variable}} placeholders to get started."
-msgstr "Sin plantillas aún. Carga un archivo SVG con marcadores de posición {{variable}} para comenzar."
-
-#: src/Admin/image-templates/ImageTemplates.js:616
-msgid "Text Placeholders"
-msgstr "Marcadores de posición de texto"
-
-#: src/Admin/image-templates/ImageTemplates.js:622
-msgid "Image Placeholders"
-msgstr "Marcadores de posición de imagen"
-
-#: src/Admin/image-templates/ImageTemplates.js:672
-msgid "Use"
-msgstr "Usar"
 
 #: src/Admin/import/Import.js:52
 #: src/Admin/import/KitImport.js:46
@@ -3003,3 +2836,8 @@ msgstr "Enviando..."
 #: src/public/poll-response/PollResponse.js:277
 msgid "Submit Response"
 msgstr "Enviar Respuesta"
+
+#. Description of the plugin
+#: fair-audience-experimental.php
+msgid "Activates advanced feature bundles for Fair Audience (fees, polls, Instagram, groups, collaborators, messaging, timeline, import, invitations, manage-event-ext). Requires fair-audience."
+msgstr ""
