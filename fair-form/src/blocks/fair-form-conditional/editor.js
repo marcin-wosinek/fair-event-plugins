@@ -13,12 +13,20 @@ import {
 	SelectControl,
 	TextControl,
 	CheckboxControl,
+	Notice,
+	Button,
+	Spinner,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
+import {
+	isCategorySource,
+	useCategories,
+	resolveCategoryChoices,
+} from '../shared/category-options.js';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -72,7 +80,16 @@ function findQuestionBlocks( blocks ) {
 					block.attributes.questionKey,
 				blockName: block.name,
 			};
-			if ( OPTION_BLOCK_PARENTS.includes( block.name ) ) {
+			if (
+				OPTION_BLOCK_PARENTS.includes( block.name ) &&
+				isCategorySource( block.attributes )
+			) {
+				// Resolved from the categories once they are loaded.
+				question.categorySource = {
+					optionSource: block.attributes.optionSource,
+					parentCategoryId: block.attributes.parentCategoryId || 0,
+				};
+			} else if ( OPTION_BLOCK_PARENTS.includes( block.name ) ) {
 				question.options = ( block.innerBlocks || [] )
 					.filter(
 						( b ) => b.name === 'fair-audience/fair-form-option'
@@ -263,8 +280,31 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 		const selectedQuestion = questionOptions.find(
 			( q ) => q.key === conditionQuestionKey
 		);
-		const hasOptions =
-			selectedQuestion?.options && selectedQuestion.options.length > 0;
+
+		// Category-backed questions (#1999) get their choices from the
+		// current categories, the same scope the public form renders.
+		const categorySource =
+			! isEventOption && ! isTicketType
+				? selectedQuestion?.categorySource
+				: undefined;
+		const categoriesState = useCategories( !! categorySource );
+		let valueChoices = selectedQuestion?.options || [];
+		if ( categorySource ) {
+			valueChoices =
+				categoriesState.status === 'success'
+					? resolveCategoryChoices(
+							categoriesState.categories,
+							categorySource
+						).choices
+					: [];
+		}
+		const hasOptions = valueChoices.length > 0;
+		// A saved value that is no longer a choice (a renamed or removed
+		// category or option) stays selected and flagged, never dropped.
+		const isUnavailableValue =
+			hasOptions &&
+			conditionValue !== '' &&
+			! valueChoices.includes( conditionValue );
 
 		// Keep the operator valid for the active source: the question
 		// operators (equals/…) and the selected/not_selected operators
@@ -466,7 +506,22 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 													),
 													value: '',
 												},
-												...selectedQuestion.options.map(
+												...( isUnavailableValue
+													? [
+															{
+																label: sprintf(
+																	/* translators: %s: saved condition value */
+																	__(
+																		'%s (no longer a choice)',
+																		'fair-form'
+																	),
+																	conditionValue
+																),
+																value: conditionValue,
+															},
+														]
+													: [] ),
+												...valueChoices.map(
 													( opt ) => ( {
 														label: opt,
 														value: opt,
@@ -494,6 +549,55 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 											) }
 										/>
 									) ) }
+								{ conditionOperator !== 'not_empty' &&
+									isUnavailableValue && (
+										<Notice
+											status="warning"
+											isDismissible={ false }
+										>
+											{ sprintf(
+												/* translators: %s: saved condition value */
+												__(
+													'“%s” is no longer one of this question’s choices. Pick a current choice or update the condition.',
+													'fair-form'
+												),
+												conditionValue
+											) }
+										</Notice>
+									) }
+								{ categorySource &&
+									categoriesState.status === 'loading' && (
+										<p>
+											<Spinner />{ ' ' }
+											{ __(
+												'Loading categories…',
+												'fair-form'
+											) }
+										</p>
+									) }
+								{ categorySource &&
+									categoriesState.status === 'error' && (
+										<Notice
+											status="error"
+											isDismissible={ false }
+										>
+											{ __(
+												'The categories could not be loaded. Check your connection and try again.',
+												'fair-form'
+											) }{ ' ' }
+											<Button
+												variant="link"
+												onClick={
+													categoriesState.retry
+												}
+											>
+												{ __(
+													'Try again',
+													'fair-form'
+												) }
+											</Button>
+										</Notice>
+									) }
 							</>
 						) }
 					</PanelBody>

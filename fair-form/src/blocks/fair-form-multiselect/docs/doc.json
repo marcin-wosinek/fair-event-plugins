@@ -14,6 +14,16 @@
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}
+		},
+		"categories": {
+			"title": "Multiselect Question with subcategory choices",
+			"description": "Every subcategory (at any depth) of one parent category is a choice.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form [data-question-key='workshop_topics']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one.",
+				"parentCategoryId": "The term ID of an existing post category whose subcategories become the choices. With a missing or deleted category the question renders without choices."
+			}
 		}
 	}
 }

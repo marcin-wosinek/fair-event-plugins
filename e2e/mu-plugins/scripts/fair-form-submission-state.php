@@ -44,8 +44,8 @@ if ( ! $submission ) {
 	return;
 }
 
-$answer_count = (int) $wpdb->get_var(
-	$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE submission_id = %d', $answers_table, $submission->id )
+$answer_rows = $wpdb->get_results(
+	$wpdb->prepare( 'SELECT question_key, answer_value FROM %i WHERE submission_id = %d', $answers_table, $submission->id )
 );
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -57,6 +57,7 @@ echo 'E2E_FAIR_FORM_SUBMISSION:' . wp_json_encode(
 		'title'         => (string) $submission->title,
 		'formId'        => (string) $submission->form_id,
 		'formTitle'     => (string) $submission->form_title,
-		'answerCount'   => $answer_count,
+		'answerCount'   => count( $answer_rows ),
+		'answers'       => (object) wp_list_pluck( $answer_rows, 'answer_value', 'question_key' ),
 	)
 ) . "\n";

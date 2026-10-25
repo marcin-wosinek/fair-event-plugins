@@ -23,16 +23,9 @@ if ( empty( $question_text ) ) {
 	return '';
 }
 
-// Collect options from inner blocks.
-$options = array();
-foreach ( $block->inner_blocks as $inner_block ) {
-	if ( 'fair-audience/fair-form-option' === $inner_block->name ) {
-		$value = $inner_block->attributes['value'] ?? '';
-		if ( '' !== $value ) {
-			$options[] = $value;
-		}
-	}
-}
+// Typed option blocks, or categories resolved on every render.
+$options        = \FairForm\Services\QuestionOptions::resolve( $attributes, $block );
+$has_no_choices = empty( $options ) && \FairForm\Services\QuestionOptions::is_category_source( $attributes );
 
 // Generate unique ID for this input.
 $input_id = 'fair-form-q-' . sanitize_title( $question_key ) . '-' . wp_unique_id();
@@ -68,4 +61,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			</label>
 		<?php endforeach; ?>
 	</fieldset>
+	<?php if ( $has_no_choices ) : ?>
+		<p class="fair-form-question-empty"><?php echo esc_html__( 'There are no choices to pick from yet.', 'fair-form' ); ?></p>
+	<?php endif; ?>
 </div>
