@@ -1,0 +1,163 @@
+/* Operator weekly-summary page: a plain, single-column working view. */
+
+.fair-weekly-summary {
+	box-sizing: border-box;
+	max-width: 44rem;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 3rem;
+	overflow-wrap: anywhere;
+}
+
+.fair-weekly-summary *,
+.fair-weekly-summary *::before,
+.fair-weekly-summary *::after {
+	box-sizing: inherit;
+}
+
+.fair-weekly-summary h1,
+.fair-weekly-summary h2,
+.fair-weekly-summary p {
+	margin-top: 0;
+}
+
+.fair-weekly-summary__eyebrow {
+	margin-bottom: 0.25rem;
+	font-size: 0.875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	opacity: 0.75;
+}
+
+.fair-weekly-summary__title {
+	margin-bottom: 0.5rem;
+	font-size: clamp(1.75rem, 6vw, 2.5rem);
+	line-height: 1.15;
+}
+
+.fair-weekly-summary__source {
+	margin-bottom: 1.5rem;
+	font-size: 0.875rem;
+}
+
+.fair-weekly-summary__week {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 0.75rem;
+	align-items: center;
+	margin-bottom: 1.5rem;
+	padding: 0.75rem;
+	border: 1px solid currentcolor;
+	border-radius: 0.5rem;
+}
+
+.fair-weekly-summary__range {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	text-align: center;
+}
+
+.fair-weekly-summary__range span {
+	font-size: 0.875rem;
+	opacity: 0.75;
+}
+
+.fair-weekly-summary__nav {
+	padding: 0.5rem 0;
+	white-space: nowrap;
+}
+
+.fair-weekly-summary__section {
+	margin-bottom: 2rem;
+}
+
+.fair-weekly-summary__section h2 {
+	margin-bottom: 0.75rem;
+	font-size: 1.25rem;
+}
+
+.fair-weekly-summary__notice {
+	padding: 0.75rem 1rem;
+	border-left: 4px solid currentcolor;
+	background: rgba(127, 127, 127, 0.12);
+}
+
+.fair-weekly-summary__events {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.fair-weekly-summary__event {
+	display: grid;
+	grid-template-columns: 8.5rem 1fr;
+	gap: 0.75rem;
+	padding: 0.625rem 0;
+	border-bottom: 1px solid rgba(127, 127, 127, 0.35);
+}
+
+.fair-weekly-summary__when {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.fair-weekly-summary__hint {
+	font-size: 0.875rem;
+}
+
+.fair-weekly-summary__button {
+	cursor: pointer;
+}
+
+.fair-weekly-summary__button:disabled {
+	cursor: progress;
+	opacity: 0.7;
+}
+
+.fair-weekly-summary__status {
+	min-height: 1.5em;
+	margin: 0.75rem 0;
+	font-weight: 600;
+}
+
+.fair-weekly-summary__status.is-error {
+	padding: 0.75rem 1rem;
+	border-left: 4px solid #cc1818;
+	background: rgba(204, 24, 24, 0.08);
+}
+
+.fair-weekly-summary__text {
+	display: block;
+	width: 100%;
+	padding: 0.75rem;
+	font-family: inherit;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	resize: vertical;
+	/* Grow to the whole summary where supported; rows is the fallback. */
+	field-sizing: content;
+}
+
+@media (max-width: 599px) {
+	.fair-weekly-summary__week {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.fair-weekly-summary__range {
+		grid-column: 1 / -1;
+		grid-row: 1;
+	}
+
+	.fair-weekly-summary__nav:last-child {
+		text-align: right;
+	}
+
+	.fair-weekly-summary__event {
+		grid-template-columns: 1fr;
+		gap: 0.125rem;
+	}
+
+	.fair-weekly-summary__button {
+		width: 100%;
+	}
+}
