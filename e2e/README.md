@@ -19,12 +19,15 @@ e2e/
 │   └── ticket-purchase-confirmation.spec.js
 ├── screenshots/                          # visual-review captures (no behavioural assertions)
 │   ├── event-signup-combinations.spec.js
+│   ├── manage-event.spec.js              # every Manage Event tab (npm run screenshots:manage-event)
+│   ├── manage-event-tabs.js              # its tab manifest
 │   └── output/                           # gitignored PNGs
 └── mu-plugins/                           # mounted into wp-env only (see .wp-env.json)
     ├── fair-e2e-support.php              # auto-loaded mu-plugin (mail capture + Mollie test creds + loads the double)
     ├── fair-e2e-settlements.php          # resets saved settlements and steers the double's settlement responses
     ├── fair-e2e-mollie-credentials.php   # stored (encrypted) Mollie tokens, encryption on/off, token-refresh double
     ├── fair-e2e-protected-credentials.php # stored (encrypted) Instagram and Telegram tokens, Instagram API double
+    ├── fair-e2e-external-http-guard.php  # refuses non-local HTTP while fair_e2e_block_external_http is set
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
@@ -211,6 +214,11 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   `participantId`, `title`, `formId`/`formTitle`, answer count). The public
   submit endpoint returns only `{success, message}`, so specs resolve the
   submission id server-side rather than reading it off the response.
+- **`manage-event-demo.php <seed|cleanup>`** — the synthetic Manage Event
+  screenshot demo (one populated event covering all ten tabs). `seed` refuses
+  to run unless mail capture, the Mollie double and the external HTTP guard
+  are active, and removes any earlier demo first. See
+  [docs/manage-event-screenshots.md](../docs/manage-event-screenshots.md).
 - **`fair-form-notification-state.php [email]`** — reports mail captured for
   the given recipient (or everything captured, unfiltered, when called with
   no address — used by the "nothing should be sent" scenarios).
