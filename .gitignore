@@ -48,3 +48,6 @@ fair-platform-deployment-config.txt
 
 # PHPUnit result cache
 .phpunit.cache/
+
+# Duplication reports (npm run duplication)
+reports/
