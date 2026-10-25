@@ -42,5 +42,14 @@ post or page.
 Renders the amount and currency in `.fair-payments-connector-amount`, the
 description, and a `.fair-payments-connector-button` (or the not-configured
 notice). After a redirect back from Mollie (`?fair_payment_callback=true`
-with a transaction id and access token), it shows the verified payment
-status instead of the button.
+with a transaction id), it shows a "processing" message instead of the
+button, then the verified status: confirmed, failed (with "Try Again"), or a
+notice that the status can't be checked on this page.
+
+The return URL carries no credential. Before sending the buyer to checkout,
+the block keeps the transaction's access token in the browser's session
+storage and sends it in the `X-Fair-Payment-Token` header when it reads the
+status. Verification therefore works after a reload in the same tab, but not
+in another browser or tab, unless the visitor is the signed-in buyer or an
+administrator. When the browser blocks site data, the block refuses to start
+a payment and asks the visitor to allow it.

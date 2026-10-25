@@ -9,6 +9,10 @@
  * webhook flips the transaction to paid, which the block's status poller
  * picks up and renders as the confirmed message.
  *
+ * The access token that gates the status read never travels in a URL
+ * (#858): the browser keeps it in session storage and sends it in a header,
+ * so the spec checks every request, navigation and Referer for it.
+ *
  * This is the spec that caught the render.php blockId clobbering (the button
  * submitted a per-render wp_unique_id() instead of the saved blockId
  * attribute, so the endpoint's amount verification 403'd every purchase):
@@ -38,6 +42,18 @@ test.describe('simple-payment block purchase', () => {
 	test('pay → callback → webhook → confirmed message and paid transaction', async ({
 		page,
 	}) => {
+		// Everything the browser sends: request URLs, their Referer headers,
+		// and top-level navigations.
+		const sent = [];
+		page.on('request', (req) => {
+			sent.push(req.url());
+			const referer = req.headers().referer;
+			if (referer) {
+				sent.push(referer);
+			}
+		});
+		page.on('framenavigated', (frame) => sent.push(frame.url()));
+
 		await page.goto(seed.pageUrl);
 
 		// Mollie is configured (dummy e2e key), so the button renders — not the
@@ -62,6 +78,17 @@ test.describe('simple-payment block purchase', () => {
 		const url = new URL(page.url());
 		const transactionId = url.searchParams.get('transaction_id');
 		expect(transactionId).toBeTruthy();
+		expect(url.searchParams.has('token')).toBe(false);
+
+		// The token the block stored before leaving for checkout.
+		const accessToken = await page.evaluate(
+			(id) =>
+				window.sessionStorage.getItem(
+					`fairPaymentsConnector.accessToken.${id}`
+				),
+			transactionId
+		);
+		expect(accessToken).toBeTruthy();
 
 		let tx = runScript(
 			'transaction-state.php',
@@ -92,6 +119,67 @@ test.describe('simple-payment block purchase', () => {
 		tx = runScript('transaction-state.php', 'E2E_TX_STATE', transactionId);
 		expect(tx.status).toBe('paid');
 		expect(tx.testmode).toBe(true);
+
+		// A reload in the same tab still verifies, from the stored token.
+		await page.reload();
+		await expect(
+			page.locator('.fair-payments-connector-success')
+		).toBeVisible({ timeout: 30000 });
+
+		expect(sent.length).toBeGreaterThan(0);
+		for (const sentUrl of sent) {
+			expect(sentUrl).not.toContain(accessToken);
+		}
+	});
+
+	test('a return page without the stored token says it cannot verify, not that payment failed', async ({
+		page,
+	}) => {
+		// A paid transaction this browser never started, so it holds no token.
+		const transaction = runScript(
+			'seed-callback-transaction.php',
+			'E2E_CALLBACK_TX',
+			'paid'
+		);
+		const callbackUrl = new URL(seed.pageUrl);
+		callbackUrl.searchParams.set('fair_payment_callback', 'true');
+		callbackUrl.searchParams.set(
+			'transaction_id',
+			String(transaction.transactionId)
+		);
+
+		try {
+			await page.goto(callbackUrl.toString());
+
+			await expect(
+				page.locator('.fair-payments-connector-unverified')
+			).toBeVisible({ timeout: 30000 });
+			await expect(
+				page.locator('.fair-payments-connector-failed')
+			).toBeHidden();
+			await expect(
+				page.locator('.fair-payments-connector-success')
+			).toBeHidden();
+			await expect(
+				page.locator('.fair-payments-connector-restart')
+			).toBeHidden();
+		} finally {
+			runScript(
+				'cleanup-callback-transaction.php',
+				'E2E_CALLBACK_TX_CLEANUP',
+				String(transaction.transactionId)
+			);
+		}
+
+		await expect(
+			page.locator('.fair-payments-connector-unverified')
+		).toBeVisible({ timeout: 30000 });
+		await expect(
+			page.locator('.fair-payments-connector-failed')
+		).toBeHidden();
+		await expect(
+			page.locator('.fair-payments-connector-restart')
+		).toBeHidden();
 	});
 
 	test('rejects a submitted amount below the block-configured amount with 422', async ({

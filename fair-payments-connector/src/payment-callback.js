@@ -7,6 +7,7 @@
  */
 
 import apiFetch from '@wordpress/api-fetch';
+import { credentialHeaders } from './payment-credentials.js';
 import './payment-callback.css';
 
 ( function () {
@@ -40,7 +41,7 @@ import './payment-callback.css';
 	 * Fetch transaction status from REST API
 	 *
 	 * @param {string} transactionId Transaction ID
-	 * @param {string} token         Per-transaction access token from the redirect URL
+	 * @param {string} token         Per-transaction access token from the redirect URL (flows that still put it there)
 	 */
 	function fetchTransactionStatus( transactionId, token ) {
 		const path = token
@@ -49,9 +50,14 @@ import './payment-callback.css';
 				) }`
 			: `/fair-payments-connector/v1/payments/${ transactionId }/status`;
 
+		// The Simple Payment block keeps its token out of the URL and in session
+		// storage instead; send it as a header when present.
+		const headers = credentialHeaders( transactionId );
+
 		apiFetch( {
 			path,
 			method: 'GET',
+			...( headers ? { headers } : {} ),
 		} )
 			.then( ( response ) => {
 				showNotification( response );

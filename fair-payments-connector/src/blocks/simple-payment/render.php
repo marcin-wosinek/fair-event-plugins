@@ -21,24 +21,10 @@ $current_post_id = get_the_ID();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $is_callback = isset( $_GET['fair_payment_callback'] ) && 'true' === $_GET['fair_payment_callback'];
 
-// Resolve the real transaction status via the canonical PaymentStatus mapper,
-// gated by the per-transaction access token exactly like the REST status
-// endpoint. Falls back to "processing" when the callback can't be verified
-// (e.g. missing/mismatched token) rather than guessing a specific outcome.
-$callback_status = 'processing';
-if ( $is_callback && class_exists( \FairPaymentsConnector\API\TransactionAPI::class ) ) {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$callback_transaction_id = isset( $_GET['transaction_id'] ) ? absint( $_GET['transaction_id'] ) : 0;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$callback_token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
-
-	$transaction    = $callback_transaction_id ? \FairPaymentsConnector\API\TransactionAPI::get_transaction( $callback_transaction_id ) : null;
-	$expected_token = $transaction ? (string) ( $transaction->access_token ?? '' ) : '';
-
-	if ( $transaction && '' !== $expected_token && '' !== $callback_token && hash_equals( $expected_token, $callback_token ) ) {
-		$callback_status = \FairPaymentsConnector\Payment\PaymentStatus::from_raw_status( (string) $transaction->status );
-	}
-}
+// The return page always starts in "processing". The access token that proves
+// the visitor started this payment is held by the browser, not the URL, so only
+// view.js can verify the status, through the token-gated REST status endpoint.
+// This also keeps the cacheable markup free of per-transaction state.
 
 // Check if Mollie is configured.
 $is_configured = \FairPaymentsConnector\Payment\MolliePaymentHandler::is_configured();
@@ -60,22 +46,25 @@ $wrapper_id = 'fair-payments-connector-' . wp_unique_id();
 >
 	<div class="fair-payments-connector-block">
 		<div class="fair-payments-connector-callback" style="<?php echo esc_attr( $is_callback ? '' : 'display: none;' ); ?>">
-			<div class="fair-payments-connector-success" data-status="confirmed" role="alert" style="<?php echo esc_attr( 'confirmed' === $callback_status ? '' : 'display: none;' ); ?>">
+			<div class="fair-payments-connector-success" data-status="confirmed" role="alert" style="display: none;">
 				<p><?php esc_html_e( 'Thank you! Your payment has been received and confirmed.', 'fair-payments-connector' ); ?></p>
 			</div>
-			<div class="fair-payments-connector-processing" data-status="processing" role="alert" style="<?php echo esc_attr( 'processing' === $callback_status ? '' : 'display: none;' ); ?>">
+			<div class="fair-payments-connector-processing" data-status="processing" role="alert">
 				<p><?php esc_html_e( 'Thank you! Your payment is being processed.', 'fair-payments-connector' ); ?></p>
 			</div>
-			<div class="fair-payments-connector-failed" data-status="failed" role="alert" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
+			<div class="fair-payments-connector-failed" data-status="failed" role="alert" style="display: none;">
 				<p><?php esc_html_e( 'Your payment was not completed. Please try again.', 'fair-payments-connector' ); ?></p>
 			</div>
+			<div class="fair-payments-connector-unverified" data-status="unverified" role="alert" style="display: none;">
+				<p><?php esc_html_e( 'We can’t check your payment status on this page. If you completed the payment, it is still being processed. Please check your email or contact the organizer before paying again.', 'fair-payments-connector' ); ?></p>
+			</div>
 
-			<div class="wp-block-button is-style-outline fair-payments-connector-callback-dismiss" style="<?php echo esc_attr( 'failed' === $callback_status ? 'display: none;' : '' ); ?>">
+			<div class="wp-block-button is-style-outline fair-payments-connector-callback-dismiss">
 				<button type="button" class="wp-block-button__link wp-element-button">
 					<?php esc_html_e( 'Continue', 'fair-payments-connector' ); ?>
 				</button>
 			</div>
-			<div class="wp-block-button is-style-outline fair-payments-connector-restart" style="<?php echo esc_attr( 'failed' === $callback_status ? '' : 'display: none;' ); ?>">
+			<div class="wp-block-button is-style-outline fair-payments-connector-restart" style="display: none;">
 				<button type="button" class="wp-block-button__link wp-element-button">
 					<?php esc_html_e( 'Try Again', 'fair-payments-connector' ); ?>
 				</button>

@@ -12,8 +12,22 @@ import {
 	renderPaymentError,
 	wireRestartButton,
 } from 'fair-events-shared/src/payment-flow.js';
+import {
+	credentialHeaders,
+	isCredentialStorageAvailable,
+	removeCredential,
+	saveCredential,
+} from '../../payment-credentials.js';
 
 const STATUS_PATH = '/fair-payments-connector/v1/payments';
+
+// Transaction this page returned for, read once from the callback URL.
+function callbackTransactionId() {
+	const params = new URLSearchParams( window.location.search );
+	return params.get( 'fair_payment_callback' ) === 'true'
+		? params.get( 'transaction_id' ) || ''
+		: '';
+}
 
 ( function () {
 	'use strict';
@@ -26,10 +40,11 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 	}
 
 	function init() {
+		const transactionId = callbackTransactionId();
 		initPaymentButtons();
-		initCallbackDismiss();
-		initRestart();
-		initCallbackPolling();
+		initCallbackDismiss( transactionId );
+		initRestart( transactionId );
+		initCallbackPolling( transactionId );
 	}
 
 	function initPaymentButtons() {
@@ -50,23 +65,28 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		} );
 	}
 
-	function initCallbackDismiss() {
+	function initCallbackDismiss( transactionId ) {
 		const buttons = document.querySelectorAll(
 			'.fair-payments-connector-callback-dismiss'
 		);
 
 		buttons.forEach( function ( button ) {
-			button.addEventListener( 'click', handleCallbackDismiss );
+			button.addEventListener( 'click', ( event ) =>
+				handleCallbackDismiss( event, transactionId )
+			);
 		} );
 	}
 
-	function handleCallbackDismiss( event ) {
+	function handleCallbackDismiss( event, transactionId ) {
 		const button = event.currentTarget;
 		const callback = button.closest( '.fair-payments-connector-callback' );
 
 		if ( callback ) {
 			callback.style.display = 'none';
 		}
+
+		// The buyer is done with this return page; a reload no longer needs it.
+		removeCredential( transactionId );
 
 		const url = new URL( window.location.href );
 		url.searchParams.delete( 'fair_payment_callback' );
@@ -75,7 +95,7 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		window.history.replaceState( {}, '', url.toString() );
 	}
 
-	function initRestart() {
+	function initRestart( transactionId ) {
 		const callbackEl = document.querySelector(
 			'.fair-payments-connector-callback'
 		);
@@ -90,6 +110,7 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 			button: restartButton,
 			form: paymentForm,
 			onReset: () => {
+				removeCredential( transactionId );
 				if ( callbackEl ) {
 					callbackEl.style.display = 'none';
 				}
@@ -97,18 +118,24 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		} );
 	}
 
-	function initCallbackPolling() {
+	function initCallbackPolling( transactionId ) {
 		const callbackEl = document.querySelector(
 			'.fair-payments-connector-callback'
 		);
-		if ( ! callbackEl ) {
+		if ( ! callbackEl || ! transactionId ) {
 			return;
 		}
 
+		// Without a stored token the read still works for the signed-in owner
+		// or an admin; anyone else gets a 404, shown as "can't verify" rather
+		// than as a failed payment.
 		handlePaymentCallback( {
 			statusPath: STATUS_PATH,
+			transactionId,
+			headers: credentialHeaders( transactionId ),
 			onConfirmed: () => updateCallbackState( callbackEl, 'confirmed' ),
 			onFailed: () => updateCallbackState( callbackEl, 'failed' ),
+			onError: () => updateCallbackState( callbackEl, 'unverified' ),
 		} );
 	}
 
@@ -160,6 +187,20 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 		if ( errorEl ) {
 			errorEl.style.display = 'none';
 		}
+
+		// The return page proves who started the payment with a token kept in
+		// session storage. Without it the buyer could pay but never see the
+		// result, so refuse before creating anything.
+		if ( ! isCredentialStorageAvailable() ) {
+			if ( errorEl ) {
+				errorEl.textContent = __(
+					'Your browser is blocking site data, which is needed to confirm your payment when you return. Allow site data for this site and try again.',
+					'fair-payments-connector'
+				);
+				errorEl.style.display = 'block';
+			}
+			return;
+		}
 		if ( loadingEl ) {
 			loadingEl.style.display = 'block';
 		}
@@ -181,6 +222,11 @@ const STATUS_PATH = '/fair-payments-connector/v1/payments';
 						'Failed to create payment',
 						'fair-payments-connector'
 					),
+					onBeforeRedirect: ( response ) =>
+						saveCredential(
+							response.transaction_id,
+							response.access_token
+						),
 					onError: ( message, error ) => {
 						renderPaymentError(
 							errorEl,
