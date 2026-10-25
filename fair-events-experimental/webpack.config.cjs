@@ -37,6 +37,10 @@ module.exports = {
 			process.cwd(),
 			'src/Frontend/meta-engagement.js'
 		),
+		'frontend/weekly-summary': path.resolve(
+			process.cwd(),
+			'src/Frontend/weekly-summary.js'
+		),
 	},
 	plugins: [
 		...defaultConfig.plugins,

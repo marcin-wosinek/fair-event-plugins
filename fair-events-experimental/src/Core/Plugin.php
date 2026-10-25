@@ -57,6 +57,10 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
+		// Operator links to an Events Week block's weekly summary; see
+		// docs/weekly-summary.md.
+		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
+
 		// Merge experimental feature states into the manage-event enabledFeatures map.
 		// Core owns `ticketing` (base ticket configuration); this plugin's own
 		// `ticketing` setting only controls its extensions, published under a

@@ -606,3 +606,69 @@ test.describe( 'PublicEventsController — category filter matching', () => {
 		}
 	} );
 } );
+
+test.describe( 'PublicEventsController — password-protected events', () => {
+	let api;
+	let eventPostId;
+	let eventDateId;
+	const title = `Protected feed event ${ Date.now() }`;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: {
+				title,
+				status: 'publish',
+				password: 'secret',
+				content: 'Members-only meeting point details',
+			},
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		eventPostId = ( await postRes.json() ).id;
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				link_type: 'post',
+				start_date: '2035-09-04',
+				start_time: '10:00:00',
+				end_date: '2035-09-04',
+				end_time: '12:00:00',
+			},
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{ headers: adminHeaders, data: { event_id: eventPostId } }
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+	} );
+
+	test.afterAll( async () => {
+		if ( eventPostId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ eventPostId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+	} );
+
+	test( 'lists the event without its protected content', async () => {
+		const res = await api.get(
+			'/wp-json/fair-events/v1/events?start_date=2035-09-01&end_date=2035-09-30&per_page=500'
+		);
+		expect( res.ok() ).toBeTruthy();
+		const event = ( await res.json() ).events.find(
+			( e ) => e.event_date_id === eventDateId
+		);
+
+		expect( event ).toBeTruthy();
+		expect( event.title ).toBe( title );
+		expect( event.description ).toBe( '' );
+	} );
+} );

@@ -577,6 +577,7 @@ msgstr "Sprawdź, jak sprzedaż biletów dwóch wydarzeń rozwijała się w dnia
 msgid "The list of events could not be loaded."
 msgstr "Nie można było wczytać listy wydarzeń."
 
+#: src/Frontend/WeeklySummaryPage.php:172
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/meta/MetaCalendarTest.js:85
 #: src/Admin/source-view/calendarLabels.js:20
@@ -1900,3 +1901,95 @@ msgstr "Strona %1$d z %2$d"
 msgid "Older"
 msgstr "Starsze"
 
+#: src/Frontend/WeeklySummaryPage.php:87
+msgid "This weekly summary link doesn’t point to a page with an events calendar. Check the link with the page organizer."
+msgstr "Ten link do podsumowania tygodnia nie prowadzi do strony z kalendarzem wydarzeń. Sprawdź link z osobą prowadzącą stronę."
+
+#. translators: 1: ISO week number, 2: ISO week-numbering year
+#: src/Frontend/WeeklySummaryPage.php:118
+#, php-format
+msgid "Week %1$d, %2$d"
+msgstr "Tydzień %1$d, %2$d"
+
+#. translators: 1: page title, 2: date range of the week
+#: src/Frontend/WeeklySummaryPage.php:126
+#, php-format
+msgid "Weekly summary: %1$s, %2$s"
+msgstr "Podsumowanie tygodnia: %1$s, %2$s"
+
+#: src/Frontend/WeeklySummaryPage.php:135
+msgid "Weekly summary for sharing"
+msgstr "Podsumowanie tygodnia do udostępnienia"
+
+#: src/Frontend/WeeklySummaryPage.php:140
+msgid "Week"
+msgstr "Tydzień"
+
+#: src/Frontend/WeeklySummaryPage.php:141
+msgid "Previous week"
+msgstr "Poprzedni tydzień"
+
+#: src/Frontend/WeeklySummaryPage.php:146
+msgid "Next week"
+msgstr "Następny tydzień"
+
+#. translators: %s: week as given in the link, e.g. "2026-W60"
+#: src/Frontend/WeeklySummaryPage.php:155
+#, php-format
+msgid "“%s” is not a valid week, so this shows the current week."
+msgstr "„%s” nie jest prawidłowym tygodniem, dlatego wyświetlany jest bieżący tydzień."
+
+#: src/Frontend/WeeklySummaryPage.php:164
+msgid "Events this week"
+msgstr "Wydarzenia w tym tygodniu"
+
+#: src/Frontend/WeeklySummaryPage.php:167
+msgid "There are no public events this week. The summary below has only its heading."
+msgstr "W tym tygodniu nie ma publicznych wydarzeń. Podsumowanie poniżej zawiera tylko nagłówek."
+
+#: src/Frontend/WeeklySummaryPage.php:189
+msgid "Summary copied. Paste it into your message."
+msgstr "Podsumowanie skopiowane. Wklej je do swojej wiadomości."
+
+#: src/Frontend/WeeklySummaryPage.php:190
+msgid "Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command."
+msgstr "Nie udało się skopiować automatycznie. Tekst podsumowania jest zaznaczony poniżej: skopiuj go poleceniem kopiowania na swoim urządzeniu."
+
+#: src/Frontend/WeeklySummaryPage.php:192
+msgid "Summary to copy"
+msgstr "Podsumowanie do skopiowania"
+
+#: src/Frontend/WeeklySummaryPage.php:193
+msgid "Copying only puts the text on your clipboard. Nothing is sent."
+msgstr "Kopiowanie tylko umieszcza tekst w schowku. Nic nie jest wysyłane."
+
+#: src/Frontend/WeeklySummaryPage.php:194
+msgid "Copy summary"
+msgstr "Kopiuj podsumowanie"
+
+#: src/Frontend/WeeklySummaryPage.php:217
+#: src/Frontend/WeeklySummaryPage.php:220
+msgid "Weekly summary unavailable"
+msgstr "Podsumowanie tygodnia niedostępne"
+
+#: src/Services/WeeklySummary.php:59
+#: src/Services/WeeklySummary.php:63
+msgid "Weekly summaries need an up-to-date Fair Events plugin."
+msgstr "Podsumowania tygodnia wymagają aktualnej wtyczki Fair Events."
+
+#: src/Services/WeeklySummary.php:67
+msgid "This weekly summary is not available because its page is not public."
+msgstr "To podsumowanie tygodnia jest niedostępne, ponieważ jego strona nie jest publiczna."
+
+#: src/Services/WeeklySummary.php:149
+#: src/Services/WeeklySummary.php:172
+msgid "This page has no events calendar for this link. Check the link with the page organizer."
+msgstr "Ta strona nie ma kalendarza wydarzeń dla tego linku. Sprawdź link z osobą prowadzącą stronę."
+
+#: src/Services/WeeklySummary.php:168
+msgid "More than one events calendar on this page uses this link’s name, so the summary can’t tell which to show. Give each calendar a unique HTML anchor."
+msgstr "Więcej niż jeden kalendarz wydarzeń na tej stronie używa nazwy z tego linku, więc nie wiadomo, który pokazać. Nadaj każdemu kalendarzowi unikalną kotwicę HTML."
+
+#: src/Services/WeeklySummary.php:170
+msgid "This events calendar also shows draft events, so it can’t be shared through a public link. Turn off showing drafts on the calendar to use it."
+msgstr "Ten kalendarz wydarzeń pokazuje też szkice, więc nie można go udostępnić publicznym linkiem. Wyłącz pokazywanie szkiców w kalendarzu, aby z niego korzystać."

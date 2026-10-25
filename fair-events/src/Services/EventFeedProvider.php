@@ -328,12 +328,16 @@ class EventFeedProvider {
 			return null;
 		}
 
-		$range       = EventTiming::range_keys( $row->get_timing() );
+		$range = EventTiming::range_keys( $row->get_timing() );
+		// A password-protected event stays listed, as WordPress lists its
+		// title, but its content never reaches public feeds or summaries.
 		$description = '';
-		if ( has_excerpt( $event_id ) ) {
-			$description = get_the_excerpt( $event_id );
-		} elseif ( $post->post_content ) {
-			$description = wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
+		if ( '' === $post->post_password ) {
+			if ( has_excerpt( $event_id ) ) {
+				$description = get_the_excerpt( $event_id );
+			} elseif ( $post->post_content ) {
+				$description = wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
+			}
 		}
 
 		return array(
