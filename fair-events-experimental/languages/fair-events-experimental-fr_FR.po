@@ -39,7 +39,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-events-experimental.php:53
+#: fair-events-experimental.php:54
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental nécessite que le plugin Fair Events soit actif."
 
@@ -327,7 +327,7 @@ msgstr "Meta a répondu, mais n'a pas confirmé la réception de l'événement d
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta a rejeté l'événement de test %s. Vérifiez la configuration et réessayez."
 
@@ -573,7 +573,7 @@ msgstr "Voyez comment les ventes de billets de deux événements ont progressé 
 msgid "The list of events could not be loaded."
 msgstr "La liste des événements n'a pas pu être chargée."
 
-#: src/Frontend/WeeklySummaryPage.php:172
+#: src/Frontend/WeeklySummaryPage.php:232
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/meta/MetaCalendarTest.js:85
 #: src/Admin/source-view/calendarLabels.js:20
@@ -1214,54 +1214,55 @@ msgstr "Ouvrir les notifications d'événements"
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr "Les notifications Telegram hebdomadaires sont désormais gérées et envoyées par Fair Events. Mettez à jour Fair Events pour les gérer ; en attendant, aucune notification hebdomadaire n'est envoyée."
 
-#: src/Admin/source-view/SourceViewApp.js:83
+#: src/Admin/source-view/SourceViewApp.js:84
 msgid "Failed to load event feed."
 msgstr "Impossible de charger le flux d’événements."
 
-#: src/Admin/source-view/SourceViewApp.js:97
+#: src/Admin/source-view/SourceViewApp.js:98
 msgid "No event feed ID provided."
 msgstr "Aucun ID de flux d’événements fourni."
 
-#: src/Admin/source-view/SourceViewApp.js:233
-#: src/Admin/source-view/SourceViewApp.js:251
+#: src/Admin/source-view/SourceViewApp.js:234
+#: src/Admin/source-view/SourceViewApp.js:252
 msgid "Back to Event Feeds"
 msgstr "Retour aux flux d’événements"
 
 #. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:258
-#, js-format
+#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Admin/source-view/SourceViewApp.js:259
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Flux d’événements : %s"
 
-#: src/Admin/source-view/SourceViewApp.js:275
+#: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr "Slug"
 
-#: src/Admin/source-view/SourceViewApp.js:281
+#: src/Admin/source-view/SourceViewApp.js:282
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/source-view/SourceViewApp.js:285
+#: src/Admin/source-view/SourceViewApp.js:286
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr "Activé"
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/SourceViewApp.js:287
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr "Désactivé"
 
-#: src/Admin/source-view/SourceViewApp.js:291
+#: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr "Entrées du flux"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:296
+#: src/Admin/source-view/SourceViewApp.js:297
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1269,42 +1270,42 @@ msgid_plural "%d feed inputs"
 msgstr[0] "%d entrée du flux"
 msgstr[1] "%d entrées du flux"
 
-#: src/Admin/source-view/SourceViewApp.js:309
+#: src/Admin/source-view/SourceViewApp.js:310
 msgid "Page"
 msgstr "Page"
 
-#: src/Admin/source-view/SourceViewApp.js:317
+#: src/Admin/source-view/SourceViewApp.js:318
 msgid "View page"
 msgstr "Voir la page"
 
-#: src/Admin/source-view/SourceViewApp.js:327
+#: src/Admin/source-view/SourceViewApp.js:328
 msgid "Feed URLs"
 msgstr "URL du flux"
 
-#: src/Admin/source-view/SourceViewApp.js:332
+#: src/Admin/source-view/SourceViewApp.js:333
 msgid "iCal"
 msgstr "iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:336
+#: src/Admin/source-view/SourceViewApp.js:337
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr "Copier l’URL du flux iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:343
+#: src/Admin/source-view/SourceViewApp.js:344
 msgid "JSON"
 msgstr "JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:347
+#: src/Admin/source-view/SourceViewApp.js:348
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr "Copier l’URL de l’API JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:359
-#: src/Admin/source-view/SourceViewApp.js:372
+#: src/Admin/source-view/SourceViewApp.js:417
+#: src/Admin/source-view/SourceViewApp.js:430
 msgid "Edit event feed"
 msgstr "Modifier le flux d’événements"
 
-#: src/Admin/source-view/SourceViewApp.js:413
+#: src/Admin/source-view/SourceViewApp.js:471
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr "Modifier le flux d’événements"
@@ -1506,7 +1507,7 @@ msgstr "Supprimer"
 msgid "No events this month."
 msgstr "Aucun événement ce mois-ci."
 
-#: src/Admin/source-view/SourceViewApp.js:168
+#: src/Admin/source-view/SourceViewApp.js:169
 msgid "Failed to load events."
 msgstr "Échec du chargement des événements."
 
@@ -1888,96 +1889,106 @@ msgstr "Page %1$d sur %2$d"
 msgid "Older"
 msgstr "Plus ancien"
 
-#: src/Frontend/WeeklySummaryPage.php:87
-msgid "This weekly summary link doesn’t point to a page with an events calendar. Check the link with the page organizer."
-msgstr "Ce lien de résumé hebdomadaire ne pointe pas vers une page avec un calendrier d'événements. Vérifiez le lien auprès de l'organisateur de la page."
-
 #. translators: 1: ISO week number, 2: ISO week-numbering year
-#: src/Frontend/WeeklySummaryPage.php:118
+#: src/Frontend/WeeklySummaryPage.php:167
 #, php-format
 msgid "Week %1$d, %2$d"
 msgstr "Semaine %1$d, %2$d"
 
 #. translators: 1: page title, 2: date range of the week
-#: src/Frontend/WeeklySummaryPage.php:126
+#: src/Frontend/WeeklySummaryPage.php:175
 #, php-format
 msgid "Weekly summary: %1$s, %2$s"
 msgstr "Résumé hebdomadaire : %1$s, %2$s"
 
-#: src/Frontend/WeeklySummaryPage.php:135
+#: src/Frontend/WeeklySummaryPage.php:184
 msgid "Weekly summary for sharing"
 msgstr "Résumé hebdomadaire à partager"
 
-#: src/Frontend/WeeklySummaryPage.php:140
+#: src/Frontend/WeeklySummaryPage.php:200
 msgid "Week"
 msgstr "Semaine"
 
-#: src/Frontend/WeeklySummaryPage.php:141
+#: src/Frontend/WeeklySummaryPage.php:201
 msgid "Previous week"
 msgstr "Semaine précédente"
 
-#: src/Frontend/WeeklySummaryPage.php:146
+#: src/Frontend/WeeklySummaryPage.php:206
 msgid "Next week"
 msgstr "Semaine suivante"
 
 #. translators: %s: week as given in the link, e.g. "2026-W60"
-#: src/Frontend/WeeklySummaryPage.php:155
+#: src/Frontend/WeeklySummaryPage.php:215
 #, php-format
 msgid "“%s” is not a valid week, so this shows the current week."
 msgstr "« %s » n'est pas une semaine valide, donc ceci affiche la semaine actuelle."
 
-#: src/Frontend/WeeklySummaryPage.php:164
+#: src/Frontend/WeeklySummaryPage.php:224
 msgid "Events this week"
 msgstr "Événements cette semaine"
 
-#: src/Frontend/WeeklySummaryPage.php:167
+#: src/Frontend/WeeklySummaryPage.php:227
 msgid "There are no public events this week. The summary below has only its heading."
 msgstr "Il n'y a pas d'événements publics cette semaine. Le résumé ci-dessous n'a que son titre."
 
-#: src/Frontend/WeeklySummaryPage.php:189
+#: src/Frontend/WeeklySummaryPage.php:249
 msgid "Summary copied. Paste it into your message."
 msgstr "Résumé copié. Collez-le dans votre message."
 
-#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Frontend/WeeklySummaryPage.php:250
 msgid "Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command."
 msgstr "Impossible de copier automatiquement. Le texte du résumé est sélectionné ci-dessous : copiez-le avec la commande de copie de votre appareil."
 
-#: src/Frontend/WeeklySummaryPage.php:192
+#: src/Frontend/WeeklySummaryPage.php:252
 msgid "Summary to copy"
 msgstr "Résumé à copier"
 
-#: src/Frontend/WeeklySummaryPage.php:193
+#: src/Frontend/WeeklySummaryPage.php:253
 msgid "Copying only puts the text on your clipboard. Nothing is sent."
 msgstr "La copie place uniquement le texte dans votre presse-papiers. Rien n'est envoyé."
 
-#: src/Frontend/WeeklySummaryPage.php:194
+#: src/Frontend/WeeklySummaryPage.php:254
 msgid "Copy summary"
 msgstr "Copier le résumé"
 
-#: src/Frontend/WeeklySummaryPage.php:217
-#: src/Frontend/WeeklySummaryPage.php:220
+#: src/Frontend/WeeklySummaryPage.php:277
+#: src/Frontend/WeeklySummaryPage.php:280
 msgid "Weekly summary unavailable"
 msgstr "Résumé hebdomadaire indisponible"
 
-#: src/Services/WeeklySummary.php:59
-#: src/Services/WeeklySummary.php:63
+#: src/Services/WeeklySummary.php:68
+#: src/Services/WeeklySummary.php:72
 msgid "Weekly summaries need an up-to-date Fair Events plugin."
 msgstr "Les résumés hebdomadaires nécessitent une extension Fair Events à jour."
 
-#: src/Services/WeeklySummary.php:67
-msgid "This weekly summary is not available because its page is not public."
-msgstr "Ce résumé hebdomadaire n'est pas disponible car sa page n'est pas publique."
+#: src/Services/WeeklySummary.php:77
+msgid "This weekly summary link doesn’t match an enabled event feed. Check the link with the site organizer."
+msgstr "Ce lien de résumé hebdomadaire ne correspond à aucun flux d’événements activé. Vérifiez le lien auprès de la personne qui organise le site."
 
-#: src/Services/WeeklySummary.php:149
-#: src/Services/WeeklySummary.php:172
-msgid "This page has no events calendar for this link. Check the link with the page organizer."
-msgstr "Cette page n'a pas de calendrier d'événements pour ce lien. Vérifiez le lien auprès de l'organisateur de la page."
+#: src/Services/WeeklySummary.php:80
+msgid "This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link."
+msgstr "Ce flux d’événements n’a pas de page, qui donne au résumé son titre et son lien. Choisissez la page du flux dans Flux d’événements pour utiliser ce lien."
 
-#: src/Services/WeeklySummary.php:168
-msgid "More than one events calendar on this page uses this link’s name, so the summary can’t tell which to show. Give each calendar a unique HTML anchor."
-msgstr "Plus d'un calendrier d'événements sur cette page utilise le nom de ce lien, donc le résumé ne peut pas déterminer lequel afficher. Donnez à chaque calendrier une ancre HTML unique."
+#: src/Admin/source-view/SourceViewApp.js:357
+msgid "Weekly summary link"
+msgstr "Lien du résumé hebdomadaire"
 
-#: src/Services/WeeklySummary.php:170
-msgid "This events calendar also shows draft events, so it can’t be shared through a public link. Turn off showing drafts on the calendar to use it."
-msgstr "Ce calendrier d'événements affiche également les événements en brouillon, il ne peut donc pas être partagé via un lien public. Désactivez l'affichage des brouillons sur le calendrier pour l'utiliser."
+#: src/Admin/source-view/SourceViewApp.js:370
+msgid "Copy link"
+msgstr "Copier le lien"
 
+#: src/Admin/source-view/SourceViewApp.js:374
+msgid "Copy the weekly summary link to share with the person who posts it"
+msgstr "Copier le lien du résumé hebdomadaire pour le partager avec la personne qui le publie"
+
+#: src/Admin/source-view/SourceViewApp.js:388
+msgid "Couldn’t copy the link. Select it above and copy it by hand."
+msgstr "Impossible de copier le lien. Sélectionnez-le ci-dessus et copiez-le à la main."
+
+#: src/Admin/source-view/SourceViewApp.js:396
+msgid "The link works once this feed is enabled."
+msgstr "Le lien fonctionne une fois ce flux activé."
+
+#: src/Admin/source-view/SourceViewApp.js:405
+msgid "Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link."
+msgstr "Choisissez une page pour ce flux afin d’obtenir un lien de résumé hebdomadaire. La page donne au résumé son titre et son lien."

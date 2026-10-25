@@ -10,14 +10,12 @@ namespace FairEventsExperimental\Services;
 defined( 'WPINC' ) || die;
 
 /**
- * Builds the weekly summary an operator copies from a source page's Events
- * Week block.
+ * Builds the weekly summary an operator copies for an event feed.
  *
- * Every part of the text comes from Fair Events' own summary code with the
- * block's own event selection, page and language, so the copied text is the
- * one the block's "Copy summary" button gives for the same week. Only public
- * events are ever listed: drafts are excluded, and a block set to show them
- * can't back a link.
+ * The text comes from Fair Events' SummaryBuilder, the code behind the weekly
+ * notification, with the feed's events and its page as heading and language.
+ * It is the text an Events Week block on that page, showing only that feed,
+ * copies for the same week. Only public events are ever listed.
  */
 class WeeklySummary {
 
@@ -27,21 +25,32 @@ class WeeklySummary {
 	private const REQUIRED_CLASSES = array(
 		'\FairEvents\Helpers\WeekViewParam',
 		'\FairEvents\Services\EventsWeekSummary',
-		'\FairEvents\Services\EventsWeekSummaryFormatter',
+		'\FairEvents\Notifications\SummaryBuilder',
+		'\FairEvents\Database\EventSourceRepository',
 		'\FairEvents\Settings\Settings',
 	);
 
 	/**
-	 * Build the summary of a source page's Events Week block for a week.
+	 * Whether a value from a link can be an event feed slug.
 	 *
-	 * @param \WP_Post $page     Source page.
-	 * @param string   $anchor   Anchor of the Events Week block on that page.
-	 * @param string   $week_raw Requested `YYYY-Www` week; anything else
-	 *                           shows the current week, as the block does.
+	 * @param string $slug Slug from the link.
+	 * @return bool
+	 */
+	public static function is_valid_slug( $slug ) {
+		return is_string( $slug ) && '' !== $slug && sanitize_title( $slug ) === $slug;
+	}
+
+	/**
+	 * Build the summary of an event feed for a week.
+	 *
+	 * @param string $slug     Event feed slug.
+	 * @param string $week_raw Requested `YYYY-Www` week; anything else
+	 *                         shows the current week, as Events Week does.
 	 * @return array|\WP_Error {
+	 *     @type string  $feed        Event feed name.
 	 *     @type string  $text        Summary text.
-	 *     @type string  $title       Source page title.
-	 *     @type string  $url         Source page permalink.
+	 *     @type string  $title       Feed page title.
+	 *     @type string  $url         Feed page permalink.
 	 *     @type string  $range       Localized date range of the week.
 	 *     @type string  $start       First 'Y-m-d' date of the week.
 	 *     @type string  $end         Last 'Y-m-d' date of the week.
@@ -53,23 +62,28 @@ class WeeklySummary {
 	 *     @type array[] $events      Each with `when`, `title` and `url`.
 	 * }
 	 */
-	public function build( \WP_Post $page, $anchor, $week_raw ) {
+	public function build( $slug, $week_raw ) {
 		foreach ( self::REQUIRED_CLASSES as $class ) {
 			if ( ! class_exists( $class ) ) {
 				return new \WP_Error( 'fair_events_outdated', __( 'Weekly summaries need an up-to-date Fair Events plugin.', 'fair-events-experimental' ) );
 			}
 		}
-		if ( ! method_exists( '\FairEvents\Services\EventsWeekSummaryFormatter', 'when' ) ) {
+		if ( ! method_exists( '\FairEvents\Notifications\SummaryBuilder', 'check' ) || ! method_exists( '\FairEvents\Notifications\SummaryBuilder', 'build' ) ) {
 			return new \WP_Error( 'fair_events_outdated', __( 'Weekly summaries need an up-to-date Fair Events plugin.', 'fair-events-experimental' ) );
 		}
 
-		if ( 'publish' !== $page->post_status || '' !== $page->post_password || ! is_post_publicly_viewable( $page ) ) {
-			return new \WP_Error( 'page_not_public', __( 'This weekly summary is not available because its page is not public.', 'fair-events-experimental' ) );
+		$source = self::is_valid_slug( $slug ) ? ( new \FairEvents\Database\EventSourceRepository() )->get_by_slug( $slug ) : null;
+		if ( ! $source || empty( $source['enabled'] ) ) {
+			return new \WP_Error( 'not_found', __( 'This weekly summary link doesn’t match an enabled event feed. Check the link with the site organizer.', 'fair-events-experimental' ) );
+		}
+		if ( empty( $source['page_id'] ) ) {
+			return new \WP_Error( 'missing_page', __( 'This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link.', 'fair-events-experimental' ) );
 		}
 
-		$selection = $this->selection( $page, $anchor );
-		if ( is_wp_error( $selection ) ) {
-			return $selection;
+		$builder = new \FairEvents\Notifications\SummaryBuilder();
+		$check   = $builder->check( $source['slug'], (int) $source['page_id'] );
+		if ( is_wp_error( $check ) ) {
+			return $check;
 		}
 
 		$parsed = \FairEvents\Helpers\WeekViewParam::parse( (string) $week_raw );
@@ -80,52 +94,23 @@ class WeeklySummary {
 			\FairEvents\Settings\Settings::get_start_of_week()
 		);
 
-		// The summary is in the page's language, as the block on that page
-		// shows it, whatever language the request would otherwise use.
-		$language = function_exists( 'pll_get_post_language' ) ? pll_get_post_language( $page->ID ) : false;
-		$locale   = function_exists( 'pll_get_post_language' ) ? pll_get_post_language( $page->ID, 'locale' ) : '';
-		$switched = $locale && switch_to_locale( $locale );
-
-		try {
-			$occurrences = \FairEvents\Services\EventsWeekSummary::occurrences(
-				$week,
-				array(
-					'categories'         => $selection['categories'],
-					'event_source_slugs' => $selection['eventSources'],
-					'include_drafts'     => false,
-				),
-				$language ? $language : false
-			);
-			// Fair Events drafts never reach a public link, even when the
-			// feed would list them for a logged-in organizer.
-			$occurrences = array_values(
-				array_filter(
-					$occurrences,
-					static fn( $occurrence ) => empty( $occurrence['is_draft'] )
-				)
-			);
-
-			$text   = \FairEvents\Services\EventsWeekSummary::format( $occurrences, $week, \FairEvents\Services\EventsWeekSummary::page_label( $page->ID ) );
-			$range  = \FairEvents\Services\EventsWeekSummary::range_title( $week['start'], $week['end'] );
-			$events = array_map(
-				static fn( $occurrence ) => array(
-					'when'  => \FairEvents\Services\EventsWeekSummaryFormatter::when( $occurrence, $week['start'], $week['end'] ),
-					'title' => (string) ( $occurrence['title'] ?? '' ),
-					'url'   => (string) ( $occurrence['url'] ?? '' ),
-				),
-				$occurrences
-			);
-		} finally {
-			if ( $switched ) {
-				restore_previous_locale();
-			}
+		$summary = $builder->build(
+			array(
+				'source_slug' => $source['slug'],
+				'page_id'     => (int) $source['page_id'],
+			),
+			$week
+		);
+		if ( is_wp_error( $summary ) ) {
+			return $summary;
 		}
 
 		return array(
-			'text'       => $text,
-			'title'      => get_the_title( $page ),
-			'url'        => (string) get_permalink( $page ),
-			'range'      => $range,
+			'feed'       => (string) $source['name'],
+			'text'       => $summary['text'],
+			'title'      => $summary['title'],
+			'url'        => $summary['url'],
+			'range'      => $summary['range'],
 			'start'      => $week['start'],
 			'end'        => $week['end'],
 			'year'       => $iso['year'],
@@ -133,43 +118,7 @@ class WeeklySummary {
 			'week_valid' => null !== $parsed,
 			'prev'       => \FairEvents\Services\EventsWeekSummary::offset_iso_week( $iso['year'], $iso['week'], -1 ),
 			'next'       => \FairEvents\Services\EventsWeekSummary::offset_iso_week( $iso['year'], $iso['week'], 1 ),
-			'events'     => $events,
+			'events'     => $summary['events'],
 		);
-	}
-
-	/**
-	 * Event selection of the page's Events Week block with the anchor.
-	 *
-	 * @param \WP_Post $page   Source page.
-	 * @param string   $anchor Block anchor.
-	 * @return array|\WP_Error `categories` and `eventSources` attributes.
-	 */
-	private function selection( \WP_Post $page, $anchor ) {
-		if ( ! WeeklySummarySelection::is_valid_anchor( $anchor ) ) {
-			return new \WP_Error( 'not_found', __( 'This page has no events calendar for this link. Check the link with the page organizer.', 'fair-events-experimental' ) );
-		}
-
-		$result = WeeklySummarySelection::find(
-			parse_blocks( $page->post_content ),
-			$anchor,
-			static function ( $ref ) {
-				$pattern = get_post( $ref );
-				if ( ! $pattern || 'wp_block' !== $pattern->post_type || 'publish' !== $pattern->post_status ) {
-					return null;
-				}
-				return parse_blocks( $pattern->post_content );
-			}
-		);
-
-		switch ( $result['status'] ) {
-			case WeeklySummarySelection::FOUND:
-				return $result['attributes'];
-			case WeeklySummarySelection::AMBIGUOUS:
-				return new \WP_Error( 'ambiguous', __( 'More than one events calendar on this page uses this link’s name, so the summary can’t tell which to show. Give each calendar a unique HTML anchor.', 'fair-events-experimental' ) );
-			case WeeklySummarySelection::SHOWS_DRAFTS:
-				return new \WP_Error( 'shows_drafts', __( 'This events calendar also shows draft events, so it can’t be shared through a public link. Turn off showing drafts on the calendar to use it.', 'fair-events-experimental' ) );
-			default:
-				return new \WP_Error( 'not_found', __( 'This page has no events calendar for this link. Check the link with the page organizer.', 'fair-events-experimental' ) );
-		}
 	}
 }

@@ -619,14 +619,18 @@ class EventSourceController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Add page_url to source data if page_id is set
+	 * Add page_url to source data if page_id is set, and the operator link
+	 * to the weekly summary, which needs a page.
 	 *
 	 * @param array $source Source data array.
-	 * @return array Source data with page_url added.
+	 * @return array Source data with page_url and weekly_summary_url added.
 	 */
 	private function add_page_url( $source ) {
-		$source['page_url']   = null;
-		$source['page_title'] = null;
+		$source['page_url']           = null;
+		$source['page_title']         = null;
+		$source['weekly_summary_url'] = ! empty( $source['page_id'] )
+			? \FairEventsExperimental\Frontend\WeeklySummaryPage::url( $source['slug'] )
+			: null;
 
 		if ( ! empty( $source['page_id'] ) ) {
 			$page = get_post( $source['page_id'] );

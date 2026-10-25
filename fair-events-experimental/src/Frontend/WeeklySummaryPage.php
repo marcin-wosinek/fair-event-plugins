@@ -12,22 +12,42 @@ defined( 'WPINC' ) || die;
 use FairEventsExperimental\Services\WeeklySummary;
 
 /**
- * Serves `?fair_weekly_summary={anchor}` on a page with an Events Week block:
- * a read-only list of the week's public events and the block's summary text,
- * for an operator to copy and post by hand (e.g. to a WhatsApp community).
+ * Serves `/fair-events-weekly-summary/{feed-slug}/`: a read-only list of the
+ * week's public events of an event feed and their summary text, for an
+ * operator to copy and post by hand (e.g. to a WhatsApp community).
  *
- * The page URL and the block's HTML anchor together name the community, so
- * each calendar gets its own link. `week_view` picks the week, as on the
- * block. Opening the page or copying sends nothing anywhere.
+ * The event feed names the community, so each feed gets its own link. `week`
+ * picks the week. Opening the page or copying sends nothing anywhere.
  */
 class WeeklySummaryPage {
 
 	/**
-	 * Query variable carrying the Events Week block's anchor.
+	 * Query variable carrying the event feed slug.
 	 *
 	 * @var string
 	 */
 	const QUERY_VAR = 'fair_weekly_summary';
+
+	/**
+	 * Path prefix of the pretty-permalink link.
+	 *
+	 * @var string
+	 */
+	const PATH = 'fair-events-weekly-summary';
+
+	/**
+	 * Option storing the version of the rewrite rules last flushed.
+	 *
+	 * @var string
+	 */
+	const RULES_OPTION = 'fair_events_experimental_weekly_summary_rules';
+
+	/**
+	 * Version of the rewrite rules; bump it when the rule changes.
+	 *
+	 * @var string
+	 */
+	const RULES_VERSION = '1';
 
 	/**
 	 * Initialize hooks.
@@ -35,24 +55,60 @@ class WeeklySummaryPage {
 	 * @return void
 	 */
 	public static function init() {
+		add_action( 'init', array( __CLASS__, 'add_rewrite_rule' ) );
 		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
-		add_action( 'template_redirect', array( __CLASS__, 'handle_request' ) );
+		// Before redirect_canonical(), which knows nothing of this path.
+		add_action( 'template_redirect', array( __CLASS__, 'handle_request' ), 1 );
 	}
 
 	/**
-	 * Operator link for a page's Events Week block.
+	 * Register the link's rewrite rule, flushing the rules once per version.
 	 *
-	 * @param int         $page_id Source page ID.
-	 * @param string      $anchor  Block anchor.
-	 * @param string|null $week    Optional `YYYY-Www` week.
+	 * @return void
+	 */
+	public static function add_rewrite_rule() {
+		add_rewrite_rule( '^' . self::PATH . '/([^/]+)/?$', 'index.php?' . self::QUERY_VAR . '=$matches[1]', 'top' );
+
+		if ( get_option( self::RULES_OPTION ) !== self::RULES_VERSION ) {
+			flush_rewrite_rules( false );
+			update_option( self::RULES_OPTION, self::RULES_VERSION );
+		}
+	}
+
+	/**
+	 * Remove the rewrite rule when the plugin is deactivated.
+	 *
+	 * The plugin is still loaded during deactivation, so the rule is taken
+	 * out of this request's rules before flushing. Deleting the option makes
+	 * the next activation flush the rule back in.
+	 *
+	 * @return void
+	 */
+	public static function deactivate() {
+		global $wp_rewrite;
+
+		unset( $wp_rewrite->extra_rules_top[ '^' . self::PATH . '/([^/]+)/?$' ] );
+		delete_option( self::RULES_OPTION );
+		flush_rewrite_rules( false );
+	}
+
+	/**
+	 * Operator link for an event feed.
+	 *
+	 * @param string      $slug Event feed slug.
+	 * @param string|null $week Optional `YYYY-Www` week.
 	 * @return string
 	 */
-	public static function url( $page_id, $anchor, $week = null ) {
-		$args = array( self::QUERY_VAR => $anchor );
-		if ( null !== $week ) {
-			$args['week_view'] = $week;
+	public static function url( $slug, $week = null ) {
+		global $wp_rewrite;
+
+		if ( $wp_rewrite->using_permalinks() ) {
+			$url = home_url( user_trailingslashit( $wp_rewrite->root . self::PATH . '/' . rawurlencode( $slug ) ) );
+		} else {
+			$url = add_query_arg( self::QUERY_VAR, rawurlencode( $slug ), home_url( '/' ) );
 		}
-		return add_query_arg( $args, get_permalink( $page_id ) );
+
+		return null === $week ? $url : add_query_arg( 'week', rawurlencode( $week ), $url );
 	}
 
 	/**
@@ -73,8 +129,8 @@ class WeeklySummaryPage {
 	 * @return void
 	 */
 	public static function handle_request() {
-		$anchor = (string) get_query_var( self::QUERY_VAR );
-		if ( '' === $anchor ) {
+		$slug = (string) get_query_var( self::QUERY_VAR );
+		if ( '' === $slug ) {
 			return;
 		}
 
@@ -82,22 +138,16 @@ class WeeklySummaryPage {
 		add_filter( 'wp_robots', 'wp_robots_no_robots' );
 		nocache_headers();
 
-		$page = is_singular() ? get_queried_object() : null;
-		if ( ! $page instanceof \WP_Post ) {
-			self::render_unavailable( __( 'This weekly summary link doesn’t point to a page with an events calendar. Check the link with the page organizer.', 'fair-events-experimental' ) );
-			exit;
-		}
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public view.
-		$week_raw = isset( $_GET['week_view'] ) ? sanitize_text_field( wp_unslash( $_GET['week_view'] ) ) : '';
-		$summary  = ( new WeeklySummary() )->build( $page, $anchor, $week_raw );
+		$week_raw = isset( $_GET['week'] ) ? sanitize_text_field( wp_unslash( $_GET['week'] ) ) : '';
+		$summary  = ( new WeeklySummary() )->build( $slug, $week_raw );
 
 		if ( is_wp_error( $summary ) ) {
 			self::render_unavailable( $summary->get_error_message() );
 			exit;
 		}
 
-		self::render( $summary, $page->ID, $anchor, $week_raw );
+		self::render( $summary, $slug, $week_raw );
 		exit;
 	}
 
@@ -105,12 +155,11 @@ class WeeklySummaryPage {
 	 * Output the summary page.
 	 *
 	 * @param array  $summary  Summary from WeeklySummary::build().
-	 * @param int    $page_id  Source page ID.
-	 * @param string $anchor   Block anchor.
+	 * @param string $slug     Event feed slug.
 	 * @param string $week_raw Requested week, as given.
 	 * @return void
 	 */
-	private static function render( array $summary, $page_id, $anchor, $week_raw ) {
+	private static function render( array $summary, $slug, $week_raw ) {
 		self::enqueue_assets();
 
 		$week_label = sprintf(
@@ -119,8 +168,8 @@ class WeeklySummaryPage {
 			$summary['week'],
 			$summary['year']
 		);
-		$prev_url = self::url( $page_id, $anchor, sprintf( '%04d-W%02d', $summary['prev']['year'], $summary['prev']['week'] ) );
-		$next_url = self::url( $page_id, $anchor, sprintf( '%04d-W%02d', $summary['next']['year'], $summary['next']['week'] ) );
+		$prev_url = self::url( $slug, sprintf( '%04d-W%02d', $summary['prev']['year'], $summary['prev']['week'] ) );
+		$next_url = self::url( $slug, sprintf( '%04d-W%02d', $summary['next']['year'], $summary['next']['week'] ) );
 		$title    = sprintf(
 			/* translators: 1: page title, 2: date range of the week */
 			__( 'Weekly summary: %1$s, %2$s', 'fair-events-experimental' ),
@@ -133,6 +182,17 @@ class WeeklySummaryPage {
 	<main class="fair-weekly-summary">
 		<header class="fair-weekly-summary__header">
 			<p class="fair-weekly-summary__eyebrow"><?php esc_html_e( 'Weekly summary for sharing', 'fair-events-experimental' ); ?></p>
+			<p class="fair-weekly-summary__feed">
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %s: event feed name */
+						__( 'Event feed: %s', 'fair-events-experimental' ),
+						$summary['feed']
+					)
+				);
+				?>
+			</p>
 			<h1 class="fair-weekly-summary__title"><?php echo esc_html( wp_strip_all_tags( $summary['title'] ) ); ?></h1>
 			<p class="fair-weekly-summary__source"><a href="<?php echo esc_url( $summary['url'] ); ?>"><?php echo esc_html( $summary['url'] ); ?></a></p>
 		</header>

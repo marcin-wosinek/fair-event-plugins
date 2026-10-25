@@ -273,3 +273,83 @@ it( 'ignores an obsolete response that arrives after a newer month', async () =>
 	expect( screen.getByText( 'August 2026' ) ).toBeInTheDocument();
 	expect( screen.queryByText( 'July event' ) ).not.toBeInTheDocument();
 } );
+
+describe( 'weekly summary link (#2045)', () => {
+	const LINK =
+		'http://example.com/fair-events-weekly-summary/community-calendar/';
+
+	function withSource( extra ) {
+		const fallback = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.path === '/fair-events/v1/sources/2'
+				? Promise.resolve( { ...source, ...extra } )
+				: fallback( options )
+		);
+	}
+
+	afterEach( () => {
+		delete navigator.clipboard;
+	} );
+
+	it( 'shows the link of a feed with a page and copies it', async () => {
+		const writeText = jest.fn( () => Promise.resolve() );
+		Object.defineProperty( navigator, 'clipboard', {
+			value: { writeText },
+			configurable: true,
+		} );
+		withSource( { weekly_summary_url: LINK, page_id: 7 } );
+		await renderApp();
+
+		expect( screen.getByText( LINK ) ).toBeInTheDocument();
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Copy link' } )
+			);
+		} );
+		expect( writeText ).toHaveBeenCalledWith( LINK );
+		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'The link works once this feed is enabled.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'says when copying the link fails', async () => {
+		Object.defineProperty( navigator, 'clipboard', {
+			value: { writeText: () => Promise.reject( new Error( 'Denied' ) ) },
+			configurable: true,
+		} );
+		withSource( { weekly_summary_url: LINK, page_id: 7 } );
+		await renderApp();
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Copy link' } )
+			);
+		} );
+		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
+			'Couldn’t copy the link.'
+		);
+	} );
+
+	it( 'notes that a disabled feed’s link works once enabled', async () => {
+		withSource( { weekly_summary_url: LINK, page_id: 7, enabled: false } );
+		await renderApp();
+
+		expect( screen.getByText( LINK ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'The link works once this feed is enabled.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'asks for a page instead of showing a link', async () => {
+		withSource( { weekly_summary_url: null, page_id: null } );
+		await renderApp();
+
+		expect(
+			screen.getByText( /Choose a page for this feed/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Copy link' } )
+		).not.toBeInTheDocument();
+	} );
+} );

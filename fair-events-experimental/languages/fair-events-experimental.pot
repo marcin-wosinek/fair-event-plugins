@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T08:14:32+00:00\n"
+"POT-Creation-Date: 2026-10-25T11:01:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events-experimental\n"
@@ -39,7 +39,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-events-experimental.php:53
+#: fair-events-experimental.php:54
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr ""
 
@@ -393,81 +393,84 @@ msgstr ""
 msgid "Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:87
-msgid "This weekly summary link doesn’t point to a page with an events calendar. Check the link with the page organizer."
-msgstr ""
-
 #. translators: 1: ISO week number, 2: ISO week-numbering year
-#: src/Frontend/WeeklySummaryPage.php:118
+#: src/Frontend/WeeklySummaryPage.php:167
 #, php-format
 msgid "Week %1$d, %2$d"
 msgstr ""
 
 #. translators: 1: page title, 2: date range of the week
-#: src/Frontend/WeeklySummaryPage.php:126
+#: src/Frontend/WeeklySummaryPage.php:175
 #, php-format
 msgid "Weekly summary: %1$s, %2$s"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:135
+#: src/Frontend/WeeklySummaryPage.php:184
 msgid "Weekly summary for sharing"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:140
+#. translators: %s: event feed name
+#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Admin/source-view/SourceViewApp.js:259
+#, php-format,js-format
+msgid "Event feed: %s"
+msgstr ""
+
+#: src/Frontend/WeeklySummaryPage.php:200
 msgid "Week"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:141
+#: src/Frontend/WeeklySummaryPage.php:201
 msgid "Previous week"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:146
+#: src/Frontend/WeeklySummaryPage.php:206
 msgid "Next week"
 msgstr ""
 
 #. translators: %s: week as given in the link, e.g. "2026-W60"
-#: src/Frontend/WeeklySummaryPage.php:155
+#: src/Frontend/WeeklySummaryPage.php:215
 #, php-format
 msgid "“%s” is not a valid week, so this shows the current week."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:164
+#: src/Frontend/WeeklySummaryPage.php:224
 msgid "Events this week"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:167
+#: src/Frontend/WeeklySummaryPage.php:227
 msgid "There are no public events this week. The summary below has only its heading."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:172
+#: src/Frontend/WeeklySummaryPage.php:232
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/meta/MetaCalendarTest.js:85
 #: src/Admin/source-view/calendarLabels.js:20
 msgid "(untitled event)"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:189
+#: src/Frontend/WeeklySummaryPage.php:249
 msgid "Summary copied. Paste it into your message."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Frontend/WeeklySummaryPage.php:250
 msgid "Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:192
+#: src/Frontend/WeeklySummaryPage.php:252
 msgid "Summary to copy"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:193
+#: src/Frontend/WeeklySummaryPage.php:253
 msgid "Copying only puts the text on your clipboard. Nothing is sent."
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:194
+#: src/Frontend/WeeklySummaryPage.php:254
 msgid "Copy summary"
 msgstr ""
 
-#: src/Frontend/WeeklySummaryPage.php:217
-#: src/Frontend/WeeklySummaryPage.php:220
+#: src/Frontend/WeeklySummaryPage.php:277
+#: src/Frontend/WeeklySummaryPage.php:280
 msgid "Weekly summary unavailable"
 msgstr ""
 
@@ -503,26 +506,17 @@ msgstr ""
 msgid "That does not look like a Meta access token. Paste the full token generated in Events Manager, without spaces. The saved token was not changed."
 msgstr ""
 
-#: src/Services/WeeklySummary.php:59
-#: src/Services/WeeklySummary.php:63
+#: src/Services/WeeklySummary.php:68
+#: src/Services/WeeklySummary.php:72
 msgid "Weekly summaries need an up-to-date Fair Events plugin."
 msgstr ""
 
-#: src/Services/WeeklySummary.php:67
-msgid "This weekly summary is not available because its page is not public."
+#: src/Services/WeeklySummary.php:77
+msgid "This weekly summary link doesn’t match an enabled event feed. Check the link with the site organizer."
 msgstr ""
 
-#: src/Services/WeeklySummary.php:149
-#: src/Services/WeeklySummary.php:172
-msgid "This page has no events calendar for this link. Check the link with the page organizer."
-msgstr ""
-
-#: src/Services/WeeklySummary.php:168
-msgid "More than one events calendar on this page uses this link’s name, so the summary can’t tell which to show. Give each calendar a unique HTML anchor."
-msgstr ""
-
-#: src/Services/WeeklySummary.php:170
-msgid "This events calendar also shows draft events, so it can’t be shared through a public link. Turn off showing drafts on the calendar to use it."
+#: src/Services/WeeklySummary.php:80
+msgid "This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link."
 msgstr ""
 
 #: src/Settings/Settings.php:36
@@ -1689,58 +1683,52 @@ msgid_plural "+%d more"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/source-view/SourceViewApp.js:83
+#: src/Admin/source-view/SourceViewApp.js:84
 msgid "Failed to load event feed."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:97
+#: src/Admin/source-view/SourceViewApp.js:98
 msgid "No event feed ID provided."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:168
+#: src/Admin/source-view/SourceViewApp.js:169
 msgid "Failed to load events."
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:233
-#: src/Admin/source-view/SourceViewApp.js:251
+#: src/Admin/source-view/SourceViewApp.js:234
+#: src/Admin/source-view/SourceViewApp.js:252
 msgid "Back to Event Feeds"
 msgstr ""
 
-#. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:258
-#, js-format
-msgid "Event feed: %s"
-msgstr ""
-
-#: src/Admin/source-view/SourceViewApp.js:275
+#: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:281
+#: src/Admin/source-view/SourceViewApp.js:282
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:285
+#: src/Admin/source-view/SourceViewApp.js:286
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/SourceViewApp.js:287
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:291
+#: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr ""
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:296
+#: src/Admin/source-view/SourceViewApp.js:297
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1748,42 +1736,66 @@ msgid_plural "%d feed inputs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/source-view/SourceViewApp.js:309
+#: src/Admin/source-view/SourceViewApp.js:310
 msgid "Page"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:317
+#: src/Admin/source-view/SourceViewApp.js:318
 msgid "View page"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:327
+#: src/Admin/source-view/SourceViewApp.js:328
 msgid "Feed URLs"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:332
+#: src/Admin/source-view/SourceViewApp.js:333
 msgid "iCal"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:336
+#: src/Admin/source-view/SourceViewApp.js:337
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:343
+#: src/Admin/source-view/SourceViewApp.js:344
 msgid "JSON"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:347
+#: src/Admin/source-view/SourceViewApp.js:348
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:359
-#: src/Admin/source-view/SourceViewApp.js:372
+#: src/Admin/source-view/SourceViewApp.js:357
+msgid "Weekly summary link"
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:370
+msgid "Copy link"
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:374
+msgid "Copy the weekly summary link to share with the person who posts it"
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:388
+msgid "Couldn’t copy the link. Select it above and copy it by hand."
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:396
+msgid "The link works once this feed is enabled."
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:405
+msgid "Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link."
+msgstr ""
+
+#: src/Admin/source-view/SourceViewApp.js:417
+#: src/Admin/source-view/SourceViewApp.js:430
 msgid "Edit event feed"
 msgstr ""
 
-#: src/Admin/source-view/SourceViewApp.js:413
+#: src/Admin/source-view/SourceViewApp.js:471
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr ""
