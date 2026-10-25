@@ -28,6 +28,7 @@ import {
  */
 import EntryForm from './components/EntryForm.js';
 import MatchModal from './components/MatchModal.js';
+import UnmatchModal from './components/UnmatchModal.js';
 import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 import TransferModal from './components/TransferModal.js';
@@ -112,6 +113,7 @@ const EntriesApp = () => {
 	const [ isFormOpen, setIsFormOpen ] = useState( false );
 	const [ editingEntry, setEditingEntry ] = useState( null );
 	const [ matchingEntry, setMatchingEntry ] = useState( null );
+	const [ unmatchingEntry, setUnmatchingEntry ] = useState( null );
 	const [ isImportOpen, setIsImportOpen ] = useState( false );
 	const [ splittingEntry, setSplittingEntry ] = useState( null );
 	const [ isTransferOpen, setIsTransferOpen ] = useState( false );
@@ -275,11 +277,21 @@ const EntriesApp = () => {
 		}
 	};
 
-	const loadEntries = async () => {
+	/**
+	 * Load the current page of entries.
+	 *
+	 * @param {Object}  options       Options.
+	 * @param {boolean} options.quiet Keep the table mounted while reloading,
+	 *                                so focus can return to a row's control,
+	 *                                and keep the rows if the reload fails.
+	 */
+	const loadEntries = async ( { quiet = false } = {} ) => {
 		// Only the latest request may update the list, so a slow response
 		// for a previous view (e.g. before focus was cleared) is dropped.
 		const requestId = ++entriesRequestRef.current;
-		setLoading( true );
+		if ( ! quiet ) {
+			setLoading( true );
+		}
 		setError( null );
 
 		try {
@@ -305,6 +317,15 @@ const EntriesApp = () => {
 			} ) );
 		} catch ( err ) {
 			if ( requestId !== entriesRequestRef.current ) {
+				return;
+			}
+			if ( quiet ) {
+				setError(
+					__(
+						'The list could not be refreshed. Reload the page to see the current entries.',
+						'fair-finance'
+					)
+				);
 				return;
 			}
 			setEntries( [] );
@@ -446,30 +467,19 @@ const EntriesApp = () => {
 		setMatchingEntry( entry );
 	};
 
-	const handleUnmatch = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to unmatch this entry from its transaction?',
-					'fair-finance'
-				)
-			)
-		) {
-			return;
-		}
+	const handleUnmatch = ( entry ) => {
+		setSuccess( null );
+		setUnmatchingEntry( entry );
+	};
 
-		try {
-			await apiFetch( {
-				path: `/fair-finance/v1/financial-entries/${ id }/match`,
-				method: 'DELETE',
-			} );
-			setSuccess( __( 'Entry unmatched successfully.', 'fair-finance' ) );
-			loadEntries();
-		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to unmatch entry.', 'fair-finance' )
-			);
-		}
+	const handleUnmatchComplete = () => {
+		setUnmatchingEntry( null );
+		setSuccess( __( 'Entry unmatched successfully.', 'fair-finance' ) );
+		loadEntries( { quiet: true } );
+	};
+
+	const handleUnmatchCancel = () => {
+		setUnmatchingEntry( null );
 	};
 
 	const handleMatchComplete = () => {
@@ -1579,7 +1589,7 @@ const EntriesApp = () => {
 																					size="small"
 																					onClick={ () =>
 																						handleUnmatch(
-																							entry.id
+																							entry
 																						)
 																					}
 																				>
@@ -1891,6 +1901,15 @@ const EntriesApp = () => {
 					entry={ matchingEntry }
 					onMatch={ handleMatchComplete }
 					onCancel={ handleMatchCancel }
+				/>
+			) }
+
+			{ /* Unmatch Modal */ }
+			{ unmatchingEntry && (
+				<UnmatchModal
+					entry={ unmatchingEntry }
+					onUnmatched={ handleUnmatchComplete }
+					onCancel={ handleUnmatchCancel }
 				/>
 			) }
 

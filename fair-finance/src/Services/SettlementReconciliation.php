@@ -96,8 +96,19 @@ class SettlementReconciliation {
 		if ( null !== $result || ! current_user_can( 'manage_options' ) || ! preg_match( '#^/fair-finance/v1/financial-entries/(\d+)/(match|unmatch)$#', $request->get_route(), $match ) ) {
 			return $result;
 		}
-		$rows = ( new ReconciliationRepository() )->rows( 'decisions', 'entry_id', (int) $match[1] );
-		return $rows ? self::error( 'reconciliation_entry_in_use', __( 'This entry belongs to a saved settlement reconciliation. Review or release its bank association in Reconciliation first.', 'fair-finance' ), 409 ) : $result;
+		return self::entry_in_use( (int) $match[1] ) ? self::error( 'reconciliation_entry_in_use', __( 'This entry belongs to a saved settlement reconciliation. Review or release its bank association in Reconciliation first.', 'fair-finance' ), 409 ) : $result;
+	}
+
+	/**
+	 * Whether a bank entry belongs to a saved settlement reconciliation, so
+	 * legacy match and unmatch actions must leave it alone.
+	 *
+	 * @param int $entry_id Bank entry ID.
+	 * @return bool
+	 * @throws \RuntimeException On SQL read failure.
+	 */
+	public static function entry_in_use( $entry_id ) {
+		return (bool) ( new ReconciliationRepository() )->rows( 'decisions', 'entry_id', (int) $entry_id );
 	}
 
 	/**

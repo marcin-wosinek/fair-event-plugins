@@ -20,3 +20,39 @@
 		}
 	}
 }
+
+/**
+ * Unmatch confirmation. Modals render in a portal outside the page wrapper,
+ * so this is scoped by the modal's own class. Core gives the header a fixed
+ * height, which clips a long entry description; let it grow and wrap so the
+ * target stays readable at 375px.
+ */
+.fair-finance-unmatch-modal {
+	.components-modal__header {
+		height: auto;
+		min-height: 72px;
+	}
+
+	.components-modal__header-heading {
+		line-height: 1.3;
+		overflow-wrap: anywhere;
+	}
+
+	.components-modal__content {
+		overflow-wrap: anywhere;
+	}
+
+	.fair-finance-unmatch-modal__transactions {
+		max-height: 240px;
+		margin: 0;
+		padding: 0 0 0 1.25em;
+		overflow-y: auto;
+	}
+
+	.fair-finance-unmatch-modal__entry {
+		margin: 0;
+		padding: 12px;
+		background: #f0f0f1;
+		border-radius: 4px;
+	}
+}

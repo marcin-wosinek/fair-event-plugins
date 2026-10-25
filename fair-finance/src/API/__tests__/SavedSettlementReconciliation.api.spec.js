@@ -240,11 +240,21 @@ test.describe( 'Saved settlement reconciliation', () => {
 			( await confirm( data, { adopt_existing: true } ) ).ok()
 		).toBeTruthy();
 		expect( ( await preview() ).bank_rows ).toEqual( data.bank_rows );
+		// The Entries screen learns of the protection before offering Unmatch.
+		const entry = await api.get( `${ ENTRIES }/${ fixture.entry_id }`, {
+			headers,
+		} );
+		expect( ( await entry.json() ).unmatch.settlement_protected ).toBe(
+			true
+		);
 		const unmatch = await api.delete(
 			`${ ENTRIES }/${ fixture.entry_id }/match`,
 			{ headers }
 		);
 		expect( unmatch.status() ).toBe( 409 );
+		expect( ( await unmatch.json() ).code ).toBe(
+			'reconciliation_entry_in_use'
+		);
 	} );
 
 	test( 'allocates only exact supported amounts and rolls back every write on failure', async () => {

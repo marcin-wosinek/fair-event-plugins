@@ -831,7 +831,54 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		return new WP_REST_Response( $entry->to_array(), 200 );
+		return new WP_REST_Response( array_merge( $entry->to_array(), array( 'unmatch' => self::get_unmatch_details( $entry ) ) ), 200 );
+	}
+
+	/**
+	 * What unmatching an entry would remove, for the admin to review first.
+	 *
+	 * Lists every association unmatching clears: the junction links plus a
+	 * legacy column link the junction lacks. A link whose transaction record
+	 * is gone is still listed, marked missing, rather than silently omitted.
+	 * `settlement_protected` is null when protection could not be checked.
+	 *
+	 * @param FinancialEntry $entry Entry.
+	 * @return array
+	 */
+	private static function get_unmatch_details( $entry ) {
+		$ids = $entry->transaction_ids;
+		if ( $entry->transaction_id && ! in_array( $entry->transaction_id, $ids, true ) ) {
+			$ids[] = $entry->transaction_id;
+		}
+
+		$transactions = array();
+		foreach ( $ids as $tid ) {
+			$t              = class_exists( Transaction::class ) ? Transaction::get_by_id( $tid ) : null;
+			$transactions[] = $t
+				? array(
+					'id'          => (int) $t->id,
+					'amount'      => (float) $t->amount,
+					'currency'    => $t->currency,
+					'description' => $t->description,
+					'created_at'  => $t->created_at,
+					'missing'     => false,
+				)
+				: array(
+					'id'      => (int) $tid,
+					'missing' => true,
+				);
+		}
+
+		try {
+			$protected = \FairFinance\Services\SettlementReconciliation::entry_in_use( $entry->id );
+		} catch ( \Throwable $error ) {
+			$protected = null;
+		}
+
+		return array(
+			'transactions'         => $transactions,
+			'settlement_protected' => $protected,
+		);
 	}
 
 	/**
@@ -1181,7 +1228,7 @@ class FinancialEntryController extends WP_REST_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'rest_unmatch_failed',
-				__( 'Failed to unmatch entry from transaction.', 'fair-finance' ),
+				__( 'Failed to unmatch entry from transaction. Nothing was changed.', 'fair-finance' ),
 				array( 'status' => 500 )
 			);
 		}
