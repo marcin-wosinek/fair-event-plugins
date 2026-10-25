@@ -171,8 +171,55 @@ npm run build --workspace=fair-events
 - Batch processing (20 strings at a time)
 - Automatically updates .po file after translation
 - Processes all locales when --locale is omitted (de_DE, es_ES, fr_FR, pl_PL)
-- Skips plural forms (need manual translation)
+- Translates plural entries too, filling every plural form the locale needs
+  (forms that already hold a translation are kept)
 - Skips intentionally untranslated (URLs, names)
+
+#### Quoted Strings (German and Polish)
+
+Asked to write German `„…“` or Polish `„…”` quotes, the model tends to close
+the quote with an ASCII `"`, which cuts the translation off right after the
+opening `„`. For `de_DE` and `pl_PL` the script therefore never asks the model
+for quotation marks:
+
+1. Before sending, each paired prose quote in the source (`"…"` or `“…”`) is
+   replaced with numbered markers, e.g. `"%s" is full.` →
+   `{{Q1}}%s{{/Q1}} is full.`. If a source string already contains text shaped
+   like `{{Q…`, the batch switches to `[[Q1]]…[[/Q1]]` or `⟦Q1⟧…⟦/Q1⟧`.
+2. The model is told to keep every marker exactly once around the translated
+   quoted text.
+3. The script checks the markers are all present, paired, opened before they
+   are closed and not overlapping, then turns them into `„…“` (German) or
+   `„…”` (Polish).
+
+These quotes are left exactly as they are, with no markers: HTML attribute
+delimiters (`<a href="%s">`), apostrophes, unpaired quotes, and technical
+values whose content contains `_`, `*`, `/`, `\`, `=`, `<`, `>`, `{`, `}` or
+starts with `.` (such as `"appointment_slot"` or `"image/*"`). printf
+placeholders inside quotes (`"%2$s"`) are kept.
+
+A German or Polish translation is rejected if a marker is missing,
+duplicated, mangled or out of order, if it ends at an opening `„`, or if it
+contains more ASCII `"` than the source left unmarked. Spanish and French
+strings are sent unchanged; only the check for a translation cut off at an
+opening `„` applies to them.
+
+#### Retries and Untranslated Strings
+
+Each batch is sent once. Valid translations in the response are kept even
+when a sibling fails. Each failed string, or every string of a response that
+could not be read at all, is retried on its own at most **two more times**.
+The run never stops to ask: a string that still fails is left empty and the
+next batch continues. The cost confirmation before the run is unchanged.
+
+At the end, the summary lists every string left untranslated with its plugin,
+locale, context, full source text (`msgid`, and `msgid_plural` for plurals)
+and the reason it failed. Running without `--locale` repeats the list for all
+locales in the final summary. Translate those strings by hand, or re-run the
+script later: it only fills empty `msgstr` values.
+
+The total cost includes responses that were rejected, when the provider
+reports their token usage.
 
 **Providers:**
 - `openai` - GPT-4o-mini ($0.15/$0.60 per 1M tokens)

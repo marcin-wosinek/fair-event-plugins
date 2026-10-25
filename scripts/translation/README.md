@@ -101,6 +101,13 @@ npm run translation:ai -- --plugin=fair-events --locale=fr_FR --provider=openai 
 3. Ask for ONE confirmation
 4. Process all languages automatically without additional prompts
 
+Plural entries are translated too. For German and Polish, quoted text is sent
+with `{{Q1}}…{{/Q1}}` markers that the script turns into `„…“` / `„…”`, so
+translations are never cut off at an opening `„`. Each batch is sent once; a
+failed string is retried alone at most twice, then left empty and listed in the
+run summary with the reason. See [TRANSLATIONS.md](../../TRANSLATIONS.md#quoted-strings-german-and-polish)
+for the details.
+
 ## Configuration
 
 Edit `/scripts/translation/config.js` to configure:
