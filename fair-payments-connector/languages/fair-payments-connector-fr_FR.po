@@ -52,14 +52,8 @@ msgstr "Test de connexion réussi. Le jeton a été actualisé."
 msgid "Connection test successful. Token is still valid."
 msgstr "Test de connexion réussi. Le jeton est toujours valide."
 
-#. translators: %s: error message
-#: src/API/ConnectionController.php:439
-#, php-format
-msgid "Connection test failed: %s"
-msgstr "Échec du test de connexion : %s"
-
-#: src/API/PaymentEndpoint.php:485
-#: src/API/PaymentEndpoint.php:526
+#: src/API/PaymentEndpoint.php:502
+#: src/API/PaymentEndpoint.php:555
 #: src/API/TransactionAPI.php:208
 #: src/API/TransactionAPI.php:379
 #: src/API/TransactionsController.php:427
@@ -70,16 +64,16 @@ msgstr "Échec du test de connexion : %s"
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
-#: src/API/PaymentEndpoint.php:324
+#: src/API/PaymentEndpoint.php:335
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "La passerelle de paiement Mollie n'est pas configurée. Veuillez configurer vos clés API dans les paramètres."
 
-#: src/API/PaymentEndpoint.php:344
+#: src/API/PaymentEndpoint.php:355
 msgid "Invalid payment amount."
 msgstr "Montant de paiement invalide."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:352
+#: src/API/PaymentEndpoint.php:363
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Paiement de %1$s %2$s"
@@ -150,24 +144,24 @@ msgstr "Transaction introuvable dans la base de données."
 msgid "Failed to update transaction status."
 msgstr "Échec de la mise à jour du statut de la transaction."
 
-#: src/blocks/simple-payment/render.php:75
+#: src/blocks/simple-payment/render.php:64
 msgid "Continue"
 msgstr "Continuer"
 
-#: src/blocks/simple-payment/render.php:67
+#: src/blocks/simple-payment/render.php:53
 msgid "Thank you! Your payment is being processed."
 msgstr "Merci ! Votre paiement est en cours de traitement."
 
-#: src/blocks/simple-payment/render.php:103
+#: src/blocks/simple-payment/render.php:92
 #: src/blocks/simple-payment/index.js:162
 msgid "Pay Now"
 msgstr "Payer maintenant"
 
-#: src/blocks/simple-payment/render.php:107
+#: src/blocks/simple-payment/render.php:96
 msgid "Processing payment..."
 msgstr "Traitement du paiement en cours..."
 
-#: src/blocks/simple-payment/render.php:116
+#: src/blocks/simple-payment/render.php:105
 msgid "Payment gateway is not configured. Please configure your Mollie API keys."
 msgstr "La passerelle de paiement n'est pas configurée. Veuillez configurer vos clés API Mollie."
 
@@ -899,29 +893,29 @@ msgstr "Configurer"
 msgid "Invalid or expired OAuth state. Please try connecting again."
 msgstr "État OAuth invalide ou expiré. Veuillez essayer de vous reconnecter."
 
-#: src/API/PaymentEndpoint.php:207
+#: src/API/PaymentEndpoint.php:218
 msgid "Invalid request."
 msgstr "Demande invalide."
 
-#: src/API/PaymentEndpoint.php:225
-#: src/API/PaymentEndpoint.php:235
+#: src/API/PaymentEndpoint.php:236
 #: src/API/PaymentEndpoint.php:246
+#: src/API/PaymentEndpoint.php:257
 msgid "Block not found."
 msgstr "Bloc non trouvé."
 
-#: src/API/PaymentEndpoint.php:270
+#: src/API/PaymentEndpoint.php:281
 msgid "Amount does not match block configuration."
 msgstr "Le montant ne correspond pas à la configuration du bloc."
 
-#: src/blocks/simple-payment/render.php:64
+#: src/blocks/simple-payment/render.php:50
 msgid "Thank you! Your payment has been received and confirmed."
 msgstr "Merci ! Votre paiement a été reçu et confirmé."
 
-#: src/blocks/simple-payment/render.php:70
+#: src/blocks/simple-payment/render.php:56
 msgid "Your payment was not completed. Please try again."
 msgstr "Votre paiement n'a pas été complété. Veuillez réessayer."
 
-#: src/blocks/simple-payment/render.php:80
+#: src/blocks/simple-payment/render.php:69
 msgid "Try Again"
 msgstr "Réessayer"
 
@@ -965,7 +959,7 @@ msgstr "Le rappel OAuth ne dispose pas du paramètre d'état. Veuillez essayer d
 msgid "Need help?"
 msgstr "Besoin d'aide ?"
 
-#: src/blocks/simple-payment/view.js:180
+#: src/blocks/simple-payment/view.js:221
 msgid "Failed to create payment"
 msgstr "Impossible de créer le paiement"
 
@@ -1099,7 +1093,7 @@ msgstr "Ce bloc est dépourvu d'un identifiant et les paiements échoueront jusq
 msgid "Your stored Mollie API key was removed. Complete the guided connection to keep accepting payments."
 msgstr "Votre clé API Mollie stockée a été supprimée. Complétez la connexion guidée pour continuer à accepter les paiements."
 
-#: src/API/PaymentEndpoint.php:258
+#: src/API/PaymentEndpoint.php:269
 msgid "This payment option is misconfigured. Please contact the site owner."
 msgstr "Cette option de paiement est mal configurée. Veuillez contacter le propriétaire du site."
 
@@ -2914,9 +2908,9 @@ msgstr "La connexion Mollie ne peut pas être remplacée tant que ce serveur ne 
 msgid "The Mollie authorization could not be stored securely. Please try connecting again."
 msgstr "L'autorisation Mollie n'a pas pu être stockée de manière sécurisée. Veuillez réessayer de vous connecter."
 
-#: src/API/PaymentEndpoint.php:307
+#: src/API/PaymentEndpoint.php:318
 #: src/API/TransactionAPI.php:247
-#: src/blocks/simple-payment/render.php:112
+#: src/blocks/simple-payment/render.php:101
 msgid "Online payment is temporarily unavailable. Please try again later or contact the organizer."
 msgstr "Le paiement en ligne est temporairement indisponible. Veuillez réessayer plus tard ou contacter l'organisateur."
 
@@ -2986,3 +2980,18 @@ msgid_plural "Too many requests. Please try again in %d seconds."
 msgstr[0] "Trop de requêtes. Veuillez réessayer dans %d seconde."
 msgstr[1] "Trop de requêtes. Veuillez réessayer dans %d secondes."
 
+#: src/API/ConnectionController.php:449
+msgid "Connection test failed."
+msgstr "Échec du test de connexion."
+
+#: src/API/WebhookEndpoint.php:279
+msgid "The payment update could not be processed."
+msgstr "La mise à jour du paiement n’a pas pu être traitée."
+
+#: src/blocks/simple-payment/render.php:59
+msgid "We can’t check your payment status on this page. If you completed the payment, it is still being processed. Please check your email or contact the organizer before paying again."
+msgstr ""
+
+#: src/blocks/simple-payment/view.js:196
+msgid "Your browser is blocking site data, which is needed to confirm your payment when you return. Allow site data for this site and try again."
+msgstr ""

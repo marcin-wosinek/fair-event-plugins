@@ -272,10 +272,11 @@ class WebhookEndpoint extends WP_REST_Controller {
 				)
 			);
 
+			// The caller gets a generic answer; the exception stays in the log.
 			return new WP_REST_Response(
 				array(
 					'success' => false,
-					'error'   => $e->getMessage(),
+					'error'   => __( 'The payment update could not be processed.', 'fair-payments-connector' ),
 				),
 				200
 			);

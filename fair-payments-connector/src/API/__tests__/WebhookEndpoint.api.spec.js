@@ -4,6 +4,7 @@ import {
 	NONCE_ENDPOINT,
 	PAYMENTS_ENDPOINT,
 	WINDOW,
+	adminAuth,
 	createPaymentPage,
 	deletePaymentPage,
 	elapse,
@@ -41,6 +42,74 @@ test.describe( 'WebhookEndpoint — POST /webhook', () => {
 		expect( res.status() ).toBe( 404 );
 		const body = await res.json();
 		expect( body.code ).toBe( 'transaction_not_found' );
+	} );
+} );
+
+test.describe( 'WebhookEndpoint — handler failure (#860)', () => {
+	// Exception message the fixture in e2e/mu-plugins/fair-e2e-error-responses.php
+	// throws: a private path and a marker.
+	const DIAGNOSTIC =
+		'E2E-DIAGNOSTIC-860 in /srv/private/fair-payments/secret.php';
+	const CLIENT = '203.0.113.86';
+
+	let api;
+	let page;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		page = await createPaymentPage( api );
+	} );
+
+	test.afterAll( async () => {
+		await deletePaymentPage( api, page.page_id );
+		await api.dispose();
+	} );
+
+	test( 'acknowledges with a generic error and keeps the exception in the payment log', async () => {
+		const { nonce } = await (
+			await api.get( NONCE_ENDPOINT, { headers: fromClient( CLIENT ) } )
+		).json();
+		const paid = await api.post( PAYMENTS_ENDPOINT, {
+			headers: fromClient( CLIENT ),
+			data: {
+				amount: '5.00',
+				post_id: page.page_id,
+				block_id: page.block_id,
+				nonce,
+			},
+		} );
+		expect( paid.status(), await paid.text() ).toBe( 201 );
+		const { mollie_payment_id: molliePaymentId } = await paid.json();
+
+		const res = await api.post( ENDPOINT, {
+			headers: fromClient( CLIENT, {
+				'X-Fair-E2E-Fail-Diagnostic': DIAGNOSTIC,
+			} ),
+			data: { id: molliePaymentId },
+		} );
+		expect( res.status() ).toBe( 200 );
+		const text = await res.text();
+		expect( JSON.parse( text ) ).toEqual( {
+			success: false,
+			error: 'The payment update could not be processed.',
+		} );
+		expect( text ).not.toContain( 'E2E-DIAGNOSTIC-860' );
+		expect( text ).not.toContain( '/srv/private' );
+
+		const log = await api.get( '/wp-json/fair-payments-connector/v1/log', {
+			headers: adminAuth,
+			params: { event: 'webhook_failed', limit: 20 },
+		} );
+		expect( log.status(), await log.text() ).toBe( 200 );
+		const entry = ( await log.json() ).find(
+			( row ) => row.context?.mollie_payment_id === molliePaymentId
+		);
+		expect( entry ).toBeDefined();
+		expect( entry.level ).toBe( 'error' );
+		expect( entry.message ).toBe(
+			`Webhook handler exception: ${ DIAGNOSTIC }`
+		);
+		expect( entry.context.exception_class ).toBe( 'RuntimeException' );
 	} );
 } );
 
