@@ -67,6 +67,51 @@ npm run start    # Watch mode for this plugin only
 npm run build    # Build this plugin only
 ```
 
+### Duplication report
+
+Run this before a cleanup pass to find code copied between plugins
+instead of reused from `fair-events-shared`:
+
+```bash
+npm run duplication
+npm run duplication -- --min-tokens=150 --min-lines=15   # stricter
+```
+
+It scans each workspace's production JavaScript and PHP in one pass:
+`src/`, the shared package's `php/src/`, `templates/` and the top-level
+plugin bootstrap files. Tests (`__tests__/`, `e2e/`, `*.test.*`, `*.spec.*`),
+builds, `vendor/`, `node_modules/`, `svn/`, generated `*.asset.php` and
+configuration files are left out, and symlinks are not followed. The root
+`package.json` `workspaces` list decides which directories count as
+workspaces.
+
+Detection uses [jscpd](https://github.com/kucherenko/jscpd) with comments
+and whitespace ignored. A match needs at least 100 tokens and must span
+more than 10 lines (jscpd compares end line minus start line with
+`--min-lines`). The first baseline (#1457) kept these defaults: they gave
+221 findings, against 1,021 at 50 tokens and 5 lines, while 150 tokens and
+15 lines gave 87 and dropped the only plugin-to-shared-package match, a
+copied UUID helper. JS and JSX are compared as one language; PHP is
+compared separately.
+
+The console prints a summary. Full reports go to the gitignored
+`reports/duplication/`: `duplication.md` for reading and
+`duplication.json` for scripting. Findings are grouped by who would own the
+cleanup:
+
+-   **Cross-plugin**: two plugins share code. A candidate for the shared
+    package.
+-   **Plugin-to-shared-package**: a plugin repeats code that
+    `fair-events-shared` already has. Reuse the shared copy.
+-   **Within-workspace**: one workspace, or one file, repeats itself. A local
+    cleanup.
+
+Each finding lists both locations with line ranges, the language and the
+match size. A block copied into several places shows up as several pairs,
+so one cleanup can clear many findings. The command only reports: findings exit 0, while discovery, detector
+or report errors exit 1. A source file above 5 MB stops the scan instead of
+being skipped.
+
 ### For Developers
 
 -   **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions

@@ -21,6 +21,7 @@
 		"test:php:install": "composer install --working-dir=tools/php-tests",
 		"test:php:compat": "node scripts/php-compat.mjs phpcompat",
 		"test:tooling": "node --test scripts/__tests__/*.test.mjs",
+		"duplication": "node scripts/duplication.mjs",
 		"test:api": "npm run test:api --workspaces --if-present",
 		"test:api:local": "node scripts/api-test-runner.mjs",
 		"test:e2e": "playwright test --config=playwright.config.js",
@@ -131,6 +132,7 @@
 		"@wordpress/env": "^12.0.0",
 		"baseline-browser-mapping": "^2.11.29",
 		"dotenv": "^18.0.8",
+		"jscpd": "5.4.1",
 		"prettier": "npm:wp-prettier@3.9.x"
 	},
 	"overrides": {
