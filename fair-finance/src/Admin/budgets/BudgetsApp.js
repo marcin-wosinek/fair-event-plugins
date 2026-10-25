@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -18,6 +18,13 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
+
 const BudgetsApp = () => {
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ stats, setStats ] = useState( {} );
@@ -31,6 +38,7 @@ const BudgetsApp = () => {
 		description: '',
 	} );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const deleteBudget = useConfirmAction();
 
 	useEffect( () => {
 		loadData();
@@ -74,34 +82,25 @@ const BudgetsApp = () => {
 		setIsFormOpen( true );
 	};
 
-	const handleDelete = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to delete this budget? Financial entries will be unlinked but not deleted.',
-					'fair-finance'
-				)
-			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-
-		try {
-			await apiFetch( {
-				path: `/fair-finance/v1/budgets/${ id }`,
-				method: 'DELETE',
-			} );
-			setSuccess( __( 'Budget deleted successfully.', 'fair-finance' ) );
-			loadData();
-		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to delete budget.', 'fair-finance' )
-			);
-		}
-	};
+	const handleDelete = () =>
+		deleteBudget.run(
+			async ( budget ) => {
+				await apiFetch( {
+					path: `/fair-finance/v1/budgets/${ budget.id }`,
+					method: 'DELETE',
+				} );
+				setError( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: budget name */
+						__( 'Budget “%s” deleted.', 'fair-finance' ),
+						budget.name
+					)
+				);
+				loadData();
+			},
+			__( 'The budget could not be deleted. Try again.', 'fair-finance' )
+		);
 
 	const handleFormSubmit = async ( e ) => {
 		e.preventDefault();
@@ -413,8 +412,8 @@ const BudgetsApp = () => {
 																size="small"
 																isDestructive
 																onClick={ () =>
-																	handleDelete(
-																		budget.id
+																	deleteBudget.open(
+																		budget
 																	)
 																}
 															>
@@ -539,6 +538,43 @@ const BudgetsApp = () => {
 					</CardBody>
 				</Card>
 			</VStack>
+
+			{ deleteBudget.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: budget name */
+						__( 'Delete budget — %s', 'fair-finance' ),
+						deleteBudget.target.name
+					) }
+					confirmLabel={ __( 'Delete budget', 'fair-finance' ) }
+					busyLabel={ __( 'Deleting…', 'fair-finance' ) }
+					isDestructive
+					isBusy={ deleteBudget.isBusy }
+					error={ deleteBudget.error }
+					onConfirm={ handleDelete }
+					onCancel={ deleteBudget.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of financial entries in the budget */
+							_n(
+								'Its %d financial entry is kept and moves to Unbudgeted.',
+								'Its %d financial entries are kept and move to Unbudgeted.',
+								getBudgetStats( deleteBudget.target.id )
+									.total_count,
+								'fair-finance'
+							),
+							getBudgetStats( deleteBudget.target.id ).total_count
+						) }
+					</p>
+					<p>
+						{ __(
+							'Connected sites linked to this budget lose that link. Deleting the budget cannot be undone.',
+							'fair-finance'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isFormOpen && (
 				<Modal

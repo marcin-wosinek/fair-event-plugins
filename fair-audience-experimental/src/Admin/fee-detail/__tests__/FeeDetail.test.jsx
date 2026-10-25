@@ -528,28 +528,38 @@ describe( 'FeeDetail — individual and bulk sends do not overlap', () => {
 	it( 'holds a single reminder back while reminders go out to everyone', async () => {
 		const bulk = deferred();
 		mockApi( { routes: { [ BULK_PATH ]: () => bulk.promise } } );
-		jest.spyOn( window, 'confirm' ).mockReturnValue( true );
 		render( <FeeDetail /> );
 
 		await rowOf( 'Ada Example' );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Send Reminders' } )
 		);
+		const bulkDialog = screen.getByRole( 'dialog', {
+			name: 'Send payment reminders — Membership 2026',
+		} );
+		fireEvent.click(
+			within( bulkDialog ).getByRole( 'button', {
+				name: 'Send reminders',
+			} )
+		);
 
-		const dialog = await openReminderDialog();
+		// The pending bulk dialog cannot be dismissed and hides the row
+		// actions, so no single reminder can start alongside it.
+		fireEvent.keyDown( bulkDialog, { key: 'Escape', code: 'Escape' } );
+		expect( bulkDialog ).toBeInTheDocument();
 		expect(
-			within( dialog ).getByText(
-				/Reminders are being sent to all members with pending payments\./
-			)
-		).toBeInTheDocument();
-		expect( sendButton( dialog ) ).toBeDisabled();
-		fireEvent.click( sendButton( dialog ) );
+			within( await rowOf( 'Ada Example' ) ).queryByRole( 'button', {
+				name: 'Actions',
+			} )
+		).not.toBeInTheDocument();
 		expect( callsTo( REMINDER_PATH ) ).toHaveLength( 0 );
 
 		await act( async () => {
 			bulk.resolve( { sent: [ 'ada@example.test' ], failed: [] } );
 		} );
-		await waitFor( () => expect( sendButton( dialog ) ).toBeEnabled() );
+
+		const dialog = await openReminderDialog();
+		expect( sendButton( dialog ) ).toBeEnabled();
 	} );
 } );
 
@@ -825,5 +835,216 @@ describe( 'FeeDetail — creating a transfer', () => {
 		await findNotice( 'Transfer created and payment marked as paid.' );
 		expect( callsTo( TRANSFER_PATH ) ).toHaveLength( 1 );
 		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
+	} );
+} );
+
+describe( 'FeeDetail — confirming payment status changes (#1936)', () => {
+	const CANCEL_PATH = `${ PAYMENTS_PATH }/31/cancel`;
+
+	async function openStatusDialog( action, title ) {
+		await openRowMenu( 'Ada Example' );
+		fireEvent.click(
+			await screen.findByRole( 'menuitem', { name: action } )
+		);
+		return screen.findByRole( 'dialog', { name: title } );
+	}
+
+	it( 'names the member, fee and amount before marking paid, and cancelling changes nothing', async () => {
+		mockApi();
+		render( <FeeDetail /> );
+
+		const dialog = await openStatusDialog(
+			'Mark as Paid',
+			'Mark as paid — Ada Example'
+		);
+
+		expect(
+			within( dialog ).getByText(
+				'Membership 2026: 25.00 EUR (ada@example.test).'
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText( /No money is collected/ )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Mark as paid' } )
+		).not.toHaveClass( 'is-destructive' );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 0 );
+	} );
+
+	it( 'marks paid once, keeps the dialog on failure, and retries', async () => {
+		const first = deferred();
+		let attempts = 0;
+		mockApi( {
+			routes: {
+				[ MARK_PAID_PATH ]: () => {
+					attempts++;
+					return attempts === 1
+						? first.promise
+						: Promise.resolve( {} );
+				},
+			},
+		} );
+		render( <FeeDetail /> );
+
+		const dialog = await openStatusDialog(
+			'Mark as Paid',
+			'Mark as paid — Ada Example'
+		);
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Mark as paid',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 1 );
+
+		await act( async () =>
+			first.reject( restError( 'update_failed', '' ) )
+		);
+
+		expect(
+			within( dialog ).getByText(
+				'The payment could not be marked as paid. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeVisible();
+
+		await act( async () => fireEvent.click( confirm ) );
+
+		expect( callsTo( MARK_PAID_PATH ) ).toHaveLength( 2 );
+		expect(
+			await findNotice( 'Payment of Ada Example marked as paid.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'states that cancelling refunds nothing, with a destructive button', async () => {
+		mockApi( { routes: { [ CANCEL_PATH ]: () => Promise.resolve( {} ) } } );
+		render( <FeeDetail /> );
+
+		const dialog = await openStatusDialog(
+			'Cancel',
+			'Cancel payment — Ada Example'
+		);
+
+		expect(
+			within( dialog ).getByText( /is canceled or refunded/ )
+		).toBeVisible();
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Cancel payment',
+		} );
+		expect( confirm ).toHaveClass( 'is-destructive' );
+
+		await act( async () => fireEvent.click( confirm ) );
+
+		expect( callsTo( CANCEL_PATH ) ).toHaveLength( 1 );
+		expect(
+			await findNotice( 'Payment of Ada Example canceled.' )
+		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'FeeDetail — bulk payment reminders (#1936)', () => {
+	const openBulkDialog = async () => {
+		await rowOf( 'Ada Example' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Send Reminders' } )
+		);
+		return screen.getByRole( 'dialog', {
+			name: 'Send payment reminders — Membership 2026',
+		} );
+	};
+
+	it( 'lists every pending member before sending, and cancelling sends nothing', async () => {
+		mockApi( { payments: [ PENDING, PAID, NO_EMAIL ] } );
+		render( <FeeDetail /> );
+
+		const dialog = await openBulkDialog();
+
+		expect(
+			within( dialog ).getByText( /each of the 2 members/ )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText( 'Ada Example — ada@example.test' )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText(
+				'Cleo Placeholder — no email address; it will be reported as not sent'
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).queryByText( /Ben Sample/ )
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( callsTo( BULK_PATH ) ).toHaveLength( 0 );
+	} );
+
+	it( 'reports which reminders were not sent and why', async () => {
+		mockApi( {
+			payments: [ PENDING, NO_EMAIL ],
+			routes: {
+				[ BULK_PATH ]: () =>
+					Promise.resolve( {
+						sent: [ 'ada@example.test' ],
+						failed: [
+							{
+								name: 'Cleo',
+								email: '',
+								reason: 'Participant has no valid email address.',
+							},
+						],
+					} ),
+			},
+		} );
+		render( <FeeDetail /> );
+
+		const dialog = await openBulkDialog();
+		await act( async () =>
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', {
+					name: 'Send reminders',
+				} )
+			)
+		);
+
+		expect( callsTo( BULK_PATH ) ).toHaveLength( 1 );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( await screen.findByText( '1 reminder sent.' ) ).toBeVisible();
+		expect(
+			screen.getByText( 'Cleo: Participant has no valid email address.' )
+		).toBeVisible();
+	} );
+
+	it( 'withholds sending when no payment is pending', async () => {
+		mockApi( { payments: [ PAID ] } );
+		render( <FeeDetail /> );
+		await screen.findByText( 'Ben Sample' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Send Reminders' } )
+		);
+
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText(
+				'No member has a pending payment, so there is nobody to remind.'
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Send reminders' } )
+		).toBeDisabled();
 	} );
 } );

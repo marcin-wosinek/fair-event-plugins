@@ -2,7 +2,7 @@
 
 /**
  * Rejects browser-native confirm/alert/prompt popups in the production
- * source of the core plugins. The policy lives in UI_GUIDELINES.md
+ * source of the scanned plugins. The policy lives in UI_GUIDELINES.md
  * ("Popups and confirmations"); there is deliberately no allowlist or
  * baseline — a native popup is replaced, not exempted.
  *
@@ -25,6 +25,11 @@ export const SCANNED_PLUGINS = [
 	'fair-payments-connector',
 	'fair-form',
 	'fair-audience',
+	'fair-events-experimental',
+	'fair-payments-connector-experimental',
+	'fair-finance',
+	'fair-platform',
+	'fair-audience-experimental',
 ];
 
 const NATIVE_POPUPS = new Set(['confirm', 'alert', 'prompt']);
@@ -171,7 +176,7 @@ function sourceFiles(directory) {
 }
 
 /**
- * Scans the production source of every core plugin.
+ * Scans the production source of every scanned plugin.
  *
  * @param {string}   root    Repository root.
  * @param {string[]} plugins Plugin directories to scan.

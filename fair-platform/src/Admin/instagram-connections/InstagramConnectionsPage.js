@@ -2,7 +2,7 @@
  * Instagram Connections Admin Page Component
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -21,6 +21,13 @@ import {
 } from '@wordpress/components';
 
 /**
+ * Internal dependencies
+ */
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
+
+/**
  * InstagramConnectionsPage component
  */
 export default function InstagramConnectionsPage() {
@@ -34,7 +41,8 @@ export default function InstagramConnectionsPage() {
 	const [ orderBy, setOrderBy ] = useState( 'connected_at' );
 	const [ order, setOrder ] = useState( 'DESC' );
 	const [ cleanupDays, setCleanupDays ] = useState( 90 );
-	const [ isCleaningUp, setIsCleaningUp ] = useState( false );
+	const [ cleanupResult, setCleanupResult ] = useState( null );
+	const cleanup = useConfirmAction();
 
 	// Fetch connections
 	useEffect( () => {
@@ -88,40 +96,28 @@ export default function InstagramConnectionsPage() {
 		}
 	};
 
-	const handleCleanup = async () => {
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete old Instagram connection logs? This cannot be undone.',
-					'fair-platform'
-				)
+	const handleCleanup = () =>
+		cleanup.run(
+			async ( { days } ) => {
+				const data = await apiFetch( {
+					path: `/fair-platform/v1/instagram-connections/cleanup?days=${ days }`,
+					method: 'DELETE',
+				} );
+				setCleanupResult(
+					data.message ||
+						__(
+							'Old logs cleaned up successfully',
+							'fair-platform'
+						)
+				);
+				fetchConnections();
+				fetchStatistics();
+			},
+			__(
+				'The old logs could not be deleted. Try again.',
+				'fair-platform'
 			)
-		) {
-			return;
-		}
-
-		setIsCleaningUp( true );
-
-		try {
-			const data = await apiFetch( {
-				path: `/fair-platform/v1/instagram-connections/cleanup?days=${ cleanupDays }`,
-				method: 'DELETE',
-			} );
-
-			alert(
-				data.message ||
-					__( 'Old logs cleaned up successfully', 'fair-platform' )
-			);
-			fetchConnections();
-			fetchStatistics();
-		} catch ( err ) {
-			alert(
-				err.message || __( 'Failed to cleanup logs', 'fair-platform' )
-			);
-		} finally {
-			setIsCleaningUp( false );
-		}
-	};
+		);
 
 	const formatDate = ( dateString ) => {
 		if ( ! dateString ) return '-';
@@ -334,9 +330,10 @@ export default function InstagramConnectionsPage() {
 						<FlexItem>
 							<Button
 								variant="secondary"
-								onClick={ handleCleanup }
-								isBusy={ isCleaningUp }
-								disabled={ isCleaningUp }
+								onClick={ () => {
+									setCleanupResult( null );
+									cleanup.open( { days: cleanupDays } );
+								} }
 								style={ { marginTop: '22px' } }
 							>
 								{ __( 'Cleanup Old Logs', 'fair-platform' ) }
@@ -345,6 +342,50 @@ export default function InstagramConnectionsPage() {
 					</HStack>
 				</CardBody>
 			</Card>
+
+			{ cleanupResult && (
+				<Notice
+					status="success"
+					onRemove={ () => setCleanupResult( null ) }
+				>
+					{ cleanupResult }
+				</Notice>
+			) }
+
+			{ cleanup.target && (
+				<ConfirmActionModal
+					title={ __(
+						'Delete old Instagram connection logs',
+						'fair-platform'
+					) }
+					confirmLabel={ __( 'Delete old logs', 'fair-platform' ) }
+					busyLabel={ __( 'Deleting…', 'fair-platform' ) }
+					isDestructive
+					isBusy={ cleanup.isBusy }
+					error={ cleanup.error }
+					onConfirm={ handleCleanup }
+					onCancel={ cleanup.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of days */
+							_n(
+								'This deletes every Instagram connection log entry older than %d day.',
+								'This deletes every Instagram connection log entry older than %d days.',
+								cleanup.target.days,
+								'fair-platform'
+							),
+							cleanup.target.days
+						) }
+					</p>
+					<p>
+						{ __(
+							'Only the log history is deleted; existing connections keep working. This cannot be undone.',
+							'fair-platform'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ /* Error Notice */ }
 			{ error && (

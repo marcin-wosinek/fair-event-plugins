@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -6,6 +6,7 @@ import {
 	Card,
 	CardBody,
 	Modal,
+	Notice,
 	TextControl,
 	TextareaControl,
 	SelectControl,
@@ -14,6 +15,9 @@ import {
 import { DataViews } from '@wordpress/dataviews';
 import useBudgets from '../components/useBudgets.js';
 import BudgetLoadStatus from '../components/BudgetLoadStatus.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -56,6 +60,10 @@ export default function FeesList() {
 	const [ feeDueDate, setFeeDueDate ] = useState( '' );
 	const [ feeBudgetId, setFeeBudgetId ] = useState( '' );
 	const [ isSaving, setIsSaving ] = useState( false );
+	// Error of the last create or update, shown in its open dialog.
+	const [ saveError, setSaveError ] = useState( null );
+	const [ notice, setNotice ] = useState( null );
+	const deleteFee = useConfirmAction();
 
 	// Edit modal state.
 	const [ isEditModalOpen, setIsEditModalOpen ] = useState( false );
@@ -245,6 +253,7 @@ export default function FeesList() {
 		setFeeAmount( '' );
 		setFeeDueDate( '' );
 		setFeeBudgetId( '' );
+		setSaveError( null );
 		setIsCreateModalOpen( true );
 		loadBudgets();
 	};
@@ -256,6 +265,7 @@ export default function FeesList() {
 		}
 
 		setIsSaving( true );
+		setSaveError( null );
 
 		apiFetch( {
 			path: '/fair-audience/v1/fees',
@@ -276,14 +286,12 @@ export default function FeesList() {
 				loadFees();
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to create fee.',
-								'fair-audience-experimental'
-							) )
+				setSaveError(
+					err.message ||
+						__(
+							'The fee could not be created. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -298,17 +306,19 @@ export default function FeesList() {
 		setFeeDescription( fee.description || '' );
 		setFeeDueDate( fee.due_date || '' );
 		setEditBudgetId( fee.budget_id ? String( fee.budget_id ) : '' );
+		setSaveError( null );
 		setIsEditModalOpen( true );
 		loadBudgets();
 	};
 
 	// Handle update fee.
 	const handleUpdateFee = () => {
-		if ( ! feeName.trim() || ! editingFee ) {
+		if ( ! feeName.trim() || ! editingFee || isSaving ) {
 			return;
 		}
 
 		setIsSaving( true );
+		setSaveError( null );
 
 		const data = {
 			name: feeName.trim(),
@@ -334,14 +344,12 @@ export default function FeesList() {
 				loadFees();
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to update fee.',
-								'fair-audience-experimental'
-							) )
+				setSaveError(
+					err.message ||
+						__(
+							'The fee could not be updated. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -350,38 +358,27 @@ export default function FeesList() {
 	};
 
 	// Handle delete fee.
-	const handleDeleteFee = ( fee ) => {
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this fee? All payment records will also be deleted.',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/fees/${ fee.id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				loadFees();
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to delete fee.',
-								'fair-audience-experimental'
-							) )
+	const handleDeleteFee = () =>
+		deleteFee.run(
+			async ( fee ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/fees/${ fee.id }`,
+					method: 'DELETE',
+				} );
+				setNotice(
+					sprintf(
+						/* translators: %s: fee name */
+						__( 'Fee “%s” deleted.', 'fair-audience-experimental' ),
+						fee.name
+					)
 				);
-			} );
-	};
+				loadFees();
+			},
+			__(
+				'The fee could not be deleted. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	// Define actions for DataViews.
 	const actions = useMemo(
@@ -406,7 +403,10 @@ export default function FeesList() {
 				id: 'delete',
 				label: __( 'Delete', 'fair-audience-experimental' ),
 				icon: 'trash',
-				callback: ( [ item ] ) => handleDeleteFee( item ),
+				callback: ( [ item ] ) => {
+					setNotice( null );
+					deleteFee.open( item );
+				},
 				supportsBulk: false,
 			},
 		],
@@ -478,6 +478,81 @@ export default function FeesList() {
 	return (
 		<div className="wrap">
 			<h1>{ __( 'Membership Fees', 'fair-audience-experimental' ) }</h1>
+
+			{ notice && (
+				<Notice status="success" onRemove={ () => setNotice( null ) }>
+					{ notice }
+				</Notice>
+			) }
+
+			{ deleteFee.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: fee name */
+						__( 'Delete fee — %s', 'fair-audience-experimental' ),
+						deleteFee.target.name
+					) }
+					confirmLabel={ __(
+						'Delete fee',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Deleting…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ deleteFee.isBusy }
+					error={ deleteFee.error }
+					onConfirm={ handleDeleteFee }
+					onCancel={ deleteFee.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: 1: amount with currency, 2: group name */
+							__(
+								'%1$s per member of %2$s.',
+								'fair-audience-experimental'
+							),
+							`${ parseFloat( deleteFee.target.amount ).toFixed(
+								2
+							) } ${ deleteFee.target.currency }`,
+							deleteFee.target.group_name || '—'
+						) }
+					</p>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of members with a payment record */
+							_n(
+								'This also deletes the payment record of its %d member, including its paid status and change history.',
+								'This also deletes the payment records of its %d members, including their paid status and change history.',
+								parseInt( deleteFee.target.member_count ) || 0,
+								'fair-audience-experimental'
+							),
+							parseInt( deleteFee.target.member_count ) || 0
+						) }
+					</p>
+					{ parseInt( deleteFee.target.paid_count ) > 0 && (
+						<p>
+							{ sprintf(
+								/* translators: %d: number of payment records marked paid */
+								_n(
+									'%d of them is marked paid.',
+									'%d of them are marked paid.',
+									parseInt( deleteFee.target.paid_count ),
+									'fair-audience-experimental'
+								),
+								parseInt( deleteFee.target.paid_count )
+							) }
+						</p>
+					) }
+					<p>
+						{ __(
+							'Payments already received are not refunded, and their transactions stay in Payments. This cannot be undone.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			<Card>
 				<CardBody>
@@ -586,6 +661,12 @@ export default function FeesList() {
 								) }
 							/>
 						</>
+					) }
+
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+						</Notice>
 					) }
 
 					<div
@@ -721,6 +802,12 @@ export default function FeesList() {
 								) }
 							/>
 						</>
+					) }
+
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+						</Notice>
 					) }
 
 					<div

@@ -1,12 +1,18 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Button, Card, CardBody, Spinner } from '@wordpress/components';
+import { Button, Card, CardBody, Notice, Spinner } from '@wordpress/components';
+
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 export default function PollsList() {
 	const [ polls, setPolls ] = useState( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
+	const [ notice, setNotice ] = useState( null );
+	const deletePoll = useConfirmAction();
 
 	useEffect( () => {
 		loadPolls();
@@ -25,31 +31,30 @@ export default function PollsList() {
 			} );
 	};
 
-	const handleDelete = ( id ) => {
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this poll?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/polls/${ id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				loadPolls();
-			} )
-			.catch( ( err ) => {
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) + err.message
+	const handleDelete = () =>
+		deletePoll.run(
+			async ( poll ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/polls/${ poll.id }`,
+					method: 'DELETE',
+				} );
+				setNotice(
+					sprintf(
+						/* translators: %s: poll title */
+						__(
+							'Poll “%s” deleted.',
+							'fair-audience-experimental'
+						),
+						poll.title
+					)
 				);
-			} );
-	};
+				loadPolls();
+			},
+			__(
+				'The poll could not be deleted. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	const getStatusBadgeColor = ( status ) => {
 		switch ( status ) {
@@ -94,6 +99,43 @@ export default function PollsList() {
 			>
 				{ __( 'Add New', 'fair-audience-experimental' ) }
 			</a>
+
+			{ notice && (
+				<Notice status="success" onRemove={ () => setNotice( null ) }>
+					{ notice }
+				</Notice>
+			) }
+
+			{ deletePoll.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: poll title */
+						__( 'Delete poll — %s', 'fair-audience-experimental' ),
+						deletePoll.target.title
+					) }
+					confirmLabel={ __(
+						'Delete poll',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Deleting…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ deletePoll.isBusy }
+					error={ deletePoll.error }
+					onConfirm={ handleDelete }
+					onCancel={ deletePoll.close }
+				>
+					<p>{ deletePoll.target.question }</p>
+					<p>
+						{ __(
+							'Invitation links already sent stop working, and its responses are no longer shown. This cannot be undone.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			<Card style={ { marginTop: '20px' } }>
 				<CardBody>
@@ -189,9 +231,10 @@ export default function PollsList() {
 											{ ' | ' }
 											<Button
 												isLink
-												onClick={ () =>
-													handleDelete( poll.id )
-												}
+												onClick={ () => {
+													setNotice( null );
+													deletePoll.open( poll );
+												} }
 												style={ { color: '#b32d2e' } }
 											>
 												{ __(

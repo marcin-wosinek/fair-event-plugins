@@ -44,7 +44,7 @@ msgid "Fair Platform"
 msgstr ""
 
 #: src/Admin/AdminHooks.php:47
-#: src/Admin/connections/ConnectionsPage.js:166
+#: src/Admin/connections/ConnectionsPage.js:162
 msgid "Connection Logs"
 msgstr "Journaux de connexion"
 
@@ -305,205 +305,192 @@ msgstr "Les identifiants OAuth Mollie ne sont pas configurés. Veuillez ajouter 
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "La bibliothèque PHP Mollie n'est pas installée. Veuillez exécuter : composer require mollie/mollie-api-php"
 
-#: src/Admin/connections/ConnectionsPage.js:70
+#: src/Admin/connections/ConnectionsPage.js:78
 msgid "Failed to load connections"
 msgstr "Échec du chargement des connexions"
 
-#: src/Admin/connections/ConnectionsPage.js:91
-msgid "Are you sure you want to delete old connection logs? This cannot be undone."
-msgstr "Êtes-vous sûr de vouloir supprimer les anciens journaux de connexion ? Cette action ne peut pas être annulée."
-
-#: src/Admin/connections/ConnectionsPage.js:110
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:113
+#: src/Admin/connections/ConnectionsPage.js:105
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:108
 msgid "Old logs cleaned up successfully"
 msgstr "Les anciens journaux ont été nettoyés avec succès"
 
-#: src/Admin/connections/ConnectionsPage.js:116
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:119
-msgid "Failed to cleanup logs"
-msgstr "Échec du nettoyage des journaux"
-
-#: src/Admin/connections/ConnectionsPage.js:132
-#: src/Admin/connections/ConnectionsPage.js:270
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:135
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:272
+#: src/Admin/connections/ConnectionsPage.js:128
+#: src/Admin/connections/ConnectionsPage.js:266
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:131
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:268
 msgid "Connected"
 msgstr "Connecté"
 
-#: src/Admin/connections/ConnectionsPage.js:134
-#: src/Admin/connections/ConnectionsPage.js:229
-#: src/Admin/connections/ConnectionsPage.js:274
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:137
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:228
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:276
+#: src/Admin/connections/ConnectionsPage.js:130
+#: src/Admin/connections/ConnectionsPage.js:225
+#: src/Admin/connections/ConnectionsPage.js:270
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:133
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:224
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:272
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/connections/ConnectionsPage.js:137
-#: src/Admin/connections/ConnectionsPage.js:278
+#: src/Admin/connections/ConnectionsPage.js:133
+#: src/Admin/connections/ConnectionsPage.js:274
 msgid "Disconnected"
 msgstr "Déconnecté"
 
-#: src/Admin/connections/ConnectionsPage.js:168
+#: src/Admin/connections/ConnectionsPage.js:164
 msgid "Monitor OAuth connections from WordPress sites."
 msgstr "Surveiller les connexions OAuth depuis les sites WordPress."
 
-#: src/Admin/connections/ConnectionsPage.js:190
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:189
+#: src/Admin/connections/ConnectionsPage.js:186
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:185
 msgid "Total Connections"
 msgstr "Connexions totales"
 
-#: src/Admin/connections/ConnectionsPage.js:211
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:210
+#: src/Admin/connections/ConnectionsPage.js:207
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:206
 msgid "Successful"
 msgstr "Réussi"
 
-#: src/Admin/connections/ConnectionsPage.js:246
+#: src/Admin/connections/ConnectionsPage.js:242
 msgid "Unique Sites"
 msgstr "Sites uniques"
 
-#: src/Admin/connections/ConnectionsPage.js:259
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:261
+#: src/Admin/connections/ConnectionsPage.js:255
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:257
 msgid "Status Filter"
 msgstr "Filtre de statut"
 
-#: src/Admin/connections/ConnectionsPage.js:263
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:265
+#: src/Admin/connections/ConnectionsPage.js:259
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:261
 msgid "All Statuses"
 msgstr "Tous les statuts"
 
-#: src/Admin/connections/ConnectionsPage.js:288
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:283
+#: src/Admin/connections/ConnectionsPage.js:284
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:279
 msgid "Sort By"
 msgstr "Trier par"
 
-#: src/Admin/connections/ConnectionsPage.js:292
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:287
+#: src/Admin/connections/ConnectionsPage.js:288
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:283
 msgid "Connection Date"
 msgstr "Date de connexion"
 
-#: src/Admin/connections/ConnectionsPage.js:299
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:294
+#: src/Admin/connections/ConnectionsPage.js:295
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:290
 msgid "Site Name"
 msgstr "Nom du site"
 
-#: src/Admin/connections/ConnectionsPage.js:303
-#: src/Admin/connections/ConnectionsPage.js:395
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:298
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:405
+#: src/Admin/connections/ConnectionsPage.js:299
+#: src/Admin/connections/ConnectionsPage.js:436
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:294
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:446
 msgid "Status"
 msgstr "Statut"
 
-#: src/Admin/connections/ConnectionsPage.js:307
-#: src/Admin/connections/ConnectionsPage.js:389
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:302
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:399
+#: src/Admin/connections/ConnectionsPage.js:303
+#: src/Admin/connections/ConnectionsPage.js:430
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:298
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:440
 msgid "ID"
 msgstr "ID"
 
-#: src/Admin/connections/ConnectionsPage.js:314
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:309
+#: src/Admin/connections/ConnectionsPage.js:310
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:305
 msgid "Order"
 msgstr "Ordre"
 
-#: src/Admin/connections/ConnectionsPage.js:318
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:313
+#: src/Admin/connections/ConnectionsPage.js:314
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:309
 msgid "Descending"
 msgstr "Décroissant"
 
-#: src/Admin/connections/ConnectionsPage.js:322
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:317
+#: src/Admin/connections/ConnectionsPage.js:318
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:313
 msgid "Ascending"
 msgstr "Croissant"
 
-#: src/Admin/connections/ConnectionsPage.js:330
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:325
+#: src/Admin/connections/ConnectionsPage.js:326
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:321
 msgid "Cleanup Days"
 msgstr "Jours de nettoyage"
 
-#: src/Admin/connections/ConnectionsPage.js:347
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:342
+#: src/Admin/connections/ConnectionsPage.js:344
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:339
 msgid "Cleanup Old Logs"
 msgstr "Nettoyer les anciens journaux"
 
-#: src/Admin/connections/ConnectionsPage.js:364
+#: src/Admin/connections/ConnectionsPage.js:405
 msgid "Connection History"
 msgstr "Historique des connexions"
 
-#: src/Admin/connections/ConnectionsPage.js:374
+#: src/Admin/connections/ConnectionsPage.js:415
 msgid "No connections found."
 msgstr "Aucune connexion trouvée."
 
-#: src/Admin/connections/ConnectionsPage.js:392
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:402
+#: src/Admin/connections/ConnectionsPage.js:433
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:443
 msgid "Site"
 msgstr "Site"
 
-#: src/Admin/connections/ConnectionsPage.js:398
+#: src/Admin/connections/ConnectionsPage.js:439
 msgid "Organization"
 msgstr "Organisation"
 
-#: src/Admin/connections/ConnectionsPage.js:404
+#: src/Admin/connections/ConnectionsPage.js:445
 msgid "Profile"
 msgstr "Profil"
 
-#: src/Admin/connections/ConnectionsPage.js:407
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:420
+#: src/Admin/connections/ConnectionsPage.js:448
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:461
 msgid "Connected At"
 msgstr "Connecté à"
 
-#: src/Admin/connections/ConnectionsPage.js:413
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:426
+#: src/Admin/connections/ConnectionsPage.js:454
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:467
 msgid "Last Refresh"
 msgstr "Dernier rafraîchissement"
 
-#: src/Admin/connections/ConnectionsPage.js:491
+#: src/Admin/connections/ConnectionsPage.js:532
 msgid "✓ Profile created"
 msgstr "✓ Profil créé"
 
-#: src/Admin/connections/ConnectionsPage.js:550
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:555
+#: src/Admin/connections/ConnectionsPage.js:591
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:596
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/Admin/connections/ConnectionsPage.js:557
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:562
+#: src/Admin/connections/ConnectionsPage.js:598
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:603
 msgid "Next"
 msgstr "Suivant"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:70
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:78
 msgid "Failed to load Instagram connections"
 msgstr "Échec du chargement des connexions Instagram"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:94
-msgid "Are you sure you want to delete old Instagram connection logs? This cannot be undone."
-msgstr "Êtes-vous sûr de vouloir supprimer les anciens journaux de connexion Instagram ? Cette action ne peut pas être annulée."
-
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:165
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:161
 msgid "Instagram Connection Logs"
 msgstr "Journaux de connexion Instagram"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:167
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:163
 msgid "Monitor Instagram OAuth connections from WordPress sites."
 msgstr "Surveillez les connexions OAuth Instagram depuis les sites WordPress."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:245
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:241
 msgid "Unique Usernames"
 msgstr "Noms d'utilisateur uniques"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:360
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:401
 msgid "Instagram Connection History"
 msgstr "Historique des connexions Instagram"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:384
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:425
 msgid "No Instagram connections found."
 msgstr "Aucune connexion Instagram trouvée."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:408
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:449
 msgid "IG Username"
 msgstr "Nom d'utilisateur IG"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:414
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:455
 msgid "IG User ID"
 msgstr "ID utilisateur IG"
 
@@ -536,3 +523,52 @@ msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépe
 #: src/Core/Plugin.php:153
 msgid "Translations"
 msgstr "Traductions"
+
+#: src/Admin/components/ConfirmActionModal.js:158
+msgid "Cancel"
+msgstr "Annuler"
+
+#: src/Admin/connections/ConnectionsPage.js:113
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:116
+msgid "The old logs could not be deleted. Try again."
+msgstr "Les anciens journaux n'ont pas pu être supprimés. Réessayez."
+
+#: src/Admin/connections/ConnectionsPage.js:362
+msgid "Delete old connection logs"
+msgstr "Supprimer les anciens journaux de connexion"
+
+#: src/Admin/connections/ConnectionsPage.js:366
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:361
+msgid "Delete old logs"
+msgstr "Supprimer les anciens journaux"
+
+#: src/Admin/connections/ConnectionsPage.js:367
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:362
+msgid "Deleting…"
+msgstr "Suppression…"
+
+#. translators: %d: number of days
+#: src/Admin/connections/ConnectionsPage.js:377
+#, js-format
+msgid "This deletes every connection log entry older than %d day."
+msgid_plural "This deletes every connection log entry older than %d days."
+msgstr[0] "Ceci supprime chaque entrée de journal de connexion antérieure à %d jour."
+msgstr[1] "Ceci supprime chaque entrée de journal de connexion antérieure à %d jours."
+
+#: src/Admin/connections/ConnectionsPage.js:387
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:382
+msgid "Only the log history is deleted; existing connections keep working. This cannot be undone."
+msgstr "Seul l'historique des journaux est supprimé ; les connexions existantes continuent de fonctionner. Cette action ne peut pas être annulée."
+
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:357
+msgid "Delete old Instagram connection logs"
+msgstr "Supprimer les anciens journaux de connexion Instagram"
+
+#. translators: %d: number of days
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:372
+#, js-format
+msgid "This deletes every Instagram connection log entry older than %d day."
+msgid_plural "This deletes every Instagram connection log entry older than %d days."
+msgstr[0] "Ceci supprime chaque entrée de journal de connexion Instagram antérieure à %d jour."
+msgstr[1] "Ceci supprime chaque entrée de journal de connexion Instagram antérieure à %d jours."
+

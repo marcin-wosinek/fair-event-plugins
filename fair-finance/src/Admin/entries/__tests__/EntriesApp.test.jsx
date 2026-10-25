@@ -712,3 +712,243 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 		expect( screen.getByText( 'Mollie payout' ) ).toBeInTheDocument();
 	} );
 } );
+
+describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
+	const ENTRY = makeEntry( {
+		id: 21,
+		description: 'Projector rental',
+		amount: 60,
+		transaction_ids: [ 5 ],
+	} );
+	const SPLIT = makeEntry( {
+		id: 30,
+		description: 'Bulk purchase',
+		amount: 100,
+		children: [
+			makeEntry( {
+				id: 31,
+				parent_entry_id: 30,
+				description: 'Bulk purchase',
+				amount: 70,
+				budget_id: 2,
+			} ),
+			makeEntry( {
+				id: 32,
+				parent_entry_id: 30,
+				description: 'Bulk purchase',
+				amount: 30,
+			} ),
+		],
+	} );
+
+	/**
+	 * Route the list and the DELETE requests.
+	 *
+	 * @param {Function} remove Response to every DELETE (may reject).
+	 */
+	const mockRemovalApi = ( remove ) => {
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			const route = path.split( '?' )[ 0 ];
+			if ( method === 'DELETE' ) {
+				return remove( route );
+			}
+			if ( route === '/fair-finance/v1/financial-entries' ) {
+				return Promise.resolve( {
+					entries: [ ENTRY, SPLIT ],
+					total: 2,
+					pages: 1,
+				} );
+			}
+			if ( route === '/fair-finance/v1/budgets' ) {
+				return Promise.resolve( [ { id: 2, name: 'Venue' } ] );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/totals' ) {
+				return Promise.resolve( {
+					total_cost: 160,
+					total_income: 0,
+					balance: -160,
+				} );
+			}
+			if (
+				route === '/fair-finance/v1/financial-entries/totals-by-tag'
+			) {
+				return Promise.resolve( {} );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const deleteRequests = () =>
+		apiFetch.mock.calls.filter( ( [ { method } ] ) => method === 'DELETE' );
+
+	it( 'names the entry and its matched transaction, and cancelling sends nothing', async () => {
+		mockRemovalApi( () => Promise.resolve( {} ) );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Projector rental' );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Delete entry — Projector rental',
+		} );
+
+		expect(
+			within( dialog ).getByText( 'Dated 2026-09-01, €60.00.' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText(
+				'It is matched to 1 transaction, which is not deleted.'
+			)
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( deleteRequests() ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps the delete dialog open on failure and retries', async () => {
+		let attempts = 0;
+		mockRemovalApi( () => {
+			attempts++;
+			return attempts === 1
+				? Promise.reject( {} )
+				: Promise.resolve( { deleted: true } );
+		} );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Projector rental' );
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete entry',
+		} );
+
+		await act( async () => {
+			fireEvent.click( confirm );
+			fireEvent.click( confirm );
+		} );
+
+		expect( deleteRequests() ).toHaveLength( 1 );
+		expect(
+			within( dialog ).getByText(
+				'The entry could not be deleted. Try again.',
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+
+		await act( async () => {
+			fireEvent.click( confirm );
+		} );
+
+		expect( deleteRequests()[ 1 ][ 0 ].path ).toBe(
+			'/fair-finance/v1/financial-entries/21'
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			await screen.findByText(
+				'Entry “Projector rental” deleted.',
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'confirms unsplitting over the split editor, listing its allocations', async () => {
+		mockRemovalApi( () => Promise.resolve( {} ) );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Projector rental' );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Edit Split' } )[ 0 ]
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
+
+		const confirmDialog = screen.getByRole( 'dialog', {
+			name: 'Unsplit entry — Bulk purchase',
+		} );
+		expect(
+			within( confirmDialog ).getByText(
+				'This deletes all 2 of its allocations:'
+			)
+		).toBeInTheDocument();
+		expect(
+			within( confirmDialog ).getByText( '€70.00 to Venue' )
+		).toBeInTheDocument();
+		expect(
+			within( confirmDialog ).getByText( '€30.00 to Unbudgeted' )
+		).toBeInTheDocument();
+
+		// Cancelling returns to the split editor without a request.
+		fireEvent.click(
+			within( confirmDialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+		expect( deleteRequests() ).toHaveLength( 0 );
+		expect(
+			screen.getByRole( 'button', { name: 'Unsplit' } )
+		).toBeInTheDocument();
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Unsplit entry' } )
+			);
+		} );
+
+		expect( deleteRequests()[ 0 ][ 0 ].path ).toBe(
+			'/fair-finance/v1/financial-entries/30/split'
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			await screen.findByText(
+				'Entry “Bulk purchase” unsplit.',
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps both the confirmation and the split editor while an unsplit is pending', async () => {
+		let resolve;
+		mockRemovalApi( () => new Promise( ( done ) => ( resolve = done ) ) );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Projector rental' );
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Edit Split' } )[ 0 ]
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Unsplit entry' } )
+			);
+		} );
+
+		const confirmDialog = screen.getByRole( 'dialog', {
+			name: 'Unsplit entry — Bulk purchase',
+		} );
+		await act( async () => {
+			fireEvent.keyDown(
+				within( confirmDialog ).getByRole( 'button', {
+					name: 'Unsplitting…',
+				} ),
+				{ key: 'Escape', code: 'Escape' }
+			);
+			// Outlast the modal exit animation a dismissal would wait for.
+			await new Promise( ( done ) => setTimeout( done, 500 ) );
+		} );
+
+		expect( confirmDialog ).toBeInTheDocument();
+		expect( document.querySelectorAll( '[role="dialog"]' ) ).toHaveLength(
+			2
+		);
+		expect( deleteRequests() ).toHaveLength( 1 );
+
+		await act( async () => resolve( {} ) );
+
+		expect( document.querySelectorAll( '[role="dialog"]' ) ).toHaveLength(
+			0
+		);
+	} );
+} );

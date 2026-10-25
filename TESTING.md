@@ -156,8 +156,10 @@ The CI job is the authoritative check.
 ### Native popup check
 
 `npm run validate:native-popups` scans the production JavaScript in
-`src/` of fair-events, fair-payments-connector, fair-form and fair-audience
-for browser-native `confirm()`, `alert()` and `prompt()` — bare, or through
+`src/` of fair-events, fair-payments-connector, fair-form, fair-audience,
+fair-events-experimental, fair-payments-connector-experimental, fair-finance,
+fair-platform and fair-audience-experimental (`SCANNED_PLUGINS` in
+`scripts/validate-native-popups.mjs`) for browser-native `confirm()`, `alert()` and `prompt()` — bare, or through
 `window`, `globalThis` or `self`, including computed (`window[ 'alert' ]`)
 and optional (`window?.confirm?.()`) forms. It parses each file, so comments,
 strings, object keys, methods on other objects and locally bound functions of

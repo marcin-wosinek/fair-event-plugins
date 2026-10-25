@@ -89,11 +89,11 @@ screens.
 
 ## Popups and confirmations
 
-This section is the canonical popup policy for fair-events,
-fair-payments-connector, fair-form and fair-audience (and the default for the
-other plugins). Implementation guidance lives in
+This section is the canonical popup policy for every plugin. Implementation
+guidance lives in
 [REACT_ADMIN_PATTERN.md § Popups and confirmations](./REACT_ADMIN_PATTERN.md#popups-and-confirmations);
-`npm run validate:native-popups` enforces the first rule.
+`npm run validate:native-popups` enforces the first rule in the plugins listed
+in [TESTING.md § Native popup check](./TESTING.md#native-popup-check).
 
 ### No browser-native popups
 

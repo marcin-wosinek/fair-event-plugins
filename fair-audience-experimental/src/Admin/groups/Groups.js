@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -6,10 +6,15 @@ import {
 	Card,
 	CardBody,
 	Modal,
+	Notice,
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 const GROUP_DETAIL_URL =
 	// eslint-disable-next-line no-undef
@@ -47,12 +52,17 @@ export default function Groups() {
 	const [ groupName, setGroupName ] = useState( '' );
 	const [ groupDescription, setGroupDescription ] = useState( '' );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ saveError, setSaveError ] = useState( null );
 
 	// Duplicate modal state.
 	const [ isDuplicateModalOpen, setIsDuplicateModalOpen ] = useState( false );
 	const [ duplicatingGroup, setDuplicatingGroup ] = useState( null );
 	const [ duplicateName, setDuplicateName ] = useState( '' );
 	const [ isDuplicating, setIsDuplicating ] = useState( false );
+	const [ duplicateError, setDuplicateError ] = useState( null );
+
+	const [ notice, setNotice ] = useState( null );
+	const deleteGroup = useConfirmAction();
 
 	// Define fields configuration for DataViews.
 	const fields = useMemo(
@@ -137,6 +147,7 @@ export default function Groups() {
 		setEditingGroup( null );
 		setGroupName( '' );
 		setGroupDescription( '' );
+		setSaveError( null );
 		setIsEditModalOpen( true );
 	};
 
@@ -145,16 +156,18 @@ export default function Groups() {
 		setEditingGroup( group );
 		setGroupName( group.name );
 		setGroupDescription( group.description || '' );
+		setSaveError( null );
 		setIsEditModalOpen( true );
 	};
 
 	// Handle save group.
 	const handleSaveGroup = () => {
-		if ( ! groupName.trim() ) {
+		if ( ! groupName.trim() || isSaving ) {
 			return;
 		}
 
 		setIsSaving( true );
+		setSaveError( null );
 
 		const request = editingGroup
 			? apiFetch( {
@@ -180,14 +193,12 @@ export default function Groups() {
 				loadGroups();
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to save group.',
-								'fair-audience-experimental'
-							) )
+				setSaveError(
+					err.message ||
+						__(
+							'The group could not be saved. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -205,16 +216,18 @@ export default function Groups() {
 				group.name
 			)
 		);
+		setDuplicateError( null );
 		setIsDuplicateModalOpen( true );
 	};
 
 	// Handle duplicate group submission.
 	const handleDuplicateGroup = () => {
-		if ( ! duplicateName.trim() ) {
+		if ( ! duplicateName.trim() || isDuplicating ) {
 			return;
 		}
 
 		setIsDuplicating( true );
+		setDuplicateError( null );
 
 		apiFetch( {
 			path: `/fair-audience/v1/groups/${ duplicatingGroup.id }/duplicate`,
@@ -226,14 +239,12 @@ export default function Groups() {
 				loadGroups();
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to duplicate group.',
-								'fair-audience-experimental'
-							) )
+				setDuplicateError(
+					err.message ||
+						__(
+							'The group could not be duplicated. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -242,38 +253,30 @@ export default function Groups() {
 	};
 
 	// Handle delete group.
-	const handleDeleteGroup = ( group ) => {
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this group?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/groups/${ group.id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				loadGroups();
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to delete group.',
-								'fair-audience-experimental'
-							) )
+	const handleDeleteGroup = () =>
+		deleteGroup.run(
+			async ( group ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/groups/${ group.id }`,
+					method: 'DELETE',
+				} );
+				setNotice(
+					sprintf(
+						/* translators: %s: group name */
+						__(
+							'Group “%s” deleted.',
+							'fair-audience-experimental'
+						),
+						group.name
+					)
 				);
-			} );
-	};
+				loadGroups();
+			},
+			__(
+				'The group could not be deleted. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	// Define actions for DataViews.
 	const actions = useMemo(
@@ -305,7 +308,10 @@ export default function Groups() {
 				id: 'delete',
 				label: __( 'Delete', 'fair-audience-experimental' ),
 				icon: 'trash',
-				callback: ( [ item ] ) => handleDeleteGroup( item ),
+				callback: ( [ item ] ) => {
+					setNotice( null );
+					deleteGroup.open( item );
+				},
 				supportsBulk: false,
 			},
 		],
@@ -323,6 +329,54 @@ export default function Groups() {
 	return (
 		<div className="wrap">
 			<h1>{ __( 'Groups', 'fair-audience-experimental' ) }</h1>
+
+			{ notice && (
+				<Notice status="success" onRemove={ () => setNotice( null ) }>
+					{ notice }
+				</Notice>
+			) }
+
+			{ deleteGroup.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: group name */
+						__( 'Delete group — %s', 'fair-audience-experimental' ),
+						deleteGroup.target.name
+					) }
+					confirmLabel={ __(
+						'Delete group',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Deleting…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ deleteGroup.isBusy }
+					error={ deleteGroup.error }
+					onConfirm={ handleDeleteGroup }
+					onCancel={ deleteGroup.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of group members */
+							_n(
+								'Its %d member stays in your audience; only the membership in this group is removed.',
+								'Its %d members stay in your audience; only their membership in this group is removed.',
+								Number( deleteGroup.target.member_count ) || 0,
+								'fair-audience-experimental'
+							),
+							Number( deleteGroup.target.member_count ) || 0
+						) }
+					</p>
+					<p>
+						{ __(
+							'Membership fees, scheduled messages and event rules that use this group are not updated. This cannot be undone.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			<Card>
 				<CardBody>
@@ -383,6 +437,12 @@ export default function Groups() {
 						) }
 					/>
 
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+						</Notice>
+					) }
+
 					<div
 						style={ {
 							display: 'flex',
@@ -433,6 +493,12 @@ export default function Groups() {
 							'fair-audience-experimental'
 						) }
 					/>
+
+					{ duplicateError && (
+						<Notice status="error" isDismissible={ false }>
+							{ duplicateError }
+						</Notice>
+					) }
 
 					<div
 						style={ {

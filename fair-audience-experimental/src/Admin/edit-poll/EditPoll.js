@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -7,17 +7,22 @@ import {
 	TextareaControl,
 	SelectControl,
 	Spinner,
+	Notice,
 } from '@wordpress/components';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 export default function EditPoll() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
-	const [ isSendingInvitations, setIsSendingInvitations ] = useState( false );
+	const sendInvitations = useConfirmAction();
 	const [ isGeneratingPDF, setIsGeneratingPDF ] = useState( false );
 	const [ error, setError ] = useState( null );
+	const [ validationError, setValidationError ] = useState( null );
 	const [ sendResult, setSendResult ] = useState( null );
 	const [ events, setEvents ] = useState( [] );
 	const [ pollId, setPollId ] = useState( null );
@@ -126,27 +131,28 @@ export default function EditPoll() {
 	};
 
 	const handleSubmit = async () => {
+		setValidationError( null );
 		// Validate
 		if ( ! formData.event_id ) {
-			alert(
+			setValidationError(
 				__( 'Please select an event.', 'fair-audience-experimental' )
 			);
 			return;
 		}
 		if ( ! formData.title ) {
-			alert(
+			setValidationError(
 				__( 'Please enter a title.', 'fair-audience-experimental' )
 			);
 			return;
 		}
 		if ( ! formData.question ) {
-			alert(
+			setValidationError(
 				__( 'Please enter a question.', 'fair-audience-experimental' )
 			);
 			return;
 		}
 		if ( formData.options.length === 0 ) {
-			alert(
+			setValidationError(
 				__(
 					'Please add at least one option.',
 					'fair-audience-experimental'
@@ -159,7 +165,7 @@ export default function EditPoll() {
 			( opt ) => ! opt.text.trim()
 		);
 		if ( emptyOptions ) {
-			alert(
+			setValidationError(
 				__(
 					'Please fill in all option texts or remove empty options.',
 					'fair-audience-experimental'
@@ -197,44 +203,46 @@ export default function EditPoll() {
 		}
 	};
 
-	const handleSendInvitations = async () => {
-		if (
-			! confirm(
-				__(
-					'Send poll invitations to all event participants who have not yet responded?',
-					'fair-audience-experimental'
-				)
+	const handleSendInvitations = () =>
+		sendInvitations.run(
+			async () => {
+				setError( null );
+				setSendResult( null );
+				const response = await apiFetch( {
+					path: `/fair-audience/v1/polls/${ pollId }/send-invitations`,
+					method: 'POST',
+				} );
+
+				setSendResult( {
+					sent_count: response.sent_count,
+					failed: response.failed,
+				} );
+
+				// Refresh the statistics without reporting a failed refresh as
+				// a failed send: the invitations already went out.
+				apiFetch( { path: `/fair-audience/v1/polls/${ pollId }` } )
+					.then( ( pollResponse ) =>
+						setPollStats( pollResponse.stats )
+					)
+					.catch( () =>
+						setError(
+							__(
+								'Invitations were sent, but the statistics could not be refreshed. Reload the page to see them.',
+								'fair-audience-experimental'
+							)
+						)
+					);
+			},
+			__(
+				'The invitations could not be sent. Some may already have gone out; check the statistics before trying again.',
+				'fair-audience-experimental'
 			)
-		) {
-			return;
-		}
+		);
 
-		setIsSendingInvitations( true );
-		setError( null );
-		setSendResult( null );
-
-		try {
-			const response = await apiFetch( {
-				path: `/fair-audience/v1/polls/${ pollId }/send-invitations`,
-				method: 'POST',
-			} );
-
-			setSendResult( {
-				sent_count: response.sent_count,
-				failed: response.failed,
-			} );
-
-			// Reload poll data to get updated statistics
-			const pollResponse = await apiFetch( {
-				path: `/fair-audience/v1/polls/${ pollId }`,
-			} );
-			setPollStats( pollResponse.stats );
-		} catch ( err ) {
-			setError( err.message );
-		} finally {
-			setIsSendingInvitations( false );
-		}
-	};
+	const eventTitle =
+		events.find(
+			( event ) => event.event_id.toString() === formData.event_id
+		)?.title || '';
 
 	const handleGeneratePDF = async () => {
 		setIsGeneratingPDF( true );
@@ -362,6 +370,59 @@ export default function EditPoll() {
 				onDismiss={ () => setSendResult( null ) }
 			/>
 
+			{ sendInvitations.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: poll title */
+						__(
+							'Send poll invitations — %s',
+							'fair-audience-experimental'
+						),
+						formData.title
+					) }
+					confirmLabel={ __(
+						'Send invitations',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __( 'Sending…', 'fair-audience-experimental' ) }
+					isBusy={ sendInvitations.isBusy }
+					error={ sendInvitations.error }
+					onConfirm={ handleSendInvitations }
+					onCancel={ sendInvitations.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %s: event title */
+							__(
+								'An invitation email goes to every participant of %s who has not answered this poll yet, including those who already received one.',
+								'fair-audience-experimental'
+							),
+							eventTitle
+						) }
+					</p>
+					{ pollStats && (
+						<p>
+							{ sprintf(
+								/* translators: %d: number of participants who answered */
+								_n(
+									'%d participant has already answered and is skipped.',
+									'%d participants have already answered and are skipped.',
+									pollStats.responded,
+									'fair-audience-experimental'
+								),
+								pollStats.responded
+							) }
+						</p>
+					) }
+					<p>
+						{ __(
+							'Sent emails cannot be recalled. Unsaved changes on this page are not saved and not used in the email.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
+
 			{ pollId && pollStats && (
 				<div
 					style={ {
@@ -466,15 +527,13 @@ export default function EditPoll() {
 				<div style={ { marginTop: '20px' } }>
 					<Button
 						isPrimary
-						onClick={ handleSendInvitations }
-						disabled={ isSendingInvitations || isSaving }
+						onClick={ () => sendInvitations.open( { pollId } ) }
+						disabled={ sendInvitations.isBusy || isSaving }
 					>
-						{ isSendingInvitations
-							? __( 'Sending...', 'fair-audience-experimental' )
-							: __(
-									'Send Poll Invitations',
-									'fair-audience-experimental'
-								) }
+						{ __(
+							'Send Poll Invitations',
+							'fair-audience-experimental'
+						) }
 					</Button>{ ' ' }
 					<Button
 						isSecondary
@@ -684,6 +743,12 @@ export default function EditPoll() {
 					/>
 				</div>
 			</div>
+
+			{ validationError && (
+				<Notice status="error" isDismissible={ false }>
+					{ validationError }
+				</Notice>
+			) }
 
 			<div style={ { marginTop: '20px' } }>
 				<Button

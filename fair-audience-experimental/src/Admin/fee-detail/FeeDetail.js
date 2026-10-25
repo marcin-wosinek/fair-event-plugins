@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import {
 	useState,
 	useEffect,
@@ -23,6 +23,9 @@ import {
 import { DataViews } from '@wordpress/dataviews';
 import useBudgets from '../components/useBudgets.js';
 import BudgetLoadStatus from '../components/BudgetLoadStatus.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -76,6 +79,7 @@ export default function FeeDetail() {
 	const [ newAmount, setNewAmount ] = useState( '' );
 	const [ adjustReason, setAdjustReason ] = useState( '' );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ adjustError, setAdjustError ] = useState( null );
 
 	// Audit log modal.
 	const [ isAuditModalOpen, setIsAuditModalOpen ] = useState( false );
@@ -91,8 +95,11 @@ export default function FeeDetail() {
 	// Notice state.
 	const [ notice, setNotice ] = useState( null );
 
-	// Reminders state.
-	const [ isSendingReminders, setIsSendingReminders ] = useState( false );
+	// Status changes and the bulk reminder, each confirmed in a dialog.
+	const markPaid = useConfirmAction();
+	const cancelPayment = useConfirmAction();
+	const bulkReminders = useConfirmAction();
+	const isSendingReminders = bulkReminders.isBusy;
 
 	// Single-member reminder: the payment being confirmed, whether its request
 	// is in flight, and the error to show in the dialog.
@@ -111,6 +118,7 @@ export default function FeeDetail() {
 	const [ selectedToAdd, setSelectedToAdd ] = useState( null );
 	const [ addAmount, setAddAmount ] = useState( '' );
 	const [ isAddingPayment, setIsAddingPayment ] = useState( false );
+	const [ addError, setAddError ] = useState( null );
 
 	// Transfer modal.
 	const [ isTransferModalOpen, setIsTransferModalOpen ] = useState( false );
@@ -238,13 +246,15 @@ export default function FeeDetail() {
 		setAdjustingPayment( payment );
 		setNewAmount( payment.amount );
 		setAdjustReason( '' );
+		setAdjustError( null );
 		setIsAdjustModalOpen( true );
 	};
 
 	const handleAdjustAmount = () => {
-		if ( ! adjustingPayment || ! adjustReason.trim() ) return;
+		if ( ! adjustingPayment || ! adjustReason.trim() || isSaving ) return;
 
 		setIsSaving( true );
+		setAdjustError( null );
 
 		apiFetch( {
 			path: `/fair-audience/v1/fees/${ feeId }/payments/${ adjustingPayment.id }/amount`,
@@ -267,14 +277,12 @@ export default function FeeDetail() {
 				} );
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to adjust amount.',
-								'fair-audience-experimental'
-							) )
+				setAdjustError(
+					err.message ||
+						__(
+							'The amount could not be adjusted. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -282,81 +290,61 @@ export default function FeeDetail() {
 			} );
 	};
 
-	// Mark as paid.
-	const handleMarkPaid = ( payment ) => {
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__( 'Mark this payment as paid?', 'fair-audience-experimental' )
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/mark-paid`,
-			method: 'POST',
-		} )
-			.then( () => {
+	// Mark as paid, after confirmation.
+	const handleMarkPaid = () =>
+		markPaid.run(
+			async ( payment ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/mark-paid`,
+					method: 'POST',
+				} );
 				loadPayments();
 				setNotice( {
 					status: 'success',
-					message: __(
-						'Payment marked as paid.',
-						'fair-audience-experimental'
+					message: sprintf(
+						/* translators: %s: member name */
+						__(
+							'Payment of %s marked as paid.',
+							'fair-audience-experimental'
+						),
+						memberName( payment ) ||
+							__( '(unnamed)', 'fair-audience-experimental' )
 					),
 				} );
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to mark as paid.',
-								'fair-audience-experimental'
-							) )
-				);
-			} );
-	};
-
-	// Cancel payment.
-	const handleCancel = ( payment ) => {
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__( 'Cancel this payment?', 'fair-audience-experimental' )
+			},
+			__(
+				'The payment could not be marked as paid. Try again.',
+				'fair-audience-experimental'
 			)
-		) {
-			return;
-		}
+		);
 
-		apiFetch( {
-			path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/cancel`,
-			method: 'POST',
-		} )
-			.then( () => {
+	// Cancel payment, after confirmation.
+	const handleCancel = () =>
+		cancelPayment.run(
+			async ( payment ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/fees/${ feeId }/payments/${ payment.id }/cancel`,
+					method: 'POST',
+				} );
 				loadPayments();
 				setNotice( {
 					status: 'success',
-					message: __(
-						'Payment canceled.',
-						'fair-audience-experimental'
+					message: sprintf(
+						/* translators: %s: member name */
+						__(
+							'Payment of %s canceled.',
+							'fair-audience-experimental'
+						),
+						memberName( payment ) ||
+							__( '(unnamed)', 'fair-audience-experimental' )
 					),
 				} );
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to cancel payment.',
-								'fair-audience-experimental'
-							) )
-				);
-			} );
-	};
+			},
+			__(
+				'The payment could not be canceled. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	// View audit log.
 	const openAuditLog = ( payment ) => {
@@ -415,15 +403,15 @@ export default function FeeDetail() {
 				} );
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to get payment link.',
-								'fair-audience-experimental'
-							) )
-				);
+				setNotice( {
+					status: 'error',
+					message:
+						err.message ||
+						__(
+							'The payment link could not be loaded. Try again.',
+							'fair-audience-experimental'
+						),
+				} );
 			} );
 	};
 
@@ -434,6 +422,7 @@ export default function FeeDetail() {
 		setAddSearch( '' );
 		setSelectedToAdd( null );
 		setAddAmount( fee.amount ? String( fee.amount ) : '' );
+		setAddError( null );
 		setIsAddModalOpen( true );
 
 		setGroupMembersLoading( true );
@@ -452,9 +441,10 @@ export default function FeeDetail() {
 	};
 
 	const handleAddPayment = () => {
-		if ( ! selectedToAdd ) return;
+		if ( ! selectedToAdd || isAddingPayment ) return;
 
 		setIsAddingPayment( true );
+		setAddError( null );
 
 		apiFetch( {
 			path: `/fair-audience/v1/fees/${ feeId }/payments`,
@@ -477,14 +467,12 @@ export default function FeeDetail() {
 				} );
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to add participant.',
-								'fair-audience-experimental'
-							) )
+				setAddError(
+					err.message ||
+						__(
+							'The participant could not be added. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -703,66 +691,91 @@ export default function FeeDetail() {
 		}
 	};
 
-	// Send reminders.
-	const handleSendReminders = () => {
+	// Send reminders to every pending member, after confirmation.
+	const openBulkReminders = () => {
 		if ( reminderSendLock.current ) {
 			return;
 		}
+		bulkReminders.open( {
+			pending: payments.filter(
+				( payment ) => payment.status === 'pending'
+			),
+		} );
+	};
 
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__(
-					'Send payment reminders to all members with pending payments?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		setIsSendingReminders( true );
-
-		apiFetch( {
-			path: `/fair-audience/v1/fees/${ feeId }/send-reminders`,
-			method: 'POST',
-		} )
-			.then( ( results ) => {
+	const handleSendReminders = () =>
+		bulkReminders.run(
+			async () => {
+				const results = await apiFetch( {
+					path: `/fair-audience/v1/fees/${ feeId }/send-reminders`,
+					method: 'POST',
+				} );
 				const sentCount = results.sent ? results.sent.length : 0;
-				const failedCount = results.failed ? results.failed.length : 0;
+				const failed = results.failed || [];
 
 				setNotice( {
-					status: failedCount > 0 ? 'warning' : 'success',
-					message: `${ sentCount } ${ __(
-						'reminders sent',
-						'fair-audience-experimental'
-					) }${
-						failedCount > 0
-							? `, ${ failedCount } ${ __(
-									'failed',
-									'fair-audience-experimental'
-								) }`
-							: ''
-					}`,
+					status: failed.length > 0 ? 'warning' : 'success',
+					message: (
+						<>
+							<p>
+								{ sprintf(
+									/* translators: %d: number of reminders sent */
+									_n(
+										'%d reminder sent.',
+										'%d reminders sent.',
+										sentCount,
+										'fair-audience-experimental'
+									),
+									sentCount
+								) }
+							</p>
+							{ failed.length > 0 && (
+								<>
+									<p>
+										{ sprintf(
+											/* translators: %d: number of reminders not sent */
+											_n(
+												'%d reminder was not sent:',
+												'%d reminders were not sent:',
+												failed.length,
+												'fair-audience-experimental'
+											),
+											failed.length
+										) }
+									</p>
+									<ul>
+										{ failed.map( ( item, index ) => (
+											<li key={ index }>
+												{ sprintf(
+													/* translators: 1: member name or email, 2: reason */
+													__(
+														'%1$s: %2$s',
+														'fair-audience-experimental'
+													),
+													item.name ||
+														item.email ||
+														__(
+															'(unnamed)',
+															'fair-audience-experimental'
+														),
+													item.reason
+												) }
+											</li>
+										) ) }
+									</ul>
+								</>
+							) }
+						</>
+					),
 				} );
 
 				loadPayments();
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to send reminders.',
-								'fair-audience-experimental'
-							) )
-				);
-			} )
-			.finally( () => {
-				setIsSendingReminders( false );
-			} );
-	};
+			},
+			__(
+				'The reminders could not be sent. Some may already have gone out; check the reminder dates before trying again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	// Define actions for DataViews.
 	const actions = useMemo(
@@ -778,7 +791,7 @@ export default function FeeDetail() {
 				id: 'mark-paid',
 				label: __( 'Mark as Paid', 'fair-audience-experimental' ),
 				icon: 'yes-alt',
-				callback: ( [ item ] ) => handleMarkPaid( item ),
+				callback: ( [ item ] ) => markPaid.open( item ),
 				supportsBulk: false,
 				isEligible: ( item ) => item.status === 'pending',
 			},
@@ -786,7 +799,7 @@ export default function FeeDetail() {
 				id: 'cancel',
 				label: __( 'Cancel', 'fair-audience-experimental' ),
 				icon: 'dismiss',
-				callback: ( [ item ] ) => handleCancel( item ),
+				callback: ( [ item ] ) => cancelPayment.open( item ),
 				supportsBulk: false,
 				isEligible: ( item ) => item.status === 'pending',
 			},
@@ -972,9 +985,8 @@ export default function FeeDetail() {
 					>
 						<Button
 							variant="secondary"
-							onClick={ handleSendReminders }
+							onClick={ openBulkReminders }
 							disabled={ isSendingReminders || isSendingReminder }
-							isBusy={ isSendingReminders }
 						>
 							{ __(
 								'Send Reminders',
@@ -1006,6 +1018,171 @@ export default function FeeDetail() {
 					/>
 				</CardBody>
 			</Card>
+
+			{ /* Status changes, confirmed with the member and amount */ }
+			{ [
+				{
+					confirm: markPaid,
+					onConfirm: handleMarkPaid,
+					/* translators: %s: member name */
+					title: __(
+						'Mark as paid — %s',
+						'fair-audience-experimental'
+					),
+					confirmLabel: __(
+						'Mark as paid',
+						'fair-audience-experimental'
+					),
+					busyLabel: __( 'Saving…', 'fair-audience-experimental' ),
+					isDestructive: false,
+					consequence: __(
+						'This records the payment as paid by hand. No money is collected or checked with the payment provider, and there is no action to set it back to pending. The change is logged in the payment history.',
+						'fair-audience-experimental'
+					),
+				},
+				{
+					confirm: cancelPayment,
+					onConfirm: handleCancel,
+					/* translators: %s: member name */
+					title: __(
+						'Cancel payment — %s',
+						'fair-audience-experimental'
+					),
+					confirmLabel: __(
+						'Cancel payment',
+						'fair-audience-experimental'
+					),
+					busyLabel: __( 'Canceling…', 'fair-audience-experimental' ),
+					isDestructive: true,
+					consequence: __(
+						'The member no longer owes this fee and gets no more reminders for it. No payment-provider transaction is canceled or refunded, and there is no action to undo this. The change is logged in the payment history.',
+						'fair-audience-experimental'
+					),
+				},
+			].map(
+				( dialog ) =>
+					dialog.confirm.target && (
+						<ConfirmActionModal
+							key={ dialog.confirmLabel }
+							title={ sprintf(
+								dialog.title,
+								memberName( dialog.confirm.target ) ||
+									__(
+										'(unnamed)',
+										'fair-audience-experimental'
+									)
+							) }
+							confirmLabel={ dialog.confirmLabel }
+							busyLabel={ dialog.busyLabel }
+							isDestructive={ dialog.isDestructive }
+							isBusy={ dialog.confirm.isBusy }
+							error={ dialog.confirm.error }
+							onConfirm={ dialog.onConfirm }
+							onCancel={ dialog.confirm.close }
+						>
+							<p>
+								{ sprintf(
+									/* translators: 1: fee name, 2: amount with currency, 3: member email or dash */
+									__(
+										'%1$s: %2$s (%3$s).',
+										'fair-audience-experimental'
+									),
+									fee ? fee.name : '—',
+									`${ parseFloat(
+										dialog.confirm.target.amount
+									).toFixed( 2 ) }${
+										fee?.currency
+											? ` ${ fee.currency }`
+											: ''
+									}`,
+									dialog.confirm.target.participant_email ||
+										'—'
+								) }
+							</p>
+							<p>{ dialog.consequence }</p>
+						</ConfirmActionModal>
+					)
+			) }
+
+			{ bulkReminders.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: fee name */
+						__(
+							'Send payment reminders — %s',
+							'fair-audience-experimental'
+						),
+						fee ? fee.name : '—'
+					) }
+					confirmLabel={ __(
+						'Send reminders',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __( 'Sending…', 'fair-audience-experimental' ) }
+					isBusy={ bulkReminders.isBusy }
+					error={ bulkReminders.error }
+					onConfirm={ handleSendReminders }
+					onCancel={ bulkReminders.close }
+					confirmDisabled={
+						bulkReminders.target.pending.length === 0
+					}
+				>
+					{ bulkReminders.target.pending.length === 0 ? (
+						<p>
+							{ __(
+								'No member has a pending payment, so there is nobody to remind.',
+								'fair-audience-experimental'
+							) }
+						</p>
+					) : (
+						<>
+							<p>
+								{ sprintf(
+									/* translators: %d: number of members with a pending payment */
+									_n(
+										'One reminder email goes to the %d member with a pending payment, including any who were reminded before:',
+										'One reminder email goes to each of the %d members with a pending payment, including any who were reminded before:',
+										bulkReminders.target.pending.length,
+										'fair-audience-experimental'
+									),
+									bulkReminders.target.pending.length
+								) }
+							</p>
+							<ul
+								style={ {
+									maxHeight: '200px',
+									overflowY: 'auto',
+									margin: 0,
+								} }
+							>
+								{ bulkReminders.target.pending.map(
+									( payment ) => (
+										<li key={ payment.id }>
+											{ memberName( payment ) ||
+												__(
+													'(unnamed)',
+													'fair-audience-experimental'
+												) }
+											{ ' — ' }
+											{ payment.participant_email ||
+												__(
+													'no email address; it will be reported as not sent',
+													'fair-audience-experimental'
+												) }
+										</li>
+									)
+								) }
+							</ul>
+							<p>
+								{ __(
+									'Sent emails cannot be recalled.',
+									'fair-audience-experimental'
+								) }
+							</p>
+						</>
+					) }
+				</ConfirmActionModal>
+			) }
 
 			{ /* Send Payment Reminder Modal */ }
 			{ reminderPayment && (
@@ -1262,6 +1439,14 @@ export default function FeeDetail() {
 									step="0.01"
 								/>
 
+								{ addError && (
+									<Notice
+										status="error"
+										isDismissible={ false }
+									>
+										{ addError }
+									</Notice>
+								) }
 								<div
 									style={ {
 										display: 'flex',
@@ -1352,6 +1537,12 @@ export default function FeeDetail() {
 							'fair-audience-experimental'
 						) }
 					/>
+
+					{ adjustError && (
+						<Notice status="error" isDismissible={ false }>
+							{ adjustError }
+						</Notice>
+					) }
 
 					<div
 						style={ {

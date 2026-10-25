@@ -6,12 +6,14 @@ import {
 	ToggleControl,
 	SelectControl,
 	Spinner,
+	Notice,
 } from '@wordpress/components';
 
 export default function EditExtraMessage() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
+	const [ validationError, setValidationError ] = useState( null );
 	const [ messageId, setMessageId ] = useState( null );
 	const [ formData, setFormData ] = useState( {
 		content: '',
@@ -104,9 +106,10 @@ export default function EditExtraMessage() {
 
 	const handleSubmit = async () => {
 		const content = getEditorContent();
+		setValidationError( null );
 
 		if ( ! content || content === '<p></p>' || content === '<br>' ) {
-			alert(
+			setValidationError(
 				__(
 					'Please enter message content.',
 					'fair-audience-experimental'
@@ -251,6 +254,12 @@ export default function EditExtraMessage() {
 					/>
 				</div>
 			</div>
+
+			{ validationError && (
+				<Notice status="error" isDismissible={ false }>
+					{ validationError }
+				</Notice>
+			) }
 
 			<div style={ { marginTop: '20px' } }>
 				<Button

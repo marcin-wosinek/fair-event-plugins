@@ -151,8 +151,9 @@ Frontend:
 
 - No browser-native `confirm()`, `alert()` or `prompt()` in any plugin; the
   only native exception is `beforeunload` navigation protection.
-  `npm run validate:native-popups` enforces this for fair-events,
-  fair-payments-connector, fair-form and fair-audience, with no allowlist.
+  `npm run validate:native-popups` enforces this, with no allowlist, for
+  every plugin except fair-timetable and fair-calendar-button (list in
+  [TESTING.md § Native popup check](./TESTING.md#native-popup-check)).
 - The policy (naming the target, related data, bulk, pending/error,
   accessibility, public pages) lives only in that section — follow it
   rather than restating it.

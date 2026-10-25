@@ -43,7 +43,7 @@ msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
 #: src/Admin/AdminPages.php:45
-#: src/Admin/entries/EntriesApp.js:751
+#: src/Admin/entries/EntriesApp.js:754
 msgid "Financial Entries"
 msgstr "Entrées financières"
 
@@ -52,7 +52,7 @@ msgid "Entries"
 msgstr "Entrées"
 
 #: src/Admin/AdminPages.php:54
-#: src/Admin/budgets/BudgetsApp.js:244
+#: src/Admin/budgets/BudgetsApp.js:243
 msgid "Budget Categories"
 msgstr "Catégories budgétaires"
 
@@ -96,17 +96,16 @@ msgid "Budget name is required."
 msgstr "Le nom du budget est requis."
 
 #: src/API/BudgetController.php:206
-#: src/Admin/budgets/BudgetsApp.js:139
+#: src/Admin/budgets/BudgetsApp.js:138
 msgid "Failed to create budget."
 msgstr "Échec de la création du budget."
 
 #: src/API/BudgetController.php:250
-#: src/Admin/budgets/BudgetsApp.js:138
+#: src/Admin/budgets/BudgetsApp.js:137
 msgid "Failed to update budget."
 msgstr "Échec de la mise à jour du budget."
 
 #: src/API/BudgetController.php:284
-#: src/Admin/budgets/BudgetsApp.js:101
 msgid "Failed to delete budget."
 msgstr "Échec de la suppression du budget."
 
@@ -345,7 +344,7 @@ msgid "Total allocations must match the original entry amount."
 msgstr "Le total des allocations doit correspondre au montant de l'entrée d'origine."
 
 #: src/API/FinancialEntryController.php:1315
-#: src/Admin/entries/components/SplitModal.js:279
+#: src/Admin/entries/components/SplitModal.js:280
 msgid "Failed to split entry."
 msgstr "Impossible de diviser l'entrée."
 
@@ -363,7 +362,6 @@ msgid "Failed to update split."
 msgstr "Impossible de mettre à jour la division."
 
 #: src/API/FinancialEntryController.php:1464
-#: src/Admin/entries/EntriesApp.js:566
 msgid "Failed to unsplit entry."
 msgstr "Impossible de fusionner l'entrée."
 
@@ -494,26 +492,26 @@ msgstr "revenu"
 
 #: src/Admin/entries/components/EntryForm.js:138
 #: src/Admin/entries/components/ImportModal.js:275
-#: src/Admin/entries/components/SplitModal.js:325
+#: src/Admin/entries/components/SplitModal.js:326
 #: src/Admin/entries/components/TagChart.js:134
-#: src/Admin/entries/EntriesApp.js:945
-#: src/Admin/entries/EntriesApp.js:1187
-#: src/Admin/entries/EntriesApp.js:1668
+#: src/Admin/entries/EntriesApp.js:948
+#: src/Admin/entries/EntriesApp.js:1190
+#: src/Admin/entries/EntriesApp.js:1671
 msgid "Cost"
 msgstr "Coût"
 
 #: src/Admin/entries/components/EntryForm.js:142
 #: src/Admin/entries/components/ImportModal.js:279
-#: src/Admin/entries/components/SplitModal.js:326
+#: src/Admin/entries/components/SplitModal.js:327
 #: src/Admin/entries/components/TagChart.js:150
-#: src/Admin/entries/EntriesApp.js:952
-#: src/Admin/entries/EntriesApp.js:1191
-#: src/Admin/entries/EntriesApp.js:1672
+#: src/Admin/entries/EntriesApp.js:955
+#: src/Admin/entries/EntriesApp.js:1194
+#: src/Admin/entries/EntriesApp.js:1675
 msgid "Income"
 msgstr "Revenu"
 
 #: src/Admin/entries/components/TagField.js:23
-#: src/Admin/entries/EntriesApp.js:907
+#: src/Admin/entries/EntriesApp.js:910
 msgid "Tag"
 msgstr "Étiquette"
 
@@ -521,7 +519,7 @@ msgstr "Étiquette"
 msgid "e.g. venue, catering, travel"
 msgstr "p. ex. lieu, restauration, transport"
 
-#: src/Admin/entries/EntriesApp.js:914
+#: src/Admin/entries/EntriesApp.js:917
 msgid "All Tags"
 msgstr "Toutes les étiquettes"
 
@@ -692,11 +690,12 @@ msgstr[1] "%d lignes"
 msgid "%1$s (%2$d)"
 msgstr "%1$s (%2$d)"
 
-#: src/Admin/budgets/BudgetsApp.js:583
+#: src/Admin/budgets/BudgetsApp.js:619
+#: src/Admin/components/ConfirmActionModal.js:158
 #: src/Admin/entries/components/EntryForm.js:223
 #: src/Admin/entries/components/ImportModal.js:317
 #: src/Admin/entries/components/MatchModal.js:253
-#: src/Admin/entries/components/SplitModal.js:505
+#: src/Admin/entries/components/SplitModal.js:506
 #: src/Admin/entries/components/TransferModal.js:242
 #: src/Admin/entries/components/UnmatchModal.js:299
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1045
@@ -949,8 +948,8 @@ msgstr "Aucun mouvement n'est enregistré pour ce règlement."
 
 #: src/Admin/entries/components/EntryForm.js:134
 #: src/Admin/entries/components/ImportModal.js:239
-#: src/Admin/entries/EntriesApp.js:934
-#: src/Admin/entries/EntriesApp.js:1089
+#: src/Admin/entries/EntriesApp.js:937
+#: src/Admin/entries/EntriesApp.js:1092
 #: src/Admin/entries/exportEntriesCsv.js:42
 #: src/Admin/reconciliation/ReconciliationApp.js:643
 #: src/Admin/settlements/components/SettlementDetail.js:588
@@ -965,16 +964,16 @@ msgstr "Type"
 msgid "Reference"
 msgstr "Référence"
 
-#: src/Admin/budgets/BudgetsApp.js:304
-#: src/Admin/budgets/BudgetsApp.js:341
-#: src/Admin/budgets/BudgetsApp.js:447
-#: src/Admin/budgets/BudgetsApp.js:564
+#: src/Admin/budgets/BudgetsApp.js:303
+#: src/Admin/budgets/BudgetsApp.js:340
+#: src/Admin/budgets/BudgetsApp.js:446
+#: src/Admin/budgets/BudgetsApp.js:600
 #: src/Admin/entries/components/EntryForm.js:175
 #: src/Admin/entries/components/ImportModal.js:250
 #: src/Admin/entries/components/MatchModal.js:191
-#: src/Admin/entries/components/SplitModal.js:414
+#: src/Admin/entries/components/SplitModal.js:415
 #: src/Admin/entries/components/TransferModal.js:163
-#: src/Admin/entries/EntriesApp.js:1101
+#: src/Admin/entries/EntriesApp.js:1104
 #: src/Admin/entries/exportEntriesCsv.js:44
 #: src/Admin/reconciliation/ReconciliationApp.js:646
 #: src/Admin/reconciliation/ReconciliationApp.js:1055
@@ -992,7 +991,7 @@ msgstr "Description"
 #: src/Admin/entries/components/ImportModal.js:236
 #: src/Admin/entries/components/MatchModal.js:189
 #: src/Admin/entries/components/TransferModal.js:153
-#: src/Admin/entries/EntriesApp.js:1083
+#: src/Admin/entries/EntriesApp.js:1086
 #: src/Admin/entries/exportEntriesCsv.js:41
 #: src/Admin/reconciliation/ReconciliationApp.js:634
 #: src/Admin/reconciliation/ReconciliationApp.js:1037
@@ -1005,9 +1004,9 @@ msgstr "Date"
 #: src/Admin/entries/components/EntryForm.js:152
 #: src/Admin/entries/components/ImportModal.js:244
 #: src/Admin/entries/components/MatchModal.js:190
-#: src/Admin/entries/components/SplitModal.js:386
+#: src/Admin/entries/components/SplitModal.js:387
 #: src/Admin/entries/components/TransferModal.js:140
-#: src/Admin/entries/EntriesApp.js:1095
+#: src/Admin/entries/EntriesApp.js:1098
 #: src/Admin/entries/exportEntriesCsv.js:43
 #: src/Admin/reconciliation/components/AllocationProposal.js:62
 #: src/Admin/reconciliation/components/AllocationProposal.js:94
@@ -1111,12 +1110,12 @@ msgid_plural "Page %1$d of %2$d (%3$d settlements)"
 msgstr[0] "Page %1$d sur %2$d (%3$d établissement)"
 msgstr[1] "Page %1$d sur %2$d (%3$d établissements)"
 
-#: src/Admin/entries/EntriesApp.js:1844
+#: src/Admin/entries/EntriesApp.js:1847
 #: src/Admin/settlements/components/SettlementList.js:251
 msgid "Previous"
 msgstr "Précédent"
 
-#: src/Admin/entries/EntriesApp.js:1875
+#: src/Admin/entries/EntriesApp.js:1878
 #: src/Admin/settlements/components/SettlementList.js:258
 msgid "Next"
 msgstr "Suivant"
@@ -1539,22 +1538,22 @@ msgstr "L'importation n'a pas pu continuer. Son dernier état connu est affiché
 msgid "Focus on a single entry by ID; other filters are ignored."
 msgstr "Concentrez-vous sur une seule entrée par ID ; les autres filtres sont ignorés."
 
-#: src/Admin/entries/EntriesApp.js:794
+#: src/Admin/entries/EntriesApp.js:797
 msgid "Show all entries"
 msgstr "Afficher toutes les entrées"
 
-#: src/Admin/entries/EntriesApp.js:804
+#: src/Admin/entries/EntriesApp.js:807
 msgid "This entry link is not valid."
 msgstr "Ce lien d'entrée n'est pas valide."
 
 #. translators: %d: financial entry ID.
-#: src/Admin/entries/EntriesApp.js:810
+#: src/Admin/entries/EntriesApp.js:813
 #, js-format
 msgid "Showing entry #%d"
 msgstr "Affichage de l'entrée n°%d"
 
 #. translators: %d: financial entry ID.
-#: src/Admin/entries/EntriesApp.js:1061
+#: src/Admin/entries/EntriesApp.js:1064
 #, js-format
 msgid "Entry #%d was not found. It may have been deleted."
 msgstr "L'entrée n°%d n'a pas été trouvée. Elle a peut-être été supprimée."
@@ -2104,7 +2103,7 @@ msgid "Previous suggestions"
 msgstr "Suggestions précédentes"
 
 #. translators: 1: current page, 2: number of pages.
-#: src/Admin/entries/EntriesApp.js:1850
+#: src/Admin/entries/EntriesApp.js:1853
 #: src/Admin/reconciliation/ReconciliationApp.js:178
 #, js-format
 msgid "Page %1$d of %2$d"
@@ -2255,9 +2254,9 @@ msgstr "Allocation"
 msgid "Event"
 msgstr "Événement"
 
-#: src/Admin/entries/components/SplitModal.js:372
-#: src/Admin/entries/EntriesApp.js:851
-#: src/Admin/entries/EntriesApp.js:1107
+#: src/Admin/entries/components/SplitModal.js:373
+#: src/Admin/entries/EntriesApp.js:854
+#: src/Admin/entries/EntriesApp.js:1110
 #: src/Admin/entries/exportEntriesCsv.js:45
 #: src/Admin/reconciliation/components/AllocationProposal.js:64
 #: src/Admin/reconciliation/components/AllocationProposal.js:120
@@ -2265,7 +2264,7 @@ msgstr "Événement"
 msgid "Budget"
 msgstr "Budget"
 
-#: src/Admin/budgets/BudgetsApp.js:348
+#: src/Admin/budgets/BudgetsApp.js:347
 #: src/Admin/entries/components/MatchModal.js:216
 #: src/Admin/entries/components/UnmatchModal.js:266
 #: src/Admin/reconciliation/components/AllocationProposal.js:77
@@ -2330,112 +2329,105 @@ msgstr "Charger les fichiers .mo/.json fournis avec l'extension au lieu de dépe
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
 
-#: src/Admin/budgets/BudgetsApp.js:52
+#: src/Admin/budgets/BudgetsApp.js:60
 msgid "Failed to load budgets."
 msgstr "Échec du chargement des budgets."
 
-#: src/Admin/budgets/BudgetsApp.js:80
-msgid "Are you sure you want to delete this budget? Financial entries will be unlinked but not deleted."
-msgstr "Êtes-vous sûr de vouloir supprimer ce budget ? Les entrées financières seront dissociées mais non supprimées."
-
-#: src/Admin/budgets/BudgetsApp.js:97
-msgid "Budget deleted successfully."
-msgstr "Budget supprimé avec succès."
-
-#: src/Admin/budgets/BudgetsApp.js:119
+#: src/Admin/budgets/BudgetsApp.js:118
 msgid "Budget updated successfully."
 msgstr "Budget mis à jour avec succès."
 
-#: src/Admin/budgets/BudgetsApp.js:128
+#: src/Admin/budgets/BudgetsApp.js:127
 msgid "Budget created successfully."
 msgstr "Budget créé avec succès."
 
-#: src/Admin/budgets/BudgetsApp.js:213
+#: src/Admin/budgets/BudgetsApp.js:212
 msgid "Unbudgeted Costs"
 msgstr "Coûts non budgétisés"
 
-#: src/Admin/budgets/BudgetsApp.js:228
+#: src/Admin/budgets/BudgetsApp.js:227
 msgid "Unbudgeted Income"
 msgstr "Revenus non budgétisés"
 
-#: src/Admin/budgets/BudgetsApp.js:247
-#: src/Admin/budgets/BudgetsApp.js:548
+#: src/Admin/budgets/BudgetsApp.js:246
+#: src/Admin/budgets/BudgetsApp.js:584
 msgid "Add New Budget"
 msgstr "Ajouter un nouveau budget"
 
-#: src/Admin/budgets/BudgetsApp.js:277
+#: src/Admin/budgets/BudgetsApp.js:276
 msgid "Loading budgets..."
 msgstr "Chargement des budgets..."
 
-#: src/Admin/budgets/BudgetsApp.js:288
+#: src/Admin/budgets/BudgetsApp.js:287
 msgid "No budget categories found. Create your first budget category to organize your costs and income."
 msgstr "Aucune catégorie budgétaire trouvée. Créez votre première catégorie budgétaire pour organiser vos coûts et revenus."
 
-#: src/Admin/budgets/BudgetsApp.js:301
-#: src/Admin/budgets/BudgetsApp.js:331
-#: src/Admin/budgets/BudgetsApp.js:434
-#: src/Admin/budgets/BudgetsApp.js:556
+#: src/Admin/budgets/BudgetsApp.js:300
+#: src/Admin/budgets/BudgetsApp.js:330
+#: src/Admin/budgets/BudgetsApp.js:433
+#: src/Admin/budgets/BudgetsApp.js:592
 msgid "Name"
 msgstr "Nom"
 
-#: src/Admin/budgets/BudgetsApp.js:310
-#: src/Admin/budgets/BudgetsApp.js:356
-#: src/Admin/budgets/BudgetsApp.js:460
-#: src/Admin/entries/EntriesApp.js:729
+#: src/Admin/budgets/BudgetsApp.js:309
+#: src/Admin/budgets/BudgetsApp.js:355
+#: src/Admin/budgets/BudgetsApp.js:459
+#: src/Admin/entries/EntriesApp.js:732
 msgid "Balance"
 msgstr "Solde"
 
-#: src/Admin/budgets/BudgetsApp.js:316
-#: src/Admin/budgets/BudgetsApp.js:378
-#: src/Admin/budgets/BudgetsApp.js:481
-#: src/Admin/entries/EntriesApp.js:1133
+#: src/Admin/budgets/BudgetsApp.js:315
+#: src/Admin/budgets/BudgetsApp.js:377
+#: src/Admin/budgets/BudgetsApp.js:480
+#: src/Admin/entries/EntriesApp.js:1136
 msgid "Actions"
 msgstr "Actions"
 
-#: src/Admin/budgets/BudgetsApp.js:392
-#: src/Admin/budgets/BudgetsApp.js:491
+#: src/Admin/budgets/BudgetsApp.js:391
+#: src/Admin/budgets/BudgetsApp.js:490
 msgid "View"
 msgstr "Afficher"
 
-#: src/Admin/budgets/BudgetsApp.js:406
-#: src/Admin/entries/EntriesApp.js:1507
-#: src/Admin/entries/EntriesApp.js:1546
+#: src/Admin/budgets/BudgetsApp.js:405
+#: src/Admin/entries/EntriesApp.js:1510
+#: src/Admin/entries/EntriesApp.js:1549
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/budgets/BudgetsApp.js:421
-#: src/Admin/entries/EntriesApp.js:1522
-#: src/Admin/entries/EntriesApp.js:1630
+#: src/Admin/budgets/BudgetsApp.js:420
+#: src/Admin/entries/EntriesApp.js:1525
+#: src/Admin/entries/EntriesApp.js:1633
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src/Admin/budgets/BudgetsApp.js:440
-#: src/Admin/entries/EntriesApp.js:665
+#: src/Admin/budgets/BudgetsApp.js:439
+#: src/Admin/entries/EntriesApp.js:668
+#: src/Admin/entries/EntriesApp.js:1991
 msgid "Unbudgeted"
 msgstr "Non budgétisé"
 
-#: src/Admin/budgets/BudgetsApp.js:453
+#: src/Admin/budgets/BudgetsApp.js:452
 msgid "Entries without a budget category"
 msgstr "Entrées sans catégorie budgétaire"
 
-#: src/Admin/budgets/BudgetsApp.js:507
-#: src/Admin/budgets/BudgetsApp.js:513
+#: src/Admin/budgets/BudgetsApp.js:506
+#: src/Admin/budgets/BudgetsApp.js:512
 msgid "Total"
 msgstr "Total"
 
-#: src/Admin/budgets/BudgetsApp.js:547
+#: src/Admin/budgets/BudgetsApp.js:583
 msgid "Edit Budget"
 msgstr "Modifier le budget"
 
-#: src/Admin/budgets/BudgetsApp.js:572
+#: src/Admin/budgets/BudgetsApp.js:608
 msgid "Optional description for this budget category"
 msgstr "Description optionnelle pour cette catégorie budgétaire"
 
-#: src/Admin/budgets/BudgetsApp.js:592
+#: src/Admin/budgets/BudgetsApp.js:628
 msgid "Update Budget"
 msgstr "Mettre à jour le budget"
 
-#: src/Admin/budgets/BudgetsApp.js:593
+#: src/Admin/budgets/BudgetsApp.js:629
 msgid "Create Budget"
 msgstr "Créer un budget"
 
@@ -2444,7 +2436,7 @@ msgid "Failed to save entry."
 msgstr "Échec de l'enregistrement de l'entrée."
 
 #: src/Admin/entries/components/EntryForm.js:103
-#: src/Admin/entries/components/SplitModal.js:209
+#: src/Admin/entries/components/SplitModal.js:210
 msgid "-- No Budget --"
 msgstr "-- Aucun budget --"
 
@@ -2479,10 +2471,10 @@ msgstr "Créer une entrée"
 
 #: src/Admin/entries/components/EventUrlField.js:61
 #: src/Admin/entries/components/EventUrlField.js:88
-#: src/Admin/entries/components/SplitModal.js:434
-#: src/Admin/entries/EntriesApp.js:864
-#: src/Admin/entries/EntriesApp.js:891
-#: src/Admin/entries/EntriesApp.js:1114
+#: src/Admin/entries/components/SplitModal.js:435
+#: src/Admin/entries/EntriesApp.js:867
+#: src/Admin/entries/EntriesApp.js:894
+#: src/Admin/entries/EntriesApp.js:1117
 msgid "Link"
 msgstr "Lien"
 
@@ -2552,7 +2544,7 @@ msgid "Entries to import:"
 msgstr "Entrées à importer :"
 
 #: src/Admin/entries/components/ImportModal.js:330
-#: src/Admin/entries/EntriesApp.js:770
+#: src/Admin/entries/EntriesApp.js:773
 msgid "Import"
 msgstr "Importer"
 
@@ -2606,7 +2598,7 @@ msgid "Action"
 msgstr "Action"
 
 #: src/Admin/entries/components/MatchModal.js:238
-#: src/Admin/entries/EntriesApp.js:1611
+#: src/Admin/entries/EntriesApp.js:1614
 msgid "Match"
 msgstr "Associer"
 
@@ -2616,7 +2608,7 @@ msgid "Participant"
 msgstr "Participant"
 
 #: src/Admin/entries/components/ParticipantField.js:109
-#: src/Admin/entries/components/SplitModal.js:408
+#: src/Admin/entries/components/SplitModal.js:409
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -2632,52 +2624,52 @@ msgstr "Lier ce transfert à un participant"
 msgid "No participants found."
 msgstr "Aucun participant trouvé."
 
-#: src/Admin/entries/components/SplitModal.js:297
-#: src/Admin/entries/EntriesApp.js:1486
-#: src/Admin/entries/EntriesApp.js:1561
+#: src/Admin/entries/components/SplitModal.js:298
+#: src/Admin/entries/EntriesApp.js:1489
+#: src/Admin/entries/EntriesApp.js:1564
 msgid "Edit Split"
 msgstr "Modifier la division"
 
-#: src/Admin/entries/components/SplitModal.js:298
-#: src/Admin/entries/components/SplitModal.js:519
+#: src/Admin/entries/components/SplitModal.js:299
+#: src/Admin/entries/components/SplitModal.js:520
 msgid "Split Entry"
 msgstr "Diviser l'entrée"
 
-#: src/Admin/entries/components/SplitModal.js:316
+#: src/Admin/entries/components/SplitModal.js:317
 #: src/Admin/entries/components/UnmatchModal.js:177
 msgid "Amount:"
 msgstr "Montant :"
 
-#: src/Admin/entries/components/SplitModal.js:322
+#: src/Admin/entries/components/SplitModal.js:323
 msgid "Type:"
 msgstr "Type :"
 
-#: src/Admin/entries/components/SplitModal.js:330
+#: src/Admin/entries/components/SplitModal.js:331
 #: src/Admin/entries/components/UnmatchModal.js:173
 msgid "Date:"
 msgstr "Date :"
 
-#: src/Admin/entries/components/SplitModal.js:338
+#: src/Admin/entries/components/SplitModal.js:339
 msgid "Description:"
 msgstr "Description :"
 
-#: src/Admin/entries/components/SplitModal.js:457
+#: src/Admin/entries/components/SplitModal.js:458
 msgid "+ Add Row"
 msgstr "+ Ajouter une ligne"
 
-#: src/Admin/entries/components/SplitModal.js:469
+#: src/Admin/entries/components/SplitModal.js:470
 msgid "Allocated:"
 msgstr "Alloué :"
 
-#: src/Admin/entries/components/SplitModal.js:479
+#: src/Admin/entries/components/SplitModal.js:480
 msgid "Remaining:"
 msgstr "Restant :"
 
-#: src/Admin/entries/components/SplitModal.js:496
+#: src/Admin/entries/components/SplitModal.js:497
 msgid "Unsplit"
 msgstr "Non divisé"
 
-#: src/Admin/entries/components/SplitModal.js:518
+#: src/Admin/entries/components/SplitModal.js:519
 msgid "Update Split"
 msgstr "Mettre à jour la division"
 
@@ -2717,25 +2709,13 @@ msgstr "Mettre à jour le transfert"
 msgid "Create Transfer"
 msgstr "Créer un transfert"
 
-#: src/Admin/entries/EntriesApp.js:333
+#: src/Admin/entries/EntriesApp.js:338
 msgid "Failed to load entries."
 msgstr "Échec du chargement des entrées."
 
-#: src/Admin/entries/EntriesApp.js:393
+#: src/Admin/entries/EntriesApp.js:398
 msgid "Failed to export entries."
 msgstr "Impossible d'exporter les entrées."
-
-#: src/Admin/entries/EntriesApp.js:413
-msgid "Are you sure you want to delete this entry?"
-msgstr "Êtes-vous sûr de vouloir supprimer cette entrée ?"
-
-#: src/Admin/entries/EntriesApp.js:430
-msgid "Entry deleted successfully."
-msgstr "Entrée supprimée avec succès."
-
-#: src/Admin/entries/EntriesApp.js:439
-msgid "Failed to delete entry."
-msgstr "Échec de la suppression de l'entrée."
 
 #: src/Admin/entries/EntriesApp.js:449
 msgid "Entry updated successfully."
@@ -2765,135 +2745,127 @@ msgstr "Division mise à jour avec succès."
 msgid "Entry split successfully."
 msgstr "Entrée divisée avec succès."
 
-#: src/Admin/entries/EntriesApp.js:542
-msgid "Are you sure you want to unsplit this entry? All child allocations will be deleted."
-msgstr "Êtes-vous sûr de vouloir annuler la division de cette entrée ? Toutes les allocations enfants seront supprimées."
-
-#: src/Admin/entries/EntriesApp.js:557
-msgid "Entry unsplit successfully."
-msgstr "Entrée divisée avec succès."
-
-#: src/Admin/entries/EntriesApp.js:586
+#: src/Admin/entries/EntriesApp.js:575
 msgid "Transfer updated successfully."
 msgstr "Transfert mis à jour avec succès."
 
-#: src/Admin/entries/EntriesApp.js:587
+#: src/Admin/entries/EntriesApp.js:576
 msgid "Transfer created successfully."
 msgstr "Transfert créé avec succès."
 
-#: src/Admin/entries/EntriesApp.js:660
+#: src/Admin/entries/EntriesApp.js:663
 msgid "All Budgets"
 msgstr "Tous les budgets"
 
-#: src/Admin/entries/EntriesApp.js:669
-#: src/Admin/entries/EntriesApp.js:871
+#: src/Admin/entries/EntriesApp.js:672
+#: src/Admin/entries/EntriesApp.js:874
 msgid "All Links"
 msgstr "Tous les liens"
 
-#: src/Admin/entries/EntriesApp.js:698
+#: src/Admin/entries/EntriesApp.js:701
 msgid "Total Costs"
 msgstr "Coûts totaux"
 
-#: src/Admin/entries/EntriesApp.js:712
+#: src/Admin/entries/EntriesApp.js:715
 msgid "Total Income"
 msgstr "Revenu total"
 
-#: src/Admin/entries/EntriesApp.js:758
+#: src/Admin/entries/EntriesApp.js:761
 msgid "Add Entry"
 msgstr "Ajouter une entrée"
 
-#: src/Admin/entries/EntriesApp.js:764
-#: src/Admin/entries/EntriesApp.js:959
-#: src/Admin/entries/EntriesApp.js:1181
+#: src/Admin/entries/EntriesApp.js:767
+#: src/Admin/entries/EntriesApp.js:962
+#: src/Admin/entries/EntriesApp.js:1184
 msgid "Transfer"
 msgstr "Transfert"
 
-#: src/Admin/entries/EntriesApp.js:780
+#: src/Admin/entries/EntriesApp.js:783
 msgid "Export CSV"
 msgstr "Exporter en CSV"
 
-#: src/Admin/entries/EntriesApp.js:823
+#: src/Admin/entries/EntriesApp.js:826
 msgid "From Date"
 msgstr "Date de début"
 
-#: src/Admin/entries/EntriesApp.js:837
+#: src/Admin/entries/EntriesApp.js:840
 msgid "To Date"
 msgstr "Date de fin"
 
-#: src/Admin/entries/EntriesApp.js:938
+#: src/Admin/entries/EntriesApp.js:941
 msgid "All Types"
 msgstr "Tous les types"
 
-#: src/Admin/entries/EntriesApp.js:974
+#: src/Admin/entries/EntriesApp.js:977
 msgid "Matching"
 msgstr "Correspondance"
 
-#: src/Admin/entries/EntriesApp.js:983
+#: src/Admin/entries/EntriesApp.js:986
 msgid "All"
 msgstr "Tous"
 
-#: src/Admin/entries/EntriesApp.js:990
+#: src/Admin/entries/EntriesApp.js:993
 msgid "Unmatched Only"
 msgstr "Non appariés uniquement"
 
-#: src/Admin/entries/EntriesApp.js:1038
+#: src/Admin/entries/EntriesApp.js:1041
 msgid "Loading entries..."
 msgstr "Chargement des entrées..."
 
-#: src/Admin/entries/EntriesApp.js:1067
+#: src/Admin/entries/EntriesApp.js:1070
 msgid "No entries found. Add your first entry to start tracking costs and income."
 msgstr "Aucune entrée trouvée. Ajoutez votre première entrée pour commencer à suivre les coûts et les revenus."
 
-#: src/Admin/entries/EntriesApp.js:1121
+#: src/Admin/entries/EntriesApp.js:1124
 msgid "Matched"
 msgstr "Apparié"
 
-#: src/Admin/entries/EntriesApp.js:1127
+#: src/Admin/entries/EntriesApp.js:1130
 #: src/Admin/entries/exportEntriesCsv.js:47
 msgid "Imported"
 msgstr "Importé"
 
-#: src/Admin/entries/EntriesApp.js:1213
+#: src/Admin/entries/EntriesApp.js:1216
 msgid "(split)"
 msgstr "(divisé)"
 
-#: src/Admin/entries/EntriesApp.js:1321
-#: src/Admin/entries/EntriesApp.js:1399
+#: src/Admin/entries/EntriesApp.js:1324
+#: src/Admin/entries/EntriesApp.js:1402
 msgid "Split ▾"
 msgstr "Diviser ▾"
 
-#: src/Admin/entries/EntriesApp.js:1325
-#: src/Admin/entries/EntriesApp.js:1403
+#: src/Admin/entries/EntriesApp.js:1328
+#: src/Admin/entries/EntriesApp.js:1406
 msgid "Split ▸"
 msgstr "Diviser ▸"
 
-#: src/Admin/entries/EntriesApp.js:1374
+#: src/Admin/entries/EntriesApp.js:1377
 msgid "Transfer ▾"
 msgstr "Transférer ▾"
 
-#: src/Admin/entries/EntriesApp.js:1378
+#: src/Admin/entries/EntriesApp.js:1381
 msgid "Transfer ▸"
 msgstr "Transférer ▸"
 
-#: src/Admin/entries/EntriesApp.js:1432
+#: src/Admin/entries/EntriesApp.js:1435
 #, js-format
 msgid "Yes (%d)"
 msgstr "Oui (%d)"
 
-#: src/Admin/entries/EntriesApp.js:1440
+#: src/Admin/entries/EntriesApp.js:1443
 msgid "Yes"
 msgstr "Oui"
 
-#: src/Admin/entries/EntriesApp.js:1451
+#: src/Admin/entries/EntriesApp.js:1454
 msgid "No"
 msgstr "Non"
 
-#: src/Admin/entries/EntriesApp.js:1576
+#: src/Admin/entries/EntriesApp.js:1579
 msgid "Split"
 msgstr "Diviser"
 
 #: src/Admin/entries/components/UnmatchModal.js:314
-#: src/Admin/entries/EntriesApp.js:1596
+#: src/Admin/entries/EntriesApp.js:1599
 #: src/Admin/reconciliation/ReconciliationApp.js:1361
 msgid "Unmatch"
 msgstr "Dissocier"
@@ -3187,8 +3159,9 @@ msgstr[1] "Cela supprime les liens avec les %d transactions :"
 msgid "This entry has no linked transactions left. Unmatching only refreshes the list."
 msgstr "Cette entrée n’a plus de transactions liées. La dissociation actualise seulement la liste."
 
-#. translators: %d: financial entry ID.
+#. translators: %d: financial entry ID
 #: src/Admin/entries/components/UnmatchModal.js:155
+#: src/Admin/entries/EntriesApp.js:651
 #, js-format
 msgid "Entry #%d"
 msgstr "Entrée n°%d"
@@ -3239,6 +3212,138 @@ msgstr "La dissociation supprime uniquement ces associations locales. L’entré
 msgid "Unmatching…"
 msgstr "Dissociation…"
 
-#: src/Admin/entries/EntriesApp.js:324
+#: src/Admin/entries/EntriesApp.js:329
 msgid "The list could not be refreshed. Reload the page to see the current entries."
 msgstr "La liste n’a pas pu être actualisée. Rechargez la page pour voir les entrées actuelles."
+
+#. translators: %s: budget name
+#: src/Admin/budgets/BudgetsApp.js:96
+#, js-format
+msgid "Budget “%s” deleted."
+msgstr "Budget « %s » supprimé."
+
+#: src/Admin/budgets/BudgetsApp.js:102
+msgid "The budget could not be deleted. Try again."
+msgstr "Le budget n'a pas pu être supprimé. Réessayez."
+
+#. translators: %s: budget name
+#: src/Admin/budgets/BudgetsApp.js:546
+#, js-format
+msgid "Delete budget — %s"
+msgstr "Supprimer le budget — %s"
+
+#: src/Admin/budgets/BudgetsApp.js:549
+msgid "Delete budget"
+msgstr "Supprimer le budget"
+
+#: src/Admin/budgets/BudgetsApp.js:550
+#: src/Admin/entries/EntriesApp.js:2026
+msgid "Deleting…"
+msgstr "Suppression…"
+
+#. translators: %d: number of financial entries in the budget
+#: src/Admin/budgets/BudgetsApp.js:560
+#, js-format
+msgid "Its %d financial entry is kept and moves to Unbudgeted."
+msgid_plural "Its %d financial entries are kept and move to Unbudgeted."
+msgstr[0] "Son %d enregistrement financier est conservé et se déplace vers Non budgétisé."
+msgstr[1] "Ses %d enregistrements financiers sont conservés et se déplacent vers Non budgétisé."
+
+#: src/Admin/budgets/BudgetsApp.js:571
+msgid "Connected sites linked to this budget lose that link. Deleting the budget cannot be undone."
+msgstr "Les sites connectés liés à ce budget perdent ce lien. La suppression du budget ne peut pas être annulée."
+
+#. translators: %s: financial entry description
+#: src/Admin/entries/EntriesApp.js:435
+#, js-format
+msgid "Entry “%s” deleted."
+msgstr "Entrée « %s » supprimée."
+
+#: src/Admin/entries/EntriesApp.js:441
+msgid "The entry could not be deleted. Try again."
+msgstr "L'entrée n'a pas pu être supprimée. Réessayez."
+
+#. translators: %s: financial entry description
+#: src/Admin/entries/EntriesApp.js:551
+#, js-format
+msgid "Entry “%s” unsplit."
+msgstr "Entrée « %s » non divisée."
+
+#: src/Admin/entries/EntriesApp.js:557
+msgid "The entry could not be unsplit. Try again."
+msgstr "L'entrée n'a pas pu être non divisée. Réessayez."
+
+#. translators: 1: entry date, 2: entry amount
+#: src/Admin/entries/EntriesApp.js:657
+#, js-format
+msgid "Dated %1$s, %2$s."
+msgstr "Datée %1$s, %2$s."
+
+#. translators: %s: financial entry description
+#: src/Admin/entries/EntriesApp.js:1943
+#, js-format
+msgid "Unsplit entry — %s"
+msgstr "Entrée non divisée — %s"
+
+#: src/Admin/entries/EntriesApp.js:1946
+msgid "Unsplit entry"
+msgstr "Entrée non divisée"
+
+#: src/Admin/entries/EntriesApp.js:1950
+msgid "Unsplitting…"
+msgstr "Non-division…"
+
+#. translators: %d: number of split allocations
+#: src/Admin/entries/EntriesApp.js:1964
+#, js-format
+msgid "This deletes its %d allocation:"
+msgid_plural "This deletes all %d of its allocations:"
+msgstr[0] "Cela supprime son %d allocation :"
+msgstr[1] "Cela supprime tous ses %d allocations :"
+
+#. translators: 1: allocation amount, 2: budget name
+#: src/Admin/entries/EntriesApp.js:1982
+#, js-format
+msgid "%1$s to %2$s"
+msgstr "%1$s à %2$s"
+
+#: src/Admin/entries/EntriesApp.js:2000
+msgid "The entry itself and its matched transactions are kept. You can split it again later."
+msgstr "L'entrée elle-même et ses transactions correspondantes sont conservées. Vous pouvez la diviser à nouveau plus tard."
+
+#. translators: %s: transfer description
+#: src/Admin/entries/EntriesApp.js:2016
+#, js-format
+msgid "Delete transfer — %s"
+msgstr "Supprimer le transfert — %s"
+
+#. translators: %s: financial entry description
+#: src/Admin/entries/EntriesApp.js:2018
+#, js-format
+msgid "Delete entry — %s"
+msgstr "Supprimer l'entrée — %s"
+
+#: src/Admin/entries/EntriesApp.js:2023
+msgid "Delete transfer"
+msgstr "Supprimer le transfert"
+
+#: src/Admin/entries/EntriesApp.js:2024
+msgid "Delete entry"
+msgstr "Supprimer l'entrée"
+
+#: src/Admin/entries/EntriesApp.js:2036
+msgid "Both of its budget allocations are deleted with it."
+msgstr "Les deux allocations budgétaires qui lui sont associées seront supprimées."
+
+#. translators: %d: number of matched transactions
+#: src/Admin/entries/EntriesApp.js:2046
+#, js-format
+msgid "It is matched to %d transaction, which is not deleted."
+msgid_plural "It is matched to %d transactions, which are not deleted."
+msgstr[0] "Il est associé à %d transaction, qui n'est pas supprimée."
+msgstr[1] "Il est associé à %d transactions, qui ne sont pas supprimées."
+
+#: src/Admin/entries/EntriesApp.js:2056
+msgid "This cannot be undone."
+msgstr "Cette action ne peut pas être annulée."
+

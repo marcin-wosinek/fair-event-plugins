@@ -171,6 +171,7 @@ const SplitModal = ( {
 	onSplit,
 	onCancel,
 	onUnsplit,
+	confirmation = null,
 } ) => {
 	const isEditMode = entry.children && entry.children.length > 0;
 	const [ allocations, setAllocations ] = useState(
@@ -522,6 +523,7 @@ const SplitModal = ( {
 					</HStack>
 				</VStack>
 			</form>
+			{ confirmation }
 		</Modal>
 	);
 };

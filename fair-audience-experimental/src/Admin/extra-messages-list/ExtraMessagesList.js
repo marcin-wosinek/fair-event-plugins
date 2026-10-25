@@ -1,12 +1,20 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Button, Card, CardBody, Spinner } from '@wordpress/components';
+import { Button, Card, CardBody, Notice, Spinner } from '@wordpress/components';
+
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 export default function ExtraMessagesList() {
 	const [ messages, setMessages ] = useState( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
+	// Result of the last delete or status change: { status, message }.
+	const [ notice, setNotice ] = useState( null );
+	const [ togglingId, setTogglingId ] = useState( null );
+	const deleteMessage = useConfirmAction();
 
 	useEffect( () => {
 		loadMessages();
@@ -25,33 +33,34 @@ export default function ExtraMessagesList() {
 			} );
 	};
 
-	const handleDelete = ( id ) => {
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this extra message?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/extra-messages/${ id }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
+	const handleDelete = () =>
+		deleteMessage.run(
+			async ( msg ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/extra-messages/${ msg.id }`,
+					method: 'DELETE',
+				} );
+				setNotice( {
+					status: 'success',
+					message: __(
+						'Extra message deleted.',
+						'fair-audience-experimental'
+					),
+				} );
 				loadMessages();
-			} )
-			.catch( ( err ) => {
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) + err.message
-				);
-			} );
-	};
+			},
+			__(
+				'The extra message could not be deleted. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	const handleToggleActive = ( msg ) => {
+		if ( togglingId ) {
+			return;
+		}
+		setTogglingId( msg.id );
+		setNotice( null );
 		apiFetch( {
 			path: `/fair-audience/v1/extra-messages/${ msg.id }`,
 			method: 'PUT',
@@ -65,10 +74,17 @@ export default function ExtraMessagesList() {
 				loadMessages();
 			} )
 			.catch( ( err ) => {
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) + err.message
-				);
-			} );
+				setNotice( {
+					status: 'error',
+					message:
+						err.message ||
+						__(
+							'The message status could not be changed. Try again.',
+							'fair-audience-experimental'
+						),
+				} );
+			} )
+			.finally( () => setTogglingId( null ) );
 	};
 
 	const truncateContent = ( content, maxLength = 80 ) => {
@@ -113,6 +129,55 @@ export default function ExtraMessagesList() {
 			>
 				{ __( 'Add New', 'fair-audience-experimental' ) }
 			</a>
+
+			{ notice && (
+				<Notice
+					status={ notice.status }
+					onRemove={ () => setNotice( null ) }
+				>
+					{ notice.message }
+				</Notice>
+			) }
+
+			{ deleteMessage.target && (
+				<ConfirmActionModal
+					title={ __(
+						'Delete extra message',
+						'fair-audience-experimental'
+					) }
+					confirmLabel={ __(
+						'Delete message',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Deleting…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ deleteMessage.isBusy }
+					error={ deleteMessage.error }
+					onConfirm={ handleDelete }
+					onCancel={ deleteMessage.close }
+				>
+					<blockquote style={ { margin: 0, whiteSpace: 'pre-wrap' } }>
+						{ truncateContent( deleteMessage.target.content, 300 ) }
+					</blockquote>
+					<p>
+						{ sprintf(
+							/* translators: %s: category name, or "All" */
+							__( 'Category: %s', 'fair-audience-experimental' ),
+							deleteMessage.target.category_name ||
+								__( 'All', 'fair-audience-experimental' )
+						) }
+					</p>
+					<p>
+						{ __(
+							'Emails sent from now on no longer include it; emails already sent are not changed. To pause it instead, set it to Inactive. Deleting cannot be undone.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			<Card style={ { marginTop: '20px' } }>
 				<CardBody>
@@ -177,6 +242,8 @@ export default function ExtraMessagesList() {
 												onClick={ () =>
 													handleToggleActive( msg )
 												}
+												isBusy={ togglingId === msg.id }
+												disabled={ !! togglingId }
 											>
 												{ msg.is_active
 													? __(
@@ -202,9 +269,10 @@ export default function ExtraMessagesList() {
 											{ ' | ' }
 											<Button
 												isLink
-												onClick={ () =>
-													handleDelete( msg.id )
-												}
+												onClick={ () => {
+													setNotice( null );
+													deleteMessage.open( msg );
+												} }
 												style={ {
 													color: '#b32d2e',
 												} }

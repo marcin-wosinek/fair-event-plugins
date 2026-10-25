@@ -8,7 +8,7 @@ import {
 	useRef,
 	Fragment,
 } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -33,6 +33,9 @@ import ImportModal from './components/ImportModal.js';
 import SplitModal from './components/SplitModal.js';
 import TransferModal from './components/TransferModal.js';
 import TagChart from './components/TagChart.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 import { buildEntriesCsv, downloadCsv } from './exportEntriesCsv.js';
 
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
@@ -116,6 +119,8 @@ const EntriesApp = () => {
 	const [ unmatchingEntry, setUnmatchingEntry ] = useState( null );
 	const [ isImportOpen, setIsImportOpen ] = useState( false );
 	const [ splittingEntry, setSplittingEntry ] = useState( null );
+	const deleteEntry = useConfirmAction();
+	const unsplitEntry = useConfirmAction();
 	const [ isTransferOpen, setIsTransferOpen ] = useState( false );
 	const [ transferEntry, setTransferEntry ] = useState( null );
 	const [ expandedEntries, setExpandedEntries ] = useState( {} );
@@ -407,39 +412,34 @@ const EntriesApp = () => {
 		setIsFormOpen( true );
 	};
 
-	const handleDelete = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to delete this entry?',
-					'fair-finance'
-				)
-			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-
-		try {
-			await apiFetch( {
-				path: `/fair-finance/v1/financial-entries/${ id }`,
-				method: 'DELETE',
-			} );
-			setSuccess( __( 'Entry deleted successfully.', 'fair-finance' ) );
-			loadEntries();
-			loadTotals();
-			if ( eventsEnabled ) {
-				loadEventUrls();
-				loadEventDateOptions();
-			}
-		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to delete entry.', 'fair-finance' )
-			);
+	const reloadAfterRemoval = () => {
+		loadEntries();
+		loadTotals();
+		if ( eventsEnabled ) {
+			loadEventUrls();
+			loadEventDateOptions();
 		}
 	};
+
+	const handleDelete = () =>
+		deleteEntry.run(
+			async ( entry ) => {
+				await apiFetch( {
+					path: `/fair-finance/v1/financial-entries/${ entry.id }`,
+					method: 'DELETE',
+				} );
+				setError( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: financial entry description */
+						__( 'Entry “%s” deleted.', 'fair-finance' ),
+						entryLabel( entry )
+					)
+				);
+				reloadAfterRemoval();
+			},
+			__( 'The entry could not be deleted. Try again.', 'fair-finance' )
+		);
 
 	const handleFormSave = () => {
 		setIsFormOpen( false );
@@ -536,37 +536,26 @@ const EntriesApp = () => {
 		setSplittingEntry( null );
 	};
 
-	const handleUnsplit = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to unsplit this entry? All child allocations will be deleted.',
-					'fair-finance'
-				)
-			)
-		) {
-			return;
-		}
-
-		try {
-			await apiFetch( {
-				path: `/fair-finance/v1/financial-entries/${ id }/split`,
-				method: 'DELETE',
-			} );
-			setSplittingEntry( null );
-			setSuccess( __( 'Entry unsplit successfully.', 'fair-finance' ) );
-			loadEntries();
-			loadTotals();
-			if ( eventsEnabled ) {
-				loadEventUrls();
-				loadEventDateOptions();
-			}
-		} catch ( err ) {
-			setError(
-				err.message || __( 'Failed to unsplit entry.', 'fair-finance' )
-			);
-		}
-	};
+	const handleUnsplit = () =>
+		unsplitEntry.run(
+			async ( entry ) => {
+				await apiFetch( {
+					path: `/fair-finance/v1/financial-entries/${ entry.id }/split`,
+					method: 'DELETE',
+				} );
+				setSplittingEntry( null );
+				setError( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: financial entry description */
+						__( 'Entry “%s” unsplit.', 'fair-finance' ),
+						entryLabel( entry )
+					)
+				);
+				reloadAfterRemoval();
+			},
+			__( 'The entry could not be unsplit. Try again.', 'fair-finance' )
+		);
 
 	const handleTransfer = () => {
 		setTransferEntry( null );
@@ -655,6 +644,20 @@ const EntriesApp = () => {
 		const budget = budgets.find( ( b ) => b.id === budgetId );
 		return budget ? budget.name : '-';
 	};
+
+	const entryLabel = ( entry ) =>
+		entry.description ||
+		/* translators: %d: financial entry ID */
+		sprintf( __( 'Entry #%d', 'fair-finance' ), entry.id );
+
+	// Date and amount, so entries sharing a description stay distinguishable.
+	const entrySummary = ( entry ) =>
+		sprintf(
+			/* translators: 1: entry date, 2: entry amount */
+			__( 'Dated %1$s, %2$s.', 'fair-finance' ),
+			entry.entry_date,
+			formatAmount( entry.amount )
+		);
 
 	const budgetOptions = [
 		{ label: __( 'All Budgets', 'fair-finance' ), value: '' },
@@ -1514,8 +1517,8 @@ const EntriesApp = () => {
 																				size="small"
 																				isDestructive
 																				onClick={ () =>
-																					handleDelete(
-																						entry.id
+																					deleteEntry.open(
+																						entry
 																					)
 																				}
 																			>
@@ -1619,8 +1622,8 @@ const EntriesApp = () => {
 																				size="small"
 																				isDestructive
 																				onClick={ () =>
-																					handleDelete(
-																						entry.id
+																					deleteEntry.open(
+																						entry
 																					)
 																				}
 																				disabled={
@@ -1929,8 +1932,129 @@ const EntriesApp = () => {
 					eventsEnabled={ eventsEnabled }
 					onSplit={ handleSplitComplete }
 					onCancel={ handleSplitCancel }
-					onUnsplit={ () => handleUnsplit( splittingEntry.id ) }
+					onUnsplit={ () => unsplitEntry.open( splittingEntry ) }
+					// Rendered inside the split editor: a sibling modal would
+					// dismiss it, losing its edits when the unsplit is cancelled.
+					confirmation={
+						unsplitEntry.target && (
+							<ConfirmActionModal
+								title={ sprintf(
+									/* translators: %s: financial entry description */
+									__( 'Unsplit entry — %s', 'fair-finance' ),
+									entryLabel( unsplitEntry.target )
+								) }
+								confirmLabel={ __(
+									'Unsplit entry',
+									'fair-finance'
+								) }
+								busyLabel={ __(
+									'Unsplitting…',
+									'fair-finance'
+								) }
+								isDestructive
+								isBusy={ unsplitEntry.isBusy }
+								error={ unsplitEntry.error }
+								onConfirm={ handleUnsplit }
+								onCancel={ unsplitEntry.close }
+							>
+								<p>{ entrySummary( unsplitEntry.target ) }</p>
+								<p>
+									{ sprintf(
+										/* translators: %d: number of split allocations */
+										_n(
+											'This deletes its %d allocation:',
+											'This deletes all %d of its allocations:',
+											unsplitEntry.target.children
+												?.length || 0,
+											'fair-finance'
+										),
+										unsplitEntry.target.children?.length ||
+											0
+									) }
+								</p>
+								<ul>
+									{ (
+										unsplitEntry.target.children || []
+									).map( ( child ) => (
+										<li key={ child.id }>
+											{ sprintf(
+												/* translators: 1: allocation amount, 2: budget name */
+												__(
+													'%1$s to %2$s',
+													'fair-finance'
+												),
+												formatAmount( child.amount ),
+												child.budget_id
+													? getBudgetName(
+															child.budget_id
+														)
+													: __(
+															'Unbudgeted',
+															'fair-finance'
+														)
+											) }
+										</li>
+									) ) }
+								</ul>
+								<p>
+									{ __(
+										'The entry itself and its matched transactions are kept. You can split it again later.',
+										'fair-finance'
+									) }
+								</p>
+							</ConfirmActionModal>
+						)
+					}
 				/>
+			) }
+
+			{ deleteEntry.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						'transfer' === deleteEntry.target.entry_type
+							? /* translators: %s: transfer description */
+								__( 'Delete transfer — %s', 'fair-finance' )
+							: /* translators: %s: financial entry description */
+								__( 'Delete entry — %s', 'fair-finance' ),
+						entryLabel( deleteEntry.target )
+					) }
+					confirmLabel={
+						'transfer' === deleteEntry.target.entry_type
+							? __( 'Delete transfer', 'fair-finance' )
+							: __( 'Delete entry', 'fair-finance' )
+					}
+					busyLabel={ __( 'Deleting…', 'fair-finance' ) }
+					isDestructive
+					isBusy={ deleteEntry.isBusy }
+					error={ deleteEntry.error }
+					onConfirm={ handleDelete }
+					onCancel={ deleteEntry.close }
+				>
+					<p>{ entrySummary( deleteEntry.target ) }</p>
+					{ 'transfer' === deleteEntry.target.entry_type && (
+						<p>
+							{ __(
+								'Both of its budget allocations are deleted with it.',
+								'fair-finance'
+							) }
+						</p>
+					) }
+					{ deleteEntry.target.transaction_ids?.length > 0 && (
+						<p>
+							{ sprintf(
+								/* translators: %d: number of matched transactions */
+								_n(
+									'It is matched to %d transaction, which is not deleted.',
+									'It is matched to %d transactions, which are not deleted.',
+									deleteEntry.target.transaction_ids.length,
+									'fair-finance'
+								),
+								deleteEntry.target.transaction_ids.length
+							) }
+						</p>
+					) }
+					<p>{ __( 'This cannot be undone.', 'fair-finance' ) }</p>
+				</ConfirmActionModal>
 			) }
 
 			{ /* Transfer Modal */ }
