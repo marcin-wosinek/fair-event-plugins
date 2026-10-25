@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "yes",
 	"description": "A single-choice question (select or radio) for Fair Form",
-	"keywords": [ "question", "select", "radio", "choice" ],
+	"keywords": [ "question", "select", "radio", "choice", "category" ],
 	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
@@ -29,6 +29,15 @@
 		"required": {
 			"type": "boolean",
 			"default": false
+		},
+		"optionSource": {
+			"type": "string",
+			"enum": [ "manual", "categories", "categoryChildren" ],
+			"default": "manual"
+		},
+		"parentCategoryId": {
+			"type": "integer",
+			"default": 0
 		}
 	},
 	"editorScript": "file:./editor.js",

@@ -49,6 +49,13 @@ jest.mock( '@wordpress/components', () => ( {
 			/>
 		</label>
 	),
+	Notice: ( { status, children } ) => (
+		<div data-status={ status }>{ children }</div>
+	),
+	Button: ( { children, onClick } ) => (
+		<button onClick={ onClick }>{ children }</button>
+	),
+	Spinner: () => null,
 	CheckboxControl: ( { label, checked, onChange } ) => (
 		<label>
 			<input
@@ -90,6 +97,54 @@ function mockFormParent( formBlock ) {
 		} )
 	);
 }
+
+/**
+ * Like mockFormParent(), with the form's question blocks.
+ *
+ * @param {Array} blocks Fake question blocks inside the Fair Form.
+ */
+function mockFormQuestions( blocks ) {
+	mockUseSelect.mockImplementation( ( callback ) =>
+		callback( ( store ) => {
+			if ( store !== 'core/block-editor' ) {
+				return {};
+			}
+			return {
+				getBlockParents: () => [ 'form-1' ],
+				getBlock: ( id ) =>
+					id === 'form-1'
+						? { name: 'fair-audience/fair-form', attributes: {} }
+						: undefined,
+				getBlocks: () => blocks,
+			};
+		} )
+	);
+}
+
+const categoryQuestion = {
+	name: 'fair-audience/fair-form-select-one',
+	attributes: {
+		questionKey: 'workshop',
+		questionText: 'Workshop',
+		optionSource: 'categoryChildren',
+		parentCategoryId: 10,
+	},
+	innerBlocks: [
+		{
+			name: 'fair-audience/fair-form-option',
+			attributes: { value: 'Typed, hidden' },
+		},
+	],
+};
+
+const categoriesResponse = {
+	headers: { get: () => '1' },
+	json: async () => [
+		{ id: 10, name: 'Workshops', parent: 0 },
+		{ id: 11, name: 'Juggling', parent: 10 },
+		{ id: 12, name: 'Aerial', parent: 10 },
+	],
+};
 
 describe( 'Fair Form Conditional Edit', () => {
 	let Edit;
@@ -367,5 +422,88 @@ describe( 'Fair Form Conditional Edit', () => {
 
 		await screen.findByLabelText( 'Adult' );
 		expect( setAttributes ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	describe( 'category-backed questions (#1999)', () => {
+		const valueOptions = () =>
+			Array.from(
+				screen.getByLabelText( 'Value' ).querySelectorAll( 'option' )
+			).map( ( o ) => o.textContent );
+
+		it( 'offers the categories in scope as condition values', async () => {
+			mockFormQuestions( [ categoryQuestion ] );
+			apiFetch.mockResolvedValue( categoriesResponse );
+			renderEdit( { conditionQuestionKey: 'workshop' } );
+
+			await waitFor( () =>
+				expect( valueOptions() ).toEqual( [
+					'— Select a value —',
+					'Aerial',
+					'Juggling',
+				] )
+			);
+			expect( apiFetch.mock.calls[ 0 ][ 0 ].path ).toMatch(
+				/^\/wp\/v2\/categories\?/
+			);
+		} );
+
+		it( 'keeps and flags a saved value that is no longer a category', async () => {
+			mockFormQuestions( [ categoryQuestion ] );
+			apiFetch.mockResolvedValue( categoriesResponse );
+			const setAttributes = jest.fn();
+			renderEdit(
+				{
+					conditionQuestionKey: 'workshop',
+					conditionValue: 'Clowning',
+				},
+				setAttributes
+			);
+
+			await waitFor( () =>
+				expect( valueOptions() ).toContain(
+					'Clowning (no longer a choice)'
+				)
+			);
+			expect( screen.getByLabelText( 'Value' ) ).toHaveValue(
+				'Clowning'
+			);
+			expect(
+				screen.getByText( /is no longer one of this question/ )
+			).toBeInTheDocument();
+			expect( setAttributes ).not.toHaveBeenCalled();
+		} );
+
+		it( 'keeps the saved value editable when categories fail to load', async () => {
+			mockFormQuestions( [ categoryQuestion ] );
+			apiFetch.mockRejectedValue( new Error( 'offline' ) );
+			renderEdit( {
+				conditionQuestionKey: 'workshop',
+				conditionValue: 'Juggling',
+			} );
+
+			await screen.findByRole( 'button', { name: 'Try again' } );
+			expect( screen.getByLabelText( 'Value' ) ).toHaveValue(
+				'Juggling'
+			);
+		} );
+
+		it( 'still uses typed options for manual questions without loading categories', () => {
+			mockFormQuestions( [
+				{
+					...categoryQuestion,
+					attributes: {
+						...categoryQuestion.attributes,
+						optionSource: 'manual',
+					},
+				},
+			] );
+			renderEdit( { conditionQuestionKey: 'workshop' } );
+
+			expect( valueOptions() ).toEqual( [
+				'— Select a value —',
+				'Typed, hidden',
+			] );
+			expect( apiFetch ).not.toHaveBeenCalled();
+		} );
 	} );
 } );

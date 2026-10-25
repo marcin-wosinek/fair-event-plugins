@@ -14,6 +14,15 @@
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}
+		},
+		"categories": {
+			"title": "Select One Question with category choices",
+			"description": "Every post category is a choice; typed option blocks are not used.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form [data-question-key='workshop_category']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
 		}
 	}
 }

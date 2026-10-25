@@ -7,7 +7,13 @@
 	"category": "widgets",
 	"icon": "yes-alt",
 	"description": "A multiple-choice checkbox question for Fair Form",
-	"keywords": [ "question", "checkbox", "multiselect", "multiple" ],
+	"keywords": [
+		"question",
+		"checkbox",
+		"multiselect",
+		"multiple",
+		"category"
+	],
 	"textdomain": "fair-form",
 	"ancestor": [
 		"fair-audience/fair-form",
@@ -29,6 +35,15 @@
 		"required": {
 			"type": "boolean",
 			"default": false
+		},
+		"optionSource": {
+			"type": "string",
+			"enum": [ "manual", "categories", "categoryChildren" ],
+			"default": "manual"
+		},
+		"parentCategoryId": {
+			"type": "integer",
+			"default": 0
 		}
 	},
 	"editorScript": "file:./editor.js",

@@ -9,8 +9,14 @@ import {
 } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useSelect } from '@wordpress/data';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { isCategorySource, useCategories } from '../shared/category-options.js';
+import {
+	OptionSourcePanel,
+	CategoryChoicesPreview,
+} from '../shared/OptionSourceControls.js';
 
 const ALLOWED_BLOCKS = [ 'fair-audience/fair-form-option' ];
 
@@ -31,6 +37,8 @@ registerBlockType( 'fair-audience/fair-form-multiselect', {
 			{
 				type: 'block',
 				blocks: [ 'fair-audience/fair-form-radio' ],
+				// Radio questions have no category source (#1999).
+				isMatch: ( attributes ) => ! isCategorySource( attributes ),
 				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
 						'fair-audience/fair-form-radio',
@@ -41,8 +49,15 @@ registerBlockType( 'fair-audience/fair-form-multiselect', {
 			},
 		],
 	},
-	edit: ( { attributes, setAttributes } ) => {
+	edit: ( { attributes, setAttributes, clientId } ) => {
 		const { questionText, questionKey, required } = attributes;
+		const usesCategories = isCategorySource( attributes );
+		const categoriesState = useCategories( usesCategories );
+		const manualOptionCount = useSelect(
+			( select ) =>
+				select( 'core/block-editor' ).getBlockCount( clientId ),
+			[ clientId ]
+		);
 
 		const onQuestionTextChange = ( value ) => {
 			const updates = { questionText: value };
@@ -90,6 +105,11 @@ registerBlockType( 'fair-audience/fair-form-multiselect', {
 							}
 						/>
 					</PanelBody>
+					<OptionSourcePanel
+						attributes={ attributes }
+						setAttributes={ setAttributes }
+						categoriesState={ categoriesState }
+					/>
 				</InspectorControls>
 
 				<div { ...blockProps }>
@@ -112,7 +132,15 @@ registerBlockType( 'fair-audience/fair-form-multiselect', {
 							{ required && <span className="required"> *</span> }
 						</span>
 					</p>
-					<div { ...innerBlocksProps } />
+					{ usesCategories ? (
+						<CategoryChoicesPreview
+							attributes={ attributes }
+							categoriesState={ categoriesState }
+							manualOptionCount={ manualOptionCount }
+						/>
+					) : (
+						<div { ...innerBlocksProps } />
+					) }
 				</div>
 			</>
 		);
