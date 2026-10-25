@@ -25,11 +25,6 @@ defined( 'WPINC' ) || die;
 class PhotoCleanup {
 
 	/**
-	 * Option holding the fair-audience-experimental feature choices.
-	 */
-	const FEATURES_OPTION = 'fair_audience_experimental_features';
-
-	/**
 	 * User meta keys of the retired bulk upload selectors.
 	 */
 	const USER_META_KEYS = array(
@@ -50,7 +45,7 @@ class PhotoCleanup {
 		);
 
 		$meta_removed    = self::delete_user_meta();
-		$feature_removed = self::remove_feature_choice();
+		$feature_removed = RetiredFeatureChoice::remove( 'photos' );
 
 		return $table_dropped && $meta_removed && $feature_removed;
 	}
@@ -78,37 +73,5 @@ class PhotoCleanup {
 		);
 
 		return null !== $remaining && 0 === (int) $remaining;
-	}
-
-	/**
-	 * Remove the stored `photos` choice, keeping every other choice.
-	 *
-	 * An older companion's sanitizer copies known keys over from the stored
-	 * value, which would put `photos` straight back, so it is detached for
-	 * this one write.
-	 *
-	 * @return bool True when the option no longer holds `photos`.
-	 */
-	private static function remove_feature_choice() {
-		global $wp_filter;
-
-		$features = get_option( self::FEATURES_OPTION );
-		if ( ! is_array( $features ) || ! array_key_exists( 'photos', $features ) ) {
-			return true;
-		}
-		unset( $features['photos'] );
-
-		$hook      = 'sanitize_option_' . self::FEATURES_OPTION;
-		$sanitizer = $wp_filter[ $hook ] ?? null;
-		unset( $wp_filter[ $hook ] );
-
-		update_option( self::FEATURES_OPTION, $features );
-
-		if ( null !== $sanitizer ) {
-			$wp_filter[ $hook ] = $sanitizer; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restores the hook detached above.
-		}
-
-		$stored = get_option( self::FEATURES_OPTION );
-		return ! is_array( $stored ) || ! array_key_exists( 'photos', $stored );
 	}
 }

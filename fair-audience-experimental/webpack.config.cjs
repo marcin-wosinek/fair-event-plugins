@@ -25,10 +25,6 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/edit-poll/index.js'
 		),
-		'admin/collaborators/index': path.resolve(
-			process.cwd(),
-			'src/Admin/collaborators/index.js'
-		),
 		'admin/instagram-posts/index': path.resolve(
 			process.cwd(),
 			'src/Admin/instagram-posts/index.js'

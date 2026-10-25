@@ -13,8 +13,7 @@ import { test, expect } from '@playwright/test';
 import { loginAsAdmin, runScript, wpCli } from './support/wp-cli.js';
 
 const FEES_PAGE = '/wp-admin/admin.php?page=fair-audience-fees';
-const COLLABORATORS_PAGE =
-	'/wp-admin/admin.php?page=fair-audience-collaborators';
+const GROUPS_PAGE = '/wp-admin/admin.php?page=fair-audience-groups';
 const POLLS_PAGE = '/wp-admin/admin.php?page=fair-audience-polls';
 const POLL_RESPONSE_PAGE = '/?poll_key=e2e-unknown-poll-key';
 
@@ -22,14 +21,14 @@ const TEXT = {
 	en: {
 		fees: 'Membership Fees',
 		createFee: 'Create Fee',
-		collaborators: 'Collaborators',
+		groups: 'Groups',
 		polls: 'Polls',
 		invalidPoll: 'Invalid or expired poll link.',
 	},
 	es: {
 		fees: 'Cuotas de membresía',
 		createFee: 'Crear tarifa',
-		collaborators: 'Colaboradores',
+		groups: 'Grupos',
 		polls: 'Encuestas',
 		invalidPoll: 'Enlace de encuesta no válido o caducado.',
 	},
@@ -51,9 +50,9 @@ async function expectScreens(page, text) {
 		page.getByRole('button', { name: text.createFee })
 	).toBeVisible();
 
-	await page.goto(COLLABORATORS_PAGE);
+	await page.goto(GROUPS_PAGE);
 	await expect(
-		page.getByRole('heading', { level: 1, name: text.collaborators })
+		page.getByRole('heading', { level: 1, name: text.groups })
 	).toBeVisible({ timeout: 20_000 });
 
 	await page.goto(POLLS_PAGE);

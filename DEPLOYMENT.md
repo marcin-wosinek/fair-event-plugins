@@ -202,6 +202,34 @@ with `wp db import pre-photo-removal.sql`, then set
 `fair_audience_db_version` back to `1.45.0` if the restored options do not
 already hold that value.
 
+## Upgrade notes: Collaborators page removal (#1987)
+
+Upgrading to fair-audience DB version `1.47.0` removes the `collaborators`
+key of `fair_audience_experimental_features` on the first request after
+deploy, keeping every other bundle choice. Nothing else is deleted:
+participants, their collaborator roles on events, confirmation tokens and
+mailing recipients stay as they were, and events keep managing
+collaborators.
+
+The Collaborators bundle no longer exists, so a
+`FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_COLLABORATORS` constant in
+`wp-config.php` has no effect any more and can be removed. The
+`fair-audience-collaborators` admin page and the
+`/fair-audience/v1/collaborators` REST route are gone; a bookmarked page gets
+WordPress's standard "not allowed" answer. Old collaborator registration
+links (`?collaborator_profile=1`) answer 410 Gone for both GET and POST,
+whether or not fair-audience-experimental is active, and create no
+participant, token or confirmation email.
+
+Either update order works. Until fair-audience is updated, an outdated
+companion still serves the page and form; once fair-audience is updated, its
+410 answer takes over the registration links even before the companion is.
+
+The cleanup is retried on every request until it succeeds. **To roll back**
+(redeploy the previous plugin versions), set `fair_audience_db_version` back
+to `1.46.0`; the bundle defaults to on, so no option needs restoring unless
+it had been switched off.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

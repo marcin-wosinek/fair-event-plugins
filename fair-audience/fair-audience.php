@@ -819,6 +819,15 @@ function fair_audience_maybe_upgrade_db() {
 		$db_version = '1.46.0';
 	}
 
+	// Retire the Collaborators page and its registration form (#1987): drop
+	// the stored `collaborators` choice. Participants and their collaborator
+	// roles are kept. Recorded only on success, so a failure is retried on
+	// the next request.
+	if ( version_compare( $db_version, '1.46.0', '>=' ) && version_compare( $db_version, '1.47.0', '<' ) && \FairAudience\Database\RetiredFeatureChoice::remove( 'collaborators' ) ) {
+		update_option( 'fair_audience_db_version', '1.47.0' );
+		$db_version = '1.47.0';
+	}
+
 	// Carry historical participant-level activities and attendance over to
 	// the one ticket each clearly belongs to, a batch per request until done.
 	if ( version_compare( $db_version, '1.45.0', '>=' ) ) {

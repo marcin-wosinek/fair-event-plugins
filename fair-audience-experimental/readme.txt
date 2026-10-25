@@ -8,7 +8,7 @@ Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Activates advanced feature bundles for Fair Audience: fees, polls, Instagram, groups, collaborators, messaging, timeline, import, invitations, manage-event-ext.
+Activates advanced feature bundles for Fair Audience: fees, polls, Instagram, groups, messaging, timeline, import, invitations, manage-event-ext.
 
 == Description ==
 
@@ -18,7 +18,6 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 * **Polls** — Attendee polls and responses.
 * **Instagram** — Instagram post import and scheduling.
 * **Groups** — Participant groups.
-* **Collaborators** — Event collaborators.
 * **Messaging** — Custom mail to the whole audience, extra messages, scheduled messages.
 * **Timeline** — Participant activity timeline.
 * **Import** — Bulk participant import.
@@ -174,7 +173,7 @@ Requires Fair Audience to be active.
 - efe9aae: Move the fees, polls, instagram, collaborators, image-templates, timeline, import, and weekly-schedule bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags. None of these bundles had callers outside fair-audience, so this is the lowest-risk slice of the fair-audience/fair-audience-experimental split (issue #1041). The `fair-audience` top-level admin menu now lands on All Participants instead of the (now-moved) Activity Timeline page.
 - 3e34be8: Move the groups and invitations bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `Group`/`GroupParticipant` and their repositories are renamed to `FairAudienceExperimental\…` and now travel with the companion; every core `fair-audience` call site (participant lists, custom mail, payment discount labels, signup pricing, anonymization, the signups-list block) and the `fair-events-experimental` invitation-token controller degrade gracefully via `class_exists()` guards when the companion is inactive.
 - e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
-- ef647cf: Scaffold the fair-audience-experimental companion plugin: `plugins_loaded` bootstrap with a runtime guard on fair-audience, a `Features` registry (master constant `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL`) listing the thirteen advanced bundles (fees, polls, galleries, Instagram, groups, collaborators, messaging, image-templates, timeline, import, weekly-schedule, invitations, manage-event-ext), and a Settings page to toggle them. This is the clean-slate step of splitting fair-audience into a lean core plus this companion — feature bundles themselves still live in fair-audience and move out in follow-up changes.
+- ef647cf: Scaffold the fair-audience-experimental companion plugin: `plugins_loaded` bootstrap with a runtime guard on fair-audience, a `Features` registry (master constant `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL`) listing the thirteen advanced bundles (fees, polls, galleries, Instagram, groups, messaging, image-templates, timeline, import, weekly-schedule, invitations, manage-event-ext), and a Settings page to toggle them. This is the clean-slate step of splitting fair-audience into a lean core plus this companion — feature bundles themselves still live in fair-audience and move out in follow-up changes.
 - 8a1195f: Move the manage-event tab extensions (Audience, Groups, Mailings) out of `fair-audience` into the `fair-audience-experimental` companion under the `manage-event-ext` feature flag (issue #1041). The tab bundle's enqueue wiring on fair-events' manage-event page — previously always registered by `fair-audience` — now lives in the companion and only mounts when its `manage-event-ext` feature is enabled, mirroring how `fair-events-experimental` merges its own manage-event extensions.
 - 2a3600a: Move the manage-event Audience tab from `fair-audience-experimental` back into core `fair-audience`, so it now renders on the fair-events Manage Event page without the experimental companion plugin active. The Groups and Mailings tabs remain in `fair-audience-experimental` behind the `manage-event-ext` feature flag.
 

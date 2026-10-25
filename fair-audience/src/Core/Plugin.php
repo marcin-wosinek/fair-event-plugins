@@ -66,6 +66,9 @@ class Plugin {
 		// Old "Upload photos" email links answer 410 Gone.
 		\FairAudience\Frontend\RetiredPhotoUploadLinks::init();
 
+		// Old collaborator registration links answer 410 Gone.
+		\FairAudience\Frontend\RetiredCollaboratorRegistrationLinks::init();
+
 		// Deferred email dispatch: confirmation emails are scheduled rather than
 		// sent inline so a slow/unreachable mail transport can't make signup
 		// requests time out. See EmailService::defer().

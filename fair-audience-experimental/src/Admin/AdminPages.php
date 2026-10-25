@@ -76,18 +76,6 @@ class AdminPages {
 			);
 		}
 
-		// Collaborators — `collaborators` bundle.
-		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'collaborators' ) ) {
-			$this->page_hooks['fair-audience-collaborators'] = add_submenu_page(
-				$parent,
-				__( 'Collaborators', 'fair-audience-experimental' ),
-				__( 'Collaborators', 'fair-audience-experimental' ),
-				'manage_options',
-				'fair-audience-collaborators',
-				array( $this, 'render_collaborators_page' )
-			);
-		}
-
 		// Membership Fees — `fees` bundle (only when fair-payments-connector is active).
 		if ( \FairAudienceExperimental\Core\Features::is_enabled( 'fees' ) && class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
 			$this->page_hooks['fair-audience-fees'] = add_submenu_page(
@@ -268,18 +256,6 @@ class AdminPages {
 				$this->enqueue_page_script( 'timeline', $exp_url, $exp_dir );
 				break;
 
-			case 'fair-audience-collaborators':
-				$this->enqueue_page_script( 'collaborators', $exp_url, $exp_dir );
-				wp_localize_script(
-					'fair-audience-experimental-collaborators',
-					'fairAudienceCollaboratorsData',
-					array(
-						'participantsUrl'        => admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' ),
-						'collaboratorProfileUrl' => home_url( '?collaborator_profile=1' ),
-					)
-				);
-				break;
-
 			case 'fair-audience-fees':
 				$this->enqueue_page_script( 'fees-list', $exp_url, $exp_dir );
 				break;
@@ -388,16 +364,6 @@ class AdminPages {
 	 */
 	public function render_timeline_page() {
 		$page = new \FairAudienceExperimental\Admin\TimelinePage();
-		$page->render();
-	}
-
-	/**
-	 * Render Collaborators page.
-	 *
-	 * @return void
-	 */
-	public function render_collaborators_page() {
-		$page = new \FairAudienceExperimental\Admin\CollaboratorsPage();
 		$page->render();
 	}
 
