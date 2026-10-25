@@ -6,6 +6,16 @@ const OVERVIEW_ENDPOINT =
 
 const STATUS_ENDPOINT = '/wp-json/fair-payments-connector/v1/oauth/status';
 
+const TEST_CONNECTION_ENDPOINT =
+	'/wp-json/fair-payments-connector/v1/test-connection';
+
+// Test-only route in e2e/mu-plugins/fair-e2e-error-responses.php.
+const ERROR_RESPONSES_ENDPOINT = '/wp-json/fair-e2e/v1/error-responses';
+
+// Exception message the fixture throws: a private path and a marker.
+const DIAGNOSTIC =
+	'E2E-DIAGNOSTIC-860 in /srv/private/fair-payments/secret.php';
+
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 
@@ -75,6 +85,45 @@ test.describe( 'ConnectionController', () => {
 			);
 			// Fair Finance is active on the test site (.wp-env.json).
 			expect( body.settlement_access_requested ).toBe( true );
+		} );
+	} );
+
+	test.describe( 'POST /test-connection (#860)', () => {
+		test( 'returns 401 for unauthenticated requests', async () => {
+			const res = await api.post( TEST_CONNECTION_ENDPOINT );
+			expect( res.status() ).toBe( 401 );
+		} );
+
+		test( 'answers a failure generically, with diagnostics only under WP_DEBUG', async () => {
+			const { wp_debug: wpDebug } = await (
+				await api.get( ERROR_RESPONSES_ENDPOINT, {
+					headers: adminAuth(),
+				} )
+			).json();
+
+			const res = await api.post( TEST_CONNECTION_ENDPOINT, {
+				headers: {
+					...adminAuth(),
+					'X-Fair-E2E-Fail-Diagnostic': DIAGNOSTIC,
+				},
+			} );
+			expect( res.status() ).toBe( 500 );
+			const text = await res.text();
+			const body = JSON.parse( text );
+
+			expect( body.code ).toBe( 'connection_failed' );
+			expect( body.message ).toBe( 'Connection test failed.' );
+			expect( body.data.status ).toBe( 500 );
+
+			if ( wpDebug ) {
+				expect( body.data.details.message ).toBe( DIAGNOSTIC );
+				expect( typeof body.data.details.file ).toBe( 'string' );
+				expect( typeof body.data.details.line ).toBe( 'number' );
+			} else {
+				expect( body.data ).toEqual( { status: 500 } );
+				expect( text ).not.toContain( 'E2E-DIAGNOSTIC-860' );
+				expect( text ).not.toContain( '/srv/private' );
+			}
 		} );
 	} );
 

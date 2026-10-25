@@ -432,22 +432,22 @@ class ConnectionController extends \WP_REST_Controller {
 				error_log( '[Fair Payments Connector] Test connection failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString() );
 			}
 
+			// The exception message and location can name server paths and
+			// library internals, so they reach the response only in debug mode.
+			$data = array( 'status' => 500 );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$data['details'] = array(
+					'message' => $e->getMessage(),
+					'code'    => $e->getCode(),
+					'file'    => basename( $e->getFile() ),
+					'line'    => $e->getLine(),
+				);
+			}
+
 			return new \WP_Error(
 				'connection_failed',
-				sprintf(
-					/* translators: %s: error message */
-					__( 'Connection test failed: %s', 'fair-payments-connector' ),
-					$e->getMessage()
-				),
-				array(
-					'status'  => 500,
-					'details' => array(
-						'message' => $e->getMessage(),
-						'code'    => $e->getCode(),
-						'file'    => basename( $e->getFile() ),
-						'line'    => $e->getLine(),
-					),
-				)
+				__( 'Connection test failed.', 'fair-payments-connector' ),
+				$data
 			);
 		}
 	}
