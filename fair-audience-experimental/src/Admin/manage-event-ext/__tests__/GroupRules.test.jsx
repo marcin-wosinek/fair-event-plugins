@@ -10,6 +10,7 @@ import {
 	act,
 	fireEvent,
 	render,
+	screen,
 	waitFor,
 	within,
 } from '@testing-library/react';
@@ -192,7 +193,6 @@ describe( 'GroupRules load states', () => {
 	} );
 
 	it( 'reports a failed refresh after a change instead of success', async () => {
-		window.confirm = jest.fn( () => true );
 		mockApi( loaded );
 		const { tab } = renderRules();
 
@@ -200,6 +200,9 @@ describe( 'GroupRules load states', () => {
 		// The deletes succeed, but the reload that follows does not.
 		mockApi( { ...loaded, permissions: noRoute() } );
 		fireEvent.click( remove );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Remove rules' } )
+		);
 
 		expect( await tab.findByText( LOAD_FAILURE ) ).toBeInTheDocument();
 		expect(
@@ -234,5 +237,88 @@ describe( 'GroupRules load states', () => {
 		expect(
 			tab.queryByRole( 'heading', { name: 'Members' } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'GroupRules — removing a group’s rules (#1936)', () => {
+	beforeEach( () => {
+		apiFetch.mockReset();
+	} );
+
+	const deletes = () =>
+		apiFetch.mock.calls
+			.map( ( [ options ] ) => options )
+			.filter( ( options ) => options.method === 'DELETE' )
+			.map( ( options ) => options.path );
+
+	it( 'lists the rules being removed, and cancelling deletes nothing', async () => {
+		mockApi( loaded );
+		const { tab } = renderRules();
+
+		fireEvent.click( await tab.findByRole( 'button', { name: 'Remove' } ) );
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Remove group rules — Members',
+		} );
+
+		expect( within( dialog ).getByText( 'Discount: 20%' ) ).toBeVisible();
+		expect( within( dialog ).getByText( 'Invited' ) ).toBeVisible();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( deletes() ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps only the rules that failed for a retry', async () => {
+		let failPermission = true;
+		mockApi( loaded, ( { path } ) => {
+			if ( path.includes( 'group-permission-rules' ) && failPermission ) {
+				failPermission = false;
+				return Promise.reject( new Error( 'Server error.' ) );
+			}
+			return Promise.resolve( {} );
+		} );
+		const { tab } = renderRules();
+
+		fireEvent.click( await tab.findByRole( 'button', { name: 'Remove' } ) );
+		await act( async () =>
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Remove rules' } )
+			)
+		);
+
+		const dialog = screen.getByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText(
+				'Some rules could not be removed; the ones still listed remain. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).queryByText( 'Discount: 20%' )
+		).not.toBeInTheDocument();
+		expect( within( dialog ).getByText( 'Invited' ) ).toBeVisible();
+
+		mockApi( { ...loaded, pricing: [], permissions: [] }, () =>
+			Promise.resolve( {} )
+		);
+		await act( async () =>
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Remove rules' } )
+			)
+		);
+
+		// The retry repeats only the permission deletion.
+		expect( deletes() ).toEqual( [
+			'/fair-events/v1/event-dates/139/group-pricing-rules/11',
+			'/fair-events/v1/event-dates/139/group-permission-rules/21',
+			'/fair-events/v1/event-dates/139/group-permission-rules/21',
+		] );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			await tab.findByText( 'Rules for Members removed.' )
+		).toBeInTheDocument();
 	} );
 } );

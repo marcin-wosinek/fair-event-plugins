@@ -35,13 +35,13 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:39
 #: src/Admin/AdminPages.php:40
-#: src/Admin/api-tokens/ApiTokensApp.js:176
+#: src/Admin/api-tokens/ApiTokensApp.js:172
 msgid "API Tokens"
 msgstr "API-Token"
 
 #: src/Admin/AdminPages.php:50
 #: src/Admin/AdminPages.php:51
-#: src/Admin/connected-sites/ConnectedSitesApp.js:382
+#: src/Admin/connected-sites/ConnectedSitesApp.js:378
 msgid "Connected Sites"
 msgstr "Verbundene Websites"
 
@@ -62,7 +62,7 @@ msgid "At least one valid scope is required."
 msgstr "Mindestens ein gültiger Umfang ist erforderlich."
 
 #: src/API/ApiTokensController.php:147
-#: src/Admin/api-tokens/ApiTokensApp.js:108
+#: src/Admin/api-tokens/ApiTokensApp.js:116
 msgid "Failed to create API token."
 msgstr "API-Token konnte nicht erstellt werden."
 
@@ -111,251 +111,228 @@ msgstr "Nach Transaktionsdatum (created_at) ab diesem Datum filtern, z. B. 2026-
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr "Nach Transaktionsdatum (created_at) bis zu diesem Datum filtern, z. B. 2026-12-31."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:24
+#: src/Admin/api-tokens/ApiTokensApp.js:31
 msgid "Read transactions"
 msgstr "Transaktionen lesen"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:59
+#: src/Admin/api-tokens/ApiTokensApp.js:67
 msgid "Failed to load API tokens."
 msgstr "API-Token konnten nicht geladen werden."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:99
+#: src/Admin/api-tokens/ApiTokensApp.js:107
 msgid "API token created."
 msgstr "API-Token erstellt."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:121
-msgid "Revoke this token? Any site using it will immediately lose access."
-msgstr "Diesen Token widerrufen? Alle Websites, die ihn verwenden, verlieren sofort den Zugriff."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:139
-msgid "API token revoked."
-msgstr "API-Token widerrufen."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:148
-msgid "Failed to revoke API token."
-msgstr "Fehler beim Widerrufen des API-Tokens."
-
-#: src/Admin/api-tokens/ApiTokensApp.js:185
+#: src/Admin/api-tokens/ApiTokensApp.js:181
 msgid "Generate Token"
 msgstr "Token generieren"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:195
+#: src/Admin/api-tokens/ApiTokensApp.js:191
 msgid "Issue scoped tokens so other sites can read this site's data over the data sharing API."
 msgstr "Geben Sie begrenzte Tokens aus, damit andere Websites die Daten dieser Website über die Datenaustausch-API lesen können."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:225
+#: src/Admin/api-tokens/ApiTokensApp.js:221
 msgid "Loading tokens…"
 msgstr "Tokens werden geladen…"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:235
+#: src/Admin/api-tokens/ApiTokensApp.js:231
 msgid "No API tokens yet. Generate one to share data with another site."
 msgstr "Noch keine API-Tokens vorhanden. Generieren Sie einen, um Daten mit einer anderen Website zu teilen."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:247
-#: src/Admin/api-tokens/ApiTokensApp.js:425
-#: src/Admin/connected-sites/ConnectedSitesApp.js:460
-#: src/Admin/connected-sites/ConnectedSitesApp.js:664
+#: src/Admin/api-tokens/ApiTokensApp.js:243
+#: src/Admin/api-tokens/ApiTokensApp.js:464
+#: src/Admin/connected-sites/ConnectedSitesApp.js:456
+#: src/Admin/connected-sites/ConnectedSitesApp.js:703
 msgid "Label"
 msgstr "Bezeichnung"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:253
-#: src/Admin/api-tokens/ApiTokensApp.js:444
-#: src/Admin/connected-sites/ConnectedSitesApp.js:472
+#: src/Admin/api-tokens/ApiTokensApp.js:249
+#: src/Admin/api-tokens/ApiTokensApp.js:483
+#: src/Admin/connected-sites/ConnectedSitesApp.js:468
 msgid "Scopes"
 msgstr "Bereiche"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:259
+#: src/Admin/api-tokens/ApiTokensApp.js:255
 msgid "Created"
 msgstr "Erstellt"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:265
+#: src/Admin/api-tokens/ApiTokensApp.js:261
 msgid "Last used"
 msgstr "Zuletzt verwendet"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:271
-#: src/Admin/connected-sites/ConnectedSitesApp.js:484
+#: src/Admin/api-tokens/ApiTokensApp.js:267
+#: src/Admin/connected-sites/ConnectedSitesApp.js:480
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:277
-#: src/Admin/connected-sites/ConnectedSitesApp.js:502
+#: src/Admin/api-tokens/ApiTokensApp.js:273
+#: src/Admin/connected-sites/ConnectedSitesApp.js:498
 msgid "Actions"
 msgstr "Aktionen"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:301
-#: src/Admin/connected-sites/ConnectedSitesApp.js:543
+#: src/Admin/api-tokens/ApiTokensApp.js:297
+#: src/Admin/connected-sites/ConnectedSitesApp.js:539
 msgid "Never"
 msgstr "Nie"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:321
+#: src/Admin/api-tokens/ApiTokensApp.js:317
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:325
+#: src/Admin/api-tokens/ApiTokensApp.js:321
 msgid "Revoked"
 msgstr "Widerrufen"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:344
+#: src/Admin/api-tokens/ApiTokensApp.js:340
 msgid "Revoke"
 msgstr "Widerrufen"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:365
+#: src/Admin/api-tokens/ApiTokensApp.js:404
 msgid "Token created"
 msgstr "Token erstellt"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:369
+#: src/Admin/api-tokens/ApiTokensApp.js:408
 msgid "Generate API Token"
 msgstr "API-Token generieren"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:380
+#: src/Admin/api-tokens/ApiTokensApp.js:419
 msgid "Copy this token now. For security it will not be shown again."
 msgstr "Kopieren Sie diesen Token jetzt. Aus Sicherheitsgründen wird er nicht erneut angezeigt."
 
-#: src/Admin/api-tokens/ApiTokensApp.js:401
+#: src/Admin/api-tokens/ApiTokensApp.js:440
 msgid "Copied!"
 msgstr "Kopiert!"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:405
+#: src/Admin/api-tokens/ApiTokensApp.js:444
 msgid "Copy token"
 msgstr "Token kopieren"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:414
+#: src/Admin/api-tokens/ApiTokensApp.js:453
 msgid "Done"
 msgstr "Fertig"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:431
+#: src/Admin/api-tokens/ApiTokensApp.js:470
 msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr "Ein Name, um zu identifizieren, für wen dieser Token ist, z. B. lamutable.es"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:473
-#: src/Admin/connected-sites/ConnectedSitesApp.js:752
+#: src/Admin/api-tokens/ApiTokensApp.js:512
+#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/connected-sites/ConnectedSitesApp.js:791
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/Admin/api-tokens/ApiTokensApp.js:488
+#: src/Admin/api-tokens/ApiTokensApp.js:527
 msgid "Generate"
 msgstr "Generieren"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:23
+#: src/Admin/connected-sites/ConnectedSitesApp.js:30
 msgid "Connected"
 msgstr "Verbunden"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:27
+#: src/Admin/connected-sites/ConnectedSitesApp.js:34
 msgid "Error"
 msgstr "Fehler"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:31
+#: src/Admin/connected-sites/ConnectedSitesApp.js:38
 msgid "Unverified"
 msgstr "Nicht verifiziert"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:108
+#: src/Admin/connected-sites/ConnectedSitesApp.js:116
 msgid "Failed to load connected sites."
 msgstr "Fehler beim Laden der verbundenen Websites."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:165
+#: src/Admin/connected-sites/ConnectedSitesApp.js:173
 msgid "Connected site updated."
 msgstr "Verbundene Website aktualisiert."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:182
+#: src/Admin/connected-sites/ConnectedSitesApp.js:190
 msgid "Connected site added."
 msgstr "Verbundene Website hinzugefügt."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:193
+#: src/Admin/connected-sites/ConnectedSitesApp.js:201
 msgid "Failed to save connected site."
 msgstr "Fehler beim Speichern der verbundenen Website."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:218
+#: src/Admin/connected-sites/ConnectedSitesApp.js:226
 msgid "no scopes"
 msgstr "keine Bereiche"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:44
+#: src/Admin/connected-sites/ConnectedSitesApp.js:51
 msgid "Connection test failed."
 msgstr "Verbindungstest fehlgeschlagen."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:291
-msgid "Remove this connected site? Stored token will be deleted."
-msgstr "Diese verbundene Website entfernen? Gespeichertes Token wird gelöscht."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:310
-msgid "Connected site removed."
-msgstr "Verbundene Website entfernt."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:319
-msgid "Failed to remove connected site."
-msgstr "Fehler beim Entfernen der verbundenen Website."
-
-#: src/Admin/connected-sites/ConnectedSitesApp.js:388
-#: src/Admin/connected-sites/ConnectedSitesApp.js:773
+#: src/Admin/connected-sites/ConnectedSitesApp.js:384
+#: src/Admin/connected-sites/ConnectedSitesApp.js:812
 msgid "Add Site"
 msgstr "Website hinzufügen"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:398
+#: src/Admin/connected-sites/ConnectedSitesApp.js:394
 msgid "Register other sites this site pulls data from. Paste a token generated on the other site’s API Tokens page."
 msgstr "Registrieren Sie andere Websites, von denen diese Website Daten abruft. Fügen Sie ein Token ein, das auf der API-Token-Seite der anderen Website generiert wurde."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:438
+#: src/Admin/connected-sites/ConnectedSitesApp.js:434
 msgid "Loading sites…"
 msgstr "Websites werden geladen…"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:448
+#: src/Admin/connected-sites/ConnectedSitesApp.js:444
 msgid "No connected sites yet. Add one to pull data from another site."
 msgstr "Noch keine verbundenen Websites. Fügen Sie eine hinzu, um Daten von einer anderen Website abzurufen."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:466
-#: src/Admin/connected-sites/ConnectedSitesApp.js:677
+#: src/Admin/connected-sites/ConnectedSitesApp.js:462
+#: src/Admin/connected-sites/ConnectedSitesApp.js:716
 msgid "Base URL"
 msgstr "Basis-URL"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:496
+#: src/Admin/connected-sites/ConnectedSitesApp.js:492
 msgid "Last sync"
 msgstr "Letzte Synchronisierung"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:572
+#: src/Admin/connected-sites/ConnectedSitesApp.js:568
 msgid "Test"
 msgstr "Test"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:586
+#: src/Admin/connected-sites/ConnectedSitesApp.js:582
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:628
+#: src/Admin/connected-sites/ConnectedSitesApp.js:624
 msgid "Remove"
 msgstr "Entfernen"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:649
+#: src/Admin/connected-sites/ConnectedSitesApp.js:688
 msgid "Edit Connected Site"
 msgstr "Verbundene Website bearbeiten"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:653
+#: src/Admin/connected-sites/ConnectedSitesApp.js:692
 msgid "Add Connected Site"
 msgstr "Verbundene Website hinzufügen"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:670
+#: src/Admin/connected-sites/ConnectedSitesApp.js:709
 msgid "A name to identify this site, e.g. acroyoga-club.es"
 msgstr "Ein Name zur Identifizierung dieser Website, z. B. acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:684
+#: src/Admin/connected-sites/ConnectedSitesApp.js:723
 msgid "The other site’s address, e.g. https://acroyoga-club.es"
 msgstr "Die Adresse der anderen Website, z. B. https://acroyoga-club.es"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:691
+#: src/Admin/connected-sites/ConnectedSitesApp.js:730
 msgid "Token"
 msgstr "Token"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:700
+#: src/Admin/connected-sites/ConnectedSitesApp.js:739
 msgid "Leave blank to keep the existing token."
 msgstr "Lassen Sie das Feld leer, um das vorhandene Token beizubehalten."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:704
+#: src/Admin/connected-sites/ConnectedSitesApp.js:743
 msgid "Paste the token from the other site’s API Tokens page."
 msgstr "Fügen Sie das Token von der API-Token-Seite der anderen Website ein."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:769
+#: src/Admin/connected-sites/ConnectedSitesApp.js:808
 msgid "Save"
 msgstr "Speichern"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:347
-#: src/Admin/connected-sites/ConnectedSitesApp.js:490
+#: src/Admin/connected-sites/ConnectedSitesApp.js:343
+#: src/Admin/connected-sites/ConnectedSitesApp.js:486
 msgid "Enabled"
 msgstr "Aktiviert"
 
@@ -367,29 +344,29 @@ msgstr "Verknüpfte Fair Finance Budget-ID oder null, um die Zuordnung zu lösch
 msgid "Budget not found."
 msgstr "Budget nicht gefunden."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:83
+#: src/Admin/connected-sites/ConnectedSitesApp.js:91
 msgid "Budgets are unavailable."
 msgstr "Budgets sind nicht verfügbar."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:358
-#: src/Admin/connected-sites/ConnectedSitesApp.js:727
+#: src/Admin/connected-sites/ConnectedSitesApp.js:354
+#: src/Admin/connected-sites/ConnectedSitesApp.js:766
 msgid "No budget"
 msgstr "Kein Budget"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:369
+#: src/Admin/connected-sites/ConnectedSitesApp.js:365
 msgid "Unlinked"
 msgstr "Nicht verknüpft"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:478
-#: src/Admin/connected-sites/ConnectedSitesApp.js:720
+#: src/Admin/connected-sites/ConnectedSitesApp.js:474
+#: src/Admin/connected-sites/ConnectedSitesApp.js:759
 msgid "Budget"
 msgstr "Budget"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:713
+#: src/Admin/connected-sites/ConnectedSitesApp.js:752
 msgid "Budgets are unavailable right now; the site can still be saved without one."
 msgstr "Budgets sind derzeit nicht verfügbar; die Website kann auch ohne Budget gespeichert werden."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:739
+#: src/Admin/connected-sites/ConnectedSitesApp.js:778
 msgid "Reconciliation proposes this budget for transactions imported from this site."
 msgstr "Die Abstimmung schlägt dieses Budget für Transaktionen vor, die von dieser Website importiert werden."
 
@@ -401,27 +378,27 @@ msgstr "Ob die Website als Importquelle verfügbar ist."
 msgid "This connected site is disabled and cannot be used to import transactions."
 msgstr "Diese verbundene Website ist deaktiviert und kann nicht zum Importieren von Transaktionen verwendet werden."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:265
+#: src/Admin/connected-sites/ConnectedSitesApp.js:273
 msgid "Connected site disabled."
 msgstr "Verbundene Website deaktiviert."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:269
+#: src/Admin/connected-sites/ConnectedSitesApp.js:277
 msgid "Connected site enabled."
 msgstr "Verbundene Website aktiviert."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:278
+#: src/Admin/connected-sites/ConnectedSitesApp.js:286
 msgid "Failed to update the connected site."
 msgstr "Fehler beim Aktualisieren der verbundenen Website."
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:348
+#: src/Admin/connected-sites/ConnectedSitesApp.js:344
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:609
+#: src/Admin/connected-sites/ConnectedSitesApp.js:605
 msgid "Disable"
 msgstr "Deaktivieren"
 
-#: src/Admin/connected-sites/ConnectedSitesApp.js:613
+#: src/Admin/connected-sites/ConnectedSitesApp.js:609
 msgid "Enable"
 msgstr "Aktivieren"
 
@@ -445,13 +422,82 @@ msgid "Experimental features for Fair Payments Connector: connected sites."
 msgstr "Experimentelle Funktionen für Fair Payments Connector: verbundene Websites."
 
 #. translators: %s: comma-separated list of granted scopes
-#: src/Admin/connected-sites/ConnectedSitesApp.js:223
+#: src/Admin/connected-sites/ConnectedSitesApp.js:231
 #, js-format
 msgid "Connection succeeded. Granted scopes: %s"
 msgstr "Verbindung erfolgreich. Gewährte Bereiche: %s"
 
 #. translators: 1: connected site label, 2: reason the test failed
-#: src/Admin/connected-sites/ConnectedSitesApp.js:235
+#: src/Admin/connected-sites/ConnectedSitesApp.js:243
 #, js-format
 msgid "Connection test failed for %1$s: %2$s"
 msgstr "Verbindungstest für %1$s fehlgeschlagen: %2$s"
+
+#. translators: %s: API token label
+#: src/Admin/api-tokens/ApiTokensApp.js:137
+#, js-format
+msgid "API token “%s” revoked."
+msgstr "API-Token „%s“ widerrufen."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:146
+msgid "The API token could not be revoked. Try again."
+msgstr "Der API-Token konnte nicht widerrufen werden. Bitte versuchen Sie es erneut."
+
+#. translators: %s: API token label
+#: src/Admin/api-tokens/ApiTokensApp.js:361
+#, js-format
+msgid "Revoke API token — %s"
+msgstr "API-Token widerrufen — %s"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:367
+msgid "Revoke token"
+msgstr "Token widerrufen"
+
+#: src/Admin/api-tokens/ApiTokensApp.js:371
+msgid "Revoking…"
+msgstr "Wird widerrufen…"
+
+#. translators: %s: comma-separated token scopes
+#: src/Admin/api-tokens/ApiTokensApp.js:384
+#, js-format
+msgid "Any site using this token immediately loses access to: %s."
+msgstr "Jede Website, die diesen Token verwendet, verliert sofort Zugriff auf: %s."
+
+#: src/Admin/api-tokens/ApiTokensApp.js:392
+msgid "The token stays listed as revoked and cannot be reactivated; generate a new token to restore access."
+msgstr "Der Token bleibt als widerrufen aufgelistet und kann nicht reaktiviert werden; generieren Sie einen neuen Token, um den Zugriff wiederherzustellen."
+
+#. translators: %s: connected site label
+#: src/Admin/connected-sites/ConnectedSitesApp.js:308
+#, js-format
+msgid "Connected site “%s” removed."
+msgstr "Verbundene Website „%s“ entfernt."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:317
+msgid "The connected site could not be removed. Try again."
+msgstr "Die verbundene Website konnte nicht entfernt werden. Bitte versuchen Sie es erneut."
+
+#. translators: %s: connected site label
+#: src/Admin/connected-sites/ConnectedSitesApp.js:645
+#, js-format
+msgid "Remove connected site — %s"
+msgstr "Verbundene Website entfernen — %s"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:651
+msgid "Remove site"
+msgstr "Website entfernen"
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:655
+msgid "Removing…"
+msgstr "Wird entfernt…"
+
+#. translators: %s: connected site base URL
+#: src/Admin/connected-sites/ConnectedSitesApp.js:668
+#, js-format
+msgid "This site stops reading data from %s, and the token stored for it is deleted here. To add the site again you need its token."
+msgstr "Diese Website liest keine Daten mehr von %s, und das dafür gespeicherte Token wird hier gelöscht. Um die Website erneut hinzuzufügen, benötigen Sie ihr Token."
+
+#: src/Admin/connected-sites/ConnectedSitesApp.js:676
+msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
+msgstr "Bereits von ihr importierte Transaktionen werden beibehalten. Das Token wird auf der anderen Website nicht widerrufen; widerrufen Sie es dort, wenn es nicht mehr funktionieren soll."
+

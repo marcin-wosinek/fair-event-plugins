@@ -21,8 +21,12 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 const PERMISSION_TYPES = [ 'invited', 'view_signups', 'manage_signups' ];
 
@@ -93,6 +97,7 @@ export default function GroupRules( { eventDateId } ) {
 	const [ editDiscountType, setEditDiscountType ] = useState( 'percentage' );
 	const [ editDiscountValue, setEditDiscountValue ] = useState( '' );
 	const [ saving, setSaving ] = useState( false );
+	const removeGroup = useConfirmAction();
 
 	/**
 	 * Load the rules and the group list.
@@ -369,59 +374,74 @@ export default function GroupRules( { eventDateId } ) {
 		}
 	};
 
-	const handleRemoveGroup = async ( groupEntry ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to remove all rules for this group?',
-					'fair-audience-experimental'
-				)
+	// Deletes every rule of the confirmed group. When only some deletions
+	// succeed, the dialog keeps the rules that remain, so a retry does not
+	// repeat the ones already gone.
+	const handleRemoveGroup = () =>
+		removeGroup.run(
+			async ( groupEntry ) => {
+				setError( null );
+				setSuccess( null );
+
+				const remove = ( kind, id ) =>
+					apiFetch( {
+						path: `/fair-events/v1/event-dates/${ eventDateId }/${ kind }/${ id }`,
+						method: 'DELETE',
+					} ).then(
+						() => true,
+						() => false
+					);
+
+				const [ pricingRemoved, ...permissionsRemoved ] =
+					await Promise.all( [
+						groupEntry.pricing
+							? remove(
+									'group-pricing-rules',
+									groupEntry.pricing.id
+								)
+							: true,
+						...groupEntry.permissions.map( ( perm ) =>
+							remove( 'group-permission-rules', perm.id )
+						),
+					] );
+
+				const remaining = {
+					...groupEntry,
+					pricing: pricingRemoved ? null : groupEntry.pricing,
+					permissions: groupEntry.permissions.filter(
+						( _, index ) => ! permissionsRemoved[ index ]
+					),
+				};
+
+				if ( remaining.pricing || remaining.permissions.length ) {
+					removeGroup.open( remaining );
+					loadData();
+					throw new Error(
+						__(
+							'Some rules could not be removed; the ones still listed remain. Try again.',
+							'fair-audience-experimental'
+						)
+					);
+				}
+
+				if ( await loadData() ) {
+					setSuccess(
+						sprintf(
+							/* translators: %s: group name */
+							__(
+								'Rules for %s removed.',
+								'fair-audience-experimental'
+							),
+							groupEntry.groupName
+						)
+					);
+				}
+			},
+			__(
+				'The group rules could not be removed. Try again.',
+				'fair-audience-experimental'
 			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-
-		try {
-			const promises = [];
-
-			if ( groupEntry.pricing ) {
-				promises.push(
-					apiFetch( {
-						path: `/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules/${ groupEntry.pricing.id }`,
-						method: 'DELETE',
-					} )
-				);
-			}
-
-			for ( const perm of groupEntry.permissions ) {
-				promises.push(
-					apiFetch( {
-						path: `/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules/${ perm.id }`,
-						method: 'DELETE',
-					} )
-				);
-			}
-
-			await Promise.all( promises );
-			if ( ! ( await loadData() ) ) {
-				return;
-			}
-			setSuccess(
-				__( 'Group rules removed.', 'fair-audience-experimental' )
-			);
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__(
-						'Failed to remove group rules.',
-						'fair-audience-experimental'
-					)
-			);
-		}
-	};
+		);
 
 	return (
 		<Card style={ { marginTop: '16px' } }>
@@ -429,6 +449,68 @@ export default function GroupRules( { eventDateId } ) {
 				<h2>{ __( 'Group Rules', 'fair-audience-experimental' ) }</h2>
 			</CardHeader>
 			<CardBody>
+				{ removeGroup.target && (
+					<ConfirmActionModal
+						title={ sprintf(
+							/* translators: %s: group name */
+							__(
+								'Remove group rules — %s',
+								'fair-audience-experimental'
+							),
+							removeGroup.target.groupName
+						) }
+						confirmLabel={ __(
+							'Remove rules',
+							'fair-audience-experimental'
+						) }
+						busyLabel={ __(
+							'Removing…',
+							'fair-audience-experimental'
+						) }
+						isDestructive
+						isBusy={ removeGroup.isBusy }
+						error={ removeGroup.error }
+						onConfirm={ handleRemoveGroup }
+						onCancel={ removeGroup.close }
+					>
+						<p>
+							{ __(
+								'These rules for this event date are removed:',
+								'fair-audience-experimental'
+							) }
+						</p>
+						<ul>
+							{ removeGroup.target.pricing && (
+								<li>
+									{ sprintf(
+										/* translators: %s: discount, e.g. "10%" or "€5.00" */
+										__(
+											'Discount: %s',
+											'fair-audience-experimental'
+										),
+										formatDiscount(
+											removeGroup.target.pricing
+												.discount_type,
+											removeGroup.target.pricing
+												.discount_value
+										)
+									) }
+								</li>
+							) }
+							{ removeGroup.target.permissions.map( ( perm ) => (
+								<li key={ perm.id }>
+									{ permissionLabel( perm.permission_type ) }
+								</li>
+							) ) }
+						</ul>
+						<p>
+							{ __(
+								'Its members no longer get this discount or these permissions for this date. The group and its members are not changed.',
+								'fair-audience-experimental'
+							) }
+						</p>
+					</ConfirmActionModal>
+				) }
 				<VStack spacing={ 4 }>
 					{ error && (
 						<Notice
@@ -599,7 +681,7 @@ export default function GroupRules( { eventDateId } ) {
 																size="small"
 																isDestructive
 																onClick={ () =>
-																	handleRemoveGroup(
+																	removeGroup.open(
 																		entry
 																	)
 																}

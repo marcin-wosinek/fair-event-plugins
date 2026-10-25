@@ -22,6 +22,9 @@ import {
 	deleteInstagramPost,
 	getAttachmentUrl,
 } from './instagram-posts-api.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 /**
  * Status badge component
@@ -83,6 +86,7 @@ export default function InstagramPosts() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isPosting, setIsPosting ] = useState( false );
 	const [ notice, setNotice ] = useState( null );
+	const deletePost = useConfirmAction();
 
 	// Form state.
 	const [ imageUrl, setImageUrl ] = useState( '' );
@@ -261,24 +265,12 @@ export default function InstagramPosts() {
 	};
 
 	/**
-	 * Handle post deletion
-	 *
-	 * @param {number} id Post ID
+	 * Delete the post being confirmed. Failures stay in the dialog.
 	 */
-	const handleDelete = ( id ) => {
-		if (
-			! confirm(
-				__(
-					'Are you sure you want to delete this post?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		deleteInstagramPost( id )
-			.then( () => {
+	const handleDelete = () =>
+		deletePost.run(
+			async ( post ) => {
+				await deleteInstagramPost( post.id );
 				setNotice( {
 					status: 'success',
 					message: __(
@@ -287,23 +279,12 @@ export default function InstagramPosts() {
 					),
 				} );
 				loadPosts();
-			} )
-			.catch( ( error ) => {
-				console.error(
-					'[Fair Audience] Failed to delete post:',
-					error
-				);
-				setNotice( {
-					status: 'error',
-					message:
-						error.message ||
-						__(
-							'Failed to delete post.',
-							'fair-audience-experimental'
-						),
-				} );
-			} );
-	};
+			},
+			__(
+				'The post could not be deleted. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	/**
 	 * Format date for display
@@ -335,6 +316,43 @@ export default function InstagramPosts() {
 	return (
 		<div className="wrap">
 			<h1>{ __( 'Instagram Posts', 'fair-audience-experimental' ) }</h1>
+
+			{ deletePost.target && (
+				<ConfirmActionModal
+					title={ __(
+						'Delete Instagram post',
+						'fair-audience-experimental'
+					) }
+					confirmLabel={ __(
+						'Delete post',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Deleting…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ deletePost.isBusy }
+					error={ deletePost.error }
+					onConfirm={ handleDelete }
+					onCancel={ deletePost.close }
+				>
+					<blockquote style={ { margin: 0, whiteSpace: 'pre-wrap' } }>
+						{ truncate( deletePost.target.caption || '', 300 ) }
+					</blockquote>
+					<p>
+						{ 'published' === deletePost.target.status
+							? __(
+									'This removes the post from this list only. It stays published on Instagram; delete it there if it should disappear.',
+									'fair-audience-experimental'
+								)
+							: __(
+									'This removes the post from this list. This cannot be undone.',
+									'fair-audience-experimental'
+								) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ notice && (
 				<Notice
@@ -592,9 +610,10 @@ export default function InstagramPosts() {
 											<Button
 												isDestructive
 												isSmall
-												onClick={ () =>
-													handleDelete( post.id )
-												}
+												onClick={ () => {
+													setNotice( null );
+													deletePost.open( post );
+												} }
 											>
 												{ __(
 													'Delete',

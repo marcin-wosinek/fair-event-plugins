@@ -21,6 +21,9 @@ import {
  */
 import SourceForm from './components/SourceForm.js';
 import CopyUrlButton from '../components/CopyUrlButton.js';
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 import './style.css';
 
 const SourcesList = () => {
@@ -30,6 +33,7 @@ const SourcesList = () => {
 	const [ success, setSuccess ] = useState( null );
 	const [ isFormOpen, setIsFormOpen ] = useState( false );
 	const [ editingSource, setEditingSource ] = useState( null );
+	const deleteFeed = useConfirmAction();
 
 	useEffect( () => {
 		loadSources();
@@ -67,40 +71,31 @@ const SourcesList = () => {
 		setIsFormOpen( true );
 	};
 
-	const handleDelete = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Are you sure you want to delete this event feed?',
-					'fair-events-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-
-		try {
-			await apiFetch( {
-				path: `/fair-events/v1/sources/${ id }`,
-				method: 'DELETE',
-			} );
-			setSuccess(
-				__( 'Event feed deleted.', 'fair-events-experimental' )
-			);
-			loadSources();
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__(
-						'Failed to delete event feed.',
-						'fair-events-experimental'
+	const handleDelete = () =>
+		deleteFeed.run(
+			async ( source ) => {
+				await apiFetch( {
+					path: `/fair-events/v1/sources/${ source.id }`,
+					method: 'DELETE',
+				} );
+				setError( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: event feed name */
+						__(
+							'Event feed “%s” deleted.',
+							'fair-events-experimental'
+						),
+						source.name
 					)
-			);
-		}
-	};
+				);
+				loadSources();
+			},
+			__(
+				'The event feed could not be deleted. Try again.',
+				'fair-events-experimental'
+			)
+		);
 
 	const handleFormSuccess = () => {
 		setIsFormOpen( false );
@@ -338,8 +333,8 @@ const SourcesList = () => {
 														size="small"
 														isDestructive
 														onClick={ () =>
-															handleDelete(
-																source.id
+															deleteFeed.open(
+																source
 															)
 														}
 													>
@@ -358,6 +353,46 @@ const SourcesList = () => {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			{ deleteFeed.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: event feed name */
+						__(
+							'Delete event feed — %s',
+							'fair-events-experimental'
+						),
+						deleteFeed.target.name
+					) }
+					confirmLabel={ __(
+						'Delete event feed',
+						'fair-events-experimental'
+					) }
+					busyLabel={ __( 'Deleting…', 'fair-events-experimental' ) }
+					isDestructive
+					isBusy={ deleteFeed.isBusy }
+					error={ deleteFeed.error }
+					onConfirm={ handleDelete }
+					onCancel={ deleteFeed.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %s: event feed slug */
+							__(
+								'Its iCal and JSON feed URLs (slug “%s”) stop working for every calendar or site that reads them.',
+								'fair-events-experimental'
+							),
+							deleteFeed.target.slug
+						) }
+					</p>
+					<p>
+						{ __(
+							'Events and categories included in the feed are not changed. Deleting the feed cannot be undone.',
+							'fair-events-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isFormOpen && (
 				<Modal

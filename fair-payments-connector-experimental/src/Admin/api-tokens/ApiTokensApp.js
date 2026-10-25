@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -17,6 +17,13 @@ import {
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+
+/**
+ * Internal dependencies
+ */
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
 
 const AVAILABLE_SCOPES = [
 	{
@@ -39,6 +46,7 @@ const ApiTokensApp = () => {
 	const [ scopes, setScopes ] = useState( [ 'transactions:read' ] );
 	const [ newToken, setNewToken ] = useState( null );
 	const [ copied, setCopied ] = useState( false );
+	const revokeToken = useConfirmAction();
 
 	useEffect( () => {
 		loadTokens();
@@ -115,43 +123,31 @@ const ApiTokensApp = () => {
 		}
 	};
 
-	const handleRevoke = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Revoke this token? Any site using it will immediately lose access.',
-					'fair-payments-connector-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-
-		try {
-			await apiFetch( {
-				path: `/fair-payments-connector/v1/admin/api-tokens/${ id }`,
-				method: 'DELETE',
-			} );
-			setSuccess(
-				__(
-					'API token revoked.',
-					'fair-payments-connector-experimental'
-				)
-			);
-			loadTokens();
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__(
-						'Failed to revoke API token.',
-						'fair-payments-connector-experimental'
+	const handleRevoke = () =>
+		revokeToken.run(
+			async ( token ) => {
+				await apiFetch( {
+					path: `/fair-payments-connector/v1/admin/api-tokens/${ token.id }`,
+					method: 'DELETE',
+				} );
+				setError( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: API token label */
+						__(
+							'API token “%s” revoked.',
+							'fair-payments-connector-experimental'
+						),
+						token.label
 					)
-			);
-		}
-	};
+				);
+				loadTokens();
+			},
+			__(
+				'The API token could not be revoked. Try again.',
+				'fair-payments-connector-experimental'
+			)
+		);
 
 	const handleCopy = () => {
 		if ( newToken && navigator.clipboard ) {
@@ -336,8 +332,8 @@ const ApiTokensApp = () => {
 															size="small"
 															isDestructive
 															onClick={ () =>
-																handleRevoke(
-																	token.id
+																revokeToken.open(
+																	token
 																)
 															}
 														>
@@ -357,6 +353,49 @@ const ApiTokensApp = () => {
 					</CardBody>
 				</Card>
 			</VStack>
+
+			{ revokeToken.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: API token label */
+						__(
+							'Revoke API token — %s',
+							'fair-payments-connector-experimental'
+						),
+						revokeToken.target.label
+					) }
+					confirmLabel={ __(
+						'Revoke token',
+						'fair-payments-connector-experimental'
+					) }
+					busyLabel={ __(
+						'Revoking…',
+						'fair-payments-connector-experimental'
+					) }
+					isDestructive
+					isBusy={ revokeToken.isBusy }
+					error={ revokeToken.error }
+					onConfirm={ handleRevoke }
+					onCancel={ revokeToken.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %s: comma-separated token scopes */
+							__(
+								'Any site using this token immediately loses access to: %s.',
+								'fair-payments-connector-experimental'
+							),
+							revokeToken.target.scopes.join( ', ' )
+						) }
+					</p>
+					<p>
+						{ __(
+							'The token stays listed as revoked and cannot be reactivated; generate a new token to restore access.',
+							'fair-payments-connector-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isFormOpen && (
 				<Modal

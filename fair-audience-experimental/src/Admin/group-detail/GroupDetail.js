@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -14,6 +14,14 @@ import {
 	Spinner,
 	Notice,
 } from '@wordpress/components';
+
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
+
+const memberName = ( person ) =>
+	`${ person.name || '' } ${ person.surname || '' }`.trim() ||
+	__( '(unnamed)', 'fair-audience-experimental' );
 
 export default function GroupDetail() {
 	const urlParams = new URLSearchParams( window.location.search );
@@ -37,12 +45,17 @@ export default function GroupDetail() {
 	const [ editName, setEditName ] = useState( '' );
 	const [ editDescription, setEditDescription ] = useState( '' );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ saveError, setSaveError ] = useState( null );
 
 	const [ allParticipants, setAllParticipants ] = useState( [] );
 	const [ participantsLoading, setParticipantsLoading ] = useState( false );
 	const [ participantSearch, setParticipantSearch ] = useState( '' );
 	const [ selectedParticipants, setSelectedParticipants ] = useState( [] );
 	const [ isAddingMembers, setIsAddingMembers ] = useState( false );
+	// Outcome of the last add: { added, failed: [ { id, label, reason } ] }.
+	const [ addResult, setAddResult ] = useState( null );
+	const [ memberNotice, setMemberNotice ] = useState( null );
+	const removeMember = useConfirmAction();
 
 	const loadGroup = useCallback( () => {
 		if ( ! groupId ) {
@@ -131,53 +144,81 @@ export default function GroupDetail() {
 		} );
 	};
 
-	const handleAddMembers = () => {
-		if ( ! groupId || selectedParticipants.length === 0 ) {
+	const handleAddMembers = async () => {
+		if (
+			! groupId ||
+			selectedParticipants.length === 0 ||
+			isAddingMembers
+		) {
 			return;
 		}
 
 		setIsAddingMembers( true );
+		setAddResult( null );
 
-		const promises = selectedParticipants.map( ( participantId ) =>
-			apiFetch( {
-				path: `/fair-audience/v1/groups/${ groupId }/participants`,
-				method: 'POST',
-				data: { participant_id: participantId },
-			} ).catch( ( err ) => {
-				if ( ! err.message?.includes( 'already' ) ) {
-					throw err;
-				}
-			} )
+		// One outcome per participant, so a failure keeps only the
+		// participants that still need adding.
+		const outcomes = await Promise.all(
+			selectedParticipants.map( ( participantId ) =>
+				apiFetch( {
+					path: `/fair-audience/v1/groups/${ groupId }/participants`,
+					method: 'POST',
+					data: { participant_id: participantId },
+				} ).then(
+					() => ( { participantId, ok: true } ),
+					( err ) =>
+						// Already a member counts as done.
+						err.message?.includes( 'already' )
+							? { participantId, ok: true }
+							: {
+									participantId,
+									ok: false,
+									reason:
+										err.message ||
+										__(
+											'The participant could not be added.',
+											'fair-audience-experimental'
+										),
+								}
+				)
+			)
 		);
 
-		Promise.all( promises )
-			.then( () => {
-				setSelectedParticipants( [] );
-				loadMembers();
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) + err.message
+		const failed = outcomes
+			.filter( ( outcome ) => ! outcome.ok )
+			.map( ( outcome ) => {
+				const participant = allParticipants.find(
+					( p ) => p.id === outcome.participantId
 				);
-			} )
-			.finally( () => {
-				setIsAddingMembers( false );
+				return {
+					id: outcome.participantId,
+					label: participant
+						? memberName( participant )
+						: `#${ outcome.participantId }`,
+					reason: outcome.reason,
+				};
 			} );
+
+		setSelectedParticipants( failed.map( ( item ) => item.id ) );
+		setAddResult( { added: outcomes.length - failed.length, failed } );
+		setIsAddingMembers( false );
+		loadMembers();
 	};
 
 	const openEditModal = () => {
 		setEditName( group.name );
 		setEditDescription( group.description || '' );
+		setSaveError( null );
 		setIsEditModalOpen( true );
 	};
 
 	const handleSaveGroup = () => {
-		if ( ! editName.trim() ) {
+		if ( ! editName.trim() || isSaving ) {
 			return;
 		}
 
 		setIsSaving( true );
+		setSaveError( null );
 
 		apiFetch( {
 			path: `/fair-audience/v1/groups/${ groupId }`,
@@ -192,14 +233,12 @@ export default function GroupDetail() {
 				loadGroup();
 			} )
 			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) +
-						( err.message ||
-							__(
-								'Failed to save group.',
-								'fair-audience-experimental'
-							) )
+				setSaveError(
+					err.message ||
+						__(
+							'The group could not be saved. Try again.',
+							'fair-audience-experimental'
+						)
 				);
 			} )
 			.finally( () => {
@@ -207,37 +246,30 @@ export default function GroupDetail() {
 			} );
 	};
 
-	const handleRemoveMember = ( participantId ) => {
-		if ( ! groupId ) {
-			return;
-		}
-
-		// eslint-disable-next-line no-undef
-		if (
-			! confirm(
-				__(
-					'Remove this participant from the group?',
-					'fair-audience-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		apiFetch( {
-			path: `/fair-audience/v1/groups/${ groupId }/participants/${ participantId }`,
-			method: 'DELETE',
-		} )
-			.then( () => {
-				loadMembers();
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-undef
-				alert(
-					__( 'Error: ', 'fair-audience-experimental' ) + err.message
+	const handleRemoveMember = () =>
+		removeMember.run(
+			async ( member ) => {
+				await apiFetch( {
+					path: `/fair-audience/v1/groups/${ groupId }/participants/${ member.id }`,
+					method: 'DELETE',
+				} );
+				setMemberNotice(
+					sprintf(
+						/* translators: %s: participant name */
+						__(
+							'%s removed from the group.',
+							'fair-audience-experimental'
+						),
+						memberName( member )
+					)
 				);
-			} );
-	};
+				loadMembers();
+			},
+			__(
+				'The participant could not be removed from the group. Try again.',
+				'fair-audience-experimental'
+			)
+		);
 
 	if ( isLoading ) {
 		return (
@@ -310,6 +342,14 @@ export default function GroupDetail() {
 					</h2>
 				</CardHeader>
 				<CardBody>
+					{ memberNotice && (
+						<Notice
+							status="success"
+							onRemove={ () => setMemberNotice( null ) }
+						>
+							{ memberNotice }
+						</Notice>
+					) }
 					{ membersLoading ? (
 						<Spinner />
 					) : members.length === 0 ? (
@@ -365,11 +405,12 @@ export default function GroupDetail() {
 												<Button
 													variant="link"
 													isDestructive
-													onClick={ () =>
-														handleRemoveMember(
-															member.id
-														)
-													}
+													onClick={ () => {
+														setMemberNotice( null );
+														removeMember.open(
+															member
+														);
+													} }
 												>
 													{ __(
 														'Remove',
@@ -444,6 +485,49 @@ export default function GroupDetail() {
 						) }
 					</div>
 
+					{ addResult && addResult.added > 0 && (
+						<Notice
+							status="success"
+							onRemove={ () => setAddResult( null ) }
+						>
+							{ sprintf(
+								/* translators: %d: number of participants added */
+								_n(
+									'%d participant added to the group.',
+									'%d participants added to the group.',
+									addResult.added,
+									'fair-audience-experimental'
+								),
+								addResult.added
+							) }
+						</Notice>
+					) }
+					{ addResult && addResult.failed.length > 0 && (
+						<Notice status="error" isDismissible={ false }>
+							<p>
+								{ __(
+									'These participants were not added and stay selected for a retry:',
+									'fair-audience-experimental'
+								) }
+							</p>
+							<ul>
+								{ addResult.failed.map( ( item ) => (
+									<li key={ item.id }>
+										{ sprintf(
+											/* translators: 1: participant name, 2: reason */
+											__(
+												'%1$s: %2$s',
+												'fair-audience-experimental'
+											),
+											item.label,
+											item.reason
+										) }
+									</li>
+								) ) }
+							</ul>
+						</Notice>
+					) }
+
 					<Button
 						variant="primary"
 						onClick={ handleAddMembers }
@@ -456,6 +540,51 @@ export default function GroupDetail() {
 					</Button>
 				</CardBody>
 			</Card>
+
+			{ removeMember.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: participant name */
+						__(
+							'Remove from group — %s',
+							'fair-audience-experimental'
+						),
+						memberName( removeMember.target )
+					) }
+					confirmLabel={ __(
+						'Remove from group',
+						'fair-audience-experimental'
+					) }
+					busyLabel={ __(
+						'Removing…',
+						'fair-audience-experimental'
+					) }
+					isDestructive
+					isBusy={ removeMember.isBusy }
+					error={ removeMember.error }
+					onConfirm={ handleRemoveMember }
+					onCancel={ removeMember.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: 1: participant name, 2: participant email or dash, 3: group name */
+							__(
+								'Remove %1$s (%2$s) from %3$s?',
+								'fair-audience-experimental'
+							),
+							memberName( removeMember.target ),
+							removeMember.target.email || '—',
+							group.name
+						) }
+					</p>
+					<p>
+						{ __(
+							'The participant stays in your audience, and you can add them to the group again later.',
+							'fair-audience-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isEditModalOpen && (
 				<Modal
@@ -485,6 +614,12 @@ export default function GroupDetail() {
 							'fair-audience-experimental'
 						) }
 					/>
+
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+						</Notice>
+					) }
 
 					<div
 						style={ {

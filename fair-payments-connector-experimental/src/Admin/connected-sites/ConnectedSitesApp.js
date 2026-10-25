@@ -18,6 +18,13 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
+import ConfirmActionModal, {
+	useConfirmAction,
+} from '../components/ConfirmActionModal.js';
+
 const STATUS_LABELS = {
 	connected: {
 		text: __( 'Connected', 'fair-payments-connector-experimental' ),
@@ -62,6 +69,7 @@ const ConnectedSitesApp = () => {
 	const [ budgetId, setBudgetId ] = useState( '' );
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ budgetsError, setBudgetsError ] = useState( null );
+	const removeSite = useConfirmAction();
 
 	useEffect( () => {
 		loadSites();
@@ -285,44 +293,32 @@ const ConnectedSitesApp = () => {
 		}
 	};
 
-	const handleRemove = async ( id ) => {
-		if (
-			! window.confirm(
-				__(
-					'Remove this connected site? Stored token will be deleted.',
-					'fair-payments-connector-experimental'
-				)
-			)
-		) {
-			return;
-		}
-
-		setError( null );
-		setSuccess( null );
-		setTestFeedback( null );
-
-		try {
-			await apiFetch( {
-				path: `/fair-payments-connector/v1/admin/connected-sites/${ id }`,
-				method: 'DELETE',
-			} );
-			setSuccess(
-				__(
-					'Connected site removed.',
-					'fair-payments-connector-experimental'
-				)
-			);
-			loadSites();
-		} catch ( err ) {
-			setError(
-				err.message ||
-					__(
-						'Failed to remove connected site.',
-						'fair-payments-connector-experimental'
+	const handleRemove = () =>
+		removeSite.run(
+			async ( site ) => {
+				await apiFetch( {
+					path: `/fair-payments-connector/v1/admin/connected-sites/${ site.id }`,
+					method: 'DELETE',
+				} );
+				setError( null );
+				setTestFeedback( null );
+				setSuccess(
+					sprintf(
+						/* translators: %s: connected site label */
+						__(
+							'Connected site “%s” removed.',
+							'fair-payments-connector-experimental'
+						),
+						site.label
 					)
-			);
-		}
-	};
+				);
+				loadSites();
+			},
+			__(
+				'The connected site could not be removed. Try again.',
+				'fair-payments-connector-experimental'
+			)
+		);
 
 	const renderStatus = ( status ) => {
 		const meta = STATUS_LABELS[ status ] || STATUS_LABELS.unverified;
@@ -620,8 +616,8 @@ const ConnectedSitesApp = () => {
 															size="small"
 															isDestructive
 															onClick={ () =>
-																handleRemove(
-																	site.id
+																removeSite.open(
+																	site
 																)
 															}
 														>
@@ -641,6 +637,49 @@ const ConnectedSitesApp = () => {
 					</CardBody>
 				</Card>
 			</VStack>
+
+			{ removeSite.target && (
+				<ConfirmActionModal
+					title={ sprintf(
+						/* translators: %s: connected site label */
+						__(
+							'Remove connected site — %s',
+							'fair-payments-connector-experimental'
+						),
+						removeSite.target.label
+					) }
+					confirmLabel={ __(
+						'Remove site',
+						'fair-payments-connector-experimental'
+					) }
+					busyLabel={ __(
+						'Removing…',
+						'fair-payments-connector-experimental'
+					) }
+					isDestructive
+					isBusy={ removeSite.isBusy }
+					error={ removeSite.error }
+					onConfirm={ handleRemove }
+					onCancel={ removeSite.close }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %s: connected site base URL */
+							__(
+								'This site stops reading data from %s, and the token stored for it is deleted here. To add the site again you need its token.',
+								'fair-payments-connector-experimental'
+							),
+							removeSite.target.base_url
+						) }
+					</p>
+					<p>
+						{ __(
+							'Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working.',
+							'fair-payments-connector-experimental'
+						) }
+					</p>
+				</ConfirmActionModal>
+			) }
 
 			{ isFormOpen && (
 				<Modal

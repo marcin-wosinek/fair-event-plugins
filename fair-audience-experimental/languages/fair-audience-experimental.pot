@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T16:31:52+00:00\n"
+"POT-Creation-Date: 2026-10-25T19:03:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -59,7 +59,7 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
-#: src/Admin/fee-detail/FeeDetail.js:867
+#: src/Admin/fee-detail/FeeDetail.js:880
 #: src/Admin/fees-list/FeesList.js:480
 msgid "Membership Fees"
 msgstr ""
@@ -81,30 +81,30 @@ msgstr ""
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
 #: src/Core/Features.php:161
-#: src/Admin/polls-list/PollsList.js:69
-#: src/Admin/polls-list/PollsList.js:78
-#: src/Admin/polls-list/PollsList.js:89
+#: src/Admin/polls-list/PollsList.js:74
+#: src/Admin/polls-list/PollsList.js:83
+#: src/Admin/polls-list/PollsList.js:94
 msgid "Polls"
 msgstr ""
 
 #: src/Admin/AdminPages.php:127
 #: src/Admin/AdminPages.php:128
 #: src/Admin/AdminPages.php:134
-#: src/Admin/edit-poll/EditPoll.js:338
-#: src/Admin/edit-poll/EditPoll.js:350
+#: src/Admin/edit-poll/EditPoll.js:346
+#: src/Admin/edit-poll/EditPoll.js:358
 msgid "Edit Poll"
 msgstr ""
 
 #: src/Admin/AdminPages.php:141
 #: src/Admin/AdminPages.php:142
-#: src/Admin/instagram-posts/InstagramPosts.js:337
+#: src/Admin/instagram-posts/InstagramPosts.js:318
 msgid "Instagram Posts"
 msgstr ""
 
 #: src/Admin/AdminPages.php:153
 #: src/Admin/AdminPages.php:154
 #: src/Core/Features.php:169
-#: src/Admin/groups/Groups.js:325
+#: src/Admin/groups/Groups.js:331
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
 msgstr ""
@@ -117,17 +117,17 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:177
 #: src/Admin/AdminPages.php:178
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:85
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:96
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:108
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:101
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:112
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:124
 msgid "Extra Messages"
 msgstr ""
 
 #: src/Admin/AdminPages.php:186
 #: src/Admin/AdminPages.php:187
 #: src/Admin/AdminPages.php:193
-#: src/Admin/edit-extra-message/EditExtraMessage.js:152
-#: src/Admin/edit-extra-message/EditExtraMessage.js:170
+#: src/Admin/edit-extra-message/EditExtraMessage.js:155
+#: src/Admin/edit-extra-message/EditExtraMessage.js:173
 msgid "Edit Extra Message"
 msgstr ""
 
@@ -214,7 +214,6 @@ msgid "Amount must be a positive number."
 msgstr ""
 
 #: src/API/FeesController.php:403
-#: src/Admin/fees-list/FeesList.js:283
 msgid "Failed to create fee."
 msgstr ""
 
@@ -223,7 +222,6 @@ msgid "Fee created successfully."
 msgstr ""
 
 #: src/API/FeesController.php:459
-#: src/Admin/fees-list/FeesList.js:341
 msgid "Failed to update fee."
 msgstr ""
 
@@ -232,7 +230,6 @@ msgid "Fee updated successfully."
 msgstr ""
 
 #: src/API/FeesController.php:493
-#: src/Admin/fees-list/FeesList.js:378
 msgid "Failed to delete fee."
 msgstr ""
 
@@ -266,7 +263,7 @@ msgid "Participant added manually."
 msgstr ""
 
 #: src/API/FeesController.php:625
-#: src/Admin/fee-detail/FeeDetail.js:473
+#: src/Admin/fee-detail/FeeDetail.js:463
 msgid "Participant added to fee."
 msgstr ""
 
@@ -287,17 +284,14 @@ msgid "Failed to mark payment as paid."
 msgstr ""
 
 #: src/API/FeesController.php:722
-#: src/Admin/fee-detail/FeeDetail.js:304
 msgid "Payment marked as paid."
 msgstr ""
 
 #: src/API/FeesController.php:745
-#: src/Admin/fee-detail/FeeDetail.js:353
 msgid "Failed to cancel payment."
 msgstr ""
 
 #: src/API/FeesController.php:760
-#: src/Admin/fee-detail/FeeDetail.js:342
 msgid "Payment canceled."
 msgstr ""
 
@@ -337,7 +331,7 @@ msgstr ""
 #: src/API/GroupsController.php:441
 #: src/API/GroupsController.php:465
 #: src/API/GroupsController.php:520
-#: src/Admin/group-detail/GroupDetail.js:62
+#: src/Admin/group-detail/GroupDetail.js:75
 msgid "Group not found."
 msgstr ""
 
@@ -368,7 +362,6 @@ msgid "Group updated successfully."
 msgstr ""
 
 #: src/API/GroupsController.php:351
-#: src/Admin/groups/Groups.js:270
 msgid "Failed to delete group."
 msgstr ""
 
@@ -378,13 +371,12 @@ msgstr ""
 
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
-#: src/Admin/groups/Groups.js:204
+#: src/Admin/groups/Groups.js:215
 #, php-format,js-format
 msgid "%s (copy)"
 msgstr ""
 
 #: src/API/GroupsController.php:410
-#: src/Admin/groups/Groups.js:233
 msgid "Failed to duplicate group."
 msgstr ""
 
@@ -566,7 +558,7 @@ msgid "Failed to create post record."
 msgstr ""
 
 #: src/API/InstagramPostsController.php:263
-#: src/Admin/instagram-posts/InstagramPosts.js:219
+#: src/Admin/instagram-posts/InstagramPosts.js:223
 msgid "Post published successfully!"
 msgstr ""
 
@@ -575,7 +567,6 @@ msgid "Post not found."
 msgstr ""
 
 #: src/API/InstagramPostsController.php:299
-#: src/Admin/instagram-posts/InstagramPosts.js:300
 msgid "Failed to delete post."
 msgstr ""
 
@@ -613,12 +604,12 @@ msgid "Poll not found."
 msgstr ""
 
 #: src/API/PollResponseController.php:271
-#: src/public/poll-response/PollResponse.js:63
+#: src/public/poll-response/PollResponse.js:69
 msgid "This poll is no longer accepting responses."
 msgstr ""
 
 #: src/API/PollResponseController.php:280
-#: src/public/poll-response/PollResponse.js:96
+#: src/public/poll-response/PollResponse.js:106
 msgid "Please select at least one option."
 msgstr ""
 
@@ -631,8 +622,8 @@ msgid "Failed to save your response. Please try again."
 msgstr ""
 
 #: src/API/PollResponseController.php:322
-#: src/public/poll-response/PollResponse.js:170
-#: src/public/poll-response/PollResponse.js:210
+#: src/public/poll-response/PollResponse.js:183
+#: src/public/poll-response/PollResponse.js:223
 msgid "Thank you for your response!"
 msgstr ""
 
@@ -921,12 +912,12 @@ msgstr ""
 
 #: templates/fee-payment.php:385
 #: templates/fee-payment.php:459
-#: src/Admin/fee-detail/FeeDetail.js:1059
+#: src/Admin/fee-detail/FeeDetail.js:1236
 msgid "Fee:"
 msgstr ""
 
 #: templates/fee-payment.php:389
-#: src/Admin/fee-detail/FeeDetail.js:1065
+#: src/Admin/fee-detail/FeeDetail.js:1242
 msgid "Amount:"
 msgstr ""
 
@@ -947,7 +938,7 @@ msgid "Your payment is being processed..."
 msgstr ""
 
 #: templates/fee-payment.php:464
-#: src/Admin/fee-detail/FeeDetail.js:942
+#: src/Admin/fee-detail/FeeDetail.js:955
 msgid "Due Date:"
 msgstr ""
 
@@ -972,8 +963,26 @@ msgid "Budgets could not be loaded."
 msgstr ""
 
 #: src/Admin/components/BudgetLoadStatus.js:57
-#: src/Admin/manage-event-ext/GroupRules.js:465
+#: src/Admin/manage-event-ext/GroupRules.js:547
 msgid "Retry"
+msgstr ""
+
+#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/edit-extra-message/EditExtraMessage.js:287
+#: src/Admin/edit-poll/EditPoll.js:773
+#: src/Admin/fee-detail/FeeDetail.js:800
+#: src/Admin/fee-detail/FeeDetail.js:1293
+#: src/Admin/fee-detail/FeeDetail.js:1464
+#: src/Admin/fee-detail/FeeDetail.js:1562
+#: src/Admin/fee-detail/FeeDetail.js:1878
+#: src/Admin/fees-list/FeesList.js:684
+#: src/Admin/fees-list/FeesList.js:828
+#: src/Admin/group-detail/GroupDetail.js:636
+#: src/Admin/groups/Groups.js:458
+#: src/Admin/groups/Groups.js:515
+#: src/Admin/manage-event-ext/EventMailings.js:699
+#: src/Admin/manage-event-ext/GroupRules.js:647
+msgid "Cancel"
 msgstr ""
 
 #. translators: %d: number of emails sent
@@ -992,679 +1001,821 @@ msgstr ""
 msgid "Failed to send to:"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:110
+#: src/Admin/edit-extra-message/EditExtraMessage.js:113
 msgid "Please enter message content."
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:156
-#: src/Admin/edit-extra-message/EditExtraMessage.js:171
+#: src/Admin/edit-extra-message/EditExtraMessage.js:159
+#: src/Admin/edit-extra-message/EditExtraMessage.js:174
 msgid "Add New Extra Message"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:201
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:131
+#: src/Admin/edit-extra-message/EditExtraMessage.js:204
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:196
 msgid "Content"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:212
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:137
+#: src/Admin/edit-extra-message/EditExtraMessage.js:215
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:202
 msgid "Category"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:216
+#: src/Admin/edit-extra-message/EditExtraMessage.js:219
 msgid "All categories"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:233
+#: src/Admin/edit-extra-message/EditExtraMessage.js:236
 msgid "Limit this message to events in a specific category, or leave as \"All categories\" for all events."
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:242
-#: src/Admin/edit-poll/EditPoll.js:666
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:182
-#: src/Admin/fees-list/FeesList.js:666
+#: src/Admin/edit-extra-message/EditExtraMessage.js:245
+#: src/Admin/edit-poll/EditPoll.js:725
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:249
+#: src/Admin/fees-list/FeesList.js:747
 msgid "Active"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:247
+#: src/Admin/edit-extra-message/EditExtraMessage.js:250
 msgid "Active messages are appended to system emails."
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:262
-#: src/Admin/edit-poll/EditPoll.js:695
+#: src/Admin/edit-extra-message/EditExtraMessage.js:271
+#: src/Admin/edit-poll/EditPoll.js:760
 #: src/Admin/settings/FeaturesTab.js:178
 msgid "Saving..."
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:264
+#: src/Admin/edit-extra-message/EditExtraMessage.js:273
 msgid "Update Message"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:268
+#: src/Admin/edit-extra-message/EditExtraMessage.js:277
 msgid "Create Message"
 msgstr ""
 
-#: src/Admin/edit-extra-message/EditExtraMessage.js:278
-#: src/Admin/edit-poll/EditPoll.js:708
-#: src/Admin/fee-detail/FeeDetail.js:787
-#: src/Admin/fee-detail/FeeDetail.js:1116
-#: src/Admin/fee-detail/FeeDetail.js:1279
-#: src/Admin/fee-detail/FeeDetail.js:1371
-#: src/Admin/fee-detail/FeeDetail.js:1687
-#: src/Admin/fees-list/FeesList.js:603
-#: src/Admin/fees-list/FeesList.js:741
-#: src/Admin/group-detail/GroupDetail.js:501
-#: src/Admin/groups/Groups.js:398
-#: src/Admin/groups/Groups.js:449
-#: src/Admin/manage-event-ext/EventMailings.js:699
-#: src/Admin/manage-event-ext/GroupRules.js:565
-msgid "Cancel"
-msgstr ""
-
-#: src/Admin/edit-poll/EditPoll.js:132
+#: src/Admin/edit-poll/EditPoll.js:138
 msgid "Please select an event."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:138
+#: src/Admin/edit-poll/EditPoll.js:144
 msgid "Please enter a title."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:144
+#: src/Admin/edit-poll/EditPoll.js:150
 msgid "Please enter a question."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:150
+#: src/Admin/edit-poll/EditPoll.js:156
 msgid "Please add at least one option."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:163
+#: src/Admin/edit-poll/EditPoll.js:169
 msgid "Please fill in all option texts or remove empty options."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:203
-msgid "Send poll invitations to all event participants who have not yet responded?"
+#: src/Admin/edit-poll/EditPoll.js:229
+msgid "Invitations were sent, but the statistics could not be refreshed. Reload the page to see them."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:260
-#: src/Admin/fee-detail/FeeDetail.js:173
-#: src/Admin/fees-list/FeesList.js:78
-#: src/Admin/fees-list/FeesList.js:512
-#: src/Admin/fees-list/FeesList.js:633
-#: src/Admin/group-detail/GroupDetail.js:327
-#: src/Admin/group-detail/GroupDetail.js:467
-#: src/Admin/groups/Groups.js:62
-#: src/Admin/groups/Groups.js:364
+#: src/Admin/edit-poll/EditPoll.js:236
+msgid "The invitations could not be sent. Some may already have gone out; check the statistics before trying again."
+msgstr ""
+
+#: src/Admin/edit-poll/EditPoll.js:268
+#: src/Admin/fee-detail/FeeDetail.js:181
+#: src/Admin/fees-list/FeesList.js:86
+#: src/Admin/fees-list/FeesList.js:587
+#: src/Admin/fees-list/FeesList.js:714
+#: src/Admin/group-detail/GroupDetail.js:367
+#: src/Admin/group-detail/GroupDetail.js:596
+#: src/Admin/groups/Groups.js:72
+#: src/Admin/groups/Groups.js:418
 #: src/Admin/import/WordPressUsersImport.js:259
 #: src/Admin/manage-event-ext/MailBodyEditor.js:24
 msgid "Name"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:261
+#: src/Admin/edit-poll/EditPoll.js:269
 msgid "Surname"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:270
+#: src/Admin/edit-poll/EditPoll.js:278
 msgid "Comments"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:283
+#: src/Admin/edit-poll/EditPoll.js:291
 msgid "Yes"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:339
-#: src/Admin/edit-poll/EditPoll.js:351
+#: src/Admin/edit-poll/EditPoll.js:347
+#: src/Admin/edit-poll/EditPoll.js:359
 msgid "Add New Poll"
 msgstr ""
 
+#. translators: %s: poll title
 #: src/Admin/edit-poll/EditPoll.js:377
+#, js-format
+msgid "Send poll invitations — %s"
+msgstr ""
+
+#: src/Admin/edit-poll/EditPoll.js:383
+msgid "Send invitations"
+msgstr ""
+
+#: src/Admin/edit-poll/EditPoll.js:387
+#: src/Admin/fee-detail/FeeDetail.js:1121
+msgid "Sending…"
+msgstr ""
+
+#. translators: %s: event title
+#: src/Admin/edit-poll/EditPoll.js:396
+#, js-format
+msgid "An invitation email goes to every participant of %s who has not answered this poll yet, including those who already received one."
+msgstr ""
+
+#. translators: %d: number of participants who answered
+#: src/Admin/edit-poll/EditPoll.js:407
+#, js-format
+msgid "%d participant has already answered and is skipped."
+msgid_plural "%d participants have already answered and are skipped."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/edit-poll/EditPoll.js:418
+msgid "Sent emails cannot be recalled. Unsaved changes on this page are not saved and not used in the email."
+msgstr ""
+
+#: src/Admin/edit-poll/EditPoll.js:438
 msgid "Poll Statistics"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:407
+#: src/Admin/edit-poll/EditPoll.js:468
 msgid "Answered"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:431
+#: src/Admin/edit-poll/EditPoll.js:492
 msgid "Received Email"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:455
+#: src/Admin/edit-poll/EditPoll.js:516
 msgid "Did Not Receive Email"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:473
-msgid "Sending..."
-msgstr ""
-
-#: src/Admin/edit-poll/EditPoll.js:474
+#: src/Admin/edit-poll/EditPoll.js:533
 msgid "Send Poll Invitations"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:485
+#: src/Admin/edit-poll/EditPoll.js:544
 msgid "Generating PDF..."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:489
+#: src/Admin/edit-poll/EditPoll.js:548
 msgid "Download Results PDF"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:495
+#: src/Admin/edit-poll/EditPoll.js:554
 msgid "Send this poll to all event participants who have not yet responded. Participants who have already answered will be skipped."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:514
+#: src/Admin/edit-poll/EditPoll.js:573
 msgid "Event"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:521
+#: src/Admin/edit-poll/EditPoll.js:580
 msgid "Select an event..."
 msgstr ""
 
 #. translators: %1$s: event title, %2$d: number of participants
-#: src/Admin/edit-poll/EditPoll.js:530
+#: src/Admin/edit-poll/EditPoll.js:589
 #, js-format
 msgid "%1$s (%2$d participants)"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:544
+#: src/Admin/edit-poll/EditPoll.js:603
 msgid "Poll Title (Internal)"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:552
+#: src/Admin/edit-poll/EditPoll.js:611
 msgid "Internal reference for this poll."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:559
-#: src/Admin/polls-list/PollsList.js:118
+#: src/Admin/edit-poll/EditPoll.js:618
+#: src/Admin/polls-list/PollsList.js:160
 msgid "Question"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:564
+#: src/Admin/edit-poll/EditPoll.js:623
 msgid "The question shown to participants."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:571
+#: src/Admin/edit-poll/EditPoll.js:630
 msgid "Options"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:573
+#: src/Admin/edit-poll/EditPoll.js:632
 msgid "Add the multiple-choice options for participants to select from."
 msgstr ""
 
 #. translators: %d: option number (1, 2, 3, etc.)
-#: src/Admin/edit-poll/EditPoll.js:597
+#: src/Admin/edit-poll/EditPoll.js:656
 #, js-format
 msgid "Option %d"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:616
+#: src/Admin/edit-poll/EditPoll.js:675
 msgid "Move up"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:627
+#: src/Admin/edit-poll/EditPoll.js:686
 msgid "Move down"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:636
-#: src/Admin/group-detail/GroupDetail.js:374
-#: src/Admin/manage-event-ext/GroupRules.js:607
+#: src/Admin/edit-poll/EditPoll.js:695
+#: src/Admin/group-detail/GroupDetail.js:415
+#: src/Admin/manage-event-ext/GroupRules.js:689
 msgid "Remove"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:647
+#: src/Admin/edit-poll/EditPoll.js:706
 msgid "Add Option"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:652
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:143
-#: src/Admin/fee-detail/FeeDetail.js:200
-#: src/Admin/fees-list/FeesList.js:139
-#: src/Admin/fees-list/FeesList.js:655
+#: src/Admin/edit-poll/EditPoll.js:711
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:208
+#: src/Admin/fee-detail/FeeDetail.js:208
+#: src/Admin/fees-list/FeesList.js:147
+#: src/Admin/fees-list/FeesList.js:736
 #: src/Admin/import/WordPressUsersImport.js:277
-#: src/Admin/instagram-posts/InstagramPosts.js:509
-#: src/Admin/polls-list/PollsList.js:124
+#: src/Admin/instagram-posts/InstagramPosts.js:527
+#: src/Admin/polls-list/PollsList.js:166
 msgid "Status"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:659
-#: src/Admin/fees-list/FeesList.js:659
+#: src/Admin/edit-poll/EditPoll.js:718
+#: src/Admin/fees-list/FeesList.js:740
 msgid "Draft"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:673
-#: src/Admin/fees-list/FeesList.js:673
+#: src/Admin/edit-poll/EditPoll.js:732
+#: src/Admin/fees-list/FeesList.js:754
 msgid "Closed"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:680
+#: src/Admin/edit-poll/EditPoll.js:739
 msgid "Active polls can receive responses. Closed polls do not accept new responses."
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:697
+#: src/Admin/edit-poll/EditPoll.js:762
 msgid "Update Poll"
 msgstr ""
 
-#: src/Admin/edit-poll/EditPoll.js:698
+#: src/Admin/edit-poll/EditPoll.js:763
 msgid "Create Poll"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:31
-msgid "Are you sure you want to delete this extra message?"
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:45
+msgid "Extra message deleted."
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:49
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:69
-#: src/Admin/fee-detail/FeeDetail.js:272
-#: src/Admin/fee-detail/FeeDetail.js:313
-#: src/Admin/fee-detail/FeeDetail.js:351
-#: src/Admin/fee-detail/FeeDetail.js:420
-#: src/Admin/fee-detail/FeeDetail.js:482
-#: src/Admin/fee-detail/FeeDetail.js:754
-#: src/Admin/fees-list/FeesList.js:281
-#: src/Admin/fees-list/FeesList.js:339
-#: src/Admin/fees-list/FeesList.js:376
-#: src/Admin/group-detail/GroupDetail.js:161
-#: src/Admin/group-detail/GroupDetail.js:197
-#: src/Admin/group-detail/GroupDetail.js:237
-#: src/Admin/groups/Groups.js:185
-#: src/Admin/groups/Groups.js:231
-#: src/Admin/groups/Groups.js:268
-#: src/Admin/polls-list/PollsList.js:49
-msgid "Error: "
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:52
+msgid "The extra message could not be deleted. Try again."
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:114
-#: src/Admin/polls-list/PollsList.js:95
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:81
+msgid "The message status could not be changed. Try again."
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:130
+#: src/Admin/polls-list/PollsList.js:100
 msgid "Add New"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:121
-msgid "No extra messages found. Create your first extra message to get started."
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:144
+msgid "Delete extra message"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:149
-#: src/Admin/group-detail/GroupDetail.js:339
-#: src/Admin/instagram-posts/InstagramPosts.js:521
-#: src/Admin/polls-list/PollsList.js:136
-msgid "Actions"
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:148
+msgid "Delete message"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:164
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:152
+#: src/Admin/fees-list/FeesList.js:499
+#: src/Admin/groups/Groups.js:350
+#: src/Admin/instagram-posts/InstagramPosts.js:330
+#: src/Admin/polls-list/PollsList.js:120
+msgid "Deleting…"
+msgstr ""
+
+#. translators: %s: category name, or "All"
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:168
+#, js-format
+msgid "Category: %s"
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:170
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:229
 msgid "All"
 msgstr ""
 
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:174
+msgid "Emails sent from now on no longer include it; emails already sent are not changed. To pause it instead, set it to Inactive. Deleting cannot be undone."
+msgstr ""
+
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:186
+msgid "No extra messages found. Create your first extra message to get started."
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:214
+#: src/Admin/group-detail/GroupDetail.js:379
+#: src/Admin/instagram-posts/InstagramPosts.js:539
+#: src/Admin/polls-list/PollsList.js:178
+msgid "Actions"
+msgstr ""
+
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:253
 msgid "Inactive"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:197
-#: src/Admin/fees-list/FeesList.js:400
-#: src/Admin/group-detail/GroupDetail.js:298
-#: src/Admin/groups/Groups.js:292
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:264
+#: src/Admin/fees-list/FeesList.js:397
+#: src/Admin/group-detail/GroupDetail.js:330
+#: src/Admin/groups/Groups.js:295
 #: src/Admin/manage-event-ext/EventMailings.js:686
-#: src/Admin/manage-event-ext/GroupRules.js:592
-#: src/Admin/polls-list/PollsList.js:184
+#: src/Admin/manage-event-ext/GroupRules.js:674
+#: src/Admin/polls-list/PollsList.js:226
 msgid "Edit"
 msgstr ""
 
-#: src/Admin/extra-messages-list/ExtraMessagesList.js:212
-#: src/Admin/fees-list/FeesList.js:407
-#: src/Admin/groups/Groups.js:306
-#: src/Admin/instagram-posts/InstagramPosts.js:599
-#: src/Admin/polls-list/PollsList.js:197
+#: src/Admin/extra-messages-list/ExtraMessagesList.js:280
+#: src/Admin/fees-list/FeesList.js:404
+#: src/Admin/groups/Groups.js:309
+#: src/Admin/instagram-posts/InstagramPosts.js:618
+#: src/Admin/polls-list/PollsList.js:240
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:183
-#: src/Admin/group-detail/GroupDetail.js:333
+#: src/Admin/fee-detail/FeeDetail.js:191
+#: src/Admin/group-detail/GroupDetail.js:373
 #: src/Admin/import/WordPressUsersImport.js:265
 msgid "Email"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:189
-#: src/Admin/fee-detail/FeeDetail.js:1254
-#: src/Admin/fee-detail/FeeDetail.js:1547
-#: src/Admin/fees-list/FeesList.js:103
-#: src/Admin/fees-list/FeesList.js:542
+#: src/Admin/fee-detail/FeeDetail.js:197
+#: src/Admin/fee-detail/FeeDetail.js:1431
+#: src/Admin/fee-detail/FeeDetail.js:1738
+#: src/Admin/fees-list/FeesList.js:111
+#: src/Admin/fees-list/FeesList.js:617
 msgid "Amount"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:222
+#: src/Admin/fee-detail/FeeDetail.js:230
 msgid "Paid At"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:228
+#: src/Admin/fee-detail/FeeDetail.js:236
 msgid "Reminder Sent"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:263
+#: src/Admin/fee-detail/FeeDetail.js:273
 msgid "Amount adjusted successfully."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:274
-msgid "Failed to adjust amount."
+#: src/Admin/fee-detail/FeeDetail.js:282
+msgid "The amount could not be adjusted. Try again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:290
-msgid "Mark this payment as paid?"
+#. translators: %s: member name
+#: src/Admin/fee-detail/FeeDetail.js:306
+#, js-format
+msgid "Payment of %s marked as paid."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:311
+#: src/Admin/fee-detail/FeeDetail.js:339
+#: src/Admin/fee-detail/FeeDetail.js:757
+#: src/Admin/fee-detail/FeeDetail.js:1070
+#: src/Admin/fee-detail/FeeDetail.js:1162
+#: src/Admin/fee-detail/FeeDetail.js:1223
+#: src/Admin/fee-detail/FeeDetail.js:1408
+#: src/Admin/group-detail/GroupDetail.js:24
+#: src/Admin/group-detail/GroupDetail.js:397
+msgid "(unnamed)"
 msgstr ""
 
 #: src/Admin/fee-detail/FeeDetail.js:315
-msgid "Failed to mark as paid."
+msgid "The payment could not be marked as paid. Try again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:328
-msgid "Cancel this payment?"
+#. translators: %s: member name
+#: src/Admin/fee-detail/FeeDetail.js:334
+#, js-format
+msgid "Payment of %s canceled."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:410
+#: src/Admin/fee-detail/FeeDetail.js:343
+msgid "The payment could not be canceled. Try again."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:398
 msgid "Payment link copied to clipboard."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:422
-msgid "Failed to get payment link."
+#: src/Admin/fee-detail/FeeDetail.js:410
+msgid "The payment link could not be loaded. Try again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:484
-msgid "Failed to add participant."
+#: src/Admin/fee-detail/FeeDetail.js:472
+msgid "The participant could not be added. Try again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:556
+#: src/Admin/fee-detail/FeeDetail.js:544
 msgid "The transfer could not be created."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:585
+#: src/Admin/fee-detail/FeeDetail.js:573
 msgid "Transfer created and payment marked as paid."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:593
+#: src/Admin/fee-detail/FeeDetail.js:581
 msgid "The transfer was created, but the payment could not be marked as paid. Mark the payment as paid from its row actions; do not create the transfer again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:641
+#: src/Admin/fee-detail/FeeDetail.js:629
 msgid "The payment reminder could not be sent."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:684
+#: src/Admin/fee-detail/FeeDetail.js:672
 #, js-format
 msgid "Payment reminder sent to %s, but this page could not be refreshed. Reload the page to see the reminder date; the email does not need to be sent again."
 msgstr ""
 
 #. translators: %s: recipient email address
-#: src/Admin/fee-detail/FeeDetail.js:696
+#: src/Admin/fee-detail/FeeDetail.js:684
 #, js-format
 msgid "Payment reminder sent to %s."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:715
-msgid "Send payment reminders to all members with pending payments?"
+#. translators: %d: number of reminders sent
+#: src/Admin/fee-detail/FeeDetail.js:723
+#, js-format
+msgid "%d reminder sent."
+msgid_plural "%d reminders sent."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of reminders not sent
+#: src/Admin/fee-detail/FeeDetail.js:737
+#, js-format
+msgid "%d reminder was not sent:"
+msgid_plural "%d reminders were not sent:"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: member name or email, 2: reason
+#. translators: 1: participant name, 2: reason
+#: src/Admin/fee-detail/FeeDetail.js:751
+#: src/Admin/group-detail/GroupDetail.js:518
+#, js-format
+msgid "%1$s: %2$s"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:736
-msgid "reminders sent"
+#: src/Admin/fee-detail/FeeDetail.js:774
+msgid "The reminders could not be sent. Some may already have gone out; check the reminder dates before trying again."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:741
-msgid "failed"
-msgstr ""
-
-#: src/Admin/fee-detail/FeeDetail.js:756
-msgid "Failed to send reminders."
-msgstr ""
-
-#: src/Admin/fee-detail/FeeDetail.js:772
-#: src/Admin/fee-detail/FeeDetail.js:1309
+#: src/Admin/fee-detail/FeeDetail.js:785
+#: src/Admin/fee-detail/FeeDetail.js:1494
 msgid "Adjust Amount"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:779
+#: src/Admin/fee-detail/FeeDetail.js:792
 msgid "Mark as Paid"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:795
-#: src/Admin/fee-detail/FeeDetail.js:1013
-#: src/Admin/fee-detail/FeeDetail.js:1128
+#: src/Admin/fee-detail/FeeDetail.js:808
+#: src/Admin/fee-detail/FeeDetail.js:1190
+#: src/Admin/fee-detail/FeeDetail.js:1305
 msgid "Send Payment Reminder"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:806
+#: src/Admin/fee-detail/FeeDetail.js:819
 msgid "Copy Payment Link"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:814
+#: src/Admin/fee-detail/FeeDetail.js:827
 msgid "View Payment Attempts"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:825
-#: src/Admin/fee-detail/FeeDetail.js:1527
-#: src/Admin/fee-detail/FeeDetail.js:1703
+#: src/Admin/fee-detail/FeeDetail.js:838
+#: src/Admin/fee-detail/FeeDetail.js:1718
+#: src/Admin/fee-detail/FeeDetail.js:1894
 msgid "Create Transfer"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:833
+#: src/Admin/fee-detail/FeeDetail.js:846
 msgid "View Audit Log"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:854
+#: src/Admin/fee-detail/FeeDetail.js:867
 msgid "No fee ID specified."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:888
+#: src/Admin/fee-detail/FeeDetail.js:901
 msgid "Fee Summary"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:905
+#: src/Admin/fee-detail/FeeDetail.js:918
 msgid "Name:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:914
+#: src/Admin/fee-detail/FeeDetail.js:927
 msgid "Group:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:923
+#: src/Admin/fee-detail/FeeDetail.js:936
 msgid "Budget:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:932
+#: src/Admin/fee-detail/FeeDetail.js:945
 msgid "Default Amount:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:951
+#: src/Admin/fee-detail/FeeDetail.js:964
 msgid "Status:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:979
+#: src/Admin/fee-detail/FeeDetail.js:991
 msgid "Send Reminders"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:989
+#: src/Admin/fee-detail/FeeDetail.js:1001
 msgid "Add Participant"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1024
-msgid "One reminder email will be sent to this member only."
+#. translators: %s: member name
+#: src/Admin/fee-detail/FeeDetail.js:1028
+#, js-format
+msgid "Mark as paid — %s"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1040
-msgid "Member:"
+#: src/Admin/fee-detail/FeeDetail.js:1032
+msgid "Mark as paid"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1046
-#: src/Admin/fee-detail/FeeDetail.js:1231
-#: src/Admin/group-detail/GroupDetail.js:357
-msgid "(unnamed)"
+#: src/Admin/fee-detail/FeeDetail.js:1036
+msgid "Saving…"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1053
-msgid "Email:"
+#: src/Admin/fee-detail/FeeDetail.js:1038
+msgid "This records the payment as paid by hand. No money is collected or checked with the payment provider, and there is no action to set it back to pending. The change is logged in the payment history."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1079
-msgid "This member has no email address, so a reminder cannot be sent."
+#. translators: %s: member name
+#: src/Admin/fee-detail/FeeDetail.js:1047
+#, js-format
+msgid "Cancel payment — %s"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1089
-msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
+#: src/Admin/fee-detail/FeeDetail.js:1051
+msgid "Cancel payment"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1140
-msgid "Add Participant to Fee"
+#: src/Admin/fee-detail/FeeDetail.js:1055
+msgid "Canceling…"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1169
-msgid "Search group members..."
+#: src/Admin/fee-detail/FeeDetail.js:1057
+msgid "The member no longer owes this fee and gets no more reminders for it. No payment-provider transaction is canceled or refunded, and there is no action to undo this. The change is logged in the payment history."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1197
-msgid "All group members already have a payment for this fee."
+#. translators: 1: fee name, 2: amount with currency, 3: member email or dash
+#: src/Admin/fee-detail/FeeDetail.js:1086
+#, js-format
+msgid "%1$s: %2$s (%3$s)."
+msgstr ""
+
+#. translators: %s: fee name
+#: src/Admin/fee-detail/FeeDetail.js:1111
+#, js-format
+msgid "Send payment reminders — %s"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1117
+msgid "Send reminders"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1132
+msgid "No member has a pending payment, so there is nobody to remind."
+msgstr ""
+
+#. translators: %d: number of members with a pending payment
+#: src/Admin/fee-detail/FeeDetail.js:1142
+#, js-format
+msgid "One reminder email goes to the %d member with a pending payment, including any who were reminded before:"
+msgid_plural "One reminder email goes to each of the %d members with a pending payment, including any who were reminded before:"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1168
+msgid "no email address; it will be reported as not sent"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1177
+msgid "Sent emails cannot be recalled."
 msgstr ""
 
 #: src/Admin/fee-detail/FeeDetail.js:1201
+msgid "One reminder email will be sent to this member only."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1217
+msgid "Member:"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1230
+msgid "Email:"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1256
+msgid "This member has no email address, so a reminder cannot be sent."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1266
+msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1317
+msgid "Add Participant to Fee"
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1346
+msgid "Search group members..."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1374
+msgid "All group members already have a payment for this fee."
+msgstr ""
+
+#: src/Admin/fee-detail/FeeDetail.js:1378
 msgid "No matches."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1294
-#: src/Admin/manage-event-ext/GroupRules.js:785
+#: src/Admin/fee-detail/FeeDetail.js:1479
+#: src/Admin/manage-event-ext/GroupRules.js:867
 msgid "Add"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1320
+#: src/Admin/fee-detail/FeeDetail.js:1505
 msgid "Current amount:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1332
+#: src/Admin/fee-detail/FeeDetail.js:1517
 msgid "New Amount"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1344
+#: src/Admin/fee-detail/FeeDetail.js:1529
 msgid "Reason (required)"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1350
+#: src/Admin/fee-detail/FeeDetail.js:1535
 msgid "Explain why the amount is being adjusted..."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1379
+#: src/Admin/fee-detail/FeeDetail.js:1570
 msgid "Adjust"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1388
+#: src/Admin/fee-detail/FeeDetail.js:1579
 msgid "Payment Attempts"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1399
+#: src/Admin/fee-detail/FeeDetail.js:1590
 msgid "No payment attempts found."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1445
+#: src/Admin/fee-detail/FeeDetail.js:1636
 msgid "unknown"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1465
+#: src/Admin/fee-detail/FeeDetail.js:1656
 msgid "Transaction:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1492
+#: src/Admin/fee-detail/FeeDetail.js:1683
 msgid "Initiated:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1518
-#: src/Admin/fee-detail/FeeDetail.js:1819
+#: src/Admin/fee-detail/FeeDetail.js:1709
+#: src/Admin/fee-detail/FeeDetail.js:2010
 msgid "Close"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1538
+#: src/Admin/fee-detail/FeeDetail.js:1729
 msgid "Participant:"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1561
+#: src/Admin/fee-detail/FeeDetail.js:1752
 msgid "Date"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1573
-#: src/Admin/fees-list/FeesList.js:522
-#: src/Admin/fees-list/FeesList.js:639
-#: src/Admin/group-detail/GroupDetail.js:477
-#: src/Admin/groups/Groups.js:73
-#: src/Admin/groups/Groups.js:374
+#: src/Admin/fee-detail/FeeDetail.js:1764
+#: src/Admin/fees-list/FeesList.js:597
+#: src/Admin/fees-list/FeesList.js:720
+#: src/Admin/group-detail/GroupDetail.js:606
+#: src/Admin/groups/Groups.js:83
+#: src/Admin/groups/Groups.js:428
 msgid "Description"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1590
+#: src/Admin/fee-detail/FeeDetail.js:1781
 msgid "A transfer needs a source and a target budget."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1594
+#: src/Admin/fee-detail/FeeDetail.js:1785
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1601
+#: src/Admin/fee-detail/FeeDetail.js:1792
 msgid "From Budget (Source)"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1608
-#: src/Admin/fee-detail/FeeDetail.js:1636
+#: src/Admin/fee-detail/FeeDetail.js:1799
+#: src/Admin/fee-detail/FeeDetail.js:1827
 msgid "-- Select Budget --"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1629
+#: src/Admin/fee-detail/FeeDetail.js:1820
 msgid "To Budget (Target)"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1661
+#: src/Admin/fee-detail/FeeDetail.js:1852
 msgid "Source and target budgets must be different."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1715
+#: src/Admin/fee-detail/FeeDetail.js:1906
 msgid "Audit Log"
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1723
+#: src/Admin/fee-detail/FeeDetail.js:1914
 msgid "No audit log entries found."
 msgstr ""
 
-#: src/Admin/fee-detail/FeeDetail.js:1796
+#: src/Admin/fee-detail/FeeDetail.js:1987
 msgid "By:"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:91
-#: src/Admin/fees-list/FeesList.js:535
-#: src/Admin/manage-event-ext/GroupRules.js:694
+#: src/Admin/fees-list/FeesList.js:99
+#: src/Admin/fees-list/FeesList.js:610
+#: src/Admin/manage-event-ext/GroupRules.js:776
 msgid "Group"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:97
-#: src/Admin/fees-list/FeesList.js:561
-#: src/Admin/fees-list/FeesList.js:688
+#: src/Admin/fees-list/FeesList.js:105
+#: src/Admin/fees-list/FeesList.js:636
+#: src/Admin/fees-list/FeesList.js:769
 msgid "Budget"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:133
-#: src/Admin/fees-list/FeesList.js:552
-#: src/Admin/fees-list/FeesList.js:648
+#: src/Admin/fees-list/FeesList.js:141
+#: src/Admin/fees-list/FeesList.js:627
+#: src/Admin/fees-list/FeesList.js:729
 msgid "Due Date"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:158
-#: src/Admin/instagram-posts/InstagramPosts.js:54
+#: src/Admin/fees-list/FeesList.js:166
+#: src/Admin/instagram-posts/InstagramPosts.js:57
 msgid "Pending"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:169
+#: src/Admin/fees-list/FeesList.js:177
 msgid "Paid"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:357
-msgid "Are you sure you want to delete this fee? All payment records will also be deleted."
+#: src/Admin/fees-list/FeesList.js:291
+msgid "The fee could not be created. Try again."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:391
+#: src/Admin/fees-list/FeesList.js:349
+msgid "The fee could not be updated. Try again."
+msgstr ""
+
+#. translators: %s: fee name
+#: src/Admin/fees-list/FeesList.js:371
+#, js-format
+msgid "Fee “%s” deleted."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:377
+msgid "The fee could not be deleted. Try again."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:388
 msgid "View Details"
 msgstr ""
 
 #: src/Admin/fees-list/FeesList.js:426
-#: src/Admin/manage-event-ext/GroupRules.js:701
+#: src/Admin/manage-event-ext/GroupRules.js:783
 msgid "Select a group..."
 msgstr ""
 
@@ -1678,141 +1829,256 @@ msgstr ""
 msgid "Budget #%d"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:486
-#: src/Admin/fees-list/FeesList.js:507
+#. translators: %s: fee name
+#: src/Admin/fees-list/FeesList.js:492
+#, js-format
+msgid "Delete fee — %s"
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:495
+msgid "Delete fee"
+msgstr ""
+
+#. translators: 1: amount with currency, 2: group name
+#: src/Admin/fees-list/FeesList.js:512
+#, js-format
+msgid "%1$s per member of %2$s."
+msgstr ""
+
+#. translators: %d: number of members with a payment record
+#: src/Admin/fees-list/FeesList.js:525
+#, js-format
+msgid "This also deletes the payment record of its %d member, including its paid status and change history."
+msgid_plural "This also deletes the payment records of its %d members, including their paid status and change history."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of payment records marked paid
+#: src/Admin/fees-list/FeesList.js:538
+#, js-format
+msgid "%d of them is marked paid."
+msgid_plural "%d of them are marked paid."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/fees-list/FeesList.js:549
+msgid "Payments already received are not refunded, and their transactions stay in Payments. This cannot be undone."
+msgstr ""
+
+#: src/Admin/fees-list/FeesList.js:561
+#: src/Admin/fees-list/FeesList.js:582
 msgid "Create Fee"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:515
+#: src/Admin/fees-list/FeesList.js:590
 msgid "Enter fee name..."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:528
+#: src/Admin/fees-list/FeesList.js:603
 msgid "Enter description (optional)..."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:569
-#: src/Admin/fees-list/FeesList.js:703
+#: src/Admin/fees-list/FeesList.js:644
+#: src/Admin/fees-list/FeesList.js:784
 msgid "Optionally link to a budget for financial tracking."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:579
+#: src/Admin/fees-list/FeesList.js:654
 msgid "You can still create this fee without a budget."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:583
-#: src/Admin/fees-list/FeesList.js:718
+#: src/Admin/fees-list/FeesList.js:658
+#: src/Admin/fees-list/FeesList.js:799
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:616
-#: src/Admin/groups/Groups.js:408
+#: src/Admin/fees-list/FeesList.js:697
+#: src/Admin/groups/Groups.js:468
 msgid "Create"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:625
+#: src/Admin/fees-list/FeesList.js:706
 msgid "Edit Fee"
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:699
+#: src/Admin/fees-list/FeesList.js:780
 msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:714
+#: src/Admin/fees-list/FeesList.js:795
 msgid "The fee keeps its current budget unless you choose another."
 msgstr ""
 
-#: src/Admin/fees-list/FeesList.js:749
-#: src/Admin/group-detail/GroupDetail.js:509
-#: src/Admin/groups/Groups.js:407
+#: src/Admin/fees-list/FeesList.js:836
+#: src/Admin/group-detail/GroupDetail.js:644
+#: src/Admin/groups/Groups.js:467
 msgid "Update"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:50
+#: src/Admin/group-detail/GroupDetail.js:63
 msgid "No group ID provided."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:199
-#: src/Admin/groups/Groups.js:187
-msgid "Failed to save group."
+#: src/Admin/group-detail/GroupDetail.js:178
+msgid "The participant could not be added."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:218
-msgid "Remove this participant from the group?"
+#: src/Admin/group-detail/GroupDetail.js:238
+#: src/Admin/groups/Groups.js:198
+msgid "The group could not be saved. Try again."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:255
-#: src/Admin/group-detail/GroupDetail.js:281
+#. translators: %s: participant name
+#: src/Admin/group-detail/GroupDetail.js:259
+#, js-format
+msgid "%s removed from the group."
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:268
+msgid "The participant could not be removed from the group. Try again."
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:287
+#: src/Admin/group-detail/GroupDetail.js:313
 msgid "← Back to Groups"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:308
-#: src/Admin/groups/Groups.js:79
+#: src/Admin/group-detail/GroupDetail.js:340
+#: src/Admin/groups/Groups.js:89
 msgid "Members"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:317
+#: src/Admin/group-detail/GroupDetail.js:357
 msgid "No members in this group."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:392
+#: src/Admin/group-detail/GroupDetail.js:433
 msgid "Add Members"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:399
+#: src/Admin/group-detail/GroupDetail.js:440
 msgid "Search participants..."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:418
+#: src/Admin/group-detail/GroupDetail.js:459
 msgid "No participants available to add."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:455
+#. translators: %d: number of participants added
+#: src/Admin/group-detail/GroupDetail.js:495
+#, js-format
+msgid "%d participant added to the group."
+msgid_plural "%d participants added to the group."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/group-detail/GroupDetail.js:508
+msgid "These participants were not added and stay selected for a retry:"
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:539
 msgid "Add Selected"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:462
-#: src/Admin/groups/Groups.js:357
+#. translators: %s: participant name
+#: src/Admin/group-detail/GroupDetail.js:548
+#, js-format
+msgid "Remove from group — %s"
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:554
+msgid "Remove from group"
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:558
+#: src/Admin/manage-event-ext/GroupRules.js:466
+msgid "Removing…"
+msgstr ""
+
+#. translators: 1: participant name, 2: participant email or dash, 3: group name
+#: src/Admin/group-detail/GroupDetail.js:571
+#, js-format
+msgid "Remove %1$s (%2$s) from %3$s?"
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:581
+msgid "The participant stays in your audience, and you can add them to the group again later."
+msgstr ""
+
+#: src/Admin/group-detail/GroupDetail.js:591
+#: src/Admin/groups/Groups.js:411
 msgid "Edit Group"
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:470
-#: src/Admin/groups/Groups.js:367
-#: src/Admin/groups/Groups.js:431
+#: src/Admin/group-detail/GroupDetail.js:599
+#: src/Admin/groups/Groups.js:421
+#: src/Admin/groups/Groups.js:491
 msgid "Enter group name..."
 msgstr ""
 
-#: src/Admin/group-detail/GroupDetail.js:483
-#: src/Admin/groups/Groups.js:380
+#: src/Admin/group-detail/GroupDetail.js:612
+#: src/Admin/groups/Groups.js:434
 msgid "Enter group description (optional)..."
 msgstr ""
 
-#: src/Admin/groups/Groups.js:249
-msgid "Are you sure you want to delete this group?"
+#: src/Admin/groups/Groups.js:244
+msgid "The group could not be duplicated. Try again."
 msgstr ""
 
-#: src/Admin/groups/Groups.js:283
+#. translators: %s: group name
+#: src/Admin/groups/Groups.js:266
+#, js-format
+msgid "Group “%s” deleted."
+msgstr ""
+
+#: src/Admin/groups/Groups.js:275
+msgid "The group could not be deleted. Try again."
+msgstr ""
+
+#: src/Admin/groups/Groups.js:286
 #: src/Admin/manage-event-ext/EventMailings.js:716
 msgid "View"
 msgstr ""
 
-#: src/Admin/groups/Groups.js:299
-#: src/Admin/groups/Groups.js:457
-#: src/Admin/instagram-posts/InstagramPosts.js:587
+#: src/Admin/groups/Groups.js:302
+#: src/Admin/groups/Groups.js:523
+#: src/Admin/instagram-posts/InstagramPosts.js:605
 #: src/Admin/manage-event-ext/EventMailings.js:728
 msgid "Duplicate"
 msgstr ""
 
-#: src/Admin/groups/Groups.js:331
-#: src/Admin/groups/Groups.js:358
+#. translators: %s: group name
+#: src/Admin/groups/Groups.js:343
+#, js-format
+msgid "Delete group — %s"
+msgstr ""
+
+#: src/Admin/groups/Groups.js:346
+msgid "Delete group"
+msgstr ""
+
+#. translators: %d: number of group members
+#: src/Admin/groups/Groups.js:363
+#, js-format
+msgid "Its %d member stays in your audience; only the membership in this group is removed."
+msgid_plural "Its %d members stay in your audience; only their membership in this group is removed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/groups/Groups.js:373
+msgid "Membership fees, scheduled messages and event rules that use this group are not updated. This cannot be undone."
+msgstr ""
+
+#: src/Admin/groups/Groups.js:385
+#: src/Admin/groups/Groups.js:412
 msgid "Create Group"
 msgstr ""
 
-#: src/Admin/groups/Groups.js:417
+#: src/Admin/groups/Groups.js:477
 msgid "Duplicate Group"
 msgstr ""
 
-#: src/Admin/groups/Groups.js:425
+#: src/Admin/groups/Groups.js:485
 msgid "New group name"
 msgstr ""
 
@@ -2060,101 +2326,117 @@ msgstr ""
 msgid "Failed:"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:55
+#: src/Admin/instagram-posts/InstagramPosts.js:58
 msgid "Publishing"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:56
+#: src/Admin/instagram-posts/InstagramPosts.js:59
 msgid "Published"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:57
+#: src/Admin/instagram-posts/InstagramPosts.js:60
 msgid "Failed"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:110
+#: src/Admin/instagram-posts/InstagramPosts.js:114
 msgid "Failed to load posts."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:132
+#: src/Admin/instagram-posts/InstagramPosts.js:136
 msgid "Select Image for Instagram"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:137
+#: src/Admin/instagram-posts/InstagramPosts.js:141
 msgid "Use this image"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:180
+#: src/Admin/instagram-posts/InstagramPosts.js:184
 msgid "Please select an image."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:191
+#: src/Admin/instagram-posts/InstagramPosts.js:195
 msgid "Please enter a caption."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:240
+#: src/Admin/instagram-posts/InstagramPosts.js:244
 msgid "Failed to publish post."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:271
-msgid "Are you sure you want to delete this post?"
-msgstr ""
-
-#: src/Admin/instagram-posts/InstagramPosts.js:284
+#: src/Admin/instagram-posts/InstagramPosts.js:276
 msgid "Post deleted."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:354
+#: src/Admin/instagram-posts/InstagramPosts.js:283
+msgid "The post could not be deleted. Try again."
+msgstr ""
+
+#: src/Admin/instagram-posts/InstagramPosts.js:322
+msgid "Delete Instagram post"
+msgstr ""
+
+#: src/Admin/instagram-posts/InstagramPosts.js:326
+msgid "Delete post"
+msgstr ""
+
+#: src/Admin/instagram-posts/InstagramPosts.js:345
+msgid "This removes the post from this list only. It stays published on Instagram; delete it there if it should disappear."
+msgstr ""
+
+#: src/Admin/instagram-posts/InstagramPosts.js:349
+msgid "This removes the post from this list. This cannot be undone."
+msgstr ""
+
+#: src/Admin/instagram-posts/InstagramPosts.js:372
 msgid "Create New Post"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:370
+#: src/Admin/instagram-posts/InstagramPosts.js:388
 msgid "Image"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:391
+#: src/Admin/instagram-posts/InstagramPosts.js:409
 msgid "Replace Image"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:402
+#: src/Admin/instagram-posts/InstagramPosts.js:420
 msgid "Remove Image"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:414
+#: src/Admin/instagram-posts/InstagramPosts.js:432
 msgid "Select from Media Library"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:428
+#: src/Admin/instagram-posts/InstagramPosts.js:446
 msgid "Must be a publicly accessible URL."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:436
-#: src/Admin/instagram-posts/InstagramPosts.js:503
+#: src/Admin/instagram-posts/InstagramPosts.js:454
+#: src/Admin/instagram-posts/InstagramPosts.js:521
 msgid "Caption"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:442
+#: src/Admin/instagram-posts/InstagramPosts.js:460
 msgid "Write your caption here..."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:457
+#: src/Admin/instagram-posts/InstagramPosts.js:475
 msgid "Posting..."
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:461
+#: src/Admin/instagram-posts/InstagramPosts.js:479
 msgid "Post to Instagram"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:474
+#: src/Admin/instagram-posts/InstagramPosts.js:492
 msgid "Post History"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:490
+#: src/Admin/instagram-posts/InstagramPosts.js:508
 msgid "No posts yet. Create your first post above!"
 msgstr ""
 
-#: src/Admin/instagram-posts/InstagramPosts.js:515
-#: src/Admin/polls-list/PollsList.js:130
+#: src/Admin/instagram-posts/InstagramPosts.js:533
+#: src/Admin/polls-list/PollsList.js:172
 msgid "Created"
 msgstr ""
 
@@ -2380,105 +2662,131 @@ msgstr ""
 msgid "Sent %1$d · failed %2$d · skipped %3$d"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:31
+#: src/Admin/manage-event-ext/GroupRules.js:35
 msgid "Percentage (%)"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:35
+#: src/Admin/manage-event-ext/GroupRules.js:39
 msgid "Fixed amount"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:55
+#: src/Admin/manage-event-ext/GroupRules.js:59
 msgid "Invited"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:57
+#: src/Admin/manage-event-ext/GroupRules.js:61
 msgid "View signups"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:59
+#: src/Admin/manage-event-ext/GroupRules.js:63
 msgid "Manage signups"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:249
+#: src/Admin/manage-event-ext/GroupRules.js:254
 msgid "Group rules added."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:254
+#: src/Admin/manage-event-ext/GroupRules.js:259
 msgid "Failed to add group rules."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:322
+#: src/Admin/manage-event-ext/GroupRules.js:327
 msgid "Group rules updated."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:327
+#: src/Admin/manage-event-ext/GroupRules.js:332
 msgid "Failed to update group rules."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:364
+#: src/Admin/manage-event-ext/GroupRules.js:369
 msgid "Failed to update permission."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:375
-msgid "Are you sure you want to remove all rules for this group?"
+#: src/Admin/manage-event-ext/GroupRules.js:420
+msgid "Some rules could not be removed; the ones still listed remain. Try again."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:413
-msgid "Group rules removed."
+#. translators: %s: group name
+#: src/Admin/manage-event-ext/GroupRules.js:431
+#, js-format
+msgid "Rules for %s removed."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:418
-msgid "Failed to remove group rules."
+#: src/Admin/manage-event-ext/GroupRules.js:440
+msgid "The group rules could not be removed. Try again."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:429
+#: src/Admin/manage-event-ext/GroupRules.js:449
 msgid "Group Rules"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:473
+#. translators: %s: group name
+#: src/Admin/manage-event-ext/GroupRules.js:456
+#, js-format
+msgid "Remove group rules — %s"
+msgstr ""
+
+#: src/Admin/manage-event-ext/GroupRules.js:462
+msgid "Remove rules"
+msgstr ""
+
+#: src/Admin/manage-event-ext/GroupRules.js:477
+msgid "These rules for this event date are removed:"
+msgstr ""
+
+#. translators: %s: discount, e.g. "10%" or "€5.00"
+#: src/Admin/manage-event-ext/GroupRules.js:487
+#, js-format
+msgid "Discount: %s"
+msgstr ""
+
+#: src/Admin/manage-event-ext/GroupRules.js:507
+msgid "Its members no longer get this discount or these permissions for this date. The group and its members are not changed."
+msgstr ""
+
+#: src/Admin/manage-event-ext/GroupRules.js:555
 msgid "Group rules could not be loaded."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:505
-#: src/Admin/manage-event-ext/GroupRules.js:716
+#: src/Admin/manage-event-ext/GroupRules.js:587
+#: src/Admin/manage-event-ext/GroupRules.js:798
 msgid "Discount Type"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:521
-#: src/Admin/manage-event-ext/GroupRules.js:725
+#: src/Admin/manage-event-ext/GroupRules.js:603
+#: src/Admin/manage-event-ext/GroupRules.js:807
 msgid "Discount Value"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:534
+#: src/Admin/manage-event-ext/GroupRules.js:616
 msgid "0 = no discount"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:553
+#: src/Admin/manage-event-ext/GroupRules.js:635
 msgid "Save"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:620
+#: src/Admin/manage-event-ext/GroupRules.js:702
 msgid "Discount:"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:678
+#: src/Admin/manage-event-ext/GroupRules.js:760
 msgid "No group rules yet. Add one below."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:688
+#: src/Admin/manage-event-ext/GroupRules.js:770
 msgid "Add Group"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:736
+#: src/Admin/manage-event-ext/GroupRules.js:818
 msgid "e.g. 10"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:740
+#: src/Admin/manage-event-ext/GroupRules.js:822
 msgid "e.g. 5.00"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:799
+#: src/Admin/manage-event-ext/GroupRules.js:881
 msgid "All groups already have rules for this event."
 msgstr ""
 
@@ -2522,15 +2830,35 @@ msgstr ""
 msgid "Insert token:"
 msgstr ""
 
-#: src/Admin/polls-list/PollsList.js:31
-msgid "Are you sure you want to delete this poll?"
+#. translators: %s: poll title
+#: src/Admin/polls-list/PollsList.js:44
+#, js-format
+msgid "Poll “%s” deleted."
 msgstr ""
 
-#: src/Admin/polls-list/PollsList.js:102
+#: src/Admin/polls-list/PollsList.js:53
+msgid "The poll could not be deleted. Try again."
+msgstr ""
+
+#. translators: %s: poll title
+#: src/Admin/polls-list/PollsList.js:113
+#, js-format
+msgid "Delete poll — %s"
+msgstr ""
+
+#: src/Admin/polls-list/PollsList.js:116
+msgid "Delete poll"
+msgstr ""
+
+#: src/Admin/polls-list/PollsList.js:132
+msgid "Invitation links already sent stop working, and its responses are no longer shown. This cannot be undone."
+msgstr ""
+
+#: src/Admin/polls-list/PollsList.js:144
 msgid "No polls found. Create your first poll to get started."
 msgstr ""
 
-#: src/Admin/polls-list/PollsList.js:112
+#: src/Admin/polls-list/PollsList.js:154
 msgid "Title"
 msgstr ""
 
@@ -2676,46 +3004,46 @@ msgstr ""
 msgid "Test"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:25
+#: src/public/poll-response/PollResponse.js:31
 msgid "Invalid poll link."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:45
+#: src/public/poll-response/PollResponse.js:51
 msgid "Invalid or expired poll link."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:78
+#: src/public/poll-response/PollResponse.js:84
 msgid "Failed to load poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:121
+#: src/public/poll-response/PollResponse.js:132
 msgid "Failed to submit your response. Please try again."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:152
+#: src/public/poll-response/PollResponse.js:165
 msgid "Error"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:179
+#: src/public/poll-response/PollResponse.js:192
 msgid "you've already submitted your response to this poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:187
+#: src/public/poll-response/PollResponse.js:200
 msgid "You've already submitted your response to this poll."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:216
+#: src/public/poll-response/PollResponse.js:229
 msgid "Your response has been recorded successfully."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:233
+#: src/public/poll-response/PollResponse.js:246
 msgid "Hi"
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:276
+#: src/public/poll-response/PollResponse.js:299
 msgid "Submitting..."
 msgstr ""
 
-#: src/public/poll-response/PollResponse.js:277
+#: src/public/poll-response/PollResponse.js:300
 msgid "Submit Response"
 msgstr ""

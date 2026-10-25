@@ -56,7 +56,7 @@ msgstr "Comparar eventos"
 
 #: src/Admin/AdminPages.php:85
 #: src/Admin/AdminPages.php:86
-#: src/Admin/sources/SourcesList.js:153
+#: src/Admin/sources/SourcesList.js:148
 msgid "Event Feeds"
 msgstr "Feeds de eventos"
 
@@ -168,7 +168,6 @@ msgid "Failed to update event feed."
 msgstr "No se ha podido actualizar el feed de eventos."
 
 #: src/API/EventSourceController.php:319
-#: src/Admin/sources/SourcesList.js:97
 msgid "Failed to delete event feed."
 msgstr "No se ha podido eliminar el feed de eventos."
 
@@ -327,7 +326,7 @@ msgstr "Meta respondió, pero no confirmó la recepción del evento de prueba %s
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -786,6 +785,7 @@ msgstr "Descripción"
 msgid "Remove from schedule"
 msgstr "Quitar del programa"
 
+#: src/Admin/components/ConfirmActionModal.js:158
 #: src/Admin/manage-event-schedule/EventSchedule.js:763
 #: src/Admin/sources/components/SourceForm.js:251
 msgid "Cancel"
@@ -1230,40 +1230,40 @@ msgstr "Volver a Feeds de eventos"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/SourceViewApp.js:259
-#, js-format,php-format
+#, js-format, php-format
 msgid "Event feed: %s"
 msgstr "Feed de eventos: %s"
 
 #: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/components/SourceForm.js:149
-#: src/Admin/sources/SourcesList.js:219
+#: src/Admin/sources/SourcesList.js:214
 msgid "Slug"
 msgstr "Slug"
 
 #: src/Admin/source-view/SourceViewApp.js:282
-#: src/Admin/sources/SourcesList.js:243
+#: src/Admin/sources/SourcesList.js:238
 msgid "Status"
 msgstr "Estado"
 
 #: src/Admin/source-view/SourceViewApp.js:286
-#: src/Admin/sources/SourcesList.js:124
+#: src/Admin/sources/SourcesList.js:119
 msgid "Enabled"
 msgstr "Activa"
 
 #: src/Admin/source-view/SourceViewApp.js:287
-#: src/Admin/sources/SourcesList.js:128
+#: src/Admin/sources/SourcesList.js:123
 msgid "Disabled"
 msgstr "Desactivado"
 
 #: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
-#: src/Admin/sources/SourcesList.js:225
+#: src/Admin/sources/SourcesList.js:220
 msgid "Feed inputs"
 msgstr "Entradas del feed"
 
 #. translators: %d: number of feed inputs
 #: src/Admin/source-view/SourceViewApp.js:297
-#: src/Admin/sources/SourcesList.js:274
+#: src/Admin/sources/SourcesList.js:269
 #, js-format
 msgid "%d feed input"
 msgid_plural "%d feed inputs"
@@ -1287,7 +1287,7 @@ msgid "iCal"
 msgstr "iCal"
 
 #: src/Admin/source-view/SourceViewApp.js:337
-#: src/Admin/sources/SourcesList.js:290
+#: src/Admin/sources/SourcesList.js:285
 msgid "Copy iCal feed URL"
 msgstr "Copiar URL del feed iCal"
 
@@ -1296,7 +1296,7 @@ msgid "JSON"
 msgstr "JSON"
 
 #: src/Admin/source-view/SourceViewApp.js:348
-#: src/Admin/sources/SourcesList.js:301
+#: src/Admin/sources/SourcesList.js:296
 msgid "Copy JSON API URL"
 msgstr "Copiar URL de la API JSON"
 
@@ -1306,7 +1306,7 @@ msgid "Edit event feed"
 msgstr "Editar feed de eventos"
 
 #: src/Admin/source-view/SourceViewApp.js:471
-#: src/Admin/sources/SourcesList.js:366
+#: src/Admin/sources/SourcesList.js:401
 msgid "Edit Event Feed"
 msgstr "Editar feed de eventos"
 
@@ -1442,64 +1442,56 @@ msgstr "Actualizar feed de eventos"
 msgid "Create event feed"
 msgstr "Crear feed de eventos"
 
-#: src/Admin/sources/SourcesList.js:50
+#: src/Admin/sources/SourcesList.js:54
 msgid "Failed to load event feeds."
 msgstr "No se han podido cargar los feeds de eventos."
 
-#: src/Admin/sources/SourcesList.js:73
-msgid "Are you sure you want to delete this event feed?"
-msgstr "¿Seguro que quieres eliminar este feed de eventos?"
-
-#: src/Admin/sources/SourcesList.js:91
-msgid "Event feed deleted."
-msgstr "Feed de eventos eliminado."
-
-#: src/Admin/sources/SourcesList.js:110
+#: src/Admin/sources/SourcesList.js:105
 msgid "Event feed updated."
 msgstr "Feed de eventos actualizado."
 
-#: src/Admin/sources/SourcesList.js:111
+#: src/Admin/sources/SourcesList.js:106
 msgid "Event feed created."
 msgstr "Feed de eventos creado."
 
-#: src/Admin/sources/SourcesList.js:156
-#: src/Admin/sources/SourcesList.js:370
+#: src/Admin/sources/SourcesList.js:151
+#: src/Admin/sources/SourcesList.js:405
 msgid "Add Event Feed"
 msgstr "Añadir feed de eventos"
 
-#: src/Admin/sources/SourcesList.js:189
+#: src/Admin/sources/SourcesList.js:184
 msgid "Loading event feeds…"
 msgstr "Cargando feeds de eventos…"
 
-#: src/Admin/sources/SourcesList.js:200
+#: src/Admin/sources/SourcesList.js:195
 msgid "No event feeds yet. Add your first event feed to get started."
 msgstr "Todavía no hay feeds de eventos. Añade tu primer feed de eventos para empezar."
 
-#: src/Admin/sources/SourcesList.js:213
+#: src/Admin/sources/SourcesList.js:208
 msgid "Name"
 msgstr "Nombre"
 
-#: src/Admin/sources/SourcesList.js:231
+#: src/Admin/sources/SourcesList.js:226
 msgid "iCal Feed"
 msgstr "Feed iCal"
 
-#: src/Admin/sources/SourcesList.js:237
+#: src/Admin/sources/SourcesList.js:232
 msgid "JSON API"
 msgstr "API JSON"
 
-#: src/Admin/sources/SourcesList.js:249
+#: src/Admin/sources/SourcesList.js:244
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/sources/SourcesList.js:319
+#: src/Admin/sources/SourcesList.js:314
 msgid "View"
 msgstr "Ver"
 
-#: src/Admin/sources/SourcesList.js:331
+#: src/Admin/sources/SourcesList.js:326
 msgid "Edit"
 msgstr "Editar"
 
-#: src/Admin/sources/SourcesList.js:346
+#: src/Admin/sources/SourcesList.js:341
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1992,3 +1984,38 @@ msgstr "El enlace funciona una vez que este feed esté activado."
 #: src/Admin/source-view/SourceViewApp.js:405
 msgid "Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link."
 msgstr "Elige una página para este feed para obtener un enlace de resumen semanal. La página da al resumen su título y enlace."
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:85
+#, js-format
+msgid "Event feed “%s” deleted."
+msgstr "Fuente de eventos «%s» eliminada."
+
+#: src/Admin/sources/SourcesList.js:94
+msgid "The event feed could not be deleted. Try again."
+msgstr "No se pudo eliminar la fuente de eventos. Inténtalo de nuevo."
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:361
+#, js-format
+msgid "Delete event feed — %s"
+msgstr "Eliminar fuente de eventos — %s"
+
+#: src/Admin/sources/SourcesList.js:367
+msgid "Delete event feed"
+msgstr "Eliminar fuente de eventos"
+
+#: src/Admin/sources/SourcesList.js:371
+msgid "Deleting…"
+msgstr "Eliminando…"
+
+#. translators: %s: event feed slug
+#: src/Admin/sources/SourcesList.js:381
+#, js-format
+msgid "Its iCal and JSON feed URLs (slug “%s”) stop working for every calendar or site that reads them."
+msgstr "Sus URLs de fuente iCal y JSON (slug «%s») dejan de funcionar para cada calendario o sitio que las lee."
+
+#: src/Admin/sources/SourcesList.js:389
+msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
+msgstr "Los eventos y categorías incluidos en la fuente no se modifican. La eliminación de la fuente no se puede deshacer."
+

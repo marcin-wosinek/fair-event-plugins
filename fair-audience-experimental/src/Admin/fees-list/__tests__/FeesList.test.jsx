@@ -665,3 +665,160 @@ describe( 'FeesList — the budget of a fee being edited', () => {
 		expect( await update( dialog ) ).not.toHaveProperty( 'budget_id' );
 	} );
 } );
+
+describe( 'FeesList — deleting a fee and failed saves (#1936)', () => {
+	const PAID_FEE = {
+		...LINKED_FEE,
+		member_count: 4,
+		paid_count: 1,
+		pending_count: 3,
+	};
+
+	/** Route list, groups and budgets as usual; writes go to `onWrite`. */
+	function mockWrites( onWrite ) {
+		apiFetch.mockImplementation( ( options ) => {
+			const { path, method } = options;
+			if ( method && method !== 'GET' ) {
+				return onWrite( options );
+			}
+			if ( path === BUDGETS_PATH ) {
+				return Promise.resolve( BUDGETS );
+			}
+			if ( path === GROUPS_PATH ) {
+				return Promise.resolve( GROUPS );
+			}
+			return Promise.resolve( {
+				headers: { get: () => '1' },
+				json: () => Promise.resolve( [ PAID_FEE ] ),
+			} );
+		} );
+	}
+
+	async function openDeleteDialog() {
+		await screen.findByRole( 'link', { name: 'Membership 2025' } );
+		const direct = screen.queryByRole( 'button', { name: 'Delete' } );
+		if ( direct ) {
+			fireEvent.click( direct );
+		} else {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Actions' } )
+			);
+			fireEvent.click(
+				await screen.findByRole( 'menuitem', { name: 'Delete' } )
+			);
+		}
+		return screen.findByRole( 'dialog', {
+			name: 'Delete fee — Membership 2025',
+		} );
+	}
+
+	const writes = () =>
+		apiFetch.mock.calls.filter(
+			( [ options ] ) => options.method && options.method !== 'GET'
+		);
+
+	afterEach( () => {
+		apiFetch.mockReset();
+	} );
+
+	it( 'names the fee and its payment records, and cancelling deletes nothing', async () => {
+		mockWrites( () => Promise.resolve( {} ) );
+		render( <FeesList /> );
+
+		const dialog = await openDeleteDialog();
+
+		expect(
+			within( dialog ).getByText( '25.00 EUR per member of Members.' )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText(
+				'This also deletes the payment records of its 4 members, including their paid status and change history.'
+			)
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText( '1 of them is marked paid.' )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByText( /are not refunded/ )
+		).toBeVisible();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( writes() ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps the dialog open after a failed delete and retries', async () => {
+		const first = deferred();
+		let attempts = 0;
+		mockWrites( () => {
+			attempts++;
+			return attempts === 1 ? first.promise : Promise.resolve( {} );
+		} );
+		render( <FeesList /> );
+
+		const dialog = await openDeleteDialog();
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete fee',
+		} );
+		fireEvent.click( confirm );
+		fireEvent.click( confirm );
+		expect( writes() ).toHaveLength( 1 );
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+
+		await act( async () => first.reject( {} ) );
+
+		expect(
+			within( dialog ).getByText(
+				'The fee could not be deleted. Try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeVisible();
+
+		await act( async () => fireEvent.click( confirm ) );
+
+		expect( writes()[ 1 ][ 0 ] ).toMatchObject( {
+			path: `${ FEES_PATH }/7`,
+			method: 'DELETE',
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect(
+			await screen.findByText( 'Fee “Membership 2025” deleted.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps Create Fee open with the entered values and the error', async () => {
+		mockWrites( () =>
+			Promise.reject( { message: 'The group has no members.' } )
+		);
+		render( <FeesList /> );
+		await screen.findByRole( 'link', { name: 'Membership 2025' } );
+
+		const dialog = await openCreateDialog();
+		await fillRequiredFields( dialog );
+		await act( async () =>
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Create' } )
+			)
+		);
+
+		expect(
+			within( dialog ).getByText( 'The group has no members.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByRole( 'textbox', { name: 'Name' } )
+		).toHaveValue( 'Membership 2026' );
+	} );
+} );

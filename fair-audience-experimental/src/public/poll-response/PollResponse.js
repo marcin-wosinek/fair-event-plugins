@@ -1,12 +1,16 @@
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { Button, CheckboxControl, Spinner } from '@wordpress/components';
 import './style.css';
 
 export default function PollResponse() {
 	const [ isLoading, setIsLoading ] = useState( true );
+	// A link or poll that cannot be answered: replaces the form.
 	const [ error, setError ] = useState( null );
+	// A missing choice or failed submission: shown beside the form, which
+	// keeps the selected choices for another attempt.
+	const [ formError, setFormError ] = useState( null );
 	const [ poll, setPoll ] = useState( null );
 	const [ participantName, setParticipantName ] = useState( '' );
 	const [ alreadyResponded, setAlreadyResponded ] = useState( false );
@@ -14,6 +18,8 @@ export default function PollResponse() {
 	const [ isSubmitting, setIsSubmitting ] = useState( false );
 	const [ submitted, setSubmitted ] = useState( false );
 	const [ accessKey, setAccessKey ] = useState( '' );
+	// Set synchronously: a double click can arrive before the re-render.
+	const submitLock = useRef( false );
 
 	useEffect( () => {
 		// Read access key from data attribute
@@ -88,11 +94,15 @@ export default function PollResponse() {
 			}
 			return [ ...prev, optionId ];
 		} );
+		setFormError( null );
 	};
 
 	const handleSubmit = async () => {
+		if ( submitLock.current ) {
+			return;
+		}
 		if ( selectedOptions.length === 0 ) {
-			alert(
+			setFormError(
 				__(
 					'Please select at least one option.',
 					'fair-audience-experimental'
@@ -101,8 +111,9 @@ export default function PollResponse() {
 			return;
 		}
 
+		submitLock.current = true;
 		setIsSubmitting( true );
-		setError( null );
+		setFormError( null );
 
 		try {
 			await apiFetch( {
@@ -116,13 +127,15 @@ export default function PollResponse() {
 
 			setSubmitted( true );
 		} catch ( err ) {
-			setError(
+			setFormError(
 				err.message ||
 					__(
 						'Failed to submit your response. Please try again.',
 						'fair-audience-experimental'
 					)
 			);
+		} finally {
+			submitLock.current = false;
 			setIsSubmitting( false );
 		}
 	};
@@ -246,7 +259,14 @@ export default function PollResponse() {
 								? 'selected'
 								: ''
 						}` }
-						onClick={ () => handleOptionToggle( option.id ) }
+						onClick={ ( e ) => {
+							// A label click is forwarded to its checkbox as a
+							// second click; toggling on both left it unchanged.
+							if ( e.target.tagName === 'LABEL' ) {
+								return;
+							}
+							handleOptionToggle( option.id );
+						} }
 						role="button"
 						tabIndex={ 0 }
 						onKeyDown={ ( e ) => {
@@ -271,26 +291,34 @@ export default function PollResponse() {
 				isPrimary
 				onClick={ handleSubmit }
 				disabled={ isSubmitting }
+				aria-describedby={
+					formError ? 'poll-response-error' : undefined
+				}
 			>
 				{ isSubmitting
 					? __( 'Submitting...', 'fair-audience-experimental' )
 					: __( 'Submit Response', 'fair-audience-experimental' ) }
 			</Button>
 
-			{ error && (
-				<div
-					style={ {
-						marginTop: '20px',
-						padding: '10px',
-						backgroundColor: '#f8d7da',
-						border: '1px solid #f5c6cb',
-						borderRadius: '4px',
-						color: '#721c24',
-					} }
-				>
-					{ error }
-				</div>
-			) }
+			{ /* Kept in the page so screen readers announce each new message. */ }
+			<div
+				role="alert"
+				id="poll-response-error"
+				style={
+					formError
+						? {
+								marginTop: '20px',
+								padding: '10px',
+								backgroundColor: '#f8d7da',
+								border: '1px solid #f5c6cb',
+								borderRadius: '4px',
+								color: '#721c24',
+							}
+						: undefined
+				}
+			>
+				{ formError }
+			</div>
 		</div>
 	);
 }

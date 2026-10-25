@@ -7,7 +7,7 @@
  * unbudgeted ("none") row.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, fireEvent, within } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import BudgetsApp from '../BudgetsApp.js';
 
@@ -71,5 +71,78 @@ describe( 'BudgetsApp — view entries links', () => {
 				'admin.php?page=fair-finance-entries&budget_id=none'
 		);
 		expect( unbudgetedLink ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'BudgetsApp — deleting a budget', () => {
+	const deleteCalls = () =>
+		apiFetch.mock.calls.filter(
+			( [ options ] ) => options.method === 'DELETE'
+		);
+
+	const openDelete = async () => {
+		render( <BudgetsApp /> );
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Delete' } )
+		);
+		return screen.getByRole( 'dialog', { name: 'Delete budget — Venue' } );
+	};
+
+	it( 'names the budget and its entries, and cancelling sends nothing', async () => {
+		const dialog = await openDelete();
+
+		expect(
+			within( dialog ).getByText(
+				'Its 1 financial entry is kept and moves to Unbudgeted.'
+			)
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( deleteCalls() ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps the dialog open on failure and retries', async () => {
+		let attempts = 0;
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( method === 'DELETE' ) {
+				attempts++;
+				return attempts === 1
+					? Promise.reject( { message: 'Failed to delete budget.' } )
+					: Promise.resolve( { deleted: true } );
+			}
+			if ( path === '/fair-finance/v1/budgets' ) {
+				return Promise.resolve( BUDGETS );
+			}
+			return Promise.resolve( STATS );
+		} );
+		const dialog = await openDelete();
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Delete budget',
+		} );
+
+		await act( async () => fireEvent.click( confirm ) );
+
+		expect(
+			within( dialog ).getByText( 'Failed to delete budget.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
+
+		await act( async () => fireEvent.click( confirm ) );
+
+		expect( deleteCalls() ).toHaveLength( 2 );
+		expect( deleteCalls()[ 1 ][ 0 ].path ).toBe(
+			'/fair-finance/v1/budgets/7'
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			await screen.findByText( 'Budget “Venue” deleted.', {
+				selector: '.components-notice__content',
+			} )
+		).toBeInTheDocument();
 	} );
 } );

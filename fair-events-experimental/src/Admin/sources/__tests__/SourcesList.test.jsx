@@ -5,7 +5,7 @@
  * "Event Feeds" while admin URLs and REST routes keep their `sources` names.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import SourcesList from '../SourcesList.js';
 
@@ -137,5 +137,85 @@ describe( 'SourcesList', () => {
 				name: 'Update event feed',
 			} )
 		).toBeInTheDocument();
+	} );
+
+	describe( 'deleting an event feed', () => {
+		const openDelete = async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+			fireEvent.click(
+				screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
+			);
+			return screen.getByRole( 'dialog', {
+				name: 'Delete event feed — Club nights',
+			} );
+		};
+		const deleteCalls = () =>
+			apiFetch.mock.calls.filter(
+				( [ options ] ) => options.method === 'DELETE'
+			);
+
+		it( 'names the feed and its URLs, and cancelling sends nothing', async () => {
+			const dialog = await openDelete();
+
+			expect(
+				within( dialog ).getByText( /slug “club-nights”/ )
+			).toBeInTheDocument();
+			expect(
+				within( dialog ).getByRole( 'button', {
+					name: 'Delete event feed',
+				} )
+			).toHaveClass( 'is-destructive' );
+
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+			);
+
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+			expect( deleteCalls() ).toHaveLength( 0 );
+		} );
+
+		it( 'keeps the dialog open on failure and retries', async () => {
+			let failNext = true;
+			apiFetch.mockImplementation( ( { path, method } ) => {
+				if ( method === 'DELETE' ) {
+					if ( failNext ) {
+						failNext = false;
+						return Promise.reject( {
+							message: 'Event feed not found.',
+						} );
+					}
+					return Promise.resolve( { deleted: true } );
+				}
+				return Promise.resolve(
+					path === '/fair-events/v1/sources' ? FEEDS : []
+				);
+			} );
+			const dialog = await openDelete();
+			const confirm = within( dialog ).getByRole( 'button', {
+				name: 'Delete event feed',
+			} );
+
+			await act( async () => fireEvent.click( confirm ) );
+
+			expect(
+				within( dialog ).getByText( 'Event feed not found.', {
+					selector: '.components-notice__content',
+				} )
+			).toBeInTheDocument();
+
+			await act( async () => fireEvent.click( confirm ) );
+
+			expect( deleteCalls() ).toHaveLength( 2 );
+			expect( deleteCalls()[ 1 ][ 0 ].path ).toBe(
+				'/fair-events/v1/sources/3'
+			);
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+			expect(
+				await screen.findByText( 'Event feed “Club nights” deleted.', {
+					selector: '.components-notice__content',
+				} )
+			).toBeInTheDocument();
+		} );
 	} );
 } );

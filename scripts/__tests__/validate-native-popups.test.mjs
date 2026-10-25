@@ -171,7 +171,7 @@ test('throws on unparseable source', () => {
 	assert.throws(() => findNativePopups('const = ;'), SyntaxError);
 });
 
-test('scans each core plugin and reports file locations', () => {
+test('scans each plugin and reports file locations', () => {
 	const files = Object.fromEntries(
 		SCANNED_PLUGINS.map((plugin) => [
 			`${plugin}/src/Admin/page.js`,
@@ -206,11 +206,39 @@ test('skips tests, build output and other plugins', () => {
 			'fair-events/src/build/index.js': 'alert( 1 );',
 			'fair-events/build/index.js': 'alert( 1 );',
 			'fair-events/e2e/flow.spec.js': 'alert( 1 );',
-			'fair-finance/src/page.js': 'alert( 1 );',
+			'fair-timetable/src/page.js': 'alert( 1 );',
 			'fair-events/src/Page.php': '<?php $this->confirm();',
 			'scripts/tool.mjs': 'confirm( 1 );',
 		},
 		(root) => assert.deepEqual(validateNativePopups(root), [])
+	);
+});
+
+test('covers the experimental plugins, Fair Finance and Fair Platform', () => {
+	for (const plugin of [
+		'fair-events-experimental',
+		'fair-payments-connector-experimental',
+		'fair-finance',
+		'fair-platform',
+		'fair-audience-experimental',
+	]) {
+		assert.ok(SCANNED_PLUGINS.includes(plugin), plugin);
+	}
+	withRepo(
+		{
+			'fair-finance/src/Admin/entries/EntriesApp.js':
+				'const ok = window.confirm( "Unmatch?" );',
+			'fair-audience-experimental/src/public/poll/Poll.js':
+				'alert( "Pick one" );',
+		},
+		(root) =>
+			assert.deepEqual(
+				validateNativePopups(root).map((error) => error.split(': ')[0]),
+				[
+					'fair-finance/src/Admin/entries/EntriesApp.js:1:12',
+					'fair-audience-experimental/src/public/poll/Poll.js:1:1',
+				]
+			)
 	);
 });
 

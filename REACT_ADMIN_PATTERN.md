@@ -743,7 +743,8 @@ The policy — what a confirmation must say, bulk, pending, error,
 accessibility and public-page rules — is canonical in
 [UI_GUIDELINES.md § Popups and confirmations](./UI_GUIDELINES.md#popups-and-confirmations).
 This section covers how to build it. `npm run validate:native-popups` fails
-CI on any `confirm()`, `alert()` or `prompt()` in the core plugins' `src/`.
+CI on any `confirm()`, `alert()` or `prompt()` in the scanned plugins' `src/`
+(see [TESTING.md § Native popup check](./TESTING.md#native-popup-check)).
 
 **Choosing the component**
 
