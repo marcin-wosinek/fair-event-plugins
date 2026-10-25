@@ -134,7 +134,7 @@
 	},
 	"overrides": {
 		"copy-webpack-plugin@10": {
-			"serialize-javascript": "7.1.2"
+			"serialize-javascript": "7.1.4"
 		},
 		"express": {
 			"qs": "^6.16.1"
