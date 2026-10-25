@@ -457,6 +457,15 @@ English images are written as `assets/screenshot-N.png`; Spanish images use
 `assets/screenshot-N-es.png`, the partial-locale fallback described in
 [DEPLOYMENT.md](./DEPLOYMENT.md).
 
+### Manage Event screenshots
+
+`npm run screenshots:manage-event` captures every Manage Event tab of a
+synthetic demo event on the isolated test site (`-- --reuse` for a running
+instance). The demo data, safety checks, conditional-tab prerequisites,
+output layout (`e2e/screenshots/output/manage-event/latest/`) and how to add
+coverage for a new tab are documented in
+[docs/manage-event-screenshots.md](./docs/manage-event-screenshots.md).
+
 ### Ad-hoc page screenshots
 
 Use the headless Playwright helper for a one-off admin or public screenshot:
