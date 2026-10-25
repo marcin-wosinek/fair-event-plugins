@@ -780,6 +780,11 @@ class FinancialEntry {
 	/**
 	 * Unmatch entry from all transactions
 	 *
+	 * Clears the junction links and the legacy column atomically, so a failed
+	 * write never leaves the two representations disagreeing. An entry that
+	 * is already unmatched succeeds as a no-op, which keeps retries safe.
+	 * Financial records, transactions and split allocations are untouched.
+	 *
 	 * @param int $id Entry ID.
 	 * @return bool True on success, false on failure.
 	 */
@@ -788,9 +793,13 @@ class FinancialEntry {
 
 		$table_name = self::get_table_name();
 
+		$wpdb->query( 'START TRANSACTION' );
+
 		// Clear junction table when connector is active.
-		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' ) ) {
-			\FairPaymentsConnector\Models\EntryTransaction::unlink_all_for_entry( $id );
+		if ( class_exists( '\\FairPaymentsConnector\\Models\\EntryTransaction' )
+			&& ! \FairPaymentsConnector\Models\EntryTransaction::unlink_all_for_entry( $id ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
 		}
 
 		// Clear legacy column.
@@ -802,7 +811,14 @@ class FinancialEntry {
 			array( '%d' )
 		);
 
-		return false !== $result;
+		if ( false === $result ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return true;
 	}
 
 	/**
