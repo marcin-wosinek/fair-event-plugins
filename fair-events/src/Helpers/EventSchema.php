@@ -13,7 +13,13 @@
 namespace FairEvents\Helpers;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Models\TicketOption;
+use FairEvents\Models\TicketOptionPrice;
+use FairEvents\Services\ActivityOptionPriceResolver;
+use FairEvents\Services\ActivitySelection;
+use FairEvents\Services\EventSchedule;
 use FairEvents\Services\TicketAvailability;
+use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -381,6 +387,10 @@ class EventSchema {
 	 * `validFrom`: the selected period's start, explicit or inferred
 	 * (issue #1841).
 	 *
+	 * A type that requires extensions advertises its base price plus the
+	 * cheapest valid extension selection, priced for the same window, or no
+	 * offer when the requirement cannot be met (issue #1447).
+	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
 	 *
@@ -432,6 +442,20 @@ class EventSchema {
 			}
 		}
 
+		// Required extensions are part of the minimum signup cost (issue
+		// #1447). They are priced for the same selected window, so an
+		// upcoming ticket price never mixes with today's extension prices.
+		$extension_prices = array();
+		if ( $selected_period ) {
+			foreach ( $ticket_types as $ticket_type ) {
+				if ( self::requires_extensions( $ticket_type ) ) {
+					$extension_prices = self::selectable_extension_prices( $pricing_event_date_id, (int) $event_date->id, $selected_period );
+					break;
+				}
+			}
+		}
+		$price_by_type_id = self::add_required_extension_costs( $ticket_types, $price_by_type_id, $extension_prices );
+
 		// select_offer_period() only selects a period with a resolved start.
 		$valid_from = $selected_period
 			? DateHelper::local_to_iso8601( $selected_period->sale_start )
@@ -465,6 +489,129 @@ class EventSchema {
 		$active_period = TicketAvailability::pick_active_period( $resolved_periods, $now, false );
 
 		return $active_period ? $active_period : TicketAvailability::pick_upcoming_period( $resolved_periods, $now );
+	}
+
+	/**
+	 * Whether a ticket type's signup requires extensions: selection is
+	 * enabled and its own minimum is positive. A zero minimum does not
+	 * inherit the event-wide minimum, which applies only to signup without
+	 * a ticket type.
+	 *
+	 * @param object $ticket_type Ticket type.
+	 * @return bool
+	 */
+	private static function requires_extensions( $ticket_type ) {
+		$rule = ActivitySelection::selection_rule( 0, $ticket_type );
+
+		return $rule['enabled'] && $rule['minimum'] > 0;
+	}
+
+	/**
+	 * Prices of the extensions a buyer could select with a ticket in the
+	 * given sale period. Left out are extensions without a price in that
+	 * period (unavailable, not free), those the event schedule marks as not
+	 * bookable, and those full on the advertised occurrence. Participant
+	 * discounts are never applied: structured data is public.
+	 *
+	 * @param int    $pricing_event_date_id Event date the option catalogue belongs to (the series master for a generated occurrence).
+	 * @param int    $event_date_id         Occurrence whose places are counted.
+	 * @param object $sale_period           Selected JSON-LD sale period (needs id).
+	 * @return float[] Selectable extension prices.
+	 */
+	public static function selectable_extension_prices( $pricing_event_date_id, $event_date_id, $sale_period ) {
+		$options = TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
+		if ( empty( $options ) ) {
+			return array();
+		}
+
+		$prices_by_option = array();
+		foreach ( $options as $option ) {
+			if ( ! empty( $option->derive_price_from_sale_period ) ) {
+				foreach ( TicketOptionPrice::get_all_by_event_date_id( (int) $pricing_event_date_id ) as $price_row ) {
+					$prices_by_option[ (int) $price_row->ticket_option_id ][ (int) $price_row->sale_period_id ] = (float) $price_row->price;
+				}
+				break;
+			}
+		}
+
+		$not_bookable = EventSchedule::non_bookable_option_ids( (int) $pricing_event_date_id );
+
+		$prices = array();
+		foreach ( $options as $option ) {
+			$price = ActivityOptionPriceResolver::price_for_period( $option, $sale_period, $prices_by_option[ (int) $option->id ] ?? array() );
+			if ( null === $price
+				|| in_array( (int) $option->id, $not_bookable, true )
+				|| ActivitySelection::is_full( $option, (int) $event_date_id ) ) {
+				continue;
+			}
+
+			$prices[] = $price;
+		}
+
+		return $prices;
+	}
+
+	/**
+	 * Add each ticket type's cheapest valid extension selection to its base
+	 * price. Pure, DB-free.
+	 *
+	 * Types with extensions disabled (including multi-occurrence tickets)
+	 * or without a positive minimum keep their base price. A type whose
+	 * requirement cannot be met is dropped, so no offer is emitted for an
+	 * impossible signup. The combined total never goes below zero.
+	 *
+	 * @param object[] $ticket_types     Ticket types.
+	 * @param float[]  $price_by_type_id Ticket-type ID => base price for the selected window.
+	 * @param float[]  $extension_prices Selectable extension prices, as returned by selectable_extension_prices().
+	 * @return float[] Ticket-type ID => advertised price.
+	 */
+	public static function add_required_extension_costs( array $ticket_types, array $price_by_type_id, array $extension_prices ) {
+		foreach ( $ticket_types as $ticket_type ) {
+			$type_id = (int) $ticket_type->id;
+			if ( ! isset( $price_by_type_id[ $type_id ] ) || ! self::requires_extensions( $ticket_type ) ) {
+				continue;
+			}
+
+			$rule = ActivitySelection::selection_rule( 0, $ticket_type );
+			$cost = self::cheapest_extension_selection_cost( $extension_prices, $rule['minimum'], $rule['maximum'] );
+			if ( null === $cost ) {
+				unset( $price_by_type_id[ $type_id ] );
+				continue;
+			}
+
+			$price_by_type_id[ $type_id ] = max( 0.0, LineItemTotals::normalize_amount( $price_by_type_id[ $type_id ] + $cost ) );
+		}
+
+		return $price_by_type_id;
+	}
+
+	/**
+	 * Cost of the cheapest selection of at least `$minimum` and at most
+	 * `$maximum` extensions: the cheapest required ones, plus every further
+	 * negative-price extension the maximum still allows. Pure, DB-free.
+	 *
+	 * @param float[]  $prices  Selectable extension prices.
+	 * @param int      $minimum Extensions the selection must contain.
+	 * @param int|null $maximum Extensions it may contain, or null for no limit.
+	 * @return float|null Selection cost, or null when the limits cannot be met.
+	 */
+	public static function cheapest_extension_selection_cost( array $prices, $minimum, $maximum ) {
+		if ( count( $prices ) < $minimum || ( null !== $maximum && $maximum < $minimum ) ) {
+			return null;
+		}
+
+		$prices = array_map( array( LineItemTotals::class, 'normalize_amount' ), $prices );
+		sort( $prices, SORT_NUMERIC );
+
+		$cost = 0.0;
+		foreach ( $prices as $index => $price ) {
+			if ( $index >= $minimum && ( $price >= 0 || ( null !== $maximum && $index >= $maximum ) ) ) {
+				break;
+			}
+			$cost += $price;
+		}
+
+		return LineItemTotals::normalize_amount( $cost );
 	}
 
 	/**

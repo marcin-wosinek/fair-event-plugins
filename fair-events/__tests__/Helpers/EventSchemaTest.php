@@ -775,4 +775,168 @@ class EventSchemaTest extends TestCase {
 			unset( $GLOBALS['_fair_test_timezone'] );
 		}
 	}
+
+	/**
+	 * Build a ticket type stub with an extension rule.
+	 *
+	 * @param int      $id       Ticket type ID.
+	 * @param int      $minimum  Minimum extensions.
+	 * @param int|null $maximum  Maximum extensions, or null for no limit.
+	 * @param bool     $enabled  Whether extension selection is enabled.
+	 * @param string   $scope    Recurrence scope.
+	 * @return object Ticket type stub.
+	 */
+	private function extension_type( $id, $minimum, $maximum = null, $enabled = true, $scope = 'single_instance' ) {
+		return (object) array(
+			'id'                 => $id,
+			'name'               => 'Type ' . $id,
+			'disabled'           => false,
+			'disable_at'         => null,
+			'activities_enabled' => $enabled,
+			'recurrence_scope'   => $scope,
+			'minimum_activities' => $minimum,
+			'maximum_activities' => $maximum,
+		);
+	}
+
+	/**
+	 * Required paid extensions add the cheapest required ones; free
+	 * extensions contribute zero.
+	 */
+	public function test_cheapest_extension_selection_cost_sums_cheapest_required() {
+		$this->assertSame( 0.0, EventSchema::cheapest_extension_selection_cost( array( 12.0, 0.0, 5.0 ), 1, null ) );
+		$this->assertSame( 5.0, EventSchema::cheapest_extension_selection_cost( array( 12.0, 0.0, 5.0 ), 2, null ) );
+		$this->assertSame( 13.5, EventSchema::cheapest_extension_selection_cost( array( 12.0, 5.5, 8.0 ), 2, 3 ) );
+	}
+
+	/**
+	 * Too few selectable extensions, or a maximum below the minimum, cannot
+	 * satisfy the requirement.
+	 */
+	public function test_cheapest_extension_selection_cost_unsatisfiable_is_null() {
+		$this->assertNull( EventSchema::cheapest_extension_selection_cost( array( 5.0 ), 2, null ) );
+		$this->assertNull( EventSchema::cheapest_extension_selection_cost( array(), 1, null ) );
+		$this->assertNull( EventSchema::cheapest_extension_selection_cost( array( 5.0, 6.0, 7.0 ), 2, 1 ) );
+	}
+
+	/**
+	 * Optional negative-price extensions lower the cost while the maximum
+	 * allows them; positive ones beyond the minimum are never added.
+	 */
+	public function test_cheapest_extension_selection_cost_includes_negative_within_maximum() {
+		$this->assertSame( -13.0, EventSchema::cheapest_extension_selection_cost( array( -8.0, -5.0, 3.0 ), 1, 2 ) );
+		$this->assertSame( -8.0, EventSchema::cheapest_extension_selection_cost( array( -8.0, -5.0, 3.0 ), 1, 1 ) );
+		$this->assertSame( -10.0, EventSchema::cheapest_extension_selection_cost( array( 4.0, -6.0, -4.0, 2.0 ), 1, null ) );
+		$this->assertSame( -2.0, EventSchema::cheapest_extension_selection_cost( array( 4.0, -6.0, 2.0, 2.0 ), 3, null ) );
+	}
+
+	/**
+	 * Extension prices are rounded like line items.
+	 */
+	public function test_cheapest_extension_selection_cost_keeps_monetary_precision() {
+		$this->assertSame( 0.3, EventSchema::cheapest_extension_selection_cost( array( 0.1, 0.2 ), 2, null ) );
+		$this->assertSame( 2.01, EventSchema::cheapest_extension_selection_cost( array( 1.005, 1.0 ), 2, null ) );
+	}
+
+	/**
+	 * Each type uses its own rule: a positive minimum adds the cheapest
+	 * selection, a zero minimum or disabled extensions (including
+	 * multi-occurrence tickets) keep the base price, and an unsatisfiable
+	 * requirement drops the type.
+	 */
+	public function test_add_required_extension_costs_per_type() {
+		$types = array(
+			$this->extension_type( 1, 1 ),
+			$this->extension_type( 2, 0 ),
+			$this->extension_type( 3, 2, null, false ),
+			$this->extension_type( 4, 2, null, true, 'multiple_instances' ),
+			$this->extension_type( 5, 3 ),
+			$this->extension_type( 6, 2, 1 ),
+			$this->extension_type( 7, 2 ),
+		);
+		$base  = array(
+			1 => 0.0,
+			2 => 10.0,
+			3 => 10.0,
+			4 => 30.0,
+			5 => 10.0,
+			6 => 10.0,
+			7 => 10.0,
+		);
+
+		$this->assertSame(
+			array(
+				1 => 5.0,
+				2 => 10.0,
+				3 => 10.0,
+				4 => 30.0,
+				7 => 27.0,
+			),
+			EventSchema::add_required_extension_costs( $types, $base, array( 12.0, 5.0 ) )
+		);
+	}
+
+	/**
+	 * A type without a price row stays omitted, even with a requirement.
+	 */
+	public function test_add_required_extension_costs_keeps_unpriced_type_omitted() {
+		$this->assertSame(
+			array(),
+			EventSchema::add_required_extension_costs( array( $this->extension_type( 1, 1 ) ), array(), array( 5.0 ) )
+		);
+	}
+
+	/**
+	 * The combined total is floored at zero: a 10 EUR ticket with minimum 1,
+	 * maximum 2, and extensions at -8 and -5 EUR advertises 0.
+	 */
+	public function test_add_required_extension_costs_floors_total_at_zero() {
+		$prices = EventSchema::add_required_extension_costs(
+			array( $this->extension_type( 1, 1, 2 ) ),
+			array( 1 => 10.0 ),
+			array( -8.0, -5.0 )
+		);
+
+		$this->assertSame( array( 1 => 0.0 ), $prices );
+
+		$offers = EventSchema::build_offers_for_types( array( $this->extension_type( 1, 1, 2 ) ), $prices, null, 'EUR', 'https://example.com/event' );
+		$this->assertSame( '0', $offers[0]['price'] );
+		$this->assertTrue( EventSchema::is_free_offer_set( $offers ) );
+	}
+
+	/**
+	 * A zero ticket that requires a paid extension is no longer advertised
+	 * as free; the free-event flag follows the adjusted offers.
+	 */
+	public function test_required_paid_extension_clears_free_flag() {
+		$types  = array(
+			$this->extension_type( 1, 1 ),
+			$this->extension_type( 2, 0 ),
+		);
+		$prices = EventSchema::add_required_extension_costs(
+			$types,
+			array(
+				1 => 0.0,
+				2 => 0.0,
+			),
+			array( 7.5 )
+		);
+		$offers = EventSchema::build_offers_for_types( $types, $prices, null, 'EUR', 'https://example.com/event' );
+
+		$this->assertSame( '7.5', $offers[0]['price'] );
+		$this->assertSame( '0', $offers[1]['price'] );
+		$this->assertFalse( EventSchema::is_free_offer_set( $offers ) );
+
+		$this->assertFalse(
+			EventSchema::is_free_offer_set(
+				EventSchema::build_offers_for_types(
+					$types,
+					EventSchema::add_required_extension_costs( array( $types[0] ), array( 1 => 0.0 ), array() ),
+					null,
+					'EUR',
+					'https://example.com/event'
+				)
+			)
+		);
+	}
 }
