@@ -57,7 +57,7 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
-		// Operator links to an Events Week block's weekly summary; see
+		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
 

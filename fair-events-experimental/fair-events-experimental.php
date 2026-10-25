@@ -36,6 +36,7 @@ register_deactivation_hook(
 		// Cron event of the former weekly notification sender.
 		wp_unschedule_hook( 'fair_events_experimental_weekly_notification' );
 		delete_option( 'fair_events_experimental_weekly_notification_next_run' );
+		\FairEventsExperimental\Frontend\WeeklySummaryPage::deactivate();
 	}
 );
 

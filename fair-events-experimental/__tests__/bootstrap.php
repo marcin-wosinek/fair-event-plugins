@@ -14,9 +14,55 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( ! function_exists( 'home_url' ) ) {
-	/** Return a stable test site URL. */
-	function home_url() {
-		return 'https://example.test/';
+	/**
+	 * Return a stable test site URL.
+	 *
+	 * @param string $path Path relative to the home URL.
+	 * @return string
+	 */
+	function home_url( $path = '' ) {
+		return 'https://example.test/' . ltrim( (string) $path, '/' );
+	}
+}
+
+if ( ! function_exists( 'sanitize_title' ) ) {
+	/**
+	 * Simplified stub of WordPress sanitize_title(): lowercase, spaces to
+	 * hyphens, anything else outside [a-z0-9_-] dropped.
+	 *
+	 * @param string $title Title to sanitize.
+	 * @return string
+	 */
+	function sanitize_title( $title ) {
+		$title = strtolower( trim( (string) $title ) );
+		$title = preg_replace( '/\\s+/', '-', $title );
+		return preg_replace( '/[^a-z0-9_\\-]/', '', $title );
+	}
+}
+
+if ( ! function_exists( 'user_trailingslashit' ) ) {
+	/**
+	 * Stub of WordPress user_trailingslashit() for a structure ending in `/`.
+	 *
+	 * @param string $url URL or path.
+	 * @return string
+	 */
+	function user_trailingslashit( $url ) {
+		return rtrim( $url, '/' ) . '/';
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Stub of WordPress add_query_arg() for its ( $key, $value, $url ) form.
+	 *
+	 * @param string $key   Query key.
+	 * @param string $value Query value, used as given.
+	 * @param string $url   URL to add it to.
+	 * @return string
+	 */
+	function add_query_arg( $key, $value, $url ) {
+		return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . $key . '=' . $value;
 	}
 }
 

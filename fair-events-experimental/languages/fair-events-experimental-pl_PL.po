@@ -39,7 +39,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-events-experimental.php:53
+#: fair-events-experimental.php:54
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental wymaga aktywnego wtyczki Fair Events."
 
@@ -327,7 +327,7 @@ msgstr "Meta odpowiedziała, ale nie potwierdziła odebrania zdarzenia testowego
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -577,7 +577,7 @@ msgstr "Sprawdź, jak sprzedaż biletów dwóch wydarzeń rozwijała się w dnia
 msgid "The list of events could not be loaded."
 msgstr "Nie można było wczytać listy wydarzeń."
 
-#: src/Frontend/WeeklySummaryPage.php:172
+#: src/Frontend/WeeklySummaryPage.php:232
 #: src/Admin/compare-events/comparison.js:98
 #: src/Admin/meta/MetaCalendarTest.js:85
 #: src/Admin/source-view/calendarLabels.js:20
@@ -1221,54 +1221,55 @@ msgstr "Otwórz powiadomienia o zdarzeniach"
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr "Powiadomienia tygodniowe na Telegramie są teraz zarządzane i wysyłane przez Fair Events. Zaktualizuj Fair Events, aby je zarządzać; do tego czasu żadne powiadomienie tygodniowe nie będzie wysłane."
 
-#: src/Admin/source-view/SourceViewApp.js:83
+#: src/Admin/source-view/SourceViewApp.js:84
 msgid "Failed to load event feed."
 msgstr "Nie udało się wczytać kanału wydarzeń."
 
-#: src/Admin/source-view/SourceViewApp.js:97
+#: src/Admin/source-view/SourceViewApp.js:98
 msgid "No event feed ID provided."
 msgstr "Nie podano ID kanału wydarzeń."
 
-#: src/Admin/source-view/SourceViewApp.js:233
-#: src/Admin/source-view/SourceViewApp.js:251
+#: src/Admin/source-view/SourceViewApp.js:234
+#: src/Admin/source-view/SourceViewApp.js:252
 msgid "Back to Event Feeds"
 msgstr "Wróć do kanałów wydarzeń"
 
 #. translators: %s: event feed name
-#: src/Admin/source-view/SourceViewApp.js:258
-#, js-format
+#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Admin/source-view/SourceViewApp.js:259
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Kanał wydarzeń: %s"
 
-#: src/Admin/source-view/SourceViewApp.js:275
+#: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:219
 msgid "Slug"
 msgstr "Uproszczona nazwa"
 
-#: src/Admin/source-view/SourceViewApp.js:281
+#: src/Admin/source-view/SourceViewApp.js:282
 #: src/Admin/sources/SourcesList.js:243
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/source-view/SourceViewApp.js:285
+#: src/Admin/source-view/SourceViewApp.js:286
 #: src/Admin/sources/SourcesList.js:124
 msgid "Enabled"
 msgstr "Włączone"
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/SourceViewApp.js:287
 #: src/Admin/sources/SourcesList.js:128
 msgid "Disabled"
 msgstr "Wyłączone"
 
-#: src/Admin/source-view/SourceViewApp.js:291
+#: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:225
 msgid "Feed inputs"
 msgstr "Składniki kanału"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:296
+#: src/Admin/source-view/SourceViewApp.js:297
 #: src/Admin/sources/SourcesList.js:274
 #, js-format
 msgid "%d feed input"
@@ -1277,42 +1278,42 @@ msgstr[0] "%d składnik kanału"
 msgstr[1] "%d składniki kanału"
 msgstr[2] "%d składników kanału"
 
-#: src/Admin/source-view/SourceViewApp.js:309
+#: src/Admin/source-view/SourceViewApp.js:310
 msgid "Page"
 msgstr "Strona"
 
-#: src/Admin/source-view/SourceViewApp.js:317
+#: src/Admin/source-view/SourceViewApp.js:318
 msgid "View page"
 msgstr "Zobacz stronę"
 
-#: src/Admin/source-view/SourceViewApp.js:327
+#: src/Admin/source-view/SourceViewApp.js:328
 msgid "Feed URLs"
 msgstr "Adresy URL kanału"
 
-#: src/Admin/source-view/SourceViewApp.js:332
+#: src/Admin/source-view/SourceViewApp.js:333
 msgid "iCal"
 msgstr "iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:336
+#: src/Admin/source-view/SourceViewApp.js:337
 #: src/Admin/sources/SourcesList.js:290
 msgid "Copy iCal feed URL"
 msgstr "Skopiuj adres URL kanału iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:343
+#: src/Admin/source-view/SourceViewApp.js:344
 msgid "JSON"
 msgstr "JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:347
+#: src/Admin/source-view/SourceViewApp.js:348
 #: src/Admin/sources/SourcesList.js:301
 msgid "Copy JSON API URL"
 msgstr "Skopiuj adres URL API JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:359
-#: src/Admin/source-view/SourceViewApp.js:372
+#: src/Admin/source-view/SourceViewApp.js:417
+#: src/Admin/source-view/SourceViewApp.js:430
 msgid "Edit event feed"
 msgstr "Edytuj kanał wydarzeń"
 
-#: src/Admin/source-view/SourceViewApp.js:413
+#: src/Admin/source-view/SourceViewApp.js:471
 #: src/Admin/sources/SourcesList.js:366
 msgid "Edit Event Feed"
 msgstr "Edytuj kanał wydarzeń"
@@ -1514,7 +1515,7 @@ msgstr "Usuń"
 msgid "No events this month."
 msgstr "Brak wydarzeń w tym miesiącu."
 
-#: src/Admin/source-view/SourceViewApp.js:168
+#: src/Admin/source-view/SourceViewApp.js:169
 msgid "Failed to load events."
 msgstr "Nie udało się załadować wydarzeń."
 
@@ -1901,95 +1902,106 @@ msgstr "Strona %1$d z %2$d"
 msgid "Older"
 msgstr "Starsze"
 
-#: src/Frontend/WeeklySummaryPage.php:87
-msgid "This weekly summary link doesn’t point to a page with an events calendar. Check the link with the page organizer."
-msgstr "Ten link do podsumowania tygodnia nie prowadzi do strony z kalendarzem wydarzeń. Sprawdź link z osobą prowadzącą stronę."
-
 #. translators: 1: ISO week number, 2: ISO week-numbering year
-#: src/Frontend/WeeklySummaryPage.php:118
+#: src/Frontend/WeeklySummaryPage.php:167
 #, php-format
 msgid "Week %1$d, %2$d"
 msgstr "Tydzień %1$d, %2$d"
 
 #. translators: 1: page title, 2: date range of the week
-#: src/Frontend/WeeklySummaryPage.php:126
+#: src/Frontend/WeeklySummaryPage.php:175
 #, php-format
 msgid "Weekly summary: %1$s, %2$s"
 msgstr "Podsumowanie tygodnia: %1$s, %2$s"
 
-#: src/Frontend/WeeklySummaryPage.php:135
+#: src/Frontend/WeeklySummaryPage.php:184
 msgid "Weekly summary for sharing"
 msgstr "Podsumowanie tygodnia do udostępnienia"
 
-#: src/Frontend/WeeklySummaryPage.php:140
+#: src/Frontend/WeeklySummaryPage.php:200
 msgid "Week"
 msgstr "Tydzień"
 
-#: src/Frontend/WeeklySummaryPage.php:141
+#: src/Frontend/WeeklySummaryPage.php:201
 msgid "Previous week"
 msgstr "Poprzedni tydzień"
 
-#: src/Frontend/WeeklySummaryPage.php:146
+#: src/Frontend/WeeklySummaryPage.php:206
 msgid "Next week"
 msgstr "Następny tydzień"
 
 #. translators: %s: week as given in the link, e.g. "2026-W60"
-#: src/Frontend/WeeklySummaryPage.php:155
+#: src/Frontend/WeeklySummaryPage.php:215
 #, php-format
 msgid "“%s” is not a valid week, so this shows the current week."
 msgstr "„%s” nie jest prawidłowym tygodniem, dlatego wyświetlany jest bieżący tydzień."
 
-#: src/Frontend/WeeklySummaryPage.php:164
+#: src/Frontend/WeeklySummaryPage.php:224
 msgid "Events this week"
 msgstr "Wydarzenia w tym tygodniu"
 
-#: src/Frontend/WeeklySummaryPage.php:167
+#: src/Frontend/WeeklySummaryPage.php:227
 msgid "There are no public events this week. The summary below has only its heading."
 msgstr "W tym tygodniu nie ma publicznych wydarzeń. Podsumowanie poniżej zawiera tylko nagłówek."
 
-#: src/Frontend/WeeklySummaryPage.php:189
+#: src/Frontend/WeeklySummaryPage.php:249
 msgid "Summary copied. Paste it into your message."
 msgstr "Podsumowanie skopiowane. Wklej je do swojej wiadomości."
 
-#: src/Frontend/WeeklySummaryPage.php:190
+#: src/Frontend/WeeklySummaryPage.php:250
 msgid "Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command."
 msgstr "Nie udało się skopiować automatycznie. Tekst podsumowania jest zaznaczony poniżej: skopiuj go poleceniem kopiowania na swoim urządzeniu."
 
-#: src/Frontend/WeeklySummaryPage.php:192
+#: src/Frontend/WeeklySummaryPage.php:252
 msgid "Summary to copy"
 msgstr "Podsumowanie do skopiowania"
 
-#: src/Frontend/WeeklySummaryPage.php:193
+#: src/Frontend/WeeklySummaryPage.php:253
 msgid "Copying only puts the text on your clipboard. Nothing is sent."
 msgstr "Kopiowanie tylko umieszcza tekst w schowku. Nic nie jest wysyłane."
 
-#: src/Frontend/WeeklySummaryPage.php:194
+#: src/Frontend/WeeklySummaryPage.php:254
 msgid "Copy summary"
 msgstr "Kopiuj podsumowanie"
 
-#: src/Frontend/WeeklySummaryPage.php:217
-#: src/Frontend/WeeklySummaryPage.php:220
+#: src/Frontend/WeeklySummaryPage.php:277
+#: src/Frontend/WeeklySummaryPage.php:280
 msgid "Weekly summary unavailable"
 msgstr "Podsumowanie tygodnia niedostępne"
 
-#: src/Services/WeeklySummary.php:59
-#: src/Services/WeeklySummary.php:63
+#: src/Services/WeeklySummary.php:68
+#: src/Services/WeeklySummary.php:72
 msgid "Weekly summaries need an up-to-date Fair Events plugin."
 msgstr "Podsumowania tygodnia wymagają aktualnej wtyczki Fair Events."
 
-#: src/Services/WeeklySummary.php:67
-msgid "This weekly summary is not available because its page is not public."
-msgstr "To podsumowanie tygodnia jest niedostępne, ponieważ jego strona nie jest publiczna."
+#: src/Services/WeeklySummary.php:77
+msgid "This weekly summary link doesn’t match an enabled event feed. Check the link with the site organizer."
+msgstr "Ten link do podsumowania tygodnia nie pasuje do żadnego włączonego kanału wydarzeń. Sprawdź link z osobą organizującą stronę."
 
-#: src/Services/WeeklySummary.php:149
-#: src/Services/WeeklySummary.php:172
-msgid "This page has no events calendar for this link. Check the link with the page organizer."
-msgstr "Ta strona nie ma kalendarza wydarzeń dla tego linku. Sprawdź link z osobą prowadzącą stronę."
+#: src/Services/WeeklySummary.php:80
+msgid "This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link."
+msgstr "Ten kanał wydarzeń nie ma strony, która nadaje podsumowaniu tytuł i link. Wybierz stronę kanału w Kanałach wydarzeń, aby użyć tego linku."
 
-#: src/Services/WeeklySummary.php:168
-msgid "More than one events calendar on this page uses this link’s name, so the summary can’t tell which to show. Give each calendar a unique HTML anchor."
-msgstr "Więcej niż jeden kalendarz wydarzeń na tej stronie używa nazwy z tego linku, więc nie wiadomo, który pokazać. Nadaj każdemu kalendarzowi unikalną kotwicę HTML."
+#: src/Admin/source-view/SourceViewApp.js:357
+msgid "Weekly summary link"
+msgstr "Link do podsumowania tygodnia"
 
-#: src/Services/WeeklySummary.php:170
-msgid "This events calendar also shows draft events, so it can’t be shared through a public link. Turn off showing drafts on the calendar to use it."
-msgstr "Ten kalendarz wydarzeń pokazuje też szkice, więc nie można go udostępnić publicznym linkiem. Wyłącz pokazywanie szkiców w kalendarzu, aby z niego korzystać."
+#: src/Admin/source-view/SourceViewApp.js:370
+msgid "Copy link"
+msgstr "Kopiuj link"
+
+#: src/Admin/source-view/SourceViewApp.js:374
+msgid "Copy the weekly summary link to share with the person who posts it"
+msgstr "Kopiuj link do podsumowania tygodnia, aby udostępnić go osobie, która je publikuje"
+
+#: src/Admin/source-view/SourceViewApp.js:388
+msgid "Couldn’t copy the link. Select it above and copy it by hand."
+msgstr "Nie udało się skopiować linku. Zaznacz go powyżej i skopiuj ręcznie."
+
+#: src/Admin/source-view/SourceViewApp.js:396
+msgid "The link works once this feed is enabled."
+msgstr "Link zadziała po włączeniu tego kanału."
+
+#: src/Admin/source-view/SourceViewApp.js:405
+msgid "Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link."
+msgstr "Wybierz stronę dla tego kanału, aby otrzymać link do podsumowania tygodnia. Strona nadaje podsumowaniu tytuł i link."

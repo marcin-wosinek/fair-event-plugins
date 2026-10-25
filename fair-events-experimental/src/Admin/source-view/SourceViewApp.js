@@ -67,6 +67,7 @@ export default function SourceViewApp() {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ isEditOpen, setIsEditOpen ] = useState( false );
+	const [ linkCopyFailed, setLinkCopyFailed ] = useState( false );
 
 	const monthKey = formatMonthParam( currentDate );
 	const sourceSlug = source?.slug;
@@ -350,6 +351,63 @@ export default function SourceViewApp() {
 								) }
 							/>
 						</HStack>
+					</VStack>
+					<VStack spacing={ 1 } style={ { minWidth: 0 } }>
+						<strong>
+							{ __(
+								'Weekly summary link',
+								'fair-events-experimental'
+							) }
+						</strong>
+						{ source.weekly_summary_url ? (
+							<>
+								<code style={ { overflowWrap: 'anywhere' } }>
+									{ source.weekly_summary_url }
+								</code>
+								<HStack spacing={ 2 } justify="flex-start">
+									<CopyUrlButton
+										url={ source.weekly_summary_url }
+										label={ __(
+											'Copy link',
+											'fair-events-experimental'
+										) }
+										tooltip={ __(
+											'Copy the weekly summary link to share with the person who posts it',
+											'fair-events-experimental'
+										) }
+										onSuccess={ () =>
+											setLinkCopyFailed( false )
+										}
+										onError={ () =>
+											setLinkCopyFailed( true )
+										}
+									/>
+								</HStack>
+								{ linkCopyFailed && (
+									<span role="alert">
+										{ __(
+											'Couldn’t copy the link. Select it above and copy it by hand.',
+											'fair-events-experimental'
+										) }
+									</span>
+								) }
+								{ ! source.enabled && (
+									<span>
+										{ __(
+											'The link works once this feed is enabled.',
+											'fair-events-experimental'
+										) }
+									</span>
+								) }
+							</>
+						) : (
+							<span>
+								{ __(
+									'Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link.',
+									'fair-events-experimental'
+								) }
+							</span>
+						) }
 					</VStack>
 					<VStack spacing={ 1 }>
 						<Button
