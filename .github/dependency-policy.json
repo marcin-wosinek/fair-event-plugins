@@ -342,15 +342,5 @@
 			"phpunit/phpunit"
 		]
 	},
-	"exceptions": [
-		{
-			"advisory": "GHSA-vfj7-8cjw-p6xm",
-			"package": "braces",
-			"dependencySet": "package-lock.json",
-			"rationale": "No fixed version exists. Build-time only (@wordpress/scripts > fast-glob > micromatch), expanding globs from our own build config; not shipped or reachable from untrusted input.",
-			"owner": "@marcin-wosinek",
-			"issue": "#2037",
-			"expires": "2027-01-31"
-		}
-	]
+	"exceptions": []
 }
