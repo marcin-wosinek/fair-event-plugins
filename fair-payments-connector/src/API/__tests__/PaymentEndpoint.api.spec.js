@@ -133,6 +133,175 @@ test.describe( 'PaymentEndpoint — GET /payments/:id/status token gating', () =
 	} );
 } );
 
+test.describe( 'PaymentEndpoint — status access token transport (#858)', () => {
+	test.describe.configure( { mode: 'serial' } );
+
+	const CLIENT = '203.0.113.30';
+	const TOKEN_HEADER = 'X-Fair-Payment-Token';
+	const OWNER = {
+		username: `e2e_payment_owner_${ Date.now() }`,
+		password: 'e2e-owner-password-858',
+	};
+	const ownerAuth = {
+		Authorization:
+			'Basic ' +
+			Buffer.from( `${ OWNER.username }:${ OWNER.password }` ).toString(
+				'base64'
+			),
+	};
+
+	let api;
+	let page;
+	let ownerId;
+	let anonymous;
+	let owned;
+
+	async function createPayment( authHeaders = {} ) {
+		const headers = fromClient( CLIENT, authHeaders );
+		const nonceRes = await api.get( NONCE_ENDPOINT, { headers } );
+		expect( nonceRes.status() ).toBe( 200 );
+		const { nonce } = await nonceRes.json();
+
+		const res = await api.post( PAYMENTS_ENDPOINT, {
+			headers,
+			data: {
+				amount: '5.00',
+				post_id: page.page_id,
+				block_id: page.block_id,
+				nonce,
+			},
+		} );
+		expect( res.status(), await res.text() ).toBe( 201 );
+		return { res, body: await res.json() };
+	}
+
+	function statusUrl( transactionId ) {
+		return `${ PAYMENTS_ENDPOINT }/${ transactionId }/status`;
+	}
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		await resetCounters( api );
+		page = await createPaymentPage( api );
+
+		const userRes = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminAuth,
+			data: {
+				username: OWNER.username,
+				password: OWNER.password,
+				email: `${ OWNER.username }@example.test`,
+				roles: [ 'subscriber' ],
+			},
+		} );
+		expect( userRes.status(), await userRes.text() ).toBe( 201 );
+		ownerId = ( await userRes.json() ).id;
+
+		anonymous = await createPayment();
+		owned = await createPayment( ownerAuth );
+	} );
+
+	test.afterAll( async () => {
+		await resetCounters( api );
+		await deletePaymentPage( api, page.page_id );
+		if ( ownerId ) {
+			await api.delete( `/wp-json/wp/v2/users/${ ownerId }`, {
+				headers: adminAuth,
+				params: { force: true, reassign: 1 },
+			} );
+		}
+		await api.dispose();
+	} );
+
+	test( 'payment creation returns the token in the body, not the checkout URL', async () => {
+		const { res, body } = anonymous;
+
+		expect( typeof body.access_token ).toBe( 'string' );
+		expect( body.access_token.length ).toBeGreaterThan( 0 );
+		expect( body.checkout_url ).not.toContain( body.access_token );
+		expect( body.checkout_url ).not.toMatch( /[?&]token=/ );
+		expect( res.headers()[ 'cache-control' ] ).toContain( 'no-store' );
+	} );
+
+	test( 'the header token reads the status without a token in the URL', async () => {
+		const { body } = anonymous;
+
+		const res = await api.get( statusUrl( body.transaction_id ), {
+			headers: { [ TOKEN_HEADER ]: body.access_token },
+		} );
+
+		expect( res.status(), await res.text() ).toBe( 200 );
+		expect( res.url() ).not.toContain( body.access_token );
+		expect( res.headers()[ 'cache-control' ] ).toContain( 'no-store' );
+		const status = await res.json();
+		expect( Number( status.transaction_id ) ).toBe(
+			Number( body.transaction_id )
+		);
+		expect( status.lifecycle_status ).toBe( 'processing' );
+	} );
+
+	test( 'a missing or wrong credential is the same 404 as a missing transaction', async () => {
+		const { body } = anonymous;
+		const missing = await api.get(
+			`${ PAYMENTS_ENDPOINT }/999999999/status`
+		);
+		const expected = await missing.json();
+
+		for ( const headers of [
+			{},
+			{ [ TOKEN_HEADER ]: 'not-the-token' },
+			{ [ TOKEN_HEADER ]: '' },
+		] ) {
+			const res = await api.get( statusUrl( body.transaction_id ), {
+				headers,
+			} );
+			expect( res.status() ).toBe( 404 );
+			expect( await res.json() ).toEqual( expected );
+		}
+	} );
+
+	test( 'a wrong header wins over a correct query token', async () => {
+		const { body } = anonymous;
+
+		const res = await api.get( statusUrl( body.transaction_id ), {
+			headers: { [ TOKEN_HEADER ]: 'not-the-token' },
+			params: { token: body.access_token },
+		} );
+
+		expect( res.status() ).toBe( 404 );
+	} );
+
+	test( 'the query token still works as a deprecated fallback', async () => {
+		const { body } = anonymous;
+
+		const res = await api.get( statusUrl( body.transaction_id ), {
+			params: { token: body.access_token },
+		} );
+
+		expect( res.status() ).toBe( 200 );
+	} );
+
+	test( 'an admin reads any status without a token', async () => {
+		const res = await api.get( statusUrl( anonymous.body.transaction_id ), {
+			headers: adminAuth,
+		} );
+
+		expect( res.status() ).toBe( 200 );
+	} );
+
+	test( 'the signed-in owner reads their own status without a token', async () => {
+		const own = await api.get( statusUrl( owned.body.transaction_id ), {
+			headers: ownerAuth,
+		} );
+		expect( own.status() ).toBe( 200 );
+
+		const other = await api.get(
+			statusUrl( anonymous.body.transaction_id ),
+			{ headers: ownerAuth }
+		);
+		expect( other.status() ).toBe( 404 );
+	} );
+} );
+
 test.describe( 'PaymentEndpoint — per-IP rate limits (#855)', () => {
 	// Each test sends dozens of sequential requests.
 	test.describe.configure( { mode: 'serial', timeout: 120_000 } );

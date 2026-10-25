@@ -66,6 +66,31 @@ describe( 'pollPaymentStatus', () => {
 		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
 	} );
 
+	test( 'sends headers with every tick', async () => {
+		apiFetch.mockResolvedValue( { lifecycle_status: 'processing' } );
+		const headers = { 'X-Fair-Payment-Token': 'abc' };
+
+		pollPaymentStatus( {
+			path: '/some/path',
+			headers,
+			maxAttempts: 2,
+			intervalMs: 1000,
+		} );
+		await flushPromises();
+		jest.advanceTimersByTime( 1000 );
+		await flushPromises();
+
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+		expect( apiFetch ).toHaveBeenNthCalledWith( 1, {
+			path: '/some/path',
+			headers,
+		} );
+		expect( apiFetch ).toHaveBeenNthCalledWith( 2, {
+			path: '/some/path',
+			headers,
+		} );
+	} );
+
 	test( 'stops after maxAttempts ticks', async () => {
 		apiFetch.mockResolvedValue( { lifecycle_status: 'processing' } );
 		const onExhausted = jest.fn();

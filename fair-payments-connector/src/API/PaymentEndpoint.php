@@ -28,6 +28,13 @@ defined( 'WPINC' ) || die;
 class PaymentEndpoint extends WP_REST_Controller {
 
 	/**
+	 * Request header carrying the per-transaction access token for status reads.
+	 *
+	 * @var string
+	 */
+	const TOKEN_HEADER = 'X-Fair-Payment-Token';
+
+	/**
 	 * Namespace for the REST API
 	 *
 	 * @var string
@@ -117,8 +124,9 @@ class PaymentEndpoint extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_transaction_status' ),
 					// Anonymous read is intentional (post-Mollie redirect flow); ownership is enforced
-					// by a per-transaction access token. Permission failures return WP_Error 404 to
-					// avoid confirming which transaction IDs exist.
+					// by a per-transaction access token sent in the X-Fair-Payment-Token header.
+					// Permission failures return WP_Error 404 to avoid confirming which transaction
+					// IDs exist.
 					'permission_callback' => array( $this, 'get_transaction_status_permissions_check' ),
 					'args'                => array(
 						'transaction_id' => array(
@@ -126,6 +134,9 @@ class PaymentEndpoint extends WP_REST_Controller {
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						),
+						// Deprecated fallback for the access token; prefer the header. Still
+						// accepted because other payment flows keep the token in their return
+						// URL and the site-wide callback notice reads it from there.
 						'token'          => array(
 							'required'          => false,
 							'type'              => 'string',
@@ -396,8 +407,10 @@ class PaymentEndpoint extends WP_REST_Controller {
 			);
 		}
 
-		// Load freshly created transaction so we can attach its access token to the
-		// post-Mollie redirect URL. The token gates the /status endpoint.
+		// Load the freshly created transaction so its access token can be returned
+		// to the browser. The token gates the /status endpoint; it is deliberately
+		// kept out of the redirect URL, where Referer headers, browser history and
+		// access logs would expose it.
 		$transaction = Transaction::get_by_id( $transaction_id );
 
 		// Prepare redirect URL.
@@ -406,7 +419,6 @@ class PaymentEndpoint extends WP_REST_Controller {
 				'fair_payment_callback' => 'true',
 				'transaction_id'        => $transaction_id,
 				'post_id'               => $post_id,
-				'token'                 => $transaction ? $transaction->access_token : '',
 			),
 			$post_id ? get_permalink( $post_id ) : home_url()
 		);
@@ -454,17 +466,22 @@ class PaymentEndpoint extends WP_REST_Controller {
 			)
 		);
 
-		// Return same response structure for backward compatibility.
-		return new WP_REST_Response(
+		// Same response structure as before, plus the access token the browser
+		// keeps for the status read after returning from checkout.
+		$response = new WP_REST_Response(
 			array(
 				'success'           => true,
 				'transaction_id'    => $transaction_id,
 				'mollie_payment_id' => $payment['mollie_payment_id'],
 				'checkout_url'      => $payment['checkout_url'],
 				'status'            => $payment['status'],
+				'access_token'      => $transaction ? (string) $transaction->access_token : '',
 			),
 			201
 		);
+		$response->header( 'Cache-Control', 'no-store, private' );
+
+		return $response;
 	}
 
 	/**
@@ -501,7 +518,12 @@ class PaymentEndpoint extends WP_REST_Controller {
 			'testmode'          => (bool) $transaction->testmode,
 		);
 
-		return new WP_REST_Response( $response_data, 200 );
+		$response = new WP_REST_Response( $response_data, 200 );
+		// The read is authorized per request (token, owner or admin), so no shared
+		// cache may store it.
+		$response->header( 'Cache-Control', 'no-store, private' );
+
+		return $response;
 	}
 
 	/**
@@ -514,8 +536,15 @@ class PaymentEndpoint extends WP_REST_Controller {
 	 * - Site admins (manage_options) — support / debugging.
 	 * - The transaction's owner when logged in (user_id matches).
 	 *
-	 * Otherwise the request must carry a `token` query arg that constant-time
-	 * matches the row's access_token.
+	 * Otherwise the request must carry the row's access_token, compared in
+	 * constant time. It is read from the X-Fair-Payment-Token header, which keeps
+	 * it out of URLs (Referer headers, browser history, access logs). The `token`
+	 * query arg is still accepted as a deprecated fallback for flows whose return
+	 * URL carries the token; the header wins when both are present.
+	 *
+	 * Residual risk: the Simple Payment block holds the token in the buyer's
+	 * session storage between checkout and return, so any script running on the
+	 * site's pages can read it. It only grants this status read.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return true|WP_Error True if allowed, WP_Error (404) otherwise.
@@ -545,7 +574,10 @@ class PaymentEndpoint extends WP_REST_Controller {
 			return true;
 		}
 
-		$provided = (string) $request->get_param( 'token' );
+		$provided = (string) $request->get_header( self::TOKEN_HEADER );
+		if ( '' === $provided ) {
+			$provided = (string) $request->get_param( 'token' );
+		}
 		$expected = (string) ( $transaction->access_token ?? '' );
 
 		if ( '' === $expected || '' === $provided ) {

@@ -26,6 +26,7 @@ const POLL_INTERVAL_MS = 3000;
  * @param {string}        [args.loadingText]        Text shown on the button while loading (passed to setButtonLoading).
  * @param {string}        [args.defaultErrorMessage] Fallback error message when the API error has none.
  * @param {Function}      [args.onError]            Called with (message, error) when the request fails.
+ * @param {Function}      [args.onBeforeRedirect]   Called with the API response right before the browser leaves for `checkout_url`, e.g. to persist a credential for the return page. Must not throw.
  * @return {Promise<Object>} Resolves with the API response. On a `checkout_url` response the browser is redirected before the promise resolves.
  */
 export async function initiatePayment( {
@@ -35,6 +36,7 @@ export async function initiatePayment( {
 	loadingText,
 	defaultErrorMessage,
 	onError,
+	onBeforeRedirect,
 } ) {
 	const restoreButton = button
 		? setButtonLoading( button, loadingText )
@@ -48,6 +50,9 @@ export async function initiatePayment( {
 		} );
 
 		if ( response && response.checkout_url ) {
+			if ( onBeforeRedirect ) {
+				onBeforeRedirect( response );
+			}
 			window.location.href = response.checkout_url;
 			return response;
 		}
@@ -87,9 +92,11 @@ export async function initiatePayment( {
  * @param {Function} [args.onError]      Called when a status request fails.
  * @param {number}   [args.maxAttempts]  Stop polling after this many ticks.
  * @param {number}   [args.intervalMs]   Delay between ticks.
+ * @param {Object}   [args.headers]      Request headers sent with every tick (e.g. an access-token header).
  */
 export function pollPaymentStatus( {
 	path,
+	headers,
 	onConfirmed,
 	onFailed,
 	onProcessing,
@@ -109,7 +116,7 @@ export function pollPaymentStatus( {
 			return;
 		}
 
-		apiFetch( { path } )
+		apiFetch( headers ? { path, headers } : { path } )
 			.then( function ( response ) {
 				if ( response.lifecycle_status === 'confirmed' ) {
 					if ( onConfirmed ) {
@@ -159,18 +166,22 @@ export function pollPaymentStatus( {
  * @param {Object}   args                Options.
  * @param {string}   args.statusPath     Hardcoded REST base path for the status resource (e.g. `/fair-payments-connector/v1/payments`). Polled at `${statusPath}/${transactionId}/status`.
  * @param {string}   [args.transactionId] Transaction id. Falls back to the `transaction_id` URL parameter.
- * @param {string}   [args.token]        Per-transaction access token. Falls back to the `token` URL parameter.
+ * @param {string}   [args.token]        Per-transaction access token sent as a query arg. Falls back to the `token` URL parameter. Prefer `headers`, which keep the token out of URLs.
+ * @param {Object}   [args.headers]      Request headers sent with every status poll (e.g. an access-token header).
  * @param {Function} [args.onConfirmed]  Called with the status response once `lifecycle_status` is `confirmed`.
  * @param {Function} [args.onFailed]     Called with the status response once `lifecycle_status` is `failed`.
  * @param {Function} [args.onProcessing] Called with the status response on each poll while still `processing`.
+ * @param {Function} [args.onError]      Called when a status request fails (e.g. the credential is missing or rejected).
  */
 export function handlePaymentCallback( {
 	statusPath,
 	transactionId,
 	token,
+	headers,
 	onConfirmed,
 	onFailed,
 	onProcessing,
+	onError,
 } ) {
 	const params = new URLSearchParams( window.location.search );
 	if ( params.get( 'fair_payment_callback' ) !== 'true' ) {
@@ -191,9 +202,11 @@ export function handlePaymentCallback( {
 
 	pollPaymentStatus( {
 		path: `${ statusPath }/${ resolvedTransactionId }/status${ query }`,
+		headers,
 		onConfirmed,
 		onFailed,
 		onProcessing,
+		onError,
 	} );
 }
 

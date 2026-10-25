@@ -53,6 +53,38 @@ describe( 'initiatePayment', () => {
 		expect( button.textContent ).toBe( 'Paying…' );
 	} );
 
+	it( 'calls onBeforeRedirect with the response before redirecting', async () => {
+		const created = {
+			checkout_url: 'https://mollie.test/pay',
+			transaction_id: 7,
+			access_token: 'secret',
+		};
+		apiFetch.mockResolvedValue( created );
+		const onBeforeRedirect = jest.fn();
+
+		await initiatePayment( {
+			apiPath: '/fair-payments-connector/v1/payments',
+			data: {},
+			onBeforeRedirect,
+		} );
+
+		expect( onBeforeRedirect ).toHaveBeenCalledTimes( 1 );
+		expect( onBeforeRedirect ).toHaveBeenCalledWith( created );
+	} );
+
+	it( 'does not call onBeforeRedirect without a checkout_url', async () => {
+		apiFetch.mockResolvedValue( { status: 'confirmed' } );
+		const onBeforeRedirect = jest.fn();
+
+		await initiatePayment( {
+			apiPath: '/fair-events/v1/get-tickets',
+			data: {},
+			onBeforeRedirect,
+		} );
+
+		expect( onBeforeRedirect ).not.toHaveBeenCalled();
+	} );
+
 	it( 'restores the button and resolves when there is no checkout_url', async () => {
 		apiFetch.mockResolvedValue( { status: 'confirmed' } );
 		const button = document.createElement( 'button' );
@@ -173,6 +205,47 @@ describe( 'handlePaymentCallback', () => {
 
 		await jest.advanceTimersByTimeAsync( 3000 );
 		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+	} );
+
+	it( 'sends the given headers on every poll, without a token in the path', async () => {
+		setLocationSearch( '?fair_payment_callback=true&transaction_id=5' );
+		apiFetch.mockResolvedValue( { lifecycle_status: 'processing' } );
+		const headers = { 'X-Fair-Payment-Token': 'abc' };
+
+		handlePaymentCallback( {
+			statusPath: '/fair-payments-connector/v1/payments',
+			headers,
+		} );
+
+		await jest.advanceTimersByTimeAsync( 0 );
+		await jest.advanceTimersByTimeAsync( 3000 * 2 );
+
+		expect( apiFetch ).toHaveBeenCalledTimes( 3 );
+		apiFetch.mock.calls.forEach( ( [ options ] ) => {
+			expect( options ).toEqual( {
+				path: '/fair-payments-connector/v1/payments/5/status',
+				headers,
+			} );
+		} );
+	} );
+
+	it( 'reports a failed status read through onError', async () => {
+		setLocationSearch( '?fair_payment_callback=true&transaction_id=5' );
+		const error = { code: 'transaction_not_found' };
+		apiFetch.mockRejectedValue( error );
+		const onError = jest.fn();
+		const onFailed = jest.fn();
+
+		handlePaymentCallback( {
+			statusPath: '/fair-payments-connector/v1/payments',
+			onError,
+			onFailed,
+		} );
+
+		await jest.advanceTimersByTimeAsync( 0 );
+
+		expect( onError ).toHaveBeenCalledWith( error );
+		expect( onFailed ).not.toHaveBeenCalled();
 	} );
 
 	it( 'stops polling after MAX_ATTEMPTS', async () => {
