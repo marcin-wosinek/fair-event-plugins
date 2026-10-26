@@ -65,7 +65,7 @@ test.describe( 'WebhookEndpoint — handler failure (#860)', () => {
 		await api.dispose();
 	} );
 
-	test( 'acknowledges with a generic error and keeps the exception in the payment log', async () => {
+	test( 'acknowledges with a generic error and logs the exception class without its message', async () => {
 		const { nonce } = await (
 			await api.get( NONCE_ENDPOINT, { headers: fromClient( CLIENT ) } )
 		).json();
@@ -106,10 +106,9 @@ test.describe( 'WebhookEndpoint — handler failure (#860)', () => {
 		);
 		expect( entry ).toBeDefined();
 		expect( entry.level ).toBe( 'error' );
-		expect( entry.message ).toBe(
-			`Webhook handler exception: ${ DIAGNOSTIC }`
-		);
+		expect( entry.message ).toBe( 'Webhook handler raised an exception' );
 		expect( entry.context.exception_class ).toBe( 'RuntimeException' );
+		expect( JSON.stringify( entry ) ).not.toContain( 'E2E-DIAGNOSTIC-860' );
 	} );
 } );
 
