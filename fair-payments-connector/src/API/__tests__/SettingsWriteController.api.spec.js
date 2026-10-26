@@ -114,6 +114,66 @@ test.describe( 'SettingsWriteController', () => {
 			} );
 		} );
 
+		test( 'saves the ticket buyer email disclosure as a boolean and audits it without any email (#1484)', async () => {
+			const before = await (
+				await api.get( SETTINGS_ENDPOINT, { headers: adminAuth() } )
+			).json();
+			const original =
+				before.fair_payment_share_ticket_buyer_email === true;
+
+			try {
+				for ( const value of [ ! original, original ] ) {
+					const res = await api.post( SETTINGS_WRITE_ENDPOINT, {
+						headers: adminAuth(),
+						data: {
+							settings: {
+								fair_payment_share_ticket_buyer_email: value,
+							},
+						},
+					} );
+					expect( res.status() ).toBe( 200 );
+
+					const settings = await (
+						await api.get( SETTINGS_ENDPOINT, {
+							headers: adminAuth(),
+						} )
+					).json();
+					expect(
+						settings.fair_payment_share_ticket_buyer_email
+					).toBe( value );
+
+					const audit = await (
+						await api.get( `${ AUDIT_LOG_ENDPOINT }?per_page=5`, {
+							headers: adminAuth(),
+						} )
+					).json();
+					const entry = audit.items.find(
+						( item ) =>
+							'fair_payment_share_ticket_buyer_email' ===
+							item.setting_key
+					);
+					expect( entry ).toBeTruthy();
+					expect( entry.is_protected ).toBe( false );
+					expect( entry.new_value ).toBe( value ? '1' : '0' );
+					expect( entry.reason ).toBe(
+						value
+							? 'Sending ticket buyers’ emails to the payment provider enabled.'
+							: 'Sending ticket buyers’ emails to the payment provider disabled.'
+					);
+					expect( JSON.stringify( entry ) ).not.toContain( '@' );
+				}
+			} finally {
+				await api.post( SETTINGS_WRITE_ENDPOINT, {
+					headers: adminAuth(),
+					data: {
+						settings: {
+							fair_payment_share_ticket_buyer_email: original,
+						},
+					},
+				} );
+			}
+		} );
+
 		test( 'creates no audit entry for a no-op save (value unchanged)', async () => {
 			await api.post( SETTINGS_WRITE_ENDPOINT, {
 				headers: adminAuth(),
@@ -168,6 +228,27 @@ test.describe( 'SettingsWriteController', () => {
 			} );
 			const settings = await settingsRes.json();
 			expect( settings.fair_payment_currency ).toBe( 'EUR' );
+		} );
+
+		test( 'POST carrying fair_payment_share_ticket_buyer_email is accepted but ignores it', async () => {
+			const before = await (
+				await api.get( SETTINGS_ENDPOINT, { headers: adminAuth() } )
+			).json();
+			const original =
+				before.fair_payment_share_ticket_buyer_email === true;
+
+			const res = await api.post( SETTINGS_ENDPOINT, {
+				headers: adminAuth(),
+				data: { fair_payment_share_ticket_buyer_email: ! original },
+			} );
+			expect( res.status() ).toBe( 200 );
+
+			const settings = await (
+				await api.get( SETTINGS_ENDPOINT, { headers: adminAuth() } )
+			).json();
+			expect( settings.fair_payment_share_ticket_buyer_email ).toBe(
+				original
+			);
 		} );
 	} );
 } );

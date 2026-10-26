@@ -34,6 +34,7 @@ class AuditLogger {
 		'fair_payment_currency',
 		'fair_payment_disable_banktransfer_near_date',
 		'fair_payment_banktransfer_threshold_days',
+		'fair_payment_share_ticket_buyer_email',
 		'bundled-translations',
 	);
 
@@ -81,6 +82,11 @@ class AuditLogger {
 					),
 					$days
 				);
+
+			case 'fair_payment_share_ticket_buyer_email':
+				return $new_value
+					? __( 'Sending ticket buyers’ emails to the payment provider enabled.', 'fair-payments-connector' )
+					: __( 'Sending ticket buyers’ emails to the payment provider disabled.', 'fair-payments-connector' );
 
 			case 'bundled-translations':
 				return $new_value

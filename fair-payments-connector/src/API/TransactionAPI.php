@@ -15,6 +15,7 @@ use FairPaymentsConnector\Payment\PaymentGatewayError;
 use FairPaymentsConnector\Payment\PaymentGatewayException;
 use FairPaymentsConnector\Payment\WorkingDays;
 use FairPaymentsConnector\Database\PaymentLogRepository;
+use FairPaymentsConnector\Settings\Settings;
 use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
@@ -403,7 +404,10 @@ class TransactionAPI {
 	 * Build the provider metadata from the locally persisted transaction.
 	 *
 	 * Local ownership data stays on the transaction record. Provider metadata
-	 * contains only reconciliation references and a resolved participant ID.
+	 * contains only reconciliation references and a resolved participant ID,
+	 * plus a Fair Events ticket buyer's email when the site allows sending it
+	 * (Settings::shares_ticket_buyer_email()). The email stays in the local
+	 * metadata either way.
 	 *
 	 * @param object $transaction    Transaction record.
 	 * @param int    $transaction_id Transaction ID.
@@ -414,6 +418,9 @@ class TransactionAPI {
 		$metadata = is_array( $metadata ) ? $metadata : array();
 
 		unset( $metadata['user_id'], $metadata['participant_id'] );
+		if ( 'fair-events-get-tickets' === ( $metadata['source'] ?? '' ) && ! Settings::shares_ticket_buyer_email() ) {
+			unset( $metadata['email'] );
+		}
 		$metadata['transaction_id'] = (int) $transaction_id;
 		if ( ! empty( $transaction->participant_id ) && (int) $transaction->participant_id > 0 ) {
 			$metadata['participant_id'] = (int) $transaction->participant_id;

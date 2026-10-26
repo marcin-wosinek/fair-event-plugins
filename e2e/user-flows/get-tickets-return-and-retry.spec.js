@@ -19,12 +19,31 @@
  * (the .wp-env.json default, and the only signup path since #1245) — its
  * render-context/render-slot enrichment doesn't touch this anonymous
  * return/retry path, so no deactivation is needed here anymore.
+ *
+ * The ticket buyer email setting (#1484) is on for the first attempt and
+ * turned off before the retry: each payment follows the setting in force
+ * when it is initiated, and the buyer's email stays local throughout.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { runScript, wpCli } from '../support/wp-cli.js';
+import {
+	runScript,
+	wpCli,
+	ticketBuyerEmailSharing,
+	setTicketBuyerEmailSharing,
+} from '../support/wp-cli.js';
 
 test.describe('get-tickets block: return and retry', () => {
+	let originalEmailSharing;
+
+	test.beforeAll(() => {
+		originalEmailSharing = ticketBuyerEmailSharing();
+	});
+
+	test.afterAll(() => {
+		setTicketBuyerEmailSharing(originalEmailSharing);
+	});
+
 	test.afterEach(() => {
 		// Leave the double reporting "paid" for every other spec's assumption.
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
@@ -40,6 +59,7 @@ test.describe('get-tickets block: return and retry', () => {
 		const email = `get-tickets.retry.${stamp}@example.test`;
 
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'failed');
+		setTicketBuyerEmailSharing(true);
 
 		await page.goto(event.pageUrl);
 
@@ -71,6 +91,10 @@ test.describe('get-tickets block: return and retry', () => {
 		expect(state.signups[0].status).toBe('failed');
 		expect(state.signups[0].transaction_status).toBe('failed');
 		const originalTransactionId = state.signups[0].transaction_id;
+		expect(state.mollie_payload.metadata.email).toBe(email);
+		expect(state.mollie_payload.metadata.transaction_id).toBe(
+			originalTransactionId
+		);
 
 		// Simulate a transaction created before #1467 linked the event post:
 		// the retry must still link its replacement transaction.
@@ -85,8 +109,10 @@ test.describe('get-tickets block: return and retry', () => {
 			).post_id
 		).toBeNull();
 
-		// The buyer's card works this time.
+		// The buyer's card works this time. Meanwhile the site stopped
+		// sending buyer emails to the payment provider.
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
+		setTicketBuyerEmailSharing(false);
 
 		await retryCard
 			.locator('.fair-events-get-tickets-callback-retry-button')
@@ -107,8 +133,16 @@ test.describe('get-tickets block: return and retry', () => {
 		expect(state.signups[0].email).toBe(email);
 		expect(state.signups[0].status).toBe('confirmed');
 		expect(state.signups[0].transaction_status).toBe('paid');
-		expect(state.mollie_payload.metadata.email).toBe(email);
-		expect(state.mollie_payload.metadata.retry_of_transaction_id).toBeTruthy();
+		expect(state.mollie_payload.metadata).not.toHaveProperty('email');
+		expect(state.mollie_payload.metadata.retry_of_transaction_id).toBe(
+			originalTransactionId
+		);
+		expect(state.mollie_payload.metadata.transaction_id).toBe(
+			state.signups[0].transaction_id
+		);
+		expect(state.mollie_payload.metadata.signup_ids).toEqual([
+			state.signups[0].id,
+		]);
 
 		const retryTransaction = runScript(
 			'transaction-state.php',
@@ -117,5 +151,6 @@ test.describe('get-tickets block: return and retry', () => {
 		);
 		expect(retryTransaction.id).not.toBe(originalTransactionId);
 		expect(retryTransaction.post_id).toBe(event.eventId);
+		expect(retryTransaction.metadata.email).toBe(email);
 	});
 });

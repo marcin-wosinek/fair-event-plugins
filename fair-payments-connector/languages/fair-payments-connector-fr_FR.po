@@ -52,9 +52,9 @@ msgstr "Test de connexion réussi. Le jeton a été actualisé."
 msgid "Connection test successful. Token is still valid."
 msgstr "Test de connexion réussi. Le jeton est toujours valide."
 
-#: src/API/PaymentEndpoint.php:502
-#: src/API/PaymentEndpoint.php:555
-#: src/API/TransactionAPI.php:208
+#: src/API/PaymentEndpoint.php:501
+#: src/API/PaymentEndpoint.php:554
+#: src/API/TransactionAPI.php:209
 #: src/API/TransactionAPI.php:379
 #: src/API/TransactionsController.php:427
 #: src/API/TransactionsController.php:447
@@ -64,34 +64,34 @@ msgstr "Test de connexion réussi. Le jeton est toujours valide."
 msgid "Transaction not found."
 msgstr "Transaction non trouvée."
 
-#: src/API/PaymentEndpoint.php:335
+#: src/API/PaymentEndpoint.php:334
 msgid "Mollie payment gateway is not configured. Please configure your API keys in settings."
 msgstr "La passerelle de paiement Mollie n'est pas configurée. Veuillez configurer vos clés API dans les paramètres."
 
-#: src/API/PaymentEndpoint.php:355
+#: src/API/PaymentEndpoint.php:354
 msgid "Invalid payment amount."
 msgstr "Montant de paiement invalide."
 
 #. translators: %s: amount and currency
-#: src/API/PaymentEndpoint.php:363
+#: src/API/PaymentEndpoint.php:362
 #, php-format
 msgid "Payment of %1$s %2$s"
 msgstr "Paiement de %1$s %2$s"
 
-#: src/API/TransactionAPI.php:146
+#: src/API/TransactionAPI.php:147
 msgid "Failed to create transaction."
 msgstr "Échec de la création de la transaction."
 
-#: src/API/TransactionAPI.php:162
+#: src/API/TransactionAPI.php:163
 msgid "Failed to create line items."
 msgstr "Échec de la création des articles de ligne."
 
-#: src/API/TransactionAPI.php:256
+#: src/API/TransactionAPI.php:257
 msgid "Redirect URL is required."
 msgstr "L'URL de redirection est requise."
 
 #. translators: %d: transaction ID
-#: src/API/TransactionAPI.php:271
+#: src/API/TransactionAPI.php:272
 #, php-format
 msgid "Payment #%d"
 msgstr "Paiement n°%d"
@@ -100,34 +100,34 @@ msgstr "Paiement n°%d"
 msgid "Failed to update transaction with payment details."
 msgstr "Échec de la mise à jour de la transaction avec les détails de paiement."
 
-#: src/API/TransactionAPI.php:704
+#: src/API/TransactionAPI.php:710
 msgid "Line items must be an array."
 msgstr "Les articles de ligne doivent être un tableau."
 
-#: src/API/TransactionAPI.php:712
+#: src/API/TransactionAPI.php:718
 msgid "At least one line item is required."
 msgstr "Au moins un article de ligne est requis."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:724
+#: src/API/TransactionAPI.php:730
 #, php-format
 msgid "Line item at index %d must be an array."
 msgstr "L'article de ligne à l'index %d doit être un tableau."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:736
+#: src/API/TransactionAPI.php:742
 #, php-format
 msgid "Line item at index %d is missing required \"name\" field."
 msgstr "L'article de ligne à l'index %d est manquant du champ obligatoire « name »."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:749
+#: src/API/TransactionAPI.php:755
 #, php-format
 msgid "Line item at index %d has invalid \"amount\" field."
 msgstr "L'élément de ligne à l'index %d a un champ « montant » invalide."
 
 #. translators: %d: line item index
-#: src/API/TransactionAPI.php:763
+#: src/API/TransactionAPI.php:769
 #, php-format
 msgid "Line item at index %d must have positive quantity."
 msgstr "L'élément de ligne à l'index %d doit avoir une quantité positive."
@@ -188,40 +188,40 @@ msgid "Application fee"
 msgstr "Frais d'application"
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:521
+#: src/Payment/MolliePaymentHandler.php:520
 #, php-format
 msgid "Failed to retrieve payment: %s"
 msgstr "Échec de la récupération du paiement : %s"
 
-#: src/Settings/Settings.php:89
+#: src/Settings/Settings.php:98
 msgid "Payment mode (test or live)"
 msgstr "Mode de paiement (test ou en direct)"
 
-#: src/Settings/Settings.php:102
+#: src/Settings/Settings.php:111
 msgid "Mollie Organization ID"
 msgstr "ID d'organisation Mollie"
 
-#: src/Settings/Settings.php:118
+#: src/Settings/Settings.php:127
 msgid "Mollie OAuth Access Token"
 msgstr "Jeton d'accès OAuth Mollie"
 
-#: src/Settings/Settings.php:130
+#: src/Settings/Settings.php:139
 msgid "Mollie OAuth Refresh Token"
 msgstr "Jeton d'actualisation OAuth Mollie"
 
-#: src/Settings/Settings.php:142
+#: src/Settings/Settings.php:151
 msgid "Mollie OAuth Token Expiration (Unix timestamp)"
 msgstr "Expiration du jeton OAuth Mollie (horodatage Unix)"
 
-#: src/Settings/Settings.php:160
+#: src/Settings/Settings.php:169
 msgid "Unique Site Identifier for OAuth"
 msgstr "Identifiant de site unique pour OAuth"
 
-#: src/Settings/Settings.php:178
+#: src/Settings/Settings.php:187
 msgid "Mollie OAuth Connection Status"
 msgstr "Statut de connexion OAuth Mollie"
 
-#: src/Settings/Settings.php:196
+#: src/Settings/Settings.php:205
 msgid "Mollie Profile ID (cached)"
 msgstr "ID de profil Mollie (en cache)"
 
@@ -420,19 +420,19 @@ msgstr "Actualiser la connexion"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/Admin/settings/SettingsApp.js:131
+#: src/Admin/settings/SettingsApp.js:132
 msgid "Successfully connected to Mollie!"
 msgstr "Connecté avec succès à Mollie !"
 
-#: src/Admin/settings/SettingsApp.js:141
+#: src/Admin/settings/SettingsApp.js:142
 msgid "Failed to save OAuth tokens: "
 msgstr "Échec de l'enregistrement des jetons OAuth : "
 
-#: src/Admin/settings/SettingsApp.js:92
+#: src/Admin/settings/SettingsApp.js:93
 msgid "OAuth callback incomplete: refresh token not received from authorization server."
 msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du serveur d'autorisation."
 
-#: src/Admin/settings/SettingsApp.js:207
+#: src/Admin/settings/SettingsApp.js:208
 msgid "Connection"
 msgstr "Connexion"
 
@@ -591,7 +591,7 @@ msgstr "ID"
 msgid "Simple Payment Block"
 msgstr "Bloc de paiement simple"
 
-#: src/Admin/settings/SettingsApp.js:218
+#: src/Admin/settings/SettingsApp.js:219
 #: src/blocks/simple-payment/index.js:128
 msgid "Currency"
 msgstr "Devise"
@@ -632,7 +632,7 @@ msgstr "Aucune transaction valide trouvée dans le fichier."
 msgid "Export Selected"
 msgstr "Exporter la sélection"
 
-#: src/API/TransactionAPI.php:513
+#: src/API/TransactionAPI.php:519
 msgid "This transaction has no Mollie payment ID to sync."
 msgstr "Cette transaction n'a pas d'ID de paiement Mollie à synchroniser."
 
@@ -647,7 +647,7 @@ msgid "Imported %1$d new, updated %2$d, skipped %3$d transaction(s)."
 msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s)."
 
 #. translators: %s: error message
-#: src/Payment/MolliePaymentHandler.php:664
+#: src/Payment/MolliePaymentHandler.php:663
 #, php-format
 msgid "Failed to list balance transactions: %s"
 msgstr "Échec de la liste des transactions de solde : %s"
@@ -697,11 +697,11 @@ msgstr "Aucun champ à mettre à jour."
 msgid "Failed to update transaction."
 msgstr "Échec de la mise à jour de la transaction."
 
-#: src/Settings/Settings.php:209
+#: src/Settings/Settings.php:218
 msgid "Disable bank transfer when close to the key date of the sale"
 msgstr "Désactiver le virement bancaire à proximité de la date clé de la vente"
 
-#: src/Settings/Settings.php:222
+#: src/Settings/Settings.php:231
 msgid "Working-day threshold for disabling bank transfer"
 msgstr "Seuil de jours ouvrables pour désactiver le virement bancaire"
 
@@ -741,7 +741,7 @@ msgstr "Seuil de jours ouvrables"
 msgid "Disable bank transfer when fewer than this many working days remain before the key date."
 msgstr "Désactiver le virement bancaire lorsque moins de ce nombre de jours ouvrables restent avant la date clé."
 
-#: src/Admin/settings/SettingsApp.js:211
+#: src/Admin/settings/SettingsApp.js:212
 msgid "Payment Methods"
 msgstr "Modes de paiement"
 
@@ -825,7 +825,7 @@ msgstr "Aucune transaction payée ne manque de données de frais Mollie."
 #: fair-payments-connector.php
 #: src/Admin/AdminPages.php:46
 #: src/Admin/AdminPages.php:47
-#: src/Core/Plugin.php:143
+#: src/Core/Plugin.php:144
 msgid "Fair Payments Connector"
 msgstr ""
 
@@ -861,11 +861,11 @@ msgid "Bundled translations"
 msgstr "Traductions groupées"
 
 #: src/Core/Features.php:127
-#: src/Core/Plugin.php:144
+#: src/Core/Plugin.php:145
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
 
-#: src/Settings/Settings.php:258
+#: src/Settings/Settings.php:280
 msgid "Per-bundle feature toggles"
 msgstr "Bascules de fonctionnalités par bundle"
 
@@ -877,11 +877,11 @@ msgstr "Impossible de charger les données du tableau de bord."
 msgid "Test mode — these figures reflect test transactions only."
 msgstr "Mode test — ces chiffres reflètent uniquement les transactions de test."
 
-#: src/Core/Plugin.php:147
+#: src/Core/Plugin.php:148
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Forcé par une constante wp-config — modifiez-la là."
 
-#: src/Admin/settings/SettingsApp.js:185
+#: src/Admin/settings/SettingsApp.js:186
 msgid "Fair Payments Connector Settings"
 msgstr "Paramètres Fair Payments Connector"
 
@@ -919,7 +919,7 @@ msgstr "Votre paiement n'a pas été complété. Veuillez réessayer."
 msgid "Try Again"
 msgstr "Réessayer"
 
-#: src/Settings/Settings.php:235
+#: src/Settings/Settings.php:257
 msgid "Default currency for all transactions"
 msgstr "Devise par défaut pour toutes les transactions"
 
@@ -951,11 +951,11 @@ msgstr "Définissez la devise par défaut pour toutes les nouvelles transactions
 msgid "Site currency"
 msgstr "Devise du site"
 
-#: src/Admin/settings/SettingsApp.js:107
+#: src/Admin/settings/SettingsApp.js:108
 msgid "OAuth callback is missing the state parameter. Please try connecting again."
 msgstr "Le rappel OAuth ne dispose pas du paramètre d'état. Veuillez essayer de vous reconnecter."
 
-#: src/Admin/settings/SettingsApp.js:264
+#: src/Admin/settings/SettingsApp.js:272
 msgid "Need help?"
 msgstr "Besoin d'aide ?"
 
@@ -990,7 +990,7 @@ msgstr "Impossible de charger l'aperçu de la connexion Mollie : %s"
 msgid "The payment could not be started. Please try again later or contact the organizer."
 msgstr "Le paiement n'a pas pu être lancé. Veuillez réessayer plus tard ou contacter l'organisateur."
 
-#: src/API/TransactionAPI.php:238
+#: src/API/TransactionAPI.php:239
 #: src/Payment/PaymentGatewayError.php:133
 msgid "Payment settings"
 msgstr "Paramètres de paiement"
@@ -1081,7 +1081,7 @@ msgstr "Créer un paiement test"
 msgid "Connect Mollie first to run a test payment."
 msgstr "Connectez d'abord Mollie pour effectuer un paiement test."
 
-#: src/Core/Plugin.php:138
+#: src/Core/Plugin.php:139
 msgid "Translations"
 msgstr "Traductions"
 
@@ -1102,7 +1102,7 @@ msgid "This block shared its identifier with another Simple Payment block on thi
 msgstr "Ce bloc a partagé son identifiant avec un autre bloc Simple Payment sur cette page, ce qui pourrait entraîner une facturation incorrecte des acheteurs. Un nouvel identifiant a été attribué — enregistrez ou mettez à jour l'article maintenant."
 
 #: src/API/TransactionsController.php:651
-#: src/Payment/MolliePaymentHandler.php:582
+#: src/Payment/MolliePaymentHandler.php:581
 #: src/Admin/external-updates/components/MollieImportPanel.js:129
 msgid "Mollie payments could not be loaded. Please try again."
 msgstr "Les paiements Mollie n'ont pas pu être chargés. Veuillez réessayer."
@@ -1281,60 +1281,60 @@ msgstr "Connecté, mais l'entrée d'audit n'a pas pu être enregistrée."
 msgid "Disconnected, but the audit entry could not be recorded."
 msgstr "Déconnecté, mais l'entrée d'audit n'a pas pu être enregistrée."
 
-#: src/API/SettingsWriteController.php:114
+#: src/API/SettingsWriteController.php:118
 msgid "No settings were provided."
 msgstr "Aucun paramètre n'a été fourni."
 
 #. translators: %s: rejected setting key
-#: src/API/SettingsWriteController.php:127
+#: src/API/SettingsWriteController.php:131
 #, php-format
 msgid "\"%s\" is not an editable setting."
 msgstr "\"%s\" n'est pas un paramètre modifiable."
 
-#: src/API/SettingsWriteController.php:157
+#: src/API/SettingsWriteController.php:161
 msgid "The setting change could not be recorded and was not saved. Please try again."
 msgstr "La modification du paramètre n'a pas pu être enregistrée et n'a pas été sauvegardée. Veuillez réessayer."
 
-#: src/AuditLog/AuditLogger.php:57
+#: src/AuditLog/AuditLogger.php:58
 msgid "Switched to live mode."
 msgstr "Basculé en mode live."
 
-#: src/AuditLog/AuditLogger.php:58
+#: src/AuditLog/AuditLogger.php:59
 msgid "Switched to test mode."
 msgstr "Basculé en mode test."
 
 #. translators: %s: currency code
-#: src/AuditLog/AuditLogger.php:63
+#: src/AuditLog/AuditLogger.php:64
 #, php-format
 msgid "Default currency changed to %s."
 msgstr "Devise par défaut changée en %s."
 
-#: src/AuditLog/AuditLogger.php:69
+#: src/AuditLog/AuditLogger.php:70
 msgid "Bank transfer restriction near the key date enabled."
 msgstr "Restriction de virement bancaire près de la date clé activée."
 
-#: src/AuditLog/AuditLogger.php:70
+#: src/AuditLog/AuditLogger.php:71
 msgid "Bank transfer restriction near the key date disabled."
 msgstr "Restriction de virement bancaire près de la date clé désactivée."
 
 #. translators: %d: number of working days
-#: src/AuditLog/AuditLogger.php:76
+#: src/AuditLog/AuditLogger.php:77
 #, php-format
 msgid "Bank transfer threshold changed to %d working day."
 msgid_plural "Bank transfer threshold changed to %d working days."
 msgstr[0] "Seuil de virement bancaire modifié à %d jour ouvrable."
 msgstr[1] "Seuil de virement bancaire modifié à %d jours ouvrables."
 
-#: src/AuditLog/AuditLogger.php:87
+#: src/AuditLog/AuditLogger.php:93
 msgid "Bundled translations enabled."
 msgstr "Traductions groupées activées."
 
-#: src/AuditLog/AuditLogger.php:88
+#: src/AuditLog/AuditLogger.php:94
 msgid "Bundled translations disabled."
 msgstr "Traductions groupées désactivées."
 
 #. translators: %s: setting key
-#: src/AuditLog/AuditLogger.php:93
+#: src/AuditLog/AuditLogger.php:99
 #, php-format
 msgid "\"%s\" was changed."
 msgstr "\"%s\" a été modifié."
@@ -1388,7 +1388,7 @@ msgid "Failed to load the audit log."
 msgstr "Impossible de charger le journal d'audit."
 
 #: src/Admin/settings/AuditLogTab.js:103
-#: src/Admin/settings/SettingsApp.js:222
+#: src/Admin/settings/SettingsApp.js:227
 msgid "Audit Log"
 msgstr "Journal d'audit"
 
@@ -1508,6 +1508,7 @@ msgid "Only paid transactions are counted, in the month they were created (UTC).
 msgstr "Seules les transactions payées sont comptées, dans le mois de leur création (UTC). Le montant calculé après frais correspond au total payé moins les commissions Fair Event et Mollie enregistrées."
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:344
+#: src/Admin/settings/PrivacyTab.js:119
 #: src/Admin/transactions/TransactionsApp.js:771
 msgid "Try again"
 msgstr "Réessayer"
@@ -2062,12 +2063,12 @@ msgstr "Accès aux règlements : autorisé"
 msgid "Reconnect"
 msgstr "Se reconnecter"
 
-#: src/Admin/settings/SettingsApp.js:72
+#: src/Admin/settings/SettingsApp.js:73
 msgid "Authorization cancelled. Nothing was changed, so an existing Mollie connection keeps working."
 msgstr "Autorisation annulée. Rien n'a été modifié, donc la connexion Mollie existante continue de fonctionner."
 
 #. translators: %s: error code reported by the authorization server
-#: src/Admin/settings/SettingsApp.js:78
+#: src/Admin/settings/SettingsApp.js:79
 #, js-format
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
 msgstr "L'autorisation Mollie a échoué (%s). Rien n'a été modifié, donc la connexion Mollie existante continue de fonctionner."
@@ -2130,7 +2131,7 @@ msgid "Failed to revoke API token."
 msgstr "Échec de la révocation du jeton API."
 
 #: src/Admin/settings/ApiTokensTab.js:222
-#: src/Admin/settings/SettingsApp.js:228
+#: src/Admin/settings/SettingsApp.js:233
 msgid "API Tokens"
 msgstr "Jetons API"
 
@@ -2401,15 +2402,15 @@ msgstr[1] "%d transactions trouvées."
 msgid "No transactions match these filters. Change them or select “Reset filters”."
 msgstr "Aucune transaction ne correspond à ces filtres. Modifiez-les ou sélectionnez « Réinitialiser les filtres »."
 
-#: src/API/TransactionAPI.php:65
+#: src/API/TransactionAPI.php:66
 msgid "The total of the line items must be positive."
 msgstr "Le total des articles doit être positif."
 
-#: src/API/TransactionAPI.php:79
+#: src/API/TransactionAPI.php:80
 msgid "The price of this purchase changed while it was being prepared. Please try again."
 msgstr "Le prix de cet achat a changé pendant qu'il était en cours de préparation. Veuillez réessayer."
 
-#: src/API/TransactionAPI.php:850
+#: src/API/TransactionAPI.php:856
 msgid "The transaction amount does not match its line items."
 msgstr "Le montant de la transaction ne correspond pas à ses articles."
 
@@ -2890,7 +2891,7 @@ msgstr "Cette transaction n'a pas de description."
 msgid "Failed to load Mollie connection overview: Mollie returned data that could not be read."
 msgstr "Impossible de charger l'aperçu de la connexion Mollie : Mollie a renvoyé des données qui n'ont pas pu être lues."
 
-#: src/Payment/MolliePaymentHandler.php:527
+#: src/Payment/MolliePaymentHandler.php:526
 msgid "Failed to retrieve payment: Mollie returned a payment that could not be read."
 msgstr "Impossible de récupérer le paiement : Mollie a renvoyé un paiement qui n'a pas pu être lu."
 
@@ -2908,8 +2909,8 @@ msgstr "La connexion Mollie ne peut pas être remplacée tant que ce serveur ne 
 msgid "The Mollie authorization could not be stored securely. Please try connecting again."
 msgstr "L'autorisation Mollie n'a pas pu être stockée de manière sécurisée. Veuillez réessayer de vous connecter."
 
-#: src/API/PaymentEndpoint.php:318
-#: src/API/TransactionAPI.php:247
+#: src/API/PaymentEndpoint.php:317
+#: src/API/TransactionAPI.php:248
 #: src/blocks/simple-payment/render.php:101
 msgid "Online payment is temporarily unavailable. Please try again later or contact the organizer."
 msgstr "Le paiement en ligne est temporairement indisponible. Veuillez réessayer plus tard ou contacter l'organisateur."
@@ -2973,7 +2974,7 @@ msgid "Payment ID in webhook is invalid."
 msgstr "L'ID de paiement dans le webhook est invalide."
 
 #. translators: %d: number of seconds to wait
-#: src/Services/PublicEndpointRateLimiter.php:227
+#: src/Services/PublicEndpointRateLimiter.php:226
 #, php-format
 msgid "Too many requests. Please try again in %d second."
 msgid_plural "Too many requests. Please try again in %d seconds."
@@ -2994,4 +2995,53 @@ msgstr ""
 
 #: src/blocks/simple-payment/view.js:196
 msgid "Your browser is blocking site data, which is needed to confirm your payment when you return. Allow site data for this site and try again."
+msgstr ""
+
+#: src/AuditLog/AuditLogger.php:88
+msgid "Sending ticket buyers’ emails to the payment provider enabled."
+msgstr ""
+
+#: src/AuditLog/AuditLogger.php:89
+msgid "Sending ticket buyers’ emails to the payment provider disabled."
+msgstr ""
+
+#: src/Settings/Settings.php:244
+#: src/Admin/settings/PrivacyTab.js:132
+msgid "Send ticket buyers’ emails to the payment provider"
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:55
+msgid "Failed to load privacy settings."
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:91
+msgid "Privacy settings saved."
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:99
+msgid "Failed to save privacy settings. Please try again."
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:128
+msgid "Payment provider"
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:136
+msgid "Include the buyer’s email in payment metadata to help reconcile Fair Events ticket payments. Enabling this sends personal data to the external payment provider. Your choice applies to future payment attempts, including retries. It does not change data already held by a provider. Buyer emails remain stored locally for registration management and messages."
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:169
+msgid "Saving…"
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:170
+msgid "Save privacy settings"
+msgstr ""
+
+#: src/Admin/settings/PrivacyTab.js:177
+msgid "You have unsaved changes."
+msgstr ""
+
+#: src/Admin/settings/SettingsApp.js:223
+msgid "Privacy"
 msgstr ""
