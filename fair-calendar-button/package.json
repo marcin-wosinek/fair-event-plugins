@@ -52,7 +52,7 @@
 		"@wordpress/jest-preset-default": "14.2.0",
 		"@wordpress/scripts": "37.0.0",
 		"babel-jest": "^30.5.2",
-		"dotenv": "^18.0.8",
+		"dotenv": "^18.0.9",
 		"jest": "^30.5.2",
 		"jest-environment-jsdom": "^30.5.2",
 		"webpack-bundle-output": "^1.1.0"
