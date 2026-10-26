@@ -26,7 +26,16 @@ class Settings {
 		'fair_payment_currency',
 		'fair_payment_disable_banktransfer_near_date',
 		'fair_payment_banktransfer_threshold_days',
+		self::SHARE_TICKET_BUYER_EMAIL,
 	);
+
+	/**
+	 * Whether Fair Events ticket payments send the buyer's email to the
+	 * payment provider in payment metadata. Off by default; upgraded sites
+	 * that already sent buyer emails start with it on — see
+	 * Schema::migrate_to_v30().
+	 */
+	const SHARE_TICKET_BUYER_EMAIL = 'fair_payment_share_ticket_buyer_email';
 
 	/**
 	 * Initialize settings
@@ -226,6 +235,19 @@ class Settings {
 			)
 		);
 
+		// Send ticket buyers' emails to the payment provider.
+		register_setting(
+			'fair_payment_settings',
+			self::SHARE_TICKET_BUYER_EMAIL,
+			array(
+				'type'              => 'boolean',
+				'description'       => __( 'Send ticket buyers’ emails to the payment provider', 'fair-payments-connector' ),
+				'sanitize_callback' => array( $this, 'sanitize_stored_boolean' ),
+				'show_in_rest'      => true,
+				'default'           => false,
+			)
+		);
+
 		// Default currency for all transactions.
 		register_setting(
 			'fair_payment_settings',
@@ -266,6 +288,28 @@ class Settings {
 				'default'           => array(),
 			)
 		);
+	}
+
+	/**
+	 * Whether the buyer's email may be sent to the payment provider with a
+	 * Fair Events ticket payment. Read when each payment is initiated, so a
+	 * change applies to every later attempt, retries included.
+	 *
+	 * @return bool
+	 */
+	public static function shares_ticket_buyer_email() {
+		return rest_sanitize_boolean( get_option( self::SHARE_TICKET_BUYER_EMAIL, false ) );
+	}
+
+	/**
+	 * Sanitize a boolean setting to '1' or '0'. WordPress stores a plain
+	 * false as '', which /wp/v2/settings reports as null instead of false.
+	 *
+	 * @param mixed $value Value.
+	 * @return string '1' or '0'.
+	 */
+	public function sanitize_stored_boolean( $value ) {
+		return rest_sanitize_boolean( $value ) ? '1' : '0';
 	}
 
 	/**

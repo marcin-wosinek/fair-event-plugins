@@ -28,18 +28,31 @@
  * running fair-events standalone must not leave the "check your email"
  * promise in the UI unfulfilled (#1360).
  *
+ * The paid scenario runs with the connector's ticket buyer email setting
+ * both on and off (#1484): the email reaches the Mollie payload only when
+ * it is on, and the local signup, confirmation and email are the same
+ * either way.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { wpCli, runScript } from '../support/wp-cli.js';
+import {
+	wpCli,
+	runScript,
+	ticketBuyerEmailSharing,
+	setTicketBuyerEmailSharing,
+} from '../support/wp-cli.js';
 
 test.describe('get-tickets block purchase (fair-audience inactive)', () => {
+	let originalEmailSharing;
+
 	test.beforeAll(() => {
 		wpCli('plugin deactivate fair-audience');
+		originalEmailSharing = ticketBuyerEmailSharing();
 	});
 
 	test.afterAll(() => {
 		wpCli('plugin activate fair-audience');
+		setTicketBuyerEmailSharing(originalEmailSharing);
 	});
 
 	test.beforeEach(() => {
@@ -51,100 +64,125 @@ test.describe('get-tickets block purchase (fair-audience inactive)', () => {
 		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
 	});
 
-	test('paid ticket: checkout via the Mollie double, webhook confirms the signup', async ({
-		page,
-		seedEvent,
-	}) => {
-		const event = seedEvent('paid', { block: 'get-tickets' });
+	for (const shareEmail of [true, false]) {
+		test(`paid ticket: checkout via the Mollie double, webhook confirms the signup (buyer email ${
+			shareEmail ? 'sent' : 'not sent'
+		} to the provider)`, async ({
+			page,
+			seedEvent,
+		}) => {
+			setTicketBuyerEmailSharing(shareEmail);
+			const event = seedEvent('paid', { block: 'get-tickets' });
 
-		const stamp = Date.now();
-		const buyerName = `E2E GetTickets Paid ${stamp}`;
-		const email = `get-tickets.paid.${stamp}@example.test`;
+			const stamp = Date.now();
+			const buyerName = `E2E GetTickets Paid ${stamp}`;
+			const email = `get-tickets.paid.${stamp}@example.test`;
 
-		await page.goto(event.pageUrl);
+			await page.goto(event.pageUrl);
 
-		// The standalone form must render — not the "fair-audience is active"
-		// deferral notice (which would mean the deactivation didn't take).
-		const form = page.locator('.fair-events-get-tickets-form');
-		await expect(form).toBeVisible();
-		await expect(
-			page.locator('.fair-events-get-tickets-notice')
-		).toHaveCount(0);
+			// The standalone form must render — not the "fair-audience is active"
+			// deferral notice (which would mean the deactivation didn't take).
+			const form = page.locator('.fair-events-get-tickets-form');
+			await expect(form).toBeVisible();
+			await expect(
+				page.locator('.fair-events-get-tickets-notice')
+			).toHaveCount(0);
 
-		await form.locator('input[name="name"]').fill(buyerName);
-		await form.locator('input[name="email"]').fill(email);
-		await form
-			.locator(
-				`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
-			)
-			.check();
+			await form.locator('input[name="name"]').fill(buyerName);
+			await form.locator('input[name="email"]').fill(email);
+			await form
+				.locator(
+					`input[name="ticket_type_id"][value="${event.ticketTypeId}"]`
+				)
+				.check();
 
-		// Submit → payment_required with a checkout_url that (via the Mollie
-		// double) is the callback URL itself, so the browser lands straight on
-		// ?fair_payment_callback=true&transaction_id=…&token=…. Wait for the
-		// rendered processing card rather than the navigation itself
-		// (waitForURL can abort when a redirect supersedes it — see
-		// ticket-purchase-confirmation.spec.js), then assert the URL by polling.
-		await form.locator('button[type="submit"]').click();
-		await expect(
-			page.locator('.fair-events-get-tickets-callback-processing')
-		).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(/fair_payment_callback=true/);
+			// Submit → payment_required with a checkout_url that (via the Mollie
+			// double) is the callback URL itself, so the browser lands straight on
+			// ?fair_payment_callback=true&transaction_id=…&token=…. Wait for the
+			// rendered processing card rather than the navigation itself
+			// (waitForURL can abort when a redirect supersedes it — see
+			// ticket-purchase-confirmation.spec.js), then assert the URL by polling.
+			await form.locator('button[type="submit"]').click();
+			await expect(
+				page.locator('.fair-events-get-tickets-callback-processing')
+			).toBeVisible({ timeout: 30000 });
+			await expect(page).toHaveURL(/fair_payment_callback=true/);
 
-		// The signup row is pending and its transaction still open — the
-		// redirect page only polls; Mollie's webhook is what flips the status.
-		let state = runScript(
-			'get-tickets-state.php',
-			'E2E_GT_STATE',
-			String(event.eventDateId)
-		);
-		expect(state.signups).toHaveLength(1);
-		expect(state.signups[0].email).toBe(email);
-		expect(state.signups[0].status).toBe('pending_payment');
-		expect(state.signups[0].amount).toBe(event.price);
-		expect(state.signups[0].mollie_payment_id).toBeTruthy();
-		expect(state.signups[0].mail).toHaveLength(0);
-		expect(state.mollie_payload.metadata.email).toBe(email);
-		expect(state.mollie_payload.metadata).not.toHaveProperty('user_id');
-		expect(state.mollie_payload.metadata).not.toHaveProperty(
-			'participant_id'
-		);
-		expect(JSON.stringify(state.payment_logs)).not.toContain(email);
+			// The signup row is pending and its transaction still open — the
+			// redirect page only polls; Mollie's webhook is what flips the status.
+			let state = runScript(
+				'get-tickets-state.php',
+				'E2E_GT_STATE',
+				String(event.eventDateId)
+			);
+			expect(state.signups).toHaveLength(1);
+			expect(state.signups[0].email).toBe(email);
+			expect(state.signups[0].status).toBe('pending_payment');
+			expect(state.signups[0].amount).toBe(event.price);
+			expect(state.signups[0].mollie_payment_id).toBeTruthy();
+			expect(state.signups[0].mail).toHaveLength(0);
+			if (shareEmail) {
+				expect(state.mollie_payload.metadata.email).toBe(email);
+			} else {
+				expect(state.mollie_payload.metadata).not.toHaveProperty('email');
+			}
+			expect(state.mollie_payload.metadata.signup_id).toBe(
+				state.signups[0].id
+			);
+			expect(state.mollie_payload.metadata.event_date_id).toBe(
+				event.eventDateId
+			);
+			expect(state.mollie_payload.metadata.transaction_id).toBe(
+				state.signups[0].transaction_id
+			);
+			expect(
+				runScript(
+					'transaction-state.php',
+					'E2E_TX_STATE',
+					String(state.signups[0].transaction_id)
+				).metadata.email
+			).toBe(email);
+			expect(state.mollie_payload.metadata).not.toHaveProperty('user_id');
+			expect(state.mollie_payload.metadata).not.toHaveProperty(
+				'participant_id'
+			);
+			expect(JSON.stringify(state.payment_logs)).not.toContain(email);
 
-		// The buyer's bank has now confirmed the payment. Simulate Mollie's
-		// webhook call (production path): the handler fetches the payment
-		// from the double (now reporting paid) and fires the real
-		// fair_payment_paid → FairEvents\Hooks\PaymentHooks chain.
-		runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
-		const webhookResponse = await page.request.post(
-			'/wp-json/fair-payments-connector/v1/webhook',
-			{ form: { id: state.signups[0].mollie_payment_id } }
-		);
-		expect(webhookResponse.ok()).toBe(true);
+			// The buyer's bank has now confirmed the payment. Simulate Mollie's
+			// webhook call (production path): the handler fetches the payment
+			// from the double (now reporting paid) and fires the real
+			// fair_payment_paid → FairEvents\Hooks\PaymentHooks chain.
+			runScript('set-mollie-status.php', 'E2E_MOLLIE_STATUS', 'paid');
+			const webhookResponse = await page.request.post(
+				'/wp-json/fair-payments-connector/v1/webhook',
+				{ form: { id: state.signups[0].mollie_payment_id } }
+			);
+			expect(webhookResponse.ok()).toBe(true);
 
-		// The block's payment-state poller picks the paid status up and swaps
-		// the processing card for the confirmed one in place.
-		await expect(
-			page.locator('.fair-events-get-tickets-callback-confirmed')
-		).toBeVisible({ timeout: 30000 });
-		await expect(page.getByText('Payment confirmed')).toBeVisible();
+			// The block's payment-state poller picks the paid status up and swaps
+			// the processing card for the confirmed one in place.
+			await expect(
+				page.locator('.fair-events-get-tickets-callback-confirmed')
+			).toBeVisible({ timeout: 30000 });
+			await expect(page.getByText('Payment confirmed')).toBeVisible();
 
-		// Server-side: signup confirmed, transaction paid (in test mode).
-		state = runScript(
-			'get-tickets-state.php',
-			'E2E_GT_STATE',
-			String(event.eventDateId)
-		);
-		expect(state.signups[0].status).toBe('confirmed');
-		expect(state.signups[0].transaction_status).toBe('paid');
-		expect(state.signups[0].transaction_testmode).toBe(true);
+			// Server-side: signup confirmed, transaction paid (in test mode).
+			state = runScript(
+				'get-tickets-state.php',
+				'E2E_GT_STATE',
+				String(event.eventDateId)
+			);
+			expect(state.signups[0].status).toBe('confirmed');
+			expect(state.signups[0].transaction_status).toBe('paid');
+			expect(state.signups[0].transaction_testmode).toBe(true);
 
-		// fair-events' own confirmation email goes out once payment is
-		// confirmed — not before (the earlier pending_payment read above
-		// carried no mail yet).
-		expect(state.signups[0].mail).toHaveLength(1);
-		expect(state.signups[0].mail[0].subject).toContain('registration');
-	});
+			// fair-events' own confirmation email goes out once payment is
+			// confirmed — not before (the earlier pending_payment read above
+			// carried no mail yet).
+			expect(state.signups[0].mail).toHaveLength(1);
+			expect(state.signups[0].mail[0].subject).toContain('registration');
+		});
+	}
 
 	test('free ticket: immediate confirmation without any transaction', async ({
 		page,

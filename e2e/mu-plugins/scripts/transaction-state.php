@@ -6,7 +6,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/transaction-state.php <transaction_id>
  *
  * Prints a single `E2E_TX_STATE:{json}` line with the row's status, testmode
- * flag, amount, currency, mollie_payment_id, and post_id.
+ * flag, amount, currency, mollie_payment_id, post_id, and its local metadata.
  *
  * @package FairEventsE2E
  */
@@ -48,5 +48,6 @@ echo 'E2E_TX_STATE:' . wp_json_encode(
 		'mollie_payment_id' => (string) $tx->mollie_payment_id,
 		'post_id'           => $tx->post_id ? (int) $tx->post_id : null,
 		'event_date_id'     => $tx->event_date_id ? (int) $tx->event_date_id : null,
+		'metadata'          => json_decode( (string) $tx->metadata, true ),
 	)
 ) . "\n";

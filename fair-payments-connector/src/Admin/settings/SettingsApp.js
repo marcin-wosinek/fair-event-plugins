@@ -11,6 +11,7 @@ import { Notice, TabPanel } from '@wordpress/components';
 import ConnectionTab from './ConnectionTab';
 import CurrencyTab from './CurrencyTab.js';
 import PaymentMethodsTab from './PaymentMethodsTab.js';
+import PrivacyTab from './PrivacyTab.js';
 import AuditLogTab from './AuditLogTab.js';
 import ApiTokensTab from './ApiTokensTab.js';
 import { saveOAuthCallback } from './settings-api';
@@ -218,6 +219,10 @@ export default function SettingsApp() {
 						title: __( 'Currency', 'fair-payments-connector' ),
 					},
 					{
+						name: 'privacy',
+						title: __( 'Privacy', 'fair-payments-connector' ),
+					},
+					{
 						name: 'audit-log',
 						title: __( 'Audit Log', 'fair-payments-connector' ),
 					},
@@ -248,6 +253,9 @@ export default function SettingsApp() {
 						) }
 						{ tab.name === 'currency' && (
 							<CurrencyTab onNotice={ setNotice } />
+						) }
+						{ tab.name === 'privacy' && (
+							<PrivacyTab onNotice={ setNotice } />
 						) }
 						{ tab.name === 'audit-log' && <AuditLogTab /> }
 						{ tab.name === 'api-tokens' && <ApiTokensTab /> }

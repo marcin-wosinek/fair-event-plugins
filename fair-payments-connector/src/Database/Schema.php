@@ -251,9 +251,10 @@ class Schema {
 		self::migrate_to_v27();
 		self::migrate_to_v28();
 		self::migrate_to_v29();
+		self::migrate_to_v30();
 
 		// Store database version for future migrations.
-		update_option( 'fair_payment_db_version', '29.0' );
+		update_option( 'fair_payment_db_version', '30.0' );
 	}
 
 	/**
@@ -1622,6 +1623,51 @@ class Schema {
 		if ( version_compare( $current_version, '29.0', '<' ) ) {
 			self::create_external_update_runs_table();
 		}
+	}
+
+	/**
+	 * Migrate database from v29.0 to v30.0
+	 *
+	 * Sets the initial value of the ticket buyer email disclosure setting
+	 * (#1484), once. Ticket payments used to always send the buyer's email
+	 * to the payment provider, so a site whose local Fair Events ticket
+	 * transactions show that it did keeps doing so; every other site,
+	 * including new installations, starts with it off. A value already set
+	 * is never changed.
+	 *
+	 * @return void
+	 */
+	public static function migrate_to_v30() {
+		global $wpdb;
+
+		$current_version = get_option( 'fair_payment_db_version', '1.0' );
+
+		if ( version_compare( $current_version, '30.0', '>=' ) ) {
+			return;
+		}
+
+		if ( false !== get_option( \FairPaymentsConnector\Settings\Settings::SHARE_TICKET_BUYER_EMAIL ) ) {
+			return;
+		}
+
+		$sent_emails = false;
+		$rows        = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT metadata FROM %i WHERE metadata LIKE %s AND metadata LIKE %s LIMIT 20',
+				self::get_payments_table_name(),
+				'%' . $wpdb->esc_like( '"source":"fair-events-get-tickets"' ) . '%',
+				'%' . $wpdb->esc_like( '"email":"' ) . '_%'
+			)
+		);
+		foreach ( (array) $rows as $row ) {
+			$metadata = json_decode( (string) $row, true );
+			if ( is_array( $metadata ) && 'fair-events-get-tickets' === ( $metadata['source'] ?? '' ) && is_string( $metadata['email'] ?? null ) && '' !== $metadata['email'] ) {
+				$sent_emails = true;
+				break;
+			}
+		}
+
+		add_option( \FairPaymentsConnector\Settings\Settings::SHARE_TICKET_BUYER_EMAIL, $sent_emails ? '1' : '0' );
 	}
 
 	/**

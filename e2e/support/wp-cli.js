@@ -66,6 +66,30 @@ export function resetCapturedMail() {
 }
 
 /**
+ * Whether ticket payments send the buyer's email to the payment provider
+ * (fair-payments-connector's Privacy setting, #1484).
+ *
+ * @return {boolean} Current setting.
+ */
+export function ticketBuyerEmailSharing() {
+	const value = wpCli('option get fair_payment_share_ticket_buyer_email', {
+		allowFailure: true,
+	}).trim();
+	return value === '1';
+}
+
+/**
+ * Turn sending ticket buyers' emails to the payment provider on or off.
+ *
+ * @param {boolean} enabled Whether buyer emails are sent.
+ */
+export function setTicketBuyerEmailSharing(enabled) {
+	wpCli(
+		`option update fair_payment_share_ticket_buyer_email ${enabled ? 1 : 0}`
+	);
+}
+
+/**
  * Log into wp-admin as the configured admin and wait for the dashboard.
  *
  * @param {import('@playwright/test').Page} page Playwright page.

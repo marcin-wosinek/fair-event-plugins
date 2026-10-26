@@ -20,7 +20,7 @@ use WP_Error;
 /**
  * The only write path for the connector settings listed in
  * Settings::MANUALLY_WRITTEN_SETTINGS (mode, currency, bank-transfer
- * threshold). Each changed setting is recorded to the audit log with a
+ * threshold, ticket buyer email disclosure). Each changed setting is recorded to the audit log with a
  * server-generated description (see AuditLogger::describe_setting_change()) —
  * administrators no longer supply a reason (#1575). The generic
  * /wp/v2/settings endpoint can no longer write these keys — see
@@ -95,6 +95,10 @@ class SettingsWriteController extends WP_REST_Controller {
 			'fair_payment_banktransfer_threshold_days'    => array(
 				'default'  => 3,
 				'sanitize' => array( $settings, 'sanitize_threshold_days' ),
+			),
+			Settings::SHARE_TICKET_BUYER_EMAIL            => array(
+				'default'  => '0',
+				'sanitize' => array( $settings, 'sanitize_stored_boolean' ),
 			),
 		);
 	}

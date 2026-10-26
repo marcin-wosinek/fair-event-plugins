@@ -679,6 +679,42 @@ if ( ! function_exists( 'wp_remote_retrieve_body' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_option' ) ) {
+	/**
+	 * Stub of WordPress add_option() backed by $GLOBALS['_fair_test_options'].
+	 * Like core, it never replaces an option that already exists.
+	 *
+	 * @param string $name  Option name.
+	 * @param mixed  $value Value to store.
+	 * @return bool
+	 */
+	function add_option( $name, $value = '' ) {
+		if ( array_key_exists( $name, $GLOBALS['_fair_test_options'] ?? array() ) ) {
+			return false;
+		}
+		$GLOBALS['_fair_test_options'][ $name ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'rest_sanitize_boolean' ) ) {
+	/**
+	 * Stub of WordPress rest_sanitize_boolean(), with core's behavior.
+	 *
+	 * @param bool|string|int $value Value to sanitize.
+	 * @return bool
+	 */
+	function rest_sanitize_boolean( $value ) {
+		if ( is_string( $value ) ) {
+			$value = strtolower( $value );
+			if ( in_array( $value, array( 'false', '0' ), true ) ) {
+				$value = false;
+			}
+		}
+		return (bool) $value;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.

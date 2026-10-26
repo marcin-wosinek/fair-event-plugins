@@ -160,6 +160,14 @@ class AuditLoggerTest extends TestCase {
 			AuditLogger::describe_setting_change( 'fair_payment_banktransfer_threshold_days', 5 )
 		);
 		$this->assertSame(
+			'Sending ticket buyers’ emails to the payment provider enabled.',
+			AuditLogger::describe_setting_change( 'fair_payment_share_ticket_buyer_email', true )
+		);
+		$this->assertSame(
+			'Sending ticket buyers’ emails to the payment provider disabled.',
+			AuditLogger::describe_setting_change( 'fair_payment_share_ticket_buyer_email', false )
+		);
+		$this->assertSame(
 			'Bundled translations enabled.',
 			AuditLogger::describe_setting_change( 'bundled-translations', true )
 		);

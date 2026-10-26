@@ -85,6 +85,7 @@ describe( 'SettingsApp — API Tokens tab (#1747)', () => {
 			'Connection',
 			'Payment Methods',
 			'Currency',
+			'Privacy',
 			'Audit Log',
 			'API Tokens',
 		] );
@@ -111,7 +112,7 @@ describe( 'SettingsApp — API Tokens tab (#1747)', () => {
 		expect(
 			screen.queryByRole( 'tab', { name: 'API Tokens' } )
 		).not.toBeInTheDocument();
-		expect( screen.getAllByRole( 'tab' ) ).toHaveLength( 4 );
+		expect( screen.getAllByRole( 'tab' ) ).toHaveLength( 5 );
 		expect( console ).toHaveLogged();
 	} );
 } );
