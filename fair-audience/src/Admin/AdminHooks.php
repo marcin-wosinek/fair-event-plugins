@@ -57,11 +57,14 @@ class AdminHooks {
 	/**
 	 * Check if current page is a hidden page.
 	 *
+	 * `$plugin_page` is null on admin screens that aren't plugin pages, and
+	 * a null array offset is deprecated in PHP 8.5.
+	 *
 	 * @return bool True if current page is hidden.
 	 */
 	private function is_hidden_page(): bool {
 		global $plugin_page;
-		return isset( self::HIDDEN_PAGES[ $plugin_page ] );
+		return is_string( $plugin_page ) && isset( self::HIDDEN_PAGES[ $plugin_page ] );
 	}
 
 	/**
@@ -99,7 +102,7 @@ class AdminHooks {
 	public function set_title_for_hidden_pages() {
 		global $plugin_page, $title;
 
-		if ( isset( self::HIDDEN_PAGES[ $plugin_page ] ) && empty( $title ) ) {
+		if ( $this->is_hidden_page() && empty( $title ) ) {
 			$title = __( self::HIDDEN_PAGES[ $plugin_page ]['title'], 'fair-audience' );
 		}
 	}

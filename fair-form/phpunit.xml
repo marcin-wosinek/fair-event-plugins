@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="../tools/php-tests/vendor/phpunit/phpunit/phpunit.xsd"
+	bootstrap="__tests__/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	cacheDirectory=".phpunit.cache"
+	failOnWarning="true"
+	failOnNotice="true"
+	failOnDeprecation="true"
+	failOnPhpunitDeprecation="true"
+	displayDetailsOnTestsThatTriggerWarnings="true"
+	displayDetailsOnTestsThatTriggerNotices="true"
+	displayDetailsOnTestsThatTriggerDeprecations="true"
+	displayDetailsOnPhpunitDeprecations="true"
+	>
+	<testsuites>
+		<testsuite name="fair-form">
+			<directory suffix="Test.php">./__tests__</directory>
+		</testsuite>
+	</testsuites>
+	<source>
+		<include>
+			<directory suffix=".php">./src</directory>
+		</include>
+	</source>
+</phpunit>
