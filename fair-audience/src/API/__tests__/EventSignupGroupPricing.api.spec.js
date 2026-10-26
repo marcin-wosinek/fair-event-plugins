@@ -19,7 +19,8 @@
  *
  * Fair Audience Experimental supplies group administration and discount rules;
  * ticket restrictions themselves remain available with Fair Events
- * Experimental inactive.
+ * Experimental inactive. Without Fair Audience Experimental membership can't
+ * be verified, so a restricted tier is refused even to a member (#1298).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -351,6 +352,123 @@ test.describe( 'Group-based pricing and group-restricted tiers', () => {
 		expect( res.ok(), await res.text() ).toBeTruthy();
 		expect( ( await res.json() ).status ).toBe( 'confirmed' );
 
+		await member.dispose();
+	} );
+
+	test( 'a member is refused the restricted tier while Fair Audience Experimental is inactive', async () => {
+		test.skip(
+			! groupsActive,
+			'fair-audience-experimental groups bundle not active'
+		);
+		test.skip(
+			! fixtureOk,
+			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
+		);
+
+		const participantRes = await api.post(
+			'/wp-json/fair-audience/v1/participants',
+			{
+				headers: authHeaders,
+				data: {
+					name: 'Unverifiable Member',
+					email: uniqueEmail( 'unverifiable-member' ),
+				},
+			}
+		);
+		expect( participantRes.ok(), await participantRes.text() ).toBeTruthy();
+		const participantId = ( await participantRes.json() ).id;
+
+		const addRes = await api.post(
+			`/wp-json/fair-audience/v1/groups/${ groupId }/participants`,
+			{ headers: authHeaders, data: { participant_id: participantId } }
+		);
+		expect( addRes.ok(), await addRes.text() ).toBeTruthy();
+
+		const tokenRes = await api.post(
+			'/wp-json/fair-e2e/v1/event-signup/participant-token',
+			{
+				headers: authHeaders,
+				data: {
+					participant_id: participantId,
+					event_date_id: event.eventDateId,
+				},
+			}
+		);
+		expect( tokenRes.ok(), await tokenRes.text() ).toBeTruthy();
+		const { token } = await tokenRes.json();
+
+		const legacySignup = ( client ) =>
+			client.post( '/wp-json/fair-audience/v1/event-signup', {
+				data: {
+					event_id: event.eventId,
+					event_date_id: event.eventDateId,
+					ticket_type_id: restrictedTypeId,
+					participant_token: token,
+				},
+			} );
+
+		const member = await request.newContext( { baseURL: BASE_URL } );
+		try {
+			const deactivateRes = await api.put(
+				'/wp-json/wp/v2/plugins/fair-audience-experimental/fair-audience-experimental',
+				{ headers: authHeaders, data: { status: 'inactive' } }
+			);
+			expect( deactivateRes.ok() ).toBeTruthy();
+
+			const legacyRes = await legacySignup( member );
+			expect( legacyRes.status() ).toBe( 403 );
+			expect( ( await legacyRes.json() ).code ).toBe(
+				'ticket_type_restricted'
+			);
+
+			const unifiedRes = await member.post(
+				'/wp-json/fair-events/v1/get-tickets',
+				{
+					data: {
+						event_date_id: event.eventDateId,
+						ticket_type_id: restrictedTypeId,
+						name: 'Unverifiable Member',
+						email: uniqueEmail( 'unverifiable-unified' ),
+						participant_token: token,
+					},
+				}
+			);
+			expect( unifiedRes.status() ).toBe( 403 );
+			expect( ( await unifiedRes.json() ).code ).toBe(
+				'ticket_type_restricted'
+			);
+
+			// The member is still recognised, but their form leaves the
+			// restricted tier out.
+			const contextRes = await member.get(
+				'/wp-json/fair-events/v1/get-tickets/viewer-context',
+				{
+					params: {
+						event_date_id: event.eventDateId,
+						participant_token: token,
+					},
+				}
+			);
+			expect( contextRes.ok(), await contextRes.text() ).toBeTruthy();
+			const context = await contextRes.json();
+			expect( context.viewer_resolved ).toBe( true );
+			expect( context.ticket_type_fieldset_html ).toContain(
+				'Priced For Discount'
+			);
+			expect( context.ticket_type_fieldset_html ).not.toContain(
+				'Members Only'
+			);
+		} finally {
+			const activateRes = await api.put(
+				'/wp-json/wp/v2/plugins/fair-audience-experimental/fair-audience-experimental',
+				{ headers: authHeaders, data: { status: 'active' } }
+			);
+			expect( activateRes.ok() ).toBeTruthy();
+		}
+
+		// With membership support back, the same member signs up.
+		const restoredRes = await legacySignup( member );
+		expect( restoredRes.ok(), await restoredRes.text() ).toBeTruthy();
 		await member.dispose();
 	} );
 

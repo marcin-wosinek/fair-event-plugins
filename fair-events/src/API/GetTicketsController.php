@@ -628,6 +628,14 @@ class GetTicketsController extends WP_REST_Controller {
 				);
 			}
 
+			// A group-restricted ticket type is refused outright while group
+			// membership can't be verified (#1298) — whether or not a
+			// companion plugin is there to hook the filter below.
+			$restriction_error = \FairEvents\Services\GroupMembershipSupport::unavailable_restriction_error( (int) $ticket_type_id );
+			if ( is_wp_error( $restriction_error ) ) {
+				return $restriction_error;
+			}
+
 			// Extension point for plugins (e.g. fair-audience) that restrict a
 			// ticket type to specific groups. Applies to both the single- and
 			// multiple_instances paths below, since this runs before either
@@ -1606,19 +1614,10 @@ class GetTicketsController extends WP_REST_Controller {
 
 		// The form for another person starts from what render.php offers
 		// everyone: no group-restricted tier, with or without a companion
-		// plugin to filter them.
-		if ( $register_another_person && ! empty( $ticket_types ) && class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
-			$restrictions_map = \FairEvents\Models\TicketTypeGroupRestriction::get_all_by_event_date_id( $pricing_event_date_id );
-			if ( ! empty( $restrictions_map ) ) {
-				$ticket_types = array_values(
-					array_filter(
-						$ticket_types,
-						static function ( $type ) use ( $restrictions_map ) {
-							return empty( $restrictions_map[ (int) $type->id ] ?? array() );
-						}
-					)
-				);
-			}
+		// plugin to filter them. So does every viewer while group membership
+		// can't be verified (#1298): nobody can be shown to be a member.
+		if ( $register_another_person || ! \FairEvents\Services\GroupMembershipSupport::is_available() ) {
+			$ticket_types = \FairEvents\Services\GroupMembershipSupport::without_restricted_types( $ticket_types, $pricing_event_date_id );
 		}
 
 		$series_master_id = null;

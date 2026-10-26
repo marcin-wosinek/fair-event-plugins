@@ -15,10 +15,11 @@ defined( 'WPINC' ) || die;
 /**
  * Pure presenter logic for group-restricted tiers and group discounts in the
  * unified Event Signup form, kept independent of the WordPress bootstrap
- * where possible so it stays unit-testable. Experimental-only lookups
- * (restrictions, memberships, discount rules) stay behind `class_exists()`
- * guards at each call site, degrading to "unrestricted, undiscounted" when
- * `fair-events-experimental` / `fair-audience-experimental` are inactive.
+ * where possible so it stays unit-testable. Restrictions are stored by
+ * stable Fair Events; memberships and discount rules come from
+ * `fair-audience-experimental`. Those lookups stay behind `class_exists()`
+ * guards at each call site: without it prices are undiscounted, and a
+ * restricted tier is refused because membership can't be verified (#1298).
  */
 class GroupSignupPricing {
 
@@ -137,16 +138,12 @@ class GroupSignupPricing {
 	 *
 	 * @param int      $ticket_type_id Ticket type ID.
 	 * @param int|null $participant_id fair-audience participant ID, or null for anonymous.
-	 * @return WP_Error|null 403 `ticket_type_restricted` when disallowed, null when allowed
-	 *                       (including when the experimental classes aren't active).
+	 * @return WP_Error|null 403 `ticket_type_restricted` when disallowed — including
+	 *                       a restricted type while group membership can't be looked
+	 *                       up (#1298) — null when allowed.
 	 */
 	public static function restriction_error( $ticket_type_id, $participant_id ) {
-		if ( ! $ticket_type_id ) {
-			return null;
-		}
-
-		if ( ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class )
-			|| ! class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
+		if ( ! $ticket_type_id || ! class_exists( \FairEvents\Models\TicketTypeGroupRestriction::class ) ) {
 			return null;
 		}
 
@@ -155,8 +152,10 @@ class GroupSignupPricing {
 			return null;
 		}
 
+		// Without Fair Audience Experimental nobody can be shown to be a
+		// member, so the restriction fails closed rather than lapsing.
 		$member_group_ids = array();
-		if ( $participant_id ) {
+		if ( $participant_id && class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class ) ) {
 			$group_participant_repo = new \FairAudienceExperimental\Database\GroupParticipantRepository();
 			$memberships            = $group_participant_repo->get_by_participant( $participant_id );
 			$member_group_ids       = array_map(

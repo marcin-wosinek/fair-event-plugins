@@ -76,6 +76,28 @@ class AdminPages {
 		add_action( 'pre_get_posts', array( $this, 'filter_upcoming_events' ) );
 		add_filter( 'views_edit-fair_event', array( $this, 'add_upcoming_view_link' ) );
 		add_action( 'admin_bar_menu', array( $this, 'add_copy_button_to_admin_bar' ), 100 );
+		add_action( 'admin_notices', array( $this, 'render_unverifiable_restrictions_notice' ) );
+	}
+
+	/**
+	 * Warn administrators that group-restricted ticket types are off sale
+	 * because group membership can't be verified (#1298). Shown across
+	 * wp-admin for as long as a saved restriction exists without Fair
+	 * Audience and Fair Audience Experimental both active.
+	 *
+	 * @return void
+	 */
+	public function render_unverifiable_restrictions_notice() {
+		if ( ! current_user_can( 'manage_options' )
+			|| \FairEvents\Services\GroupMembershipSupport::is_available()
+			|| ! \FairEvents\Models\TicketTypeGroupRestriction::exists_any() ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			esc_html__( 'Some ticket types are limited to members of specific groups, but group membership can\'t be checked because Fair Audience or Fair Audience Experimental is inactive. Those ticket types are hidden from signup forms and can\'t be bought. Their group settings are kept: activate both plugins to sell them to group members again.', 'fair-events' )
+		);
 	}
 
 	/**
