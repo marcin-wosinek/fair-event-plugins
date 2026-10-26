@@ -300,6 +300,9 @@ describe( 'weekly summary link (#2045)', () => {
 		withSource( { weekly_summary_url: LINK, page_id: 7 } );
 		await renderApp();
 
+		expect(
+			screen.getByText( 'WhatsApp summary link' )
+		).toBeInTheDocument();
 		expect( screen.getByText( LINK ) ).toBeInTheDocument();
 		await act( async () => {
 			fireEvent.click(
@@ -346,7 +349,9 @@ describe( 'weekly summary link (#2045)', () => {
 		await renderApp();
 
 		expect(
-			screen.getByText( /Choose a page for this feed/ )
+			screen.getByText(
+				/Choose a page for this feed to get a WhatsApp summary link/
+			)
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'button', { name: 'Copy link' } )

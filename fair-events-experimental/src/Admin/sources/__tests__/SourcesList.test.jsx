@@ -139,6 +139,109 @@ describe( 'SourcesList', () => {
 		).toBeInTheDocument();
 	} );
 
+	describe( 'WhatsApp summary column', () => {
+		const WHATSAPP_FEEDS = [
+			{
+				...FEEDS[ 0 ],
+				page_id: 7,
+				weekly_summary_url:
+					'https://example.test/fair-events-weekly-summary/club-nights/',
+			},
+			{
+				id: 5,
+				name: 'Jams',
+				slug: 'jams',
+				enabled: true,
+				page_id: 8,
+				data_sources: [],
+				weekly_summary_url:
+					'https://example.test/?fair_weekly_summary=jams',
+			},
+			{
+				id: 6,
+				name: 'Talks',
+				slug: 'talks',
+				enabled: true,
+				page_id: null,
+				data_sources: [],
+				weekly_summary_url: null,
+			},
+			{
+				...FEEDS[ 1 ],
+				page_id: 9,
+				weekly_summary_url:
+					'https://example.test/fair-events-weekly-summary/workshops/',
+			},
+		];
+		const row = ( name ) =>
+			screen.getByRole( 'link', { name } ).closest( 'tr' );
+
+		beforeEach( () => {
+			apiFetch.mockImplementation( ( { path } ) =>
+				Promise.resolve(
+					path === '/fair-events/v1/sources' ? WHATSAPP_FEEDS : []
+				)
+			);
+		} );
+
+		it( 'links each enabled feed with a page to its own summary', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+
+			expect(
+				screen.getByRole( 'columnheader', { name: 'WhatsApp' } )
+			).toBeInTheDocument();
+			expect(
+				within( row( 'Club nights' ) ).getByRole( 'link', {
+					name: 'Open WhatsApp summary',
+				} )
+			).toHaveAttribute(
+				'href',
+				'https://example.test/fair-events-weekly-summary/club-nights/'
+			);
+			expect(
+				within( row( 'Jams' ) ).getByRole( 'link', {
+					name: 'Open WhatsApp summary',
+				} )
+			).toHaveAttribute(
+				'href',
+				'https://example.test/?fair_weekly_summary=jams'
+			);
+		} );
+
+		it( 'asks for a page when the feed has none', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Talks' } );
+
+			const talks = within( row( 'Talks' ) );
+			expect(
+				talks.getByText(
+					'Choose a page to enable the WhatsApp summary.'
+				)
+			).toBeInTheDocument();
+			expect(
+				talks.queryByRole( 'link', { name: 'Open WhatsApp summary' } )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'asks to enable a disabled feed instead of linking it', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Workshops' } );
+
+			const workshops = within( row( 'Workshops' ) );
+			expect(
+				workshops.getByText(
+					'Enable this feed to use its WhatsApp summary.'
+				)
+			).toBeInTheDocument();
+			expect(
+				workshops.queryByRole( 'link', {
+					name: 'Open WhatsApp summary',
+				} )
+			).not.toBeInTheDocument();
+		} );
+	} );
+
 	describe( 'deleting an event feed', () => {
 		const openDelete = async () => {
 			render( <SourcesList /> );

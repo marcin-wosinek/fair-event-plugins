@@ -56,7 +56,7 @@ msgstr "Ereignisse vergleichen"
 
 #: src/Admin/AdminPages.php:85
 #: src/Admin/AdminPages.php:86
-#: src/Admin/sources/SourcesList.js:148
+#: src/Admin/sources/SourcesList.js:168
 msgid "Event Feeds"
 msgstr "Veranstaltungs-Feeds"
 
@@ -326,7 +326,7 @@ msgstr "Meta hat geantwortet, aber den Empfang des Test-Ereignisses %s nicht bes
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta hat das %s-Test-Event abgelehnt. Überprüfen Sie die Konfiguration und versuchen Sie es erneut."
 
@@ -1230,18 +1230,18 @@ msgstr "Zurück zu den Veranstaltungs-Feeds"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/SourceViewApp.js:259
-#, js-format, php-format
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Veranstaltungs-Feed: %s"
 
 #: src/Admin/source-view/SourceViewApp.js:276
 #: src/Admin/sources/components/SourceForm.js:149
-#: src/Admin/sources/SourcesList.js:214
+#: src/Admin/sources/SourcesList.js:234
 msgid "Slug"
 msgstr "Slug"
 
 #: src/Admin/source-view/SourceViewApp.js:282
-#: src/Admin/sources/SourcesList.js:238
+#: src/Admin/sources/SourcesList.js:264
 msgid "Status"
 msgstr "Status"
 
@@ -1257,13 +1257,13 @@ msgstr "Deaktiviert"
 
 #: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
-#: src/Admin/sources/SourcesList.js:220
+#: src/Admin/sources/SourcesList.js:240
 msgid "Feed inputs"
 msgstr "Feed-Eingaben"
 
 #. translators: %d: number of feed inputs
 #: src/Admin/source-view/SourceViewApp.js:297
-#: src/Admin/sources/SourcesList.js:269
+#: src/Admin/sources/SourcesList.js:295
 #, js-format
 msgid "%d feed input"
 msgid_plural "%d feed inputs"
@@ -1287,7 +1287,7 @@ msgid "iCal"
 msgstr "iCal"
 
 #: src/Admin/source-view/SourceViewApp.js:337
-#: src/Admin/sources/SourcesList.js:285
+#: src/Admin/sources/SourcesList.js:311
 msgid "Copy iCal feed URL"
 msgstr "iCal-Feed-URL kopieren"
 
@@ -1296,7 +1296,7 @@ msgid "JSON"
 msgstr "JSON"
 
 #: src/Admin/source-view/SourceViewApp.js:348
-#: src/Admin/sources/SourcesList.js:296
+#: src/Admin/sources/SourcesList.js:322
 msgid "Copy JSON API URL"
 msgstr "JSON-API-URL kopieren"
 
@@ -1306,7 +1306,7 @@ msgid "Edit event feed"
 msgstr "Veranstaltungs-Feed bearbeiten"
 
 #: src/Admin/source-view/SourceViewApp.js:471
-#: src/Admin/sources/SourcesList.js:401
+#: src/Admin/sources/SourcesList.js:430
 msgid "Edit Event Feed"
 msgstr "Veranstaltungs-Feed bearbeiten"
 
@@ -1454,44 +1454,44 @@ msgstr "Veranstaltungs-Feed aktualisiert."
 msgid "Event feed created."
 msgstr "Veranstaltungs-Feed erstellt."
 
-#: src/Admin/sources/SourcesList.js:151
-#: src/Admin/sources/SourcesList.js:405
+#: src/Admin/sources/SourcesList.js:171
+#: src/Admin/sources/SourcesList.js:434
 msgid "Add Event Feed"
 msgstr "Veranstaltungs-Feed hinzufügen"
 
-#: src/Admin/sources/SourcesList.js:184
+#: src/Admin/sources/SourcesList.js:204
 msgid "Loading event feeds…"
 msgstr "Veranstaltungs-Feeds werden geladen …"
 
-#: src/Admin/sources/SourcesList.js:195
+#: src/Admin/sources/SourcesList.js:215
 msgid "No event feeds yet. Add your first event feed to get started."
 msgstr "Noch keine Veranstaltungs-Feeds. Fügen Sie Ihren ersten Veranstaltungs-Feed hinzu, um loszulegen."
 
-#: src/Admin/sources/SourcesList.js:208
+#: src/Admin/sources/SourcesList.js:228
 msgid "Name"
 msgstr "Name"
 
-#: src/Admin/sources/SourcesList.js:226
+#: src/Admin/sources/SourcesList.js:246
 msgid "iCal Feed"
 msgstr "iCal-Feed"
 
-#: src/Admin/sources/SourcesList.js:232
+#: src/Admin/sources/SourcesList.js:252
 msgid "JSON API"
 msgstr "JSON-API"
 
-#: src/Admin/sources/SourcesList.js:244
+#: src/Admin/sources/SourcesList.js:270
 msgid "Actions"
 msgstr "Aktionen"
 
-#: src/Admin/sources/SourcesList.js:314
+#: src/Admin/sources/SourcesList.js:343
 msgid "View"
 msgstr "Ansehen"
 
-#: src/Admin/sources/SourcesList.js:326
+#: src/Admin/sources/SourcesList.js:355
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: src/Admin/sources/SourcesList.js:341
+#: src/Admin/sources/SourcesList.js:370
 msgid "Delete"
 msgstr "Löschen"
 
@@ -1893,10 +1893,6 @@ msgstr "Woche %1$d, %2$d"
 msgid "Weekly summary: %1$s, %2$s"
 msgstr "Wochenübersicht: %1$s, %2$s"
 
-#: src/Frontend/WeeklySummaryPage.php:184
-msgid "Weekly summary for sharing"
-msgstr "Wochenübersicht zum Teilen"
-
 #: src/Frontend/WeeklySummaryPage.php:200
 msgid "Week"
 msgstr "Woche"
@@ -1919,30 +1915,6 @@ msgstr "„%s“ ist keine gültige Woche, daher wird die aktuelle Woche angezei
 msgid "Events this week"
 msgstr "Veranstaltungen dieser Woche"
 
-#: src/Frontend/WeeklySummaryPage.php:227
-msgid "There are no public events this week. The summary below has only its heading."
-msgstr "Diese Woche gibt es keine öffentlichen Veranstaltungen. Die Übersicht unten enthält nur ihre Überschrift."
-
-#: src/Frontend/WeeklySummaryPage.php:249
-msgid "Summary copied. Paste it into your message."
-msgstr "Übersicht kopiert. Füge sie in deine Nachricht ein."
-
-#: src/Frontend/WeeklySummaryPage.php:250
-msgid "Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command."
-msgstr "Automatisches Kopieren war nicht möglich. Der Text der Übersicht ist unten markiert: Kopiere ihn mit dem Kopierbefehl deines Geräts."
-
-#: src/Frontend/WeeklySummaryPage.php:252
-msgid "Summary to copy"
-msgstr "Übersicht zum Kopieren"
-
-#: src/Frontend/WeeklySummaryPage.php:253
-msgid "Copying only puts the text on your clipboard. Nothing is sent."
-msgstr "Beim Kopieren landet der Text nur in deiner Zwischenablage. Es wird nichts gesendet."
-
-#: src/Frontend/WeeklySummaryPage.php:254
-msgid "Copy summary"
-msgstr "Übersicht kopieren"
-
 #: src/Frontend/WeeklySummaryPage.php:277
 #: src/Frontend/WeeklySummaryPage.php:280
 msgid "Weekly summary unavailable"
@@ -1961,17 +1933,9 @@ msgstr "Dieser Link zur Wochenübersicht passt zu keinem aktivierten Veranstaltu
 msgid "This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link."
 msgstr "Dieser Veranstaltungs-Feed hat keine Seite, die der Übersicht Titel und Link gibt. Wähle in Veranstaltungs-Feeds die Seite des Feeds, um diesen Link zu nutzen."
 
-#: src/Admin/source-view/SourceViewApp.js:357
-msgid "Weekly summary link"
-msgstr "Link zur Wochenübersicht"
-
 #: src/Admin/source-view/SourceViewApp.js:370
 msgid "Copy link"
 msgstr "Link kopieren"
-
-#: src/Admin/source-view/SourceViewApp.js:374
-msgid "Copy the weekly summary link to share with the person who posts it"
-msgstr "Link zur Wochenübersicht kopieren, um ihn mit der Person zu teilen, die sie veröffentlicht"
 
 #: src/Admin/source-view/SourceViewApp.js:388
 msgid "Couldn’t copy the link. Select it above and copy it by hand."
@@ -1980,10 +1944,6 @@ msgstr "Der Link konnte nicht kopiert werden. Markiere ihn oben und kopiere ihn 
 #: src/Admin/source-view/SourceViewApp.js:396
 msgid "The link works once this feed is enabled."
 msgstr "Der Link funktioniert, sobald dieser Feed aktiviert ist."
-
-#: src/Admin/source-view/SourceViewApp.js:405
-msgid "Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link."
-msgstr "Wähle eine Seite für diesen Feed, um einen Link zur Wochenübersicht zu erhalten. Die Seite gibt der Übersicht Titel und Link."
 
 #. translators: %s: event feed name
 #: src/Admin/sources/SourcesList.js:85
@@ -1996,26 +1956,81 @@ msgid "The event feed could not be deleted. Try again."
 msgstr "Der Ereignisfeed konnte nicht gelöscht werden. Versuchen Sie es erneut."
 
 #. translators: %s: event feed name
-#: src/Admin/sources/SourcesList.js:361
+#: src/Admin/sources/SourcesList.js:390
 #, js-format
 msgid "Delete event feed — %s"
 msgstr "Ereignisfeed löschen — %s"
 
-#: src/Admin/sources/SourcesList.js:367
+#: src/Admin/sources/SourcesList.js:396
 msgid "Delete event feed"
 msgstr "Ereignisfeed löschen"
 
-#: src/Admin/sources/SourcesList.js:371
+#: src/Admin/sources/SourcesList.js:400
 msgid "Deleting…"
 msgstr "Wird gelöscht…"
 
 #. translators: %s: event feed slug
-#: src/Admin/sources/SourcesList.js:381
+#: src/Admin/sources/SourcesList.js:410
 #, js-format
 msgid "Its iCal and JSON feed URLs (slug “%s”) stop working for every calendar or site that reads them."
 msgstr "Die iCal- und JSON-Feed-URLs (Slug „%s“) funktionieren nicht mehr für jeden Kalender oder jede Website, die sie liest."
 
-#: src/Admin/sources/SourcesList.js:389
+#: src/Admin/sources/SourcesList.js:418
 msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
 msgstr "Ereignisse und Kategorien im Feed werden nicht geändert. Das Löschen des Feeds kann nicht rückgängig gemacht werden."
 
+#: src/Frontend/WeeklySummaryPage.php:184
+msgid "Weekly summary for WhatsApp"
+msgstr "Wochenübersicht für WhatsApp"
+
+#: src/Frontend/WeeklySummaryPage.php:227
+msgid "There are no public events this week. The message below has only its heading."
+msgstr "Diese Woche gibt es keine öffentlichen Veranstaltungen. Die Nachricht unten enthält nur ihre Überschrift."
+
+#: src/Frontend/WeeklySummaryPage.php:249
+msgid "Message copied. Paste it into WhatsApp."
+msgstr "Nachricht kopiert. Füge sie in WhatsApp ein."
+
+#: src/Frontend/WeeklySummaryPage.php:250
+msgid "Couldn’t copy automatically. The message is selected below: copy it with your device’s copy command."
+msgstr "Automatisches Kopieren nicht möglich. Die Nachricht ist unten markiert: Kopiere sie mit dem Kopierbefehl deines Geräts."
+
+#: src/Frontend/WeeklySummaryPage.php:252
+msgid "WhatsApp message"
+msgstr "WhatsApp-Nachricht"
+
+#: src/Frontend/WeeklySummaryPage.php:253
+msgid "Copy this message, then paste it into your WhatsApp group or community. Nothing is sent automatically."
+msgstr "Kopiere diese Nachricht und füge sie in deine WhatsApp-Gruppe oder -Community ein. Es wird nichts automatisch gesendet."
+
+#: src/Frontend/WeeklySummaryPage.php:254
+msgid "Copy WhatsApp message"
+msgstr "WhatsApp-Nachricht kopieren"
+
+#: src/Admin/source-view/SourceViewApp.js:357
+msgid "WhatsApp summary link"
+msgstr "Link zur WhatsApp-Übersicht"
+
+#: src/Admin/source-view/SourceViewApp.js:374
+msgid "Copy the WhatsApp summary link to share with the person who posts it"
+msgstr "Link zur WhatsApp-Übersicht kopieren, um ihn mit der Person zu teilen, die sie veröffentlicht"
+
+#: src/Admin/source-view/SourceViewApp.js:405
+msgid "Choose a page for this feed to get a WhatsApp summary link. The page gives the message its title and link."
+msgstr "Wähle eine Seite für diesen Feed, um einen Link zur WhatsApp-Übersicht zu erhalten. Die Seite gibt der Nachricht ihren Titel und Link."
+
+#: src/Admin/sources/SourcesList.js:130
+msgid "Choose a page to enable the WhatsApp summary."
+msgstr "Wähle eine Seite, um die WhatsApp-Übersicht zu aktivieren."
+
+#: src/Admin/sources/SourcesList.js:136
+msgid "Enable this feed to use its WhatsApp summary."
+msgstr "Aktiviere diesen Feed, um seine WhatsApp-Übersicht zu nutzen."
+
+#: src/Admin/sources/SourcesList.js:143
+msgid "Open WhatsApp summary"
+msgstr "WhatsApp-Übersicht öffnen"
+
+#: src/Admin/sources/SourcesList.js:258
+msgid "WhatsApp"
+msgstr "WhatsApp"

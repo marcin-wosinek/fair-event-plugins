@@ -433,7 +433,7 @@ test.describe( 'Fair Events Experimental — operator weekly summary', () => {
 		expect( text ).toBe( expected );
 		expect( text.split( '\n' ) ).toHaveLength( 1 );
 		await expect(
-			page.getByRole( 'button', { name: 'Copy summary' } )
+			page.getByRole( 'button', { name: 'Copy WhatsApp message' } )
 		).toBeEnabled();
 	} );
 
@@ -481,6 +481,60 @@ test.describe( 'Fair Events Experimental — operator weekly summary', () => {
 		await expect( page.getByText( 'Week 20, 2036' ) ).toBeVisible();
 	} );
 
+	test( 'opens each feed’s WhatsApp summary from the Event Feeds list', async ( {
+		page,
+	} ) => {
+		await loginAsAdmin( page );
+		await page.goto( '/wp-admin/admin.php?page=fair-events-sources' );
+		const row = ( feed ) =>
+			page.getByRole( 'row' ).filter( {
+				has: page.getByRole( 'link', {
+					name: `Weekly feed ${ feed }`,
+					exact: true,
+				} ),
+			} );
+		const summaryLink = { name: 'Open WhatsApp summary' };
+
+		await expect(
+			page.getByRole( 'columnheader', { name: 'WhatsApp' } )
+		).toBeVisible();
+		await expect(
+			row( fixtures.pageless ).getByText(
+				'Choose a page to enable the WhatsApp summary.'
+			)
+		).toBeVisible();
+		await expect(
+			row( fixtures.disabled ).getByText(
+				'Enable this feed to use its WhatsApp summary.'
+			)
+		).toBeVisible();
+		await expect(
+			row( fixtures.disabled ).getByRole( 'link', summaryLink )
+		).toHaveCount( 0 );
+
+		const hrefs = {};
+		for ( const community of COMMUNITIES ) {
+			const { feed } = fixtures[ community ];
+			hrefs[ community ] = await row( feed )
+				.getByRole( 'link', summaryLink )
+				.getAttribute( 'href' );
+			expect( new URL( hrefs[ community ] ).pathname ).toBe(
+				`/fair-events-weekly-summary/${ feed }/`
+			);
+		}
+
+		// Clicking an in-page link stalls headless rendering on the next
+		// page, so follow the link's href.
+		const { slug, feed } = fixtures.barcelona;
+		await page.goto( hrefs.barcelona );
+		await expect( page.locator( '.fair-weekly-summary__feed' ) ).toHaveText(
+			`Event feed: Weekly feed ${ feed }`
+		);
+		expect(
+			await page.locator( '.fair-weekly-summary__text' ).inputValue()
+		).toBe( await blockSummary( page, slug ) );
+	} );
+
 	test( 'copies the summary to the clipboard', async ( {
 		page,
 		context,
@@ -493,16 +547,29 @@ test.describe( 'Fair Events Experimental — operator weekly summary', () => {
 		const expected = await blockSummary( page, slug, WEEK );
 		const requests = [];
 		await page.goto( operatorPath( feed, WEEK ) );
+		await expect(
+			page.getByText( 'Weekly summary for WhatsApp' )
+		).toBeVisible();
+		await expect(
+			page.getByRole( 'heading', { level: 2, name: 'WhatsApp message' } )
+		).toBeVisible();
+		await expect(
+			page.getByText(
+				'Copy this message, then paste it into your WhatsApp group or community. Nothing is sent automatically.'
+			)
+		).toBeVisible();
 		page.on( 'request', ( request ) => {
 			if ( request.method() !== 'GET' ) {
 				requests.push( `${ request.method() } ${ request.url() }` );
 			}
 		} );
 
-		await page.getByRole( 'button', { name: 'Copy summary' } ).click();
+		await page
+			.getByRole( 'button', { name: 'Copy WhatsApp message' } )
+			.click();
 
 		await expect( page.getByRole( 'status' ) ).toHaveText(
-			'Summary copied. Paste it into your message.'
+			'Message copied. Paste it into WhatsApp.'
 		);
 		expect(
 			await page.evaluate( () => navigator.clipboard.readText() )
@@ -527,7 +594,9 @@ test.describe( 'Fair Events Experimental — operator weekly summary', () => {
 		const { feed } = fixtures.valencia;
 		await page.goto( operatorPath( feed, WEEK ) );
 
-		await page.getByRole( 'button', { name: 'Copy summary' } ).click();
+		await page
+			.getByRole( 'button', { name: 'Copy WhatsApp message' } )
+			.click();
 
 		await expect( page.getByRole( 'status' ) ).toContainText(
 			'Couldn’t copy automatically.'
@@ -557,7 +626,7 @@ test.describe( 'Fair Events Experimental — operator weekly summary', () => {
 		);
 		expect( overflow ).toBe( false );
 		const button = await page
-			.getByRole( 'button', { name: 'Copy summary' } )
+			.getByRole( 'button', { name: 'Copy WhatsApp message' } )
 			.boundingBox();
 		expect( button.width ).toBeGreaterThan( 300 );
 	} );

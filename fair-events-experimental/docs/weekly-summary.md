@@ -1,10 +1,10 @@
-# Weekly summary links for operators
+# WhatsApp weekly summary links for operators
 
-An operator link opens a plain, public page for one community's event feed.
-It lists the week's public events and offers **Copy summary**, so whoever
-posts the weekly message (for example in a WhatsApp community) can review
-the week, copy the text and paste it by hand. Opening the page or copying
-sends nothing anywhere.
+An operator link opens a plain, public page for one community's event feed:
+the **weekly summary for WhatsApp**. It lists the week's public events and
+offers **Copy WhatsApp message**, so whoever posts the weekly message in the
+community's WhatsApp group or community can review the week, copy the text
+and paste it by hand. Opening the page or copying sends nothing anywhere.
 
 The copied text is built by the same Fair Events code as the weekly
 notification. It is exactly what an Events Week View block on the feed's
@@ -21,10 +21,13 @@ Each community is an **event feed** in Fair Events → Event Feeds:
    and link) and, on a Polylang site, its language. It must be published and
    public: not a draft, private or password-protected.
 3. Make sure the feed is enabled.
-4. Open the feed's view. **Weekly summary link** shows the link, with a
-   **Copy link** button to share it with the operator.
+4. In the Event Feeds list, the feed's **WhatsApp** column shows **Open
+   WhatsApp summary**, which opens the page for the current week.
+5. To share the link with the operator, open the feed's view. **WhatsApp
+   summary link** shows the link, with a **Copy link** button.
 
-A feed without a page shows a hint instead of the link. There is nothing
+A feed without a page shows a hint instead of the link, in both places. In
+the list, a disabled feed shows a hint to enable it. There is nothing
 else to configure: change the feed's inputs and the summary follows.
 
 ## Share the link
@@ -46,7 +49,7 @@ https://example.com/fair-events-weekly-summary/valencia/?week=2026-W44
 
 On a site with plain permalinks, the same page is at
 `https://example.com/?fair_weekly_summary=valencia&week=2026-W44`. The feed
-view shows whichever form the site uses.
+view and the Event Feeds list use whichever form the site uses.
 
 An invalid week (e.g. `2027-W53`, a week 2027 doesn't have) shows the
 current week with a note. **Previous week** and **Next week** keep the
@@ -59,15 +62,15 @@ it.
 
 ## What the page shows
 
--   The feed's name, its page's title and URL, the week's date range and its
-    ISO week.
--   The week's events in order, with day and time.
--   The summary text in a box, selectable for copying by hand.
--   After copying, a confirmation. If the browser blocks the clipboard, the
-    page says so and selects the text, so it can be copied with the device's
-    own copy command.
--   For a week without events, a note. The summary then has only its
-    heading line, like the calendar's.
+- The feed's name, its page's title and URL, the week's date range and its
+  ISO week.
+- The week's events in order, with day and time.
+- The WhatsApp message in a box, selectable for copying by hand.
+- After copying, a confirmation. If the browser blocks the clipboard, the
+  page says so and selects the text, so it can be copied with the device's
+  own copy command.
+- For a week without events, a note. The message then has only its
+  heading line, like the calendar's.
 
 ## What stays private
 
@@ -79,21 +82,24 @@ its content is never included.
 The link shows an "unavailable" page (HTTP 404) instead of a summary, never
 another feed's, when:
 
--   no event feed has the slug, or the feed is disabled,
--   the feed has no page,
--   the feed's page isn't published and public (draft, private, or
-    password-protected).
+- no event feed has the slug, or the feed is disabled,
+- the feed has no page,
+- the feed's page isn't published and public (draft, private, or
+  password-protected).
 
 ## Implementation
 
--   `src/Frontend/WeeklySummaryPage.php` registers the link's rewrite rule,
-    builds links and renders the page.
--   `src/Services/WeeklySummary.php` resolves the feed and builds the
-    summary with Fair Events' `Notifications\SummaryBuilder`.
--   `src/Frontend/weekly-summary.js` handles copying.
--   `src/Admin/source-view/SourceViewApp.js` shows each feed's link.
--   Tests: `__tests__/Frontend/WeeklySummaryPageTest.php`,
-    `src/Frontend/__tests__/weekly-summary.test.js`,
-    `src/Admin/source-view/__tests__/SourceViewApp.test.jsx` and
-    `e2e/fair-events-experimental-weekly-summary.spec.js` at the repository
-    root.
+- `src/Frontend/WeeklySummaryPage.php` registers the link's rewrite rule,
+  builds links and renders the page.
+- `src/Services/WeeklySummary.php` resolves the feed and builds the
+  summary with Fair Events' `Notifications\SummaryBuilder`.
+- `src/Frontend/weekly-summary.js` handles copying.
+- `src/Admin/sources/SourcesList.js` opens each feed's summary from the
+  Event Feeds list; `src/Admin/source-view/SourceViewApp.js` shows its
+  link with a copy button.
+- Tests: `__tests__/Frontend/WeeklySummaryPageTest.php`,
+  `src/Frontend/__tests__/weekly-summary.test.js`,
+  `src/Admin/sources/__tests__/SourcesList.test.jsx`,
+  `src/Admin/source-view/__tests__/SourceViewApp.test.jsx` and
+  `e2e/fair-events-experimental-weekly-summary.spec.js` at the repository
+  root.
