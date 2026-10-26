@@ -393,8 +393,8 @@ class MolliePaymentHandler {
 						$testmode ? 'true' : 'false'
 					),
 					'context'        => array(
-						'amount'      => $payment_data['amount'],
-						'description' => $args['description'],
+						'amount'      => (float) $args['amount'],
+						'currency'    => $args['currency'],
 						'testmode'    => $testmode,
 						'has_profile' => (bool) $profile_id,
 					),
@@ -422,21 +422,20 @@ class MolliePaymentHandler {
 				'status'            => $payment->status,
 			);
 		} catch ( MollieException | \UnexpectedValueException | \Error $e ) {
-			// At this point Mollie may or may not have created the payment — we never.
-			// got a confirmed response. Log the request payload so an admin can search.
-			// the Mollie dashboard for an orphan payment.
+			// At this point Mollie may or may not have created the payment — we never
+			// got a confirmed response. Log the amount, currency and transaction so an
+			// admin can search the Mollie dashboard for an orphan payment. The exception
+			// text stays out of the log; its class is the diagnostic category.
 			$logger->log(
 				'mollie_call_failed',
 				array(
 					'level'          => 'error',
 					'transaction_id' => $transaction_id,
-					'message'        => sprintf( 'Mollie API call failed: %s', $e->getMessage() ),
+					'message'        => 'Mollie API call failed',
 					'context'        => array(
-						'exception_class'   => get_class( $e ),
-						'exception_message' => $e->getMessage(),
-						'amount'            => $args['amount'],
-						'currency'          => $args['currency'],
-						'description'       => $args['description'],
+						'exception_class' => get_class( $e ),
+						'amount'          => (float) $args['amount'],
+						'currency'        => $args['currency'],
 					),
 				)
 			);

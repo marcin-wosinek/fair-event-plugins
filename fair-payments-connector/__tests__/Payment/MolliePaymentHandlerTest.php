@@ -810,11 +810,11 @@ class MolliePaymentHandlerTest extends TestCase {
 	}
 
 	/**
-	 * The full technical detail (including the request body) must still reach
-	 * the payment log — it moves there exclusively instead of the thrown
-	 * exception, it doesn't disappear.
+	 * A failed Mollie call is still logged with what an admin needs to find an
+	 * orphan payment, but the raw exception text (which can embed the request
+	 * body, URLs and IDs) and the payment description stay out of the log.
 	 */
-	public function test_create_payment_logs_full_detail_on_api_error() {
+	public function test_create_payment_logs_safe_detail_on_api_error() {
 		$mollie = MollieApiClient::fake(
 			array(
 				CreatePaymentRequest::class => MockResponse::unprocessableEntity( 'The payment method is not activated on your account.' ),
@@ -826,8 +826,10 @@ class MolliePaymentHandlerTest extends TestCase {
 		try {
 			$handler->create_payment(
 				array(
-					'amount'   => '10.00',
-					'metadata' => array( 'transaction_id' => 7 ),
+					'amount'      => '10.00',
+					'currency'    => 'EUR',
+					'description' => 'Ticket for Jane Doe',
+					'metadata'    => array( 'transaction_id' => 7 ),
 				)
 			);
 		} catch ( PaymentGatewayException $e ) {
@@ -842,9 +844,17 @@ class MolliePaymentHandlerTest extends TestCase {
 		$this->assertNotFalse( $failure_row, 'Expected a mollie_call_failed log row.' );
 		$this->assertSame( 'error', $failure_row['level'] );
 		$this->assertSame( 7, $failure_row['transaction_id'] );
-		$this->assertStringContainsString( 'not activated', $failure_row['message'] );
+		$this->assertNull( $failure_row['ip_address'] );
+
+		foreach ( $logged_rows as $row ) {
+			$this->assertStringNotContainsString( 'not activated', (string) $row['message'] );
+			$this->assertStringNotContainsString( 'not activated', (string) $row['context'] );
+			$this->assertStringNotContainsString( 'Jane Doe', (string) $row['context'] );
+		}
 
 		$context = json_decode( $failure_row['context'], true );
-		$this->assertStringContainsString( 'not activated', $context['exception_message'] );
+		$this->assertEquals( 10, $context['amount'] );
+		$this->assertSame( 'EUR', $context['currency'] );
+		$this->assertStringStartsWith( 'Mollie\\Api\\Exceptions\\', $context['exception_class'] );
 	}
 }
