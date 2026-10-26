@@ -30,7 +30,7 @@
 		"@wordpress/api-fetch": "8.0.0",
 		"@wordpress/components": "43.0.0",
 		"@wordpress/dataviews": "20.0.0",
-		"@wordpress/dom-ready": "4.57.0",
+		"@wordpress/dom-ready": "5.0.0",
 		"@wordpress/element": "9.0.0",
 		"@wordpress/i18n": "6.30.0"
 	},
