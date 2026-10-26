@@ -40,7 +40,7 @@ jobs:
                   fi
 
             - name: Checkout tag ${{ inputs.plugin }}@${{ inputs.version }}
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   ref: ${{ inputs.plugin }}@${{ inputs.version }}
                   fetch-depth: 1
