@@ -39,14 +39,14 @@ jobs:
         timeout-minutes: 10
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
               with:
                   persist-credentials: false
 
             # Vulnerability exceptions come from the base branch, so a pull
             # request can't approve its own findings.
             - name: Check out the base branch's dependency policy
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   ref: ${{ github.event.pull_request.base.sha }}
                   path: base
@@ -68,12 +68,12 @@ jobs:
         timeout-minutes: 10
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
               with:
                   persist-credentials: false
 
             - name: Check out the base branch's dependency policy
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   ref: ${{ github.event.pull_request.base.sha }}
                   path: base
@@ -102,14 +102,14 @@ jobs:
         timeout-minutes: 10
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
               with:
                   persist-credentials: false
 
             # Package approvals come from the base branch: a pull request
             # can't approve the packages it adds.
             - name: Check out the base branch's dependency policy
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   ref: ${{ github.event.pull_request.base.sha }}
                   path: base
