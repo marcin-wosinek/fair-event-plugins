@@ -355,7 +355,7 @@ export default function SourceViewApp() {
 					<VStack spacing={ 1 } style={ { minWidth: 0 } }>
 						<strong>
 							{ __(
-								'Weekly summary link',
+								'WhatsApp summary link',
 								'fair-events-experimental'
 							) }
 						</strong>
@@ -372,7 +372,7 @@ export default function SourceViewApp() {
 											'fair-events-experimental'
 										) }
 										tooltip={ __(
-											'Copy the weekly summary link to share with the person who posts it',
+											'Copy the WhatsApp summary link to share with the person who posts it',
 											'fair-events-experimental'
 										) }
 										onSuccess={ () =>
@@ -403,7 +403,7 @@ export default function SourceViewApp() {
 						) : (
 							<span>
 								{ __(
-									'Choose a page for this feed to get a weekly summary link. The page gives the summary its title and link.',
+									'Choose a page for this feed to get a WhatsApp summary link. The page gives the message its title and link.',
 									'fair-events-experimental'
 								) }
 							</span>

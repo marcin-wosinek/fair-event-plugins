@@ -125,6 +125,26 @@ const SourcesList = () => {
 		);
 	};
 
+	const getWhatsAppSummary = ( source ) => {
+		if ( ! source.weekly_summary_url ) {
+			return __(
+				'Choose a page to enable the WhatsApp summary.',
+				'fair-events-experimental'
+			);
+		}
+		if ( ! source.enabled ) {
+			return __(
+				'Enable this feed to use its WhatsApp summary.',
+				'fair-events-experimental'
+			);
+		}
+		return (
+			<a href={ source.weekly_summary_url }>
+				{ __( 'Open WhatsApp summary', 'fair-events-experimental' ) }
+			</a>
+		);
+	};
+
 	const getIcalUrl = ( slug ) => {
 		const template =
 			window.fairEventsSourcesData?.icalUrlTemplate ||
@@ -236,6 +256,12 @@ const SourcesList = () => {
 										</th>
 										<th>
 											{ __(
+												'WhatsApp',
+												'fair-events-experimental'
+											) }
+										</th>
+										<th>
+											{ __(
 												'Status',
 												'fair-events-experimental'
 											) }
@@ -300,12 +326,19 @@ const SourcesList = () => {
 												/>
 											</td>
 											<td>
+												{ getWhatsAppSummary( source ) }
+											</td>
+											<td>
 												{ getStatusBadge(
 													source.enabled
 												) }
 											</td>
 											<td>
-												<HStack spacing={ 2 }>
+												<HStack
+													spacing={ 2 }
+													justify="flex-start"
+													wrap
+												>
 													<Button
 														variant="secondary"
 														size="small"

@@ -181,7 +181,7 @@ class WeeklySummaryPage {
 		?>
 	<main class="fair-weekly-summary">
 		<header class="fair-weekly-summary__header">
-			<p class="fair-weekly-summary__eyebrow"><?php esc_html_e( 'Weekly summary for sharing', 'fair-events-experimental' ); ?></p>
+			<p class="fair-weekly-summary__eyebrow"><?php esc_html_e( 'Weekly summary for WhatsApp', 'fair-events-experimental' ); ?></p>
 			<p class="fair-weekly-summary__feed">
 				<?php
 				echo esc_html(
@@ -224,7 +224,7 @@ class WeeklySummaryPage {
 			<h2 id="fair-weekly-summary-events"><?php esc_html_e( 'Events this week', 'fair-events-experimental' ); ?></h2>
 			<?php if ( empty( $summary['events'] ) ) : ?>
 				<p class="fair-weekly-summary__notice fair-weekly-summary__empty">
-					<?php esc_html_e( 'There are no public events this week. The summary below has only its heading.', 'fair-events-experimental' ); ?>
+					<?php esc_html_e( 'There are no public events this week. The message below has only its heading.', 'fair-events-experimental' ); ?>
 				</p>
 			<?php else : ?>
 				<ol class="fair-weekly-summary__events">
@@ -246,12 +246,12 @@ class WeeklySummaryPage {
 		<section
 			class="fair-weekly-summary__section fair-weekly-summary__copy"
 			aria-labelledby="fair-weekly-summary-text-label"
-			data-copied-message="<?php esc_attr_e( 'Summary copied. Paste it into your message.', 'fair-events-experimental' ); ?>"
-			data-failed-message="<?php esc_attr_e( 'Couldn’t copy automatically. The summary text is selected below: copy it with your device’s copy command.', 'fair-events-experimental' ); ?>"
+			data-copied-message="<?php esc_attr_e( 'Message copied. Paste it into WhatsApp.', 'fair-events-experimental' ); ?>"
+			data-failed-message="<?php esc_attr_e( 'Couldn’t copy automatically. The message is selected below: copy it with your device’s copy command.', 'fair-events-experimental' ); ?>"
 		>
-			<h2 id="fair-weekly-summary-text-label"><?php esc_html_e( 'Summary to copy', 'fair-events-experimental' ); ?></h2>
-			<p class="fair-weekly-summary__hint"><?php esc_html_e( 'Copying only puts the text on your clipboard. Nothing is sent.', 'fair-events-experimental' ); ?></p>
-			<button type="button" class="fair-weekly-summary__button wp-element-button"><?php esc_html_e( 'Copy summary', 'fair-events-experimental' ); ?></button>
+			<h2 id="fair-weekly-summary-text-label"><?php esc_html_e( 'WhatsApp message', 'fair-events-experimental' ); ?></h2>
+			<p class="fair-weekly-summary__hint"><?php esc_html_e( 'Copy this message, then paste it into your WhatsApp group or community. Nothing is sent automatically.', 'fair-events-experimental' ); ?></p>
+			<button type="button" class="fair-weekly-summary__button wp-element-button"><?php esc_html_e( 'Copy WhatsApp message', 'fair-events-experimental' ); ?></button>
 			<p class="fair-weekly-summary__status" role="status" aria-live="polite"></p>
 			<?php
 			// esc_html(), unlike esc_textarea(), keeps entities WordPress
