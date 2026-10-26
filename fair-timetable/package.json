@@ -39,7 +39,7 @@
 		"@fortawesome/react-fontawesome": "^3.3.1",
 		"@wordpress/block-editor": "18.1.0",
 		"@wordpress/blocks": "16.2.0",
-		"@wordpress/components": "42.0.0",
+		"@wordpress/components": "43.0.0",
 		"@wordpress/i18n": "6.30.0",
 		"date-fns": "^4.4.0"
 	},
