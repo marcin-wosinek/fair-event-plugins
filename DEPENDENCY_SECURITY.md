@@ -37,12 +37,12 @@ the workflow:
   `package.json` with dependencies needs its own tracked lockfile.
   `yarn.lock`, `pnpm-lock.yaml` and `npm-shrinkwrap.json` fail as
   unsupported.
-- **Composer:** every tracked `composer.lock`, including `tools/php-tests`,
-  `fair-events-shared/php` and the `fair-event-plugins.com` website. A
-  `composer.json` needs a tracked lockfile unless it only requires platform
-  packages (`php`, `ext-*`) or packages from an in-repository `path`
-  repository; `fair-finance` and `fair-form` are lockfile-free for that
-  reason. A lockfile with no packages is reported as "no packages".
+- **Composer:** every tracked `composer.lock`, including `tools/php-tests`
+  and `fair-events-shared/php`. A `composer.json` needs a tracked lockfile
+  unless it only requires platform packages (`php`, `ext-*`) or packages
+  from an in-repository `path` repository; `fair-finance` and `fair-form`
+  are lockfile-free for that reason. A lockfile with no packages is
+  reported as "no packages".
 
 Audits never install anything: `npm audit --package-lock-only --ignore-scripts`
 and `composer audit --locked --no-plugins --no-scripts`. Both include

@@ -42,15 +42,13 @@ updates:
                   - minor
                   - patch
 
-    # Every maintained Composer dependency set, including the website and
-    # PHP test tooling.
+    # Every maintained Composer dependency set, including PHP test tooling.
     - package-ecosystem: composer
       directories:
           - /
           - /fair-audience
           - /fair-audience-experimental
           - /fair-calendar-button
-          - /fair-event-plugins.com
           - /fair-events
           - /fair-events-experimental
           - /fair-events-shared/php
