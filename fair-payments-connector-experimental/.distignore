@@ -3,9 +3,6 @@
 .gitignore
 .github/
 node_modules/
-tests/
-__tests__/
-e2e/
 svn/
 .distignore
 .editorconfig
@@ -16,8 +13,21 @@ package.json
 package-lock.json
 phpcs.xml
 webpack.config.cjs
+jest.config.js
+playwright.config.js
 *.md
 !CHANGELOG.md
+
+# Test suites, PHPUnit configuration, and test results
+__tests__/
+tests/
+e2e/
+phpunit.xml
+phpunit.xml.dist
+.phpunit.result.cache
+.phpunit.cache/
+test-results/
+playwright-report/
 
 # Build artifacts that should be included
 !/vendor/

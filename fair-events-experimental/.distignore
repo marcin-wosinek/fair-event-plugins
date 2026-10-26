@@ -1,0 +1,24 @@
+# Development files
+.git/
+.gitignore
+.github/
+.distignore
+.DS_Store
+node_modules/
+composer.lock
+package.json
+package-lock.json
+jest.config.cjs
+playwright.config.js
+webpack.config.cjs
+
+# Test suites, PHPUnit configuration, and test results
+__tests__/
+tests/
+e2e/
+phpunit.xml
+phpunit.xml.dist
+.phpunit.result.cache
+.phpunit.cache/
+test-results/
+playwright-report/
