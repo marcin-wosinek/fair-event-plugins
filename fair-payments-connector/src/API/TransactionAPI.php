@@ -291,16 +291,16 @@ class TransactionAPI {
 		} catch ( PaymentGatewayException $e ) {
 			return $e->get_error()->to_wp_error( (int) $transaction_id );
 		} catch ( \Exception $e ) {
-			// Non-gateway failure (e.g. missing API key/OAuth connection). Full
-			// detail is logged here; the public response stays fully generic —
-			// this is the security-critical fallback, since $e->getMessage()
-			// must never reach an anonymous visitor.
+			// Non-gateway failure (e.g. missing API key/OAuth connection). The
+			// exception class is logged here; the public response stays fully
+			// generic — this is the security-critical fallback, since
+			// $e->getMessage() must never reach an anonymous visitor or the log.
 			$logger->log(
 				'mollie_payment_failed',
 				array(
 					'level'          => 'error',
 					'transaction_id' => (int) $transaction_id,
-					'message'        => sprintf( 'Payment initiation failed: %s', $e->getMessage() ),
+					'message'        => 'Payment initiation failed before reaching Mollie',
 					'context'        => array( 'exception_class' => get_class( $e ) ),
 				)
 			);
@@ -331,7 +331,6 @@ class TransactionAPI {
 					),
 					'context'        => array(
 						'mollie_payment_id' => $mollie_payment['mollie_payment_id'],
-						'checkout_url'      => $mollie_payment['checkout_url'],
 						'status'            => $mollie_payment['status'],
 					),
 				)

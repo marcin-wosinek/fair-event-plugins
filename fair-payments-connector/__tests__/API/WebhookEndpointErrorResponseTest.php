@@ -78,7 +78,8 @@ class WebhookEndpointErrorResponseTest extends TestCase {
 		);
 		$this->assertCount( 1, $logged );
 		$this->assertSame( 'error', $logged[0]['level'] );
-		$this->assertSame( 'Webhook handler exception: ' . self::DIAGNOSTIC, $logged[0]['message'] );
+		$this->assertSame( 'Webhook handler raised an exception', $logged[0]['message'] );
+		$this->assertStringNotContainsString( 'E2E-DIAGNOSTIC-860', wp_json_encode( $logged[0] ) );
 		$this->assertSame(
 			array(
 				'exception_class'   => 'RuntimeException',

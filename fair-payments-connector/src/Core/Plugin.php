@@ -73,6 +73,7 @@ class Plugin {
 		$this->load_admin();
 		$this->load_settings();
 		$this->load_notifications();
+		$this->load_payment_log_retention();
 		$this->load_api_key_removed_notice();
 		$this->load_payment_setup_notice();
 		$this->load_shared_settings_page();
@@ -259,6 +260,19 @@ class Plugin {
 
 		$settings = new \FairPaymentsConnector\Settings\NotificationSettings();
 		$settings->init();
+	}
+
+	/**
+	 * Schedule the daily payment log pruning.
+	 *
+	 * Independent of notification ownership: the payment log belongs to this
+	 * plugin whichever release sends notifications.
+	 *
+	 * @return void
+	 */
+	private function load_payment_log_retention() {
+		$retention = new \FairPaymentsConnector\Hooks\PaymentLogRetentionHooks();
+		$retention->init();
 	}
 
 	/**

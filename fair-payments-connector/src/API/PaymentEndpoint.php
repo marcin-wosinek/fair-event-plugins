@@ -292,10 +292,9 @@ class PaymentEndpoint extends WP_REST_Controller {
 				'level'   => 'info',
 				'message' => sprintf( 'Payment request received for post %d', (int) $post_id ),
 				'context' => array(
-					'amount'      => $amount,
-					'currency'    => $currency,
-					'description' => $description,
-					'post_id'     => $post_id,
+					'amount'   => $amount,
+					'currency' => $currency,
+					'post_id'  => $post_id,
 				),
 			)
 		);

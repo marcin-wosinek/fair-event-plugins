@@ -88,8 +88,9 @@ class TransactionDeletionService {
 					array(
 						'transaction_id' => $transaction_id,
 						'level'          => 'error',
-						'message'        => $error->getMessage(),
+						'message'        => 'Transaction deletion failed and was rolled back',
 						'context'        => array(
+							'exception_class'   => get_class( $error ),
 							'mollie_payment_id' => $transaction->mollie_payment_id,
 						),
 					)

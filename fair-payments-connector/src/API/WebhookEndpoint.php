@@ -264,7 +264,7 @@ class WebhookEndpoint extends WP_REST_Controller {
 				'webhook_failed',
 				array(
 					'level'   => 'error',
-					'message' => sprintf( 'Webhook handler exception: %s', $e->getMessage() ),
+					'message' => 'Webhook handler raised an exception',
 					'context' => array(
 						'exception_class'   => get_class( $e ),
 						'mollie_payment_id' => $mollie_payment_id,
@@ -272,7 +272,7 @@ class WebhookEndpoint extends WP_REST_Controller {
 				)
 			);
 
-			// The caller gets a generic answer; the exception stays in the log.
+			// The caller gets a generic answer; the exception class stays in the log.
 			return new WP_REST_Response(
 				array(
 					'success' => false,

@@ -20,8 +20,7 @@ use WP_Error;
  * later requests never extend it. Increments are not atomic, so concurrent
  * requests can exceed a limit slightly.
  *
- * The client is identified by REMOTE_ADDR only, the same trust boundary as
- * PaymentLogRepository::get_client_ip(). Forwarded headers are ignored because
+ * The client is identified by REMOTE_ADDR only. Forwarded headers are ignored because
  * any caller can set them; a site behind a reverse proxy should configure the
  * server to pass the real client address.
  */
