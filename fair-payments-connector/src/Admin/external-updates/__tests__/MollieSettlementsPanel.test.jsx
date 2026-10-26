@@ -4,16 +4,24 @@
  * page's one-action-at-a-time model.
  */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	configure,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import MollieSettlementsPanel, {
 	MOLLIE_SETTLEMENTS_ACTION,
 } from '../components/MollieSettlementsPanel.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
 // Notices also announce themselves in a live region, which would make every
-// notice text match twice.
-jest.mock( '@wordpress/a11y', () => ( { speak: jest.fn() } ) );
+// notice text match twice. Mocking @wordpress/a11y is not enough: components
+// may resolve its own copy of the package, so ignore the region instead.
+configure( { defaultIgnore: 'script, style, .a11y-speak-region' } );
 
 const IMPORTS = '/fair-payments-connector/v1/settlements/imports';
 
