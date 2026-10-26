@@ -38,7 +38,7 @@
 		"@wordpress/block-editor": "19.0.0",
 		"@wordpress/blocks": "17.0.0",
 		"@wordpress/components": "43.0.0",
-		"@wordpress/i18n": "6.30.0",
+		"@wordpress/i18n": "7.0.0",
 		"calendar-link": "^2.11.6",
 		"date-fns": "^4.1.0",
 		"fair-events-shared": "*"

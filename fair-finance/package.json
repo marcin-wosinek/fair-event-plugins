@@ -43,7 +43,7 @@
 		"@wordpress/api-fetch": "8.0.0",
 		"@wordpress/components": "43.0.0",
 		"@wordpress/element": "9.0.0",
-		"@wordpress/i18n": "6.30.0",
+		"@wordpress/i18n": "7.0.0",
 		"fair-events-shared": "*",
 		"fair-payments-connector": "*",
 		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
