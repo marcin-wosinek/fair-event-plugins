@@ -47,6 +47,25 @@ class TicketTypeGroupRestriction {
 	}
 
 	/**
+	 * Check whether any existing ticket type has a saved group restriction.
+	 *
+	 * @return bool True when at least one restriction exists.
+	 */
+	public static function exists_any() {
+		global $wpdb;
+
+		$found = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT 1 FROM %i r INNER JOIN %i tt ON r.ticket_type_id = tt.id LIMIT 1',
+				self::get_table_name(),
+				$wpdb->prefix . 'fair_events_ticket_types'
+			)
+		);
+
+		return null !== $found;
+	}
+
+	/**
 	 * Get restrictions for every ticket type on an event date.
 	 *
 	 * @param int $event_date_id Event date ID.

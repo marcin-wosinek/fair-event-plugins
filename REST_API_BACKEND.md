@@ -600,7 +600,10 @@ sub-route) expose:
     so the visible result never depends on who the page happened to be
     rendered for. The endpoint rebuilds the same-shaped context as
     `fair_events_signup_render_context` above, but *unfiltered* (including
-    group-restricted tiers), plus a `viewer_resolved` key (`false` by
+    group-restricted tiers — unless group membership can't be verified
+    because Fair Audience or Fair Audience Experimental is inactive, in
+    which case they fail closed and are left out, #1298), plus a
+    `viewer_resolved` key (`false` by
     default), the optional request token, and
     `token_identity_validated` (`false` by default). A companion plugin
     validates the token server-side and sets `viewer_resolved = true` whenever it
