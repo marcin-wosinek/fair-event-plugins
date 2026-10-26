@@ -33,6 +33,6 @@
 		"@wordpress/api-fetch": "8.0.0",
 		"@wordpress/components": "43.0.0",
 		"@wordpress/element": "9.0.0",
-		"@wordpress/i18n": "6.30.0"
+		"@wordpress/i18n": "7.0.0"
 	}
 }
