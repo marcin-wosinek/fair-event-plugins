@@ -293,11 +293,6 @@
 			"composer/installers",
 			"repository:composer:https://wpackagist.org"
 		],
-		"fair-event-plugins.com/composer.json": [
-			"phpunit/phpunit",
-			"stripe/stripe-php",
-			"vlucas/phpdotenv"
-		],
 		"fair-events/composer.json": [
 			"composer/installers",
 			"path:fair-events/shared",
