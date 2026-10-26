@@ -18,6 +18,10 @@ const path = require('path');
  * guide, example, and block.json it references, recording the version in
  * the shipped plugin header; see scripts/block-docs.mjs and #1682).
  *
+ * For the plugins in DEV_ARTIFACT_PLUGINS, also rejects development test
+ * artifacts — test suites, PHPUnit configuration, and test-result caches —
+ * outside the production vendor/ directory (see #2001).
+ *
  * Usage:
  *   node scripts/verify-dist-archive.cjs <plugin> <zipPath>   # targeted
  *   node scripts/verify-dist-archive.cjs                      # every dist/*.zip
@@ -25,6 +29,66 @@ const path = require('path');
 
 const rootDir = path.join(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
+
+const DEV_ARTIFACT_PLUGINS = [
+	'fair-events-experimental',
+	'fair-payments-connector-experimental',
+];
+const DEV_ARTIFACT_DIRECTORIES = [
+	'__tests__',
+	'tests',
+	'e2e',
+	'.phpunit.cache',
+	'test-results',
+	'playwright-report',
+];
+const DEV_ARTIFACT_FILES = [
+	'phpunit.xml',
+	'phpunit.xml.dist',
+	'.phpunit.result.cache',
+];
+
+/**
+ * @param {string}   pluginName
+ * @param {string}   zipPath
+ * @param {string[]} entries    Every file path in the archive.
+ * @returns {string[]} error messages, one per offending entry.
+ */
+function verifyNoDevArtifacts(pluginName, zipPath, entries) {
+	if (!DEV_ARTIFACT_PLUGINS.includes(pluginName)) {
+		return [];
+	}
+
+	const errors = [];
+	for (const entry of entries) {
+		const segments = entry.split('/');
+		// Match against paths inside the plugin directory. Production
+		// Composer dependencies keep whatever their packages ship.
+		const pluginSegments =
+			segments[0] === pluginName ? segments.slice(1) : segments;
+		if (pluginSegments[0] === 'vendor') {
+			continue;
+		}
+		const fileName = pluginSegments[pluginSegments.length - 1];
+		if (
+			DEV_ARTIFACT_FILES.includes(fileName) ||
+			pluginSegments
+				.slice(0, -1)
+				.some((segment) => DEV_ARTIFACT_DIRECTORIES.includes(segment))
+		) {
+			errors.push(
+				`${pluginName}: ${zipPath} contains development artifact ${entry}`
+			);
+		}
+	}
+
+	if (errors.length === 0) {
+		console.log(
+			`${pluginName}: ${zipPath} contains no development test artifacts.`
+		);
+	}
+	return errors;
+}
 
 /**
  * @param {string} pluginName
@@ -101,6 +165,7 @@ function verify(pluginName, zipPath, blockDocs) {
 		errors.push(composerError);
 	}
 	errors.push(...verifyBlockDocs(pluginName, zipPath, entries, blockDocs));
+	errors.push(...verifyNoDevArtifacts(pluginName, zipPath, entries));
 	return errors;
 }
 
