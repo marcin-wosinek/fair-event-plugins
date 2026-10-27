@@ -29,7 +29,7 @@ class WeeklyDigestMailerTest extends TestCase {
 	 * The methods Fair Events checks for before it hands a send over.
 	 */
 	public function test_exposes_the_methods_fair_events_calls() {
-		foreach ( array( 'compose', 'send_to_subscribers', 'send_test' ) as $method ) {
+		foreach ( array( 'compose', 'send_to_subscribers', 'send_to_subscribers_reporting', 'send_to_feed_subscribers_reporting', 'send_test' ) as $method ) {
 			$this->assertTrue( method_exists( WeeklyDigestMailer::class, $method ), $method );
 		}
 	}

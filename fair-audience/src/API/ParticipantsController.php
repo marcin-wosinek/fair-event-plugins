@@ -11,6 +11,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
+use FairAudience\Database\ParticipantFeedRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\ManageSubscriptionToken;
@@ -533,6 +534,8 @@ class ParticipantsController extends WP_REST_Controller {
 			: array();
 		$item['groups'] = $groups_by_pid[ $participant->id ] ?? array();
 
+		$item['weekly_feed_ids'] = ( new ParticipantFeedRepository() )->get_feed_ids_by_participant( (int) $participant->id );
+
 		return rest_ensure_response( $item );
 	}
 
@@ -759,6 +762,10 @@ class ParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		// Preferences and pending confirmations belong to the deleted profile.
+		( new ParticipantFeedRepository() )->delete_by_participant( (int) $id );
+		( new EmailConfirmationTokenRepository() )->delete_by_participant_id( (int) $id );
+
 		return rest_ensure_response(
 			array(
 				'message' => __( 'Participant deleted successfully.', 'fair-audience' ),
@@ -876,6 +883,7 @@ class ParticipantsController extends WP_REST_Controller {
 			'instagram'              => $participant->instagram,
 			'email_profile'          => $participant->email_profile,
 			'weekly_summary_opt_out' => (bool) $participant->weekly_summary_opt_out,
+			'weekly_feed_mode'       => $participant->weekly_feed_mode,
 			'status'                 => $participant->status,
 			'wp_user_id'             => $participant->wp_user_id,
 			'wp_user'                => $wp_user,

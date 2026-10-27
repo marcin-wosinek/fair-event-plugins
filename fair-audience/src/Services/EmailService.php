@@ -11,6 +11,7 @@ use FairAudienceExperimental\Database\PollRepository;
 use FairAudienceExperimental\Database\PollAccessKeyRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
+use FairAudience\Database\ParticipantFeedRepository;
 use FairAudienceExperimental\Database\GroupParticipantRepository;
 use FairAudienceExperimental\Database\ExtraMessageRepository;
 use FairAudienceExperimental\Database\FeeRepository;
@@ -82,6 +83,13 @@ class EmailService {
 	private $participant_repository;
 
 	/**
+	 * Participant weekly-feed repository instance.
+	 *
+	 * @var ParticipantFeedRepository
+	 */
+	private $participant_feed_repository;
+
+	/**
 	 * Group participant repository instance.
 	 *
 	 * @var GroupParticipantRepository|null Null when fair-audience-experimental's `groups` bundle is inactive.
@@ -114,6 +122,7 @@ class EmailService {
 		}
 		$this->event_participant_repository = new EventParticipantRepository();
 		$this->participant_repository       = new ParticipantRepository();
+		$this->participant_feed_repository  = new ParticipantFeedRepository();
 		// Groups live in fair-audience-experimental; only instantiate their
 		// repository when the companion (and its `groups` bundle) is active.
 		$this->group_participant_repository = class_exists( GroupParticipantRepository::class )
@@ -1182,9 +1191,12 @@ class EmailService {
 	 * @param string        $email_type   EmailType constant used for the consent check (defaults to MARKETING).
 	 * @param callable|null $observer Optional; told about each participant as it is
 	 *                                processed: see {@see WeeklyDigestMailer::send_to_subscribers_reporting()}.
+	 * @param int|null      $weekly_feed_id Optional; send only to the participants this weekly email feed is
+	 *                                      meant for ({@see WeeklyFeeds::in_scope()}). Others are not
+	 *                                      recipients, so they are neither reported nor counted.
 	 * @return array Results array with 'sent', 'failed', and 'skipped' keys.
 	 */
-	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array(), $email_type = EmailType::MARKETING, $observer = null ) {
+	public function send_bulk_custom_mail_to_all( $subject, $content, $is_marketing = true, $skip_participant_ids = array(), $group_ids = array(), $email_type = EmailType::MARKETING, $observer = null, $weekly_feed_id = null ) {
 		// Increase time limit for bulk sending.
 		set_time_limit( 300 ); // 5 minutes.
 
@@ -1196,6 +1208,7 @@ class EmailService {
 
 		$participants          = $this->participant_repository->get_all();
 		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
+		$feed_subscriber_ids   = null !== $weekly_feed_id ? $this->participant_feed_repository->get_participant_ids_by_feed( (int) $weekly_feed_id ) : array();
 		$deliver_email_type    = $is_marketing ? $email_type : EmailType::MINIMAL;
 		$report                = static function ( $event, $participant, $reason = '' ) use ( $observer ) {
 			if ( null === $observer ) {
@@ -1215,6 +1228,11 @@ class EmailService {
 		foreach ( $participants as $participant ) {
 			// Filter by group membership.
 			if ( ! empty( $group_ids ) && ! in_array( $participant->id, $group_participant_ids, true ) ) {
+				continue;
+			}
+
+			// Filter by the weekly email feed the participant chose.
+			if ( null !== $weekly_feed_id && ! WeeklyFeeds::in_scope( $participant, (int) $weekly_feed_id, $feed_subscriber_ids ) ) {
 				continue;
 			}
 
@@ -2874,6 +2892,69 @@ class EmailService {
 	}
 
 	/**
+	 * Send the link to the subscription-management page.
+	 *
+	 * Sent when someone signs up with an address that is already subscribed
+	 * and submits email preferences: only the owner of the address may
+	 * change them, on the page this link opens.
+	 *
+	 * @param Participant $participant Subscribed participant.
+	 * @return bool True if mail dispatched.
+	 */
+	public function send_manage_subscription_link( Participant $participant ): bool {
+		if ( ! $this->has_valid_email( $participant ) ) {
+			return false;
+		}
+
+		$site_name               = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$manage_subscription_url = ManageSubscriptionToken::get_url( (int) $participant->id );
+		$greeting_name           = ! empty( $participant->name ) ? $participant->name : __( 'there', 'fair-audience' );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( 'Your %s email preferences', 'fair-audience' ),
+			$site_name
+		);
+
+		$message = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+		<tr>
+			<td align="center" style="padding: 20px 0;">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<tr>
+						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 40px 30px;">
+							<p style="margin: 0 0 20px 0;">' . sprintf(
+								/* translators: %s: participant first name */
+								esc_html__( 'Hi %s,', 'fair-audience' ),
+								'<strong>' . esc_html( $greeting_name ) . '</strong>'
+							) . '</p>
+							<p style="margin: 0 0 20px 0;">' . esc_html__( 'Someone asked to subscribe this address, which is already subscribed. Nothing was changed. To review or change which emails you receive, open your subscription page.', 'fair-audience' ) . '</p>
+							<p style="margin: 0 0 20px 0; text-align: center;"><a href="' . esc_url( $manage_subscription_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none;">' . esc_html__( 'Manage your subscription', 'fair-audience' ) . '</a></p>
+							<p style="margin: 0; font-size: 14px; color: #666666;">' . esc_html__( 'If you did not ask for this, you can ignore this email.', 'fair-audience' ) . '</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
+
+		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
+	}
+
+	/**
 	 * Cron hook used to dispatch deferred emails.
 	 */
 	const DEFERRED_EMAIL_HOOK = 'fair_audience_send_deferred_email';
@@ -2892,6 +2973,7 @@ class EmailService {
 		'send_confirmation_email',
 		'send_form_confirmation',
 		'send_form_notification',
+		'send_manage_subscription_link',
 	);
 
 	/**

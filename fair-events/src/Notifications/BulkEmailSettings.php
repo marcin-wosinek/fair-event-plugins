@@ -95,8 +95,9 @@ class BulkEmailSettings {
 	 * Write the summary Fair Audience reads: whether any bulk email
 	 * configuration is on, and whether any was set up (an event feed chosen).
 	 *
-	 * One weekly-summary preference covers every bulk email configuration,
-	 * so a participant who opts out receives none of them.
+	 * The weekly-summary preference covers every bulk email configuration,
+	 * so a participant who opts out receives none of them. Which feeds a
+	 * subscriber receives is chosen in Fair Audience ({@see WeeklyFeedCatalog}).
 	 *
 	 * @return void
 	 */

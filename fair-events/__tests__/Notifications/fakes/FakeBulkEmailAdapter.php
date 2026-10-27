@@ -54,7 +54,7 @@ class FakeBulkEmailAdapter extends BulkEmailAdapter {
 	public $throw_after_reports = -1;
 
 	/**
-	 * Sent emails as [subject, html].
+	 * Sent emails as [subject, html, feed ID].
 	 *
 	 * @var array[]
 	 */
@@ -90,10 +90,11 @@ class FakeBulkEmailAdapter extends BulkEmailAdapter {
 	 * @param string        $subject  Subject.
 	 * @param string        $html     Body.
 	 * @param callable|null $observer Recipient observer.
+	 * @param int|null      $feed_id  Feed the email lists.
 	 * @return array
 	 * @throws \RuntimeException When told to.
 	 */
-	public function send( $subject, $html, $observer = null ) {
+	public function send( $subject, $html, $observer = null, $feed_id = null ) {
 		if ( $this->throw ) {
 			throw new \RuntimeException( 'mailer down' );
 		}
@@ -105,7 +106,7 @@ class FakeBulkEmailAdapter extends BulkEmailAdapter {
 				$observer( $event, $recipient );
 			}
 		}
-		$this->sent[] = array( $subject, $html );
+		$this->sent[] = array( $subject, $html, $feed_id );
 
 		return $this->counts;
 	}

@@ -372,19 +372,25 @@ class Plugin {
 		nocache_headers();
 		status_header( $page['status'] );
 
-		if ( \FairAudience\Services\ManageSubscriptionPage::VIEW_MANAGE === $page['view'] ) {
-			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_manage_subscription_script' ) );
-		}
+		$with_script = \FairAudience\Services\ManageSubscriptionPage::VIEW_MANAGE === $page['view'];
+		add_action(
+			'wp_enqueue_scripts',
+			function () use ( $with_script ) {
+				$this->enqueue_manage_subscription_assets( $with_script );
+			}
+		);
 
-		// Load manage subscription template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/manage-subscription.php';
+		\FairAudience\Services\ManageSubscriptionRenderer::render( $page );
 		exit;
 	}
 
 	/**
-	 * Enqueue the script that opens the deletion confirmation dialog.
+	 * Enqueue the page's styles and, when its forms are shown, the script
+	 * that keeps the preferences in step and opens the deletion dialog.
+	 *
+	 * @param bool $with_script Whether to enqueue the script too.
 	 */
-	public function enqueue_manage_subscription_script() {
+	public function enqueue_manage_subscription_assets( $with_script ) {
 		$asset_file = FAIR_AUDIENCE_PLUGIN_DIR . 'build/frontend/manage-subscription/index.asset.php';
 
 		if ( ! file_exists( $asset_file ) ) {
@@ -392,6 +398,18 @@ class Plugin {
 		}
 
 		$asset_data = include $asset_file;
+
+		wp_enqueue_style(
+			'fair-audience-manage-subscription',
+			FAIR_AUDIENCE_PLUGIN_URL . 'build/frontend/manage-subscription/style-index.css',
+			array(),
+			$asset_data['version']
+		);
+		wp_style_add_data( 'fair-audience-manage-subscription', 'rtl', 'replace' );
+
+		if ( ! $with_script ) {
+			return;
+		}
 
 		wp_enqueue_script(
 			'fair-audience-manage-subscription',

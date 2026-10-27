@@ -27,20 +27,46 @@ class BulkEmailAdapter {
 	 * Whether Fair Audience can send the email on this request.
 	 *
 	 * Fair Audience must report each recipient's outcome, for the
-	 * notification history ({@see HistoryRecorder::recipient_observer()}).
+	 * notification history ({@see HistoryRecorder::recipient_observer()}),
+	 * and send each feed's email only to that feed's subscribers.
 	 *
 	 * @return string ACTIVE, INACTIVE (Fair Audience is not active) or
-	 *     UPDATE_REQUIRED (an older Fair Audience still sends it itself, or
-	 *     cannot report each recipient).
+	 *     UPDATE_REQUIRED (an older Fair Audience still sends it itself,
+	 *     cannot report each recipient or cannot limit it to a feed's
+	 *     subscribers).
 	 */
 	public function availability() {
 		if ( ! Ownership::legacy_active( Ownership::BULK_EMAIL ) ) {
 			return self::INACTIVE;
 		}
 
-		return Ownership::legacy_yields( Ownership::BULK_EMAIL ) && method_exists( self::MAILER, 'send_to_subscribers' ) && self::reports_recipients()
+		return Ownership::legacy_yields( Ownership::BULK_EMAIL ) && method_exists( self::MAILER, 'send_to_subscribers' ) && self::reports_recipients() && self::supports_feeds()
 			? self::ACTIVE
 			: self::UPDATE_REQUIRED;
+	}
+
+	/**
+	 * Whether Fair Audience handed the email over and reports each
+	 * recipient, but must be updated to send a feed's email only to the
+	 * subscribers who chose that feed.
+	 *
+	 * @return bool
+	 */
+	public function needs_feed_update() {
+		return Ownership::legacy_active( Ownership::BULK_EMAIL )
+			&& Ownership::legacy_yields( Ownership::BULK_EMAIL )
+			&& method_exists( self::MAILER, 'send_to_subscribers' )
+			&& self::reports_recipients()
+			&& ! self::supports_feeds();
+	}
+
+	/**
+	 * Whether Fair Audience sends a feed's email only to its subscribers.
+	 *
+	 * @return bool
+	 */
+	public static function supports_feeds() {
+		return method_exists( self::MAILER, 'send_to_feed_subscribers_reporting' );
 	}
 
 	/**
@@ -78,15 +104,22 @@ class BulkEmailAdapter {
 	}
 
 	/**
-	 * Send the email to every eligible subscriber.
+	 * Send the email to every eligible subscriber, or only to the eligible
+	 * subscribers of one feed.
 	 *
 	 * @param string        $subject  Subject.
 	 * @param string        $html     Body.
 	 * @param callable|null $observer Told about each recipient as it is processed.
+	 * @param int|null      $feed_id  Event feed (source) ID the email lists, or null for every subscriber.
 	 * @return array{sent: int, failed: int, skipped: int}
 	 */
-	public function send( $subject, $html, $observer = null ) {
+	public function send( $subject, $html, $observer = null, $feed_id = null ) {
 		$mailer = self::MAILER;
+		if ( null !== $feed_id ) {
+			$observer = null !== $observer ? $observer : static function () {};
+			return $mailer::send_to_feed_subscribers_reporting( (int) $feed_id, $subject, $html, $observer );
+		}
+
 		return null !== $observer
 			? $mailer::send_to_subscribers_reporting( $subject, $html, $observer )
 			: $mailer::send_to_subscribers( $subject, $html );

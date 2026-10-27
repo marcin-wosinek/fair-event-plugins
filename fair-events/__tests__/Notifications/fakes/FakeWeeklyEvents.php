@@ -27,6 +27,13 @@ class FakeWeeklyEvents {
 	public $error = false;
 
 	/**
+	 * ID of the source the week is resolved to; 0 for none.
+	 *
+	 * @var int
+	 */
+	public $source_id = 5;
+
+	/**
 	 * Requests as [selection, week start, week end].
 	 *
 	 * @var array[]
@@ -47,8 +54,13 @@ class FakeWeeklyEvents {
 		}
 
 		return array(
-			'week' => $week,
-			'days' => array(
+			'source' => $this->source_id ? array(
+				'id'   => $this->source_id,
+				'name' => 'Members',
+				'slug' => $selection,
+			) : null,
+			'week'   => $week,
+			'days'   => array(
 				array( 'events' => $this->empty ? array() : array( array( 'title' => 'Concert' ) ) ),
 			),
 		);

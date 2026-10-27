@@ -29,8 +29,9 @@ class WeeklyDigestMailer {
 	 * Fair Events can have several weekly email configurations. Since it
 	 * gave them IDs, this option holds a read-only summary of all of them
 	 * (`summary`, `enabled`, `configured`) instead of one configuration's
-	 * settings; `enabled` means at least one is on. One weekly-summary
-	 * preference covers every configuration.
+	 * settings; `enabled` means at least one is on. The weekly-summary
+	 * preference covers every configuration; which feeds a subscriber
+	 * receives is chosen separately ({@see WeeklyFeeds}).
 	 */
 	const SETTINGS_OPTION = 'fair_events_notification_bulk_email';
 
@@ -48,6 +49,11 @@ class WeeklyDigestMailer {
 	 * Recurring cron hook of this plugin's former weekly digest sender.
 	 */
 	const LEGACY_CRON_HOOK = 'fair_audience_weekly_digest_tick';
+
+	/**
+	 * Feed ID for an email whose sender does not say which feed it lists.
+	 */
+	const UNKNOWN_FEED = 0;
 
 	/**
 	 * Remove the former sender's recurring cron event.
@@ -84,12 +90,15 @@ class WeeklyDigestMailer {
 	/**
 	 * Send the email to every participant who may receive the weekly summary.
 	 *
+	 * The sender does not say which feed the email lists, so participants
+	 * who chose their feeds do not receive it.
+	 *
 	 * @param string $subject Email subject.
 	 * @param string $html    Email content (HTML).
 	 * @return array{sent: int, failed: int, skipped: int} Number of participants per outcome.
 	 */
 	public static function send_to_subscribers( $subject, $html ) {
-		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY );
+		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY, null, self::UNKNOWN_FEED );
 
 		return array(
 			'sent'    => count( $results['sent'] ),
@@ -101,6 +110,9 @@ class WeeklyDigestMailer {
 	/**
 	 * Send the email to every participant who may receive the weekly
 	 * summary, reporting each one to an observer as it is processed.
+	 *
+	 * The sender does not say which feed the email lists, so participants
+	 * who chose their feeds do not receive it and are not reported.
 	 *
 	 * The observer is called with an event and the recipient:
 	 * 'sending' before the email is handed to the mail system, then 'sent'
@@ -116,7 +128,38 @@ class WeeklyDigestMailer {
 	 * @return array{sent: int, failed: int, skipped: int} Number of participants per outcome.
 	 */
 	public static function send_to_subscribers_reporting( $subject, $html, callable $observer ) {
-		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY, $observer );
+		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY, $observer, self::UNKNOWN_FEED );
+
+		return array(
+			'sent'    => count( $results['sent'] ),
+			'failed'  => count( $results['failed'] ),
+			'skipped' => count( $results['skipped'] ),
+		);
+	}
+
+	/**
+	 * Send one event feed's email to the participants who may receive the
+	 * weekly summary and receive that feed, reporting each one to an
+	 * observer as it is processed.
+	 *
+	 * Participants who chose their feeds receive it only when they chose
+	 * this one; the others receive every feed's email. Participants it is not
+	 * meant for are not reported. Otherwise as
+	 * {@see self::send_to_subscribers_reporting()}.
+	 *
+	 * @param int      $feed_id  Fair Events event source ID the email lists.
+	 * @param string   $subject  Email subject.
+	 * @param string   $html     Email content (HTML).
+	 * @param callable $observer Called as `$observer( string $event, array $recipient )`.
+	 * @return array{sent: int, failed: int, skipped: int} Number of participants per outcome.
+	 * @throws \InvalidArgumentException Without a valid feed ID, so nothing goes to every subscriber.
+	 */
+	public static function send_to_feed_subscribers_reporting( $feed_id, $subject, $html, callable $observer ) {
+		if ( ! is_int( $feed_id ) || $feed_id <= 0 ) {
+			throw new \InvalidArgumentException( 'A weekly email feed ID is required.' );
+		}
+
+		$results = ( new EmailService() )->send_bulk_custom_mail_to_all( $subject, $html, true, array(), array(), EmailType::WEEKLY_SUMMARY, $observer, $feed_id );
 
 		return array(
 			'sent'    => count( $results['sent'] ),

@@ -82,10 +82,14 @@ class EmailConfirmationTokenRepository {
 	/**
 	 * Create a new token for a participant.
 	 *
-	 * @param int $participant_id Participant ID.
+	 * Replaces the participant's earlier token, together with any preferences
+	 * that were waiting on it.
+	 *
+	 * @param int        $participant_id      Participant ID.
+	 * @param array|null $pending_preferences Preferences to apply only when this token confirms.
 	 * @return EmailConfirmationToken|null Created token or null on failure.
 	 */
-	public function create_token( $participant_id ) {
+	public function create_token( $participant_id, $pending_preferences = null ) {
 		// Delete any existing token for this participant.
 		$this->delete_by_participant_id( $participant_id );
 
@@ -102,6 +106,8 @@ class EmailConfirmationTokenRepository {
 				'expires_at'     => $expires_at,
 			)
 		);
+
+		$token->pending_preferences = is_array( $pending_preferences ) ? $pending_preferences : null;
 
 		if ( $token->save() ) {
 			return $token;
