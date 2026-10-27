@@ -34,6 +34,7 @@
 		"test:wp-env:start": "wp-env start",
 		"test:wp-env:stop": "wp-env stop",
 		"screenshot": "node scripts/screenshot.js",
+		"demo:reset": "node scripts/reset-demo.mjs",
 		"screenshots:manage-event": "node scripts/manage-event-screenshots.mjs",
 		"screenshot:attach": "node scripts/pr-assets.mjs attach",
 		"screenshot:verify": "node scripts/pr-assets.mjs verify",

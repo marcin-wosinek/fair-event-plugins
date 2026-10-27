@@ -40,6 +40,19 @@ This provides:
 -   **WordPress**: http://localhost:8080
 -   **phpMyAdmin**: http://localhost:8081
 
+To recreate that site as a clean demo installation (site title
+"Fair Events Plugins: Demo", `admin` / `password`, English with Spanish
+available, only Fair Events active), for example before regenerating
+WordPress.org screenshots:
+
+```bash
+npm run demo:reset -- --acknowledge-reset
+```
+
+**This deletes the local site's database and files volume.** Prerequisites,
+safeguards and recovery are in
+[TESTING.md](./TESTING.md#resetting-the-demo-site).
+
 ### Build Commands
 
 ```bash
