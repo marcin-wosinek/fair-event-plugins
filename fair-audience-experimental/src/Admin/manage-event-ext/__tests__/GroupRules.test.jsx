@@ -14,6 +14,9 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
+// React comes with @wordpress/element, which does not re-export Profiler.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Profiler } from 'react';
 import apiFetch from '@wordpress/api-fetch';
 import GroupRules from '../GroupRules.js';
 
@@ -237,6 +240,48 @@ describe( 'GroupRules load states', () => {
 		expect(
 			tab.queryByRole( 'heading', { name: 'Members' } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'GroupRules — switching events (#2066)', () => {
+	beforeEach( () => {
+		apiFetch.mockReset();
+	} );
+
+	it( 'shows nothing of the previous event once another one is chosen', async () => {
+		mockApi( loaded );
+		let switched = false;
+		const afterSwitch = [];
+		// The first commit for the new event, before its effects run.
+		const onRender = () => {
+			if ( switched && 0 === afterSwitch.length ) {
+				afterSwitch.push(
+					[ ...document.body.querySelectorAll( 'h3' ) ].some(
+						( heading ) => 'Members' === heading.textContent
+					)
+				);
+			}
+		};
+		const view = render(
+			<Profiler id="rules" onRender={ onRender }>
+				<GroupRules eventDateId={ 1 } />
+			</Profiler>
+		);
+		const tab = within( view.container );
+		expect(
+			await tab.findByRole( 'heading', { name: 'Members' } )
+		).toBeInTheDocument();
+
+		mockApi( empty );
+		switched = true;
+		view.rerender(
+			<Profiler id="rules" onRender={ onRender }>
+				<GroupRules eventDateId={ 2 } />
+			</Profiler>
+		);
+
+		expect( afterSwitch ).toEqual( [ false ] );
+		expect( await tab.findByText( EMPTY_STATE ) ).toBeInTheDocument();
 	} );
 } );
 

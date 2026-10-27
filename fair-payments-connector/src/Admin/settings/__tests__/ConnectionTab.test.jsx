@@ -17,7 +17,8 @@
  *     (not /wp/v2/settings) with no reason, keeps failures in the dialog,
  *     and treats a missing audit entry as a completed disconnect.
  *   - Stale overview (#1773): an answer for an earlier mode never replaces
- *     the current profile name.
+ *     the current profile name, and the earlier mode's overview is gone in
+ *     the same render that shows the new mode (#2066).
  *   - Settlement access (#1693): the authorization asks for it only when the
  *     site wants it, a connection missing it offers a reconnect that never
  *     disconnects, and nothing is shown when it is granted or not wanted.
@@ -30,6 +31,9 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
+// React comes with @wordpress/element, which does not re-export Profiler.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Profiler } from 'react';
 import apiFetch from '@wordpress/api-fetch';
 import ConnectionTab from '../ConnectionTab.js';
 import { buildAuthorizeUrl } from '../settings-api.js';
@@ -522,6 +526,69 @@ describe( 'ConnectionTab — stale overview', () => {
 		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
 		expect( screen.queryByText( 'Old test profile' ) ).toBeNull();
 		expect( screen.getByText( 'Live profile' ) ).toBeInTheDocument();
+
+		expect( console ).toHaveLogged();
+	} );
+} );
+
+describe( 'ConnectionTab — overview after a mode change', () => {
+	it( 'never shows the earlier mode’s overview next to the new mode', async () => {
+		let mode = 'test';
+		const pending = [];
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			if ( path === '/wp/v2/settings' ) {
+				return Promise.resolve( {
+					...CONNECTED_SETTINGS,
+					fair_payment_mode: mode,
+				} );
+			}
+			if ( path === '/fair-payments-connector/v1/settings' && method ) {
+				mode = 'live';
+				return Promise.resolve( {} );
+			}
+			if ( path === '/fair-payments-connector/v1/connection/overview' ) {
+				return 'test' === mode
+					? Promise.resolve( {
+							...OVERVIEW,
+							profile_name: 'Test profile',
+						} )
+					: new Promise( ( resolve ) => pending.push( resolve ) );
+			}
+			return Promise.reject( new Error( 'No route' ) );
+		} );
+
+		// Checked after every commit, before effects run.
+		const stale = [];
+		const onRender = () => {
+			const text = document.body.textContent;
+			if (
+				text.includes( 'Live mode: this creates' ) &&
+				text.includes( 'Test profile' )
+			) {
+				stale.push( 'Test profile' );
+			}
+		};
+		render(
+			<Profiler id="connection" onRender={ onRender }>
+				<ConnectionTab onNotice={ () => {} } shouldReload={ false } />
+			</Profiler>
+		);
+		expect( await screen.findByText( 'Test profile' ) ).toBeInTheDocument();
+
+		fireEvent.click( screen.getByLabelText( 'Live Mode' ) );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Save mode' } ) );
+		expect(
+			await screen.findByText( /Live mode: this creates/ )
+		).toBeInTheDocument();
+		expect( screen.queryByText( 'Test profile' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByText( 'Loading payment methods…' )
+		).toBeInTheDocument();
+
+		await waitFor( () => expect( pending ).toHaveLength( 1 ) );
+		pending[ 0 ]( { ...OVERVIEW, profile_name: 'Live profile' } );
+		expect( await screen.findByText( 'Live profile' ) ).toBeInTheDocument();
+		expect( stale ).toEqual( [] );
 
 		expect( console ).toHaveLogged();
 	} );

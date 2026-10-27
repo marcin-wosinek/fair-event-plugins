@@ -94,9 +94,8 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	const [ isLoading, setIsLoading ] = useState( false );
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
 	const [ isSaving, setIsSaving ] = useState( false );
-	const [ overview, setOverview ] = useState( null );
-	const [ overviewLoading, setOverviewLoading ] = useState( false );
-	const [ overviewError, setOverviewError ] = useState( null );
+	// The overview or its error, with the mode it was loaded for.
+	const [ overviewResult, setOverviewResult ] = useState( null );
 	const [ isTestingPayment, setIsTestingPayment ] = useState( false );
 	const [ testCheckoutUrl, setTestCheckoutUrl ] = useState( null );
 	const [ pendingMode, setPendingMode ] = useState( 'test' );
@@ -199,9 +198,10 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 	 * enabled methods differ between test and live mode.
 	 */
 	useEffect( () => {
+		// Hidden already while the credentials are unusable; cleared so a
+		// later connection in the same mode loads its own.
+		setOverviewResult( null );
 		if ( ! connected || credentialStatus !== 'available' ) {
-			setOverview( null );
-			setOverviewError( null );
 			return;
 		}
 
@@ -209,37 +209,41 @@ export default function ConnectionTab( { onNotice, shouldReload } ) {
 		// profile name back after a newer one.
 		let isCurrent = true;
 
-		setOverview( null );
-		setOverviewLoading( true );
-		setOverviewError( null );
-
 		loadConnectionOverview()
 			.then( ( data ) => {
-				if ( ! isCurrent ) {
-					return;
+				if ( isCurrent ) {
+					setOverviewResult( { mode, data, error: null } );
 				}
-				setOverview( data );
-				setOverviewLoading( false );
 			} )
 			.catch( ( error ) => {
 				if ( ! isCurrent ) {
 					return;
 				}
-				setOverviewError(
-					error.message ||
+				setOverviewResult( {
+					mode,
+					data: null,
+					error:
+						error.message ||
 						( error.data && error.data.message ) ||
 						__(
 							'Failed to load payment methods.',
 							'fair-payments-connector'
-						)
-				);
-				setOverviewLoading( false );
+						),
+				} );
 			} );
 
 		return () => {
 			isCurrent = false;
 		};
 	}, [ connected, mode, credentialStatus ] );
+
+	// Shown only for the connection and mode on screen, so a disconnect or
+	// a mode change never shows the previous overview, not even for the
+	// render before the request above starts.
+	const overviewCurrent = credentialsUsable && overviewResult?.mode === mode;
+	const overview = overviewCurrent ? overviewResult.data : null;
+	const overviewError = overviewCurrent ? overviewResult.error : null;
+	const overviewLoading = credentialsUsable && ! overviewCurrent;
 
 	/**
 	 * Handle Connect and Reconnect — fetches a CSRF state token first, then

@@ -112,7 +112,8 @@ export function locationUrl( state ) {
  * The view in the URL and a way to change it.
  *
  * `navigate` adds a browser history entry, or replaces the current one
- * with `{ replace: true }`, e.g. while typing a search.
+ * with `{ replace: true }`, e.g. while typing a search. It returns the
+ * view state it opened.
  *
  * @return {Array} The view state and `navigate( state, options )`.
  */
@@ -136,7 +137,9 @@ export function useLocationState() {
 			window.history.pushState( null, '', url );
 			window.scrollTo?.( 0, 0 );
 		}
-		setLocation( parseLocation( window.location.search ) );
+		const next = parseLocation( window.location.search );
+		setLocation( next );
+		return next;
 	}, [] );
 
 	return [ location, navigate ];

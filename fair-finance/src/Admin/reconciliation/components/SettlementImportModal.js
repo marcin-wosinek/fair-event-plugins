@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useRef, useEffect } from '@wordpress/element';
+import { useState, useRef } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -39,14 +39,6 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 	const fileInputRef = useRef( null );
 	const selectionRef = useRef( 0 );
 
-	useEffect( () => {
-		if ( report?.suggested_entry ) {
-			setSelectedEntryId( String( report.suggested_entry.id ) );
-		} else {
-			setSelectedEntryId( '' );
-		}
-	}, [ report ] );
-
 	const handleFileChange = async ( e ) => {
 		const selectedFile = e.target.files[ 0 ];
 		if ( ! selectedFile ) {
@@ -58,6 +50,7 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		setError( null );
 		setSuccess( null );
 		setReport( null );
+		setSelectedEntryId( '' );
 		setIsLoading( false );
 		setIsParsing( true );
 
@@ -100,7 +93,13 @@ const SettlementImportModal = ( { onImport, onCancel } ) => {
 		if ( selection !== selectionRef.current ) {
 			return;
 		}
+		// The report shows with its suggested entry already selected.
 		setReport( response );
+		setSelectedEntryId(
+			response?.suggested_entry
+				? String( response.suggested_entry.id )
+				: ''
+		);
 		setError( previewError );
 		setIsLoading( false );
 	};
