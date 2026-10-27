@@ -30,6 +30,9 @@ class TelegramConnector {
 	/**
 	 * Register the connector and guard writes to its credential.
 	 *
+	 * Called before the takeover runs, so each callback acts only once Fair
+	 * Events owns the channel.
+	 *
 	 * @return void
 	 */
 	public static function init() {
@@ -48,6 +51,10 @@ class TelegramConnector {
 	 * @return void
 	 */
 	public static function register( $registry ) {
+		if ( ! self::owned() ) {
+			return;
+		}
+
 		$registry->register(
 			self::ID,
 			array(
@@ -66,6 +73,10 @@ class TelegramConnector {
 	 * @return void
 	 */
 	public static function register_setting() {
+		if ( ! self::owned() ) {
+			return;
+		}
+
 		register_setting(
 			'connectors',
 			TelegramSettings::TOKEN_OPTION,
@@ -88,7 +99,7 @@ class TelegramConnector {
 	 * @return bool|null
 	 */
 	public static function autoload( $autoload, $option ) {
-		return TelegramSettings::TOKEN_OPTION === $option ? false : $autoload;
+		return TelegramSettings::TOKEN_OPTION === $option && self::owned() ? false : $autoload;
 	}
 
 	/**
@@ -129,6 +140,7 @@ class TelegramConnector {
 			|| ! $request->has_param( TelegramSettings::TOKEN_OPTION )
 			// Leave everyone else to the route's own permission check.
 			|| ! current_user_can( 'manage_options' )
+			|| ! self::owned()
 		) {
 			return $response;
 		}
@@ -248,6 +260,15 @@ class TelegramConnector {
 	 */
 	public static function admin_url() {
 		return admin_url( 'options-connectors.php' );
+	}
+
+	/**
+	 * Whether Fair Events runs the Telegram channel.
+	 *
+	 * @return bool
+	 */
+	private static function owned() {
+		return Ownership::owns( Ownership::TELEGRAM );
 	}
 
 	/**

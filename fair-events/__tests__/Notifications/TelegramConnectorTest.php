@@ -7,6 +7,7 @@
 
 namespace FairEvents\Tests\Notifications;
 
+use FairEvents\Notifications\Ownership;
 use FairEvents\Notifications\TelegramSettings;
 use FairEvents\Notifications\TelegramConnector;
 use PHPUnit\Framework\TestCase;
@@ -161,7 +162,19 @@ class TelegramConnectorTest extends TestCase {
 
 	/** A newly saved credential is never autoloaded; other options are untouched. */
 	public function test_credential_option_is_not_autoloaded() {
+		Ownership::mark_migrated( Ownership::TELEGRAM );
+
 		$this->assertFalse( TelegramConnector::autoload( null, TelegramSettings::TOKEN_OPTION ) );
 		$this->assertNull( TelegramConnector::autoload( null, 'another_option' ) );
+	}
+
+	/**
+	 * Registered before the takeover runs, the connector stays out of the
+	 * way until Fair Events owns the channel.
+	 */
+	public function test_callbacks_wait_for_the_takeover() {
+		$this->assertNull( TelegramConnector::autoload( null, TelegramSettings::TOKEN_OPTION ) );
+		// Returns before calling register_setting(), which is not stubbed here.
+		TelegramConnector::register_setting();
 	}
 }

@@ -28,6 +28,7 @@ e2e/
     ├── fair-e2e-mollie-credentials.php   # stored (encrypted) Mollie tokens, encryption on/off, token-refresh double
     ├── fair-e2e-protected-credentials.php # stored (encrypted) Instagram and Telegram tokens, Instagram API double
     ├── fair-e2e-external-http-guard.php  # refuses non-local HTTP while fair_e2e_block_external_http is set
+    ├── fair-e2e-notification-startup.php # opt-in stand-ins that flag notification startup running too early (#2059)
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
