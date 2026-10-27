@@ -1,0 +1,113 @@
+/* Prices table: wide content scrolls inside this wrapper, never the page. */
+.fair-events-tickets__prices-scroll {
+	overflow-x: auto;
+}
+
+.fair-events-tickets__prices-table td,
+.fair-events-tickets__prices-table th {
+	vertical-align: top;
+}
+
+/* Each ticket is a tbody holding its main row and settings row, so stripe
+   whole tickets instead of alternating table rows. */
+.fair-events-tickets__prices-table > tbody:nth-of-type(odd) > tr {
+	background-color: #f6f7f7;
+}
+
+.fair-events-tickets__prices-table > tbody + tbody > tr:first-child > td {
+	border-top: 1px solid #dcdcde;
+}
+
+/* Keep columns from shrinking into unusable controls; the wrapper scrolls. */
+.fair-events-tickets__name-cell {
+	min-width: 240px;
+}
+
+.fair-events-tickets__prices-table td:has(input[type="number"]) {
+	min-width: 96px;
+}
+
+.fair-events-tickets__price-cell {
+	min-width: 110px;
+}
+
+.fair-events-tickets__prices-table td:last-child {
+	min-width: 120px;
+}
+
+.fair-events-tickets__price-input .components-base-control__label {
+	margin-bottom: 4px;
+}
+
+/* Settings row: a collapsible panel under its ticket. */
+.fair-events-tickets__settings-row > td {
+	padding-top: 0;
+}
+
+.fair-events-tickets__settings-row .components-panel__body {
+	border: 0;
+}
+
+.fair-events-tickets__settings-row
+	.components-panel__body
+	> .components-panel__body-title,
+.fair-events-tickets__settings-row
+	.components-panel__body.is-opened
+	> .components-panel__body-title {
+	margin: 0;
+}
+
+.fair-events-tickets__settings-row
+	.components-panel__body
+	> .components-panel__body-title
+	> .components-panel__body-toggle {
+	width: auto;
+	padding: 8px 40px 8px 8px;
+	margin-left: -8px;
+	font-weight: 500;
+}
+
+/* Hide the panel's hover fill so the toggle reads as a link-like control. */
+.fair-events-tickets__settings-row .components-panel__body-toggle:hover {
+	background: transparent;
+}
+
+.fair-events-tickets__settings-row .components-panel__body.is-opened {
+	padding: 0 0 8px;
+}
+
+.fair-events-tickets__settings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px 32px;
+	align-items: flex-start;
+	max-width: 720px;
+}
+
+.fair-events-tickets__settings-extensions {
+	flex: 0 1 320px;
+	min-width: 0;
+}
+
+.fair-events-tickets__settings-extensions
+	.components-h-stack
+	> .components-base-control {
+	flex: 1 1 120px;
+}
+
+.fair-events-tickets__settings-deadline {
+	flex: 0 1 260px;
+}
+
+.fair-events-tickets__settings-alert {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	align-items: baseline;
+	padding-bottom: 8px;
+}
+
+.fair-events-tickets__error {
+	margin: 0;
+	color: #b32d2e;
+}
