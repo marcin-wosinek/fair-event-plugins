@@ -13,6 +13,7 @@ use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\WeeklyFeeds;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -69,6 +70,13 @@ class MailingSignupController extends WP_REST_Controller {
 	private $category_repository;
 
 	/**
+	 * Weekly email feeds.
+	 *
+	 * @var WeeklyFeeds
+	 */
+	private $weekly_feeds;
+
+	/**
 	 * Rate limit: max requests per email per hour.
 	 */
 	const RATE_LIMIT_MAX = 3;
@@ -86,6 +94,7 @@ class MailingSignupController extends WP_REST_Controller {
 		$this->token_repository       = new EmailConfirmationTokenRepository();
 		$this->email_service          = new EmailService();
 		$this->category_repository    = new ParticipantCategoryRepository();
+		$this->weekly_feeds           = new WeeklyFeeds();
 	}
 
 	/**
@@ -102,17 +111,17 @@ class MailingSignupController extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'name'         => array(
+						'name'            => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'surname'      => array(
+						'surname'         => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'email'        => array(
+						'email'           => array(
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_email',
@@ -120,10 +129,22 @@ class MailingSignupController extends WP_REST_Controller {
 								return is_email( $value );
 							},
 						),
-						'category_ids' => array(
+						'category_ids'    => array(
 							'type'    => 'array',
 							'default' => array(),
 							'items'   => array(
+								'type' => 'integer',
+							),
+						),
+						// Omitted: the weekly opt-out is left as it is.
+						'weekly_summary'  => array(
+							'type' => 'boolean',
+						),
+						// Omitted: the weekly feeds are left as they are. An
+						// empty list chooses no feeds, not every feed.
+						'weekly_feed_ids' => array(
+							'type'  => 'array',
+							'items' => array(
 								'type' => 'integer',
 							),
 						),
@@ -174,14 +195,25 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Rejected before anything changes, whoever is signing up.
+		$weekly_preferences = $this->weekly_preferences( $request );
+		if ( array_key_exists( 'feed_ids', $weekly_preferences ) ) {
+			$checked = $this->weekly_feeds->resolve_selection( $weekly_preferences['feed_ids'] );
+			if ( is_wp_error( $checked ) ) {
+				return $checked;
+			}
+			$weekly_preferences['feed_ids'] = $checked;
+		}
+
 		// Logged-in WP users with a linked participant skip the email
 		// confirmation dance: we already trust their identity, so just flip
-		// the email_profile to marketing and apply category selections.
+		// the email_profile to marketing and apply category selections. They
+		// can only ever change their own linked participant.
 		$wp_user_id = get_current_user_id();
 		if ( $wp_user_id ) {
 			$wp_participant = $this->participant_repository->get_by_user_id( $wp_user_id );
 			if ( $wp_participant ) {
-				return $this->subscribe_wp_user( $wp_participant, $category_ids );
+				return $this->subscribe_wp_user( $wp_participant, $category_ids, $weekly_preferences );
 			}
 		}
 
@@ -202,6 +234,21 @@ class MailingSignupController extends WP_REST_Controller {
 
 		if ( $existing ) {
 			// Email exists.
+			if ( 'confirmed' === $existing->status && ! empty( $weekly_preferences ) ) {
+				// Only the address's owner may change its preferences, so
+				// nothing submitted here is applied or kept for later: the
+				// owner chooses on the page the emailed link opens.
+				EmailService::defer( 'send_manage_subscription_link', array( $existing ) );
+
+				return rest_ensure_response(
+					array(
+						'success' => true,
+						'message' => __( 'This email address is already subscribed. We sent it a link to review and change its email preferences.', 'fair-audience' ),
+						'status'  => 'manage_link_sent',
+					)
+				);
+			}
+
 			if ( 'confirmed' === $existing->status ) {
 				// Already confirmed.
 				return rest_ensure_response(
@@ -212,8 +259,9 @@ class MailingSignupController extends WP_REST_Controller {
 					)
 				);
 			} else {
-				// Pending - resend confirmation email.
-				$token = $this->token_repository->create_token( $existing->id );
+				// Pending - resend confirmation email. Weekly preferences wait
+				// on the new token and apply only when it confirms.
+				$token = $this->token_repository->create_token( $existing->id, $weekly_preferences ? $weekly_preferences : null );
 
 				// Update pending category selections.
 				if ( ! empty( $category_ids ) ) {
@@ -257,8 +305,9 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// Create confirmation token.
-		$token = $this->token_repository->create_token( $participant->id );
+		// Create confirmation token. Weekly preferences wait on it and apply
+		// only when it confirms.
+		$token = $this->token_repository->create_token( $participant->id, $weekly_preferences ? $weekly_preferences : null );
 
 		if ( ! $token ) {
 			return new WP_Error(
@@ -342,6 +391,20 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// Apply the weekly preferences submitted with this token first, so a
+		// failure leaves the token for another try. Feeds that cannot be
+		// chosen any more are left out; none is added.
+		if ( is_array( $token->pending_preferences ) ) {
+			$applied = $this->weekly_feeds->apply( $participant, $token->pending_preferences, false );
+			if ( is_wp_error( $applied ) ) {
+				return new WP_Error(
+					'update_failed',
+					__( 'Failed to confirm subscription. Please try again.', 'fair-audience' ),
+					array( 'status' => 500 )
+				);
+			}
+		}
+
 		// Update participant status to confirmed and set email profile to marketing.
 		$participant->status        = 'confirmed';
 		$participant->email_profile = 'marketing';
@@ -381,12 +444,20 @@ class MailingSignupController extends WP_REST_Controller {
 	 * dance. The user's identity is already trusted by WordPress, so we just
 	 * flip email_profile to 'marketing' and apply category selections.
 	 *
-	 * @param \FairAudience\Models\Participant $participant  Participant linked to the WP user.
-	 * @param array                            $category_ids Selected category IDs.
-	 * @return \WP_REST_Response
+	 * @param \FairAudience\Models\Participant $participant        Participant linked to the WP user.
+	 * @param array                            $category_ids       Selected category IDs.
+	 * @param array                            $weekly_preferences Checked weekly preferences; see {@see WeeklyFeeds::apply()}.
+	 * @return \WP_REST_Response|\WP_Error
 	 */
-	private function subscribe_wp_user( $participant, $category_ids ) {
+	private function subscribe_wp_user( $participant, $category_ids, array $weekly_preferences = array() ) {
 		$was_marketing = ( 'marketing' === $participant->email_profile && 'confirmed' === $participant->status );
+
+		if ( $weekly_preferences ) {
+			$applied = $this->weekly_feeds->apply( $participant, $weekly_preferences );
+			if ( is_wp_error( $applied ) ) {
+				return $applied;
+			}
+		}
 
 		if ( ! $was_marketing ) {
 			$participant->email_profile = 'marketing';
@@ -398,6 +469,16 @@ class MailingSignupController extends WP_REST_Controller {
 			$this->category_repository->set_categories(
 				$participant->id,
 				array_map( 'intval', $category_ids )
+			);
+		}
+
+		if ( $was_marketing && $weekly_preferences ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'message' => __( 'Your email preferences have been updated.', 'fair-audience' ),
+					'status'  => 'preferences_updated',
+				)
 			);
 		}
 
@@ -418,6 +499,24 @@ class MailingSignupController extends WP_REST_Controller {
 				'status'  => 'confirmed',
 			)
 		);
+	}
+
+	/**
+	 * The weekly preferences a request submitted.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array `weekly_summary` (bool) and `feed_ids` (raw), each only when submitted.
+	 */
+	private function weekly_preferences( $request ) {
+		$preferences = array();
+		if ( null !== $request->get_param( 'weekly_summary' ) ) {
+			$preferences['weekly_summary'] = (bool) $request->get_param( 'weekly_summary' );
+		}
+		if ( null !== $request->get_param( 'weekly_feed_ids' ) ) {
+			$preferences['feed_ids'] = $request->get_param( 'weekly_feed_ids' );
+		}
+
+		return $preferences;
 	}
 
 	/**

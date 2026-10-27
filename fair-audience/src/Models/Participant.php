@@ -74,6 +74,15 @@ class Participant {
 	public $weekly_summary_opt_out;
 
 	/**
+	 * Which weekly emails the participant receives: 'all' (every weekly
+	 * email, including feeds added later) or 'selected' (only the feeds in
+	 * ParticipantFeedRepository; none when it holds none).
+	 *
+	 * @var string
+	 */
+	public $weekly_feed_mode;
+
+	/**
 	 * Subscription status (pending or confirmed).
 	 *
 	 * @var string
@@ -126,6 +135,7 @@ class Participant {
 		$this->instagram              = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
 		$this->email_profile          = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
 		$this->weekly_summary_opt_out = isset( $data['weekly_summary_opt_out'] ) ? (int) $data['weekly_summary_opt_out'] : 0;
+		$this->weekly_feed_mode       = isset( $data['weekly_feed_mode'] ) && 'selected' === $data['weekly_feed_mode'] ? 'selected' : 'all';
 		$this->status                 = isset( $data['status'] ) ? $data['status'] : 'confirmed';
 		$this->wp_user_id             = isset( $data['wp_user_id'] ) && $data['wp_user_id'] ? (int) $data['wp_user_id'] : null;
 		$this->created_at             = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -157,6 +167,10 @@ class Participant {
 			$this->status = 'confirmed';
 		}
 
+		if ( 'selected' !== $this->weekly_feed_mode ) {
+			$this->weekly_feed_mode = 'all';
+		}
+
 		// Convert empty email to null for database storage.
 		$email = ! empty( $this->email ) ? $this->email : null;
 
@@ -166,7 +180,7 @@ class Participant {
 
 		if ( $this->id ) {
 			// Update existing - use raw query to properly handle NULL values.
-			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, phone = %s, instagram = %s, email_profile = %s, weekly_summary_opt_out = %d, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
+			$sql  = "UPDATE {$table_name} SET name = %s, surname = %s, phone = %s, instagram = %s, email_profile = %s, weekly_summary_opt_out = %d, weekly_feed_mode = %s, status = %s, {$email_sql}, {$wp_user_id_sql} WHERE id = %d";
 			$args = array(
 				$this->name,
 				$this->surname,
@@ -174,6 +188,7 @@ class Participant {
 				$this->instagram,
 				$this->email_profile,
 				(int) $this->weekly_summary_opt_out,
+				$this->weekly_feed_mode,
 				$this->status,
 			);
 			if ( null !== $email ) {
@@ -191,7 +206,7 @@ class Participant {
 			$email_col      = null === $email ? 'NULL' : '%s';
 			$wp_user_id_col = null === $this->wp_user_id ? 'NULL' : '%d';
 
-			$sql  = "INSERT INTO {$table_name} (name, surname, phone, instagram, email_profile, weekly_summary_opt_out, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, %d, %s, {$email_col}, {$wp_user_id_col})";
+			$sql  = "INSERT INTO {$table_name} (name, surname, phone, instagram, email_profile, weekly_summary_opt_out, weekly_feed_mode, status, email, wp_user_id) VALUES (%s, %s, %s, %s, %s, %d, %s, %s, {$email_col}, {$wp_user_id_col})";
 			$args = array(
 				$this->name,
 				$this->surname,
@@ -199,6 +214,7 @@ class Participant {
 				$this->instagram,
 				$this->email_profile,
 				(int) $this->weekly_summary_opt_out,
+				$this->weekly_feed_mode,
 				$this->status,
 			);
 			if ( null !== $email ) {
@@ -256,6 +272,7 @@ class Participant {
 		$this->instagram              = '';
 		$this->email_profile          = 'minimal';
 		$this->weekly_summary_opt_out = 0;
+		$this->weekly_feed_mode       = 'all';
 		$this->wp_user_id             = null;
 
 		return $this->save();

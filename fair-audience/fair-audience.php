@@ -64,6 +64,7 @@ function fair_audience_activate() {
 
 	dbDelta( \FairAudience\Database\Schema::get_fee_payment_transactions_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_participant_categories_table_sql() );
+	dbDelta( \FairAudience\Database\Schema::get_participant_feeds_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_email_consent_log_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_scheduled_messages_table_sql() );
@@ -826,6 +827,18 @@ function fair_audience_maybe_upgrade_db() {
 	if ( version_compare( $db_version, '1.46.0', '>=' ) && version_compare( $db_version, '1.47.0', '<' ) && \FairAudience\Database\RetiredFeatureChoice::remove( 'collaborators' ) ) {
 		update_option( 'fair_audience_db_version', '1.47.0' );
 		$db_version = '1.47.0';
+	}
+
+	// Weekly email feed subscriptions (#2041). Existing participants get the
+	// 'all' feed mode, so they keep receiving every weekly email until they
+	// choose feeds themselves.
+	if ( version_compare( $db_version, '1.47.0', '>=' ) && version_compare( $db_version, '1.48.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( \FairAudience\Database\Schema::get_participants_table_sql() );
+		dbDelta( \FairAudience\Database\Schema::get_participant_feeds_table_sql() );
+		dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
+		update_option( 'fair_audience_db_version', '1.48.0' );
+		$db_version = '1.48.0';
 	}
 
 	// Carry historical participant-level activities and attendance over to

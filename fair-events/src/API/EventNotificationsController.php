@@ -1275,6 +1275,9 @@ class EventNotificationsController extends WP_REST_Controller {
 			if ( BulkEmailAdapter::UPDATE_REQUIRED === $state && ( new BulkEmailAdapter() )->needs_reporting_update() ) {
 				$messages[ $state ] = __( 'The weekly email is paused until Fair Audience is updated: this version of Fair Events records whether each subscriber’s email was sent, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update.', 'fair-events' );
 			}
+			if ( BulkEmailAdapter::UPDATE_REQUIRED === $state && ( new BulkEmailAdapter() )->needs_feed_update() ) {
+				$messages[ $state ] = __( 'The weekly email is paused until Fair Audience is updated: this version of Fair Events sends each feed’s email only to the subscribers who chose that feed, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update.', 'fair-events' );
+			}
 			return array(
 				'state'   => $state,
 				'message' => $messages[ $state ],

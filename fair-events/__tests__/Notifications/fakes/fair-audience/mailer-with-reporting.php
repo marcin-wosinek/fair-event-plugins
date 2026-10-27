@@ -1,6 +1,7 @@
 <?php
 /**
- * A Fair Audience release that reports each recipient.
+ * A Fair Audience release that reports each recipient, but sends every
+ * weekly email to all subscribers.
  *
  * @package FairEvents
  */

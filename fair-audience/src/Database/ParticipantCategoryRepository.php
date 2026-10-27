@@ -53,7 +53,7 @@ class ParticipantCategoryRepository {
 	 *
 	 * @param int   $participant_id Participant ID.
 	 * @param int[] $category_ids   Array of category IDs.
-	 * @return bool Success.
+	 * @return bool Whether every change was stored.
 	 */
 	public function set_categories( $participant_id, array $category_ids ) {
 		global $wpdb;
@@ -61,28 +61,27 @@ class ParticipantCategoryRepository {
 		$table_name = $this->get_table_name();
 
 		// Delete existing categories.
-		$wpdb->delete(
+		$ok = false !== $wpdb->delete(
 			$table_name,
 			array( 'participant_id' => $participant_id ),
 			array( '%d' )
 		);
 
 		// Insert new categories.
-		foreach ( $category_ids as $category_id ) {
-			$category_id = (int) $category_id;
+		foreach ( array_unique( array_map( 'intval', $category_ids ) ) as $category_id ) {
 			if ( $category_id > 0 ) {
-				$wpdb->insert(
+				$ok = false !== $wpdb->insert(
 					$table_name,
 					array(
 						'participant_id' => $participant_id,
 						'category_id'    => $category_id,
 					),
 					array( '%d', '%d' )
-				);
+				) && $ok;
 			}
 		}
 
-		return true;
+		return $ok;
 	}
 
 	/**

@@ -43,6 +43,14 @@ class EmailConfirmationToken {
 	public $expires_at;
 
 	/**
+	 * Preferences submitted with the signup, applied only when this token
+	 * confirms the email address. Null when there are none.
+	 *
+	 * @var array|null
+	 */
+	public $pending_preferences;
+
+	/**
 	 * Created timestamp.
 	 *
 	 * @var string
@@ -66,11 +74,30 @@ class EmailConfirmationToken {
 	 * @param array $data Data array.
 	 */
 	public function populate( $data ) {
-		$this->id             = isset( $data['id'] ) ? (int) $data['id'] : null;
-		$this->participant_id = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
-		$this->token          = isset( $data['token'] ) ? $data['token'] : '';
-		$this->expires_at     = isset( $data['expires_at'] ) ? $data['expires_at'] : '';
-		$this->created_at     = isset( $data['created_at'] ) ? $data['created_at'] : '';
+		$this->id                  = isset( $data['id'] ) ? (int) $data['id'] : null;
+		$this->participant_id      = isset( $data['participant_id'] ) ? (int) $data['participant_id'] : 0;
+		$this->token               = isset( $data['token'] ) ? $data['token'] : '';
+		$this->expires_at          = isset( $data['expires_at'] ) ? $data['expires_at'] : '';
+		$this->pending_preferences = self::decode_preferences( $data['pending_preferences'] ?? null );
+		$this->created_at          = isset( $data['created_at'] ) ? $data['created_at'] : '';
+	}
+
+	/**
+	 * Decode stored pending preferences.
+	 *
+	 * @param mixed $value Array, JSON string or null.
+	 * @return array|null
+	 */
+	private static function decode_preferences( $value ) {
+		if ( is_array( $value ) ) {
+			return $value;
+		}
+		if ( ! is_string( $value ) || '' === $value ) {
+			return null;
+		}
+		$decoded = json_decode( $value, true );
+
+		return is_array( $decoded ) ? $decoded : null;
 	}
 
 	/**
@@ -103,12 +130,13 @@ class EmailConfirmationToken {
 		}
 
 		$data = array(
-			'participant_id' => $this->participant_id,
-			'token'          => $this->token,
-			'expires_at'     => $this->expires_at,
+			'participant_id'      => $this->participant_id,
+			'token'               => $this->token,
+			'expires_at'          => $this->expires_at,
+			'pending_preferences' => is_array( $this->pending_preferences ) ? wp_json_encode( $this->pending_preferences ) : null,
 		);
 
-		$format = array( '%d', '%s', '%s' );
+		$format = array( '%d', '%s', '%s', '%s' );
 
 		if ( $this->id ) {
 			// Update existing.

@@ -34,6 +34,7 @@ class Schema {
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
 			email_profile ENUM('minimal', 'marketing', 'declined') NOT NULL DEFAULT 'minimal',
 			weekly_summary_opt_out TINYINT(1) NOT NULL DEFAULT 0,
+			weekly_feed_mode ENUM('all', 'selected') NOT NULL DEFAULT 'all' COMMENT 'all = every weekly email incl. later feeds, selected = only participant_feeds',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
 			wp_user_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -243,6 +244,7 @@ class Schema {
 			participant_id BIGINT UNSIGNED NOT NULL,
 			token CHAR(32) NOT NULL COMMENT 'Random token for email confirmation URL',
 			expires_at DATETIME NOT NULL,
+			pending_preferences TEXT DEFAULT NULL COMMENT 'JSON preferences applied only when this token confirms',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY idx_token (token),
@@ -484,6 +486,30 @@ class Schema {
 			UNIQUE KEY idx_participant_category (participant_id, category_id),
 			KEY idx_participant_id (participant_id),
 			KEY idx_category_id (category_id)
+		) ENGINE=InnoDB $charset_collate;";
+	}
+
+	/**
+	 * Get SQL for creating the participant weekly-feed subscriptions table.
+	 *
+	 * Feeds are Fair Events event sources, by their stable numeric ID.
+	 *
+	 * @return string SQL statement.
+	 */
+	public static function get_participant_feeds_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_audience_participant_feeds';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE $table_name (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			participant_id BIGINT UNSIGNED NOT NULL,
+			feed_id BIGINT UNSIGNED NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idx_participant_feed (participant_id, feed_id),
+			KEY idx_feed_id (feed_id)
 		) ENGINE=InnoDB $charset_collate;";
 	}
 

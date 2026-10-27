@@ -253,6 +253,18 @@ if ( ! function_exists( 'is_email' ) ) {
 	}
 }
 
+if ( ! function_exists( 'absint' ) ) {
+	/**
+	 * Stub of WordPress absint().
+	 *
+	 * @param mixed $value Raw value.
+	 * @return int Non-negative integer.
+	 */
+	function absint( $value ) {
+		return abs( (int) $value );
+	}
+}
+
 if ( ! function_exists( 'sanitize_text_field' ) ) {
 	/**
 	 * Stub of WordPress sanitize_text_field().

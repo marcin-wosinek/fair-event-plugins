@@ -48,16 +48,47 @@ class ManageSubscriptionPage {
 	private $anonymize;
 
 	/**
+	 * Weekly email feeds.
+	 *
+	 * @var WeeklyFeeds|null
+	 */
+	private $weekly_feeds;
+
+	/**
+	 * Participant category repository.
+	 *
+	 * @var ParticipantCategoryRepository|object|null
+	 */
+	private $categories;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param callable|null $find_participant Participant lookup by ID; defaults to the repository.
-	 * @param callable|null $anonymize        Anonymization of a participant; defaults to the service.
+	 * @param callable|null    $find_participant Participant lookup by ID; defaults to the repository.
+	 * @param callable|null    $anonymize        Anonymization of a participant; defaults to the service.
+	 * @param WeeklyFeeds|null $weekly_feeds     Weekly email feeds; defaults to Fair Events' feeds.
+	 * @param object|null      $categories       Participant category repository.
 	 */
-	public function __construct( ?callable $find_participant = null, ?callable $anonymize = null ) {
+	public function __construct( ?callable $find_participant = null, ?callable $anonymize = null, ?WeeklyFeeds $weekly_feeds = null, $categories = null ) {
 		$this->find_participant = $find_participant ?? static function ( $participant_id ) {
 			return ( new ParticipantRepository() )->get_by_id( $participant_id );
 		};
 		$this->anonymize        = $anonymize ?? array( ParticipantAnonymizationService::class, 'anonymize' );
+		$this->weekly_feeds     = $weekly_feeds;
+		$this->categories       = $categories;
+	}
+
+	/**
+	 * Weekly email feeds, created when first needed.
+	 *
+	 * @return WeeklyFeeds
+	 */
+	private function weekly_feeds(): WeeklyFeeds {
+		if ( null === $this->weekly_feeds ) {
+			$this->weekly_feeds = new WeeklyFeeds();
+		}
+
+		return $this->weekly_feeds;
 	}
 
 	/**
@@ -73,6 +104,14 @@ class ManageSubscriptionPage {
 	 *     @type string      $message            Notice to show, if any.
 	 *     @type string      $message_type       'success' or 'error'.
 	 *     @type string      $confirmation_proof Proof the confirmed deletion must carry.
+	 *     @type array       $preferences        On the manage view: the email preferences to show
+	 *                                           (email_profile, weekly_summary, weekly_feed_mode,
+	 *                                           weekly_feeds), as submitted after a rejected save.
+	 *     @type array       $weekly             On the manage view: whether the weekly email is
+	 *                                           offered (`enabled`), whether feeds can be chosen
+	 *                                           (`feeds_available`), the feeds to offer (`feeds`),
+	 *                                           and chosen feeds not sent now (`unavailable`,
+	 *                                           `deleted`).
 	 * }
 	 */
 	public function handle( string $token, array $post = array() ): array {
@@ -120,17 +159,53 @@ class ManageSubscriptionPage {
 		$page['confirmation_proof'] = self::issue_confirmation_proof( $participant_id );
 
 		if ( isset( $post['confirm_delete_my_data'] ) ) {
-			return $this->delete_data( $page, $participant_id, $post );
-		}
-
-		if ( isset( $post['delete_my_data'] ) ) {
+			$page = $this->delete_data( $page, $participant_id, $post );
+		} elseif ( isset( $post['delete_my_data'] ) ) {
 			$page['view'] = self::VIEW_CONFIRM_DELETE;
-			return $page;
+		} elseif ( isset( $post['email_profile'] ) ) {
+			$page = $this->save_preferences( $page, $post );
 		}
 
-		if ( isset( $post['email_profile'] ) ) {
-			return $this->save_preferences( $page, $post );
+		return self::VIEW_MANAGE === $page['view'] && null === $page['redirect'] ? $this->with_preferences( $page ) : $page;
+	}
+
+	/**
+	 * Add what the preferences form shows, unless a rejected save already did.
+	 *
+	 * @param array $page Page state so far.
+	 * @return array Page state.
+	 */
+	private function with_preferences( array $page ): array {
+		$participant = $page['participant'];
+
+		if ( ! isset( $page['preferences'] ) ) {
+			$page['preferences'] = array(
+				'email_profile'    => (string) ( $participant->email_profile ?? 'minimal' ),
+				'weekly_summary'   => empty( $participant->weekly_summary_opt_out ),
+				'weekly_feed_mode' => WeeklyFeeds::MODE_SELECTED === ( $participant->weekly_feed_mode ?? '' ) ? WeeklyFeeds::MODE_SELECTED : WeeklyFeeds::MODE_ALL,
+				'weekly_feeds'     => array(),
+			);
 		}
+
+		$enabled = WeeklyDigestMailer::is_enabled();
+		$feeds   = $enabled ? $this->weekly_feeds() : null;
+		$stored  = $feeds ? $feeds->selected( (int) $participant->id ) : array();
+		if ( ! isset( $page['preferences_submitted'] ) ) {
+			$page['preferences']['weekly_feeds'] = $stored;
+		}
+		unset( $page['preferences_submitted'] );
+
+		$missing        = $feeds && $feeds->is_available() ? $feeds->unavailable( $stored ) : array(
+			'unavailable' => array(),
+			'deleted'     => 0,
+		);
+		$page['weekly'] = array(
+			'enabled'         => $enabled,
+			'feeds_available' => $feeds && $feeds->is_available(),
+			'feeds'           => $feeds ? $feeds->subscribable() : array(),
+			'unavailable'     => $missing['unavailable'],
+			'deleted'         => $missing['deleted'],
+		);
 
 		return $page;
 	}
@@ -168,6 +243,11 @@ class ManageSubscriptionPage {
 	/**
 	 * Save the email preferences form.
 	 *
+	 * Weekly preferences are read only while the weekly email is offered
+	 * and the participant chose marketing emails; the feed mode and feeds
+	 * only when the form sent them, so saving other preferences keeps them.
+	 * A feed that cannot be chosen rejects the whole save.
+	 *
 	 * @param array $page Page state so far.
 	 * @param array $post Unslashed POST fields.
 	 * @return array Page state.
@@ -180,22 +260,73 @@ class ManageSubscriptionPage {
 			return $page;
 		}
 
-		$participant->email_profile = $new_profile;
-
+		$weekly = array();
+		$mode   = null;
 		if ( WeeklyDigestMailer::is_enabled() && 'marketing' === $new_profile ) {
-			$participant->weekly_summary_opt_out = isset( $post['weekly_summary'] ) ? 0 : 1;
+			$weekly['weekly_summary'] = isset( $post['weekly_summary'] );
+
+			$mode = isset( $post['weekly_feed_mode'] ) && is_string( $post['weekly_feed_mode'] ) ? $post['weekly_feed_mode'] : null;
+			if ( WeeklyFeeds::MODE_SELECTED === $mode ) {
+				$weekly['feed_ids'] = isset( $post['weekly_feeds'] ) ? (array) $post['weekly_feeds'] : array();
+				$checked            = $this->weekly_feeds()->resolve_selection( $weekly['feed_ids'], $this->weekly_feeds()->selected( (int) $participant->id ) );
+				if ( is_wp_error( $checked ) ) {
+					return $this->rejected( $page, $checked->get_error_message(), $new_profile, $weekly, $mode );
+				}
+			} elseif ( WeeklyFeeds::MODE_ALL !== $mode ) {
+				$mode = null;
+			}
 		}
 
-		if ( ! $participant->save() ) {
+		$participant->email_profile = $new_profile;
+		if ( WeeklyFeeds::MODE_ALL === $mode ) {
+			// The chosen feeds stay stored, so choosing feeds again starts from them.
+			$participant->weekly_feed_mode = WeeklyFeeds::MODE_ALL;
+		}
+
+		$saved = $weekly
+			? true === $this->weekly_feeds()->apply( $participant, $weekly )
+			: $participant->save();
+
+		if ( ! $saved ) {
+			$page['status']  = 500;
 			$page['message'] = __( 'Failed to update preferences. Please try again.', 'fair-audience' );
 			return $page;
 		}
 
 		$selected_cats = isset( $post['mailing_categories'] ) ? array_map( 'absint', (array) $post['mailing_categories'] ) : array();
-		( new ParticipantCategoryRepository() )->set_categories( $participant->id, $selected_cats );
+		$categories    = $this->categories ?? new ParticipantCategoryRepository();
+		if ( ! $categories->set_categories( $participant->id, $selected_cats ) ) {
+			$page['status']  = 500;
+			$page['message'] = __( 'Failed to update preferences. Please try again.', 'fair-audience' );
+			return $page;
+		}
 
 		$page['message']      = __( 'Your preferences have been updated.', 'fair-audience' );
 		$page['message_type'] = 'success';
+		return $page;
+	}
+
+	/**
+	 * A save that changed nothing, with the submitted choices kept on the form.
+	 *
+	 * @param array       $page    Page state so far.
+	 * @param string      $message Why the save was rejected.
+	 * @param string      $profile Submitted email profile.
+	 * @param array       $weekly  Submitted weekly preferences.
+	 * @param string|null $mode    Submitted feed mode.
+	 * @return array Page state.
+	 */
+	private function rejected( array $page, string $message, string $profile, array $weekly, ?string $mode ): array {
+		$page['status']                = 400;
+		$page['message']               = $message;
+		$page['preferences_submitted'] = true;
+		$page['preferences']           = array(
+			'email_profile'    => $profile,
+			'weekly_summary'   => ! empty( $weekly['weekly_summary'] ),
+			'weekly_feed_mode' => WeeklyFeeds::MODE_SELECTED === $mode ? WeeklyFeeds::MODE_SELECTED : WeeklyFeeds::MODE_ALL,
+			'weekly_feeds'     => array_values( array_filter( array_map( 'absint', (array) ( $weekly['feed_ids'] ?? array() ) ) ) ),
+		);
+
 		return $page;
 	}
 

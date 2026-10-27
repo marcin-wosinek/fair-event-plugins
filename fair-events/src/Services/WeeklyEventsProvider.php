@@ -105,7 +105,7 @@ class WeeklyEventsProvider {
 	 * @param string                            $selection {@see self::LOCAL_EVENTS} or an event source slug.
 	 * @param string|false                      $language  Polylang language slug to translate events to,
 	 *                                                     or false to leave them untranslated.
-	 * @return array|\WP_Error {@see self::week_data()}, plus `source`: name,
+	 * @return array|\WP_Error {@see self::week_data()}, plus `source`: id, name,
 	 *     slug and page_url of the selected source, or null for local events.
 	 */
 	public function for_notification( array $week, $selection, $language = false ) {
@@ -127,6 +127,7 @@ class WeeklyEventsProvider {
 		return array(
 			'source' => $source
 				? array(
+					'id'       => (int) $source['id'],
 					'name'     => $source['name'],
 					'slug'     => $source['slug'],
 					'page_url' => $source['page_id'] ? get_permalink( $source['page_id'] ) : null,

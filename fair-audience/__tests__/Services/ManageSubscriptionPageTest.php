@@ -8,8 +8,16 @@
 namespace FairAudience\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
+use FairAudience\Models\Participant;
 use FairAudience\Services\ManageSubscriptionPage;
 use FairAudience\Services\ManageSubscriptionToken;
+use FairAudience\Services\WeeklyDigestMailer;
+use FairAudience\Services\WeeklyFeeds;
+use FairAudience\Tests\Services\Fakes\FakeParticipantFeedRepository;
+use FairAudience\Tests\Services\Fakes\FakeWeeklyFeedCatalog;
+
+require_once __DIR__ . '/fakes/FakeWeeklyFeedCatalog.php';
+require_once __DIR__ . '/fakes/FakeParticipantFeedRepository.php';
 
 /**
  * Deleting personal data needs the signed link, an explicit confirmed
@@ -39,10 +47,55 @@ class ManageSubscriptionPageTest extends TestCase {
 	private $anonymize_succeeds = true;
 
 	/**
+	 * Stored weekly feeds.
+	 *
+	 * @var FakeParticipantFeedRepository
+	 */
+	private $feed_repository;
+
+	/**
+	 * Stored announcement categories by participant, and whether storing fails.
+	 *
+	 * @var object
+	 */
+	private $categories;
+
+	/**
 	 * Seed two ordinary participants.
 	 */
 	protected function setUp(): void {
-		$this->participants       = array(
+		$GLOBALS['_fair_test_options'] = array(
+			WeeklyDigestMailer::LEGACY_OPTION => array( 'enabled' => true ),
+		);
+		$this->feed_repository         = new FakeParticipantFeedRepository();
+		$this->categories              = new class() {
+			/**
+			 * Categories by participant.
+			 *
+			 * @var array
+			 */
+			public $stored = array();
+
+			/**
+			 * Whether storing fails.
+			 *
+			 * @var bool
+			 */
+			public $fails = false;
+
+			/**
+			 * Replace a participant's categories.
+			 *
+			 * @param int   $participant_id Participant ID.
+			 * @param int[] $ids            Category IDs.
+			 * @return bool
+			 */
+			public function set_categories( $participant_id, array $ids ) {
+				$this->stored[ $participant_id ] = $ids;
+				return ! $this->fails;
+			}
+		};
+		$this->participants            = array(
 			7 => (object) array(
 				'id'    => 7,
 				'name'  => 'Ada',
@@ -54,8 +107,8 @@ class ManageSubscriptionPageTest extends TestCase {
 				'email' => 'bo@example.test',
 			),
 		);
-		$this->anonymized         = array();
-		$this->anonymize_succeeds = true;
+		$this->anonymized              = array();
+		$this->anonymize_succeeds      = true;
 	}
 
 	/**
@@ -75,7 +128,9 @@ class ManageSubscriptionPageTest extends TestCase {
 					$participant->email = '';
 				}
 				return $this->anonymize_succeeds;
-			}
+			},
+			new WeeklyFeeds( new FakeWeeklyFeedCatalog(), $this->feed_repository ),
+			$this->categories
 		);
 	}
 
@@ -278,6 +333,241 @@ class ManageSubscriptionPageTest extends TestCase {
 		$this->assertSame( ManageSubscriptionPage::VIEW_DELETED, $page['view'] );
 		$this->assertSame( 'success', $page['message_type'] );
 		$this->assertSame( '', $page['confirmation_proof'] );
+	}
+
+	/**
+	 * A marketing subscriber whose saves are counted, as participant 9.
+	 *
+	 * @param string $mode    Weekly feed mode.
+	 * @param bool   $opt_out Weekly opt-out.
+	 * @return Participant
+	 */
+	private function subscriber( $mode = WeeklyFeeds::MODE_ALL, $opt_out = false ) {
+		$participant = new class() extends Participant {
+			/**
+			 * Number of saves.
+			 *
+			 * @var int
+			 */
+			public $saves = 0;
+
+			/**
+			 * Count the save.
+			 *
+			 * @return bool
+			 */
+			public function save() {
+				++$this->saves;
+				return true;
+			}
+		};
+
+		$participant->id                     = 9;
+		$participant->name                   = 'Cy';
+		$participant->email                  = 'cy@example.test';
+		$participant->email_profile          = 'marketing';
+		$participant->status                 = 'confirmed';
+		$participant->weekly_summary_opt_out = $opt_out ? 1 : 0;
+		$participant->weekly_feed_mode       = $mode;
+		$this->participants[9]               = $participant;
+
+		return $participant;
+	}
+
+	/**
+	 * Save the preferences form for participant 9.
+	 *
+	 * @param array $post POST fields.
+	 * @return array Page state.
+	 */
+	private function save( array $post ) {
+		$page = new ManageSubscriptionPage(
+			function ( $participant_id ) {
+				return $this->participants[ $participant_id ] ?? null;
+			},
+			null,
+			new WeeklyFeeds( new FakeWeeklyFeedCatalog(), $this->feed_repository ),
+			$this->categories
+		);
+
+		return $page->handle( ManageSubscriptionToken::generate( 9 ), $post );
+	}
+
+	/**
+	 * The page shows the weekly switch, the offered feeds and the stored choice.
+	 */
+	public function test_shows_weekly_preferences_and_feeds() {
+		$this->subscriber( WeeklyFeeds::MODE_SELECTED );
+		$this->feed_repository->feeds[9] = array( 1, 3 );
+
+		$page = $this->save( array() );
+
+		$this->assertTrue( $page['weekly']['enabled'] );
+		$this->assertTrue( $page['weekly']['feeds_available'] );
+		$this->assertSame( array( 2, 1 ), array_column( $page['weekly']['feeds'], 'id' ) );
+		$this->assertSame( array( 'Archive' ), array_column( $page['weekly']['unavailable'], 'name' ) );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $page['preferences']['weekly_feed_mode'] );
+		$this->assertSame( array( 1, 3 ), $page['preferences']['weekly_feeds'] );
+	}
+
+	/**
+	 * Saving without the feed fields keeps an existing subscriber's scope.
+	 */
+	public function test_saving_other_preferences_keeps_the_legacy_scope() {
+		$participant = $this->subscriber();
+
+		$page = $this->save(
+			array(
+				'email_profile'      => 'marketing',
+				'weekly_summary'     => 'on',
+				'mailing_categories' => array( '4' ),
+			)
+		);
+
+		$this->assertSame( 'success', $page['message_type'] );
+		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
+		$this->assertSame( array( 4 ), $this->categories->stored[9] );
+	}
+
+	/**
+	 * Choosing feeds stores them, also when none is chosen.
+	 */
+	public function test_choosing_feeds_stores_the_selection() {
+		$participant = $this->subscriber();
+
+		$page = $this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'selected',
+				'weekly_feeds'     => array( '2', '1' ),
+			)
+		);
+
+		$this->assertSame( 'success', $page['message_type'] );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
+		$this->assertSame( array( 1, 2 ), $this->feed_repository->feeds[9] );
+
+		$this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'selected',
+			)
+		);
+
+		$this->assertSame( array(), $this->feed_repository->feeds[9] );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
+	}
+
+	/**
+	 * A feed that cannot be chosen rejects the save and changes nothing.
+	 */
+	public function test_unavailable_feed_rejects_the_whole_save() {
+		$participant = $this->subscriber();
+
+		$page = $this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_feed_mode' => 'selected',
+				'weekly_feeds'     => array( '1', '3' ),
+			)
+		);
+
+		$this->assertSame( 400, $page['status'] );
+		$this->assertSame( 'error', $page['message_type'] );
+		$this->assertSame( 0, $participant->saves );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
+		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
+		$this->assertArrayNotHasKey( 9, $this->categories->stored );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $page['preferences']['weekly_feed_mode'], 'The submitted choice stays on the form.' );
+	}
+
+	/**
+	 * Saving keeps chosen feeds that cannot be chosen now.
+	 */
+	public function test_saving_keeps_unavailable_feeds() {
+		$this->subscriber( WeeklyFeeds::MODE_SELECTED );
+		$this->feed_repository->feeds[9] = array( 3 );
+
+		$this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'selected',
+				'weekly_feeds'     => array( '2' ),
+			)
+		);
+
+		$this->assertSame( array( 2, 3 ), $this->feed_repository->feeds[9] );
+	}
+
+	/**
+	 * Going back to every weekly email keeps the chosen feeds for later.
+	 */
+	public function test_choosing_all_weekly_emails_again() {
+		$participant                     = $this->subscriber( WeeklyFeeds::MODE_SELECTED );
+		$this->feed_repository->feeds[9] = array( 1 );
+
+		$this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'all',
+			)
+		);
+
+		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertSame( array( 1 ), $this->feed_repository->feeds[9] );
+	}
+
+	/**
+	 * Essential emails only leaves the weekly preferences alone.
+	 */
+	public function test_minimal_profile_ignores_weekly_fields() {
+		$participant = $this->subscriber( WeeklyFeeds::MODE_ALL, true );
+
+		$this->save(
+			array(
+				'email_profile'    => 'minimal',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'selected',
+				'weekly_feeds'     => array( '1' ),
+			)
+		);
+
+		$this->assertSame( 'minimal', $participant->email_profile );
+		$this->assertSame( 1, $participant->weekly_summary_opt_out );
+		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
+	}
+
+	/**
+	 * Failing to store preferences is reported, not reported as success.
+	 */
+	public function test_storage_failures_are_visible() {
+		$this->subscriber();
+		$this->feed_repository->fails = true;
+
+		$page = $this->save(
+			array(
+				'email_profile'    => 'marketing',
+				'weekly_summary'   => 'on',
+				'weekly_feed_mode' => 'selected',
+				'weekly_feeds'     => array( '1' ),
+			)
+		);
+		$this->assertSame( 500, $page['status'] );
+		$this->assertSame( 'error', $page['message_type'] );
+
+		$this->feed_repository->fails = false;
+		$this->categories->fails      = true;
+
+		$page = $this->save( array( 'email_profile' => 'marketing' ) );
+		$this->assertSame( 500, $page['status'] );
+		$this->assertSame( 'error', $page['message_type'] );
 	}
 
 	/**

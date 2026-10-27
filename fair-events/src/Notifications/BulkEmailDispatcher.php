@@ -23,6 +23,9 @@ defined( 'WPINC' ) || die;
  * before Fair Audience is called, so overlapping cron requests send once.
  * Each configuration has its own claims, schedule, history and last sent
  * week: two configurations both send in the same week.
+ *
+ * Fair Audience sends each email only to the subscribers of the event feed
+ * it lists ({@see WeeklyFeedCatalog}).
  */
 class BulkEmailDispatcher {
 	public const HOOK = 'fair_events_notification_bulk_email';
@@ -300,6 +303,15 @@ class BulkEmailDispatcher {
 			}
 			$recorder->cover( $week['week'] );
 
+			// Only the subscribers of the feed the email lists receive it.
+			// Without a feed to name, nothing is sent rather than everyone.
+			$feed_id = isset( $week['source']['id'] ) ? (int) $week['source']['id'] : 0;
+			if ( $feed_id <= 0 ) {
+				$result = self::result( 'failed', 'configuration_error' );
+				$recorder->finish( HistoryOutcome::FAILURE, 'configuration_error' );
+				return $this->record( $config_id, $send_week, $week, 'configuration_error', __( 'The selected event feed does not exist or is disabled.', 'fair-events' ) );
+			}
+
 			$email = $this->adapter->compose( $week, $settings );
 			if ( $settings['skip_empty'] && ! empty( $email['empty'] ) ) {
 				$result = self::result( 'skipped', 'no_events' );
@@ -307,7 +319,7 @@ class BulkEmailDispatcher {
 				return $this->record( $config_id, $send_week, $week, 'skipped_empty', __( 'No events that week, so nothing was sent.', 'fair-events' ) );
 			}
 
-			$counts = $this->adapter->send( $email['subject'], $email['html'], $recorder->recipient_observer() );
+			$counts = $this->adapter->send( $email['subject'], $email['html'], $recorder->recipient_observer(), $feed_id );
 			$result = self::result( 'sent', '' );
 			$recorder->finish( HistoryOutcome::SKIPPED, 'no_recipients' );
 

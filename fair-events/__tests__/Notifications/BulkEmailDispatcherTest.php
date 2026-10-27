@@ -216,6 +216,26 @@ class BulkEmailDispatcherTest extends TestCase {
 		$this->assertSame( array(), $this->adapter->sent );
 	}
 
+	/** The email goes only to the subscribers of the feed it lists. */
+	public function test_sends_to_the_listed_feed_only() {
+		$this->events->source_id = 9;
+
+		$this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:00' ) );
+
+		$this->assertSame( 9, $this->adapter->sent[0][2] );
+	}
+
+	/** Without a feed to name, nothing is sent rather than everyone. */
+	public function test_week_without_a_feed_is_a_configuration_error() {
+		$this->events->source_id = 0;
+
+		$run = $this->process( '2026-W41', self::settings(), self::moment( '2026-10-05 08:00' ) );
+
+		$this->assertSame( 'configuration_error', $run['status'] );
+		$this->assertSame( array(), $this->adapter->sent );
+		$this->assertSame( 'failed', $this->log->rows['bulk_email|2026-10-05|bulk_email|subscribers|1']['state'] );
+	}
+
 	/** The events week is the send week or the one after, across a year boundary. */
 	public function test_event_week_follows_the_scope_across_years() {
 		$now = self::moment( '2026-12-28 08:00' );
