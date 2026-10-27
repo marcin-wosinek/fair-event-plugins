@@ -446,12 +446,68 @@ which is the authoritative workspace list.
 
 ## Specialized workflows
 
+### Resetting the demo site
+
+`npm run demo:reset -- --acknowledge-reset` recreates the regular Docker
+Compose site (`compose.yml`, port 8080) as a clean demo installation:
+
+| Setting           | Value                                                          |
+| ----------------- | -------------------------------------------------------------- |
+| Site title        | Fair Events Plugins: Demo                                      |
+| Administrator     | `admin` / `password`                                           |
+| Site & admin mail | marcin.wosinek@gmail.com                                       |
+| Languages         | English (US, active) and Spanish (`es_ES` core and themes)     |
+| Plugins           | All mounted project plugins available; only Fair Events active |
+| Content           | None: sample post, page, privacy page and comment removed      |
+| Permalinks        | `/%postname%/`                                                 |
+
+**It is destructive.** It removes this checkout's Compose containers and its
+two data volumes, `<project>_wordpress` and `<project>_db` (the project is the
+checkout's directory name, e.g. `fair-event-plugins`), so all posts, users,
+uploads, installed themes/plugins/languages, options and `wp-config.php` go.
+Repository files, images, other Compose projects, wp-env instances and every
+other volume are kept; it never prunes. Without `--acknowledge-reset` it
+exits with status 2 and changes nothing.
+
+Prerequisites:
+
+- Docker with Compose v2, on a local engine (a remote `DOCKER_HOST` or
+  Docker context is refused).
+- `npm install`, `npm run build -w fair-events` and `npm run composer:install`,
+  so Fair Events can be activated. Build any other plugin you will activate.
+- Ports 8080, 8081 and 3306 free. Another checkout's running Compose stack is
+  reported by name; stop it there with `docker compose stop` first.
+- Network access to `api.wordpress.org` and `downloads.wordpress.org` for the
+  Spanish language packs.
+
+Before deleting anything the script checks those prerequisites, that
+`compose.yml` mounts the two named volumes, not bind mounts or external
+volumes, and that both volumes carry this project's Compose labels. It then
+starts the stack, waits (bounded) for the database, the WordPress files and
+HTTP, installs, and verifies the settings above, the admin login over HTTP
+and that the mounted plugins are discoverable. Any failure names the stage
+and exits non-zero; status 2 means nothing was changed, status 1 means the
+site is incomplete. Fix the cause and run the command again: every run
+starts from empty volumes.
+
+The site gets `scripts/demo/fair-demo-safety.php` as an MU plugin. It
+suppresses all outgoing email, refuses outgoing HTTP requests except
+WordPress.org and the site itself (so no payment provider or messaging
+service is reached), and pauses cron until the reset has verified the
+baseline. The credentials are public and for local use only.
+
+Screenshot fixtures stay with their workflows: run the WordPress.org
+screenshots below against the reset site. The Manage Event screenshots use
+their own isolated wp-env instance and need no reset.
+
 ### WordPress.org screenshots
 
 `fair-events/e2e/wordpress-org.spec.js` generates the plugin-directory images
 at a consistent 1200×900 viewport. These scripts remain separate from the
 behavioral E2E lifecycle because they use locale assets and the regular
-development stack.
+development stack. Start from a clean site with
+`npm run demo:reset -- --acknowledge-reset` ([Resetting the demo site](#resetting-the-demo-site)),
+which also installs the Spanish core and theme language packs.
 
 The spec accepts `SCREENSHOT_LOCALE` (`''` for English). Run both locale scripts
 in the same session so their output does not drift:
@@ -462,7 +518,8 @@ npm run screenshots:es -w fair-events
 ```
 
 Before a localized capture, install the relevant core and theme language packs
-and generate current translation/build artifacts:
+(already done on a reset site) and generate current translation/build
+artifacts:
 
 ```bash
 docker compose run wpcli wp language core install es_ES

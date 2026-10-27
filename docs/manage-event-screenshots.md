@@ -23,7 +23,11 @@ npm run screenshots:manage-event -- --reuse
 ```
 
 The command uses the same lifecycle as `test:e2e:local` (see
-[TESTING.md](../TESTING.md#isolated-wordpress-test-lifecycle)). An owned run
+[TESTING.md](../TESTING.md#isolated-wordpress-test-lifecycle)). It does not
+use the Docker Compose site on port 8080, so it needs no
+`npm run demo:reset`; that reset prepares the Compose site for the
+WordPress.org screenshots
+([TESTING.md](../TESTING.md#resetting-the-demo-site)). An owned run
 refuses to start while the tests instance is already running, and never
 overlaps another Playwright run on the same site. Extra arguments are passed
 to Playwright, e.g. `-- --reuse --grep "Finance"`. A filtered run cannot be
