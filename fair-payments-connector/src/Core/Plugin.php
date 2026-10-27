@@ -208,6 +208,7 @@ class Plugin {
 				'strategy'  => 'defer',
 			)
 		);
+		wp_set_script_translations( 'fair-payments-connector-callback', 'fair-payments-connector', Features::script_translations_path() );
 
 		wp_enqueue_style(
 			'fair-payments-connector-callback',

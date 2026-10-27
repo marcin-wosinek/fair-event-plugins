@@ -1,180 +1,234 @@
 /**
- * Payment Callback Handler
+ * Payment return notice
  *
- * Handles payment callback from Mollie and shows transaction status notification.
+ * Fallback notice for a buyer returning from Mollie to a page where no block
+ * renders its own payment result. The Simple Payment and event signup blocks
+ * report the return themselves, so the notice stays out of their way.
+ *
+ * The status read is authenticated with the access token the browser keeps in
+ * session storage, sent in a request header (#858). Logged-in owners and
+ * admins are authenticated by their session instead. Nothing here reads or
+ * forwards a token from the URL.
  *
  * @package FairPaymentsConnector
  */
 
-import apiFetch from '@wordpress/api-fetch';
+import { __, sprintf } from '@wordpress/i18n';
+import { pollPaymentStatus } from 'fair-events-shared/src/payment-flow.js';
 import { credentialHeaders } from './payment-credentials.js';
 import './payment-callback.css';
 
-( function () {
-	'use strict';
+const STATUS_PATH = '/fair-payments-connector/v1/payments';
 
-	// Defensive: handle both scenarios (DOM loading or already loaded)
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', initializeCallback );
-	} else {
-		initializeCallback();
+// Rendered result surfaces of blocks that handle the return themselves.
+const OWNING_SURFACES =
+	'.fair-payments-connector-callback, .fair-events-get-tickets-callback';
+
+const CLASS_NAME = 'fair-payments-connector-notification';
+
+/**
+ * Transaction id from a valid return marker.
+ *
+ * @return {string} Positive integer id, or '' when the URL is not a return.
+ */
+function returnTransactionId() {
+	const params = new URLSearchParams( window.location.search );
+	if ( params.get( 'fair_payment_callback' ) !== 'true' ) {
+		return '';
 	}
+	const id = params.get( 'transaction_id' ) || '';
+	return /^[1-9]\d*$/.test( id ) ? id : '';
+}
 
-	function initializeCallback() {
-		// Get transaction_id and token from URL parameters
-		const urlParams = new URLSearchParams( window.location.search );
-		const transactionId = urlParams.get( 'transaction_id' );
-		const token = urlParams.get( 'token' ) || '';
+/**
+ * Format an amount in the page language, falling back to "12.50 EUR".
+ *
+ * @param {string|number} amount   Amount.
+ * @param {string}        currency ISO 4217 code.
+ * @return {string} Display amount.
+ */
+function formatAmount( amount, currency ) {
+	const value = Number( amount );
+	try {
+		return new Intl.NumberFormat( document.documentElement.lang || [], {
+			style: 'currency',
+			currency,
+		} ).format( value );
+	} catch ( error ) {
+		return `${ amount } ${ currency }`;
+	}
+}
 
-		if ( ! transactionId ) {
-			console.error(
-				'Fair Payments Connector: No transaction_id found in URL'
+/**
+ * Notice text for the current model.
+ *
+ * @param {Object} model Notice model.
+ * @return {string} Message.
+ */
+function messageFor( { phase, transaction } ) {
+	const hasAmount =
+		transaction &&
+		transaction.currency &&
+		Number.isFinite( Number( transaction.amount ) );
+	const amount = hasAmount
+		? formatAmount( transaction.amount, transaction.currency )
+		: '';
+
+	switch ( phase ) {
+		case 'confirmed':
+			return amount
+				? sprintf(
+						/* translators: %s: formatted amount, e.g. €12.50 */
+						__(
+							'Thank you! Your payment of %s has been received and confirmed.',
+							'fair-payments-connector'
+						),
+						amount
+					)
+				: __(
+						'Thank you! Your payment has been received and confirmed.',
+						'fair-payments-connector'
+					);
+		case 'failed':
+			return amount
+				? sprintf(
+						/* translators: %s: formatted amount, e.g. €12.50 */
+						__(
+							'Your payment of %s was not completed.',
+							'fair-payments-connector'
+						),
+						amount
+					)
+				: __(
+						'Your payment was not completed.',
+						'fair-payments-connector'
+					);
+		case 'processing':
+			return amount
+				? sprintf(
+						/* translators: %s: formatted amount, e.g. €12.50 */
+						__(
+							'Thank you! Your payment of %s is being processed.',
+							'fair-payments-connector'
+						),
+						amount
+					)
+				: __(
+						'Thank you! Your payment is being processed.',
+						'fair-payments-connector'
+					);
+		case 'unverified':
+			return __(
+				'We couldn’t verify your payment status. If you completed the payment, check your email for a confirmation or contact the organizer.',
+				'fair-payments-connector'
 			);
+		default:
+			return __(
+				'Checking your payment status…',
+				'fair-payments-connector'
+			);
+	}
+}
+
+/**
+ * Show the notice for a transaction and keep it in step with the status.
+ *
+ * @param {string} transactionId Transaction id.
+ */
+function startNotice( transactionId ) {
+	const model = { phase: 'checking', transaction: null, dismissed: false };
+
+	const notice = document.createElement( 'div' );
+	notice.className = CLASS_NAME;
+	notice.setAttribute( 'role', 'status' );
+
+	const message = document.createElement( 'p' );
+	message.className = `${ CLASS_NAME }__message`;
+	notice.appendChild( message );
+
+	const testMode = document.createElement( 'span' );
+	testMode.className = `${ CLASS_NAME }__testmode`;
+	testMode.textContent = __( 'Test mode', 'fair-payments-connector' );
+	notice.appendChild( testMode );
+
+	const dismiss = document.createElement( 'button' );
+	dismiss.type = 'button';
+	dismiss.className = `${ CLASS_NAME }__dismiss`;
+	dismiss.setAttribute(
+		'aria-label',
+		__( 'Dismiss payment notice', 'fair-payments-connector' )
+	);
+	dismiss.textContent = '×';
+	notice.appendChild( dismiss );
+
+	let stopPolling = null;
+
+	function render() {
+		if ( model.dismissed ) {
+			notice.remove();
 			return;
 		}
-
-		// Fetch transaction status from API
-		fetchTransactionStatus( transactionId, token );
+		notice.dataset.phase = model.phase;
+		message.textContent = messageFor( model );
+		testMode.hidden = ! (
+			model.transaction &&
+			model.transaction.testmode &&
+			model.phase !== 'unverified'
+		);
 	}
 
-	/**
-	 * Fetch transaction status from REST API
-	 *
-	 * @param {string} transactionId Transaction ID
-	 * @param {string} token         Per-transaction access token from the redirect URL (flows that still put it there)
-	 */
-	function fetchTransactionStatus( transactionId, token ) {
-		const path = token
-			? `/fair-payments-connector/v1/payments/${ transactionId }/status?token=${ encodeURIComponent(
-					token
-				) }`
-			: `/fair-payments-connector/v1/payments/${ transactionId }/status`;
-
-		// The Simple Payment block keeps its token out of the URL and in session
-		// storage instead; send it as a header when present.
-		const headers = credentialHeaders( transactionId );
-
-		apiFetch( {
-			path,
-			method: 'GET',
-			...( headers ? { headers } : {} ),
-		} )
-			.then( ( response ) => {
-				showNotification( response );
-			} )
-			.catch( ( error ) => {
-				console.error(
-					'Fair Payments Connector: Failed to fetch transaction status',
-					error
-				);
-				showErrorNotification( error );
-			} );
-	}
-
-	/**
-	 * Show notification based on transaction status
-	 *
-	 * @param {Object} transaction Transaction data
-	 */
-	function showNotification( transaction ) {
-		const status = transaction.status;
-		let message = '';
-		let type = 'info';
-
-		switch ( status ) {
-			case 'paid':
-			case 'completed':
-				message = `Thank you! Your payment of ${ transaction.amount } ${ transaction.currency } has been successfully processed.`;
-				type = 'success';
-				break;
-
-			case 'pending_payment':
-			case 'pending':
-				message = `Your payment of ${ transaction.amount } ${ transaction.currency } is being processed. You will receive a confirmation shortly.`;
-				type = 'info';
-				break;
-
-			case 'failed':
-			case 'expired':
-			case 'canceled':
-				message = `Your payment of ${ transaction.amount } ${ transaction.currency } was not completed. Please try again.`;
-				type = 'error';
-				break;
-
-			case 'draft':
-				message = `Your payment is still being initialized. Please wait...`;
-				type = 'info';
-				break;
-
-			default:
-				message = `Payment status: ${ status }`;
-				type = 'info';
-				break;
+	function update( phase, transaction ) {
+		if ( model.dismissed ) {
+			return;
 		}
+		model.phase = phase;
+		model.transaction = transaction || model.transaction;
+		render();
+	}
 
-		// Add testmode indicator
-		if ( transaction.testmode ) {
-			message += ' (Test Mode)';
+	function isUsable( response ) {
+		return !! response && typeof response.lifecycle_status === 'string';
+	}
+
+	dismiss.addEventListener( 'click', () => {
+		model.dismissed = true;
+		if ( stopPolling ) {
+			stopPolling();
 		}
+		render();
+	} );
 
-		displayNotification( message, type );
+	render();
+	const container = document.querySelector( 'main' ) || document.body;
+	container.insertBefore( notice, container.firstChild );
+
+	stopPolling = pollPaymentStatus( {
+		path: `${ STATUS_PATH }/${ transactionId }/status`,
+		headers: credentialHeaders( transactionId ),
+		onConfirmed: ( response ) => update( 'confirmed', response ),
+		onFailed: ( response ) => update( 'failed', response ),
+		onProcessing: ( response ) => {
+			if ( ! isUsable( response ) ) {
+				stopPolling();
+				update( 'unverified', null );
+				return;
+			}
+			update( 'processing', response );
+		},
+		onError: () => update( 'unverified', null ),
+	} );
+}
+
+function init() {
+	const transactionId = returnTransactionId();
+	if ( ! transactionId || document.querySelector( OWNING_SURFACES ) ) {
+		return;
 	}
+	startNotice( transactionId );
+}
 
-	/**
-	 * Show error notification
-	 *
-	 * @param {Error} error Error object
-	 */
-	function showErrorNotification( error ) {
-		const message =
-			error.message ||
-			'Failed to retrieve payment status. Please contact support.';
-		displayNotification( message, 'error' );
-	}
-
-	/**
-	 * Display notification to user
-	 *
-	 * @param {string} message Notification message
-	 * @param {string} type Notification type (success, error, info)
-	 */
-	function displayNotification( message, type ) {
-		// Create notification element
-		const notification = document.createElement( 'div' );
-		notification.className = `fair-payments-connector-notification fair-payments-connector-notification--${ type }`;
-		notification.setAttribute( 'role', 'alert' );
-		notification.setAttribute( 'aria-live', 'polite' );
-
-		// Create message content
-		const messageElement = document.createElement( 'p' );
-		messageElement.textContent = message;
-		notification.appendChild( messageElement );
-
-		// Create dismiss button
-		const dismissButton = document.createElement( 'button' );
-		dismissButton.textContent = '×';
-		dismissButton.className =
-			'fair-payments-connector-notification__dismiss';
-		dismissButton.setAttribute( 'aria-label', 'Dismiss notification' );
-		dismissButton.addEventListener( 'click', () => {
-			notification.remove();
-		} );
-		notification.appendChild( dismissButton );
-
-		// Insert at the top of the page
-		const body = document.querySelector( 'body' );
-		body.insertBefore( notification, body.firstChild );
-
-		// Auto-dismiss after 10 seconds for success/info messages
-		if ( type === 'success' || type === 'info' ) {
-			setTimeout( () => {
-				if ( notification.parentNode ) {
-					notification.classList.add(
-						'fair-payments-connector-notification--fade-out'
-					);
-					setTimeout( () => notification.remove(), 500 );
-				}
-			}, 10000 );
-		}
-	}
-} )();
+if ( document.readyState === 'loading' ) {
+	document.addEventListener( 'DOMContentLoaded', init );
+} else {
+	init();
+}

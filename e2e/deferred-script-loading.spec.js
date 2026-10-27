@@ -76,23 +76,10 @@ test.describe('calendar button frontend script', () => {
 });
 
 test.describe('payment callback script', () => {
-	const seeded = [];
-
-	const seedTransaction = (status) => {
-		const transaction = runScript(
-			'seed-callback-transaction.php',
-			'E2E_CALLBACK_TX',
-			status
-		);
-		seeded.push(transaction);
-		return transaction;
-	};
-
-	const callbackUrl = (transaction, token = transaction.token) =>
-		`/?fair_payment_callback=true&transaction_id=${transaction.transactionId}&token=${token}`;
+	let transaction;
 
 	test.afterAll(() => {
-		for (const transaction of seeded) {
+		if (transaction) {
 			runScript(
 				'cleanup-callback-transaction.php',
 				'E2E_CALLBACK_TX_CLEANUP',
@@ -101,45 +88,38 @@ test.describe('payment callback script', () => {
 		}
 	});
 
-	for (const [status, type, text] of [
-		['paid', 'success', 'has been successfully processed'],
-		['pending_payment', 'info', 'is being processed'],
-		['failed', 'error', 'was not completed'],
-	]) {
-		test(`is deferred in the footer and reports a ${status} payment`, async ({
-			page,
-		}) => {
-			const errors = collectErrors(page);
-			const transaction = seedTransaction(status);
-
-			await page.goto(callbackUrl(transaction));
-
-			expect(
-				await scriptTag(page, 'fair-payments-connector-callback')
-			).toMatchObject({ defer: true, async: false, inFooter: true });
-
-			const notification = page.locator(
-				`.fair-payments-connector-notification--${type}`
-			);
-			await expect(notification).toBeVisible();
-			await expect(notification).toContainText(text);
-			await expect(notification).toContainText(
-				`${transaction.amount} ${transaction.currency}`
-			);
-			expect(errors).toEqual([]);
-		});
-	}
-
-	test('reports an error when the status cannot be read', async ({
+	// Status wording and credentials are covered by
+	// user-flows/payment-return-notification.spec.js.
+	test('is deferred in the footer and reports the payment', async ({
 		page,
 	}) => {
-		const transaction = seedTransaction('paid');
+		const errors = collectErrors(page);
+		transaction = runScript(
+			'seed-callback-transaction.php',
+			'E2E_CALLBACK_TX',
+			'paid'
+		);
+		await page.addInitScript(
+			([key, token]) => window.sessionStorage.setItem(key, token),
+			[
+				`fairPaymentsConnector.accessToken.${transaction.transactionId}`,
+				transaction.token,
+			]
+		);
 
-		await page.goto(callbackUrl(transaction, 'not-the-token'));
+		await page.goto(
+			`/?fair_payment_callback=true&transaction_id=${transaction.transactionId}`
+		);
 
-		await expect(
-			page.locator('.fair-payments-connector-notification--error')
-		).toBeVisible();
+		expect(
+			await scriptTag(page, 'fair-payments-connector-callback')
+		).toMatchObject({ defer: true, async: false, inFooter: true });
+
+		const notification = page.locator(
+			'.fair-payments-connector-notification[data-phase="confirmed"]'
+		);
+		await expect(notification).toBeVisible();
+		expect(errors).toEqual([]);
 	});
 });
 

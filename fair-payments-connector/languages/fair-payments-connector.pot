@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T09:15:26+00:00\n"
+"POT-Creation-Date: 2026-10-27T08:20:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector\n"
@@ -91,7 +91,7 @@ msgid "Your stored Mollie API key was removed. Complete the guided connection to
 msgstr ""
 
 #: src/Admin/ApiKeyRemovedNotice.php:73
-#: src/Admin/settings/ConnectionTab.js:885
+#: src/Admin/settings/ConnectionTab.js:889
 msgid "Connect with Mollie"
 msgstr ""
 
@@ -280,12 +280,12 @@ msgid "Connected, but the audit entry could not be recorded."
 msgstr ""
 
 #: src/API/OAuthCallbackController.php:263
-#: src/Admin/settings/ConnectionTab.js:313
+#: src/Admin/settings/ConnectionTab.js:317
 msgid "Disconnected from Mollie."
 msgstr ""
 
 #: src/API/OAuthCallbackController.php:269
-#: src/Admin/settings/ConnectionTab.js:329
+#: src/Admin/settings/ConnectionTab.js:333
 msgid "Disconnected, but the audit entry could not be recorded."
 msgstr ""
 
@@ -664,10 +664,12 @@ msgid "\"%s\" was changed."
 msgstr ""
 
 #: src/blocks/simple-payment/render.php:50
+#: src/payment-callback.js:88
 msgid "Thank you! Your payment has been received and confirmed."
 msgstr ""
 
 #: src/blocks/simple-payment/render.php:53
+#: src/payment-callback.js:116
 msgid "Thank you! Your payment is being processed."
 msgstr ""
 
@@ -748,12 +750,12 @@ msgid "Transaction status must be \"draft\" to initiate payment. Current status:
 msgstr ""
 
 #: src/Payment/MollieCredentials.php:207
-#: src/Admin/settings/ConnectionTab.js:899
+#: src/Admin/settings/ConnectionTab.js:903
 msgid "Payments are paused: the Mollie connection is stored encrypted, but this server no longer provides the Sodium encryption support needed to read it. Ask your host to restore PHP Sodium support; the connection then resumes without reconnecting."
 msgstr ""
 
 #: src/Payment/MollieCredentials.php:211
-#: src/Admin/settings/ConnectionTab.js:921
+#: src/Admin/settings/ConnectionTab.js:925
 msgid "Payments are paused: the stored Mollie connection can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Reconnect to Mollie to resume payments."
 msgstr ""
 
@@ -1342,6 +1344,7 @@ msgid "Live mode"
 msgstr ""
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:76
+#: src/payment-callback.js:151
 msgid "Test mode"
 msgstr ""
 
@@ -1366,7 +1369,7 @@ msgstr ""
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:252
 #: src/Admin/external-updates/components/MollieImportPanel.js:301
-#: src/Admin/settings/ConnectionTab.js:363
+#: src/Admin/settings/ConnectionTab.js:367
 #: src/Admin/transaction/TransactionPage.js:1036
 #: src/Admin/transactions/TransactionsApp.js:49
 #: src/Admin/transactions/TransactionsApp.js:998
@@ -1375,7 +1378,7 @@ msgstr ""
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:253
 #: src/Admin/external-updates/components/MollieImportPanel.js:308
-#: src/Admin/settings/ConnectionTab.js:364
+#: src/Admin/settings/ConnectionTab.js:368
 #: src/Admin/transaction/TransactionPage.js:1040
 #: src/Admin/transactions/TransactionsApp.js:48
 #: src/Admin/transactions/TransactionsApp.js:1002
@@ -1395,7 +1398,7 @@ msgid "Find paid Mollie payments created during a period of up to 90 days and im
 msgstr ""
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
-#: src/Admin/settings/ConnectionTab.js:1156
+#: src/Admin/settings/ConnectionTab.js:1160
 #: src/Admin/transaction/TransactionPage.js:1017
 #: src/Admin/transactions/TransactionsApp.js:576
 #: src/Admin/transactions/TransactionsApp.js:899
@@ -1998,8 +2001,8 @@ msgstr ""
 
 #: src/Admin/settings/ApiTokensTab.js:483
 #: src/Admin/settings/ApiTokensTab.js:578
-#: src/Admin/settings/ConnectionTab.js:705
-#: src/Admin/settings/ConnectionTab.js:821
+#: src/Admin/settings/ConnectionTab.js:709
+#: src/Admin/settings/ConnectionTab.js:825
 #: src/Admin/transaction/TransactionPage.js:151
 #: src/Admin/transaction/TransactionPage.js:281
 #: src/Admin/transaction/TransactionPage.js:505
@@ -2126,248 +2129,248 @@ msgid "Next"
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:56
-#: src/Admin/settings/ConnectionTab.js:1054
+#: src/Admin/settings/ConnectionTab.js:1058
 msgid "Profile name:"
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:57
-#: src/Admin/settings/ConnectionTab.js:994
+#: src/Admin/settings/ConnectionTab.js:998
 msgid "Profile ID:"
 msgstr ""
 
 #: src/Admin/settings/ConnectionTab.js:58
-#: src/Admin/settings/ConnectionTab.js:981
+#: src/Admin/settings/ConnectionTab.js:985
 msgid "Organization ID:"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:168
+#: src/Admin/settings/ConnectionTab.js:167
 msgid "Failed to load settings."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:231
+#: src/Admin/settings/ConnectionTab.js:228
 msgid "Failed to load payment methods."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:258
+#: src/Admin/settings/ConnectionTab.js:262
 msgid "Failed to initiate Mollie connection. Please try again."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:341
+#: src/Admin/settings/ConnectionTab.js:345
 msgid "Failed to disconnect."
 msgstr ""
 
 #. translators: %s: mode name (Test or Live)
-#: src/Admin/settings/ConnectionTab.js:361
+#: src/Admin/settings/ConnectionTab.js:365
 #, js-format
 msgid "Switched to %s mode."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:374
+#: src/Admin/settings/ConnectionTab.js:378
 msgid "Failed to change mode."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:396
+#: src/Admin/settings/ConnectionTab.js:400
 msgid "Connection refreshed successfully."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:417
+#: src/Admin/settings/ConnectionTab.js:421
 msgid "Failed to refresh connection."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:449
+#: src/Admin/settings/ConnectionTab.js:453
 msgid "Please check the error log for more details or try reconnecting to Mollie."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:481
+#: src/Admin/settings/ConnectionTab.js:485
 msgid "Test payment created. Complete or cancel the checkout in the new tab; its status updates automatically."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:541
-#: src/Admin/settings/ConnectionTab.js:628
+#: src/Admin/settings/ConnectionTab.js:545
+#: src/Admin/settings/ConnectionTab.js:632
 msgid "Failed to create test payment."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:577
+#: src/Admin/settings/ConnectionTab.js:581
 msgid "Failed to load the test payment details."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:658
-#: src/Admin/settings/ConnectionTab.js:719
-#: src/Admin/settings/ConnectionTab.js:1204
+#: src/Admin/settings/ConnectionTab.js:662
+#: src/Admin/settings/ConnectionTab.js:723
+#: src/Admin/settings/ConnectionTab.js:1208
 msgid "Disconnect Mollie"
 msgstr ""
 
 #. translators: %s: Mollie profile name
-#: src/Admin/settings/ConnectionTab.js:677
+#: src/Admin/settings/ConnectionTab.js:681
 #, js-format
 msgid "Disconnect this site from the Mollie profile \"%s\"?"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:683
+#: src/Admin/settings/ConnectionTab.js:687
 msgid "Disconnect this site from the connected Mollie account?"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:694
+#: src/Admin/settings/ConnectionTab.js:698
 msgid "This site loses its Mollie connection: it cannot create new Mollie payments or receive status updates for existing ones until you reconnect. Payments already in Mollie are not cancelled or refunded."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:715
+#: src/Admin/settings/ConnectionTab.js:719
 msgid "Disconnecting…"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:732
-#: src/Admin/settings/ConnectionTab.js:838
-#: src/Admin/settings/ConnectionTab.js:1315
+#: src/Admin/settings/ConnectionTab.js:736
+#: src/Admin/settings/ConnectionTab.js:842
+#: src/Admin/settings/ConnectionTab.js:1319
 msgid "Create test payment"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:736
-#: src/Admin/settings/ConnectionTab.js:834
+#: src/Admin/settings/ConnectionTab.js:740
+#: src/Admin/settings/ConnectionTab.js:838
 msgid "Create live test payment"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:755
+#: src/Admin/settings/ConnectionTab.js:759
 msgid "Loading the test payment details…"
 msgstr ""
 
 #. translators: %s: amount with currency code, e.g. "1.00 EUR"
-#: src/Admin/settings/ConnectionTab.js:767
+#: src/Admin/settings/ConnectionTab.js:771
 #, js-format
 msgid "Create a live test payment of %s?"
 msgstr ""
 
 #. translators: %s: amount with currency code, e.g. "1.00 EUR"
-#: src/Admin/settings/ConnectionTab.js:775
+#: src/Admin/settings/ConnectionTab.js:779
 #, js-format
 msgid "Create a test-mode payment of %s?"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:792
-#: src/Admin/settings/ConnectionTab.js:1278
+#: src/Admin/settings/ConnectionTab.js:796
+#: src/Admin/settings/ConnectionTab.js:1282
 msgid "Live mode: this creates a real payment with real money and gateway fees."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:799
-#: src/Admin/settings/ConnectionTab.js:1282
+#: src/Admin/settings/ConnectionTab.js:803
+#: src/Admin/settings/ConnectionTab.js:1286
 msgid "Test mode: no real money is charged."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:809
+#: src/Admin/settings/ConnectionTab.js:813
 msgid "The payment details could not be loaded, so no payment can be created. Close this dialog and try again."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:832
+#: src/Admin/settings/ConnectionTab.js:836
 msgid "Creating…"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:855
+#: src/Admin/settings/ConnectionTab.js:859
 msgid "Loading connection settings..."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:872
+#: src/Admin/settings/ConnectionTab.js:876
 msgid "Mollie Connection"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:878
+#: src/Admin/settings/ConnectionTab.js:882
 msgid "Connect your Mollie account to accept payments. This uses secure OAuth authentication."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:912
-#: src/Admin/settings/ConnectionTab.js:946
+#: src/Admin/settings/ConnectionTab.js:916
+#: src/Admin/settings/ConnectionTab.js:950
 msgid "Reconnect to Mollie"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:933
+#: src/Admin/settings/ConnectionTab.js:937
 msgid "Connected to Mollie"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:955
+#: src/Admin/settings/ConnectionTab.js:959
 msgid "Mollie has not authorized this site to read settlements yet. Reconnect to grant that permission. Payments keep working in the meantime."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:970
+#: src/Admin/settings/ConnectionTab.js:974
 msgid "Settlement access: authorized"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1003
+#: src/Admin/settings/ConnectionTab.js:1007
 msgid "Missing (required for payments)"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1018
+#: src/Admin/settings/ConnectionTab.js:1022
 msgid "Please reconnect to Mollie to fetch the profile ID."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1034
+#: src/Admin/settings/ConnectionTab.js:1038
 msgid "Loading payment methods…"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1068
+#: src/Admin/settings/ConnectionTab.js:1072
 msgid "Enabled payment methods:"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1109
+#: src/Admin/settings/ConnectionTab.js:1113
 msgid "No payment methods are currently enabled."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1122
+#: src/Admin/settings/ConnectionTab.js:1126
 msgid "Manage payment methods in Mollie"
 msgstr ""
 
 #. translators: %s: expiration date
-#: src/Admin/settings/ConnectionTab.js:1142
+#: src/Admin/settings/ConnectionTab.js:1146
 #, js-format
 msgid "Token expires: %s"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1163
+#: src/Admin/settings/ConnectionTab.js:1167
 msgid "Test Mode"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1170
+#: src/Admin/settings/ConnectionTab.js:1174
 msgid "Live Mode"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1188
+#: src/Admin/settings/ConnectionTab.js:1192
 msgid "Save mode"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1218
+#: src/Admin/settings/ConnectionTab.js:1222
 msgid "Reconnect"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1234
+#: src/Admin/settings/ConnectionTab.js:1238
 msgid "Refreshing..."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1238
+#: src/Admin/settings/ConnectionTab.js:1242
 msgid "Refresh Connection"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1253
+#: src/Admin/settings/ConnectionTab.js:1257
 msgid "Reconnect and Refresh Connection are unavailable until encryption support is restored. Disconnecting stays possible."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1267
+#: src/Admin/settings/ConnectionTab.js:1271
 msgid "Test payment"
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1269
+#: src/Admin/settings/ConnectionTab.js:1273
 msgid "Make a small payment (one unit of your currency, e.g. €1) to check that checkout and confirmation work from start to finish."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1291
+#: src/Admin/settings/ConnectionTab.js:1295
 msgid "Test payment created. If the checkout did not open in a new tab, "
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1300
+#: src/Admin/settings/ConnectionTab.js:1304
 msgid "open it here."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1330
+#: src/Admin/settings/ConnectionTab.js:1334
 msgid "Test payments are paused until the stored Mollie connection can be read again."
 msgstr ""
 
-#: src/Admin/settings/ConnectionTab.js:1345
+#: src/Admin/settings/ConnectionTab.js:1349
 msgid "Connect Mollie first to run a test payment."
 msgstr ""
 
@@ -3034,6 +3037,40 @@ msgstr ""
 
 #: src/blocks/simple-payment/view.js:221
 msgid "Failed to create payment"
+msgstr ""
+
+#. translators: %s: formatted amount, e.g. €12.50
+#: src/payment-callback.js:82
+#, js-format
+msgid "Thank you! Your payment of %s has been received and confirmed."
+msgstr ""
+
+#. translators: %s: formatted amount, e.g. €12.50
+#: src/payment-callback.js:96
+#, js-format
+msgid "Your payment of %s was not completed."
+msgstr ""
+
+#: src/payment-callback.js:102
+msgid "Your payment was not completed."
+msgstr ""
+
+#. translators: %s: formatted amount, e.g. €12.50
+#: src/payment-callback.js:110
+#, js-format
+msgid "Thank you! Your payment of %s is being processed."
+msgstr ""
+
+#: src/payment-callback.js:121
+msgid "We couldn’t verify your payment status. If you completed the payment, check your email for a confirmation or contact the organizer."
+msgstr ""
+
+#: src/payment-callback.js:126
+msgid "Checking your payment status…"
+msgstr ""
+
+#: src/payment-callback.js:159
+msgid "Dismiss payment notice"
 msgstr ""
 
 #: src/blocks/simple-payment/block.json
