@@ -15,6 +15,10 @@ function sameForm( fields, a, b ) {
 	return fields.every( ( field ) => a[ field ] === b[ field ] );
 }
 
+function formKey( fields, form ) {
+	return JSON.stringify( fields.map( ( field ) => form[ field ] ) );
+}
+
 /**
  * Bring a draft up to date with saved settings read from the server.
  *
@@ -71,9 +75,7 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 	const { id } = channel;
 	const route = `${ PATH }/configurations/${ id }`;
 	const saved = toForm( channel );
-	const savedKey = JSON.stringify(
-		fields.map( ( field ) => saved[ field ] )
-	);
+	const savedKey = formKey( fields, saved );
 	const latestSaved = useRef( saved );
 	latestSaved.current = saved;
 
@@ -86,6 +88,8 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 				conflict: false,
 			}
 	);
+	// The draft as last set, for handlers that run before the re-render.
+	const latestDraft = useRef( draft );
 	const [ notice, setNotice ] = useState( null );
 	const [ pending, setPending ] = useState( {
 		save: false,
@@ -99,22 +103,41 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 	const busy = useRef( { save: false, preview: false, test: false } );
 	// Bumped whenever a preview stops describing the saved settings.
 	const previewRequest = useRef( 0 );
+	// Saved settings the draft and the preview were last brought up to.
+	const knownKey = useRef( savedKey );
 
-	useEffect( () => {
-		setDraft( ( current ) =>
-			reconcileDraft( fields, current, latestSaved.current )
-		);
+	const dropPreview = () => {
 		previewRequest.current++;
 		setPreview( null );
+	};
+
+	// Sets the draft here and in the page's store in the same render, so
+	// the page's "Unsaved changes" marker never lags behind the editor.
+	const commitDraft = ( next ) => {
+		latestDraft.current = next;
+		setDraft( next );
+		drafts?.set( id, next, ! sameForm( fields, next.form, next.baseline ) );
+	};
+
+	// Saved settings changed elsewhere, e.g. in another tab. A save from
+	// this editor has already brought both up to date.
+	useEffect( () => {
+		const current = latestDraft.current;
+		const next = reconcileDraft( fields, current, latestSaved.current );
+		if ( next !== current ) {
+			commitDraft( next );
+		}
+		if ( savedKey !== knownKey.current ) {
+			knownKey.current = savedKey;
+			dropPreview();
+		}
+		// commitDraft only reads refs and stable setters.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ savedKey, fields ] );
 
 	const dirty = ! sameForm( fields, draft.form, draft.baseline );
 	const problem = adapter.problem ? adapter.problem( draft.form ) : null;
 	useUnsavedWarning( dirty && ! drafts );
-
-	useEffect( () => {
-		drafts?.set( id, draft, dirty );
-	}, [ drafts, id, draft, dirty ] );
 
 	const start = ( action ) => {
 		busy.current[ action ] = true;
@@ -126,14 +149,16 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 	};
 
 	// A draft edited back to its baseline follows the latest saved settings.
-	const setField = ( field, value ) =>
-		setDraft( ( current ) =>
+	const setField = ( field, value ) => {
+		const current = latestDraft.current;
+		commitDraft(
 			reconcileDraft(
 				fields,
 				{ ...current, form: { ...current.form, [ field ]: value } },
 				latestSaved.current
 			)
 		);
+	};
 
 	const save = async () => {
 		if ( busy.current.save || busy.current.test || problem ) {
@@ -151,14 +176,18 @@ export default function useNotificationEditor( { channel, adapter, onSaved } ) {
 					: submitted,
 			} );
 			const savedForm = toForm( savedChannel );
-			// Edits typed while the request ran stay in the draft.
-			setDraft( ( current ) => ( {
+			const current = latestDraft.current;
+			// Edits typed while the request ran stay in the draft. The draft,
+			// the dropped preview and the notice show in one render.
+			commitDraft( {
 				form: sameForm( fields, current.form, submitted )
 					? savedForm
 					: current.form,
 				baseline: savedForm,
 				conflict: false,
-			} ) );
+			} );
+			knownKey.current = formKey( fields, savedForm );
+			dropPreview();
 			onSaved( id, savedChannel );
 			setNotice( { status: 'success', message: messages.saved } );
 		} catch ( error ) {

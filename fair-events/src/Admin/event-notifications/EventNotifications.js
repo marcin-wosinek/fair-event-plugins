@@ -76,6 +76,8 @@ export default function EventNotifications( { sourcesUrl } ) {
 	const [ data, setData ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
 	const [ location, navigate ] = useLocationState();
+	// A message about how the view was reached, with the view it belongs
+	// to: it is shown there only, so it is gone as soon as the view changes.
 	const [ flash, setFlash ] = useState( null );
 	const { store, dirty } = useDraftStore();
 	useUnsavedWarning( dirty.length > 0 );
@@ -128,15 +130,6 @@ export default function EventNotifications( { sourcesUrl } ) {
 		previousView.current = view;
 	}, [ view, load ] );
 
-	// A message about how the view was reached lasts until the next view.
-	const shownFlash = useRef( null );
-	useEffect( () => {
-		if ( shownFlash.current && shownFlash.current !== location ) {
-			setFlash( null );
-		}
-		shownFlash.current = location;
-	}, [ location ] );
-
 	// Credentials and plugins are changed on other screens, usually in
 	// another tab. Coming back re-reads availability and status; each
 	// section keeps its own unsaved edits.
@@ -174,21 +167,21 @@ export default function EventNotifications( { sourcesUrl } ) {
 	const onAdded = useCallback(
 		( configuration ) => {
 			onSaved( configuration.id, configuration );
-			shownFlash.current = null;
-			setFlash(
-				sprintf(
+			const reached = navigate( {
+				view: 'configuration',
+				configuration: configuration.id,
+				tab: 'editor',
+			} );
+			setFlash( {
+				location: reached,
+				message: sprintf(
 					/* translators: %s: name of the added notification */
 					__(
 						'“%s” was added. It is paused: set it up, turn it on and save it when it is ready.',
 						'fair-events'
 					),
 					configuration.name || TYPE_LABELS[ configuration.type ]
-				)
-			);
-			navigate( {
-				view: 'configuration',
-				configuration: configuration.id,
-				tab: 'editor',
+				),
 			} );
 		},
 		[ onSaved, navigate ]
@@ -224,7 +217,9 @@ export default function EventNotifications( { sourcesUrl } ) {
 					location={ location }
 					navigate={ navigate }
 					onSaved={ onSaved }
-					flash={ flash }
+					flash={
+						flash?.location === location ? flash.message : null
+					}
 				/>
 			</>
 		);

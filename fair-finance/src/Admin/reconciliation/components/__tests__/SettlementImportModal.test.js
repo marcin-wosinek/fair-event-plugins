@@ -2,16 +2,12 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import {
-	render,
-	screen,
-	fireEvent,
-	waitFor,
-	within,
-	act,
-} from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+// React comes with @wordpress/element, which does not re-export Profiler.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Profiler } from 'react';
 import apiFetch from '@wordpress/api-fetch';
 import SettlementImportModal from '../SettlementImportModal.js';
 
@@ -131,7 +127,8 @@ describe( 'SettlementImportModal', () => {
 			data: PARSED,
 		} );
 
-		await waitFor( () => expect( confirmButton() ).toBeEnabled() );
+		// The suggested entry is selected in the render that shows the report.
+		expect( confirmButton() ).toBeEnabled();
 		fireEvent.click( confirmButton() );
 
 		expect(
@@ -234,7 +231,7 @@ describe( 'SettlementImportModal', () => {
 		expect(
 			dialog().queryByText( 'Failed to parse file.' )
 		).not.toBeInTheDocument();
-		await waitFor( () => expect( confirmButton() ).toBeEnabled() );
+		expect( confirmButton() ).toBeEnabled();
 		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
 	} );
 
@@ -264,5 +261,46 @@ describe( 'SettlementImportModal', () => {
 			dialog().getByText( 'Failed to parse file.' )
 		).toBeInTheDocument();
 		expectNoReport();
+	} );
+} );
+
+describe( 'SettlementImportModal — report and selection', () => {
+	it( 'never shows a report without its suggested entry selected', async () => {
+		apiFetch.mockReset();
+		apiFetch.mockResolvedValue( REPORT );
+		// Checked after every commit, before effects run.
+		const unselected = [];
+		const onRender = () => {
+			const shown = document.body.textContent.includes(
+				'Settlement 19415110.2605.03'
+			);
+			const confirm = screen.queryByRole( 'button', {
+				name: 'Confirm Match',
+			} );
+			if ( shown && confirm?.disabled ) {
+				unselected.push( 'Confirm Match disabled' );
+			}
+		};
+		render(
+			<Profiler id="modal" onRender={ onRender }>
+				<SettlementImportModal
+					onImport={ jest.fn() }
+					onCancel={ jest.fn() }
+				/>
+			</Profiler>
+		);
+
+		chooseFile( settlement() );
+		expect(
+			await dialog().findByText( 'Settlement 19415110.2605.03' )
+		).toBeInTheDocument();
+		chooseFile( settlement() );
+		expect( confirmButton() ).toBeDisabled();
+		expect(
+			await dialog().findByText( 'Settlement 19415110.2605.03' )
+		).toBeInTheDocument();
+
+		expect( confirmButton() ).toBeEnabled();
+		expect( unselected ).toEqual( [] );
 	} );
 } );

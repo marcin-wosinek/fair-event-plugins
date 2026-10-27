@@ -56,6 +56,23 @@ Jest configurations should discover `**/__tests__/**/*.test.js` and
 `src/`, excluding test, entry-point, dependency, and generated files. Aim for
 70% or better coverage for new code where that measure is meaningful.
 
+### Asserting absence after an asynchronous action
+
+Wait for the action's own visible outcome (for example `await
+findByText( 'Settings saved.' )`), then assert the related state, including
+absence, straight away with `queryBy…`. When the outcome and its side effects
+must agree, the component should update them in the same render: set them in
+the action's handler, not in an effect that reacts to changed data. Wrapping
+the absence check in `waitFor` would only hide a render where they disagree.
+
+Wait for absence separately only where the change is meant to arrive later
+(for example a list that reloads after the save), and say why in a comment.
+Testing Library flushes effects inside `act`, so a passing assertion does not
+prove there was no inconsistent render in between. To check that, wrap the
+component in React's `<Profiler onRender>` and inspect the DOM on each commit,
+as the save-completion tests in
+`fair-events/src/Admin/event-notifications/__tests__/` do.
+
 Repository-level Node utilities use the built-in Node test runner under
 `scripts/__tests__/*.test.mjs`; `npm test` includes them through
 `test:tooling`.

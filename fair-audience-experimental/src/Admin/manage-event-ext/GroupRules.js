@@ -66,7 +66,27 @@ const permissionLabel = ( type ) => {
 	}
 };
 
+/**
+ * Group pricing and permission rules of one event date.
+ *
+ * Keyed by the event date, so switching events starts over with empty
+ * rules, notices and form selections in the same render, and a request
+ * still running for the previous event can no longer change what is shown.
+ *
+ * @param {Object}      props
+ * @param {number|null} props.eventDateId Event date ID.
+ * @return {JSX.Element} The rules panel.
+ */
 export default function GroupRules( { eventDateId } ) {
+	return (
+		<EventGroupRules
+			key={ eventDateId || 'none' }
+			eventDateId={ eventDateId }
+		/>
+	);
+}
+
+function EventGroupRules( { eventDateId } ) {
 	const [ pricingRules, setPricingRules ] = useState( [] );
 	const [ permissionRules, setPermissionRules ] = useState( [] );
 	const [ groups, setGroups ] = useState( [] );
@@ -146,19 +166,7 @@ export default function GroupRules( { eventDateId } ) {
 	}, [ eventDateId ] );
 
 	useEffect( () => {
-		// Drop everything that belongs to the previous event.
-		setPricingRules( [] );
-		setPermissionRules( [] );
-		setGroups( [] );
-		setError( null );
-		setSuccess( null );
-		setEditingGroupId( null );
-		setSelectedGroupId( '' );
-
 		if ( ! eventDateId ) {
-			latestLoadRef.current++;
-			setLoadStatus( 'idle' );
-			setLoadError( '' );
 			return undefined;
 		}
 

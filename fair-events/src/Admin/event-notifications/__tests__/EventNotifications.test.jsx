@@ -4,12 +4,16 @@
 import '@testing-library/jest-dom';
 import {
 	act,
+	configure,
 	fireEvent,
 	render,
 	screen,
 	waitFor,
 	within,
 } from '@testing-library/react';
+// React comes with @wordpress/element, which does not re-export Profiler.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Profiler } from 'react';
 import apiFetch from '@wordpress/api-fetch';
 import { getSettings, setSettings } from '@wordpress/date';
 import EventNotifications, { mergeRead } from '../EventNotifications.js';
@@ -18,6 +22,10 @@ import { dayStartUtc } from '../historyFormat.js';
 import { TelegramMessage } from '../TelegramPreview.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+// A Notice's text is mirrored into the a11y-speak live region, which
+// outlives each test; queries look at the page only.
+configure( { defaultIgnore: 'script, style, .a11y-speak-region' } );
 
 // jsdom does not scroll; opening a view scrolls to the top.
 window.scrollTo = () => {};
@@ -418,11 +426,7 @@ describe( 'EventNotifications', () => {
 		expect(
 			calls( 'POST', `${ PATH }/configurations/bulk_email` )
 		).toHaveLength( 0 );
-		await waitFor( () =>
-			expect(
-				tg.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 
 		// The list marks the draft left behind, and it is there on return.
 		fireEvent.click(
@@ -779,11 +783,7 @@ describe( 'Independent editors', () => {
 		expect(
 			await mail.findByText( 'Bulk email settings saved.' )
 		).toBeInTheDocument();
-		await waitFor( () =>
-			expect(
-				mail.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 
 		const tg = await openNotification( 'Telegram' );
 		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '21:00' );
@@ -841,11 +841,7 @@ describe( 'Independent editors', () => {
 		fireEvent.change( tg.getByLabelText( 'Send at' ), {
 			target: { value: '18:00' },
 		} );
-		await waitFor( () =>
-			expect(
-				tg.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 	} );
 
 	it( 'keeps the draft after a failed save and lets it be retried', async () => {
@@ -992,11 +988,7 @@ describe( 'Independent editors', () => {
 		expect( await mail.findByLabelText( 'Subject' ) ).toHaveValue(
 			'Changed meanwhile'
 		);
-		await waitFor( () =>
-			expect(
-				mail.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 		expect(
 			mail.getByRole( 'button', { name: 'Save bulk email settings' } )
 		).toBeEnabled();
@@ -1034,11 +1026,7 @@ describe( 'Independent editors', () => {
 		// A clean one follows the saved settings.
 		const tg = await openNotification( 'Telegram' );
 		expect( await tg.findByDisplayValue( '12:00' ) ).toBeInTheDocument();
-		await waitFor( () =>
-			expect(
-				tg.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 		expect(
 			tg.queryByText( /These settings were saved somewhere else/ )
 		).not.toBeInTheDocument();
@@ -1074,11 +1062,7 @@ describe( 'Independent editors', () => {
 		} );
 
 		expect( tg.getByLabelText( 'Send at' ) ).toHaveValue( '18:00' );
-		await waitFor( () =>
-			expect(
-				tg.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( tg.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 		expect(
 			tg.queryByText( /These settings were saved somewhere else/ )
 		).not.toBeInTheDocument();
@@ -1167,6 +1151,129 @@ describe( 'Independent editors', () => {
 			own.queryByText( 'Organizer update: 2026-10-12' )
 		).not.toBeInTheDocument();
 	} );
+} );
+
+describe( 'Save completion', () => {
+	const kinds = [
+		{
+			id: 'telegram',
+			name: 'Telegram',
+			previewButton: 'Preview next Telegram message',
+			preview: {
+				occurrence_count: 1,
+				week_title: '12–18 Oct 2026',
+				messages: [ { text: 'Shown before the save', entities: [] } ],
+			},
+			field: 'Send at',
+			value: '18:00',
+			changes: { time_of_day: '18:00' },
+			saveButton: 'Save Telegram settings',
+			saved: 'Telegram settings saved.',
+		},
+		{
+			id: 'bulk_email',
+			name: 'Bulk email',
+			previewButton: 'Preview next email',
+			preview: {
+				subject: 'Shown before the save',
+				html: '<p>Concert night</p>',
+				empty: false,
+				week_title: '12–18 Oct 2026',
+			},
+			field: 'Subject',
+			value: 'New',
+			changes: { subject: 'New' },
+			saveButton: 'Save bulk email settings',
+			saved: 'Bulk email settings saved.',
+		},
+		{
+			id: 'individual_email',
+			name: 'Individual email',
+			previewButton: 'Preview next email',
+			preview: {
+				recipient: 'organizer@example.test',
+				subject: 'Shown before the save',
+				html: '<p>Concert night</p>',
+				empty: false,
+				skip_empty: true,
+				week_title: '12–18 Oct 2026',
+			},
+			field: 'Subject',
+			value: 'New',
+			changes: { subject: 'New' },
+			saveButton: 'Save individual email settings',
+			saved: 'Individual email settings saved.',
+		},
+	];
+
+	// After every commit, before effects or the next assertion: a screen
+	// that says "saved" must not show what the save replaced.
+	function watchCommits( savedText ) {
+		const stale = [];
+		const onRender = () => {
+			const page = document.querySelector( '.fair-events-notifications' );
+			if ( ! page?.textContent.includes( savedText ) ) {
+				return;
+			}
+			if (
+				page.querySelector( 'h2 .fair-events-notifications__unsaved' )
+			) {
+				stale.push( 'Unsaved changes' );
+			}
+			if ( page.textContent.includes( 'Shown before the save' ) ) {
+				stale.push( 'preview' );
+			}
+		};
+		return { stale, onRender };
+	}
+
+	it.each( kinds )(
+		'shows the $name notice without the old preview or unsaved marker',
+		async ( kind ) => {
+			visit( `&configuration=${ kind.id }` );
+			mockApi( payload(), {
+				[ `GET ${ PATH }/configurations/${ kind.id }/preview` ]: () =>
+					Promise.resolve( kind.preview ),
+				[ `POST ${ PATH }/configurations/${ kind.id }` ]: () =>
+					Promise.resolve( payload( { [ kind.id ]: kind.changes } ) ),
+			} );
+			const commits = watchCommits( kind.saved );
+			render(
+				<Profiler id="page" onRender={ commits.onRender }>
+					<EventNotifications sourcesUrl={ null } />
+				</Profiler>
+			);
+			await screen.findByRole( 'navigation', {
+				name: 'Notification sections',
+			} );
+
+			const editor = within( section( kind.name ) );
+			fireEvent.click(
+				editor.getByRole( 'button', { name: kind.previewButton } )
+			);
+			expect(
+				await editor.findByText( /Shown before the save/ )
+			).toBeInTheDocument();
+			fireEvent.change( editor.getByLabelText( kind.field ), {
+				target: { value: kind.value },
+			} );
+			expect( editor.getByText( 'Unsaved changes' ) ).toBeInTheDocument();
+
+			fireEvent.click(
+				editor.getByRole( 'button', { name: kind.saveButton } )
+			);
+
+			expect( await editor.findByText( kind.saved ) ).toBeInTheDocument();
+			expect(
+				editor.queryByText( /Shown before the save/ )
+			).not.toBeInTheDocument();
+			expect(
+				editor.queryByText( 'Unsaved changes' )
+			).not.toBeInTheDocument();
+			expect( leavingIsGuarded() ).toBe( false );
+			expect( commits.stale ).toEqual( [] );
+		}
+	);
 } );
 
 describe( 'Individual email', () => {
@@ -1268,11 +1375,7 @@ describe( 'Individual email', () => {
 		expect(
 			calls( 'POST', `${ PATH }/configurations/telegram` )
 		).toHaveLength( 0 );
-		await waitFor( () =>
-			expect(
-				own.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( own.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 	} );
 
 	it( 'edits its wording without changing the bulk email wording', async () => {
@@ -1299,11 +1402,7 @@ describe( 'Individual email', () => {
 		expect(
 			mail.getByLabelText( 'Skip the email when the week has no events' )
 		).toBeChecked();
-		await waitFor( () =>
-			expect(
-				mail.queryByText( 'Unsaved changes' )
-			).not.toBeInTheDocument()
-		);
+		expect( mail.queryByText( 'Unsaved changes' ) ).not.toBeInTheDocument();
 	} );
 
 	it( 'starts off and cannot be turned on without a recipient', async () => {
@@ -1685,11 +1784,13 @@ describe( 'Several notifications of one kind', () => {
 
 		// The message belongs to the view it was shown in.
 		fireEvent.click( named.getByRole( 'link', { name: 'History' } ) );
-		await waitFor( () =>
-			expect(
-				screen.queryByText( /“Members” was added/ )
-			).not.toBeInTheDocument()
-		);
+		expect(
+			screen.queryByText( /“Members” was added/ )
+		).not.toBeInTheDocument();
+		// The history itself loads afterwards.
+		expect(
+			await screen.findByText( 'Nothing has been sent or tested yet.' )
+		).toBeInTheDocument();
 	} );
 
 	it( 'explains why a kind cannot be added now', async () => {

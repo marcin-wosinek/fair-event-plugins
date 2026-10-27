@@ -3,6 +3,7 @@
  */
 import { act, renderHook } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { DraftsContext } from '../drafts.js';
 import useNotificationEditor, {
 	reconcileDraft,
 } from '../useNotificationEditor.js';
@@ -58,6 +59,56 @@ function renderEditor( initial = channel(), onSaved = jest.fn() ) {
 				...props,
 			} ),
 		{ initialProps: { channel: initial } }
+	);
+}
+
+/**
+ * Render the editor in a page's draft store and keep what every render
+ * showed, with the dirty flag the store held at that moment.
+ *
+ * @param {Object} initial Saved configuration payload.
+ * @return {Object} renderHook's result, `renders` and the store's `set`.
+ */
+function renderInStore( initial = channel() ) {
+	const renders = [];
+	let stored = false;
+	const set = jest.fn( ( id, draft, isDirty ) => {
+		stored = isDirty;
+	} );
+	const store = { get: () => undefined, set };
+	const hook = renderHook(
+		( props ) => {
+			const editor = useNotificationEditor( {
+				adapter: ADAPTER,
+				onSaved: () => {},
+				...props,
+			} );
+			renders.push( {
+				notice: editor.notice,
+				preview: editor.preview,
+				dirty: editor.dirty,
+				stored,
+			} );
+			return editor;
+		},
+		{
+			initialProps: { channel: initial },
+			wrapper: ( { children } ) => (
+				<DraftsContext.Provider value={ store }>
+					{ children }
+				</DraftsContext.Provider>
+			),
+		}
+	);
+	return { ...hook, renders, set };
+}
+
+// Renders that show the success notice next to state from before the save.
+function inconsistent( renders ) {
+	return renders.filter(
+		( shown ) =>
+			'success' === shown.notice?.status &&
+			( shown.preview || shown.dirty || shown.stored )
 	);
 }
 
@@ -219,6 +270,110 @@ describe( 'useNotificationEditor', () => {
 
 		expect( result.current.preview ).toBeNull();
 		expect( result.current.pending.preview ).toBe( false );
+	} );
+
+	it( 'shows the saved notice, no preview and a clean store in one render', async () => {
+		apiFetch.mockResolvedValueOnce( { subject: 'Weekly preview' } );
+		const { result, renders, rerender } = renderInStore();
+		await act( () => result.current.loadPreview() );
+		act( () => result.current.setField( 'subject', ' Next ' ) );
+		expect( renders.at( -1 ).stored ).toBe( true );
+
+		apiFetch.mockResolvedValueOnce( channel( { subject: 'Next' } ) );
+		await act( () => result.current.save() );
+		rerender( { channel: channel( { subject: 'Next' } ) } );
+
+		expect( result.current.notice.status ).toBe( 'success' );
+		expect( result.current.preview ).toBeNull();
+		expect( result.current.dirty ).toBe( false );
+		expect( inconsistent( renders ) ).toEqual( [] );
+	} );
+
+	it( 'drops the preview also when the save changed nothing', async () => {
+		apiFetch.mockResolvedValueOnce( { subject: 'Weekly preview' } );
+		const { result, renders } = renderInStore();
+		await act( () => result.current.loadPreview() );
+		expect( result.current.preview ).toEqual( {
+			subject: 'Weekly preview',
+		} );
+
+		apiFetch.mockResolvedValueOnce( channel() );
+		await act( () => result.current.save() );
+
+		expect( result.current.preview ).toBeNull();
+		expect( inconsistent( renders ) ).toEqual( [] );
+	} );
+
+	it( 'drops a preview response that arrives after a save', async () => {
+		const preview = deferred();
+		apiFetch
+			.mockReturnValueOnce( preview.promise )
+			.mockResolvedValueOnce( channel() );
+		const { result } = renderInStore();
+
+		let previewed;
+		act( () => {
+			previewed = result.current.loadPreview();
+		} );
+		await act( () => result.current.save() );
+		await act( async () => {
+			preview.resolve( { subject: 'Before the save' } );
+			await previewed;
+		} );
+
+		expect( result.current.preview ).toBeNull();
+		expect( result.current.pending.preview ).toBe( false );
+	} );
+
+	it( 'keeps the preview and the dirty draft after a failed save', async () => {
+		apiFetch.mockResolvedValueOnce( { subject: 'Weekly preview' } );
+		const { result, renders } = renderInStore();
+		await act( () => result.current.loadPreview() );
+		act( () => result.current.setField( 'subject', 'Next' ) );
+
+		apiFetch.mockRejectedValueOnce( {} );
+		await act( () => result.current.save() );
+
+		expect( result.current.notice.status ).toBe( 'error' );
+		expect( result.current.preview ).toEqual( {
+			subject: 'Weekly preview',
+		} );
+		expect( result.current.dirty ).toBe( true );
+		expect( renders.at( -1 ).stored ).toBe( true );
+	} );
+
+	it( 'keeps an edit typed during the save unsaved in the same render', async () => {
+		const request = deferred();
+		apiFetch.mockReturnValueOnce( request.promise );
+		const { result, renders, set } = renderInStore();
+		act( () => result.current.setField( 'subject', 'Next' ) );
+
+		let saving;
+		act( () => {
+			saving = result.current.save();
+		} );
+		act( () => result.current.setField( 'subject', 'Later' ) );
+		await act( async () => {
+			request.resolve( channel( { subject: 'Next' } ) );
+			await saving;
+		} );
+
+		expect( result.current.form.subject ).toBe( 'Later' );
+		expect( result.current.saved.subject ).toBe( 'Next' );
+		expect( result.current.dirty ).toBe( true );
+		expect( set ).toHaveBeenLastCalledWith(
+			'sample',
+			{
+				form: { subject: 'Later', time_of_day: '08:00' },
+				baseline: { subject: 'Next', time_of_day: '08:00' },
+				conflict: false,
+			},
+			true
+		);
+		const saved = renders.filter(
+			( shown ) => 'success' === shown.notice?.status
+		);
+		expect( saved.every( ( shown ) => shown.stored ) ).toBe( true );
 	} );
 
 	it( 'shows a conflict only while the draft differs', () => {
