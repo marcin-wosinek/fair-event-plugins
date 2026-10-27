@@ -53,6 +53,20 @@ async function openMoreActions() {
 	} );
 }
 
+/**
+ * Expands a ticket's collapsed "Ticket settings" panel (#2062). With several
+ * ticket types, pass the ticket name to pick its panel.
+ */
+function openTicketSettings( ticketName ) {
+	fireEvent.click(
+		screen.getByRole( 'button', {
+			name: ticketName
+				? `Ticket settings: ${ ticketName }`
+				: /^Ticket settings/,
+		} )
+	);
+}
+
 describe( 'sale-period calendar date conversion (#1500)', () => {
 	it( 'crosses month, year, and DST boundaries without shifting', async () => {
 		expect( exclusiveEndToInclusiveDate( '2026-09-01' ) ).toBe(
@@ -128,6 +142,7 @@ function savePayload( ref ) {
 describe( 'EventTickets — extension selection rules (#1521)', () => {
 	it( 'renders enabled, minimum, and maximum controls for every ticket type', async () => {
 		await renderTickets( { initialData: initialDataWithTicketType } );
+		openTicketSettings();
 		expect(
 			screen.getByRole( 'checkbox', { name: 'Enable extensions' } )
 		).toBeChecked();
@@ -154,6 +169,7 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 				options: [ { name: 'One' }, { name: 'Two' } ],
 			},
 		} );
+		openTicketSettings();
 		fireEvent.click(
 			screen.getByRole( 'checkbox', { name: 'Enable extensions' } )
 		);
@@ -173,6 +189,7 @@ describe( 'EventTickets — extension selection rules (#1521)', () => {
 				options: [ { name: 'One' }, { name: 'Two' } ],
 			},
 		} );
+		openTicketSettings();
 		fireEvent.change( screen.getByLabelText( 'Minimum selections' ), {
 			target: { value: '2' },
 		} );
@@ -3265,6 +3282,7 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		expect( isMarked( 20 ) ).toBe( false );
 		expect( isMarked( 21 ) ).toBe( true );
 
+		openTicketSettings();
 		fireEvent.change(
 			container.querySelector( 'input[type="datetime-local"]' ),
 			{ target: { value: '2026-01-20T00:00' } }
@@ -3346,5 +3364,312 @@ describe( 'EventTickets — sale periods with no tickets on sale (#1840)', () =>
 		);
 
 		expect( legendEntry() ).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventTickets — per-ticket settings panel (#2062)', () => {
+	const ticketType = ( id, name, sortOrder, extra = {} ) => ( {
+		id,
+		name,
+		capacity: null,
+		minimum_activities: 1,
+		maximum_activities: 2,
+		activities_enabled: true,
+		disable_at: '2026-01-20 15:00:00',
+		recurrence_scope: 'single_instance',
+		group_ids: [],
+		sort_order: sortOrder,
+		...extra,
+	} );
+
+	const initialData = {
+		...emptyInitialData,
+		ticket_types: [
+			ticketType( 31, 'Standard', 0 ),
+			ticketType( 32, 'Supporter', 1, {
+				minimum_activities: 0,
+				maximum_activities: null,
+				disable_at: null,
+			} ),
+		],
+		sale_periods: [
+			{
+				id: 901,
+				name: '',
+				sale_start: '2026-01-01',
+				sale_end: '2026-02-01',
+			},
+		],
+		prices: [
+			{ ticket_type_id: 31, sale_period_id: 901, price: 20 },
+			{ ticket_type_id: 32, sale_period_id: 901, price: 35 },
+		],
+		settings: { show_ticket_type_end_date: true },
+		options: [ { name: 'Lunch' }, { name: 'T-shirt' } ],
+	};
+
+	const settingsToggle = ( name ) =>
+		screen.getByRole( 'button', { name: `Ticket settings: ${ name }` } );
+
+	const typeRow = ( container, name ) =>
+		Array.from(
+			container.querySelectorAll( 'input[placeholder="Type name"]' )
+		)
+			.find( ( input ) => input.value === name )
+			.closest( 'tr' );
+
+	// A ticket's settings row is the second row of its tbody group.
+	const settingsRow = ( container, name ) =>
+		typeRow( container, name ).nextElementSibling;
+
+	const moveToTop = ( container, name ) =>
+		fireEvent.click(
+			within( typeRow( container, name ) ).getByRole( 'button', {
+				name: 'Move to top',
+			} )
+		);
+
+	it( 'starts collapsed, keeping names and prices directly editable', async () => {
+		const { container } = await renderTickets( { initialData } );
+
+		expect( settingsToggle( 'Standard' ) ).toHaveAttribute(
+			'aria-expanded',
+			'false'
+		);
+		expect( settingsToggle( 'Supporter' ) ).toHaveAttribute(
+			'aria-expanded',
+			'false'
+		);
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Enable extensions' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText( 'Minimum selections' )
+		).not.toBeInTheDocument();
+		expect(
+			container.querySelector( 'input[type="datetime-local"]' )
+		).not.toBeInTheDocument();
+		// The moved columns are gone from the header.
+		expect(
+			screen.queryByRole( 'columnheader', { name: 'Extensions' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'columnheader', { name: 'End date' } )
+		).not.toBeInTheDocument();
+
+		const row = typeRow( container, 'Standard' );
+		fireEvent.change( row.querySelector( 'input[step="0.01"]' ), {
+			target: { value: '22' },
+		} );
+		expect( row.querySelector( 'input[step="0.01"]' ) ).toHaveValue( 22 );
+	} );
+
+	it( 'opens one ticket’s settings with its own extension rules and deadline', async () => {
+		const { container } = await renderTickets( { initialData } );
+
+		fireEvent.click( settingsToggle( 'Standard' ) );
+
+		const standardSettings = settingsRow( container, 'Standard' );
+		expect(
+			within( standardSettings ).getByLabelText( 'Minimum selections' )
+		).toHaveValue( 1 );
+		expect(
+			within( standardSettings ).getByLabelText( 'Maximum selections' )
+		).toHaveValue( 2 );
+		expect(
+			within( standardSettings ).getByLabelText( 'Stop selling on' )
+		).toHaveValue( '2026-01-20T15:00' );
+		// The other ticket's settings stay collapsed.
+		expect(
+			within( settingsRow( container, 'Supporter' ) ).queryByLabelText(
+				'Minimum selections'
+			)
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps edits made in settings after collapsing and reopening them', async () => {
+		const onDirtyChange = jest.fn();
+		const { container } = await renderTickets( {
+			initialData,
+			onDirtyChange,
+		} );
+
+		fireEvent.click( settingsToggle( 'Supporter' ) );
+		const supporterSettings = () => settingsRow( container, 'Supporter' );
+		fireEvent.change(
+			within( supporterSettings() ).getByLabelText(
+				'Maximum selections'
+			),
+			{ target: { value: '1' } }
+		);
+		fireEvent.change(
+			within( supporterSettings() ).getByLabelText( 'Stop selling on' ),
+			{ target: { value: '2026-01-25T12:00' } }
+		);
+
+		fireEvent.click( settingsToggle( 'Supporter' ) );
+		expect(
+			within( supporterSettings() ).queryByLabelText(
+				'Maximum selections'
+			)
+		).not.toBeInTheDocument();
+		expect( onDirtyChange ).toHaveBeenLastCalledWith( true );
+
+		fireEvent.click( settingsToggle( 'Supporter' ) );
+		expect(
+			within( supporterSettings() ).getByLabelText( 'Maximum selections' )
+		).toHaveValue( 1 );
+		expect(
+			within( supporterSettings() ).getByLabelText( 'Stop selling on' )
+		).toHaveValue( '2026-01-25T12:00' );
+	} );
+
+	it( 'saves collapsed settings unchanged', async () => {
+		const { onSaveRef } = await renderTickets( { initialData } );
+
+		const payload = savePayload( onSaveRef );
+
+		expect(
+			payload.ticket_types.map(
+				( {
+					id,
+					activities_enabled: enabled,
+					minimum_activities: minimum,
+					maximum_activities: maximum,
+					disable_at: disableAt,
+				} ) => [ id, enabled, minimum, maximum, disableAt ]
+			)
+		).toEqual( [
+			[ 31, true, 1, 2, '2026-01-20 15:00:00' ],
+			[ 32, true, 0, null, null ],
+		] );
+	} );
+
+	it( 'shows a collapsed settings error and opens the panel on the affected field', async () => {
+		const { container } = await renderTickets( {
+			initialData: {
+				...initialData,
+				ticket_types: [
+					initialData.ticket_types[ 0 ],
+					ticketType( 32, 'Supporter', 1, {
+						minimum_activities: 2,
+						maximum_activities: 1,
+					} ),
+				],
+			},
+		} );
+
+		const supporterSettings = settingsRow( container, 'Supporter' );
+		expect(
+			within( supporterSettings ).getByText(
+				'Maximum selections cannot be lower than minimum selections.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Save tickets' } )
+		).toBeDisabled();
+		expect(
+			screen.getByText(
+				'Fix the extension selection rules before saving.'
+			)
+		).toBeInTheDocument();
+		// The valid ticket shows no review action.
+		expect(
+			within( settingsRow( container, 'Standard' ) ).queryByRole(
+				'button',
+				{ name: 'Review settings' }
+			)
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			within( supporterSettings ).getByRole( 'button', {
+				name: 'Review settings',
+			} )
+		);
+
+		expect( settingsToggle( 'Supporter' ) ).toHaveAttribute(
+			'aria-expanded',
+			'true'
+		);
+		const maximum =
+			within( supporterSettings ).getByLabelText( 'Maximum selections' );
+		expect( maximum ).toHaveFocus();
+		expect(
+			within( supporterSettings ).queryByRole( 'button', {
+				name: 'Review settings',
+			} )
+		).not.toBeInTheDocument();
+
+		fireEvent.change( maximum, { target: { value: '2' } } );
+		expect(
+			screen.getByRole( 'button', { name: 'Save tickets' } )
+		).toBeEnabled();
+	} );
+
+	it( 'keeps expansion and settings with saved and unsaved tickets when reordered', async () => {
+		const { container, onSaveRef } = await renderTickets( {
+			initialData,
+		} );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '+ Add Ticket Type' } )
+		);
+		const newNameInput = Array.from(
+			container.querySelectorAll( 'input[placeholder="Type name"]' )
+		).at( -1 );
+		fireEvent.change( newNameInput, { target: { value: 'Kids' } } );
+
+		fireEvent.click( settingsToggle( 'Kids' ) );
+		fireEvent.change(
+			within( settingsRow( container, 'Kids' ) ).getByLabelText(
+				'Minimum selections'
+			),
+			{ target: { value: '2' } }
+		);
+		fireEvent.click( settingsToggle( 'Supporter' ) );
+
+		moveToTop( container, 'Kids' );
+		moveToTop( container, 'Supporter' );
+
+		const names = Array.from(
+			container.querySelectorAll( 'input[placeholder="Type name"]' )
+		).map( ( input ) => input.value );
+		expect( names ).toEqual( [ 'Supporter', 'Kids', 'Standard' ] );
+
+		expect( settingsToggle( 'Supporter' ) ).toHaveAttribute(
+			'aria-expanded',
+			'true'
+		);
+		expect( settingsToggle( 'Kids' ) ).toHaveAttribute(
+			'aria-expanded',
+			'true'
+		);
+		expect( settingsToggle( 'Standard' ) ).toHaveAttribute(
+			'aria-expanded',
+			'false'
+		);
+		expect(
+			within( settingsRow( container, 'Kids' ) ).getByLabelText(
+				'Minimum selections'
+			)
+		).toHaveValue( 2 );
+		expect(
+			within( settingsRow( container, 'Supporter' ) ).getByLabelText(
+				'Minimum selections'
+			)
+		).toHaveValue( 0 );
+
+		const payload = savePayload( onSaveRef );
+		expect(
+			payload.ticket_types.map( ( { id, name, minimum_activities } ) => [
+				id,
+				name,
+				minimum_activities,
+			] )
+		).toEqual( [
+			[ 32, 'Supporter', 0 ],
+			[ undefined, 'Kids', '2' ],
+			[ 31, 'Standard', 1 ],
+		] );
 	} );
 } );
