@@ -4,6 +4,7 @@
  * With Fair Events Experimental deactivated, an administrator opens the
  * Statistics tab from Manage Event, and the old standalone Statistics URL
  * (fair-events-event-statistics, from existing bookmarks) opens the same view.
+ * Both views offer the sales history range for the cumulative charts (#2063).
  * Experimental is reactivated afterwards so the rest of the suite keeps its
  * default plugin set.
  */
@@ -39,6 +40,42 @@ test.describe('Event Statistics without Experimental', () => {
 			page.getByRole('heading', { name: 'Cumulative tickets sold' })
 		).toBeVisible();
 
+		// Both cumulative charts follow the sales history range (#2063).
+		const salesHistory = page.getByRole('combobox', {
+			name: 'Sales history',
+		});
+		await expect(salesHistory).toHaveValue('30');
+		const salesCharts = page.locator(
+			'.fair-event-statistics__sales-charts'
+		);
+		await expect(
+			salesCharts.getByText('From 30 days before the event')
+		).toHaveCount(2);
+		await expect(
+			salesCharts
+				.locator('svg')
+				.getByText('30 days before the event', { exact: true })
+		).toHaveCount(2);
+		const ninetyDays = page.waitForResponse(
+			(response) =>
+				response.url().includes('history_days=90') && response.ok()
+		);
+		await salesHistory.selectOption({
+			label: 'From 90 days before the event',
+		});
+		await ninetyDays;
+		await expect(
+			salesCharts.getByText('From 90 days before the event')
+		).toHaveCount(2);
+		await expect(
+			salesCharts
+				.locator('svg')
+				.getByText('90 days before the event', { exact: true })
+		).toHaveCount(2);
+		await expect(
+			page.getByRole('button', { name: 'Download PNG' }).first()
+		).toBeEnabled();
+
 		// Capacity (#1711) loads without Experimental: the event and its
 		// ticket type, and no activities, as none were configured.
 		await expect(
@@ -64,5 +101,16 @@ test.describe('Event Statistics without Experimental', () => {
 		await expect(
 			page.getByRole('heading', { name: 'Cumulative tickets sold' })
 		).toBeVisible();
+		await salesHistory.selectOption({
+			label: 'From 60 days before the event',
+		});
+		await expect(
+			salesCharts.getByText('From 60 days before the event')
+		).toHaveCount(2);
+		await expect(
+			salesCharts
+				.locator('svg')
+				.getByText('60 days before the event', { exact: true })
+		).toHaveCount(2);
 	});
 });
