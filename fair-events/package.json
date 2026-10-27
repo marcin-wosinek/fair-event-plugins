@@ -45,7 +45,7 @@
 		"@wordpress/dataviews": "20.0.0",
 		"@wordpress/date": "5.57.0",
 		"@wordpress/dom-ready": "5.0.0",
-		"@wordpress/element": "9.0.0",
+		"@wordpress/element": "10.0.0",
 		"@wordpress/i18n": "7.0.0",
 		"@wordpress/icons": "19.0.0",
 		"calendar-link": "^2.11.6",
