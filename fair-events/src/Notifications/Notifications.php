@@ -25,7 +25,7 @@ class Notifications {
 	public const HISTORY_CLEANUP_HOOK = 'fair_events_notification_history_cleanup';
 
 	/**
-	 * Start once every plugin had the chance to say whether it hands over.
+	 * Boot once every plugin had the chance to say whether it hands over.
 	 *
 	 * @return void
 	 */
@@ -36,18 +36,44 @@ class Notifications {
 	}
 
 	/**
-	 * Take over what is ready, then run the owned channels.
+	 * Register what must be in place before `init`, and defer the rest.
+	 *
+	 * Taking over, scheduling and starting the workers wait for `init`
+	 * ({@see self::start()}): an option update can reach integrations that
+	 * are not ready yet, and scheduling runs every plugin's translated
+	 * `cron_schedules` labels, which must not load translations early.
 	 *
 	 * @return void
 	 */
 	public static function boot() {
+		// Its callbacks check ownership when they run, after the takeover.
+		if ( Ownership::legacy_yields( Ownership::TELEGRAM ) ) {
+			TelegramConnector::init();
+		}
+
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEvents\API\EventNotificationsController() )->register_routes();
+				( new \FairEvents\API\NotificationHistoryController() )->register_routes();
+			}
+		);
+
+		// After Action Scheduler (priority 1) and translations (priority 10),
+		// before Connectors (priority 15).
+		add_action( 'init', array( self::class, 'start' ), 11 );
+	}
+
+	/**
+	 * Take over what is ready, then run the owned channels.
+	 *
+	 * @return void
+	 */
+	public static function start() {
 		Migration::run();
 
-		if ( Ownership::owns( Ownership::TELEGRAM ) ) {
-			TelegramConnector::init();
-			if ( ConfigurationMigration::is_migrated( Configurations::TELEGRAM ) ) {
-				TelegramDispatcher::init();
-			}
+		if ( Ownership::owns( Ownership::TELEGRAM ) && ConfigurationMigration::is_migrated( Configurations::TELEGRAM ) ) {
+			TelegramDispatcher::init();
 		}
 
 		if ( Ownership::owns( Ownership::BULK_EMAIL ) && ConfigurationMigration::is_migrated( Configurations::BULK_EMAIL ) ) {
@@ -64,14 +90,6 @@ class Notifications {
 		if ( ! wp_next_scheduled( self::HISTORY_CLEANUP_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::HISTORY_CLEANUP_HOOK );
 		}
-
-		add_action(
-			'rest_api_init',
-			static function () {
-				( new \FairEvents\API\EventNotificationsController() )->register_routes();
-				( new \FairEvents\API\NotificationHistoryController() )->register_routes();
-			}
-		);
 	}
 
 	/**
