@@ -133,7 +133,7 @@ describe( 'EventStatistics component', () => {
 		).toBeInTheDocument();
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-events/v1/event-dates/42/statistics',
+			path: '/fair-events/v1/event-dates/42/statistics?history_days=30',
 		} );
 		// getAllByText: WordPress Notice mirrors its text into an a11y live region.
 		expect(
@@ -953,5 +953,226 @@ describe( 'EventStatistics capacity', () => {
 		expect(
 			screen.getByText( 'Tickets per activity' )
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventStatistics sales history range', () => {
+	const pointsFor = ( days ) => [
+		{
+			date: '2026-03-17',
+			label: `${ days } days before the event`,
+			total: 2,
+		},
+		{ date: '2026-03-18', label: 'Quiet day', total: 2 },
+		{ date: '2026-06-15', label: 'Day of the event', total: 5 },
+	];
+	const responseFor = ( days ) => ( {
+		event_name: 'Summer Retreat',
+		total_tickets: 5,
+		total_sales: 5,
+		currency: 'EUR',
+		total_sales_amount: 50,
+		excluded_currencies: [],
+		days_until_start: 5,
+		history_days: days,
+		series: pointsFor( days ),
+		amount_series: pointsFor( days ).map( ( { total, ...point } ) => ( {
+			...point,
+			amount: total * 10,
+		} ) ),
+		tickets_per_activity: [],
+		activities_per_ticket: [],
+	} );
+	const requestedDays = ( call ) =>
+		Number(
+			new URLSearchParams( call[ 0 ].path.split( '?' )[ 1 ] ).get(
+				'history_days'
+			)
+		);
+	const select = () =>
+		screen.getByRole( 'combobox', { name: 'Sales history' } );
+	const chartSeries = () =>
+		screen
+			.getAllByTestId( 'area-chart' )
+			.map( ( chart ) => JSON.parse( chart.dataset.series ) );
+
+	// Each request stays pending until the test settles it.
+	function deferApi() {
+		const pending = [];
+		apiFetch.mockImplementation(
+			( options ) =>
+				new Promise( ( resolve, reject ) => {
+					pending.push( { options, resolve, reject } );
+				} )
+		);
+		return pending;
+	}
+
+	beforeEach( () => {
+		jest.resetAllMocks();
+		downloadElementAsPng.mockResolvedValue( undefined );
+	} );
+
+	it( 'offers four ranges and starts with 30 days', async () => {
+		apiFetch.mockImplementation( ( options ) =>
+			Promise.resolve( responseFor( requestedDays( [ options ] ) ) )
+		);
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		await screen.findByText( 'Cumulative tickets sold' );
+		expect( select() ).toHaveValue( '30' );
+		expect(
+			within( select() )
+				.getAllByRole( 'option' )
+				.map( ( option ) => option.textContent )
+		).toEqual( [
+			'From 30 days before the event',
+			'From 60 days before the event',
+			'From 90 days before the event',
+			'From 180 days before the event',
+		] );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect( requestedDays( apiFetch.mock.calls[ 0 ] ) ).toBe( 30 );
+	} );
+
+	it( 'reloads both charts together for the selected range', async () => {
+		const pending = deferApi();
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await act( async () => pending[ 0 ].resolve( responseFor( 30 ) ) );
+
+		fireEvent.change( select(), { target: { value: '90' } } );
+
+		expect( requestedDays( [ pending[ 1 ].options ] ) ).toBe( 90 );
+		// While loading, neither chart shows the 30-day data or offers a
+		// download of it.
+		expect( screen.queryAllByTestId( 'area-chart' ) ).toHaveLength( 0 );
+		const downloads = screen.getAllByRole( 'button', {
+			name: 'Download PNG',
+		} );
+		expect( downloads ).toHaveLength( 2 );
+		downloads.forEach( ( button ) =>
+			expect( button ).toHaveAttribute( 'aria-disabled', 'true' )
+		);
+		expect(
+			document.querySelector( '.fair-event-statistics__sales-charts' )
+		).toHaveAttribute( 'aria-busy', 'true' );
+		// The rest of the page stays visible.
+		expect( screen.getByText( '5 tickets' ) ).toBeInTheDocument();
+
+		await act( async () => pending[ 1 ].resolve( responseFor( 90 ) ) );
+
+		const [ tickets, amounts ] = chartSeries();
+		expect( tickets ).toEqual( pointsFor( 90 ) );
+		// Each card names its period, so an exported image does too.
+		document
+			.querySelectorAll(
+				'.fair-event-statistics__sales-charts .fair-event-statistics__chart-card'
+			)
+			.forEach( ( card ) =>
+				expect(
+					within( card ).getByText( 'From 90 days before the event' )
+				).toBeInTheDocument()
+			);
+		expect( amounts.map( ( point ) => point.label ) ).toEqual(
+			pointsFor( 90 ).map( ( point ) => point.label )
+		);
+		// The opening balance and the day without sales come through as sent.
+		expect( amounts.map( ( point ) => point.amount ) ).toEqual( [
+			20, 20, 50,
+		] );
+		screen
+			.getAllByRole( 'button', { name: 'Download PNG' } )
+			.forEach( ( button ) =>
+				expect( button ).not.toHaveAttribute( 'aria-disabled', 'true' )
+			);
+	} );
+
+	it( 'ignores a slower response for an earlier range', async () => {
+		const pending = deferApi();
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await act( async () => pending[ 0 ].resolve( responseFor( 30 ) ) );
+
+		fireEvent.change( select(), { target: { value: '60' } } );
+		fireEvent.change( select(), { target: { value: '180' } } );
+		await act( async () => pending[ 2 ].resolve( responseFor( 180 ) ) );
+		await act( async () => pending[ 1 ].resolve( responseFor( 60 ) ) );
+
+		expect( select() ).toHaveValue( '180' );
+		expect( chartSeries()[ 0 ] ).toEqual( pointsFor( 180 ) );
+	} );
+
+	it( 'ignores a late failure for an earlier range', async () => {
+		const pending = deferApi();
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await act( async () => pending[ 0 ].resolve( responseFor( 30 ) ) );
+
+		fireEvent.change( select(), { target: { value: '60' } } );
+		fireEvent.change( select(), { target: { value: '90' } } );
+		await act( async () => pending[ 2 ].resolve( responseFor( 90 ) ) );
+		await act( async () =>
+			pending[ 1 ].reject( new Error( 'Late failure' ) )
+		);
+
+		expect( screen.queryByText( 'Late failure' ) ).toBeNull();
+		expect( chartSeries()[ 0 ] ).toEqual( pointsFor( 90 ) );
+	} );
+
+	it( 'hides the charts after a failed range and retries it', async () => {
+		const pending = deferApi();
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await act( async () => pending[ 0 ].resolve( responseFor( 30 ) ) );
+
+		fireEvent.change( select(), { target: { value: '90' } } );
+		await act( async () =>
+			pending[ 1 ].reject( new Error( 'Statistics unavailable' ) )
+		);
+
+		expect(
+			screen.getAllByText( 'Statistics unavailable' ).length
+		).toBeGreaterThan( 0 );
+		expect( screen.queryByText( 'Cumulative tickets sold' ) ).toBeNull();
+		expect( select() ).toHaveValue( '90' );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
+		expect( requestedDays( [ pending[ 2 ].options ] ) ).toBe( 90 );
+		await act( async () => pending[ 2 ].resolve( responseFor( 90 ) ) );
+
+		// The a11y live region keeps the announced text; the notice is gone.
+		expect(
+			document.querySelector( '.components-notice.is-error' )
+		).toBeNull();
+		expect( chartSeries()[ 0 ] ).toEqual( pointsFor( 90 ) );
+	} );
+
+	it( 'keeps the range fixed while a chart is exported', async () => {
+		apiFetch.mockImplementation( ( options ) =>
+			Promise.resolve( responseFor( requestedDays( [ options ] ) ) )
+		);
+		let finishExport;
+		downloadElementAsPng.mockImplementation(
+			() =>
+				new Promise( ( resolve ) => {
+					finishExport = resolve;
+				} )
+		);
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await screen.findByText( 'Cumulative tickets sold' );
+		fireEvent.change( select(), { target: { value: '60' } } );
+		await waitFor( () =>
+			expect( chartSeries()[ 0 ] ).toEqual( pointsFor( 60 ) )
+		);
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', { name: 'Download PNG' } )[ 0 ]
+		);
+
+		await waitFor( () => expect( select() ).toBeDisabled() );
+		expect( downloadElementAsPng ).toHaveBeenCalledWith(
+			expect.any( HTMLElement ),
+			expect.stringMatching( /summer-retreat/i )
+		);
+		await act( async () => finishExport() );
+		expect( select() ).toBeEnabled();
+		expect( select() ).toHaveValue( '60' );
 	} );
 } );

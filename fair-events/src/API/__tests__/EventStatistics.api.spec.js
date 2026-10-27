@@ -1073,7 +1073,8 @@ test.describe( 'EventStatisticsController', () => {
 		const body = await getStatistics( occurrences.upcoming.eventDateId );
 		expect( body.start_date ).toBe( addDays( today, 10 ) );
 		expect( body.end_date ).toBe( addDays( today, 10 ) );
-		expect( body.series[ 0 ].date ).toBe( addDays( today, -17 ) );
+		expect( body.history_days ).toBe( 30 );
+		expect( body.series[ 0 ].date ).toBe( addDays( today, -20 ) );
 		expect( body.series[ 0 ].total ).toBe( 1 );
 		const lastRecorded = body.series.findLast(
 			( point ) => typeof point.total === 'number'
@@ -1096,6 +1097,139 @@ test.describe( 'EventStatisticsController', () => {
 				.every( ( point ) => point.total === null )
 		).toBe( true );
 	} );
+
+	test( 'charts each history range with opening balances and empty days', async () => {
+		occurrences.history = await createOccurrence( 'history', 10 );
+		const { eventDateId } = occurrences.history;
+		// Sales 95, 60, 30 and 13 days before the event, which starts in 10.
+		const sales = [
+			{ offset: -85, amount: 10 },
+			{ offset: -50, amount: 20 },
+			{ offset: -20, amount: 30 },
+			{ offset: -3, amount: 40 },
+		];
+		for ( const sale of sales ) {
+			const buyer = await addRelationship( eventDateId );
+			await ticketFixtureAsync( 'signup', {
+				eventDateId,
+				participantId: buyer.participantId,
+				quantity: 1,
+				createdAt: `${ addDays( today, sale.offset ) } 12:00:00`,
+				units: [ confirmed() ],
+			} );
+			addTransaction(
+				buyer.relationshipId,
+				sale.amount,
+				'EUR',
+				'paid',
+				'charge',
+				addDays( today, sale.offset )
+			);
+		}
+
+		const getRange = async ( days ) => {
+			const [ canonical, legacy ] = await Promise.all(
+				NAMESPACES.map( async ( namespace ) => {
+					const response = await api.get(
+						`${ statisticsPath( namespace, eventDateId ) }?history_days=${ days }`,
+						{ headers: adminHeaders }
+					);
+					expect( response.ok() ).toBeTruthy();
+					return response.json();
+				} )
+			);
+			expect( legacy ).toEqual( canonical );
+			return canonical;
+		};
+
+		// Each range's first point, as an offset from today.
+		const firstOffsets = { 30: -20, 60: -50, 90: -80, 180: -170 };
+		const byDefault = await getStatistics( eventDateId );
+		for ( const [ days, firstOffset ] of Object.entries( firstOffsets ) ) {
+			const body = await getRange( days );
+			expect( body.history_days ).toBe( Number( days ) );
+			expect( body.series ).toHaveLength( Number( days ) + 1 );
+			expect( body.series[ 0 ] ).toMatchObject( {
+				date: addDays( today, firstOffset ),
+				label: `${ days } days before the event`,
+			} );
+			expect( body.series.at( -1 ) ).toMatchObject( {
+				date: addDays( today, 10 ),
+				label: 'Day of the event',
+				total: null,
+			} );
+			expect( body.amount_series.map( ( point ) => point.date ) ).toEqual(
+				body.series.map( ( point ) => point.date )
+			);
+
+			// Every recorded point holds all sales up to its day, those
+			// before the window included and each counted once; days without
+			// sales repeat the running total. Future points stay null.
+			body.series.forEach( ( point, index ) => {
+				const upTo = sales.filter(
+					( sale ) => addDays( today, sale.offset ) <= point.date
+				);
+				const recorded = point.date <= today;
+				expect( {
+					date: point.date,
+					total: point.total,
+					amount: body.amount_series[ index ].amount,
+				} ).toEqual( {
+					date: point.date,
+					total: recorded ? upTo.length : null,
+					amount: recorded
+						? upTo.reduce( ( sum, sale ) => sum + sale.amount, 0 )
+						: null,
+				} );
+			} );
+			expect(
+				body.series.findLast(
+					( point ) => typeof point.total === 'number'
+				).total
+			).toBe( 4 );
+			expect( body.total_tickets ).toBe( 4 );
+			expect( body.total_sales_amount ).toBe( 100 );
+			if ( Number( days ) === 30 ) {
+				expect( body ).toEqual( byDefault );
+			}
+		}
+
+		// A sale on the window's first day counts once, not also in the
+		// opening balance.
+		const sixty = await getRange( 60 );
+		expect( sixty.series[ 0 ].total ).toBe( 2 );
+		expect( sixty.series[ 1 ].total ).toBe( 2 );
+	} );
+
+	for ( const namespace of NAMESPACES ) {
+		test( `rejects unsupported history ranges on ${ namespace }`, async () => {
+			const endpoint = statisticsPath(
+				namespace,
+				occurrences.upcoming.eventDateId
+			);
+			for ( const value of [
+				'0',
+				'27',
+				'45',
+				'365',
+				'-30',
+				'60.5',
+				'abc',
+			] ) {
+				const response = await api.get(
+					`${ endpoint }?history_days=${ value }`,
+					{ headers: adminHeaders }
+				);
+				expect( { value, status: response.status() } ).toEqual( {
+					value,
+					status: 400,
+				} );
+				expect( ( await response.json() ).code ).toBe(
+					'rest_invalid_param'
+				);
+			}
+		} );
+	}
 
 	test( 'starts a far-future range today and ends on the event day', async () => {
 		const body = await getStatistics( occurrences.farFuture.eventDateId );

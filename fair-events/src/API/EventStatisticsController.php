@@ -58,6 +58,20 @@ class EventStatisticsController extends WP_REST_Controller {
 	protected $rest_base = 'event-dates/(?P<event_date_id>\d+)/statistics';
 
 	/**
+	 * Days before the event start that the cumulative series can begin.
+	 *
+	 * @var int[]
+	 */
+	const HISTORY_DAYS = array( 30, 60, 90, 180 );
+
+	/**
+	 * Default history length when a request names none.
+	 *
+	 * @var int
+	 */
+	const DEFAULT_HISTORY_DAYS = 30;
+
+	/**
 	 * Event participant repository.
 	 *
 	 * @var EventParticipantRepository
@@ -106,6 +120,14 @@ class EventStatisticsController extends WP_REST_Controller {
 					'required'          => true,
 					'sanitize_callback' => 'absint',
 					'validate_callback' => static fn( $value ) => (int) $value > 0,
+				),
+				'history_days'  => array(
+					'type'              => 'integer',
+					'enum'              => self::HISTORY_DAYS,
+					'default'           => self::DEFAULT_HISTORY_DAYS,
+					'sanitize_callback' => 'absint',
+					// Explicit: hand-written args do not enforce enum on their own.
+					'validate_callback' => 'rest_validate_request_arg',
 				),
 			),
 		);
@@ -179,7 +201,8 @@ class EventStatisticsController extends WP_REST_Controller {
 		$tickets             = EventTicketStatistics::for_event_date( $event_date );
 		$daily_sales         = $tickets['daily'];
 
-		$window_start = $start->sub( new DateInterval( 'P27D' ) );
+		$history_days = (int) $request->get_param( 'history_days' );
+		$window_start = $start->sub( new DateInterval( 'P' . $history_days . 'D' ) );
 		if ( $window_start > $recorded_end ) {
 			$window_start = $recorded_end;
 		}
@@ -235,6 +258,7 @@ class EventStatisticsController extends WP_REST_Controller {
 				'excluded_currencies'                 => $excluded_currencies,
 				'start_date'                          => $start->format( 'Y-m-d' ),
 				'end_date'                            => $end->format( 'Y-m-d' ),
+				'history_days'                        => $history_days,
 				'days_until_start'                    => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
 				'series'                              => $series,
 				'tickets_per_activity'                => $tickets['tickets_per_activity'],

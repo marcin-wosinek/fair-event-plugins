@@ -11,6 +11,7 @@ import {
 	CardHeader,
 	CardBody,
 	Notice,
+	SelectControl,
 	Spinner,
 } from '@wordpress/components';
 import { download } from '@wordpress/icons';
@@ -41,12 +42,31 @@ import {
 
 const BAR_COLOR = '#3858e9'; // WordPress admin blue.
 
+// Days before the event start that the cumulative charts can begin; the
+// statistics endpoint accepts exactly these.
+const HISTORY_DAYS = [ 30, 60, 90, 180 ];
+const DEFAULT_HISTORY_DAYS = 30;
+
+function getHistoryLabel( days ) {
+	return sprintf(
+		/* translators: %d: number of calendar days before the event that the sales charts start. */
+		_n(
+			'From %d day before the event',
+			'From %d days before the event',
+			days,
+			'fair-events'
+		),
+		days
+	);
+}
+
 // A chart card. Passing `onDownload` adds the "Download PNG" action and the
 // event-name subtitle, so the exported image stays self-explanatory outside the
 // admin screen.
 function ChartCard( {
 	title,
 	eventName,
+	period,
 	onDownload,
 	isDownloadDisabled,
 	isDownloading,
@@ -64,6 +84,11 @@ function ChartCard( {
 					{ onDownload && eventName && (
 						<p className="fair-event-statistics__chart-subtitle">
 							{ eventName }
+						</p>
+					) }
+					{ period && (
+						<p className="fair-event-statistics__chart-subtitle">
+							{ period }
 						</p>
 					) }
 				</div>
@@ -145,6 +170,15 @@ function CumulativeChart( { series, dataKey, name, valueFormatter } ) {
 				) }
 			</AreaChart>
 		</ResponsiveContainer>
+	);
+}
+
+// Holds a cumulative chart's place while the selected range loads.
+function ChartPlaceholder() {
+	return (
+		<div className="fair-event-statistics__chart-placeholder">
+			<Spinner />
+		</div>
 	);
 }
 
@@ -254,29 +288,48 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 	const [ statistics, setStatistics ] = useState( null );
 	const [ statisticsLoading, setStatisticsLoading ] = useState( true );
 	const [ statisticsError, setStatisticsError ] = useState( '' );
+	const [ historyDays, setHistoryDays ] = useState( DEFAULT_HISTORY_DAYS );
+	const [ reloadCount, setReloadCount ] = useState( 0 );
 
 	useEffect( () => {
 		if ( ! eventDateId ) {
 			setStatisticsLoading( false );
 			return;
 		}
+		// Only the latest request may update the view: a slower response for
+		// an earlier range or event must not replace the current one.
+		let isCurrent = true;
 		setStatisticsLoading( true );
 		setStatisticsError( '' );
 		apiFetch( {
-			path: `/fair-events/v1/event-dates/${ eventDateId }/statistics`,
+			path: `/fair-events/v1/event-dates/${ eventDateId }/statistics?history_days=${ historyDays }`,
 		} )
-			.then( setStatistics )
-			.catch( ( error ) =>
-				setStatisticsError(
-					error?.message ||
-						__(
-							'Event sales statistics could not be loaded.',
-							'fair-events'
-						)
-				)
+			.then( ( response ) => isCurrent && setStatistics( response ) )
+			.catch(
+				( error ) =>
+					isCurrent &&
+					setStatisticsError(
+						error?.message ||
+							__(
+								'Event sales statistics could not be loaded.',
+								'fair-events'
+							)
+					)
 			)
-			.finally( () => setStatisticsLoading( false ) );
-	}, [ eventDateId ] );
+			.finally( () => isCurrent && setStatisticsLoading( false ) );
+		return () => {
+			isCurrent = false;
+		};
+	}, [ eventDateId, historyDays, reloadCount ] );
+
+	// The sales charts show data only once it matches the selected range;
+	// while it loads, or after it failed, earlier data would misrepresent it.
+	let salesHistoryState = 'ready';
+	if ( statisticsLoading ) {
+		salesHistoryState = 'loading';
+	} else if ( statisticsError ) {
+		salesHistoryState = 'error';
+	}
 
 	const totalTickets =
 		statistics?.total_tickets ?? statistics?.total_sales ?? 0;
@@ -351,7 +404,17 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 	return (
 		<div>
 			{ statisticsError && (
-				<Notice status="error" isDismissible={ false }>
+				<Notice
+					status="error"
+					isDismissible={ false }
+					actions={ [
+						{
+							label: __( 'Try again', 'fair-events' ),
+							onClick: () =>
+								setReloadCount( ( count ) => count + 1 ),
+						},
+					] }
+				>
 					{ statisticsError }
 				</Notice>
 			) }
@@ -415,41 +478,85 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 							{ exportError }
 						</Notice>
 					) }
-					<div className="fair-event-statistics__sales-charts">
-						<ChartCard
-							title={ salesChartTitle }
-							eventName={ eventName }
-							onDownload={ ( card ) =>
-								downloadChart( salesChartTitle, card )
+					<div className="fair-event-statistics__history">
+						<SelectControl
+							__next40pxDefaultSize
+							__nextHasNoMarginBottom
+							label={ __( 'Sales history', 'fair-events' ) }
+							value={ String( historyDays ) }
+							options={ HISTORY_DAYS.map( ( days ) => ( {
+								value: String( days ),
+								label: getHistoryLabel( days ),
+							} ) ) }
+							// An export captures the charts on screen, so the
+							// range stays fixed until it finishes.
+							disabled={ exportingChart !== null }
+							onChange={ ( value ) =>
+								setHistoryDays( Number( value ) )
 							}
-							isDownloadDisabled={ exportingChart !== null }
-							isDownloading={ exportingChart === salesChartTitle }
-						>
-							<CumulativeChart
-								series={ statistics.series }
-								dataKey="total"
-								name={ __( 'Tickets', 'fair-events' ) }
-							/>
-						</ChartCard>
-						<ChartCard
-							title={ salesAmountChartTitle }
-							eventName={ eventName }
-							onDownload={ ( card ) =>
-								downloadChart( salesAmountChartTitle, card )
-							}
-							isDownloadDisabled={ exportingChart !== null }
-							isDownloading={
-								exportingChart === salesAmountChartTitle
-							}
-						>
-							<CumulativeChart
-								series={ statistics.amount_series }
-								dataKey="amount"
-								name={ __( 'Net sales amount', 'fair-events' ) }
-								valueFormatter={ formatCurrency }
-							/>
-						</ChartCard>
+						/>
 					</div>
+					{ salesHistoryState !== 'error' && (
+						<div
+							className="fair-event-statistics__sales-charts"
+							aria-busy={ salesHistoryState === 'loading' }
+						>
+							<ChartCard
+								title={ salesChartTitle }
+								eventName={ eventName }
+								period={ getHistoryLabel( historyDays ) }
+								onDownload={ ( card ) =>
+									downloadChart( salesChartTitle, card )
+								}
+								isDownloadDisabled={
+									exportingChart !== null ||
+									salesHistoryState !== 'ready'
+								}
+								isDownloading={
+									exportingChart === salesChartTitle
+								}
+							>
+								{ salesHistoryState === 'ready' ? (
+									<CumulativeChart
+										series={ statistics.series }
+										dataKey="total"
+										name={ __( 'Tickets', 'fair-events' ) }
+									/>
+								) : (
+									<ChartPlaceholder />
+								) }
+							</ChartCard>
+							<ChartCard
+								title={ salesAmountChartTitle }
+								eventName={ eventName }
+								period={ getHistoryLabel( historyDays ) }
+								onDownload={ ( card ) =>
+									downloadChart( salesAmountChartTitle, card )
+								}
+								isDownloadDisabled={
+									exportingChart !== null ||
+									salesHistoryState !== 'ready'
+								}
+								isDownloading={
+									exportingChart === salesAmountChartTitle
+								}
+							>
+								{ salesHistoryState === 'ready' ? (
+									<CumulativeChart
+										series={ statistics.amount_series }
+										dataKey="amount"
+										name={ __(
+											'Net sales amount',
+											'fair-events'
+										) }
+										valueFormatter={ formatCurrency }
+									/>
+								) : (
+									<ChartPlaceholder />
+								) }
+							</ChartCard>
+						</div>
+					) }
 
 					<Notice status="info" isDismissible={ false }>
 						{ __(

@@ -15,7 +15,7 @@
  *
  * Every row is synthetic. Dates are fixed offsets from the day of the run
  * (the event starts in 12 days, sales cover the weeks before), because
- * Statistics charts only the four weeks before the event up to today; runs
+ * Statistics charts the 30 days before the event by default; runs
  * on the same day reproduce the same screens. The demo is found again by the
  * `_fair_e2e_manage_event_demo` post meta and the reserved participant
  * domain, so a rerun or an interrupted run never leaves duplicates behind.
