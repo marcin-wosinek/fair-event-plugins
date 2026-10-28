@@ -69,6 +69,10 @@ export default function ManageEventApp() {
 	const paymentEntriesUrl =
 		window.fairEventsManageEventData?.paymentEntriesUrl || '';
 	const copyEventUrl = window.fairEventsManageEventData?.copyEventUrl || '';
+	// Finance shows payments from Fair Payments Connector and costs and
+	// budgets from Fair Finance; either plugin is enough for the tab.
+	const financeActive = !! window.fairEventsManageEventData?.financeActive;
+	const connectorActive = !! window.fairPaymentsConnector?.connectorActive;
 	// Statistics read Fair Audience's ticket and payment data, so PHP only
 	// sets this when that plugin is active.
 	const statisticsAvailable =
@@ -1104,11 +1108,13 @@ export default function ManageEventApp() {
 			name: 'finance',
 			title: __( 'Finance', 'fair-events' ),
 			order: 70,
-			isVisible: !! paymentEntriesUrl,
+			isVisible: financeActive || connectorActive,
 			disabled: isLinkOnlyEvent( eventDate ),
 			render: () => (
 				<EventFinance
 					eventDateId={ eventDateId }
+					connectorActive={ connectorActive }
+					financeActive={ financeActive }
 					entriesUrl={ paymentEntriesUrl }
 				/>
 			),

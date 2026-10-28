@@ -44,6 +44,13 @@ const costEntry = {
 	description: 'Venue rental',
 };
 
+const failedTransaction = {
+	id: 3,
+	amount: 20,
+	status: 'failed',
+	created_at: '2026-07-22 10:00:00',
+};
+
 const budgetA = { id: 3, name: 'Summer camp' };
 const budgetB = { id: 7, name: 'General fund' };
 
@@ -51,10 +58,15 @@ function mockApiFetchByPath( {
 	totals = { total_income: 0, total_cost: 0, balance: 0 },
 	costEntries = [],
 	paidTransactions = [],
+	failedTransactions = [],
 	budgets = [],
 	eventBudgetId = null,
+	failing = null,
 } = {} ) {
 	apiFetch.mockImplementation( ( { path, method, data } ) => {
+		if ( failing && path.startsWith( failing ) ) {
+			return Promise.reject( new Error( 'Server exploded.' ) );
+		}
 		if ( path.startsWith( '/fair-finance/v1/financial-entries/totals' ) ) {
 			return Promise.resolve( totals );
 		}
@@ -73,13 +85,22 @@ function mockApiFetchByPath( {
 		if ( path.includes( 'status=paid' ) ) {
 			return Promise.resolve( { transactions: paidTransactions } );
 		}
+		if ( path.includes( 'status=failed' ) ) {
+			return Promise.resolve( { transactions: failedTransactions } );
+		}
 		return Promise.resolve( { transactions: [] } );
 	} );
 }
 
+const bothActive = { connectorActive: true, financeActive: true };
+
 afterEach( () => {
 	jest.clearAllMocks();
 } );
+
+function calledPaths() {
+	return apiFetch.mock.calls.map( ( call ) => call[ 0 ].path );
+}
 
 function statValue( label ) {
 	return screen.getByText( label ).previousSibling.textContent;
@@ -92,7 +113,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 			paidTransactions: [ paidTransactionWithEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByText( 'Total Income' ) ).toBeInTheDocument()
@@ -106,7 +133,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 			paidTransactions: [ paidTransactionWithEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		expect(
 			await screen.findByRole( 'link', { name: '#5' } )
@@ -118,7 +151,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 			paidTransactions: [ paidTransactionWithoutEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByText( 'Payments' ) ).toBeInTheDocument()
@@ -136,7 +175,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 			costEntries: [ costEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByText( 'Venue rental' ) ).toBeInTheDocument()
@@ -148,7 +193,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 	it( 'requests only cost-type entries', async () => {
 		mockApiFetchByPath( {} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
 
@@ -168,7 +219,13 @@ describe( 'EventFinance — transaction table is the income source of truth (#13
 			paidTransactions: [ paidTransactionWithEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByText( 'Total Net' ) ).toBeInTheDocument()
@@ -183,7 +240,13 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 	it( 'lists "No budget" plus every available budget, with no budget selected by default', async () => {
 		mockApiFetchByPath( { budgets: [ budgetA, budgetB ] } );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await screen.findByText( 'General fund' );
 
@@ -205,7 +268,13 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 			eventBudgetId: budgetB.id,
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByLabelText( 'Budget' ) ).toHaveValue(
@@ -217,7 +286,13 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 	it( 'saves the selected budget to the event-budget endpoint', async () => {
 		mockApiFetchByPath( { budgets: [ budgetA, budgetB ] } );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await screen.findByText( 'Summer camp' );
 
@@ -251,7 +326,13 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 			eventBudgetId: budgetA.id,
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect( screen.getByLabelText( 'Budget' ) ).toHaveValue(
@@ -280,7 +361,13 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 			eventBudgetId: budgetA.id,
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		await waitFor( () =>
 			expect(
@@ -306,7 +393,13 @@ describe( 'EventFinance — links to the focused entry view (#1914)', () => {
 			],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		expect(
 			await screen.findByRole( 'link', { name: '#5' } )
@@ -323,7 +416,13 @@ describe( 'EventFinance — links to the focused entry view (#1914)', () => {
 	it( 'links the cost entry date to the focused entry view', async () => {
 		mockApiFetchByPath( { costEntries: [ costEntry ] } );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="admin.php" /> );
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
 
 		const link = await screen.findByRole( 'link', {
 			name: 'Entry #9, 2026-07-19',
@@ -338,7 +437,9 @@ describe( 'EventFinance — links to the focused entry view (#1914)', () => {
 			costEntries: [ costEntry ],
 		} );
 
-		render( <EventFinance eventDateId={ 42 } entriesUrl="" /> );
+		render(
+			<EventFinance { ...bothActive } eventDateId={ 42 } entriesUrl="" />
+		);
 
 		await screen.findByText( 'Venue rental' );
 		expect( screen.getByText( '#5' ) ).toBeInTheDocument();
@@ -352,5 +453,225 @@ describe( 'EventFinance — links to the focused entry view (#1914)', () => {
 		screen.getAllByRole( 'link' ).forEach( ( link ) => {
 			expect( link.getAttribute( 'href' ) ).not.toContain( 'entry_id=' );
 		} );
+	} );
+} );
+
+describe( 'EventFinance — plugin availability (#2110)', () => {
+	it( 'payments only: shows payment figures and tables without any Fair Finance request', async () => {
+		mockApiFetchByPath( {
+			paidTransactions: [ paidTransactionWithEntry ],
+			failedTransactions: [ failedTransaction ],
+		} );
+
+		render(
+			<EventFinance
+				connectorActive
+				financeActive={ false }
+				eventDateId={ 42 }
+				entriesUrl=""
+			/>
+		);
+
+		await screen.findByText( 'Payments' );
+		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
+		expect( statValue( 'Total Net' ) ).toBe( '€44.21' );
+		expect( screen.getByText( 'Failed Payments' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: '€45.00' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=1'
+		);
+
+		expect( screen.queryByText( 'Total Costs' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Budget entry' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( '#5' ) ).not.toBeInTheDocument();
+		expect( screen.queryByLabelText( 'Budget' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', { name: 'View All Entries' } )
+		).not.toBeInTheDocument();
+
+		const paths = calledPaths();
+		expect(
+			paths.filter( ( path ) =>
+				path.startsWith( '/fair-payments-connector/v1/transactions' )
+			)
+		).toHaveLength( 4 );
+		expect(
+			paths.some(
+				( path ) =>
+					path.startsWith( '/fair-finance/' ) ||
+					path.endsWith( '/budget' )
+			)
+		).toBe( false );
+	} );
+
+	it( 'payments only: shows a payment-specific empty state', async () => {
+		mockApiFetchByPath( {} );
+
+		render(
+			<EventFinance
+				connectorActive
+				financeActive={ false }
+				eventDateId={ 42 }
+				entriesUrl=""
+			/>
+		);
+
+		expect(
+			await screen.findByText( 'No payments for this event yet.' )
+		).toBeInTheDocument();
+		expect( statValue( 'Total Income' ) ).toBe( '€0.00' );
+	} );
+
+	it( 'Fair Finance only: shows costs and budgets without income, net, balance or payment requests', async () => {
+		mockApiFetchByPath( {
+			totals: { total_cost: 12 },
+			costEntries: [ costEntry ],
+			budgets: [ budgetA ],
+		} );
+
+		render(
+			<EventFinance
+				connectorActive={ false }
+				financeActive
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		await screen.findByText( 'Venue rental' );
+		await screen.findByText( 'Summer camp' );
+		expect( statValue( 'Total Costs' ) ).toBe( '€12.00' );
+		expect( screen.queryByText( 'Total Income' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Total Net' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Payments' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'View All Entries' } )
+		).toHaveAttribute( 'href', 'admin.php&event_date_id=42' );
+		expect(
+			calledPaths().some( ( path ) =>
+				path.startsWith( '/fair-payments-connector/' )
+			)
+		).toBe( false );
+	} );
+
+	it( 'Fair Finance only: shows a cost-specific empty state', async () => {
+		mockApiFetchByPath( {} );
+
+		render(
+			<EventFinance
+				connectorActive={ false }
+				financeActive
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		expect(
+			await screen.findByText( 'No costs for this event yet.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'both active: keeps the combined summary, balance and empty state', async () => {
+		mockApiFetchByPath( {} );
+
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'No financial entries for this event yet.'
+			)
+		).toBeInTheDocument();
+		expect( statValue( 'Balance' ) ).toBe( '€0.00' );
+		expect( screen.getByLabelText( 'Budget' ) ).toBeInTheDocument();
+	} );
+
+	it( 'keeps payments visible when the Fair Finance requests fail', async () => {
+		mockApiFetchByPath( {
+			paidTransactions: [ paidTransactionWithEntry ],
+			failing: '/fair-finance/v1/financial-entries',
+		} );
+
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'Costs could not be loaded. Server exploded.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
+		expect( screen.getByText( 'Payments' ) ).toBeInTheDocument();
+		// A failed source is never shown as a zero total.
+		expect( screen.queryByText( 'Total Costs' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( 'No financial entries for this event yet.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps costs visible when the payment requests fail', async () => {
+		mockApiFetchByPath( {
+			totals: { total_cost: 12 },
+			costEntries: [ costEntry ],
+			failing: '/fair-payments-connector/v1/transactions',
+		} );
+
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'Payments could not be loaded. Server exploded.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Venue rental' ) ).toBeInTheDocument();
+		expect( statValue( 'Total Costs' ) ).toBe( '€12.00' );
+		expect( screen.queryByText( 'Total Income' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'disables the budget controls when budgets fail to load', async () => {
+		mockApiFetchByPath( { failing: '/fair-finance/v1/budgets' } );
+
+		render(
+			<EventFinance
+				{ ...bothActive }
+				eventDateId={ 42 }
+				entriesUrl="admin.php"
+			/>
+		);
+
+		expect(
+			await screen.findByText(
+				'Budgets could not be loaded. Server exploded.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Budget' ) ).toBeDisabled();
+		expect(
+			screen.getByRole( 'button', { name: 'Save budget' } )
+		).toBeDisabled();
 	} );
 } );
