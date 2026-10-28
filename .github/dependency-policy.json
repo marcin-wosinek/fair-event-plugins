@@ -337,5 +337,15 @@
 			"phpunit/phpunit"
 		]
 	},
-	"exceptions": []
+	"exceptions": [
+		{
+			"advisory": "GHSA-gcqx-w48m-w2h4",
+			"package": "deepmerge",
+			"dependencySet": "package-lock.json",
+			"rationale": "No fixed release; reaches the lockfile only through @wordpress/* packages externalized to WordPress core and through build/test tooling, so no shipped bundle includes it.",
+			"owner": "@marcin-wosinek",
+			"issue": "#2115",
+			"expires": "2027-01-31"
+		}
+	]
 }
