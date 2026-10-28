@@ -153,6 +153,71 @@ describe( 'QuestionnaireResponses — linked to participants', () => {
 	} );
 } );
 
+describe( 'QuestionnaireResponses — add to group (#1935)', () => {
+	it( 'snapshots every linked participant once and reports the result next to the button', async () => {
+		const groupCalls = [];
+		apiFetch.mockImplementation( ( { path, data } ) => {
+			if ( path.startsWith( '/fair-form/v1/questionnaire-responses' ) ) {
+				return Promise.resolve( [
+					...LINKED_RESPONSES,
+					{ ...LINKED_RESPONSES[ 0 ], id: 3 },
+					...STANDALONE_RESPONSES,
+				] );
+			}
+			if ( path.startsWith( '/fair-audience/v1/groups?' ) ) {
+				return Promise.resolve( [
+					{ id: 5, name: 'Volunteers', member_count: 0 },
+				] );
+			}
+			groupCalls.push( data.participant_id );
+			return Promise.resolve( {} );
+		} );
+
+		render( <QuestionnaireResponses /> );
+		await screen.findAllByText( 'Friend' );
+		const trigger = screen.getByRole( 'button', {
+			name: 'Add participants to group',
+		} );
+		fireEvent.click( trigger );
+
+		const dialog = await screen.findByRole( 'dialog' );
+		expect(
+			within( dialog ).getByText( '1 participant will be added:' )
+		).toBeInTheDocument();
+		expect(
+			within( dialog ).getByText(
+				'1 response is not linked to a participant and is left out.'
+			)
+		).toBeInTheDocument();
+
+		const select = within( dialog ).getByRole( 'combobox', {
+			name: 'Group',
+		} );
+		await within( select ).findByRole( 'option', {
+			name: 'Volunteers (0)',
+		} );
+		fireEvent.change( select, { target: { value: '5' } } );
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Add to group' } )
+		);
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( groupCalls ).toEqual( [ 7 ] );
+		expect(
+			screen.getByText( 'Group: Volunteers', {
+				selector: '.components-notice__content p',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( '1 participant was added to the group.', {
+				selector: '.components-notice__content p',
+			} )
+		).toBeInTheDocument();
+	} );
+} );
+
 describe( 'QuestionnaireResponses — row actions', () => {
 	it( 'offers a View action that navigates to the submission detail page', async () => {
 		mockResponses( STANDALONE_RESPONSES );

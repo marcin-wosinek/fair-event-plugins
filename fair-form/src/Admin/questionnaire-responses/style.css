@@ -24,3 +24,71 @@
 	color: #996800;
 	cursor: help;
 }
+
+.fair-form-questionnaire-responses__group-result {
+	margin: 0 0 16px;
+}
+
+.fair-form-questionnaire-responses__group-result p {
+	margin: 0.25em 0;
+}
+
+/*
+ * Add-to-group popup. Long names, emails and group titles wrap instead of
+ * widening the popup, the participant lists scroll inside it, and the button
+ * row wraps at 375px.
+ */
+.fair-form-group-modal__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.fair-form-group-modal__body p {
+	margin: 0;
+}
+
+.fair-form-group-modal__body .components-notice {
+	margin: 0;
+}
+
+.fair-form-group-modal__body .components-notice p {
+	margin: 0 0 8px;
+}
+
+.fair-form-group-modal__people {
+	margin: 0;
+	padding: 8px 12px 8px 28px;
+	max-height: 180px;
+	overflow-y: auto;
+	list-style: disc;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background: #fff;
+	overflow-wrap: anywhere;
+}
+
+.fair-form-group-modal__people li {
+	margin-bottom: 4px;
+}
+
+.fair-form-group-modal__detail {
+	color: #646970;
+}
+
+.fair-form-group-modal__note {
+	color: #50575e;
+}
+
+.fair-form-group-modal__hint {
+	color: #50575e;
+	font-style: italic;
+}
+
+.fair-form-group-modal__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 4px;
+}
