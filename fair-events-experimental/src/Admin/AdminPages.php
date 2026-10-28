@@ -2,7 +2,8 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental admin pages (compare events, sources and Meta)
+ * Registers the experimental admin pages (compare events, sources, Meta and
+ * WhatsApp)
  * as submenus under the fair-events-calendar menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -113,6 +114,16 @@ class AdminPages {
 				array( $this, 'render_meta_page' )
 			);
 		}
+
+		// WhatsApp page. The access token lives in Settings → Connectors.
+		$this->page_hooks['fair-events-whatsapp'] = add_submenu_page(
+			$parent,
+			__( 'WhatsApp', 'fair-events-experimental' ),
+			__( 'WhatsApp', 'fair-events-experimental' ),
+			'manage_options',
+			'fair-events-whatsapp',
+			array( $this, 'render_whatsapp_page' )
+		);
 	}
 
 	/**
@@ -261,6 +272,13 @@ class AdminPages {
 				wp_set_script_translations( 'fair-events-meta', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;
+
+			case 'fair-events-whatsapp':
+				$asset_file = include $exp_dir . 'build/admin/whatsapp/index.asset.php';
+				wp_enqueue_script( 'fair-events-whatsapp', $exp_url . 'build/admin/whatsapp/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-whatsapp', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				wp_enqueue_style( 'wp-components' );
+				break;
 		}
 	}
 
@@ -350,6 +368,17 @@ class AdminPages {
 	public function render_meta_page() {
 		?>
 		<div id="fair-events-meta-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render WhatsApp page
+	 *
+	 * @return void
+	 */
+	public function render_whatsapp_page() {
+		?>
+		<div id="fair-events-whatsapp-root"></div>
 		<?php
 	}
 

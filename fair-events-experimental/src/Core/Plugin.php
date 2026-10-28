@@ -57,6 +57,10 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
+		// Manual WhatsApp connection: IDs, validation and one-off test sends.
+		// No provider, schedule or queue is registered; see WHATSAPP.md.
+		\FairEventsExperimental\WhatsApp\Connector::init();
+
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
@@ -173,6 +177,13 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_rest_api() {
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\WhatsAppController() )->register_routes();
+			}
+		);
+
 		if ( Features::is_enabled( 'sources' ) ) {
 			add_action(
 				'rest_api_init',

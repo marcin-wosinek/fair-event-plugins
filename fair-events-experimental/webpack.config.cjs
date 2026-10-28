@@ -13,6 +13,10 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/meta/index.js'
 		),
+		'admin/whatsapp/index': path.resolve(
+			process.cwd(),
+			'src/Admin/whatsapp/index.js'
+		),
 		'admin/compare-events/index': path.resolve(
 			process.cwd(),
 			'src/Admin/compare-events/index.js'

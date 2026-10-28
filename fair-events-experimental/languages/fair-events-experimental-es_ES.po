@@ -43,26 +43,26 @@ msgstr "https://github.com/marcin-wosinek"
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental requiere que el complemento Fair Events esté activo."
 
-#: src/Admin/AdminPages.php:62
 #: src/Admin/AdminPages.php:63
+#: src/Admin/AdminPages.php:64
 msgid "Experimental Settings"
 msgstr "Ajustes experimentales"
 
-#: src/Admin/AdminPages.php:74
 #: src/Admin/AdminPages.php:75
+#: src/Admin/AdminPages.php:76
 #: src/Admin/compare-events/CompareEventsPage.js:485
 msgid "Compare events"
 msgstr "Comparar eventos"
 
-#: src/Admin/AdminPages.php:85
 #: src/Admin/AdminPages.php:86
+#: src/Admin/AdminPages.php:87
 #: src/Admin/sources/SourcesList.js:168
 msgid "Event Feeds"
 msgstr "Feeds de eventos"
 
-#: src/Admin/AdminPages.php:94
 #: src/Admin/AdminPages.php:95
-#: src/Admin/AdminPages.php:101
+#: src/Admin/AdminPages.php:96
+#: src/Admin/AdminPages.php:102
 msgid "View Event Feed"
 msgstr "Ver feed de eventos"
 
@@ -326,7 +326,7 @@ msgstr "Meta respondió, pero no confirmó la recepción del evento de prueba %s
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:312
 #: src/Admin/meta/MetaConversions.js:531
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -691,6 +691,7 @@ msgid "Add schedule item"
 msgstr "Añadir elemento del programa"
 
 #: src/Admin/manage-event-schedule/EventSchedule.js:399
+#: src/Admin/whatsapp/WhatsAppConnection.js:344
 msgid "No unsaved changes."
 msgstr "No hay cambios sin guardar."
 
@@ -1058,8 +1059,9 @@ msgstr "Eventos recibidos: no reportado"
 msgid "Events received: %d"
 msgstr "Eventos recibidos: %d"
 
-#. translators: %s: Meta trace ID for support requests
+#. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
+#: src/Admin/whatsapp/WhatsAppConnection.js:101
 #, js-format
 msgid "Trace ID: %s"
 msgstr "ID de seguimiento: %s"
@@ -1163,6 +1165,7 @@ msgid "Dataset / Pixel ID"
 msgstr "ID de conjunto de datos / píxel"
 
 #: src/Admin/meta/MetaConversions.js:615
+#: src/Admin/whatsapp/WhatsAppConnection.js:538
 msgid "Manage in Connectors"
 msgstr "Gestionar en Conectores"
 
@@ -1175,6 +1178,7 @@ msgid "Save Meta settings"
 msgstr "Guardar ajustes de Meta"
 
 #: src/Admin/meta/MetaConversions.js:674
+#: src/Admin/whatsapp/WhatsAppConnection.js:599
 msgid "Discard changes"
 msgstr "Descartar cambios"
 
@@ -1230,7 +1234,7 @@ msgstr "Volver a Feeds de eventos"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/SourceViewApp.js:259
-#, js-format,php-format
+#, js-format, php-format
 msgid "Event feed: %s"
 msgstr "Feed de eventos: %s"
 
@@ -1306,7 +1310,7 @@ msgid "Edit event feed"
 msgstr "Editar feed de eventos"
 
 #: src/Admin/source-view/SourceViewApp.js:471
-#: src/Admin/sources/SourcesList.js:430
+#: src/Admin/sources/SourcesList.js:434
 msgid "Edit Event Feed"
 msgstr "Editar feed de eventos"
 
@@ -1455,7 +1459,7 @@ msgid "Event feed created."
 msgstr "Feed de eventos creado."
 
 #: src/Admin/sources/SourcesList.js:171
-#: src/Admin/sources/SourcesList.js:434
+#: src/Admin/sources/SourcesList.js:438
 msgid "Add Event Feed"
 msgstr "Añadir feed de eventos"
 
@@ -1483,15 +1487,15 @@ msgstr "API JSON"
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/sources/SourcesList.js:343
+#: src/Admin/sources/SourcesList.js:347
 msgid "View"
 msgstr "Ver"
 
-#: src/Admin/sources/SourcesList.js:355
+#: src/Admin/sources/SourcesList.js:359
 msgid "Edit"
 msgstr "Editar"
 
-#: src/Admin/sources/SourcesList.js:370
+#: src/Admin/sources/SourcesList.js:374
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1503,8 +1507,8 @@ msgstr "No hay eventos este mes."
 msgid "Failed to load events."
 msgstr "Error al cargar los eventos."
 
-#: src/Admin/AdminPages.php:109
 #: src/Admin/AdminPages.php:110
+#: src/Admin/AdminPages.php:111
 #: src/Admin/meta/MetaPage.js:24
 msgid "Meta"
 msgstr "Meta"
@@ -1956,26 +1960,26 @@ msgid "The event feed could not be deleted. Try again."
 msgstr "No se pudo eliminar la fuente de eventos. Inténtalo de nuevo."
 
 #. translators: %s: event feed name
-#: src/Admin/sources/SourcesList.js:390
+#: src/Admin/sources/SourcesList.js:394
 #, js-format
 msgid "Delete event feed — %s"
 msgstr "Eliminar fuente de eventos — %s"
 
-#: src/Admin/sources/SourcesList.js:396
+#: src/Admin/sources/SourcesList.js:400
 msgid "Delete event feed"
 msgstr "Eliminar fuente de eventos"
 
-#: src/Admin/sources/SourcesList.js:400
+#: src/Admin/sources/SourcesList.js:404
 msgid "Deleting…"
 msgstr "Eliminando…"
 
 #. translators: %s: event feed slug
-#: src/Admin/sources/SourcesList.js:410
+#: src/Admin/sources/SourcesList.js:414
 #, js-format
 msgid "Its iCal and JSON feed URLs (slug “%s”) stop working for every calendar or site that reads them."
 msgstr "Sus URLs de fuente iCal y JSON (slug «%s») dejan de funcionar para cada calendario o sitio que las lee."
 
-#: src/Admin/sources/SourcesList.js:418
+#: src/Admin/sources/SourcesList.js:422
 msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
 msgstr "Los eventos y categorías incluidos en la fuente no se modifican. La eliminación de la fuente no se puede deshacer."
 
@@ -2031,6 +2035,347 @@ msgstr "Activa este feed para usar su resumen de WhatsApp."
 msgid "Open WhatsApp summary"
 msgstr "Abrir resumen de WhatsApp"
 
+#: src/Admin/AdminPages.php:121
+#: src/Admin/AdminPages.php:122
+#: src/WhatsApp/Connector.php:54
 #: src/Admin/sources/SourcesList.js:258
+#: src/Admin/whatsapp/WhatsAppPage.js:24
 msgid "WhatsApp"
 msgstr "WhatsApp"
+
+#: src/API/WhatsAppController.php:138
+msgid "Enter the recipient number in international format, with the country code, such as +34 600 123 456."
+msgstr "Introduce el número del destinatario en formato internacional, con el código de país, como +34 600 123 456."
+
+#: src/API/WhatsAppController.php:184
+msgid "The WhatsApp access token is managed in Settings → Connectors. Nothing was saved."
+msgstr "El token de acceso de WhatsApp se gestiona en Ajustes → Conectores. No se guardó nada."
+
+#: src/API/WhatsAppController.php:243
+msgid "Confirm that the recipient agreed to receive this test message. Nothing was sent."
+msgstr "Confirma que el destinatario aceptó recibir este mensaje de prueba. No se envió nada."
+
+#: src/API/WhatsAppController.php:269
+msgid "This template is not an approved template without parameters in this language. Reload the templates and pick another. Nothing was sent."
+msgstr "Esta plantilla no es una plantilla aprobada sin parámetros en este idioma. Recarga las plantillas y elige otra. No se envió nada."
+
+#: src/API/WhatsAppController.php:305
+msgid "Add a WhatsApp access token in Settings → Connectors first."
+msgstr "Añade un token de acceso de WhatsApp en Ajustes → Conectores primero."
+
+#: src/API/WhatsAppController.php:313
+msgid "Save the WhatsApp Business Account ID and the Phone Number ID first."
+msgstr "Guarda primero el ID de la cuenta comercial de WhatsApp y el ID del número de teléfono."
+
+#: src/API/WhatsAppController.php:320
+msgid "Validate the connection with the saved settings first."
+msgstr "Valida primero la conexión con los ajustes guardados."
+
+#: src/API/WhatsAppController.php:337
+msgid "WhatsApp did not confirm the message, so it may or may not have been sent. Ask the recipient before sending again; it was not retried."
+msgstr "WhatsApp no confirmó el mensaje, así que es posible que se haya enviado o no. Pregunta al destinatario antes de enviar de nuevo; no se reintentó."
+
+#: src/API/WhatsAppController.php:361
+msgid "Meta rejected the access token: it is invalid or has expired. Generate a new token and save it in Settings → Connectors."
+msgstr "Meta rechazó el token de acceso: no es válido o ha expirado. Genera un nuevo token y guárdalo en Ajustes → Conectores."
+
+#: src/API/WhatsAppController.php:363
+msgid "The access token lacks the whatsapp_business_management or whatsapp_business_messaging permission, or access to this WhatsApp Business Account. Assign the account to the token's user and generate a new token."
+msgstr "El token de acceso carece del permiso whatsapp_business_management o whatsapp_business_messaging, o del acceso a esta cuenta comercial de WhatsApp. Asigna la cuenta al usuario del token y genera un nuevo token."
+
+#: src/API/WhatsAppController.php:365
+msgid "Meta is limiting requests right now. Wait a few minutes and try again."
+msgstr "Meta está limitando las solicitudes en este momento. Espera unos minutos e intenta de nuevo."
+
+#: src/API/WhatsAppController.php:367
+msgid "Meta found no WhatsApp Business Account with this ID that the token can access. Check the WhatsApp Business Account ID and the token's access."
+msgstr "Meta no encontró ninguna cuenta comercial de WhatsApp con este ID a la que el token pueda acceder. Comprueba el ID de la cuenta comercial de WhatsApp y el acceso del token."
+
+#: src/API/WhatsAppController.php:369
+msgid "Meta found no phone number with this Phone Number ID that the token can access. Copy the Phone Number ID from the App Dashboard or WhatsApp Manager; it is not the telephone number."
+msgstr "Meta no encontró ningún número de teléfono con este ID de número de teléfono al que el token pueda acceder. Copia el ID del número de teléfono del panel de control de la aplicación o del gestor de WhatsApp; no es el número de teléfono."
+
+#: src/API/WhatsAppController.php:371
+msgid "This Phone Number ID belongs to a different WhatsApp Business Account. Use two IDs from the same account."
+msgstr "Este ID de número de teléfono pertenece a una cuenta comercial de WhatsApp diferente. Usa dos ID de la misma cuenta."
+
+#: src/API/WhatsAppController.php:373
+msgid "The recipient is not on the sender's list of allowed numbers. A test sender can only message numbers added in the App Dashboard."
+msgstr "El destinatario no está en la lista de números permitidos del remitente. Un remitente de prueba solo puede enviar mensajes a números añadidos en el panel de control de la aplicación."
+
+#: src/API/WhatsAppController.php:375
+msgid "WhatsApp cannot deliver to this recipient. Check that the number uses WhatsApp."
+msgstr "WhatsApp no puede entregar al destinatario. Comprueba que el número usa WhatsApp."
+
+#: src/API/WhatsAppController.php:377
+msgid "The sender phone number is not registered with the Cloud API. Register it in WhatsApp Manager."
+msgstr "El número de teléfono del remitente no está registrado en la API en la nube. Regístralo en el gestor de WhatsApp."
+
+#: src/API/WhatsAppController.php:379
+msgid "The WhatsApp Business Account is restricted or locked. Check its status in WhatsApp Manager."
+msgstr "La cuenta comercial de WhatsApp está restringida o bloqueada. Comprueba su estado en el gestor de WhatsApp."
+
+#: src/API/WhatsAppController.php:381
+msgid "The WhatsApp Business Account has a payment problem. Check its payment method in Meta Business Settings."
+msgstr "La cuenta comercial de WhatsApp tiene un problema de pago. Comprueba su método de pago en Ajustes comerciales de Meta."
+
+#: src/API/WhatsAppController.php:383
+msgid "Meta refused this template: it does not exist in this language or is not approved. Reload the templates and pick another."
+msgstr "Meta rechazó esta plantilla: no existe en este idioma o no está aprobada. Recarga las plantillas y elige otra."
+
+#: src/API/WhatsAppController.php:385
+msgid "Meta could not process the request. Try again later."
+msgstr "Meta no pudo procesar la solicitud. Inténtalo de nuevo más tarde."
+
+#: src/API/WhatsAppController.php:387
+msgid "Could not reach Meta. Check the site's outgoing connection and try again."
+msgstr "No se pudo alcanzar a Meta. Comprueba la conexión saliente del sitio e inténtalo de nuevo."
+
+#: src/API/WhatsAppController.php:389
+msgid "Meta rejected the request. Check both IDs and the token's access, then try again."
+msgstr "Meta rechazó la solicitud. Comprueba ambos IDs y el acceso del token, luego inténtalo de nuevo."
+
+#: src/WhatsApp/Connector.php:69
+msgid "Send test WhatsApp templates from Fair Events → WhatsApp. Removing the access token stops test sends until another token is saved."
+msgstr "Envía plantillas de WhatsApp de prueba desde Fair Events → WhatsApp. Al eliminar el token de acceso se detienen los envíos de prueba hasta que se guarde otro token."
+
+#. translators: %s: environment variable name
+#: src/WhatsApp/Connector.php:73
+#, php-format
+msgid "The token in use comes from the %s environment variable, so removing a saved token here does not stop test sends."
+msgstr "El token en uso proviene de la variable de entorno %s, por lo que eliminar un token guardado aquí no detiene los envíos de prueba."
+
+#. translators: %s: PHP constant name
+#: src/WhatsApp/Connector.php:76
+#, php-format
+msgid "The token in use comes from the %s constant, so removing a saved token here does not stop test sends."
+msgstr "El token en uso proviene de la constante %s, por lo que eliminar un token guardado aquí no detiene los envíos de prueba."
+
+#: src/WhatsApp/Connector.php:93
+msgid "WhatsApp access token"
+msgstr "Token de acceso de WhatsApp"
+
+#: src/WhatsApp/Connector.php:94
+msgid "Access token for the WhatsApp Cloud API."
+msgstr "Token de acceso para la API de WhatsApp Cloud."
+
+#: src/WhatsApp/Connector.php:176
+msgid "That does not look like a WhatsApp access token. Paste the full token generated in Meta Business Settings, without spaces. The saved token was not changed."
+msgstr "Esto no parece un token de acceso de WhatsApp. Pega el token completo generado en Ajustes de Meta Business, sin espacios. El token guardado no se cambió."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:39
+msgid "No WhatsApp access token is configured. Add one in Connectors."
+msgstr "No hay ningún token de acceso de WhatsApp configurado. Añade uno en Conectores."
+
+#. translators: %s: environment variable name
+#: src/Admin/whatsapp/WhatsAppConnection.js:50
+#, js-format
+msgid "The access token comes from the %s environment variable, which overrides any token saved in Connectors. Validate the connection to confirm Meta accepts it."
+msgstr "El token de acceso proviene de la variable de entorno %s, que anula cualquier token guardado en Conectores. Valida la conexión para confirmar que Meta lo acepta."
+
+#. translators: %s: PHP constant name
+#: src/Admin/whatsapp/WhatsAppConnection.js:63
+#, js-format
+msgid "The access token comes from the %s constant, which overrides any token saved in Connectors. Validate the connection to confirm Meta accepts it."
+msgstr "El token de acceso proviene de la constante %s, que anula cualquier token guardado en Conectores. Valida la conexión para confirmar que Meta lo acepta."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:73
+msgid "An access token is saved in Connectors. It is not shown here. Validate the connection to confirm Meta accepts it."
+msgstr "Un token de acceso se guarda en Conectores. No se muestra aquí. Valida la conexión para confirmar que Meta lo acepta."
+
+#. translators: %d: numeric error code reported by Meta
+#: src/Admin/whatsapp/WhatsAppConnection.js:92
+#, js-format
+msgid "Meta error code: %d"
+msgstr "Código de error de Meta: %d"
+
+#. translators: 1: sender's verified business name, 2: sender's telephone number, 3: date and time of the validation
+#: src/Admin/whatsapp/WhatsAppConnection.js:136
+#, js-format
+msgid "Connection validated: messages are sent as %1$s (%2$s). Checked on %3$s."
+msgstr "Conexión validada: los mensajes se envían como %1$s (%2$s). Comprobado el %3$s."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:141
+msgid "(no display name)"
+msgstr "(sin nombre para mostrar)"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:143
+msgid "number not reported"
+msgstr "número no reportado"
+
+#. translators: %s: quality rating reported by Meta, such as GREEN
+#: src/Admin/whatsapp/WhatsAppConnection.js:151
+#, js-format
+msgid "Quality rating: %s"
+msgstr "Calificación de calidad: %s"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:168
+msgid "Not sent"
+msgstr "No enviado"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:170
+msgid "Accepted by WhatsApp"
+msgstr "Aceptado por WhatsApp"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:172
+msgid "Outcome unknown"
+msgstr "Resultado desconocido"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:229
+msgid "Failed to load the WhatsApp settings."
+msgstr "No se pudieron cargar los ajustes de WhatsApp."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:288
+msgid "Failed to load the templates."
+msgstr "No se pudieron cargar las plantillas."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:325
+msgid "Loading WhatsApp settings…"
+msgstr "Cargando ajustes de WhatsApp…"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:339
+msgid "IDs contain digits only. Fix the highlighted field to save."
+msgstr "Los ID contienen solo dígitos. Corrige el campo resaltado para guardar."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:349
+msgid "Add a WhatsApp access token in Connectors before validating the connection."
+msgstr "Añade un token de acceso de WhatsApp en Conectores antes de validar la conexión."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:354
+msgid "Save the WhatsApp Business Account ID and the Phone Number ID before validating the connection."
+msgstr "Guarda el ID de la cuenta empresarial de WhatsApp y el ID del número de teléfono antes de validar la conexión."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:359
+msgid "Save or discard your changes before validating: validation checks the saved settings, not what is in the fields."
+msgstr "Guarda o descarta tus cambios antes de validar: la validación comprueba los ajustes guardados, no lo que hay en los campos."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:370
+msgid "Validate the connection with the saved settings to send a test template."
+msgstr "Valida la conexión con los ajustes guardados para enviar una plantilla de prueba."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:375
+msgid "This account has no approved templates without parameters. Create one in WhatsApp Manager, or use hello_world, then reload the templates."
+msgstr "Esta cuenta no tiene plantillas aprobadas sin parámetros. Crea una en WhatsApp Manager o usa hello_world y luego recarga las plantillas."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:380
+msgid "Choose a template to send."
+msgstr "Elige una plantilla para enviar."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:385
+msgid "Enter the recipient number."
+msgstr "Introduce el número del destinatario."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:390
+msgid "Confirm that the recipient agreed to receive this test message."
+msgstr "Confirma que el destinatario aceptó recibir este mensaje de prueba."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:412
+msgid "WhatsApp settings saved. Validate the connection to check them with Meta."
+msgstr "Ajustes de WhatsApp guardados. Valida la conexión para comprobarlos con Meta."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:422
+msgid "Failed to save the WhatsApp settings."
+msgstr "No se pudieron guardar los ajustes de WhatsApp."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:446
+msgid "The connection could not be validated."
+msgstr "No se pudo validar la conexión."
+
+#. translators: 1: template name, 2: template language code, 3: recipient number with most digits hidden
+#: src/Admin/whatsapp/WhatsAppConnection.js:480
+#, js-format
+msgid "WhatsApp accepted the %1$s (%2$s) template for %3$s. This does not confirm delivery: ask the recipient whether it arrived."
+msgstr "WhatsApp aceptó la plantilla %1$s (%2$s) para %3$s. Esto no confirma la entrega: pregunta al destinatario si le llegó."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:496
+msgid "The test template could not be sent."
+msgstr "No se pudo enviar la plantilla de prueba."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:518
+msgid "Use digits only."
+msgstr "Usa solo dígitos."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:532
+msgid "Connection"
+msgstr "Conexión"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:553
+msgid "WhatsApp Business Account ID"
+msgstr "ID de cuenta de WhatsApp Business"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:557
+msgid "Shown in the App Dashboard under WhatsApp → API Setup, and in WhatsApp Manager. It is an account ID, not a telephone number."
+msgstr "Se muestra en el panel de aplicaciones en WhatsApp → Configuración de API, y en WhatsApp Manager. Es un ID de cuenta, no un número de teléfono."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:565
+msgid "Phone Number ID"
+msgstr "ID de número de teléfono"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:566
+msgid "The ID Meta assigns to the sender number, shown under WhatsApp → API Setup. It differs from the telephone number itself."
+msgstr "El ID que Meta asigna al número del remitente, que se muestra en WhatsApp → Configuración de API. Difiere del número de teléfono en sí."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:586
+msgid "Save settings"
+msgstr "Guardar ajustes"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:613
+msgid "Validate connection"
+msgstr "Validar conexión"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:629
+msgid "Checking the connection with Meta…"
+msgstr "Comprobando la conexión con Meta…"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:656
+msgid "Settings saved, not validated."
+msgstr "Ajustes guardados, no validados."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:669
+msgid "Send a test template"
+msgstr "Enviar una plantilla de prueba"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:677
+msgid "Sends one approved template without parameters, once. Only send to someone who agreed to receive it. The recipient number is not stored."
+msgstr "Envía una plantilla aprobada sin parámetros, una sola vez. Solo envía a alguien que haya aceptado recibirla. El número del destinatario no se almacena."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:684
+msgid "Loading templates…"
+msgstr "Cargando plantillas…"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:702
+msgid "Template"
+msgstr "Plantilla"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:713
+msgid "Choose a template"
+msgstr "Elige una plantilla"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:728
+msgid "Recipient number"
+msgstr "Número del destinatario"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:732
+msgid "International format with the country code, such as +34 600 123 456. A test sender only reaches numbers added in the App Dashboard."
+msgstr "Formato internacional con el código de país, como +34 600 123 456. Un remitente de prueba solo alcanza números añadidos en el panel de aplicaciones."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:744
+msgid "The recipient agreed to receive this test message."
+msgstr "El destinatario aceptó recibir este mensaje de prueba."
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:766
+msgid "Send test template"
+msgstr "Enviar plantilla de prueba"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:781
+msgid "Reload templates"
+msgstr "Recargar plantillas"
+
+#: src/Admin/whatsapp/WhatsAppConnection.js:794
+msgid "Sending the test template…"
+msgstr "Enviando la plantilla de prueba…"
+
+#: src/Admin/whatsapp/WhatsAppPage.js:26
+msgid "Connect a WhatsApp Business sender and send a test template. Scheduled WhatsApp notifications are not available yet, so nothing is sent automatically."
+msgstr "Conecta un remitente de WhatsApp Business y envía una plantilla de prueba. Las notificaciones programadas de WhatsApp aún no están disponibles, por lo que nada se envía automáticamente."
+
