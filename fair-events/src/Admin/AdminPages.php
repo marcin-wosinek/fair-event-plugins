@@ -516,8 +516,12 @@ class AdminPages {
 			// and only when Fair Audience provides the data.
 			$localized_data['statisticsAvailable'] = EventStatisticsController::is_available() && current_user_can( 'manage_options' );
 
-			// Add finance entries URL if fair-finance plugin is active.
-			if ( class_exists( 'FairFinance\Core\Plugin' ) ) {
+			// Fair Finance supplies costs, budgets and accounting entries on the
+			// Finance tab. Always present, so the tab can tell it apart from a
+			// Fair Payments Connector-only site.
+			$finance_active                  = class_exists( 'FairFinance\Core\Plugin' );
+			$localized_data['financeActive'] = $finance_active;
+			if ( $finance_active ) {
 				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-finance-entries' );
 			}
 
@@ -531,7 +535,11 @@ class AdminPages {
 			// "connector plugin missing" apart from "installed but unconfigured"
 			// — the JS shows a different warning for each. `paymentConfigured`
 			// and `settingsUrl` only exist when the connector is active.
-			$connector_active        = class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
+			// The constant proves the plugin itself loaded: its classes can
+			// still be autoloadable when it is inactive (e.g. through another
+			// plugin's or a test double's Composer autoloader).
+			$connector_active        = defined( 'FAIR_PAYMENTS_CONNECTOR_VERSION' )
+				&& class_exists( '\FairPaymentsConnector\Payment\MolliePaymentHandler' );
 			$payments_connector_data = array(
 				'currency'        => Money::site_currency(),
 				'connectorActive' => $connector_active,

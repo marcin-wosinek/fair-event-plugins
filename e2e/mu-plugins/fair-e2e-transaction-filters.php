@@ -35,7 +35,8 @@ add_action(
 		 * - users: [ { display_name, role?, password? } ] — logins and emails are generated.
 		 * - transactions: [ { amount, status, testmode, description,
 		 *   created_at (UTC), participant?, user? (indexes into the lists
-		 *   above), participant_id? (raw id, for a missing participant) } ].
+		 *   above), participant_id? (raw id, for a missing participant),
+		 *   event_date_id? } ].
 		 */
 		register_rest_route(
 			'fair-e2e/v1',
@@ -108,8 +109,9 @@ add_action(
 								'description'       => (string) $transaction['description'],
 								'metadata'          => '',
 								'created_at'        => (string) $transaction['created_at'],
+								'event_date_id'     => isset( $transaction['event_date_id'] ) ? (int) $transaction['event_date_id'] : null,
 							),
-							array( '%s', '%d', '%d', '%f', '%s', '%s', '%d', '%s', '%s', '%s' )
+							array( '%s', '%d', '%d', '%f', '%s', '%s', '%d', '%s', '%s', '%s', '%d' )
 						);
 						$transaction_ids[] = (int) $wpdb->insert_id;
 					}

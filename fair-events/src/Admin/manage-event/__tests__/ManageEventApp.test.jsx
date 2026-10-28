@@ -118,6 +118,7 @@ afterEach( () => {
 	jest.restoreAllMocks();
 	jest.clearAllMocks();
 	delete window.fairEventsManageEventData;
+	delete window.fairPaymentsConnector;
 	window.history.replaceState( {}, '', '/' );
 } );
 
@@ -252,6 +253,7 @@ it( 'disables Prices and Finance tabs for external-URL events', async () => {
 		enabledPostTypes: [],
 		enabledFeatures: { ticketing: true },
 		paymentEntriesUrl: 'http://example.com/entries',
+		financeActive: '1',
 	};
 	apiFetch.mockImplementation( ( opts ) => {
 		if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
@@ -289,6 +291,7 @@ it( 'keeps Prices and Finance tabs enabled for post-linked events', async () => 
 		enabledPostTypes: [],
 		enabledFeatures: { ticketing: true },
 		paymentEntriesUrl: 'http://example.com/entries',
+		financeActive: '1',
 	};
 	apiFetch.mockImplementation( ( opts ) => {
 		if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
@@ -312,6 +315,66 @@ it( 'keeps Prices and Finance tabs enabled for post-linked events', async () => 
 	).not.toHaveAttribute( 'aria-disabled', 'true' );
 } );
 
+describe( 'Finance tab availability (#2110)', () => {
+	// wp_localize_script turns PHP booleans into '1' and ''.
+	it.each( [
+		[ 'neither plugin', '', '', false ],
+		[ 'Fair Payments Connector only', '1', '', true ],
+		[ 'Fair Finance only', '', '1', true ],
+		[ 'both plugins', '1', '1', true ],
+	] )(
+		'with %s active, Finance visible: %s',
+		async ( _label, connectorActive, financeActive, visible ) => {
+			window.fairPaymentsConnector = { connectorActive, currency: 'EUR' };
+			window.fairEventsManageEventData.financeActive = financeActive;
+
+			render( <ManageEventApp /> );
+
+			await screen.findByRole( 'tab', { name: 'Admin' } );
+			if ( visible ) {
+				expect(
+					screen.getByRole( 'tab', { name: 'Finance' } )
+				).toBeInTheDocument();
+			} else {
+				expect(
+					screen.queryByRole( 'tab', { name: 'Finance' } )
+				).not.toBeInTheDocument();
+			}
+		}
+	);
+
+	it( 'loads only payments when Fair Finance is inactive', async () => {
+		window.history.replaceState( {}, '', '?tab=finance' );
+		window.fairPaymentsConnector = {
+			connectorActive: '1',
+			currency: 'EUR',
+		};
+		window.fairEventsManageEventData.financeActive = '';
+
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByText( 'No payments for this event yet.' )
+		).toBeInTheDocument();
+		const paths = apiFetch.mock.calls.map( ( call ) => call[ 0 ].path );
+		expect(
+			paths.some( ( path ) =>
+				path.startsWith( '/fair-payments-connector/v1/transactions' )
+			)
+		).toBe( true );
+		expect(
+			paths.some(
+				( path ) =>
+					path.startsWith( '/fair-finance/' ) ||
+					path.endsWith( '/budget' )
+			)
+		).toBe( false );
+		expect(
+			screen.queryByRole( 'link', { name: 'View All Entries' } )
+		).not.toBeInTheDocument();
+	} );
+} );
+
 it( 'passes isSeries=true to EventTickets for an irregular (manual) series (#1158)', async () => {
 	window.history.replaceState( {}, '', '?tab=prices' );
 	window.fairEventsManageEventData = {
@@ -321,6 +384,7 @@ it( 'passes isSeries=true to EventTickets for an irregular (manual) series (#115
 		enabledPostTypes: [],
 		enabledFeatures: { ticketing: true },
 		paymentEntriesUrl: 'http://example.com/entries',
+		financeActive: '1',
 	};
 	apiFetch.mockImplementation( ( opts ) => {
 		if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
@@ -1858,6 +1922,7 @@ describe( 'Statistics tab (#1726)', () => {
 		window.fairEventsManageEventData.statisticsAvailable = true;
 		window.fairEventsManageEventData.paymentEntriesUrl =
 			'http://example.com/entries';
+		window.fairEventsManageEventData.financeActive = '1';
 		window.history.replaceState( {}, '', '?tab=statistics' );
 		render( <ManageEventApp /> );
 
