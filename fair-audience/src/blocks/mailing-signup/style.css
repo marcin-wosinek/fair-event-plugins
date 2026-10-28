@@ -37,17 +37,37 @@
 	background-color: #fff;
 }
 
-/* Category checkboxes */
-.fair-audience-mailing-categories {
+/* Category and weekly-update checkboxes */
+.fair-audience-mailing-categories,
+.fair-audience-mailing-weekly {
 	border: 1px solid #ccc;
 	border-radius: 4px;
 	padding: 16px;
 	margin-bottom: 20px;
 }
 
-.fair-audience-mailing-categories legend {
+.fair-audience-mailing-categories legend,
+.fair-audience-mailing-weekly legend {
 	font-weight: 500;
 	padding: 0 4px;
+}
+
+.fair-audience-mailing-feeds {
+	border: 0;
+	margin: 12px 0 0;
+	padding: 0 0 0 24px;
+	min-width: 0;
+}
+
+.fair-audience-mailing-feeds legend {
+	padding: 0;
+}
+
+.fair-audience-mailing-hint,
+.fair-audience-mailing-weekly-unavailable {
+	margin: 8px 0 0;
+	font-size: 0.875em;
+	color: #555;
 }
 
 .fair-audience-mailing-category-label {
