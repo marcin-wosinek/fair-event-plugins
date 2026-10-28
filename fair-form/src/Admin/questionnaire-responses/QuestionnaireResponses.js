@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -8,9 +8,6 @@ import {
 	CheckboxControl,
 	Modal,
 	RadioControl,
-	SelectControl,
-	TextControl,
-	TextareaControl,
 	Notice,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
@@ -21,6 +18,10 @@ import {
 } from 'fair-events-shared/src/dateTime.js';
 import { buildBulkExportText } from '../utils/export-format.js';
 import DeleteSubmissionDialog from '../components/DeleteSubmissionDialog.js';
+import AddToGroupModal, {
+	collectParticipants,
+	describeOutcome,
+} from './AddToGroupModal.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -53,16 +54,10 @@ export default function QuestionnaireResponses() {
 	// Delete confirmation state.
 	const [ deleteItem, setDeleteItem ] = useState( null );
 
-	// Add-to-group modal state.
-	const [ isGroupModalOpen, setIsGroupModalOpen ] = useState( false );
-	const [ groupMode, setGroupMode ] = useState( 'existing' );
-	const [ availableGroups, setAvailableGroups ] = useState( [] );
-	const [ groupsLoading, setGroupsLoading ] = useState( false );
-	const [ selectedGroupId, setSelectedGroupId ] = useState( '' );
-	const [ newGroupName, setNewGroupName ] = useState( '' );
-	const [ newGroupDescription, setNewGroupDescription ] = useState( '' );
-	const [ isSubmittingGroup, setIsSubmittingGroup ] = useState( false );
-	const [ groupFeedback, setGroupFeedback ] = useState( null );
+	// Add-to-group popup: the participants snapshotted when it opened (null =
+	// closed), and the outcome reported next to its button once it closes.
+	const [ groupDialog, setGroupDialog ] = useState( null );
+	const [ groupResult, setGroupResult ] = useState( null );
 
 	const params = new URLSearchParams( window.location.search );
 	const eventDateId = params.get( 'event_date_id' );
@@ -126,22 +121,16 @@ export default function QuestionnaireResponses() {
 		);
 	}, [ responses ] );
 
-	// Unique participant IDs from responses (skip null/0).
-	const uniqueParticipantIds = useMemo( () => {
-		const ids = new Set();
-		responses.forEach( ( response ) => {
-			const pid = parseInt( response.participant_id, 10 );
-			if ( pid > 0 ) {
-				ids.add( pid );
-			}
-		} );
-		return Array.from( ids );
-	}, [ responses ] );
-
 	// Whether any loaded response carries a participant link — drives the
 	// participant columns, the group button and the export picker so they
 	// can never disagree with each other.
-	const hasParticipantData = uniqueParticipantIds.length > 0;
+	const hasParticipantData = useMemo(
+		() =>
+			responses.some(
+				( response ) => parseInt( response.participant_id, 10 ) > 0
+			),
+		[ responses ]
+	);
 
 	// Build fields for DataViews.
 	const fields = useMemo( () => {
@@ -391,107 +380,16 @@ export default function QuestionnaireResponses() {
 	);
 
 	const openGroupModal = () => {
-		setGroupMode( 'existing' );
-		setSelectedGroupId( '' );
-		setNewGroupName( '' );
-		setNewGroupDescription( '' );
-		setGroupFeedback( null );
-		setIsGroupModalOpen( true );
-
-		setGroupsLoading( true );
-		apiFetch( {
-			path: '/fair-audience/v1/groups?orderby=name&order=asc',
-		} )
-			.then( ( data ) => {
-				setAvailableGroups( data );
-				setGroupsLoading( false );
-			} )
-			.catch( ( err ) => {
-				// eslint-disable-next-line no-console
-				console.error( 'Error loading groups:', err );
-				setGroupsLoading( false );
-			} );
+		setGroupResult( null );
+		setGroupDialog( collectParticipants( responses ) );
 	};
 
-	const addParticipantsToGroup = ( groupId ) => {
-		const promises = uniqueParticipantIds.map( ( participantId ) =>
-			apiFetch( {
-				path: `/fair-audience/v1/groups/${ groupId }/participants`,
-				method: 'POST',
-				data: { participant_id: participantId },
-			} )
-				.then( () => ( { added: true } ) )
-				.catch( ( err ) => {
-					if ( err.code === 'already_member' ) {
-						return { added: false };
-					}
-					throw err;
-				} )
-		);
-
-		return Promise.all( promises ).then( ( results ) => ( {
-			added: results.filter( ( r ) => r.added ).length,
-			skipped: results.filter( ( r ) => ! r.added ).length,
-		} ) );
-	};
-
-	const handleSubmitGroup = () => {
-		if ( uniqueParticipantIds.length === 0 ) {
-			return;
+	const closeGroupModal = ( { groupName, added, skipped, failed } ) => {
+		setGroupDialog( null );
+		if ( added + skipped + failed > 0 ) {
+			setGroupResult( { groupName, added, skipped, failed } );
 		}
-
-		setIsSubmittingGroup( true );
-		setGroupFeedback( null );
-
-		const resolveGroup =
-			groupMode === 'new'
-				? apiFetch( {
-						path: '/fair-audience/v1/groups',
-						method: 'POST',
-						data: {
-							name: newGroupName.trim(),
-							description: newGroupDescription.trim(),
-						},
-					} ).then( ( group ) => group.id )
-				: Promise.resolve( parseInt( selectedGroupId, 10 ) );
-
-		resolveGroup
-			.then( ( groupId ) => addParticipantsToGroup( groupId ) )
-			.then( ( { added, skipped } ) => {
-				setGroupFeedback( {
-					status: 'success',
-					message: sprintf(
-						// translators: 1: number added, 2: number already in group
-						__(
-							'%1$d participant(s) added, %2$d already in group.',
-							'fair-form'
-						),
-						added,
-						skipped
-					),
-				} );
-			} )
-			.catch( ( err ) => {
-				setGroupFeedback( {
-					status: 'error',
-					message:
-						err.message ||
-						__(
-							'Failed to add participants to group.',
-							'fair-form'
-						),
-				} );
-			} )
-			.finally( () => {
-				setIsSubmittingGroup( false );
-			} );
 	};
-
-	const canSubmitGroup =
-		uniqueParticipantIds.length > 0 &&
-		! isSubmittingGroup &&
-		( ( groupMode === 'existing' && selectedGroupId ) ||
-			( groupMode === 'new' && newGroupName.trim() ) );
 
 	const openWaModal = () => {
 		setWaColumnMode( 'all' );
@@ -607,6 +505,44 @@ export default function QuestionnaireResponses() {
 				</Button>
 			</div>
 
+			{ groupResult && (
+				<Notice
+					status={ groupResult.failed > 0 ? 'warning' : 'success' }
+					onRemove={ () => setGroupResult( null ) }
+					className="fair-form-questionnaire-responses__group-result"
+				>
+					{ groupResult.groupName && (
+						<p>
+							{ sprintf(
+								/* translators: %s: group name */
+								__( 'Group: %s', 'fair-form' ),
+								groupResult.groupName
+							) }
+						</p>
+					) }
+					{ describeOutcome(
+						groupResult.added,
+						groupResult.skipped
+					).map( ( sentence ) => (
+						<p key={ sentence }>{ sentence }</p>
+					) ) }
+					{ groupResult.failed > 0 && (
+						<p>
+							{ sprintf(
+								/* translators: %d: number of participants */
+								_n(
+									'%d participant could not be added.',
+									'%d participants could not be added.',
+									groupResult.failed,
+									'fair-form'
+								),
+								groupResult.failed
+							) }
+						</p>
+					) }
+				</Notice>
+			) }
+
 			{ deleteItem && (
 				<DeleteSubmissionDialog
 					key={ deleteItem.id }
@@ -621,121 +557,13 @@ export default function QuestionnaireResponses() {
 				/>
 			) }
 
-			{ isGroupModalOpen && (
-				<Modal
-					title={ __( 'Add participants to group', 'fair-form' ) }
-					onRequestClose={ () => setIsGroupModalOpen( false ) }
-					style={ { maxWidth: '500px', width: '100%' } }
-				>
-					<p>
-						{ sprintf(
-							// translators: %d: number of unique participants
-							__(
-								'%d unique participant(s) will be added.',
-								'fair-form'
-							),
-							uniqueParticipantIds.length
-						) }
-					</p>
-
-					<RadioControl
-						label={ __( 'Target group', 'fair-form' ) }
-						selected={ groupMode }
-						options={ [
-							{
-								label: __( 'Use existing group', 'fair-form' ),
-								value: 'existing',
-							},
-							{
-								label: __( 'Create new group', 'fair-form' ),
-								value: 'new',
-							},
-						] }
-						onChange={ setGroupMode }
-					/>
-
-					{ groupMode === 'existing' && (
-						<SelectControl
-							label={ __( 'Group', 'fair-form' ) }
-							value={ selectedGroupId }
-							onChange={ setSelectedGroupId }
-							options={ [
-								{
-									label: groupsLoading
-										? __( 'Loading...', 'fair-form' )
-										: __(
-												'— Select a group —',
-												'fair-form'
-											),
-									value: '',
-								},
-								...availableGroups.map( ( group ) => ( {
-									label: `${ group.name } (${ group.member_count })`,
-									value: String( group.id ),
-								} ) ),
-							] }
-							disabled={ groupsLoading }
-						/>
-					) }
-
-					{ groupMode === 'new' && (
-						<>
-							<TextControl
-								label={ __( 'Name', 'fair-form' ) }
-								value={ newGroupName }
-								onChange={ setNewGroupName }
-								placeholder={ __(
-									'Enter group name...',
-									'fair-form'
-								) }
-							/>
-							<TextareaControl
-								label={ __( 'Description', 'fair-form' ) }
-								value={ newGroupDescription }
-								onChange={ setNewGroupDescription }
-								placeholder={ __(
-									'Enter group description (optional)...',
-									'fair-form'
-								) }
-							/>
-						</>
-					) }
-
-					{ groupFeedback && (
-						<Notice
-							status={ groupFeedback.status }
-							isDismissible={ false }
-						>
-							{ groupFeedback.message }
-						</Notice>
-					) }
-
-					<div
-						style={ {
-							display: 'flex',
-							justifyContent: 'flex-end',
-							gap: '8px',
-							marginTop: '16px',
-						} }
-					>
-						<Button
-							variant="secondary"
-							onClick={ () => setIsGroupModalOpen( false ) }
-						>
-							{ __( 'Close', 'fair-form' ) }
-						</Button>
-						<Button
-							variant="primary"
-							onClick={ handleSubmitGroup }
-							disabled={ ! canSubmitGroup }
-							isBusy={ isSubmittingGroup }
-						>
-							{ groupMode === 'new'
-								? __( 'Create group and add', 'fair-form' )
-								: __( 'Add to group', 'fair-form' ) }
-						</Button>
-					</div>
-				</Modal>
+			{ groupDialog && (
+				<AddToGroupModal
+					participants={ groupDialog.participants }
+					unlinkedCount={ groupDialog.unlinkedCount }
+					duplicateCount={ groupDialog.duplicateCount }
+					onClose={ closeGroupModal }
+				/>
 			) }
 
 			{ isWaModalOpen && (
