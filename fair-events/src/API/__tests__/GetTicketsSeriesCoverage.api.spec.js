@@ -5,6 +5,10 @@
  * covers, and checkout keeps enforcing the same places it always did. The
  * same assertions run with fair-audience active and inactive. The suite is
  * single-worker, so fair-audience is back on before any other spec runs.
+ *
+ * The dates are read together whatever the series size (#1996): a WP-CLI
+ * trace of the page render and the availability refresh counts the single
+ * event date reads and the admission counts each one runs.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -26,6 +30,10 @@ const adminHeaders = {
 const VIEWER_CONTEXT_PATH =
 	'/wp-json/fair-events/v1/get-tickets/viewer-context';
 
+const SIGNUP_BLOCK = '<!-- wp:fair-events/event-signup /-->';
+const GET_TICKETS_BLOCK = '<!-- wp:fair-events/get-tickets /-->';
+const FIRST_DATE = '2036-02-07';
+
 const uniqueEmail = ( label ) =>
 	`coverage-${ label }-${ Date.now() }-${ Math.random()
 		.toString( 36 )
@@ -42,6 +50,42 @@ async function wpCli( ...args ) {
 	return stdout;
 }
 
+/**
+ * The date of a weekly series' occurrence, counted from the first.
+ *
+ * @param {number} index Zero-based occurrence index.
+ * @return {string} Y-m-d date.
+ */
+function weeklyDate( index ) {
+	const date = new Date( `${ FIRST_DATE }T00:00:00Z` );
+	date.setUTCDate( date.getUTCDate() + 7 * index );
+	return date.toISOString().slice( 0, 10 );
+}
+
+/**
+ * Trace the queries an event post's signup forms run, for its render (as
+ * the series page, or an occurrence page with a date) and the refresh.
+ *
+ * @param {number} postId           Event post.
+ * @param {number} eventDateId      Event date the refresh is for.
+ * @param {string} [occurrenceDate] Y-m-d of the occurrence page.
+ * @return {Promise<Object>} The script's E2E_COVERAGE_TRACE payload.
+ */
+async function traceCoverage( postId, eventDateId, occurrenceDate ) {
+	const stdout = await wpCli(
+		'eval-file',
+		'wp-content/mu-plugins/scripts/series-coverage-query-trace.php',
+		String( postId ),
+		String( eventDateId ),
+		...( occurrenceDate ? [ occurrenceDate ] : [] )
+	);
+	const line = stdout
+		.split( '\n' )
+		.find( ( row ) => row.startsWith( 'E2E_COVERAGE_TRACE:' ) );
+	expect( line, stdout ).toBeTruthy();
+	return JSON.parse( line.slice( 'E2E_COVERAGE_TRACE:'.length ) );
+}
+
 for ( const audienceActive of [ true, false ] ) {
 	test.describe( `GetTicketsController — series date coverage (fair-audience ${
 		audienceActive ? 'active' : 'inactive'
@@ -50,19 +94,28 @@ for ( const audienceActive of [ true, false ] ) {
 		const createdPostIds = [];
 
 		/**
-		 * Create a post-linked event, optionally a series, with one place per
-		 * date and free tickets of the given scopes.
+		 * Create a post-linked event, optionally a series, with tickets of the
+		 * given scopes.
 		 *
 		 * @param {Object}   options
-		 * @param {string[]} options.scopes Ticket type scopes, in order.
-		 * @param {string}   [options.rrule] Recurrence rule for a series.
-		 * @return {Promise<{eventDateId: number, occurrenceIds: number[], typeIds: number[]}>} Created IDs.
+		 * @param {string[]} options.scopes     Ticket type scopes, in order.
+		 * @param {string}   [options.rrule]    Recurrence rule for a series.
+		 * @param {?number}  [options.capacity] Places per date, null for no limit.
+		 * @param {number}   [options.price]    Price of every ticket type.
+		 * @param {string}   [options.content]  Post content.
+		 * @return {Promise<{postId: number, eventDateId: number, occurrenceIds: number[], typeIds: number[]}>} Created IDs.
 		 */
-		async function createEvent( { scopes, rrule } ) {
+		async function createEvent( {
+			scopes,
+			rrule,
+			capacity = 1,
+			price = 0,
+			content = '',
+		} ) {
 			const title = `Coverage ${ Date.now() } ${ Math.random() }`;
 			const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
 				headers: adminHeaders,
-				data: { title, status: 'publish' },
+				data: { title, status: 'publish', content },
 			} );
 			expect( postRes.ok() ).toBeTruthy();
 			const postId = ( await postRes.json() ).id;
@@ -75,9 +128,9 @@ for ( const audienceActive of [ true, false ] ) {
 					data: {
 						title,
 						link_type: 'post',
-						start_date: '2036-02-07',
+						start_date: FIRST_DATE,
 						start_time: '10:00:00',
-						end_date: '2036-02-07',
+						end_date: FIRST_DATE,
 						end_time: '12:00:00',
 						...( rrule ? { rrule } : {} ),
 					},
@@ -98,7 +151,7 @@ for ( const audienceActive of [ true, false ] ) {
 				{
 					headers: adminHeaders,
 					data: {
-						capacity: 1,
+						capacity,
 						ticket_types: scopes.map( ( scope ) => ( {
 							name: scope,
 							capacity: null,
@@ -118,7 +171,7 @@ for ( const audienceActive of [ true, false ] ) {
 						prices: scopes.map( ( _scope, index ) => ( {
 							ticket_type_index: index,
 							sale_period_index: 0,
-							price: 0,
+							price,
 						} ) ),
 						settings: {},
 					},
@@ -131,6 +184,7 @@ for ( const audienceActive of [ true, false ] ) {
 			).toBeTruthy();
 
 			return {
+				postId,
 				eventDateId,
 				occurrenceIds: [
 					eventDateId,
@@ -287,6 +341,204 @@ for ( const audienceActive of [ true, false ] ) {
 			expect( body.series_coverage.dates.map( ( d ) => d.full ) ).toEqual(
 				[ true, true, true ]
 			);
+		} );
+
+		test( 'dates without a limit are never full', async () => {
+			const series = await createEvent( {
+				scopes: [ 'single_instance' ],
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				capacity: null,
+			} );
+			const [ , second ] = series.occurrenceIds;
+
+			const bought = await buy( {
+				event_date_id: second,
+				ticket_type_id: series.typeIds[ 0 ],
+				email: uniqueEmail( 'unlimited' ),
+				quantity: 2,
+			} );
+			expect( bought.status, JSON.stringify( bought.body ) ).toBe( 200 );
+
+			const body = await viewerContext( series.eventDateId );
+			expect( body.series_coverage.dates.map( ( d ) => d.full ) ).toEqual(
+				[ false, false, false ]
+			);
+		} );
+
+		test( 'a payment hold fills its date until it lapses', async () => {
+			const series = await createEvent( {
+				scopes: [ 'single_instance' ],
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				price: 10,
+			} );
+			const [ , second ] = series.occurrenceIds;
+			const email = uniqueEmail( 'hold' );
+
+			const held = await buy( {
+				event_date_id: second,
+				ticket_type_id: series.typeIds[ 0 ],
+				email,
+				quantity: 1,
+			} );
+			expect( held.status, JSON.stringify( held.body ) ).toBe( 200 );
+
+			let body = await viewerContext( series.eventDateId );
+			expect( body.series_coverage.dates.map( ( d ) => d.full ) ).toEqual(
+				[ false, true, false ]
+			);
+
+			const signupsRes = await api.get(
+				'/wp-json/fair-events/v1/get-tickets',
+				{ headers: adminHeaders, params: { event_date: second } }
+			);
+			expect( signupsRes.ok() ).toBeTruthy();
+			const signup = ( await signupsRes.json() ).find(
+				( row ) => row.email === email
+			);
+			expect( signup.status ).toBe( 'pending_payment' );
+
+			const lapseRes = await api.post(
+				'/wp-json/fair-e2e/v1/ticket-capacity/lapse',
+				{ headers: adminHeaders, data: { signup_id: signup.id } }
+			);
+			expect( lapseRes.ok() ).toBeTruthy();
+
+			// The next refresh counts afresh: nothing is cached across requests.
+			body = await viewerContext( series.eventDateId );
+			expect( body.series_coverage.dates.map( ( d ) => d.full ) ).toEqual(
+				[ false, false, false ]
+			);
+		} );
+
+		test( "the viewer's own dates are marked while fair-audience recognises them", async () => {
+			const series = await createEvent( {
+				scopes: [ 'single_instance' ],
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+				capacity: null,
+			} );
+			const [ , second ] = series.occurrenceIds;
+
+			// One visitor buys, then refreshes the series form in the same
+			// browser session.
+			const visitor = await request.newContext( { baseURL: BASE_URL } );
+			const res = await visitor.post(
+				'/wp-json/fair-events/v1/get-tickets',
+				{
+					data: {
+						name: 'Coverage Buyer',
+						_honeypot: '',
+						event_date_id: second,
+						ticket_type_id: series.typeIds[ 0 ],
+						email: uniqueEmail( 'own' ),
+						quantity: 1,
+					},
+				}
+			);
+			const bought = await res.json();
+			expect( res.status(), JSON.stringify( bought ) ).toBe( 200 );
+
+			const refresh = await visitor.get( VIEWER_CONTEXT_PATH, {
+				params: { event_date_id: series.eventDateId },
+			} );
+			expect( refresh.ok() ).toBeTruthy();
+			const body = await refresh.json();
+			await visitor.dispose();
+
+			expect(
+				body.series_coverage.dates.map( ( d ) => d.signed_up )
+			).toEqual( [ false, audienceActive, false ] );
+			expect( body.series_coverage.whole_series ).toEqual(
+				series.occurrenceIds
+			);
+		} );
+
+		test( 'coverage reads the dates together, so its date reads do not grow with the series (#1996)', async () => {
+			test.setTimeout( 240_000 );
+
+			const layouts = {
+				one: SIGNUP_BLOCK,
+				two: SIGNUP_BLOCK + GET_TICKETS_BLOCK,
+			};
+			const traces = [];
+			for ( const capacity of [ null, 5 ] ) {
+				for ( const count of [ 3, 48 ] ) {
+					for ( const [ layout, content ] of Object.entries(
+						layouts
+					) ) {
+						const series = await createEvent( {
+							scopes: [ 'multiple_instances' ],
+							rrule: `FREQ=WEEKLY;COUNT=${ count }`,
+							capacity,
+							content,
+						} );
+						const occurrence = Math.floor( count / 2 );
+						const pages = {
+							series: await traceCoverage(
+								series.postId,
+								series.eventDateId
+							),
+							occurrence: await traceCoverage(
+								series.postId,
+								series.occurrenceIds[ occurrence ],
+								weeklyDate( occurrence )
+							),
+						};
+						for ( const trace of Object.values( pages ) ) {
+							expect( trace.status ).toBe( 200 );
+							expect( trace.forms ).toBe(
+								'one' === layout ? 1 : 2
+							);
+							expect(
+								trace.coverage.dates.map( ( d ) => d.id )
+							).toEqual( series.occurrenceIds );
+						}
+						traces.push( { capacity, count, layout, pages } );
+					}
+				}
+			}
+
+			// Compare each page of a 48-date series with the same page of a
+			// 3-date one.
+			const find = ( capacity, count, layout ) =>
+				traces.find(
+					( t ) =>
+						t.capacity === capacity &&
+						t.count === count &&
+						t.layout === layout
+				).pages;
+			for ( const capacity of [ null, 5 ] ) {
+				for ( const layout of Object.keys( layouts ) ) {
+					const small = find( capacity, 3, layout );
+					const large = find( capacity, 48, layout );
+					for ( const page of [ 'series', 'occurrence' ] ) {
+						for ( const phase of [ 'render', 'refresh' ] ) {
+							const before = small[ page ][ phase ];
+							const after = large[ page ][ phase ];
+							const where = `${ capacity } places, ${ layout } form(s), ${ page } ${ phase }`;
+
+							// No event date is read one by one per occurrence.
+							expect( after.date_reads, where ).toBe(
+								before.date_reads
+							);
+							if ( null === capacity ) {
+								// Unlimited dates count no admissions at all.
+								expect( after.admission_counts, where ).toBe(
+									0
+								);
+								expect( after.total, where ).toBe(
+									before.total
+								);
+							} else {
+								// Limited dates still count fresh, once per date.
+								expect(
+									after.admission_counts / 48,
+									where
+								).toBe( before.admission_counts / 3 );
+							}
+						}
+					}
+				}
+			}
 		} );
 	} );
 }

@@ -196,11 +196,32 @@ class TicketCapacity {
 	 */
 	public static function remaining_for_event_date( int $event_date_id ) {
 		$event_date = EventDates::get_by_id( $event_date_id );
-		if ( ! $event_date || null === $event_date->capacity ) {
+		if ( ! $event_date ) {
 			return null;
 		}
 
-		return max( 0, (int) $event_date->capacity - self::count_event_date( $event_date_id ) );
+		return self::remaining_for_event_dates( array( $event_date ) )[ $event_date_id ];
+	}
+
+	/**
+	 * Places still available on event dates already loaded, so a caller
+	 * describing many dates reads them once instead of once per date. A date
+	 * without a limit costs no count; a limited one counts its admissions
+	 * fresh, as count_event_date() does.
+	 *
+	 * @param EventDates[] $event_dates Loaded event dates.
+	 * @return array<int, int|null> Remaining places by event date ID, null when the date has no limit.
+	 */
+	public static function remaining_for_event_dates( array $event_dates ) {
+		$remaining = array();
+		foreach ( $event_dates as $event_date ) {
+			$id               = (int) $event_date->id;
+			$remaining[ $id ] = null === $event_date->capacity
+				? null
+				: max( 0, (int) $event_date->capacity - self::count_event_date( $id ) );
+		}
+
+		return $remaining;
 	}
 
 	/**
