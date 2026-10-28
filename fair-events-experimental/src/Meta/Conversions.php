@@ -25,6 +25,11 @@ class Conversions {
 	public const CLEANUP_HOOK      = 'fair_events_experimental_meta_cleanup';
 	public const QUEUED_TIMEOUT    = 10;
 	public const IMMEDIATE_TIMEOUT = 10;
+	public const WORKER_ROW_LIMIT  = 20;
+	public const WORKER_BUDGET     = 20;
+
+	/** Seconds kept back per claim, beyond its HTTP timeout, for the final database updates. */
+	public const FINISH_RESERVE = 2;
 
 	/** Custom engagement events by button action; distinct from checkout and purchase. */
 	public const ENGAGEMENT_EVENTS = array(
@@ -33,12 +38,14 @@ class Conversions {
 	);
 
 	/**
-	 * Register hooks. Delivery and cleanup always run; checkout and purchase
-	 * measurement is wired only when Fair Payments Connector is available.
+	 * Register hooks. Delivery, cleanup and schedule repair always run;
+	 * checkout and purchase measurement is wired only when Fair Payments
+	 * Connector is available.
 	 */
 	public function init() {
 		add_action( self::DELIVERY_HOOK, array( $this, 'deliver_due' ) );
 		add_action( self::CLEANUP_HOOK, array( $this, 'cleanup' ) );
+		add_action( 'init', array( $this, 'reconcile_schedule' ) );
 		if ( ! self::payments_available() ) {
 			return;
 		}
@@ -132,11 +139,27 @@ class Conversions {
 		return $result['accepted'];
 	}
 
-	/** @param array $event Outbox event. @return bool */
+	/**
+	 * Repair a missing or failed delivery schedule once background work can
+	 * be scheduled again. It never sends: queued events go through
+	 * {@see deliver_due()} only.
+	 */
+	public function reconcile_schedule() {
+		( new DeliverySchedule() )->reconcile_if_needed();
+	}
+
+	/**
+	 * Queue an event and bring delivery forward to now, ahead of any later
+	 * retry. A scheduling failure is recorded for administrators and never
+	 * reaches the payment that triggered it.
+	 *
+	 * @param array $event Outbox event. @return bool
+	 */
 	private static function queue( $event ) {
-		$inserted = ( new Outbox() )->enqueue( $event );
-		if ( $inserted && ! wp_next_scheduled( self::DELIVERY_HOOK ) ) {
-			wp_schedule_single_event( time() + 1, self::DELIVERY_HOOK );
+		$outbox   = new Outbox();
+		$inserted = $outbox->enqueue( $event );
+		if ( $inserted ) {
+			( new DeliverySchedule( $outbox ) )->ensure_by( time() );
 		}
 		return $inserted;
 	}
@@ -312,31 +335,67 @@ class Conversions {
 	 * schedule as a temporary error, with the same event ID so Meta can
 	 * deduplicate it. Rows finished before confirmation was checked keep
 	 * their `accepted` state: it records an HTTP success only.
+	 *
+	 * One run sends at most {@see WORKER_ROW_LIMIT} rows within
+	 * {@see WORKER_BUDGET} seconds, claiming another row only while its HTTP
+	 * timeout and {@see FINISH_RESERVE} still fit. Before each send a wake-up
+	 * covers the claim's lease end, so an interrupted run is recovered
+	 * without it; when the run ends — normally, early, or by an
+	 * exception — the schedule is reconciled for the remaining work, which
+	 * includes rows other workers held when claims were contended.
+	 *
+	 * @param int $scheduled_for Wake-up timestamp; it only keeps wake-ups distinct.
 	 */
-	public function deliver_due() {
-		$outbox = new Outbox();
-		$row    = $outbox->claim_due();
-		while ( $row ) {
-			$result = $this->send_payload(
-				self::payload_for( $row ),
-				'',
-				self::QUEUED_TIMEOUT,
-				array(
-					'origin'         => 'production',
-					'delivery_path'  => 'queued',
-					'outbox_id'      => (int) $row->id,
-					'attempt_number' => (int) $row->attempt_count + 1,
-				)
-			);
-			if ( $result['accepted'] ) {
-				$outbox->finish( (int) $row->id, 'received', '', '', $result['diagnostics'] );
-			} elseif ( $result['temporary'] ) {
-				$outbox->retry( $row, $result['code'], $result['type'], 'unconfirmed' === $result['outcome'] ? 'unconfirmed' : 'temporary_error', $result['diagnostics'] );
-			} else {
-				$outbox->finish( (int) $row->id, 'configuration_error', $result['code'], $result['type'], $result['diagnostics'] );
+	public function deliver_due( $scheduled_for = 0 ) {
+		unset( $scheduled_for );
+		$outbox   = new Outbox();
+		$schedule = new DeliverySchedule( $outbox );
+		$started  = $this->now();
+		try {
+			$outbox->expire_exhausted_claims();
+			for ( $sent = 0; $sent < self::WORKER_ROW_LIMIT; $sent++ ) {
+				if ( $this->now() - $started > self::WORKER_BUDGET - self::QUEUED_TIMEOUT - self::FINISH_RESERVE ) {
+					break;
+				}
+				$row = $outbox->claim_due();
+				if ( ! $row ) {
+					break;
+				}
+				$lease_end = isset( $row->claim_expires_at ) ? strtotime( $row->claim_expires_at . ' UTC' ) : false;
+				$schedule->cover_claim( $lease_end ? $lease_end : time() + Outbox::LEASE_SECONDS );
+				$this->deliver_claimed( $outbox, $row );
 			}
-			$row = $outbox->claim_due();
+		} finally {
+			$schedule->reconcile();
 		}
+	}
+
+	/** @param Outbox $outbox Outbox. @param object $row Claimed row. */
+	private function deliver_claimed( $outbox, $row ) {
+		$result = $this->send_payload(
+			self::payload_for( $row ),
+			'',
+			self::QUEUED_TIMEOUT,
+			array(
+				'origin'         => 'production',
+				'delivery_path'  => 'queued',
+				'outbox_id'      => (int) $row->id,
+				// The claim already counted this attempt.
+				'attempt_number' => (int) $row->attempt_count,
+			)
+		);
+		if ( $result['accepted'] ) {
+			$outbox->finish( $row, 'received', '', '', $result['diagnostics'] );
+		} elseif ( $result['temporary'] ) {
+			$outbox->retry( $row, $result['code'], $result['type'], 'unconfirmed' === $result['outcome'] ? 'unconfirmed' : 'temporary_error', $result['diagnostics'] );
+		} else {
+			$outbox->finish( $row, 'configuration_error', $result['code'], $result['type'], $result['diagnostics'] );
+		}
+	}
+
+	/** @return float Seconds, for the worker's execution budget. */
+	protected function now() {
+		return microtime( true );
 	}
 
 	/**

@@ -165,6 +165,8 @@ if ( ! function_exists( 'wp_remote_post' ) ) {
 		$GLOBALS['_fair_test_remote_post_requests'][] = array(
 			'url'  => $url,
 			'args' => $args,
+			// The WP-Cron schedule as it stood when the request went out.
+			'cron' => $GLOBALS['_fair_test_cron'] ?? array(),
 		);
 		return isset( $GLOBALS['_fair_test_remote_post_response'] )
 			? $GLOBALS['_fair_test_remote_post_response']
@@ -424,17 +426,36 @@ if ( ! function_exists( 'wp_date' ) ) {
 	}
 }
 
-// Cron stubs: scheduled single events are recorded in
-// $GLOBALS['_fair_test_scheduled'] as hook name => timestamp.
+// Cron stubs backed by a WP-Cron-shaped array in $GLOBALS['_fair_test_cron']
+// (timestamp => hook => key => event). Like WP-Cron, a single event is
+// refused as a duplicate within ten minutes of one with the same hook and
+// arguments. Setting $GLOBALS['_fair_test_cron_fails'] makes scheduling fail.
+if ( ! function_exists( '_get_cron_array' ) ) {
+	/**
+	 * Stub of WordPress _get_cron_array().
+	 *
+	 * @return array
+	 */
+	function _get_cron_array() {
+		return $GLOBALS['_fair_test_cron'] ?? array();
+	}
+}
+
 if ( ! function_exists( 'wp_next_scheduled' ) ) {
 	/**
 	 * Stub of WordPress wp_next_scheduled().
 	 *
 	 * @param string $hook Hook name.
+	 * @param array  $args Event arguments.
 	 * @return int|false
 	 */
-	function wp_next_scheduled( $hook ) {
-		return $GLOBALS['_fair_test_scheduled'][ $hook ] ?? false;
+	function wp_next_scheduled( $hook, $args = array() ) {
+		foreach ( _get_cron_array() as $timestamp => $hooks ) {
+			if ( isset( $hooks[ $hook ][ md5( serialize( $args ) ) ] ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WP-Cron's own key.
+				return $timestamp;
+			}
+		}
+		return false;
 	}
 }
 
@@ -444,10 +465,46 @@ if ( ! function_exists( 'wp_schedule_single_event' ) ) {
 	 *
 	 * @param int    $timestamp Run time.
 	 * @param string $hook      Hook name.
-	 * @return true
+	 * @param array  $args      Event arguments.
+	 * @param bool   $wp_error  Whether to return a WP_Error on failure.
+	 * @return bool|WP_Error
 	 */
-	function wp_schedule_single_event( $timestamp, $hook ) {
-		$GLOBALS['_fair_test_scheduled'][ $hook ] = $timestamp;
+	function wp_schedule_single_event( $timestamp, $hook, $args = array(), $wp_error = false ) {
+		if ( ! empty( $GLOBALS['_fair_test_cron_fails'] ) ) {
+			return $wp_error ? new WP_Error( 'could_not_set', 'The cron event list could not be saved.' ) : false;
+		}
+		$key = md5( serialize( $args ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WP-Cron's own key.
+		foreach ( _get_cron_array() as $existing => $hooks ) {
+			if ( abs( $existing - $timestamp ) <= 600 && isset( $hooks[ $hook ][ $key ] ) ) {
+				return $wp_error ? new WP_Error( 'duplicate_event', 'A duplicate event already exists.' ) : false;
+			}
+		}
+		$GLOBALS['_fair_test_cron'][ $timestamp ][ $hook ][ $key ] = array(
+			'schedule' => false,
+			'args'     => $args,
+		);
+		ksort( $GLOBALS['_fair_test_cron'] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_event' ) ) {
+	/**
+	 * Stub of WordPress wp_unschedule_event().
+	 *
+	 * @param int    $timestamp Run time.
+	 * @param string $hook      Hook name.
+	 * @param array  $args      Event arguments.
+	 * @return bool
+	 */
+	function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
+		$key = md5( serialize( $args ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- WP-Cron's own key.
+		if ( ! isset( $GLOBALS['_fair_test_cron'][ $timestamp ][ $hook ][ $key ] ) ) {
+			return false;
+		}
+		unset( $GLOBALS['_fair_test_cron'][ $timestamp ][ $hook ][ $key ] );
+		$GLOBALS['_fair_test_cron'][ $timestamp ] = array_filter( $GLOBALS['_fair_test_cron'][ $timestamp ] );
+		$GLOBALS['_fair_test_cron']               = array_filter( $GLOBALS['_fair_test_cron'] );
 		return true;
 	}
 }

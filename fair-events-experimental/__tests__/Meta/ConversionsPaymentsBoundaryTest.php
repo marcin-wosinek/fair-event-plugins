@@ -24,14 +24,14 @@ class ConversionsPaymentsBoundaryTest extends TestCase {
 		$GLOBALS['_fair_test_remote_post_requests'] = array();
 	}
 
-	/** Without the payment connector only delivery and cleanup are wired. */
-	public function test_init_without_payments_registers_only_delivery_and_cleanup() {
+	/** Without the payment connector only delivery, cleanup and schedule repair are wired. */
+	public function test_init_without_payments_registers_only_delivery_cleanup_and_schedule_repair() {
 		$this->assertFalse( Conversions::payments_available() );
 
 		( new Conversions() )->init();
 
 		$this->assertSame(
-			array( Conversions::DELIVERY_HOOK, Conversions::CLEANUP_HOOK ),
+			array( Conversions::DELIVERY_HOOK, Conversions::CLEANUP_HOOK, 'init' ),
 			array_keys( $GLOBALS['_fair_test_hooks'] )
 		);
 	}

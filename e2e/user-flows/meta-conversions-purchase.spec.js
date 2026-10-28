@@ -292,4 +292,79 @@ test.describe('Meta Conversions checkout/purchase reporting', () => {
 		);
 		expect(purchaseRequests).toHaveLength(1);
 	});
+
+	test('a purchase completes while delivery cannot be scheduled, and is delivered once it can (#1971)', async ({
+		page,
+		seedEvent,
+	}) => {
+		const event = seedEvent('paid');
+		const stamp = Date.now();
+		const email = `meta.unscheduled.${stamp}@example.test`;
+		// Every WP-Cron write for delivery fails, and nothing runs behind
+		// the test's back.
+		wpCli('option update fair_e2e_meta_block_schedule 1');
+		wpCli('option update fair_e2e_meta_hold_cron 1');
+		try {
+			await grantMarketingConsent(page, event.pageUrl);
+			await page.goto(event.pageUrl);
+
+			const form = page.locator('.fair-events-get-tickets-form');
+			await expect(form).toBeVisible();
+			await form.locator('input[name="ticket_type_id"]').check();
+			await form
+				.locator('input[name="name"]')
+				.fill(`E2E Meta Unscheduled ${stamp}`);
+			await form.locator('input[name="email"]').fill(email);
+			await form.locator('.form-button').click();
+			await expect(
+				page.getByText('Payment confirmed', { exact: false })
+			).toBeVisible({ timeout: 30000 });
+
+			const signup = runScript(
+				'signup-state.php',
+				'E2E_STATE',
+				`${email} ${event.eventDateId}`
+			);
+			const transaction = runScript(
+				'transaction-state.php',
+				'E2E_TX_STATE',
+				String(signup.transaction_id)
+			);
+			expect(transaction.status).toBe('paid');
+
+			const queued = runScript(
+				'meta-conversions-state.php',
+				'E2E_META_STATE',
+				String(signup.transaction_id)
+			);
+			expect(queued.rows.map((row) => row.state)).toEqual([
+				'pending',
+				'pending',
+			]);
+		} finally {
+			wpCli('option delete fair_e2e_meta_block_schedule', {
+				allowFailure: true,
+			});
+		}
+
+		// The next WP-CLI request repairs the schedule; the worker then runs.
+		wpCli('cron event run --due-now');
+		wpCli('option delete fair_e2e_meta_hold_cron', {
+			allowFailure: true,
+		});
+		const signup = runScript(
+			'signup-state.php',
+			'E2E_STATE',
+			`${email} ${event.eventDateId}`
+		);
+		const delivered = runScript(
+			'meta-conversions-state.php',
+			'E2E_META_STATE',
+			String(signup.transaction_id)
+		);
+		expect(delivered.rows.map((row) => row.state)).toEqual([
+			'received',
+			'received',
+		]);
+	});
 });

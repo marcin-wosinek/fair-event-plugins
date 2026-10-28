@@ -161,6 +161,63 @@ test.describe('Meta admin page', () => {
 		).toContainText('Meta Conversions settings saved.');
 	});
 
+	test('warns while background delivery cannot be scheduled, until it recovers (#1971)', async ({
+		page,
+	}) => {
+		const source = `https://example.test/meta-admin-${Date.now()}`;
+		const warning = page.getByText(
+			/Background delivery to Meta could not be scheduled/
+		);
+		// A queued row with no wake-up, while every scheduling attempt fails.
+		wpCli('option update fair_e2e_meta_hold_cron 1');
+		wpCli('option update fair_e2e_meta_block_schedule 1');
+		try {
+			runScript(
+				'meta-queue-fixture.php',
+				'E2E_META_QUEUE',
+				`add ${source} warning`
+			);
+			runScript(
+				'meta-queue-fixture.php',
+				'E2E_META_QUEUE',
+				`clear-wakeups ${source}`
+			);
+
+			await loginAsAdmin(page);
+			await page.goto(META_URL);
+			await expect(warning).toBeVisible();
+			await expect(warning).toContainText('last failure:');
+			await expect(
+				page.getByText(/Scheduling is retried automatically/)
+			).toBeVisible();
+
+			// Background execution works again: the next visit repairs it.
+			wpCli('option delete fair_e2e_meta_block_schedule');
+			await page.reload();
+			await expect(
+				page.getByRole('heading', { name: 'Meta Conversions' })
+			).toBeVisible();
+			await expect(warning).toHaveCount(0);
+		} finally {
+			wpCli('option delete fair_e2e_meta_block_schedule', {
+				allowFailure: true,
+			});
+			runScript(
+				'meta-queue-fixture.php',
+				'E2E_META_QUEUE',
+				`cleanup ${source}`
+			);
+			runScript(
+				'meta-queue-fixture.php',
+				'E2E_META_QUEUE',
+				`clear-wakeups ${source}`
+			);
+			wpCli('option delete fair_e2e_meta_hold_cron', {
+				allowFailure: true,
+			});
+		}
+	});
+
 	test('non-administrators cannot open the Meta page', async ({ page }) => {
 		wpCli(`user delete ${EDITOR.login} --yes`, { allowFailure: true });
 		wpCli(
