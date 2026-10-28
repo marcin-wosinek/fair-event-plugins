@@ -521,6 +521,74 @@ Run sequentially on the local isolated instance at `271b6125`:
     that the Spanish messages of the Event Signup script reach an anonymous
     visitor on the event page.
 
+## Series coverage re-measurement (2026-10-28)
+
+Local runs before and after series coverage started reading its dates
+together ([#1996](https://github.com/marcin-wosinek/fair-event-plugins/issues/1996)).
+`SeriesCoverage` now reads the picker dates and the whole-series dates with
+one `EventDates::get_by_ids()` query, and takes their remaining places from
+those rows through `TicketCapacity::remaining_for_event_dates()`, instead of
+one `EventDates::get_by_id()` per occurrence. A date with a limit still has
+its admissions counted fresh on every request, as before.
+
+-   **Revisions:** before is `f4d13535` on `main`; after is the #1996 change
+    applied to `f4d13535`.
+-   **Environment:** the local isolated `tests` instance (`--reuse`),
+    WordPress 7.1.3, PHP 8.3.35, MariaDB 12.3.3, Twenty Twenty-Five, no
+    persistent object cache. Absolute numbers from this laptop are not
+    comparable with the hosted runs above; the two columns below are
+    comparable with each other.
+-   **Runs:** `npm run performance -- --reuse --scenario=fair-events`, 5
+    samples, unchanged fixtures (48 occurrences, both signup forms on the
+    page, no capacity limit).
+
+| Page | Queries before → after | Δ Queries |
+| --- | --- | --- |
+| plain | 32 → 32 | 0 |
+| feature | 41 → 41 | 0 |
+| recurring-master | 210 → 116 | −94 |
+| recurring-occurrence | 205 → 111 | −94 |
+| event-options | 90 → 90 | 0 |
+| listings | 53 → 53 | 0 |
+
+Durations moved in both directions by up to 42 ms between the two local
+runs on pages the change does not touch (the plain page took 68.7 ms
+before and 106.0 ms after), so they are not reported.
+
+### Query trace by size, form count and capacity
+
+`series-coverage-query-trace.php` (in `e2e/mu-plugins/scripts/`) renders an
+event post's blocks as an anonymous visitor, then runs the viewer-context
+refresh, and counts three groups of queries: all of them, single event
+date reads by ID (`date reads`), and ticket-unit and unbackfilled-signup
+counts (`admission counts`). `GetTicketsSeriesCoverage.api.spec.js` runs it
+for weekly series of 3 and 48 dates, with one form (Event Signup) and two
+(Event Signup and Get Tickets), on the series page and on its middle
+occurrence, with no limit and with 5 places per date. The table shows the
+series page with fair-audience inactive; the occurrence page's render costs
+one or two queries more in every row, the same before and after.
+
+| Places | Dates | Forms | Render: total / date reads / admission counts | Refresh: total / date reads / admission counts |
+| --- | --- | --- | --- | --- |
+| no limit | 3 | 1 | 22 / 5 / 0 → 20 / 2 / 0 | 18 / 4 / 0 → 16 / 1 / 0 |
+| no limit | 3 | 2 | 38 / 9 / 0 → 34 / 3 / 0 | 18 / 4 / 0 → 16 / 1 / 0 |
+| no limit | 48 | 1 | 67 / 50 / 0 → 20 / 2 / 0 | 63 / 49 / 0 → 16 / 1 / 0 |
+| no limit | 48 | 2 | 128 / 99 / 0 → 34 / 3 / 0 | 63 / 49 / 0 → 16 / 1 / 0 |
+| 5 | 3 | 1 | 34 / 5 / 6 → 32 / 2 / 6 | 30 / 4 / 6 → 28 / 1 / 6 |
+| 5 | 3 | 2 | 62 / 9 / 12 → 58 / 3 / 12 | 30 / 4 / 6 → 28 / 1 / 6 |
+| 5 | 48 | 1 | 259 / 50 / 96 → 212 / 2 / 96 | 255 / 49 / 96 → 208 / 1 / 96 |
+| 5 | 48 | 2 | 512 / 99 / 192 → 418 / 3 / 192 | 255 / 49 / 96 → 208 / 1 / 96 |
+
+-   **Removed:** one date read per occurrence per form. Without a limit, a
+    form's queries no longer depend on the number of dates.
+-   **Remaining:** with a limit, each date still costs 4 queries per form
+    (2 admission counts, plus the date row and series IDs that
+    `count_event_date()` reads), so 48 limited dates still add about 190
+    queries per form. With fair-audience active, its
+    `fair_events_capacity_legacy_admissions` filter adds one more count per
+    date (144 admission counts for 48 dates instead of 96). Batching the
+    admission counts was outside #1996.
+
 ## Events list scaling
 
 `npm run performance -- --events-list-scaling` measures how the
@@ -748,18 +816,21 @@ being written up here (see the linked issue for the verification detail).
    ([#1668](https://github.com/marcin-wosinek/fair-event-plugins/issues/1668),
    fixed) and now add 6–9 requests each on the feature page.
 
-2. **Each signup form on a series page now reads every occurrence once —
+2. **Fixed: each signup form on a series page read every occurrence once —
    query-count cost.** The same commit added series coverage to the signup
    form. Between the baseline and the re-measurement, the series master went
    from 101 to 209 queries and the mid-series occurrence from 94 to 204
    (`fair-events`), while the single-date options event moved only from 82
-   to 90. A WP-CLI query trace of the master page attributes 48 queries in
+   to 90. A WP-CLI query trace of the master page attributed 48 queries in
    each of the two signup forms (Event Signup and Get Tickets) to
    `TicketCapacity::remaining_for_event_date()` loading
    `EventDates::get_by_id()` once per occurrence, called from
-   `SeriesCoverage::describe()`. That is one query per occurrence per form:
-   a real page with one form and 48 occurrences pays about 48, and
-   occurrences with a capacity also count their signups. Follow-up: [#1996](https://github.com/marcin-wosinek/fair-event-plugins/issues/1996).
+   `SeriesCoverage::describe()`. Coverage now reads its dates with one query,
+   and the master and occurrence pages each take 94 queries fewer in a
+   local comparison. Dates with a capacity limit still count their
+   admissions once per date
+   ([re-measurement](#series-coverage-re-measurement-2026-10-28),
+   [#1996](https://github.com/marcin-wosinek/fair-event-plugins/issues/1996)).
 
 3. **The events calendar and week blocks query per displayed occurrence —
    query-count cost.** The `listings` page costs 60 queries with
@@ -783,8 +854,8 @@ being written up here (see the linked issue for the verification detail).
    five event blocks, two of which are signup forms (Event Signup and the
    legacy Get Tickets block). No follow-up was filed: nothing here grew with
    data, and a real event page carries one signup form, not two. Series
-   coverage has since added per-occurrence queries to both forms; see
-   finding 2.
+   coverage later added per-occurrence queries to both forms, since
+   removed for dates without a limit; see finding 2.
 
 5. **Fixed: Query Loop layouts of the events list queried twice per
    rendered post — query-count cost.** The block's empty-site cost is +6
