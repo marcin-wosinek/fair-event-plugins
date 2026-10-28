@@ -14,7 +14,19 @@ defined( 'WPINC' ) || die;
 /** Stores and claims conversion delivery work. */
 class Outbox {
 	public const TABLE_SUFFIX = 'fair_events_meta_outbox';
-	public const DB_VERSION   = '6';
+	public const DB_VERSION   = '7';
+
+	/** Seconds a queued claim stays reserved for its worker before it can be recovered. */
+	public const LEASE_SECONDS = 300;
+
+	/** Sends allowed per queued row, counting interrupted ones: the first and one per retry delay. */
+	public const MAX_ATTEMPTS = 6;
+
+	/** Seconds before each retry, by the attempt that failed. */
+	private const RETRY_DELAYS = array( 60, 300, 1800, 7200, 43200 );
+
+	/** Candidates tried by one {@see claim_due()} before it gives way to other workers. */
+	private const CLAIM_TRIES = 3;
 
 	/**
 	 * State of a reserved immediate send that has not finished — or never
@@ -25,6 +37,9 @@ class Outbox {
 
 	/** Allowlisted keys of the stored `meta_diagnostics` JSON. */
 	private const DIAGNOSTIC_KEYS = array( 'http_status', 'events_received', 'messages', 'fbtrace_id' );
+
+	/** @var bool Whether the last {@see claim_due()} lost every candidate to other workers. */
+	private $contended = false;
 
 	/** @var int ID of the row the last {@see insert()} added, or 0. */
 	private $inserted_id = 0;
@@ -55,6 +70,11 @@ class Outbox {
 	 * finished earlier keep NULL and are shown without diagnostics.
 	 *
 	 * Version 6 adds the {@see DeliveryAttempts} table of sent requests.
+	 *
+	 * Version 7 adds the `claim_token` and `claim_expires_at` lease of a
+	 * queued `sending` row. Rows already `sending` when it is installed get a
+	 * full lease from now, so a worker still running old code can finish
+	 * before the row is recovered.
 	 */
 	public static function install() {
 		global $wpdb;
@@ -80,6 +100,8 @@ class Outbox {
 				event_context text DEFAULT NULL,
 				meta_diagnostics text DEFAULT NULL,
 				state varchar(32) NOT NULL DEFAULT 'pending',
+				claim_token char(32) DEFAULT NULL,
+				claim_expires_at datetime DEFAULT NULL,
 				attempt_count smallint(5) unsigned NOT NULL DEFAULT 0,
 				next_attempt_at datetime NOT NULL,
 				result_category varchar(40) NOT NULL DEFAULT '',
@@ -91,6 +113,7 @@ class Outbox {
 				UNIQUE KEY logical_conversion (transaction_id,event_name),
 				UNIQUE KEY delivery_event (event_id),
 				KEY due (state,next_attempt_at),
+				KEY claims (state,claim_expires_at),
 				KEY retention (updated_at)
 			) {$charset};"
 		);
@@ -98,6 +121,7 @@ class Outbox {
 		if ( $column && 'NO' === $column->Null ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
 			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i MODIFY transaction_id bigint(20) unsigned DEFAULT NULL', $table ) );
 		}
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET claim_expires_at = %s WHERE state = 'sending' AND claim_expires_at IS NULL", $table, self::lease_end() ) );
 		DeliveryAttempts::install();
 		update_option( 'fair_events_experimental_meta_db_version', self::DB_VERSION );
 	}
@@ -199,24 +223,115 @@ class Outbox {
 		return $this->inserted_id;
 	}
 
-	/** Atomically claim the next due row. @return object|null */
+	/**
+	 * Atomically claim the next due row, or recover a queued claim whose
+	 * lease expired because its worker was interrupted. The claim gets a
+	 * unique token and a {@see LEASE_SECONDS} lease, and counts as an
+	 * attempt straight away, so repeated interruptions cannot bypass
+	 * {@see MAX_ATTEMPTS}. `immediate_*` rows are never claimed.
+	 *
+	 * A row another worker claimed first is skipped; after
+	 * {@see CLAIM_TRIES} such losses this returns null with
+	 * {@see contended()} set, although due work may remain.
+	 *
+	 * @return object|null Claimed row, with its `claim_token`.
+	 */
 	public function claim_due() {
 		global $wpdb;
-		$table = self::table_name();
-		$id    = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE state IN ('pending','retry_pending') AND next_attempt_at <= %s ORDER BY next_attempt_at,id LIMIT 1", $table, current_time( 'mysql', true ) ) );
-		if ( ! $id ) {
-			return null;
+		$table           = self::table_name();
+		$this->contended = false;
+		for ( $try = 0; $try < self::CLAIM_TRIES; $try++ ) {
+			$now = current_time( 'mysql', true );
+			$id  = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE state IN ('pending','retry_pending') AND next_attempt_at <= %s ORDER BY next_attempt_at,id LIMIT 1", $table, $now ) );
+			if ( ! $id ) {
+				$id = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE state = 'sending' AND claim_expires_at <= %s AND attempt_count < %d ORDER BY claim_expires_at,id LIMIT 1", $table, $now, self::MAX_ATTEMPTS ) );
+			}
+			if ( ! $id ) {
+				return null;
+			}
+			$token   = bin2hex( random_bytes( 16 ) );
+			$claimed = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i SET state = 'sending', claim_token = %s, claim_expires_at = %s, attempt_count = attempt_count + 1, updated_at = %s WHERE id = %d AND ( ( state IN ('pending','retry_pending') AND next_attempt_at <= %s ) OR ( state = 'sending' AND claim_expires_at <= %s AND attempt_count < %d ) )",
+					$table,
+					$token,
+					self::lease_end(),
+					$now,
+					$id,
+					$now,
+					$now,
+					self::MAX_ATTEMPTS
+				)
+			);
+			if ( 1 === $claimed ) {
+				return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d AND claim_token = %s', $table, $id, $token ) );
+			}
+			$this->contended = true;
 		}
-		$claimed = $wpdb->query( $wpdb->prepare( "UPDATE %i SET state = 'sending', updated_at = %s WHERE id = %d AND state IN ('pending','retry_pending')", $table, current_time( 'mysql', true ), $id ) );
-		return 1 === $claimed ? $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $id ) ) : null;
+		return null;
 	}
 
-	/** @param int $id Row ID. @param string $category Safe result category. @param string $code Safe Meta code. @param string $type Safe Meta type. @param array|null $diagnostics Allowlisted diagnostics. */
-	public function finish( $id, $category, $code = '', $type = '', $diagnostics = null ) {
+	/** @return bool Whether the last {@see claim_due()} lost every candidate to other workers. */
+	public function contended() {
+		return $this->contended;
+	}
+
+	/**
+	 * Finish interrupted claims that used their last attempt as
+	 * `retries_exhausted`, with the `interrupted` category, once their lease
+	 * expired. They are never sent again.
+	 */
+	public function expire_exhausted_claims() {
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET attempt_count = attempt_count + 1 WHERE id = %d', self::table_name(), $id ) );
-		$wpdb->update(
-			self::table_name(),
+		$now = current_time( 'mysql', true );
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET state = 'retries_exhausted', result_category = 'interrupted', meta_error_code = '', meta_error_type = 'interrupted', meta_diagnostics = NULL, fbp = NULL, fbc = NULL, claim_token = NULL, claim_expires_at = NULL, updated_at = %s WHERE state = 'sending' AND claim_expires_at <= %s AND attempt_count >= %d",
+				self::table_name(),
+				$now,
+				$now,
+				self::MAX_ATTEMPTS
+			)
+		);
+	}
+
+	/**
+	 * When outstanding queued work next needs a worker: the earliest due or
+	 * retrying row, or the earliest claim lease to expire.
+	 *
+	 * @return int|null Unix timestamp, possibly past, or null without work.
+	 */
+	public function next_wake_at() {
+		global $wpdb;
+		$table = self::table_name();
+		$times = array(
+			$wpdb->get_var( $wpdb->prepare( "SELECT MIN(next_attempt_at) FROM %i WHERE state IN ('pending','retry_pending')", $table ) ),
+			$wpdb->get_var( $wpdb->prepare( "SELECT MIN(claim_expires_at) FROM %i WHERE state = 'sending'", $table ) ),
+		);
+		$times = array_filter(
+			array_map(
+				static fn( $time ) => is_string( $time ) && preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $time ) ? strtotime( $time . ' UTC' ) : false,
+				$times
+			)
+		);
+		return $times ? (int) min( $times ) : null;
+	}
+
+	/**
+	 * Store a claimed row's terminal outcome. Only the worker still holding
+	 * the claim may write it: a row recovered by another worker is left to
+	 * that worker.
+	 *
+	 * @param object     $row      Claimed row.
+	 * @param string     $category Safe result category.
+	 * @param string     $code     Safe Meta code.
+	 * @param string     $type     Safe Meta type.
+	 * @param array|null $diagnostics Allowlisted diagnostics.
+	 * @return bool Whether the claim was still held and the outcome stored.
+	 */
+	public function finish( $row, $category, $code = '', $type = '', $diagnostics = null ) {
+		return $this->update_claimed(
+			$row,
 			array(
 				'state'            => $category,
 				'result_category'  => $category,
@@ -225,49 +340,71 @@ class Outbox {
 				'meta_diagnostics' => self::encode_diagnostics( $diagnostics ),
 				'fbp'              => null,
 				'fbc'              => null,
+				'claim_token'      => null,
+				'claim_expires_at' => null,
 				'updated_at'       => current_time( 'mysql', true ),
-			),
-			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
-			array( '%d' )
+			)
 		);
 	}
 
 	/**
+	 * Schedule a claimed row's next attempt, or finish it as
+	 * `retries_exhausted` after {@see MAX_ATTEMPTS}. The claim already
+	 * counted this attempt. The worker reconciles the delivery schedule when
+	 * it finishes, so nothing is scheduled here.
+	 *
 	 * @param object     $row      Claimed row.
 	 * @param string     $code     Safe code.
 	 * @param string     $type     Safe type.
 	 * @param string     $category `temporary_error`, or `unconfirmed` when Meta answered without confirming the event.
 	 * @param array|null $diagnostics Allowlisted diagnostics.
+	 * @return bool Whether the claim was still held and the outcome stored.
 	 */
 	public function retry( $row, $code = '', $type = '', $category = 'temporary_error', $diagnostics = null ) {
-		global $wpdb;
-		$delays   = array( 60, 300, 1800, 7200, 43200 );
-		$attempts = (int) $row->attempt_count + 1;
-		if ( $attempts > count( $delays ) ) {
-			$this->finish( (int) $row->id, 'retries_exhausted', $code, $type, $diagnostics );
-			return;
+		$attempts = max( 1, (int) $row->attempt_count );
+		if ( $attempts >= self::MAX_ATTEMPTS ) {
+			return $this->finish( $row, 'retries_exhausted', $code, $type, $diagnostics );
 		}
-		$next_attempt = gmdate( 'Y-m-d H:i:s', time() + $delays[ $attempts - 1 ] );
-		$wpdb->update(
-			self::table_name(),
+		return $this->update_claimed(
+			$row,
 			array(
 				'state'            => 'retry_pending',
 				'result_category'  => $category,
-				'attempt_count'    => $attempts,
-				'next_attempt_at'  => $next_attempt,
+				'next_attempt_at'  => gmdate( 'Y-m-d H:i:s', time() + self::RETRY_DELAYS[ $attempts - 1 ] ),
 				'meta_error_code'  => sanitize_key( $code ),
 				'meta_error_type'  => sanitize_key( $type ),
 				'meta_diagnostics' => self::encode_diagnostics( $diagnostics ),
+				'claim_token'      => null,
+				'claim_expires_at' => null,
 				'updated_at'       => current_time( 'mysql', true ),
-			),
-			array( 'id' => $row->id ),
-			array( '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ),
-			array( '%d' )
+			)
 		);
-		if ( ! wp_next_scheduled( Conversions::DELIVERY_HOOK ) ) {
-			wp_schedule_single_event( strtotime( $next_attempt . ' UTC' ), Conversions::DELIVERY_HOOK );
-		}
+	}
+
+	/**
+	 * @param object $row  Claimed row.
+	 * @param array  $data Columns to write; every value is a string or null.
+	 * @return bool Whether exactly the claimed row was updated.
+	 */
+	private function update_claimed( $row, $data ) {
+		global $wpdb;
+		$updated = $wpdb->update(
+			self::table_name(),
+			$data,
+			array(
+				'id'          => (int) $row->id,
+				'state'       => 'sending',
+				'claim_token' => (string) ( $row->claim_token ?? '' ),
+			),
+			array_fill( 0, count( $data ), '%s' ),
+			array( '%d', '%s', '%s' )
+		);
+		return 1 === $updated;
+	}
+
+	/** @return string UTC end of a lease taken now. */
+	private static function lease_end() {
+		return gmdate( 'Y-m-d H:i:s', time() + self::LEASE_SECONDS );
 	}
 
 	/** @return array */

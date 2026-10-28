@@ -1419,3 +1419,59 @@ describe( 'MetaConversions settings fields', () => {
 		).toHaveLength( 0 );
 	} );
 } );
+
+describe( 'MetaConversions delivery scheduling warning', () => {
+	it( 'warns with the last failure time while scheduling fails', async () => {
+		apiFetch.mockResolvedValue(
+			config( {
+				delivery_schedule: {
+					healthy: false,
+					last_failure_code: 'could_not_set',
+					last_failure_at: '2026-01-01 10:00:00',
+					last_failure_at_local: 'January 1, 2026 11:00 am',
+				},
+			} )
+		);
+
+		render( <MetaConversions onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByText(
+				/Background delivery to Meta could not be scheduled \(last failure: January 1, 2026 11:00 am\)/
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /Scheduling is retried automatically/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows nothing once scheduling recovered, or for an older response', async () => {
+		apiFetch.mockResolvedValue(
+			config( {
+				delivery_schedule: {
+					healthy: true,
+					last_failure_code: 'could_not_set',
+					last_failure_at: '2026-01-01 10:00:00',
+					last_failure_at_local: 'January 1, 2026 11:00 am',
+				},
+			} )
+		);
+		const { unmount } = render( <MetaConversions onNotice={ () => {} } /> );
+		expect(
+			await screen.findByText( 'No delivery attempts yet.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /could not be scheduled/ )
+		).not.toBeInTheDocument();
+		unmount();
+
+		apiFetch.mockResolvedValue( config() );
+		render( <MetaConversions onNotice={ () => {} } /> );
+		expect(
+			await screen.findByText( 'No delivery attempts yet.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /could not be scheduled/ )
+		).not.toBeInTheDocument();
+	} );
+} );

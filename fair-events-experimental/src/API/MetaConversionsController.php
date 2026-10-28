@@ -10,6 +10,7 @@ namespace FairEventsExperimental\API;
 use FairEventsExperimental\Meta\Connector;
 use FairEventsExperimental\Meta\Conversions;
 use FairEventsExperimental\Meta\DeliveryAttempts;
+use FairEventsExperimental\Meta\DeliverySchedule;
 use FairEventsExperimental\Meta\Engagement;
 use FairEventsExperimental\Meta\Outbox;
 use WP_REST_Controller;
@@ -212,6 +213,7 @@ class MetaConversionsController extends WP_REST_Controller {
 				'connectors_url'        => Connector::admin_url(),
 				'test_event_code'       => (string) get_option( Conversions::TEST_CODE_OPTION, '' ),
 				'diagnostics'           => ( new Outbox() )->diagnostics(),
+				'delivery_schedule'     => DeliverySchedule::status(),
 				'test_history'          => array_map( array( $this, 'with_local_time' ), Conversions::test_history() ),
 				'consent_api_available' => function_exists( 'wp_has_consent' ),
 			)

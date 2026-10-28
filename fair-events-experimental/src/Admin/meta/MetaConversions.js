@@ -314,6 +314,45 @@ function TestResult( { entry, latest = false } ) {
 }
 
 /**
+ * Warning shown while queued delivery could not be scheduled in the
+ * background. Nothing is shown once scheduling has recovered.
+ *
+ * @param {Object} props
+ * @param {Object} props.schedule `delivery_schedule` from the settings payload.
+ * @return {Element|null} Warning notice, or null while scheduling is healthy.
+ */
+export function DeliveryScheduleWarning( { schedule } ) {
+	if ( ! schedule || schedule.healthy ) {
+		return null;
+	}
+	return (
+		<Notice status="warning" isDismissible={ false }>
+			<p>
+				{ schedule.last_failure_at_local
+					? sprintf(
+							/* translators: %s: date and time when background delivery last failed to be scheduled */
+							__(
+								'Background delivery to Meta could not be scheduled (last failure: %s). Queued checkout and purchase events wait until it can.',
+								'fair-events-experimental'
+							),
+							schedule.last_failure_at_local
+						)
+					: __(
+							'Background delivery to Meta could not be scheduled. Queued checkout and purchase events wait until it can.',
+							'fair-events-experimental'
+						) }
+			</p>
+			<p>
+				{ __(
+					'Scheduling is retried automatically on later site visits, and queued events are delivered once it succeeds. Payments are not affected. If this warning stays, check that WP-Cron runs on this site.',
+					'fair-events-experimental'
+				) }
+			</p>
+		</Notice>
+	);
+}
+
+/**
  * What the administrator should know about the access token: whether one is
  * configured and where it comes from. A configured token is not proof that
  * Meta accepts it.
@@ -574,6 +613,9 @@ export default function MetaConversions( { onNotice } ) {
 						'fair-events-experimental'
 					) }
 				</p>
+				<DeliveryScheduleWarning
+					schedule={ config.delivery_schedule }
+				/>
 				{ ! config.consent_api_available && (
 					<Notice status="warning" isDismissible={ false }>
 						<p>

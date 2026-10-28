@@ -27,6 +27,12 @@
  * WhatsApp Cloud API requests go to the same host; lib/whatsapp-http-double.php
  * answers them first, and a request it already answered is left alone here.
  *
+ * Two switches let a spec control queued delivery's WP-Cron wake-ups. While
+ * `fair_e2e_meta_block_schedule` is set, scheduling a delivery wake-up fails
+ * like a broken cron store. While `fair_e2e_meta_hold_cron` is set, WP-Cron
+ * is never spawned, so due wake-ups stay in place for the spec to inspect
+ * and workers run only when it starts them.
+ *
  * @package FairEventsE2E
  */
 
@@ -82,4 +88,27 @@ add_filter(
 	},
 	10,
 	3
+);
+
+add_filter(
+	'pre_schedule_event',
+	static function ( $result, $event, $wp_error ) {
+		if ( 'fair_events_experimental_meta_deliver' !== $event->hook || ! get_option( 'fair_e2e_meta_block_schedule' ) ) {
+			return $result;
+		}
+		return $wp_error ? new WP_Error( 'e2e_schedule_blocked', 'E2E simulated scheduling failure' ) : false;
+	},
+	10,
+	3
+);
+
+add_filter(
+	'cron_request',
+	static function ( $cron_request ) {
+		if ( get_option( 'fair_e2e_meta_hold_cron' ) ) {
+			// Nothing listens on the discard port, so the spawn goes nowhere.
+			$cron_request['url'] = 'http://127.0.0.1:9/wp-cron.php';
+		}
+		return $cron_request;
+	}
 );

@@ -31,7 +31,7 @@ class DeliveryAttemptsTest extends TestCase {
 			Conversions::TEST_CODE_OPTION => 'TEST12345',
 		);
 		$GLOBALS['_fair_test_remote_post_requests'] = array();
-		$GLOBALS['_fair_test_scheduled']            = array();
+		$GLOBALS['_fair_test_cron']                 = array();
 		$this->meta_answers( 200, array( 'events_received' => 1 ) );
 		$this->original_wpdb = $GLOBALS['wpdb'] ?? null;
 		$GLOBALS['wpdb']     = new class() { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test fake, restored in tearDown().
@@ -288,7 +288,10 @@ class DeliveryAttemptsTest extends TestCase {
 			'fbp'               => self::FBP,
 			'fbc'               => '',
 			'event_context'     => null,
-			'attempt_count'     => 2,
+			// The claim already counted this third attempt.
+			'attempt_count'     => 3,
+			'claim_token'       => str_repeat( 'a', 32 ),
+			'claim_expires_at'  => '2026-01-01 00:05:00',
 			'event_post_id'     => null,
 			'event_date_id'     => null,
 			'client_user_agent' => '',
@@ -304,7 +307,16 @@ class DeliveryAttemptsTest extends TestCase {
 		// The outbox row is still scheduled for its next retry as before.
 		$outbox = array_values( array_filter( $GLOBALS['wpdb']->updated, static fn( $update ) => DeliveryAttempts::table_name() !== $update[0] ) );
 		$this->assertSame( 'retry_pending', $outbox[0][1]['state'] );
-		$this->assertSame( 3, $outbox[0][1]['attempt_count'] );
+		$this->assertArrayNotHasKey( 'attempt_count', $outbox[0][1] );
+		// Only the worker still holding the claim may write its outcome.
+		$this->assertSame(
+			array(
+				'id'          => 77,
+				'state'       => 'sending',
+				'claim_token' => str_repeat( 'a', 32 ),
+			),
+			$outbox[0][2]
+		);
 	}
 
 	/**
