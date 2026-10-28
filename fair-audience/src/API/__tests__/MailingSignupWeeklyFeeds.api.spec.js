@@ -6,6 +6,10 @@
  * e2e/mu-plugins/scripts/weekly-feeds-fixture.php, which also reads the
  * stored preferences and pending confirmation, and runs a weekly email's
  * send to see who receives it.
+ *
+ * The Mailing Signup block (#2042) signs its feed policy into the form; the
+ * block-form tests read it from a published page, as a visitor's browser
+ * does.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -283,5 +287,311 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		for ( const address of [ onlyA, none, optedOut, pending ] ) {
 			expect( b.recipients ).not.toContain( address );
 		}
+	} );
+} );
+
+test.describe( 'Mailing signup — Mailing Signup block feed policy', () => {
+	test.describe.configure( { mode: 'serial' } );
+
+	const suffix = `${ Date.now() }`;
+	const emails = [];
+	const pageIds = [];
+	let api;
+	let feeds;
+	let configurations;
+
+	const email = ( label ) => {
+		const address = `block-feeds-${ label }+${ suffix }@example.test`;
+		emails.push( address );
+		return address;
+	};
+
+	const signup = ( data ) =>
+		api.post( SIGNUP, {
+			data: { name: 'Block', surname: 'Tester', ...data },
+		} );
+
+	// Publishes a page holding the block and returns its weekly fieldset.
+	const blockForm = async ( attributes ) => {
+		const created = await api.post( '/wp-json/wp/v2/pages', {
+			headers: adminHeaders,
+			data: {
+				title: `Mailing signup ${ suffix }`,
+				status: 'publish',
+				content: `<!-- wp:fair-audience/mailing-signup ${ JSON.stringify(
+					attributes
+				) } /-->`,
+			},
+		} );
+		expect( created.ok() ).toBeTruthy();
+		const page = await created.json();
+		pageIds.push( page.id );
+
+		const html = await ( await api.get( page.link ) ).text();
+		const fieldset = html.match(
+			/<fieldset\s+class="fair-audience-mailing-weekly"[\s\S]*?<\/legend>[\s\S]*?(?:<\/fieldset>\s*){1,2}/
+		);
+		return {
+			html: fieldset ? fieldset[ 0 ] : null,
+			config: fieldset
+				? fieldset[ 0 ].match( /data-weekly-config="([^"]+)"/ )[ 1 ]
+				: null,
+		};
+	};
+
+	const pending = async ( address ) =>
+		( await fixture( 'state', address ) ).pending;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		( { feeds, configurations } = await fixture( 'seed', suffix ) );
+	} );
+
+	test.afterAll( async () => {
+		for ( const id of pageIds ) {
+			await api.delete( `/wp-json/wp/v2/pages/${ id }`, {
+				headers: adminHeaders,
+				params: { force: 'true' },
+			} );
+		}
+		if ( feeds ) {
+			await fixture(
+				'cleanup',
+				Object.values( feeds ).join( ',' ),
+				Object.values( configurations ).join( ',' ),
+				emails.join( ',' )
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'the editor lists only feeds a subscriber can choose, to editors only', async () => {
+		const anonymous = await api.get( `${ SIGNUP }/weekly-feeds` );
+		expect( anonymous.status() ).toBe( 401 );
+
+		const res = await api.get( `${ SIGNUP }/weekly-feeds`, {
+			headers: adminHeaders,
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.json();
+		const ids = body.feeds.map( ( feed ) => feed.id );
+
+		expect( body.available ).toBe( true );
+		expect( ids ).toEqual( expect.arrayContaining( [ feeds.a, feeds.b ] ) );
+		expect( ids ).not.toContain( feeds.c );
+		expect( ids ).not.toContain( feeds.d );
+	} );
+
+	test( 'a block without the weekly checkbox renders and submits no weekly fields', async () => {
+		const form = await blockForm( { showCategories: false } );
+		expect( form.html ).toBe( null );
+	} );
+
+	test( 'a tampered form configuration is rejected before anything is stored', async () => {
+		const { config } = await blockForm( {
+			weeklyUpdate: 'checked',
+			feedSelection: 'hidden',
+			feedId: feeds.a,
+		} );
+		const forged = Buffer.from(
+			`hidden:${ feeds.b }:` +
+				Buffer.from( config, 'base64url' ).toString().split( ':' )[ 2 ]
+		).toString( 'base64url' );
+
+		for ( const weeklyConfig of [ forged, 'not-a-config' ] ) {
+			const address = email( `tampered-${ weeklyConfig.length }` );
+			const res = await signup( {
+				email: address,
+				weekly_config: weeklyConfig,
+				weekly_summary: true,
+			} );
+
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'invalid_weekly_config' );
+			expect( ( await fixture( 'state', address ) ).participant ).toBe(
+				null
+			);
+		}
+	} );
+
+	test( 'a hidden-feed form subscribes to its own feed, whatever IDs are submitted', async () => {
+		const form = await blockForm( {
+			weeklyUpdate: 'checked',
+			feedSelection: 'hidden',
+			feedId: feeds.a,
+		} );
+		expect( form.html ).toContain( 'name="mailing_weekly"' );
+		expect( form.html ).toContain( 'checked' );
+		expect( form.html ).not.toContain( 'mailing_weekly_feeds' );
+
+		const address = email( 'hidden-checked' );
+		const res = await signup( {
+			email: address,
+			weekly_config: form.config,
+			weekly_summary: true,
+			weekly_feed_ids: [ feeds.b ],
+		} );
+		expect( ( await res.json() ).status ).toBe( 'pending' );
+		expect( await pending( address ) ).toEqual( {
+			weekly_summary: true,
+			feed_ids: [ feeds.a ],
+		} );
+
+		const { token } = await fixture( 'state', address );
+		await api.post( `${ SIGNUP }/confirm`, { data: { token } } );
+		const participant = ( await fixture( 'state', address ) ).participant;
+		expect( participant.weekly_feed_mode ).toBe( 'selected' );
+		expect( participant.feed_ids ).toEqual( [ feeds.a ] );
+		expect( participant.weekly_summary_opt_out ).toBe( false );
+	} );
+
+	test( 'declining the weekly update on a hidden-feed form stores only the opt-out', async () => {
+		const { config } = await blockForm( {
+			weeklyUpdate: 'unchecked',
+			feedSelection: 'hidden',
+			feedId: feeds.a,
+		} );
+		const address = email( 'hidden-unchecked' );
+		await signup( {
+			email: address,
+			weekly_config: config,
+			weekly_summary: false,
+		} );
+
+		expect( await pending( address ) ).toEqual( {
+			weekly_summary: false,
+		} );
+	} );
+
+	test( 'a hidden feed that cannot be chosen is not offered or substituted', async () => {
+		for ( const feedId of [ feeds.d, 999999999 ] ) {
+			const form = await blockForm( {
+				weeklyUpdate: 'checked',
+				feedSelection: 'hidden',
+				feedId,
+			} );
+			expect( form.html ).toContain(
+				'Weekly updates are not available right now.'
+			);
+			expect( form.html ).not.toContain( 'name="mailing_weekly"' );
+
+			const address = email( `hidden-unavailable-${ feedId }` );
+			const res = await signup( {
+				email: address,
+				weekly_config: form.config,
+				weekly_summary: true,
+			} );
+			expect( res.status() ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe(
+				'weekly_feed_unavailable'
+			);
+			expect( ( await fixture( 'state', address ) ).participant ).toBe(
+				null
+			);
+		}
+	} );
+
+	test( 'a multiselect form offers every eligible feed, unselected, and needs one when checked', async () => {
+		const form = await blockForm( {
+			weeklyUpdate: 'unchecked',
+			feedSelection: 'multiselect',
+		} );
+		for ( const id of [ feeds.a, feeds.b ] ) {
+			expect( form.html ).toContain( `value="${ id }"` );
+		}
+		for ( const id of [ feeds.c, feeds.d ] ) {
+			expect( form.html ).not.toContain( `value="${ id }"` );
+		}
+		expect( form.html ).not.toMatch(
+			/name="mailing_weekly_feeds\[\]"[^>]*checked/
+		);
+
+		const missing = email( 'multi-missing' );
+		const rejected = await signup( {
+			email: missing,
+			weekly_config: form.config,
+			weekly_summary: true,
+		} );
+		expect( rejected.status() ).toBe( 400 );
+		expect( ( await rejected.json() ).code ).toBe( 'weekly_feed_required' );
+		expect( ( await fixture( 'state', missing ) ).participant ).toBe(
+			null
+		);
+
+		const unavailable = email( 'multi-unavailable' );
+		const invalid = await signup( {
+			email: unavailable,
+			weekly_config: form.config,
+			weekly_summary: true,
+			weekly_feed_ids: [ feeds.a, feeds.d ],
+		} );
+		expect( ( await invalid.json() ).code ).toBe( 'invalid_weekly_feeds' );
+
+		const address = email( 'multi-chosen' );
+		await signup( {
+			email: address,
+			weekly_config: form.config,
+			weekly_summary: true,
+			weekly_feed_ids: [ feeds.a, feeds.b ],
+		} );
+		const { token } = await fixture( 'state', address );
+		await api.post( `${ SIGNUP }/confirm`, { data: { token } } );
+		const participant = ( await fixture( 'state', address ) ).participant;
+		expect( participant.weekly_feed_mode ).toBe( 'selected' );
+		expect( participant.feed_ids ).toEqual(
+			[ feeds.a, feeds.b ].sort( ( x, y ) => x - y )
+		);
+
+		const declined = email( 'multi-declined' );
+		await signup( {
+			email: declined,
+			weekly_config: form.config,
+			weekly_summary: false,
+		} );
+		expect( await pending( declined ) ).toEqual( {
+			weekly_summary: false,
+		} );
+
+		const omitted = email( 'multi-omitted' );
+		const unanswered = await signup( {
+			email: omitted,
+			weekly_config: form.config,
+		} );
+		expect( ( await unanswered.json() ).code ).toBe(
+			'weekly_summary_required'
+		);
+	} );
+
+	test( 'a block form with a subscribed address only emails it the management link', async () => {
+		const { config } = await blockForm( {
+			weeklyUpdate: 'checked',
+			feedSelection: 'hidden',
+			feedId: feeds.b,
+		} );
+		const address = email( 'block-existing' );
+		const created = await api.post(
+			'/wp-json/fair-audience/v1/participants',
+			{
+				headers: adminHeaders,
+				data: {
+					name: 'Existing',
+					email: address,
+					email_profile: 'marketing',
+				},
+			}
+		);
+		expect( created.ok() ).toBeTruthy();
+
+		const res = await signup( {
+			email: address,
+			weekly_config: config,
+			weekly_summary: true,
+		} );
+		expect( ( await res.json() ).status ).toBe( 'manage_link_sent' );
+
+		const state = await fixture( 'state', address );
+		expect( state.participant.weekly_feed_mode ).toBe( 'all' );
+		expect( state.participant.feed_ids ).toEqual( [] );
+		expect( state.token ).toBe( null );
 	} );
 } );

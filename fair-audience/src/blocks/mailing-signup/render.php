@@ -151,6 +151,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</fieldset>
 		<?php endif; ?>
 
+		<?php \FairAudience\Services\MailingSignupWeeklyRenderer::render( $form_id, $attributes ); ?>
+
 		<?php if ( $has_session_prefill && ! $has_wp_user_prefill ) : ?>
 		<button type="button" class="fair-audience-not-you">
 			<?php echo esc_html__( 'Not you? Start fresh', 'fair-audience' ); ?>
@@ -163,7 +165,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			</button>
 		</div>
 
-		<div class="fair-audience-mailing-message" style="display: none;"></div>
+		<div class="fair-audience-mailing-message" role="status" aria-live="polite" style="display: none;"></div>
 	</form>
 	<?php echo wp_kses_post( \FairAudience\Services\Branding::block_html() ); ?>
 </div>

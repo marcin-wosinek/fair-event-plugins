@@ -15,6 +15,7 @@ import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
 import ServerSideRender from '@wordpress/server-side-render';
+import WeeklyUpdatePanel from './WeeklyUpdatePanel.js';
 
 registerBlockType( 'fair-audience/mailing-signup', {
 	edit: ( { attributes, setAttributes } ) => {
@@ -182,6 +183,10 @@ registerBlockType( 'fair-audience/mailing-signup', {
 								</>
 							) }
 					</PanelBody>
+					<WeeklyUpdatePanel
+						attributes={ attributes }
+						setAttributes={ setAttributes }
+					/>
 				</InspectorControls>
 
 				<div { ...blockProps }>

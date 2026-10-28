@@ -43,6 +43,20 @@
 			"items": {
 				"type": "number"
 			}
+		},
+		"weeklyUpdate": {
+			"type": "string",
+			"enum": [ "hidden", "unchecked", "checked" ],
+			"default": "hidden"
+		},
+		"feedSelection": {
+			"type": "string",
+			"enum": [ "multiselect", "hidden" ],
+			"default": "multiselect"
+		},
+		"feedId": {
+			"type": "number",
+			"default": 0
 		}
 	},
 	"editorScript": "file:./editor.js",

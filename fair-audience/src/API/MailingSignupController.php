@@ -13,6 +13,7 @@ use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\MailingSignupWeeklyPolicy;
 use FairAudience\Services\WeeklyFeeds;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -101,7 +102,7 @@ class MailingSignupController extends WP_REST_Controller {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
-		// POST /fair-audience/v1/mailing-signup
+		// POST /fair-audience/v1/mailing-signup.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -148,12 +149,30 @@ class MailingSignupController extends WP_REST_Controller {
 								'type' => 'integer',
 							),
 						),
+						// Signed by the Mailing Signup block: the form's feed
+						// policy, which the weekly fields must follow.
+						'weekly_config'   => array(
+							'type' => 'string',
+						),
 					),
 				),
 			)
 		);
 
-		// POST /fair-audience/v1/mailing-signup/confirm
+		// GET /fair-audience/v1/mailing-signup/weekly-feeds.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/weekly-feeds',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_weekly_feeds' ),
+					'permission_callback' => array( $this, 'editor_permissions_check' ),
+				),
+			)
+		);
+
+		// POST /fair-audience/v1/mailing-signup/confirm.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/confirm',
@@ -197,6 +216,12 @@ class MailingSignupController extends WP_REST_Controller {
 
 		// Rejected before anything changes, whoever is signing up.
 		$weekly_preferences = $this->weekly_preferences( $request );
+		if ( null !== $request->get_param( 'weekly_config' ) ) {
+			$weekly_preferences = $this->apply_form_policy( (string) $request->get_param( 'weekly_config' ), $weekly_preferences );
+			if ( is_wp_error( $weekly_preferences ) ) {
+				return $weekly_preferences;
+			}
+		}
 		if ( array_key_exists( 'feed_ids', $weekly_preferences ) ) {
 			$checked = $this->weekly_feeds->resolve_selection( $weekly_preferences['feed_ids'] );
 			if ( is_wp_error( $checked ) ) {
@@ -517,6 +542,101 @@ class MailingSignupController extends WP_REST_Controller {
 		}
 
 		return $preferences;
+	}
+
+	/**
+	 * Apply the Mailing Signup block's feed policy to submitted weekly
+	 * preferences.
+	 *
+	 * A hidden-feed form subscribes to its configured feed whatever IDs were
+	 * submitted. Accepting the weekly update needs at least one feed;
+	 * declining it with no feeds leaves the feed choice unchanged.
+	 *
+	 * @param string $config      Signed form configuration.
+	 * @param array  $preferences Submitted preferences; see {@see self::weekly_preferences()}.
+	 * @return array|WP_Error Preferences to apply, or an error.
+	 */
+	private function apply_form_policy( string $config, array $preferences ) {
+		$policy = MailingSignupWeeklyPolicy::verify( $config );
+		if ( ! $policy ) {
+			return new WP_Error(
+				'invalid_weekly_config',
+				__( 'This form is out of date. Please reload the page and try again.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! array_key_exists( 'weekly_summary', $preferences ) ) {
+			return new WP_Error(
+				'weekly_summary_required',
+				__( 'Please say whether you want to receive the weekly update.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$weekly = $preferences['weekly_summary'];
+
+		if ( MailingSignupWeeklyPolicy::FEEDS_HIDDEN === $policy['feeds'] ) {
+			unset( $preferences['feed_ids'] );
+			if ( $weekly ) {
+				$offered = array_column( $this->weekly_feeds->subscribable(), 'id' );
+				if ( $this->weekly_feeds->is_available() && ! in_array( $policy['feed_id'], $offered, true ) ) {
+					return new WP_Error(
+						'weekly_feed_unavailable',
+						__( 'The weekly update of this form is not available right now. Please sign up without it.', 'fair-audience' ),
+						array( 'status' => 400 )
+					);
+				}
+				$preferences['feed_ids'] = array( $policy['feed_id'] );
+			}
+
+			return $preferences;
+		}
+
+		$feed_ids = $preferences['feed_ids'] ?? array();
+		if ( empty( $feed_ids ) ) {
+			if ( $weekly ) {
+				return new WP_Error(
+					'weekly_feed_required',
+					__( 'Please choose at least one event feed to receive the weekly update.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
+			unset( $preferences['feed_ids'] );
+		}
+
+		return $preferences;
+	}
+
+	/**
+	 * Feeds a Mailing Signup block can offer, for the block editor.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_weekly_feeds() {
+		return rest_ensure_response(
+			array(
+				'available' => $this->weekly_feeds->is_available(),
+				'feeds'     => array_map(
+					function ( $feed ) {
+						return array(
+							'id'   => (int) $feed['id'],
+							'name' => (string) $feed['name'],
+						);
+					},
+					$this->weekly_feeds->subscribable()
+				),
+			)
+		);
+	}
+
+	/**
+	 * Whether the current user can configure blocks.
+	 *
+	 * @return bool
+	 */
+	public function editor_permissions_check() {
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**

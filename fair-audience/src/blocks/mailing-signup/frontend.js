@@ -9,6 +9,14 @@ import {
 	onDomReady,
 	wireNotYouButton,
 } from 'fair-events-shared/src/form-utils.js';
+import {
+	createWeeklyState,
+	setWeeklyChecked,
+	setFeedSelected,
+	weeklyError,
+	weeklyRequestData,
+	responseNotice,
+} from './signupModel.js';
 
 /**
  * Frontend JavaScript for Fair Audience Mailing Signup
@@ -32,27 +40,76 @@ const CSS_PREFIX = 'fair-audience-mailing';
 		);
 
 		forms.forEach( function ( form ) {
-			setupFormSubmission( form );
+			setupForm( form );
 			wireNotYouButton( form.querySelector( '.fair-audience-not-you' ) );
 		} );
 	}
 
 	/**
-	 * Setup form submission handling
+	 * Read the weekly-update state the server rendered into the form.
+	 *
+	 * @param {HTMLElement} form The form element
+	 * @return {Object|null} Weekly state
+	 */
+	function readWeeklyState( form ) {
+		const fieldset = form.querySelector( '.fair-audience-mailing-weekly' );
+		if ( ! fieldset ) {
+			return null;
+		}
+		const checkbox = fieldset.querySelector(
+			'input[name="mailing_weekly"]'
+		);
+
+		return createWeeklyState( {
+			config: fieldset.dataset.weeklyConfig,
+			feedMode: fieldset.dataset.weeklyFeeds,
+			offered: !! checkbox,
+			checked: checkbox ? checkbox.defaultChecked : false,
+		} );
+	}
+
+	/**
+	 * Keep one state model per form and update it from its controls.
+	 *
 	 * @param {HTMLElement} form The form element
 	 */
-	function setupFormSubmission( form ) {
+	function setupForm( form ) {
+		const state = {
+			weekly: readWeeklyState( form ),
+			submitting: false,
+		};
+
+		form.addEventListener( 'change', function ( e ) {
+			const input = e.target;
+			if ( ! state.weekly ) {
+				return;
+			}
+			if ( input.name === 'mailing_weekly' ) {
+				state.weekly = setWeeklyChecked( state.weekly, input.checked );
+			} else if ( input.name === 'mailing_weekly_feeds[]' ) {
+				state.weekly = setFeedSelected(
+					state.weekly,
+					parseInt( input.value, 10 ),
+					input.checked
+				);
+			}
+		} );
+
 		form.addEventListener( 'submit', function ( e ) {
 			e.preventDefault();
-			submitSignup( form );
+			if ( state.submitting ) {
+				return;
+			}
+			submitSignup( form, state );
 		} );
 	}
 
 	/**
 	 * Submit signup
-	 * @param {HTMLElement} form The form element
+	 * @param {HTMLElement} form  The form element
+	 * @param {Object}      state The form's state model
 	 */
-	function submitSignup( form ) {
+	function submitSignup( form, state ) {
 		const container = form.closest( '.fair-audience-mailing-signup' );
 		const submitButton = form.querySelector(
 			'.fair-audience-mailing-submit-button'
@@ -105,6 +162,12 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			return;
 		}
 
+		const weeklyMessage = weeklyError( state.weekly );
+		if ( weeklyMessage ) {
+			showMessage( messageContainer, weeklyMessage, 'error', CSS_PREFIX );
+			return;
+		}
+
 		// Collect selected category IDs
 		const categoryCheckboxes = form.querySelectorAll(
 			'input[name="mailing_categories[]"]:checked'
@@ -119,9 +182,11 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			surname: surnameInput.value.trim(),
 			email: emailInput.value.trim(),
 			category_ids: categoryIds,
+			...weeklyRequestData( state.weekly ),
 		};
 
 		// Disable button and show loading state
+		state.submitting = true;
 		const restoreButton = setButtonLoading(
 			submitButton,
 			__( 'Submitting...', 'fair-audience' )
@@ -134,38 +199,22 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			data: requestData,
 		} )
 			.then( function ( response ) {
-				// Handle different response statuses
-				let message = successMessage;
+				const notice = responseNotice( response, successMessage );
 
-				if ( response.status === 'already_subscribed' ) {
-					message = response.message;
-					showMessage(
-						messageContainer,
-						message,
-						'info',
-						CSS_PREFIX
-					);
-				} else if ( response.status === 'resent' ) {
-					message = response.message;
-					showMessage(
-						messageContainer,
-						message,
-						'info',
-						CSS_PREFIX
-					);
-				} else {
-					showMessage(
-						messageContainer,
-						message,
-						'success',
-						CSS_PREFIX
-					);
+				showMessage(
+					messageContainer,
+					notice.message,
+					notice.type,
+					CSS_PREFIX
+				);
+				if ( notice.reset ) {
 					// Clear form on new signup
 					form.reset();
+					state.weekly = readWeeklyState( form );
 				}
 
 				// Show notification
-				showNotification( message, 'success' );
+				showNotification( notice.message, 'success' );
 			} )
 			.catch( function ( error ) {
 				console.error( 'Mailing signup error:', error );
@@ -187,6 +236,7 @@ const CSS_PREFIX = 'fair-audience-mailing';
 				showNotification( errorMessage, 'error' );
 			} )
 			.finally( function () {
+				state.submitting = false;
 				restoreButton();
 			} );
 	}

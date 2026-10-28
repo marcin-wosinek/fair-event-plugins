@@ -21,6 +21,21 @@
 				"categoryIds": "Post category term IDs to offer (Posts → Categories).",
 				"preselectedCategoryIds": "A subset of categoryIds checked by default."
 			}
+		},
+		"with-weekly-feeds": {
+			"title": "Signup with a weekly update",
+			"description": "Offers the weekly update, unchecked, and lets subscribers choose event feeds.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-mailing-signup .fair-audience-mailing-weekly"
+		},
+		"with-hidden-feed": {
+			"title": "Signup for one event feed's weekly update",
+			"description": "Shows the weekly update checked and subscribes to one configured event feed without listing feeds.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-mailing-signup .fair-audience-mailing-weekly",
+			"syntheticIds": {
+				"feedId": "An event feed ID with an enabled weekly email (Fair Events → Event feeds)."
+			}
 		}
 	}
 }
