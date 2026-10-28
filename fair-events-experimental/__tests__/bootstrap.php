@@ -175,6 +175,57 @@ if ( ! function_exists( 'wp_remote_post' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_remote_get' ) ) {
+	/**
+	 * Stub of WordPress wp_remote_get(). Records every call and answers with
+	 * the next response queued in $GLOBALS['_fair_test_remote_get_responses'],
+	 * defaulting to an empty 200.
+	 *
+	 * @param string $url  Request URL.
+	 * @param array  $args Request args.
+	 * @return array|WP_Error
+	 */
+	function wp_remote_get( $url, $args = array() ) {
+		$GLOBALS['_fair_test_remote_get_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+		return ! empty( $GLOBALS['_fair_test_remote_get_responses'] )
+			? array_shift( $GLOBALS['_fair_test_remote_get_responses'] )
+			: array(
+				'response' => array( 'code' => 200 ),
+				'body'     => '{}',
+			);
+	}
+}
+
+if ( ! function_exists( 'delete_option' ) ) {
+	/**
+	 * Stub of WordPress delete_option() backed by $GLOBALS['_fair_test_options'].
+	 *
+	 * @param string $name Option name.
+	 * @return true
+	 */
+	function delete_option( $name ) {
+		unset( $GLOBALS['_fair_test_options'][ $name ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_hash' ) ) {
+	/**
+	 * Stub of WordPress wp_hash() with a fixed test salt.
+	 *
+	 * @param string $data   Data to hash.
+	 * @param string $scheme Salt scheme, unused.
+	 * @return string
+	 */
+	function wp_hash( $data, $scheme = 'auth' ) {
+		unset( $scheme );
+		return hash_hmac( 'md5', (string) $data, 'fair-test-salt' );
+	}
+}
+
 if ( ! function_exists( 'is_wp_error' ) ) {
 	/**
 	 * Stub of WordPress is_wp_error().

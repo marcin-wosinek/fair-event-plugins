@@ -32,6 +32,9 @@
  *   7. Fakes remote connected sites for Fair Payments Connector
  *      Experimental imports (see lib/connected-site-http-double.php) and adds
  *      helper routes for the External Updates specs.
+ *   8. Intercepts the WhatsApp Cloud API (see lib/whatsapp-http-double.php)
+ *      so fair-events-experimental's WhatsApp validation and test sends never
+ *      reach graph.facebook.com.
  *
  * @package FairEventsE2E
  */
@@ -666,3 +669,9 @@ require_once __DIR__ . '/lib/telegram-http-double.php';
  * 7. Fake connected sites and External Updates helper routes.
  */
 require_once __DIR__ . '/lib/connected-site-http-double.php';
+
+/*
+ * 8. Intercept the WhatsApp Cloud API. Runs before the Meta double, which
+ * leaves requests already answered here alone.
+ */
+require_once __DIR__ . '/lib/whatsapp-http-double.php';

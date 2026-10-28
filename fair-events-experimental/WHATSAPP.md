@@ -2,8 +2,14 @@
 
 Prerequisite validation for sending Fair Events notifications over the
 WhatsApp Cloud API (issue #1922). This document records what must exist on
-Meta's side before connector UI or delivery work starts. Nothing here enables
-sending: there is no provider, REST route, setting or scheduled WhatsApp send.
+Meta's side before delivery work starts.
+
+The manual connection (issue #1923) is built: the access token is saved in
+Settings → Connectors, and Fair Events → WhatsApp stores the WhatsApp Business
+Account ID and Phone Number ID, validates them against Meta and sends one
+approved test template on request (see [Manual connection](#manual-connection)).
+Automatic sending is still off: there is no notification provider, scheduled
+send, subscriber integration or delivery queue.
 
 Findings were checked against Meta's official developer documentation on
 **2026-10-20**. Meta changes these requirements often; re-check the linked
@@ -28,12 +34,12 @@ pages before acting on any item.
 
 | Item      | Value                                                              |
 | --------- | ------------------------------------------------------------------ |
-| Status    | **Outstanding.** Deferred by the owner on 2026-10-20               |
+| Status    | **Done.** Reported by the owner in #1922 on 2026-10-27             |
 | Sender    | Meta test business phone number (created by the App Dashboard)     |
 | Recipient | Administrator's phone, added and verified as a test recipient      |
 | Template  | `hello_world`, language `en_US`                                    |
 | API       | Graph API `v24.0` (latest version listed in the changelog)         |
-| Evidence  | Date, sanitized response and recipient confirmation (to be filled) |
+| Evidence  | Screenshot of the sent message in the #1922 comment (2026-10-27)   |
 
 Procedure:
 
@@ -118,7 +124,7 @@ action La Mutable still has to take; **blocked** = cannot proceed yet.
 | 10  | **Templates.** Each needs approval (automatic, up to 24 h in review). A reminder for an event the subscriber registered for can be **utility** if purely informational. Announcing a new event to subscribers is **marketing**. Mixed content is classified as marketing.                                                            | Outstanding                      | Draft and submit the notification templates in each language used                          |
 | 11  | **Recipient opt-in.** Must state that the person agrees to receive messages from the business, name the business, and comply with local law. Can be collected on a website form. Opt-out must be clear and honored. Separate opt-in per message category is recommended.                                                             | Outstanding                      | Design opt-in capture with a timestamp (downstream work)                                   |
 | 12  | **Messaging limit.** New portfolios can message 250 unique users per rolling 24 h outside service windows. Verification, or 2,000 delivered high-quality messages in 30 days, raises it to 2,000.                                                                                                                                    | Verified                         | Check the subscriber count against 250 before launch                                       |
-| 13  | **Live send from the test sender.**                                                                                                                                                                                                                                                                                                  | **Outstanding** (owner deferred) | Run the controlled test send and record the result                                         |
+| 13  | **Live send from the test sender.**                                                                                                                                                                                                                                                                                                  | **Done** (2026-10-27)            | None; the owner's screenshot in #1922 is the evidence                                      |
 
 ### Onboarding other businesses (not built)
 
@@ -132,13 +138,40 @@ for La Mutable's own setup.
 
 ## Unresolved
 
-- The controlled test send and receipt confirmation (prerequisite 13).
+- The controlled test send was reported as a screenshot only; its HTTP
+  status and sanitized response were not recorded as text.
 - Meta's documentation does not say how many messages a test number may send
   per day.
 - Spain's per-message rates come from Meta's rate-card files and were not
   copied here, because they change.
-- The getting-started guide's examples still use `v23.0`. Confirm the current
-  Graph API version when implementing.
+- The getting-started guide's examples still use `v23.0`. The manual
+  connection uses `v26.0`, the latest version in the Graph API changelog on
+  2026-10-28.
+
+## Manual connection
+
+Built in #1923, in fair-events-experimental:
+
+- **Token:** Settings → Connectors → WhatsApp (`fair-events-whatsapp`). It is
+  separate from the Meta Conversions API token. An environment variable or
+  PHP constant named `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_ACCESS_TOKEN` takes
+  precedence over the saved token, in that order. The token is never returned
+  by the plugin's REST routes.
+- **IDs:** Fair Events → WhatsApp saves the WhatsApp Business Account ID and
+  the Phone Number ID (both digits, neither is the telephone number) without
+  contacting Meta.
+- **Validation** reads the account, then pages through its phone numbers to
+  find the Phone Number ID and shows the sender's verified name, number and
+  quality rating. Saving other IDs, or replacing or removing the token, makes
+  the result stale.
+- **Test send:** only approved templates without parameters are offered. Each
+  send needs the administrator to confirm the recipient agreed to it, goes
+  out once, and is reported as "accepted by WhatsApp", never as delivered. A
+  timed-out send is reported as uncertain and is not retried. The recipient
+  number is not stored.
+- **Errors** show a translated explanation, Meta's numeric error code and its
+  trace ID. Meta's own messages, the token and recipient numbers are not
+  logged or returned.
 
 ## Sources
 

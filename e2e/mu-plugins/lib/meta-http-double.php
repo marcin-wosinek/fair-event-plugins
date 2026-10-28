@@ -24,6 +24,9 @@
  * `{transport: true}` fails the request like a network error, and `delay`
  * (seconds, up to 5) answers slowly.
  *
+ * WhatsApp Cloud API requests go to the same host; lib/whatsapp-http-double.php
+ * answers them first, and a request it already answered is left alone here.
+ *
  * @package FairEventsE2E
  */
 
@@ -32,7 +35,7 @@ defined( 'ABSPATH' ) || exit;
 add_filter(
 	'pre_http_request',
 	static function ( $preempt, $parsed_args, $url ) {
-		if ( false === strpos( $url, 'graph.facebook.com' ) ) {
+		if ( false !== $preempt || false === strpos( $url, 'graph.facebook.com' ) ) {
 			return $preempt;
 		}
 
