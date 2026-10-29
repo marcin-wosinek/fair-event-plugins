@@ -6,11 +6,11 @@ the mailing list after confirming (double opt-in).
 
 ## Composition
 
-- **Parent:** must be a direct child of `fair-audience/fair-form` or of a
-  `fair-audience/fair-form-conditional` inside one. Not available in Event
+- **Parent:** must be a direct child of `fair-form/fair-form` or of a
+  `fair-form/fair-form-conditional` inside one. Not available in Event
   Signup, which has its own "keep me informed" checkbox.
 - No inner blocks. Use at most one per form.
-- The form needs an Email question (`fair-audience/fair-form-email`): the
+- The form needs an Email question (`fair-form/fair-form-email`): the
   subscription is made for the submitted email address.
 
 ## Attributes

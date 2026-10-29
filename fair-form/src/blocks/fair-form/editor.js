@@ -1,7 +1,6 @@
 import './style.css';
 import './editor.css';
 
-import { registerBlockType } from '@wordpress/blocks';
 import {
 	useBlockProps,
 	useInnerBlocksProps,
@@ -22,6 +21,7 @@ import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
 import { generateUuid } from 'fair-events-shared/src/uuid.js';
 import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -101,7 +101,7 @@ function EventDateSelect( { eventDateId, onChange } ) {
 	);
 }
 
-registerBlockType( 'fair-audience/fair-form', {
+registerFormBlockType( 'fair-form', {
 	edit: ( { attributes, setAttributes, clientId } ) => {
 		const {
 			submitButtonText,

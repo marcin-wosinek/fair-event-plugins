@@ -1,6 +1,6 @@
 import './style.css';
 
-import { registerBlockType, createBlock } from '@wordpress/blocks';
+import { createBlock } from '@wordpress/blocks';
 import {
 	useBlockProps,
 	useInnerBlocksProps,
@@ -11,18 +11,19 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-const ALLOWED_BLOCKS = [ 'fair-audience/fair-form-option' ];
+const ALLOWED_BLOCKS = [ 'fair-form/fair-form-option' ];
 
-registerBlockType( 'fair-audience/fair-form-radio', {
+registerFormBlockType( 'fair-form-radio', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-select-one' ],
+				blocks: [ 'fair-form/fair-form-select-one' ],
 				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
-						'fair-audience/fair-form-select-one',
+						'fair-form/fair-form-select-one',
 						{ ...attributes, displayAs: 'select' },
 						innerBlocks
 					);
@@ -30,10 +31,10 @@ registerBlockType( 'fair-audience/fair-form-radio', {
 			},
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-multiselect' ],
+				blocks: [ 'fair-form/fair-form-multiselect' ],
 				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
-						'fair-audience/fair-form-multiselect',
+						'fair-form/fair-form-multiselect',
 						attributes,
 						innerBlocks
 					);

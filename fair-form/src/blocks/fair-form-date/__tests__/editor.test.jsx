@@ -36,6 +36,7 @@ jest.mock( '@wordpress/components', () => ( {
 } ) );
 
 jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
+	...jest.requireActual( 'fair-events-shared/src/question-utils.js' ),
 	generateQuestionKey: ( text ) =>
 		text
 			.toLowerCase()
@@ -47,7 +48,11 @@ jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
 let capturedSettings;
 jest.mock( '@wordpress/blocks', () => ( {
 	registerBlockType: ( name, settings ) => {
-		capturedSettings = settings;
+		// The legacy fair-audience alias is registered too; keep the
+		// canonical block's settings.
+		if ( name.startsWith( 'fair-form/' ) ) {
+			capturedSettings = settings;
+		}
 	},
 } ) );
 

@@ -4,9 +4,10 @@
  * text question, an email question and a file upload question, for the Fair
  * Form translations E2E spec (#1872).
  *
- * The blocks are stored under their original fair-audience/fair-form* names,
- * like every form saved before Fair Form got its own text domain, so the
- * spec can reopen and submit an existing form.
+ * The blocks are deliberately stored under their legacy
+ * fair-audience/fair-form* names (#1161), like every form saved before Fair
+ * Form got its own namespace and text domain, so the spec can reopen and
+ * submit an existing form through the legacy aliases.
  *
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/seed-fair-form-translations-page.php <formId>

@@ -8,7 +8,7 @@ community list, collect registrations of interest, or gather profile answers.
 
 Top-level block without inner blocks. Questions are stored in the `questions`
 attribute (not as nested blocks); for block-based questions use Fair Form
-(`fair-audience/fair-form`).
+(`fair-form/fair-form`).
 
 ## Attributes
 

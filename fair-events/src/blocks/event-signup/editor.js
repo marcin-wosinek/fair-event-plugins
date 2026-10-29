@@ -31,6 +31,10 @@ import { useSelect } from '@wordpress/data';
 import { createPortal, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
+import {
+	FAIR_FORM_BLOCK_NAMESPACE,
+	LEGACY_FAIR_FORM_BLOCK_NAMESPACE,
+} from 'fair-events-shared/src/question-utils.js';
 import metadata from './block.json';
 import './editor.css';
 
@@ -45,22 +49,23 @@ const QUESTIONS_SLOT_SELECTOR = '.fair-events-event-signup-questions-slot';
 const BASE_ALLOWED_BLOCKS = [ 'core/heading', 'core/paragraph', 'core/list' ];
 
 // Custom question blocks that can additionally be nested once fair-form is
-// active. Mirrors the legacy fair-audience/event-signup block's set, minus
-// the file-upload question: the unified form is submittable by anonymous
-// visitors and uploads stay out until there is a vetted path.
-const FAIR_FORM_ALLOWED_BLOCKS = [
-	'fair-audience/fair-form-short-text',
-	'fair-audience/fair-form-long-text',
-	'fair-audience/fair-form-email',
-	'fair-audience/fair-form-phone',
-	'fair-audience/fair-form-url',
-	'fair-audience/fair-form-date',
-	'fair-audience/fair-form-datetime',
-	'fair-audience/fair-form-select-one',
-	'fair-audience/fair-form-radio',
-	'fair-audience/fair-form-multiselect',
-	'fair-audience/fair-form-consent',
-	'fair-audience/fair-form-conditional',
+// active, by slug (the namespace depends on the Fair Form version). Mirrors
+// the legacy fair-audience/event-signup block's set, minus the file-upload
+// question: the unified form is submittable by anonymous visitors and
+// uploads stay out until there is a vetted path.
+const FAIR_FORM_ALLOWED_BLOCK_SLUGS = [
+	'fair-form-short-text',
+	'fair-form-long-text',
+	'fair-form-email',
+	'fair-form-phone',
+	'fair-form-url',
+	'fair-form-date',
+	'fair-form-datetime',
+	'fair-form-select-one',
+	'fair-form-radio',
+	'fair-form-multiselect',
+	'fair-form-consent',
+	'fair-form-conditional',
 ];
 
 registerBlockType( metadata.name, {
@@ -70,17 +75,31 @@ registerBlockType( metadata.name, {
 
 		// The fair-form question set is only registered when fair-form is
 		// active. Without it, offer no question blocks — there is no
-		// fair-events-owned default question set.
-		const isFairFormActive = useSelect(
+		// fair-events-owned default question set. Fair Form registers its
+		// blocks under its own namespace since #1161 (keeping the
+		// fair-audience names as hidden aliases); older versions only have
+		// the fair-audience names, so fall back to those.
+		const fairFormNamespace = useSelect(
 			( select ) =>
-				!! select( 'core/blocks' ).getBlockType(
-					'fair-audience/fair-form-short-text'
-				),
+				[
+					FAIR_FORM_BLOCK_NAMESPACE,
+					LEGACY_FAIR_FORM_BLOCK_NAMESPACE,
+				].find(
+					( namespace ) =>
+						!! select( 'core/blocks' ).getBlockType(
+							`${ namespace }/fair-form-short-text`
+						)
+				) ?? null,
 			[]
 		);
 
-		const allowedBlocks = isFairFormActive
-			? [ ...BASE_ALLOWED_BLOCKS, ...FAIR_FORM_ALLOWED_BLOCKS ]
+		const allowedBlocks = fairFormNamespace
+			? [
+					...BASE_ALLOWED_BLOCKS,
+					...FAIR_FORM_ALLOWED_BLOCK_SLUGS.map(
+						( slug ) => `${ fairFormNamespace }/${ slug }`
+					),
+				]
 			: BASE_ALLOWED_BLOCKS;
 
 		const {

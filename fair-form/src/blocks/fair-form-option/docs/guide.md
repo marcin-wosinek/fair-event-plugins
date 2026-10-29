@@ -5,8 +5,8 @@ visitor and the value stored as the answer.
 
 ## Composition
 
-- **Parent:** must be a direct child of `fair-audience/fair-form-select-one`,
-  `fair-audience/fair-form-radio`, or `fair-audience/fair-form-multiselect`.
+- **Parent:** must be a direct child of `fair-form/fair-form-select-one`,
+  `fair-form/fair-form-radio`, or `fair-form/fair-form-multiselect`.
 - No inner blocks. It cannot be made reusable.
 
 ## Attributes

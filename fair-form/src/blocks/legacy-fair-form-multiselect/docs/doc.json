@@ -1,0 +1,52 @@
+{
+	"kind": "php-block",
+	"name": "fair-audience/fair-form-multiselect",
+	"title": "Multiselect Question (legacy name)",
+	"description": "Former name of fair-form/fair-form-multiselect, kept as a hidden alias so content saved under it keeps rendering and editing.",
+	"registeredIn": "src/Hooks/BlockHooks.php",
+	"attributes": {
+		"questionText": {
+			"type": "string",
+			"default": ""
+		},
+		"questionKey": {
+			"type": "string",
+			"default": ""
+		},
+		"required": {
+			"type": "boolean",
+			"default": false
+		},
+		"optionSource": {
+			"type": "string",
+			"enum": [ "manual", "categories", "categoryChildren" ],
+			"default": "manual"
+		},
+		"parentCategoryId": {
+			"type": "integer",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"inserter": false
+	},
+	"status": "legacy",
+	"replacement": "fair-form/fair-form-multiselect",
+	"registration": {
+		"condition": "always",
+		"detail": "Registered on init whenever Fair Form is active, in PHP, as an alias of fair-form/fair-form-multiselect with its attributes, template and frontend assets. It has no editor script of its own; fair-form/fair-form-multiselect's editor script handles it in the editor."
+	},
+	"requires": [],
+	"examples": {
+		"minimal": {
+			"title": "Multiselect Question with options (legacy names)",
+			"description": "The canonical minimal example saved under the legacy block names; renders the same as fair-form/fair-form-multiselect.",
+			"context": "page",
+			"frontend": ".wp-block-fair-audience-fair-form [data-question-key='workshop_interests']",
+			"syntheticIds": {
+				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
+			}
+		}
+	}
+}

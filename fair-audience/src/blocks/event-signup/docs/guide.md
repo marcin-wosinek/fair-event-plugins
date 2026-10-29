@@ -26,8 +26,9 @@ Any other saved attributes are passed to Event Signup unchanged.
 ## Composition
 
 Saved instances may contain Fair Form question blocks, which keep their saved
-order. A form that contains `fair-audience/fair-form-file-upload` is not
-rendered: visitors see "This form is temporarily unavailable. Please contact
+order. A form that contains a file-upload question
+(`fair-form/fair-form-file-upload`, or its legacy name
+`fair-audience/fair-form-file-upload`) is not rendered: visitors see "This form is temporarily unavailable. Please contact
 the organizer." because Event Signup has no anonymous-upload path.
 
 ## Prerequisites

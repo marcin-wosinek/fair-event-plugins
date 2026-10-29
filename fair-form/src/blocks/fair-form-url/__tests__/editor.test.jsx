@@ -36,6 +36,7 @@ jest.mock( '@wordpress/components', () => ( {
 } ) );
 
 jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
+	...jest.requireActual( 'fair-events-shared/src/question-utils.js' ),
 	generateQuestionKey: ( text ) =>
 		text
 			.toLowerCase()
@@ -47,7 +48,11 @@ jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
 let capturedSettings;
 jest.mock( '@wordpress/blocks', () => ( {
 	registerBlockType: ( name, settings ) => {
-		capturedSettings = settings;
+		// The legacy fair-audience alias is registered too; keep the
+		// canonical block's settings.
+		if ( name.startsWith( 'fair-form/' ) ) {
+			capturedSettings = settings;
+		}
 	},
 	createBlock: ( name, attributes ) => ( { name, attributes } ),
 } ) );
@@ -167,7 +172,7 @@ describe( 'Fair Form URL Question Edit', () => {
 
 	it( 'transforms to short-text, preserving attributes', () => {
 		const transform = capturedSettings.transforms.to.find( ( t ) =>
-			t.blocks.includes( 'fair-audience/fair-form-short-text' )
+			t.blocks.includes( 'fair-form/fair-form-short-text' )
 		);
 
 		const attributes = {
@@ -178,7 +183,7 @@ describe( 'Fair Form URL Question Edit', () => {
 		};
 
 		expect( transform.transform( attributes ) ).toEqual( {
-			name: 'fair-audience/fair-form-short-text',
+			name: 'fair-form/fair-form-short-text',
 			attributes,
 		} );
 	} );

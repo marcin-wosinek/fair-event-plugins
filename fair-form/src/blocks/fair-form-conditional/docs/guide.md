@@ -6,7 +6,7 @@ are neither required nor submitted.
 
 ## Composition
 
-- Nested inside `fair-audience/fair-form`, `fair-events/event-signup`, or
+- Nested inside `fair-form/fair-form`, `fair-events/event-signup`, or
   (legacy content only) `fair-audience/event-signup`. Sections can be nested
   inside each other.
 - **Inner blocks:** `core/heading`, `core/paragraph`, `core/list`, and every

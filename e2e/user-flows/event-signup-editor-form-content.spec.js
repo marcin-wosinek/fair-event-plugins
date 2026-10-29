@@ -123,7 +123,7 @@ test.describe('Event Signup block "Form content" area in the editor', () => {
 		// The inserted question block lands inside the Form content area, not
 		// somewhere else in the block tree, and remains selectable/configurable.
 		const question = questionsArea.locator(
-			'.wp-block-fair-audience-fair-form-conditional'
+			'.wp-block-fair-form-fair-form-conditional'
 		);
 		await question.waitFor();
 		await expect(question).toHaveClass(/is-selected/);

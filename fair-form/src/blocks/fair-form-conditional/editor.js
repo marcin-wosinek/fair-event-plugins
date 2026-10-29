@@ -1,7 +1,6 @@
 import './style.css';
 import './editor.css';
 
-import { registerBlockType } from '@wordpress/blocks';
 import {
 	useBlockProps,
 	useInnerBlocksProps,
@@ -21,12 +20,16 @@ import { __, sprintf } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
+import {
+	FAIR_FORM_QUESTION_BLOCK_NAMES,
+	canonicalFairFormBlockName,
+} from 'fair-events-shared/src/question-utils.js';
 import {
 	isCategorySource,
 	useCategories,
 	resolveCategoryChoices,
 } from '../shared/category-options.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
 const ALLOWED_BLOCKS = [
 	'core/heading',
@@ -61,27 +64,30 @@ const TICKET_TYPE_SOURCE_OPTION = {
 };
 
 const OPTION_BLOCK_PARENTS = [
-	'fair-audience/fair-form-multiselect',
-	'fair-audience/fair-form-select-one',
-	'fair-audience/fair-form-radio',
+	'fair-form/fair-form-multiselect',
+	'fair-form/fair-form-select-one',
+	'fair-form/fair-form-radio',
 ];
 
 function findQuestionBlocks( blocks ) {
 	const questions = [];
 	for ( const block of blocks ) {
+		// Blocks still under their legacy names count as their canonical
+		// counterparts.
+		const blockName = canonicalFairFormBlockName( block.name );
 		if (
 			block.attributes?.questionKey &&
-			block.name !== 'fair-audience/fair-form-conditional'
+			blockName !== 'fair-form/fair-form-conditional'
 		) {
 			const question = {
 				key: block.attributes.questionKey,
 				text:
 					block.attributes.questionText ||
 					block.attributes.questionKey,
-				blockName: block.name,
+				blockName,
 			};
 			if (
-				OPTION_BLOCK_PARENTS.includes( block.name ) &&
+				OPTION_BLOCK_PARENTS.includes( blockName ) &&
 				isCategorySource( block.attributes )
 			) {
 				// Resolved from the categories once they are loaded.
@@ -89,10 +95,12 @@ function findQuestionBlocks( blocks ) {
 					optionSource: block.attributes.optionSource,
 					parentCategoryId: block.attributes.parentCategoryId || 0,
 				};
-			} else if ( OPTION_BLOCK_PARENTS.includes( block.name ) ) {
+			} else if ( OPTION_BLOCK_PARENTS.includes( blockName ) ) {
 				question.options = ( block.innerBlocks || [] )
 					.filter(
-						( b ) => b.name === 'fair-audience/fair-form-option'
+						( b ) =>
+							canonicalFairFormBlockName( b.name ) ===
+							'fair-form/fair-form-option'
 					)
 					.map( ( b ) => b.attributes?.value )
 					.filter( Boolean );
@@ -106,7 +114,7 @@ function findQuestionBlocks( blocks ) {
 	return questions;
 }
 
-registerBlockType( 'fair-audience/fair-form-conditional', {
+registerFormBlockType( 'fair-form-conditional', {
 	edit: ( { attributes, setAttributes, clientId } ) => {
 		const {
 			conditionSource,
@@ -129,7 +137,8 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 				const formParentId = parents.find( ( parentId ) => {
 					const parentBlock = getBlock( parentId );
 					return (
-						parentBlock?.name === 'fair-audience/fair-form' ||
+						canonicalFairFormBlockName( parentBlock?.name ) ===
+							'fair-form/fair-form' ||
 						parentBlock?.name === 'fair-audience/event-signup' ||
 						parentBlock?.name === 'fair-events/event-signup'
 					);
@@ -475,7 +484,7 @@ registerBlockType( 'fair-audience/fair-form-conditional', {
 										};
 										if (
 											question?.blockName ===
-											'fair-audience/fair-form-multiselect'
+											'fair-form/fair-form-multiselect'
 										) {
 											updates.conditionOperator =
 												'contains';

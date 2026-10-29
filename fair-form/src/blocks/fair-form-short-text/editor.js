@@ -1,43 +1,41 @@
 import './style.css';
 
-import { registerBlockType, createBlock } from '@wordpress/blocks';
+import { createBlock } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-short-text', {
+registerFormBlockType( 'fair-form-short-text', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-long-text' ],
+				blocks: [ 'fair-form/fair-form-long-text' ],
 				transform: ( attributes ) => {
 					return createBlock(
-						'fair-audience/fair-form-long-text',
+						'fair-form/fair-form-long-text',
 						attributes
 					);
 				},
 			},
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-phone' ],
+				blocks: [ 'fair-form/fair-form-phone' ],
 				transform: ( attributes ) => {
 					return createBlock(
-						'fair-audience/fair-form-phone',
+						'fair-form/fair-form-phone',
 						attributes
 					);
 				},
 			},
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-url' ],
+				blocks: [ 'fair-form/fair-form-url' ],
 				transform: ( attributes ) => {
-					return createBlock(
-						'fair-audience/fair-form-url',
-						attributes
-					);
+					return createBlock( 'fair-form/fair-form-url', attributes );
 				},
 			},
 		],

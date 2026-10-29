@@ -1,6 +1,6 @@
 /**
  * E2E: single-occurrence dropdown in the base Event Signup form (fair-events
- * alone, no fair-audience/fair-form) — a recurring series with a
+ * alone, no fair-form/fair-form) — a recurring series with a
  * 'single_instance' ticket type offers a <select> of upcoming occurrences so
  * an anonymous visitor can pick which date they're signing up for, instead of
  * being silently registered for whichever occurrence the page resolved (#1190).

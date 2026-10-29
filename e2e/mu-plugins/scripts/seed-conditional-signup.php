@@ -32,10 +32,10 @@ $content = implode(
 	"\n",
 	array(
 		'<!-- wp:fair-events/event-signup -->',
-		'<!-- wp:fair-audience/fair-form-conditional {"conditionSource":"eventOption","conditionOptionShortName":"dinner","conditionOperator":"selected"} -->',
-		'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"diet","questionText":"Dietary restrictions"} /-->',
-		'<!-- wp:fair-audience/fair-form-long-text {"questionKey":"notes","questionText":"Anything else?"} /-->',
-		'<!-- /wp:fair-audience/fair-form-conditional -->',
+		'<!-- wp:fair-form/fair-form-conditional {"conditionSource":"eventOption","conditionOptionShortName":"dinner","conditionOperator":"selected"} -->',
+		'<!-- wp:fair-form/fair-form-short-text {"questionKey":"diet","questionText":"Dietary restrictions"} /-->',
+		'<!-- wp:fair-form/fair-form-long-text {"questionKey":"notes","questionText":"Anything else?"} /-->',
+		'<!-- /wp:fair-form/fair-form-conditional -->',
 		'<!-- /wp:fair-events/event-signup -->',
 	)
 );

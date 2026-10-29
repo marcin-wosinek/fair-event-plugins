@@ -52,13 +52,18 @@ jest.mock( 'fair-events-shared/src/questionnaire.js', () => ( {
 } ) );
 
 jest.mock( 'fair-events-shared/src/question-utils.js', () => ( {
+	...jest.requireActual( 'fair-events-shared/src/question-utils.js' ),
 	generateQuestionKey: ( text ) => text,
 } ) );
 
 let capturedSettings;
 jest.mock( '@wordpress/blocks', () => ( {
 	registerBlockType: ( name, settings ) => {
-		capturedSettings = settings;
+		// The legacy fair-audience alias is registered too; keep the
+		// canonical block's settings.
+		if ( name.startsWith( 'fair-form/' ) ) {
+			capturedSettings = settings;
+		}
 	},
 	createBlock: ( name, attributes, innerBlocks ) => ( {
 		name,
@@ -139,9 +144,9 @@ describe( 'Fair Form Select One Question', () => {
 			optionSource: 'categoryChildren',
 			parentCategoryId: 10,
 		};
-		const innerBlocks = [ { name: 'fair-audience/fair-form-option' } ];
+		const innerBlocks = [ { name: 'fair-form/fair-form-option' } ];
 		const block = transformTo(
-			'fair-audience/fair-form-multiselect'
+			'fair-form/fair-form-multiselect'
 		).transform( attributes, innerBlocks );
 
 		expect( block.attributes ).toMatchObject( {
@@ -152,7 +157,7 @@ describe( 'Fair Form Select One Question', () => {
 	} );
 
 	it( 'offers the radio transform only for typed options', () => {
-		const toRadio = transformTo( 'fair-audience/fair-form-radio' );
+		const toRadio = transformTo( 'fair-form/fair-form-radio' );
 		expect( toRadio.isMatch( baseAttributes ) ).toBe( true );
 		expect( toRadio.isMatch( {} ) ).toBe( true );
 		expect(

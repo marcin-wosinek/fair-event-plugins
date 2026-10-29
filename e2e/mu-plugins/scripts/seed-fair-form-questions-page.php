@@ -40,39 +40,39 @@ $choices = array( 'A friend', 'Social media' );
 
 $option_blocks = '';
 foreach ( $choices as $choice ) {
-	$option_blocks .= '<!-- wp:fair-audience/fair-form-option ' . wp_json_encode( array( 'value' => $choice ) ) . ' /-->';
+	$option_blocks .= '<!-- wp:fair-form/fair-form-option ' . wp_json_encode( array( 'value' => $choice ) ) . ' /-->';
 }
 
 $content = implode(
 	'',
 	array(
-		'<!-- wp:fair-audience/fair-form ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form ' . wp_json_encode(
 			array(
 				'formId'    => $form_id,
 				'formTitle' => $form_title,
 			)
 		) . ' -->',
-		'<!-- wp:fair-audience/fair-form-short-text ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form-short-text ' . wp_json_encode(
 			array(
 				'questionKey'  => 'full_name',
 				'questionText' => $questions['full_name'],
 			)
 		) . ' /-->',
-		'<!-- wp:fair-audience/fair-form-email ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form-email ' . wp_json_encode(
 			array(
 				'questionKey'  => 'email',
 				'questionText' => $questions['email'],
 			)
 		) . ' /-->',
-		'<!-- wp:fair-audience/fair-form-select-one ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form-select-one ' . wp_json_encode(
 			array(
 				'questionKey'  => 'how_heard',
 				'questionText' => $questions['how_heard'],
 			)
 		) . ' -->',
 		$option_blocks,
-		'<!-- /wp:fair-audience/fair-form-select-one -->',
-		'<!-- /wp:fair-audience/fair-form -->',
+		'<!-- /wp:fair-form/fair-form-select-one -->',
+		'<!-- /wp:fair-form/fair-form -->',
 	)
 );
 

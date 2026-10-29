@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-radio",
+	"name": "fair-form/fair-form-radio",
 	"version": "1.0.0",
 	"title": "Radio Button Question",
 	"category": "widgets",
@@ -10,7 +10,7 @@
 	"keywords": [ "question", "radio", "choice", "button" ],
 	"textdomain": "fair-form",
 	"ancestor": [
-		"fair-audience/fair-form",
+		"fair-form/fair-form",
 		"fair-audience/event-signup",
 		"fair-events/event-signup"
 	],

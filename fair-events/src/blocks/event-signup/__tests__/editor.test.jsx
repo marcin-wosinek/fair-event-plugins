@@ -94,12 +94,29 @@ describe( 'Event Signup EditComponent', () => {
 		Edit = capturedSettings.edit;
 	} );
 
+	// `fairForm` is the namespace the active Fair Form registers its blocks
+	// under: true for a current Fair Form (both namespaces, the legacy one
+	// as aliases), 'fair-audience' for one from before #1161, false for none.
 	const renderEdit = (
-		isFairFormActive,
+		fairForm,
 		attributes = {},
 		setAttributes = () => {}
 	) => {
-		mockUseSelect.mockReturnValue( isFairFormActive );
+		const namespaces = {
+			true: [ 'fair-form', 'fair-audience' ],
+			'fair-audience': [ 'fair-audience' ],
+			false: [],
+		}[ fairForm ];
+		mockUseSelect.mockImplementation( ( callback ) =>
+			callback( () => ( {
+				getBlockType: ( name ) =>
+					namespaces.some( ( namespace ) =>
+						name.startsWith( `${ namespace }/` )
+					)
+						? { name }
+						: undefined,
+			} ) )
+		);
 		return render(
 			<Edit
 				attributes={ {
@@ -175,15 +192,41 @@ describe( 'Event Signup EditComponent', () => {
 		] );
 		unmount();
 
-		renderEdit( true );
+		const { unmount: unmountActive } = renderEdit( true );
 		const [ , activeOptions ] = mockUseInnerBlocksProps.mock.calls.at( -1 );
 		expect( activeOptions.allowedBlocks ).toEqual(
+			expect.arrayContaining( [
+				'core/heading',
+				'fair-form/fair-form-short-text',
+				'fair-form/fair-form-conditional',
+			] )
+		);
+		// The hidden legacy aliases are not offered alongside.
+		expect(
+			activeOptions.allowedBlocks.filter( ( name ) =>
+				name.startsWith( 'fair-audience/' )
+			)
+		).toEqual( [] );
+		expect( activeOptions.allowedBlocks ).not.toContain(
+			'fair-form/fair-form-file-upload'
+		);
+		unmountActive();
+
+		// A Fair Form from before #1161 only registers the legacy names.
+		renderEdit( 'fair-audience' );
+		const [ , legacyOptions ] = mockUseInnerBlocksProps.mock.calls.at( -1 );
+		expect( legacyOptions.allowedBlocks ).toEqual(
 			expect.arrayContaining( [
 				'core/heading',
 				'fair-audience/fair-form-short-text',
 				'fair-audience/fair-form-conditional',
 			] )
 		);
+		expect(
+			legacyOptions.allowedBlocks.filter( ( name ) =>
+				name.startsWith( 'fair-form/' )
+			)
+		).toEqual( [] );
 	} );
 
 	describe( 'price toggles', () => {

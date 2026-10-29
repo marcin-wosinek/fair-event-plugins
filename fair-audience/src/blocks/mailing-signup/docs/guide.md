@@ -8,7 +8,7 @@ the weekly email of upcoming events from Fair Events' event feeds.
 ## Composition
 
 Top-level block without inner blocks. Inside a Fair Form use
-`fair-audience/fair-form-mailing-signup` instead.
+`fair-form/fair-form-mailing-signup` instead.
 
 ## Attributes
 

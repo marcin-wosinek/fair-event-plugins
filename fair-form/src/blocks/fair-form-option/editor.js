@@ -1,8 +1,8 @@
-import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-option', {
+registerFormBlockType( 'fair-form-option', {
 	edit: ( { attributes, setAttributes } ) => {
 		const { value } = attributes;
 

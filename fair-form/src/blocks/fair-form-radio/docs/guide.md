@@ -6,7 +6,7 @@ A single choice shown as radio buttons, all options visible at once. One of the 
 
 It can be nested (at any depth) inside:
 
-- `fair-audience/fair-form` — directly or inside a Conditional Section;
+- `fair-form/fair-form` — directly or inside a Conditional Section;
 - `fair-events/event-signup` — as a signup question (Fair Events' Event
   Signup offers a smaller set of question types; see below);
 - `fair-audience/event-signup` — only in content saved with that removed
@@ -17,7 +17,7 @@ also keeps its own allow-list. Fair Form and Conditional Section accept every
 question type; Event Signup accepts all of them except File Upload and
 Mailing Sign Up.
 
-**Inner blocks:** the options, as `fair-audience/fair-form-option` blocks (the
+**Inner blocks:** the options, as `fair-form/fair-form-option` blocks (the
 only allowed child), in display order. A question without options renders no
 choices.
 

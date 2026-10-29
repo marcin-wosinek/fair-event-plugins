@@ -196,13 +196,13 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   `fair_payment_transactions` row (status, testmode, amount, Mollie id).
 - **`seed-fair-form-notification-page.php <notificationEmail> [formId] [noBlock]`**
   / **`cleanup-fair-form-notification-page.php <pageId>`** — create/delete a
-  published page carrying a `fair-audience/fair-form` block with the given
+  published page carrying a `fair-form/fair-form` block with the given
   `notificationEmail`/`formId` attributes (no inner question blocks; answers
   are posted directly to REST). Pass `1` as `noBlock` to omit the block
   entirely. Cleanup also removes any questionnaire submissions/answers
   created against the page.
 - **`seed-fair-form-questions-page.php [formId] [formTitle]`** — creates a
-  published page carrying a `fair-audience/fair-form` block with **real inner
+  published page carrying a `fair-form/fair-form` block with **real inner
   question blocks** (short text, email, and a select-one built from option
   blocks), so a spec can fill and submit the form through the browser instead
   of posting to REST. Emits the page id + permalink and the seeded question

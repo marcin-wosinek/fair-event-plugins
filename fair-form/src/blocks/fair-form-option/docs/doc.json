@@ -10,7 +10,7 @@
 			"title": "Options of a select question",
 			"description": "Options only exist inside a choice question, which must be inside a form.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form select option[value='Vegetarian']",
+			"frontend": ".wp-block-fair-form-fair-form select option[value='Vegetarian']",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}

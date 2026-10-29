@@ -1,12 +1,12 @@
 import './style.css';
 
-import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-date', {
+registerFormBlockType( 'fair-form-date', {
 	edit: ( { attributes, setAttributes } ) => {
 		const { questionText, questionKey, required, placeholder } = attributes;
 

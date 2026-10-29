@@ -791,11 +791,11 @@ test( 'copies with Experimental inactive and with legacy tools enabled', async (
 		method: 'POST',
 		data: {
 			content: `<!-- wp:fair-events/event-signup -->
-<!-- wp:fair-audience/fair-form-conditional ${ JSON.stringify(
+<!-- wp:fair-form/fair-form-conditional ${ JSON.stringify(
 				sourceConditionalAttributes
 			) } -->
 <!-- wp:paragraph --><p>Nested conditional content</p><!-- /wp:paragraph -->
-<!-- /wp:fair-audience/fair-form-conditional -->
+<!-- /wp:fair-form/fair-form-conditional -->
 <!-- /wp:fair-events/event-signup -->`,
 		},
 	} );
@@ -890,7 +890,7 @@ test( 'copies with Experimental inactive and with legacy tools enabled', async (
 			}, copied.content.raw );
 			const copiedConditional = copiedBlocks[ 0 ].innerBlocks[ 0 ];
 			expect( copiedConditional.name ).toBe(
-				'fair-audience/fair-form-conditional'
+				'fair-form/fair-form-conditional'
 			);
 			expect( copiedConditional.attributes ).toMatchObject( {
 				conditionSource: sourceConditionalAttributes.conditionSource,

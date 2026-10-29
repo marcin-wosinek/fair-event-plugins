@@ -36,7 +36,7 @@ $content = implode(
 	"\n",
 	array(
 		'<!-- wp:fair-events/event-signup -->',
-		'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"diet","questionText":"Dietary needs?"} /-->',
+		'<!-- wp:fair-form/fair-form-short-text {"questionKey":"diet","questionText":"Dietary needs?"} /-->',
 		'<!-- /wp:fair-events/event-signup -->',
 	)
 );

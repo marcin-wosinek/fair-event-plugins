@@ -1265,7 +1265,7 @@ const FEATURE_PAGE_CONTENT = [
 	'<!-- wp:fair-audience/mailing-signup /-->',
 	'<!-- wp:fair-timetable/timetable /-->',
 	'<!-- wp:fair-payment/simple-payment /-->',
-	'<!-- wp:fair-audience/fair-form /-->',
+	'<!-- wp:fair-form/fair-form /-->',
 	'<!-- wp:fair-calendar-button/calendar-button /-->',
 ].join('\n\n');
 

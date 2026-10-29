@@ -10,7 +10,7 @@
 			"title": "Date Question in a Fair Form",
 			"description": "The smallest valid placement: one question in a Fair Form.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form [data-question-type='date'][data-question-key='date_of_arrival']",
+			"frontend": ".wp-block-fair-form-fair-form [data-question-type='date'][data-question-key='date_of_arrival']",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}

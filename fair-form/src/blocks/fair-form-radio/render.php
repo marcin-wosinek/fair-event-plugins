@@ -26,7 +26,7 @@ if ( empty( $question_text ) ) {
 // Collect options from inner blocks.
 $options = array();
 foreach ( $block->inner_blocks as $inner_block ) {
-	if ( 'fair-audience/fair-form-option' === $inner_block->name ) {
+	if ( 'fair-form/fair-form-option' === \FairForm\Hooks\BlockHooks::canonical_name( $inner_block->name ) ) {
 		$value = $inner_block->attributes['value'] ?? '';
 		if ( '' !== $value ) {
 			$options[] = $value;
