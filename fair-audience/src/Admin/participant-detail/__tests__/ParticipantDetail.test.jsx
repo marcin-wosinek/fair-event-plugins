@@ -213,3 +213,125 @@ describe( 'ParticipantDetail — delete participant (#1775)', () => {
 		).toHaveAttribute( 'href', 'admin.php?page=fair-audience' );
 	} );
 } );
+
+describe( 'ParticipantDetail — weekly event feeds (#2125)', () => {
+	const renderWith = async ( overrides ) => {
+		apiFetch.mockImplementation( ( { path } ) =>
+			Promise.resolve(
+				path.endsWith( '/activity' )
+					? ACTIVITY
+					: { ...PARTICIPANT, ...overrides }
+			)
+		);
+		render( <ParticipantDetail /> );
+		const header = await screen.findByText( 'Event feeds' );
+		return header.closest( 'tr' ).querySelector( 'td' );
+	};
+
+	const AVAILABLE = {
+		available: true,
+		selected: [],
+		unavailable: [],
+		deleted: 0,
+	};
+
+	it( 'shows all feeds as a continuing preference without listing names', async () => {
+		const cell = await renderWith( {
+			weekly_feed_mode: 'all',
+			weekly_feed_ids: [ 1 ],
+			weekly_feed_summary: AVAILABLE,
+		} );
+
+		expect( cell ).toHaveTextContent( 'All event feeds' );
+		expect( cell ).toHaveTextContent( 'Includes event feeds added later.' );
+		expect( within( cell ).queryByRole( 'list' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'lists selected feeds by name, marking unavailable and deleted ones', async () => {
+		const longName =
+			'Community workshops, talks and open studio evenings in the old town';
+		const cell = await renderWith( {
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [ 1, 3, 42 ],
+			weekly_feed_summary: {
+				available: true,
+				selected: [ { id: 1, name: longName } ],
+				unavailable: [ { id: 3, name: 'Archive' } ],
+				deleted: 1,
+			},
+		} );
+
+		expect( cell ).toHaveTextContent( 'Selected event feeds' );
+		const items = within( cell )
+			.getAllByRole( 'listitem' )
+			.map( ( item ) => item.textContent );
+		expect( items ).toEqual( [
+			longName,
+			'Archive (not available right now)',
+		] );
+		expect( cell ).toHaveTextContent( '1 selected feed was deleted.' );
+	} );
+
+	it( 'shows no feeds only when none are stored', async () => {
+		const cell = await renderWith( {
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [],
+			weekly_feed_summary: AVAILABLE,
+		} );
+
+		expect( cell ).toHaveTextContent( 'No event feeds' );
+	} );
+
+	it( 'keeps the selection count when feed names cannot be retrieved', async () => {
+		const cell = await renderWith( {
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [ 1, 2 ],
+			weekly_feed_summary: { ...AVAILABLE, available: false },
+		} );
+
+		expect( cell ).toHaveTextContent( 'Selected event feeds' );
+		expect( cell ).toHaveTextContent(
+			'2 feeds are selected, but feed names cannot be retrieved right now.'
+		);
+		expect( cell ).not.toHaveTextContent( 'No event feeds' );
+		expect( cell ).not.toHaveTextContent( 'deleted' );
+	} );
+
+	it( 'keeps the weekly opt-out visible next to the saved feeds', async () => {
+		const cell = await renderWith( {
+			weekly_summary_opt_out: true,
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [ 1 ],
+			weekly_feed_summary: {
+				...AVAILABLE,
+				selected: [ { id: 1, name: 'Workshops' } ],
+			},
+		} );
+
+		expect( screen.getByText( 'Opted out' ) ).toBeInTheDocument();
+		expect( cell ).toHaveTextContent(
+			'Saved preference only: this participant opted out of weekly summaries.'
+		);
+	} );
+
+	it( 'does not imply delivery without marketing consent', async () => {
+		const cell = await renderWith( {
+			email_profile: 'minimal',
+			weekly_feed_mode: 'all',
+			weekly_feed_summary: AVAILABLE,
+		} );
+
+		expect( cell ).toHaveTextContent(
+			'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
+		);
+	} );
+
+	it( 'mentions no delivery caveat for a confirmed marketing subscriber', async () => {
+		const cell = await renderWith( {
+			weekly_feed_mode: 'all',
+			weekly_feed_summary: AVAILABLE,
+		} );
+
+		expect( cell ).not.toHaveTextContent( 'Saved preference only' );
+	} );
+} );

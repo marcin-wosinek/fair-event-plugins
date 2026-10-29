@@ -104,6 +104,55 @@ class WeeklyFeeds {
 	}
 
 	/**
+	 * Describe a participant's feed preference for showing it, without
+	 * changing it.
+	 *
+	 * Only the 'selected' mode with chosen feeds needs the catalog. When
+	 * Fair Events cannot list feeds, or listing them fails, the summary is
+	 * marked unavailable and the chosen feeds stay unclassified: they are
+	 * never reported as deleted.
+	 *
+	 * @param string|null $mode     Participant's feed mode.
+	 * @param int[]       $feed_ids Chosen feed IDs.
+	 * @return array{available: bool, selected: array[], unavailable: array[], deleted: int}
+	 *     Whether feed names could be read, chosen feeds sent now and those
+	 *     not sent now (each with `id` and `name`), and how many chosen
+	 *     feeds no longer exist.
+	 */
+	public function summary( $mode, array $feed_ids ): array {
+		$summary = array(
+			'available'   => $this->is_available(),
+			'selected'    => array(),
+			'unavailable' => array(),
+			'deleted'     => 0,
+		);
+
+		if ( self::MODE_SELECTED !== $mode || ! $feed_ids || ! $summary['available'] ) {
+			return $summary;
+		}
+
+		try {
+			$ids     = array_map( 'intval', $feed_ids );
+			$missing = $this->unavailable( $ids );
+
+			$summary['selected']    = array_values(
+				array_filter(
+					$this->subscribable(),
+					static function ( $feed ) use ( $ids ) {
+						return in_array( (int) $feed['id'], $ids, true );
+					}
+				)
+			);
+			$summary['unavailable'] = $missing['unavailable'];
+			$summary['deleted']     = $missing['deleted'];
+		} catch ( \Throwable $e ) {
+			$summary['available'] = false;
+		}
+
+		return $summary;
+	}
+
+	/**
 	 * Check a submitted selection and work out what to store.
 	 *
 	 * Every submitted feed must be one that can be chosen now. Stored feeds

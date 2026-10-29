@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -52,6 +52,121 @@ const STATUS_DISPLAY = {
 	pending: __( 'Pending', 'fair-audience' ),
 	confirmed: __( 'Confirmed', 'fair-audience' ),
 };
+
+// The weekly event feeds a participant chose. A saved choice says nothing
+// about delivery, so the opt-out and consent stay spelled out next to it.
+function WeeklyFeeds( { participant } ) {
+	const feedIds = participant.weekly_feed_ids || [];
+	const summary = participant.weekly_feed_summary;
+	const isAll = participant.weekly_feed_mode !== 'selected';
+
+	let deliveryNote = null;
+	if ( participant.weekly_summary_opt_out ) {
+		deliveryNote = __(
+			'Saved preference only: this participant opted out of weekly summaries.',
+			'fair-audience'
+		);
+	} else if (
+		participant.email_profile !== 'marketing' ||
+		participant.status !== 'confirmed'
+	) {
+		deliveryNote = __(
+			'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.',
+			'fair-audience'
+		);
+	}
+
+	let content;
+	if ( isAll ) {
+		content = (
+			<>
+				<strong>{ __( 'All event feeds', 'fair-audience' ) }</strong>
+				<p className="fair-audience-participant-detail__note">
+					{ __(
+						'Includes event feeds added later.',
+						'fair-audience'
+					) }
+				</p>
+			</>
+		);
+	} else if ( feedIds.length === 0 ) {
+		content = <strong>{ __( 'No event feeds', 'fair-audience' ) }</strong>;
+	} else if ( ! summary?.available ) {
+		content = (
+			<>
+				<strong>
+					{ __( 'Selected event feeds', 'fair-audience' ) }
+				</strong>
+				<p className="fair-audience-participant-detail__note">
+					{ sprintf(
+						/* translators: %d: number of selected event feeds. */
+						_n(
+							'%d feed is selected, but feed names cannot be retrieved right now.',
+							'%d feeds are selected, but feed names cannot be retrieved right now.',
+							feedIds.length,
+							'fair-audience'
+						),
+						feedIds.length
+					) }
+				</p>
+			</>
+		);
+	} else {
+		const selected = summary.selected || [];
+		const unavailable = summary.unavailable || [];
+		content = (
+			<>
+				<strong>
+					{ __( 'Selected event feeds', 'fair-audience' ) }
+				</strong>
+				{ selected.length + unavailable.length > 0 && (
+					<ul className="fair-audience-participant-detail__feeds">
+						{ selected.map( ( feed ) => (
+							<li key={ feed.id }>{ feed.name }</li>
+						) ) }
+						{ unavailable.map( ( feed ) => (
+							<li key={ feed.id }>
+								{ sprintf(
+									/* translators: %s: event feed name. */
+									__(
+										'%s (not available right now)',
+										'fair-audience'
+									),
+									feed.name
+								) }
+							</li>
+						) ) }
+					</ul>
+				) }
+				{ summary.deleted > 0 && (
+					<p className="fair-audience-participant-detail__note">
+						{ sprintf(
+							/* translators: %d: number of deleted event feeds. */
+							_n(
+								'%d selected feed was deleted.',
+								'%d selected feeds were deleted.',
+								summary.deleted,
+								'fair-audience'
+							),
+							summary.deleted
+						) }
+					</p>
+				) }
+			</>
+		);
+	}
+
+	return (
+		<>
+			{ content }
+			{ deliveryNote && (
+				<p className="fair-audience-participant-detail__note">
+					{ deliveryNote }
+				</p>
+			) }
+		</>
+	);
+}
 
 export default function ParticipantDetail() {
 	const urlParams = new URLSearchParams( window.location.search );
@@ -206,6 +321,14 @@ export default function ParticipantDetail() {
 									{ participant.weekly_summary_opt_out
 										? __( 'Opted out', 'fair-audience' )
 										: __( 'Subscribed', 'fair-audience' ) }
+								</td>
+							</tr>
+							<tr>
+								<th>
+									{ __( 'Event feeds', 'fair-audience' ) }
+								</th>
+								<td>
+									<WeeklyFeeds participant={ participant } />
 								</td>
 							</tr>
 							<tr>

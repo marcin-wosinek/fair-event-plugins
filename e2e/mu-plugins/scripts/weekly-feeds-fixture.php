@@ -5,12 +5,15 @@
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php seed <suffix>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php state <email>
+ *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php choose <email> <mode> <feedIds>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php deliver <configId>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php cleanup <sourceIds> <configIds> <emails>
  *
  * `seed` creates four event feeds: A and B with an enabled weekly email, C
  * enabled without one, and D disabled with one. `state` reports a
- * participant's weekly preferences and pending confirmation. `deliver` runs
+ * participant's weekly preferences and pending confirmation. `choose` stores
+ * a feed mode and comma-separated feed IDs for a participant as they are,
+ * so feeds that cannot be chosen or no longer exist can be set up. `deliver` runs
  * a weekly email configuration's send for the current week, exactly as
  * WP-Cron would, and reports who received it. `cleanup` takes
  * comma-separated lists and removes the participants (with their tokens,
@@ -122,6 +125,16 @@ if ( 'seed' === $fixture_action ) {
 			),
 		);
 	}
+} elseif ( 'choose' === $fixture_action ) {
+	$fixture_id = (int) $wpdb->get_var(
+		$wpdb->prepare( 'SELECT id FROM %i WHERE email = %s', $wpdb->prefix . 'fair_audience_participants', sanitize_email( $args[1] ?? '' ) )
+	);
+	if ( ! $fixture_id ) {
+		WP_CLI::error( 'Participant not found.' );
+	}
+	$wpdb->update( $wpdb->prefix . 'fair_audience_participants', array( 'weekly_feed_mode' => $args[2] ?? 'all' ), array( 'id' => $fixture_id ), array( '%s' ), array( '%d' ) );
+	( new \FairAudience\Database\ParticipantFeedRepository() )->set_feeds( $fixture_id, array_map( 'intval', array_filter( explode( ',', (string) ( $args[3] ?? '' ) ) ) ) );
+	$fixture_out = array( 'participant_id' => $fixture_id );
 } elseif ( 'deliver' === $fixture_action ) {
 	$fixture_config = $args[1] ?? '';
 	$fixture_before = count( (array) get_option( 'fair_e2e_captured_mail', array() ) );
@@ -181,7 +194,7 @@ if ( 'seed' === $fixture_action ) {
 	BulkEmailSettings::refresh_summary();
 	$fixture_out = array( 'cleaned' => true );
 } else {
-	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|deliver|cleanup …' );
+	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|choose|deliver|cleanup …' );
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

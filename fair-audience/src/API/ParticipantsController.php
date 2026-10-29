@@ -15,6 +15,7 @@ use FairAudience\Database\ParticipantFeedRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\ManageSubscriptionToken;
+use FairAudience\Services\WeeklyFeeds;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -534,7 +535,8 @@ class ParticipantsController extends WP_REST_Controller {
 			: array();
 		$item['groups'] = $groups_by_pid[ $participant->id ] ?? array();
 
-		$item['weekly_feed_ids'] = ( new ParticipantFeedRepository() )->get_feed_ids_by_participant( (int) $participant->id );
+		$item['weekly_feed_ids']     = ( new ParticipantFeedRepository() )->get_feed_ids_by_participant( (int) $participant->id );
+		$item['weekly_feed_summary'] = ( new WeeklyFeeds() )->summary( $participant->weekly_feed_mode, $item['weekly_feed_ids'] );
 
 		return rest_ensure_response( $item );
 	}
