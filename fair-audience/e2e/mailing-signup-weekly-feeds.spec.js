@@ -4,7 +4,7 @@
  *
  * An editor turns on the weekly checkbox and picks one hidden event feed in
  * the block settings; a visitor signs up on the published page and the feed
- * applies when the confirmation link is used. A multiselect form asks for a
+ * applies when they follow the link in the confirmation email. A multiselect form asks for a
  * feed before sending, works from the keyboard, and only emails a
  * management link to an address that is already subscribed.
  *
@@ -189,16 +189,20 @@ test.describe( 'Mailing Signup block — weekly update and event feeds', () => {
 			feed_ids: [ feeds.a ],
 		} );
 
-		// The visitor's own context: the shared one sat idle through the
-		// editor steps, and its pooled socket may have been closed.
-		const confirmed = await visitor.request.post(
-			'/wp-json/fair-audience/v1/mailing-signup/confirm',
-			{ data: { token: state.token } }
-		);
-		expect( confirmed.ok() ).toBeTruthy();
-		const participant = ( await fixture( 'state', address ) ).participant;
-		expect( participant.weekly_feed_mode ).toBe( 'selected' );
-		expect( participant.feed_ids ).toEqual( [ feeds.a ] );
+		// The visitor follows the link the confirmation email carries.
+		const { link } = await fixture( 'confirmation-link', address );
+		await visitor.goto( link );
+		await expect(
+			visitor.getByRole( 'heading', { name: 'Email Confirmed!' } )
+		).toBeVisible();
+		const confirmed = await fixture( 'state', address );
+		expect( confirmed.token ).toBe( null );
+		expect( confirmed.participant ).toMatchObject( {
+			status: 'confirmed',
+			weekly_feed_mode: 'selected',
+			feed_ids: [ feeds.a ],
+			weekly_summary_opt_out: false,
+		} );
 		await visitor.close();
 	} );
 

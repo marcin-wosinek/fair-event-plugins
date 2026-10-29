@@ -5,13 +5,16 @@
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php seed <suffix>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php state <email>
+ *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php confirmation-link <email>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php choose <email> <mode> <feedIds>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php deliver <configId>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php cleanup <sourceIds> <configIds> <emails>
  *
  * `seed` creates four event feeds: A and B with an enabled weekly email, C
  * enabled without one, and D disabled with one. `state` reports a
- * participant's weekly preferences and pending confirmation. `choose` stores
+ * participant's weekly preferences, categories and pending confirmation.
+ * `confirmation-link` sends the address's deferred confirmation email, as
+ * WP-Cron would, and reports the link it carries. `choose` stores
  * a feed mode and comma-separated feed IDs for a participant as they are,
  * so feeds that cannot be chosen or no longer exist can be set up. `deliver` runs
  * a weekly email configuration's send for the current week, exactly as
@@ -107,6 +110,12 @@ if ( 'seed' === $fixture_action ) {
 						$wpdb->prepare( 'SELECT feed_id FROM %i WHERE participant_id = %d ORDER BY feed_id', $wpdb->prefix . 'fair_audience_participant_feeds', $fixture_id )
 					)
 				),
+				'category_ids'           => array_map(
+					'intval',
+					$wpdb->get_col(
+						$wpdb->prepare( 'SELECT category_id FROM %i WHERE participant_id = %d ORDER BY category_id', $wpdb->prefix . 'fair_audience_participant_categories', $fixture_id )
+					)
+				),
 			),
 			'token'       => $fixture_token ? $fixture_token['token'] : null,
 			'pending'     => $fixture_token && null !== $fixture_token['pending_preferences'] ? json_decode( $fixture_token['pending_preferences'], true ) : null,
@@ -125,6 +134,30 @@ if ( 'seed' === $fixture_action ) {
 			),
 		);
 	}
+} elseif ( 'confirmation-link' === $fixture_action ) {
+	$fixture_email = sanitize_email( $args[1] ?? '' );
+	$fixture_hook  = \FairAudience\Services\EmailService::DEFERRED_EMAIL_HOOK;
+	foreach ( (array) _get_cron_array() as $fixture_time => $fixture_hooks ) {
+		foreach ( $fixture_hooks[ $fixture_hook ] ?? array() as $fixture_event ) {
+			list( $fixture_method, $fixture_mail_args ) = $fixture_event['args'];
+			if ( 'send_confirmation_email' === $fixture_method && $fixture_email === $fixture_mail_args[0]->email ) {
+				wp_unschedule_event( $fixture_time, $fixture_hook, $fixture_event['args'] );
+				\FairAudience\Services\EmailService::run_deferred( $fixture_method, $fixture_mail_args );
+			}
+		}
+	}
+	$fixture_link = null;
+	foreach ( (array) get_option( 'fair_e2e_captured_mail', array() ) as $fixture_entry ) {
+		if ( in_array( $fixture_email, (array) $fixture_entry['to'], true )
+			&& preg_match( '/https?:\/\/[^\s"\'<>]*[?&]confirm_email_key=[A-Za-z0-9]+/', html_entity_decode( (string) $fixture_entry['body'] ), $fixture_match ) ) {
+			$fixture_link = $fixture_match[0];
+		}
+	}
+	if ( ! $fixture_link ) {
+		WP_CLI::error( 'No confirmation email captured.' );
+	}
+	$fixture_parts = wp_parse_url( $fixture_link );
+	$fixture_out   = array( 'link' => $fixture_parts['path'] . '?' . $fixture_parts['query'] );
 } elseif ( 'choose' === $fixture_action ) {
 	$fixture_id = (int) $wpdb->get_var(
 		$wpdb->prepare( 'SELECT id FROM %i WHERE email = %s', $wpdb->prefix . 'fair_audience_participants', sanitize_email( $args[1] ?? '' ) )
@@ -194,7 +227,7 @@ if ( 'seed' === $fixture_action ) {
 	BulkEmailSettings::refresh_summary();
 	$fixture_out = array( 'cleaned' => true );
 } else {
-	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|choose|deliver|cleanup …' );
+	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|confirmation-link|choose|deliver|cleanup …' );
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

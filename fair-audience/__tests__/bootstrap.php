@@ -428,6 +428,31 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Stub of WordPress get_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $name Transient name.
+	 * @return mixed Stored value or false.
+	 */
+	function get_transient( $name ) {
+		return $GLOBALS['_fair_test_transients'][ $name ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'delete_transient' ) ) {
+	/**
+	 * Stub of WordPress delete_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $name Transient name.
+	 * @return bool Always true.
+	 */
+	function delete_transient( $name ) {
+		unset( $GLOBALS['_fair_test_transients'][ $name ] );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'home_url' ) ) {
 	/**
 	 * Stub of WordPress home_url() — overridable via $GLOBALS['_fair_test_home_url'].

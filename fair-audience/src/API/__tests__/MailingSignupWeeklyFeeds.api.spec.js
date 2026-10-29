@@ -166,6 +166,88 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		expect( participant.weekly_summary_opt_out ).toBe( true );
 	} );
 
+	// The link in the confirmation email opens a page rather than calling
+	// the REST endpoint; it must apply the same choices.
+	const followEmailedLink = async ( address ) => {
+		const { link } = await fixture( 'confirmation-link', address );
+		const res = await api.get( link );
+		expect( res.status() ).toBe( 200 );
+		return { link, res, html: await res.text() };
+	};
+
+	test( 'the emailed confirmation link applies the submitted feeds, opt-out and categories', async () => {
+		const address = email( 'emailed-link' );
+		await signup( {
+			email: address,
+			weekly_summary: false,
+			weekly_feed_ids: [ feeds.a ],
+			category_ids: [ 987654 ],
+		} );
+
+		const { link, res, html } = await followEmailedLink( address );
+
+		expect( html ).toContain( 'Email Confirmed!' );
+		const state = await fixture( 'state', address );
+		expect( state.token ).toBe( null );
+		expect( state.participant ).toMatchObject( {
+			status: 'confirmed',
+			email_profile: 'marketing',
+			weekly_feed_mode: 'selected',
+			feed_ids: [ feeds.a ],
+			weekly_summary_opt_out: true,
+			category_ids: [ 987654 ],
+		} );
+		expect( res.headers()[ 'cache-control' ] ).toContain( 'no-cache' );
+
+		// The link works once; a reused one changes nothing.
+		const reused = await ( await api.get( link ) ).text();
+		expect( reused ).toContain( 'Confirmation Failed' );
+		expect( ( await fixture( 'state', address ) ).participant ).toEqual(
+			state.participant
+		);
+	} );
+
+	test( 'the emailed link of a signup without weekly fields keeps every weekly email', async () => {
+		const address = email( 'emailed-legacy' );
+		await signup( { email: address } );
+
+		const { html } = await followEmailedLink( address );
+
+		expect( html ).toContain( 'Email Confirmed!' );
+		const { participant } = await fixture( 'state', address );
+		expect( participant.weekly_feed_mode ).toBe( 'all' );
+		expect( participant.feed_ids ).toEqual( [] );
+		expect( participant.weekly_summary_opt_out ).toBe( false );
+	} );
+
+	test( 'the emailed link drops a feed removed since signup, and adds none', async () => {
+		const removed = await fixture( 'seed', `${ suffix }-removed` );
+		const address = email( 'emailed-removed' );
+		await signup( {
+			email: address,
+			weekly_feed_ids: [ removed.feeds.a, feeds.b ],
+		} );
+		await fixture(
+			'cleanup',
+			Object.values( removed.feeds ).join( ',' ),
+			Object.values( removed.configurations ).join( ',' ),
+			''
+		);
+
+		await followEmailedLink( address );
+
+		const { participant } = await fixture( 'state', address );
+		expect( participant.status ).toBe( 'confirmed' );
+		expect( participant.weekly_feed_mode ).toBe( 'selected' );
+		expect( participant.feed_ids ).toEqual( [ feeds.b ] );
+	} );
+
+	test( 'an unknown confirmation link shows an error', async () => {
+		const res = await api.get( '/?confirm_email_key=not-a-real-token' );
+		expect( res.status() ).toBe( 200 );
+		expect( await res.text() ).toContain( 'Confirmation Failed' );
+	} );
+
 	test( 'a signup with a subscribed address only emails it the management link', async () => {
 		const address = email( 'existing' );
 		const created = await api.post(
