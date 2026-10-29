@@ -358,7 +358,7 @@ class ClientTest extends TestCase {
 		$this->assertStringContainsString( 'status=APPROVED', $GLOBALS['_fair_test_remote_get_requests'][0]['url'] );
 	}
 
-	/** An accepted send reports acceptance, not delivery, and sends exactly the template. */
+	/** An accepted send reports acceptance (not delivery) with Meta's message ID, and sends exactly the template. */
 	public function test_send_template_accepted() {
 		$GLOBALS['_fair_test_remote_post_response'] = self::answer(
 			200,
@@ -378,6 +378,7 @@ class ClientTest extends TestCase {
 			array(
 				'ok'             => true,
 				'outcome'        => 'accepted',
+				'message_id'     => 'wamid.ABC',
 				'message_status' => 'accepted',
 			),
 			$result

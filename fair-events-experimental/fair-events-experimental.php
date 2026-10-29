@@ -34,6 +34,7 @@ register_deactivation_hook(
 		// Every delivery wake-up, whatever timestamp argument it carries.
 		wp_unschedule_hook( \FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK );
 		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
+		wp_clear_scheduled_hook( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK );
 		// Cron event of the former weekly notification sender.
 		wp_unschedule_hook( 'fair_events_experimental_weekly_notification' );
 		delete_option( 'fair_events_experimental_weekly_notification_next_run' );

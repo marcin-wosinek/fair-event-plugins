@@ -57,9 +57,11 @@ class Plugin {
 		// manageable in Connectors while delivery is off or unavailable.
 		\FairEventsExperimental\Meta\Connector::init();
 
-		// Manual WhatsApp connection: IDs, validation and one-off test sends.
-		// No provider, schedule or queue is registered; see WHATSAPP.md.
+		// Manual WhatsApp connection: IDs, validation, one-off test sends and
+		// their delivery updates from Meta's webhook. No provider, schedule
+		// or queue is registered; see WHATSAPP.md.
 		\FairEventsExperimental\WhatsApp\Connector::init();
+		$this->load_whatsapp_deliveries();
 
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
@@ -181,6 +183,7 @@ class Plugin {
 			'rest_api_init',
 			static function () {
 				( new \FairEventsExperimental\API\WhatsAppController() )->register_routes();
+				( new \FairEventsExperimental\API\WhatsAppWebhookController() )->register_routes();
 			}
 		);
 
@@ -218,6 +221,24 @@ class Plugin {
 					$controller->register_routes();
 				}
 			);
+		}
+	}
+
+	/**
+	 * Keep the WhatsApp delivery tables installed and pruned daily.
+	 *
+	 * @return void
+	 */
+	private function load_whatsapp_deliveries() {
+		\FairEventsExperimental\WhatsApp\Deliveries::maybe_install();
+		add_action(
+			\FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK,
+			static function () {
+				( new \FairEventsExperimental\WhatsApp\Deliveries() )->prune();
+			}
+		);
+		if ( ! wp_next_scheduled( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK );
 		}
 	}
 

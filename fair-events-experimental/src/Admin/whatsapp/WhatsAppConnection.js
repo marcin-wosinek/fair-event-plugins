@@ -15,11 +15,20 @@ import {
 	TextControl,
 } from '@wordpress/components';
 
+import WebhookSetup from './WebhookSetup.js';
+import DeliveryHistory from './DeliveryHistory.js';
+
 const PATH = '/fair-events-experimental/v1/whatsapp';
 
 // Re-read when the page regains focus: the token is managed in Connectors,
-// usually in another tab, and replacing it invalidates the validation.
-const REMOTE_FIELDS = [ 'token_configured', 'token_source', 'validation' ];
+// usually in another tab, and replacing it invalidates the validation; Meta
+// may have verified the webhook meanwhile.
+const REMOTE_FIELDS = [
+	'token_configured',
+	'token_source',
+	'validation',
+	'webhook',
+];
 
 const ID_PATTERN = /^\d{0,32}$/;
 
@@ -191,8 +200,9 @@ function TestResult( { result } ) {
 }
 
 /**
- * Fair Events → WhatsApp: save the sender's IDs, validate them against Meta
- * and send one approved template to an authorized recipient.
+ * Fair Events → WhatsApp: save the sender's IDs, validate them against Meta,
+ * set up the delivery-update webhook, send one approved template to an
+ * authorized recipient and follow what happened to recent sends.
  *
  * @param {Object}   props
  * @param {Function} props.onNotice Shows a page-level notice.
@@ -214,11 +224,20 @@ export default function WhatsAppConnection( { onNotice } ) {
 	const [ authorized, setAuthorized ] = useState( false );
 	const [ sending, setSending ] = useState( false );
 	const [ result, setResult ] = useState( null );
+	const [ sendCount, setSendCount ] = useState( 0 );
 
 	const applyConfig = ( next ) => {
 		setConfig( next );
 		setSavedConfig( next );
 	};
+
+	// Only the webhook status: the fields may hold unsaved edits.
+	const applyWebhook = useCallback( ( webhook ) => {
+		const merge = ( current ) =>
+			current && webhook ? { ...current, webhook } : current;
+		setConfig( merge );
+		setSavedConfig( merge );
+	}, [] );
 
 	useEffect( () => {
 		apiFetch( { path: PATH } )
@@ -478,7 +497,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 				message: sprintf(
 					/* translators: 1: template name, 2: template language code, 3: recipient number with most digits hidden */
 					__(
-						'WhatsApp accepted the %1$s (%2$s) template for %3$s. This does not confirm delivery: ask the recipient whether it arrived.',
+						'WhatsApp accepted the %1$s (%2$s) template for %3$s. This does not confirm delivery yet: follow it under Recent messages.',
 						'fair-events-experimental'
 					),
 					response.template.name,
@@ -504,6 +523,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 		// Each send needs its own confirmation.
 		setAuthorized( false );
 		setSending( false );
+		setSendCount( ( count ) => count + 1 );
 	};
 
 	const token = tokenStatus( config );
@@ -663,6 +683,19 @@ export default function WhatsAppConnection( { onNotice } ) {
 				</CardBody>
 			</Card>
 
+			<WebhookSetup
+				webhook={ savedConfig.webhook }
+				onSaved={ ( next ) => {
+					// Keep unsaved ID edits in the fields.
+					setSavedConfig( next );
+					setConfig( ( current ) => ( {
+						...current,
+						webhook: next.webhook,
+					} ) );
+				} }
+				onNotice={ onNotice }
+			/>
+
 			<Card style={ { marginTop: '16px' } }>
 				<CardHeader>
 					<h2>
@@ -675,7 +708,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 				<CardBody>
 					<p>
 						{ __(
-							'Sends one approved template without parameters, once. Only send to someone who agreed to receive it. The recipient number is not stored.',
+							'Sends one approved template without parameters, once. Only send to someone who agreed to receive it. Only the last three digits of the recipient number are kept, in Recent messages.',
 							'fair-events-experimental'
 						) }
 					</p>
@@ -800,6 +833,11 @@ export default function WhatsAppConnection( { onNotice } ) {
 					{ result && <TestResult result={ result } /> }
 				</CardBody>
 			</Card>
+
+			<DeliveryHistory
+				refreshKey={ sendCount }
+				onWebhook={ applyWebhook }
+			/>
 		</>
 	);
 }

@@ -152,7 +152,7 @@ class Client {
 	 * @param string $recipient       Recipient number, digits only.
 	 * @param string $name            Template name.
 	 * @param string $language        Template language code.
-	 * @return array `ok` and `outcome`: 'accepted' with `message_status`,
+	 * @return array `ok` and `outcome`: 'accepted' with `message_id` and `message_status`,
 	 *     'not_accepted' or 'uncertain' with the {@see self::failure()} fields.
 	 */
 	public function send_template( $phone_number_id, $recipient, $name, $language ) {
@@ -182,10 +182,11 @@ class Client {
 		$answer = self::answer( $response );
 		if ( $answer['ok'] ) {
 			$message = $answer['data']['messages'][0] ?? null;
-			if ( is_array( $message ) && is_string( $message['id'] ?? null ) && '' !== $message['id'] ) {
+			if ( is_array( $message ) && self::valid_message_id( $message['id'] ?? null ) ) {
 				return array(
 					'ok'             => true,
 					'outcome'        => 'accepted',
+					'message_id'     => $message['id'],
 					'message_status' => self::text( $message['message_status'] ?? '' ),
 				);
 			}
@@ -221,6 +222,16 @@ class Client {
 	 */
 	public static function mask_recipient( $digits ) {
 		return str_repeat( '•', max( 0, strlen( $digits ) - 3 ) ) . substr( $digits, -3 );
+	}
+
+	/**
+	 * Whether a value can be a WhatsApp message ID (a `wamid.` identifier).
+	 *
+	 * @param mixed $value Message ID.
+	 * @return bool
+	 */
+	public static function valid_message_id( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^[A-Za-z0-9._=+\/:-]{1,191}$/', $value );
 	}
 
 	/**

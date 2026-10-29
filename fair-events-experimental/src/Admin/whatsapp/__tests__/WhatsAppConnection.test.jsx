@@ -23,6 +23,25 @@ const VALIDATION = {
 	},
 };
 
+const WEBHOOK = {
+	app_secret: {
+		configured: false,
+		source: 'none',
+		override_name: 'FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_APP_SECRET',
+	},
+	verify_token: {
+		configured: false,
+		source: 'none',
+		override_name: 'FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_VERIFY_TOKEN',
+	},
+	callback_url:
+		'http://example.test/wp-json/fair-events-experimental/v1/whatsapp/webhook',
+	verified_at_local: null,
+	received_at_local: null,
+};
+
+const NO_DELIVERIES = { items: [], retention_days: 30, webhook: WEBHOOK };
+
 const TEMPLATES = [
 	{ name: 'hello_world', language: 'en_US', category: 'UTILITY' },
 ];
@@ -36,6 +55,7 @@ function config( overrides ) {
 		token_override_name: 'FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_ACCESS_TOKEN',
 		connectors_url: 'http://example.test/wp-admin/options-connectors.php',
 		validation: null,
+		webhook: WEBHOOK,
 		...overrides,
 	};
 }
@@ -50,12 +70,16 @@ function apiError( code, message, data = {} ) {
  * @param {Object} routes `"METHOD path"` → value or function( options ).
  */
 function mockApi( routes ) {
+	const all = {
+		[ `GET ${ PATH }/deliveries` ]: NO_DELIVERIES,
+		...routes,
+	};
 	apiFetch.mockImplementation( ( options ) => {
 		const key = `${ options.method || 'GET' } ${ options.path }`;
-		if ( ! ( key in routes ) ) {
+		if ( ! ( key in all ) ) {
 			return Promise.reject( new Error( `Unexpected ${ key }` ) );
 		}
-		const route = routes[ key ];
+		const route = all[ key ];
 		try {
 			const value =
 				typeof route === 'function' ? route( options ) : route;
@@ -379,6 +403,64 @@ describe( 'WhatsAppConnection', () => {
 			await screen.findByText(
 				/This account has no approved templates without parameters/
 			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'reloads the delivery history after a send', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: config( { validation: VALIDATION } ),
+			[ `GET ${ PATH }/templates` ]: TEMPLATES,
+			[ `POST ${ PATH }/test` ]: {
+				outcome: 'accepted',
+				message_status: 'accepted',
+				recipient: '••••••••123',
+				delivery_id: 7,
+				template: { name: 'hello_world', language: 'en_US' },
+			},
+		} );
+
+		render( <WhatsAppConnection onNotice={ () => {} } /> );
+		await screen.findByRole( 'option', { name: 'hello_world (en_US)' } );
+		expect(
+			await screen.findByText( 'No messages sent yet.' )
+		).toBeInTheDocument();
+		const before = calls( 'GET', `${ PATH }/deliveries` ).length;
+
+		fireEvent.change( screen.getByLabelText( 'Template' ), {
+			target: { value: 'hello_world|en_US' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Recipient number' ), {
+			target: { value: '+34 600 000 123' },
+		} );
+		fireEvent.click(
+			screen.getByLabelText(
+				'The recipient agreed to receive this test message.'
+			)
+		);
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Send test template' } )
+			);
+		} );
+
+		expect( calls( 'GET', `${ PATH }/deliveries` ) ).toHaveLength(
+			before + 1
+		);
+	} );
+
+	it( 'shows the webhook setup with the callback URL', async () => {
+		mockApi( { [ `GET ${ PATH }` ]: config() } );
+
+		render( <WhatsAppConnection onNotice={ () => {} } /> );
+
+		expect( await screen.findByLabelText( 'Callback URL' ) ).toHaveValue(
+			WEBHOOK.callback_url
+		);
+		// Notice repeats its text in the a11y live region.
+		expect(
+			screen.getAllByText(
+				/Verification alone does not show that updates arrive/
+			)[ 0 ]
 		).toBeInTheDocument();
 	} );
 } );

@@ -1,5 +1,6 @@
 /**
- * E2E: connect WhatsApp manually and send a test template (#1923).
+ * E2E: connect WhatsApp manually and send a test template (#1923), then set
+ * up the delivery-update webhook and follow a send to delivery (#1924).
  *
  * An administrator saves the access token in Settings → Connectors, enters
  * the WhatsApp Business Account ID and Phone Number ID on Fair Events →
@@ -10,9 +11,13 @@
  * lib/whatsapp-http-double.php answers graph.facebook.com for a synthetic
  * account and logs each request without the token.
  *
+ * Delivery callbacks are posted to the site's webhook signed with the App
+ * Secret saved through the page, as Meta would send them.
+ *
  * Run: `npm run test:e2e:local -- e2e/user-flows/whatsapp-connection.spec.js`.
  */
 
+import { createHmac } from 'node:crypto';
 import { test, expect } from '../support/fixtures.js';
 import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
 
@@ -22,14 +27,75 @@ const TOKEN_OPTION = 'fair_events_experimental_whatsapp_access_token';
 const PAGE_URL = '/wp-admin/admin.php?page=fair-events-whatsapp';
 const CONNECTORS_URL = '/wp-admin/options-connectors.php';
 const AUTHORIZED = 'The recipient agreed to receive this test message.';
+const APP_SECRET = 'abcdef0123456789abcdef0123456789';
+const VERIFY_TOKEN = 'e2e-browser-verify-token';
 
 const OPTIONS = [
 	TOKEN_OPTION,
 	'fair_events_experimental_whatsapp_waba_id',
 	'fair_events_experimental_whatsapp_phone_number_id',
 	'fair_events_experimental_whatsapp_validation',
+	'fair_events_experimental_whatsapp_webhook',
+	'fair_events_experimental_whatsapp_app_secret',
+	'fair_events_experimental_whatsapp_verify_token',
 	'fair_e2e_whatsapp_requests',
 ];
+
+/** Remove every recorded send and waiting callback. */
+function emptyDeliveries() {
+	wpCli(
+		`eval 'global $wpdb; foreach ( array( "fair_events_whatsapp_deliveries", "fair_events_whatsapp_unmatched" ) as $t ) { $wpdb->query( "DELETE FROM {$wpdb->prefix}$t" ); }'`
+	);
+}
+
+/**
+ * A signed delivery status callback, as Meta posts it.
+ *
+ * @param {import('@playwright/test').APIRequestContext} request Request context.
+ * @param {string}                                       id      Message ID.
+ * @param {string}                                       status  Status.
+ * @return {Promise<import('@playwright/test').APIResponse>} Response.
+ */
+function postStatus(request, id, status) {
+	const raw = JSON.stringify({
+		object: 'whatsapp_business_account',
+		entry: [
+			{
+				id: '100000000000001',
+				changes: [
+					{
+						field: 'messages',
+						value: {
+							messaging_product: 'whatsapp',
+							metadata: { phone_number_id: '200000000000002' },
+							statuses: [
+								{
+									id,
+									status,
+									timestamp: String(
+										Math.floor(Date.now() / 1000)
+									),
+								},
+							],
+						},
+					},
+				],
+			},
+		],
+	});
+	return request.post(
+		'/wp-json/fair-events-experimental/v1/whatsapp/webhook',
+		{
+			headers: {
+				'Content-Type': 'application/json',
+				'X-Hub-Signature-256':
+					'sha256=' +
+					createHmac('sha256', APP_SECRET).update(raw).digest('hex'),
+			},
+			data: raw,
+		}
+	);
+}
 
 /** Test sends the double received. */
 function sentMessages() {
@@ -87,12 +153,14 @@ test.describe('WhatsApp connection', () => {
 		for (const option of OPTIONS) {
 			wpCli(`option delete ${option}`, { allowFailure: true });
 		}
+		emptyDeliveries();
 	});
 
 	test.afterAll(() => {
 		for (const option of OPTIONS) {
 			wpCli(`option delete ${option}`, { allowFailure: true });
 		}
+		emptyDeliveries();
 	});
 
 	test('an administrator connects, validates and sends a test template', async ({
@@ -218,6 +286,98 @@ test.describe('WhatsApp connection', () => {
 		await expect(page.getByLabel('Phone Number ID')).toHaveValue(
 			'200000000000002'
 		);
+	});
+
+	test('an administrator sets up delivery updates and follows a send to delivery', async ({
+		page,
+	}) => {
+		wpCli(`option update ${TOKEN_OPTION} ${TOKEN}`);
+		wpCli(
+			'option update fair_events_experimental_whatsapp_waba_id 100000000000001'
+		);
+		wpCli(
+			'option update fair_events_experimental_whatsapp_phone_number_id 200000000000002'
+		);
+		await loginAsAdmin(page);
+		await page.goto(PAGE_URL);
+
+		// Setup instructions with the callback URL; nothing verified yet.
+		await expect(
+			page.getByRole('heading', { name: 'Delivery updates' })
+		).toBeVisible();
+		await expect(page.getByLabel('Callback URL')).toHaveValue(
+			/fair-events-experimental\/v1\/whatsapp\/webhook$/
+		);
+		await expect(
+			page.getByText(/^Not verified: Meta has not checked/).first()
+		).toBeVisible();
+		await expect(
+			page.getByText(/^No updates received yet/).first()
+		).toBeVisible();
+
+		// Save both credentials; they are not shown back.
+		await page.getByLabel('App Secret').fill(APP_SECRET);
+		await page.getByLabel('Verify token').fill(VERIFY_TOKEN);
+		await page
+			.getByRole('button', { name: 'Save webhook settings' })
+			.click();
+		await expect(
+			page.getByText(/^Webhook settings saved\./).first()
+		).toBeVisible();
+		await expect(page.getByLabel('App Secret')).toHaveValue('');
+		expect(await page.content()).not.toContain(APP_SECRET);
+
+		// Meta verifies the callback URL.
+		const verify = await page.request.get(
+			'/wp-json/fair-events-experimental/v1/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=' +
+				VERIFY_TOKEN +
+				'&hub.challenge=987654'
+		);
+		expect(await verify.text()).toBe('987654');
+		await page.reload();
+		await expect(
+			page.getByText(/^Verified: Meta checked/).first()
+		).toBeVisible();
+		await expect(
+			page.getByText(/^No updates received yet/).first()
+		).toBeVisible();
+
+		// Send a test template: it is listed as accepted, not delivered.
+		await page.getByRole('button', { name: 'Validate connection' }).click();
+		await expect(
+			page.getByText(/Connection validated/).first()
+		).toBeVisible();
+		await page.getByLabel('Template').selectOption('hello_world|en_US');
+		await page.getByLabel('Recipient number').fill('+34 600 000 125');
+		await page.getByLabel(AUTHORIZED).check();
+		await page.getByRole('button', { name: 'Send test template' }).click();
+		const messages = page.getByRole('list', { name: 'Recent messages' });
+		await expect(
+			messages.getByText('Accepted', { exact: true })
+		).toBeVisible();
+		await expect(messages.getByText(/to ••••••••125/)).toBeVisible();
+
+		// Meta reports delivery; the page picks it up without a reload.
+		const id = sentMessages().pop().message_id;
+		expect((await postStatus(page.request, id, 'delivered')).status()).toBe(
+			200
+		);
+		await expect(
+			messages.getByText('Delivered', { exact: true })
+		).toBeVisible({ timeout: 20000 });
+		await expect(
+			page
+				.getByText(/^Receiving updates: the last authenticated update/)
+				.first()
+		).toBeVisible();
+
+		// The result survives a reload.
+		await page.reload();
+		await expect(
+			page
+				.getByRole('list', { name: 'Recent messages' })
+				.getByText('Delivered', { exact: true })
+		).toBeVisible();
 	});
 
 	test('the page works at a phone-sized viewport', async ({ page }) => {

@@ -28,6 +28,21 @@ class Connector {
 	public const TOKEN_OPTION    = 'fair_events_experimental_whatsapp_access_token';
 
 	/**
+	 * Webhook credentials: the override name (environment variable or PHP
+	 * constant) and the option each is saved in.
+	 */
+	public const WEBHOOK = array(
+		'app_secret'   => array(
+			'name'   => 'FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_APP_SECRET',
+			'option' => 'fair_events_experimental_whatsapp_app_secret',
+		),
+		'verify_token' => array(
+			'name'   => 'FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_VERIFY_TOKEN',
+			'option' => 'fair_events_experimental_whatsapp_verify_token',
+		),
+	);
+
+	/**
 	 * Register the connector and guard writes to its credential.
 	 *
 	 * @return void
@@ -218,6 +233,85 @@ class Connector {
 	 */
 	public static function token() {
 		return self::credential()['token'];
+	}
+
+	/**
+	 * A webhook credential in effect and where it comes from: an environment
+	 * variable, then a PHP constant, both named in {@see self::WEBHOOK}, then
+	 * the option saved on Fair Events → WhatsApp.
+	 *
+	 * @param string $kind 'app_secret' or 'verify_token'.
+	 * @return array{token: string, source: string} Source is 'env', 'constant',
+	 *     'database' or 'none'.
+	 */
+	public static function webhook_credential( $kind ) {
+		$names = self::WEBHOOK[ $kind ];
+
+		$value = getenv( $names['name'] );
+		if ( is_string( $value ) && '' !== trim( $value ) ) {
+			return self::resolved( $value, 'env' );
+		}
+		if ( defined( $names['name'] ) ) {
+			$value = constant( $names['name'] );
+			if ( is_string( $value ) && '' !== trim( $value ) ) {
+				return self::resolved( $value, 'constant' );
+			}
+		}
+		$value = get_option( $names['option'], '' );
+		if ( is_string( $value ) && '' !== trim( $value ) ) {
+			return self::resolved( $value, 'database' );
+		}
+
+		return self::resolved( '', 'none' );
+	}
+
+	/**
+	 * Whether a value can be the given webhook credential. Meta's App Secret
+	 * is hexadecimal; the verify token is any printable string the
+	 * administrator also enters in the App Dashboard.
+	 *
+	 * @param string $kind  'app_secret' or 'verify_token'.
+	 * @param mixed  $value Candidate value.
+	 * @return bool
+	 */
+	public static function valid_webhook_credential( $kind, $value ) {
+		$pattern = 'app_secret' === $kind ? '/^[A-Za-z0-9]{16,128}$/' : '/^[\x21-\x7E]{8,256}$/';
+		return is_string( $value ) && 1 === preg_match( $pattern, $value );
+	}
+
+	/**
+	 * Save or, with '', remove a webhook credential. The option is never
+	 * autoloaded and never returned by a REST route.
+	 *
+	 * @param string $kind  'app_secret' or 'verify_token'.
+	 * @param string $value Valid credential, or ''.
+	 * @return void
+	 */
+	public static function save_webhook_credential( $kind, $value ) {
+		$option = self::WEBHOOK[ $kind ]['option'];
+		if ( '' === $value ) {
+			delete_option( $option );
+			return;
+		}
+		update_option( $option, $value, false );
+	}
+
+	/**
+	 * Webhook credential status for administrators, without the values.
+	 *
+	 * @return array<string, array{configured: bool, source: string, override_name: string}>
+	 */
+	public static function webhook_status() {
+		$status = array();
+		foreach ( self::WEBHOOK as $kind => $names ) {
+			$source          = self::webhook_credential( $kind )['source'];
+			$status[ $kind ] = array(
+				'configured'    => 'none' !== $source,
+				'source'        => $source,
+				'override_name' => $names['name'],
+			);
+		}
+		return $status;
 	}
 
 	/**
