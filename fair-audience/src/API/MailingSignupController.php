@@ -12,6 +12,7 @@ use FairAudience\Database\ParticipantCategoryRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
+use FairAudience\Services\EmailConfirmation;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\MailingSignupWeeklyPolicy;
 use FairAudience\Services\WeeklyFeeds;
@@ -377,83 +378,18 @@ class MailingSignupController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function confirm_email( $request ) {
-		$token_string = $request->get_param( 'token' );
+		$outcome = ( new EmailConfirmation( null, null, $this->weekly_feeds, $this->category_repository ) )->confirm( (string) $request->get_param( 'token' ) );
 
-		// Get token.
-		$token = $this->token_repository->get_by_token( $token_string );
+		$errors = array(
+			EmailConfirmation::INVALID_TOKEN         => array( __( 'Invalid or expired confirmation link. Please sign up again.', 'fair-audience' ), 400 ),
+			EmailConfirmation::TOKEN_EXPIRED         => array( __( 'This confirmation link has expired. Please sign up again.', 'fair-audience' ), 400 ),
+			EmailConfirmation::PARTICIPANT_NOT_FOUND => array( __( 'Invalid confirmation link. Please sign up again.', 'fair-audience' ), 400 ),
+			EmailConfirmation::UPDATE_FAILED         => array( __( 'Failed to confirm subscription. Please try again.', 'fair-audience' ), 500 ),
+		);
 
-		if ( ! $token ) {
-			return new WP_Error(
-				'invalid_token',
-				__( 'Invalid or expired confirmation link. Please sign up again.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
+		if ( isset( $errors[ $outcome ] ) ) {
+			return new WP_Error( $outcome, $errors[ $outcome ][0], array( 'status' => $errors[ $outcome ][1] ) );
 		}
-
-		// Check if expired.
-		if ( $token->is_expired() ) {
-			// Delete expired token.
-			$token->delete();
-
-			return new WP_Error(
-				'token_expired',
-				__( 'This confirmation link has expired. Please sign up again.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Get participant.
-		$participant = $this->participant_repository->get_by_id( $token->participant_id );
-
-		if ( ! $participant ) {
-			// Clean up orphaned token.
-			$token->delete();
-
-			return new WP_Error(
-				'participant_not_found',
-				__( 'Invalid confirmation link. Please sign up again.', 'fair-audience' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Apply the weekly preferences submitted with this token first, so a
-		// failure leaves the token for another try. Feeds that cannot be
-		// chosen any more are left out; none is added.
-		if ( is_array( $token->pending_preferences ) ) {
-			$applied = $this->weekly_feeds->apply( $participant, $token->pending_preferences, false );
-			if ( is_wp_error( $applied ) ) {
-				return new WP_Error(
-					'update_failed',
-					__( 'Failed to confirm subscription. Please try again.', 'fair-audience' ),
-					array( 'status' => 500 )
-				);
-			}
-		}
-
-		// Update participant status to confirmed and set email profile to marketing.
-		$participant->status        = 'confirmed';
-		$participant->email_profile = 'marketing';
-
-		if ( ! $participant->save() ) {
-			return new WP_Error(
-				'update_failed',
-				__( 'Failed to confirm subscription. Please try again.', 'fair-audience' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		// Apply pending category selections.
-		$transient_key      = 'fair_audience_pending_cats_' . $participant->id;
-		$pending_categories = get_transient( $transient_key );
-		if ( is_array( $pending_categories ) && ! empty( $pending_categories ) ) {
-			$this->category_repository->set_categories( $participant->id, $pending_categories );
-			delete_transient( $transient_key );
-		}
-
-		// Delete the token (one-time use).
-		$token->delete();
-
-		AudienceSession::set( (int) $participant->id );
 
 		return rest_ensure_response(
 			array(

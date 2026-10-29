@@ -345,8 +345,10 @@ class Plugin {
 			return;
 		}
 
-		// Load email confirmation template.
-		include FAIR_AUDIENCE_PLUGIN_DIR . 'templates/email-confirmation.php';
+		$outcome = ( new \FairAudience\Services\EmailConfirmation() )->confirm( sanitize_text_field( $confirm_key ) );
+
+		nocache_headers();
+		\FairAudience\Services\EmailConfirmationRenderer::render( $outcome );
 		exit;
 	}
 
