@@ -8,8 +8,10 @@ The manual connection (issue #1923) is built: the access token is saved in
 Settings → Connectors, and Fair Events → WhatsApp stores the WhatsApp Business
 Account ID and Phone Number ID, validates them against Meta and sends one
 approved test template on request (see [Manual connection](#manual-connection)).
-Automatic sending is still off: there is no notification provider, scheduled
-send, subscriber integration or delivery queue.
+Delivery updates (issue #1924) arrive through a webhook and show what happened
+to each send (see [Delivery updates](#delivery-updates)). Automatic sending is
+still off: there is no notification provider, scheduled send, subscriber
+integration or delivery queue.
 
 Findings were checked against Meta's official developer documentation on
 **2026-10-20**. Meta changes these requirements often; re-check the linked
@@ -167,11 +169,100 @@ Built in #1923, in fair-events-experimental:
 - **Test send:** only approved templates without parameters are offered. Each
   send needs the administrator to confirm the recipient agreed to it, goes
   out once, and is reported as "accepted by WhatsApp", never as delivered. A
-  timed-out send is reported as uncertain and is not retried. The recipient
-  number is not stored.
+  timed-out send is reported as uncertain and is not retried. Only the masked
+  recipient (last three digits) is stored, in the delivery history.
 - **Errors** show a translated explanation, Meta's numeric error code and its
   trace ID. Meta's own messages, the token and recipient numbers are not
   logged or returned.
+
+## Delivery updates
+
+Built in #1924, in fair-events-experimental. Checked against Meta's webhook
+documentation on **2026-10-29**.
+
+### Setup
+
+Fair Events → WhatsApp → **Delivery updates** shows the callback URL,
+`/wp-json/fair-events-experimental/v1/whatsapp/webhook`, and stores two
+credentials, neither of which is ever returned by a REST route:
+
+- **App Secret** (App Dashboard → App settings → Basic) authenticates each
+  callback. `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_APP_SECRET` as an environment
+  variable or PHP constant takes precedence over the saved value, in that
+  order.
+- **Verify token**, any string of 8+ printable characters entered both here
+  and in the App Dashboard (WhatsApp → Configuration → Webhook).
+  `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_VERIFY_TOKEN` overrides it the same way.
+
+Then subscribe the webhook to the **messages** field. The page reports two
+separate facts: when Meta last **verified** the callback URL with the current
+verify token, and when an **authenticated update** for the saved account last
+arrived. Verification alone does not prove that updates arrive. Another
+verify token clears the first; another App Secret or other IDs clear the
+second.
+
+### Endpoint
+
+- **GET** answers `hub.mode=subscribe` with `hub.challenge` as plain text
+  when `hub.verify_token` matches (PHP delivers these as `hub_mode` etc.;
+  both spellings are read). The challenge must be `[A-Za-z0-9_-]`, anything
+  else is refused with 403.
+- **POST** requires `X-Hub-Signature-256: sha256=<hex>`, the HMAC-SHA256 of
+  the exact raw body with the App Secret, compared in constant time; without
+  a saved secret it answers 503, with a missing or wrong signature 401. Only
+  entries whose `id` is the saved WhatsApp Business Account ID and changes
+  whose `metadata.phone_number_id` is the saved Phone Number ID are applied;
+  other accounts, numbers and fields are acknowledged with 200 and ignored.
+  A storage or consumer failure answers 500, so Meta resends the batch;
+  applying it again is safe. Bodies over 1 MB are refused (413).
+
+### Delivery records
+
+Each send is a row in `{prefix}fair_events_whatsapp_deliveries`, created
+before the request to Meta; a send that cannot be recorded is not sent. A
+row keeps the origin (`admin_test`; `scheduled` is reserved for scheduled
+sends, which are not built), both IDs, Meta's message ID, the template, the
+masked recipient, the send result and the delivery evidence. Raw payloads,
+message bodies, full numbers and Meta's error text are never stored.
+
+| Outcome        | Meaning                                                             |
+| -------------- | ------------------------------------------------------------------- |
+| `accepted`     | WhatsApp accepted the request; no delivery update yet               |
+| `sent`         | WhatsApp sent it; not yet on the phone                              |
+| `delivered`    | It reached the recipient's phone                                    |
+| `read`         | The recipient opened it                                             |
+| `failed`       | WhatsApp reported a delivery failure, with a translated explanation |
+| `not_accepted` | WhatsApp refused the send                                           |
+| `uncertain`    | The send timed out or was not confirmed; it is never retried        |
+
+Transitions: `sent` → `delivered` → `read` only move forward, so duplicate
+or older callbacks change nothing. The first failure is kept separately: it
+decides the outcome until delivery is confirmed, and confirmed delivery or a
+read wins over it while its code stays visible. Only failure codes on an
+allowlist are kept (others are stored as 0). Each update is one conditional
+`UPDATE`, so concurrent callbacks cannot interleave.
+
+A callback that arrives before the send stores its message ID waits in
+`{prefix}fair_events_whatsapp_unmatched` (unique per message and status) and
+is applied as soon as the ID is stored. Delivery rows are kept 30 days,
+waiting callbacks 24 hours and at most 500 of them; a daily cron event
+(`fair_events_experimental_whatsapp_cleanup`) prunes both.
+
+The page lists the 20 most recent sends and checks for updates every 10
+seconds while one is still `accepted` or `sent` and the page is visible, up
+to 30 times after each send or **Refresh statuses**.
+
+### Incoming messages
+
+Authenticated incoming messages for the saved account are passed to
+`do_action( 'fair_events_experimental_whatsapp_incoming_message', $message )`
+for the opt-out feature that follows. `$message` holds `id`, `from` (digits),
+`timestamp`, `type`, `text` (the body of a text message or button reply,
+otherwise null), `waba_id` and `phone_number_id`. The hook runs synchronously
+and **at least once**: Meta resends a callback this site did not acknowledge,
+so consumers must deduplicate by `id`. A consumer that throws makes the
+callback answer 500. This plugin does not store, log or reply to incoming
+messages, and nothing subscribes to the hook yet.
 
 ## Sources
 
@@ -186,4 +277,7 @@ Built in #1923, in fair-events-experimental:
 - [Groups API](https://developers.facebook.com/docs/whatsapp/cloud-api/groups)
 - [Onboarding WhatsApp Business app users (coexistence)](https://developers.facebook.com/docs/whatsapp/embedded-signup/custom-flows/onboarding-business-app-users)
 - [Get started for Tech Providers](https://developers.facebook.com/docs/whatsapp/solution-providers/get-started-for-tech-providers)
+- [Webhooks](https://developers.facebook.com/docs/graph-api/webhooks/getting-started)
+  and [WhatsApp webhook verification (archived SDK)](https://whatsapp.github.io/WhatsApp-Nodejs-SDK/api-reference/webhooks/start/)
+- [Cloud API error codes](https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes)
 - [WhatsApp changelog](https://developers.facebook.com/documentation/business-messaging/whatsapp/changelog)

@@ -333,6 +333,7 @@ test.describe( 'WhatsAppController', () => {
 			outcome: 'accepted',
 			message_status: 'accepted',
 			recipient: '••••••••123',
+			delivery_id: expect.any( Number ),
 			template: { name: 'hello_world', language: 'en_US' },
 		} );
 		const sends = ( await doubleRequests() ).filter(
@@ -346,6 +347,7 @@ test.describe( 'WhatsAppController', () => {
 				to: '34600000123',
 				template: 'hello_world',
 				language: 'en_US',
+				message_id: expect.stringMatching( /^wamid\.E2E/ ),
 			},
 		] );
 	} );

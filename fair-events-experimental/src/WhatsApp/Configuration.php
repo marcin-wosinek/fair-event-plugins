@@ -22,6 +22,7 @@ class Configuration {
 	public const WABA_OPTION       = 'fair_events_experimental_whatsapp_waba_id';
 	public const PHONE_OPTION      = 'fair_events_experimental_whatsapp_phone_number_id';
 	public const VALIDATION_OPTION = 'fair_events_experimental_whatsapp_validation';
+	public const WEBHOOK_OPTION    = 'fair_events_experimental_whatsapp_webhook';
 
 	/**
 	 * Whether a value can be a WhatsApp Business Account or Phone Number ID.
@@ -121,6 +122,80 @@ class Configuration {
 			'validated_at' => (string) ( $stored['validated_at'] ?? '' ),
 			'sender'       => (array) ( $stored['sender'] ?? array() ),
 		);
+	}
+
+	/**
+	 * Remember that Meta verified the callback URL with the verify token in
+	 * effect.
+	 *
+	 * @return void
+	 */
+	public static function record_webhook_verification() {
+		self::update_webhook(
+			array(
+				'verified_at'    => current_time( 'mysql', true ),
+				'verified_token' => self::fingerprint( Connector::webhook_credential( 'verify_token' )['token'] ),
+			)
+		);
+	}
+
+	/**
+	 * Remember that an authenticated callback for the saved account arrived.
+	 *
+	 * @return void
+	 */
+	public static function record_webhook_receipt() {
+		self::update_webhook(
+			array(
+				'received_at'  => current_time( 'mysql', true ),
+				'received_for' => self::receipt_fingerprint(),
+			)
+		);
+	}
+
+	/**
+	 * When the webhook was last verified and when it last delivered an
+	 * authenticated event, each only while it still applies: another verify
+	 * token voids the verification; another App Secret or other IDs void the
+	 * receipt.
+	 *
+	 * @return array{verified_at: string|null, received_at: string|null}
+	 */
+	public static function webhook() {
+		$stored = get_option( self::WEBHOOK_OPTION, array() );
+		$stored = is_array( $stored ) ? $stored : array();
+		$token  = self::fingerprint( Connector::webhook_credential( 'verify_token' )['token'] );
+		$secret = self::receipt_fingerprint();
+
+		return array(
+			'verified_at' => '' !== $token && hash_equals( $token, (string) ( $stored['verified_token'] ?? '' ) )
+				? (string) ( $stored['verified_at'] ?? '' )
+				: null,
+			'received_at' => '' !== $secret && hash_equals( $secret, (string) ( $stored['received_for'] ?? '' ) )
+				? (string) ( $stored['received_at'] ?? '' )
+				: null,
+		);
+	}
+
+	/**
+	 * Merge fields into the stored webhook indicators.
+	 *
+	 * @param array $fields Fields to store.
+	 * @return void
+	 */
+	private static function update_webhook( array $fields ) {
+		$stored = get_option( self::WEBHOOK_OPTION, array() );
+		update_option( self::WEBHOOK_OPTION, array_merge( is_array( $stored ) ? $stored : array(), $fields ), false );
+	}
+
+	/**
+	 * What a receipt was recorded for: the App Secret and both IDs.
+	 *
+	 * @return string Empty while the App Secret is missing.
+	 */
+	private static function receipt_fingerprint() {
+		$secret = Connector::webhook_credential( 'app_secret' )['token'];
+		return '' === $secret ? '' : self::fingerprint( $secret . '|' . implode( '|', self::ids() ) );
 	}
 
 	/**

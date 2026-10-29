@@ -29,6 +29,16 @@
  * `fair_e2e_whatsapp_response` option to fail the next sends like a network
  * timeout, and should delete it afterwards.
  *
+ * An accepted send answers with a fresh `wamid.E2E…` ID, logged as
+ * `message_id` so a spec can post delivery callbacks for it. A spec can store
+ * an ID in the `fair_e2e_whatsapp_message_id` option to make the next sends
+ * use it instead, for callbacks that arrive before the send is stored.
+ *
+ * Incoming messages passed to the plugin's
+ * `fair_events_experimental_whatsapp_incoming_message` hook are appended to
+ * the `fair_e2e_whatsapp_incoming` option. An incoming text of `E2E_THROW`
+ * makes this listener throw, like a failing consumer.
+ *
  * @package FairEventsE2E
  */
 
@@ -104,9 +114,11 @@ add_filter(
 			'token_suffix' => substr( $token, -4 ),
 		);
 		if ( is_array( $body ) ) {
-			$entry['to']       = (string) ( $body['to'] ?? '' );
-			$entry['template'] = (string) ( $body['template']['name'] ?? '' );
-			$entry['language'] = (string) ( $body['template']['language']['code'] ?? '' );
+			$entry['to']         = (string) ( $body['to'] ?? '' );
+			$entry['template']   = (string) ( $body['template']['name'] ?? '' );
+			$entry['language']   = (string) ( $body['template']['language']['code'] ?? '' );
+			$forced              = get_option( 'fair_e2e_whatsapp_message_id', '' );
+			$entry['message_id'] = is_string( $forced ) && '' !== $forced ? $forced : 'wamid.E2E' . wp_generate_password( 12, false );
 		}
 		$log   = get_option( 'fair_e2e_whatsapp_requests', array() );
 		$log[] = $entry;
@@ -143,7 +155,7 @@ add_filter(
 					),
 					'messages'          => array(
 						array(
-							'id'             => 'wamid.E2E' . wp_generate_password( 12, false ),
+							'id'             => $entry['message_id'],
 							'message_status' => 'accepted',
 						),
 					),
@@ -268,4 +280,16 @@ add_filter(
 	},
 	9,
 	3
+);
+
+add_action(
+	'fair_events_experimental_whatsapp_incoming_message',
+	static function ( $message ) {
+		if ( 'E2E_THROW' === ( $message['text'] ?? null ) ) {
+			throw new RuntimeException( 'E2E simulated consumer failure' );
+		}
+		$log   = get_option( 'fair_e2e_whatsapp_incoming', array() );
+		$log[] = $message;
+		update_option( 'fair_e2e_whatsapp_incoming', $log, false );
+	}
 );
