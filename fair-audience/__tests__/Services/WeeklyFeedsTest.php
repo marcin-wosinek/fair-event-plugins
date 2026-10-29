@@ -127,6 +127,67 @@ class WeeklyFeedsTest extends TestCase {
 		$this->assertSame( 'weekly_feeds_unavailable', $result->get_error_code() );
 	}
 
+	/** The summary names chosen feeds, unavailable ones, and counts deleted ones. */
+	public function test_summary_classifies_chosen_feeds() {
+		$this->assertSame(
+			array(
+				'available'   => true,
+				'selected'    => array(
+					array(
+						'id'   => 1,
+						'name' => 'Workshops',
+					),
+				),
+				'unavailable' => array(
+					array(
+						'id'   => 3,
+						'name' => 'Archive',
+					),
+				),
+				'deleted'     => 1,
+			),
+			$this->feeds()->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 3, 42 ) )
+		);
+	}
+
+	/** The 'all' mode and an empty choice list no feeds. */
+	public function test_summary_lists_no_feeds_for_all_or_none() {
+		$empty = array(
+			'available'   => true,
+			'selected'    => array(),
+			'unavailable' => array(),
+			'deleted'     => 0,
+		);
+
+		$this->assertSame( $empty, $this->feeds()->summary( WeeklyFeeds::MODE_ALL, array( 1, 2 ) ) );
+		$this->assertSame( $empty, $this->feeds()->summary( WeeklyFeeds::MODE_SELECTED, array() ) );
+		$this->assertSame( $empty, $this->feeds()->summary( null, array( 1 ) ) );
+	}
+
+	/** Without a working catalog, chosen feeds are never reported as deleted. */
+	public function test_summary_is_unavailable_without_a_working_catalog() {
+		$unavailable = array(
+			'available'   => false,
+			'selected'    => array(),
+			'unavailable' => array(),
+			'deleted'     => 0,
+		);
+
+		$this->assertSame( $unavailable, ( new WeeklyFeeds( false, $this->repository ) )->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 42 ) ) );
+
+		$failing = new class() extends FakeWeeklyFeedCatalog {
+			/**
+			 * Fail like a broken database.
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function subscribable() {
+				throw new \RuntimeException( 'Database unavailable' );
+			}
+		};
+		$this->assertSame( $unavailable, ( new WeeklyFeeds( $failing, $this->repository ) )->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 42 ) ) );
+	}
+
 	/** Stored feeds that cannot be chosen now are kept. */
 	public function test_keeps_stored_feeds_that_are_unavailable() {
 		$this->assertSame( array( 2, 3 ), $this->feeds()->resolve_selection( array( 2 ), array( 1, 3 ) ) );

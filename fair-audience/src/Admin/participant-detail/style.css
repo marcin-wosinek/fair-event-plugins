@@ -59,6 +59,25 @@
 	overflow-x: auto;
 }
 
+.fair-audience-participant-detail__profile-table td {
+	overflow-wrap: anywhere;
+}
+
+.fair-audience-participant-detail__feeds {
+	margin: 4px 0 0;
+	padding-left: 1.25em;
+	list-style: disc;
+}
+
+.fair-audience-participant-detail__feeds li {
+	margin: 0;
+}
+
+.fair-audience-participant-detail__note {
+	margin: 4px 0 0;
+	color: #646970;
+}
+
 @media screen and (max-width: 600px) {
 	.fair-audience-participant-detail__header {
 		flex-direction: column;
