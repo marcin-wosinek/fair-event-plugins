@@ -10,7 +10,7 @@
 			"title": "Mailing opt-in in a form",
 			"description": "A newsletter opt-in checkbox after an email question.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form .fair-form-mailing-signup",
+			"frontend": ".wp-block-fair-form-fair-form .fair-form-mailing-signup",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}
@@ -19,7 +19,7 @@
 			"title": "Opt-in with category choice",
 			"description": "Lets the visitor pick from two categories, one preselected.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form .fair-form-mailing-signup",
+			"frontend": ".wp-block-fair-form-fair-form .fair-form-mailing-signup",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one.",
 				"categoryIds": "Post category term IDs to offer (Posts → Categories).",

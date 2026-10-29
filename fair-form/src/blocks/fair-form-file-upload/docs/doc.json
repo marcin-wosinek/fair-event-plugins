@@ -10,7 +10,7 @@
 			"title": "Image upload in a Fair Form",
 			"description": "An optional image upload limited to 5 MB.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form [data-question-type='file_upload'] input[type='file']",
+			"frontend": ".wp-block-fair-form-fair-form [data-question-type='file_upload'] input[type='file']",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}
@@ -19,7 +19,7 @@
 			"title": "Required PDF upload",
 			"description": "A required PDF upload limited to 10 MB.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form [data-question-type='file_upload'][data-accepted-types='application/pdf']",
+			"frontend": ".wp-block-fair-form-fair-form [data-question-type='file_upload'][data-accepted-types='application/pdf']",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}

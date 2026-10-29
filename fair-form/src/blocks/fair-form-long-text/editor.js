@@ -1,6 +1,6 @@
 import './style.css';
 
-import { registerBlockType, createBlock } from '@wordpress/blocks';
+import { createBlock } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -11,16 +11,17 @@ import {
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-long-text', {
+registerFormBlockType( 'fair-form-long-text', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-short-text' ],
+				blocks: [ 'fair-form/fair-form-short-text' ],
 				transform: ( attributes ) => {
 					return createBlock(
-						'fair-audience/fair-form-short-text',
+						'fair-form/fair-form-short-text',
 						attributes
 					);
 				},

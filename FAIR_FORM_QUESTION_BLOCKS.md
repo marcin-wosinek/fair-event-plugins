@@ -1,7 +1,7 @@
 # Fair Form Question Blocks
 
 Checklist for adding a new question type to Fair Form (e.g. the phone, email,
-and url questions). A question block is a small block (`fair-audience/fair-form-{type}`)
+and url questions). A question block is a small block (`fair-form/fair-form-{type}`)
 that can be nested inside three different parent blocks, and whose answers
 flow through one shared validation/storage pipeline. Missing any one of the
 steps below leaves the block registered but unusable somewhere.
@@ -13,7 +13,7 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
 -   `block.json` — same `questionText`/`questionKey`/`required`/`placeholder`
     attributes as the other question blocks. Set `ancestor` to name every
     parent context the question should be available in:
-    -   `fair-audience/fair-form`
+    -   `fair-form/fair-form`
     -   `fair-events/event-signup`
     -   `fair-audience/event-signup` — not a block anyone can insert: the
         name survives only for content saved before the block was removed,
@@ -30,10 +30,39 @@ Mirror the closest existing sibling under `fair-form/src/blocks/fair-form-{type}
 
 ## 2. Block registration (`fair-form/src/Hooks/BlockHooks.php`)
 
--   `register_block_type( FAIR_FORM_DIR . 'build/blocks/fair-form-{type}' )`
--   `wp_set_script_translations( 'fair-audience-fair-form-{type}-editor-script', 'fair-form', $translations_path )` —
-    WordPress derives the handle from the block name, and the domain is
-    Fair Form's own (see [I18N_SETUP.md](./I18N_SETUP.md))
+-   Add `'fair-form-{type}'` to `BlockHooks::BLOCK_SLUGS`. `register_blocks()`
+    registers `build/blocks/fair-form-{type}` and sets the script
+    translations for each of its script handles — WordPress derives them
+    from the block name (`fair-form-fair-form-{type}-editor-script`), and
+    the domain is Fair Form's own (see [I18N_SETUP.md](./I18N_SETUP.md)).
+-   In `editor.js`, register the block with
+    `registerFormBlockType( 'fair-form-{type}', settings )` from
+    `../shared/register-form-block.js`.
+-   A new type has no legacy name: leave `BlockHooks::LEGACY_NAMES` and
+    `LEGACY_FAIR_FORM_BLOCK_SLUGS` alone.
+
+### Legacy names (#1161)
+
+Until #1161 the blocks were registered as `fair-audience/fair-form*`, a
+leftover from when the form feature lived in Fair Audience. The old names
+stay registered permanently as hidden aliases, because imports and restored
+revisions or backups can bring them back at any time:
+
+-   **Rendering** — the PHP alias reuses the canonical block's attributes,
+    template and frontend assets (`BlockHooks::register_legacy_alias()`).
+    Compare block names through `BlockHooks::canonical_name()` (PHP) or
+    `canonicalFairFormBlockName()` (JS) whenever saved content is inspected.
+-   **Editing** — `registerFormBlockType()`
+    (`fair-form/src/blocks/shared/register-form-block.js`) registers both
+    names in the editor; a legacy block replaces itself and its nested legacy
+    blocks with the canonical ones, unless the canonical block is not allowed
+    where it sits.
+-   **Stored content** — `FairForm\Services\BlockNameMigration` rewrites
+    the posts table once, a batch per request, skipping posts that contain
+    the removed `fair-audience/event-signup` block.
+-   **Older Fair Events** — the Event Signup editor offers the namespace that
+    is registered (`fair-form` first, then `fair-audience`), so a current
+    Fair Events works with a Fair Form from before the rename.
 
 ## 3. The step that's easy to miss: parent `ALLOWED_BLOCKS`
 
@@ -44,7 +73,8 @@ block where it appears in **both** places. There are three such gates:
 
 -   `fair-form/src/blocks/fair-form/editor.js` — `ALLOWED_BLOCKS`
 -   `fair-form/src/blocks/fair-form-conditional/editor.js` — `ALLOWED_BLOCKS`
--   `fair-events/src/blocks/event-signup/editor.js` — `FAIR_FORM_ALLOWED_BLOCKS`
+-   `fair-events/src/blocks/event-signup/editor.js` — `FAIR_FORM_ALLOWED_BLOCK_SLUGS`
+    (slugs; the namespace is chosen at runtime, see "Legacy names" above)
 
 The first two source from `FAIR_FORM_QUESTION_BLOCK_NAMES`
 (`fair-events-shared/src/question-utils.js`), since a fair-form and a
@@ -52,7 +82,7 @@ conditional section inside it are supposed to accept the exact same set of
 question types — add the new block's name there and both arrays pick it up.
 The `event-signup` array is a genuine, deliberately smaller subset (e.g.
 file-upload and mailing-signup are excluded) and stays hardcoded — add
-`'fair-audience/fair-form-{type}'` to it directly, if the new type belongs
+`'fair-form-{type}'` to it directly, if the new type belongs
 there.
 
 A block with a correct `ancestor` array and no entry in these arrays will

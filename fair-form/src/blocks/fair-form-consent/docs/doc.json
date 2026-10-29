@@ -10,7 +10,7 @@
 			"title": "Required consent checkbox",
 			"description": "A terms-and-conditions checkbox, required by default.",
 			"context": "page",
-			"frontend": ".wp-block-fair-audience-fair-form [data-question-key='accept_terms'] input[type='checkbox']",
+			"frontend": ".wp-block-fair-form-fair-form [data-question-key='accept_terms'] input[type='checkbox']",
 			"syntheticIds": {
 				"formId": "A UUID identifying this form within the post (submissions are grouped by it). Generate a fresh UUID (v4) per Fair Form block; the editor replaces a missing or duplicated one."
 			}

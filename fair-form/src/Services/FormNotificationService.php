@@ -14,6 +14,7 @@ namespace FairForm\Services;
 
 use FairForm\Database\QuestionnaireSubmissionRepository;
 use FairForm\Database\QuestionnaireAnswerRepository;
+use FairForm\Hooks\BlockHooks;
 
 defined( 'WPINC' ) || die;
 
@@ -75,7 +76,8 @@ class FormNotificationService {
 	 * that produced this submission.
 	 *
 	 * Walks the post's blocks (dereferencing reusable `core/block` patterns)
-	 * looking for a `fair-audience/fair-form` block. When a form ID was
+	 * looking for a `fair-form/fair-form` block (or its legacy
+	 * `fair-audience/fair-form` name). When a form ID was
 	 * submitted, matches on the block's `formId` attribute; otherwise takes
 	 * the first Fair Form block found. Forms placed outside `post_content`
 	 * (e.g. an FSE template part) are not found — a deliberate trade-off, see
@@ -156,7 +158,7 @@ class FormNotificationService {
 				continue;
 			}
 
-			if ( 'fair-audience/fair-form' === $block_name ) {
+			if ( 'fair-form/fair-form' === BlockHooks::canonical_name( $block_name ) ) {
 				if ( '' === $form_id || ( $block['attrs']['formId'] ?? '' ) === $form_id ) {
 					return $block;
 				}

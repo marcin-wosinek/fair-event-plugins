@@ -139,6 +139,13 @@ test.describe( 'Content saved with the removed fair-audience signup block', () =
 				'<!-- wp:fair-audience/fair-form-file-upload {"questionKey":"cv","questionText":"Your CV"} /-->',
 				'<!-- /wp:fair-audience/fair-form-conditional -->',
 			].join( '\n' ),
+			// Under the fair-form names used since #1161.
+			'<!-- wp:fair-form/fair-form-file-upload {"questionKey":"cv","questionText":"Your CV"} /-->',
+			[
+				'<!-- wp:fair-form/fair-form-conditional {"conditionQuestionKey":"first_question","conditionValue":"yes"} -->',
+				'<!-- wp:fair-form/fair-form-file-upload {"questionKey":"cv","questionText":"Your CV"} /-->',
+				'<!-- /wp:fair-form/fair-form-conditional -->',
+			].join( '\n' ),
 		] ) {
 			const { html } = await render(
 				savedBlock( null, `${ QUESTIONS }\n${ upload }` )

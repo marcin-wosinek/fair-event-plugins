@@ -6,7 +6,7 @@ A date and time chosen with the browser's native date-time picker. One of the Fa
 
 It can be nested (at any depth) inside:
 
-- `fair-audience/fair-form` — directly or inside a Conditional Section;
+- `fair-form/fair-form` — directly or inside a Conditional Section;
 - `fair-events/event-signup` — as a signup question (Fair Events' Event
   Signup offers a smaller set of question types; see below);
 - `fair-audience/event-signup` — only in content saved with that removed

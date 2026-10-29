@@ -9,8 +9,8 @@
  * - discovery keeps core's permissions: anonymous requests get 401, a
  *   subscriber gets 403, and an editor (edit_posts) can list block types;
  * - every block registered under a Fair namespace is claimed by exactly one
- *   index (ownership does not follow the namespace: Fair Form owns its
- *   fair-audience/fair-form-* blocks);
+ *   index (ownership does not follow the namespace: Fair Form owns the
+ *   fair-audience/fair-form-* legacy aliases of its fair-form/* blocks);
  * - each index entry's status matches live registration: authoring and
  *   legacy blocks are registered, legacy ones hidden from the inserter, the
  *   PHP-only alias has no editor script, and "unregistered" entries
@@ -40,6 +40,7 @@ const OPTIONAL_PLUGINS = [
 const FAIR_NAMESPACES = [
 	'fair-events/',
 	'fair-audience/',
+	'fair-form/',
 	'fair-timetable/',
 	'fair-calendar-button/',
 	'fair-payment/',
@@ -189,6 +190,8 @@ test.describe( 'Block discovery', () => {
 
 		const owner = ( name ) =>
 			documented.find( ( block ) => block.name === name )?.ownerPlugin;
+		expect( owner( 'fair-form/fair-form' ) ).toBe( 'fair-form' );
+		expect( owner( 'fair-form/fair-form-short-text' ) ).toBe( 'fair-form' );
 		expect( owner( 'fair-audience/fair-form' ) ).toBe( 'fair-form' );
 		expect( owner( 'fair-audience/fair-form-short-text' ) ).toBe(
 			'fair-form'
@@ -255,6 +258,12 @@ test.describe( 'Block discovery', () => {
 			metadata: null,
 			metadataSource: 'php:src/Hooks/BlockHooks.php',
 			replacement: 'fair-events/event-signup',
+		} );
+		expect( entry( 'fair-audience/fair-form-email' ) ).toMatchObject( {
+			status: 'legacy',
+			metadata: null,
+			metadataSource: 'php:src/Hooks/BlockHooks.php',
+			replacement: 'fair-form/fair-form-email',
 		} );
 		expect( entry( 'fair-events/get-tickets' ) ).toMatchObject( {
 			status: 'legacy',

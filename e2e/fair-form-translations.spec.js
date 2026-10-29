@@ -6,9 +6,10 @@
  *
  * The block strings used to sit in Fair Audience's catalog, which isn't
  * loaded for Fair Form's blocks, so they rendered in English on a translated
- * site. The seeded form is stored under the original fair-audience/fair-form*
- * block names, so each case also reopens and submits an existing form with a
- * file upload.
+ * site. The seeded form is stored under the legacy fair-audience/fair-form*
+ * block names (#1161), so each case also reopens and submits an existing form
+ * with a file upload, and checks the editor converts it to the fair-form/*
+ * names.
  *
  * The `translation-delivery.php` fixture sets the site locale and copies the
  * plugin's own es_ES catalog to the language-pack location, so the spec
@@ -104,8 +105,29 @@ async function expectEditor(page, text) {
 	await expect(
 		shortText.getByPlaceholder(text.answerPlaceholder)
 	).toBeVisible({ timeout: 20_000 });
-	// The saved fair-audience/* blocks load without a recovery warning.
+	// The saved fair-audience/* blocks load without a recovery warning and
+	// turn into the canonical fair-form/* blocks, nested ones included.
 	await expect(editorFrame.locator('.block-editor-warning')).toHaveCount(0);
+	await expect
+		.poll(() =>
+			page.evaluate(() => {
+				const names = [];
+				const collect = (blocks) =>
+					blocks.forEach((block) => {
+						names.push(block.name);
+						collect(block.innerBlocks);
+					});
+				// eslint-disable-next-line no-undef
+				collect(wp.data.select('core/block-editor').getBlocks());
+				return names;
+			})
+		)
+		.toEqual([
+			'fair-form/fair-form',
+			'fair-form/fair-form-short-text',
+			'fair-form/fair-form-email',
+			'fair-form/fair-form-file-upload',
+		]);
 
 	await shortText.click();
 	await expect(

@@ -135,5 +135,9 @@ function fair_form_maybe_upgrade_db() {
 	if ( version_compare( $db_version, '1.5.0', '>=' ) ) {
 		\FairForm\Services\SubmissionTicketBackfill::maybe_run();
 	}
+
+	// Rename stored fair-audience/fair-form* blocks to fair-form/fair-form*,
+	// a batch per request until done.
+	\FairForm\Services\BlockNameMigration::maybe_run();
 }
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_form_maybe_upgrade_db' );

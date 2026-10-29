@@ -1,6 +1,5 @@
 import './style.css';
 
-import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -11,8 +10,9 @@ import {
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-mailing-signup', {
+registerFormBlockType( 'fair-form-mailing-signup', {
 	edit: ( { attributes, setAttributes } ) => {
 		const { showCategories, categoryIds, preselectedCategoryIds } =
 			attributes;

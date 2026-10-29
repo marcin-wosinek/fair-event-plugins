@@ -11,7 +11,7 @@ Event Signup (`fair-events/event-signup`), which accepts the same questions.
 - Top-level block, no parent restriction; supports wide/full alignment and
   padding/margin.
 - **Inner blocks:** `core/heading`, `core/paragraph`, `core/list`, and the
-  Fair Form blocks: `fair-audience/fair-form-short-text`, `-long-text`,
+  Fair Form blocks: `fair-form/fair-form-short-text`, `-long-text`,
   `-email`, `-phone`, `-url`, `-date`, `-datetime`, `-select-one`,
   `-multiselect`, `-radio`, `-file-upload`, `-consent`, `-conditional`, and
   `-mailing-signup`.

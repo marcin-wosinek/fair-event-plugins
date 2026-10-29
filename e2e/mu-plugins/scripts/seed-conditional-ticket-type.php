@@ -80,9 +80,9 @@ $content = implode(
 	"\n",
 	array(
 		'<!-- wp:fair-events/event-signup -->',
-		'<!-- wp:fair-audience/fair-form-conditional {"conditionSource":"ticketType","conditionTicketTypeIds":[' . $adult_type_id . '],"conditionOperator":"selected"} -->',
-		'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"guardian","questionText":"Guardian contact"} /-->',
-		'<!-- /wp:fair-audience/fair-form-conditional -->',
+		'<!-- wp:fair-form/fair-form-conditional {"conditionSource":"ticketType","conditionTicketTypeIds":[' . $adult_type_id . '],"conditionOperator":"selected"} -->',
+		'<!-- wp:fair-form/fair-form-short-text {"questionKey":"guardian","questionText":"Guardian contact"} /-->',
+		'<!-- /wp:fair-form/fair-form-conditional -->',
 		'<!-- /wp:fair-events/event-signup -->',
 	)
 );

@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-long-text",
+	"name": "fair-form/fair-form-long-text",
 	"version": "1.0.0",
 	"title": "Long Text Question",
 	"category": "widgets",
@@ -10,7 +10,7 @@
 	"keywords": [ "question", "textarea", "long text" ],
 	"textdomain": "fair-form",
 	"ancestor": [
-		"fair-audience/fair-form",
+		"fair-form/fair-form",
 		"fair-audience/event-signup",
 		"fair-events/event-signup"
 	],

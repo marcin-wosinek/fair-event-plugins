@@ -36,7 +36,7 @@ if ( $no_block ) {
 		$block_attrs['formId'] = $form_id;
 	}
 
-	$content = '<!-- wp:fair-audience/fair-form ' . wp_json_encode( $block_attrs ) . ' /-->';
+	$content = '<!-- wp:fair-form/fair-form ' . wp_json_encode( $block_attrs ) . ' /-->';
 }
 
 $page_id = wp_insert_post(

@@ -116,8 +116,8 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 		"\n",
 		array(
 			'<!-- wp:fair-audience/event-signup {"signupButtonText":"Join the retreat"} -->',
-			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
-			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"arrival","questionText":"Arrival time"} /-->',
+			'<!-- wp:fair-form/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
+			'<!-- wp:fair-form/fair-form-short-text {"questionKey":"arrival","questionText":"Arrival time"} /-->',
 			'<!-- /wp:fair-audience/event-signup -->',
 		)
 	);
@@ -128,7 +128,7 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 		"\n",
 		array(
 			'<!-- wp:fair-events/event-signup -->',
-			'<!-- wp:fair-audience/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
+			'<!-- wp:fair-form/fair-form-short-text {"questionKey":"dietary","questionText":"Dietary needs"} /-->',
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
@@ -150,7 +150,7 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 		"\n",
 		array(
 			'<!-- wp:fair-events/event-signup -->',
-			'<!-- wp:fair-audience/fair-form-phone {"questionKey":"mobile","questionText":"Mobile"} /-->',
+			'<!-- wp:fair-form/fair-form-phone {"questionKey":"mobile","questionText":"Mobile"} /-->',
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
@@ -159,7 +159,7 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 		"\n",
 		array(
 			'<!-- wp:fair-events/event-signup -->',
-			'<!-- wp:fair-audience/fair-form-url {"questionKey":"website","questionText":"Website"} /-->',
+			'<!-- wp:fair-form/fair-form-url {"questionKey":"website","questionText":"Website"} /-->',
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
@@ -168,8 +168,8 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 		"\n",
 		array(
 			'<!-- wp:fair-events/event-signup -->',
-			'<!-- wp:fair-audience/fair-form-date {"questionKey":"visit_date","questionText":"Visit date"} /-->',
-			'<!-- wp:fair-audience/fair-form-datetime {"questionKey":"appointment_slot","questionText":"Appointment slot"} /-->',
+			'<!-- wp:fair-form/fair-form-date {"questionKey":"visit_date","questionText":"Visit date"} /-->',
+			'<!-- wp:fair-form/fair-form-datetime {"questionKey":"appointment_slot","questionText":"Appointment slot"} /-->',
 			'<!-- /wp:fair-events/event-signup -->',
 		)
 	);
@@ -184,13 +184,13 @@ if ( isset( $overrides['block'] ) && 'saved-audience-signup' === $overrides['blo
 			'<!-- wp:fair-events/event-info /-->',
 			'',
 			'<!-- wp:fair-events/event-signup {"submitButtonText":"Save my place","showKeepInformed":false} -->',
-			'<!-- wp:fair-audience/fair-form-short-text {"questionText":"Dietary needs","questionKey":"dietary","required":true} /-->',
+			'<!-- wp:fair-form/fair-form-short-text {"questionText":"Dietary needs","questionKey":"dietary","required":true} /-->',
 			'',
-			'<!-- wp:fair-audience/fair-form-radio {"questionText":"Arrival","questionKey":"arrival"} -->',
-			'<!-- wp:fair-audience/fair-form-option {"value":"Friday"} /-->',
+			'<!-- wp:fair-form/fair-form-radio {"questionText":"Arrival","questionKey":"arrival"} -->',
+			'<!-- wp:fair-form/fair-form-option {"value":"Friday"} /-->',
 			'',
-			'<!-- wp:fair-audience/fair-form-option {"value":"Saturday"} /-->',
-			'<!-- /wp:fair-audience/fair-form-radio -->',
+			'<!-- wp:fair-form/fair-form-option {"value":"Saturday"} /-->',
+			'<!-- /wp:fair-form/fair-form-radio -->',
 			'<!-- /wp:fair-events/event-signup -->',
 			'',
 			'<!-- wp:buttons -->',

@@ -82,7 +82,7 @@ while the site holds no events:
 -   **Feature** (`fair-performance-feature`) — one representative public
     block from each plugin that ships one: `fair-events/events-list`,
     `fair-audience/mailing-signup`, `fair-timetable/timetable`,
-    `fair-payment/simple-payment`, `fair-audience/fair-form`, and
+    `fair-payment/simple-payment`, `fair-form/fair-form`, and
     `fair-calendar-button/calendar-button`. `fair-finance` and `fair-platform`
     register no public blocks (admin/REST only), so they contribute no block
     markup here — their cost only shows up on the Plain page.

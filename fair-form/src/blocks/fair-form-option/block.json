@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "fair-audience/fair-form-option",
+	"name": "fair-form/fair-form-option",
 	"version": "1.0.0",
 	"title": "Form Option",
 	"category": "widgets",
@@ -10,9 +10,9 @@
 	"keywords": [ "option", "choice" ],
 	"textdomain": "fair-form",
 	"parent": [
-		"fair-audience/fair-form-select-one",
-		"fair-audience/fair-form-multiselect",
-		"fair-audience/fair-form-radio"
+		"fair-form/fair-form-select-one",
+		"fair-form/fair-form-multiselect",
+		"fair-form/fair-form-radio"
 	],
 	"supports": {
 		"html": false,

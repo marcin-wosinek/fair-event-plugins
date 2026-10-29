@@ -13,12 +13,12 @@ replaces `fair-events/get-tickets` and `fair-audience/event-signup`.
   ticket and personal-details fields:
   - always: `core/heading`, `core/paragraph`, `core/list`;
   - when Fair Form is active: the question blocks
-    `fair-audience/fair-form-short-text`, `-long-text`, `-email`, `-phone`,
+    `fair-form/fair-form-short-text`, `-long-text`, `-email`, `-phone`,
     `-url`, `-date`, `-datetime`, `-select-one`, `-radio`, `-multiselect`,
     `-consent`, and `-conditional`.
 
-  `fair-audience/fair-form-file-upload` and
-  `fair-audience/fair-form-mailing-signup` are deliberately **not** allowed
+  `fair-form/fair-form-file-upload` and
+  `fair-form/fair-form-mailing-signup` are deliberately **not** allowed
   here (there is no vetted anonymous-upload path, and mailing consent has its
   own checkbox). Questions are answered once per signup and stored with it.
 - The block saves its inner blocks; with none it serializes as a

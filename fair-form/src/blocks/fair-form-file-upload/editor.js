@@ -1,6 +1,5 @@
 import './style.css';
 
-import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -11,8 +10,9 @@ import {
 import { __ } from '@wordpress/i18n';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
 import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-registerBlockType( 'fair-audience/fair-form-file-upload', {
+registerFormBlockType( 'fair-form-file-upload', {
 	edit: ( { attributes, setAttributes } ) => {
 		const {
 			questionText,

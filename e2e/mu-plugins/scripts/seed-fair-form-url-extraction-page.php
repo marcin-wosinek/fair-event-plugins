@@ -30,21 +30,21 @@ $questions = array(
 $content = implode(
 	'',
 	array(
-		'<!-- wp:fair-audience/fair-form -->',
-		'<!-- wp:fair-audience/fair-form-email ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form -->',
+		'<!-- wp:fair-form/fair-form-email ' . wp_json_encode(
 			array(
 				'questionKey'  => 'email',
 				'questionText' => $questions['email'],
 			)
 		) . ' /-->',
-		'<!-- wp:fair-audience/fair-form-url ' . wp_json_encode(
+		'<!-- wp:fair-form/fair-form-url ' . wp_json_encode(
 			array(
 				'questionKey'         => 'website',
 				'questionText'        => $questions['website'],
 				'extractEventDetails' => true,
 			)
 		) . ' /-->',
-		'<!-- /wp:fair-audience/fair-form -->',
+		'<!-- /wp:fair-form/fair-form -->',
 	)
 );
 

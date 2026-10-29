@@ -6,7 +6,7 @@ A single choice from a dropdown list. One of the Fair Form question blocks.
 
 It can be nested (at any depth) inside:
 
-- `fair-audience/fair-form` — directly or inside a Conditional Section;
+- `fair-form/fair-form` — directly or inside a Conditional Section;
 - `fair-events/event-signup` — as a signup question (Fair Events' Event
   Signup offers a smaller set of question types; see below);
 - `fair-audience/event-signup` — only in content saved with that removed
@@ -17,7 +17,7 @@ also keeps its own allow-list. Fair Form and Conditional Section accept every
 question type; Event Signup accepts all of them except File Upload and
 Mailing Sign Up.
 
-**Inner blocks:** the typed options, as `fair-audience/fair-form-option`
+**Inner blocks:** the typed options, as `fair-form/fair-form-option`
 blocks (the only allowed child), in display order. They are used only while
 `optionSource` is `manual`; a question without options renders no choices.
 With a category source the option blocks are kept but ignored, so switching

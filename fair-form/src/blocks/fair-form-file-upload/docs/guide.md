@@ -5,7 +5,7 @@ are stored in the media library and linked from the submission.
 
 ## Composition
 
-- Nested (at any depth) inside `fair-audience/fair-form`, including inside a
+- Nested (at any depth) inside `fair-form/fair-form`, including inside a
   Conditional Section.
 - **Not available in Event Signup** (`fair-events/event-signup`): there is no
   vetted upload path for anonymous signups. A saved

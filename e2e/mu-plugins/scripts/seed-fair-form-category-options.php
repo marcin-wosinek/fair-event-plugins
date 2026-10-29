@@ -83,7 +83,7 @@ $children = array(
 );
 
 $page_content = $block(
-	'fair-audience/fair-form',
+	'fair-form/fair-form',
 	array(
 		'formId'    => 'e2e-category-options',
 		'formTitle' => 'E2E Category Options',
@@ -92,23 +92,23 @@ $page_content = $block(
 		'',
 		array(
 			$block(
-				'fair-audience/fair-form-select-one',
+				'fair-form/fair-form-select-one',
 				array(
 					'questionKey'  => 'workshop',
 					'questionText' => 'Which workshop?',
 					'required'     => true,
 				) + $children,
-				$block( 'fair-audience/fair-form-option', array( 'value' => 'Typed leftover' ) )
+				$block( 'fair-form/fair-form-option', array( 'value' => 'Typed leftover' ) )
 			),
 			$block(
-				'fair-audience/fair-form-conditional',
+				'fair-form/fair-form-conditional',
 				array(
 					'conditionQuestionKey' => 'workshop',
 					'conditionOperator'    => 'equals',
 					'conditionValue'       => $category_names['alpha'],
 				),
 				$block(
-					'fair-audience/fair-form-short-text',
+					'fair-form/fair-form-short-text',
 					array(
 						'questionKey'  => 'alpha_note',
 						'questionText' => 'Alpha note',
@@ -116,16 +116,16 @@ $page_content = $block(
 				)
 			),
 			$block(
-				'fair-audience/fair-form-multiselect',
+				'fair-form/fair-form-multiselect',
 				array(
 					'questionKey'  => 'topics',
 					'questionText' => 'Which topics?',
 					'required'     => true,
 				) + $children,
-				$block( 'fair-audience/fair-form-option', array( 'value' => 'Typed topic' ) )
+				$block( 'fair-form/fair-form-option', array( 'value' => 'Typed topic' ) )
 			),
 			$block(
-				'fair-audience/fair-form-multiselect',
+				'fair-form/fair-form-multiselect',
 				array(
 					'questionKey'      => 'empty_group',
 					'questionText'     => 'Empty group',
@@ -134,7 +134,7 @@ $page_content = $block(
 				)
 			),
 			$block(
-				'fair-audience/fair-form-select-one',
+				'fair-form/fair-form-select-one',
 				array(
 					'questionKey'      => 'missing_parent',
 					'questionText'     => 'Missing parent',
@@ -143,7 +143,7 @@ $page_content = $block(
 				)
 			),
 			$block(
-				'fair-audience/fair-form-select-one',
+				'fair-form/fair-form-select-one',
 				array(
 					'questionKey'  => 'any_category',
 					'questionText' => 'Any category',
@@ -172,21 +172,21 @@ $event_content = $block(
 	'fair-events/event-signup',
 	array(),
 	$block(
-		'fair-audience/fair-form-multiselect',
+		'fair-form/fair-form-multiselect',
 		array(
 			'questionKey'  => 'signup_topics',
 			'questionText' => 'Signup topics',
 			'required'     => true,
 		) + $children
 	) . $block(
-		'fair-audience/fair-form-conditional',
+		'fair-form/fair-form-conditional',
 		array(
 			'conditionQuestionKey' => 'signup_topics',
 			'conditionOperator'    => 'contains',
 			'conditionValue'       => $category_names['alpha'],
 		),
 		$block(
-			'fair-audience/fair-form-short-text',
+			'fair-form/fair-form-short-text',
 			array(
 				'questionKey'  => 'signup_alpha_note',
 				'questionText' => 'Signup alpha note',

@@ -1,6 +1,6 @@
 import './style.css';
 
-import { registerBlockType, createBlock } from '@wordpress/blocks';
+import { createBlock } from '@wordpress/blocks';
 import {
 	useBlockProps,
 	useInnerBlocksProps,
@@ -17,18 +17,19 @@ import {
 	OptionSourcePanel,
 	CategoryChoicesPreview,
 } from '../shared/OptionSourceControls.js';
+import { registerFormBlockType } from '../shared/register-form-block.js';
 
-const ALLOWED_BLOCKS = [ 'fair-audience/fair-form-option' ];
+const ALLOWED_BLOCKS = [ 'fair-form/fair-form-option' ];
 
-registerBlockType( 'fair-audience/fair-form-select-one', {
+registerFormBlockType( 'fair-form-select-one', {
 	transforms: {
 		to: [
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-multiselect' ],
+				blocks: [ 'fair-form/fair-form-multiselect' ],
 				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
-						'fair-audience/fair-form-multiselect',
+						'fair-form/fair-form-multiselect',
 						attributes,
 						innerBlocks
 					);
@@ -36,12 +37,12 @@ registerBlockType( 'fair-audience/fair-form-select-one', {
 			},
 			{
 				type: 'block',
-				blocks: [ 'fair-audience/fair-form-radio' ],
+				blocks: [ 'fair-form/fair-form-radio' ],
 				// Radio questions have no category source (#1999).
 				isMatch: ( attributes ) => ! isCategorySource( attributes ),
 				transform: ( attributes, innerBlocks ) => {
 					return createBlock(
-						'fair-audience/fair-form-radio',
+						'fair-form/fair-form-radio',
 						attributes,
 						innerBlocks
 					);

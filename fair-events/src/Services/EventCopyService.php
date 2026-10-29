@@ -251,7 +251,9 @@ class EventCopyService {
 		$changed = false;
 
 		foreach ( $blocks as &$block ) {
-			if ( 'fair-audience/fair-form-conditional' === $block['blockName'] && isset( $block['attrs']['conditionTicketTypeIds'] ) && is_array( $block['attrs']['conditionTicketTypeIds'] ) ) {
+			// Fair Form's conditional section, under its current name or the
+			// fair-audience name it had before #1161.
+			if ( in_array( $block['blockName'], array( 'fair-form/fair-form-conditional', 'fair-audience/fair-form-conditional' ), true ) && isset( $block['attrs']['conditionTicketTypeIds'] ) && is_array( $block['attrs']['conditionTicketTypeIds'] ) ) {
 				$remapped = array();
 				foreach ( $block['attrs']['conditionTicketTypeIds'] as $source_id ) {
 					$source_id = (int) $source_id;

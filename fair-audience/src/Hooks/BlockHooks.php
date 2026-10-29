@@ -123,8 +123,10 @@ class BlockHooks {
 
 		// The unified form has no vetted upload path for anonymous visitors,
 		// so a form that asks for a file is neither shown without the
-		// question nor allowed to accept uploads.
-		if ( self::contains_block( $parsed_block['innerBlocks'] ?? array(), 'fair-audience/fair-form-file-upload' ) ) {
+		// question nor allowed to accept uploads. Fair Form names the
+		// question fair-form/fair-form-file-upload since #1161 and keeps the
+		// fair-audience name for older content.
+		if ( self::contains_block( $parsed_block['innerBlocks'] ?? array(), array( 'fair-form/fair-form-file-upload', 'fair-audience/fair-form-file-upload' ) ) ) {
 			return '<p class="fair-audience-event-signup-unavailable">'
 				. esc_html__( 'This form is temporarily unavailable. Please contact the organizer.', 'fair-audience' )
 				. '</p>';
@@ -143,19 +145,19 @@ class BlockHooks {
 	}
 
 	/**
-	 * Whether a parsed block tree contains a block of the given name, at any
-	 * depth.
+	 * Whether a parsed block tree contains a block of one of the given names,
+	 * at any depth.
 	 *
-	 * @param array  $blocks     Parsed blocks.
-	 * @param string $block_name Block name to look for.
+	 * @param array    $blocks      Parsed blocks.
+	 * @param string[] $block_names Block names to look for.
 	 * @return bool
 	 */
-	private static function contains_block( array $blocks, $block_name ) {
+	private static function contains_block( array $blocks, array $block_names ) {
 		foreach ( $blocks as $inner_block ) {
-			if ( ( $inner_block['blockName'] ?? null ) === $block_name ) {
+			if ( in_array( $inner_block['blockName'] ?? null, $block_names, true ) ) {
 				return true;
 			}
-			if ( ! empty( $inner_block['innerBlocks'] ) && self::contains_block( $inner_block['innerBlocks'], $block_name ) ) {
+			if ( ! empty( $inner_block['innerBlocks'] ) && self::contains_block( $inner_block['innerBlocks'], $block_names ) ) {
 				return true;
 			}
 		}

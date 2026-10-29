@@ -71,7 +71,11 @@ jest.mock( '@wordpress/components', () => ( {
 let capturedSettings;
 jest.mock( '@wordpress/blocks', () => ( {
 	registerBlockType: ( name, settings ) => {
-		capturedSettings = settings;
+		// The legacy fair-audience alias is registered too; keep the
+		// canonical block's settings.
+		if ( name.startsWith( 'fair-form/' ) ) {
+			capturedSettings = settings;
+		}
 	},
 } ) );
 
@@ -113,7 +117,7 @@ function mockFormQuestions( blocks ) {
 				getBlockParents: () => [ 'form-1' ],
 				getBlock: ( id ) =>
 					id === 'form-1'
-						? { name: 'fair-audience/fair-form', attributes: {} }
+						? { name: 'fair-form/fair-form', attributes: {} }
 						: undefined,
 				getBlocks: () => blocks,
 			};
@@ -122,7 +126,7 @@ function mockFormQuestions( blocks ) {
 }
 
 const categoryQuestion = {
-	name: 'fair-audience/fair-form-select-one',
+	name: 'fair-form/fair-form-select-one',
 	attributes: {
 		questionKey: 'workshop',
 		questionText: 'Workshop',
@@ -131,7 +135,7 @@ const categoryQuestion = {
 	},
 	innerBlocks: [
 		{
-			name: 'fair-audience/fair-form-option',
+			name: 'fair-form/fair-form-option',
 			attributes: { value: 'Typed, hidden' },
 		},
 	],
