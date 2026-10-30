@@ -700,7 +700,7 @@ msgstr "%1$s (%2$d)"
 #: src/Admin/entries/components/TransferModal.js:242
 #: src/Admin/entries/components/UnmatchModal.js:299
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1045
-#: src/Admin/reconciliation/components/SettlementImportModal.js:394
+#: src/Admin/reconciliation/components/SettlementImportModal.js:393
 #: src/Admin/settlements/components/CsvImportModal.js:416
 msgid "Cancel"
 msgstr "Anuluj"
@@ -767,7 +767,7 @@ msgid "← All settlements"
 msgstr "← Wszystkie rozliczenia"
 
 #. translators: %s: settlement reference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:244
+#: src/Admin/reconciliation/components/SettlementImportModal.js:243
 #: src/Admin/settlements/components/SettlementDetail.js:164
 #, js-format
 msgid "Settlement %s"
@@ -2507,7 +2507,7 @@ msgstr "Użyj tego adresu URL"
 
 #: src/Admin/entries/components/ImportModal.js:54
 #: src/Admin/readSpreadsheet.js:32
-#: src/Admin/reconciliation/components/SettlementImportModal.js:73
+#: src/Admin/reconciliation/components/SettlementImportModal.js:66
 msgid "Failed to parse file."
 msgstr "Nie udało się przeanalizować pliku."
 
@@ -2902,93 +2902,93 @@ msgstr "Nie udało się odczytać pliku."
 msgid "Transactions matched successfully."
 msgstr "Transakcje dopasowane pomyślnie."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:97
+#: src/Admin/reconciliation/components/SettlementImportModal.js:90
 msgid "Failed to match settlement."
 msgstr "Nie udało się dopasować rozliczenia."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:124
+#: src/Admin/reconciliation/components/SettlementImportModal.js:123
 #: src/Admin/reconciliation/ReconciliationApp.js:544
 msgid "Settlement matched successfully."
 msgstr "Rozliczenie zostało pomyślnie dopasowane."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:133
+#: src/Admin/reconciliation/components/SettlementImportModal.js:132
 #: src/Admin/reconciliation/ReconciliationApp.js:442
 msgid "Failed to match transactions."
 msgstr "Nie udało się dopasować transakcji."
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:148
+#: src/Admin/reconciliation/components/SettlementImportModal.js:147
 #, js-format
 msgid "%1$s — %2$s (suggested)"
 msgstr "%1$s — %2$s (sugerowane)"
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:165
+#: src/Admin/reconciliation/components/SettlementImportModal.js:164
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:189
+#: src/Admin/reconciliation/components/SettlementImportModal.js:188
 msgid "Import Mollie Settlement CSV"
 msgstr "Importuj plik CSV rozliczenia Mollie"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:208
+#: src/Admin/reconciliation/components/SettlementImportModal.js:207
 msgid "Select a Mollie settlement export (.csv). Payment rows are matched to transactions by their Mollie payment ID, and the payout is matched to a bank entry."
 msgstr "Wybierz eksport rozliczenia Mollie (.csv). Wiersze płatności są dopasowywane do transakcji na podstawie ich identyfikatora płatności Mollie, a wypłata jest dopasowywana do wpisu bankowego."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:227
+#: src/Admin/reconciliation/components/SettlementImportModal.js:226
 msgid "Parsing file…"
 msgstr "Analizowanie pliku…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:228
+#: src/Admin/reconciliation/components/SettlementImportModal.js:227
 msgid "Matching settlement…"
 msgstr "Dopasowywanie rozliczenia…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:250
+#: src/Admin/reconciliation/components/SettlementImportModal.js:249
 msgid "Payments matched:"
 msgstr "Dopasowane płatności:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:256
+#: src/Admin/reconciliation/components/SettlementImportModal.js:255
 msgid "Settlement total:"
 msgstr "Razem rozliczenie:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:265
+#: src/Admin/reconciliation/components/SettlementImportModal.js:264
 msgid "Fees total:"
 msgstr "Razem opłaty:"
 
 #. translators: %s: amount difference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:276
+#: src/Admin/reconciliation/components/SettlementImportModal.js:275
 #, js-format
 msgid "(differs from recorded fees by %s)"
 msgstr "(różni się od zarejestrowanych opłat o %s)"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:288
+#: src/Admin/reconciliation/components/SettlementImportModal.js:287
 msgid "Match to bank entry"
 msgstr "Dopasuj do wpisu bankowego"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:296
+#: src/Admin/reconciliation/components/SettlementImportModal.js:295
 msgid "— Select a bank entry —"
 msgstr "— Wybierz wpis bankowy —"
 
 #. translators: 1: entry amount, 2: settlement total
-#: src/Admin/reconciliation/components/SettlementImportModal.js:313
+#: src/Admin/reconciliation/components/SettlementImportModal.js:312
 #, js-format
 msgid "Selected entry (%1$s) does not equal the settlement total (%2$s)."
 msgstr "Wybrany wpis (%1$s) nie równa się sumie rozliczenia (%2$s)."
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:335
+#: src/Admin/reconciliation/components/SettlementImportModal.js:334
 #, js-format
 msgid "%d payment row(s) had no matching transaction:"
 msgstr "%d wiersz(y) płatności nie miał(y) pasującej transakcji:"
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:365
+#: src/Admin/reconciliation/components/SettlementImportModal.js:364
 #, js-format
 msgid "%d unmatched transaction(s) in this date window are absent from the CSV:"
 msgstr "%d niedopasowana(e) transakcja(e) w tym oknie czasowym brakuje w pliku CSV:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:410
+#: src/Admin/reconciliation/components/SettlementImportModal.js:409
 #: src/Admin/reconciliation/ReconciliationApp.js:998
 msgid "Confirm Match"
 msgstr "Potwierdź dopasowanie"
@@ -3173,6 +3173,7 @@ msgstr[2] "Spowoduje to usunięcie powiązań ze wszystkimi %d transakcjami:"
 msgid "This entry has no linked transactions left. Unmatching only refreshes the list."
 msgstr "Ten wpis nie ma już powiązanych transakcji. Cofnięcie dopasowania tylko odświeży listę."
 
+#. translators: %d: financial entry ID.
 #. translators: %d: financial entry ID
 #: src/Admin/entries/components/UnmatchModal.js:155
 #: src/Admin/entries/EntriesApp.js:651
@@ -3363,4 +3364,3 @@ msgstr[2] "Jest dopasowany do %d transakcji, które nie są usuwane."
 #: src/Admin/entries/EntriesApp.js:2056
 msgid "This cannot be undone."
 msgstr "Nie można tego cofnąć."
-

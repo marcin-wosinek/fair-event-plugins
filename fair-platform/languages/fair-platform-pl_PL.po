@@ -573,4 +573,3 @@ msgid_plural "This deletes every Instagram connection log entry older than %d da
 msgstr[0] "To usuwają każdy wpis dziennika połączeń z Instagrama starszy niż %d dzień."
 msgstr[1] "To usuwają każdy wpis dziennika połączeń z Instagrama starszy niż %d dni."
 msgstr[2] "To usuwają każdy wpis dziennika połączeń z Instagrama starszy niż %d dni."
-

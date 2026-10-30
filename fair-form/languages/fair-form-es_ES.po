@@ -84,11 +84,10 @@ msgstr "Entrada #%d"
 msgid "No page"
 msgstr "Sin página"
 
-#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format,js-format
+#, php-format, js-format
 msgid "Event date #%d"
 msgstr "Fecha del evento #%d"
 
@@ -169,12 +168,12 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr "Forzado por una constante wp-config — cámbialo allí."
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:210
+#: src/Services/FormNotificationService.php:212
 #, php-format
 msgid "New form submission — %s"
 msgstr "Nuevo envío de formulario — %s"
 
-#: src/Services/FormNotificationService.php:217
+#: src/Services/FormNotificationService.php:219
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
 #: src/Admin/submission-detail/SubmissionDetail.js:430
@@ -182,12 +181,12 @@ msgid "Email"
 msgstr "Correo electrónico"
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:229
+#: src/Services/FormNotificationService.php:231
 #, php-format
 msgid "Page: %s"
 msgstr "Página: %s"
 
-#: src/Services/FormNotificationService.php:257
+#: src/Services/FormNotificationService.php:259
 msgid "A new form submission has been received."
 msgstr "Se ha recibido un nuevo envío de formulario."
 
@@ -627,7 +626,7 @@ msgid "No answers recorded."
 msgstr "No hay respuestas registradas."
 
 #: src/Admin/submission-detail/SubmissionDetail.js:473
-#: src/blocks/fair-form-conditional/editor.js:54
+#: src/blocks/fair-form-conditional/editor.js:57
 msgid "Question"
 msgstr "Pregunta"
 
@@ -639,86 +638,86 @@ msgstr "Respuesta"
 msgid "Submission date"
 msgstr "Fecha de envío"
 
-#: src/blocks/fair-form-conditional/editor.js:39
+#: src/blocks/fair-form-conditional/editor.js:42
 msgid "equals"
 msgstr "es igual a"
 
-#: src/blocks/fair-form-conditional/editor.js:40
+#: src/blocks/fair-form-conditional/editor.js:43
 msgid "not equals"
 msgstr "no es igual a"
 
-#: src/blocks/fair-form-conditional/editor.js:41
+#: src/blocks/fair-form-conditional/editor.js:44
 msgid "contains"
 msgstr "contiene"
 
-#: src/blocks/fair-form-conditional/editor.js:42
+#: src/blocks/fair-form-conditional/editor.js:45
 msgid "is not empty"
 msgstr "no está vacío"
 
-#: src/blocks/fair-form-conditional/editor.js:49
-#: src/blocks/fair-form-conditional/editor.js:328
-#: src/blocks/fair-form-conditional/editor.js:343
+#: src/blocks/fair-form-conditional/editor.js:52
+#: src/blocks/fair-form-conditional/editor.js:337
+#: src/blocks/fair-form-conditional/editor.js:352
 msgid "is selected"
 msgstr "está seleccionado"
 
-#: src/blocks/fair-form-conditional/editor.js:50
-#: src/blocks/fair-form-conditional/editor.js:327
-#: src/blocks/fair-form-conditional/editor.js:342
+#: src/blocks/fair-form-conditional/editor.js:53
+#: src/blocks/fair-form-conditional/editor.js:336
+#: src/blocks/fair-form-conditional/editor.js:351
 msgid "is not selected"
 msgstr "no está seleccionado"
 
-#: src/blocks/fair-form-conditional/editor.js:55
+#: src/blocks/fair-form-conditional/editor.js:58
 msgid "Event option"
 msgstr "Opción de evento"
 
-#: src/blocks/fair-form-conditional/editor.js:59
+#: src/blocks/fair-form-conditional/editor.js:62
 msgid "Ticket type"
 msgstr "Tipo de entrada"
 
-#: src/blocks/fair-form-conditional/editor.js:271
+#: src/blocks/fair-form-conditional/editor.js:280
 msgid "— Select a question —"
 msgstr "— Selecciona una pregunta —"
 
-#: src/blocks/fair-form-conditional/editor.js:323
+#: src/blocks/fair-form-conditional/editor.js:332
 msgid "No condition set"
 msgstr "Sin condición establecida"
 
-#: src/blocks/fair-form-conditional/editor.js:373
+#: src/blocks/fair-form-conditional/editor.js:382
 msgid "Condition Settings"
 msgstr "Configuración de condición"
 
-#: src/blocks/fair-form-conditional/editor.js:377
+#: src/blocks/fair-form-conditional/editor.js:386
 msgid "Condition source"
 msgstr "Origen de la condición"
 
-#: src/blocks/fair-form-conditional/editor.js:397
+#: src/blocks/fair-form-conditional/editor.js:406
 msgid "Option short name"
 msgstr "Nombre corto de la opción"
 
-#: src/blocks/fair-form-conditional/editor.js:407
+#: src/blocks/fair-form-conditional/editor.js:416
 msgid "Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time."
 msgstr "Introduce el nombre corto de la opción (configúralo en la pestaña Entradas del evento). Las opciones no se pueden listar aquí porque provienen de la fecha del evento seleccionada en el momento de renderización."
 
-#: src/blocks/fair-form-conditional/editor.js:413
-#: src/blocks/fair-form-conditional/editor.js:449
-#: src/blocks/fair-form-conditional/editor.js:487
+#: src/blocks/fair-form-conditional/editor.js:422
+#: src/blocks/fair-form-conditional/editor.js:458
+#: src/blocks/fair-form-conditional/editor.js:496
 msgid "Operator"
 msgstr "Operador"
 
-#: src/blocks/fair-form-conditional/editor.js:462
+#: src/blocks/fair-form-conditional/editor.js:471
 msgid "Show when question"
 msgstr "Mostrar cuando"
 
-#: src/blocks/fair-form-conditional/editor.js:499
-#: src/blocks/fair-form-conditional/editor.js:539
+#: src/blocks/fair-form-conditional/editor.js:508
+#: src/blocks/fair-form-conditional/editor.js:548
 msgid "Value"
 msgstr "Valor"
 
-#: src/blocks/fair-form-conditional/editor.js:503
+#: src/blocks/fair-form-conditional/editor.js:512
 msgid "— Select a value —"
 msgstr "— Seleccionar un valor —"
 
-#: src/blocks/fair-form-conditional/editor.js:546
+#: src/blocks/fair-form-conditional/editor.js:555
 msgid "The value to compare against."
 msgstr "El valor a comparar."
 
@@ -727,13 +726,13 @@ msgstr "El valor a comparar."
 #: src/blocks/fair-form-datetime/editor.js:31
 #: src/blocks/fair-form-email/editor.js:31
 #: src/blocks/fair-form-file-upload/editor.js:43
-#: src/blocks/fair-form-long-text/editor.js:52
-#: src/blocks/fair-form-multiselect/editor.js:88
-#: src/blocks/fair-form-phone/editor.js:53
-#: src/blocks/fair-form-radio/editor.js:73
-#: src/blocks/fair-form-select-one/editor.js:88
-#: src/blocks/fair-form-short-text/editor.js:66
-#: src/blocks/fair-form-url/editor.js:51
+#: src/blocks/fair-form-long-text/editor.js:53
+#: src/blocks/fair-form-multiselect/editor.js:89
+#: src/blocks/fair-form-phone/editor.js:54
+#: src/blocks/fair-form-radio/editor.js:74
+#: src/blocks/fair-form-select-one/editor.js:89
+#: src/blocks/fair-form-short-text/editor.js:64
+#: src/blocks/fair-form-url/editor.js:52
 msgid "Question Settings"
 msgstr "Configuración de la pregunta"
 
@@ -742,18 +741,18 @@ msgstr "Configuración de la pregunta"
 #: src/blocks/fair-form-datetime/editor.js:33
 #: src/blocks/fair-form-email/editor.js:33
 #: src/blocks/fair-form-file-upload/editor.js:45
-#: src/blocks/fair-form-long-text/editor.js:54
-#: src/blocks/fair-form-multiselect/editor.js:90
-#: src/blocks/fair-form-phone/editor.js:55
-#: src/blocks/fair-form-radio/editor.js:75
-#: src/blocks/fair-form-select-one/editor.js:90
-#: src/blocks/fair-form-short-text/editor.js:68
-#: src/blocks/fair-form-url/editor.js:53
+#: src/blocks/fair-form-long-text/editor.js:55
+#: src/blocks/fair-form-multiselect/editor.js:91
+#: src/blocks/fair-form-phone/editor.js:56
+#: src/blocks/fair-form-radio/editor.js:76
+#: src/blocks/fair-form-select-one/editor.js:91
+#: src/blocks/fair-form-short-text/editor.js:66
+#: src/blocks/fair-form-url/editor.js:54
 msgid "Question Key"
 msgstr "Clave de la pregunta"
 
 #: src/blocks/fair-form-consent/editor.js:39
-#: src/blocks/fair-form-short-text/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:71
 msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"favorite_color\"). Se utiliza internamente."
 
@@ -762,13 +761,13 @@ msgstr "Un identificador único para esta pregunta (p. ej. \"favorite_color\"). 
 #: src/blocks/fair-form-datetime/editor.js:44
 #: src/blocks/fair-form-email/editor.js:44
 #: src/blocks/fair-form-file-upload/editor.js:56
-#: src/blocks/fair-form-long-text/editor.js:65
-#: src/blocks/fair-form-multiselect/editor.js:101
-#: src/blocks/fair-form-phone/editor.js:66
-#: src/blocks/fair-form-radio/editor.js:86
-#: src/blocks/fair-form-select-one/editor.js:101
-#: src/blocks/fair-form-short-text/editor.js:79
-#: src/blocks/fair-form-url/editor.js:64
+#: src/blocks/fair-form-long-text/editor.js:66
+#: src/blocks/fair-form-multiselect/editor.js:102
+#: src/blocks/fair-form-phone/editor.js:67
+#: src/blocks/fair-form-radio/editor.js:87
+#: src/blocks/fair-form-select-one/editor.js:102
+#: src/blocks/fair-form-short-text/editor.js:77
+#: src/blocks/fair-form-url/editor.js:65
 msgid "Required"
 msgstr "Requerido"
 
@@ -783,10 +782,10 @@ msgstr "Un identificador único para esta pregunta (p. ej. \"birthdate\"). Se ut
 #: src/blocks/fair-form-date/editor.js:51
 #: src/blocks/fair-form-datetime/editor.js:51
 #: src/blocks/fair-form-email/editor.js:51
-#: src/blocks/fair-form-long-text/editor.js:72
-#: src/blocks/fair-form-phone/editor.js:73
-#: src/blocks/fair-form-short-text/editor.js:86
-#: src/blocks/fair-form-url/editor.js:71
+#: src/blocks/fair-form-long-text/editor.js:73
+#: src/blocks/fair-form-phone/editor.js:74
+#: src/blocks/fair-form-short-text/editor.js:84
+#: src/blocks/fair-form-url/editor.js:72
 msgid "Placeholder"
 msgstr "Marcador de posición"
 
@@ -794,13 +793,13 @@ msgstr "Marcador de posición"
 #: src/blocks/fair-form-datetime/editor.js:68
 #: src/blocks/fair-form-email/editor.js:68
 #: src/blocks/fair-form-file-upload/editor.js:98
-#: src/blocks/fair-form-long-text/editor.js:101
-#: src/blocks/fair-form-multiselect/editor.js:126
-#: src/blocks/fair-form-phone/editor.js:98
-#: src/blocks/fair-form-radio/editor.js:106
-#: src/blocks/fair-form-select-one/editor.js:126
-#: src/blocks/fair-form-short-text/editor.js:106
-#: src/blocks/fair-form-url/editor.js:102
+#: src/blocks/fair-form-long-text/editor.js:102
+#: src/blocks/fair-form-multiselect/editor.js:127
+#: src/blocks/fair-form-phone/editor.js:99
+#: src/blocks/fair-form-radio/editor.js:107
+#: src/blocks/fair-form-select-one/editor.js:127
+#: src/blocks/fair-form-short-text/editor.js:104
+#: src/blocks/fair-form-url/editor.js:103
 msgid "Enter your question..."
 msgstr "Ingresa tu pregunta..."
 
@@ -836,16 +835,16 @@ msgstr "Tamaño máximo de archivo (MB)"
 msgid "Max file size:"
 msgstr "Tamaño máximo de archivo:"
 
-#: src/blocks/fair-form-long-text/editor.js:59
+#: src/blocks/fair-form-long-text/editor.js:60
 msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"comments\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-long-text/editor.js:79
+#: src/blocks/fair-form-long-text/editor.js:80
 msgid "Rows"
 msgstr "Filas"
 
-#: src/blocks/fair-form-long-text/editor.js:115
-#: src/blocks/fair-form-short-text/editor.js:120
+#: src/blocks/fair-form-long-text/editor.js:116
+#: src/blocks/fair-form-short-text/editor.js:118
 msgid "Type your answer..."
 msgstr "Escribe tu respuesta..."
 
@@ -881,9 +880,9 @@ msgstr "Categorías marcadas por defecto cuando se carga el formulario."
 msgid "Category preferences will be shown here"
 msgstr "Las preferencias de categoría se mostrarán aquí"
 
-#: src/blocks/fair-form-multiselect/editor.js:95
-#: src/blocks/fair-form-radio/editor.js:80
-#: src/blocks/fair-form-select-one/editor.js:95
+#: src/blocks/fair-form-multiselect/editor.js:96
+#: src/blocks/fair-form-radio/editor.js:81
+#: src/blocks/fair-form-select-one/editor.js:96
 msgid "A unique identifier for this question. Used internally."
 msgstr "Un identificador único para esta pregunta. Se utiliza internamente."
 
@@ -891,27 +890,27 @@ msgstr "Un identificador único para esta pregunta. Se utiliza internamente."
 msgid "Enter option text..."
 msgstr "Ingresa el texto de la opción..."
 
-#: src/blocks/fair-form-phone/editor.js:60
+#: src/blocks/fair-form-phone/editor.js:61
 msgid "A unique identifier for this question (e.g. \"mobile_phone\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"mobile_phone\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-phone/editor.js:79
+#: src/blocks/fair-form-phone/editor.js:80
 msgid "Must include country code with leading \"+\" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone."
 msgstr "Debe incluir el código de país con el signo «+» al principio (p. ej. +49 170 123 45 67). Déjalo vacío para usar el ejemplo de la zona horaria de tu sitio."
 
-#: src/blocks/fair-form-url/editor.js:58
+#: src/blocks/fair-form-url/editor.js:59
 msgid "A unique identifier for this question (e.g. \"website\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"website\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-url/editor.js:78
+#: src/blocks/fair-form-url/editor.js:79
 msgid "Read event details from the linked page"
 msgstr "Lee los detalles del evento desde la página vinculada"
 
-#: src/blocks/fair-form-url/editor.js:82
+#: src/blocks/fair-form-url/editor.js:83
 msgid "Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored."
 msgstr "Cuando el visitante abandona el campo, se muestran los detalles del evento que publica el enlace (título, fechas, ubicación) justo debajo; no se almacena nada."
 
-#: src/blocks/fair-form-url/editor.js:115
+#: src/blocks/fair-form-url/editor.js:116
 msgid "https://example.com"
 msgstr ""
 
@@ -1366,264 +1365,265 @@ msgstr "%1$s – %2$s"
 #: src/blocks/fair-form-multiselect/render.php:65
 #: src/blocks/fair-form-select-one/render.php:67
 msgid "There are no choices to pick from yet."
-msgstr ""
+msgstr "Aún no hay opciones para elegir."
 
 #. translators: %d: participant ID
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:90
 #, js-format
 msgid "ID %d"
-msgstr ""
+msgstr "ID %d"
 
 #. translators: %d: participant ID
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:102
 #, js-format
 msgid "Participant #%d"
-msgstr ""
+msgstr "Participante #%d"
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:162
 #, js-format
 msgid "%d participant was added to the group."
 msgid_plural "%d participants were added to the group."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d participante fue añadido al grupo."
+msgstr[1] "%d participantes fueron añadidos al grupo."
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:176
 #, js-format
 msgid "%d participant was already in the group and was skipped."
 msgid_plural "%d participants were already in the group and were skipped."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d participante ya estaba en el grupo y fue omitido."
+msgstr[1] "%d participantes ya estaban en el grupo y fueron omitidos."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:254
 msgid "Added"
-msgstr ""
+msgstr "Añadido"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:255
 msgid "Already in the group — skipped"
-msgstr ""
+msgstr "Ya está en el grupo — omitido"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:271
 msgid "Select a group to add the participants to."
-msgstr ""
+msgstr "Selecciona un grupo para añadir los participantes."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:276
 msgid "Enter a name for the new group."
-msgstr ""
+msgstr "Introduce un nombre para el nuevo grupo."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:315
 msgid "The group could not be created. Try again."
-msgstr ""
+msgstr "No se pudo crear el grupo. Inténtalo de nuevo."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:343
 msgid "The participant could not be added to the group."
-msgstr ""
+msgstr "No se pudo añadir el participante al grupo."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:394
 msgid "Adding…"
-msgstr ""
+msgstr "Añadiendo…"
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:398
 #, js-format
 msgid "Try again for %d participant"
 msgid_plural "Try again for %d participants"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Vuelve a intentarlo para %d participante"
+msgstr[1] "Vuelve a intentarlo para %d participantes"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:427
 msgid "Participants already handled"
-msgstr ""
+msgstr "Participantes ya gestionados"
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:441
 #, js-format
 msgid "%d participant could not be added. Try again:"
 msgid_plural "%d participants could not be added. Try again:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d participante no pudo ser añadido. Vuelve a intentarlo:"
+msgstr[1] "%d participantes no pudieron ser añadidos. Vuelve a intentarlo:"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:451
 msgid "Participants that could not be added"
-msgstr ""
+msgstr "Participantes que no se pudieron añadir"
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:471
 #, js-format
 msgid "%d participant will be added:"
 msgid_plural "%d participants will be added:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d participante será añadido:"
+msgstr[1] "%d participantes serán añadidos:"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:481
 msgid "Participants to add"
-msgstr ""
+msgstr "Participantes a añadir"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:488
 msgid "Everyone who answered this questionnaire is included, regardless of the table’s filters and pages."
-msgstr ""
+msgstr "Se incluyen todos los que respondieron este cuestionario, independientemente de los filtros y páginas de la tabla."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:492
 msgid "Participants who are already in the group are skipped."
-msgstr ""
+msgstr "Se omiten los participantes que ya están en el grupo."
 
 #. translators: %d: number of responses
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:501
 #, js-format
 msgid "%d response is not linked to a participant and is left out."
 msgid_plural "%d responses are not linked to a participant and are left out."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d respuesta no está vinculada a un participante y se omite."
+msgstr[1] "%d respuestas no están vinculadas a un participante y se omiten."
 
 #. translators: %d: number of responses
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:515
 #, js-format
 msgid "%d more response comes from a participant listed above; each participant is added once."
 msgid_plural "%d more responses come from participants listed above; each participant is added once."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d respuesta más proviene de un participante listado arriba; cada participante se añade una sola vez."
+msgstr[1] "%d respuestas más provienen de participantes listados arriba; cada participante se añade una sola vez."
 
 #. translators: %s: group name
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:530
 #, js-format
 msgid "Target group: %s"
-msgstr ""
+msgstr "Grupo destino: %s"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:566
-#: src/blocks/fair-form-conditional/editor.js:594
+#: src/blocks/fair-form-conditional/editor.js:603
 #: src/blocks/shared/OptionSourceControls.js:149
 msgid "Try again"
-msgstr ""
+msgstr "Inténtalo de nuevo"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:574
 msgid "The groups could not be loaded."
-msgstr ""
+msgstr "No se pudieron cargar los grupos."
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:591
 msgid "Loading…"
-msgstr ""
+msgstr "Cargando…"
 
 #. translators: 1: group name, 2: number of members
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:604
 #, js-format
 msgid "%1$s (%2$d)"
-msgstr ""
+msgstr "%1$s (%2$d)"
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:630
 msgid "Description (optional)"
-msgstr ""
+msgstr "Descripción (opcional)"
 
 #. translators: %s: group name
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:518
 #, js-format
 msgid "Group: %s"
-msgstr ""
+msgstr "Grupo: %s"
 
 #. translators: %d: number of participants
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:533
 #, js-format
 msgid "%d participant could not be added."
 msgid_plural "%d participants could not be added."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d participante no pudo ser añadido."
+msgstr[1] "%d participantes no pudieron ser añadidos."
 
 #. translators: %s: saved condition value
-#: src/blocks/fair-form-conditional/editor.js:514
+#: src/blocks/fair-form-conditional/editor.js:523
 #, js-format
 msgid "%s (no longer a choice)"
-msgstr ""
+msgstr "%s (ya no es una opción)"
 
 #. translators: %s: saved condition value
-#: src/blocks/fair-form-conditional/editor.js:560
+#: src/blocks/fair-form-conditional/editor.js:569
 #, js-format
 msgid "“%s” is no longer one of this question’s choices. Pick a current choice or update the condition."
-msgstr ""
+msgstr "«%s» ya no es una de las opciones de esta pregunta. Elige una opción actual o actualiza la condición."
 
-#: src/blocks/fair-form-conditional/editor.js:572
+#: src/blocks/fair-form-conditional/editor.js:581
 #: src/blocks/shared/OptionSourceControls.js:156
 msgid "Loading categories…"
-msgstr ""
+msgstr "Cargando categorías…"
 
-#: src/blocks/fair-form-conditional/editor.js:584
+#: src/blocks/fair-form-conditional/editor.js:593
 #: src/blocks/shared/OptionSourceControls.js:144
 msgid "The categories could not be loaded. Check your connection and try again."
-msgstr ""
+msgstr "No se pudieron cargar las categorías. Comprueba tu conexión e intenta de nuevo."
 
 #: src/blocks/shared/OptionSourceControls.js:36
 msgid "Options typed in the question"
-msgstr ""
+msgstr "Opciones escritas en la pregunta"
 
 #: src/blocks/shared/OptionSourceControls.js:40
 msgid "All post categories"
-msgstr ""
+msgstr "Todas las categorías de entrada"
 
 #: src/blocks/shared/OptionSourceControls.js:44
 msgid "Subcategories of one category"
-msgstr ""
+msgstr "Subcategorías de una categoría"
 
 #: src/blocks/shared/OptionSourceControls.js:72
 msgid "Choices"
-msgstr ""
+msgstr "Opciones"
 
 #: src/blocks/shared/OptionSourceControls.js:74
 msgid "Where do the choices come from?"
-msgstr ""
+msgstr "¿De dónde proceden las opciones?"
 
 #: src/blocks/shared/OptionSourceControls.js:82
 msgid "Choices follow your categories as they are added, renamed or removed. Each answer keeps the category name the visitor picked. To turn this question into radio buttons, switch back to typed options first."
-msgstr ""
+msgstr "Las opciones siguen tus categorías conforme se añaden, renombran o eliminan. Cada respuesta conserva el nombre de la categoría que eligió el visitante. Para convertir esta pregunta en botones de radio, vuelve primero a las opciones escritas."
 
 #: src/blocks/shared/OptionSourceControls.js:91
 msgid "Parent category"
-msgstr ""
+msgstr "Categoría padre"
 
 #: src/blocks/shared/OptionSourceControls.js:99
 msgid "All of its subcategories, at every level, become choices. The parent itself is not one."
-msgstr ""
+msgstr "Todas sus subcategorías, en todos los niveles, se convierten en opciones. La categoría padre no es una de ellas."
 
 #. translators: %d: number of typed options
 #: src/blocks/shared/OptionSourceControls.js:129
 #, js-format
 msgid "Your %d typed option is kept. Switch back to typed options to use it again."
 msgid_plural "Your %d typed options are kept. Switch back to typed options to use them again."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Tu %d opción escrita se mantiene. Vuelve a las opciones escritas para usarla de nuevo."
+msgstr[1] "Tus %d opciones escritas se mantienen. Vuelve a las opciones escritas para usarlas de nuevo."
 
 #: src/blocks/shared/OptionSourceControls.js:167
 msgid "Choose a parent category in the block settings. Until then, visitors see no choices."
-msgstr ""
+msgstr "Elige una categoría padre en los ajustes del bloque. Hasta entonces, los visitantes no ven opciones."
 
 #: src/blocks/shared/OptionSourceControls.js:176
 msgid "The parent category of this question no longer exists. Choose another one in the block settings; until then, visitors see no choices."
-msgstr ""
+msgstr "La categoría padre de esta pregunta ya no existe. Elige otra en los ajustes del bloque; hasta entonces, los visitantes no ven opciones."
 
 #: src/blocks/shared/OptionSourceControls.js:186
 msgid "This category has no subcategories yet. Visitors see no choices until you add some."
-msgstr ""
+msgstr "Esta categoría aún no tiene subcategorías. Los visitantes no ven opciones hasta que añadas algunas."
 
 #: src/blocks/shared/OptionSourceControls.js:190
 msgid "There are no categories yet. Visitors see no choices until you add some."
-msgstr ""
+msgstr "Aún no hay categorías. Los visitantes no ven opciones hasta que añadas algunas."
 
 #. translators: %d: number of choices
 #: src/blocks/shared/OptionSourceControls.js:203
 #, js-format
 msgid "%d choice from categories:"
 msgid_plural "%d choices from categories:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d opción de categorías:"
+msgstr[1] "%d opciones de categorías:"
 
 #. translators: %d: number of choices not listed in the preview
 #: src/blocks/shared/OptionSourceControls.js:221
 #, js-format
 msgid "…and %d more."
 msgid_plural "…and %d more."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "…y %d más."
+msgstr[1] "…y %d más."
 
 #: src/blocks/fair-form-multiselect/block.json
 #: src/blocks/fair-form-select-one/block.json
 msgctxt "block keyword"
 msgid "category"
-msgstr ""
+msgstr "categoría"
+

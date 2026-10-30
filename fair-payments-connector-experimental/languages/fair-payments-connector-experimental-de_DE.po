@@ -500,4 +500,3 @@ msgstr "Diese Website liest keine Daten mehr von %s, und das dafür gespeicherte
 #: src/Admin/connected-sites/ConnectedSitesApp.js:676
 msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
 msgstr "Bereits von ihr importierte Transaktionen werden beibehalten. Das Token wird auf der anderen Website nicht widerrufen; widerrufen Sie es dort, wenn es nicht mehr funktionieren soll."
-

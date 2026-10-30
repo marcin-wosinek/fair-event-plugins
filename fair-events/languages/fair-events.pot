@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-28T06:37:10+00:00\n"
+"POT-Creation-Date: 2026-10-30T06:32:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -1958,45 +1958,45 @@ msgstr ""
 msgid "The selected page must be published and publicly visible."
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:54
+#: src/Notifications/TelegramConnector.php:61
 #: src/Admin/event-notifications/shared.js:15
 #: src/Admin/event-notifications/TelegramChannel.js:218
 msgid "Telegram"
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:55
+#: src/Notifications/TelegramConnector.php:62
 msgid "Post weekly event summaries to Telegram chats and channels."
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:74
+#: src/Notifications/TelegramConnector.php:85
 msgid "Telegram bot token"
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:75
+#: src/Notifications/TelegramConnector.php:86
 msgid "Bot token for weekly event notifications on Telegram."
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:144
+#: src/Notifications/TelegramConnector.php:156
 msgid "That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE…. The saved token was not changed."
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:221
+#: src/Notifications/TelegramConnector.php:233
 msgid "No Telegram bot token is configured. Add one in Settings → Connectors."
 msgstr ""
 
 #. translators: %s: environment variable name
-#: src/Notifications/TelegramConnector.php:230
+#: src/Notifications/TelegramConnector.php:242
 #, php-format
 msgid "The %s environment variable does not hold a valid Telegram bot token. Correct it where it is set."
 msgstr ""
 
 #. translators: %s: PHP constant name
-#: src/Notifications/TelegramConnector.php:233
+#: src/Notifications/TelegramConnector.php:245
 #, php-format
 msgid "The %s constant does not hold a valid Telegram bot token. Correct it where it is defined."
 msgstr ""
 
-#: src/Notifications/TelegramConnector.php:235
+#: src/Notifications/TelegramConnector.php:247
 msgid "The saved Telegram bot token is not a valid bot token. Replace it in Settings → Connectors with the full token from @BotFather."
 msgstr ""
 
@@ -2237,7 +2237,7 @@ msgstr[1] ""
 
 #. translators: %s: activity name
 #: src/Services/ActivitySelection.php:189
-#: src/Services/TicketCapacity.php:835
+#: src/Services/TicketCapacity.php:856
 #, php-format
 msgid "\"%s\" is full."
 msgstr ""
@@ -2580,19 +2580,19 @@ msgid "-%s"
 msgstr ""
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:729
+#: src/Services/TicketCapacity.php:750
 #, php-format
 msgid "%1$s on %2$s"
 msgstr ""
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:820
+#: src/Services/TicketCapacity.php:841
 #, php-format
 msgid "\"%1$s\" is full on %2$s."
 msgstr ""
 
 #. translators: 1: number of places still available, 2: activity name, 3: event date and time
-#: src/Services/TicketCapacity.php:826
+#: src/Services/TicketCapacity.php:847
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\" on %3$s."
 msgid_plural "Only %1$d places are left in \"%2$s\" on %3$s."
@@ -2600,19 +2600,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of places still available, 2: activity name
-#: src/Services/TicketCapacity.php:840
+#: src/Services/TicketCapacity.php:861
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\"."
 msgid_plural "Only %1$d places are left in \"%2$s\"."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Services/TicketCapacity.php:851
+#: src/Services/TicketCapacity.php:872
 msgid "This ticket type is sold out."
 msgstr ""
 
 #. translators: %d: number of tickets still available
-#: src/Services/TicketCapacity.php:854
+#: src/Services/TicketCapacity.php:875
 #, php-format
 msgid "Only %d ticket of this type is left."
 msgid_plural "Only %d tickets of this type are left."
@@ -2620,25 +2620,25 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event date and time
-#: src/Services/TicketCapacity.php:867
+#: src/Services/TicketCapacity.php:888
 #, php-format
 msgid "The event on %s is fully booked."
 msgstr ""
 
 #. translators: 1: number of places still available, 2: event date and time
-#: src/Services/TicketCapacity.php:872
+#: src/Services/TicketCapacity.php:893
 #, php-format
 msgid "Only %1$d place is left for %2$s."
 msgid_plural "Only %1$d places are left for %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Services/TicketCapacity.php:878
+#: src/Services/TicketCapacity.php:899
 msgid "This event is fully booked."
 msgstr ""
 
 #. translators: %d: number of places still available
-#: src/Services/TicketCapacity.php:881
+#: src/Services/TicketCapacity.php:902
 #, php-format
 msgid "Only %d place is left."
 msgid_plural "Only %d places are left."
@@ -7030,7 +7030,7 @@ msgid "(untitled sale period)"
 msgstr ""
 
 #: src/blocks/event-proposal/editor.js:21
-#: src/blocks/event-signup/editor.js:157
+#: src/blocks/event-signup/editor.js:176
 msgid "Form Settings"
 msgstr ""
 
@@ -7067,7 +7067,7 @@ msgid "Email address for notifications"
 msgstr ""
 
 #: src/blocks/event-proposal/editor.js:78
-#: src/blocks/event-signup/editor.js:159
+#: src/blocks/event-signup/editor.js:178
 msgid "Submit Button Text"
 msgstr ""
 
@@ -7099,27 +7099,27 @@ msgstr ""
 msgid "Notifications enabled"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:148
+#: src/blocks/event-signup/editor.js:167
 msgid "Form content"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:166
+#: src/blocks/event-signup/editor.js:185
 msgid "Show ticket price"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:173
+#: src/blocks/event-signup/editor.js:192
 msgid "Show option prices"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:180
+#: src/blocks/event-signup/editor.js:199
 msgid "Show mailing signup checkbox"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:195
+#: src/blocks/event-signup/editor.js:214
 msgid "Edit tickets"
 msgstr ""
 
-#: src/blocks/event-signup/editor.js:199
+#: src/blocks/event-signup/editor.js:218
 msgid "Connect this block to an event date to edit its tickets."
 msgstr ""
 

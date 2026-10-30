@@ -144,7 +144,7 @@ msgstr "Editar mensaje adicional"
 #: src/Admin/groups/Groups.js:458
 #: src/Admin/groups/Groups.js:515
 #: src/Admin/manage-event-ext/EventMailings.js:699
-#: src/Admin/manage-event-ext/GroupRules.js:647
+#: src/Admin/manage-event-ext/GroupRules.js:655
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -367,7 +367,7 @@ msgstr "Grupo eliminado correctamente."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:215
-#, php-format, js-format
+#, php-format,js-format
 msgid "%s (copy)"
 msgstr "%s (copia)"
 
@@ -1111,7 +1111,7 @@ msgstr "Inactivo"
 #: src/Admin/group-detail/GroupDetail.js:330
 #: src/Admin/groups/Groups.js:295
 #: src/Admin/manage-event-ext/EventMailings.js:686
-#: src/Admin/manage-event-ext/GroupRules.js:674
+#: src/Admin/manage-event-ext/GroupRules.js:682
 #: src/Admin/polls-list/PollsList.js:226
 msgid "Edit"
 msgstr "Editar"
@@ -1148,7 +1148,7 @@ msgstr "(sin nombre)"
 
 #: src/Admin/edit-poll/EditPoll.js:695
 #: src/Admin/group-detail/GroupDetail.js:415
-#: src/Admin/manage-event-ext/GroupRules.js:689
+#: src/Admin/manage-event-ext/GroupRules.js:697
 msgid "Remove"
 msgstr "Eliminar"
 
@@ -1276,7 +1276,7 @@ msgstr "Se enviará alrededor de: %s"
 msgid "Send time will be computed from the chosen date."
 msgstr "La hora de envío se calculará a partir de la fecha elegida."
 
-#: src/Admin/manage-event-ext/GroupRules.js:635
+#: src/Admin/manage-event-ext/GroupRules.js:643
 msgid "Save"
 msgstr "Guardar"
 
@@ -1452,81 +1452,81 @@ msgstr "Ver inscripciones"
 msgid "Manage signups"
 msgstr "Gestionar inscripciones"
 
-#: src/Admin/manage-event-ext/GroupRules.js:254
+#: src/Admin/manage-event-ext/GroupRules.js:262
 msgid "Group rules added."
 msgstr "Reglas de grupo añadidas."
 
-#: src/Admin/manage-event-ext/GroupRules.js:259
+#: src/Admin/manage-event-ext/GroupRules.js:267
 msgid "Failed to add group rules."
 msgstr "Error al añadir reglas de grupo."
 
-#: src/Admin/manage-event-ext/GroupRules.js:327
+#: src/Admin/manage-event-ext/GroupRules.js:335
 msgid "Group rules updated."
 msgstr "Reglas de grupo actualizadas."
 
-#: src/Admin/manage-event-ext/GroupRules.js:332
+#: src/Admin/manage-event-ext/GroupRules.js:340
 msgid "Failed to update group rules."
 msgstr "Error al actualizar reglas de grupo."
 
-#: src/Admin/manage-event-ext/GroupRules.js:369
+#: src/Admin/manage-event-ext/GroupRules.js:377
 msgid "Failed to update permission."
 msgstr "Error al actualizar el permiso."
 
-#: src/Admin/manage-event-ext/GroupRules.js:449
+#: src/Admin/manage-event-ext/GroupRules.js:457
 msgid "Group Rules"
 msgstr "Reglas de grupo"
 
-#: src/Admin/manage-event-ext/GroupRules.js:587
-#: src/Admin/manage-event-ext/GroupRules.js:798
+#: src/Admin/manage-event-ext/GroupRules.js:595
+#: src/Admin/manage-event-ext/GroupRules.js:806
 msgid "Discount Type"
 msgstr "Tipo de descuento"
 
-#: src/Admin/manage-event-ext/GroupRules.js:603
-#: src/Admin/manage-event-ext/GroupRules.js:807
+#: src/Admin/manage-event-ext/GroupRules.js:611
+#: src/Admin/manage-event-ext/GroupRules.js:815
 msgid "Discount Value"
 msgstr "Valor del descuento"
 
-#: src/Admin/manage-event-ext/GroupRules.js:616
+#: src/Admin/manage-event-ext/GroupRules.js:624
 msgid "0 = no discount"
 msgstr "0 = sin descuento"
 
-#: src/Admin/manage-event-ext/GroupRules.js:702
+#: src/Admin/manage-event-ext/GroupRules.js:710
 msgid "Discount:"
 msgstr "Descuento:"
 
-#: src/Admin/manage-event-ext/GroupRules.js:760
+#: src/Admin/manage-event-ext/GroupRules.js:768
 msgid "No group rules yet. Add one below."
 msgstr "Aún no hay reglas de grupo. Añade una a continuación."
 
-#: src/Admin/manage-event-ext/GroupRules.js:770
+#: src/Admin/manage-event-ext/GroupRules.js:778
 msgid "Add Group"
 msgstr "Añadir grupo"
 
 #: src/Admin/fees-list/FeesList.js:99
 #: src/Admin/fees-list/FeesList.js:610
-#: src/Admin/manage-event-ext/GroupRules.js:776
+#: src/Admin/manage-event-ext/GroupRules.js:784
 msgid "Group"
 msgstr "Grupo"
 
 #: src/Admin/fees-list/FeesList.js:426
-#: src/Admin/manage-event-ext/GroupRules.js:783
+#: src/Admin/manage-event-ext/GroupRules.js:791
 msgid "Select a group..."
 msgstr "Selecciona un grupo..."
 
-#: src/Admin/manage-event-ext/GroupRules.js:818
+#: src/Admin/manage-event-ext/GroupRules.js:826
 msgid "e.g. 10"
 msgstr "p. ej. 10"
 
-#: src/Admin/manage-event-ext/GroupRules.js:822
+#: src/Admin/manage-event-ext/GroupRules.js:830
 msgid "e.g. 5.00"
 msgstr "p. ej. 5.00"
 
 #: src/Admin/fee-detail/FeeDetail.js:1479
-#: src/Admin/manage-event-ext/GroupRules.js:867
+#: src/Admin/manage-event-ext/GroupRules.js:875
 msgid "Add"
 msgstr "Añadir"
 
-#: src/Admin/manage-event-ext/GroupRules.js:881
+#: src/Admin/manage-event-ext/GroupRules.js:889
 msgid "All groups already have rules for this event."
 msgstr "Todos los grupos ya tienen reglas para este evento."
 
@@ -1595,11 +1595,11 @@ msgid "Fair Audience Experimental Settings"
 msgstr "Ajustes experimentales de Fair Audience"
 
 #: src/Admin/components/BudgetLoadStatus.js:57
-#: src/Admin/manage-event-ext/GroupRules.js:547
+#: src/Admin/manage-event-ext/GroupRules.js:555
 msgid "Retry"
 msgstr "Reintentar"
 
-#: src/Admin/manage-event-ext/GroupRules.js:555
+#: src/Admin/manage-event-ext/GroupRules.js:563
 msgid "Group rules could not be loaded."
 msgstr "No se pudieron cargar las reglas de grupo."
 
@@ -2736,6 +2736,7 @@ msgid_plural "%d reminders were not sent:"
 msgstr[0] "%d recordatorio no se envió:"
 msgstr[1] "%d recordatorios no se enviaron:"
 
+#. translators: 1: member name or email, 2: reason
 #. translators: 1: participant name, 2: reason
 #: src/Admin/fee-detail/FeeDetail.js:751
 #: src/Admin/group-detail/GroupDetail.js:518
@@ -2915,7 +2916,7 @@ msgid "Remove from group"
 msgstr "Eliminar del grupo"
 
 #: src/Admin/group-detail/GroupDetail.js:558
-#: src/Admin/manage-event-ext/GroupRules.js:466
+#: src/Admin/manage-event-ext/GroupRules.js:474
 msgid "Removing…"
 msgstr "Eliminando…"
 
@@ -2985,41 +2986,41 @@ msgstr "Esto elimina la entrada solo de esta lista. Permanece publicada en Insta
 msgid "This removes the post from this list. This cannot be undone."
 msgstr "Esto elimina la entrada de esta lista. Esto no se puede deshacer."
 
-#: src/Admin/manage-event-ext/GroupRules.js:420
+#: src/Admin/manage-event-ext/GroupRules.js:428
 msgid "Some rules could not be removed; the ones still listed remain. Try again."
 msgstr "No se pudieron eliminar algunas reglas; las que siguen listadas permanecen. Inténtalo de nuevo."
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:431
+#: src/Admin/manage-event-ext/GroupRules.js:439
 #, js-format
 msgid "Rules for %s removed."
 msgstr "Reglas para %s eliminadas."
 
-#: src/Admin/manage-event-ext/GroupRules.js:440
+#: src/Admin/manage-event-ext/GroupRules.js:448
 msgid "The group rules could not be removed. Try again."
 msgstr "No se pudieron eliminar las reglas del grupo. Inténtalo de nuevo."
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:456
+#: src/Admin/manage-event-ext/GroupRules.js:464
 #, js-format
 msgid "Remove group rules — %s"
 msgstr "Eliminar reglas del grupo — %s"
 
-#: src/Admin/manage-event-ext/GroupRules.js:462
+#: src/Admin/manage-event-ext/GroupRules.js:470
 msgid "Remove rules"
 msgstr "Eliminar reglas"
 
-#: src/Admin/manage-event-ext/GroupRules.js:477
+#: src/Admin/manage-event-ext/GroupRules.js:485
 msgid "These rules for this event date are removed:"
 msgstr "Estas reglas para esta fecha de evento se han eliminado:"
 
 #. translators: %s: discount, e.g. "10%" or "€5.00"
-#: src/Admin/manage-event-ext/GroupRules.js:487
+#: src/Admin/manage-event-ext/GroupRules.js:495
 #, js-format
 msgid "Discount: %s"
 msgstr "Descuento: %s"
 
-#: src/Admin/manage-event-ext/GroupRules.js:507
+#: src/Admin/manage-event-ext/GroupRules.js:515
 msgid "Its members no longer get this discount or these permissions for this date. The group and its members are not changed."
 msgstr "Sus miembros ya no obtienen este descuento o estos permisos para esta fecha. El grupo y sus miembros no se modifican."
 
@@ -3046,4 +3047,3 @@ msgstr "Eliminar encuesta"
 #: src/Admin/polls-list/PollsList.js:132
 msgid "Invitation links already sent stop working, and its responses are no longer shown. This cannot be undone."
 msgstr "Los enlaces de invitación ya enviados dejarán de funcionar y sus respuestas ya no se mostrarán. Esto no se puede deshacer."
-

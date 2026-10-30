@@ -500,4 +500,3 @@ msgstr "Este sitio deja de leer datos de %s y el token almacenado para él se el
 #: src/Admin/connected-sites/ConnectedSitesApp.js:676
 msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
 msgstr "Las transacciones ya importadas se conservan. El token no se revoca en el otro sitio; revócalo allí si debe dejar de funcionar."
-

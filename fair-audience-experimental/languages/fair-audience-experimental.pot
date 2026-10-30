@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-25T19:03:48+00:00\n"
+"POT-Creation-Date: 2026-10-30T06:33:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-audience-experimental\n"
@@ -963,7 +963,7 @@ msgid "Budgets could not be loaded."
 msgstr ""
 
 #: src/Admin/components/BudgetLoadStatus.js:57
-#: src/Admin/manage-event-ext/GroupRules.js:547
+#: src/Admin/manage-event-ext/GroupRules.js:555
 msgid "Retry"
 msgstr ""
 
@@ -981,7 +981,7 @@ msgstr ""
 #: src/Admin/groups/Groups.js:458
 #: src/Admin/groups/Groups.js:515
 #: src/Admin/manage-event-ext/EventMailings.js:699
-#: src/Admin/manage-event-ext/GroupRules.js:647
+#: src/Admin/manage-event-ext/GroupRules.js:655
 msgid "Cancel"
 msgstr ""
 
@@ -1232,7 +1232,7 @@ msgstr ""
 
 #: src/Admin/edit-poll/EditPoll.js:695
 #: src/Admin/group-detail/GroupDetail.js:415
-#: src/Admin/manage-event-ext/GroupRules.js:689
+#: src/Admin/manage-event-ext/GroupRules.js:697
 msgid "Remove"
 msgstr ""
 
@@ -1341,7 +1341,7 @@ msgstr ""
 #: src/Admin/group-detail/GroupDetail.js:330
 #: src/Admin/groups/Groups.js:295
 #: src/Admin/manage-event-ext/EventMailings.js:686
-#: src/Admin/manage-event-ext/GroupRules.js:674
+#: src/Admin/manage-event-ext/GroupRules.js:682
 #: src/Admin/polls-list/PollsList.js:226
 msgid "Edit"
 msgstr ""
@@ -1662,7 +1662,7 @@ msgid "No matches."
 msgstr ""
 
 #: src/Admin/fee-detail/FeeDetail.js:1479
-#: src/Admin/manage-event-ext/GroupRules.js:867
+#: src/Admin/manage-event-ext/GroupRules.js:875
 msgid "Add"
 msgstr ""
 
@@ -1767,7 +1767,7 @@ msgstr ""
 
 #: src/Admin/fees-list/FeesList.js:99
 #: src/Admin/fees-list/FeesList.js:610
-#: src/Admin/manage-event-ext/GroupRules.js:776
+#: src/Admin/manage-event-ext/GroupRules.js:784
 msgid "Group"
 msgstr ""
 
@@ -1815,7 +1815,7 @@ msgid "View Details"
 msgstr ""
 
 #: src/Admin/fees-list/FeesList.js:426
-#: src/Admin/manage-event-ext/GroupRules.js:783
+#: src/Admin/manage-event-ext/GroupRules.js:791
 msgid "Select a group..."
 msgstr ""
 
@@ -1991,7 +1991,7 @@ msgid "Remove from group"
 msgstr ""
 
 #: src/Admin/group-detail/GroupDetail.js:558
-#: src/Admin/manage-event-ext/GroupRules.js:466
+#: src/Admin/manage-event-ext/GroupRules.js:474
 msgid "Removing…"
 msgstr ""
 
@@ -2682,111 +2682,111 @@ msgstr ""
 msgid "Manage signups"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:254
+#: src/Admin/manage-event-ext/GroupRules.js:262
 msgid "Group rules added."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:259
+#: src/Admin/manage-event-ext/GroupRules.js:267
 msgid "Failed to add group rules."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:327
+#: src/Admin/manage-event-ext/GroupRules.js:335
 msgid "Group rules updated."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:332
+#: src/Admin/manage-event-ext/GroupRules.js:340
 msgid "Failed to update group rules."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:369
+#: src/Admin/manage-event-ext/GroupRules.js:377
 msgid "Failed to update permission."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:420
+#: src/Admin/manage-event-ext/GroupRules.js:428
 msgid "Some rules could not be removed; the ones still listed remain. Try again."
 msgstr ""
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:431
+#: src/Admin/manage-event-ext/GroupRules.js:439
 #, js-format
 msgid "Rules for %s removed."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:440
+#: src/Admin/manage-event-ext/GroupRules.js:448
 msgid "The group rules could not be removed. Try again."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:449
+#: src/Admin/manage-event-ext/GroupRules.js:457
 msgid "Group Rules"
 msgstr ""
 
 #. translators: %s: group name
-#: src/Admin/manage-event-ext/GroupRules.js:456
+#: src/Admin/manage-event-ext/GroupRules.js:464
 #, js-format
 msgid "Remove group rules — %s"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:462
+#: src/Admin/manage-event-ext/GroupRules.js:470
 msgid "Remove rules"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:477
+#: src/Admin/manage-event-ext/GroupRules.js:485
 msgid "These rules for this event date are removed:"
 msgstr ""
 
 #. translators: %s: discount, e.g. "10%" or "€5.00"
-#: src/Admin/manage-event-ext/GroupRules.js:487
+#: src/Admin/manage-event-ext/GroupRules.js:495
 #, js-format
 msgid "Discount: %s"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:507
+#: src/Admin/manage-event-ext/GroupRules.js:515
 msgid "Its members no longer get this discount or these permissions for this date. The group and its members are not changed."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:555
+#: src/Admin/manage-event-ext/GroupRules.js:563
 msgid "Group rules could not be loaded."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:587
-#: src/Admin/manage-event-ext/GroupRules.js:798
+#: src/Admin/manage-event-ext/GroupRules.js:595
+#: src/Admin/manage-event-ext/GroupRules.js:806
 msgid "Discount Type"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:603
-#: src/Admin/manage-event-ext/GroupRules.js:807
+#: src/Admin/manage-event-ext/GroupRules.js:611
+#: src/Admin/manage-event-ext/GroupRules.js:815
 msgid "Discount Value"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:616
+#: src/Admin/manage-event-ext/GroupRules.js:624
 msgid "0 = no discount"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:635
+#: src/Admin/manage-event-ext/GroupRules.js:643
 msgid "Save"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:702
+#: src/Admin/manage-event-ext/GroupRules.js:710
 msgid "Discount:"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:760
+#: src/Admin/manage-event-ext/GroupRules.js:768
 msgid "No group rules yet. Add one below."
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:770
+#: src/Admin/manage-event-ext/GroupRules.js:778
 msgid "Add Group"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:818
+#: src/Admin/manage-event-ext/GroupRules.js:826
 msgid "e.g. 10"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:822
+#: src/Admin/manage-event-ext/GroupRules.js:830
 msgid "e.g. 5.00"
 msgstr ""
 
-#: src/Admin/manage-event-ext/GroupRules.js:881
+#: src/Admin/manage-event-ext/GroupRules.js:889
 msgid "All groups already have rules for this event."
 msgstr ""
 

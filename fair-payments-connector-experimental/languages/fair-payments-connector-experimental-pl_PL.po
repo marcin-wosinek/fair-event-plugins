@@ -500,4 +500,3 @@ msgstr "Ta witryna przestaje odczytywać dane z %s, a token dla niej przechowywa
 #: src/Admin/connected-sites/ConnectedSitesApp.js:676
 msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
 msgstr "Transakcje już zaimportowane z niej są zachowywane. Token nie jest odwołany na drugiej witrynie; odwołaj go tam, jeśli powinien przestać działać."
-

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-28T06:01:41+00:00\n"
+"POT-Creation-Date: 2026-10-30T06:33:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -175,12 +175,12 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:210
+#: src/Services/FormNotificationService.php:212
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:217
+#: src/Services/FormNotificationService.php:219
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
 #: src/Admin/submission-detail/SubmissionDetail.js:430
@@ -188,12 +188,12 @@ msgid "Email"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:229
+#: src/Services/FormNotificationService.php:231
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:257
+#: src/Services/FormNotificationService.php:259
 msgid "A new form submission has been received."
 msgstr ""
 
@@ -558,7 +558,7 @@ msgid "Create new group"
 msgstr ""
 
 #: src/Admin/questionnaire-responses/AddToGroupModal.js:566
-#: src/blocks/fair-form-conditional/editor.js:594
+#: src/blocks/fair-form-conditional/editor.js:603
 #: src/blocks/shared/OptionSourceControls.js:149
 msgid "Try again"
 msgstr ""
@@ -793,7 +793,7 @@ msgid "No answers recorded."
 msgstr ""
 
 #: src/Admin/submission-detail/SubmissionDetail.js:473
-#: src/blocks/fair-form-conditional/editor.js:54
+#: src/blocks/fair-form-conditional/editor.js:57
 msgid "Question"
 msgstr ""
 
@@ -805,107 +805,107 @@ msgstr ""
 msgid "Submission date"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:39
+#: src/blocks/fair-form-conditional/editor.js:42
 msgid "equals"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:40
+#: src/blocks/fair-form-conditional/editor.js:43
 msgid "not equals"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:41
+#: src/blocks/fair-form-conditional/editor.js:44
 msgid "contains"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:42
+#: src/blocks/fair-form-conditional/editor.js:45
 msgid "is not empty"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:49
-#: src/blocks/fair-form-conditional/editor.js:328
-#: src/blocks/fair-form-conditional/editor.js:343
+#: src/blocks/fair-form-conditional/editor.js:52
+#: src/blocks/fair-form-conditional/editor.js:337
+#: src/blocks/fair-form-conditional/editor.js:352
 msgid "is selected"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:50
-#: src/blocks/fair-form-conditional/editor.js:327
-#: src/blocks/fair-form-conditional/editor.js:342
+#: src/blocks/fair-form-conditional/editor.js:53
+#: src/blocks/fair-form-conditional/editor.js:336
+#: src/blocks/fair-form-conditional/editor.js:351
 msgid "is not selected"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:55
+#: src/blocks/fair-form-conditional/editor.js:58
 msgid "Event option"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:59
+#: src/blocks/fair-form-conditional/editor.js:62
 msgid "Ticket type"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:271
+#: src/blocks/fair-form-conditional/editor.js:280
 msgid "— Select a question —"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:323
+#: src/blocks/fair-form-conditional/editor.js:332
 msgid "No condition set"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:373
+#: src/blocks/fair-form-conditional/editor.js:382
 msgid "Condition Settings"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:377
+#: src/blocks/fair-form-conditional/editor.js:386
 msgid "Condition source"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:397
+#: src/blocks/fair-form-conditional/editor.js:406
 msgid "Option short name"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:407
+#: src/blocks/fair-form-conditional/editor.js:416
 msgid "Enter the option's short name (set it in the event's Tickets tab). Options can't be listed here because they come from the selected event date at render time."
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:413
-#: src/blocks/fair-form-conditional/editor.js:449
-#: src/blocks/fair-form-conditional/editor.js:487
+#: src/blocks/fair-form-conditional/editor.js:422
+#: src/blocks/fair-form-conditional/editor.js:458
+#: src/blocks/fair-form-conditional/editor.js:496
 msgid "Operator"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:462
+#: src/blocks/fair-form-conditional/editor.js:471
 msgid "Show when question"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:499
-#: src/blocks/fair-form-conditional/editor.js:539
+#: src/blocks/fair-form-conditional/editor.js:508
+#: src/blocks/fair-form-conditional/editor.js:548
 msgid "Value"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:503
+#: src/blocks/fair-form-conditional/editor.js:512
 msgid "— Select a value —"
 msgstr ""
 
 #. translators: %s: saved condition value
-#: src/blocks/fair-form-conditional/editor.js:514
+#: src/blocks/fair-form-conditional/editor.js:523
 #, js-format
 msgid "%s (no longer a choice)"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:546
+#: src/blocks/fair-form-conditional/editor.js:555
 msgid "The value to compare against."
 msgstr ""
 
 #. translators: %s: saved condition value
-#: src/blocks/fair-form-conditional/editor.js:560
+#: src/blocks/fair-form-conditional/editor.js:569
 #, js-format
 msgid "“%s” is no longer one of this question’s choices. Pick a current choice or update the condition."
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:572
+#: src/blocks/fair-form-conditional/editor.js:581
 #: src/blocks/shared/OptionSourceControls.js:156
 msgid "Loading categories…"
 msgstr ""
 
-#: src/blocks/fair-form-conditional/editor.js:584
+#: src/blocks/fair-form-conditional/editor.js:593
 #: src/blocks/shared/OptionSourceControls.js:144
 msgid "The categories could not be loaded. Check your connection and try again."
 msgstr ""
@@ -915,13 +915,13 @@ msgstr ""
 #: src/blocks/fair-form-datetime/editor.js:31
 #: src/blocks/fair-form-email/editor.js:31
 #: src/blocks/fair-form-file-upload/editor.js:43
-#: src/blocks/fair-form-long-text/editor.js:52
-#: src/blocks/fair-form-multiselect/editor.js:88
-#: src/blocks/fair-form-phone/editor.js:53
-#: src/blocks/fair-form-radio/editor.js:73
-#: src/blocks/fair-form-select-one/editor.js:88
-#: src/blocks/fair-form-short-text/editor.js:66
-#: src/blocks/fair-form-url/editor.js:51
+#: src/blocks/fair-form-long-text/editor.js:53
+#: src/blocks/fair-form-multiselect/editor.js:89
+#: src/blocks/fair-form-phone/editor.js:54
+#: src/blocks/fair-form-radio/editor.js:74
+#: src/blocks/fair-form-select-one/editor.js:89
+#: src/blocks/fair-form-short-text/editor.js:64
+#: src/blocks/fair-form-url/editor.js:52
 msgid "Question Settings"
 msgstr ""
 
@@ -930,18 +930,18 @@ msgstr ""
 #: src/blocks/fair-form-datetime/editor.js:33
 #: src/blocks/fair-form-email/editor.js:33
 #: src/blocks/fair-form-file-upload/editor.js:45
-#: src/blocks/fair-form-long-text/editor.js:54
-#: src/blocks/fair-form-multiselect/editor.js:90
-#: src/blocks/fair-form-phone/editor.js:55
-#: src/blocks/fair-form-radio/editor.js:75
-#: src/blocks/fair-form-select-one/editor.js:90
-#: src/blocks/fair-form-short-text/editor.js:68
-#: src/blocks/fair-form-url/editor.js:53
+#: src/blocks/fair-form-long-text/editor.js:55
+#: src/blocks/fair-form-multiselect/editor.js:91
+#: src/blocks/fair-form-phone/editor.js:56
+#: src/blocks/fair-form-radio/editor.js:76
+#: src/blocks/fair-form-select-one/editor.js:91
+#: src/blocks/fair-form-short-text/editor.js:66
+#: src/blocks/fair-form-url/editor.js:54
 msgid "Question Key"
 msgstr ""
 
 #: src/blocks/fair-form-consent/editor.js:39
-#: src/blocks/fair-form-short-text/editor.js:73
+#: src/blocks/fair-form-short-text/editor.js:71
 msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
 msgstr ""
 
@@ -950,13 +950,13 @@ msgstr ""
 #: src/blocks/fair-form-datetime/editor.js:44
 #: src/blocks/fair-form-email/editor.js:44
 #: src/blocks/fair-form-file-upload/editor.js:56
-#: src/blocks/fair-form-long-text/editor.js:65
-#: src/blocks/fair-form-multiselect/editor.js:101
-#: src/blocks/fair-form-phone/editor.js:66
-#: src/blocks/fair-form-radio/editor.js:86
-#: src/blocks/fair-form-select-one/editor.js:101
-#: src/blocks/fair-form-short-text/editor.js:79
-#: src/blocks/fair-form-url/editor.js:64
+#: src/blocks/fair-form-long-text/editor.js:66
+#: src/blocks/fair-form-multiselect/editor.js:102
+#: src/blocks/fair-form-phone/editor.js:67
+#: src/blocks/fair-form-radio/editor.js:87
+#: src/blocks/fair-form-select-one/editor.js:102
+#: src/blocks/fair-form-short-text/editor.js:77
+#: src/blocks/fair-form-url/editor.js:65
 msgid "Required"
 msgstr ""
 
@@ -971,10 +971,10 @@ msgstr ""
 #: src/blocks/fair-form-date/editor.js:51
 #: src/blocks/fair-form-datetime/editor.js:51
 #: src/blocks/fair-form-email/editor.js:51
-#: src/blocks/fair-form-long-text/editor.js:72
-#: src/blocks/fair-form-phone/editor.js:73
-#: src/blocks/fair-form-short-text/editor.js:86
-#: src/blocks/fair-form-url/editor.js:71
+#: src/blocks/fair-form-long-text/editor.js:73
+#: src/blocks/fair-form-phone/editor.js:74
+#: src/blocks/fair-form-short-text/editor.js:84
+#: src/blocks/fair-form-url/editor.js:72
 msgid "Placeholder"
 msgstr ""
 
@@ -982,13 +982,13 @@ msgstr ""
 #: src/blocks/fair-form-datetime/editor.js:68
 #: src/blocks/fair-form-email/editor.js:68
 #: src/blocks/fair-form-file-upload/editor.js:98
-#: src/blocks/fair-form-long-text/editor.js:101
-#: src/blocks/fair-form-multiselect/editor.js:126
-#: src/blocks/fair-form-phone/editor.js:98
-#: src/blocks/fair-form-radio/editor.js:106
-#: src/blocks/fair-form-select-one/editor.js:126
-#: src/blocks/fair-form-short-text/editor.js:106
-#: src/blocks/fair-form-url/editor.js:102
+#: src/blocks/fair-form-long-text/editor.js:102
+#: src/blocks/fair-form-multiselect/editor.js:127
+#: src/blocks/fair-form-phone/editor.js:99
+#: src/blocks/fair-form-radio/editor.js:107
+#: src/blocks/fair-form-select-one/editor.js:127
+#: src/blocks/fair-form-short-text/editor.js:104
+#: src/blocks/fair-form-url/editor.js:103
 msgid "Enter your question..."
 msgstr ""
 
@@ -1024,16 +1024,16 @@ msgstr ""
 msgid "Max file size:"
 msgstr ""
 
-#: src/blocks/fair-form-long-text/editor.js:59
+#: src/blocks/fair-form-long-text/editor.js:60
 msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-long-text/editor.js:79
+#: src/blocks/fair-form-long-text/editor.js:80
 msgid "Rows"
 msgstr ""
 
-#: src/blocks/fair-form-long-text/editor.js:115
-#: src/blocks/fair-form-short-text/editor.js:120
+#: src/blocks/fair-form-long-text/editor.js:116
+#: src/blocks/fair-form-short-text/editor.js:118
 msgid "Type your answer..."
 msgstr ""
 
@@ -1069,9 +1069,9 @@ msgstr ""
 msgid "Category preferences will be shown here"
 msgstr ""
 
-#: src/blocks/fair-form-multiselect/editor.js:95
-#: src/blocks/fair-form-radio/editor.js:80
-#: src/blocks/fair-form-select-one/editor.js:95
+#: src/blocks/fair-form-multiselect/editor.js:96
+#: src/blocks/fair-form-radio/editor.js:81
+#: src/blocks/fair-form-select-one/editor.js:96
 msgid "A unique identifier for this question. Used internally."
 msgstr ""
 
@@ -1079,27 +1079,27 @@ msgstr ""
 msgid "Enter option text..."
 msgstr ""
 
-#: src/blocks/fair-form-phone/editor.js:60
+#: src/blocks/fair-form-phone/editor.js:61
 msgid "A unique identifier for this question (e.g. \"mobile_phone\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-phone/editor.js:79
+#: src/blocks/fair-form-phone/editor.js:80
 msgid "Must include country code with leading \"+\" (e.g. +49 170 123 45 67). Leave empty to use the example for your site’s timezone."
 msgstr ""
 
-#: src/blocks/fair-form-url/editor.js:58
+#: src/blocks/fair-form-url/editor.js:59
 msgid "A unique identifier for this question (e.g. \"website\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-url/editor.js:78
+#: src/blocks/fair-form-url/editor.js:79
 msgid "Read event details from the linked page"
 msgstr ""
 
-#: src/blocks/fair-form-url/editor.js:82
+#: src/blocks/fair-form-url/editor.js:83
 msgid "Once the visitor leaves the field, any event details the link publishes (title, dates, location) are shown right underneath it; nothing is stored."
 msgstr ""
 
-#: src/blocks/fair-form-url/editor.js:115
+#: src/blocks/fair-form-url/editor.js:116
 msgid "https://example.com"
 msgstr ""
 

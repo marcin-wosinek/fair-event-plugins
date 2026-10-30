@@ -699,7 +699,7 @@ msgstr "%1$s (%2$d)"
 #: src/Admin/entries/components/TransferModal.js:242
 #: src/Admin/entries/components/UnmatchModal.js:299
 #: src/Admin/reconciliation/components/SavedSettlementReview.js:1045
-#: src/Admin/reconciliation/components/SettlementImportModal.js:394
+#: src/Admin/reconciliation/components/SettlementImportModal.js:393
 #: src/Admin/settlements/components/CsvImportModal.js:416
 msgid "Cancel"
 msgstr "Cancelar"
@@ -764,7 +764,7 @@ msgid "← All settlements"
 msgstr "← Todos los liquidaciones"
 
 #. translators: %s: settlement reference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:244
+#: src/Admin/reconciliation/components/SettlementImportModal.js:243
 #: src/Admin/settlements/components/SettlementDetail.js:164
 #, js-format
 msgid "Settlement %s"
@@ -2495,7 +2495,7 @@ msgstr "Usar esta URL"
 
 #: src/Admin/entries/components/ImportModal.js:54
 #: src/Admin/readSpreadsheet.js:32
-#: src/Admin/reconciliation/components/SettlementImportModal.js:73
+#: src/Admin/reconciliation/components/SettlementImportModal.js:66
 msgid "Failed to parse file."
 msgstr "Error al analizar el archivo."
 
@@ -2890,93 +2890,93 @@ msgstr "Error al leer el archivo."
 msgid "Transactions matched successfully."
 msgstr "Transacciones emparejadas correctamente."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:97
+#: src/Admin/reconciliation/components/SettlementImportModal.js:90
 msgid "Failed to match settlement."
 msgstr "Error al coincidir el liquidación."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:124
+#: src/Admin/reconciliation/components/SettlementImportModal.js:123
 #: src/Admin/reconciliation/ReconciliationApp.js:544
 msgid "Settlement matched successfully."
 msgstr "Liquidación coincidida correctamente."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:133
+#: src/Admin/reconciliation/components/SettlementImportModal.js:132
 #: src/Admin/reconciliation/ReconciliationApp.js:442
 msgid "Failed to match transactions."
 msgstr "Error al emparejar transacciones."
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:148
+#: src/Admin/reconciliation/components/SettlementImportModal.js:147
 #, js-format
 msgid "%1$s — %2$s (suggested)"
 msgstr "%1$s — %2$s (sugerido)"
 
 #. translators: 1: amount, 2: date
-#: src/Admin/reconciliation/components/SettlementImportModal.js:165
+#: src/Admin/reconciliation/components/SettlementImportModal.js:164
 #, js-format
 msgid "%1$s — %2$s"
 msgstr "%1$s — %2$s"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:189
+#: src/Admin/reconciliation/components/SettlementImportModal.js:188
 msgid "Import Mollie Settlement CSV"
 msgstr "Importar CSV de liquidación de Mollie"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:208
+#: src/Admin/reconciliation/components/SettlementImportModal.js:207
 msgid "Select a Mollie settlement export (.csv). Payment rows are matched to transactions by their Mollie payment ID, and the payout is matched to a bank entry."
 msgstr "Selecciona una exportación de liquidación de Mollie (.csv). Las filas de pago se cotejan con las transacciones por su ID de pago de Mollie, y el pago se coteja con una entrada bancaria."
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:227
+#: src/Admin/reconciliation/components/SettlementImportModal.js:226
 msgid "Parsing file…"
 msgstr "Analizando archivo…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:228
+#: src/Admin/reconciliation/components/SettlementImportModal.js:227
 msgid "Matching settlement…"
 msgstr "Cotejando liquidación…"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:250
+#: src/Admin/reconciliation/components/SettlementImportModal.js:249
 msgid "Payments matched:"
 msgstr "Pagos coincidentes:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:256
+#: src/Admin/reconciliation/components/SettlementImportModal.js:255
 msgid "Settlement total:"
 msgstr "Total de liquidación:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:265
+#: src/Admin/reconciliation/components/SettlementImportModal.js:264
 msgid "Fees total:"
 msgstr "Total de comisiones:"
 
 #. translators: %s: amount difference
-#: src/Admin/reconciliation/components/SettlementImportModal.js:276
+#: src/Admin/reconciliation/components/SettlementImportModal.js:275
 #, js-format
 msgid "(differs from recorded fees by %s)"
 msgstr "(difiere de las comisiones registradas por %s)"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:288
+#: src/Admin/reconciliation/components/SettlementImportModal.js:287
 msgid "Match to bank entry"
 msgstr "Coincidir con entrada bancaria"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:296
+#: src/Admin/reconciliation/components/SettlementImportModal.js:295
 msgid "— Select a bank entry —"
 msgstr "— Seleccionar una entrada bancaria —"
 
 #. translators: 1: entry amount, 2: settlement total
-#: src/Admin/reconciliation/components/SettlementImportModal.js:313
+#: src/Admin/reconciliation/components/SettlementImportModal.js:312
 #, js-format
 msgid "Selected entry (%1$s) does not equal the settlement total (%2$s)."
 msgstr "La entrada seleccionada (%1$s) no es igual al total de liquidación (%2$s)."
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:335
+#: src/Admin/reconciliation/components/SettlementImportModal.js:334
 #, js-format
 msgid "%d payment row(s) had no matching transaction:"
 msgstr "%d fila(s) de pago no tenía(n) transacción coincidente:"
 
 #. translators: %d: count
-#: src/Admin/reconciliation/components/SettlementImportModal.js:365
+#: src/Admin/reconciliation/components/SettlementImportModal.js:364
 #, js-format
 msgid "%d unmatched transaction(s) in this date window are absent from the CSV:"
 msgstr "%d transacción(es) sin coincidencia en esta ventana de fecha están ausentes del CSV:"
 
-#: src/Admin/reconciliation/components/SettlementImportModal.js:410
+#: src/Admin/reconciliation/components/SettlementImportModal.js:409
 #: src/Admin/reconciliation/ReconciliationApp.js:998
 msgid "Confirm Match"
 msgstr "Confirmar coincidencia"
@@ -3159,6 +3159,7 @@ msgstr[1] "Se eliminarán los vínculos con las %d transacciones:"
 msgid "This entry has no linked transactions left. Unmatching only refreshes the list."
 msgstr "Esta entrada ya no tiene transacciones vinculadas. Deshacer la coincidencia solo actualizará la lista."
 
+#. translators: %d: financial entry ID.
 #. translators: %d: financial entry ID
 #: src/Admin/entries/components/UnmatchModal.js:155
 #: src/Admin/entries/EntriesApp.js:651
@@ -3346,4 +3347,3 @@ msgstr[1] "Se corresponde con %d transacciones, que no se eliminan."
 #: src/Admin/entries/EntriesApp.js:2056
 msgid "This cannot be undone."
 msgstr "Esto no se puede deshacer."
-

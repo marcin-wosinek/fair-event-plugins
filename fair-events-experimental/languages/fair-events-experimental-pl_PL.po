@@ -326,7 +326,7 @@ msgstr "Meta odpowiedziała, ale nie potwierdziła odebrania zdarzenia testowego
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:314
 #: src/Admin/meta/MetaConversions.js:570
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -1066,7 +1066,6 @@ msgstr "Odebrane zdarzenia: nie zgłoszono"
 msgid "Events received: %d"
 msgstr "Odebrane zdarzenia: %d"
 
-#. translators: %s: Meta trace ID for support requests
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
 #: src/Admin/whatsapp/WhatsAppConnection.js:110
@@ -1242,7 +1241,7 @@ msgstr "Wróć do kanałów wydarzeń"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/SourceViewApp.js:259
-#, js-format,php-format
+#, js-format, php-format
 msgid "Event feed: %s"
 msgstr "Kanał wydarzeń: %s"
 
@@ -2405,278 +2404,279 @@ msgstr "Planowanie jest automatycznie ponawiane przy kolejnych odwiedzinach stro
 #: src/API/WhatsAppController.php:245
 #: src/Admin/whatsapp/WebhookSetup.js:316
 msgid "Enter an App Secret or a verify token to save."
-msgstr ""
+msgstr "Wpisz klucz aplikacji lub token weryfikacyjny, aby zapisać."
 
 #: src/API/WhatsAppController.php:368
 msgid "The send could not be recorded, so nothing was sent. Try again; if it keeps failing, check the site's database."
-msgstr ""
+msgstr "Wysłanie nie mogło być zarejestrowane, więc nic nie zostało wysłane. Spróbuj ponownie; jeśli problem będzie się powtarzać, sprawdź bazę danych witryny."
 
 #: src/API/WhatsAppController.php:478
 msgid "WhatsApp could not deliver to this number. It may not use WhatsApp, or may run an outdated app."
-msgstr ""
+msgstr "WhatsApp nie mógł dostarczyć wiadomości na ten numer. Numer może nie używać WhatsAppa lub może mieć zainstalowaną starszą wersję aplikacji."
 
 #: src/API/WhatsAppController.php:480
 msgid "More than 24 hours passed since the recipient last wrote, so only an approved template can reach them."
-msgstr ""
+msgstr "Minęło więcej niż 24 godziny od ostatniej wiadomości od odbiorcy, dlatego tylko zatwierdzony szablon może go osiągnąć."
 
 #: src/API/WhatsAppController.php:482
 msgid "WhatsApp chose not to deliver this message to keep engagement healthy. Wait before sending this person another marketing message."
-msgstr ""
+msgstr "WhatsApp zdecydował się nie dostarczać tej wiadomości, aby utrzymać zdrowy poziom zaangażowania. Poczekaj przed wysłaniem tej osobie kolejnej wiadomości marketingowej."
 
 #: src/API/WhatsAppController.php:484
 msgid "The recipient stopped marketing messages from this business."
-msgstr ""
+msgstr "Odbiorca zatrzymał wiadomości marketingowe od tej firmy."
 
 #: src/API/WhatsAppController.php:486
 msgid "The sender and the recipient are the same number."
-msgstr ""
+msgstr "Nadawca i odbiorca to ten sam numer."
 
 #: src/API/WhatsAppController.php:488
 msgid "WhatsApp held this message back as part of an experiment on the recipient's number."
-msgstr ""
+msgstr "WhatsApp wstrzymał tę wiadomość w ramach eksperymentu na numerze odbiorcy."
 
 #: src/API/WhatsAppController.php:501
 msgid "Too many messages were sent too quickly. Wait before sending again."
-msgstr ""
+msgstr "Zbyt wiele wiadomości zostało wysłanych zbyt szybko. Poczekaj przed wysłaniem kolejnej wiadomości."
 
 #: src/API/WhatsAppController.php:505
 msgid "WhatsApp could not process the message content."
-msgstr ""
+msgstr "WhatsApp nie mógł przetworzyć zawartości wiadomości."
 
 #: src/API/WhatsAppController.php:513
 msgid "The template is missing, paused or not approved in this language. Check it in WhatsApp Manager."
-msgstr ""
+msgstr "Szablon jest brakujący, wstrzymany lub nie zatwierdzony w tym języku. Sprawdź go w WhatsApp Manager."
 
 #: src/API/WhatsAppController.php:518
 msgid "WhatsApp had a temporary problem delivering the message. Try again later."
-msgstr ""
+msgstr "WhatsApp miał tymczasowy problem z dostarczeniem wiadomości. Spróbuj ponownie później."
 
 #: src/API/WhatsAppController.php:520
 msgid "WhatsApp reported that the message was not delivered."
-msgstr ""
+msgstr "WhatsApp zgłosił, że wiadomość nie została dostarczona."
 
 #: src/API/WhatsAppWebhookController.php:90
 msgid "Webhook verification failed."
-msgstr ""
+msgstr "Weryfikacja webhooka nie powiodła się."
 
 #: src/API/WhatsAppWebhookController.php:139
 msgid "The WhatsApp webhook is not configured."
-msgstr ""
+msgstr "Webhook WhatsAppa nie jest skonfigurowany."
 
 #: src/API/WhatsAppWebhookController.php:143
 msgid "The callback is too large."
-msgstr ""
+msgstr "Wywołanie zwrotne jest zbyt duże."
 
 #: src/API/WhatsAppWebhookController.php:146
 msgid "The callback signature is missing or invalid."
-msgstr ""
+msgstr "Podpis wywołania zwrotnego jest brakujący lub nieprawidłowy."
 
 #: src/API/WhatsAppWebhookController.php:152
 msgid "The callback is not a WhatsApp Business Account update."
-msgstr ""
+msgstr "Wywołanie zwrotne nie jest aktualizacją konta biznesowego WhatsAppa."
 
 #: src/API/WhatsAppWebhookController.php:181
 msgid "The callback could not be stored. Meta will send it again."
-msgstr ""
+msgstr "Wywołanie zwrotne nie mogło być zapisane. Meta wyśle je ponownie."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:31
 msgid "Accepted"
-msgstr ""
+msgstr "Zaakceptowano"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:32
 msgid "WhatsApp accepted the message. Waiting for a delivery update."
-msgstr ""
+msgstr "WhatsApp zaakceptował wiadomość. Oczekiwanie na aktualizację dostarczenia."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:40
 msgid "WhatsApp sent the message. It has not reached the phone yet."
-msgstr ""
+msgstr "WhatsApp wysłał wiadomość. Nie dotarła jeszcze do telefonu."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:47
 msgid "Delivered"
-msgstr ""
+msgstr "Dostarczone"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:48
 msgid "The message reached the recipient's phone."
-msgstr ""
+msgstr "Wiadomość dotarła do telefonu odbiorcy."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:55
 msgid "Read"
-msgstr ""
+msgstr "Przeczytane"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:56
 msgid "The recipient opened the message."
-msgstr ""
+msgstr "Odbiorca otworzył wiadomość."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:63
 msgid "Not delivered"
-msgstr ""
+msgstr "Niedostarczone"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:68
 msgid "Not accepted"
-msgstr ""
+msgstr "Nie zaakceptowane"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:74
 msgid "WhatsApp did not confirm the send, so it may or may not have gone out. It was not retried."
-msgstr ""
+msgstr "WhatsApp nie potwierdził wysłania, więc wiadomość mogła, ale nie musiała zostać wysłana. Nie podjęto ponownej próby."
 
 #. translators: %s: explanation of the failure
 #: src/Admin/whatsapp/DeliveryHistory.js:94
 #, js-format
 msgid "An earlier update reported a failure: %s"
-msgstr ""
+msgstr "Wcześniejsza aktualizacja zgłosiła błąd: %s"
 
 #. translators: %d: numeric error code reported by WhatsApp
 #: src/Admin/whatsapp/DeliveryHistory.js:107
 #, js-format
 msgid "WhatsApp error code: %d"
-msgstr ""
+msgstr "Kod błędu WhatsApp: %d"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:193
 #: src/Admin/whatsapp/DeliveryHistory.js:256
 msgid "Recent messages"
-msgstr ""
+msgstr "Ostatnie wiadomości"
 
 #. translators: %d: number of days
 #: src/Admin/whatsapp/DeliveryHistory.js:200
 #, js-format
 msgid "Messages sent in the last %d day, with their latest delivery update. Only the last three digits of each recipient number are kept."
 msgid_plural "Messages sent in the last %d days, with their latest delivery update. Only the last three digits of each recipient number are kept."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "Wiadomość wysłana w ciągu ostatniego %d dnia z najnowszą aktualizacją dostarczenia. Przechowywane są tylko ostatnie trzy cyfry każdego numeru odbiorcy."
+msgstr[1] "Wiadomości wysłane w ciągu ostatnich %d dni z najnowszą aktualizacją dostarczenia. Przechowywane są tylko ostatnie trzy cyfry każdego numeru odbiorcy."
+msgstr[2] "Wiadomości wysłane w ciągu ostatnich %d dni z najnowszą aktualizacją dostarczenia. Przechowywane są tylko ostatnie trzy cyfry każdego numeru odbiorcy."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:216
 msgid "Refresh statuses"
-msgstr ""
+msgstr "Odśwież statusy"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:224
 msgid "Failed to load the delivery updates. Refresh to try again."
-msgstr ""
+msgstr "Nie udało się wczytać aktualizacji dostarczenia. Odśwież, aby spróbować ponownie."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:232
 msgid "Loading messages…"
-msgstr ""
+msgstr "Wczytywanie wiadomości…"
 
 #: src/Admin/whatsapp/DeliveryHistory.js:240
 msgid "No messages sent yet."
-msgstr ""
+msgstr "Nie wysłano jeszcze żadnych wiadomości."
 
 #: src/Admin/whatsapp/DeliveryHistory.js:248
 msgid "Some messages are still waiting for an update. Refresh to check again."
-msgstr ""
+msgstr "Niektóre wiadomości wciąż czekają na aktualizację. Odśwież, aby sprawdzić ponownie."
 
 #. translators: 1: template name, 2: template language code, 3: recipient number with most digits hidden, 4: date and time of the send
 #: src/Admin/whatsapp/DeliveryHistory.js:279
 #, js-format
 msgid "%1$s (%2$s) to %3$s, sent on %4$s"
-msgstr ""
+msgstr "%1$s (%2$s) do %3$s, wysłane %4$s"
 
 #. translators: %s: environment variable name
 #: src/Admin/whatsapp/WebhookSetup.js:29
 #, js-format
 msgid "Set by the %s environment variable. A value saved here is ignored."
-msgstr ""
+msgstr "Ustawione przez zmienną środowiskową %s. Wartość zapisana tutaj jest ignorowana."
 
 #. translators: %s: PHP constant name
 #: src/Admin/whatsapp/WebhookSetup.js:39
 #, js-format
 msgid "Set by the %s constant. A value saved here is ignored."
-msgstr ""
+msgstr "Ustawione przez stałą %s. Wartość zapisana tutaj jest ignorowana."
 
 #: src/Admin/whatsapp/WebhookSetup.js:47
 msgid "Saved, not shown. Enter a new value to replace it."
-msgstr ""
+msgstr "Zapisane, nie wyświetlane. Wpisz nową wartość, aby ją zastąpić."
 
 #: src/Admin/whatsapp/WebhookSetup.js:52
 msgid "Not set."
-msgstr ""
+msgstr "Nie ustawiono."
 
 #. translators: %s: date and time
 #: src/Admin/whatsapp/WebhookSetup.js:71
 #, js-format
 msgid "Verified: Meta checked the callback URL with the current verify token on %s."
-msgstr ""
+msgstr "Zweryfikowane: Meta sprawdziła adres URL wywołania zwrotnego z bieżącym tokenem weryfikacji dnia %s."
 
 #: src/Admin/whatsapp/WebhookSetup.js:77
 msgid "Not verified: Meta has not checked the callback URL with the current verify token."
-msgstr ""
+msgstr "Nie zweryfikowane: Meta nie sprawdziła adresu URL wywołania zwrotnego z bieżącym tokenem weryfikacji."
 
 #. translators: %s: date and time
 #: src/Admin/whatsapp/WebhookSetup.js:88
 #, js-format
 msgid "Receiving updates: the last authenticated update for this account arrived on %s."
-msgstr ""
+msgstr "Odbieranie aktualizacji: ostatnia uwierzytelniona aktualizacja dla tego konta dotarła dnia %s."
 
 #: src/Admin/whatsapp/WebhookSetup.js:94
 msgid "No updates received yet: no authenticated update for this account has arrived. Verification alone does not show that updates arrive; subscribe to the messages field and send a test template."
-msgstr ""
+msgstr "Brak odebranych aktualizacji: żadna uwierzytelniona aktualizacja dla tego konta nie dotarła. Sama weryfikacja nie pokazuje, że aktualizacje docierają; subskrybuj pole wiadomości i wyślij szablon testowy."
 
 #: src/Admin/whatsapp/WebhookSetup.js:157
 msgid "Failed to save the webhook settings."
-msgstr ""
+msgstr "Nie udało się zapisać ustawień webhooka."
 
 #: src/Admin/whatsapp/WebhookSetup.js:176
 msgid "Webhook settings saved. If you changed the verify token, verify the callback URL again in the App Dashboard."
-msgstr ""
+msgstr "Ustawienia webhooka zapisane. Jeśli zmieniłeś token weryfikacji, zweryfikuj adres URL wywołania zwrotnego ponownie w Panelu aplikacji."
 
 #: src/Admin/whatsapp/WebhookSetup.js:212
 msgid "App Secret removed. Delivery updates are refused until another one is saved."
-msgstr ""
+msgstr "Klucz tajny aplikacji usunięty. Aktualizacje dostarczania są odrzucane do czasu zapisania innego."
 
 #: src/Admin/whatsapp/WebhookSetup.js:216
 msgid "Verify token removed. Meta cannot verify the callback URL until another one is saved."
-msgstr ""
+msgstr "Token weryfikacji usunięty. Meta nie może zweryfikować adresu URL wywołania zwrotnego do czasu zapisania innego."
 
 #: src/Admin/whatsapp/WebhookSetup.js:224
 msgid "Remove the saved App Secret"
-msgstr ""
+msgstr "Usuń zapisany klucz tajny aplikacji"
 
 #: src/Admin/whatsapp/WebhookSetup.js:228
 msgid "Remove the saved verify token"
-msgstr ""
+msgstr "Usuń zapisany token weryfikacji"
 
 #: src/Admin/whatsapp/WebhookSetup.js:242
 msgid "Delivery updates"
-msgstr ""
+msgstr "Aktualizacje dostarczania"
 
 #: src/Admin/whatsapp/WebhookSetup.js:247
 msgid "WhatsApp reports whether each message was delivered through a webhook. Until it is set up, a send only shows that WhatsApp accepted the message."
-msgstr ""
+msgstr "WhatsApp raportuje, czy każda wiadomość została dostarczona przez webhook. Dopóki nie zostanie skonfigurowany, wysłanie pokazuje tylko, że WhatsApp zaakceptował wiadomość."
 
 #: src/Admin/whatsapp/WebhookSetup.js:254
 msgid "Copy the App Secret from App settings → Basic in the App Dashboard, and choose a verify token of at least 8 characters. Save both below."
-msgstr ""
+msgstr "Skopiuj klucz tajny aplikacji z Ustawień aplikacji → Podstawowe w Panelu aplikacji i wybierz token weryfikacji o długości co najmniej 8 znaków. Zapisz oba poniżej."
 
 #: src/Admin/whatsapp/WebhookSetup.js:260
 msgid "In the App Dashboard, open WhatsApp → Configuration, edit the webhook, enter the callback URL below and the same verify token, then select Verify and save."
-msgstr ""
+msgstr "W Panelu aplikacji otwórz WhatsApp → Konfiguracja, edytuj webhook, wpisz poniżej adres URL wywołania zwrotnego i ten sam token weryfikacji, a następnie wybierz Zweryfikuj i zapisz."
 
 #: src/Admin/whatsapp/WebhookSetup.js:266
 msgid "Subscribe the webhook to the messages field."
-msgstr ""
+msgstr "Subskrybuj webhook do pola wiadomości."
 
 #: src/Admin/whatsapp/WebhookSetup.js:276
 msgid "Callback URL"
-msgstr ""
+msgstr "Adres URL wywołania zwrotnego"
 
 #: src/Admin/whatsapp/WebhookSetup.js:287
 msgid "App Secret"
-msgstr ""
+msgstr "Klucz tajny aplikacji"
 
 #: src/Admin/whatsapp/WebhookSetup.js:291
 msgid "Verify token"
-msgstr ""
+msgstr "Token weryfikacji"
 
 #: src/Admin/whatsapp/WebhookSetup.js:307
 msgid "Save webhook settings"
-msgstr ""
+msgstr "Zapisz ustawienia webhooka"
 
 #. translators: 1: template name, 2: template language code, 3: recipient number with most digits hidden
 #: src/Admin/whatsapp/WhatsAppConnection.js:499
 #, js-format
 msgid "WhatsApp accepted the %1$s (%2$s) template for %3$s. This does not confirm delivery yet: follow it under Recent messages."
-msgstr ""
+msgstr "WhatsApp zaakceptował szablon %1$s (%2$s) dla %3$s. To nie potwierdza jeszcze dostarczenia: śledź go w sekcji Ostatnie wiadomości."
 
 #: src/Admin/whatsapp/WhatsAppConnection.js:710
 msgid "Sends one approved template without parameters, once. Only send to someone who agreed to receive it. Only the last three digits of the recipient number are kept, in Recent messages."
-msgstr ""
+msgstr "Wysyła jeden zatwierdzony szablon bez parametrów, raz. Wysyłaj tylko do osób, które wyraziły zgodę na otrzymywanie wiadomości. W sekcji Ostatnie wiadomości przechowywane są tylko ostatnie trzy cyfry numeru odbiorcy."
+

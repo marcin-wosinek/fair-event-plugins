@@ -3010,60 +3010,60 @@ msgstr "Nie udało się przetworzyć aktualizacji płatności."
 
 #: src/blocks/simple-payment/render.php:59
 msgid "We can’t check your payment status on this page. If you completed the payment, it is still being processed. Please check your email or contact the organizer before paying again."
-msgstr ""
+msgstr "Nie możemy sprawdzić statusu twojej płatności na tej stronie. Jeśli ukończyłeś płatność, jest ona wciąż przetwarzana. Sprawdź swoją skrzynkę e-mail lub skontaktuj się z organizatorem przed dokonaniem kolejnej płatności."
 
 #: src/blocks/simple-payment/view.js:196
 msgid "Your browser is blocking site data, which is needed to confirm your payment when you return. Allow site data for this site and try again."
-msgstr ""
+msgstr "Twoja przeglądarka blokuje dane witryny, które są potrzebne do potwierdzenia twojej płatności po powrocie. Zezwól na dane witryny dla tej witryny i spróbuj ponownie."
 
 #: src/AuditLog/AuditLogger.php:88
 msgid "Sending ticket buyers’ emails to the payment provider enabled."
-msgstr ""
+msgstr "Wysyłanie wiadomości e-mail kupujących bilety do dostawcy płatności włączone."
 
 #: src/AuditLog/AuditLogger.php:89
 msgid "Sending ticket buyers’ emails to the payment provider disabled."
-msgstr ""
+msgstr "Wysyłanie wiadomości e-mail kupujących bilety do dostawcy płatności wyłączone."
 
 #: src/Settings/Settings.php:244
 #: src/Admin/settings/PrivacyTab.js:132
 msgid "Send ticket buyers’ emails to the payment provider"
-msgstr ""
+msgstr "Wysyłaj wiadomości e-mail kupujących bilety do dostawcy płatności"
 
 #: src/Admin/settings/PrivacyTab.js:55
 msgid "Failed to load privacy settings."
-msgstr ""
+msgstr "Nie udało się wczytać ustawień prywatności."
 
 #: src/Admin/settings/PrivacyTab.js:91
 msgid "Privacy settings saved."
-msgstr ""
+msgstr "Ustawienia prywatności zapisane."
 
 #: src/Admin/settings/PrivacyTab.js:99
 msgid "Failed to save privacy settings. Please try again."
-msgstr ""
+msgstr "Nie udało się zapisać ustawień prywatności. Spróbuj ponownie."
 
 #: src/Admin/settings/PrivacyTab.js:128
 msgid "Payment provider"
-msgstr ""
+msgstr "Dostawca płatności"
 
 #: src/Admin/settings/PrivacyTab.js:136
 msgid "Include the buyer’s email in payment metadata to help reconcile Fair Events ticket payments. Enabling this sends personal data to the external payment provider. Your choice applies to future payment attempts, including retries. It does not change data already held by a provider. Buyer emails remain stored locally for registration management and messages."
-msgstr ""
+msgstr "Dołącz adres e-mail kupującego do metadanych płatności, aby ułatwić uzgodnienie płatności biletów Fair Events. Włączenie tej opcji wysyła dane osobowe do zewnętrznego dostawcy płatności. Twój wybór dotyczy przyszłych prób płatności, w tym ponownych prób. Nie zmienia to danych już przechowywanych przez dostawcę. Adresy e-mail kupujących pozostają przechowywane lokalnie do zarządzania rejestracją i wiadomościami."
 
 #: src/Admin/settings/PrivacyTab.js:169
 msgid "Saving…"
-msgstr ""
+msgstr "Zapisywanie…"
 
 #: src/Admin/settings/PrivacyTab.js:170
 msgid "Save privacy settings"
-msgstr ""
+msgstr "Zapisz ustawienia prywatności"
 
 #: src/Admin/settings/PrivacyTab.js:177
 msgid "You have unsaved changes."
-msgstr ""
+msgstr "Masz niezapisane zmiany."
 
 #: src/Admin/settings/SettingsApp.js:223
 msgid "Privacy"
-msgstr ""
+msgstr "Prywatność"
 
 #. translators: %s: formatted amount, e.g. €12.50
 #: src/payment-callback.js:82
@@ -3098,3 +3098,4 @@ msgstr "Sprawdzanie statusu płatności…"
 #: src/payment-callback.js:159
 msgid "Dismiss payment notice"
 msgstr "Zamknij powiadomienie o płatności"
+

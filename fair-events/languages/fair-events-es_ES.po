@@ -539,7 +539,7 @@ msgid "Display event with time range and title"
 msgstr "Mostrar evento con rango de tiempo y título"
 
 #: src/blocks/event-proposal/editor.js:21
-#: src/blocks/event-signup/editor.js:157
+#: src/blocks/event-signup/editor.js:176
 msgid "Form Settings"
 msgstr "Configuración del formulario"
 
@@ -576,7 +576,7 @@ msgid "Email address for notifications"
 msgstr "Dirección de correo electrónico para notificaciones"
 
 #: src/blocks/event-proposal/editor.js:78
-#: src/blocks/event-signup/editor.js:159
+#: src/blocks/event-signup/editor.js:178
 msgid "Submit Button Text"
 msgstr "Texto del botón de envío"
 
@@ -1207,37 +1207,37 @@ msgstr "Filtrar por tipo de ocurrencia."
 
 #. translators: %d: number of days
 #: src/blocks/event-info/render.php:102
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d days"
 msgstr "Cada %d días"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:109
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every 2 weeks on %s"
 msgstr "Cada 2 semanas el %s"
 
 #. translators: 1: number of weeks, 2: day of week
 #: src/blocks/event-info/render.php:113
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %1$d weeks on %2$s"
 msgstr "Cada %1$d semanas el %2$s"
 
 #. translators: %s: day of week
 #: src/blocks/event-info/render.php:116
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %s"
 msgstr "Cada %s"
 
 #. translators: %d: number of months
 #: src/blocks/event-info/render.php:121
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d months"
 msgstr "Cada %d meses"
 
 #. translators: %d: number of years
 #: src/blocks/event-info/render.php:128
-#, php-format,js-format
+#, php-format, js-format
 msgid "Every %d years"
 msgstr "Cada %d años"
 
@@ -1247,7 +1247,7 @@ msgstr "Anualmente"
 
 #. translators: %s: date of next occurrence
 #: src/blocks/event-info/render.php:207
-#, php-format,js-format
+#, php-format, js-format
 msgid "Next: %s"
 msgstr "Siguiente: %s"
 
@@ -1710,7 +1710,7 @@ msgstr "Una de las ocurrencias seleccionadas no es válida para esta entrada."
 #. translators: %d: minimum number of occurrences required
 #: src/API/GetTicketsController.php:2156
 #: src/blocks/event-signup/frontend.js:2778
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d occurrence."
 msgid_plural "Please select at least %d occurrences."
 msgstr[0] "Selecciona al menos %d ocurrencia."
@@ -1722,7 +1722,6 @@ msgstr[1] "Selecciona al menos %d ocurrencias."
 msgid "Tickets for event #%d"
 msgstr "Entradas para el evento #%d"
 
-#. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:709
 #: src/API/GetTicketsController.php:2190
@@ -2391,7 +2390,7 @@ msgstr "Los tickets de pago requieren el complemento Fair Payments Connector. In
 msgid "until %s (default)"
 msgstr "hasta %s (predeterminado)"
 
-#: src/blocks/event-signup/editor.js:148
+#: src/blocks/event-signup/editor.js:167
 msgid "Form content"
 msgstr "Contenido del formulario"
 
@@ -2413,11 +2412,11 @@ msgstr "Haz clic para añadir esta fecha"
 msgid "%d dates selected"
 msgstr "%d fechas seleccionadas"
 
-#: src/blocks/event-signup/editor.js:195
+#: src/blocks/event-signup/editor.js:214
 msgid "Edit tickets"
 msgstr "Editar tickets"
 
-#: src/blocks/event-signup/editor.js:199
+#: src/blocks/event-signup/editor.js:218
 msgid "Connect this block to an event date to edit its tickets."
 msgstr "Conecta este bloque a una fecha de evento para editar sus entradas."
 
@@ -2838,7 +2837,7 @@ msgstr "Selecciona actividades"
 #: src/Services/SignupFieldsetRenderer.php:241
 #: src/blocks/event-signup/frontend.js:2369
 #: src/blocks/event-signup/frontend.js:2818
-#, php-format,js-format
+#, php-format, js-format
 msgid "Please select at least %d activity to sign up."
 msgid_plural "Please select at least %d activities to sign up."
 msgstr[0] "Selecciona al menos %d actividad para inscribirte."
@@ -3097,11 +3096,11 @@ msgstr "Eliminar logo"
 msgid "Remove organizer logo?"
 msgstr "¿Eliminar logo del organizador?"
 
-#: src/blocks/event-signup/editor.js:166
+#: src/blocks/event-signup/editor.js:185
 msgid "Show ticket price"
 msgstr "Mostrar precio de la entrada"
 
-#: src/blocks/event-signup/editor.js:173
+#: src/blocks/event-signup/editor.js:192
 msgid "Show option prices"
 msgstr "Mostrar precios de las opciones"
 
@@ -3942,11 +3941,10 @@ msgstr "El bloque Precios del evento está deshabilitado — no hay ningún even
 msgid "Event Prices block is disabled — no public prices are configured for this event."
 msgstr "El bloque Precios del evento está deshabilitado — no hay precios públicos configurados para este evento."
 
-#. translators: 1: sale period start date, 2: sale period end date
 #. translators: 1: start date, 2: end date
 #: src/blocks/event-prices/render.php:117
 #: src/Admin/components/eventTiming.js:86
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s – %2$s"
 msgstr "%1$s – %2$s"
 
@@ -4269,7 +4267,7 @@ msgstr "Error al actualizar la inscripción."
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
 #: src/API/GetTicketsController.php:3016
 #: ../fair-events-shared/src/TicketEditModal.js:100
-#, php-format,js-format
+#, php-format, js-format
 msgid "%1$s would have %2$d of %3$d place taken."
 msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] "%1$s tendría %2$d de %3$d plaza ocupada."
@@ -4316,19 +4314,19 @@ msgid "Gallery removed"
 msgstr "Galería eliminada"
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:729
+#: src/Services/TicketCapacity.php:750
 #, php-format
 msgid "%1$s on %2$s"
 msgstr "%1$s el %2$s"
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:820
+#: src/Services/TicketCapacity.php:841
 #, php-format
 msgid "\"%1$s\" is full on %2$s."
 msgstr "«%1$s» está completo el %2$s."
 
 #. translators: 1: number of places still available, 2: activity name, 3: event date and time
-#: src/Services/TicketCapacity.php:826
+#: src/Services/TicketCapacity.php:847
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\" on %3$s."
 msgid_plural "Only %1$d places are left in \"%2$s\" on %3$s."
@@ -4337,25 +4335,25 @@ msgstr[1] "Solo quedan %1$d plazas en «%2$s» el %3$s."
 
 #. translators: %s: activity name
 #: src/Services/ActivitySelection.php:189
-#: src/Services/TicketCapacity.php:835
+#: src/Services/TicketCapacity.php:856
 #, php-format
 msgid "\"%s\" is full."
 msgstr "«%s» está completo."
 
 #. translators: 1: number of places still available, 2: activity name
-#: src/Services/TicketCapacity.php:840
+#: src/Services/TicketCapacity.php:861
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\"."
 msgid_plural "Only %1$d places are left in \"%2$s\"."
 msgstr[0] "Solo queda %1$d plaza en «%2$s»."
 msgstr[1] "Solo quedan %1$d plazas en «%2$s»."
 
-#: src/Services/TicketCapacity.php:851
+#: src/Services/TicketCapacity.php:872
 msgid "This ticket type is sold out."
 msgstr "Este tipo de entrada está agotado."
 
 #. translators: %d: number of tickets still available
-#: src/Services/TicketCapacity.php:854
+#: src/Services/TicketCapacity.php:875
 #, php-format
 msgid "Only %d ticket of this type is left."
 msgid_plural "Only %d tickets of this type are left."
@@ -4363,25 +4361,25 @@ msgstr[0] "Solo queda %d entrada de este tipo."
 msgstr[1] "Solo quedan %d entradas de este tipo."
 
 #. translators: %s: event date and time
-#: src/Services/TicketCapacity.php:867
+#: src/Services/TicketCapacity.php:888
 #, php-format
 msgid "The event on %s is fully booked."
 msgstr "El evento del %s está completamente reservado."
 
 #. translators: 1: number of places still available, 2: event date and time
-#: src/Services/TicketCapacity.php:872
+#: src/Services/TicketCapacity.php:893
 #, php-format
 msgid "Only %1$d place is left for %2$s."
 msgid_plural "Only %1$d places are left for %2$s."
 msgstr[0] "Solo queda %1$d plaza para %2$s."
 msgstr[1] "Solo quedan %1$d plazas para %2$s."
 
-#: src/Services/TicketCapacity.php:878
+#: src/Services/TicketCapacity.php:899
 msgid "This event is fully booked."
 msgstr "Este evento está completamente reservado."
 
 #. translators: %d: number of places still available
-#: src/Services/TicketCapacity.php:881
+#: src/Services/TicketCapacity.php:902
 #, php-format
 msgid "Only %d place is left."
 msgid_plural "Only %d places are left."
@@ -4791,7 +4789,6 @@ msgstr "No se pudo descargar la imagen del gráfico. Por favor, inténtalo de nu
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr "Algunos pagos fueron excluidos porque utilizan diferentes monedas: %s."
 
-#. translators: %d: number of confirmed tickets.
 #. translators: %d: number of tickets on the printed list
 #: src/Admin/event-statistics/EventStatistics.js:441
 #: src/Admin/manage-event/signup-print.js:187
@@ -5512,45 +5509,45 @@ msgstr "Elige la página que encabeza el mensaje."
 msgid "The selected page must be published and publicly visible."
 msgstr "La página seleccionada debe estar publicada y ser visible públicamente."
 
-#: src/Notifications/TelegramConnector.php:54
+#: src/Notifications/TelegramConnector.php:61
 #: src/Admin/event-notifications/shared.js:15
 #: src/Admin/event-notifications/TelegramChannel.js:218
 msgid "Telegram"
 msgstr "Telegram"
 
-#: src/Notifications/TelegramConnector.php:55
+#: src/Notifications/TelegramConnector.php:62
 msgid "Post weekly event summaries to Telegram chats and channels."
 msgstr "Publica resúmenes semanales de eventos en chats y canales de Telegram."
 
-#: src/Notifications/TelegramConnector.php:74
+#: src/Notifications/TelegramConnector.php:85
 msgid "Telegram bot token"
 msgstr "Token de bot de Telegram"
 
-#: src/Notifications/TelegramConnector.php:75
+#: src/Notifications/TelegramConnector.php:86
 msgid "Bot token for weekly event notifications on Telegram."
 msgstr "Token de bot para las notificaciones semanales de eventos en Telegram."
 
-#: src/Notifications/TelegramConnector.php:144
+#: src/Notifications/TelegramConnector.php:156
 msgid "That does not look like a Telegram bot token. Copy the full token from @BotFather, for example 123456789:AAE…. The saved token was not changed."
 msgstr "Eso no parece un token de bot de Telegram. Copia el token completo de @BotFather, por ejemplo 123456789:AAE…. El token guardado no se ha modificado."
 
-#: src/Notifications/TelegramConnector.php:221
+#: src/Notifications/TelegramConnector.php:233
 msgid "No Telegram bot token is configured. Add one in Settings → Connectors."
 msgstr "No hay ningún token de bot de Telegram configurado. Añade uno en Ajustes → Conectores."
 
 #. translators: %s: environment variable name
-#: src/Notifications/TelegramConnector.php:230
+#: src/Notifications/TelegramConnector.php:242
 #, php-format
 msgid "The %s environment variable does not hold a valid Telegram bot token. Correct it where it is set."
 msgstr "La variable de entorno %s no contiene un token de bot de Telegram válido. Corrígela donde se establece."
 
 #. translators: %s: PHP constant name
-#: src/Notifications/TelegramConnector.php:233
+#: src/Notifications/TelegramConnector.php:245
 #, php-format
 msgid "The %s constant does not hold a valid Telegram bot token. Correct it where it is defined."
 msgstr "La constante %s no contiene un token de bot de Telegram válido. Corrígela donde está definida."
 
-#: src/Notifications/TelegramConnector.php:235
+#: src/Notifications/TelegramConnector.php:247
 msgid "The saved Telegram bot token is not a valid bot token. Replace it in Settings → Connectors with the full token from @BotFather."
 msgstr "El token de bot de Telegram guardado no es un token de bot válido. Sustitúyelo en Ajustes → Conectores por el token completo de @BotFather."
 
@@ -5675,7 +5672,6 @@ msgstr "Guardar configuración de correo masivo"
 msgid "Preview next email"
 msgstr "Vista previa del próximo correo"
 
-#. translators: %s: the administrator's own email address
 #. translators: %s: the saved recipient email address
 #: src/Admin/event-notifications/BulkEmailChannel.js:91
 #: src/Admin/event-notifications/IndividualEmailChannel.js:183
@@ -6112,7 +6108,7 @@ msgstr "Columnas — parte %1$d de %2$d"
 msgid "Print"
 msgstr "Imprimir"
 
-#: src/blocks/event-signup/editor.js:180
+#: src/blocks/event-signup/editor.js:199
 msgid "Show mailing signup checkbox"
 msgstr "Mostrar la casilla de suscripción al boletín"
 
@@ -6600,7 +6596,6 @@ msgstr "Esta sesión ha terminado"
 msgid "%1$s, %2$s %3$s"
 msgstr "%1$s, %3$s de %2$s"
 
-#. translators: %s: source host, e.g. "instagram.com".
 #. translators: %s: source domain, e.g. "example.com".
 #: src/Notifications/WeeklyEmailRenderer.php:195
 #: src/Notifications/WeeklyEmailRenderer.php:203
@@ -7054,7 +7049,6 @@ msgstr "Añadir notificación"
 msgid "Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind."
 msgstr "Envía los eventos de la semana automáticamente. Cada notificación tiene su propio horario, su propia selección de eventos y su propio historial, y se guarda por separado. Puedes tener más de una de cada tipo."
 
-#. translators: 1: notification name, 2: its kind, e.g. "Telegram"
 #. translators: 1: registrant name, 2: short ticket reference
 #: src/Admin/event-notifications/HistoryView.js:65
 #: src/Admin/manage-event/EventSignups.js:64
@@ -7241,8 +7235,6 @@ msgstr "%1$s, %2$s – %3$s"
 msgid "%1$s %2$s – %3$s"
 msgstr "%1$s %2$s – %3$s"
 
-#. translators: 1: date, 2: start time
-#. translators: 1: notification name, 2: date and time the send or test started
 #. translators: 1: "Scheduled" or "Test", 2: date and time it started
 #: src/Admin/components/eventTiming.js:60
 #: src/Admin/event-notifications/ExecutionDetails.js:148
@@ -7869,11 +7861,11 @@ msgstr "Entrada guardada."
 
 #: src/Admin/AdminPages.php:99
 msgid "Some ticket types are limited to members of specific groups, but group membership can't be checked because Fair Audience or Fair Audience Experimental is inactive. Those ticket types are hidden from signup forms and can't be bought. Their group settings are kept: activate both plugins to sell them to group members again."
-msgstr ""
+msgstr "Algunos tipos de entrada están limitados a miembros de grupos específicos, pero no se puede verificar la pertenencia al grupo porque Fair Audience o Fair Audience Experimental está inactivo. Estos tipos de entrada están ocultos en los formularios de registro y no se pueden comprar. Su configuración de grupo se mantiene: activa ambos complementos para venderlos a miembros del grupo nuevamente."
 
 #: src/Services/GroupMembershipSupport.php:58
 msgid "This ticket type is not available for your account."
-msgstr ""
+msgstr "Este tipo de entrada no está disponible para tu cuenta."
 
 #: src/Admin/manage-event/EventTickets.js:2216
 msgid "Ticket settings"
@@ -7911,7 +7903,7 @@ msgstr "Historial de ventas"
 
 #: src/API/EventNotificationsController.php:1279
 msgid "The weekly email is paused until Fair Audience is updated: this version of Fair Events sends each feed’s email only to the subscribers who chose that feed, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update."
-msgstr ""
+msgstr "El correo electrónico semanal está pausado hasta que se actualice Fair Audience: esta versión de Fair Events envía el correo electrónico de cada fuente solo a los suscriptores que eligieron esa fuente, lo que requiere una versión más nueva de Fair Audience. Tu configuración se mantiene y el envío se reanuda en la próxima hora programada después de la actualización."
 
 #: src/Admin/manage-event/EventFinance.js:196
 msgid "Payments could not be loaded."
@@ -7932,3 +7924,4 @@ msgstr "Todavía no hay pagos para este evento."
 #: src/Admin/manage-event/EventFinance.js:312
 msgid "No costs for this event yet."
 msgstr "Todavía no hay costes para este evento."
+

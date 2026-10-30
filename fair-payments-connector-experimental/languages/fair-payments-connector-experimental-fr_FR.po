@@ -500,4 +500,3 @@ msgstr "Ce site arrête de lire les données de %s, et le jeton stocké pour cel
 #: src/Admin/connected-sites/ConnectedSitesApp.js:676
 msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
 msgstr "Les transactions déjà importées de celui-ci sont conservées. Le jeton n'est pas révoqué sur l'autre site ; révoquez-le là-bas s'il doit cesser de fonctionner."
-

@@ -571,4 +571,3 @@ msgid "This deletes every Instagram connection log entry older than %d day."
 msgid_plural "This deletes every Instagram connection log entry older than %d days."
 msgstr[0] "Ceci supprime chaque entrée de journal de connexion Instagram antérieure à %d jour."
 msgstr[1] "Ceci supprime chaque entrée de journal de connexion Instagram antérieure à %d jours."
-
