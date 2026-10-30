@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.22.0
+
+### Minor Changes
+
+- 20e6bdd: The Mailing Signup block can offer the weekly email of upcoming events. In the block's new "Weekly update" settings, editors show a "Receive a weekly update of upcoming events" checkbox, unchecked or checked by default, and either let subscribers choose event feeds or subscribe them to one feed without showing a choice. A checked weekly update needs at least one feed; the choice applies when the subscriber confirms their email address, and an already-subscribed address is emailed a link to change its preferences instead. When the form's feeds are not available, it says so and signs up without the weekly update. Existing blocks keep working unchanged. The form now also shows the right message when only a management link is sent or a signed-in subscriber's preferences are updated.
+- 73a29b6: Show which weekly event feeds a participant subscribes to on their detail page, including feeds that are unavailable or deleted.
+- 476994b: Remove the Collaborators page. The Fair Audience menu no longer lists it, a bookmarked link gets WordPress's standard "not allowed" page, and its import/export and event assignment controls and the `/fair-audience/v1/collaborators` route are gone. The public collaborator registration form is retired too: old `?collaborator_profile=1` links answer 410 Gone, accept no submissions and send no confirmation email, whether or not Fair Audience Experimental is active. The Collaborators bundle is gone from the experimental settings, and a `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_COLLABORATORS` constant no longer has any effect. On upgrade, only the stored Collaborators choice is deleted; participants, their collaborator roles on events, and collaborator recipients in event mailings are kept. See DEPLOYMENT.md for the upgrade notes.
+- f4d1353: Subscribers can choose which event feeds' weekly emails they receive. The subscription-management page now offers "All weekly emails" (the default, which also covers feeds added later) or "Only the event feeds I choose" with a checkbox per feed, and each feed's weekly email goes only to the subscribers it is meant for. Existing subscribers keep receiving every weekly email until they choose. The mailing signup endpoint accepts optional `weekly_summary` and `weekly_feed_ids` fields: a new subscriber's choice applies when they confirm their email address, and a signup with an already-subscribed address only emails it a link to the management page. Update Fair Audience and Fair Events together: Fair Events pauses the weekly email until Fair Audience supports feed subscriptions.
+
+### Patch Changes
+
+- 3024913: Admin lists use the latest WordPress DataViews release. Bulk actions now appear in the table header, with a labeled action menu on small screens, and item counts follow the site language's number format.
+- eaf9179: Apply the weekly-update choice, event feeds and announcement categories chosen at signup when a subscriber confirms through the link in the confirmation email; previously the link confirmed the address but dropped those choices.
+- 1100da4: Content saved with the removed Fair Audience Event Signup block still shows "This form is temporarily unavailable" instead of a file upload when its file-upload question uses Fair Form's new `fair-form/fair-form-file-upload` block name.
+- d1d2f1f: Admin screens no longer log "Using null as an array offset is deprecated" warnings on PHP 8.5. The hidden participant and form-response pages keep their titles and access rules.
+- 92e5070: Ticket types limited to members of specific groups now stay protected when group membership can't be checked.
+
+    - Without Fair Audience or Fair Audience Experimental active, a restricted ticket type is hidden from signup forms and direct signup or purchase requests for it are refused. Before, such requests were accepted from anyone.
+    - Administrators see a warning across wp-admin while this applies. The group settings are kept, and members can buy these ticket types again once both plugins are active.
+
+- Updated dependencies [5bc7dde]
+    - fair-events-shared@0.7.1
+
 ## 1.21.0
 
 ### Minor Changes

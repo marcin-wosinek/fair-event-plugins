@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.4.1
+
+### Patch Changes
+
+- b67ae0b: Deleting a budget, deleting an entry or transfer, and unsplitting an entry now ask in a dialog instead of the browser's own prompt.
+
+    - Budget deletion names the budget and says how many entries move to Unbudgeted.
+    - Entry deletion names the entry with its date and amount, says that a transfer's two budget allocations go with it, and that matched transactions are not deleted.
+    - Unsplit opens over the split editor and lists every allocation it deletes. Cancelling returns to the editor with your changes intact.
+    - Failures stay in the dialog for a retry, and nothing can be submitted twice while a request runs.
+
+- 86ed5f0: Unmatching a financial entry now opens a confirmation instead of the browser's own prompt. It names the entry and lists every transaction it will be unlinked from, flagging any whose record no longer exists, and says what stays: the entry, its split allocations and the payment-provider transactions.
+
+    - An entry that belongs to a saved settlement reconciliation can't be unmatched from Entries. The dialog says so before you try and links to Reconciliation, where the association can be released. Previously the refusal only showed as a notice at the top of the page, so it looked like Unmatch did nothing.
+    - Unmatching is now all-or-nothing: if removing a link fails, nothing changes. The error shows in the dialog so you can try again, and you can't submit twice while it runs.
+    - After unmatching, the list refreshes in place. If the refresh fails, a notice says so; the unmatch itself still happened.
+
+- 6db7432: Admin screens no longer briefly show old state after an action has finished.
+
+    - Event notifications: the "settings saved" notice, removing the old preview and clearing the "Unsaved changes" marker now happen together. The preview is also removed when a save changed nothing. The message shown after adding a notification goes away as soon as you open another view.
+    - Payments settings: after a mode change, disconnect or reconnect, the Mollie profile and payment methods of the previous mode or connection are no longer shown.
+    - Finance settlement import: a matched settlement report now shows with its suggested entry already selected.
+    - Manage event Groups tab: switching events clears the previous event's rules, messages and selections at once, and a change still saving for the previous event no longer shows its result on the new one.
+
+- Updated dependencies [3c373a3]
+- Updated dependencies [625a7ec]
+- Updated dependencies [56ba4ee]
+- Updated dependencies [5bc7dde]
+- Updated dependencies [6db7432]
+- Updated dependencies [0fb18d4]
+    - fair-payments-connector@2.7.0
+    - fair-events-shared@0.7.1
+
 ## 1.4.0
 
 ### Minor Changes

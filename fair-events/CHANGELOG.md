@@ -1,5 +1,57 @@
 # fair-events
 
+## 2.1.0
+
+### Minor Changes
+
+- b926237: The Prices table on Manage Event is easier to read and edit, especially with long ticket names, translated labels and several pricing periods.
+
+    - Extension rules (enable, minimum and maximum selections) and a ticket's sales deadline now sit in a collapsible "Ticket settings" area beneath each ticket, collapsed when the page opens. Names, capacities, period availability and prices stay editable in the main table.
+    - Ticket names get a wider field, and each price label sits above its input instead of overlapping it. A table too wide for the screen scrolls within its card.
+    - Collapsing settings or moving a ticket to the top keeps unsaved values with the right ticket. A rule problem in collapsed settings is shown beneath the ticket with a "Review settings" button that opens the panel at the affected field, and the disabled Save tickets button now says why.
+
+- da6f9bc: Event statistics can show sales history further back. A "Sales history" choice above the cumulative ticket and sales amount charts starts both charts 30, 60, 90 or 180 days before the event; the default is 30 days, three more than the 27 days shown before.
+
+    - Both charts update together, and sales before the chosen period still count toward the starting totals. Each chart names its period under its title, so a downloaded PNG shows which period it covers.
+    - While a new period loads, the charts show a spinner and cannot be downloaded. If loading fails, a notice offers to try again.
+    - The statistics REST endpoint accepts an optional `history_days` parameter (30, 60, 90 or 180; default 30) and reports the length it used as `history_days`.
+
+- f4d1353: Subscribers can choose which event feeds' weekly emails they receive. The subscription-management page now offers "All weekly emails" (the default, which also covers feeds added later) or "Only the event feeds I choose" with a checkbox per feed, and each feed's weekly email goes only to the subscribers it is meant for. Existing subscribers keep receiving every weekly email until they choose. The mailing signup endpoint accepts optional `weekly_summary` and `weekly_feed_ids` fields: a new subscriber's choice applies when they confirm their email address, and a signup with an already-subscribed address only emails it a link to the management page. Update Fair Audience and Fair Events together: Fair Events pauses the weekly email until Fair Audience supports feed subscriptions.
+
+### Patch Changes
+
+- 3024913: Admin lists use the latest WordPress DataViews release. Bulk actions now appear in the table header, with a labeled action menu on small screens, and item counts follow the site language's number format.
+- 1100da4: Event Signup offers Fair Form's questions under their new `fair-form/…` block names, and keeps offering the old `fair-audience/…` names when the site runs a Fair Form version from before the rename. Copying an event also updates ticket-type conditions in questions saved under either name.
+- 0b50dc2: The Finance tab in Manage Event now appears whenever Fair Payments Connector is active, so administrators can see an event's payments without installing Fair Finance.
+
+    - With only Fair Payments Connector, the tab shows the event's total income and net, its payments and failed payments, and "No payments for this event yet." when there are none. Costs, balance, budgets and accounting-entry links are left out.
+    - With only Fair Finance, the tab shows the budget, costs and accounting entries, without income, net or balance.
+    - With both plugins, the tab works as before.
+    - Payments and costs load separately: if one cannot be loaded, the tab says which one and still shows the other, instead of failing as a whole or showing a zero total.
+
+- 7edbf3b: Event pages' structured data (JSON-LD) now includes the cost of required extensions in each ticket type's advertised price. A ticket type that requires extensions advertises its price plus the cheapest valid choice of extensions for the same sale period, leaving out extensions that are full, not bookable on the schedule or not priced in that period. A ticket type whose required extensions cannot currently be chosen is no longer advertised, and an event is marked as free only when every advertised offer, extensions included, costs nothing. Signup prices, discounts and the prices shown on the page are unchanged.
+- bdcd492: Event notifications now start once WordPress has finished setting up, which stops the early-loading notices WP-CLI commands, page loads and scheduled tasks reported on sites with Hostinger's tools, Ultimate Addons for Gutenberg, Fair Payments Connector or Fair Audience.
+
+    - Taking notifications over from Fair Events Experimental and Fair Audience, upgrading their data and scheduling the daily history cleanup now wait for WordPress's `init` step, after other plugins' background-task storage and translations are ready.
+    - Settings, history and delivery records are kept. A takeover still sends nothing, an interrupted one resumes safely, and the Telegram connector, scheduled sends and the history cleanup keep working.
+
+- 6db7432: Admin screens no longer briefly show old state after an action has finished.
+
+    - Event notifications: the "settings saved" notice, removing the old preview and clearing the "Unsaved changes" marker now happen together. The preview is also removed when a save changed nothing. The message shown after adding a notification goes away as soon as you open another view.
+    - Payments settings: after a mode change, disconnect or reconnect, the Mollie profile and payment methods of the previous mode or connection are no longer shown.
+    - Finance settlement import: a matched settlement report now shows with its suggested entry already selected.
+    - Manage event Groups tab: switching events clears the previous event's rules, messages and selections at once, and a change still saving for the previous event no longer shows its result on the new one.
+
+- 4996563: Keep the content of password-protected events out of public event feeds, the iCal feed and event structured data; such events are still listed by title and link.
+- 92e5070: Ticket types limited to members of specific groups now stay protected when group membership can't be checked.
+
+    - Without Fair Audience or Fair Audience Experimental active, a restricted ticket type is hidden from signup forms and direct signup or purchase requests for it are refused. Before, such requests were accepted from anyone.
+    - Administrators see a warning across wp-admin while this applies. The group settings are kept, and members can buy these ticket types again once both plugins are active.
+
+- 59320ad: Signup forms on recurring events load faster. The list of dates a series ticket covers now reads all its dates at once instead of one by one, so a 48-date series page with both signup forms runs about 94 fewer database queries. Date labels, full dates, your own signups and whole-series coverage are unchanged.
+- Updated dependencies [5bc7dde]
+    - fair-events-shared@0.7.1
+
 ## 2.0.0
 
 ### Major Changes

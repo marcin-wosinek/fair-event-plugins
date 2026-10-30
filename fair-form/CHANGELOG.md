@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.8.0
+
+### Minor Changes
+
+- 1100da4: Fair Form's blocks are now registered under Fair Form's own name: `fair-form/fair-form`, `fair-form/fair-form-email` and so on, instead of `fair-audience/…`. Their attributes, form IDs, question keys and stored answers are unchanged.
+
+    - After the update, Fair Form renames the blocks in saved content — posts, pages, drafts, revisions, synced patterns and templates — a few posts per page load until every post is done. It leaves posts that still contain the removed Fair Audience Event Signup block alone.
+    - The old names stay registered and hidden from the inserter, so content that still uses them renders as before. This includes imported content, restored backups and theme files. When such a form is opened in the editor, it switches to the new names, and the next save stores them.
+    - Migrated forms get a `wp-block-fair-form-fair-form…` class on their wrapper instead of `wp-block-fair-audience-fair-form…`. Update any custom CSS that targets the old class.
+
+- b5d3df0: Select One and Multiselect questions can take their choices from your post categories: all categories, or every subcategory of one category. The choices follow categories as you add, rename or remove them, in standalone forms and in Event Signup questions. Earlier answers keep the category name the visitor picked, and options you typed in before are kept when you switch.
+
+### Patch Changes
+
+- 3024913: Admin lists use the latest WordPress DataViews release. Bulk actions now appear in the table header, with a labeled action menu on small screens, and item counts follow the site language's number format.
+- 1f197d1: Adding questionnaire respondents to a group now lists everyone who will be added, says up front which responses are left out and that existing members are skipped, and reports who was added, who was skipped and who could not be added with the reason. Only the participants that failed stay in the popup for another try, against the same group, so retrying after creating a new group no longer creates a second one. The popup can't be closed while it's working, and the result appears next to the button once everything has gone through.
+- d1d2f1f: Admin screens no longer log "Using null as an array offset is deprecated" warnings on PHP 8.5. The hidden participant and form-response pages keep their titles and access rules.
+- Updated dependencies [5bc7dde]
+    - fair-events-shared@0.7.1
+
 ## 1.7.0
 
 ### Minor Changes

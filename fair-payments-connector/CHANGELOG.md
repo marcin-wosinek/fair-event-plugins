@@ -1,5 +1,48 @@
 # fair-payments-connector
 
+## 2.7.0
+
+### Minor Changes
+
+- 625a7ec: The payment log now keeps entries for 90 days and stores less personal data.
+
+    - Entries older than 90 days, including existing ones, are deleted by a daily WordPress cron job. Sites can change the window with the `fair_payment_log_retention_days` filter, for example `add_filter( 'fair_payment_log_retention_days', fn() => 30 );`. The job runs when WordPress cron runs, so sites that need it on time should trigger cron from a system scheduler.
+    - New entries no longer record the visitor's IP address. Their details keep only diagnostic fields such as transaction, post and Mollie payment IDs, amount, currency, status and error codes; payment descriptions, checkout URLs and raw error text are left out.
+
+- 56ba4ee: Reworked the notice shown after returning from checkout.
+
+    - It appears only when no payment or ticket block on the page already shows the result, so buyers see one result per payment.
+    - It checks the payment with the browser's saved payment credential and never reads or sends a token in the URL. When the status can't be checked, it says so instead of reporting a failed payment.
+    - Messages are translatable, amounts follow the site language's money format, and the notice follows the theme's fonts and colors on every screen size. It stays until dismissed and can be closed with the keyboard.
+
+- 0fb18d4: A new Privacy tab in payment settings controls whether Fair Events ticket payments send the buyer's email to the payment provider.
+
+    - When it is off, new ticket payments, including retries, leave the email out of the payment metadata sent to Mollie. Transaction, event and signup references are still sent, and the email stays stored locally for registrations, participant matching and confirmation messages.
+    - The choice applies to payment attempts made after it changes; it does not change data a provider already holds. Each change is recorded in the audit log.
+    - New sites start with it off. Sites whose existing ticket payments already included buyer emails keep sending them until an administrator turns it off.
+
+### Patch Changes
+
+- 3c373a3: Failed connection tests and Mollie webhooks no longer reveal server file paths or internal error details. The connection test shows the technical details only when WP_DEBUG is on, and the full webhook error stays in the payment log.
+- 5bc7dde: The Simple Payment block no longer puts the payment's access token in the return URL. The token proves that a visitor started the payment, and a URL can leak it to other sites through the `Referer` header, browser history and server logs. The block now keeps the token in the browser tab's session storage before sending the buyer to Mollie, and sends it in a request header when it checks the payment status.
+
+    - After returning from Mollie, the block shows "processing" first, then the checked result. Reloading the page in the same tab still works.
+    - If the status can't be checked (for example, the return link was opened in another browser), the block says so and asks the buyer to check their email or contact the organizer before paying again. It no longer suggests the payment failed.
+    - If the browser blocks site data, the block won't start a payment. It asks the visitor to allow site data first, so nobody pays without seeing the result.
+    - Signed-in buyers and administrators can still check a payment without the token.
+
+    For flows that still put the token in their return URL, the status check keeps accepting it there for now.
+
+- 6db7432: Admin screens no longer briefly show old state after an action has finished.
+
+    - Event notifications: the "settings saved" notice, removing the old preview and clearing the "Unsaved changes" marker now happen together. The preview is also removed when a save changed nothing. The message shown after adding a notification goes away as soon as you open another view.
+    - Payments settings: after a mode change, disconnect or reconnect, the Mollie profile and payment methods of the previous mode or connection are no longer shown.
+    - Finance settlement import: a matched settlement report now shows with its suggested entry already selected.
+    - Manage event Groups tab: switching events clears the previous event's rules, messages and selections at once, and a change still saving for the previous event no longer shows its result on the new one.
+
+- Updated dependencies [5bc7dde]
+    - fair-events-shared@0.7.1
+
 ## 2.6.0
 
 ### Minor Changes

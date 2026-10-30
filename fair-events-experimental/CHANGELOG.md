@@ -1,5 +1,53 @@
 # fair-events-experimental
 
+## 2.1.0
+
+### Minor Changes
+
+- 4996563: Add shareable WhatsApp weekly-summary links for operators: a public page per event feed, at `/fair-events-weekly-summary/<feed-slug>/`, that lists the week's public events and copies a WhatsApp message with the same summary text as the weekly notification and an Events Week calendar showing that feed. The Event Feeds list opens each feed's WhatsApp summary, and each feed's view shows its link with a copy button.
+- d9ca815: See whether WhatsApp test sends were delivered.
+
+    - Fair Events → WhatsApp has a **Delivery updates** section with the webhook's callback URL and setup steps. Save Meta's App Secret and a verify token there (or set `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_APP_SECRET` / `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_VERIFY_TOKEN`); neither is ever shown again. The page says separately when Meta verified the callback URL and when the last authenticated update arrived.
+    - Only callbacks signed with the App Secret and addressed to the saved WhatsApp Business Account and Phone Number ID are used.
+    - **Recent messages** lists the last 30 days of test sends with their outcome: accepted, sent, delivered, read, not delivered (with a translated reason and WhatsApp's error code), not accepted, or unknown. Statuses refresh on their own while a message is waiting, and the list survives a page reload. Only the last three digits of each recipient number are kept.
+    - Repeated, late or simultaneous updates never move a message backwards; a confirmed delivery outranks an earlier failure, which stays visible.
+    - Incoming messages are handed to a developer hook for the upcoming opt-out feature. Nothing replies to them and they are not stored.
+
+- 7bd6883: Connect WhatsApp manually and send a test template.
+
+    - Settings → Connectors has a WhatsApp connector for the Cloud API access token, separate from the Meta Conversions API token. An environment variable or PHP constant named `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_ACCESS_TOKEN` overrides the saved token.
+    - The new Fair Events → WhatsApp page saves the WhatsApp Business Account ID and the Phone Number ID, and explains that neither is the telephone number. **Validate connection** checks them with Meta and shows the sender's name, number and quality rating; changing the IDs or the token clears that result.
+    - **Send test template** sends an approved template without parameters to a number you enter, once, after you confirm the recipient agreed to receive it. It reports whether WhatsApp accepted the message, which is not proof of delivery; a send that times out is reported as uncertain and is not retried.
+    - Errors explain what to fix (an expired token, a missing permission, IDs from different accounts, a recipient a test sender can't reach) and show Meta's error code and trace ID. The token and recipient numbers are never shown or stored.
+    - WhatsApp messages are not sent automatically yet.
+
+### Patch Changes
+
+- b67ae0b: Deleting an event feed now asks in a dialog instead of the browser's own prompt. It names the feed, says that its iCal and JSON feed URLs stop working, and that the events and categories it includes are not changed. If the deletion fails, the error stays in the dialog so you can try again.
+- f3ab738: The plugin ZIPs no longer include development test suites, PHPUnit configuration, or test-result caches. Runtime files, built assets, translations, and documentation are unchanged.
+- 6d595da: Queued checkout and purchase events reach Meta more reliably.
+
+    - A new checkout or purchase is sent right away instead of waiting behind a retry scheduled for later.
+    - When background delivery cannot be scheduled, the Meta page shows a warning with the time of the last failure. Later site visits try again, and queued events are sent once scheduling works. Payments are not affected.
+    - Events whose delivery was interrupted, for example by a server timeout, are sent again after five minutes under the same Meta event ID. An interrupted attempt counts toward the existing limit of six attempts.
+    - Each background run sends at most 20 events and stops early enough to finish within about 20 seconds. Remaining events are scheduled for the next run.
+
+- Updated dependencies [3024913]
+- Updated dependencies [1100da4]
+- Updated dependencies [0b50dc2]
+- Updated dependencies [7edbf3b]
+- Updated dependencies [bdcd492]
+- Updated dependencies [5bc7dde]
+- Updated dependencies [6db7432]
+- Updated dependencies [b926237]
+- Updated dependencies [4996563]
+- Updated dependencies [92e5070]
+- Updated dependencies [59320ad]
+- Updated dependencies [da6f9bc]
+- Updated dependencies [f4d1353]
+    - fair-events@2.1.0
+    - fair-events-shared@0.7.1
+
 ## 2.0.0
 
 ### Major Changes

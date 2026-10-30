@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: audience, experimental
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -27,6 +27,33 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 Requires Fair Audience to be active.
 
 == Changelog ==
+
+## 1.6.0
+
+### Minor Changes
+
+- be1afe6: Remove the Image Templates admin page from Fair Audience Experimental, with its menu entry and its "Image templates" feature toggle. A bookmark to the old page now gets WordPress's standard answer for a page that does not exist, and a stored `image-templates` setting is ignored and dropped the next time the experimental settings are saved. Its REST routes are gone as well: `GET` and `POST fair-audience/v1/image-templates`, `DELETE fair-audience/v1/image-templates/{id}` and `POST fair-audience/v1/image-templates/{id}/render`. Uploaded SVG templates, generated images and their template details stay in the Media Library untouched, and the other experimental features work as before.
+- 476994b: Remove the Collaborators page. The Fair Audience menu no longer lists it, a bookmarked link gets WordPress's standard "not allowed" page, and its import/export and event assignment controls and the `/fair-audience/v1/collaborators` route are gone. The public collaborator registration form is retired too: old `?collaborator_profile=1` links answer 410 Gone, accept no submissions and send no confirmation email, whether or not Fair Audience Experimental is active. The Collaborators bundle is gone from the experimental settings, and a `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_COLLABORATORS` constant no longer has any effect. On upgrade, only the stored Collaborators choice is deleted; participants, their collaborator roles on events, and collaborator recipients in event mailings are kept. See DEPLOYMENT.md for the upgrade notes.
+
+### Patch Changes
+
+- b67ae0b: Polls, extra messages, groups, Instagram posts, group rules and membership fees no longer use the browser's own prompts and alerts.
+
+    - Deleting a poll, extra message, group, Instagram post or fee, removing a group member or a group's event rules, sending poll invitations or fee reminders, and marking a fee payment paid or canceled each ask in a dialog. It names what changes and what does not: for example, deleting a fee lists how many payment records go with it and says that payments already received are not refunded.
+    - Failures stay in the dialog for a retry, and an action can't be sent twice while it runs. When only some of a group's rules are removed, the dialog keeps just the remaining ones.
+    - Form validation and save errors appear next to the form, which keeps what you entered. Adding several members to a group reports who could not be added, and why, and keeps them selected. Bulk fee reminders list which members were not reminded, and why.
+    - The public poll page shows a missing choice or failed submission beside the form and keeps the selected options, so you can submit again. Clicking an option's text now selects it; before, it left the option unchanged.
+
+- 3024913: Admin lists use the latest WordPress DataViews release. Bulk actions now appear in the table header, with a labeled action menu on small screens, and item counts follow the site language's number format.
+- 6db7432: Admin screens no longer briefly show old state after an action has finished.
+
+    - Event notifications: the "settings saved" notice, removing the old preview and clearing the "Unsaved changes" marker now happen together. The preview is also removed when a save changed nothing. The message shown after adding a notification goes away as soon as you open another view.
+    - Payments settings: after a mode change, disconnect or reconnect, the Mollie profile and payment methods of the previous mode or connection are no longer shown.
+    - Finance settlement import: a matched settlement report now shows with its suggested entry already selected.
+    - Manage event Groups tab: switching events clears the previous event's rules, messages and selections at once, and a change still saving for the previous event no longer shows its result on the new one.
+
+- Updated dependencies [5bc7dde]
+    - fair-events-shared@0.7.1
 
 ## 1.5.0
 
@@ -173,7 +200,7 @@ Requires Fair Audience to be active.
 - efe9aae: Move the fees, polls, instagram, collaborators, image-templates, timeline, import, and weekly-schedule bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags. None of these bundles had callers outside fair-audience, so this is the lowest-risk slice of the fair-audience/fair-audience-experimental split (issue #1041). The `fair-audience` top-level admin menu now lands on All Participants instead of the (now-moved) Activity Timeline page.
 - 3e34be8: Move the groups and invitations bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `Group`/`GroupParticipant` and their repositories are renamed to `FairAudienceExperimental\…` and now travel with the companion; every core `fair-audience` call site (participant lists, custom mail, payment discount labels, signup pricing, anonymization, the signups-list block) and the `fair-events-experimental` invitation-token controller degrade gracefully via `class_exists()` guards when the companion is inactive.
 - e84e6b3: Move the galleries and messaging bundles out of `fair-audience` into the `fair-audience-experimental` companion, gated behind their `Features::is_enabled()` flags (issue #1041). `PhotoParticipant`/`GalleryAccessKey` and `CustomMailMessage`/`ExtraMessage`/`ScheduledMessage` (plus their repositories, controllers, admin pages, media-library hooks, and the scheduled-message cron) are renamed to `FairAudienceExperimental\…` and now travel with the companion; every cross-plugin call site (`fair-events-experimental`'s gallery endpoint, stable `fair-events`' gallery page, `fair-form`'s questionnaire photo tagging, and core `fair-audience`'s email service and anonymization service) degrades gracefully via `class_exists()` guards when the companion is inactive.
-- ef647cf: Scaffold the fair-audience-experimental companion plugin: `plugins_loaded` bootstrap with a runtime guard on fair-audience, a `Features` registry (master constant `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL`) listing the thirteen advanced bundles (fees, polls, galleries, Instagram, groups, messaging, image-templates, timeline, import, weekly-schedule, invitations, manage-event-ext), and a Settings page to toggle them. This is the clean-slate step of splitting fair-audience into a lean core plus this companion — feature bundles themselves still live in fair-audience and move out in follow-up changes.
+- ef647cf: Scaffold the fair-audience-experimental companion plugin: `plugins_loaded` bootstrap with a runtime guard on fair-audience, a `Features` registry (master constant `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL`) listing the thirteen advanced bundles (fees, polls, galleries, Instagram, groups, collaborators, messaging, image-templates, timeline, import, weekly-schedule, invitations, manage-event-ext), and a Settings page to toggle them. This is the clean-slate step of splitting fair-audience into a lean core plus this companion — feature bundles themselves still live in fair-audience and move out in follow-up changes.
 - 8a1195f: Move the manage-event tab extensions (Audience, Groups, Mailings) out of `fair-audience` into the `fair-audience-experimental` companion under the `manage-event-ext` feature flag (issue #1041). The tab bundle's enqueue wiring on fair-events' manage-event page — previously always registered by `fair-audience` — now lives in the companion and only mounts when its `manage-event-ext` feature is enabled, mirroring how `fair-events-experimental` merges its own manage-event extensions.
 - 2a3600a: Move the manage-event Audience tab from `fair-audience-experimental` back into core `fair-audience`, so it now renders on the fair-events Manage Event page without the experimental companion plugin active. The Groups and Mailings tabs remain in `fair-audience-experimental` behind the `manage-event-ext` feature flag.
 
