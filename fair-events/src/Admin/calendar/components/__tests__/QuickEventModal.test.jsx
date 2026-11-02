@@ -686,4 +686,161 @@ describe( 'optional times (#1851)', () => {
 			''
 		);
 	} );
+
+	const lookUp = async ( url = 'https://example.com/event' ) => {
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: url },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Fetched Event'
+			)
+		);
+	};
+
+	const titleOnly = {
+		title: 'Fetched Event',
+		start_date: null,
+		start_time: null,
+		end_date: null,
+		end_time: null,
+		all_day: false,
+		location: null,
+		source: 'opengraph',
+		found: [ 'title' ],
+	};
+
+	it( 'drops the untouched default times when the page gave no start (#2142)', async () => {
+		lookupResponse = titleOnly;
+
+		const { onSuccess } = await renderModal();
+		await lookUp();
+
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-06-10'
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect(
+			screen.getAllByText( /didn't specify: start date/ ).length
+		).toBeGreaterThan( 0 );
+
+		// Completed manually: the times entered are the ones saved.
+		setTime( 'Start time (optional)', '19:00' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createData() ).toMatchObject( {
+			start_date: '2026-06-10',
+			start_time: '19:00:00',
+			end_time: null,
+			link_type: 'external',
+			external_url: 'https://example.com/event',
+		} );
+	} );
+
+	it( 'keeps times the user entered before a dateless lookup (#2142)', async () => {
+		lookupResponse = titleOnly;
+
+		await renderModal();
+		setTime( 'Start time (optional)', '17:15' );
+		setTime( 'End time (optional)', '18:45' );
+		await lookUp();
+
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'17:15'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'18:45'
+		);
+	} );
+
+	it( 'prefills a Momoyoga lookup with editable values (#2142)', async () => {
+		lookupResponse = {
+			title: 'Fetched Event',
+			start_date: '2026-11-07',
+			start_time: '11:30:00',
+			end_date: '2026-11-07',
+			end_time: '14:00:00',
+			all_day: false,
+			location: 'Atempo Barcelona',
+			source: 'opengraph',
+			found: [ 'title', 'start', 'end', 'location' ],
+		};
+		const url =
+			'https://www.momoyoga.com/a-tempo-barcelona/event/6b1b2f01-877e-4718-b5f2-f15d8c58dc11';
+
+		const { onSuccess } = await renderModal();
+		await lookUp( url );
+
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-11-07'
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'11:30'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'14:00'
+		);
+		// No venue of that name exists: it is shown, not guessed.
+		expect( screen.getByLabelText( 'Venue' ) ).toHaveValue( '' );
+		expect(
+			screen.getByText( 'From the page: Atempo Barcelona' )
+		).toBeInTheDocument();
+		// The visible notice, not an earlier test's live-region announcement.
+		expect(
+			document.querySelector( '.components-notice.is-info' )
+		).toBeNull();
+
+		fillTitle( 'Acroyoga workshop' );
+		setTime( 'End time (optional)', '14:30' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createData() ).toMatchObject( {
+			title: 'Acroyoga workshop',
+			start_date: '2026-11-07',
+			start_time: '11:30:00',
+			end_date: '2026-11-07',
+			end_time: '14:30:00',
+			link_type: 'external',
+			external_url: url,
+		} );
+	} );
+
+	it( 'allows manual completion after a failed lookup (#2142)', async () => {
+		lookupResponse = new Error( 'That page could not be fetched.' );
+
+		const { onSuccess } = await renderModal();
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: 'https://www.momoyoga.com/x/event/y' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+		await waitFor( () =>
+			expect(
+				screen.getByText( 'That page could not be fetched.' )
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'Manual' } ) );
+		fillTitle( 'Typed by hand' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createData() ).toMatchObject( {
+			title: 'Typed by hand',
+			start_date: '2026-06-10',
+			external_url: 'https://www.momoyoga.com/x/event/y',
+		} );
+	} );
 } );

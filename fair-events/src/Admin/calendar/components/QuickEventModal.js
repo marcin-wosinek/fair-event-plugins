@@ -43,6 +43,10 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	const [ startTime, setStartTime ] = useState( '10:00' );
 	const [ endDate, setEndDate ] = useState( dateStr );
 	const [ endTime, setEndTime ] = useState( '12:00' );
+	// Whether the user changed any timing field. Until then the times are
+	// only the popup's defaults, which a lookup must not leave looking like
+	// values read from the page.
+	const [ timingEdited, setTimingEdited ] = useState( false );
 	const [ venueId, setVenueId ] = useState( '' );
 	const [ venues, setVenues ] = useState( [] );
 	const [ isCreatingVenue, setIsCreatingVenue ] = useState( false );
@@ -140,6 +144,15 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				// not stand in for a time the page didn't give.
 				setEndDate( metadata.end_date || metadata.start_date );
 				setEndTime( ( metadata.end_time || '' ).slice( 0, 5 ) );
+			} else if ( ! timingEdited ) {
+				// The page gave no start: keep the day picked in the
+				// calendar but drop the default times, so nothing looks
+				// imported. Times the user entered are kept.
+				setAllDay( false );
+				setStartDate( dateStr );
+				setStartTime( '' );
+				setEndDate( dateStr );
+				setEndTime( '' );
 			}
 
 			setFetchedLocation( metadata.location || null );
@@ -181,6 +194,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	};
 
 	const handleTimingChange = ( patch ) => {
+		setTimingEdited( true );
 		Object.entries( patch ).forEach( ( [ field, next ] ) =>
 			timingSetters[ field ]( next )
 		);
