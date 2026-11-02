@@ -541,6 +541,37 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Count entries awaiting a budget
+	 *
+	 * Counts standalone entries and split allocations without a budget,
+	 * across all dates and entry types.
+	 *
+	 * @return int|null Number of unbudgeted entries, or null if the query failed.
+	 */
+	public static function count_unbudgeted() {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+
+		// Split parents are excluded: their allocations are counted instead,
+		// matching get_totals_by_budget().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE budget_id IS NULL AND id NOT IN (SELECT DISTINCT parent_entry_id FROM %i WHERE parent_entry_id IS NOT NULL)',
+				$table_name,
+				$table_name
+			)
+		);
+
+		if ( null === $count || '' !== $wpdb->last_error ) {
+			return null;
+		}
+
+		return (int) $count;
+	}
+
+	/**
 	 * Get totals grouped by budget
 	 *
 	 * @return array Array with budget_id as key and totals as value.

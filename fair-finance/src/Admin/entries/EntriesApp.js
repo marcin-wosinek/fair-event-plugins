@@ -79,6 +79,69 @@ const readFocusFromUrl = () => {
 	return { id: parseInt( raw, 10 ), invalid: false };
 };
 
+/**
+ * The number of entries awaiting a budget, with distinct loading and error
+ * states so neither can be mistaken for zero.
+ *
+ * @param {Object}   props         Props.
+ * @param {Object}   props.state   `{ status: 'loading'|'success'|'error', count }`.
+ * @param {Function} props.onRetry Reloads the count after a failure.
+ */
+const UnbudgetedCount = ( { state, onRetry } ) => {
+	let content;
+	if ( state.status === 'error' ) {
+		content = (
+			<>
+				<span>
+					{ __(
+						'The number of entries without a budget could not be loaded.',
+						'fair-finance'
+					) }
+				</span>
+				<Button variant="link" onClick={ onRetry }>
+					{ __( 'Retry', 'fair-finance' ) }
+				</Button>
+			</>
+		);
+	} else if ( state.status === 'success' ) {
+		content = (
+			<strong>
+				{ sprintf(
+					/* translators: %d: number of financial entries without a budget */
+					_n(
+						'%d entry is waiting for a budget.',
+						'%d entries are waiting for a budget.',
+						state.count,
+						'fair-finance'
+					),
+					state.count
+				) }
+			</strong>
+		);
+	} else {
+		content = (
+			<>
+				<Spinner />
+				<span>
+					{ __(
+						'Counting entries without a budget…',
+						'fair-finance'
+					) }
+				</span>
+			</>
+		);
+	}
+
+	return (
+		<div
+			className={ `fair-finance-unbudgeted-count is-${ state.status }` }
+			role="status"
+		>
+			{ content }
+		</div>
+	);
+};
+
 const EntriesApp = () => {
 	// Focus is read before the first data request so a focused link never
 	// loads the full list first.
@@ -86,12 +149,19 @@ const EntriesApp = () => {
 	const isFocused = focus.id !== null || focus.invalid;
 	const entriesRequestRef = useRef( 0 );
 	const totalsRequestRef = useRef( 0 );
+	const unbudgetedRequestRef = useRef( 0 );
 	const [ entries, setEntries ] = useState( [] );
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ eventUrls, setEventUrls ] = useState( [] );
 	const [ eventDateOptions, setEventDateOptions ] = useState( [] );
 	const [ tags, setTags ] = useState( [] );
 	const [ tagTotals, setTagTotals ] = useState( {} );
+	// Entries awaiting a budget, across the whole ledger. Independent of the
+	// table's filters, pagination, sorting and focus.
+	const [ unbudgeted, setUnbudgeted ] = useState( {
+		status: 'loading',
+		count: null,
+	} );
 	const [ totals, setTotals ] = useState( {
 		total_cost: 0,
 		total_income: 0,
@@ -147,6 +217,7 @@ const EntriesApp = () => {
 			}
 		}
 		loadTags();
+		loadUnbudgetedCount();
 	}, [] );
 
 	useEffect( () => {
@@ -363,6 +434,31 @@ const EntriesApp = () => {
 		}
 	};
 
+	const loadUnbudgetedCount = async () => {
+		// Only the latest request may update the count, so a slow response
+		// from before a save never overwrites the refreshed value.
+		const requestId = ++unbudgetedRequestRef.current;
+		setUnbudgeted( { status: 'loading', count: null } );
+		try {
+			const data = await apiFetch( {
+				path: '/fair-finance/v1/financial-entries/unbudgeted-count',
+			} );
+			if ( requestId !== unbudgetedRequestRef.current ) {
+				return;
+			}
+			const count = Number( data?.count );
+			if ( ! Number.isInteger( count ) || count < 0 ) {
+				throw new Error( 'Invalid unbudgeted count response.' );
+			}
+			setUnbudgeted( { status: 'success', count } );
+		} catch {
+			if ( requestId !== unbudgetedRequestRef.current ) {
+				return;
+			}
+			setUnbudgeted( { status: 'error', count: null } );
+		}
+	};
+
 	const exportCsv = async () => {
 		setExportLoading( true );
 		try {
@@ -415,6 +511,7 @@ const EntriesApp = () => {
 	const reloadAfterRemoval = () => {
 		loadEntries();
 		loadTotals();
+		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -452,6 +549,7 @@ const EntriesApp = () => {
 		loadEntries();
 		loadTotals();
 		loadTags();
+		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -476,6 +574,7 @@ const EntriesApp = () => {
 		setUnmatchingEntry( null );
 		setSuccess( __( 'Entry unmatched successfully.', 'fair-finance' ) );
 		loadEntries( { quiet: true } );
+		loadUnbudgetedCount();
 	};
 
 	const handleUnmatchCancel = () => {
@@ -486,6 +585,7 @@ const EntriesApp = () => {
 		setMatchingEntry( null );
 		setSuccess( __( 'Entry matched to transaction.', 'fair-finance' ) );
 		loadEntries();
+		loadUnbudgetedCount();
 	};
 
 	const handleMatchCancel = () => {
@@ -501,6 +601,7 @@ const EntriesApp = () => {
 		setSuccess( __( 'Entries imported successfully.', 'fair-finance' ) );
 		loadEntries();
 		loadTotals();
+		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -526,6 +627,7 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
+		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -577,6 +679,7 @@ const EntriesApp = () => {
 		);
 		loadEntries();
 		loadTotals();
+		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
 			loadEventDateOptions();
@@ -787,6 +890,12 @@ const EntriesApp = () => {
 					</CardHeader>
 					<CardBody>
 						<VStack spacing={ 4 }>
+							{ /* Entries awaiting a budget (whole ledger) */ }
+							<UnbudgetedCount
+								state={ unbudgeted }
+								onRetry={ loadUnbudgetedCount }
+							/>
+
 							{ /* Focused entry: replaces the filters */ }
 							{ isFocused && (
 								<Notice
