@@ -115,8 +115,7 @@ it( 'shows the feed details and requests the visible grid range', async () => {
 			name: 'Event feed: Community calendar',
 		} )
 	).toBeInTheDocument();
-	expect( screen.getByText( 'community-calendar' ) ).toBeInTheDocument();
-	expect( screen.getByText( '1 feed input' ) ).toBeInTheDocument();
+	expect( screen.getByText( '1 configured source' ) ).toBeInTheDocument();
 	expect( screen.getByText( 'July 2026' ) ).toBeInTheDocument();
 
 	const [ params ] = eventsCalls();
@@ -274,24 +273,124 @@ it( 'ignores an obsolete response that arrives after a newer month', async () =>
 	expect( screen.queryByText( 'July event' ) ).not.toBeInTheDocument();
 } );
 
-describe( 'weekly summary link (#2045)', () => {
+function withSource( extra ) {
+	const fallback = apiFetch.getMockImplementation();
+	apiFetch.mockImplementation( ( options ) =>
+		options.path === '/fair-events/v1/sources/2'
+			? Promise.resolve( { ...source, ...extra } )
+			: fallback( options )
+	);
+}
+
+describe( 'feed header (#2083)', () => {
+	it( 'shows one edit button that opens the editor', async () => {
+		await renderApp();
+
+		const editButtons = screen.getAllByRole( 'button', {
+			name: 'Edit event feed',
+		} );
+		expect( editButtons ).toHaveLength( 1 );
+		// The editor loads its pages and categories on open.
+		await act( async () => {
+			fireEvent.click( editButtons[ 0 ] );
+		} );
+		expect(
+			screen.getByRole( 'dialog', { name: 'Edit Event Feed' } )
+		).toBeInTheDocument();
+	} );
+
+	it.each( [
+		[ 0, '0 configured sources' ],
+		[ 1, '1 configured source' ],
+		[ 3, '3 configured sources' ],
+	] )( 'counts %d configured sources', async ( count, text ) => {
+		withSource( {
+			data_sources: Array.from( { length: count }, () => ( {
+				source_type: 'categories',
+				config: {},
+			} ) ),
+		} );
+		await renderApp();
+
+		expect( screen.getByText( text ) ).toBeInTheDocument();
+	} );
+
+	it( 'labels the status and links the published public page', async () => {
+		withSource( {
+			page_id: 7,
+			page_url: 'http://example.com/agenda/',
+			page_title: 'Agenda',
+		} );
+		await renderApp();
+
+		expect( screen.getByText( 'Enabled' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Public page: Agenda' ) ).toBeInTheDocument();
+		const link = screen.getByRole( 'link', { name: /Open public page/ } );
+		expect( link ).toHaveAttribute( 'href', 'http://example.com/agenda/' );
+		expect( link ).toHaveAttribute( 'target', '_blank' );
+	} );
+
+	it( 'explains a missing or unpublished public page', async () => {
+		withSource( { page_id: null, page_url: null } );
+		await renderApp();
+		expect(
+			screen.getByText( /Public page: none selected/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'link', { name: /Open public page/ } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'explains a selected page that is not published', async () => {
+		withSource( { page_id: 7, page_url: null } );
+		await renderApp();
+		expect(
+			screen.getByText( /selected page isn’t published/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'labels a disabled feed and explains the consequences', async () => {
+		withSource( { enabled: false } );
+		await renderApp();
+		expect( screen.getByText( 'Disabled' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( /This feed is disabled/ )
+		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'subscription and integrations', () => {
+	it( 'keeps the slug, iCal and JSON in a collapsed section', async () => {
+		await renderApp();
+
+		const toggle = screen.getByRole( 'button', {
+			name: 'Subscription and integrations',
+		} );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+		expect( screen.queryByText( 'community-calendar' ) ).toBeNull();
+
+		fireEvent.click( toggle );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'true' );
+		expect( screen.getByText( 'community-calendar' ) ).toBeInTheDocument();
+		expect( screen.getByRole( 'button', { name: 'iCal' } ) ).toBeVisible();
+		expect( screen.getByRole( 'button', { name: 'JSON' } ) ).toBeVisible();
+	} );
+} );
+
+describe( 'weekly summary (#2045, #2083)', () => {
 	const LINK =
 		'http://example.com/fair-events-weekly-summary/community-calendar/';
-
-	function withSource( extra ) {
-		const fallback = apiFetch.getMockImplementation();
-		apiFetch.mockImplementation( ( options ) =>
-			options.path === '/fair-events/v1/sources/2'
-				? Promise.resolve( { ...source, ...extra } )
-				: fallback( options )
-		);
-	}
 
 	afterEach( () => {
 		delete navigator.clipboard;
 	} );
 
-	it( 'shows the link of a feed with a page and copies it', async () => {
+	const copyButton = () =>
+		screen.getByRole( 'button', { name: 'Copy summary link' } );
+	const linkField = () =>
+		screen.queryByRole( 'textbox', { name: 'Weekly summary link' } );
+
+	it( 'opens the summary and copies its link', async () => {
 		const writeText = jest.fn( () => Promise.resolve() );
 		Object.defineProperty( navigator, 'clipboard', {
 			value: { writeText },
@@ -301,22 +400,36 @@ describe( 'weekly summary link (#2045)', () => {
 		await renderApp();
 
 		expect(
-			screen.getByText( 'WhatsApp summary link' )
+			screen.getByRole( 'heading', { name: 'Weekly summary' } )
 		).toBeInTheDocument();
-		expect( screen.getByText( LINK ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: /Open weekly summary/ } )
+		).toHaveAttribute( 'href', LINK );
+		// The raw URL stays out of the way until asked for.
+		expect( linkField() ).toBeNull();
+
 		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'button', { name: 'Copy link' } )
-			);
+			fireEvent.click( copyButton() );
 		} );
 		expect( writeText ).toHaveBeenCalledWith( LINK );
+		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
+			'Summary link copied.'
+		);
 		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
-		expect(
-			screen.queryByText( 'The link works once this feed is enabled.' )
-		).not.toBeInTheDocument();
 	} );
 
-	it( 'says when copying the link fails', async () => {
+	it( 'shows the full link on request for manual copying', async () => {
+		withSource( { weekly_summary_url: LINK, page_id: 7 } );
+		await renderApp();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Show summary link' } )
+		);
+		expect( linkField() ).toHaveValue( LINK );
+		expect( linkField() ).toHaveAttribute( 'readonly' );
+	} );
+
+	it( 'reveals the link when copying is rejected', async () => {
 		Object.defineProperty( navigator, 'clipboard', {
 			value: { writeText: () => Promise.reject( new Error( 'Denied' ) ) },
 			configurable: true,
@@ -325,36 +438,91 @@ describe( 'weekly summary link (#2045)', () => {
 		await renderApp();
 
 		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'button', { name: 'Copy link' } )
-			);
+			fireEvent.click( copyButton() );
 		} );
 		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
 			'Couldn’t copy the link.'
 		);
+		expect( linkField() ).toHaveValue( LINK );
 	} );
 
-	it( 'notes that a disabled feed’s link works once enabled', async () => {
+	it( 'reveals the link when the clipboard is unavailable', async () => {
+		withSource( { weekly_summary_url: LINK, page_id: 7 } );
+		await renderApp();
+
+		await act( async () => {
+			fireEvent.click( copyButton() );
+		} );
+		expect( screen.getByRole( 'alert' ) ).toBeInTheDocument();
+		expect( linkField() ).toHaveValue( LINK );
+	} );
+
+	it( 'keeps copying but not opening for a disabled feed', async () => {
 		withSource( { weekly_summary_url: LINK, page_id: 7, enabled: false } );
 		await renderApp();
 
-		expect( screen.getByText( LINK ) ).toBeInTheDocument();
+		const open = screen.getByRole( 'button', {
+			name: 'Open weekly summary',
+		} );
+		expect( open ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( open ).toHaveAccessibleDescription(
+			/Enable this feed to open its weekly summary/
+		);
 		expect(
-			screen.getByText( 'The link works once this feed is enabled.' )
-		).toBeInTheDocument();
+			screen.queryByRole( 'link', { name: /Open weekly summary/ } )
+		).not.toBeInTheDocument();
+		expect( copyButton() ).toBeEnabled();
 	} );
 
-	it( 'asks for a page instead of showing a link', async () => {
+	it( 'asks for a page instead of offering the summary', async () => {
 		withSource( { weekly_summary_url: null, page_id: null } );
 		await renderApp();
 
 		expect(
 			screen.getByText(
-				/Choose a page for this feed to get a WhatsApp summary link/
+				/Choose a public page for this feed to get a weekly summary link/
 			)
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole( 'button', { name: 'Copy link' } )
+			screen.queryByRole( 'button', { name: 'Copy summary link' } )
 		).not.toBeInTheDocument();
+	} );
+
+	it( 'clears copy feedback when the link changes after editing', async () => {
+		Object.defineProperty( navigator, 'clipboard', {
+			value: { writeText: () => Promise.resolve() },
+			configurable: true,
+		} );
+		let current = { weekly_summary_url: LINK, page_id: 7 };
+		const fallback = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.path === '/fair-events/v1/sources/2'
+				? Promise.resolve( { ...source, ...current } )
+				: fallback( options )
+		);
+		await renderApp();
+		await act( async () => {
+			fireEvent.click( copyButton() );
+		} );
+		expect( screen.getByRole( 'status' ) ).toHaveTextContent( 'copied' );
+
+		// Saving in the editor refetches the feed with a new link.
+		current = { weekly_summary_url: `${ LINK }renamed/`, page_id: 7 };
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Edit event feed' } )
+		);
+		const dialog = screen.getByRole( 'dialog' );
+		await act( async () => {
+			fireEvent.submit( dialog.querySelector( 'form' ) );
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		await waitFor( () =>
+			expect(
+				screen.getByRole( 'link', { name: /Open weekly summary/ } )
+			).toHaveAttribute( 'href', `${ LINK }renamed/` )
+		);
+		expect( screen.getByRole( 'status' ) ).toBeEmptyDOMElement();
 	} );
 } );

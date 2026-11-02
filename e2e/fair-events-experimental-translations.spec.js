@@ -1,6 +1,6 @@
 /**
- * Fair Events Experimental's event feed calendar and public event proposal
- * messages are translated (#1872) and stay in English on an English site.
+ * Fair Events Experimental's event feed calendar, feed detail actions
+ * (#2083) and public event proposal messages are translated (#1872) and stay in English on an English site.
  *
  * Their strings used to sit in Fair Events' catalog, which isn't loaded for
  * this plugin's bundles or replies, so they rendered in English on a
@@ -21,10 +21,12 @@ const PROPOSALS_ROUTE = '/wp-json/fair-events/v1/event-proposals';
 const TEXT = {
 	en: {
 		calendarNav: ['Previous', 'Today', 'Next'],
+		feedActions: ['Edit event feed', 'Subscription and integrations'],
 		pastStart: 'Event start date must be in the future.',
 	},
 	es: {
 		calendarNav: ['Anterior', 'Hoy', 'Siguiente'],
+		feedActions: ['Editar feed de eventos', 'Suscripción e integraciones'],
 		pastStart: 'La fecha de inicio del evento debe ser en el futuro.',
 	},
 };
@@ -44,7 +46,7 @@ let sourceId = null;
 
 async function expectScreens(page, request, text) {
 	await page.goto(`${SOURCE_VIEW_PAGE}${sourceId}`);
-	for (const label of text.calendarNav) {
+	for (const label of [...text.calendarNav, ...text.feedActions]) {
 		await expect(page.getByRole('button', { name: label })).toBeVisible({
 			timeout: 20_000,
 		});
