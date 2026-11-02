@@ -137,4 +137,61 @@ class AbstractUrlLookupControllerTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'rest_lookup_no_metadata', $result->get_error_code() );
 	}
+	/**
+	 * A Momoyoga event page, whose HTML has no dates, returns the start, end
+	 * and venue from the event's public data.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_fills_momoyoga_event_details() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+		$fixtures                       = dirname( __DIR__ ) . '/fixtures/momoyoga/';
+		$page_url                       = 'https://www.momoyoga.com/a-tempo-barcelona/event/6b1b2f01-877e-4718-b5f2-f15d8c58dc11';
+
+		$GLOBALS['_fair_test_remote_responses'][ $page_url ] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html; charset=UTF-8' ),
+			'body'     => file_get_contents( $fixtures . 'page.html' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+		);
+		$GLOBALS['_fair_test_remote_responses']['https://api.momoyoga.com/clients/a-tempo-barcelona/events/6b1b2f01-877e-4718-b5f2-f15d8c58dc11'] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'application/ld+json; charset=utf-8' ),
+			'body'     => file_get_contents( $fixtures . 'event.json' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+		);
+
+		$result = $this->controller->do_lookup( $page_url );
+
+		$this->assertInstanceOf( WP_REST_Response::class, $result );
+		$data = $result->get_data();
+		$this->assertSame( '2026-11-07', $data['start_date'] );
+		$this->assertSame( '11:30:00', $data['start_time'] );
+		$this->assertSame( '14:00:00', $data['end_time'] );
+		$this->assertSame( 'Atempo Barcelona', $data['location'] );
+		$this->assertSame( array( 'title', 'start', 'end', 'location' ), $data['found'] );
+	}
+
+	/**
+	 * When Momoyoga's event data is unavailable, the page's own title is
+	 * still returned with the dates left for manual completion.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_keeps_page_metadata_when_momoyoga_data_fails() {
+		$page_url = 'https://www.momoyoga.com/a-tempo-barcelona/event/6b1b2f01-877e-4718-b5f2-f15d8c58dc11';
+
+		$GLOBALS['_fair_test_remote_responses'][ $page_url ] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html' ),
+			'body'     => file_get_contents( dirname( __DIR__ ) . '/fixtures/momoyoga/page.html' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+		);
+		$GLOBALS['_fair_test_remote_responses']['https://api.momoyoga.com/clients/a-tempo-barcelona/events/6b1b2f01-877e-4718-b5f2-f15d8c58dc11'] = new WP_Error( 'http_request_failed', 'timeout' );
+
+		$result = $this->controller->do_lookup( $page_url );
+
+		$this->assertInstanceOf( WP_REST_Response::class, $result );
+		$data = $result->get_data();
+		$this->assertSame( 'Taller de Acroyoga Fundamentos ✦ noviembre', $data['title'] );
+		$this->assertNull( $data['start_date'] );
+		$this->assertSame( array( 'title' ), $data['found'] );
+	}
 }

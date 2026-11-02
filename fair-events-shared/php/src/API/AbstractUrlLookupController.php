@@ -10,6 +10,7 @@ namespace FairEventsShared\API;
 
 defined( 'WPINC' ) || die;
 
+use FairEventsShared\Helpers\MomoyogaEventSource;
 use FairEventsShared\Helpers\PageMetadataParser;
 use FairEventsShared\Helpers\SafeUrlFetcher;
 use WP_REST_Controller;
@@ -53,6 +54,10 @@ abstract class AbstractUrlLookupController extends WP_REST_Controller {
 		}
 
 		$metadata = PageMetadataParser::parse( $body );
+
+		// Some event platforms render their details with JavaScript; fill
+		// what the page itself lacks from the platform's public event data.
+		$metadata = MomoyogaEventSource::supplement( $url, $metadata );
 
 		if ( empty( $metadata['title'] ) ) {
 			return new WP_Error(

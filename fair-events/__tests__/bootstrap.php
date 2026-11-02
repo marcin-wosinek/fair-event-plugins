@@ -561,13 +561,19 @@ if ( ! function_exists( 'wp_safe_remote_get' ) ) {
 	 * Stub of WordPress wp_safe_remote_get() — delegates to the wp_remote_get()
 	 * stub above (this bootstrap has no notion of "unsafe" URL rejection;
 	 * seed $GLOBALS['_fair_test_remote_responses'][ $url ] with a WP_Error to
-	 * simulate that outcome).
+	 * simulate that outcome). Each call is recorded in
+	 * $GLOBALS['_fair_test_remote_requests'] so tests can assert its args.
 	 *
 	 * @param string $url  URL to fetch.
-	 * @param array  $args Request args (ignored by this stub).
+	 * @param array  $args Request args (recorded, otherwise ignored).
 	 * @return array|WP_Error Raw response array, or a seeded WP_Error.
 	 */
 	function wp_safe_remote_get( $url, $args = array() ) {
+		$GLOBALS['_fair_test_remote_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+
 		return wp_remote_get( $url, $args );
 	}
 }

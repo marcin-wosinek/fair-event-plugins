@@ -1,0 +1,16 @@
+{
+	"@context": "/contexts/Event",
+	"@id": "/clients/a-tempo-barcelona/events/6b1b2f01-877e-4718-b5f2-f15d8c58dc11",
+	"@type": "Event",
+	"id": "6b1b2f01-877e-4718-b5f2-f15d8c58dc11",
+	"dateRangeString": "sábado, 7 nov 2026 11:30–14:00",
+	"isBookable": true,
+	"isSoldOut": false,
+	"type": "event",
+	"fromTime": "2026-11-07T11:30:00+01:00",
+	"toTime": "2026-11-07T14:00:00+01:00",
+	"description": "Workshop description.",
+	"image": "https://cdn.momo.yoga/upload/eventImage/event-image.jpg",
+	"location": "Atempo Barcelona",
+	"title": "Taller de Acroyoga Fundamentos ✦ noviembre"
+}
