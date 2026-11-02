@@ -86,7 +86,7 @@ test('the manifest covers exactly the registered Manage Event tabs', () => {
 		[...registered].sort(),
 		MANAGE_EVENT_TABS.map((tab) => tab.name).sort()
 	);
-	assert.equal(MANAGE_EVENT_TABS.length, 10);
+	assert.equal(MANAGE_EVENT_TABS.length, 11);
 });
 
 test('every tab has a stable, ordered filename', () => {
@@ -142,7 +142,7 @@ test('a complete run indexes every tab with its capture context', () => {
 		const index = buildIndex({ runDirectory: root, revision });
 		assert.equal(index.status, 'complete');
 		assert.deepEqual(index.failures, []);
-		assert.equal(index.images.length, 10);
+		assert.equal(index.images.length, 11);
 		assert.deepEqual(index.images[2], {
 			...index.images[2],
 			tab: 'schedule',
@@ -257,7 +257,7 @@ test('a complete run replaces latest and drops earlier runs', async () => {
 		assert.equal(status, 0);
 		assert.equal(existsSync(join(output, 'runs', 'old')), false);
 		assert.equal(existsSync(join(output, 'latest', 'stale.png')), false);
-		assert.equal(existsSync(join(output, 'latest', '10-admin.png')), true);
+		assert.equal(existsSync(join(output, 'latest', '11-admin.png')), true);
 		assert.equal(existsSync(join(output, 'latest', 'results')), false);
 		const index = JSON.parse(
 			readFileSync(join(output, 'latest', 'index.json'), 'utf8')

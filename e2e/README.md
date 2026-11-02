@@ -216,7 +216,7 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   submit endpoint returns only `{success, message}`, so specs resolve the
   submission id server-side rather than reading it off the response.
 - **`manage-event-demo.php <seed|cleanup>`** — the synthetic Manage Event
-  screenshot demo (one populated event covering all ten tabs). `seed` refuses
+  screenshot demo (one populated event covering all eleven tabs). `seed` refuses
   to run unless mail capture, the Mollie double and the external HTTP guard
   are active, and removes any earlier demo first. See
   [docs/manage-event-screenshots.md](../docs/manage-event-screenshots.md).

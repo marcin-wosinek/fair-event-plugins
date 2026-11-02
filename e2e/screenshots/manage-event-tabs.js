@@ -88,6 +88,21 @@ export const MANAGE_EVENT_TABS = [
 		],
 	},
 	{
+		name: 'messages',
+		title: 'Messages',
+		plugin: 'fair-events',
+		prerequisites: [
+			'Fair Events Ticketing feature on.',
+			'Not a generated series occurrence or a link-only event (otherwise the tab only explains why).',
+		],
+		ready: ( panel ) => [
+			panel.getByRole( 'heading', {
+				name: 'Booking confirmation message',
+			} ),
+			panel.getByRole( 'button', { name: 'Save message' } ),
+		],
+	},
+	{
 		name: 'groups',
 		title: 'Groups',
 		plugin: 'fair-audience-experimental',
