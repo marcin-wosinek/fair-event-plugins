@@ -157,6 +157,10 @@ class Installer {
 		// Version 3.43.0 - Schedule items table (no data migration needed, table created by dbDelta).
 		$sql = Schema::get_schedule_items_table_sql();
 		dbDelta( $sql );
+
+		// Version 3.48.0 - Event date booking_message column (no data
+		// migration needed, applied by dbDelta through the event dates
+		// statement above).
 	}
 
 	/**

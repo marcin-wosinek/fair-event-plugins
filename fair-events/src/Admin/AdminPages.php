@@ -565,6 +565,12 @@ class AdminPages {
 				\FairEvents\Core\Features::script_translations_path()
 			);
 
+			// The Messages tab edits the booking confirmation message with the
+			// classic editor (TinyMCE + quicktags); it is a ticketing tab.
+			if ( \FairEvents\Core\Features::is_enabled( 'ticketing' ) ) {
+				wp_enqueue_editor();
+			}
+
 			do_action( 'fair_events_manage_event_enqueue_assets', $hook );
 
 			// Styles imported by the bundle (the Statistics tab's charts).

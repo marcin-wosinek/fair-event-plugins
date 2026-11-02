@@ -41,6 +41,7 @@ import {
 	RECURRENCE_FREQUENCIES,
 } from 'fair-events-shared';
 import EventFinance from './EventFinance.js';
+import EventMessages from './EventMessages.js';
 import EventTickets from './EventTickets.js';
 import { resolveFinalOccurrenceDate } from './salePeriodBoundaries.js';
 import RecurrenceCalendar from './RecurrenceCalendar.js';
@@ -1088,6 +1089,24 @@ export default function ManageEventApp() {
 					}
 					eventTitle={ getEventDisplayTitle( title ) }
 					eventDateLabel={ formatTimingStart( eventDate ) }
+				/>
+			),
+		},
+		{
+			name: 'messages',
+			title: __( 'Messages', 'fair-events' ),
+			order: 30,
+			// A ticketing tab. Series dates and link-only events open it
+			// too, to see why they have nothing to edit here.
+			isVisible: ticketingEnabled,
+			render: () => (
+				<EventMessages
+					eventDateId={ eventDateId }
+					eventDate={ eventDate }
+					manageEventUrl={ manageEventUrl }
+					setTabDirty={ setTabDirty }
+					getTabDraft={ getTabDraft }
+					setTabDraft={ setTabDraft }
 				/>
 			),
 		},

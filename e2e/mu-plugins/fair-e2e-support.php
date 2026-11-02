@@ -649,6 +649,38 @@ add_filter(
 	2
 );
 
+// Read the mail captured above for one recipient, oldest first, so API
+// specs can check what a booking emailed without going through WP-CLI.
+add_action(
+	'rest_api_init',
+	static function () {
+		register_rest_route(
+			'fair-e2e/v1',
+			'/captured-mail',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'callback'            => static function ( WP_REST_Request $request ) {
+					$to    = sanitize_email( (string) $request->get_param( 'to' ) );
+					$found = array();
+					foreach ( get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
+						if ( in_array( $to, (array) ( $entry['to'] ?? array() ), true ) ) {
+							$found[] = array(
+								'subject' => (string) ( $entry['subject'] ?? '' ),
+								'body'    => (string) ( $entry['body'] ?? '' ),
+							);
+						}
+					}
+
+					return rest_ensure_response( $found );
+				},
+			)
+		);
+	}
+);
+
 /*
  * 5. Intercept the Meta Conversions API transport.
  *

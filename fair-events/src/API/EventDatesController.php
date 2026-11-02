@@ -10,6 +10,7 @@ namespace FairEvents\API;
 defined( 'WPINC' ) || die;
 
 use FairEvents\Models\EventDates;
+use FairEvents\Services\BookingMessage;
 use FairEvents\Services\EventBudget;
 use FairEvents\Services\EventCopyService;
 use FairEvents\Services\EventPublication;
@@ -290,6 +291,43 @@ class EventDatesController extends WP_REST_Controller {
 							'validate_callback' => function ( $value ) {
 								return null === $value || ( is_numeric( $value ) && (int) $value > 0 );
 							},
+						),
+					),
+				),
+			)
+		);
+
+		// GET, PUT /fair-events/v1/event-dates/{id}/booking-message - Read/update
+		// the message added to booking confirmation emails (#2126). Kept out
+		// of the event date responses, which public-facing code also reads.
+		register_rest_route(
+			$this->namespace,
+			'/event-dates/(?P<id>\d+)/booking-message',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_booking_message' ),
+					'permission_callback' => array( $this, 'booking_message_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the event date.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_booking_message' ),
+					'permission_callback' => array( $this, 'booking_message_permissions_check' ),
+					'args'                => array(
+						'id'      => array(
+							'description' => __( 'Unique identifier for the event date.', 'fair-events' ),
+							'type'        => 'integer',
+						),
+						'message' => array(
+							'description' => __( 'Message HTML added to booking confirmation emails. An empty string clears it.', 'fair-events' ),
+							'type'        => 'string',
+							'required'    => true,
 						),
 					),
 				),
@@ -2309,6 +2347,87 @@ class EventDatesController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Get the booking confirmation message that applies to an event date.
+	 *
+	 * A series occurrence answers with its series' message and names the
+	 * series row, where the message is edited.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_booking_message( $request ) {
+		$event_date = EventDates::get_by_id( (int) $request->get_param( 'id' ) );
+		if ( ! $event_date ) {
+			return $this->booking_message_not_found();
+		}
+
+		return new WP_REST_Response( $this->booking_message_response( $event_date ), 200 );
+	}
+
+	/**
+	 * Save (or clear) the booking confirmation message of an event date.
+	 *
+	 * Applies to bookings confirmed from now on; nobody who already booked
+	 * is emailed. A series occurrence is rejected: the series owns the
+	 * message for all its dates.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function update_booking_message( $request ) {
+		$event_date = EventDates::get_by_id( (int) $request->get_param( 'id' ) );
+		if ( ! $event_date ) {
+			return $this->booking_message_not_found();
+		}
+
+		if ( BookingMessage::owner_id( $event_date ) !== (int) $event_date->id ) {
+			return new WP_Error(
+				'rest_booking_message_on_series',
+				__( 'This date is part of a series. Edit the message on the series.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( false === BookingMessage::save( (int) $event_date->id, (string) $request->get_param( 'message' ) ) ) {
+			return new WP_Error(
+				'rest_booking_message_save_failed',
+				__( 'The message could not be saved.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response( $this->booking_message_response( $event_date ), 200 );
+	}
+
+	/**
+	 * Build the booking message response for an event date.
+	 *
+	 * @param EventDates $event_date Requested event date row.
+	 * @return array{message: string, series_event_date_id: int|null}
+	 */
+	private function booking_message_response( EventDates $event_date ) {
+		$owner_id = BookingMessage::owner_id( $event_date );
+
+		return array(
+			'message'              => BookingMessage::get( (int) $event_date->id ),
+			'series_event_date_id' => $owner_id !== (int) $event_date->id ? $owner_id : null,
+		);
+	}
+
+	/**
+	 * Error for a booking message request on a missing event date.
+	 *
+	 * @return WP_Error 404 error.
+	 */
+	private function booking_message_not_found() {
+		return new WP_Error(
+			'rest_event_date_not_found',
+			__( 'Event date not found.', 'fair-events' ),
+			array( 'status' => 404 )
+		);
+	}
+
+	/**
 	 * Get paginated list of all event dates
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
@@ -2697,6 +2816,50 @@ class EventDatesController extends WP_REST_Controller {
 	 */
 	private function set_standalone_categories( $event_date_id, $category_ids ) {
 		EventDates::set_category_ids( $event_date_id, $category_ids );
+	}
+
+	/**
+	 * Check whether the current user may read or change an event's booking
+	 * message.
+	 *
+	 * Editors of the event itself only: the linked post's edit_post for a
+	 * linked event (a series occurrence uses its series' post), the
+	 * management capability (edit_posts) for an event without a page. A
+	 * missing event date passes through to the callback's 404 for users
+	 * who could manage events at all.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return bool|WP_Error True when allowed, otherwise an error.
+	 */
+	public function booking_message_permissions_check( $request ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return $this->booking_message_forbidden();
+		}
+
+		$event_date = EventDates::get_by_id( (int) $request->get_param( 'id' ) );
+		if ( ! $event_date ) {
+			return true;
+		}
+
+		$post_id = (int) $event_date->get_resolved_event_id();
+		if ( $post_id > 0 && get_post( $post_id ) && ! current_user_can( 'edit_post', $post_id ) ) {
+			return $this->booking_message_forbidden();
+		}
+
+		return true;
+	}
+
+	/**
+	 * Error for a user who may not manage an event's booking message.
+	 *
+	 * @return WP_Error 401 or 403 error.
+	 */
+	private function booking_message_forbidden() {
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'You do not have permission to manage this event\'s booking message.', 'fair-events' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
 	}
 
 	/**

@@ -2055,6 +2055,14 @@ class EmailService {
 			SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 		);
 
+		// The organizer's own message for this event, resolved and sanitized
+		// by fair-events so both confirmation senders include the same
+		// content (#2126).
+		$custom_message_html = '';
+		if ( $event_date_id > 0 && class_exists( \FairEvents\Services\BookingMessage::class ) ) {
+			$custom_message_html = \FairEvents\Services\BookingMessage::for_email( $event_date_id );
+		}
+
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
 		$message = SignupConfirmationEmail::html(
 			array(
@@ -2067,6 +2075,7 @@ class EmailService {
 				'payment_amount_display'       => esc_html( $payment_amount_display ),
 				'option_names'                 => array_map( 'esc_html', $option_names ),
 				'answers_html'                 => $answers_html,
+				'custom_message_html'          => $custom_message_html,
 				/* translators: %s: participant first name */
 				'greeting_template'            => esc_html__( 'Hi %s,', 'fair-audience' ),
 				'confirmation_sentence'        => $confirmation_sentence,
