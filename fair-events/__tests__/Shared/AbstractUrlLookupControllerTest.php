@@ -137,6 +137,7 @@ class AbstractUrlLookupControllerTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'rest_lookup_no_metadata', $result->get_error_code() );
 	}
+
 	/**
 	 * A Momoyoga event page, whose HTML has no dates, returns the start, end
 	 * and venue from the event's public data.
@@ -193,5 +194,96 @@ class AbstractUrlLookupControllerTest extends TestCase {
 		$this->assertSame( 'Taller de Acroyoga Fundamentos ✦ noviembre', $data['title'] );
 		$this->assertNull( $data['start_date'] );
 		$this->assertSame( array( 'title' ), $data['found'] );
+	}
+
+	/**
+	 * A Meetup event page whose JSON-LD lacks the Event is filled from its
+	 * embedded event data through lookup_url() (#2124).
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_fills_meetup_event_from_embedded_data() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$url  = 'https://www.meetup.com/es-ES/idiolect/events/317159839/';
+		$html = preg_replace(
+			'#<script type="application/ld\+json"[^>]*>\{"@context":"https://schema.org","@type":"Event".*?</script>#s',
+			'',
+			file_get_contents( __DIR__ . '/../fixtures/meetup/event-page.html' ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+		);
+
+		$GLOBALS['_fair_test_remote_responses'][ $url ] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html; charset=utf-8' ),
+			'body'     => $html,
+		);
+
+		$data = $this->controller->do_lookup( $url )->get_data();
+
+		$this->assertSame( 'meetup', $data['source'] );
+		$this->assertSame( '2/8 spots left for this semi-class: Speak Spanish, Play Catan', $data['title'] );
+		$this->assertSame( '2026-11-06', $data['start_date'] );
+		$this->assertSame( '19:00:00', $data['start_time'] );
+		$this->assertSame( '22:00:00', $data['end_time'] );
+		$this->assertSame( 'New ziryab', $data['location'] );
+	}
+
+	/**
+	 * The same embedded data on a non-Meetup URL is ignored, so generic
+	 * imports keep their Open Graph result.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_ignores_embedded_event_on_other_sites() {
+		$url  = 'https://example.com/idiolect/events/317159839/';
+		$html = '<html><head><meta property="og:title" content="OG Title"></head><body>'
+			. '<script id="__NEXT_DATA__" type="application/json">'
+			. wp_json_encode(
+				array(
+					'props' => array(
+						'pageProps' => array(
+							'event' => array(
+								'id'       => '317159839',
+								'title'    => 'Embedded',
+								'dateTime' => '2026-11-06T19:00:00+01:00',
+							),
+						),
+					),
+				)
+			)
+			. '</script></body></html>';
+
+		$GLOBALS['_fair_test_remote_responses'][ $url ] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html' ),
+			'body'     => $html,
+		);
+
+		$data = $this->controller->do_lookup( $url )->get_data();
+
+		$this->assertSame( 'opengraph', $data['source'] );
+		$this->assertSame( 'OG Title', $data['title'] );
+		$this->assertNull( $data['start_datetime'] );
+	}
+
+	/**
+	 * Meetup refusing the request (e.g. 403 to automated access) surfaces the
+	 * usual fetch error, leaving manual entry open.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_reports_blocked_meetup_page() {
+		$url = 'https://www.meetup.com/idiolect/events/317159839/';
+
+		$GLOBALS['_fair_test_remote_responses'][ $url ] = array(
+			'response' => array( 'code' => 403 ),
+			'headers'  => array( 'content-type' => 'text/html' ),
+			'body'     => '<html><title>Access denied</title></html>',
+		);
+
+		$result = $this->controller->do_lookup( $url );
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'rest_lookup_bad_status', $result->get_error_code() );
 	}
 }

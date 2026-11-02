@@ -313,6 +313,109 @@ describe( 'QuickEventModal', () => {
 		expect(
 			screen.getAllByText( /didn't specify/ ).length
 		).toBeGreaterThan( 0 );
+		// The popup's default times must not look extracted (#2124).
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+	} );
+
+	it( 'prefills an editable Meetup lookup and keeps its link (#2124)', async () => {
+		const meetupUrl = 'https://www.meetup.com/idiolect/events/317159839/';
+		lookupResponse = {
+			title: 'Speak Spanish, Play Catan',
+			start_date: '2026-11-06',
+			start_time: '19:00:00',
+			end_date: null,
+			end_time: null,
+			all_day: false,
+			location: 'New ziryab',
+			source: 'meetup',
+			found: [ 'title', 'start', 'location' ],
+		};
+
+		const { onSuccess } = await renderModal();
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: meetupUrl },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Speak Spanish, Play Catan'
+			)
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'19:00'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByText( 'From the page: New ziryab' ) ).toBeVisible();
+
+		fillTitle( 'Spanish & Catan' );
+		fireEvent.change( screen.getByLabelText( 'End time (optional)' ), {
+			target: { value: '22:00' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+		const createCall = apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect( createCall[ 0 ].data ).toMatchObject( {
+			title: 'Spanish & Catan',
+			start_date: '2026-11-06',
+			end_date: '2026-11-06',
+			start_time: '19:00:00',
+			end_time: '22:00:00',
+			link_type: 'external',
+			external_url: meetupUrl,
+		} );
+	} );
+
+	it( 'allows manual completion after a failed lookup, keeping the link (#2124)', async () => {
+		const meetupUrl = 'https://www.meetup.com/idiolect/events/317159839/';
+		lookupResponse = new Error( 'That page could not be fetched.' );
+
+		const { onSuccess } = await renderModal();
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: meetupUrl },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+		await waitFor( () =>
+			expect(
+				screen.getByText( 'That page could not be fetched.' )
+			).toBeInTheDocument()
+		);
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'Manual' } ) );
+		fillTitle( 'Manually entered' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+		const createCall = apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect( createCall[ 0 ].data ).toMatchObject( {
+			title: 'Manually entered',
+			link_type: 'external',
+			external_url: meetupUrl,
+		} );
 	} );
 
 	it( 'shows an error and keeps the URL tab on a failed lookup', async () => {

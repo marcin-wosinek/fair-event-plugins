@@ -10,6 +10,7 @@ namespace FairEventsShared\API;
 
 defined( 'WPINC' ) || die;
 
+use FairEventsShared\Helpers\MeetupEventData;
 use FairEventsShared\Helpers\MomoyogaEventSource;
 use FairEventsShared\Helpers\PageMetadataParser;
 use FairEventsShared\Helpers\SafeUrlFetcher;
@@ -54,6 +55,13 @@ abstract class AbstractUrlLookupController extends WP_REST_Controller {
 		}
 
 		$metadata = PageMetadataParser::parse( $body );
+
+		// Meetup pages may lack a complete schema.org Event; their embedded
+		// event data fills the gaps. The class check keeps this safe when an
+		// older copy of the shared package wins the autoload race.
+		if ( class_exists( MeetupEventData::class ) ) {
+			$metadata = MeetupEventData::fill_missing( $url, $body, $metadata );
+		}
 
 		// Some event platforms render their details with JavaScript; fill
 		// what the page itself lacks from the platform's public event data.
