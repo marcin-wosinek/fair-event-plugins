@@ -952,3 +952,286 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 		);
 	} );
 } );
+
+describe( 'EntriesApp — entries awaiting a budget (#2088)', () => {
+	const COUNT_ROUTE = '/fair-finance/v1/financial-entries/unbudgeted-count';
+	const ENTRY = makeEntry( { id: 41, description: 'Printing flyers' } );
+
+	/**
+	 * Route the page's requests. Each count request is answered by the next
+	 * function in `counts`, so a test controls every response in order.
+	 *
+	 * @param {Object}     options
+	 * @param {Function[]} options.counts Count responses, in request order.
+	 * @param {Function}   options.remove Response to DELETE (may reject).
+	 */
+	const mockCountApi = ( {
+		counts,
+		remove = () => Promise.resolve( { deleted: true } ),
+	} ) => {
+		let countRequest = 0;
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			const route = path.split( '?' )[ 0 ];
+			if ( method === 'DELETE' ) {
+				return remove( route );
+			}
+			if ( route === COUNT_ROUTE ) {
+				const respond = counts[ countRequest ] || counts.at( -1 );
+				countRequest++;
+				return respond();
+			}
+			if ( route === '/fair-finance/v1/financial-entries' ) {
+				return Promise.resolve( {
+					entries: [ ENTRY ],
+					total: 1,
+					pages: 1,
+				} );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/totals' ) {
+				return Promise.resolve( {
+					total_cost: 40,
+					total_income: 0,
+					balance: -40,
+				} );
+			}
+			if (
+				route === '/fair-finance/v1/financial-entries/totals-by-tag'
+			) {
+				return Promise.resolve( {} );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const countValue = ( count ) => () => Promise.resolve( { count } );
+	const deferred = () => {
+		let resolve;
+		let reject;
+		const promise = new Promise( ( res, rej ) => {
+			resolve = res;
+			reject = rej;
+		} );
+		return { promise, resolve, reject, respond: () => promise };
+	};
+
+	const countRequests = () => requestsTo( COUNT_ROUTE );
+	const countRegion = () =>
+		document.querySelector( '.fair-finance-unbudgeted-count' );
+
+	const deleteEntry = async () => {
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		const dialog = screen.getByRole( 'dialog' );
+		await act( async () => {
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Delete entry' } )
+			);
+		} );
+		return dialog;
+	};
+
+	it( 'shows loading first, then the count, and pluralizes it', async () => {
+		const pending = deferred();
+		mockCountApi( { counts: [ pending.respond ] } );
+		render( <EntriesApp /> );
+
+		expect(
+			screen.getByText( 'Counting entries without a budget…' )
+		).toBeInTheDocument();
+		expect( countRegion() ).toHaveAttribute( 'role', 'status' );
+
+		await act( async () => pending.resolve( { count: 1 } ) );
+
+		expect(
+			screen.getByText( '1 entry is waiting for a budget.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Counting entries without a budget…' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'displays zero explicitly', async () => {
+		mockCountApi( { counts: [ countValue( 0 ) ] } );
+		render( <EntriesApp /> );
+
+		expect(
+			await screen.findByText( '0 entries are waiting for a budget.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'distinguishes a failure from zero and retries', async () => {
+		mockCountApi( {
+			counts: [
+				() => Promise.reject( { message: 'Database error' } ),
+				countValue( 3 ),
+			],
+		} );
+		render( <EntriesApp /> );
+
+		expect(
+			await screen.findByText(
+				'The number of entries without a budget could not be loaded.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /entries are waiting for a budget/ )
+		).not.toBeInTheDocument();
+
+		await act( async () => {
+			fireEvent.click( screen.getByRole( 'button', { name: 'Retry' } ) );
+		} );
+
+		expect(
+			screen.getByText( '3 entries are waiting for a budget.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Retry' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'treats a malformed response as a failure, not zero', async () => {
+		mockCountApi( { counts: [ () => Promise.resolve( {} ) ] } );
+		render( <EntriesApp /> );
+
+		expect(
+			await screen.findByText(
+				'The number of entries without a budget could not be loaded.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'is not narrowed or reloaded by table filters', async () => {
+		mockCountApi( { counts: [ countValue( 4 ) ] } );
+		render( <EntriesApp /> );
+		await screen.findByText( '4 entries are waiting for a budget.' );
+		const listBefore = listRequests().length;
+
+		await act( async () => {
+			fireEvent.change( screen.getByLabelText( 'Budget' ), {
+				target: { value: 'none' },
+			} );
+		} );
+		await act( async () => {
+			fireEvent.change( screen.getByLabelText( 'From Date' ), {
+				target: { value: '2026-09-01' },
+			} );
+		} );
+
+		// The table reloaded for each filter; the count did not.
+		expect( listRequests().length ).toBeGreaterThan( listBefore );
+		expect( countRequests() ).toHaveLength( 1 );
+		expect( [ ...countRequests()[ 0 ].keys() ] ).toEqual( [] );
+		expect(
+			screen.getByText( '4 entries are waiting for a budget.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows the overall count in a focused entry view', async () => {
+		openAt( '&entry_id=41' );
+		mockCountApi( { counts: [ countValue( 6 ) ] } );
+		render( <EntriesApp /> );
+
+		expect(
+			await screen.findByText( '6 entries are waiting for a budget.' )
+		).toBeInTheDocument();
+		expect( [ ...countRequests()[ 0 ].keys() ] ).toEqual( [] );
+	} );
+
+	it( 'refreshes after a successful save, showing loading instead of the stale value', async () => {
+		const refresh = deferred();
+		mockCountApi( { counts: [ countValue( 2 ), refresh.respond ] } );
+		render( <EntriesApp /> );
+		await screen.findByText( '2 entries are waiting for a budget.' );
+		await screen.findByText( 'Printing flyers' );
+
+		await deleteEntry();
+
+		expect(
+			await screen.findByText(
+				'Entry “Printing flyers” deleted.',
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+		expect( countRequests() ).toHaveLength( 2 );
+		expect(
+			screen.getByText( 'Counting entries without a budget…' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( '2 entries are waiting for a budget.' )
+		).not.toBeInTheDocument();
+
+		await act( async () => refresh.resolve( { count: 1 } ) );
+
+		expect(
+			screen.getByText( '1 entry is waiting for a budget.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'leaves the count unchanged when a save fails or is cancelled', async () => {
+		mockCountApi( {
+			counts: [ countValue( 2 ) ],
+			remove: () => Promise.reject( {} ),
+		} );
+		render( <EntriesApp /> );
+		await screen.findByText( '2 entries are waiting for a budget.' );
+		await screen.findByText( 'Printing flyers' );
+
+		const dialog = await deleteEntry();
+		expect(
+			within( dialog ).getByText(
+				'The entry could not be deleted. Try again.',
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+		);
+
+		expect( countRequests() ).toHaveLength( 1 );
+		expect(
+			screen.getByText( '2 entries are waiting for a budget.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'ignores a superseded response that arrives late', async () => {
+		const first = deferred();
+		const second = deferred();
+		mockCountApi( { counts: [ first.respond, second.respond ] } );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Printing flyers' );
+
+		// A save while the first count is still pending starts a second one.
+		await deleteEntry();
+		await screen.findByText(
+			'Entry “Printing flyers” deleted.',
+			IN_NOTICE
+		);
+
+		await act( async () => second.resolve( { count: 1 } ) );
+		await act( async () => first.resolve( { count: 5 } ) );
+
+		expect(
+			screen.getByText( '1 entry is waiting for a budget.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( '5 entries are waiting for a budget.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'ignores a superseded failure that arrives late', async () => {
+		const first = deferred();
+		mockCountApi( { counts: [ first.respond, countValue( 1 ) ] } );
+		render( <EntriesApp /> );
+		await screen.findByText( 'Printing flyers' );
+
+		await deleteEntry();
+		await screen.findByText( '1 entry is waiting for a budget.' );
+		await act( async () => first.reject( {} ) );
+
+		expect(
+			screen.getByText( '1 entry is waiting for a budget.' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Retry' } )
+		).not.toBeInTheDocument();
+	} );
+} );

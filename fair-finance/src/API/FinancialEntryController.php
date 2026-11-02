@@ -74,6 +74,19 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-finance/v1/financial-entries/unbudgeted-count - Count entries awaiting a budget.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/unbudgeted-count',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_unbudgeted_count' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+				),
+			)
+		);
+
 		// GET /fair-finance/v1/financial-entries/event-urls - Get distinct event URLs.
 		register_rest_route(
 			$this->namespace,
@@ -763,6 +776,29 @@ class FinancialEntryController extends WP_REST_Controller {
 		$totals = FinancialEntry::get_totals( $filters );
 
 		return new WP_REST_Response( $totals, 200 );
+	}
+
+	/**
+	 * Get the number of entries awaiting a budget
+	 *
+	 * Independent of any table filter: counts every standalone entry and
+	 * split allocation without a budget, excluding split parents.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_unbudgeted_count( $request ) {
+		$count = FinancialEntry::count_unbudgeted();
+
+		if ( null === $count ) {
+			return new WP_Error(
+				'unbudgeted_count_failed',
+				__( 'The number of entries without a budget could not be loaded.', 'fair-finance' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response( array( 'count' => $count ), 200 );
 	}
 
 	/**

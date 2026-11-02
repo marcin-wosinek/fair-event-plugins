@@ -12,6 +12,24 @@
  */
 
 .wrap.fair-finance-entries-page {
+	/* Entries awaiting a budget: a single line that wraps on narrow screens. */
+	.fair-finance-unbudgeted-count {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 8px;
+		min-height: 24px;
+		overflow-wrap: anywhere;
+
+		.components-spinner {
+			margin: 0;
+		}
+
+		&.is-error {
+			color: #d63638;
+		}
+	}
+
 	@media screen and (max-width: 600px) {
 		.fair-finance-entries-summary {
 			flex-direction: column;
