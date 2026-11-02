@@ -163,6 +163,40 @@ class SignupConfirmationEmailTest extends TestCase {
 	}
 
 	/**
+	 * Empty or whitespace-only custom message renders exactly the email
+	 * rendered without the key, so existing confirmations are unchanged.
+	 */
+	public function test_html_unchanged_when_custom_message_empty(): void {
+		$without = SignupConfirmationEmail::html( $this->args() );
+
+		$this->assertSame( $without, SignupConfirmationEmail::html( $this->args( array( 'custom_message_html' => '' ) ) ) );
+		$this->assertSame( $without, SignupConfirmationEmail::html( $this->args( array( 'custom_message_html' => "  \n" ) ) ) );
+	}
+
+	/**
+	 * The organizer's message renders as given, after the booking details
+	 * and answers and before the action link and sign-off.
+	 */
+	public function test_html_places_custom_message_after_answers_before_sign_off(): void {
+		$html = SignupConfirmationEmail::html(
+			$this->args(
+				array(
+					'answers_html'        => '<tr><td>Question</td><td>Answer</td></tr>',
+					'custom_message_html' => '<p>Bring <a href="https://example.com/map">the map</a>.</p>',
+					'action_url'          => 'https://example.com/event',
+					'action_label'        => 'Open the event',
+				)
+			)
+		);
+
+		$message = strpos( $html, '<p>Bring <a href="https://example.com/map">the map</a>.</p>' );
+		$this->assertNotFalse( $message );
+		$this->assertGreaterThan( strpos( $html, 'Your answers:' ), $message );
+		$this->assertLessThan( strpos( $html, 'Open the event' ), $message );
+		$this->assertLessThan( strpos( $html, 'Thanks,<br>' ), $message );
+	}
+
+	/**
 	 * The sign-off and footer both include the site name.
 	 */
 	public function test_html_includes_site_name_in_sign_off_and_footer(): void {

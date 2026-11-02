@@ -77,6 +77,7 @@ class EmailService {
 				'payment_amount_display'       => esc_html( $payment_amount_display ),
 				'option_names'                 => array(),
 				'answers_html'                 => '',
+				'custom_message_html'          => BookingMessage::for_email( (int) $event_date_id ),
 				/* translators: %s: buyer first name */
 				'greeting_template'            => esc_html__( 'Hi %s,', 'fair-events' ),
 				'confirmation_sentence'        => sprintf(

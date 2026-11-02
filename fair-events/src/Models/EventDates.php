@@ -1294,6 +1294,53 @@ class EventDates {
 	}
 
 	/**
+	 * Get the raw post-booking message stored on an event date row.
+	 *
+	 * Kept out of hydrate() so the message never travels with event date
+	 * objects or the REST responses built from them. Callers resolve a
+	 * series occurrence to its master first (see BookingMessage).
+	 *
+	 * @param int $id Event date row ID.
+	 * @return string Stored HTML, or '' when none is set or the row is missing.
+	 */
+	public static function get_booking_message( $id ) {
+		global $wpdb;
+
+		$value = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT booking_message FROM %i WHERE id = %d LIMIT 1',
+				$wpdb->prefix . 'fair_event_dates',
+				$id
+			)
+		);
+
+		return null === $value ? '' : (string) $value;
+	}
+
+	/**
+	 * Store (or clear) the post-booking message on an event date row.
+	 *
+	 * @param int    $id      Event date row ID.
+	 * @param string $message Sanitized HTML. An empty string clears it.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function save_booking_message( $id, $message ) {
+		global $wpdb;
+
+		$message = (string) $message;
+
+		$result = $wpdb->update(
+			$wpdb->prefix . 'fair_event_dates',
+			array( 'booking_message' => '' === $message ? null : $message ),
+			array( 'id' => $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Delete event date by ID
 	 *
 	 * Cascades to generated occurrences (rows with master_id = $id) and
