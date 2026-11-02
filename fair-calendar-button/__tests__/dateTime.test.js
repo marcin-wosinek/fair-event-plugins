@@ -3,6 +3,7 @@
  */
 
 import {
+	calculateEndTime,
 	calculateDaysInclusive,
 	calculateEndDate,
 	validateDateTimeOrder,
@@ -462,5 +463,33 @@ describe( 'dateTime utilities', () => {
 				expect( result ).toBe( 'End date cannot be before start date' );
 			} );
 		} );
+	} );
+} );
+
+describe( 'shared all-day helpers (#2089)', () => {
+	it( 're-exports the fair-events-shared calendar-date helpers', async () => {
+		const shared =
+			await import( 'fair-events-shared/src/calendarDates.js' );
+		expect( calculateDaysInclusive ).toBe( shared.calculateDaysInclusive );
+		expect( calculateEndDate ).toBe( shared.calculateEndDate );
+	} );
+
+	it( 'keeps an all-day length across a daylight-saving change', () => {
+		const length = calculateDaysInclusive( '2026-03-28', '2026-03-30' );
+		expect( length ).toBe( 3 );
+		expect( calculateEndDate( '2026-10-24', length ) ).toBe( '2026-10-26' );
+	} );
+} );
+
+describe( 'calculateEndTime keeps timed events in elapsed minutes', () => {
+	it( 'moves the end with the start', () => {
+		expect( calculateEndTime( '2026-10-27T22:00', '240' ) ).toBe(
+			'2026-10-28T02:00'
+		);
+	} );
+
+	it( 'returns empty for "other" or a missing start', () => {
+		expect( calculateEndTime( '2026-10-27T22:00', 'other' ) ).toBe( '' );
+		expect( calculateEndTime( '', '60' ) ).toBe( '' );
 	} );
 } );
