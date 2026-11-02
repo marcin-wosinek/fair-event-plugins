@@ -25,6 +25,8 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/e2e-system-deps.mjs'
+            - 'scripts/__tests__/e2e-system-deps.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
     pull_request:
@@ -48,6 +50,8 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/e2e-system-deps.mjs'
+            - 'scripts/__tests__/e2e-system-deps.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
 
@@ -124,12 +128,54 @@ jobs:
                   restore-keys: ${{ runner.os }}-playwright-
 
             - name: Install Playwright browser
-              run: |
-                  if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-                      npx playwright install-deps chromium
-                  else
-                      npx playwright install --with-deps chromium
-                  fi
+              if: steps.playwright-cache.outputs.cache-hit != 'true'
+              run: npx playwright install chromium
+
+            # Linux system dependencies: only the downloaded .deb archives are
+            # cached. APT refreshes its indexes and installs on every run, and
+            # restored archives must match the fresh index's SHA256. See
+            # TESTING.md § E2E system dependencies.
+            - name: Start system dependency timer
+              run: echo "E2E_DEPS_STARTED_AT=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+            - name: Compute system dependency cache key
+              id: system-deps-key
+              run: node scripts/e2e-system-deps.mjs key >> "$GITHUB_OUTPUT"
+
+            - name: Restore system dependency archives
+              id: system-deps-cache
+              uses: actions/cache/restore@v6
+              with:
+                  path: ${{ steps.system-deps-key.outputs.path }}
+                  key: ${{ steps.system-deps-key.outputs.key }}
+
+            - name: Install Playwright system dependencies
+              env:
+                  E2E_DEPS_CACHE_HIT: ${{ steps.system-deps-cache.outputs.cache-hit }}
+              run: node scripts/e2e-system-deps.mjs install
+
+            - name: Save system dependency archives
+              id: system-deps-save
+              if: steps.system-deps-cache.outputs.cache-hit != 'true'
+              uses: actions/cache/save@v6
+              with:
+                  path: ${{ steps.system-deps-key.outputs.path }}
+                  key: ${{ steps.system-deps-key.outputs.key }}
+
+            - name: Report system dependency preparation
+              if: always() && steps.system-deps-key.outcome == 'success'
+              env:
+                  E2E_DEPS_SAVE_OUTCOME: ${{ steps.system-deps-save.outcome }}
+              run: node scripts/e2e-system-deps.mjs report
+
+            - name: Upload system dependency report
+              if: always() && steps.system-deps-key.outcome == 'success'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: e2e-system-deps
+                  path: ${{ runner.temp }}/e2e-system-deps/
+                  retention-days: 30
+                  if-no-files-found: ignore
 
             - name: Read PHP version from wp-env config
               id: wp-env-config

@@ -460,6 +460,90 @@ strict-mode violation.
 `.github/workflows/e2e.yml` runs the same managed lifecycle on relevant pull
 requests and uploads the HTML report and traces after failures.
 
+### E2E system dependencies in CI
+
+Chromium needs Linux libraries and fonts that the runner image lacks (about
+13 packages, ~22 MB on `ubuntu-26.04`). `playwright install-deps` fetches
+them from the Ubuntu mirror on every run. That usually takes seconds, but
+the mirror is sometimes very slow: on 2026-10-27 three runs spent 4–10
+minutes downloading the same 25 MB at ~44 kB/s. Playwright's browser cache
+doesn't help here, because system packages can't be restored as an installed
+environment (<https://playwright.dev/docs/ci>).
+
+`scripts/e2e-system-deps.mjs` therefore caches only the downloaded `.deb`
+archives, in `~/.cache/e2e-apt-archives`, and lets APT do everything else on
+every run:
+
+1. `key` builds the cache key from the Ubuntu release, architecture, runner
+   image and image version (`ImageOS`, `ImageVersion`), the installed
+   Playwright version, the browser and a hash of the script itself
+   (`e2e-apt-v1-ubuntu26.04-amd64-ubuntu26-20261025.179.1-pw1.64.1-chromium-<hash>`).
+   The workflow restores that exact key only; there are no fallback keys.
+2. `install` refreshes the package indexes, then checks every restored
+   archive against them: it must be readable by `dpkg-deb`, its exact
+   package version and architecture must still be listed, and its SHA256
+   must match the signed index. Anything else (corrupt, superseded,
+   another architecture) is deleted and logged as dropped. The verified
+   archives go into `/var/cache/apt/archives`, and
+   `playwright install-deps chromium` runs as before. APT resolves and
+   installs the current packages and downloads only what's missing. If the
+   install fails while reused archives were present, it is retried once
+   without them; a failure without reused archives, or a second failure,
+   fails the job.
+3. The archives this run used (verified reuse plus fresh downloads) replace
+   the cache directory's contents. The workflow saves them only on a cache
+   miss, because a cache key can't be overwritten.
+4. `report` writes the job summary and the `e2e-system-deps` artifact
+   (`report.json` plus the install log): cache state, restore, verify,
+   install, keep and save durations, the total including cache overhead,
+   APT's `Need to get …` line, downloaded and reused archives with versions,
+   dropped archives, retries and recovery events.
+
+No installed system directory or package database is ever restored.
+
+**Invalidation.** A new runner image (weekly), a Playwright update, a change
+to the script or a different OS or architecture all change the key, so the
+first run afterwards downloads everything and saves a new set. GitHub evicts
+caches unused for 7 days, so old keys need no cleanup. To force a cold cache
+without changing the script's behaviour, bump `CACHE_SCHEMA` in the script.
+To drop one entry, use `gh cache list --key e2e-apt-` and `gh cache delete
+<key>`.
+
+**Security updates.** The index is refreshed on every run and APT always
+installs the newest version, so an update published after a cache was saved
+is downloaded and installed as usual. Its archive is missing from the cache,
+which shows up as `partial-reuse` (`Need to get 917 kB/21.9 MB`). The
+superseded archive fails verification and is dropped. The entry isn't
+rewritten until the key changes, at the latest with the next image.
+
+**States** in the summary: `fresh` (cache miss, everything downloaded),
+`reuse` (nothing downloaded), `partial-reuse` (some archives downloaded),
+`reuse-empty` (a hit on an empty set), and `recovered` (index refresh or
+install retry needed). A recovery run is not a failure; a recurring one is
+worth checking in the install log.
+
+**Benchmarking.** `scripts/e2e-deps-benchmark.mjs` reads finished run
+attempts through `gh` and reports, per attempt, the runner image, state,
+queue delay, preparation time (the browser step plus every system-dependency
+step), job duration, APT's download line and errors/retries; then per group
+and state the median, range and slowest preparation, job duration, runner
+minutes and failures:
+
+```bash
+node scripts/e2e-deps-benchmark.mjs baseline=<run id>:1-5 candidate=<run id>:1-5
+gh run rerun <run id>                    # another attempt of the same commit
+gh cache delete <key>                    # make the next attempt fresh again
+```
+
+Compare like states (fresh with fresh, reuse with the baseline's normal
+download), keep worker and shard settings unchanged, and keep failed
+attempts in the table.
+
+Tests for the cache key, APT parsing, archive verification and recovery
+decisions are in `scripts/__tests__/e2e-system-deps.test.mjs`. The
+performance workflow still runs `playwright install-deps` directly; it can
+adopt the script separately.
+
 ## Package script conventions
 
 Workspaces expose only the scripts supported by their tests:
