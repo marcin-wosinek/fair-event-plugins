@@ -12,6 +12,10 @@
  * them shows both and filters by notification, and the browser's Back and
  * Forward buttons move between the views.
  *
+ * The list can be narrowed to one event feed (#2084): the feed is kept in
+ * the URL through a search, a reload and the browser's Back and Forward
+ * buttons, can be cleared, and a feed that does not exist lists nothing.
+ *
  * Individual email needs no other plugin or event feed, so the spec does not
  * depend on Fair Audience or Telegram. No mail leaves the host:
  * fair-e2e-support.php captures wp_mail().
@@ -295,5 +299,90 @@ test.describe('Several notifications of the same kind', () => {
 			own.getByLabel('Email the weekly summary to this address')
 		).toBeChecked();
 		await expect(own.getByLabel('Send at')).toHaveValue('19:45');
+	});
+});
+
+test.describe('Notification list by event feed', () => {
+	const suffix = `e2e2084-${Date.now()}`;
+	let seeded = null;
+
+	test.beforeAll(() => {
+		seeded = fixture(`seed-feeds ${suffix}`);
+	});
+
+	test.afterAll(() => {
+		if (seeded) {
+			fixture(`remove ${seeded.configurations.join(' ')}`);
+			fixture(
+				`remove-feeds ${Object.values(seeded.feeds)
+					.map((feed) => feed.id)
+					.join(' ')}`
+			);
+		}
+	});
+
+	test('filters by feed, keeps it in the URL and clears it', async ({
+		page,
+	}) => {
+		const { north, south } = seeded.feeds;
+		const northDigest = `North digest ${suffix}`;
+		const southDigest = `South digest ${suffix}`;
+		await loginAsAdmin(page);
+		await page.goto(SETTINGS_URL);
+
+		const feed = view(page).getByRole('combobox', { name: 'Event feed' });
+		const search = view(page).getByRole('textbox', {
+			name: 'Search notifications',
+		});
+		await expect(feed).toHaveValue('');
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await expect(listRow(page, southDigest)).toHaveCount(1);
+
+		await feed.selectOption(north.slug);
+		await expect(page).toHaveURL(new RegExp(`feed=${north.slug}`));
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await expect(listRow(page, southDigest)).toHaveCount(0);
+
+		// Combined with the search, and both survive a reload.
+		await search.fill('digest');
+		await expect(page).toHaveURL(/s=digest/);
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await page.reload();
+		await expect(feed).toHaveValue(north.slug);
+		await expect(search).toHaveValue('digest');
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await expect(listRow(page, southDigest)).toHaveCount(0);
+
+		// Back and Forward move between the chosen feeds.
+		await feed.selectOption(south.slug);
+		await expect(listRow(page, southDigest)).toHaveCount(1);
+		await expect(listRow(page, northDigest)).toHaveCount(0);
+		await page.goBack();
+		await expect(feed).toHaveValue(north.slug);
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await expect(listRow(page, southDigest)).toHaveCount(0);
+		await page.goForward();
+		await expect(feed).toHaveValue(south.slug);
+		await expect(listRow(page, southDigest)).toHaveCount(1);
+
+		// Clearing it lists every feed again and keeps the search.
+		await feed.selectOption('');
+		await expect(page).not.toHaveURL(/feed=/);
+		await expect(search).toHaveValue('digest');
+		await expect(listRow(page, northDigest)).toHaveCount(1);
+		await expect(listRow(page, southDigest)).toHaveCount(1);
+
+		// A feed that does not exist lists nothing and offers every feed.
+		await page.goto(`${SETTINGS_URL}&feed=${north.slug}-gone`);
+		await expect(
+			view(page).getByText(
+				`The event feed “${north.slug}-gone” is not available`,
+				{ exact: false }
+			)
+		).toBeVisible();
+		await expect(view(page).getByRole('table')).toHaveCount(0);
+		await view(page).getByRole('button', { name: 'Show all feeds' }).click();
+		await expect(page).not.toHaveURL(/feed=/);
+		await expect(listRow(page, northDigest)).toHaveCount(1);
 	});
 });

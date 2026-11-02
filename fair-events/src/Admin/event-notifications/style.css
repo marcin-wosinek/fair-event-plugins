@@ -152,8 +152,15 @@
 	display: block;
 }
 
-.fair-events-notifications__search {
-	max-width: 400px;
+.fair-events-notifications__list-controls {
+	display: grid;
+	gap: 8px 16px;
+	grid-template-columns: repeat(2, minmax(0, 400px));
+	margin-bottom: 8px;
+}
+
+.fair-events-notifications__list > .components-notice {
+	margin: 0 0 16px;
 }
 
 .fair-events-notifications__add {
@@ -232,6 +239,10 @@
 
 	.fair-events-notifications__fields-list dd {
 		margin-bottom: 8px;
+	}
+
+	.fair-events-notifications__list-controls {
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.fair-events-notifications__pagination .components-button {

@@ -25,7 +25,8 @@ function positive( value ) {
  * The page's view as kept in the URL, so refresh, direct links and the
  * browser's Back and Forward buttons show the same view.
  *
- * - `list`: every notification, with `search` and `listPage`.
+ * - `list`: every notification, with `search`, the event `feed` slug it is
+ *   filtered by ('' for every feed) and `listPage`.
  * - `configuration`: one notification by `configuration`, on its `tab`
  *   (`editor` or `history`).
  * - `history`: the history of every notification.
@@ -57,6 +58,7 @@ export function parseLocation( search ) {
 		tab: 'history' === params.get( 'tab' ) ? 'history' : 'editor',
 		execution: parseInt( params.get( 'execution' ), 10 ) || 0,
 		search: params.get( 's' ) || '',
+		feed: params.get( 'feed' ) || '',
 		listPage: positive( params.get( 'list_page' ) ),
 		historyPage: positive( params.get( 'history_page' ) ),
 		deliveriesPage: positive( params.get( 'deliveries_page' ) ),
@@ -89,6 +91,7 @@ export function locationUrl( state ) {
 		set( 'tab', state.tab, 'editor' );
 	} else {
 		set( 's', state.search );
+		set( 'feed', state.feed );
 		set( 'list_page', state.listPage, 1 );
 	}
 	if (
