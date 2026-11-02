@@ -44,6 +44,10 @@ CI checks every minimum on the real runtime (see
 need PHP 8.4+ to run the PHPUnit suites, which is separate from what the
 plugins support.
 
+The development and CI WordPress environments (wp-env, the Docker Compose
+dev stack and the default CI jobs) run PHP 8.5. That is also separate from
+the minimums: moving it never raises a plugin's supported version.
+
 ## Database Query Patterns
 
 ### Using `wpdb::prepare()` with Table Names

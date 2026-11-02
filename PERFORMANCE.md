@@ -21,6 +21,12 @@ used by `test:api:local`/`test:e2e:local` (see
 instance: it builds, starts, provisions, measures, and stops it, exactly like
 the API/E2E lifecycle runner.
 
+The instance runs the PHP version in `.wp-env.json`. Every result recorded
+in this document was measured on **PHP 8.3**. The environment moved to PHP
+8.5 with [#2099](https://github.com/marcin-wosinek/fair-event-plugins/issues/2099),
+so later runs aren't directly comparable with these tables; compare a new
+run against a new baseline taken on the same version.
+
 `.wp-env.json` mounts every distributable workspace so the audit can cover
 plugins that the normal API/E2E activation set omits:
 
