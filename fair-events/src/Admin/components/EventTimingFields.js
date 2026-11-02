@@ -8,6 +8,10 @@
  * explicit choice. The optional Event length shortcut only ever fills the
  * end from a supplied start, never a missing time.
  *
+ * Moving the start date moves a valid end date by the same number of
+ * calendar days, keeping the entered times and the all-day choice (#2089).
+ *
+
  * @package FairEvents
  */
 
@@ -21,13 +25,57 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { DurationOptions, calculateDuration } from 'fair-events-shared';
+import {
+	DurationOptions,
+	calculateDuration,
+	addCalendarDays,
+	differenceInCalendarDays,
+	isValidDateString,
+} from 'fair-events-shared';
 import { getDurationLabelConfig } from './durationLabels.js';
 
 const pad = ( value ) => String( value ).padStart( 2, '0' );
 
 const toDateString = ( date ) =>
 	`${ date.getFullYear() }-${ pad( date.getMonth() + 1 ) }-${ pad( date.getDate() ) }`;
+
+/**
+ * The fields to change when the start date moves: the new start, plus the
+ * end date shifted by the same number of calendar days when the current
+ * range is valid. Times and the all-day choice are never touched, so an
+ * omitted time stays omitted. An empty, impossible or reversed range only
+ * changes the start; the form's validation reports it rather than this
+ * silently repairing it.
+ *
+ * @param {Object} value        Current fields (see EventTimingFields `value`).
+ * @param {string} nextStartDate New start date (`YYYY-MM-DD`, '' when cleared).
+ * @return {Object} Patch for `onChange`, e.g. `{ startDate, endDate }`.
+ */
+export function getStartDateChange( value, nextStartDate ) {
+	const patch = { startDate: nextStartDate };
+	const { allDay, startDate, startTime, endDate, endTime } = value;
+
+	if (
+		! isValidDateString( nextStartDate ) ||
+		! isValidDateString( startDate ) ||
+		! isValidDateString( endDate )
+	) {
+		return patch;
+	}
+
+	const days = differenceInCalendarDays( endDate, startDate );
+	const reversedTimes =
+		days === 0 && ! allDay && startTime && endTime && endTime < startTime;
+	if ( days < 0 || reversedTimes ) {
+		return patch;
+	}
+
+	const shiftedEnd = addCalendarDays( nextStartDate, days );
+	if ( shiftedEnd ) {
+		patch.endDate = shiftedEnd;
+	}
+	return patch;
+}
 
 /**
  * @param {Object}   props
@@ -131,7 +179,13 @@ export default function EventTimingFields( {
 			label={ label }
 			type="date"
 			value={ value[ field ] }
-			onChange={ ( next ) => onChange( { [ field ]: next } ) }
+			onChange={ ( next ) =>
+				onChange(
+					field === 'startDate'
+						? getStartDateChange( value, next )
+						: { [ field ]: next }
+				)
+			}
 			required={ datesRequired }
 			disabled={ disabled }
 		/>

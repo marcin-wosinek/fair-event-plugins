@@ -9,6 +9,7 @@
 // Export shared utilities here
 export * from './dateTime.js';
 export * from './calendarUtils.js';
+export * from './calendarDates.js';
 export * from './dynamicDateRegistry.js';
 export { default as CopyUrlButton } from './CopyUrlButton.js';
 export { default as DateTimeControl } from './DateTimeControl.js';

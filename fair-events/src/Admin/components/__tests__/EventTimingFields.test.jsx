@@ -129,3 +129,128 @@ test( 'shows the validation message it is given', () => {
 		document.querySelector( '.components-notice.is-error' )
 	).toHaveTextContent( 'The end date is before the start date.' );
 } );
+
+describe( 'moving the start date keeps the event length (#2089)', () => {
+	const moveStart = ( next ) =>
+		fireEvent.change( screen.getByLabelText( 'Start date' ), {
+			target: { value: next },
+		} );
+
+	test.each( [
+		[
+			'same-day, later',
+			timed,
+			'2026-10-27',
+			{ startDate: '2026-10-27', endDate: '2026-10-27' },
+		],
+		[
+			'same-day, earlier across a year boundary',
+			timed,
+			'2025-12-31',
+			{ startDate: '2025-12-31', endDate: '2025-12-31' },
+		],
+		[
+			'overnight',
+			{
+				...timed,
+				startTime: '22:00',
+				endDate: '2026-10-19',
+				endTime: '02:00',
+			},
+			'2026-10-31',
+			{ startDate: '2026-10-31', endDate: '2026-11-01' },
+		],
+		[
+			'multi-day across a month boundary',
+			{ ...timed, endDate: '2026-10-21' },
+			'2026-10-30',
+			{ startDate: '2026-10-30', endDate: '2026-11-02' },
+		],
+		[
+			'all-day over the October DST change',
+			{
+				allDay: true,
+				startDate: '2026-10-18',
+				startTime: '',
+				endDate: '2026-10-19',
+				endTime: '',
+			},
+			'2026-10-25',
+			{ startDate: '2026-10-25', endDate: '2026-10-26', allDay: true },
+		],
+	] )( '%s', ( _label, initial, next, expected ) => {
+		render( <Harness initial={ initial } /> );
+		moveStart( next );
+		expect( state() ).toEqual( {
+			...initial,
+			...expected,
+		} );
+	} );
+
+	test.each( [
+		[ 'both times', '', '' ],
+		[ 'the start time', '', '12:00' ],
+		[ 'the end time', '10:00', '' ],
+	] )( 'keeps omitted %s omitted', ( _label, startTime, endTime ) => {
+		const initial = {
+			...timed,
+			startTime,
+			endTime,
+			endDate: '2026-10-20',
+		};
+		render( <Harness initial={ initial } /> );
+		moveStart( '2026-03-28' );
+		expect( state() ).toEqual( {
+			...initial,
+			startDate: '2026-03-28',
+			endDate: '2026-03-30',
+		} );
+	} );
+
+	test( 'an explicit end edit sets the length the next move keeps', () => {
+		render( <Harness initial={ timed } /> );
+		fireEvent.change( screen.getByLabelText( 'End date' ), {
+			target: { value: '2026-10-22' },
+		} );
+		moveStart( '2026-11-01' );
+		expect( state() ).toMatchObject( {
+			startDate: '2026-11-01',
+			endDate: '2026-11-05',
+			startTime: '10:00',
+			endTime: '12:00',
+		} );
+	} );
+
+	test.each( [
+		[ 'an empty end date', { ...timed, endDate: '' }, '2026-10-27' ],
+		[ 'an empty start date', { ...timed, startDate: '' }, '2026-10-27' ],
+		[
+			'a reversed date range',
+			{ ...timed, endDate: '2026-10-17' },
+			'2026-10-27',
+		],
+		[
+			'reversed times on one day',
+			{ ...timed, startTime: '12:00', endTime: '10:00' },
+			'2026-10-27',
+		],
+		[ 'a cleared start date', timed, '' ],
+	] )( 'changes only the start for %s', ( _label, initial, next ) => {
+		const spy = jest.fn();
+		render( <Harness initial={ initial } onChangeSpy={ spy } /> );
+		moveStart( next );
+		expect( spy ).toHaveBeenLastCalledWith( { startDate: next } );
+		expect( state() ).toEqual( { ...initial, startDate: next } );
+	} );
+
+	test( 'rendering existing dates changes nothing', () => {
+		const spy = jest.fn();
+		render(
+			<Harness
+				initial={ { ...timed, endDate: '2026-11-13' } }
+				onChangeSpy={ spy }
+			/>
+		);
+		expect( spy ).not.toHaveBeenCalled();
+	} );
+} );
