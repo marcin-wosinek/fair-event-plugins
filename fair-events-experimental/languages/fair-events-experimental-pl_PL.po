@@ -1225,55 +1225,52 @@ msgstr "Otwórz powiadomienia o zdarzeniach"
 msgid "Weekly Telegram notifications are now managed and sent by Fair Events. Update Fair Events to manage them; until then no weekly notification is sent."
 msgstr "Powiadomienia tygodniowe na Telegramie są teraz zarządzane i wysyłane przez Fair Events. Zaktualizuj Fair Events, aby je zarządzać; do tego czasu żadne powiadomienie tygodniowe nie będzie wysłane."
 
-#: src/Admin/source-view/SourceViewApp.js:84
+#: src/Admin/source-view/SourceViewApp.js:82
 msgid "Failed to load event feed."
 msgstr "Nie udało się wczytać kanału wydarzeń."
 
-#: src/Admin/source-view/SourceViewApp.js:98
+#: src/Admin/source-view/SourceViewApp.js:96
 msgid "No event feed ID provided."
 msgstr "Nie podano ID kanału wydarzeń."
 
-#: src/Admin/source-view/SourceViewApp.js:234
-#: src/Admin/source-view/SourceViewApp.js:252
+#: src/Admin/source-view/SourceViewApp.js:232
+#: src/Admin/source-view/SourceViewApp.js:250
 msgid "Back to Event Feeds"
 msgstr "Wróć do kanałów wydarzeń"
 
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
-#: src/Admin/source-view/SourceViewApp.js:259
+#: src/Admin/source-view/FeedHeader.js:44
 #, js-format, php-format
 msgid "Event feed: %s"
 msgstr "Kanał wydarzeń: %s"
 
-#: src/Admin/source-view/SourceViewApp.js:276
+#: src/Admin/source-view/IntegrationsSection.js:39
 #: src/Admin/sources/components/SourceForm.js:149
 #: src/Admin/sources/SourcesList.js:234
 msgid "Slug"
 msgstr "Uproszczona nazwa"
 
-#: src/Admin/source-view/SourceViewApp.js:282
 #: src/Admin/sources/SourcesList.js:264
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/source-view/SourceViewApp.js:286
+#: src/Admin/source-view/FeedHeader.js:57
 #: src/Admin/sources/SourcesList.js:119
 msgid "Enabled"
 msgstr "Włączone"
 
-#: src/Admin/source-view/SourceViewApp.js:287
+#: src/Admin/source-view/FeedHeader.js:58
 #: src/Admin/sources/SourcesList.js:123
 msgid "Disabled"
 msgstr "Wyłączone"
 
-#: src/Admin/source-view/SourceViewApp.js:292
 #: src/Admin/sources/components/SourceForm.js:192
 #: src/Admin/sources/SourcesList.js:240
 msgid "Feed inputs"
 msgstr "Składniki kanału"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/source-view/SourceViewApp.js:297
 #: src/Admin/sources/SourcesList.js:295
 #, js-format
 msgid "%d feed input"
@@ -1282,42 +1279,33 @@ msgstr[0] "%d składnik kanału"
 msgstr[1] "%d składniki kanału"
 msgstr[2] "%d składników kanału"
 
-#: src/Admin/source-view/SourceViewApp.js:310
-msgid "Page"
-msgstr "Strona"
-
-#: src/Admin/source-view/SourceViewApp.js:318
-msgid "View page"
-msgstr "Zobacz stronę"
-
-#: src/Admin/source-view/SourceViewApp.js:328
+#: src/Admin/source-view/IntegrationsSection.js:43
 msgid "Feed URLs"
 msgstr "Adresy URL kanału"
 
-#: src/Admin/source-view/SourceViewApp.js:333
+#: src/Admin/source-view/IntegrationsSection.js:47
 msgid "iCal"
 msgstr "iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:337
+#: src/Admin/source-view/IntegrationsSection.js:48
 #: src/Admin/sources/SourcesList.js:311
 msgid "Copy iCal feed URL"
 msgstr "Skopiuj adres URL kanału iCal"
 
-#: src/Admin/source-view/SourceViewApp.js:344
+#: src/Admin/source-view/IntegrationsSection.js:55
 msgid "JSON"
 msgstr "JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:348
+#: src/Admin/source-view/IntegrationsSection.js:56
 #: src/Admin/sources/SourcesList.js:322
 msgid "Copy JSON API URL"
 msgstr "Skopiuj adres URL API JSON"
 
-#: src/Admin/source-view/SourceViewApp.js:417
-#: src/Admin/source-view/SourceViewApp.js:430
+#: src/Admin/source-view/FeedHeader.js:100
 msgid "Edit event feed"
 msgstr "Edytuj kanał wydarzeń"
 
-#: src/Admin/source-view/SourceViewApp.js:471
+#: src/Admin/source-view/SourceViewApp.js:304
 #: src/Admin/sources/SourcesList.js:434
 msgid "Edit Event Feed"
 msgstr "Edytuj kanał wydarzeń"
@@ -1511,7 +1499,7 @@ msgstr "Usuń"
 msgid "No events this month."
 msgstr "Brak wydarzeń w tym miesiącu."
 
-#: src/Admin/source-view/SourceViewApp.js:169
+#: src/Admin/source-view/SourceViewApp.js:167
 msgid "Failed to load events."
 msgstr "Nie udało się załadować wydarzeń."
 
@@ -1951,18 +1939,6 @@ msgstr "Ten link do podsumowania tygodnia nie pasuje do żadnego włączonego ka
 msgid "This event feed has no page, which gives the summary its title and link. Choose the feed’s page in Event Feeds to use this link."
 msgstr "Ten kanał wydarzeń nie ma strony, która nadaje podsumowaniu tytuł i link. Wybierz stronę kanału w Kanałach wydarzeń, aby użyć tego linku."
 
-#: src/Admin/source-view/SourceViewApp.js:370
-msgid "Copy link"
-msgstr "Kopiuj link"
-
-#: src/Admin/source-view/SourceViewApp.js:388
-msgid "Couldn’t copy the link. Select it above and copy it by hand."
-msgstr "Nie udało się skopiować linku. Zaznacz go powyżej i skopiuj ręcznie."
-
-#: src/Admin/source-view/SourceViewApp.js:396
-msgid "The link works once this feed is enabled."
-msgstr "Link zadziała po włączeniu tego kanału."
-
 #. translators: %s: event feed name
 #: src/Admin/sources/SourcesList.js:85
 #, js-format
@@ -2024,18 +2000,6 @@ msgstr "Skopiuj tę wiadomość, a następnie wklej ją w swojej grupie lub spo�
 #: src/Frontend/WeeklySummaryPage.php:254
 msgid "Copy WhatsApp message"
 msgstr "Kopiuj wiadomość na WhatsApp"
-
-#: src/Admin/source-view/SourceViewApp.js:357
-msgid "WhatsApp summary link"
-msgstr "Link do podsumowania na WhatsApp"
-
-#: src/Admin/source-view/SourceViewApp.js:374
-msgid "Copy the WhatsApp summary link to share with the person who posts it"
-msgstr "Skopiuj link do podsumowania na WhatsApp, aby udostępnić go osobie, która je publikuje"
-
-#: src/Admin/source-view/SourceViewApp.js:405
-msgid "Choose a page for this feed to get a WhatsApp summary link. The page gives the message its title and link."
-msgstr "Wybierz stronę dla tego kanału, aby otrzymać link do podsumowania na WhatsApp. Strona nadaje wiadomości tytuł i link."
 
 #: src/Admin/sources/SourcesList.js:130
 msgid "Choose a page to enable the WhatsApp summary."
@@ -2679,4 +2643,97 @@ msgstr "WhatsApp zaakceptował szablon %1$s (%2$s) dla %3$s. To nie potwierdza j
 #: src/Admin/whatsapp/WhatsAppConnection.js:710
 msgid "Sends one approved template without parameters, once. Only send to someone who agreed to receive it. Only the last three digits of the recipient number are kept, in Recent messages."
 msgstr "Wysyła jeden zatwierdzony szablon bez parametrów, raz. Wysyłaj tylko do osób, które wyraziły zgodę na otrzymywanie wiadomości. W sekcji Ostatnie wiadomości przechowywane są tylko ostatnie trzy cyfry numeru odbiorcy."
+
+#: src/Admin/source-view/FeedHeader.js:19
+msgid "Public page: the selected page isn’t published yet."
+msgstr "Strona publiczna: wybrana strona nie została jeszcze opublikowana."
+
+#: src/Admin/source-view/FeedHeader.js:23
+msgid "Public page: none selected. Choose one in the feed settings."
+msgstr "Strona publiczna: nie wybrano żadnej. Wybierz jedną w ustawieniach kanału."
+
+#. translators: %d: number of sources (categories, other feeds…) the event feed collects events from; not a number of events
+#: src/Admin/source-view/FeedHeader.js:63
+#, js-format
+msgid "%d configured source"
+msgid_plural "%d configured sources"
+msgstr[0] "%d skonfigurowane źródło"
+msgstr[1] "%d skonfigurowane źródła"
+msgstr[2] "%d skonfigurowanych źródeł"
+
+#. translators: %s: title of the feed's public page
+#: src/Admin/source-view/FeedHeader.js:77
+#, js-format
+msgid "Public page: %s"
+msgstr "Strona publiczna: %s"
+
+#: src/Admin/source-view/FeedHeader.js:82
+msgid "(untitled page)"
+msgstr "(strona bez tytułu)"
+
+#: src/Admin/source-view/FeedHeader.js:91
+msgid "This feed is disabled: its calendar subscription and weekly summary stop working until you enable it."
+msgstr "Ten kanał jest wyłączony: jego subskrypcja kalendarza i cotygodniowe podsumowanie przestają działać, dopóki go nie włączysz."
+
+#: src/Admin/source-view/FeedHeader.js:109
+msgid "Open public page"
+msgstr "Otwórz stronę publiczną"
+
+#: src/Admin/source-view/FeedHeader.js:111
+#: src/Admin/source-view/WeeklySummarySection.js:73
+msgid "(opens in a new tab)"
+msgstr "(otwiera się w nowej karcie)"
+
+#: src/Admin/source-view/IntegrationsSection.js:25
+msgid "Subscription and integrations"
+msgstr "Subskrypcja i integracje"
+
+#: src/Admin/source-view/IntegrationsSection.js:33
+msgid "Use these addresses to subscribe to the feed in a calendar app or to connect it to another site."
+msgstr "Użyj tych adresów, aby zasubskrybować kanał w aplikacji kalendarza lub połączyć go z inną witryną."
+
+#: src/Admin/source-view/WeeklySummarySection.js:43
+msgid "Weekly summary"
+msgstr "Cotygodniowe podsumowanie"
+
+#: src/Admin/source-view/WeeklySummarySection.js:47
+msgid "Choose a public page for this feed to get a weekly summary link. The page gives the WhatsApp message its title and link."
+msgstr "Wybierz stronę publiczną dla tego kanału, aby uzyskać link do cotygodniowego podsumowania. Strona nadaje wiadomości WhatsApp jej tytuł i link."
+
+#: src/Admin/source-view/WeeklySummarySection.js:55
+msgid "Send this link to the person who prepares the WhatsApp post. It shows this week’s events as a message ready to copy."
+msgstr "Wyślij ten link osobie, która przygotowuje post na WhatsAppie. Pokazuje on wydarzenia z tego tygodnia jako wiadomość gotową do skopiowania."
+
+#: src/Admin/source-view/WeeklySummarySection.js:68
+#: src/Admin/source-view/WeeklySummarySection.js:87
+msgid "Open weekly summary"
+msgstr "Otwórz cotygodniowe podsumowanie"
+
+#: src/Admin/source-view/WeeklySummarySection.js:96
+msgid "Copy summary link"
+msgstr "Skopiuj link podsumowania"
+
+#: src/Admin/source-view/WeeklySummarySection.js:100
+msgid "Copy the weekly summary link to send to the person who posts it"
+msgstr "Skopiuj link cotygodniowego podsumowania, aby wysłać go osobie, która go publikuje"
+
+#: src/Admin/source-view/WeeklySummarySection.js:113
+msgid "Enable this feed to open its weekly summary. You can copy the link now; it works once the feed is enabled."
+msgstr "Włącz ten kanał, aby otworzyć jego cotygodniowe podsumowanie. Możesz skopiować link teraz; będzie działać, gdy kanał zostanie włączony."
+
+#: src/Admin/source-view/WeeklySummarySection.js:121
+msgid "Summary link copied."
+msgstr "Link podsumowania skopiowany."
+
+#: src/Admin/source-view/WeeklySummarySection.js:131
+msgid "Couldn’t copy the link. Select it in the field below and copy it by hand."
+msgstr "Nie można było skopiować linku. Wybierz go w polu poniżej i skopiuj ręcznie."
+
+#: src/Admin/source-view/WeeklySummarySection.js:138
+msgid "Show summary link"
+msgstr "Pokaż link podsumowania"
+
+#: src/Admin/source-view/WeeklySummarySection.js:148
+msgid "Weekly summary link"
+msgstr "Link cotygodniowego podsumowania"
 

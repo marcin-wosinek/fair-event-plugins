@@ -2,6 +2,8 @@
  * The event feed preview renders on the shared admin calendar (#1847):
  * feed details, month navigation with browser history, event links, crowded
  * days in grid and mobile agenda layouts, and the empty and error states.
+ * The detail page's header, weekly-summary sharing and collapsed
+ * integrations (#2083) edit, share and fit every viewport.
  *
  * Needs a current `npm run build` in fair-events-experimental.
  */
@@ -22,7 +24,13 @@ const adminApiFetch = (page, options) =>
 const suffix = Date.now();
 const crowdedTitles = [1, 2, 3, 4, 5].map((n) => `Crowded ${n} ${suffix}`);
 const externalTitle = `Partner festival ${suffix}`;
-const created = { categoryId: null, eventDateIds: [], source: null };
+const pageTitle = `Feed public page ${suffix}`;
+const created = {
+	categoryId: null,
+	eventDateIds: [],
+	source: null,
+	pageId: null,
+};
 
 const calendarDay = (page, day) =>
 	page.locator('.fair-events-calendar-day.current-month').filter({
@@ -46,6 +54,13 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 			data: { name: `Feed preview ${suffix}` },
 		});
 		created.categoryId = category.id;
+
+		const publicPage = await adminApiFetch(page, {
+			path: '/wp/v2/pages',
+			method: 'POST',
+			data: { title: pageTitle, status: 'publish' },
+		});
+		created.pageId = publicPage.id;
 
 		const fixtures = [
 			...crowdedTitles.map((title, index) => ({
@@ -107,6 +122,9 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 		if (created.categoryId) {
 			await remove(`/wp/v2/categories/${created.categoryId}?force=true`);
 		}
+		if (created.pageId) {
+			await remove(`/wp/v2/pages/${created.pageId}?force=true`);
+		}
 		await page.close();
 	});
 
@@ -121,8 +139,7 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 		await expect(
 			page.getByRole('heading', { name: created.source.name })
 		).toBeVisible({ timeout: 20_000 });
-		await expect(page.getByText(created.source.slug)).toBeVisible();
-		await expect(page.getByText('1 feed input')).toBeVisible();
+		await expect(page.getByText('1 configured source')).toBeVisible();
 
 		// Grid mode clamps the crowded day to three rows plus "+2 more".
 		const crowded = calendarDay(page, 12);
@@ -222,5 +239,87 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 		});
 		await expect(page.locator('.fair-events-calendar-grid')).toHaveCount(1);
 		await expect(page.getByText('No events this month.')).toHaveCount(0);
+	});
+
+	test('edits the feed, shares its weekly summary and shows integrations', async ({
+		page,
+		context,
+	}) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await loginAsAdmin(page);
+		await page.goto(
+			`${SOURCE_VIEW_PAGE}${created.source.id}&month=${MONTH}`
+		);
+
+		const edit = page.getByRole('button', { name: 'Edit event feed' });
+		await expect(edit).toHaveCount(1, { timeout: 20_000 });
+		await expect(
+			page.getByText('Public page: none selected', { exact: false })
+		).toBeVisible();
+		await expect(
+			page.getByText(/Choose a public page for this feed/)
+		).toBeVisible();
+
+		// Linking a page in the editor refreshes the header and summary.
+		await edit.click();
+		const dialog = page.getByRole('dialog');
+		await dialog
+			.getByLabel('Linked Page')
+			.selectOption({ label: pageTitle });
+		await dialog.getByRole('button', { name: 'Update event feed' }).click();
+		await expect(dialog).toHaveCount(0);
+
+		await expect(page.getByText(`Public page: ${pageTitle}`)).toBeVisible();
+		await expect(
+			page.getByRole('link', { name: /Open public page/ })
+		).toHaveAttribute('target', '_blank');
+
+		const summary = page.getByRole('link', {
+			name: /Open weekly summary/,
+		});
+		await expect(summary).toHaveAttribute(
+			'href',
+			new RegExp(`fair-events-weekly-summary/${created.source.slug}/$`)
+		);
+		await page.getByRole('button', { name: 'Copy summary link' }).click();
+		await expect(page.getByRole('status')).toHaveText(
+			'Summary link copied.'
+		);
+		expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+			await summary.getAttribute('href')
+		);
+
+		await page.getByRole('button', { name: 'Show summary link' }).click();
+		await expect(
+			page.getByRole('textbox', { name: 'Weekly summary link' })
+		).toHaveValue(await summary.getAttribute('href'));
+
+		const integrations = page.getByRole('button', {
+			name: 'Subscription and integrations',
+		});
+		await expect(integrations).toHaveAttribute('aria-expanded', 'false');
+		await expect(page.getByText(created.source.slug)).toBeHidden();
+		await integrations.click();
+		await expect(page.getByText(created.source.slug)).toBeVisible();
+		await expect(page.getByRole('button', { name: 'iCal' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'JSON' })).toBeVisible();
+
+		// Long names and URLs wrap instead of widening the page.
+		for (const [width, height] of [
+			[1280, 900],
+			[768, 1024],
+			[375, 812],
+		]) {
+			await page.setViewportSize({ width, height });
+			await expect
+				.poll(() =>
+					page.evaluate(
+						() =>
+							document.documentElement.scrollWidth -
+							document.documentElement.clientWidth
+					)
+				)
+				.toBeLessThanOrEqual(0);
+		}
 	});
 });

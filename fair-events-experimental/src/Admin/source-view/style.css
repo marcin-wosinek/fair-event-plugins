@@ -1,0 +1,156 @@
+/* Event feed detail page (#2083). */
+
+.fair-events-feed-view {
+	min-width: 0;
+}
+
+.fair-events-feed-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px 24px;
+	margin: 8px 0 16px;
+}
+
+.fair-events-feed-header__main {
+	flex: 1 1 320px;
+	min-width: 0;
+}
+
+.fair-events-feed-header__title {
+	margin: 0 0 8px;
+	padding: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-feed-header__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin: 0 0 4px;
+}
+
+.fair-events-feed-header__page,
+.fair-events-feed-header__note {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-feed-header__note {
+	margin-top: 4px;
+	color: #8a2424;
+}
+
+.fair-events-feed-header__actions,
+.fair-events-feed-section__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.fair-events-feed-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.fair-events-feed-status--enabled {
+	background: #d4edda;
+	color: #155724;
+}
+
+.fair-events-feed-status--disabled {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+.fair-events-feed-section {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	padding: 12px 16px;
+	margin-bottom: 12px;
+	min-width: 0;
+}
+
+.fair-events-feed-section--compact {
+	padding: 4px 8px;
+}
+
+.fair-events-feed-section__title {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.fair-events-feed-section__text {
+	margin: 0 0 8px;
+	color: #50575e;
+}
+
+.fair-events-feed-section__note,
+.fair-events-feed-section__error {
+	margin: 8px 0 0;
+}
+
+.fair-events-feed-section__error {
+	color: #b32d2e;
+}
+
+.fair-events-feed-copy-status:not(:empty) {
+	margin-top: 8px;
+	color: #155724;
+}
+
+.fair-events-disclosure {
+	margin-top: 4px;
+}
+
+.fair-events-feed-section--compact .fair-events-disclosure {
+	margin-top: 0;
+}
+
+.fair-events-disclosure__content {
+	padding: 4px 8px 8px;
+	min-width: 0;
+}
+
+.fair-events-disclosure__content input {
+	font-family: monospace;
+}
+
+.fair-events-feed-integrations {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	align-items: center;
+	gap: 8px 16px;
+	margin: 0;
+}
+
+.fair-events-feed-integrations dt {
+	font-weight: 600;
+}
+
+.fair-events-feed-integrations dd {
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-events-feed-calendar {
+	margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+	.fair-events-feed-integrations {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 4px;
+	}
+
+	.fair-events-feed-integrations dd + dt {
+		margin-top: 8px;
+	}
+}

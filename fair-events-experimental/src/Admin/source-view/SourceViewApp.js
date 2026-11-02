@@ -6,17 +6,14 @@
 
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import {
-	Button,
 	Card,
 	CardHeader,
 	CardBody,
 	Modal,
 	Spinner,
 	Notice,
-	__experimentalHStack as HStack,
-	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import { __, _n, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate } from 'fair-events-shared/src/calendarUtils.js';
 import {
@@ -29,7 +26,9 @@ import {
 	getVisibleRange,
 } from 'fair-events-shared/src/calendar/index.js';
 import { getCalendarLabels } from './calendarLabels.js';
-import CopyUrlButton from '../components/CopyUrlButton.js';
+import FeedHeader from './FeedHeader.js';
+import WeeklySummarySection from './WeeklySummarySection.js';
+import IntegrationsSection from './IntegrationsSection.js';
 import SourceForm from '../sources/components/SourceForm.js';
 
 const {
@@ -67,7 +66,6 @@ export default function SourceViewApp() {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
 	const [ isEditOpen, setIsEditOpen ] = useState( false );
-	const [ linkCopyFailed, setLinkCopyFailed ] = useState( false );
 
 	const monthKey = formatMonthParam( currentDate );
 	const sourceSlug = source?.slug;
@@ -245,7 +243,7 @@ export default function SourceViewApp() {
 	}
 
 	return (
-		<div className="wrap fair-events-calendar-wrap">
+		<div className="wrap fair-events-calendar-wrap fair-events-feed-view">
 			<p>
 				<a href={ sourcesListUrl }>
 					&larr;{ ' ' }
@@ -253,183 +251,18 @@ export default function SourceViewApp() {
 				</a>
 			</p>
 
-			<h1>
-				{ sprintf(
-					/* translators: %s: event feed name */
-					__( 'Event feed: %s', 'fair-events-experimental' ),
-					source.name
-				) }
-			</h1>
+			<FeedHeader
+				source={ source }
+				onEdit={ () => setIsEditOpen( true ) }
+			/>
 
-			<div
-				className="fair-events-source-info"
-				style={ {
-					background: '#fff',
-					border: '1px solid #c3c4c7',
-					padding: '16px',
-					marginBottom: '20px',
-				} }
-			>
-				<HStack spacing={ 6 } wrap>
-					<VStack spacing={ 1 }>
-						<strong>
-							{ __( 'Slug', 'fair-events-experimental' ) }
-						</strong>
-						<code>{ source.slug }</code>
-					</VStack>
-					<VStack spacing={ 1 }>
-						<strong>
-							{ __( 'Status', 'fair-events-experimental' ) }
-						</strong>
-						<span>
-							{ source.enabled
-								? __( 'Enabled', 'fair-events-experimental' )
-								: __( 'Disabled', 'fair-events-experimental' ) }
-						</span>
-					</VStack>
-					<VStack spacing={ 1 }>
-						<strong>
-							{ __( 'Feed inputs', 'fair-events-experimental' ) }
-						</strong>
-						<span>
-							{ sprintf(
-								/* translators: %d: number of feed inputs */
-								_n(
-									'%d feed input',
-									'%d feed inputs',
-									source.data_sources?.length || 0,
-									'fair-events-experimental'
-								),
-								source.data_sources?.length || 0
-							) }
-						</span>
-					</VStack>
-					{ source.page_url && (
-						<VStack spacing={ 1 }>
-							<strong>
-								{ __( 'Page', 'fair-events-experimental' ) }
-							</strong>
-							<a
-								href={ source.page_url }
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{ source.page_title ||
-									__(
-										'View page',
-										'fair-events-experimental'
-									) }{ ' ' }
-								&#8599;
-							</a>
-						</VStack>
-					) }
-					<VStack spacing={ 1 }>
-						<strong>
-							{ __( 'Feed URLs', 'fair-events-experimental' ) }
-						</strong>
-						<HStack spacing={ 2 }>
-							<CopyUrlButton
-								url={ getIcalUrl( source.slug ) }
-								label={ __(
-									'iCal',
-									'fair-events-experimental'
-								) }
-								tooltip={ __(
-									'Copy iCal feed URL',
-									'fair-events-experimental'
-								) }
-							/>
-							<CopyUrlButton
-								url={ getJsonUrl( source.slug ) }
-								label={ __(
-									'JSON',
-									'fair-events-experimental'
-								) }
-								tooltip={ __(
-									'Copy JSON API URL',
-									'fair-events-experimental'
-								) }
-							/>
-						</HStack>
-					</VStack>
-					<VStack spacing={ 1 } style={ { minWidth: 0 } }>
-						<strong>
-							{ __(
-								'WhatsApp summary link',
-								'fair-events-experimental'
-							) }
-						</strong>
-						{ source.weekly_summary_url ? (
-							<>
-								<code style={ { overflowWrap: 'anywhere' } }>
-									{ source.weekly_summary_url }
-								</code>
-								<HStack spacing={ 2 } justify="flex-start">
-									<CopyUrlButton
-										url={ source.weekly_summary_url }
-										label={ __(
-											'Copy link',
-											'fair-events-experimental'
-										) }
-										tooltip={ __(
-											'Copy the WhatsApp summary link to share with the person who posts it',
-											'fair-events-experimental'
-										) }
-										onSuccess={ () =>
-											setLinkCopyFailed( false )
-										}
-										onError={ () =>
-											setLinkCopyFailed( true )
-										}
-									/>
-								</HStack>
-								{ linkCopyFailed && (
-									<span role="alert">
-										{ __(
-											'Couldn’t copy the link. Select it above and copy it by hand.',
-											'fair-events-experimental'
-										) }
-									</span>
-								) }
-								{ ! source.enabled && (
-									<span>
-										{ __(
-											'The link works once this feed is enabled.',
-											'fair-events-experimental'
-										) }
-									</span>
-								) }
-							</>
-						) : (
-							<span>
-								{ __(
-									'Choose a page for this feed to get a WhatsApp summary link. The page gives the message its title and link.',
-									'fair-events-experimental'
-								) }
-							</span>
-						) }
-					</VStack>
-					<VStack spacing={ 1 }>
-						<Button
-							variant="secondary"
-							onClick={ () => setIsEditOpen( true ) }
-						>
-							{ __(
-								'Edit event feed',
-								'fair-events-experimental'
-							) }
-						</Button>
-					</VStack>
-				</HStack>
-				<Button
-					variant="secondary"
-					size="small"
-					onClick={ () => setIsEditOpen( true ) }
-					style={ { alignSelf: 'flex-start', marginTop: '8px' } }
-				>
-					{ __( 'Edit event feed', 'fair-events-experimental' ) }
-				</Button>
-			</div>
+			<WeeklySummarySection source={ source } />
+
+			<IntegrationsSection
+				source={ source }
+				icalUrl={ getIcalUrl( source.slug ) }
+				jsonUrl={ getJsonUrl( source.slug ) }
+			/>
 
 			{ eventsState.error && (
 				<Notice status="error" isDismissible={ false }>
@@ -437,7 +270,7 @@ export default function SourceViewApp() {
 				</Notice>
 			) }
 
-			<Card style={ { marginTop: '16px' } }>
+			<Card className="fair-events-feed-calendar">
 				<CardHeader>
 					<CalendarHeader
 						currentDate={ currentDate }
