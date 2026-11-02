@@ -129,7 +129,7 @@
 		"@estruyf/github-actions-reporter": "^1.14.0",
 		"@playwright/test": "^1.64.1",
 		"@types/node": "^26.6.6",
-		"@wordpress/block-serialization-default-parser": "^5.57.0",
+		"@wordpress/block-serialization-default-parser": "^6.0.0",
 		"@wordpress/env": "^12.0.0",
 		"baseline-browser-mapping": "^2.11.34",
 		"dotenv": "^18.0.9",
