@@ -1966,6 +1966,282 @@ describe( 'Notification list', () => {
 	} );
 } );
 
+describe( 'Notification list by event feed', () => {
+	function rowOf( name ) {
+		return screen
+			.getAllByRole( 'row' )
+			.find( ( row ) => within( row ).queryByRole( 'link', { name } ) );
+	}
+
+	// Names of the listed notifications, in order.
+	function listed() {
+		return screen
+			.queryAllByRole( 'row' )
+			.slice( 1 )
+			.map(
+				( row ) => within( row ).getAllByRole( 'link' )[ 0 ].textContent
+			);
+	}
+
+	function feedSelect() {
+		return screen.getByRole( 'combobox', { name: 'Event feed' } );
+	}
+
+	function chooseFeed( slug ) {
+		fireEvent.change( feedSelect(), { target: { value: slug } } );
+	}
+
+	async function popTo( search ) {
+		visit( search );
+		await act( async () => {
+			window.dispatchEvent( new PopStateEvent( 'popstate' ) );
+		} );
+	}
+
+	// Telegram sends City events, bulk email Member events, individual
+	// email all local events; a second individual email sends City events.
+	function feeds( extra = [] ) {
+		const page = payload( {}, [
+			{
+				...configuration( 'individual_email', {
+					event_selection: 'city',
+					recipient: 'city-team@example.test',
+				} ),
+				id: 'city-digest',
+				name: 'City digest',
+			},
+			...extra,
+		] );
+		page.sources.push( { slug: 'quiet', name: 'Quiet events' } );
+		return page;
+	}
+
+	async function renderList( search = '', page = feeds() ) {
+		visit( search );
+		mockApi( page );
+		render( <EventNotifications sourcesUrl={ null } /> );
+		await screen.findByRole( 'combobox', { name: 'Event feed' } );
+	}
+
+	it( 'offers every enabled feed, with all feeds by default', async () => {
+		await renderList();
+
+		expect( feedSelect() ).toHaveValue( '' );
+		expect(
+			within( feedSelect() )
+				.getAllByRole( 'option' )
+				.map( ( option ) => option.textContent )
+		).toEqual( [
+			'All feeds',
+			'City events',
+			'Member events',
+			'Quiet events',
+		] );
+		expect( listed() ).toEqual( [
+			'Telegram',
+			'Bulk email',
+			'Individual email',
+			'City digest',
+		] );
+	} );
+
+	it( 'shows only the notifications of the chosen feed, of every kind, combined with the search', async () => {
+		await renderList();
+
+		chooseFeed( 'city' );
+		expect( listed() ).toEqual( [ 'Telegram', 'City digest' ] );
+		expect( currentSearch() ).toMatchObject( { feed: 'city' } );
+
+		fireEvent.change(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
+			{ target: { value: 'city-team' } }
+		);
+		expect( listed() ).toEqual( [ 'City digest' ] );
+		expect( currentSearch() ).toMatchObject( {
+			feed: 'city',
+			s: 'city-team',
+		} );
+
+		fireEvent.change(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
+			{ target: { value: 'organizer@' } }
+		);
+		expect(
+			screen.getByText(
+				'No notification of “City events” matches “organizer@”.'
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+
+		// Clearing the feed keeps the search.
+		chooseFeed( '' );
+		expect( listed() ).toEqual( [ 'Individual email' ] );
+		expect( currentSearch() ).not.toHaveProperty( 'feed' );
+		expect( currentSearch() ).toMatchObject( { s: 'organizer@' } );
+	} );
+
+	it( 'leaves out notifications of all local events and without a feed once a feed is chosen', async () => {
+		await renderList(
+			'',
+			feeds( [
+				{
+					...configuration( 'telegram', { source_slug: '' } ),
+					id: 'no-feed',
+					name: 'Feedless',
+				},
+			] )
+		);
+		expect( rowOf( 'Feedless' ) ).toBeDefined();
+
+		chooseFeed( 'members' );
+		expect( listed() ).toEqual( [ 'Bulk email' ] );
+	} );
+
+	it( 'filters before paging and starts again from the first page', async () => {
+		const many = Array.from( { length: 22 }, ( unused, index ) => ( {
+			...configuration( 'telegram' ),
+			id: `city-${ index }`,
+			name: `City ${ index + 1 }`,
+		} ) );
+		await renderList( '&list_page=2', feeds( many ) );
+		expect( screen.getByText( 'Page 2 of 2' ) ).toBeInTheDocument();
+
+		chooseFeed( 'members' );
+		expect( listed() ).toEqual( [ 'Bulk email' ] );
+		expect( currentSearch() ).not.toHaveProperty( 'list_page' );
+		expect( screen.queryByText( /^Page / ) ).not.toBeInTheDocument();
+
+		// Telegram, City digest and 22 more: 24 of City events.
+		chooseFeed( 'city' );
+		expect( screen.getByText( 'Page 1 of 2' ) ).toBeInTheDocument();
+		fireEvent.click( screen.getByRole( 'link', { name: 'Next page' } ) );
+		expect( listed() ).toEqual( [
+			'City 19',
+			'City 20',
+			'City 21',
+			'City 22',
+		] );
+		expect( currentSearch() ).toMatchObject( {
+			feed: 'city',
+			list_page: '2',
+		} );
+
+		chooseFeed( '' );
+		expect( currentSearch() ).not.toHaveProperty( 'list_page' );
+		expect( screen.getByText( 'Page 1 of 2' ) ).toBeInTheDocument();
+	} );
+
+	it( 'restores the feed of a direct link and follows Back and Forward', async () => {
+		await renderList( '&feed=members' );
+
+		expect( feedSelect() ).toHaveValue( 'members' );
+		expect( listed() ).toEqual( [ 'Bulk email' ] );
+
+		chooseFeed( 'city' );
+		expect( listed() ).toEqual( [ 'Telegram', 'City digest' ] );
+
+		await popTo( '&feed=members' );
+		expect( feedSelect() ).toHaveValue( 'members' );
+		expect( listed() ).toEqual( [ 'Bulk email' ] );
+
+		await popTo( '&feed=city' );
+		expect( feedSelect() ).toHaveValue( 'city' );
+		expect( listed() ).toEqual( [ 'Telegram', 'City digest' ] );
+
+		await popTo( '' );
+		expect( feedSelect() ).toHaveValue( '' );
+		expect( listed() ).toHaveLength( 4 );
+	} );
+
+	it( 'keeps the feed when coming back from a notification', async () => {
+		await renderList( '&feed=city' );
+
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getAllByRole( 'link', {
+				name: 'Telegram',
+			} )[ 0 ]
+		);
+		await screen.findByRole( 'navigation', {
+			name: 'Notification sections',
+		} );
+		await popTo( '&feed=city' );
+		expect( feedSelect() ).toHaveValue( 'city' );
+		expect( listed() ).toEqual( [ 'Telegram', 'City digest' ] );
+	} );
+
+	it( 'says when the chosen feed has no notification', async () => {
+		await renderList();
+
+		chooseFeed( 'quiet' );
+		expect(
+			screen.getByText(
+				'No notification sends events from “Quiet events”.'
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'shows nothing for an unavailable feed and offers to show all feeds', async () => {
+		await renderList( '&feed=gone' );
+
+		expect(
+			screen.getByText( /The event feed “gone” is not available/ )
+		).toBeInTheDocument();
+		expect( feedSelect() ).toHaveValue( 'gone' );
+		expect(
+			within( feedSelect() ).getByRole( 'option', {
+				name: 'gone (unavailable)',
+			} )
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( /There is no notification yet/ )
+		).not.toBeInTheDocument();
+		expect( currentSearch() ).toMatchObject( { feed: 'gone' } );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Show all feeds' } )
+		);
+		expect( listed() ).toHaveLength( 4 );
+		expect( currentSearch() ).not.toHaveProperty( 'feed' );
+	} );
+
+	it( 'treats a feed that is turned off as unavailable', async () => {
+		const page = feeds();
+		page.sources = page.sources.filter(
+			( source ) => 'members' !== source.slug
+		);
+		await renderList( '&feed=members', page );
+
+		expect(
+			screen.getByText( /The event feed “members” is not available/ )
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'lists a notification by its saved feed while a draft changes it', async () => {
+		await renderList();
+
+		const telegramView = await openNotification( 'Telegram' );
+		fireEvent.change(
+			telegramView.getByRole( 'combobox', { name: 'Events to include' } ),
+			{ target: { value: 'members' } }
+		);
+		fireEvent.click(
+			screen.getByRole( 'link', { name: '← All notifications' } )
+		);
+		await screen.findByRole( 'combobox', { name: 'Event feed' } );
+
+		chooseFeed( 'city' );
+		expect( listed() ).toEqual( [ 'Telegram', 'City digest' ] );
+		expect(
+			within( rowOf( 'Telegram' ) ).getByText( 'Unsaved changes' )
+		).toBeInTheDocument();
+		chooseFeed( 'members' );
+		expect( listed() ).toEqual( [ 'Bulk email' ] );
+	} );
+} );
+
 describe( 'Navigation', () => {
 	it( 'opens a notification from a direct link', async () => {
 		await renderPage( payload(), {}, 'bulk_email' );

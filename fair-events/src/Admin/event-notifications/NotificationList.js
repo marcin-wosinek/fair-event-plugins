@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { TextControl } from '@wordpress/components';
+import { Notice, SelectControl, TextControl } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -84,13 +84,105 @@ export function matchesSearch( configuration, search ) {
 }
 
 /**
- * Every notification in a searchable list of pages. Each row links to its
- * editor and its own history, and shows whether it is on, where it sends,
- * its next send and its latest send or test. On narrow screens each row
- * stacks into labeled lines.
+ * Individual email's event selection meaning every published local event,
+ * not an event feed. Mirrors IndividualEmailSettings::LOCAL_EVENTS.
+ */
+const LOCAL_EVENTS = '@local';
+
+/**
+ * The event feed a notification's saved settings send events from.
+ *
+ * @param {Object} configuration Configuration payload.
+ * @return {string} Event feed slug, or '' when it names none.
+ */
+export function feedOf( configuration ) {
+	if ( 'individual_email' === configuration.type ) {
+		const selection = configuration.event_selection || '';
+		return LOCAL_EVENTS === selection ? '' : selection;
+	}
+	return configuration.source_slug || '';
+}
+
+/**
+ * Options of the event feed filter: every feed, then each enabled feed. A
+ * feed in the URL that is not enabled stays selected, marked unavailable.
+ *
+ * @param {Array}  sources Enabled event feeds.
+ * @param {string} current Feed slug in the URL.
+ * @return {Array} Select options.
+ */
+function feedOptions( sources, current ) {
+	const options = [
+		{ value: '', label: __( 'All feeds', 'fair-events' ) },
+		...sources.map( ( source ) => ( {
+			value: source.slug,
+			label: source.name || source.slug,
+		} ) ),
+	];
+	if ( current && ! sources.some( ( source ) => source.slug === current ) ) {
+		options.push( {
+			value: current,
+			label: sprintf(
+				/* translators: %s: event feed slug */
+				__( '%s (unavailable)', 'fair-events' ),
+				current
+			),
+		} );
+	}
+	return options;
+}
+
+/**
+ * Why the list shows no notification.
+ *
+ * @param {Object} props
+ * @param {number} props.total    Number of notifications.
+ * @param {number} props.inFeed   Number of notifications of the selected feed.
+ * @param {string} props.feedName Selected feed's name, or '' for every feed.
+ * @param {string} props.search   Typed search.
+ * @return {string} Message.
+ */
+function emptyMessage( { total, inFeed, feedName, search } ) {
+	if ( 0 === total ) {
+		return __(
+			'There is no notification yet. Add one below.',
+			'fair-events'
+		);
+	}
+	if ( feedName && 0 === inFeed ) {
+		return sprintf(
+			/* translators: %s: event feed name */
+			__( 'No notification sends events from “%s”.', 'fair-events' ),
+			feedName
+		);
+	}
+	if ( feedName ) {
+		return sprintf(
+			/* translators: 1: the typed search, 2: event feed name */
+			__( 'No notification of “%2$s” matches “%1$s”.', 'fair-events' ),
+			search,
+			feedName
+		);
+	}
+	return sprintf(
+		/* translators: %s: the typed search */
+		__( 'No notification matches “%s”.', 'fair-events' ),
+		search
+	);
+}
+
+/**
+ * Every notification in a searchable list of pages, which can be narrowed
+ * to one event feed. Each row links to its editor and its own history, and
+ * shows whether it is on, where it sends, its next send and its latest send
+ * or test. On narrow screens each row stacks into labeled lines.
+ *
+ * Membership follows saved settings: a draft that changes a notification's
+ * feed moves it only once it is saved.
  *
  * @param {Object}   props
  * @param {Array}    props.configurations Configuration payloads.
+ * @param {Array}    props.sources        Enabled event feeds.
  * @param {Array}    props.dirty          IDs of notifications with unsaved changes.
  * @param {Object}   props.location       View state.
  * @param {Function} props.navigate       Changes the view.
@@ -98,13 +190,26 @@ export function matchesSearch( configuration, search ) {
  */
 export default function NotificationList( {
 	configurations,
+	sources = [],
 	dirty,
 	location,
 	navigate,
 } ) {
-	const matching = configurations.filter( ( configuration ) =>
+	const { feed } = location;
+	const selectedFeed = feed
+		? sources.find( ( source ) => source.slug === feed )
+		: null;
+	const unavailable = !! feed && ! selectedFeed;
+	const inFeed = unavailable
+		? []
+		: configurations.filter(
+				( configuration ) => ! feed || feedOf( configuration ) === feed
+			);
+	const matching = inFeed.filter( ( configuration ) =>
 		matchesSearch( configuration, location.search )
 	);
+	const selectFeed = ( slug ) =>
+		navigate( { ...location, feed: slug, listPage: 1 } );
 	const totalPages = Math.max( 1, Math.ceil( matching.length / PER_PAGE ) );
 	const page = Math.min( location.listPage, totalPages );
 	const shown = matching.slice( ( page - 1 ) * PER_PAGE, page * PER_PAGE );
@@ -119,36 +224,72 @@ export default function NotificationList( {
 
 	return (
 		<div className="fair-events-notifications__list">
-			<TextControl
-				className="fair-events-notifications__search"
-				label={ __( 'Search notifications', 'fair-events' ) }
-				help={ __( 'By name, kind, address or chat.', 'fair-events' ) }
-				value={ location.search }
-				onChange={ ( search ) =>
-					navigate(
-						{ ...location, search, listPage: 1 },
-						{ replace: true }
-					)
-				}
-			/>
+			<div className="fair-events-notifications__list-controls">
+				<TextControl
+					className="fair-events-notifications__search"
+					label={ __( 'Search notifications', 'fair-events' ) }
+					help={ __(
+						'By name, kind, address or chat.',
+						'fair-events'
+					) }
+					value={ location.search }
+					onChange={ ( search ) =>
+						navigate(
+							{ ...location, search, listPage: 1 },
+							{ replace: true }
+						)
+					}
+				/>
+				<SelectControl
+					className="fair-events-notifications__feed"
+					label={ __( 'Event feed', 'fair-events' ) }
+					help={ __(
+						'Shows the notifications that send events from this feed.',
+						'fair-events'
+					) }
+					value={ feed }
+					options={ feedOptions( sources, feed ) }
+					onChange={ selectFeed }
+				/>
+			</div>
 
-			{ 0 === matching.length ? (
+			{ unavailable && (
+				<Notice
+					status="warning"
+					isDismissible={ false }
+					actions={ [
+						{
+							label: __( 'Show all feeds', 'fair-events' ),
+							onClick: () => selectFeed( '' ),
+							variant: 'secondary',
+						},
+					] }
+				>
+					{ sprintf(
+						/* translators: %s: event feed slug */
+						__(
+							'The event feed “%s” is not available: it does not exist, was deleted or is turned off. No notification is listed for it.',
+							'fair-events'
+						),
+						feed
+					) }
+				</Notice>
+			) }
+
+			{ ! unavailable && 0 === matching.length && (
 				<p>
-					{ location.search
-						? sprintf(
-								/* translators: %s: the typed search */
-								__(
-									'No notification matches “%s”.',
-									'fair-events'
-								),
-								location.search
-							)
-						: __(
-								'There is no notification yet. Add one below.',
-								'fair-events'
-							) }
+					{ emptyMessage( {
+						total: configurations.length,
+						inFeed: inFeed.length,
+						feedName: selectedFeed
+							? selectedFeed.name || selectedFeed.slug
+							: '',
+						search: location.search,
+					} ) }
 				</p>
-			) : (
+			) }
+
+			{ 0 < matching.length && (
 				<table className="widefat striped fair-events-notifications__table">
 					<thead>
 						<tr>

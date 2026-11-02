@@ -7,6 +7,8 @@
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php remove <id>...
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php state <id>
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php run <id>
+ *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php seed-feeds <suffix>
+ *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php remove-feeds <source-id>...
  *
  * `reset` puts the configuration a type started with (its ID is the type)
  * back to the type's defaults, turned off, without history, queued sends or
@@ -16,6 +18,11 @@
  * individual email configuration's cron callback for the current send week,
  * exactly as WP-Cron would.
  *
+ * `seed-feeds` creates two enabled event feeds, North and South, each with
+ * an individual email that sends its events (#2084), and reports the feeds
+ * and the configuration IDs; `remove` deletes those configurations and
+ * `remove-feeds` the feeds.
+ *
  * Prints a single `E2E_NOTIFICATION_CONFIGURATIONS:{json}` line.
  *
  * @package FairEventsE2E
@@ -23,6 +30,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use FairEvents\Database\EventSourceRepository;
 use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\DeliveryLog;
@@ -86,6 +94,47 @@ if ( 'reset' === $fixture_action ) {
 	}
 	update_option( Configurations::INDEX_OPTION, $fixture_index, true );
 	$out = array( 'removed' => $fixture_ids );
+} elseif ( 'seed-feeds' === $fixture_action ) {
+	$fixture_suffix  = sanitize_title( $fixture_ids[0] ?? (string) time() );
+	$fixture_sources = new EventSourceRepository();
+	$out             = array(
+		'feeds'          => array(),
+		'configurations' => array(),
+	);
+	foreach ( array(
+		'north' => 'North',
+		'south' => 'South',
+	) as $fixture_key => $fixture_label ) {
+		$fixture_slug = "{$fixture_key}-{$fixture_suffix}";
+		$fixture_name = "{$fixture_label} feed {$fixture_suffix}";
+		$fixture_feed = $fixture_sources->create( $fixture_name, $fixture_slug, array() );
+		if ( ! $fixture_feed ) {
+			WP_CLI::error( "Could not create the event feed {$fixture_slug}." );
+		}
+		$fixture_record = Configurations::create(
+			Configurations::INDIVIDUAL_EMAIL,
+			"{$fixture_label} digest {$fixture_suffix}",
+			array(
+				'recipient'       => "{$fixture_slug}@example.test",
+				'event_selection' => $fixture_slug,
+			)
+		);
+		if ( ! $fixture_record ) {
+			WP_CLI::error( "Could not create the notification of {$fixture_slug}." );
+		}
+		$out['feeds'][ $fixture_key ] = array(
+			'id'   => (int) $fixture_feed,
+			'slug' => $fixture_slug,
+			'name' => $fixture_name,
+		);
+		$out['configurations'][]      = $fixture_record['id'];
+	}
+} elseif ( 'remove-feeds' === $fixture_action ) {
+	$fixture_sources = new EventSourceRepository();
+	foreach ( $fixture_ids as $fixture_id ) {
+		$fixture_sources->delete( (int) $fixture_id );
+	}
+	$out = array( 'removedFeeds' => $fixture_ids );
 } elseif ( 'run' === $fixture_action ) {
 	IndividualEmailDispatcher::handle( BulkEmailDispatcher::iso_week( BulkEmailDispatcher::now() ), $fixture_ids[0] ?? '' );
 	$out = array( 'ran' => $fixture_ids[0] ?? '' );
@@ -111,7 +160,7 @@ if ( 'reset' === $fixture_action ) {
 		'lastSentWeek' => BulkEmailDispatcher::last_sent_week( $fixture_id ),
 	);
 } else {
-	WP_CLI::error( 'Expected reset <type>..., remove <id>..., state <id> or run <id>.' );
+	WP_CLI::error( 'Expected reset <type>..., remove <id>..., state <id>, run <id>, seed-feeds <suffix> or remove-feeds <source-id>....' );
 }
 
 echo 'E2E_NOTIFICATION_CONFIGURATIONS:' . wp_json_encode( (object) $out ) . "\n";

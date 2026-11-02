@@ -267,6 +267,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 				</p>
 				<NotificationList
 					configurations={ data.configurations }
+					sources={ data.sources }
 					dirty={ dirty }
 					location={ location }
 					navigate={ navigate }
