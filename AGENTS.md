@@ -6,7 +6,7 @@ list in the root `package.json` is authoritative.
 
 ## Agent Workflows
 
-The seven agent workflows have one canonical definition under
+The eight agent workflows have one canonical definition under
 `.agents/skills/<name>/SKILL.md`. Codex discovers those skills directly and
 invokes them with `$<name>`. Claude Code preserves the matching `/<name>` slash
 commands through thin files in `.claude/commands/`; each adapter passes

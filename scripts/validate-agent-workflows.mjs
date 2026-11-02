@@ -12,6 +12,7 @@ export const WORKFLOWS = [
 	'release',
 	'translate',
 	'new-plugin',
+	'rebase',
 ];
 
 const LEGACY_HOOKS = [

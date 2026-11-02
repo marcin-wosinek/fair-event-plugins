@@ -35,7 +35,7 @@ function withFixture(callback) {
 	}
 }
 
-test('accepts all seven valid workflow pairs and hook configurations', () => {
+test('accepts all eight valid workflow pairs and hook configurations', () => {
 	withFixture((root) => assert.deepEqual(validateAgentWorkflows(root), []));
 });
 
