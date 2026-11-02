@@ -50,7 +50,7 @@ Everything is written under the gitignored
 | `runs/<timestamp>/`   | The current run, including `results/<tab>.json` capture records. Kept for debugging.        |
 
 Each run starts by deleting the previous `runs/`. `latest` is replaced only
-when all ten tabs were captured and Playwright exited with status 0, so a
+when all eleven tabs were captured and Playwright exited with status 0, so a
 failed run can never mix stale and new images. The images stay local:
 publishing them is a separate, deliberate step (and only ever of this
 synthetic data, see [TESTING.md](../TESTING.md#ad-hoc-page-screenshots)).
@@ -103,12 +103,13 @@ active.
 | 2   | Prices        | fair-events                | Fair Events **Ticketing** feature on. Disabled for a generated series occurrence or a link-only event.                                               |
 | 3   | Schedule      | fair-events-experimental   | Fair Events Experimental active, Ticketing on, and the event's **Workshop schedule** enabled (Prices → More options).                                |
 | 4   | List          | fair-events                | Ticketing on. Disabled for a link-only event.                                                                                                        |
-| 5   | Groups        | fair-audience-experimental | Both Experimental plugins and Fair Audience active; Ticketing, Experimental **Ticketing extensions**, **Groups** and **Manage Event extensions** on. |
-| 6   | Audience      | fair-audience              | Fair Audience active.                                                                                                                                |
-| 7   | Mailings      | fair-audience-experimental | Fair Audience and Fair Audience Experimental active; Experimental **Mailings** and **Manage Event extensions** on.                                   |
-| 8   | Statistics    | fair-events                | Fair Audience active, and the viewer can `manage_options`.                                                                                           |
-| 9   | Finance       | fair-events                | Fair Finance active.                                                                                                                                 |
-| 10  | Admin         | fair-events                | Always.                                                                                                                                              |
+| 5   | Messages      | fair-events                | Ticketing on. A generated series occurrence or a link-only event shows only why there is nothing to edit.                                            |
+| 6   | Groups        | fair-audience-experimental | Both Experimental plugins and Fair Audience active; Ticketing, Experimental **Ticketing extensions**, **Groups** and **Manage Event extensions** on. |
+| 7   | Audience      | fair-audience              | Fair Audience active.                                                                                                                                |
+| 8   | Mailings      | fair-audience-experimental | Fair Audience and Fair Audience Experimental active; Experimental **Mailings** and **Manage Event extensions** on.                                   |
+| 9   | Statistics    | fair-events                | Fair Audience active, and the viewer can `manage_options`.                                                                                           |
+| 10  | Finance       | fair-events                | Fair Finance active.                                                                                                                                 |
+| 11  | Admin         | fair-events                | Always.                                                                                                                                              |
 
 ## What counts as a capture
 

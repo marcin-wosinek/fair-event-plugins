@@ -72,7 +72,11 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		const allTickets = page.locator(
 			'tr.fair-audience-audience-table__ticket'
 		);
-		const search = page.getByLabel('Search', { exact: true });
+		// By role: the classic editor's hidden link dialog has a Search field too.
+		const search = page.getByRole('textbox', {
+			name: 'Search',
+			exact: true,
+		});
 
 		await loginAsAdmin(page);
 		await openAudience(event.eventDateId);
