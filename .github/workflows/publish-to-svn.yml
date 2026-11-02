@@ -82,7 +82,7 @@ jobs:
               if: ${{ steps.reuse.outputs.reuse != 'true' }}
               uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
               with:
-                  php-version: '8.3'
+                  php-version: '8.5'
                   extensions: mbstring, intl, zip
                   coverage: none
 

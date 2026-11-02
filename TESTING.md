@@ -130,12 +130,22 @@ Examples live in `fair-events/__tests__/` and
 
 ### PHP versions
 
-Two version ranges apply, and they are deliberately different:
+Three version ranges apply, and they are deliberately different:
 
-| What                       | PHP                                      | Checked by            |
-| -------------------------- | ---------------------------------------- | --------------------- |
-| Plugin runtime (shipped)   | 7.4, 8.0 or 8.2 minimum per plugin       | `php-runtime` CI jobs |
-| PHPUnit suites and tooling | 8.4 and 8.5 (PHPUnit 13 requires 8.4.1+) | `php-tests` CI jobs   |
+| What                                                                                           | PHP                                      | Checked by                                                      |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| Plugin runtime (shipped)                                                                       | 7.4, 8.0 or 8.2 minimum per plugin       | `php-runtime` CI jobs                                           |
+| PHPUnit suites and tooling                                                                     | 8.4 and 8.5 (PHPUnit 13 requires 8.4.1+) | `php-tests` CI jobs                                             |
+| WordPress environments (default CI jobs, wp-env dev and tests sites, Docker Compose dev stack) | 8.5                                      | `.wp-env.json`, `compose.yml`, checked by `validate:php-compat` |
+
+The WordPress environments run current PHP so that deprecations real sites
+hit show up in development and CI. That version is not a plugin minimum;
+raising it changes no `Requires PHP` or Composer `platform` value.
+`npm run validate:php-compat` fails when `compose.yml`'s WordPress images or
+any literal `php-version:` in `.github/workflows/` disagrees with
+`.wp-env.json` `phpVersion`. Matrix legs (`${{ matrix.php }}`) are the other
+two ranges and are not checked against it. To change the version, edit
+`.wp-env.json` and let the check list every other place.
 
 Per-plugin minimums and the rules for changing them are in
 [PHP_PATTERNS.md § Supported PHP Versions](./PHP_PATTERNS.md#supported-php-versions).
@@ -169,6 +179,26 @@ them:
 Run the runtime check locally against an older PHP with Docker, for example
 `docker run --rm -v "$PWD":/app -w /app/fair-events php:7.4-cli php -l fair-events.php`.
 The CI job is the authoritative check.
+
+### Upgrading an existing local wp-env site
+
+A change to `phpVersion` (or anything else in `.wp-env.json`) reaches an
+existing local site on its next `wp-env start`. wp-env notices the changed
+configuration and rebuilds the containers, keeping the development and tests
+databases. It skips that step without warning when wordpress.org is
+unreachable, so do it while online:
+
+1. Check that no run is using the instance: `pgrep -fl "playwright test"`.
+2. Run `npx wp-env start`. The rebuild takes a few minutes; both databases
+   are kept.
+3. Check the version: `npx wp-env run cli php -v` and
+   `npx wp-env run tests-cli php -v`. If either still shows the old version,
+   run `npx wp-env start --update`.
+
+Secondary worktrees follow the same steps; the ports in
+`.wp-env.override.json` carry over. Don't use `wp-env destroy` for this. It
+deletes the databases and images, and nothing about a version change needs
+it.
 
 ### Native popup check
 

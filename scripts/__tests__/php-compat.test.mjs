@@ -14,6 +14,7 @@ import {
 	ROOT,
 	RUNNER_SCRIPT,
 	checkDeclarations,
+	checkRuntimeParity,
 	constraintMinimum,
 	headerValue,
 	minimums,
@@ -176,6 +177,57 @@ test('requires a policy entry for every workspace', () => {
 	);
 });
 
+function runtimeFiles() {
+	return {
+		'.wp-env.json': { phpVersion: '8.5' },
+		'compose.yml':
+			'services:\n    wordpress:\n        image: wordpress:7.1.3-php8.5\n    db:\n        image: mysql:8.0\n    wpcli:\n        image: wordpress:cli-php8.5\n',
+		'.github/workflows/build.yml':
+			"jobs:\n    build:\n        steps:\n            - with:\n                  php-version: '8.5'\n    php-tests:\n        steps:\n            - with:\n                  php-version: ${{ matrix.php }}\n",
+	};
+}
+
+function runtimeProblems(overrides) {
+	return withRepo({ ...runtimeFiles(), ...overrides }, (root) =>
+		checkRuntimeParity(root)
+	);
+}
+
+test('accepts one development PHP version across wp-env, Compose and CI', () => {
+	assert.deepEqual(runtimeProblems({}), []);
+});
+
+test('reports a Compose WordPress image on another or no PHP version', () => {
+	assert.deepEqual(
+		runtimeProblems({
+			'compose.yml':
+				'services:\n    wordpress:\n        image: wordpress:7.1.3-php8.3\n    wpcli:\n        image: wordpress:cli\n',
+		}),
+		[
+			'compose.yml: image "wordpress:7.1.3-php8.3" should pin php8.5 to match .wp-env.json.',
+			'compose.yml: image "wordpress:cli" should pin php8.5 to match .wp-env.json.',
+		]
+	);
+});
+
+test('reports a literal workflow PHP version and skips matrix legs', () => {
+	assert.deepEqual(
+		runtimeProblems({
+			'.github/workflows/deploy.yml':
+				'steps:\n    - with:\n          php-version: "8.3"\n          tools: composer\n',
+		}),
+		[
+			'.github/workflows/deploy.yml: php-version "8.3" should be "8.5" to match .wp-env.json.',
+		]
+	);
+});
+
+test('reports a missing wp-env PHP version', () => {
+	assert.deepEqual(runtimeProblems({ '.wp-env.json': {} }), [
+		'.wp-env.json: phpVersion is not set.',
+	]);
+});
+
 test('lists shipped PHP files, skipping tests and dependencies', () => {
 	withRepo(
 		{
@@ -200,6 +252,10 @@ test('lists shipped PHP files, skipping tests and dependencies', () => {
 
 test('repository declarations match the policy', () => {
 	assert.deepEqual(checkDeclarations(), []);
+});
+
+test('repository uses one development PHP version', () => {
+	assert.deepEqual(checkRuntimeParity(), []);
 });
 
 test('CI checks every policy minimum on its own runtime', () => {

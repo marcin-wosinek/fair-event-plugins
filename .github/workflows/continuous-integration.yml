@@ -21,7 +21,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
               with:
-                  php-version: '8.3'
+                  php-version: '8.5'
                   extensions: mbstring, intl, zip
                   coverage: none
 
@@ -46,9 +46,9 @@ jobs:
                       ./fair-audience-experimental/vendor
                       ./fair-calendar-button/vendor
                       ./vendor
-                  key: ${{ runner.os }}-php8.3-${{ hashFiles('**/composer.lock', '**/composer.json', '!**/vendor/**', '!**/node_modules/**') }}
+                  key: ${{ runner.os }}-php8.5-${{ hashFiles('**/composer.lock', '**/composer.json', '!**/vendor/**', '!**/node_modules/**') }}
                   restore-keys: |
-                      ${{ runner.os }}-php8.3-
+                      ${{ runner.os }}-php8.5-
 
             - name: Setup Node.js
               uses: actions/setup-node@v7

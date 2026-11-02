@@ -5,7 +5,9 @@
 // source for each workspace's supported PHP minimum; TESTING.md documents it
 // and CI groups its runtime jobs by it.
 //
-//   node scripts/php-compat.mjs check                 declarations agree with POLICY
+//   node scripts/php-compat.mjs check                 declarations agree with POLICY;
+//                                                     .wp-env.json, compose.yml and
+//                                                     workflows share one dev/CI PHP
 //   node scripts/php-compat.mjs list --minimum=8.0    workspaces with that minimum
 //   node scripts/php-compat.mjs runtime --minimum=8.0 production install, platform
 //                                                     check, lint, autoload (runs
@@ -169,6 +171,55 @@ export function checkDeclarations(root = ROOT, policy = POLICY) {
 			problems.push(
 				`${workspace}/package.json: test:php is set but there is no phpunit.xml.`
 			);
+		}
+	}
+	return problems;
+}
+
+/**
+ * Returns every place where the development/CI PHP version disagrees with
+ * `.wp-env.json` `phpVersion`: the `wordpress:*` image tags in `compose.yml`
+ * and every literal `php-version:` in the workflows. Matrix legs
+ * (`${{ matrix.php }}`) are separate ranges and are skipped.
+ */
+export function checkRuntimeParity(root = ROOT) {
+	const problems = [];
+	const expected = readJson(path.join(root, '.wp-env.json')).phpVersion;
+	if (!expected) {
+		return ['.wp-env.json: phpVersion is not set.'];
+	}
+
+	const compose = readIfExists(path.join(root, 'compose.yml')) ?? '';
+	for (const match of compose.matchAll(/^\s*image:\s*(wordpress:\S*)/gm)) {
+		const image = match[1];
+		const version = image.match(/php(\d+\.\d+)/)?.[1];
+		if (version !== expected) {
+			problems.push(
+				`compose.yml: image "${image}" should pin php${expected} to match .wp-env.json.`
+			);
+		}
+	}
+
+	const workflows = path.join(root, '.github', 'workflows');
+	const files = existsSync(workflows)
+		? readdirSync(workflows)
+				.filter((name) => /\.ya?ml$/.test(name))
+				.sort()
+		: [];
+	for (const name of files) {
+		const source = readFileSync(path.join(workflows, name), 'utf8');
+		for (const match of source.matchAll(
+			/^\s*php-version:\s*['"]?([^'"\s#]+)/gm
+		)) {
+			const version = match[1];
+			if (version.startsWith('${{')) {
+				continue;
+			}
+			if (version !== expected) {
+				problems.push(
+					`.github/workflows/${name}: php-version "${version}" should be "${expected}" to match .wp-env.json.`
+				);
+			}
 		}
 	}
 	return problems;
@@ -342,12 +393,14 @@ export function main(args = process.argv.slice(2)) {
 	const minimum = parseMinimum(rest);
 	switch (command) {
 		case 'check': {
-			const problems = checkDeclarations();
+			const problems = [...checkDeclarations(), ...checkRuntimeParity()];
 			for (const problem of problems) {
 				console.error(problem);
 			}
 			if (problems.length === 0) {
-				console.log('PHP compatibility declarations match the policy.');
+				console.log(
+					'PHP compatibility declarations match the policy, and the development/CI PHP version is consistent.'
+				);
 			}
 			return problems.length === 0 ? 0 : 1;
 		}
