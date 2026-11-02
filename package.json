@@ -143,6 +143,8 @@
 		"express": {
 			"qs": "^6.16.1"
 		},
+		"glob@10": "^14.0.3",
+		"glob@13": "^14.0.3",
 		"js-yaml@3": {
 			"argparse": "^2.0.1"
 		},
@@ -153,6 +155,7 @@
 		"micromark-extension-math": {
 			"katex": "^0.18.2"
 		},
+		"minimatch@10": "^11.0.4",
 		"postcss-selector-parser": "^7.1.6"
 	}
 }
