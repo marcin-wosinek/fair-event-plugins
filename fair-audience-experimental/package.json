@@ -35,7 +35,7 @@
 		"@wordpress/i18n": "7.0.0"
 	},
 	"devDependencies": {
-		"@babel/core": "^8.0.7",
+		"@babel/core": "^8.0.10",
 		"@babel/preset-env": "^8.0.7",
 		"@babel/preset-react": "^8.0.1",
 		"@playwright/test": "^1.64.1",
