@@ -2,12 +2,13 @@
  * @jest-environment jsdom
  *
  * Tests for EventTimingFields (#1851): either time can be left empty and
- * cleared on its own, and Event length never fills a missing time.
+ * cleared on its own, and Event length never fills a missing time. Moving
+ * the start date or start time keeps the event length (#2089).
  */
 import '@testing-library/jest-dom';
 import { useState } from '@wordpress/element';
 import { render, screen, fireEvent } from '@testing-library/react';
-import EventTimingFields from '../EventTimingFields.js';
+import EventTimingFields, { getStartTimeChange } from '../EventTimingFields.js';
 
 function Harness( {
 	initial,
@@ -253,4 +254,197 @@ describe( 'moving the start date keeps the event length (#2089)', () => {
 		);
 		expect( spy ).not.toHaveBeenCalled();
 	} );
+} );
+
+describe( 'moving the start time keeps the event length', () => {
+	const moveStartTime = ( next ) =>
+		fireEvent.change( screen.getByLabelText( 'Start time (optional)' ), {
+			target: { value: next },
+		} );
+
+	test.each( [
+		[
+			'later on the same day',
+			timed,
+			'14:00',
+			{ startTime: '14:00', endDate: '2026-10-18', endTime: '16:00' },
+		],
+		[
+			'earlier on the same day',
+			timed,
+			'08:15',
+			{ startTime: '08:15', endDate: '2026-10-18', endTime: '10:15' },
+		],
+		[
+			'later, past midnight',
+			timed,
+			'23:00',
+			{ startTime: '23:00', endDate: '2026-10-19', endTime: '01:00' },
+		],
+		[
+			'an overnight event moved back onto one day',
+			{
+				...timed,
+				startTime: '22:00',
+				endDate: '2026-10-19',
+				endTime: '02:00',
+			},
+			'19:00',
+			{ startTime: '19:00', endDate: '2026-10-18', endTime: '23:00' },
+		],
+		[
+			'past midnight across a year boundary',
+			{
+				...timed,
+				startDate: '2026-12-31',
+				endDate: '2026-12-31',
+			},
+			'23:30',
+			{ startTime: '23:30', endDate: '2027-01-01', endTime: '01:30' },
+		],
+		[
+			'a multi-day event across a month boundary',
+			{
+				...timed,
+				startDate: '2026-10-30',
+				endDate: '2026-11-01',
+				endTime: '09:00',
+			},
+			'18:00',
+			{ startTime: '18:00', endDate: '2026-11-01', endTime: '17:00' },
+		],
+		[
+			'over the October DST change, by wall-clock time',
+			{
+				...timed,
+				startDate: '2026-10-24',
+				startTime: '22:00',
+				endDate: '2026-10-25',
+				endTime: '04:00',
+			},
+			'23:00',
+			{ startTime: '23:00', endDate: '2026-10-25', endTime: '05:00' },
+		],
+		[
+			'a zero-length event',
+			{ ...timed, endTime: '10:00' },
+			'11:00',
+			{ startTime: '11:00', endDate: '2026-10-18', endTime: '11:00' },
+		],
+	] )( '%s', ( _label, initial, next, expected ) => {
+		render( <Harness initial={ initial } /> );
+		moveStartTime( next );
+		expect( state() ).toEqual( { ...initial, ...expected } );
+	} );
+
+	test( 'repeated changes keep the original length', () => {
+		render( <Harness initial={ timed } /> );
+		moveStartTime( '14:00' );
+		moveStartTime( '23:30' );
+		moveStartTime( '07:00' );
+		expect( state() ).toEqual( {
+			...timed,
+			startTime: '07:00',
+			endDate: '2026-10-18',
+			endTime: '09:00',
+		} );
+	} );
+
+	test( 'an explicit end edit sets the length the next move keeps', () => {
+		render( <Harness initial={ timed } /> );
+		fireEvent.change( screen.getByLabelText( 'End time (optional)' ), {
+			target: { value: '13:30' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'End date' ), {
+			target: { value: '2026-10-19' },
+		} );
+		moveStartTime( '12:00' );
+		expect( state() ).toEqual( {
+			...timed,
+			startTime: '12:00',
+			endDate: '2026-10-19',
+			endTime: '15:30',
+		} );
+	} );
+
+	test( 'keeps the start date and the earlier start-date shift intact', () => {
+		render( <Harness initial={ timed } /> );
+		moveStartTime( '14:00' );
+		fireEvent.change( screen.getByLabelText( 'Start date' ), {
+			target: { value: '2026-11-02' },
+		} );
+		expect( state() ).toEqual( {
+			...timed,
+			startDate: '2026-11-02',
+			startTime: '14:00',
+			endDate: '2026-11-02',
+			endTime: '16:00',
+		} );
+	} );
+
+	test.each( [
+		[ 'clearing the start time', timed, '' ],
+		[
+			'first supplying a start time',
+			{ ...timed, startTime: '' },
+			'09:00',
+		],
+		[ 'a missing end time', { ...timed, endTime: '' }, '14:00' ],
+		[
+			'missing end time and end date',
+			{ ...timed, endDate: '', endTime: '' },
+			'14:00',
+		],
+		[ 'an empty end date', { ...timed, endDate: '' }, '14:00' ],
+		[ 'an empty start date', { ...timed, startDate: '' }, '14:00' ],
+		[
+			'an impossible end date',
+			{ ...timed, endDate: '2026-02-30' },
+			'14:00',
+		],
+		[
+			'a reversed date range',
+			{ ...timed, endDate: '2026-10-17' },
+			'14:00',
+		],
+		[
+			'reversed times on one day',
+			{ ...timed, startTime: '12:00', endTime: '10:00' },
+			'14:00',
+		],
+	] )( 'changes only the start time for %s', ( _label, initial, next ) => {
+		const spy = jest.fn();
+		render( <Harness initial={ initial } onChangeSpy={ spy } /> );
+		moveStartTime( next );
+		expect( spy ).toHaveBeenLastCalledWith( { startTime: next } );
+		expect( state() ).toEqual( { ...initial, startTime: next } );
+	} );
+
+	test.each( [ 'UTC', 'Europe/Madrid', 'America/New_York', 'Asia/Tokyo' ] )(
+		'does not depend on the browser timezone (%s)',
+		( timeZone ) => {
+			const original = process.env.TZ;
+			process.env.TZ = timeZone;
+			try {
+				expect(
+					getStartTimeChange(
+						{
+							allDay: false,
+							startDate: '2026-03-28',
+							startTime: '23:00',
+							endDate: '2026-03-29',
+							endTime: '03:00',
+						},
+						'23:30'
+					)
+				).toEqual( {
+					startTime: '23:30',
+					endDate: '2026-03-29',
+					endTime: '03:30',
+				} );
+			} finally {
+				process.env.TZ = original;
+			}
+		}
+	);
 } );
