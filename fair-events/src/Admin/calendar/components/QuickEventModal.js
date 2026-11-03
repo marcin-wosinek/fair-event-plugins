@@ -30,6 +30,7 @@ import {
 } from 'fair-events-shared';
 import EventTimingFields from '../../components/EventTimingFields.js';
 import { getTimingError } from '../../components/eventTiming.js';
+import { getLookupTiming } from '../../components/lookupTiming.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../../components/InlineVenueCreator.js';
@@ -139,14 +140,16 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				setTitle( metadata.title );
 			}
 
-			if ( metadata.start_date ) {
-				setAllDay( Boolean( metadata.all_day ) );
-				setStartDate( metadata.start_date );
-				setStartTime( ( metadata.start_time || '' ).slice( 0, 5 ) );
-				// The page's own end, or none: the popup's default end must
-				// not stand in for a time the page didn't give.
-				setEndDate( metadata.end_date || metadata.start_date );
-				setEndTime( ( metadata.end_time || '' ).slice( 0, 5 ) );
+			// The page's own timing, or none: the popup's default end must
+			// not stand in for a time the page didn't give.
+			const timing = getLookupTiming( metadata );
+
+			if ( timing ) {
+				setAllDay( timing.allDay );
+				setStartDate( timing.startDate );
+				setStartTime( timing.startTime );
+				setEndDate( timing.endDate );
+				setEndTime( timing.endTime );
 			} else if ( ! timingEdited ) {
 				// The page gave no start: drop the default or previously
 				// imported times, so nothing looks imported. A single

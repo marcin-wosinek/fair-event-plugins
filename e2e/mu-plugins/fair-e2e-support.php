@@ -707,3 +707,8 @@ require_once __DIR__ . '/lib/connected-site-http-double.php';
  * leaves requests already answered here alone.
  */
 require_once __DIR__ . '/lib/whatsapp-http-double.php';
+
+/*
+ * 9. Serve captured Meetup event pages to the URL lookup tests.
+ */
+require_once __DIR__ . '/lib/meetup-page-http-double.php';

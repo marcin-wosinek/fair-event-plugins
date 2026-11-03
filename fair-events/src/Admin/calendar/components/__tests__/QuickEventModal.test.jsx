@@ -382,6 +382,120 @@ describe( 'QuickEventModal', () => {
 		} );
 	} );
 
+	it( 'prefills timing from an older shared parser’s combined fields (#2124)', async () => {
+		const meetupUrl =
+			'https://www.meetup.com/lifeinmotion-es/events/317238692/?eventOrigin=group_calendar';
+		// An older vendored shared parser returns only the combined
+		// site-local fields; the calendar day picked (Nov 3) must not
+		// replace the event's own day (Nov 2).
+		lookupResponse = {
+			title: 'Morning yoga in the park',
+			start_datetime: '2026-11-02 10:00:00',
+			end_datetime: '2026-11-02 11:00:00',
+			all_day: false,
+			location: 'Puente del Mar',
+			source: 'schema',
+			found: [ 'title', 'start', 'end', 'location' ],
+		};
+
+		const { onSuccess } = await renderModal( {
+			date: new Date( '2026-11-03T00:00:00' ),
+		} );
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: meetupUrl },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Morning yoga in the park'
+			)
+		);
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-11-02'
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'10:00'
+		);
+		expect( screen.getByLabelText( 'End date' ) ).toHaveValue(
+			'2026-11-02'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'11:00'
+		);
+		expect(
+			screen.getByText( 'From the page: Puente del Mar' )
+		).toBeVisible();
+
+		// Still editable before saving.
+		fireEvent.change( screen.getByLabelText( 'End time (optional)' ), {
+			target: { value: '11:30' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+		const createCall = apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect( createCall[ 0 ].data ).toMatchObject( {
+			title: 'Morning yoga in the park',
+			start_date: '2026-11-02',
+			end_date: '2026-11-02',
+			start_time: '10:00:00',
+			end_time: '11:30:00',
+			all_day: false,
+			link_type: 'external',
+			external_url: meetupUrl,
+		} );
+	} );
+
+	it( 'reads a legacy all-day lookup without midnight times (#2124)', async () => {
+		lookupResponse = {
+			title: 'Festival',
+			start_datetime: '2026-11-02 00:00:00',
+			end_datetime: '2026-11-04 00:00:00',
+			all_day: true,
+			location: null,
+			source: 'schema',
+			found: [ 'title', 'start', 'end' ],
+		};
+
+		const { onSuccess } = await renderModal();
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: 'https://example.com/festival' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue( 'Festival' )
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+
+		const createCall = apiFetch.mock.calls.find(
+			( [ opts ] ) =>
+				opts.path === '/fair-events/v1/event-dates' &&
+				opts.method === 'POST'
+		);
+		expect( createCall[ 0 ].data ).toMatchObject( {
+			start_date: '2026-11-02',
+			end_date: '2026-11-04',
+			start_time: null,
+			end_time: null,
+			all_day: true,
+		} );
+	} );
+
 	it( 'allows manual completion after a failed lookup, keeping the link (#2124)', async () => {
 		const meetupUrl = 'https://www.meetup.com/idiolect/events/317159839/';
 		lookupResponse = new Error( 'That page could not be fetched.' );

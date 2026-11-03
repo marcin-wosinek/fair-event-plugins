@@ -391,4 +391,78 @@ class MeetupEventDataTest extends TestCase {
 			. '<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"event":</script></body></html>';
 		$this->assertSame( PageMetadataParser::parse( $malformed ), $this->lookup( $malformed ) );
 	}
+
+	/**
+	 * The reported event's URL, with Meetup's calendar query parameter.
+	 */
+	const REOPENED_URL = 'https://www.meetup.com/lifeinmotion-es/events/317238692/?eventOrigin=group_calendar';
+
+	/**
+	 * The captured page of the event reported when #2124 was reopened.
+	 *
+	 * @return string HTML.
+	 */
+	private function reopened_fixture() {
+		return file_get_contents( __DIR__ . '/../fixtures/meetup/event-page-317238692.html' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+	}
+
+	/**
+	 * The reported URL is recognized with its query parameter and under a
+	 * locale prefix.
+	 *
+	 * @return void
+	 */
+	public function test_recognizes_reopened_event_url() {
+		$this->assertSame( '317238692', MeetupEventData::event_id_from_url( self::REOPENED_URL ) );
+		$this->assertSame( '317238692', MeetupEventData::event_id_from_url( 'https://www.meetup.com/es-ES/lifeinmotion-es/events/317238692/?eventOrigin=group_calendar' ) );
+	}
+
+	/**
+	 * The reported page's SportsEvent JSON-LD alone yields November 2,
+	 * 10:00-11:00 in Europe/Madrid, at Puente del Mar.
+	 *
+	 * @return void
+	 */
+	public function test_reopened_page_is_parsed_from_sports_event_schema() {
+		$result = PageMetadataParser::parse( $this->reopened_fixture() );
+
+		$this->assertSame( 'schema', $result['source'] );
+		$this->assertSame( '2026-11-02 10:00:00', $result['start_datetime'] );
+		$this->assertSame( '2026-11-02 11:00:00', $result['end_datetime'] );
+		$this->assertFalse( $result['all_day'] );
+		$this->assertSame( '2026-11-02', $result['start_date'] );
+		$this->assertSame( '10:00:00', $result['start_time'] );
+		$this->assertSame( '2026-11-02', $result['end_date'] );
+		$this->assertSame( '11:00:00', $result['end_time'] );
+		$this->assertSame( 'Puente del Mar', $result['location'] );
+		$this->assertSame( array( 'title', 'start', 'end', 'location' ), $result['found'] );
+
+		// The fallback leaves a complete schema result as it is.
+		$this->assertSame( $result, MeetupEventData::fill_missing( self::REOPENED_URL, $this->reopened_fixture(), $result ) );
+	}
+
+	/**
+	 * Without the SportsEvent, the matching embedded event gives the same
+	 * timing and venue.
+	 *
+	 * @return void
+	 */
+	public function test_reopened_page_fills_from_embedded_event() {
+		$html = preg_replace(
+			'#<script type="application/ld\+json"[^>]*>\{"@context":"https://schema.org","@type":"SportsEvent".*?</script>#s',
+			'',
+			$this->reopened_fixture()
+		);
+		$this->assertStringNotContainsString( 'SportsEvent', $html );
+
+		$result = $this->lookup( $html, self::REOPENED_URL );
+
+		$this->assertSame( 'meetup', $result['source'] );
+		$this->assertSame( '2026-11-02', $result['start_date'] );
+		$this->assertSame( '10:00:00', $result['start_time'] );
+		$this->assertSame( '2026-11-02', $result['end_date'] );
+		$this->assertSame( '11:00:00', $result['end_time'] );
+		$this->assertSame( 'Puente del Mar', $result['location'] );
+		$this->assertSame( array( 'title', 'start', 'end', 'location' ), $result['found'] );
+	}
 }
