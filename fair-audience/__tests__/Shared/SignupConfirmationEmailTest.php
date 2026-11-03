@@ -1,6 +1,7 @@
 <?php
 /**
- * FairEventsShared\Notifications\SignupConfirmationEmail formatting tests.
+ * FairEventsShared\Notifications\SignupConfirmationEmail and
+ * BookingConfirmationEmail formatting tests.
  *
  * @package FairAudience
  */
@@ -8,6 +9,7 @@
 namespace FairAudience\Tests\Shared;
 
 use PHPUnit\Framework\TestCase;
+use FairEventsShared\Notifications\BookingConfirmationEmail;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 /**
@@ -167,10 +169,10 @@ class SignupConfirmationEmailTest extends TestCase {
 	 * rendered without the key, so existing confirmations are unchanged.
 	 */
 	public function test_html_unchanged_when_custom_message_empty(): void {
-		$without = SignupConfirmationEmail::html( $this->args() );
+		$without = BookingConfirmationEmail::html( $this->args() );
 
-		$this->assertSame( $without, SignupConfirmationEmail::html( $this->args( array( 'custom_message_html' => '' ) ) ) );
-		$this->assertSame( $without, SignupConfirmationEmail::html( $this->args( array( 'custom_message_html' => "  \n" ) ) ) );
+		$this->assertSame( $without, BookingConfirmationEmail::html( $this->args( array( 'custom_message_html' => '' ) ) ) );
+		$this->assertSame( $without, BookingConfirmationEmail::html( $this->args( array( 'custom_message_html' => "  \n" ) ) ) );
 	}
 
 	/**
@@ -178,7 +180,7 @@ class SignupConfirmationEmailTest extends TestCase {
 	 * and answers and before the action link and sign-off.
 	 */
 	public function test_html_places_custom_message_after_answers_before_sign_off(): void {
-		$html = SignupConfirmationEmail::html(
+		$html = BookingConfirmationEmail::html(
 			$this->args(
 				array(
 					'answers_html'        => '<tr><td>Question</td><td>Answer</td></tr>',
@@ -194,6 +196,16 @@ class SignupConfirmationEmailTest extends TestCase {
 		$this->assertGreaterThan( strpos( $html, 'Your answers:' ), $message );
 		$this->assertLessThan( strpos( $html, 'Open the event' ), $message );
 		$this->assertLessThan( strpos( $html, 'Thanks,<br>' ), $message );
+	}
+
+	/**
+	 * The original class delegates to BookingConfirmationEmail, so both
+	 * render the same email for the same args.
+	 */
+	public function test_html_matches_booking_confirmation_email(): void {
+		$args = $this->args( array( 'custom_message_html' => '<p>Note</p>' ) );
+
+		$this->assertSame( BookingConfirmationEmail::html( $args ), SignupConfirmationEmail::html( $args ) );
 	}
 
 	/**

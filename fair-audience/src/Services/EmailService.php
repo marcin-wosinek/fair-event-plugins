@@ -25,6 +25,7 @@ use FairAudience\Services\ParticipantToken;
 use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
 use FairEventsShared\Money;
+use FairEventsShared\Notifications\BookingConfirmationEmail;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 defined( 'WPINC' ) || die;
@@ -2064,7 +2065,7 @@ class EmailService {
 		}
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
-		$message = SignupConfirmationEmail::html(
+		$message = BookingConfirmationEmail::html(
 			array(
 				'event_title'                  => esc_html( $event_title ),
 				'participant_name'             => esc_html( $participant->name ),
