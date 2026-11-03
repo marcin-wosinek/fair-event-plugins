@@ -2,8 +2,8 @@
  * The event feed preview renders on the shared admin calendar (#1847):
  * feed details, month navigation with browser history, event links, crowded
  * days in grid and mobile agenda layouts, and the empty and error states.
- * The detail page's header, weekly-summary sharing and collapsed
- * integrations (#2083) edit, share and fit every viewport.
+ * The detail page's header, weekly-summary action and collapsed
+ * integrations (#2083) edit, open and fit every viewport.
  *
  * Needs a current `npm run build` in fair-events-experimental.
  */
@@ -241,11 +241,9 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 		await expect(page.getByText('No events this month.')).toHaveCount(0);
 	});
 
-	test('edits the feed, shares its weekly summary and shows integrations', async ({
+	test('edits the feed, opens its weekly summary and shows integrations', async ({
 		page,
-		context,
 	}) => {
-		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 		await loginAsAdmin(page);
 		await page.goto(
 			`${SOURCE_VIEW_PAGE}${created.source.id}&month=${MONTH}`
@@ -256,9 +254,17 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 		await expect(
 			page.getByText('Public page: none selected', { exact: false })
 		).toBeVisible();
+		// Without a page the summary section stays, its action explained.
 		await expect(
-			page.getByText(/Choose a public page for this feed/)
+			page.getByRole('heading', { name: 'Weekly summary' })
 		).toBeVisible();
+		const unavailable = page.getByRole('button', {
+			name: 'Open weekly summary',
+		});
+		await expect(unavailable).toHaveAttribute('aria-disabled', 'true');
+		await expect(unavailable).toHaveAccessibleDescription(
+			/Choose a public page in the feed settings/
+		);
 
 		// Linking a page in the editor refreshes the header and summary.
 		await edit.click();
@@ -281,18 +287,31 @@ test.describe('Fair Events Experimental — event feed preview', () => {
 			'href',
 			new RegExp(`fair-events-weekly-summary/${created.source.slug}/$`)
 		);
-		await page.getByRole('button', { name: 'Copy summary link' }).click();
-		await expect(page.getByRole('status')).toHaveText(
-			'Summary link copied.'
-		);
-		expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-			await summary.getAttribute('href')
-		);
-
-		await page.getByRole('button', { name: 'Show summary link' }).click();
+		await expect(summary).toHaveAttribute('target', '_blank');
+		const [summaryPage] = await Promise.all([
+			page.context().waitForEvent('page'),
+			summary.click(),
+		]);
+		await summaryPage.waitForLoadState();
+		expect(summaryPage.url()).toBe(await summary.getAttribute('href'));
+		await expect(
+			summaryPage.getByRole('heading', { level: 1, name: pageTitle })
+		).toBeVisible();
+		// The public page keeps its own message copying.
+		await expect(
+			summaryPage.getByRole('button', { name: 'Copy WhatsApp message' })
+		).toBeVisible();
+		await summaryPage.close();
+		// Opening is the section's only action.
+		await expect(
+			page.getByRole('button', { name: 'Copy summary link' })
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('button', { name: 'Show summary link' })
+		).toHaveCount(0);
 		await expect(
 			page.getByRole('textbox', { name: 'Weekly summary link' })
-		).toHaveValue(await summary.getAttribute('href'));
+		).toHaveCount(0);
 
 		const integrations = page.getByRole('button', {
 			name: 'Subscription and integrations',

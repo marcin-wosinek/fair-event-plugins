@@ -381,119 +381,86 @@ describe( 'weekly summary (#2045, #2083)', () => {
 	const LINK =
 		'http://example.com/fair-events-weekly-summary/community-calendar/';
 
-	afterEach( () => {
-		delete navigator.clipboard;
-	} );
+	const openButton = () =>
+		screen.getByRole( 'button', { name: 'Open weekly summary' } );
 
-	const copyButton = () =>
-		screen.getByRole( 'button', { name: 'Copy summary link' } );
-	const linkField = () =>
-		screen.queryByRole( 'textbox', { name: 'Weekly summary link' } );
+	function expectNoCopyControls() {
+		expect(
+			screen.queryByRole( 'button', { name: 'Copy summary link' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Show summary link' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'textbox', { name: 'Weekly summary link' } )
+		).not.toBeInTheDocument();
+	}
 
-	it( 'opens the summary and copies its link', async () => {
-		const writeText = jest.fn( () => Promise.resolve() );
-		Object.defineProperty( navigator, 'clipboard', {
-			value: { writeText },
-			configurable: true,
-		} );
+	it( 'opens the summary as the only action', async () => {
 		withSource( { weekly_summary_url: LINK, page_id: 7 } );
 		await renderApp();
 
 		expect(
 			screen.getByRole( 'heading', { name: 'Weekly summary' } )
 		).toBeInTheDocument();
+		const open = screen.getByRole( 'link', {
+			name: /Open weekly summary/,
+		} );
+		expect( open ).toHaveAttribute( 'href', LINK );
+		expect( open ).toHaveAttribute( 'target', '_blank' );
+		expect( open ).toHaveTextContent( '(opens in a new tab)' );
 		expect(
-			screen.getByRole( 'link', { name: /Open weekly summary/ } )
-		).toHaveAttribute( 'href', LINK );
-		// The raw URL stays out of the way until asked for.
-		expect( linkField() ).toBeNull();
-
-		await act( async () => {
-			fireEvent.click( copyButton() );
-		} );
-		expect( writeText ).toHaveBeenCalledWith( LINK );
-		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
-			'Summary link copied.'
-		);
-		expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+			screen.queryByText( /Choose a public page in the feed settings/ )
+		).not.toBeInTheDocument();
+		expectNoCopyControls();
 	} );
 
-	it( 'shows the full link on request for manual copying', async () => {
-		withSource( { weekly_summary_url: LINK, page_id: 7 } );
-		await renderApp();
-
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Show summary link' } )
-		);
-		expect( linkField() ).toHaveValue( LINK );
-		expect( linkField() ).toHaveAttribute( 'readonly' );
-	} );
-
-	it( 'reveals the link when copying is rejected', async () => {
-		Object.defineProperty( navigator, 'clipboard', {
-			value: { writeText: () => Promise.reject( new Error( 'Denied' ) ) },
-			configurable: true,
-		} );
-		withSource( { weekly_summary_url: LINK, page_id: 7 } );
-		await renderApp();
-
-		await act( async () => {
-			fireEvent.click( copyButton() );
-		} );
-		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
-			'Couldn’t copy the link.'
-		);
-		expect( linkField() ).toHaveValue( LINK );
-	} );
-
-	it( 'reveals the link when the clipboard is unavailable', async () => {
-		withSource( { weekly_summary_url: LINK, page_id: 7 } );
-		await renderApp();
-
-		await act( async () => {
-			fireEvent.click( copyButton() );
-		} );
-		expect( screen.getByRole( 'alert' ) ).toBeInTheDocument();
-		expect( linkField() ).toHaveValue( LINK );
-	} );
-
-	it( 'keeps copying but not opening for a disabled feed', async () => {
+	it( 'explains why a disabled feed cannot open its summary', async () => {
 		withSource( { weekly_summary_url: LINK, page_id: 7, enabled: false } );
 		await renderApp();
 
-		const open = screen.getByRole( 'button', {
-			name: 'Open weekly summary',
-		} );
-		expect( open ).toHaveAttribute( 'aria-disabled', 'true' );
-		expect( open ).toHaveAccessibleDescription(
-			/Enable this feed to open its weekly summary/
+		expect( openButton() ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( openButton() ).toHaveAccessibleDescription(
+			'Enable this feed to open its weekly summary.'
 		);
 		expect(
 			screen.queryByRole( 'link', { name: /Open weekly summary/ } )
 		).not.toBeInTheDocument();
-		expect( copyButton() ).toBeEnabled();
+		expectNoCopyControls();
 	} );
 
-	it( 'asks for a page instead of offering the summary', async () => {
+	it( 'keeps the section without a page and asks for one', async () => {
 		withSource( { weekly_summary_url: null, page_id: null } );
 		await renderApp();
 
 		expect(
-			screen.getByText(
-				/Choose a public page for this feed to get a weekly summary link/
-			)
+			screen.getByRole( 'heading', { name: 'Weekly summary' } )
 		).toBeInTheDocument();
+		expect( openButton() ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( openButton() ).toHaveAccessibleDescription(
+			/Choose a public page in the feed settings/
+		);
 		expect(
-			screen.queryByRole( 'button', { name: 'Copy summary link' } )
+			screen.queryByRole( 'link', { name: /Open weekly summary/ } )
 		).not.toBeInTheDocument();
+		expectNoCopyControls();
 	} );
 
-	it( 'clears copy feedback when the link changes after editing', async () => {
-		Object.defineProperty( navigator, 'clipboard', {
-			value: { writeText: () => Promise.resolve() },
-			configurable: true,
+	it( 'asks for a page first when a page-less feed is disabled', async () => {
+		withSource( {
+			weekly_summary_url: null,
+			page_id: null,
+			enabled: false,
 		} );
-		let current = { weekly_summary_url: LINK, page_id: 7 };
+		await renderApp();
+
+		expect( openButton() ).toHaveAccessibleDescription(
+			/Choose a public page in the feed settings/
+		);
+	} );
+
+	it( 'opens the new summary once a page is linked in the editor', async () => {
+		let current = { weekly_summary_url: null, page_id: null };
 		const fallback = apiFetch.getMockImplementation();
 		apiFetch.mockImplementation( ( options ) =>
 			options.path === '/fair-events/v1/sources/2'
@@ -501,13 +468,10 @@ describe( 'weekly summary (#2045, #2083)', () => {
 				: fallback( options )
 		);
 		await renderApp();
-		await act( async () => {
-			fireEvent.click( copyButton() );
-		} );
-		expect( screen.getByRole( 'status' ) ).toHaveTextContent( 'copied' );
+		expect( openButton() ).toHaveAttribute( 'aria-disabled', 'true' );
 
-		// Saving in the editor refetches the feed with a new link.
-		current = { weekly_summary_url: `${ LINK }renamed/`, page_id: 7 };
+		// Saving in the editor refetches the feed with its new link.
+		current = { weekly_summary_url: LINK, page_id: 7 };
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Edit event feed' } )
 		);
@@ -521,8 +485,10 @@ describe( 'weekly summary (#2045, #2083)', () => {
 		await waitFor( () =>
 			expect(
 				screen.getByRole( 'link', { name: /Open weekly summary/ } )
-			).toHaveAttribute( 'href', `${ LINK }renamed/` )
+			).toHaveAttribute( 'href', LINK )
 		);
-		expect( screen.getByRole( 'status' ) ).toBeEmptyDOMElement();
+		expect(
+			screen.queryByText( /Choose a public page in the feed settings/ )
+		).not.toBeInTheDocument();
 	} );
 } );

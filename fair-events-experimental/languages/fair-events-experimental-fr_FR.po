@@ -326,7 +326,7 @@ msgstr "Meta a répondu, mais n'a pas confirmé la réception de l'événement d
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:314
 #: src/Admin/meta/MetaConversions.js:570
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta a rejeté l'événement de test %s. Vérifiez la configuration et réessayez."
 
@@ -1059,6 +1059,7 @@ msgstr "Événements reçus : non signalés"
 msgid "Events received: %d"
 msgstr "Événements reçus : %d"
 
+#. translators: %s: Meta trace ID for support requests
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
 #: src/Admin/whatsapp/WhatsAppConnection.js:110
@@ -1234,7 +1235,7 @@ msgstr "Retour aux flux d’événements"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/FeedHeader.js:44
-#, js-format, php-format
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Flux d’événements : %s"
 
@@ -2665,7 +2666,7 @@ msgid "Open public page"
 msgstr "Ouvrir la page publique"
 
 #: src/Admin/source-view/FeedHeader.js:111
-#: src/Admin/source-view/WeeklySummarySection.js:73
+#: src/Admin/source-view/WeeklySummarySection.js:76
 msgid "(opens in a new tab)"
 msgstr "(s'ouvre dans un nouvel onglet)"
 
@@ -2681,44 +2682,19 @@ msgstr "Utilisez ces adresses pour vous abonner au flux dans une application de 
 msgid "Weekly summary"
 msgstr "Résumé hebdomadaire"
 
-#: src/Admin/source-view/WeeklySummarySection.js:47
-msgid "Choose a public page for this feed to get a weekly summary link. The page gives the WhatsApp message its title and link."
-msgstr "Choisissez une page publique pour ce flux afin d'obtenir un lien de résumé hebdomadaire. La page donne au message WhatsApp son titre et son lien."
-
-#: src/Admin/source-view/WeeklySummarySection.js:55
-msgid "Send this link to the person who prepares the WhatsApp post. It shows this week’s events as a message ready to copy."
-msgstr "Envoyez ce lien à la personne qui prépare la publication WhatsApp. Il affiche les événements de cette semaine sous forme de message prêt à copier."
-
-#: src/Admin/source-view/WeeklySummarySection.js:68
-#: src/Admin/source-view/WeeklySummarySection.js:87
+#: src/Admin/source-view/WeeklySummarySection.js:59
+#: src/Admin/source-view/WeeklySummarySection.js:71
 msgid "Open weekly summary"
 msgstr "Ouvrir le résumé hebdomadaire"
 
-#: src/Admin/source-view/WeeklySummarySection.js:96
-msgid "Copy summary link"
-msgstr "Copier le lien du résumé"
+#: src/Admin/source-view/WeeklySummarySection.js:23
+msgid "Choose a public page in the feed settings to open the weekly summary. The page gives the WhatsApp message its title and link."
+msgstr "Choisissez une page publique dans les réglages du flux pour ouvrir le résumé hebdomadaire. La page donne au message WhatsApp son titre et son lien."
 
-#: src/Admin/source-view/WeeklySummarySection.js:100
-msgid "Copy the weekly summary link to send to the person who posts it"
-msgstr "Copier le lien du résumé hebdomadaire à envoyer à la personne qui le publie"
+#: src/Admin/source-view/WeeklySummarySection.js:28
+msgid "Enable this feed to open its weekly summary."
+msgstr "Activez ce flux pour ouvrir son résumé hebdomadaire."
 
-#: src/Admin/source-view/WeeklySummarySection.js:113
-msgid "Enable this feed to open its weekly summary. You can copy the link now; it works once the feed is enabled."
-msgstr "Activez ce flux pour ouvrir son résumé hebdomadaire. Vous pouvez copier le lien maintenant ; il fonctionnera une fois le flux activé."
-
-#: src/Admin/source-view/WeeklySummarySection.js:121
-msgid "Summary link copied."
-msgstr "Lien du résumé copié."
-
-#: src/Admin/source-view/WeeklySummarySection.js:131
-msgid "Couldn’t copy the link. Select it in the field below and copy it by hand."
-msgstr "Impossible de copier le lien. Sélectionnez-le dans le champ ci-dessous et copiez-le manuellement."
-
-#: src/Admin/source-view/WeeklySummarySection.js:138
-msgid "Show summary link"
-msgstr "Afficher le lien du résumé"
-
-#: src/Admin/source-view/WeeklySummarySection.js:148
-msgid "Weekly summary link"
-msgstr "Lien du résumé hebdomadaire"
-
+#: src/Admin/source-view/WeeklySummarySection.js:46
+msgid "Opens this week’s events as a WhatsApp message, ready to copy and post."
+msgstr "Ouvre les événements de cette semaine sous forme de message WhatsApp, prêt à copier et à publier."
