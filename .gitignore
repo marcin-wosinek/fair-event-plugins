@@ -25,6 +25,7 @@ test-results/
 */test-results/
 */tests/screenshots/*.png
 e2e/screenshots/output/
+e2e-results/
 */.env
 
 # Local deploy config (real values); template `.deploy/example.env` is committed

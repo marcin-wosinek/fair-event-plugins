@@ -458,7 +458,28 @@ unrelated "Save"/"Open save panel" element, so
 strict-mode violation.
 
 `.github/workflows/e2e.yml` runs the same managed lifecycle on relevant pull
-requests and uploads the HTML report and traces after failures.
+requests, split into four Playwright shards:
+
+- **`E2E shard N/4`** jobs each run `npm run test:e2e:local -- --shard=N/4` on
+  their own runner, so every shard has its own wp-env containers, database,
+  uploads, captured emails and settings. Inside a shard the suite stays
+  sequential (`workers: 1`, `fullyParallel: false`), because specs share
+  WordPress state. Shards don't cancel each other when one fails.
+- **`E2E shard inventory`** lists the suite without WordPress and fails if any
+  test is missing from every shard or assigned to more than one
+  (`scripts/check-e2e-shards.mjs`).
+- **`E2E`** is the single status: it fails unless the inventory check and all
+  four shards succeeded.
+
+Every shard uploads `playwright-report-shard-N-of-4-attempt-A` (HTML report,
+traces and failure screenshots, plus `e2e-results/results.json` with stats),
+on success as well as failure. Open the failing shard's job and its artifact;
+reports are not merged.
+
+Playwright shards a sequential suite by whole spec files, in discovery order. A
+very long spec added to one shard can unbalance them; compare per-shard job
+durations, and change the shard count in both the matrix and the inventory
+check's `--total`.
 
 ## Package script conventions
 

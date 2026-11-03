@@ -25,6 +25,8 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/check-e2e-shards.mjs'
+            - 'scripts/__tests__/check-e2e-shards.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
     pull_request:
@@ -48,12 +50,64 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/check-e2e-shards.mjs'
+            - 'scripts/__tests__/check-e2e-shards.test.mjs'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
 
 jobs:
-    e2e:
+    # Lists the suite without WordPress and fails if sharding would skip or
+    # repeat a test. Keep --total in step with the e2e-shard matrix.
+    e2e-inventory:
+        name: E2E shard inventory
         runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-events-shared/node_modules
+                      ./fair-timetable/node_modules
+                  key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
+
+            - name: Test shard inventory check
+              run: node --test scripts/__tests__/check-e2e-shards.test.mjs
+
+            - name: Check every test runs in exactly one shard
+              run: node scripts/check-e2e-shards.mjs --total=4
+
+    # Each shard is a separate runner with its own wp-env containers, database,
+    # uploads, captured emails and settings. Inside a shard the suite stays
+    # sequential (workers: 1) because specs mutate shared WordPress state.
+    e2e-shard:
+        name: E2E shard ${{ matrix.shard }}/4
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2, 3, 4]
 
         steps:
             - uses: actions/checkout@v7
@@ -174,15 +228,39 @@ jobs:
               run: node --test scripts/__tests__/api-test-runner.test.mjs
 
             - name: Prepare environment and run E2E tests
-              run: npm run test:e2e:local
+              run: npm run test:e2e:local -- --shard=${{ matrix.shard }}/4
 
+            # Uploaded on success too, so every shard's timings and flaky
+            # retries stay available for comparison.
             - name: Upload Playwright report
-              if: failure()
+              if: ${{ !cancelled() }}
               uses: actions/upload-artifact@v7
               with:
-                  name: playwright-report
+                  name: playwright-report-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
                   path: |
                       playwright-report/
                       test-results/
+                      e2e-results/
                   retention-days: 7
                   if-no-files-found: ignore
+
+    # Single status for the whole suite: fails unless the inventory check and
+    # every shard succeeded (a failed, cancelled or skipped shard fails it).
+    e2e:
+        name: E2E
+        runs-on: ubuntu-latest
+        needs: [e2e-inventory, e2e-shard]
+        if: ${{ always() }}
+
+        steps:
+            - name: Check inventory and shard results
+              env:
+                  INVENTORY_RESULT: ${{ needs.e2e-inventory.result }}
+                  SHARDS_RESULT: ${{ needs.e2e-shard.result }}
+              run: |
+                  echo "Shard inventory: $INVENTORY_RESULT"
+                  echo "E2E shards: $SHARDS_RESULT"
+                  if [ "$INVENTORY_RESULT" != success ] || [ "$SHARDS_RESULT" != success ]; then
+                      echo "::error::E2E failed; open the failing 'E2E shard N/4' job and its playwright-report-shard-N-of-4 artifact."
+                      exit 1
+                  fi

@@ -25,6 +25,8 @@ export default defineConfig({
 		? [
 				['github'],
 				['html'],
+				// Per-shard stats (duration, flaky, failures) for CI benchmarks.
+				['json', { outputFile: 'e2e-results/results.json' }],
 				[
 					'@estruyf/github-actions-reporter',
 					{
@@ -33,7 +35,7 @@ export default defineConfig({
 						showAnnotations: false,
 					},
 				],
-		  ]
+			]
 		: 'html',
 
 	timeout: 60 * 1000,
