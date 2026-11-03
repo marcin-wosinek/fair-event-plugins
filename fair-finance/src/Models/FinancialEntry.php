@@ -316,15 +316,7 @@ class FinancialEntry {
 			}
 		}
 
-		if ( ! empty( $filters['event_url'] ) ) {
-			$where_clauses[] = 'event_url = %s';
-			$where_values[]  = $filters['event_url'];
-		}
-
-		if ( ! empty( $filters['event_date_id'] ) ) {
-			$where_clauses[] = 'event_date_id = %d';
-			$where_values[]  = (int) $filters['event_date_id'];
-		}
+		self::add_event_clauses( $filters, $where_clauses, $where_values );
 
 		if ( ! empty( $filters['tag'] ) ) {
 			if ( 'none' === $filters['tag'] ) {
@@ -415,6 +407,65 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Add the event filter conditions to a WHERE clause.
+	 *
+	 * A selected local event date matches entries linked to it by ID, plus
+	 * entries that carry only a URL (no event date ID) exactly equal to the
+	 * event date's resolved display URL. Entries assigned to another event
+	 * date stay excluded even when their URL matches.
+	 *
+	 * @param array $filters       Filters with optional event_url and event_date_id.
+	 * @param array $where_clauses WHERE clauses, extended in place.
+	 * @param array $where_values  Placeholder values, extended in place.
+	 * @return void
+	 */
+	private static function add_event_clauses( $filters, &$where_clauses, &$where_values ) {
+		if ( ! empty( $filters['event_url'] ) ) {
+			$where_clauses[] = 'event_url = %s';
+			$where_values[]  = $filters['event_url'];
+		}
+
+		if ( empty( $filters['event_date_id'] ) ) {
+			return;
+		}
+
+		$event_date_id = (int) $filters['event_date_id'];
+		$display_url   = self::get_event_date_display_url( $event_date_id );
+
+		if ( $display_url ) {
+			$where_clauses[] = '( event_date_id = %d OR ( event_date_id IS NULL AND event_url = %s ) )';
+			$where_values[]  = $event_date_id;
+			$where_values[]  = $display_url;
+			return;
+		}
+
+		$where_clauses[] = 'event_date_id = %d';
+		$where_values[]  = $event_date_id;
+	}
+
+	/**
+	 * Resolve a local event date's display URL.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return string|null The display URL, or null when Fair Events is
+	 *                     unavailable or the event date has no link.
+	 */
+	private static function get_event_date_display_url( $event_date_id ) {
+		if ( ! class_exists( '\\FairEvents\\Models\\EventDates' ) ) {
+			return null;
+		}
+
+		$event_date = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+		if ( ! $event_date ) {
+			return null;
+		}
+
+		$display_url = $event_date->get_display_url();
+
+		return $display_url ? (string) $display_url : null;
+	}
+
+	/**
 	 * Get totals (sum of costs, income, and balance)
 	 *
 	 * @param array $filters Same filters as get_filtered (excluding pagination).
@@ -464,15 +515,7 @@ class FinancialEntry {
 			}
 		}
 
-		if ( ! empty( $filters['event_url'] ) ) {
-			$where_clauses[] = 'event_url = %s';
-			$where_values[]  = $filters['event_url'];
-		}
-
-		if ( ! empty( $filters['event_date_id'] ) ) {
-			$where_clauses[] = 'event_date_id = %d';
-			$where_values[]  = (int) $filters['event_date_id'];
-		}
+		self::add_event_clauses( $filters, $where_clauses, $where_values );
 
 		if ( ! empty( $filters['tag'] ) ) {
 			if ( 'none' === $filters['tag'] ) {

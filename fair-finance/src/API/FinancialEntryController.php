@@ -497,7 +497,10 @@ class FinancialEntryController extends WP_REST_Controller {
 			'event_url'     => array(
 				'description'       => __( 'Filter by event URL.', 'fair-finance' ),
 				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
+				// Sanitized like stored links, so percent-encoded URLs still match exactly.
+				'sanitize_callback' => function ( $value ) {
+					return esc_url_raw( (string) $value );
+				},
 			),
 			'event_date_id' => array(
 				'description' => __( 'Filter by event date ID.', 'fair-finance' ),
