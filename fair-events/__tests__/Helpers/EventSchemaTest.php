@@ -939,4 +939,236 @@ class EventSchemaTest extends TestCase {
 			)
 		);
 	}
+
+	/**
+	 * Sale state of the selected window as the clock moves: upcoming before
+	 * its start, on sale inside it, nothing once it closes.
+	 */
+	public function test_offer_window_moves_from_upcoming_to_on_sale_to_closed() {
+		$periods = array( $this->sale_period( 1, '2026-07-01 00:00:00', '2026-08-01 00:00:00' ) );
+		$window  = function ( $now ) use ( $periods ) {
+			return EventSchema::offer_window( TicketAvailability::resolve_periods( $periods, $now, null, '2026-03-10 00:00:00' ), $now );
+		};
+
+		$upcoming = $window( '2026-06-30 23:59:59' );
+		$this->assertSame( 1, $upcoming['period']->id );
+		$this->assertFalse( $upcoming['on_sale'] );
+
+		$this->assertTrue( $window( '2026-07-01 00:00:00' )['on_sale'] );
+		$this->assertTrue( $window( '2026-07-31 23:59:59' )['on_sale'] );
+		$this->assertNull( $window( '2026-08-01 00:00:00' ) );
+	}
+
+	/**
+	 * A later period stays upcoming while an earlier one is on sale, and an
+	 * inferred first start opens the sale.
+	 */
+	public function test_offer_window_prefers_open_period_and_infers_boundaries() {
+		$periods = TicketAvailability::resolve_periods(
+			array(
+				$this->sale_period( 1, null, '2026-06-01 00:00:00' ),
+				$this->sale_period( 2, '2026-06-01 00:00:00', null ),
+			),
+			'2026-05-20 09:00:00',
+			'2026-09-01 00:00:00',
+			'2026-03-10 00:00:00'
+		);
+
+		$open = EventSchema::offer_window( $periods, '2026-05-20 09:00:00' );
+		$this->assertSame( 1, $open['period']->id );
+		$this->assertSame( '2026-03-10 00:00:00', $open['period']->sale_start );
+		$this->assertTrue( $open['on_sale'] );
+
+		$later = EventSchema::offer_window( $periods, '2026-06-02 09:00:00' );
+		$this->assertSame( 2, $later['period']->id );
+		$this->assertTrue( $later['on_sale'] );
+
+		$this->assertNull( EventSchema::offer_window( $periods, '2026-09-01 00:00:00' ) );
+	}
+
+	/**
+	 * An upcoming offer keeps its price and validFrom but states no
+	 * availability, even for a type that would be sold out.
+	 */
+	public function test_build_offers_for_types_upcoming_omits_availability() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class' ) ),
+			array( 1 => 15.0 ),
+			'2026-09-01T00:00:00+00:00',
+			'EUR',
+			'https://example.com/event',
+			null,
+			false,
+			array( 1 )
+		);
+
+		$this->assertArrayNotHasKey( 'availability', $offers[0] );
+		$this->assertSame( '15', $offers[0]['price'] );
+		$this->assertSame( '2026-09-01T00:00:00+00:00', $offers[0]['validFrom'] );
+	}
+
+	/**
+	 * On sale, purchasable types are InStock and exhausted ones SoldOut.
+	 */
+	public function test_build_offers_for_types_on_sale_reports_stock() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Single class' ), $this->ticket_type( 2, 'Pass' ) ),
+			array(
+				1 => 15.0,
+				2 => 40.0,
+			),
+			'2026-04-01T00:00:00+00:00',
+			'EUR',
+			'https://example.com/event',
+			null,
+			true,
+			array( 2 )
+		);
+
+		$this->assertSame( 'https://schema.org/InStock', $offers[0]['availability'] );
+		$this->assertSame( 'https://schema.org/SoldOut', $offers[1]['availability'] );
+		$this->assertSame( '40', $offers[1]['price'] );
+		$this->assertSame( '2026-04-01T00:00:00+00:00', $offers[1]['validFrom'] );
+	}
+
+	/**
+	 * A sold-out type still omits when disabled or unpriced.
+	 */
+	public function test_build_offers_for_types_sold_out_keeps_omission_rules() {
+		$offers = EventSchema::build_offers_for_types(
+			array( $this->ticket_type( 1, 'Disabled', true ), $this->ticket_type( 2, 'Unpriced' ) ),
+			array( 1 => 15.0 ),
+			null,
+			'EUR',
+			'https://example.com/event',
+			null,
+			true,
+			array( 1, 2 )
+		);
+
+		$this->assertSame( array(), $offers );
+	}
+
+	/**
+	 * With places for its cheapest selection a type is on sale at that
+	 * price; once only dearer extensions have places, it is priced with
+	 * those.
+	 */
+	public function test_resolve_offer_prices_uses_available_extensions() {
+		$resolved = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 1 ), $this->extension_type( 2, 1 ) ),
+			array(
+				1 => 10.0,
+				2 => 10.0,
+			),
+			array( 5.0, 12.0 ),
+			array(
+				1 => array( 5.0, 12.0 ),
+				2 => array( 12.0 ),
+			),
+			array()
+		);
+
+		$this->assertSame(
+			array(
+				1 => 15.0,
+				2 => 22.0,
+			),
+			$resolved['prices']
+		);
+		$this->assertSame( array(), $resolved['sold_out'] );
+	}
+
+	/**
+	 * When places alone prevent the required selection, the type is sold
+	 * out at its cheapest configured selection — never zero.
+	 */
+	public function test_resolve_offer_prices_exhausted_extensions_sell_out_at_configured_price() {
+		$resolved = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 2 ) ),
+			array( 1 => 10.0 ),
+			array( 5.0, 7.0, 12.0 ),
+			array( 1 => array( 12.0 ) ),
+			array()
+		);
+
+		$this->assertSame( array( 1 => 22.0 ), $resolved['prices'] );
+		$this->assertSame( array( 1 ), $resolved['sold_out'] );
+	}
+
+	/**
+	 * A requirement the configured extensions cannot meet omits the offer,
+	 * with or without places.
+	 */
+	public function test_resolve_offer_prices_invalid_configuration_omits_offer() {
+		$resolved = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 2 ), $this->extension_type( 2, 2, 1 ) ),
+			array(
+				1 => 10.0,
+				2 => 10.0,
+			),
+			array( 5.0 ),
+			array(
+				1 => array(),
+				2 => array(),
+			),
+			array( 1 )
+		);
+
+		$this->assertSame( array(), $resolved['prices'] );
+		$this->assertSame( array(), $resolved['sold_out'] );
+	}
+
+	/**
+	 * A type sold out by event or ticket-type places keeps its base price,
+	 * plus its cheapest configured selection when extensions are required.
+	 */
+	public function test_resolve_offer_prices_type_sold_out_keeps_configured_price() {
+		$resolved = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 0 ), $this->extension_type( 2, 1 ) ),
+			array(
+				1 => 10.0,
+				2 => 10.0,
+			),
+			array( 5.0, 12.0 ),
+			array( 2 => array( 12.0 ) ),
+			array( 1, 2 )
+		);
+
+		$this->assertSame(
+			array(
+				1 => 10.0,
+				2 => 15.0,
+			),
+			$resolved['prices']
+		);
+		$this->assertSame( array( 1, 2 ), $resolved['sold_out'] );
+	}
+
+	/**
+	 * An upcoming window counts no places: configured prices apply and
+	 * nothing is sold out. Negative extensions and the zero floor still
+	 * apply to a sold-out price.
+	 */
+	public function test_resolve_offer_prices_upcoming_and_floor() {
+		$upcoming = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 1 ) ),
+			array( 1 => 10.0 ),
+			array( 5.0 ),
+			array(),
+			array()
+		);
+		$this->assertSame( array( 1 => 15.0 ), $upcoming['prices'] );
+		$this->assertSame( array(), $upcoming['sold_out'] );
+
+		$floored = EventSchema::resolve_offer_prices(
+			array( $this->extension_type( 1, 1, 2 ) ),
+			array( 1 => 10.0 ),
+			array( -8.0, -5.0 ),
+			array( 1 => array() ),
+			array()
+		);
+		$this->assertSame( array( 1 => 0.0 ), $floored['prices'] );
+		$this->assertSame( array( 1 ), $floored['sold_out'] );
+	}
 }
