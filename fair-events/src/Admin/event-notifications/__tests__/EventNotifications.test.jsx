@@ -2769,3 +2769,238 @@ describe( 'TelegramMessage', () => {
 		expect( within( message ).getAllByRole( 'link' ) ).toHaveLength( 1 );
 	} );
 } );
+
+describe( 'Duplicating a notification', () => {
+	const DUPLICATE = `${ PATH }/configurations/telegram/duplicate`;
+
+	function copy( overrides ) {
+		return {
+			...configuration( 'telegram', { enabled: false } ),
+			id: 'copy-id',
+			name: 'Copy of Telegram',
+			...overrides,
+		};
+	}
+
+	function rowOf( name ) {
+		return screen
+			.getAllByRole( 'row' )
+			.find( ( row ) => within( row ).queryByRole( 'link', { name } ) );
+	}
+
+	it( 'adds a paused copy once, however often it is clicked, and opens it', async () => {
+		const request = deferred();
+		const original = { telegram: { enabled: true } };
+		let current = payload( original );
+		await renderPage(
+			current,
+			{
+				[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+				[ `POST ${ DUPLICATE }` ]: () => request.promise,
+			},
+			null
+		);
+
+		const row = within( rowOf( 'Telegram' ) );
+		fireEvent.click( row.getByRole( 'button', { name: 'Duplicate' } ) );
+		const pending = row.getByRole( 'button', { name: 'Duplicating…' } );
+		// Stays focusable while pending, but cannot be used.
+		expect( pending ).toHaveAttribute( 'aria-disabled', 'true' );
+		fireEvent.click( pending );
+		expect( calls( 'POST', DUPLICATE ) ).toHaveLength( 1 );
+		expect( calls( 'POST', DUPLICATE )[ 0 ][ 0 ] ).not.toHaveProperty(
+			'data'
+		);
+
+		current = payload( original, [ copy() ] );
+		await act( async () => request.resolve( copy() ) );
+
+		expect(
+			await screen.findByText(
+				'“Copy of Telegram” was added as a copy of the saved settings. It is paused and has no history: check it, turn it on and save it when it is ready.'
+			)
+		).toBeInTheDocument();
+		const named = within( section( 'Copy of Telegram' ) );
+		expect( named.getByLabelText( 'Send at' ) ).toHaveValue( '10:30' );
+		expect(
+			named.getByLabelText( 'Post the weekly summary to Telegram' )
+		).not.toBeChecked();
+		expect( currentSearch() ).toMatchObject( {
+			configuration: 'copy-id',
+		} );
+
+		// The original stays on, next to its copy.
+		fireEvent.click(
+			screen.getByRole( 'link', { name: '← All notifications' } )
+		);
+		await screen.findByRole( 'table' );
+		expect(
+			within( rowOf( 'Telegram' ) ).getByText( 'On' )
+		).toBeInTheDocument();
+		expect(
+			within( rowOf( 'Copy of Telegram' ) ).getByText( 'Paused' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a failed copy in its row and lets it be retried', async () => {
+		let attempts = 0;
+		await renderPage(
+			payload(),
+			{
+				[ `POST ${ DUPLICATE }` ]: () => {
+					attempts++;
+					return 1 === attempts
+						? Promise.reject( {
+								code: 'configuration_not_duplicated',
+								message:
+									'The notification could not be duplicated. Please try again.',
+							} )
+						: Promise.resolve( copy() );
+				},
+			},
+			null
+		);
+
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		);
+		expect(
+			await within( rowOf( 'Telegram' ) ).findByText(
+				'The notification could not be duplicated. Please try again.'
+			)
+		).toBeInTheDocument();
+		expect( screen.getByRole( 'table' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		);
+		expect(
+			await screen.findByRole( 'heading', {
+				name: /^Copy of Telegram/,
+			} )
+		).toBeInTheDocument();
+		expect( attempts ).toBe( 2 );
+	} );
+
+	it( 'falls back to a general message when the failure has none', async () => {
+		await renderPage(
+			payload(),
+			{ [ `POST ${ DUPLICATE }` ]: () => Promise.reject( {} ) },
+			null
+		);
+
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		);
+
+		expect(
+			await screen.findByText(
+				'Failed to duplicate the notification. Please try again.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'explains why a notification of an unavailable kind cannot be duplicated', async () => {
+		const message =
+			'The weekly email is paused because Fair Audience is not active.';
+		await renderPage(
+			payload( {
+				bulk_email: { state: 'inactive', state_message: message },
+			} ),
+			{},
+			null
+		);
+
+		const row = within( rowOf( 'Bulk email' ) );
+		const button = row.getByRole( 'button', { name: 'Duplicate' } );
+		expect( button ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( button ).toHaveAccessibleDescription( message );
+		expect(
+			row.getByText( 'Cannot be duplicated now, see its status.' )
+		).toBeInTheDocument();
+		fireEvent.click( button );
+		expect(
+			calls( 'POST', `${ PATH }/configurations/bulk_email/duplicate` )
+		).toHaveLength( 0 );
+		expect(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		).toBeEnabled();
+	} );
+
+	it( 'copies the saved settings and keeps the original’s unsaved draft', async () => {
+		await renderPage( payload(), {
+			[ `POST ${ DUPLICATE }` ]: () => Promise.resolve( copy() ),
+		} );
+
+		fireEvent.change(
+			within( section( 'Telegram' ) ).getByLabelText( 'Send at' ),
+			{ target: { value: '12:00' } }
+		);
+		fireEvent.click(
+			screen.getByRole( 'link', { name: '← All notifications' } )
+		);
+		await screen.findByRole( 'table' );
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		);
+
+		const named = within(
+			( await screen.findByRole( 'heading', {
+				name: /^Copy of Telegram/,
+			} ) ) && section( 'Copy of Telegram' )
+		);
+		expect( named.getByLabelText( 'Send at' ) ).toHaveValue( '10:30' );
+		const original = await openNotification( 'Telegram' );
+		expect( original.getByLabelText( 'Send at' ) ).toHaveValue( '12:00' );
+	} );
+
+	it( 'keeps the copy when a read issued before it answers later', async () => {
+		const read = deferred();
+		let reads = 0;
+		await renderPage(
+			payload(),
+			{
+				[ `GET ${ PATH }` ]: () => {
+					reads++;
+					if ( 1 === reads ) {
+						return Promise.resolve( payload() );
+					}
+					return 2 === reads
+						? read.promise
+						: Promise.resolve( payload( {}, [ copy() ] ) );
+				},
+				[ `POST ${ DUPLICATE }` ]: () => Promise.resolve( copy() ),
+			},
+			null
+		);
+
+		// Coming back to the tab issues a read that is still pending.
+		await returnToPage();
+		fireEvent.click(
+			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
+				name: 'Duplicate',
+			} )
+		);
+		await screen.findByRole( 'heading', { name: /^Copy of Telegram/ } );
+		await act( async () => read.resolve( payload() ) );
+		expect(
+			screen.getByRole( 'heading', { name: /^Copy of Telegram/ } )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'link', { name: '← All notifications' } )
+		);
+		await screen.findByRole( 'table' );
+		expect( rowOf( 'Copy of Telegram' ) ).toBeDefined();
+	} );
+} );

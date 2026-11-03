@@ -186,6 +186,29 @@ export default function EventNotifications( { sourcesUrl } ) {
 		},
 		[ onSaved, navigate ]
 	);
+	// A copy is made of the saved settings, so drafts are left untouched.
+	const onDuplicated = useCallback(
+		( configuration ) => {
+			onSaved( configuration.id, configuration );
+			const reached = navigate( {
+				view: 'configuration',
+				configuration: configuration.id,
+				tab: 'editor',
+			} );
+			setFlash( {
+				location: reached,
+				message: sprintf(
+					/* translators: %s: name of the copy */
+					__(
+						'“%s” was added as a copy of the saved settings. It is paused and has no history: check it, turn it on and save it when it is ready.',
+						'fair-events'
+					),
+					configuration.name || TYPE_LABELS[ configuration.type ]
+				),
+			} );
+		},
+		[ onSaved, navigate ]
+	);
 
 	const noFeed = data && 0 === data.sources.length && (
 		<Notice status="warning" isDismissible={ false }>
@@ -271,6 +294,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 					dirty={ dirty }
 					location={ location }
 					navigate={ navigate }
+					onDuplicated={ onDuplicated }
 				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
 				<p className="description">

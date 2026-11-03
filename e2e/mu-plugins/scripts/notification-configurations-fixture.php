@@ -16,7 +16,8 @@
  * administration offers no deletion yet. `state` reports a configuration's
  * queued sends, next send, history and last sent week. `run` executes an
  * individual email configuration's cron callback for the current send week,
- * exactly as WP-Cron would.
+ * exactly as WP-Cron would. `state` also reports the stored settings, which
+ * the routes return with defaults filled in.
  *
  * `seed-feeds` creates two enabled event feeds, North and South, each with
  * an individual email that sends its events (#2084), and reports the feeds
@@ -139,6 +140,7 @@ if ( 'reset' === $fixture_action ) {
 	IndividualEmailDispatcher::handle( BulkEmailDispatcher::iso_week( BulkEmailDispatcher::now() ), $fixture_ids[0] ?? '' );
 	$out = array( 'ran' => $fixture_ids[0] ?? '' );
 } elseif ( 'state' === $fixture_action ) {
+	global $wpdb;
 	$fixture_id     = $fixture_ids[0] ?? '';
 	$fixture_record = Configurations::get( $fixture_id );
 	if ( ! $fixture_record ) {
@@ -158,6 +160,9 @@ if ( 'reset' === $fixture_action ) {
 		'nextRun'      => get_option( Configurations::option( $fixture_id, 'next_run' ), null ),
 		'runs'         => array_values( (array) get_option( Configurations::option( $fixture_id, 'runs' ), array() ) ),
 		'lastSentWeek' => BulkEmailDispatcher::last_sent_week( $fixture_id ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test inspection.
+		'deliveries'   => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE config_id = %s', DeliveryLog::table_name(), $fixture_id ) ),
+		'settings'     => (object) $fixture_record['settings'],
 	);
 } else {
 	WP_CLI::error( 'Expected reset <type>..., remove <id>..., state <id>, run <id>, seed-feeds <suffix> or remove-feeds <source-id>....' );

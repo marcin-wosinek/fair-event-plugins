@@ -7,6 +7,7 @@ import { Notice, SelectControl, TextControl } from '@wordpress/components';
 /**
  * Internal dependencies
  */
+import DuplicateAction from './DuplicateAction.js';
 import Pagination from './Pagination.js';
 import { tokenStatus } from './TelegramChannel.js';
 import {
@@ -175,7 +176,8 @@ function emptyMessage( { total, inFeed, feedName, search } ) {
  * Every notification in a searchable list of pages, which can be narrowed
  * to one event feed. Each row links to its editor and its own history, and
  * shows whether it is on, where it sends, its next send and its latest send
- * or test. On narrow screens each row stacks into labeled lines.
+ * or test. Each row can also be duplicated into a paused copy. On narrow
+ * screens each row stacks into labeled lines.
  *
  * Membership follows saved settings: a draft that changes a notification's
  * feed moves it only once it is saved.
@@ -186,6 +188,7 @@ function emptyMessage( { total, inFeed, feedName, search } ) {
  * @param {Array}    props.dirty          IDs of notifications with unsaved changes.
  * @param {Object}   props.location       View state.
  * @param {Function} props.navigate       Changes the view.
+ * @param {Function} props.onDuplicated   Receives the payload of a duplicated notification's copy.
  * @return {JSX.Element} The list.
  */
 export default function NotificationList( {
@@ -194,6 +197,7 @@ export default function NotificationList( {
 	dirty,
 	location,
 	navigate,
+	onDuplicated,
 } ) {
 	const { feed } = location;
 	const selectedFeed = feed
@@ -314,6 +318,7 @@ export default function NotificationList( {
 						{ shown.map( ( configuration ) => {
 							const problem = integrationProblem( configuration );
 							const latest = configuration.latest_execution;
+							const problemId = `fair-events-notification-problem-${ configuration.id }`;
 							return (
 								<tr key={ configuration.id }>
 									<td
@@ -355,7 +360,7 @@ export default function NotificationList( {
 												) }
 											</span>
 										) }
-										<span className="fair-events-notifications__row-actions">
+										<div className="fair-events-notifications__row-actions">
 											<a
 												{ ...open(
 													configuration,
@@ -375,7 +380,14 @@ export default function NotificationList( {
 													'fair-events'
 												) }
 											</a>
-										</span>
+											<DuplicateAction
+												configuration={ configuration }
+												reasonId={
+													problem ? problemId : null
+												}
+												onDuplicated={ onDuplicated }
+											/>
+										</div>
 									</td>
 									<td
 										data-label={ __(
@@ -408,7 +420,10 @@ export default function NotificationList( {
 											/>
 										) }
 										{ problem && (
-											<span className="fair-events-notifications__problem">
+											<span
+												id={ problemId }
+												className="fair-events-notifications__problem"
+											>
 												{ problem }
 											</span>
 										) }
