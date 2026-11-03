@@ -67,7 +67,7 @@ const savedSchedule = {
 const entry = ( name ) =>
 	screen.getByRole( 'heading', { name } ).closest( '.components-card' );
 
-// Error notices are also announced in a live region, so match the visible
+// Notices are also announced in a live region, so match the visible
 // notice only.
 const noticeText = ( text ) =>
 	screen.findByText( text, { selector: '.components-notice__content' } );
@@ -228,13 +228,7 @@ describe( 'EventSchedule', () => {
 			screen.getByRole( 'button', { name: 'Save schedule' } )
 		);
 
-		expect(
-			// The Notice also speaks its text into an a11y live region after
-			// a delay, so scope the query to the visible notice.
-			await screen.findByText( 'Schedule saved.', {
-				selector: '.components-notice__content',
-			} )
-		).toBeInTheDocument();
+		expect( await noticeText( 'Schedule saved.' ) ).toBeInTheDocument();
 		expect( lastSave() ).toMatchObject( {
 			path: '/fair-events/v1/event-dates/7/schedule',
 			data: {
