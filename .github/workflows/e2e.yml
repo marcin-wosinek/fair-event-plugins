@@ -134,7 +134,7 @@ jobs:
               run: |
                   status=0
                   echo '### Chromium system libraries' >> "$GITHUB_STEP_SUMMARY"
-                  for bin in $(find ~/.cache/ms-playwright -type f \( -name chrome -o -name headless_shell \) -path '*linux*'); do
+                  for bin in $(find ~/.cache/ms-playwright -type f \( -name chrome -o -name headless_shell -o -name chrome-headless-shell \) -path '*linux*'); do
                       missing=$(ldd "$bin" | grep 'not found' || true)
                       [ -n "$missing" ] && status=1
                       echo "- \`${bin#"$HOME"/}\`: ${missing:-all libraries found}" | tee -a "$GITHUB_STEP_SUMMARY"
