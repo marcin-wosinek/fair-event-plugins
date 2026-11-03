@@ -5,10 +5,17 @@ import { test, expect } from '@playwright/test';
  * lookup → review → save. The lookup response is routed to a fixed payload
  * so the test doesn't depend on a live Oona page; the server-side extraction
  * is covered by the PHPUnit and API specs.
+ *
+ * The Meetup cases (#2124) cover a response from an older vendored shared
+ * parser (combined fields only), and a real lookup of the captured Meetup
+ * page served by e2e/mu-plugins/lib/meetup-page-http-double.php.
  */
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASSWORD || 'password';
+
+const MEETUP_URL =
+	'https://www.meetup.com/fair-e2e-meetup/events/317238692/?eventOrigin=group_calendar';
 
 const OONA_URL =
 	'https://oona.es/evento/emuna-yoga-expande-martes-y-jueves-4d79e226';
@@ -49,7 +56,9 @@ async function routeLookup( page, payload ) {
 }
 
 async function lookUp( page, url ) {
-	await page.getByRole( 'button', { name: 'Add event' } ).click();
+	// The toolbar button; once the grid renders, each day also has an
+	// icon-only "Add event" button.
+	await page.getByRole( 'button', { name: 'Add event' } ).first().click();
 	const modal = page.getByRole( 'dialog', { name: 'Quick Add Event' } );
 	await expect( modal ).toBeVisible();
 
@@ -197,6 +206,141 @@ test.describe( 'Calendar Quick Add — From URL lookup', () => {
 					method: 'DELETE',
 				} ).catch( () => {} );
 			}
+		}
+	} );
+
+	async function saveAndRead( page, modal, title ) {
+		await modal.getByRole( 'button', { name: 'Create Event' } ).click();
+		await expect(
+			page
+				.locator( '#fair-events-calendar-root' )
+				.getByText( `Event "${ title }" created.` )
+		).toBeVisible();
+		const eventDateId = await createdEventDateId( page );
+		const eventDate = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ eventDateId }`,
+		} );
+		return { eventDateId, eventDate };
+	}
+
+	async function deleteEventDate( page, eventDateId ) {
+		if ( eventDateId ) {
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+		}
+	}
+
+	test( 'prefills a Meetup event from an older parser’s combined fields', async ( {
+		page,
+	} ) => {
+		const title = `E2E Meetup Legacy ${ Date.now() }`;
+		// What a sibling plugin's pre-0.2.9 shared parser returns.
+		await routeLookup( page, {
+			title,
+			start_datetime: '2026-11-02 10:00:00',
+			end_datetime: '2026-11-02 11:00:00',
+			all_day: false,
+			location: 'Puente del Mar',
+			source: 'schema',
+			found: [ 'title', 'start', 'end', 'location' ],
+		} );
+
+		let eventDateId;
+		try {
+			const modal = await lookUp( page, MEETUP_URL );
+
+			await expect( modal.getByLabel( 'Title' ) ).toHaveValue( title );
+			await expect( modal.getByLabel( 'Start date' ) ).toHaveValue(
+				'2026-11-02'
+			);
+			await expect(
+				modal.getByLabel( 'Start time (optional)' )
+			).toHaveValue( '10:00' );
+			await expect( modal.getByLabel( 'End date' ) ).toHaveValue(
+				'2026-11-02'
+			);
+			await expect(
+				modal.getByLabel( 'End time (optional)' )
+			).toHaveValue( '11:00' );
+			await expect(
+				modal.getByText( 'From the page: Puente del Mar' )
+			).toBeVisible();
+
+			let eventDate;
+			( { eventDateId, eventDate } = await saveAndRead(
+				page,
+				modal,
+				title
+			) );
+			expect( eventDate ).toMatchObject( {
+				start_date: '2026-11-02',
+				start_time: '10:00:00',
+				end_date: '2026-11-02',
+				end_time: '11:00:00',
+				link_type: 'external',
+				external_url: MEETUP_URL,
+			} );
+		} finally {
+			await deleteEventDate( page, eventDateId );
+		}
+	} );
+
+	test( 'prefills the captured Meetup page through the real lookup', async ( {
+		page,
+	} ) => {
+		// The server converts to the site timezone, so the expected values
+		// come from the same endpoint the modal calls.
+		const expected = await apiFetch( page, {
+			path: '/fair-events/v1/lookup-url',
+			method: 'POST',
+			data: { url: MEETUP_URL },
+		} );
+		expect( expected.found ).toEqual( [
+			'title',
+			'start',
+			'end',
+			'location',
+		] );
+
+		let eventDateId;
+		try {
+			const modal = await lookUp( page, MEETUP_URL );
+
+			await expect( modal.getByLabel( 'Title' ) ).toHaveValue(
+				'Morning yoga in the park 🌞🌿'
+			);
+			await expect( modal.getByLabel( 'Start date' ) ).toHaveValue(
+				expected.start_date
+			);
+			await expect(
+				modal.getByLabel( 'Start time (optional)' )
+			).toHaveValue( expected.start_time.slice( 0, 5 ) );
+			await expect( modal.getByLabel( 'End date' ) ).toHaveValue(
+				expected.end_date
+			);
+			await expect(
+				modal.getByLabel( 'End time (optional)' )
+			).toHaveValue( expected.end_time.slice( 0, 5 ) );
+
+			const title = `E2E Meetup Lookup ${ Date.now() }`;
+			await modal.getByLabel( 'Title' ).fill( title );
+			let eventDate;
+			( { eventDateId, eventDate } = await saveAndRead(
+				page,
+				modal,
+				title
+			) );
+			expect( eventDate ).toMatchObject( {
+				start_date: expected.start_date,
+				start_time: expected.start_time,
+				end_time: expected.end_time,
+				link_type: 'external',
+				external_url: MEETUP_URL,
+			} );
+		} finally {
+			await deleteEventDate( page, eventDateId );
 		}
 	} );
 } );

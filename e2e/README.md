@@ -31,6 +31,7 @@ e2e/
     ├── fair-e2e-notification-startup.php # opt-in stand-ins that flag notification startup running too early (#2059)
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
+    │   ├── meetup-page-http-double.php   # captured Meetup event pages for URL lookups
     │   └── mollie-http-double.php        # fake Mollie HTTP transport
     └── scripts/                          # WP-CLI eval-file helpers (NOT auto-loaded — subdir)
         ├── seed-event.php

@@ -3,6 +3,8 @@
  *
  * Verifies POST /fair-events/v1/lookup-url rejects non-http(s) URLs,
  * enforces the permission check, and fetches metadata from a live page.
+ * The Meetup cases fetch captured pages served by the test-only
+ * e2e/mu-plugins/lib/meetup-page-http-double.php, so they never reach Meetup.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -63,5 +65,67 @@ test.describe( 'EventLookupController', () => {
 
 		expect( body.title ).toBeTruthy();
 		expect( body ).toHaveProperty( 'found' );
+	} );
+
+	const meetupUrl = ( group ) =>
+		`https://www.meetup.com/${ group }/events/317238692/?eventOrigin=group_calendar`;
+
+	// November 2, 2026, 10:00–11:00 in Europe/Madrid, as the tests site's
+	// local time (the controller converts to the site timezone).
+	const expectReportedTiming = ( body ) => {
+		expect( body ).toMatchObject( {
+			title: 'Morning yoga in the park 🌞🌿',
+			all_day: false,
+			location: 'Puente del Mar',
+			found: [ 'title', 'start', 'end', 'location' ],
+		} );
+		expect( body.start_date ).toMatch( /^\d{4}-\d{2}-\d{2}$/ );
+		expect( body.start_time ).toMatch( /^\d{2}:\d{2}:\d{2}$/ );
+		// One hour long, and the combined fields agree with the split ones.
+		expect( body.start_datetime ).toBe(
+			`${ body.start_date } ${ body.start_time }`
+		);
+		expect( body.end_datetime ).toBe(
+			`${ body.end_date } ${ body.end_time }`
+		);
+		expect(
+			Date.parse( body.end_datetime.replace( ' ', 'T' ) + 'Z' ) -
+				Date.parse( body.start_datetime.replace( ' ', 'T' ) + 'Z' )
+		).toBe( 60 * 60 * 1000 );
+	};
+
+	test( 'extracts a Meetup event from its SportsEvent schema (#2124)', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/lookup-url', {
+			headers: authHeader,
+			data: { url: meetupUrl( 'fair-e2e-meetup' ) },
+		} );
+
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.source ).toBe( 'schema' );
+		expectReportedTiming( body );
+	} );
+
+	test( 'falls back to the matching embedded Meetup event (#2124)', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/lookup-url', {
+			headers: authHeader,
+			data: { url: meetupUrl( 'fair-e2e-meetup-embedded' ) },
+		} );
+
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.source ).toBe( 'meetup' );
+		expectReportedTiming( body );
+	} );
+
+	test( 'reports a Meetup page that refuses access (#2124)', async () => {
+		const res = await api.post( '/wp-json/fair-events/v1/lookup-url', {
+			headers: authHeader,
+			data: { url: meetupUrl( 'fair-e2e-meetup-blocked' ) },
+		} );
+
+		expect( res.status() ).toBe( 502 );
+		const body = await res.json();
+		expect( body.code ).toBe( 'rest_lookup_bad_status' );
 	} );
 } );
