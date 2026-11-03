@@ -145,7 +145,25 @@
 .fair-events-notifications__row-actions {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 4px 12px;
+}
+
+.fair-events-notifications__row-actions .components-button.is-link {
+	text-decoration: none;
+}
+
+.fair-events-notifications__duplicate-note,
+.fair-events-notifications__duplicate-error {
+	flex-basis: 100%;
+}
+
+.fair-events-notifications__duplicate-note {
+	color: #50575e;
+}
+
+.fair-events-notifications__duplicate-error.components-notice {
+	margin: 4px 0 0;
 }
 
 .fair-events-notifications__primary .fair-events-notifications__unsaved {

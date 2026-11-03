@@ -323,6 +323,16 @@ class EventNotificationsController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			$configuration . '/duplicate',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'duplicate_configuration' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			$configuration . '/preview',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -467,6 +477,82 @@ class EventNotificationsController extends WP_REST_Controller {
 		$response = rest_ensure_response( $this->summarized( array( $record ) )[0] );
 		$response->set_status( 201 );
 		return $response;
+	}
+
+	/**
+	 * Add a paused copy of a configuration's saved settings under a new ID.
+	 *
+	 * Only the settings are copied: the copy has no next send, run history,
+	 * delivery records or last sent week, and nothing is scheduled or sent.
+	 * Credentials stay in Connectors and are never part of the settings.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function duplicate_configuration( $request ) {
+		$source = $this->find_configuration( $request );
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+		$unavailable = $this->type_unavailable( $source['type'] );
+		if ( $unavailable ) {
+			return $unavailable;
+		}
+
+		switch ( $source['type'] ) {
+			case Configurations::TELEGRAM:
+				$settings                                     = TelegramSettings::get( $source['id'] );
+				$settings['providers']['telegram']['enabled'] = false;
+				break;
+			case Configurations::BULK_EMAIL:
+				// `stored()` keeps an unsaved subject empty, so the copy keeps the dynamic default.
+				$settings = BulkEmailSettings::stored( $source['id'] );
+				break;
+			default:
+				$settings = IndividualEmailSettings::stored( $source['id'] );
+		}
+		$settings['enabled'] = false;
+
+		$record = Configurations::create( $source['type'], $this->copy_name( $source ), $settings );
+		if ( ! $record ) {
+			return new WP_Error(
+				'configuration_not_duplicated',
+				__( 'The notification could not be duplicated. Please try again.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+		if ( Configurations::BULK_EMAIL === $record['type'] ) {
+			BulkEmailSettings::refresh_summary();
+		}
+
+		$response = rest_ensure_response( $this->summarized( array( $record ) )[0] );
+		$response->set_status( 201 );
+		return $response;
+	}
+
+	/**
+	 * A copy's name: "Copy of" the source's name, or of its type's name.
+	 *
+	 * The source part is shortened so the whole name fits and keeps its marker.
+	 *
+	 * @param array $source Source configuration record.
+	 * @return string
+	 */
+	private function copy_name( array $source ) {
+		$labels = array(
+			Configurations::TELEGRAM         => __( 'Telegram', 'fair-events' ),
+			Configurations::BULK_EMAIL       => __( 'Bulk email', 'fair-events' ),
+			Configurations::INDIVIDUAL_EMAIL => __( 'Individual email', 'fair-events' ),
+		);
+		$name   = '' === $source['name'] ? $labels[ $source['type'] ] : $source['name'];
+		/* translators: %s: name of the notification that was copied */
+		$pattern = __( 'Copy of %s', 'fair-events' );
+		$room    = max( 1, Configurations::MAX_NAME_LENGTH - mb_strlen( sprintf( $pattern, '' ) ) );
+		if ( mb_strlen( $name ) > $room ) {
+			$name = rtrim( mb_substr( $name, 0, $room - 1 ) ) . '…';
+		}
+
+		return sprintf( $pattern, $name );
 	}
 
 	/**

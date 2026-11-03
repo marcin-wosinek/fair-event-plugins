@@ -21,6 +21,10 @@
  * server-generated ID, its own settings, schedule and history; the type
  * routes above manage only the configuration each type started with.
  *
+ * Duplication (#2130): a paused copy of a configuration's saved settings
+ * under a new ID and name, without its schedule, history or deliveries,
+ * that sends nothing and changes independently of its original.
+ *
  * The retired routes of the former owners
  * (Fair Events Experimental, Fair Audience) must be gone.
  *
@@ -36,6 +40,8 @@
  * when the site already has a token.
  */
 
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { test, expect, request } from '@playwright/test';
 import { runScript } from '../../../../e2e/support/wp-cli.js';
 
@@ -1487,6 +1493,330 @@ test.describe( 'EventNotificationsController', () => {
 				savedSecond.next_run.timestamp
 			);
 			expect( ( await read( first.id ) ).next_run ).toBeNull();
+		} );
+
+		test.describe( 'duplicate', () => {
+			const duplicate = ( id, headers = adminHeaders ) =>
+				api.post( `${ CONFIGURATIONS }/${ id }/duplicate`, {
+					headers,
+				} );
+
+			const duplicated = async ( id ) => {
+				const res = await duplicate( id );
+				expect( res.status() ).toBe( 201 );
+				const copy = await res.json();
+				created.push( copy.id );
+				return copy;
+			};
+
+			// Not blocking: a long synchronous WP-CLI run leaves dead
+			// keep-alive sockets for the next request.
+			const wp = async ( ...args ) =>
+				(
+					await promisify( execFile )(
+						'npx',
+						[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
+						{
+							cwd: new URL( '../../../../', import.meta.url ),
+							encoding: 'utf8',
+						}
+					)
+				).stdout;
+
+			const stateOf = async ( id ) => {
+				const stdout = await wp(
+					'eval-file',
+					'wp-content/mu-plugins/scripts/notification-configurations-fixture.php',
+					'state',
+					id
+				);
+				const match = stdout.match(
+					/E2E_NOTIFICATION_CONFIGURATIONS:(\{.*\})/
+				);
+				if ( ! match ) {
+					throw new Error(
+						`Expected fixture output, got:\n${ stdout }`
+					);
+				}
+				return JSON.parse( match[ 1 ] );
+			};
+
+			const mailTo = async ( to ) =>
+				(
+					await api.get(
+						`${ MAIL_LOG }?to=${ encodeURIComponent( to ) }`,
+						{ headers: adminHeaders }
+					)
+				).json();
+
+			// Everything a copy must not inherit, as the routes report it.
+			const RUNTIME = [
+				'id',
+				'name',
+				'enabled',
+				'next_run',
+				'runs',
+				'deliveries',
+				'last_sent_week',
+				'latest_execution',
+			];
+			const settingsOf = ( payload ) =>
+				Object.fromEntries(
+					Object.entries( payload ).filter(
+						( [ field ] ) => ! RUNTIME.includes( field )
+					)
+				);
+
+			test( 'is limited to administrators and existing notifications', async () => {
+				const own = await createIndividual( 'Duplicate rights' );
+				const anon = await request.newContext( {
+					baseURL: BASE_URL,
+				} );
+				expect(
+					(
+						await anon.post(
+							`${ CONFIGURATIONS }/${ own.id }/duplicate`
+						)
+					).status()
+				).toBe( 401 );
+				await anon.dispose();
+				expect(
+					( await duplicate( own.id, subscriberHeaders ) ).status()
+				).toBe( 403 );
+
+				const missing = await duplicate(
+					'00000000-0000-4000-a000-000000000000'
+				);
+				expect( missing.status() ).toBe( 404 );
+				expect( ( await missing.json() ).code ).toBe(
+					'unknown_configuration'
+				);
+
+				// Nothing was added by a refused request.
+				const page = await (
+					await api.get( PATH, { headers: adminHeaders } )
+				).json();
+				expect(
+					page.configurations.filter(
+						( { name } ) => 'Copy of Duplicate rights' === name
+					)
+				).toHaveLength( 0 );
+			} );
+
+			test( 'copies an individual email paused, without its history, and sends nothing', async () => {
+				const source = await createIndividual( 'Team digest' );
+				let res = await update( source.id, {
+					enabled: true,
+					recipient: SHARED,
+					event_selection: '@local',
+					day_of_week: 2,
+					time_of_day: '06:45',
+					week_scope: 'next',
+					skip_empty: false,
+					subject: '',
+					intro: 'Hello team',
+					outro: 'Bye',
+				} );
+				expect( res.status() ).toBe( 200 );
+				const saved = await res.json();
+				expect( saved.next_run ).not.toBeNull();
+				// Give the original a history to leave behind.
+				expect(
+					(
+						await api.post(
+							`${ CONFIGURATIONS }/${ source.id }/test`,
+							{ headers: adminHeaders }
+						)
+					).status()
+				).toBe( 200 );
+				const original = await read( source.id );
+				expect( original.latest_execution ).not.toBeNull();
+				await api.delete( MAIL_LOG, { headers: adminHeaders } );
+
+				const copy = await duplicated( source.id );
+
+				expect( copy.id ).toMatch( /^[a-z0-9-]{36}$/ );
+				expect( copy.id ).not.toBe( source.id );
+				expect( copy ).toMatchObject( {
+					type: 'individual_email',
+					name: 'Copy of Team digest',
+					enabled: false,
+					next_run: null,
+					runs: [],
+					last_sent_week: '',
+					latest_execution: null,
+				} );
+				expect( settingsOf( copy ) ).toEqual( settingsOf( original ) );
+				expect( await mailTo( SHARED ) ).toEqual( [] );
+
+				const state = await stateOf( copy.id );
+				expect( state ).toMatchObject( {
+					queued: [],
+					nextRun: null,
+					runs: [],
+					lastSentWeek: '',
+					deliveries: 0,
+				} );
+				// An unsaved subject stays the dynamic default.
+				expect( state.settings ).toMatchObject( {
+					enabled: false,
+					subject: '',
+				} );
+				const history = await (
+					await api.get( `${ CONFIGURATIONS }/${ copy.id }/history`, {
+						headers: adminHeaders,
+					} )
+				).json();
+				expect( history ).toMatchObject( {
+					next_run: null,
+					runs: [],
+				} );
+
+				// The original is unchanged, and changes apart from its copy.
+				expect( await read( source.id ) ).toEqual( original );
+				res = await update( copy.id, {
+					time_of_day: '21:00',
+					recipient: 'copy-2130-api@example.test',
+				} );
+				expect( res.status() ).toBe( 200 );
+				expect( await read( source.id ) ).toEqual( original );
+				await update( source.id, { intro: 'Changed original' } );
+				expect( ( await read( copy.id ) ).intro ).toBe( 'Hello team' );
+			} );
+
+			test( 'copies a bulk email and a Telegram summary paused', async () => {
+				let res = await create( {
+					type: 'bulk_email',
+					name: 'Members weekly',
+				} );
+				test.skip(
+					409 === res.status(),
+					'Fair Audience does not run the bulk email here.'
+				);
+				expect( res.status() ).toBe( 201 );
+				const bulk = await res.json();
+				created.push( bulk.id );
+				res = await update( bulk.id, {
+					enabled: true,
+					source_slug: sourceSlug,
+					day_of_week: 4,
+					time_of_day: '11:10',
+					week_scope: 'next',
+					skip_empty: false,
+					subject: '',
+					intro: '<p>Hi members</p>',
+				} );
+				expect( res.status() ).toBe( 200 );
+				const bulkOriginal = await read( bulk.id );
+				expect( bulkOriginal.next_run ).not.toBeNull();
+
+				const bulkCopy = await duplicated( bulk.id );
+				expect( bulkCopy ).toMatchObject( {
+					name: 'Copy of Members weekly',
+					enabled: false,
+					next_run: null,
+					runs: [],
+					latest_execution: null,
+				} );
+				expect( settingsOf( bulkCopy ) ).toEqual(
+					settingsOf( bulkOriginal )
+				);
+				expect( await read( bulk.id ) ).toEqual( bulkOriginal );
+				const bulkState = await stateOf( bulkCopy.id );
+				expect( bulkState ).toMatchObject( {
+					queued: [],
+					nextRun: null,
+					runs: [],
+					deliveries: 0,
+				} );
+				expect( bulkState.settings ).toMatchObject( {
+					enabled: false,
+					subject: '',
+				} );
+
+				// Unnamed, so the copy is named after the kind.
+				res = await create( { type: 'telegram' } );
+				expect( res.status() ).toBe( 201 );
+				const telegram = await res.json();
+				created.push( telegram.id );
+				const page = await createPage( 'publish' );
+				res = await update( telegram.id, {
+					source_slug: sourceSlug,
+					page_id: page.id,
+					chat_ids: [ '@fair_2130_api' ],
+					time_of_day: '09:40',
+					week_scope: 'next',
+				} );
+				expect( res.status() ).toBe( 200 );
+				const telegramOriginal = await read( telegram.id );
+
+				const telegramCopy = await duplicated( telegram.id );
+				expect( telegramCopy ).toMatchObject( {
+					name: 'Copy of Telegram',
+					enabled: false,
+					chat_ids: [ '@fair_2130_api' ],
+					next_run: null,
+					runs: [],
+					deliveries: [],
+				} );
+				expect( settingsOf( telegramCopy ) ).toEqual(
+					settingsOf( telegramOriginal )
+				);
+				expect(
+					( await stateOf( telegramCopy.id ) ).settings
+				).toMatchObject( {
+					enabled: false,
+					providers: { telegram: { enabled: false } },
+				} );
+			} );
+
+			test( 'refuses a kind this plugin cannot manage now', async () => {
+				const res = await create( {
+					type: 'bulk_email',
+					name: 'Unavailable copy',
+				} );
+				test.skip(
+					409 === res.status(),
+					'Fair Audience does not run the bulk email here.'
+				);
+				const bulk = await res.json();
+				created.push( bulk.id );
+
+				await wp( 'plugin', 'deactivate', 'fair-audience' );
+				try {
+					const refused = await duplicate( bulk.id );
+					expect( refused.status() ).toBe( 409 );
+					expect( ( await refused.json() ).code ).toBe(
+						'fair_audience_inactive'
+					);
+				} finally {
+					await wp( 'plugin', 'activate', 'fair-audience' );
+				}
+
+				const page = await (
+					await api.get( PATH, { headers: adminHeaders } )
+				).json();
+				expect(
+					page.configurations.filter(
+						( { name } ) => 'Copy of Unavailable copy' === name
+					)
+				).toHaveLength( 0 );
+			} );
+
+			test( 'keeps the name within its length and the copy marker', async () => {
+				const long = 'N'.repeat( 100 );
+				const source = await createIndividual( long );
+				expect( source.name ).toBe( long );
+
+				const copy = await duplicated( source.id );
+				expect( copy.name.length ).toBeLessThanOrEqual( 100 );
+				expect( copy.name ).toMatch( /^Copy of N+…$/ );
+
+				// Copies of one notification may share a name.
+				const again = await duplicated( source.id );
+				expect( again.id ).not.toBe( copy.id );
+				expect( again.name ).toBe( copy.name );
+			} );
 		} );
 
 		test( 'preview, test and history use their own settings', async () => {

@@ -16,6 +16,10 @@
  * the URL through a search, a reload and the browser's Back and Forward
  * buttons, can be cleared, and a feed that does not exist lists nothing.
  *
+ * A notification can be duplicated from the list with the keyboard (#2130):
+ * the copy opens paused with the saved settings, sends nothing, and is saved
+ * apart from its original.
+ *
  * Individual email needs no other plugin or event feed, so the spec does not
  * depend on Fair Audience or Telegram. No mail leaves the host:
  * fair-e2e-support.php captures wp_mail().
@@ -384,5 +388,80 @@ test.describe('Notification list by event feed', () => {
 		await view(page).getByRole('button', { name: 'Show all feeds' }).click();
 		await expect(page).not.toHaveURL(/feed=/);
 		await expect(listRow(page, northDigest)).toHaveCount(1);
+	});
+});
+
+test.describe('Duplicating a notification', () => {
+	const ids = [];
+
+	test.beforeAll(() => {
+		resetCapturedMail();
+	});
+
+	test.afterAll(() => {
+		if (ids.length) {
+			fixture(`remove ${ids.join(' ')}`);
+		}
+		resetCapturedMail();
+	});
+
+	test('opens a paused copy of the saved settings that is saved on its own', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		const name = `Duplicated digest ${Date.now()}`;
+		const copyName = `Copy of ${name}`;
+
+		const originalId = await addIndividualEmail(page, name);
+		ids.push(originalId);
+		await turnOn(view(page), '06:30');
+		resetCapturedMail();
+
+		await page.getByRole('link', { name: '← All notifications' }).click();
+		const duplicate = listRow(page, name).getByRole('button', {
+			name: 'Duplicate',
+		});
+		await duplicate.focus();
+		await page.keyboard.press('Enter');
+
+		await expect(
+			page
+				.getByText(`“${copyName}” was added as a copy`, {
+					exact: false,
+				})
+				.first()
+		).toBeVisible();
+		await expect(page).toHaveURL(/configuration=[a-z0-9-]{36}/);
+		const copyId = new URL(page.url()).searchParams.get('configuration');
+		ids.push(copyId);
+		expect(copyId).not.toBe(originalId);
+
+		const copy = view(page);
+		await expect(copy.getByLabel('Name')).toHaveValue(copyName);
+		await expect(copy.getByLabel('Send to')).toHaveValue(RECIPIENT);
+		await expect(copy.getByLabel('Send at')).toHaveValue('06:30');
+		await expect(
+			copy.getByLabel('Email the weekly summary to this address')
+		).not.toBeChecked();
+		expect(capturedMail()).toEqual([]);
+
+		// Saved apart from the original.
+		await copy.getByLabel('Send at').fill('20:15');
+		await copy
+			.getByRole('button', { name: 'Save individual email settings' })
+			.click();
+		await expect(
+			copy.getByText('Individual email settings saved.').first()
+		).toBeVisible();
+
+		await page.getByRole('link', { name: '← All notifications' }).click();
+		await expect(listRow(page, name).getByText('On')).toBeVisible();
+		await expect(listRow(page, copyName).getByText('Paused')).toBeVisible();
+		const original = await open(page, name);
+		await expect(original.getByLabel('Send at')).toHaveValue('06:30');
+		await expect(
+			original.getByLabel('Email the weekly summary to this address')
+		).toBeChecked();
+		expect(capturedMail()).toEqual([]);
 	});
 });
