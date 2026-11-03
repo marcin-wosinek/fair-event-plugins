@@ -326,7 +326,7 @@ msgstr "Meta odpowiedziała, ale nie potwierdziła odebrania zdarzenia testowego
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:314
 #: src/Admin/meta/MetaConversions.js:570
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta odrzuciła zdarzenie testowe %s. Sprawdź konfigurację i spróbuj ponownie."
 
@@ -1066,6 +1066,7 @@ msgstr "Odebrane zdarzenia: nie zgłoszono"
 msgid "Events received: %d"
 msgstr "Odebrane zdarzenia: %d"
 
+#. translators: %s: Meta trace ID for support requests
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
 #: src/Admin/whatsapp/WhatsAppConnection.js:110
@@ -1241,7 +1242,7 @@ msgstr "Wróć do kanałów wydarzeń"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/FeedHeader.js:44
-#, js-format, php-format
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Kanał wydarzeń: %s"
 
@@ -2680,7 +2681,7 @@ msgid "Open public page"
 msgstr "Otwórz stronę publiczną"
 
 #: src/Admin/source-view/FeedHeader.js:111
-#: src/Admin/source-view/WeeklySummarySection.js:73
+#: src/Admin/source-view/WeeklySummarySection.js:76
 msgid "(opens in a new tab)"
 msgstr "(otwiera się w nowej karcie)"
 
@@ -2696,44 +2697,19 @@ msgstr "Użyj tych adresów, aby zasubskrybować kanał w aplikacji kalendarza l
 msgid "Weekly summary"
 msgstr "Cotygodniowe podsumowanie"
 
-#: src/Admin/source-view/WeeklySummarySection.js:47
-msgid "Choose a public page for this feed to get a weekly summary link. The page gives the WhatsApp message its title and link."
-msgstr "Wybierz stronę publiczną dla tego kanału, aby uzyskać link do cotygodniowego podsumowania. Strona nadaje wiadomości WhatsApp jej tytuł i link."
-
-#: src/Admin/source-view/WeeklySummarySection.js:55
-msgid "Send this link to the person who prepares the WhatsApp post. It shows this week’s events as a message ready to copy."
-msgstr "Wyślij ten link osobie, która przygotowuje post na WhatsAppie. Pokazuje on wydarzenia z tego tygodnia jako wiadomość gotową do skopiowania."
-
-#: src/Admin/source-view/WeeklySummarySection.js:68
-#: src/Admin/source-view/WeeklySummarySection.js:87
+#: src/Admin/source-view/WeeklySummarySection.js:59
+#: src/Admin/source-view/WeeklySummarySection.js:71
 msgid "Open weekly summary"
 msgstr "Otwórz cotygodniowe podsumowanie"
 
-#: src/Admin/source-view/WeeklySummarySection.js:96
-msgid "Copy summary link"
-msgstr "Skopiuj link podsumowania"
+#: src/Admin/source-view/WeeklySummarySection.js:23
+msgid "Choose a public page in the feed settings to open the weekly summary. The page gives the WhatsApp message its title and link."
+msgstr "Wybierz stronę publiczną w ustawieniach kanału, aby otworzyć cotygodniowe podsumowanie. Strona nadaje wiadomości WhatsApp jej tytuł i link."
 
-#: src/Admin/source-view/WeeklySummarySection.js:100
-msgid "Copy the weekly summary link to send to the person who posts it"
-msgstr "Skopiuj link cotygodniowego podsumowania, aby wysłać go osobie, która go publikuje"
+#: src/Admin/source-view/WeeklySummarySection.js:28
+msgid "Enable this feed to open its weekly summary."
+msgstr "Włącz ten kanał, aby otworzyć jego cotygodniowe podsumowanie."
 
-#: src/Admin/source-view/WeeklySummarySection.js:113
-msgid "Enable this feed to open its weekly summary. You can copy the link now; it works once the feed is enabled."
-msgstr "Włącz ten kanał, aby otworzyć jego cotygodniowe podsumowanie. Możesz skopiować link teraz; będzie działać, gdy kanał zostanie włączony."
-
-#: src/Admin/source-view/WeeklySummarySection.js:121
-msgid "Summary link copied."
-msgstr "Link podsumowania skopiowany."
-
-#: src/Admin/source-view/WeeklySummarySection.js:131
-msgid "Couldn’t copy the link. Select it in the field below and copy it by hand."
-msgstr "Nie można było skopiować linku. Wybierz go w polu poniżej i skopiuj ręcznie."
-
-#: src/Admin/source-view/WeeklySummarySection.js:138
-msgid "Show summary link"
-msgstr "Pokaż link podsumowania"
-
-#: src/Admin/source-view/WeeklySummarySection.js:148
-msgid "Weekly summary link"
-msgstr "Link cotygodniowego podsumowania"
-
+#: src/Admin/source-view/WeeklySummarySection.js:46
+msgid "Opens this week’s events as a WhatsApp message, ready to copy and post."
+msgstr "Otwiera wydarzenia z tego tygodnia jako wiadomość WhatsApp gotową do skopiowania i opublikowania."

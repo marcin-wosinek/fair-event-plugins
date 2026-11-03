@@ -91,18 +91,8 @@
 	color: #50575e;
 }
 
-.fair-events-feed-section__note,
-.fair-events-feed-section__error {
+.fair-events-feed-section__note {
 	margin: 8px 0 0;
-}
-
-.fair-events-feed-section__error {
-	color: #b32d2e;
-}
-
-.fair-events-feed-copy-status:not(:empty) {
-	margin-top: 8px;
-	color: #155724;
 }
 
 .fair-events-disclosure {

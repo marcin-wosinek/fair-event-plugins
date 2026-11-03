@@ -326,7 +326,7 @@ msgstr "Meta hat geantwortet, aber den Empfang des Test-Ereignisses %s nicht bes
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:314
 #: src/Admin/meta/MetaConversions.js:570
-#, php-format, js-format
+#, php-format,js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta hat das %s-Test-Event abgelehnt. Überprüfen Sie die Konfiguration und versuchen Sie es erneut."
 
@@ -1059,6 +1059,7 @@ msgstr "Empfangene Ereignisse: nicht gemeldet"
 msgid "Events received: %d"
 msgstr "Empfangene Ereignisse: %d"
 
+#. translators: %s: Meta trace ID for support requests
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
 #: src/Admin/whatsapp/WhatsAppConnection.js:110
@@ -1234,7 +1235,7 @@ msgstr "Zurück zu den Veranstaltungs-Feeds"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/FeedHeader.js:44
-#, js-format, php-format
+#, js-format,php-format
 msgid "Event feed: %s"
 msgstr "Veranstaltungs-Feed: %s"
 
@@ -2665,7 +2666,7 @@ msgid "Open public page"
 msgstr "Öffentliche Seite öffnen"
 
 #: src/Admin/source-view/FeedHeader.js:111
-#: src/Admin/source-view/WeeklySummarySection.js:73
+#: src/Admin/source-view/WeeklySummarySection.js:76
 msgid "(opens in a new tab)"
 msgstr "(öffnet in einem neuen Tab)"
 
@@ -2681,44 +2682,19 @@ msgstr "Verwenden Sie diese Adressen, um den Feed in einer Kalender-App zu abonn
 msgid "Weekly summary"
 msgstr "Wöchentliche Zusammenfassung"
 
-#: src/Admin/source-view/WeeklySummarySection.js:47
-msgid "Choose a public page for this feed to get a weekly summary link. The page gives the WhatsApp message its title and link."
-msgstr "Wählen Sie eine öffentliche Seite für diesen Feed aus, um einen Link zur wöchentlichen Zusammenfassung zu erhalten. Die Seite gibt der WhatsApp-Nachricht ihren Titel und Link."
-
-#: src/Admin/source-view/WeeklySummarySection.js:55
-msgid "Send this link to the person who prepares the WhatsApp post. It shows this week’s events as a message ready to copy."
-msgstr "Senden Sie diesen Link an die Person, die den WhatsApp-Beitrag vorbereitet. Er zeigt die Ereignisse dieser Woche als eine zum Kopieren bereite Nachricht."
-
-#: src/Admin/source-view/WeeklySummarySection.js:68
-#: src/Admin/source-view/WeeklySummarySection.js:87
+#: src/Admin/source-view/WeeklySummarySection.js:59
+#: src/Admin/source-view/WeeklySummarySection.js:71
 msgid "Open weekly summary"
 msgstr "Wöchentliche Zusammenfassung öffnen"
 
-#: src/Admin/source-view/WeeklySummarySection.js:96
-msgid "Copy summary link"
-msgstr "Zusammenfassungs-Link kopieren"
+#: src/Admin/source-view/WeeklySummarySection.js:23
+msgid "Choose a public page in the feed settings to open the weekly summary. The page gives the WhatsApp message its title and link."
+msgstr "Wählen Sie in den Feed-Einstellungen eine öffentliche Seite aus, um die wöchentliche Zusammenfassung zu öffnen. Die Seite gibt der WhatsApp-Nachricht ihren Titel und Link."
 
-#: src/Admin/source-view/WeeklySummarySection.js:100
-msgid "Copy the weekly summary link to send to the person who posts it"
-msgstr "Kopieren Sie den Link zur wöchentlichen Zusammenfassung, um ihn an die Person zu senden, die ihn veröffentlicht"
+#: src/Admin/source-view/WeeklySummarySection.js:28
+msgid "Enable this feed to open its weekly summary."
+msgstr "Aktivieren Sie diesen Feed, um seine wöchentliche Zusammenfassung zu öffnen."
 
-#: src/Admin/source-view/WeeklySummarySection.js:113
-msgid "Enable this feed to open its weekly summary. You can copy the link now; it works once the feed is enabled."
-msgstr "Aktivieren Sie diesen Feed, um seine wöchentliche Zusammenfassung zu öffnen. Sie können den Link jetzt kopieren; er funktioniert, sobald der Feed aktiviert ist."
-
-#: src/Admin/source-view/WeeklySummarySection.js:121
-msgid "Summary link copied."
-msgstr "Zusammenfassungs-Link kopiert."
-
-#: src/Admin/source-view/WeeklySummarySection.js:131
-msgid "Couldn’t copy the link. Select it in the field below and copy it by hand."
-msgstr "Der Link konnte nicht kopiert werden. Wählen Sie ihn im Feld unten aus und kopieren Sie ihn manuell."
-
-#: src/Admin/source-view/WeeklySummarySection.js:138
-msgid "Show summary link"
-msgstr "Zusammenfassungs-Link anzeigen"
-
-#: src/Admin/source-view/WeeklySummarySection.js:148
-msgid "Weekly summary link"
-msgstr "Link zur wöchentlichen Zusammenfassung"
-
+#: src/Admin/source-view/WeeklySummarySection.js:46
+msgid "Opens this week’s events as a WhatsApp message, ready to copy and post."
+msgstr "Öffnet die Ereignisse dieser Woche als WhatsApp-Nachricht, bereit zum Kopieren und Posten."
