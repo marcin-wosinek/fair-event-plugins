@@ -11,7 +11,7 @@
  * Text Domain: fair-audience
  * Domain Path: /languages
  * Requires at least: 7.0
- * Requires PHP: 8.2
+ * Requires PHP: 8.3
  *
  * @package FairAudience
  */

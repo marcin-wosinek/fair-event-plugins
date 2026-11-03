@@ -106,7 +106,7 @@ namespace casing to directory casing exactly, and watch file/folder name case.
 
 ### PHP / WordPress — see [PHP_PATTERNS.md](./PHP_PATTERNS.md)
 
-- Shipped code runs on each plugin's declared PHP minimum (7.4, 8.0 or 8.2;
+- Shipped code runs on each plugin's declared PHP minimum (7.4, 8.0, 8.2 or 8.3;
   see [PHP_PATTERNS.md § Supported PHP Versions](./PHP_PATTERNS.md#supported-php-versions)),
   even though PHPUnit runs on 8.4+. PSR-4 autoloading, namespace
   `FairPaymentsConnector` (and per-plugin equivalents).
