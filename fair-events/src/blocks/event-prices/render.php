@@ -120,23 +120,21 @@ if ( ! function_exists( 'fair_events_format_sale_period_range' ) ) {
 
 if ( ! function_exists( 'fair_events_format_price_entry' ) ) {
 	/**
-	 * Localized label for a ticket entry's state.
+	 * Localized label for a ticket entry's price: the formatted amount, or
+	 * "Free" for an explicit zero price.
 	 *
 	 * @param array  $entry    Schedule entry (see EventPricingSchedule::build_schedule()).
 	 * @param string $currency Site currency code.
 	 * @return string Escaped-safe label text (caller still escapes on output).
 	 */
 	function fair_events_format_price_entry( $entry, $currency ) {
-		switch ( $entry['state'] ) {
-			case 'priced':
-				return class_exists( \FairEventsShared\Money::class )
-					? \FairEventsShared\Money::format_inline( $entry['price'], $currency )
-					: (string) $entry['price'];
-			case 'free':
-				return __( 'Free', 'fair-events' );
-			default:
-				return __( 'Not available', 'fair-events' );
+		if ( 'free' === $entry['state'] ) {
+			return __( 'Free', 'fair-events' );
 		}
+
+		return class_exists( \FairEventsShared\Money::class )
+			? \FairEventsShared\Money::format_inline( $entry['price'], $currency )
+			: (string) $entry['price'];
 	}
 }
 ?>

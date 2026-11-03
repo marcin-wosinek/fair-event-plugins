@@ -48,15 +48,6 @@
 	white-space: nowrap;
 }
 
-.wp-block-fair-events-event-prices__row--unavailable
-	.wp-block-fair-events-event-prices__name,
-.wp-block-fair-events-event-prices__row--unavailable
-	.wp-block-fair-events-event-prices__price {
-	color: #888;
-	font-style: italic;
-	font-weight: normal;
-}
-
 .wp-block-fair-events-event-prices__row--free
 	.wp-block-fair-events-event-prices__price {
 	font-weight: 600;

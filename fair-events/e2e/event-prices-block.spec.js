@@ -6,7 +6,8 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
 /**
  * E2E coverage for #1624: the Event Prices block must render the event's
  * public pricing schedule straight from the Prices tab configuration —
- * enabled ticket types, sale periods, and free/priced/unavailable states —
+ * enabled ticket types, sale periods, and free/priced prices, listing in each
+ * period only the ticket types available in it (#2165) —
  * and must follow the visitor's selected recurring-event occurrence.
  * Each block instance can also hide ticket types and sale periods from its
  * own display without affecting other blocks or signup.
@@ -208,7 +209,7 @@ test.describe( 'Event Prices block', () => {
 		}
 	} );
 
-	test( 'multiple sale periods show each period, with free, priced, and not-available states', async ( {
+	test( 'multiple sale periods show each period with only its available tickets, free and priced', async ( {
 		browser,
 	} ) => {
 		const resources = await setUpPricesPage(
@@ -274,12 +275,21 @@ test.describe( 'Event Prices block', () => {
 			const regularPeriod = periods.filter( {
 				hasText: 'Regular window',
 			} );
-			// Early bird has no price row for the regular period — shown as
-			// not available, never guessed as free or omitted silently.
-			await expect( regularPeriod ).toContainText( 'Early bird' );
-			await expect( regularPeriod ).toContainText( 'Not available' );
-			await expect( regularPeriod ).toContainText( 'RSVP' );
-			await expect( regularPeriod ).toContainText( 'Free' );
+			// Early bird has no price row for the regular period — left out
+			// of that card, never guessed as free or labelled unavailable.
+			await expect(
+				regularPeriod.locator(
+					'.wp-block-fair-events-event-prices__name'
+				)
+			).toHaveText( [ 'RSVP' ] );
+			await expect(
+				regularPeriod.locator(
+					'.wp-block-fair-events-event-prices__price'
+				)
+			).toHaveText( [ 'Free' ] );
+			await expect(
+				resources.visitorPage.locator( 'body' )
+			).not.toContainText( 'Not available' );
 		} finally {
 			await cleanUp( adminPage, resources );
 		}
@@ -637,9 +647,11 @@ test.describe( 'Event Prices block', () => {
 				} );
 				await expect( blocks.nth( 0 ) ).toContainText( '90' );
 				await expect( blocks.nth( 0 ) ).toContainText( '120' );
-				// The second block keeps showing everything.
+				// The second block keeps showing everything available —
+				// Workshop only has no Early Bird price, so it isn't listed
+				// there.
 				expect( await shapeOf( blocks.nth( 1 ) ) ).toEqual( {
-					'Early Bird': [ 'Full Pass', 'Day Pass', 'Workshop only' ],
+					'Early Bird': [ 'Full Pass', 'Day Pass' ],
 					Regular: [ 'Full Pass', 'Day Pass', 'Workshop only' ],
 					'Last minute': [ 'Full Pass', 'Day Pass', 'Workshop only' ],
 				} );

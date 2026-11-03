@@ -31,5 +31,9 @@ block is placed on; IDs of another event have no effect.
 
 ## Rendering
 
-Renders `.wp-block-fair-events-event-prices` with a table of ticket types and
-their prices per sale period, highlighting the period currently on sale.
+Renders `.wp-block-fair-events-event-prices` with one card per sale period,
+past and upcoming alike, each showing the period's dates and the ticket types
+available in it with their prices. A ticket type appears in a period only when
+it has a price there (an explicit zero price shows as "Free"); ticket types
+without a price in a period are left out of that card, and a period with no
+available ticket types is not shown.
