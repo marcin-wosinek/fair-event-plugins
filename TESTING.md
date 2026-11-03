@@ -335,13 +335,13 @@ on, or wait for, a local full-suite run.
 Full suites run with a single worker and take a while. Approximate figures
 (October 2026):
 
-| Suite                                       | Tests | Local                                     | CI job  |
-| ------------------------------------------- | ----- | ----------------------------------------- | ------- |
-| Root E2E (`test:e2e:local`)                 | 305   | ~30–45 min\*, plus ~5 min build and start | ~31 min |
-| fair-events API (`--workspace=fair-events`) | 439   | ~12 min with `--reuse` (measured)         | —       |
-| All API workspaces (`test:api:local`)       | ~850  | ~25 min\*                                 | ~18 min |
+| Suite                                       | Tests | Local                                     | CI job             |
+| ------------------------------------------- | ----- | ----------------------------------------- | ------------------ |
+| Root E2E (`test:e2e:local`)                 | 446   | ~40–55 min\*, plus ~5 min build and start | ~21 min (4 shards) |
+| fair-events API (`--workspace=fair-events`) | 439   | ~12 min with `--reuse` (measured)         | —                  |
+| All API workspaces (`test:api:local`)       | ~850  | ~25 min\*                                 | ~18 min            |
 
-\* Estimated from CI, where the root E2E test phase alone takes 27.6 min.
+\* Estimated from CI, where the unsharded root E2E test phase took 34–53 min.
 Local API runs have been about 1.5× slower per test than CI. Workspace E2E
 suites (fair-events has 114 tests) don't run in CI. Run them with
 `--workspace` and name specs by path (see
@@ -480,6 +480,22 @@ Playwright shards a sequential suite by whole spec files, in discovery order. A
 very long spec added to one shard can unbalance them; compare per-shard job
 durations, and change the shard count in both the matrix and the inventory
 check's `--total`.
+
+Measured in November 2026 (#2102; five runs each, 446 tests, PHP 8.5,
+Playwright 1.64.1, `ubuntu-latest` = ubuntu-26.04, all caches warm):
+
+| Median (range)           | Sequential (1 job) | 4 shards         |
+| ------------------------ | ------------------ | ---------------- |
+| Workflow elapsed         | 42.8 (34.6–54.3)   | 20.9 (20.3–22.5) |
+| Test step, slowest job   | 41.7 (33.7–53.1)   | 19.7 (18.9–21.4) |
+| Runner minutes, all jobs | 43 (35–55)         | 65 (58–69)       |
+
+Sharding halves the wait for a result and costs about 50% more runner
+minutes: each shard repeats ~3 minutes of setup (caches, Docker images,
+wp-env start). The shards are uneven: shard 4 takes 16–18 min of test time,
+shard 2 only 4–6 min, so the slowest shard sets the elapsed time. Flaky
+retries come from the block-docs examples spec (`wp.apiFetch is not a
+function` right after login), which also flakes in sequential runs.
 
 ## Package script conventions
 
