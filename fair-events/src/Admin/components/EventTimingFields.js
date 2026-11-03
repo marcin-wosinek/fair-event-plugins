@@ -10,8 +10,9 @@
  *
  * Moving the start date moves a valid end date by the same number of
  * calendar days, keeping the entered times and the all-day choice (#2089).
+ * Moving the start time of a fully timed event moves its end by the same
+ * wall-clock amount, so 10:00–12:00 moved to 14:00 becomes 14:00–16:00.
  *
-
  * @package FairEvents
  */
 
@@ -74,6 +75,77 @@ export function getStartDateChange( value, nextStartDate ) {
 	if ( shiftedEnd ) {
 		patch.endDate = shiftedEnd;
 	}
+	return patch;
+}
+
+const MINUTES_PER_DAY = 24 * 60;
+
+// A wall-clock `HH:MM` time, as a time input reports it.
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/**
+ * Minutes after midnight of a wall-clock time, or null when it is not `HH:MM`.
+ *
+ * @param {string} time Time string.
+ * @return {number|null} Minutes since midnight, or null.
+ */
+const toMinutes = ( time ) => {
+	const match = TIME_PATTERN.exec( time );
+	return match ? Number( match[ 1 ] ) * 60 + Number( match[ 2 ] ) : null;
+};
+
+/**
+ * The fields to change when the start time moves: the new start time, plus
+ * the end date and time moved by the same wall-clock amount when the event
+ * has a valid, fully specified timed range. The length is counted in
+ * site-local minutes on the calendar, never through the browser timezone,
+ * so a daylight-saving change can't stretch or shrink it. Clearing or
+ * first supplying a start time, a missing end time, an all-day event and
+ * an empty, impossible or reversed range only change the start time; the
+ * form's validation reports a bad range rather than this repairing it.
+ *
+ * @param {Object} value         Current fields (see EventTimingFields `value`).
+ * @param {string} nextStartTime New start time (`HH:MM`, '' when cleared).
+ * @return {Object} Patch for `onChange`, e.g. `{ startTime, endDate, endTime }`.
+ */
+export function getStartTimeChange( value, nextStartTime ) {
+	const patch = { startTime: nextStartTime };
+	const { allDay, startDate, startTime, endDate, endTime } = value;
+
+	const nextStart = toMinutes( nextStartTime );
+	const start = toMinutes( startTime );
+	const end = toMinutes( endTime );
+	const days = differenceInCalendarDays( endDate, startDate );
+	if (
+		allDay ||
+		nextStart === null ||
+		start === null ||
+		end === null ||
+		days === null ||
+		! isValidDateString( startDate ) ||
+		! isValidDateString( endDate )
+	) {
+		return patch;
+	}
+
+	const length = days * MINUTES_PER_DAY + end - start;
+	if ( length < 0 ) {
+		return patch;
+	}
+
+	const nextEnd = nextStart + length;
+	const shiftedEndDate = addCalendarDays(
+		startDate,
+		Math.floor( nextEnd / MINUTES_PER_DAY )
+	);
+	if ( ! shiftedEndDate ) {
+		return patch;
+	}
+	const endMinutes = nextEnd % MINUTES_PER_DAY;
+	patch.endDate = shiftedEndDate;
+	patch.endTime = `${ pad( Math.floor( endMinutes / 60 ) ) }:${ pad(
+		endMinutes % 60
+	) }`;
 	return patch;
 }
 
@@ -196,7 +268,13 @@ export default function EventTimingFields( {
 			label={ label }
 			type="time"
 			value={ value[ field ] }
-			onChange={ ( next ) => onChange( { [ field ]: next } ) }
+			onChange={ ( next ) =>
+				onChange(
+					field === 'startTime'
+						? getStartTimeChange( value, next )
+						: { [ field ]: next }
+				)
+			}
 			disabled={ disabled }
 		/>
 	);
