@@ -51,6 +51,53 @@ const getEventUrlLabel = ( url ) => {
 	}
 };
 
+const EVENT_DATE_PREFIX = 'id:';
+const EVENT_URL_PREFIX = 'url:';
+
+/**
+ * Build the Link filter options: local event dates first, then URL-only
+ * links. A URL that exactly matches a local event date's display URL is
+ * merged into that event date's option, so administrators see one option
+ * per event regardless of how each entry stores its link.
+ *
+ * @param {Array<{label: string, id: string, url: string|null}>} eventDates Local event dates.
+ * @param {string[]}                                             eventUrls  Distinct entry URLs.
+ * @return {Array<{label: string, value: string}>} Select options.
+ */
+const buildEventFilterOptions = ( eventDates, eventUrls ) => {
+	const localUrls = new Set(
+		eventDates.map( ( eventDate ) => eventDate.url ).filter( Boolean )
+	);
+	return [
+		...eventDates.map( ( eventDate ) => ( {
+			label: eventDate.label,
+			value: EVENT_DATE_PREFIX + eventDate.id,
+		} ) ),
+		...eventUrls
+			.filter( ( url ) => ! localUrls.has( url ) )
+			.map( ( url ) => ( {
+				label: getEventUrlLabel( url ),
+				value: EVENT_URL_PREFIX + url,
+			} ) ),
+	];
+};
+
+/**
+ * The Link filter value for the current filters.
+ *
+ * @param {Object} filters Active filters.
+ * @return {string} Select value, empty when no link is selected.
+ */
+const getEventFilterValue = ( filters ) => {
+	if ( filters.event_date_id ) {
+		return EVENT_DATE_PREFIX + filters.event_date_id;
+	}
+	if ( filters.event_url ) {
+		return EVENT_URL_PREFIX + filters.event_url;
+	}
+	return '';
+};
+
 const DEFAULT_FILTERS = {
 	date_from: '',
 	date_to: '',
@@ -153,7 +200,7 @@ const EntriesApp = () => {
 	const [ entries, setEntries ] = useState( [] );
 	const [ budgets, setBudgets ] = useState( [] );
 	const [ eventUrls, setEventUrls ] = useState( [] );
-	const [ eventDateOptions, setEventDateOptions ] = useState( [] );
+	const [ eventDates, setEventDates ] = useState( [] );
 	const [ tags, setTags ] = useState( [] );
 	const [ tagTotals, setTagTotals ] = useState( {} );
 	// Entries awaiting a budget, across the whole ledger. Independent of the
@@ -300,7 +347,7 @@ const EntriesApp = () => {
 				path: '/fair-finance/v1/financial-entries/event-date-ids',
 			} );
 			if ( ids.length === 0 ) {
-				setEventDateOptions( [] );
+				setEventDates( [] );
 				return;
 			}
 			try {
@@ -309,20 +356,22 @@ const EntriesApp = () => {
 						','
 					) }`,
 				} );
-				setEventDateOptions(
+				setEventDates(
 					events.map( ( event ) => ( {
 						label:
 							event.title ||
 							getEventUrlLabel( event.display_url || '' ),
-						value: event.id.toString(),
+						id: event.id.toString(),
+						url: event.display_url || null,
 					} ) )
 				);
 			} catch {
 				// fair-events not available, fall back to bare IDs.
-				setEventDateOptions(
+				setEventDates(
 					ids.map( ( id ) => ( {
 						label: `#${ id }`,
-						value: id.toString(),
+						id: id.toString(),
+						url: null,
 					} ) )
 				);
 			}
@@ -703,6 +752,27 @@ const EntriesApp = () => {
 		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 	};
 
+	/**
+	 * Select a link: a local event date or a URL-only link. The other link
+	 * field is cleared so list, totals and export all use one selection.
+	 *
+	 * @param {string} value Prefixed option value, or empty to clear.
+	 */
+	const handleEventFilterChange = ( value ) => {
+		const eventDateId = value.startsWith( EVENT_DATE_PREFIX )
+			? value.slice( EVENT_DATE_PREFIX.length )
+			: '';
+		const eventUrl = value.startsWith( EVENT_URL_PREFIX )
+			? value.slice( EVENT_URL_PREFIX.length )
+			: '';
+		setFilters( ( prev ) => ( {
+			...prev,
+			event_date_id: eventDateId,
+			event_url: eventUrl,
+		} ) );
+		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
+	};
+
 	const handlePageChange = ( newPage ) => {
 		setPagination( ( prev ) => ( { ...prev, page: newPage } ) );
 	};
@@ -771,13 +841,7 @@ const EntriesApp = () => {
 		{ label: __( 'Unbudgeted', 'fair-finance' ), value: 'none' },
 	];
 
-	const eventUrlOptions = [
-		{ label: __( 'All Links', 'fair-finance' ), value: '' },
-		...eventUrls.map( ( url ) => ( {
-			label: getEventUrlLabel( url ),
-			value: url,
-		} ) ),
-	];
+	const eventFilterOptions = buildEventFilterOptions( eventDates, eventUrls );
 
 	return (
 		<div className="wrap fair-finance-entries-page">
@@ -971,13 +1035,15 @@ const EntriesApp = () => {
 										}
 									/>
 									{ eventsEnabled &&
-										eventDateOptions.length > 0 && (
+										eventFilterOptions.length > 0 && (
 											<SelectControl
 												label={ __(
 													'Link',
 													'fair-finance'
 												) }
-												value={ filters.event_date_id }
+												value={ getEventFilterValue(
+													filters
+												) }
 												options={ [
 													{
 														label: __(
@@ -986,31 +1052,10 @@ const EntriesApp = () => {
 														),
 														value: '',
 													},
-													...eventDateOptions,
+													...eventFilterOptions,
 												] }
-												onChange={ ( value ) =>
-													handleFilterChange(
-														'event_date_id',
-														value
-													)
-												}
-											/>
-										) }
-									{ eventsEnabled &&
-										eventDateOptions.length === 0 &&
-										eventUrls.length > 0 && (
-											<SelectControl
-												label={ __(
-													'Link',
-													'fair-finance'
-												) }
-												value={ filters.event_url }
-												options={ eventUrlOptions }
-												onChange={ ( value ) =>
-													handleFilterChange(
-														'event_url',
-														value
-													)
+												onChange={
+													handleEventFilterChange
 												}
 											/>
 										) }
