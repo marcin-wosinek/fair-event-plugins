@@ -134,7 +134,7 @@ Three version ranges apply, and they are deliberately different:
 
 | What                                                                                           | PHP                                      | Checked by                                                      |
 | ---------------------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
-| Plugin runtime (shipped)                                                                       | 7.4, 8.0 or 8.2 minimum per plugin       | `php-runtime` CI jobs                                           |
+| Plugin runtime (shipped)                                                                       | 7.4, 8.0, 8.2 or 8.3 minimum per plugin  | `php-runtime` CI jobs                                           |
 | PHPUnit suites and tooling                                                                     | 8.4 and 8.5 (PHPUnit 13 requires 8.4.1+) | `php-tests` CI jobs                                             |
 | WordPress environments (default CI jobs, wp-env dev and tests sites, Docker Compose dev stack) | 8.5                                      | `.wp-env.json`, `compose.yml`, checked by `validate:php-compat` |
 
@@ -163,7 +163,7 @@ because the tests happen to run there.
 CI covers the runtime minimums in three ways, since PHPUnit cannot run on
 them:
 
-- `php-runtime` (PHP 7.4, 8.0, 8.2): for each workspace at that minimum,
+- `php-runtime` (PHP 7.4, 8.0, 8.2, 8.3): for each workspace at that minimum,
   `node scripts/php-compat.mjs runtime --minimum=<version>` installs the
   locked production dependencies, runs `composer check-platform-reqs
 --no-dev`, lints every shipped PHP file with `php -l`, and loads

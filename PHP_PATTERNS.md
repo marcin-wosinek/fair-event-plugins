@@ -9,11 +9,12 @@ production dependencies run on. These minimums only change deliberately,
 with a changeset that tells site owners to upgrade first. Upgrading test
 tooling is never a reason to raise one.
 
-| Workspace                                             | Minimum PHP |
-| ----------------------------------------------------- | ----------: |
-| fair-events, fair-events-shared (`php/` package)      |         7.4 |
-| fair-audience, fair-payments-connector, fair-platform |         8.2 |
-| Every other plugin                                    |         8.0 |
+| Workspace                                        | Minimum PHP |
+| ------------------------------------------------ | ----------: |
+| fair-events, fair-events-shared (`php/` package) |         7.4 |
+| fair-payments-connector, fair-platform           |         8.2 |
+| fair-audience                                    |         8.3 |
+| Every other plugin                               |         8.0 |
 
 The minimum is written down in four places, and they must agree:
 
@@ -37,7 +38,8 @@ only that package to a release that still supports the minimum (`composer
 update vendor/package` keeps the existing constraint). Never install with
 `--ignore-platform-req(s)` to get past the conflict. If no compatible release
 exists, raising that plugin's minimum is a separate, documented decision.
-fair-audience moved from PHP 8.0 to 8.2 this way: PhpSpreadsheet 5 needs 8.2.
+fair-audience moved from PHP 8.0 to 8.2 this way, because PhpSpreadsheet 5
+needs 8.2, and then to 8.3, because ZipStream-PHP 3.2 needs 8.3.
 
 CI checks every minimum on the real runtime (see
 [TESTING.md § PHP versions](./TESTING.md#php-versions)). Contributors still

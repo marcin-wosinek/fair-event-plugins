@@ -41,7 +41,7 @@ export const POLICY = {
 		plugin: false,
 	},
 	'fair-platform': { minimum: '8.2' },
-	'fair-audience': { minimum: '8.2' },
+	'fair-audience': { minimum: '8.3' },
 	'fair-timetable': { minimum: '8.0' },
 	'fair-finance': { minimum: '8.0' },
 	'fair-events-experimental': { minimum: '8.0' },
