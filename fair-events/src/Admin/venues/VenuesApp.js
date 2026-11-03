@@ -12,6 +12,7 @@ import {
 	Spinner,
 	Notice,
 	Modal,
+	SearchControl,
 	TextControl,
 	TextareaControl,
 	__experimentalVStack as VStack,
@@ -113,6 +114,41 @@ export function getCoordinateError( latitude, longitude ) {
 }
 
 /**
+ * Normalize text for search: lowercase and strip accents, so "arboles"
+ * matches "Árboles".
+ *
+ * @param {string} value Raw text.
+ * @return {string} Normalized text.
+ */
+export function normalizeSearchText( value ) {
+	return ( value || '' )
+		.normalize( 'NFD' )
+		.replace( /[\u0300-\u036f]/g, '' )
+		.toLowerCase();
+}
+
+/**
+ * Filter venues whose name or address contains the query as a partial,
+ * case- and accent-insensitive match. A blank query returns all venues.
+ * The original ordering is preserved.
+ *
+ * @param {Array}  venues Venues to filter.
+ * @param {string} query  Raw search query.
+ * @return {Array} Matching venues.
+ */
+export function filterVenues( venues, query ) {
+	const needle = normalizeSearchText( ( query || '' ).trim() );
+	if ( ! needle ) {
+		return venues;
+	}
+	return venues.filter(
+		( venue ) =>
+			normalizeSearchText( venue.name ).includes( needle ) ||
+			normalizeSearchText( venue.address ).includes( needle )
+	);
+}
+
+/**
  * @param {Object}  props                   Component props.
  * @param {boolean} [props.canDeleteVenues] Whether the current user may delete
  *                                           venues. Defaults to false so the
@@ -141,11 +177,22 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 	const [ deleteError, setDeleteError ] = useState( null );
 	const [ deleteOutcomeUnknown, setDeleteOutcomeUnknown ] = useState( false );
 	const [ selectedVenues, setSelectedVenues ] = useState( new Set() );
+	const [ searchQuery, setSearchQuery ] = useState( '' );
 	const [ isImporting, setIsImporting ] = useState( false );
 	const [ mapsPreviewUrl, setMapsPreviewUrl ] = useState( null );
 	const [ isMapsPreviewLoading, setIsMapsPreviewLoading ] = useState( false );
 	const [ mapsPreviewError, setMapsPreviewError ] = useState( null );
 	const mapsPreviewRequest = useRef( 0 );
+
+	const matchingVenues = filterVenues( venues, searchQuery );
+	// Only venues that are both visible and still loaded count as selected,
+	// so hidden or deleted venues can never be exported.
+	const selectedMatchingVenues = matchingVenues.filter( ( v ) =>
+		selectedVenues.has( v.id )
+	);
+	const allMatchingSelected =
+		matchingVenues.length > 0 &&
+		selectedMatchingVenues.length === matchingVenues.length;
 
 	const coordinateError = getCoordinateError(
 		formData.latitude,
@@ -411,25 +458,28 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 	};
 
 	const toggleAllVenues = () => {
-		if ( selectedVenues.size === venues.length ) {
+		if ( allMatchingSelected ) {
 			setSelectedVenues( new Set() );
 		} else {
-			setSelectedVenues( new Set( venues.map( ( v ) => v.id ) ) );
+			setSelectedVenues( new Set( matchingVenues.map( ( v ) => v.id ) ) );
 		}
 	};
 
+	const handleSearchChange = ( value ) => {
+		setSearchQuery( value );
+		setSelectedVenues( new Set() );
+	};
+
 	const handleExport = () => {
-		const venuesToExport = venues
-			.filter( ( v ) => selectedVenues.has( v.id ) )
-			.map( ( v ) => {
-				const exported = {};
-				VENUE_FIELDS.forEach( ( field ) => {
-					if ( v[ field ] ) {
-						exported[ field ] = v[ field ];
-					}
-				} );
-				return exported;
+		const venuesToExport = selectedMatchingVenues.map( ( v ) => {
+			const exported = {};
+			VENUE_FIELDS.forEach( ( field ) => {
+				if ( v[ field ] ) {
+					exported[ field ] = v[ field ];
+				}
 			} );
+			return exported;
+		} );
 
 		const blob = new Blob( [ JSON.stringify( venuesToExport, null, 2 ) ], {
 			type: 'application/json',
@@ -561,7 +611,7 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 				<CardHeader>
 					<h2>{ __( 'All Venues', 'fair-events' ) }</h2>
 					<HStack spacing={ 2 } expanded={ false }>
-						{ selectedVenues.size > 0 && (
+						{ selectedMatchingVenues.length > 0 && (
 							<Button
 								variant="secondary"
 								onClick={ handleExport }
@@ -618,17 +668,49 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 						) }
 
 						{ ! loading && venues.length > 0 && (
+							<SearchControl
+								__nextHasNoMarginBottom
+								label={ __( 'Search venues', 'fair-events' ) }
+								hideLabelFromVision={ false }
+								help={ __(
+									'Search by name or address',
+									'fair-events'
+								) }
+								placeholder={ __(
+									'Search venues',
+									'fair-events'
+								) }
+								value={ searchQuery }
+								onChange={ handleSearchChange }
+							/>
+						) }
+
+						{ ! loading &&
+							venues.length > 0 &&
+							matchingVenues.length === 0 && (
+								<div className="venues-no-matches">
+									<p>
+										{ __(
+											'No matching venues.',
+											'fair-events'
+										) }
+									</p>
+								</div>
+							) }
+
+						{ ! loading && matchingVenues.length > 0 && (
 							<table className="wp-list-table widefat fixed striped">
 								<thead>
 									<tr>
 										<td className="check-column">
 											<input
 												type="checkbox"
-												checked={
-													selectedVenues.size ===
-													venues.length
-												}
+												checked={ allMatchingSelected }
 												onChange={ toggleAllVenues }
+												aria-label={ __(
+													'Select all matching venues',
+													'fair-events'
+												) }
 											/>
 										</td>
 										<th>{ __( 'Name', 'fair-events' ) }</th>
@@ -641,7 +723,7 @@ const VenuesApp = ( { canDeleteVenues = false } ) => {
 									</tr>
 								</thead>
 								<tbody>
-									{ venues.map( ( venue ) => (
+									{ matchingVenues.map( ( venue ) => (
 										<tr key={ venue.id }>
 											<th className="check-column">
 												<input

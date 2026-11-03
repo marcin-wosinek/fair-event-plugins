@@ -10,7 +10,7 @@ import {
 	act,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import VenuesApp from '../VenuesApp.js';
+import VenuesApp, { filterVenues } from '../VenuesApp.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -647,5 +647,226 @@ describe( 'venue deletion confirmation (#1772)', () => {
 		expect(
 			screen.getByRole( 'button', { name: 'Cancel' } )
 		).not.toBeDisabled();
+	} );
+} );
+
+describe( 'filterVenues', () => {
+	const venues = [
+		{ id: 1, name: 'Árboles Botella', address: 'Calle Mayor 3' },
+		{ id: 2, name: 'La Mutable', address: 'Carrer de Sueca 12' },
+		{ id: 3, name: 'Sin Dirección', address: null },
+	];
+	const ids = ( list ) => list.map( ( v ) => v.id );
+
+	test.each( [
+		[ 'arboles', [ 1 ] ],
+		[ 'ÁRBOL', [ 1 ] ],
+		[ 'mutab', [ 2 ] ],
+		[ 'sueca', [ 2 ] ],
+		[ 'direccion', [ 3 ] ],
+		[ '  calle mayor  ', [ 1 ] ],
+		[ 'nowhere', [] ],
+	] )( '%p matches %p', ( query, expected ) => {
+		expect( ids( filterVenues( venues, query ) ) ).toEqual( expected );
+	} );
+
+	test.each( [ '', '   ' ] )(
+		'blank query %p returns every venue in order',
+		( query ) => {
+			expect( ids( filterVenues( venues, query ) ) ).toEqual( [
+				1, 2, 3,
+			] );
+		}
+	);
+} );
+
+describe( 'venue search (#2123)', () => {
+	const venues = [
+		{
+			...existingVenue,
+			id: 1,
+			name: 'Árboles Botella',
+			address: 'Calle Mayor 3',
+		},
+		{
+			...existingVenue,
+			id: 2,
+			name: 'La Mutable',
+			address: 'Carrer de Sueca 12',
+		},
+		{ ...existingVenue, id: 3, name: 'Plaza Redonda', address: '' },
+	];
+
+	const search = ( value ) =>
+		fireEvent.change( screen.getByLabelText( 'Search venues' ), {
+			target: { value },
+		} );
+	const rowNames = () =>
+		screen
+			.queryAllByRole( 'row' )
+			.slice( 1 )
+			.map( ( row ) => row.querySelector( 'strong' ).textContent );
+	const rowCheckbox = ( name ) =>
+		screen
+			.getByText( name )
+			.closest( 'tr' )
+			.querySelector( 'input[type="checkbox"]' );
+	const selectAll = () =>
+		screen.getByRole( 'checkbox', { name: 'Select all matching venues' } );
+
+	const renderList = async ( props = {} ) => {
+		apiFetch.mockImplementation( ( options ) =>
+			options.method === 'DELETE'
+				? Promise.resolve( {} )
+				: Promise.resolve( venues )
+		);
+		render( <VenuesApp { ...props } /> );
+		await screen.findByText( 'La Mutable' );
+	};
+
+	test( 'filters by partial, accent-insensitive name and address', async () => {
+		await renderList();
+
+		expect( screen.getByText( 'Search by name or address' ) ).toBeVisible();
+
+		search( 'arboles' );
+		expect( rowNames() ).toEqual( [ 'Árboles Botella' ] );
+
+		search( 'SUECA' );
+		expect( rowNames() ).toEqual( [ 'La Mutable' ] );
+	} );
+
+	test( 'whitespace-only and cleared queries show every venue', async () => {
+		await renderList();
+
+		search( '   ' );
+		expect( rowNames() ).toHaveLength( 3 );
+
+		search( 'redonda' );
+		expect( rowNames() ).toEqual( [ 'Plaza Redonda' ] );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Reset search' } )
+		);
+		expect( screen.getByLabelText( 'Search venues' ) ).toHaveValue( '' );
+		expect( rowNames() ).toHaveLength( 3 );
+	} );
+
+	test( 'no matches shows a distinct message and keeps search available', async () => {
+		await renderList();
+
+		search( 'nowhere' );
+
+		expect( screen.getByText( 'No matching venues.' ) ).toBeVisible();
+		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( /No venues found/ )
+		).not.toBeInTheDocument();
+		expect( screen.getByLabelText( 'Search venues' ) ).toBeEnabled();
+	} );
+
+	test( 'an empty database keeps its own message', async () => {
+		apiFetch.mockResolvedValue( [] );
+		render( <VenuesApp /> );
+
+		expect( await screen.findByText( /No venues found/ ) ).toBeVisible();
+		expect( screen.queryByText( 'No matching venues.' ) ).toBeNull();
+	} );
+
+	test( 'changing or clearing the search clears the selection', async () => {
+		await renderList();
+
+		fireEvent.click( rowCheckbox( 'La Mutable' ) );
+		expect(
+			screen.getByRole( 'button', { name: 'Export Selected' } )
+		).toBeVisible();
+
+		search( 'la' );
+		expect( rowCheckbox( 'La Mutable' ) ).not.toBeChecked();
+		expect(
+			screen.queryByRole( 'button', { name: 'Export Selected' } )
+		).toBeNull();
+
+		fireEvent.click( rowCheckbox( 'La Mutable' ) );
+		search( '' );
+		expect( rowCheckbox( 'La Mutable' ) ).not.toBeChecked();
+	} );
+
+	test( 'select all selects and exports only matching venues', async () => {
+		await renderList();
+		const blobParts = [];
+		const OriginalBlob = global.Blob;
+		global.Blob = jest.fn( ( parts ) => {
+			blobParts.push( parts.join( '' ) );
+			return {};
+		} );
+		URL.createObjectURL = jest.fn( () => 'blob:venues' );
+		URL.revokeObjectURL = jest.fn();
+		const clickSpy = jest
+			.spyOn( HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( () => {} );
+
+		try {
+			search( 'ca' );
+			expect( rowNames() ).toEqual( [ 'Árboles Botella', 'La Mutable' ] );
+
+			fireEvent.click( selectAll() );
+			expect( selectAll() ).toBeChecked();
+			expect( rowCheckbox( 'Árboles Botella' ) ).toBeChecked();
+
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Export Selected' } )
+			);
+
+			const exported = JSON.parse( blobParts[ 0 ] );
+			expect( exported.map( ( v ) => v.name ) ).toEqual( [
+				'Árboles Botella',
+				'La Mutable',
+			] );
+
+			search( '' );
+			expect( selectAll() ).not.toBeChecked();
+			expect( rowCheckbox( 'Plaza Redonda' ) ).not.toBeChecked();
+		} finally {
+			global.Blob = OriginalBlob;
+			clickSpy.mockRestore();
+		}
+	} );
+
+	test( 'edits the matching venue while filtered', async () => {
+		await renderList();
+
+		search( 'mutable' );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Edit' } ) );
+
+		expect( screen.getByLabelText( 'Name' ) ).toHaveValue( 'La Mutable' );
+	} );
+
+	test( 'deletes the matching venue and keeps the query', async () => {
+		await renderList( { canDeleteVenues: true } );
+
+		search( 'redonda' );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Delete venue?',
+		} );
+		expect( dialog ).toHaveTextContent( 'Plaza Redonda' );
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Delete venue' } )
+			);
+		} );
+
+		await waitFor( () =>
+			expect(
+				apiFetch.mock.calls.filter( ( [ o ] ) => o.method === 'DELETE' )
+			).toEqual( [
+				[ { path: '/fair-events/v1/venues/3', method: 'DELETE' } ],
+			] )
+		);
+		expect( screen.getByLabelText( 'Search venues' ) ).toHaveValue(
+			'redonda'
+		);
 	} );
 } );
