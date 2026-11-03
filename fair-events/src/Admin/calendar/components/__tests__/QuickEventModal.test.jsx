@@ -946,4 +946,134 @@ describe( 'optional times (#1851)', () => {
 			external_url: 'https://www.momoyoga.com/x/event/y',
 		} );
 	} );
+	const oona = {
+		title: 'Fetched Event',
+		start_date: '2026-11-02',
+		start_time: '08:45:00',
+		end_date: '2026-11-02',
+		end_time: '10:00:00',
+		all_day: false,
+		location: 'Valencia, España',
+		source: 'schema',
+		timing_ambiguous: false,
+		found: [ 'title', 'start', 'end', 'location' ],
+	};
+	const oonaUrl =
+		'https://oona.es/evento/emuna-yoga-expande-martes-y-jueves-4d79e226';
+
+	const severalSessions = {
+		...titleOnly,
+		location: 'The Venue',
+		source: 'schema',
+		timing_ambiguous: true,
+		found: [ 'title', 'location' ],
+	};
+
+	it( 'prefills an editable Oona lookup and keeps its link (#2143)', async () => {
+		lookupResponse = oona;
+
+		const { onSuccess } = await renderModal();
+		await lookUp( oonaUrl );
+
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-11-02'
+		);
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			'08:45'
+		);
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'10:00'
+		);
+		expect(
+			screen.getByText( 'From the page: Valencia, España' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /lists several sessions/ )
+		).not.toBeInTheDocument();
+
+		setTime( 'Start time (optional)', '09:00' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createData() ).toMatchObject( {
+			title: 'Fetched Event',
+			start_date: '2026-11-02',
+			start_time: '09:00:00',
+			end_date: '2026-11-02',
+			end_time: '10:00:00',
+			link_type: 'external',
+			external_url: oonaUrl,
+		} );
+	} );
+
+	it( 'requires a date when the page lists several sessions (#2143)', async () => {
+		lookupResponse = severalSessions;
+
+		const { onSuccess } = await renderModal();
+		await lookUp();
+
+		expect(
+			screen.getByText( /This page lists several sessions/ )
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue( '' );
+		expect( screen.getByLabelText( 'Start time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'Venue' ) ).toHaveValue( '5' );
+		expect(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		).toBeDisabled();
+
+		fireEvent.change( screen.getByLabelText( 'Start date' ), {
+			target: { value: '2026-11-05' },
+		} );
+		setTime( 'Start time (optional)', '09:00' );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		// No duration is guessed for the missing end.
+		expect( createData() ).toMatchObject( {
+			start_date: '2026-11-05',
+			start_time: '09:00:00',
+			end_date: '2026-11-05',
+			end_time: null,
+			venue_id: 5,
+			external_url: 'https://example.com/event',
+		} );
+	} );
+
+	it( 'clears imported timing when a later lookup lists several sessions (#2143)', async () => {
+		lookupResponse = oona;
+
+		await renderModal();
+		await lookUp( oonaUrl );
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-11-02'
+		);
+
+		lookupResponse = severalSessions;
+		await lookUp( 'https://example.com/course' );
+
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue( '' );
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			''
+		);
+		expect(
+			screen.getByText( /This page lists several sessions/ )
+		).toBeInTheDocument();
+
+		// A third lookup with a single occurrence drops the warning.
+		lookupResponse = oona;
+		await lookUp( oonaUrl );
+		await waitFor( () =>
+			expect(
+				screen.queryByText( /This page lists several sessions/ )
+			).not.toBeInTheDocument()
+		);
+		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
+			'2026-11-02'
+		);
+	} );
 } );

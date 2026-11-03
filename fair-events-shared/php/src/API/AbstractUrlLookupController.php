@@ -13,6 +13,7 @@ defined( 'WPINC' ) || die;
 use FairEventsShared\Helpers\MeetupEventData;
 use FairEventsShared\Helpers\MomoyogaEventSource;
 use FairEventsShared\Helpers\PageMetadataParser;
+use FairEventsShared\Helpers\PrimaryEventData;
 use FairEventsShared\Helpers\SafeUrlFetcher;
 use WP_REST_Controller;
 use WP_REST_Response;
@@ -55,6 +56,14 @@ abstract class AbstractUrlLookupController extends WP_REST_Controller {
 		}
 
 		$metadata = PageMetadataParser::parse( $body );
+
+		// Prefer the page's own event (by URL or WebPage.mainEntity) over
+		// the first Event found, and never merge several sessions. The class
+		// check keeps this safe when an older copy of the shared package
+		// wins the autoload race.
+		if ( class_exists( PrimaryEventData::class ) ) {
+			$metadata = PrimaryEventData::apply( $url, $body, $metadata );
+		}
 
 		// Meetup pages may lack a complete schema.org Event; their embedded
 		// event data fills the gaps. The class check keeps this safe when an
