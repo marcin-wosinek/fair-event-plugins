@@ -284,4 +284,35 @@ class EventSchemaExtensionPricesTest extends TestCase {
 		$this->assertSame( array( 6.0 ), EventSchema::selectable_extension_prices( 1, 2, (object) array( 'id' => 1 ) ) );
 		$this->assertSame( array( 1 ), $this->db->catalogue_reads );
 	}
+
+	/**
+	 * Configured extensions ignore places, but still need a price in the
+	 * period and a bookable schedule.
+	 */
+	public function test_configured_options_ignore_places() {
+		$this->db->options[1]       = array(
+			$this->option( 10, 1, 4.0, false, 1 ),
+			$this->option( 11, 1, 6.0 ),
+			$this->option( 12, 1, 8.0, true ),
+		);
+		$this->db->non_bookable[1]  = array( 11 );
+		$this->db->event_dates[1]   = (object) array(
+			'id'              => 1,
+			'master_id'       => null,
+			'occurrence_type' => 'single',
+			'all_day'         => '0',
+			'start_date'      => '2026-11-10',
+			'end_date'        => '2026-11-10',
+			'start_time'      => '18:00:00',
+			'end_time'        => '20:00:00',
+		);
+		$this->db->taken            = array( 10 => array( 1 => 1 ) );
+		$this->db->option_prices[1] = array();
+
+		$rows = EventSchema::configured_extension_options( 1, (object) array( 'id' => 1 ) );
+
+		$this->assertSame( array( 10 ), array_map( static fn( $row ) => (int) $row['option']->id, $rows ) );
+		$this->assertSame( array( 4.0 ), array_column( $rows, 'price' ) );
+		$this->assertSame( array(), EventSchema::selectable_extension_prices( 1, 1, (object) array( 'id' => 1 ) ) );
+	}
 }

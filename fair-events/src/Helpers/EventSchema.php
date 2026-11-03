@@ -18,6 +18,7 @@ use FairEvents\Models\TicketOptionPrice;
 use FairEvents\Services\ActivityOptionPriceResolver;
 use FairEvents\Services\ActivitySelection;
 use FairEvents\Services\EventSchedule;
+use FairEvents\Services\OfferCapacity;
 use FairEvents\Services\TicketAvailability;
 use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
@@ -389,7 +390,16 @@ class EventSchema {
 	 *
 	 * A type that requires extensions advertises its base price plus the
 	 * cheapest valid extension selection, priced for the same window, or no
-	 * offer when the requirement cannot be met (issue #1447).
+	 * offer when the configured extensions cannot meet the requirement
+	 * (issue #1447).
+	 *
+	 * Availability follows public signup (issue #2082). An upcoming window's
+	 * offers carry `validFrom` and no `availability`. During an open window
+	 * an offer is `InStock` when one ticket of its type can be bought, and
+	 * `SoldOut` when the event date (every covered date for a whole-series
+	 * ticket), the ticket type or the required extensions have no place left;
+	 * a sold-out offer keeps the price of its cheapest configured selection.
+	 * Places are read, never locked.
 	 *
 	 * Everything is behind class_exists() guards since a fair-events-only
 	 * site (without ticketing) must not fatal.
@@ -430,7 +440,11 @@ class EventSchema {
 			TicketAvailability::resolve_default_sale_start( $pricing_event_date_id, $now )
 		);
 
-		$selected_period = self::select_offer_period( $periods, $now );
+		// Availability is reported only while the selected window is open;
+		// an upcoming window advertises its price and validFrom alone.
+		$window          = self::offer_window( $periods, $now );
+		$selected_period = $window ? $window['period'] : null;
+		$on_sale         = $window && $window['on_sale'];
 
 		// Price for each type inside the selected window.
 		$price_by_type_id = array();
@@ -442,19 +456,46 @@ class EventSchema {
 			}
 		}
 
+		// Only enabled, priced types can become offers, so only they are
+		// worth a capacity count.
+		$offer_types = array_values(
+			array_filter(
+				$ticket_types,
+				static function ( $ticket_type ) use ( $price_by_type_id, $now ) {
+					return isset( $price_by_type_id[ (int) $ticket_type->id ] )
+						&& TicketAvailability::is_ticket_type_enabled( $ticket_type, $now );
+				}
+			)
+		);
+
+		$capacity = $on_sale ? new OfferCapacity( (int) $event_date->id ) : null;
+
 		// Required extensions are part of the minimum signup cost (issue
 		// #1447). They are priced for the same selected window, so an
 		// upcoming ticket price never mixes with today's extension prices.
-		$extension_prices = array();
-		if ( $selected_period ) {
-			foreach ( $ticket_types as $ticket_type ) {
-				if ( self::requires_extensions( $ticket_type ) ) {
-					$extension_prices = self::selectable_extension_prices( $pricing_event_date_id, (int) $event_date->id, $selected_period );
-					break;
-				}
+		$configured_extensions = null;
+		$available_extensions  = array();
+		foreach ( $offer_types as $ticket_type ) {
+			if ( ! self::requires_extensions( $ticket_type ) ) {
+				continue;
+			}
+
+			if ( null === $configured_extensions ) {
+				$configured_extensions = self::configured_extension_options( $pricing_event_date_id, $selected_period );
+			}
+
+			if ( $capacity ) {
+				$available_extensions[ (int) $ticket_type->id ] = $capacity->available_extension_prices( $configured_extensions, $ticket_type );
 			}
 		}
-		$price_by_type_id = self::add_required_extension_costs( $ticket_types, $price_by_type_id, $extension_prices );
+
+		$resolved = self::resolve_offer_prices(
+			$ticket_types,
+			$price_by_type_id,
+			array_column( $configured_extensions ?? array(), 'price' ),
+			$available_extensions,
+			$capacity ? $capacity->sold_out_type_ids( $offer_types ) : array()
+		);
 
 		// select_offer_period() only selects a period with a resolved start.
 		$valid_from = $selected_period
@@ -463,11 +504,13 @@ class EventSchema {
 
 		return self::build_offers_for_types(
 			$ticket_types,
-			$price_by_type_id,
+			$resolved['prices'],
 			$valid_from,
 			Money::site_currency(),
 			get_permalink( $post_id ),
-			$now
+			$now,
+			$on_sale,
+			$resolved['sold_out']
 		);
 	}
 
@@ -486,9 +529,36 @@ class EventSchema {
 	 * @return object|null Selected period, always with a resolved sale_start, or null.
 	 */
 	public static function select_offer_period( array $resolved_periods, $now ) {
-		$active_period = TicketAvailability::pick_active_period( $resolved_periods, $now, false );
+		$window = self::offer_window( $resolved_periods, $now );
 
-		return $active_period ? $active_period : TicketAvailability::pick_upcoming_period( $resolved_periods, $now );
+		return $window ? $window['period'] : null;
+	}
+
+	/**
+	 * The sale period select_offer_period() picks, with whether it is open
+	 * now (`on_sale`) or still upcoming. Pure, DB-free.
+	 *
+	 * @param object[] $resolved_periods Sale periods, post TicketAvailability::resolve_periods().
+	 * @param string   $now              Current site datetime ('Y-m-d H:i:s').
+	 * @return array{period: object, on_sale: bool}|null Null when no period is selected.
+	 */
+	public static function offer_window( array $resolved_periods, $now ) {
+		$active_period = TicketAvailability::pick_active_period( $resolved_periods, $now, false );
+		if ( $active_period ) {
+			return array(
+				'period'  => $active_period,
+				'on_sale' => true,
+			);
+		}
+
+		$upcoming_period = TicketAvailability::pick_upcoming_period( $resolved_periods, $now );
+
+		return $upcoming_period
+			? array(
+				'period'  => $upcoming_period,
+				'on_sale' => false,
+			)
+			: null;
 	}
 
 	/**
@@ -519,6 +589,27 @@ class EventSchema {
 	 * @return float[] Selectable extension prices.
 	 */
 	public static function selectable_extension_prices( $pricing_event_date_id, $event_date_id, $sale_period ) {
+		$prices = array();
+		foreach ( self::configured_extension_options( $pricing_event_date_id, $sale_period ) as $row ) {
+			if ( ! ActivitySelection::is_full( $row['option'], (int) $event_date_id ) ) {
+				$prices[] = $row['price'];
+			}
+		}
+
+		return $prices;
+	}
+
+	/**
+	 * Extensions configured for the given sale period, whatever their
+	 * places: each has a price in that period and the event schedule keeps
+	 * it bookable. Participant discounts are never applied: structured data
+	 * is public.
+	 *
+	 * @param int    $pricing_event_date_id Event date the option catalogue belongs to (the series master for a generated occurrence).
+	 * @param object $sale_period           Selected JSON-LD sale period (needs id).
+	 * @return array[] Each: option (row with id, capacity) and price.
+	 */
+	public static function configured_extension_options( $pricing_event_date_id, $sale_period ) {
 		$options = TicketOption::get_all_by_event_date_id( (int) $pricing_event_date_id );
 		if ( empty( $options ) ) {
 			return array();
@@ -536,19 +627,20 @@ class EventSchema {
 
 		$not_bookable = EventSchedule::non_bookable_option_ids( (int) $pricing_event_date_id );
 
-		$prices = array();
+		$rows = array();
 		foreach ( $options as $option ) {
 			$price = ActivityOptionPriceResolver::price_for_period( $option, $sale_period, $prices_by_option[ (int) $option->id ] ?? array() );
-			if ( null === $price
-				|| in_array( (int) $option->id, $not_bookable, true )
-				|| ActivitySelection::is_full( $option, (int) $event_date_id ) ) {
+			if ( null === $price || in_array( (int) $option->id, $not_bookable, true ) ) {
 				continue;
 			}
 
-			$prices[] = $price;
+			$rows[] = array(
+				'option' => $option,
+				'price'  => $price,
+			);
 		}
 
-		return $prices;
+		return $rows;
 	}
 
 	/**
@@ -566,23 +658,71 @@ class EventSchema {
 	 * @return float[] Ticket-type ID => advertised price.
 	 */
 	public static function add_required_extension_costs( array $ticket_types, array $price_by_type_id, array $extension_prices ) {
+		return self::resolve_offer_prices( $ticket_types, $price_by_type_id, $extension_prices, array(), array() )['prices'];
+	}
+
+	/**
+	 * Resolve each ticket type's advertised price and whether it is sold
+	 * out. Pure, DB-free.
+	 *
+	 * A type requiring extensions adds the cheapest selection of its
+	 * available extensions to its base price. When the configured
+	 * extensions cannot meet its requirement even ignoring places, the type
+	 * is dropped: no offer is emitted for an impossible signup. When only
+	 * places prevent it, or the type is sold out on its own, it is sold out
+	 * and priced with the cheapest configured selection, so a sold-out
+	 * offer keeps a truthful price. Types with extensions disabled
+	 * (including multi-occurrence tickets) or without a positive minimum
+	 * keep their base price. The combined total never goes below zero.
+	 *
+	 * @param object[]  $ticket_types          Ticket types.
+	 * @param float[]   $price_by_type_id      Ticket-type ID => base price for the selected window.
+	 * @param float[]   $configured_extensions Configured extension prices, whatever their places.
+	 * @param float[][] $available_by_type_id  Ticket-type ID => extension prices with places for that type; a type
+	 *                                         without an entry uses the configured prices (no places counted).
+	 * @param int[]     $sold_out_type_ids     Types without an event or ticket-type place left.
+	 * @return array{prices: float[], sold_out: int[]} Advertised prices by type ID, and the sold-out type IDs.
+	 */
+	public static function resolve_offer_prices( array $ticket_types, array $price_by_type_id, array $configured_extensions, array $available_by_type_id, array $sold_out_type_ids ) {
+		$sold_out = array();
+
 		foreach ( $ticket_types as $ticket_type ) {
 			$type_id = (int) $ticket_type->id;
-			if ( ! isset( $price_by_type_id[ $type_id ] ) || ! self::requires_extensions( $ticket_type ) ) {
+			if ( ! isset( $price_by_type_id[ $type_id ] ) ) {
 				continue;
 			}
 
-			$rule = ActivitySelection::selection_rule( 0, $ticket_type );
-			$cost = self::cheapest_extension_selection_cost( $extension_prices, $rule['minimum'], $rule['maximum'] );
-			if ( null === $cost ) {
-				unset( $price_by_type_id[ $type_id ] );
-				continue;
+			$type_sold_out = in_array( $type_id, $sold_out_type_ids, true );
+
+			if ( self::requires_extensions( $ticket_type ) ) {
+				$rule       = ActivitySelection::selection_rule( 0, $ticket_type );
+				$configured = self::cheapest_extension_selection_cost( $configured_extensions, $rule['minimum'], $rule['maximum'] );
+				if ( null === $configured ) {
+					unset( $price_by_type_id[ $type_id ] );
+					continue;
+				}
+
+				$available = $type_sold_out || ! isset( $available_by_type_id[ $type_id ] )
+					? null
+					: self::cheapest_extension_selection_cost( $available_by_type_id[ $type_id ], $rule['minimum'], $rule['maximum'] );
+
+				if ( null === $available && isset( $available_by_type_id[ $type_id ] ) ) {
+					$type_sold_out = true;
+				}
+
+				$cost                         = null === $available ? $configured : $available;
+				$price_by_type_id[ $type_id ] = max( 0.0, LineItemTotals::normalize_amount( $price_by_type_id[ $type_id ] + $cost ) );
 			}
 
-			$price_by_type_id[ $type_id ] = max( 0.0, LineItemTotals::normalize_amount( $price_by_type_id[ $type_id ] + $cost ) );
+			if ( $type_sold_out ) {
+				$sold_out[] = $type_id;
+			}
 		}
 
-		return $price_by_type_id;
+		return array(
+			'prices'   => $price_by_type_id,
+			'sold_out' => $sold_out,
+		);
 	}
 
 	/**
@@ -625,10 +765,13 @@ class EventSchema {
 	 * @param string      $currency         Site currency code.
 	 * @param string      $permalink        Event permalink, used as the offer URL.
 	 * @param string|null $now              Current site datetime for scheduled disabling; defaults to current_time( 'mysql' ).
-	 * @return array Offer objects, one per purchasable type; disabled types and
+	 * @param bool        $on_sale          Whether the selected window is open. An upcoming window's offers
+	 *                                      carry no availability, only their price and validFrom.
+	 * @param int[]       $sold_out_type_ids Types reported SoldOut while on sale; the rest are InStock.
+	 * @return array Offer objects, one per advertised type; disabled types and
 	 *               types with no explicit price row for the selected window are omitted.
 	 */
-	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, $valid_from, $currency, $permalink, $now = null ) {
+	public static function build_offers_for_types( array $ticket_types, array $price_by_type_id, $valid_from, $currency, $permalink, $now = null, $on_sale = true, array $sold_out_type_ids = array() ) {
 		$offers = array();
 
 		foreach ( $ticket_types as $ticket_type ) {
@@ -654,9 +797,15 @@ class EventSchema {
 				'@type'         => 'Offer',
 				'price'         => (string) $price_by_type_id[ $type_id ],
 				'priceCurrency' => $currency,
-				'availability'  => 'https://schema.org/InStock',
-				'url'           => $permalink,
 			);
+
+			if ( $on_sale ) {
+				$offer['availability'] = in_array( $type_id, $sold_out_type_ids, true )
+					? 'https://schema.org/SoldOut'
+					: 'https://schema.org/InStock';
+			}
+
+			$offer['url'] = $permalink;
 
 			// A blank name (the admin ticket editor doesn't require one)
 			// is omitted rather than serialized as "" — an empty `name`
