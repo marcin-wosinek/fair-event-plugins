@@ -9,6 +9,7 @@ namespace FairEvents\Services;
 
 use FairEvents\Helpers\DateHelper;
 use FairEventsShared\Money;
+use FairEventsShared\Notifications\BookingConfirmationEmail;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 defined( 'WPINC' ) || die;
@@ -66,7 +67,7 @@ class EmailService {
 			__( 'Your registration for %s is confirmed', 'fair-events' );
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
-		$message = SignupConfirmationEmail::html(
+		$message = BookingConfirmationEmail::html(
 			array(
 				'event_title'                  => esc_html( $event_title ),
 				'participant_name'             => esc_html( $name ),

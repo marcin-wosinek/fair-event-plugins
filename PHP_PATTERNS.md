@@ -525,6 +525,11 @@ through to whichever plugin ships the new copy. A changed signature fatals
 whenever an older copy of the class wins the autoload race and gets called
 with the new call shape.
 
+A new key in an existing `$args` array is a call-shape change too, and a
+quieter one: an older copy ignores the key instead of failing. #2126's
+booking message was dropped from confirmations this way until it moved to
+the new `BookingConfirmationEmail` class.
+
 **After editing anything under `fair-events-shared/php/src/`, bump the
 `version` in `fair-events-shared/php/composer.json` and run `npm run
 composer:update:shared`** (runs `composer update fair-events/shared` in every

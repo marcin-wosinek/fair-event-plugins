@@ -207,6 +207,25 @@ test.describe( 'Booking confirmation message', () => {
 		return body.signups[ 0 ].id;
 	};
 
+	// Two paragraphs and a link, as the classic editor saves them.
+	const RICH_MESSAGE =
+		'<p>Doors open at 9.</p>\n<p>Find us at the <a href="https://example.com/venue">venue</a>.</p>';
+
+	const occurrences = ( body, needle ) => body.split( needle ).length - 1;
+
+	/**
+	 * Captured mails to `email` that carry `needle`, with how many times
+	 * each carries it.
+	 *
+	 * @param {string} email  Recipient.
+	 * @param {string} needle Saved message HTML.
+	 * @return {Promise<number[]>} Per-mail occurrence counts.
+	 */
+	const messageCounts = async ( email, needle ) =>
+		( await mailTo( email ) )
+			.map( ( mail ) => occurrences( mail.body, needle ) )
+			.filter( ( count ) => count > 0 );
+
 	const fixture = async ( path, data ) => {
 		const res = await api.post( `/wp-json/fair-e2e/v1/${ path }`, {
 			headers: adminHeaders,
@@ -376,21 +395,18 @@ test.describe( 'Booking confirmation message', () => {
 			linked: true,
 			price: 0,
 		} );
-		await saveMessage(
-			eventDateId,
-			'<p>Doors open at 9. <a href="https://example.com/venue">Venue</a></p>'
+		const saved = await saveMessage( eventDateId, RICH_MESSAGE );
+		const { message } = await saved.json();
+		expect( message ).toContain(
+			'<a href="https://example.com/venue">venue</a>'
 		);
 		const email = uniqueEmail( 'free' );
 
 		const body = await book( eventDateId, typeId, email );
 		expect( body.status ).toBe( 'confirmed' );
 
-		const withMessage = ( await mailTo( email ) ).filter( ( mail ) =>
-			mail.body.includes(
-				'<p>Doors open at 9. <a href="https://example.com/venue">Venue</a></p>'
-			)
-		);
-		expect( withMessage ).toHaveLength( 1 );
+		// One confirmation, carrying the saved paragraphs and link once.
+		expect( await messageCounts( email, message ) ).toEqual( [ 1 ] );
 	} );
 
 	test( 'an event without a message sends the standard confirmation', async () => {
@@ -418,26 +434,22 @@ test.describe( 'Booking confirmation message', () => {
 			linked: true,
 			price: 12,
 		} );
-		await saveMessage( eventDateId, '<p>Paid note</p>' );
+		const saved = await saveMessage( eventDateId, RICH_MESSAGE );
+		const { message } = await saved.json();
 		const email = uniqueEmail( 'paid' );
 
 		const body = await book( eventDateId, typeId, email );
 		expect( body.status ).toBe( 'payment_required' );
 		const signupId = await signupIdFor( eventDateId );
 
-		const countMessage = async () =>
-			( await mailTo( email ) ).filter( ( mail ) =>
-				mail.body.includes( '<p>Paid note</p>' )
-			).length;
-
-		expect( await countMessage() ).toBe( 0 );
+		expect( await messageCounts( email, message ) ).toEqual( [] );
 
 		await fixture( 'ticket-capacity/pay', { signup_id: signupId } );
-		expect( await countMessage() ).toBe( 1 );
+		expect( await messageCounts( email, message ) ).toEqual( [ 1 ] );
 
 		// A repeated payment notification sends nothing new.
 		await fixture( 'ticket-capacity/pay', { signup_id: signupId } );
-		expect( await countMessage() ).toBe( 1 );
+		expect( await messageCounts( email, message ) ).toEqual( [ 1 ] );
 	} );
 
 	test( 'a failed payment never gets the message', async () => {
