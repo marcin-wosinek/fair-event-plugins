@@ -123,13 +123,24 @@ jobs:
                   key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
                   restore-keys: ${{ runner.os }}-playwright-
 
+            # No `--with-deps`: the runner image already ships the system
+            # libraries Chromium needs (it preinstalls Google Chrome), so the
+            # job never waits on the Ubuntu APT mirror. If a library goes
+            # missing, Playwright fails at browser launch and names it.
             - name: Install Playwright browser
+              run: npx playwright install chromium
+
+            - name: Check Chromium system libraries
               run: |
-                  if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-                      npx playwright install-deps chromium
-                  else
-                      npx playwright install --with-deps chromium
-                  fi
+                  status=0
+                  echo '### Chromium system libraries' >> "$GITHUB_STEP_SUMMARY"
+                  for bin in $(find ~/.cache/ms-playwright -type f \( -name chrome -o -name headless_shell \) -path '*linux*'); do
+                      missing=$(ldd "$bin" | grep 'not found' || true)
+                      [ -n "$missing" ] && status=1
+                      echo "- \`${bin#"$HOME"/}\`: ${missing:-all libraries found}" | tee -a "$GITHUB_STEP_SUMMARY"
+                  done
+                  echo "- Fonts installed: $(fc-list | wc -l)" | tee -a "$GITHUB_STEP_SUMMARY"
+                  exit $status
 
             - name: Read PHP version from wp-env config
               id: wp-env-config
