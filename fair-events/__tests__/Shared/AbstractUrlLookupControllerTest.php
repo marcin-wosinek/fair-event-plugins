@@ -102,6 +102,88 @@ class AbstractUrlLookupControllerTest extends TestCase {
 	}
 
 	/**
+	 * An Oona event page, whose Event is the WebPage's mainEntity, returns
+	 * its site-local interval and venue (#2143).
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_prefills_oona_event() {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+		$page_url                       = 'https://oona.es/evento/emuna-yoga-expande-martes-y-jueves-4d79e226';
+
+		$GLOBALS['_fair_test_remote_responses'][ $page_url ] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html; charset=utf-8' ),
+			'body'     => file_get_contents( dirname( __DIR__ ) . '/fixtures/oona/event-page.html' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+		);
+
+		$result = $this->controller->do_lookup( $page_url );
+
+		$this->assertInstanceOf( WP_REST_Response::class, $result );
+		$data = $result->get_data();
+		$this->assertSame( 'Emuná Yoga Expande - Todos los Lunes', $data['title'] );
+		$this->assertSame( '2026-11-02', $data['start_date'] );
+		$this->assertSame( '08:45:00', $data['start_time'] );
+		$this->assertSame( '10:00:00', $data['end_time'] );
+		$this->assertSame( 'Valencia, España', $data['location'] );
+		$this->assertFalse( $data['timing_ambiguous'] );
+	}
+
+	/**
+	 * A page listing several sessions returns its title and venue with the
+	 * timing left for manual completion.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_leaves_ambiguous_sessions_untimed() {
+		$session = function ( $day ) {
+			return array(
+				'@type'     => 'Event',
+				'name'      => 'Course',
+				'startDate' => "2026-11-{$day}T09:00:00Z",
+				'location'  => array( 'name' => 'Hall' ),
+			);
+		};
+		$html    = '<html><head><script type="application/ld+json">'
+			. wp_json_encode(
+				array(
+					'@type'      => 'WebPage',
+					'mainEntity' => array( $session( '03' ), $session( '10' ) ),
+				)
+			)
+			. '</script></head></html>';
+
+		$GLOBALS['_fair_test_remote_responses']['https://example.com/course'] = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-type' => 'text/html' ),
+			'body'     => $html,
+		);
+
+		$data = $this->controller->do_lookup( 'https://example.com/course' )->get_data();
+
+		$this->assertSame( 'Course', $data['title'] );
+		$this->assertSame( 'Hall', $data['location'] );
+		$this->assertTrue( $data['timing_ambiguous'] );
+		$this->assertNull( $data['start_date'] );
+		$this->assertSame( array( 'title', 'location' ), $data['found'] );
+	}
+
+	/**
+	 * A failed Oona fetch passes the fetch error through for manual entry.
+	 *
+	 * @return void
+	 */
+	public function test_lookup_url_passes_through_oona_fetch_error() {
+		$GLOBALS['_fair_test_remote_responses']['https://oona.es/evento/missing'] = array(
+			'response' => array( 'code' => 404 ),
+			'headers'  => array( 'content-type' => 'text/html' ),
+			'body'     => 'Not found',
+		);
+
+		$this->assertInstanceOf( WP_Error::class, $this->controller->do_lookup( 'https://oona.es/evento/missing' ) );
+	}
+
+	/**
 	 * A transport-level failure (from SafeUrlFetcher) passes its WP_Error
 	 * straight through.
 	 *

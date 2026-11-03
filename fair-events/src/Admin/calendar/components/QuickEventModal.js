@@ -60,6 +60,8 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 	const [ lookupError, setLookupError ] = useState( null );
 	const [ fetchedLocation, setFetchedLocation ] = useState( null );
 	const [ missingFields, setMissingFields ] = useState( [] );
+	// The page listed several sessions, so its timing was left empty.
+	const [ timingAmbiguous, setTimingAmbiguous ] = useState( false );
 
 	// Categories.
 	const [ categories, setCategories ] = useState( [] );
@@ -120,6 +122,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 
 		setIsLookingUp( true );
 		setLookupError( null );
+		setTimingAmbiguous( false );
 
 		// The pasted URL becomes the external link regardless of outcome.
 		setLinkType( 'external' );
@@ -145,15 +148,21 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				setEndDate( metadata.end_date || metadata.start_date );
 				setEndTime( ( metadata.end_time || '' ).slice( 0, 5 ) );
 			} else if ( ! timingEdited ) {
-				// The page gave no start: keep the day picked in the
-				// calendar but drop the default times, so nothing looks
-				// imported. Times the user entered are kept.
+				// The page gave no start: drop the default or previously
+				// imported times, so nothing looks imported. A single
+				// event keeps the day picked in the calendar; when the
+				// page lists several sessions, that day is no better than
+				// a guess, so the date is cleared and must be entered.
+				// Timing the user entered is kept.
+				const day = metadata.timing_ambiguous ? '' : dateStr;
 				setAllDay( false );
-				setStartDate( dateStr );
+				setStartDate( day );
 				setStartTime( '' );
-				setEndDate( dateStr );
+				setEndDate( day );
 				setEndTime( '' );
 			}
+
+			setTimingAmbiguous( Boolean( metadata.timing_ambiguous ) );
 
 			setFetchedLocation( metadata.location || null );
 
@@ -195,7 +204,13 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 
 	const handleTimingChange = ( patch ) => {
 		setTimingEdited( true );
-		Object.entries( patch ).forEach( ( [ field, next ] ) =>
+		// After a lookup cleared both dates, the first start date entered
+		// also fills the empty end date, which saving would use anyway.
+		const fields =
+			patch.startDate && ! endDate && ! ( 'endDate' in patch )
+				? { ...patch, endDate: patch.startDate }
+				: patch;
+		Object.entries( fields ).forEach( ( [ field, next ] ) =>
 			timingSetters[ field ]( next )
 		);
 	};
@@ -362,6 +377,15 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								</Button>
 							</HStack>
 						</VStack>
+					) }
+
+					{ 'manual' === activeTab && timingAmbiguous && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
+								'This page lists several sessions. Enter the date and times of the one you are adding.',
+								'fair-events'
+							) }
+						</Notice>
 					) }
 
 					{ 'manual' === activeTab && missingFields.length > 0 && (

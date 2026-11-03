@@ -171,6 +171,14 @@ class PageMetadataParser {
 			}
 		}
 
+		// A WebPage's main entity is the event the page itself describes.
+		if ( isset( $node['mainEntity'] ) && is_array( $node['mainEntity'] ) ) {
+			$found = self::find_event_node( $node['mainEntity'] );
+			if ( $found ) {
+				return $found;
+			}
+		}
+
 		// A plain (non-associative) list of nodes.
 		if ( array_values( $node ) === $node ) {
 			foreach ( $node as $item ) {

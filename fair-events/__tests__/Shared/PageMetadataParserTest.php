@@ -164,4 +164,22 @@ class PageMetadataParserTest extends TestCase {
 		$this->assertNull( $result['source'] );
 		$this->assertSame( array(), $result['found'] );
 	}
+
+	/**
+	 * An Event nested as a WebPage's mainEntity (Oona's structure, #2143) is
+	 * found.
+	 *
+	 * @return void
+	 */
+	public function test_finds_event_in_web_page_main_entity() {
+		$html = file_get_contents( dirname( __DIR__ ) . '/fixtures/oona/event-page.html' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local test fixture.
+
+		$result = PageMetadataParser::parse( $html );
+
+		$this->assertSame( 'Emuná Yoga Expande - Todos los Lunes', $result['title'] );
+		$this->assertSame( '2026-11-02 07:45:00', $result['start_datetime'] );
+		$this->assertSame( '2026-11-02 09:00:00', $result['end_datetime'] );
+		$this->assertSame( 'Valencia, España', $result['location'] );
+		$this->assertSame( 'schema', $result['source'] );
+	}
 }
