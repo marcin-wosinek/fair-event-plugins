@@ -526,31 +526,41 @@ test.describe( 'MetaEngagementController', () => {
 
 		test( 'a click queued before immediate delivery finishes through the queue once', async () => {
 			const activationId = uuid();
-			await wp(
-				'eval',
-				`$event = FairEventsExperimental\\Meta\\Conversions::build_engagement_event( 'ticket', '${ activationId }', FairEventsExperimental\\Meta\\Engagement::event_context( ${ event.id }, ${ event.eventDateId } ), '${ FBP }', '' ); ( new FairEventsExperimental\\Meta\\Outbox() )->enqueue( $event );`
-			);
+			// Enqueueing schedules a due wake-up, and the next request would
+			// spawn WP-Cron to deliver it before the replay is inspected.
+			// Hold WP-Cron so only this test's explicit worker run sends it.
+			await wp( 'option', 'update', 'fair_e2e_meta_hold_cron', '1' );
+			try {
+				await wp(
+					'eval',
+					`$event = FairEventsExperimental\\Meta\\Conversions::build_engagement_event( 'ticket', '${ activationId }', FairEventsExperimental\\Meta\\Engagement::event_context( ${ event.id }, ${ event.eventDateId } ), '${ FBP }', '' ); ( new FairEventsExperimental\\Meta\\Outbox() )->enqueue( $event );`
+				);
 
-			const replay = await anon.post( PATH, {
-				data: body( { activation_id: activationId } ),
-			} );
-			expect( await replay.json() ).toEqual( { received: false } );
-			expect( ( await engagementState( event.id ) ).requests ).toEqual(
-				[]
-			);
+				const replay = await anon.post( PATH, {
+					data: body( { activation_id: activationId } ),
+				} );
+				expect( await replay.json() ).toEqual( { received: false } );
+				expect(
+					( await engagementState( event.id ) ).requests
+				).toEqual( [] );
 
-			await wp(
-				'eval',
-				'( new FairEventsExperimental\\Meta\\Conversions() )->deliver_due();'
-			);
-			const state = await engagementState( event.id );
-			expect( state.requests ).toHaveLength( 1 );
-			expect( state.requests[ 0 ] ).not.toHaveProperty(
-				'test_event_code'
-			);
-			expect( state.rows.map( ( row ) => row.state ) ).toEqual( [
-				'received',
-			] );
+				await wp(
+					'eval',
+					'( new FairEventsExperimental\\Meta\\Conversions() )->deliver_due();'
+				);
+				const state = await engagementState( event.id );
+				expect( state.requests ).toHaveLength( 1 );
+				expect( state.requests[ 0 ] ).not.toHaveProperty(
+					'test_event_code'
+				);
+				expect( state.rows.map( ( row ) => row.state ) ).toEqual( [
+					'received',
+				] );
+			} finally {
+				await wp( 'option', 'delete', 'fair_e2e_meta_hold_cron' ).catch(
+					() => {}
+				);
+			}
 		} );
 
 		test( 'limits requests per client', async () => {
