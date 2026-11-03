@@ -229,7 +229,11 @@ describe( 'EventSchedule', () => {
 		);
 
 		expect(
-			await screen.findByText( 'Schedule saved.' )
+			// The Notice also speaks its text into an a11y live region after
+			// a delay, so scope the query to the visible notice.
+			await screen.findByText( 'Schedule saved.', {
+				selector: '.components-notice__content',
+			} )
 		).toBeInTheDocument();
 		expect( lastSave() ).toMatchObject( {
 			path: '/fair-events/v1/event-dates/7/schedule',
