@@ -16,8 +16,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Builds the display-ready pricing schedule the event-prices block renders:
- * one section per sale period, each listing every enabled ticket type's
- * state in that period (free, priced, or not available). Presentation-only —
+ * one section per sale period, each listing the enabled ticket types
+ * available in that period (free or priced). Presentation-only —
  * it never decides purchasability for the signup flow, which stays owned by
  * {@see TicketPricing} and {@see TicketAvailability}.
  *
@@ -58,13 +58,13 @@ class EventPricingSchedule {
 	 * Pure, DB-free schedule assembly, split out from build_for_event_date()
 	 * for unit testing without a database.
 	 *
-	 * Every enabled ticket type gets one entry per period so the table shows
-	 * the full ticket-type/period relationship — a type with no price row for
-	 * a period appears there as "not available" rather than being silently
-	 * dropped from that period's row, so a visitor can see it isn't on offer
-	 * then instead of assuming an omission is an error. Only an explicit
-	 * price row is ever "free" or "priced" (issue #1624): a missing row is
-	 * never guessed as free.
+	 * Each period lists only the enabled ticket types available in it — those
+	 * with an explicit price row there — in their configured order (#2165).
+	 * A type with no price row for a period is omitted from that period
+	 * rather than shown as "not available", keeping each card to what a
+	 * visitor can actually buy then. Only an explicit price row is ever
+	 * "free" or "priced" (issue #1624): a missing row is never guessed as
+	 * free, and an explicit zero price stays visible as "free".
 	 *
 	 * @param object[] $ticket_types     TicketType objects.
 	 * @param object[] $resolved_periods TicketSalePeriod objects, already run
@@ -82,13 +82,13 @@ class EventPricingSchedule {
 	 *         entries: array<int, array{
 	 *             ticket_type_id: int,
 	 *             name: string,
-	 *             state: 'free'|'priced'|'unavailable',
+	 *             state: 'free'|'priced',
 	 *             price: float|null
 	 *         }>
 	 *     }>,
 	 *     has_prices: bool
-	 * } `periods` lists only sections with at least one displayable (free or
-	 *   priced) entry, in their configured order. `has_prices` is false when
+	 * } `periods` lists only sections with at least one entry, in their
+	 *   configured order. `has_prices` is false when
 	 *   no enabled ticket type has an explicit price in any period — the
 	 *   caller's signal to render nothing publicly.
 	 */
@@ -129,36 +129,30 @@ class EventPricingSchedule {
 				continue;
 			}
 
-			$period_prices    = $price_by_period[ (int) $period->id ] ?? array();
-			$entries          = array();
-			$period_has_price = false;
+			$period_prices = $price_by_period[ (int) $period->id ] ?? array();
+			$entries       = array();
 
 			foreach ( $enabled_types as $ticket_type ) {
 				$type_id = (int) $ticket_type->id;
 
-				if ( array_key_exists( $type_id, $period_prices ) ) {
-					$price            = $period_prices[ $type_id ];
-					$period_has_price = true;
-					$entries[]        = array(
-						'ticket_type_id' => $type_id,
-						'name'           => $ticket_type->name,
-						'state'          => $price > 0.0 ? 'priced' : 'free',
-						'price'          => $price > 0.0 ? $price : null,
-					);
-				} else {
-					$entries[] = array(
-						'ticket_type_id' => $type_id,
-						'name'           => $ticket_type->name,
-						'state'          => 'unavailable',
-						'price'          => null,
-					);
+				// No price row: not available in this period, so not listed.
+				if ( ! array_key_exists( $type_id, $period_prices ) ) {
+					continue;
 				}
+
+				$price     = $period_prices[ $type_id ];
+				$entries[] = array(
+					'ticket_type_id' => $type_id,
+					'name'           => $ticket_type->name,
+					'state'          => $price > 0.0 ? 'priced' : 'free',
+					'price'          => $price > 0.0 ? $price : null,
+				);
 			}
 
-			// No displayable (free or priced) entry in this period — every
-			// type is either unpriced here or genuinely priced elsewhere;
-			// showing an all-"not available" period would only confuse.
-			if ( ! $period_has_price ) {
+			// Nothing available in this period — an empty card would only
+			// confuse visitors. Boundaries were resolved against every
+			// configured period beforehand, so neighbours keep their dates.
+			if ( empty( $entries ) ) {
 				continue;
 			}
 
@@ -192,8 +186,8 @@ class EventPricingSchedule {
 	 * @param mixed $hidden_ticket_type_ids Ticket type IDs to hide.
 	 * @param mixed $hidden_sale_period_ids Sale period IDs to hide.
 	 * @return array{periods: array, has_prices: bool} Same shape as
-	 *   build_schedule(): sections left with no free or priced entry are
-	 *   dropped, and `has_prices` reflects the filtered result.
+	 *   build_schedule(): sections left with no entry are dropped, and
+	 *   `has_prices` reflects the filtered result.
 	 */
 	public static function filter_schedule( array $schedule, $hidden_ticket_type_ids, $hidden_sale_period_ids ) {
 		$hidden_types   = self::normalize_ids( $hidden_ticket_type_ids );
@@ -215,17 +209,9 @@ class EventPricingSchedule {
 				)
 			);
 
-			$has_displayable = false;
-			foreach ( $entries as $entry ) {
-				if ( 'unavailable' !== $entry['state'] ) {
-					$has_displayable = true;
-					break;
-				}
-			}
-
-			// Same rule as build_schedule(): an all-"not available" section
-			// would only confuse visitors.
-			if ( ! $has_displayable ) {
+			// Same rule as build_schedule(): an empty card would only
+			// confuse visitors.
+			if ( empty( $entries ) ) {
 				continue;
 			}
 

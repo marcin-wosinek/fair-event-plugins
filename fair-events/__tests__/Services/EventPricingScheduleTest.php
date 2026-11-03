@@ -89,8 +89,8 @@ class EventPricingScheduleTest extends TestCase {
 	}
 
 	/**
-	 * Multiple ticket types across multiple periods each get their own entry,
-	 * in the configured period order.
+	 * Multiple ticket types across multiple periods: each period lists only
+	 * the types priced in it, in the configured period order.
 	 */
 	public function test_multiple_types_multiple_periods() {
 		$types   = array(
@@ -114,18 +114,82 @@ class EventPricingScheduleTest extends TestCase {
 		$this->assertSame( 11, $result['periods'][1]['id'] );
 
 		// Period 1: both types priced.
+		$this->assertSame( array( 1, 2 ), array_column( $result['periods'][0]['entries'], 'ticket_type_id' ) );
 		$this->assertSame( 'priced', $result['periods'][0]['entries'][0]['state'] );
 		$this->assertSame( 'priced', $result['periods'][0]['entries'][1]['state'] );
 
-		// Period 2: early bird has no row for this period — not available,
-		// not guessed as free.
-		$this->assertSame( 'unavailable', $result['periods'][1]['entries'][0]['state'] );
-		$this->assertNull( $result['periods'][1]['entries'][0]['price'] );
-		$this->assertSame( 'priced', $result['periods'][1]['entries'][1]['state'] );
+		// Period 2: early bird has no row for this period — left out, not
+		// guessed as free.
+		$this->assertSame( array( 2 ), array_column( $result['periods'][1]['entries'], 'ticket_type_id' ) );
+		$this->assertSame( 'priced', $result['periods'][1]['entries'][0]['state'] );
+		$this->assertSame( 20.0, $result['periods'][1]['entries'][0]['price'] );
 	}
 
 	/**
-	 * An explicit zero-price row is "free", not "not available" — the only
+	 * The #2165 example: five ticket types, only two of them on sale in
+	 * Early bird. Each period lists just its available tickets, keeping
+	 * names, prices, the configured order, and free tickets as "free".
+	 */
+	public function test_mixed_availability_lists_only_available_tickets_per_period() {
+		$types   = array(
+			$this->ticket_type( 1, '2 workshops' ),
+			$this->ticket_type( 2, 'Fusion pass' ),
+			$this->ticket_type( 3, 'Bring a friend' ),
+			$this->ticket_type( 4, 'Workshop 1' ),
+			$this->ticket_type( 5, 'Workshop 2' ),
+		);
+		$periods = array(
+			$this->period( 10, 'Early bird', '2026-01-01 00:00:00', '2026-02-01 00:00:00' ),
+			$this->period( 11, 'Regular', '2026-02-01 00:00:00', '2026-03-01 00:00:00' ),
+		);
+		$prices  = array(
+			// Price rows in a different order than the ticket types, so the
+			// entry order provably follows the configured type order.
+			$this->price( 2, 10, 120.0 ),
+			$this->price( 1, 10, 60.0 ),
+			$this->price( 5, 11, 35.0 ),
+			$this->price( 4, 11, 35.0 ),
+			$this->price( 3, 11, 0.0 ),
+			$this->price( 2, 11, 140.0 ),
+			$this->price( 1, 11, 70.0 ),
+		);
+
+		$result = EventPricingSchedule::build_schedule( $types, $periods, $prices );
+
+		$this->assertTrue( $result['has_prices'] );
+		$this->assertSame(
+			array(
+				array(
+					'ticket_type_id' => 1,
+					'name'           => '2 workshops',
+					'state'          => 'priced',
+					'price'          => 60.0,
+				),
+				array(
+					'ticket_type_id' => 2,
+					'name'           => 'Fusion pass',
+					'state'          => 'priced',
+					'price'          => 120.0,
+				),
+			),
+			$result['periods'][0]['entries']
+		);
+		$this->assertSame(
+			array( '2 workshops', 'Fusion pass', 'Bring a friend', 'Workshop 1', 'Workshop 2' ),
+			array_column( $result['periods'][1]['entries'], 'name' )
+		);
+		$this->assertSame(
+			array( 'priced', 'priced', 'free', 'priced', 'priced' ),
+			array_column( $result['periods'][1]['entries'], 'state' )
+		);
+		$this->assertSame(
+			array( 70.0, 140.0, null, 35.0, 35.0 ),
+			array_column( $result['periods'][1]['entries'], 'price' )
+		);
+	}
+
+	/**
+	 * An explicit zero-price row is "free" and stays listed — the only
 	 * way a ticket type is ever shown as free (issue #1624).
 	 */
 	public function test_explicit_zero_price_is_free() {
@@ -140,10 +204,10 @@ class EventPricingScheduleTest extends TestCase {
 	}
 
 	/**
-	 * A ticket type with no price row anywhere is "not available" in every
-	 * period, never "free".
+	 * A ticket type with no price row anywhere produces no entry in any
+	 * period — it is never shown as "free".
 	 */
-	public function test_missing_price_row_is_unavailable_not_free() {
+	public function test_missing_price_row_is_omitted_not_free() {
 		$result = EventPricingSchedule::build_schedule(
 			array(
 				$this->ticket_type( 1, 'Priced' ),
@@ -154,13 +218,14 @@ class EventPricingScheduleTest extends TestCase {
 		);
 
 		$this->assertCount( 1, $result['periods'] );
+		$this->assertCount( 1, $result['periods'][0]['entries'] );
+		$this->assertSame( 1, $result['periods'][0]['entries'][0]['ticket_type_id'] );
 		$this->assertSame( 'priced', $result['periods'][0]['entries'][0]['state'] );
-		$this->assertSame( 'unavailable', $result['periods'][0]['entries'][1]['state'] );
 	}
 
 	/**
 	 * A manually disabled ticket type is dropped from the schedule entirely,
-	 * not shown as unavailable.
+	 * even where it has a price row.
 	 */
 	public function test_disabled_type_is_omitted() {
 		$result = EventPricingSchedule::build_schedule(
@@ -241,8 +306,8 @@ class EventPricingScheduleTest extends TestCase {
 	}
 
 	/**
-	 * A period where nothing is displayable (every type unavailable there)
-	 * is omitted — an all-"not available" section would only confuse.
+	 * A period where no ticket type is available (no price rows there) is
+	 * omitted — an empty card would only confuse.
 	 */
 	public function test_period_with_no_displayable_price_is_omitted() {
 		$result = EventPricingSchedule::build_schedule(
@@ -256,6 +321,43 @@ class EventPricingScheduleTest extends TestCase {
 
 		$this->assertCount( 1, $result['periods'] );
 		$this->assertSame( 10, $result['periods'][0]['id'] );
+	}
+
+	/**
+	 * Dropping an empty interior period never shifts its neighbours: the
+	 * lazy boundaries were resolved against every configured period first.
+	 */
+	public function test_empty_interior_period_keeps_neighbour_boundaries() {
+		$now      = '2026-01-15 09:00:00';
+		$periods  = array(
+			$this->period( 10, 'Early', null, '2026-02-01 00:00:00' ),
+			$this->period( 11, 'Unpriced', '2026-02-01 00:00:00', '2026-03-01 00:00:00' ),
+			$this->period( 12, 'Late', '2026-03-01 00:00:00', null ),
+		);
+		$resolved = TicketAvailability::resolve_periods( $periods, $now, '2026-04-01 00:00:00', '2026-01-01 00:00:00' );
+
+		$result = EventPricingSchedule::build_schedule(
+			array(
+				$this->ticket_type( 1, 'General' ),
+				$this->ticket_type( 2, 'Student' ),
+			),
+			$resolved,
+			array(
+				$this->price( 1, 10, 10.0 ),
+				$this->price( 2, 12, 0.0 ),
+			),
+			$now
+		);
+
+		$this->assertTrue( $result['has_prices'] );
+		$this->assertSame( array( 10, 12 ), array_column( $result['periods'], 'id' ) );
+		$this->assertSame( '2026-01-01 00:00:00', $result['periods'][0]['sale_start'] );
+		$this->assertSame( '2026-02-01 00:00:00', $result['periods'][0]['sale_end'] );
+		$this->assertSame( '2026-03-01 00:00:00', $result['periods'][1]['sale_start'] );
+		$this->assertSame( '2026-04-01 00:00:00', $result['periods'][1]['sale_end'] );
+		$this->assertSame( array( 1 ), array_column( $result['periods'][0]['entries'], 'ticket_type_id' ) );
+		$this->assertSame( array( 2 ), array_column( $result['periods'][1]['entries'], 'ticket_type_id' ) );
+		$this->assertSame( 'free', $result['periods'][1]['entries'][0]['state'] );
 	}
 
 	/**
@@ -364,7 +466,7 @@ class EventPricingScheduleTest extends TestCase {
 
 		$this->assertSame(
 			array(
-				10 => array( 1, 3 ),
+				10 => array( 1 ),
 				11 => array( 1, 3 ),
 				12 => array( 1, 3 ),
 			),
@@ -405,22 +507,23 @@ class EventPricingScheduleTest extends TestCase {
 	}
 
 	/**
-	 * A section left with only "not available" rows is dropped, while free
-	 * and unavailable states survive filtering unchanged.
+	 * A section emptied by the block's hidden ticket types is dropped, while
+	 * the remaining sections keep their dates and free/priced states.
 	 */
-	public function test_filter_drops_sections_left_without_prices_and_keeps_states() {
-		// Only Workshop remains: free in Regular, priced in Last minute, no
-		// price row in Early Bird — so Early Bird disappears.
+	public function test_filter_drops_sections_left_empty_and_keeps_states() {
+		// Only Workshop remains: free in Regular, priced in Last minute, not
+		// on sale in Early Bird — so Early Bird disappears.
 		$result = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 1, 2 ), array() );
 
+		$this->assertTrue( $result['has_prices'] );
 		$this->assertSame( array( 11, 12 ), array_keys( $this->shape( $result ) ) );
 		$this->assertSame( 'free', $result['periods'][0]['entries'][0]['state'] );
 		$this->assertNull( $result['periods'][0]['entries'][0]['price'] );
 		$this->assertSame( 'priced', $result['periods'][1]['entries'][0]['state'] );
-
-		// Unavailable rows next to priced ones are preserved.
-		$with_unavailable = EventPricingSchedule::filter_schedule( $this->festival_schedule(), array( 2 ), array() );
-		$this->assertSame( 'unavailable', $with_unavailable['periods'][0]['entries'][1]['state'] );
+		$this->assertSame( '2026-02-01 00:00:00', $result['periods'][0]['sale_start'] );
+		$this->assertSame( '2026-03-01 00:00:00', $result['periods'][0]['sale_end'] );
+		$this->assertSame( '2026-03-01 00:00:00', $result['periods'][1]['sale_start'] );
+		$this->assertSame( '2026-04-01 00:00:00', $result['periods'][1]['sale_end'] );
 	}
 
 	/**
