@@ -991,7 +991,11 @@ describe( 'optional times (#1851)', () => {
 			screen.queryByText( /lists several sessions/ )
 		).not.toBeInTheDocument();
 
+		// Moving the prefilled start keeps the event's length (#2089).
 		setTime( 'Start time (optional)', '09:00' );
+		expect( screen.getByLabelText( 'End time (optional)' ) ).toHaveValue(
+			'10:15'
+		);
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Create Event' } )
 		);
@@ -1001,7 +1005,7 @@ describe( 'optional times (#1851)', () => {
 			start_date: '2026-11-02',
 			start_time: '09:00:00',
 			end_date: '2026-11-02',
-			end_time: '10:00:00',
+			end_time: '10:15:00',
 			link_type: 'external',
 			external_url: oonaUrl,
 		} );
