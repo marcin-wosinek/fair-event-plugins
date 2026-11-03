@@ -272,6 +272,22 @@ test('owned root E2E mode validates Chromium and runs only the root suite', asyn
 	assert.deepEqual(executor.calls.at(-2).args, ['run', 'test:e2e']);
 });
 
+test('owned root E2E mode forwards the CI shard selection to Playwright', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const parsed = parseArguments(['--suite=e2e', '--', '--shard=2/4']);
+	assert.equal(
+		await run(executor, parsed, new EventEmitter(), async () => {}),
+		0
+	);
+	assert.deepEqual(executor.calls.at(-2).args, [
+		'run',
+		'test:e2e',
+		'--',
+		'--shard=2/4',
+	]);
+	assert.deepEqual(executor.calls.at(-1).args, ['wp-env', 'stop']);
+});
+
 test('workspace E2E mode forwards specs and Playwright options unchanged', async () => {
 	const executor = createExecutor();
 	const parsed = parseArguments([
