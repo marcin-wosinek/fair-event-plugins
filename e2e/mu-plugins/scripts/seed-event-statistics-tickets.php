@@ -13,6 +13,8 @@
  *                       Omit units (or pass []) for a signup not yet backfilled.
  *                       holdMinutes sets a payment hold ending that many
  *                       minutes from now (negative: already lapsed).
+ *                       legacyEventParticipantId marks the signup as
+ *                       backfilled from that relationship (provenance).
  *   configure           {eventDateId, eventCapacity?,
  *                       ticketTypes?: [{name, capacity}], options?: [{name, capacity}]}
  *                       A null capacity is unlimited.
@@ -20,6 +22,7 @@
  *   ticket-status       {ticketId, status}
  *   transfer            {ticketId, holderParticipantId}
  *   participant-option  {relationshipId, optionId, name}
+ *   relationship-ticket-type {relationshipId, ticketTypeId}
  *   cleanup             {eventDateIds: [], configuredEventDateIds?: []}
  *                       configuredEventDateIds also lose the ticket types and
  *                       activities `configure` gave them.
@@ -68,7 +71,7 @@ switch ( $fixture_action ) {
 				'participant_id'     => empty( $data['participantId'] ) ? null : (int) $data['participantId'],
 				'payment_expires_at' => $hold_until( $data ),
 				'created_at'         => (string) $data['createdAt'],
-			)
+			) + ( empty( $data['legacyEventParticipantId'] ) ? array() : array( 'legacy_event_participant_id' => (int) $data['legacyEventParticipantId'] ) )
 		);
 		$signup_id  = (int) $wpdb->insert_id;
 		$ticket_ids = array();
@@ -153,6 +156,10 @@ switch ( $fixture_action ) {
 				'status'               => 'confirmed',
 			)
 		);
+		break;
+
+	case 'relationship-ticket-type':
+		$result['updated'] = $wpdb->update( $wpdb->prefix . 'fair_audience_event_participants', array( 'ticket_type_id' => (int) $data['ticketTypeId'] ), array( 'id' => (int) $data['relationshipId'] ) );
 		break;
 
 	case 'cleanup':

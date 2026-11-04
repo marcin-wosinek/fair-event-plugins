@@ -661,6 +661,82 @@ what it writes. The stages 3–5 upgrade notes must give the minimum versions
 of each plugin, in the format of the existing `DEPLOYMENT.md` upgrade notes.
 Versions are filled in when each stage is released. They aren't known yet.
 
+### 8.7 Stage 2 storage and capabilities
+
+**Implemented** (#2138, Fair Events DB `3.49.0`). Stage 2 adds storage and
+capability checks only. The storage stays empty: nothing in the live flows
+writes payment links yet, and every reader, lifecycle handler, permission,
+notification and Audience ledger write is unchanged (§8.1). Stage 3
+implements shadow writes for every live writer and turns them on before it
+takes its cutoff.
+
+**Schema** (`fair-events/src/Database/Schema.php`, created by `dbDelta()` in
+`Installer::create_tables()`; no data migration):
+
+- `fair_events_signup_payment_links` (InnoDB): `id`, `signup_id`,
+  `transaction_id` (not a foreign key), `role` (`charge`,
+  `additional_charge`, `upgrade`, `legacy_refund_record`),
+  `allocated_amount DECIMAL(10,2)`, `currency CHAR(3)`, `attribution`
+  (`live`, `backfill`, `reconciled`), `evidence` (JSON `TEXT` with a `type`),
+  `created_at` (the attempt's creation, copied from the transaction's
+  `created_at` unless the writer gives one) and `recorded_at` (when the link
+  was written). Unique key `idx_signup_transaction_role` (`signup_id`,
+  `transaction_id`, `role`), which also serves purchase lookups; key
+  `idx_transaction_id`.
+- `fair_events_signups.legacy_event_participant_id`: nullable, unique
+  (`idx_legacy_event_participant_id`). It is the provenance marker of §4.2:
+  the relationship a backfilled purchase was created from. Ordinary
+  purchases leave it null. It is a plain integer, so it survives Audience
+  being deactivated, and the purchase's `participant_id` stays optional.
+
+**Interfaces** (all in `fair-events/src/`):
+
+| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                        |
+| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                            |
+| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                             |
+| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                     |
+| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                    |
+| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (false until stage 3), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (false until stage 4), `payment_information_available()`. |
+
+`write()` errors: `payment_links_unavailable` (schema not upgraded),
+`payment_information_unavailable` (Connector inactive or its table missing),
+`missing_transaction`, `payment_links_busy` (lock timeout),
+`invalid_payment_transaction`, `invalid_payment_link` (with the `field`),
+`duplicate_payment_link` (the same purchase and role twice in one set),
+`payment_link_conflict`, `allocation_exceeds_total`,
+`payment_link_unknown_purchase`, `payment_link_write_failed` (rolled back).
+Nothing is written on any error.
+
+**Admissions.** Both legacy filters skip a relationship that a purchase
+names as its provenance, whatever that purchase's participant or status:
+`EventTicketStatistics::get_relationships_without_signup()` when
+`storage_available()`, and Audience's
+`EventParticipantRepository::count_admissions_without_signup()` when the
+active Events has `PaymentHistoryCompatibility::purchase_provenance_available()`.
+The participant/date and ticket-type matching for ordinary purchases is
+unchanged, and so is the activity attribution in Statistics. Audience
+reports this support with `EventParticipantRepository::excludes_purchase_provenance()`.
+
+**Starting the backfill.** `PaymentHistoryCompatibility::backfill_blockers()`
+lists what stops stage 3 from starting: `storage_unavailable`,
+`shadow_writes_incomplete`, `payment_information_unavailable` and
+`audience_incompatible` (an active Audience without
+`excludes_purchase_provenance()`, which would count backfilled
+relationships twice, §8.5). Stage 3 must refuse to start while any is
+listed. In stage 2 `shadow_writes_incomplete` is always listed.
+
+**Supported combinations at stage 2** (§8.6):
+
+| Combination                   | Behaviour                                                                                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Events + Audience + Connector | Unchanged. Storage exists and is empty.                                                                                                                     |
+| Events + Audience             | Unchanged. `payment_information_available()` is false; `write()` refuses with `payment_information_unavailable`.                                            |
+| Newer Events + older Audience | Works. Events' Statistics skips provenance relationships; the older Audience capacity filter doesn't, so the backfill is blocked (`audience_incompatible`). |
+| Older Events + newer Audience | Works. Audience finds no `PaymentHistoryCompatibility` and runs its previous query, never reading the missing column.                                       |
+| Events upgrade incomplete     | `storage_available()` is false until DB `3.49.0` is recorded and the table exists; both filters keep their previous queries.                                |
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"
@@ -715,7 +791,14 @@ Run locally only the focused specs named here, as
 - **Stage 2 (#2138):** PHP unit tests for the link invariants (uniqueness,
   allocation never above the total). An API spec showing the legacy filters
   skip backfilled relationships. A spec showing Statistics still answers with
-  an older Audience.
+  an older Audience. Implemented as
+  `fair-events/__tests__/Services/PaymentLinkAllocationTest.php`,
+  `PaymentLinksTest.php` (writer, reader, capabilities, older and newer
+  Audience), `fair-audience/__tests__/Database/AdmissionsProvenanceTest.php`
+  (older and newer Events) and
+  `fair-events/src/API/__tests__/PaymentHistoryFoundation.api.spec.js`
+  (schema on install and upgrade, provenance in capacity and Statistics
+  including a series pass, uniqueness, conflicts, concurrent writers).
 - **Stage 3 (#2139):** API specs with fixtures for examples 3, 4, 5, 7, 9, 11,
   13, 14, 16 and 20–22. Rerun and resume specs (examples 17, 18). The
   verification report, including the reasons in §6.2. Reconciliation
