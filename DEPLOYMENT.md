@@ -230,6 +230,51 @@ The cleanup is retried on every request until it succeeds. **To roll back**
 to `1.46.0`; the bundle defaults to on, so no option needs restoring unless
 it had been switched off.
 
+## Upgrade notes: payment history storage (#2138)
+
+Stage 2 of the payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.7](./PAYMENT_HISTORY_MIGRATION.md#87-stage-2-storage-and-capabilities)).
+Upgrading to fair-events DB version `3.49.0` adds, on the first request
+after deploy:
+
+- the empty table `{prefix}fair_events_signup_payment_links`;
+- the nullable column `legacy_event_participant_id`, with a unique index,
+  on `{prefix}fair_events_signups`.
+
+No existing row changes and nothing is deleted. Ticket counts, capacity,
+Statistics revenue, payments, retries and emails keep working from the same
+data as before; the new storage stays empty until stage 3.
+
+**Update order: Fair Payments Connector first, then Fair Events, then Fair
+Audience.** Connector has no change in this stage, but keep it current so
+the later stages start from a known version. Every order still works:
+
+- Newer Fair Events with an older Fair Audience: everything works, but the
+  stage 3 backfill refuses to start (`audience_incompatible`) until Fair
+  Audience is updated. An older Fair Audience would count each backfilled
+  participant a second time in capacity, so never start the backfill with
+  one, and don't roll Fair Audience back below this release once the
+  backfill has run.
+- Older Fair Events with a newer Fair Audience: Fair Audience notices the
+  missing capability and keeps its previous capacity query.
+
+Minimum versions are those released with this change; see each plugin's
+changelog for the version numbers.
+
+**To roll back** (redeploy the previous plugin versions), nothing needs
+restoring: the older code ignores the empty table and the null column. To
+remove them as well, drop the table, then the index and column, and set
+`fair_events_db_version` back to `3.48.0`:
+
+```bash
+wp db query "DROP TABLE IF EXISTS $(wp db prefix)fair_events_signup_payment_links"
+wp db query "ALTER TABLE $(wp db prefix)fair_events_signups DROP INDEX idx_legacy_event_participant_id, DROP COLUMN legacy_event_participant_id"
+wp option update fair_events_db_version 3.48.0
+```
+
+Only do this before stage 3 has run: afterwards the column holds the
+backfill's provenance (see the stage 3 notes).
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

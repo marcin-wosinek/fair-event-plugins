@@ -97,7 +97,10 @@ class Installer {
 	 * 3.40.0 checkout keys and 3.43.0 schedule items. The 3.35.0 tickets
 	 * table is backfilled by migrate_to_3_35_0(). Columns added by 3.38.0
 	 * (attended_at, activities), 3.39.0 (over-capacity flags) and 3.48.0
-	 * (booking_message) need no data migration either.
+	 * (booking_message) need no data migration either, nor do the 3.49.0
+	 * signup payment links table and the signups' legacy_event_participant_id
+	 * provenance column: both start empty, and the payment history backfill
+	 * fills them later.
 	 *
 	 * @return string[] Statements for dbDelta().
 	 */
@@ -123,6 +126,7 @@ class Installer {
 			Schema::get_ticket_activities_table_sql(),
 			Schema::get_checkout_keys_table_sql(),
 			Schema::get_schedule_items_table_sql(),
+			Schema::get_signup_payment_links_table_sql(),
 		);
 	}
 

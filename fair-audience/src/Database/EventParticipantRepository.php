@@ -603,7 +603,10 @@ class EventParticipantRepository {
 	 * or ticket type is already counted there and is skipped, so one
 	 * admission never counts twice. So is one whose participant holds an
 	 * active ticket on the date: a ticket assigned to them by its purchaser
-	 * is counted as that ticket.
+	 * is counted as that ticket. So is one a fair-events purchase names as
+	 * its provenance (backfilled from it), whatever that purchase's
+	 * participant or status, when the active fair-events supports
+	 * provenance.
 	 *
 	 * @param string $scope 'event_date' or 'ticket_type'.
 	 * @param int    $id    Event date ID or ticket type ID.
@@ -614,6 +617,14 @@ class EventParticipantRepository {
 
 		$column = 'ticket_type' === $scope ? 'ticket_type_id' : 'event_date_id';
 
+		$provenance_clause = '';
+		$provenance_args   = array();
+		if ( self::events_purchase_provenance_available() ) {
+			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
+			$provenance_args   = array( $wpdb->prefix . 'fair_events_signups' );
+		}
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $provenance_clause is a fixed fragment with its own %i placeholder.
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM %i AS ep
@@ -632,17 +643,48 @@ class EventParticipantRepository {
 				     WHERE t.holder_participant_id = ep.participant_id
 				     AND t.event_date_id = ep.event_date_id
 				     AND t.status NOT IN ( 'failed', 'expired', 'cancelled', 'refunded' )
-				 )",
-				$this->get_table_name(),
-				$column,
-				(int) $id,
-				gmdate( 'Y-m-d H:i:s' ),
-				$wpdb->prefix . 'fair_events_signups',
-				$wpdb->prefix . 'fair_events_tickets'
+				 )
+				 {$provenance_clause}",
+				array_merge(
+					array(
+						$this->get_table_name(),
+						$column,
+						(int) $id,
+						gmdate( 'Y-m-d H:i:s' ),
+						$wpdb->prefix . 'fair_events_signups',
+						$wpdb->prefix . 'fair_events_tickets',
+					),
+					$provenance_args
+				)
 			)
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		return (int) $count;
+	}
+
+	/**
+	 * Capability marker read by fair-events
+	 * (PaymentHistoryCompatibility::audience_compatible()): this version's
+	 * capacity filter skips relationships named by purchase provenance, so
+	 * fair-events' payment history backfill may create purchases from them.
+	 *
+	 * @return bool Always true.
+	 */
+	public static function excludes_purchase_provenance() {
+		return true;
+	}
+
+	/**
+	 * Whether the active fair-events stores purchase provenance. Checked by
+	 * capability, so this version keeps working with an older fair-events.
+	 *
+	 * @return bool
+	 */
+	private static function events_purchase_provenance_available() {
+		return class_exists( \FairEvents\Services\PaymentHistoryCompatibility::class )
+			&& method_exists( \FairEvents\Services\PaymentHistoryCompatibility::class, 'purchase_provenance_available' )
+			&& \FairEvents\Services\PaymentHistoryCompatibility::purchase_provenance_available();
 	}
 
 	/**

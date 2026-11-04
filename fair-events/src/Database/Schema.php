@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.48.0';
+	const DB_VERSION = '3.49.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -411,6 +411,15 @@ class Schema {
 	/**
 	 * Get the SQL for creating the fair_events_signups table
 	 *
+	 * The transaction_id column is the latest payment attempt only, used by the retry,
+	 * cancel and session flows; the payment history lives in
+	 * fair_events_signup_payment_links. legacy_event_participant_id is the
+	 * purchase's provenance: the Fair Audience relationship a historical
+	 * backfill created it from (PAYMENT_HISTORY_MIGRATION.md §4.2). It is
+	 * null for ordinary purchases, and unique, so one relationship never
+	 * yields two purchases. It is a plain integer, not a foreign key, and
+	 * outlives Fair Audience being deactivated.
+	 *
 	 * @return string SQL statement for creating the table.
 	 */
 	public static function get_signups_table_sql() {
@@ -433,13 +442,55 @@ class Schema {
 			payment_expires_at DATETIME DEFAULT NULL,
 			participant_id BIGINT UNSIGNED DEFAULT NULL,
 			over_capacity TINYINT(1) NOT NULL DEFAULT 0,
+			legacy_event_participant_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_event_date_id (event_date_id),
 			KEY idx_email (email(100)),
 			KEY idx_transaction_id (transaction_id),
 			KEY idx_payment_expires_at (payment_expires_at),
-			KEY idx_participant_id (participant_id)
+			KEY idx_participant_id (participant_id),
+			UNIQUE KEY idx_legacy_event_participant_id (legacy_event_participant_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_signup_payment_links table
+	 *
+	 * One row per (purchase, Connector transaction, role): the Events-owned
+	 * payment history of a purchase (PAYMENT_HISTORY_MIGRATION.md §5.1).
+	 * The transaction_id is not a foreign key; Connector may be inactive and the
+	 * transaction may have been deleted, and the link stays either way.
+	 * allocated_amount is this purchase's part of the transaction total in
+	 * currency, the transaction's currency when the link was written; the
+	 * total and the transaction status are always read from Connector.
+	 * attribution says who wrote the link (live, backfill or reconciled) and
+	 * evidence (JSON) what established it. created_at is when the attempt
+	 * was created, copied from the transaction; recorded_at is when the link
+	 * was written. The unique key also serves purchase lookups.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_signup_payment_links_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_signup_payment_links';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			signup_id BIGINT UNSIGNED NOT NULL,
+			transaction_id BIGINT UNSIGNED NOT NULL,
+			role VARCHAR(30) NOT NULL,
+			allocated_amount DECIMAL(10,2) NOT NULL,
+			currency CHAR(3) NOT NULL,
+			attribution VARCHAR(20) NOT NULL,
+			evidence TEXT NOT NULL,
+			created_at DATETIME NOT NULL,
+			recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_signup_transaction_role (signup_id, transaction_id, role),
+			KEY idx_transaction_id (transaction_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

@@ -21,7 +21,9 @@ defined( 'WPINC' ) || die;
  *
  * Two kinds of admission without ticket units still count, never on top of
  * units: a confirmed signup not yet backfilled (by its quantity), and a
- * signed-up relationship with no signup behind it (as one ticket).
+ * signed-up relationship with no signup behind it (as one ticket). A
+ * relationship that a purchase was backfilled from never counts on top of
+ * that purchase.
  *
  * Activities count per ticket from confirmed ticket selections. Historical
  * selections recorded per participant are attributed only when the
@@ -294,6 +296,9 @@ class EventTicketStatistics {
 	 * Signed-up Fair Audience relationships with no signup behind them, using
 	 * the same matching as the capacity bridge
 	 * (Fair Audience's EventParticipantRepository::count_admissions_without_signup()).
+	 * A relationship a purchase names as its provenance
+	 * (legacy_event_participant_id) is that purchase's admission, whatever
+	 * the purchase's participant or status, so it never counts again.
 	 *
 	 * @param array $scope Scope from get_scope().
 	 * @return array[]
@@ -302,6 +307,13 @@ class EventTicketStatistics {
 		global $wpdb;
 
 		list( $clause, $args ) = self::scope_clause( $scope, 'ep.event_date_id', 'ep.created_at', get_gmt_from_date( $scope['start'] ) );
+
+		$provenance_clause = '';
+		$provenance_args   = array();
+		if ( PaymentHistoryCompatibility::storage_available() ) {
+			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
+			$provenance_args   = array( self::signups_table() );
+		}
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
@@ -314,9 +326,11 @@ class EventTicketStatistics {
 					WHERE s.participant_id = ep.participant_id
 					AND ( s.event_date_id = ep.event_date_id OR ( ep.ticket_type_id IS NOT NULL AND s.ticket_type_id = ep.ticket_type_id ) )
 				)
+				{$provenance_clause}
 				AND {$clause}",
 				array_merge(
 					array( $wpdb->prefix . 'fair_audience_event_participants', self::ticket_types_table(), self::signups_table() ),
+					$provenance_args,
 					$args
 				)
 			),
