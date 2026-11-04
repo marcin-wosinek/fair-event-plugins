@@ -19,7 +19,13 @@ defined( 'WPINC' ) || die;
 class Installer {
 
 	/**
-	 * Install database tables
+	 * Bring the database to the current version.
+	 *
+	 * The one entry point for activation and for upgrades found during plugin
+	 * initialization: classify the site, create or update every table, then
+	 * run the migrations the stored version still needs, in one sequence.
+	 * Nothing is recorded while a table is missing, so the next
+	 * maybe_upgrade() retries the whole run.
 	 *
 	 * @return void
 	 */
@@ -28,11 +34,12 @@ class Installer {
 		$fresh_install   = self::is_fresh_install();
 		$current_version = Schema::get_db_version();
 
-		self::create_tables();
+		if ( ! self::create_tables() ) {
+			return;
+		}
 
 		// A fresh site gets the current schema directly; there is no data for
-		// the historical migrations to upgrade, and some of them query tables
-		// that would not exist yet.
+		// the historical migrations to upgrade.
 		if ( $fresh_install ) {
 			Schema::update_db_version( Schema::DB_VERSION );
 			return;
@@ -80,87 +87,70 @@ class Installer {
 	}
 
 	/**
+	 * CREATE TABLE statements for every current table, in creation order.
+	 *
+	 * Tables whose version needs no data migration: 2.1.0 event date
+	 * categories, 2.5.0 group pricing rules, 2.6.0 ticket tables, 2.8.0 group
+	 * permission rules, 3.0.0 event date settings, 3.3.0 ticket options,
+	 * 3.4.0 ticket type group restrictions, 3.9.0 ticket option prices,
+	 * 3.15.0 signups, 3.37.0 capacity overrides, 3.38.0 ticket activities,
+	 * 3.40.0 checkout keys and 3.43.0 schedule items. The 3.35.0 tickets
+	 * table is backfilled by migrate_to_3_35_0(). Columns added by 3.38.0
+	 * (attended_at, activities), 3.39.0 (over-capacity flags) and 3.48.0
+	 * (booking_message) need no data migration either.
+	 *
+	 * @return string[] Statements for dbDelta().
+	 */
+	private static function table_statements() {
+		return array(
+			Schema::get_event_dates_table_sql(),
+			Schema::get_event_sources_table_sql(),
+			Schema::get_event_venues_table_sql(),
+			Schema::get_event_date_categories_table_sql(),
+			Schema::get_event_date_posts_table_sql(),
+			Schema::get_group_pricing_rules_table_sql(),
+			Schema::get_ticket_types_table_sql(),
+			Schema::get_ticket_sale_periods_table_sql(),
+			Schema::get_ticket_prices_table_sql(),
+			Schema::get_group_permission_rules_table_sql(),
+			Schema::get_event_date_settings_table_sql(),
+			Schema::get_ticket_options_table_sql(),
+			Schema::get_ticket_type_group_restrictions_table_sql(),
+			Schema::get_ticket_option_prices_table_sql(),
+			Schema::get_signups_table_sql(),
+			Schema::get_tickets_table_sql(),
+			Schema::get_capacity_overrides_table_sql(),
+			Schema::get_ticket_activities_table_sql(),
+			Schema::get_checkout_keys_table_sql(),
+			Schema::get_schedule_items_table_sql(),
+		);
+	}
+
+	/**
 	 * Create or update every current table with dbDelta().
 	 *
-	 * @return void
+	 * The dbDelta() call adds missing tables and columns but never drops one,
+	 * so the legacy columns that later migrations consume stay in place until those
+	 * migrations remove them.
+	 *
+	 * @return bool True when every table exists afterwards.
 	 */
 	private static function create_tables() {
+		global $wpdb;
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$sql = Schema::get_event_dates_table_sql();
-		dbDelta( $sql );
+		$created = true;
+		foreach ( self::table_statements() as $sql ) {
+			dbDelta( $sql );
 
-		$sql = Schema::get_event_sources_table_sql();
-		dbDelta( $sql );
+			preg_match( '/CREATE TABLE (\S+)/', $sql, $matches );
+			if ( null === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $matches[1] ) ) ) ) {
+				$created = false;
+			}
+		}
 
-		$sql = Schema::get_event_venues_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_event_date_categories_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_event_date_posts_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_group_pricing_rules_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_types_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_sale_periods_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_prices_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_group_permission_rules_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_event_date_settings_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_options_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_type_group_restrictions_table_sql();
-		dbDelta( $sql );
-
-		$sql = Schema::get_ticket_option_prices_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.15.0 - Signups table (no data migration needed, table created by dbDelta).
-		$sql = Schema::get_signups_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.35.0 - Ticket units table (existing signups are backfilled by migrate_to_3_35_0()).
-		$sql = Schema::get_tickets_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.37.0 - Capacity override audit table (no data migration needed, table created by dbDelta).
-		$sql = Schema::get_capacity_overrides_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.38.0 - Ticket attended_at column and per-ticket activities
-		// table (no data migration needed, both applied by dbDelta).
-		$sql = Schema::get_ticket_activities_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.39.0 - Activity over-capacity flag and activity columns on
-		// the override audit (no data migration needed, applied by dbDelta
-		// through the two statements above).
-
-		// Version 3.40.0 - Checkout idempotency keys table (no data migration needed, table created by dbDelta).
-		$sql = Schema::get_checkout_keys_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.43.0 - Schedule items table (no data migration needed, table created by dbDelta).
-		$sql = Schema::get_schedule_items_table_sql();
-		dbDelta( $sql );
-
-		// Version 3.48.0 - Event date booking_message column (no data
-		// migration needed, applied by dbDelta through the event dates
-		// statement above).
+		return $created;
 	}
 
 	/**
@@ -495,189 +485,12 @@ class Installer {
 	}
 
 	/**
-	 * Run database upgrades if needed
+	 * Run database upgrades if needed.
 	 *
 	 * @return void
 	 */
 	public static function maybe_upgrade() {
 		if ( self::needs_upgrade() ) {
-			// A fresh site has nothing to migrate, and the migrations below
-			// would run before install() creates the tables they touch.
-			if ( self::is_fresh_install() ) {
-				self::install();
-				return;
-			}
-
-			$current_version = Schema::get_db_version();
-
-			// Run migrations.
-			if ( version_compare( $current_version, '1.0.0', '<' ) ) {
-				self::migrate_to_1_0_0();
-			}
-
-			if ( version_compare( $current_version, '1.5.0', '<' ) ) {
-				self::migrate_to_1_5_0();
-			}
-
-			if ( version_compare( $current_version, '1.6.0', '<' ) ) {
-				self::migrate_to_1_6_0();
-			}
-
-			if ( version_compare( $current_version, '1.7.0', '<' ) ) {
-				self::migrate_to_1_7_0();
-			}
-
-			if ( version_compare( $current_version, '1.8.0', '<' ) ) {
-				self::migrate_to_1_8_0();
-			}
-
-			if ( version_compare( $current_version, '1.9.0', '<' ) ) {
-				self::migrate_to_1_9_0();
-			}
-
-			if ( version_compare( $current_version, '2.0.0', '<' ) ) {
-				self::migrate_to_2_0_0();
-			}
-
-			if ( version_compare( $current_version, '2.2.0', '<' ) ) {
-				self::migrate_to_2_2_0();
-			}
-
-			if ( version_compare( $current_version, '2.3.0', '<' ) ) {
-				self::migrate_to_2_3_0();
-			}
-
-			if ( version_compare( $current_version, '2.4.0', '<' ) ) {
-				self::migrate_to_2_4_0();
-			}
-
-			if ( version_compare( $current_version, '2.6.0', '<' ) ) {
-				self::migrate_to_2_6_0();
-			}
-
-			if ( version_compare( $current_version, '2.7.0', '<' ) ) {
-				self::migrate_to_2_7_0();
-			}
-
-			if ( version_compare( $current_version, '3.1.0', '<' ) ) {
-				self::migrate_to_3_1_0();
-			}
-
-			if ( version_compare( $current_version, '3.2.0', '<' ) ) {
-				self::migrate_to_3_2_0();
-			}
-
-			// Version 3.3.0 - Ticket options table (no data migration needed, table created by dbDelta).
-
-			// Version 3.4.0 - Ticket type group restrictions table (no data migration needed, table created by dbDelta).
-
-			if ( version_compare( $current_version, '3.5.0', '<' ) ) {
-				self::migrate_to_3_5_0();
-			}
-
-			// Version 3.5.0 - Invitation tokens table (no data migration needed, table created by dbDelta).
-
-			if ( version_compare( $current_version, '3.6.0', '<' ) ) {
-				self::migrate_to_3_6_0();
-			}
-
-			if ( version_compare( $current_version, '3.7.0', '<' ) ) {
-				self::migrate_to_3_7_0();
-			}
-
-			if ( version_compare( $current_version, '3.8.0', '<' ) ) {
-				self::migrate_to_3_8_0();
-			}
-
-			if ( version_compare( $current_version, '3.9.0', '<' ) ) {
-				self::migrate_to_3_9_0();
-			}
-
-			if ( version_compare( $current_version, '3.10.0', '<' ) ) {
-				self::migrate_to_3_10_0();
-			}
-
-			if ( version_compare( $current_version, '3.11.0', '<' ) ) {
-				self::migrate_to_3_11_0();
-			}
-
-			if ( version_compare( $current_version, '3.12.0', '<' ) ) {
-				self::migrate_to_3_12_0();
-			}
-
-			if ( version_compare( $current_version, '3.16.0', '<' ) ) {
-				self::migrate_to_3_16_0();
-			}
-
-			if ( version_compare( $current_version, '3.17.0', '<' ) ) {
-				self::migrate_to_3_17_0();
-			}
-
-			if ( version_compare( $current_version, '3.18.0', '<' ) ) {
-				self::migrate_to_3_18_0();
-			}
-
-			if ( version_compare( $current_version, '3.19.0', '<' ) ) {
-				self::migrate_to_3_19_0();
-			}
-
-			if ( version_compare( $current_version, '3.20.0', '<' ) ) {
-				self::migrate_to_3_20_0();
-			}
-
-			if ( version_compare( $current_version, '3.21.0', '<' ) ) {
-				self::migrate_to_3_21_0();
-			}
-
-			if ( version_compare( $current_version, '3.22.0', '<' ) ) {
-				self::migrate_to_3_22_0();
-			}
-
-			if ( version_compare( $current_version, '3.23.0', '<' ) ) {
-				self::migrate_to_3_23_0();
-			}
-
-			if ( version_compare( $current_version, '3.24.0', '<' ) ) {
-				self::migrate_to_3_24_0();
-			}
-
-			if ( version_compare( $current_version, '3.25.0', '<' ) ) {
-				self::migrate_to_3_25_0();
-			}
-
-			if ( version_compare( $current_version, '3.26.0', '<' ) ) {
-				self::migrate_to_3_26_0();
-			}
-
-			if ( version_compare( $current_version, '3.27.0', '<' ) ) {
-				self::migrate_to_3_27_0();
-			}
-
-			if ( version_compare( $current_version, '3.28.0', '<' ) ) {
-				self::migrate_to_3_28_0();
-			}
-
-			if ( version_compare( $current_version, '3.29.0', '<' ) ) {
-				self::migrate_to_3_29_0();
-			}
-
-			if ( version_compare( $current_version, '3.30.0', '<' ) ) {
-				self::migrate_to_3_30_0();
-			}
-
-			if ( version_compare( $current_version, '3.31.0', '<' ) ) {
-				self::migrate_to_3_31_0();
-			}
-
-			if ( version_compare( $current_version, '3.32.0', '<' ) ) {
-				self::migrate_to_3_32_0();
-			}
-
-			if ( version_compare( $current_version, '3.33.0', '<' ) ) {
-				self::migrate_to_3_33_0();
-			}
-
-			// Install/update tables.
 			self::install();
 		}
 	}
@@ -2193,12 +2006,19 @@ class Installer {
 	/**
 	 * Migrate to version 3.30.0 - Allow undated event placeholders.
 	 *
+	 * Tables created after 3.47.0 never had the legacy column and already
+	 * allow undated rows through the canonical timing columns.
+	 *
 	 * @return void
 	 */
 	private static function migrate_to_3_30_0() {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
+		if ( ! self::column_exists( $table_name, 'start_datetime' ) ) {
+			return;
+		}
+
 		$wpdb->query(
 			$wpdb->prepare(
 				'ALTER TABLE %i MODIFY start_datetime DATETIME DEFAULT NULL',
