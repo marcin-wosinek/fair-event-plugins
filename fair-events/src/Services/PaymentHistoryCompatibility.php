@@ -19,8 +19,10 @@ defined( 'WPINC' ) || die;
  * - storage_available(): the payment links table and the purchase
  *   provenance column exist. Both legacy admission filters skip
  *   relationships named by provenance from then on.
- * - shadow_write_coverage(): every live payment writer also writes links.
- *   False until stage 3 implements and turns on that coverage.
+ * - shadow_write_coverage(): every live payment writer also writes links
+ *   and Audience-only admissions have shadow purchases
+ *   (PaymentHistoryShadowWrites). On once the site supports it and the
+ *   coverage floors are recorded.
  * - migration_verified(): the backfill finished and its verification
  *   report was clean (§8.4). Set by stage 3; false until then.
  * - ownership_cutover(): payment links are authoritative for purchases.
@@ -38,6 +40,11 @@ class PaymentHistoryCompatibility {
 	 * First database version with payment links and purchase provenance.
 	 */
 	const STORAGE_DB_VERSION = '3.49.0';
+
+	/**
+	 * First database version with the shadow work queue.
+	 */
+	const SHADOW_DB_VERSION = '3.50.0';
 
 	/**
 	 * Option holding the migration's state; written by later stages.
@@ -82,14 +89,42 @@ class PaymentHistoryCompatibility {
 	}
 
 	/**
+	 * Whether this site can run shadow writes: the links storage and the
+	 * shadow work queue exist, and an active Fair Audience skips the
+	 * relationships and activities that shadow purchases stand for.
+	 *
+	 * @return bool
+	 */
+	public static function shadow_writes_supported() {
+		return self::storage_available()
+			&& version_compare( Schema::get_db_version(), self::SHADOW_DB_VERSION, '>=' )
+			&& self::audience_compatible();
+	}
+
+	/**
 	 * Whether every live payment writer also records payment links (shadow
-	 * writes, §8.1). Stage 2 leaves storage empty, so this is false; stage 3
-	 * turns it on once every writer is covered, before taking its cutoff.
+	 * writes, §8.1, §8.8): supported, and turned on with its coverage floors
+	 * recorded by PaymentHistoryShadowWrites::maybe_enable(), before the
+	 * backfill takes its cutoff.
 	 *
 	 * @return bool
 	 */
 	public static function shadow_write_coverage() {
-		return false;
+		if ( ! self::shadow_writes_supported() ) {
+			return false;
+		}
+		$state = self::get_state();
+		return is_array( $state['shadow_writes'] ?? null ) && ! empty( $state['shadow_writes']['enabled_at'] );
+	}
+
+	/**
+	 * The migration's state option as an array.
+	 *
+	 * @return array
+	 */
+	public static function get_state() {
+		$state = get_option( self::STATE_OPTION, array() );
+		return is_array( $state ) ? $state : array();
 	}
 
 	/**
@@ -98,8 +133,7 @@ class PaymentHistoryCompatibility {
 	 * @return bool
 	 */
 	public static function migration_verified() {
-		$state = get_option( self::STATE_OPTION, array() );
-		return is_array( $state ) && 'verified' === ( $state['status'] ?? '' );
+		return 'verified' === ( self::get_state()['status'] ?? '' );
 	}
 
 	/**
@@ -134,18 +168,22 @@ class PaymentHistoryCompatibility {
 
 	/**
 	 * Whether the active Fair Audience, if any, skips relationships named by
-	 * purchase provenance in its capacity filter. An older Audience would
-	 * count a backfilled relationship a second time (§8.5), so the backfill
-	 * must not start with it.
+	 * purchase provenance in its capacity filters: both their admissions and
+	 * their participant-scope activities, which the purchase's unit carries
+	 * instead. An older Audience would count them a second time (§8.5), so
+	 * neither shadow writes nor the backfill run with it.
 	 *
 	 * @return bool
 	 */
 	public static function audience_compatible() {
-		if ( ! class_exists( \FairAudience\Database\EventParticipantRepository::class ) ) {
+		$repository = \FairAudience\Database\EventParticipantRepository::class;
+		if ( ! class_exists( $repository ) ) {
 			return true;
 		}
-		return method_exists( \FairAudience\Database\EventParticipantRepository::class, 'excludes_purchase_provenance' )
-			&& true === \FairAudience\Database\EventParticipantRepository::excludes_purchase_provenance();
+		return method_exists( $repository, 'excludes_purchase_provenance' )
+			&& true === $repository::excludes_purchase_provenance()
+			&& method_exists( $repository, 'excludes_provenance_activity_selections' )
+			&& true === $repository::excludes_provenance_activity_selections();
 	}
 
 	/**

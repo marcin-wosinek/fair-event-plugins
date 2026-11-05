@@ -1,7 +1,7 @@
 <?php
 /**
- * A Fair Audience release whose capacity filter skips relationships named
- * by purchase provenance.
+ * A Fair Audience release whose capacity filters skip relationships named
+ * by purchase provenance, and their participant-scope activities.
  *
  * @package FairEvents
  */
@@ -21,6 +21,15 @@ class EventParticipantRepository {
 	 * @return bool
 	 */
 	public static function excludes_purchase_provenance() {
+		return true;
+	}
+
+	/**
+	 * Capability marker.
+	 *
+	 * @return bool
+	 */
+	public static function excludes_provenance_activity_selections() {
 		return true;
 	}
 }

@@ -441,8 +441,8 @@ class PaymentLinksTest extends TestCase {
 	}
 
 	/**
-	 * Stage 2 storage exists but authority and shadow writes are off, so the
-	 * backfill can't start.
+	 * Storage exists but authority stays unchanged, and until shadow writes
+	 * record their coverage floors the backfill can't start.
 	 *
 	 * @return void
 	 */
@@ -463,6 +463,59 @@ class PaymentLinksTest extends TestCase {
 		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array( 'status' => 'verified' );
 		$this->assertTrue( PaymentHistoryCompatibility::migration_verified() );
 		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
+	}
+
+	/**
+	 * Shadow writes are supported from the shadow work schema on, and cover
+	 * the live writers once their floors are recorded; the backfill is then
+	 * no longer blocked by them.
+	 *
+	 * @return void
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_shadow_write_coverage_needs_schema_and_floors() {
+		self::activate_connector();
+
+		$this->assertTrue( PaymentHistoryCompatibility::shadow_writes_supported() );
+		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
+
+		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array(
+			'shadow_writes' => array(
+				'enabled_at'         => '2026-11-05 10:00:00',
+				'transaction_floor'  => 40,
+				'relationship_floor' => 12,
+			),
+		);
+		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
+		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
+
+		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.49.0';
+		PaymentHistoryCompatibility::reset_cache();
+		$this->assertFalse( PaymentHistoryCompatibility::shadow_writes_supported() );
+		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
+		$this->assertSame( array( 'shadow_writes_incomplete' ), PaymentHistoryCompatibility::backfill_blockers() );
+	}
+
+	/**
+	 * A Fair Audience that skips provenance admissions but still counts their
+	 * participant-scope activities would count a shadow purchase's
+	 * activities twice, so shadow writes stay off with it.
+	 *
+	 * @return void
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_stage_two_audience_keeps_shadow_writes_off() {
+		require_once __DIR__ . '/fakes/fair-audience/repository-provenance-admissions-only.php';
+		self::activate_connector();
+		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array(
+			'shadow_writes' => array( 'enabled_at' => '2026-11-05 10:00:00' ),
+		);
+
+		$this->assertFalse( PaymentHistoryCompatibility::audience_compatible() );
+		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
+		$this->assertSame( array( 'shadow_writes_incomplete', 'audience_incompatible' ), PaymentHistoryCompatibility::backfill_blockers() );
 	}
 
 	/**

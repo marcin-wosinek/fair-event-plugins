@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.49.0';
+	const DB_VERSION = '3.50.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -491,6 +491,44 @@ class Schema {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_signup_transaction_role (signup_id, transaction_id, role),
 			KEY idx_transaction_id (transaction_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_payment_shadow_work table
+	 *
+	 * Shadow writes still owed by the payment history migration's live
+	 * writers (PAYMENT_HISTORY_MIGRATION.md §8.8): a Connector transaction
+	 * whose payment links aren't written yet, or a Fair Audience relationship
+	 * whose shadow purchase isn't in step yet. One row per (kind, source_id);
+	 * it is removed once the work succeeds. status is `pending` until the
+	 * first attempt, `failed` when an attempt errored, and `unresolved` when
+	 * the evidence named no purchase; reason holds the error code or the
+	 * unresolved reason, detail its JSON context. Outstanding rows block the
+	 * migration's verification.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_payment_shadow_work_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_payment_shadow_work';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			kind VARCHAR(20) NOT NULL,
+			source_id BIGINT UNSIGNED NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			reason VARCHAR(64) DEFAULT NULL,
+			detail TEXT DEFAULT NULL,
+			attempts INT UNSIGNED NOT NULL DEFAULT 0,
+			next_attempt_at DATETIME NOT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_kind_source (kind, source_id),
+			KEY idx_status_next_attempt (status, next_attempt_at)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

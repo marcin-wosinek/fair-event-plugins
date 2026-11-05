@@ -103,5 +103,45 @@ class AdmissionsProvenanceTest extends TestCase {
 	 */
 	public function test_reports_provenance_support_to_events(): void {
 		$this->assertTrue( EventParticipantRepository::excludes_purchase_provenance() );
+		$this->assertTrue( EventParticipantRepository::excludes_provenance_activity_selections() );
+	}
+
+	/**
+	 * The participant-scope activity query the repository ran.
+	 *
+	 * @return array{query: string, args: array}
+	 */
+	private function selections_query() {
+		( new EventParticipantRepository() )->count_participant_scope_selections( 7, 50, array( 50, 51 ) );
+		return $this->database->last_prepared;
+	}
+
+	/**
+	 * With an older fair-events, participant-scope activities are counted
+	 * as before.
+	 */
+	public function test_older_events_keeps_previous_selection_query(): void {
+		$prepared = $this->selections_query();
+
+		$this->assertStringNotContainsString( 'legacy_event_participant_id', $prepared['query'] );
+		$this->assertSame( substr_count( $prepared['query'], '%' ), count( $prepared['args'] ) );
+	}
+
+	/**
+	 * With fair-events storing provenance, the activities of a relationship
+	 * a purchase names are left to that purchase's ticket.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_newer_events_skips_provenance_selections(): void {
+		require_once __DIR__ . '/fakes/fair-events/compatibility-with-provenance.php';
+		$GLOBALS['_fair_test_provenance_available'] = true;
+
+		$prepared = $this->selections_query();
+
+		$this->assertStringContainsString( 'NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )', $prepared['query'] );
+		$this->assertSame( 'wp_fair_events_signups', end( $prepared['args'] ) );
+		$this->assertSame( array( 50, 51 ), array_slice( $prepared['args'], 7, 2 ) );
+		$this->assertSame( substr_count( $prepared['query'], '%' ), count( $prepared['args'] ) );
 	}
 }

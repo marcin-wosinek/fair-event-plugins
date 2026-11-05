@@ -275,6 +275,44 @@ wp option update fair_events_db_version 3.48.0
 Only do this before stage 3 has run: afterwards the column holds the
 backfill's provenance (see the stage 3 notes).
 
+## Upgrade notes: payment history shadow writes (#2139)
+
+First part of stage 3 of the payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.8](./PAYMENT_HISTORY_MIGRATION.md#88-stage-3-shadow-writes)).
+Upgrading to fair-events DB version `3.50.0` adds, on the first request
+after deploy, the empty table `{prefix}fair_events_payment_shadow_work`,
+and turns shadow writes on once Fair Audience is current too:
+
+- every new payment attempt is also recorded in
+  `{prefix}fair_events_signup_payment_links`;
+- every new Fair Audience-only admission (Audience's purchase route, an
+  organizer adding a participant) gets an Events purchase that follows it,
+  marked with `legacy_event_participant_id`. These purchases appear in the
+  Manage Event signups list, and their ticket counts in place of the
+  participant, so ticket counts, capacity and Statistics stay the same.
+  They send no email and don't change payments;
+- the option `fair_events_payment_history_migration` records when this
+  started (`shadow_writes`), and the cron
+  `fair_events_payment_history_shadow_work` runs every fifteen minutes.
+
+Payments, retries, emails, revenue and the Audience ledger keep working
+from the same data as before.
+
+**Update order: Fair Payments Connector first, then Fair Events, then Fair
+Audience.** Shadow writes start only once both Fair Events and Fair
+Audience are on this release. Until then nothing changes.
+
+**Rolling back.** Before shadow writes have started, redeploy the previous
+versions; nothing needs restoring. Once they have started, don't roll Fair
+Audience back below this release, and don't roll Fair Events back below the
+#2138 release: either would count every shadow purchase's activities or
+admission a second time. Rolling Fair Events back to the #2138 release is
+safe: it ignores the queue table and keeps skipping the relationships its
+shadow purchases stand for. Those purchases stop following their
+relationships until you upgrade again, when the sweep brings them back in
+step. Don't drop
+`legacy_event_participant_id` once shadow writes have run.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

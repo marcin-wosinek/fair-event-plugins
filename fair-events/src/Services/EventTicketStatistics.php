@@ -340,7 +340,9 @@ class EventTicketStatistics {
 
 	/**
 	 * Confirmed activities still recorded per participant on the
-	 * occurrence's series, keyed by participant_key(), then option ID.
+	 * occurrence's series, keyed by participant_key(), then option ID. A
+	 * relationship a purchase names as its provenance is left out: that
+	 * purchase's unit carries its activities.
 	 *
 	 * @param array $scope Scope from get_scope().
 	 * @return array<string, array<int, string>> Activity name snapshots.
@@ -350,15 +352,24 @@ class EventTicketStatistics {
 
 		$event_date_ids = count( $scope['series_ids'] ) < 2 ? array( $scope['event_date_id'] ) : $scope['series_ids'];
 
+		$provenance_clause = '';
+		$provenance_args   = array();
+		if ( PaymentHistoryCompatibility::storage_available() ) {
+			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
+			$provenance_args   = array( self::signups_table() );
+		}
+
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ep.participant_id, ep.event_date_id, epo.ticket_option_id, epo.ticket_option_name
 				FROM %i AS ep
 				INNER JOIN %i AS epo ON epo.event_participant_id = ep.id
 				WHERE ep.label = 'signed_up' AND epo.status = 'confirmed' AND epo.ticket_id IS NULL
+				{$provenance_clause}
 				AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $event_date_ids ), '%d' ) ) . ' )',
 				array_merge(
 					array( $wpdb->prefix . 'fair_audience_event_participants', $wpdb->prefix . 'fair_audience_event_participant_options' ),
+					$provenance_args,
 					$event_date_ids
 				)
 			),

@@ -205,7 +205,7 @@ test.describe( 'Payment history foundation', () => {
 
 	test( 'storage is installed with its keys and survives repeated installs', async () => {
 		const expectSchema = ( schema ) => {
-			expect( schema.version ).toBe( '3.49.0' );
+			expect( schema.version ).toBe( '3.50.0' );
 			expect( schema.linksTable ).toBe( true );
 			expect( schema.engine ).toBe( 'InnoDB' );
 			expect( schema.indexes.idx_signup_transaction_role ).toEqual( {
@@ -234,7 +234,7 @@ test.describe( 'Payment history foundation', () => {
 		expect( upgrade.before.provenanceColumn ).toBeNull();
 		expect( upgrade.before.storageAvailable ).toBe( false );
 		for ( const run of [ upgrade.first, upgrade.second ] ) {
-			expect( run.version ).toBe( '3.49.0' );
+			expect( run.version ).toBe( '3.50.0' );
 			expect( run.linksTable ).toBe( true );
 			expect( run.provenanceUnique ).toBe( true );
 			expect( run.storageAvailable ).toBe( true );
@@ -275,16 +275,24 @@ test.describe( 'Payment history foundation', () => {
 		expect( body.total_tickets ).toBe( 2 );
 		expect( await capacityTaken( eventDateId ) ).toBe( 2 );
 
-		// A purchase by the same participant also skips the relationship,
-		// and its participant-scope activity is attributed to its one
-		// ticket, never counted twice.
+		// A purchase by the same participant also skips the relationship.
+		// Its participant-scope activity is the purchase's, carried by its
+		// one ticket as the shadow writes and the backfill copy it, and
+		// never counted twice (§4.4, §8.8).
 		await seedSignup( {
 			eventDateId,
 			participantId: other.participantId,
 			quantity: 1,
 			createdAt: siteNow(),
 			legacyEventParticipantId: other.relationshipId,
-			units: [ { status: 'confirmed' } ],
+			units: [
+				{
+					status: 'confirmed',
+					activities: [
+						{ optionId: yoga.optionId, name: yoga.name },
+					],
+				},
+			],
 		} );
 		await tickets( 'participant-option', {
 			relationshipId: other.relationshipId,

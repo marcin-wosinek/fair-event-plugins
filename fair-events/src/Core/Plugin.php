@@ -127,6 +127,7 @@ class Plugin {
 		\FairEvents\Hooks\PaymentHooks::init();
 		\FairEvents\Hooks\SignupEmailHooks::init();
 		\FairEvents\Services\TicketBackfill::init();
+		\FairEvents\Services\PaymentHistoryShadowWrites::init();
 	}
 
 	/**

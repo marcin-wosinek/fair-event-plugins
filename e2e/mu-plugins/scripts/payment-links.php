@@ -11,6 +11,7 @@
  *   upgrade             {}  Put the schema back to 3.48.0 (no links table,
  *                           no provenance column), then run maybe_upgrade()
  *                           twice, reporting the schema after each run.
+ *                           Existing provenance and links are restored after.
  *   reinstall           {}  Run Installer::install() twice on the current
  *                           schema, reporting the schema after each run.
  *   seed                {eventDateId, signups, amount, currency?, status?}
@@ -94,10 +95,10 @@ switch ( $fixture_action ) {
 		break;
 
 	case 'upgrade':
-		$non_null = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE legacy_event_participant_id IS NOT NULL', $signups_table ) );
-		if ( $non_null ) {
-			WP_CLI::error( 'Refusing to reset: signups with provenance exist.' );
-		}
+		// Shadow purchases other specs left behind keep their provenance:
+		// it is set aside while the column is gone and put back after.
+		$provenance_rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, legacy_event_participant_id FROM %i WHERE legacy_event_participant_id IS NOT NULL', $signups_table ), ARRAY_A );
+		$link_rows       = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $links_table ), ARRAY_A );
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $links_table ) );
 		$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP INDEX idx_legacy_event_participant_id, DROP COLUMN legacy_event_participant_id', $signups_table ) );
 		\FairEvents\Database\Schema::update_db_version( '3.48.0' );
@@ -106,6 +107,12 @@ switch ( $fixture_action ) {
 		$result['first'] = $schema();
 		\FairEvents\Database\Installer::maybe_upgrade();
 		$result['second'] = $schema();
+		foreach ( $provenance_rows as $row ) {
+			$wpdb->update( $signups_table, array( 'legacy_event_participant_id' => (int) $row['legacy_event_participant_id'] ), array( 'id' => (int) $row['id'] ) );
+		}
+		foreach ( $link_rows as $row ) {
+			$wpdb->insert( $links_table, $row );
+		}
 		break;
 
 	case 'reinstall':
