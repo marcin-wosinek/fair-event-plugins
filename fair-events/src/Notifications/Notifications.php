@@ -7,6 +7,8 @@
 
 namespace FairEvents\Notifications;
 
+use FairEvents\Core\Cron;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -87,9 +89,7 @@ class Notifications {
 
 		// Whatever channels are on: history is kept for every type.
 		add_action( self::HISTORY_CLEANUP_HOOK, array( self::class, 'clean_up_history' ) );
-		if ( ! wp_next_scheduled( self::HISTORY_CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::HISTORY_CLEANUP_HOOK );
-		}
+		Cron::ensure_recurring( self::HISTORY_CLEANUP_HOOK, 'daily', time() + HOUR_IN_SECONDS );
 	}
 
 	/**

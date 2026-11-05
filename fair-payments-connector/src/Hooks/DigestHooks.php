@@ -11,6 +11,7 @@
 
 namespace FairPaymentsConnector\Hooks;
 
+use FairPaymentsConnector\Core\Cron;
 use FairPaymentsConnector\Services\DigestBuilder;
 use FairPaymentsConnector\Services\NotificationQueue;
 
@@ -73,10 +74,12 @@ class DigestHooks {
 	 * @return void
 	 */
 	public function init() {
+		// The intervals are registered before anything schedules with them,
+		// and scheduling waits for `init`: it runs every plugin's translated
+		// `cron_schedules` labels.
 		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
 		add_action( self::CRON_HOOK, array( $this, 'flush_due' ) );
-
-		$this->schedule_events();
+		add_action( 'init', array( $this, 'schedule_events' ), 11 );
 	}
 
 	/**
@@ -87,18 +90,29 @@ class DigestHooks {
 	 * The single argument-less hourly event registered by earlier versions,
 	 * which flushed every frequency at once, is removed.
 	 *
-	 * @return void
+	 * @return bool Whether every frequency is scheduled. A frequency that
+	 *              could not be is tried again on the next request.
 	 */
 	public function schedule_events() {
 		if ( false !== wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_clear_scheduled_hook( self::CRON_HOOK );
 		}
 
+		$scheduled = true;
 		foreach ( self::FREQUENCY_SCHEDULES as $frequency => $schedule ) {
-			if ( false === wp_next_scheduled( self::CRON_HOOK, array( $frequency ) ) ) {
-				wp_schedule_event( time() + self::FREQUENCY_INTERVALS[ $frequency ], $schedule, self::CRON_HOOK, array( $frequency ) );
-			}
+			$result    = Cron::ensure_recurring( self::CRON_HOOK, $schedule, time() + self::FREQUENCY_INTERVALS[ $frequency ], array( $frequency ) );
+			$scheduled = true === $result && $scheduled;
 		}
+		return $scheduled;
+	}
+
+	/**
+	 * Remove every digest event, whatever its frequency argument.
+	 *
+	 * @return void
+	 */
+	public static function unschedule() {
+		wp_unschedule_hook( self::CRON_HOOK );
 	}
 
 	/**

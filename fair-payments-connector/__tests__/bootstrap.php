@@ -600,9 +600,14 @@ if ( ! function_exists( 'wp_schedule_event' ) ) {
 	 * @param string $recurrence Schedule name.
 	 * @param string $hook       Hook name.
 	 * @param array  $args       Hook arguments.
-	 * @return bool
+	 * @param bool   $wp_error   Whether to return a WP_Error on failure.
+	 * @return bool|WP_Error False, or a WP_Error when asked for one, for a
+	 *                       hook listed in $GLOBALS['_fair_test_cron_fail'].
 	 */
-	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ) {
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array(), $wp_error = false ) {
+		if ( ! empty( $GLOBALS['_fair_test_cron_fail'][ $hook ] ) ) {
+			return $wp_error ? new WP_Error( 'could_not_set', 'The cron event list could not be saved.' ) : false;
+		}
 		$GLOBALS['_fair_test_cron'][] = array(
 			'timestamp'  => $timestamp,
 			'recurrence' => $recurrence,
@@ -610,6 +615,40 @@ if ( ! function_exists( 'wp_schedule_event' ) ) {
 			'args'       => $args,
 		);
 		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_hook' ) ) {
+	/**
+	 * Stub of WordPress wp_unschedule_hook() — removes every event of a hook,
+	 * whatever its arguments.
+	 *
+	 * @param string $hook Hook name.
+	 * @return int
+	 */
+	function wp_unschedule_hook( $hook ) {
+		$before                     = count( $GLOBALS['_fair_test_cron'] ?? array() );
+		$GLOBALS['_fair_test_cron'] = array_values(
+			array_filter(
+				$GLOBALS['_fair_test_cron'] ?? array(),
+				function ( $event ) use ( $hook ) {
+					return $event['hook'] !== $hook;
+				}
+			)
+		);
+		return $before - count( $GLOBALS['_fair_test_cron'] );
+	}
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+	/**
+	 * Stub of WordPress sanitize_key().
+	 *
+	 * @param string $key Key to sanitize.
+	 * @return string
+	 */
+	function sanitize_key( $key ) {
+		return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) );
 	}
 }
 

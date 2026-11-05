@@ -75,8 +75,8 @@ function fair_payment_activate() {
  * @return void
  */
 function fair_payment_deactivate() {
-	if ( class_exists( 'FairPaymentsConnector\Hooks\PaymentLogRetentionHooks' ) ) {
-		FairPaymentsConnector\Hooks\PaymentLogRetentionHooks::unschedule();
+	if ( class_exists( 'FairPaymentsConnector\Core\Cron' ) ) {
+		FairPaymentsConnector\Core\Cron::deactivate();
 	}
 
 	// Flush rewrite rules to clean up REST API routes.

@@ -12,6 +12,7 @@
 
 namespace FairAudience\Hooks;
 
+use FairAudience\Core\Cron;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\EmailConsentLog;
@@ -30,33 +31,24 @@ class PendingSubscriptionTimeoutHooks {
 
 	/**
 	 * Initialize hooks.
+	 *
+	 * The interval is registered before anything schedules with it, and
+	 * scheduling waits for `init`: it runs every plugin's translated
+	 * `cron_schedules` labels.
 	 */
 	public static function init() {
-		add_filter( 'cron_schedules', array( static::class, 'add_cron_schedule' ) );
-
+		Cron::register_interval();
 		add_action( self::CRON_HOOK, array( static::class, 'run' ) );
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'fair_audience_every_five_minutes', self::CRON_HOOK );
-		}
+		add_action( 'init', array( static::class, 'schedule' ), 11 );
 	}
 
 	/**
-	 * Register the shared 5-minute cron schedule.
+	 * Restore the tick when it is missing, keeping an existing one.
 	 *
-	 * Other plugins register the same key; the `isset()` guard makes adding
-	 * it twice a no-op.
-	 *
-	 * @param array $schedules Existing schedules.
-	 * @return array
+	 * @return true|string True when it is scheduled, or a failure code.
 	 */
-	public static function add_cron_schedule( $schedules ) {
-		if ( ! isset( $schedules['fair_audience_every_five_minutes'] ) ) {
-			$schedules['fair_audience_every_five_minutes'] = array(
-				'interval' => 5 * MINUTE_IN_SECONDS,
-				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience' ),
-			);
-		}
-		return $schedules;
+	public static function schedule() {
+		return Cron::ensure_recurring( self::CRON_HOOK, Cron::EVERY_FIVE_MINUTES, time() + MINUTE_IN_SECONDS );
 	}
 
 	/**

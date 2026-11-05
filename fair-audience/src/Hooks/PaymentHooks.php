@@ -12,6 +12,7 @@ namespace FairAudience\Hooks;
 use FairAudienceExperimental\Database\FeePaymentRepository;
 use FairAudienceExperimental\Database\FeeAuditLogRepository;
 use FairAudienceExperimental\Database\FeeRepository;
+use FairAudience\Core\Cron;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
@@ -25,6 +26,11 @@ defined( 'WPINC' ) || die;
  * Hooks into fair-payments-connector webhook to handle fee payment completion.
  */
 class PaymentHooks {
+
+	/**
+	 * Cron hook releasing expired pending-payment signups.
+	 */
+	const CLEANUP_HOOK = 'fair_audience_cleanup_expired_signups';
 
 	/**
 	 * Initialize hooks.
@@ -49,11 +55,12 @@ class PaymentHooks {
 		add_action( 'fair_payment_backfill_participant_ids', array( static::class, 'backfill_participant_ids' ) );
 
 		// Expire pending signup rows whose payment never completed.
-		add_action( 'fair_audience_cleanup_expired_signups', array( static::class, 'cleanup_expired_signups' ) );
-		if ( ! wp_next_scheduled( 'fair_audience_cleanup_expired_signups' ) ) {
-			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'fair_audience_every_five_minutes', 'fair_audience_cleanup_expired_signups' );
-		}
-		add_filter( 'cron_schedules', array( static::class, 'add_cron_schedule' ) );
+		// The interval is registered before anything schedules with it, and
+		// scheduling waits for `init`: it runs every plugin's translated
+		// `cron_schedules` labels.
+		Cron::register_interval();
+		add_action( self::CLEANUP_HOOK, array( static::class, 'cleanup_expired_signups' ) );
+		add_action( 'init', array( static::class, 'schedule_cleanup' ), 11 );
 	}
 
 	/**
@@ -437,19 +444,12 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Register a 5-minute cron schedule used by the signup expiry cleanup.
+	 * Restore the expired-signup cleanup when it is missing, keeping an existing one.
 	 *
-	 * @param array $schedules Existing schedules.
-	 * @return array
+	 * @return true|string True when it is scheduled, or a failure code.
 	 */
-	public static function add_cron_schedule( $schedules ) {
-		if ( ! isset( $schedules['fair_audience_every_five_minutes'] ) ) {
-			$schedules['fair_audience_every_five_minutes'] = array(
-				'interval' => 5 * MINUTE_IN_SECONDS,
-				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience' ),
-			);
-		}
-		return $schedules;
+	public static function schedule_cleanup() {
+		return Cron::ensure_recurring( self::CLEANUP_HOOK, Cron::EVERY_FIVE_MINUTES, time() + MINUTE_IN_SECONDS );
 	}
 
 	/**

@@ -39,11 +39,12 @@ class PaymentLogRetentionHooksTest extends TestCase {
 	 * Reset cron and filters and install the fake $wpdb.
 	 */
 	protected function setUp(): void {
-		$GLOBALS['_fair_test_cron']    = array();
-		$GLOBALS['_fair_test_filters'] = array();
-		$this->previous_wpdb           = $GLOBALS['wpdb'] ?? null;
-		$this->wpdb                    = new PaymentLogWPDB();
-		$GLOBALS['wpdb']               = $this->wpdb; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- unit test installs a $wpdb double.
+		$GLOBALS['_fair_test_cron']      = array();
+		$GLOBALS['_fair_test_cron_fail'] = array();
+		$GLOBALS['_fair_test_filters']   = array();
+		$this->previous_wpdb             = $GLOBALS['wpdb'] ?? null;
+		$this->wpdb                      = new PaymentLogWPDB();
+		$GLOBALS['wpdb']                 = $this->wpdb; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- unit test installs a $wpdb double.
 	}
 
 	/**
@@ -130,12 +131,16 @@ class PaymentLogRetentionHooksTest extends TestCase {
 	}
 
 	/**
-	 * Loading the plugin again does not add a second event.
+	 * Loading the plugin schedules nothing before `init`, and reconciling on
+	 * every later request does not add a second event.
 	 */
 	public function test_does_not_schedule_a_duplicate_event() {
 		$hooks = new PaymentLogRetentionHooks();
 		$hooks->init();
-		$hooks->init();
+		$this->assertSame( array(), $GLOBALS['_fair_test_cron'] );
+
+		$hooks->schedule_event();
+		$hooks->schedule_event();
 
 		$this->assertCount( 1, $GLOBALS['_fair_test_cron'] );
 	}
@@ -150,6 +155,24 @@ class PaymentLogRetentionHooksTest extends TestCase {
 		PaymentLogRetentionHooks::unschedule();
 
 		$this->assertSame( array( 'some_other_hook' ), array_column( $GLOBALS['_fair_test_cron'], 'hook' ) );
+	}
+
+	/**
+	 * A refused event is reported and scheduled on the next attempt.
+	 */
+	public function test_failed_scheduling_is_reported_and_retried() {
+		ini_set( 'error_log', '/dev/null' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- keeps the expected failure log out of the test output.
+		$GLOBALS['_fair_test_cron_fail'][ PaymentLogRetentionHooks::CRON_HOOK ] = true;
+		$hooks = new PaymentLogRetentionHooks();
+
+		$this->assertSame( 'could_not_set', $hooks->schedule_event() );
+		$this->assertSame( array(), $GLOBALS['_fair_test_cron'] );
+
+		$GLOBALS['_fair_test_cron_fail'] = array();
+
+		$this->assertTrue( $hooks->schedule_event() );
+		$this->assertTrue( $hooks->schedule_event() );
+		$this->assertCount( 1, $GLOBALS['_fair_test_cron'] );
 	}
 
 	/**

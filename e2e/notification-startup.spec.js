@@ -16,6 +16,10 @@
  * claims, sent nothing, and left the workers and the Telegram connector in
  * place. A request that finds another one migrating leaves the work to it.
  *
+ * Every startup also checks that no Fair plugin builds `cron_schedules`
+ * before `init`, and that each plugin's recurring events exist exactly once,
+ * restored on the first request after they went missing (#2064).
+ *
  * Remote requests are refused and mail is captured throughout, so nothing
  * leaves the host.
  */
@@ -56,12 +60,29 @@ function lastEntry(context) {
 	return entries.at(-1);
 }
 
-// No notice raised from notification code, and everything in place once
-// WordPress finished loading.
+// Plugins whose scheduling waits for `init` (#2064).
+const LIFECYCLE_PLUGINS = [
+	'FairEvents',
+	'FairAudience',
+	'FairPaymentsConnector',
+	'FairEventsExperimental',
+	'FairAudienceExperimental',
+];
+
+// No notice raised from notification code, no plugin scheduling before
+// `init`, and everything in place once WordPress finished loading.
 function expectQuietStartup(entry) {
 	expect(entry.diagnostics.filter((notice) => notice.notifications)).toEqual(
 		[]
 	);
+	expect(
+		entry.early_cron.filter((caller) =>
+			LIFECYCLE_PLUGINS.includes(caller.split('\\')[0])
+		)
+	).toEqual([]);
+	// Every recurring event exists exactly once, each Payments digest
+	// frequency included, and none of a disabled feature.
+	expect(entry.stages.recurring).toEqual(entry.stages.expected_recurring);
 	expect(entry.stages).toMatchObject({
 		cleanup_handler: true,
 		individual_email_worker: true,
@@ -194,6 +215,38 @@ test.describe('Event notification startup (#2059)', () => {
 		expect(entry.cleanup_ran).toBe(true);
 		const after = fixture('state');
 		expectComplete(after);
+		expect(after.mail).toBe(before.mail);
+		expect(after.telegram).toBe(before.telegram);
+	});
+
+	test('missing recurring events are restored once on the next startup (#2064)', async ({
+		request,
+	}) => {
+		const dropped = fixture('drop-recurring').dropped;
+		expect(Object.keys(dropped).length).toBeGreaterThan(0);
+		before = fixture('state');
+
+		// The first request restores them, with each interval in place.
+		const restored = cliStartup();
+		expectQuietStartup(restored);
+		expect(
+			restored.stages.recurring.fair_events_cleanup_expired_ticket_signups
+		).toBe(1);
+		expect(
+			restored.stages.recurring.fair_audience_cleanup_expired_signups
+		).toBe(1);
+
+		// Later startups keep them as they are.
+		expectQuietStartup(cliStartup());
+		expectQuietStartup(await httpStartup(request));
+
+		fixture('drop-recurring');
+		expectQuietStartup(await httpStartup(request));
+
+		// Restoring sends nothing and changes no notification state.
+		const after = fixture('state');
+		expectComplete(after);
+		expect(after.settings).toBe(before.settings);
 		expect(after.mail).toBe(before.mail);
 		expect(after.telegram).toBe(before.telegram);
 	});

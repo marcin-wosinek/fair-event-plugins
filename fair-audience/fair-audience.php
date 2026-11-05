@@ -857,8 +857,7 @@ add_action( 'plugins_loaded', __NAMESPACE__ . '\\fair_audience_maybe_upgrade_db'
  * Deactivation hook.
  */
 function fair_audience_deactivate() {
-	wp_clear_scheduled_hook( 'fair_audience_cleanup_expired_signups' );
-	wp_clear_scheduled_hook( 'fair_audience_send_scheduled_messages' );
-	wp_clear_scheduled_hook( 'fair_audience_weekly_digest_tick' );
+	// Only this plugin's events: Fair Audience Experimental clears its own.
+	\FairAudience\Core\Cron::deactivate();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_deactivate' );

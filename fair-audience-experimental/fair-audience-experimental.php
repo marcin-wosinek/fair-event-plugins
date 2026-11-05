@@ -30,6 +30,9 @@ add_action(
 	function () {
 		// Runtime guard: deactivate gracefully when fair-audience is not active.
 		if ( ! defined( 'FAIR_AUDIENCE_VERSION' ) ) {
+			// Nothing of this plugin runs without Fair Audience, so nothing
+			// stays scheduled; the next request with it back restores it.
+			\FairAudienceExperimental\Core\Cron::deactivate();
 			add_action(
 				'admin_notices',
 				function () {
@@ -60,23 +63,15 @@ add_action(
 );
 
 /**
- * Activation hook.
- *
- * @return void
- */
-function fair_audience_experimental_activate() {
-	if ( \FairAudienceExperimental\Core\Features::is_enabled( 'instagram' ) && ! wp_next_scheduled( 'fair_audience_refresh_instagram_token' ) ) {
-		wp_schedule_event( time(), 'daily', 'fair_audience_refresh_instagram_token' );
-	}
-}
-register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_experimental_activate' );
-
-/**
  * Deactivation hook.
+ *
+ * Removes every event this plugin owns; pending scheduled messages and
+ * Instagram credentials stay. The first request after reactivation restores
+ * the enabled bundles' events.
  *
  * @return void
  */
 function fair_audience_experimental_deactivate() {
-	wp_clear_scheduled_hook( 'fair_audience_refresh_instagram_token' );
+	\FairAudienceExperimental\Core\Cron::deactivate();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_experimental_deactivate' );

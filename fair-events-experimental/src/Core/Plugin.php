@@ -227,19 +227,26 @@ class Plugin {
 	/**
 	 * Keep the WhatsApp delivery tables installed and pruned daily.
 	 *
+	 * The cleanup handler is registered at once; installing and scheduling
+	 * wait for `init`, after translations and the other plugins' bootstraps.
+	 *
 	 * @return void
 	 */
 	private function load_whatsapp_deliveries() {
-		\FairEventsExperimental\WhatsApp\Deliveries::maybe_install();
 		add_action(
 			\FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK,
 			static function () {
 				( new \FairEventsExperimental\WhatsApp\Deliveries() )->prune();
 			}
 		);
-		if ( ! wp_next_scheduled( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK );
-		}
+		add_action( 'init', array( \FairEventsExperimental\WhatsApp\Deliveries::class, 'maybe_install' ), 5 );
+		add_action(
+			'init',
+			static function () {
+				Cron::ensure_recurring( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK, 'daily', time() + DAY_IN_SECONDS );
+			},
+			11
+		);
 	}
 
 	/**
@@ -250,12 +257,28 @@ class Plugin {
 	 */
 	private function load_meta_conversions() {
 		if ( ! Features::is_enabled( 'meta-conversions' ) ) {
+			// Nothing runs while the bundle is off. Queued outbox rows stay
+			// and get a wake-up again once it is turned back on.
+			add_action(
+				'init',
+				static function () {
+					Cron::unschedule( Cron::META_HOOKS );
+				},
+				11
+			);
 			return;
 		}
 
-		if ( \FairEventsExperimental\Meta\Outbox::DB_VERSION !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
-			\FairEventsExperimental\Meta\Outbox::install();
-		}
+		// Before Conversions reconciles its wake-ups from the outbox (`init`, 10).
+		add_action(
+			'init',
+			static function () {
+				if ( \FairEventsExperimental\Meta\Outbox::DB_VERSION !== (string) get_option( 'fair_events_experimental_meta_db_version', '' ) ) {
+					\FairEventsExperimental\Meta\Outbox::install();
+				}
+			},
+			5
+		);
 		$service = new \FairEventsExperimental\Meta\Conversions();
 		$service->init();
 		add_action(
@@ -275,9 +298,13 @@ class Plugin {
 			}
 		);
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_meta_engagement' ) );
-		if ( ! wp_next_scheduled( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + DAY_IN_SECONDS, 'daily', \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
-		}
+		add_action(
+			'init',
+			static function () {
+				Cron::ensure_recurring( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK, 'daily', time() + DAY_IN_SECONDS );
+			},
+			11
+		);
 	}
 
 	/**

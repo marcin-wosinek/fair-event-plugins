@@ -7,6 +7,8 @@
 
 namespace FairEvents\Notifications;
 
+use FairEvents\Core\Cron;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -231,15 +233,17 @@ class BulkEmailDispatcher {
 	 * @param string             $config_id Configuration ID.
 	 * @param array              $settings  Its settings.
 	 * @param \DateTimeImmutable $after     Reference moment, in the site timezone.
-	 * @return void
+	 * @return bool Whether the send is scheduled. On failure no next send is
+	 *              recorded, so the next request's {@see self::init()} tries again.
 	 */
 	private static function schedule_next( $config_id, array $settings, \DateTimeImmutable $after ) {
 		$due  = self::next_due( $settings, $after, self::last_sent_week( $config_id ) );
 		$week = self::iso_week( $due );
 		$args = array( $week, $config_id );
 
-		if ( ! wp_next_scheduled( self::HOOK, $args ) ) {
-			wp_schedule_single_event( $due->getTimestamp(), self::HOOK, $args );
+		if ( true !== Cron::ensure_single( $due->getTimestamp(), self::HOOK, $args ) ) {
+			delete_option( Configurations::option( $config_id, 'next_run' ) );
+			return false;
 		}
 		update_option(
 			Configurations::option( $config_id, 'next_run' ),
@@ -249,6 +253,7 @@ class BulkEmailDispatcher {
 			),
 			false
 		);
+		return true;
 	}
 
 	/**

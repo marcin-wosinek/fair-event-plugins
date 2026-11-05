@@ -7,6 +7,8 @@
 
 namespace FairEvents\Notifications;
 
+use FairEvents\Core\Cron;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -25,9 +27,11 @@ defined( 'WPINC' ) || die;
  * - copies the run history and last sent week where the configuration has
  *   none yet;
  * - re-queues every queued send with the configuration ID at the same time
- *   and for the same week, then removes the old event. Nothing is sent and
- *   nothing missed is replayed: a send still due runs as it would have, and
- *   is handled by the usual expiry rules.
+ *   and for the same week, and removes the old event once the new one is
+ *   confirmed. A send that cannot be re-queued stays as it was, and the type
+ *   is tried again on the next request. Nothing is sent and nothing missed
+ *   is replayed: a send still due runs as it would have, and is handled by
+ *   the usual expiry rules.
  *
  * Delivery claims are assigned in {@see DeliveryLog::maybe_install()}, which
  * runs first. The type's marker is written last, after checking that the
@@ -127,9 +131,10 @@ class ConfigurationMigration {
 		$hook  = $source['hook'];
 		$moved = 0;
 		foreach ( ScheduledSends::without_configuration( $hook ) as list( $timestamp, $args ) ) {
-			$with_id = array( $args[0], $id );
-			if ( ! wp_next_scheduled( $hook, $with_id ) ) {
-				wp_schedule_single_event( $timestamp, $hook, $with_id );
+			// The old send goes only once its replacement is in place, so a
+			// failed replacement leaves the send queued and the type unmigrated.
+			if ( true !== Cron::ensure_single( $timestamp, $hook, array( $args[0], $id ) ) ) {
+				continue;
 			}
 			wp_unschedule_event( $timestamp, $hook, $args );
 			++$moved;
@@ -143,11 +148,12 @@ class ConfigurationMigration {
 		) {
 			update_option( Configurations::option( $id, 'next_run' ), $next, false );
 		}
-		delete_option( $source['next_run_option'] );
 
 		if ( ! Configurations::exists( $id, $type ) || ScheduledSends::without_configuration( $hook ) ) {
 			return null;
 		}
+		// Kept until every send moved, so a retry can still copy it.
+		delete_option( $source['next_run_option'] );
 
 		if ( Configurations::BULK_EMAIL === $type ) {
 			BulkEmailSettings::refresh_summary();

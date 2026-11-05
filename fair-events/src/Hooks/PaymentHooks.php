@@ -9,12 +9,16 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Core\Cron;
+
 defined( 'WPINC' ) || die;
 
 /**
  * Hooks into fair-payments-connector webhook to handle ticket payment completion.
  */
 class PaymentHooks {
+
+	public const CLEANUP_HOOK = 'fair_events_cleanup_expired_ticket_signups';
 
 	/**
 	 * Register hooks.
@@ -28,11 +32,28 @@ class PaymentHooks {
 		add_filter( 'fair_payment_prepare_event', array( static::class, 'prepare_event' ), 10, 2 );
 		add_filter( 'fair_payment_validate_event_date_id', array( static::class, 'validate_event_date_id' ), 10, 2 );
 
-		// Cron to expire stale pending_payment rows.
-		add_action( 'fair_events_cleanup_expired_ticket_signups', array( static::class, 'cleanup_expired_signups' ) );
-		if ( ! wp_next_scheduled( 'fair_events_cleanup_expired_ticket_signups' ) ) {
-			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'hourly', 'fair_events_cleanup_expired_ticket_signups' );
-		}
+		// Cron to expire stale pending_payment rows. Scheduling waits for
+		// `init`: it runs every plugin's translated `cron_schedules` labels.
+		add_action( self::CLEANUP_HOOK, array( static::class, 'cleanup_expired_signups' ) );
+		add_action( 'init', array( static::class, 'schedule_cleanup' ), 11 );
+	}
+
+	/**
+	 * Restore the hourly cleanup when it is missing, keeping an existing one.
+	 *
+	 * @return true|string True when it is scheduled, or a failure code.
+	 */
+	public static function schedule_cleanup() {
+		return Cron::ensure_recurring( self::CLEANUP_HOOK, 'hourly', time() + MINUTE_IN_SECONDS );
+	}
+
+	/**
+	 * Remove the hourly cleanup. Pending signups stay and expire once it runs again.
+	 *
+	 * @return void
+	 */
+	public static function unschedule() {
+		wp_unschedule_hook( self::CLEANUP_HOOK );
 	}
 
 	/**

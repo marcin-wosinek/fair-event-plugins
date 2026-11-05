@@ -8,6 +8,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/notification-startup-fixture.php reset <fresh|pending|interrupted>
  *   wp eval-file wp-content/mu-plugins/scripts/notification-startup-fixture.php state
  *   wp eval-file wp-content/mu-plugins/scripts/notification-startup-fixture.php due-cleanup
+ *   wp eval-file wp-content/mu-plugins/scripts/notification-startup-fixture.php drop-recurring
  *   wp eval-file wp-content/mu-plugins/scripts/notification-startup-fixture.php hold-lock <seconds>
  *
  * `enable` turns on the startup stand-ins of fair-e2e-notification-startup.php,
@@ -27,6 +28,9 @@
  * history, delivery claims, a fingerprint of the saved settings, the
  * captured outbound messages and the startup log. `due-cleanup` moves the
  * history cleanup event into the past for the next cron request.
+ *
+ * `drop-recurring` removes every recurring event the Fair plugins own, as
+ * after a deactivation or a failed schedule, for the next startup to restore.
  *
  * `hold-lock` applies the `pending` reset, then holds the migration lock for
  * the given seconds, as a request still migrating would; the
@@ -164,6 +168,13 @@ if ( 'enable' === $fixture_action ) {
 	wp_schedule_event( time() - MINUTE_IN_SECONDS, 'daily', Notifications::HISTORY_CLEANUP_HOOK );
 	delete_transient( 'doing_cron' );
 	$out = array( 'due' => (bool) wp_next_scheduled( Notifications::HISTORY_CLEANUP_HOOK ) );
+} elseif ( 'drop-recurring' === $fixture_action ) {
+	// Runs after this process's own startup, so nothing restores them before the next request.
+	$dropped = array();
+	foreach ( array_keys( fair_e2e_notification_startup_expected_recurring() ) as $hook ) {
+		$dropped[ $hook ] = (int) wp_unschedule_hook( $hook );
+	}
+	$out = array( 'dropped' => $dropped );
 } elseif ( 'hold-lock' === $fixture_action ) {
 	$fixture_reset( 'pending' );
 	if ( Lock::acquire( Lock::MIGRATION ) ) {

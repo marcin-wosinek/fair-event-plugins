@@ -7,6 +7,8 @@
 
 namespace FairEvents\Notifications;
 
+use FairEvents\Core\Cron;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -185,15 +187,17 @@ class TelegramDispatcher {
 	 * @param string             $config_id Configuration ID.
 	 * @param array              $settings  Its settings.
 	 * @param \DateTimeImmutable $after     Reference moment, in the site timezone.
-	 * @return void
+	 * @return bool Whether the send is scheduled. On failure no next send is
+	 *              recorded, so the next request's {@see self::init()} tries again.
 	 */
 	private static function schedule_next( $config_id, array $settings, \DateTimeImmutable $after ) {
 		$due  = WeekSchedule::next_due( $after, $settings['day_of_week'], $settings['time_of_day'] );
 		$week = WeekSchedule::target_week( $due, $settings['week_scope'], self::start_of_week() );
 		$args = array( $week['start'], $config_id );
 
-		if ( ! wp_next_scheduled( self::HOOK, $args ) ) {
-			wp_schedule_single_event( $due->getTimestamp(), self::HOOK, $args );
+		if ( true !== Cron::ensure_single( $due->getTimestamp(), self::HOOK, $args ) ) {
+			delete_option( Configurations::option( $config_id, 'next_run' ) );
+			return false;
 		}
 		update_option(
 			Configurations::option( $config_id, 'next_run' ),
@@ -203,6 +207,7 @@ class TelegramDispatcher {
 			),
 			false
 		);
+		return true;
 	}
 
 	/**

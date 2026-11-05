@@ -64,11 +64,29 @@ $GLOBALS['fair_e2e_notification_startup'] = array(
 		'context'     => defined( 'WP_CLI' ) && WP_CLI ? 'cli' : ( wp_doing_cron() ? 'cron' : 'http' ),
 		'uri'         => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '',
 		'diagnostics' => array(),
+		'early_cron'  => array(),
 		'writes'      => array(),
 		'stages'      => array(),
 		'cleanup_ran' => false,
 	),
 );
+
+/**
+ * The Fair plugin code on the call stack, outermost first.
+ *
+ * @return string[] Class or function names in a `Fair*` namespace.
+ */
+function fair_e2e_notification_startup_fair_callers() {
+	$callers = array();
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- test fixture.
+	foreach ( array_reverse( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ) ) as $frame ) {
+		$name = $frame['class'] ?? $frame['function'] ?? '';
+		if ( preg_match( '/^Fair[A-Za-z]*\\\\/', $name ) ) {
+			$callers[] = $name;
+		}
+	}
+	return array_values( array_unique( $callers ) );
+}
 
 /**
  * Whether Fair Events notification code is on the call stack.
@@ -121,6 +139,11 @@ add_filter(
 	'cron_schedules', // phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- test fixture.
 	static function ( $schedules ) {
 		if ( ! $GLOBALS['fair_e2e_notification_startup']['translations_ready'] ) {
+			// Which plugin scheduled before `init` (#2064).
+			$callers = fair_e2e_notification_startup_fair_callers();
+			if ( $callers ) {
+				$GLOBALS['fair_e2e_notification_startup']['entry']['early_cron'][] = $callers[0];
+			}
 			_doing_it_wrong(
 				'_load_textdomain_just_in_time',
 				'Translation loading for the <code>fair-e2e-startup</code> domain was triggered too early.',
@@ -148,6 +171,46 @@ add_action(
 	2
 );
 
+/**
+ * Recurring events each active plugin should keep scheduled, by hook.
+ *
+ * Feature-gated events are expected exactly while their feature is on, and
+ * Payments digests (one per frequency) while Fair Payments Connector runs
+ * payment notifications.
+ *
+ * @return array<string,int>
+ */
+function fair_e2e_notification_startup_expected_recurring() {
+	$expected = array();
+	if ( defined( 'FAIR_EVENTS_VERSION' ) ) {
+		$expected['fair_events_cleanup_expired_ticket_signups'] = 1;
+		$expected['fair_events_notification_history_cleanup']   = 1;
+	}
+	if ( defined( 'FAIR_AUDIENCE_VERSION' ) ) {
+		$expected['fair_audience_cleanup_expired_signups']           = 1;
+		$expected['fair_audience_pending_subscription_timeout_tick'] = 1;
+	}
+	if ( class_exists( '\FairPaymentsConnector\Core\NotificationOwnership' ) ) {
+		$expected['fair_payment_prune_payment_log'] = 1;
+		if ( \FairPaymentsConnector\Core\NotificationOwnership::is_owner() ) {
+			$expected['fair_payment_flush_digest'] = 3;
+		}
+	}
+	if ( defined( 'FAIR_EVENTS_EXPERIMENTAL_VERSION' ) ) {
+		$expected['fair_events_experimental_whatsapp_cleanup'] = 1;
+		$expected['fair_events_experimental_meta_cleanup']     = \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' ) ? 1 : 0;
+	}
+	if ( defined( 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION' ) ) {
+		$messaging = \FairAudienceExperimental\Core\Features::is_enabled( 'messaging' ) ? 1 : 0;
+		$instagram = \FairAudienceExperimental\Core\Features::is_enabled( 'instagram' ) ? 1 : 0;
+
+		$expected['fair_audience_send_scheduled_messages']            = $messaging;
+		$expected['fair_audience_cleanup_instagram_temp_attachments'] = $instagram;
+		$expected['fair_audience_refresh_instagram_token']            = $instagram;
+	}
+	return $expected;
+}
+
 add_action(
 	'wp_loaded',
 	static function () {
@@ -172,6 +235,19 @@ add_action(
 			? wp_is_connector_registered( 'fair-events-telegram' )
 			: null;
 		$stages['schedule_label']     = wp_get_schedules()['fair_e2e_startup_fortnightly']['display'] ?? '';
+
+		// Each plugin's recurring events once WordPress finished loading, and
+		// how many it should own on this site (#2064).
+		$stages['recurring']          = array();
+		$stages['expected_recurring'] = array();
+		foreach ( fair_e2e_notification_startup_expected_recurring() as $hook => $expected ) {
+			$count = 0;
+			foreach ( (array) _get_cron_array() as $hooks ) {
+				$count += count( $hooks[ $hook ] ?? array() );
+			}
+			$stages['recurring'][ $hook ]          = $count;
+			$stages['expected_recurring'][ $hook ] = $expected;
+		}
 
 		$GLOBALS['fair_e2e_notification_startup']['entry']['stages'] = $stages;
 	}

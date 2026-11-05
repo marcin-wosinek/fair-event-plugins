@@ -45,7 +45,8 @@ class DigestHooksTest extends TestCase {
 	 * Reset cron state and build the hooks over the fakes.
 	 */
 	protected function setUp(): void {
-		$GLOBALS['_fair_test_cron'] = array();
+		$GLOBALS['_fair_test_cron']      = array();
+		$GLOBALS['_fair_test_cron_fail'] = array();
 
 		$this->queue   = new FakeNotificationQueue();
 		$this->channel = new FakeChannel();
@@ -117,6 +118,35 @@ class DigestHooksTest extends TestCase {
 
 		$this->assertNotContains( 'fair_payment_flush_digest()', $this->scheduled() );
 		$this->assertCount( 3, $GLOBALS['_fair_test_cron'] );
+	}
+
+	/**
+	 * A refused event leaves the others in place and is added on the next attempt.
+	 */
+	public function test_failed_scheduling_is_reported_and_retried() {
+		ini_set( 'error_log', '/dev/null' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- keeps the expected failure log out of the test output.
+		$GLOBALS['_fair_test_cron_fail'][ DigestHooks::CRON_HOOK ] = true;
+
+		$this->assertFalse( $this->hooks->schedule_events() );
+		$this->assertSame( array(), $this->scheduled() );
+
+		$GLOBALS['_fair_test_cron_fail'] = array();
+
+		$this->assertTrue( $this->hooks->schedule_events() );
+		$this->assertTrue( $this->hooks->schedule_events() );
+		$this->assertCount( 3, $GLOBALS['_fair_test_cron'] );
+	}
+
+	/**
+	 * Deactivation removes every frequency's event and leaves other hooks alone.
+	 */
+	public function test_unschedule_removes_every_frequency() {
+		$this->hooks->schedule_events();
+		wp_schedule_event( time(), 'daily', 'some_other_hook' );
+
+		\FairPaymentsConnector\Core\Cron::deactivate();
+
+		$this->assertSame( array( 'some_other_hook()' ), $this->scheduled() );
 	}
 
 	/**

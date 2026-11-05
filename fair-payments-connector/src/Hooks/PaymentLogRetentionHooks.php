@@ -10,6 +10,7 @@
 
 namespace FairPaymentsConnector\Hooks;
 
+use FairPaymentsConnector\Core\Cron;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use FairPaymentsConnector\Services\PaymentLogRetention;
 
@@ -55,8 +56,8 @@ class PaymentLogRetentionHooks {
 	 */
 	public function init() {
 		add_action( self::CRON_HOOK, array( $this, 'prune' ) );
-
-		$this->schedule_event();
+		// Scheduling runs every plugin's translated `cron_schedules` labels.
+		add_action( 'init', array( $this, 'schedule_event' ), 11 );
 	}
 
 	/**
@@ -66,21 +67,21 @@ class PaymentLogRetentionHooks {
 	 * too. The first run is due straight away, to start clearing rows that
 	 * expired before the policy existed.
 	 *
-	 * @return void
+	 * @return true|string True when it is scheduled, or a failure code; a
+	 *                     failure is tried again on the next request.
 	 */
 	public function schedule_event() {
-		if ( false === wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time(), 'daily', self::CRON_HOOK );
-		}
+		return Cron::ensure_recurring( self::CRON_HOOK, 'daily', time() );
 	}
 
 	/**
-	 * Remove the scheduled event. Called on plugin deactivation.
+	 * Remove the scheduled event, whatever its arguments. Called on plugin
+	 * deactivation.
 	 *
 	 * @return void
 	 */
 	public static function unschedule() {
-		wp_clear_scheduled_hook( self::CRON_HOOK );
+		wp_unschedule_hook( self::CRON_HOOK );
 	}
 
 	/**
