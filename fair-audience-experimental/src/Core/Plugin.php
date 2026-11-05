@@ -183,6 +183,9 @@ class Plugin {
 		if ( Features::is_enabled( 'instagram' ) ) {
 			\FairAudienceExperimental\Hooks\InstagramCleanupHooks::init();
 		}
+
+		// Schedules the enabled bundles' events and removes the others'.
+		Cron::init();
 	}
 
 	/**
@@ -329,7 +332,7 @@ class Plugin {
 		}
 
 		if ( Features::is_enabled( 'instagram' ) ) {
-			add_action( 'fair_audience_refresh_instagram_token', array( $this, 'refresh_instagram_token' ) );
+			add_action( Cron::INSTAGRAM_TOKEN_HOOK, array( $this, 'refresh_instagram_token' ) );
 		}
 	}
 

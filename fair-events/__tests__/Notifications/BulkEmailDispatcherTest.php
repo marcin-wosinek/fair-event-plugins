@@ -48,12 +48,13 @@ class BulkEmailDispatcherTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$GLOBALS['_fair_test_options']  = array();
-		$GLOBALS['_fair_test_cron']     = array();
-		$GLOBALS['_fair_test_timezone'] = 'UTC';
-		$this->log                      = new FakeDeliveryLog();
-		$this->adapter                  = new FakeBulkEmailAdapter();
-		$this->events                   = new FakeWeeklyEvents();
+		$GLOBALS['_fair_test_options']   = array();
+		$GLOBALS['_fair_test_cron']      = array();
+		$GLOBALS['_fair_test_cron_fail'] = array();
+		$GLOBALS['_fair_test_timezone']  = 'UTC';
+		$this->log                       = new FakeDeliveryLog();
+		$this->adapter                   = new FakeBulkEmailAdapter();
+		$this->events                    = new FakeWeeklyEvents();
 	}
 
 	/**
@@ -63,6 +64,7 @@ class BulkEmailDispatcherTest extends TestCase {
 	 */
 	protected function tearDown(): void {
 		unset( $GLOBALS['_fair_test_timezone'] );
+		$GLOBALS['_fair_test_cron_fail'] = array();
 	}
 
 	/**
@@ -292,6 +294,25 @@ class BulkEmailDispatcherTest extends TestCase {
 		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings( array( 'enabled' => false ) ) );
 		$this->assertEmpty( $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] ?? array() );
 		$this->assertNull( BulkEmailDispatcher::next_run( 'bulk_email' ) );
+	}
+
+	/** A send that cannot be queued records no next send, and the next attempt queues it once. */
+	public function test_failed_scheduling_records_no_next_send_and_retries() {
+		ini_set( 'error_log', '/dev/null' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- keeps the expected failure log out of the test output.
+		$GLOBALS['_fair_test_cron_fail'][ BulkEmailDispatcher::HOOK ] = true;
+
+		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings() );
+
+		$this->assertEmpty( $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] ?? array() );
+		$this->assertArrayNotHasKey( \FairEvents\Notifications\Configurations::option( 'bulk_email', 'next_run' ), $GLOBALS['_fair_test_options'] );
+		$this->assertNull( BulkEmailDispatcher::next_run( 'bulk_email' ) );
+
+		$GLOBALS['_fair_test_cron_fail'] = array();
+		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings() );
+		BulkEmailDispatcher::reschedule( 'bulk_email', self::settings() );
+
+		$this->assertCount( 1, $GLOBALS['_fair_test_cron'][ BulkEmailDispatcher::HOOK ] );
+		$this->assertNotNull( BulkEmailDispatcher::next_run( 'bulk_email' ) );
 	}
 
 	/** Invalid send weeks are refused. */

@@ -899,13 +899,41 @@ if ( ! function_exists( 'wp_schedule_single_event' ) ) {
 	/**
 	 * Stub of WordPress wp_schedule_single_event().
 	 *
+	 * A hook listed in $GLOBALS['_fair_test_cron_fail'] is refused the way
+	 * WordPress refuses an event: a WP_Error when asked for one, else false.
+	 *
 	 * @param int    $timestamp When the event runs.
 	 * @param string $hook      Hook name.
 	 * @param array  $args      Hook arguments.
-	 * @return true
+	 * @param bool   $wp_error  Whether to return a WP_Error on failure.
+	 * @return true|false|WP_Error
 	 */
-	function wp_schedule_single_event( $timestamp, $hook, $args = array() ) {
+	function wp_schedule_single_event( $timestamp, $hook, $args = array(), $wp_error = false ) {
+		if ( ! empty( $GLOBALS['_fair_test_cron_fail'][ $hook ] ) ) {
+			return $wp_error ? new WP_Error( 'could_not_set', 'The cron event list could not be saved.' ) : false;
+		}
 		$GLOBALS['_fair_test_cron'][ $hook ][] = array( $timestamp, $args );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	/**
+	 * Stub of WordPress wp_schedule_event(), stored like a single event with
+	 * its recurrence as a third element. Refused like wp_schedule_single_event().
+	 *
+	 * @param int    $timestamp  First run.
+	 * @param string $recurrence Recurrence name.
+	 * @param string $hook       Hook name.
+	 * @param array  $args       Hook arguments.
+	 * @param bool   $wp_error   Whether to return a WP_Error on failure.
+	 * @return true|false|WP_Error
+	 */
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array(), $wp_error = false ) {
+		if ( ! empty( $GLOBALS['_fair_test_cron_fail'][ $hook ] ) ) {
+			return $wp_error ? new WP_Error( 'could_not_set', 'The cron event list could not be saved.' ) : false;
+		}
+		$GLOBALS['_fair_test_cron'][ $hook ][] = array( $timestamp, $args, $recurrence );
 		return true;
 	}
 }

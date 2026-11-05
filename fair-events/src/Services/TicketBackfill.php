@@ -56,6 +56,16 @@ class TicketBackfill {
 	}
 
 	/**
+	 * Remove the pending batch. The progress stays, so {@see self::init()}
+	 * resumes an unfinished backfill once the plugin is active again.
+	 *
+	 * @return void
+	 */
+	public static function unschedule() {
+		wp_unschedule_hook( self::CRON_HOOK );
+	}
+
+	/**
 	 * Start (or restart) the backfill from the first signup.
 	 *
 	 * @return void

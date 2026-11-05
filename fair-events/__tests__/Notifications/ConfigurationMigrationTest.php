@@ -38,7 +38,18 @@ class ConfigurationMigrationTest extends TestCase {
 			),
 		);
 		$GLOBALS['_fair_test_cron']        = array();
+		$GLOBALS['_fair_test_cron_fail']   = array();
 		$GLOBALS['_fair_test_sent_emails'] = array();
+		ini_set( 'error_log', '/dev/null' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- keeps the expected failure logs out of the test output.
+	}
+
+	/**
+	 * Clean up.
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		$GLOBALS['_fair_test_cron_fail'] = array();
 	}
 
 	/**
@@ -134,6 +145,32 @@ class ConfigurationMigrationTest extends TestCase {
 			$GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ]
 		);
 		$this->assertTrue( ConfigurationMigration::is_migrated( Configurations::INDIVIDUAL_EMAIL ) );
+	}
+
+	/** A replacement send that cannot be queued keeps the old send and leaves the type to retry. */
+	public function test_failed_requeue_keeps_the_old_send_and_retries() {
+		$this->seed_individual_email();
+		$GLOBALS['_fair_test_cron_fail'][ IndividualEmailDispatcher::HOOK ] = true;
+
+		ConfigurationMigration::run();
+
+		$this->assertFalse( ConfigurationMigration::is_migrated( Configurations::INDIVIDUAL_EMAIL ) );
+		$this->assertSame(
+			array( array( self::QUEUED_AT, array( '2026-W42' ) ) ),
+			$GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ]
+		);
+		$this->assertArrayHasKey( IndividualEmailDispatcher::LEGACY_NEXT_RUN_OPTION, $GLOBALS['_fair_test_options'] );
+
+		$GLOBALS['_fair_test_cron_fail'] = array();
+		ConfigurationMigration::run();
+
+		$this->assertTrue( ConfigurationMigration::is_migrated( Configurations::INDIVIDUAL_EMAIL ) );
+		$this->assertSame(
+			array( array( self::QUEUED_AT, array( '2026-W42', 'individual_email' ) ) ),
+			$GLOBALS['_fair_test_cron'][ IndividualEmailDispatcher::HOOK ]
+		);
+		$this->assertSame( self::QUEUED_AT, IndividualEmailDispatcher::next_run( 'individual_email' )['timestamp'] );
+		$this->assertSame( array(), $GLOBALS['_fair_test_sent_emails'] );
 	}
 
 	/** A type that was never set up gets its configuration, turned off. */

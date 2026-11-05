@@ -76,8 +76,8 @@ namespace FairEvents {
 	function fair_events_deactivate() {
 		// Clear the permalinks to remove our post type's rules from the database.
 		flush_rewrite_rules();
-		// Notification settings and history stay; nothing is sent while inactive.
-		\FairEvents\Notifications\Notifications::deactivate();
+		// Settings, history and pending signups stay; nothing runs while inactive.
+		\FairEvents\Core\Cron::deactivate();
 	}
 	register_deactivation_hook( __FILE__, __NAMESPACE__ . '\fair_events_deactivate' );
 }

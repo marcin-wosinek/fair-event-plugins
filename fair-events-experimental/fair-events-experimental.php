@@ -31,14 +31,7 @@ define( 'FAIR_EVENTS_EXPERIMENTAL_NOTIFICATIONS_HANDOFF', true );
 register_deactivation_hook(
 	__FILE__,
 	static function () {
-		// Every delivery wake-up, whatever timestamp argument it carries.
-		wp_unschedule_hook( \FairEventsExperimental\Meta\Conversions::DELIVERY_HOOK );
-		wp_clear_scheduled_hook( \FairEventsExperimental\Meta\Conversions::CLEANUP_HOOK );
-		wp_clear_scheduled_hook( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK );
-		// Cron event of the former weekly notification sender.
-		wp_unschedule_hook( 'fair_events_experimental_weekly_notification' );
-		delete_option( 'fair_events_experimental_weekly_notification_next_run' );
-		\FairEventsExperimental\Frontend\WeeklySummaryPage::deactivate();
+		\FairEventsExperimental\Core\Cron::deactivate();
 	}
 );
 
@@ -49,6 +42,9 @@ add_action(
 	function () {
 		// Runtime guard: deactivate gracefully when fair-events is not active.
 		if ( ! defined( 'FAIR_EVENTS_VERSION' ) ) {
+			// Nothing of this plugin runs without Fair Events, so nothing stays
+			// scheduled; the next request with Fair Events back restores it.
+			\FairEventsExperimental\Core\Cron::unschedule( \FairEventsExperimental\Core\Cron::OWNED_HOOKS );
 			add_action(
 				'admin_notices',
 				function () {

@@ -34,10 +34,8 @@ class InstagramCleanupHooks {
 	 * Initialize hooks.
 	 */
 	public static function init() {
+		// Scheduled by Core\Cron on `init`, while the bundle is on.
 		add_action( self::CRON_HOOK, array( static::class, 'sweep' ) );
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
-		}
 	}
 
 	/**

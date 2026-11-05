@@ -32,6 +32,11 @@ class ScheduledMessageHooks {
 	const CRON_HOOK = 'fair_audience_send_scheduled_messages';
 
 	/**
+	 * Five-minute interval shared with Fair Audience.
+	 */
+	const INTERVAL = 'fair_audience_every_five_minutes';
+
+	/**
 	 * Max rows claimed (and sent) per cron tick.
 	 */
 	const BATCH_SIZE = 20;
@@ -47,10 +52,8 @@ class ScheduledMessageHooks {
 	public static function init() {
 		add_filter( 'cron_schedules', array( static::class, 'add_cron_schedule' ) );
 
+		// Scheduled by Core\Cron on `init`, while the bundle is on.
 		add_action( self::CRON_HOOK, array( static::class, 'run_due' ) );
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'fair_audience_every_five_minutes', self::CRON_HOOK );
-		}
 
 		// Reschedule when the underlying anchor moves; cancel when it disappears.
 		// A mailing is scoped to a single event date, so deleting that date
@@ -63,15 +66,15 @@ class ScheduledMessageHooks {
 	/**
 	 * Register the shared 5-minute cron schedule.
 	 *
-	 * Mirrors PaymentHooks::add_cron_schedule so the sender works even if that
-	 * hook set isn't active. Adding the same key twice is a no-op.
+	 * Mirrors Fair Audience's own registration so the sender works whatever
+	 * that plugin's version. Adding the same key twice is a no-op.
 	 *
 	 * @param array $schedules Existing schedules.
 	 * @return array
 	 */
 	public static function add_cron_schedule( $schedules ) {
-		if ( ! isset( $schedules['fair_audience_every_five_minutes'] ) ) {
-			$schedules['fair_audience_every_five_minutes'] = array(
+		if ( ! isset( $schedules[ self::INTERVAL ] ) ) {
+			$schedules[ self::INTERVAL ] = array(
 				'interval' => 5 * MINUTE_IN_SECONDS,
 				'display'  => __( 'Every 5 minutes (fair-audience)', 'fair-audience-experimental' ),
 			);

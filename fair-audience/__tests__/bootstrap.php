@@ -567,3 +567,101 @@ if ( ! function_exists( 'wp_cache_delete' ) ) {
 		return true;
 	}
 }
+
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+if ( ! function_exists( 'has_filter' ) ) {
+	/**
+	 * Stub of WordPress has_filter() over $GLOBALS['_fair_test_hooks'].
+	 *
+	 * @param string   $hook_name Hook name.
+	 * @param callable $callback  Callback to look for.
+	 * @return bool|int Priority when registered, else false.
+	 */
+	function has_filter( $hook_name, $callback = false ) {
+		foreach ( $GLOBALS['_fair_test_hooks'][ $hook_name ] ?? array() as $registered ) {
+			if ( false === $callback || $registered['callback'] === $callback ) {
+				return 10;
+			}
+		}
+		return false;
+	}
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+	/**
+	 * Stub of WordPress sanitize_key().
+	 *
+	 * @param string $key Key to sanitize.
+	 * @return string
+	 */
+	function sanitize_key( $key ) {
+		return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) );
+	}
+}
+
+// WP-Cron stubs. Events live in $GLOBALS['_fair_test_cron'] as
+// [ hook => [ [ timestamp, args, recurrence ], ... ] ]. Like WordPress,
+// wp_schedule_event() refuses a recurrence that no `cron_schedules` filter
+// registered (only `hourly`, `daily` and `weekly` are built in).
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	/**
+	 * Stub of WordPress wp_next_scheduled().
+	 *
+	 * @param string $hook Hook name.
+	 * @param array  $args Hook arguments.
+	 * @return int|false
+	 */
+	function wp_next_scheduled( $hook, $args = array() ) {
+		foreach ( $GLOBALS['_fair_test_cron'][ $hook ] ?? array() as $event ) {
+			if ( $event[1] === $args ) {
+				return $event[0];
+			}
+		}
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	/**
+	 * Stub of WordPress wp_schedule_event().
+	 *
+	 * @param int    $timestamp  First run.
+	 * @param string $recurrence Recurrence name.
+	 * @param string $hook       Hook name.
+	 * @param array  $args       Hook arguments.
+	 * @param bool   $wp_error   Whether to return a WP_Error on failure.
+	 * @return true|false|WP_Error
+	 */
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array(), $wp_error = false ) {
+		$schedules = array(
+			'hourly' => array( 'interval' => 3600 ),
+			'daily'  => array( 'interval' => 86400 ),
+			'weekly' => array( 'interval' => 604800 ),
+		);
+		foreach ( $GLOBALS['_fair_test_hooks']['cron_schedules'] ?? array() as $registered ) {
+			$schedules = call_user_func( $registered['callback'], $schedules );
+		}
+		if ( ! isset( $schedules[ $recurrence ] ) ) {
+			return $wp_error ? new WP_Error( 'invalid_schedule', 'Event schedule does not exist.' ) : false;
+		}
+		$GLOBALS['_fair_test_cron'][ $hook ][] = array( $timestamp, $args, $recurrence );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_hook' ) ) {
+	/**
+	 * Stub of WordPress wp_unschedule_hook(): every event of a hook, whatever its arguments.
+	 *
+	 * @param string $hook Hook name.
+	 * @return int Number of events removed.
+	 */
+	function wp_unschedule_hook( $hook ) {
+		$count = count( $GLOBALS['_fair_test_cron'][ $hook ] ?? array() );
+		unset( $GLOBALS['_fair_test_cron'][ $hook ] );
+		return $count;
+	}
+}
