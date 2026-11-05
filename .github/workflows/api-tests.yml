@@ -32,6 +32,8 @@ on:
             - 'scripts/__tests__/api-test-runner.test.mjs'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
+    # Manual runs for CI benchmarks (TESTING.md § REST API tests).
+    workflow_dispatch:
 
 jobs:
     api-tests:
@@ -133,14 +135,17 @@ jobs:
               run: node --test scripts/__tests__/api-test-runner.test.mjs
 
             - name: Prepare environment and run API tests
-              run: npm run test:api:local
+              run: npm run test:api:local -- --results-dir=api-results
 
+            # Uploaded on success too, so phase timings (api-results/timings.json)
+            # and per-workspace results stay available for comparison.
             - name: Upload Playwright report
-              if: failure()
+              if: ${{ !cancelled() }}
               uses: actions/upload-artifact@v7
               with:
-                  name: api-playwright-report
+                  name: api-playwright-report-attempt-${{ github.run_attempt }}
                   path: |
+                      api-results/
                       */playwright-report/
                       */test-results/
                   retention-days: 7
