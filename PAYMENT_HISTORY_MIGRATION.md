@@ -838,6 +838,129 @@ writers'. `shadow_write_coverage()` is true from then on, which clears the
 | Events without Audience                   | Shadow writes on for get-tickets; no relationship to mirror.                                                                          |
 | Events + Audience without Connector       | Links can't be written (`payment_information_unavailable`); the work waits in the queue, and shadow purchases are still kept in step. |
 
+### 8.9 Stage 3 backfill and verification
+
+**Implemented** (#2139, second of three pull requests; Fair Events DB
+`3.51.0`). `Services\PaymentHistoryBackfill` migrates history up to the
+cutoffs, reports what it can't attribute, and verifies the result. It
+changes no ledger row, relationship, participant-scope activity,
+transaction, or `live` or `reconciled` link, and fires no hook. Ownership
+and the Statistics readers don't change (§8.1).
+
+**Starting.** An administrator runs a dry run, reviews it, confirms a
+database backup and starts the backfill (`start_dry_run()`,
+`start( array( 'backup_confirmed' => true ) )`). Both refuse while
+`backfill_blockers()` lists anything, which now includes
+`storage_unavailable` below DB `3.51.0`; the backfill also refuses without a
+completed dry run over the same cutoffs (`dry_run_required`,
+`dry_run_stale`) or a confirmed backup (`backup_required`). Nothing starts on
+plugin upgrade. The REST routes and the Payment history page come with the
+third pull request.
+
+**Cutoffs.** The cutoffs are the shadow writes' coverage floors (§8.8), not
+the highest IDs when the backfill starts (§8.2): records after the floors
+are already the live writers', and leaving them to them means the backfill
+never races a live writer over the same new record.
+
+**Runs.** State lives in `fair_events_payment_history_migration`: `dry_run`
+and `backfill`, each with its status, cutoffs, phase, cursor, counts and
+last error, and the top-level `status`, which mirrors the backfill's
+(`verified` makes `migration_verified()` true). Batches are serialized by a
+named lock and run through the cron `fair_events_payment_history_backfill_batch`;
+a failed batch keeps its cursor at the last record that succeeded and is
+retried with a growing delay. A blocker that appears mid-run pauses the
+backfill; the shadow work cron continues it once the blocker clears and
+reschedules a run whose cron event was lost. The phases, in ID order:
+
+1. **Admissions.** Each relationship is classified by
+   `PaymentHistoryAdmissions` (§4.1, §4.3). A legacy admission gets its
+   purchase through `ShadowPurchases::create_purchase()`, the shape shadow
+   purchases have (§4.2), with its participant-scope activities copied
+   onto its unit with their status and hold, its check-in unless
+   `TicketHistoryBackfill` already placed it, and the links of the attempts
+   its ledger names that are attributable now. All of it commits in one
+   database transaction, under the relationship's lock and then each
+   transaction's link lock in ascending order. `pending_payment`
+   relationships are skipped and revisited. A generated occurrence's
+   relationship covered by a whole-series pass on its master (a signed-up
+   relationship or confirmed purchase of a whole-series type, bought before
+   the occurrence's pass cutoff) is `duplicate_series_relationship`.
+2. **Activities.** A relationship whose purchase names it as provenance has
+   its activities copied onto that purchase's unit. Otherwise its
+   activities stay at participant scope, because copying them without
+   marking the read-only source row would count them twice in capacity:
+   with exactly one ticket held there Statistics already assigns them to
+   it; with zero or several they are `ambiguous_activity`.
+3. **Transactions.** Every Connector transaction is attributed by
+   `PaymentAttribution` and linked with `attribution = backfill`, or
+   reported with its reason. `amount_mismatch` isn't reported for a
+   backfilled or shadow purchase, whose amount comes from its links. Stored
+   links that refuse the set (a different `live` or `reconciled` link, or
+   no room under the total) are reported as `existing_link_conflict`, an
+   addition to §6.2; nothing is changed.
+4. **References.** A refund-labelled ledger row is reported as
+   `unsupported_refund_record` and, when its relationship maps to one
+   purchase, kept as a `legacy_refund_record` link with
+   `allocated_amount = 0`, so it never uses up the transaction's total. A
+   ledger row or purchase naming a deleted transaction is
+   `missing_transaction`.
+5. **Revisit** (backfill only). Signed-up relationships without a purchase
+   are classified again, which admits checkouts that completed during the
+   run, and open findings about attribution or activities are attributed
+   again; a finding that resolves is marked `resolved`.
+6. **Verify** (backfill only). `PaymentHistoryVerification` compares every
+   event date and stores the result in
+   `fair_events_payment_history_comparisons`, then runs the global checks.
+
+**Dry run.** The same phases up to references, through the same rules:
+`PaymentHistoryPlannedSources` lets `PaymentAttribution` see a planned
+purchase (the negative relationship ID) for every relationship the backfill
+would admit, so both reach the same conclusions. It writes no purchase,
+unit, activity or link, only its own findings, and counts what it would
+create, plus the paid totals per currency it would attribute and leave
+unresolved. A new dry run replaces the previous dry run's findings.
+
+**Findings** live in `fair_events_payment_history_findings`, one per
+(mode, reason, source type, source ID): `transaction`, `relationship`,
+`ledger_row`, `signup` or `link`, with the event date from immutable
+metadata when there is one. A re-run refreshes a finding instead of adding
+one. `amount_mismatch`, `multiple_paid_attempts` and
+`unsupported_refund_record` are informational. `multiple_paid_attempts`
+covers the `charge` and `upgrade` roles: several paid add-ons are separate
+purchases of activities, not attempts.
+
+**Verification report** (§8.4), per stored event date, so a whole-series
+pass counts once on its master on both sides:
+
+- **Admissions.** The source side counts confirmed units of ordinary
+  purchases, confirmed purchases without units, and signed-up
+  relationships by today's rule with provenance ignored. The target side is
+  what Statistics counts now. The only allowed difference, `legacy_rule`,
+  is a provenance purchase whose participant only had a failed or expired
+  ordinary purchase there, which §4.1 admits and gap G3 hid.
+- **Activity selections**, split the same way. Reported, never blocking.
+- **Revenue** per currency and transaction: the ledger's paid transactions
+  on signed-up relationships against paid link allocations. Allowed causes:
+  `shared_transaction` (fully allocated across several purchases, §5.4),
+  `legacy_refund_record` (§11), `unresolved` (an open finding lists it), and
+  `not_in_ledger`: a paid link today's ledger reader can't reach, such as a
+  purchase whose relationship isn't signed up or that Audience never
+  recorded. That last cause is an addition to §8.4: such money was received,
+  and stage 5 counts it. Anything else is `unexpected` and blocks.
+- `revenue_state` is `incomplete` when the date has unresolved money or an
+  unallocated remainder (§7.1), else `available`. For a generated
+  occurrence, `series_pass_revenue` is what today's Statistics adds there
+  for passes: the difference §7.2 introduces at stage 5.
+
+The global checks block on: a blocking date (`unexpected_differences`),
+outstanding shadow work (`shadow_work_outstanding`), a transaction
+allocated beyond its total (`allocation_exceeds_total`), and a paid event
+payment (a recognised source or a ledger row, not a participant fee) with
+no link and no open finding (`unlisted_paid_transactions`). They also
+record `multiple_paid_attempts`, `currency_mismatch` and links naming
+deleted transactions. The backfill ends `verified` or
+`verification_failed`; `verify()` runs the report again.
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"
@@ -909,6 +1032,14 @@ Run locally only the focused specs named here, as
   (live links for a get-tickets attempt and its retry; an Audience
   purchase's shadow purchase through pending, paid and capacity; an
   organizer-added participant through the sweep; queued work).
+- **Stage 3 (#2139), backfill:** `fair-events/__tests__/Services/PaymentHistoryPlannedSourcesTest.php`
+  (the dry run reaches the backfill's conclusions for examples 3, 11, 20
+  and 21), `PaymentHistoryVerificationTest.php` (the allowed and unexpected
+  differences) and
+  `fair-events/src/API/__tests__/PaymentHistoryBackfill.api.spec.js`
+  (examples 3, 4, 5, 7, 9, 11, 13, 14, 16 and 20–22 through a dry run and
+  the backfill, a repeated interrupted batch, a checkout completed during
+  the run, a re-run, and the verification report).
 - **Stage 3 (#2139):** API specs with fixtures for examples 3, 4, 5, 7, 9, 11,
   13, 14, 16 and 20–22. Rerun and resume specs (examples 17, 18). The
   verification report, including the reasons in §6.2. Reconciliation
