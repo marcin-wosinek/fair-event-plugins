@@ -454,17 +454,27 @@ test.describe( 'Payment history foundation', () => {
 		signupIds.push( ...seeded.signupIds );
 		const [ first, second ] = seeded.signupIds;
 
-		// Each set fits on its own; together they would be 48 of 36.
-		const results = await Promise.all( [
-			links( 'write', {
-				transactionId: seeded.transactionId,
-				links: [ link( first, 24 ) ],
-			} ),
-			links( 'write', {
-				transactionId: seeded.transactionId,
-				links: [ link( second, 24 ) ],
-			} ),
-		] );
+		// Each set fits on its own; together they would be 48 of 36. The
+		// writers race inside the container: parallel `wp-env run` calls
+		// break the environment for every later spec in the job.
+		const { results } = await links( 'parallel', {
+			runs: [
+				{
+					action: 'write',
+					data: {
+						transactionId: seeded.transactionId,
+						links: [ link( first, 24 ) ],
+					},
+				},
+				{
+					action: 'write',
+					data: {
+						transactionId: seeded.transactionId,
+						links: [ link( second, 24 ) ],
+					},
+				},
+			],
+		} );
 		expect( results.filter( ( r ) => r.inserted === 1 ) ).toHaveLength( 1 );
 		expect(
 			results.filter( ( r ) => r.error === 'allocation_exceeds_total' )
@@ -482,16 +492,24 @@ test.describe( 'Payment history foundation', () => {
 		} );
 		transactionIds.push( other.transactionId );
 		signupIds.push( ...other.signupIds );
-		const holding = links( 'hold-lock', {
-			transactionId: other.transactionId,
-			seconds: 6,
+		const {
+			results: [ hold, write ],
+		} = await links( 'parallel', {
+			runs: [
+				{
+					action: 'hold-lock',
+					data: { transactionId: other.transactionId, seconds: 6 },
+				},
+				{
+					action: 'write',
+					delayMs: 1500,
+					data: {
+						transactionId: other.transactionId,
+						links: [ link( other.signupIds[ 0 ], 10 ) ],
+					},
+				},
+			],
 		} );
-		await new Promise( ( resolve ) => setTimeout( resolve, 1500 ) );
-		const waiting = links( 'write', {
-			transactionId: other.transactionId,
-			links: [ link( other.signupIds[ 0 ], 10 ) ],
-		} );
-		const [ hold, write ] = await Promise.all( [ holding, waiting ] );
 		expect( hold.acquired ).toBe( true );
 		expect( write.inserted ).toBe( 1 );
 		expect( write.started ).toBeLessThan( hold.released );

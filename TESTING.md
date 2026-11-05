@@ -400,6 +400,16 @@ The root command runs each workspace that defines `test:api`. API-capable
 workspaces should expose a script that targets `src/API/__tests__/`; workspaces
 without API specs should omit it.
 
+**Run WP-CLI fixtures one at a time.** Await each `npx wp-env run` before
+starting the next; don't wrap several in `Promise.all`. In CI run 41784629083,
+two concurrent `wp-env run` calls left wp-env reporting `Environment not
+initialized` for every later fixture, across all remaining workspaces and the
+final cleanup. To test a race between server-side writers, start the
+processes inside the container from one `wp-env run`. The `parallel` action of
+`e2e/mu-plugins/scripts/payment-links.php` shows how: it starts each child
+`wp eval-file` with `proc_open`, waits an optional `delayMs` between starts, and
+returns all results in order.
+
 `.github/workflows/api-tests.yml` uses the same lifecycle command and test-only
 authentication as local development. Its path filters include API sources,
 Playwright configuration, wp-env configuration, lifecycle code, and test
