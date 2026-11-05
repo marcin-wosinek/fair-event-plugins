@@ -52,6 +52,11 @@ class PaymentHistoryCompatibility {
 	const BACKFILL_DB_VERSION = '3.51.0';
 
 	/**
+	 * First database version with the reconciliation audit.
+	 */
+	const RECONCILIATION_DB_VERSION = '3.52.0';
+
+	/**
 	 * Option holding the migration's state; written by later stages.
 	 */
 	const STATE_OPTION = 'fair_events_payment_history_migration';
@@ -214,6 +219,18 @@ class PaymentHistoryCompatibility {
 			$blockers[] = 'audience_incompatible';
 		}
 		return $blockers;
+	}
+
+	/**
+	 * Whether administrators can reconcile findings: the backfill's tables
+	 * and the reconciliation audit (DB 3.52.0) exist. Reconciliation also
+	 * needs Connector, checked per action.
+	 *
+	 * @return bool
+	 */
+	public static function reconciliation_available() {
+		return self::storage_available()
+			&& version_compare( Schema::get_db_version(), self::RECONCILIATION_DB_VERSION, '>=' );
 	}
 
 	/**

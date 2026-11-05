@@ -170,6 +170,20 @@ class AdminPages {
 			array( $this, 'render_event_notifications_page' )
 		);
 
+		// Payment history page: the migration of historical admissions and
+		// payments, its verification and reconciliation. Listed once the
+		// payment link storage exists.
+		if ( \FairEvents\Services\PaymentHistoryCompatibility::storage_available() ) {
+			$this->page_hooks['fair-events-payment-history'] = add_submenu_page(
+				$parent,
+				__( 'Payment history', 'fair-events' ),
+				__( 'Payment history', 'fair-events' ),
+				'manage_options',
+				'fair-events-payment-history',
+				array( $this, 'render_payment_history_page' )
+			);
+		}
+
 		// Settings page.
 		$this->page_hooks['fair-events-settings'] = add_submenu_page(
 			$parent,
@@ -626,6 +640,44 @@ class AdminPages {
 			return;
 		}
 
+		// Payment history page.
+		if ( 'fair-events-payment-history' === $slug ) {
+			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/payment-history/index.asset.php';
+
+			wp_enqueue_script(
+				'fair-events-payment-history',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/payment-history/index.js',
+				$asset_file['dependencies'],
+				$asset_file['version'],
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
+			);
+
+			wp_enqueue_style(
+				'fair-events-payment-history',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/payment-history/index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+
+			wp_localize_script(
+				'fair-events-payment-history',
+				'fairEventsPaymentHistoryData',
+				array(
+					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
+				)
+			);
+
+			wp_set_script_translations(
+				'fair-events-payment-history',
+				'fair-events',
+				\FairEvents\Core\Features::script_translations_path()
+			);
+			return;
+		}
+
 		// Event notifications page.
 		if ( 'fair-events-event-notifications' === $slug ) {
 			$asset_file = include FAIR_EVENTS_PLUGIN_DIR . 'build/admin/event-notifications/index.asset.php';
@@ -787,6 +839,17 @@ class AdminPages {
 	public function render_event_statistics_page() {
 		?>
 		<div id="fair-events-event-statistics-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render the payment history page.
+	 *
+	 * @return void
+	 */
+	public function render_payment_history_page() {
+		?>
+		<div id="fair-events-payment-history-root"></div>
 		<?php
 	}
 

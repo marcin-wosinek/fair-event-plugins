@@ -489,6 +489,13 @@ class PaymentLinksTest extends TestCase {
 		);
 		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
 		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
+		$this->assertTrue( PaymentHistoryCompatibility::reconciliation_available() );
+
+		// The backfill runs from 3.51.0; reconciliation needs the 3.52.0 audit.
+		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.51.0';
+		PaymentHistoryCompatibility::reset_cache();
+		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
+		$this->assertFalse( PaymentHistoryCompatibility::reconciliation_available() );
 
 		// Shadow writes run from 3.50.0; the backfill needs its 3.51.0 tables.
 		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.50.0';

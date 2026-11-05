@@ -31,8 +31,9 @@ defined( 'WPINC' ) || die;
  * - revenue per currency and transaction: the ledger's paid transactions on
  *   signed-up relationships against paid link allocations. Allowed causes:
  *   `shared_transaction` (§5.4), `legacy_refund_record` (§11), `unresolved`
- *   (an open finding lists it), `not_in_ledger` (a paid purchase today's
- *   ledger reader can't reach, §8.9). Anything else is `unexpected` and
+ *   (an open finding lists it), `reconciled` (an administrator linked or
+ *   reviewed it, §6.3), `not_in_ledger` (a paid purchase today's ledger
+ *   reader can't reach, §8.9). Anything else is `unexpected` and
  *   blocks.
  *
  * Counts are per stored event date, on both sides, so a whole-series
@@ -49,7 +50,7 @@ class PaymentHistoryVerification {
 	/**
 	 * Causes a revenue difference may have without blocking.
 	 */
-	const EXPLAINED_CAUSES = array( 'shared_transaction', 'legacy_refund_record', 'unresolved', 'not_in_ledger' );
+	const EXPLAINED_CAUSES = array( 'shared_transaction', 'legacy_refund_record', 'unresolved', 'reconciled', 'not_in_ledger' );
 
 	/**
 	 * Classify per-transaction revenue differences of one event date.
@@ -57,7 +58,8 @@ class PaymentHistoryVerification {
 	 * @param array[] $source  Ledger rows: transaction_id, kind, amount, currency.
 	 * @param array[] $target  Link sums: transaction_id, allocated, currency.
 	 * @param array   $context shared: tx => true (fully allocated across several purchases),
-	 *                         unresolved: tx => true (open finding).
+	 *                         unresolved: tx => true (open finding),
+	 *                         reconciled: tx => true (an administrator decided it).
 	 * @return array<string, array{source: float, target: float, differences: array[], unexpected: float}> Per currency.
 	 */
 	public static function classify_revenue( array $source, array $target, array $context ) {
@@ -140,6 +142,9 @@ class PaymentHistoryVerification {
 	private static function revenue_cause( $id, array $tx, array $context ) {
 		if ( ! empty( $context['unresolved'][ $id ] ) ) {
 			return 'unresolved';
+		}
+		if ( ! empty( $context['reconciled'][ $id ] ) ) {
+			return 'reconciled';
 		}
 		// The ledger subtracts a refund-labelled row; links keep it as a
 		// legacy record that never counts (§11).
@@ -555,10 +560,11 @@ class PaymentHistoryVerification {
 
 	/**
 	 * Which transactions are shared and fully allocated, have an
-	 * unallocated remainder, or have an open finding.
+	 * unallocated remainder, have an open finding, or were decided by an
+	 * administrator.
 	 *
 	 * @param int[] $transaction_ids Transaction IDs.
-	 * @return array{shared: array<int, true>, remainder: array<int, true>, unresolved: array<int, true>}
+	 * @return array{shared: array<int, true>, remainder: array<int, true>, unresolved: array<int, true>, reconciled: array<int, true>}
 	 */
 	private static function revenue_context( array $transaction_ids ) {
 		global $wpdb;
@@ -567,6 +573,7 @@ class PaymentHistoryVerification {
 			'shared'     => array(),
 			'remainder'  => array(),
 			'unresolved' => array(),
+			'reconciled' => array(),
 		);
 		$transaction_ids = array_values( array_filter( array_map( 'intval', $transaction_ids ) ) );
 		if ( ! $transaction_ids ) {
@@ -613,6 +620,21 @@ class PaymentHistoryVerification {
 			)
 		) as $id ) {
 			$context['unresolved'][ (int) $id ] = true;
+		}
+
+		foreach ( (array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT source_id FROM %i WHERE mode = %s AND status IN ( %s, %s ) AND source_type = %s AND source_id IN ( {$list} )
+				UNION SELECT DISTINCT transaction_id FROM %i WHERE attribution = %s AND transaction_id IN ( {$list} )",
+				array_merge(
+					array( PaymentHistoryFinding::table(), PaymentHistoryFinding::MODE_BACKFILL, PaymentHistoryFinding::STATUS_RECONCILED, PaymentHistoryFinding::STATUS_REVIEWED, PaymentHistoryFinding::SOURCE_TRANSACTION ),
+					$transaction_ids,
+					array( SignupPaymentLink::table(), SignupPaymentLink::ATTRIBUTION_RECONCILED ),
+					$transaction_ids
+				)
+			)
+		) as $id ) {
+			$context['reconciled'][ (int) $id ] = true;
 		}
 
 		return $context;
@@ -806,7 +828,7 @@ class PaymentHistoryVerification {
 		}
 
 		// No paid event payment is linked to nothing and missing from the
-		// unresolved list. Event payments are the recognised sources and
+		// unresolved list (or decided by an administrator). Event payments are the recognised sources and
 		// anything the ledger names; participant fees are out of scope.
 		$ledger_clause = ShadowPurchases::audience_tables_exist()
 			? $wpdb->prepare( ' OR EXISTS ( SELECT 1 FROM %i AS l WHERE l.transaction_id = t.id )', $wpdb->prefix . 'fair_audience_event_participant_transactions' )
@@ -818,7 +840,7 @@ class PaymentHistoryVerification {
 				AND ( t.metadata LIKE %s OR t.metadata LIKE %s{$ledger_clause} )
 				AND ( t.metadata IS NULL OR t.metadata NOT LIKE %s )
 				AND NOT EXISTS ( SELECT 1 FROM %i AS lk WHERE lk.transaction_id = t.id )
-				AND NOT EXISTS ( SELECT 1 FROM %i AS f WHERE f.mode = %s AND f.status = %s AND f.source_type = %s AND f.source_id = t.id )
+				AND NOT EXISTS ( SELECT 1 FROM %i AS f WHERE f.mode = %s AND f.status IN ( %s, %s, %s ) AND f.source_type = %s AND f.source_id = t.id )
 				ORDER BY t.id LIMIT 100",
 				$transactions,
 				(int) $transaction_cutoff,
@@ -829,6 +851,8 @@ class PaymentHistoryVerification {
 				PaymentHistoryFinding::table(),
 				$mode,
 				PaymentHistoryFinding::STATUS_OPEN,
+				PaymentHistoryFinding::STATUS_RECONCILED,
+				PaymentHistoryFinding::STATUS_REVIEWED,
 				PaymentHistoryFinding::SOURCE_TRANSACTION
 			)
 		);

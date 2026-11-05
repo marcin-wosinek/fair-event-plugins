@@ -854,8 +854,8 @@ database backup and starts the backfill (`start_dry_run()`,
 `storage_unavailable` below DB `3.51.0`; the backfill also refuses without a
 completed dry run over the same cutoffs (`dry_run_required`,
 `dry_run_stale`) or a confirmed backup (`backup_required`). Nothing starts on
-plugin upgrade. The REST routes and the Payment history page come with the
-third pull request.
+plugin upgrade. The Payment history page and its REST routes (§8.10) start
+and follow it.
 
 **Cutoffs.** The cutoffs are the shadow writes' coverage floors (§8.8), not
 the highest IDs when the backfill starts (§8.2): records after the floors
@@ -961,6 +961,85 @@ record `multiple_paid_attempts`, `currency_mismatch` and links naming
 deleted transactions. The backfill ends `verified` or
 `verification_failed`; `verify()` runs the report again.
 
+### 8.10 Stage 3 reconciliation
+
+**Implemented** (#2139, third of three pull requests; Fair Events DB
+`3.52.0`). Administrators decide on what the backfill reported, as §6.3
+requires. Ownership and the Statistics readers still don't change (§8.1).
+
+**Interfaces.** `API\PaymentHistoryController` registers, under
+`fair-events/v1/payment-history`, every route behind `manage_options` (401
+logged out, 403 without it):
+
+| Route                                  | Use                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /`                                | `PaymentHistoryBackfill::status()`, plus `reconciliation_available` and finding counts per status.      |
+| `POST /dry-run`, `/backfill`           | Start a dry run, or the backfill with `backup_confirmed`. Refusals are 409 (400 for `backup_required`). |
+| `POST /backfill/resume`, `/verify`     | Continue a paused backfill; verify a finished one again.                                               |
+| `GET /comparisons`                     | The verification report, blocking dates first, then incomplete revenue.                                |
+| `GET /findings`                        | Findings by `mode`, `status` (`open`, `decided`, `resolved`, `all`), `reason`, `event_date_id`, source. |
+| `GET /findings/{id}`                   | The finding with its transaction, links, remaining balance, suggested purchases and audit trail.       |
+| `POST /findings/{id}/links`            | Link the finding's transaction: `links` (`signup_id`, `role`, `allocated_amount`), `note`, `expected_link_ids`. |
+| `POST /findings/{id}/review`           | Mark the finding reviewed with a `note`.                                                               |
+| `DELETE /links/{id}`                   | Remove a reconciled link: `note`, `expected_link_ids`.                                                 |
+| `GET /purchases`, `GET /audit`         | Purchase search by number, name or email; audit records, newest first.                                 |
+
+`Services\PaymentHistoryReconciliation` holds the rules:
+
+- Only backfill findings are reconciled; a dry run's are replaced by the
+  next dry run (`finding_not_reconcilable`). Linking applies to transaction
+  findings whose evidence named no purchase, several, or didn't add up:
+  `no_evidence`, `allocation_mismatch`, `ambiguous_activity_charge`,
+  `ambiguous_upgrade`, `participant_relationship_conflict`,
+  `existing_link_conflict`. Any open finding can be marked reviewed,
+  informational ones included.
+- Links are written with `attribution = reconciled` through
+  `PaymentLinks::write_in_transaction()`, so §5.1 holds: the total is never
+  exceeded, and a set conflicting with stored links is refused. Roles are
+  `charge`, `additional_charge` and `upgrade`. Identifying hints from the
+  transaction (metadata, editable columns, the registrations it names) only
+  suggest purchases (§6.1); the administrator chooses.
+- Each action runs under the transaction's link lock, in one database
+  transaction with the finding change and an audit record. It is refused as
+  `reconciliation_stale` (409) when the finding is no longer open or the
+  transaction's link IDs differ from `expected_link_ids`, so a concurrent
+  decision is never overwritten. A note is required.
+- Linking marks every open linkable finding of the transaction
+  `reconciled`; reviewing marks the finding `reviewed`. Removing the last
+  reconciled link of a transaction opens its reconciled findings again.
+  `SignupPaymentLink::delete_reconciled()` is the only deletion of a link,
+  and refuses `live` and `backfill` ones.
+- Afterwards the affected purchases' amounts follow their links (§4.2), the
+  affected event dates are compared again, and a finished backfill is
+  verified again.
+
+**Re-runs.** `PaymentHistoryFinding::record()` never reopens a `reconciled`
+or `reviewed` finding, and the backfill skips a transaction with a
+reconciled link or a decided finding (`transaction_reconciled`), so a
+re-run neither changes nor re-reports an administrator's decision. A
+reviewed transaction stays unlinked even if later evidence would attribute
+it: a review can't be undone yet. Undoing one is left for a follow-up.
+
+**Verification** treats a decided transaction as explained: its revenue
+difference has the cause `reconciled`, an addition to §8.4's causes, and a
+paid transaction with a decided finding isn't `unlisted_paid_transactions`.
+A reviewed finding doesn't make revenue `incomplete` (§7.1): the
+administrator decided the money belongs to no purchase.
+
+**Audit.** `fair_events_payment_history_audit` (`Models\PaymentHistoryAudit`)
+is append-only: `action` (`link`, `unlink`, `review`), `finding_id`,
+`reason`, `transaction_id`, `user_id`, `note`, `before_state` and
+`after_state` (the finding status and the transaction's links, JSON) and
+`created_at` (UTC).
+
+**Page.** Fair Events → Payment history (`src/Admin/payment-history/`,
+listed once payment link storage exists, `manage_options`) shows the
+migration's progress and blockers with its controls, the verification
+report, and the findings filtered by run, status, reason and event. A
+finding's dialog names the payment, its amount and status, the purchases
+already linked and the balance left, and collects the allocation and the
+note. Starting the migration is confirmed with the backup tables named.
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"
@@ -1040,6 +1119,14 @@ Run locally only the focused specs named here, as
   (examples 3, 4, 5, 7, 9, 11, 13, 14, 16 and 20–22 through a dry run and
   the backfill, a repeated interrupted batch, a checkout completed during
   the run, a re-run, and the verification report).
+- **Stage 3 (#2139), reconciliation:** `PaymentHistoryVerificationTest.php`
+  (the `reconciled` cause),
+  `fair-events/src/API/__tests__/PaymentHistoryReconciliation.api.spec.js`
+  (401/403 on every route, validation, stale and concurrent decisions,
+  linking and splitting examples 11 and 21, reviewing examples 9 and 14, the
+  audit, removal, and a re-run keeping every decision), the component tests
+  in `src/Admin/payment-history/__tests__/` and
+  `fair-events/e2e/payment-history-reconciliation.spec.js`.
 - **Stage 3 (#2139):** API specs with fixtures for examples 3, 4, 5, 7, 9, 11,
   13, 14, 16 and 20–22. Rerun and resume specs (examples 17, 18). The
   verification report, including the reasons in §6.2. Reconciliation

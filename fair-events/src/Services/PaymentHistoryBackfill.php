@@ -1164,6 +1164,12 @@ class PaymentHistoryBackfill {
 	 * @return string|\WP_Error Outcome.
 	 */
 	private static function process_transaction( $mode, $transaction_id, array &$run ) {
+		// An administrator decided this transaction (§6.3): its reconciled
+		// links and reviewed findings stand, and it isn't reported again.
+		if ( self::reconciled( $transaction_id ) ) {
+			return 'transaction_reconciled';
+		}
+
 		$transaction = PaymentAttributionDatabase::transaction( $transaction_id );
 		if ( ! $transaction ) {
 			return PaymentHistoryCompatibility::payment_information_available()
@@ -1227,6 +1233,20 @@ class PaymentHistoryBackfill {
 		}
 		PaymentHistoryFinding::resolve_source( $mode, $type, $transaction_id, $keep );
 		return $outcome;
+	}
+
+	/**
+	 * Whether an administrator decided a transaction: it has a reconciled
+	 * link, or a backfill finding about it was reconciled or reviewed.
+	 *
+	 * @param int $transaction_id Transaction ID.
+	 * @return bool
+	 */
+	private static function reconciled( $transaction_id ) {
+		if ( PaymentHistoryFinding::is_decided( self::MODE_BACKFILL, PaymentHistoryFinding::SOURCE_TRANSACTION, $transaction_id ) ) {
+			return true;
+		}
+		return in_array( SignupPaymentLink::ATTRIBUTION_RECONCILED, array_column( SignupPaymentLink::get_by_transaction_id( $transaction_id ), 'attribution' ), true );
 	}
 
 	/**

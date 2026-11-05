@@ -14,10 +14,13 @@ defined( 'WPINC' ) || die;
  * belong to which purchase, with what role and allocation
  * (PAYMENT_HISTORY_MIGRATION.md §5.1).
  *
- * Rows are only ever inserted. Nothing here updates or deletes a link, so a
- * later writer can never change a link another one recorded. Write through
+ * Rows are only ever inserted, never updated, so a later writer can never
+ * change a link another one recorded. Write through
  * \FairEvents\Services\PaymentLinks, which validates a transaction's
- * allocation set and serializes writers.
+ * allocation set and serializes writers. The one deletion is an
+ * administrator removing a link they reconciled
+ * (\FairEvents\Services\PaymentHistoryReconciliation, §6.3):
+ * delete_reconciled() refuses every other attribution.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -140,6 +143,34 @@ class SignupPaymentLink {
 				'created_at'       => (string) $link['created_at'],
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+		);
+	}
+
+	/**
+	 * One link.
+	 *
+	 * @param int $id Link ID.
+	 * @return array|null Row as an associative array.
+	 */
+	public static function get( $id ) {
+		global $wpdb;
+
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', self::table(), (int) $id ), ARRAY_A );
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Delete a link an administrator reconciled. Live and backfilled links
+	 * are never deleted. Callers hold the transaction's writer lock.
+	 *
+	 * @param int $id Link ID.
+	 * @return bool True when a reconciled link was deleted.
+	 */
+	public static function delete_reconciled( $id ) {
+		global $wpdb;
+
+		return 1 === (int) $wpdb->query(
+			$wpdb->prepare( 'DELETE FROM %i WHERE id = %d AND attribution = %s', self::table(), (int) $id, self::ATTRIBUTION_RECONCILED )
 		);
 	}
 
