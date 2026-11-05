@@ -13,6 +13,10 @@ import {
 	Spinner,
 } from '@wordpress/components';
 import UserLinkSection from '../all-participants/UserLinkSection.js';
+import WeeklyPreferencesFields, {
+	weeklyEditsFrom,
+	weeklyChanges,
+} from './WeeklyPreferencesFields.js';
 
 const EMPTY_FORM = {
 	name: '',
@@ -44,11 +48,65 @@ export default function ParticipantEditModal( {
 	const [ error, setError ] = useState( null );
 	// Refuses a second submission before the first one re-rendered the form.
 	const inFlight = useRef( false );
+	// Saved weekly preferences (read from the participant itself: a list
+	// row may lack them), the feed list, and the edits made to them.
+	const [ saved, setSaved ] = useState( { status: 'idle' } );
+	const [ catalog, setCatalog ] = useState( { status: 'idle' } );
+	const [ weekly, setWeekly ] = useState( null );
+	// Numbers the latest load of each kind: a response to an older one (for
+	// a closed popup or another participant) is ignored.
+	const savedRequest = useRef( 0 );
+	const catalogRequest = useRef( 0 );
+
+	const loadSaved = ( participantId ) => {
+		const request = ++savedRequest.current;
+		setSaved( { status: 'loading' } );
+		setWeekly( null );
+		apiFetch( {
+			path: `/fair-audience/v1/participants/${ participantId }`,
+		} )
+			.then( ( data ) => {
+				if ( request !== savedRequest.current ) {
+					return;
+				}
+				setSaved( { status: 'ready', data } );
+				setWeekly( weeklyEditsFrom( data ) );
+			} )
+			.catch( () => {
+				if ( request === savedRequest.current ) {
+					setSaved( { status: 'error' } );
+				}
+			} );
+	};
+
+	const loadCatalog = () => {
+		const request = ++catalogRequest.current;
+		setCatalog( { status: 'loading' } );
+		apiFetch( { path: '/fair-audience/v1/mailing-signup/weekly-feeds' } )
+			.then( ( data ) => {
+				if ( request !== catalogRequest.current ) {
+					return;
+				}
+				setCatalog( {
+					status: 'ready',
+					available: !! data?.available,
+					feeds: Array.isArray( data?.feeds ) ? data.feeds : [],
+				} );
+			} )
+			.catch( () => {
+				if ( request === catalogRequest.current ) {
+					setCatalog( { status: 'error' } );
+				}
+			} );
+	};
 
 	// Filled when the popup opens, and for another participant: a reload of
 	// the same participant behind an open popup must not wipe what was typed.
 	useEffect( () => {
 		if ( ! isOpen ) {
+			// Loads still running belong to the closed popup.
+			++savedRequest.current;
+			++catalogRequest.current;
 			return;
 		}
 
@@ -69,10 +127,17 @@ export default function ParticipantEditModal( {
 			const groupIds = ( participant.groups || [] ).map( ( g ) => g.id );
 			setSelectedGroupIds( groupIds );
 			setOriginalGroupIds( groupIds );
+			loadSaved( participant.id );
+			loadCatalog();
 		} else {
 			setFormData( EMPTY_FORM );
 			setSelectedGroupIds( [] );
 			setOriginalGroupIds( [] );
+			++savedRequest.current;
+			++catalogRequest.current;
+			setSaved( { status: 'idle' } );
+			setCatalog( { status: 'idle' } );
+			setWeekly( null );
 		}
 
 		setGroupsLoading( true );
@@ -114,6 +179,16 @@ export default function ParticipantEditModal( {
 			email_profile: formData.email_profile,
 			wp_user_id: formData.wp_user_id,
 		};
+		if ( participant && saved.status === 'ready' && weekly ) {
+			const offered =
+				catalog.status === 'ready' && catalog.available
+					? catalog.feeds.map( ( feed ) => feed.id )
+					: null;
+			Object.assign(
+				dataToSend,
+				weeklyChanges( saved.data, weekly, offered )
+			);
+		}
 
 		try {
 			const result = await apiFetch( {
@@ -318,6 +393,18 @@ export default function ParticipantEditModal( {
 						onLink={ handleLinkUser }
 						onUnlink={ handleUnlinkUser }
 					/>
+					{ participant && (
+						<WeeklyPreferencesFields
+							saved={ saved }
+							catalog={ catalog }
+							edits={ weekly }
+							emailProfile={ formData.email_profile }
+							disabled={ isSaving }
+							onChange={ setWeekly }
+							onRetrySaved={ () => loadSaved( participant.id ) }
+							onRetryFeeds={ loadCatalog }
+						/>
+					) }
 					<div style={ { marginTop: '16px' } }>
 						<label
 							style={ {
@@ -402,7 +489,14 @@ export default function ParticipantEditModal( {
 							</Notice>
 						</div>
 					) }
-					<div style={ { marginTop: '16px' } }>
+					<div
+						style={ {
+							marginTop: '16px',
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: '8px',
+						} }
+					>
 						<Button
 							variant="primary"
 							onClick={ handleSubmit }
@@ -412,6 +506,13 @@ export default function ParticipantEditModal( {
 							{ participant || createdId
 								? __( 'Update', 'fair-audience' )
 								: __( 'Add', 'fair-audience' ) }
+						</Button>
+						<Button
+							variant="tertiary"
+							onClick={ close }
+							disabled={ isSaving }
+						>
+							{ __( 'Cancel', 'fair-audience' ) }
 						</Button>
 					</div>
 				</CardBody>

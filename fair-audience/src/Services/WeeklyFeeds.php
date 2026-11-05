@@ -190,6 +190,54 @@ class WeeklyFeeds {
 	}
 
 	/**
+	 * Work out what an administrator's feed choice stores.
+	 *
+	 * - 'all' keeps the stored feeds, so switching back to chosen feeds
+	 *   restores them; they do not limit delivery while the mode is 'all'.
+	 * - 'selected' checks the submitted feeds like a subscriber's choice
+	 *   ({@see resolve_selection()}): stored feeds that cannot be chosen
+	 *   now are kept.
+	 * - 'none' clears every stored feed, also those that cannot be chosen
+	 *   now, and needs no catalog.
+	 *
+	 * @param string $mode      'all', 'selected' or 'none'.
+	 * @param mixed  $submitted Submitted feed IDs; only for 'selected'.
+	 * @param int[]  $stored    Feed IDs stored so far.
+	 * @return array{mode: string, feed_ids: int[]|null}|\WP_Error Mode to
+	 *     store and feed IDs to store (null to keep the stored ones), or an
+	 *     error when the choice cannot be accepted.
+	 */
+	public function resolve_choice( $mode, $submitted, array $stored = array() ) {
+		if ( self::MODE_ALL === $mode ) {
+			return array(
+				'mode'     => self::MODE_ALL,
+				'feed_ids' => null,
+			);
+		}
+
+		if ( 'none' === $mode ) {
+			return array(
+				'mode'     => self::MODE_SELECTED,
+				'feed_ids' => array(),
+			);
+		}
+
+		if ( self::MODE_SELECTED !== $mode || null === $submitted ) {
+			return new \WP_Error( 'invalid_weekly_feeds', __( 'One of the chosen event feeds is not available. Please review your choice and try again.', 'fair-audience' ), array( 'status' => 400 ) );
+		}
+
+		$feed_ids = $this->resolve_selection( $submitted, $stored );
+		if ( is_wp_error( $feed_ids ) ) {
+			return $feed_ids;
+		}
+
+		return array(
+			'mode'     => self::MODE_SELECTED,
+			'feed_ids' => $feed_ids,
+		);
+	}
+
+	/**
 	 * Feed IDs a participant chose.
 	 *
 	 * @param int $participant_id Participant ID.

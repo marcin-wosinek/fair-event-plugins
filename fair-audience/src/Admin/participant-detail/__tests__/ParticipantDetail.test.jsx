@@ -335,3 +335,68 @@ describe( 'ParticipantDetail — weekly event feeds (#2125)', () => {
 		expect( cell ).not.toHaveTextContent( 'Saved preference only' );
 	} );
 } );
+
+describe( 'ParticipantDetail — editing weekly preferences (#2135)', () => {
+	it( 'refreshes the weekly summary after saving preferences in the popup', async () => {
+		let stored = {
+			...PARTICIPANT,
+			weekly_summary_opt_out: false,
+			weekly_feed_mode: 'all',
+			weekly_feed_ids: [ 1 ],
+			weekly_feed_summary: {
+				available: true,
+				selected: [],
+				unavailable: [],
+				deleted: 0,
+			},
+		};
+		apiFetch.mockImplementation( ( { path, method = 'GET', data } ) => {
+			if ( path === '/fair-audience/v1/groups' ) {
+				return Promise.resolve( [] );
+			}
+			if ( path === '/fair-audience/v1/mailing-signup/weekly-feeds' ) {
+				return Promise.resolve( {
+					available: true,
+					feeds: [ { id: 1, name: 'Workshops' } ],
+				} );
+			}
+			if ( path.endsWith( '/activity' ) ) {
+				return Promise.resolve( ACTIVITY );
+			}
+			if ( method === 'PUT' ) {
+				stored = {
+					...stored,
+					weekly_summary_opt_out: data.weekly_summary_opt_out,
+					weekly_feed_mode: 'selected',
+					weekly_feed_ids: [],
+				};
+				return Promise.resolve( { id: 144 } );
+			}
+			return Promise.resolve( stored );
+		} );
+		render( <ParticipantDetail /> );
+		const row = ( label ) =>
+			screen.getByText( label, { selector: 'th' } ).closest( 'tr' );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Edit participant' } )
+		);
+		const dialog = await screen.findByRole( 'dialog' );
+		fireEvent.click(
+			await within( dialog ).findByLabelText( 'No event feeds' )
+		);
+		fireEvent.click(
+			within( dialog ).getByLabelText( 'Send the weekly events summary' )
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Update' } )
+		);
+
+		// The summary reloads after the popup closes.
+		await waitFor( () =>
+			expect( row( 'Event feeds' ) ).toHaveTextContent( 'No event feeds' )
+		);
+		expect( row( 'Weekly summary' ) ).toHaveTextContent( 'Opted out' );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+	} );
+} );

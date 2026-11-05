@@ -17,6 +17,7 @@ import {
 	fireEvent,
 	waitFor,
 	within,
+	act,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import ParticipantEditModal from '../ParticipantEditModal.js';
@@ -228,5 +229,371 @@ describe( 'ParticipantEditModal', () => {
 		await waitFor( () =>
 			expect( screen.getByLabelText( 'Name *' ) ).toHaveValue( 'Janet' )
 		);
+	} );
+} );
+
+/**
+ * Weekly summary and event feed preferences in the edit popup (#2135).
+ *
+ * The saved preferences come from the participant itself, not the list
+ * row; only changed preferences are sent, so anything the popup could not
+ * load or show stays as stored.
+ */
+describe( 'ParticipantEditModal — weekly preferences', () => {
+	const FEEDS = [
+		{ id: 1, name: 'Workshops' },
+		{ id: 2, name: 'Concerts' },
+	];
+	const SAVED = {
+		id: 5,
+		status: 'confirmed',
+		email_profile: 'marketing',
+		weekly_summary_opt_out: false,
+		weekly_feed_mode: 'selected',
+		weekly_feed_ids: [ 1, 3 ],
+		weekly_feed_summary: {
+			available: true,
+			selected: [ FEEDS[ 0 ] ],
+			unavailable: [ { id: 3, name: 'Archive' } ],
+			deleted: 0,
+		},
+	};
+	// A list row: no weekly preferences at all.
+	const ROW = {
+		id: 5,
+		name: 'Jane',
+		surname: 'Doe',
+		email: 'jane@example.com',
+		email_profile: 'marketing',
+		groups: [],
+	};
+
+	/**
+	 * @param {Object}   answers
+	 * @param {Function} [answers.detail] Answers the participant GET.
+	 * @param {Function} [answers.feeds]  Answers the feed list GET.
+	 * @param {Function} [answers.save]   Answers the PUT.
+	 */
+	function mockPreferences( { detail, feeds, save } = {} ) {
+		apiFetch.mockImplementation( ( request ) => {
+			const { path, method = 'GET' } = request;
+			if ( path === '/fair-audience/v1/groups' ) {
+				return Promise.resolve( [] );
+			}
+			if ( path === '/fair-audience/v1/mailing-signup/weekly-feeds' ) {
+				return feeds
+					? feeds()
+					: Promise.resolve( { available: true, feeds: FEEDS } );
+			}
+			if ( method === 'PUT' ) {
+				return save ? save( request ) : Promise.resolve( { id: 5 } );
+			}
+			if ( path.startsWith( '/fair-audience/v1/participants/' ) ) {
+				return detail ? detail( request ) : Promise.resolve( SAVED );
+			}
+			return Promise.resolve( {} );
+		} );
+	}
+
+	const openFor = ( participant = ROW ) => renderModal( { participant } );
+	const sent = () => requests( 'PUT' ).map( ( request ) => request.data );
+	const update = () =>
+		fireEvent.click( screen.getByRole( 'button', { name: 'Update' } ) );
+
+	it( 'shows the saved preferences read from the participant, not the list row', async () => {
+		mockPreferences();
+		openFor();
+
+		expect(
+			await screen.findByLabelText( 'Send the weekly events summary' )
+		).toBeChecked();
+		expect(
+			await screen.findByLabelText( 'Selected event feeds' )
+		).toBeChecked();
+		expect( screen.getByLabelText( 'Workshops' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'Concerts' ) ).not.toBeChecked();
+		expect(
+			screen.getByText( 'Archive (not available right now)' )
+		).toBeInTheDocument();
+		expect(
+			requests( 'GET' ).map( ( request ) => request.path )
+		).toContain( '/fair-audience/v1/participants/5' );
+	} );
+
+	it( 'sends no preference when none changed', async () => {
+		mockPreferences();
+		const { onClose } = openFor();
+		await screen.findByLabelText( 'Workshops' );
+
+		update();
+
+		await waitFor( () => expect( onClose ).toHaveBeenCalled() );
+		expect( sent()[ 0 ] ).not.toHaveProperty( 'weekly_summary_opt_out' );
+		expect( sent()[ 0 ] ).not.toHaveProperty( 'weekly_feed_mode' );
+		expect( sent()[ 0 ] ).not.toHaveProperty( 'weekly_feed_ids' );
+	} );
+
+	it.each( [
+		[
+			'chosen feeds',
+			() => fireEvent.click( screen.getByLabelText( 'Concerts' ) ),
+			{ weekly_feed_mode: 'selected', weekly_feed_ids: [ 1, 2 ] },
+		],
+		[
+			'all feeds',
+			() => fireEvent.click( screen.getByLabelText( 'All event feeds' ) ),
+			{ weekly_feed_mode: 'all' },
+		],
+		[
+			'no feeds',
+			() => fireEvent.click( screen.getByLabelText( 'No event feeds' ) ),
+			{ weekly_feed_mode: 'none' },
+		],
+		[
+			'a weekly opt-out',
+			() =>
+				fireEvent.click(
+					screen.getByLabelText( 'Send the weekly events summary' )
+				),
+			{ weekly_summary_opt_out: true },
+		],
+	] )( 'saves %s with the profile', async ( _, change, expected ) => {
+		mockPreferences();
+		const { onClose, onSaved } = openFor();
+		await screen.findByLabelText( 'Workshops' );
+
+		change();
+		update();
+
+		await waitFor( () => expect( onClose ).toHaveBeenCalled() );
+		const data = sent()[ 0 ];
+		expect( data ).toMatchObject( { name: 'Jane', ...expected } );
+		// The unavailable Archive feed is never sent: the server keeps it.
+		expect( data.weekly_feed_ids || [] ).not.toContain( 3 );
+		if ( ! ( 'weekly_feed_ids' in expected ) ) {
+			expect( data ).not.toHaveProperty( 'weekly_feed_ids' );
+		}
+		expect( onSaved ).toHaveBeenCalledWith( { id: 5 }, expect.anything() );
+	} );
+
+	it( 'keeps the feed choice when the summary or email profile changes, and explains delivery', async () => {
+		mockPreferences();
+		openFor();
+		await screen.findByLabelText( 'Workshops' );
+		fireEvent.click( screen.getByLabelText( 'Concerts' ) );
+
+		fireEvent.click(
+			screen.getByLabelText( 'Send the weekly events summary' )
+		);
+		fireEvent.change( screen.getByLabelText( 'Email Profile' ), {
+			target: { value: 'declined' },
+		} );
+
+		expect( screen.getByLabelText( 'Selected event feeds' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'Concerts' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'Workshops' ) ).toBeChecked();
+		expect(
+			screen.getByText(
+				'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
+			)
+		).toBeInTheDocument();
+
+		update();
+
+		await waitFor( () => expect( sent() ).toHaveLength( 1 ) );
+		expect( sent()[ 0 ] ).toMatchObject( {
+			email_profile: 'declined',
+			weekly_summary_opt_out: true,
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [ 1, 2 ],
+		} );
+	} );
+
+	it( 'explains delivery for a participant awaiting confirmation', async () => {
+		mockPreferences( {
+			detail: () => Promise.resolve( { ...SAVED, status: 'pending' } ),
+		} );
+		openFor();
+
+		expect(
+			await screen.findByText(
+				'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'cancels without saving', async () => {
+		mockPreferences();
+		const { onClose } = openFor();
+		await screen.findByLabelText( 'Workshops' );
+		fireEvent.click( screen.getByLabelText( 'No event feeds' ) );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( onClose ).toHaveBeenCalledTimes( 1 );
+		expect( requests( 'PUT' ) ).toHaveLength( 0 );
+	} );
+
+	it( 'keeps every edit when saving fails', async () => {
+		mockPreferences( {
+			save: () =>
+				Promise.reject( {
+					message:
+						'One of the chosen event feeds is not available. Please review your choice and try again.',
+				} ),
+		} );
+		const { onClose } = openFor();
+		await screen.findByLabelText( 'Workshops' );
+		fireEvent.click( screen.getByLabelText( 'Concerts' ) );
+
+		update();
+
+		expect(
+			await within( screen.getByRole( 'dialog' ) ).findByText(
+				'One of the chosen event feeds is not available. Please review your choice and try again.',
+				{ selector: '.components-notice__content p' }
+			)
+		).toBeInTheDocument();
+		expect( onClose ).not.toHaveBeenCalled();
+		expect( screen.getByLabelText( 'Concerts' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'Selected event feeds' ) ).toBeChecked();
+	} );
+
+	it( 'saves contact edits without preferences it could not load, and retries loading', async () => {
+		let detailFails = true;
+		mockPreferences( {
+			detail: () =>
+				detailFails
+					? Promise.reject( { message: 'Server error' } )
+					: Promise.resolve( SAVED ),
+		} );
+		const { onClose } = openFor();
+
+		expect(
+			await screen.findByText(
+				'Weekly summary preferences could not be loaded. Saving now keeps them unchanged.'
+			)
+		).toBeInTheDocument();
+		typeName( 'Janet' );
+
+		detailFails = false;
+		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
+		expect(
+			await screen.findByLabelText( 'Send the weekly events summary' )
+		).toBeChecked();
+		expect( screen.getByLabelText( 'Name *' ) ).toHaveValue( 'Janet' );
+
+		detailFails = true;
+		fireEvent.click(
+			screen.getByLabelText( 'Send the weekly events summary' )
+		);
+		update();
+		await waitFor( () => expect( onClose ).toHaveBeenCalled() );
+		expect( sent()[ 0 ] ).toMatchObject( {
+			name: 'Janet',
+			weekly_summary_opt_out: true,
+		} );
+	} );
+
+	it( 'leaves the feed choice out while the feed list cannot be read', async () => {
+		let feedsFail = true;
+		mockPreferences( {
+			feeds: () =>
+				feedsFail
+					? Promise.reject( { message: 'Server error' } )
+					: Promise.resolve( { available: true, feeds: FEEDS } ),
+		} );
+		const { onClose } = openFor();
+
+		expect(
+			await screen.findByText(
+				'Event feeds cannot be listed right now. Saving now keeps the feed choice unchanged.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByLabelText( 'No event feeds' )
+		).not.toBeInTheDocument();
+		typeName( 'Janet' );
+
+		feedsFail = false;
+		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
+		expect( await screen.findByLabelText( 'Workshops' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'Name *' ) ).toHaveValue( 'Janet' );
+		fireEvent.click( screen.getByLabelText( 'No event feeds' ) );
+
+		update();
+		await waitFor( () => expect( onClose ).toHaveBeenCalled() );
+		expect( sent()[ 0 ] ).toMatchObject( {
+			name: 'Janet',
+			weekly_feed_mode: 'none',
+		} );
+	} );
+
+	it( 'sends no feed change when Fair Events cannot offer feeds', async () => {
+		mockPreferences( {
+			feeds: () => Promise.resolve( { available: false, feeds: [] } ),
+		} );
+		const { onClose } = openFor();
+		await screen.findByText(
+			'Event feeds cannot be listed right now. Saving now keeps the feed choice unchanged.'
+		);
+
+		update();
+
+		await waitFor( () => expect( onClose ).toHaveBeenCalled() );
+		expect( sent()[ 0 ] ).not.toHaveProperty( 'weekly_feed_mode' );
+	} );
+
+	it( 'ignores a late answer for another participant', async () => {
+		let answerFirst;
+		mockPreferences( {
+			detail: ( { path } ) =>
+				path.endsWith( '/5' )
+					? new Promise( ( resolve ) => {
+							answerFirst = () =>
+								resolve( {
+									...SAVED,
+									weekly_feed_mode: 'all',
+								} );
+						} )
+					: Promise.resolve( { ...SAVED, id: 6 } ),
+		} );
+		const { rerender } = render(
+			<ParticipantEditModal
+				isOpen
+				participant={ ROW }
+				onClose={ () => {} }
+			/>
+		);
+		rerender(
+			<ParticipantEditModal
+				isOpen
+				participant={ { ...ROW, id: 6 } }
+				onClose={ () => {} }
+			/>
+		);
+		expect(
+			await screen.findByLabelText( 'Selected event feeds' )
+		).toBeChecked();
+
+		await act( async () => {
+			answerFirst();
+		} );
+
+		expect( screen.getByLabelText( 'Selected event feeds' ) ).toBeChecked();
+		expect( screen.getByLabelText( 'All event feeds' ) ).not.toBeChecked();
+	} );
+
+	it( 'leaves preferences out when adding a participant', async () => {
+		mockPreferences();
+		renderModal();
+		await screen.findByLabelText( 'Name *' );
+
+		expect(
+			screen.queryByText( 'Weekly summary' )
+		).not.toBeInTheDocument();
+		expect(
+			requests( 'GET' ).map( ( request ) => request.path )
+		).not.toContain( '/fair-audience/v1/mailing-signup/weekly-feeds' );
 	} );
 } );
