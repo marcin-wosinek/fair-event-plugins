@@ -13,7 +13,7 @@ jest.mock( '@wordpress/data', () => ( {
 } ) );
 
 jest.mock( '@wordpress/block-editor', () => ( {
-	useBlockProps: ( props ) => props || {},
+	useBlockProps: ( props ) => ( { ...props, 'data-testid': 'question' } ),
 	useInnerBlocksProps: ( props ) => ( {
 		...props,
 		'data-testid': 'typed-options',
@@ -106,6 +106,23 @@ describe( 'Fair Form Multiselect Question', () => {
 		expect( apiFetch ).not.toHaveBeenCalled();
 	} );
 
+	it( 'keeps its own wrapper and offers the choice source', () => {
+		render(
+			<Edit
+				attributes={ baseAttributes }
+				setAttributes={ () => {} }
+				clientId="q-1"
+			/>
+		);
+		expect( screen.getByTestId( 'question' ) ).toHaveClass(
+			'fair-form-question',
+			'fair-form-question-multiselect'
+		);
+		expect(
+			screen.getByLabelText( 'Where do the choices come from?' )
+		).toBeInTheDocument();
+	} );
+
 	it( 'previews category choices and keeps the typed options aside', async () => {
 		apiFetch.mockResolvedValue( {
 			headers: { get: () => '1' },
@@ -153,6 +170,7 @@ describe( 'Fair Form Multiselect Question', () => {
 		expect( block.attributes ).toMatchObject( {
 			optionSource: 'categoryChildren',
 			parentCategoryId: 10,
+			displayAs: 'select',
 		} );
 		expect( block.innerBlocks ).toBe( innerBlocks );
 	} );
