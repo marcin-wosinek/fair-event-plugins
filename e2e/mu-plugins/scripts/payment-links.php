@@ -28,12 +28,21 @@
  *   delete-transaction  {transactionId}  Delete it in Connector, as an
  *                           administrator can.
  *   cleanup             {transactionIds, signupIds}
+ *   parallel            {runs: [{action, data, delayMs?}]}  Run each action
+ *                           as its own `wp eval-file` process inside the
+ *                           container, all at once (each started delayMs
+ *                           after the previous one), and report their
+ *                           results in order. Concurrent writers must go
+ *                           through this one call: parallel `wp-env run`
+ *                           invocations from the spec broke the wp-env
+ *                           environment for the rest of the CI job.
  *
  * Prints one `E2E_PAYMENT_LINKS:{json}` line.
  *
  * @package FairEventsE2E
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Test fixture inspects and resets exact schema.
+ * phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open, WordPress.WP.AlternativeFunctions -- The parallel action runs WP-CLI children in the test container.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -226,6 +235,50 @@ switch ( $fixture_action ) {
 		foreach ( array_filter( array_map( 'intval', (array) ( $data['signupIds'] ?? array() ) ) ) as $signup_id ) {
 			$wpdb->delete( $links_table, array( 'signup_id' => $signup_id ) );
 			$wpdb->delete( $signups_table, array( 'id' => $signup_id ) );
+		}
+		break;
+
+	case 'parallel':
+		$children = array();
+		foreach ( (array) $data['runs'] as $run ) {
+			usleep( 1000 * (int) ( $run['delayMs'] ?? 0 ) );
+			$stderr     = wp_tempnam( 'e2e-payment-links' );
+			$command    = implode(
+				' ',
+				array_map(
+					'escapeshellarg',
+					array(
+						'wp',
+						'eval-file',
+						__FILE__,
+						(string) $run['action'],
+						wp_json_encode( (object) ( $run['data'] ?? array() ) ),
+						'--path=' . ABSPATH,
+					)
+				)
+			);
+			$pipes      = array();
+			$process    = proc_open(
+				$command,
+				array(
+					1 => array( 'pipe', 'w' ),
+					2 => array( 'file', $stderr, 'w' ),
+				),
+				$pipes
+			);
+			$children[] = array( $process, $pipes, $stderr );
+		}
+		$result['results'] = array();
+		foreach ( $children as list( $process, $pipes, $stderr ) ) {
+			$stdout = stream_get_contents( $pipes[1] );
+			fclose( $pipes[1] );
+			$exit_code    = proc_close( $process );
+			$child_errors = (string) file_get_contents( $stderr );
+			wp_delete_file( $stderr );
+			if ( 0 !== $exit_code || ! preg_match( '/E2E_PAYMENT_LINKS:(\{.*\})/', $stdout, $match ) ) {
+				WP_CLI::error( "Parallel run failed ({$exit_code}):\n{$stdout}{$child_errors}" );
+			}
+			$result['results'][] = json_decode( $match[1], true );
 		}
 		break;
 
