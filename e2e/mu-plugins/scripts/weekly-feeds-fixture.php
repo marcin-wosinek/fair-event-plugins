@@ -7,6 +7,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php state <email>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php confirmation-link <email>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php choose <email> <mode> <feedIds>
+ *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php status <email> <status>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php deliver <configId>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php cleanup <sourceIds> <configIds> <emails>
  *
@@ -16,7 +17,8 @@
  * `confirmation-link` sends the address's deferred confirmation email, as
  * WP-Cron would, and reports the link it carries. `choose` stores
  * a feed mode and comma-separated feed IDs for a participant as they are,
- * so feeds that cannot be chosen or no longer exist can be set up. `deliver` runs
+ * so feeds that cannot be chosen or no longer exist can be set up. `status`
+ * sets a participant's confirmation status. `deliver` runs
  * a weekly email configuration's send for the current week, exactly as
  * WP-Cron would, and reports who received it. `cleanup` takes
  * comma-separated lists and removes the participants (with their tokens,
@@ -168,6 +170,18 @@ if ( 'seed' === $fixture_action ) {
 	$wpdb->update( $wpdb->prefix . 'fair_audience_participants', array( 'weekly_feed_mode' => $args[2] ?? 'all' ), array( 'id' => $fixture_id ), array( '%s' ), array( '%d' ) );
 	( new \FairAudience\Database\ParticipantFeedRepository() )->set_feeds( $fixture_id, array_map( 'intval', array_filter( explode( ',', (string) ( $args[3] ?? '' ) ) ) ) );
 	$fixture_out = array( 'participant_id' => $fixture_id );
+} elseif ( 'status' === $fixture_action ) {
+	$fixture_updated = $wpdb->update(
+		$wpdb->prefix . 'fair_audience_participants',
+		array( 'status' => 'pending' === ( $args[2] ?? '' ) ? 'pending' : 'confirmed' ),
+		array( 'email' => sanitize_email( $args[1] ?? '' ) ),
+		array( '%s' ),
+		array( '%s' )
+	);
+	if ( ! $fixture_updated ) {
+		WP_CLI::error( 'Participant not found.' );
+	}
+	$fixture_out = array( 'updated' => (int) $fixture_updated );
 } elseif ( 'deliver' === $fixture_action ) {
 	$fixture_config = $args[1] ?? '';
 	$fixture_before = count( (array) get_option( 'fair_e2e_captured_mail', array() ) );
@@ -227,7 +241,7 @@ if ( 'seed' === $fixture_action ) {
 	BulkEmailSettings::refresh_summary();
 	$fixture_out = array( 'cleaned' => true );
 } else {
-	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|confirmation-link|choose|deliver|cleanup …' );
+	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|confirmation-link|choose|status|deliver|cleanup …' );
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

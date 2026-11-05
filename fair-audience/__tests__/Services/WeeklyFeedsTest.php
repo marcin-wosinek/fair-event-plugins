@@ -290,6 +290,59 @@ class WeeklyFeedsTest extends TestCase {
 		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
 	}
 
+	/** The all-feeds choice keeps the stored feeds and needs no catalog. */
+	public function test_all_feeds_choice_keeps_stored_feeds() {
+		$expected = array(
+			'mode'     => WeeklyFeeds::MODE_ALL,
+			'feed_ids' => null,
+		);
+
+		$this->assertSame( $expected, $this->feeds()->resolve_choice( WeeklyFeeds::MODE_ALL, null, array( 1, 3 ) ) );
+		$this->assertSame( $expected, ( new WeeklyFeeds( false, $this->repository ) )->resolve_choice( WeeklyFeeds::MODE_ALL, null, array( 1 ) ) );
+	}
+
+	/** The no-feeds choice clears every stored feed, unavailable ones too. */
+	public function test_no_feeds_choice_clears_every_feed() {
+		$expected = array(
+			'mode'     => WeeklyFeeds::MODE_SELECTED,
+			'feed_ids' => array(),
+		);
+
+		$this->assertSame( $expected, $this->feeds()->resolve_choice( 'none', null, array( 1, 3, 42 ) ) );
+		$this->assertSame( $expected, ( new WeeklyFeeds( false, $this->repository ) )->resolve_choice( 'none', null, array( 1 ) ) );
+	}
+
+	/** Chosen feeds are checked, keeping stored feeds that cannot be chosen now. */
+	public function test_selected_choice_keeps_unavailable_feeds() {
+		$this->assertSame(
+			array(
+				'mode'     => WeeklyFeeds::MODE_SELECTED,
+				'feed_ids' => array( 2, 3, 42 ),
+			),
+			$this->feeds()->resolve_choice( WeeklyFeeds::MODE_SELECTED, array( 2 ), array( 1, 3, 42 ) )
+		);
+	}
+
+	/** An invalid or uncheckable choice is refused rather than widened or cleared. */
+	public function test_selected_choice_refuses_what_it_cannot_check() {
+		$cases = array(
+			'invalid_weekly_feeds'     => array( $this->feeds(), WeeklyFeeds::MODE_SELECTED, array( 3 ) ),
+			'weekly_feeds_unavailable' => array( new WeeklyFeeds( false, $this->repository ), WeeklyFeeds::MODE_SELECTED, array( 1 ) ),
+		);
+		foreach ( $cases as $code => list( $feeds, $mode, $submitted ) ) {
+			$result = $feeds->resolve_choice( $mode, $submitted, array( 1 ) );
+
+			$this->assertInstanceOf( \WP_Error::class, $result, $code );
+			$this->assertSame( $code, $result->get_error_code() );
+		}
+
+		foreach ( array( array( WeeklyFeeds::MODE_SELECTED, null ), array( 'some', array( 1 ) ) ) as list( $mode, $submitted ) ) {
+			$result = $this->feeds()->resolve_choice( $mode, $submitted );
+			$this->assertInstanceOf( \WP_Error::class, $result, $mode );
+			$this->assertSame( 'invalid_weekly_feeds', $result->get_error_code() );
+		}
+	}
+
 	/** Storage failures are reported. */
 	public function test_reports_storage_failures() {
 		$this->repository->fails = true;

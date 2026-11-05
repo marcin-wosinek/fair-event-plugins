@@ -157,7 +157,10 @@ class ParticipantsController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+					'args'                => array_merge(
+						$this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+						$this->get_weekly_preference_args()
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -696,16 +699,50 @@ class ParticipantsController extends WP_REST_Controller {
 			}
 		}
 
+		// Weekly email preferences are checked before anything is written.
+		$feed_repository = new ParticipantFeedRepository();
+		$feed_choice     = null;
+		$feed_mode       = $request->get_param( 'weekly_feed_mode' );
+		$feed_ids        = $request->get_param( 'weekly_feed_ids' );
+		if ( null !== $feed_ids && 'selected' !== $feed_mode ) {
+			return new WP_Error(
+				'invalid_weekly_feeds',
+				__( 'Event feeds can only be chosen together with the selected event feeds option.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( null !== $feed_mode ) {
+			$feed_choice = ( new WeeklyFeeds() )->resolve_choice(
+				$feed_mode,
+				$feed_ids,
+				$feed_repository->get_feed_ids_by_participant( (int) $participant->id )
+			);
+			if ( is_wp_error( $feed_choice ) ) {
+				return $feed_choice;
+			}
+		}
+
+		$opt_out_param = $request->get_param( 'weekly_summary_opt_out' );
+
+		// Confirmation status and weekly preferences are not contact details:
+		// a contact edit keeps them as stored unless this request sets them.
 		$participant->populate(
 			array(
-				'id'            => $participant->id,
-				'name'          => $request->get_param( 'name' ),
-				'surname'       => $request->get_param( 'surname' ),
-				'email'         => $new_email,
-				'phone'         => $request->get_param( 'phone' ),
-				'instagram'     => $request->get_param( 'instagram' ),
-				'email_profile' => $request->get_param( 'email_profile' ),
-				'wp_user_id'    => $new_wp_user_id,
+				'id'                     => $participant->id,
+				'name'                   => $request->get_param( 'name' ),
+				'surname'                => $request->get_param( 'surname' ),
+				'email'                  => $new_email,
+				'phone'                  => $request->get_param( 'phone' ),
+				'instagram'              => $request->get_param( 'instagram' ),
+				'email_profile'          => $request->get_param( 'email_profile' ),
+				'wp_user_id'             => $new_wp_user_id,
+				'status'                 => $participant->status,
+				'weekly_summary_opt_out' => null === $opt_out_param
+					? $participant->weekly_summary_opt_out
+					: (int) (bool) $opt_out_param,
+				'weekly_feed_mode'       => $feed_choice ? $feed_choice['mode'] : $participant->weekly_feed_mode,
+				'created_at'             => $participant->created_at,
+				'updated_at'             => $participant->updated_at,
 			)
 		);
 
@@ -713,7 +750,18 @@ class ParticipantsController extends WP_REST_Controller {
 		$wpdb->suppress_errors( true );
 		$last_error_before = $wpdb->last_error;
 
-		$result = $participant->save();
+		// The profile and its feeds are saved together or not at all.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- transaction control.
+		$wpdb->query( 'START TRANSACTION' );
+		$result = ! ( $feed_choice && null !== $feed_choice['feed_ids'] )
+			|| $feed_repository->replace_feeds( (int) $participant->id, $feed_choice['feed_ids'] );
+		$result = $result && $participant->save();
+		if ( $result ) {
+			$wpdb->query( 'COMMIT' );
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		$wpdb->suppress_errors( false );
 		$db_error = $wpdb->last_error;
@@ -891,6 +939,34 @@ class ParticipantsController extends WP_REST_Controller {
 			'wp_user'                => $wp_user,
 			'created_at'             => $participant->created_at,
 			'updated_at'             => $participant->updated_at,
+		);
+	}
+
+	/**
+	 * Optional weekly email preferences an update may set. An omitted
+	 * preference keeps its stored value.
+	 *
+	 * @return array REST args.
+	 */
+	private function get_weekly_preference_args() {
+		return array(
+			'weekly_summary_opt_out' => array(
+				'description' => __( 'Whether the participant opted out of the weekly events summary.', 'fair-audience' ),
+				'type'        => 'boolean',
+			),
+			'weekly_feed_mode'       => array(
+				'description' => __( 'Which event feeds the weekly summary covers: all, selected or none.', 'fair-audience' ),
+				'type'        => 'string',
+				'enum'        => array( WeeklyFeeds::MODE_ALL, WeeklyFeeds::MODE_SELECTED, 'none' ),
+			),
+			'weekly_feed_ids'        => array(
+				'description' => __( 'Chosen event feed IDs, with the selected mode.', 'fair-audience' ),
+				'type'        => 'array',
+				'items'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+			),
 		);
 	}
 

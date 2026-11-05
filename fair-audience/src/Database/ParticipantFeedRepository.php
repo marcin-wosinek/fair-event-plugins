@@ -81,10 +81,35 @@ class ParticipantFeedRepository {
 	public function set_feeds( $participant_id, array $feed_ids ) {
 		global $wpdb;
 
+		$wpdb->query( 'START TRANSACTION' );
+
+		$ok = $this->replace_feeds( $participant_id, $feed_ids );
+
+		if ( $ok ) {
+			$wpdb->query( 'COMMIT' );
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+
+		return $ok;
+	}
+
+	/**
+	 * Replace a participant's feeds within the caller's transaction.
+	 *
+	 * Starts no transaction of its own: MySQL commits an open transaction
+	 * when another one starts, so a caller saving more than the feeds owns
+	 * the transaction and rolls back on any failure.
+	 *
+	 * @param int   $participant_id Participant ID.
+	 * @param int[] $feed_ids       Feed IDs; empty for none.
+	 * @return bool Whether every change was stored.
+	 */
+	public function replace_feeds( $participant_id, array $feed_ids ) {
+		global $wpdb;
+
 		$table_name = $this->get_table_name();
 		$feed_ids   = array_values( array_unique( array_filter( array_map( 'intval', $feed_ids ) ) ) );
-
-		$wpdb->query( 'START TRANSACTION' );
 
 		$ok = false !== $wpdb->delete(
 			$table_name,
@@ -105,8 +130,6 @@ class ParticipantFeedRepository {
 				array( '%d', '%d' )
 			);
 		}
-
-		$wpdb->query( $ok ? 'COMMIT' : 'ROLLBACK' );
 
 		return $ok;
 	}
