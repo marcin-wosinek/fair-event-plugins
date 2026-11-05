@@ -339,9 +339,10 @@ Full suites run with a single worker and take a while. Approximate figures
 | ------------------------------------------- | ----- | ----------------------------------------- | ------------------ |
 | Root E2E (`test:e2e:local`)                 | 446   | ~40–55 min\*, plus ~5 min build and start | ~21 min (4 shards) |
 | fair-events API (`--workspace=fair-events`) | 439   | ~12 min with `--reuse` (measured)         | —                  |
-| All API workspaces (`test:api:local`)       | ~850  | ~25 min\*                                 | ~18 min            |
+| All API workspaces (`test:api:local`)       | 1250  | ~40–55 min\*, plus ~3 min build and start | ~23 min (4 shards) |
 
-\* Estimated from CI, where the unsharded root E2E test phase took 34–53 min.
+\* Estimated from CI, where the unsharded root E2E test phase took 34–53 min
+and the unsharded API test phase 39–52 min.
 Local API runs have been about 1.5× slower per test than CI. Workspace E2E
 suites (fair-events has 114 tests) don't run in CI. Run them with
 `--workspace` and name specs by path (see
@@ -396,14 +397,82 @@ npm run test:api:local -- --workspace=fair-events
 npm run test:api:local -- --workspace=fair-events -- GetTickets.api.spec.js --grep "returns tickets"
 ```
 
-The root command runs each workspace that defines `test:api`. API-capable
-workspaces should expose a script that targets `src/API/__tests__/`; workspaces
-without API specs should omit it.
+The root command runs `npm run test:api --workspace=<name>` for each workspace
+that defines `test:api`, in root `package.json` order. A failing workspace does
+not stop the next one; the run fails with the first failing status and names
+the failing workspaces at the end. API-capable workspaces should expose a
+script that targets `src/API/__tests__/`; workspaces without API specs should
+omit it.
+
+Two runner options exist mainly for CI, and work locally too:
+
+```bash
+# Run one quarter of every workspace's API suite.
+npm run test:api:local -- --shard=2/4
+# Write api-results/<workspace>.json (Playwright JSON) and
+# api-results/timings.json (build, Composer, wp-env start, readiness,
+# each workspace, cleanup).
+npm run test:api:local -- --results-dir=api-results
+```
+
+`--shard` is handed to every workspace explicitly, together with
+`--pass-with-no-tests`, because a small workspace can have nothing in a given
+shard. `--results-dir` switches the reporters to `github,html,json`, so every
+workspace also leaves an HTML report in `<workspace>/playwright-report/`.
 
 `.github/workflows/api-tests.yml` uses the same lifecycle command and test-only
-authentication as local development. Its path filters include API sources,
-Playwright configuration, wp-env configuration, lifecycle code, and test
-support mu-plugins.
+authentication as local development, split into four isolated shards:
+
+- **`API shard N/4`** jobs each run
+  `npm run test:api:local -- --shard=N/4 --results-dir=api-results` on their
+  own runner, so every shard has its own wp-env containers, database, uploads,
+  captured emails and settings. Inside a shard the suite stays sequential
+  (`workers: 1`, `fullyParallel: false`, two CI retries), because specs share
+  WordPress state. Shards don't cancel each other when one fails.
+- **`API shard inventory`** lists every workspace's suite through its own
+  `test:api` script, without WordPress, and fails on listing errors, an empty
+  suite, or a test that is missing from every shard or assigned to more than
+  one (`scripts/check-api-shards.mjs --total=4`). Test keys include the
+  workspace.
+- **`API Tests`** is the single status. It fails unless the inventory check
+  and all four shards succeeded, and it compares each shard's JSON results with
+  the planned inventory: a planned test that never ran, or an unplanned one
+  that did, fails it. Existing skips count as run; flaky retries and failures
+  are listed in its step summary.
+
+Every shard uploads `api-report-shard-N-of-4-attempt-A` (`api-results/` with
+timings and JSON results, plus each workspace's HTML report and
+`test-results/` traces) on success as well as failure. Open the failing shard's
+job: its log ends with the failing workspaces, and its step summary has the
+phase timings. Reports are not merged. The workflow also has a manual trigger
+(`gh workflow run api-tests.yml --ref <branch>`) for benchmark runs.
+
+Playwright shards each workspace's sequential suite by whole spec files, so
+each shard gets roughly a quarter of every workspace. Change the shard count in
+both the matrix and the inventory check's `--total`.
+
+Measured in November 2026 (#2153; five runs each of one commit per layout,
+dispatched together, 1250 tests, PHP 8.5, Playwright 1.64.1,
+`ubuntu-latest`, two CI retries, all caches warm, queue delay excluded):
+
+| Median (range)           | Sequential (1 job) | 4 shards         |
+| ------------------------ | ------------------ | ---------------- |
+| Workflow elapsed (min)   | 45.3 (42.1–55.9)   | 22.9 (18.1–24.5) |
+| Test step, slowest job   | 44.4 (41.2–54.9)   | 21.9 (17.0–23.1) |
+| Runner minutes, all jobs | 46 (43–56)         | 66 (64–68)       |
+| Failed runs              | 1 of 5             | 0 of 5           |
+
+Sharding halves the wait for a result and costs about 45% more runner
+minutes: each shard repeats ~3 minutes of setup (build, wp-env start), and the
+inventory and status jobs add about 2 minutes. Shard 3 is the slowest (17–23
+min of test time against 8–15 for the others), mostly because a slow
+fair-payments-connector spec group lands there. Every run had the known flaky
+retry in fair-audience's `SignupHookBridge` free-signup test, in both layouts.
+The failed sequential run lost its wp-env site mid-suite (`Environment not
+initialized`).
+
+Its path filters include API sources, Playwright configuration, wp-env
+configuration, lifecycle and shard-check code, and test support mu-plugins.
 
 ### End-to-end tests
 
