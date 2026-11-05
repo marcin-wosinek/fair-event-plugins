@@ -1,8 +1,23 @@
+import { google, ics } from 'calendar-link';
 import {
 	createEventData,
 	formatEventDescription,
+	handleCalendarClick,
 	isCalendarExportable,
 } from '../src/blocks/calendar-button/utils/calendar-handler.js';
+
+jest.mock( '@wordpress/i18n', () => ( {
+	__: jest.fn( ( text, domain ) => `${ text } [${ domain }]` ),
+} ) );
+
+jest.mock( 'calendar-link', () => {
+	const actual = jest.requireActual( 'calendar-link' );
+	return {
+		...actual,
+		google: jest.fn( actual.google ),
+		ics: jest.fn( actual.ics ),
+	};
+} );
 
 describe( 'calendar-handler', () => {
 	describe( 'createEventData', () => {
@@ -334,5 +349,81 @@ describe( 'calendar-handler', () => {
 				'Event details\n\nhttps://example.com/event?id=123&category=tech'
 			);
 		} );
+	} );
+} );
+
+describe( 'handleCalendarClick', () => {
+	function openAndChoose( provider, attributes ) {
+		const button = document.createElement( 'button' );
+		document.body.appendChild( button );
+		handleCalendarClick(
+			createEventData(
+				attributes || {
+					start: '2026-07-15T10:00:00Z',
+					end: '2026-07-15T11:00:00Z',
+					allDay: false,
+					title: 'Event',
+				}
+			),
+			button
+		);
+		document
+			.querySelector(
+				`.calendar-dropdown [data-provider="${ provider }"]`
+			)
+			.click();
+	}
+
+	beforeEach( () => {
+		window.open = jest.fn();
+		jest.spyOn( HTMLAnchorElement.prototype, 'click' ).mockImplementation(
+			() => {}
+		);
+	} );
+
+	afterEach( () => {
+		delete window.plausible;
+		document.body.innerHTML = '';
+		jest.restoreAllMocks();
+	} );
+
+	it( 'translates the ICS label in the plugin text domain', () => {
+		const button = document.createElement( 'button' );
+		document.body.appendChild( button );
+		handleCalendarClick( { title: 'Event' }, button );
+
+		expect(
+			document.querySelector( '[data-provider="ics"]' ).textContent
+		).toBe( ' Download ICS [fair-calendar-button]' );
+	} );
+
+	it( 'does not track the chosen provider, even when Plausible exists', () => {
+		window.plausible = jest.fn();
+
+		openAndChoose( 'google' );
+
+		expect( window.plausible ).not.toHaveBeenCalled();
+	} );
+
+	it( 'passes the all-day dates through to the provider generator unchanged', () => {
+		openAndChoose( 'ics', {
+			start: '2024-12-21T00:00:00Z',
+			end: '2024-12-22T00:00:00Z',
+			allDay: true,
+			title: 'Retreat',
+		} );
+
+		const [ passed ] = ics.mock.calls.at( -1 );
+		expect( passed.start ).toEqual( new Date( '2024-12-21T00:00:00Z' ) );
+		expect( passed.end ).toEqual( new Date( '2024-12-23T00:00:00Z' ) );
+		expect( passed.allDay ).toBe( true );
+	} );
+
+	it( 'passes the timed dates through to the provider generator unchanged', () => {
+		openAndChoose( 'google' );
+
+		const [ passed ] = google.mock.calls.at( -1 );
+		expect( passed.start ).toEqual( new Date( '2026-07-15T10:00:00Z' ) );
+		expect( passed.end ).toEqual( new Date( '2026-07-15T11:00:00Z' ) );
 	} );
 } );

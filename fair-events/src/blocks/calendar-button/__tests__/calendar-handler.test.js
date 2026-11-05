@@ -9,8 +9,22 @@
 import { google, ics, outlook, yahoo } from 'calendar-link';
 import {
 	createEventData,
+	handleCalendarClick,
 	isCalendarExportable,
 } from '../utils/calendar-handler.js';
+
+jest.mock( '@wordpress/i18n', () => ( {
+	__: jest.fn( ( text, domain ) => `${ text } [${ domain }]` ),
+} ) );
+
+jest.mock( 'calendar-link', () => {
+	const actual = jest.requireActual( 'calendar-link' );
+	return {
+		...actual,
+		google: jest.fn( actual.google ),
+		ics: jest.fn( actual.ics ),
+	};
+} );
 
 describe( 'createEventData', () => {
 	describe( 'all-day events in a UTC+12 timezone', () => {
@@ -121,5 +135,84 @@ describe( 'isCalendarExportable', () => {
 				allDay: true,
 			} )
 		).toBe( true );
+	} );
+} );
+
+describe( 'handleCalendarClick', () => {
+	function openAndChoose( provider, attributes ) {
+		const button = document.createElement( 'button' );
+		document.body.appendChild( button );
+		handleCalendarClick(
+			createEventData(
+				attributes || {
+					start: '2026-07-15T10:00:00Z',
+					end: '2026-07-15T11:00:00Z',
+					allDay: false,
+					title: 'Event',
+				}
+			),
+			button
+		);
+		document
+			.querySelector(
+				`.calendar-dropdown [data-provider="${ provider }"]`
+			)
+			.click();
+	}
+
+	beforeEach( () => {
+		window.open = jest.fn();
+		jest.spyOn( HTMLAnchorElement.prototype, 'click' ).mockImplementation(
+			() => {}
+		);
+	} );
+
+	afterEach( () => {
+		delete window.plausible;
+		document.body.innerHTML = '';
+		jest.restoreAllMocks();
+	} );
+
+	it( 'translates the ICS label in the plugin text domain', () => {
+		const button = document.createElement( 'button' );
+		document.body.appendChild( button );
+		handleCalendarClick( { title: 'Event' }, button );
+
+		expect(
+			document.querySelector( '[data-provider="ics"]' ).textContent
+		).toBe( ' Download ICS [fair-events]' );
+	} );
+
+	it( 'tracks the chosen provider with Plausible', () => {
+		window.plausible = jest.fn();
+
+		openAndChoose( 'google' );
+
+		expect( window.plausible ).toHaveBeenCalledWith(
+			'Fair calendar button',
+			{ props: { provider: 'google' } }
+		);
+	} );
+
+	it( 'passes the all-day dates through to the provider generator unchanged', () => {
+		openAndChoose( 'ics', {
+			start: '2026-12-30',
+			end: '2027-01-01',
+			allDay: true,
+			title: 'Retreat',
+		} );
+
+		const [ passed ] = ics.mock.calls.at( -1 );
+		expect( passed.start ).toEqual( '2026-12-30' );
+		expect( passed.end ).toEqual( '2027-01-02' );
+		expect( passed.allDay ).toBe( true );
+	} );
+
+	it( 'passes the timed dates through to the provider generator unchanged', () => {
+		openAndChoose( 'google' );
+
+		const [ passed ] = google.mock.calls.at( -1 );
+		expect( passed.start ).toEqual( new Date( '2026-07-15T10:00:00Z' ) );
+		expect( passed.end ).toEqual( new Date( '2026-07-15T11:00:00Z' ) );
 	} );
 } );
