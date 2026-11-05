@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import {
+	formatTimings,
 	parseArguments,
 	resolveTestsPort,
 	runApiTests,
@@ -86,7 +87,7 @@ test('owned success prepares, starts, waits, tests all workspaces, and stops', a
 			'npx wp-env start',
 			'npx wp-env run tests-cli wp rewrite structure /%postname%/ --hard',
 			'npx wp-env run tests-cli wp core is-installed',
-			'npm run test:api',
+			'npm run test:api --workspace=fair-events',
 			'npx wp-env stop',
 		]
 	);
@@ -166,7 +167,7 @@ test('interrupt between steps starts no further steps', async () => {
 test('API failure remains the final status and still cleans up', async () => {
 	const executor = createExecutor({
 		...stoppedStatus(),
-		'npm run test:api': { code: 23 },
+		'npm run test:api --workspace=fair-events': { code: 23 },
 	});
 	assert.equal(await run(executor), 23);
 	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
@@ -185,7 +186,11 @@ test('interrupt terminates the active child, cleans up, and returns signal statu
 				'npx wp-env stop': { code: 31 },
 			},
 			(call) => {
-				if (call.args.join(' ') === 'run test:api' && !emitted) {
+				if (
+					call.args.join(' ') ===
+						'run test:api --workspace=fair-events' &&
+					!emitted
+				) {
 					emitted = true;
 					signalSource.emit(signal);
 				}
@@ -216,7 +221,10 @@ test('reuse skips status, build, startup, and teardown', async () => {
 	assert.equal(await run(executor, makeOptions({ reuse: true })), 0);
 	assert.deepEqual(
 		executor.calls.map((call) => call.args.join(' ')),
-		['wp-env run tests-cli wp core is-installed', 'run test:api']
+		[
+			'wp-env run tests-cli wp core is-installed',
+			'run test:api --workspace=fair-events',
+		]
 	);
 });
 
@@ -443,4 +451,185 @@ test('WP_ENV_TESTS_PORT wins over both files', async () => {
 			);
 		}
 	);
+});
+
+const twoApiWorkspaces = {
+	workspaces: ['fair-events', 'fair-audience', 'fair-events-shared'],
+	suiteWorkspaces: {
+		api: ['fair-events', 'fair-audience'],
+		e2e: [],
+	},
+};
+
+async function runTwo(executor, runOptions, extra = {}) {
+	return runApiTests({
+		options: runOptions,
+		executor,
+		workspaceConfig: twoApiWorkspaces,
+		logger() {},
+		signalSource: new EventEmitter(),
+		...extra,
+	});
+}
+
+function testCalls(executor) {
+	return executor.calls
+		.filter((call) => call.args[1] === 'test:api')
+		.map((call) => call.args.join(' '));
+}
+
+test('every API workspace runs explicitly, and a failure does not stop the next', async () => {
+	const executor = createExecutor({
+		...stoppedStatus(),
+		'npm run test:api --workspace=fair-events': { code: 23 },
+		'npm run test:api --workspace=fair-audience': { code: 5 },
+	});
+	assert.equal(await runTwo(executor, makeOptions()), 23);
+	assert.deepEqual(testCalls(executor), [
+		'run test:api --workspace=fair-events',
+		'run test:api --workspace=fair-audience',
+	]);
+	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
+});
+
+test('an API shard selection reaches every workspace and allows empty shards', async () => {
+	const executor = createExecutor();
+	const parsed = parseArguments(['--reuse', '--shard=2/4', '--grep', 'x']);
+	assert.deepEqual(parsed.shard, { current: 2, total: 4 });
+	assert.deepEqual(parsed.forwarded, ['--grep', 'x']);
+	assert.equal(await runTwo(executor, parsed), 0);
+	assert.deepEqual(testCalls(executor), [
+		'run test:api --workspace=fair-events -- --shard=2/4 --pass-with-no-tests --grep x',
+		'run test:api --workspace=fair-audience -- --shard=2/4 --pass-with-no-tests --grep x',
+	]);
+});
+
+test('a shard after the workspace separator is still owned by the runner', () => {
+	const parsed = parseArguments([
+		'--workspace=fair-events',
+		'--',
+		'--shard=1/2',
+	]);
+	assert.deepEqual(parsed.shard, { current: 1, total: 2 });
+	assert.deepEqual(parsed.forwarded, []);
+});
+
+test('E2E keeps forwarding --shard to Playwright untouched', () => {
+	const parsed = parseArguments(['--suite=e2e', '--shard=3/4']);
+	assert.equal(parsed.shard, undefined);
+	assert.deepEqual(parsed.forwarded, ['--shard=3/4']);
+});
+
+test('invalid shard and results options are rejected', () => {
+	for (const args of [
+		['--shard=0/4'],
+		['--shard=5/4'],
+		['--shard=1'],
+		['--shard=a/b'],
+		['--shard=1/2', '--shard=2/2'],
+		['--results-dir='],
+		['--suite=e2e', '--results-dir=out'],
+	]) {
+		assert.throws(() => parseArguments(args), undefined, args.join(' '));
+	}
+});
+
+test('a results directory adds a JSON report per workspace without dropping annotations', async () => {
+	const executor = createExecutor();
+	const parsed = parseArguments([
+		'--reuse',
+		'--shard=1/4',
+		'--results-dir=/tmp/api-results',
+	]);
+	assert.equal(await runTwo(executor, parsed), 0);
+	const calls = executor.calls.filter((call) => call.args[1] === 'test:api');
+	assert.deepEqual(
+		calls.map((call) => call.args.slice(3)),
+		[
+			[
+				'--',
+				'--shard=1/4',
+				'--pass-with-no-tests',
+				'--reporter=github,html,json',
+			],
+			[
+				'--',
+				'--shard=1/4',
+				'--pass-with-no-tests',
+				'--reporter=github,html,json',
+			],
+		]
+	);
+	assert.deepEqual(
+		calls.map((call) => call.options.env.PLAYWRIGHT_JSON_OUTPUT_FILE),
+		[
+			'/tmp/api-results/fair-events.json',
+			'/tmp/api-results/fair-audience.json',
+		]
+	);
+});
+
+test('phase timings are recorded for preparation, each workspace and cleanup', async () => {
+	let now = 0;
+	const executor = createExecutor(stoppedStatus(), () => {
+		now += 1500;
+	});
+	const written = [];
+	const parsed = makeOptions({ shard: { current: 1, total: 4 } });
+	assert.equal(
+		await runTwo(executor, parsed, {
+			clock: () => now,
+			writeTimings: async (timings) => written.push(timings),
+		}),
+		0
+	);
+	assert.equal(written.length, 1);
+	assert.deepEqual(written[0].shard, { current: 1, total: 4 });
+	assert.deepEqual(
+		written[0].phases.map((entry) => [entry.name, entry.seconds]),
+		[
+			['Build', 1.5],
+			['Composer install', 1.5],
+			['wp-env start', 1.5],
+			['WordPress readiness', 3],
+			['API tests: fair-events', 1.5],
+			['API tests: fair-audience', 1.5],
+			['wp-env stop', 1.5],
+		]
+	);
+	const summary = formatTimings(written[0]);
+	assert.match(summary, /### API shard 1\/4 timings/);
+	assert.match(summary, /\| API tests: fair-events \| 1\.5 s \| ok \|/);
+});
+
+test('timings are still written when a workspace fails', async () => {
+	const executor = createExecutor({
+		'npm run test:api --workspace=fair-audience': { code: 1 },
+	});
+	const written = [];
+	assert.equal(
+		await runTwo(executor, makeOptions({ reuse: true }), {
+			writeTimings: async (timings) => written.push(timings),
+		}),
+		1
+	);
+	assert.deepEqual(
+		written[0].phases.map((entry) => entry.code),
+		[0, 0, 1]
+	);
+	assert.match(formatTimings(written[0]), /fair-audience \| .* \| exit 1 \|/);
+});
+
+test('an interrupt during one workspace starts no further workspaces', async () => {
+	const signalSource = new EventEmitter();
+	const executor = createExecutor(stoppedStatus(), (call) => {
+		if (call.args.join(' ') === 'run test:api --workspace=fair-events') {
+			signalSource.emit('SIGINT');
+		}
+	});
+	assert.equal(await runTwo(executor, makeOptions(), { signalSource }), 130);
+	assert.deepEqual(testCalls(executor), [
+		'run test:api --workspace=fair-events',
+	]);
+	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
 });

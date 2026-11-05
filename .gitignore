@@ -26,6 +26,8 @@ test-results/
 */tests/screenshots/*.png
 e2e/screenshots/output/
 e2e-results/
+api-results/
+api-inventory.json
 */.env
 
 # Local deploy config (real values); template `.deploy/example.env` is committed

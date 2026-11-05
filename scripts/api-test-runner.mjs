@@ -2,19 +2,39 @@
 /* eslint-disable no-console */
 
 import { spawn } from 'node:child_process';
-import { access } from 'node:fs/promises';
-import { readFile } from 'node:fs/promises';
+import {
+	access,
+	appendFile,
+	mkdir,
+	readFile,
+	writeFile,
+} from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
 
+// Matches the shard notation Playwright accepts: --shard=<current>/<total>.
+export function parseShard(value) {
+	const match = /^(\d+)\/(\d+)$/.exec(value ?? '');
+	const current = Number(match?.[1]);
+	const total = Number(match?.[2]);
+	if (!match || current < 1 || total < 1 || current > total) {
+		throw new Error(
+			'The --shard option must look like --shard=<current>/<total>, e.g. --shard=2/4.'
+		);
+	}
+	return { current, total };
+}
+
 export function parseArguments(args) {
 	let reuse = false;
 	let suite = 'api';
 	let workspace;
-	const forwarded = [];
+	let resultsDir;
+	let forwarded = [];
 
 	for (let index = 0; index < args.length; index++) {
 		const argument = args[index];
@@ -26,6 +46,8 @@ export function parseArguments(args) {
 			workspace = args[++index];
 		} else if (argument.startsWith('--workspace=')) {
 			workspace = argument.slice('--workspace='.length);
+		} else if (argument.startsWith('--results-dir=')) {
+			resultsDir = argument.slice('--results-dir='.length);
 		} else if (argument !== '--') {
 			forwarded.push(argument);
 		}
@@ -40,8 +62,33 @@ export function parseArguments(args) {
 	if (!['api', 'e2e'].includes(suite)) {
 		throw new Error('The --suite option must be either "api" or "e2e".');
 	}
+	if (resultsDir === '') {
+		throw new Error('The --results-dir option requires a value.');
+	}
+	if (resultsDir !== undefined && suite !== 'api') {
+		throw new Error('The --results-dir option applies to the API suite.');
+	}
 
-	return { reuse, suite, workspace, forwarded };
+	// E2E passes --shard straight to Playwright. The API suite spans one
+	// Playwright project per workspace, so the runner owns the selection and
+	// hands it to every workspace explicitly.
+	let shard;
+	if (suite === 'api') {
+		const shardArguments = forwarded.filter((value) =>
+			value.startsWith('--shard=')
+		);
+		if (shardArguments.length > 1) {
+			throw new Error('Pass --shard at most once.');
+		}
+		if (shardArguments.length) {
+			shard = parseShard(shardArguments[0].slice('--shard='.length));
+			forwarded = forwarded.filter(
+				(value) => !value.startsWith('--shard=')
+			);
+		}
+	}
+
+	return { reuse, suite, workspace, forwarded, shard, resultsDir };
 }
 
 export async function loadWorkspaces(rootDirectory) {
@@ -104,7 +151,7 @@ export function createProcessExecutor({ cwd, env }) {
 			return new Promise((resolve) => {
 				const child = spawn(command, args, {
 					cwd,
-					env,
+					env: options.env ? { ...env, ...options.env } : env,
 					stdio: options.capture
 						? ['ignore', 'pipe', 'inherit']
 						: 'inherit',
@@ -136,6 +183,63 @@ function phase(message, logger) {
 	logger(`\n==> ${message}`);
 }
 
+function formatSeconds(seconds) {
+	return seconds >= 60
+		? `${(seconds / 60).toFixed(1)} min`
+		: `${seconds.toFixed(1)} s`;
+}
+
+/**
+ * Playwright arguments for one API workspace run. A shard selection is passed
+ * to every workspace; a workspace whose tests all fall into other shards then
+ * has nothing to run, which is not a failure (the inventory check proves the
+ * union of shards is the whole suite). A results directory adds a JSON report
+ * next to the HTML report, without dropping GitHub annotations.
+ *
+ * @param {Object} options Parsed runner options.
+ * @return {string[]} Arguments placed after `npm run test:api --workspace=… --`.
+ */
+export function apiWorkspaceArguments(options) {
+	const args = [];
+	if (options.shard) {
+		args.push(
+			`--shard=${options.shard.current}/${options.shard.total}`,
+			'--pass-with-no-tests'
+		);
+	}
+	if (options.resultsDir) {
+		args.push('--reporter=github,html,json');
+	}
+	return [...args, ...options.forwarded];
+}
+
+/**
+ * Markdown summary of one runner invocation's timings, for the GitHub step
+ * summary and the job log.
+ *
+ * @param {Object} timings Timings as written to timings.json.
+ * @return {string} Markdown table.
+ */
+export function formatTimings(timings) {
+	const label = timings.shard
+		? `API shard ${timings.shard.current}/${timings.shard.total}`
+		: 'API tests';
+	const rows = timings.phases.map(
+		(entry) =>
+			`| ${entry.name} | ${formatSeconds(entry.seconds)} | ${
+				entry.code === 0 ? 'ok' : `exit ${entry.code}`
+			} |`
+	);
+	return [
+		`### ${label} timings`,
+		'',
+		'| Phase | Duration | Result |',
+		'| --- | --- | --- |',
+		...rows,
+		'',
+	].join('\n');
+}
+
 export async function runTests({
 	options,
 	executor,
@@ -143,6 +247,8 @@ export async function runTests({
 	browserValidator = validateChromium,
 	logger = console.log,
 	signalSource = process,
+	clock = () => performance.now(),
+	writeTimings = async () => {},
 }) {
 	if (
 		options.workspace &&
@@ -175,6 +281,18 @@ export async function runTests({
 			return { code: SIGNAL_EXIT_CODES[interruptedSignal], stdout: '' };
 		}
 		return executor.run(command, args, runOptions);
+	};
+	const phases = [];
+	// Runs a step and records how long it took, for CI benchmarks.
+	const timedStep = async (name, command, args, runOptions) => {
+		const startedAt = clock();
+		const result = await runStep(command, args, runOptions);
+		phases.push({
+			name,
+			seconds: Math.round(clock() - startedAt) / 1000,
+			code: result.code,
+		});
+		return result;
 	};
 
 	try {
@@ -213,11 +331,11 @@ export async function runTests({
 				'Preparing builds and production Composer dependencies',
 				logger
 			);
-			for (const args of [
-				['run', 'build'],
-				['run', 'composer:install:prod'],
+			for (const [name, args] of [
+				['Build', ['run', 'build']],
+				['Composer install', ['run', 'composer:install:prod']],
 			]) {
-				const result = await runStep('npm', args);
+				const result = await timedStep(name, 'npm', args);
 				if (result.code !== 0) {
 					return result.code;
 				}
@@ -227,7 +345,10 @@ export async function runTests({
 			// The instance was not running, so anything a failed or interrupted
 			// start leaves behind belongs to this run and is stopped too.
 			ownsEnvironment = true;
-			const start = await runStep('npx', ['wp-env', 'start']);
+			const start = await timedStep('wp-env start', 'npx', [
+				'wp-env',
+				'start',
+			]);
 			if (start.code !== 0) {
 				primaryResult = start.code;
 				return primaryResult;
@@ -261,6 +382,7 @@ export async function runTests({
 			'core',
 			'is-installed',
 		]);
+		const readinessStart = clock();
 		for (const args of readinessCommands) {
 			const result = await runStep('npx', args);
 			if (result.code !== 0) {
@@ -268,11 +390,26 @@ export async function runTests({
 				return primaryResult;
 			}
 		}
+		phases.push({
+			name: 'WordPress readiness',
+			seconds: Math.round(clock() - readinessStart) / 1000,
+			code: 0,
+		});
 
-		phase(
-			options.suite === 'api' ? 'Running API tests' : 'Running E2E tests',
-			logger
-		);
+		if (options.suite === 'api') {
+			primaryResult = await runApiWorkspaces({
+				options,
+				workspaces: options.workspace
+					? [options.workspace]
+					: workspaceConfig.suiteWorkspaces.api,
+				timedStep,
+				logger,
+				isInterrupted: () => Boolean(interruptedSignal),
+			});
+			return primaryResult;
+		}
+
+		phase('Running E2E tests', logger);
 		const testArgs = ['run', `test:${options.suite}`];
 		if (options.workspace) {
 			testArgs.push(`--workspace=${options.workspace}`);
@@ -285,22 +422,112 @@ export async function runTests({
 	} finally {
 		signalSource.off('SIGINT', onSigint);
 		signalSource.off('SIGTERM', onSigterm);
+		let cleanupFailure;
 		if (ownsEnvironment) {
 			phase('Stopping owned WordPress test environment', logger);
+			const cleanupStart = clock();
 			const cleanup = await executor.run('npx', ['wp-env', 'stop']);
+			phases.push({
+				name: 'wp-env stop',
+				seconds: Math.round(clock() - cleanupStart) / 1000,
+				code: cleanup.code,
+			});
 			if (cleanup.code !== 0) {
 				logger(
 					`Cleanup failed with exit status ${cleanup.code}; the isolated environment may still be running.`
 				);
 				if (!primaryResult && !interruptedSignal) {
-					return cleanup.code;
+					cleanupFailure = cleanup.code;
 				}
 			}
 		}
+		if (phases.length) {
+			const timings = {
+				suite: options.suite,
+				shard: options.shard ?? null,
+				phases,
+			};
+			logger(`\n${formatTimings(timings)}`);
+			await writeTimings(timings);
+		}
+		if (cleanupFailure !== undefined) {
+			// eslint-disable-next-line no-unsafe-finally
+			return cleanupFailure;
+		}
 		if (interruptedSignal) {
+			// eslint-disable-next-line no-unsafe-finally
 			return SIGNAL_EXIT_CODES[interruptedSignal];
 		}
 	}
+}
+
+/**
+ * Run `test:api` in each workspace explicitly, so the shard and reporter
+ * arguments reach every workspace and each one's duration and result is
+ * recorded. Like `npm run --workspaces`, a failing workspace does not stop
+ * the others; the first failing status is returned.
+ *
+ * @param {Object}   root               Parameters.
+ * @param {Object}   root.options       Parsed runner options.
+ * @param {string[]} root.workspaces    Workspaces to run, in order.
+ * @param {Function} root.timedStep     Records and runs one step.
+ * @param {Function} root.logger        Log sink.
+ * @param {Function} root.isInterrupted Whether a signal arrived.
+ * @return {Promise<number>} Exit status.
+ */
+async function runApiWorkspaces({
+	options,
+	workspaces,
+	timedStep,
+	logger,
+	isInterrupted,
+}) {
+	const shardLabel = options.shard
+		? ` (shard ${options.shard.current}/${options.shard.total})`
+		: '';
+	const playwrightArgs = apiWorkspaceArguments(options);
+	const failed = [];
+	let status = 0;
+
+	for (const workspace of workspaces) {
+		if (isInterrupted()) {
+			break;
+		}
+		phase(`Running API tests: ${workspace}${shardLabel}`, logger);
+		const args = ['run', 'test:api', `--workspace=${workspace}`];
+		if (playwrightArgs.length) {
+			args.push('--', ...playwrightArgs);
+		}
+		const runOptions = options.resultsDir
+			? {
+					env: {
+						PLAYWRIGHT_JSON_OUTPUT_FILE: resolve(
+							options.resultsDir,
+							`${workspace}.json`
+						),
+					},
+				}
+			: undefined;
+		const result = await timedStep(
+			`API tests: ${workspace}`,
+			'npm',
+			args,
+			runOptions
+		);
+		if (result.code !== 0) {
+			failed.push(workspace);
+			status ||= result.code;
+		}
+	}
+
+	if (failed.length) {
+		logger(
+			`\nAPI tests failed${shardLabel} in: ${failed.join(
+				', '
+			)}. Open that workspace's report under <workspace>/playwright-report/.`
+		);
+	}
+	return status;
 }
 
 export const runApiTests = runTests;
@@ -328,10 +555,28 @@ async function main() {
 		WP_ADMIN_PASS: 'password',
 		WP_ADMIN_PASSWORD: 'password',
 	};
+	if (options.resultsDir) {
+		options.resultsDir = resolve(rootDirectory, options.resultsDir);
+		await mkdir(options.resultsDir, { recursive: true });
+	}
 	process.exitCode = await runTests({
 		options,
 		executor: createProcessExecutor({ cwd: rootDirectory, env }),
 		workspaceConfig,
+		writeTimings: async (timings) => {
+			if (options.resultsDir) {
+				await writeFile(
+					`${options.resultsDir}/timings.json`,
+					`${JSON.stringify(timings, null, 2)}\n`
+				);
+			}
+			if (options.resultsDir && process.env.GITHUB_STEP_SUMMARY) {
+				await appendFile(
+					process.env.GITHUB_STEP_SUMMARY,
+					`${formatTimings(timings)}\n`
+				);
+			}
+		},
 	});
 }
 
