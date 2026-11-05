@@ -200,6 +200,37 @@ class Client {
 	}
 
 	/**
+	 * ID of the Meta app that issued the token.
+	 *
+	 * @return string Numeric app ID, or '' when Meta does not return one.
+	 */
+	public function app_id() {
+		$answer = $this->get( 'app', array( 'fields' => 'id' ) );
+		return $answer['ok'] ? self::numeric_id( $answer['data']['id'] ?? null ) : '';
+	}
+
+	/**
+	 * ID of the business that owns a WhatsApp Business Account.
+	 *
+	 * @param string $waba_id WhatsApp Business Account ID.
+	 * @return string Numeric business ID, or '' when Meta does not return one.
+	 */
+	public function owner_business_id( $waba_id ) {
+		$answer = $this->get( $waba_id, array( 'fields' => 'owner_business_info' ) );
+		return $answer['ok'] ? self::numeric_id( $answer['data']['owner_business_info']['id'] ?? null ) : '';
+	}
+
+	/**
+	 * A Graph object ID, when it is one.
+	 *
+	 * @param mixed $value Candidate ID from Meta.
+	 * @return string The ID, or ''.
+	 */
+	private static function numeric_id( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^\d{1,32}$/', $value ) ? $value : '';
+	}
+
+	/**
 	 * Recipient number reduced to its digits, or '' when it cannot be an
 	 * international number.
 	 *

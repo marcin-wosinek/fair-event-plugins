@@ -437,6 +437,77 @@ class ClientTest extends TestCase {
 		$this->assertStringNotContainsString( '600000123', (string) wp_json_encode( $result ) );
 	}
 
+	/** The app and owning business IDs are read on the fixed host. */
+	public function test_app_and_owner_business_ids() {
+		self::queue(
+			self::answer( 200, array( 'id' => '555000000000001' ) ),
+			self::answer(
+				200,
+				array(
+					'id'                  => self::WABA,
+					'owner_business_info' => array(
+						'id'   => '777000000000001',
+						'name' => 'Fair Events',
+					),
+				)
+			)
+		);
+
+		$this->assertSame( '555000000000001', self::client()->app_id() );
+		$this->assertSame( '777000000000001', self::client()->owner_business_id( self::WABA ) );
+		$requests = $GLOBALS['_fair_test_remote_get_requests'];
+		$this->assertSame( 'https://graph.facebook.com/' . Client::GRAPH_API_VERSION . '/app?fields=id', $requests[0]['url'] );
+		$this->assertSame(
+			'https://graph.facebook.com/' . Client::GRAPH_API_VERSION . '/' . self::WABA . '?fields=owner_business_info',
+			$requests[1]['url']
+		);
+		$this->assertSame( 'Bearer ' . self::TOKEN, $requests[0]['args']['headers']['Authorization'] );
+	}
+
+	/**
+	 * Failed or malformed lookups give no ID.
+	 *
+	 * @return array<string, array{0: array|\WP_Error}>
+	 */
+	public static function lookup_failures() {
+		return array(
+			'transport'      => array( new \WP_Error( 'http_request_failed', 'timeout' ) ),
+			'no permission'  => array( self::graph_error( 403, 200 ) ),
+			'invalid token'  => array( self::graph_error( 401, 190 ) ),
+			'not JSON'       => array( self::answer( 200, 'not json' ) ),
+			'missing ID'     => array( self::answer( 200, array( 'name' => 'App' ) ) ),
+			'non-numeric ID' => array( self::answer( 200, array( 'id' => '123/../evil' ) ) ),
+			'numeric type'   => array( self::answer( 200, array( 'id' => 123 ) ) ),
+		);
+	}
+
+	/**
+	 * A failed app lookup gives ''.
+	 *
+	 * @param array|\WP_Error $response Meta's answer.
+	 */
+	#[DataProvider( 'lookup_failures' )]
+	public function test_app_id_failures( $response ) {
+		self::queue( $response );
+
+		$this->assertSame( '', self::client()->app_id() );
+	}
+
+	/** A missing or malformed owner gives ''. */
+	public function test_owner_business_id_failures() {
+		self::queue(
+			self::graph_error( 403, 200 ),
+			self::answer( 200, array( 'id' => self::WABA ) ),
+			self::answer( 200, array( 'owner_business_info' => array( 'id' => 'abc' ) ) ),
+			self::answer( 200, array( 'owner_business_info' => 'x' ) )
+		);
+
+		$client = self::client();
+		for ( $i = 0; $i < 4; $i++ ) {
+			$this->assertSame( '', $client->owner_business_id( self::WABA ) );
+		}
+	}
+
 	/** Recipients are reduced to digits; anything else is refused. */
 	public function test_normalize_and_mask_recipient() {
 		$this->assertSame( '34600123456', Client::normalize_recipient( '+34 600 123 456' ) );

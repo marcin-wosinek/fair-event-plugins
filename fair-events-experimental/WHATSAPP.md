@@ -191,7 +191,9 @@ credentials, neither of which is ever returned by a REST route:
   variable or PHP constant takes precedence over the saved value, in that
   order.
 - **Verify token**, any string of 8+ printable characters entered both here
-  and in the App Dashboard (WhatsApp → Configuration → Webhook).
+  and in the App Dashboard's webhook form: **Use cases → Customize →
+  Configuration** for apps with Meta's use-case layout, or **WhatsApp →
+  Configuration → Webhook** in older apps.
   `FAIR_EVENTS_EXPERIMENTAL_WHATSAPP_VERIFY_TOKEN` overrides it the same way.
 
 Then subscribe the webhook to the **messages** field. The page reports two
@@ -200,6 +202,29 @@ verify token, and when an **authenticated update** for the saved account last
 arrived. Verification alone does not prove that updates arrive. Another
 verify token clears the first; another App Secret or other IDs clear the
 second.
+
+### Dashboard links
+
+Added in #2132. With a token and a WhatsApp Business Account ID saved, the
+setup steps also link to the exact App Dashboard pages. Administrator-only
+**GET** `/wp-json/fair-events-experimental/v1/whatsapp/dashboard-links`
+returns `app_settings_url` and `webhook_configuration_url`, each `null` when
+it cannot be built; it never returns the token or Meta's errors, and a failed
+lookup is never an error. The admin page fetches it on its own, so the
+settings reads and saves still never contact Meta.
+
+- The app ID comes from `GET /app?fields=id` with the saved token; the
+  business ID from the account's `owner_business_info`. Each lookup is
+  independent: without the business ID only the Basic settings link
+  (`https://developers.facebook.com/apps/{app_id}/settings/basic/`) is shown.
+- The webhook link is Meta's own UI route for the WhatsApp use case, not an
+  API contract, so the written steps stay complete without it:
+  `https://developers.facebook.com/apps/{app_id}/use_cases/customize/wa-settings/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&business_id={business_id}&selected_tab=wa-settings`.
+- Results are cached in transients (`fair_events_experimental_whatsapp_app_id`,
+  `…_business_id`) for 24 hours, failures for 5 minutes. Each stores a salted
+  fingerprint of the token (and the account ID, for the business), never the
+  token, so another token, an environment override or another account looks
+  the IDs up again.
 
 ### Endpoint
 

@@ -10,6 +10,7 @@ namespace FairEventsExperimental\API;
 use FairEventsExperimental\WhatsApp\Client;
 use FairEventsExperimental\WhatsApp\Configuration;
 use FairEventsExperimental\WhatsApp\Connector;
+use FairEventsExperimental\WhatsApp\DashboardLinks;
 use FairEventsExperimental\WhatsApp\Deliveries;
 use WP_Error;
 use WP_REST_Controller;
@@ -78,6 +79,15 @@ class WhatsAppController extends WP_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_templates' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/dashboard-links',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_dashboard_links' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
 			)
 		);
@@ -250,6 +260,18 @@ class WhatsAppController extends WP_REST_Controller {
 			Connector::save_webhook_credential( $kind, (string) $request->get_param( $kind ) );
 		}
 		return $this->get_item();
+	}
+
+	/**
+	 * Links to the App Dashboard pages used in webhook setup, resolved with
+	 * the saved token and account. Kept apart from the settings reads and
+	 * saves, which never contact Meta; a failed lookup only leaves a link
+	 * null, never an error.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_dashboard_links() {
+		return rest_ensure_response( DashboardLinks::resolve() );
 	}
 
 	/**
