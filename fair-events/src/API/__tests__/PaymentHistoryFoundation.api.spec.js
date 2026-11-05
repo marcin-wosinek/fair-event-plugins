@@ -205,7 +205,7 @@ test.describe( 'Payment history foundation', () => {
 
 	test( 'storage is installed with its keys and survives repeated installs', async () => {
 		const expectSchema = ( schema ) => {
-			expect( schema.version ).toBe( '3.51.0' );
+			expect( schema.version ).toBe( '3.52.0' );
 			expect( schema.linksTable ).toBe( true );
 			expect( schema.engine ).toBe( 'InnoDB' );
 			expect( schema.indexes.idx_signup_transaction_role ).toEqual( {
@@ -234,7 +234,7 @@ test.describe( 'Payment history foundation', () => {
 		expect( upgrade.before.provenanceColumn ).toBeNull();
 		expect( upgrade.before.storageAvailable ).toBe( false );
 		for ( const run of [ upgrade.first, upgrade.second ] ) {
-			expect( run.version ).toBe( '3.51.0' );
+			expect( run.version ).toBe( '3.52.0' );
 			expect( run.linksTable ).toBe( true );
 			expect( run.provenanceUnique ).toBe( true );
 			expect( run.storageAvailable ).toBe( true );

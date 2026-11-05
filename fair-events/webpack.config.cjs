@@ -100,6 +100,10 @@ const scriptConfig = {
 			process.cwd(),
 			'src/Admin/event-statistics/index.js'
 		),
+		'admin/payment-history/index': path.resolve(
+			process.cwd(),
+			'src/Admin/payment-history/index.js'
+		),
 		'admin/all-events/index': path.resolve(
 			process.cwd(),
 			'src/Admin/all-events/index.js'

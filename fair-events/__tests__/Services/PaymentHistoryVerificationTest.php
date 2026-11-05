@@ -55,12 +55,14 @@ class PaymentHistoryVerificationTest extends TestCase {
 	 *
 	 * @param int[] $shared     Fully allocated shared transactions.
 	 * @param int[] $unresolved Transactions with an open finding.
+	 * @param int[] $reconciled Transactions an administrator decided.
 	 * @return array
 	 */
-	private static function context( array $shared = array(), array $unresolved = array() ) {
+	private static function context( array $shared = array(), array $unresolved = array(), array $reconciled = array() ) {
 		return array(
 			'shared'     => array_fill_keys( $shared, true ),
 			'unresolved' => array_fill_keys( $unresolved, true ),
+			'reconciled' => array_fill_keys( $reconciled, true ),
 		);
 	}
 
@@ -108,6 +110,43 @@ class PaymentHistoryVerificationTest extends TestCase {
 
 		$this->assertSame( 'unexpected', $result['EUR']['differences'][0]['cause'] );
 		$this->assertSame( -24.0, $result['EUR']['unexpected'] );
+	}
+
+	/**
+	 * An administrator's decision explains the difference it makes: a
+	 * split that doesn't follow the ledger, or a payment kept without a
+	 * link (§6.3).
+	 */
+	public function test_reconciled_transaction_is_explained(): void {
+		$result = PaymentHistoryVerification::classify_revenue(
+			array( self::ledger( 13, '24.00' ), self::ledger( 10, '15.00' ) ),
+			array( self::link( 13, '12.00' ) ),
+			self::context( array(), array(), array( 13, 10 ) )
+		);
+
+		$causes = array_column( $result['EUR']['differences'], 'cause', 'transaction_id' );
+		$this->assertSame(
+			array(
+				10 => 'reconciled',
+				13 => 'reconciled',
+			),
+			$causes
+		);
+		$this->assertSame( 0.0, $result['EUR']['unexpected'] );
+	}
+
+	/**
+	 * An open finding still reads as unresolved, even with a reconciled link
+	 * on the same transaction.
+	 */
+	public function test_open_finding_wins_over_reconciled(): void {
+		$result = PaymentHistoryVerification::classify_revenue(
+			array( self::ledger( 13, '24.00' ) ),
+			array( self::link( 13, '12.00' ) ),
+			self::context( array(), array( 13 ), array( 13 ) )
+		);
+
+		$this->assertSame( 'unresolved', $result['EUR']['differences'][0]['cause'] );
 	}
 
 	/**

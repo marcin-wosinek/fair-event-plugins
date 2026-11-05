@@ -273,6 +273,17 @@ class Plugin {
 			20
 		);
 
+		// Payment history migration — registers `/fair-events/v1/payment-history`
+		// for administrators: progress, verification, findings and their
+		// reconciliation (PAYMENT_HISTORY_MIGRATION.md §8.10).
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PaymentHistoryController();
+				$controller->register_routes();
+			}
+		);
+
 		// Venue controller — registers `/fair-events/v1/venues`.
 		add_action(
 			'rest_api_init',

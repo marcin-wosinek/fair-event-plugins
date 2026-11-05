@@ -1,7 +1,8 @@
 <?php
 /**
  * Seed synthetic payment history and drive the payment history backfill
- * for PaymentHistoryBackfill API coverage (#2139, stage 3 of #2111).
+ * for the PaymentHistoryBackfill and PaymentHistoryReconciliation API
+ * coverage (#2139, stage 3 of #2111).
  *
  * Usage: wp eval-file .../payment-history-backfill.php <action> <json>
  *
@@ -435,7 +436,7 @@ switch ( $fixture_action ) {
 		}
 		foreach ( array_map( 'intval', (array) ( $data['transactionIds'] ?? array() ) ) as $transaction_id ) {
 			$result['links'][ $transaction_id ] = (array) $wpdb->get_results(
-				$wpdb->prepare( 'SELECT signup_id, role, allocated_amount, attribution FROM %i WHERE transaction_id = %d ORDER BY signup_id, role', $t['links'], $transaction_id ),
+				$wpdb->prepare( 'SELECT id, signup_id, role, allocated_amount, attribution FROM %i WHERE transaction_id = %d ORDER BY signup_id, role', $t['links'], $transaction_id ),
 				ARRAY_A
 			);
 		}
@@ -497,8 +498,9 @@ switch ( $fixture_action ) {
 			$wpdb->delete( $t['participants'], array( 'id' => (int) $participant_id ) );
 		}
 
-		// The runs' traces: their state, findings and the report.
+		// The runs' traces: their state, findings, reconciliation audit and the report.
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i', PaymentHistoryFinding::table() ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i', \FairEvents\Models\PaymentHistoryAudit::table() ) );
 		PaymentHistoryVerification::clear();
 		$state = PaymentHistoryCompatibility::get_state();
 		unset( $state['dry_run'], $state['backfill'], $state['status'] );

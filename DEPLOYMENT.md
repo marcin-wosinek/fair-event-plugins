@@ -327,9 +327,10 @@ nothing runs, until an administrator starts the backfill.
 `PaymentHistoryCompatibility::backfill_blockers()` lists anything: Fair
 Payments Connector and Fair Audience must be on the shadow writes release or
 later, and shadow writes must be on. It also needs a completed dry run over
-the same records, and a confirmed database backup. The Payment history page
-that starts and follows it ships with the next part of stage 3; until then,
-use WP-CLI:
+the same records, and a confirmed database backup. From fair-events DB
+version `3.52.0` (the reconciliation release, below), start and follow it
+on **Fair Events → Payment history**. On the backfill release alone, use
+WP-CLI:
 
 ```bash
 # 1. Dry run: writes no purchase or link. Runs in the background; check it.
@@ -380,6 +381,46 @@ the shadow writes release is safe, and it ignores the two new tables. Keep
 Fair Audience on the shadow writes release or later, since an older one
 would count backfilled admissions twice. To undo the backfill's data as
 well, restore the tables exported above.
+
+## Upgrade notes: payment history reconciliation (#2139)
+
+Third part of stage 3 of the payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.10](./PAYMENT_HISTORY_MIGRATION.md#810-stage-3-reconciliation)).
+Upgrading to fair-events DB version `3.52.0` adds, on the first request
+after deploy, one empty table: `{prefix}fair_events_payment_history_audit`.
+Nothing runs on upgrade.
+
+**What appears.** Administrators get **Fair Events → Payment history**
+(`manage_options`), and the `fair-events/v1/payment-history` REST routes.
+The page runs the dry run and the backfill described above, so the WP-CLI
+commands are no longer needed, shows the verification report, and lists
+the records the backfill couldn't link. For each one an administrator can
+link the payment to purchases, split a shared payment, remove a link they
+added, or mark the record reviewed. Every decision needs a note and is
+recorded in the audit table.
+
+**Readiness gates.** Same as the backfill: nothing starts while
+`backfill_blockers()` lists anything, without a completed dry run over the
+same records, or without a confirmed backup (the page asks for it and names
+the tables). Reconciliation needs Fair Payments Connector active to link;
+reviewing works without it. A decision re-runs verification once the
+backfill has finished, so the migration's status may show `running` for a
+few batches afterwards. Payment authority and the Statistics readers still
+don't change (`ownership_cutover()` stays false).
+
+**Back up** `{prefix}fair_events_payment_history_audit` together with the
+backfill tables listed above: reconciliation writes
+`{prefix}fair_events_signup_payment_links` (reconciled links only),
+`{prefix}fair_events_payment_history_findings` (statuses),
+`{prefix}fair_events_payment_history_comparisons` and
+`{prefix}fair_events_signups` (the amount of migrated purchases).
+
+**Recovery.** A wrong link is removed on the page, which keeps both
+decisions in the audit. Rolling back to the backfill release is safe: it
+ignores the audit table, keeps reconciled links (they're inert before stage
+4), and a re-run of its backfill would report the reconciled transactions
+again, since it doesn't know about decisions. Restore the backed-up tables
+to undo the reconciliation entirely.
 
 ## Publishing to WordPress.org SVN
 

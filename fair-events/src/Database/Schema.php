@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.51.0';
+	const DB_VERSION = '3.52.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -543,8 +543,10 @@ class Schema {
 	 * source_id identifies: a Connector `transaction`, an Audience
 	 * `relationship` or `ledger_row`, or an Events `signup`. event_date_id
 	 * is the date the record concerns, when one is known, for filtering.
-	 * status is `open`, or `resolved` once a later pass attributed the
-	 * record. detail holds the JSON context. Source rows are never changed.
+	 * status is `open`, `resolved` once a later pass attributed the record,
+	 * or an administrator's decision: `reconciled` (linked by hand) or
+	 * `reviewed` (kept without a link). A re-run never reopens a decided
+	 * finding. detail holds the JSON context. Source rows are never changed.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -604,6 +606,41 @@ class Schema {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_event_date_id (event_date_id),
 			KEY idx_blocking (blocking)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_payment_history_audit table
+	 *
+	 * Append-only record of every payment history reconciliation
+	 * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10): one row per administrator
+	 * action (`link`, `unlink` or `review`), with the finding and reason it
+	 * resolves, the transaction it touched, the acting user, the note they
+	 * entered, and the finding and link state before and after as JSON.
+	 * created_at is UTC. Rows are never updated or deleted.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_payment_history_audit_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_payment_history_audit';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			action VARCHAR(20) NOT NULL,
+			finding_id BIGINT UNSIGNED DEFAULT NULL,
+			reason VARCHAR(64) DEFAULT NULL,
+			transaction_id BIGINT UNSIGNED DEFAULT NULL,
+			user_id BIGINT UNSIGNED NOT NULL,
+			note TEXT NOT NULL,
+			before_state LONGTEXT NOT NULL,
+			after_state LONGTEXT NOT NULL,
+			created_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			KEY idx_finding_id (finding_id),
+			KEY idx_transaction_id (transaction_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 
