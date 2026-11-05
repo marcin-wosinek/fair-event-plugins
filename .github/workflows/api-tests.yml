@@ -16,6 +16,9 @@ on:
             - 'package.json'
             - 'scripts/api-test-runner.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/check-api-shards.mjs'
+            - 'scripts/check-e2e-shards.mjs'
+            - 'scripts/__tests__/check-api-shards.test.mjs'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
     pull_request:
@@ -30,14 +33,78 @@ on:
             - 'package.json'
             - 'scripts/api-test-runner.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/check-api-shards.mjs'
+            - 'scripts/check-e2e-shards.mjs'
+            - 'scripts/__tests__/check-api-shards.test.mjs'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
     # Manual runs for CI benchmarks (TESTING.md § REST API tests).
     workflow_dispatch:
 
 jobs:
-    api-tests:
+    # Lists every API workspace's suite without WordPress, through each
+    # workspace's own test:api script, and fails if sharding would skip or
+    # repeat a test. Keep --total in step with the api-shard matrix.
+    api-inventory:
+        name: API shard inventory
         runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-finance/node_modules
+                      ./fair-payments-connector-experimental/node_modules
+                      ./fair-events-shared/node_modules
+                      ./fair-timetable/node_modules
+                  key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
+
+            - name: Test shard inventory check and lifecycle runner
+              run: node --test scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs
+
+            - name: Check every API test runs in exactly one shard
+              run: node scripts/check-api-shards.mjs --total=4 --output=api-inventory.json
+
+            - name: Upload planned inventory
+              uses: actions/upload-artifact@v7
+              with:
+                  name: api-inventory-attempt-${{ github.run_attempt }}
+                  path: api-inventory.json
+                  retention-days: 7
+
+    # Each shard is a separate runner with its own wp-env containers, database,
+    # uploads, captured emails and settings. Every API workspace runs its part
+    # of the shard; inside a shard the suite stays sequential (workers: 1)
+    # because specs mutate shared WordPress state.
+    api-shard:
+        name: API shard ${{ matrix.shard }}/4
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2, 3, 4]
 
         steps:
             - uses: actions/checkout@v7
@@ -131,22 +198,66 @@ jobs:
               if: steps.docker-cache.outputs.cache-hit != 'true'
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
-            - name: Test API lifecycle runner
-              run: node --test scripts/__tests__/api-test-runner.test.mjs
-
             - name: Prepare environment and run API tests
-              run: npm run test:api:local -- --results-dir=api-results
+              run: npm run test:api:local -- --shard=${{ matrix.shard }}/4 --results-dir=api-results
 
-            # Uploaded on success too, so phase timings (api-results/timings.json)
-            # and per-workspace results stay available for comparison.
+            # Uploaded on success too, so phase timings (api-results/timings.json),
+            # per-workspace results and flaky retries stay available for
+            # comparison. The status job reads the JSON results from here.
             - name: Upload Playwright report
               if: ${{ !cancelled() }}
               uses: actions/upload-artifact@v7
               with:
-                  name: api-playwright-report-attempt-${{ github.run_attempt }}
+                  name: api-report-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
                   path: |
                       api-results/
                       */playwright-report/
                       */test-results/
                   retention-days: 7
                   if-no-files-found: ignore
+
+    # Single status for the whole suite: fails unless the inventory check and
+    # every shard succeeded (a failed, cancelled or skipped shard fails it), or
+    # if any planned test did not run in its shard.
+    api:
+        name: API Tests
+        runs-on: ubuntu-latest
+        needs: [api-inventory, api-shard]
+        if: ${{ always() }}
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            # All attempts: after "Re-run failed jobs" the shards that passed
+            # earlier keep their artifacts, and the latest attempt wins.
+            - name: Download inventory and shard results
+              if: ${{ needs.api-inventory.result == 'success' }}
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: api-*
+                  path: api-artifacts
+
+            - name: Check every planned test ran
+              id: coverage
+              if: ${{ needs.api-inventory.result == 'success' }}
+              run: node scripts/check-api-shards.mjs --verify --results=api-artifacts
+
+            - name: Check inventory and shard results
+              if: ${{ always() }}
+              env:
+                  INVENTORY_RESULT: ${{ needs.api-inventory.result }}
+                  SHARDS_RESULT: ${{ needs.api-shard.result }}
+                  COVERAGE_RESULT: ${{ steps.coverage.outcome }}
+              run: |
+                  echo "Shard inventory: $INVENTORY_RESULT"
+                  echo "API shards: $SHARDS_RESULT"
+                  echo "Executed coverage: $COVERAGE_RESULT"
+                  if [ "$INVENTORY_RESULT" != success ] || [ "$SHARDS_RESULT" != success ] || [ "$COVERAGE_RESULT" != success ]; then
+                      echo "::error::API tests failed; open the failing 'API shard N/4' job (its log names the failing workspace) and its api-report-shard-N-of-4 artifact."
+                      exit 1
+                  fi
