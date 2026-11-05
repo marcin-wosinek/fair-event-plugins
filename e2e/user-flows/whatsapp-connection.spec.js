@@ -12,7 +12,9 @@
  * account and logs each request without the token.
  *
  * Delivery callbacks are posted to the site's webhook signed with the App
- * Secret saved through the page, as Meta would send them.
+ * Secret saved through the page, as Meta would send them. The setup steps
+ * link to the App Dashboard pages resolved from the token (#2132); a token
+ * the double refuses those lookups for leaves the written steps alone.
  *
  * Run: `npm run test:e2e:local -- e2e/user-flows/whatsapp-connection.spec.js`.
  */
@@ -29,6 +31,11 @@ const CONNECTORS_URL = '/wp-admin/options-connectors.php';
 const AUTHORIZED = 'The recipient agreed to receive this test message.';
 const APP_SECRET = 'abcdef0123456789abcdef0123456789';
 const VERIFY_TOKEN = 'e2e-browser-verify-token';
+const NO_APP_TOKEN = 'e2e-whatsapp-browser-noapp-token-0123456789';
+const LINK_TRANSIENTS = [
+	'fair_events_experimental_whatsapp_app_id',
+	'fair_events_experimental_whatsapp_business_id',
+];
 
 const OPTIONS = [
 	TOKEN_OPTION,
@@ -149,19 +156,19 @@ async function saveTokenInConnectors(page, token) {
 }
 
 test.describe('WhatsApp connection', () => {
-	test.beforeAll(() => {
+	const reset = () => {
 		for (const option of OPTIONS) {
 			wpCli(`option delete ${option}`, { allowFailure: true });
 		}
+		for (const name of LINK_TRANSIENTS) {
+			wpCli(`transient delete ${name}`, { allowFailure: true });
+		}
 		emptyDeliveries();
-	});
+	};
 
-	test.afterAll(() => {
-		for (const option of OPTIONS) {
-			wpCli(`option delete ${option}`, { allowFailure: true });
-		}
-		emptyDeliveries();
-	});
+	test.beforeAll(reset);
+
+	test.afterAll(reset);
 
 	test('an administrator connects, validates and sends a test template', async ({
 		page,
@@ -250,7 +257,9 @@ test.describe('WhatsApp connection', () => {
 		await expect(
 			page.getByText(/This does not confirm delivery/)
 		).toBeVisible();
-		await expect(page.getByText(/••••••••123/)).toBeVisible();
+		await expect(
+			page.getByText(/template for ••••••••123\./)
+		).toBeVisible();
 		await expect(page.getByLabel(AUTHORIZED)).not.toBeChecked();
 		await expect(send).toBeDisabled();
 		expect(sentMessages()).toEqual([
@@ -314,6 +323,24 @@ test.describe('WhatsApp connection', () => {
 		await expect(
 			page.getByText(/^No updates received yet/).first()
 		).toBeVisible();
+
+		// Each step links to its App Dashboard page, in a new tab.
+		const basic = page.getByRole('link', {
+			name: /Open App settings → Basic/,
+		});
+		const configuration = page.getByRole('link', {
+			name: /Open webhook configuration/,
+		});
+		await expect(basic).toHaveAttribute(
+			'href',
+			'https://developers.facebook.com/apps/500000000000005/settings/basic/'
+		);
+		await expect(configuration).toHaveAttribute(
+			'href',
+			'https://developers.facebook.com/apps/500000000000005/use_cases/customize/wa-settings/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&business_id=700000000000007&selected_tab=wa-settings'
+		);
+		await expect(configuration).toHaveAttribute('target', '_blank');
+		expect(await page.content()).not.toContain(TOKEN);
 
 		// Save both credentials; they are not shown back.
 		await page.getByLabel('App Secret').fill(APP_SECRET);
@@ -413,5 +440,42 @@ test.describe('WhatsApp connection', () => {
 				document.documentElement.clientWidth
 		);
 		expect(overflow).toBeLessThanOrEqual(0);
+	});
+
+	test('without resolved links the steps still read and webhook settings save', async ({
+		page,
+	}) => {
+		wpCli(`option update ${TOKEN_OPTION} ${NO_APP_TOKEN}`);
+		wpCli(
+			'option update fair_events_experimental_whatsapp_waba_id 100000000000001'
+		);
+		await loginAsAdmin(page);
+		const lookup = page.waitForResponse((response) =>
+			response.url().includes('dashboard-links')
+		);
+		await page.goto(PAGE_URL);
+
+		await expect(
+			page.getByText(/Use cases → Customize → Configuration/)
+		).toBeVisible();
+		expect((await lookup).status()).toBe(200);
+		await expect(
+			page.getByRole('link', { name: /Open App settings/ })
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('link', { name: /Open webhook configuration/ })
+		).toHaveCount(0);
+
+		await page.getByLabel('Verify token').fill(VERIFY_TOKEN);
+		await page
+			.getByRole('button', { name: 'Save webhook settings' })
+			.click();
+		await expect(
+			page.getByText(/^Webhook settings saved\./).first()
+		).toBeVisible();
+		// The failed lookup shows no error of its own.
+		await expect(page.locator('.components-notice.is-error')).toHaveCount(
+			0
+		);
 	});
 });

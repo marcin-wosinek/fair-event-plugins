@@ -2,7 +2,8 @@
  * Playwright API tests for WhatsAppController (#1923): administrator-only
  * access, saving and removing the IDs, connection validation (pagination,
  * account mismatch, invalid tokens), invalidation when the IDs or token
- * change, template filtering and the explicit test send.
+ * change, template filtering, the explicit test send and the App Dashboard
+ * links resolved from the token and account (#2132).
  *
  * Nothing reaches Meta: e2e/mu-plugins/lib/whatsapp-http-double.php answers
  * graph.facebook.com for the synthetic account it documents and logs each
@@ -30,6 +31,16 @@ const WABA = '100000000000001';
 const PHONE = '200000000000002';
 const OTHER_ACCOUNT_PHONE = '300000000000003';
 const RECIPIENT = '+34 600 000 123';
+const NO_BUSINESS_TOKEN = 'e2e-whatsapp-nobusiness-token-0123456789';
+const NO_APP_TOKEN = 'e2e-whatsapp-noapp-token-0123456789';
+const BASIC_URL =
+	'https://developers.facebook.com/apps/500000000000005/settings/basic/';
+const WEBHOOK_URL =
+	'https://developers.facebook.com/apps/500000000000005/use_cases/customize/wa-settings/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&business_id=700000000000007&selected_tab=wa-settings';
+const LINK_TRANSIENTS = [
+	'fair_events_experimental_whatsapp_app_id',
+	'fair_events_experimental_whatsapp_business_id',
+];
 
 const adminHeaders = {
 	Authorization:
@@ -135,6 +146,9 @@ test.describe( 'WhatsAppController', () => {
 			'fair_events_experimental_whatsapp_validation',
 			'fair_e2e_whatsapp_response'
 		).catch( () => {} );
+		for ( const name of LINK_TRANSIENTS ) {
+			await wp( 'transient', 'delete', name ).catch( () => {} );
+		}
 		await clearDoubleRequests();
 		if ( subscriberId ) {
 			await api.delete(
@@ -152,6 +166,7 @@ test.describe( 'WhatsAppController', () => {
 			[ 'post', PATH, { waba_id: WABA, phone_number_id: PHONE } ],
 			[ 'post', `${ PATH }/validate`, undefined ],
 			[ 'get', `${ PATH }/templates`, undefined ],
+			[ 'get', `${ PATH }/dashboard-links`, undefined ],
 			[
 				'post',
 				`${ PATH }/test`,
@@ -472,5 +487,74 @@ test.describe( 'WhatsAppController', () => {
 		expect( ( await ( await sendTest() ).json() ).code ).toBe(
 			'missing_token'
 		);
+	} );
+
+	test( 'dashboard links are resolved, cached and never carry the token', async () => {
+		const links = () =>
+			api.get( `${ PATH }/dashboard-links`, { headers: adminHeaders } );
+		const lookups = async () =>
+			( await doubleRequests() ).filter(
+				( r ) =>
+					'app' === r.path ||
+					( WABA === r.path && 'GET' === r.method )
+			);
+		for ( const name of LINK_TRANSIENTS ) {
+			await wp( 'transient', 'delete', name ).catch( () => {} );
+		}
+		await clearDoubleRequests();
+
+		// No token yet: no links and no request to Meta.
+		await saveToken( '' );
+		await saveIds( WABA, PHONE );
+		let res = await links();
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( {
+			app_settings_url: null,
+			webhook_configuration_url: null,
+		} );
+		expect( await doubleRequests() ).toHaveLength( 0 );
+
+		await saveToken( TOKEN );
+		res = await links();
+		const text = await res.text();
+		expect( text ).not.toContain( TOKEN );
+		expect( JSON.parse( text ) ).toEqual( {
+			app_settings_url: BASIC_URL,
+			webhook_configuration_url: WEBHOOK_URL,
+		} );
+		expect( await lookups() ).toHaveLength( 2 );
+
+		// A second read is served from the cache.
+		await links();
+		expect( await lookups() ).toHaveLength( 2 );
+
+		// Saving the settings never resolves links.
+		await clearDoubleRequests();
+		expect( ( await saveIds( WABA, PHONE ) ).status() ).toBe( 200 );
+		expect( await doubleRequests() ).toHaveLength( 0 );
+
+		// Another token is looked up again; a failed business lookup keeps
+		// the Basic settings link and is not an error.
+		await saveToken( NO_BUSINESS_TOKEN );
+		res = await links();
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( {
+			app_settings_url: BASIC_URL,
+			webhook_configuration_url: null,
+		} );
+		expect( await lookups() ).toHaveLength( 2 );
+
+		// A failed app lookup gives no link at all, still without an error.
+		await saveToken( NO_APP_TOKEN );
+		res = await links();
+		expect( res.status() ).toBe( 200 );
+		const failed = await res.text();
+		expect( failed ).not.toContain( 'secret-should-not-leak' );
+		expect( JSON.parse( failed ) ).toEqual( {
+			app_settings_url: null,
+			webhook_configuration_url: null,
+		} );
+
+		await saveToken( '' );
 	} );
 } );

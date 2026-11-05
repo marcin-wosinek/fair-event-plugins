@@ -203,4 +203,75 @@ describe( 'WebhookSetup', () => {
 			'short'
 		);
 	} );
+
+	it( 'links each step to its App Dashboard page in a new tab', () => {
+		const links = {
+			app_settings_url:
+				'https://developers.facebook.com/apps/555/settings/basic/',
+			webhook_configuration_url:
+				'https://developers.facebook.com/apps/555/use_cases/customize/wa-settings/?business_id=777',
+		};
+		render(
+			<WebhookSetup
+				webhook={ webhook() }
+				links={ links }
+				onSaved={ () => {} }
+				onNotice={ () => {} }
+			/>
+		);
+
+		const basic = screen.getByRole( 'link', {
+			name: /Open App settings → Basic/,
+		} );
+		const configuration = screen.getByRole( 'link', {
+			name: /Open webhook configuration/,
+		} );
+		expect( basic ).toHaveAttribute( 'href', links.app_settings_url );
+		expect( configuration ).toHaveAttribute(
+			'href',
+			links.webhook_configuration_url
+		);
+		for ( const link of [ basic, configuration ] ) {
+			expect( link ).toHaveAttribute( 'target', '_blank' );
+			expect( link.getAttribute( 'rel' ) ).toContain( 'noopener' );
+			expect( link.getAttribute( 'rel' ) ).toContain( 'noreferrer' );
+		}
+	} );
+
+	it( 'keeps the written steps without links', () => {
+		const { rerender } = render(
+			<WebhookSetup
+				webhook={ webhook() }
+				onSaved={ () => {} }
+				onNotice={ () => {} }
+			/>
+		);
+		expect( screen.queryByRole( 'link' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByText( /Use cases → Customize → Configuration/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /Copy the App Secret from App settings → Basic/ )
+		).toBeInTheDocument();
+
+		// Only the Basic settings link when the business was not resolved.
+		rerender(
+			<WebhookSetup
+				webhook={ webhook() }
+				links={ {
+					app_settings_url:
+						'https://developers.facebook.com/apps/555/settings/basic/',
+					webhook_configuration_url: null,
+				} }
+				onSaved={ () => {} }
+				onNotice={ () => {} }
+			/>
+		);
+		expect( screen.getAllByRole( 'link' ) ).toHaveLength( 1 );
+		expect(
+			screen.queryByRole( 'link', {
+				name: /Open webhook configuration/,
+			} )
+		).not.toBeInTheDocument();
+	} );
 } );

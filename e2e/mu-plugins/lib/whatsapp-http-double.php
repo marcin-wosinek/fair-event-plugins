@@ -20,6 +20,9 @@
  *   header, so they must not be offered.
  * - A token containing `expired` gets error 190; one containing `noaccess`
  *   gets error 200.
+ * - `/app` answers app 500000000000005; the account's `owner_business_info`
+ *   is business 700000000000007. A token containing `nobusiness` gets error
+ *   200 for the owner only, and one containing `noapp` for `/app` only.
  * - Sending to a number ending in 131030 gets "recipient not in allowed list".
  *
  * Each request is appended to the `fair_e2e_whatsapp_requests` option as
@@ -158,6 +161,29 @@ add_filter(
 							'id'             => $entry['message_id'],
 							'message_status' => 'accepted',
 						),
+					),
+				)
+			);
+		}
+
+		if ( 'GET' === $method && 'app' === $path ) {
+			if ( false !== strpos( $token, 'noapp' ) ) {
+				return fair_e2e_whatsapp_error( 403, 200 );
+			}
+			return fair_e2e_whatsapp_answer( 200, array( 'id' => '500000000000005' ) );
+		}
+
+		if ( 'GET' === $method && $waba === $path && 'owner_business_info' === ( $query['fields'] ?? '' ) ) {
+			if ( false !== strpos( $token, 'nobusiness' ) ) {
+				return fair_e2e_whatsapp_error( 403, 200 );
+			}
+			return fair_e2e_whatsapp_answer(
+				200,
+				array(
+					'id'                  => $waba,
+					'owner_business_info' => array(
+						'id'   => '700000000000007',
+						'name' => 'Fair Events E2E Business',
 					),
 				)
 			);

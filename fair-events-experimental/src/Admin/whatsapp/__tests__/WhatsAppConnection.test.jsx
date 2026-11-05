@@ -42,6 +42,15 @@ const WEBHOOK = {
 
 const NO_DELIVERIES = { items: [], retention_days: 30, webhook: WEBHOOK };
 
+const NO_LINKS = { app_settings_url: null, webhook_configuration_url: null };
+
+const LINKS = {
+	app_settings_url:
+		'https://developers.facebook.com/apps/555000000000001/settings/basic/',
+	webhook_configuration_url:
+		'https://developers.facebook.com/apps/555000000000001/use_cases/customize/wa-settings/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&business_id=777000000000001&selected_tab=wa-settings',
+};
+
 const TEMPLATES = [
 	{ name: 'hello_world', language: 'en_US', category: 'UTILITY' },
 ];
@@ -72,6 +81,7 @@ function apiError( code, message, data = {} ) {
 function mockApi( routes ) {
 	const all = {
 		[ `GET ${ PATH }/deliveries` ]: NO_DELIVERIES,
+		[ `GET ${ PATH }/dashboard-links` ]: NO_LINKS,
 		...routes,
 	};
 	apiFetch.mockImplementation( ( options ) => {
@@ -462,5 +472,86 @@ describe( 'WhatsAppConnection', () => {
 				/Verification alone does not show that updates arrive/
 			)[ 0 ]
 		).toBeInTheDocument();
+	} );
+
+	it( 'links the webhook steps to the App Dashboard once resolved', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: config(),
+			[ `GET ${ PATH }/dashboard-links` ]: LINKS,
+		} );
+
+		render( <WhatsAppConnection onNotice={ () => {} } /> );
+
+		expect(
+			await screen.findByRole( 'link', {
+				name: /Open webhook configuration/,
+			} )
+		).toHaveAttribute( 'href', LINKS.webhook_configuration_url );
+		expect(
+			screen.getByRole( 'link', { name: /Open App settings → Basic/ } )
+		).toHaveAttribute( 'href', LINKS.app_settings_url );
+	} );
+
+	it( 'shows no link and no error when the lookup fails', async () => {
+		const onNotice = jest.fn();
+		mockApi( {
+			[ `GET ${ PATH }` ]: config(),
+			[ `GET ${ PATH }/dashboard-links` ]: () => {
+				throw apiError( 'rest_forbidden', 'Nope' );
+			},
+		} );
+
+		render( <WhatsAppConnection onNotice={ onNotice } /> );
+
+		await screen.findByLabelText( 'Callback URL' );
+		await act( async () => {} );
+		expect( calls( 'GET', `${ PATH }/dashboard-links` ) ).toHaveLength( 1 );
+		expect(
+			screen.queryByRole( 'link', { name: /Open App settings/ } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText( /Use cases → Customize → Configuration/ )
+		).toBeInTheDocument();
+		expect( onNotice ).not.toHaveBeenCalled();
+	} );
+
+	it( 'drops the links when the account changes and ignores a stale answer', async () => {
+		const pending = [];
+		mockApi( {
+			[ `GET ${ PATH }` ]: config(),
+			[ `POST ${ PATH }` ]: ( { data } ) => config( data ),
+		} );
+		const answered = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.path === `${ PATH }/dashboard-links`
+				? new Promise( ( resolve ) => pending.push( resolve ) )
+				: answered( options )
+		);
+
+		render( <WhatsAppConnection onNotice={ () => {} } /> );
+
+		const waba = await screen.findByLabelText(
+			'WhatsApp Business Account ID'
+		);
+		expect( pending ).toHaveLength( 1 );
+
+		fireEvent.change( waba, { target: { value: '100000000000002' } } );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Save settings' } )
+			);
+		} );
+		expect( pending ).toHaveLength( 2 );
+
+		// The first lookup answers last, for the account no longer saved.
+		await act( async () => {
+			pending[ 1 ]( NO_LINKS );
+		} );
+		await act( async () => {
+			pending[ 0 ]( LINKS );
+		} );
+		expect(
+			screen.queryByRole( 'link', { name: /Open App settings/ } )
+		).not.toBeInTheDocument();
 	} );
 } );

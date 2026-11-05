@@ -1,6 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import {
 	Button,
 	Card,
@@ -225,6 +225,8 @@ export default function WhatsAppConnection( { onNotice } ) {
 	const [ sending, setSending ] = useState( false );
 	const [ result, setResult ] = useState( null );
 	const [ sendCount, setSendCount ] = useState( 0 );
+	const [ links, setLinks ] = useState( null );
+	const linksRequest = useRef( 0 );
 
 	const applyConfig = ( next ) => {
 		setConfig( next );
@@ -253,6 +255,39 @@ export default function WhatsAppConnection( { onNotice } ) {
 			);
 	}, [] );
 
+	// App Dashboard links for webhook setup are optional: they are resolved
+	// apart from the settings, so a slow or failed lookup never delays or
+	// blocks them, and only the latest request's answer is shown.
+	const loadLinks = useCallback( () => {
+		const request = ++linksRequest.current;
+		apiFetch( { path: `${ PATH }/dashboard-links` } )
+			.then( ( next ) => {
+				if ( request === linksRequest.current ) {
+					setLinks( next );
+				}
+			} )
+			.catch( () => {
+				if ( request === linksRequest.current ) {
+					setLinks( null );
+				}
+			} );
+	}, [] );
+	const linksKey = savedConfig
+		? [
+				savedConfig.waba_id,
+				savedConfig.token_configured,
+				savedConfig.token_source,
+			].join( '|' )
+		: '';
+	useEffect( () => {
+		setLinks( null );
+		if ( linksKey ) {
+			loadLinks();
+		} else {
+			linksRequest.current++;
+		}
+	}, [ linksKey, loadLinks ] );
+
 	const refreshRemote = useCallback( () => {
 		if ( 'hidden' === document.visibilityState ) {
 			return;
@@ -266,9 +301,11 @@ export default function WhatsAppConnection( { onNotice } ) {
 					current ? { ...current, ...remote } : current;
 				setConfig( merge );
 				setSavedConfig( merge );
+				// The token may have been replaced in Connectors.
+				loadLinks();
 			} )
 			.catch( () => {} );
-	}, [] );
+	}, [ loadLinks ] );
 	useEffect( () => {
 		window.addEventListener( 'focus', refreshRemote );
 		document.addEventListener( 'visibilitychange', refreshRemote );
@@ -685,6 +722,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 
 			<WebhookSetup
 				webhook={ savedConfig.webhook }
+				links={ links }
 				onSaved={ ( next ) => {
 					// Keep unsaved ID edits in the fields.
 					setSavedConfig( next );

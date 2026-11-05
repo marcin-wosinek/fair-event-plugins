@@ -6,6 +6,7 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
+	ExternalLink,
 	Flex,
 	FlexItem,
 	Notice,
@@ -118,11 +119,18 @@ function errorMessage( error, fallback ) {
  *
  * @param {Object}   props
  * @param {Object}   props.webhook  Webhook status from the API.
+ * @param {Object}   [props.links]  App Dashboard links from the API; without
+ *                                  one, its step keeps only the written path.
  * @param {Function} props.onSaved  Receives the settings payload after a save.
  * @param {Function} props.onNotice Shows a page-level notice.
  * @return {Element} The webhook card.
  */
-export default function WebhookSetup( { webhook, onSaved, onNotice } ) {
+export default function WebhookSetup( {
+	webhook,
+	links = null,
+	onSaved,
+	onNotice,
+} ) {
 	const [ values, setValues ] = useState( EMPTY );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
@@ -255,11 +263,39 @@ export default function WebhookSetup( { webhook, onSaved, onNotice } ) {
 							'Copy the App Secret from App settings → Basic in the App Dashboard, and choose a verify token of at least 8 characters. Save both below.',
 							'fair-events-experimental'
 						) }
+						{ links?.app_settings_url && (
+							<>
+								{ ' ' }
+								<ExternalLink
+									rel="noopener noreferrer"
+									href={ links.app_settings_url }
+								>
+									{ __(
+										'Open App settings → Basic',
+										'fair-events-experimental'
+									) }
+								</ExternalLink>
+							</>
+						) }
 					</li>
 					<li>
 						{ __(
-							'In the App Dashboard, open WhatsApp → Configuration, edit the webhook, enter the callback URL below and the same verify token, then select Verify and save.',
+							'In the App Dashboard, open the webhook configuration: Use cases → Customize → Configuration for the WhatsApp use case, or WhatsApp → Configuration in older apps. Edit the webhook, enter the callback URL below and the same verify token, then select Verify and save.',
 							'fair-events-experimental'
+						) }
+						{ links?.webhook_configuration_url && (
+							<>
+								{ ' ' }
+								<ExternalLink
+									rel="noopener noreferrer"
+									href={ links.webhook_configuration_url }
+								>
+									{ __(
+										'Open webhook configuration',
+										'fair-events-experimental'
+									) }
+								</ExternalLink>
+							</>
 						) }
 					</li>
 					<li>
