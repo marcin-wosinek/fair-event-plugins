@@ -47,6 +47,11 @@ class PaymentHistoryCompatibility {
 	const SHADOW_DB_VERSION = '3.50.0';
 
 	/**
+	 * First database version with the backfill's findings and comparisons.
+	 */
+	const BACKFILL_DB_VERSION = '3.51.0';
+
+	/**
 	 * Option holding the migration's state; written by later stages.
 	 */
 	const STATE_OPTION = 'fair_events_payment_history_migration';
@@ -188,14 +193,15 @@ class PaymentHistoryCompatibility {
 
 	/**
 	 * Reasons the stage 3 backfill can't start on this site; empty when it
-	 * can. Stage 3 must refuse to start while any is listed.
+	 * can. Stage 3 must refuse to start while any is listed. Storage counts
+	 * as unavailable until the backfill's own tables (DB 3.51.0) exist too.
 	 *
 	 * @return string[] Codes: storage_unavailable, shadow_writes_incomplete,
 	 *                  payment_information_unavailable, audience_incompatible.
 	 */
 	public static function backfill_blockers() {
 		$blockers = array();
-		if ( ! self::storage_available() ) {
+		if ( ! self::storage_available() || version_compare( Schema::get_db_version(), self::BACKFILL_DB_VERSION, '<' ) ) {
 			$blockers[] = 'storage_unavailable';
 		}
 		if ( ! self::shadow_write_coverage() ) {

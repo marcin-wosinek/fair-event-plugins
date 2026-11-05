@@ -100,8 +100,9 @@ class Installer {
 	 * (booking_message) need no data migration either, nor do the 3.49.0
 	 * signup payment links table and the signups' legacy_event_participant_id
 	 * provenance column: both start empty, and the payment history backfill
-	 * fills them later. The 3.50.0 payment shadow work queue starts empty
-	 * too.
+	 * fills them later. The 3.50.0 payment shadow work queue and the 3.51.0
+	 * payment history findings and comparisons start empty too: the
+	 * backfill fills them once an administrator starts it.
 	 *
 	 * @return string[] Statements for dbDelta().
 	 */
@@ -129,6 +130,8 @@ class Installer {
 			Schema::get_schedule_items_table_sql(),
 			Schema::get_signup_payment_links_table_sql(),
 			Schema::get_payment_shadow_work_table_sql(),
+			Schema::get_payment_history_findings_table_sql(),
+			Schema::get_payment_history_comparisons_table_sql(),
 		);
 	}
 

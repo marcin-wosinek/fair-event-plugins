@@ -313,6 +313,74 @@ relationships until you upgrade again, when the sweep brings them back in
 step. Don't drop
 `legacy_event_participant_id` once shadow writes have run.
 
+## Upgrade notes: payment history backfill (#2139)
+
+Second part of stage 3 of the payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.9](./PAYMENT_HISTORY_MIGRATION.md#89-stage-3-backfill-and-verification)).
+Upgrading to fair-events DB version `3.51.0` adds, on the first request
+after deploy, two empty tables:
+`{prefix}fair_events_payment_history_findings` and
+`{prefix}fair_events_payment_history_comparisons`. Nothing else changes, and
+nothing runs, until an administrator starts the backfill.
+
+**Readiness to start.** The backfill refuses to start while
+`PaymentHistoryCompatibility::backfill_blockers()` lists anything: Fair
+Payments Connector and Fair Audience must be on the shadow writes release or
+later, and shadow writes must be on. It also needs a completed dry run over
+the same records, and a confirmed database backup. The Payment history page
+that starts and follows it ships with the next part of stage 3; until then,
+use WP-CLI:
+
+```bash
+# 1. Dry run: writes no purchase or link. Runs in the background; check it.
+wp eval 'print_r( FairEvents\Services\PaymentHistoryBackfill::start_dry_run() );'
+wp eval 'print_r( FairEvents\Services\PaymentHistoryBackfill::status() );'
+# 2. Back up the tables below, then start.
+wp eval 'print_r( FairEvents\Services\PaymentHistoryBackfill::start( array( "backup_confirmed" => true ) ) );'
+```
+
+**Back up before starting** (`wp db export --tables=…`):
+
+- written by the backfill: `{prefix}fair_events_signups`,
+  `{prefix}fair_events_tickets`, `{prefix}fair_events_ticket_activities`,
+  `{prefix}fair_events_signup_payment_links`,
+  `{prefix}fair_events_payment_history_findings`,
+  `{prefix}fair_events_payment_history_comparisons`, and the option
+  `fair_events_payment_history_migration`;
+- read only, for reference: `{prefix}fair_audience_event_participants`,
+  `{prefix}fair_audience_event_participant_options`,
+  `{prefix}fair_audience_event_participant_transactions`,
+  `{prefix}fair_audience_participants`, `{prefix}fair_payment_transactions`
+  and `{prefix}fair_payment_line_items`.
+
+The backfill runs in batches through WP-Cron and survives deploys and
+failures: a failed batch is retried from the last record that succeeded,
+with a growing delay, and the shadow work cron reschedules a run whose
+batch was lost. If a blocker appears (Connector deactivated, Fair Audience
+rolled back), the backfill pauses and continues once it clears.
+
+The backfill creates confirmed Events purchases for historical Fair
+Audience admissions (marked with `legacy_event_participant_id`, like shadow
+purchases) and records payment links with `attribution = backfill`. Ticket
+counts, capacity and Statistics stay the same; the purchases appear in the
+Manage Event signups list. It changes no ledger row, relationship,
+participant activity, transaction or existing link, and sends no email.
+
+**Verification.** When it finishes, the option's `status` becomes
+`verified` when the report has no blocking difference, or
+`verification_failed` with the blockers. Shadow work still queued blocks
+verification; run `PaymentHistoryBackfill::verify()` again once it clears.
+Unresolved records are listed as findings and don't block. Payment
+authority and the Statistics readers don't change in this release
+(`ownership_cutover()` stays false).
+
+**Rolling back.** Before stage 4 the Audience ledger is still
+authoritative, so the previous plugin versions keep working: redeploying
+the shadow writes release is safe, and it ignores the two new tables. Keep
+Fair Audience on the shadow writes release or later, since an older one
+would count backfilled admissions twice. To undo the backfill's data as
+well, restore the tables exported above.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

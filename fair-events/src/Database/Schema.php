@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.50.0';
+	const DB_VERSION = '3.51.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -529,6 +529,81 @@ class Schema {
 			PRIMARY KEY (id),
 			UNIQUE KEY idx_kind_source (kind, source_id),
 			KEY idx_status_next_attempt (status, next_attempt_at)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_payment_history_findings table
+	 *
+	 * What the payment history backfill reported about a source record
+	 * (PAYMENT_HISTORY_MIGRATION.md §6.2, §8.9): one row per (mode, reason,
+	 * source_type, source_id), so a re-run updates the row instead of
+	 * adding another. mode is `dry_run` or `backfill`; a new dry run
+	 * replaces the previous dry run's rows. source_type names what
+	 * source_id identifies: a Connector `transaction`, an Audience
+	 * `relationship` or `ledger_row`, or an Events `signup`. event_date_id
+	 * is the date the record concerns, when one is known, for filtering.
+	 * status is `open`, or `resolved` once a later pass attributed the
+	 * record. detail holds the JSON context. Source rows are never changed.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_payment_history_findings_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_payment_history_findings';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			mode VARCHAR(20) NOT NULL,
+			reason VARCHAR(64) NOT NULL,
+			source_type VARCHAR(20) NOT NULL,
+			source_id BIGINT UNSIGNED NOT NULL,
+			event_date_id BIGINT UNSIGNED DEFAULT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'open',
+			detail TEXT DEFAULT NULL,
+			first_seen_at DATETIME NOT NULL,
+			last_seen_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_mode_reason_source (mode, reason, source_type, source_id),
+			KEY idx_mode_status_reason (mode, status, reason),
+			KEY idx_event_date_id (event_date_id)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_payment_history_comparisons table
+	 *
+	 * The payment history verification report (PAYMENT_HISTORY_MIGRATION.md
+	 * §8.4, §8.9): one row per event date, comparing what the source
+	 * history (relationships, Audience ledger) and the Events-owned history
+	 * (units, payment links) say about it. admissions and activities hold
+	 * the source and target counts and the explained difference, revenue the
+	 * same per currency with each transaction's difference and cause, as
+	 * JSON. revenue_state is `available` or `incomplete` (§7.1). blocking
+	 * is 1 when a difference has no cause the contract allows.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_payment_history_comparisons_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_payment_history_comparisons';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			event_date_id BIGINT UNSIGNED NOT NULL,
+			admissions TEXT NOT NULL,
+			activities TEXT NOT NULL,
+			revenue TEXT NOT NULL,
+			revenue_state VARCHAR(20) NOT NULL,
+			blocking TINYINT(1) NOT NULL DEFAULT 0,
+			checked_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY idx_event_date_id (event_date_id),
+			KEY idx_blocking (blocking)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

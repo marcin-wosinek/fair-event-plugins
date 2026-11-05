@@ -490,11 +490,17 @@ class PaymentLinksTest extends TestCase {
 		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
 		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
 
+		// Shadow writes run from 3.50.0; the backfill needs its 3.51.0 tables.
+		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.50.0';
+		PaymentHistoryCompatibility::reset_cache();
+		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
+		$this->assertSame( array( 'storage_unavailable' ), PaymentHistoryCompatibility::backfill_blockers() );
+
 		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.49.0';
 		PaymentHistoryCompatibility::reset_cache();
 		$this->assertFalse( PaymentHistoryCompatibility::shadow_writes_supported() );
 		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
-		$this->assertSame( array( 'shadow_writes_incomplete' ), PaymentHistoryCompatibility::backfill_blockers() );
+		$this->assertSame( array( 'storage_unavailable', 'shadow_writes_incomplete' ), PaymentHistoryCompatibility::backfill_blockers() );
 	}
 
 	/**

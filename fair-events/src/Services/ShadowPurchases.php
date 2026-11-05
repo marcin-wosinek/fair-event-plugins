@@ -62,8 +62,7 @@ class ShadowPurchases {
 			);
 		}
 
-		$lock = substr( $wpdb->prefix . 'fair_events_shadow_purchase_' . $relationship_id, 0, 64 );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, self::LOCK_TIMEOUT ) ) ) {
+		if ( ! self::acquire_lock( $relationship_id ) ) {
 			return new \WP_Error( 'shadow_purchase_busy', 'Another writer is syncing this relationship.' );
 		}
 
@@ -77,8 +76,43 @@ class ShadowPurchases {
 			}
 			return $result;
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			self::release_lock( $relationship_id );
 		}
+	}
+
+	/**
+	 * Take the named lock that serializes writers of one relationship's
+	 * purchase: these syncs and the historical backfill. A writer that also
+	 * needs payment link locks takes this one first.
+	 *
+	 * @param int $relationship_id Relationship ID.
+	 * @return bool True when the lock is held.
+	 */
+	public static function acquire_lock( $relationship_id ) {
+		global $wpdb;
+		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::lock_name( $relationship_id ), self::LOCK_TIMEOUT ) );
+	}
+
+	/**
+	 * Release the lock taken by acquire_lock().
+	 *
+	 * @param int $relationship_id Relationship ID.
+	 * @return void
+	 */
+	public static function release_lock( $relationship_id ) {
+		global $wpdb;
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::lock_name( $relationship_id ) ) );
+	}
+
+	/**
+	 * Name of a relationship's lock, prefixed like PaymentLinks::lock_name().
+	 *
+	 * @param int $relationship_id Relationship ID.
+	 * @return string
+	 */
+	private static function lock_name( $relationship_id ) {
+		global $wpdb;
+		return substr( $wpdb->prefix . 'fair_events_shadow_purchase_' . (int) $relationship_id, 0, 64 );
 	}
 
 	/**
@@ -99,7 +133,7 @@ class ShadowPurchases {
 					'signup_id' => null,
 				);
 			}
-			$signup_id = self::create( $relationship );
+			$signup_id = self::create_purchase( $relationship );
 			if ( is_wp_error( $signup_id ) ) {
 				return $signup_id;
 			}
@@ -244,12 +278,15 @@ class ShadowPurchases {
 	/**
 	 * Create the purchase and its single unit. The relationship's creation
 	 * time (database clock, UTC) becomes the purchase time in site time, as
-	 * Events stores it.
+	 * Events stores it. Shared with the historical backfill
+	 * (PaymentHistoryBackfill), which calls it inside its own lock and
+	 * database transaction, so both give a relationship the same purchase
+	 * (§4.2).
 	 *
 	 * @param object $relationship Relationship row.
 	 * @return int|\WP_Error Signup ID.
 	 */
-	private static function create( $relationship ) {
+	public static function create_purchase( $relationship ) {
 		global $wpdb;
 
 		$state      = self::target_state( $relationship, '' );
