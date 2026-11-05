@@ -676,6 +676,20 @@ class EventParticipantRepository {
 	}
 
 	/**
+	 * Capability marker read by fair-events
+	 * (PaymentHistoryCompatibility::audience_compatible()): this version's
+	 * activity capacity filter (count_participant_scope_selections()) skips
+	 * relationships named by purchase provenance, whose activities the
+	 * purchase's ticket carries. Without it, fair-events neither shadow
+	 * writes nor backfills purchases.
+	 *
+	 * @return bool Always true.
+	 */
+	public static function excludes_provenance_activity_selections() {
+		return true;
+	}
+
+	/**
 	 * Whether the active fair-events stores purchase provenance. Checked by
 	 * capability, so this version keeps working with an older fair-events.
 	 *
@@ -758,8 +772,10 @@ class EventParticipantRepository {
 	 * relationship (signed_up, or pending_payment within its hold), the
 	 * selection itself confirmed or an unexpired hold. A selection counts on
 	 * its relationship's event date; one on a whole-series pass counts on
-	 * every date of the series. Reported to fair-events through
-	 * fair_events_capacity_legacy_activity_selections.
+	 * every date of the series. A relationship a fair-events purchase names
+	 * as its provenance is skipped, when the active fair-events supports
+	 * provenance: that purchase's ticket carries its activities. Reported to
+	 * fair-events through fair_events_capacity_legacy_activity_selections.
 	 *
 	 * @param int   $ticket_option_id Ticket option ID.
 	 * @param int   $event_date_id    Occurrence (event date) ID.
@@ -774,6 +790,13 @@ class EventParticipantRepository {
 			$series_ids = array( (int) $event_date_id );
 		}
 		$now = gmdate( 'Y-m-d H:i:s' );
+
+		$provenance_clause = '';
+		$provenance_args   = array();
+		if ( self::events_purchase_provenance_available() ) {
+			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
+			$provenance_args   = array( $wpdb->prefix . 'fair_events_signups' );
+		}
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list built here.
 		$count = $wpdb->get_var(
@@ -794,8 +817,9 @@ class EventParticipantRepository {
 				 )
 				 AND (
 				     ep.event_date_id = %d
-				     OR ( tt.recurrence_scope = 'whole_series' AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . ' ) )
-				 )',
+				     OR ( tt.recurrence_scope = 'whole_series' AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . " ) )
+				 )
+				 {$provenance_clause}",
 				array_merge(
 					array(
 						$this->get_table_name(),
@@ -806,7 +830,8 @@ class EventParticipantRepository {
 						$now,
 						(int) $event_date_id,
 					),
-					$series_ids
+					$series_ids,
+					$provenance_args
 				)
 			)
 		);
