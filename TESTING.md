@@ -266,8 +266,7 @@ A `--reuse` instance kept alive across a long session of ad-hoc debugging
 (manual `curl`/API calls, repeated spec runs, fixture creation) accumulates
 stale posts/pages/events that never get cleaned up. That can flake unrelated
 specs that count or list all items of a type, with confusing failures like
-`wp.apiFetch is not a function` or a test timing out well past what the
-assertion itself should take. A plain `test:wp-env:stop` + `test:wp-env:start`
+a test timing out well past what the assertion itself should take. A plain `test:wp-env:stop` + `test:wp-env:start`
 does **not** clear this, because the database volume persists across a
 restart. Reset it as described below. If a full-suite run surfaces failures
 unrelated to the change you're testing, check whether they reproduce in
@@ -536,6 +535,25 @@ unrelated "Save"/"Open save panel" element, so
 `getByRole('button', { name: 'Save', exact: true })` is required to avoid a
 strict-mode violation.
 
+#### Calling `wp.apiFetch` from a spec
+
+A spec that creates fixtures with the browser's `wp.apiFetch` must wait for a
+callable client first. WordPress prints `#wpadminbar` near the top of the
+admin body, but the `wp-api-fetch` script loads further down the page, so
+`waitForSelector('#wpadminbar')` can return while the document is still
+`loading`. At that point `window.wp` already exists, holding the scripts that
+loaded earlier, so the call fails with `wp.apiFetch is not a function` rather
+than `wp is not defined`. The failure only shows on a slow runner and passes
+on retry. This caused the block-docs examples flakes in #2152.
+
+Wait with `waitForFunction(() => typeof window.wp?.apiFetch === 'function')`
+on an admin URL before the first request, and again after every navigation.
+`e2e/block-docs-examples.spec.js` does this through
+`e2e/support/block-docs-api-fetch.js`. The helper waits up to 10 seconds, then
+fails with the stage, URL, request and what it found instead of a client. It
+sends each request exactly once. `e2e/block-docs-api-fetch.spec.js` covers it
+without a WordPress site.
+
 `.github/workflows/e2e.yml` runs the same managed lifecycle on relevant pull
 requests, split into four Playwright shards:
 
@@ -573,8 +591,10 @@ Sharding halves the wait for a result and costs about 50% more runner
 minutes: each shard repeats ~3 minutes of setup (caches, Docker images,
 wp-env start). The shards are uneven: shard 4 takes 16–18 min of test time,
 shard 2 only 4–6 min, so the slowest shard sets the elapsed time. Flaky
-retries come from the block-docs examples spec (`wp.apiFetch is not a
-function` right after login), which also flakes in sequential runs.
+retries came from the block-docs examples spec (`wp.apiFetch is not a
+function` right after login), which also flaked in sequential runs; see
+[Calling `wp.apiFetch` from a spec](#calling-wpapifetch-from-a-spec) for the
+cause and fix (#2152).
 
 ## Package script conventions
 
