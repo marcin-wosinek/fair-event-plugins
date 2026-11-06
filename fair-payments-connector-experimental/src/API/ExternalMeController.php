@@ -9,16 +9,13 @@ namespace FairPaymentsConnectorExperimental\API;
 
 defined( 'WPINC' ) || die;
 
+use FairEventsShared\API\AbstractExternalMeController;
 use FairPaymentsConnectorExperimental\Models\ApiToken;
-use WP_REST_Controller;
-use WP_REST_Server;
-use WP_REST_Request;
-use WP_REST_Response;
 
 /**
  * Handles the public GET /external/me endpoint.
  */
-class ExternalMeController extends WP_REST_Controller {
+class ExternalMeController extends AbstractExternalMeController {
 
 	/**
 	 * Namespace for the REST API.
@@ -28,33 +25,20 @@ class ExternalMeController extends WP_REST_Controller {
 	protected $namespace = 'fair-payments-connector/v1';
 
 	/**
-	 * Register the route for token introspection.
+	 * Token model class.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/external/me',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => ApiTokenAuth::require_token(),
-				),
-			)
-		);
+	protected function token_model() {
+		return ApiToken::class;
 	}
 
 	/**
-	 * Return the authenticated token's label and scopes.
+	 * Auth class.
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response
+	 * @return string
 	 */
-	public function get_item( $request ) {
-		$row = $request->get_param( '_fair_api_token' );
-
-		return new WP_REST_Response( ApiToken::to_array( $row ), 200 );
+	protected function auth_class() {
+		return ApiTokenAuth::class;
 	}
 }

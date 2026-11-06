@@ -72,13 +72,15 @@ if ( ! function_exists( 'wp_parse_args' ) ) {
 
 if ( ! function_exists( '__' ) ) {
 	/**
-	 * Stub of WordPress __() — returns the string untranslated.
+	 * Stub of WordPress __() — returns the string untranslated and records the
+	 * text domain in $GLOBALS['_fair_test_gettext_domains'].
 	 *
 	 * @param string $text   Text to translate.
-	 * @param string $domain Text domain (unused).
+	 * @param string $domain Text domain.
 	 * @return string
 	 */
-	function __( $text, $domain = 'default' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	function __( $text, $domain = 'default' ) {
+		$GLOBALS['_fair_test_gettext_domains'][] = $domain;
 		return $text;
 	}
 }
@@ -510,13 +512,15 @@ if ( ! function_exists( 'absint' ) ) {
 if ( ! function_exists( 'wp_generate_password' ) ) {
 	/**
 	 * Stub of WordPress wp_generate_password() — a fixed-character string of
-	 * the requested length.
+	 * the requested length. Tests that need distinct values queue one
+	 * character per call in $GLOBALS['_fair_test_password_chars'].
 	 *
 	 * @param int $length Password length.
 	 * @return string
 	 */
 	function wp_generate_password( $length = 12 ) {
-		return str_repeat( 'a', $length );
+		$char = empty( $GLOBALS['_fair_test_password_chars'] ) ? 'a' : array_shift( $GLOBALS['_fair_test_password_chars'] );
+		return str_repeat( $char, $length );
 	}
 }
 
