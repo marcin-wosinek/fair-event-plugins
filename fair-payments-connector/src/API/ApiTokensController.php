@@ -9,17 +9,13 @@ namespace FairPaymentsConnector\API;
 
 defined( 'WPINC' ) || die;
 
+use FairEventsShared\API\AbstractApiTokensController;
 use FairPaymentsConnector\Models\ApiToken;
-use WP_REST_Controller;
-use WP_REST_Server;
-use WP_REST_Request;
-use WP_REST_Response;
-use WP_Error;
 
 /**
  * Handles admin endpoints for listing, creating and revoking API tokens.
  */
-class ApiTokensController extends WP_REST_Controller {
+class ApiTokensController extends AbstractApiTokensController {
 
 	/**
 	 * Namespace for the REST API.
@@ -29,157 +25,47 @@ class ApiTokensController extends WP_REST_Controller {
 	protected $namespace = 'fair-payments-connector/v1';
 
 	/**
-	 * Register the admin API token routes.
+	 * Token model class.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/admin/api-tokens',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
-					'args'                => array(
-						'label'  => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-						'scopes' => array(
-							'type'     => 'array',
-							'required' => true,
-							'items'    => array(
-								'type' => 'string',
-								'enum' => ApiToken::ALLOWED_SCOPES,
-							),
-						),
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			'/admin/api-tokens/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
-					'args'                => array(
-						'id' => array(
-							'type'              => 'integer',
-							'sanitize_callback' => 'absint',
-						),
-					),
-				),
-			)
-		);
+	protected function token_model() {
+		return ApiToken::class;
 	}
 
 	/**
-	 * Admin capability check for all routes.
+	 * Message for a missing or blank label.
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	public function permissions_check() {
-		return current_user_can( 'manage_options' );
+	protected function invalid_label_message() {
+		return __( 'A label is required.', 'fair-payments-connector' );
 	}
 
 	/**
-	 * List all API tokens.
+	 * Message for missing or unsupported scopes.
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response
+	 * @return string
 	 */
-	public function get_items( $request ) {
-		$tokens = ApiToken::get_all();
-
-		$data = array_map(
-			array( ApiToken::class, 'to_array' ),
-			$tokens
-		);
-
-		return new WP_REST_Response( $data, 200 );
+	protected function invalid_scopes_message() {
+		return __( 'At least one valid scope is required.', 'fair-payments-connector' );
 	}
 
 	/**
-	 * Create a new API token.
+	 * Message for a token that could not be stored.
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response|WP_Error
+	 * @return string
 	 */
-	public function create_item( $request ) {
-		$label  = $request->get_param( 'label' );
-		$scopes = (array) $request->get_param( 'scopes' );
-
-		if ( empty( $label ) ) {
-			return new WP_Error(
-				'rest_invalid_label',
-				__( 'A label is required.', 'fair-payments-connector' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// The route's enum already rejects unsupported scopes; a request is
-		// never granted a subset of what it asked for.
-		if ( empty( $scopes ) || array_diff( $scopes, ApiToken::ALLOWED_SCOPES ) ) {
-			return new WP_Error(
-				'rest_invalid_scopes',
-				__( 'At least one valid scope is required.', 'fair-payments-connector' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$result = ApiToken::create( $label, array_values( array_unique( $scopes ) ) );
-
-		if ( ! $result ) {
-			return new WP_Error(
-				'rest_api_token_creation_failed',
-				__( 'Failed to create API token.', 'fair-payments-connector' ),
-				array( 'status' => 500 )
-			);
-		}
-
-		$row      = ApiToken::get_by_id( $result['id'] );
-		$response = ApiToken::to_array( $row );
-
-		// One-time plaintext token; never retrievable again.
-		$response['token'] = $result['token'];
-
-		return new WP_REST_Response( $response, 201 );
+	protected function creation_failed_message() {
+		return __( 'Failed to create API token.', 'fair-payments-connector' );
 	}
 
 	/**
-	 * Revoke an API token.
+	 * Message for an unknown token ID.
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response|WP_Error
+	 * @return string
 	 */
-	public function delete_item( $request ) {
-		$id = (int) $request->get_param( 'id' );
-
-		$existing = ApiToken::get_by_id( $id );
-		if ( ! $existing ) {
-			return new WP_Error(
-				'rest_api_token_not_found',
-				__( 'API token not found.', 'fair-payments-connector' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		ApiToken::revoke( $id );
-
-		$row = ApiToken::get_by_id( $id );
-
-		return new WP_REST_Response( ApiToken::to_array( $row ), 200 );
+	protected function not_found_message() {
+		return __( 'API token not found.', 'fair-payments-connector' );
 	}
 }

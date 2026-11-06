@@ -67,12 +67,15 @@ foreach (
 
 if ( ! function_exists( '__' ) ) {
 	/**
-	 * Stub of WordPress __() — returns the text untranslated.
+	 * Stub of WordPress __() — returns the text untranslated and records the
+	 * text domain in $GLOBALS['_fair_test_gettext_domains'].
 	 *
-	 * @param string $text Text to translate.
+	 * @param string $text   Text to translate.
+	 * @param string $domain Text domain.
 	 * @return string
 	 */
-	function __( $text ) {
+	function __( $text, $domain = 'default' ) {
+		$GLOBALS['_fair_test_gettext_domains'][] = $domain;
 		return (string) $text;
 	}
 }

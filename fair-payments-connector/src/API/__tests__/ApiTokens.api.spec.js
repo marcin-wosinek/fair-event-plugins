@@ -4,8 +4,14 @@
  * tokens created before the move — including ones that still carry the retired
  * `locations:read` scope — and single ownership of the routes.
  *
- * Fixture routes live in e2e/mu-plugins/fair-e2e-support.php.
+ * Release pairings (#2080) run every request of a test as one mix of Fair
+ * Payments Connector and Experimental releases, in either load order and
+ * with an older copy of the shared package winning the autoload race.
+ *
+ * Fixture routes live in e2e/mu-plugins/fair-e2e-support.php; release
+ * pairings in e2e/mu-plugins/fair-e2e-api-token-releases.php.
  */
+import { createHash } from 'node:crypto';
 import { test, expect, request } from '@playwright/test';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
@@ -30,6 +36,67 @@ const FIXTURES = '/wp-json/fair-e2e/v1/api-tokens';
 const OWNERS = '/wp-json/fair-e2e/v1/api-token-owners';
 const IMPORT = '/wp-json/fair-payments-connector/v1/transactions/import';
 const TX_HELPERS = '/wp-json/fair-e2e/v1/external-updates';
+const RELEASES = '/wp-json/fair-e2e/v1/api-token-releases';
+
+const TOKEN_ROUTES = {
+	'/fair-payments-connector/v1/admin/api-tokens': [
+		'GET ApiTokensController',
+		'POST ApiTokensController',
+	],
+	'/fair-payments-connector/v1/admin/api-tokens/(?P<id>\\d+)': [
+		'DELETE ApiTokensController',
+	],
+	'/fair-payments-connector/v1/external/me': [ 'GET ExternalMeController' ],
+	'/fair-payments-connector/v1/external/transactions': [
+		'GET ExternalTransactionsController',
+	],
+};
+
+// Which plugin serves API tokens for each pairing, and what loads.
+const PAIRINGS = {
+	'core-only': {
+		owner: 'FairPaymentsConnector',
+		loaded: [ 'core' ],
+	},
+	'both-updated': {
+		owner: 'FairPaymentsConnector',
+		loaded: [ 'core', 'experimental' ],
+	},
+	'core-old-experimental': {
+		owner: 'FairPaymentsConnectorExperimental',
+		loaded: [ 'core', 'experimental (pre-handoff)' ],
+	},
+	'old-core-experimental': {
+		owner: 'FairPaymentsConnectorExperimental',
+		loaded: [ 'core (pre-token)', 'experimental' ],
+	},
+};
+
+const NEW_SHARED_CLASSES = [
+	'FairEventsShared\\API\\AbstractApiTokensController',
+	'FairEventsShared\\API\\AbstractExternalMeController',
+	'FairEventsShared\\API\\AbstractExternalTransactionsController',
+	'FairEventsShared\\ApiTokens\\AbstractApiToken',
+	'FairEventsShared\\ApiTokens\\AbstractApiTokenAuth',
+];
+
+const releaseHeaders = ( releases, order, oldShared ) => ( {
+	'X-Fair-E2E-Payments-Releases': releases,
+	'X-Fair-E2E-Plugin-Order': order,
+	...( oldShared ? { 'X-Fair-E2E-Old-Shared-First': '1' } : {} ),
+} );
+
+// Every token route's handlers, as "METHOD Class", in registration order.
+const routeHandlers = ( owners ) =>
+	Object.fromEntries(
+		Object.entries( owners ).map( ( [ route, handlers ] ) => [
+			route,
+			handlers.map(
+				( handler ) =>
+					`${ handler.methods.sort().join( '|' ) } ${ handler.class }`
+			),
+		] )
+	);
 
 const TOKEN_FIELDS = [
 	'created_at',
@@ -518,6 +585,227 @@ test.describe( 'API tokens in Fair Payments Connector (#1747)', () => {
 				message: 'This token does not have the required scope.',
 				data: { status: 403 },
 			} );
+		} );
+	} );
+	test.describe( 'release pairings (#2080)', () => {
+		const contexts = [];
+
+		const pairing = async ( releases, order, oldShared ) => {
+			const context = await request.newContext( {
+				baseURL: BASE_URL,
+				extraHTTPHeaders: releaseHeaders( releases, order, oldShared ),
+			} );
+			contexts.push( context );
+			return context;
+		};
+
+		test.afterAll( async () => {
+			for ( const context of contexts ) {
+				await context.dispose();
+			}
+		} );
+
+		for ( const [ releases, expected ] of Object.entries( PAIRINGS ) ) {
+			for ( const order of [ 'core-first', 'experimental-first' ] ) {
+				for ( const oldShared of [ false, true ] ) {
+					const name = `${ releases }, ${ order }${
+						oldShared ? ', older shared package first' : ''
+					}`;
+
+					test( `${ name }: one plugin serves the whole token lifecycle`, async () => {
+						const site = await pairing(
+							releases,
+							order,
+							oldShared
+						);
+
+						const ran = await (
+							await site.get( RELEASES, { headers: admin } )
+						).json();
+						expect( ran.releases ).toBe( releases );
+						expect( ran.loaded ).toEqual(
+							'experimental-first' === order
+								? [ ...expected.loaded ].reverse()
+								: expected.loaded
+						);
+						if ( oldShared ) {
+							// The older copy was asked first and lacks the new classes,
+							// so they came from a plugin that bundles them.
+							expect( ran.declined.sort() ).toEqual(
+								NEW_SHARED_CLASSES
+							);
+							expect( ran.served.length ).toBeGreaterThan( 0 );
+						}
+						for ( const source of Object.values(
+							ran.shared_source
+						) ) {
+							expect( source ).toMatch(
+								/^[a-z-]+\/vendor\/fair-events\/shared\/src\//
+							);
+						}
+
+						// Exactly one handler per route and method, all from the owner.
+						const owners = await site.get( OWNERS, {
+							headers: admin,
+						} );
+						expect( owners.ok(), await owners.text() ).toBeTruthy();
+						const handlers = routeHandlers( await owners.json() );
+						expect( Object.keys( handlers ).sort() ).toEqual(
+							Object.keys( TOKEN_ROUTES ).sort()
+						);
+						for ( const [
+							route,
+							expectedHandlers,
+						] of Object.entries( TOKEN_ROUTES ) ) {
+							expect( handlers[ route ], route ).toEqual(
+								expectedHandlers.map( ( handler ) =>
+									handler.replace(
+										' ',
+										` ${ expected.owner }\\API\\`
+									)
+								)
+							);
+						}
+
+						// Created with its plaintext shown once, stored as a hash.
+						const created = await site.post( TOKENS, {
+							headers: admin,
+							data: {
+								label: label( `pairing ${ name }` ),
+								scopes: [ 'transactions:read' ],
+							},
+						} );
+						expect( created.status(), await created.text() ).toBe(
+							201
+						);
+						const token = await created.json();
+						tokenIds.push( token.id );
+						expect( Object.keys( token ).sort() ).toEqual(
+							[ ...TOKEN_FIELDS, 'token' ].sort()
+						);
+						expect( token.token ).toMatch( /^[A-Za-z0-9]{40}$/ );
+
+						const listText = await (
+							await site.get( TOKENS, { headers: admin } )
+						).text();
+						expect( listText ).not.toContain( token.token );
+						expect( listText ).not.toContain( 'token_hash' );
+						expect(
+							( await storedRow( token.id ) ).token_hash
+						).toBe(
+							createHash( 'sha256' )
+								.update( token.token )
+								.digest( 'hex' )
+						);
+
+						// Authorized for what it was granted.
+						const me = await site.get( ME, {
+							headers: bearer( token.token ),
+						} );
+						expect( me.status(), await me.text() ).toBe( 200 );
+						const meText = await me.text();
+						expect( meText ).not.toContain( token.token );
+						expect(
+							Object.keys( JSON.parse( meText ) ).sort()
+						).toEqual( TOKEN_FIELDS );
+						const transactions = await site.get( TRANSACTIONS, {
+							headers: bearer( token.token ),
+						} );
+						expect(
+							transactions.status(),
+							await transactions.text()
+						).toBe( 200 );
+						expect(
+							Object.keys( await transactions.json() ).sort()
+						).toEqual( [
+							'page',
+							'per_page',
+							'total',
+							'transactions',
+						] );
+
+						// Rejected without the scope, when invalid, and once revoked.
+						const locations = await legacyToken(
+							`pairing locations ${ name }`,
+							[ 'locations:read' ]
+						);
+						const underScoped = await site.get( TRANSACTIONS, {
+							headers: bearer( locations.token ),
+						} );
+						expect( underScoped.status() ).toBe( 403 );
+						expect( ( await underScoped.json() ).message ).toBe(
+							'This token does not have the required scope.'
+						);
+
+						const invalid = await site.get( ME, {
+							headers: bearer( 'x'.repeat( 40 ) ),
+						} );
+						expect( invalid.status() ).toBe( 401 );
+						expect( ( await invalid.json() ).message ).toBe(
+							'Invalid or missing API token.'
+						);
+
+						const revoked = await site.delete(
+							`${ TOKENS }/${ token.id }`,
+							{ headers: admin }
+						);
+						expect( revoked.status() ).toBe( 200 );
+						expect( ( await revoked.json() ).status ).toBe(
+							'revoked'
+						);
+						for ( const url of [ ME, TRANSACTIONS ] ) {
+							expect(
+								(
+									await site.get( url, {
+										headers: bearer( token.token ),
+									} )
+								).status(),
+								url
+							).toBe( 401 );
+						}
+					} );
+				}
+			}
+		}
+
+		test( 'a token keeps working when the serving plugin changes', async () => {
+			const fallback = await pairing(
+				'old-core-experimental',
+				'core-first',
+				false
+			);
+			const updated = await pairing( 'core-only', 'core-first', false );
+
+			const created = await fallback.post( TOKENS, {
+				headers: admin,
+				data: {
+					label: label( 'handover' ),
+					scopes: [ 'transactions:read' ],
+				},
+			} );
+			expect( created.status(), await created.text() ).toBe( 201 );
+			const token = await created.json();
+			tokenIds.push( token.id );
+
+			for ( const site of [ updated, fallback ] ) {
+				const me = await site.get( ME, {
+					headers: bearer( token.token ),
+				} );
+				expect( me.status(), await me.text() ).toBe( 200 );
+				expect( ( await me.json() ).id ).toBe( token.id );
+			}
+
+			// Revoked by the updated plugin, rejected by the fallback.
+			await updated.delete( `${ TOKENS }/${ token.id }`, {
+				headers: admin,
+			} );
+			expect(
+				(
+					await fallback.get( TRANSACTIONS, {
+						headers: bearer( token.token ),
+					} )
+				).status()
+			).toBe( 401 );
 		} );
 	} );
 } );
