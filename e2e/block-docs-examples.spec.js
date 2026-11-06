@@ -22,6 +22,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from './support/fixtures.js';
 import { ADMIN_PASSWORD, ADMIN_USER, wpCli } from './support/wp-cli.js';
+import { blockDocsApiFetch } from './support/block-docs-api-fetch.js';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const OPTIONAL_PLUGINS = ['fair-timetable', 'fair-calendar-button'];
@@ -124,25 +125,6 @@ async function login(page) {
 	await page.waitForSelector('#wpadminbar');
 }
 
-async function apiFetch(page, options) {
-	const result = await page.evaluate(async (opts) => {
-		try {
-			// eslint-disable-next-line no-undef
-			return { ok: true, data: await wp.apiFetch(opts) };
-		} catch (error) {
-			return { ok: false, message: error?.message, code: error?.code };
-		}
-	}, options);
-	if (!result.ok) {
-		throw new Error(
-			`apiFetch ${options.method || 'GET'} ${options.path} failed: ${
-				result.code
-			} ${result.message}`
-		);
-	}
-	return result.data;
-}
-
 /**
  * Wait for the editor to load the post with every block type it uses
  * registered, then report each block's validity recursively.
@@ -216,6 +198,50 @@ async function savePost(page) {
 	expect(saved, 'the editor saved the post').toBe(true);
 }
 
+/**
+ * Delete the page and venue a test created, attempting each one even when
+ * another fails.
+ *
+ * @param {import('@playwright/test').Page} page            Playwright page.
+ * @param {Object}                          created         Created fixture ids.
+ * @param {?number}                         created.pageId  Page to delete.
+ * @param {?number}                         created.venueId Venue to delete.
+ * @return {Promise<string[]>} One message per failed cleanup step.
+ */
+async function removeFixtures(page, { pageId, venueId }) {
+	const requests = [];
+	if (pageId) {
+		requests.push({
+			path: `/wp/v2/pages/${pageId}?force=true`,
+			method: 'DELETE',
+		});
+	}
+	if (venueId) {
+		requests.push({
+			path: `/fair-events/v1/venues/${venueId}`,
+			method: 'DELETE',
+		});
+	}
+	if (!requests.length) {
+		return [];
+	}
+
+	const errors = [];
+	try {
+		await page.goto('/wp-admin/');
+	} catch (error) {
+		errors.push(`cleanup navigation to /wp-admin/: ${error.message}`);
+	}
+	for (const request of requests) {
+		try {
+			await blockDocsApiFetch(page, request, { stage: 'cleanup' });
+		} catch (error) {
+			errors.push(error.message);
+		}
+	}
+	return errors;
+}
+
 const cases = collectCases();
 
 test.describe('Block documentation examples', () => {
@@ -264,58 +290,63 @@ test.describe('Block documentation examples', () => {
 
 			let postId;
 			let permalink;
-			let createdPage = false;
+			let createdPageId = null;
+			let venueId = null;
 			let seed = null;
 			const content = (markup) =>
 				substituteIds(markup, item.example, seed);
+			const setup = (options) =>
+				blockDocsApiFetch(page, options, { stage: 'setup' });
 
-			let venueId = null;
-			if (item.example.syntheticIds?.venueId) {
-				const venue = await apiFetch(page, {
-					path: '/fair-events/v1/venues',
-					method: 'POST',
-					data: {
-						name: `Block docs venue ${Date.now()}`,
-						address: '1 Example Street',
-					},
-				});
-				venueId = venue.id;
-				seed = { venueId };
-			}
-
-			if (
-				item.example.context === 'event' ||
-				item.example.context === 'recurring-event'
-			) {
-				// A recurring example needs a series with upcoming sessions.
-				const flavour =
-					item.example.context === 'recurring-event'
-						? 'multiple-instances'
-						: 'paid';
-				seed = { ...seedEvent(flavour), ...seed };
-				postId = seed.eventId;
-				await apiFetch(page, {
-					path: `/wp/v2/fair_event/${postId}`,
-					method: 'POST',
-					data: { content: content(item.markup) },
-				});
-				permalink = seed.pageUrl;
-			} else {
-				const created = await apiFetch(page, {
-					path: '/wp/v2/pages',
-					method: 'POST',
-					data: {
-						title: `Block docs: ${item.label} ${item.example.name}`,
-						status: 'publish',
-						content: content(item.markup),
-					},
-				});
-				postId = created.id;
-				permalink = created.link;
-				createdPage = true;
-			}
-
+			// The cleanup boundary starts before the first fixture request, so
+			// a later setup failure still removes what was already created.
+			let failure = null;
 			try {
+				if (item.example.syntheticIds?.venueId) {
+					const venue = await setup({
+						path: '/fair-events/v1/venues',
+						method: 'POST',
+						data: {
+							name: `Block docs venue ${Date.now()}`,
+							address: '1 Example Street',
+						},
+					});
+					venueId = venue.id;
+					seed = { venueId };
+				}
+
+				if (
+					item.example.context === 'event' ||
+					item.example.context === 'recurring-event'
+				) {
+					// A recurring example needs a series with upcoming sessions.
+					const flavour =
+						item.example.context === 'recurring-event'
+							? 'multiple-instances'
+							: 'paid';
+					seed = { ...seedEvent(flavour), ...seed };
+					postId = seed.eventId;
+					await setup({
+						path: `/wp/v2/fair_event/${postId}`,
+						method: 'POST',
+						data: { content: content(item.markup) },
+					});
+					permalink = seed.pageUrl;
+				} else {
+					const created = await setup({
+						path: '/wp/v2/pages',
+						method: 'POST',
+						data: {
+							title: `Block docs: ${item.label} ${item.example.name}`,
+							status: 'publish',
+							content: content(item.markup),
+						},
+					});
+					createdPageId = created.id;
+					postId = created.id;
+					permalink = created.link;
+				}
+
 				if (item.editor) {
 					const loaded = await openAndInspect(page, postId);
 					expect(loaded.problems, 'blocks valid on load').toEqual([]);
@@ -337,22 +368,29 @@ test.describe('Block documentation examples', () => {
 					page.locator(item.example.frontendSelector).first(),
 					`frontend renders ${item.example.frontendSelector}`
 				).toBeAttached();
-			} finally {
-				if (createdPage || venueId) {
-					await page.goto('/wp-admin/');
-				}
-				if (createdPage) {
-					await apiFetch(page, {
-						path: `/wp/v2/pages/${postId}?force=true`,
-						method: 'DELETE',
+			} catch (error) {
+				failure = error;
+			}
+
+			const cleanupErrors = await removeFixtures(page, {
+				pageId: createdPageId,
+				venueId,
+			});
+			if (failure) {
+				// Keep the original failure as the test result; cleanup
+				// problems are reported alongside it.
+				for (const message of cleanupErrors) {
+					test.info().annotations.push({
+						type: 'cleanup failure',
+						description: message,
 					});
 				}
-				if (venueId) {
-					await apiFetch(page, {
-						path: `/fair-events/v1/venues/${venueId}`,
-						method: 'DELETE',
-					});
-				}
+				throw failure;
+			}
+			if (cleanupErrors.length) {
+				throw new Error(
+					`Block docs cleanup failed:\n${cleanupErrors.join('\n')}`
+				);
 			}
 		});
 	}
