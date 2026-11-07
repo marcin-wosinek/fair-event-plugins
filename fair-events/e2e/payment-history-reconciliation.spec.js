@@ -168,23 +168,23 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		await api?.dispose();
 	} );
 
-	test( 'filters records by an expired payment and test/live mode (#2219)', async ( {
+	test( 'filters records by payment status and test/live mode (#2219)', async ( {
 		page,
 	} ) => {
 		const t10 = seed.transactions.T10;
 		const { previous } = await backfill( 'set-transactions', {
-			transactions: { [ t10 ]: { status: 'expired' } },
+			transactions: { [ t10 ]: { status: 'canceled' } },
 		} );
 		try {
 			await login( page );
 			await page.goto( PAGE );
-			const expiry = page.getByLabel( 'Expired transaction', {
+			const paymentStatus = page.getByLabel( 'Payment status', {
 				exact: true,
 			} );
 			const paymentMode = page.getByLabel( 'Payment mode', {
 				exact: true,
 			} );
-			await expect( expiry ).toHaveValue( 'all' );
+			await expect( paymentStatus ).toHaveValue( '' );
 			await expect( paymentMode ).toHaveValue( 'all' );
 			const count = page.getByText( /^\d+ records?$/ );
 			await expect( count ).toBeVisible();
@@ -193,7 +193,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 				name: `Open Payment without a purchase — Payment #${ t10 }, 15.00 EUR`,
 			} );
 
-			await expiry.selectOption( 'expired' );
+			await paymentStatus.selectOption( { label: 'Canceled' } );
 			await expect( t10Button ).toBeVisible();
 			await expect( count ).toHaveText( '1 record' );
 
@@ -205,7 +205,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			await expect( t10Button ).toHaveCount( 0 );
 
 			await page.getByRole( 'button', { name: 'Clear filters' } ).click();
-			await expect( expiry ).toHaveValue( 'all' );
+			await expect( paymentStatus ).toHaveValue( '' );
 			await expect( paymentMode ).toHaveValue( 'all' );
 			await expect( count ).toHaveText( unfiltered );
 			await expect(

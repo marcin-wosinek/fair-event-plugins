@@ -112,7 +112,7 @@ describe( 'FindingsPanel', () => {
 			} )
 		).toHaveTextContent( 'Decide' );
 		expect( apiFetch.mock.calls[ 0 ][ 0 ].path ).toBe(
-			'/fair-events/v1/payment-history/findings?mode=backfill&status=open&reason=&event_date_id=-1&transaction_expiry=all&payment_mode=all&page=1&per_page=20'
+			'/fair-events/v1/payment-history/findings?mode=backfill&status=open&reason=&event_date_id=-1&transaction_status=&payment_mode=all&page=1&per_page=20'
 		);
 
 		fireEvent.change( screen.getByLabelText( 'Reason' ), {
@@ -153,7 +153,7 @@ describe( 'FindingsPanel', () => {
 		);
 	}
 
-	it( 'filters by expired transaction and payment mode, from the first page', async () => {
+	it( 'filters by payment status and mode, from the first page', async () => {
 		apiFetch.mockImplementation( () =>
 			respond( [ finding() ], {}, 45, 3 )
 		);
@@ -165,13 +165,28 @@ describe( 'FindingsPanel', () => {
 			/>
 		);
 
-		const expiry = await screen.findByLabelText( 'Expired transaction' );
+		const paymentStatus = await screen.findByLabelText( 'Payment status' );
 		const paymentMode = screen.getByLabelText( 'Payment mode' );
-		expect( expiry ).toHaveValue( 'all' );
+		expect( paymentStatus ).toHaveValue( '' );
 		expect( paymentMode ).toHaveValue( 'all' );
 		expect(
-			Array.from( expiry.options ).map( ( option ) => option.text )
-		).toEqual( [ 'All', 'Expired only', 'Exclude expired' ] );
+			Array.from( paymentStatus.options ).map( ( option ) => [
+				option.value,
+				option.text,
+			] )
+		).toEqual( [
+			[ '', 'All statuses' ],
+			[ 'draft', 'Not started' ],
+			[ 'pending_payment,open', 'Awaiting payment' ],
+			[ 'pending', 'Pending' ],
+			[ 'authorized', 'Authorized' ],
+			[ 'paid', 'Paid' ],
+			[ 'failed', 'Failed' ],
+			[ 'canceled', 'Canceled' ],
+			[ 'expired', 'Expired' ],
+			[ 'refunded', 'Refunded' ],
+			[ 'charged_back', 'Charged back' ],
+		] );
 		expect(
 			Array.from( paymentMode.options ).map( ( option ) => option.text )
 		).toEqual( [ 'All', 'Test only', 'Live only' ] );
@@ -181,9 +196,11 @@ describe( 'FindingsPanel', () => {
 		);
 		await waitFor( () => expect( lastQuery().get( 'page' ) ).toBe( '2' ) );
 
-		fireEvent.change( expiry, { target: { value: 'expired' } } );
+		fireEvent.change( paymentStatus, { target: { value: 'canceled' } } );
 		await waitFor( () => {
-			expect( lastQuery().get( 'transaction_expiry' ) ).toBe( 'expired' );
+			expect( lastQuery().get( 'transaction_status' ) ).toBe(
+				'canceled'
+			);
 			expect( lastQuery().get( 'page' ) ).toBe( '1' );
 		} );
 
@@ -197,7 +214,7 @@ describe( 'FindingsPanel', () => {
 			const query = lastQuery();
 			expect( query.get( 'payment_mode' ) ).toBe( 'live' );
 			// Combined with the other filters, and with the run's mode kept apart.
-			expect( query.get( 'transaction_expiry' ) ).toBe( 'expired' );
+			expect( query.get( 'transaction_status' ) ).toBe( 'canceled' );
 			expect( query.get( 'mode' ) ).toBe( 'backfill' );
 			expect( query.get( 'status' ) ).toBe( 'open' );
 			expect( query.get( 'page' ) ).toBe( '1' );
