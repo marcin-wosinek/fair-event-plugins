@@ -168,6 +168,54 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		await api?.dispose();
 	} );
 
+	test( 'filters records by an expired payment and test/live mode (#2219)', async ( {
+		page,
+	} ) => {
+		const t10 = seed.transactions.T10;
+		const { previous } = await backfill( 'set-transactions', {
+			transactions: { [ t10 ]: { status: 'expired' } },
+		} );
+		try {
+			await login( page );
+			await page.goto( PAGE );
+			const expiry = page.getByLabel( 'Expired transaction', {
+				exact: true,
+			} );
+			const paymentMode = page.getByLabel( 'Payment mode', {
+				exact: true,
+			} );
+			await expect( expiry ).toHaveValue( 'all' );
+			await expect( paymentMode ).toHaveValue( 'all' );
+			const count = page.getByText( /^\d+ records?$/ );
+			await expect( count ).toBeVisible();
+			const unfiltered = await count.textContent();
+			const t10Button = page.getByRole( 'button', {
+				name: `Open Payment without a purchase — Payment #${ t10 }, 15.00 EUR`,
+			} );
+
+			await expiry.selectOption( 'expired' );
+			await expect( t10Button ).toBeVisible();
+			await expect( count ).toHaveText( '1 record' );
+
+			// Every seeded payment is a test one: nothing is live.
+			await paymentMode.selectOption( 'live' );
+			await expect(
+				page.getByText( 'No records match these filters.' )
+			).toBeVisible();
+			await expect( t10Button ).toHaveCount( 0 );
+
+			await page.getByRole( 'button', { name: 'Clear filters' } ).click();
+			await expect( expiry ).toHaveValue( 'all' );
+			await expect( paymentMode ).toHaveValue( 'all' );
+			await expect( count ).toHaveText( unfiltered );
+			await expect(
+				page.getByText( 'No records match these filters.' )
+			).toHaveCount( 0 );
+		} finally {
+			await backfill( 'set-transactions', { transactions: previous } );
+		}
+	} );
+
 	test( 'splits a shared payment, then removes one of its links', async ( {
 		page,
 	} ) => {

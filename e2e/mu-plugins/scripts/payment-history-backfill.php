@@ -409,6 +409,16 @@ switch ( $fixture_action ) {
 		$result = array( 'run' => $state['backfill'] );
 		break;
 
+	// Change seeded transactions' status or test mode; returns what they were,
+	// so a spec can put them back.
+	case 'set-transactions':
+		$result = array( 'previous' => array() );
+		foreach ( (array) ( $data['transactions'] ?? array() ) as $transaction_id => $changes ) {
+			$result['previous'][ $transaction_id ] = $wpdb->get_row( $wpdb->prepare( 'SELECT status, testmode FROM %i WHERE id = %d', $t['transactions'], (int) $transaction_id ), ARRAY_A );
+			$wpdb->update( $t['transactions'], array_intersect_key( (array) $changes, array_flip( array( 'status', 'testmode' ) ) ), array( 'id' => (int) $transaction_id ) );
+		}
+		break;
+
 	case 'set-label':
 		$wpdb->update( $t['relationships'], array( 'label' => (string) $data['label'] ), array( 'id' => (int) $data['relationshipId'] ) );
 		$result = array( 'ok' => true );
