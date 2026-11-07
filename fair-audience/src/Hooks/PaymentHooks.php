@@ -17,6 +17,7 @@ use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\EventsLifecycle;
 use FairAudience\Services\TicketActivities;
 use FairEventsShared\Money;
 
@@ -43,6 +44,7 @@ class PaymentHooks {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_activities_added_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_activities_added_failed' ), 10, 2 );
 		add_action( 'fair_payment_paid', array( static::class, 'handle_series_upgrade_paid' ), 10, 2 );
+		add_action( 'fair_events_purchase_payment_applied', array( static::class, 'project_payment_applied' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
 		add_action( 'fair_audience_event_signup_failed', array( static::class, 'send_signup_payment_failed_email' ), 10, 2 );
@@ -503,6 +505,12 @@ class PaymentHooks {
 			return;
 		}
 
+		// After the payment history cutover Fair Events confirms the
+		// purchases and this plugin follows (project_payment_applied()).
+		if ( EventsLifecycle::active() ) {
+			return;
+		}
+
 		$repo   = new EventParticipantRepository();
 		$ledger = new EventParticipantTransactionRepository();
 
@@ -594,6 +602,12 @@ class PaymentHooks {
 	public static function handle_activities_added_paid( $payment, $transaction ) {
 		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
 		if ( empty( $metadata['source'] ) || 'fair-audience-activity-addon' !== $metadata['source'] ) {
+			return;
+		}
+
+		// After the payment history cutover Fair Events confirms the
+		// activities and this plugin follows (project_payment_applied()).
+		if ( EventsLifecycle::active() ) {
 			return;
 		}
 
@@ -710,6 +724,12 @@ class PaymentHooks {
 			return;
 		}
 
+		// A delayed failure of an attempt the buyer has since retried for the
+		// same activities must not release the holds the retry relies on.
+		if ( EventsLifecycle::addon_attempt_superseded( $transaction ) ) {
+			return;
+		}
+
 		$option_ids = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
 			? array_map( 'intval', $metadata['ticket_option_ids'] )
 			: array();
@@ -751,6 +771,12 @@ class PaymentHooks {
 			return;
 		}
 
+		// After the payment history cutover Fair Events upgrades the
+		// purchase and this plugin follows (project_payment_applied()).
+		if ( EventsLifecycle::active() ) {
+			return;
+		}
+
 		$dedupe_key = 'fair_audience_series_upgrade_' . (int) $transaction->id;
 		if ( get_transient( $dedupe_key ) ) {
 			return;
@@ -781,6 +807,131 @@ class PaymentHooks {
 
 		// Reuse the standard paid-signup confirmation email.
 		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
+	}
+
+	/**
+	 * Follow what Fair Events committed for a paid attempt of this plugin's
+	 * routes after the payment history cutover (PAYMENT_HISTORY_MIGRATION.md
+	 * §8.12): the relationships, participant-scope activities and ledger
+	 * are compatibility projections of the Events purchases, and the emails
+	 * go out from here as before.
+	 *
+	 * Fair Events fires this once per change, or again from its retry cron
+	 * when the request stopped before finishing, so every write here is
+	 * idempotent; an email may then go out twice, never not at all.
+	 *
+	 * @param object $transaction Connector transaction.
+	 * @param array  $applied     Source, role and the purchases (`signups`) after the change.
+	 * @return void
+	 */
+	public static function project_payment_applied( $transaction, $applied ) {
+		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		$metadata = is_array( $metadata ) ? $metadata : array();
+		$source   = (string) ( $applied['source'] ?? '' );
+		$repo     = new EventParticipantRepository();
+		$ledger   = new EventParticipantTransactionRepository();
+
+		if ( 'fair-audience-signup' === $source ) {
+			$confirmation_participant = null;
+			foreach ( (array) ( $applied['signups'] ?? array() ) as $signup ) {
+				$event_participant = self::projected_relationship( $repo, $signup );
+				if ( ! $event_participant ) {
+					continue;
+				}
+
+				if ( 'signed_up' !== $event_participant->label || null !== $event_participant->payment_expires_at ) {
+					$event_participant->label              = 'signed_up';
+					$event_participant->payment_expires_at = null;
+					$event_participant->save();
+				}
+				$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
+
+				if ( null === $confirmation_participant ) {
+					$confirmation_participant = $event_participant;
+				}
+			}
+
+			if ( null !== $confirmation_participant ) {
+				do_action( 'fair_audience_event_signup_paid', $confirmation_participant, $transaction );
+			}
+			return;
+		}
+
+		$event_participant_id = (int) ( $metadata['event_participant_id'] ?? 0 );
+		$event_participant    = $event_participant_id ? $repo->get_by_id( $event_participant_id ) : null;
+		if ( ! $event_participant ) {
+			return;
+		}
+
+		if ( 'fair-audience-activity-addon' === $source ) {
+			$option_ids = array_map( 'intval', (array) ( $metadata['ticket_option_ids'] ?? array() ) );
+			// Fair Events confirmed them on the purchase's ticket. An add-on
+			// bought without a ticket was held at participant scope; it is
+			// confirmed there too, as Audience screens read it.
+			if ( empty( $metadata['ticket_id'] ) ) {
+				$options = self::resolve_option_rows( $option_ids );
+				if ( $options ) {
+					$repo->add_options( $event_participant_id, $options );
+				}
+			}
+			$ledger->record( $event_participant_id, (int) $transaction->id, 'charge' );
+			do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
+			return;
+		}
+
+		if ( 'fair-audience-series-upgrade' === $source ) {
+			$ticket_type_id = (int) ( $metadata['ticket_type_id'] ?? 0 );
+			if ( $ticket_type_id && (int) $event_participant->ticket_type_id !== $ticket_type_id ) {
+				$event_participant->ticket_type_id = $ticket_type_id;
+				$event_participant->save();
+			}
+			$ledger->record( $event_participant_id, (int) $transaction->id, 'charge' );
+			do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
+		}
+	}
+
+	/**
+	 * The relationship a confirmed purchase of this plugin's route stands
+	 * for. When the expiry cron removed it before a late payment arrived,
+	 * the participant is signed up again, so Audience lists who paid.
+	 *
+	 * @param EventParticipantRepository $repo   Relationship repository.
+	 * @param object                     $signup The confirmed fair_events_signups row.
+	 * @return object|null
+	 */
+	private static function projected_relationship( EventParticipantRepository $repo, $signup ) {
+		$relationship_id = (int) ( $signup->legacy_event_participant_id ?? 0 );
+		$relationship    = $relationship_id ? $repo->get_by_id( $relationship_id ) : null;
+		if ( $relationship ) {
+			return $relationship;
+		}
+
+		$participant_id = (int) ( $signup->participant_id ?? 0 );
+		$event_date_id  = (int) $signup->event_date_id;
+		if ( ! $participant_id || ! $event_date_id ) {
+			return null;
+		}
+
+		$existing = $repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( $existing ) {
+			return $existing;
+		}
+
+		$event_date = class_exists( \FairEvents\Models\EventDates::class ) ? \FairEvents\Models\EventDates::get_by_id( $event_date_id ) : null;
+		if ( ! $event_date || empty( $event_date->event_id ) ) {
+			return null;
+		}
+
+		$relationship = new \FairAudience\Models\EventParticipant(
+			array(
+				'event_id'       => (int) $event_date->event_id,
+				'event_date_id'  => $event_date_id,
+				'participant_id' => $participant_id,
+				'label'          => 'signed_up',
+				'ticket_type_id' => $signup->ticket_type_id ? (int) $signup->ticket_type_id : null,
+			)
+		);
+		return $relationship->save() ? $relationship : null;
 	}
 
 	/**

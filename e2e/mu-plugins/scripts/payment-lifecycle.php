@@ -10,18 +10,24 @@
  *   activate    {}  Record a cutover activation, keeping whatever was there
  *                   to restore.
  *   deactivate  {}  Restore the state from before `activate`.
- *   settle      {transactionId, status, throwOnConfirmed?}  Connector
- *                   reports the status (paid or failed): every payment hook
- *                   runs, as for a webhook. Counts the confirmation and
- *                   failure announcements. With throwOnConfirmed, the first
- *                   confirmation listener throws, as a request dying after
- *                   the purchase was confirmed would.
+ *   settle      {transactionId, status, throwOnConfirmed?, throwOnApplied?}
+ *                   Connector reports the status (paid or failed): every
+ *                   payment hook runs, as for a webhook. Counts the
+ *                   confirmation, failure and Fair Audience projection
+ *                   announcements. With throwOnConfirmed (throwOnApplied),
+ *                   the first confirmation (projection) listener throws, as
+ *                   a request dying after the change committed would.
+ *   status      {transactionId, status}  Only change the status stored in
+ *                   Connector, firing no hook (an attempt that failed
+ *                   before its notification arrived).
  *   mollie-status {status?}  The status the Mollie double reports when a
  *                   payment is synced; none restores its default (paid).
  *   due         {}  Make the lifecycle's queued work due and run the retry
  *                   cron's processing once, counting announcements.
  *   state       {signupIds, transactionIds}  Purchases, links per
- *                   transaction, lifecycle work rows and findings.
+ *                   transaction, lifecycle work rows and findings. Each
+ *                   linked purchase is listed with its relationship (Fair
+ *                   Audience) and its tickets' activities.
  *   parallel    {runs: [{action, data, delayMs?}]}  Run actions in
  *                   concurrent processes; results in order.
  *   cleanup     {signupIds, transactionIds}  Links, work rows and findings.
@@ -58,6 +64,7 @@ $result             = array();
 $announcements = array(
 	'confirmed' => 0,
 	'failed'    => 0,
+	'applied'   => 0,
 );
 $count_hooks   = static function () use ( &$announcements ) {
 	add_action(
@@ -71,6 +78,13 @@ $count_hooks   = static function () use ( &$announcements ) {
 		'fair_events_signup_payment_failed',
 		static function () use ( &$announcements ) {
 			++$announcements['failed'];
+		},
+		0
+	);
+	add_action(
+		'fair_events_purchase_payment_applied',
+		static function () use ( &$announcements ) {
+			++$announcements['applied'];
 		},
 		0
 	);
@@ -106,6 +120,15 @@ switch ( $fixture_action ) {
 
 	case 'settle':
 		$count_hooks();
+		if ( ! empty( $data['throwOnApplied'] ) ) {
+			add_action(
+				'fair_events_purchase_payment_applied',
+				static function () {
+					throw new RuntimeException( 'E2E: request interrupted after the payment was applied.' );
+				},
+				1
+			);
+		}
 		if ( ! empty( $data['throwOnConfirmed'] ) ) {
 			add_action(
 				'fair_events_signup_confirmed',
@@ -136,6 +159,11 @@ switch ( $fixture_action ) {
 		);
 		break;
 
+	case 'status':
+		$wpdb->update( $transactions_table, array( 'status' => sanitize_key( (string) $data['status'] ) ), array( 'id' => (int) $data['transactionId'] ) );
+		$result = array( 'status' => sanitize_key( (string) $data['status'] ) );
+		break;
+
 	case 'mollie-status':
 		if ( empty( $data['status'] ) ) {
 			delete_option( 'fair_e2e_mollie_get_status' );
@@ -149,11 +177,12 @@ switch ( $fixture_action ) {
 		$count_hooks();
 		$wpdb->query(
 			$wpdb->prepare(
-				'UPDATE %i SET next_attempt_at = %s WHERE kind IN (%s, %s)',
+				'UPDATE %i SET next_attempt_at = %s WHERE kind IN (%s, %s, %s)',
 				PaymentShadowWork::table(),
 				gmdate( 'Y-m-d H:i:s', time() - 1 ),
 				PaymentShadowWork::KIND_PAYMENT,
-				PaymentShadowWork::KIND_CONFIRMATION
+				PaymentShadowWork::KIND_CONFIRMATION,
+				PaymentShadowWork::KIND_PROJECTION
 			)
 		);
 		$result = array(
@@ -188,12 +217,37 @@ switch ( $fixture_action ) {
 				) : null,
 			);
 		}
+		$result['purchases'] = array();
 		foreach ( array_map( 'intval', (array) ( $data['transactionIds'] ?? array() ) ) as $transaction_id ) {
+			$links                                     = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT signup_id, role, allocated_amount, attribution FROM %i WHERE transaction_id = %d ORDER BY id', $links_table, $transaction_id ), ARRAY_A );
 			$result['transactions'][ $transaction_id ] = array(
-				'links'            => (array) $wpdb->get_results( $wpdb->prepare( 'SELECT signup_id, role, allocated_amount, attribution FROM %i WHERE transaction_id = %d ORDER BY id', $links_table, $transaction_id ), ARRAY_A ),
+				'links'            => $links,
 				'transaction_work' => PaymentShadowWork::get( PaymentShadowWork::KIND_TRANSACTION, $transaction_id ),
 				'payment_work'     => PaymentShadowWork::get( PaymentShadowWork::KIND_PAYMENT, $transaction_id ),
+				'projection_work'  => PaymentShadowWork::get( PaymentShadowWork::KIND_PROJECTION, $transaction_id ),
+				'ledger'           => array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT event_participant_id FROM %i WHERE transaction_id = %d ORDER BY event_participant_id', $wpdb->prefix . 'fair_audience_event_participant_transactions', $transaction_id ) ) ),
 			);
+			foreach ( $links as $link_row ) {
+				$signup_id = (int) $link_row['signup_id'];
+				if ( isset( $result['purchases'][ $signup_id ] ) ) {
+					continue;
+				}
+				$purchase                          = $wpdb->get_row( $wpdb->prepare( 'SELECT id, status, ticket_type_id, amount, legacy_event_participant_id, participant_id, event_date_id FROM %i WHERE id = %d', $signups_table, $signup_id ), ARRAY_A );
+				$relationship_id                   = (int) ( $purchase['legacy_event_participant_id'] ?? 0 );
+				$result['purchases'][ $signup_id ] = array(
+					'purchase'     => $purchase,
+					'relationship' => $relationship_id ? $wpdb->get_row( $wpdb->prepare( 'SELECT id, label, ticket_type_id, payment_expires_at FROM %i WHERE id = %d', $wpdb->prefix . 'fair_audience_event_participants', $relationship_id ), ARRAY_A ) : null,
+					'activities'   => (array) $wpdb->get_results(
+						$wpdb->prepare(
+							'SELECT a.ticket_id, a.ticket_option_id, a.status FROM %i AS a INNER JOIN %i AS t ON t.id = a.ticket_id WHERE t.signup_id = %d ORDER BY a.ticket_option_id',
+							$wpdb->prefix . 'fair_events_ticket_activities',
+							$wpdb->prefix . 'fair_events_tickets',
+							$signup_id
+						),
+						ARRAY_A
+					),
+				);
+			}
 		}
 		break;
 
@@ -244,7 +298,7 @@ switch ( $fixture_action ) {
 	case 'cleanup':
 		foreach ( array_filter( array_map( 'intval', (array) ( $data['transactionIds'] ?? array() ) ) ) as $transaction_id ) {
 			$wpdb->delete( $links_table, array( 'transaction_id' => $transaction_id ) );
-			foreach ( array( PaymentShadowWork::KIND_TRANSACTION, PaymentShadowWork::KIND_PAYMENT ) as $kind ) {
+			foreach ( array( PaymentShadowWork::KIND_TRANSACTION, PaymentShadowWork::KIND_PAYMENT, PaymentShadowWork::KIND_PROJECTION ) as $kind ) {
 				PaymentShadowWork::complete( $kind, $transaction_id );
 			}
 		}

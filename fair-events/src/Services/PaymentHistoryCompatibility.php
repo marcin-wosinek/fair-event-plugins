@@ -209,6 +209,27 @@ class PaymentHistoryCompatibility {
 	}
 
 	/**
+	 * Whether the active Fair Audience, if any, runs its purchase route,
+	 * add-ons and series upgrades through the Events purchase lifecycle
+	 * once the cutover is active (§8.12): it records each attempt with
+	 * PurchaseLifecycle before the buyer pays, leaves paid notifications of
+	 * those routes to Events and projects what Events committed. An older
+	 * Audience keeps confirming its own relationships, which Events would
+	 * no longer follow, so the stage 4 activation refuses to run with it.
+	 *
+	 * @return bool
+	 */
+	public static function audience_lifecycle_available() {
+		if ( ! class_exists( \FairAudience\Database\EventParticipantRepository::class ) ) {
+			return true;
+		}
+		$lifecycle = 'FairAudience\\Services\\EventsLifecycle';
+		return class_exists( $lifecycle )
+			&& method_exists( $lifecycle, 'supports_purchase_lifecycle' )
+			&& true === $lifecycle::supports_purchase_lifecycle();
+	}
+
+	/**
 	 * Reasons the stage 3 backfill can't start on this site; empty when it
 	 * can. Stage 3 must refuse to start while any is listed. Storage counts
 	 * as unavailable until the backfill's own tables (DB 3.51.0) exist too.

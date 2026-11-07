@@ -31,6 +31,14 @@ defined( 'WPINC' ) || die;
  * be an admission by the contract's rule (§4.1), or a pending Audience
  * checkout whose latest ledger charge comes from Audience's purchase route.
  *
+ * After the stage 4 cutover the purchase lifecycle owns payments
+ * (PurchaseLifecycle, §8.12): a paid notification confirms the purchase and
+ * an upgrade changes its ticket type before Audience's relationship
+ * follows. A sync never reverses either: a confirmed purchase stays
+ * confirmed while its relationship still awaits payment or is gone, and a purchase
+ * with a paid upgrade keeps its ticket type. Organizer changes (moves,
+ * relabelling, removal) are still followed.
+ *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class ShadowPurchases {
@@ -235,12 +243,26 @@ class ShadowPurchases {
 	/**
 	 * The status a shadow purchase takes from its relationship.
 	 *
-	 * @param object|null $relationship Relationship row, or null when it was deleted.
-	 * @param string      $current      The purchase's current status.
+	 * @param object|null $relationship  Relationship row, or null when it was deleted.
+	 * @param string      $current       The purchase's current status.
+	 * @param bool        $authoritative Whether the purchase lifecycle owns payments (the cutover).
 	 * @return array{status: string, payment_expires_at: string|null}
 	 */
-	public static function target_state( $relationship, $current ) {
+	public static function target_state( $relationship, $current, $authoritative = false ) {
 		$now = gmdate( 'Y-m-d H:i:s' );
+
+		// After the cutover the lifecycle confirms the purchase first. A
+		// relationship that still awaits payment is only lagging behind, and
+		// one the expiry cron deleted before a late payment arrived is
+		// recreated by the projection: neither undoes a paid purchase.
+		// Removing a participant who holds a ticket is refused in Audience,
+		// so a deletion is never an organizer cancelling it.
+		if ( $authoritative && 'confirmed' === $current && ( ! $relationship || 'pending_payment' === $relationship->label ) ) {
+			return array(
+				'status'             => 'confirmed',
+				'payment_expires_at' => null,
+			);
+		}
 
 		if ( ! $relationship ) {
 			return array(
@@ -339,8 +361,9 @@ class ShadowPurchases {
 	private static function update( $signup, $relationship ) {
 		global $wpdb;
 
-		$state   = self::target_state( $relationship, (string) $signup->status );
-		$changes = array();
+		$authoritative = PaymentHistoryCompatibility::ownership_cutover();
+		$state         = self::target_state( $relationship, (string) $signup->status, $authoritative );
+		$changes       = array();
 		if ( $state['status'] !== (string) $signup->status ) {
 			$changes['status'] = $state['status'];
 		}
@@ -351,7 +374,9 @@ class ShadowPurchases {
 			if ( (int) $relationship->event_date_id !== (int) $signup->event_date_id ) {
 				$changes['event_date_id'] = (int) $relationship->event_date_id;
 			}
-			if ( (int) $relationship->ticket_type_id !== (int) $signup->ticket_type_id ) {
+			if ( (int) $relationship->ticket_type_id !== (int) $signup->ticket_type_id
+				&& ! ( $authoritative && PurchaseLifecycle::has_paid_upgrade( (int) $signup->id ) )
+			) {
 				$changes['ticket_type_id'] = $relationship->ticket_type_id ? (int) $relationship->ticket_type_id : null;
 			}
 		}

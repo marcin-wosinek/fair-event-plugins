@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
+use FairAudience\Services\EventsLifecycle;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\GroupSignupPricing;
@@ -790,6 +791,13 @@ class EventSignupController extends WP_REST_Controller {
 			$ledger->record( $ep_id, (int) $transaction_id, 'charge' );
 		}
 
+		// After the payment history cutover Fair Events records the purchases
+		// and the attempt's links before the buyer is sent to pay.
+		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
@@ -1104,6 +1112,12 @@ class EventSignupController extends WP_REST_Controller {
 		// Also closes a secondary gap: add-on charges never recorded to the
 		// ledger, so payment history for the registration was missing them.
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
+
+		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			$this->release_addon_holds( (int) $event_participant->id, $ticket ? (int) $ticket->id : 0, $new_option_ids );
+			return $recorded;
+		}
 
 		$redirect_url = add_query_arg(
 			array(
@@ -1810,6 +1824,11 @@ class EventSignupController extends WP_REST_Controller {
 		// this charge (see #1112).
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
 
+		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
@@ -1891,8 +1910,17 @@ class EventSignupController extends WP_REST_Controller {
 			return $series_price;
 		}
 
+		// After the payment history cutover the credit is what the purchase
+		// behind this registration paid, not every charge on the registration
+		// (which also holds other purchases on the same date).
 		$ledger   = new EventParticipantTransactionRepository();
-		$net_paid = $ledger->get_net_paid( (int) $existing->id );
+		$net_paid = EventsLifecycle::upgrade_credit( (int) $existing->id, Money::site_currency() );
+		if ( is_wp_error( $net_paid ) ) {
+			return $net_paid;
+		}
+		if ( null === $net_paid ) {
+			$net_paid = $ledger->get_net_paid( (int) $existing->id );
+		}
 
 		// The upgrade's one line, built before anything is decided: the
 		// difference still owed, never below zero. Free or paid, and what the
@@ -1914,6 +1942,11 @@ class EventSignupController extends WP_REST_Controller {
 
 		// Nothing left to pay (already covered, or a free series): convert in place now.
 		if ( $delta <= 0 ) {
+			$upgraded = EventsLifecycle::upgrade_without_payment( (int) $existing->id, (int) $ticket_type->id );
+			if ( is_wp_error( $upgraded ) ) {
+				return $upgraded;
+			}
+
 			$existing->ticket_type_id = (int) $ticket_type->id;
 			$existing->save();
 
@@ -1963,6 +1996,11 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$ledger->record( (int) $existing->id, (int) $transaction_id, 'charge' );
+
+		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
 
 		// Deliberately do NOT touch $existing here: the seat and original payment
 		// remain valid whether or not the upgrade payment completes.
@@ -2132,6 +2170,16 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// After the payment history cutover a retry of a checkout for several
+		// occurrences names every one of them, so Fair Events can link it to
+		// the whole purchase set instead of guessing (gap G7).
+		$original_occurrences = isset( $metadata['event_participant_ids'] ) && is_array( $metadata['event_participant_ids'] )
+			? array_values( array_unique( array_filter( array_map( 'intval', $metadata['event_participant_ids'] ) ) ) )
+			: array();
+		if ( count( $original_occurrences ) > 1 && EventsLifecycle::active() ) {
+			return $this->retry_multi_instance_payment( $old_transaction, $metadata, $original_occurrences );
+		}
+
 		$event_id       = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
 		$event_date_id  = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
 		$participant_id = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
@@ -2271,6 +2319,11 @@ class EventSignupController extends WP_REST_Controller {
 		// place that remembers each attempt (see #1112).
 		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $new_transaction_id, 'charge' );
 
+		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
 		$redirect_url = add_query_arg(
 			array(
 				'fair_payment_callback' => 'true',
@@ -2287,6 +2340,152 @@ class EventSignupController extends WP_REST_Controller {
 			$new_transaction_id,
 			array(
 				'redirect_url' => $redirect_url,
+			)
+		);
+
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
+		}
+
+		return rest_ensure_response(
+			array(
+				'success'        => true,
+				'status'         => 'payment_required',
+				'message'        => __( 'Redirecting to payment…', 'fair-audience' ),
+				'checkout_url'   => $payment['checkout_url'],
+				'transaction_id' => (int) $new_transaction_id,
+				'amount'         => $old_transaction->amount,
+				'currency'       => $old_transaction->currency,
+			)
+		);
+	}
+
+	/**
+	 * Retry a failed checkout for several occurrences after the payment
+	 * history cutover: every occurrence's registration is held again and
+	 * named in the new attempt, which mirrors the original line items, so
+	 * Fair Events links it to the whole purchase set. A registration that is
+	 * gone (its hold lapsed and was cleaned up) or already paid can't be
+	 * retried as part of the set; the buyer signs up again.
+	 *
+	 * @param object $old_transaction      The failed/expired transaction.
+	 * @param array  $metadata             Its decoded metadata.
+	 * @param int[]  $event_participant_ids Registrations it was for.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function retry_multi_instance_payment( $old_transaction, $metadata, array $event_participant_ids ) {
+		$transaction_id = (int) $old_transaction->id;
+		$event_id       = isset( $metadata['post_id'] ) ? (int) $metadata['post_id'] : (int) $old_transaction->post_id;
+		$event_date_id  = isset( $metadata['event_date_id'] ) ? (int) $metadata['event_date_id'] : (int) $old_transaction->event_date_id;
+		$participant_id = isset( $metadata['participant_id'] ) ? (int) $metadata['participant_id'] : (int) $old_transaction->participant_id;
+		$user_id        = isset( $old_transaction->user_id ) ? (int) $old_transaction->user_id : 0;
+
+		$rows = array();
+		foreach ( $event_participant_ids as $event_participant_id ) {
+			$row = $this->event_participant_repository->get_by_id( $event_participant_id );
+			if ( ! $row || (int) $row->participant_id !== $participant_id ) {
+				return new WP_Error(
+					'retry_unavailable',
+					__( 'This booking is no longer held. Please sign up again.', 'fair-audience' ),
+					array( 'status' => 409 )
+				);
+			}
+			$rows[] = $row;
+		}
+
+		$signed_up = array_filter(
+			$rows,
+			static fn( $row ) => 'signed_up' === $row->label
+		);
+		if ( count( $signed_up ) === count( $rows ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'status'  => 'already_signed_up',
+					'message' => __( 'You are already signed up for this event.', 'fair-audience' ),
+				)
+			);
+		}
+		if ( $signed_up ) {
+			return new WP_Error(
+				'retry_unavailable',
+				__( 'This booking is no longer held. Please sign up again.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$old_line_items = \FairPaymentsConnector\Models\LineItem::get_by_transaction_id( $transaction_id );
+		if ( empty( $old_line_items ) ) {
+			return new WP_Error(
+				'invalid_retry_state',
+				__( 'Original line items could not be loaded.', 'fair-audience' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$line_items = array();
+		foreach ( $old_line_items as $li ) {
+			$line_items[] = array(
+				'name'     => (string) $li->name,
+				'quantity' => isset( $li->quantity ) ? (int) $li->quantity : 1,
+				'amount'   => (float) $li->unit_amount,
+			);
+		}
+
+		$expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
+		foreach ( $rows as $row ) {
+			$row->label              = 'pending_payment';
+			$row->payment_expires_at = $expires_at;
+			$row->save();
+		}
+
+		$new_transaction_id = \FairPaymentsConnector\API\TransactionAPI::create_transaction(
+			$line_items,
+			array(
+				'currency'      => $old_transaction->currency,
+				'description'   => $old_transaction->description,
+				'post_id'       => $event_id,
+				'event_date_id' => $event_date_id,
+				'user_id'       => $user_id ? $user_id : null,
+				'metadata'      => array(
+					'source'                  => 'fair-audience-signup',
+					'event_date_id'           => $event_date_id,
+					'event_participant_ids'   => $event_participant_ids,
+					'participant_id'          => $participant_id,
+					'ticket_type_id'          => isset( $metadata['ticket_type_id'] ) ? (int) $metadata['ticket_type_id'] : null,
+					'retry_of_transaction_id' => $transaction_id,
+				),
+			)
+		);
+
+		if ( is_wp_error( $new_transaction_id ) ) {
+			return $new_transaction_id;
+		}
+
+		$ledger = new EventParticipantTransactionRepository();
+		foreach ( $event_participant_ids as $event_participant_id ) {
+			$ledger->record( $event_participant_id, (int) $new_transaction_id, 'charge' );
+		}
+
+		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
+		$payment = \FairPaymentsConnector\API\TransactionAPI::initiate_payment(
+			$new_transaction_id,
+			array(
+				'redirect_url' => add_query_arg(
+					array(
+						'fair_payment_callback' => 'true',
+						'fair_signup_tx'        => $new_transaction_id,
+						'fst_sig'               => \FairAudience\Services\TransactionAccessToken::generate(
+							(int) $new_transaction_id,
+							$participant_id
+						),
+					),
+					get_permalink( $event_id )
+				),
 			)
 		);
 
@@ -2448,6 +2647,11 @@ class EventSignupController extends WP_REST_Controller {
 
 		if ( is_wp_error( $new_transaction_id ) ) {
 			return $new_transaction_id;
+		}
+
+		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
 		}
 
 		$redirect_url = add_query_arg(

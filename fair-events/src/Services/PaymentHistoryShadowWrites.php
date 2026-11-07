@@ -295,7 +295,7 @@ class PaymentHistoryShadowWrites {
 	public static function process_due( $limit ) {
 		$rows = PaymentShadowWork::get_due(
 			$limit,
-			PaymentHistoryCompatibility::shadow_write_coverage() ? array() : array( PaymentShadowWork::KIND_PAYMENT, PaymentShadowWork::KIND_CONFIRMATION )
+			PaymentHistoryCompatibility::shadow_write_coverage() ? array() : PaymentShadowWork::lifecycle_kinds()
 		);
 		usort(
 			$rows,
@@ -319,7 +319,7 @@ class PaymentHistoryShadowWrites {
 	 * @return string Outcome: done, failed or unresolved.
 	 */
 	public static function process( $kind, $source_id ) {
-		if ( in_array( $kind, array( PaymentShadowWork::KIND_PAYMENT, PaymentShadowWork::KIND_CONFIRMATION ), true ) ) {
+		if ( in_array( $kind, PaymentShadowWork::lifecycle_kinds(), true ) ) {
 			try {
 				return PurchaseLifecycle::process_work( $kind, $source_id );
 			} catch ( \Throwable $error ) {
@@ -471,7 +471,10 @@ class PaymentHistoryShadowWrites {
 
 	/**
 	 * Relationships whose shadow purchase doesn't reflect them: deleted,
-	 * relabelled, paid, re-held, moved or retyped.
+	 * relabelled, paid, re-held, moved or retyped. After the cutover a
+	 * confirmed purchase whose relationship still awaits payment or is gone is the
+	 * lifecycle's (its projection catches up), so it isn't listed again on
+	 * every sweep.
 	 *
 	 * @param int $limit Most rows.
 	 * @return int[]
@@ -479,7 +482,8 @@ class PaymentHistoryShadowWrites {
 	private static function find_out_of_step( $limit ) {
 		global $wpdb;
 
-		$now = gmdate( 'Y-m-d H:i:s' );
+		$now           = gmdate( 'Y-m-d H:i:s' );
+		$authoritative = PaymentHistoryCompatibility::ownership_cutover() ? 1 : 0;
 		return array_map(
 			'intval',
 			(array) $wpdb->get_col(
@@ -487,16 +491,18 @@ class PaymentHistoryShadowWrites {
 					"SELECT s.legacy_event_participant_id FROM %i AS s
 					LEFT JOIN %i AS ep ON ep.id = s.legacy_event_participant_id
 					WHERE s.legacy_event_participant_id IS NOT NULL AND (
-						( ep.id IS NULL AND s.status IN ( 'confirmed', 'pending_payment' ) )
+						( ep.id IS NULL AND s.status IN ( 'confirmed', 'pending_payment' ) AND NOT ( %d = 1 AND s.status = 'confirmed' ) )
 						OR ( ep.label = 'signed_up' AND s.status <> 'confirmed' )
-						OR ( ep.label = 'pending_payment' AND ep.payment_expires_at > %s AND ( s.status <> 'pending_payment' OR NOT ( s.payment_expires_at <=> ep.payment_expires_at ) ) )
+						OR ( ep.label = 'pending_payment' AND ep.payment_expires_at > %s AND ( s.status <> 'pending_payment' OR NOT ( s.payment_expires_at <=> ep.payment_expires_at ) ) AND NOT ( %d = 1 AND s.status = 'confirmed' ) )
 						OR ( ep.label IN ( 'interested', 'collaborator' ) AND s.status IN ( 'confirmed', 'pending_payment' ) )
 						OR ( ep.id IS NOT NULL AND ( ep.event_date_id <> s.event_date_id OR NOT ( ep.ticket_type_id <=> s.ticket_type_id ) ) )
 					)
 					ORDER BY s.id ASC LIMIT %d",
 					$wpdb->prefix . 'fair_events_signups',
 					self::relationships_table(),
+					$authoritative,
 					$now,
+					$authoritative,
 					(int) $limit
 				)
 			)
