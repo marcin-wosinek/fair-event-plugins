@@ -8,7 +8,8 @@
  * registration happens only on the List tab; the Audience tab offers no
  * Delete action (#1710). "Summary" copies the ticket and add-on counts of
  * every confirmed ticket, whatever the mailing filter shows, and explains a
- * refused clipboard (#1839).
+ * refused clipboard (#1839). Registrations are listed alphabetically by their
+ * stored name, through filtering and reloads (#2217).
  */
 
 import { readFile } from 'node:fs/promises';
@@ -88,7 +89,8 @@ test.describe( 'Manage Event — List tab', () => {
 	let eventDateId;
 	let originalAudienceStatus;
 	const signup = {
-		name: `List Tab Tester ${ Date.now() }`,
+		// Sorts before the group, so it stays the first numbered row (#2217).
+		name: `List Tab Attendee ${ Date.now() }`,
 		email: `manage-event-list-${ Date.now() }@example.test`,
 		ticketType: 'List Tab Admission',
 		selectedExtra: 'List Tab Dinner',
@@ -540,5 +542,185 @@ test.describe( 'Manage Event — List tab', () => {
 		expect(
 			signups.filter( ( row ) => row.name === signup.name )
 		).toHaveLength( 0 );
+	} );
+} );
+
+test.describe( 'Manage Event — List tab alphabetical order (#2217)', () => {
+	test.setTimeout( 60_000 );
+
+	let adminContext;
+	let adminPage;
+	let eventPostId;
+	let eventDateId;
+	// Bought in this order, so the API's order is not alphabetical. The two
+	// spellings of Ana López tie and keep their registration order.
+	const purchases = [
+		{ name: 'Zoë Álvarez', optIn: true },
+		{ name: 'ana lópez', optIn: false },
+		{ name: 'Émile Zola', optIn: true },
+		{ name: 'Bob Brown', optIn: false },
+		{ name: 'Ana López', optIn: true },
+	];
+	const alphabetical = [
+		'ana lópez',
+		'Ana López',
+		'Bob Brown',
+		'Émile Zola',
+		'Zoë Álvarez',
+	];
+
+	const listedNames = () =>
+		adminPage
+			.locator( '.fair-events-signups tbody tr' )
+			.evaluateAll( ( rows ) =>
+				rows.map( ( row ) =>
+					row
+						.querySelectorAll( 'td' )[ 1 ]
+						.firstChild.textContent.trim()
+				)
+			);
+
+	test.beforeAll( async ( { browser } ) => {
+		adminContext = await browser.newContext();
+		adminPage = await adminContext.newPage();
+		await login( adminPage );
+		await adminPage.goto(
+			'/wp-admin/admin.php?page=fair-events-all-events'
+		);
+		await adminPage.waitForFunction(
+			() => window.wp && window.wp.apiFetch
+		);
+
+		const eventPost = await apiFetch( adminPage, {
+			path: '/wp/v2/fair_event',
+			method: 'POST',
+			data: {
+				title: `Manage Event List order e2e ${ Date.now() }`,
+				status: 'publish',
+			},
+		} );
+		eventPostId = eventPost.id;
+		const eventDate = await apiFetch( adminPage, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'Manage Event List order e2e',
+				link_type: 'post',
+				start_date: '2036-03-01',
+				start_time: '10:00:00',
+				end_date: '2036-03-01',
+				end_time: '12:00:00',
+			},
+		} );
+		eventDateId = eventDate.id;
+		await apiFetch( adminPage, {
+			path: `/fair-events/v1/event-dates/${ eventDateId }`,
+			method: 'PUT',
+			data: { event_id: eventPostId },
+		} );
+
+		const tickets = await apiFetch( adminPage, {
+			path: `/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			method: 'PUT',
+			data: {
+				ticket_types: [
+					{
+						name: 'Order Admission',
+						capacity: null,
+						minimum_activities: 0,
+						disable_at: null,
+						recurrence_scope: 'single_instance',
+						group_ids: [],
+					},
+				],
+				sale_periods: [
+					{
+						name: 'Always available',
+						sale_start: '2020-01-01 00:00:00',
+						sale_end: '2099-01-01 00:00:00',
+					},
+				],
+				prices: [
+					{
+						ticket_type_index: 0,
+						sale_period_index: 0,
+						price: 0,
+					},
+				],
+				settings: {},
+				options: [],
+			},
+		} );
+		const ticketTypeId = tickets.ticket_types?.[ 0 ]?.id;
+		expect( ticketTypeId ).toBeTruthy();
+
+		const stamp = Date.now();
+		for ( const [ index, purchase ] of purchases.entries() ) {
+			await buyAsVisitor( {
+				event_date_id: eventDateId,
+				name: purchase.name,
+				email: `manage-event-order-${ stamp }-${ index }@example.test`,
+				ticket_type_id: ticketTypeId,
+				quantity: 1,
+				mailing_opt_in: purchase.optIn,
+			} );
+		}
+	} );
+
+	test.afterAll( async () => {
+		if ( eventDateId ) {
+			const signups = await apiFetch( adminPage, {
+				path: `/fair-events/v1/get-tickets?event_date=${ eventDateId }`,
+			} ).catch( () => [] );
+			for ( const row of signups ) {
+				await apiFetch( adminPage, {
+					path: `/fair-events/v1/get-tickets/${ row.id }`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+			}
+		}
+		if ( eventPostId ) {
+			await apiFetch( adminPage, {
+				path: `/wp/v2/fair_event/${ eventPostId }`,
+				method: 'DELETE',
+				data: { force: true },
+			} ).catch( () => {} );
+		}
+		if ( eventDateId ) {
+			await apiFetch( adminPage, {
+				path: `/fair-events/v1/event-dates/${ eventDateId }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+		}
+		await adminContext?.close();
+	} );
+
+	test( 'lists registrations by name before and after filtering and reloading', async () => {
+		const listUrl = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${ eventDateId }&tab=list`;
+		await adminPage.goto( listUrl );
+		await expect(
+			adminPage.locator( '.fair-events-signups tbody tr' )
+		).toHaveCount( purchases.length );
+
+		// The stored names are shown exactly, in alphabetical order.
+		expect( await listedNames() ).toEqual( alphabetical );
+
+		await adminPage
+			.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			.check();
+		await expect(
+			adminPage.locator( '.fair-events-signups tbody tr' )
+		).toHaveCount( 3 );
+		expect( await listedNames() ).toEqual( [
+			'Ana López',
+			'Émile Zola',
+			'Zoë Álvarez',
+		] );
+
+		await adminPage.reload();
+		await expect(
+			adminPage.locator( '.fair-events-signups tbody tr' )
+		).toHaveCount( purchases.length );
+		expect( await listedNames() ).toEqual( alphabetical );
 	} );
 } );

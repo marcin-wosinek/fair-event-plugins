@@ -25,6 +25,7 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
+import { sortSignupsByName } from './signup-order.js';
 import { buildSignupPrintHtml, openPrintWindow } from './signup-print.js';
 import {
 	buildSignupSummary,
@@ -822,9 +823,12 @@ export default function EventSignups( {
 		{ key: 'actions', label: __( 'Actions', 'fair-events' ) },
 	];
 
-	// Filters apply to whole registrations, which are then expanded, so all
-	// tickets of a registration are included or excluded together.
-	const confirmedSignups = signups.filter( isConfirmedSignup );
+	// Registrations are listed alphabetically by name (#2217) before the
+	// filters run, so the screen, the printout and the summary share one
+	// order. Filters apply to whole registrations, which are then expanded,
+	// so all tickets of a registration stay together, in their own order.
+	const confirmedSignups =
+		sortSignupsByName( signups ).filter( isConfirmedSignup );
 	const visibleSignups = mailingOnly
 		? confirmedSignups.filter( ( s ) => isMailingOptIn( s.mailing_opt_in ) )
 		: confirmedSignups;
