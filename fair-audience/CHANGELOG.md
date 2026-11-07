@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.0.0
+
+### Major Changes
+
+- a1a0ae7: Fair Audience now requires PHP 8.3. Upgrade your site to PHP 8.3 or newer before updating the plugin. Sites still on PHP 8.2 keep working on the release they already have, but WordPress won't install this or any later Fair Audience release there, so they also stop receiving fixes, including security fixes. The library that builds ZIP files for spreadsheet exports moves to its current 3.2 line, which needs PHP 8.3.
+
+### Minor Changes
+
+- be236c7: Edit a participant's weekly summary and event feeds in the participant popup, from the participant page or the participants list. Choose all event feeds, selected feeds by name, or none; feeds that cannot be chosen right now stay saved unless you choose no feeds. Saving contact details no longer resets a participant awaiting confirmation to confirmed, nor resets their weekly summary preferences.
+- 92e4497: Record payment history as payments happen. Every new payment attempt is now also linked to the purchase it pays for, and participants signed up through Fair Audience alone (its own purchase route, or added by an organizer) get a matching ticket purchase that follows them. Ticket counts, capacity, Statistics, payments and emails stay the same. Update Fair Events and Fair Audience together: recording starts once both are on this release.
+
+### Patch Changes
+
+- 3fb6f61: The organizer's booking message now reaches the confirmation email even when another Fair Events plugin on the site hasn't been updated yet. Before, an older plugin's copy of the shared email layout could be used instead, and that copy left the message out.
+- b9b2d66: Background tasks now start reliably and stop cleanly. Fair Audience's five-minute expired-signup cleanup could fail to start, because it was scheduled before its interval existed. Each plugin now restores any missing recurring task on the next page load, retries one that could not be scheduled instead of reporting it as scheduled, removes all of its own tasks when it is deactivated (including each Payments digest frequency), and stops a feature's tasks while that feature is turned off. Settings, history, queued messages and digests are kept, and missed weekly notifications are still never sent late.
+- 97776e1: Add a Messages tab to Manage Event where organizers write a message, with formatting and links, that is added to the booking confirmation email: right away for free bookings and once payment is confirmed for paid ones. A series shares one message, and the message also appears when Fair Audience sends the confirmation.
+- f18db4b: Fair Events now has storage for each ticket purchase's payment history, and records which Fair Audience participant a purchase was carried over from. This prepares a later update that copies older payment records into Fair Events. Nothing visible changes yet: ticket counts, capacity, revenue and payments work as before, and the new storage stays empty for now. Fair Audience no longer counts a participant a second time once a carried-over purchase exists for them. Update Fair Payments Connector first, then Fair Events, then Fair Audience.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
+
 ## 1.22.0
 
 ### Minor Changes

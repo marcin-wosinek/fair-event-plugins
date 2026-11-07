@@ -1,5 +1,41 @@
 # fair-events-experimental
 
+## 2.2.0
+
+### Minor Changes
+
+- 9f2c0a1: Simplify the event feed detail page. A compact header shows the feed's status, how many configured sources it collects from, one Edit event feed button and an Open public page link. The weekly summary has its own section with an Open weekly summary action, which explains how to enable it when no public page is linked, while the slug and the iCal and JSON addresses move into a collapsed Subscription and integrations section, so the calendar appears sooner on every screen size.
+- 6c845d1: The WhatsApp delivery-updates setup now links straight to the right Meta App Dashboard pages: App settings → Basic for the App Secret, and the WhatsApp use case's webhook configuration. The links are worked out from the saved access token and WhatsApp Business Account ID. The written steps also name the newer Use cases → Customize → Configuration path, and still work on their own when no link can be resolved.
+
+### Patch Changes
+
+- b9b2d66: Background tasks now start reliably and stop cleanly. Fair Audience's five-minute expired-signup cleanup could fail to start, because it was scheduled before its interval existed. Each plugin now restores any missing recurring task on the next page load, retries one that could not be scheduled instead of reporting it as scheduled, removes all of its own tasks when it is deactivated (including each Payments digest frequency), and stops a feature's tasks while that feature is turned off. Settings, history, queued messages and digests are kept, and missed weekly notifications are still never sent late.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [b9b2d66]
+- Updated dependencies [97776e1]
+- Updated dependencies [452f3d8]
+- Updated dependencies [e057b74]
+- Updated dependencies [ca82e97]
+- Updated dependencies [ed09e90]
+- Updated dependencies [e443adf]
+- Updated dependencies [4e35f74]
+- Updated dependencies [7a8655f]
+- Updated dependencies [7930425]
+- Updated dependencies [5502f19]
+- Updated dependencies [a445149]
+- Updated dependencies [2a750be]
+- Updated dependencies [678ee59]
+- Updated dependencies [15808ca]
+- Updated dependencies [6789f07]
+- Updated dependencies [92e4497]
+- Updated dependencies [f18db4b]
+- Updated dependencies [c59f45d]
+- Updated dependencies [dee0685]
+- Updated dependencies [88e5777]
+- Updated dependencies [dcb5c4b]
+    - fair-events@2.2.0
+    - fair-events-shared@0.8.0
+
 ## 2.1.0
 
 ### Minor Changes

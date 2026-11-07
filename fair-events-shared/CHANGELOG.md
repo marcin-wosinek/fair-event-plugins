@@ -1,5 +1,19 @@
 # fair-events-shared
 
+## 0.8.0
+
+### Minor Changes
+
+- 5502f19: Recognize Momoyoga event links in **From URL**. Momoyoga pages load their details with JavaScript, so a lookup used to find only the title. It now also fills the start and end date and time and the venue name from Momoyoga's public event data, converted to the site's timezone. Every value stays editable, and the link is kept as the event's external link. When Momoyoga's data can't be read, the page title is still filled and the missing fields are left for you to complete. Fair Form's link preview reads Momoyoga dates the same way.
+
+    When a looked-up page gives no start date, **Quick Add Event** no longer leaves its 10:00–12:00 default times in place, where they could pass for imported values. The calendar day you picked stays, and any times you had already entered are kept.
+
+### Patch Changes
+
+- 3fb6f61: The organizer's booking message now reaches the confirmation email even when another Fair Events plugin on the site hasn't been updated yet. Before, an older plugin's copy of the shared email layout could be used instead, and that copy left the message out.
+- 678ee59: Prefill Oona events in “From URL”: the page's own event, published as the main entity of its schema.org WebPage, now supplies the title, start and end times (converted to the site timezone) and venue name. Lookups prefer the event that matches the page URL over related events listed on the same page. When a page lists several sessions, the title and venue are still filled but the date and times are left for you to enter, rather than merging the sessions into one long event. Times published without a timezone are no longer guessed.
+- 88e5777: Feature flags in Fair Events, Fair Payments Connector, and Fair Form now resolve through one shared implementation. Settings, `wp-config.php` constants, and filters keep working exactly as before.
+
 ## 0.7.1
 
 ### Patch Changes

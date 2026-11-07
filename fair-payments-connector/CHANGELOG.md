@@ -1,5 +1,17 @@
 # fair-payments-connector
 
+## 2.7.1
+
+### Patch Changes
+
+- b9b2d66: Background tasks now start reliably and stop cleanly. Fair Audience's five-minute expired-signup cleanup could fail to start, because it was scheduled before its interval existed. Each plugin now restores any missing recurring task on the next page load, retries one that could not be scheduled instead of reporting it as scheduled, removes all of its own tasks when it is deactivated (including each Payments digest frequency), and stops a feature's tasks while that feature is turned off. Settings, history, queued messages and digests are kept, and missed weekly notifications are still never sent late.
+- 88e5777: Feature flags in Fair Events, Fair Payments Connector, and Fair Form now resolve through one shared implementation. Settings, `wp-config.php` constants, and filters keep working exactly as before.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
+
 ## 2.7.0
 
 ### Minor Changes
