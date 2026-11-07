@@ -1,5 +1,44 @@
 # fair-events
 
+## 2.2.0
+
+### Minor Changes
+
+- 97776e1: Add a Messages tab to Manage Event where organizers write a message, with formatting and links, that is added to the booking confirmation email: right away for free bookings and once payment is confirmed for paid ones. A series shares one message, and the message also appears when Fair Audience sends the confirmation.
+- 7930425: Prefill Meetup events in “From URL”: when a Meetup event page lacks complete schema.org data, the title, start and end times (converted to the site timezone) and venue name are read from the page's embedded event data. A lookup that finds no start time now leaves the time fields empty instead of showing the default 10:00–12:00.
+- 5502f19: Recognize Momoyoga event links in **From URL**. Momoyoga pages load their details with JavaScript, so a lookup used to find only the title. It now also fills the start and end date and time and the venue name from Momoyoga's public event data, converted to the site's timezone. Every value stays editable, and the link is kept as the event's external link. When Momoyoga's data can't be read, the page title is still filled and the missing fields are left for you to complete. Fair Form's link preview reads Momoyoga dates the same way.
+
+    When a looked-up page gives no start date, **Quick Add Event** no longer leaves its 10:00–12:00 default times in place, where they could pass for imported values. The calendar day you picked stays, and any times you had already entered are kept.
+
+- a445149: Duplicate an event notification from the notification list: the copy keeps the saved settings, starts paused under a "Copy of" name, has no history and opens for editing.
+- 2a750be: Filter the Event notifications list by event feed. The chosen feed is kept in the page URL, so links, refreshes and the browser's Back and Forward buttons show the same filtered list.
+- 678ee59: Prefill Oona events in “From URL”: the page's own event, published as the main entity of its schema.org WebPage, now supplies the title, start and end times (converted to the site timezone) and venue name. Lookups prefer the event that matches the page URL over related events listed on the same page. When a page lists several sessions, the title and venue are still filled but the date and times are left for you to enter, rather than merging the sessions into one long event. Times published without a timezone are no longer guessed.
+- 15808ca: Migrate historical payment history into Fair Events. A dry run reports what the migration would do; after reviewing it and confirming a database backup, an administrator starts the backfill, which runs in the background. It gives historical Fair Audience participants a matching ticket purchase, links past payment attempts to the purchases they paid for, lists every payment it can't attribute safely, and compares ticket counts and revenue per event date. Ticket counts, capacity, Statistics, payments and emails stay the same. The Payment history page for starting it and reviewing the results comes in a later release; until then, see the upgrade notes for the WP-CLI commands.
+- 6789f07: Add a Payment history page for administrators (Fair Events → Payment history). It runs the dry run and the migration of historical payment history, shows its progress, blockers and the verification report per event date, and lists every record the migration couldn't link automatically. From there an administrator can link a payment to the purchase it was for, split a shared payment between purchases, remove a link they added, or mark a record as reviewed. Each decision needs a note and is kept in an audit log with who made it and when. Nothing is charged, refunded or emailed, and existing payment records aren't changed.
+- 92e4497: Record payment history as payments happen. Every new payment attempt is now also linked to the purchase it pays for, and participants signed up through Fair Audience alone (its own purchase route, or added by an organizer) get a matching ticket purchase that follows them. Ticket counts, capacity, Statistics, payments and emails stay the same. Update Fair Events and Fair Audience together: recording starts once both are on this release.
+- f18db4b: Fair Events now has storage for each ticket purchase's payment history, and records which Fair Audience participant a purchase was carried over from. This prepares a later update that copies older payment records into Fair Events. Nothing visible changes yet: ticket counts, capacity, revenue and payments work as before, and the new storage stays empty for now. Fair Audience no longer counts a participant a second time once a carried-over purchase exists for them. Update Fair Payments Connector first, then Fair Events, then Fair Audience.
+- c59f45d: Filter Payment history records to review by their payment's status (such as paid, canceled or expired) and by test or live payment mode. Payment numbers in the list and in a record's dialog now link to the payment in Fair Payments Connector.
+- dcb5c4b: Search the Venues list by name or address. Matching ignores case and accents, so "arboles" finds "Árboles". Changing the search clears the selection, and "Select all" and export cover only the matching venues.
+
+### Patch Changes
+
+- 3fb6f61: The organizer's booking message now reaches the confirmation email even when another Fair Events plugin on the site hasn't been updated yet. Before, an older plugin's copy of the shared email layout could be used instead, and that copy left the message out.
+- b9b2d66: Background tasks now start reliably and stop cleanly. Fair Audience's five-minute expired-signup cleanup could fail to start, because it was scheduled before its interval existed. Each plugin now restores any missing recurring task on the next page load, retries one that could not be scheduled instead of reporting it as scheduled, removes all of its own tasks when it is deactivated (including each Payments digest frequency), and stops a feature's tasks while that feature is turned off. Settings, history, queued messages and digests are kept, and missed weekly notifications are still never sent late.
+- 452f3d8: Search engines now see accurate ticket availability on event pages. Tickets whose sale hasn't started show when sales open, with no availability claimed yet, and tickets that are fully booked — because the event, the ticket type or every required workshop has no place left — are marked sold out at their usual price instead of being shown as in stock or left out.
+- e057b74: The Event Prices block now lists only the tickets available in each sale period, instead of showing the rest as greyed-out "Not available" rows.
+- ca82e97: Moving an event's start date now moves its end date by the same number of days, keeping the event's length and entered times.
+- ed09e90: Moving an event's start time now moves its end by the same amount, keeping the event's length; for example, a 10:00–12:00 event moved to start at 14:00 ends at 16:00.
+- e443adf: Database upgrades now run each pending migration once, after every table is in place, whether they start from plugin activation or from the first page load after an update. If a table can't be created, the upgrade is no longer marked complete and is retried on the next page load.
+- 4e35f74: The Manage Event List tab now lists registrations alphabetically by the registrant's name, ignoring case and accents, so organizers can find a registration quickly. The order holds when filtering, after a reload, and in the printed list.
+- 7a8655f: Fill the date and times in “From URL” when another active Fair Events plugin bundles an older copy of the shared page parser. That copy reports the event's start and end as combined date-time values, which the Quick Add form now reads instead of leaving the calendar day and empty times.
+- dee0685: Prepare ticket purchases for Fair Events owning their payment history. Once the payment history cutover is activated (in a later release), each checkout and payment retry records its payment before the buyer pays, and a payment completed for an earlier attempt still confirms the purchase. Payment notifications that arrive twice or out of order confirm once, and a confirmation interrupted before its email is sent is finished later. Nothing changes until the cutover is activated.
+- 88e5777: Feature flags in Fair Events, Fair Payments Connector, and Fair Form now resolve through one shared implementation. Settings, `wp-config.php` constants, and filters keep working exactly as before.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
+
 ## 2.1.0
 
 ### Minor Changes

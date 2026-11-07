@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: audience, experimental
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -27,6 +27,17 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 Requires Fair Audience to be active.
 
 == Changelog ==
+
+## 1.6.1
+
+### Patch Changes
+
+- b9b2d66: Background tasks now start reliably and stop cleanly. Fair Audience's five-minute expired-signup cleanup could fail to start, because it was scheduled before its interval existed. Each plugin now restores any missing recurring task on the next page load, retries one that could not be scheduled instead of reporting it as scheduled, removes all of its own tasks when it is deactivated (including each Payments digest frequency), and stops a feature's tasks while that feature is turned off. Settings, history, queued messages and digests are kept, and missed weekly notifications are still never sent late.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
 
 ## 1.6.0
 

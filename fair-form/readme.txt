@@ -4,7 +4,7 @@ Tags: form, events, fair
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: Private
 License URI: https://fair-event-plugins.com
 
@@ -21,6 +21,22 @@ Fair Form provides the form block family (`fair-form*`) and the questionnaire an
 Every release ships `block-docs/index.json` in the plugin folder. It lists each block the plugin supplies (its blocks use the `fair-audience/` namespace; the index records Fair Form as their owner), with its block.json, a usage guide, and serialized examples that match this release. To check which blocks are registered on a particular site, use the authenticated WordPress endpoint `/wp-json/wp/v2/block-types` (it requires the `edit_posts` capability). `block-docs/README.md` explains the difference between shipped, registered, and insertable blocks.
 
 == Changelog ==
+
+## 1.8.1
+
+### Patch Changes
+
+- 5502f19: Recognize Momoyoga event links in **From URL**. Momoyoga pages load their details with JavaScript, so a lookup used to find only the title. It now also fills the start and end date and time and the venue name from Momoyoga's public event data, converted to the site's timezone. Every value stays editable, and the link is kept as the event's external link. When Momoyoga's data can't be read, the page title is still filled and the missing fields are left for you to complete. Fair Form's link preview reads Momoyoga dates the same way.
+
+    When a looked-up page gives no start date, **Quick Add Event** no longer leaves its 10:00–12:00 default times in place, where they could pass for imported values. The calendar day you picked stays, and any times you had already entered are kept.
+
+- 678ee59: Prefill Oona events in “From URL”: the page's own event, published as the main entity of its schema.org WebPage, now supplies the title, start and end times (converted to the site timezone) and venue name. Lookups prefer the event that matches the page URL over related events listed on the same page. When a page lists several sessions, the title and venue are still filled but the date and times are left for you to enter, rather than merging the sessions into one long event. Times published without a timezone are no longer guessed.
+- 88e5777: Feature flags in Fair Events, Fair Payments Connector, and Fair Form now resolve through one shared implementation. Settings, `wp-config.php` constants, and filters keep working exactly as before.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
 
 ## 1.8.0
 
