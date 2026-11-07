@@ -34,7 +34,7 @@ function finding( overrides = {} ) {
 	};
 }
 
-function respond( items, extra = {} ) {
+function respond( items, extra = {}, total = items.length, totalPages = 1 ) {
 	return Promise.resolve( {
 		json: () =>
 			Promise.resolve( {
@@ -48,8 +48,8 @@ function respond( items, extra = {} ) {
 		headers: {
 			get: ( name ) =>
 				( {
-					'X-WP-Total': String( items.length ),
-					'X-WP-TotalPages': '1',
+					'X-WP-Total': String( total ),
+					'X-WP-TotalPages': String( totalPages ),
 				} )[ name ],
 		},
 	} );
@@ -112,7 +112,7 @@ describe( 'FindingsPanel', () => {
 			} )
 		).toHaveTextContent( 'Decide' );
 		expect( apiFetch.mock.calls[ 0 ][ 0 ].path ).toBe(
-			'/fair-events/v1/payment-history/findings?mode=backfill&status=open&reason=&event_date_id=-1&page=1&per_page=20'
+			'/fair-events/v1/payment-history/findings?mode=backfill&status=open&reason=&event_date_id=-1&transaction_expiry=all&payment_mode=all&page=1&per_page=20'
 		);
 
 		fireEvent.change( screen.getByLabelText( 'Reason' ), {
@@ -145,5 +145,99 @@ describe( 'FindingsPanel', () => {
 		expect(
 			screen.getByRole( 'button', { name: /^Open / } )
 		).toHaveTextContent( 'View' );
+	} );
+
+	function lastQuery() {
+		return new URLSearchParams(
+			apiFetch.mock.calls.at( -1 )[ 0 ].path.split( '?' )[ 1 ]
+		);
+	}
+
+	it( 'filters by expired transaction and payment mode, from the first page', async () => {
+		apiFetch.mockImplementation( () =>
+			respond( [ finding() ], {}, 45, 3 )
+		);
+		render(
+			<FindingsPanel
+				status={ { dry_run: {}, backfill: { status: 'verified' } } }
+				refreshKey={ 0 }
+				onChanged={ jest.fn() }
+			/>
+		);
+
+		const expiry = await screen.findByLabelText( 'Expired transaction' );
+		const paymentMode = screen.getByLabelText( 'Payment mode' );
+		expect( expiry ).toHaveValue( 'all' );
+		expect( paymentMode ).toHaveValue( 'all' );
+		expect(
+			Array.from( expiry.options ).map( ( option ) => option.text )
+		).toEqual( [ 'All', 'Expired only', 'Exclude expired' ] );
+		expect(
+			Array.from( paymentMode.options ).map( ( option ) => option.text )
+		).toEqual( [ 'All', 'Test only', 'Live only' ] );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Next page' } )
+		);
+		await waitFor( () => expect( lastQuery().get( 'page' ) ).toBe( '2' ) );
+
+		fireEvent.change( expiry, { target: { value: 'expired' } } );
+		await waitFor( () => {
+			expect( lastQuery().get( 'transaction_expiry' ) ).toBe( 'expired' );
+			expect( lastQuery().get( 'page' ) ).toBe( '1' );
+		} );
+
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Next page' } )
+		);
+		await waitFor( () => expect( lastQuery().get( 'page' ) ).toBe( '2' ) );
+
+		fireEvent.change( paymentMode, { target: { value: 'live' } } );
+		await waitFor( () => {
+			const query = lastQuery();
+			expect( query.get( 'payment_mode' ) ).toBe( 'live' );
+			// Combined with the other filters, and with the run's mode kept apart.
+			expect( query.get( 'transaction_expiry' ) ).toBe( 'expired' );
+			expect( query.get( 'mode' ) ).toBe( 'backfill' );
+			expect( query.get( 'status' ) ).toBe( 'open' );
+			expect( query.get( 'page' ) ).toBe( '1' );
+		} );
+		expect( await screen.findByText( 'Page 1 of 3' ) ).toBeInTheDocument();
+	} );
+
+	it( 'says when nothing matches, and clearing the filters restores the records', async () => {
+		apiFetch.mockImplementation( ( { path } ) =>
+			respond( path.includes( 'payment_mode=test' ) ? [] : [ finding() ] )
+		);
+		render(
+			<FindingsPanel
+				status={ { dry_run: {}, backfill: { status: 'verified' } } }
+				refreshKey={ 0 }
+				onChanged={ jest.fn() }
+			/>
+		);
+
+		expect( await screen.findByText( '1 record' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'No records match these filters.' )
+		).not.toBeInTheDocument();
+
+		fireEvent.change( screen.getByLabelText( 'Payment mode' ), {
+			target: { value: 'test' },
+		} );
+		expect(
+			await screen.findByText( 'No records match these filters.' )
+		).toBeInTheDocument();
+		expect( screen.getByText( '0 records' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Clear filters' } )
+		);
+		expect( await screen.findByText( '1 record' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Payment mode' ) ).toHaveValue( 'all' );
+		expect( lastQuery().get( 'payment_mode' ) ).toBe( 'all' );
+		expect(
+			screen.queryByText( 'No records match these filters.' )
+		).not.toBeInTheDocument();
 	} );
 } );

@@ -160,3 +160,11 @@
 		margin-bottom: 8px;
 	}
 }
+
+.fair-events-payment-history__empty {
+	margin: 0 0 12px;
+}
+
+.fair-events-payment-history__empty p {
+	margin: 0 0 8px;
+}

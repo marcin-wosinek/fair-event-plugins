@@ -155,44 +155,57 @@ class PaymentHistoryController extends WP_REST_Controller {
 				'callback'            => array( $this, 'get_findings' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'mode'          => array(
+					'mode'               => array(
 						'type'              => 'string',
 						'enum'              => array( PaymentHistoryFinding::MODE_BACKFILL, PaymentHistoryFinding::MODE_DRY_RUN ),
 						'default'           => PaymentHistoryFinding::MODE_BACKFILL,
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'status'        => array(
+					'status'             => array(
 						'type'              => 'string',
 						'enum'              => array( '', 'all', PaymentHistoryFinding::STATUS_OPEN, PaymentHistoryFinding::STATUS_RESOLVED, PaymentHistoryFinding::STATUS_RECONCILED, PaymentHistoryFinding::STATUS_REVIEWED, 'decided' ),
 						'default'           => PaymentHistoryFinding::STATUS_OPEN,
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'reason'        => array(
+					'reason'             => array(
 						'type'              => 'string',
 						'enum'              => array_merge( array( '' ), PaymentHistoryFinding::REASONS ),
 						'default'           => '',
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'event_date_id' => array(
+					'event_date_id'      => array(
 						'type'              => 'integer',
 						'minimum'           => -1,
 						'default'           => -1,
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'source_type'   => array(
+					'source_type'        => array(
 						'type'              => 'string',
 						'enum'              => array( '', PaymentHistoryFinding::SOURCE_TRANSACTION, PaymentHistoryFinding::SOURCE_RELATIONSHIP, PaymentHistoryFinding::SOURCE_LEDGER_ROW, PaymentHistoryFinding::SOURCE_SIGNUP, PaymentHistoryFinding::SOURCE_LINK ),
 						'default'           => '',
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'source_id'     => array(
+					'source_id'          => array(
 						'type'              => 'integer',
 						'minimum'           => 0,
 						'default'           => 0,
 						'validate_callback' => 'rest_validate_request_arg',
 					),
-					'page'          => $this->page_arg(),
-					'per_page'      => $this->per_page_arg(),
+					// The finding's Connector transaction, independently of the run's `mode`.
+					'transaction_expiry' => array(
+						'type'              => 'string',
+						'enum'              => PaymentHistoryFinding::TRANSACTION_EXPIRY_VALUES,
+						'default'           => PaymentHistoryFinding::FILTER_ALL,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'payment_mode'       => array(
+						'type'              => 'string',
+						'enum'              => PaymentHistoryFinding::PAYMENT_MODE_VALUES,
+						'default'           => PaymentHistoryFinding::FILTER_ALL,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+					'page'               => $this->page_arg(),
+					'per_page'           => $this->per_page_arg(),
 				),
 			)
 		);
@@ -472,9 +485,11 @@ class PaymentHistoryController extends WP_REST_Controller {
 		$status   = $this->statuses( (string) $request['status'] );
 		$per_page = (int) $request['per_page'];
 		$filters  = array(
-			'status'      => $status,
-			'reason'      => (string) $request['reason'],
-			'source_type' => (string) $request['source_type'],
+			'status'             => $status,
+			'reason'             => (string) $request['reason'],
+			'source_type'        => (string) $request['source_type'],
+			'transaction_expiry' => (string) $request['transaction_expiry'],
+			'payment_mode'       => (string) $request['payment_mode'],
 		);
 		if ( (int) $request['source_id'] > 0 ) {
 			$filters['source_id'] = (int) $request['source_id'];

@@ -977,7 +977,7 @@ logged out, 403 without it):
 | `POST /dry-run`, `/backfill`           | Start a dry run, or the backfill with `backup_confirmed`. Refusals are 409 (400 for `backup_required`). |
 | `POST /backfill/resume`, `/verify`     | Continue a paused backfill; verify a finished one again.                                               |
 | `GET /comparisons`                     | The verification report, blocking dates first, then incomplete revenue.                                |
-| `GET /findings`                        | Findings by `mode`, `status` (`open`, `decided`, `resolved`, `all`), `reason`, `event_date_id`, source. |
+| `GET /findings`                        | Findings by `mode`, `status` (`open`, `decided`, `resolved`, `all`), `reason`, `event_date_id`, source, `transaction_expiry` and `payment_mode`. |
 | `GET /findings/{id}`                   | The finding with its transaction, links, remaining balance, suggested purchases and audit trail.       |
 | `POST /findings/{id}/links`            | Link the finding's transaction: `links` (`signup_id`, `role`, `allocated_amount`), `note`, `expected_link_ids`. |
 | `POST /findings/{id}/review`           | Mark the finding reviewed with a `note`.                                                               |
@@ -1026,6 +1026,17 @@ paid transaction with a decided finding isn't `unlisted_paid_transactions`.
 A reviewed finding doesn't make revenue `incomplete` (§7.1): the
 administrator decided the money belongs to no purchase.
 
+**Transaction filters** (#2219). `transaction_expiry` (`all`, `expired`,
+`exclude_expired`) and `payment_mode` (`all`, `test`, `live`) read the
+finding's transaction as it is now in Connector (`status`, `testmode`), not
+a snapshot from the run, and are independent of the run's `mode`. The
+transaction is the one reconciliation uses: the source of a transaction
+finding, otherwise `detail.transaction_id`. Both default to `all`, which
+lists every finding; an active filter matches only findings whose
+transaction exists and satisfies it, and matches nothing while Connector's
+transactions can't be read. Totals and pages follow every filter; the
+reason and event counts still follow only run and status.
+
 **Audit.** `fair_events_payment_history_audit` (`Models\PaymentHistoryAudit`)
 is append-only: `action` (`link`, `unlink`, `review`), `finding_id`,
 `reason`, `transaction_id`, `user_id`, `note`, `before_state` and
@@ -1035,7 +1046,8 @@ is append-only: `action` (`link`, `unlink`, `review`), `finding_id`,
 **Page.** Fair Events → Payment history (`src/Admin/payment-history/`,
 listed once payment link storage exists, `manage_options`) shows the
 migration's progress and blockers with its controls, the verification
-report, and the findings filtered by run, status, reason and event. A
+report, and the findings filtered by run, status, reason, event, expired
+transaction and payment mode. A
 finding's dialog names the payment, its amount and status, the purchases
 already linked and the balance left, and collects the allocation and the
 note. Starting the migration is confirmed with the backup tables named.

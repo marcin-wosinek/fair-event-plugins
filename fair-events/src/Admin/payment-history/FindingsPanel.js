@@ -1,6 +1,7 @@
 /**
- * Records the migration reported, filtered by run, status, reason and
- * event, each opening its reconciliation dialog.
+ * Records the migration reported, filtered by run, status, reason, event
+ * and their payment's expiry and test/live mode, each opening its
+ * reconciliation dialog.
  *
  * @package FairEvents
  */
@@ -91,6 +92,8 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 	const [ findingStatus, setFindingStatus ] = useState( 'open' );
 	const [ reason, setReason ] = useState( '' );
 	const [ eventDate, setEventDate ] = useState( '-1' );
+	const [ transactionExpiry, setTransactionExpiry ] = useState( 'all' );
+	const [ paymentMode, setPaymentMode ] = useState( 'all' );
 	const [ page, setPage ] = useState( 1 );
 	const [ openId, setOpenId ] = useState( null );
 	const [ notice, setNotice ] = useState( null );
@@ -123,6 +126,8 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 			status: findingStatus,
 			reason,
 			event_date_id: eventDate,
+			transaction_expiry: transactionExpiry,
+			payment_mode: paymentMode,
 			page: String( page ),
 			per_page: String( PER_PAGE ),
 		} );
@@ -165,12 +170,33 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 		return () => {
 			active = false;
 		};
-	}, [ mode, findingStatus, reason, eventDate, page, refreshKey ] );
+	}, [
+		mode,
+		findingStatus,
+		reason,
+		eventDate,
+		transactionExpiry,
+		paymentMode,
+		page,
+		refreshKey,
+	] );
 
 	const labels = reasonLabels();
 	const statuses = findingStatusLabels();
 	const filter = ( setter ) => ( value ) => {
 		setter( value );
+		setPage( 1 );
+	};
+	const narrowed =
+		reason !== '' ||
+		eventDate !== '-1' ||
+		transactionExpiry !== 'all' ||
+		paymentMode !== 'all';
+	const clearFilters = () => {
+		setReason( '' );
+		setEventDate( '-1' );
+		setTransactionExpiry( 'all' );
+		setPaymentMode( 'all' );
 		setPage( 1 );
 	};
 
@@ -279,6 +305,42 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 						options={ eventOptions }
 						onChange={ filter( setEventDate ) }
 					/>
+					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={ __( 'Expired transaction', 'fair-events' ) }
+						value={ transactionExpiry }
+						options={ [
+							{ value: 'all', label: __( 'All', 'fair-events' ) },
+							{
+								value: 'expired',
+								label: __( 'Expired only', 'fair-events' ),
+							},
+							{
+								value: 'exclude_expired',
+								label: __( 'Exclude expired', 'fair-events' ),
+							},
+						] }
+						onChange={ filter( setTransactionExpiry ) }
+					/>
+					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={ __( 'Payment mode', 'fair-events' ) }
+						value={ paymentMode }
+						options={ [
+							{ value: 'all', label: __( 'All', 'fair-events' ) },
+							{
+								value: 'test',
+								label: __( 'Test only', 'fair-events' ),
+							},
+							{
+								value: 'live',
+								label: __( 'Live only', 'fair-events' ),
+							},
+						] }
+						onChange={ filter( setPaymentMode ) }
+					/>
 				</div>
 
 				{ mode === 'dry_run' && (
@@ -309,6 +371,25 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 						) }
 					</p>
 				) }
+				{ ! data.loading &&
+					! data.error &&
+					data.total === 0 &&
+					narrowed && (
+						<div className="fair-events-payment-history__empty">
+							<p>
+								{ __(
+									'No records match these filters.',
+									'fair-events'
+								) }
+							</p>
+							<Button
+								variant="secondary"
+								onClick={ clearFilters }
+							>
+								{ __( 'Clear filters', 'fair-events' ) }
+							</Button>
+						</div>
+					) }
 
 				<ul className="fair-events-payment-history__findings">
 					{ data.items.map( ( finding ) => (

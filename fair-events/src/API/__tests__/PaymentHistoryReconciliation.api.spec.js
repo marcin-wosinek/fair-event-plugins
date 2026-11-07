@@ -305,6 +305,148 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		expect( t10Context.can_review ).toBe( true );
 	} );
 
+	test( 'findings filter by their payment’s expiry and test/live mode (#2219)', async () => {
+		const T10 = seed.transactions.T10;
+		const T13b = seed.transactions.T13b;
+		// T10 expired, T13b live; every other seeded payment stays a paid test one.
+		const { previous } = await backfill( 'set-transactions', {
+			transactions: {
+				[ T10 ]: { status: 'expired' },
+				[ T13b ]: { testmode: 0 },
+			},
+		} );
+		const before = await state();
+
+		// The payment a finding is about, as reconciliation reads it.
+		const transactionOf = ( item ) =>
+			item.source_type === 'transaction'
+				? item.source_id
+				: Number( item.detail?.transaction_id || 0 );
+		async function list( params, perPage = 100, page = 1 ) {
+			const response = await api.get( `${ ROUTE }/findings`, {
+				headers: adminHeaders,
+				params: { status: 'all', per_page: perPage, page, ...params },
+			} );
+			expect( response.ok(), JSON.stringify( params ) ).toBeTruthy();
+			return {
+				items: ( await response.json() ).items,
+				total: Number( response.headers()[ 'x-wp-total' ] ),
+				pages: Number( response.headers()[ 'x-wp-totalpages' ] ),
+			};
+		}
+		const ids = ( items ) => items.map( ( item ) => item.id ).sort();
+
+		try {
+			const all = await list( {} );
+			expect(
+				await list( { transaction_expiry: 'all', payment_mode: 'all' } )
+			).toEqual( all );
+			// Records without an identifiable payment are listed under All.
+			const withoutPayment = all.items.filter(
+				( item ) => ! transactionOf( item )
+			);
+			expect( withoutPayment.length ).toBeGreaterThan( 0 );
+			// So is a payment record whose payment no longer exists.
+			const missing = all.items.filter(
+				( item ) =>
+					item.reason === 'missing_transaction' &&
+					item.source_type === 'ledger_row'
+			);
+			expect( missing.length ).toBeGreaterThan( 0 );
+
+			const expired = await list( { transaction_expiry: 'expired' } );
+			expect( expired.total ).toBe( expired.items.length );
+			expect( expired.items.length ).toBeGreaterThan( 0 );
+			expect( new Set( expired.items.map( transactionOf ) ) ).toEqual(
+				new Set( [ T10 ] )
+			);
+
+			const notExpired = await list( {
+				transaction_expiry: 'exclude_expired',
+			} );
+			expect( notExpired.items.map( transactionOf ) ).not.toContain(
+				T10
+			);
+			expect( notExpired.items.map( transactionOf ) ).toContain( T13b );
+			expect( notExpired.items.every( transactionOf ) ).toBe( true );
+			for ( const item of [ ...withoutPayment, ...missing ] ) {
+				expect( ids( notExpired.items ) ).not.toContain( item.id );
+			}
+
+			const live = await list( { payment_mode: 'live' } );
+			expect( live.items.map( transactionOf ) ).toContain( T13b );
+			expect( live.items.map( transactionOf ) ).not.toContain( T10 );
+			const testOnly = await list( { payment_mode: 'test' } );
+			expect( testOnly.items.map( transactionOf ) ).toContain( T10 );
+			expect( testOnly.items.map( transactionOf ) ).not.toContain( T13b );
+			for ( const item of [ ...withoutPayment, ...missing ] ) {
+				expect( ids( testOnly.items ) ).not.toContain( item.id );
+				expect( ids( live.items ) ).not.toContain( item.id );
+			}
+
+			// Combined: every condition holds, with each other and the
+			// existing filters.
+			const none = await list( {
+				payment_mode: 'live',
+				transaction_expiry: 'expired',
+			} );
+			expect( none ).toEqual( { items: [], total: 0, pages: 1 } );
+			const expiredTest = await list( {
+				payment_mode: 'test',
+				transaction_expiry: 'expired',
+				reason: 'no_evidence',
+				event_date_id: dates.A,
+			} );
+			expect(
+				expiredTest.items.map( ( item ) => item.source_id )
+			).toEqual( [ T10 ] );
+			expect(
+				(
+					await list( {
+						payment_mode: 'test',
+						transaction_expiry: 'exclude_expired',
+						reason: 'no_evidence',
+						event_date_id: dates.A,
+					} )
+				).items.map( transactionOf )
+			).not.toContain( T10 );
+
+			// Totals and pages count every match, not one page.
+			const paged = [];
+			let pages = 1;
+			for ( let page = 1; page <= pages; page++ ) {
+				const result = await list(
+					{ transaction_expiry: 'exclude_expired' },
+					2,
+					page
+				);
+				expect( result.total ).toBe( notExpired.total );
+				pages = result.pages;
+				paged.push( ...result.items );
+			}
+			expect( pages ).toBe( Math.ceil( notExpired.total / 2 ) );
+			expect( ids( paged ) ).toEqual( ids( notExpired.items ) );
+
+			for ( const params of [
+				{ transaction_expiry: 'paid' },
+				{ payment_mode: 'dry_run' },
+			] ) {
+				const response = await api.get( `${ ROUTE }/findings`, {
+					headers: adminHeaders,
+					params,
+				} );
+				expect( response.status(), JSON.stringify( params ) ).toBe(
+					400
+				);
+			}
+
+			// Filtering is read-only.
+			expect( await state() ).toEqual( before );
+		} finally {
+			await backfill( 'set-transactions', { transactions: previous } );
+		}
+	} );
+
 	test( 'a decision needs a note and a valid allocation', async () => {
 		const t7 = await findingOf( 'transaction', seed.transactions.T7 );
 		const s11a = seed.signups.S11a;

@@ -70,6 +70,19 @@ class PaymentHistoryFinding {
 	const INFORMATIONAL = array( 'amount_mismatch', 'multiple_paid_attempts', 'unsupported_refund_record' );
 
 	/**
+	 * Filters on the finding's Connector transaction, by its current status
+	 * and its test/live mode (not the run's `mode`). `all` matches every
+	 * finding, including those without an identifiable transaction.
+	 */
+	const FILTER_ALL                = 'all';
+	const EXPIRY_EXPIRED            = 'expired';
+	const EXPIRY_EXCLUDE_EXPIRED    = 'exclude_expired';
+	const PAYMENT_MODE_TEST         = 'test';
+	const PAYMENT_MODE_LIVE         = 'live';
+	const TRANSACTION_EXPIRY_VALUES = array( self::FILTER_ALL, self::EXPIRY_EXPIRED, self::EXPIRY_EXCLUDE_EXPIRED );
+	const PAYMENT_MODE_VALUES       = array( self::FILTER_ALL, self::PAYMENT_MODE_TEST, self::PAYMENT_MODE_LIVE );
+
+	/**
 	 * Table name.
 	 *
 	 * @return string
@@ -177,7 +190,7 @@ class PaymentHistoryFinding {
 	 *
 	 * @param string $mode    Mode.
 	 * @param array  $filters reason, event_date_id, status (a status or a list), source_type, source_id,
-	 *                        after_id, limit, offset.
+	 *                        transaction_expiry, payment_mode, after_id, limit, offset.
 	 * @return array[] Rows with decoded detail.
 	 */
 	public static function query( $mode, array $filters = array() ) {
@@ -189,7 +202,7 @@ class PaymentHistoryFinding {
 
 		$rows = (array) $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE {$where_sql} ORDER BY id ASC LIMIT %d OFFSET %d",
+				"SELECT f.* FROM %i AS f WHERE {$where_sql} ORDER BY f.id ASC LIMIT %d OFFSET %d",
 				array_merge( array( self::table() ), $args )
 			),
 			ARRAY_A
@@ -210,7 +223,7 @@ class PaymentHistoryFinding {
 
 		list( $where_sql, $args ) = self::where( $mode, $filters );
 		return (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE {$where_sql}", array_merge( array( self::table() ), $args ) )
+			$wpdb->prepare( "SELECT COUNT(*) FROM %i AS f WHERE {$where_sql}", array_merge( array( self::table() ), $args ) )
 		);
 	}
 
@@ -231,13 +244,13 @@ class PaymentHistoryFinding {
 			'reasons'     => array(),
 		);
 		foreach ( (array) $wpdb->get_results(
-			$wpdb->prepare( "SELECT COALESCE(event_date_id, 0) AS event_date_id, COUNT(*) AS total FROM %i WHERE {$where_sql} GROUP BY COALESCE(event_date_id, 0) ORDER BY event_date_id", array_merge( array( self::table() ), $args ) ),
+			$wpdb->prepare( "SELECT COALESCE(event_date_id, 0) AS event_date_id, COUNT(*) AS total FROM %i AS f WHERE {$where_sql} GROUP BY COALESCE(event_date_id, 0) ORDER BY event_date_id", array_merge( array( self::table() ), $args ) ),
 			ARRAY_A
 		) as $row ) {
 			$facets['event_dates'][ (int) $row['event_date_id'] ] = (int) $row['total'];
 		}
 		foreach ( (array) $wpdb->get_results(
-			$wpdb->prepare( "SELECT reason, COUNT(*) AS total FROM %i WHERE {$where_sql} GROUP BY reason ORDER BY reason", array_merge( array( self::table() ), $args ) ),
+			$wpdb->prepare( "SELECT reason, COUNT(*) AS total FROM %i AS f WHERE {$where_sql} GROUP BY reason ORDER BY reason", array_merge( array( self::table() ), $args ) ),
 			ARRAY_A
 		) as $row ) {
 			$facets['reasons'][ (string) $row['reason'] ] = (int) $row['total'];
@@ -367,10 +380,64 @@ class PaymentHistoryFinding {
 			$args    = array_merge( $args, $statuses );
 		}
 
+		list( $transaction_sql, $transaction_args ) = self::transaction_condition( $filters );
+		if ( $transaction_sql ) {
+			$where[] = $transaction_sql;
+			$args    = array_merge( $args, $transaction_args );
+		}
+
 		$where[] = 'id > %d';
 		$args[]  = (int) ( $filters['after_id'] ?? 0 );
 
 		return array( implode( ' AND ', $where ), $args );
+	}
+
+	/**
+	 * The condition on a finding's Connector transaction, for the
+	 * transaction_expiry and payment_mode filters. The transaction is the
+	 * one PaymentHistoryReconciliation::transaction_id_of() reads: the
+	 * source of a transaction finding, otherwise `detail.transaction_id`.
+	 * A finding whose transaction can't be found never matches an active
+	 * filter; neither does any finding while Connector's transactions
+	 * can't be read.
+	 *
+	 * @param array $filters Filters, on the findings table aliased `f`.
+	 * @return array{0: string, 1: array} SQL (empty when no filter is active) and its arguments.
+	 */
+	private static function transaction_condition( array $filters ) {
+		$conditions = array();
+		$args       = array();
+
+		$expiry = (string) ( $filters['transaction_expiry'] ?? self::FILTER_ALL );
+		if ( self::EXPIRY_EXPIRED === $expiry ) {
+			$conditions[] = 't.status = %s';
+			$args[]       = 'expired';
+		} elseif ( self::EXPIRY_EXCLUDE_EXPIRED === $expiry ) {
+			$conditions[] = 't.status <> %s';
+			$args[]       = 'expired';
+		}
+
+		$payment_mode = (string) ( $filters['payment_mode'] ?? self::FILTER_ALL );
+		if ( self::PAYMENT_MODE_TEST === $payment_mode || self::PAYMENT_MODE_LIVE === $payment_mode ) {
+			$conditions[] = 't.testmode = %d';
+			$args[]       = self::PAYMENT_MODE_TEST === $payment_mode ? 1 : 0;
+		}
+
+		if ( ! $conditions ) {
+			return array( '', array() );
+		}
+		if ( ! \FairEvents\Services\PaymentHistoryCompatibility::payment_information_available() ) {
+			return array( '1 = 0', array() );
+		}
+
+		$transaction_id = "CASE WHEN f.source_type = %s THEN f.source_id WHEN JSON_VALID(f.detail) THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(f.detail, '$.transaction_id')) AS UNSIGNED) ELSE 0 END";
+		return array(
+			'EXISTS ( SELECT 1 FROM %i AS t WHERE t.id = ' . $transaction_id . ' AND ' . implode( ' AND ', $conditions ) . ' )',
+			array_merge(
+				array( \FairPaymentsConnector\Database\Schema::get_payments_table_name(), self::SOURCE_TRANSACTION ),
+				$args
+			),
+		);
 	}
 
 	/**
