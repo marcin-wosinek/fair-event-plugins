@@ -47,6 +47,23 @@ class PaymentShadowWork {
 	const KIND_CONFIRMATION = 'confirmation';
 
 	/**
+	 * Lifecycle work on one Connector transaction from a Fair Audience
+	 * route, after the stage 4 cutover: project what its payment changed
+	 * on the purchases into Audience (`fair_events_purchase_payment_applied`).
+	 * Queued as soon as the change committed and removed once the hook ran.
+	 */
+	const KIND_PROJECTION = 'projection';
+
+	/**
+	 * Kinds the purchase lifecycle owns, as opposed to shadow writes.
+	 *
+	 * @return string[]
+	 */
+	public static function lifecycle_kinds() {
+		return array( self::KIND_PAYMENT, self::KIND_CONFIRMATION, self::KIND_PROJECTION );
+	}
+
+	/**
 	 * Not attempted yet.
 	 */
 	const STATUS_PENDING = 'pending';

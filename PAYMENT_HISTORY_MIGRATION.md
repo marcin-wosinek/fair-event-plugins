@@ -691,14 +691,14 @@ takes its cutoff (§8.8).
 
 **Interfaces** (all in `fair-events/src/`):
 
-| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                            |
-| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                                |
-| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                                 |
-| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                         |
-| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                        |
-| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (the recorded stage 4 activation, §8.11), `payment_information_available()`. |
+| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                                                                      |
+| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                                                                          |
+| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                                                                           |
+| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                                                                   |
+| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                                                                  |
+| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (the recorded stage 4 activation, §8.11), `audience_lifecycle_available()` (§8.12), `payment_information_available()`. |
 
 `write()` errors: `payment_links_unavailable` (schema not upgraded),
 `payment_information_unavailable` (Connector inactive or its table missing),
@@ -1060,10 +1060,9 @@ note. Starting the migration is confirmed with the backup tables named.
 `Services\PurchaseLifecycle` makes the get-tickets flows write and read
 payment links as the authority. It runs only once the cutover is active,
 which nothing can switch on until the third pull request adds the
-activation; until then every flow behaves as in §8.8. The second pull request
-moves Fair Audience's routes (its purchase route, add-ons and series
-upgrades) onto the same service; until it lands they keep their previous
-behaviour, and the activation must refuse to run without it.
+activation; until then every flow behaves as in §8.8. Fair Audience's routes
+(its purchase route, add-ons and series upgrades) moved onto the same service
+in the second pull request (§8.12).
 
 **The gate.** `PaymentHistoryCompatibility::ownership_cutover()` is true
 when the state option's `cutover` entry has an `activated_at` and the links
@@ -1121,6 +1120,94 @@ and still skips the shadow work then.
 the purchases by their latest attempt (`get_all_by_transaction_id()`); a
 buyer returning from a superseded attempt that was paid sees the newer
 attempt's state. Readers move in stage 5 (#2141).
+
+### 8.12 Stage 4 lifecycle: Fair Audience routes
+
+**Implemented** (#2140, second of three pull requests; no schema change).
+Fair Audience's purchase route (`POST fair-audience/v1/event-signup`, its
+multi-occurrence variant and its retry), activity add-ons and their retry,
+and series upgrades run through `Services\PurchaseLifecycle` once the
+cutover is active. Until then every route behaves as in §8.8.
+
+**Capability.** Fair Audience reports it with
+`FairAudience\Services\EventsLifecycle::supports_purchase_lifecycle()`;
+Events reads it in `PaymentHistoryCompatibility::audience_lifecycle_available()`
+(true without Audience). Events applies the Audience sources only when it is
+true (`PurchaseLifecycle::handles_audience_sources()`), and Audience leaves
+them to Events only when that is true, so a mismatched pair keeps the
+previous behaviour on both sides. An older Audience after activation is
+**not supported** (#2140 decision): it would keep confirming its own
+relationships, which Events no longer follows. The third pull request makes
+the activation refuse to run while `audience_lifecycle_available()` is false,
+and `DEPLOYMENT.md` gets the update order and recovery for it. This narrows
+§8.6's "newer Events + older Audience: every stage" for stage 4.
+
+**Writes.**
+
+- Each route records its attempt (`PurchaseLifecycle::record_attempt()`)
+  after the transaction and its ledger rows exist and before the buyer is
+  sent to pay. A new Audience checkout gets its purchase first: the
+  relationships the metadata names are synced as shadow purchases (§8.8)
+  with no coverage floor, since the backfill is over. When recording fails
+  the buyer gets a 503 (`payment_not_recorded`), the add-on's holds are
+  released and nothing is charged: the transaction stays a draft that never
+  reached the provider.
+- A retry of a checkout for several occurrences now names every
+  relationship (`event_participant_ids`) and holds them all again, so the
+  attempt is linked to the whole purchase set instead of being reported as
+  `allocation_mismatch` (gap G7). A set with a registration that is gone or
+  already paid can't be retried (409 `retry_unavailable`); the buyer signs
+  up again.
+- **Upgrade price** (§5.6, gap G4): the series price minus the paid
+  allocations of the purchase the relationship represents
+  (`PurchaseLifecycle::upgrade_credit()`, all roles but
+  `legacy_refund_record`, in the site currency), not the relationship's
+  `get_net_paid()`. A relationship with no single purchase can't be upgraded
+  online (409 `upgrade_unavailable`). An upgrade with nothing left to pay
+  changes the purchase's ticket type at once.
+- The ledger is still written at creation, as before (§8.1).
+
+**Notifications.** `Hooks\PaymentHooks` hands the paid notification to the
+lifecycle, which resolves the purchases from the attempt's links (writing
+them first when missing, queued as `payment` work when that fails) and makes
+each change once, under the transaction's link lock:
+
+| Source                         | Change in Events                                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fair-audience-signup`         | Each linked purchase confirmed (`charge`), with the capacity recheck of §8.11. A late payment confirms an expired purchase.                                        |
+| `fair-audience-activity-addon` | The activities confirmed on the purchase's ticket: the one the add-on names, else the buyer's ticket of that purchase, else its first. A lapsed hold is rechecked. |
+| `fair-audience-series-upgrade` | The purchase and its active tickets get the whole-series ticket type. The original `charge` link stays.                                                            |
+
+More than one paid `charge` or `upgrade` attempt is reported as
+`multiple_paid_attempts`, as in §8.11. Audience's own paid handlers for these
+sources return early. Failed notifications change nothing in Events: the
+purchase follows its relationship's hold, as before. A delayed failure of an
+add-on attempt leaves the holds alone when a newer attempt for some of the
+same activities on the same purchase is still open or paid
+(`PurchaseLifecycle::addon_attempt_superseded()`).
+
+**Projection.** After the change commits, Events fires
+`fair_events_purchase_payment_applied( $transaction, { source, role, signups } )`
+and Audience follows it (`PaymentHooks::project_payment_applied()`): the
+relationship becomes `signed_up` (recreated when the expiry cron removed it
+before a late payment), a participant-scope add-on is confirmed at
+participant scope, an upgrade sets the relationship's ticket type, the ledger
+row is written, and the same emails go out. A `projection` work row
+(`fair_events_payment_shadow_work`, keyed by transaction) is queued before
+the hook and removed after it, so the retry cron finishes a request that
+stopped in between, at least once.
+
+**Shadow purchases after the cutover.** A sync never reverses the lifecycle:
+a confirmed purchase stays confirmed while its relationship still awaits
+payment or is gone, and a purchase with a paid `upgrade` link keeps its
+ticket type. The sweep no longer lists those as out of step. Organizer
+changes (relabelling, moves) are followed as before; removing a participant
+who holds a ticket is refused in Audience, so a deleted relationship never
+cancels a paid purchase.
+
+**Readers.** Unchanged (#2141). Statistics, the participant detail and the
+resume flow still read the ledger and relationships, which the projection
+keeps in step.
 
 ## 9. Worked examples
 
@@ -1222,7 +1309,14 @@ Run locally only the focused specs named here, as
   `fair-events/src/API/__tests__/PaymentLifecycleCutover.api.spec.js`
   (links before payment, a late paid superseded attempt with example 9's
   finding, replayed, concurrent and delayed notifications, cancelling from
-  links, and an interrupted confirmation finished by the cron).
+  links, and an interrupted confirmation finished by the cron). Fair
+  Audience routes (second pull request): `PurchaseLifecycleRulesTest.php`
+  (the upgrade credit and the shadow sync after the cutover) and
+  `fair-audience/src/API/__tests__/AudienceLifecycleCutover.api.spec.js`
+  (a paid signup linked before payment and confirmed once, add-ons (10)
+  confirmed once, an interrupted projection finished by the cron, a delayed
+  add-on failure after a retry, and an upgrade (12) priced from the
+  purchase's paid allocation).
 - **Stage 5 (#2141):** `EventStatistics.api.spec.js` for each supported
   combination in §8.6 (example 15), the three revenue states, the series rule
   (§7.2), the standalone Statistics page and chart download. A focused E2E for

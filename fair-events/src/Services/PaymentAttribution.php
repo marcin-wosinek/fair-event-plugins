@@ -331,7 +331,7 @@ class PaymentAttribution {
 	 * @param int $relationship_id Relationship ID.
 	 * @return int|null Signup ID, or null with zero or several candidates.
 	 */
-	private function relationship_purchase( $relationship_id ) {
+	public function relationship_purchase( $relationship_id ) {
 		if ( $relationship_id <= 0 ) {
 			return null;
 		}

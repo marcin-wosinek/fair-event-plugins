@@ -263,6 +263,7 @@ test.describe.serial( 'Payment lifecycle after the cutover', () => {
 		expect( failed.announcements ).toEqual( {
 			confirmed: 0,
 			failed: 1,
+			applied: 0,
 		} );
 
 		const second = await retry(
@@ -296,7 +297,7 @@ test.describe.serial( 'Payment lifecycle after the cutover', () => {
 		// A replayed notification confirms nothing twice.
 		expect(
 			( await settle( late.transactionId, 'paid' ) ).announcements
-		).toEqual( { confirmed: 0, failed: 0 } );
+		).toEqual( { confirmed: 0, failed: 0, applied: 0 } );
 
 		// The retry is paid too: both are money received, and reported.
 		expect(
