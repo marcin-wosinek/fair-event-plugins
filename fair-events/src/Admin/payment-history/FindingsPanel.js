@@ -7,7 +7,11 @@
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -26,7 +30,12 @@ import {
 	reasonLabels,
 	transactionStatusLabels,
 } from './labels.js';
-import { formatAmount, formatEventDate, formatUtcDateTime } from './format.js';
+import {
+	formatAmount,
+	formatEventDate,
+	formatUtcDateTime,
+	transactionUrl,
+} from './format.js';
 
 const PER_PAGE = 20;
 
@@ -100,6 +109,75 @@ export function describeSource( finding ) {
 		default:
 			return `${ finding.source_type } #${ finding.source_id }`;
 	}
+}
+
+/**
+ * What a finding is about, with its payment number linked to the payment's
+ * page in Fair Payments Connector. Plain text when the payment can't be
+ * opened: Connector's payments can't be read, the finding names no payment,
+ * or the payment no longer exists.
+ *
+ * @param {Object}  props
+ * @param {Object}  props.finding  Finding.
+ * @param {boolean} props.linkable Whether Connector's payments can be read.
+ * @return {JSX.Element|string} Source.
+ */
+export function SourceDescription( { finding, linkable } ) {
+	const detail = finding.detail || {};
+	const transactionId =
+		finding.source_type === 'transaction'
+			? finding.source_id
+			: Number( detail.transaction_id || 0 );
+	if (
+		! linkable ||
+		! transactionId ||
+		finding.reason === 'missing_transaction'
+	) {
+		return describeSource( finding );
+	}
+
+	let text;
+	switch ( finding.source_type ) {
+		case 'transaction':
+			text =
+				detail.amount !== undefined
+					? sprintf(
+							/* translators: 1: payment number, 2: amount. Keep <a></a>: it links to the payment. */
+							__( '<a>Payment #%1$d</a>, %2$s', 'fair-events' ),
+							transactionId,
+							formatAmount( detail.amount, detail.currency )
+						)
+					: sprintf(
+							/* translators: %d: payment number. Keep <a></a>: it links to the payment. */
+							__( '<a>Payment #%d</a>', 'fair-events' ),
+							transactionId
+						);
+			break;
+		case 'ledger_row':
+			text = sprintf(
+				/* translators: 1: payment record number, 2: payment number. Keep <a></a>: it links to the payment. */
+				__(
+					'Payment record #%1$d (<a>payment #%2$d</a>)',
+					'fair-events'
+				),
+				finding.source_id,
+				transactionId
+			);
+			break;
+		case 'link':
+			text = sprintf(
+				/* translators: %d: payment number. Keep <a></a>: it links to the payment. */
+				__( 'Link to <a>payment #%d</a>', 'fair-events' ),
+				transactionId
+			);
+			break;
+		default:
+			return describeSource( finding );
+	}
+	return createInterpolateElement( text, {
+		// eslint-disable-next-line jsx-a11y/anchor-has-content -- content comes from the translated string.
+		a: <a href={ transactionUrl( transactionId ) } />,
+	} );
 }
 
 /**
@@ -427,7 +505,15 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 										) }
 									</span>
 								) }
-								<div>{ describeSource( finding ) }</div>
+								<div>
+									<SourceDescription
+										finding={ finding }
+										linkable={
+											status.payment_information ===
+											'available'
+										}
+									/>
+								</div>
 								<div className="fair-events-payment-history__hint">
 									{ sprintf(
 										/* translators: 1: event and date, 2: status, 3: date and time it was last seen */

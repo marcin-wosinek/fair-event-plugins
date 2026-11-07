@@ -212,9 +212,14 @@ describe( 'FindingModal', () => {
 				name: 'Review record — Shared payment doesn’t add up',
 			} )
 		).toBeInTheDocument();
-		expect(
-			screen.getByText( '#900 — 24.00 EUR, Paid' )
-		).toBeInTheDocument();
+		const payment = screen.getByRole( 'link', { name: '#900' } );
+		expect( payment ).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=900'
+		);
+		expect( payment.parentElement ).toHaveTextContent(
+			'#900 — 24.00 EUR, Paid'
+		);
 		expect(
 			screen.getByText(
 				'Linked: 0.00 EUR of 24.00 EUR. Left: 24.00 EUR.'
