@@ -35,6 +35,7 @@ import {
 	waitFor,
 	within,
 	act,
+	cleanup,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventSignups, { expandTicketRows } from '../EventSignups.js';
@@ -2055,9 +2056,10 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		expect(
 			printedRows( doc ).map( ( row ) => row.slice( 2, 6 ) )
 		).toEqual( [
+			// Ada Lovelace sorts before Bob, Jr. (#2217).
+			[ 'Ticket not created yet', 'General', '?', '?' ],
 			[ 'REF00201', 'General', '✓', '' ],
 			[ 'REF00202', 'General', '', '✓' ],
-			[ 'Ticket not created yet', 'General', '?', '?' ],
 		] );
 		expect(
 			Array.from( doc.querySelectorAll( '.legend-entry' ) ).map(
@@ -2283,27 +2285,28 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		} );
 		await screen.findByText( 'Granted Now' );
 
-		// The screen keeps the registration's own Yes/No.
+		// The screen keeps the registration's own Yes/No, in alphabetical
+		// order (#2217).
 		expect(
 			bodyRows().map(
 				( tr ) => tr.querySelectorAll( 'td' )[ 5 ].textContent
 			)
-		).toEqual( [ 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes' ] );
+		).toEqual( [ 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes' ] );
 
 		const { doc } = print();
 
 		expect(
 			printedRows( doc ).map( ( cells ) => [ cells[ 1 ], cells[ 5 ] ] )
 		).toEqual( [
-			[ 'Granted Now', '✓' ],
 			[ 'Declined Now', '✗' ],
-			[ 'Unspecified Now', '' ],
-			[ 'Unlinked Opt-in', '✓' ],
-			[ 'Unlinked No', '' ],
+			[ 'Granted Now', '✓' ],
 			[ 'Older Response', '✓' ],
+			[ 'Unlinked No', '' ],
+			[ 'Unlinked Opt-in', '✓' ],
+			[ 'Unspecified Now', '' ],
 		] );
 		expect( doc.querySelector( 'tbody td.col-mailing' ).textContent ).toBe(
-			'✓'
+			'✗'
 		);
 	} );
 
@@ -2593,17 +2596,18 @@ describe( 'EventSignups — test-payment tickets (#1866)', () => {
 		const ticketCells = printed.map(
 			( row ) => row.querySelectorAll( 'td' )[ 2 ]
 		);
+		// Alphabetical: Ada, Carol, then Tess Tester's test purchase (#2217).
 		expect( ticketCells.map( ( cell ) => cell.textContent ) ).toEqual( [
-			'REF00201 Test payment',
-			'REF00202 Test payment',
 			'REF00101',
 			'REF00301',
+			'REF00201 Test payment',
+			'REF00202 Test payment',
 		] );
 		expect(
 			ticketCells.map(
 				( cell ) => cell.querySelectorAll( '.test-warning' ).length
 			)
-		).toEqual( [ 1, 1, 0, 0 ] );
+		).toEqual( [ 0, 0, 1, 1 ] );
 		// Readable in black and white: bold, bordered, no background color.
 		const style = doc.querySelector( 'style' ).textContent;
 		const rule = style.slice(
@@ -2917,5 +2921,144 @@ describe( 'EventSignups — Summary (#1839)', () => {
 		expect( writeText.mock.calls[ 0 ][ 0 ] ).toContain(
 			'- Current type: 2'
 		);
+	} );
+} );
+
+describe( 'EventSignups — alphabetical order (#2217)', () => {
+	/**
+	 * A confirmed registration with one ticket per given ticket ID.
+	 *
+	 * @param {number}        id        Registration ID.
+	 * @param {string|null}   name      Stored name, kept as is.
+	 * @param {Array<number>} ticketIds Ticket IDs, in purchase order.
+	 * @param {Object}        overrides Fields to override.
+	 * @return {Object} Registration
+	 */
+	const registration = ( id, name, ticketIds, overrides = {} ) => ( {
+		...signups[ 0 ],
+		id,
+		name,
+		email: `r${ id }@example.com`,
+		tickets: ticketIds.map( ( ticketId, index ) =>
+			ticket( ticketId, index + 1 )
+		),
+		...overrides,
+	} );
+
+	// Shuffled on purpose: the API order must not leak into the List.
+	const shuffled = [
+		registration( 6, 'zoë Álvarez', [ 601 ] ),
+		registration( 4, 'Ana María López García', [ 401, 402 ], {
+			mailing_opt_in: false,
+		} ),
+		registration( 3, 'Émile Zola', [ 301 ] ),
+		registration( 5, 'ana maría lópez garcía', [ 501 ] ),
+		registration( 2, '', [ 201 ] ),
+		registration( 7, 'Bob', [ 701 ], { mailing_opt_in: false } ),
+		registration( 1, 'Zoe Alvarez', [ 101 ] ),
+	];
+
+	// Empty name first; case/accent variants tie and fall back to the
+	// registration ID; tickets of one purchase stay together, in order.
+	const expectedReferences = [
+		'REF00201',
+		'REF00401',
+		'REF00402',
+		'REF00501',
+		'REF00701',
+		'REF00301',
+		'REF00101',
+		'REF00601',
+	];
+
+	const references = () =>
+		bodyRows().map( ( row ) =>
+			within( row ).getAllByRole( 'cell' )[ 2 ].textContent.trim()
+		);
+
+	it( 'lists registrations by their complete name, whatever the API order', async () => {
+		await renderSignups( { rows: shuffled } );
+
+		expect( references() ).toEqual( expectedReferences );
+	} );
+
+	it( 'shows and keeps the stored names exactly, without changing the API data', async () => {
+		const snapshot = JSON.parse( JSON.stringify( shuffled ) );
+		await renderSignups( { rows: shuffled } );
+
+		expect( shuffled ).toEqual( snapshot );
+		expect( screen.getByText( 'zoë Álvarez' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'ana maría lópez garcía' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the order when the mailing filter narrows the List', async () => {
+		await renderSignups( { rows: shuffled } );
+
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		expect( references() ).toEqual(
+			expectedReferences.filter(
+				( reference ) =>
+					! [ 'REF00401', 'REF00402', 'REF00701' ].includes(
+						reference
+					)
+			)
+		);
+	} );
+
+	it( 'keeps the order after a refresh returns the registrations reshuffled', async () => {
+		await renderSignups( { rows: shuffled } );
+		const first = references();
+		cleanup();
+
+		await renderSignups( { rows: [ ...shuffled ].reverse() } );
+
+		expect( references() ).toEqual( first );
+		expect( first ).toEqual( expectedReferences );
+	} );
+
+	it( 'treats a missing name as empty without dropping the registration', async () => {
+		await renderSignups( {
+			rows: [
+				registration( 9, 'Bea', [ 901 ] ),
+				registration( 8, null, [ 801 ] ),
+			],
+		} );
+
+		expect( references() ).toEqual( [ 'REF00801', 'REF00901' ] );
+	} );
+
+	it( 'prints the complete List in the same order', async () => {
+		mockApi( { rows: shuffled } );
+		render( <EventSignups eventDateId={ 42 } eventTitle="Ball" /> );
+		await screen.findByText( 'Bob' );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+
+		const written = [];
+		jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Print list' } ) );
+		const doc = new window.DOMParser().parseFromString(
+			written.join( '' ),
+			'text/html'
+		);
+
+		expect(
+			Array.from( doc.querySelectorAll( 'tbody tr' ) ).map( ( row ) =>
+				row.querySelectorAll( 'td' )[ 2 ].textContent.trim()
+			)
+		).toEqual( expectedReferences );
+		window.open.mockRestore();
 	} );
 } );
