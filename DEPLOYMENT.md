@@ -422,6 +422,77 @@ ignores the audit table, keeps reconciled links (they're inert before stage
 again, since it doesn't know about decisions. Restore the backed-up tables
 to undo the reconciliation entirely.
 
+## Upgrade notes: payment history cutover (#2140)
+
+Stage 4 of the payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.11–8.13](./PAYMENT_HISTORY_MIGRATION.md#813-stage-4-activation)).
+No schema change and nothing runs on upgrade. The release adds the Events
+purchase lifecycle (get-tickets and Fair Audience's routes) and the switch
+that turns it on. Until an administrator switches, payments, emails, the
+Audience ledger and Statistics work exactly as after stage 3.
+
+**Update order: Fair Payments Connector first, then Fair Events, then Fair
+Audience**, all to this release, before switching. Fair Audience must be on
+this release or later: it reports
+`FairAudience\Services\EventsLifecycle::supports_purchase_lifecycle()`, and
+the switch refuses without it (`audience_lifecycle_unavailable`). An older
+Fair Audience is **not supported after the switch**: it would keep
+confirming its own registrations, which Fair Events no longer follows.
+
+**Readiness to switch.** On **Fair Events → Payment history**, the Payment
+records card lists what blocks the switch
+(`PaymentHistoryCutover::blockers()`): the stage 3 backfill must have
+finished with a clean verification (`migration_verified()`), shadow writes
+must be on, Connector readable, Fair Audience current, and no shadow or
+lifecycle work queued. The switch rechecks all of it, and the verification's
+global checks, under a lock; if the recheck fails, verify again first.
+
+**Back up before switching** (`wp db export --tables=…`), and confirm it in
+the dialog:
+
+- `{prefix}fair_events_signups`, `{prefix}fair_events_tickets`,
+  `{prefix}fair_events_ticket_activities`,
+  `{prefix}fair_events_signup_payment_links`,
+  `{prefix}fair_events_payment_shadow_work`,
+  `{prefix}fair_events_payment_history_findings`,
+  `{prefix}fair_events_payment_history_audit`;
+- `{prefix}fair_audience_event_participants`,
+  `{prefix}fair_audience_event_participant_options`,
+  `{prefix}fair_audience_event_participant_transactions` (the lifecycle
+  still writes them, after Fair Events);
+- `{prefix}fair_payment_transactions`;
+- the options `fair_events_payment_history_migration` and
+  `fair_events_payment_history_cutover`.
+
+Without the page (WP-CLI):
+
+```bash
+wp eval 'print_r( FairEvents\Services\PaymentHistoryCutover::status() );'
+wp eval 'print_r( FairEvents\Services\PaymentHistoryCutover::activate( array( "backup_confirmed" => true, "user_id" => 1 ) ) );'
+```
+
+**What changes.** From the switch on, each new payment attempt is linked to
+its purchases before the buyer pays (a 503 `payment_not_recorded` and no
+charge when it can't be), paid notifications resolve purchases from those
+links, so a late payment for an earlier attempt is honoured and a repeated
+notification counts once, and Fair Audience follows what Fair Events
+committed. The switch is recorded in the audit table and in the option
+`fair_events_payment_history_cutover`. Statistics readers don't change
+until stage 5 (#2141).
+
+**Recovery: forward repair only.** The switch can't be undone from the page,
+and a later failed verification doesn't undo it. Don't roll Fair Events or
+Fair Audience back below this release afterwards: Fair Events would stop
+writing links first (its gate needs this release's code), and an older Fair
+Audience would confirm registrations Fair Events no longer follows. The
+Payment records card lists what needs repair (`audience_lifecycle_unavailable`,
+`payment_information_unavailable`, `verification_failed`) and the work
+waiting to be retried every fifteen minutes. Fix the code or plugin versions,
+let the queue drain, re-run the backfill for the affected range and
+reconcile what's left. Restoring the backup above loses every payment
+recorded since the switch; do it only if nothing was paid in between.
+Deactivating a plugin isn't a rollback: the switch stays recorded.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

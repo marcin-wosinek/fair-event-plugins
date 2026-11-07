@@ -11,7 +11,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Append-only record of administrators' reconciliation actions
- * (PAYMENT_HISTORY_MIGRATION.md §6.3): who did what, when (UTC), which
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3) and of the stage 4 activation
+ * (§8.13): who did what, when (UTC), which
  * finding and reason it resolved, the note they entered, and the finding and
  * link state before and after. Rows are only inserted and read; nothing
  * here updates or deletes one.
@@ -24,6 +25,12 @@ class PaymentHistoryAudit {
 	const ACTION_LINK   = 'link';
 	const ACTION_UNLINK = 'unlink';
 	const ACTION_REVIEW = 'review';
+
+	/**
+	 * The stage 4 activation (PaymentHistoryCutover): no finding or
+	 * transaction; the state holds the activation recorded.
+	 */
+	const ACTION_ACTIVATE = 'activate';
 
 	/**
 	 * Table name.

@@ -1,7 +1,8 @@
 /**
  * Payment history page: the migration of historical registrations and
- * payments into Fair Events, its verification, and the reconciliation of
- * what it couldn't link (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10).
+ * payments into Fair Events, its verification, the reconciliation of what
+ * it couldn't link, and the switch of payment records to Fair Events
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13).
  *
  * @package FairEvents
  */
@@ -16,6 +17,7 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import MigrationPanel from './MigrationPanel.js';
+import CutoverPanel from './CutoverPanel.js';
 import VerificationPanel from './VerificationPanel.js';
 import FindingsPanel from './FindingsPanel.js';
 
@@ -112,6 +114,13 @@ export default function PaymentHistoryPage() {
 			{ status && (
 				<VStack spacing={ 6 }>
 					<MigrationPanel status={ status } onAction={ runAction } />
+					{ status.cutover &&
+						( status.backfill || status.cutover.activation ) && (
+							<CutoverPanel
+								cutover={ status.cutover }
+								onAction={ runAction }
+							/>
+						) }
 					{ status.backfill && (
 						<VerificationPanel
 							summary={ status.comparisons }

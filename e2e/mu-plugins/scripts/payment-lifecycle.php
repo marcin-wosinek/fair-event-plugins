@@ -92,28 +92,30 @@ $count_hooks   = static function () use ( &$announcements ) {
 
 switch ( $fixture_action ) {
 	case 'activate':
-		$state = PaymentHistoryCompatibility::get_state();
+		// Records an activation directly, skipping PaymentHistoryCutover's
+		// readiness gates, which these specs don't set up.
 		if ( false === get_option( $saved_option, false ) ) {
-			update_option( $saved_option, array( 'cutover' => $state['cutover'] ?? null ), false );
+			update_option( $saved_option, array( 'cutover' => get_option( PaymentHistoryCompatibility::CUTOVER_OPTION, null ) ), false );
 		}
-		$state['cutover'] = array(
-			'activated_at' => gmdate( 'Y-m-d H:i:s' ),
-			'user_id'      => 0,
-			'reference'    => 'e2e-payment-lifecycle',
+		update_option(
+			PaymentHistoryCompatibility::CUTOVER_OPTION,
+			array(
+				'activated_at' => gmdate( 'Y-m-d H:i:s' ),
+				'user_id'      => 0,
+				'reference'    => 'e2e-payment-lifecycle',
+			),
+			true
 		);
-		update_option( PaymentHistoryCompatibility::STATE_OPTION, $state, false );
 		$result = array( 'cutover' => PaymentHistoryCompatibility::ownership_cutover() );
 		break;
 
 	case 'deactivate':
 		$saved = get_option( $saved_option, false );
-		$state = PaymentHistoryCompatibility::get_state();
-		if ( is_array( $saved ) && null !== $saved['cutover'] ) {
-			$state['cutover'] = $saved['cutover'];
+		if ( is_array( $saved ) && is_array( $saved['cutover'] ?? null ) ) {
+			update_option( PaymentHistoryCompatibility::CUTOVER_OPTION, $saved['cutover'], true );
 		} else {
-			unset( $state['cutover'] );
+			delete_option( PaymentHistoryCompatibility::CUTOVER_OPTION );
 		}
-		update_option( PaymentHistoryCompatibility::STATE_OPTION, $state, false );
 		delete_option( $saved_option );
 		$result = array( 'cutover' => PaymentHistoryCompatibility::ownership_cutover() );
 		break;

@@ -478,13 +478,15 @@ class PaymentLinksTest extends TestCase {
 		self::activate_connector();
 		$option = PaymentHistoryCompatibility::STATE_OPTION;
 
-		$GLOBALS['_fair_test_options'][ $option ] = array(
-			'status'  => 'verified',
-			'cutover' => array(),
-		);
+		$GLOBALS['_fair_test_options'][ $option ]                                     = array( 'status' => 'verified' );
+		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::CUTOVER_OPTION ] = array();
 		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
 
-		$GLOBALS['_fair_test_options'][ $option ]['cutover'] = array(
+		// An entry in the migration's state, which other writers rewrite, isn't an activation.
+		$GLOBALS['_fair_test_options'][ $option ]['cutover'] = array( 'activated_at' => '2026-11-07 10:00:00' );
+		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
+
+		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::CUTOVER_OPTION ] = array(
 			'activated_at' => '2026-11-07 10:00:00',
 			'user_id'      => 1,
 		);

@@ -133,6 +133,7 @@ class PaymentHistoryBackfill {
 			'comparisons'       => PaymentHistoryCompatibility::storage_available() ? PaymentHistoryVerification::summary() : null,
 			'verified'          => PaymentHistoryCompatibility::migration_verified(),
 			'ownership_cutover' => PaymentHistoryCompatibility::ownership_cutover(),
+			'cutover'           => PaymentHistoryCutover::status(),
 		);
 	}
 
@@ -274,7 +275,7 @@ class PaymentHistoryBackfill {
 	public static function run_batch( ?int $batch_size = null ) {
 		global $wpdb;
 
-		$lock = substr( $wpdb->prefix . 'fair_events_payment_history_backfill', 0, 64 );
+		$lock = self::lock_name();
 		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
 			return null;
 		}
@@ -290,6 +291,17 @@ class PaymentHistoryBackfill {
 		} finally {
 			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
 		}
+	}
+
+	/**
+	 * Named lock a batch holds. The stage 4 activation takes it too, so no
+	 * batch or verification pass changes the migration under it.
+	 *
+	 * @return string
+	 */
+	public static function lock_name() {
+		global $wpdb;
+		return substr( $wpdb->prefix . 'fair_events_payment_history_backfill', 0, 64 );
 	}
 
 	/**

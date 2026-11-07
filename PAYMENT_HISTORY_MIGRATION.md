@@ -646,14 +646,14 @@ does today), never by comparing version strings. Stage changesets declare a
 version bump for every plugin whose code changed
 ([RELEASES.md](./RELEASES.md)).
 
-| Combination                   | Must work from                                                                                                  |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Events alone                  | Stage 5: Statistics with tickets and capacity, revenue `unavailable`                                            |
-| Events + Connector            | Stage 5: Statistics with revenue, no Audience                                                                   |
-| Events + Audience             | Every stage; revenue `unavailable`                                                                              |
-| Events + Audience + Connector | Every stage                                                                                                     |
-| Newer Events + older Audience | Every stage; the older Audience keeps writing the ledger, and Events' shadow or live writes cover payment links |
-| Older Events + newer Audience | Every stage; Audience must skip writes that need the newer Events methods                                       |
+| Combination                   | Must work from                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Events alone                  | Stage 5: Statistics with tickets and capacity, revenue `unavailable`                                   |
+| Events + Connector            | Stage 5: Statistics with revenue, no Audience                                                          |
+| Events + Audience             | Every stage; revenue `unavailable`                                                                     |
+| Events + Audience + Connector | Every stage                                                                                            |
+| Newer Events + older Audience | Up to stage 3, the older Audience writing the ledger; the stage 4 activation refuses it (§8.12, §8.13) |
+| Older Events + newer Audience | Every stage; Audience must skip writes that need the newer Events methods                              |
 
 Update order for each stage release: **Connector first**, then **Events**,
 then **Audience**. Events adds storage and readers before Audience changes
@@ -691,14 +691,14 @@ takes its cutoff (§8.8).
 
 **Interfaces** (all in `fair-events/src/`):
 
-| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                                                                      |
-| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                                                                          |
-| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                                                                           |
-| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                                                                   |
-| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                                                                  |
-| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (the recorded stage 4 activation, §8.11), `audience_lifecycle_available()` (§8.12), `payment_information_available()`. |
+| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                                                                             |
+| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                                                                                 |
+| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                                                                                  |
+| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                                                                          |
+| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                                                                         |
+| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (the recorded stage 4 activation, §8.11, §8.13), `audience_lifecycle_available()` (§8.12), `payment_information_available()`. |
 
 `write()` errors: `payment_links_unavailable` (schema not upgraded),
 `payment_information_unavailable` (Connector inactive or its table missing),
@@ -1059,16 +1059,18 @@ note. Starting the migration is confirmed with the backup tables named.
 **Implemented** (#2140, first of three pull requests; no schema change).
 `Services\PurchaseLifecycle` makes the get-tickets flows write and read
 payment links as the authority. It runs only once the cutover is active,
-which nothing can switch on until the third pull request adds the
-activation; until then every flow behaves as in §8.8. Fair Audience's routes
+which an administrator switches on (§8.13); until then every flow behaves as
+in §8.8. Fair Audience's routes
 (its purchase route, add-ons and series upgrades) moved onto the same service
 in the second pull request (§8.12).
 
 **The gate.** `PaymentHistoryCompatibility::ownership_cutover()` is true
-when the state option's `cutover` entry has an `activated_at` and the links
-storage and work queue exist (DB `3.50.0`). The entry is separate from the
-backfill's `status`: a later `verification_failed` doesn't clear it, so
-authority never moves back to the ledger (§8.5).
+when the option `fair_events_payment_history_cutover` holds an activation
+with an `activated_at` and the links storage and work queue exist (DB
+`3.50.0`). The option is separate from the backfill's state and `status`,
+which the backfill and shadow writes rewrite as they run: a later
+`verification_failed` doesn't clear it, so authority never moves back to the
+ledger (§8.5). Only the activation (§8.13) writes it.
 
 **Writes.**
 
@@ -1137,10 +1139,10 @@ true (`PurchaseLifecycle::handles_audience_sources()`), and Audience leaves
 them to Events only when that is true, so a mismatched pair keeps the
 previous behaviour on both sides. An older Audience after activation is
 **not supported** (#2140 decision): it would keep confirming its own
-relationships, which Events no longer follows. The third pull request makes
-the activation refuse to run while `audience_lifecycle_available()` is false,
-and `DEPLOYMENT.md` gets the update order and recovery for it. This narrows
-§8.6's "newer Events + older Audience: every stage" for stage 4.
+relationships, which Events no longer follows. The activation refuses to run
+while `audience_lifecycle_available()` is false (§8.13), and `DEPLOYMENT.md`
+gives the update order and recovery for it. This narrows §8.6's "newer
+Events + older Audience: every stage" for stage 4.
 
 **Writes.**
 
@@ -1208,6 +1210,74 @@ cancels a paid purchase.
 **Readers.** Unchanged (#2141). Statistics, the participant detail and the
 resume flow still read the ledger and relationships, which the projection
 keeps in step.
+
+### 8.13 Stage 4 activation
+
+**Implemented** (#2140, third of three pull requests; no schema change).
+`Services\PaymentHistoryCutover` switches payment authority to Events
+(§8.1 stage 4). Nothing switches it on upgrade or when readiness first
+passes: an administrator does, on the Payment history page.
+
+**Blockers.** `PaymentHistoryCutover::blockers()` lists what stops the
+activation, which refuses while any is listed (409 `cutover_blocked` with the
+codes):
+
+| Code                              | Condition                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `storage_unavailable`             | Fair Events is below DB `3.52.0` (the audit records the activation)                            |
+| `migration_unverified`            | `migration_verified()` is false: the backfill hasn't finished with a clean verification (§8.9) |
+| `shadow_writes_incomplete`        | Shadow writes don't cover the live writers (§8.8)                                              |
+| `payment_information_unavailable` | Connector's transactions can't be read                                                         |
+| `audience_incompatible`           | An active Audience doesn't skip provenance relationships (§8.7)                                |
+| `audience_lifecycle_unavailable`  | An active Audience without the purchase lifecycle (§8.12)                                      |
+| `shadow_work_outstanding`         | Shadow or lifecycle work is still queued in `fair_events_payment_shadow_work`                  |
+
+**Activation** (`activate( array( 'backup_confirmed' => true ) )`, or `POST
+fair-events/v1/payment-history/cutover` behind `manage_options`):
+
+- Without `backup_confirmed` it is refused (400 `backup_required`); a second
+  activation is `cutover_active` (409).
+- It takes its own named lock and the backfill's batch lock
+  (`PaymentHistoryBackfill::lock_name()`), so no other activation, backfill
+  batch or verification pass runs under it (`cutover_busy` after five
+  seconds). Under the locks it reads the stored activation from the database
+  again, rechecks every blocker and runs the verification's global checks
+  (`PaymentHistoryVerification::global_checks()`) again. Any blocker there
+  is `verification_stale` (409, `verification_blockers`): the administrator
+  verifies again first.
+- It then writes, in one database transaction, an audit record
+  (`action = activate`, `reason = ownership_cutover`, the activation in
+  `after_state`) and the option `fair_events_payment_history_cutover`:
+  `activated_at`, `user_id`, `backup_confirmed_at`, `reference` (the
+  verification it relied on, `backfill-verification:<checked_at>`),
+  `verification` (that check's time, the recheck's, the cutoffs, the
+  comparison summary and the finding counts) and `audit_id`. Afterwards
+  `fair_events_payment_history_cutover_activated` fires.
+- Requests that read the gate before it changed finish on the stage 3 path.
+  Their attempts are still linked: shadow writes keep running after the
+  cutover, and a paid notification arriving after it writes missing links
+  first (§8.11).
+
+**After the activation.** Nothing undoes it: not a later
+`verification_failed`, a backfill re-run, or deactivating and reactivating a
+plugin. `PaymentHistoryCutover::status()` (`cutover` in the page's `GET /`)
+reports the activation with the administrator's name, the queued work by
+kind and status, and what needs forward repair:
+`audience_lifecycle_unavailable` (an older Audience was installed: update
+it), `payment_information_unavailable`, `verification_failed`, and
+`storage_unavailable` (Fair Events rolled back below the storage the gate
+needs, which turns the gate off until it is upgraded again). Recovery is
+forward repair (§8.5): fix the code or plugin versions, let the retry cron
+finish the queued work, re-run the backfill for the affected range and
+reconcile what's left. Restoring the backup loses every payment recorded
+only as links since the activation.
+
+**Page.** Fair Events → Payment history shows a Payment records card once a
+backfill exists. Before the activation it explains what the switch changes,
+lists the blockers and offers the switch, confirmed in a dialog that names
+the tables to back up, says nothing is charged, refunded or emailed and that
+it can't be undone, and needs the backup confirmed. Afterwards it shows who
+switched and when, the issues, and the work waiting to be retried.
 
 ## 9. Worked examples
 
@@ -1316,7 +1386,16 @@ Run locally only the focused specs named here, as
   (a paid signup linked before payment and confirmed once, add-ons (10)
   confirmed once, an interrupted projection finished by the cron, a delayed
   add-on failure after a retry, and an upgrade (12) priced from the
-  purchase's paid allocation).
+  purchase's paid allocation). Activation (third pull request):
+  `PaymentHistoryCutoverTest.php` (the blockers including an older
+  Audience, the issues after it, the record, refusals), `PaymentLinksTest.php`
+  (the gate follows only the activation option),
+  `fair-events/src/API/__tests__/PaymentHistoryCutover.api.spec.js` (401/403,
+  the backup, blockers, the recheck under the lock, concurrent requests
+  activating once with one audit record, a later verification failure and a
+  Fair Audience deactivation and reactivation keeping it),
+  `src/Admin/payment-history/__tests__/CutoverPanel.test.jsx` and
+  `fair-events/e2e/payment-history-cutover.spec.js`.
 - **Stage 5 (#2141):** `EventStatistics.api.spec.js` for each supported
   combination in §8.6 (example 15), the three revenue states, the series rule
   (§7.2), the standalone Statistics page and chart download. A focused E2E for
