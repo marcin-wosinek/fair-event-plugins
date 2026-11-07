@@ -7,10 +7,18 @@
  * Both views offer the sales history range for the cumulative charts (#2063).
  * Experimental is reactivated afterwards so the rest of the suite keeps its
  * default plugin set.
+ *
+ * Once Statistics read Fair Events records (#2141), the tab works with Fair
+ * Audience deactivated and shows the same results after it is reactivated,
+ * and without Fair Payments Connector it says revenue is unavailable instead
+ * of showing 0.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { loginAsAdmin, wpCli } from '../support/wp-cli.js';
+import { loginAsAdmin, runScript, wpCli } from '../support/wp-cli.js';
+
+const readers = (action) =>
+	runScript('payment-readers.php', 'E2E_PAYMENT_READERS', `${action} '{}'`);
 
 test.describe('Event Statistics without Experimental', () => {
 	test.beforeAll(() => {
@@ -112,5 +120,72 @@ test.describe('Event Statistics without Experimental', () => {
 				.locator('svg')
 				.getByText('60 days before the event', { exact: true })
 		).toHaveCount(2);
+	});
+});
+
+test.describe('Event Statistics on Fair Events records', () => {
+	let audienceDeactivated = false;
+	let connectorDeactivated = false;
+
+	test.beforeAll(() => {
+		readers('prepare');
+		readers('activate');
+	});
+
+	test.afterAll(() => {
+		if (audienceDeactivated) {
+			wpCli('plugin activate fair-audience');
+		}
+		if (connectorDeactivated) {
+			wpCli('plugin activate fair-payments-connector');
+		}
+		readers('restore');
+	});
+
+	test('works without Fair Audience and says when revenue is unavailable', async ({
+		page,
+		seedEvent,
+	}) => {
+		const event = seedEvent('free');
+		await loginAsAdmin(page);
+		const tab = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${event.eventDateId}&tab=statistics`;
+		const summary = page.locator('.fair-event-statistics__summary');
+
+		await page.goto(tab);
+		await expect(summary.getByText('0 tickets')).toBeVisible();
+		const before = await summary.innerText();
+
+		wpCli('plugin deactivate fair-audience');
+		audienceDeactivated = true;
+		await page.goto(tab);
+		await expect(page.getByRole('tab', { name: 'Statistics' })).toHaveCount(
+			1
+		);
+		await expect(summary.getByText('0 tickets')).toBeVisible();
+		expect(await summary.innerText()).toBe(before);
+		await expect(
+			page.getByRole('button', { name: 'Download PNG' }).first()
+		).toBeEnabled();
+
+		wpCli('plugin activate fair-audience');
+		audienceDeactivated = false;
+		await page.goto(tab);
+		await expect(summary.getByText('0 tickets')).toBeVisible();
+		expect(await summary.innerText()).toBe(before);
+
+		wpCli('plugin deactivate fair-payments-connector');
+		connectorDeactivated = true;
+		await page.goto(
+			`/wp-admin/admin.php?page=fair-events-event-statistics&event_date_id=${event.eventDateId}`
+		);
+		await expect(summary.getByText('0 tickets')).toBeVisible();
+		await expect(summary.getByText('Revenue unavailable')).toBeVisible();
+		await expect(summary.getByText(/€/)).toHaveCount(0);
+		await expect(
+			page.getByText(/Activate Fair Payments Connector/)
+		).toBeVisible();
+
+		wpCli('plugin activate fair-payments-connector');
+		connectorDeactivated = false;
 	});
 });

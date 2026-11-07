@@ -186,6 +186,44 @@ export function cutoverBlockerLabels() {
 }
 
 /**
+ * Why Statistics can't switch to Fair Events records yet (§8.14).
+ *
+ * @return {Object} Labels by blocker code.
+ */
+export function readerBlockerLabels() {
+	return {
+		storage_unavailable: __(
+			'Fair Events hasn’t finished its database update.',
+			'fair-events'
+		),
+		ownership_cutover_inactive: __(
+			'Switch payment records to Fair Events first.',
+			'fair-events'
+		),
+		migration_unverified: __(
+			'The migration hasn’t been verified yet. Finish it and pass its verification first.',
+			'fair-events'
+		),
+		verification_before_cutover: __(
+			'The last verification ran before payment records were switched. Verify again so it covers the payments recorded since.',
+			'fair-events'
+		),
+		payment_information_unavailable: __(
+			'Payment information can’t be read. Activate Fair Payments Connector.',
+			'fair-events'
+		),
+		shadow_work_outstanding: __(
+			'Some recent payments are still waiting to be recorded. They are retried automatically every fifteen minutes.',
+			'fair-events'
+		),
+		relationship_admissions: __(
+			'Some events still count Fair Audience registrations that have no Fair Events ticket. Run the migration again, then verify.',
+			'fair-events'
+		),
+	};
+}
+
+/**
  * What needs fixing after payment records switched to Fair Events. None of
  * these switches them back.
  *

@@ -971,18 +971,18 @@ requires. Ownership and the Statistics readers still don't change (§8.1).
 `fair-events/v1/payment-history`, every route behind `manage_options` (401
 logged out, 403 without it):
 
-| Route                                  | Use                                                                                                    |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `GET /`                                | `PaymentHistoryBackfill::status()`, plus `reconciliation_available` and finding counts per status.      |
-| `POST /dry-run`, `/backfill`           | Start a dry run, or the backfill with `backup_confirmed`. Refusals are 409 (400 for `backup_required`). |
-| `POST /backfill/resume`, `/verify`     | Continue a paused backfill; verify a finished one again.                                               |
-| `GET /comparisons`                     | The verification report, blocking dates first, then incomplete revenue.                                |
-| `GET /findings`                        | Findings by `mode`, `status` (`open`, `decided`, `resolved`, `all`), `reason`, `event_date_id`, source, `transaction_status` and `payment_mode`. |
-| `GET /findings/{id}`                   | The finding with its transaction, links, remaining balance, suggested purchases and audit trail.       |
-| `POST /findings/{id}/links`            | Link the finding's transaction: `links` (`signup_id`, `role`, `allocated_amount`), `note`, `expected_link_ids`. |
-| `POST /findings/{id}/review`           | Mark the finding reviewed with a `note`.                                                               |
-| `DELETE /links/{id}`                   | Remove a reconciled link: `note`, `expected_link_ids`.                                                 |
-| `GET /purchases`, `GET /audit`         | Purchase search by number, name or email; audit records, newest first.                                 |
+| Route                              | Use                                                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /`                            | `PaymentHistoryBackfill::status()`, plus `reconciliation_available` and finding counts per status.                                               |
+| `POST /dry-run`, `/backfill`       | Start a dry run, or the backfill with `backup_confirmed`. Refusals are 409 (400 for `backup_required`).                                          |
+| `POST /backfill/resume`, `/verify` | Continue a paused backfill; verify a finished one again.                                                                                         |
+| `GET /comparisons`                 | The verification report, blocking dates first, then incomplete revenue.                                                                          |
+| `GET /findings`                    | Findings by `mode`, `status` (`open`, `decided`, `resolved`, `all`), `reason`, `event_date_id`, source, `transaction_status` and `payment_mode`. |
+| `GET /findings/{id}`               | The finding with its transaction, links, remaining balance, suggested purchases and audit trail.                                                 |
+| `POST /findings/{id}/links`        | Link the finding's transaction: `links` (`signup_id`, `role`, `allocated_amount`), `note`, `expected_link_ids`.                                  |
+| `POST /findings/{id}/review`       | Mark the finding reviewed with a `note`.                                                                                                         |
+| `DELETE /links/{id}`               | Remove a reconciled link: `note`, `expected_link_ids`.                                                                                           |
+| `GET /purchases`, `GET /audit`     | Purchase search by number, name or email; audit records, newest first.                                                                           |
 
 `Services\PaymentHistoryReconciliation` holds the rules:
 
@@ -1279,6 +1279,107 @@ the tables to back up, says nothing is charged, refunded or emailed and that
 it can't be undone, and needs the backup confirmed. Afterwards it shows who
 switched and when, the issues, and the work waiting to be retried.
 
+### 8.14 Stage 5 statistics readers
+
+**Implemented** (#2141, first of two pull requests; no schema change).
+`Services\PaymentHistoryReaders` switches Statistics, ticket counts and
+capacity to what Fair Events owns (§8.1 stage 5), and
+`Services\PurchasePaymentHistory` is the shared reader of purchase payments.
+Purchase details, the participant's payment history and Connector's
+transaction view move onto it in the second pull request.
+
+**The gate.** `PaymentHistoryReaders::active()` is true when the option
+`fair_events_payment_history_readers` holds an activation with an
+`activated_at` and the links storage exists. Like the stage 4 activation it
+is apart from the backfill's state: a later `verification_failed`, a missing
+plugin or a new finding never clears it, so the Audience readers are never
+silently restored (§8.5). Two things write it:
+
+- **An administrator** (`activate()`, or `POST
+fair-events/v1/payment-history/readers` behind `manage_options`; 401/403
+  otherwise). It refuses while `blockers()` lists anything (409
+  `readers_blocked` with the codes): `storage_unavailable` (below DB
+  `3.52.0`), `ownership_cutover_inactive` (§8.13), `migration_unverified`,
+  `verification_before_cutover` (the backfill's last verification ran before
+  the stage 4 activation, so it doesn't cover what the lifecycle wrote since),
+  `payment_information_unavailable`, `shadow_work_outstanding`, and
+  `relationship_admissions`: stored dates where today's Statistics counts a
+  signed-up relationship with no purchase by the participant and none naming
+  it as provenance, the admissions the Events readers would drop. A
+  relationship reported as `duplicate_series_relationship` is explained: its
+  pass counts there. That and the stored comparisons (revenue from paid
+  links against the ledger, §8.9) are the stage 5 comparisons. Under the
+  stage 4 activation lock and the backfill's batch lock it rereads the
+  option, rechecks every blocker and the verification's global checks
+  (`verification_stale` with `verification_blockers` when they fail), then
+  writes an audit record (`action = activate`, `reason = reader_cutover`) and
+  the option (`activated_at`, `user_id`, `reference`, `verification`,
+  `audit_id`) in one database transaction, and fires
+  `fair_events_payment_history_readers_activated`. A second activation is
+  `readers_active` (409). No backup is asked for: nothing but the option
+  changes.
+- **A site without source history** (`maybe_activate_without_history()`, on
+  the shadow work cron and whenever Statistics checks its availability):
+  no Fair Audience plugin or tables, shadow writes cover the live writers,
+  and every purchase with a `transaction_id` has a link. It records
+  `reason = no_source_history` once, with `add_option()`, so a fresh
+  Events-only site gets Statistics with no migration and without Connector,
+  and installing Fair Audience later doesn't switch it back.
+
+**Readers after the activation.**
+
+- `EventTicketStatistics` counts ticket units and unbackfilled confirmed
+  purchases only. Relationships without a purchase and participant-scope
+  activities are no longer read, so §4.4's ambiguous activities stay findings
+  and are no longer in "tickets without activity assignment".
+- `TicketCapacity` no longer applies `fair_events_capacity_legacy_admissions`
+  and `fair_events_capacity_legacy_activity_selections`. The filters stay
+  registered for the pre-activation path (§3.5).
+- `EventStatisticsController` is registered when the readers are active or,
+  before that, while Fair Audience provides the ledger readers (G9). Both
+  namespaces and the history windows are unchanged.
+
+**Revenue** (`PurchasePaymentHistory::event_date_revenue()`, §7):
+
+- The sum of `allocated_amount` over the date's purchases' links whose
+  transaction is `paid` in Connector, `legacy_refund_record` excluded, in the
+  site currency; other currencies are listed in `excluded_currencies`.
+  Every paid attempt counts (§5.5).
+- `revenue_state`: `unavailable` when Connector's transactions can't be read
+  (`total_sales_amount` and every `amount_series` point null);
+  `incomplete` when a paid transaction linked to the date has an unallocated
+  remainder, an open non-informational backfill finding names the date, or a
+  paid event payment whose immutable `metadata.event_date_id` is the date has
+  no link and no finding; `available` otherwise. `unresolved_payments`
+  counts those payments once each and `reconciliation_url` links to Payment
+  history.
+- A whole-series purchase counts on its master. A generated occurrence
+  reports `series_pass_revenue`: the paid allocations of the master's
+  confirmed whole-series purchases bought before its pass cutoff, as ticket
+  counts apply them. It isn't in the occurrence's total (§7.2).
+- The chart dates each paid link by its `created_at`, the attempt's creation
+  (§7.3).
+- `payment_readers` says which readers answered (`events` or `audience`).
+  Before the activation the ledger path also reports `revenue_state`:
+  `unavailable` without Connector, otherwise `available`.
+
+`PurchasePaymentHistory::for_signups()` returns every link of the purchases
+(every role and attempt, oldest first) with its transaction as Connector has
+it now, and `purchases_for_transactions()` the purchases each transaction is
+linked to. Neither reads editable transaction columns, an email or
+`signup.transaction_id`.
+
+**Supported combinations after the activation** (§8.6):
+
+| Combination                   | Statistics                                                          |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Events alone                  | Tickets, activities and capacity; revenue `unavailable`             |
+| Events + Connector            | Everything, no Audience needed                                      |
+| Events + Audience             | Tickets, activities and capacity from Events; revenue `unavailable` |
+| Events + Audience + Connector | Everything; Audience is not read                                    |
+
+Before the activation, Statistics still needs Fair Audience as in §3.4.
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"
@@ -1401,6 +1502,19 @@ Run locally only the focused specs named here, as
   (§7.2), the standalone Statistics page and chart download. A focused E2E for
   the Statistics page with Audience deactivated, then reactivated, showing
   the same results. The `fair-audience/v1` alias route stays registered.
+  Statistics readers (first pull request):
+  `fair-events/__tests__/Services/PaymentHistoryReadersTest.php` (the
+  blockers, the record, the gate, and revenue from allocations for examples
+  1, 7, 9, 11, 12, 14, 21 and 22),
+  `fair-events/src/API/__tests__/EventStatisticsReaders.api.spec.js` (the
+  Audience readers before the switch, 401/403 and refusals, revenue from
+  paid allocations with a retry, a shared payment and a refund-labelled
+  record, `incomplete` from an unlinked payment, a pass counted once on its
+  master, Audience deactivated and reactivated with the same results, and
+  `unavailable` without Connector, on both namespaces), the component tests
+  in `src/Admin/event-statistics/__tests__/` and
+  `src/Admin/payment-history/__tests__/ReadersPanel.test.jsx`, and
+  `e2e/user-flows/event-statistics-tab.spec.js`.
 
 ## 11. Out of scope
 
@@ -1466,7 +1580,7 @@ specs that pin them are updated knowingly.
   the deleted ID. Reported as `missing_transaction` (§6.2).
 - **G9. Statistics requires Audience.** The route and the page are
   registered only when `EventStatisticsController::is_available()` finds the
-  Audience repositories. Fixed by stage 5.
+  Audience repositories. Fixed by stage 5 (§8.14).
 
 ## Read first for stages 2–5
 

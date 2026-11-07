@@ -134,6 +134,7 @@ class PaymentHistoryBackfill {
 			'verified'          => PaymentHistoryCompatibility::migration_verified(),
 			'ownership_cutover' => PaymentHistoryCompatibility::ownership_cutover(),
 			'cutover'           => PaymentHistoryCutover::status(),
+			'readers'           => PaymentHistoryReaders::status(),
 		);
 	}
 

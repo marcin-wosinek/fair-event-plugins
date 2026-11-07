@@ -129,6 +129,7 @@ class Plugin {
 		\FairEvents\Services\TicketBackfill::init();
 		\FairEvents\Services\PaymentHistoryShadowWrites::init();
 		\FairEvents\Services\PaymentHistoryBackfill::init();
+		\FairEvents\Services\PaymentHistoryReaders::init();
 	}
 
 	/**
@@ -257,8 +258,9 @@ class Plugin {
 		);
 
 		// Event statistics — registers `/fair-events/v1/event-dates/{id}/statistics`
-		// and its former `/fair-audience/v1/...` path. The data lives in Fair
-		// Audience, so both exist only while it is active. Priority 20 runs
+		// and its former `/fair-audience/v1/...` path. Both exist once the
+		// Events readers are active (PaymentHistoryReaders) or, before that,
+		// while Fair Audience provides the ledger they read. Priority 20 runs
 		// after an older Fair Audience's own registration, which the alias
 		// then overrides.
 		add_action(

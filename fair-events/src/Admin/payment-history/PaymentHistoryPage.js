@@ -1,8 +1,9 @@
 /**
  * Payment history page: the migration of historical registrations and
  * payments into Fair Events, its verification, the reconciliation of what
- * it couldn't link, and the switch of payment records to Fair Events
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13).
+ * it couldn't link, the switch of payment records to Fair Events, and the
+ * switch of statistics to Fair Events records
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13, §8.14).
  *
  * @package FairEvents
  */
@@ -18,6 +19,7 @@ import {
 } from '@wordpress/components';
 import MigrationPanel from './MigrationPanel.js';
 import CutoverPanel from './CutoverPanel.js';
+import ReadersPanel from './ReadersPanel.js';
 import VerificationPanel from './VerificationPanel.js';
 import FindingsPanel from './FindingsPanel.js';
 
@@ -118,6 +120,14 @@ export default function PaymentHistoryPage() {
 						( status.backfill || status.cutover.activation ) && (
 							<CutoverPanel
 								cutover={ status.cutover }
+								onAction={ runAction }
+							/>
+						) }
+					{ status.readers &&
+						( status.cutover?.activation ||
+							status.readers.activation ) && (
+							<ReadersPanel
+								readers={ status.readers }
 								onAction={ runAction }
 							/>
 						) }

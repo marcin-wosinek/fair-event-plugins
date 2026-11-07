@@ -12,11 +12,11 @@ jest.mock( '../EventStatistics.js', () => {
 } );
 
 describe( 'StatisticsPage', () => {
-	it( 'renders the statistics when Fair Audience is active', () => {
+	it( 'renders the statistics when they are available', () => {
 		render(
 			<StatisticsPage
 				eventDateId={ 42 }
-				audienceActive
+				statisticsAvailable
 				manageEventUrl="http://example.com/wp-admin/admin.php?page=fair-events-manage-event"
 			/>
 		);
@@ -24,23 +24,27 @@ describe( 'StatisticsPage', () => {
 		expect( screen.getByText( 'Statistics for 42' ) ).toBeInTheDocument();
 	} );
 
-	it( 'explains the missing Fair Audience dependency instead of loading charts', () => {
+	it( 'explains how to make statistics available instead of loading charts', () => {
 		render(
 			<StatisticsPage
 				eventDateId={ 42 }
-				audienceActive={ false }
+				statisticsAvailable={ false }
 				manageEventUrl="http://example.com/wp-admin/admin.php?page=fair-events-manage-event"
+				paymentHistoryUrl="http://example.com/wp-admin/admin.php?page=fair-events-payment-history"
 			/>
 		);
 
 		expect(
-			screen.getByText(
-				/Event statistics need the Fair Audience plugin/,
-				{
-					selector: 'p',
-				}
-			)
+			screen.getByText( /Event statistics aren’t available yet/, {
+				selector: 'p',
+			} )
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Open Payment history' } )
+		).toHaveAttribute(
+			'href',
+			'http://example.com/wp-admin/admin.php?page=fair-events-payment-history'
+		);
 		expect(
 			screen.getByRole( 'link', { name: 'Back to Manage Event' } )
 		).toHaveAttribute(

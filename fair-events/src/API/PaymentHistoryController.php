@@ -12,6 +12,7 @@ use FairEvents\Models\PaymentHistoryFinding;
 use FairEvents\Services\PaymentHistoryBackfill;
 use FairEvents\Services\PaymentHistoryCompatibility;
 use FairEvents\Services\PaymentHistoryCutover;
+use FairEvents\Services\PaymentHistoryReaders;
 use FairEvents\Services\PaymentHistoryReconciliation;
 use FairEvents\Services\PaymentHistoryVerification;
 use WP_Error;
@@ -144,6 +145,16 @@ class PaymentHistoryController extends WP_REST_Controller {
 						'validate_callback' => 'rest_validate_request_arg',
 					),
 				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/readers',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'activate_readers' ),
+				'permission_callback' => $permission,
 			)
 		);
 
@@ -491,6 +502,38 @@ class PaymentHistoryController extends WP_REST_Controller {
 			$code,
 			$messages[ $code ] ?? $result->get_error_message(),
 			array( 'status' => $statuses[ $code ] ?? 409 ) + ( is_array( $data ) ? $data : array() )
+		);
+	}
+
+	/**
+	 * Switch Statistics, ticket counts and capacity to the records Fair
+	 * Events owns (stage 5). Refused while anything blocks it, the
+	 * verification's recheck fails, or it is already active; the outcome is
+	 * audited.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function activate_readers( $request ) {
+		unset( $request );
+		$result = PaymentHistoryReaders::activate( array( 'user_id' => get_current_user_id() ) );
+		if ( ! is_wp_error( $result ) ) {
+			return rest_ensure_response( PaymentHistoryBackfill::status() );
+		}
+
+		$code     = $result->get_error_code();
+		$messages = array(
+			'readers_active'     => __( 'Statistics already use Fair Events records.', 'fair-events' ),
+			'readers_blocked'    => __( 'Statistics can\'t switch to Fair Events records on this site yet.', 'fair-events' ),
+			'readers_busy'       => __( 'The payment history migration is busy. Try again in a moment.', 'fair-events' ),
+			'verification_stale' => __( 'The verification no longer passes. Verify the migration again before switching statistics.', 'fair-events' ),
+			'readers_failed'     => __( 'The switch couldn\'t be recorded. Nothing changed; try again.', 'fair-events' ),
+		);
+		$data     = $result->get_error_data();
+		return new WP_Error(
+			$code,
+			$messages[ $code ] ?? $result->get_error_message(),
+			array( 'status' => 'readers_failed' === $code ? 500 : 409 ) + ( is_array( $data ) ? $data : array() )
 		);
 	}
 

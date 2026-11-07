@@ -527,7 +527,8 @@ class AdminPages {
 			}
 
 			// The Statistics tab mirrors its REST route: administrators only,
-			// and only when Fair Audience provides the data.
+			// once the Events readers are active or, before that, while Fair
+			// Audience provides the data.
 			$localized_data['statisticsAvailable'] = EventStatisticsController::is_available() && current_user_can( 'manage_options' );
 
 			// Fair Finance supplies costs, budgets and accounting entries on the
@@ -626,9 +627,10 @@ class AdminPages {
 				'fair-events-event-statistics',
 				'fairEventsEventStatisticsData',
 				array(
-					'eventDateId'    => $event_date_id,
-					'manageEventUrl' => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					'audienceActive' => EventStatisticsController::is_available(),
+					'eventDateId'         => $event_date_id,
+					'manageEventUrl'      => admin_url( 'admin.php?page=fair-events-manage-event' ),
+					'statisticsAvailable' => EventStatisticsController::is_available(),
+					'paymentHistoryUrl'   => admin_url( 'admin.php?page=fair-events-payment-history' ),
 				)
 			);
 

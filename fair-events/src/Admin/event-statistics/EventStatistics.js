@@ -356,6 +356,13 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		[ statistics?.currency ]
 	);
 	const formatCurrency = ( value ) => currencyFormatter.format( value );
+	// Responses from before the revenue states had an amount whenever they
+	// had a response.
+	const revenueState = statistics?.revenue_state || 'available';
+	const revenueAvailable =
+		revenueState !== 'unavailable' &&
+		statistics?.total_sales_amount !== null &&
+		statistics?.total_sales_amount !== undefined;
 
 	// Prefer the live Manage Event title; the standalone Statistics page has
 	// only the value the API returned.
@@ -420,6 +427,44 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 			) }
 			{ statistics && (
 				<>
+					{ ! revenueAvailable && (
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
+								'Revenue isn’t available because payment information can’t be read. Activate Fair Payments Connector to see sales amounts.',
+								'fair-events'
+							) }
+						</Notice>
+					) }
+					{ revenueState === 'incomplete' && (
+						<Notice
+							status="warning"
+							isDismissible={ false }
+							actions={
+								statistics.reconciliation_url
+									? [
+											{
+												label: __(
+													'Review payment history',
+													'fair-events'
+												),
+												url: statistics.reconciliation_url,
+											},
+										]
+									: []
+							}
+						>
+							{ sprintf(
+								/* translators: %d: number of paid payments not yet linked to this event's purchases. */
+								_n(
+									'Revenue is incomplete: %d paid payment isn’t linked to this event’s purchases yet. The total shows only linked payments.',
+									'Revenue is incomplete: %d paid payments aren’t linked to this event’s purchases yet. The total shows only linked payments.',
+									statistics.unresolved_payments || 0,
+									'fair-events'
+								),
+								statistics.unresolved_payments || 0
+							) }
+						</Notice>
+					) }
 					{ statistics.excluded_currencies?.length > 0 && (
 						<Notice status="warning" isDismissible={ false }>
 							{ sprintf(
@@ -447,11 +492,43 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 										totalTickets
 									) }
 								</strong>
-								<strong style={ { fontSize: '24px' } }>
-									{ formatCurrency(
-										statistics.total_sales_amount
+								{ revenueAvailable ? (
+									<strong style={ { fontSize: '24px' } }>
+										{ formatCurrency(
+											statistics.total_sales_amount
+										) }
+										{ revenueState === 'incomplete' && (
+											<span className="fair-event-statistics__revenue-flag">
+												{ __(
+													'(incomplete)',
+													'fair-events'
+												) }
+											</span>
+										) }
+									</strong>
+								) : (
+									<span className="fair-event-statistics__revenue-unavailable">
+										{ __(
+											'Revenue unavailable',
+											'fair-events'
+										) }
+									</span>
+								) }
+								{ revenueAvailable &&
+									statistics.series_pass_revenue > 0 && (
+										<span>
+											{ sprintf(
+												/* translators: %s: formatted amount of whole-series pass revenue covering this occurrence. */
+												__(
+													'Plus %s from series passes, counted on the series’ first date',
+													'fair-events'
+												),
+												formatCurrency(
+													statistics.series_pass_revenue
+												)
+											) }
+										</span>
 									) }
-								</strong>
 								{ statistics.days_until_start !== null && (
 									<span>
 										{ sprintf(
@@ -535,23 +612,50 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 								}
 								isDownloadDisabled={
 									exportingChart !== null ||
-									salesHistoryState !== 'ready'
+									salesHistoryState !== 'ready' ||
+									! revenueAvailable
 								}
 								isDownloading={
 									exportingChart === salesAmountChartTitle
 								}
 							>
-								{ salesHistoryState === 'ready' ? (
-									<CumulativeChart
-										series={ statistics.amount_series }
-										dataKey="amount"
-										name={ __(
-											'Net sales amount',
-											'fair-events'
-										) }
-										valueFormatter={ formatCurrency }
-									/>
-								) : (
+								{ salesHistoryState === 'ready' &&
+									! revenueAvailable && (
+										<p className="fair-event-statistics__chart-note">
+											{ __(
+												'Revenue isn’t available because payment information can’t be read.',
+												'fair-events'
+											) }
+										</p>
+									) }
+								{ salesHistoryState === 'ready' &&
+									revenueAvailable && (
+										<>
+											<CumulativeChart
+												series={
+													statistics.amount_series
+												}
+												dataKey="amount"
+												name={ __(
+													'Net sales amount',
+													'fair-events'
+												) }
+												valueFormatter={
+													formatCurrency
+												}
+											/>
+											{ /* Inside the card so a download carries the caveat too. */ }
+											{ revenueState === 'incomplete' && (
+												<p className="fair-event-statistics__chart-note">
+													{ __(
+														'Incomplete: only payments linked to this event’s purchases are included.',
+														'fair-events'
+													) }
+												</p>
+											) }
+										</>
+									) }
+								{ salesHistoryState !== 'ready' && (
 									<ChartPlaceholder />
 								) }
 							</ChartCard>

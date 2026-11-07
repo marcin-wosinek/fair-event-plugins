@@ -493,6 +493,72 @@ reconcile what's left. Restoring the backup above loses every payment
 recorded since the switch; do it only if nothing was paid in between.
 Deactivating a plugin isn't a rollback: the switch stays recorded.
 
+## Upgrade notes: payment history statistics readers (#2141)
+
+Stage 5 of the payment history migration, first of two pull requests
+([PAYMENT_HISTORY_MIGRATION.md § 8.14](./PAYMENT_HISTORY_MIGRATION.md#814-stage-5-statistics-readers)).
+No schema change and nothing runs on upgrade on a site with Fair Audience
+records. The release adds the Events readers for Statistics, ticket counts
+and capacity, and the switch that turns them on. Until an administrator
+switches, Statistics read Fair Audience as before, and still need it.
+
+**Update order: Fair Payments Connector first, then Fair Events, then Fair
+Audience**, as for stage 4. Only Fair Events changes in this release.
+
+**Sites without Fair Audience records.** A site where Fair Audience's tables
+don't exist and every purchase with a payment attempt has a payment link is
+switched automatically, the first time Statistics or the fifteen-minute
+payment history cron sees it (reason `no_source_history`). Statistics then
+work with Fair Events alone; revenue needs Fair Payments Connector.
+
+**Readiness to switch.** On **Fair Events → Payment history**, the
+Statistics card appears once payment records use Fair Events (stage 4) and
+lists what blocks the switch (`PaymentHistoryReaders::blockers()`): the
+stage 4 switch, a clean verification that ran **after** it
+(`verification_before_cutover` otherwise: use "Verify again"), Connector
+readable, no shadow or lifecycle work queued, and no event date where
+Statistics still counts a signed-up Fair Audience registration without a
+Fair Events purchase (`relationship_admissions`, with the dates). The switch
+rechecks all of it and the verification's global checks under the stage 4
+locks. No backup is needed: the switch changes no record, only which
+records Statistics read.
+
+Without the page (WP-CLI):
+
+```bash
+wp eval 'print_r( FairEvents\Services\PaymentHistoryReaders::status() );'
+wp eval 'print_r( FairEvents\Services\PaymentHistoryReaders::activate( array( "user_id" => 1 ) ) );'
+```
+
+**What changes.** Ticket counts and capacity stop reading Fair Audience
+registrations and participant-scope activities, and the
+`fair_events_capacity_legacy_admissions` and
+`fair_events_capacity_legacy_activity_selections` filters are no longer
+applied. Revenue is the paid allocations of the date's purchases, with
+`revenue_state` `available`, `incomplete` (paid money for the date not
+fully allocated: the count and a link to Payment history) or `unavailable`
+(no amount, never 0). **Occurrence totals change on purpose:** a
+whole-series pass counts once, on the series master, and a generated
+occurrence reports it as `series_pass_revenue` instead of adding it; a
+payment shared by several dates counts each date's share. The switch is
+recorded in the audit table and the option
+`fair_events_payment_history_readers`.
+
+**Verification after the switch.** Open Statistics for a few event dates
+with paid sales, including one series occurrence, and compare with the
+verification report on Payment history: totals match the "Events" side,
+minus pass revenue on occurrences. Deactivate and reactivate Fair Audience:
+the figures stay the same.
+
+**Recovery: forward repair only.** Nothing undoes the switch: not a missing
+plugin, a later failed verification or a new finding. If a date's revenue is
+wrong, fix the links (re-run the backfill for the range, reconcile what's
+left) rather than rolling back. Rolling Fair Events back below this release
+returns Statistics to the Fair Audience ledger, which stage 4 still writes,
+so older figures stay readable while you repair. Source history (ledger,
+registrations, participant-scope activities) is kept; deleting it needs a
+separate follow-up.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

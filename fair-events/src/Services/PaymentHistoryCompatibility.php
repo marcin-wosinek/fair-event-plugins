@@ -188,11 +188,15 @@ class PaymentHistoryCompatibility {
 	/**
 	 * Whether Connector's transactions can be read: the plugin is active and
 	 * its table exists. When false, revenue is unavailable, never zero.
+	 * Active means its main file ran (FAIR_PAYMENTS_CONNECTOR_VERSION), not
+	 * only that its classes autoload: another plugin's Composer autoloader
+	 * can still find them while Connector is deactivated.
 	 *
 	 * @return bool
 	 */
 	public static function payment_information_available() {
-		if ( ! class_exists( \FairPaymentsConnector\Models\Transaction::class )
+		if ( ! defined( 'FAIR_PAYMENTS_CONNECTOR_VERSION' )
+			|| ! class_exists( \FairPaymentsConnector\Models\Transaction::class )
 			|| ! method_exists( \FairPaymentsConnector\Models\Transaction::class, 'get_by_id' )
 			|| ! class_exists( \FairPaymentsConnector\Database\Schema::class )
 			|| ! method_exists( \FairPaymentsConnector\Database\Schema::class, 'get_payments_table_name' )
