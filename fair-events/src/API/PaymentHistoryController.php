@@ -11,6 +11,7 @@ use FairEvents\Models\PaymentHistoryAudit;
 use FairEvents\Models\PaymentHistoryFinding;
 use FairEvents\Services\PaymentHistoryBackfill;
 use FairEvents\Services\PaymentHistoryCompatibility;
+use FairEvents\Services\PaymentHistoryCutover;
 use FairEvents\Services\PaymentHistoryReconciliation;
 use FairEvents\Services\PaymentHistoryVerification;
 use WP_Error;
@@ -23,9 +24,10 @@ defined( 'WPINC' ) || die;
 
 /**
  * The payment history migration for administrators
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10): its progress and
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13): its progress and
  * blockers, the dry run and backfill controls, the verification report,
- * the findings, and their reconciliation with its audit trail. Every route
+ * the findings, their reconciliation with its audit trail, and the stage 4
+ * activation. Every route
  * needs `manage_options`: 401 when logged out, 403 without it.
  */
 class PaymentHistoryController extends WP_REST_Controller {
@@ -125,6 +127,23 @@ class PaymentHistoryController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'verify' ),
 				'permission_callback' => $permission,
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			$base . '/cutover',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'activate_cutover' ),
+				'permission_callback' => $permission,
+				'args'                => array(
+					'backup_confirmed' => array(
+						'type'              => 'boolean',
+						'default'           => false,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+				),
 			)
 		);
 
@@ -433,6 +452,46 @@ class PaymentHistoryController extends WP_REST_Controller {
 	public function verify( $request ) {
 		unset( $request );
 		return $this->run_result( PaymentHistoryBackfill::verify(), 202 );
+	}
+
+	/**
+	 * Switch purchase payment authority to Fair Events (stage 4). Refused
+	 * while anything blocks it, without a confirmed backup, or when it is
+	 * already active; the outcome is audited.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function activate_cutover( $request ) {
+		$result = PaymentHistoryCutover::activate(
+			array(
+				'backup_confirmed' => (bool) $request['backup_confirmed'],
+				'user_id'          => get_current_user_id(),
+			)
+		);
+		if ( ! is_wp_error( $result ) ) {
+			return rest_ensure_response( PaymentHistoryBackfill::status() );
+		}
+
+		$code     = $result->get_error_code();
+		$messages = array(
+			'backup_required'    => __( 'Confirm that a fresh database backup was taken before switching payment records.', 'fair-events' ),
+			'cutover_active'     => __( 'Payment records already use Fair Events.', 'fair-events' ),
+			'cutover_blocked'    => __( 'Payment records can\'t be switched to Fair Events on this site yet.', 'fair-events' ),
+			'cutover_busy'       => __( 'The payment history migration is busy. Try again in a moment.', 'fair-events' ),
+			'verification_stale' => __( 'The verification no longer passes. Verify the migration again before switching payment records.', 'fair-events' ),
+			'cutover_failed'     => __( 'The switch couldn\'t be recorded. Nothing changed; try again.', 'fair-events' ),
+		);
+		$statuses = array(
+			'backup_required' => 400,
+			'cutover_failed'  => 500,
+		);
+		$data     = $result->get_error_data();
+		return new WP_Error(
+			$code,
+			$messages[ $code ] ?? $result->get_error_message(),
+			array( 'status' => $statuses[ $code ] ?? 409 ) + ( is_array( $data ) ? $data : array() )
+		);
 	}
 
 	/**

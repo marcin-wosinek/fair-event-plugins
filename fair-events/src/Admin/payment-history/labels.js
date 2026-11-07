@@ -163,6 +163,71 @@ export function blockerLabels() {
 }
 
 /**
+ * What stops payment records from switching to Fair Events.
+ *
+ * @return {Object<string, string>} Explanations by blocker code.
+ */
+export function cutoverBlockerLabels() {
+	return {
+		...blockerLabels(),
+		migration_unverified: __(
+			'The migration hasn’t been verified yet. Finish it and pass its verification first.',
+			'fair-events'
+		),
+		audience_lifecycle_unavailable: __(
+			'Fair Audience is too old to record its payments in Fair Events. Update Fair Audience first.',
+			'fair-events'
+		),
+		shadow_work_outstanding: __(
+			'Some recent payments are still waiting to be recorded. They are retried automatically every fifteen minutes.',
+			'fair-events'
+		),
+	};
+}
+
+/**
+ * What needs fixing after payment records switched to Fair Events. None of
+ * these switches them back.
+ *
+ * @return {Object<string, string>} Explanations by issue code.
+ */
+export function cutoverIssueLabels() {
+	return {
+		storage_unavailable: __(
+			'Fair Events can’t read its payment records: its database update is incomplete or it was rolled back. Update Fair Events to its latest version.',
+			'fair-events'
+		),
+		audience_lifecycle_unavailable: __(
+			'Fair Audience is too old: its purchases are no longer recorded in Fair Events. Update Fair Audience to its latest version.',
+			'fair-events'
+		),
+		payment_information_unavailable: __(
+			'Payment information can’t be read because Fair Payments Connector is inactive or not installed. Payments arriving now are recorded once it is back.',
+			'fair-events'
+		),
+		verification_failed: __(
+			'The last verification found problems. Fix them and verify again; payment records keep using Fair Events.',
+			'fair-events'
+		),
+	};
+}
+
+/**
+ * Queued work, by kind.
+ *
+ * @return {Object<string, string>} Labels by work kind.
+ */
+export function workKindLabels() {
+	return {
+		transaction: __( 'Payments to link', 'fair-events' ),
+		relationship: __( 'Registrations to follow', 'fair-events' ),
+		payment: __( 'Payment updates to apply', 'fair-events' ),
+		confirmation: __( 'Confirmations to announce', 'fair-events' ),
+		projection: __( 'Updates to pass to Fair Audience', 'fair-events' ),
+	};
+}
+
+/**
  * What stops verification from passing.
  *
  * @return {Object<string, string>} Explanations by verification blocker code.

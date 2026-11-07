@@ -26,9 +26,10 @@ defined( 'WPINC' ) || die;
  * - migration_verified(): the backfill finished and its verification
  *   report was clean (§8.4). Set by stage 3; false until then.
  * - ownership_cutover(): payment links are authoritative for purchases.
- *   True once the stage 4 activation is recorded.
+ *   True once the stage 4 activation is recorded (PaymentHistoryCutover).
  *
- * backfill_blockers() lists what stops the stage 3 backfill from starting.
+ * backfill_blockers() lists what stops the stage 3 backfill from starting;
+ * PaymentHistoryCutover::blockers() what stops the stage 4 activation.
  * Fair Audience calls into this class only after checking it and the method
  * exist, so newer Audience keeps working with older Events.
  *
@@ -60,6 +61,13 @@ class PaymentHistoryCompatibility {
 	 * Option holding the migration's state; written by later stages.
 	 */
 	const STATE_OPTION = 'fair_events_payment_history_migration';
+
+	/**
+	 * Option holding the stage 4 activation (PaymentHistoryCutover). Kept
+	 * apart from STATE_OPTION, which the backfill and shadow writes rewrite
+	 * as they go, so no writer of the migration's state can drop it.
+	 */
+	const CUTOVER_OPTION = 'fair_events_payment_history_cutover';
 
 	/**
 	 * Whether the links table was found, cached per request.
@@ -151,12 +159,12 @@ class PaymentHistoryCompatibility {
 	 * 4, §8.1): the lifecycle writes links first and resolves purchases from
 	 * them (PurchaseLifecycle).
 	 *
-	 * True once an administrator's activation is recorded in the state
-	 * option's `cutover` entry and the storage it relies on (links and the
-	 * work queue) exists. The activation is kept apart from the backfill's
+	 * True once an administrator's activation is recorded in
+	 * CUTOVER_OPTION and the storage it relies on (links and the work
+	 * queue) exists. The activation is kept apart from the backfill's
 	 * mutable `status`: a later verification failure never clears it, so
 	 * ledger authority is never silently restored and recovery is forward
-	 * repair (§8.5). Only the stage 4 activation writes the entry.
+	 * repair (§8.5). Only PaymentHistoryCutover::activate() writes it.
 	 *
 	 * @return bool
 	 */
@@ -164,8 +172,17 @@ class PaymentHistoryCompatibility {
 		if ( ! self::storage_available() || version_compare( Schema::get_db_version(), self::SHADOW_DB_VERSION, '<' ) ) {
 			return false;
 		}
-		$cutover = self::get_state()['cutover'] ?? null;
-		return is_array( $cutover ) && ! empty( $cutover['activated_at'] );
+		return null !== self::get_cutover();
+	}
+
+	/**
+	 * The recorded stage 4 activation, or null when there is none.
+	 *
+	 * @return array|null activated_at, user_id, reference, backup_confirmed_at, verification, audit_id.
+	 */
+	public static function get_cutover() {
+		$cutover = get_option( self::CUTOVER_OPTION, null );
+		return is_array( $cutover ) && ! empty( $cutover['activated_at'] ) ? $cutover : null;
 	}
 
 	/**
