@@ -4,7 +4,10 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import FindingsPanel, { describeSource } from '../FindingsPanel.js';
+import FindingsPanel, {
+	describeSource,
+	SourceDescription,
+} from '../FindingsPanel.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -81,6 +84,72 @@ describe( 'describeSource', () => {
 				finding( { source_type: 'signup', source_id: 11 } )
 			)
 		).toBe( 'Purchase #11' );
+	} );
+} );
+
+describe( 'SourceDescription', () => {
+	const url = ( id ) =>
+		`admin.php?page=fair-payments-connector-transaction&transaction_id=${ id }`;
+
+	it( 'links the payment number to the payment’s page', () => {
+		const { rerender } = render(
+			<SourceDescription finding={ finding() } linkable />
+		);
+		const link = screen.getByRole( 'link', { name: 'Payment #900' } );
+		expect( link ).toHaveAttribute( 'href', url( 900 ) );
+		expect( link.parentElement ).toHaveTextContent(
+			'Payment #900, 15.00 EUR'
+		);
+
+		rerender(
+			<SourceDescription
+				finding={ finding( {
+					source_type: 'ledger_row',
+					source_id: 3,
+					detail: { transaction_id: 901 },
+				} ) }
+				linkable
+			/>
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'payment #901' } )
+		).toHaveAttribute( 'href', url( 901 ) );
+	} );
+
+	it( 'stays plain text when the payment can’t be opened', () => {
+		const { rerender, container } = render(
+			<SourceDescription finding={ finding() } linkable={ false } />
+		);
+		expect( container ).toHaveTextContent( 'Payment #900, 15.00 EUR' );
+		expect( screen.queryByRole( 'link' ) ).not.toBeInTheDocument();
+
+		// The payment no longer exists.
+		rerender(
+			<SourceDescription
+				finding={ finding( {
+					reason: 'missing_transaction',
+					source_type: 'ledger_row',
+					source_id: 3,
+					detail: { transaction_id: 901 },
+				} ) }
+				linkable
+			/>
+		);
+		expect( screen.queryByRole( 'link' ) ).not.toBeInTheDocument();
+
+		// No payment named.
+		rerender(
+			<SourceDescription
+				finding={ finding( {
+					source_type: 'signup',
+					source_id: 11,
+					detail: {},
+				} ) }
+				linkable
+			/>
+		);
+		expect( container ).toHaveTextContent( 'Purchase #11' );
+		expect( screen.queryByRole( 'link' ) ).not.toBeInTheDocument();
 	} );
 } );
 

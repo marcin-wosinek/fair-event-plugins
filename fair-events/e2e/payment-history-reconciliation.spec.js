@@ -196,6 +196,13 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			await paymentStatus.selectOption( { label: 'Canceled' } );
 			await expect( t10Button ).toBeVisible();
 			await expect( count ).toHaveText( '1 record' );
+			// The payment number opens the payment in Fair Payments Connector.
+			await expect(
+				page.getByRole( 'link', { name: `Payment #${ t10 }` } )
+			).toHaveAttribute(
+				'href',
+				`admin.php?page=fair-payments-connector-transaction&transaction_id=${ t10 }`
+			);
 
 			// Every seeded payment is a test one: nothing is live.
 			await paymentMode.selectOption( 'live' );

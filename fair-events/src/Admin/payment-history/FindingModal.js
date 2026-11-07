@@ -10,7 +10,13 @@
  */
 
 import { __, sprintf } from '@wordpress/i18n';
-import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -38,6 +44,7 @@ import {
 	formatPurchase,
 	formatUtcDateTime,
 	toCents,
+	transactionUrl,
 } from './format.js';
 
 const LINK_ROLES = [ 'charge', 'additional_charge', 'upgrade' ];
@@ -203,12 +210,21 @@ function TransactionSummary( { context } ) {
 		<dl className="fair-events-payment-history__facts">
 			<dt>{ __( 'Payment', 'fair-events' ) }</dt>
 			<dd>
-				{ sprintf(
-					/* translators: 1: payment number, 2: amount, 3: payment status */
-					__( '#%1$d — %2$s, %3$s', 'fair-events' ),
-					transaction.id,
-					formatAmount( transaction.amount, transaction.currency ),
-					statuses[ transaction.status ] ?? transaction.status
+				{ createInterpolateElement(
+					sprintf(
+						/* translators: 1: payment number, 2: amount, 3: payment status. Keep <a></a>: it links to the payment. */
+						__( '<a>#%1$d</a> — %2$s, %3$s', 'fair-events' ),
+						transaction.id,
+						formatAmount(
+							transaction.amount,
+							transaction.currency
+						),
+						statuses[ transaction.status ] ?? transaction.status
+					),
+					{
+						// eslint-disable-next-line jsx-a11y/anchor-has-content -- content comes from the translated string.
+						a: <a href={ transactionUrl( transaction.id ) } />,
+					}
 				) }
 			</dd>
 			<dt>{ __( 'Created', 'fair-events' ) }</dt>

@@ -101,3 +101,15 @@ export function toCents( amount ) {
 	const value = Number( amount );
 	return Number.isFinite( value ) ? Math.round( value * 100 ) : NaN;
 }
+
+/**
+ * Fair Payments Connector's page for one payment.
+ *
+ * @param {number} transactionId Payment number.
+ * @return {string} Admin URL, relative to wp-admin.
+ */
+export function transactionUrl( transactionId ) {
+	return `admin.php?page=fair-payments-connector-transaction&transaction_id=${ Number(
+		transactionId
+	) }`;
+}
