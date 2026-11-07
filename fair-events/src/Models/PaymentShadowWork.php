@@ -32,6 +32,21 @@ class PaymentShadowWork {
 	const KIND_RELATIONSHIP = 'relationship';
 
 	/**
+	 * Lifecycle work on one Connector transaction, after the stage 4
+	 * cutover: apply its paid or failed status to the purchases its links
+	 * name. Queued when a notification couldn't be applied in full.
+	 */
+	const KIND_PAYMENT = 'payment';
+
+	/**
+	 * Lifecycle work on one purchase, after the stage 4 cutover: announce
+	 * its confirmation (`fair_events_signup_confirmed`). Queued as soon as
+	 * a paid purchase is confirmed and removed once the hook ran, so a
+	 * request interrupted in between is finished by the retry cron.
+	 */
+	const KIND_CONFIRMATION = 'confirmation';
+
+	/**
 	 * Not attempted yet.
 	 */
 	const STATUS_PENDING = 'pending';
@@ -83,6 +98,37 @@ class PaymentShadowWork {
 				(int) $source_id,
 				self::STATUS_PENDING,
 				$now,
+				$now,
+				$now
+			)
+		);
+	}
+
+	/**
+	 * Queue work that is first due after a delay, unless the source already
+	 * has a row. The delay leaves the request that queued it time to finish
+	 * the work itself; the retry cron only picks up what it left behind.
+	 *
+	 * @param string $kind      Kind.
+	 * @param int    $source_id Source ID.
+	 * @param int    $delay     Seconds before the first retry.
+	 * @param array  $detail    Context, stored as JSON.
+	 * @return bool True when this call created the row.
+	 */
+	public static function enqueue_later( $kind, $source_id, $delay, array $detail = array() ) {
+		global $wpdb;
+
+		$now = gmdate( 'Y-m-d H:i:s' );
+
+		return 1 === (int) $wpdb->query(
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (kind, source_id, status, detail, attempts, next_attempt_at, created_at, updated_at) VALUES (%s, %d, %s, %s, 0, %s, %s, %s)',
+				self::table(),
+				(string) $kind,
+				(int) $source_id,
+				self::STATUS_PENDING,
+				(string) wp_json_encode( $detail ),
+				gmdate( 'Y-m-d H:i:s', time() + max( 0, (int) $delay ) ),
 				$now,
 				$now
 			)
@@ -177,11 +223,22 @@ class PaymentShadowWork {
 	/**
 	 * Rows whose next attempt is due, oldest first.
 	 *
-	 * @param int $limit Maximum rows.
+	 * @param int      $limit Maximum rows.
+	 * @param string[] $kinds Only these kinds; all when empty.
 	 * @return array[]
 	 */
-	public static function get_due( $limit ) {
+	public static function get_due( $limit, array $kinds = array() ) {
 		global $wpdb;
+
+		if ( $kinds ) {
+			return (array) $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT * FROM %i WHERE next_attempt_at <= %s AND kind IN (' . implode( ', ', array_fill( 0, count( $kinds ), '%s' ) ) . ') ORDER BY next_attempt_at ASC, id ASC LIMIT %d',
+					array_merge( array( self::table(), gmdate( 'Y-m-d H:i:s' ) ), array_values( array_map( 'strval', $kinds ) ), array( max( 1, (int) $limit ) ) )
+				),
+				ARRAY_A
+			);
+		}
 
 		return (array) $wpdb->get_results(
 			$wpdb->prepare(

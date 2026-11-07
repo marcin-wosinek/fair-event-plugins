@@ -691,14 +691,14 @@ takes its cutoff (§8.8).
 
 **Interfaces** (all in `fair-events/src/`):
 
-| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                        |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                         |
-| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                             |
-| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                              |
-| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                      |
-| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                     |
-| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (false until stage 4), `payment_information_available()`. |
+| Class                                  | Use                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Services\PaymentLinks::write()`       | Adds one transaction's links atomically. Holds a named lock per transaction (`GET_LOCK`, `lock_name()`) and a database transaction, so concurrent writers can't exceed the total together. Returns `inserted`/`unchanged` counts, or a `WP_Error`.                                                                                                                            |
+| `PaymentLinks::write_in_transaction()` | The same inside a database transaction the caller opened (a purchase, its units and its links together, §8.3). The caller holds `acquire_lock()` until it commits, and rolls back on an error.                                                                                                                                                                                |
+| `PaymentLinks::get_for_signup()`       | A purchase's links with each transaction's Connector status. `payment_information` is `unavailable` when Connector can't be read (links still returned, never treated as 0); a deleted transaction has `transaction_missing`.                                                                                                                                                 |
+| `Services\PaymentLinkAllocation`       | The pure rules behind `write()`: field validation, `LineItemTotals` rounding compared in cents, a repeated identical link is `unchanged` (the stored row keeps its attribution and evidence), a different one is `payment_link_conflict` and refuses the whole set, and the sum never exceeds the total (`allocation_exceeds_total`).                                         |
+| `Models\SignupPaymentLink`             | Table access. Insert only: nothing updates or deletes a link, so a backfill can't change a `live` or `reconciled` one.                                                                                                                                                                                                                                                        |
+| `Services\PaymentHistoryCompatibility` | Capability checks, kept separate: `storage_available()` (DB `3.49.0` and the table exist), `purchase_provenance_available()`, `shadow_write_coverage()` (§8.8), `migration_verified()` (`fair_events_payment_history_migration` option status `verified`, set by stage 3), `ownership_cutover()` (the recorded stage 4 activation, §8.11), `payment_information_available()`. |
 
 `write()` errors: `payment_links_unavailable` (schema not upgraded),
 `payment_information_unavailable` (Connector inactive or its table missing),
@@ -1054,6 +1054,74 @@ finding's dialog names the payment, its amount and status, the purchases
 already linked and the balance left, and collects the allocation and the
 note. Starting the migration is confirmed with the backup tables named.
 
+### 8.11 Stage 4 lifecycle: get-tickets
+
+**Implemented** (#2140, first of three pull requests; no schema change).
+`Services\PurchaseLifecycle` makes the get-tickets flows write and read
+payment links as the authority. It runs only once the cutover is active,
+which nothing can switch on until the third pull request adds the
+activation; until then every flow behaves as in §8.8. The second pull request
+moves Fair Audience's routes (its purchase route, add-ons and series
+upgrades) onto the same service; until it lands they keep their previous
+behaviour, and the activation must refuse to run without it.
+
+**The gate.** `PaymentHistoryCompatibility::ownership_cutover()` is true
+when the state option's `cutover` entry has an `activated_at` and the links
+storage and work queue exist (DB `3.50.0`). The entry is separate from the
+backfill's `status`: a later `verification_failed` doesn't clear it, so
+authority never moves back to the ledger (§8.5).
+
+**Writes.**
+
+- A checkout's attempt is linked (`attribution = live`, through
+  `PaymentAttribution` as in §8.8) right after the transaction exists and
+  before the signup hooks run or the payment starts, so Fair Audience
+  projects only what Events has recorded. When the links can't be written
+  the buyer gets a 503 (`payment_not_recorded`) and nothing is charged; the
+  same idempotency key continues the checkout with the same transaction.
+- A retry links its new attempt before the purchases move to it, so a
+  purchase never points at an attempt missing from its history.
+- `fair_events_signups.transaction_id` keeps meaning "latest attempt"
+  (§5.1). Retry and "Cancel and start over" resolve the purchases whose
+  latest attempt is the transaction from its links
+  (`current_signup_ids()`); an attempt without links (one the backfill left
+  unresolved) falls back to its metadata.
+- Free purchases, holds and their expiry are unchanged: they have no
+  attempt to link.
+
+**Notifications** (`Hooks\PaymentHooks` delegates to the service).
+
+- **Paid:** the purchases are the attempt's `charge` links, whichever
+  attempt is each purchase's latest, so a late payment for a superseded
+  attempt confirms its purchase (§5.5). A purchase that is already
+  confirmed is left alone, so a replayed or concurrent notification
+  confirms and announces once. The capacity recheck and over-capacity flags
+  of a lapsed hold are unchanged. When an attempt has no links yet they are
+  written first; when that fails the notification is queued (work kind
+  `payment`) and applied again by the retry cron. More than one paid
+  attempt for a purchase records the backfill's `multiple_paid_attempts`
+  finding; every paid attempt counts.
+- **Failed, cancelled, expired:** only purchases whose latest attempt it is,
+  and only while they await payment. A delayed failure never undoes a
+  confirmation or touches a newer attempt.
+- **Announcing:** `fair_events_signup_confirmed` fires after the
+  confirmation committed. The request that confirmed the purchase queues a
+  `confirmation` work row first and removes it after the hook ran; when the
+  request dies in between, the retry cron announces it five minutes later.
+  Delivery is at least once: a request that dies after the hook but before
+  removing the row is announced twice.
+
+**Queue.** The lifecycle's rows share `fair_events_payment_shadow_work`
+(kinds `payment` and `confirmation`), its retry delays and its
+verification blocker. After the cutover the cron keeps running them even
+if shadow writes lose coverage (an older Fair Audience installed later),
+and still skips the shadow work then.
+
+**Not yet covered.** The callback page and payment-state route still read
+the purchases by their latest attempt (`get_all_by_transaction_id()`); a
+buyer returning from a superseded attempt that was paid sees the newer
+attempt's state. Readers move in stage 5 (#2141).
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"
@@ -1149,7 +1217,12 @@ Run locally only the focused specs named here, as
 - **Stage 4 (#2140):** specs for free, paid, failed, retried (8, 9),
   cancelled, add-on (10) and upgrade (12) flows, each writing links first.
   Webhook replay produces no duplicates. A late paid notification for an
-  older attempt confirms the purchase.
+  older attempt confirms the purchase. Get-tickets (first pull request):
+  `PaymentLinksTest.php` (the gate) and
+  `fair-events/src/API/__tests__/PaymentLifecycleCutover.api.spec.js`
+  (links before payment, a late paid superseded attempt with example 9's
+  finding, replayed, concurrent and delayed notifications, cancelling from
+  links, and an interrupted confirmation finished by the cron).
 - **Stage 5 (#2141):** `EventStatistics.api.spec.js` for each supported
   combination in §8.6 (example 15), the three revenue states, the series rule
   (§7.2), the standalone Statistics page and chart download. A focused E2E for
