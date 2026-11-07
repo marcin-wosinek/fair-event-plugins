@@ -1,6 +1,6 @@
 /**
  * Records the migration reported, filtered by run, status, reason, event
- * and their payment's expiry and test/live mode, each opening its
+ * and their payment's status and test/live mode, each opening its
  * reconciliation dialog.
  *
  * @package FairEvents
@@ -20,10 +20,35 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import FindingModal from './FindingModal.js';
-import { findingStatusLabels, reasonLabel, reasonLabels } from './labels.js';
+import {
+	findingStatusLabels,
+	reasonLabel,
+	reasonLabels,
+	transactionStatusLabels,
+} from './labels.js';
 import { formatAmount, formatEventDate, formatUtcDateTime } from './format.js';
 
 const PER_PAGE = 20;
+
+/**
+ * Payment status filter options: one per label, so statuses shown the same
+ * way (open and pending_payment are both "Awaiting payment") are one choice.
+ * Each value lists its statuses, comma-separated.
+ *
+ * @return {Array<{value: string, label: string}>} Options after "All".
+ */
+export function paymentStatusOptions() {
+	const byLabel = new Map();
+	Object.entries( transactionStatusLabels() ).forEach(
+		( [ status, label ] ) => {
+			byLabel.set( label, [ ...( byLabel.get( label ) || [] ), status ] );
+		}
+	);
+	return Array.from( byLabel, ( [ label, statuses ] ) => ( {
+		value: statuses.join( ',' ),
+		label,
+	} ) );
+}
 
 /**
  * What a finding is about, in a few words.
@@ -92,7 +117,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 	const [ findingStatus, setFindingStatus ] = useState( 'open' );
 	const [ reason, setReason ] = useState( '' );
 	const [ eventDate, setEventDate ] = useState( '-1' );
-	const [ transactionExpiry, setTransactionExpiry ] = useState( 'all' );
+	const [ paymentStatus, setPaymentStatus ] = useState( '' );
 	const [ paymentMode, setPaymentMode ] = useState( 'all' );
 	const [ page, setPage ] = useState( 1 );
 	const [ openId, setOpenId ] = useState( null );
@@ -126,7 +151,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 			status: findingStatus,
 			reason,
 			event_date_id: eventDate,
-			transaction_expiry: transactionExpiry,
+			transaction_status: paymentStatus,
 			payment_mode: paymentMode,
 			page: String( page ),
 			per_page: String( PER_PAGE ),
@@ -175,7 +200,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 		findingStatus,
 		reason,
 		eventDate,
-		transactionExpiry,
+		paymentStatus,
 		paymentMode,
 		page,
 		refreshKey,
@@ -190,12 +215,12 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 	const narrowed =
 		reason !== '' ||
 		eventDate !== '-1' ||
-		transactionExpiry !== 'all' ||
+		paymentStatus !== '' ||
 		paymentMode !== 'all';
 	const clearFilters = () => {
 		setReason( '' );
 		setEventDate( '-1' );
-		setTransactionExpiry( 'all' );
+		setPaymentStatus( '' );
 		setPaymentMode( 'all' );
 		setPage( 1 );
 	};
@@ -308,20 +333,16 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 					<SelectControl
 						__nextHasNoMarginBottom
 						__next40pxDefaultSize
-						label={ __( 'Expired transaction', 'fair-events' ) }
-						value={ transactionExpiry }
+						label={ __( 'Payment status', 'fair-events' ) }
+						value={ paymentStatus }
 						options={ [
-							{ value: 'all', label: __( 'All', 'fair-events' ) },
 							{
-								value: 'expired',
-								label: __( 'Expired only', 'fair-events' ),
+								value: '',
+								label: __( 'All statuses', 'fair-events' ),
 							},
-							{
-								value: 'exclude_expired',
-								label: __( 'Exclude expired', 'fair-events' ),
-							},
+							...paymentStatusOptions(),
 						] }
-						onChange={ filter( setTransactionExpiry ) }
+						onChange={ filter( setPaymentStatus ) }
 					/>
 					<SelectControl
 						__nextHasNoMarginBottom

@@ -192,10 +192,14 @@ class PaymentHistoryController extends WP_REST_Controller {
 						'validate_callback' => 'rest_validate_request_arg',
 					),
 					// The finding's Connector transaction, independently of the run's `mode`.
-					'transaction_expiry' => array(
-						'type'              => 'string',
-						'enum'              => PaymentHistoryFinding::TRANSACTION_EXPIRY_VALUES,
-						'default'           => PaymentHistoryFinding::FILTER_ALL,
+					'transaction_status' => array(
+						'description'       => 'Any of these current statuses; empty for any.',
+						'type'              => 'array',
+						'items'             => array(
+							'type' => 'string',
+							'enum' => PaymentHistoryFinding::TRANSACTION_STATUSES,
+						),
+						'default'           => array(),
 						'validate_callback' => 'rest_validate_request_arg',
 					),
 					'payment_mode'       => array(
@@ -485,11 +489,11 @@ class PaymentHistoryController extends WP_REST_Controller {
 		$status   = $this->statuses( (string) $request['status'] );
 		$per_page = (int) $request['per_page'];
 		$filters  = array(
-			'status'             => $status,
-			'reason'             => (string) $request['reason'],
-			'source_type'        => (string) $request['source_type'],
-			'transaction_expiry' => (string) $request['transaction_expiry'],
-			'payment_mode'       => (string) $request['payment_mode'],
+			'status'               => $status,
+			'reason'               => (string) $request['reason'],
+			'source_type'          => (string) $request['source_type'],
+			'transaction_statuses' => (array) $request['transaction_status'],
+			'payment_mode'         => (string) $request['payment_mode'],
 		);
 		if ( (int) $request['source_id'] > 0 ) {
 			$filters['source_id'] = (int) $request['source_id'];

@@ -71,16 +71,20 @@ class PaymentHistoryFinding {
 
 	/**
 	 * Filters on the finding's Connector transaction, by its current status
-	 * and its test/live mode (not the run's `mode`). `all` matches every
-	 * finding, including those without an identifiable transaction.
+	 * and its test/live mode (not the run's `mode`). No status, or `all`
+	 * mode, matches every finding, including those without an identifiable
+	 * transaction.
 	 */
-	const FILTER_ALL                = 'all';
-	const EXPIRY_EXPIRED            = 'expired';
-	const EXPIRY_EXCLUDE_EXPIRED    = 'exclude_expired';
-	const PAYMENT_MODE_TEST         = 'test';
-	const PAYMENT_MODE_LIVE         = 'live';
-	const TRANSACTION_EXPIRY_VALUES = array( self::FILTER_ALL, self::EXPIRY_EXPIRED, self::EXPIRY_EXCLUDE_EXPIRED );
-	const PAYMENT_MODE_VALUES       = array( self::FILTER_ALL, self::PAYMENT_MODE_TEST, self::PAYMENT_MODE_LIVE );
+	const FILTER_ALL          = 'all';
+	const PAYMENT_MODE_TEST   = 'test';
+	const PAYMENT_MODE_LIVE   = 'live';
+	const PAYMENT_MODE_VALUES = array( self::FILTER_ALL, self::PAYMENT_MODE_TEST, self::PAYMENT_MODE_LIVE );
+
+	/**
+	 * The statuses Connector stores on a transaction: its own, Mollie's, and
+	 * those a Mollie CSV import maps to.
+	 */
+	const TRANSACTION_STATUSES = array( 'draft', 'pending_payment', 'open', 'pending', 'authorized', 'paid', 'failed', 'canceled', 'expired', 'refunded', 'charged_back' );
 
 	/**
 	 * Table name.
@@ -190,7 +194,7 @@ class PaymentHistoryFinding {
 	 *
 	 * @param string $mode    Mode.
 	 * @param array  $filters reason, event_date_id, status (a status or a list), source_type, source_id,
-	 *                        transaction_expiry, payment_mode, after_id, limit, offset.
+	 *                        transaction_statuses, payment_mode, after_id, limit, offset.
 	 * @return array[] Rows with decoded detail.
 	 */
 	public static function query( $mode, array $filters = array() ) {
@@ -394,7 +398,7 @@ class PaymentHistoryFinding {
 
 	/**
 	 * The condition on a finding's Connector transaction, for the
-	 * transaction_expiry and payment_mode filters. The transaction is the
+	 * transaction_statuses (any of them) and payment_mode filters. The transaction is the
 	 * one PaymentHistoryReconciliation::transaction_id_of() reads: the
 	 * source of a transaction finding, otherwise `detail.transaction_id`.
 	 * A finding whose transaction can't be found never matches an active
@@ -408,13 +412,10 @@ class PaymentHistoryFinding {
 		$conditions = array();
 		$args       = array();
 
-		$expiry = (string) ( $filters['transaction_expiry'] ?? self::FILTER_ALL );
-		if ( self::EXPIRY_EXPIRED === $expiry ) {
-			$conditions[] = 't.status = %s';
-			$args[]       = 'expired';
-		} elseif ( self::EXPIRY_EXCLUDE_EXPIRED === $expiry ) {
-			$conditions[] = 't.status <> %s';
-			$args[]       = 'expired';
+		$statuses = array_values( array_unique( array_filter( array_map( 'strval', (array) ( $filters['transaction_statuses'] ?? array() ) ) ) ) );
+		if ( $statuses ) {
+			$conditions[] = 't.status IN ( ' . implode( ', ', array_fill( 0, count( $statuses ), '%s' ) ) . ' )';
+			$args         = array_merge( $args, $statuses );
 		}
 
 		$payment_mode = (string) ( $filters['payment_mode'] ?? self::FILTER_ALL );

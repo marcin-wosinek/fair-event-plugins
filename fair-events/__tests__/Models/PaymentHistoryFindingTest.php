@@ -117,8 +117,8 @@ class PaymentHistoryFindingTest extends TestCase {
 		PaymentHistoryFinding::count(
 			PaymentHistoryFinding::MODE_BACKFILL,
 			array(
-				'transaction_expiry' => PaymentHistoryFinding::FILTER_ALL,
-				'payment_mode'       => PaymentHistoryFinding::FILTER_ALL,
+				'transaction_statuses' => array(),
+				'payment_mode'         => PaymentHistoryFinding::FILTER_ALL,
 			)
 		);
 
@@ -133,12 +133,12 @@ class PaymentHistoryFindingTest extends TestCase {
 	 */
 	public function test_active_filters_match_nothing_without_connector(): void {
 		foreach ( array(
-			array( 'transaction_expiry' => PaymentHistoryFinding::EXPIRY_EXPIRED ),
-			array( 'transaction_expiry' => PaymentHistoryFinding::EXPIRY_EXCLUDE_EXPIRED ),
+			array( 'transaction_statuses' => array( 'canceled' ) ),
+			array( 'transaction_statuses' => array( 'open', 'pending_payment' ) ),
 			array( 'payment_mode' => PaymentHistoryFinding::PAYMENT_MODE_TEST ),
 			array(
-				'payment_mode'       => PaymentHistoryFinding::PAYMENT_MODE_LIVE,
-				'transaction_expiry' => PaymentHistoryFinding::EXPIRY_EXPIRED,
+				'payment_mode'         => PaymentHistoryFinding::PAYMENT_MODE_LIVE,
+				'transaction_statuses' => array( 'expired' ),
 			),
 		) as $filters ) {
 			$this->wpdb->prepared = array();

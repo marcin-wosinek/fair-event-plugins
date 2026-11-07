@@ -285,6 +285,8 @@ export function transactionStatusLabels() {
 		failed: __( 'Failed', 'fair-events' ),
 		canceled: __( 'Canceled', 'fair-events' ),
 		expired: __( 'Expired', 'fair-events' ),
+		refunded: __( 'Refunded', 'fair-events' ),
+		charged_back: __( 'Charged back', 'fair-events' ),
 	};
 }
 

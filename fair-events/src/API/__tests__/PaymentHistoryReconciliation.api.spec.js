@@ -305,13 +305,16 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		expect( t10Context.can_review ).toBe( true );
 	} );
 
-	test( 'findings filter by their payment’s expiry and test/live mode (#2219)', async () => {
+	test( 'findings filter by their payment’s status and test/live mode (#2219)', async () => {
+		const T7 = seed.transactions.T7;
 		const T10 = seed.transactions.T10;
 		const T13b = seed.transactions.T13b;
-		// T10 expired, T13b live; every other seeded payment stays a paid test one.
+		// T10 canceled, T7 expired, T13b live; every other seeded payment
+		// stays a paid test one.
 		const { previous } = await backfill( 'set-transactions', {
 			transactions: {
-				[ T10 ]: { status: 'expired' },
+				[ T7 ]: { status: 'expired' },
+				[ T10 ]: { status: 'canceled' },
 				[ T13b ]: { testmode: 0 },
 			},
 		} );
@@ -335,11 +338,13 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			};
 		}
 		const ids = ( items ) => items.map( ( item ) => item.id ).sort();
+		const payments = ( result ) =>
+			new Set( result.items.map( transactionOf ) );
 
 		try {
 			const all = await list( {} );
 			expect(
-				await list( { transaction_expiry: 'all', payment_mode: 'all' } )
+				await list( { transaction_status: '', payment_mode: 'all' } )
 			).toEqual( all );
 			// Records without an identifiable payment are listed under All.
 			const withoutPayment = all.items.filter(
@@ -353,82 +358,90 @@ test.describe.serial( 'Payment history reconciliation', () => {
 					item.source_type === 'ledger_row'
 			);
 			expect( missing.length ).toBeGreaterThan( 0 );
-
-			const expired = await list( { transaction_expiry: 'expired' } );
-			expect( expired.total ).toBe( expired.items.length );
-			expect( expired.items.length ).toBeGreaterThan( 0 );
-			expect( new Set( expired.items.map( transactionOf ) ) ).toEqual(
-				new Set( [ T10 ] )
+			const unmatched = [ ...withoutPayment, ...missing ].map(
+				( item ) => item.id
 			);
 
-			const notExpired = await list( {
-				transaction_expiry: 'exclude_expired',
-			} );
-			expect( notExpired.items.map( transactionOf ) ).not.toContain(
-				T10
-			);
-			expect( notExpired.items.map( transactionOf ) ).toContain( T13b );
-			expect( notExpired.items.every( transactionOf ) ).toBe( true );
-			for ( const item of [ ...withoutPayment, ...missing ] ) {
-				expect( ids( notExpired.items ) ).not.toContain( item.id );
-			}
+			const canceled = await list( { transaction_status: 'canceled' } );
+			expect( canceled.total ).toBe( canceled.items.length );
+			expect( payments( canceled ) ).toEqual( new Set( [ T10 ] ) );
+
+			// Several statuses match any of them.
+			expect(
+				payments(
+					await list( { transaction_status: 'canceled,expired' } )
+				)
+			).toEqual( new Set( [ T7, T10 ] ) );
+
+			const paid = await list( { transaction_status: 'paid' } );
+			expect( payments( paid ) ).toContain( T13b );
+			expect( payments( paid ) ).not.toContain( T10 );
+			expect( payments( paid ) ).not.toContain( T7 );
+			expect(
+				ids( paid.items ).filter( ( id ) => unmatched.includes( id ) )
+			).toEqual( [] );
 
 			const live = await list( { payment_mode: 'live' } );
-			expect( live.items.map( transactionOf ) ).toContain( T13b );
-			expect( live.items.map( transactionOf ) ).not.toContain( T10 );
+			expect( payments( live ) ).toContain( T13b );
+			expect( payments( live ) ).not.toContain( T10 );
 			const testOnly = await list( { payment_mode: 'test' } );
-			expect( testOnly.items.map( transactionOf ) ).toContain( T10 );
-			expect( testOnly.items.map( transactionOf ) ).not.toContain( T13b );
-			for ( const item of [ ...withoutPayment, ...missing ] ) {
-				expect( ids( testOnly.items ) ).not.toContain( item.id );
-				expect( ids( live.items ) ).not.toContain( item.id );
+			expect( payments( testOnly ) ).toContain( T10 );
+			expect( payments( testOnly ) ).not.toContain( T13b );
+			for ( const result of [ live, testOnly ] ) {
+				expect(
+					ids( result.items ).filter( ( id ) =>
+						unmatched.includes( id )
+					)
+				).toEqual( [] );
 			}
 
 			// Combined: every condition holds, with each other and the
 			// existing filters.
-			const none = await list( {
-				payment_mode: 'live',
-				transaction_expiry: 'expired',
-			} );
-			expect( none ).toEqual( { items: [], total: 0, pages: 1 } );
-			const expiredTest = await list( {
-				payment_mode: 'test',
-				transaction_expiry: 'expired',
-				reason: 'no_evidence',
-				event_date_id: dates.A,
-			} );
 			expect(
-				expiredTest.items.map( ( item ) => item.source_id )
-			).toEqual( [ T10 ] );
+				await list( {
+					payment_mode: 'live',
+					transaction_status: 'canceled',
+				} )
+			).toEqual( { items: [], total: 0, pages: 1 } );
 			expect(
 				(
 					await list( {
 						payment_mode: 'test',
-						transaction_expiry: 'exclude_expired',
+						transaction_status: 'canceled',
 						reason: 'no_evidence',
 						event_date_id: dates.A,
 					} )
-				).items.map( transactionOf )
+				).items.map( ( item ) => item.source_id )
+			).toEqual( [ T10 ] );
+			expect(
+				payments(
+					await list( {
+						payment_mode: 'test',
+						transaction_status: 'paid',
+						reason: 'no_evidence',
+						event_date_id: dates.A,
+					} )
+				)
 			).not.toContain( T10 );
 
 			// Totals and pages count every match, not one page.
-			const paged = [];
+			const pagedItems = [];
 			let pages = 1;
 			for ( let page = 1; page <= pages; page++ ) {
 				const result = await list(
-					{ transaction_expiry: 'exclude_expired' },
+					{ transaction_status: 'paid' },
 					2,
 					page
 				);
-				expect( result.total ).toBe( notExpired.total );
+				expect( result.total ).toBe( paid.total );
 				pages = result.pages;
-				paged.push( ...result.items );
+				pagedItems.push( ...result.items );
 			}
-			expect( pages ).toBe( Math.ceil( notExpired.total / 2 ) );
-			expect( ids( paged ) ).toEqual( ids( notExpired.items ) );
+			expect( pages ).toBe( Math.ceil( paid.total / 2 ) );
+			expect( ids( pagedItems ) ).toEqual( ids( paid.items ) );
 
 			for ( const params of [
-				{ transaction_expiry: 'paid' },
+				{ transaction_status: 'cancelled' },
 				{ payment_mode: 'dry_run' },
 			] ) {
 				const response = await api.get( `${ ROUTE }/findings`, {
@@ -446,7 +459,6 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			await backfill( 'set-transactions', { transactions: previous } );
 		}
 	} );
-
 	test( 'a decision needs a note and a valid allocation', async () => {
 		const t7 = await findingOf( 'transaction', seed.transactions.T7 );
 		const s11a = seed.signups.S11a;
