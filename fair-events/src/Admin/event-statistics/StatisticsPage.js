@@ -1,8 +1,9 @@
 /**
  * Standalone Event Statistics page
  *
- * The statistics come from Fair Audience's participant and payment data, so
- * without that plugin the page explains the missing dependency instead of
+ * Statistics read Fair Events' own records once payment records are moved
+ * to Fair Events, and Fair Audience's records before that. When neither can
+ * be read the page explains how to make them available instead of
  * rendering charts that cannot load.
  *
  * @package FairEvents
@@ -14,18 +15,26 @@ import EventStatistics from './EventStatistics.js';
 
 export default function StatisticsPage( {
 	eventDateId,
-	audienceActive,
+	statisticsAvailable,
 	manageEventUrl,
+	paymentHistoryUrl,
 } ) {
-	if ( ! audienceActive ) {
+	if ( ! statisticsAvailable ) {
 		return (
 			<Notice status="warning" isDismissible={ false }>
 				<p>
 					{ __(
-						'Event statistics need the Fair Audience plugin, which records tickets and payments. Activate Fair Audience to see sales and activity charts for this event.',
+						'Event statistics aren’t available yet. Activate Fair Audience, or move its payment records to Fair Events on the Payment history page.',
 						'fair-events'
 					) }
 				</p>
+				{ paymentHistoryUrl ? (
+					<p>
+						<a href={ paymentHistoryUrl }>
+							{ __( 'Open Payment history', 'fair-events' ) }
+						</a>
+					</p>
+				) : null }
 				{ eventDateId && manageEventUrl ? (
 					<p>
 						<a

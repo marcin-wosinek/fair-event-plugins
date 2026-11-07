@@ -341,6 +341,80 @@ describe( 'EventStatistics component', () => {
 		).toEqual( amountSeries );
 	} );
 
+	it( 'shows unavailable revenue without an amount, distinct from zero', async () => {
+		mockApi( {
+			revenue_state: 'unavailable',
+			total_sales_amount: null,
+			amount_series: [
+				{ date: '2026-06-14', label: '1 day before', amount: null },
+			],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect(
+			await screen.findByText( 'Revenue unavailable' )
+		).toBeInTheDocument();
+		expect( screen.queryByText( /€/ ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByText( /Activate Fair Payments Connector/ )
+		).toBeInTheDocument();
+		expect( screen.queryByTestId( 'amount-area' ) ).not.toBeInTheDocument();
+		expect( screen.getByText( '3 tickets' ) ).toBeInTheDocument();
+		const [ ticketsDownload, amountDownload ] = screen.getAllByRole(
+			'button',
+			{ name: 'Download PNG' }
+		);
+		expect( ticketsDownload ).not.toHaveAttribute(
+			'aria-disabled',
+			'true'
+		);
+		expect( amountDownload ).toHaveAttribute( 'aria-disabled', 'true' );
+	} );
+
+	it( 'marks incomplete revenue with the unresolved count and a review link', async () => {
+		mockApi( {
+			revenue_state: 'incomplete',
+			total_sales_amount: 12.5,
+			unresolved_payments: 2,
+			reconciliation_url:
+				'http://example.com/wp-admin/admin.php?page=fair-events-payment-history',
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect(
+			await screen.findByText( /2 paid payments aren’t linked/ )
+		).toBeInTheDocument();
+		expect( screen.getByText( '(incomplete)' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Review payment history' } )
+		).toHaveAttribute(
+			'href',
+			'http://example.com/wp-admin/admin.php?page=fair-events-payment-history'
+		);
+		expect(
+			screen.getByText(
+				'Incomplete: only payments linked to this event’s purchases are included.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows covering series pass revenue apart from the total', async () => {
+		mockApi( {
+			revenue_state: 'available',
+			total_sales_amount: 12.5,
+			series_pass_revenue: 80,
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect(
+			await screen.findByText( /Plus €\s?80[.,]00 from series passes/ )
+		).toBeInTheDocument();
+		expect( screen.getByText( /€\s?12[.,]50/ ) ).toBeInTheDocument();
+	} );
+
 	it( 'shows statistics failures', async () => {
 		apiFetch.mockRejectedValue( new Error( 'Statistics unavailable' ) );
 

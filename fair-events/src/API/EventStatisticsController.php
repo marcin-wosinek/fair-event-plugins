@@ -15,6 +15,9 @@ use FairEvents\Models\EventDates;
 use FairEvents\Models\TicketType;
 use FairEvents\Services\EventCapacityStatistics;
 use FairEvents\Services\EventTicketStatistics;
+use FairEvents\Services\PaymentHistoryCompatibility;
+use FairEvents\Services\PaymentHistoryReaders;
+use FairEvents\Services\PurchasePaymentHistory;
 use FairEventsShared\Money;
 use WP_Error;
 use WP_REST_Controller;
@@ -26,10 +29,17 @@ defined( 'WPINC' ) || die;
 
 /**
  * Provides display-ready sales statistics for one event occurrence: confirmed
- * ticket counts and activity aggregates (see EventTicketStatistics), revenue
- * from Fair Audience's payment ledger of the qualifying relationships, and
- * the places currently taken against each capacity limit (see
+ * ticket counts and activity aggregates (see EventTicketStatistics), revenue,
+ * and the places currently taken against each capacity limit (see
  * EventCapacityStatistics).
+ *
+ * Once the Events readers are active (PaymentHistoryReaders,
+ * PAYMENT_HISTORY_MIGRATION.md §8.14) revenue is the paid allocations of
+ * the date's purchases (PurchasePaymentHistory) and Fair Audience isn't
+ * needed. Until then it comes from Fair Audience's payment ledger of the
+ * qualifying relationships, as before. Either way `revenue_state` says
+ * whether it is `available`, `incomplete` or `unavailable`; an unavailable
+ * amount is null, never 0.
  *
  * Serves the canonical fair-events/v1 route and, for existing consumers, the
  * fair-audience/v1 path the endpoint had before it moved here.
@@ -72,34 +82,25 @@ class EventStatisticsController extends WP_REST_Controller {
 	const DEFAULT_HISTORY_DAYS = 30;
 
 	/**
-	 * Event participant repository.
-	 *
-	 * @var EventParticipantRepository
-	 */
-	private $event_participant_repo;
-
-	/**
-	 * Participant transaction repository.
-	 *
-	 * @var EventParticipantTransactionRepository
-	 */
-	private $transaction_repo;
-
-	/**
-	 * Whether Fair Audience provides the participant and payment data the
-	 * statistics need.
+	 * Whether statistics can be served: the Events readers are active, or
+	 * Fair Audience provides the participant and payment data the
+	 * pre-activation statistics read.
 	 *
 	 * @return bool
 	 */
 	public static function is_available() {
-		return method_exists( EventParticipantRepository::class, 'get_confirmed_sales_rows' )
-			&& method_exists( EventParticipantTransactionRepository::class, 'get_paid_statistics_transactions' );
+		return PaymentHistoryReaders::maybe_activate_without_history() || self::legacy_available();
 	}
 
-	/** Constructor. */
-	public function __construct() {
-		$this->event_participant_repo = new EventParticipantRepository();
-		$this->transaction_repo       = new EventParticipantTransactionRepository();
+	/**
+	 * Whether Fair Audience provides what the pre-activation statistics
+	 * read.
+	 *
+	 * @return bool
+	 */
+	public static function legacy_available() {
+		return method_exists( EventParticipantRepository::class, 'get_confirmed_sales_rows' )
+			&& method_exists( EventParticipantTransactionRepository::class, 'get_paid_statistics_transactions' );
 	}
 
 	/**
@@ -178,26 +179,15 @@ class EventStatisticsController extends WP_REST_Controller {
 		$today        = new DateTimeImmutable( 'today', $timezone );
 		$recorded_end = $today < $end ? $today : $end;
 
-		$rows                = $this->get_qualifying_sales_rows( $event_date );
-		$currency            = Money::site_currency();
-		$transactions        = $this->transaction_repo->get_paid_statistics_transactions( wp_list_pluck( $rows, 'id' ) );
-		$daily_amounts       = array();
-		$excluded_currencies = array();
-		$total_sales_amount  = 0.0;
-		foreach ( $transactions as $transaction ) {
-			if ( strtoupper( (string) $transaction['currency'] ) !== $currency ) {
-				$excluded_currencies[] = strtoupper( (string) $transaction['currency'] );
-				continue;
-			}
-			$amount = (float) $transaction['amount'] * ( 'refund' === $transaction['kind'] ? -1 : 1 );
-			$date   = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $transaction['created_at'], $timezone );
-			if ( $date ) {
-				$key                   = $date->format( 'Y-m-d' );
-				$daily_amounts[ $key ] = ( $daily_amounts[ $key ] ?? 0.0 ) + $amount;
-			}
-			$total_sales_amount += $amount;
+		$currency = Money::site_currency();
+		$revenue  = PaymentHistoryReaders::active() ? PurchasePaymentHistory::event_date_revenue( $event_date ) : $this->get_legacy_revenue( $event_date, $currency );
+		if ( null === $revenue ) {
+			return new WP_Error( 'statistics_unavailable', __( 'Event statistics need Fair Audience until payment records are moved to Fair Events.', 'fair-events' ), array( 'status' => 503 ) );
 		}
-		$excluded_currencies = array_values( array_unique( $excluded_currencies ) );
+		$available           = PurchasePaymentHistory::STATE_UNAVAILABLE !== $revenue['state'];
+		$daily_amounts       = $revenue['daily'];
+		$excluded_currencies = $revenue['excluded_currencies'];
+		$total_sales_amount  = $available ? (float) $revenue['total'] : null;
 		$tickets             = EventTicketStatistics::for_event_date( $event_date );
 		$daily_sales         = $tickets['daily'];
 
@@ -207,7 +197,7 @@ class EventStatisticsController extends WP_REST_Controller {
 			$window_start = $recorded_end;
 		}
 		$cumulative        = 0;
-		$cumulative_amount = 0.0;
+		$cumulative_amount = $available ? 0.0 : null;
 		foreach ( $daily_sales as $date => $count ) {
 			if ( $date < $window_start->format( 'Y-m-d' ) ) {
 				$cumulative += $count;
@@ -225,8 +215,10 @@ class EventStatisticsController extends WP_REST_Controller {
 		while ( $cursor <= $end ) {
 			$key = $cursor->format( 'Y-m-d' );
 			if ( $cursor < $recorded_end ) {
-				$cumulative        += $daily_sales[ $key ] ?? 0;
-				$cumulative_amount += $daily_amounts[ $key ] ?? 0.0;
+				$cumulative += $daily_sales[ $key ] ?? 0;
+				if ( $available ) {
+					$cumulative_amount += $daily_amounts[ $key ] ?? 0.0;
+				}
 			} elseif ( $key === $recorded_end->format( 'Y-m-d' ) ) {
 				// Fold all remaining confirmations into the final visible point.
 				$cumulative        = $tickets['total'];
@@ -254,6 +246,14 @@ class EventStatisticsController extends WP_REST_Controller {
 				'total_sales'                         => $tickets['total'],
 				'currency'                            => $currency,
 				'total_sales_amount'                  => $total_sales_amount,
+				'revenue_state'                       => $revenue['state'],
+				// Paid money for the date not yet allocated to its purchases.
+				'unresolved_payments'                 => (int) $revenue['unresolved'],
+				'reconciliation_url'                  => 'incomplete' === $revenue['state'] ? admin_url( 'admin.php?page=fair-events-payment-history' ) : null,
+				// Whole-series pass revenue covering a generated occurrence,
+				// counted on its master and never in this total (§7.2).
+				'series_pass_revenue'                 => $available ? $revenue['series_pass_revenue'] : null,
+				'payment_readers'                     => PaymentHistoryReaders::active() ? 'events' : 'audience',
 				'amount_series'                       => $amount_series,
 				'excluded_currencies'                 => $excluded_currencies,
 				'start_date'                          => $start->format( 'Y-m-d' ),
@@ -272,6 +272,55 @@ class EventStatisticsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Revenue from Fair Audience's ledger, before the reader activation:
+	 * the paid transactions of the qualifying relationships, refunds
+	 * subtracted, by the ledger row's day.
+	 *
+	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
+	 * @param string                        $currency   Site currency.
+	 * @return array|null Revenue summary shaped like PurchasePaymentHistory::event_date_revenue(), or null without Fair Audience.
+	 */
+	private function get_legacy_revenue( $event_date, $currency ) {
+		if ( ! self::legacy_available() ) {
+			return null;
+		}
+		if ( ! PaymentHistoryCompatibility::payment_information_available() ) {
+			return PurchasePaymentHistory::summarize( array(), array(), $currency, false );
+		}
+
+		$rows                = $this->get_qualifying_sales_rows( $event_date );
+		$transactions        = ( new EventParticipantTransactionRepository() )->get_paid_statistics_transactions( wp_list_pluck( $rows, 'id' ) );
+		$timezone            = wp_timezone();
+		$daily_amounts       = array();
+		$excluded_currencies = array();
+		$total               = 0.0;
+		foreach ( $transactions as $transaction ) {
+			if ( strtoupper( (string) $transaction['currency'] ) !== $currency ) {
+				$excluded_currencies[] = strtoupper( (string) $transaction['currency'] );
+				continue;
+			}
+			$amount = (float) $transaction['amount'] * ( 'refund' === $transaction['kind'] ? -1 : 1 );
+			$date   = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $transaction['created_at'], $timezone );
+			if ( $date ) {
+				$key                   = $date->format( 'Y-m-d' );
+				$daily_amounts[ $key ] = ( $daily_amounts[ $key ] ?? 0.0 ) + $amount;
+			}
+			$total += $amount;
+		}
+
+		return array(
+			'state'               => PurchasePaymentHistory::STATE_AVAILABLE,
+			'currency'            => $currency,
+			'total'               => $total,
+			'daily'               => $daily_amounts,
+			'excluded_currencies' => array_values( array_unique( $excluded_currencies ) ),
+			'unresolved'          => 0,
+			// The ledger adds covering passes into the occurrence's total.
+			'series_pass_revenue' => null,
+		);
+	}
+
+	/**
 	 * Get the signed-up relationships whose payments count as revenue: direct
 	 * relationships plus qualifying whole-series passes. Revenue only; ticket
 	 * counts come from EventTicketStatistics.
@@ -280,7 +329,8 @@ class EventStatisticsController extends WP_REST_Controller {
 	 * @return array[] Confirmed relationship rows.
 	 */
 	private function get_qualifying_sales_rows( $event_date ) {
-		$rows = $this->event_participant_repo->get_confirmed_sales_rows( (int) $event_date->id );
+		$repository = new EventParticipantRepository();
+		$rows       = $repository->get_confirmed_sales_rows( (int) $event_date->id );
 		if ( 'generated' !== $event_date->occurrence_type || ! $event_date->master_id ) {
 			return $rows;
 		}
@@ -288,7 +338,7 @@ class EventStatisticsController extends WP_REST_Controller {
 		$participant_ids = array_fill_keys( array_map( 'intval', wp_list_pluck( $rows, 'participant_id' ) ), true );
 		// A pass covers the occurrences that had not started when it was bought.
 		$occurrence_time = strtotime( (string) \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() ) );
-		foreach ( $this->event_participant_repo->get_confirmed_sales_rows( (int) $event_date->master_id ) as $row ) {
+		foreach ( $repository->get_confirmed_sales_rows( (int) $event_date->master_id ) as $row ) {
 			$participant_id = (int) $row['participant_id'];
 			if ( isset( $participant_ids[ $participant_id ] ) || empty( $row['ticket_type_id'] ) ) {
 				continue;

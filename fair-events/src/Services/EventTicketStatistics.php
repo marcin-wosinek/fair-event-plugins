@@ -31,6 +31,10 @@ defined( 'WPINC' ) || die;
  * tickets are left out of the activity charts and reported instead of
  * guessing which ticket chose what.
  *
+ * Once the Events readers are active (PaymentHistoryReaders, §8.14) only
+ * Events purchases and their ticket activities count: neither Fair
+ * Audience relationships nor participant-scope activities are read.
+ *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- scope clauses hold only code-defined column names and generated placeholders.
  */
@@ -306,6 +310,11 @@ class EventTicketStatistics {
 	private static function get_relationships_without_signup( array $scope ) {
 		global $wpdb;
 
+		// After the reader activation only Events purchases admit (§8.14).
+		if ( PaymentHistoryReaders::active() ) {
+			return array();
+		}
+
 		list( $clause, $args ) = self::scope_clause( $scope, 'ep.event_date_id', 'ep.created_at', get_gmt_from_date( $scope['start'] ) );
 
 		$provenance_clause = '';
@@ -349,6 +358,11 @@ class EventTicketStatistics {
 	 */
 	private static function get_participant_scope_selections( array $scope ) {
 		global $wpdb;
+
+		// After the reader activation only ticket activities count (§8.14).
+		if ( PaymentHistoryReaders::active() ) {
+			return array();
+		}
 
 		$event_date_ids = count( $scope['series_ids'] ) < 2 ? array( $scope['event_date_id'] ) : $scope['series_ids'];
 

@@ -13,14 +13,19 @@ domReady( () => {
 		'fair-events-event-statistics-root'
 	);
 	if ( container ) {
-		const { eventDateId, audienceActive, manageEventUrl } =
-			window.fairEventsEventStatisticsData || {};
+		const {
+			eventDateId,
+			statisticsAvailable,
+			manageEventUrl,
+			paymentHistoryUrl,
+		} = window.fairEventsEventStatisticsData || {};
 		const root = createRoot( container );
 		root.render(
 			<StatisticsPage
 				eventDateId={ eventDateId }
-				audienceActive={ !! audienceActive }
+				statisticsAvailable={ !! statisticsAvailable }
 				manageEventUrl={ manageEventUrl }
+				paymentHistoryUrl={ paymentHistoryUrl }
 			/>
 		);
 	}

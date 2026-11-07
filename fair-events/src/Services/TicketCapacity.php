@@ -135,13 +135,15 @@ class TicketCapacity {
 		/**
 		 * Filters the number of active admissions on an event date that have
 		 * no fair-events signup behind them (e.g. a companion plugin's
-		 * relationships that predate ticket units).
+		 * relationships that predate ticket units). Not applied once the
+		 * Events readers are active (PaymentHistoryReaders): only Events
+		 * purchases take places then.
 		 *
 		 * @param int    $count Admissions without a signup. Default 0.
 		 * @param string $scope 'event_date'.
 		 * @param int    $id    Event date ID.
 		 */
-		$legacy = (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'event_date', $event_date_id );
+		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'event_date', $event_date_id );
 
 		return $units + $unbackfilled + max( 0, $legacy );
 	}
@@ -183,7 +185,7 @@ class TicketCapacity {
 		);
 
 		/** This filter is documented in TicketCapacity::count_event_date(). */
-		$legacy = (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'ticket_type', $ticket_type_id );
+		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'ticket_type', $ticket_type_id );
 
 		return $units + $unbackfilled + max( 0, $legacy );
 	}
@@ -297,14 +299,15 @@ class TicketCapacity {
 		 * Filters the number of active activity selections on an occurrence
 		 * that are not stored on an individual ticket (e.g. a companion
 		 * plugin's participant-level selections from before activities were
-		 * stored per ticket).
+		 * stored per ticket). Not applied once the Events readers are active
+		 * (PaymentHistoryReaders).
 		 *
 		 * @param int   $count            Selections without a ticket. Default 0.
 		 * @param int   $ticket_option_id Ticket option ID.
 		 * @param int   $event_date_id    Occurrence (event date) ID.
 		 * @param int[] $series_ids       Every event date of the occurrence's series (just the occurrence outside a series).
 		 */
-		$legacy = (int) apply_filters( 'fair_events_capacity_legacy_activity_selections', 0, $ticket_option_id, $event_date_id, count( $series_ids ) < 2 ? array( $event_date_id ) : $series_ids );
+		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_activity_selections', 0, $ticket_option_id, $event_date_id, count( $series_ids ) < 2 ? array( $event_date_id ) : $series_ids );
 
 		return $selections + max( 0, $legacy );
 	}
