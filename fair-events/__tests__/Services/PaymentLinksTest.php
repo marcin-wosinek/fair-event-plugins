@@ -466,6 +466,39 @@ class PaymentLinksTest extends TestCase {
 	}
 
 	/**
+	 * The cutover is on only once an activation is recorded, and a later
+	 * verification failure doesn't turn it off: authority never moves back
+	 * to the ledger (§8.5). Without the storage it relies on it is off.
+	 *
+	 * @return void
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_cutover_follows_the_recorded_activation_only() {
+		self::activate_connector();
+		$option = PaymentHistoryCompatibility::STATE_OPTION;
+
+		$GLOBALS['_fair_test_options'][ $option ] = array(
+			'status'  => 'verified',
+			'cutover' => array(),
+		);
+		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
+
+		$GLOBALS['_fair_test_options'][ $option ]['cutover'] = array(
+			'activated_at' => '2026-11-07 10:00:00',
+			'user_id'      => 1,
+		);
+		$this->assertTrue( PaymentHistoryCompatibility::ownership_cutover() );
+
+		$GLOBALS['_fair_test_options'][ $option ]['status'] = 'verification_failed';
+		$this->assertFalse( PaymentHistoryCompatibility::migration_verified() );
+		$this->assertTrue( PaymentHistoryCompatibility::ownership_cutover() );
+
+		$GLOBALS['_fair_test_options']['fair_events_db_version'] = PaymentHistoryCompatibility::STORAGE_DB_VERSION;
+		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
+	}
+
+	/**
 	 * Shadow writes are supported from the shadow work schema on, and cover
 	 * the live writers once their floors are recorded; the backfill is then
 	 * no longer blocked by them.

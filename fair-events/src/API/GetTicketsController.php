@@ -1210,6 +1210,14 @@ class GetTicketsController extends WP_REST_Controller {
 			}
 		}
 
+		// After the payment history cutover the attempt's links are written
+		// before the buyer is sent to pay. It's a no-op once written, so a
+		// checkout continued after an interruption records them then.
+		$recorded = $this->record_payment_attempt( $transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
 		if ( ! $checkout['hooks_fired'] ) {
 			if ( ! $open ) {
 				return $this->checkout_closed_error();
@@ -1372,6 +1380,35 @@ class GetTicketsController extends WP_REST_Controller {
 		if ( $checkout['id'] ) {
 			CheckoutKey::mark_hooks_fired( $checkout['id'] );
 		}
+	}
+
+	/**
+	 * Write an attempt's payment links when they are authoritative (the
+	 * payment history cutover, PurchaseLifecycle). Before it, the shadow
+	 * writer records them after the request.
+	 *
+	 * @param int $transaction_id Connector transaction ID.
+	 * @return true|WP_Error True when recorded or not needed; an error the
+	 *                       buyer can retry otherwise.
+	 */
+	private function record_payment_attempt( $transaction_id ) {
+		if ( ! \FairEvents\Services\PurchaseLifecycle::active() ) {
+			return true;
+		}
+
+		$recorded = \FairEvents\Services\PurchaseLifecycle::record_attempt( (int) $transaction_id );
+		if ( ! is_wp_error( $recorded ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'payment_not_recorded',
+			__( 'Your purchase could not be recorded right now. Please try again in a moment.', 'fair-events' ),
+			array(
+				'status' => 503,
+				'reason' => $recorded->get_error_code(),
+			)
+		);
 	}
 
 	/**
@@ -3494,7 +3531,7 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$signup_ids  = \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
+		$signup_ids  = \FairEvents\Services\PurchaseLifecycle::current_signup_ids( $transaction );
 		$signup_rows = array_values(
 			array_filter(
 				array_map(
@@ -3643,6 +3680,13 @@ class GetTicketsController extends WP_REST_Controller {
 			return $new_transaction_id;
 		}
 
+		// The new attempt is linked before the purchases move to it, so a
+		// purchase never points at an attempt missing from its history.
+		$recorded = $this->record_payment_attempt( (int) $new_transaction_id );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
+
 		foreach ( $signup_rows as $row ) {
 			\FairEvents\Models\EventSignup::update_transaction( (int) $row->id, (int) $new_transaction_id, 'pending_payment' );
 		}
@@ -3742,7 +3786,7 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$signup_ids = \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
+		$signup_ids = \FairEvents\Services\PurchaseLifecycle::current_signup_ids( $transaction );
 		if ( empty( $signup_ids ) ) {
 			return new WP_Error(
 				'invalid_cancel_state',

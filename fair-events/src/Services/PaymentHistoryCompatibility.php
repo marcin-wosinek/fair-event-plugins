@@ -26,7 +26,7 @@ defined( 'WPINC' ) || die;
  * - migration_verified(): the backfill finished and its verification
  *   report was clean (§8.4). Set by stage 3; false until then.
  * - ownership_cutover(): payment links are authoritative for purchases.
- *   False until stage 4.
+ *   True once the stage 4 activation is recorded.
  *
  * backfill_blockers() lists what stops the stage 3 backfill from starting.
  * Fair Audience calls into this class only after checking it and the method
@@ -147,13 +147,25 @@ class PaymentHistoryCompatibility {
 	}
 
 	/**
-	 * Whether payment links are the authority for purchase payments. Nothing
-	 * switches authority before stage 4.
+	 * Whether payment links are the authority for purchase payments (stage
+	 * 4, §8.1): the lifecycle writes links first and resolves purchases from
+	 * them (PurchaseLifecycle).
+	 *
+	 * True once an administrator's activation is recorded in the state
+	 * option's `cutover` entry and the storage it relies on (links and the
+	 * work queue) exists. The activation is kept apart from the backfill's
+	 * mutable `status`: a later verification failure never clears it, so
+	 * ledger authority is never silently restored and recovery is forward
+	 * repair (§8.5). Only the stage 4 activation writes the entry.
 	 *
 	 * @return bool
 	 */
 	public static function ownership_cutover() {
-		return false;
+		if ( ! self::storage_available() || version_compare( Schema::get_db_version(), self::SHADOW_DB_VERSION, '<' ) ) {
+			return false;
+		}
+		$cutover = self::get_state()['cutover'] ?? null;
+		return is_array( $cutover ) && ! empty( $cutover['activated_at'] );
 	}
 
 	/**

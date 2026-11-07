@@ -10,6 +10,7 @@
 namespace FairEvents\Hooks;
 
 use FairEvents\Core\Cron;
+use FairEvents\Services\PurchaseLifecycle;
 
 defined( 'WPINC' ) || die;
 
@@ -59,113 +60,57 @@ class PaymentHooks {
 	/**
 	 * On payment paid: flip matching get-tickets signup(s) to confirmed.
 	 *
-	 * A 'multiple_instances' ticket-type purchase creates one signup row per
-	 * chosen occurrence under a single transaction; every other purchase
-	 * creates exactly one row, so resolve_signup_ids() always returns at
-	 * least the single-row case.
+	 * After the payment history cutover the purchases come from the
+	 * attempt's payment links (PurchaseLifecycle), so a late payment for a
+	 * superseded attempt confirms its purchase too. Before it, they come
+	 * from the transaction's metadata: a 'multiple_instances' ticket-type
+	 * purchase creates one signup row per chosen occurrence under a single
+	 * transaction; every other purchase creates exactly one row.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_paid( $payment, $transaction ) {
+		if ( PurchaseLifecycle::active() ) {
+			PurchaseLifecycle::handle_paid( $transaction );
+			return;
+		}
+
 		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			if ( ! self::confirm_paid_signup( $signup_id ) ) {
+			if ( ! PurchaseLifecycle::confirm_paid_signup( $signup_id ) ) {
 				continue;
 			}
 
 			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
 			if ( $signup ) {
-				/**
-				 * Fires when a base-route signup's payment is confirmed.
-				 *
-				 * @param object $signup      The fair_events_signups row (status already 'confirmed').
-				 * @param object $transaction Transaction object from fair-payments-connector.
-				 */
-				do_action( 'fair_events_signup_confirmed', $signup, $transaction );
+				PurchaseLifecycle::announce_confirmed( $signup, $transaction );
 			}
 		}
 	}
 
 	/**
-	 * Confirm a paid signup. The payment is always honored. A signup whose
-	 * hold had already lapsed no longer held its places, nor the places of
-	 * its tickets' activities, so they are rechecked under the capacity
-	 * lock; when they have been taken in the meantime the signup is flagged
-	 * over capacity for the organizer, and so is each activity that went
-	 * past its limit.
-	 *
-	 * @param int $signup_id Signup row ID.
-	 * @return bool True when the signup transitioned to confirmed.
-	 */
-	private static function confirm_paid_signup( $signup_id ) {
-		$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
-		if ( ! $signup ) {
-			return false;
-		}
-
-		if ( \FairEvents\Services\TicketCapacity::signup_holds_places( $signup ) ) {
-			return \FairEvents\Models\EventSignup::confirm_paid( $signup_id );
-		}
-
-		// Each ticket asks for its place where it now is: one moved on its
-		// own on its new date, and one cancelled on its own nowhere.
-		$demands = \FairEvents\Services\TicketCapacity::demands_for_signup( $signup );
-
-		return \FairEvents\Services\TicketCapacity::with_capacity_lock(
-			$demands,
-			static function ( $shortage ) use ( $signup_id, $demands ) {
-				$shortages = $shortage
-					? \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( $demands ) )
-					: array();
-
-				if ( ! \FairEvents\Models\EventSignup::confirm_paid( $signup_id ) ) {
-					return false;
-				}
-				if ( $shortage ) {
-					\FairEvents\Models\EventSignup::mark_over_capacity( $signup_id );
-				}
-
-				$full_option_ids = array();
-				foreach ( $shortages as $found ) {
-					if ( 'ticket_option' === $found['scope'] ) {
-						$full_option_ids[] = (int) $found['id'];
-					}
-				}
-				if ( $full_option_ids ) {
-					foreach ( \FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id ) as $ticket ) {
-						\FairEvents\Models\EventTicketActivity::mark_over_capacity( (int) $ticket->id, $full_option_ids );
-					}
-				}
-
-				return true;
-			}
-		);
-	}
-
-	/**
-	 * On payment failed/canceled: mark the signup(s) as failed.
+	 * On payment failed/canceled: mark the signup(s) still awaiting this
+	 * payment as failed.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_failed( $payment, $transaction ) {
-		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			if ( ! \FairEvents\Models\EventSignup::fail_pending( $signup_id ) ) {
-				continue;
+		$failed = array();
+		if ( PurchaseLifecycle::active() ) {
+			$failed = PurchaseLifecycle::handle_failed( $transaction );
+		} else {
+			foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
+				if ( \FairEvents\Models\EventSignup::fail_pending( $signup_id ) ) {
+					$failed[] = $signup_id;
+				}
 			}
+		}
 
-			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
-			if ( $signup ) {
-				/**
-				 * Fires when a base-route signup's payment fails/cancels/expires.
-				 *
-				 * @param object $signup      The fair_events_signups row (status already 'failed').
-				 * @param object $transaction Transaction object from fair-payments-connector.
-				 */
-				do_action( 'fair_events_signup_payment_failed', $signup, $transaction );
-			}
+		foreach ( $failed as $signup_id ) {
+			PurchaseLifecycle::announce_failed( $signup_id, $transaction );
 		}
 	}
 

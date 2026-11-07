@@ -105,12 +105,16 @@ class PaymentHistoryShadowWrites {
 	 * Turn shadow writes on when the site supports them, recording the
 	 * coverage floors: transactions and relationships up to these IDs are
 	 * the historical backfill's; everything after is the live writers'.
-	 * Schedules the retry cron while coverage is on.
+	 * Schedules the retry cron while coverage is on, and after the cutover
+	 * in any case, for the lifecycle's queued work.
 	 *
 	 * @return void
 	 */
 	public static function maybe_enable() {
 		if ( ! PaymentHistoryCompatibility::shadow_writes_supported() ) {
+			if ( PaymentHistoryCompatibility::ownership_cutover() && function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::CRON_HOOK ) ) {
+				wp_schedule_event( time() + MINUTE_IN_SECONDS, self::CRON_SCHEDULE, self::CRON_HOOK );
+			}
 			return;
 		}
 
@@ -267,22 +271,32 @@ class PaymentHistoryShadowWrites {
 	 * @return void
 	 */
 	public static function run_scheduled() {
-		if ( ! PaymentHistoryCompatibility::shadow_write_coverage() ) {
+		$covered = PaymentHistoryCompatibility::shadow_write_coverage();
+		// After the cutover the lifecycle's own queued work (interrupted
+		// notifications and confirmations) is retried whatever happens to
+		// coverage: authority never moves back to the ledger (§8.5).
+		if ( ! $covered && ! PaymentHistoryCompatibility::ownership_cutover() ) {
 			return;
 		}
 
-		self::sweep();
+		if ( $covered ) {
+			self::sweep();
+		}
 		self::process_due( self::BATCH_SIZE );
 	}
 
 	/**
 	 * Process queue rows whose next attempt is due, relationships first.
+	 * Without coverage only the lifecycle's work runs.
 	 *
 	 * @param int $limit Most rows.
 	 * @return int Rows processed.
 	 */
 	public static function process_due( $limit ) {
-		$rows = PaymentShadowWork::get_due( $limit );
+		$rows = PaymentShadowWork::get_due(
+			$limit,
+			PaymentHistoryCompatibility::shadow_write_coverage() ? array() : array( PaymentShadowWork::KIND_PAYMENT, PaymentShadowWork::KIND_CONFIRMATION )
+		);
 		usort(
 			$rows,
 			static function ( $a, $b ) {
@@ -305,6 +319,15 @@ class PaymentHistoryShadowWrites {
 	 * @return string Outcome: done, failed or unresolved.
 	 */
 	public static function process( $kind, $source_id ) {
+		if ( in_array( $kind, array( PaymentShadowWork::KIND_PAYMENT, PaymentShadowWork::KIND_CONFIRMATION ), true ) ) {
+			try {
+				return PurchaseLifecycle::process_work( $kind, $source_id );
+			} catch ( \Throwable $error ) {
+				PaymentShadowWork::defer( $kind, $source_id, PaymentShadowWork::STATUS_FAILED, 'lifecycle_exception', array( 'message' => $error->getMessage() ) );
+				return 'failed';
+			}
+		}
+
 		$coverage = self::coverage();
 		if ( ! $coverage ) {
 			return 'failed';
