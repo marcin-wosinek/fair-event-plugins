@@ -7,10 +7,14 @@
  * Usage: wp eval-file .../payment-history-backfill.php <action> <json>
  *
  * Actions:
- *   seed       {eventId, dateA, dateB, dateC}  Legacy history for the
- *              contract's worked examples 3, 4, 5, 7, 9, 11, 13, 14, 16,
+ *   seed       {eventId, dateA, dateB, dateC, dateD?}  Legacy history for
+ *              the contract's worked examples 3, 4, 5, 7, 9, 11, 13, 14, 16,
  *              20, 21 and 22, written straight to the tables as older
- *              versions left it (no hook fires). Then raises the shadow
+ *              versions left it (no hook fires). With dateD, also two paid
+ *              purchases an administrator moved to date B (#2236), through
+ *              the real move and its Audience hook: one from A whose
+ *              metadata names A, one from D whose metadata names no date.
+ *              Then raises the shadow
  *              writes' coverage floors to the newest IDs, so the seeded
  *              history is the backfill's, as history before shadow writes
  *              is on a site. Prints every seeded ID.
@@ -348,6 +352,37 @@ switch ( $fixture_action ) {
 		);
 		$ledger( $r22, $t14 );
 		$ledger( $r22, $t14, 'refund' );
+
+		// #2236: a paid get-tickets purchase moved from $from to date B by
+		// an administrator. The participant keeps another active purchase on
+		// $from, so the Audience relationship and its ledger row stay there.
+		$moved = static function ( $key, $from, array $metadata ) use ( $wpdb, $t, $dates, $participant, $relationship, $transaction, $ledger, $signup ) {
+			$participant_id = $participant( 'P' . $key );
+			$signup( 'S' . $key . 'other', $from, $participant_id, '0.00' );
+			$signup_id      = $signup( 'S' . $key, $from, $participant_id, '5.00' );
+			$transaction_id = $transaction(
+				'T' . $key,
+				'5.00',
+				'paid',
+				array(
+					'source'    => 'fair-events-get-tickets',
+					'signup_id' => $signup_id,
+				) + $metadata
+			);
+			$wpdb->update( $t['transactions'], array( 'event_date_id' => $from ), array( 'id' => $transaction_id ) );
+			$wpdb->update( $t['signups'], array( 'transaction_id' => $transaction_id ), array( 'id' => $signup_id ) );
+			$ledger( $relationship( 'R' . $key, $participant_id, $from, 'signed_up' ), $transaction_id );
+
+			\FairEvents\Models\EventSignup::move_in_transaction( $signup_id, $dates['B'] );
+			do_action( 'fair_events_signup_moved', \FairEvents\Models\EventSignup::get_by_id( $signup_id ), $from );
+		};
+		if ( ! empty( $data['dateD'] ) ) {
+			$dates['D'] = (int) $data['dateD'];
+			// Explained: the immutable metadata names the original date.
+			$moved( 'M', $dates['A'], array( 'event_date_id' => $dates['A'] ) );
+			// Unexplained: only the editable transaction column names it.
+			$moved( 'N', $dates['D'], array() );
+		}
 
 		// A checkout still pending when the backfill passes; signed up later.
 		$relationship( 'R23', $participant( 'P23' ), $dates['A'], 'pending_payment', array( 'payment_expires_at' => '2024-03-01 10:15:00' ) );

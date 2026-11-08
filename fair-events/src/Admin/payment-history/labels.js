@@ -368,6 +368,7 @@ export function revenueCauseLabels() {
 			'Paid, missing from the old records',
 			'fair-events'
 		),
+		moved_purchase: __( 'Purchase moved to another date', 'fair-events' ),
 		unexpected: __( 'Unexplained difference', 'fair-events' ),
 	};
 }

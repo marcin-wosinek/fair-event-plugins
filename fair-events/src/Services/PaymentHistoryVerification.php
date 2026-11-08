@@ -33,8 +33,10 @@ defined( 'WPINC' ) || die;
  *   `shared_transaction` (§5.4), `legacy_refund_record` (§11), `unresolved`
  *   (an open finding lists it), `reconciled` (an administrator linked or
  *   reviewed it, §6.3), `not_in_ledger` (a paid purchase today's ledger
- *   reader can't reach, §8.9). Anything else is `unexpected` and
- *   blocks.
+ *   reader can't reach, §8.9), `moved_purchase` (the ledger still counts a
+ *   payment on the date its metadata names, while its fully allocated
+ *   purchase was moved to another date, §8.9). Anything else is
+ *   `unexpected` and blocks.
  *
  * Counts are per stored event date, on both sides, so a whole-series
  * pass's revenue appears once, on its master (§7.2). For a generated
@@ -50,7 +52,7 @@ class PaymentHistoryVerification {
 	/**
 	 * Causes a revenue difference may have without blocking.
 	 */
-	const EXPLAINED_CAUSES = array( 'shared_transaction', 'legacy_refund_record', 'unresolved', 'reconciled', 'not_in_ledger' );
+	const EXPLAINED_CAUSES = array( 'shared_transaction', 'legacy_refund_record', 'unresolved', 'reconciled', 'not_in_ledger', 'moved_purchase' );
 
 	/**
 	 * Classify per-transaction revenue differences of one event date.
@@ -59,7 +61,8 @@ class PaymentHistoryVerification {
 	 * @param array[] $target  Link sums: transaction_id, allocated, currency.
 	 * @param array   $context shared: tx => true (fully allocated across several purchases),
 	 *                         unresolved: tx => true (open finding),
-	 *                         reconciled: tx => true (an administrator decided it).
+	 *                         reconciled: tx => true (an administrator decided it),
+	 *                         moved: tx => true (fully allocated to purchases moved off this date).
 	 * @return array<string, array{source: float, target: float, differences: array[], unexpected: float}> Per currency.
 	 */
 	public static function classify_revenue( array $source, array $target, array $context ) {
@@ -145,6 +148,12 @@ class PaymentHistoryVerification {
 		}
 		if ( ! empty( $context['reconciled'][ $id ] ) ) {
 			return 'reconciled';
+		}
+		// The ledger relationship stayed on the original date when its
+		// purchase moved; the links count the payment once, on the
+		// purchase's current date (§8.9).
+		if ( ! empty( $context['moved'][ $id ] ) && 0 === $tx['target'] && 0 === $tx['refund'] && $tx['charge'] > 0 ) {
+			return 'moved_purchase';
 		}
 		// The ledger subtracts a refund-labelled row; links keep it as a
 		// legacy record that never counts (§11).
@@ -331,9 +340,14 @@ class PaymentHistoryVerification {
 		$activities               = self::activity_counts( $event_date_id, $audience );
 		$activities['unexpected'] = $activities['target'] - $activities['source'];
 
-		$transaction_ids = array_unique( array_merge( array_column( $revenue['source'], 'transaction_id' ), array_column( $revenue['target'], 'transaction_id' ) ) );
-		$context         = self::revenue_context( $transaction_ids );
-		$currencies      = self::classify_revenue( $revenue['source'], $revenue['target'], $context );
+		$transaction_ids  = array_unique( array_merge( array_column( $revenue['source'], 'transaction_id' ), array_column( $revenue['target'], 'transaction_id' ) ) );
+		$context          = self::revenue_context( $transaction_ids );
+		$context['moved'] = self::moved_transactions(
+			$event_date_id,
+			array_diff( array_column( $revenue['source'], 'transaction_id' ), array_column( $revenue['target'], 'transaction_id' ) ),
+			$context
+		);
+		$currencies       = self::classify_revenue( $revenue['source'], $revenue['target'], $context );
 
 		$incomplete = (bool) array_intersect_key( $context['unresolved'], array_flip( $transaction_ids ) )
 			|| (bool) array_intersect_key( $context['remainder'], array_flip( array_column( $revenue['target'], 'transaction_id' ) ) )
@@ -564,13 +578,14 @@ class PaymentHistoryVerification {
 	 * administrator.
 	 *
 	 * @param int[] $transaction_ids Transaction IDs.
-	 * @return array{shared: array<int, true>, remainder: array<int, true>, unresolved: array<int, true>, reconciled: array<int, true>}
+	 * @return array{shared: array<int, true>, complete: array<int, true>, remainder: array<int, true>, unresolved: array<int, true>, reconciled: array<int, true>}
 	 */
 	private static function revenue_context( array $transaction_ids ) {
 		global $wpdb;
 
 		$context         = array(
 			'shared'     => array(),
+			'complete'   => array(),
 			'remainder'  => array(),
 			'unresolved' => array(),
 			'reconciled' => array(),
@@ -598,6 +613,7 @@ class PaymentHistoryVerification {
 		foreach ( $rows as $row ) {
 			$id = (int) $row['transaction_id'];
 			if ( LineItemTotals::amounts_match( $row['allocated'], $row['amount'] ) ) {
+				$context['complete'][ $id ] = true;
 				if ( (int) $row['purchases'] > 1 ) {
 					$context['shared'][ $id ] = true;
 				}
@@ -638,6 +654,49 @@ class PaymentHistoryVerification {
 		}
 
 		return $context;
+	}
+
+	/**
+	 * Which of the ledger's transactions on a date belong to a purchase
+	 * moved off it: links allocate the whole transaction, none of them to a
+	 * purchase on this date, and the transaction's immutable metadata names
+	 * this date as the one it paid for. The editable transaction column is
+	 * never evidence, and a transaction with an open finding or an
+	 * administrator's decision keeps that cause (§8.9).
+	 *
+	 * @param int   $event_date_id   Event date ID.
+	 * @param int[] $transaction_ids Ledger transactions without a link on the date.
+	 * @param array $context         See revenue_context().
+	 * @return array<int, true>
+	 */
+	private static function moved_transactions( $event_date_id, array $transaction_ids, array $context ) {
+		global $wpdb;
+
+		$candidates = array();
+		foreach ( $transaction_ids as $id ) {
+			$id = (int) $id;
+			if ( ! empty( $context['complete'][ $id ] ) && empty( $context['unresolved'][ $id ] ) && empty( $context['reconciled'][ $id ] ) ) {
+				$candidates[] = $id;
+			}
+		}
+		if ( ! $candidates ) {
+			return array();
+		}
+
+		$moved = array();
+		foreach ( (array) $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, metadata FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $candidates ), '%d' ) ) . ' )',
+				array_merge( array( \FairPaymentsConnector\Database\Schema::get_payments_table_name() ), $candidates )
+			),
+			ARRAY_A
+		) as $row ) {
+			$metadata = json_decode( (string) $row['metadata'], true );
+			if ( is_array( $metadata ) && isset( $metadata['event_date_id'] ) && (int) $metadata['event_date_id'] === (int) $event_date_id ) {
+				$moved[ (int) $row['id'] ] = true;
+			}
+		}
+		return $moved;
 	}
 
 	/**
