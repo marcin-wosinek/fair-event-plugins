@@ -531,6 +531,10 @@ class AdminPages {
 			// Audience provides the data.
 			$localized_data['statisticsAvailable'] = EventStatisticsController::is_available() && current_user_can( 'manage_options' );
 
+			// The Finance tab's purchase payments read the payment links once
+			// the Events readers are active (PAYMENT_HISTORY_MIGRATION.md §8.15).
+			$localized_data['paymentReadersActive'] = \FairEvents\Services\PaymentHistoryReaders::active() && current_user_can( 'manage_options' );
+
 			// Fair Finance supplies costs, budgets and accounting entries on the
 			// Finance tab. Always present, so the tab can tell it apart from a
 			// Fair Payments Connector-only site.

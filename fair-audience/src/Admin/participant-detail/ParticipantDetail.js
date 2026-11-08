@@ -12,6 +12,7 @@ import {
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 import DeleteParticipantsModal from '../components/DeleteParticipantsModal.js';
 import FeedbackSnackbar from '../components/FeedbackSnackbar.js';
+import ParticipantPurchases from './ParticipantPurchases.js';
 import { formatTimingStart } from 'fair-events-shared/src/dateTime.js';
 
 // The All Participants page, which is the plugin's top-level menu page.
@@ -251,6 +252,9 @@ export default function ParticipantDetail() {
 	}`.trim();
 	const events = activity?.events || [];
 	const submissions = activity?.submissions || [];
+	// Once Fair Events' payment readers answer, payments are listed per
+	// purchase and the per-event ledger column isn't shown.
+	const eventsReaders = activity?.payment_readers === 'events';
 
 	return (
 		<div className="wrap fair-audience-participant-detail">
@@ -394,9 +398,14 @@ export default function ParticipantDetail() {
 											'fair-audience'
 										) }
 									</th>
-									<th>
-										{ __( 'Transaction', 'fair-audience' ) }
-									</th>
+									{ ! eventsReaders && (
+										<th>
+											{ __(
+												'Transaction',
+												'fair-audience'
+											) }
+										</th>
+									) }
 								</tr>
 							</thead>
 							<tbody>
@@ -432,48 +441,51 @@ export default function ParticipantDetail() {
 													ev.created_at
 												) }
 											</td>
-											<td>
-												{ transactionUrl ? (
-													<>
-														<a
-															href={
-																transactionUrl
-															}
-														>
-															{ `#${ ev.transaction_id }` }
-														</a>
-														{ ev.transaction_status && (
-															<span
-																title={
-																	TRANSACTION_STATUS_DISPLAY[
-																		ev
-																			.transaction_status
-																	]?.label
+											{ ! eventsReaders && (
+												<td>
+													{ transactionUrl ? (
+														<>
+															<a
+																href={
+																	transactionUrl
 																}
-																style={ {
-																	marginLeft:
-																		'6px',
-																	color: TRANSACTION_STATUS_DISPLAY[
-																		ev
-																			.transaction_status
-																	]?.color,
-																	fontWeight:
-																		'bold',
-																} }
 															>
-																{
-																	TRANSACTION_STATUS_DISPLAY[
-																		ev
-																			.transaction_status
-																	]?.label
-																}
-															</span>
-														) }
-													</>
-												) : (
-													'—'
-												) }
-											</td>
+																{ `#${ ev.transaction_id }` }
+															</a>
+															{ ev.transaction_status && (
+																<span
+																	title={
+																		TRANSACTION_STATUS_DISPLAY[
+																			ev
+																				.transaction_status
+																		]?.label
+																	}
+																	style={ {
+																		marginLeft:
+																			'6px',
+																		color: TRANSACTION_STATUS_DISPLAY[
+																			ev
+																				.transaction_status
+																		]
+																			?.color,
+																		fontWeight:
+																			'bold',
+																	} }
+																>
+																	{
+																		TRANSACTION_STATUS_DISPLAY[
+																			ev
+																				.transaction_status
+																		]?.label
+																	}
+																</span>
+															) }
+														</>
+													) : (
+														'—'
+													) }
+												</td>
+											) }
 										</tr>
 									);
 								} ) }
@@ -482,6 +494,13 @@ export default function ParticipantDetail() {
 					) }
 				</CardBody>
 			</Card>
+
+			{ eventsReaders && Array.isArray( activity.purchases ) && (
+				<ParticipantPurchases
+					purchases={ activity.purchases }
+					paymentInformation={ activity.payment_information }
+				/>
+			) }
 
 			<Card className="fair-audience-participant-detail__card">
 				<CardHeader>

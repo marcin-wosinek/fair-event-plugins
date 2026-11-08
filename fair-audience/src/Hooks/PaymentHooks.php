@@ -18,6 +18,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\EventsLifecycle;
+use FairAudience\Services\EventsPaymentReaders;
 use FairAudience\Services\TicketActivities;
 use FairEventsShared\Money;
 
@@ -184,15 +185,21 @@ class PaymentHooks {
 		$event_participant  = null;
 
 		if ( ! $is_fee_payment ) {
-			// Resolve via the ledger — keyed on the transaction, not on
-			// participant_id, so this must not be gated behind participant
-			// resolution (a transaction can have a working ledger link even
-			// when participant_id itself never got set at creation time).
-			$event_participants = self::resolve_event_participants_for_transaction(
-				new EventParticipantRepository(),
-				new EventParticipantTransactionRepository(),
-				(int) $transaction->id
-			);
+			// Once Fair Events' payment readers are active, what the payment
+			// is for comes from its payment links: the purchases, their
+			// purchaser, ticket type and ticket activities
+			// (PAYMENT_HISTORY_MIGRATION.md §8.15). Before that, resolve via
+			// the ledger — keyed on the transaction, not on participant_id,
+			// so this must not be gated behind participant resolution (a
+			// transaction can have a working ledger link even when
+			// participant_id itself never got set at creation time).
+			$event_participants = EventsPaymentReaders::active()
+				? EventsPaymentReaders::transaction_purchases( (int) $transaction->id )
+				: self::resolve_event_participants_for_transaction(
+					new EventParticipantRepository(),
+					new EventParticipantTransactionRepository(),
+					(int) $transaction->id
+				);
 			$event_participant  = $event_participants ? $event_participants[0] : null;
 		} elseif ( class_exists( FeeRepository::class ) ) {
 			// Membership-fee payments — resolve the group/fee names so the
@@ -937,15 +944,20 @@ class PaymentHooks {
 	/**
 	 * The activities a participant holds on a relationship's event date,
 	 * across their tickets and participant scope, with current names and
-	 * prices. The snapshotted name stands in for a deleted option.
+	 * prices. The snapshotted name stands in for a deleted option. A Fair
+	 * Events purchase (EventsPaymentReaders::transaction_purchases()) brings
+	 * its own ticket activities instead.
 	 *
-	 * @param object $event_participant EventParticipant row.
+	 * @param object $event_participant EventParticipant row, or a purchase with activity_rows.
 	 * @return array[] Items with name, short_name, price, discounted_price.
 	 */
 	private static function get_activity_options( $event_participant ) {
 		global $wpdb;
 
-		$rows = ( new EventParticipantRepository() )->get_activity_rows( $event_participant );
+		// A purchase from Fair Events carries its own ticket activities.
+		$rows = isset( $event_participant->activity_rows )
+			? (array) $event_participant->activity_rows
+			: ( new EventParticipantRepository() )->get_activity_rows( $event_participant );
 		if ( empty( $rows ) ) {
 			return array();
 		}

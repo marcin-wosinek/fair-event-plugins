@@ -21,6 +21,7 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import PurchasePayments from './PurchasePayments.js';
 
 const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
@@ -91,17 +92,23 @@ const loadErrorMessage = ( err, summary ) =>
  * plugin is active, so one missing or failing plugin never hides the other's
  * data or shows it as a zero total.
  *
+ * Once the Events payment readers are active, a purchase payments section
+ * follows, with every attempt of the date's purchases from Fair Events'
+ * payment links.
+ *
  * @param {Object}  props
- * @param {number}  props.eventDateId     Event date being managed.
- * @param {boolean} props.connectorActive Fair Payments Connector is active.
- * @param {boolean} props.financeActive   Fair Finance is active.
- * @param {string}  props.entriesUrl      Fair Finance entries screen URL.
+ * @param {number}  props.eventDateId          Event date being managed.
+ * @param {boolean} props.connectorActive      Fair Payments Connector is active.
+ * @param {boolean} props.financeActive        Fair Finance is active.
+ * @param {string}  props.entriesUrl           Fair Finance entries screen URL.
+ * @param {boolean} props.paymentReadersActive The Events payment readers are active.
  */
 export default function EventFinance( {
 	eventDateId,
 	connectorActive,
 	financeActive,
 	entriesUrl,
+	paymentReadersActive = false,
 } ) {
 	// Payments (Fair Payments Connector). `null` until loaded.
 	const [ payments, setPayments ] = useState( null );
@@ -815,6 +822,10 @@ export default function EventFinance( {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			{ paymentReadersActive && eventDateId && (
+				<PurchasePayments eventDateId={ eventDateId } />
+			) }
 		</>
 	);
 }

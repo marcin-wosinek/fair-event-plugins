@@ -16,6 +16,12 @@
  *                metadata?}  Insert one Connector transaction.
  *   link         {signupId, transactionId, role?, amount, currency?,
  *                createdAt}  Insert one payment link.
+ *   latest       {signupId, transactionId}  Point the purchase's latest
+ *                    attempt (fair_events_signups.transaction_id) at it.
+ *   attempt-purchases {transactionId}  The purchase IDs the buyer's payment
+ *                    callback resolves for the attempt.
+ *   notification {transactionId}  The Connector notification context
+ *                    after every enrichment filter.
  *   cleanup      {transactionIds}  Remove the transactions and every link
  *                    naming them.
  *   restore      {}  Put the stashed activation back.
@@ -114,6 +120,31 @@ switch ( $fixture_action ) {
 			)
 		);
 		$result = array( 'linkId' => (int) $wpdb->insert_id );
+		break;
+
+	case 'latest':
+		$wpdb->update(
+			$wpdb->prefix . 'fair_events_signups',
+			array( 'transaction_id' => (int) $data['transactionId'] ),
+			array( 'id' => (int) $data['signupId'] )
+		);
+		$result = array( 'signupId' => (int) $data['signupId'] );
+		break;
+
+	case 'attempt-purchases':
+		$result = array(
+			'signupIds' => array_map(
+				static fn( $row ) => (int) $row->id,
+				\FairEvents\Services\PurchasePaymentHistory::signups_for_transaction( (int) $data['transactionId'] )
+			),
+		);
+		break;
+
+	case 'notification':
+		$transaction = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $transactions, (int) $data['transactionId'] ) );
+		$result      = array(
+			'context' => apply_filters( 'fair_payment_notification_context', array(), $transaction, null ),
+		);
 		break;
 
 	case 'cleanup':

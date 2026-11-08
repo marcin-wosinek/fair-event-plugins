@@ -986,12 +986,23 @@ class TransactionsController extends WP_REST_Controller {
 		$event_date_id = $transaction->event_date_id ? (int) $transaction->event_date_id : null;
 		$event         = apply_filters( 'fair_payment_prepare_event', null, $event_date_id );
 
+		/**
+		 * Purchases this transaction pays for, as the plugin that owns them
+		 * records it (Fair Events' payment links). Null when no plugin
+		 * reports purchases; an array, possibly empty, when one does.
+		 *
+		 * @param array|null $purchases      Purchases, or null.
+		 * @param int        $transaction_id Transaction ID.
+		 */
+		$purchases = apply_filters( 'fair_payment_prepare_purchases', null, (int) $transaction->id );
+
 		$data = array(
 			'id'                   => (int) $transaction->id,
 			'mollie_payment_id'    => $transaction->mollie_payment_id ?? '',
 			'post_id'              => $transaction->post_id ? (int) $transaction->post_id : null,
 			'event_date_id'        => $event_date_id,
 			'event'                => $event,
+			'purchases'            => is_array( $purchases ) ? array_values( $purchases ) : null,
 			'post_title'           => $post_title,
 			'user_id'              => $transaction->user_id ? (int) $transaction->user_id : null,
 			'user_name'            => $user_name,

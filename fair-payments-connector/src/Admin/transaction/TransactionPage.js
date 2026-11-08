@@ -726,6 +726,169 @@ const PersonPostCard = ( { transaction: t, onUpdate, transactionId } ) => {
 	);
 };
 
+/**
+ * What a purchase's share of the transaction pays for.
+ *
+ * @param {string} role Payment link role.
+ * @return {string} Label
+ */
+export const purchaseRoleLabel = ( role ) => {
+	switch ( role ) {
+		case 'charge':
+			return __( 'Tickets', 'fair-payments-connector' );
+		case 'additional_charge':
+			return __( 'Added activities', 'fair-payments-connector' );
+		case 'upgrade':
+			return __( 'Series upgrade', 'fair-payments-connector' );
+		case 'legacy_refund_record':
+			return __(
+				'Refund record (not counted)',
+				'fair-payments-connector'
+			);
+		default:
+			return role;
+	}
+};
+
+const formatShare = ( amount, currency ) => {
+	try {
+		return new Intl.NumberFormat( undefined, {
+			style: 'currency',
+			currency: currency || 'EUR',
+		} ).format( amount );
+	} catch {
+		return `${ Number( amount ).toFixed( 2 ) } ${ currency }`;
+	}
+};
+
+/**
+ * Purchases this transaction pays for, as the plugin that owns them
+ * reports them (Fair Events' payment links). Not shown when no plugin
+ * reports purchases (`purchases` is null). The editable event above is a
+ * separate field and doesn't decide this list.
+ *
+ * @param {Object}        props
+ * @param {Object[]|null} props.purchases Purchases from the transaction response.
+ */
+export const PurchasesCard = ( { purchases } ) => {
+	if ( ! Array.isArray( purchases ) ) {
+		return null;
+	}
+
+	return (
+		<Card>
+			<CardHeader>
+				<Heading level={ 4 }>
+					{ __( 'Purchases', 'fair-payments-connector' ) }
+				</Heading>
+			</CardHeader>
+			<CardBody>
+				{ purchases.length === 0 ? (
+					<p style={ { margin: 0 } }>
+						{ __(
+							'This transaction isn’t linked to any purchase.',
+							'fair-payments-connector'
+						) }
+					</p>
+				) : (
+					<div style={ { overflowX: 'auto' } }>
+						<table className="wp-list-table widefat fixed striped">
+							<thead>
+								<tr>
+									<th>
+										{ __(
+											'Purchase',
+											'fair-payments-connector'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Event',
+											'fair-payments-connector'
+										) }
+									</th>
+									<th>
+										{ __(
+											'For',
+											'fair-payments-connector'
+										) }
+									</th>
+									<th>
+										{ __(
+											'Share',
+											'fair-payments-connector'
+										) }
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{ purchases.map( ( purchase ) => (
+									<tr
+										key={ `${ purchase.signup_id }-${ purchase.role }` }
+									>
+										<td>
+											{ purchase.name ||
+												sprintf(
+													/* translators: %d: purchase ID */
+													__(
+														'Purchase #%d',
+														'fair-payments-connector'
+													),
+													purchase.signup_id
+												) }
+										</td>
+										<td>
+											{ purchase.event ? (
+												<a
+													href={
+														purchase.event
+															.manage_url
+													}
+												>
+													{ purchase.event.title }
+													{ purchase.event
+														.start_date && (
+														<>
+															{ ' — ' }
+															{ formatTimingStart(
+																purchase.event
+															) }
+														</>
+													) }
+												</a>
+											) : (
+												sprintf(
+													/* translators: %d: event date ID */
+													__(
+														'Event date #%d',
+														'fair-payments-connector'
+													),
+													purchase.event_date_id
+												)
+											) }
+										</td>
+										<td>
+											{ purchaseRoleLabel(
+												purchase.role
+											) }
+										</td>
+										<td>
+											{ formatShare(
+												purchase.allocated_amount,
+												purchase.currency
+											) }
+										</td>
+									</tr>
+								) ) }
+							</tbody>
+						</table>
+					</div>
+				) }
+			</CardBody>
+		</Card>
+	);
+};
+
 const TransactionPage = () => {
 	const [ transaction, setTransaction ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
@@ -1226,6 +1389,8 @@ const TransactionPage = () => {
 					onUpdate={ setTransaction }
 					transactionId={ transactionId }
 				/>
+
+				<PurchasesCard purchases={ t.purchases } />
 
 				<Card>
 					<CardHeader>

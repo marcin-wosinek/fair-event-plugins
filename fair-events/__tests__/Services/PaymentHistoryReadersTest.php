@@ -292,6 +292,43 @@ class PaymentHistoryReadersTest extends TestCase {
 	}
 
 	/**
+	 * What a purchase has paid sums only the allocations that count as
+	 * revenue, in the requested currency, in cents (§5.2, §8.15): a failed
+	 * attempt, a refund-labelled record and another currency don't add.
+	 * Every paid attempt does (example 9).
+	 *
+	 * @return void
+	 */
+	public function test_paid_amount_sums_counted_allocations_in_one_currency(): void {
+		$payments = array(
+			array(
+				'allocated_amount'  => 30.0,
+				'currency'          => 'EUR',
+				'counts_as_revenue' => false,
+			),
+			array(
+				'allocated_amount'  => 0.1,
+				'currency'          => 'eur',
+				'counts_as_revenue' => true,
+			),
+			array(
+				'allocated_amount'  => 0.2,
+				'currency'          => 'EUR',
+				'counts_as_revenue' => true,
+			),
+			array(
+				'allocated_amount'  => 12.0,
+				'currency'          => 'USD',
+				'counts_as_revenue' => true,
+			),
+		);
+
+		$this->assertSame( 0.3, PurchasePaymentHistory::paid_amount( $payments, 'EUR' ) );
+		$this->assertSame( 12.0, PurchasePaymentHistory::paid_amount( $payments, 'usd' ) );
+		$this->assertSame( 0.0, PurchasePaymentHistory::paid_amount( array(), 'EUR' ) );
+	}
+
+	/**
 	 * A paid link row.
 	 *
 	 * @param int    $transaction_id Transaction ID.

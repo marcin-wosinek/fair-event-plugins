@@ -183,7 +183,8 @@ They're the integration surface ([RELEASES.md § Cross-plugin interface changes]
   `fair_payment_status_changed`.
 - Connector filters: `fair_payment_prepare_event`,
   `fair_payment_validate_event_date_id`, `fair_payment_prepare_participant`,
-  `fair_payment_resolve_participant_id`, `fair_payment_notification_context`.
+  `fair_payment_resolve_participant_id`, `fair_payment_notification_context`,
+  and, from stage 5, `fair_payment_prepare_purchases` (§8.15).
 - Events actions: `fair_events_signup_created`,
   `fair_events_signup_transaction_created`, `fair_events_signup_confirmed`,
   `fair_events_signup_payment_failed`, `fair_events_signup_moved`,
@@ -1118,10 +1119,9 @@ verification blocker. After the cutover the cron keeps running them even
 if shadow writes lose coverage (an older Fair Audience installed later),
 and still skips the shadow work then.
 
-**Not yet covered.** The callback page and payment-state route still read
-the purchases by their latest attempt (`get_all_by_transaction_id()`); a
-buyer returning from a superseded attempt that was paid sees the newer
-attempt's state. Readers move in stage 5 (#2141).
+**Readers.** The callback page and payment-state route read the purchases
+by their latest attempt (`get_all_by_transaction_id()`) until the stage 5
+readers are active; from then on they read the attempt's own links (§8.15).
 
 ### 8.12 Stage 4 lifecycle: Fair Audience routes
 
@@ -1207,9 +1207,9 @@ changes (relabelling, moves) are followed as before; removing a participant
 who holds a ticket is refused in Audience, so a deleted relationship never
 cancels a paid purchase.
 
-**Readers.** Unchanged (#2141). Statistics, the participant detail and the
-resume flow still read the ledger and relationships, which the projection
-keeps in step.
+**Readers.** Unchanged in stage 4. Statistics, the participant detail and
+the resume flow read the ledger and relationships, which the projection
+keeps in step, until the stage 5 readers are active (§8.14, §8.15).
 
 ### 8.13 Stage 4 activation
 
@@ -1285,8 +1285,9 @@ switched and when, the issues, and the work waiting to be retried.
 `Services\PaymentHistoryReaders` switches Statistics, ticket counts and
 capacity to what Fair Events owns (§8.1 stage 5), and
 `Services\PurchasePaymentHistory` is the shared reader of purchase payments.
-Purchase details, the participant's payment history and Connector's
-transaction view move onto it in the second pull request.
+Purchase details, the participant's payment history, Connector's
+transaction view and notifications moved onto it in the second pull request
+(§8.15).
 
 **The gate.** `PaymentHistoryReaders::active()` is true when the option
 `fair_events_payment_history_readers` holds an activation with an
@@ -1379,6 +1380,78 @@ linked to. Neither reads editable transaction columns, an email or
 | Events + Audience + Connector | Everything; Audience is not read                                    |
 
 Before the activation, Statistics still needs Fair Audience as in §3.4.
+
+### 8.15 Stage 5 purchase readers and completion
+
+**Implemented** (#2141, second of two pull requests; no schema change).
+Every remaining reader of purchase payments follows the same gate as
+Statistics, `PaymentHistoryReaders::active()` (§8.14), and reads
+`Services\PurchasePaymentHistory`. Before the activation each reader behaves
+as before; afterwards none of them reads the Audience ledger, an editable
+transaction column, a matching email or `signup.transaction_id` to decide
+which purchase a payment belongs to.
+
+**Readers after the activation.**
+
+| Reader (§3.4)                                  | After the activation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Statistics, ticket statistics, capacity        | §8.14.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `GET fair-events/v1/get-tickets` (signup list) | Each purchase gains `payment_history`: `payment_information`, `currency`, `paid_amount` (the purchase's paid allocations in the site currency, null when unavailable) and `payments`, every link from `for_signups()` with `latest` marking the purchase's latest attempt. `transaction_id` keeps meaning the latest attempt (§5.1). `payment_history` is null before the activation.                                                                                                                                                     |
+| Manage Event: Finance                          | The general list is unchanged: Connector transactions by their editable `event_date_id`, with totals (#2141 decision). A **Purchase payments** section follows, from the list above: every attempt of the date's purchases, its role and status, this purchase's share of a shared payment, and whether it counts as revenue.                                                                                                                                                                                                             |
+| Signup block callback and payment state        | `PurchasePaymentHistory::signups_for_transaction()`: the attempt's `charge` links, so a buyer returning from a superseded attempt sees its own purchase. An attempt without links, and the cookie session (which only follows a purchase's latest attempt), behave as before.                                                                                                                                                                                                                                                             |
+| Retry and cancel                               | Unchanged since stage 4 (§8.11): the purchases whose latest attempt it is, from links.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Participant detail (Fair Audience)             | `GET fair-audience/v1/participants/{id}/activity` reports `payment_readers` (`events` or `audience`). With `events` it adds `purchases` from `participant_purchases()`: the purchases the participant made **as the purchaser** (the purchase's participant or a ticket's purchaser), each with every payment and its paid amount. Tickets the participant only holds aren't listed, and the per-event `transaction_id`/`transaction_status` from the ledger are null; the page shows a Purchases card instead of the Transaction column. |
+| Connector transaction view                     | `GET fair-payments-connector/v1/transactions/{id}` adds `purchases` from the new filter `fair_payment_prepare_purchases( null, $transaction_id )`. Fair Events answers it from `transaction_purchases()`: each linked purchase, its date, role and allocation. Null when no plugin answers (before the activation, or an older Fair Events); the page then shows no Purchases card. The editable event and participant fields are unchanged.                                                                                              |
+| Connector notifications                        | Fair Audience's `enrich_notification_context()` resolves the purchases from the transaction's links (`EventsPaymentReaders::transaction_purchases()`): the event, the purchaser, the purchase's ticket type and its tickets' activities. The discount labels use the same fields. Fee payments are unchanged.                                                                                                                                                                                                                             |
+| Audience upgrade price                         | Unchanged since stage 4: the purchase's paid allocations (§8.12).                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Audience resume and retry                      | Unchanged: they continue an unpaid attempt of Fair Audience's own route from its registration, and every attempt they create is linked first (§8.12). They don't attribute history.                                                                                                                                                                                                                                                                                                                                                       |
+| Purchase confirmation emails                   | Unchanged: they read the purchase, its units and activities, which Fair Events owns.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+Fair Audience checks the Events readers by capability
+(`FairAudience\Services\EventsPaymentReaders::active()`: the classes and
+methods exist and the activation is recorded), so an older Fair Events keeps
+the ledger readers. Participant fee payments and every unrelated Audience
+feature are untouched.
+
+**Supported combinations after the activation** (§8.6), in addition to
+§8.14:
+
+| Combination                   | Purchase payments                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Events alone                  | The links are listed with `payment_information` `unavailable`, no status and no paid amount; the Finance tab is hidden. |
+| Events + Connector            | Everything except the participant detail and notification enrichment, which are Fair Audience's.                        |
+| Events + Audience             | The participant's purchases are listed; amounts paid are unavailable.                                                   |
+| Events + Audience + Connector | Everything; the ledger isn't read.                                                                                      |
+| Older Connector               | No Purchases card on the transaction view; everything else as above.                                                    |
+| Older Audience                | The participant detail and notifications keep the ledger (not supported after stage 4, §8.12).                          |
+
+**Final verification** (the migration is complete on a site when all hold):
+
+1. Payment history shows the stage 4 switch and the Statistics switch, with
+   no outstanding work and no open finding other than informational ones.
+2. For a sample of dates (a paid single purchase, a retried purchase, a
+   payment shared by several dates, a series pass and its occurrences),
+   Statistics revenue equals the sum of the counted shares in the date's
+   Purchase payments section, minus pass revenue on occurrences (§7.2).
+3. The Connector view of a shared payment lists every purchase, and the
+   shares add up to its total.
+4. A purchaser's participant detail lists the same attempts as the Finance
+   section.
+5. Deactivating and reactivating Fair Audience leaves Statistics, the
+   get-tickets payment history and the Connector purchases unchanged.
+
+**Update order.** Fair Payments Connector first (it adds the filter), then
+Fair Events, then Fair Audience. Each newer plugin works next to an older
+one through capability checks; only the stage 4 rule about an older Fair
+Audience after that switch applies (§8.12).
+
+**Recovery.** Forward repair, as for §8.14: nothing switches the readers
+back, so fix the links (backfill re-run for the range, reconciliation)
+rather than the readers. Rolling Fair Events back below this release only
+removes the new fields and sections; the stored links and the ledger, which
+stage 4 still writes, are untouched. Source history (ledger, relationships,
+participant-scope activities, `signup.transaction_id`) is kept. Deleting it
+is outside this migration and needs a separate follow-up issue (§8.5, §11).
 
 ## 9. Worked examples
 
@@ -1514,7 +1587,18 @@ Run locally only the focused specs named here, as
   `unavailable` without Connector, on both namespaces), the component tests
   in `src/Admin/event-statistics/__tests__/` and
   `src/Admin/payment-history/__tests__/ReadersPanel.test.jsx`, and
-  `e2e/user-flows/event-statistics-tab.spec.js`.
+  `e2e/user-flows/event-statistics-tab.spec.js`. Purchase readers (second
+  pull request): `PaymentHistoryReadersTest.php` (a purchase's paid amount),
+  `fair-events/src/API/__tests__/PurchasePaymentReaders.api.spec.js` (every
+  reader unchanged before the switch; afterwards the get-tickets history of
+  a failed attempt, a paid retry, a refund-labelled record and a shared
+  payment, 401 anonymously, the Connector purchases of a shared payment,
+  the purchaser's purchases without the holder's tickets, a superseded
+  attempt's purchase for the callback, notification enrichment from links,
+  Fair Audience deactivated and reactivated with the same results, and
+  `unavailable` without Connector), `src/Admin/manage-event/__tests__/PurchasePayments.test.jsx`,
+  Connector's `src/Admin/transaction/__tests__/PurchasesCard.test.jsx` and
+  Audience's `src/Admin/participant-detail/__tests__/ParticipantDetail.test.jsx`.
 
 ## 11. Out of scope
 
@@ -1581,6 +1665,10 @@ specs that pin them are updated knowingly.
 - **G9. Statistics requires Audience.** The route and the page are
   registered only when `EventStatisticsController::is_available()` finds the
   Audience repositories. Fixed by stage 5 (§8.14).
+
+G5 and G6 are fixed for every reader by §8.15: purchase history lists every
+attempt from links, and the participant detail no longer shows only a
+registration's latest attempt.
 
 ## Read first for stages 2–5
 

@@ -1135,6 +1135,10 @@ export default function ManageEventApp() {
 					connectorActive={ connectorActive }
 					financeActive={ financeActive }
 					entriesUrl={ paymentEntriesUrl }
+					paymentReadersActive={
+						!! window.fairEventsManageEventData
+							?.paymentReadersActive
+					}
 				/>
 			),
 		},

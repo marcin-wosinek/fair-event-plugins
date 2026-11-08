@@ -2504,6 +2504,13 @@ class GetTicketsController extends WP_REST_Controller {
 		$date_labels       = array();
 		$consents          = array();
 		$test_payments     = array();
+		// Every attempt of each purchase, from its payment links, once the
+		// Events readers are active (PAYMENT_HISTORY_MIGRATION.md §8.15).
+		// transaction_id keeps meaning the latest attempt.
+		$payment_history = \FairEvents\Services\PaymentHistoryReaders::active()
+			? \FairEvents\Services\PurchasePaymentHistory::for_signups( wp_list_pluck( $signups, 'id' ) )
+			: null;
+		$site_currency   = \FairEventsShared\Money::site_currency();
 
 		foreach ( $signups as $signup ) {
 			$signup_tickets = $tickets_by_signup[ (int) $signup->id ] ?? array();
@@ -2624,6 +2631,9 @@ class GetTicketsController extends WP_REST_Controller {
 			// consents to now, which the historical mailing_opt_in cannot tell.
 			$signup->newsletter_consent = $this->resolve_newsletter_consent( $signup->participant_id ?? null, $consents );
 			$signup->is_test_payment    = $this->resolve_test_payment( $signup->transaction_id ?? null, $test_payments );
+			$signup->payment_history    = $payment_history
+				? $this->format_payment_history( $signup, $payment_history, $site_currency )
+				: null;
 		}
 
 		if ( $request->get_param( 'include_answers' ) ) {
@@ -2631,6 +2641,34 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * A purchase's payment history for the list: every linked attempt,
+	 * oldest first, which one is the latest, and what the purchase has paid.
+	 *
+	 * @param object $signup   Purchase row.
+	 * @param array  $history  Result of PurchasePaymentHistory::for_signups().
+	 * @param string $currency Site currency.
+	 * @return array{payment_information: string, currency: string, paid_amount: float|null, payments: array[]}
+	 */
+	private function format_payment_history( $signup, array $history, $currency ) {
+		$latest   = (int) ( $signup->transaction_id ?? 0 );
+		$payments = array_map(
+			static function ( $payment ) use ( $latest ) {
+				$payment['latest'] = $latest > 0 && $payment['transaction_id'] === $latest;
+				return $payment;
+			},
+			$history['purchases'][ (int) $signup->id ] ?? array()
+		);
+		$readable = \FairEvents\Services\PurchasePaymentHistory::STATE_AVAILABLE === $history['payment_information'];
+
+		return array(
+			'payment_information' => $history['payment_information'],
+			'currency'            => $currency,
+			'paid_amount'         => $readable ? \FairEvents\Services\PurchasePaymentHistory::paid_amount( $payments, $currency ) : null,
+			'payments'            => $payments,
+		);
 	}
 
 	/**
@@ -3481,7 +3519,7 @@ class GetTicketsController extends WP_REST_Controller {
 			);
 		}
 
-		$signup_rows = \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $transaction->id );
+		$signup_rows = \FairEvents\Services\PurchasePaymentHistory::signups_for_transaction( (int) $transaction->id );
 		$state       = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $transaction, $signup_rows );
 
 		// Also expose the canonical confirmed|processing|failed lifecycle

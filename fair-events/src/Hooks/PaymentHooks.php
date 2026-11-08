@@ -31,6 +31,7 @@ class PaymentHooks {
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
 
 		add_filter( 'fair_payment_prepare_event', array( static::class, 'prepare_event' ), 10, 2 );
+		add_filter( 'fair_payment_prepare_purchases', array( static::class, 'prepare_purchases' ), 10, 2 );
 		add_filter( 'fair_payment_validate_event_date_id', array( static::class, 'validate_event_date_id' ), 10, 2 );
 
 		// Cron to expire stale pending_payment rows. Scheduling waits for
@@ -153,6 +154,25 @@ class PaymentHooks {
 				'manage_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . (int) $event_date->id ),
 			)
 		);
+	}
+
+	/**
+	 * Describe the purchases a transaction pays for in Connector's
+	 * transaction view, from Fair Events' payment links
+	 * (PAYMENT_HISTORY_MIGRATION.md §8.15). Only once the Events readers are
+	 * active: before that the links aren't the verified authority, so the
+	 * view shows no purchases rather than possibly incomplete ones.
+	 *
+	 * @param array|null $prepared       Purchases from another plugin, or null.
+	 * @param int        $transaction_id Transaction ID.
+	 * @return array|null
+	 */
+	public static function prepare_purchases( $prepared, $transaction_id ) {
+		if ( null !== $prepared || ! \FairEvents\Services\PaymentHistoryReaders::active() ) {
+			return $prepared;
+		}
+
+		return \FairEvents\Services\PurchasePaymentHistory::transaction_purchases( (int) $transaction_id );
 	}
 
 	/**
