@@ -56,13 +56,15 @@ class PaymentHistoryVerificationTest extends TestCase {
 	 * @param int[] $shared     Fully allocated shared transactions.
 	 * @param int[] $unresolved Transactions with an open finding.
 	 * @param int[] $reconciled Transactions an administrator decided.
+	 * @param int[] $moved      Transactions fully allocated to purchases moved off the date.
 	 * @return array
 	 */
-	private static function context( array $shared = array(), array $unresolved = array(), array $reconciled = array() ) {
+	private static function context( array $shared = array(), array $unresolved = array(), array $reconciled = array(), array $moved = array() ) {
 		return array(
 			'shared'     => array_fill_keys( $shared, true ),
 			'unresolved' => array_fill_keys( $unresolved, true ),
 			'reconciled' => array_fill_keys( $reconciled, true ),
+			'moved'      => array_fill_keys( $moved, true ),
 		);
 	}
 
@@ -194,6 +196,50 @@ class PaymentHistoryVerificationTest extends TestCase {
 
 		$this->assertSame( 'not_in_ledger', $result['EUR']['differences'][0]['cause'] );
 		$this->assertSame( 0.0, $result['EUR']['unexpected'] );
+	}
+
+	/**
+	 * #2236: the ledger still counts a moved purchase's payment on its
+	 * original date, where links allocate nothing. Explained.
+	 */
+	public function test_moved_purchase_is_explained(): void {
+		$result = PaymentHistoryVerification::classify_revenue(
+			array( self::ledger( 178, '5.00' ) ),
+			array(),
+			self::context( array(), array(), array(), array( 178 ) )
+		);
+
+		$this->assertSame( 5.0, $result['EUR']['source'] );
+		$this->assertSame( 0.0, $result['EUR']['target'] );
+		$this->assertSame( 'moved_purchase', $result['EUR']['differences'][0]['cause'] );
+		$this->assertSame( 0.0, $result['EUR']['unexpected'] );
+	}
+
+	/**
+	 * A moved transaction that still has an allocation on the date is not
+	 * explained by the move.
+	 */
+	public function test_moved_purchase_needs_no_allocation_on_the_date(): void {
+		$partial = PaymentHistoryVerification::classify_revenue(
+			array( self::ledger( 178, '5.00' ) ),
+			array( self::link( 178, '2.00' ) ),
+			self::context( array(), array(), array(), array( 178 ) )
+		);
+		$this->assertSame( 'unexpected', $partial['EUR']['differences'][0]['cause'] );
+		$this->assertSame( -3.0, $partial['EUR']['unexpected'] );
+	}
+
+	/**
+	 * An open finding on a moved transaction still reads as unresolved.
+	 */
+	public function test_open_finding_wins_over_moved_purchase(): void {
+		$result = PaymentHistoryVerification::classify_revenue(
+			array( self::ledger( 178, '5.00' ) ),
+			array(),
+			self::context( array(), array( 178 ), array(), array( 178 ) )
+		);
+
+		$this->assertSame( 'unresolved', $result['EUR']['differences'][0]['cause'] );
 	}
 
 	/**

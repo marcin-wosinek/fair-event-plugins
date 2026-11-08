@@ -946,11 +946,64 @@ pass counts once on its master on both sides:
   `not_in_ledger`: a paid link today's ledger reader can't reach, such as a
   purchase whose relationship isn't signed up or that Audience never
   recorded. That last cause is an addition to §8.4: such money was received,
-  and stage 5 counts it. Anything else is `unexpected` and blocks.
+  and stage 5 counts it. `moved_purchase` is another addition (#2236): see
+  _Moved purchases_ below. Anything else is `unexpected` and blocks.
 - `revenue_state` is `incomplete` when the date has unresolved money or an
   unallocated remainder (§7.1), else `available`. For a generated
   occurrence, `series_pass_revenue` is what today's Statistics adds there
   for passes: the difference §7.2 introduces at stage 5.
+
+**Moved purchases** (#2236). An administrator's move
+(`fair_events_signup_moved`) moves the purchase, its units and its links'
+date, but `SignupHookBridge::handle_signup_moved()` leaves the Audience
+relationship, and so its ledger rows, on the original date when the
+participant has another active purchase there. The ledger then counts the
+payment on the original date and the links on the new one: the original
+date shows the full amount as old records and nothing as new ones, and the
+new date shows `not_in_ledger`. Revenue follows the purchase's current
+date, as the Events-owned Statistics query does; the transaction's metadata,
+provider record, status, amount and currency are never rewritten, and the
+ledger isn't repaired to agree. On the original date the difference is
+`moved_purchase` only when all of these hold:
+
+- the ledger counts the transaction there as a charge, with no refund row,
+  and no link allocates any of it to a purchase on that date;
+- its links (other than `legacy_refund_record`) allocate the whole
+  transaction total, so it counts exactly once across the dates, and the
+  global `allocation_exceeds_total` check still guards over-allocation;
+- the transaction's immutable metadata `event_date_id` is that date. The
+  editable Connector `event_date_id` column is never evidence, so a changed
+  transaction date alone never explains a difference;
+- no open finding lists it and no administrator decided it (those keep
+  `unresolved` and `reconciled`).
+
+A partly allocated, unlinked or otherwise unexplained difference still
+blocks. The rule is read-only: re-running verification or the backfill
+writes no links, purchases or units for it.
+
+To confirm a site's case before relying on it (read-only, after a backup):
+
+```sql
+-- The transaction, its immutable metadata and its links' purchases now.
+SELECT t.id, t.status, t.amount, t.currency, t.event_date_id AS column_date,
+       JSON_EXTRACT(t.metadata, '$.event_date_id') AS metadata_date,
+       lk.signup_id, lk.role, lk.allocated_amount, s.event_date_id AS purchase_date
+FROM wp_fair_payment_transactions t
+LEFT JOIN wp_fair_events_signup_payment_links lk ON lk.transaction_id = t.id
+LEFT JOIN wp_fair_events_signups s ON s.id = lk.signup_id
+WHERE t.id = <transaction>;
+-- Where the ledger counts it, and whether another purchase keeps that relationship.
+SELECT ep.id, ep.event_date_id, ep.participant_id, ep.label, l.kind
+FROM wp_fair_audience_event_participant_transactions l
+JOIN wp_fair_audience_event_participants ep ON ep.id = l.event_participant_id
+WHERE l.transaction_id = <transaction>;
+```
+
+Then run `verify()` (`POST /backfill/verify`) and check that the original
+date lists the transaction as `moved_purchase`, the new date as
+`not_in_ledger`, and neither blocks. If the links aren't complete or don't
+point at the moved purchase, the stored associations are defective and need
+their own repair; this rule doesn't apply.
 
 The global checks block on: a blocking date (`unexpected_differences`),
 outstanding shadow work (`shadow_work_outstanding`), a transaction

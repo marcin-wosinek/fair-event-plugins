@@ -7,7 +7,8 @@
  * The legacy history is synthetic: the payment-history-backfill.php WP-CLI
  * fixture writes it straight to the tables, as older plugin versions left
  * it, for the contract's worked examples 3, 4, 5, 7, 9, 11, 13, 14, 16 and
- * 20–22, and then makes it predate shadow writes. The fixture drives the
+ * 20–22, plus paid purchases moved between dates (#2236), and then makes
+ * it predate shadow writes. The fixture drives the
  * batches that WP-Cron runs on a site.
  */
 
@@ -117,6 +118,7 @@ test.describe.serial( 'Payment history backfill', () => {
 			[ 'A', '10' ],
 			[ 'B', '11' ],
 			[ 'C', '12' ],
+			[ 'D', '13' ],
 		] ) {
 			const date = await api.post(
 				'/wp-json/fair-events/v1/event-dates',
@@ -142,6 +144,7 @@ test.describe.serial( 'Payment history backfill', () => {
 			dateA: dates.A,
 			dateB: dates.B,
 			dateC: dates.C,
+			dateD: dates.D,
 		} );
 		expect( seed.blockers ).toEqual( [] );
 	} );
@@ -413,12 +416,52 @@ test.describe.serial( 'Payment history backfill', () => {
 			[ t.T3 ]: 'shared_transaction',
 			[ t.T13 ]: 'shared_transaction',
 			[ t.T13b ]: 'unresolved',
+			[ t.TM ]: 'moved_purchase',
 		} );
 		expect( causes( 'C' ) ).toEqual( {
 			[ t.T3 ]: 'shared_transaction',
 			[ t.T7 ]: 'unresolved',
 			[ t.T14 ]: 'legacy_refund_record',
 		} );
+		// #2236: the moved purchase keeps its €5 link, counted once, on its
+		// current date. Its original date explains the ledger's stale row;
+		// the move without immutable date evidence still blocks.
+		expect( links( current, t.TM ) ).toEqual( [
+			{
+				signup: s.SM,
+				role: 'charge',
+				amount: 5,
+				attribution: 'backfill',
+			},
+		] );
+		expect( links( current, t.TN ) ).toEqual( [
+			{
+				signup: s.SN,
+				role: 'charge',
+				amount: 5,
+				attribution: 'backfill',
+			},
+		] );
+		expect( causes( 'B' ) ).toMatchObject( {
+			[ t.TM ]: 'not_in_ledger',
+			[ t.TN ]: 'not_in_ledger',
+		} );
+		const dateD = current.comparisons[ dates.D ];
+		expect( dateD.blocking ).toBe( true );
+		expect( dateD.revenue.currencies.EUR.differences ).toEqual( [
+			{
+				transaction_id: t.TN,
+				source: 5,
+				target: 0,
+				cause: 'unexpected',
+			},
+		] );
+		expect( dateD.admissions.unexpected ).toBe( 0 );
+		expect( run.status ).toBe( 'verification_failed' );
+		expect( run.verification.blockers.unexpected_differences ).toContain(
+			dates.D
+		);
+
 		const dateA = current.comparisons[ dates.A ];
 		expect( dateA.revenue.currencies.EUR.target ).toBe( 44 );
 		expect( dateA.admissions.source ).toBe( dateA.admissions.target );
@@ -448,5 +491,19 @@ test.describe.serial( 'Payment history backfill', () => {
 		const after = await state();
 		expect( after.purchases ).toEqual( before.purchases );
 		expect( after.links ).toEqual( before.links );
+
+		// The moved purchase still counts once, explained, and the
+		// unexplained move still blocks.
+		const t = seed.transactions;
+		expect(
+			after.comparisons[ dates.A ].revenue.currencies.EUR.differences
+		).toContainEqual( {
+			transaction_id: t.TM,
+			source: 5,
+			target: 0,
+			cause: 'moved_purchase',
+		} );
+		expect( after.comparisons[ dates.A ].blocking ).toBe( false );
+		expect( after.comparisons[ dates.D ].blocking ).toBe( true );
 	} );
 } );
