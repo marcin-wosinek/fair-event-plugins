@@ -400,3 +400,116 @@ describe( 'ParticipantDetail — editing weekly preferences (#2135)', () => {
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'ParticipantDetail — purchases from Fair Events (#2141)', () => {
+	const EVENTS_ACTIVITY = {
+		...ACTIVITY,
+		events: [ { ...ACTIVITY.events[ 0 ], transaction_id: null } ],
+		payment_readers: 'events',
+		payment_information: 'available',
+		purchases: [
+			{
+				signup_id: 31,
+				event_id: 3,
+				event_date_id: 5,
+				event_title: 'Spring Meetup',
+				start_date: '2026-03-01',
+				start_time: '18:00:00',
+				status: 'confirmed',
+				quantity: 2,
+				ticket_type_name: 'Regular',
+				created_at: '2026-01-15 10:00:00',
+				latest_transaction_id: 71,
+				paid_amount: 30,
+				paid_currency: 'EUR',
+				payments: [
+					{
+						transaction_id: 70,
+						role: 'charge',
+						allocated_amount: 30,
+						currency: 'EUR',
+						created_at: '2026-01-15 10:00:00',
+						counts_as_revenue: false,
+						transaction_missing: false,
+						transaction_status: 'failed',
+					},
+					{
+						transaction_id: 71,
+						role: 'charge',
+						allocated_amount: 30,
+						currency: 'EUR',
+						created_at: '2026-01-15 10:05:00',
+						counts_as_revenue: true,
+						transaction_missing: false,
+						transaction_status: 'success',
+					},
+				],
+			},
+		],
+	};
+
+	const withActivity = ( activity ) =>
+		apiFetch.mockImplementation( ( { path } ) =>
+			Promise.resolve(
+				path.endsWith( '/activity' ) ? activity : PARTICIPANT
+			)
+		);
+
+	it( 'lists each purchase with every attempt, without the ledger column', async () => {
+		withActivity( EVENTS_ACTIVITY );
+		render( <ParticipantDetail /> );
+
+		const heading = await screen.findByRole( 'heading', {
+			name: 'Purchases (1)',
+		} );
+		const card = heading.closest(
+			'.fair-audience-participant-detail__card'
+		);
+		const row = within( card ).getAllByRole( 'row' )[ 1 ];
+		expect( row ).toHaveTextContent( '2 × Regular' );
+		expect( row ).toHaveTextContent( 'Confirmed' );
+		expect(
+			within( row ).getByRole( 'link', { name: '#70' } )
+		).toBeInTheDocument();
+		expect( row ).toHaveTextContent( 'Failed' );
+		expect( row ).toHaveTextContent( '(latest attempt)' );
+		expect(
+			screen.queryByRole( 'columnheader', { name: 'Transaction' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'says when payment information can’t be read', async () => {
+		withActivity( {
+			...EVENTS_ACTIVITY,
+			payment_information: 'unavailable',
+			purchases: [
+				{ ...EVENTS_ACTIVITY.purchases[ 0 ], paid_amount: null },
+			],
+		} );
+		render( <ParticipantDetail /> );
+
+		expect(
+			(
+				await screen.findAllByText(
+					/payment information can’t be read/
+				)
+			)[ 0 ]
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the ledger column before the readers are active', async () => {
+		withActivity( {
+			...ACTIVITY,
+			payment_readers: 'audience',
+			purchases: null,
+		} );
+		render( <ParticipantDetail /> );
+
+		expect(
+			await screen.findByRole( 'columnheader', { name: 'Transaction' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'heading', { name: /^Purchases/ } )
+		).not.toBeInTheDocument();
+	} );
+} );

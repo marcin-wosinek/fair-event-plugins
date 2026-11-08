@@ -10,6 +10,7 @@ namespace FairAudience\API;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
+use FairAudience\Services\EventsPaymentReaders;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\ParticipantFeedRepository;
 use FairAudience\Models\Participant;
@@ -408,8 +409,13 @@ class ParticipantsController extends WP_REST_Controller {
 		$events        = array();
 		$relationships = $this->event_participant_repository->get_by_participant( $id );
 
+		// Once Fair Events' payment readers are active, payments come from
+		// the participant's purchases (PAYMENT_HISTORY_MIGRATION.md §8.15)
+		// and the ledger isn't read: the relationships list the events, the
+		// purchases list what the participant paid as the purchaser.
+		$events_readers               = EventsPaymentReaders::active();
 		$event_participant_ids        = array_map( fn( $rel ) => (int) $rel->id, $relationships );
-		$latest_transaction_ids_by_ep = $event_participant_ids
+		$latest_transaction_ids_by_ep = $event_participant_ids && ! $events_readers
 			? $this->event_participant_transaction_repository->get_latest_charge_transaction_ids( $event_participant_ids )
 			: array();
 		$transaction_ids              = array_values( array_unique( array_filter( $latest_transaction_ids_by_ep ) ) );
@@ -481,10 +487,73 @@ class ParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		$purchases           = null;
+		$payment_information = null;
+		if ( $events_readers ) {
+			$history             = EventsPaymentReaders::participant_purchases( $id );
+			$payment_information = $history['payment_information'];
+			$purchases           = array_map( array( $this, 'format_purchase' ), $history['purchases'] );
+		}
+
 		return rest_ensure_response(
 			array(
-				'events'      => $events,
-				'submissions' => $submissions,
+				'events'              => $events,
+				'submissions'         => $submissions,
+				// 'events' (Fair Events' payment links) or 'audience' (the ledger).
+				'payment_readers'     => $events_readers ? 'events' : 'audience',
+				'payment_information' => $payment_information,
+				'purchases'           => $purchases,
+			)
+		);
+	}
+
+	/**
+	 * A purchase of the participant for the activity response, with its
+	 * event's title and timing.
+	 *
+	 * @param array $purchase Purchase from PurchasePaymentHistory::participant_purchases().
+	 * @return array
+	 */
+	private function format_purchase( array $purchase ) {
+		$timing     = self::UNDATED_TIMING;
+		$event_date = $purchase['event_date_id'] ? \FairEvents\Models\EventDates::get_by_id( (int) $purchase['event_date_id'] ) : null;
+		if ( $event_date ) {
+			$timing = $event_date->get_timing();
+		}
+
+		return array_merge(
+			array(
+				'signup_id'     => $purchase['signup_id'],
+				'event_id'      => $purchase['event_id'],
+				'event_date_id' => $purchase['event_date_id'],
+				'event_title'   => $purchase['event_id'] ? get_the_title( (int) $purchase['event_id'] ) : '',
+			),
+			$timing,
+			array(
+				'status'                => $purchase['status'],
+				'quantity'              => $purchase['quantity'],
+				'ticket_type_name'      => $purchase['ticket_type_name'],
+				'created_at'            => $purchase['created_at'],
+				'latest_transaction_id' => $purchase['latest_transaction_id'],
+				'paid_amount'           => $purchase['paid_amount'],
+				'paid_currency'         => $purchase['paid_currency'],
+				'payments'              => array_map(
+					function ( $payment ) {
+						return array(
+							'transaction_id'      => $payment['transaction_id'],
+							'role'                => $payment['role'],
+							'allocated_amount'    => $payment['allocated_amount'],
+							'currency'            => $payment['currency'],
+							'created_at'          => $payment['created_at'],
+							'counts_as_revenue'   => $payment['counts_as_revenue'],
+							'transaction_missing' => $payment['transaction_missing'],
+							'transaction_status'  => $payment['transaction']
+								? $this->normalize_transaction_status( $payment['transaction']['status'] )
+								: null,
+						);
+					},
+					$purchase['payments']
+				),
 			)
 		);
 	}

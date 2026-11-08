@@ -559,6 +559,52 @@ so older figures stay readable while you repair. Source history (ledger,
 registrations, participant-scope activities) is kept; deleting it needs a
 separate follow-up.
 
+## Upgrade notes: payment history purchase readers (#2141)
+
+Stage 5 of the payment history migration, second of two pull requests, which
+completes it
+([PAYMENT_HISTORY_MIGRATION.md § 8.15](./PAYMENT_HISTORY_MIGRATION.md#815-stage-5-purchase-readers-and-completion)).
+No schema change and nothing runs on upgrade. Everything follows the
+Statistics switch above: until it is on, every screen reads as before.
+
+**Update order: Fair Payments Connector first, then Fair Events, then Fair
+Audience.** All three change in this release. Connector adds the
+`fair_payment_prepare_purchases` filter, Fair Events answers it, and Fair
+Audience reads the Events readers only when its capability check
+(`EventsPaymentReaders::active()`) passes, so any order works without
+errors; the order above just turns everything on at once.
+
+**What changes once the Statistics switch is on.**
+
+- **Manage Event → Finance** keeps its payments list and adds **Purchase
+  payments**: every attempt of the date's purchases, with this purchase's
+  share of a shared payment and whether it counts as revenue.
+- `GET fair-events/v1/get-tickets` gives each purchase a `payment_history`;
+  `transaction_id` is still the latest attempt.
+- **Fair Payments → Transaction** shows a **Purchases** card: which purchases
+  the payment is for, on which date, and each one's share.
+- **Fair Audience → participant** shows a **Purchases** card with what the
+  participant bought as the purchaser and every payment of it, instead of
+  the per-event Transaction column.
+- A buyer returning from an earlier payment attempt sees that attempt's
+  purchase.
+- Payment notifications (email, Telegram) name the event, ticket type,
+  activities and buyer from Fair Events' payment links, not the Fair
+  Audience ledger.
+
+**Final verification.** Follow § 8.15's checklist: both switches recorded and
+no work queued on Payment history; for a few dates (a retried purchase, a
+shared payment, a series pass) Statistics revenue equals the counted shares
+under Purchase payments; a shared payment's Purchases card adds up to its
+total; a purchaser's participant page lists the same attempts; and
+deactivating and reactivating Fair Audience changes none of these.
+
+**Recovery: forward repair only**, as for the Statistics switch. Rolling a
+plugin back below this release only removes the new cards and fields; the
+links and the ledger (still written since stage 4) stay intact. Source
+history (ledger, registrations, participant-scope activities) is kept;
+deleting it is out of scope and needs a separate follow-up issue.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

@@ -145,6 +145,197 @@ class PurchasePaymentHistory {
 	}
 
 	/**
+	 * The purchases a get-tickets attempt was made for, for the buyer's
+	 * payment callback and payment state (§8.15).
+	 *
+	 * Once the Events readers are active these are the attempt's `charge`
+	 * links, whichever attempt is each purchase's latest, so a buyer
+	 * returning from a superseded attempt sees that attempt's purchase.
+	 * Before that, or for an attempt without links, they are the purchases
+	 * whose latest attempt it is, as before.
+	 *
+	 * @param int $transaction_id Connector transaction ID.
+	 * @return object[] fair_events_signups rows, by ID.
+	 */
+	public static function signups_for_transaction( $transaction_id ) {
+		global $wpdb;
+
+		$transaction_id = (int) $transaction_id;
+		if ( $transaction_id > 0 && PaymentHistoryReaders::active() ) {
+			$signup_ids = array();
+			foreach ( self::purchases_for_transactions( array( $transaction_id ) )[ $transaction_id ] ?? array() as $purchase ) {
+				if ( SignupPaymentLink::ROLE_CHARGE === $purchase['role'] ) {
+					$signup_ids[] = $purchase['signup_id'];
+				}
+			}
+			$signup_ids = self::ids( $signup_ids );
+			if ( $signup_ids ) {
+				return (array) $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT * FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' ) ORDER BY id ASC',
+						array_merge( array( $wpdb->prefix . 'fair_events_signups' ), $signup_ids )
+					)
+				);
+			}
+		}
+
+		return \FairEvents\Models\EventSignup::get_all_by_transaction_id( $transaction_id );
+	}
+
+	/**
+	 * The purchases a participant made, with every payment of each (§4.6,
+	 * §8.15). The participant is the purchaser: the purchase's own
+	 * participant, or the purchaser of one of its tickets. Tickets the
+	 * participant only holds belong to someone else's purchase and aren't
+	 * listed.
+	 *
+	 * @param int $participant_id Fair Audience participant ID.
+	 * @return array{payment_information: string, purchases: array[]} Newest
+	 *         first. Per purchase: signup_id, event_date_id, event_id, status,
+	 *         quantity, amount, ticket_type_id, ticket_type_name, created_at,
+	 *         latest_transaction_id, paid_amount (in paid_currency, the site
+	 *         currency; null when unavailable), and payments (see for_signups()).
+	 */
+	public static function participant_purchases( $participant_id ) {
+		global $wpdb;
+
+		$participant_id = (int) $participant_id;
+		if ( $participant_id <= 0 ) {
+			return array(
+				'payment_information' => PaymentHistoryCompatibility::payment_information_available() ? self::STATE_AVAILABLE : self::STATE_UNAVAILABLE,
+				'purchases'           => array(),
+			);
+		}
+
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT s.id, s.event_date_id, s.status, s.quantity, s.amount, s.ticket_type_id, s.transaction_id, s.created_at,
+					d.event_id, tt.name AS ticket_type_name
+				FROM %i AS s
+				LEFT JOIN %i AS d ON d.id = s.event_date_id
+				LEFT JOIN %i AS tt ON tt.id = s.ticket_type_id
+				WHERE s.participant_id = %d
+					OR s.id IN ( SELECT t.signup_id FROM %i AS t WHERE t.purchaser_participant_id = %d )
+				ORDER BY s.created_at DESC, s.id DESC',
+				$wpdb->prefix . 'fair_events_signups',
+				$wpdb->prefix . 'fair_event_dates',
+				$wpdb->prefix . 'fair_events_ticket_types',
+				$participant_id,
+				$wpdb->prefix . 'fair_events_tickets',
+				$participant_id
+			),
+			ARRAY_A
+		);
+
+		$history  = self::for_signups( array_column( $rows, 'id' ) );
+		$currency = \FairEventsShared\Money::site_currency();
+
+		$purchases = array();
+		foreach ( $rows as $row ) {
+			$payments    = $history['purchases'][ (int) $row['id'] ] ?? array();
+			$purchases[] = array(
+				'signup_id'             => (int) $row['id'],
+				'event_date_id'         => (int) $row['event_date_id'],
+				'event_id'              => $row['event_id'] ? (int) $row['event_id'] : null,
+				'status'                => (string) $row['status'],
+				'quantity'              => (int) $row['quantity'],
+				'amount'                => (float) $row['amount'],
+				'ticket_type_id'        => $row['ticket_type_id'] ? (int) $row['ticket_type_id'] : null,
+				'ticket_type_name'      => null !== $row['ticket_type_name'] ? (string) $row['ticket_type_name'] : null,
+				'created_at'            => (string) $row['created_at'],
+				'latest_transaction_id' => $row['transaction_id'] ? (int) $row['transaction_id'] : null,
+				'paid_amount'           => self::STATE_AVAILABLE === $history['payment_information'] ? self::paid_amount( $payments, $currency ) : null,
+				'paid_currency'         => $currency,
+				'payments'              => $payments,
+			);
+		}
+
+		return array(
+			'payment_information' => $history['payment_information'],
+			'purchases'           => $purchases,
+		);
+	}
+
+	/**
+	 * The purchases a transaction is linked to, described for Connector's
+	 * transaction view (§8.15): who bought what, for which date, and how
+	 * much of the transaction belongs to each.
+	 *
+	 * @param int $transaction_id Connector transaction ID.
+	 * @return array[] signup_id, name, status, event_date_id, event (title,
+	 *                 timing, manage_url; null when the date is gone), role,
+	 *                 allocated_amount, currency.
+	 */
+	public static function transaction_purchases( $transaction_id ) {
+		global $wpdb;
+
+		$transaction_id = (int) $transaction_id;
+		$links          = self::purchases_for_transactions( array( $transaction_id ) )[ $transaction_id ] ?? array();
+		if ( ! $links ) {
+			return array();
+		}
+
+		$signup_ids = self::ids( array_column( $links, 'signup_id' ) );
+		$signups    = array();
+		foreach ( (array) $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, name, status FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' )',
+				array_merge( array( $wpdb->prefix . 'fair_events_signups' ), $signup_ids )
+			),
+			OBJECT_K
+		) as $id => $signup ) {
+			$signups[ (int) $id ] = $signup;
+		}
+
+		$events    = array();
+		$purchases = array();
+		foreach ( $links as $link ) {
+			$event_date_id = (int) $link['event_date_id'];
+			if ( ! array_key_exists( $event_date_id, $events ) ) {
+				$event_date               = \FairEvents\Models\EventDates::get_by_id( $event_date_id );
+				$events[ $event_date_id ] = $event_date
+					? array_merge(
+						array( 'title' => $event_date->get_display_title() ),
+						$event_date->get_timing(),
+						array( 'manage_url' => admin_url( 'admin.php?page=fair-events-manage-event&event_date_id=' . $event_date_id . '&tab=finance' ) )
+					)
+					: null;
+			}
+			$signup      = $signups[ (int) $link['signup_id'] ] ?? null;
+			$purchases[] = array(
+				'signup_id'        => (int) $link['signup_id'],
+				'name'             => $signup ? (string) $signup->name : '',
+				'status'           => $signup ? (string) $signup->status : '',
+				'event_date_id'    => $event_date_id,
+				'event'            => $events[ $event_date_id ],
+				'role'             => $link['role'],
+				'allocated_amount' => $link['allocated_amount'],
+				'currency'         => $link['currency'],
+			);
+		}
+		return $purchases;
+	}
+
+	/**
+	 * What a purchase has paid: its revenue links' allocations in one
+	 * currency (§5.2). Other currencies are never converted or added.
+	 *
+	 * @param array[] $payments Links from for_signups().
+	 * @param string  $currency Currency to sum.
+	 * @return float
+	 */
+	public static function paid_amount( array $payments, $currency ) {
+		$cents    = 0;
+		$currency = strtoupper( (string) $currency );
+		foreach ( $payments as $payment ) {
+			if ( ! empty( $payment['counts_as_revenue'] ) && strtoupper( (string) $payment['currency'] ) === $currency ) {
+				$cents += self::cents( $payment['allocated_amount'] );
+			}
+		}
+		return self::amount( $cents );
+	}
+
+	/**
 	 * Revenue of one occurrence from paid link allocations (§7).
 	 *
 	 * The purchases stored on the date count, a whole-series pass on its
