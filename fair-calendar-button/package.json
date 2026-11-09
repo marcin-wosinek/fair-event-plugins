@@ -37,7 +37,7 @@
 		"@wordpress/api-fetch": "8.1.0",
 		"@wordpress/block-editor": "20.0.0",
 		"@wordpress/blocks": "17.1.0",
-		"@wordpress/components": "43.0.0",
+		"@wordpress/components": "44.0.0",
 		"@wordpress/i18n": "7.1.0",
 		"calendar-link": "^2.11.7",
 		"date-fns": "^4.1.0",
