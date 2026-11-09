@@ -201,6 +201,22 @@ describe( 'EventStatistics component', () => {
 		expect(
 			screen.queryByText( /until the event/ )
 		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/No tickets have been confirmed for this date yet/
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows the empty-state line only while no ticket is confirmed', async () => {
+		mockApi();
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect( await screen.findByText( '3 tickets' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByText( /No tickets have been confirmed/ )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'shows a zero-activity bucket while no ticket chose an activity', async () => {
@@ -413,6 +429,119 @@ describe( 'EventStatistics component', () => {
 			await screen.findByText( /Plus €\s?80[.,]00 from series passes/ )
 		).toBeInTheDocument();
 		expect( screen.getByText( /€\s?12[.,]50/ ) ).toBeInTheDocument();
+	} );
+
+	// What a site with Fair Events alone answers for an empty event (#2112):
+	// Events readers, no payment information, nothing configured.
+	it( 'renders an empty event on a Fair Events-only site', async () => {
+		mockApi( {
+			total_tickets: 0,
+			total_sales: 0,
+			total_sales_amount: null,
+			revenue_state: 'unavailable',
+			payment_readers: 'events',
+			series: [ { date: '2026-06-15', label: 'Day of event', total: 0 } ],
+			amount_series: [
+				{ date: '2026-06-15', label: 'Day of event', amount: null },
+			],
+			tickets_per_activity: [],
+			activities_per_ticket: [],
+			event_capacity: {
+				taken: 0,
+				capacity: null,
+				remaining: null,
+				over: 0,
+			},
+			ticket_type_capacity: [],
+			activity_capacity: [],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect( await screen.findByText( '0 tickets' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Revenue unavailable' ) ).toBeInTheDocument();
+		expect( screen.queryByText( /€/ ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByText( /No tickets have been confirmed/ )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Event capacity' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'This event has no ticket types.' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( 'This event has no activities.' )
+		).toBeInTheDocument();
+		const [ ticketsDownload, amountDownload ] = screen.getAllByRole(
+			'button',
+			{ name: 'Download PNG' }
+		);
+		expect( ticketsDownload ).not.toHaveAttribute(
+			'aria-disabled',
+			'true'
+		);
+		expect( amountDownload ).toHaveAttribute( 'aria-disabled', 'true' );
+	} );
+
+	it( 'shows zero revenue as an amount when payment information is readable', async () => {
+		mockApi( {
+			total_tickets: 0,
+			total_sales: 0,
+			total_sales_amount: 0,
+			revenue_state: 'available',
+			payment_readers: 'events',
+			amount_series: [
+				{ date: '2026-06-15', label: 'Day of event', amount: 0 },
+			],
+		} );
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		expect( await screen.findByText( '0 tickets' ) ).toBeInTheDocument();
+		expect( screen.getByText( /€\s?0[.,]00/ ) ).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'Revenue unavailable' )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText( /Activate Fair Payments Connector/ )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'retries a failed first load and then shows the statistics', async () => {
+		apiFetch.mockRejectedValueOnce( new Error( 'Statistics unavailable' ) );
+		mockApi();
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+
+		const retry = await screen.findByRole( 'button', {
+			name: 'Try again',
+		} );
+		expect( screen.queryByText( '3 tickets' ) ).toBeNull();
+		await act( async () => {
+			fireEvent.click( retry );
+		} );
+
+		expect( await screen.findByText( '3 tickets' ) ).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Try again' } )
+		).toBeNull();
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+	} );
+
+	it( 'names the event and its date only when asked to', async () => {
+		mockApi( { event_name: 'Spring Dance', start_date: '2026-06-15' } );
+
+		const { unmount } = render(
+			<EventStatistics eventDateId={ 42 } showEventHeading />
+		);
+
+		expect(
+			await screen.findByText( /^Spring Dance, .*2026/ )
+		).toBeInTheDocument();
+		unmount();
+
+		render( <EventStatistics eventDateId={ 42 } /> );
+		expect( await screen.findByText( '3 tickets' ) ).toBeInTheDocument();
+		expect( screen.queryByText( /^Spring Dance, / ) ).toBeNull();
 	} );
 
 	it( 'shows statistics failures', async () => {

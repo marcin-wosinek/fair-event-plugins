@@ -256,3 +256,42 @@ teardown**, runs `cleanup-event.php` for each and resets captured mail. So each
 call yields a fresh, isolated event — specs run in any order, any number of
 times, without colliding or accumulating rows. `support/wp-cli.js` also exports
 `loginAsAdmin(page)` for specs that need to drive wp-admin.
+
+## Fresh-install sites
+
+Deactivating a plugin on the shared tests site keeps its tables, options and
+history, so it can't show how a feature behaves where that plugin was never
+installed. For that, `.wp-env.json` mounts a test-only
+`wp-content/db.php` drop-in (`e2e/drop-ins/db.php`). WordPress loads it before
+it sets the table prefix, and it switches the prefix for one of a fixed list
+of site names:
+
+| Site               | Prefix                | Selected by                                                            |
+| ------------------ | --------------------- | ---------------------------------------------------------------------- |
+| `events-only`      | `e2efresh_events_`    | `X-Fair-E2E-Site: <site>` header, or `FAIR_E2E_SITE=<site>` for WP-CLI |
+| `events-connector` | `e2efresh_connector_` | same                                                                   |
+
+Each is a separate WordPress in the tests database, with its own users,
+options, active plugins and plugin tables. Without the header or variable
+nothing changes. `e2e/support/fresh-site.js` drives it:
+
+```js
+import { installFreshSite, dropFreshSite } from '../support/fresh-site.js';
+
+const site = await installFreshSite('events-only', ['fair-events']);
+await site.state(); // prefix, active plugins, Audience/Connector tables and options
+const event = await site.seedEvent('paid'); // seed-event.php on the fresh site
+await site.seed({ eventDateId: event.eventDateId, ticketTypeId: event.ticketTypeId, purchases: [...] });
+// Browser specs: test.use({ extraHTTPHeaders: site.headers }); API specs: request.newContext({ extraHTTPHeaders: site.headers }).
+await dropFreshSite('events-only');
+```
+
+`installFreshSite()` drops the site's tables, runs `wp core install` with the
+usual admin credentials, activates only the listed plugins in order, and sets
+pretty permalinks. `scripts/fresh-install.php` holds the `drop`, `state` and
+`seed` actions; `drop` refuses any prefix not in the drop-in's list. Log the
+browser in through `page.context().request` (see
+`user-flows/event-statistics-fresh-install.spec.js`) so the session carries the
+header. WP-Cron loopback requests carry no header and run the default site's
+cron. Specs: `fair-events/src/API/__tests__/EventStatisticsFreshInstall.api.spec.js`
+and `user-flows/event-statistics-fresh-install.spec.js` (#2112).

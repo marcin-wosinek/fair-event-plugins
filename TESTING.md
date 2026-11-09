@@ -528,6 +528,12 @@ To add a root E2E test:
 Specs that capture outgoing mail or replace external services use the test-only
 support layer in `e2e/mu-plugins/`. See [`e2e/README.md`](./e2e/README.md).
 
+To test an installation where a plugin was **never** installed (no tables,
+options or history, which deactivation on the shared site leaves behind), use
+a fresh-install site: a separate WordPress in the tests database, selected by
+the `X-Fair-E2E-Site` header or `FAIR_E2E_SITE` for WP-CLI. See
+[`e2e/README.md` § Fresh-install sites](./e2e/README.md#fresh-install-sites).
+
 To save a post/page through the standard Gutenberg editor (as opposed to a
 plugin's own custom admin app), the top-bar button is labeled **"Save"** for
 an already-published item, not "Update" — and the screen has a second,

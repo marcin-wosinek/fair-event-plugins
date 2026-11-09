@@ -18,6 +18,7 @@ domReady( () => {
 			statisticsAvailable,
 			manageEventUrl,
 			paymentHistoryUrl,
+			allEventsUrl,
 		} = window.fairEventsEventStatisticsData || {};
 		const root = createRoot( container );
 		root.render(
@@ -26,6 +27,7 @@ domReady( () => {
 				statisticsAvailable={ !! statisticsAvailable }
 				manageEventUrl={ manageEventUrl }
 				paymentHistoryUrl={ paymentHistoryUrl }
+				allEventsUrl={ allEventsUrl }
 			/>
 		);
 	}
