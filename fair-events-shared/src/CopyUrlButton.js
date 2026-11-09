@@ -2,7 +2,8 @@
  * WordPress dependencies
  */
 import { useState, useEffect, useRef } from '@wordpress/element';
-import { Button, Tooltip } from '@wordpress/components';
+import { Button } from '@wordpress/components';
+import { Tooltip } from '@wordpress/ui';
 import { copy, check } from '@wordpress/icons';
 
 const COPIED_RESET_MS = 2000;
@@ -73,15 +74,20 @@ export default function CopyUrlButton( {
 	};
 
 	return (
-		<Tooltip text={ tooltip }>
-			<Button
-				variant={ variant }
-				size={ size }
-				icon={ copied ? check : copy }
-				onClick={ handleCopy }
-			>
-				{ copied ? copiedLabel : label }
-			</Button>
-		</Tooltip>
+		<Tooltip.Root>
+			<Tooltip.Trigger
+				render={
+					<Button
+						variant={ variant }
+						size={ size }
+						icon={ copied ? check : copy }
+						onClick={ handleCopy }
+					>
+						{ copied ? copiedLabel : label }
+					</Button>
+				}
+			/>
+			<Tooltip.Popup>{ tooltip }</Tooltip.Popup>
+		</Tooltip.Root>
 	);
 }

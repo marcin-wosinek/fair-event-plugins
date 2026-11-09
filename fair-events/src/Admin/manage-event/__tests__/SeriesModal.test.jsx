@@ -229,7 +229,8 @@ describe( 'skipping dates of a regular schedule', () => {
 		// A native <button>: Enter and Space activate it without extra code.
 		expect( day.tagName ).toBe( 'BUTTON' );
 		expect( day ).toHaveAttribute( 'type', 'button' );
-		day.focus();
+		// Focus opens the day's tooltip, a state update that must run in act().
+		act( () => day.focus() );
 		expect( day ).toHaveFocus();
 	} );
 
