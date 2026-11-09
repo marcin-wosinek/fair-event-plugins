@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.0
+
+### Minor Changes
+
+- a38ffab: The **Entries** page now shows how many financial entries are still waiting for a budget, above the entries table. The number covers the whole ledger, whatever filters, page or sorting the table shows. It counts each split allocation without a budget, not the split entry itself. It updates after you save, delete, import, split, unsplit, match or unmatch an entry, or save a transfer. While the number is loading the page says so, and if it can't be loaded you can retry, so neither is shown as zero.
+
+### Patch Changes
+
+- 7b40dc0: Fix the Link filter on the Entries page hiding costs that were linked to an event by pasting its address. Selecting an event now also shows entries whose link matches that event's page, while entries assigned to another event stay excluded, and events linked only by address are listed in the same Link dropdown.
+- Updated dependencies [3fb6f61]
+- Updated dependencies [b9b2d66]
+- Updated dependencies [5502f19]
+- Updated dependencies [678ee59]
+- Updated dependencies [d354f24]
+- Updated dependencies [88e5777]
+    - fair-events-shared@0.8.0
+    - fair-payments-connector@2.8.0
+
 ## 1.4.1
 
 ### Patch Changes
