@@ -272,7 +272,7 @@ msgstr "Kalender-Ereignis Details"
 msgid "Edit Calendar Event"
 msgstr "Kalender-Ereignis bearbeiten"
 
-#: src/blocks/calendar-button/utils/calendar-handler.js:82
+#: src/blocks/calendar-button/utils/calendar-handler.js:37
 msgid "Download ICS"
 msgstr "ICS herunterladen"
 

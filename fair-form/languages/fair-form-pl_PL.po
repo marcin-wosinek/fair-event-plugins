@@ -84,10 +84,11 @@ msgstr "Post #%d"
 msgid "No page"
 msgstr "Brak strony"
 
+#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format, js-format
+#, php-format,js-format
 msgid "Event date #%d"
 msgstr "Data wydarzenia #%d"
 
@@ -727,12 +728,10 @@ msgstr "Wartość do porównania."
 #: src/blocks/fair-form-email/editor.js:31
 #: src/blocks/fair-form-file-upload/editor.js:43
 #: src/blocks/fair-form-long-text/editor.js:53
-#: src/blocks/fair-form-multiselect/editor.js:89
 #: src/blocks/fair-form-phone/editor.js:54
-#: src/blocks/fair-form-radio/editor.js:74
-#: src/blocks/fair-form-select-one/editor.js:89
 #: src/blocks/fair-form-short-text/editor.js:64
 #: src/blocks/fair-form-url/editor.js:52
+#: src/blocks/shared/ChoiceQuestionEdit.js:89
 msgid "Question Settings"
 msgstr "Ustawienia pytania"
 
@@ -742,12 +741,10 @@ msgstr "Ustawienia pytania"
 #: src/blocks/fair-form-email/editor.js:33
 #: src/blocks/fair-form-file-upload/editor.js:45
 #: src/blocks/fair-form-long-text/editor.js:55
-#: src/blocks/fair-form-multiselect/editor.js:91
 #: src/blocks/fair-form-phone/editor.js:56
-#: src/blocks/fair-form-radio/editor.js:76
-#: src/blocks/fair-form-select-one/editor.js:91
 #: src/blocks/fair-form-short-text/editor.js:66
 #: src/blocks/fair-form-url/editor.js:54
+#: src/blocks/shared/ChoiceQuestionEdit.js:91
 msgid "Question Key"
 msgstr "Klucz pytania"
 
@@ -762,12 +759,10 @@ msgstr "Unikalny identyfikator tego pytania (np. \"favorite_color\"). Używany w
 #: src/blocks/fair-form-email/editor.js:44
 #: src/blocks/fair-form-file-upload/editor.js:56
 #: src/blocks/fair-form-long-text/editor.js:66
-#: src/blocks/fair-form-multiselect/editor.js:102
 #: src/blocks/fair-form-phone/editor.js:67
-#: src/blocks/fair-form-radio/editor.js:87
-#: src/blocks/fair-form-select-one/editor.js:102
 #: src/blocks/fair-form-short-text/editor.js:77
 #: src/blocks/fair-form-url/editor.js:65
+#: src/blocks/shared/ChoiceQuestionEdit.js:102
 msgid "Required"
 msgstr "Wymagane"
 
@@ -794,12 +789,10 @@ msgstr "Placeholder"
 #: src/blocks/fair-form-email/editor.js:68
 #: src/blocks/fair-form-file-upload/editor.js:98
 #: src/blocks/fair-form-long-text/editor.js:102
-#: src/blocks/fair-form-multiselect/editor.js:127
 #: src/blocks/fair-form-phone/editor.js:99
-#: src/blocks/fair-form-radio/editor.js:107
-#: src/blocks/fair-form-select-one/editor.js:127
 #: src/blocks/fair-form-short-text/editor.js:104
 #: src/blocks/fair-form-url/editor.js:103
+#: src/blocks/shared/ChoiceQuestionEdit.js:128
 msgid "Enter your question..."
 msgstr "Wpisz swoje pytanie..."
 
@@ -880,9 +873,7 @@ msgstr "Kategorie zaznaczone domyślnie po załadowaniu formularza."
 msgid "Category preferences will be shown here"
 msgstr "Preferencje kategorii będą wyświetlane tutaj"
 
-#: src/blocks/fair-form-multiselect/editor.js:96
-#: src/blocks/fair-form-radio/editor.js:81
-#: src/blocks/fair-form-select-one/editor.js:96
+#: src/blocks/shared/ChoiceQuestionEdit.js:96
 msgid "A unique identifier for this question. Used internally."
 msgstr "Unikalny identyfikator tego pytania. Używany wewnętrznie."
 
@@ -1637,4 +1628,3 @@ msgstr[2] "…i %d więcej."
 msgctxt "block keyword"
 msgid "category"
 msgstr "kategoria"
-

@@ -45,28 +45,28 @@ msgstr "Tokens de API"
 msgid "Connected Sites"
 msgstr "Sitios conectados"
 
-#: src/API/ApiTokenAuth.php:46
+#: src/API/ApiTokenAuth.php:35
 msgid "This token does not have the required scope."
 msgstr "Este token no tiene el alcance requerido."
 
-#: src/API/ApiTokenAuth.php:106
+#: src/API/ApiTokenAuth.php:44
 msgid "Invalid or missing API token."
 msgstr "Token de API inválido o faltante."
 
-#: src/API/ApiTokensController.php:127
+#: src/API/ApiTokensController.php:42
 msgid "A label is required."
 msgstr "Se requiere una etiqueta."
 
-#: src/API/ApiTokensController.php:137
+#: src/API/ApiTokensController.php:51
 msgid "At least one valid scope is required."
 msgstr "Se requiere al menos un alcance válido."
 
-#: src/API/ApiTokensController.php:147
+#: src/API/ApiTokensController.php:60
 #: src/Admin/api-tokens/ApiTokensApp.js:116
 msgid "Failed to create API token."
 msgstr "No se pudo crear el token de API."
 
-#: src/API/ApiTokensController.php:174
+#: src/API/ApiTokensController.php:69
 msgid "API token not found."
 msgstr "Token de API no encontrado."
 
@@ -103,11 +103,11 @@ msgstr "Se importaron %1$d nuevas, se actualizaron %2$d, se omitieron %3$d trans
 msgid "Connected site not found."
 msgstr "Sitio conectado no encontrado."
 
-#: src/API/ExternalTransactionsController.php:85
+#: src/API/ExternalTransactionsController.php:51
 msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
 msgstr "Filtra por fecha de transacción (created_at) desde esta fecha, p. ej. 2026-01-01."
 
-#: src/API/ExternalTransactionsController.php:92
+#: src/API/ExternalTransactionsController.php:60
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr "Filtra por fecha de transacción (created_at) hasta esta fecha, p. ej. 2026-12-31."
 

@@ -23,7 +23,7 @@ msgstr "Transactions"
 #: src/Admin/AdminPages.php:67
 #: src/Admin/AdminPages.php:68
 #: src/Admin/AdminPages.php:75
-#: src/Admin/transaction/TransactionPage.js:866
+#: src/Admin/transaction/TransactionPage.js:1029
 msgid "Transaction Detail"
 msgstr "Détail de la transaction"
 
@@ -226,12 +226,12 @@ msgstr "Statut de connexion OAuth Mollie"
 msgid "Mollie Profile ID (cached)"
 msgstr "ID de profil Mollie (en cache)"
 
-#: src/Admin/transaction/TransactionPage.js:1167
+#: src/Admin/transaction/TransactionPage.js:1330
 msgid "Name"
 msgstr "Nom"
 
-#: src/Admin/transaction/TransactionPage.js:1107
-#: src/Admin/transaction/TransactionPage.js:1173
+#: src/Admin/transaction/TransactionPage.js:1270
+#: src/Admin/transaction/TransactionPage.js:1336
 #: src/Admin/transactions/TransactionsApp.js:910
 msgid "Description"
 msgstr "Description"
@@ -242,7 +242,7 @@ msgstr "Description"
 msgid "Edit"
 msgstr "Modifier"
 
-#: src/Admin/transaction/TransactionPage.js:1191
+#: src/Admin/transaction/TransactionPage.js:1354
 msgid "Total"
 msgstr "Total"
 
@@ -253,7 +253,7 @@ msgstr "Total"
 #: src/Admin/transaction/TransactionPage.js:151
 #: src/Admin/transaction/TransactionPage.js:281
 #: src/Admin/transaction/TransactionPage.js:505
-#: src/Admin/transaction/TransactionPage.js:1413
+#: src/Admin/transaction/TransactionPage.js:1578
 #: src/Admin/transactions/components/ImportTransactionsModal.js:243
 msgid "Cancel"
 msgstr "Annuler"
@@ -261,10 +261,11 @@ msgstr "Annuler"
 #: src/Admin/transaction/TransactionLog.js:131
 #: src/Admin/transaction/TransactionPage.js:475
 #: src/Admin/transaction/TransactionPage.js:601
+#: src/Admin/transaction/TransactionPage.js:805
 msgid "Event"
 msgstr "Événement"
 
-#: src/Admin/transaction/TransactionPage.js:984
+#: src/Admin/transaction/TransactionPage.js:1147
 #: src/Admin/transactions/TransactionsApp.js:874
 #: src/blocks/simple-payment/index.js:118
 msgid "Amount"
@@ -320,7 +321,7 @@ msgstr "Passage en mode %s."
 #: src/Admin/external-updates/components/MollieImportPanel.js:252
 #: src/Admin/external-updates/components/MollieImportPanel.js:301
 #: src/Admin/settings/ConnectionTab.js:367
-#: src/Admin/transaction/TransactionPage.js:1036
+#: src/Admin/transaction/TransactionPage.js:1199
 #: src/Admin/transactions/TransactionsApp.js:49
 #: src/Admin/transactions/TransactionsApp.js:998
 msgid "Test"
@@ -329,7 +330,7 @@ msgstr "Test"
 #: src/Admin/external-updates/components/MollieImportPanel.js:253
 #: src/Admin/external-updates/components/MollieImportPanel.js:308
 #: src/Admin/settings/ConnectionTab.js:368
-#: src/Admin/transaction/TransactionPage.js:1040
+#: src/Admin/transaction/TransactionPage.js:1203
 #: src/Admin/transactions/TransactionsApp.js:48
 #: src/Admin/transactions/TransactionsApp.js:1002
 msgid "Live"
@@ -393,7 +394,7 @@ msgstr "Le jeton expire : %s"
 
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
 #: src/Admin/settings/ConnectionTab.js:1160
-#: src/Admin/transaction/TransactionPage.js:1017
+#: src/Admin/transaction/TransactionPage.js:1180
 #: src/Admin/transactions/TransactionsApp.js:576
 #: src/Admin/transactions/TransactionsApp.js:899
 msgid "Mode"
@@ -437,44 +438,44 @@ msgstr "Rappel OAuth incomplet : le jeton d'actualisation n'a pas été reçu du
 msgid "Connection"
 msgstr "Connexion"
 
-#: src/Admin/transaction/TransactionPage.js:828
+#: src/Admin/transaction/TransactionPage.js:991
 msgid "No transaction ID provided."
 msgstr "Aucun ID de transaction fourni."
 
-#: src/Admin/transaction/TransactionPage.js:843
+#: src/Admin/transaction/TransactionPage.js:1006
 msgid "Failed to load transaction."
 msgstr "Échec du chargement de la transaction."
 
-#: src/Admin/transaction/TransactionPage.js:874
-#: src/Admin/transaction/TransactionPage.js:893
+#: src/Admin/transaction/TransactionPage.js:1037
+#: src/Admin/transaction/TransactionPage.js:1056
 msgid "Back to Transactions"
 msgstr "Retour aux Transactions"
 
-#: src/Admin/transaction/TransactionPage.js:899
+#: src/Admin/transaction/TransactionPage.js:1062
 msgid "Transaction"
 msgstr "Transaction"
 
-#: src/Admin/transaction/TransactionPage.js:914
+#: src/Admin/transaction/TransactionPage.js:1077
 msgid "Payment Details"
 msgstr "Détails du Paiement"
 
-#: src/Admin/transaction/TransactionPage.js:993
+#: src/Admin/transaction/TransactionPage.js:1156
 #: src/Admin/transactions/TransactionsApp.js:880
 msgid "Mollie Fee"
 msgstr "Frais Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:1005
+#: src/Admin/transaction/TransactionPage.js:1168
 #: src/Admin/transactions/TransactionsApp.js:886
 msgid "Integration Fee"
 msgstr "Frais d'Intégration"
 
-#: src/Admin/transaction/TransactionPage.js:1054
+#: src/Admin/transaction/TransactionPage.js:1217
 msgid "Status & Timing"
 msgstr "Statut et Timing"
 
 #: src/Admin/settings/ApiTokensTab.js:289
 #: src/Admin/settings/ApiTokensTab.js:350
-#: src/Admin/transaction/TransactionPage.js:1064
+#: src/Admin/transaction/TransactionPage.js:1227
 #: src/Admin/transactions/TransactionsApp.js:563
 #: src/Admin/transactions/TransactionsApp.js:893
 msgid "Status"
@@ -482,27 +483,27 @@ msgstr "Statut"
 
 #: src/Admin/settings/ApiTokensTab.js:277
 #: src/Admin/settings/ApiTokensTab.js:329
-#: src/Admin/transaction/TransactionPage.js:1075
+#: src/Admin/transaction/TransactionPage.js:1238
 msgid "Created"
 msgstr "Créé"
 
-#: src/Admin/transaction/TransactionPage.js:1083
+#: src/Admin/transaction/TransactionPage.js:1246
 msgid "Payment Initiated"
 msgstr "Paiement Initié"
 
-#: src/Admin/transaction/TransactionPage.js:1091
+#: src/Admin/transaction/TransactionPage.js:1254
 msgid "Updated"
 msgstr "Mis à jour"
 
-#: src/Admin/transaction/TransactionPage.js:1156
+#: src/Admin/transaction/TransactionPage.js:1319
 msgid "Line Items"
 msgstr "Articles"
 
-#: src/Admin/transaction/TransactionPage.js:1179
+#: src/Admin/transaction/TransactionPage.js:1342
 msgid "Quantity"
 msgstr "Quantité"
 
-#: src/Admin/transaction/TransactionPage.js:1185
+#: src/Admin/transaction/TransactionPage.js:1348
 msgid "Unit Amount"
 msgstr "Montant Unitaire"
 
@@ -514,23 +515,23 @@ msgstr "Utilisateur"
 msgid "Post"
 msgstr "Article"
 
-#: src/Admin/transaction/TransactionPage.js:1233
+#: src/Admin/transaction/TransactionPage.js:1398
 msgid "URLs & Mollie"
 msgstr "URLs et Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:1240
+#: src/Admin/transaction/TransactionPage.js:1405
 msgid "Mollie Payment ID"
 msgstr "ID de Paiement Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:1264
+#: src/Admin/transaction/TransactionPage.js:1429
 msgid "Redirect URL"
 msgstr "URL de Redirection"
 
-#: src/Admin/transaction/TransactionPage.js:1282
+#: src/Admin/transaction/TransactionPage.js:1447
 msgid "Webhook URL"
 msgstr "URL du webhook"
 
-#: src/Admin/transaction/TransactionPage.js:1300
+#: src/Admin/transaction/TransactionPage.js:1465
 msgid "Checkout URL"
 msgstr "URL de paiement"
 
@@ -653,27 +654,27 @@ msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s).
 msgid "Failed to list balance transactions: %s"
 msgstr "Échec de la liste des transactions de solde : %s"
 
-#: src/Admin/transaction/TransactionPage.js:798
+#: src/Admin/transaction/TransactionPage.js:961
 msgid "Synced with Mollie successfully."
 msgstr "Synchronisé avec Mollie avec succès."
 
-#: src/Admin/transaction/TransactionPage.js:802
+#: src/Admin/transaction/TransactionPage.js:965
 msgid "Mollie responded but the settlement fee could not be extracted. See Mollie response below."
 msgstr "Mollie a répondu mais les frais de règlement n'ont pas pu être extraits. Voir la réponse Mollie ci-dessous."
 
-#: src/Admin/transaction/TransactionPage.js:814
+#: src/Admin/transaction/TransactionPage.js:977
 msgid "Failed to sync with Mollie."
 msgstr "Échec de la synchronisation avec Mollie."
 
-#: src/Admin/transaction/TransactionPage.js:927
+#: src/Admin/transaction/TransactionPage.js:1090
 msgid "Syncing…"
 msgstr "Synchronisation en cours…"
 
-#: src/Admin/transaction/TransactionPage.js:931
+#: src/Admin/transaction/TransactionPage.js:1094
 msgid "Sync with Mollie"
 msgstr "Synchroniser avec Mollie"
 
-#: src/Admin/transaction/TransactionPage.js:955
+#: src/Admin/transaction/TransactionPage.js:1118
 msgid "See Mollie response"
 msgstr "Voir la réponse Mollie"
 
@@ -849,19 +850,19 @@ msgstr ""
 msgid "Fair Payments Connector:"
 msgstr "Fair Payments Connector :"
 
-#: src/Core/Features.php:122
+#: src/Core/Features.php:94
 msgid "Core"
 msgstr "Cœur"
 
-#: src/Core/Features.php:123
+#: src/Core/Features.php:95
 msgid "Transactions, settings, payment blocks. Always on."
 msgstr "Transactions, paramètres, blocs de paiement. Toujours actif."
 
-#: src/Core/Features.php:126
+#: src/Core/Features.php:98
 msgid "Bundled translations"
 msgstr "Traductions groupées"
 
-#: src/Core/Features.php:127
+#: src/Core/Features.php:99
 #: src/Core/Plugin.php:145
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Charger les fichiers .mo/.json fournis avec le plugin au lieu de dépendre des packs de langue WordPress.org. Utile lorsqu'une locale est en dessous du seuil de 90 % sur translate.wordpress.org ou pour les chaînes en cours."
@@ -965,7 +966,7 @@ msgstr "Besoin d'aide ?"
 msgid "Failed to create payment"
 msgstr "Impossible de créer le paiement"
 
-#: src/Admin/transaction/TransactionPage.js:1123
+#: src/Admin/transaction/TransactionPage.js:1286
 msgid "Details"
 msgstr "Détails"
 
@@ -1207,23 +1208,23 @@ msgstr "Personne, Article et Événement"
 msgid "Failed to delete the transaction. It has not been changed."
 msgstr "Impossible de supprimer la transaction. Elle n'a pas été modifiée."
 
-#: src/Admin/transaction/TransactionPage.js:776
+#: src/Admin/transaction/TransactionPage.js:939
 msgid "Failed to delete transaction."
 msgstr "Impossible de supprimer la transaction."
 
-#: src/Admin/transaction/TransactionPage.js:1330
+#: src/Admin/transaction/TransactionPage.js:1495
 msgid "Danger Zone"
 msgstr "Zone de danger"
 
-#: src/Admin/transaction/TransactionPage.js:1335
+#: src/Admin/transaction/TransactionPage.js:1500
 msgid "Permanently delete this local transaction record. This does not cancel, refund, or delete the payment in Mollie or any other external service."
 msgstr "Supprimer définitivement cet enregistrement de transaction local. Cela n'annule pas, ne rembourse pas et ne supprime pas le paiement dans Mollie ou tout autre service externe."
 
-#: src/Admin/transaction/TransactionPage.js:1423
+#: src/Admin/transaction/TransactionPage.js:1588
 msgid "Deleting…"
 msgstr "Suppression en cours…"
 
-#: src/Admin/transaction/TransactionPage.js:1402
+#: src/Admin/transaction/TransactionPage.js:1567
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
 msgstr "Seul l'enregistrement de transaction local et ses données locales exclusivement détenues sont supprimés. Le paiement dans Mollie ou tout autre service externe n'est pas annulé, remboursé ou supprimé."
 
@@ -1586,15 +1587,15 @@ msgstr "Ce paiement ne peut plus être poursuivi."
 msgid "External Updates run this request belongs to."
 msgstr "Exécution des mises à jour externes à laquelle appartient cette demande."
 
-#: src/Hooks/DigestHooks.php:114
+#: src/Hooks/DigestHooks.php:128
 msgid "Every hour (fair-payments digest)"
 msgstr "Chaque heure (résumé fair-payments)"
 
-#: src/Hooks/DigestHooks.php:120
+#: src/Hooks/DigestHooks.php:134
 msgid "Every day (fair-payments digest)"
 msgstr "Chaque jour (résumé fair-payments)"
 
-#: src/Hooks/DigestHooks.php:126
+#: src/Hooks/DigestHooks.php:140
 msgid "Every week (fair-payments digest)"
 msgstr "Chaque semaine (résumé fair-payments)"
 
@@ -2076,36 +2077,36 @@ msgstr "Autorisation annulée. Rien n'a été modifié, donc la connexion Mollie
 msgid "Mollie authorization failed (%s). Nothing was changed, so an existing Mollie connection keeps working."
 msgstr "L'autorisation Mollie a échoué (%s). Rien n'a été modifié, donc la connexion Mollie existante continue de fonctionner."
 
-#: src/API/ApiTokenAuth.php:46
+#: src/API/ApiTokenAuth.php:35
 msgid "This token does not have the required scope."
 msgstr "Ce jeton n'a pas la portée requise."
 
-#: src/API/ApiTokenAuth.php:106
+#: src/API/ApiTokenAuth.php:44
 msgid "Invalid or missing API token."
 msgstr "Jeton API invalide ou manquant."
 
-#: src/API/ApiTokensController.php:127
+#: src/API/ApiTokensController.php:42
 msgid "A label is required."
 msgstr "Un libellé est requis."
 
-#: src/API/ApiTokensController.php:137
+#: src/API/ApiTokensController.php:51
 msgid "At least one valid scope is required."
 msgstr "Au moins une portée valide est requise."
 
-#: src/API/ApiTokensController.php:147
+#: src/API/ApiTokensController.php:60
 #: src/Admin/settings/ApiTokensTab.js:163
 msgid "Failed to create API token."
 msgstr "Impossible de créer le jeton API."
 
-#: src/API/ApiTokensController.php:174
+#: src/API/ApiTokensController.php:69
 msgid "API token not found."
 msgstr "Jeton API non trouvé."
 
-#: src/API/ExternalTransactionsController.php:85
+#: src/API/ExternalTransactionsController.php:51
 msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
 msgstr "Filtrer par date de transaction (created_at) à partir de cette date, par exemple 2026-01-01."
 
-#: src/API/ExternalTransactionsController.php:92
+#: src/API/ExternalTransactionsController.php:60
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr "Filtrer par date de transaction (created_at) jusqu'à cette date, par exemple 2026-12-31."
 
@@ -2262,36 +2263,36 @@ msgstr "La date de début doit être antérieure ou égale à la date de fin."
 msgid "The minimum amount must not be greater than the maximum amount."
 msgstr "Le montant minimum ne doit pas être supérieur au montant maximum."
 
-#: src/API/TransactionsController.php:1062
+#: src/API/TransactionsController.php:1073
 msgid "Limit results to a transaction ID, Mollie payment ID, description, or person name or email."
 msgstr "Limiter les résultats à un ID de transaction, un ID de paiement Mollie, une description, ou le nom ou l’e-mail d’une personne."
 
-#: src/API/TransactionsController.php:1068
+#: src/API/TransactionsController.php:1079
 msgid "Earliest transaction date (YYYY-MM-DD, site timezone, inclusive)."
 msgstr "Date de transaction la plus ancienne (AAAA-MM-JJ, fuseau horaire du site, incluse)."
 
-#: src/API/TransactionsController.php:1069
+#: src/API/TransactionsController.php:1080
 msgid "Latest transaction date (YYYY-MM-DD, site timezone, inclusive)."
 msgstr "Date de transaction la plus récente (AAAA-MM-JJ, fuseau horaire du site, incluse)."
 
-#: src/API/TransactionsController.php:1070
+#: src/API/TransactionsController.php:1081
 msgid "Lowest transaction amount, inclusive, without currency conversion."
 msgstr "Montant de transaction le plus bas, inclus, sans conversion de devise."
 
-#: src/API/TransactionsController.php:1071
+#: src/API/TransactionsController.php:1082
 msgid "Highest transaction amount, inclusive, without currency conversion."
 msgstr "Montant de transaction le plus élevé, inclus, sans conversion de devise."
 
-#: src/API/TransactionsController.php:1148
+#: src/API/TransactionsController.php:1159
 msgid "Enter a valid date as YYYY-MM-DD."
 msgstr "Saisissez une date valide au format AAAA-MM-JJ."
 
-#: src/API/TransactionsController.php:1174
+#: src/API/TransactionsController.php:1185
 #: src/Admin/transactions/TransactionsApp.js:104
 msgid "Enter an amount of zero or more with at most two decimal places."
 msgstr "Saisissez un montant supérieur ou égal à zéro avec au plus deux décimales."
 
-#: src/API/TransactionsController.php:1192
+#: src/API/TransactionsController.php:1203
 msgid "Enter a search of at most 200 characters."
 msgstr "Saisissez une recherche de 200 caractères au maximum."
 
@@ -2868,25 +2869,25 @@ msgstr "Les détails du paiement n'ont pas pu être chargés, aucun paiement ne 
 msgid "Creating…"
 msgstr "Création en cours…"
 
-#: src/Admin/transaction/TransactionPage.js:1348
-#: src/Admin/transaction/TransactionPage.js:1359
-#: src/Admin/transaction/TransactionPage.js:1424
+#: src/Admin/transaction/TransactionPage.js:1513
+#: src/Admin/transaction/TransactionPage.js:1524
+#: src/Admin/transaction/TransactionPage.js:1589
 msgid "Delete local transaction"
 msgstr "Supprimer la transaction locale"
 
 #. translators: 1: transaction ID, 2: amount, e.g. "12.50", 3: currency code, e.g. "EUR"
-#: src/Admin/transaction/TransactionPage.js:1377
+#: src/Admin/transaction/TransactionPage.js:1542
 #, js-format
 msgid "Permanently delete transaction #%1$d for %2$s %3$s? This cannot be undone."
 msgstr "Supprimer définitivement la transaction #%1$d pour %2$s %3$s ? Cette action ne peut pas être annulée."
 
 #. translators: %s: transaction description
-#: src/Admin/transaction/TransactionPage.js:1390
+#: src/Admin/transaction/TransactionPage.js:1555
 #, js-format
 msgid "Description: %s"
 msgstr "Description : %s"
 
-#: src/Admin/transaction/TransactionPage.js:1396
+#: src/Admin/transaction/TransactionPage.js:1561
 msgid "This transaction has no description."
 msgstr "Cette transaction n'a pas de description."
 
@@ -3082,4 +3083,52 @@ msgstr "Vérification du statut de votre paiement…"
 #: src/payment-callback.js:159
 msgid "Dismiss payment notice"
 msgstr "Fermer l’avis de paiement"
+
+#: src/Admin/transaction/TransactionPage.js:738
+msgid "Tickets"
+msgstr "Billets"
+
+#: src/Admin/transaction/TransactionPage.js:740
+msgid "Added activities"
+msgstr "Activités ajoutées"
+
+#: src/Admin/transaction/TransactionPage.js:742
+msgid "Series upgrade"
+msgstr "Mise à niveau de série"
+
+#: src/Admin/transaction/TransactionPage.js:744
+msgid "Refund record (not counted)"
+msgstr "Enregistrement de remboursement (non compté)"
+
+#: src/Admin/transaction/TransactionPage.js:782
+msgid "Purchases"
+msgstr "Achats"
+
+#: src/Admin/transaction/TransactionPage.js:788
+msgid "This transaction isn’t linked to any purchase."
+msgstr "Cette transaction n'est liée à aucun achat."
+
+#: src/Admin/transaction/TransactionPage.js:799
+msgid "Purchase"
+msgstr "Achat"
+
+#: src/Admin/transaction/TransactionPage.js:811
+msgid "For"
+msgstr "Pour"
+
+#: src/Admin/transaction/TransactionPage.js:817
+msgid "Share"
+msgstr "Partager"
+
+#. translators: %d: purchase ID
+#: src/Admin/transaction/TransactionPage.js:833
+#, js-format
+msgid "Purchase #%d"
+msgstr "Achat n°%d"
+
+#. translators: %d: event date ID
+#: src/Admin/transaction/TransactionPage.js:862
+#, js-format
+msgid "Event date #%d"
+msgstr "Date de l'événement n°%d"
 
