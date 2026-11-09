@@ -24,8 +24,6 @@
  * leaves the host.
  */
 
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import {
 	ADMIN_PASSWORD,
@@ -50,6 +48,18 @@ async function httpStartup(request, path = '/') {
 	const response = await request.get(path);
 	expect(response.status()).toBeLessThan(500);
 	return lastEntry(path.startsWith('/wp-cron.php') ? 'cron' : 'http');
+}
+
+// A plain WP-CLI run still works, so a failure here leaves the wp-env
+// environment usable for the rest of the shard.
+function expectUsableEnvironment() {
+	try {
+		fixture('state');
+	} catch (err) {
+		throw new Error(
+			`The wp-env tests environment is unusable after the concurrent startup: ${err.message}`
+		);
+	}
 }
 
 function lastEntry(context) {
@@ -253,57 +263,50 @@ test.describe('Event notification startup (#2059)', () => {
 
 	test('a startup that finds the migration running leaves it alone', async ({
 		request,
-	}) => {
-		test.setTimeout(120_000);
-		const holder = spawn(
-			'npx',
-			[
-				'wp-env',
-				'run',
-				'tests-cli',
-				'wp',
-				'eval-file',
-				`wp-content/mu-plugins/scripts/${SCRIPT}`,
-				'hold-lock',
-				'30',
-			],
-			{
-				cwd: fileURLToPath(new URL('../', import.meta.url)),
-				stdio: 'ignore',
-			}
-		);
-		const finished = new Promise((resolve) => holder.on('exit', resolve));
+	}, testInfo) => {
+		test.setTimeout(180_000);
 
+		// The holder, the page request and the state reads run inside one
+		// WP-CLI process: overlapping `wp-env run` calls broke the wp-env
+		// environment for the rest of the CI shard (#2188).
+		let contended;
 		try {
-			await expect
-				.poll(
-					() =>
-						wpCli(
-							'option get fair_e2e_notification_startup_lock_held',
-							{ allowFailure: true }
-						).trim(),
-					{ timeout: 60_000 }
-				)
-				.toBe('1');
-			before = fixture('state');
-			expect(before.markers.configuration).toBe(false);
-			expect(before.lockFree).toBe(false);
-
-			const waiting = await httpStartup(request);
-			expect(
-				waiting.diagnostics.filter((notice) => notice.notifications)
-			).toEqual([]);
-			// Not upgraded yet, so its worker waits; nothing else is touched.
-			expect(waiting.stages.individual_email_worker).toBe(false);
-			expect(waiting.stages.cleanup_handler).toBe(true);
-			expect(waiting.writes).toEqual([]);
-			const during = fixture('state');
-			expect(during.markers.configuration).toBe(false);
-			expect(during.settings).toBe(before.settings);
+			contended = fixture('contend');
 		} finally {
-			await finished;
+			// Fails alone: the environment must still answer later specs.
+			expectUsableEnvironment();
 		}
+		await testInfo.attach('lock holder', {
+			body: JSON.stringify(contended.holder ?? null, null, 2),
+			contentType: 'application/json',
+		});
+		expect(
+			contended.ok,
+			`Concurrent startup failed at "${contended.stage}": ${contended.error}\n` +
+				`Lock holder: ${JSON.stringify(contended.holder ?? null, null, 2)}`
+		).toBe(true);
 
+		before = contended.before;
+		expect(before.markers.configuration).toBe(false);
+		expect(before.lockFree).toBe(false);
+
+		// The page request ran while the holder still held the lock.
+		expect(contended.response).toBeLessThan(500);
+		const waiting = contended.startup;
+		expect(
+			waiting.diagnostics.filter((notice) => notice.notifications)
+		).toEqual([]);
+		// Not upgraded yet, so its worker waits; nothing else is touched.
+		expect(waiting.stages.individual_email_worker).toBe(false);
+		expect(waiting.stages.cleanup_handler).toBe(true);
+		expect(waiting.writes).toEqual([]);
+		const during = contended.during;
+		expect(during.lockFree).toBe(false);
+		expect(during.markers.configuration).toBe(false);
+		expect(during.settings).toBe(before.settings);
+		expect(contended.holder.exitCode).toBe(0);
+
+		// Once the lock is free, the next startup finishes the takeover once.
 		expectQuietStartup(await httpStartup(request));
 		const after = fixture('state');
 		expectComplete(after);
@@ -312,5 +315,14 @@ test.describe('Event notification startup (#2059)', () => {
 		expect(after.importedTotal).toBe(before.importedTotal);
 		expect(after.mail).toBe(before.mail);
 		expect(after.telegram).toBe(before.telegram);
+
+		// Another startup has nothing left to migrate or import.
+		const repeated = await httpStartup(request);
+		expectQuietStartup(repeated);
+		expect(repeated.writes).toEqual([]);
+		const again = fixture('state');
+		expectComplete(again);
+		expect(again.importedTotal).toBe(after.importedTotal);
+		expect(again.claims).toBe(after.claims);
 	});
 });
