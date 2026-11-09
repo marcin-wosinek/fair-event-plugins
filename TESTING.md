@@ -332,13 +332,13 @@ most one whole spec file, then push and let CI cover the rest. Don't block
 on, or wait for, a local full-suite run.
 
 Full suites run with a single worker and take a while. Approximate figures
-(October 2026):
+(November 2026; CI job = critical path with balanced shards):
 
 | Suite                                       | Tests | Local                                     | CI job             |
 | ------------------------------------------- | ----- | ----------------------------------------- | ------------------ |
-| Root E2E (`test:e2e:local`)                 | 446   | ~40–55 min\*, plus ~5 min build and start | ~21 min (4 shards) |
+| Root E2E (`test:e2e:local`)                 | 465   | ~40–55 min\*, plus ~5 min build and start | ~17 min (4 shards) |
 | fair-events API (`--workspace=fair-events`) | 439   | ~12 min with `--reuse` (measured)         | —                  |
-| All API workspaces (`test:api:local`)       | 1250  | ~40–55 min\*, plus ~3 min build and start | ~23 min (4 shards) |
+| All API workspaces (`test:api:local`)       | 1328  | ~40–55 min\*, plus ~3 min build and start | ~21 min (4 shards) |
 
 \* Estimated from CI, where the unsharded root E2E test phase took 34–53 min
 and the unsharded API test phase 39–52 min.
@@ -406,7 +406,7 @@ omit it.
 Two runner options exist mainly for CI, and work locally too:
 
 ```bash
-# Run one quarter of every workspace's API suite.
+# Run the second of four duration-balanced API shards.
 npm run test:api:local -- --shard=2/4
 # Write api-results/<workspace>.json (Playwright JSON) and
 # api-results/timings.json (build, Composer, wp-env start, readiness,
@@ -414,9 +414,12 @@ npm run test:api:local -- --shard=2/4
 npm run test:api:local -- --results-dir=api-results
 ```
 
-`--shard` is handed to every workspace explicitly, together with
-`--pass-with-no-tests`, because a small workspace can have nothing in a given
-shard. `--results-dir` switches the reporters to `github,html,json`, so every
+`--shard` is owned by the runner, not forwarded to Playwright. It lists every
+API workspace, assigns their spec files together to shards by recorded
+duration, and runs each workspace with a `--test-list` of its files in that
+shard; a workspace with no files there is skipped. Combined with
+`--workspace`, it runs only that workspace's part of the shard. See
+[Rebalancing shards](#rebalancing-shards). `--results-dir` switches the reporters to `github,html,json`, so every
 workspace also leaves an HTML report in `<workspace>/playwright-report/`.
 
 **Run WP-CLI fixtures one at a time.** Await each `npx wp-env run` before
@@ -439,10 +442,12 @@ authentication as local development, split into four isolated shards:
   (`workers: 1`, `fullyParallel: false`, two CI retries), because specs share
   WordPress state. Shards don't cancel each other when one fails.
 - **`API shard inventory`** lists every workspace's suite through its own
-  `test:api` script, without WordPress, and fails on listing errors, an empty
-  suite, or a test that is missing from every shard or assigned to more than
-  one (`scripts/check-api-shards.mjs --total=4`). Test keys include the
-  workspace.
+  `test:api` script, without WordPress, computes the same assignment as the
+  shards, lists each shard through the same `--test-list` files, and fails on
+  listing errors, an empty suite, or a test that is missing from every shard or
+  assigned to more than one (`scripts/check-api-shards.mjs --total=4`). Test
+  keys include the workspace. The uploaded inventory also records each
+  shard's files and estimated seconds.
 - **`API Tests`** is the single status. It fails unless the inventory check
   and all four shards succeeded, and it compares each shard's JSON results with
   the planned inventory: a planned test that never ran, or an unplanned one
@@ -456,11 +461,11 @@ job: its log ends with the failing workspaces, and its step summary has the
 phase timings. Reports are not merged. The workflow also has a manual trigger
 (`gh workflow run api-tests.yml --ref <branch>`) for benchmark runs.
 
-Playwright shards each workspace's sequential suite by whole spec files, so
-each shard gets roughly a quarter of every workspace. Change the shard count in
-both the matrix and the inventory check's `--total`.
+Shards hold whole spec files, balanced by recorded duration across all
+workspaces ([Rebalancing shards](#rebalancing-shards)). Change the shard count
+in both the matrix and the inventory check's `--total`.
 
-Measured in November 2026 (#2153; five runs each of one commit per layout,
+Before rebalancing, measured in November 2026 (#2153; five runs each of one commit per layout,
 dispatched together, 1250 tests, PHP 8.5, Playwright 1.64.1,
 `ubuntu-latest`, two CI retries, all caches warm, queue delay excluded):
 
@@ -565,12 +570,15 @@ requests, split into four Playwright shards:
 
 - **`E2E shard N/4`** jobs each run `npm run test:e2e:local -- --shard=N/4` on
   their own runner, so every shard has its own wp-env containers, database,
-  uploads, captured emails and settings. Inside a shard the suite stays
+  uploads, captured emails and settings. The runner assigns whole spec files
+  by recorded duration and runs its shard's files through `--test-list`
+  ([Rebalancing shards](#rebalancing-shards)). Inside a shard the suite stays
   sequential (`workers: 1`, `fullyParallel: false`), because specs share
   WordPress state. Shards don't cancel each other when one fails.
-- **`E2E shard inventory`** lists the suite without WordPress and fails if any
-  test is missing from every shard or assigned to more than one
-  (`scripts/check-e2e-shards.mjs`).
+- **`E2E shard inventory`** lists the suite without WordPress, computes the
+  same assignment, lists each shard through the same `--test-list`, and fails
+  if the suite is empty or any test is missing from every shard or assigned to
+  more than one (`scripts/check-e2e-shards.mjs`).
 - **`E2E`** is the single status: it fails unless the inventory check and all
   four shards succeeded.
 
@@ -579,12 +587,11 @@ traces and failure screenshots, plus `e2e-results/results.json` with stats),
 on success as well as failure. Open the failing shard's job and its artifact;
 reports are not merged.
 
-Playwright shards a sequential suite by whole spec files, in discovery order. A
-very long spec added to one shard can unbalance them; compare per-shard job
-durations, and change the shard count in both the matrix and the inventory
-check's `--total`.
+`--shard` covers the root suite only; combining it with `--workspace` is
+rejected. Change the shard count in both the matrix and the inventory check's
+`--total`.
 
-Measured in November 2026 (#2102; five runs each, 446 tests, PHP 8.5,
+Before rebalancing, measured in November 2026 (#2102; five runs each, 446 tests, PHP 8.5,
 Playwright 1.64.1, `ubuntu-latest` = ubuntu-26.04, all caches warm):
 
 | Median (range)           | Sequential (1 job) | 4 shards         |
@@ -601,6 +608,122 @@ retries came from the block-docs examples spec (`wp.apiFetch is not a
 function` right after login), which also flaked in sequential runs; see
 [Calling `wp.apiFetch` from a spec](#calling-wpapifetch-from-a-spec) for the
 cause and fix (#2152).
+
+### Rebalancing shards
+
+Both CI suites keep four isolated shards, but which spec files run in which
+shard comes from recorded durations rather than Playwright's file-count
+split (#2224). `scripts/shard-assignment.mjs` is the single assignment path;
+the lifecycle runner and both inventory checks use it.
+
+**Assignment rules.**
+
+- The unit is a whole spec file, so file-level hooks and `describe.serial`
+  groups stay together. Splitting a large spec is out of scope.
+- The suite is listed without WordPress (the root config for E2E, each
+  workspace's own `test:api` script for API). Files are sorted by weight,
+  longest first, and each goes to the currently lightest shard. Ties keep
+  discovery order and go to the lowest-numbered shard, so the same inventory
+  and timing data always give the same assignment.
+- API files of all workspaces are balanced together, so one slow workspace
+  doesn't load a single shard. Inside a shard, workspaces run in root
+  `package.json` order and files in discovery order.
+- Weights are the checked-in median seconds per file in
+  `scripts/shard-timings/e2e.json` and `scripts/shard-timings/api.json`, keyed
+  by path from the repository root. They are never fetched during a run.
+- A new or renamed file without an entry weighs the median of the recorded
+  files. Entries without a file are reported as stale and ignored. Both
+  appear in the shard job log and the inventory job log.
+- Each shard runs its files through Playwright's `--test-list`, which matches
+  exact rootDir-relative paths and is AND-ed with the workspace script's own
+  path argument and any forwarded `--grep` or file filter. Passing your own
+  `--test-list` together with `--shard` is rejected.
+
+**When to refresh.** Refresh after adding or removing slow specs, or when a
+shard's test time drifts more than a few minutes from the others in the
+`report` output. Pick at least three recent successful runs of `main` (or
+`workflow_dispatch` runs) whose artifacts haven't expired (seven days):
+
+```bash
+gh run list --workflow=e2e.yml --branch=main --status=success --limit=5
+node scripts/shard-timings.mjs refresh --suite=e2e --run=<id> --run=<id> --run=<id>
+node scripts/shard-timings.mjs refresh --suite=api --run=<id> --run=<id> --run=<id>
+node scripts/check-e2e-shards.mjs --total=4
+node scripts/check-api-shards.mjs --total=4
+```
+
+`refresh` downloads each run's shard reports (latest attempt per shard) with
+`gh`. A file's duration runs from its first test start to its last test end.
+Only clean samples count, meaning every test ran once and passed or was
+skipped; samples with retries, failures or tests that never ran are reported
+per run and counted as `excluded`. A file that was never clean keeps the
+median of its excluded samples with `samples: 0`. The known flaky
+`EventSignupHookBridge` spec is one of these. Review the timing diff and the
+check output (estimated minutes per shard) in the PR that refreshes them.
+
+**Measuring a change.** Dispatch the baseline and the candidate together and
+in alternation, at least three of each per suite, so both see the same runner
+image and caches. Then compare them:
+
+```bash
+gh workflow run e2e.yml --ref <baseline-branch>; gh workflow run e2e.yml --ref <candidate-branch>
+node scripts/shard-timings.mjs report --suite=e2e --label=Before --run=<id> …
+node scripts/shard-timings.mjs report --suite=e2e --label=After --run=<id> …
+```
+
+`report` gives, per run and as medians with ranges, the workflow elapsed
+time from first job start to last job end (queue delay excluded), each
+shard's test time (Playwright's duration for E2E, the sum of the workspace
+test phases for API), the fastest-to-slowest gap, runner minutes over all
+jobs, and flaky and failed tests. Keep failed runs in the table and say why
+any run is excluded.
+
+**Results (#2224).** Measured on 2026-11-09 with interleaved
+`workflow_dispatch` runs of a baseline branch (`main` plus a manual trigger)
+and the balanced branch: PHP 8.5, Playwright 1.65, `ubuntu-latest`, two CI
+retries, warm caches. There were three runs per side for E2E and six for API.
+All runs were dispatched together, so the elapsed times include waits for a
+free runner. Compare the critical path instead: the inventory job plus the
+slowest shard job plus the status job. Medians (range), in minutes:
+
+| E2E (465 tests)           | Before           | Balanced         |
+| ------------------------- | ---------------- | ---------------- |
+| Slowest shard, test time  | 14.4 (13.4–16.3) | 11.5 (11.2–11.9) |
+| Fastest shard, test time  | 4.4 (4.3–6.1)    | 10.6 (9.1–10.6)  |
+| Fastest-to-slowest gap    | 10.1 (9.1–10.1)  | 1.3 (0.6–2.3)    |
+| Critical path (jobs)      | 19.7 (18.6–21.3) | 16.6 (16.0–17.1) |
+| Runner minutes, all jobs  | 56.8 (56.2–60.3) | 61.7 (60.2–63.1) |
+| Flaky / failed tests, sum | 1 / 0            | 0 / 0            |
+
+| API (1328 tests)          | Before           | Balanced         |
+| ------------------------- | ---------------- | ---------------- |
+| Slowest shard, test time  | 16.7 (13.6–18.9) | 14.9 (13.4–15.5) |
+| Fastest shard, test time  | 9.7 (8.2–11.9)   | 11.4 (9.0–13.7)  |
+| Fastest-to-slowest gap    | 7.3 (1.9–9.5)    | 3.0 (1.3–5.7)    |
+| Critical path (jobs)      | 22.0 (19.2–26.2) | 21.2 (19.5–22.0) |
+| Runner minutes, all jobs  | 69.7 (62.4–82.9) | 74.5 (61.0–77.9) |
+| Flaky / failed tests, sum | 9 / 2            | 7 / 4            |
+
+Balancing evens out the shards and shortens the slowest one, but each suite
+used about 7–9% more runner minutes. Almost all of the extra time is test
+time, spread over many mid-sized spec files with no link to their position in
+a shard. It may come from leftover site state of other specs that now share a
+shard, or from runner variance: the last API pair used fewer minutes balanced
+than before. The trade-off was accepted on #2224. All runs are kept:
+
+- Before, E2E: 42605626819, 42605643357, 42605659535. API: 42605635108,
+  42605651488, 42605667217, 42610832048, 42610839519 (failed: the known
+  `MetaDeliveryQueue` "overlapping workers" flake), 42615470886.
+- Balanced, E2E: 42605631176, 42605647373, 42605663460. API: 42605639382,
+  42605654889, 42605671284, 42610836026, 42610843986, 42615475918. The first
+  three failed every attempt of `PaymentHistoryReconciliation`'s findings
+  filter test, an order dependency that balancing exposed: another spec's
+  canceled payment entered its exact-set check. The test now compares only its
+  own payments. 42610836026 failed on the same `MetaDeliveryQueue` flake.
+
+The assignment's estimate (sum of file spans) is below a shard's real test
+time. It leaves out per-workspace start-up (API) and gaps between files, and
+it adds the same amount to every shard, so it doesn't change the balance.
 
 ## Package script conventions
 
