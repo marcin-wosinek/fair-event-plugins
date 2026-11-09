@@ -29,6 +29,8 @@ e2e/
     ├── fair-e2e-protected-credentials.php # stored (encrypted) Instagram and Telegram tokens, Instagram API double
     ├── fair-e2e-external-http-guard.php  # refuses non-local HTTP while fair_e2e_block_external_http is set
     ├── fair-e2e-notification-startup.php # opt-in stand-ins that flag notification startup running too early (#2059)
+    ├── fair-e2e-admin-table-example.php  # test-only review page for the shared admin table (#2205)
+    ├── admin-table-example/build/        # its bundle, built by fair-events-shared (gitignored)
     ├── lib/
     │   ├── event-factory.php             # composable event-seeding builders
     │   ├── meetup-page-http-double.php   # captured Meetup event pages for URL lookups

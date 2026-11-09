@@ -233,6 +233,15 @@ specific behaviour, not certification that each satisfies every rule above.
   reports partial success, and keeps only the failed profiles with their
   reasons for a retry.
 
+## Lists: one table pattern
+
+Admin lists of items with actions (Event Notifications, Event Feeds, Finance
+Entries, Transactions) share one presentation: linked item identity first,
+right-aligned amounts with currency, sentence-case status text, and a
+rightmost Actions column with one frequent text action plus an overflow menu.
+The contract, components, responsive layout and toolbar anatomy live in
+[fair-events-shared/src/admin-table/README.md](./fair-events-shared/src/admin-table/README.md).
+
 ## Dates and times: one interpretation, everywhere
 
 - Stored dates and times (`start_date`, `start_time` etc.) are naive site-local
