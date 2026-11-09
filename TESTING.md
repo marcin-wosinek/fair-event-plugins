@@ -432,6 +432,25 @@ processes inside the container from one `wp-env run`. The `parallel` action of
 `wp eval-file` with `proc_open`, waits an optional `delayMs` between starts, and
 returns all results in order.
 
+The same rule holds for E2E specs: never start a background `wp-env run` (for
+example with `spawn`) and keep calling `wpCli()` or `runScript()` while it
+runs. A spec needing a long-lived concurrent process lets one fixture
+coordinate the whole phase. The `contend` action of
+`e2e/mu-plugins/scripts/notification-startup-fixture.php` (#2188) shows the
+pattern:
+
+- It starts the lock holder as a child `wp eval-file` with its output in files.
+- It waits for a ready file instead of a fixed sleep, and signals release
+  through a second file. Every wait has a deadline.
+- It reads state through fresh child processes, so its own option cache never
+  answers.
+- It makes the real page request to the `tests-wordpress` service with the
+  site's `Host` header, because `localhost` inside the CLI container is the
+  container itself.
+- It stops the holder and removes the signal files on every failure. It
+  reports the holder's output, exit code and signal with `ok: false` instead
+  of failing the WP-CLI run, so the spec can attach them to the report.
+
 `.github/workflows/api-tests.yml` uses the same lifecycle command and test-only
 authentication as local development, split into four isolated shards:
 
