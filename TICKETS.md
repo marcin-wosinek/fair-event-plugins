@@ -98,6 +98,11 @@ grounding happens at planning time (`/plan-ticket`), not in the ticket.
      rendering across viewports — it's the only signal
      [COMMIT_GUIDE.md](./COMMIT_GUIDE.md) uses to require before/after
      screenshots at PR time, so skipping it silently skips that check.
+     Apply `monitoring` to ongoing tracking tickets that are updated on a
+     recurring (weekly) cadence and stay open across individual updates —
+     e.g. duplication (#2226), performance (#2249), screenshot freshness
+     (#2258) and translation coverage (#2259). Don't use it for one-off work
+     those tickets spawn; that work gets its own ticket.
 
 ## Project status transitions
 
