@@ -1,0 +1,755 @@
+{
+	"suite": "api",
+	"about": "Median clean seconds per spec file. Refresh with: node scripts/shard-timings.mjs refresh (TESTING.md § Rebalancing shards).",
+	"runs": [
+		{
+			"run": 42578302407,
+			"attempt": 1,
+			"headSha": "d354f24ed65859ad17bd6b604b5cc2c011d50b0b",
+			"createdAt": "2026-11-09T07:16:41Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42577830794,
+			"attempt": 1,
+			"headSha": "b0de98bd5cff38e0166aff5cec027b77a0570456",
+			"createdAt": "2026-11-09T07:12:23Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42572908641,
+			"attempt": 1,
+			"headSha": "cfaaf65ec5d0a3bfbceaef58da27f7770a4b1343",
+			"createdAt": "2026-11-09T06:25:12Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42578341902,
+			"attempt": 1,
+			"headSha": "9dbd0d22e611163f3ebcca0333f276f4c18a0741",
+			"createdAt": "2026-11-09T07:17:03Z",
+			"conclusion": "failure"
+		},
+		{
+			"run": 42372886362,
+			"attempt": 1,
+			"headSha": "f08bbf4c61201582c06d4fb0451c049b29ce7398",
+			"createdAt": "2026-11-07T12:31:46Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42369253724,
+			"attempt": 1,
+			"headSha": "325e9d2df85d763504f412ab9225a016b0744732",
+			"createdAt": "2026-11-07T11:41:46Z",
+			"conclusion": "success"
+		}
+	],
+	"files": {
+		"fair-audience-experimental/src/API/__tests__/EventInvitations.api.spec.js": {
+			"seconds": 8.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/FeesBudget.api.spec.js": {
+			"seconds": 11.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/FeesController.api.spec.js": {
+			"seconds": 17.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/ImportController.api.spec.js": {
+			"seconds": 2.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/InstagramPostsController.api.spec.js": {
+			"seconds": 1.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/ScheduledMessagesController.api.spec.js": {
+			"seconds": 8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience-experimental/src/API/__tests__/TimelineController.api.spec.js": {
+			"seconds": 3.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ActivityCapacity.api.spec.js": {
+			"seconds": 10.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ActivityOptionPricing.api.spec.js": {
+			"seconds": 19.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/AudienceLifecycleCutover.api.spec.js": {
+			"seconds": 26.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/BuyAnotherTicket.api.spec.js": {
+			"seconds": 3.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/CustomMail.api.spec.js": {
+			"seconds": 13.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventInterestController.api.spec.js": {
+			"seconds": 0.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventParticipantsMarketingConsent.api.spec.js": {
+			"seconds": 7.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventParticipantsMove.api.spec.js": {
+			"seconds": 4.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventParticipantsRemove.api.spec.js": {
+			"seconds": 24.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupActivities.api.spec.js": {
+			"seconds": 1.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupAddActivities.api.spec.js": {
+			"seconds": 3.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupAvailability.api.spec.js": {
+			"seconds": 0.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupBasePricing.api.spec.js": {
+			"seconds": 4.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupGroupPricing.api.spec.js": {
+			"seconds": 5.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupHookBridge.api.spec.js": {
+			"seconds": 9.6,
+			"samples": 0,
+			"excluded": 6
+		},
+		"fair-audience/src/API/__tests__/EventSignupLedgerResolution.api.spec.js": {
+			"seconds": 0.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupLineItemTotals.api.spec.js": {
+			"seconds": 22.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupRecurrenceScope.api.spec.js": {
+			"seconds": 15.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupResume.api.spec.js": {
+			"seconds": 4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/EventSignupSavedBlock.api.spec.js": {
+			"seconds": 3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/InstagramCredentials.api.spec.js": {
+			"seconds": 17.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/MailingSignupWeeklyFeeds.api.spec.js": {
+			"seconds": 61,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ParticipantFeedSummary.api.spec.js": {
+			"seconds": 8.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ParticipantPreferences.api.spec.js": {
+			"seconds": 25.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ParticipantsActivityTransactionStatus.api.spec.js": {
+			"seconds": 1.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/ParticipantsStats.api.spec.js": {
+			"seconds": 0.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/RepeatPurchases.api.spec.js": {
+			"seconds": 5.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/SessionController.api.spec.js": {
+			"seconds": 0,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/TicketActivities.api.spec.js": {
+			"seconds": 25.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/TicketAssign.api.spec.js": {
+			"seconds": 26.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/TicketEdit.api.spec.js": {
+			"seconds": 10.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/TicketOperations.api.spec.js": {
+			"seconds": 36.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/TransactionParticipantLink.api.spec.js": {
+			"seconds": 14,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-audience/src/API/__tests__/UnfinishedPurchases.api.spec.js": {
+			"seconds": 19.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events-experimental/src/API/__tests__/GroupRulesControllers.api.spec.js": {
+			"seconds": 12.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events-experimental/src/API/__tests__/MetaConversionsController.api.spec.js": {
+			"seconds": 71.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events-experimental/src/API/__tests__/MetaDeliveryQueue.api.spec.js": {
+			"seconds": 79.2,
+			"samples": 5,
+			"excluded": 1
+		},
+		"fair-events-experimental/src/API/__tests__/MetaEngagementController.api.spec.js": {
+			"seconds": 84.6,
+			"samples": 5,
+			"excluded": 1
+		},
+		"fair-events-experimental/src/API/__tests__/RetiredRoutes.api.spec.js": {
+			"seconds": 6.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events-experimental/src/API/__tests__/WhatsAppController.api.spec.js": {
+			"seconds": 39.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events-experimental/src/API/__tests__/WhatsAppWebhook.api.spec.js": {
+			"seconds": 32,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/ActivityCapacity.api.spec.js": {
+			"seconds": 22.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/ActivityOptionPricing.api.spec.js": {
+			"seconds": 36.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/ActivityOrder.api.spec.js": {
+			"seconds": 1.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/AllEventsList.api.spec.js": {
+			"seconds": 1.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/AllEventsVenueFilter.api.spec.js": {
+			"seconds": 2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/BlockDiscovery.api.spec.js": {
+			"seconds": 14,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/CalendarExportEligibility.api.spec.js": {
+			"seconds": 9.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/CalendarFeedController.api.spec.js": {
+			"seconds": 8.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/CategoriesController.api.spec.js": {
+			"seconds": 4.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesBookingMessage.api.spec.js": {
+			"seconds": 14,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesBudget.api.spec.js": {
+			"seconds": 5.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesController.api.spec.js": {
+			"seconds": 64.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesOverrides.api.spec.js": {
+			"seconds": 9.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesPublication.api.spec.js": {
+			"seconds": 27.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesSiblings.api.spec.js": {
+			"seconds": 1.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventDatesTiming.api.spec.js": {
+			"seconds": 13,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventLookupController.api.spec.js": {
+			"seconds": 1.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventNotificationsController.api.spec.js": {
+			"seconds": 120.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventSchedule.api.spec.js": {
+			"seconds": 23.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventStatistics.api.spec.js": {
+			"seconds": 56.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/EventStatisticsReaders.api.spec.js": {
+			"seconds": 36,
+			"samples": 4,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsGroupRestrictionUnavailable.api.spec.js": {
+			"seconds": 14.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsIdempotency.api.spec.js": {
+			"seconds": 67.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsInactiveSalePeriod.api.spec.js": {
+			"seconds": 1.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsIrregularSeries.api.spec.js": {
+			"seconds": 1.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsLineItemTotals.api.spec.js": {
+			"seconds": 25.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsMultipleInstances.api.spec.js": {
+			"seconds": 1.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsNewsletterConsent.api.spec.js": {
+			"seconds": 6.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsPaymentState.api.spec.js": {
+			"seconds": 9.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsPaymentUnavailable.api.spec.js": {
+			"seconds": 1.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsQuestionnaire.api.spec.js": {
+			"seconds": 3.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsRateLimit.api.spec.js": {
+			"seconds": 35.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsRecurringMaster.api.spec.js": {
+			"seconds": 1.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsSeriesCoverage.api.spec.js": {
+			"seconds": 72.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsSignupDeletion.api.spec.js": {
+			"seconds": 1.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsSignupsAnswers.api.spec.js": {
+			"seconds": 2.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsSignupsList.api.spec.js": {
+			"seconds": 12.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsTestPayment.api.spec.js": {
+			"seconds": 10.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsTicketAnswers.api.spec.js": {
+			"seconds": 13,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsTransactionDescription.api.spec.js": {
+			"seconds": 5.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsUnsetSalePeriod.api.spec.js": {
+			"seconds": 2.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/GetTicketsViewerContext.api.spec.js": {
+			"seconds": 2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/NotificationHistoryController.api.spec.js": {
+			"seconds": 46.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/OrganizerSettings.api.spec.js": {
+			"seconds": 0.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentHistoryBackfill.api.spec.js": {
+			"seconds": 24,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentHistoryCutover.api.spec.js": {
+			"seconds": 24.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentHistoryFoundation.api.spec.js": {
+			"seconds": 37.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentHistoryReconciliation.api.spec.js": {
+			"seconds": 34.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentHistoryShadowWrites.api.spec.js": {
+			"seconds": 21.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PaymentLifecycleCutover.api.spec.js": {
+			"seconds": 29.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PublicEventsController.api.spec.js": {
+			"seconds": 11.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/PurchasePaymentReaders.api.spec.js": {
+			"seconds": 29.8,
+			"samples": 2,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/SignupAdminEdits.api.spec.js": {
+			"seconds": 23.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/TicketCapacity.api.spec.js": {
+			"seconds": 24.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/TicketTypeOrder.api.spec.js": {
+			"seconds": 2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/TicketUnits.api.spec.js": {
+			"seconds": 20.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/TicketsController.api.spec.js": {
+			"seconds": 30.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/TimingConsumers.api.spec.js": {
+			"seconds": 8.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-events/src/API/__tests__/VenueController.api.spec.js": {
+			"seconds": 10.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/ConnectedSiteBudgetReconciliation.api.spec.js": {
+			"seconds": 7.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/EventBudgetReconciliation.api.spec.js": {
+			"seconds": 11.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryEventFilter.api.spec.js": {
+			"seconds": 6.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryFocus.api.spec.js": {
+			"seconds": 5.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryTagRoutes.api.spec.js": {
+			"seconds": 1.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryTransfer.api.spec.js": {
+			"seconds": 1.2,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryUnbudgetedCount.api.spec.js": {
+			"seconds": 7.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/FinancialEntryUnmatch.api.spec.js": {
+			"seconds": 6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-finance/src/API/__tests__/SavedSettlementReconciliation.api.spec.js": {
+			"seconds": 57.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/FairFormDateAnswers.api.spec.js": {
+			"seconds": 1.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/FairFormDatetimeAnswers.api.spec.js": {
+			"seconds": 1.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/FairFormPhoneAnswers.api.spec.js": {
+			"seconds": 3.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/FairFormUrlAnswers.api.spec.js": {
+			"seconds": 3.4,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/QuestionnaireResponses.api.spec.js": {
+			"seconds": 9.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-form/src/API/__tests__/UrlPreview.api.spec.js": {
+			"seconds": 1.7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector-experimental/src/API/__tests__/ConnectedSitesBudget.api.spec.js": {
+			"seconds": 4.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector-experimental/src/API/__tests__/ConnectedSitesEnabled.api.spec.js": {
+			"seconds": 4.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector-experimental/src/API/__tests__/ConnectedSitesExternalUpdates.api.spec.js": {
+			"seconds": 21.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/ApiTokens.api.spec.js": {
+			"seconds": 35.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/AuditLogController.api.spec.js": {
+			"seconds": 0.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/ConnectionController.api.spec.js": {
+			"seconds": 0.8,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/DashboardController.api.spec.js": {
+			"seconds": 4.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/ExternalUpdates.api.spec.js": {
+			"seconds": 13.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/MollieCredentials.api.spec.js": {
+			"seconds": 9.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/NotificationsController.api.spec.js": {
+			"seconds": 4.5,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/OAuthCallbackController.api.spec.js": {
+			"seconds": 11.9,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/PaymentEndpoint.api.spec.js": {
+			"seconds": 16.3,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/SettingsWriteController.api.spec.js": {
+			"seconds": 7,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/Settlements.api.spec.js": {
+			"seconds": 303.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/TelegramCredentials.api.spec.js": {
+			"seconds": 11.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/TestPayment.api.spec.js": {
+			"seconds": 6.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/Transaction.api.spec.js": {
+			"seconds": 24.6,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/TransactionsList.api.spec.js": {
+			"seconds": 15.1,
+			"samples": 6,
+			"excluded": 0
+		},
+		"fair-payments-connector/src/API/__tests__/WebhookEndpoint.api.spec.js": {
+			"seconds": 7.7,
+			"samples": 6,
+			"excluded": 0
+		}
+	}
+}

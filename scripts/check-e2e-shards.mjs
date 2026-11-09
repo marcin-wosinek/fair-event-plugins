@@ -2,21 +2,27 @@
 /* eslint-disable no-console */
 
 /**
- * Verify that Playwright's sharding covers the root E2E suite exactly once.
+ * Verify that the duration-based shard assignment covers the root E2E suite
+ * exactly once.
  *
- * Lists the unsharded suite and every shard (`playwright test --list
- * --reporter=json`, no WordPress needed) and fails when a test is missing from
- * all shards, appears in more than one shard, or a shard lists a test the
- * unsharded run does not know.
+ * Lists the unsharded suite (`playwright test --list --reporter=json`, no
+ * WordPress needed), assigns its files to shards the way the lifecycle runner
+ * does (scripts/shard-assignment.mjs), lists every shard through the same
+ * `--test-list` the runner passes, and fails when the suite is empty, a test
+ * is missing from all shards, appears in more than one shard, or a shard lists
+ * a test the unsharded run does not know.
  *
  * Usage: node scripts/check-e2e-shards.mjs --total=4
  */
 
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-const execFileAsync = promisify(execFile);
+import {
+	describeAssignment,
+	listReport,
+	planSuite,
+	writeTestLists,
+} from './shard-assignment.mjs';
 
 export function parseTotal(args) {
 	const argument = args.find((value) => value.startsWith('--total='));
@@ -97,36 +103,31 @@ export function compareInventories(full, shards) {
 	return problems;
 }
 
-async function listTests(extraArgs = []) {
-	const { stdout } = await execFileAsync(
-		'npx',
-		[
-			'playwright',
-			'test',
-			'--config=playwright.config.js',
-			'--list',
-			'--reporter=json',
-			...extraArgs,
-		],
-		{ maxBuffer: 64 * 1024 * 1024 }
-	);
-	const report = JSON.parse(stdout);
-	if (report.errors?.length) {
-		throw new Error(
-			`Playwright reported listing errors:\n${report.errors
-				.map((error) => error.message)
-				.join('\n')}`
-		);
-	}
-	return collectTests(report);
-}
-
 async function main() {
 	const total = parseTotal(process.argv.slice(2));
-	const full = await listTests();
+	const rootDirectory = fileURLToPath(new URL('..', import.meta.url));
+	const fullReport = await listReport(rootDirectory, 'e2e');
+	const full = collectTests(fullReport);
+	const { assignment } = await planSuite({
+		rootDirectory,
+		suite: 'e2e',
+		total,
+		list: async () => fullReport,
+	});
+	describeAssignment(assignment).forEach((line) => console.log(line));
+
 	const shards = [];
-	for (let current = 1; current <= total; current++) {
-		shards.push(await listTests([`--shard=${current}/${total}`]));
+	for (const files of assignment.shards) {
+		const lists = await writeTestLists(files);
+		shards.push(
+			lists.has(undefined)
+				? collectTests(
+						await listReport(rootDirectory, 'e2e', undefined, [
+							`--test-list=${lists.get(undefined)}`,
+						])
+					)
+				: []
+		);
 	}
 
 	shards.forEach((keys, index) =>
@@ -135,6 +136,9 @@ async function main() {
 	console.log(`Unsharded: ${full.length} tests`);
 
 	const problems = compareInventories(full, shards);
+	if (full.length === 0) {
+		problems.push('The E2E suite lists no tests.');
+	}
 	if (problems.length) {
 		problems.forEach((problem) => console.error(problem));
 		process.exitCode = 1;

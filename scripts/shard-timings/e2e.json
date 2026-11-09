@@ -1,0 +1,623 @@
+{
+	"suite": "e2e",
+	"about": "Median clean seconds per spec file. Refresh with: node scripts/shard-timings.mjs refresh (TESTING.md § Rebalancing shards).",
+	"runs": [
+		{
+			"run": 42597107273,
+			"attempt": 1,
+			"headSha": "e70a32456088044cb914e2e29673dea869636b8c",
+			"createdAt": "2026-11-09T09:55:49Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42593999906,
+			"attempt": 1,
+			"headSha": "30e0f72a54ce29902638fa15a6f3324835a9372b",
+			"createdAt": "2026-11-09T09:30:50Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42593960396,
+			"attempt": 1,
+			"headSha": "ef182131f015698a2157f07a6b284afa94e4651b",
+			"createdAt": "2026-11-09T09:30:32Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42592692372,
+			"attempt": 1,
+			"headSha": "8c64ca0685ea65412a79d9dcf55ec0ea7edd1f93",
+			"createdAt": "2026-11-09T09:20:40Z",
+			"conclusion": "success"
+		},
+		{
+			"run": 42589867879,
+			"attempt": 1,
+			"headSha": "c4ca182e8971d30e84e890f4ea1ade774eef23d2",
+			"createdAt": "2026-11-09T08:58:53Z",
+			"conclusion": "success"
+		}
+	],
+	"files": {
+		"e2e/admin-login.spec.js": {
+			"seconds": 10.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/block-docs-api-fetch.spec.js": {
+			"seconds": 3.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/block-docs-examples.spec.js": {
+			"seconds": 377.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/deferred-script-loading.spec.js": {
+			"seconds": 10,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-audience-experimental-feature-flags.spec.js": {
+			"seconds": 25.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-audience-experimental-translations.spec.js": {
+			"seconds": 11.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-admin-menu.spec.js": {
+			"seconds": 20.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-event-address.spec.js": {
+			"seconds": 16.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-event-info-session.spec.js": {
+			"seconds": 3.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-experimental-settings-tab.spec.js": {
+			"seconds": 27.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-experimental-source-preview.spec.js": {
+			"seconds": 9.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-experimental-translations.spec.js": {
+			"seconds": 10,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-experimental-weekly-summary.spec.js": {
+			"seconds": 12.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-feature-flags.spec.js": {
+			"seconds": 40.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-other-sessions.spec.js": {
+			"seconds": 7.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-source-calendar-date-shift.spec.js": {
+			"seconds": 2.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-events-start-time-shift.spec.js": {
+			"seconds": 2.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-entry-unmatch.spec.js": {
+			"seconds": 2.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-event-filter.spec.js": {
+			"seconds": 1.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-imports.spec.js": {
+			"seconds": 6.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-settlements.spec.js": {
+			"seconds": 54.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-translations.spec.js": {
+			"seconds": 11.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-finance-unbudgeted-count.spec.js": {
+			"seconds": 2.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-form-admin-menu.spec.js": {
+			"seconds": 5.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-form-translations.spec.js": {
+			"seconds": 19.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-admin-menu.spec.js": {
+			"seconds": 5.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-api-tokens.spec.js": {
+			"seconds": 14.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-confirmations.spec.js": {
+			"seconds": 6.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-connected-sites-enabled.spec.js": {
+			"seconds": 2.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-connected-sites-test.spec.js": {
+			"seconds": 1.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-credential-encryption.spec.js": {
+			"seconds": 7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-external-updates.spec.js": {
+			"seconds": 18.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-fee-dashboard.spec.js": {
+			"seconds": 4.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-notifications.spec.js": {
+			"seconds": 3.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-payments-connector-reconnect.spec.js": {
+			"seconds": 13,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fair-settings-page.spec.js": {
+			"seconds": 29.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fee-budget-selection.spec.js": {
+			"seconds": 19.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/fee-transfer.spec.js": {
+			"seconds": 6.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/native-popup-replacements.spec.js": {
+			"seconds": 4.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/notification-startup.spec.js": {
+			"seconds": 71.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/payment-transaction-entry-link.spec.js": {
+			"seconds": 2.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/payment-transactions-filters.spec.js": {
+			"seconds": 5.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/payment-transactions-import-retry.spec.js": {
+			"seconds": 2.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/plugin-check.spec.js": {
+			"seconds": 135.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/retired-collaborators.spec.js": {
+			"seconds": 17.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/retired-gallery.spec.js": {
+			"seconds": 12.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/retired-photo-upload.spec.js": {
+			"seconds": 11.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/screenshots/event-signup-combinations.spec.js": {
+			"seconds": 16.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/screenshots/manage-event.spec.js": {
+			"seconds": 0,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/smoke.spec.js": {
+			"seconds": 1.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/addon-abandon-and-return.spec.js": {
+			"seconds": 11.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/addon-pricing-standalone.spec.js": {
+			"seconds": 28.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/audience-assign-ticket.spec.js": {
+			"seconds": 6.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/audience-ticket-operations.spec.js": {
+			"seconds": 12.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/bulk-email-preview-weeks.spec.js": {
+			"seconds": 12.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/compare-events.spec.js": {
+			"seconds": 11.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/conditional-signup-fields.spec.js": {
+			"seconds": 1.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/conditional-ticket-type-fields.spec.js": {
+			"seconds": 0.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/credential-recovery.spec.js": {
+			"seconds": 10.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/custom-mail.spec.js": {
+			"seconds": 16.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/daily-sales-digest.spec.js": {
+			"seconds": 10.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/event-invitations.spec.js": {
+			"seconds": 24.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/event-signup-editor-form-content.spec.js": {
+			"seconds": 25.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/event-signup-mailing-checkbox.spec.js": {
+			"seconds": 34.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/event-statistics-tab.spec.js": {
+			"seconds": 20.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-add-to-group.spec.js": {
+			"seconds": 3.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-category-options.spec.js": {
+			"seconds": 19.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-notification-email.spec.js": {
+			"seconds": 28.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-standalone-responses.spec.js": {
+			"seconds": 2.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-submission-detail.spec.js": {
+			"seconds": 18.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-submission-dialogs.spec.js": {
+			"seconds": 10.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fair-form-url-extraction.spec.js": {
+			"seconds": 7.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/fee-payment-reminder.spec.js": {
+			"seconds": 6.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-cancel-and-restart.spec.js": {
+			"seconds": 35.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-form-layout.spec.js": {
+			"seconds": 9.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-idempotent-submit.spec.js": {
+			"seconds": 13.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-occurrence-dropdown.spec.js": {
+			"seconds": 19.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-purchase.spec.js": {
+			"seconds": 39.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/get-tickets-return-and-retry.spec.js": {
+			"seconds": 15.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/group-discount-note-accuracy.spec.js": {
+			"seconds": 13.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/groups-tab-availability.spec.js": {
+			"seconds": 35.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/individual-email-notifications.spec.js": {
+			"seconds": 33.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/line-item-totals.spec.js": {
+			"seconds": 9.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/list-print.spec.js": {
+			"seconds": 39.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/mailing-signup-submit.spec.js": {
+			"seconds": 0.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-access-token-connector.spec.js": {
+			"seconds": 11.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-admin-page.spec.js": {
+			"seconds": 42.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-calendar-test.spec.js": {
+			"seconds": 42.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-conversions-purchase.spec.js": {
+			"seconds": 64.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-engagement-buttons.spec.js": {
+			"seconds": 80.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/meta-sent-requests.spec.js": {
+			"seconds": 4.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/multi-instance-purchase.spec.js": {
+			"seconds": 24.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/notification-configurations.spec.js": {
+			"seconds": 38.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/payment-return-notification.spec.js": {
+			"seconds": 16.8,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/phone-question-placeholder.spec.js": {
+			"seconds": 10.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/register-another-person.spec.js": {
+			"seconds": 14.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/restricted-tiers-membership-unavailable.spec.js": {
+			"seconds": 48.5,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/resume-signup-recognised-email.spec.js": {
+			"seconds": 13.3,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/saved-audience-signup-block.spec.js": {
+			"seconds": 5.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/signup-confirmation-capacity.spec.js": {
+			"seconds": 33.4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/signup-export-with-answers.spec.js": {
+			"seconds": 2.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/signup-occurrence-pickers.spec.js": {
+			"seconds": 19.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/signups-list-permission.spec.js": {
+			"seconds": 1.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/simple-payment-duplicate-block.spec.js": {
+			"seconds": 0.2,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/simple-payment-multi-block.spec.js": {
+			"seconds": 1.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/simple-payment-purchase.spec.js": {
+			"seconds": 9.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/ticket-purchase-confirmation.spec.js": {
+			"seconds": 13.6,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unfinished-purchase-rosters.spec.js": {
+			"seconds": 14.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-activities.spec.js": {
+			"seconds": 5.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-date-fields.spec.js": {
+			"seconds": 3.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-nested-question.spec.js": {
+			"seconds": 3.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-participant-token.spec.js": {
+			"seconds": 10.7,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-phone-question.spec.js": {
+			"seconds": 4,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/unified-signup-url-question.spec.js": {
+			"seconds": 3.9,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/weekly-telegram-notifications.spec.js": {
+			"seconds": 31.1,
+			"samples": 5,
+			"excluded": 0
+		},
+		"e2e/user-flows/whatsapp-connection.spec.js": {
+			"seconds": 46.4,
+			"samples": 5,
+			"excluded": 0
+		}
+	}
+}

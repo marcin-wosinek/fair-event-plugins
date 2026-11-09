@@ -14,20 +14,20 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
-const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
+import {
+	describeAssignment,
+	parseShard,
+	planSuite,
+	writeTestLists,
+} from './shard-assignment.mjs';
 
-// Matches the shard notation Playwright accepts: --shard=<current>/<total>.
-export function parseShard(value) {
-	const match = /^(\d+)\/(\d+)$/.exec(value ?? '');
-	const current = Number(match?.[1]);
-	const total = Number(match?.[2]);
-	if (!match || current < 1 || total < 1 || current > total) {
-		throw new Error(
-			'The --shard option must look like --shard=<current>/<total>, e.g. --shard=2/4.'
-		);
-	}
-	return { current, total };
-}
+export { parseShard };
+
+const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
+const ROOT_DIRECTORY = fileURLToPath(new URL('..', import.meta.url)).replace(
+	/\/$/,
+	''
+);
 
 export function parseArguments(args) {
 	let reuse = false;
@@ -69,21 +69,32 @@ export function parseArguments(args) {
 		throw new Error('The --results-dir option applies to the API suite.');
 	}
 
-	// E2E passes --shard straight to Playwright. The API suite spans one
-	// Playwright project per workspace, so the runner owns the selection and
-	// hands it to every workspace explicitly.
+	// The runner owns --shard for both suites: it assigns whole spec files by
+	// recorded duration (scripts/shard-assignment.mjs) and hands each run an
+	// explicit --test-list instead of Playwright's own sharding.
 	let shard;
-	if (suite === 'api') {
-		const shardArguments = forwarded.filter((value) =>
-			value.startsWith('--shard=')
-		);
-		if (shardArguments.length > 1) {
-			throw new Error('Pass --shard at most once.');
+	const shardArguments = forwarded.filter((value) =>
+		value.startsWith('--shard')
+	);
+	if (shardArguments.length > 1) {
+		throw new Error('Pass --shard at most once.');
+	}
+	if (shardArguments.length) {
+		if (!shardArguments[0].startsWith('--shard=')) {
+			throw new Error(
+				'The --shard option must look like --shard=<current>/<total>, e.g. --shard=2/4.'
+			);
 		}
-		if (shardArguments.length) {
-			shard = parseShard(shardArguments[0].slice('--shard='.length));
-			forwarded = forwarded.filter(
-				(value) => !value.startsWith('--shard=')
+		shard = parseShard(shardArguments[0].slice('--shard='.length));
+		forwarded = forwarded.filter((value) => !value.startsWith('--shard'));
+		if (forwarded.some((value) => value.startsWith('--test-list'))) {
+			throw new Error(
+				'The --shard option selects files with its own --test-list; pass one or the other.'
+			);
+		}
+		if (suite === 'e2e' && workspace !== undefined) {
+			throw new Error(
+				'Balanced E2E shards cover the root suite only; drop --workspace or --shard.'
 			);
 		}
 	}
@@ -190,27 +201,46 @@ function formatSeconds(seconds) {
 }
 
 /**
- * Playwright arguments for one API workspace run. A shard selection is passed
- * to every workspace; a workspace whose tests all fall into other shards then
- * has nothing to run, which is not a failure (the inventory check proves the
- * union of shards is the whole suite). A results directory adds a JSON report
- * next to the HTML report, without dropping GitHub annotations.
+ * Playwright arguments for one API workspace run. In a shard, the workspace
+ * runs exactly the files of its `--test-list`. A results directory adds a
+ * JSON report next to the HTML report, without dropping GitHub annotations.
  *
- * @param {Object} options Parsed runner options.
+ * @param {Object} options    Parsed runner options.
+ * @param {string} [testList] The workspace's test list in this shard.
  * @return {string[]} Arguments placed after `npm run test:api --workspace=… --`.
  */
-export function apiWorkspaceArguments(options) {
+export function apiWorkspaceArguments(options, testList) {
 	const args = [];
-	if (options.shard) {
-		args.push(
-			`--shard=${options.shard.current}/${options.shard.total}`,
-			'--pass-with-no-tests'
-		);
+	if (testList) {
+		args.push(`--test-list=${testList}`);
 	}
 	if (options.resultsDir) {
 		args.push('--reporter=github,html,json');
 	}
 	return [...args, ...options.forwarded];
+}
+
+/**
+ * Files of one shard, from the duration-based assignment of the whole suite.
+ *
+ * @param {Object}   root            Parameters.
+ * @param {string}   root.suite      "e2e" or "api".
+ * @param {Object}   root.shard      Parsed shard.
+ * @param {string[]} root.workspaces Every API workspace, in root order.
+ * @return {Promise<{files: Object[], lines: string[]}>} The shard's files and
+ *   a description of the whole assignment.
+ */
+export async function planShard({ suite, shard, workspaces }) {
+	const { assignment } = await planSuite({
+		rootDirectory: ROOT_DIRECTORY,
+		suite,
+		workspaces,
+		total: shard.total,
+	});
+	return {
+		files: assignment.shards[shard.current - 1],
+		lines: describeAssignment(assignment),
+	};
 }
 
 /**
@@ -221,9 +251,10 @@ export function apiWorkspaceArguments(options) {
  * @return {string} Markdown table.
  */
 export function formatTimings(timings) {
+	const suite = timings.suite === 'e2e' ? 'E2E' : 'API';
 	const label = timings.shard
-		? `API shard ${timings.shard.current}/${timings.shard.total}`
-		: 'API tests';
+		? `${suite} shard ${timings.shard.current}/${timings.shard.total}`
+		: `${suite} tests`;
 	const rows = timings.phases.map(
 		(entry) =>
 			`| ${entry.name} | ${formatSeconds(entry.seconds)} | ${
@@ -249,6 +280,8 @@ export async function runTests({
 	signalSource = process,
 	clock = () => performance.now(),
 	writeTimings = async () => {},
+	shardPlanner = planShard,
+	testListWriter = writeTestLists,
 }) {
 	if (
 		options.workspace &&
@@ -296,6 +329,48 @@ export async function runTests({
 	};
 
 	try {
+		// Select the shard's files first: listing needs no WordPress, and a
+		// listing problem then fails before any build or container start.
+		let testLists;
+		if (options.shard) {
+			const label = `${options.shard.current}/${options.shard.total}`;
+			phase(`Selecting the files of shard ${label}`, logger);
+			const selectionStart = clock();
+			let selection;
+			try {
+				selection = await shardPlanner({
+					suite: options.suite,
+					shard: options.shard,
+					workspaces: workspaceConfig.suiteWorkspaces.api,
+				});
+				testLists = await testListWriter(selection.files);
+			} catch (error) {
+				logger(
+					`Could not assign spec files to shards: ${error.message}`
+				);
+				return 1;
+			}
+			phases.push({
+				name: 'Shard selection',
+				seconds: Math.round(clock() - selectionStart) / 1000,
+				code: 0,
+			});
+			selection.lines.forEach((line) => logger(line));
+			const selected = options.workspace
+				? selection.files.filter(
+						(file) => file.workspace === options.workspace
+					)
+				: selection.files;
+			if (!selected.length) {
+				logger(
+					`Shard ${label} has no assigned spec files${
+						options.workspace ? ` in ${options.workspace}` : ''
+					}; nothing to run.`
+				);
+				return 0;
+			}
+		}
+
 		if (options.suite === 'e2e') {
 			phase('Validating Chromium browser dependency', logger);
 			try {
@@ -405,6 +480,7 @@ export async function runTests({
 				timedStep,
 				logger,
 				isInterrupted: () => Boolean(interruptedSignal),
+				testLists,
 			});
 			return primaryResult;
 		}
@@ -414,8 +490,11 @@ export async function runTests({
 		if (options.workspace) {
 			testArgs.push(`--workspace=${options.workspace}`);
 		}
-		if (options.forwarded.length) {
-			testArgs.push('--', ...options.forwarded);
+		const playwrightArgs = testLists
+			? [`--test-list=${testLists.get(undefined)}`, ...options.forwarded]
+			: options.forwarded;
+		if (playwrightArgs.length) {
+			testArgs.push('--', ...playwrightArgs);
 		}
 		primaryResult = (await runStep('npm', testArgs)).code;
 		return primaryResult;
@@ -462,10 +541,11 @@ export async function runTests({
 }
 
 /**
- * Run `test:api` in each workspace explicitly, so the shard and reporter
- * arguments reach every workspace and each one's duration and result is
- * recorded. Like `npm run --workspaces`, a failing workspace does not stop
- * the others; the first failing status is returned.
+ * Run `test:api` in each workspace explicitly, so the shard selection and
+ * reporter arguments reach every workspace and each one's duration and result
+ * is recorded. In a shard, a workspace with no assigned files is skipped
+ * rather than run without a filter. Like `npm run --workspaces`, a failing
+ * workspace does not stop the others; the first failing status is returned.
  *
  * @param {Object}   root               Parameters.
  * @param {Object}   root.options       Parsed runner options.
@@ -473,6 +553,7 @@ export async function runTests({
  * @param {Function} root.timedStep     Records and runs one step.
  * @param {Function} root.logger        Log sink.
  * @param {Function} root.isInterrupted Whether a signal arrived.
+ * @param {Map}      [root.testLists]   Shard test list per workspace.
  * @return {Promise<number>} Exit status.
  */
 async function runApiWorkspaces({
@@ -481,11 +562,11 @@ async function runApiWorkspaces({
 	timedStep,
 	logger,
 	isInterrupted,
+	testLists,
 }) {
 	const shardLabel = options.shard
 		? ` (shard ${options.shard.current}/${options.shard.total})`
 		: '';
-	const playwrightArgs = apiWorkspaceArguments(options);
 	const failed = [];
 	let status = 0;
 
@@ -493,6 +574,16 @@ async function runApiWorkspaces({
 		if (isInterrupted()) {
 			break;
 		}
+		if (testLists && !testLists.has(workspace)) {
+			logger(
+				`\nNo ${workspace} spec files are assigned to this shard; skipping it.`
+			);
+			continue;
+		}
+		const playwrightArgs = apiWorkspaceArguments(
+			options,
+			testLists?.get(workspace)
+		);
 		phase(`Running API tests: ${workspace}${shardLabel}`, logger);
 		const args = ['run', 'test:api', `--workspace=${workspace}`];
 		if (playwrightArgs.length) {
@@ -541,10 +632,7 @@ async function main() {
 		process.exitCode = 2;
 		return;
 	}
-	const rootDirectory = fileURLToPath(new URL('..', import.meta.url)).replace(
-		/\/$/,
-		''
-	);
+	const rootDirectory = ROOT_DIRECTORY;
 	const workspaceConfig = await loadWorkspaces(rootDirectory);
 	const testsPort = await resolveTestsPort(rootDirectory);
 	const env = {
