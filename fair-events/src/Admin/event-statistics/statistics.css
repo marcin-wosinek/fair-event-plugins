@@ -180,3 +180,19 @@
 	margin: 8px 0 0;
 	color: #757575;
 }
+
+.fair-event-statistics-page__back {
+	margin: 4px 0 16px;
+}
+
+.fair-event-statistics__event-heading {
+	margin: 0 0 16px;
+	font-size: 15px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.fair-event-statistics__empty {
+	margin: 12px 0 0;
+	color: #50575e;
+}

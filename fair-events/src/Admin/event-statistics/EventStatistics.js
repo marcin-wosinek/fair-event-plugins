@@ -17,7 +17,7 @@ import {
 import { download } from '@wordpress/icons';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { getEventDisplayTitle } from 'fair-events-shared';
+import { getEventDisplayTitle, formatSiteLocalDate } from 'fair-events-shared';
 import {
 	EXPORT_IGNORE_ATTRIBUTE,
 	buildChartFilename,
@@ -280,7 +280,21 @@ function CapacityList( { rows } ) {
 	);
 }
 
-export default function EventStatistics( { eventDateId, eventTitle } ) {
+/**
+ * Statistics for one event date.
+ *
+ * @param {Object}  props
+ * @param {number}  props.eventDateId      Event date to report on.
+ * @param {string}  [props.eventTitle]     Live title from Manage Event.
+ * @param {boolean} [props.showEventHeading] Name the event and its date above
+ *                                         the figures (the standalone page has
+ *                                         no Manage Event header doing it).
+ */
+export default function EventStatistics( {
+	eventDateId,
+	eventTitle,
+	showEventHeading = false,
+} ) {
 	const [ exportingChart, setExportingChart ] = useState( null );
 	const [ exportError, setExportError ] = useState( '' );
 	// Guards against a second activation landing before the busy state renders.
@@ -408,8 +422,24 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 		);
 	}
 
+	const eventStartDate = statistics?.start_date
+		? formatSiteLocalDate( statistics.start_date )
+		: '';
+
 	return (
 		<div>
+			{ showEventHeading && statistics && (
+				<p className="fair-event-statistics__event-heading">
+					{ eventStartDate
+						? sprintf(
+								/* translators: 1: event title, 2: event date. */
+								__( '%1$s, %2$s', 'fair-events' ),
+								eventName,
+								eventStartDate
+							)
+						: eventName }
+				</p>
+			) }
 			{ statisticsError && (
 				<Notice
 					status="error"
@@ -544,6 +574,14 @@ export default function EventStatistics( { eventDateId, eventTitle } ) {
 									</span>
 								) }
 							</div>
+							{ totalTickets === 0 && (
+								<p className="fair-event-statistics__empty">
+									{ __(
+										'No tickets have been confirmed for this date yet. The charts fill in as tickets are confirmed.',
+										'fair-events'
+									) }
+								</p>
+							) }
 						</CardBody>
 					</Card>
 

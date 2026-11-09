@@ -15,6 +15,7 @@
 	"mappings": {
 		"wp-content/mu-plugins": "./e2e/mu-plugins",
 		"wp-content/plugins/fair-timetable": "./fair-timetable",
-		"wp-content/plugins/fair-calendar-button": "./fair-calendar-button"
+		"wp-content/plugins/fair-calendar-button": "./fair-calendar-button",
+		"wp-content/db.php": "./e2e/drop-ins/db.php"
 	}
 }

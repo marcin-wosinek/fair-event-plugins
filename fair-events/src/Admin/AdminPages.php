@@ -635,6 +635,7 @@ class AdminPages {
 					'manageEventUrl'      => admin_url( 'admin.php?page=fair-events-manage-event' ),
 					'statisticsAvailable' => EventStatisticsController::is_available(),
 					'paymentHistoryUrl'   => admin_url( 'admin.php?page=fair-events-payment-history' ),
+					'allEventsUrl'        => admin_url( 'admin.php?page=fair-events-all-events' ),
 				)
 			);
 
