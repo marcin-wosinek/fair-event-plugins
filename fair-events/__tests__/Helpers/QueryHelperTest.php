@@ -182,6 +182,53 @@ class QueryHelperTest extends TestCase {
 	}
 
 	/**
+	 * Combined periods (`any`) OR their criteria sets inside one group,
+	 * after the publication constraints.
+	 */
+	public function test_where_any_ors_criteria_sets() {
+		$now   = '2026-06-10 12:00:00';
+		$query = new \QueryHelperTestQuery(
+			array(
+				'fair_events_date_query' => array(
+					'any' => array(
+						array(
+							'start_before' => $now,
+							'end_after'    => $now,
+						),
+						array( 'start_after' => $now ),
+					),
+				),
+			)
+		);
+
+		$where = QueryHelper::filter_by_dates( '', $query );
+
+		$start = "CONCAT( wp_fair_event_dates.start_date, ' ', COALESCE( wp_fair_event_dates.start_time, '00:00:00' ) )";
+		$end   = "CONCAT( wp_fair_event_dates.end_date, ' ', COALESCE( wp_fair_event_dates.end_time, '23:59:59' ) )";
+
+		$this->assertStringStartsWith( " AND wp_fair_event_dates.status = 'active' AND COALESCE(", $where );
+		$this->assertStringEndsWith(
+			" AND ( ( {$start} <= '{$now}' AND {$end} >= '{$now}' ) OR ( ( {$start} >= '{$now}' OR ( wp_fair_event_dates.all_day = 0 AND ( wp_fair_event_dates.start_time IS NULL OR wp_fair_event_dates.end_time IS NULL ) AND {$end} >= '{$now}' ) ) ) )",
+			$where
+		);
+	}
+
+	/**
+	 * A single criteria set keeps the legacy AND-ed output.
+	 */
+	public function test_where_single_criteria_set_is_unchanged() {
+		$now   = '2026-06-10 12:00:00';
+		$query = new \QueryHelperTestQuery(
+			array( 'fair_events_date_query' => array( 'end_before' => $now ) )
+		);
+
+		$this->assertStringEndsWith(
+			" AND CONCAT( wp_fair_event_dates.end_date, ' ', COALESCE( wp_fair_event_dates.end_time, '23:59:59' ) ) < '{$now}'",
+			QueryHelper::filter_by_dates( '', $query )
+		);
+	}
+
+	/**
 	 * The group_by_post() filter is a no-op when the block hasn't engaged the
 	 * custom table query.
 	 */

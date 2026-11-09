@@ -11,7 +11,9 @@ import { timingFields } from '../../e2e/support/event-timing.js';
  * (including the untitled/unlinked-title fallbacks), category filtering, the
  * empty state, the unavailable-pattern state, and local recurring series
  * grouped once in the Upcoming view (per-event and bundled Query Loop
- * layouts, editor preview agreement, several lists on one page).
+ * layouts, editor preview agreement, several lists on one page), and
+ * combined time periods (Past/Current/Future unions in both layouts, the
+ * empty selection, legacy single filters, save/reopen in the editor).
  * Boundary timing in a non-UTC site timezone and external (iCal/API) source
  * filtering are not covered here — see RecurrenceSummaryTest/
  * EventsListSeriesTest and TESTING.md's WP-CLI eval-file manual check.
@@ -520,6 +522,7 @@ test.describe( 'Events List block', () => {
 				content:
 					perEventBlock( 'upcoming' ) +
 					perEventBlock( 'all' ) +
+					`<!-- wp:fair-events/events-list {"timeFilters":["current","future"],"displayPattern":"wp_block:${ pattern.id }","categories":[${ category.id }],"className":"list-current-future"} /-->` +
 					`<!-- wp:fair-events/events-list {"timeFilter":"upcoming","displayPattern":"fair-events/event-list","categories":[${ category.id }],"className":"list-query-loop"} /-->`,
 			},
 		} );
@@ -548,6 +551,15 @@ test.describe( 'Events List block', () => {
 			await expect(
 				page.locator( '.list-all .series-fixture' )
 			).toHaveCount( 7 );
+
+			// Only Future alone groups a series: Current + Future lists
+			// every upcoming date, like All.
+			await expect(
+				page.locator( '.list-current-future .series-fixture' )
+			).toHaveCount( 7 );
+			await expect(
+				page.locator( '.list-current-future' )
+			).not.toContainText( 'next occurrence' );
 
 			// Bundled Query Loop layout: the post appears once, with the
 			// series summary in its dates block.
@@ -740,5 +752,358 @@ test.describe( 'Events List block', () => {
 			} ).catch( () => {} );
 			await cleanupPage( page, listPage );
 		}
+	} );
+	test.describe( 'combined time periods', () => {
+		const suffix = Date.now();
+		const fixtures = {};
+
+		// Post-backed past, current and future events in a unique category,
+		// so both the Query Loop and the per-event layouts list them. The
+		// wide margins keep each in its period whatever the site timezone.
+		test.beforeEach( async ( { page } ) => {
+			if ( fixtures.category ) {
+				return;
+			}
+			const iso = ( ms ) =>
+				new Date( Date.now() + ms )
+					.toISOString()
+					.slice( 0, 19 )
+					.replace( 'T', ' ' );
+			const hour = 60 * 60 * 1000;
+
+			fixtures.category = await apiFetch( page, {
+				path: '/wp/v2/categories',
+				method: 'POST',
+				data: { name: `Events List Periods Category ${ suffix }` },
+			} );
+			fixtures.pattern = await apiFetch( page, {
+				path: '/wp/v2/blocks',
+				method: 'POST',
+				data: {
+					title: `Events List Periods Pattern ${ suffix }`,
+					status: 'publish',
+					content:
+						'<!-- wp:html --><p class="period-fixture">{{title}}</p><!-- /wp:html -->',
+				},
+			} );
+			fixtures.events = [];
+			for ( const [ name, start, end ] of [
+				[ 'Past', -72 * hour, -71 * hour ],
+				[ 'Current', -6 * hour, 6 * hour ],
+				[ 'Future', 72 * hour, 73 * hour ],
+			] ) {
+				const event = await apiFetch( page, {
+					path: '/wp/v2/fair_event',
+					method: 'POST',
+					data: {
+						title: `${ name } Period Fixture ${ suffix }`,
+						status: 'publish',
+						categories: [ fixtures.category.id ],
+					},
+				} );
+				const ensured = await apiFetch( page, {
+					path: '/fair-events/v1/event-dates/ensure-for-post',
+					method: 'POST',
+					data: { post_id: event.id },
+				} );
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ ensured.id }`,
+					method: 'PUT',
+					data: {
+						title: `${ name } Period Fixture ${ suffix }`,
+						...timingFields( iso( start ), iso( end ) ),
+						all_day: false,
+					},
+				} );
+				fixtures.events.push( { event, ensured } );
+			}
+		} );
+
+		test.afterAll( async ( { browser } ) => {
+			if ( ! fixtures.category ) {
+				return;
+			}
+			const page = await browser.newPage();
+			await login( page );
+			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			for ( const { event, ensured } of fixtures.events ) {
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ ensured.id }`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+				await apiFetch( page, {
+					path: `/wp/v2/fair_event/${ event.id }?force=true`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+			}
+			await apiFetch( page, {
+				path: `/wp/v2/blocks/${ fixtures.pattern.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/categories/${ fixtures.category.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await page.close();
+		} );
+
+		const block = ( selection, pattern, className ) =>
+			`<!-- wp:fair-events/events-list ${ JSON.stringify( {
+				...selection,
+				displayPattern: pattern,
+				categories: [ fixtures.category.id ],
+				className,
+			} ) } /-->`;
+
+		const titles = async ( locator ) =>
+			( await locator.allTextContents() ).map( ( text ) =>
+				text.replace( ` Period Fixture ${ suffix }`, '' ).trim()
+			);
+
+		test( 'lists the union of checked periods once, in both layouts, beside legacy blocks', async ( {
+			page,
+		} ) => {
+			test.setTimeout( 120_000 );
+			const perEvent = `wp_block:${ fixtures.pattern.id }`;
+			const queryLoop = 'fair-events/event-list';
+
+			const listPage = await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Events List Periods Page ${ suffix }`,
+					status: 'publish',
+					content: [
+						block(
+							{ timeFilters: [ 'current', 'future' ] },
+							perEvent,
+							'pe-current-future'
+						),
+						block(
+							{ timeFilters: [ 'past', 'current' ] },
+							perEvent,
+							'pe-past-current'
+						),
+						block(
+							{ timeFilters: [ 'past', 'future' ] },
+							perEvent,
+							'pe-past-future'
+						),
+						block( { timeFilters: [] }, perEvent, 'pe-none' ),
+						block(
+							{ timeFilter: 'all' },
+							perEvent,
+							'pe-legacy-all'
+						),
+						block(
+							{ timeFilter: 'past' },
+							perEvent,
+							'pe-legacy-past'
+						),
+						block(
+							{ timeFilters: [ 'current', 'future' ] },
+							queryLoop,
+							'ql-current-future'
+						),
+						block(
+							{ timeFilters: [ 'past', 'current', 'future' ] },
+							queryLoop,
+							'ql-all'
+						),
+						block( { timeFilters: [] }, queryLoop, 'ql-none' ),
+						block(
+							{ timeFilter: 'ongoing' },
+							queryLoop,
+							'ql-legacy-ongoing'
+						),
+					].join( '' ),
+				},
+			} );
+
+			try {
+				await page.goto( listPage.link );
+				const rows = ( className ) =>
+					page.locator( `.${ className } .period-fixture` );
+				const posts = ( className ) =>
+					page
+						.locator( `.${ className }` )
+						.getByText(
+							new RegExp( `Period Fixture ${ suffix }` )
+						);
+
+				expect( await titles( rows( 'pe-current-future' ) ) ).toEqual( [
+					'Current',
+					'Future',
+				] );
+				expect( await titles( rows( 'pe-past-current' ) ) ).toEqual( [
+					'Past',
+					'Current',
+				] );
+				expect( await titles( rows( 'pe-past-future' ) ) ).toEqual( [
+					'Past',
+					'Future',
+				] );
+				expect( await titles( rows( 'pe-legacy-all' ) ) ).toEqual( [
+					'Past',
+					'Current',
+					'Future',
+				] );
+				expect( await titles( rows( 'pe-legacy-past' ) ) ).toEqual( [
+					'Past',
+				] );
+				await expect( rows( 'pe-none' ) ).toHaveCount( 0 );
+				await expect(
+					page.locator( '.pe-none .no-events' )
+				).toHaveText( 'No events found.' );
+
+				expect( await titles( posts( 'ql-current-future' ) ) ).toEqual(
+					[ 'Current', 'Future' ]
+				);
+				expect( await titles( posts( 'ql-all' ) ) ).toEqual( [
+					'Past',
+					'Current',
+					'Future',
+				] );
+				expect( await titles( posts( 'ql-legacy-ongoing' ) ) ).toEqual(
+					[ 'Current' ]
+				);
+				await expect( posts( 'ql-none' ) ).toHaveCount( 0 );
+				await expect(
+					page.locator( '.ql-none .no-events' )
+				).toHaveText( 'No events found.' );
+			} finally {
+				await cleanupPage( page, listPage );
+			}
+		} );
+
+		test( 'saves checked periods, reopens them, and previews what the page shows', async ( {
+			page,
+		} ) => {
+			test.setTimeout( 120_000 );
+			const listPage = await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Events List Periods Editor ${ suffix }`,
+					status: 'publish',
+					content: block(
+						{ timeFilter: 'upcoming' },
+						`wp_block:${ fixtures.pattern.id }`,
+						'pe-editor'
+					),
+				},
+			} );
+
+			const openInspector = async () => {
+				await page.goto(
+					`/wp-admin/post.php?post=${ listPage.id }&action=edit`
+				);
+				await page.waitForFunction(
+					() =>
+						window.wp?.data
+							?.select( 'core/block-editor' )
+							?.getBlocks()?.length > 0
+				);
+				await page.evaluate( () => {
+					const { dispatch, select } = window.wp.data;
+					dispatch( 'core/preferences' ).set(
+						'core/edit-post',
+						'welcomeGuide',
+						false
+					);
+					dispatch( 'core/block-editor' ).selectBlock(
+						select( 'core/block-editor' ).getBlocks()[ 0 ].clientId
+					);
+					dispatch( 'core/edit-post' ).openGeneralSidebar(
+						'edit-post/block'
+					);
+				} );
+				return page.getByRole( 'group', { name: 'Show events' } );
+			};
+
+			const previewRows = () =>
+				page
+					.frameLocator( 'iframe[name="editor-canvas"]' )
+					.locator( '.period-fixture' );
+
+			try {
+				let group = await openInspector();
+				await expect(
+					group.getByRole( 'checkbox', { name: 'Future' } )
+				).toBeChecked();
+				await expect(
+					group.getByRole( 'checkbox', { name: 'Current' } )
+				).not.toBeChecked();
+
+				await group
+					.getByRole( 'checkbox', { name: 'Current' } )
+					.check();
+				await expect( previewRows() ).toHaveCount( 2 );
+				expect( await titles( previewRows() ) ).toEqual( [
+					'Current',
+					'Future',
+				] );
+
+				await page.evaluate( () =>
+					window.wp.data.dispatch( 'core/editor' ).savePost()
+				);
+				await page.waitForFunction(
+					() =>
+						! window.wp.data
+							.select( 'core/editor' )
+							.isSavingPost() &&
+						! window.wp.data
+							.select( 'core/editor' )
+							.isEditedPostDirty()
+				);
+				const saved = await apiFetch( page, {
+					path: `/wp/v2/pages/${ listPage.id }?context=edit`,
+				} );
+				expect( saved.content.raw ).toContain(
+					'"timeFilters":["current","future"]'
+				);
+
+				group = await openInspector();
+				await expect(
+					group.getByRole( 'checkbox', { name: 'Current' } )
+				).toBeChecked();
+				await expect(
+					group.getByRole( 'checkbox', { name: 'Future' } )
+				).toBeChecked();
+				await expect(
+					group.getByRole( 'checkbox', { name: 'Past' } )
+				).not.toBeChecked();
+
+				// Clearing every period empties the preview and asks for one.
+				await group
+					.getByRole( 'checkbox', { name: 'Current' } )
+					.uncheck();
+				await group
+					.getByRole( 'checkbox', { name: 'Future' } )
+					.uncheck();
+				await expect(
+					page.locator( '.components-notice' ).filter( {
+						hasText:
+							'Select at least one period to display events.',
+					} )
+				).toBeVisible();
+				await expect(
+					page
+						.frameLocator( 'iframe[name="editor-canvas"]' )
+						.locator( '.pe-editor .no-events, .no-events' )
+						.first()
+				).toHaveText( 'No events found.' );
+
+				// The saved Current + Future block renders the same on the page
+				// (leaving the unsaved empty selection behind).
+				page.on( 'dialog', ( dialog ) => dialog.accept() );
+				await page.goto( listPage.link );
+				expect(
+					await titles( page.locator( '.pe-editor .period-fixture' ) )
+				).toEqual( [ 'Current', 'Future' ] );
+			} finally {
+				await cleanupPage( page, listPage );
+			}
+		} );
 	} );
 } );

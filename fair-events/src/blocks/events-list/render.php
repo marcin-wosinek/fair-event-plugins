@@ -12,59 +12,39 @@
 defined( 'WPINC' ) || die;
 
 use FairEvents\Helpers\EventsListSeries;
+use FairEvents\Helpers\EventsListTimeFilters;
 use FairEvents\Helpers\OccurrenceFields;
 use FairEvents\Helpers\PatternResolver;
 use FairEvents\Settings\Settings;
 use FairEvents\Services\EventFeedProvider;
 
 // Get block attributes.
-$time_filter        = $attributes['timeFilter'] ?? 'upcoming';
+$time_periods       = EventsListTimeFilters::normalize( $attributes );
+$time_filter        = EventsListTimeFilters::mode( $time_periods );
 $categories         = $attributes['categories'] ?? array();
 $display_pattern    = $attributes['displayPattern'] ?? 'default';
 $event_source_slugs = $attributes['eventSources'] ?? array();
 
 $current_time = current_time( 'Y-m-d H:i:s' );
 
-// Time filter → [ range_start, range_end ] for the per-event provider path,
-// and the equivalent fair_events_date_query args for the Query Loop path.
-// Both read the canonical timing through EventTimingSql: "upcoming" is
-// start >= now, "ongoing" is start <= now <= end, "past" is end < now. A date
-// without an end time ends with its end date, so it stays current through
-// that day, and the Query Loop's "upcoming" keeps a date missing a time
-// until then too.
-switch ( $time_filter ) {
-	case 'upcoming':
-		$range_start            = $current_time;
-		$range_end              = null;
-		$query_args_date_filter = array( 'start_after' => $current_time );
-		$query_order            = 'ASC';
-		break;
-
-	case 'past':
-		$range_start            = null;
-		$range_end              = $current_time;
-		$query_args_date_filter = array( 'end_before' => $current_time );
-		$query_order            = 'DESC';
-		break;
-
-	case 'ongoing':
-		$range_start            = $current_time;
-		$range_end              = $current_time;
-		$query_args_date_filter = array(
-			'start_before' => $current_time,
-			'end_after'    => $current_time,
-		);
-		$query_order            = 'ASC';
-		break;
-
-	case 'all':
-	default:
-		$range_start            = null;
-		$range_end              = null;
-		$query_args_date_filter = true;
-		$query_order            = 'ASC';
-		break;
+// Selected periods → [ range_start, range_end ] for the per-event provider
+// path, and the equivalent fair_events_date_query args for the Query Loop
+// path. Both read the canonical timing through EventTimingSql: Future
+// ("upcoming") is start >= now, Current ("ongoing") is start <= now <= end,
+// Past is end < now. A date without an end time ends with its end date, so
+// it stays current through that day, and the Query Loop's Future keeps a
+// date missing a time until then too. Several periods are their union (see
+// EventsListTimeFilters); none selected shows no events without a query.
+$has_time_periods = EventsListTimeFilters::MODE_NONE !== $time_filter;
+if ( $has_time_periods ) {
+	list( $range_start, $range_end ) = EventsListTimeFilters::provider_range( $time_periods, $current_time );
+	$query_args_date_filter          = EventsListTimeFilters::query_date_filter( $time_periods, $current_time );
+} else {
+	$range_start            = null;
+	$range_end              = null;
+	$query_args_date_filter = true;
 }
+$query_order = EventsListTimeFilters::order( $time_periods );
 
 $resolved = PatternResolver::resolve( $display_pattern );
 
@@ -121,9 +101,11 @@ add_filter( 'query_loop_block_query_vars', $query_loop_filter_callback, 10, 2 );
 $events_query = null;
 $occurrences  = array();
 
-if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
+// With no periods selected, neither path queries and the block shows its
+// empty state.
+if ( $has_time_periods && PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 	$events_query = new WP_Query( $query_args );
-} elseif ( PatternResolver::TYPE_PER_EVENT === $resolved['type'] ) {
+} elseif ( $has_time_periods && PatternResolver::TYPE_PER_EVENT === $resolved['type'] ) {
 	$occurrences = ( new EventFeedProvider() )->get_occurrences(
 		$range_start,
 		$range_end,
@@ -153,6 +135,19 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 	if ( 'upcoming' === $time_filter ) {
 		$occurrences = EventsListSeries::upcoming( $occurrences, $current_time );
 	}
+
+	// A combination narrows the provider's candidate range once per date,
+	// so a date matching two periods appears once.
+	if ( EventsListTimeFilters::MODE_COMBINED === $time_filter ) {
+		$occurrences = array_values(
+			array_filter(
+				$occurrences,
+				static function ( $occurrence ) use ( $time_periods, $current_time ) {
+					return EventsListTimeFilters::matches( $occurrence, $time_periods, $current_time );
+				}
+			)
+		);
+	}
 }
 ?>
 
@@ -162,7 +157,7 @@ if ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) {
 			<?php esc_html_e( 'The selected display pattern is no longer available. Choose a different pattern to display these events.', 'fair-events' ); ?>
 		</p>
 	<?php elseif ( PatternResolver::TYPE_QUERY_LOOP === $resolved['type'] ) : ?>
-		<?php if ( $events_query->have_posts() ) : ?>
+		<?php if ( $events_query && $events_query->have_posts() ) : ?>
 			<?php
 			EventsListSeries::push_context(
 				array(

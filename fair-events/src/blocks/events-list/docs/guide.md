@@ -1,6 +1,6 @@
 ## Purpose
 
-A list of events — upcoming, past, ongoing, or all — rendered through a block
+A list of events — past, current, future, or any combination — rendered through a block
 pattern, so the look of each item is designed in the editor rather than fixed
 by the plugin.
 
@@ -12,9 +12,21 @@ pattern show the data of each listed event.
 
 ## Attributes
 
-- `timeFilter` — `upcoming` (default; start in the future, soonest first),
-  `past` (ended, most recent first), `ongoing` (started and not yet ended), or
-  `all`. A missing end time counts as equal to the start.
+- `timeFilters` — the periods to show, any of `past` (ended), `current`
+  (started and not yet ended) and `future` (not started yet). An event is
+  listed once when it matches any checked period. Only Past lists the most
+  recent first; every other selection is soonest first. Only Future shows a
+  recurring series from the site once, at its next date with its schedule;
+  other selections list each matching date. An empty array shows no events,
+  and the editor asks to check at least one period.
+- `timeFilter` — the legacy single filter, used only when `timeFilters` is
+  absent: `upcoming` (the default for a new block) is Future, `ongoing`
+  Current, `past` Past, and `all` all three. Existing blocks keep their output
+  without being re-saved.
+
+  A date without an end time ends with its end date, so it stays current
+  through that day and is past from the next. A date missing a time stays
+  future until it ends.
 - `categories` — post category term IDs; when non-empty only events in any of
   them are listed.
 - `displayPattern` — the pattern used for each event (or the whole list):

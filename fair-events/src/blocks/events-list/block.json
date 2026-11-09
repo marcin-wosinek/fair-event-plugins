@@ -15,6 +15,13 @@
 			"enum": [ "all", "upcoming", "past", "ongoing" ],
 			"default": "upcoming"
 		},
+		"timeFilters": {
+			"type": "array",
+			"items": {
+				"type": "string",
+				"enum": [ "past", "current", "future" ]
+			}
+		},
 		"categories": {
 			"type": "array",
 			"default": [],

@@ -13,8 +13,8 @@
 			"frontend": ".wp-block-fair-events-events-list"
 		},
 		"filtered": {
-			"title": "Past events of one category as a grid",
-			"description": "Past events in one category, most recent first, using the bundled grid pattern.",
+			"title": "Current and upcoming events of one category as a grid",
+			"description": "Events in one category that are happening now or have not started yet, soonest first, using the bundled grid pattern.",
 			"context": "page",
 			"frontend": ".wp-block-fair-events-events-list",
 			"syntheticIds": {
