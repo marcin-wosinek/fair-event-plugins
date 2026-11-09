@@ -8,6 +8,7 @@ module.exports = {
 		'/build/',
 		'/e2e/',
 	],
+	setupFiles: [ '<rootDir>/jest.setup.js' ],
 	transformIgnorePatterns: [
 		'/node_modules/(?!(uuid|@wordpress/components|@wordpress/dataviews|@wordpress/ui|@wordpress/theme)/)',
 	],
