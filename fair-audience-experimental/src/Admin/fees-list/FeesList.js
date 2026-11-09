@@ -10,9 +10,9 @@ import {
 	TextControl,
 	TextareaControl,
 	SelectControl,
-	Tooltip,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
+import { Tooltip } from '@wordpress/ui';
 import useBudgets from '../components/useBudgets.js';
 import BudgetLoadStatus from '../components/BudgetLoadStatus.js';
 import ConfirmActionModal, {
@@ -126,9 +126,12 @@ export default function FeesList() {
 							item.currency
 						}`;
 						return (
-							<Tooltip text={ tooltipText }>
-								<span>{ amountText }</span>
-							</Tooltip>
+							<Tooltip.Root>
+								<Tooltip.Trigger
+									render={ <span>{ amountText }</span> }
+								/>
+								<Tooltip.Popup>{ tooltipText }</Tooltip.Popup>
+							</Tooltip.Root>
 						);
 					}
 					return amountText;

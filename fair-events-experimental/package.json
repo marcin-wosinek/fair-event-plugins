@@ -26,8 +26,6 @@
 		"test:api": "playwright test src/API/__tests__/ --pass-with-no-tests"
 	},
 	"dependencies": {
-		"fair-events": "*",
-		"fair-events-shared": "*",
 		"@wordpress/api-fetch": "8.1.0",
 		"@wordpress/components": "44.0.0",
 		"@wordpress/date": "6.1.0",
@@ -35,6 +33,9 @@
 		"@wordpress/element": "10.1.0",
 		"@wordpress/i18n": "7.1.0",
 		"@wordpress/icons": "20.0.0",
+		"@wordpress/ui": "0.26.0",
+		"fair-events": "*",
+		"fair-events-shared": "*",
 		"recharts": "^3.10.1"
 	},
 	"devDependencies": {

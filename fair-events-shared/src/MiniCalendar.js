@@ -27,11 +27,8 @@
  */
 
 import { useState, useMemo, useEffect } from '@wordpress/element';
-import {
-	Button,
-	Tooltip,
-	__experimentalHStack as HStack,
-} from '@wordpress/components';
+import { Button, __experimentalHStack as HStack } from '@wordpress/components';
+import { Tooltip } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
 import {
 	formatLocalDate,
@@ -427,7 +424,12 @@ function DayCell( { date, dateStr, day, todayStr, dayProps } ) {
 	}
 
 	if ( props.tooltip ) {
-		return <Tooltip text={ props.tooltip }>{ cell }</Tooltip>;
+		return (
+			<Tooltip.Root>
+				<Tooltip.Trigger render={ cell } />
+				<Tooltip.Popup>{ props.tooltip }</Tooltip.Popup>
+			</Tooltip.Root>
+		);
 	}
 
 	return cell;

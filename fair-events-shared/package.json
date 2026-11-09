@@ -29,6 +29,7 @@
 		"@wordpress/components": "44.0.0",
 		"@wordpress/date": "6.1.0",
 		"@wordpress/scripts": "37.1.0",
+		"@wordpress/ui": "0.26.0",
 		"date-fns": "^4.0.0"
 	}
 }
