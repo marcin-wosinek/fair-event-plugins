@@ -259,7 +259,10 @@ describe( 'QuestionnaireResponses — Markdown export (#1422)', () => {
 			await screen.findByRole( 'button', { name: 'Copy to clipboard' } )
 		);
 
-		await screen.findByText( 'Message copied to clipboard.' );
+		// The Notice text is mirrored into the a11y-speak live region.
+		await screen.findByText( 'Message copied to clipboard.', {
+			ignore: '.a11y-speak-region, script, style',
+		} );
 
 		const message = writeText.mock.calls[ 0 ][ 0 ];
 
