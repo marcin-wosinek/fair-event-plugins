@@ -340,6 +340,14 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		const ids = ( items ) => items.map( ( item ) => item.id ).sort();
 		const payments = ( result ) =>
 			new Set( result.items.map( transactionOf ) );
+		// Exact sets are checked over this spec's own payments: specs that
+		// ran earlier in the same shard can leave canceled or live payments
+		// with findings of their own (#2224).
+		const seeded = new Set( Object.values( seed.transactions ) );
+		const ownPayments = ( result ) =>
+			new Set(
+				[ ...payments( result ) ].filter( ( id ) => seeded.has( id ) )
+			);
 
 		try {
 			const all = await list( {} );
@@ -364,11 +372,11 @@ test.describe.serial( 'Payment history reconciliation', () => {
 
 			const canceled = await list( { transaction_status: 'canceled' } );
 			expect( canceled.total ).toBe( canceled.items.length );
-			expect( payments( canceled ) ).toEqual( new Set( [ T10 ] ) );
+			expect( ownPayments( canceled ) ).toEqual( new Set( [ T10 ] ) );
 
 			// Several statuses match any of them.
 			expect(
-				payments(
+				ownPayments(
 					await list( { transaction_status: 'canceled,expired' } )
 				)
 			).toEqual( new Set( [ T7, T10 ] ) );
@@ -397,12 +405,12 @@ test.describe.serial( 'Payment history reconciliation', () => {
 
 			// Combined: every condition holds, with each other and the
 			// existing filters.
-			expect(
-				await list( {
-					payment_mode: 'live',
-					transaction_status: 'canceled',
-				} )
-			).toEqual( { items: [], total: 0, pages: 1 } );
+			const liveCanceled = await list( {
+				payment_mode: 'live',
+				transaction_status: 'canceled',
+			} );
+			expect( liveCanceled.total ).toBe( liveCanceled.items.length );
+			expect( ownPayments( liveCanceled ) ).toEqual( new Set() );
 			expect(
 				(
 					await list( {
