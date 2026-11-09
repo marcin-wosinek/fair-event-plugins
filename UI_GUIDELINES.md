@@ -51,8 +51,9 @@ screens.
   master/generated, placeholder, rrule and similar vocabulary out of the UI
   (use "series" / "single date").
 - Renames are display-only: never change REST field names or DB values in a
-  wording pass, and regenerate translation catalogs
-  ([TRANSLATIONS.md](./TRANSLATIONS.md)) in the same PR.
+  wording pass. Keep source strings translatable; batch catalog regeneration
+  and translations in a dedicated translation PR
+  ([TRANSLATIONS.md](./TRANSLATIONS.md#translation-pr-scope)).
 
 ## i18n: translatable sentences only
 

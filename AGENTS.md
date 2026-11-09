@@ -85,8 +85,9 @@ Before declaring a task finished (and before any commit), all of these hold:
    individual tests or at most one whole spec file. **Never run the full API or
    E2E suites locally** (~70 min); CI runs them on the PR.
 5. New/changed UI strings follow the i18n rules
-   ([UI_GUIDELINES.md](./UI_GUIDELINES.md)); translation catalogs regenerated
-   when a wording pass touched them.
+   ([UI_GUIDELINES.md](./UI_GUIDELINES.md)). Batch catalog regeneration and
+   translations in a dedicated translation PR across all supported locales,
+   following [TRANSLATIONS.md](./TRANSLATIONS.md#translation-pr-scope).
 6. For PRs on `responsive-ui` tickets: before/after screenshots at all three
    viewports ([COMMIT_GUIDE.md](./COMMIT_GUIDE.md)).
 7. If `fair-events-shared/php/src/**` changed: version bumped in its

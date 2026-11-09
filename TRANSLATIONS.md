@@ -445,6 +445,31 @@ validation: {
 
 ## Integration with Existing Workflow
 
+### Translation PR scope
+
+Batch accumulated translation work into one dedicated PR per translation pass,
+covering all affected plugins and all supported locales together. Feature and
+wording PRs keep source strings correctly internationalized, but defer POT/PO
+updates, translated text, and MO/JSON catalog regeneration unless their spec
+explicitly requests translation work. Required JS/CSS builds still run in
+feature PRs; this policy does not waive build verification.
+
+Use the standard workflow below for the dedicated translation pass: extract
+current strings, update catalogs, pull approved community translations, fill
+remaining gaps, validate, compile, and build. Determine supported locales from
+the current translation tooling and plugin catalogs rather than assuming a
+fixed number. Review coverage for every affected plugin and locale before
+opening the single PR.
+
+Recurring passes can be tracked by one long-lived, non-sprint ticket, following
+the monitoring pattern in #2226 and #2249. Keep it open, leave its sprint
+Iteration unset, and append one history entry per weekly pass with the source
+revision, affected plugins/locales, coverage or remaining gaps, and translation
+PR link. Preserve previous entries and record skipped or failed passes with a
+reason. Translation PRs reference this ticket rather than closing it; individual
+feature PRs can link it without creating a translation follow-up ticket each.
+This guidance does not create a ticket or schedule automatic translation runs.
+
 ### Standard Translation Workflow
 
 ```bash
