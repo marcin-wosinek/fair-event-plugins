@@ -45,28 +45,28 @@ msgstr "Jetons API"
 msgid "Connected Sites"
 msgstr "Sites connectés"
 
-#: src/API/ApiTokenAuth.php:46
+#: src/API/ApiTokenAuth.php:35
 msgid "This token does not have the required scope."
 msgstr "Ce jeton n'a pas la portée requise."
 
-#: src/API/ApiTokenAuth.php:106
+#: src/API/ApiTokenAuth.php:44
 msgid "Invalid or missing API token."
 msgstr "Jeton API invalide ou manquant."
 
-#: src/API/ApiTokensController.php:127
+#: src/API/ApiTokensController.php:42
 msgid "A label is required."
 msgstr "Un libellé est requis."
 
-#: src/API/ApiTokensController.php:137
+#: src/API/ApiTokensController.php:51
 msgid "At least one valid scope is required."
 msgstr "Au moins une portée valide est requise."
 
-#: src/API/ApiTokensController.php:147
+#: src/API/ApiTokensController.php:60
 #: src/Admin/api-tokens/ApiTokensApp.js:116
 msgid "Failed to create API token."
 msgstr "Impossible de créer le jeton API."
 
-#: src/API/ApiTokensController.php:174
+#: src/API/ApiTokensController.php:69
 msgid "API token not found."
 msgstr "Jeton API non trouvé."
 
@@ -103,11 +103,11 @@ msgstr "Importé %1$d nouveau(x), mis à jour %2$d, ignoré %3$d transaction(s) 
 msgid "Connected site not found."
 msgstr "Site connecté non trouvé."
 
-#: src/API/ExternalTransactionsController.php:85
+#: src/API/ExternalTransactionsController.php:51
 msgid "Filter by transaction date (created_at) from this date, e.g. 2026-01-01."
 msgstr "Filtrer par date de transaction (created_at) à partir de cette date, par exemple 2026-01-01."
 
-#: src/API/ExternalTransactionsController.php:92
+#: src/API/ExternalTransactionsController.php:60
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr "Filtrer par date de transaction (created_at) jusqu'à cette date, par exemple 2026-12-31."
 

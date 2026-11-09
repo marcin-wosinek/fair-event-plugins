@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T19:15:38+00:00\n"
+"POT-Creation-Date: 2026-11-09T08:17:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-events\n"
@@ -73,62 +73,68 @@ msgstr ""
 
 #: src/Admin/AdminPages.php:156
 #: src/Admin/AdminPages.php:157
-#: src/Core/Features.php:181
+#: src/Core/Features.php:146
 #: src/Admin/venues/VenuesApp.js:588
 msgid "Venues"
 msgstr ""
 
 #: src/Admin/AdminPages.php:166
 #: src/Admin/AdminPages.php:167
-#: src/Admin/event-notifications/EventNotifications.js:292
+#: src/Admin/event-notifications/EventNotifications.js:316
 msgid "Event notifications"
 msgstr ""
 
-#: src/Admin/AdminPages.php:176
+#: src/Admin/AdminPages.php:179
+#: src/Admin/AdminPages.php:180
+#: src/Admin/payment-history/PaymentHistoryPage.js:100
+msgid "Payment history"
+msgstr ""
+
+#: src/Admin/AdminPages.php:190
 #: src/Admin/settings/SettingsApp.js:92
 msgid "Fair Events Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:177
+#: src/Admin/AdminPages.php:191
 #: src/Admin/event-notifications/ConfigurationView.js:137
 #: src/blocks/other-sessions/components/EditComponent.js:83
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/AdminPages.php:186
-#: src/Admin/AdminPages.php:187
-#: src/Admin/AdminPages.php:194
+#: src/Admin/AdminPages.php:200
+#: src/Admin/AdminPages.php:201
+#: src/Admin/AdminPages.php:208
 #: src/Hooks/AdminBarHooks.php:59
 #: src/Admin/calendar/CalendarApp.js:366
-#: src/Admin/manage-event/ManageEventApp.js:1261
-#: src/Admin/manage-event/ManageEventApp.js:1611
+#: src/Admin/manage-event/ManageEventApp.js:1265
+#: src/Admin/manage-event/ManageEventApp.js:1615
 msgid "Manage Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:201
-#: src/Admin/AdminPages.php:202
-#: src/Admin/AdminPages.php:208
+#: src/Admin/AdminPages.php:215
+#: src/Admin/AdminPages.php:216
+#: src/Admin/AdminPages.php:222
 msgid "Event Statistics"
 msgstr ""
 
-#: src/Admin/AdminPages.php:213
-#: src/Admin/AdminPages.php:214
-#: src/Admin/AdminPages.php:220
+#: src/Admin/AdminPages.php:227
+#: src/Admin/AdminPages.php:228
+#: src/Admin/AdminPages.php:234
 #: src/Admin/CopyEventPage.php:215
 msgid "Copy Event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:281
+#: src/Admin/AdminPages.php:295
 #: src/PostTypes/Event.php:487
 #: src/Admin/all-events/AllEvents.js:388
 msgid "Copy"
 msgstr ""
 
-#: src/Admin/AdminPages.php:283
+#: src/Admin/AdminPages.php:297
 msgid "Copy this event"
 msgstr ""
 
-#: src/Admin/AdminPages.php:888
+#: src/Admin/AdminPages.php:957
 msgid "Upcoming"
 msgstr ""
 
@@ -217,8 +223,8 @@ msgid "What Will Be Created"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:291
-#: src/Admin/calendar/components/QuickEventModal.js:423
-#: src/Admin/manage-event/ManageEventApp.js:1287
+#: src/Admin/calendar/components/QuickEventModal.js:426
+#: src/Admin/manage-event/ManageEventApp.js:1291
 msgid "Title"
 msgstr ""
 
@@ -247,8 +253,8 @@ msgstr ""
 #: src/Admin/CopyEventPage.php:324
 #: src/blocks/event-proposal/render.php:156
 #: src/Admin/all-events/AllEvents.js:215
-#: src/Admin/calendar/components/QuickEventModal.js:477
-#: src/Admin/manage-event/ManageEventApp.js:1317
+#: src/Admin/calendar/components/QuickEventModal.js:480
+#: src/Admin/manage-event/ManageEventApp.js:1321
 #: src/blocks/components/CategorySelector.js:60
 msgid "Categories"
 msgstr ""
@@ -270,13 +276,15 @@ msgid "Create Copy"
 msgstr ""
 
 #: src/Admin/CopyEventPage.php:348
-#: src/Admin/calendar/components/QuickEventModal.js:610
+#: src/Admin/calendar/components/QuickEventModal.js:613
 #: src/Admin/components/ConfirmActionModal.js:96
 #: src/Admin/components/InlineVenueCreator.js:95
 #: src/Admin/manage-event/EditInstancesModal.js:83
-#: src/Admin/manage-event/ManageEventApp.js:1798
+#: src/Admin/manage-event/ManageEventApp.js:1802
 #: src/Admin/manage-event/SeriesModal.js:535
 #: src/Admin/manage-event/SignupEditModal.js:365
+#: src/Admin/payment-history/FindingModal.js:702
+#: src/Admin/payment-history/FindingModal.js:944
 #: src/Admin/venues/VenuesApp.js:1048
 #: ../fair-events-shared/src/TicketEditModal.js:663
 msgid "Cancel"
@@ -637,11 +645,11 @@ msgstr ""
 #: src/API/EventDatesController.php:2425
 #: src/API/EventScheduleController.php:120
 #: src/API/EventScheduleController.php:140
-#: src/API/EventStatisticsController.php:165
+#: src/API/EventStatisticsController.php:166
 #: src/API/GetTicketsController.php:550
 #: src/API/GetTicketsController.php:559
-#: src/API/GetTicketsController.php:1589
-#: src/API/GetTicketsController.php:1598
+#: src/API/GetTicketsController.php:1626
+#: src/API/GetTicketsController.php:1635
 #: src/API/TicketsController.php:121
 #: src/API/TicketsController.php:142
 #: src/API/TicketsController.php:296
@@ -710,133 +718,162 @@ msgstr ""
 msgid "You do not have permission to look up event pages."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:367
+#: src/API/EventNotificationsController.php:377
 msgid "You do not have permission to manage event notifications."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:381
+#: src/API/EventNotificationsController.php:391
 msgid "Enter the send time as HH:MM, for example 09:00."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:393
+#: src/API/EventNotificationsController.php:403
 #: src/Services/WeeklyEventsProvider.php:215
 msgid "Choose which events to include."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:462
+#: src/API/EventNotificationsController.php:472
 msgid "The notification could not be added. Please try again."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:501
+#: src/API/EventNotificationsController.php:520
+msgid "The notification could not be duplicated. Please try again."
+msgstr ""
+
+#: src/API/EventNotificationsController.php:543
+#: src/Notifications/TelegramConnector.php:61
+#: src/Admin/event-notifications/shared.js:15
+#: src/Admin/event-notifications/TelegramChannel.js:218
+msgid "Telegram"
+msgstr ""
+
+#: src/API/EventNotificationsController.php:544
+#: src/Admin/event-notifications/BulkEmailChannel.js:82
+#: src/Admin/event-notifications/shared.js:16
+msgid "Bulk email"
+msgstr ""
+
+#: src/API/EventNotificationsController.php:545
+#: src/Admin/event-notifications/IndividualEmailChannel.js:175
+#: src/Admin/event-notifications/shared.js:17
+msgid "Individual email"
+msgstr ""
+
+#. translators: %s: name of the notification that was copied
+#: src/API/EventNotificationsController.php:549
+#, php-format
+msgid "Copy of %s"
+msgstr ""
+
+#: src/API/EventNotificationsController.php:587
 msgid "A notification’s kind cannot be changed. Add a new notification instead. Nothing was saved."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:686
+#: src/API/EventNotificationsController.php:772
 msgid "The notification could not be saved. Please try again."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:724
+#: src/API/EventNotificationsController.php:810
 msgid "The Telegram bot token is managed in Settings → Connectors. Nothing was saved."
 msgstr ""
 
 #. translators: %s: comma-separated list of the rejected identifiers
-#: src/API/EventNotificationsController.php:756
+#: src/API/EventNotificationsController.php:842
 #, php-format
 msgid "These are not Telegram chat IDs or @channel usernames: %s"
 msgstr ""
 
 #. translators: %d: maximum number of Telegram destinations
-#: src/API/EventNotificationsController.php:767
+#: src/API/EventNotificationsController.php:853
 #, php-format
 msgid "Enter at most %d Telegram chats or channels."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:790
+#: src/API/EventNotificationsController.php:876
 msgid "Before turning on Telegram summaries, add a bot token in Settings → Connectors and save at least one chat or channel."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:829
+#: src/API/EventNotificationsController.php:915
 msgid "Choose an event feed before turning on the weekly email."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:830
-#: src/Notifications/BulkEmailDispatcher.php:312
+#: src/API/EventNotificationsController.php:916
+#: src/Notifications/BulkEmailDispatcher.php:317
 #: src/Notifications/SummaryBuilder.php:43
 #: src/Services/WeeklyEventsProvider.php:220
 msgid "The selected event feed does not exist or is disabled."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:859
+#: src/API/EventNotificationsController.php:945
 msgid "Enter exactly one email address, for example name@example.com. Nothing was saved."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:877
+#: src/API/EventNotificationsController.php:963
 #: src/Admin/event-notifications/IndividualEmailChannel.js:107
 msgid "Enter the email address that receives the weekly email before turning it on."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:964
+#: src/API/EventNotificationsController.php:1050
 msgid "Save at least one Telegram chat or channel before sending a test message."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:973
+#: src/API/EventNotificationsController.php:1059
 msgid "There are no events in the selected week, so there is nothing to send."
 msgstr ""
 
 #. translators: %s: email address
-#: src/API/EventNotificationsController.php:1061
-#: src/API/EventNotificationsController.php:1129
+#: src/API/EventNotificationsController.php:1147
+#: src/API/EventNotificationsController.php:1215
 #, php-format
 msgid "The test email to %s could not be sent."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1111
+#: src/API/EventNotificationsController.php:1197
 msgid "Save the email address that receives the weekly email before sending a test."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1170
+#: src/API/EventNotificationsController.php:1256
 msgid "This notification does not exist."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1262
+#: src/API/EventNotificationsController.php:1348
 msgid "Telegram summaries are still sent by an older Fair Events Experimental. Update Fair Events Experimental to manage them here; until then they keep running from its settings."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1272
+#: src/API/EventNotificationsController.php:1358
 msgid "The weekly email is paused because Fair Audience is not active. Fair Audience decides who receives it and sends it. Your settings are kept and sending resumes at the next scheduled time once Fair Audience is active again."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1273
+#: src/API/EventNotificationsController.php:1359
 msgid "The weekly email is still sent by an older Fair Audience. Update Fair Audience to manage it here; until then it keeps running from the Weekly Digest page."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1276
+#: src/API/EventNotificationsController.php:1362
 msgid "The weekly email is paused until Fair Audience is updated: this version of Fair Events records whether each subscriber’s email was sent, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1279
+#: src/API/EventNotificationsController.php:1365
 msgid "The weekly email is paused until Fair Audience is updated: this version of Fair Events sends each feed’s email only to the subscribers who chose that feed, which needs a newer Fair Audience. Your settings are kept and sending resumes at the next scheduled time after the update."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1412
+#: src/API/EventNotificationsController.php:1498
 msgid "Update Fair Events Experimental to manage Telegram summaries here. Nothing was changed."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1422
+#: src/API/EventNotificationsController.php:1508
 msgid "Activate Fair Audience to manage and send the weekly email. Your saved settings were not changed."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1429
+#: src/API/EventNotificationsController.php:1515
 msgid "Update Fair Audience to manage the weekly email here. Nothing was changed."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1471
+#: src/API/EventNotificationsController.php:1557
 msgid "Choose an event feed and save before previewing the weekly email."
 msgstr ""
 
-#: src/API/EventNotificationsController.php:1572
+#: src/API/EventNotificationsController.php:1658
 #: src/Notifications/TelegramFormatter.php:66
-#: src/Admin/manage-event/ManageEventApp.js:1846
+#: src/Admin/manage-event/ManageEventApp.js:1850
 msgid "(no title)"
 msgstr ""
 
@@ -845,7 +882,8 @@ msgid "Every schedule entry, in display order. Entries left out are removed."
 msgstr ""
 
 #: src/API/EventScheduleController.php:92
-#: src/API/EventStatisticsController.php:147
+#: src/API/EventStatisticsController.php:148
+#: src/API/PaymentHistoryController.php:388
 msgid "You must be logged in."
 msgstr ""
 
@@ -853,28 +891,32 @@ msgstr ""
 msgid "You do not have permission to manage this event's schedule."
 msgstr ""
 
-#: src/API/EventStatisticsController.php:150
+#: src/API/EventStatisticsController.php:151
 msgid "You do not have permission to view event statistics."
 msgstr ""
 
-#: src/API/EventStatisticsController.php:171
+#: src/API/EventStatisticsController.php:172
 msgid "The event start date is invalid."
 msgstr ""
 
+#: src/API/EventStatisticsController.php:185
+msgid "Event statistics need Fair Audience until payment records are moved to Fair Events."
+msgstr ""
+
 #. translators: %d: number of calendar days before the event.
-#: src/API/EventStatisticsController.php:319
+#: src/API/EventStatisticsController.php:369
 #, php-format
 msgid "%d day before the event"
 msgid_plural "%d days before the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/EventStatisticsController.php:324
+#: src/API/EventStatisticsController.php:374
 msgid "Day of the event"
 msgstr ""
 
 #. translators: %s: ordinal event-day number, for example 1st or 2nd.
-#: src/API/EventStatisticsController.php:329
+#: src/API/EventStatisticsController.php:379
 #, php-format
 msgid "%s day of the event"
 msgstr ""
@@ -888,7 +930,7 @@ msgid "Too many requests. Please try again later."
 msgstr ""
 
 #: src/API/GetTicketsController.php:619
-#: src/API/GetTicketsController.php:2132
+#: src/API/GetTicketsController.php:2169
 msgid "Invalid ticket type."
 msgstr ""
 
@@ -897,14 +939,14 @@ msgid "This ticket type is no longer available."
 msgstr ""
 
 #: src/API/GetTicketsController.php:664
-#: src/API/GetTicketsController.php:2175
+#: src/API/GetTicketsController.php:2212
 msgid "This ticket type is not currently on sale."
 msgstr ""
 
 #. translators: %s: event name
 #. translators: %s: occurrence date/time label
 #: src/API/GetTicketsController.php:709
-#: src/API/GetTicketsController.php:2190
+#: src/API/GetTicketsController.php:2227
 #, php-format
 msgid "Ticket for %s"
 msgstr ""
@@ -916,8 +958,8 @@ msgid "Ticket for event #%d"
 msgstr ""
 
 #: src/API/GetTicketsController.php:748
-#: src/API/GetTicketsController.php:2205
-#: src/API/GetTicketsController.php:3543
+#: src/API/GetTicketsController.php:2242
+#: src/API/GetTicketsController.php:3618
 msgid "Paid tickets are not available because online payments are not configured."
 msgstr ""
 
@@ -938,53 +980,57 @@ msgstr ""
 msgid "You have successfully registered! A confirmation email is on its way."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1263
+#: src/API/GetTicketsController.php:1271
 msgid "Your payment is being processed. You will receive a confirmation email once it is complete."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1386
+#: src/API/GetTicketsController.php:1406
+msgid "Your purchase could not be recorded right now. Please try again in a moment."
+msgstr ""
+
+#: src/API/GetTicketsController.php:1423
 msgid "This purchase has ended and can no longer be paid. Submit the form again to start a new one."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1399
+#: src/API/GetTicketsController.php:1436
 msgid "This purchase is still being processed. Please wait a moment and try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1426
+#: src/API/GetTicketsController.php:1463
 msgid "Send activities either for each ticket or for a single ticket, not both."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1433
-#: src/API/GetTicketsController.php:1444
+#: src/API/GetTicketsController.php:1470
+#: src/API/GetTicketsController.php:1481
 msgid "Choose the activities for each ticket."
 msgstr ""
 
-#: src/API/GetTicketsController.php:1482
+#: src/API/GetTicketsController.php:1519
 #: src/Services/ActivitySelection.php:166
 msgid "One of the selected activities is not available for this event."
 msgstr ""
 
 #. translators: %s: activity name
-#: src/API/GetTicketsController.php:1536
+#: src/API/GetTicketsController.php:1573
 #: src/Services/ActivitySelection.php:178
 #, php-format
 msgid "\"%s\" is not currently on sale. Reload the page and choose again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2007
+#: src/API/GetTicketsController.php:2044
 msgid "Event Signup"
 msgstr ""
 
-#: src/API/GetTicketsController.php:2120
+#: src/API/GetTicketsController.php:2157
 msgid "Please select at least one occurrence."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2143
+#: src/API/GetTicketsController.php:2180
 msgid "One of the selected occurrences is not valid for this ticket."
 msgstr ""
 
 #. translators: %d: minimum number of occurrences required
-#: src/API/GetTicketsController.php:2156
+#: src/API/GetTicketsController.php:2193
 #: src/blocks/event-signup/frontend.js:2778
 #, php-format,js-format
 msgid "Please select at least %d occurrence."
@@ -993,55 +1039,55 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event name
-#: src/API/GetTicketsController.php:2233
+#: src/API/GetTicketsController.php:2270
 #, php-format
 msgid "Tickets for %s"
 msgstr ""
 
 #. translators: %d: event date ID
-#: src/API/GetTicketsController.php:2238
+#: src/API/GetTicketsController.php:2275
 #, php-format
 msgid "Tickets for event #%d"
 msgstr ""
 
-#: src/API/GetTicketsController.php:2828
-#: src/API/GetTicketsController.php:2867
-#: src/API/GetTicketsController.php:3188
+#: src/API/GetTicketsController.php:2903
+#: src/API/GetTicketsController.php:2942
+#: src/API/GetTicketsController.php:3263
 msgid "Signup not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2836
+#: src/API/GetTicketsController.php:2911
 msgid "Failed to delete signup."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2882
+#: src/API/GetTicketsController.php:2957
 msgid "Choose either a new date or a new ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2893
+#: src/API/GetTicketsController.php:2968
 msgid "Enter a reason for going over capacity."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2921
+#: src/API/GetTicketsController.php:2996
 msgid "The chosen date is not another active date of this series."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2922
+#: src/API/GetTicketsController.php:2997
 msgid "The chosen ticket type is not available for this signup."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2963
-#: src/API/GetTicketsController.php:3246
+#: src/API/GetTicketsController.php:3038
+#: src/API/GetTicketsController.php:3321
 msgid "Only confirmed signups can be moved or given another ticket type."
 msgstr ""
 
-#: src/API/GetTicketsController.php:2970
+#: src/API/GetTicketsController.php:3045
 #: src/Admin/manage-event/SignupEditModal.js:219
 msgid "Failed to update signup."
 msgstr ""
 
 #. translators: 1: event date, ticket type or activity name, 2: places taken after the change, 3: capacity
-#: src/API/GetTicketsController.php:3016
+#: src/API/GetTicketsController.php:3091
 #, php-format
 #: ../fair-events-shared/src/TicketEditModal.js:100
 msgid "%1$s would have %2$d of %3$d place taken."
@@ -1049,63 +1095,63 @@ msgid_plural "%1$s would have %2$d of %3$d places taken."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/API/GetTicketsController.php:3233
+#: src/API/GetTicketsController.php:3308
 msgid "Tickets in this purchase have been given their own types. Edit each ticket instead."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3265
+#: src/API/GetTicketsController.php:3340
 msgid "A whole-series ticket covers every date and cannot be moved."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3284
+#: src/API/GetTicketsController.php:3359
 msgid "This event has no other dates to move the signup to."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3315
+#: src/API/GetTicketsController.php:3390
 msgid "This signup has no ticket type to change."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3349
-#: src/API/GetTicketsController.php:3442
-#: src/API/GetTicketsController.php:3474
-#: src/API/GetTicketsController.php:3731
+#: src/API/GetTicketsController.php:3424
+#: src/API/GetTicketsController.php:3517
+#: src/API/GetTicketsController.php:3549
+#: src/API/GetTicketsController.php:3813
 msgid "Transaction not found."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3483
-#: src/API/GetTicketsController.php:3577
+#: src/API/GetTicketsController.php:3558
+#: src/API/GetTicketsController.php:3652
 msgid "This payment cannot be retried."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3492
+#: src/API/GetTicketsController.php:3567
 msgid "This payment is not retriable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3512
-#: src/API/GetTicketsController.php:3697
-#: src/API/GetTicketsController.php:3708
+#: src/API/GetTicketsController.php:3587
+#: src/API/GetTicketsController.php:3779
+#: src/API/GetTicketsController.php:3790
 msgid "This payment is missing context needed to retry."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3535
+#: src/API/GetTicketsController.php:3610
 msgid "This payment session has expired. Please start over."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3587
+#: src/API/GetTicketsController.php:3662
 msgid "Original line items could not be loaded."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3740
+#: src/API/GetTicketsController.php:3822
 msgid "This payment is not manageable from this endpoint."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3749
-#: src/API/GetTicketsController.php:3783
-#: src/API/GetTicketsController.php:3792
+#: src/API/GetTicketsController.php:3831
+#: src/API/GetTicketsController.php:3865
+#: src/API/GetTicketsController.php:3874
 msgid "This payment could not be cancelled safely. Please try again."
 msgstr ""
 
-#: src/API/GetTicketsController.php:3761
+#: src/API/GetTicketsController.php:3843
 msgid "We could not verify the payment status. Please try again."
 msgstr ""
 
@@ -1123,6 +1169,85 @@ msgstr ""
 
 #: src/API/NotificationHistoryController.php:268
 msgid "This notification history entry does not exist."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:391
+msgid "You do not have permission to manage payment history."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:489
+msgid "Confirm that a fresh database backup was taken before switching payment records."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:490
+msgid "Payment records already use Fair Events."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:491
+msgid "Payment records can't be switched to Fair Events on this site yet."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:492
+#: src/API/PaymentHistoryController.php:528
+msgid "The payment history migration is busy. Try again in a moment."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:493
+msgid "The verification no longer passes. Verify the migration again before switching payment records."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:494
+#: src/API/PaymentHistoryController.php:530
+msgid "The switch couldn't be recorded. Nothing changed; try again."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:526
+msgid "Statistics already use Fair Events records."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:527
+msgid "Statistics can't switch to Fair Events records on this site yet."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:529
+msgid "The verification no longer passes. Verify the migration again before switching statistics."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:780
+msgid "The payment history migration can't start on this site yet."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:781
+msgid "The migration is already running."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:782
+msgid "A dry run is already running."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:783
+#: src/Admin/payment-history/MigrationPanel.js:241
+msgid "Run a dry run and review it before starting the migration."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:784
+msgid "The dry run covered different records. Run it again before starting the migration."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:785
+msgid "Confirm that a database backup was taken before starting the migration."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:786
+msgid "The migration is not paused."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:787
+msgid "The migration has not finished."
+msgstr ""
+
+#: src/API/PaymentHistoryController.php:830
+msgid "Payment history isn't available until Fair Events finishes its database update."
 msgstr ""
 
 #: src/API/PublicEventsController.php:66
@@ -1403,12 +1528,12 @@ msgid "4 hours"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:58
-#: src/blocks/event-signup/render.php:761
+#: src/blocks/event-signup/render.php:765
 msgid "Your Name"
 msgstr ""
 
 #: src/blocks/event-proposal/render.php:73
-#: src/blocks/event-signup/render.php:778
+#: src/blocks/event-signup/render.php:782
 msgid "Your Email"
 msgstr ""
 
@@ -1440,130 +1565,130 @@ msgstr ""
 msgid "Event Signup: could not resolve an event date for this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:478
+#: src/blocks/event-signup/render.php:482
 #: src/blocks/event-signup/frontend.js:954
 msgid "Payment confirmed"
 msgstr ""
 
 #. translators: %s: event title
-#: src/blocks/event-signup/render.php:484
+#: src/blocks/event-signup/render.php:488
 #, php-format
 msgid "You're signed up for %s."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:494
+#: src/blocks/event-signup/render.php:498
 #, php-format
 msgid "Amount paid: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:505
+#: src/blocks/event-signup/render.php:509
 #: src/blocks/event-signup/frontend.js:974
 msgid "A confirmation email is on its way. You can close this page."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:508
+#: src/blocks/event-signup/render.php:512
 #: src/blocks/event-signup/frontend.js:984
 #: src/blocks/event-signup/frontend.js:1812
 msgid "Back to the signup form"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:516
+#: src/blocks/event-signup/render.php:520
 msgid "Thank you for your payment!"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:518
+#: src/blocks/event-signup/render.php:522
 msgid "We're confirming with your bank. This usually takes a few seconds — the page will update as soon as it's done."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:524
+#: src/blocks/event-signup/render.php:528
 #, php-format
 msgid "Amount: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:531
+#: src/blocks/event-signup/render.php:535
 msgid "Check payment status again"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:535
-#: src/blocks/event-signup/render.php:562
-#: src/blocks/event-signup/render.php:596
+#: src/blocks/event-signup/render.php:539
+#: src/blocks/event-signup/render.php:566
+#: src/blocks/event-signup/render.php:600
 msgid "Cancel and start over"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:543
+#: src/blocks/event-signup/render.php:547
 msgid "Your payment is waiting."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:545
+#: src/blocks/event-signup/render.php:549
 msgid "You can pick up where you left off on the secure payment page."
 msgstr ""
 
 #. translators: %s: formatted amount with currency
-#: src/blocks/event-signup/render.php:551
-#: src/blocks/event-signup/render.php:575
+#: src/blocks/event-signup/render.php:555
+#: src/blocks/event-signup/render.php:579
 #, php-format
 msgid "Amount due: %s"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:558
+#: src/blocks/event-signup/render.php:562
 msgid "Continue payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:570
+#: src/blocks/event-signup/render.php:574
 msgid "Your payment didn't go through."
-msgstr ""
-
-#: src/blocks/event-signup/render.php:582
-#: src/blocks/event-signup/render.php:603
-msgid "Online ticket sales for this event have closed."
 msgstr ""
 
 #: src/blocks/event-signup/render.php:586
 #: src/blocks/event-signup/render.php:607
+msgid "Online ticket sales for this event have closed."
+msgstr ""
+
+#: src/blocks/event-signup/render.php:590
+#: src/blocks/event-signup/render.php:611
 msgid "Ticket sales are temporarily unavailable. Please check back later."
 msgstr ""
 
-#: src/blocks/event-signup/render.php:591
+#: src/blocks/event-signup/render.php:595
 msgid "Retry payment"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:689
+#: src/blocks/event-signup/render.php:693
 msgid "Choose a date"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:697
-#: src/blocks/event-signup/render.php:723
+#: src/blocks/event-signup/render.php:701
+#: src/blocks/event-signup/render.php:727
 #: src/Services/SignupFieldsetRenderer.php:264
 #: src/blocks/event-signup/frontend.js:1461
 msgid "full"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:700
-#: src/blocks/event-signup/render.php:726
+#: src/blocks/event-signup/render.php:704
+#: src/blocks/event-signup/render.php:730
 #: src/blocks/event-signup/frontend.js:685
 #: src/blocks/event-signup/frontend.js:1464
 msgid "already signed up"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:715
+#: src/blocks/event-signup/render.php:719
 msgid "Choose your dates"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:749
+#: src/blocks/event-signup/render.php:753
 msgid "Dates included"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:794
+#: src/blocks/event-signup/render.php:798
 msgid "Quantity"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:816
+#: src/blocks/event-signup/render.php:820
 msgid "Keep me informed about future events"
 msgstr ""
 
-#: src/blocks/event-signup/render.php:888
+#: src/blocks/event-signup/render.php:892
 msgid "Total"
 msgstr ""
 
@@ -1670,32 +1795,32 @@ msgstr ""
 msgid "All day"
 msgstr ""
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:142
 msgid "Core"
 msgstr ""
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:143
 msgid "Events, calendar, all-events, settings, core blocks. Always on."
 msgstr ""
 
-#: src/Core/Features.php:182
+#: src/Core/Features.php:147
 msgid "Venues admin page and REST controller. Always on."
 msgstr ""
 
-#: src/Core/Features.php:185
+#: src/Core/Features.php:150
 msgid "Bundled translations"
 msgstr ""
 
-#: src/Core/Features.php:186
+#: src/Core/Features.php:151
 #: src/Core/Plugin.php:106
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr ""
 
-#: src/Core/Features.php:189
+#: src/Core/Features.php:154
 msgid "Ticketing"
 msgstr ""
 
-#: src/Core/Features.php:190
+#: src/Core/Features.php:155
 msgid "Ticket types, sale periods, and pricing."
 msgstr ""
 
@@ -1738,11 +1863,13 @@ msgid "%1$s—ends %2$s %3$s"
 msgstr ""
 
 #: src/Helpers/OccurrenceFields.php:147
-#: src/Admin/manage-event/ManageEventApp.js:1420
+#: src/Admin/manage-event/ManageEventApp.js:1424
 msgid "Online"
 msgstr ""
 
 #: src/Helpers/OccurrenceFields.php:188
+#: src/Admin/payment-history/FindingModal.js:561
+#: src/Admin/payment-history/FindingsPanel.js:406
 msgid "Event"
 msgstr ""
 
@@ -1912,27 +2039,27 @@ msgstr ""
 msgid "Latitude and longitude must be 20 characters or fewer."
 msgstr ""
 
-#: src/Notifications/BulkEmailDispatcher.php:273
-#: src/Notifications/IndividualEmailDispatcher.php:259
+#: src/Notifications/BulkEmailDispatcher.php:278
+#: src/Notifications/IndividualEmailDispatcher.php:263
 msgid "Not sent: the scheduled week had already passed when the send ran."
 msgstr ""
 
-#: src/Notifications/BulkEmailDispatcher.php:279
+#: src/Notifications/BulkEmailDispatcher.php:284
 msgid "Not sent: Fair Audience was not available to send the email."
 msgstr ""
 
-#: src/Notifications/BulkEmailDispatcher.php:319
-#: src/Notifications/IndividualEmailDispatcher.php:294
+#: src/Notifications/BulkEmailDispatcher.php:324
+#: src/Notifications/IndividualEmailDispatcher.php:298
 msgid "No events that week, so nothing was sent."
 msgstr ""
 
 #. translators: 1: emails sent, 2: emails that failed, 3: subscribers skipped
-#: src/Notifications/BulkEmailDispatcher.php:339
+#: src/Notifications/BulkEmailDispatcher.php:344
 #, php-format
 msgid "Sent: %1$d. Failed: %2$d. Skipped: %3$d."
 msgstr ""
 
-#: src/Notifications/BulkEmailDispatcher.php:351
+#: src/Notifications/BulkEmailDispatcher.php:356
 msgid "The send stopped with an error. Some emails may have been sent; it is not repeated automatically."
 msgstr ""
 
@@ -1941,19 +2068,19 @@ msgstr ""
 msgid "This week’s events: {week_start} – {week_end}"
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:278
+#: src/Notifications/IndividualEmailDispatcher.php:282
 msgid "Not sent: no valid email address is saved."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:303
+#: src/Notifications/IndividualEmailDispatcher.php:307
 msgid "The site could not hand the email over for delivery. It is not repeated automatically."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:310
+#: src/Notifications/IndividualEmailDispatcher.php:314
 msgid "Handed over to the site’s mail system. This does not confirm that it reached the inbox."
 msgstr ""
 
-#: src/Notifications/IndividualEmailDispatcher.php:318
+#: src/Notifications/IndividualEmailDispatcher.php:322
 msgid "The send stopped with an error. The email may have been sent; it is not repeated automatically."
 msgstr ""
 
@@ -1971,12 +2098,6 @@ msgstr ""
 
 #: src/Notifications/SummaryBuilder.php:51
 msgid "The selected page must be published and publicly visible."
-msgstr ""
-
-#: src/Notifications/TelegramConnector.php:61
-#: src/Admin/event-notifications/shared.js:15
-#: src/Admin/event-notifications/TelegramChannel.js:218
-msgid "Telegram"
 msgstr ""
 
 #: src/Notifications/TelegramConnector.php:62
@@ -2015,20 +2136,20 @@ msgstr ""
 msgid "The saved Telegram bot token is not a valid bot token. Replace it in Settings → Connectors with the full token from @BotFather."
 msgstr ""
 
-#: src/Notifications/TelegramDispatcher.php:226
+#: src/Notifications/TelegramDispatcher.php:231
 msgid "Not sent: the week had already ended when the scheduled send ran."
 msgstr ""
 
-#: src/Notifications/TelegramDispatcher.php:237
+#: src/Notifications/TelegramDispatcher.php:242
 msgid "No events this week, so nothing was sent."
 msgstr ""
 
-#: src/Notifications/TelegramDispatcher.php:266
+#: src/Notifications/TelegramDispatcher.php:271
 msgid "No delivery destination is enabled and configured."
 msgstr ""
 
 #. translators: 1: destinations delivered, 2: destinations failed, 3: destinations with an unknown outcome
-#: src/Notifications/TelegramDispatcher.php:284
+#: src/Notifications/TelegramDispatcher.php:289
 #, php-format
 msgid "Delivered: %1$d. Failed: %2$d. Unknown outcome: %3$d."
 msgstr ""
@@ -2252,7 +2373,7 @@ msgstr[1] ""
 
 #. translators: %s: activity name
 #: src/Services/ActivitySelection.php:189
-#: src/Services/TicketCapacity.php:856
+#: src/Services/TicketCapacity.php:859
 #, php-format
 msgid "\"%s\" is full."
 msgstr ""
@@ -2525,13 +2646,106 @@ msgstr ""
 msgid "This ticket type is not available for your account."
 msgstr ""
 
+#: src/Services/PaymentHistoryReconciliation.php:900
+msgid "Reconciliation isn't available until Fair Events finishes its database update."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:901
+msgid "This record no longer exists."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:902
+msgid "Records from a dry run can't be reconciled. Start the migration, then reconcile what it reports."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:903
+msgid "This record was already reconciled or reviewed."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:904
+msgid "This record has no payment that could be linked to a purchase. You can mark it as reviewed."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:905
+msgid "Payment information can't be read because Fair Payments Connector is inactive or not installed."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:906
+msgid "Choose at least one purchase to link."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:907
+msgid "Enter a note explaining the decision."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:908
+msgid "Someone changed this payment while you were reviewing it. Reload it and decide again."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:909
+msgid "These links already exist. Nothing was changed."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:910
+msgid "The decision couldn't be recorded, so nothing was changed. Try again."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:911
+msgid "The decision couldn't be saved, so nothing was changed. Try again."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:912
+msgid "This payment is being updated right now. Try again in a moment."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:913
+msgid "This link no longer exists."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:914
+msgid "Only links added during reconciliation can be removed."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:915
+msgid "The amounts add up to more than the payment's total."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:916
+msgid "One of these purchases is already linked to this payment with a different amount."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:917
+#: src/Admin/payment-history/FindingModal.js:133
+msgid "The same purchase is listed twice with the same role."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:918
+msgid "One of these purchases no longer exists."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:919
+msgid "Each linked purchase needs a role and an amount of zero or more."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:920
+msgid "This payment has no valid total or currency, so it can't be linked."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:921
+msgid "This payment no longer exists in Fair Payments Connector."
+msgstr ""
+
+#: src/Services/PaymentHistoryReconciliation.php:923
+msgid "The decision couldn't be saved."
+msgstr ""
+
 #: src/Services/SignupFieldsetRenderer.php:57
 #: src/blocks/event-signup/frontend.js:1020
 msgid "This purchase:"
 msgstr ""
 
 #: src/Services/SignupFieldsetRenderer.php:61
-#: src/Admin/manage-event/EventSignups.js:583
+#: src/Admin/manage-event/EventSignups.js:584
 #: src/Admin/manage-event/SignupExportModal.js:71
 #: src/blocks/event-signup/frontend.js:1028
 msgid "Ticket"
@@ -2595,19 +2809,19 @@ msgid "-%s"
 msgstr ""
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:750
+#: src/Services/TicketCapacity.php:753
 #, php-format
 msgid "%1$s on %2$s"
 msgstr ""
 
 #. translators: 1: activity name, 2: event date and time
-#: src/Services/TicketCapacity.php:841
+#: src/Services/TicketCapacity.php:844
 #, php-format
 msgid "\"%1$s\" is full on %2$s."
 msgstr ""
 
 #. translators: 1: number of places still available, 2: activity name, 3: event date and time
-#: src/Services/TicketCapacity.php:847
+#: src/Services/TicketCapacity.php:850
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\" on %3$s."
 msgid_plural "Only %1$d places are left in \"%2$s\" on %3$s."
@@ -2615,19 +2829,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of places still available, 2: activity name
-#: src/Services/TicketCapacity.php:861
+#: src/Services/TicketCapacity.php:864
 #, php-format
 msgid "Only %1$d place is left in \"%2$s\"."
 msgid_plural "Only %1$d places are left in \"%2$s\"."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Services/TicketCapacity.php:872
+#: src/Services/TicketCapacity.php:875
 msgid "This ticket type is sold out."
 msgstr ""
 
 #. translators: %d: number of tickets still available
-#: src/Services/TicketCapacity.php:875
+#: src/Services/TicketCapacity.php:878
 #, php-format
 msgid "Only %d ticket of this type is left."
 msgid_plural "Only %d tickets of this type are left."
@@ -2635,25 +2849,25 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: event date and time
-#: src/Services/TicketCapacity.php:888
+#: src/Services/TicketCapacity.php:891
 #, php-format
 msgid "The event on %s is fully booked."
 msgstr ""
 
 #. translators: 1: number of places still available, 2: event date and time
-#: src/Services/TicketCapacity.php:893
+#: src/Services/TicketCapacity.php:896
 #, php-format
 msgid "Only %1$d place is left for %2$s."
 msgid_plural "Only %1$d places are left for %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Services/TicketCapacity.php:899
+#: src/Services/TicketCapacity.php:902
 msgid "This event is fully booked."
 msgstr ""
 
 #. translators: %d: number of places still available
-#: src/Services/TicketCapacity.php:902
+#: src/Services/TicketCapacity.php:905
 #, php-format
 msgid "Only %d place is left."
 msgid_plural "Only %d places are left."
@@ -2767,7 +2981,7 @@ msgstr ""
 #: src/Admin/all-events/AllEvents.js:108
 #: src/Admin/event-notifications/AddNotification.js:119
 #: src/Admin/event-notifications/NotificationEditor.js:74
-#: src/Admin/manage-event/EventSignups.js:582
+#: src/Admin/manage-event/EventSignups.js:583
 #: src/Admin/manage-event/EventTickets.js:1371
 #: src/Admin/manage-event/EventTickets.js:2532
 #: src/Admin/manage-event/EventTickets.js:2572
@@ -2781,6 +2995,7 @@ msgstr ""
 #: src/Admin/all-events/AllEvents.js:122
 #: src/Admin/manage-event/EditInstancesModal.js:72
 #: src/Admin/manage-event/RecurrenceCalendar.js:171
+#: src/Admin/payment-history/labels.js:406
 msgid "Cancelled"
 msgstr ""
 
@@ -2799,9 +3014,9 @@ msgid "(%d dates)"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:188
-#: src/Admin/manage-event/EventFinance.js:499
-#: src/Admin/manage-event/EventFinance.js:574
-#: src/Admin/manage-event/EventFinance.js:718
+#: src/Admin/manage-event/EventFinance.js:506
+#: src/Admin/manage-event/EventFinance.js:581
+#: src/Admin/manage-event/EventFinance.js:725
 #: src/Admin/manage-event/SignupExportModal.js:118
 msgid "Date"
 msgstr ""
@@ -2819,7 +3034,7 @@ msgid "Type"
 msgstr ""
 
 #: src/Admin/all-events/AllEvents.js:381
-#: src/Admin/event-notifications/NotificationList.js:365
+#: src/Admin/event-notifications/NotificationList.js:370
 #: src/Admin/venues/VenuesApp.js:785
 msgid "Edit"
 msgstr ""
@@ -2868,7 +3083,7 @@ msgid "Today"
 msgstr ""
 
 #: src/Admin/calendar/calendarLabels.js:19
-#: src/Admin/calendar/components/QuickEventModal.js:334
+#: src/Admin/calendar/components/QuickEventModal.js:337
 msgid "Add event"
 msgstr ""
 
@@ -2905,144 +3120,144 @@ msgstr ""
 msgid "No public page yet"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:119
+#: src/Admin/calendar/components/QuickEventModal.js:120
 msgid "Enter a URL to look up."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:190
+#: src/Admin/calendar/components/QuickEventModal.js:193
 msgid "Could not look up that page."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:227
+#: src/Admin/calendar/components/QuickEventModal.js:230
 msgid "Title is required."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:276
+#: src/Admin/calendar/components/QuickEventModal.js:279
 msgid "Event created, but linking the post failed."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:289
+#: src/Admin/calendar/components/QuickEventModal.js:292
 #: src/Admin/event-meta-box/LinkOptions.js:82
 msgid "Failed to create event."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:297
+#: src/Admin/calendar/components/QuickEventModal.js:300
 #: src/Admin/event-meta-box/EventEditForm.js:242
 #: src/Admin/manage-event/ManageEventApp.js:980
 msgid "— No venue —"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:300
+#: src/Admin/calendar/components/QuickEventModal.js:303
 #: src/Admin/manage-event/ManageEventApp.js:983
 msgid "Add new venue"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:321
+#: src/Admin/calendar/components/QuickEventModal.js:324
 msgid "Quick Add Event"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:342
+#: src/Admin/calendar/components/QuickEventModal.js:345
 msgid "Manual"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:346
+#: src/Admin/calendar/components/QuickEventModal.js:349
 msgid "From URL"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:359
+#: src/Admin/calendar/components/QuickEventModal.js:362
 msgid "Event page URL"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:376
+#: src/Admin/calendar/components/QuickEventModal.js:379
 msgid "Look up"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:384
+#: src/Admin/calendar/components/QuickEventModal.js:387
 msgid "This page lists several sessions. Enter the date and times of the one you are adding."
 msgstr ""
 
 #. translators: %s: comma-separated list of missing field names
-#: src/Admin/calendar/components/QuickEventModal.js:395
+#: src/Admin/calendar/components/QuickEventModal.js:398
 #, js-format
 msgid "This page didn't specify: %s. Fill these in manually."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:402
+#: src/Admin/calendar/components/QuickEventModal.js:405
 msgid "start date"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:408
+#: src/Admin/calendar/components/QuickEventModal.js:411
 msgid "end date"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:413
+#: src/Admin/calendar/components/QuickEventModal.js:416
 msgid "location"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:444
+#: src/Admin/calendar/components/QuickEventModal.js:447
 #: src/Admin/event-meta-box/EventEditForm.js:268
-#: src/Admin/manage-event/ManageEventApp.js:1374
+#: src/Admin/manage-event/ManageEventApp.js:1378
 #: src/blocks/venue-info/components/EditComponent.js:81
 #: src/blocks/venue-info/components/EditComponent.js:194
 msgid "Venue"
 msgstr ""
 
 #. translators: %s: location name found on the source page
-#: src/Admin/calendar/components/QuickEventModal.js:452
+#: src/Admin/calendar/components/QuickEventModal.js:455
 #, js-format
 msgid "From the page: %s"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:472
+#: src/Admin/calendar/components/QuickEventModal.js:475
 #: src/Admin/manage-event/EventTickets.js:2863
 msgid "More options"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:511
+#: src/Admin/calendar/components/QuickEventModal.js:514
 msgid "Link to"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:515
+#: src/Admin/calendar/components/QuickEventModal.js:518
 #: src/Admin/manage-event/EventLinkModal.js:274
 msgid "Nowhere — show details only"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:522
+#: src/Admin/calendar/components/QuickEventModal.js:525
 #: src/Admin/manage-event/EventLinkModal.js:267
 msgid "An external website"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:529
+#: src/Admin/calendar/components/QuickEventModal.js:532
 #: src/Admin/manage-event/EventLinkModal.js:260
 msgid "A page on this site"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:541
+#: src/Admin/calendar/components/QuickEventModal.js:544
 #: src/Admin/manage-event/EventLinkModal.js:287
 msgid "External URL"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:555
+#: src/Admin/calendar/components/QuickEventModal.js:558
 #: src/Admin/manage-event/EventLinkModal.js:352
 msgid "Search posts by title"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:560
+#: src/Admin/calendar/components/QuickEventModal.js:563
 #: src/Admin/manage-event/EventLinkModal.js:357
 msgid "Start typing to search..."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:567
+#: src/Admin/calendar/components/QuickEventModal.js:570
 #: src/Admin/manage-event/EventLinkModal.js:364
 msgid "Select a post"
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:574
+#: src/Admin/calendar/components/QuickEventModal.js:577
 #: src/Admin/manage-event/EventLinkModal.js:371
 msgid "Select..."
 msgstr ""
 
-#: src/Admin/calendar/components/QuickEventModal.js:621
+#: src/Admin/calendar/components/QuickEventModal.js:624
 msgid "Create Event"
 msgstr ""
 
@@ -3115,9 +3330,11 @@ msgstr ""
 #. translators: 1: date, 2: start time
 #. translators: 1: notification name, 2: date and time the send or test started
 #. translators: 1: "Scheduled" or "Test", 2: date and time it started
+#. translators: 1: event title, 2: event start date and time
 #: src/Admin/components/eventTiming.js:60
 #: src/Admin/event-notifications/ExecutionDetails.js:148
-#: src/Admin/event-notifications/NotificationList.js:447
+#: src/Admin/event-notifications/NotificationList.js:462
+#: src/Admin/payment-history/format.js:45
 #, js-format
 msgid "%1$s, %2$s"
 msgstr ""
@@ -3177,7 +3394,7 @@ msgstr ""
 
 #: src/Admin/components/InlineVenueCreator.js:83
 #: src/Admin/event-meta-box/EventEditForm.js:275
-#: src/Admin/manage-event/ManageEventApp.js:1391
+#: src/Admin/manage-event/ManageEventApp.js:1395
 #: src/Admin/settings/OrganizerTab.js:335
 #: src/Admin/venues/VenuesApp.js:718
 #: src/Admin/venues/VenuesApp.js:883
@@ -3205,7 +3422,7 @@ msgid "Failed to save event."
 msgstr ""
 
 #: src/Admin/event-meta-box/EventEditForm.js:278
-#: src/Admin/manage-event/ManageEventApp.js:1397
+#: src/Admin/manage-event/ManageEventApp.js:1401
 msgid "Used as the event location only when no venue is selected above."
 msgstr ""
 
@@ -3297,11 +3514,6 @@ msgstr ""
 msgid "Failed to send the test email."
 msgstr ""
 
-#: src/Admin/event-notifications/BulkEmailChannel.js:82
-#: src/Admin/event-notifications/shared.js:16
-msgid "Bulk email"
-msgstr ""
-
 #: src/Admin/event-notifications/BulkEmailChannel.js:87
 msgid "Save bulk email settings"
 msgstr ""
@@ -3358,13 +3570,13 @@ msgid "Weeks run from Monday to Sunday. Previews and tests select the week relat
 msgstr ""
 
 #: src/Admin/event-notifications/ConfigurationView.js:58
-#: src/Admin/event-notifications/EventNotifications.js:231
+#: src/Admin/event-notifications/EventNotifications.js:254
 msgid "← All notifications"
 msgstr ""
 
 #: src/Admin/event-notifications/ConfigurationView.js:61
-#: src/Admin/event-notifications/EventNotifications.js:234
-#: src/Admin/event-notifications/EventNotifications.js:265
+#: src/Admin/event-notifications/EventNotifications.js:257
+#: src/Admin/event-notifications/EventNotifications.js:288
 msgid "All notification history"
 msgstr ""
 
@@ -3373,7 +3585,7 @@ msgid "This notification does not exist. It may have been removed, or the link i
 msgstr ""
 
 #: src/Admin/event-notifications/ConfigurationView.js:111
-#: src/Admin/event-notifications/NotificationList.js:352
+#: src/Admin/event-notifications/NotificationList.js:357
 msgid "Unsaved changes"
 msgstr ""
 
@@ -3392,8 +3604,25 @@ msgid "Notification sections"
 msgstr ""
 
 #: src/Admin/event-notifications/ConfigurationView.js:138
-#: src/Admin/event-notifications/NotificationList.js:373
+#: src/Admin/event-notifications/NotificationList.js:378
 msgid "History"
+msgstr ""
+
+#: src/Admin/event-notifications/DuplicateAction.js:59
+msgid "Failed to duplicate the notification. Please try again."
+msgstr ""
+
+#: src/Admin/event-notifications/DuplicateAction.js:83
+msgid "Duplicating…"
+msgstr ""
+
+#: src/Admin/event-notifications/DuplicateAction.js:84
+#: src/Admin/manage-event/EventTickets.js:2781
+msgid "Duplicate"
+msgstr ""
+
+#: src/Admin/event-notifications/DuplicateAction.js:88
+msgid "Cannot be duplicated now, see its status."
 msgstr ""
 
 #: src/Admin/event-notifications/EmailContentControls.js:35
@@ -3459,40 +3688,47 @@ msgstr ""
 msgid "“%s” was added. It is paused: set it up, turn it on and save it when it is ready."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:192
+#. translators: %s: name of the copy
+#: src/Admin/event-notifications/EventNotifications.js:202
+#, js-format
+msgid "“%s” was added as a copy of the saved settings. It is paused and has no history: check it, turn it on and save it when it is ready."
+msgstr ""
+
+#: src/Admin/event-notifications/EventNotifications.js:215
 msgid "There is no event feed yet. Telegram and bulk email list the events of an event feed, so they can only be turned on once one exists. Individual email can send all published local events without one."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:198
+#: src/Admin/event-notifications/EventNotifications.js:221
 msgid "Create an event feed"
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:201
+#: src/Admin/event-notifications/EventNotifications.js:224
 msgid "Event feeds are created with the Fair Events Experimental plugin."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:236
+#: src/Admin/event-notifications/EventNotifications.js:259
 msgid "Every scheduled send and test of every notification, newest first. Open an entry to see each recipient or chat."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:252
+#: src/Admin/event-notifications/EventNotifications.js:275
 msgid "Send the week’s events automatically. Each notification has its own schedule, its own choice of events and its own history, and is saved on its own. You can have more than one of each kind."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:277
+#: src/Admin/event-notifications/EventNotifications.js:301
 msgid "Sends run in the site’s timezone and can be a few minutes late on low-traffic sites."
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:282
+#: src/Admin/event-notifications/EventNotifications.js:306
 msgid "How WordPress schedules tasks"
 msgstr ""
 
-#: src/Admin/event-notifications/EventNotifications.js:303
+#: src/Admin/event-notifications/EventNotifications.js:327
 #: src/Admin/event-notifications/ExecutionDetails.js:127
 #: src/Admin/event-notifications/ExecutionDetails.js:255
 #: src/Admin/event-notifications/HistoryView.js:264
-#: src/Admin/event-statistics/EventStatistics.js:412
+#: src/Admin/event-statistics/EventStatistics.js:419
 #: src/Admin/manage-event/EventMessages.js:338
+#: src/Admin/payment-history/PaymentHistoryPage.js:111
 #: src/blocks/event-prices/components/EditComponent.js:159
 msgid "Try again"
 msgstr ""
@@ -3517,8 +3753,8 @@ msgstr ""
 #: src/Admin/event-notifications/HistoryView.js:86
 #: src/Admin/event-notifications/HistoryView.js:305
 #: src/Admin/event-notifications/HistoryView.js:342
-#: src/Admin/event-notifications/NotificationList.js:297
-#: src/Admin/event-notifications/NotificationList.js:320
+#: src/Admin/event-notifications/NotificationList.js:301
+#: src/Admin/event-notifications/NotificationList.js:325
 msgid "Notification"
 msgstr ""
 
@@ -3555,11 +3791,15 @@ msgstr ""
 #: src/Admin/event-notifications/ExecutionDetails.js:190
 #: src/Admin/event-notifications/HistoryView.js:301
 #: src/Admin/event-notifications/HistoryView.js:323
+#: src/Admin/manage-event/PurchasePayments.js:235
+#: src/Admin/payment-history/MigrationPanel.js:139
 msgid "Started"
 msgstr ""
 
 #: src/Admin/event-notifications/ExecutionDetails.js:193
 #: src/Admin/event-notifications/historyFormat.js:52
+#: src/Admin/payment-history/MigrationPanel.js:137
+#: src/Admin/payment-history/MigrationPanel.js:143
 msgid "Finished"
 msgstr ""
 
@@ -3646,6 +3886,8 @@ msgstr ""
 #: src/Admin/event-notifications/historyFormat.js:30
 #: src/Admin/event-notifications/shared.js:38
 #: src/Admin/event-notifications/TelegramPreview.js:15
+#: src/Admin/manage-event/PurchasePayments.js:64
+#: src/Admin/payment-history/labels.js:389
 msgid "Failed"
 msgstr ""
 
@@ -3780,7 +4022,7 @@ msgstr ""
 #. translators: 1: notification name, 2: its kind, e.g. "Telegram"
 #. translators: 1: registrant name, 2: short ticket reference
 #: src/Admin/event-notifications/HistoryView.js:65
-#: src/Admin/manage-event/EventSignups.js:64
+#: src/Admin/manage-event/EventSignups.js:65
 #, js-format
 msgid "%1$s (%2$s)"
 msgstr ""
@@ -3822,6 +4064,7 @@ msgid "Failed to load the notification history."
 msgstr ""
 
 #: src/Admin/event-notifications/HistoryView.js:246
+#: src/Admin/payment-history/FindingsPanel.js:488
 msgid "Clear filters"
 msgstr ""
 
@@ -3847,7 +4090,7 @@ msgstr ""
 
 #. translators: %s: event feed slug
 #: src/Admin/event-notifications/IndividualEmailChannel.js:79
-#: src/Admin/event-notifications/NotificationList.js:127
+#: src/Admin/event-notifications/NotificationList.js:128
 #: src/Admin/event-notifications/shared.js:125
 #, js-format
 msgid "%s (unavailable)"
@@ -3873,11 +4116,6 @@ msgstr ""
 
 #: src/Admin/event-notifications/IndividualEmailChannel.js:167
 msgid "Save an email address before sending a test."
-msgstr ""
-
-#: src/Admin/event-notifications/IndividualEmailChannel.js:175
-#: src/Admin/event-notifications/shared.js:17
-msgid "Individual email"
 msgstr ""
 
 #: src/Admin/event-notifications/IndividualEmailChannel.js:177
@@ -3926,124 +4164,133 @@ msgstr ""
 msgid "These settings were saved somewhere else, for example in another tab, after you started editing. Saving replaces them with the values shown here."
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:34
+#: src/Admin/event-notifications/NotificationList.js:35
 msgid "No chat or channel yet"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:37
+#: src/Admin/event-notifications/NotificationList.js:38
 msgid "Subscribers who agreed to marketing emails, chosen by Fair Audience"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:42
+#: src/Admin/event-notifications/NotificationList.js:43
 msgid "No address yet"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:116
+#: src/Admin/event-notifications/NotificationList.js:117
 msgid "All feeds"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:147
+#: src/Admin/event-notifications/NotificationList.js:148
 msgid "There is no notification yet. Add one below."
 msgstr ""
 
 #. translators: %s: event feed name
-#: src/Admin/event-notifications/NotificationList.js:155
+#: src/Admin/event-notifications/NotificationList.js:156
 #, js-format
 msgid "No notification sends events from “%s”."
 msgstr ""
 
 #. translators: 1: the typed search, 2: event feed name
-#: src/Admin/event-notifications/NotificationList.js:162
+#: src/Admin/event-notifications/NotificationList.js:163
 #, js-format
 msgid "No notification of “%2$s” matches “%1$s”."
 msgstr ""
 
 #. translators: %s: the typed search
-#: src/Admin/event-notifications/NotificationList.js:169
+#: src/Admin/event-notifications/NotificationList.js:170
 #, js-format
 msgid "No notification matches “%s”."
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:230
+#: src/Admin/event-notifications/NotificationList.js:234
 msgid "Search notifications"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:231
+#: src/Admin/event-notifications/NotificationList.js:235
 msgid "By name, kind, address or chat."
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:245
+#: src/Admin/event-notifications/NotificationList.js:249
 msgid "Event feed"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:246
+#: src/Admin/event-notifications/NotificationList.js:250
 msgid "Shows the notifications that send events from this feed."
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:262
+#: src/Admin/event-notifications/NotificationList.js:266
 msgid "Show all feeds"
 msgstr ""
 
 #. translators: %s: event feed slug
-#: src/Admin/event-notifications/NotificationList.js:270
+#: src/Admin/event-notifications/NotificationList.js:274
 #, js-format
 msgid "The event feed “%s” is not available: it does not exist, was deleted or is turned off. No notification is listed for it."
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:300
-#: src/Admin/event-notifications/NotificationList.js:381
+#: src/Admin/event-notifications/NotificationList.js:304
+#: src/Admin/event-notifications/NotificationList.js:393
 msgid "Sends to"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:303
-#: src/Admin/event-notifications/NotificationList.js:389
-#: src/Admin/manage-event/EventFinance.js:727
-#: src/Admin/manage-event/EventSignups.js:590
+#: src/Admin/event-notifications/NotificationList.js:307
+#: src/Admin/event-notifications/NotificationList.js:401
+#: src/Admin/manage-event/EventFinance.js:734
+#: src/Admin/manage-event/EventSignups.js:591
+#: src/Admin/manage-event/PurchasePayments.js:238
 #: src/Admin/manage-event/SignupExportModal.js:101
+#: src/Admin/payment-history/FindingModal.js:563
+#: src/Admin/payment-history/FindingsPanel.js:379
 msgid "Status"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:306
-#: src/Admin/event-notifications/NotificationList.js:417
+#: src/Admin/event-notifications/NotificationList.js:310
+#: src/Admin/event-notifications/NotificationList.js:432
 msgid "Next send"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:309
-#: src/Admin/event-notifications/NotificationList.js:430
+#: src/Admin/event-notifications/NotificationList.js:313
+#: src/Admin/event-notifications/NotificationList.js:445
 msgid "Latest send or test"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:397
+#: src/Admin/event-notifications/NotificationList.js:409
 msgid "On"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:404
+#: src/Admin/event-notifications/NotificationList.js:416
 msgid "Paused"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:424
+#: src/Admin/event-notifications/NotificationList.js:439
 msgid "Not scheduled"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:460
+#: src/Admin/event-notifications/NotificationList.js:475
 msgid "Nothing sent yet"
 msgstr ""
 
-#: src/Admin/event-notifications/NotificationList.js:490
+#: src/Admin/event-notifications/NotificationList.js:505
 msgid "Notification pages"
 msgstr ""
 
 #: src/Admin/event-notifications/Pagination.js:32
+#: src/Admin/payment-history/FindingsPanel.js:564
+#: src/Admin/payment-history/VerificationPanel.js:288
 msgid "Previous page"
 msgstr ""
 
 #. translators: 1: current page number, 2: number of pages
 #: src/Admin/event-notifications/Pagination.js:37
+#: src/Admin/payment-history/FindingsPanel.js:569
+#: src/Admin/payment-history/VerificationPanel.js:293
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
 #: src/Admin/event-notifications/Pagination.js:47
+#: src/Admin/payment-history/FindingsPanel.js:579
+#: src/Admin/payment-history/VerificationPanel.js:306
 msgid "Next page"
 msgstr ""
 
@@ -4347,27 +4594,43 @@ msgstr ""
 msgid "Event sales statistics could not be loaded."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:365
+#: src/Admin/event-statistics/EventStatistics.js:372
 msgid "Cumulative tickets sold"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:366
+#: src/Admin/event-statistics/EventStatistics.js:373
 msgid "Cumulative sales amount"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:385
+#: src/Admin/event-statistics/EventStatistics.js:392
 msgid "The chart image could not be downloaded. Please try again."
 msgstr ""
 
+#: src/Admin/event-statistics/EventStatistics.js:432
+msgid "Revenue isn’t available because payment information can’t be read. Activate Fair Payments Connector to see sales amounts."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:446
+msgid "Review payment history"
+msgstr ""
+
+#. translators: %d: number of paid payments not yet linked to this event's purchases.
+#: src/Admin/event-statistics/EventStatistics.js:458
+#, js-format
+msgid "Revenue is incomplete: %d paid payment isn’t linked to this event’s purchases yet. The total shows only linked payments."
+msgid_plural "Revenue is incomplete: %d paid payments aren’t linked to this event’s purchases yet. The total shows only linked payments."
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %s: comma-separated currency codes excluded from event revenue.
-#: src/Admin/event-statistics/EventStatistics.js:427
+#: src/Admin/event-statistics/EventStatistics.js:472
 #, js-format
 msgid "Some payments were excluded because they use different currencies: %s."
 msgstr ""
 
 #. translators: %d: number of confirmed tickets.
 #. translators: %d: number of tickets on the printed list
-#: src/Admin/event-statistics/EventStatistics.js:441
+#: src/Admin/event-statistics/EventStatistics.js:486
 #: src/Admin/manage-event/signup-print.js:187
 #, js-format
 msgid "%d ticket"
@@ -4375,62 +4638,85 @@ msgid_plural "%d tickets"
 msgstr[0] ""
 msgstr[1] ""
 
+#: src/Admin/event-statistics/EventStatistics.js:502
+msgid "(incomplete)"
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:511
+msgid "Revenue unavailable"
+msgstr ""
+
+#. translators: %s: formatted amount of whole-series pass revenue covering this occurrence.
+#: src/Admin/event-statistics/EventStatistics.js:522
+#, js-format
+msgid "Plus %s from series passes, counted on the series’ first date"
+msgstr ""
+
 #. translators: %d: calendar days until the event.
-#: src/Admin/event-statistics/EventStatistics.js:459
+#: src/Admin/event-statistics/EventStatistics.js:536
 #, js-format
 msgid "%d day until the event"
 msgid_plural "%d days until the event"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-statistics/EventStatistics.js:485
+#: src/Admin/event-statistics/EventStatistics.js:562
 msgid "Sales history"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:523
-#: src/Admin/event-statistics/EventStatistics.js:701
-#: src/Admin/event-statistics/EventStatistics.js:746
+#: src/Admin/event-statistics/EventStatistics.js:600
+#: src/Admin/event-statistics/EventStatistics.js:805
+#: src/Admin/event-statistics/EventStatistics.js:850
+#: src/Admin/manage-event/PurchasePayments.js:34
 msgid "Tickets"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:548
+#: src/Admin/event-statistics/EventStatistics.js:625
+msgid "Revenue isn’t available because payment information can’t be read."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:639
 msgid "Net sales amount"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:562
+#: src/Admin/event-statistics/EventStatistics.js:650
+msgid "Incomplete: only payments linked to this event’s purchases are included."
+msgstr ""
+
+#: src/Admin/event-statistics/EventStatistics.js:666
 msgid "Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:571
+#: src/Admin/event-statistics/EventStatistics.js:675
 msgid "Capacity shows the places taken right now: confirmed tickets and tickets held while their payment is in progress. This can be more than the confirmed tickets sold."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:577
+#: src/Admin/event-statistics/EventStatistics.js:681
 msgid "Event capacity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:586
+#: src/Admin/event-statistics/EventStatistics.js:690
 msgid "Capacity by ticket type"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:593
+#: src/Admin/event-statistics/EventStatistics.js:697
 msgid "This event has no ticket types."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:604
+#: src/Admin/event-statistics/EventStatistics.js:708
 msgid "Each ticket type has one limit for the whole series, so these places are counted across all its dates."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:617
+#: src/Admin/event-statistics/EventStatistics.js:721
 msgid "Capacity by activity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:624
+#: src/Admin/event-statistics/EventStatistics.js:728
 msgid "This event has no activities."
 msgstr ""
 
 #. translators: %d: number of purchases with missing ticket records.
-#: src/Admin/event-statistics/EventStatistics.js:640
+#: src/Admin/event-statistics/EventStatistics.js:744
 #, js-format
 msgid "%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created."
 msgid_plural "%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created."
@@ -4438,40 +4724,44 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tickets left out of the activity charts.
-#: src/Admin/event-statistics/EventStatistics.js:654
+#: src/Admin/event-statistics/EventStatistics.js:758
 #, js-format
 msgid "%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket."
 msgid_plural "%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/event-statistics/EventStatistics.js:666
+#: src/Admin/event-statistics/EventStatistics.js:770
 msgid "Tickets per activity"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:670
+#: src/Admin/event-statistics/EventStatistics.js:774
 msgid "No activities recorded for confirmed tickets."
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:710
-#: src/Admin/event-statistics/EventStatistics.js:734
+#: src/Admin/event-statistics/EventStatistics.js:814
+#: src/Admin/event-statistics/EventStatistics.js:838
 msgid "Activities per ticket"
 msgstr ""
 
-#: src/Admin/event-statistics/EventStatistics.js:714
+#: src/Admin/event-statistics/EventStatistics.js:818
 msgid "No confirmed tickets to chart."
 msgstr ""
 
-#: src/Admin/event-statistics/StatisticsPage.js:24
-msgid "Event statistics need the Fair Audience plugin, which records tickets and payments. Activate Fair Audience to see sales and activity charts for this event."
+#: src/Admin/event-statistics/StatisticsPage.js:26
+msgid "Event statistics aren’t available yet. Activate Fair Audience, or move its payment records to Fair Events on the Payment history page."
 msgstr ""
 
 #: src/Admin/event-statistics/StatisticsPage.js:34
+msgid "Open Payment history"
+msgstr ""
+
+#: src/Admin/event-statistics/StatisticsPage.js:43
 msgid "Back to Manage Event"
 msgstr ""
 
 #: src/Admin/manage-event/EditInstancesModal.js:41
-#: src/Admin/manage-event/ManageEventApp.js:1529
+#: src/Admin/manage-event/ManageEventApp.js:1533
 msgid "Edit instances"
 msgstr ""
 
@@ -4571,12 +4861,12 @@ msgid "Published"
 msgstr ""
 
 #: src/Admin/manage-event/EventContextHeader.js:296
-#: src/Admin/manage-event/ManageEventApp.js:1812
+#: src/Admin/manage-event/ManageEventApp.js:1816
 msgid "Publish event"
 msgstr ""
 
 #: src/Admin/manage-event/EventContextHeader.js:297
-#: src/Admin/manage-event/ManageEventApp.js:1811
+#: src/Admin/manage-event/ManageEventApp.js:1815
 msgid "Move to draft"
 msgstr ""
 
@@ -4592,132 +4882,134 @@ msgstr ""
 msgid "open the master event"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:196
+#: src/Admin/manage-event/EventFinance.js:203
 msgid "Payments could not be loaded."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:227
+#: src/Admin/manage-event/EventFinance.js:234
 msgid "Costs could not be loaded."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:257
+#: src/Admin/manage-event/EventFinance.js:264
 msgid "Budgets could not be loaded."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:281
+#: src/Admin/manage-event/EventFinance.js:288
 msgid "Budget updated."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:284
+#: src/Admin/manage-event/EventFinance.js:291
 msgid "Failed to update budget."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:304
+#: src/Admin/manage-event/EventFinance.js:311
 msgid "No financial entries for this event yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:310
+#: src/Admin/manage-event/EventFinance.js:317
 msgid "No payments for this event yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:312
+#: src/Admin/manage-event/EventFinance.js:319
 msgid "No costs for this event yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:322
-#: src/Admin/manage-event/EventFinance.js:353
+#: src/Admin/manage-event/EventFinance.js:329
+#: src/Admin/manage-event/EventFinance.js:360
 msgid "Budget"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:354
+#: src/Admin/manage-event/EventFinance.js:361
 msgid "Reconciliation splits preselect this budget for payments linked to this event."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:361
+#: src/Admin/manage-event/EventFinance.js:368
 msgid "No budget"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:384
+#: src/Admin/manage-event/EventFinance.js:391
 msgid "Save budget"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:394
+#: src/Admin/manage-event/EventFinance.js:401
 #: src/Admin/manage-event/ManageEventApp.js:1128
 msgid "Finance"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:425
+#: src/Admin/manage-event/EventFinance.js:432
 msgid "Total Costs"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:437
+#: src/Admin/manage-event/EventFinance.js:444
 msgid "Total Income"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:449
+#: src/Admin/manage-event/EventFinance.js:456
 msgid "Total Net"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:460
+#: src/Admin/manage-event/EventFinance.js:467
 msgid "Sum of online payments after Mollie and application fees."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:464
+#: src/Admin/manage-event/EventFinance.js:471
 msgid "Sum of online payments after fees, excluding transactions whose fee data has not been recorded yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:473
+#: src/Admin/manage-event/EventFinance.js:480
 msgid "Balance"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:493
+#: src/Admin/manage-event/EventFinance.js:500
 msgid "Costs"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:502
-#: src/Admin/manage-event/EventFinance.js:577
-#: src/Admin/manage-event/EventFinance.js:721
+#: src/Admin/manage-event/EventFinance.js:509
+#: src/Admin/manage-event/EventFinance.js:584
+#: src/Admin/manage-event/EventFinance.js:728
 msgid "Amount"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:508
-#: src/Admin/manage-event/EventFinance.js:594
-#: src/Admin/manage-event/EventFinance.js:733
+#: src/Admin/manage-event/EventFinance.js:515
+#: src/Admin/manage-event/EventFinance.js:601
+#: src/Admin/manage-event/EventFinance.js:740
+#: src/Admin/payment-history/FindingModal.js:234
 msgid "Description"
 msgstr ""
 
 #. translators: 1: financial entry ID, 2: entry date
-#: src/Admin/manage-event/EventFinance.js:525
+#: src/Admin/manage-event/EventFinance.js:532
 #, js-format
 msgid "Entry #%1$d, %2$s"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:568
+#: src/Admin/manage-event/EventFinance.js:575
+#: src/Admin/payment-history/labels.js:307
 msgid "Payments"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:583
+#: src/Admin/manage-event/EventFinance.js:590
 msgid "Amount paid minus Mollie and application fees."
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:588
+#: src/Admin/manage-event/EventFinance.js:595
 msgid "Net received"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:600
-#: src/Admin/manage-event/EventFinance.js:739
+#: src/Admin/manage-event/EventFinance.js:607
+#: src/Admin/manage-event/EventFinance.js:746
 msgid "Participant"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:607
+#: src/Admin/manage-event/EventFinance.js:614
 msgid "Budget entry"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:712
+#: src/Admin/manage-event/EventFinance.js:719
 msgid "Failed Payments"
 msgstr ""
 
-#: src/Admin/manage-event/EventFinance.js:811
+#: src/Admin/manage-event/EventFinance.js:818
 msgid "View All Entries"
 msgstr ""
 
@@ -4838,6 +5130,7 @@ msgid "Saving does not email anyone who has already booked; the message applies 
 msgstr ""
 
 #: src/Admin/manage-event/EventMessages.js:424
+#: src/Admin/payment-history/FindingModal.js:954
 msgid "Saving…"
 msgstr ""
 
@@ -4850,13 +5143,13 @@ msgid "Booking confirmation message"
 msgstr ""
 
 #. translators: 1: e.g. "1 ticket on this date", 2: e.g. "1 on another date"
-#: src/Admin/manage-event/EventSignups.js:232
+#: src/Admin/manage-event/EventSignups.js:233
 #, js-format
 msgid "%1$s; %2$s"
 msgstr ""
 
 #. translators: %d: number of tickets of the purchase on the date shown
-#: src/Admin/manage-event/EventSignups.js:235
+#: src/Admin/manage-event/EventSignups.js:236
 #, js-format
 msgid "%d ticket on this date"
 msgid_plural "%d tickets on this date"
@@ -4864,239 +5157,241 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of tickets of the purchase on other dates
-#: src/Admin/manage-event/EventSignups.js:245
+#: src/Admin/manage-event/EventSignups.js:246
 #, js-format
 msgid "%d on another date"
 msgid_plural "%d on other dates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/EventSignups.js:266
+#: src/Admin/manage-event/EventSignups.js:267
 msgid "Ticket not created yet"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:299
+#: src/Admin/manage-event/EventSignups.js:300
 msgid "Test payment"
 msgstr ""
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:389
+#: src/Admin/manage-event/EventSignups.js:390
 #, js-format
 msgid "Activity %s added"
 msgstr ""
 
 #. translators: %s: activity name
-#: src/Admin/manage-event/EventSignups.js:397
+#: src/Admin/manage-event/EventSignups.js:398
 #, js-format
 msgid "Moved (activity %s over capacity)"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:400
+#: src/Admin/manage-event/EventSignups.js:401
 msgid "Moved"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:402
+#: src/Admin/manage-event/EventSignups.js:403
 msgid "Ticket type changed"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:413
+#: src/Admin/manage-event/EventSignups.js:414
 msgid "Confirmed — over capacity"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:414
+#: src/Admin/manage-event/EventSignups.js:415
+#: src/Admin/payment-history/labels.js:404
 #: ../fair-events-shared/src/TicketEditModal.js:54
 msgid "Confirmed"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:443
+#: src/Admin/manage-event/EventSignups.js:444
 msgid "Hide details"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:444
-#: src/Admin/manage-event/ManageEventApp.js:1281
+#: src/Admin/manage-event/EventSignups.js:445
+#: src/Admin/manage-event/ManageEventApp.js:1285
 msgid "Details"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:450
+#: src/Admin/manage-event/EventSignups.js:451
 msgid "Paid after its hold expired"
 msgstr ""
 
 #. translators: 1: what the administrator did, 2: administrator name, 3: date and time, 4: reason given
-#: src/Admin/manage-event/EventSignups.js:460
+#: src/Admin/manage-event/EventSignups.js:461
 #, js-format
 msgid "%1$s by %2$s on %3$s: %4$s"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:466
+#: src/Admin/manage-event/EventSignups.js:467
 msgid "unknown user"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:521
+#: src/Admin/manage-event/EventSignups.js:522
 msgid "Selected"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:524
+#: src/Admin/manage-event/EventSignups.js:525
 msgid "Not selected"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:525
+#: src/Admin/manage-event/EventSignups.js:526
 msgid "Selection unavailable"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:584
+#: src/Admin/manage-event/EventSignups.js:585
 #: src/Admin/manage-event/EventTickets.js:1734
 #: src/Admin/manage-event/SignupExportModal.js:76
 msgid "Ticket Type"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:591
+#: src/Admin/manage-event/EventSignups.js:592
 #: src/Admin/manage-event/SignupExportModal.js:112
 msgid "Mailing"
 msgstr ""
 
 #. translators: %s: event date, e.g. "19:00—22:00, 10 June"
-#: src/Admin/manage-event/EventSignups.js:612
+#: src/Admin/manage-event/EventSignups.js:613
 #, js-format
 msgid "Purchase registered for %s"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:625
+#: src/Admin/manage-event/EventSignups.js:626
 #: ../fair-events-shared/src/TicketEditModal.js:417
 msgid "Yes"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:626
+#: src/Admin/manage-event/EventSignups.js:627
 #: ../fair-events-shared/src/TicketEditModal.js:418
 msgid "No"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:752
+#: src/Admin/manage-event/EventSignups.js:753
 msgid "Failed to load signups."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:822
+#: src/Admin/manage-event/EventSignups.js:823
 #: src/Admin/venues/VenuesApp.js:721
 msgid "Actions"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:851
+#: src/Admin/manage-event/EventSignups.js:855
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:861
+#: src/Admin/manage-event/EventSignups.js:865
 msgid "Could not open the print window. Allow pop-ups for this site and try again."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:874
+#: src/Admin/manage-event/EventSignups.js:878
 msgid "The summary is unavailable because the ticket types and add-ons of this event could not be loaded. Reload this page and try again."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:894
+#: src/Admin/manage-event/EventSignups.js:898
 msgid "Could not copy the summary. Allow this site to use the clipboard and try again."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:908
+#: src/Admin/manage-event/EventSignups.js:912
 msgid "Summary copied to clipboard."
 msgstr ""
 
 #. translators: %d: number of confirmed tickets in the purchase, on every date
-#: src/Admin/manage-event/EventSignups.js:939
+#: src/Admin/manage-event/EventSignups.js:943
 #, js-format
 msgid "Entire purchase — %d ticket"
 msgid_plural "Entire purchase — %d tickets"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/EventSignups.js:959
+#: src/Admin/manage-event/EventSignups.js:963
 msgid "Move"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:972
+#: src/Admin/manage-event/EventSignups.js:976
 #: src/Admin/manage-event/SignupEditModal.js:392
 msgid "Change ticket type"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:980
+#: src/Admin/manage-event/EventSignups.js:984
 #: src/Admin/venues/VenuesApp.js:801
 msgid "Delete"
 msgstr ""
 
 #. translators: %s: ticket label, e.g. "Ticket 2 (AE2671B5)"
-#: src/Admin/manage-event/EventSignups.js:1052
+#: src/Admin/manage-event/EventSignups.js:1056
 #, js-format
 msgid "Edit %s"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1057
+#: src/Admin/manage-event/EventSignups.js:1061
 #: ../fair-events-shared/src/TicketEditModal.js:697
 msgid "Edit ticket"
 msgstr ""
 
 #. translators: %s: registrant name and ticket reference
-#: src/Admin/manage-event/EventSignups.js:1106
+#: src/Admin/manage-event/EventSignups.js:1110
 #, js-format
 msgid "Registration for %s deleted."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1113
+#: src/Admin/manage-event/EventSignups.js:1117
 msgid "The registration could not be deleted. Try again."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1128
+#: src/Admin/manage-event/EventSignups.js:1132
 #: src/Admin/manage-event/ManageEventApp.js:1076
 #: src/Admin/manage-event/signup-print.js:184
 msgid "List"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1139
+#: src/Admin/manage-event/EventSignups.js:1143
 msgid "Mailing opt-ins only"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1154
+#: src/Admin/manage-event/EventSignups.js:1158
 msgid "Copy the number of tickets per ticket type and add-on, without participant details"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1159
+#: src/Admin/manage-event/EventSignups.js:1163
+#: src/Admin/payment-history/labels.js:319
 msgid "Summary"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1168
+#: src/Admin/manage-event/EventSignups.js:1172
 #: src/Admin/manage-event/SignupExportModal.js:388
 msgid "Export"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1177
+#: src/Admin/manage-event/EventSignups.js:1181
 msgid "Print list"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1217
+#: src/Admin/manage-event/EventSignups.js:1221
 msgid "Some older registrations are still being split into individual tickets. They are listed as one row for now; reload this page in a few minutes to see their tickets."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1226
+#: src/Admin/manage-event/EventSignups.js:1230
 msgid "No confirmed registrations yet."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1230
+#: src/Admin/manage-event/EventSignups.js:1234
 msgid "Nothing to export — no registrations match the current filter."
 msgstr ""
 
 #. translators: %s: registrant name and ticket reference
-#: src/Admin/manage-event/EventSignups.js:1273
+#: src/Admin/manage-event/EventSignups.js:1277
 #, js-format
 msgid "Delete registration — %s"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1276
+#: src/Admin/manage-event/EventSignups.js:1280
 msgid "Delete registration"
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1277
+#: src/Admin/manage-event/EventSignups.js:1281
 msgid "Deleting registration…"
 msgstr ""
 
 #. translators: 1: signup name, 2: number of tickets, 3: payment status
-#: src/Admin/manage-event/EventSignups.js:1288
+#: src/Admin/manage-event/EventSignups.js:1292
 #, js-format
 msgid "Delete the registration for %1$s, with its %2$d ticket? Its current payment status is %3$s."
 msgid_plural "Delete the registration for %1$s, with all %2$d of its tickets? Its current payment status is %3$s."
@@ -5104,7 +5399,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of tickets on the date shown, 2: number of tickets on other dates
-#: src/Admin/manage-event/EventSignups.js:1303
+#: src/Admin/manage-event/EventSignups.js:1307
 #, js-format
 msgid "This deletes the entire purchase on every date: %1$d on this date and %2$d ticket on another date."
 msgid_plural "This deletes the entire purchase on every date: %1$d on this date and %2$d tickets on other dates."
@@ -5112,30 +5407,30 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of cancelled or otherwise inactive tickets
-#: src/Admin/manage-event/EventSignups.js:1318
+#: src/Admin/manage-event/EventSignups.js:1322
 #, js-format
 msgid "It also removes %d cancelled or otherwise inactive ticket of this purchase."
 msgid_plural "It also removes %d cancelled or otherwise inactive tickets of this purchase."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/EventSignups.js:1329
+#: src/Admin/manage-event/EventSignups.js:1333
 msgid "This deletion is permanent. It removes only the local signup record and does not refund or cancel any payment-provider transaction."
 msgstr ""
 
 #. translators: %s: registrant name and ticket reference
-#: src/Admin/manage-event/EventSignups.js:1351
+#: src/Admin/manage-event/EventSignups.js:1355
 #, js-format
 msgid "Registration for %s moved to another date."
 msgstr ""
 
 #. translators: %s: registrant name and ticket reference
-#: src/Admin/manage-event/EventSignups.js:1359
+#: src/Admin/manage-event/EventSignups.js:1363
 #, js-format
 msgid "Ticket type changed for %s."
 msgstr ""
 
-#: src/Admin/manage-event/EventSignups.js:1378
+#: src/Admin/manage-event/EventSignups.js:1382
 msgid "Ticket saved."
 msgstr ""
 
@@ -5486,10 +5781,6 @@ msgstr ""
 #: src/Admin/manage-event/EventTickets.js:2608
 #: src/Admin/manage-event/EventTickets.js:2613
 msgid "Short name"
-msgstr ""
-
-#: src/Admin/manage-event/EventTickets.js:2781
-msgid "Duplicate"
 msgstr ""
 
 #: src/Admin/manage-event/EventTickets.js:2839
@@ -5858,128 +6149,129 @@ msgid "Failed to toggle occurrence."
 msgstr ""
 
 #: src/Admin/manage-event/ManageEventApp.js:1115
+#: src/Admin/payment-history/ReadersPanel.js:97
 msgid "Statistics"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1143
+#: src/Admin/manage-event/ManageEventApp.js:1147
 msgid "Admin"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1149
+#: src/Admin/manage-event/ManageEventApp.js:1153
 msgid "Event Administration"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1158
+#: src/Admin/manage-event/ManageEventApp.js:1162
 msgid "Open copy options for the underlying recurring event, not only this date."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1162
+#: src/Admin/manage-event/ManageEventApp.js:1166
 msgid "Open copy options with this event selected as the source."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1172
+#: src/Admin/manage-event/ManageEventApp.js:1176
 msgid "Copy event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1195
+#: src/Admin/manage-event/ManageEventApp.js:1199
 msgid "Permanently delete this event and all associated data. This action cannot be undone."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1206
+#: src/Admin/manage-event/ManageEventApp.js:1210
 msgid "Delete Event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1269
+#: src/Admin/manage-event/ManageEventApp.js:1273
 msgid "Back to Calendar"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1406
+#: src/Admin/manage-event/ManageEventApp.js:1410
 msgid "Attendance mode"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1413
+#: src/Admin/manage-event/ManageEventApp.js:1417
 msgid "In person"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1427
+#: src/Admin/manage-event/ManageEventApp.js:1431
 msgid "Hybrid"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1440
+#: src/Admin/manage-event/ManageEventApp.js:1444
 msgid "Joining link"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1444
+#: src/Admin/manage-event/ManageEventApp.js:1448
 msgid "Shown publicly. Leave empty to link to the event page instead."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1462
+#: src/Admin/manage-event/ManageEventApp.js:1466
 msgid "Recurrence"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1474
+#: src/Admin/manage-event/ManageEventApp.js:1478
 #: src/Admin/manage-event/SeriesModal.js:368
 msgid "Edit series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1484
-#: src/Admin/manage-event/ManageEventApp.js:1697
+#: src/Admin/manage-event/ManageEventApp.js:1488
+#: src/Admin/manage-event/ManageEventApp.js:1701
 msgid "End series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1544
+#: src/Admin/manage-event/ManageEventApp.js:1548
 #: src/Admin/manage-event/SeriesModal.js:369
 msgid "Turn into a series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1561
+#: src/Admin/manage-event/ManageEventApp.js:1565
 msgid "Save event details"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1565
+#: src/Admin/manage-event/ManageEventApp.js:1569
 msgid "Title is required"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1672
+#: src/Admin/manage-event/ManageEventApp.js:1676
 msgid "Delete series"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1673
+#: src/Admin/manage-event/ManageEventApp.js:1677
 msgid "Delete event"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1677
+#: src/Admin/manage-event/ManageEventApp.js:1681
 msgid "Deleting series…"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1678
+#: src/Admin/manage-event/ManageEventApp.js:1682
 msgid "Deleting event…"
 msgstr ""
 
 #. translators: %s: title of the series
-#: src/Admin/manage-event/ManageEventApp.js:1694
+#: src/Admin/manage-event/ManageEventApp.js:1698
 #, js-format
 msgid "End series — %s"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1698
+#: src/Admin/manage-event/ManageEventApp.js:1702
 msgid "Ending series…"
 msgstr ""
 
 #. translators: %s: event title
-#: src/Admin/manage-event/ManageEventApp.js:1709
+#: src/Admin/manage-event/ManageEventApp.js:1713
 #, js-format
 msgid "End the series %s?"
 msgstr ""
 
 #. translators: %s: date and time of the first date of the series
-#: src/Admin/manage-event/ManageEventApp.js:1716
+#: src/Admin/manage-event/ManageEventApp.js:1720
 #, js-format
 msgid "Its first date, %s, is kept as a single event."
 msgstr ""
 
 #. translators: %d: number of dates that will be deleted
-#: src/Admin/manage-event/ManageEventApp.js:1728
+#: src/Admin/manage-event/ManageEventApp.js:1732
 #, js-format
 msgid "%d other date is deleted:"
 msgid_plural "All %d other dates are deleted:"
@@ -5987,59 +6279,178 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of further dates not listed individually
-#: src/Admin/manage-event/ManageEventApp.js:1756
+#: src/Admin/manage-event/ManageEventApp.js:1760
 #, js-format
 msgid "and %d more date"
 msgid_plural "and %d more dates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1770
+#: src/Admin/manage-event/ManageEventApp.js:1774
 msgid "Registrations and ticket types that belong to a deleted date are not moved to the first date."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1778
+#: src/Admin/manage-event/ManageEventApp.js:1782
 msgid "The series has no other dates to delete."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1785
+#: src/Admin/manage-event/ManageEventApp.js:1789
 msgid "This is saved immediately and cannot be undone."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1797
+#: src/Admin/manage-event/ManageEventApp.js:1801
 msgid "Save and continue"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1800
+#: src/Admin/manage-event/ManageEventApp.js:1804
 msgid "You have unsaved changes. Save event details before setting up the link?"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1816
+#: src/Admin/manage-event/ManageEventApp.js:1820
 msgid "Moving to draft…"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1817
+#: src/Admin/manage-event/ManageEventApp.js:1821
 msgid "Publishing…"
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1829
+#: src/Admin/manage-event/ManageEventApp.js:1833
 msgid "This linked page will be moved to draft too:"
 msgid_plural "These linked pages will be moved to draft too:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1835
+#: src/Admin/manage-event/ManageEventApp.js:1839
 msgid "This linked page will be published too, even if it is a draft now:"
 msgid_plural "These linked pages will be published too, even if they are drafts now:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1855
+#: src/Admin/manage-event/ManageEventApp.js:1859
 msgid "The external page this event links to is not changed."
 msgstr ""
 
-#: src/Admin/manage-event/ManageEventApp.js:1863
+#: src/Admin/manage-event/ManageEventApp.js:1867
 msgid "Your unsaved changes to the event details stay on this screen, but this action does not save them."
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:36
+msgid "Added activities"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:38
+#: src/Admin/payment-history/labels.js:332
+msgid "Series upgrade"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:40
+msgid "Refund record"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:54
+msgid "Missing in Fair Payments Connector"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:58
+#: src/Admin/payment-history/labels.js:388
+msgid "Paid"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:62
+#: src/Admin/payment-history/labels.js:384
+#: src/Admin/payment-history/labels.js:385
+#: src/Admin/payment-history/labels.js:405
+#: ../fair-events-shared/src/TicketEditModal.js:57
+msgid "Awaiting payment"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:66
+#: src/Admin/payment-history/labels.js:390
+msgid "Canceled"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:68
+#: src/Admin/payment-history/labels.js:391
+#: src/Admin/payment-history/labels.js:407
+msgid "Expired"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:82
+msgid "Not counted: refund record"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:85
+msgid "Counted"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:86
+msgid "Not counted: not paid"
+msgstr ""
+
+#. translators: %s: error message from the server
+#: src/Admin/manage-event/PurchasePayments.js:153
+#, js-format
+msgid "Purchase payments could not be loaded. %s"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:159
+msgid "Purchase payments could not be loaded."
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:185
+msgid "Purchase payments"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:190
+msgid "Every payment attempt of the purchases listed for this date, from Fair Events records. A payment shared by several purchases shows only this purchase’s share."
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:206
+msgid "Payment statuses and totals aren’t available because payment information can’t be read."
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:215
+msgid "No purchase on this date has a payment."
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:228
+msgid "Purchase"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:231
+#: src/Admin/payment-history/FindingModal.js:211
+msgid "Payment"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:233
+#: src/Admin/payment-history/FindingModal.js:794
+msgid "For"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:241
+msgid "This purchase’s share"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:247
+msgid "Revenue"
+msgstr ""
+
+#. translators: %d: purchase ID
+#. translators: %d: purchase number
+#: src/Admin/manage-event/PurchasePayments.js:260
+#: src/Admin/payment-history/FindingsPanel.js:100
+#, js-format
+msgid "Purchase #%d"
+msgstr ""
+
+#: src/Admin/manage-event/PurchasePayments.js:277
+msgid "(latest attempt)"
+msgstr ""
+
+#. translators: %s: total amount of the payment
+#: src/Admin/manage-event/PurchasePayments.js:319
+#, js-format
+msgid "of %s"
 msgstr ""
 
 #: src/Admin/manage-event/RecurrenceCalendar.js:99
@@ -6447,6 +6858,7 @@ msgid "The amount paid stays the same: no charge or refund is made for a price d
 msgstr ""
 
 #: src/Admin/manage-event/SignupEditModal.js:319
+#: src/Admin/payment-history/FindingsPanel.js:398
 msgid "Reason"
 msgstr ""
 
@@ -6568,6 +6980,1098 @@ msgstr ""
 
 #: src/Admin/manage-event/SignupExportModal.js:511
 msgid "Copy to clipboard"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:100
+#: src/Admin/payment-history/MigrationPanel.js:221
+#: src/Admin/payment-history/ReadersPanel.js:59
+msgid "The request failed. Check your connection and try again."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:114
+msgid "Payment records"
+msgstr ""
+
+#. translators: 1: date and time of the switch, 2: administrator's name
+#: src/Admin/payment-history/CutoverPanel.js:123
+#, js-format
+msgid "Payment records use Fair Events since %1$s. Switched by %2$s."
+msgstr ""
+
+#. translators: %s: date and time of the switch
+#: src/Admin/payment-history/CutoverPanel.js:134
+#, js-format
+msgid "Payment records use Fair Events since %s."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:145
+msgid "Fair Audience’s records still decide which purchases are paid. After the switch, Fair Events does: each new payment is linked to its purchases before the buyer pays, a late payment for an earlier attempt still confirms its purchase, and a repeated payment notification counts once."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:167
+msgid "Payment records can’t switch to Fair Events yet:"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:186
+msgid "Waiting to be retried"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:197
+msgid "These are retried automatically every fifteen minutes. Nothing is charged twice."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:207
+msgid "The switch can’t be undone. If something goes wrong, update the plugins and fix the records here; Fair Audience’s records stay as they were."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:220
+#: src/Admin/payment-history/CutoverPanel.js:232
+msgid "Switch payment records to Fair Events"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:236
+msgid "Switch payment records"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:240
+#: src/Admin/payment-history/ReadersPanel.js:179
+msgid "Switching…"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:248
+msgid "From now on Fair Events decides which purchases are paid, for tickets and for Fair Audience registrations, activities and series upgrades."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:254
+msgid "It doesn’t charge, refund or email anyone. Ticket counts and statistics stay the same, and Fair Audience’s own records are still kept up to date."
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:260
+msgid "It can’t be undone. Restoring a backup afterwards loses the payments recorded since, so take a fresh database backup of these tables first:"
+msgstr ""
+
+#: src/Admin/payment-history/CutoverPanel.js:274
+msgid "I took a fresh database backup that includes these tables."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:116
+msgid "Add at least one purchase."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:122
+msgid "Choose a purchase in every row."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:126
+msgid "Enter an amount of zero or more in every row."
+msgstr ""
+
+#. translators: 1: total of the entered amounts, 2: amount left on the payment
+#: src/Admin/payment-history/FindingModal.js:144
+#, js-format
+msgid "The amounts add up to %1$s, more than the %2$s left on this payment."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:164
+msgid "The decision couldn’t be saved. Check your connection and try again."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:183
+#: src/Admin/payment-history/labels.js:154
+#: src/Admin/payment-history/labels.js:291
+msgid "Payment information can’t be read because Fair Payments Connector is inactive or not installed."
+msgstr ""
+
+#. translators: %d: payment number
+#: src/Admin/payment-history/FindingModal.js:198
+#, js-format
+msgid "Payment #%d no longer exists in Fair Payments Connector."
+msgstr ""
+
+#. translators: 1: payment number, 2: amount, 3: payment status. Keep <a></a>: it links to the payment.
+#: src/Admin/payment-history/FindingModal.js:216
+#, js-format
+msgid "<a>#%1$d</a> — %2$s, %3$s"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:230
+msgid "Created"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:240
+msgid "Line items"
+msgstr ""
+
+#. translators: 1: quantity, 2: item name, 3: line total
+#: src/Admin/payment-history/FindingModal.js:247
+#, js-format
+msgid "%1$d × %2$s: %3$s"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:268
+msgid "Its records mention"
+msgstr ""
+
+#. translators: %s: comma-separated purchase numbers
+#: src/Admin/payment-history/FindingModal.js:274
+#, js-format
+msgid "purchases %s"
+msgstr ""
+
+#. translators: %s: comma-separated registration numbers
+#: src/Admin/payment-history/FindingModal.js:283
+#, js-format
+msgid "registrations %s"
+msgstr ""
+
+#. translators: %d: payment number
+#: src/Admin/payment-history/FindingModal.js:292
+#, js-format
+msgid "a retry of payment #%d"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:348
+msgid "This record couldn’t be loaded."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:396
+msgid "Review record"
+msgstr ""
+
+#. translators: %d: payment number
+#: src/Admin/payment-history/FindingModal.js:482
+#, js-format
+msgid "Payment #%d was linked."
+msgstr ""
+
+#. translators: %s: reason the record was reported
+#: src/Admin/payment-history/FindingModal.js:501
+#, js-format
+msgid "“%s” was marked as reviewed. It won’t be reported again."
+msgstr ""
+
+#. translators: 1: purchase, 2: amount
+#: src/Admin/payment-history/FindingModal.js:527
+#, js-format
+msgid "The link to %1$s for %2$s was removed."
+msgstr ""
+
+#. translators: %s: reason the record was reported
+#: src/Admin/payment-history/FindingModal.js:544
+#, js-format
+msgid "Review record — %s"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:571
+msgid "Linked purchases"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:574
+msgid "This payment isn’t linked to any purchase."
+msgstr ""
+
+#. translators: 1: purchase, 2: event and date, 3: amount, 4: role, 5: who recorded the link
+#: src/Admin/payment-history/FindingModal.js:586
+#, js-format
+msgid "%1$s · %2$s — %3$s (%4$s, %5$s)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:615
+#: src/Admin/payment-history/FindingModal.js:655
+#: src/Admin/payment-history/FindingModal.js:714
+msgid "Remove link"
+msgstr ""
+
+#. translators: 1: amount already linked, 2: payment total, 3: amount left
+#: src/Admin/payment-history/FindingModal.js:629
+#, js-format
+msgid "Linked: %1$s of %2$s. Left: %3$s."
+msgstr ""
+
+#. translators: %s: purchase
+#: src/Admin/payment-history/FindingModal.js:660
+#, js-format
+msgid "Remove the link to %s?"
+msgstr ""
+
+#. translators: 1: amount, 2: payment number
+#: src/Admin/payment-history/FindingModal.js:667
+#, js-format
+msgid "%1$s of payment #%2$d will no longer count for this purchase. The payment itself isn’t changed or refunded. If no other link added here remains, the record needs a decision again."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:680
+msgid "Why are you removing it? (required)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:713
+msgid "Removing…"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:724
+msgid "Link this payment"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:730
+msgid "Choose the purchase this payment was for. To split a shared payment, add a row per purchase. Only linked amounts count as revenue."
+msgstr ""
+
+#. translators: %d: row number
+#: src/Admin/payment-history/FindingModal.js:749
+#, js-format
+msgid "Purchase %d"
+msgstr ""
+
+#. translators: 1: purchase amount, 2: purchase status
+#: src/Admin/payment-history/FindingModal.js:759
+#, js-format
+msgid "Purchase amount: %1$s. Status: %2$s."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:773
+msgid "Search by name, email or purchase number."
+msgstr ""
+
+#. translators: %s: currency code
+#: src/Admin/payment-history/FindingModal.js:822
+#, js-format
+msgid "Amount (%s)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:851
+msgid "Remove row"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:872
+msgid "Add another purchase"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:883
+msgid "There is no payment here to link. If you’ve checked the record, mark it as reviewed."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:893
+msgid "Linking needs Fair Payments Connector to be active. You can still mark the record as reviewed."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:901
+msgid "Note for the audit log (required)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:905
+msgid "Say what you checked and why you decided this way. It’s kept with your name and the time."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:921
+msgid "Reload this record"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:932
+msgid "Enter a note to record your decision."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:955
+msgid "Mark as reviewed, no link"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:973
+msgid "Linking…"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:974
+msgid "Link payment"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:989
+msgid "An administrator already decided this record. The audit log below shows who and why."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:993
+msgid "A later pass of the migration resolved this record. Nothing needs deciding."
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:1002
+msgid "Audit log"
+msgstr ""
+
+#. translators: 1: date and time, 2: action, 3: user name, 4: note
+#: src/Admin/payment-history/FindingModal.js:1008
+#, js-format
+msgid "%1$s — %2$s by %3$s: “%4$s”"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:1014
+msgid "linked"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:1015
+msgid "removed a link"
+msgstr ""
+
+#: src/Admin/payment-history/FindingModal.js:1019
+msgid "marked as reviewed"
+msgstr ""
+
+#. translators: %d: user ID
+#: src/Admin/payment-history/FindingModal.js:1027
+#, js-format
+msgid "user #%d"
+msgstr ""
+
+#. translators: 1: payment number, 2: amount
+#: src/Admin/payment-history/FindingsPanel.js:75
+#, js-format
+msgid "Payment #%1$d, %2$s"
+msgstr ""
+
+#. translators: %d: payment number
+#: src/Admin/payment-history/FindingsPanel.js:81
+#, js-format
+msgid "Payment #%d"
+msgstr ""
+
+#. translators: %d: registration number
+#: src/Admin/payment-history/FindingsPanel.js:87
+#, js-format
+msgid "Registration #%d"
+msgstr ""
+
+#. translators: 1: payment record number, 2: payment number
+#: src/Admin/payment-history/FindingsPanel.js:93
+#, js-format
+msgid "Payment record #%1$d (payment #%2$d)"
+msgstr ""
+
+#. translators: %d: payment number
+#: src/Admin/payment-history/FindingsPanel.js:106
+#, js-format
+msgid "Link to payment #%d"
+msgstr ""
+
+#. translators: 1: payment number, 2: amount. Keep <a></a>: it links to the payment.
+#: src/Admin/payment-history/FindingsPanel.js:146
+#, js-format
+msgid "<a>Payment #%1$d</a>, %2$s"
+msgstr ""
+
+#. translators: %d: payment number. Keep <a></a>: it links to the payment.
+#: src/Admin/payment-history/FindingsPanel.js:152
+#, js-format
+msgid "<a>Payment #%d</a>"
+msgstr ""
+
+#. translators: 1: payment record number, 2: payment number. Keep <a></a>: it links to the payment.
+#: src/Admin/payment-history/FindingsPanel.js:159
+#, js-format
+msgid "Payment record #%1$d (<a>payment #%2$d</a>)"
+msgstr ""
+
+#. translators: %d: payment number. Keep <a></a>: it links to the payment.
+#: src/Admin/payment-history/FindingsPanel.js:170
+#, js-format
+msgid "Link to <a>payment #%d</a>"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:266
+msgid "The reported records couldn’t be loaded."
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:307
+msgid "All reasons"
+msgstr ""
+
+#. translators: 1: reason, 2: number of records
+#. translators: 1: event and date, 2: number of records
+#: src/Admin/payment-history/FindingsPanel.js:314
+#: src/Admin/payment-history/FindingsPanel.js:326
+#, js-format
+msgid "%1$s (%2$d)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:321
+msgid "All events"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:329
+#: src/Admin/payment-history/format.js:38
+msgid "No event date"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:338
+#: src/Admin/payment-history/MigrationPanel.js:151
+msgid "Records to review"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:342
+msgid "These are the records the migration couldn’t link automatically, or linked with a note. Nothing is guessed: open a record to link its payment, split a shared one, or mark it as reviewed."
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:359
+msgid "Run"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:364
+#: src/Admin/payment-history/MigrationPanel.js:261
+#: src/Admin/payment-history/MigrationPanel.js:313
+msgid "Migration"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:368
+msgid "Dry run (preview only)"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:385
+#: src/Admin/payment-history/labels.js:366
+msgid "Decided by an administrator"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:391
+#: src/Admin/payment-history/FindingsPanel.js:431
+msgid "All"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:414
+msgid "Payment status"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:419
+msgid "All statuses"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:428
+msgid "Payment mode"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:434
+msgid "Test only"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:438
+msgid "Live only"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:447
+msgid "Dry run records show what the migration would report. They’re replaced by the next dry run and can’t be reconciled; decide on them once the migration has run."
+msgstr ""
+
+#. translators: %d: number of records
+#: src/Admin/payment-history/FindingsPanel.js:463
+#, js-format
+msgid "%d record"
+msgid_plural "%d records"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/payment-history/FindingsPanel.js:479
+msgid "No records match these filters."
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:502
+msgid "For review only"
+msgstr ""
+
+#. translators: 1: event and date, 2: status, 3: date and time it was last seen
+#: src/Admin/payment-history/FindingsPanel.js:520
+#, js-format
+msgid "%1$s · %2$s · last seen %3$s"
+msgstr ""
+
+#. translators: 1: reason, 2: what the record is about
+#: src/Admin/payment-history/FindingsPanel.js:543
+#, js-format
+msgid "Open %1$s — %2$s"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:550
+msgid "Decide"
+msgstr ""
+
+#: src/Admin/payment-history/FindingsPanel.js:551
+msgid "View"
+msgstr ""
+
+#: src/Admin/payment-history/format.js:75
+msgid "Purchase no longer exists"
+msgstr ""
+
+#: src/Admin/payment-history/format.js:77
+#: ../fair-events-shared/src/TicketEditModal.js:695
+msgid "(no name)"
+msgstr ""
+
+#. translators: 1: purchase number, 2: purchaser name, 3: purchaser email
+#: src/Admin/payment-history/format.js:81
+#, js-format
+msgid "Purchase #%1$d — %2$s (%3$s)"
+msgstr ""
+
+#. translators: 1: purchase number, 2: purchaser name
+#: src/Admin/payment-history/format.js:88
+#, js-format
+msgid "Purchase #%1$d — %2$s"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:19
+msgid "Payment without a purchase"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:20
+msgid "The payment records name no purchase that still exists, so it can’t be linked automatically."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:26
+msgid "Shared payment doesn’t add up"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:27
+msgid "The payment covers several purchases, but their amounts don’t add up to its total."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:33
+msgid "Amount differs from the purchase"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:34
+msgid "The payment was linked, but its total differs from the purchase’s own amount. For review only."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:40
+msgid "Activity with no clear ticket"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:41
+msgid "An activity was chosen for a person who holds no ticket, or several, on this date."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:47
+msgid "Activity payment with no clear purchase"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:51
+msgid "An activity payment could belong to none or several of the person’s purchases."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:57
+msgid "Series upgrade with no clear purchase"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:58
+msgid "A series upgrade payment could belong to none or several of the person’s purchases."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:64
+msgid "Duplicate of a series pass"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:65
+msgid "A registration on one session repeats a series pass that already covers it."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:71
+msgid "Paid more than once"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:72
+msgid "More than one payment for the same purchase was completed. All of them count. For review only."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:78
+msgid "Payment no longer exists"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:79
+msgid "A record names a payment that was deleted from Fair Payments Connector."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:85
+msgid "Currencies don’t match"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:86
+msgid "Records sharing one payment use different currencies."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:92
+msgid "Refund record kept"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:93
+msgid "An old refund entry is kept as it was and never counts as revenue. For review only."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:99
+msgid "Payment recorded for different people"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:100
+msgid "One payment was recorded against registrations of different people."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:106
+msgid "Conflicts with existing links"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:107
+msgid "The payment records point to purchases, but links already recorded for this payment leave no room for them."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:132
+msgid "Needs a decision"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:133
+msgid "Resolved by a later pass"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:134
+#: src/Admin/payment-history/labels.js:346
+msgid "Linked by an administrator"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:135
+msgid "Reviewed, no link"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:146
+msgid "Fair Events hasn’t finished updating its database yet. Reload the page in a moment."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:150
+msgid "New payments aren’t recorded in Fair Events yet. Update Fair Audience and Fair Payments Connector to their latest versions."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:158
+msgid "Fair Audience is too old: it would count migrated tickets twice. Update Fair Audience first."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:173
+#: src/Admin/payment-history/labels.js:203
+msgid "The migration hasn’t been verified yet. Finish it and pass its verification first."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:177
+msgid "Fair Audience is too old to record its payments in Fair Events. Update Fair Audience first."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:181
+#: src/Admin/payment-history/labels.js:215
+msgid "Some recent payments are still waiting to be recorded. They are retried automatically every fifteen minutes."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:195
+msgid "Fair Events hasn’t finished its database update."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:199
+msgid "Switch payment records to Fair Events first."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:207
+msgid "The last verification ran before payment records were switched. Verify again so it covers the payments recorded since."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:211
+msgid "Payment information can’t be read. Activate Fair Payments Connector."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:219
+msgid "Some events still count Fair Audience registrations that have no Fair Events ticket. Run the migration again, then verify."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:234
+msgid "Fair Events can’t read its payment records: its database update is incomplete or it was rolled back. Update Fair Events to its latest version."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:238
+msgid "Fair Audience is too old: its purchases are no longer recorded in Fair Events. Update Fair Audience to its latest version."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:242
+msgid "Payment information can’t be read because Fair Payments Connector is inactive or not installed. Payments arriving now are recorded once it is back."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:246
+msgid "The last verification found problems. Fix them and verify again; payment records keep using Fair Events."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:260
+msgid "Payments to link"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:261
+msgid "Registrations to follow"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:262
+msgid "Payment updates to apply"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:263
+msgid "Confirmations to announce"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:264
+msgid "Updates to pass to Fair Audience"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:275
+msgid "Some event dates differ in ways the migration can’t explain."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:279
+msgid "Some recent payments are still waiting to be recorded."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:283
+msgid "Some payments are linked for more than their total."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:287
+msgid "Some paid event payments are neither linked nor listed for review."
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:305
+msgid "Registrations"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:306
+#: ../fair-events-shared/src/TicketEditModal.js:408
+#: ../fair-events-shared/src/TicketEditModal.js:568
+msgid "Activities"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:308
+msgid "Refund and deleted-payment records"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:309
+msgid "Purchases naming deleted payments"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:313
+msgid "Second look at registrations"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:314
+msgid "Second look at reported records"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:318
+#: src/Admin/payment-history/VerificationPanel.js:224
+msgid "Verification"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:330
+msgid "Purchase price"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:331
+msgid "Activities added later"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:333
+msgid "Old refund record"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:344
+msgid "Recorded at payment"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:345
+msgid "Migrated"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:357
+msgid "Shared payment split between dates"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:361
+msgid "Old refund record not counted"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:365
+msgid "Listed for review"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:367
+msgid "Paid, missing from the old records"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:371
+msgid "Purchase moved to another date"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:372
+#: src/Admin/payment-history/VerificationPanel.js:50
+msgid "Unexplained difference"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:383
+msgid "Not started"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:386
+msgid "Pending"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:387
+msgid "Authorized"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:392
+msgid "Refunded"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:393
+msgid "Charged back"
+msgstr ""
+
+#: src/Admin/payment-history/labels.js:408
+msgid "Payment failed"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:49
+msgid "The migration is running in the background. You can leave this page; it continues on its own."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:57
+msgid "The migration is paused until the problems below are fixed. It continues on its own once they are."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:65
+msgid "The migration finished and its verification passed. Old and new payment records agree, apart from the differences listed."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:73
+msgid "The migration finished, but its verification found problems. Fix them, then verify again."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:83
+msgid "The dry run is checking your records. It changes nothing."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:92
+msgid "The dry run finished. Review what it found below, then start the migration."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:100
+msgid "Nothing has been migrated yet. Start with a dry run: it shows what the migration would do and changes nothing."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:133
+msgid "Step"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:147
+msgid "Registrations to migrate"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:149
+msgid "Payment links"
+msgstr ""
+
+#. translators: 1: paid amount that can be attributed, 2: paid amount left for review
+#: src/Admin/payment-history/MigrationPanel.js:158
+#, js-format
+msgid "Paid: %1$s can be linked automatically, %2$s needs review."
+msgstr ""
+
+#. translators: 1: error message, 2: date and time of the next attempt or the failure
+#: src/Admin/payment-history/MigrationPanel.js:171
+#, js-format
+msgid "The last batch failed and will be retried automatically: %1$s (%2$s)"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:235
+msgid "The migration can’t start until the problems above are fixed."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:250
+msgid "New records arrived since the dry run. Run it again before starting."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:272
+msgid "The migration can’t run on this site yet:"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:307
+msgid "Dry run"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:341
+msgid "Run the dry run again"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:345
+msgid "Run a dry run"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:359
+#: src/Admin/payment-history/MigrationPanel.js:405
+msgid "Start the migration"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:372
+msgid "Continue the migration"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:387
+msgid "Verify again"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:401
+msgid "Start the payment history migration"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:406
+msgid "Starting…"
+msgstr ""
+
+#. translators: %d: number of registrations the dry run would migrate
+#: src/Admin/payment-history/MigrationPanel.js:428
+#, js-format
+msgid "The migration creates Fair Events purchases for %d historical registration and links past payments to purchases, as the dry run showed."
+msgid_plural "The migration creates Fair Events purchases for %d historical registrations and links past payments to purchases, as the dry run showed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/payment-history/MigrationPanel.js:438
+msgid "It doesn’t change or delete any existing registration, payment or refund record, doesn’t charge or refund anyone, and sends no email. Ticket counts and statistics stay the same."
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:444
+msgid "It can’t be undone from this page. To undo it, restore a database backup of these tables:"
+msgstr ""
+
+#: src/Admin/payment-history/MigrationPanel.js:458
+msgid "I took a database backup that includes these tables."
+msgstr ""
+
+#: src/Admin/payment-history/PaymentHistoryPage.js:62
+msgid "The payment history couldn’t be loaded."
+msgstr ""
+
+#: src/Admin/payment-history/PaymentHistoryPage.js:102
+msgid "Moves past registrations and payments recorded by Fair Audience into Fair Events, so every purchase keeps its own payment history. Old records are kept; nothing is charged, refunded or emailed."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:72
+msgid "Statistics use Fair Events records. This site had no earlier Fair Audience records to move."
+msgstr ""
+
+#. translators: 1: date and time of the switch, 2: administrator's name
+#: src/Admin/payment-history/ReadersPanel.js:79
+#, js-format
+msgid "Statistics use Fair Events records since %1$s. Switched by %2$s."
+msgstr ""
+
+#. translators: %s: date and time of the switch
+#: src/Admin/payment-history/ReadersPanel.js:89
+#, js-format
+msgid "Statistics use Fair Events records since %s."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:107
+msgid "Statistics, ticket counts and capacity still read Fair Audience’s registrations and payment records. After the switch they read only Fair Events: its tickets and the payments linked to them. They then work without Fair Audience, and a payment shared by several dates counts once."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:117
+msgid "Statistics can’t switch to Fair Events records yet:"
+msgstr ""
+
+#. translators: %s: comma-separated event date IDs.
+#: src/Admin/payment-history/ReadersPanel.js:134
+#, js-format
+msgid "Event date: %s"
+msgid_plural "Event dates: %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/payment-history/ReadersPanel.js:149
+msgid "The switch can’t be undone. Fair Audience’s records stay as they were."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:162
+#: src/Admin/payment-history/ReadersPanel.js:174
+msgid "Switch statistics to Fair Events"
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:178
+msgid "Switch statistics"
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:186
+msgid "From now on Statistics, ticket counts and capacity read only Fair Events’ tickets and the payments linked to them."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:192
+msgid "Revenue for a date then counts only its own share of a payment shared by several dates, and series pass revenue counts once, on the series’ first date. Other dates of the series show it separately."
+msgstr ""
+
+#: src/Admin/payment-history/ReadersPanel.js:198
+msgid "It doesn’t change, charge, refund or email anything, and it can’t be undone."
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:55
+msgid "Revenue incomplete"
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:61
+msgid "Matches"
+msgstr ""
+
+#. translators: 1: tickets counted from the old records, 2: tickets counted from the new records
+#: src/Admin/payment-history/VerificationPanel.js:69
+#, js-format
+msgid "Tickets: %1$d in the old records, %2$d in the new ones."
+msgstr ""
+
+#. translators: %d: number of registrations the new rule counts
+#: src/Admin/payment-history/VerificationPanel.js:80
+#, js-format
+msgid "%d registration counts now that an earlier failed checkout no longer hides it."
+msgid_plural "%d registrations count now that an earlier failed checkout no longer hides them."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: revenue in the old records, 2: revenue in the new records
+#: src/Admin/payment-history/VerificationPanel.js:95
+#, js-format
+msgid "Revenue: %1$s in the old records, %2$s in the new ones."
+msgstr ""
+
+#. translators: 1: payment number, 2: amount in the old records, 3: amount in the new records, 4: reason for the difference
+#: src/Admin/payment-history/VerificationPanel.js:113
+#, js-format
+msgid "Payment #%1$d: %2$s before, %3$s now — %4$s"
+msgstr ""
+
+#. translators: %s: series pass revenue covering this session
+#: src/Admin/payment-history/VerificationPanel.js:140
+#, js-format
+msgid "Series passes covering this session: %s, counted once on the series."
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:209
+msgid "The verification report couldn’t be loaded."
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:229
+msgid "The verification report appears here once the migration has compared every event date."
+msgstr ""
+
+#. translators: 1: number of event dates compared, 2: number with unexplained differences, 3: number with incomplete revenue
+#: src/Admin/payment-history/VerificationPanel.js:239
+#, js-format
+msgid "Event dates compared: %1$d. With unexplained differences: %2$d. With incomplete revenue: %3$d."
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:250
+msgid "Show only dates with unexplained differences"
+msgstr ""
+
+#: src/Admin/payment-history/VerificationPanel.js:270
+msgid "No event dates to show."
 msgstr ""
 
 #: src/Admin/settings/FeaturesTab.js:58
@@ -7114,7 +8618,7 @@ msgstr ""
 msgid "Button to add this event to a calendar"
 msgstr ""
 
-#: src/blocks/calendar-button/utils/calendar-handler.js:82
+#: src/blocks/calendar-button/utils/calendar-handler.js:32
 msgid "Download ICS"
 msgstr ""
 
@@ -7947,10 +9451,6 @@ msgstr ""
 msgid "Ticket %1$d (%2$s)"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:57
-msgid "Awaiting payment"
-msgstr ""
-
 #: ../fair-events-shared/src/TicketEditModal.js:76
 msgid "%s — Full"
 msgstr ""
@@ -8000,11 +9500,6 @@ msgstr ""
 msgid "Ticket type"
 msgstr ""
 
-#: ../fair-events-shared/src/TicketEditModal.js:408
-#: ../fair-events-shared/src/TicketEditModal.js:568
-msgid "Activities"
-msgstr ""
-
 #: ../fair-events-shared/src/TicketEditModal.js:414
 #: ../fair-events-shared/src/TicketEditModal.js:605
 msgid "Checked in"
@@ -8052,9 +9547,5 @@ msgstr ""
 
 #: ../fair-events-shared/src/TicketEditModal.js:693
 msgid "Edit ticket — %s"
-msgstr ""
-
-#: ../fair-events-shared/src/TicketEditModal.js:695
-msgid "(no name)"
 msgstr ""
 
