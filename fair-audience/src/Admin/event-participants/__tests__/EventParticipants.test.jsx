@@ -616,8 +616,11 @@ describe( 'EventParticipants — removal and feedback (#1775)', () => {
 			)
 		).toBeInTheDocument();
 		// The answer for the earlier, one-person selection arrives late.
-		answerFirst( PREVIEW );
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		// Inside act() so no state update during the wait escapes it.
+		await act( async () => {
+			answerFirst( PREVIEW );
+			await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		} );
 		expect(
 			within( dialog ).getByText(
 				'2 people will receive this invitation.'
