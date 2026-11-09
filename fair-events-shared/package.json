@@ -6,6 +6,7 @@
 	"main": "src/index.js",
 	"private": true,
 	"scripts": {
+		"build": "wp-scripts build --config webpack.example.config.cjs",
 		"format": "wp-scripts format",
 		"test": "jest",
 		"test:js": "jest"
@@ -28,6 +29,7 @@
 	"dependencies": {
 		"@wordpress/components": "44.0.0",
 		"@wordpress/date": "6.1.0",
+		"@wordpress/icons": "20.0.0",
 		"@wordpress/scripts": "37.1.0",
 		"@wordpress/ui": "0.26.0",
 		"date-fns": "^4.0.0"

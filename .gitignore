@@ -54,3 +54,6 @@ fair-platform-deployment-config.txt
 
 # Duplication reports (npm run duplication)
 reports/
+
+# Admin table review example bundle (built by fair-events-shared)
+e2e/mu-plugins/admin-table-example/build/

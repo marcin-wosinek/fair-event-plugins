@@ -737,6 +737,14 @@ import {
 } from '@wordpress/components';
 ```
 
+### List tables
+
+For a list of items with row actions, build the table from the shared
+presentation components in `fair-events-shared/src/admin-table/` (table
+shell, identity, status, row actions, list messages) and import its
+`style.css`. The page keeps its data, filters, pagination and mutations. See
+[the admin table README](./fair-events-shared/src/admin-table/README.md).
+
 ### Popups and confirmations
 
 The policy — what a confirmation must say, bulk, pending, error,

@@ -1,0 +1,281 @@
+/**
+ * Shared admin table styles. Every rule is scoped to `.fair-admin-table`, so
+ * importing this file changes no other table. Page-specific rules (column
+ * widths, toolbars, notices) stay with each consumer.
+ *
+ * @package FairEventsShared
+ */
+
+.fair-admin-table {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	color: #1d2327;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+		Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-size: 13px;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.fair-admin-table__table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+}
+
+.fair-admin-table__caption {
+	border: 0;
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+.fair-admin-table__header,
+.fair-admin-table__cell {
+	padding: 12px 16px;
+	text-align: left;
+	vertical-align: top;
+}
+
+.fair-admin-table__header {
+	background: #f6f7f7;
+	border-bottom: 1px solid #dcdcde;
+	color: #50575e;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.fair-admin-table__table tbody tr + tr .fair-admin-table__cell {
+	border-top: 1px solid #f0f0f1;
+}
+
+/* Identity: strong linked name, muted supporting text below. */
+.fair-admin-table__cell--identity {
+	min-width: 12em;
+}
+
+.fair-admin-table__identity {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.fair-admin-table__identity-name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.fair-admin-table__identity-name a {
+	color: var(--wp-admin-theme-color-darker-10, #2145e6);
+	text-decoration: none;
+}
+
+.fair-admin-table__identity-name a:hover {
+	text-decoration: underline;
+}
+
+.fair-admin-table__identity-name a:focus,
+.fair-admin-table__actions .components-button.is-link:focus {
+	border-radius: 2px;
+	box-shadow: 0 0 0 2px var(--wp-admin-theme-color, #3858e9);
+	outline: 2px solid transparent;
+}
+
+.fair-admin-table__identity-meta,
+.fair-admin-table__reason {
+	color: #646970;
+}
+
+/* A warning the organizer must see stays visible next to the identity. */
+.fair-admin-table__warning {
+	color: #8a4d00;
+	font-weight: 600;
+}
+
+/* Amounts: right-aligned, digits line up. */
+.fair-admin-table__header--amount,
+.fair-admin-table__cell--amount {
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	white-space: nowrap;
+}
+
+/* Status: marker plus text, never color alone. */
+.fair-admin-table__status {
+	align-items: center;
+	display: inline-flex;
+	font-weight: 600;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.fair-admin-table__status::before {
+	background: currentColor;
+	border-radius: 50%;
+	content: "";
+	flex: none;
+	height: 8px;
+	width: 8px;
+}
+
+.fair-admin-table__status--success {
+	color: #007017;
+}
+
+.fair-admin-table__status--warning {
+	color: #8a4d00;
+}
+
+.fair-admin-table__status--error {
+	color: #b32d2e;
+}
+
+.fair-admin-table__status--info {
+	color: #0a4b78;
+}
+
+.fair-admin-table__status--neutral {
+	color: #50575e;
+}
+
+.fair-admin-table__status--neutral::before {
+	background: transparent;
+	border: 1px solid currentColor;
+	box-sizing: border-box;
+}
+
+/* Actions: rightmost column, frequent action then the overflow trigger. */
+.fair-admin-table__header--actions,
+.fair-admin-table__cell--actions {
+	text-align: right;
+	width: 1%;
+}
+
+.fair-admin-table__actions {
+	align-items: flex-end;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.fair-admin-table__action-buttons {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+	white-space: nowrap;
+}
+
+.fair-admin-table__actions .fair-admin-table__primary-action {
+	white-space: nowrap;
+}
+
+.fair-admin-table__actions .fair-admin-table__reason {
+	font-size: 12px;
+	min-width: 12em;
+	text-align: right;
+	white-space: normal;
+}
+
+/* Messages around the table. */
+.fair-admin-table__message--loading,
+.fair-admin-table__message--empty,
+.fair-admin-table__message--no-results {
+	align-items: center;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	padding: 24px 16px;
+}
+
+.fair-admin-table__message p {
+	margin: 0;
+}
+
+.fair-admin-table__message--loading .components-spinner {
+	margin: 0;
+}
+
+/* Narrow screens: one labeled block per row. */
+@media (max-width: 782px) {
+	.fair-admin-table__table thead {
+		display: none;
+	}
+
+	.fair-admin-table__table,
+	.fair-admin-table__table tbody,
+	.fair-admin-table__table tr,
+	.fair-admin-table__cell {
+		display: block;
+		width: 100%;
+	}
+
+	.fair-admin-table__table tbody tr {
+		box-sizing: border-box;
+		padding: 12px 16px;
+	}
+
+	.fair-admin-table__table tbody tr + tr {
+		border-top: 1px solid #dcdcde;
+	}
+
+	.fair-admin-table__table tbody tr + tr .fair-admin-table__cell {
+		border-top: 0;
+	}
+
+	.fair-admin-table__cell {
+		box-sizing: border-box;
+		display: flex;
+		gap: 16px;
+		justify-content: space-between;
+		padding: 4px 0;
+		text-align: right;
+	}
+
+	.fair-admin-table__cell[data-label]::before {
+		color: #50575e;
+		content: attr(data-label);
+		flex: none;
+		font-weight: 600;
+		max-width: 45%;
+		text-align: left;
+	}
+
+	.fair-admin-table__cell--identity {
+		display: block;
+		padding-bottom: 8px;
+		text-align: left;
+	}
+
+	.fair-admin-table__cell--identity[data-label]::before,
+	.fair-admin-table__cell--actions[data-label]::before {
+		display: none;
+	}
+
+	.fair-admin-table__cell--amount {
+		white-space: normal;
+	}
+
+	.fair-admin-table__cell--actions {
+		display: block;
+		padding-top: 8px;
+		width: 100%;
+	}
+
+	.fair-admin-table__actions {
+		align-items: flex-start;
+	}
+
+	.fair-admin-table__actions .fair-admin-table__reason {
+		min-width: 0;
+		text-align: left;
+	}
+}
