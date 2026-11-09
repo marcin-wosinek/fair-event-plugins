@@ -66,6 +66,10 @@ class QueryHelper {
 	 * without an end time ends with its end date, so it stays "ongoing"
 	 * through that day and is "past" from the next.
 	 *
+	 * `any` holds a list of such criteria sets, ORed together (the
+	 * events-list block's combined time periods); the GROUP BY in
+	 * group_by_post() keeps a post matching several sets from repeating.
+	 *
 	 * @param string    $where WHERE clause.
 	 * @param \WP_Query $query Query object.
 	 * @return string Modified WHERE clause.
@@ -90,31 +94,71 @@ class QueryHelper {
 			return $where;
 		}
 
-		$start_key = EventTimingSql::start_key( $dates_table );
-		$end_key   = EventTimingSql::end_key( $dates_table );
+		if ( isset( $date_query['any'] ) && is_array( $date_query['any'] ) ) {
+			$groups = array();
+			foreach ( $date_query['any'] as $group ) {
+				$conditions = is_array( $group ) ? self::date_conditions( $dates_table, $group ) : array();
+				if ( empty( $conditions ) ) {
+					// A group without conditions matches every date row, so
+					// the whole OR does too.
+					return $where;
+				}
+				$groups[] = '( ' . implode( ' AND ', $conditions ) . ' )';
+			}
 
-		if ( isset( $date_query['start_after'] ) ) {
-			list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( $dates_table, $date_query['start_after'] );
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $upcoming_sql is a static internal template holding the placeholders.
-			$where .= $wpdb->prepare( " AND {$upcoming_sql}", $upcoming_args );
+			if ( ! empty( $groups ) ) {
+				$where .= ' AND ( ' . implode( ' OR ', $groups ) . ' )';
+			}
+
+			return $where;
 		}
 
-		if ( isset( $date_query['end_before'] ) ) {
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND {$end_key} < %s", $date_query['end_before'] );
-		}
-
-		if ( isset( $date_query['start_before'] ) ) {
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND {$start_key} <= %s", $date_query['start_before'] );
-		}
-
-		if ( isset( $date_query['end_after'] ) ) {
-      // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$where .= $wpdb->prepare( " AND {$end_key} >= %s", $date_query['end_after'] );
+		foreach ( self::date_conditions( $dates_table, $date_query ) as $condition ) {
+			$where .= ' AND ' . $condition;
 		}
 
 		return $where;
+	}
+
+	/**
+	 * Prepared SQL conditions for one set of date criteria, to be joined
+	 * with AND.
+	 *
+	 * @param string $dates_table Dates table name.
+	 * @param array  $criteria    Any of `start_after`, `end_before`,
+	 *                            `start_before`, `end_after` (site-local
+	 *                            'Y-m-d H:i:s').
+	 * @return string[] Prepared conditions.
+	 */
+	private static function date_conditions( $dates_table, array $criteria ) {
+		global $wpdb;
+
+		$start_key  = EventTimingSql::start_key( $dates_table );
+		$end_key    = EventTimingSql::end_key( $dates_table );
+		$conditions = array();
+
+		if ( isset( $criteria['start_after'] ) ) {
+			list( $upcoming_sql, $upcoming_args ) = EventTimingSql::upcoming( $dates_table, $criteria['start_after'] );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $upcoming_sql is a static internal template holding the placeholders.
+			$conditions[] = $wpdb->prepare( $upcoming_sql, $upcoming_args );
+		}
+
+		if ( isset( $criteria['end_before'] ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$conditions[] = $wpdb->prepare( "{$end_key} < %s", $criteria['end_before'] );
+		}
+
+		if ( isset( $criteria['start_before'] ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$conditions[] = $wpdb->prepare( "{$start_key} <= %s", $criteria['start_before'] );
+		}
+
+		if ( isset( $criteria['end_after'] ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$conditions[] = $wpdb->prepare( "{$end_key} >= %s", $criteria['end_after'] );
+		}
+
+		return $conditions;
 	}
 
 	/**

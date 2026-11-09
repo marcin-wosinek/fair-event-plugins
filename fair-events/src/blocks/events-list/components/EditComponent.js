@@ -2,7 +2,12 @@
  * WordPress dependencies
  */
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, Notice } from '@wordpress/components';
+import {
+	PanelBody,
+	SelectControl,
+	CheckboxControl,
+	Notice,
+} from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
@@ -13,6 +18,13 @@ import {
 	classifyPatternContent,
 	PATTERN_TYPE_QUERY_LOOP,
 } from '../patternCompatibility.js';
+import {
+	PERIOD_PAST,
+	PERIOD_CURRENT,
+	PERIOD_FUTURE,
+	normalizeTimeFilters,
+	togglePeriod,
+} from '../timeFilters.js';
 
 /**
  * Edit component for Events List block
@@ -23,7 +35,34 @@ import {
  * @return {JSX.Element} The edit component
  */
 export default function EditComponent( { attributes, setAttributes } ) {
-	const { timeFilter, categories, displayPattern, eventSources } = attributes;
+	const { categories, displayPattern, eventSources } = attributes;
+	const timePeriods = normalizeTimeFilters( attributes );
+	const periodOptions = [
+		{ value: PERIOD_PAST, label: __( 'Past', 'fair-events' ) },
+		{ value: PERIOD_CURRENT, label: __( 'Current', 'fair-events' ) },
+		{ value: PERIOD_FUTURE, label: __( 'Future', 'fair-events' ) },
+	];
+
+	let timeHelp = __(
+		'Shows events in any checked period, soonest first.',
+		'fair-events'
+	);
+	if ( timePeriods.length === 1 && timePeriods[ 0 ] === PERIOD_FUTURE ) {
+		timeHelp = __(
+			'Shows events that have not started yet. A recurring series from this site appears once, at its next date, with its schedule. Events from calendar feeds and external sources are listed one date at a time.',
+			'fair-events'
+		);
+	} else if ( timePeriods.length === 1 && timePeriods[ 0 ] === PERIOD_PAST ) {
+		timeHelp = __(
+			'Shows events that have ended, most recent first.',
+			'fair-events'
+		);
+	} else if (
+		timePeriods.length === 1 &&
+		timePeriods[ 0 ] === PERIOD_CURRENT
+	) {
+		timeHelp = __( 'Shows events happening now.', 'fair-events' );
+	}
 
 	const blockProps = useBlockProps();
 
@@ -116,42 +155,67 @@ export default function EditComponent( { attributes, setAttributes } ) {
 							) }
 						</Notice>
 					) }
-					<SelectControl
-						label={ __( 'Time Filter', 'fair-events' ) }
-						value={ timeFilter }
-						options={ [
-							{
-								label: __( 'All Events', 'fair-events' ),
-								value: 'all',
-							},
-							{
-								label: __( 'Upcoming Events', 'fair-events' ),
-								value: 'upcoming',
-							},
-							{
-								label: __( 'Past Events', 'fair-events' ),
-								value: 'past',
-							},
-							{
-								label: __( 'Ongoing Events', 'fair-events' ),
-								value: 'ongoing',
-							},
-						] }
-						onChange={ ( value ) =>
-							setAttributes( { timeFilter: value } )
-						}
-						help={
-							timeFilter === 'upcoming'
-								? __(
-										'Shows events that have not started yet. A recurring series from this site appears once, at its next date, with its schedule. Events from calendar feeds and external sources are listed one date at a time.',
+					<fieldset
+						className="fair-events-events-list-time-filters"
+						aria-describedby="fair-events-events-list-time-help"
+						style={ { margin: '0 0 16px', padding: 0, border: 0 } }
+					>
+						<legend
+							className="components-base-control__label"
+							style={ {
+								padding: 0,
+								marginBottom: '8px',
+								fontSize: '11px',
+								fontWeight: 500,
+								textTransform: 'uppercase',
+							} }
+						>
+							{ __( 'Show events', 'fair-events' ) }
+						</legend>
+						{ periodOptions.map( ( option ) => (
+							<CheckboxControl
+								key={ option.value }
+								__nextHasNoMarginBottom
+								label={ option.label }
+								checked={ timePeriods.includes( option.value ) }
+								onChange={ ( checked ) =>
+									setAttributes( {
+										timeFilters: togglePeriod(
+											timePeriods,
+											option.value,
+											checked
+										),
+									} )
+								}
+							/>
+						) ) }
+						{ timePeriods.length === 0 ? (
+							<div id="fair-events-events-list-time-help">
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
+										'Select at least one period to display events.',
 										'fair-events'
-									)
-								: __(
-										'Filter events by time relative to now',
-										'fair-events'
-									)
-						}
-					/>
+									) }
+								</Notice>
+							</div>
+						) : (
+							<p
+								id="fair-events-events-list-time-help"
+								className="components-base-control__help"
+								style={ {
+									marginTop: '8px',
+									fontSize: '12px',
+									fontStyle: 'normal',
+									color: '#757575',
+								} }
+							>
+								{ timeHelp }
+							</p>
+						) }
+					</fieldset>
 					<CategorySelector
 						selectedCategories={ categories }
 						onChange={ ( ids ) =>
@@ -181,9 +245,12 @@ export default function EditComponent( { attributes, setAttributes } ) {
 			</InspectorControls>
 
 			<div { ...blockProps }>
+				{ /* POST keeps an empty `timeFilters` (no periods) intact;
+				a GET query string would drop it and fall back to Future. */ }
 				<ServerSideRender
 					block="fair-events/events-list"
 					attributes={ attributes }
+					httpMethod="POST"
 				/>
 			</div>
 		</>

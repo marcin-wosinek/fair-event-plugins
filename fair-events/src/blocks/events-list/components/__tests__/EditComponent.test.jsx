@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import '@testing-library/jest-dom';
-import { render, waitFor, within } from '@testing-library/react';
+import { act, render, waitFor, within } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EditComponent from '../EditComponent.js';
 
@@ -201,7 +201,7 @@ describe( 'EventsList EditComponent', () => {
 		).toBeNull();
 	} );
 
-	it( 'explains recurring-series grouping for the Upcoming filter', async () => {
+	it( 'explains recurring-series grouping when only Future is checked', async () => {
 		const { container } = await renderBlock( { timeFilter: 'upcoming' } );
 
 		expect(
@@ -216,19 +216,113 @@ describe( 'EventsList EditComponent', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'omits the recurring-series explanation for other time filters', async () => {
-		const { container } = await renderBlock( { timeFilter: 'past' } );
+	it( 'omits the recurring-series explanation for other selections', async () => {
+		const { container } = await renderBlock( {
+			timeFilters: [ 'current', 'future' ],
+		} );
 
 		expect(
 			within( container ).queryByText(
 				/A recurring series from this site/i
 			)
 		).toBeNull();
+		expect(
+			within( container ).getByText( /any checked period/i )
+		).toBeInTheDocument();
 	} );
 
-	it( 'passes the current time filter, categories, and event feeds to the preview', async () => {
+	it( 'groups the Past, Current and Future checkboxes under one label', async () => {
+		const { container } = await renderBlock();
+
+		const group = within( container ).getByRole( 'group', {
+			name: 'Show events',
+		} );
+		const labels = within( group )
+			.getAllByRole( 'checkbox' )
+			.map( ( box ) => box.closest( 'div' ).textContent );
+
+		expect( labels ).toEqual( [ 'Past', 'Current', 'Future' ] );
+	} );
+
+	it.each( [
+		[ 'upcoming', [ false, false, true ] ],
+		[ 'ongoing', [ false, true, false ] ],
+		[ 'past', [ true, false, false ] ],
+		[ 'all', [ true, true, true ] ],
+		[ undefined, [ false, false, true ] ],
+	] )(
+		'checks the periods of a legacy "%s" block',
+		async ( timeFilter, expected ) => {
+			const { container } = await renderBlock( { timeFilter } );
+
+			const boxes = within( container )
+				.getByRole( 'group', { name: 'Show events' } )
+				.querySelectorAll( 'input[type="checkbox"]' );
+
+			expect( Array.from( boxes ).map( ( box ) => box.checked ) ).toEqual(
+				expected
+			);
+		}
+	);
+
+	it( 'prefers saved periods over the legacy filter', async () => {
 		const { container } = await renderBlock( {
-			timeFilter: 'past',
+			timeFilter: 'all',
+			timeFilters: [ 'past' ],
+		} );
+
+		expect(
+			within( container ).getByRole( 'checkbox', { name: 'Past' } )
+		).toBeChecked();
+		expect(
+			within( container ).getByRole( 'checkbox', { name: 'Future' } )
+		).not.toBeChecked();
+	} );
+
+	it( 'adds a checked period to the saved selection', async () => {
+		const { container, setAttributes } = await renderBlock( {
+			timeFilter: 'upcoming',
+		} );
+
+		await act( async () => {
+			within( container )
+				.getByRole( 'checkbox', { name: 'Current' } )
+				.click();
+		} );
+
+		expect( setAttributes ).toHaveBeenCalledWith( {
+			timeFilters: [ 'current', 'future' ],
+		} );
+	} );
+
+	it( 'saves an empty selection when the last period is unchecked', async () => {
+		const { container, setAttributes } = await renderBlock( {
+			timeFilters: [ 'future' ],
+		} );
+
+		await act( async () => {
+			within( container )
+				.getByRole( 'checkbox', { name: 'Future' } )
+				.click();
+		} );
+
+		expect( setAttributes ).toHaveBeenCalledWith( { timeFilters: [] } );
+	} );
+
+	it( 'guides the editor when no period is checked', async () => {
+		const { container } = await renderBlock( { timeFilters: [] } );
+
+		expect(
+			container.querySelector( '.components-notice' ).textContent
+		).toContain( 'Select at least one period to display events.' );
+		within( container )
+			.getAllByRole( 'checkbox' )
+			.forEach( ( box ) => expect( box ).not.toBeChecked() );
+	} );
+
+	it( 'passes the periods, categories, and event feeds to the preview over POST', async () => {
+		const { container } = await renderBlock( {
+			timeFilters: [ 'current', 'future' ],
 			categories: [ 3 ],
 			eventSources: [ 'my-source' ],
 		} );
@@ -238,8 +332,26 @@ describe( 'EventsList EditComponent', () => {
 			ssr.getAttribute( 'data-attributes' )
 		);
 
-		expect( passedAttributes.timeFilter ).toBe( 'past' );
+		expect( passedAttributes.timeFilters ).toEqual( [
+			'current',
+			'future',
+		] );
 		expect( passedAttributes.categories ).toEqual( [ 3 ] );
 		expect( passedAttributes.eventSources ).toEqual( [ 'my-source' ] );
+		expect( mockServerSideRender ).toHaveBeenLastCalledWith(
+			expect.objectContaining( { httpMethod: 'POST' } )
+		);
+	} );
+
+	it( 'keeps an empty selection in the preview attributes', async () => {
+		const { container } = await renderBlock( { timeFilters: [] } );
+
+		const passedAttributes = JSON.parse(
+			within( container )
+				.getByTestId( 'ssr' )
+				.getAttribute( 'data-attributes' )
+		);
+
+		expect( passedAttributes.timeFilters ).toEqual( [] );
 	} );
 } );
