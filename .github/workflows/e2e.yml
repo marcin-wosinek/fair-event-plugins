@@ -27,6 +27,12 @@ on:
             - 'scripts/__tests__/api-test-runner.test.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-e2e-shards.test.mjs'
+            - 'scripts/shard-assignment.mjs'
+            - 'scripts/shard-timings.mjs'
+            - 'scripts/shard-timings/**'
+            - 'scripts/__tests__/shard-assignment.test.mjs'
+            - 'scripts/__tests__/shard-timings.test.mjs'
+            - 'scripts/__tests__/fixtures/test-list/**'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
     pull_request:
@@ -52,12 +58,22 @@ on:
             - 'scripts/__tests__/api-test-runner.test.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-e2e-shards.test.mjs'
+            - 'scripts/shard-assignment.mjs'
+            - 'scripts/shard-timings.mjs'
+            - 'scripts/shard-timings/**'
+            - 'scripts/__tests__/shard-assignment.test.mjs'
+            - 'scripts/__tests__/shard-timings.test.mjs'
+            - 'scripts/__tests__/fixtures/test-list/**'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
+    # Manual runs for CI benchmarks (TESTING.md § Rebalancing shards).
+    workflow_dispatch:
 
 jobs:
-    # Lists the suite without WordPress and fails if sharding would skip or
-    # repeat a test. Keep --total in step with the e2e-shard matrix.
+    # Lists the suite without WordPress, assigns whole spec files to shards by
+    # recorded duration (scripts/shard-timings/e2e.json), and fails if the
+    # assignment would skip or repeat a test. Keep --total in step with the
+    # e2e-shard matrix.
     e2e-inventory:
         name: E2E shard inventory
         runs-on: ubuntu-latest
@@ -91,15 +107,17 @@ jobs:
               if: steps.npm-cache.outputs.cache-hit != 'true'
               run: HUSKY=0 npm ci --prefer-offline
 
-            - name: Test shard inventory check
-              run: node --test scripts/__tests__/check-e2e-shards.test.mjs
+            - name: Test shard assignment and inventory check
+              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-e2e-shards.test.mjs
 
             - name: Check every test runs in exactly one shard
               run: node scripts/check-e2e-shards.mjs --total=4
 
     # Each shard is a separate runner with its own wp-env containers, database,
-    # uploads, captured emails and settings. Inside a shard the suite stays
-    # sequential (workers: 1) because specs mutate shared WordPress state.
+    # uploads, captured emails and settings. The runner computes the same
+    # duration-based assignment as the inventory job and runs its shard's files
+    # through --test-list. Inside a shard the suite stays sequential
+    # (workers: 1) because specs mutate shared WordPress state.
     e2e-shard:
         name: E2E shard ${{ matrix.shard }}/4
         runs-on: ubuntu-latest

@@ -8,10 +8,13 @@
  *
  *   node scripts/check-api-shards.mjs --total=4 --output=api-inventory.json
  *
- * Lists each workspace's tests through its own `test:api` script, unsharded and
- * per shard, and fails on listing errors, an empty suite, or a test that is
- * missing from every shard, assigned to more than one, or only listed by a
- * shard. Writes the planned assignment to the output file.
+ * Lists each workspace's tests through its own `test:api` script, assigns the
+ * files of all workspaces to shards the way the lifecycle runner does
+ * (scripts/shard-assignment.mjs), lists every shard through the same
+ * per-workspace `--test-list` the runner passes, and fails on listing errors,
+ * an empty suite, or a test that is missing from every shard, assigned to more
+ * than one, or only listed by a shard. Writes the planned assignment to the
+ * output file.
  *
  * Verification, run by the final status job after the shards:
  *
@@ -25,15 +28,11 @@
  * count as run; retries and failures are reported separately.
  */
 
-import { execFile } from 'node:child_process';
 import { appendFile, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 import { collectTests, compareInventories } from './check-e2e-shards.mjs';
-
-const execFileAsync = promisify(execFile);
 
 export function parseOptions(args) {
 	const value = (name) =>
@@ -190,55 +189,58 @@ export function verifyExecution(inventory, executed) {
 	return { problems, retried, failed };
 }
 
-async function listWorkspace(workspace, extraArgs) {
-	const { stdout } = await execFileAsync(
-		'npm',
-		[
-			'run',
-			'test:api',
-			'--silent',
-			`--workspace=${workspace}`,
-			'--',
-			'--list',
-			'--reporter=json',
-			...extraArgs,
-		],
-		{ maxBuffer: 64 * 1024 * 1024 }
-	);
-	const report = JSON.parse(stdout);
-	if (report.errors?.length) {
-		throw new Error(
-			`Playwright reported listing errors in ${workspace}:\n${report.errors
-				.map((error) => error.message)
-				.join('\n')}`
-		);
-	}
-	return collectTests(report);
-}
-
 async function plan({ total, output }) {
 	// Imported here: the runner loads Playwright, which the verification job
 	// (Node.js only, no npm install) does not have.
 	const { loadWorkspaces } = await import('./api-test-runner.mjs');
+	const { describeAssignment, listReport, planSuite, writeTestLists } =
+		await import('./shard-assignment.mjs');
 	const rootDirectory = fileURLToPath(new URL('..', import.meta.url));
 	const { suiteWorkspaces } = await loadWorkspaces(rootDirectory);
+	const reports = new Map();
+	const { assignment } = await planSuite({
+		rootDirectory,
+		suite: 'api',
+		workspaces: suiteWorkspaces.api,
+		total,
+		list: async (root, suite, workspace) => {
+			const report = await listReport(root, suite, workspace);
+			reports.set(workspace, report);
+			return report;
+		},
+	});
+	describeAssignment(assignment).forEach((line) => console.log(line));
+
 	const listings = {};
 	for (const workspace of suiteWorkspaces.api) {
-		const full = await listWorkspace(workspace, []);
-		const shards = [];
-		for (let current = 1; current <= total; current++) {
-			// Small workspaces have shards with nothing to run, as in CI.
-			shards.push(
-				await listWorkspace(workspace, [
-					`--shard=${current}/${total}`,
-					'--pass-with-no-tests',
-				])
+		listings[workspace] = {
+			full: collectTests(reports.get(workspace)),
+			shards: [],
+		};
+	}
+	for (const files of assignment.shards) {
+		const lists = await writeTestLists(files);
+		for (const workspace of suiteWorkspaces.api) {
+			// A workspace with no files in this shard is skipped by the runner.
+			listings[workspace].shards.push(
+				lists.has(workspace)
+					? collectTests(
+							await listReport(rootDirectory, 'api', workspace, [
+								`--test-list=${lists.get(workspace)}`,
+							])
+						)
+					: []
 			);
 		}
-		listings[workspace] = { full, shards };
 	}
 
 	const { problems, inventory } = planInventory(listings, total);
+	inventory.assignment = {
+		estimatedSeconds: assignment.loads,
+		files: assignment.shards.map((files) => files.map((file) => file.id)),
+		fallback: assignment.fallback,
+		stale: assignment.stale,
+	};
 	for (const [workspace, counts] of Object.entries(inventory.workspaces)) {
 		console.log(
 			`${workspace}: ${counts.tests} tests, per shard ${counts.perShard.join(' / ')}`

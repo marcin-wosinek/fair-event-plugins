@@ -19,6 +19,12 @@ on:
             - 'scripts/check-api-shards.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-api-shards.test.mjs'
+            - 'scripts/shard-assignment.mjs'
+            - 'scripts/shard-timings.mjs'
+            - 'scripts/shard-timings/**'
+            - 'scripts/__tests__/shard-assignment.test.mjs'
+            - 'scripts/__tests__/shard-timings.test.mjs'
+            - 'scripts/__tests__/fixtures/test-list/**'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
     pull_request:
@@ -36,6 +42,12 @@ on:
             - 'scripts/check-api-shards.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-api-shards.test.mjs'
+            - 'scripts/shard-assignment.mjs'
+            - 'scripts/shard-timings.mjs'
+            - 'scripts/shard-timings/**'
+            - 'scripts/__tests__/shard-assignment.test.mjs'
+            - 'scripts/__tests__/shard-timings.test.mjs'
+            - 'scripts/__tests__/fixtures/test-list/**'
             - 'e2e/mu-plugins/**'
             - '.github/workflows/api-tests.yml'
     # Manual runs for CI benchmarks (TESTING.md § REST API tests).
@@ -43,8 +55,10 @@ on:
 
 jobs:
     # Lists every API workspace's suite without WordPress, through each
-    # workspace's own test:api script, and fails if sharding would skip or
-    # repeat a test. Keep --total in step with the api-shard matrix.
+    # workspace's own test:api script, assigns the spec files of all
+    # workspaces to shards by recorded duration (scripts/shard-timings/api.json),
+    # and fails if the assignment would skip or repeat a test. Keep --total in
+    # step with the api-shard matrix.
     api-inventory:
         name: API shard inventory
         runs-on: ubuntu-latest
@@ -81,7 +95,7 @@ jobs:
               run: HUSKY=0 npm ci --prefer-offline
 
             - name: Test shard inventory check and lifecycle runner
-              run: node --test scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs
+              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs
 
             - name: Check every API test runs in exactly one shard
               run: node scripts/check-api-shards.mjs --total=4 --output=api-inventory.json
@@ -94,9 +108,11 @@ jobs:
                   retention-days: 7
 
     # Each shard is a separate runner with its own wp-env containers, database,
-    # uploads, captured emails and settings. Every API workspace runs its part
-    # of the shard; inside a shard the suite stays sequential (workers: 1)
-    # because specs mutate shared WordPress state.
+    # uploads, captured emails and settings. The runner computes the same
+    # duration-based assignment as the inventory job; every API workspace with
+    # files in the shard runs them through --test-list, and one with none is
+    # skipped. Inside a shard the suite stays sequential (workers: 1) because
+    # specs mutate shared WordPress state.
     api-shard:
         name: API shard ${{ matrix.shard }}/4
         runs-on: ubuntu-latest

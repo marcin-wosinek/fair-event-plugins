@@ -40,6 +40,36 @@ function createExecutor(responses = {}, onRun) {
 	};
 }
 
+const shardFiles = {
+	e2e: [{ id: 'e2e/a.spec.js', listPath: 'a.spec.js', workspace: undefined }],
+	api: [
+		{
+			id: 'fair-events/src/API/__tests__/A.api.spec.js',
+			listPath: 'src/API/__tests__/A.api.spec.js',
+			workspace: 'fair-events',
+		},
+		{
+			id: 'fair-audience/src/API/__tests__/B.api.spec.js',
+			listPath: 'src/API/__tests__/B.api.spec.js',
+			workspace: 'fair-audience',
+		},
+	],
+};
+
+// Stands in for the duration-based assignment, which lists the real suite.
+function stubPlanner(files = shardFiles) {
+	return async ({ suite }) => ({ files: files[suite], lines: [] });
+}
+
+async function stubListWriter(files) {
+	return new Map(
+		files.map((file) => [
+			file.workspace,
+			`/lists/${file.workspace ?? 'root'}.txt`,
+		])
+	);
+}
+
 function makeOptions(overrides = {}) {
 	return {
 		reuse: false,
@@ -72,6 +102,8 @@ async function run(
 		logger() {},
 		signalSource,
 		browserValidator,
+		shardPlanner: stubPlanner(),
+		testListWriter: stubListWriter,
 	});
 }
 
@@ -280,7 +312,7 @@ test('owned root E2E mode validates Chromium and runs only the root suite', asyn
 	assert.deepEqual(executor.calls.at(-2).args, ['run', 'test:e2e']);
 });
 
-test('owned root E2E mode forwards the CI shard selection to Playwright', async () => {
+test('owned root E2E mode runs the shard as an explicit test list', async () => {
 	const executor = createExecutor(stoppedStatus());
 	const parsed = parseArguments(['--suite=e2e', '--', '--shard=2/4']);
 	assert.equal(
@@ -291,7 +323,7 @@ test('owned root E2E mode forwards the CI shard selection to Playwright', async 
 		'run',
 		'test:e2e',
 		'--',
-		'--shard=2/4',
+		'--test-list=/lists/root.txt',
 	]);
 	assert.deepEqual(executor.calls.at(-1).args, ['wp-env', 'stop']);
 });
@@ -468,6 +500,8 @@ async function runTwo(executor, runOptions, extra = {}) {
 		workspaceConfig: twoApiWorkspaces,
 		logger() {},
 		signalSource: new EventEmitter(),
+		shardPlanner: stubPlanner(),
+		testListWriter: stubListWriter,
 		...extra,
 	});
 }
@@ -492,16 +526,89 @@ test('every API workspace runs explicitly, and a failure does not stop the next'
 	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
 });
 
-test('an API shard selection reaches every workspace and allows empty shards', async () => {
+test('an API shard gives every workspace its own test list and keeps options', async () => {
 	const executor = createExecutor();
 	const parsed = parseArguments(['--reuse', '--shard=2/4', '--grep', 'x']);
 	assert.deepEqual(parsed.shard, { current: 2, total: 4 });
 	assert.deepEqual(parsed.forwarded, ['--grep', 'x']);
+	const requests = [];
+	assert.equal(
+		await runTwo(executor, parsed, {
+			shardPlanner: async (request) => {
+				requests.push(request);
+				return { files: shardFiles.api, lines: [] };
+			},
+		}),
+		0
+	);
+	assert.deepEqual(requests, [
+		{
+			suite: 'api',
+			shard: { current: 2, total: 4 },
+			workspaces: ['fair-events', 'fair-audience'],
+		},
+	]);
+	assert.deepEqual(testCalls(executor), [
+		'run test:api --workspace=fair-events -- --test-list=/lists/fair-events.txt --grep x',
+		'run test:api --workspace=fair-audience -- --test-list=/lists/fair-audience.txt --grep x',
+	]);
+});
+
+test('an API workspace with no files in the shard is skipped, not run unfiltered', async () => {
+	const executor = createExecutor();
+	const parsed = parseArguments(['--reuse', '--shard=3/4']);
+	assert.equal(
+		await runTwo(executor, parsed, {
+			shardPlanner: stubPlanner({ api: shardFiles.api.slice(1) }),
+		}),
+		0
+	);
+	assert.deepEqual(testCalls(executor), [
+		'run test:api --workspace=fair-audience -- --test-list=/lists/fair-audience.txt',
+	]);
+});
+
+test('a focused API workspace runs only its part of the balanced shard', async () => {
+	const executor = createExecutor();
+	const parsed = parseArguments([
+		'--reuse',
+		'--workspace=fair-audience',
+		'--shard=1/4',
+	]);
 	assert.equal(await runTwo(executor, parsed), 0);
 	assert.deepEqual(testCalls(executor), [
-		'run test:api --workspace=fair-events -- --shard=2/4 --pass-with-no-tests --grep x',
-		'run test:api --workspace=fair-audience -- --shard=2/4 --pass-with-no-tests --grep x',
+		'run test:api --workspace=fair-audience -- --test-list=/lists/fair-audience.txt',
 	]);
+});
+
+test('an empty shard runs nothing and starts no environment', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const logs = [];
+	assert.equal(
+		await runTwo(executor, parseArguments(['--shard=4/4']), {
+			shardPlanner: stubPlanner({ api: [] }),
+			logger: (line) => logs.push(line),
+		}),
+		0
+	);
+	assert.deepEqual(executor.calls, []);
+	assert.ok(logs.some((line) => /has no assigned spec files/.test(line)));
+});
+
+test('a failed shard assignment stops before any build or container start', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const logs = [];
+	assert.equal(
+		await runTwo(executor, parseArguments(['--shard=1/4']), {
+			shardPlanner: async () => {
+				throw new Error('Playwright reported listing errors');
+			},
+			logger: (line) => logs.push(line),
+		}),
+		1
+	);
+	assert.deepEqual(executor.calls, []);
+	assert.ok(logs.some((line) => /listing errors/.test(line)));
 });
 
 test('a shard after the workspace separator is still owned by the runner', () => {
@@ -514,10 +621,14 @@ test('a shard after the workspace separator is still owned by the runner', () =>
 	assert.deepEqual(parsed.forwarded, []);
 });
 
-test('E2E keeps forwarding --shard to Playwright untouched', () => {
-	const parsed = parseArguments(['--suite=e2e', '--shard=3/4']);
-	assert.equal(parsed.shard, undefined);
-	assert.deepEqual(parsed.forwarded, ['--shard=3/4']);
+test('the runner owns an E2E shard instead of forwarding it to Playwright', () => {
+	const parsed = parseArguments([
+		'--suite=e2e',
+		'--shard=3/4',
+		'--retries=0',
+	]);
+	assert.deepEqual(parsed.shard, { current: 3, total: 4 });
+	assert.deepEqual(parsed.forwarded, ['--retries=0']);
 });
 
 test('invalid shard and results options are rejected', () => {
@@ -527,6 +638,10 @@ test('invalid shard and results options are rejected', () => {
 		['--shard=1'],
 		['--shard=a/b'],
 		['--shard=1/2', '--shard=2/2'],
+		['--shard', '1/4'],
+		['--shard=1/4', '--test-list=mine.txt'],
+		['--shard=1/4', '--test-list-invert=mine.txt'],
+		['--suite=e2e', '--workspace=fair-events', '--shard=1/4'],
 		['--results-dir='],
 		['--suite=e2e', '--results-dir=out'],
 	]) {
@@ -548,14 +663,12 @@ test('a results directory adds a JSON report per workspace without dropping anno
 		[
 			[
 				'--',
-				'--shard=1/4',
-				'--pass-with-no-tests',
+				'--test-list=/lists/fair-events.txt',
 				'--reporter=github,html,json',
 			],
 			[
 				'--',
-				'--shard=1/4',
-				'--pass-with-no-tests',
+				'--test-list=/lists/fair-audience.txt',
 				'--reporter=github,html,json',
 			],
 		]
@@ -588,6 +701,7 @@ test('phase timings are recorded for preparation, each workspace and cleanup', a
 	assert.deepEqual(
 		written[0].phases.map((entry) => [entry.name, entry.seconds]),
 		[
+			['Shard selection', 0],
 			['Build', 1.5],
 			['Composer install', 1.5],
 			['wp-env start', 1.5],
