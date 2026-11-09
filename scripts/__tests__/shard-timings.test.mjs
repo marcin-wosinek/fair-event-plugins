@@ -156,10 +156,14 @@ test('run figures exclude queue time and use per-shard test time', () => {
 		conclusion: 'success',
 		attempt: 1,
 		jobs: [
-			{ startedAt: at(0), completedAt: at(60) },
-			{ startedAt: at(60), completedAt: at(660) },
-			{ startedAt: at(60), completedAt: at(360) },
-			{ startedAt: null, completedAt: null },
+			{
+				name: 'API shard inventory',
+				startedAt: at(0),
+				completedAt: at(60),
+			},
+			{ name: 'API shard 1/2', startedAt: at(60), completedAt: at(660) },
+			{ name: 'API shard 2/2', startedAt: at(60), completedAt: at(360) },
+			{ name: 'API Tests', startedAt: null, completedAt: null },
 		],
 	};
 	const apiShards = [
@@ -181,6 +185,8 @@ test('run figures exclude queue time and use per-shard test time', () => {
 	const figures = runFigures(metadata, apiShards, 'api');
 	assert.equal(figures.elapsed, 11);
 	assert.equal(figures.runnerMinutes, 16);
+	// Inventory (1) + slowest shard (10); the status job never started.
+	assert.equal(figures.criticalPath, 11);
 	assert.deepEqual(figures.shardMinutes, [6, 1]);
 	assert.equal(figures.gap, 5);
 	assert.equal(figures.flaky, 2);
@@ -195,7 +201,7 @@ test('run figures exclude queue time and use per-shard test time', () => {
 	]);
 	assert.match(
 		markdown,
-		/\| 2 \| success \(attempt 2\) \| 11\.0 \| 6\.0 \| 1\.0 \|/
+		/\| 2 \| success \(attempt 2\) \| 11\.0 \| 11\.0 \| 6\.0 \| 1\.0 \|/
 	);
 	assert.match(
 		markdown,

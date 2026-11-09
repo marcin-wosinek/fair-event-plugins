@@ -274,7 +274,10 @@ async function runMetadata(run) {
  * Benchmark figures of one run.
  *
  * Elapsed time runs from the first job start to the last job end, so queue
- * delay before the first job is excluded. Runner minutes add up every job.
+ * delay before the first job is excluded, but waits for a free runner between
+ * jobs are not. The critical path adds the inventory job, the slowest shard
+ * job and the status job, so it ignores runner queueing altogether. Runner
+ * minutes add up every job.
  * A shard's test time is Playwright's own duration (E2E) or the sum of its
  * workspace test phases (API).
  *
@@ -314,10 +317,19 @@ export function runFigures(metadata, shards, suite) {
 				),
 			0
 		);
+	const minutes = (job) =>
+		(Date.parse(job.completedAt) - Date.parse(job.startedAt)) / 60000;
+	const shardJobs = jobs.filter((job) => / shard \d+\/\d+$/.test(job.name));
+	const criticalPath =
+		Math.max(0, ...shardJobs.map(minutes)) +
+		jobs
+			.filter((job) => !shardJobs.includes(job))
+			.reduce((sum, job) => sum + minutes(job), 0);
 	return {
 		conclusion: metadata.conclusion,
 		attempt: metadata.attempt,
 		elapsed: (Math.max(...completed) - Math.min(...started)) / 60000,
+		criticalPath,
 		runnerMinutes:
 			jobs.reduce(
 				(sum, job, index) => sum + completed[index] - started[index],
@@ -357,10 +369,10 @@ export function formatReport(label, rows) {
 	const lines = [
 		`### ${label}`,
 		'',
-		`| Run | Result | Elapsed | ${shardHeaders.join(
+		`| Run | Result | Elapsed | Critical path | ${shardHeaders.join(
 			' | '
 		)} | Gap | Runner min | Flaky | Failed |`,
-		`| --- | --- | --- | ${shardHeaders
+		`| --- | --- | --- | --- | ${shardHeaders
 			.map(() => '---')
 			.join(' | ')} | --- | --- | --- | --- |`,
 	];
@@ -368,7 +380,9 @@ export function formatReport(label, rows) {
 		lines.push(
 			`| ${run} | ${figures.conclusion}${
 				figures.attempt > 1 ? ` (attempt ${figures.attempt})` : ''
-			} | ${figures.elapsed.toFixed(1)} | ${figures.shardMinutes
+			} | ${figures.elapsed.toFixed(1)} | ${figures.criticalPath.toFixed(
+				1
+			)} | ${figures.shardMinutes
 				.map((value) => value.toFixed(1))
 				.join(
 					' | '
@@ -383,6 +397,9 @@ export function formatReport(label, rows) {
 		'| Median (range), minutes | Value |',
 		'| --- | --- |',
 		`| Workflow elapsed | ${summary(column((f) => f.elapsed))} |`,
+		`| Critical path (jobs, no queueing) | ${summary(
+			column((f) => f.criticalPath)
+		)} |`,
 		`| Slowest shard, test time | ${summary(column((f) => f.slowest))} |`,
 		`| Fastest shard, test time | ${summary(column((f) => f.fastest))} |`,
 		`| Fastest-to-slowest gap | ${summary(column((f) => f.gap))} |`,
