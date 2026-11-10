@@ -29,12 +29,26 @@ function adminAuth() {
 
 test.describe( 'SettingsWriteController', () => {
 	let api;
+	let originalCurrency;
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
+		const settings = await api.get( SETTINGS_ENDPOINT, {
+			headers: adminAuth(),
+		} );
+		expect( settings.ok() ).toBeTruthy();
+		originalCurrency = ( await settings.json() ).fair_payment_currency;
 	} );
 
+	// Tests switch the site currency; restore it even when one fails
+	// midway, since later specs in the shard read revenue in it.
 	test.afterAll( async () => {
+		if ( originalCurrency ) {
+			await api.post( SETTINGS_WRITE_ENDPOINT, {
+				headers: adminAuth(),
+				data: { settings: { fair_payment_currency: originalCurrency } },
+			} );
+		}
 		await api.dispose();
 	} );
 

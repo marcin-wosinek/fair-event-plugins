@@ -101,11 +101,11 @@ function ticketFixture( action, data ) {
 	);
 }
 
-// The same fixture without blocking the event loop. A long run of blocking
+// runFixture without blocking the event loop. A long run of blocking
 // fixture calls leaves the server time to close the idle keep-alive
 // connections unnoticed, and the next request then fails with "socket hang
 // up".
-async function ticketFixtureAsync( action, data ) {
+async function runFixtureAsync( script, args, marker ) {
 	const { stdout } = await promisify( execFile )(
 		'npx',
 		[
@@ -114,17 +114,24 @@ async function ticketFixtureAsync( action, data ) {
 			'tests-cli',
 			'wp',
 			'eval-file',
-			'wp-content/mu-plugins/scripts/seed-event-statistics-tickets.php',
-			action,
-			JSON.stringify( data ),
+			`wp-content/mu-plugins/scripts/${ script }`,
+			...args,
 		],
 		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
 	);
-	const match = stdout.match( /E2E_EVENT_STATISTICS_TICKETS:(\{.*\})/ );
+	const match = stdout.match( new RegExp( `${ marker }:(\\{.*\\})` ) );
 	if ( ! match ) {
-		throw new Error( `Expected fixture output, got:\n${ stdout }` );
+		throw new Error( `Expected ${ marker } output, got:\n${ stdout }` );
 	}
 	return JSON.parse( match[ 1 ] );
+}
+
+function ticketFixtureAsync( action, data ) {
+	return runFixtureAsync(
+		'seed-event-statistics-tickets.php',
+		[ action, JSON.stringify( data ) ],
+		'E2E_EVENT_STATISTICS_TICKETS'
+	);
 }
 
 // Connector transactions and payment links, written directly.
@@ -171,6 +178,8 @@ test.describe( 'EventStatisticsController', () => {
 	let subscriberHeaders;
 	let adminHeaders;
 	let originalTimezone;
+	let currencyPinned = false;
+	let originalCurrency;
 	let today;
 	const eventIds = [];
 	const participantIds = [];
@@ -345,6 +354,13 @@ test.describe( 'EventStatisticsController', () => {
 		today = dateInTimezone( testTimezone );
 		expect( today ).not.toBe( new Date().toISOString().slice( 0, 10 ) );
 
+		// Revenue sums only the site currency, and the rows here are EUR:
+		// pin it, whatever an earlier spec in the shard left behind.
+		originalCurrency = (
+			await paymentFixtureAsync( 'currency', { currency: 'EUR' } )
+		).previous;
+		currencyPinned = true;
+
 		occurrences.upcoming = await createOccurrence( 'upcoming', 10 );
 		occurrences.farFuture = await createOccurrence( 'far future', 40 );
 		occurrences.ongoing = await createOccurrence( 'ongoing', -2, 2 );
@@ -453,6 +469,13 @@ test.describe( 'EventStatisticsController', () => {
 	} );
 
 	test.afterAll( async () => {
+		// First, over WP-CLI: a failing request below must not leave the
+		// site currency pinned for the rest of the shard.
+		if ( currencyPinned ) {
+			await paymentFixtureAsync( 'currency', {
+				currency: originalCurrency,
+			} );
+		}
 		if ( transactionIds.length ) {
 			await paymentFixtureAsync( 'cleanup', { transactionIds } );
 		}
@@ -468,7 +491,7 @@ test.describe( 'EventStatisticsController', () => {
 			await ticketFixtureAsync( 'cleanup', {
 				eventDateIds: series.occurrenceIds,
 			} );
-			runFixture(
+			await runFixtureAsync(
 				'cleanup-event.php',
 				[ String( series.eventId ), String( series.eventDateId ) ],
 				'E2E_CLEANUP'

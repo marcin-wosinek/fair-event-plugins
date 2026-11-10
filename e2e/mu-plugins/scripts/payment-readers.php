@@ -6,9 +6,10 @@
  * Usage: wp eval-file .../payment-readers.php <action> <json>
  *
  * Actions:
- *   prepare      {}  Stash the reader activation, then remove it, so the
- *                    site starts on the Fair Audience readers. Prints the
- *                    activation facts and blockers.
+ *   prepare      {}  Stash the reader activation and site currency, then
+ *                    remove the activation, so the site starts on the Fair
+ *                    Audience readers, and pin the currency to EUR, the
+ *                    rows' default. Prints the activation facts and blockers.
  *   activate     {}  Record the activation directly, as an administrator's
  *                    switch would after verification.
  *   facts        {}  The activation facts, blockers and stored activation.
@@ -24,7 +25,10 @@
  *                    after every enrichment filter.
  *   cleanup      {transactionIds}  Remove the transactions and every link
  *                    naming them.
- *   restore      {}  Put the stashed activation back.
+ *   restore      {}  Put the stashed activation and currency back.
+ *   currency     {currency}  Set the site currency, or remove the option
+ *                    for null. Prints the previous value (null if unset),
+ *                    for a spec to restore in afterAll.
  *
  * Rows are written directly, so no lifecycle hook runs. Prints one
  * `E2E_PAYMENT_READERS:{json}` line.
@@ -47,16 +51,27 @@ if ( ! is_array( $data ) ) {
 	WP_CLI::error( 'Second argument must be a JSON object.' );
 }
 
-$saved_option = 'fair_e2e_payment_readers_saved';
-$transactions = $wpdb->prefix . 'fair_payment_transactions';
-$result       = array();
+$saved_option     = 'fair_e2e_payment_readers_saved';
+$currency_option  = 'fair_payment_currency';
+$fixture_currency = 'EUR';
+$transactions     = $wpdb->prefix . 'fair_payment_transactions';
+$result           = array();
 
 switch ( $fixture_action ) {
 	case 'prepare':
-		if ( false === get_option( $saved_option, false ) ) {
-			update_option( $saved_option, array( 'readers' => get_option( PaymentHistoryReaders::OPTION, null ) ), false );
+		// Stash once, so a rerun after a crashed run keeps the original.
+		$saved = get_option( $saved_option, false );
+		if ( ! is_array( $saved ) ) {
+			$saved = array( 'readers' => get_option( PaymentHistoryReaders::OPTION, null ) );
 		}
+		if ( ! array_key_exists( 'currency', $saved ) ) {
+			$saved['currency'] = get_option( $currency_option, null );
+		}
+		update_option( $saved_option, $saved, false );
 		delete_option( PaymentHistoryReaders::OPTION );
+		// Revenue sums only the site currency: pin it to the fixture's, as
+		// other specs (e.g. the audit log's) leave it switched.
+		update_option( $currency_option, $fixture_currency );
 		$facts  = PaymentHistoryReaders::facts();
 		$result = array(
 			'facts'    => $facts,
@@ -94,7 +109,7 @@ switch ( $fixture_action ) {
 			array(
 				'mollie_payment_id' => 'tr_readers_' . wp_generate_uuid4(),
 				'amount'            => (float) $data['amount'],
-				'currency'          => (string) ( $data['currency'] ?? 'EUR' ),
+				'currency'          => (string) ( $data['currency'] ?? $fixture_currency ),
 				'status'            => (string) $data['status'],
 				'description'       => 'Payment readers fixture',
 				'metadata'          => isset( $data['metadata'] ) ? wp_json_encode( $data['metadata'] ) : null,
@@ -112,7 +127,7 @@ switch ( $fixture_action ) {
 				'transaction_id'   => (int) $data['transactionId'],
 				'role'             => (string) ( $data['role'] ?? SignupPaymentLink::ROLE_CHARGE ),
 				'allocated_amount' => (float) $data['amount'],
-				'currency'         => (string) ( $data['currency'] ?? 'EUR' ),
+				'currency'         => (string) ( $data['currency'] ?? $fixture_currency ),
 				'attribution'      => SignupPaymentLink::ATTRIBUTION_LIVE,
 				'evidence'         => wp_json_encode( array( 'type' => 'e2e' ) ),
 				'created_at'       => (string) $data['createdAt'],
@@ -164,9 +179,25 @@ switch ( $fixture_action ) {
 			} else {
 				update_option( PaymentHistoryReaders::OPTION, $saved['readers'], true );
 			}
+			if ( array_key_exists( 'currency', $saved ) ) {
+				if ( null === $saved['currency'] ) {
+					delete_option( $currency_option );
+				} else {
+					update_option( $currency_option, $saved['currency'] );
+				}
+			}
 			delete_option( $saved_option );
 		}
 		$result = array( 'active' => PaymentHistoryReaders::active() );
+		break;
+
+	case 'currency':
+		$result = array( 'previous' => get_option( $currency_option, null ) );
+		if ( null === ( $data['currency'] ?? null ) ) {
+			delete_option( $currency_option );
+		} else {
+			update_option( $currency_option, (string) $data['currency'] );
+		}
 		break;
 
 	default:

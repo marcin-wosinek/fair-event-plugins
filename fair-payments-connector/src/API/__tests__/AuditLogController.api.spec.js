@@ -26,12 +26,26 @@ function adminAuth() {
 
 test.describe( 'AuditLogController', () => {
 	let api;
+	let originalCurrency;
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
+		const settings = await api.get( '/wp-json/wp/v2/settings', {
+			headers: adminAuth(),
+		} );
+		expect( settings.ok() ).toBeTruthy();
+		originalCurrency = ( await settings.json() ).fair_payment_currency;
 	} );
 
+	// The pagination check switches the site currency; later specs in the
+	// shard read revenue in it, so put it back.
 	test.afterAll( async () => {
+		if ( originalCurrency ) {
+			await api.post( SETTINGS_WRITE_ENDPOINT, {
+				headers: adminAuth(),
+				data: { settings: { fair_payment_currency: originalCurrency } },
+			} );
+		}
 		await api.dispose();
 	} );
 
