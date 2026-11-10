@@ -82,21 +82,24 @@ test.describe('Manage individual tickets from the Audience tab', () => {
 		await openAudience(event.eventDateId);
 		await expect(tickets('Paula Purchaser')).toHaveCount(2);
 
-		// Assignment: the second ticket goes to someone new.
+		// Holder change: the second ticket goes to someone new.
 		await tickets('Paula Purchaser')
 			.nth(1)
-			.getByRole('button', { name: /^Assign Ticket 2/ })
+			.getByRole('button', { name: /^Change holder of Ticket 2/ })
 			.click();
 		let dialog = page.getByRole('dialog', {
-			name: /^Assign ticket — Ticket 2/,
+			name: /^Change ticket holder — Ticket 2/,
 		});
 		await dialog.getByRole('radio', { name: 'A new participant' }).check();
 		await dialog.getByLabel('Name', { exact: true }).fill('Gil');
 		await dialog.getByLabel('Surname').fill('Guest');
-		await dialog.getByLabel('Email (optional)').fill(guestEmail);
-		await dialog.getByRole('button', { name: 'Assign ticket' }).click();
+		await dialog.getByLabel('Email', { exact: true }).fill(guestEmail);
+		await dialog.getByRole('button', { name: 'Review change' }).click();
+		await dialog
+			.getByRole('button', { name: 'Change ticket holder' })
+			.click();
 		await expect(
-			page.getByText('Ticket assigned to Gil Guest.')
+			page.getByText('Ticket holder changed to Gil Guest.')
 		).toBeVisible();
 		await expect(tickets('Gil Guest')).toHaveCount(1);
 		await expect(tickets('Paula Purchaser')).toHaveCount(1);

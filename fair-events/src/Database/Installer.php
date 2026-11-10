@@ -103,7 +103,9 @@ class Installer {
 	 * fills them later. The 3.50.0 payment shadow work queue and the 3.51.0
 	 * payment history findings and comparisons start empty too: the
 	 * backfill fills them once an administrator starts it. So does the
-	 * 3.52.0 reconciliation audit, written by administrators' actions.
+	 * 3.52.0 reconciliation audit, written by administrators' actions, and
+	 * the 3.53.0 ticket transfer history, which starts with the first
+	 * holder change made after the upgrade.
 	 *
 	 * @return string[] Statements for dbDelta().
 	 */
@@ -134,6 +136,7 @@ class Installer {
 			Schema::get_payment_history_findings_table_sql(),
 			Schema::get_payment_history_comparisons_table_sql(),
 			Schema::get_payment_history_audit_table_sql(),
+			Schema::get_ticket_transfers_table_sql(),
 		);
 	}
 

@@ -9,6 +9,14 @@
  * checked-in tickets, tickets awaiting payment and terminal ones, payment
  * staying with the purchaser, capacity, a moved purchase, and a whole-series
  * pass held by someone else.
+ *
+ * Holder changes (#2133): the transfer history (previous and new holder,
+ * administrator, UTC time) through repeated changes and back to the
+ * purchaser, a repeated request recording nothing, a change confirmed
+ * against an outdated holder refused with nothing written, a failed history
+ * write rolling the whole change back, a new holder needing an email,
+ * sibling tickets and payment links left alone, anonymization detaching the
+ * history's identities, and the history going with a deleted purchase.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -519,6 +527,12 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 			email: companionEmail,
 		} );
 
+		const emailless = await assign( ticketOne, {
+			participant: { name: marker, surname: 'Noemail' },
+		} );
+		expect( emailless.status ).toBe( 400 );
+		expect( emailless.body.code ).toBe( 'participant_email_required' );
+
 		const nameless = await assign( ticketOne, {
 			participant: { name: '  ', email: uniqueEmail( 'nameless' ) },
 		} );
@@ -872,4 +886,270 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 			ticket_type_id: series.typeIds[ 0 ],
 		} );
 	} );
+	async function transferState( ticketIds, signupId = 0 ) {
+		const params = ticketIds.map( ( id ) => `ticket_ids[]=${ id }` );
+		if ( signupId ) {
+			params.push( `signup_id=${ signupId }` );
+		}
+		const res = await api.get(
+			`/wp-json/fair-e2e/v1/ticket-transfers?${ params.join( '&' ) }`,
+			{ headers: adminHeaders }
+		);
+		const body = await res.json();
+		expect( res.ok(), JSON.stringify( body ) ).toBeTruthy();
+		return body;
+	}
+
+	async function ticketDetails( ticketId, dateId = eventDateId ) {
+		const res = await api.get(
+			`/wp-json/fair-audience/v1/event-dates/${ dateId }/tickets/${ ticketId }`,
+			{ headers: adminHeaders }
+		);
+		const body = await res.json();
+		expect( res.ok(), JSON.stringify( body ) ).toBeTruthy();
+		return body.ticket;
+	}
+
+	test.describe.serial( 'holder changes (#2133)', () => {
+		let paidSignupId;
+		let payerId;
+		let payerEmail;
+		let transferOne;
+		let transferTwo;
+		let middleId;
+
+		test( 'records each change with its administrator and UTC time, and keeps the purchaser and the payment', async () => {
+			payerEmail = uniqueEmail( 'transfer-payer' );
+			await buy( {
+				event_date_id: eventDateId,
+				email: payerEmail,
+				ticket_type_id: paidId,
+				quantity: 2,
+			} );
+			const signup = await signupOf( eventDateId, payerEmail );
+			paidSignupId = signup.id;
+			payerId = Number( signup.participant_id );
+			[ transferOne, transferTwo ] = signup.tickets.map(
+				( ticket ) => ticket.id
+			);
+			await fixture( 'pay', { signup_id: paidSignupId } );
+
+			const meRes = await api.get( '/wp-json/wp/v2/users/me', {
+				headers: adminHeaders,
+				params: { context: 'edit' },
+			} );
+			const me = await meRes.json();
+
+			const before = await purchase( paidSignupId );
+			const linksBefore = ( await transferState( [], paidSignupId ) )
+				.links;
+			const startedAt = Date.now() - 2000;
+
+			// Payer → companion.
+			let res = await assign( transferOne, {
+				participant_id: companionId,
+				expected_holder_participant_id: payerId,
+			} );
+			expect( res.status, JSON.stringify( res.body ) ).toBe( 200 );
+
+			// A retried request for the same holder changes and records nothing.
+			res = await assign( transferOne, {
+				participant_id: companionId,
+				expected_holder_participant_id: payerId,
+			} );
+			expect( res.status, JSON.stringify( res.body ) ).toBe( 200 );
+			expect( res.body.assignee.participant_id ).toBe( companionId );
+
+			// Companion → a new participant → back to the payer.
+			const newEmail = uniqueEmail( 'transfer-new' );
+			res = await assign( transferOne, {
+				participant: {
+					name: 'Tess',
+					surname: 'Transfer',
+					email: newEmail,
+				},
+				expected_holder_participant_id: companionId,
+			} );
+			expect( res.status, JSON.stringify( res.body ) ).toBe( 200 );
+			middleId = res.body.assignee.participant_id;
+			createdParticipantIds.push( middleId );
+			res = await assign( transferOne, {
+				participant_id: payerId,
+				expected_holder_participant_id: middleId,
+			} );
+			expect( res.status, JSON.stringify( res.body ) ).toBe( 200 );
+			expect( res.body.purchaser.participant_id ).toBe( payerId );
+			const finishedAt = Date.now() + 2000;
+
+			const stored = (
+				await transferState( [ transferOne, transferTwo ] )
+			).transfers;
+			expect(
+				stored.map( ( row ) => [
+					row.ticket_id,
+					row.from_participant_id,
+					row.to_participant_id,
+					row.user_id,
+				] )
+			).toEqual( [
+				[ transferOne, payerId, companionId, me.id ],
+				[ transferOne, companionId, middleId, me.id ],
+				[ transferOne, middleId, payerId, me.id ],
+			] );
+			for ( const row of stored ) {
+				const at = Date.parse(
+					`${ row.created_at.replace( ' ', 'T' ) }Z`
+				);
+				expect( at ).toBeGreaterThanOrEqual( startedAt );
+				expect( at ).toBeLessThanOrEqual( finishedAt );
+			}
+
+			// The ticket details list the history, with people read from
+			// their current profiles.
+			const details = await ticketDetails( transferOne );
+			expect( details.purchaser.participant_id ).toBe( payerId );
+			expect( details.assignee.participant_id ).toBe( payerId );
+			expect(
+				details.transfers.map( ( transfer ) => [
+					transfer.from.participant_id,
+					transfer.to.participant_id,
+					transfer.by,
+				] )
+			).toEqual( [
+				[ payerId, companionId, me.name ],
+				[ companionId, middleId, me.name ],
+				[ middleId, payerId, me.name ],
+			] );
+			expect( details.transfers[ 1 ].to ).toEqual( {
+				participant_id: middleId,
+				name: 'Tess Transfer',
+				email: newEmail,
+			} );
+			expect( details.transfers[ 0 ].transferred_at ).toMatch(
+				/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00$/
+			);
+
+			// The sibling, the purchase and its payment links are untouched.
+			const after = await purchase( paidSignupId );
+			expect( after.signup ).toEqual( before.signup );
+			expect( after.tickets[ transferTwo ] ).toEqual(
+				before.tickets[ transferTwo ]
+			);
+			expect( after.tickets[ transferOne ] ).toEqual(
+				before.tickets[ transferOne ]
+			);
+			expect( ( await transferState( [], paidSignupId ) ).links ).toEqual(
+				linksBefore
+			);
+			expect( ( await ticketDetails( transferTwo ) ).transfers ).toEqual(
+				[]
+			);
+		} );
+
+		test( 'refuses a change confirmed against an outdated holder, and writes nothing', async () => {
+			const moved = await assign( transferTwo, {
+				participant_id: companionId,
+				expected_holder_participant_id: payerId,
+			} );
+			expect( moved.status, JSON.stringify( moved.body ) ).toBe( 200 );
+
+			// A second administrator still saw the payer holding it.
+			const staleEmail = uniqueEmail( 'transfer-stale' );
+			for ( const data of [
+				{ participant_id: middleId },
+				{ participant: { name: 'Stale', email: staleEmail } },
+			] ) {
+				const stale = await assign( transferTwo, {
+					...data,
+					expected_holder_participant_id: payerId,
+				} );
+				expect( stale.status ).toBe( 409 );
+				expect( stale.body.code ).toBe( 'ticket_holder_changed' );
+				// The refusal carries the ticket as it is now, for a fresh
+				// review.
+				expect( stale.body.data.ticket.assignee.participant_id ).toBe(
+					companionId
+				);
+				expect( stale.body.data.ticket.purchaser.participant_id ).toBe(
+					payerId
+				);
+			}
+
+			expect(
+				( await purchase( paidSignupId ) ).tickets[ transferTwo ].holder
+			).toBe( companionId );
+			expect( await participantsMatching( staleEmail ) ).toHaveLength(
+				0
+			);
+			expect(
+				( await transferState( [ transferTwo ] ) ).transfers
+			).toHaveLength( 1 );
+		} );
+
+		test( 'rolls the whole change back when its history cannot be recorded', async () => {
+			const email = uniqueEmail( 'transfer-rollback' );
+			await failTransferHistory( true );
+			try {
+				const failed = await assign( transferTwo, {
+					participant: { name: 'Rolled', surname: 'Back', email },
+					expected_holder_participant_id: companionId,
+				} );
+				expect( failed.status ).toBe( 500 );
+				expect( failed.body.code ).toBe( 'assignment_failed' );
+			} finally {
+				await failTransferHistory( false );
+			}
+
+			expect(
+				( await purchase( paidSignupId ) ).tickets[ transferTwo ].holder
+			).toBe( companionId );
+			expect( await participantsMatching( email ) ).toHaveLength( 0 );
+			expect(
+				( await transferState( [ transferTwo ] ) ).transfers
+			).toHaveLength( 1 );
+		} );
+
+		test( 'detaches an anonymized participant from the history, which goes with a deleted purchase', async () => {
+			// The new participant held the first ticket in between; erase them.
+			const res = await api.post(
+				'/wp-json/fair-e2e/v1/ticket-transfers/anonymize',
+				{ headers: adminHeaders, data: { participant_id: middleId } }
+			);
+			expect( res.ok(), await res.text() ).toBeTruthy();
+
+			const stored = ( await transferState( [ transferOne ] ) ).transfers;
+			expect(
+				stored.map( ( row ) => [
+					row.from_participant_id,
+					row.to_participant_id,
+				] )
+			).toEqual( [
+				[ payerId, companionId ],
+				[ companionId, null ],
+				[ null, payerId ],
+			] );
+			const details = await ticketDetails( transferOne );
+			expect( details.transfers[ 1 ].to ).toBeNull();
+			expect( details.transfers[ 2 ].from ).toBeNull();
+			expect( details.purchaser.participant_id ).toBe( payerId );
+
+			const deleted = await api.delete(
+				`/wp-json/fair-events/v1/get-tickets/${ paidSignupId }`,
+				{ headers: adminHeaders }
+			);
+			expect( deleted.ok(), await deleted.text() ).toBeTruthy();
+			expect(
+				( await transferState( [ transferOne, transferTwo ] ) )
+					.transfers
+			).toEqual( [] );
+		} );
+	} );
+
+	async function failTransferHistory( enabled ) {
+		const res = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-transfers/fail',
+			{ headers: adminHeaders, data: { enabled } }
+		);
+		expect( res.ok() ).toBeTruthy();
+	}
 } );

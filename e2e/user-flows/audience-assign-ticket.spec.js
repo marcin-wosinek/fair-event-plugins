@@ -1,19 +1,22 @@
 /**
- * E2E: an administrator assigns one ticket of a purchase to someone else from
- * the Audience tab, and back to its purchaser (#1535).
+ * E2E: an administrator changes the holder of one ticket of a purchase from
+ * the Audience tab, and back to its purchaser (#1535, #2133).
  *
  * A visitor buys two tickets. The administrator gives the second one to a
- * participant created in the same step: it moves under the new holder, still
- * naming its purchaser, while the purchaser keeps the first. Assigning it back
- * to the purchaser, found by search, returns it and leaves the other person
- * listed without a ticket.
+ * participant created in the same step, after reviewing the change: it moves
+ * under the new holder, still naming its purchaser, while the purchaser keeps
+ * the first, and the ticket details list the change. Giving it back to the
+ * purchaser, found by search, returns it, leaves the other person listed
+ * without a ticket, and keeps both changes in the history.
  */
 
 import { test, expect } from '../support/fixtures.js';
 import { loginAsAdmin } from '../support/wp-cli.js';
 
-test.describe('Assign a ticket from the Audience tab', () => {
-	test('gives one ticket to a new participant and back to its purchaser', async ({
+const escapeRegExp = (text) => text.replace(/[.+]/g, '\\$&');
+
+test.describe('Change a ticket holder from the Audience tab', () => {
+	test('gives one ticket to a new participant and back to its purchaser, keeping the history', async ({
 		page,
 		request,
 		seedEvent,
@@ -60,12 +63,12 @@ test.describe('Assign a ticket from the Audience tab', () => {
 		// Give the second ticket to someone new.
 		await tickets('Paula Purchaser')
 			.nth(1)
-			.getByRole('button', { name: /^Assign Ticket 2/ })
+			.getByRole('button', { name: /^Change holder of Ticket 2/ })
 			.click();
 		let dialog = page.getByRole('dialog', {
-			name: /^Assign ticket — Ticket 2/,
+			name: /^Change ticket holder — Ticket 2/,
 		});
-		// Purchaser first, then the current assignee: still the purchaser.
+		// The holder first, then the purchaser: both Paula so far.
 		const people = dialog.locator(
 			'.fair-audience-assign-ticket__people dd'
 		);
@@ -75,16 +78,30 @@ test.describe('Assign a ticket from the Audience tab', () => {
 		]);
 
 		await dialog.getByRole('radio', { name: 'A new participant' }).check();
-		await expect(
-			dialog.getByRole('button', { name: 'Assign ticket' })
-		).toBeDisabled();
+		const review = dialog.getByRole('button', { name: 'Review change' });
+		await expect(review).toBeDisabled();
 		await dialog.getByLabel('Name', { exact: true }).fill('Gil');
 		await dialog.getByLabel('Surname').fill('Guest');
-		await dialog.getByLabel('Email (optional)').fill(guestEmail);
-		await dialog.getByRole('button', { name: 'Assign ticket' }).click();
+		await expect(review).toBeDisabled();
+		await dialog.getByLabel('Email', { exact: true }).fill(guestEmail);
+		await review.click();
+
+		// The review names the ticket, both holders and the purchaser.
+		await expect(people).toHaveText([
+			/^Ticket 2 — /,
+			`Paula Purchaser (${buyerEmail})`,
+			`Gil Guest (${guestEmail}) — new participant`,
+			`Paula Purchaser (${buyerEmail})`,
+		]);
+		await expect(dialog).toContainText(
+			'The payment stays with the purchaser.'
+		);
+		await dialog
+			.getByRole('button', { name: 'Change ticket holder' })
+			.click();
 
 		await expect(
-			page.getByText('Ticket assigned to Gil Guest.')
+			page.getByText('Ticket holder changed to Gil Guest.')
 		).toBeVisible();
 		await expect(dialog).toBeHidden();
 		await expect(tickets('Gil Guest')).toHaveCount(1);
@@ -101,29 +118,62 @@ test.describe('Assign a ticket from the Audience tab', () => {
 			'1 ticket assigned to someone else'
 		);
 
+		// The ticket details tell the holder from the purchaser and list
+		// the change.
+		const openDetails = async (holder) => {
+			await tickets(holder)
+				.filter({ hasText: 'Ticket 2' })
+				.getByRole('button', { name: /^Edit Ticket 2/ })
+				.click();
+			const details = page.getByRole('dialog', {
+				name: /^Edit ticket — /,
+			});
+			await expect(details.getByText('Status:')).toBeVisible();
+			return details;
+		};
+		let details = await openDetails('Gil Guest');
+		await expect(
+			details.locator('.fair-events-ticket-edit__people dd')
+		).toHaveText([
+			`Gil Guest (${guestEmail})`,
+			`Paula Purchaser (${buyerEmail})`,
+		]);
+		await expect(
+			details.locator('.fair-events-ticket-edit__transfers li')
+		).toHaveText([
+			new RegExp(
+				`from Paula Purchaser \\(${escapeRegExp(buyerEmail)}\\) to Gil Guest \\(${escapeRegExp(guestEmail)}\\), by `
+			),
+		]);
+		await details.getByRole('button', { name: 'Cancel' }).click();
+		await expect(details).toBeHidden();
+
 		// Give it back to the purchaser, found by search.
 		await tickets('Gil Guest')
-			.getByRole('button', { name: /^Assign Ticket 2/ })
+			.getByRole('button', { name: /^Change holder of Ticket 2/ })
 			.click();
 		dialog = page.getByRole('dialog', {
-			name: /^Assign ticket — Ticket 2/,
+			name: /^Change ticket holder — Ticket 2/,
 		});
 		await expect(
 			dialog.locator('.fair-audience-assign-ticket__people dd')
 		).toHaveText([
-			`Paula Purchaser (${buyerEmail})`,
 			`Gil Guest (${guestEmail})`,
+			`Paula Purchaser (${buyerEmail})`,
 		]);
 		await dialog.getByLabel('Search by name or email').fill(buyerEmail);
 		const purchaserChoice = dialog.getByRole('radio', {
-			name: new RegExp(buyerEmail.replace(/[.+]/g, '\\$&')),
+			name: new RegExp(escapeRegExp(buyerEmail)),
 		});
 		await expect(purchaserChoice).toHaveCount(1);
 		await purchaserChoice.check();
-		await dialog.getByRole('button', { name: 'Assign ticket' }).click();
+		await dialog.getByRole('button', { name: 'Review change' }).click();
+		await dialog
+			.getByRole('button', { name: 'Change ticket holder' })
+			.click();
 
 		await expect(
-			page.getByText('Ticket assigned to Paula Purchaser.')
+			page.getByText('Ticket holder changed to Paula Purchaser.')
 		).toBeVisible();
 		await expect(tickets('Paula Purchaser')).toHaveCount(2);
 		await expect(group('Paula Purchaser')).not.toContainText(
@@ -136,5 +186,17 @@ test.describe('Assign a ticket from the Audience tab', () => {
 				'tr.fair-audience-audience-table__participant'
 			)
 		).toContainText('Interested');
+
+		// Both changes are kept, and Paula is still the purchaser.
+		details = await openDetails('Paula Purchaser');
+		await expect(
+			details.locator('.fair-events-ticket-edit__people dd')
+		).toHaveText([
+			`Paula Purchaser (${buyerEmail})`,
+			`Paula Purchaser (${buyerEmail})`,
+		]);
+		await expect(
+			details.locator('.fair-events-ticket-edit__transfers li')
+		).toHaveText([/to Gil Guest/, /from Gil Guest .* to Paula Purchaser/]);
 	});
 });
