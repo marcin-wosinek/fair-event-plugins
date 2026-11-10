@@ -4,7 +4,8 @@
  * Description: Test-only routes for the get-tickets payment-state API specs,
  *              loaded ONLY inside the Playwright wp-env instance. Seeds a
  *              visitor-owned get-tickets payment attempt (a Mollie-backed
- *              transaction and its signup rows, each in a chosen status),
+ *              transaction, its signup rows, each in a chosen status, and
+ *              the attempt's payment links),
  *              sets the status the Mollie double reports, and reads back or
  *              removes the attempt.
  *
@@ -132,6 +133,13 @@ add_action(
 						\FairEvents\Models\EventTicket::sync_status_from_signup( $signup_id );
 					}
 
+					// Write the attempt's payment links, as the checkout does
+					// before sending the buyer to pay.
+					$recorded = \FairEvents\Services\PurchaseLifecycle::record_attempt( (int) $transaction_id );
+					if ( is_wp_error( $recorded ) ) {
+						return new WP_Error( 'record_failed', $recorded->get_error_message(), array( 'status' => 500 ) );
+					}
+
 					$transaction = \FairPaymentsConnector\Models\Transaction::get_by_id( (int) $transaction_id );
 
 					return rest_ensure_response(
@@ -176,6 +184,11 @@ add_action(
 						foreach ( $signup_ids as $signup_id ) {
 							\FairEvents\Models\EventSignup::delete( (int) $signup_id );
 						}
+						$wpdb->delete(
+							\FairEvents\Models\SignupPaymentLink::table(),
+							array( 'transaction_id' => $transaction_id ),
+							array( '%d' )
+						);
 						$wpdb->delete(
 							\FairPaymentsConnector\Database\Schema::get_payments_table_name(),
 							array( 'id' => $transaction_id ),

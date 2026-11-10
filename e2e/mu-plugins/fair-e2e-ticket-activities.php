@@ -139,7 +139,8 @@ add_action(
 			)
 		);
 
-		// Confirm an add-on payment as the payment webhook would.
+		// Confirm an add-on payment as the payment webhook would: Fair
+		// Events applies it, and Fair Audience follows what it committed.
 		register_rest_route(
 			'fair-e2e/v1',
 			'/ticket-activities/pay-addon',
@@ -152,7 +153,7 @@ add_action(
 						return new WP_Error( 'no_transaction', 'Transaction not found.', array( 'status' => 400 ) );
 					}
 
-					\FairAudience\Hooks\PaymentHooks::handle_activities_added_paid( (object) array(), $transaction );
+					\FairEvents\Hooks\PaymentHooks::handle_payment_paid( (object) array(), $transaction );
 
 					return rest_ensure_response( array( 'paid' => true ) );
 				},

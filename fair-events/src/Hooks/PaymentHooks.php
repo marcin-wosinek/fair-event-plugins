@@ -59,58 +59,28 @@ class PaymentHooks {
 	}
 
 	/**
-	 * On payment paid: flip matching get-tickets signup(s) to confirmed.
-	 *
-	 * After the payment history cutover the purchases come from the
-	 * attempt's payment links (PurchaseLifecycle), so a late payment for a
-	 * superseded attempt confirms its purchase too. Before it, they come
-	 * from the transaction's metadata: a 'multiple_instances' ticket-type
-	 * purchase creates one signup row per chosen occurrence under a single
-	 * transaction; every other purchase creates exactly one row.
+	 * On payment paid: confirm the purchases the attempt's payment links
+	 * name (PurchaseLifecycle), so a late payment for a superseded attempt
+	 * confirms its purchase too.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_paid( $payment, $transaction ) {
-		if ( PurchaseLifecycle::active() ) {
-			PurchaseLifecycle::handle_paid( $transaction );
-			return;
-		}
-
-		foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-			if ( ! PurchaseLifecycle::confirm_paid_signup( $signup_id ) ) {
-				continue;
-			}
-
-			$signup = \FairEvents\Models\EventSignup::get_by_id( $signup_id );
-			if ( $signup ) {
-				PurchaseLifecycle::announce_confirmed( $signup, $transaction );
-			}
-		}
+		PurchaseLifecycle::handle_paid( $transaction );
 	}
 
 	/**
-	 * On payment failed/canceled: mark the signup(s) still awaiting this
-	 * payment as failed.
+	 * On payment failed/canceled: mark the purchases whose latest attempt
+	 * this is, and that still await payment, as failed.
 	 *
 	 * @param object $payment     Payment object from fair-payments-connector.
 	 * @param object $transaction Transaction object from fair-payments-connector.
 	 * @return void
 	 */
 	public static function handle_payment_failed( $payment, $transaction ) {
-		$failed = array();
-		if ( PurchaseLifecycle::active() ) {
-			$failed = PurchaseLifecycle::handle_failed( $transaction );
-		} else {
-			foreach ( self::resolve_signup_ids( $transaction ) as $signup_id ) {
-				if ( \FairEvents\Models\EventSignup::fail_pending( $signup_id ) ) {
-					$failed[] = $signup_id;
-				}
-			}
-		}
-
-		foreach ( $failed as $signup_id ) {
+		foreach ( PurchaseLifecycle::handle_failed( $transaction ) as $signup_id ) {
 			PurchaseLifecycle::announce_failed( $signup_id, $transaction );
 		}
 	}
@@ -159,16 +129,14 @@ class PaymentHooks {
 	/**
 	 * Describe the purchases a transaction pays for in Connector's
 	 * transaction view, from Fair Events' payment links
-	 * (PAYMENT_HISTORY_MIGRATION.md §8.15). Only once the Events readers are
-	 * active: before that the links aren't the verified authority, so the
-	 * view shows no purchases rather than possibly incomplete ones.
+	 * (PAYMENT_HISTORY_MIGRATION.md §8.15).
 	 *
 	 * @param array|null $prepared       Purchases from another plugin, or null.
 	 * @param int        $transaction_id Transaction ID.
 	 * @return array|null
 	 */
 	public static function prepare_purchases( $prepared, $transaction_id ) {
-		if ( null !== $prepared || ! \FairEvents\Services\PaymentHistoryReaders::active() ) {
+		if ( null !== $prepared ) {
 			return $prepared;
 		}
 
@@ -188,19 +156,5 @@ class PaymentHooks {
 		}
 
 		return (bool) \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
-	}
-
-	/**
-	 * Resolve the signup ID(s) from a transaction, returning an empty array
-	 * if not a get-tickets transaction.
-	 *
-	 * Delegates to EventSignup::resolve_signup_ids_from_transaction() so the
-	 * retry/cancel REST routes resolve the exact same multi-row set.
-	 *
-	 * @param object $transaction Transaction object.
-	 * @return int[] Signup IDs (empty when none apply).
-	 */
-	private static function resolve_signup_ids( $transaction ) {
-		return \FairEvents\Models\EventSignup::resolve_signup_ids_from_transaction( $transaction );
 	}
 }

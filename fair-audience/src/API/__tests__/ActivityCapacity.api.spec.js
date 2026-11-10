@@ -411,7 +411,7 @@ test.describe.serial( 'Activity capacity on audience routes', () => {
 		expect( ( await signupOf( holderEmail ) ).over_capacity ).toBe( true );
 	} );
 
-	test( 'participant-level history keeps its place without counting twice once carried over', async () => {
+	test( 'participant-level history takes a place only once carried over to a ticket', async () => {
 		const singleEmail = uniqueEmail( 'single' );
 		expect( ( await buy( { email: singleEmail } ) ).status ).toBe( 200 );
 		const single = ( await participants() ).find(
@@ -430,14 +430,16 @@ test.describe.serial( 'Activity capacity on audience routes', () => {
 			event_participant_id: holder.id,
 			option_ids: [ option.Legacy ],
 		} );
-		// Unresolved history holds one place per participant.
-		expect( await taken( option.Legacy ) ).toBe( before + 2 );
+		// Only Fair Events ticket activities take places (#2251): history
+		// recorded per participant holds none.
+		expect( await taken( option.Legacy ) ).toBe( before );
 
-		// The single-ticket participant's history moves to their ticket; the
-		// holder's two tickets leave theirs at participant level.
+		// The single-ticket participant's history moves to their ticket and
+		// takes its place there, once; the holder's two tickets leave theirs
+		// at participant level, still holding none.
 		await fixture( 'backfill' );
-		expect( await taken( option.Legacy ) ).toBe( before + 2 );
+		expect( await taken( option.Legacy ) ).toBe( before + 1 );
 		await fixture( 'backfill' );
-		expect( await taken( option.Legacy ) ).toBe( before + 2 );
+		expect( await taken( option.Legacy ) ).toBe( before + 1 );
 	} );
 } );

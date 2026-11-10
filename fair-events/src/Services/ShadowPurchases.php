@@ -192,14 +192,20 @@ class ShadowPurchases {
 			}
 		}
 
+		// A purchase of the same ticket type covers the relationship only
+		// when one purchase admits to several dates (a whole-series pass). A
+		// multiple_instances checkout has one relationship and one purchase
+		// per chosen occurrence, all of one type.
 		$active_purchase = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT 1 FROM %i AS s
+				LEFT JOIN %i AS tt ON tt.id = s.ticket_type_id
 				WHERE s.participant_id = %d
-				AND ( s.event_date_id = %d OR ( %d > 0 AND s.ticket_type_id = %d ) )
+				AND ( s.event_date_id = %d OR ( %d > 0 AND s.ticket_type_id = %d AND NOT ( tt.recurrence_scope <=> 'multiple_instances' ) ) )
 				AND ( s.status = 'confirmed' OR ( s.status = 'pending_payment' AND s.payment_expires_at IS NOT NULL AND s.payment_expires_at > %s ) )
 				LIMIT 1",
 				$wpdb->prefix . 'fair_events_signups',
+				$wpdb->prefix . 'fair_events_ticket_types',
 				(int) $relationship->participant_id,
 				(int) $relationship->event_date_id,
 				(int) $relationship->ticket_type_id,
@@ -243,21 +249,20 @@ class ShadowPurchases {
 	/**
 	 * The status a shadow purchase takes from its relationship.
 	 *
-	 * @param object|null $relationship  Relationship row, or null when it was deleted.
-	 * @param string      $current       The purchase's current status.
-	 * @param bool        $authoritative Whether the purchase lifecycle owns payments (the cutover).
+	 * @param object|null $relationship Relationship row, or null when it was deleted.
+	 * @param string      $current      The purchase's current status.
 	 * @return array{status: string, payment_expires_at: string|null}
 	 */
-	public static function target_state( $relationship, $current, $authoritative = false ) {
+	public static function target_state( $relationship, $current ) {
 		$now = gmdate( 'Y-m-d H:i:s' );
 
-		// After the cutover the lifecycle confirms the purchase first. A
+		// The purchase lifecycle confirms the purchase first. A
 		// relationship that still awaits payment is only lagging behind, and
 		// one the expiry cron deleted before a late payment arrived is
 		// recreated by the projection: neither undoes a paid purchase.
 		// Removing a participant who holds a ticket is refused in Audience,
 		// so a deletion is never an organizer cancelling it.
-		if ( $authoritative && 'confirmed' === $current && ( ! $relationship || 'pending_payment' === $relationship->label ) ) {
+		if ( 'confirmed' === $current && ( ! $relationship || 'pending_payment' === $relationship->label ) ) {
 			return array(
 				'status'             => 'confirmed',
 				'payment_expires_at' => null,
@@ -361,9 +366,8 @@ class ShadowPurchases {
 	private static function update( $signup, $relationship ) {
 		global $wpdb;
 
-		$authoritative = PaymentHistoryCompatibility::ownership_cutover();
-		$state         = self::target_state( $relationship, (string) $signup->status, $authoritative );
-		$changes       = array();
+		$state   = self::target_state( $relationship, (string) $signup->status );
+		$changes = array();
 		if ( $state['status'] !== (string) $signup->status ) {
 			$changes['status'] = $state['status'];
 		}
@@ -375,7 +379,7 @@ class ShadowPurchases {
 				$changes['event_date_id'] = (int) $relationship->event_date_id;
 			}
 			if ( (int) $relationship->ticket_type_id !== (int) $signup->ticket_type_id
-				&& ! ( $authoritative && PurchaseLifecycle::has_paid_upgrade( (int) $signup->id ) )
+				&& ! PurchaseLifecycle::has_paid_upgrade( (int) $signup->id )
 			) {
 				$changes['ticket_type_id'] = $relationship->ticket_type_id ? (int) $relationship->ticket_type_id : null;
 			}

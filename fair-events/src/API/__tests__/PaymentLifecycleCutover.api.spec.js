@@ -1,16 +1,17 @@
 /**
- * The get-tickets lifecycle once payment links are authoritative (#2140,
- * stage 4 of #2111; PAYMENT_HISTORY_MIGRATION.md §8.11): attempts are
+ * The get-tickets lifecycle, with payment links authoritative (#2140,
+ * stage 4 of #2111; PAYMENT_HISTORY_MIGRATION.md §8.11) and no cutover
+ * activation recorded (#2251): attempts are
  * linked before the buyer pays, and payment notifications resolve their
  * purchases from those links: a late payment for a superseded attempt is
  * honoured, replays and concurrent notifications confirm once, delayed
  * failures change nothing they shouldn't, and an interrupted confirmation
  * is finished by the retry cron.
  *
- * Purchases go through the public route against the Mollie double; the
- * cutover activation, payment notifications and the retry cron run through
- * the payment-lifecycle.php WP-CLI fixture. The activation is restored after
- * the suite, so no other spec runs with it.
+ * Purchases go through the public route against the Mollie double; payment
+ * notifications and the retry cron run through the payment-lifecycle.php
+ * WP-CLI fixture, which also stashes any recorded activation for the suite
+ * and restores it afterwards.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -56,7 +57,7 @@ async function lifecycle( action, data = {} ) {
 	return JSON.parse( match[ 1 ] );
 }
 
-test.describe.serial( 'Payment lifecycle after the cutover', () => {
+test.describe.serial( 'Payment lifecycle', () => {
 	// Every check drives the site through WP-CLI calls that take seconds.
 	test.describe.configure( { timeout: 180 * 1000 } );
 
@@ -207,11 +208,11 @@ test.describe.serial( 'Payment lifecycle after the cutover', () => {
 		expect( tickets.ok(), JSON.stringify( ticketsBody ) ).toBeTruthy();
 		ticketTypeId = ticketsBody.ticket_types[ 0 ].id;
 
-		expect( ( await lifecycle( 'activate' ) ).cutover ).toBe( true );
+		expect( ( await lifecycle( 'clear' ) ).cutover ).toBe( false );
 	} );
 
 	test.afterAll( async () => {
-		await lifecycle( 'deactivate' ).catch( () => {} );
+		await lifecycle( 'restore' ).catch( () => {} );
 		await lifecycle( 'cleanup', { signupIds, transactionIds } ).catch(
 			() => {}
 		);

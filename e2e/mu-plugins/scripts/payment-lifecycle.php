@@ -1,15 +1,16 @@
 <?php
 /**
- * Drive and inspect the fair-events purchase lifecycle after the payment
- * history cutover, for PaymentLifecycleCutover API coverage (#2140, stage 4
- * of #2111).
+ * Drive and inspect the fair-events purchase lifecycle, for
+ * PaymentLifecycleCutover and AudienceLifecycleCutover API coverage (#2140,
+ * stage 4 of #2111). The lifecycle is unconditional (#2251): the specs run
+ * it with no cutover activation recorded.
  *
  * Usage: wp eval-file .../payment-lifecycle.php <action> <json>
  *
  * Actions:
- *   activate    {}  Record a cutover activation, keeping whatever was there
- *                   to restore.
- *   deactivate  {}  Restore the state from before `activate`.
+ *   clear       {}  Remove any recorded cutover activation, keeping it to
+ *                   restore.
+ *   restore     {}  Put back the activation `clear` removed.
  *   settle      {transactionId, status, throwOnConfirmed?, throwOnApplied?}
  *                   Connector reports the status (paid or failed): every
  *                   payment hook runs, as for a webhook. Counts the
@@ -91,25 +92,15 @@ $count_hooks   = static function () use ( &$announcements ) {
 };
 
 switch ( $fixture_action ) {
-	case 'activate':
-		// Records an activation directly, skipping PaymentHistoryCutover's
-		// readiness gates, which these specs don't set up.
+	case 'clear':
 		if ( false === get_option( $saved_option, false ) ) {
 			update_option( $saved_option, array( 'cutover' => get_option( PaymentHistoryCompatibility::CUTOVER_OPTION, null ) ), false );
 		}
-		update_option(
-			PaymentHistoryCompatibility::CUTOVER_OPTION,
-			array(
-				'activated_at' => gmdate( 'Y-m-d H:i:s' ),
-				'user_id'      => 0,
-				'reference'    => 'e2e-payment-lifecycle',
-			),
-			true
-		);
+		delete_option( PaymentHistoryCompatibility::CUTOVER_OPTION );
 		$result = array( 'cutover' => PaymentHistoryCompatibility::ownership_cutover() );
 		break;
 
-	case 'deactivate':
+	case 'restore':
 		$saved = get_option( $saved_option, false );
 		if ( is_array( $saved ) && is_array( $saved['cutover'] ?? null ) ) {
 			update_option( PaymentHistoryCompatibility::CUTOVER_OPTION, $saved['cutover'], true );

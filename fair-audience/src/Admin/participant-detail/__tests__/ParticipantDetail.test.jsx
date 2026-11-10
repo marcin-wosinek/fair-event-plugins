@@ -45,8 +45,6 @@ const ACTIVITY = {
 			start_time: '18:00:00',
 			label: 'signed_up',
 			created_at: '2026-01-15 10:00:00',
-			transaction_id: 0,
-			transaction_status: null,
 		},
 	],
 	submissions: [
@@ -401,11 +399,9 @@ describe( 'ParticipantDetail — editing weekly preferences (#2135)', () => {
 	} );
 } );
 
-describe( 'ParticipantDetail — purchases from Fair Events (#2141)', () => {
+describe( 'ParticipantDetail — purchases from Fair Events (#2141, #2251)', () => {
 	const EVENTS_ACTIVITY = {
 		...ACTIVITY,
-		events: [ { ...ACTIVITY.events[ 0 ], transaction_id: null } ],
-		payment_readers: 'events',
 		payment_information: 'available',
 		purchases: [
 			{
@@ -497,19 +493,19 @@ describe( 'ParticipantDetail — purchases from Fair Events (#2141)', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'keeps the ledger column before the readers are active', async () => {
+	it( 'never shows a ledger column, even without purchases', async () => {
 		withActivity( {
 			...ACTIVITY,
-			payment_readers: 'audience',
-			purchases: null,
+			payment_information: 'available',
+			purchases: [],
 		} );
 		render( <ParticipantDetail /> );
 
 		expect(
-			await screen.findByRole( 'columnheader', { name: 'Transaction' } )
+			await screen.findByRole( 'heading', { name: 'Purchases (0)' } )
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole( 'heading', { name: /^Purchases/ } )
+			screen.queryByRole( 'columnheader', { name: 'Transaction' } )
 		).not.toBeInTheDocument();
 	} );
 } );

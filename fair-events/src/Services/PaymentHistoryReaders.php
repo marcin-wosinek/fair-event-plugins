@@ -14,10 +14,12 @@ use FairEvents\Models\SignupPaymentLink;
 defined( 'WPINC' ) || die;
 
 /**
- * The stage 5 reader activation (PAYMENT_HISTORY_MIGRATION.md §8.14):
- * Statistics, ticket counts and capacity read only what Fair Events owns
- * (ticket units, activities and payment links) instead of Fair Audience's
- * relationships, participant-scope activities and ledger.
+ * The stage 5 reader activation record (PAYMENT_HISTORY_MIGRATION.md
+ * §8.14), shown on the Payment history page. Statistics, ticket counts,
+ * capacity and purchase history read only what Fair Events owns (ticket
+ * units, activities and payment links) unconditionally since #2251, so no
+ * runtime path reads active(); the record remains for the migration page
+ * until its removal (#2252).
  *
  * - A site with history from before the migration switches when an
  *   administrator does, on the Payment history page, after the stage 4

@@ -761,7 +761,7 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 		);
 	} );
 
-	test( 'counts a hand-added participant once when they are given a ticket', async () => {
+	test( 'a hand-added participant given a ticket uses its place', async () => {
 		const event = await createEvent( {
 			capacity: 10,
 			ticketTypes: [ { name: 'Standard' } ],
@@ -785,7 +785,8 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 			}
 		);
 		createdParticipantIds.push( handAddedId );
-		expect( await eventDatePlaces( event.eventDateId ) ).toBe( 3 );
+		// A relationship with no purchase takes no place (#2251).
+		expect( await eventDatePlaces( event.eventDateId ) ).toBe( 2 );
 
 		// Given one of the two tickets, they use that place, not a third.
 		const assigned = await assign(

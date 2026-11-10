@@ -19,21 +19,13 @@ defined( 'WPINC' ) || die;
  * whole_series ticket counts on every occurrence of its series that starts
  * at or after its purchase.
  *
- * Two kinds of admission without ticket units still count, never on top of
- * units: a confirmed signup not yet backfilled (by its quantity), and a
- * signed-up relationship with no signup behind it (as one ticket). A
- * relationship that a purchase was backfilled from never counts on top of
- * that purchase.
+ * A confirmed signup not yet backfilled to ticket units still counts, by
+ * its quantity, never on top of units. Activities count per ticket from
+ * confirmed ticket selections.
  *
- * Activities count per ticket from confirmed ticket selections. Historical
- * selections recorded per participant are attributed only when the
- * participant holds exactly one ticket on that event date; otherwise those
- * tickets are left out of the activity charts and reported instead of
- * guessing which ticket chose what.
- *
- * Once the Events readers are active (PaymentHistoryReaders, §8.14) only
- * Events purchases and their ticket activities count: neither Fair
- * Audience relationships nor participant-scope activities are read.
+ * Only Events purchases and their ticket activities count (§8.14, #2251):
+ * neither Fair Audience relationships nor participant-scope activities are
+ * read, so Statistics work with Fair Audience inactive.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- scope clauses hold only code-defined column names and generated placeholders.
@@ -44,7 +36,7 @@ class EventTicketStatistics {
 	 * Calculate ticket statistics for an occurrence.
 	 *
 	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
-	 * @return array{total: int, daily: array<string, int>, tickets_per_activity: array[], activities_per_ticket: array[], tickets_without_activity_assignment: int, incomplete_ticket_backfills: int}
+	 * @return array{total: int, daily: array<string, int>, tickets_per_activity: array[], activities_per_ticket: array[], incomplete_ticket_backfills: int}
 	 */
 	public static function for_event_date( $event_date ) {
 		$scope      = self::get_scope( $event_date );
@@ -55,7 +47,6 @@ class EventTicketStatistics {
 		$incomplete = array();
 		foreach ( $tickets as $ticket ) {
 			$units[] = array(
-				'key'        => self::participant_key( $ticket['participant_id'], $ticket['event_date_id'] ),
 				'count'      => 1,
 				'date'       => substr( (string) $ticket['created_at'], 0, 10 ),
 				'activities' => $activities[ (int) $ticket['id'] ] ?? array(),
@@ -66,47 +57,20 @@ class EventTicketStatistics {
 		}
 		foreach ( self::get_unbackfilled_signups( $scope ) as $signup ) {
 			$units[] = array(
-				'key'        => self::participant_key( $signup['participant_id'], $signup['event_date_id'] ),
 				'count'      => (int) $signup['quantity'],
 				'date'       => substr( (string) $signup['created_at'], 0, 10 ),
 				'activities' => array(),
 			);
 		}
-		foreach ( self::get_relationships_without_signup( $scope ) as $relationship ) {
-			// Relationship timestamps come from the database clock (UTC).
-			$units[] = array(
-				'key'        => self::participant_key( $relationship['participant_id'], $relationship['event_date_id'] ),
-				'count'      => 1,
-				'date'       => get_date_from_gmt( (string) $relationship['created_at'], 'Y-m-d' ),
-				'activities' => array(),
-			);
-		}
-
-		$tickets_per_key = array();
-		foreach ( $units as $unit ) {
-			if ( $unit['key'] ) {
-				$tickets_per_key[ $unit['key'] ] = ( $tickets_per_key[ $unit['key'] ] ?? 0 ) + $unit['count'];
-			}
-		}
-		$participant_selections = self::get_participant_scope_selections( $scope );
 
 		$total        = 0;
 		$daily        = array();
 		$per_activity = array();
 		$names        = array();
 		$buckets      = array();
-		$unassigned   = 0;
 		foreach ( $units as $unit ) {
 			$total                 += $unit['count'];
 			$daily[ $unit['date'] ] = ( $daily[ $unit['date'] ] ?? 0 ) + $unit['count'];
-			$selections             = $unit['key'] ? ( $participant_selections[ $unit['key'] ] ?? array() ) : array();
-			if ( $selections ) {
-				if ( 1 !== $tickets_per_key[ $unit['key'] ] ) {
-					$unassigned += $unit['count'];
-					continue;
-				}
-				$unit['activities'] += $selections;
-			}
 
 			$activity_count             = count( $unit['activities'] );
 			$buckets[ $activity_count ] = ( $buckets[ $activity_count ] ?? 0 ) + $unit['count'];
@@ -143,12 +107,11 @@ class EventTicketStatistics {
 		}
 
 		return array(
-			'total'                               => $total,
-			'daily'                               => $daily,
-			'tickets_per_activity'                => $tickets_per_activity,
-			'activities_per_ticket'               => $activities_per_ticket,
-			'tickets_without_activity_assignment' => $unassigned,
-			'incomplete_ticket_backfills'         => count( $incomplete ),
+			'total'                       => $total,
+			'daily'                       => $daily,
+			'tickets_per_activity'        => $tickets_per_activity,
+			'activities_per_ticket'       => $activities_per_ticket,
+			'incomplete_ticket_backfills' => count( $incomplete ),
 		);
 	}
 
@@ -294,120 +257,6 @@ class EventTicketStatistics {
 			),
 			ARRAY_A
 		);
-	}
-
-	/**
-	 * Signed-up Fair Audience relationships with no signup behind them, using
-	 * the same matching as the capacity bridge
-	 * (Fair Audience's EventParticipantRepository::count_admissions_without_signup()).
-	 * A relationship a purchase names as its provenance
-	 * (legacy_event_participant_id) is that purchase's admission, whatever
-	 * the purchase's participant or status, so it never counts again.
-	 *
-	 * @param array $scope Scope from get_scope().
-	 * @return array[]
-	 */
-	private static function get_relationships_without_signup( array $scope ) {
-		global $wpdb;
-
-		// After the reader activation only Events purchases admit (§8.14).
-		if ( PaymentHistoryReaders::active() ) {
-			return array();
-		}
-
-		list( $clause, $args ) = self::scope_clause( $scope, 'ep.event_date_id', 'ep.created_at', get_gmt_from_date( $scope['start'] ) );
-
-		$provenance_clause = '';
-		$provenance_args   = array();
-		if ( PaymentHistoryCompatibility::storage_available() ) {
-			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
-			$provenance_args   = array( self::signups_table() );
-		}
-
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ep.id, ep.participant_id, ep.event_date_id, ep.created_at
-				FROM %i AS ep
-				LEFT JOIN %i AS tt ON tt.id = ep.ticket_type_id
-				WHERE ep.label = 'signed_up'
-				AND NOT EXISTS (
-					SELECT 1 FROM %i AS s
-					WHERE s.participant_id = ep.participant_id
-					AND ( s.event_date_id = ep.event_date_id OR ( ep.ticket_type_id IS NOT NULL AND s.ticket_type_id = ep.ticket_type_id ) )
-				)
-				{$provenance_clause}
-				AND {$clause}",
-				array_merge(
-					array( $wpdb->prefix . 'fair_audience_event_participants', self::ticket_types_table(), self::signups_table() ),
-					$provenance_args,
-					$args
-				)
-			),
-			ARRAY_A
-		);
-	}
-
-	/**
-	 * Confirmed activities still recorded per participant on the
-	 * occurrence's series, keyed by participant_key(), then option ID. A
-	 * relationship a purchase names as its provenance is left out: that
-	 * purchase's unit carries its activities.
-	 *
-	 * @param array $scope Scope from get_scope().
-	 * @return array<string, array<int, string>> Activity name snapshots.
-	 */
-	private static function get_participant_scope_selections( array $scope ) {
-		global $wpdb;
-
-		// After the reader activation only ticket activities count (§8.14).
-		if ( PaymentHistoryReaders::active() ) {
-			return array();
-		}
-
-		$event_date_ids = count( $scope['series_ids'] ) < 2 ? array( $scope['event_date_id'] ) : $scope['series_ids'];
-
-		$provenance_clause = '';
-		$provenance_args   = array();
-		if ( PaymentHistoryCompatibility::storage_available() ) {
-			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
-			$provenance_args   = array( self::signups_table() );
-		}
-
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ep.participant_id, ep.event_date_id, epo.ticket_option_id, epo.ticket_option_name
-				FROM %i AS ep
-				INNER JOIN %i AS epo ON epo.event_participant_id = ep.id
-				WHERE ep.label = 'signed_up' AND epo.status = 'confirmed' AND epo.ticket_id IS NULL
-				{$provenance_clause}
-				AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $event_date_ids ), '%d' ) ) . ' )',
-				array_merge(
-					array( $wpdb->prefix . 'fair_audience_event_participants', $wpdb->prefix . 'fair_audience_event_participant_options' ),
-					$provenance_args,
-					$event_date_ids
-				)
-			),
-			ARRAY_A
-		);
-
-		$selections = array();
-		foreach ( $rows as $row ) {
-			$key = self::participant_key( $row['participant_id'], $row['event_date_id'] );
-			$selections[ $key ][ (int) $row['ticket_option_id'] ] = (string) $row['ticket_option_name'];
-		}
-		return $selections;
-	}
-
-	/**
-	 * Identify a participant's admissions stored on one event date, or null
-	 * when the purchase has no participant.
-	 *
-	 * @param int|string|null $participant_id Participant ID.
-	 * @param int|string      $event_date_id  Stored event date ID.
-	 * @return string|null
-	 */
-	private static function participant_key( $participant_id, $event_date_id ) {
-		return $participant_id ? (int) $participant_id . ':' . (int) $event_date_id : null;
 	}
 
 	/**

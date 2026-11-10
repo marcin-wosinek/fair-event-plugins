@@ -37,12 +37,6 @@ const LABEL_DISPLAY = {
 	interested: __( 'Interested', 'fair-audience' ),
 };
 
-const TRANSACTION_STATUS_DISPLAY = {
-	success: { color: '#00a32a', label: __( 'Paid', 'fair-audience' ) },
-	pending: { color: '#dba617', label: __( 'Pending', 'fair-audience' ) },
-	failed: { color: '#d63638', label: __( 'Failed', 'fair-audience' ) },
-};
-
 const EMAIL_PROFILE_DISPLAY = {
 	minimal: __( 'Minimal', 'fair-audience' ),
 	marketing: __( 'Marketing', 'fair-audience' ),
@@ -252,9 +246,6 @@ export default function ParticipantDetail() {
 	}`.trim();
 	const events = activity?.events || [];
 	const submissions = activity?.submissions || [];
-	// Once Fair Events' payment readers answer, payments are listed per
-	// purchase and the per-event ledger column isn't shown.
-	const eventsReaders = activity?.payment_readers === 'events';
 
 	return (
 		<div className="wrap fair-audience-participant-detail">
@@ -398,23 +389,12 @@ export default function ParticipantDetail() {
 											'fair-audience'
 										) }
 									</th>
-									{ ! eventsReaders && (
-										<th>
-											{ __(
-												'Transaction',
-												'fair-audience'
-											) }
-										</th>
-									) }
 								</tr>
 							</thead>
 							<tbody>
 								{ events.map( ( ev ) => {
 									const manageUrl = ev.event_date_id
 										? `admin.php?page=fair-events-manage-event&event_date_id=${ ev.event_date_id }&tab=audience`
-										: null;
-									const transactionUrl = ev.transaction_id
-										? `admin.php?page=fair-payments-connector-transaction&transaction_id=${ ev.transaction_id }`
 										: null;
 									return (
 										<tr key={ ev.id }>
@@ -441,51 +421,6 @@ export default function ParticipantDetail() {
 													ev.created_at
 												) }
 											</td>
-											{ ! eventsReaders && (
-												<td>
-													{ transactionUrl ? (
-														<>
-															<a
-																href={
-																	transactionUrl
-																}
-															>
-																{ `#${ ev.transaction_id }` }
-															</a>
-															{ ev.transaction_status && (
-																<span
-																	title={
-																		TRANSACTION_STATUS_DISPLAY[
-																			ev
-																				.transaction_status
-																		]?.label
-																	}
-																	style={ {
-																		marginLeft:
-																			'6px',
-																		color: TRANSACTION_STATUS_DISPLAY[
-																			ev
-																				.transaction_status
-																		]
-																			?.color,
-																		fontWeight:
-																			'bold',
-																	} }
-																>
-																	{
-																		TRANSACTION_STATUS_DISPLAY[
-																			ev
-																				.transaction_status
-																		]?.label
-																	}
-																</span>
-															) }
-														</>
-													) : (
-														'—'
-													) }
-												</td>
-											) }
 										</tr>
 									);
 								} ) }
@@ -495,7 +430,7 @@ export default function ParticipantDetail() {
 				</CardBody>
 			</Card>
 
-			{ eventsReaders && Array.isArray( activity.purchases ) && (
+			{ Array.isArray( activity?.purchases ) && (
 				<ParticipantPurchases
 					purchases={ activity.purchases }
 					paymentInformation={ activity.payment_information }

@@ -64,8 +64,6 @@ class SignupHookBridge {
 		add_action( 'fair_events_signup_confirmed', array( static::class, 'handle_signup_confirmed' ), 10, 2 );
 		add_action( 'fair_events_signup_payment_failed', array( static::class, 'handle_signup_payment_failed' ), 10, 2 );
 		add_action( 'fair_events_backfill_signup_participant_ids', array( static::class, 'backfill_signup_participant_ids' ) );
-		add_filter( 'fair_events_capacity_legacy_admissions', array( static::class, 'filter_legacy_admissions' ), 10, 3 );
-		add_filter( 'fair_events_capacity_legacy_activity_selections', array( static::class, 'filter_legacy_activity_selections' ), 10, 4 );
 		add_action( 'fair_events_signup_moved', array( static::class, 'handle_signup_moved' ), 10, 2 );
 		add_action( 'fair_events_signup_ticket_type_changed', array( static::class, 'handle_signup_ticket_type_changed' ), 10, 1 );
 	}
@@ -171,35 +169,6 @@ class SignupHookBridge {
 		}
 
 		( new EventParticipantRepository() )->update_ticket_type_by_event_date( $event_date_id, $participant_id, (int) $signup->ticket_type_id );
-	}
-
-	/**
-	 * Add admissions that exist only as fair-audience relationships to
-	 * fair-events' capacity count. Hooked on
-	 * fair_events_capacity_legacy_admissions.
-	 *
-	 * @param int    $count Admissions reported so far.
-	 * @param string $scope 'event_date' or 'ticket_type'.
-	 * @param int    $id    Event date ID or ticket type ID.
-	 * @return int
-	 */
-	public static function filter_legacy_admissions( $count, $scope, $id ) {
-		return (int) $count + ( new EventParticipantRepository() )->count_admissions_without_signup( (string) $scope, (int) $id );
-	}
-
-	/**
-	 * Add activity selections recorded per participant rather than per
-	 * ticket to fair-events' activity capacity count. Hooked on
-	 * fair_events_capacity_legacy_activity_selections.
-	 *
-	 * @param int   $count            Selections reported so far.
-	 * @param int   $ticket_option_id Ticket option ID.
-	 * @param int   $event_date_id    Occurrence (event date) ID.
-	 * @param int[] $series_ids       Every event date of the occurrence's series.
-	 * @return int
-	 */
-	public static function filter_legacy_activity_selections( $count, $ticket_option_id, $event_date_id, $series_ids = array() ) {
-		return (int) $count + ( new EventParticipantRepository() )->count_participant_scope_selections( (int) $ticket_option_id, (int) $event_date_id, (array) $series_ids );
 	}
 
 	/**

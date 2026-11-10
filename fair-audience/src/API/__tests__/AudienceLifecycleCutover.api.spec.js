@@ -1,7 +1,8 @@
 /**
- * Fair Audience's purchase route, activity add-ons and series upgrades once
- * Fair Events' payment links are authoritative (#2140, stage 4 of #2111;
- * PAYMENT_HISTORY_MIGRATION.md §8.12): every attempt is recorded in Fair
+ * Fair Audience's purchase route, activity add-ons and series upgrades with
+ * Fair Events' payment links authoritative (#2140, stage 4 of #2111;
+ * PAYMENT_HISTORY_MIGRATION.md §8.12) and no cutover activation recorded
+ * (#2251): every attempt is recorded in Fair
  * Events before the buyer pays, Fair Events applies the paid notification
  * to its purchase once, and Fair Audience follows what it committed. An
  * upgrade is priced from the purchase's own paid allocations, a delayed
@@ -9,9 +10,9 @@
  * projection is finished by the retry cron.
  *
  * Purchases go through the public routes against the Mollie double, as the
- * admin's linked participant. The cutover activation, payment
- * notifications and the retry cron run through the payment-lifecycle.php
- * WP-CLI fixture; the activation is restored after the suite.
+ * admin's linked participant. Payment notifications and the retry cron run
+ * through the payment-lifecycle.php WP-CLI fixture, which also stashes any
+ * recorded activation for the suite and restores it afterwards.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -59,7 +60,7 @@ async function lifecycle( action, data = {} ) {
 	return JSON.parse( match[ 1 ] );
 }
 
-test.describe.serial( 'Fair Audience lifecycle after the cutover', () => {
+test.describe.serial( 'Fair Audience purchase lifecycle', () => {
 	// Every check drives the site through WP-CLI calls that take seconds.
 	test.describe.configure( { timeout: 180 * 1000 } );
 
@@ -216,12 +217,11 @@ test.describe.serial( 'Fair Audience lifecycle after the cutover', () => {
 		).toBeTruthy();
 		participantId = ( await participantRes.json() ).id;
 
-		expect( ( await lifecycle( 'activate' ) ).cutover ).toBe( true );
+		expect( ( await lifecycle( 'clear' ) ).cutover ).toBe( false );
 	} );
 
 	test.afterAll( async () => {
-		const restored = await lifecycle( 'deactivate' );
-		expect( restored.cutover ).toBe( false );
+		await lifecycle( 'restore' );
 		await lifecycle( 'cleanup', { signupIds, transactionIds } );
 		if ( participantId ) {
 			await api.delete(
@@ -456,5 +456,55 @@ test.describe.serial( 'Fair Audience lifecycle after the cutover', () => {
 		expect(
 			linksOf( current, Number( dropIn.transaction_id ) )
 		).toHaveLength( 1 );
+	} );
+
+	test( 'a free signup gets its purchase at once, and a free upgrade upgrades it', async () => {
+		const series = await createEvent( {
+			ticketTypes: [
+				{ name: 'Free Drop-In', price: 0 },
+				{ name: 'Free Pass', price: 0, scope: 'whole_series' },
+			],
+		} );
+		const signup = {
+			event_id: series.eventId,
+			event_date_id: series.eventDateId,
+		};
+		const purchases = async () => {
+			const res = await api.get(
+				`/wp-json/fair-events/v1/get-tickets?event_date=${ series.eventDateId }`,
+				{ headers: authHeaders }
+			);
+			expect( res.status() ).toBe( 200 );
+			const rows = await res.json();
+			signupIds.push( ...rows.map( ( row ) => Number( row.id ) ) );
+			return rows;
+		};
+
+		// No sweep has run: the purchase, and so its place, exist already.
+		const free = await post( EVENT_SIGNUP, {
+			...signup,
+			ticket_type_id: series.typeIds[ 0 ],
+		} );
+		expect( free.status, JSON.stringify( free.body ) ).toBe( 200 );
+		expect( free.body.status ).toBe( 'signed_up' );
+		let rows = await purchases();
+		expect( rows ).toHaveLength( 1 );
+		expect( rows[ 0 ].status ).toBe( 'confirmed' );
+		expect( Number( rows[ 0 ].ticket_type_id ) ).toBe(
+			series.typeIds[ 0 ]
+		);
+
+		// Nothing to pay: the same purchase becomes the pass.
+		const upgrade = await post( EVENT_SIGNUP, {
+			...signup,
+			ticket_type_id: series.typeIds[ 1 ],
+		} );
+		expect( upgrade.status, JSON.stringify( upgrade.body ) ).toBe( 200 );
+		expect( upgrade.body.status ).toBe( 'signed_up' );
+		rows = await purchases();
+		expect( rows ).toHaveLength( 1 );
+		expect( Number( rows[ 0 ].ticket_type_id ) ).toBe(
+			series.typeIds[ 1 ]
+		);
 	} );
 } );

@@ -25,8 +25,10 @@ defined( 'WPINC' ) || die;
  *   coverage floors are recorded.
  * - migration_verified(): the backfill finished and its verification
  *   report was clean (§8.4). Set by stage 3; false until then.
- * - ownership_cutover(): payment links are authoritative for purchases.
- *   True once the stage 4 activation is recorded (PaymentHistoryCutover).
+ * - ownership_cutover(): whether the stage 4 activation was recorded
+ *   (PaymentHistoryCutover). Reported on the Payment history page only:
+ *   payment links are authoritative for purchases unconditionally (#2251),
+ *   so no runtime path reads it.
  *
  * backfill_blockers() lists what stops the stage 3 backfill from starting;
  * PaymentHistoryCutover::blockers() what stops the stage 4 activation.
@@ -155,9 +157,9 @@ class PaymentHistoryCompatibility {
 	}
 
 	/**
-	 * Whether payment links are the authority for purchase payments (stage
-	 * 4, §8.1): the lifecycle writes links first and resolves purchases from
-	 * them (PurchaseLifecycle).
+	 * Whether the stage 4 activation (§8.1) was recorded, for the Payment
+	 * history page. The purchase lifecycle doesn't read it: it is
+	 * authoritative unconditionally (PurchaseLifecycle, #2251).
 	 *
 	 * True once an administrator's activation is recorded in
 	 * CUTOVER_OPTION and the storage it relies on (links and the work

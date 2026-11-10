@@ -148,11 +148,10 @@ class PurchasePaymentHistory {
 	 * The purchases a get-tickets attempt was made for, for the buyer's
 	 * payment callback and payment state (§8.15).
 	 *
-	 * Once the Events readers are active these are the attempt's `charge`
-	 * links, whichever attempt is each purchase's latest, so a buyer
-	 * returning from a superseded attempt sees that attempt's purchase.
-	 * Before that, or for an attempt without links, they are the purchases
-	 * whose latest attempt it is, as before.
+	 * These are the attempt's `charge` links, whichever attempt is each
+	 * purchase's latest, so a buyer returning from a superseded attempt
+	 * sees that attempt's purchase. An attempt without links has none: its
+	 * purchases are never guessed from a latest-attempt pointer.
 	 *
 	 * @param int $transaction_id Connector transaction ID.
 	 * @return object[] fair_events_signups rows, by ID.
@@ -161,25 +160,27 @@ class PurchasePaymentHistory {
 		global $wpdb;
 
 		$transaction_id = (int) $transaction_id;
-		if ( $transaction_id > 0 && PaymentHistoryReaders::active() ) {
-			$signup_ids = array();
-			foreach ( self::purchases_for_transactions( array( $transaction_id ) )[ $transaction_id ] ?? array() as $purchase ) {
-				if ( SignupPaymentLink::ROLE_CHARGE === $purchase['role'] ) {
-					$signup_ids[] = $purchase['signup_id'];
-				}
-			}
-			$signup_ids = self::ids( $signup_ids );
-			if ( $signup_ids ) {
-				return (array) $wpdb->get_results(
-					$wpdb->prepare(
-						'SELECT * FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' ) ORDER BY id ASC',
-						array_merge( array( $wpdb->prefix . 'fair_events_signups' ), $signup_ids )
-					)
-				);
-			}
+		if ( $transaction_id <= 0 ) {
+			return array();
 		}
 
-		return \FairEvents\Models\EventSignup::get_all_by_transaction_id( $transaction_id );
+		$signup_ids = array();
+		foreach ( self::purchases_for_transactions( array( $transaction_id ) )[ $transaction_id ] ?? array() as $purchase ) {
+			if ( SignupPaymentLink::ROLE_CHARGE === $purchase['role'] ) {
+				$signup_ids[] = $purchase['signup_id'];
+			}
+		}
+		$signup_ids = self::ids( $signup_ids );
+		if ( ! $signup_ids ) {
+			return array();
+		}
+
+		return (array) $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' ) ORDER BY id ASC',
+				array_merge( array( $wpdb->prefix . 'fair_events_signups' ), $signup_ids )
+			)
+		);
 	}
 
 	/**

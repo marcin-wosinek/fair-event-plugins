@@ -218,7 +218,7 @@ describe( 'EventFinance purchase payments', () => {
 				eventDateId={ 7 }
 				connectorActive
 				financeActive={ false }
-				paymentReadersActive
+				purchasePaymentsAvailable
 			/>
 		);
 

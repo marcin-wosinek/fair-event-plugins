@@ -595,79 +595,12 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Count active admissions that have no fair-events signup behind them:
-	 * relationships from before ticket units, the retired fair-audience
-	 * purchase route, or an organizer adding a participant by hand. They
-	 * keep occupying capacity next to fair-events' ticket units. A
-	 * relationship whose participant has a signup for the same event date
-	 * or ticket type is already counted there and is skipped, so one
-	 * admission never counts twice. So is one whose participant holds an
-	 * active ticket on the date: a ticket assigned to them by its purchaser
-	 * is counted as that ticket. So is one a fair-events purchase names as
-	 * its provenance (backfilled from it), whatever that purchase's
-	 * participant or status, when the active fair-events supports
-	 * provenance.
-	 *
-	 * @param string $scope 'event_date' or 'ticket_type'.
-	 * @param int    $id    Event date ID or ticket type ID.
-	 * @return int
-	 */
-	public function count_admissions_without_signup( $scope, $id ) {
-		global $wpdb;
-
-		$column = 'ticket_type' === $scope ? 'ticket_type_id' : 'event_date_id';
-
-		$provenance_clause = '';
-		$provenance_args   = array();
-		if ( self::events_purchase_provenance_available() ) {
-			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
-			$provenance_args   = array( $wpdb->prefix . 'fair_events_signups' );
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $provenance_clause is a fixed fragment with its own %i placeholder.
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM %i AS ep
-				 WHERE ep.%i = %d
-				 AND (
-				     ep.label = 'signed_up'
-				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
-				 )
-				 AND NOT EXISTS (
-				     SELECT 1 FROM %i AS s
-				     WHERE s.participant_id = ep.participant_id
-				     AND ( s.event_date_id = ep.event_date_id OR ( ep.ticket_type_id IS NOT NULL AND s.ticket_type_id = ep.ticket_type_id ) )
-				 )
-				 AND NOT EXISTS (
-				     SELECT 1 FROM %i AS t
-				     WHERE t.holder_participant_id = ep.participant_id
-				     AND t.event_date_id = ep.event_date_id
-				     AND t.status NOT IN ( 'failed', 'expired', 'cancelled', 'refunded' )
-				 )
-				 {$provenance_clause}",
-				array_merge(
-					array(
-						$this->get_table_name(),
-						$column,
-						(int) $id,
-						gmdate( 'Y-m-d H:i:s' ),
-						$wpdb->prefix . 'fair_events_signups',
-						$wpdb->prefix . 'fair_events_tickets',
-					),
-					$provenance_args
-				)
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-
-		return (int) $count;
-	}
-
-	/**
 	 * Capability marker read by fair-events
-	 * (PaymentHistoryCompatibility::audience_compatible()): this version's
-	 * capacity filter skips relationships named by purchase provenance, so
-	 * fair-events' payment history backfill may create purchases from them.
+	 * (PaymentHistoryCompatibility::audience_compatible()): this version
+	 * never counts a relationship named by purchase provenance next to its
+	 * purchase. It reports no admissions to fair-events' capacity at all
+	 * (#2251), so fair-events' payment history backfill may create purchases
+	 * from them.
 	 *
 	 * @return bool Always true.
 	 */
@@ -677,11 +610,12 @@ class EventParticipantRepository {
 
 	/**
 	 * Capability marker read by fair-events
-	 * (PaymentHistoryCompatibility::audience_compatible()): this version's
-	 * activity capacity filter (count_participant_scope_selections()) skips
-	 * relationships named by purchase provenance, whose activities the
-	 * purchase's ticket carries. Without it, fair-events neither shadow
-	 * writes nor backfills purchases.
+	 * (PaymentHistoryCompatibility::audience_compatible()): this version
+	 * never counts the activities of a relationship named by purchase
+	 * provenance, whose activities the purchase's ticket carries. It reports
+	 * no participant-scope selections to fair-events' capacity at all
+	 * (#2251). Without it, fair-events neither shadow writes nor backfills
+	 * purchases.
 	 *
 	 * @return bool Always true.
 	 */
@@ -690,25 +624,12 @@ class EventParticipantRepository {
 	}
 
 	/**
-	 * Whether the active fair-events stores purchase provenance. Checked by
-	 * capability, so this version keeps working with an older fair-events.
-	 *
-	 * @return bool
-	 */
-	private static function events_purchase_provenance_available() {
-		return class_exists( \FairEvents\Services\PaymentHistoryCompatibility::class )
-			&& method_exists( \FairEvents\Services\PaymentHistoryCompatibility::class, 'purchase_provenance_available' )
-			&& \FairEvents\Services\PaymentHistoryCompatibility::purchase_provenance_available();
-	}
-
-	/**
 	 * Count the places an activity (ticket option) has taken on an event
 	 * date.
 	 *
 	 * With per-ticket storage, fair-events counts every active ticket
 	 * selecting the activity on that occurrence (sibling tickets of one
-	 * purchase take one place each) plus the participant-level selections
-	 * reported by count_participant_scope_selections() — see
+	 * purchase take one place each) — see
 	 * TicketCapacity::count_ticket_option(). Without it, each relationship
 	 * holding the option counts once:
 	 *
@@ -764,80 +685,6 @@ class EventParticipantRepository {
 		}
 
 		return \FairEvents\Services\TicketCapacity::count_ticket_option( (int) $ticket_option_id, (int) $event_date_id );
-	}
-
-	/**
-	 * Count participant-level activity selections still holding a place on
-	 * an occurrence: selections not attributed to a ticket, on an active
-	 * relationship (signed_up, or pending_payment within its hold), the
-	 * selection itself confirmed or an unexpired hold. A selection counts on
-	 * its relationship's event date; one on a whole-series pass counts on
-	 * every date of the series. A relationship a fair-events purchase names
-	 * as its provenance is skipped, when the active fair-events supports
-	 * provenance: that purchase's ticket carries its activities. Reported to
-	 * fair-events through fair_events_capacity_legacy_activity_selections.
-	 *
-	 * @param int   $ticket_option_id Ticket option ID.
-	 * @param int   $event_date_id    Occurrence (event date) ID.
-	 * @param int[] $series_ids       Every event date of the occurrence's series.
-	 * @return int
-	 */
-	public function count_participant_scope_selections( $ticket_option_id, $event_date_id, array $series_ids ) {
-		global $wpdb;
-
-		$series_ids = array_values( array_filter( array_map( 'intval', $series_ids ) ) );
-		if ( ! $series_ids ) {
-			$series_ids = array( (int) $event_date_id );
-		}
-		$now = gmdate( 'Y-m-d H:i:s' );
-
-		$provenance_clause = '';
-		$provenance_args   = array();
-		if ( self::events_purchase_provenance_available() ) {
-			$provenance_clause = 'AND NOT EXISTS ( SELECT 1 FROM %i AS bp WHERE bp.legacy_event_participant_id = ep.id )';
-			$provenance_args   = array( $wpdb->prefix . 'fair_events_signups' );
-		}
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list built here.
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*)
-				 FROM %i ep
-				 INNER JOIN %i epo ON epo.event_participant_id = ep.id
-				 LEFT JOIN %i tt ON tt.id = ep.ticket_type_id
-				 WHERE epo.ticket_option_id = %d
-				 AND epo.ticket_id IS NULL
-				 AND (
-				     ep.label = 'signed_up'
-				     OR ( ep.label = 'pending_payment' AND ep.payment_expires_at IS NOT NULL AND ep.payment_expires_at > %s )
-				 )
-				 AND (
-				     epo.status = 'confirmed'
-				     OR ( epo.status = 'pending_payment' AND epo.expires_at IS NOT NULL AND epo.expires_at > %s )
-				 )
-				 AND (
-				     ep.event_date_id = %d
-				     OR ( tt.recurrence_scope = 'whole_series' AND ep.event_date_id IN ( " . implode( ', ', array_fill( 0, count( $series_ids ), '%d' ) ) . " ) )
-				 )
-				 {$provenance_clause}",
-				array_merge(
-					array(
-						$this->get_table_name(),
-						$wpdb->prefix . 'fair_audience_event_participant_options',
-						$wpdb->prefix . 'fair_events_ticket_types',
-						(int) $ticket_option_id,
-						$now,
-						$now,
-						(int) $event_date_id,
-					),
-					$series_ids,
-					$provenance_args
-				)
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-
-		return (int) $count;
 	}
 
 	/**

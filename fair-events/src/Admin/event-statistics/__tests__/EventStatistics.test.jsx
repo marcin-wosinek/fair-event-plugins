@@ -102,7 +102,6 @@ describe( 'EventStatistics component', () => {
 					{ activities: 1, tickets: 1 },
 					{ activities: 2, tickets: 1 },
 				],
-				tickets_without_activity_assignment: 0,
 				incomplete_ticket_backfills: 0,
 				...statistics,
 			} )
@@ -160,9 +159,6 @@ describe( 'EventStatistics component', () => {
 		expect(
 			JSON.parse( screen.getByTestId( 'total-area' ).dataset.props )
 		).toMatchObject( { name: 'Tickets' } );
-		expect(
-			screen.queryByText( /left out of the activity charts/ )
-		).toBeNull();
 		expect( screen.queryByText( /fewer ticket records/ ) ).toBeNull();
 	} );
 
@@ -237,37 +233,15 @@ describe( 'EventStatistics component', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'explains tickets left out of the activity charts, with plurals', async () => {
-		mockApi( {
-			tickets_without_activity_assignment: 2,
-			incomplete_ticket_backfills: 1,
-		} );
+	it( 'warns about purchases with missing ticket records', async () => {
+		mockApi( { incomplete_ticket_backfills: 1 } );
 
 		render( <EventStatistics eventDateId={ 42 } /> );
 
 		expect(
 			(
 				await screen.findAllByText(
-					'2 tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket.'
-				)
-			).length
-		).toBeGreaterThan( 0 );
-		expect(
-			screen.getAllByText(
-				'1 purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.'
-			).length
-		).toBeGreaterThan( 0 );
-	} );
-
-	it( 'uses the singular warning for one left-out ticket', async () => {
-		mockApi( { tickets_without_activity_assignment: 1 } );
-
-		render( <EventStatistics eventDateId={ 42 } /> );
-
-		expect(
-			(
-				await screen.findAllByText(
-					/^1 ticket is left out of the activity charts/
+					'1 purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.'
 				)
 			).length
 		).toBeGreaterThan( 0 );
@@ -439,7 +413,6 @@ describe( 'EventStatistics component', () => {
 			total_sales: 0,
 			total_sales_amount: null,
 			revenue_state: 'unavailable',
-			payment_readers: 'events',
 			series: [ { date: '2026-06-15', label: 'Day of event', total: 0 } ],
 			amount_series: [
 				{ date: '2026-06-15', label: 'Day of event', amount: null },
@@ -488,7 +461,6 @@ describe( 'EventStatistics component', () => {
 			total_sales: 0,
 			total_sales_amount: 0,
 			revenue_state: 'available',
-			payment_readers: 'events',
 			amount_series: [
 				{ date: '2026-06-15', label: 'Day of event', amount: 0 },
 			],
@@ -841,7 +813,6 @@ describe( 'EventStatistics capacity', () => {
 		],
 		tickets_per_activity: [ { id: 1, name: 'Yoga', count: 2 } ],
 		activities_per_ticket: [ { activities: 1, tickets: 3 } ],
-		tickets_without_activity_assignment: 0,
 		incomplete_ticket_backfills: 0,
 		event_capacity: { taken: 29, capacity: 40, remaining: 11, over: 0 },
 		ticket_type_capacity: [

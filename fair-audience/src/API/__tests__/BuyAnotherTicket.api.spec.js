@@ -417,33 +417,26 @@ test.describe
 	} );
 
 	test( 'an admission without tickets can still be cancelled', async () => {
-		const participantRes = await api.post(
-			'/wp-json/fair-audience/v1/participants',
+		// A relationship with no purchase behind it, as an organizer or a
+		// release before ticket units left it. fair-audience's own signup
+		// route now records a purchase at once (#2251).
+		const legacyRes = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-capacity/legacy-admission',
 			{
 				headers: adminHeaders,
 				data: {
-					name: 'Legacy',
-					surname: 'Admission',
+					event_date_id: eventDateId,
+					ticket_type_id: communityId,
 					email: `buy-another-legacy-${ Date.now() }@example.test`,
 				},
 			}
 		);
-		expect( participantRes.ok(), await participantRes.text() ).toBeTruthy();
-		legacyParticipantId = ( await participantRes.json() ).id;
+		expect( legacyRes.ok(), await legacyRes.text() ).toBeTruthy();
+		legacyParticipantId = ( await legacyRes.json() ).participant_id;
 		const token = await tokenFor( legacyParticipantId );
 
-		// fair-audience's own signup route keeps a relationship only.
 		const anonymous = await request.newContext( { baseURL: BASE_URL } );
 		try {
-			const signupRes = await anonymous.post( SIGNUP_ROUTE, {
-				data: {
-					event_id: postId,
-					event_date_id: eventDateId,
-					ticket_type_id: communityId,
-					participant_token: token,
-				},
-			} );
-			expect( signupRes.ok(), await signupRes.text() ).toBeTruthy();
 			const [ before ] = await relationship( legacyParticipantId );
 			expect( before.label ).toBe( 'signed_up' );
 			expect( before.tickets ?? [] ).toHaveLength( 0 );

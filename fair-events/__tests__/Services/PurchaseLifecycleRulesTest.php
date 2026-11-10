@@ -13,9 +13,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Covers PAYMENT_HISTORY_MIGRATION.md §8.12: a series upgrade is priced
- * from the purchase's own paid allocations (§5.6, gap G4), and after the
- * cutover a shadow purchase sync never reverses a confirmation the
- * lifecycle made.
+ * from the purchase's own paid allocations (§5.6, gap G4), and a shadow
+ * purchase sync never reverses a confirmation the lifecycle made (#2251).
  */
 class PurchaseLifecycleRulesTest extends TestCase {
 
@@ -73,7 +72,7 @@ class PurchaseLifecycleRulesTest extends TestCase {
 	}
 
 	/**
-	 * After the cutover a relationship still awaiting payment, or gone, leaves a confirmed purchase confirmed.
+	 * A relationship still awaiting payment, or gone, leaves a confirmed purchase confirmed.
 	 *
 	 * @return void
 	 */
@@ -87,33 +86,18 @@ class PurchaseLifecycleRulesTest extends TestCase {
 			'payment_expires_at' => gmdate( 'Y-m-d H:i:s', time() - 600 ),
 		);
 
-		$this->assertSame( 'confirmed', ShadowPurchases::target_state( $pending, 'confirmed', true )['status'] );
-		$this->assertSame( 'confirmed', ShadowPurchases::target_state( $expired, 'confirmed', true )['status'] );
-		$this->assertSame( 'confirmed', ShadowPurchases::target_state( null, 'confirmed', true )['status'] );
-		$this->assertNull( ShadowPurchases::target_state( $pending, 'confirmed', true )['payment_expires_at'] );
+		$this->assertSame( 'confirmed', ShadowPurchases::target_state( $pending, 'confirmed' )['status'] );
+		$this->assertSame( 'confirmed', ShadowPurchases::target_state( $expired, 'confirmed' )['status'] );
+		$this->assertSame( 'confirmed', ShadowPurchases::target_state( null, 'confirmed' )['status'] );
+		$this->assertNull( ShadowPurchases::target_state( $pending, 'confirmed' )['payment_expires_at'] );
 	}
 
 	/**
-	 * Before the cutover the relationship decides, as in stage 3.
+	 * Relabelling, re-holding and an expired hold are still followed.
 	 *
 	 * @return void
 	 */
-	public function test_relationship_stays_authoritative_before_the_cutover(): void {
-		$pending = (object) array(
-			'label'              => 'pending_payment',
-			'payment_expires_at' => gmdate( 'Y-m-d H:i:s', time() + 600 ),
-		);
-
-		$this->assertSame( 'pending_payment', ShadowPurchases::target_state( $pending, 'confirmed' )['status'] );
-		$this->assertSame( 'cancelled', ShadowPurchases::target_state( null, 'confirmed' )['status'] );
-	}
-
-	/**
-	 * Relabelling, re-holding and an expired hold are still followed after the cutover.
-	 *
-	 * @return void
-	 */
-	public function test_organizer_changes_are_still_followed_after_the_cutover(): void {
+	public function test_organizer_changes_are_still_followed(): void {
 		$interested = (object) array(
 			'label'              => 'interested',
 			'payment_expires_at' => null,
@@ -123,8 +107,8 @@ class PurchaseLifecycleRulesTest extends TestCase {
 			'payment_expires_at' => gmdate( 'Y-m-d H:i:s', time() + 600 ),
 		);
 
-		$this->assertSame( 'cancelled', ShadowPurchases::target_state( $interested, 'confirmed', true )['status'] );
-		$this->assertSame( 'pending_payment', ShadowPurchases::target_state( $pending, 'expired', true )['status'] );
-		$this->assertSame( 'expired', ShadowPurchases::target_state( null, 'pending_payment', true )['status'] );
+		$this->assertSame( 'cancelled', ShadowPurchases::target_state( $interested, 'confirmed' )['status'] );
+		$this->assertSame( 'pending_payment', ShadowPurchases::target_state( $pending, 'expired' )['status'] );
+		$this->assertSame( 'expired', ShadowPurchases::target_state( null, 'pending_payment' )['status'] );
 	}
 }

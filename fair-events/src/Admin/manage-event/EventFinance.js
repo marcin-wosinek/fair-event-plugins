@@ -101,14 +101,14 @@ const loadErrorMessage = ( err, summary ) =>
  * @param {boolean} props.connectorActive      Fair Payments Connector is active.
  * @param {boolean} props.financeActive        Fair Finance is active.
  * @param {string}  props.entriesUrl           Fair Finance entries screen URL.
- * @param {boolean} props.paymentReadersActive The Events payment readers are active.
+ * @param {boolean} props.purchasePaymentsAvailable Purchase payments can be listed.
  */
 export default function EventFinance( {
 	eventDateId,
 	connectorActive,
 	financeActive,
 	entriesUrl,
-	paymentReadersActive = false,
+	purchasePaymentsAvailable = false,
 } ) {
 	// Payments (Fair Payments Connector). `null` until loaded.
 	const [ payments, setPayments ] = useState( null );
@@ -823,7 +823,7 @@ export default function EventFinance( {
 				</CardBody>
 			</Card>
 
-			{ paymentReadersActive && eventDateId && (
+			{ purchasePaymentsAvailable && eventDateId && (
 				<PurchasePayments eventDateId={ eventDateId } />
 			) }
 		</>

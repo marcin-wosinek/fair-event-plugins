@@ -1,16 +1,16 @@
 /**
- * The stage 5 reader cutover (#2141, stage 5 of #2111;
- * PAYMENT_HISTORY_MIGRATION.md §8.14): Statistics keeps the Fair Audience
- * readers until the switch, which only administrators can request and
- * which refuses while anything blocks it. Once the Events readers are
- * active, revenue is the paid allocations of each date's purchases, in
+ * Statistics read Fair Events records unconditionally (#2251; stage 5 of
+ * #2111, PAYMENT_HISTORY_MIGRATION.md §8.14): with no reader activation
+ * recorded, revenue is the paid allocations of each date's purchases, in
  * three states, a whole-series pass counts once on its master, ticket
  * counts and capacity ignore Fair Audience relationships, and results stay
  * the same through a Fair Audience deactivation and reactivation. Without
- * Fair Payments Connector revenue is unavailable, never 0.
+ * Fair Payments Connector revenue is unavailable, never 0. The migration
+ * page's reader switch keeps its permissions and blockers until #2252
+ * removes it.
  *
- * The payment-readers.php fixture stashes the reader activation and puts it
- * back afterwards, so no other spec runs with it.
+ * The payment-readers.php fixture stashes any recorded reader activation
+ * and puts it back afterwards, so these tests run without one.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -76,7 +76,7 @@ function addDays( date, days ) {
 
 const confirmed = () => ( { status: 'confirmed' } );
 
-test.describe.serial( 'Statistics on the Events payment readers', () => {
+test.describe.serial( 'Statistics from Fair Events records', () => {
 	test.describe.configure( { timeout: 240 * 1000 } );
 
 	let api;
@@ -193,6 +193,8 @@ test.describe.serial( 'Statistics on the Events payment readers', () => {
 	}
 
 	test.beforeAll( async () => {
+		// A dozen sequential fixture calls overrun the default hook budget.
+		test.setTimeout( 240 * 1000 );
 		api = await request.newContext( { baseURL: BASE_URL } );
 		anonymous = await request.newContext( { baseURL: BASE_URL } );
 		adminHeaders = await login( api, ADMIN_USER, ADMIN_PASSWORD );
@@ -223,8 +225,7 @@ test.describe.serial( 'Statistics on the Events payment readers', () => {
 		// A: two tickets, a failed attempt then a paid retry; a preserved
 		// refund-labelled record; one ticket sharing a payment with B and C;
 		// and a signed-up Fair Audience relationship of the person holding
-		// one of the two tickets. Today's Statistics counts that
-		// relationship on top of the ticket; the Events readers don't. As a
+		// one of the two tickets, which Statistics never counts. As a
 		// ticket holder it is never mirrored as a purchase (§4.1), so the
 		// counts don't depend on when the shadow sweep runs.
 		const holderId = await signedUpRelationship( dates.a );
@@ -314,18 +315,6 @@ test.describe.serial( 'Statistics on the Events payment readers', () => {
 		await subscriberApi?.dispose();
 	} );
 
-	test( 'keeps the Fair Audience readers until the switch', async () => {
-		const a = await statistics( dates.a );
-		expect( a.payment_readers ).toBe( 'audience' );
-		// Two units, the shared purchase's unit and the holder's relationship.
-		expect( a.total_tickets ).toBe( 4 );
-		// Capacity already skipped a relationship whose person holds a ticket.
-		expect( a.event_capacity.taken ).toBe( 3 );
-		// No ledger row names these purchases.
-		expect( a.revenue_state ).toBe( 'available' );
-		expect( a.total_sales_amount ).toBe( 0 );
-	} );
-
 	test( 'only administrators can switch, and never while it is blocked', async () => {
 		const path = '/wp-json/fair-events/v1/payment-history/readers';
 		expect( ( await anonymous.post( path ) ).status() ).toBe( 401 );
@@ -356,12 +345,12 @@ test.describe.serial( 'Statistics on the Events payment readers', () => {
 		expect( ( await readers( 'facts' ) ).active ).toBe( false );
 	} );
 
-	test( 'reads revenue from paid allocations once switched', async () => {
-		expect( ( await readers( 'activate' ) ).active ).toBe( true );
+	test( 'reads revenue from paid allocations without any activation', async () => {
+		expect( ( await readers( 'facts' ) ).activation ).toBeNull();
 
 		const a = await statistics( dates.a );
-		expect( a.payment_readers ).toBe( 'events' );
-		// Only Events purchases admit: the relationship no longer counts.
+		expect( a ).not.toHaveProperty( 'payment_readers' );
+		// Only Events purchases admit: the relationship never counts.
 		expect( a.total_tickets ).toBe( 3 );
 		expect( a.event_capacity.taken ).toBe( 3 );
 		// The paid retry and A's share of the shared payment; the failed
@@ -456,7 +445,6 @@ test.describe.serial( 'Statistics on the Events payment readers', () => {
 		for ( const [ index, id ] of ids.entries() ) {
 			expect( await statistics( id ) ).toEqual( before[ index ] );
 		}
-		expect( ( await readers( 'facts' ) ).active ).toBe( true );
 	} );
 
 	test( 'reports revenue unavailable, not zero, without Fair Payments Connector', async () => {

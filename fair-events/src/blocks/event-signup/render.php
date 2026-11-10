@@ -126,11 +126,9 @@ if ( ! $signup_transaction
 }
 
 if ( $signup_transaction && class_exists( \FairEvents\Services\SignupPaymentState::class ) ) {
-	// The attempt's own purchases: from its payment links once the Events
-	// readers are active, so a superseded attempt shows what it bought.
-	$signup_rows  = class_exists( \FairEvents\Services\PurchasePaymentHistory::class )
-		? \FairEvents\Services\PurchasePaymentHistory::signups_for_transaction( (int) $signup_transaction->id )
-		: \FairEvents\Models\EventSignup::get_all_by_transaction_id( (int) $signup_transaction->id );
+	// The attempt's own purchases, from its payment links, so a superseded
+	// attempt shows what it bought.
+	$signup_rows  = \FairEvents\Services\PurchasePaymentHistory::signups_for_transaction( (int) $signup_transaction->id );
 	$signup_state = \FairEvents\Services\SignupPaymentState::resolve_for_transaction( $signup_transaction, $signup_rows );
 }
 

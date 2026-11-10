@@ -1506,6 +1506,77 @@ stage 4 still writes, are untouched. Source history (ledger, relationships,
 participant-scope activities, `signup.transaction_id`) is kept. Deleting it
 is outside this migration and needs a separate follow-up issue (§8.5, §11).
 
+### 8.16 Permanent ownership
+
+**Implemented** (#2251; no schema change). The runtime no longer chooses
+between old and new ownership: what §8.11–§8.15 do after their activations
+is what every site does, whether or not an activation is recorded.
+
+- **Lifecycle.** `PurchaseLifecycle::active()` is always true. Fair Events'
+  paid and failed notifications always go through `handle_paid()` and
+  `handle_failed()`; the metadata-based path and
+  `EventSignup::resolve_signup_ids_from_transaction()` are no longer used by
+  Fair Events' own notifications. `current_signup_ids()` (retry, cancel,
+  failure) and `signups_for_transaction()` (buyer callback, payment state)
+  read links only: an attempt without links names no purchase, and the caller
+  refuses the operation (409 for retry and cancel) rather than falling back to
+  metadata or `signup.transaction_id`.
+- **Fair Audience routes.** `EventsLifecycle::record_attempt()`,
+  `upgrade_credit()` and `upgrade_without_payment()` return a 503
+  `payment_not_recorded` error (reason `events_lifecycle_unavailable`) when
+  Fair Events is inactive or lacks the lifecycle, instead of the old
+  Audience-only behaviour. The upgrade price never falls back to the ledger.
+  Fair Audience no longer confirms its own paid signups, add-ons or series
+  upgrades (`PaymentHooks::handle_signup_paid()`,
+  `handle_activities_added_paid()`, `handle_series_upgrade_paid()` are
+  removed): Fair Events applies them and Fair Audience projects what it
+  committed (§8.12). Failure handling (emails, add-on hold release) is
+  unchanged.
+- **Admissions and capacity.** `TicketCapacity` no longer applies
+  `fair_events_capacity_legacy_admissions` or
+  `fair_events_capacity_legacy_activity_selections`, and Fair Audience no
+  longer registers them. A relationship without a purchase, and a
+  participant-scope activity, take no place and aren't counted in
+  Statistics. Fair Audience's capability markers
+  (`excludes_purchase_provenance()`,
+  `excludes_provenance_activity_selections()`) stay true. A free signup on
+  Fair Audience's purchase route gets its purchase at once
+  (`EventsLifecycle::record_signup()` → `PurchaseLifecycle::record_relationship()`),
+  and so does the registration a series upgrade resolves, so neither waits
+  for the shadow writer's sweep. An organizer-added relationship still
+  reaches Fair Events through that sweep, as on reader-activated sites since
+  §8.14; its retirement is #2253. A pending relationship of a
+  `multiple_instances` checkout now qualifies for its own purchase even
+  though the participant's other occurrences hold purchases of the same
+  ticket type (`ShadowPurchases::qualifies()`); before, the attempt of a
+  checkout for several occurrences couldn't be recorded.
+- **Statistics.** The route is always registered and reads
+  `PurchasePaymentHistory::event_date_revenue()`. `payment_readers` and
+  `tickets_without_activity_assignment` are dropped from the response, and
+  the Statistics page no longer shows the participant-scope activities
+  notice. `EventStatisticsController::is_available()` and
+  `legacy_available()` are removed.
+- **Purchase readers.** The get-tickets list always carries
+  `payment_history`; Connector's transaction view always gets `purchases`.
+  The participant detail always lists `purchases` (empty, with
+  `payment_information` `unavailable`, without Fair Events' readers) and its
+  events no longer carry `transaction_id`/`transaction_status` from the
+  ledger; `payment_readers` is dropped. Notification enrichment names nothing
+  without Fair Events' readers. The Finance tab's Purchase payments section is
+  shown to administrators (`purchasePaymentsAvailable`).
+- **Shadow writes.** A shadow purchase sync always treats the lifecycle as
+  authoritative (`ShadowPurchases::target_state()` lost its pre-cutover
+  mode), and the retry cron runs the lifecycle's queued work whenever the
+  work queue exists.
+
+The stage 4 and stage 5 activations remain recorded and shown on the Payment
+history page until the migration tooling is removed (#2252);
+`PaymentHistoryCompatibility::ownership_cutover()` and
+`PaymentHistoryReaders::active()` only report them there. Historical
+synchronization (#2253), storage removal (#2254) and the supported upgrade
+path (#2255) are separate. A site that never completed the migration must
+not upgrade directly to this release (#2255).
+
 ## 9. Worked examples
 
 Amounts are in EUR, the site currency, unless stated otherwise. "Revenue"

@@ -200,13 +200,17 @@ test.describe
 		return ( await res.json() ).participant;
 	}
 
+	// The payments of the participant's purchases, as the participant
+	// detail lists them (from Fair Events' payment links, #2251).
 	async function activityTransactionIds( participantId ) {
 		const res = await api.get(
 			`/wp-json/fair-audience/v1/participants/${ participantId }/activity`,
 			{ headers: adminHeaders }
 		);
 		expect( res.ok() ).toBeTruthy();
-		return ( await res.json() ).events.map( ( e ) => e.transaction_id );
+		return ( await res.json() ).purchases.flatMap( ( purchase ) =>
+			purchase.payments.map( ( payment ) => payment.transaction_id )
+		);
 	}
 
 	async function setTransaction( data ) {
