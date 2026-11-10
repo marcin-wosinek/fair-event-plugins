@@ -15,6 +15,13 @@
  * eval-file manual check (TESTING.md) alongside this change, following the
  * precedent in EventSignupLedgerResolution.api.spec.js.
  *
+ * Visitor requests go through each test's own `visitor` context (Playwright's
+ * test-scoped `request` fixture), so every test starts as a new visitor with no
+ * fair_audience_session cookie, whatever order the tests run in. A test that
+ * means a returning visitor reuses its own `visitor` across its requests. The
+ * shared `api` context carries only administrative setup, assertions and
+ * teardown (#2196).
+ *
  * Skips gracefully when fair-audience is not active in the test environment.
  */
 
@@ -32,6 +39,11 @@ const adminHeaders = {
 			'base64'
 		),
 };
+
+const sessionCookie = async ( context ) =>
+	( await context.storageState() ).cookies.find(
+		( cookie ) => cookie.name === 'fair_audience_session'
+	)?.value;
 
 test.describe( 'SignupHookBridge — base get-tickets route links a Participant', () => {
 	let api;
@@ -146,12 +158,14 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		await api.dispose();
 	} );
 
-	test( 'a signup with no ticket type and no activities selected still completes (#1310: the options filters run unconditionally)', async () => {
+	test( 'a signup with no ticket type and no activities selected still completes (#1310: the options filters run unconditionally)', async ( {
+		request: visitor,
+	} ) => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
 		const guardEmail = `signup-hook-bridge-no-options-${ Date.now() }@example.test`;
 
-		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
+		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: eventDateId,
 				name: 'No Options Buyer',
@@ -164,10 +178,12 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		expect( body.status ).toBe( 'confirmed' );
 	} );
 
-	test( 'a free signup through the base route creates a linked Participant and EventParticipant', async () => {
+	test( 'a free signup through the base route creates a linked Participant and EventParticipant', async ( {
+		request: visitor,
+	} ) => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
-		const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
+		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
 			data: {
 				event_date_id: eventDateId,
 				name: buyerName,
@@ -222,12 +238,14 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		expect( Number( linkedSignup.participant_id ) ).toBe( participant.id );
 	} );
 
-	test( 'two signups with the same email on the same event date share one participant_id and one EventParticipant row', async () => {
+	test( 'two signups with the same email on the same event date share one participant_id and one EventParticipant row', async ( {
+		request: visitor,
+	} ) => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
 		const repeatEmail = `signup-hook-bridge-repeat-${ Date.now() }@example.test`;
 
-		const firstRes = await api.post(
+		const firstRes = await visitor.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
 				data: {
@@ -243,7 +261,7 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		// A second, independent purchase under the same email/event date — the
 		// series-master scenario (#1083 PR 3): a whole-series pass bought
 		// again, or a companion ticket, must not be treated as a duplicate.
-		const secondRes = await api.post(
+		const secondRes = await visitor.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
 				data: {
@@ -296,7 +314,9 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		expect( matching[ 0 ].label ).toBe( 'signed_up' );
 	} );
 
-	test( 'a viewer already holding a ticket for the date can buy another one (#1534)', async () => {
+	test( 'a viewer already holding a ticket for the date can buy another one (#1534)', async ( {
+		request: visitor,
+	} ) => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
 		// Until #1534 a recognised viewer whose relationship was signed_up
@@ -312,10 +332,12 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 			quantity: 1,
 		};
 
-		// Resolved as the returning viewer via the session cookie
-		// link_participant() set on the first request (this Playwright
-		// request context carries cookies across requests, like a browser).
-		const firstRes = await api.post(
+		// A returning visitor: this test's own context starts without a
+		// session, and the first purchase gives it the cookie that
+		// link_participant() sets. The later purchases resolve the viewer
+		// through that cookie (the context carries cookies, like a browser).
+		expect( await sessionCookie( visitor ) ).toBeUndefined();
+		const firstRes = await visitor.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
 				data: {
@@ -325,10 +347,11 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 			}
 		);
 		expect( firstRes.ok(), await firstRes.text() ).toBeTruthy();
+		expect( await sessionCookie( visitor ) ).toBeTruthy();
 
 		const secondKey = `second-${ Date.now() }-key`;
 		for ( let i = 0; i < 2; i++ ) {
-			const secondRes = await api.post(
+			const secondRes = await visitor.post(
 				'/wp-json/fair-events/v1/get-tickets',
 				{ data: { ...purchase, idempotency_key: secondKey } }
 			);
@@ -366,10 +389,6 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 	test.describe( 'registering another person (#1528)', () => {
 		const VIEWER_CONTEXT_PATH =
 			'/wp-json/fair-events/v1/get-tickets/viewer-context';
-		const sessionCookie = async ( context ) =>
-			( await context.storageState() ).cookies.find(
-				( cookie ) => cookie.name === 'fair_audience_session'
-			)?.value;
 		const signupsFor = async ( email ) => {
 			const res = await api.get(
 				`/wp-json/fair-events/v1/get-tickets?event_date=${ eventDateId }`,
@@ -665,25 +684,30 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		} );
 	} );
 
-	test( 'the per-email rate limit rejects an 11th signup within the window (#1245, #1769)', async () => {
+	test( 'the per-email rate limit rejects an 11th signup within the window (#1245, #1769)', async ( {
+		request: visitor,
+	} ) => {
 		test.skip( ! fairAudienceActive, 'fair-audience not active' );
 
 		const rateLimitEmail = `signup-hook-bridge-rl-${ Date.now() }@example.test`;
 
 		// No ticket_type_id: a plain signup, so only the rate limiter decides.
 		for ( let i = 0; i < 10; i++ ) {
-			const res = await api.post( '/wp-json/fair-events/v1/get-tickets', {
-				data: {
-					event_date_id: eventDateId,
-					name: 'Rate Limit Tester',
-					email: rateLimitEmail,
-					quantity: 1,
-				},
-			} );
+			const res = await visitor.post(
+				'/wp-json/fair-events/v1/get-tickets',
+				{
+					data: {
+						event_date_id: eventDateId,
+						name: 'Rate Limit Tester',
+						email: rateLimitEmail,
+						quantity: 1,
+					},
+				}
+			);
 			expect( res.ok() ).toBeTruthy();
 		}
 
-		const limitedRes = await api.post(
+		const limitedRes = await visitor.post(
 			'/wp-json/fair-events/v1/get-tickets',
 			{
 				data: {
