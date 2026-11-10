@@ -80,6 +80,22 @@ const NEW_SHARED_CLASSES = [
 	'FairEventsShared\\ApiTokens\\AbstractApiTokenAuth',
 ];
 
+// The pre-0.2.17 shared copy the fixture registers first (Fair Timetable 0.8.0).
+const OLD_SHARED_VERSION = '0.2.10';
+
+// Numeric x.y.z comparison: negative, zero or positive.
+const compareVersions = ( a, b ) => {
+	const left = a.split( '.' ).map( Number );
+	const right = b.split( '.' ).map( Number );
+	for ( let i = 0; i < Math.max( left.length, right.length ); i++ ) {
+		const diff = ( left[ i ] || 0 ) - ( right[ i ] || 0 );
+		if ( diff ) {
+			return diff;
+		}
+	}
+	return 0;
+};
+
 const releaseHeaders = ( releases, order, oldShared ) => ( {
 	'X-Fair-E2E-Payments-Releases': releases,
 	'X-Fair-E2E-Plugin-Order': order,
@@ -628,20 +644,43 @@ test.describe( 'API tokens in Fair Payments Connector (#1747)', () => {
 								? [ ...expected.loaded ].reverse()
 								: expected.loaded
 						);
+						const loader = ran.shared_loader;
+						expect( loader.state ).toBe( 'selected' );
 						if ( oldShared ) {
-							// The older copy was asked first and lacks the new classes,
-							// so they came from a plugin that bundles them.
-							expect( ran.declined.sort() ).toEqual(
-								NEW_SHARED_CLASSES
+							// The older copy, lacking the new classes, registered
+							// before every plugin; the loader still chose the newest.
+							expect( loader.registered[ 0 ] ).toEqual( {
+								dir: ran.old_shared_dir,
+								version: OLD_SHARED_VERSION,
+							} );
+							expect( loader.selected.dir ).not.toBe(
+								ran.old_shared_dir
 							);
-							expect( ran.served.length ).toBeGreaterThan( 0 );
+							for ( const { version } of loader.registered ) {
+								expect(
+									compareVersions(
+										loader.selected.version,
+										version
+									)
+								).toBeGreaterThanOrEqual( 0 );
+							}
 						}
+						// Every new shared class loaded, from the selected copy.
+						expect(
+							Object.keys( ran.shared_source ).sort()
+						).toEqual( NEW_SHARED_CLASSES );
+						expect( loader.selected.plugin ).toMatch(
+							/^[a-z-]+\/vendor\/fair-events\/shared$/
+						);
 						for ( const source of Object.values(
 							ran.shared_source
 						) ) {
-							expect( source ).toMatch(
-								/^[a-z-]+\/vendor\/fair-events\/shared\/src\//
-							);
+							expect( source ).not.toBeNull();
+							expect(
+								source.startsWith(
+									`${ loader.selected.plugin }/src/`
+								)
+							).toBe( true );
 						}
 
 						// Exactly one handler per route and method, all from the owner.
