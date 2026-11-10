@@ -18,6 +18,7 @@
  * Skips gracefully when fair-audience is not active in the test environment.
  */
 
+import { randomUUID } from 'node:crypto';
 import { test, expect, request } from '@playwright/test';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
@@ -695,5 +696,330 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		);
 		expect( limitedRes.status() ).toBe( 429 );
 		expect( ( await limitedRes.json() ).code ).toBe( 'rate_limited' );
+	} );
+} );
+
+// #2213 — the confirmation Fair Audience sends lists the extras selected
+// with that booking. Mail is captured by e2e/mu-plugins and read back from
+// fair-e2e/v1/captured-mail; payment is driven through
+// fair-e2e/v1/ticket-capacity/pay.
+test.describe( 'SignupHookBridge — confirmation email lists the booking’s extras', () => {
+	let api;
+	let fairAudienceActive = false;
+	const postIds = [];
+	const eventDateIds = [];
+
+	const uniqueEmail = ( label ) =>
+		`booking-extras-${ label }-${ Date.now() }-${ Math.random()
+			.toString( 36 )
+			.slice( 2 ) }@example.test`;
+
+	// Mirrors esc_html() for the characters these names use.
+	const escHtml = ( text ) =>
+		text
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;' )
+			.replace( />/g, '&gt;' )
+			.replace( /"/g, '&quot;' )
+			.replace( /'/g, '&#039;' );
+
+	const listed = ( body, name ) =>
+		body.includes( `>${ escHtml( name ) }</li>` );
+
+	/**
+	 * A linked, bookable event with one ticket type and four extras.
+	 *
+	 * @param {number} ticketPrice Ticket type price.
+	 * @return {Promise<Object>} eventDateId, typeId and option IDs by name.
+	 */
+	const createEvent = async ( ticketPrice = 0 ) => {
+		const title = `Booking extras ${ Date.now() } ${ Math.random() }`;
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title, status: 'publish' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		const postId = ( await postRes.json() ).id;
+		postIds.push( postId );
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				start_date: '2035-11-01',
+				start_time: '10:00:00',
+				end_date: '2035-11-01',
+				end_time: '12:00:00',
+			},
+		} );
+		const edBody = await edRes.json();
+		expect( edRes.ok(), JSON.stringify( edBody ) ).toBeTruthy();
+		const eventDateId = edBody.id;
+		eventDateIds.push( eventDateId );
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { event_id: postId, link_type: 'post' },
+			}
+		);
+		expect( linkRes.ok(), await linkRes.text() ).toBeTruthy();
+
+		const ticketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					capacity: null,
+					ticket_types: [
+						{
+							name: 'Entry',
+							capacity: null,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							minimum_instances: 1,
+							group_ids: [],
+						},
+					],
+					sale_periods: [
+						{
+							name: 'Always on',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2099-01-01 00:00:00',
+						},
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: ticketPrice,
+						},
+					],
+					options: [
+						{ name: 'Morning workshop', price: 15, capacity: null },
+						{ name: 'Welcome drink', price: 0, capacity: null },
+						{ name: 'Tea & "Biscuits"', price: 0, capacity: null },
+						{ name: 'Dinner', price: 0, capacity: null },
+					],
+					settings: {},
+				},
+			}
+		);
+		const ticketsBody = await ticketsRes.json();
+		expect( ticketsRes.ok(), JSON.stringify( ticketsBody ) ).toBeTruthy();
+
+		const options = {};
+		for ( const option of ticketsBody.options || [] ) {
+			options[ option.name ] = option.id;
+		}
+		expect( Object.keys( options ) ).toHaveLength( 4 );
+
+		return {
+			eventDateId,
+			typeId: ticketsBody.ticket_types[ 0 ].id,
+			options,
+		};
+	};
+
+	// A fresh visitor per purchase unless one is given, so no buyer session
+	// carries over by accident.
+	const book = async ( data, browser = null ) => {
+		const visitor =
+			browser || ( await request.newContext( { baseURL: BASE_URL } ) );
+		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				name: 'Extras Buyer',
+				_honeypot: '',
+				idempotency_key: randomUUID(),
+				...data,
+			},
+		} );
+		const text = await res.text();
+		if ( ! browser ) {
+			await visitor.dispose();
+		}
+		expect( res.ok(), text ).toBeTruthy();
+		return JSON.parse( text );
+	};
+
+	const mailTo = async ( email ) => {
+		const res = await api.get(
+			`/wp-json/fair-e2e/v1/captured-mail?to=${ encodeURIComponent(
+				email
+			) }`,
+			{ headers: adminHeaders }
+		);
+		expect( res.ok() ).toBeTruthy();
+		return res.json();
+	};
+
+	const confirmations = async ( email ) =>
+		( await mailTo( email ) ).filter( ( mail ) =>
+			mail.body.includes( 'Registration reference:' )
+		);
+
+	const signupIdsFor = async ( eventDateId ) => {
+		const res = await api.get(
+			`/wp-json/fair-e2e/v1/checkout-keys?event_date_ids[]=${ eventDateId }`,
+			{ headers: adminHeaders }
+		);
+		const body = await res.json();
+		expect( res.ok(), JSON.stringify( body ) ).toBeTruthy();
+		return body.signups.map( ( signup ) => signup.id );
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const pluginsRes = await api.get( '/wp-json/wp/v2/plugins', {
+			headers: adminHeaders,
+		} );
+		if ( pluginsRes.ok() ) {
+			fairAudienceActive = ( await pluginsRes.json() ).some(
+				( p ) =>
+					p.plugin?.includes( 'fair-audience' ) &&
+					p.status === 'active'
+			);
+		}
+	} );
+
+	test.afterAll( async () => {
+		for ( const id of eventDateIds ) {
+			await api.delete( `/wp-json/fair-events/v1/event-dates/${ id }`, {
+				headers: adminHeaders,
+			} );
+		}
+		for ( const id of postIds ) {
+			await api.delete( `/wp-json/wp/v2/fair_event/${ id }?force=true`, {
+				headers: adminHeaders,
+			} );
+		}
+		await api.dispose();
+	} );
+
+	test( 'a free booking lists each of its extras once, escaped', async () => {
+		test.skip( ! fairAudienceActive, 'fair-audience not active' );
+		const { eventDateId, typeId, options } = await createEvent();
+		const email = uniqueEmail( 'free' );
+
+		const body = await book( {
+			email,
+			event_date_id: eventDateId,
+			ticket_type_id: typeId,
+			quantity: 2,
+			ticket_activities: [
+				[ options[ 'Welcome drink' ], options[ 'Tea & "Biscuits"' ] ],
+				[ options[ 'Welcome drink' ] ],
+			],
+		} );
+		expect( body.status ).toBe( 'confirmed' );
+
+		const mails = await confirmations( email );
+		expect( mails ).toHaveLength( 1 );
+		const message = mails[ 0 ].body;
+		expect( message ).toContain( 'Selected options:' );
+		expect( listed( message, 'Welcome drink' ) ).toBe( true );
+		expect( listed( message, 'Tea & "Biscuits"' ) ).toBe( true );
+		expect( message.split( '>Welcome drink</li>' ) ).toHaveLength( 2 );
+		expect( message ).not.toContain( 'Tea & "Biscuits"' );
+		expect( listed( message, 'Dinner' ) ).toBe( false );
+		expect( listed( message, 'Morning workshop' ) ).toBe( false );
+		// Existing details stay intact.
+		expect( message ).toContain( 'Ticket type:' );
+		expect( message ).toContain( 'Entry' );
+	} );
+
+	test( 'a booking without extras has no extras section', async () => {
+		test.skip( ! fairAudienceActive, 'fair-audience not active' );
+		const { eventDateId, typeId } = await createEvent();
+		const email = uniqueEmail( 'none' );
+
+		await book( {
+			email,
+			event_date_id: eventDateId,
+			ticket_type_id: typeId,
+			quantity: 1,
+		} );
+
+		const mails = await confirmations( email );
+		expect( mails ).toHaveLength( 1 );
+		expect( mails[ 0 ].body ).not.toContain( 'Selected options:' );
+	} );
+
+	test( 'a second booking by the same buyer lists only its own extras', async () => {
+		test.skip( ! fairAudienceActive, 'fair-audience not active' );
+		const { eventDateId, typeId, options } = await createEvent();
+		const email = uniqueEmail( 'repeat' );
+		// The same browser, remembered as the buyer after the first booking.
+		const browser = await request.newContext( { baseURL: BASE_URL } );
+
+		try {
+			await book(
+				{
+					email,
+					event_date_id: eventDateId,
+					ticket_type_id: typeId,
+					quantity: 1,
+					ticket_option_ids: [ options[ 'Welcome drink' ] ],
+				},
+				browser
+			);
+			const second = await book(
+				{
+					email,
+					event_date_id: eventDateId,
+					ticket_type_id: typeId,
+					quantity: 1,
+					ticket_option_ids: [ options.Dinner ],
+				},
+				browser
+			);
+			expect( second.status ).toBe( 'confirmed' );
+		} finally {
+			await browser.dispose();
+		}
+
+		const mails = await confirmations( email );
+		expect( mails ).toHaveLength( 2 );
+		expect( listed( mails[ 0 ].body, 'Welcome drink' ) ).toBe( true );
+		expect( listed( mails[ 0 ].body, 'Dinner' ) ).toBe( false );
+		expect( listed( mails[ 1 ].body, 'Dinner' ) ).toBe( true );
+		expect( listed( mails[ 1 ].body, 'Welcome drink' ) ).toBe( false );
+	} );
+
+	test( 'a paid booking lists its paid and free extras once paid', async () => {
+		test.skip( ! fairAudienceActive, 'fair-audience not active' );
+		const { eventDateId, typeId, options } = await createEvent( 10 );
+		const email = uniqueEmail( 'paid' );
+
+		const body = await book( {
+			email,
+			event_date_id: eventDateId,
+			ticket_type_id: typeId,
+			quantity: 1,
+			ticket_option_ids: [
+				options[ 'Morning workshop' ],
+				options[ 'Welcome drink' ],
+			],
+		} );
+		expect( body.status ).toBe( 'payment_required' );
+		expect( await confirmations( email ) ).toHaveLength( 0 );
+
+		const [ signupId ] = await signupIdsFor( eventDateId );
+		const payRes = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-capacity/pay',
+			{ headers: adminHeaders, data: { signup_id: signupId } }
+		);
+		expect( payRes.ok(), await payRes.text() ).toBeTruthy();
+
+		const mails = await confirmations( email );
+		expect( mails ).toHaveLength( 1 );
+		const message = mails[ 0 ].body;
+		expect( message ).toContain( 'Selected options:' );
+		expect( listed( message, 'Morning workshop' ) ).toBe( true );
+		expect( listed( message, 'Welcome drink' ) ).toBe( true );
+		expect( listed( message, 'Dinner' ) ).toBe( false );
+		expect( message ).toContain( 'Amount paid:' );
 	} );
 } );

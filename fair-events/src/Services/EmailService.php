@@ -76,7 +76,7 @@ class EmailService {
 				'registration_reference'       => '#' . $signup_id,
 				'ticket_type_name'             => esc_html( $ticket_type_name ),
 				'payment_amount_display'       => esc_html( $payment_amount_display ),
-				'option_names'                 => array(),
+				'option_names'                 => array_map( 'esc_html', BookingExtras::for_signup( (int) $signup_id ) ),
 				'answers_html'                 => '',
 				'custom_message_html'          => BookingMessage::for_email( (int) $event_date_id ),
 				/* translators: %s: buyer first name */

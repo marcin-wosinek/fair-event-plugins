@@ -1141,19 +1141,9 @@ class SignupHookBridge {
 		if ( ! $transaction_id ) {
 			// This purchase's own ticket type and activities: the relationship
 			// may already describe an earlier purchase for the same date.
-			$activity_names = array();
-			if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
-				foreach ( (array) ( $ticket_selection['ticket_option_ids'] ?? array() ) as $option_id ) {
-					$option = \FairEvents\Models\TicketOption::get_by_id( (int) $option_id );
-					if ( $option && '' !== (string) $option->name ) {
-						$activity_names[] = (string) $option->name;
-					}
-				}
-			}
-
 			$email_service = new EmailService();
 			$event         = get_post( $event_id );
-			$email_service->send_signup_payment_confirmation( $participant, $event, null, array_values( array_unique( $activity_names ) ), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
+			$email_service->send_signup_payment_confirmation( $participant, $event, null, self::free_purchase_activity_names( (int) $signup_id, $ticket_selection ), (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
 		}
 	}
 
@@ -1402,17 +1392,71 @@ class SignupHookBridge {
 			return;
 		}
 
+		( new EmailService() )->send_signup_payment_confirmation(
+			$participant,
+			get_post( $event_participant->event_id ),
+			$transaction,
+			self::stored_purchase_activity_names( (int) $signup->id ),
+			(int) $signup->event_date_id,
+			(int) $signup->ticket_type_id,
+			(int) $event_participant->id
+		);
+	}
+
+	/**
+	 * Names of the activities a free purchase was confirmed with. Read from
+	 * the purchase's own tickets when fair-events stored them there, so the
+	 * email shows exactly what was booked; otherwise (an older fair-events,
+	 * or a purchase it did not store activities for) from the submitted
+	 * option IDs.
+	 *
+	 * @param int   $signup_id        Signup row ID.
+	 * @param array $ticket_selection Ticket selection from fair_events_signup_created.
+	 * @return string[]
+	 */
+	private static function free_purchase_activity_names( $signup_id, $ticket_selection ) {
+		if ( ! empty( $ticket_selection['activities_stored'] ) && class_exists( \FairEvents\Services\BookingExtras::class ) ) {
+			return \FairEvents\Services\BookingExtras::for_signup( (int) $signup_id );
+		}
+
+		$activity_names = array();
+		if ( class_exists( \FairEvents\Models\TicketOption::class ) ) {
+			foreach ( (array) ( $ticket_selection['ticket_option_ids'] ?? array() ) as $option_id ) {
+				$option = \FairEvents\Models\TicketOption::get_by_id( (int) $option_id );
+				if ( $option && '' !== (string) $option->name ) {
+					$activity_names[] = (string) $option->name;
+				}
+			}
+		}
+
+		return array_values( array_unique( $activity_names ) );
+	}
+
+	/**
+	 * Names of the activities confirmed on a purchase's own tickets. Uses
+	 * fair-events' shared resolver, so both senders list the same extras;
+	 * an older fair-events without it falls back to reading the ticket
+	 * activities here.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return string[]
+	 */
+	private static function stored_purchase_activity_names( $signup_id ) {
+		if ( class_exists( \FairEvents\Services\BookingExtras::class ) ) {
+			return \FairEvents\Services\BookingExtras::for_signup( (int) $signup_id );
+		}
+
 		$ticket_ids = array_map(
 			static function ( $ticket ) {
 				return (int) $ticket->id;
 			},
-			\FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup->id )
+			\FairEvents\Models\EventTicket::get_by_signup_id( (int) $signup_id )
 		);
 
 		$activity_names = array();
 		foreach ( \FairEvents\Models\EventTicketActivity::get_by_ticket_ids( $ticket_ids ) as $rows ) {
 			foreach ( $rows as $row ) {
-				if ( ! \FairEvents\Models\EventTicketActivity::is_active_row( $row ) ) {
+				if ( 'confirmed' !== $row->status ) {
 					continue;
 				}
 				// Prefer the current option name so renames are reflected;
@@ -1424,15 +1468,7 @@ class SignupHookBridge {
 			}
 		}
 
-		( new EmailService() )->send_signup_payment_confirmation(
-			$participant,
-			get_post( $event_participant->event_id ),
-			$transaction,
-			array_values( array_unique( array_filter( $activity_names ) ) ),
-			(int) $signup->event_date_id,
-			(int) $signup->ticket_type_id,
-			(int) $event_participant->id
-		);
+		return array_values( array_unique( array_filter( $activity_names ) ) );
 	}
 
 	/**

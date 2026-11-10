@@ -10,6 +10,8 @@ namespace FairEvents\Tests\Services;
 use PHPUnit\Framework\TestCase;
 use FairEvents\Services\EmailService;
 
+require_once __DIR__ . '/Booking_Extras_Test_WPDB.php';
+
 /**
  * Verifies fair-events' standalone confirmation email renders through the
  * shared formatter with the registration reference and (on paid signups) the
@@ -26,6 +28,110 @@ class EmailServiceTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$GLOBALS['_fair_test_sent_emails'] = array();
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new Booking_Extras_Test_WPDB();
+	}
+
+	/**
+	 * Restore the bootstrap's plain $wpdb double.
+	 */
+	protected function tearDown(): void {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+		parent::tearDown();
+	}
+
+	/**
+	 * The confirmation lists every extra confirmed on the booking's tickets,
+	 * paid and free, each once, with the option's current name.
+	 */
+	public function test_confirmation_lists_selected_extras(): void {
+		$wpdb = $GLOBALS['wpdb'];
+		$wpdb->seed_ticket( 42, 100 );
+		$wpdb->seed_ticket( 42, 101 );
+		$wpdb->seed_option( 5, 'Workshop', 15.0 );
+		$wpdb->seed_option( 6, 'Free drink', 0.0 );
+		$wpdb->seed_activity( 100, 5, 'Workshop (old name)' );
+		$wpdb->seed_activity( 100, 6, 'Free drink' );
+		$wpdb->seed_activity( 101, 5, 'Workshop' );
+
+		( new EmailService() )->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test', 0, 30.0 );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringContainsString( 'Selected options:', $message );
+		$this->assertStringContainsString( '>Workshop</li>', $message );
+		$this->assertStringContainsString( '>Free drink</li>', $message );
+		$this->assertSame( 1, substr_count( $message, '>Workshop</li>' ) );
+		$this->assertStringNotContainsString( 'old name', $message );
+		// Existing details stay intact.
+		$this->assertStringContainsString( '#42', $message );
+		$this->assertStringContainsString( '30.00 EUR', $message );
+	}
+
+	/**
+	 * An extra whose option is gone falls back to the name stored with the
+	 * selection.
+	 */
+	public function test_confirmation_falls_back_to_stored_extra_name(): void {
+		$wpdb = $GLOBALS['wpdb'];
+		$wpdb->seed_ticket( 42, 100 );
+		$wpdb->seed_activity( 100, 9, 'Retired activity' );
+
+		( new EmailService() )->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$this->assertStringContainsString( '>Retired activity</li>', $GLOBALS['_fair_test_sent_emails'][0]['message'] );
+	}
+
+	/**
+	 * Extras on another booking, and add-ons still awaiting payment, are left
+	 * out.
+	 */
+	public function test_confirmation_excludes_other_bookings_and_pending_extras(): void {
+		$wpdb = $GLOBALS['wpdb'];
+		$wpdb->seed_ticket( 42, 100 );
+		$wpdb->seed_ticket( 43, 200 );
+		$wpdb->seed_option( 5, 'Workshop' );
+		$wpdb->seed_option( 6, 'Dinner' );
+		$wpdb->seed_option( 7, 'Parking' );
+		$wpdb->seed_activity( 100, 5, 'Workshop' );
+		$wpdb->seed_activity( 100, 7, 'Parking', 'pending_payment', gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS ) );
+		$wpdb->seed_activity( 200, 6, 'Dinner' );
+
+		( new EmailService() )->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringContainsString( '>Workshop</li>', $message );
+		$this->assertStringNotContainsString( 'Dinner', $message );
+		$this->assertStringNotContainsString( 'Parking', $message );
+	}
+
+	/**
+	 * A booking without extras shows no extras section.
+	 */
+	public function test_confirmation_without_extras_omits_section(): void {
+		$GLOBALS['wpdb']->seed_ticket( 42, 100 );
+
+		( new EmailService() )->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringNotContainsString( 'Selected options:', $message );
+		$this->assertStringNotContainsString( '<li', $message );
+	}
+
+	/**
+	 * Extra names are escaped.
+	 */
+	public function test_confirmation_escapes_extra_names(): void {
+		$wpdb = $GLOBALS['wpdb'];
+		$wpdb->seed_ticket( 42, 100 );
+		$wpdb->seed_option( 5, '<script>alert(1)</script> & Co' );
+		$wpdb->seed_activity( 100, 5, 'Stored' );
+
+		( new EmailService() )->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringNotContainsString( '<script>', $message );
+		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt; &amp; Co', $message );
 	}
 
 	/**
