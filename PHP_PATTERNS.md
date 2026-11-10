@@ -511,29 +511,116 @@ namespace `FairEventsShared\`) consumed by several plugins via a `path`
 repository in each consumer's `composer.json`. Each plugin bundles its own
 copy under its own `vendor/`, resolved independently by Composer.
 
-**Only one copy of a given `FairEventsShared\` class is ever loaded per
-request** — whichever active plugin's autoloader resolves it first wins; the
-others never load their copy of that class at all. When plugins update
-independently (e.g. via wp.org, on different release cadences), one site can
-end up running plugin A at version 2.0 alongside plugin B still at 1.0, so the
-copy of the shared package that "wins" the autoload race is not guaranteed to
-be the newest one.
+### Newest copy wins (#2181)
 
-**Additive-only.** Never change an existing shared method's signature (params,
-return type, or removal); ship new capability as a new class or a new method
-instead. A new class/method is skew-safe — Composer's PSR-4 loader simply
-returns when the file is absent, so an older sibling's autoloader falls
-through to whichever plugin ships the new copy. A changed signature fatals
-whenever an older copy of the class wins the autoload race and gets called
-with the new call shape.
+PHP loads each `FairEventsShared\` class once per request, so the copies
+cannot coexist. `fair-events-shared/php/bootstrap.php` (the global class
+`Fair_Events_Shared_Loader`, outside the namespace) makes the newest copy
+the only source:
+
+1. **Registration, while main files load.** Each consumer requires its own
+   `vendor/autoload.php`, then its copy's `vendor/fair-events/shared/bootstrap.php`,
+   and calls `\Fair_Events_Shared_Loader::register()` with `plugin_file`,
+   `package_dir` and `messages` (its `Core\SharedLibraryMessages::message`).
+   The first copy of the file to load defines the class; later copies only
+   register. The version is read from the copy's `composer.json`.
+2. **Selection, on `plugins_loaded` at priority `PHP_INT_MIN`.** The highest
+   version (`version_compare()`) is selected; equal versions use the first
+   registered identical copy. Shared PSR-4 and classmap entries are removed
+   from every registered Composer loader (other namespaces stay), and a
+   prepended autoloader serves `FairEventsShared\` from the selected copy
+   only, so a class missing from it never falls through to an older copy.
+3. **Use, from `plugins_loaded` priority 0.** Consumers start through
+   `\Fair_Events_Shared_Loader::when_ready( __FILE__, $init )` (runs at
+   priority 0, or immediately on an activation request) or check
+   `\Fair_Events_Shared_Loader::is_ready( __FILE__ )` in their own
+   `plugins_loaded` callback (Fair Payments Connector and its Experimental
+   plugin keep priority 10). Nothing may touch a shared class before that:
+   not the main file, constructors, activation callbacks or upgrade
+   routines. Ownership constants and activation/deactivation registrations
+   stay in the main file. Fair Events' notification boot still runs at
+   `plugins_loaded` 20.
+
+Plugins that don't bundle the package follow the same rule: Fair Finance
+boots the shared settings screen on `plugins_loaded` 0 and only when
+`is_ready()`; Fair Events Experimental stays off when Fair Events is
+paused. Fair Calendar Button doesn't use it.
+
+**Early-loaded classes.** PHP can't replace a loaded class. If a shared
+class, interface or trait already loaded from a copy other than the
+selected version when selection runs, the request is a **conflict**:
+nothing is redirected, the provenance (symbol → file, via reflection) is
+recorded, `is_ready()` stays false and every registered plugin skips its
+initialization for that request. Already-running legacy code keeps its own
+classes, best effort. Fair Audience also skips its batch repairs, which go
+through other plugins' models; its schema migrations don't use shared
+classes and still run.
+
+**Notices.** Users with `update_plugins` see them on the Plugins screens
+(site and network) and Fair plugin screens (`fair-…` pages, `fair_…` post
+types), recomputed every request and not dismissible:
+
+- an error naming the paused plugins and the plugin whose copy loaded first,
+  when selection conflicted;
+- one warning naming every active plugin bundling an older copy than the
+  one in use (plugins already named in the error are not repeated).
+
+The selected copy's plugin supplies the wording, in its own text domain;
+the bootstrap itself carries no translatable strings.
+
+**Supported combinations.**
+
+| Combination                                                       | Guarantee                                                               |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Updated plugins only (any versions, any load order)               | Newest copy serves every shared class                                   |
+| One updated plugin                                                | Its own copy, as before                                                 |
+| Updated plugins + audited legacy release, no early class          | Newest copy wins; the legacy loader can't override it; outdated warning |
+| Updated plugins + audited legacy release that loads a class early | Conflict: updated plugins paused for that request, error notice         |
+| Other historical releases, or only legacy plugins                 | No guarantee                                                            |
+
+The audited legacy releases, as shipped on wordpress.org:
+
+| Release                | Bundled shared version | Loads a shared class early               |
+| ---------------------- | ---------------------- | ---------------------------------------- |
+| `fair-timetable@0.7.0` | 0.2.1                  | On admin requests (`Admin\SettingsPage`) |
+| `fair-timetable@0.7.1` | 0.2.6                  | On admin requests (`Admin\SettingsPage`) |
+| `fair-timetable@0.8.0` | 0.2.10                 | On admin requests (`Admin\SettingsPage`) |
+
+0.7.1's lock file names 0.2.5, but the shipped copy declares 0.2.6. Their
+shipped vendor trees are test fixtures in
+`e2e/mu-plugins/lib/legacy-shared/`, exercised by
+`fair-events/src/API/__tests__/SharedLibraryLoader.api.spec.js` and
+`e2e/shared-library-notices.spec.js`; the selection rules themselves are
+covered by `fair-events/__tests__/Shared/SharedLibraryLoaderTest.php`.
+
+Known limits: a legacy plugin activated mid-request registers its Composer
+loader after selection and may serve its own classes for that one request;
+a plugin activated late with a newer copy waits for the next request
+(`is_ready()` is false for it); Composer APCu class caching is not
+supported.
+
+**The bootstrap is a protocol.** Whichever copy loads first runs for every
+plugin, including newer ones. Keep it free of shared classes and
+translations, PHP 7.4 compatible, and never change the meaning of an
+existing method, argument or registration key; add new keys and methods
+only, and bump `PROTOCOL` if old copies must be detected.
+
+**Additive-only — backward compatibility is the contract.** Newest-wins
+means older plugins run against newer shared code, and a conflicted or
+unsupported request can still run newer callers against an older copy.
+Never change an existing shared method's signature (params, return type, or
+removal), its behaviour for existing callers, or a class's place in the
+namespace; ship new capability as a new class or a new method instead, and
+keep old ones working for older callers.
 
 A new key in an existing `$args` array is a call-shape change too, and a
 quieter one: an older copy ignores the key instead of failing. #2126's
 booking message was dropped from confirmations this way until it moved to
 the new `BookingConfirmationEmail` class.
 
-**After editing anything under `fair-events-shared/php/src/`, bump the
-`version` in `fair-events-shared/php/composer.json` and run `npm run
+**After editing anything shipped under `fair-events-shared/php/` (`src/`
+or `bootstrap.php`), bump the `version` in
+`fair-events-shared/php/composer.json` and run `npm run
 composer:update:shared`** (runs `composer update fair-events/shared` in every
 consumer workspace) before committing. `composer install` only re-mirrors a
 `path`-type dependency when the lock file's version/reference for that
@@ -544,7 +631,13 @@ CI once already (class-not-found on a plugin whose cached vendor still had
 the pre-edit copy). If you scaffold a new plugin that consumes the shared
 package, make sure its `package.json` gets a `composer:update:shared` script
 too (see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)) — two plugins were
-found missing it.
+found missing it. The bump is load-bearing: selection compares declared
+versions, so a forgotten bump lets an older copy with the same number win.
+`npm run validate:shared-version` (CI build job) fails when shipped shared
+PHP changed without a higher version, or when a consumer's tracked
+`composer.lock` names another version. A new consumer also needs the
+registration and deferred start described above, and a
+`Core\SharedLibraryMessages` class.
 
 ### Monetary totals: `LineItemTotals`
 
@@ -593,11 +686,14 @@ screen, shared by every active Fair plugin. Plugins never call into the
 class directly — each pushes plain-array field descriptors through a filter,
 so the extension point tolerates version skew: if two active plugins bundle
 different versions of `fair-events-shared`, only one copy of the
-`SettingsPage` class is ever loaded (whichever plugin's autoloader PHP
-resolves it from first), and every other plugin's fields are just arrays that
+`SettingsPage` class is ever loaded (normally the newest, see
+[Newest copy wins](#newest-copy-wins-2181); an outdated legacy plugin can
+still load its own first), and every other plugin's fields are just arrays that
 copy can read regardless of which version registered them.
 
-**Registering a field** — call this once per plugin, guarded by `is_admin()`:
+**Registering a field** — call this once per plugin, guarded by `is_admin()`,
+from initialization that runs after shared-library selection (never while
+the main file loads):
 
 ```php
 if ( is_admin() ) {

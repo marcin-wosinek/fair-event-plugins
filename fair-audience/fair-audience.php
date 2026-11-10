@@ -33,9 +33,26 @@ define( 'FAIR_AUDIENCE_EVENT_NOTIFICATIONS_HANDOFF', true );
 // Composer autoloader.
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Initialize plugin.
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => __DIR__ . '/vendor/fair-events/shared',
+		'messages'    => array( \FairAudience\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
+// Initialize plugin once the shared library is selected.
 use FairAudience\Core\Plugin;
-Plugin::instance()->init();
+\Fair_Events_Shared_Loader::when_ready(
+	__FILE__,
+	static function () {
+		Plugin::instance()->init();
+	}
+);
 
 /**
  * Activation hook.
@@ -839,6 +856,13 @@ function fair_audience_maybe_upgrade_db() {
 		dbDelta( \FairAudience\Database\Schema::get_email_confirmation_tokens_table_sql() );
 		update_option( 'fair_audience_db_version', '1.48.0' );
 		$db_version = '1.48.0';
+	}
+
+	// The batch repairs below go through Fair Events and Fair Payments
+	// Connector models, which stay off when the shared library could not be
+	// selected; they resume on the next request that selects it.
+	if ( ! \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
+		return;
 	}
 
 	// Carry historical participant-level activities and attendance over to

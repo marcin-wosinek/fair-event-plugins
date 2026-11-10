@@ -108,6 +108,22 @@ function verifyComposer(pluginName, zipPath, entries) {
 	}
 
 	console.log(`${pluginName}: ${zipPath} contains ${requiredEntry}.`);
+
+	// Plugins bundling the shared library load its selection bootstrap from
+	// their main file, and the selection reads the copy's version from its
+	// composer.json (#2181).
+	const composerJson = JSON.parse(fs.readFileSync(composerJsonPath, 'utf8'));
+	if (composerJson.require && composerJson.require['fair-events/shared']) {
+		for (const file of ['bootstrap.php', 'composer.json']) {
+			const sharedEntry = `${pluginName}/vendor/fair-events/shared/${file}`;
+			if (!entries.includes(sharedEntry)) {
+				return `${pluginName}: ${zipPath} is missing ${sharedEntry} (the shared library's selection needs it)`;
+			}
+		}
+		console.log(
+			`${pluginName}: ${zipPath} contains the shared library bootstrap.`
+		);
+	}
 	return null;
 }
 

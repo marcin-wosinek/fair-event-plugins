@@ -34,6 +34,18 @@ if ( file_exists( FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php' ) )
 	require_once FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => FAIR_PAYMENTS_CONNECTOR_PLUGIN_DIR . 'vendor/fair-events/shared',
+		'messages'    => array( \FairPaymentsConnector\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
 // Initialize the plugin.
 add_action( 'plugins_loaded', 'fair_payments_connector_init' );
 
@@ -50,6 +62,10 @@ register_deactivation_hook( __FILE__, 'fair_payment_deactivate' );
  * @return void
  */
 function fair_payments_connector_init() {
+	// Shared classes are safe only once the newest copy is selected.
+	if ( ! \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
+		return;
+	}
 	if ( class_exists( 'FairPaymentsConnector\Core\Plugin' ) ) {
 		FairPaymentsConnector\Core\Plugin::instance()->init();
 	}

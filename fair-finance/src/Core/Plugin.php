@@ -73,11 +73,26 @@ class Plugin {
 	}
 
 	/**
-	 * Boot the shared central "Fair Event Plugins" settings screen and
-	 * register this plugin's bundled-translations row on it.
+	 * Boot the shared central "Fair Event Plugins" settings screen once the
+	 * shared library is safe to use.
 	 *
 	 * Fair Finance doesn't bundle fair-events-shared's PHP package; the
 	 * screen comes from any active Fair Event plugin that does.
+	 *
+	 * @return void
+	 */
+	public static function boot_shared_settings_page() {
+		if ( class_exists( 'Fair_Events_Shared_Loader', false ) && ! \Fair_Events_Shared_Loader::is_ready() ) {
+			return;
+		}
+		if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
+			\FairEventsShared\Admin\SettingsPage::boot();
+		}
+	}
+
+	/**
+	 * Boot the shared central "Fair Event Plugins" settings screen and
+	 * register this plugin's bundled-translations row on it.
 	 *
 	 * @return void
 	 */
@@ -86,8 +101,14 @@ class Plugin {
 			return;
 		}
 
-		if ( class_exists( '\FairEventsShared\Admin\SettingsPage' ) ) {
-			\FairEventsShared\Admin\SettingsPage::boot();
+		// This plugin bundles no shared library and boots another plugin's
+		// copy. Loading it while plugins are still loading would pick a copy
+		// before the newest is selected (#2181), so wait until every plugin
+		// has loaded and the selection has run.
+		if ( ! did_action( 'plugins_loaded' ) ) {
+			add_action( 'plugins_loaded', array( self::class, 'boot_shared_settings_page' ), 0 );
+		} else {
+			self::boot_shared_settings_page();
 		}
 
 		add_filter( 'fair_event_plugins_settings_fields', array( $this, 'register_shared_settings_fields' ) );

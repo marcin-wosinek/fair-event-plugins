@@ -8,6 +8,8 @@
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 vendor/
+# Shipped Fair Timetable vendor trees, fixtures for the shared-library loader (#2181)
+!e2e/mu-plugins/lib/legacy-shared/*/vendor/
 
 # Plugin dependencies and build artifacts
 */vendor/*

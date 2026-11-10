@@ -77,6 +77,12 @@ add_action(
 			}
 		}
 
+		// An updated Fair Events stays off when the shared library could not
+		// be selected; this add-on builds on it, so it stays off too.
+		if ( class_exists( 'Fair_Events_Shared_Loader', false ) && ! \Fair_Events_Shared_Loader::is_ready() ) {
+			return;
+		}
+
 		\FairEventsExperimental\Core\Plugin::instance()->init();
 	},
 	5
