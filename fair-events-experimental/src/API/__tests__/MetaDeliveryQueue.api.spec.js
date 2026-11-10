@@ -66,6 +66,30 @@ async function fixture( ...args ) {
 	return JSON.parse( out.match( /E2E_META_QUEUE:(\{.*\})/ )[ 1 ] );
 }
 
+/**
+ * Run two fixture actions at once inside the container, from one wp-env
+ * command: parallel `wp-env run` calls can break wp-env for the rest of the
+ * job (#2189).
+ *
+ * @param {string}   runSource Source URL scoping the run.
+ * @param {Object[]} runs      Two `{ action, key? }` child runs.
+ * @return {Promise<Object>} Reported state, with each child's in `children`.
+ */
+async function parallel( runSource, runs ) {
+	return fixture( 'parallel', runSource, JSON.stringify( runs ) );
+}
+
+/**
+ * Whether two child runs' actions were under way at the same time.
+ *
+ * @param {Object} a One child's reported state.
+ * @param {Object} b The other child's reported state.
+ * @return {boolean} Whether their action intervals overlap.
+ */
+function overlapped( a, b ) {
+	return a.started < b.finished && b.started < a.finished;
+}
+
 async function setOption( name, value ) {
 	await wp( 'option', 'update', name, value );
 }
@@ -341,7 +365,16 @@ test.describe( 'Meta delivery queue', () => {
 			JSON.stringify( { delay: 1 } ),
 			'--format=json'
 		);
-		await Promise.all( [ fixture( 'deliver' ), fixture( 'deliver' ) ] );
+		const { children } = await parallel( source, [
+			{ action: 'deliver' },
+			{ action: 'deliver' },
+		] );
+		// Both workers were sending at once, not one after the other.
+		expect( children.map( ( child ) => child.waited ) ).toEqual( [
+			true,
+			true,
+		] );
+		expect( overlapped( ...children ) ).toBe( true );
 
 		const state = await fixture( 'state', source );
 		// Counted from the per-attempt log: the double's own request log
@@ -363,20 +396,44 @@ test.describe( 'Meta delivery queue', () => {
 			'{"state":"retry_pending","next_attempt_at":"+1800"}'
 		);
 		await fixture( 'reconcile', source );
-		await Promise.all( [
-			fixture( 'queue', source, 'race-a' ),
-			fixture( 'queue', source, 'race-b' ),
+		const { children } = await parallel( source, [
+			{ action: 'queue', key: 'race-a' },
+			{ action: 'queue', key: 'race-b' },
 		] );
+		// Both requests bootstrapped first and then started together.
+		expect( children.map( ( child ) => child.waited ) ).toEqual( [
+			true,
+			true,
+		] );
+		expect(
+			Math.abs( children[ 0 ].started - children[ 1 ].started )
+		).toBeLessThan( 0.1 );
 		await fixture( 'reconcile', source );
 
 		const state = await fixture( 'state', source );
-		expect( state.wakeups.length ).toBeGreaterThanOrEqual( 1 );
+		expect( state.rows ).toHaveLength( 3 );
+		expect( state.wakeups ).toHaveLength( 1 );
 		// Neither request removed the other's early wake-up, and the
 		// distant retry's own wake-up was replaced, not kept alongside.
 		expect( state.wakeups[ 0 ] ).toBeLessThanOrEqual( state.now );
 		expect(
 			state.wakeups.filter( ( at ) => at > state.now + 600 )
 		).toEqual( [] );
+	} );
+
+	test( 'a failing parallel child fails the run with its output', async () => {
+		const failure = await parallel( source, [
+			{ action: 'queue', key: 'ok' },
+			{ action: 'no-such-action' },
+		] ).catch( ( error ) => error );
+		expect( failure ).toBeInstanceOf( Error );
+		expect( failure.message ).toContain(
+			'Parallel child 1 (no-such-action) failed with exit status 1.'
+		);
+		expect( failure.message ).toContain( 'Unknown action no-such-action.' );
+		// The other child still ran to completion, and wp-env still works.
+		const state = await fixture( 'state', source );
+		expect( state.rows ).toHaveLength( 1 );
 	} );
 
 	test( 'Meta warnings on a confirmed receipt are kept, redacted', async () => {
