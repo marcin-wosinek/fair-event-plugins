@@ -23,10 +23,12 @@
  * - `X-Fair-E2E-Plugin-Order: experimental-first` loads the Experimental
  *   plugin (or its stand-in) before Fair Payments Connector (or its stand-in).
  *   Without it Fair Payments Connector loads first, as WordPress sorts them.
- * - `X-Fair-E2E-Old-Shared-First: 1` registers, ahead of every plugin, an
- *   autoloader for a copy of the shared package from before 0.2.17: it
- *   serves every FairEventsShared class except the ones 0.2.17 added, as an
- *   older bundled copy winning the autoload race would.
+ * - `X-Fair-E2E-Old-Shared-First: 1` registers, ahead of every plugin, a
+ *   real copy of the shared package from before 0.2.17 (0.2.10, as Fair
+ *   Timetable 0.8.0 ships it) with the shared-library loader, and loads that
+ *   release's Composer autoloader, as an older Fair plugin whose directory
+ *   sorts first would. That copy lacks the classes 0.2.17 added; the loader
+ *   must still select the newest copy and serve every shared class from it.
  *
  * GET /fair-e2e/v1/api-token-releases reports what the request ran with.
  *
@@ -44,8 +46,6 @@ $GLOBALS['fair_e2e_releases'] = array(
 	'order'      => isset( $_SERVER['HTTP_X_FAIR_E2E_PLUGIN_ORDER'] ) && 'experimental-first' === $_SERVER['HTTP_X_FAIR_E2E_PLUGIN_ORDER'] ? 'experimental-first' : 'core-first',
 	'old_shared' => ! empty( $_SERVER['HTTP_X_FAIR_E2E_OLD_SHARED_FIRST'] ),
 	'loaded'     => array(),
-	'declined'   => array(),
-	'served'     => array(),
 );
 // phpcs:enable
 
@@ -165,42 +165,47 @@ if ( in_array( $fair_e2e_releases_scenario, array( 'core-only', 'both-updated', 
 }
 
 /**
- * Autoloader for a pre-0.2.17 copy of the shared package.
+ * Plugin directory of the release bundling the older shared copy: Fair
+ * Timetable 0.8.0 as shipped, with shared 0.2.10 (see lib/legacy-shared/).
  *
- * @param string $class_name Class to load.
- * @return void
+ * @return string
  */
-function fair_e2e_releases_old_shared_autoload( $class_name ) {
-	if ( 0 !== strpos( $class_name, 'FairEventsShared\\' ) ) {
-		return;
-	}
-	if ( in_array( $class_name, fair_e2e_releases_new_shared_classes(), true ) ) {
-		$GLOBALS['fair_e2e_releases']['declined'][] = $class_name;
-		return;
-	}
+function fair_e2e_releases_old_shared_plugin_dir() {
+	return __DIR__ . '/lib/legacy-shared/fair-timetable-0.8.0';
+}
 
-	$relative = str_replace( '\\', '/', substr( $class_name, strlen( 'FairEventsShared\\' ) ) ) . '.php';
-	foreach ( array( 'fair-events', 'fair-payments-connector', 'fair-payments-connector-experimental' ) as $plugin ) {
-		$file = WP_PLUGIN_DIR . '/' . $plugin . '/vendor/fair-events/shared/src/' . $relative;
-		if ( file_exists( $file ) ) {
-			$GLOBALS['fair_e2e_releases']['served'][] = $class_name;
-			require $file;
-			return;
-		}
-	}
+/**
+ * Package directory of the older shared copy, as the loader reports it.
+ *
+ * @return string
+ */
+function fair_e2e_releases_old_shared_dir() {
+	$dir  = fair_e2e_releases_old_shared_plugin_dir() . '/vendor/fair-events/shared';
+	$real = realpath( $dir );
+	return rtrim( str_replace( '\\', '/', false === $real ? $dir : $real ), '/' );
+}
+
+/**
+ * A plugin path relative to the plugins directory.
+ *
+ * @param string $path Absolute path.
+ * @return string
+ */
+function fair_e2e_releases_plugin_relative( $path ) {
+	return str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $path );
 }
 
 if ( $GLOBALS['fair_e2e_releases']['old_shared'] ) {
-	// Composer prepends each plugin's autoloader as its main file loads, so
-	// prepend this one again once they all have, ahead of the token routes.
-	spl_autoload_register( 'fair_e2e_releases_old_shared_autoload', true, true );
-	add_action(
-		'plugins_loaded',
-		static function () {
-			spl_autoload_unregister( 'fair_e2e_releases_old_shared_autoload' );
-			spl_autoload_register( 'fair_e2e_releases_old_shared_autoload', true, true );
-		},
-		PHP_INT_MIN
+	// An older Fair plugin whose directory sorts first: its Composer
+	// autoloader is in place and its copy registers with the loader before
+	// any other plugin loads. The loader must still select the newest copy.
+	require_once fair_e2e_releases_old_shared_plugin_dir() . '/vendor/autoload.php';
+	require_once WP_PLUGIN_DIR . '/fair-payments-connector/vendor/fair-events/shared/bootstrap.php';
+	Fair_Events_Shared_Loader::register(
+		array(
+			'plugin_file' => fair_e2e_releases_old_shared_plugin_dir() . '/fair-timetable.php',
+			'package_dir' => fair_e2e_releases_old_shared_dir(),
+		)
 	);
 }
 
@@ -219,20 +224,38 @@ add_action(
 					$sources = array();
 					foreach ( fair_e2e_releases_new_shared_classes() as $class_name ) {
 						$sources[ $class_name ] = class_exists( $class_name, false )
-							? str_replace( trailingslashit( WP_PLUGIN_DIR ), '', ( new ReflectionClass( $class_name ) )->getFileName() )
+							? fair_e2e_releases_plugin_relative( ( new ReflectionClass( $class_name ) )->getFileName() )
 							: null;
 					}
 
+					$loader = class_exists( 'Fair_Events_Shared_Loader', false ) ? Fair_Events_Shared_Loader::report() : null;
+
 					return rest_ensure_response(
 						array(
-							'releases'      => $GLOBALS['fair_e2e_releases']['releases'],
-							'order'         => $GLOBALS['fair_e2e_releases']['order'],
-							'loaded'        => $GLOBALS['fair_e2e_releases']['loaded'],
-							'old_shared'    => $GLOBALS['fair_e2e_releases']['old_shared'],
-							'declined'      => array_values( array_unique( $GLOBALS['fair_e2e_releases']['declined'] ) ),
-							'served'        => array_values( array_unique( $GLOBALS['fair_e2e_releases']['served'] ) ),
-							'shared_source' => $sources,
-							'constants'     => array(
+							'releases'       => $GLOBALS['fair_e2e_releases']['releases'],
+							'order'          => $GLOBALS['fair_e2e_releases']['order'],
+							'loaded'         => $GLOBALS['fair_e2e_releases']['loaded'],
+							'old_shared'     => $GLOBALS['fair_e2e_releases']['old_shared'],
+							'old_shared_dir' => fair_e2e_releases_old_shared_dir(),
+							'shared_loader'  => null === $loader ? null : array(
+								'state'      => $loader['state'],
+								'registered' => array_map(
+									static function ( $package ) {
+										return array(
+											'dir'     => $package['dir'],
+											'version' => $package['version'],
+										);
+									},
+									$loader['packages']
+								),
+								'selected'   => null === $loader['selected'] ? null : array(
+									'dir'     => $loader['selected']['dir'],
+									'plugin'  => fair_e2e_releases_plugin_relative( $loader['selected']['dir'] ),
+									'version' => $loader['selected']['version'],
+								),
+							),
+							'shared_source'  => $sources,
+							'constants'      => array(
 								'owns'                 => defined( 'FAIR_PAYMENTS_CONNECTOR_OWNS_API_TOKENS' ),
 								'handoff'              => defined( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_API_TOKENS_HANDOFF' ),
 								'experimental_version' => defined( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_VERSION' ) ? FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_VERSION : null,
