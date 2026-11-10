@@ -8,7 +8,7 @@
 namespace FairEvents\Tests\Models;
 
 use FairEvents\Models\EventSignup;
-use FairEvents\Hooks\PaymentHooks;
+use FairEvents\Services\PurchaseLifecycle;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -102,6 +102,38 @@ class EventSignupTest extends TestCase {
 	}
 
 	/**
+	 * Apply a paid notification to the purchases its payment links name,
+	 * as PurchaseLifecycle::handle_paid() does for each linked purchase.
+	 *
+	 * @param int[]  $signup_ids  Linked purchases.
+	 * @param object $transaction Connector transaction.
+	 * @return void
+	 */
+	private function pay( array $signup_ids, $transaction ): void {
+		foreach ( $signup_ids as $signup_id ) {
+			if ( PurchaseLifecycle::confirm_paid_signup( $signup_id ) ) {
+				PurchaseLifecycle::announce_confirmed( EventSignup::get_by_id( $signup_id ), $transaction );
+			}
+		}
+	}
+
+	/**
+	 * Apply a failed notification to the purchases whose latest attempt it
+	 * is, as PurchaseLifecycle::handle_failed() does.
+	 *
+	 * @param int[]  $signup_ids  Linked purchases.
+	 * @param object $transaction Connector transaction.
+	 * @return void
+	 */
+	private function fail_payment( array $signup_ids, $transaction ): void {
+		foreach ( $signup_ids as $signup_id ) {
+			if ( EventSignup::fail_pending( $signup_id ) ) {
+				PurchaseLifecycle::announce_failed( $signup_id, $transaction );
+			}
+		}
+	}
+
+	/**
 	 * A paid callback confirms the signup without replacing customer data.
 	 */
 	public function test_payment_confirmation_preserves_registration_data(): void {
@@ -119,18 +151,7 @@ class EventSignupTest extends TestCase {
 		$GLOBALS['wpdb']->seed_row( 'wp_fair_events_signups', 10, $signup );
 		$GLOBALS['_fair_test_actions'] = array();
 
-		PaymentHooks::handle_payment_paid(
-			(object) array(),
-			(object) array(
-				'id'       => 40,
-				'metadata' => wp_json_encode(
-					array(
-						'source'    => 'fair-events-get-tickets',
-						'signup_id' => 10,
-					)
-				),
-			)
-		);
+		$this->pay( array( 10 ), (object) array( 'id' => 40 ) );
 
 		$confirmed = EventSignup::get_by_id( 10 );
 		$this->assertSame( 'confirmed', $confirmed->status );
@@ -165,12 +186,12 @@ class EventSignupTest extends TestCase {
 		);
 		$GLOBALS['_fair_test_actions'] = array();
 
-		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
+		$this->fail_payment( array( 10 ), $transaction );
 		$this->assertSame( 'expired', EventSignup::get_by_id( 10 )->status );
 		$this->assertArrayNotHasKey( 'fair_events_signup_payment_failed', $GLOBALS['_fair_test_actions'] );
 
-		PaymentHooks::handle_payment_paid( (object) array(), $transaction );
-		PaymentHooks::handle_payment_paid( (object) array(), $transaction );
+		$this->pay( array( 10 ), $transaction );
+		$this->pay( array( 10 ), $transaction );
 		$this->assertSame( 'confirmed', EventSignup::get_by_id( 10 )->status );
 		$this->assertCount( 1, $GLOBALS['_fair_test_actions']['fair_events_signup_confirmed'] );
 	}
@@ -202,8 +223,8 @@ class EventSignupTest extends TestCase {
 		);
 		$GLOBALS['_fair_test_actions'] = array();
 
-		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
-		PaymentHooks::handle_payment_failed( (object) array(), $transaction );
+		$this->fail_payment( array( 10, 11 ), $transaction );
+		$this->fail_payment( array( 10, 11 ), $transaction );
 
 		$this->assertSame( 'failed', EventSignup::get_by_id( 10 )->status );
 		$this->assertSame( 'failed', EventSignup::get_by_id( 11 )->status );
@@ -280,18 +301,7 @@ class EventSignupTest extends TestCase {
 		$this->assertSame( 'released', EventSignup::release_for_restart( 40, array( 10 ) ) );
 		$GLOBALS['_fair_test_actions'] = array();
 
-		PaymentHooks::handle_payment_paid(
-			(object) array(),
-			(object) array(
-				'id'       => 40,
-				'metadata' => wp_json_encode(
-					array(
-						'source'    => 'fair-events-get-tickets',
-						'signup_id' => 10,
-					)
-				),
-			)
-		);
+		$this->pay( array( 10 ), (object) array( 'id' => 40 ) );
 
 		$this->assertSame( 'confirmed', EventSignup::get_by_id( 10 )->status );
 		$this->assertCount( 1, $GLOBALS['_fair_test_actions']['fair_events_signup_confirmed'] );

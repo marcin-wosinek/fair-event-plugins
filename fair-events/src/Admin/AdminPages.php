@@ -7,7 +7,6 @@
 
 namespace FairEvents\Admin;
 
-use FairEvents\API\EventStatisticsController;
 use FairEvents\Models\EventDates;
 use FairEvents\Services\EventCopyService;
 use FairEvents\Settings\Settings;
@@ -526,14 +525,12 @@ class AdminPages {
 				$localized_data['audienceUrl'] = admin_url( 'admin.php?page=fair-audience-event-participants&event_date_id=' );
 			}
 
-			// The Statistics tab mirrors its REST route: administrators only,
-			// once the Events readers are active or, before that, while Fair
-			// Audience provides the data.
-			$localized_data['statisticsAvailable'] = EventStatisticsController::is_available() && current_user_can( 'manage_options' );
+			// The Statistics tab mirrors its REST route: administrators only.
+			$localized_data['statisticsAvailable'] = current_user_can( 'manage_options' );
 
-			// The Finance tab's purchase payments read the payment links once
-			// the Events readers are active (PAYMENT_HISTORY_MIGRATION.md §8.15).
-			$localized_data['paymentReadersActive'] = \FairEvents\Services\PaymentHistoryReaders::active() && current_user_can( 'manage_options' );
+			// The Finance tab's purchase payments, from the payment links
+			// (PAYMENT_HISTORY_MIGRATION.md §8.15): administrators only.
+			$localized_data['purchasePaymentsAvailable'] = current_user_can( 'manage_options' );
 
 			// Fair Finance supplies costs, budgets and accounting entries on the
 			// Finance tab. Always present, so the tab can tell it apart from a
@@ -633,7 +630,7 @@ class AdminPages {
 				array(
 					'eventDateId'         => $event_date_id,
 					'manageEventUrl'      => admin_url( 'admin.php?page=fair-events-manage-event' ),
-					'statisticsAvailable' => EventStatisticsController::is_available(),
+					'statisticsAvailable' => current_user_can( 'manage_options' ),
 					'paymentHistoryUrl'   => admin_url( 'admin.php?page=fair-events-payment-history' ),
 					'allEventsUrl'        => admin_url( 'admin.php?page=fair-events-all-events' ),
 				)

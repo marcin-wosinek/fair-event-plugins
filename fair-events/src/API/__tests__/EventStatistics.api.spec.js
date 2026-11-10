@@ -1,7 +1,10 @@
 /**
  * Live API coverage for event sales statistics: the canonical fair-events
  * route and the fair-audience path it moved from (#1726), and the capacity
- * figures it reports beside them (#1711).
+ * figures it reports beside them (#1711). Tickets and revenue come from
+ * Fair Events purchases and their payment links alone (#2251): a Fair
+ * Audience relationship, its participant-scope activities and its ledger
+ * never count.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -40,41 +43,8 @@ function addDays( date, days ) {
 	return value.toISOString().slice( 0, 10 );
 }
 
-function setParticipantCreatedAt( eventDateId, participantId, createdAt ) {
-	const output = execFileSync(
-		'npx',
-		[
-			'wp-env',
-			'run',
-			'tests-cli',
-			'wp',
-			'eval-file',
-			'wp-content/mu-plugins/scripts/set-event-participant-created-at.php',
-			String( eventDateId ),
-			String( participantId ),
-			`${ createdAt }T12:00:00`,
-		],
-		{
-			cwd: new URL( '../../../../', import.meta.url ),
-			encoding: 'utf8',
-		}
-	);
-	const match = output.match( /E2E_EVENT_STATISTICS:(\{.*\})/ );
-	if ( ! match ) {
-		throw new Error( `Expected fixture output, got:\n${ output }` );
-	}
-	return JSON.parse( match[ 1 ] );
-}
-
-function addTransaction(
-	relationshipId,
-	amount,
-	currency,
-	status,
-	kind,
-	date,
-	transactionId = 0
-) {
+// A Fair Audience ledger row for a relationship. Statistics never read it.
+function addLedgerTransaction( relationshipId, amount, date ) {
 	const output = execFileSync(
 		'npx',
 		[
@@ -86,11 +56,11 @@ function addTransaction(
 			'wp-content/mu-plugins/scripts/seed-event-statistics-transaction.php',
 			String( relationshipId ),
 			String( amount ),
-			currency,
-			status,
-			kind,
+			'EUR',
+			'paid',
+			'charge',
 			`${ date } 12:00:00`,
-			String( transactionId ),
+			'0',
 		],
 		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
 	);
@@ -157,6 +127,29 @@ async function ticketFixtureAsync( action, data ) {
 	return JSON.parse( match[ 1 ] );
 }
 
+// Connector transactions and payment links, written directly.
+async function paymentFixtureAsync( action, data ) {
+	const { stdout } = await promisify( execFile )(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'wp',
+			'eval-file',
+			'wp-content/mu-plugins/scripts/payment-readers.php',
+			action,
+			JSON.stringify( data ),
+		],
+		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
+	);
+	const match = stdout.match( /E2E_PAYMENT_READERS:(\{.*\})/ );
+	if ( ! match ) {
+		throw new Error( `Expected fixture output, got:\n${ stdout }` );
+	}
+	return JSON.parse( match[ 1 ] );
+}
+
 const NAMESPACES = [ 'fair-events/v1', 'fair-audience/v1' ];
 
 const statisticsPath = ( namespace, eventDateId ) =>
@@ -181,6 +174,7 @@ test.describe( 'EventStatisticsController', () => {
 	let today;
 	const eventIds = [];
 	const participantIds = [];
+	const transactionIds = [];
 	const occurrences = {};
 	let series;
 	const username = `statistics-subscriber-${ Date.now() }`;
@@ -222,40 +216,40 @@ test.describe( 'EventStatisticsController', () => {
 		return { eventId, eventDateId };
 	}
 
-	async function addParticipant( eventDateId, label, createdAt = null ) {
-		const participant = await api.post(
-			'/wp-json/fair-audience/v1/participants',
-			{
-				headers: adminHeaders,
-				data: {
-					name: `Statistics ${ label }`,
-					email: `statistics-${ Date.now() }-${
-						participantIds.length
-					}@example.test`,
-				},
-			}
-		);
-		expect( participant.ok() ).toBeTruthy();
-		const participantId = ( await participant.json() ).id;
-		participantIds.push( participantId );
-		const relationship = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-			{
-				headers: adminHeaders,
-				data: { participant_id: participantId, label },
-			}
-		);
-		expect( relationship.ok() ).toBeTruthy();
-		const relationshipData = await relationship.json();
-		if ( createdAt ) {
-			const result = setParticipantCreatedAt(
-				eventDateId,
-				participantId,
-				createdAt
-			);
-			expect( result.updated ).toBe( 1 );
+	// A one-ticket Events purchase made on a day, as an offset from today.
+	function purchase( eventDateId, offset, extra = {} ) {
+		return ticketFixture( 'signup', {
+			eventDateId,
+			quantity: 1,
+			createdAt: `${ addDays( today, offset ) } 12:00:00`,
+			units: [ confirmed() ],
+			...extra,
+		} ).signupId;
+	}
+
+	// A Connector attempt, linked to purchases with the amount each gets.
+	async function payment( allocations, date, options = {} ) {
+		const createdAt = `${ date } 12:00:00`;
+		const total =
+			options.total ??
+			allocations.reduce( ( sum, [ , amount ] ) => sum + amount, 0 );
+		const { transactionId } = await paymentFixtureAsync( 'transaction', {
+			amount: total,
+			currency: options.currency ?? 'EUR',
+			status: options.status ?? 'paid',
+			createdAt,
+		} );
+		transactionIds.push( transactionId );
+		for ( const [ signupId, amount ] of allocations ) {
+			await paymentFixtureAsync( 'link', {
+				signupId,
+				transactionId,
+				amount,
+				currency: options.currency ?? 'EUR',
+				createdAt,
+			} );
 		}
-		return relationshipData.id;
+		return transactionId;
 	}
 
 	async function addRelationship( eventDateId, label = 'signed_up' ) {
@@ -359,18 +353,28 @@ test.describe( 'EventStatisticsController', () => {
 		occurrences.tickets = await createOccurrence( 'tickets', 10 );
 		occurrences.capacity = await createOccurrence( 'capacity', 10 );
 
-		occurrences.upcoming.firstRelationshipId = await addParticipant(
+		occurrences.upcoming.firstSignupId = purchase(
 			occurrences.upcoming.eventDateId,
-			'signed_up',
-			addDays( today, -20 )
+			-20
 		);
-		occurrences.upcoming.secondRelationshipId = await addParticipant(
+		occurrences.upcoming.secondSignupId = purchase(
 			occurrences.upcoming.eventDateId,
-			'signed_up',
-			today
+			0
 		);
+		// One confirmed purchase; unpaid purchases and every kind of Fair
+		// Audience relationship never count.
+		purchase( occurrences.qualifying.eventDateId, -1 );
+		purchase( occurrences.qualifying.eventDateId, -1, {
+			status: 'pending_payment',
+			units: [ { status: 'pending_payment' } ],
+			holdMinutes: 15,
+		} );
+		purchase( occurrences.qualifying.eventDateId, -1, {
+			status: 'failed',
+			units: [ { status: 'failed' } ],
+		} );
 		for ( const label of [ 'signed_up', 'interested', 'collaborator' ] ) {
-			await addParticipant( occurrences.qualifying.eventDateId, label );
+			await addRelationship( occurrences.qualifying.eventDateId, label );
 		}
 
 		const user = await api.post( '/wp-json/wp/v2/users', {
@@ -388,56 +392,41 @@ test.describe( 'EventStatisticsController', () => {
 	} );
 
 	test( 'aggregates payment history and excludes inconsistent currencies', async () => {
-		const first = occurrences.upcoming.firstRelationshipId;
-		const second = occurrences.upcoming.secondRelationshipId;
-		const sharedCharge = addTransaction(
-			first,
-			10,
-			'EUR',
-			'paid',
-			'charge',
+		const first = occurrences.upcoming.firstSignupId;
+		const second = occurrences.upcoming.secondSignupId;
+		// One payment shared by both purchases counts once, as its
+		// allocations.
+		await payment(
+			[
+				[ first, 4 ],
+				[ second, 6 ],
+			],
 			addDays( today, -25 )
 		);
-		addTransaction(
-			first,
-			7.5,
-			'EUR',
-			'paid',
-			'charge',
-			addDays( today, -5 )
-		);
-		addTransaction(
-			first,
-			2.5,
-			'EUR',
-			'paid',
-			'refund',
-			addDays( today, -2 )
-		);
-		addTransaction(
-			first,
-			99,
-			'EUR',
-			'failed',
-			'charge',
-			addDays( today, -1 )
-		);
-		addTransaction( first, 30, 'USD', 'paid', 'charge', today );
-		addTransaction(
-			second,
-			10,
-			'EUR',
-			'paid',
-			'charge',
-			addDays( today, -25 ),
-			sharedCharge
-		);
+		await payment( [ [ first, 7.5 ] ], addDays( today, -5 ) );
+		// A failed attempt and a refund-labelled record never count.
+		await payment( [ [ first, 99 ] ], addDays( today, -1 ), {
+			status: 'failed',
+		} );
+		const refund = await payment( [], addDays( today, -2 ), {
+			total: 2.5,
+		} );
+		await paymentFixtureAsync( 'link', {
+			signupId: first,
+			transactionId: refund,
+			amount: 0,
+			role: 'legacy_refund_record',
+			createdAt: `${ addDays( today, -2 ) } 12:00:00`,
+		} );
+		await payment( [ [ first, 30 ] ], today, { currency: 'USD' } );
 
 		const body = await getStatistics( occurrences.upcoming.eventDateId );
 		expect( body.currency ).toBe( 'EUR' );
 		expect( body.total_sales ).toBe( 2 );
-		expect( body.total_sales_amount ).toBe( 15 );
+		expect( body.revenue_state ).toBe( 'available' );
+		expect( body.total_sales_amount ).toBe( 17.5 );
 		expect( body.excluded_currencies ).toEqual( [ 'USD' ] );
+		expect( body ).not.toHaveProperty( 'payment_readers' );
 		expect( body.amount_series.map( ( point ) => point.date ) ).toEqual(
 			body.series.map( ( point ) => point.date )
 		);
@@ -454,7 +443,7 @@ test.describe( 'EventStatisticsController', () => {
 			body.amount_series.find(
 				( point ) => point.date === addDays( today, -2 )
 			).amount
-		).toBe( 15 );
+		).toBe( 17.5 );
 		expect(
 			body.amount_series.findLast(
 				( point ) => typeof point.amount === 'number'
@@ -464,7 +453,10 @@ test.describe( 'EventStatisticsController', () => {
 	} );
 
 	test.afterAll( async () => {
-		ticketFixture( 'cleanup', {
+		if ( transactionIds.length ) {
+			await paymentFixtureAsync( 'cleanup', { transactionIds } );
+		}
+		await ticketFixtureAsync( 'cleanup', {
 			eventDateIds: Object.values( occurrences ).map(
 				( occurrence ) => occurrence.eventDateId
 			),
@@ -473,7 +465,9 @@ test.describe( 'EventStatisticsController', () => {
 				: [],
 		} );
 		if ( series ) {
-			ticketFixture( 'cleanup', { eventDateIds: series.occurrenceIds } );
+			await ticketFixtureAsync( 'cleanup', {
+				eventDateIds: series.occurrenceIds,
+			} );
 			runFixture(
 				'cleanup-event.php',
 				[ String( series.eventId ), String( series.eventDateId ) ],
@@ -517,7 +511,7 @@ test.describe( 'EventStatisticsController', () => {
 		await subscriberApi?.dispose();
 	} );
 
-	test( 'counts confirmed tickets, historical admissions, and per-ticket activities', async () => {
+	test( 'counts confirmed tickets, unbackfilled purchases, and per-ticket activities, never relationships', async () => {
 		const eventDateId = occurrences.tickets.eventDateId;
 		const at = ( offset, time = '12:00:00' ) =>
 			`${ addDays( today, offset ) } ${ time }`;
@@ -569,14 +563,15 @@ test.describe( 'EventStatisticsController', () => {
 		// Historical signups without ticket rows count by quantity: before
 		// the chart window, with no activities...
 		signup( null, at( -30 ), [], { quantity: 2 } );
-		// ...one ticket with participant-scoped activities...
+		// ...and the same with one and with two tickets, whose holders also
+		// hold participant-scope activities in Fair Audience, which never
+		// count.
 		const single = await addRelationship( eventDateId );
 		signup( single.participantId, at( -2 ), [], { quantity: 1 } );
 		ticketFixture( 'participant-option', {
 			relationshipId: single.relationshipId,
 			...yoga,
 		} );
-		// ...and two tickets whose activities cannot be attributed.
 		const ambiguous = await addRelationship( eventDateId );
 		signup( ambiguous.participantId, at( -2 ), [], { quantity: 2 } );
 		ticketFixture( 'participant-option', {
@@ -587,31 +582,23 @@ test.describe( 'EventStatisticsController', () => {
 		signup( null, at( -1, '23:30:00' ), [ confirmed(), confirmed() ], {
 			quantity: 3,
 		} );
-		// A relationship with no signup is one historical admission.
+		// A relationship with no purchase behind it, its activity and its
+		// ledger payment are not an admission, an activity or revenue.
 		const legacy = await addRelationship( eventDateId );
-		setParticipantCreatedAt(
-			eventDateId,
-			legacy.participantId,
-			addDays( today, -3 )
-		);
 		ticketFixture( 'participant-option', {
 			relationshipId: legacy.relationshipId,
 			...thai,
 		} );
-		addTransaction(
-			legacy.relationshipId,
-			20,
-			'EUR',
-			'paid',
-			'charge',
-			addDays( today, -3 )
-		);
+		addLedgerTransaction( legacy.relationshipId, 20, addDays( today, -3 ) );
 
 		let body = await getStatistics( eventDateId );
-		expect( body.total_tickets ).toBe( 13 );
+		expect( body.total_tickets ).toBe( 12 );
 		expect( body.total_sales ).toBe( body.total_tickets );
-		expect( body.total_sales_amount ).toBe( 20 );
-		expect( body.tickets_without_activity_assignment ).toBe( 2 );
+		expect( body.revenue_state ).toBe( 'available' );
+		expect( body.total_sales_amount ).toBe( 0 );
+		expect( body ).not.toHaveProperty(
+			'tickets_without_activity_assignment'
+		);
 		expect( body.incomplete_ticket_backfills ).toBe( 1 );
 		const totalOn = ( offset ) =>
 			body.series.find(
@@ -621,21 +608,23 @@ test.describe( 'EventStatisticsController', () => {
 		expect( totalOn( -6 ) ).toBe( 5 );
 		expect( totalOn( -5 ) ).toBe( 5 );
 		expect( totalOn( -4 ) ).toBe( 7 );
-		expect( totalOn( -3 ) ).toBe( 8 );
-		expect( totalOn( -2 ) ).toBe( 11 );
-		expect( totalOn( -1 ) ).toBe( 13 );
-		expect( totalOn( 0 ) ).toBe( 13 );
+		expect( totalOn( -3 ) ).toBe( 7 );
+		expect( totalOn( -2 ) ).toBe( 10 );
+		expect( totalOn( -1 ) ).toBe( 12 );
+		expect( totalOn( 0 ) ).toBe( 12 );
 		expect( body.tickets_per_activity ).toEqual( [
-			{ id: 900001, name: 'Yoga', count: 3 },
 			{ id: 900002, name: 'Acro', count: 2 },
-			{ id: 900003, name: 'Thai', count: 1 },
+			{ id: 900001, name: 'Yoga', count: 2 },
 			{ id: 900005, name: 'Yoga', count: 1 },
 		] );
 		expect( body.activities_per_ticket ).toEqual( [
-			{ activities: 0, tickets: 5 },
-			{ activities: 1, tickets: 5 },
+			{ activities: 0, tickets: 8 },
+			{ activities: 1, tickets: 3 },
 			{ activities: 2, tickets: 1 },
 		] );
+		// Capacity counts the same purchases: the relationship takes no
+		// place.
+		expect( body.event_capacity.taken ).toBe( body.total_tickets );
 		expect( JSON.stringify( body ) ).not.toMatch( /@example\.test/ );
 
 		// A transfer changes nothing; each cancellation or refund removes one.
@@ -645,25 +634,25 @@ test.describe( 'EventStatisticsController', () => {
 			holderParticipantId: second.participantId,
 		} );
 		expect( ( await getStatistics( eventDateId ) ).total_tickets ).toBe(
-			13
+			12
 		);
 		ticketFixture( 'ticket-status', {
 			ticketId: threeTickets.ticketIds[ 2 ],
 			status: 'cancelled',
 		} );
 		body = await getStatistics( eventDateId );
-		expect( body.total_tickets ).toBe( 12 );
+		expect( body.total_tickets ).toBe( 11 );
 		expect( body.activities_per_ticket[ 0 ] ).toEqual( {
 			activities: 0,
-			tickets: 4,
+			tickets: 7,
 		} );
 		ticketFixture( 'ticket-status', {
 			ticketId: oneMore.ticketIds[ 0 ],
 			status: 'refunded',
 		} );
 		body = await getStatistics( eventDateId );
-		expect( body.total_tickets ).toBe( 11 );
-		expect( body.total_sales_amount ).toBe( 20 );
+		expect( body.total_tickets ).toBe( 10 );
+		expect( body.total_sales_amount ).toBe( 0 );
 		expect(
 			body.tickets_per_activity.find( ( row ) => row.id === 900002 ).count
 		).toBe( 1 );
@@ -1109,20 +1098,14 @@ test.describe( 'EventStatisticsController', () => {
 			{ offset: -3, amount: 40 },
 		];
 		for ( const sale of sales ) {
-			const buyer = await addRelationship( eventDateId );
-			await ticketFixtureAsync( 'signup', {
+			const { signupId } = await ticketFixtureAsync( 'signup', {
 				eventDateId,
-				participantId: buyer.participantId,
 				quantity: 1,
 				createdAt: `${ addDays( today, sale.offset ) } 12:00:00`,
 				units: [ confirmed() ],
 			} );
-			addTransaction(
-				buyer.relationshipId,
-				sale.amount,
-				'EUR',
-				'paid',
-				'charge',
+			await payment(
+				[ [ signupId, sale.amount ] ],
 				addDays( today, sale.offset )
 			);
 		}
@@ -1271,7 +1254,7 @@ test.describe( 'EventStatisticsController', () => {
 		expect( body.series.at( -1 ).total ).toBe( body.total_sales );
 	} );
 
-	test( 'counts only signed-up rows and preserves the final total', async () => {
+	test( 'counts only confirmed purchases, never relationships, and preserves the final total', async () => {
 		const body = await getStatistics( occurrences.qualifying.eventDateId );
 		expect( body.total_sales ).toBe( 1 );
 		expect(

@@ -40,11 +40,8 @@ class PaymentHooks {
 	public static function init() {
 		add_action( 'fair_payment_paid', array( static::class, 'handle_payment_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_payment_failed' ), 10, 2 );
-		add_action( 'fair_payment_paid', array( static::class, 'handle_signup_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_signup_failed' ), 10, 2 );
-		add_action( 'fair_payment_paid', array( static::class, 'handle_activities_added_paid' ), 10, 2 );
 		add_action( 'fair_payment_failed', array( static::class, 'handle_activities_added_failed' ), 10, 2 );
-		add_action( 'fair_payment_paid', array( static::class, 'handle_series_upgrade_paid' ), 10, 2 );
 		add_action( 'fair_events_purchase_payment_applied', array( static::class, 'project_payment_applied' ), 10, 2 );
 
 		add_action( 'fair_audience_event_signup_paid', array( static::class, 'send_signup_confirmation_email' ), 10, 2 );
@@ -184,11 +181,11 @@ class PaymentHooks {
 		$event_participants = array();
 
 		if ( ! $is_fee_payment ) {
-			// The purchases this transaction paid for — from Fair Events'
-			// payment links once its readers are active, before that from the
-			// transaction's own evidence (TransactionPurchases). Never another
-			// purchase of the same participant (#2250).
-			$event_participants = TransactionPurchases::create()->for_transaction( (int) $transaction->id, $metadata );
+			// The purchases this transaction paid for, from Fair Events'
+			// payment links (PAYMENT_HISTORY_MIGRATION.md §8.15). Without
+			// them nothing is named: never the ledger, nor another purchase
+			// of the same participant (#2250, #2251).
+			$event_participants = TransactionPurchases::create()->for_transaction( (int) $transaction->id );
 		} elseif ( class_exists( FeeRepository::class ) ) {
 			// Membership-fee payments — resolve the group/fee names so the
 			// notification names what was actually purchased instead of the
@@ -500,63 +497,6 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Flip a pending_payment event_participant row to signed_up when Mollie
-	 * confirms the payment.
-	 *
-	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payments-connector.
-	 */
-	public static function handle_signup_paid( $payment, $transaction ) {
-		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
-		if ( empty( $metadata['source'] ) || 'fair-audience-signup' !== $metadata['source'] ) {
-			return;
-		}
-
-		// After the payment history cutover Fair Events confirms the
-		// purchases and this plugin follows (project_payment_applied()).
-		if ( EventsLifecycle::active() ) {
-			return;
-		}
-
-		$repo   = new EventParticipantRepository();
-		$ledger = new EventParticipantTransactionRepository();
-
-		// Resolve via the ledger, the sole registration↔transaction link
-		// (see #1112, #1113). A 'multiple_instances' purchase links several
-		// rows to the same transaction; every other signup path links exactly
-		// one.
-		$event_participants = self::resolve_event_participants_for_transaction( $repo, $ledger, (int) $transaction->id );
-		if ( empty( $event_participants ) ) {
-			return;
-		}
-
-		$confirmation_participant = null;
-		foreach ( $event_participants as $event_participant ) {
-			if ( 'pending_payment' !== $event_participant->label ) {
-				continue;
-			}
-
-			$event_participant->label              = 'signed_up';
-			$event_participant->payment_expires_at = null;
-			$event_participant->save();
-
-			// Preserve this charge in the ledger so a registration keeps its
-			// full payment history across later attempts (e.g. a series-pass
-			// upgrade). Idempotent under webhook retries via the ledger's
-			// unique key.
-			$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
-
-			if ( null === $confirmation_participant ) {
-				$confirmation_participant = $event_participant;
-			}
-		}
-
-		if ( null !== $confirmation_participant ) {
-			do_action( 'fair_audience_event_signup_paid', $confirmation_participant, $transaction );
-		}
-	}
-
-	/**
 	 * Mark a pending_payment row as having a failed transaction, while keeping
 	 * the link to that transaction so the resume-link flow can surface the
 	 * retry UI when the buyer returns via the email link.
@@ -580,7 +520,7 @@ class PaymentHooks {
 		$repo   = new EventParticipantRepository();
 		$ledger = new EventParticipantTransactionRepository();
 
-		// See handle_signup_paid(): a 'multiple_instances' purchase shares one
+		// A 'multiple_instances' purchase shares one
 		// transaction across several rows. Fire the action once, using the
 		// first still-pending row, so the resume-link email is sent a single
 		// time regardless of how many occurrences were selected.
@@ -593,127 +533,6 @@ class PaymentHooks {
 			do_action( 'fair_audience_event_signup_failed', $event_participant, $transaction );
 			return;
 		}
-	}
-
-	/**
-	 * Attach added activities to an existing signed-up subscription once Mollie
-	 * confirms the add-on payment. The base signup row is never touched: a
-	 * failed add-on simply leaves nothing attached.
-	 *
-	 * Idempotent — Mollie retries the webhook, so a per-transaction transient
-	 * guards against attaching (and emailing) twice.
-	 *
-	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payments-connector.
-	 */
-	public static function handle_activities_added_paid( $payment, $transaction ) {
-		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
-		if ( empty( $metadata['source'] ) || 'fair-audience-activity-addon' !== $metadata['source'] ) {
-			return;
-		}
-
-		// After the payment history cutover Fair Events confirms the
-		// activities and this plugin follows (project_payment_applied()).
-		if ( EventsLifecycle::active() ) {
-			return;
-		}
-
-		$dedupe_key = 'fair_audience_activities_added_' . (int) $transaction->id;
-		if ( get_transient( $dedupe_key ) ) {
-			return;
-		}
-
-		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
-		$option_ids           = isset( $metadata['ticket_option_ids'] ) && is_array( $metadata['ticket_option_ids'] )
-			? array_map( 'intval', $metadata['ticket_option_ids'] )
-			: array();
-
-		if ( ! $event_participant_id || empty( $option_ids ) ) {
-			return;
-		}
-
-		$repo              = new EventParticipantRepository();
-		$event_participant = $repo->get_by_id( $event_participant_id );
-		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
-			return;
-		}
-
-		// Resolve option names from the live ticket_options table, keyed by id.
-		$options = self::resolve_option_rows( $option_ids );
-		if ( empty( $options ) ) {
-			return;
-		}
-
-		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
-
-		// An add-on bought for one ticket is confirmed on that ticket only,
-		// provided the participant still holds it on this date.
-		$ticket_id = isset( $metadata['ticket_id'] ) ? (int) $metadata['ticket_id'] : 0;
-		$ticket    = $ticket_id && TicketActivities::available() ? \FairEvents\Models\EventTicket::get_by_id( $ticket_id ) : null;
-		if ( $ticket
-			&& (int) $ticket->holder_participant_id === (int) $event_participant->participant_id
-			&& (int) $ticket->event_date_id === (int) $event_participant->event_date_id
-		) {
-			self::confirm_ticket_addon( $ticket, $options );
-		} else {
-			$repo->add_options( $event_participant_id, $options );
-		}
-
-		do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
-	}
-
-	/**
-	 * Confirm a paid add-on on its ticket. The payment is always honored.
-	 * Activities whose hold is still running keep their place; a hold that
-	 * already lapsed released its place, so those activities are rechecked
-	 * under the capacity lock, and any that went past the activity's limit
-	 * meanwhile are flagged over capacity together with the ticket's signup.
-	 *
-	 * @param object $ticket  Ticket row.
-	 * @param array  $options Options as arrays with `id` and `name` (see resolve_option_rows()).
-	 * @return void
-	 */
-	private static function confirm_ticket_addon( $ticket, array $options ) {
-		$ticket_id = (int) $ticket->id;
-		$held_ids  = \FairEvents\Models\EventTicketActivity::get_active_option_ids( array( $ticket_id ) );
-		$lapsed    = array_values(
-			array_filter(
-				$options,
-				static fn( $option ) => ! in_array( (int) $option['id'], $held_ids, true )
-			)
-		);
-
-		if ( ! $lapsed || ! method_exists( \FairEvents\Services\TicketCapacity::class, 'count_ticket_option' ) ) {
-			\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
-			return;
-		}
-
-		$demand = array(
-			'event_date_id'  => (int) $ticket->event_date_id,
-			'ticket_type_id' => (int) $ticket->ticket_type_id,
-			'quantity'       => 0,
-			'option_ids'     => array_map( static fn( $option ) => (int) $option['id'], $lapsed ),
-		);
-
-		\FairEvents\Services\TicketCapacity::with_capacity_lock(
-			array( $demand ),
-			static function ( $shortage ) use ( $ticket, $ticket_id, $options, $demand ) {
-				$full_option_ids = array();
-				if ( $shortage ) {
-					foreach ( \FairEvents\Services\TicketCapacity::find_shortages( \FairEvents\Services\TicketCapacity::places_needed( array( $demand ) ) ) as $found ) {
-						$full_option_ids[] = (int) $found['id'];
-					}
-				}
-
-				\FairEvents\Models\EventTicketActivity::confirm( $ticket_id, $options );
-				if ( $full_option_ids ) {
-					\FairEvents\Models\EventTicketActivity::mark_over_capacity( $ticket_id, $full_option_ids );
-					\FairEvents\Models\EventSignup::mark_over_capacity( (int) $ticket->signup_id );
-				}
-
-				return true;
-			}
-		);
 	}
 
 	/**
@@ -756,64 +575,6 @@ class PaymentHooks {
 		if ( $event_participant_id ) {
 			( new EventParticipantRepository() )->release_pending_options( $event_participant_id, $option_ids );
 		}
-	}
-
-	/**
-	 * Convert a single-instance signup into a whole-series pass once Mollie
-	 * confirms the upgrade payment. The registration row is upgraded in place
-	 * (the unique event_date/participant key means it must stay one row): its
-	 * ticket_type becomes the whole-series type, which is all the series-pass
-	 * projection (is_occurrence_covered_by_series_pass and the admin/frontend
-	 * lists) needs to start covering every occurrence.
-	 *
-	 * Idempotent — Mollie retries the webhook, so a per-transaction transient
-	 * guards against converting (and emailing) twice.
-	 *
-	 * @param object $payment     Mollie payment object.
-	 * @param object $transaction Transaction row from fair-payments-connector.
-	 */
-	public static function handle_series_upgrade_paid( $payment, $transaction ) {
-		$metadata = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
-		if ( empty( $metadata['source'] ) || 'fair-audience-series-upgrade' !== $metadata['source'] ) {
-			return;
-		}
-
-		// After the payment history cutover Fair Events upgrades the
-		// purchase and this plugin follows (project_payment_applied()).
-		if ( EventsLifecycle::active() ) {
-			return;
-		}
-
-		$dedupe_key = 'fair_audience_series_upgrade_' . (int) $transaction->id;
-		if ( get_transient( $dedupe_key ) ) {
-			return;
-		}
-
-		$event_participant_id = isset( $metadata['event_participant_id'] ) ? (int) $metadata['event_participant_id'] : 0;
-		$ticket_type_id       = isset( $metadata['ticket_type_id'] ) ? (int) $metadata['ticket_type_id'] : 0;
-
-		if ( ! $event_participant_id || ! $ticket_type_id ) {
-			return;
-		}
-
-		$repo              = new EventParticipantRepository();
-		$event_participant = $repo->get_by_id( $event_participant_id );
-		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
-			return;
-		}
-
-		set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
-
-		// Upgrade the ticket type in place.
-		$event_participant->ticket_type_id = $ticket_type_id;
-		$event_participant->save();
-
-		// Preserve the upgrade charge alongside the original payment.
-		$ledger = new EventParticipantTransactionRepository();
-		$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
-
-		// Reuse the standard paid-signup confirmation email.
-		do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
 	}
 
 	/**

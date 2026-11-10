@@ -42,11 +42,12 @@ defined( 'WPINC' ) || die;
  * (`fair_events_purchase_payment_applied`), which Audience projects onto
  * its relationships, activities and ledger. Only an Audience that says it
  * does this (PaymentHistoryCompatibility::audience_lifecycle_available())
- * gets those notifications handled here; stage 4's activation refuses to
- * run with an older one.
+ * gets those notifications handled here.
  *
- * Before the cutover nothing here runs; the callers keep their previous
- * paths and the shadow writer records links after the fact.
+ * The lifecycle is unconditional (#2251): it no longer waits for the
+ * recorded stage 4 activation, and a purchase with no payment links is
+ * never resolved from the transaction's metadata or a latest-attempt
+ * pointer instead.
  */
 class PurchaseLifecycle {
 
@@ -62,24 +63,26 @@ class PurchaseLifecycle {
 	const APPLIED_HOOK = 'fair_events_purchase_payment_applied';
 
 	/**
-	 * Whether the lifecycle is authoritative on this site.
+	 * Whether the lifecycle is authoritative on this site: always, since
+	 * Fair Events owns purchases and their payment history (#2251). Kept
+	 * for Fair Audience, which checks it before using the lifecycle.
 	 *
 	 * @return bool
 	 */
 	public static function active() {
-		return PaymentHistoryCompatibility::ownership_cutover();
+		return true;
 	}
 
 	/**
-	 * Whether payments from Fair Audience's routes are applied here: the
-	 * lifecycle is active and Fair Audience, when active, projects what
-	 * Events commits instead of confirming its own relationships. Fair
-	 * Audience checks this before leaving its paid notifications to Events.
+	 * Whether payments from Fair Audience's routes are applied here: Fair
+	 * Audience, when active, projects what Events commits instead of
+	 * confirming its own relationships. Fair Audience checks this before
+	 * leaving its paid notifications to Events.
 	 *
 	 * @return bool
 	 */
 	public static function handles_audience_sources() {
-		return self::active() && PaymentHistoryCompatibility::audience_lifecycle_available();
+		return PaymentHistoryCompatibility::audience_lifecycle_available();
 	}
 
 	/**
@@ -145,6 +148,23 @@ class PurchaseLifecycle {
 	}
 
 	/**
+	 * Bring the purchase of a Fair Audience registration in step now: a
+	 * free signup, which records no attempt, gets its purchase (and so its
+	 * places) at once instead of on the shadow writer's next sweep. Repeating
+	 * it is a no-op. A registration that doesn't qualify (§4.1) gets none.
+	 *
+	 * @param int $relationship_id Fair Audience relationship ID.
+	 * @return int|null|\WP_Error The purchase ID, null when there is none, or why it failed.
+	 */
+	public static function record_relationship( $relationship_id ) {
+		$synced = ShadowPurchases::sync( (int) $relationship_id, 0 );
+		if ( is_wp_error( $synced ) ) {
+			return $synced;
+		}
+		return empty( $synced['signup_id'] ) ? null : (int) $synced['signup_id'];
+	}
+
+	/**
 	 * Purchases a transaction is linked to.
 	 *
 	 * @param int      $transaction_id Connector transaction ID.
@@ -165,19 +185,16 @@ class PurchaseLifecycle {
 
 	/**
 	 * Purchases whose latest attempt is this transaction: the set a retry
-	 * repeats, a cancellation releases and a failure fails. Before the
-	 * cutover, and for an attempt with no links (one the backfill left
-	 * unresolved), the purchases are resolved from the transaction's
-	 * metadata as before.
+	 * repeats, a cancellation releases and a failure fails. Only payment
+	 * links say which purchases an attempt is for: an attempt with none
+	 * (one the backfill left unresolved) has no purchases here, and the
+	 * caller refuses the operation.
 	 *
 	 * @param object $transaction Connector transaction.
 	 * @return int[] Signup IDs.
 	 */
 	public static function current_signup_ids( $transaction ) {
-		$linked = self::active() ? self::linked_signup_ids( (int) $transaction->id ) : array();
-		if ( ! $linked ) {
-			return EventSignup::resolve_signup_ids_from_transaction( $transaction );
-		}
+		$linked = self::linked_signup_ids( (int) $transaction->id );
 
 		return array_values(
 			array_filter(
@@ -1027,6 +1044,9 @@ class PurchaseLifecycle {
 	 * @return int|null
 	 */
 	private static function relationship_purchase( $relationship_id ) {
+		// A free registration's purchase may not exist yet: bring it in step
+		// first, as record_attempt() does for a checkout.
+		self::record_relationship( (int) $relationship_id );
 		return ( new PaymentAttribution( new PaymentAttributionDatabase() ) )->relationship_purchase( (int) $relationship_id );
 	}
 

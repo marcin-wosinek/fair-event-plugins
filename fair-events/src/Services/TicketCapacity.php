@@ -35,10 +35,10 @@ defined( 'WPINC' ) || die;
  * its ticket type, and one place on every occurrence of its series that
  * starts at or after the purchase (the mid-series rule).
  *
- * During the move to ticket units two kinds of admission without units keep
- * their places: a signup whose units have not been backfilled yet (counted
- * by its quantity), and a companion plugin's admission with no signup behind
- * it, reported through the `fair_events_capacity_legacy_admissions` filter.
+ * A signup whose units have not been backfilled yet keeps its places,
+ * counted by its quantity. Only Fair Events purchases take places: a
+ * companion plugin's admission with no purchase behind it takes none
+ * (#2251).
  *
  * Activities (#1697): every active ticket selecting an activity takes one of
  * its places, so sibling tickets of one purchase choosing the same activity
@@ -46,10 +46,7 @@ defined( 'WPINC' ) || die;
  * places (as above) and the selection itself is confirmed or an add-on hold
  * that has not expired. An activity's limit applies to each occurrence on
  * its own: a selection counts on its ticket's occurrence, and a whole_series
- * ticket's selection on every occurrence its ticket covers. Selections a
- * companion plugin still records per participant, not per ticket, are
- * reported through the `fair_events_capacity_legacy_activity_selections`
- * filter.
+ * ticket's selection on every occurrence its ticket covers.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -132,20 +129,7 @@ class TicketCapacity {
 			);
 		}
 
-		/**
-		 * Filters the number of active admissions on an event date that have
-		 * no fair-events signup behind them (e.g. a companion plugin's
-		 * relationships that predate ticket units). Not applied once the
-		 * Events readers are active (PaymentHistoryReaders): only Events
-		 * purchases take places then.
-		 *
-		 * @param int    $count Admissions without a signup. Default 0.
-		 * @param string $scope 'event_date'.
-		 * @param int    $id    Event date ID.
-		 */
-		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'event_date', $event_date_id );
-
-		return $units + $unbackfilled + max( 0, $legacy );
+		return $units + $unbackfilled;
 	}
 
 	/**
@@ -184,10 +168,7 @@ class TicketCapacity {
 			)
 		);
 
-		/** This filter is documented in TicketCapacity::count_event_date(). */
-		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_admissions', 0, 'ticket_type', $ticket_type_id );
-
-		return $units + $unbackfilled + max( 0, $legacy );
+		return $units + $unbackfilled;
 	}
 
 	/**
@@ -295,21 +276,7 @@ class TicketCapacity {
 			);
 		}
 
-		/**
-		 * Filters the number of active activity selections on an occurrence
-		 * that are not stored on an individual ticket (e.g. a companion
-		 * plugin's participant-level selections from before activities were
-		 * stored per ticket). Not applied once the Events readers are active
-		 * (PaymentHistoryReaders).
-		 *
-		 * @param int   $count            Selections without a ticket. Default 0.
-		 * @param int   $ticket_option_id Ticket option ID.
-		 * @param int   $event_date_id    Occurrence (event date) ID.
-		 * @param int[] $series_ids       Every event date of the occurrence's series (just the occurrence outside a series).
-		 */
-		$legacy = PaymentHistoryReaders::active() ? 0 : (int) apply_filters( 'fair_events_capacity_legacy_activity_selections', 0, $ticket_option_id, $event_date_id, count( $series_ids ) < 2 ? array( $event_date_id ) : $series_ids );
-
-		return $selections + max( 0, $legacy );
+		return $selections;
 	}
 
 	/**

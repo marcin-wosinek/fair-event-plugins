@@ -15,7 +15,8 @@
  *   otherwise.
  *
  * Both route namespaces answer the same, and the administrator-only
- * permissions and the unknown-date 404 are unchanged.
+ * permissions and the unknown-date 404 are unchanged. No payment history
+ * activation is involved (#2251).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -71,7 +72,7 @@ async function seedPopulated( site ) {
 }
 
 function expectTicketFigures( body ) {
-	expect( body.payment_readers ).toBe( 'events' );
+	expect( body ).not.toHaveProperty( 'payment_readers' );
 	expect( body.total_tickets ).toBe( 3 );
 	expect( body.tickets_per_activity ).toEqual( [
 		{ id: expect.any( Number ), name: 'Yoga', count: 2 },
@@ -81,7 +82,6 @@ function expectTicketFigures( body ) {
 		{ activities: 0, tickets: 0 },
 		{ activities: 1, tickets: 3 },
 	] );
-	expect( body.tickets_without_activity_assignment ).toBe( 0 );
 	expect( body.event_capacity ).toEqual( {
 		taken: 3,
 		capacity: 10,
@@ -205,10 +205,9 @@ for ( const combination of [
 			const event = await site.seedEvent( 'free' );
 			const body = await statistics( admin, event.eventDateId );
 
-			expect( body.payment_readers ).toBe( 'events' );
+			expect( body ).not.toHaveProperty( 'payment_readers' );
 			expect( body.total_tickets ).toBe( 0 );
 			expect( body.tickets_per_activity ).toEqual( [] );
-			expect( body.tickets_without_activity_assignment ).toBe( 0 );
 			expect( body.event_capacity ).toEqual( {
 				taken: 0,
 				capacity: null,
@@ -230,13 +229,6 @@ for ( const combination of [
 					true
 				);
 			}
-
-			// The reader activation for a site without Fair Audience
-			// history happened on its own.
-			const state = await site.state();
-			expect( state.readers ).toEqual(
-				expect.objectContaining( { reason: 'no_source_history' } )
-			);
 		} );
 
 		test( 'counts tickets, activities, capacity and revenue from its own records', async () => {

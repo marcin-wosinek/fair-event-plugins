@@ -9,14 +9,9 @@ namespace FairEvents\API;
 
 use DateInterval;
 use DateTimeImmutable;
-use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairEvents\Models\EventDates;
-use FairEvents\Models\TicketType;
 use FairEvents\Services\EventCapacityStatistics;
 use FairEvents\Services\EventTicketStatistics;
-use FairEvents\Services\PaymentHistoryCompatibility;
-use FairEvents\Services\PaymentHistoryReaders;
 use FairEvents\Services\PurchasePaymentHistory;
 use FairEventsShared\Money;
 use WP_Error;
@@ -33,13 +28,10 @@ defined( 'WPINC' ) || die;
  * and the places currently taken against each capacity limit (see
  * EventCapacityStatistics).
  *
- * Once the Events readers are active (PaymentHistoryReaders,
- * PAYMENT_HISTORY_MIGRATION.md §8.14) revenue is the paid allocations of
- * the date's purchases (PurchasePaymentHistory) and Fair Audience isn't
- * needed. Until then it comes from Fair Audience's payment ledger of the
- * qualifying relationships, as before. Either way `revenue_state` says
- * whether it is `available`, `incomplete` or `unavailable`; an unavailable
- * amount is null, never 0.
+ * Revenue is the paid allocations of the date's purchases
+ * (PurchasePaymentHistory, PAYMENT_HISTORY_MIGRATION.md §8.14), so Fair
+ * Audience isn't needed. `revenue_state` says whether it is `available`,
+ * `incomplete` or `unavailable`; an unavailable amount is null, never 0.
  *
  * Serves the canonical fair-events/v1 route and, for existing consumers, the
  * fair-audience/v1 path the endpoint had before it moved here.
@@ -80,28 +72,6 @@ class EventStatisticsController extends WP_REST_Controller {
 	 * @var int
 	 */
 	const DEFAULT_HISTORY_DAYS = 30;
-
-	/**
-	 * Whether statistics can be served: the Events readers are active, or
-	 * Fair Audience provides the participant and payment data the
-	 * pre-activation statistics read.
-	 *
-	 * @return bool
-	 */
-	public static function is_available() {
-		return PaymentHistoryReaders::maybe_activate_without_history() || self::legacy_available();
-	}
-
-	/**
-	 * Whether Fair Audience provides what the pre-activation statistics
-	 * read.
-	 *
-	 * @return bool
-	 */
-	public static function legacy_available() {
-		return method_exists( EventParticipantRepository::class, 'get_confirmed_sales_rows' )
-			&& method_exists( EventParticipantTransactionRepository::class, 'get_paid_statistics_transactions' );
-	}
 
 	/**
 	 * Register the canonical route and its compatibility alias.
@@ -179,11 +149,8 @@ class EventStatisticsController extends WP_REST_Controller {
 		$today        = new DateTimeImmutable( 'today', $timezone );
 		$recorded_end = $today < $end ? $today : $end;
 
-		$currency = Money::site_currency();
-		$revenue  = PaymentHistoryReaders::active() ? PurchasePaymentHistory::event_date_revenue( $event_date ) : $this->get_legacy_revenue( $event_date, $currency );
-		if ( null === $revenue ) {
-			return new WP_Error( 'statistics_unavailable', __( 'Event statistics need Fair Audience until payment records are moved to Fair Events.', 'fair-events' ), array( 'status' => 503 ) );
-		}
+		$currency            = Money::site_currency();
+		$revenue             = PurchasePaymentHistory::event_date_revenue( $event_date );
 		$available           = PurchasePaymentHistory::STATE_UNAVAILABLE !== $revenue['state'];
 		$daily_amounts       = $revenue['daily'];
 		$excluded_currencies = $revenue['excluded_currencies'];
@@ -240,117 +207,33 @@ class EventStatisticsController extends WP_REST_Controller {
 
 		return new WP_REST_Response(
 			array(
-				'event_name'                          => trim( (string) $event_date->get_display_title() ),
-				'total_tickets'                       => $tickets['total'],
+				'event_name'                  => trim( (string) $event_date->get_display_title() ),
+				'total_tickets'               => $tickets['total'],
 				// Deprecated alias of total_tickets, kept for older clients.
-				'total_sales'                         => $tickets['total'],
-				'currency'                            => $currency,
-				'total_sales_amount'                  => $total_sales_amount,
-				'revenue_state'                       => $revenue['state'],
+				'total_sales'                 => $tickets['total'],
+				'currency'                    => $currency,
+				'total_sales_amount'          => $total_sales_amount,
+				'revenue_state'               => $revenue['state'],
 				// Paid money for the date not yet allocated to its purchases.
-				'unresolved_payments'                 => (int) $revenue['unresolved'],
-				'reconciliation_url'                  => 'incomplete' === $revenue['state'] ? admin_url( 'admin.php?page=fair-events-payment-history' ) : null,
+				'unresolved_payments'         => (int) $revenue['unresolved'],
+				'reconciliation_url'          => 'incomplete' === $revenue['state'] ? admin_url( 'admin.php?page=fair-events-payment-history' ) : null,
 				// Whole-series pass revenue covering a generated occurrence,
 				// counted on its master and never in this total (§7.2).
-				'series_pass_revenue'                 => $available ? $revenue['series_pass_revenue'] : null,
-				'payment_readers'                     => PaymentHistoryReaders::active() ? 'events' : 'audience',
-				'amount_series'                       => $amount_series,
-				'excluded_currencies'                 => $excluded_currencies,
-				'start_date'                          => $start->format( 'Y-m-d' ),
-				'end_date'                            => $end->format( 'Y-m-d' ),
-				'history_days'                        => $history_days,
-				'days_until_start'                    => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
-				'series'                              => $series,
-				'tickets_per_activity'                => $tickets['tickets_per_activity'],
-				'activities_per_ticket'               => $tickets['activities_per_ticket'],
-				'tickets_without_activity_assignment' => $tickets['tickets_without_activity_assignment'],
-				'incomplete_ticket_backfills'         => $tickets['incomplete_ticket_backfills'],
+				'series_pass_revenue'         => $available ? $revenue['series_pass_revenue'] : null,
+				'amount_series'               => $amount_series,
+				'excluded_currencies'         => $excluded_currencies,
+				'start_date'                  => $start->format( 'Y-m-d' ),
+				'end_date'                    => $end->format( 'Y-m-d' ),
+				'history_days'                => $history_days,
+				'days_until_start'            => $today < $start ? (int) $today->diff( $start )->format( '%a' ) : null,
+				'series'                      => $series,
+				'tickets_per_activity'        => $tickets['tickets_per_activity'],
+				'activities_per_ticket'       => $tickets['activities_per_ticket'],
+				'incomplete_ticket_backfills' => $tickets['incomplete_ticket_backfills'],
 				// Places taken now, payment holds included: not the confirmed
 				// sales counted above.
 			) + EventCapacityStatistics::for_event_date( $event_date )
 		);
-	}
-
-	/**
-	 * Revenue from Fair Audience's ledger, before the reader activation:
-	 * the paid transactions of the qualifying relationships, refunds
-	 * subtracted, by the ledger row's day.
-	 *
-	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
-	 * @param string                        $currency   Site currency.
-	 * @return array|null Revenue summary shaped like PurchasePaymentHistory::event_date_revenue(), or null without Fair Audience.
-	 */
-	private function get_legacy_revenue( $event_date, $currency ) {
-		if ( ! self::legacy_available() ) {
-			return null;
-		}
-		if ( ! PaymentHistoryCompatibility::payment_information_available() ) {
-			return PurchasePaymentHistory::summarize( array(), array(), $currency, false );
-		}
-
-		$rows                = $this->get_qualifying_sales_rows( $event_date );
-		$transactions        = ( new EventParticipantTransactionRepository() )->get_paid_statistics_transactions( wp_list_pluck( $rows, 'id' ) );
-		$timezone            = wp_timezone();
-		$daily_amounts       = array();
-		$excluded_currencies = array();
-		$total               = 0.0;
-		foreach ( $transactions as $transaction ) {
-			if ( strtoupper( (string) $transaction['currency'] ) !== $currency ) {
-				$excluded_currencies[] = strtoupper( (string) $transaction['currency'] );
-				continue;
-			}
-			$amount = (float) $transaction['amount'] * ( 'refund' === $transaction['kind'] ? -1 : 1 );
-			$date   = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $transaction['created_at'], $timezone );
-			if ( $date ) {
-				$key                   = $date->format( 'Y-m-d' );
-				$daily_amounts[ $key ] = ( $daily_amounts[ $key ] ?? 0.0 ) + $amount;
-			}
-			$total += $amount;
-		}
-
-		return array(
-			'state'               => PurchasePaymentHistory::STATE_AVAILABLE,
-			'currency'            => $currency,
-			'total'               => $total,
-			'daily'               => $daily_amounts,
-			'excluded_currencies' => array_values( array_unique( $excluded_currencies ) ),
-			'unresolved'          => 0,
-			// The ledger adds covering passes into the occurrence's total.
-			'series_pass_revenue' => null,
-		);
-	}
-
-	/**
-	 * Get the signed-up relationships whose payments count as revenue: direct
-	 * relationships plus qualifying whole-series passes. Revenue only; ticket
-	 * counts come from EventTicketStatistics.
-	 *
-	 * @param \FairEvents\Models\EventDates $event_date Event occurrence.
-	 * @return array[] Confirmed relationship rows.
-	 */
-	private function get_qualifying_sales_rows( $event_date ) {
-		$repository = new EventParticipantRepository();
-		$rows       = $repository->get_confirmed_sales_rows( (int) $event_date->id );
-		if ( 'generated' !== $event_date->occurrence_type || ! $event_date->master_id ) {
-			return $rows;
-		}
-
-		$participant_ids = array_fill_keys( array_map( 'intval', wp_list_pluck( $rows, 'participant_id' ) ), true );
-		// A pass covers the occurrences that had not started when it was bought.
-		$occurrence_time = strtotime( (string) \FairEvents\Helpers\EventTiming::series_pass_cutoff( $event_date->get_timing() ) );
-		foreach ( $repository->get_confirmed_sales_rows( (int) $event_date->master_id ) as $row ) {
-			$participant_id = (int) $row['participant_id'];
-			if ( isset( $participant_ids[ $participant_id ] ) || empty( $row['ticket_type_id'] ) ) {
-				continue;
-			}
-			$ticket_type = TicketType::get_by_id( (int) $row['ticket_type_id'] );
-			if ( ! $ticket_type || ! $ticket_type->is_whole_series() || ( $row['created_at'] && $occurrence_time < strtotime( $row['created_at'] ) ) ) {
-				continue;
-			}
-			$participant_ids[ $participant_id ] = true;
-			$rows[]                             = $row;
-		}
-		return $rows;
 	}
 
 	/**

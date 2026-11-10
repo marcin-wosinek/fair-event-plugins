@@ -1,19 +1,14 @@
 /**
- * Playwright API tests for transaction status on the participant activity
- * endpoint (issue #984): GET /fair-audience/v1/participants/{id}/activity.
+ * Playwright API tests for payments on the participant activity endpoint:
+ * GET /fair-audience/v1/participants/{id}/activity.
  *
- * Each event entry now carries a `transaction_status` derived from the
- * matching fair-payments-connector transaction ('success' | 'pending' |
- * 'failed' | null). Since #1113, both `transaction_id` and `transaction_status`
- * are sourced from the event-participant transaction ledger (the latest
- * charge per registration) rather than the removed
- * event_participants.transaction_id column. Seeding a real paid/pending/failed
- * transaction requires routing a signup through the Mollie flow, so —
- * mirroring TimelineController.api.spec.js — this suite covers the shape
- * contract that is reachable over HTTP: a free (no-transaction) signup must
- * report transaction_id/transaction_status as null. The paid/pending/failed
- * status mapping itself is exercised via the WP-CLI eval-file manual check
- * (TESTING.md).
+ * Event entries used to carry the latest ledger charge per registration
+ * (`transaction_id`, `transaction_status`; #984, #1113). Since #2251 the
+ * participant's payments come only from their Fair Events purchases
+ * (`purchases`, `payment_information`), so event entries carry no
+ * transaction fields and the Fair Audience ledger is never read here. The
+ * purchase payment history itself is covered by fair-events'
+ * PurchasePaymentReaders.api.spec.js.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -36,7 +31,7 @@ function uniqueEmail( prefix ) {
 	) }@example.test`;
 }
 
-test.describe( 'ParticipantsController activity — transaction_status', () => {
+test.describe( 'ParticipantsController activity — payments', () => {
 	let api;
 	let participantId;
 	let eventId;
@@ -120,7 +115,7 @@ test.describe( 'ParticipantsController activity — transaction_status', () => {
 		expect( res.status() ).toBe( 401 );
 	} );
 
-	test( 'a signup with no transaction reports null transaction_status', async () => {
+	test( 'events carry no ledger transaction; payments come from purchases', async () => {
 		test.skip(
 			! fixtureOk,
 			'Skipped pending #1410 — publishing a fair_event does not auto-create its event-date'
@@ -135,7 +130,11 @@ test.describe( 'ParticipantsController activity — transaction_status', () => {
 
 		const event = body.events.find( ( ev ) => ev.event_id === eventId );
 		expect( event, 'linked event in the activity response' ).toBeTruthy();
-		expect( event.transaction_id ).toBeNull();
-		expect( event.transaction_status ).toBeNull();
+		expect( event ).not.toHaveProperty( 'transaction_id' );
+		expect( event ).not.toHaveProperty( 'transaction_status' );
+		expect( body ).not.toHaveProperty( 'payment_readers' );
+		// A relationship is not a purchase: nothing was bought.
+		expect( body.purchases ).toEqual( [] );
+		expect( body.payment_information ).toBe( 'available' );
 	} );
 } );

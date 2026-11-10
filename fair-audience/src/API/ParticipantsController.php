@@ -9,7 +9,6 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EventsPaymentReaders;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\ParticipantFeedRepository;
@@ -81,22 +80,14 @@ class ParticipantsController extends WP_REST_Controller {
 	private $group_participant_repository;
 
 	/**
-	 * Event participant transaction ledger repository instance.
-	 *
-	 * @var EventParticipantTransactionRepository
-	 */
-	private $event_participant_transaction_repository;
-
-	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->repository                               = new ParticipantRepository();
-		$this->event_participant_repository             = new EventParticipantRepository();
-		$this->group_participant_repository             = class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class )
+		$this->repository                   = new ParticipantRepository();
+		$this->event_participant_repository = new EventParticipantRepository();
+		$this->group_participant_repository = class_exists( \FairAudienceExperimental\Database\GroupParticipantRepository::class )
 			? new \FairAudienceExperimental\Database\GroupParticipantRepository()
 			: null;
-		$this->event_participant_transaction_repository = new EventParticipantTransactionRepository();
 	}
 
 	/**
@@ -403,26 +394,15 @@ class ParticipantsController extends WP_REST_Controller {
 		}
 
 		$has_event_dates = class_exists( '\FairEvents\Models\EventDates' );
-		$has_payments    = class_exists( '\FairPaymentsConnector\Models\Transaction' );
 
 		// Build events list.
 		$events        = array();
 		$relationships = $this->event_participant_repository->get_by_participant( $id );
 
-		// Once Fair Events' payment readers are active, payments come from
-		// the participant's purchases (PAYMENT_HISTORY_MIGRATION.md §8.15)
-		// and the ledger isn't read: the relationships list the events, the
-		// purchases list what the participant paid as the purchaser.
-		$events_readers               = EventsPaymentReaders::active();
-		$event_participant_ids        = array_map( fn( $rel ) => (int) $rel->id, $relationships );
-		$latest_transaction_ids_by_ep = $event_participant_ids && ! $events_readers
-			? $this->event_participant_transaction_repository->get_latest_charge_transaction_ids( $event_participant_ids )
-			: array();
-		$transaction_ids              = array_values( array_unique( array_filter( $latest_transaction_ids_by_ep ) ) );
-		$statuses                     = $has_payments && $transaction_ids
-			? $this->event_participant_transaction_repository->get_statuses_by_transaction_ids( $transaction_ids )
-			: array();
-
+		// Payments come from the participant's purchases in Fair Events
+		// (PAYMENT_HISTORY_MIGRATION.md §8.15), never from this plugin's
+		// ledger: the relationships list the events, the purchases list what
+		// the participant paid as the purchaser.
 		foreach ( $relationships as $rel ) {
 			$event_title = $rel->event_id ? get_the_title( (int) $rel->event_id ) : '';
 			$timing      = self::UNDATED_TIMING;
@@ -433,8 +413,6 @@ class ParticipantsController extends WP_REST_Controller {
 				}
 			}
 
-			$transaction_id = $latest_transaction_ids_by_ep[ (int) $rel->id ] ?? null;
-
 			$events[] = array_merge(
 				array(
 					'id'            => (int) $rel->id,
@@ -444,12 +422,8 @@ class ParticipantsController extends WP_REST_Controller {
 				),
 				$timing,
 				array(
-					'label'              => $rel->label,
-					'created_at'         => $rel->created_at,
-					'transaction_id'     => $transaction_id,
-					'transaction_status' => $transaction_id
-						? $this->normalize_transaction_status( $statuses[ $transaction_id ] ?? null )
-						: null,
+					'label'      => $rel->label,
+					'created_at' => $rel->created_at,
 				)
 			);
 		}
@@ -487,9 +461,11 @@ class ParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		$purchases           = null;
-		$payment_information = null;
-		if ( $events_readers ) {
+		// Without Fair Events' readers the purchases can't be told: the
+		// payment information is unavailable, never an empty history.
+		$purchases           = array();
+		$payment_information = 'unavailable';
+		if ( EventsPaymentReaders::active() ) {
 			$history             = EventsPaymentReaders::participant_purchases( $id );
 			$payment_information = $history['payment_information'];
 			$purchases           = array_map( array( $this, 'format_purchase' ), $history['purchases'] );
@@ -499,8 +475,6 @@ class ParticipantsController extends WP_REST_Controller {
 			array(
 				'events'              => $events,
 				'submissions'         => $submissions,
-				// 'events' (Fair Events' payment links) or 'audience' (the ledger).
-				'payment_readers'     => $events_readers ? 'events' : 'audience',
 				'payment_information' => $payment_information,
 				'purchases'           => $purchases,
 			)

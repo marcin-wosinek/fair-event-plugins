@@ -358,8 +358,6 @@ export default function EventStatistics( {
 	const distributionData = statistics?.activities_per_ticket || [];
 	const ticketTypeCapacity = statistics?.ticket_type_capacity || [];
 	const activityCapacity = statistics?.activity_capacity || [];
-	const unassignedTickets =
-		statistics?.tickets_without_activity_assignment || 0;
 	const incompleteBackfills = statistics?.incomplete_ticket_backfills || 0;
 	const currencyFormatter = useMemo(
 		() =>
@@ -786,20 +784,6 @@ export default function EventStatistics( {
 									'fair-events'
 								),
 								incompleteBackfills
-							) }
-						</Notice>
-					) }
-					{ unassignedTickets > 0 && (
-						<Notice status="warning" isDismissible={ false }>
-							{ sprintf(
-								/* translators: %d: number of tickets left out of the activity charts. */
-								_n(
-									'%d ticket is left out of the activity charts because its activities were recorded for the participant rather than for each ticket.',
-									'%d tickets are left out of the activity charts because their activities were recorded for the participant rather than for each ticket.',
-									unassignedTickets,
-									'fair-events'
-								),
-								unassignedTickets
 							) }
 						</Notice>
 					) }

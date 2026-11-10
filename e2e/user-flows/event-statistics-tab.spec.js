@@ -8,10 +8,10 @@
  * Experimental is reactivated afterwards so the rest of the suite keeps its
  * default plugin set.
  *
- * Once Statistics read Fair Events records (#2141), the tab works with Fair
- * Audience deactivated and shows the same results after it is reactivated,
- * and without Fair Payments Connector it says revenue is unavailable instead
- * of showing 0.
+ * Statistics read Fair Events records with no reader activation recorded
+ * (#2141, #2251): the tab works with Fair Audience deactivated and shows the
+ * same results after it is reactivated, and without Fair Payments Connector
+ * it says revenue is unavailable instead of showing 0.
  */
 
 import { test, expect } from '../support/fixtures.js';
@@ -128,8 +128,8 @@ test.describe('Event Statistics on Fair Events records', () => {
 	let connectorDeactivated = false;
 
 	test.beforeAll(() => {
+		// Stash any recorded activation: none is needed.
 		readers('prepare');
-		readers('activate');
 	});
 
 	test.afterAll(() => {

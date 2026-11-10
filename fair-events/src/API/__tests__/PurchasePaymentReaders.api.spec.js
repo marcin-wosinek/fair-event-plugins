@@ -1,17 +1,18 @@
 /**
  * Purchase payment readers (#2141, second pull request of stage 5 of #2111;
- * PAYMENT_HISTORY_MIGRATION.md §8.15): once the Events readers are active,
- * the get-tickets list carries every attempt of each purchase, Connector's
- * transaction view lists the purchases a transaction pays for, the
- * participant detail lists the participant's purchases as the purchaser,
- * the buyer's payment callback resolves an attempt's own purchases, and
- * payment notifications are enriched from the links instead of the Fair
- * Audience ledger. Before the switch every reader is unchanged. Results
- * stay the same through a Fair Audience deactivation, and payment
- * information missing without Connector is said as such.
+ * PAYMENT_HISTORY_MIGRATION.md §8.15), unconditional since #2251: with no
+ * reader activation recorded, the get-tickets list carries every attempt of
+ * each purchase, Connector's transaction view lists the purchases a
+ * transaction pays for, the participant detail lists the participant's
+ * purchases as the purchaser, the buyer's payment callback resolves an
+ * attempt's own purchases, and payment notifications are enriched from the
+ * links, never the Fair Audience ledger. An attempt without links names no
+ * purchase, whatever a purchase's latest-attempt pointer says. Results stay
+ * the same through a Fair Audience deactivation, and payment information
+ * missing without Connector is said as such.
  *
- * The payment-readers.php fixture stashes the reader activation and puts it
- * back afterwards, so no other spec runs with it.
+ * The payment-readers.php fixture stashes any recorded reader activation
+ * and puts it back afterwards, so these tests run without one.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -74,7 +75,7 @@ function addDays( date, days ) {
 	return value.toISOString().slice( 0, 10 );
 }
 
-test.describe.serial( 'Purchase payments on the Events readers', () => {
+test.describe.serial( 'Purchase payments from Fair Events records', () => {
 	test.describe.configure( { timeout: 240 * 1000 } );
 
 	let api;
@@ -186,6 +187,8 @@ test.describe.serial( 'Purchase payments on the Events readers', () => {
 	}
 
 	test.beforeAll( async () => {
+		// A dozen sequential fixture calls overrun the default hook budget.
+		test.setTimeout( 240 * 1000 );
 		api = await request.newContext( { baseURL: BASE_URL } );
 		anonymous = await request.newContext( { baseURL: BASE_URL } );
 		adminHeaders = await login( api, ADMIN_USER, ADMIN_PASSWORD );
@@ -276,6 +279,26 @@ test.describe.serial( 'Purchase payments on the Events readers', () => {
 			} );
 		}
 
+		// S4 on B: its latest attempt is a paid payment with no links.
+		signups.s4 = (
+			await tickets( 'signup', {
+				eventDateId: b.eventDateId,
+				participantId: participants.buyer,
+				quantity: 1,
+				createdAt: later,
+				units: [ { status: 'confirmed' } ],
+			} )
+		).signupId;
+		tx.unlinked = await transaction( {
+			amount: 18,
+			status: 'paid',
+			createdAt: later,
+		} );
+		await readers( 'latest', {
+			signupId: signups.s4,
+			transactionId: tx.unlinked,
+		} );
+
 		signups.dateA = a.eventDateId;
 		signups.dateB = b.eventDateId;
 	} );
@@ -317,35 +340,33 @@ test.describe.serial( 'Purchase payments on the Events readers', () => {
 		await anonymous?.dispose();
 	} );
 
-	test( 'keeps every reader unchanged until the switch', async () => {
-		const a = await listed( signups.dateA );
-		expect( a[ signups.s1 ].payment_history ).toBeNull();
-		expect( Number( a[ signups.s1 ].transaction_id ) ).toBe( tx.paid );
+	test( 'never resolves an attempt without links from a latest-attempt pointer', async () => {
+		expect( ( await readers( 'facts' ) ).activation ).toBeNull();
 
-		expect( ( await transactionView( tx.shared ) ).purchases ).toBeNull();
-
-		const buyer = await activity( participants.buyer );
-		expect( buyer.payment_readers ).toBe( 'audience' );
-		expect( buyer.purchases ).toBeNull();
-
-		// The callback only knows the purchases whose latest attempt it is.
+		const s4 = ( await listed( signups.dateB ) )[ signups.s4 ];
+		expect( Number( s4.transaction_id ) ).toBe( tx.unlinked );
+		expect( s4.payment_history ).toMatchObject( {
+			payment_information: 'available',
+			paid_amount: 0,
+			payments: [],
+		} );
 		expect(
 			(
 				await readers( 'attempt-purchases', {
-					transactionId: tx.failed,
+					transactionId: tx.unlinked,
 				} )
 			).signupIds
 		).toEqual( [] );
-		// No ledger row names the payment, so nothing enriches it.
+		expect( ( await transactionView( tx.unlinked ) ).purchases ).toEqual(
+			[]
+		);
 		const { context } = await readers( 'notification', {
-			transactionId: tx.paid,
+			transactionId: tx.unlinked,
 		} );
 		expect( context.event_title ).toBeUndefined();
 	} );
 
-	test( 'lists every attempt of each purchase once switched', async () => {
-		expect( ( await readers( 'activate' ) ).active ).toBe( true );
-
+	test( 'lists every attempt of each purchase', async () => {
 		const a = await listed( signups.dateA );
 		const s1 = a[ signups.s1 ];
 		// transaction_id keeps meaning the latest attempt.
@@ -411,10 +432,19 @@ test.describe.serial( 'Purchase payments on the Events readers', () => {
 
 	test( 'lists the purchaser’s purchases, not the holder’s tickets', async () => {
 		const buyer = await activity( participants.buyer );
-		expect( buyer.payment_readers ).toBe( 'events' );
+		expect( buyer ).not.toHaveProperty( 'payment_readers' );
 		expect( buyer.payment_information ).toBe( 'available' );
-		expect( buyer.purchases ).toHaveLength( 1 );
-		expect( buyer.purchases[ 0 ] ).toMatchObject( {
+		expect( buyer.purchases ).toHaveLength( 2 );
+		expect(
+			buyer.purchases.find(
+				( purchase ) => purchase.signup_id === signups.s4
+			)
+		).toMatchObject( { paid_amount: 0, payments: [] } );
+		expect(
+			buyer.purchases.find(
+				( purchase ) => purchase.signup_id === signups.s1
+			)
+		).toMatchObject( {
 			signup_id: signups.s1,
 			event_date_id: signups.dateA,
 			event_title: eventTitle,
@@ -424,10 +454,12 @@ test.describe.serial( 'Purchase payments on the Events readers', () => {
 			paid_amount: 30,
 		} );
 		expect(
-			buyer.purchases[ 0 ].payments.map( ( payment ) => [
-				payment.transaction_id,
-				payment.transaction_status,
-			] )
+			buyer.purchases
+				.find( ( purchase ) => purchase.signup_id === signups.s1 )
+				.payments.map( ( payment ) => [
+					payment.transaction_id,
+					payment.transaction_status,
+				] )
 		).toEqual( [
 			[ tx.failed, 'failed' ],
 			[ tx.refund, 'success' ],

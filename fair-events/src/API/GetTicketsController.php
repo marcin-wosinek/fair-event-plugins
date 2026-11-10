@@ -1383,19 +1383,14 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Write an attempt's payment links when they are authoritative (the
-	 * payment history cutover, PurchaseLifecycle). Before it, the shadow
-	 * writer records them after the request.
+	 * Write an attempt's payment links (PurchaseLifecycle) before the buyer
+	 * is sent to pay.
 	 *
 	 * @param int $transaction_id Connector transaction ID.
-	 * @return true|WP_Error True when recorded or not needed; an error the
-	 *                       buyer can retry otherwise.
+	 * @return true|WP_Error True when recorded; an error the buyer can retry
+	 *                       otherwise.
 	 */
 	private function record_payment_attempt( $transaction_id ) {
-		if ( ! \FairEvents\Services\PurchaseLifecycle::active() ) {
-			return true;
-		}
-
 		$recorded = \FairEvents\Services\PurchaseLifecycle::record_attempt( (int) $transaction_id );
 		if ( ! is_wp_error( $recorded ) ) {
 			return true;
@@ -2504,12 +2499,10 @@ class GetTicketsController extends WP_REST_Controller {
 		$date_labels       = array();
 		$consents          = array();
 		$test_payments     = array();
-		// Every attempt of each purchase, from its payment links, once the
-		// Events readers are active (PAYMENT_HISTORY_MIGRATION.md §8.15).
-		// transaction_id keeps meaning the latest attempt.
-		$payment_history = \FairEvents\Services\PaymentHistoryReaders::active()
-			? \FairEvents\Services\PurchasePaymentHistory::for_signups( wp_list_pluck( $signups, 'id' ) )
-			: null;
+		// Every attempt of each purchase, from its payment links
+		// (PAYMENT_HISTORY_MIGRATION.md §8.15). transaction_id keeps meaning
+		// the latest attempt.
+		$payment_history = \FairEvents\Services\PurchasePaymentHistory::for_signups( wp_list_pluck( $signups, 'id' ) );
 		$site_currency   = \FairEventsShared\Money::site_currency();
 
 		foreach ( $signups as $signup ) {
@@ -2631,9 +2624,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// consents to now, which the historical mailing_opt_in cannot tell.
 			$signup->newsletter_consent = $this->resolve_newsletter_consent( $signup->participant_id ?? null, $consents );
 			$signup->is_test_payment    = $this->resolve_test_payment( $signup->transaction_id ?? null, $test_payments );
-			$signup->payment_history    = $payment_history
-				? $this->format_payment_history( $signup, $payment_history, $site_currency )
-				: null;
+			$signup->payment_history    = $this->format_payment_history( $signup, $payment_history, $site_currency );
 		}
 
 		if ( $request->get_param( 'include_answers' ) ) {

@@ -13,8 +13,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Runs Fair Audience's purchase route, activity add-ons and series upgrades
- * through Fair Events' purchase lifecycle once the payment history cutover
- * is active (PAYMENT_HISTORY_MIGRATION.md §8.12):
+ * through Fair Events' purchase lifecycle (PAYMENT_HISTORY_MIGRATION.md
+ * §8.12), which owns purchases and their payment history:
  *
  * - Every attempt is recorded in Fair Events (its purchase and payment
  *   links) before the buyer is sent to pay. When that fails the buyer gets a
@@ -26,9 +26,11 @@ defined( 'WPINC' ) || die;
  *   itself.
  * - A series upgrade is priced from the purchase's own paid allocations.
  *
- * Before the cutover, or with a Fair Events that lacks the lifecycle, every
- * route keeps its previous behaviour. Fair Events checks
- * supports_purchase_lifecycle() before its activation can run.
+ * When Fair Events is inactive or lacks the lifecycle, these operations are
+ * refused with an error the buyer can read (#2251): Fair Audience no longer
+ * keeps purchase accounting of its own. Its other features don't depend on
+ * this. Fair Events checks supports_purchase_lifecycle() before leaving
+ * these routes' paid notifications to this plugin's projection.
  */
 class EventsLifecycle {
 
@@ -45,7 +47,8 @@ class EventsLifecycle {
 	}
 
 	/**
-	 * Whether Fair Events applies payments of Fair Audience's routes.
+	 * Whether Fair Events applies payments of Fair Audience's routes: it is
+	 * active and has the purchase lifecycle.
 	 *
 	 * @return bool
 	 */
@@ -61,11 +64,11 @@ class EventsLifecycle {
 	 * is a no-op.
 	 *
 	 * @param int $transaction_id Connector transaction ID.
-	 * @return true|WP_Error True when recorded or not needed; an error the buyer can retry otherwise.
+	 * @return true|WP_Error True when recorded; an error the buyer can retry otherwise.
 	 */
 	public static function record_attempt( $transaction_id ) {
 		if ( ! self::active() ) {
-			return true;
+			return self::unavailable_error();
 		}
 
 		$recorded = \FairEvents\Services\PurchaseLifecycle::record_attempt( (int) $transaction_id );
@@ -84,16 +87,32 @@ class EventsLifecycle {
 	}
 
 	/**
+	 * Give a free registration its Fair Events purchase now, so it takes
+	 * its places at once. Best effort: when it can't be recorded, Fair
+	 * Events' shadow writer catches up on its next sweep.
+	 *
+	 * @param int $event_participant_id Registration just signed up.
+	 * @return void
+	 */
+	public static function record_signup( $event_participant_id ) {
+		$lifecycle = 'FairEvents\\Services\\PurchaseLifecycle';
+		if ( (int) $event_participant_id <= 0 || ! self::active() || ! method_exists( $lifecycle, 'record_relationship' ) ) {
+			return;
+		}
+		$lifecycle::record_relationship( (int) $event_participant_id );
+	}
+
+	/**
 	 * What the purchase behind a registration has paid, for a series
 	 * upgrade's price, in the site currency.
 	 *
 	 * @param int    $event_participant_id Registration being upgraded.
 	 * @param string $currency             Site currency.
-	 * @return float|WP_Error|null What it paid; an error when it can't be told; null before the cutover.
+	 * @return float|WP_Error What it paid; an error when it can't be told.
 	 */
 	public static function upgrade_credit( $event_participant_id, $currency ) {
 		if ( ! self::active() ) {
-			return null;
+			return self::unavailable_error();
 		}
 
 		$credit = \FairEvents\Services\PurchaseLifecycle::upgrade_credit( (int) $event_participant_id, (string) $currency );
@@ -113,7 +132,7 @@ class EventsLifecycle {
 	 */
 	public static function upgrade_without_payment( $event_participant_id, $ticket_type_id ) {
 		if ( ! self::active() ) {
-			return true;
+			return self::unavailable_error();
 		}
 
 		$upgraded = \FairEvents\Services\PurchaseLifecycle::upgrade_without_payment( (int) $event_participant_id, (int) $ticket_type_id );
@@ -129,6 +148,23 @@ class EventsLifecycle {
 	 */
 	public static function addon_attempt_superseded( $transaction ) {
 		return self::active() && \FairEvents\Services\PurchaseLifecycle::addon_attempt_superseded( $transaction );
+	}
+
+	/**
+	 * A buyer-facing error for a purchase operation while Fair Events can't
+	 * account for it (inactive, or without the lifecycle).
+	 *
+	 * @return WP_Error
+	 */
+	private static function unavailable_error() {
+		return new WP_Error(
+			'payment_not_recorded',
+			__( 'Your purchase could not be recorded right now. Please try again in a moment.', 'fair-audience' ),
+			array(
+				'status' => 503,
+				'reason' => 'events_lifecycle_unavailable',
+			)
+		);
 	}
 
 	/**

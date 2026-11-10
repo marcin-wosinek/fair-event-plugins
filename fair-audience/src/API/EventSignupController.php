@@ -527,6 +527,7 @@ class EventSignupController extends WP_REST_Controller {
 
 		$this->snapshot_ticket_type_on_signup( $event_date_id, $participant->id, $ticket_type_id );
 		$this->snapshot_options_on_signup( $event_date_id, $participant->id, $option_items );
+		EventsLifecycle::record_signup( $event_participant_id );
 
 		$option_names = $this->translated_option_names( $option_items );
 		$this->email_service->send_signup_payment_confirmation( $participant, $event, null, $option_names, (int) $event_date_id, (int) $ticket_type_id, $event_participant_id );
@@ -687,10 +688,12 @@ class EventSignupController extends WP_REST_Controller {
 				$existing_occ = $this->event_participant_repository->get_by_event_date_and_participant( (int) $occ->id, $participant->id );
 				if ( $existing_occ ) {
 					$this->event_participant_repository->update_label_by_event_date( (int) $occ->id, $participant->id, 'signed_up' );
+					$occurrence_participant_id = (int) $existing_occ->id;
 				} else {
-					$this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', (int) $occ->id );
+					$occurrence_participant_id = (int) $this->event_participant_repository->add_participant_to_event( $event_id, $participant->id, 'signed_up', (int) $occ->id );
 				}
 				$this->snapshot_ticket_type_on_signup( (int) $occ->id, $participant->id, $ticket_type->id );
+				EventsLifecycle::record_signup( $occurrence_participant_id );
 			}
 
 			AudienceSession::set( (int) $participant->id );
@@ -1910,16 +1913,12 @@ class EventSignupController extends WP_REST_Controller {
 			return $series_price;
 		}
 
-		// After the payment history cutover the credit is what the purchase
-		// behind this registration paid, not every charge on the registration
-		// (which also holds other purchases on the same date).
-		$ledger   = new EventParticipantTransactionRepository();
+		// The credit is what the purchase behind this registration paid, not
+		// every charge on the registration (which also holds other purchases
+		// on the same date).
 		$net_paid = EventsLifecycle::upgrade_credit( (int) $existing->id, Money::site_currency() );
 		if ( is_wp_error( $net_paid ) ) {
 			return $net_paid;
-		}
-		if ( null === $net_paid ) {
-			$net_paid = $ledger->get_net_paid( (int) $existing->id );
 		}
 
 		// The upgrade's one line, built before anything is decided: the
@@ -1995,7 +1994,7 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		$ledger->record( (int) $existing->id, (int) $transaction_id, 'charge' );
+		( new EventParticipantTransactionRepository() )->record( (int) $existing->id, (int) $transaction_id, 'charge' );
 
 		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
 		if ( is_wp_error( $recorded ) ) {
@@ -2170,13 +2169,13 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// After the payment history cutover a retry of a checkout for several
-		// occurrences names every one of them, so Fair Events can link it to
-		// the whole purchase set instead of guessing (gap G7).
+		// A retry of a checkout for several occurrences names every one of
+		// them, so Fair Events can link it to the whole purchase set instead
+		// of guessing (gap G7).
 		$original_occurrences = isset( $metadata['event_participant_ids'] ) && is_array( $metadata['event_participant_ids'] )
 			? array_values( array_unique( array_filter( array_map( 'intval', $metadata['event_participant_ids'] ) ) ) )
 			: array();
-		if ( count( $original_occurrences ) > 1 && EventsLifecycle::active() ) {
+		if ( count( $original_occurrences ) > 1 ) {
 			return $this->retry_multi_instance_payment( $old_transaction, $metadata, $original_occurrences );
 		}
 

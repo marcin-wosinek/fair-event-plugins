@@ -242,7 +242,7 @@ test.describe( 'Payment history foundation', () => {
 		expect( upgrade.second ).toEqual( upgrade.first );
 	} );
 
-	test( 'a relationship named by purchase provenance is not counted again in capacity or Statistics', async () => {
+	test( 'a purchase backfilled from a relationship counts once; relationships never count in capacity or Statistics', async () => {
 		const eventDateId = await createEventDate( 'provenance' );
 		const legacy = await addRelationship( eventDateId );
 		const yoga = { optionId: 910001, name: 'Provenance yoga' };
@@ -251,9 +251,10 @@ test.describe( 'Payment history foundation', () => {
 			...yoga,
 		} );
 
+		// A relationship alone is no admission (#2251).
 		let body = await statistics( eventDateId );
-		expect( body.total_tickets ).toBe( 1 );
-		expect( await capacityTaken( eventDateId ) ).toBe( 1 );
+		expect( body.total_tickets ).toBe( 0 );
+		expect( await capacityTaken( eventDateId ) ).toBe( 0 );
 
 		// The purchase backfilled from that relationship has no participant
 		// match (as after anonymization), so only provenance ties them.
@@ -269,16 +270,16 @@ test.describe( 'Payment history foundation', () => {
 		expect( body.total_tickets ).toBe( 1 );
 		expect( await capacityTaken( eventDateId ) ).toBe( 1 );
 
-		// A relationship without provenance still counts, as today.
+		// Nor is a relationship without provenance.
 		const other = await addRelationship( eventDateId );
 		body = await statistics( eventDateId );
-		expect( body.total_tickets ).toBe( 2 );
-		expect( await capacityTaken( eventDateId ) ).toBe( 2 );
+		expect( body.total_tickets ).toBe( 1 );
+		expect( await capacityTaken( eventDateId ) ).toBe( 1 );
 
-		// A purchase by the same participant also skips the relationship.
-		// Its participant-scope activity is the purchase's, carried by its
-		// one ticket as the shadow writes and the backfill copy it, and
-		// never counted twice (§4.4, §8.8).
+		// A purchase by the same participant counts once. Its
+		// participant-scope activity is the purchase's, carried by its one
+		// ticket as the shadow writes and the backfill copy it, and never
+		// counted twice (§4.4, §8.8).
 		await seedSignup( {
 			eventDateId,
 			participantId: other.participantId,
@@ -303,7 +304,6 @@ test.describe( 'Payment history foundation', () => {
 		expect( body.tickets_per_activity ).toEqual( [
 			{ id: yoga.optionId, name: yoga.name, count: 1 },
 		] );
-		expect( body.tickets_without_activity_assignment ).toBe( 0 );
 		expect( await capacityTaken( eventDateId ) ).toBe( 2 );
 
 		// Provenance is the admission whatever the purchase's status: a
@@ -331,7 +331,7 @@ test.describe( 'Payment history foundation', () => {
 		expect( duplicate.duplicateKey ).toBe( true );
 	} );
 
-	test( 'a whole-series relationship backfilled on the master counts once on each occurrence', async () => {
+	test( 'a whole-series pass backfilled on the master counts once on each occurrence', async () => {
 		series = await runFixture(
 			'seed-event.php',
 			'three-ticket-scopes',
@@ -352,7 +352,8 @@ test.describe( 'Payment history foundation', () => {
 			relationshipId: pass.relationshipId,
 			ticketTypeId: wholeSeriesTypeId,
 		} );
-		expect( ( await statistics( firstId ) ).total_tickets ).toBe( 1 );
+		// The relationship alone counts nowhere.
+		expect( ( await statistics( firstId ) ).total_tickets ).toBe( 0 );
 
 		await seedSignup( {
 			eventDateId: masterId,

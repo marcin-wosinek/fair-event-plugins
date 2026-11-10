@@ -779,7 +779,7 @@ test.describe( 'Ticket capacity', () => {
 	} );
 
 	test.describe( 'migration', () => {
-		test( 'admissions without ticket units keep their places without counting twice', async () => {
+		test( 'signups without ticket units keep their places; relationships without a signup take none', async () => {
 			const {
 				eventDateId,
 				typeIds: [ typeId ],
@@ -792,15 +792,16 @@ test.describe( 'Ticket capacity', () => {
 				ticketTypeIds: [ typeId ],
 			};
 
-			// A relationship from before ticket units, with no signup.
+			// A Fair Audience relationship with no signup is no purchase and
+			// takes no place (#2251).
 			await fixture( 'legacy-admission', {
 				event_date_id: eventDateId,
 				ticket_type_id: typeId,
 				email: uniqueEmail( 'legacy-only' ),
 			} );
 			let c = await counts( both );
-			expect( c.event( eventDateId ) ).toBe( 1 );
-			expect( c.type( typeId ) ).toBe( 1 );
+			expect( c.event( eventDateId ) ).toBe( 0 );
+			expect( c.type( typeId ) ).toBe( 0 );
 
 			// A signup the backfill hasn't reached yet counts its quantity.
 			await fixture( 'unbackfilled-signup', {
@@ -810,10 +811,10 @@ test.describe( 'Ticket capacity', () => {
 				quantity: 2,
 			} );
 			c = await counts( both );
-			expect( c.event( eventDateId ) ).toBe( 3 );
-			expect( c.type( typeId ) ).toBe( 3 );
+			expect( c.event( eventDateId ) ).toBe( 2 );
+			expect( c.type( typeId ) ).toBe( 2 );
 
-			// A relationship and the signup behind it are one admission.
+			// A relationship and the signup behind it: the signup's places.
 			const { participant_id: participantId } = await fixture(
 				'legacy-admission',
 				{
@@ -830,8 +831,8 @@ test.describe( 'Ticket capacity', () => {
 				quantity: 3,
 			} );
 			c = await counts( both );
-			expect( c.event( eventDateId ) ).toBe( 6 );
-			expect( c.type( typeId ) ).toBe( 6 );
+			expect( c.event( eventDateId ) ).toBe( 5 );
+			expect( c.type( typeId ) ).toBe( 5 );
 
 			// Backfilling units changes how admissions are stored, not how
 			// many places they take.
@@ -851,18 +852,18 @@ test.describe( 'Ticket capacity', () => {
 			expect( ( await backfill.json() ).audit.missing ).toEqual( [] );
 
 			c = await counts( both );
-			expect( c.event( eventDateId ) ).toBe( 6 );
-			expect( c.type( typeId ) ).toBe( 6 );
+			expect( c.event( eventDateId ) ).toBe( 5 );
+			expect( c.type( typeId ) ).toBe( 5 );
 
-			// The remaining four places are still sellable, and no more.
+			// The remaining five places are still sellable, and no more.
 			const rest = await buy( {
 				event_date_id: eventDateId,
 				ticket_type_id: typeId,
 				email: uniqueEmail( 'rest' ),
-				quantity: 5,
+				quantity: 6,
 			} );
 			expect( rest.status ).toBe( 409 );
-			expect( rest.body.data.remaining ).toBe( 4 );
+			expect( rest.body.data.remaining ).toBe( 5 );
 		} );
 	} );
 } );

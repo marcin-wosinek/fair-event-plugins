@@ -105,14 +105,14 @@ class PaymentHistoryShadowWrites {
 	 * Turn shadow writes on when the site supports them, recording the
 	 * coverage floors: transactions and relationships up to these IDs are
 	 * the historical backfill's; everything after is the live writers'.
-	 * Schedules the retry cron while coverage is on, and after the cutover
-	 * in any case, for the lifecycle's queued work.
+	 * Schedules the retry cron in any case once the work queue exists, for
+	 * the purchase lifecycle's queued work.
 	 *
 	 * @return void
 	 */
 	public static function maybe_enable() {
 		if ( ! PaymentHistoryCompatibility::shadow_writes_supported() ) {
-			if ( PaymentHistoryCompatibility::ownership_cutover() && function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			if ( self::queue_available() && function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::CRON_HOOK ) ) {
 				wp_schedule_event( time() + MINUTE_IN_SECONDS, self::CRON_SCHEDULE, self::CRON_HOOK );
 			}
 			return;
@@ -131,6 +131,16 @@ class PaymentHistoryShadowWrites {
 		if ( function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + MINUTE_IN_SECONDS, self::CRON_SCHEDULE, self::CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Whether the work queue the purchase lifecycle retries from exists.
+	 *
+	 * @return bool
+	 */
+	private static function queue_available() {
+		return PaymentHistoryCompatibility::storage_available()
+			&& version_compare( \FairEvents\Database\Schema::get_db_version(), PaymentHistoryCompatibility::SHADOW_DB_VERSION, '>=' );
 	}
 
 	/**
@@ -272,10 +282,10 @@ class PaymentHistoryShadowWrites {
 	 */
 	public static function run_scheduled() {
 		$covered = PaymentHistoryCompatibility::shadow_write_coverage();
-		// After the cutover the lifecycle's own queued work (interrupted
-		// notifications and confirmations) is retried whatever happens to
-		// coverage: authority never moves back to the ledger (§8.5).
-		if ( ! $covered && ! PaymentHistoryCompatibility::ownership_cutover() ) {
+		// The lifecycle's own queued work (interrupted notifications and
+		// confirmations) is retried whatever happens to coverage: authority
+		// never moves back to the ledger (§8.5).
+		if ( ! $covered && ! self::queue_available() ) {
 			return;
 		}
 
@@ -471,10 +481,9 @@ class PaymentHistoryShadowWrites {
 
 	/**
 	 * Relationships whose shadow purchase doesn't reflect them: deleted,
-	 * relabelled, paid, re-held, moved or retyped. After the cutover a
-	 * confirmed purchase whose relationship still awaits payment or is gone is the
-	 * lifecycle's (its projection catches up), so it isn't listed again on
-	 * every sweep.
+	 * relabelled, paid, re-held, moved or retyped. A confirmed purchase
+	 * whose relationship still awaits payment or is gone is the lifecycle's
+	 * (its projection catches up), so it isn't listed again on every sweep.
 	 *
 	 * @param int $limit Most rows.
 	 * @return int[]
@@ -482,8 +491,7 @@ class PaymentHistoryShadowWrites {
 	private static function find_out_of_step( $limit ) {
 		global $wpdb;
 
-		$now           = gmdate( 'Y-m-d H:i:s' );
-		$authoritative = PaymentHistoryCompatibility::ownership_cutover() ? 1 : 0;
+		$now = gmdate( 'Y-m-d H:i:s' );
 		return array_map(
 			'intval',
 			(array) $wpdb->get_col(
@@ -491,18 +499,16 @@ class PaymentHistoryShadowWrites {
 					"SELECT s.legacy_event_participant_id FROM %i AS s
 					LEFT JOIN %i AS ep ON ep.id = s.legacy_event_participant_id
 					WHERE s.legacy_event_participant_id IS NOT NULL AND (
-						( ep.id IS NULL AND s.status IN ( 'confirmed', 'pending_payment' ) AND NOT ( %d = 1 AND s.status = 'confirmed' ) )
+						( ep.id IS NULL AND s.status = 'pending_payment' )
 						OR ( ep.label = 'signed_up' AND s.status <> 'confirmed' )
-						OR ( ep.label = 'pending_payment' AND ep.payment_expires_at > %s AND ( s.status <> 'pending_payment' OR NOT ( s.payment_expires_at <=> ep.payment_expires_at ) ) AND NOT ( %d = 1 AND s.status = 'confirmed' ) )
+						OR ( ep.label = 'pending_payment' AND ep.payment_expires_at > %s AND ( s.status <> 'pending_payment' OR NOT ( s.payment_expires_at <=> ep.payment_expires_at ) ) AND s.status <> 'confirmed' )
 						OR ( ep.label IN ( 'interested', 'collaborator' ) AND s.status IN ( 'confirmed', 'pending_payment' ) )
 						OR ( ep.id IS NOT NULL AND ( ep.event_date_id <> s.event_date_id OR NOT ( ep.ticket_type_id <=> s.ticket_type_id ) ) )
 					)
 					ORDER BY s.id ASC LIMIT %d",
 					$wpdb->prefix . 'fair_events_signups',
 					self::relationships_table(),
-					$authoritative,
 					$now,
-					$authoritative,
 					(int) $limit
 				)
 			)
