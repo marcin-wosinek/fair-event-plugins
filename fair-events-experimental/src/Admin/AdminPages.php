@@ -163,12 +163,19 @@ class AdminPages {
 	/**
 	 * Whether Fair Events can serve the Statistics the comparison charts read.
 	 *
+	 * Current Fair Events always registers the Statistics route; an older
+	 * release gates it behind `is_available()`.
+	 *
 	 * @return bool
 	 */
 	private function is_statistics_available() {
 		$controller = '\FairEvents\API\EventStatisticsController';
 
-		return method_exists( $controller, 'is_available' ) && $controller::is_available();
+		if ( ! class_exists( $controller ) ) {
+			return false;
+		}
+
+		return ! method_exists( $controller, 'is_available' ) || $controller::is_available();
 	}
 
 	/**
