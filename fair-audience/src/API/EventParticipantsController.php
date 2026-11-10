@@ -355,22 +355,22 @@ class EventParticipantsController extends WP_REST_Controller {
 					'callback'            => array( $this, 'assign_ticket' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
-						'event_date_id'  => array(
+						'event_date_id'                  => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
-						'ticket_id'      => array(
+						'ticket_id'                      => array(
 							'type'     => 'integer',
 							'required' => true,
 						),
 						// An existing participant to give the ticket to.
-						'participant_id' => array(
+						'participant_id'                 => array(
 							'type'     => 'integer',
 							'required' => false,
 							'minimum'  => 1,
 						),
 						// Or the details of a participant to create.
-						'participant'    => array(
+						'participant'                    => array(
 							'type'       => 'object',
 							'required'   => false,
 							'properties' => array(
@@ -378,6 +378,13 @@ class EventParticipantsController extends WP_REST_Controller {
 								'surname' => array( 'type' => 'string' ),
 								'email'   => array( 'type' => 'string' ),
 							),
+						),
+						// The holder the administrator confirmed the change
+						// from (0 for none): a change made meanwhile is refused.
+						'expected_holder_participant_id' => array(
+							'type'     => 'integer',
+							'required' => false,
+							'minimum'  => 0,
 						),
 					),
 				),
@@ -1330,7 +1337,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			$signup                      = \FairEvents\Models\EventSignup::get_by_id( (int) $ticket->signup_id );
 			$payload['participant_name'] = $signup ? (string) $signup->name : '';
 		}
-		$payload['editable'] = 'confirmed' === $payload['status'];
+		$payload['editable']  = 'confirmed' === $payload['status'];
+		$payload['transfers'] = $this->ticket_transfers( (int) $ticket->id );
 
 		$current      = $ticket->ticket_type_id ? \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id ) : null;
 		$ticket_types = array();
@@ -1686,7 +1694,11 @@ class EventParticipantsController extends WP_REST_Controller {
 	 * holder gets a relationship on the event date when they have none, so
 	 * they are listed in the audience; an existing relationship, and the
 	 * previous holder's, are left untouched. Creating the participant, the
-	 * relationship and the change of holder share one transaction.
+	 * relationship, the change of holder and its transfer record share one
+	 * transaction. With expected_holder_participant_id, a holder changed
+	 * by someone else since the administrator reviewed the change is
+	 * refused with a 409 carrying the ticket as it is now. Giving the
+	 * ticket to its current holder changes and records nothing.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error Response object or error.
@@ -1709,7 +1721,9 @@ class EventParticipantsController extends WP_REST_Controller {
 			return $ticket;
 		}
 
-		if ( ! method_exists( \FairEvents\Models\EventTicket::class, 'set_holder' ) ) {
+		if ( ! method_exists( \FairEvents\Models\EventTicket::class, 'set_holder' )
+			|| ! method_exists( \FairEvents\Models\EventTicketTransfer::class, 'create' )
+		) {
 			return new WP_Error(
 				'fair_events_unavailable',
 				__( 'Update Fair Events to assign tickets.', 'fair-audience' ),
@@ -1738,7 +1752,11 @@ class EventParticipantsController extends WP_REST_Controller {
 			}
 		}
 
-		$saved = $this->save_assignment( $ticket, $participant );
+		$expected = $request->has_param( 'expected_holder_participant_id' )
+			? (int) $request->get_param( 'expected_holder_participant_id' )
+			: null;
+
+		$saved = $this->save_assignment( $ticket, $participant, $expected );
 		if ( is_wp_error( $saved ) ) {
 			return $saved;
 		}
@@ -1796,11 +1814,11 @@ class EventParticipantsController extends WP_REST_Controller {
 
 	/**
 	 * Build, without saving, the participant a ticket is to be assigned to
-	 * from the details an administrator entered. A name is required. An
-	 * email is optional, has to be valid, and must not belong to an existing
-	 * participant: that identity is offered instead of creating a second
-	 * one. The participant starts on the minimal email profile; marketing
-	 * consent is recorded through its own flow.
+	 * from the details an administrator entered. A name and a valid email
+	 * are required. The email must not belong to an existing participant:
+	 * that identity is offered instead of creating a second one, and its
+	 * profile is left as it is. The participant starts on the minimal
+	 * email profile; marketing consent is recorded through its own flow.
 	 *
 	 * @param array $details name, surname, email.
 	 * @return \FairAudience\Models\Participant|WP_Error
@@ -1817,20 +1835,26 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
-		if ( '' !== $email ) {
-			if ( ! is_email( $email ) ) {
-				return new WP_Error(
-					'invalid_email',
-					__( 'Enter a valid email address.', 'fair-audience' ),
-					array( 'status' => 400 )
-				);
-			}
+		if ( '' === $email ) {
+			return new WP_Error(
+				'participant_email_required',
+				__( 'Enter the new participant’s email address.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
 
-			$email    = sanitize_email( $email );
-			$existing = $this->participant_repo->get_by_email( $email );
-			if ( $existing ) {
-				return $this->email_exists_error( $existing );
-			}
+		if ( ! is_email( $email ) ) {
+			return new WP_Error(
+				'invalid_email',
+				__( 'Enter a valid email address.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$email    = sanitize_email( $email );
+		$existing = $this->participant_repo->get_by_email( $email );
+		if ( $existing ) {
+			return $this->email_exists_error( $existing );
 		}
 
 		return new \FairAudience\Models\Participant(
@@ -1863,24 +1887,26 @@ class EventParticipantsController extends WP_REST_Controller {
 	/**
 	 * Write an assignment in one transaction: create the participant when
 	 * they are new, make sure they have a relationship on the ticket's
-	 * event date, and make them the ticket's holder. The ticket is checked
-	 * again under a row lock, so a check-in or status change made meanwhile
-	 * is not overwritten. A failed step rolls back all of them, so no
-	 * participant is left behind without the ticket.
+	 * event date, make them the ticket's holder and record the transfer.
+	 * The ticket is checked again under a row lock, so a check-in, status
+	 * change or other holder change made meanwhile is not overwritten. A
+	 * failed step rolls back all of them, so no participant is left behind
+	 * without the ticket and no transfer is recorded without the change.
 	 *
 	 * @param object                           $ticket      Ticket row.
 	 * @param \FairAudience\Models\Participant $participant New holder; saved here when not saved yet.
+	 * @param int|null                         $expected    Holder the change was confirmed from, or null to skip the check.
 	 * @return true|WP_Error
 	 * @throws \Throwable Re-thrown after rolling back.
 	 */
-	private function save_assignment( $ticket, $participant ) {
+	private function save_assignment( $ticket, $participant, $expected = null ) {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			$result = $this->write_assignment( $ticket, $participant );
+			$result = $this->write_assignment( $ticket, $participant, $expected );
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( 'ROLLBACK' );
@@ -1903,9 +1929,10 @@ class EventParticipantsController extends WP_REST_Controller {
 	 *
 	 * @param object                           $ticket      Ticket row.
 	 * @param \FairAudience\Models\Participant $participant New holder; saved here when not saved yet.
+	 * @param int|null                         $expected    Holder the change was confirmed from, or null to skip the check.
 	 * @return true|WP_Error
 	 */
-	private function write_assignment( $ticket, $participant ) {
+	private function write_assignment( $ticket, $participant, $expected = null ) {
 		global $wpdb;
 
 		$failed = new WP_Error(
@@ -1928,6 +1955,25 @@ class EventParticipantsController extends WP_REST_Controller {
 			return $refusal;
 		}
 
+		$current_holder = $this->current_holder_id( $locked );
+
+		// Already theirs, e.g. a retried request: nothing changes and no
+		// transfer is recorded.
+		if ( $participant->id && (int) $participant->id === $current_holder ) {
+			return true;
+		}
+
+		if ( null !== $expected && $expected !== $current_holder ) {
+			return new WP_Error(
+				'ticket_holder_changed',
+				__( 'Someone else changed this ticket’s holder in the meantime. Review the change again before saving it.', 'fair-audience' ),
+				array(
+					'status' => 409,
+					'ticket' => $this->build_ticket_payload( $locked, $this->ticket_activity_rows( $locked ) ),
+				)
+			);
+		}
+
 		if ( ! $participant->id ) {
 			// The email's unique key refuses a participant created with the
 			// same email since it was checked.
@@ -1946,13 +1992,54 @@ class EventParticipantsController extends WP_REST_Controller {
 			return $failed;
 		}
 
-		if ( (int) $locked->holder_participant_id !== (int) $participant->id
-			&& ! \FairEvents\Models\EventTicket::set_holder( (int) $locked->id, (int) $participant->id )
+		if ( ! \FairEvents\Models\EventTicket::set_holder( (int) $locked->id, (int) $participant->id )
+			|| ! \FairEvents\Models\EventTicketTransfer::create( (int) $locked->id, $current_holder, (int) $participant->id, get_current_user_id() )
 		) {
 			return $failed;
 		}
 
 		return true;
+	}
+
+	/**
+	 * The participant who holds a ticket now, as the Audience tab shows it:
+	 * its holder, else its purchaser.
+	 *
+	 * @param object $ticket Ticket row.
+	 * @return int Participant ID, or 0 when no existing participant holds it.
+	 */
+	private function current_holder_id( $ticket ) {
+		$holder = $this->ticket_person( $ticket->holder_participant_id ?? 0 ) ?? $this->ticket_purchaser( $ticket );
+
+		return (int) ( $holder['participant_id'] ?? 0 );
+	}
+
+	/**
+	 * A ticket's holder changes, oldest first, for its details. People are
+	 * read from their current profiles; one deleted or anonymized since is
+	 * null, as is an administrator whose account no longer exists.
+	 *
+	 * @param int $ticket_id Ticket ID.
+	 * @return array[]
+	 */
+	private function ticket_transfers( $ticket_id ) {
+		if ( ! method_exists( \FairEvents\Models\EventTicketTransfer::class, 'get_by_ticket_id' ) ) {
+			return array();
+		}
+
+		$transfers = array();
+		foreach ( \FairEvents\Models\EventTicketTransfer::get_by_ticket_id( (int) $ticket_id ) as $row ) {
+			$user        = $row->user_id ? get_userdata( (int) $row->user_id ) : false;
+			$transfers[] = array(
+				'id'             => (int) $row->id,
+				'transferred_at' => gmdate( 'c', strtotime( $row->created_at . ' UTC' ) ),
+				'from'           => $this->ticket_person( $row->from_participant_id ?? 0 ),
+				'to'             => $this->ticket_person( $row->to_participant_id ?? 0 ),
+				'by'             => $user ? (string) $user->display_name : null,
+			);
+		}
+
+		return $transfers;
 	}
 
 	/**

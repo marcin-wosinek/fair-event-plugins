@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.52.0';
+	const DB_VERSION = '3.53.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -721,6 +721,39 @@ class Schema {
 			UNIQUE KEY idx_ticket_option (ticket_id, ticket_option_id),
 			KEY idx_ticket_option_id (ticket_option_id),
 			KEY idx_status_expires (status, expires_at)
+		) ENGINE=InnoDB {$charset_collate};";
+	}
+
+	/**
+	 * Get the SQL for creating the fair_events_ticket_transfers table
+	 *
+	 * One row per administrator change of a ticket's holder (#2133): the
+	 * ticket, the holder before and after, the acting WordPress user and the
+	 * UTC time. Holders are participant IDs only, never name or email
+	 * snapshots, so profile changes and anonymization apply to the history
+	 * too; anonymizing a participant clears their IDs here. The purchaser,
+	 * which a transfer never changes, stays on the ticket. Rows go with
+	 * their ticket when it is physically deleted.
+	 *
+	 * @return string SQL statement for creating the table.
+	 */
+	public static function get_ticket_transfers_table_sql() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . 'fair_events_ticket_transfers';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		return "CREATE TABLE {$table_name} (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			ticket_id BIGINT UNSIGNED NOT NULL,
+			from_participant_id BIGINT UNSIGNED DEFAULT NULL,
+			to_participant_id BIGINT UNSIGNED DEFAULT NULL,
+			user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			KEY idx_ticket_id (ticket_id),
+			KEY idx_from_participant_id (from_participant_id),
+			KEY idx_to_participant_id (to_participant_id)
 		) ENGINE=InnoDB {$charset_collate};";
 	}
 

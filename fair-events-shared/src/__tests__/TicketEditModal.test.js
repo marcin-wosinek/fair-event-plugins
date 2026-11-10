@@ -3,7 +3,8 @@
  *
  * Component tests for the shared ticket editor (#1709), opened from both the
  * List tab and the Audience tab, including its pending, failure and retry
- * behaviour (#1934).
+ * behaviour (#1934), and the ticket's holder, purchaser and holder changes
+ * (#2133).
  */
 import '@testing-library/jest-dom';
 import {
@@ -15,6 +16,7 @@ import {
 	act,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { getSettings, setSettings } from '@wordpress/date';
 import TicketEditModal, { activityRuleProblem } from '../TicketEditModal.js';
 
 jest.mock( '@wordpress/api-fetch' );
@@ -566,6 +568,81 @@ describe( 'TicketEditModal', () => {
 
 		expect(
 			within( modal ).queryByRole( 'heading', { name: 'Signup answers' } )
+		).toBeNull();
+	} );
+
+	it( 'names the holder and the purchaser, and lists holder changes in the site’s timezone', async () => {
+		const JANE = {
+			participant_id: 10,
+			name: 'Jane Doe',
+			email: 'jane@example.com',
+		};
+		const CASEY = {
+			participant_id: 20,
+			name: 'Casey Companion',
+			email: 'casey@example.com',
+		};
+		const original = getSettings();
+		setSettings( {
+			...original,
+			formats: { ...original.formats, datetime: 'Y-m-d H:i' },
+			timezone: { offset: 1, offsetFormatted: '+01:00', string: '' },
+		} );
+		try {
+			mockApi(
+				response( {
+					purchaser: JANE,
+					assignee: CASEY,
+					transfers: [
+						{
+							id: 1,
+							transferred_at: '2026-11-08T10:15:00+00:00',
+							from: JANE,
+							// Anonymized since.
+							to: null,
+							by: 'Ada Admin',
+						},
+						{
+							id: 2,
+							transferred_at: '2026-11-09T08:00:00+00:00',
+							from: null,
+							to: CASEY,
+							by: null,
+						},
+					],
+				} )
+			);
+			const { modal } = await renderModal();
+
+			const people = modal.querySelector(
+				'.fair-events-ticket-edit__people'
+			);
+			expect( people ).toHaveTextContent(
+				'Ticket holderCasey Companion (casey@example.com)'
+			);
+			expect( people ).toHaveTextContent(
+				'Purchased byJane Doe (jane@example.com)'
+			);
+
+			const history = within( modal )
+				.getByRole( 'heading', { name: 'Holder changes' } )
+				.closest( 'section' );
+			const items = within( history ).getAllByRole( 'listitem' );
+			expect( items.map( ( item ) => item.textContent ) ).toEqual( [
+				'2026-11-08 11:15: from Jane Doe (jane@example.com) to Unavailable (deleted or anonymized participant), by Ada Admin',
+				'2026-11-09 09:00: from Unavailable (deleted or anonymized participant) to Casey Companion (casey@example.com), by a deleted user',
+			] );
+		} finally {
+			setSettings( original );
+		}
+	} );
+
+	it( 'shows no holder changes for a ticket never transferred', async () => {
+		mockApi( response( { transfers: [] } ) );
+		const { modal } = await renderModal();
+
+		expect(
+			within( modal ).queryByRole( 'heading', { name: 'Holder changes' } )
 		).toBeNull();
 	} );
 

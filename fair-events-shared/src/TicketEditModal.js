@@ -25,6 +25,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { dateI18n, getSettings } from '@wordpress/date';
 
 /**
  * Label naming one ticket of a purchase: its number within the purchase and
@@ -237,6 +238,105 @@ export function TicketAnswers( { answers, needsReview } ) {
 }
 
 /**
+ * A ticket's holder or purchaser as text: name and email, or a note that the
+ * person is no longer available (deleted or anonymized since).
+ *
+ * @param {Object|null} person Person from the ticket response.
+ * @return {string} Label
+ */
+export function ticketPersonLabel( person ) {
+	const name = person?.name || '';
+	const email = person?.email || '';
+	if ( name && email ) {
+		return sprintf(
+			/* translators: 1: person's name, 2: their email address */
+			__( '%1$s (%2$s)', 'fair-events' ),
+			name,
+			email
+		);
+	}
+	return (
+		name ||
+		email ||
+		__( 'Unavailable (deleted or anonymized participant)', 'fair-events' )
+	);
+}
+
+/**
+ * Who holds the ticket and who bought it.
+ *
+ * @param {Object} props
+ * @param {Object} props.ticket Ticket from the REST response.
+ * @return {Element|null} Summary, or null when the response has neither.
+ */
+export function TicketPeople( { ticket } ) {
+	if ( ! ticket.assignee && ! ticket.purchaser ) {
+		return null;
+	}
+	return (
+		<dl
+			className="fair-events-ticket-edit__people"
+			style={ { margin: '8px 0 0' } }
+		>
+			<dt style={ { fontWeight: 600 } }>
+				{ __( 'Ticket holder', 'fair-events' ) }
+			</dt>
+			<dd style={ { margin: '0 0 4px' } }>
+				{ ticketPersonLabel( ticket.assignee ) }
+			</dd>
+			<dt style={ { fontWeight: 600 } }>
+				{ __( 'Purchased by', 'fair-events' ) }
+			</dt>
+			<dd style={ { margin: 0 } }>
+				{ ticketPersonLabel( ticket.purchaser ) }
+			</dd>
+		</dl>
+	);
+}
+
+/**
+ * The ticket's holder changes, oldest first, with their UTC times shown in
+ * the site's timezone.
+ *
+ * @param {Object} props
+ * @param {Array}  props.transfers Transfers from the REST response.
+ * @return {Element|null} History, or null when there is none.
+ */
+export function TicketTransferHistory( { transfers } ) {
+	if ( ! transfers || transfers.length === 0 ) {
+		return null;
+	}
+	const format = getSettings().formats?.datetime || 'F j, Y g:i a';
+	return (
+		<section
+			className="fair-events-ticket-edit__transfers"
+			style={ { marginTop: 16 } }
+		>
+			<h3 style={ { fontSize: 13, margin: '0 0 8px' } }>
+				{ __( 'Holder changes', 'fair-events' ) }
+			</h3>
+			<ol style={ { margin: 0, paddingLeft: 20 } }>
+				{ transfers.map( ( transfer ) => (
+					<li key={ transfer.id } style={ { marginBottom: 4 } }>
+						{ sprintf(
+							/* translators: 1: date and time, 2: previous holder, 3: new holder, 4: administrator's name */
+							__(
+								'%1$s: from %2$s to %3$s, by %4$s',
+								'fair-events'
+							),
+							dateI18n( format, transfer.transferred_at ),
+							ticketPersonLabel( transfer.from ),
+							ticketPersonLabel( transfer.to ),
+							transfer.by || __( 'a deleted user', 'fair-events' )
+						) }
+					</li>
+				) ) }
+			</ol>
+		</section>
+	);
+}
+
+/**
  * Class name for a Modal whose title names a person. Render
  * WrappingModalStyle inside the Modal along with it.
  */
@@ -386,7 +486,11 @@ export default function TicketEditModal( {
 						ticketStatusName( ticket.status )
 					) }
 				</p>
+				<TicketPeople ticket={ ticket } />
 			</div>
+		);
+		const history = (
+			<TicketTransferHistory transfers={ ticket.transfers } />
 		);
 
 		if ( ! ticket.editable ) {
@@ -419,6 +523,7 @@ export default function TicketEditModal( {
 						</dd>
 					</dl>
 					{ answers }
+					{ history }
 					<Flex justify="flex-end" style={ { marginTop: 16 } }>
 						<Button variant="tertiary" onClick={ onClose }>
 							{ __( 'Close', 'fair-events' ) }
@@ -609,6 +714,7 @@ export default function TicketEditModal( {
 					/>
 				</div>
 				{ answers }
+				{ history }
 				{ saveError && (
 					<Notice status="error" isDismissible={ false }>
 						{ saveError }

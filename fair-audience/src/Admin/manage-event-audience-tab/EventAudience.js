@@ -934,8 +934,8 @@ export default function EventAudience( {
 		loadParticipants();
 		showToast(
 			sprintf(
-				/* translators: %s: name of the participant the ticket was assigned to */
-				__( 'Ticket assigned to %s.', 'fair-audience' ),
+				/* translators: %s: name of the ticket's new holder */
+				__( 'Ticket holder changed to %s.', 'fair-audience' ),
 				updatedTicket.assignee?.name || __( '—', 'fair-audience' )
 			)
 		);
@@ -1842,12 +1842,18 @@ export default function EventAudience( {
 								}
 								label={ sprintf(
 									/* translators: %s: ticket label, e.g. "Ticket 1 — Regular (AB12CD34)" */
-									__( 'Assign %s', 'fair-audience' ),
+									__(
+										'Change holder of %s',
+										'fair-audience'
+									),
 									fullLabel
 								) }
 								showTooltip={ false }
 							>
-								{ __( 'Assign ticket', 'fair-audience' ) }
+								{ __(
+									'Change ticket holder',
+									'fair-audience'
+								) }
 							</Button>
 							{ ticketMoveTargets.length > 0 &&
 								! ticket.whole_series && (
@@ -3339,6 +3345,7 @@ export default function EventAudience( {
 					audienceParticipantIds={ audienceParticipantIds }
 					onClose={ () => setAssigningTicket( null ) }
 					onAssigned={ handleTicketAssigned }
+					onRefresh={ loadParticipants }
 				/>
 			) }
 

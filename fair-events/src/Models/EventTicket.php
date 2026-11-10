@@ -257,6 +257,7 @@ class EventTicket {
 		if ( $stale_ids ) {
 			self::announce_deletion( $stale_ids );
 			EventTicketActivity::delete_by_ticket_ids( $stale_ids );
+			EventTicketTransfer::delete_by_ticket_ids( $stale_ids );
 			$removed = (int) $wpdb->query(
 				$wpdb->prepare(
 					'DELETE FROM %i WHERE id IN (' . implode( ', ', array_fill( 0, count( $stale_ids ), '%d' ) ) . ')',
@@ -691,8 +692,8 @@ class EventTicket {
 	}
 
 	/**
-	 * Drop a deleted participant's links while keeping the units as
-	 * non-personal purchase history.
+	 * Drop a deleted participant's links while keeping the units, and the
+	 * transfers between holders, as non-personal purchase history.
 	 *
 	 * @param int $participant_id Participant ID.
 	 * @return void
@@ -711,6 +712,8 @@ class EventTicket {
 				)
 			);
 		}
+
+		EventTicketTransfer::anonymize_participant( $participant_id );
 	}
 
 	/**
@@ -740,6 +743,7 @@ class EventTicket {
 		$ticket_ids = array_map( 'intval', wp_list_pluck( self::get_by_signup_id( $signup_id ), 'id' ) );
 		self::announce_deletion( $ticket_ids );
 		EventTicketActivity::delete_by_ticket_ids( $ticket_ids );
+		EventTicketTransfer::delete_by_ticket_ids( $ticket_ids );
 
 		return $wpdb->query(
 			$wpdb->prepare( 'DELETE FROM %i WHERE signup_id = %d', self::table(), $signup_id )

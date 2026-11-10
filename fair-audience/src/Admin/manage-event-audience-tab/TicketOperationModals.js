@@ -33,9 +33,9 @@ import { personLabel } from './AssignTicketModal.js';
 function TicketPeople( { ticket } ) {
 	return (
 		<dl className="fair-audience-assign-ticket__people">
-			<dt>{ __( 'Purchaser', 'fair-audience' ) }</dt>
+			<dt>{ __( 'Purchased by', 'fair-audience' ) }</dt>
 			<dd>{ personLabel( ticket.purchaser ) }</dd>
-			<dt>{ __( 'Assignee', 'fair-audience' ) }</dt>
+			<dt>{ __( 'Ticket holder', 'fair-audience' ) }</dt>
 			<dd>{ personLabel( ticket.assignee ) }</dd>
 		</dl>
 	);
