@@ -36,6 +36,24 @@ namespace FairTimetable;
 defined( 'WPINC' ) || die;
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => __DIR__ . '/vendor/fair-events/shared',
+		'messages'    => array( \FairTimetable\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
 use FairTimetable\Core\Plugin;
 
-Plugin::instance()->init();
+// Initialize plugin once the shared library is selected.
+\Fair_Events_Shared_Loader::when_ready(
+	__FILE__,
+	static function () {
+		Plugin::instance()->init();
+	}
+);

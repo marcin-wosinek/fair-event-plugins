@@ -31,6 +31,8 @@ function runtimeFiles(plugin) {
 		'docs/weekly-summary.md',
 		'vendor/autoload.php',
 		'vendor/composer/autoload_real.php',
+		'vendor/fair-events/shared/bootstrap.php',
+		'vendor/fair-events/shared/composer.json',
 		'vendor/fair-events/shared/tests/SharedTest.php',
 		'vendor/fair-events/shared/phpunit.xml',
 		'src/API/SourcesController.php',
@@ -108,10 +110,26 @@ test('does not apply the development-artifact rule to other plugins', () => {
 	const result = verify('fair-platform', [
 		'fair-platform.php',
 		'vendor/autoload.php',
+		'vendor/fair-events/shared/bootstrap.php',
+		'vendor/fair-events/shared/composer.json',
 		'__tests__/bootstrap.php',
 		'phpunit.xml',
 	]);
 
 	assert.equal(result.status, 0, result.stderr);
 	assert.doesNotMatch(result.stdout, /development test artifacts/);
+});
+
+test('rejects a shared-library consumer without the selection bootstrap', () => {
+	const result = verify('fair-platform', [
+		'fair-platform.php',
+		'vendor/autoload.php',
+		'vendor/fair-events/shared/composer.json',
+	]);
+
+	assert.equal(result.status, 1);
+	assert.match(
+		result.stderr,
+		/fair-platform\/vendor\/fair-events\/shared\/bootstrap\.php/
+	);
 });

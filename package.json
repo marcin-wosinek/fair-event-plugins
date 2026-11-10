@@ -42,6 +42,7 @@
 		"validate:native-popups": "node scripts/validate-native-popups.mjs",
 		"validate:text-domains": "node scripts/validate-text-domains.mjs",
 		"validate:php-compat": "node scripts/php-compat.mjs check",
+		"validate:shared-version": "node scripts/validate-shared-version.mjs",
 		"validate:agent-workflows": "node scripts/validate-agent-workflows.mjs && node --test scripts/__tests__/agent-hook.test.mjs scripts/__tests__/validate-agent-workflows.test.mjs",
 		"audit:npm": "node scripts/dependency-security.mjs audit-npm",
 		"audit:composer": "node scripts/dependency-security.mjs audit-composer",

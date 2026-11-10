@@ -162,6 +162,9 @@ jobs:
             - name: Check PHP compatibility declarations
               run: npm run validate:php-compat
 
+            - name: Check the shared PHP version and consumer locks
+              run: npm run validate:shared-version
+
             # PHPUnit runs in the php-tests matrix, so the JavaScript suites
             # and artifacts are produced only once.
             - name: Run JavaScript and tooling tests

@@ -38,6 +38,26 @@ define( 'FAIR_PAYMENTS_CONNECTOR_EXPERIMENTAL_API_TOKENS_HANDOFF', true );
 // Composer autoloader.
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => __DIR__ . '/vendor/fair-events/shared',
+		'messages'    => array( \FairPaymentsConnectorExperimental\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
 // Initialize plugin.
 use FairPaymentsConnectorExperimental\Core\Plugin;
-add_action( 'plugins_loaded', array( Plugin::class, 'instance' ) );
+add_action(
+	'plugins_loaded',
+	static function () {
+		// Shared classes are safe only once the newest copy is selected.
+		if ( \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
+			Plugin::instance();
+		}
+	}
+);

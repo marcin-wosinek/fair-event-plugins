@@ -23,6 +23,18 @@ defined( 'ABSPATH' ) || die;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => __DIR__ . '/vendor/fair-events/shared',
+		'messages'    => array( \FairAudienceExperimental\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
 // Defer bootstrap to plugins_loaded so fair-audience (loaded alphabetically before
 // fair-audience-experimental) has already been included and FAIR_AUDIENCE_VERSION is defined.
 add_action(
@@ -56,6 +68,11 @@ add_action(
 		define( 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION', '1.6.1' );
 		define( 'FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		define( 'FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+
+		// Shared classes are safe only once the newest copy is selected.
+		if ( ! \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
+			return;
+		}
 
 		\FairAudienceExperimental\Core\Plugin::instance()->init();
 	},

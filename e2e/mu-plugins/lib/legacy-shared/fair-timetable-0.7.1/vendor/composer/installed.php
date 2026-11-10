@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'marcin-wosinek/fair-timetable',
+        'pretty_version' => 'dev-523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+        'version' => 'dev-523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+        'reference' => '523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+        'type' => 'wordpress-plugin',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => false,
+    ),
+    'versions' => array(
+        'composer/installers' => array(
+            'pretty_version' => 'v2.3.0',
+            'version' => '2.3.0.0',
+            'reference' => '12fb2dfe5e16183de69e784a7b84046c43d97e8e',
+            'type' => 'composer-plugin',
+            'install_path' => __DIR__ . '/./installers',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'fair-events/shared' => array(
+            'pretty_version' => '0.2.5',
+            'version' => '0.2.5.0',
+            'reference' => 'd310c5ada6a8edd40c001d2c9f421f198076e3cd',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../fair-events/shared',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'marcin-wosinek/fair-timetable' => array(
+            'pretty_version' => 'dev-523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+            'version' => 'dev-523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+            'reference' => '523ab67e5a7931c886cc4579d7fa2bb3b5c96bd1',
+            'type' => 'wordpress-plugin',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);
