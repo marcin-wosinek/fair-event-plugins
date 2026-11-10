@@ -22,6 +22,17 @@
  *   every delivery wake-up; `drain` runs workers until no queued work is due.
  * - `state <source>` reports only.
  * - `cleanup <source>` deletes the run's rows.
+ * - `parallel <source> <runs>` runs two child actions at once, each as its
+ *   own `wp eval-file` process inside the container. `<runs>` is a JSON list
+ *   of `{action, key?}`, such as two `deliver` workers or two `queue` calls
+ *   with distinct keys. Both children wait for a shared start time after
+ *   bootstrapping, so their work begins together; each reports the
+ *   `started`/`finished` times of its action and whether it `waited` for
+ *   that start. Children are reaped before any failure is reported, and a
+ *   failure names the child's action, exit status, stdout and stderr.
+ *   Concurrent workers must go through this one call: parallel `wp-env run`
+ *   invocations from a spec can leave wp-env reporting `Environment not
+ *   initialized` for the rest of the job (#2189).
  *
  * Every action prints one `E2E_META_QUEUE:{json}` line with the run's
  * `rows` (oldest first), the scheduled `wakeups`, `now`, the scheduling
@@ -32,6 +43,8 @@
  * send.
  *
  * @package FairEventsE2E
+ *
+ * phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.system_calls_proc_open, WordPress.WP.AlternativeFunctions -- The parallel action runs WP-CLI children in the test container.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -70,6 +83,15 @@ $fair_e2e_event = static function ( $key ) use ( $source ) {
 		'event_context'  => '',
 	);
 };
+
+// A parallel child waits for the shared start time after bootstrapping.
+$fair_e2e_start_at = (float) getenv( 'FAIR_E2E_META_START_AT' );
+$fair_e2e_waited   = microtime( true ) < $fair_e2e_start_at;
+if ( $fair_e2e_waited ) {
+	time_sleep_until( $fair_e2e_start_at );
+}
+$fair_e2e_started  = microtime( true );
+$fair_e2e_children = null;
 
 switch ( $fair_e2e_action ) {
 	case 'add':
@@ -129,9 +151,78 @@ switch ( $fair_e2e_action ) {
 		break;
 	case 'state':
 		break;
+	case 'parallel':
+		$fair_e2e_runs = json_decode( $args[2] ?? '', true );
+		if ( ! is_array( $fair_e2e_runs ) || 2 !== count( $fair_e2e_runs ) ) {
+			WP_CLI::error( 'parallel needs a JSON list of two runs.' );
+		}
+		// Long enough for both children to bootstrap before it.
+		$fair_e2e_child_start = sprintf( '%.6F', microtime( true ) + 3 );
+		$fair_e2e_procs       = array();
+		foreach ( $fair_e2e_runs as $fair_e2e_run ) {
+			$fair_e2e_child_action = (string) ( $fair_e2e_run['action'] ?? '' );
+			if ( 'parallel' === $fair_e2e_child_action ) {
+				WP_CLI::error( 'parallel runs cannot nest.' );
+			}
+			$fair_e2e_out     = wp_tempnam( 'e2e-meta-queue-out' );
+			$fair_e2e_err     = wp_tempnam( 'e2e-meta-queue-err' );
+			$fair_e2e_command = 'FAIR_E2E_META_START_AT=' . escapeshellarg( $fair_e2e_child_start ) . ' ' . implode(
+				' ',
+				array_map(
+					'escapeshellarg',
+					array(
+						'wp',
+						'eval-file',
+						__FILE__,
+						$fair_e2e_child_action,
+						$source,
+						(string) ( $fair_e2e_run['key'] ?? '' ),
+						'--path=' . ABSPATH,
+					)
+				)
+			);
+			$fair_e2e_pipes   = array();
+			// Output goes to files, so neither child can block on a full pipe
+			// and their lines never interleave.
+			$fair_e2e_procs[] = array(
+				'action'  => $fair_e2e_child_action,
+				'process' => proc_open(
+					$fair_e2e_command,
+					array(
+						0 => array( 'file', '/dev/null', 'r' ),
+						1 => array( 'file', $fair_e2e_out, 'w' ),
+						2 => array( 'file', $fair_e2e_err, 'w' ),
+					),
+					$fair_e2e_pipes
+				),
+				'out'     => $fair_e2e_out,
+				'err'     => $fair_e2e_err,
+			);
+		}
+		// Reap every child before judging any of them.
+		$fair_e2e_children = array();
+		$fair_e2e_failures = array();
+		foreach ( $fair_e2e_procs as $fair_e2e_index => $fair_e2e_proc ) {
+			$fair_e2e_exit   = is_resource( $fair_e2e_proc['process'] ) ? proc_close( $fair_e2e_proc['process'] ) : -1;
+			$fair_e2e_stdout = (string) file_get_contents( $fair_e2e_proc['out'] );
+			$fair_e2e_stderr = (string) file_get_contents( $fair_e2e_proc['err'] );
+			wp_delete_file( $fair_e2e_proc['out'] );
+			wp_delete_file( $fair_e2e_proc['err'] );
+			$fair_e2e_state = preg_match( '/^E2E_META_QUEUE:(\{.*\})$/m', $fair_e2e_stdout, $fair_e2e_match ) ? json_decode( $fair_e2e_match[1], true ) : null;
+			if ( 0 !== $fair_e2e_exit || ! is_array( $fair_e2e_state ) ) {
+				$fair_e2e_failures[] = "Parallel child {$fair_e2e_index} ({$fair_e2e_proc['action']}) failed with exit status {$fair_e2e_exit}.\nstdout:\n{$fair_e2e_stdout}\nstderr:\n{$fair_e2e_stderr}";
+			}
+			$fair_e2e_children[] = $fair_e2e_state;
+		}
+		if ( $fair_e2e_failures ) {
+			WP_CLI::error( implode( "\n", $fair_e2e_failures ) );
+		}
+		break;
 	default:
 		WP_CLI::error( "Unknown action {$fair_e2e_action}." );
 }
+
+$fair_e2e_finished = microtime( true );
 
 $rows            = $source ? $wpdb->get_results(
 	$wpdb->prepare(
@@ -157,10 +248,13 @@ foreach ( (array) get_option( 'fair_e2e_meta_requests', array() ) as $request ) 
 
 echo 'E2E_META_QUEUE:' . wp_json_encode(
 	array(
-		'rows'    => $rows ? $rows : array(),
-		'wakeups' => array_column( DeliverySchedule::wakeups(), 'timestamp' ),
-		'now'     => time(),
-		'status'  => DeliverySchedule::status(),
-		'sent'    => $sent,
-	)
+		'rows'     => $rows ? $rows : array(),
+		'wakeups'  => array_column( DeliverySchedule::wakeups(), 'timestamp' ),
+		'now'      => time(),
+		'status'   => DeliverySchedule::status(),
+		'sent'     => $sent,
+		'started'  => $fair_e2e_started,
+		'finished' => $fair_e2e_finished,
+		'waited'   => $fair_e2e_waited,
+	) + ( null === $fair_e2e_children ? array() : array( 'children' => $fair_e2e_children ) )
 ) . "\n";
