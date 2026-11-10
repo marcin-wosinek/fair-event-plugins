@@ -137,6 +137,9 @@
 		"prettier": "npm:wp-prettier@3.9.x"
 	},
 	"overrides": {
+		"@wp-playground/storage": {
+			"isomorphic-git": "^1.38.6"
+		},
 		"copy-webpack-plugin@10": {
 			"serialize-javascript": "7.1.4"
 		},
