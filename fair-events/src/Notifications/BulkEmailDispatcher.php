@@ -107,6 +107,8 @@ class BulkEmailDispatcher {
 				// Always the next future moment: a send missed while a plugin was
 				// inactive or being migrated is never replayed.
 				self::schedule_next( $id, $settings, self::now() );
+				// This request may have listed a configuration deleted meanwhile.
+				ScheduledSends::drop_if_deleted( self::HOOK, $id, Configurations::BULK_EMAIL );
 			}
 		}
 	}
@@ -130,6 +132,13 @@ class BulkEmailDispatcher {
 		// the weekly cycle.
 		if ( $settings['enabled'] ) {
 			self::schedule_next( $config_id, $settings, $now );
+		}
+		// A deletion that finished after the check above must not leave the
+		// following send queued, nor start this one. From here on the send
+		// runs to the end and records its outcome even if the notification is
+		// deleted meanwhile.
+		if ( ScheduledSends::drop_if_deleted( self::HOOK, $config_id, Configurations::BULK_EMAIL ) ) {
+			return;
 		}
 
 		( new self() )->process( $config_id, (string) $send_week, $settings, $now );

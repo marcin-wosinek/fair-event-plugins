@@ -11,6 +11,7 @@ use FairEvents\Database\EventSourceRepository;
 use FairEvents\Notifications\BulkEmailAdapter;
 use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\BulkEmailSettings;
+use FairEvents\Notifications\ConfigurationMigration;
 use FairEvents\Notifications\Configurations;
 use FairEvents\Notifications\DeliveryLog;
 use FairEvents\Notifications\ExecutionHistory;
@@ -21,6 +22,7 @@ use FairEvents\Notifications\IndividualEmailEvents;
 use FairEvents\Notifications\IndividualEmailRenderer;
 use FairEvents\Notifications\IndividualEmailSettings;
 use FairEvents\Notifications\Ownership;
+use FairEvents\Notifications\ScheduledSends;
 use FairEvents\Notifications\SummaryBuilder;
 use FairEvents\Notifications\TelegramConnector;
 use FairEvents\Notifications\TelegramDispatcher;
@@ -318,6 +320,11 @@ class EventNotificationsController extends WP_REST_Controller {
 						'type' => array( 'type' => 'string' ),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_configuration' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+				),
 			)
 		);
 
@@ -596,11 +603,111 @@ class EventNotificationsController extends WP_REST_Controller {
 		if ( $error ) {
 			return $error;
 		}
-		if ( $request->has_param( 'name' ) ) {
-			Configurations::update( $record['id'], array( 'name' => $request->get_param( 'name' ) ) );
+		if ( $request->has_param( 'name' ) && ! Configurations::update( $record['id'], array( 'name' => $request->get_param( 'name' ) ) ) ) {
+			return $this->not_saved( $record['id'], $record['type'] );
 		}
 
-		return rest_ensure_response( $this->summarized( array( Configurations::get( $record['id'] ) ) )[0] );
+		$saved = Configurations::get( $record['id'] );
+		if ( ! $saved ) {
+			return $this->not_saved( $record['id'], $record['type'] );
+		}
+		return rest_ensure_response( $this->summarized( array( $saved ) )[0] );
+	}
+
+	/**
+	 * Delete one configuration and cancel its queued sends.
+	 *
+	 * Its execution and delivery history and delivery claims are kept, so
+	 * deleted notifications stay in All notification history. Nothing is sent.
+	 * A send already started finishes and records its outcome; the dispatchers
+	 * check again after queuing the following send, so none stays queued.
+	 * Works whether or not the type can be delivered right now.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function delete_configuration( $request ) {
+		$record = $this->find_configuration( $request );
+		if ( is_wp_error( $record ) ) {
+			return $record;
+		}
+		// Until a type's former single settings were moved, the move would
+		// create its first configuration again.
+		if ( Configurations::legacy_id( $record['type'] ) === $record['id'] && ! ConfigurationMigration::is_migrated( $record['type'] ) ) {
+			return new WP_Error(
+				'configuration_migrating',
+				__( 'This notification is still being moved from its previous settings and cannot be deleted yet. Nothing was deleted. Reload the page in a few minutes and try again.', 'fair-events' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$deleted = Configurations::delete( $record['id'] );
+		if ( false === $deleted ) {
+			return $this->find_configuration( $request );
+		}
+		if ( null === $deleted ) {
+			return new WP_Error(
+				'configuration_not_deleted',
+				__( 'The notification could not be deleted because another change to notifications was being saved. Nothing was deleted. Please try again.', 'fair-events' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		ScheduledSends::clear_deleted( self::hook( $record['type'] ), $record['id'], $record['type'] );
+		if ( Configurations::BULK_EMAIL === $record['type'] ) {
+			BulkEmailSettings::refresh_summary();
+		}
+
+		return rest_ensure_response(
+			array(
+				'deleted'  => true,
+				'previous' => array(
+					'id'   => $record['id'],
+					'type' => $record['type'],
+					'name' => $record['name'],
+				),
+			)
+		);
+	}
+
+	/**
+	 * Cron hook of a type's sends.
+	 *
+	 * @param string $type Notification type.
+	 * @return string
+	 */
+	private static function hook( $type ) {
+		switch ( $type ) {
+			case Configurations::TELEGRAM:
+				return TelegramDispatcher::HOOK;
+			case Configurations::BULK_EMAIL:
+				return BulkEmailDispatcher::HOOK;
+			default:
+				return IndividualEmailDispatcher::HOOK;
+		}
+	}
+
+	/**
+	 * Why a save did not land: the configuration was deleted meanwhile, or
+	 * another change held the lock.
+	 *
+	 * @param string $id   Configuration ID.
+	 * @param string $type Its type.
+	 * @return WP_Error
+	 */
+	private function not_saved( $id, $type ) {
+		if ( ! Configurations::still_exists( $id, $type ) ) {
+			return new WP_Error(
+				'unknown_configuration',
+				__( 'This notification was deleted, so nothing was saved.', 'fair-events' ),
+				array( 'status' => 404 )
+			);
+		}
+		return new WP_Error(
+			'configuration_not_saved',
+			__( 'The notification could not be saved because another change to notifications was being saved. Please try again.', 'fair-events' ),
+			array( 'status' => 503 )
+		);
 	}
 
 	/**
@@ -879,12 +986,16 @@ class EventNotificationsController extends WP_REST_Controller {
 			}
 		}
 
-		TelegramSettings::save( $id, $settings );
+		if ( ! TelegramSettings::save( $id, $settings ) ) {
+			return $this->not_saved( $id, Configurations::TELEGRAM );
+		}
 
 		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day', 'week_scope' ), $previous, $settings )
 			|| ( $settings['enabled'] && ! TelegramDispatcher::next_run( $id ) ) ) {
 			TelegramDispatcher::reschedule( $id, $settings );
 		}
+		// Never leave a send queued for a configuration deleted meanwhile.
+		ScheduledSends::drop_if_deleted( TelegramDispatcher::HOOK, $id, Configurations::TELEGRAM );
 
 		return null;
 	}
@@ -919,12 +1030,16 @@ class EventNotificationsController extends WP_REST_Controller {
 			}
 		}
 
-		BulkEmailSettings::save( $id, $settings );
+		if ( ! BulkEmailSettings::save( $id, $settings ) ) {
+			return $this->not_saved( $id, Configurations::BULK_EMAIL );
+		}
 
 		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day' ), $previous, $settings )
 			|| ( $settings['enabled'] && ! BulkEmailDispatcher::next_run( $id ) ) ) {
 			BulkEmailDispatcher::reschedule( $id, $settings );
 		}
+		// Never leave a send queued for a configuration deleted meanwhile.
+		ScheduledSends::drop_if_deleted( BulkEmailDispatcher::HOOK, $id, Configurations::BULK_EMAIL );
 
 		return null;
 	}
@@ -970,12 +1085,16 @@ class EventNotificationsController extends WP_REST_Controller {
 			}
 		}
 
-		IndividualEmailSettings::save( $id, $settings );
+		if ( ! IndividualEmailSettings::save( $id, $settings ) ) {
+			return $this->not_saved( $id, Configurations::INDIVIDUAL_EMAIL );
+		}
 
 		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day' ), $previous, $settings )
 			|| ( $settings['enabled'] && ! IndividualEmailDispatcher::next_run( $id ) ) ) {
 			IndividualEmailDispatcher::reschedule( $id, $settings );
 		}
+		// Never leave a send queued for a configuration deleted meanwhile.
+		ScheduledSends::drop_if_deleted( IndividualEmailDispatcher::HOOK, $id, Configurations::INDIVIDUAL_EMAIL );
 
 		return null;
 	}

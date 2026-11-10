@@ -3004,3 +3004,351 @@ describe( 'Duplicating a notification', () => {
 		expect( rowOf( 'Copy of Telegram' ) ).toBeDefined();
 	} );
 } );
+
+describe( 'Deleting a notification', () => {
+	const ID = 'digest-id';
+	const DELETE = `${ PATH }/configurations/${ ID }`;
+
+	function digest( overrides ) {
+		return {
+			...configuration( 'individual_email', {
+				enabled: true,
+				recipient: 'team@example.test',
+				next_run: { time_local: '14 October 2026 07:15' },
+			} ),
+			id: ID,
+			name: 'Team digest',
+			...overrides,
+		};
+	}
+
+	// An open dialog hides the page behind it from assistive technology.
+	function rowOf( name ) {
+		return screen
+			.getAllByRole( 'row', { hidden: true } )
+			.find( ( row ) =>
+				within( row ).queryByRole( 'link', { name, hidden: true } )
+			);
+	}
+
+	function openDialog( name = 'Team digest' ) {
+		fireEvent.click(
+			within( rowOf( name ) ).getByRole( 'button', { name: 'Delete' } )
+		);
+		return within( screen.getByRole( 'dialog' ) );
+	}
+
+	const deletedMessage =
+		'“Team digest” was deleted. It will not send again; its history stays in All notification history.';
+
+	it( 'names the notification and its consequences, and cancelling changes nothing', async () => {
+		await renderPage( payload( {}, [ digest() ] ), {}, null );
+
+		const dialog = openDialog();
+
+		expect(
+			screen.getByRole( 'dialog', {
+				name: 'Delete notification — Team digest',
+			} )
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText(
+				'Delete the notification “Team digest” (Individual email), which sends to: team@example.test?'
+			)
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText(
+				'Its next send, planned for 14 October 2026 07:15, and every later one are cancelled.'
+			)
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText(
+				'A send that has already started finishes and is recorded. Messages already delivered cannot be recalled.'
+			)
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText(
+				'Its past sends and tests stay in All notification history.'
+			)
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText( 'This cannot be undone.' )
+		).toBeInTheDocument();
+
+		fireEvent.click( dialog.getByRole( 'button', { name: 'Cancel' } ) );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+
+		// Escape cancels too; the dialog closes once its animation ends.
+		openDialog();
+		fireEvent.keyDown( screen.getByRole( 'dialog' ), {
+			key: 'Escape',
+			code: 'Escape',
+		} );
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+
+		expect( calls( 'DELETE', DELETE ) ).toHaveLength( 0 );
+		expect( rowOf( 'Team digest' ) ).toBeDefined();
+	} );
+
+	it( 'names an unnamed notification by its kind', async () => {
+		await renderPage( payload(), {}, null );
+
+		const dialog = openDialog( 'Telegram' );
+
+		expect(
+			screen.getByRole( 'dialog', {
+				name: 'Delete notification — Telegram',
+			} )
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText(
+				'Delete the unnamed Telegram notification, which sends to: @fair_channel?'
+			)
+		).toBeInTheDocument();
+		expect(
+			dialog.getByText( 'It will never be scheduled again.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'deletes once, blocks dismissal while pending, then removes only that row', async () => {
+		const request = deferred();
+		let current = payload( {}, [ digest() ] );
+		await renderPage(
+			current,
+			{
+				[ `GET ${ PATH }` ]: () => Promise.resolve( current ),
+				[ `DELETE ${ DELETE }` ]: () => request.promise,
+			},
+			null
+		);
+
+		const dialog = openDialog();
+		fireEvent.click(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		);
+		const pending = dialog.getByRole( 'button', { name: 'Deleting…' } );
+		fireEvent.click( pending );
+		expect( calls( 'DELETE', DELETE ) ).toHaveLength( 1 );
+		expect(
+			dialog.getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		fireEvent.keyDown( screen.getByRole( 'dialog' ), {
+			key: 'Escape',
+			code: 'Escape',
+		} );
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		// The row stays until the server confirms.
+		expect( rowOf( 'Team digest' ) ).toBeDefined();
+
+		const readsBefore = calls( 'GET', PATH ).length;
+		current = payload();
+		await act( async () =>
+			request.resolve( { deleted: true, previous: { id: ID } } )
+		);
+
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( rowOf( 'Team digest' ) ).toBeUndefined();
+		expect( rowOf( 'Telegram' ) ).toBeDefined();
+		expect( rowOf( 'Bulk email' ) ).toBeDefined();
+		expect( screen.getByText( deletedMessage ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } )
+		).toHaveFocus();
+		// The list is read again, and the report stays.
+		await waitFor( () =>
+			expect( calls( 'GET', PATH ).length ).toBeGreaterThan( readsBefore )
+		);
+		expect( screen.getByText( deletedMessage ) ).toBeInTheDocument();
+	} );
+
+	it( 'keeps the row after a failure and lets it be retried in the dialog', async () => {
+		let attempts = 0;
+		await renderPage(
+			payload( {}, [ digest() ] ),
+			{
+				[ `GET ${ PATH }` ]: () =>
+					Promise.resolve(
+						payload( {}, attempts > 1 ? [] : [ digest() ] )
+					),
+				[ `DELETE ${ DELETE }` ]: () => {
+					attempts++;
+					return 1 === attempts
+						? Promise.reject( {
+								code: 'configuration_not_deleted',
+								message:
+									'The notification could not be deleted because another change to notifications was being saved. Nothing was deleted. Please try again.',
+							} )
+						: Promise.resolve( { deleted: true } );
+				},
+			},
+			null
+		);
+
+		const dialog = openDialog();
+		fireEvent.click(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		);
+
+		expect(
+			await dialog.findByText(
+				'“Team digest” was not deleted: The notification could not be deleted because another change to notifications was being saved. Nothing was deleted. Please try again.'
+			)
+		).toBeInTheDocument();
+		expect( rowOf( 'Team digest' ) ).toBeDefined();
+
+		fireEvent.click(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		);
+		expect( await screen.findByText( deletedMessage ) ).toBeInTheDocument();
+		expect( attempts ).toBe( 2 );
+		expect( rowOf( 'Team digest' ) ).toBeUndefined();
+	} );
+
+	it( 'falls back to a general message when the failure has none', async () => {
+		await renderPage(
+			payload( {}, [ digest() ] ),
+			{ [ `DELETE ${ DELETE }` ]: () => Promise.reject( {} ) },
+			null
+		);
+
+		const dialog = openDialog();
+		fireEvent.click(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		);
+
+		expect(
+			await dialog.findByText(
+				'“Team digest” was not deleted: Failed to delete the notification. Please try again.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'treats a notification the server no longer has as deleted', async () => {
+		let asked = false;
+		await renderPage(
+			payload( {}, [ digest() ] ),
+			{
+				[ `GET ${ PATH }` ]: () =>
+					Promise.resolve( payload( {}, asked ? [] : [ digest() ] ) ),
+				[ `DELETE ${ DELETE }` ]: () =>
+					( asked = true ) &&
+					Promise.reject( {
+						code: 'unknown_configuration',
+						message: 'This notification does not exist.',
+					} ),
+			},
+			null
+		);
+
+		fireEvent.click(
+			openDialog().getByRole( 'button', { name: 'Delete notification' } )
+		);
+
+		expect( await screen.findByText( deletedMessage ) ).toBeInTheDocument();
+		expect( rowOf( 'Team digest' ) ).toBeUndefined();
+	} );
+
+	it( 'is offered for a notification whose kind cannot be delivered now', async () => {
+		await renderPage(
+			payload( {
+				bulk_email: {
+					state: 'inactive',
+					state_message:
+						'The weekly email is paused because Fair Audience is not active.',
+				},
+			} ),
+			{},
+			null
+		);
+
+		expect(
+			within( rowOf( 'Bulk email' ) ).getByRole( 'button', {
+				name: 'Delete',
+			} )
+		).toBeEnabled();
+	} );
+
+	it( 'does not bring the row back when a read issued before it answers later', async () => {
+		const read = deferred();
+		let reads = 0;
+		await renderPage(
+			payload( {}, [ digest() ] ),
+			{
+				[ `GET ${ PATH }` ]: () => {
+					reads++;
+					if ( 1 === reads ) {
+						return Promise.resolve( payload( {}, [ digest() ] ) );
+					}
+					return 2 === reads
+						? read.promise
+						: Promise.resolve( payload() );
+				},
+				[ `DELETE ${ DELETE }` ]: () =>
+					Promise.resolve( { deleted: true } ),
+			},
+			null
+		);
+
+		// Coming back to the tab issues a read that is still pending.
+		await returnToPage();
+		fireEvent.click(
+			openDialog().getByRole( 'button', { name: 'Delete notification' } )
+		);
+		await screen.findByText( deletedMessage );
+		await act( async () => read.resolve( payload( {}, [ digest() ] ) ) );
+
+		expect( rowOf( 'Team digest' ) ).toBeUndefined();
+	} );
+
+	it( 'discards the deleted notification’s unsaved draft only', async () => {
+		await renderPage(
+			payload( {}, [ digest() ] ),
+			{
+				[ `DELETE ${ DELETE }` ]: () =>
+					Promise.resolve( { deleted: true } ),
+			},
+			ID
+		);
+
+		fireEvent.change(
+			within( section( 'Team digest' ) ).getByLabelText( 'Send at' ),
+			{ target: { value: '12:00' } }
+		);
+		fireEvent.click(
+			screen.getByRole( 'link', { name: '← All notifications' } )
+		);
+		await screen.findByRole( 'table' );
+		expect(
+			within( rowOf( 'Team digest' ) ).getByText( 'Unsaved changes' )
+		).toBeInTheDocument();
+		expect( leavingIsGuarded() ).toBe( true );
+
+		const dialog = openDialog();
+		expect(
+			dialog.getByText( 'Its unsaved changes are discarded.' )
+		).toBeInTheDocument();
+		fireEvent.click(
+			dialog.getByRole( 'button', { name: 'Delete notification' } )
+		);
+		await screen.findByText( deletedMessage );
+
+		expect( leavingIsGuarded() ).toBe( false );
+	} );
+
+	it( 'leaves out a configuration deleted after a read was issued', () => {
+		const shown = payload( {}, [ digest() ] );
+		const read = payload( {}, [ digest() ] );
+
+		expect(
+			mergeRead( shown, read, 3, {}, { [ ID ]: 4 } ).configurations.map(
+				( { id } ) => id
+			)
+		).toEqual( [ 'telegram', 'bulk_email', 'individual_email' ] );
+		// A read issued after the deletion is taken as it is.
+		expect(
+			mergeRead( shown, read, 5, {}, { [ ID ]: 4 } ).configurations
+		).toHaveLength( 4 );
+	} );
+} );

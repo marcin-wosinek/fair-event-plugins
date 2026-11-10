@@ -95,6 +95,8 @@ class IndividualEmailDispatcher {
 				// Always the next future moment: a send missed while the plugin
 				// was inactive is never replayed.
 				self::schedule_next( $configuration['id'], $settings, BulkEmailDispatcher::now() );
+				// This request may have listed a configuration deleted meanwhile.
+				ScheduledSends::drop_if_deleted( self::HOOK, $configuration['id'], Configurations::INDIVIDUAL_EMAIL );
 			}
 		}
 	}
@@ -118,6 +120,13 @@ class IndividualEmailDispatcher {
 		// the weekly cycle.
 		if ( $settings['enabled'] ) {
 			self::schedule_next( $config_id, $settings, $now );
+		}
+		// A deletion that finished after the check above must not leave the
+		// following send queued, nor start this one. From here on the send
+		// runs to the end and records its outcome even if the notification is
+		// deleted meanwhile.
+		if ( ScheduledSends::drop_if_deleted( self::HOOK, $config_id, Configurations::INDIVIDUAL_EMAIL ) ) {
+			return;
 		}
 
 		( new self() )->process( $config_id, (string) $send_week, $settings, $now );
