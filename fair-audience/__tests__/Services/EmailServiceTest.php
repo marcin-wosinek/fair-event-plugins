@@ -134,6 +134,44 @@ class EmailServiceTest extends TestCase {
 	}
 
 	/**
+	 * Option names are escaped in the rendered list.
+	 */
+	public function test_escapes_selected_option_names(): void {
+		( new EmailService() )->send_signup_payment_confirmation(
+			$this->participant(),
+			$this->event(),
+			null,
+			array( '<script>alert(1)</script> & Co' ),
+			0,
+			0,
+			1
+		);
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringNotContainsString( '<script>', $message );
+		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt; &amp; Co', $message );
+	}
+
+	/**
+	 * Without selected options the section is left out.
+	 */
+	public function test_omits_selected_options_without_names(): void {
+		( new EmailService() )->send_signup_payment_confirmation(
+			$this->participant(),
+			$this->event(),
+			null,
+			array(),
+			0,
+			0,
+			1
+		);
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringNotContainsString( 'Selected options:', $message );
+		$this->assertStringNotContainsString( '<li', $message );
+	}
+
+	/**
 	 * A registration reference of 0 (not yet known) omits the row entirely.
 	 */
 	public function test_omits_registration_reference_when_zero(): void {

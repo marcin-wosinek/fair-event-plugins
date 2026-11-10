@@ -9,6 +9,9 @@ namespace FairEvents\Tests\Hooks;
 
 use PHPUnit\Framework\TestCase;
 use FairEvents\Hooks\SignupEmailHooks;
+use FairEvents\Tests\Services\Booking_Extras_Test_WPDB;
+
+require_once __DIR__ . '/../Services/Booking_Extras_Test_WPDB.php';
 
 /**
  * Verifies SignupEmailHooks reads the fair_events_signups row and threads its
@@ -30,7 +33,68 @@ class SignupEmailHooksTest extends TestCase {
 		$GLOBALS['_fair_test_sent_emails'] = array();
 		$GLOBALS['_fair_test_transients']  = array();
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
+		$GLOBALS['wpdb'] = new Booking_Extras_Test_WPDB();
+	}
+
+	/**
+	 * Restore the bootstrap's plain $wpdb double.
+	 */
+	protected function tearDown(): void {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.
 		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+		parent::tearDown();
+	}
+
+	/**
+	 * Seed the booking's tickets with a paid and a free extra.
+	 *
+	 * @param int $signup_id Signup row ID.
+	 * @return void
+	 */
+	private function seed_extras( $signup_id ): void {
+		$wpdb = $GLOBALS['wpdb'];
+		$wpdb->seed_ticket( $signup_id, $signup_id * 10 );
+		$wpdb->seed_option( 5, 'Workshop', 15.0 );
+		$wpdb->seed_option( 6, 'Free drink', 0.0 );
+		$wpdb->seed_activity( $signup_id * 10, 5, 'Workshop' );
+		$wpdb->seed_activity( $signup_id * 10, 6, 'Free drink' );
+	}
+
+	/**
+	 * The free-path confirmation lists the booking's extras.
+	 */
+	public function test_handle_signup_created_free_path_lists_extras(): void {
+		$this->seed_signup( 20 );
+		$this->seed_extras( 20 );
+
+		SignupEmailHooks::handle_signup_created( 20, 0, 'Jane Doe', 'jane@example.test', array(), null );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringContainsString( 'Selected options:', $message );
+		$this->assertStringContainsString( '>Workshop</li>', $message );
+		$this->assertStringContainsString( '>Free drink</li>', $message );
+	}
+
+	/**
+	 * The paid-path confirmation lists the booking's extras.
+	 */
+	public function test_handle_signup_confirmed_lists_extras(): void {
+		$this->seed_signup( 21, array( 'amount' => 15.0 ) );
+		$this->seed_extras( 21 );
+
+		$signup = (object) array(
+			'id'            => 21,
+			'event_date_id' => 0,
+			'name'          => 'Jane Doe',
+			'email'         => 'jane@example.test',
+		);
+
+		SignupEmailHooks::handle_signup_confirmed( $signup, (object) array() );
+
+		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
+		$this->assertStringContainsString( '>Workshop</li>', $message );
+		$this->assertStringContainsString( '>Free drink</li>', $message );
+		$this->assertStringContainsString( '15.00 EUR', $message );
 	}
 
 	/**
