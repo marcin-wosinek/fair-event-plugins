@@ -199,14 +199,28 @@ describe( 'CopyUrlButton', () => {
 	} );
 
 	it( 'clears its timer on unmount', async () => {
-		setClipboard( jest.fn().mockResolvedValue() );
-		const { unmount } = render(
-			<CopyUrlButton { ...TEXT } url="https://example.com" />
-		);
+		const timeoutSpy = jest.spyOn( globalThis, 'setTimeout' );
+		const clearTimeoutSpy = jest.spyOn( globalThis, 'clearTimeout' );
 
-		await click( screen.getByRole( 'button' ) );
-		unmount();
+		try {
+			setClipboard( jest.fn().mockResolvedValue() );
+			const { unmount } = render(
+				<CopyUrlButton { ...TEXT } url="https://example.com" />
+			);
 
-		expect( jest.getTimerCount() ).toBe( 0 );
+			await click( screen.getByRole( 'button' ) );
+			const timerIndex = timeoutSpy.mock.calls.findLastIndex(
+				( [ , delay ] ) => delay === 2000
+			);
+			expect( timerIndex ).toBeGreaterThanOrEqual( 0 );
+			const timerId = timeoutSpy.mock.results[ timerIndex ].value;
+			clearTimeoutSpy.mockClear();
+			unmount();
+
+			expect( clearTimeoutSpy ).toHaveBeenCalledWith( timerId );
+		} finally {
+			timeoutSpy.mockRestore();
+			clearTimeoutSpy.mockRestore();
+		}
 	} );
 } );
