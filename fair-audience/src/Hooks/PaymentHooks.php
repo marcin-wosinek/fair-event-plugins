@@ -18,8 +18,8 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\EventsLifecycle;
-use FairAudience\Services\EventsPaymentReaders;
 use FairAudience\Services\TicketActivities;
+use FairAudience\Services\TransactionPurchases;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -175,32 +175,20 @@ class PaymentHooks {
 		global $wpdb;
 
 		// A transaction is either a membership-fee payment (metadata carries
-		// fee_payment_id, no ledger row ever exists for it) or an event
-		// signup (resolved via the ledger) — never both, so skip the ledger
-		// lookup entirely for fee payments instead of querying it for a
-		// guaranteed-empty result.
+		// fee_payment_id, no purchase is ever linked to it) or an event
+		// purchase — never both, so skip the purchase lookup entirely for
+		// fee payments instead of querying it for a guaranteed-empty result.
 		$metadata           = ! empty( $transaction->metadata ) ? json_decode( $transaction->metadata, true ) : array();
+		$metadata           = is_array( $metadata ) ? $metadata : array();
 		$is_fee_payment     = ! empty( $metadata['fee_payment_id'] );
 		$event_participants = array();
-		$event_participant  = null;
 
 		if ( ! $is_fee_payment ) {
-			// Once Fair Events' payment readers are active, what the payment
-			// is for comes from its payment links: the purchases, their
-			// purchaser, ticket type and ticket activities
-			// (PAYMENT_HISTORY_MIGRATION.md §8.15). Before that, resolve via
-			// the ledger — keyed on the transaction, not on participant_id,
-			// so this must not be gated behind participant resolution (a
-			// transaction can have a working ledger link even when
-			// participant_id itself never got set at creation time).
-			$event_participants = EventsPaymentReaders::active()
-				? EventsPaymentReaders::transaction_purchases( (int) $transaction->id )
-				: self::resolve_event_participants_for_transaction(
-					new EventParticipantRepository(),
-					new EventParticipantTransactionRepository(),
-					(int) $transaction->id
-				);
-			$event_participant  = $event_participants ? $event_participants[0] : null;
+			// The purchases this transaction paid for — from Fair Events'
+			// payment links once its readers are active, before that from the
+			// transaction's own evidence (TransactionPurchases). Never another
+			// purchase of the same participant (#2250).
+			$event_participants = TransactionPurchases::create()->for_transaction( (int) $transaction->id, $metadata );
 		} elseif ( class_exists( FeeRepository::class ) ) {
 			// Membership-fee payments — resolve the group/fee names so the
 			// notification names what was actually purchased instead of the
@@ -217,15 +205,16 @@ class PaymentHooks {
 			}
 		}
 
+		$summary = TransactionPurchases::summary( $event_participants );
+
 		// Participant branch — prefer transaction->participant_id, but fall
-		// back to the ledger's event_participant->participant_id when the
-		// transaction's own id never resolved. Only safe when exactly one
-		// event_participant is linked: a 'multiple_instances' purchase can
-		// charge one transaction against several registrants, and picking
-		// an arbitrary one there would misattribute the notification.
+		// back to the purchaser when every resolved purchase has the same
+		// one. A 'multiple_instances' purchase can charge one transaction
+		// against several registrants, and picking an arbitrary one there
+		// would misattribute the notification.
 		$participant_id = isset( $transaction->participant_id ) ? (int) $transaction->participant_id : 0;
-		if ( $participant_id <= 0 && 1 === count( $event_participants ) && ! empty( $event_participant->participant_id ) ) {
-			$participant_id = (int) $event_participant->participant_id;
+		if ( $participant_id <= 0 ) {
+			$participant_id = $summary['participant_id'];
 		}
 
 		if ( $participant_id > 0 ) {
@@ -242,57 +231,68 @@ class PaymentHooks {
 			}
 		}
 
-		if ( $event_participant ) {
-			$event = get_post( (int) $event_participant->event_id );
+		// The event only when every purchase is for the same one.
+		if ( $summary['event_id'] > 0 ) {
+			$event = get_post( $summary['event_id'] );
 			if ( $event ) {
 				$context['event_title'] = $event->post_title;
 				$edit_link              = get_edit_post_link( $event->ID, 'raw' );
 				$context['event_url']   = $edit_link ? $edit_link : get_permalink( $event->ID );
 			}
+		}
 
-			// Ticket type (Regular, Student, Early bird, ...).
-			if ( ! empty( $event_participant->ticket_type_id ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$ticket_type_name = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT name FROM {$wpdb->prefix}fair_events_ticket_types WHERE id = %d",
-						(int) $event_participant->ticket_type_id
-					)
-				);
-				if ( $ticket_type_name ) {
-					$context['ticket_label'] = (string) $ticket_type_name;
-				}
+		// Ticket types (Regular, Student, Early bird, ...) of every purchase
+		// the transaction paid for.
+		$ticket_labels = array();
+		foreach ( $summary['ticket_type_ids'] as $ticket_type_id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$ticket_type_name = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT name FROM %i WHERE id = %d',
+					$wpdb->prefix . 'fair_events_ticket_types',
+					$ticket_type_id
+				)
+			);
+			if ( $ticket_type_name ) {
+				$ticket_labels[] = (string) $ticket_type_name;
 			}
+		}
+		$ticket_labels = array_values( array_unique( $ticket_labels ) );
+		if ( ! empty( $ticket_labels ) ) {
+			$context['ticket_label'] = implode( ', ', $ticket_labels );
+		}
 
-			// Activities — the ticket options selected at signup. Telegram
-			// notifications stay readable on mobile, so prefer the curated
-			// `short_name` when set; fall back to the full `name`, then the
-			// snapshot `epo.ticket_option_name` for options whose row was
-			// deleted after signup.
-			$option_names = array();
+		// Activities — the ticket options selected with each purchase.
+		// Telegram notifications stay readable on mobile, so prefer the
+		// curated `short_name` when set; fall back to the full `name`, then
+		// the snapshot `epo.ticket_option_name` for options whose row was
+		// deleted after signup. Discounts — group rule, plus any
+		// activity-collaborator discounts detected from the transaction
+		// line items — follow the same purchase.
+		$option_names = array();
+		$parts        = array();
+		foreach ( $event_participants as $event_participant ) {
 			foreach ( self::get_activity_options( $event_participant ) as $activity ) {
 				$option_names[] = $activity['short_name'];
 			}
-			$option_names = array_values( array_unique( array_filter( $option_names ) ) );
-			if ( ! empty( $option_names ) ) {
-				$context['activities'] = implode( ', ', $option_names );
-			}
-
-			// Applied discounts — group rule, plus any activity-collaborator
-			// discounts detected from the transaction line items.
-			$parts = array();
 
 			$group_label = self::format_applied_discount( $event_participant, $transaction );
 			if ( '' !== $group_label ) {
 				$parts[] = $group_label;
 			}
 
-			$collab_labels = self::detect_activity_collaborator_discounts( $event_participant, $transaction );
-			foreach ( $collab_labels as $label ) {
+			foreach ( self::detect_activity_collaborator_discounts( $event_participant, $transaction ) as $label ) {
 				$parts[] = $label;
 			}
+		}
 
-			$context['discounts'] = implode( '; ', $parts );
+		$option_names = array_values( array_unique( array_filter( $option_names ) ) );
+		if ( ! empty( $option_names ) ) {
+			$context['activities'] = implode( ', ', $option_names );
+		}
+
+		if ( $event_participants ) {
+			$context['discounts'] = implode( '; ', array_values( array_unique( $parts ) ) );
 		}
 
 		return $context;
