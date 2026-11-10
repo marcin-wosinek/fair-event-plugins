@@ -435,7 +435,7 @@ test.describe( 'CalendarFeedController — VTIMEZONE block on named zones', () =
 function parseVevents( ics ) {
 	const unfolded = ics.replace( /\r\n[ \t]/g, '' );
 	const unescape = ( value ) =>
-		value.replace( /\\([\;,nN])/g, ( _, ch ) =>
+		value.replace( /\\([\\;,nN])/g, ( _, ch ) =>
 			'n' === ch || 'N' === ch ? '\n' : ch
 		);
 	const property = ( block, name ) => {
@@ -450,8 +450,10 @@ function parseVevents( ics ) {
 		.slice( 1 )
 		.map( ( block ) => {
 			const description = property( block, 'DESCRIPTION' );
+			const summary = property( block, 'SUMMARY' );
 			return {
 				uid: property( block, 'UID' ),
+				summary: null === summary ? null : unescape( summary ),
 				url: property( block, 'URL' ),
 				description:
 					null === description ? null : unescape( description ),
@@ -790,5 +792,141 @@ test.describe( 'CalendarFeedController — event links in DESCRIPTION (#1691)', 
 		expect( res.headers().location ).toBe(
 			'https://example.com/calendar-feed-link'
 		);
+	} );
+} );
+
+test.describe( 'CalendarFeedController — decoded SUMMARY titles (#2214)', () => {
+	const RANGE = 'start_date=2035-11-01&end_date=2035-11-30';
+	const NBSP = '\u00A0';
+
+	let api;
+	let stamp;
+	let postId;
+	let postEventDateId;
+	let standaloneId;
+	let postTitle;
+	let standaloneTitle;
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		stamp = Date.now();
+
+		postTitle = `La&nbsp;Mutable &#x2014; post ${ stamp }`;
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title: postTitle, status: 'publish' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const postDateRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: postTitle,
+					link_type: 'post',
+					start_date: '2035-11-01',
+					start_time: '10:00:00',
+					end_date: '2035-11-01',
+					end_time: '12:00:00',
+				},
+			}
+		);
+		expect( postDateRes.ok() ).toBeTruthy();
+		postEventDateId = ( await postDateRes.json() ).id;
+
+		const linkRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ postEventDateId }`,
+			{
+				headers: adminHeaders,
+				data: { event_id: postId },
+			}
+		);
+		expect( linkRes.ok() ).toBeTruthy();
+
+		standaloneTitle = `La&nbsp;Mutable &amp; friends, &#8220;live&#8221;; ${ stamp }`;
+		const standaloneRes = await api.post(
+			'/wp-json/fair-events/v1/event-dates',
+			{
+				headers: adminHeaders,
+				data: {
+					title: standaloneTitle,
+					start_date: '2035-11-02',
+					start_time: '10:00:00',
+					end_date: '2035-11-02',
+					end_time: '12:00:00',
+					link_type: 'none',
+				},
+			}
+		);
+		expect( standaloneRes.ok() ).toBeTruthy();
+		standaloneId = ( await standaloneRes.json() ).id;
+	} );
+
+	test.afterAll( async () => {
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{ headers: adminHeaders }
+			);
+		}
+		for ( const id of [ postEventDateId, standaloneId ] ) {
+			if ( id ) {
+				await api.delete(
+					`/wp-json/fair-events/v1/event-dates/${ id }`,
+					{ headers: adminHeaders }
+				);
+			}
+		}
+	} );
+
+	test( 'decodes HTML entities in SUMMARY and keeps iCalendar escaping', async () => {
+		const res = await api.get(
+			`/wp-json/fair-events/v1/calendar.ics?${ RANGE }`
+		);
+		expect( res.ok() ).toBeTruthy();
+		const body = await res.text();
+		const unfolded = body.replace( /\r\n[ \t]/g, '' );
+
+		const byId = new Map();
+		for ( const vevent of parseVevents( body ) ) {
+			const match = vevent.uid?.match( /_(\d+)@/ );
+			if ( match ) {
+				byId.set( Number( match[ 1 ] ), vevent );
+			}
+		}
+
+		expect( byId.get( standaloneId )?.summary ).toBe(
+			`La${ NBSP }Mutable & friends, \u201Clive\u201D; ${ stamp }`
+		);
+		expect( byId.get( postEventDateId )?.summary ).toBe(
+			`La${ NBSP }Mutable \u2014 post ${ stamp }`
+		);
+
+		// Commas and semicolons stay escaped on the wire; no raw entity leaks.
+		expect( unfolded ).toContain(
+			`SUMMARY:La${ NBSP }Mutable & friends\\, \u201Clive\u201D\\; ${ stamp }`
+		);
+		expect( unfolded ).not.toContain( '&nbsp;' );
+		expect( unfolded ).not.toContain( '&amp;' );
+	} );
+
+	test( 'leaves stored titles unchanged', async () => {
+		await api.get( `/wp-json/fair-events/v1/calendar.ics?${ RANGE }` );
+
+		const standaloneRes = await api.get(
+			`/wp-json/fair-events/v1/event-dates/${ standaloneId }`,
+			{ headers: adminHeaders }
+		);
+		expect( standaloneRes.ok() ).toBeTruthy();
+		expect( ( await standaloneRes.json() ).title ).toBe( standaloneTitle );
+
+		const postRes = await api.get(
+			`/wp-json/wp/v2/fair_event/${ postId }?context=edit`,
+			{ headers: adminHeaders }
+		);
+		expect( postRes.ok() ).toBeTruthy();
+		expect( ( await postRes.json() ).title.raw ).toBe( postTitle );
 	} );
 } );

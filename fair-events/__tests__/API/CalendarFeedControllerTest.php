@@ -12,6 +12,7 @@
 
 namespace FairEvents\Tests\API;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use FairEvents\API\CalendarFeedController;
 use FairEvents\Helpers\ICalParser;
@@ -394,5 +395,93 @@ class CalendarFeedControllerTest extends TestCase {
 		}
 
 		$this->assertSame( array( 'timed@example.com', 'all-day@example.com' ), $uids );
+	}
+
+	/**
+	 * Titles exercised by the entity-decoding test (#2214): stored title and
+	 * the plain-text SUMMARY a calendar client should display.
+	 *
+	 * @return array[]
+	 */
+	public static function title_provider() {
+		$nbsp = "\u{00A0}";
+
+		return array(
+			'reported nbsp'            => array( 'La&nbsp;Mutable', "La{$nbsp}Mutable" ),
+			'ampersand'                => array( 'Salsa &amp; Bachata', 'Salsa & Bachata' ),
+			'named quotes'             => array( '&quot;Open&quot; &apos;jam&apos;', '"Open" \'jam\'' ),
+			'numeric quotes'           => array( '&#8220;Night&#8221; &#039;out&#039;', "\u{201C}Night\u{201D} 'out'" ),
+			'decimal reference'        => array( 'Caf&#233;', 'Café' ),
+			'hexadecimal reference'    => array( 'Caf&#xE9; &#x2014; live', "Café \u{2014} live" ),
+			'plain title'              => array( 'Plain event', 'Plain event' ),
+			'accented characters'      => array( 'Música en directo: ñandú', 'Música en directo: ñandú' ),
+			'unicode nbsp'             => array( "La{$nbsp}Mutable", "La{$nbsp}Mutable" ),
+			'double-encoded stays'     => array( 'Literal &amp;nbsp;', 'Literal &nbsp;' ),
+			'commas and semicolons'    => array( 'Rock&nbsp;&amp;&nbsp;Roll, live; free', "Rock{$nbsp}&{$nbsp}Roll, live; free" ),
+			'backslash and newline'    => array( "Back\\slash &amp;\nnext line", "Back\\slash &\nnext line" ),
+			'long unicode for folding' => array(
+				str_repeat( 'Fiesta&nbsp;de&nbsp;la&nbsp;Música &amp; ñandú, ', 4 ),
+				str_repeat( "Fiesta{$nbsp}de{$nbsp}la{$nbsp}Música & ñandú, ", 4 ),
+			),
+		);
+	}
+
+	/**
+	 * HTML entities in titles are decoded once into the SUMMARY, while
+	 * Sabre/VObject keeps iCalendar escaping and folding valid: the feed
+	 * reparses to exactly one event whose SUMMARY is the intended text (#2214).
+	 *
+	 * @param string $title    Stored title.
+	 * @param string $expected Expected displayed SUMMARY.
+	 * @return void
+	 */
+	#[DataProvider( 'title_provider' )]
+	public function test_summary_decodes_html_entities( $title, $expected ) {
+		$GLOBALS['_fair_test_timezone'] = 'Europe/Madrid';
+
+		$ics = $this->build_ics(
+			array(
+				array(
+					'uid'             => 'entities@example.com',
+					'title'           => $title,
+					'description'     => 'Description',
+					'start'           => '2026-06-15 12:00:00',
+					'end'             => '2026-06-15 13:00:00',
+					'all_day'         => false,
+					'calendar_export' => true,
+					'url'             => 'https://example.com/event',
+					'location'        => null,
+				),
+			)
+		);
+
+		$vcalendar = \Sabre\VObject\Reader::read( $ics );
+		$this->assertSame( array(), $vcalendar->validate() );
+
+		$vevents = $vcalendar->select( 'VEVENT' );
+		$this->assertCount( 1, $vevents );
+
+		$vevent = reset( $vevents );
+		$this->assertCount( 1, $vevent->select( 'SUMMARY' ) );
+		$this->assertSame( $expected, (string) $vevent->{'SUMMARY'} );
+		$this->assertSame( 'Description' . "\n\n" . 'https://example.com/event', (string) $vevent->{'DESCRIPTION'} );
+
+		// Same property set as a plain-title event: nothing leaked into new lines.
+		$names = array();
+		foreach ( $vevent->children() as $property ) {
+			$names[] = $property->name;
+		}
+		sort( $names );
+		$this->assertSame( array( 'DESCRIPTION', 'DTEND', 'DTSTAMP', 'DTSTART', 'LAST-MODIFIED', 'SUMMARY', 'UID', 'URL' ), $names );
+
+		// Every physical line respects the 75-octet folding limit.
+		foreach ( explode( "\r\n", $ics ) as $line ) {
+			$this->assertLessThanOrEqual( 75, strlen( $line ) );
+		}
+
+		// The ICS parser used for external feeds reads the same text back.
+		$events = $this->reparse( $ics );
+		$this->assertCount( 1, $events );
+		$this->assertSame( $expected, $events[0]['summary'] );
 	}
 }

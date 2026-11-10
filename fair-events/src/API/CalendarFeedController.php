@@ -279,7 +279,7 @@ class CalendarFeedController extends WP_REST_Controller {
 			'VEVENT',
 			array(
 				'UID'           => $occurrence['uid'],
-				'SUMMARY'       => $occurrence['title'],
+				'SUMMARY'       => $this->decode_title( $occurrence['title'] ),
 				'DESCRIPTION'   => $this->build_description( (string) $occurrence['description'], $url ),
 				'DTSTAMP'       => $now,
 				'LAST-MODIFIED' => $now,
@@ -308,6 +308,22 @@ class CalendarFeedController extends WP_REST_Controller {
 			$vevent->add( 'DTSTART', DateHelper::local_to_ical_utc( $occurrence['start'] ) );
 			$vevent->add( 'DTEND', DateHelper::local_to_ical_utc( $occurrence['end'] ) );
 		}
+	}
+
+	/**
+	 * Decode HTML entities in an occurrence title for the ICS SUMMARY (#2214).
+	 *
+	 * Titles come from WordPress post titles, which may store entities such as
+	 * `&nbsp;` or `&amp;`. Calendar clients render SUMMARY as plain text, so the
+	 * entities are decoded once here; Sabre/VObject then applies iCalendar
+	 * escaping and line folding. `&nbsp;` becomes U+00A0, and a double-encoded
+	 * `&amp;nbsp;` stays literal `&nbsp;`.
+	 *
+	 * @param mixed $title Occurrence title.
+	 * @return string Decoded title.
+	 */
+	private function decode_title( $title ) {
+		return html_entity_decode( (string) $title, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 
 	/**
