@@ -166,6 +166,16 @@
 	margin: 4px 0 0;
 }
 
+/* The confirmation renders outside the page wrapper, so it is not nested. */
+.fair-events-notifications__delete-consequences {
+	margin: 0 0 0 1.5em;
+	list-style: disc;
+}
+
+.fair-events-notifications__deleted.components-notice {
+	margin: 0 0 16px;
+}
+
 .fair-events-notifications__primary .fair-events-notifications__unsaved {
 	display: block;
 }

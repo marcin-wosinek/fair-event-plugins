@@ -25,6 +25,10 @@
  * under a new ID and name, without its schedule, history or deliveries,
  * that sends nothing and changes independently of its original.
  *
+ * Deletion (#2204): administrators only; removes only the selected
+ * configuration and its queued sends, keeps its execution history, sends
+ * nothing, and is never undone by a later save.
+ *
  * The retired routes of the former owners
  * (Fair Events Experimental, Fair Audience) must be gone.
  *
@@ -1341,6 +1345,46 @@ test.describe( 'EventNotificationsController', () => {
 				} )
 			).json();
 
+		// Not blocking: a long synchronous WP-CLI run leaves dead
+		// keep-alive sockets for the next request.
+		const wp = async ( ...args ) =>
+			(
+				await promisify( execFile )(
+					'npx',
+					[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
+					{
+						cwd: new URL( '../../../../', import.meta.url ),
+						encoding: 'utf8',
+					}
+				)
+			).stdout;
+
+		// A type also reports a deleted configuration.
+		const stateOf = async ( id, type = '' ) => {
+			const stdout = await wp(
+				'eval-file',
+				'wp-content/mu-plugins/scripts/notification-configurations-fixture.php',
+				'state',
+				id,
+				...( type ? [ type ] : [] )
+			);
+			const match = stdout.match(
+				/E2E_NOTIFICATION_CONFIGURATIONS:(\{.*\})/
+			);
+			if ( ! match ) {
+				throw new Error( `Expected fixture output, got:\n${ stdout }` );
+			}
+			return JSON.parse( match[ 1 ] );
+		};
+
+		const mailTo = async ( to ) =>
+			(
+				await api.get(
+					`${ MAIL_LOG }?to=${ encodeURIComponent( to ) }`,
+					{ headers: adminHeaders }
+				)
+			).json();
+
 		test.afterAll( () => {
 			if ( created.length ) {
 				runScript(
@@ -1508,46 +1552,6 @@ test.describe( 'EventNotificationsController', () => {
 				created.push( copy.id );
 				return copy;
 			};
-
-			// Not blocking: a long synchronous WP-CLI run leaves dead
-			// keep-alive sockets for the next request.
-			const wp = async ( ...args ) =>
-				(
-					await promisify( execFile )(
-						'npx',
-						[ 'wp-env', 'run', 'tests-cli', 'wp', ...args ],
-						{
-							cwd: new URL( '../../../../', import.meta.url ),
-							encoding: 'utf8',
-						}
-					)
-				).stdout;
-
-			const stateOf = async ( id ) => {
-				const stdout = await wp(
-					'eval-file',
-					'wp-content/mu-plugins/scripts/notification-configurations-fixture.php',
-					'state',
-					id
-				);
-				const match = stdout.match(
-					/E2E_NOTIFICATION_CONFIGURATIONS:(\{.*\})/
-				);
-				if ( ! match ) {
-					throw new Error(
-						`Expected fixture output, got:\n${ stdout }`
-					);
-				}
-				return JSON.parse( match[ 1 ] );
-			};
-
-			const mailTo = async ( to ) =>
-				(
-					await api.get(
-						`${ MAIL_LOG }?to=${ encodeURIComponent( to ) }`,
-						{ headers: adminHeaders }
-					)
-				).json();
 
 			// Everything a copy must not inherit, as the routes report it.
 			const RUNTIME = [
@@ -1816,6 +1820,215 @@ test.describe( 'EventNotificationsController', () => {
 				const again = await duplicated( source.id );
 				expect( again.id ).not.toBe( copy.id );
 				expect( again.name ).toBe( copy.name );
+			} );
+		} );
+
+		test.describe( 'delete', () => {
+			const remove = ( id, headers = adminHeaders ) =>
+				api.delete( `${ CONFIGURATIONS }/${ id }`, { headers } );
+
+			const listed = async () =>
+				(
+					await (
+						await api.get( PATH, { headers: adminHeaders } )
+					).json()
+				).configurations.map( ( { id } ) => id );
+
+			const executionsOf = async ( id ) =>
+				(
+					await api.get(
+						`${ PATH }/executions?configuration=${ id }`,
+						{ headers: adminHeaders }
+					)
+				).json();
+
+			test( 'is limited to administrators and existing notifications', async () => {
+				const own = await createIndividual( 'Delete rights' );
+				const anon = await request.newContext( {
+					baseURL: BASE_URL,
+				} );
+				expect(
+					(
+						await anon.delete( `${ CONFIGURATIONS }/${ own.id }` )
+					).status()
+				).toBe( 401 );
+				await anon.dispose();
+				expect(
+					( await remove( own.id, subscriberHeaders ) ).status()
+				).toBe( 403 );
+
+				const missing = await remove(
+					'00000000-0000-4000-a000-000000000000'
+				);
+				expect( missing.status() ).toBe( 404 );
+				expect( ( await missing.json() ).code ).toBe(
+					'unknown_configuration'
+				);
+
+				// A refused request deleted nothing.
+				expect( ( await read( own.id ) ).name ).toBe( 'Delete rights' );
+				expect( await listed() ).toContain( own.id );
+			} );
+
+			test( 'removes only the selected individual email, cancels its sends and keeps its history', async () => {
+				const kept = await createIndividual( 'Kept digest' );
+				const deleted = await createIndividual( 'Deleted digest' );
+				for ( const { id } of [ kept, deleted ] ) {
+					const res = await update( id, {
+						enabled: true,
+						recipient: SHARED,
+						event_selection: '@local',
+						skip_empty: false,
+					} );
+					expect( res.status() ).toBe( 200 );
+				}
+				// Give it a history to keep.
+				expect(
+					(
+						await api.post(
+							`${ CONFIGURATIONS }/${ deleted.id }/test`,
+							{ headers: adminHeaders }
+						)
+					).status()
+				).toBe( 200 );
+				const [ execution ] = await executionsOf( deleted.id );
+				expect( execution ).toBeTruthy();
+				expect( ( await stateOf( deleted.id ) ).queued ).toHaveLength(
+					1
+				);
+				const keptBefore = await read( kept.id );
+				const keptStateBefore = await stateOf( kept.id );
+				await api.delete( MAIL_LOG, { headers: adminHeaders } );
+
+				const res = await remove( deleted.id );
+
+				expect( res.status() ).toBe( 200 );
+				expect( await res.json() ).toEqual( {
+					deleted: true,
+					previous: {
+						id: deleted.id,
+						type: 'individual_email',
+						name: 'Deleted digest',
+					},
+				} );
+				expect(
+					(
+						await api.get( `${ CONFIGURATIONS }/${ deleted.id }`, {
+							headers: adminHeaders,
+						} )
+					).status()
+				).toBe( 404 );
+				expect( await listed() ).not.toContain( deleted.id );
+				expect(
+					await stateOf( deleted.id, 'individual_email' )
+				).toMatchObject( { exists: false, queued: [], nextRun: null } );
+
+				// Its history stays, marked as belonging to a deleted notification.
+				const [ keptExecution ] = await executionsOf( deleted.id );
+				expect( keptExecution ).toMatchObject( {
+					id: execution.id,
+					configuration: {
+						id: deleted.id,
+						name: 'Deleted digest',
+						exists: false,
+					},
+				} );
+
+				// A send already queued elsewhere finds nothing to send.
+				await wp(
+					'eval-file',
+					'wp-content/mu-plugins/scripts/notification-configurations-fixture.php',
+					'run',
+					deleted.id
+				);
+				expect( await mailTo( SHARED ) ).toEqual( [] );
+				expect(
+					await stateOf( deleted.id, 'individual_email' )
+				).toMatchObject( { queued: [], nextRun: null } );
+
+				// The other notification is unchanged.
+				expect( await read( kept.id ) ).toEqual( keptBefore );
+				expect( await stateOf( kept.id ) ).toEqual( keptStateBefore );
+
+				// A save or a second deletion never brings it back.
+				expect(
+					( await update( deleted.id, { name: 'Back' } ) ).status()
+				).toBe( 404 );
+				expect( ( await remove( deleted.id ) ).status() ).toBe( 404 );
+				expect( await listed() ).not.toContain( deleted.id );
+			} );
+
+			test( 'removes a bulk email and a Telegram summary, leaving feeds and connectors alone', async () => {
+				const tokenBefore = ( await readStatus() ).token_configured;
+				const telegramRes = await create( {
+					type: 'telegram',
+					name: 'Deleted summary',
+				} );
+				expect( telegramRes.status() ).toBe( 201 );
+				const telegram = await telegramRes.json();
+				created.push( telegram.id );
+				const page = await createPage( 'publish' );
+				expect(
+					(
+						await update( telegram.id, {
+							source_slug: sourceSlug,
+							page_id: page.id,
+							chat_ids: [ '@fair_2204_api' ],
+						} )
+					).status()
+				).toBe( 200 );
+
+				let res = await remove( telegram.id );
+				expect( res.status() ).toBe( 200 );
+				expect( await listed() ).not.toContain( telegram.id );
+				expect(
+					await stateOf( telegram.id, 'telegram' )
+				).toMatchObject( { exists: false, queued: [], nextRun: null } );
+				expect( ( await readStatus() ).token_configured ).toBe(
+					tokenBefore
+				);
+
+				res = await create( {
+					type: 'bulk_email',
+					name: 'Deleted bulk',
+				} );
+				test.skip(
+					409 === res.status(),
+					'Fair Audience does not run the bulk email here.'
+				);
+				expect( res.status() ).toBe( 201 );
+				const bulk = await res.json();
+				created.push( bulk.id );
+				expect(
+					(
+						await update( bulk.id, {
+							enabled: true,
+							source_slug: sourceSlug,
+						} )
+					).status()
+				).toBe( 200 );
+				expect( ( await stateOf( bulk.id ) ).queued ).toHaveLength( 1 );
+
+				// Deletion works even while the plugin that delivers it is inactive.
+				await wp( 'plugin', 'deactivate', 'fair-audience' );
+				try {
+					res = await remove( bulk.id );
+				} finally {
+					await wp( 'plugin', 'activate', 'fair-audience' );
+				}
+				expect( res.status() ).toBe( 200 );
+				expect( await listed() ).not.toContain( bulk.id );
+				expect( await stateOf( bulk.id, 'bulk_email' ) ).toMatchObject(
+					{ exists: false, queued: [], nextRun: null }
+				);
+
+				// The event feed is untouched.
+				const feed = await api.get(
+					`/wp-json/fair-events/v1/sources/${ sourceId }`,
+					{ headers: adminHeaders }
+				);
+				expect( feed.status() ).toBe( 200 );
+				expect( ( await feed.json() ).slug ).toBe( sourceSlug );
 			} );
 		} );
 

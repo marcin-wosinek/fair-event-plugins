@@ -901,6 +901,9 @@ if ( ! function_exists( 'wp_schedule_single_event' ) ) {
 	 *
 	 * A hook listed in $GLOBALS['_fair_test_cron_fail'] is refused the way
 	 * WordPress refuses an event: a WP_Error when asked for one, else false.
+	 * A callable in $GLOBALS['_fair_test_cron_on_schedule'] runs just before
+	 * the event is stored, standing in for another request that acted between
+	 * the caller's last read and its scheduling.
 	 *
 	 * @param int    $timestamp When the event runs.
 	 * @param string $hook      Hook name.
@@ -911,6 +914,9 @@ if ( ! function_exists( 'wp_schedule_single_event' ) ) {
 	function wp_schedule_single_event( $timestamp, $hook, $args = array(), $wp_error = false ) {
 		if ( ! empty( $GLOBALS['_fair_test_cron_fail'][ $hook ] ) ) {
 			return $wp_error ? new WP_Error( 'could_not_set', 'The cron event list could not be saved.' ) : false;
+		}
+		if ( isset( $GLOBALS['_fair_test_cron_on_schedule'] ) ) {
+			call_user_func( $GLOBALS['_fair_test_cron_on_schedule'], $hook, $args );
 		}
 		$GLOBALS['_fair_test_cron'][ $hook ][] = array( $timestamp, $args );
 		return true;

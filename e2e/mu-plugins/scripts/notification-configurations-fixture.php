@@ -5,16 +5,18 @@
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php reset <type>...
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php remove <id>...
- *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php state <id>
+ *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php state <id> [<type>]
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php run <id>
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php seed-feeds <suffix>
  *   wp eval-file wp-content/mu-plugins/scripts/notification-configurations-fixture.php remove-feeds <source-id>...
  *
  * `reset` puts the configuration a type started with (its ID is the type)
  * back to the type's defaults, turned off, without history, queued sends or
- * delivery records. `remove` deletes configurations a spec added: the
- * administration offers no deletion yet. `state` reports a configuration's
- * queued sends, next send, history and last sent week. `run` executes an
+ * delivery records. `remove` deletes configurations a spec added and clears
+ * what deleted ones left behind, without going through the deletion route.
+ * `state` reports a configuration's queued sends, next send, history and
+ * last sent week; given a type, it also reports a deleted configuration,
+ * with `exists` false. `run` executes an
  * individual email configuration's cron callback for the current send week,
  * exactly as WP-Cron would. `state` also reports the stored settings, which
  * the routes return with defaults filled in.
@@ -79,7 +81,16 @@ if ( 'reset' === $fixture_action ) {
 	$fixture_index = get_option( Configurations::INDEX_OPTION, array() );
 	foreach ( $fixture_ids as $fixture_id ) {
 		$fixture_record = Configurations::get( $fixture_id );
-		if ( ! $fixture_record || Configurations::legacy_id( $fixture_record['type'] ) === $fixture_id ) {
+		if ( ! $fixture_record ) {
+			// Deleted by a spec: its history stays by design; clear it here.
+			if ( Configurations::valid_id( $fixture_id ) && ! in_array( $fixture_id, Configurations::TYPES, true ) ) {
+				foreach ( array_keys( $fixture_hooks ) as $fixture_type ) {
+					$fixture_clear( $fixture_id, $fixture_type );
+				}
+			}
+			continue;
+		}
+		if ( Configurations::legacy_id( $fixture_record['type'] ) === $fixture_id ) {
 			continue;
 		}
 		$fixture_clear( $fixture_id, $fixture_record['type'] );
@@ -143,11 +154,12 @@ if ( 'reset' === $fixture_action ) {
 	global $wpdb;
 	$fixture_id     = $fixture_ids[0] ?? '';
 	$fixture_record = Configurations::get( $fixture_id );
-	if ( ! $fixture_record ) {
+	$fixture_type   = $fixture_record ? $fixture_record['type'] : ( $fixture_ids[1] ?? '' );
+	if ( ! isset( $fixture_hooks[ $fixture_type ] ) ) {
 		WP_CLI::error( "Unknown configuration {$fixture_id}." );
 	}
 	$fixture_queued = array();
-	foreach ( ScheduledSends::events( $fixture_hooks[ $fixture_record['type'] ] ) as list( $timestamp, $hook_args ) ) {
+	foreach ( ScheduledSends::events( $fixture_hooks[ $fixture_type ] ) as list( $timestamp, $hook_args ) ) {
 		if ( ( $hook_args[1] ?? '' ) === $fixture_id ) {
 			$fixture_queued[] = array(
 				'timestamp' => $timestamp,
@@ -156,13 +168,14 @@ if ( 'reset' === $fixture_action ) {
 		}
 	}
 	$out = array(
+		'exists'       => (bool) $fixture_record,
 		'queued'       => $fixture_queued,
 		'nextRun'      => get_option( Configurations::option( $fixture_id, 'next_run' ), null ),
 		'runs'         => array_values( (array) get_option( Configurations::option( $fixture_id, 'runs' ), array() ) ),
 		'lastSentWeek' => BulkEmailDispatcher::last_sent_week( $fixture_id ),
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- test inspection.
 		'deliveries'   => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE config_id = %s', DeliveryLog::table_name(), $fixture_id ) ),
-		'settings'     => (object) $fixture_record['settings'],
+		'settings'     => (object) ( $fixture_record ? $fixture_record['settings'] : array() ),
 	);
 } else {
 	WP_CLI::error( 'Expected reset <type>..., remove <id>..., state <id>, run <id>, seed-feeds <suffix> or remove-feeds <source-id>....' );

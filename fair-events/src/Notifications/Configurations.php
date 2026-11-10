@@ -16,8 +16,8 @@ defined( 'WPINC' ) || die;
  * A site can have several configurations of the same type. Each one is kept
  * in its own option, as are its next scheduled send, run history and last
  * sent week ({@see self::option()}), so saving or sending one never rewrites
- * another. The list of IDs changes only when a configuration is added, under
- * a lock.
+ * another. Adding, changing and deleting a configuration run under one lock,
+ * so a save never recreates a configuration deleted meanwhile.
  *
  * The configuration that took over a type's former single settings uses the
  * type key as its ID ({@see self::legacy_id()}); the type's original routes
@@ -166,26 +166,88 @@ class Configurations {
 	/**
 	 * Change a configuration's name or settings. Its ID and type never change.
 	 *
+	 * Runs under the configurations lock and re-reads the stored record, so a
+	 * save that races a deletion never brings the deleted configuration back.
+	 *
 	 * @param string $id      Configuration ID.
 	 * @param array  $changes 'name' and/or 'settings'.
-	 * @return bool Whether the configuration exists.
+	 * @return bool Whether the change was saved: false when the configuration
+	 *              does not exist or the lock could not be taken.
 	 */
 	public static function update( $id, array $changes ) {
 		if ( ! self::valid_id( $id ) ) {
 			return false;
 		}
-		$stored = get_option( self::option( $id ), null );
-		if ( ! is_array( $stored ) ) {
+		if ( ! Lock::acquire( Lock::CONFIGURATIONS, self::LOCK_WAIT ) ) {
 			return false;
 		}
-		if ( array_key_exists( 'name', $changes ) ) {
-			$stored['name'] = self::sanitize_name( $changes['name'] );
+		try {
+			self::forget_cached( $id );
+			$stored = get_option( self::option( $id ), null );
+			if ( ! is_array( $stored ) ) {
+				return false;
+			}
+			if ( array_key_exists( 'name', $changes ) ) {
+				$stored['name'] = self::sanitize_name( $changes['name'] );
+			}
+			if ( array_key_exists( 'settings', $changes ) ) {
+				$stored['settings'] = (array) $changes['settings'];
+			}
+			update_option( self::option( $id ), $stored, false );
+			return true;
+		} finally {
+			Lock::release( Lock::CONFIGURATIONS );
 		}
-		if ( array_key_exists( 'settings', $changes ) ) {
-			$stored['settings'] = (array) $changes['settings'];
+	}
+
+	/**
+	 * Remove a configuration and its entry in the list.
+	 *
+	 * Only the configuration itself goes. Its queued sends are cleared by its
+	 * type's dispatcher; its execution and delivery history, delivery claims
+	 * and the migration and ownership markers stay, so the audit trail is kept
+	 * and a migrated configuration is never created again.
+	 *
+	 * @param string $id Configuration ID.
+	 * @return array|false|null The deleted record, false when there was none,
+	 *                          or null when the lock could not be taken.
+	 */
+	public static function delete( $id ) {
+		if ( ! self::valid_id( $id ) ) {
+			return false;
 		}
-		update_option( self::option( $id ), $stored, false );
-		return true;
+		if ( ! Lock::acquire( Lock::CONFIGURATIONS, self::LOCK_WAIT ) ) {
+			return null;
+		}
+		try {
+			self::forget_cached( $id );
+			$record = self::get( $id );
+			if ( $record ) {
+				delete_option( self::option( $id ) );
+			}
+			self::remove_from_index( $id );
+			return $record ? $record : false;
+		} finally {
+			Lock::release( Lock::CONFIGURATIONS );
+		}
+	}
+
+	/**
+	 * Whether a configuration exists, read past this request's option cache.
+	 *
+	 * For code that has just scheduled a send and must not leave one queued
+	 * for a configuration another request deleted meanwhile.
+	 *
+	 * @param string $id   Configuration ID.
+	 * @param string $type Required type.
+	 * @return bool
+	 */
+	public static function still_exists( $id, $type ) {
+		if ( ! self::valid_id( $id ) ) {
+			return false;
+		}
+		self::forget_cached( $id );
+		return self::exists( $id, $type );
 	}
 
 	/**
@@ -246,6 +308,41 @@ class Configurations {
 				)
 			)
 			: array();
+	}
+
+	/**
+	 * Drop a configuration's option and the list from this request's cache,
+	 * so the next read sees what another request stored.
+	 *
+	 * @param string $id Configuration ID.
+	 * @return void
+	 */
+	private static function forget_cached( $id ) {
+		wp_cache_delete( self::option( $id ), 'options' );
+		wp_cache_delete( self::INDEX_OPTION, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+	}
+
+	/**
+	 * Unlist a configuration. Call while holding the lock.
+	 *
+	 * @param string $id Configuration ID.
+	 * @return void
+	 */
+	private static function remove_from_index( $id ) {
+		$index = self::index();
+		$kept  = array_values(
+			array_filter(
+				$index,
+				static function ( $entry ) use ( $id ) {
+					return $entry['id'] !== $id;
+				}
+			)
+		);
+		if ( count( $kept ) !== count( $index ) ) {
+			update_option( self::INDEX_OPTION, $kept, true );
+		}
 	}
 
 	/**

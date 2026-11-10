@@ -13,7 +13,7 @@ defined( 'WPINC' ) || die;
  * Named MySQL session locks, unique per site on a shared database server.
  *
  * Used where two requests must not interleave: the takeover and upgrade of
- * notification data, and adding a configuration to the list.
+ * notification data, and adding, changing or deleting a configuration.
  */
 class Lock {
 	// MySQL rejects lock names over 64 characters; name() appends 33.

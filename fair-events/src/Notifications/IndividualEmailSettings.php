@@ -88,10 +88,10 @@ class IndividualEmailSettings {
 	 *
 	 * @param string $id       Configuration ID.
 	 * @param array  $settings Settings.
-	 * @return void
+	 * @return bool Whether it was saved; false when the configuration no longer exists.
 	 */
 	public static function save( $id, array $settings ) {
-		Configurations::update( $id, array( 'settings' => self::sanitize( $settings ) ) );
+		return Configurations::update( $id, array( 'settings' => self::sanitize( $settings ) ) );
 	}
 
 	/**

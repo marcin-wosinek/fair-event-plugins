@@ -24,15 +24,26 @@ import {
 
 /**
  * Apply a read of the page payload, keeping each configuration saved or
- * added after the read was issued: the read may not include that change.
+ * added after the read was issued, and leaving out each one deleted after
+ * it: the read may not include that change.
  *
  * @param {Object|null} current   Shown payload.
- * @param {Object}      next      Payload read from the server.
+ * @param {Object}      read      Payload read from the server.
  * @param {number}      requested Number the read was issued with.
  * @param {Object}      saved     Number of each configuration's last save, by ID.
+ * @param {Object}      [deleted] Number of each configuration's deletion, by ID.
  * @return {Object} Payload to show.
  */
-export function mergeRead( current, next, requested, saved ) {
+export function mergeRead( current, read, requested, saved, deleted = {} ) {
+	const gone = ( { id } ) => deleted[ id ] > requested;
+	const next = read.configurations.some( gone )
+		? {
+				...read,
+				configurations: read.configurations.filter(
+					( configuration ) => ! gone( configuration )
+				),
+			}
+		: read;
 	if ( ! current ) {
 		return next;
 	}
@@ -79,14 +90,21 @@ export default function EventNotifications( { sourcesUrl } ) {
 	// A message about how the view was reached, with the view it belongs
 	// to: it is shown there only, so it is gone as soon as the view changes.
 	const [ flash, setFlash ] = useState( null );
-	const { store, dirty } = useDraftStore();
+	const { store, dirty, remove } = useDraftStore();
+	// The last deletion's report, shown above the list.
+	const [ deleted, setDeleted ] = useState( null );
 	useUnsavedWarning( dirty.length > 0 );
 
 	// Orders reads against saves. `issued` numbers every read and save as it
-	// happens, `applied` is the newest read shown, and `saved` the number of
-	// each configuration's last save or addition, by ID: a read issued
-	// before it may predate it.
-	const requests = useRef( { issued: 0, applied: 0, saved: {} } );
+	// happens, `applied` is the newest read shown, `saved` the number of
+	// each configuration's last save or addition and `deleted` of its
+	// deletion, by ID: a read issued before it may predate it.
+	const requests = useRef( {
+		issued: 0,
+		applied: 0,
+		saved: {},
+		deleted: {},
+	} );
 
 	const load = useCallback( () => {
 		const requested = ++requests.current.issued;
@@ -95,10 +113,10 @@ export default function EventNotifications( { sourcesUrl } ) {
 				return;
 			}
 			requests.current.applied = requested;
-			const { saved } = requests.current;
+			const { saved, deleted: removed } = requests.current;
 			setLoadError( null );
 			setData( ( current ) =>
-				mergeRead( current, next, requested, saved )
+				mergeRead( current, next, requested, saved, removed )
 			);
 		} );
 	}, [] );
@@ -210,6 +228,40 @@ export default function EventNotifications( { sourcesUrl } ) {
 		[ onSaved, navigate ]
 	);
 
+	// The list re-reads to show the server's view, keeping the report.
+	const onDeleted = useCallback(
+		( configuration ) => {
+			const { id } = configuration;
+			requests.current.deleted[ id ] = ++requests.current.issued;
+			remove( id );
+			setData( ( current ) => ( {
+				...current,
+				configurations: current.configurations.filter(
+					( shown ) => shown.id !== id
+				),
+			} ) );
+			setDeleted( {
+				message: sprintf(
+					/* translators: %s: name of the deleted notification */
+					__(
+						'“%s” was deleted. It will not send again; its history stays in All notification history.',
+						'fair-events'
+					),
+					configuration.name || TYPE_LABELS[ configuration.type ]
+				),
+			} );
+			load().catch( () => {} );
+		},
+		[ remove, load ]
+	);
+
+	// The report belongs to the list it was made in.
+	useEffect( () => {
+		if ( 'list' !== view ) {
+			setDeleted( null );
+		}
+	}, [ view ] );
+
 	const noFeed = data && 0 === data.sources.length && (
 		<Notice status="warning" isDismissible={ false }>
 			{ __(
@@ -295,6 +347,9 @@ export default function EventNotifications( { sourcesUrl } ) {
 					location={ location }
 					navigate={ navigate }
 					onDuplicated={ onDuplicated }
+					onDeleted={ onDeleted }
+					deleted={ deleted }
+					onDismissDeleted={ () => setDeleted( null ) }
 				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
 				<p className="description">

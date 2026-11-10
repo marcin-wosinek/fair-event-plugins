@@ -72,10 +72,10 @@ class TelegramSettings {
 	 *
 	 * @param string $id       Configuration ID.
 	 * @param array  $settings Settings, validated by the caller.
-	 * @return void
+	 * @return bool Whether it was saved; false when the configuration no longer exists.
 	 */
 	public static function save( $id, array $settings ) {
-		Configurations::update( $id, array( 'settings' => self::normalize( $settings ) ) );
+		return Configurations::update( $id, array( 'settings' => self::normalize( $settings ) ) );
 	}
 
 	/**

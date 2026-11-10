@@ -20,6 +20,11 @@
  * the copy opens paused with the saved settings, sends nothing, and is saved
  * apart from its original.
  *
+ * A notification can be deleted from the list with the keyboard (#2204):
+ * the confirmation names it and can be cancelled; deleting removes only its
+ * row, also after a reload, its queued sends never run, and its past sends
+ * stay in All notification history.
+ *
  * Individual email needs no other plugin or event feed, so the spec does not
  * depend on Fair Audience or Telegram. No mail leaves the host:
  * fair-e2e-support.php captures wp_mail().
@@ -463,5 +468,112 @@ test.describe('Duplicating a notification', () => {
 			original.getByLabel('Email the weekly summary to this address')
 		).toBeChecked();
 		expect(capturedMail()).toEqual([]);
+	});
+});
+
+test.describe('Deleting a notification', () => {
+	const ids = [];
+
+	test.beforeAll(() => {
+		resetCapturedMail();
+	});
+
+	test.afterAll(() => {
+		if (ids.length) {
+			fixture(`remove ${ids.join(' ')}`);
+		}
+		resetCapturedMail();
+	});
+
+	test('confirms, removes only its row and keeps its history', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		const suffix = Date.now();
+		const keptName = `Kept digest ${suffix}`;
+		const name = `Deleted digest ${suffix}`;
+
+		const keptId = await addIndividualEmail(page, keptName);
+		ids.push(keptId);
+		await turnOn(view(page), '06:10');
+		const id = await addIndividualEmail(page, name);
+		ids.push(id);
+		await turnOn(view(page), '06:20');
+		// One scheduled send, so it has a history to keep.
+		fixture(`run ${id}`);
+		await expect.poll(() => capturedMail().length).toBe(1);
+		resetCapturedMail();
+		expect(fixture(`state ${id}`).queued).toHaveLength(1);
+
+		await page.goto(SETTINGS_URL);
+		const remove = listRow(page, name).getByRole('button', {
+			name: 'Delete',
+		});
+		await remove.focus();
+		await page.keyboard.press('Enter');
+		let dialog = page.getByRole('dialog', {
+			name: `Delete notification — ${name}`,
+		});
+		await expect(dialog).toBeVisible();
+		await expect(
+			dialog.getByText(
+				`Delete the notification “${name}” (Individual email), which sends to: ${RECIPIENT}?`
+			)
+		).toBeVisible();
+		await expect(
+			dialog.getByText(
+				'Its past sends and tests stay in All notification history.'
+			)
+		).toBeVisible();
+
+		// Escape cancels, and focus returns to the row's action.
+		await page.keyboard.press('Escape');
+		await expect(dialog).toHaveCount(0);
+		await expect(remove).toBeFocused();
+		await expect(listRow(page, name)).toHaveCount(1);
+
+		await page.keyboard.press('Enter');
+		dialog = page.getByRole('dialog', {
+			name: `Delete notification — ${name}`,
+		});
+		await dialog.getByRole('button', { name: 'Delete notification' }).click();
+
+		await expect(
+			page.getByText(`“${name}” was deleted.`, { exact: false }).first()
+		).toBeVisible();
+		await expect(dialog).toHaveCount(0);
+		await expect(listRow(page, name)).toHaveCount(0);
+		await expect(listRow(page, keptName)).toHaveCount(1);
+		await expect(
+			page.getByRole('textbox', { name: 'Search notifications' })
+		).toBeFocused();
+
+		await page.reload();
+		await expect(listRow(page, keptName)).toHaveCount(1);
+		await expect(listRow(page, name)).toHaveCount(0);
+
+		// Its queued send never runs; the other one stays scheduled.
+		expect(fixture(`state ${id} individual_email`)).toMatchObject({
+			exists: false,
+			queued: [],
+			nextRun: null,
+		});
+		fixture(`run ${id}`);
+		expect(capturedMail()).toEqual([]);
+		expect(fixture(`state ${keptId}`).queued).toHaveLength(1);
+
+		// Its past send stays in the history of every notification.
+		await page.goto(
+			`${SETTINGS_URL}&view=history&filter_configuration=${id}`
+		);
+		await expect(
+			view(page).getByRole('combobox', { name: 'Notification' })
+		).toHaveValue(id);
+		await expect(historyRows(page)).toHaveCount(1);
+		await expect(historyRows(page).filter({ hasText: name })).toHaveCount(1);
+		await historyRows(page).getByRole('link').click();
+		await expect(
+			view(page).getByText('This notification no longer exists.')
+		).toBeVisible();
 	});
 });

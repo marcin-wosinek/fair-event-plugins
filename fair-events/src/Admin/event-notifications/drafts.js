@@ -22,8 +22,9 @@ export const DraftsContext = createContext( null );
 /**
  * The page's draft store.
  *
- * @return {Object} `store` for DraftsContext, and `dirty`, the IDs of
- *     notifications with unsaved changes.
+ * @return {Object} `store` for DraftsContext, `dirty`, the IDs of
+ *     notifications with unsaved changes, and `remove`, which drops one
+ *     notification's draft.
  */
 export function useDraftStore() {
 	const drafts = useRef( {} );
@@ -42,6 +43,16 @@ export function useDraftStore() {
 		} );
 	}, [] );
 
+	// A deleted notification's draft goes with it.
+	const remove = useCallback( ( id ) => {
+		delete drafts.current[ id ];
+		setDirty( ( current ) =>
+			current.includes( id )
+				? current.filter( ( shown ) => shown !== id )
+				: current
+		);
+	}, [] );
+
 	const store = useMemo( () => ( { get, set } ), [ get, set ] );
-	return { store, dirty };
+	return { store, dirty, remove };
 }

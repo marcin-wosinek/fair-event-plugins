@@ -50,6 +50,46 @@ class ScheduledSends {
 	}
 
 	/**
+	 * Remove a configuration's queued sends and next send if it no longer exists.
+	 *
+	 * Call right after queuing a send: a deletion that finished in another
+	 * request between reading the configuration and queuing the send cleared
+	 * the queue before this send was added, so it is removed here.
+	 *
+	 * @param string $hook      Cron hook.
+	 * @param string $config_id Configuration ID.
+	 * @param string $type      Its notification type.
+	 * @return bool Whether the configuration was deleted.
+	 */
+	public static function drop_if_deleted( $hook, $config_id, $type ) {
+		if ( Configurations::still_exists( $config_id, $type ) ) {
+			return false;
+		}
+		self::clear( $hook, $config_id );
+		delete_option( Configurations::option( $config_id, 'next_run' ) );
+		return true;
+	}
+
+	/**
+	 * Remove a deleted configuration's queued sends, including those queued
+	 * before configurations had IDs when it is the type's first configuration.
+	 *
+	 * @param string $hook      Cron hook.
+	 * @param string $config_id Configuration ID.
+	 * @param string $type      Its notification type.
+	 * @return void
+	 */
+	public static function clear_deleted( $hook, $config_id, $type ) {
+		self::clear( $hook, $config_id );
+		if ( Configurations::legacy_id( $type ) === $config_id ) {
+			foreach ( self::without_configuration( $hook ) as list( $timestamp, $args ) ) {
+				wp_unschedule_event( $timestamp, $hook, $args );
+			}
+		}
+		delete_option( Configurations::option( $config_id, 'next_run' ) );
+	}
+
+	/**
 	 * Queued sends from before configurations had IDs.
 	 *
 	 * @param string $hook Cron hook.

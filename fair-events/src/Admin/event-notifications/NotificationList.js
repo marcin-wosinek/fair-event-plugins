@@ -2,11 +2,13 @@
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { useEffect, useRef } from '@wordpress/element';
 import { Notice, SelectControl, TextControl } from '@wordpress/components';
 
 /**
  * Internal dependencies
  */
+import DeleteAction from './DeleteAction.js';
 import DuplicateAction from './DuplicateAction.js';
 import Pagination from './Pagination.js';
 import { tokenStatus } from './TelegramChannel.js';
@@ -176,19 +178,24 @@ function emptyMessage( { total, inFeed, feedName, search } ) {
  * Every notification in a searchable list of pages, which can be narrowed
  * to one event feed. Each row links to its editor and its own history, and
  * shows whether it is on, where it sends, its next send and its latest send
- * or test. Each row can also be duplicated into a paused copy. On narrow
- * screens each row stacks into labeled lines.
+ * or test. Each row can also be duplicated into a paused copy, or deleted
+ * after a confirmation. Once one is deleted, focus moves to the search, the
+ * list's first control, and the result is reported above the list. On
+ * narrow screens each row stacks into labeled lines.
  *
  * Membership follows saved settings: a draft that changes a notification's
  * feed moves it only once it is saved.
  *
  * @param {Object}   props
- * @param {Array}    props.configurations Configuration payloads.
- * @param {Array}    props.sources        Enabled event feeds.
- * @param {Array}    props.dirty          IDs of notifications with unsaved changes.
- * @param {Object}   props.location       View state.
- * @param {Function} props.navigate       Changes the view.
- * @param {Function} props.onDuplicated   Receives the payload of a duplicated notification's copy.
+ * @param {Array}    props.configurations     Configuration payloads.
+ * @param {Array}    props.sources            Enabled event feeds.
+ * @param {Array}    props.dirty              IDs of notifications with unsaved changes.
+ * @param {Object}   props.location           View state.
+ * @param {Function} props.navigate           Changes the view.
+ * @param {Function} props.onDuplicated       Receives the payload of a duplicated notification's copy.
+ * @param {Function} props.onDeleted          Receives the payload of a deleted notification.
+ * @param {Object}   [props.deleted]          The last deletion's report, `{ message }`, or null.
+ * @param {Function} [props.onDismissDeleted] Hides the deletion report.
  * @return {JSX.Element} The list.
  */
 export default function NotificationList( {
@@ -198,7 +205,18 @@ export default function NotificationList( {
 	location,
 	navigate,
 	onDuplicated,
+	onDeleted,
+	deleted = null,
+	onDismissDeleted,
 } ) {
+	const searchField = useRef();
+	// The deleted row and its dialog are gone; keep focus in the list.
+	useEffect( () => {
+		if ( deleted ) {
+			searchField.current?.focus();
+		}
+	}, [ deleted ] );
+
 	const { feed } = location;
 	const selectedFeed = feed
 		? sources.find( ( source ) => source.slug === feed )
@@ -228,8 +246,18 @@ export default function NotificationList( {
 
 	return (
 		<div className="fair-events-notifications__list">
+			{ deleted && (
+				<Notice
+					status="success"
+					className="fair-events-notifications__deleted"
+					onRemove={ onDismissDeleted }
+				>
+					{ deleted.message }
+				</Notice>
+			) }
 			<div className="fair-events-notifications__list-controls">
 				<TextControl
+					ref={ searchField }
 					className="fair-events-notifications__search"
 					label={ __( 'Search notifications', 'fair-events' ) }
 					help={ __(
@@ -386,6 +414,16 @@ export default function NotificationList( {
 													problem ? problemId : null
 												}
 												onDuplicated={ onDuplicated }
+											/>
+											<DeleteAction
+												configuration={ configuration }
+												audience={ audienceSummary(
+													configuration
+												) }
+												isDirty={ dirty.includes(
+													configuration.id
+												) }
+												onDeleted={ onDeleted }
 											/>
 										</div>
 									</td>
