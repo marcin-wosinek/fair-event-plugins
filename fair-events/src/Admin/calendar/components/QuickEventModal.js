@@ -430,6 +430,33 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								autoFocus
 							/>
 
+							<FormTokenField
+								label={ __( 'Categories', 'fair-events' ) }
+								value={ categories
+									.map( ( id ) => {
+										const cat = availableCategories.find(
+											( c ) => c.id === id
+										);
+										return cat ? cat.name : '';
+									} )
+									.filter( Boolean ) }
+								suggestions={ availableCategories.map(
+									( c ) => c.name
+								) }
+								onChange={ ( tokens ) => {
+									const ids = tokens
+										.map( ( token ) => {
+											const cat =
+												availableCategories.find(
+													( c ) => c.name === token
+												);
+											return cat ? cat.id : null;
+										} )
+										.filter( ( id ) => id !== null );
+									setCategories( ids );
+								} }
+							/>
+
 							<EventTimingFields
 								value={ {
 									allDay,
@@ -476,40 +503,6 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								initialOpen={ false }
 							>
 								<VStack spacing={ 4 }>
-									<FormTokenField
-										label={ __(
-											'Categories',
-											'fair-events'
-										) }
-										value={ categories
-											.map( ( id ) => {
-												const cat =
-													availableCategories.find(
-														( c ) => c.id === id
-													);
-												return cat ? cat.name : '';
-											} )
-											.filter( Boolean ) }
-										suggestions={ availableCategories.map(
-											( c ) => c.name
-										) }
-										onChange={ ( tokens ) => {
-											const ids = tokens
-												.map( ( token ) => {
-													const cat =
-														availableCategories.find(
-															( c ) =>
-																c.name === token
-														);
-													return cat ? cat.id : null;
-												} )
-												.filter(
-													( id ) => id !== null
-												);
-											setCategories( ids );
-										} }
-									/>
-
 									<RadioControl
 										label={ __( 'Link to', 'fair-events' ) }
 										selected={ linkType }

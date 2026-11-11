@@ -343,4 +343,103 @@ test.describe( 'Calendar Quick Add — From URL lookup', () => {
 			await deleteEventDate( page, eventDateId );
 		}
 	} );
+
+	test( 'shows Categories by default and keeps the selection through a lookup (#2203)', async ( {
+		page,
+	} ) => {
+		const suffix = Date.now();
+		const title = `E2E Quick Add Categories ${ suffix }`;
+		await routeLookup( page, {
+			title,
+			start_date: '2026-11-03',
+			start_time: '18:00:00',
+			end_date: '2026-11-03',
+			end_time: '19:30:00',
+			all_day: false,
+			location: null,
+			source: 'schema',
+			timing_ambiguous: false,
+			found: [ 'title', 'start', 'end' ],
+		} );
+
+		const created = [];
+		let eventDateId;
+		try {
+			for ( const name of [ 'Dance', 'Music', 'Theatre' ] ) {
+				created.push(
+					await apiFetch( page, {
+						path: '/fair-events/v1/sources/categories',
+						method: 'POST',
+						data: { name: `E2E ${ name } ${ suffix }` },
+					} )
+				);
+			}
+			// Reload so the modal fetches the new categories.
+			await page.reload();
+			await page.waitForFunction( () => window.wp?.apiFetch );
+
+			await page
+				.getByRole( 'button', { name: 'Add event' } )
+				.first()
+				.click();
+			const modal = page.getByRole( 'dialog', {
+				name: 'Quick Add Event',
+			} );
+			const categoryField = modal.getByLabel( 'Categories' );
+			// Visible without opening "More options".
+			await expect( categoryField ).toBeVisible();
+			await expect(
+				modal.getByRole( 'button', { name: 'More options' } )
+			).toHaveAttribute( 'aria-expanded', 'false' );
+
+			// Keyboard: add three, then Backspace removes the last one.
+			for ( const category of created ) {
+				await categoryField.fill( category.name );
+				// The modal loads categories on open; wait for the match.
+				await expect(
+					modal.getByRole( 'option', { name: category.name } )
+				).toBeVisible();
+				await categoryField.press( 'Enter' );
+			}
+			await categoryField.press( 'Backspace' );
+			const tokens = modal.locator(
+				'.components-form-token-field__token-text [aria-hidden="true"]'
+			);
+			await expect( tokens ).toHaveText( [
+				created[ 0 ].name,
+				created[ 1 ].name,
+			] );
+
+			// Complete the event through "From URL"; the selection stays.
+			await modal.getByRole( 'radio', { name: 'From URL' } ).click();
+			await modal
+				.getByLabel( 'Event page URL' )
+				.fill( 'https://example.com/workshop' );
+			await modal.getByRole( 'button', { name: 'Look up' } ).click();
+			await expect( modal.getByLabel( 'Title' ) ).toHaveValue( title );
+			await expect( categoryField ).toBeVisible();
+			await expect( tokens ).toHaveText( [
+				created[ 0 ].name,
+				created[ 1 ].name,
+			] );
+
+			let eventDate;
+			( { eventDateId, eventDate } = await saveAndRead(
+				page,
+				modal,
+				title
+			) );
+			expect( eventDate.categories.map( ( c ) => c.id ).sort() ).toEqual(
+				[ created[ 0 ].id, created[ 1 ].id ].sort()
+			);
+		} finally {
+			await deleteEventDate( page, eventDateId );
+			for ( const category of created ) {
+				await apiFetch( page, {
+					path: `/wp/v2/categories/${ category.id }?force=true`,
+					method: 'DELETE',
+				} ).catch( () => {} );
+			}
+		}
+	} );
 } );
