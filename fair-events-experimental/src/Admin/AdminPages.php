@@ -243,7 +243,8 @@ class AdminPages {
 					)
 				);
 				wp_set_script_translations( 'fair-events-sources', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
-				wp_enqueue_style( 'wp-components' );
+				// The list and shared admin table styles are bundled from fair-events-shared.
+				wp_enqueue_style( 'fair-events-sources', $exp_url . 'build/admin/sources/style-index.css', array( 'wp-components' ), $asset_file['version'] );
 				break;
 
 			case 'fair-events-source-view':

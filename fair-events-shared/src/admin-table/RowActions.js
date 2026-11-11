@@ -20,6 +20,9 @@ import { moreVertical } from '@wordpress/icons';
 /**
  * @typedef {Object} RowAction
  * @property {string}   label          Visible action text, e.g. "Edit".
+ * @property {string}   accessibleLabel Primary only: item-specific accessible
+ *                                      name that starts with `label`, e.g.
+ *                                      "Edit “Spring feed”".
  * @property {Function} onClick        Called with { restoreFocus } (see README).
  * @property {string}   href           Link target instead of onClick.
  * @property {boolean}  disabled       Action unavailable.
@@ -66,6 +69,7 @@ export default function RowActions( { primary, secondary = [], moreLabel } ) {
 						disabled={ primary.disabled || primary.isBusy }
 						accessibleWhenDisabled
 						isBusy={ primary.isBusy }
+						aria-label={ primary.accessibleLabel || undefined }
 						aria-describedby={
 							primaryReason ? reasonId : undefined
 						}

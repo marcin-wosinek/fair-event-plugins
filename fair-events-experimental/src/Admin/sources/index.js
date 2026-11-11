@@ -5,6 +5,11 @@ import domReady from '@wordpress/dom-ready';
 import { createRoot } from '@wordpress/element';
 
 /**
+ * Shared dependencies
+ */
+import 'fair-events-shared/src/admin-table/style.css';
+
+/**
  * Internal dependencies
  */
 import SourcesList from './SourcesList.js';

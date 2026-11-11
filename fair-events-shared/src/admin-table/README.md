@@ -88,8 +88,9 @@ meets 4.5:1 contrast on white.
 **Actions.** The rightmost column, `variant="actions"`, holds `RowActions`:
 
 - `primary` is the one most frequent action, shown as a text link-button
-  ("Edit", "View", "Retry"). Give `href` for navigation or `onClick` for an
-  in-page action.
+  ("Edit", "Retry"). Give `href` for navigation or `onClick` for an
+  in-page action, and `accessibleLabel` to name it after the item
+  ("Edit “Spring feed”").
 - `secondary` lists the other actions in an always-visible "⋮" menu.
   Destructive ones go last with `isDestructive`. With no secondary actions
   the menu is omitted entirely — never render an empty menu.
@@ -189,11 +190,32 @@ tone, disabled actions with reasons and a row without secondary actions.
 Tests: `src/admin-table/__tests__/` (Jest) and
 `e2e/admin-table-example.spec.js` (layout, keyboard and focus in a browser).
 
-## Pilot notes for #2206 (Event Feeds)
+## Pilot outcome: Event Feeds (#2206)
 
-- Identity: feed name linked to its view page, slug as supporting text.
-- Status: `success` "Enabled" / `neutral` "Disabled".
-- Primary action: "View"; secondary: "Edit", then "Delete" (destructive,
-  existing `ConfirmActionModal`).
-- Keep the copy-URL buttons and the WhatsApp summary hint as their own
-  columns; the hint is an eligibility explanation and must stay visible.
+Event Feeds was the first page migrated. What it settled for the rollouts:
+
+- **Primary action is the most frequent in-page action, not navigation.**
+  When the identity link already opens the item, don't repeat it as "View";
+  Event Feeds shows "Edit" (opening the existing editor) as the primary
+  action.
+- **Copy actions go in the menu,** before the destructive action, unless the
+  page establishes copying as its primary workflow. The page owns the
+  clipboard call and reports the result in a `Notice` naming the item and
+  what was copied. When the clipboard is unavailable or rejects the write,
+  the error notice includes the text itself so it can be copied by hand; the
+  menu item stays available for a retry. No separate URL columns.
+- **Name repeated primary actions per item.** Pass `accessibleLabel`
+  (starting with the visible label, e.g. "Edit “Spring feed”") so a screen
+  reader can tell rows' actions apart; the visible text stays short.
+- **Eligibility explanations stay in their own column** when they describe
+  one property of the item (the WhatsApp summary hint), and in
+  `ItemIdentity`'s `children` when they concern the item as a whole.
+- **Keep loaded rows mounted across reloads.** Show `TableMessage`
+  `loading` only before the first successful load; afterwards refresh in
+  place, so a `Modal` can return focus to the row's control. A failed reload
+  shows the `error` message with a retry above the rows it keeps.
+- **After deleting,** remove the row from local state, then move focus to the
+  page heading (`tabIndex={ -1 }`) once the confirmation has closed.
+- **Import the shared stylesheet from the page entry and enqueue the page's
+  built `style-index.css`** in PHP; without the enqueue the table renders
+  unstyled.

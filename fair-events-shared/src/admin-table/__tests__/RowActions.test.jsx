@@ -66,6 +66,18 @@ it( 'renders a link primary action', () => {
 	);
 } );
 
+it( 'names the primary action after its item when given an accessible label', () => {
+	renderActions( {
+		primary: {
+			label: 'Edit',
+			accessibleLabel: 'Edit “Spring feed”',
+			onClick: jest.fn(),
+		},
+	} );
+	const edit = screen.getByRole( 'button', { name: 'Edit “Spring feed”' } );
+	expect( edit ).toHaveTextContent( 'Edit' );
+} );
+
 it( 'runs the primary action with a focus handoff', () => {
 	const onClick = jest.fn();
 	renderActions( { primary: { label: 'Edit', onClick } } );
