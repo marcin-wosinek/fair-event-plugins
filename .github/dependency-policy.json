@@ -351,15 +351,6 @@
 			"owner": "@marcin-wosinek",
 			"issue": "#2115",
 			"expires": "2027-01-31"
-		},
-		{
-			"advisory": "GHSA-g3hv-75wg-m249",
-			"package": "minimatch",
-			"dependencySet": "package-lock.json",
-			"rationale": "No patched 3.x release; the 3.x copies come from eslint 9 and its import/react/jsx-a11y plugins and from npm-packlist in @wordpress/scripts, which can't take minimatch 11's exports. 3.x lacks the vulnerable firstPhasePreProcess()/optimizationLevel path, and it is lint/packaging tooling only, never in a plugin build.",
-			"owner": "@marcin-wosinek",
-			"issue": "#2147",
-			"expires": "2027-01-31"
 		}
 	]
 }
