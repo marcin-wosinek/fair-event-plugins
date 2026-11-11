@@ -25,6 +25,8 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/php-diagnostics.mjs'
+            - 'scripts/__tests__/php-diagnostics.test.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-e2e-shards.test.mjs'
             - 'scripts/shard-assignment.mjs'
@@ -56,6 +58,8 @@ on:
             - 'scripts/workspace-e2e-runner.mjs'
             - 'scripts/block-docs.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/php-diagnostics.mjs'
+            - 'scripts/__tests__/php-diagnostics.test.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-e2e-shards.test.mjs'
             - 'scripts/shard-assignment.mjs'
@@ -66,8 +70,14 @@ on:
             - 'scripts/__tests__/fixtures/test-list/**'
             - '.wp-env.json'
             - '.github/workflows/e2e.yml'
-    # Manual runs for CI benchmarks (TESTING.md § Rebalancing shards).
+    # Manual runs for CI benchmarks (TESTING.md § Rebalancing shards) and the
+    # opt-in PHP diagnostics sweep (TESTING.md § PHP diagnostics sweep).
     workflow_dispatch:
+        inputs:
+            php_diagnostics:
+                description: 'PHP diagnostics sweep: log warnings, notices and deprecations on the tests site and publish a grouped summary'
+                type: boolean
+                default: false
 
 jobs:
     # Lists the suite without WordPress, assigns whole spec files to shards by
@@ -247,10 +257,13 @@ jobs:
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
             - name: Test lifecycle runner
-              run: node --test scripts/__tests__/api-test-runner.test.mjs
+              run: node --test scripts/__tests__/api-test-runner.test.mjs scripts/__tests__/php-diagnostics.test.mjs
 
+            # PHP_DIAGNOSTICS is empty unless a manual dispatch opts in.
             - name: Prepare environment and run E2E tests
-              run: npm run test:e2e:local -- --shard=${{ matrix.shard }}/4
+              env:
+                  PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics == true && '--php-diagnostics' || '' }}
+              run: npm run test:e2e:local -- --shard=${{ matrix.shard }}/4 $PHP_DIAGNOSTICS
 
             # Uploaded on success too, so every shard's timings and flaky
             # retries stay available for comparison.
@@ -265,6 +278,18 @@ jobs:
                       e2e-results/
                   retention-days: 7
                   if-no-files-found: ignore
+
+            # The raw logs, report.json and summary.md of a diagnostics sweep.
+            # Not named api-*, so the API status job never mistakes it for
+            # shard results. The summary is also in this job's summary.
+            - name: Upload PHP diagnostics
+              if: ${{ !cancelled() && inputs.php_diagnostics == true }}
+              uses: actions/upload-artifact@v7
+              with:
+                  name: php-diagnostics-e2e-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
+                  path: php-diagnostics/
+                  retention-days: 14
+                  if-no-files-found: warn
 
     # Single status for the whole suite: fails unless the inventory check and
     # every shard succeeded (a failed, cancelled or skipped shard fails it).

@@ -16,6 +16,8 @@ on:
             - 'package.json'
             - 'scripts/api-test-runner.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/php-diagnostics.mjs'
+            - 'scripts/__tests__/php-diagnostics.test.mjs'
             - 'scripts/check-api-shards.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-api-shards.test.mjs'
@@ -41,6 +43,8 @@ on:
             - 'package.json'
             - 'scripts/api-test-runner.mjs'
             - 'scripts/__tests__/api-test-runner.test.mjs'
+            - 'scripts/php-diagnostics.mjs'
+            - 'scripts/__tests__/php-diagnostics.test.mjs'
             - 'scripts/check-api-shards.mjs'
             - 'scripts/check-e2e-shards.mjs'
             - 'scripts/__tests__/check-api-shards.test.mjs'
@@ -54,8 +58,14 @@ on:
             - 'e2e/drop-ins/**'
             - 'e2e/support/fresh-site.js'
             - '.github/workflows/api-tests.yml'
-    # Manual runs for CI benchmarks (TESTING.md § REST API tests).
+    # Manual runs for CI benchmarks (TESTING.md § REST API tests) and the
+    # opt-in PHP diagnostics sweep (TESTING.md § PHP diagnostics sweep).
     workflow_dispatch:
+        inputs:
+            php_diagnostics:
+                description: 'PHP diagnostics sweep: log warnings, notices and deprecations on the tests site and publish a grouped summary'
+                type: boolean
+                default: false
 
 jobs:
     # Lists every API workspace's suite without WordPress, through each
@@ -99,7 +109,7 @@ jobs:
               run: HUSKY=0 npm ci --prefer-offline
 
             - name: Test shard inventory check and lifecycle runner
-              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs
+              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs scripts/__tests__/php-diagnostics.test.mjs
 
             - name: Check every API test runs in exactly one shard
               run: node scripts/check-api-shards.mjs --total=4 --output=api-inventory.json
@@ -222,8 +232,11 @@ jobs:
               if: steps.docker-cache.outputs.cache-hit != 'true'
               run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
 
+            # PHP_DIAGNOSTICS is empty unless a manual dispatch opts in.
             - name: Prepare environment and run API tests
-              run: npm run test:api:local -- --shard=${{ matrix.shard }}/4 --results-dir=api-results
+              env:
+                  PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics == true && '--php-diagnostics' || '' }}
+              run: npm run test:api:local -- --shard=${{ matrix.shard }}/4 --results-dir=api-results $PHP_DIAGNOSTICS
 
             # Uploaded on success too, so phase timings (api-results/timings.json),
             # per-workspace results and flaky retries stay available for
@@ -239,6 +252,18 @@ jobs:
                       */test-results/
                   retention-days: 7
                   if-no-files-found: ignore
+
+            # The raw logs, report.json and summary.md of a diagnostics sweep.
+            # Not named api-*, so the API status job never mistakes it for
+            # shard results. The summary is also in this job's summary.
+            - name: Upload PHP diagnostics
+              if: ${{ !cancelled() && inputs.php_diagnostics == true }}
+              uses: actions/upload-artifact@v7
+              with:
+                  name: php-diagnostics-api-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
+                  path: php-diagnostics/
+                  retention-days: 14
+                  if-no-files-found: warn
 
     # Single status for the whole suite: fails unless the inventory check and
     # every shard succeeded (a failed, cancelled or skipped shard fails it), or

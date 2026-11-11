@@ -628,6 +628,80 @@ function` right after login), which also flaked in sequential runs; see
 [Calling `wp.apiFetch` from a spec](#calling-wpapifetch-from-a-spec) for the
 cause and fix (#2152).
 
+### PHP diagnostics sweep
+
+The sweep records the PHP warnings, notices and deprecations that the API and
+E2E suites raise on the tests site. Run it when PHP or WordPress is upgraded, or
+when a plugin's minimum changes. It is opt-in. Ordinary runs keep the tests
+site's defaults (`WP_DEBUG` off) and never load the probe (#2163).
+
+**Locally**, add `--php-diagnostics` to an owned run of one spec file or one
+test. It refuses `--reuse`, because it edits the tests site's `wp-config.php`
+and only does that to an instance it starts and stops itself:
+
+```bash
+npm run test:api:local -- --php-diagnostics --workspace=fair-events -- GetTickets.api.spec.js
+npm run test:e2e:local -- --php-diagnostics e2e/smoke.spec.js
+```
+
+**In CI**, open the API Tests or E2E workflow under Actions, choose
+_Run workflow_, and tick _PHP diagnostics sweep_. Every shard runs its usual
+files. Each shard's job summary shows the grouped results, and its
+`php-diagnostics-<suite>-shard-N-of-4-attempt-M` artifact holds the raw logs
+and the report.
+
+What a sweep does, after WordPress is ready and before any test:
+
+1. Backs up `wp-config.php` and sets `WP_DEBUG` to true, `WP_DEBUG_DISPLAY`
+   to false, and `WP_DEBUG_LOG` to a file in
+   `wp-content/fair-php-diagnostics/`. HTTP requests log to `http.log` and
+   WP-CLI commands to `cli.log`. It uses `wp config set` instead of the
+   deprecated `env.tests.config` option of `.wp-env.json`.
+2. Sends one request with a run-specific token. The test-only
+   `e2e/mu-plugins/fair-e2e-php-diagnostics.php` probe raises a uniquely
+   marked warning, and the sweep requires that warning in `http.log` and
+   absent from the response. If it is missing, the log can't be read, or the
+   warning is displayed, no tests run and the run fails as a logging failure.
+3. After the tests, including failed or interrupted ones, it copies both logs
+   out of the container, restores `wp-config.php`, and then stops the
+   instance. If the restore fails, the run fails and prints the command that
+   restores the file by hand. A diagnostics run that was killed before it
+   could restore puts the original back on its next start.
+
+Output lands in `php-diagnostics/` at the repository root (gitignored):
+`http.log`, `cli.log`, `report.json` and `summary.md`. The summary is also
+printed at the end of the run. Entries are grouped by runtime (HTTP or
+WP-CLI), severity, message, file and line, with counts. Multiline traces stay
+with their entry. Probe entries are excluded. Groups are listed by owner:
+
+| Owner                | What it covers                                                             |
+| -------------------- | -------------------------------------------------------------------------- |
+| Repository plugins   | Code under a workspace's plugin directory, plus the bundled shared library |
+| Test support         | `e2e/mu-plugins/` and the `db.php` drop-in                                 |
+| Bundled third-party  | Other packages in a plugin's `vendor/` or `node_modules/`                  |
+| WordPress core       | `wp-admin/`, `wp-includes/` and the root PHP files                         |
+| Other plugins/themes | Anything else under `wp-content/`                                          |
+| WP-CLI               | `phar://` paths from the WP-CLI phar                                       |
+
+Application log messages (`error_log()` lines that WP_DEBUG-gated code writes,
+such as a failed participant link) and unparsed lines are listed separately.
+They aren't PHP diagnostics.
+
+**Reading the result.** _Clean_ means the probe verified logging, the tests
+passed, and the logs hold no PHP diagnostics and no unparsed lines.
+_Logging failed_ means the log can't be trusted, so read nothing as clean.
+Findings don't fail the run yet. Logging failures and test failures do. Fix
+each entry from a repository plugin, or file it as its own ticket.
+
+WP-CLI noise is in two places, and neither comes from our plugins. The WP-CLI
+phar prints its own PHP 8.5 deprecations, for example `react/promise` case
+statements or a `php-cli-tools` `Colors.php` "null as an array offset" notice,
+straight to the job output. The ones raised before WordPress loads never reach
+the logs. Any that WP-CLI raises later, and anything else that the commands
+run by specs and the runner raise, land in `cli.log` and are labelled WP-CLI in
+the summary. WP-CLI shows diagnostics on stderr, so fixtures that parse its
+stdout are unaffected.
+
 ### Rebalancing shards
 
 Both CI suites keep four isolated shards, but which spec files run in which
