@@ -34,12 +34,19 @@ class Installer {
 		$fresh_install   = self::is_fresh_install();
 		$current_version = Schema::get_db_version();
 
+		// Recorded before the first table, so a failed run that left some
+		// tables behind is still known as fresh when the next run retries.
+		if ( $fresh_install ) {
+			\FairEvents\Services\PaymentHistoryUpgrade::record_fresh_install();
+		}
+
 		if ( ! self::create_tables() ) {
 			return;
 		}
 
 		// A fresh site gets the current schema directly; there is no data for
-		// the historical migrations to upgrade.
+		// the historical migrations to upgrade, and no payment history to
+		// migrate either (PaymentHistoryUpgrade).
 		if ( $fresh_install ) {
 			Schema::update_db_version( Schema::DB_VERSION );
 			return;
@@ -57,7 +64,7 @@ class Installer {
 	 *
 	 * @return bool True when there is no version, no table and no legacy event.
 	 */
-	private static function is_fresh_install() {
+	public static function is_fresh_install() {
 		global $wpdb;
 
 		if ( Schema::has_db_version() ) {

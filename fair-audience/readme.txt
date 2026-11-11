@@ -29,6 +29,10 @@ Fair Audience is a WordPress plugin that helps you manage event participants. It
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Use the Fair Audience menu in the admin panel to manage participants
 
+= Upgrading a site with earlier payment history =
+
+Update Fair Payments Connector first, then Fair Events, then Fair Audience. Versions after 2.0.0 start only where Fair Events has recorded that the payment history migration finished (or was never needed). Follow the [upgrade guide](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+
 == Frequently Asked Questions ==
 
 = What WordPress version do I need? =

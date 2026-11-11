@@ -105,6 +105,10 @@ When Telegram posting is turned on, the plugin sends the week's event summary to
 4. Fill in the event details including start time, end time, and content.
 5. Publish your event and add the Events Calendar or Events List block to any page to display it.
 
+= Upgrading a site with earlier payment history =
+
+Versions after 2.2.0 no longer include the payment history migration. A site that already sold tickets must finish it on Fair Events 2.2.0 (with Fair Payments Connector 2.8.0 and Fair Audience 2.0.0) before updating; otherwise Fair Events pauses and tells administrators what to do. New installations need nothing. Follow the [upgrade guide](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+
 == Development ==
 
 * GitHub Repository: [marcin-wosinek/fair-event-plugins](https://github.com/marcin-wosinek/fair-event-plugins)

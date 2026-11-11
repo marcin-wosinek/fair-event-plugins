@@ -21,6 +21,11 @@ Each section is marked as one of:
   names tables or columns, the names are indicative. Stage 2 fixes the schema
   but must keep every field and invariant listed here.
 
+> **Historical since #2251.** Stages 2–5 below describe the migration as
+> shipped up to `build-2.2.0`, the last release that runs it. Newer releases
+> start only on a site that finished it or was installed fresh: see §8.16
+> and §8.17.
+
 Anything this contract doesn't state is not yet decided. A later stage that
 needs to decide it records a timestamped `## Decision` comment on its issue
 and updates this document in the same pull request.
@@ -1574,8 +1579,93 @@ history page until the migration tooling is removed (#2252);
 `PaymentHistoryCompatibility::ownership_cutover()` and
 `PaymentHistoryReaders::active()` only report them there. Historical
 synchronization (#2253), storage removal (#2254) and the supported upgrade
-path (#2255) are separate. A site that never completed the migration must
-not upgrade directly to this release (#2255).
+path (#2255) are separate. A site that never completed the migration can't
+upgrade directly to this release: Fair Events and Fair Audience refuse to
+start there (§8.17).
+
+### 8.17 Supported upgrade path
+
+**Implemented** (#2255, prerequisite pull request; no schema change).
+`Services\PaymentHistoryUpgrade` decides, once per request and before
+anything else, whether this site may run a release whose purchases no longer
+depend on the migration (§8.16 onward). Versions never decide (§8.6); only
+recorded state does. Operator steps: [DEPLOYMENT.md](./DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+
+**Prerequisite release.** `build-2.2.0` (Fair Payments Connector 2.8.0, Fair
+Events 2.2.0, Fair Audience 2.0.0) is the last release with the complete
+workflow of §8.9–§8.15 and the first with all of it. Its archives were
+checked: Fair Events records DB `3.52.0`, its lifecycle still follows the
+stage 4 switch, and the Payment history page carries both switches. A site
+on anything older updates to it first, in the order Connector → Events →
+Audience.
+
+**Completion evidence** (option `fair_events_payment_history_completion`,
+autoloaded, written once with `add_option()`, never removed): `basis`,
+`recorded_at`, the `plugin_versions` running then, and for a migrated site
+the activations it relied on (`ownership_cutover`: `activated_at`,
+`reference`, `audit_id`; `readers`: `activated_at`, `reason`, `audit_id`;
+`verification_checked_at`). Bases:
+
+| Basis               | Recorded when                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fresh_install`     | `Installer::install()` classifies the site as fresh (`Installer::is_fresh_install()`: no version option, no Fair Events table, no legacy event), before it creates the first table, so a failed run is still known as fresh on retry. Fresh installations never run the migration and never manufacture its records.                                                                                                                                                          |
+| `migrated`          | The first request after the update sees all of: the reconciliation storage (DB ≥ `3.52.0`), the stage 4 activation, the stage 5 activation with reason `reader_cutover`, the migration `verified`, no `transaction` or `relationship` shadow work with status `failed` or `unresolved`, and no open backfill finding outside `PaymentHistoryFinding::INFORMATIONAL`. Pending work isn't counted: it runs in the request that queued it, and a refused site couldn't drain it. |
+| `no_source_history` | As `migrated`, but the intermediate release recorded the stage 5 activation with reason `no_source_history`, Fair Audience still has no tables and no shadow work failed.                                                                                                                                                                                                                                                                                                     |
+
+**Refusal.** An existing site without evidence whose records don't qualify
+is an unsupported upgrade. `Plugin::init()` and the activation hook of both
+plugins return before the installer, the upgrade routines
+(`fair_audience_maybe_upgrade_db()`, its batch repairs included), every hook,
+route, block and cron handler. Nothing is written, so reinstalling
+`build-2.2.0` is the recovery. Administrators see a notice naming each
+missing condition (codes `storage_unavailable`, `ownership_cutover_missing`,
+`readers_missing`, `migration_unverified`, `migration_work_outstanding`,
+`findings_open`), the prerequisite versions and the steps.
+Fair Audience asks Fair Events (`FairAudience\Services\EventsUpgradeGate`):
+
+| Fair Events                                       | Fair Audience                                                                      |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Inactive                                          | Starts; its purchase routes refuse without Fair Events (§8.16)                     |
+| Active, without `PaymentHistoryUpgrade` (≤ 2.2.0) | Refuses (`events_outdated`) until Fair Events is updated, as the update order says |
+| Active                                            | Follows Fair Events' decision                                                      |
+
+The experimental plugins aren't gated and keep their own routes.
+
+**Upgrade readiness** (`GET fair-events/v1/payment-history/upgrade`, behind
+`manage_options`, shown first on the Payment history page; separate from
+`PaymentHistoryController` so #2252 can retire the migration routes):
+
+- `safe_to_upgrade`: completion evidence is recorded. This is what the
+  releases without the migration tooling require.
+- `checks`: each condition and whether it holds now, with what to do next.
+- `ready_for_cleanup` (`applicable`, `ready`, `blockers`): whether the
+  source-history removal of #2254 could run. Never inferred from versions or
+  from `safe_to_upgrade`: it also needs no failed migration work and no
+  blocking finding now, and every staging check recorded as passed
+  (`staging_verification_incomplete`). `cleanup_unavailable` stays listed
+  until #2254 adds the cleanup. Not applicable to a `fresh_install` site.
+
+**Staging verification** (`PUT fair-events/v1/payment-history/upgrade/staging-verification`,
+option `fair_events_payment_history_staging_verification`): the date the
+§8.15 final verification ran on staging (site-local, not in the future), the
+Connector, Events and Audience versions staging ran (Events required), each
+check (`representative_purchases`, `statistics_revenue`,
+`shared_allocations`, `finance_participant_attempts`,
+`audience_reactivation`), a note of up to 1,000 characters, the administrator
+and the time. Invalid input is `400 invalid_staging_verification` with the
+`fields`. It is operator evidence, separate from the runtime evidence: it
+never makes a site safe to upgrade.
+
+**For the cleanup (#2252–#2254).** Keep `PaymentHistoryUpgrade`, both
+options, the upgrade routes and the two entry-point checks. Once the
+migration's own records are gone (#2254), the evidence is the only thing
+that tells a migrated site from an unmigrated one, so a missing evidence
+must keep meaning "refuse", and `decide()` may then only refuse.
+
+**Final verification** (after #2252–#2254, before release) remains open on
+#2255: the fresh, eligible and ineligible upgrade matrix against the
+resulting code, the evidence surviving the cleanup, and the final operator
+guidance.
 
 ## 9. Worked examples
 

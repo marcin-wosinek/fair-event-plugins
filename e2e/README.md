@@ -272,6 +272,7 @@ of site names:
 | ------------------ | --------------------- | ---------------------------------------------------------------------- |
 | `events-only`      | `e2efresh_events_`    | `X-Fair-E2E-Site: <site>` header, or `FAIR_E2E_SITE=<site>` for WP-CLI |
 | `events-connector` | `e2efresh_connector_` | same                                                                   |
+| `upgrade-path`     | `e2efresh_upgrade_`   | same                                                                   |
 
 Each is a separate WordPress in the tests database, with its own users,
 options, active plugins and plugin tables. Without the header or variable

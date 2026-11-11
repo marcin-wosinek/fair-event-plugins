@@ -44,6 +44,13 @@ class Plugin {
 	 * Initialize the plugin.
 	 */
 	public function init() {
+		// On a site that never finished the payment history migration this
+		// version starts nothing (PAYMENT_HISTORY_MIGRATION.md §8.17).
+		if ( ! \FairAudience\Services\EventsUpgradeGate::allows_initialization() ) {
+			\FairAudience\Services\EventsUpgradeGate::refuse_initialization();
+			return;
+		}
+
 		// Default: rely on WordPress.org language packs. The `bundled-translations`
 		// feature flag opts into loading the .mo files we ship in `languages/`.
 		add_action(

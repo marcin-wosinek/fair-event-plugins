@@ -408,3 +408,138 @@ export function purchaseStatusLabels() {
 		failed: __( 'Payment failed', 'fair-events' ),
 	};
 }
+
+/**
+ * The upgrade checklist (PAYMENT_HISTORY_MIGRATION.md §8.17): what each
+ * condition means and what to do when it isn't met.
+ *
+ * @return {Object<string, {label: string, action: string}>} Labels by check code.
+ */
+export function upgradeCheckLabels() {
+	return {
+		completion_recorded: {
+			label: __( 'Completion recorded on this site', 'fair-events' ),
+			action: __(
+				'Recorded automatically once every other condition holds.',
+				'fair-events'
+			),
+		},
+		migration_verified: {
+			label: __( 'Migration verified', 'fair-events' ),
+			action: __(
+				'Run the migration and verify it until the report is clean.',
+				'fair-events'
+			),
+		},
+		ownership_cutover: {
+			label: __(
+				'Payment records switched to Fair Events',
+				'fair-events'
+			),
+			action: __(
+				'Switch payment records to Fair Events on this page.',
+				'fair-events'
+			),
+		},
+		readers_switched: {
+			label: __( 'Statistics switched to Fair Events', 'fair-events' ),
+			action: __(
+				'Switch statistics to Fair Events on this page.',
+				'fair-events'
+			),
+		},
+		no_migration_work: {
+			label: __( 'No payment records waiting to move', 'fair-events' ),
+			action: __(
+				'Wait for the queued records to be retried, or fix what stops them.',
+				'fair-events'
+			),
+		},
+		no_blocking_finding: {
+			label: __( 'No open findings', 'fair-events' ),
+			action: __(
+				'Link or review every open finding. Findings marked “for review only” don’t count.',
+				'fair-events'
+			),
+		},
+	};
+}
+
+/**
+ * Why the source-history cleanup can't run yet.
+ *
+ * @return {Object<string, string>} Labels by blocker code.
+ */
+export function cleanupBlockerLabels() {
+	return {
+		upgrade_unsafe: __(
+			'The site isn’t safe to upgrade yet (see the checklist).',
+			'fair-events'
+		),
+		migration_work_outstanding: __(
+			'Payment records are still waiting to move.',
+			'fair-events'
+		),
+		findings_open: __( 'Findings are still open.', 'fair-events' ),
+		staging_verification_incomplete: __(
+			'The staging verification isn’t recorded with every check passed.',
+			'fair-events'
+		),
+		cleanup_unavailable: __(
+			'Removing the old records comes with a later release.',
+			'fair-events'
+		),
+	};
+}
+
+/**
+ * The final verification checks an operator records from staging
+ * (PAYMENT_HISTORY_MIGRATION.md §8.15).
+ *
+ * @return {Object<string, {label: string, help: string}>} Labels by check code.
+ */
+export function stagingCheckLabels() {
+	return {
+		representative_purchases: {
+			label: __( 'Representative purchases checked', 'fair-events' ),
+			help: __(
+				'A paid single purchase, a retried purchase, a payment shared by several dates, and a series pass with its dates.',
+				'fair-events'
+			),
+		},
+		statistics_revenue: {
+			label: __( 'Statistics match the linked payments', 'fair-events' ),
+			help: __(
+				'For each sampled date, Statistics revenue equals the counted shares in its Purchase payments section, minus series pass revenue on the series’ other dates.',
+				'fair-events'
+			),
+		},
+		shared_allocations: {
+			label: __( 'Shared payments add up', 'fair-events' ),
+			help: __(
+				'The payment’s page lists every purchase it covers, and their shares add up to its total.',
+				'fair-events'
+			),
+		},
+		finance_participant_attempts: {
+			label: __(
+				'Finance and participant payments agree',
+				'fair-events'
+			),
+			help: __(
+				'A purchaser’s participant page lists the same payment attempts as the date’s Finance tab.',
+				'fair-events'
+			),
+		},
+		audience_reactivation: {
+			label: __(
+				'Unchanged after reactivating Fair Audience',
+				'fair-events'
+			),
+			help: __(
+				'Deactivating and reactivating Fair Audience leaves Statistics, ticket payment history and the payment’s purchases unchanged.',
+				'fair-events'
+			),
+		},
+	};
+}

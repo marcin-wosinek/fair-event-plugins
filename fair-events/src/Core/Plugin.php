@@ -38,6 +38,14 @@ class Plugin {
 	 * @return void
 	 */
 	public function init() {
+		// An existing site that never finished the payment history migration
+		// can't run this release: start nothing, write nothing, and tell the
+		// administrator how to get back (PAYMENT_HISTORY_MIGRATION.md §8.17).
+		if ( ! \FairEvents\Services\PaymentHistoryUpgrade::allows_initialization() ) {
+			\FairEvents\Services\PaymentHistoryUpgrade::refuse_initialization();
+			return;
+		}
+
 		\FairEvents\Database\Installer::maybe_upgrade();
 
 		// Default: rely on WordPress.org language packs. The `bundled-translations`
@@ -277,6 +285,17 @@ class Plugin {
 			'rest_api_init',
 			function () {
 				$controller = new \FairEvents\API\PaymentHistoryController();
+				$controller->register_routes();
+			}
+		);
+
+		// Upgrade readiness — registers `/fair-events/v1/payment-history/upgrade`
+		// for administrators: completion evidence, its checklist and the
+		// staging verification (PAYMENT_HISTORY_MIGRATION.md §8.17).
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\PaymentHistoryUpgradeController();
 				$controller->register_routes();
 			}
 		);

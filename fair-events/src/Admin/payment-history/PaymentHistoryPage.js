@@ -2,8 +2,9 @@
  * Payment history page: the migration of historical registrations and
  * payments into Fair Events, its verification, the reconciliation of what
  * it couldn't link, the switch of payment records to Fair Events, and the
- * switch of statistics to Fair Events records
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13, §8.14).
+ * switch of statistics to Fair Events records, and whether the site is
+ * ready for the releases after the migration
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13, §8.14, §8.17).
  *
  * @package FairEvents
  */
@@ -22,6 +23,7 @@ import CutoverPanel from './CutoverPanel.js';
 import ReadersPanel from './ReadersPanel.js';
 import VerificationPanel from './VerificationPanel.js';
 import FindingsPanel from './FindingsPanel.js';
+import UpgradePanel from './UpgradePanel.js';
 
 const POLL_MS = 5000;
 
@@ -115,6 +117,7 @@ export default function PaymentHistoryPage() {
 			{ ! status && ! error && <Spinner /> }
 			{ status && (
 				<VStack spacing={ 6 }>
+					<UpgradePanel refreshKey={ refreshKey } />
 					<MigrationPanel status={ status } onAction={ runAction } />
 					{ status.cutover &&
 						( status.backfill || status.cutover.activation ) && (
