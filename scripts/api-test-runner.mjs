@@ -15,6 +15,15 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 import {
+	buildReport,
+	collectLogs,
+	createToken,
+	enableDiagnostics,
+	formatSummary,
+	restoreDiagnostics,
+	verifyLogging,
+} from './php-diagnostics.mjs';
+import {
 	describeAssignment,
 	parseShard,
 	planSuite,
@@ -31,6 +40,7 @@ const ROOT_DIRECTORY = fileURLToPath(new URL('..', import.meta.url)).replace(
 
 export function parseArguments(args) {
 	let reuse = false;
+	let phpDiagnostics = false;
 	let suite = 'api';
 	let workspace;
 	let resultsDir;
@@ -40,6 +50,8 @@ export function parseArguments(args) {
 		const argument = args[index];
 		if (argument === '--reuse') {
 			reuse = true;
+		} else if (argument === '--php-diagnostics') {
+			phpDiagnostics = true;
 		} else if (argument.startsWith('--suite=')) {
 			suite = argument.slice('--suite='.length);
 		} else if (argument === '--workspace') {
@@ -67,6 +79,13 @@ export function parseArguments(args) {
 	}
 	if (resultsDir !== undefined && suite !== 'api') {
 		throw new Error('The --results-dir option applies to the API suite.');
+	}
+	if (phpDiagnostics && reuse) {
+		// The sweep edits the tests site's wp-config.php; it only does that to
+		// an instance it started and stops itself.
+		throw new Error(
+			'The --php-diagnostics option needs an owned environment; drop --reuse.'
+		);
 	}
 
 	// The runner owns --shard for both suites: it assigns whole spec files by
@@ -99,7 +118,15 @@ export function parseArguments(args) {
 		}
 	}
 
-	return { reuse, suite, workspace, forwarded, shard, resultsDir };
+	return {
+		reuse,
+		suite,
+		workspace,
+		forwarded,
+		shard,
+		resultsDir,
+		phpDiagnostics,
+	};
 }
 
 export async function loadWorkspaces(rootDirectory) {
@@ -282,7 +309,14 @@ export async function runTests({
 	writeTimings = async () => {},
 	shardPlanner = planShard,
 	testListWriter = writeTestLists,
+	diagnostics = {},
 }) {
+	const {
+		baseUrl,
+		fetchImpl,
+		tokenFactory = createToken,
+		writeReport = async () => {},
+	} = diagnostics;
 	if (
 		options.workspace &&
 		(!workspaceConfig.workspaces.includes(options.workspace) ||
@@ -299,6 +333,10 @@ export async function runTests({
 	let ownsEnvironment = false;
 	let interruptedSignal;
 	let primaryResult;
+	let testsRan = false;
+	// State of the --php-diagnostics sweep; `touched` once wp-config.php may
+	// have been changed and therefore needs restoring.
+	const sweep = { touched: false, enabled: false, verified: false };
 	const onSignal = (signal) => {
 		interruptedSignal ??= signal;
 		executor.terminate(signal);
@@ -471,6 +509,52 @@ export async function runTests({
 			code: 0,
 		});
 
+		if (options.phpDiagnostics) {
+			phase('Enabling PHP diagnostics logging on the tests site', logger);
+			const diagnosticsStart = clock();
+			sweep.token = tokenFactory();
+			sweep.touched = true;
+			const enabled = await enableDiagnostics({
+				run: runStep,
+				token: sweep.token,
+				logger,
+			});
+			if (enabled.ok) {
+				sweep.enabled = true;
+				phase('Verifying PHP diagnostics logging with a probe', logger);
+				const verified = await verifyLogging({
+					run: runStep,
+					baseUrl,
+					token: sweep.token,
+					fetchImpl,
+				});
+				sweep.verified = verified.ok;
+				sweep.runtime = verified.runtime;
+				sweep.failure = verified.reason;
+			} else {
+				sweep.failure = enabled.reason;
+			}
+			phases.push({
+				name: 'PHP diagnostics setup',
+				seconds: Math.round(clock() - diagnosticsStart) / 1000,
+				code: sweep.verified ? 0 : 1,
+			});
+			if (!sweep.verified) {
+				logger(
+					`PHP diagnostics logging failed: ${sweep.failure}. No tests were run.`
+				);
+				primaryResult = interruptedSignal
+					? SIGNAL_EXIT_CODES[interruptedSignal]
+					: 1;
+				return primaryResult;
+			}
+			logger(
+				`Logging verified: the probe warning reached the log and stayed out of the response (PHP ${sweep.runtime.php}, WordPress ${sweep.runtime.wordpress}).`
+			);
+		}
+
+		testsRan = true;
+
 		if (options.suite === 'api') {
 			primaryResult = await runApiWorkspaces({
 				options,
@@ -502,6 +586,24 @@ export async function runTests({
 		signalSource.off('SIGINT', onSigint);
 		signalSource.off('SIGTERM', onSigterm);
 		let cleanupFailure;
+		if (sweep.touched) {
+			const diagnosticsFailure = await finishDiagnostics({
+				sweep,
+				options,
+				executor,
+				logger,
+				workspaces: workspaceConfig.workspaces,
+				writeReport,
+				tests: testStatus({
+					testsRan,
+					primaryResult,
+					interruptedSignal,
+				}),
+			});
+			if (diagnosticsFailure && !primaryResult && !interruptedSignal) {
+				cleanupFailure = 1;
+			}
+		}
 		if (ownsEnvironment) {
 			phase('Stopping owned WordPress test environment', logger);
 			const cleanupStart = clock();
@@ -516,7 +618,7 @@ export async function runTests({
 					`Cleanup failed with exit status ${cleanup.code}; the isolated environment may still be running.`
 				);
 				if (!primaryResult && !interruptedSignal) {
-					cleanupFailure = cleanup.code;
+					cleanupFailure ??= cleanup.code;
 				}
 			}
 		}
@@ -538,6 +640,87 @@ export async function runTests({
 			return SIGNAL_EXIT_CODES[interruptedSignal];
 		}
 	}
+}
+
+function testStatus({ testsRan, primaryResult, interruptedSignal }) {
+	if (!testsRan) {
+		return 'not run';
+	}
+	if (interruptedSignal) {
+		return 'interrupted';
+	}
+	return primaryResult === 0 ? 'passed' : 'failed';
+}
+
+/**
+ * End a --php-diagnostics sweep while the containers still run: collect the
+ * logs, write the report, and restore wp-config.php. Runs after failures and
+ * interrupts too, so it calls the executor directly instead of `runStep`.
+ *
+ * @param {Object}   root             Parameters.
+ * @param {Object}   root.sweep       Sweep state from runTests().
+ * @param {Object}   root.options     Parsed runner options.
+ * @param {Object}   root.executor    Process executor.
+ * @param {Function} root.logger      Log sink.
+ * @param {string[]} root.workspaces  Repository workspaces.
+ * @param {Function} root.writeReport Writes the logs, report and summary.
+ * @param {string}   root.tests       Test status for the report.
+ * @return {Promise<boolean>} Whether collection, reporting or restoring failed.
+ */
+async function finishDiagnostics({
+	sweep,
+	options,
+	executor,
+	logger,
+	workspaces,
+	writeReport,
+	tests,
+}) {
+	let failed = !sweep.verified;
+	const run = (command, args, runOptions) =>
+		executor.run(command, args, runOptions);
+	if (sweep.enabled) {
+		phase('Collecting PHP diagnostics logs', logger);
+		const collected = await collectLogs({ run });
+		let failure = sweep.failure;
+		if (!collected.ok) {
+			failed = true;
+			failure ??= `the log could not be collected after the tests: ${collected.reason}`;
+			logger(`PHP diagnostics logging failed: ${failure}.`);
+		}
+		const report = buildReport({
+			logs: collected.logs,
+			token: sweep.token,
+			context: {
+				suite: options.suite,
+				shard: options.shard,
+				runtime: sweep.runtime,
+				tests,
+			},
+			logging: sweep.verified && collected.ok,
+			failure,
+			workspaces,
+		});
+		const summary = formatSummary(report);
+		logger(`\n${summary}`);
+		try {
+			await writeReport({ report, summary, logs: collected.logs });
+		} catch (error) {
+			failed = true;
+			logger(
+				`Could not write the PHP diagnostics report: ${error.message}`
+			);
+		}
+	}
+	phase('Restoring the tests site wp-config.php', logger);
+	const restored = await restoreDiagnostics({ run });
+	if (!restored.ok) {
+		failed = true;
+		logger(
+			`Restoring failed: ${restored.reason}. Until it is restored, the tests site keeps WP_DEBUG on; run \`npx wp-env start\` and then \`npx wp-env run tests-cli sh -c 'mv /var/www/html/wp-config.fair-php-diagnostics-backup.php /var/www/html/wp-config.php'\`.`
+		);
+	}
+	return failed;
 }
 
 /**
@@ -647,10 +830,42 @@ async function main() {
 		options.resultsDir = resolve(rootDirectory, options.resultsDir);
 		await mkdir(options.resultsDir, { recursive: true });
 	}
+	const diagnosticsDirectory = resolve(rootDirectory, 'php-diagnostics');
 	process.exitCode = await runTests({
 		options,
 		executor: createProcessExecutor({ cwd: rootDirectory, env }),
 		workspaceConfig,
+		diagnostics: {
+			baseUrl: env.WP_BASE_URL,
+			writeReport: async ({ report, summary, logs }) => {
+				await mkdir(diagnosticsDirectory, { recursive: true });
+				await writeFile(
+					`${diagnosticsDirectory}/http.log`,
+					logs?.http ?? ''
+				);
+				await writeFile(
+					`${diagnosticsDirectory}/cli.log`,
+					logs?.cli ?? ''
+				);
+				await writeFile(
+					`${diagnosticsDirectory}/report.json`,
+					`${JSON.stringify(report, null, 2)}\n`
+				);
+				await writeFile(
+					`${diagnosticsDirectory}/summary.md`,
+					`${summary}\n`
+				);
+				if (process.env.GITHUB_STEP_SUMMARY) {
+					await appendFile(
+						process.env.GITHUB_STEP_SUMMARY,
+						`${summary}\n`
+					);
+				}
+				console.log(
+					`PHP diagnostics written to ${diagnosticsDirectory}/ (http.log, cli.log, report.json, summary.md).`
+				);
+			},
+		},
 		writeTimings: async (timings) => {
 			if (options.resultsDir) {
 				await writeFile(

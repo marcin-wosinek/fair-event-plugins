@@ -29,6 +29,7 @@ test-results/
 e2e/screenshots/output/
 e2e-results/
 api-results/
+php-diagnostics/
 api-inventory.json
 */.env
 
