@@ -410,6 +410,11 @@ class ParticipantRepository {
 	 * Used by the pending-subscription timeout sweep; rows are returned (not
 	 * bulk-updated) because each revert needs its own EmailConsentLog entry.
 	 *
+	 * A member whose latest consent entry is a CSV import is left out: its
+	 * marketing preference came from another site and is not an unconfirmed
+	 * signup to undo (#2218). A later signup logs a newer entry and makes the
+	 * member eligible again.
+	 *
 	 * @param string $cutoff Datetime string (UTC, 'Y-m-d H:i:s'); rows with
 	 *                       updated_at older than this are returned.
 	 * @return Participant[] Array of participants.
@@ -418,12 +423,22 @@ class ParticipantRepository {
 		global $wpdb;
 
 		$table_name = $this->get_table_name();
+		$log_table  = $wpdb->prefix . 'fair_audience_email_consent_log';
 
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE email_profile = 'marketing' AND status = 'pending' AND updated_at < %s",
+				"SELECT p.* FROM %i p
+				WHERE p.email_profile = 'marketing' AND p.status = 'pending' AND p.updated_at < %s
+				AND NOT EXISTS (
+					SELECT 1 FROM %i l
+					WHERE l.participant_id = p.id AND l.source = %s
+					AND NOT EXISTS ( SELECT 1 FROM %i newer WHERE newer.participant_id = p.id AND newer.id > l.id )
+				)",
 				$table_name,
-				$cutoff
+				$cutoff,
+				$log_table,
+				\FairAudience\Services\AudienceMigration::CONSENT_SOURCE,
+				$log_table
 			),
 			ARRAY_A
 		);

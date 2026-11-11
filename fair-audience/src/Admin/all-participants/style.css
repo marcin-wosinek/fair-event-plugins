@@ -63,3 +63,64 @@
 	left: 16px;
 	z-index: 100000;
 }
+
+/* Export/import overflow menu next to "Add Participant". */
+.fair-audience-all-participants__migration-menu {
+	display: inline-block;
+	margin-left: 4px;
+	vertical-align: top;
+}
+
+.fair-audience-import__rules,
+.fair-audience-import__counts,
+.fair-audience-import__rows {
+	margin: 0 0 0 1.5em;
+	list-style: disc;
+}
+
+.fair-audience-import__counts {
+	margin-top: 4px;
+}
+
+.fair-audience-import__rows {
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.fair-audience-import__section h3 {
+	margin: 8px 0 4px;
+}
+
+.fair-audience-import__section p {
+	margin: 0 0 8px;
+}
+
+.fair-audience-import__detail ul {
+	margin: 2px 0 0 1.5em;
+	list-style: circle;
+}
+
+.fair-audience-import__opt-out {
+	margin: 2px 0 0;
+	color: #b32d2e;
+	font-weight: 600;
+}
+
+.fair-audience-import__file label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
+.fair-audience-import__file input[type="file"] {
+	max-width: 100%;
+}
+
+.fair-audience-import__hint {
+	margin: 4px 0 0;
+	color: #646970;
+}
+
+.fair-audience-import__report:focus {
+	outline: none;
+}

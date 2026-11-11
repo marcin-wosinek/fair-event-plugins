@@ -20,6 +20,7 @@ import { Icon, caution, link, send } from '@wordpress/icons';
 import ParticipantEditModal from '../components/ParticipantEditModal.js';
 import DeleteParticipantsModal from '../components/DeleteParticipantsModal.js';
 import EmailSendResultNotice from '../components/EmailSendResultNotice.js';
+import AudienceMigrationMenu from './AudienceMigrationMenu.js';
 
 const DEFAULT_VIEW = {
 	type: 'table',
@@ -628,6 +629,11 @@ export default function AllParticipants() {
 			>
 				{ __( 'Add Participant', 'fair-audience' ) }
 			</button>
+			<AudienceMigrationMenu
+				onMessage={ setSnackbar }
+				onError={ setErrorMessage }
+				onImported={ refresh }
+			/>
 			<hr className="wp-header-end" />
 
 			<VStack
