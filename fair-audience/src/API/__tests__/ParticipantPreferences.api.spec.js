@@ -1,6 +1,7 @@
 /**
  * Playwright API tests for weekly summary and event feed preferences on
- * PUT /fair-audience/v1/participants/{id} (#2135).
+ * PUT /fair-audience/v1/participants/{id} (#2135). Feed subscriptions are
+ * always explicit and independent of the email profile (#2239).
  *
  * Feeds and a participant's stored choice are set up with
  * e2e/mu-plugins/scripts/weekly-feeds-fixture.php: feeds A and B are
@@ -114,8 +115,8 @@ test.describe( 'Participant popup — weekly preferences', () => {
 		await api.dispose();
 	} );
 
-	test( 'saves the weekly opt-out and all, selected and no feeds', async () => {
-		const { id, email } = await participant( 'modes', 'all', [] );
+	test( 'saves the weekly opt-out, selected and no feeds, and refuses all feeds', async () => {
+		const { id, email } = await participant( 'modes', 'selected', [] );
 
 		let res = await update( id, {
 			...contact( email ),
@@ -129,16 +130,25 @@ test.describe( 'Participant popup — weekly preferences', () => {
 		expect( state.weekly_feed_mode ).toBe( 'selected' );
 		expect( state.feed_ids ).toEqual( sorted( [ feeds.a, feeds.b ] ) );
 
-		// All feeds keeps the stored choice for switching back.
+		// The former "all feeds" choice cannot be restored.
 		res = await update( id, {
 			...contact( email ),
 			weekly_summary_opt_out: false,
 			weekly_feed_mode: 'all',
 		} );
+		expect( res.status() ).toBe( 400 );
+		state = await stored( email );
+		expect( state.weekly_summary_opt_out ).toBe( true );
+		expect( state.weekly_feed_mode ).toBe( 'selected' );
+		expect( state.feed_ids ).toEqual( sorted( [ feeds.a, feeds.b ] ) );
+
+		res = await update( id, {
+			...contact( email ),
+			weekly_summary_opt_out: false,
+		} );
 		expect( res.status() ).toBe( 200 );
 		state = await stored( email );
 		expect( state.weekly_summary_opt_out ).toBe( false );
-		expect( state.weekly_feed_mode ).toBe( 'all' );
 		expect( state.feed_ids ).toEqual( sorted( [ feeds.a, feeds.b ] ) );
 
 		res = await update( id, {
@@ -213,8 +223,51 @@ test.describe( 'Participant popup — weekly preferences', () => {
 		expect( ( await stored( email ) ).feed_ids ).toEqual( [] );
 	} );
 
+	test( 'feed and marketing preferences change independently', async () => {
+		const { id, email } = await participant( 'independent', 'selected', [
+			feeds.a,
+		] );
+
+		// Marketing off keeps the feeds.
+		let res = await update( id, {
+			...contact( email ),
+			email_profile: 'minimal',
+		} );
+		expect( res.status() ).toBe( 200 );
+		let state = await stored( email );
+		expect( state.email_profile ).toBe( 'minimal' );
+		expect( state.feed_ids ).toEqual( [ feeds.a ] );
+
+		// Feeds chosen without marketing.
+		res = await update( id, {
+			...contact( email ),
+			email_profile: 'minimal',
+			weekly_feed_mode: 'selected',
+			weekly_feed_ids: [ feeds.a, feeds.b ],
+		} );
+		expect( res.status() ).toBe( 200 );
+		state = await stored( email );
+		expect( state.email_profile ).toBe( 'minimal' );
+		expect( state.feed_ids ).toEqual( sorted( [ feeds.a, feeds.b ] ) );
+
+		// Removing every feed keeps the marketing preference.
+		res = await update( id, {
+			...contact( email ),
+			email_profile: 'marketing',
+		} );
+		expect( res.status() ).toBe( 200 );
+		res = await update( id, {
+			...contact( email ),
+			weekly_feed_mode: 'none',
+		} );
+		expect( res.status() ).toBe( 200 );
+		state = await stored( email );
+		expect( state.email_profile ).toBe( 'marketing' );
+		expect( state.feed_ids ).toEqual( [] );
+	} );
+
 	test( 'refuses feeds that cannot be chosen and changes nothing', async () => {
-		const { id, email } = await participant( 'invalid', 'all', [
+		const { id, email } = await participant( 'invalid', 'selected', [
 			feeds.a,
 		] );
 
@@ -226,6 +279,7 @@ test.describe( 'Participant popup — weekly preferences', () => {
 				weekly_feed_ids: [ feeds.a, DELETED_FEED ],
 			},
 			{ weekly_feed_mode: 'selected' },
+			{ weekly_feed_mode: 'all' },
 			{ weekly_feed_mode: 'all', weekly_feed_ids: [ feeds.b ] },
 			{ weekly_feed_ids: [ feeds.b ] },
 			{ weekly_feed_mode: 'everything' },
@@ -241,7 +295,7 @@ test.describe( 'Participant popup — weekly preferences', () => {
 		}
 
 		const state = await stored( email );
-		expect( state.weekly_feed_mode ).toBe( 'all' );
+		expect( state.weekly_feed_mode ).toBe( 'selected' );
 		expect( state.weekly_summary_opt_out ).toBe( false );
 		expect( state.feed_ids ).toEqual( [ feeds.a ] );
 		const detail = await (
@@ -271,7 +325,9 @@ test.describe( 'Participant popup — weekly preferences', () => {
 	} );
 
 	test( 'only administrators can change preferences', async () => {
-		const { id, email } = await participant( 'auth', 'all', [] );
+		const { id, email } = await participant( 'auth', 'selected', [
+			feeds.a,
+		] );
 		const change = { ...contact( email ), weekly_feed_mode: 'none' };
 
 		expect( ( await update( id, change, {} ) ).status() ).toBe( 401 );
@@ -300,6 +356,6 @@ test.describe( 'Participant popup — weekly preferences', () => {
 		);
 
 		expect( forbidden.status() ).toBe( 403 );
-		expect( ( await stored( email ) ).weekly_feed_mode ).toBe( 'all' );
+		expect( ( await stored( email ) ).feed_ids ).toEqual( [ feeds.a ] );
 	} );
 } );

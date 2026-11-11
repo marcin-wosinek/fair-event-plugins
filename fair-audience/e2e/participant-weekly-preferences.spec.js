@@ -136,6 +136,7 @@ test.describe( 'Fair Audience — edit weekly preferences in the participant pop
 		await expect(
 			dialog.getByText( `${ nameC } (not available right now)` )
 		).toBeVisible();
+		await expect( dialog.getByLabel( 'All event feeds' ) ).toHaveCount( 0 );
 
 		// Cancel changes nothing.
 		await dialog.getByLabel( 'No event feeds' ).check();

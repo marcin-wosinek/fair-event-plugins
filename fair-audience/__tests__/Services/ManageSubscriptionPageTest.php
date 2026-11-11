@@ -342,7 +342,7 @@ class ManageSubscriptionPageTest extends TestCase {
 	 * @param bool   $opt_out Weekly opt-out.
 	 * @return Participant
 	 */
-	private function subscriber( $mode = WeeklyFeeds::MODE_ALL, $opt_out = false ) {
+	private function subscriber( $mode = WeeklyFeeds::MODE_SELECTED, $opt_out = false ) {
 		$participant = new class() extends Participant {
 			/**
 			 * Number of saves.
@@ -394,10 +394,26 @@ class ManageSubscriptionPageTest extends TestCase {
 	}
 
 	/**
+	 * POST fields of the form with its weekly section and feed list shown.
+	 *
+	 * @param array $fields Other fields.
+	 * @return array
+	 */
+	private static function with_feeds( array $fields ) {
+		return array_merge(
+			array(
+				ManageSubscriptionPage::WEEKLY_FIELD => '1',
+				ManageSubscriptionPage::FEEDS_FIELD  => '1',
+			),
+			$fields
+		);
+	}
+
+	/**
 	 * The page shows the weekly switch, the offered feeds and the stored choice.
 	 */
 	public function test_shows_weekly_preferences_and_feeds() {
-		$this->subscriber( WeeklyFeeds::MODE_SELECTED );
+		$this->subscriber();
 		$this->feed_repository->feeds[9] = array( 1, 3 );
 
 		$page = $this->save( array() );
@@ -406,27 +422,29 @@ class ManageSubscriptionPageTest extends TestCase {
 		$this->assertTrue( $page['weekly']['feeds_available'] );
 		$this->assertSame( array( 2, 1 ), array_column( $page['weekly']['feeds'], 'id' ) );
 		$this->assertSame( array( 'Archive' ), array_column( $page['weekly']['unavailable'], 'name' ) );
-		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $page['preferences']['weekly_feed_mode'] );
+		$this->assertArrayNotHasKey( 'weekly_feed_mode', $page['preferences'], 'No "all weekly emails" choice is offered.' );
 		$this->assertSame( array( 1, 3 ), $page['preferences']['weekly_feeds'] );
 	}
 
 	/**
-	 * Saving without the feed fields keeps an existing subscriber's scope.
+	 * Saving without the feed list keeps the stored feeds.
 	 */
-	public function test_saving_other_preferences_keeps_the_legacy_scope() {
-		$participant = $this->subscriber();
+	public function test_saving_other_preferences_keeps_the_feeds() {
+		$participant                     = $this->subscriber();
+		$this->feed_repository->feeds[9] = array( 2 );
 
 		$page = $this->save(
 			array(
-				'email_profile'      => 'marketing',
-				'weekly_summary'     => 'on',
-				'mailing_categories' => array( '4' ),
+				'email_profile'                      => 'marketing',
+				ManageSubscriptionPage::WEEKLY_FIELD => '1',
+				'weekly_summary'                     => 'on',
+				'mailing_categories'                 => array( '4' ),
 			)
 		);
 
 		$this->assertSame( 'success', $page['message_type'] );
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
-		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
+		$this->assertSame( array( 2 ), $this->feed_repository->feeds[9] );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
 		$this->assertSame( array( 4 ), $this->categories->stored[9] );
 	}
 
@@ -437,11 +455,12 @@ class ManageSubscriptionPageTest extends TestCase {
 		$participant = $this->subscriber();
 
 		$page = $this->save(
-			array(
-				'email_profile'    => 'marketing',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'selected',
-				'weekly_feeds'     => array( '2', '1' ),
+			self::with_feeds(
+				array(
+					'email_profile'  => 'marketing',
+					'weekly_summary' => 'on',
+					'weekly_feeds'   => array( '2', '1' ),
+				)
 			)
 		);
 
@@ -450,15 +469,61 @@ class ManageSubscriptionPageTest extends TestCase {
 		$this->assertSame( array( 1, 2 ), $this->feed_repository->feeds[9] );
 
 		$this->save(
-			array(
-				'email_profile'    => 'marketing',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'selected',
+			self::with_feeds(
+				array(
+					'email_profile'  => 'marketing',
+					'weekly_summary' => 'on',
+				)
 			)
 		);
 
 		$this->assertSame( array(), $this->feed_repository->feeds[9] );
-		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
+		$this->assertSame( 'marketing', $participant->email_profile, 'Removing every feed keeps the marketing preference.' );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
+	}
+
+	/**
+	 * A subscriber with marketing turned off can still choose feeds.
+	 */
+	public function test_feeds_can_be_chosen_without_marketing() {
+		$participant = $this->subscriber( WeeklyFeeds::MODE_SELECTED, true );
+
+		$page = $this->save(
+			self::with_feeds(
+				array(
+					'email_profile'  => 'minimal',
+					'weekly_summary' => 'on',
+					'weekly_feeds'   => array( '1' ),
+				)
+			)
+		);
+
+		$this->assertSame( 'success', $page['message_type'] );
+		$this->assertSame( 'minimal', $participant->email_profile );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
+		$this->assertSame( array( 1 ), $this->feed_repository->feeds[9] );
+	}
+
+	/**
+	 * Turning marketing off keeps the selected feeds.
+	 */
+	public function test_turning_marketing_off_keeps_the_feeds() {
+		$participant                     = $this->subscriber();
+		$this->feed_repository->feeds[9] = array( 1, 2 );
+
+		$this->save(
+			self::with_feeds(
+				array(
+					'email_profile'  => 'minimal',
+					'weekly_summary' => 'on',
+					'weekly_feeds'   => array( '1', '2' ),
+				)
+			)
+		);
+
+		$this->assertSame( 'minimal', $participant->email_profile );
+		$this->assertSame( array( 1, 2 ), $this->feed_repository->feeds[9] );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
 	}
 
 	/**
@@ -468,36 +533,38 @@ class ManageSubscriptionPageTest extends TestCase {
 		$participant = $this->subscriber();
 
 		$page = $this->save(
-			array(
-				'email_profile'    => 'marketing',
-				'weekly_feed_mode' => 'selected',
-				'weekly_feeds'     => array( '1', '3' ),
+			self::with_feeds(
+				array(
+					'email_profile' => 'minimal',
+					'weekly_feeds'  => array( '1', '3' ),
+				)
 			)
 		);
 
 		$this->assertSame( 400, $page['status'] );
 		$this->assertSame( 'error', $page['message_type'] );
 		$this->assertSame( 0, $participant->saves );
+		$this->assertSame( 'marketing', $participant->email_profile );
 		$this->assertSame( 0, $participant->weekly_summary_opt_out );
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
 		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
 		$this->assertArrayNotHasKey( 9, $this->categories->stored );
-		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $page['preferences']['weekly_feed_mode'], 'The submitted choice stays on the form.' );
+		$this->assertSame( array( 1, 3 ), $page['preferences']['weekly_feeds'], 'The submitted choice stays on the form.' );
 	}
 
 	/**
 	 * Saving keeps chosen feeds that cannot be chosen now.
 	 */
 	public function test_saving_keeps_unavailable_feeds() {
-		$this->subscriber( WeeklyFeeds::MODE_SELECTED );
+		$this->subscriber();
 		$this->feed_repository->feeds[9] = array( 3 );
 
 		$this->save(
-			array(
-				'email_profile'    => 'marketing',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'selected',
-				'weekly_feeds'     => array( '2' ),
+			self::with_feeds(
+				array(
+					'email_profile'  => 'marketing',
+					'weekly_summary' => 'on',
+					'weekly_feeds'   => array( '2' ),
+				)
 			)
 		);
 
@@ -505,42 +572,61 @@ class ManageSubscriptionPageTest extends TestCase {
 	}
 
 	/**
-	 * Going back to every weekly email keeps the chosen feeds for later.
+	 * A form that still posts the former "all weekly emails" choice
+	 * changes no feed and never restores that mode.
 	 */
-	public function test_choosing_all_weekly_emails_again() {
-		$participant                     = $this->subscriber( WeeklyFeeds::MODE_SELECTED );
+	public function test_former_all_choice_is_ignored() {
+		$participant                     = $this->subscriber();
 		$this->feed_repository->feeds[9] = array( 1 );
 
 		$this->save(
 			array(
-				'email_profile'    => 'marketing',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'all',
+				'email_profile'                      => 'marketing',
+				ManageSubscriptionPage::WEEKLY_FIELD => '1',
+				'weekly_summary'                     => 'on',
+				'weekly_feed_mode'                   => 'all',
 			)
 		);
 
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
 		$this->assertSame( array( 1 ), $this->feed_repository->feeds[9] );
 	}
 
 	/**
-	 * Essential emails only leaves the weekly preferences alone.
+	 * Pausing the weekly summary keeps the feeds, whose list is not submitted then.
 	 */
-	public function test_minimal_profile_ignores_weekly_fields() {
-		$participant = $this->subscriber( WeeklyFeeds::MODE_ALL, true );
+	public function test_pausing_the_weekly_summary_keeps_the_feeds() {
+		$participant                     = $this->subscriber();
+		$this->feed_repository->feeds[9] = array( 1 );
 
 		$this->save(
 			array(
-				'email_profile'    => 'minimal',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'selected',
-				'weekly_feeds'     => array( '1' ),
+				'email_profile'                      => 'marketing',
+				ManageSubscriptionPage::WEEKLY_FIELD => '1',
+			)
+		);
+
+		$this->assertSame( 1, $participant->weekly_summary_opt_out );
+		$this->assertSame( array( 1 ), $this->feed_repository->feeds[9] );
+		$this->assertSame( 'marketing', $participant->email_profile );
+	}
+
+	/**
+	 * A form without the weekly section leaves the weekly preferences alone.
+	 */
+	public function test_form_without_weekly_section_keeps_weekly_preferences() {
+		$participant = $this->subscriber( WeeklyFeeds::MODE_SELECTED, true );
+
+		$this->save(
+			array(
+				'email_profile'  => 'minimal',
+				'weekly_summary' => 'on',
+				'weekly_feeds'   => array( '1' ),
 			)
 		);
 
 		$this->assertSame( 'minimal', $participant->email_profile );
 		$this->assertSame( 1, $participant->weekly_summary_opt_out );
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
 		$this->assertArrayNotHasKey( 9, $this->feed_repository->feeds );
 	}
 
@@ -552,11 +638,12 @@ class ManageSubscriptionPageTest extends TestCase {
 		$this->feed_repository->fails = true;
 
 		$page = $this->save(
-			array(
-				'email_profile'    => 'marketing',
-				'weekly_summary'   => 'on',
-				'weekly_feed_mode' => 'selected',
-				'weekly_feeds'     => array( '1' ),
+			self::with_feeds(
+				array(
+					'email_profile'  => 'marketing',
+					'weekly_summary' => 'on',
+					'weekly_feeds'   => array( '1' ),
+				)
 			)
 		);
 		$this->assertSame( 500, $page['status'] );

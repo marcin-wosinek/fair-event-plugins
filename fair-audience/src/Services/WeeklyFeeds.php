@@ -17,16 +17,35 @@ defined( 'WPINC' ) || die;
  * submitted choice may store.
  *
  * Feeds come from Fair Events ({@see \FairEvents\Notifications\WeeklyFeedCatalog})
- * and are identified by their numeric ID. A participant in the 'all' mode
- * receives every weekly email, including feeds added later; in the
- * 'selected' mode, only the feeds they chose, and none when they chose none.
+ * and are identified by their numeric ID. A participant receives only the
+ * feeds they subscribed to, and none when they subscribed to none: a feed
+ * added later needs its own subscription. Feed subscriptions do not depend
+ * on general marketing consent.
+ *
  * A feed that is unavailable for now stays selected, so it comes back when
  * the feed is turned on again, but is never replaced by another feed.
  */
 class WeeklyFeeds {
 
-	const MODE_ALL      = 'all';
+	/**
+	 * Feed mode of a participant whose feeds are the stored subscriptions.
+	 * Every participant has it once {@see \FairAudience\Database\FeedModeConversion}
+	 * has run.
+	 */
 	const MODE_SELECTED = 'selected';
+
+	/**
+	 * Former mode that sent every feed, including feeds added later. Kept
+	 * only so the one-time conversion can find the participants who still
+	 * have it; it no longer widens delivery and cannot be chosen.
+	 */
+	const LEGACY_MODE_ALL = 'all';
+
+	/**
+	 * Administrator choice that clears every stored feed, also those that
+	 * cannot be chosen now.
+	 */
+	const CHOICE_NONE = 'none';
 
 	/**
 	 * Fair Events' feed catalog, or null while Fair Events cannot provide it.
@@ -107,19 +126,18 @@ class WeeklyFeeds {
 	 * Describe a participant's feed preference for showing it, without
 	 * changing it.
 	 *
-	 * Only the 'selected' mode with chosen feeds needs the catalog. When
-	 * Fair Events cannot list feeds, or listing them fails, the summary is
-	 * marked unavailable and the chosen feeds stay unclassified: they are
-	 * never reported as deleted.
+	 * Only chosen feeds need the catalog. When Fair Events cannot list
+	 * feeds, or listing them fails, the summary is marked unavailable and
+	 * the chosen feeds stay unclassified: they are never reported as
+	 * deleted.
 	 *
-	 * @param string|null $mode     Participant's feed mode.
-	 * @param int[]       $feed_ids Chosen feed IDs.
+	 * @param int[] $feed_ids Chosen feed IDs.
 	 * @return array{available: bool, selected: array[], unavailable: array[], deleted: int}
 	 *     Whether feed names could be read, chosen feeds sent now and those
 	 *     not sent now (each with `id` and `name`), and how many chosen
 	 *     feeds no longer exist.
 	 */
-	public function summary( $mode, array $feed_ids ): array {
+	public function summary( array $feed_ids ): array {
 		$summary = array(
 			'available'   => $this->is_available(),
 			'selected'    => array(),
@@ -127,7 +145,7 @@ class WeeklyFeeds {
 			'deleted'     => 0,
 		);
 
-		if ( self::MODE_SELECTED !== $mode || ! $feed_ids || ! $summary['available'] ) {
+		if ( ! $feed_ids || ! $summary['available'] ) {
 			return $summary;
 		}
 
@@ -192,15 +210,13 @@ class WeeklyFeeds {
 	/**
 	 * Work out what an administrator's feed choice stores.
 	 *
-	 * - 'all' keeps the stored feeds, so switching back to chosen feeds
-	 *   restores them; they do not limit delivery while the mode is 'all'.
 	 * - 'selected' checks the submitted feeds like a subscriber's choice
 	 *   ({@see resolve_selection()}): stored feeds that cannot be chosen
 	 *   now are kept.
 	 * - 'none' clears every stored feed, also those that cannot be chosen
 	 *   now, and needs no catalog.
 	 *
-	 * @param string $mode      'all', 'selected' or 'none'.
+	 * @param string $mode      'selected' or 'none'; the former 'all' is refused.
 	 * @param mixed  $submitted Submitted feed IDs; only for 'selected'.
 	 * @param int[]  $stored    Feed IDs stored so far.
 	 * @return array{mode: string, feed_ids: int[]|null}|\WP_Error Mode to
@@ -208,14 +224,7 @@ class WeeklyFeeds {
 	 *     error when the choice cannot be accepted.
 	 */
 	public function resolve_choice( $mode, $submitted, array $stored = array() ) {
-		if ( self::MODE_ALL === $mode ) {
-			return array(
-				'mode'     => self::MODE_ALL,
-				'feed_ids' => null,
-			);
-		}
-
-		if ( 'none' === $mode ) {
+		if ( self::CHOICE_NONE === $mode ) {
 			return array(
 				'mode'     => self::MODE_SELECTED,
 				'feed_ids' => array(),
@@ -251,9 +260,9 @@ class WeeklyFeeds {
 	 * Apply weekly email preferences to a participant whose identity is
 	 * already trusted.
 	 *
-	 * A key that is absent leaves that preference unchanged. Choosing feeds
-	 * switches the participant to the 'selected' mode, also with no feeds,
-	 * and never clears the weekly opt-out.
+	 * A key that is absent leaves that preference unchanged. Choosing feeds,
+	 * also choosing none, never clears the weekly opt-out, and neither
+	 * preference changes the participant's general marketing consent.
 	 *
 	 * @param Participant $participant Participant; saved when a preference changes.
 	 * @param array       $preferences `weekly_summary` (bool) and/or `feed_ids` (int[]).
@@ -296,8 +305,8 @@ class WeeklyFeeds {
 	 * that cannot be chosen now. Never adds a feed.
 	 *
 	 * Without Fair Events' catalog the submitted feeds are kept as they are:
-	 * they were checked when submitted, and dropping them all would widen
-	 * the choice to every feed.
+	 * they were checked when submitted, and dropping them all would lose
+	 * the subscriber's choice.
 	 *
 	 * @param int[] $submitted Feed IDs checked earlier.
 	 * @param int[] $stored    Feed IDs stored so far.
@@ -327,20 +336,17 @@ class WeeklyFeeds {
 	/**
 	 * Whether a feed's weekly email is meant for a participant.
 	 *
-	 * Consent and the weekly opt-out are checked separately
+	 * Only an explicit subscription to that feed counts, whatever the
+	 * participant's feed mode: an email whose feed is unknown reaches nobody.
+	 * Confirmation and the weekly opt-out are checked separately
 	 * ({@see RecipientResolver::can_receive_email()}).
 	 *
 	 * @param Participant $participant    Participant.
 	 * @param int         $feed_id        Feed the email lists; 0 when the sender cannot say.
 	 * @param int[]       $subscriber_ids IDs of the participants who chose that feed.
-	 * @return bool Always for the 'all' mode; for chosen feeds, only when
-	 *     this feed is one of them.
+	 * @return bool Whether this feed is one the participant subscribed to.
 	 */
 	public static function in_scope( Participant $participant, int $feed_id, array $subscriber_ids ): bool {
-		if ( self::MODE_SELECTED !== $participant->weekly_feed_mode ) {
-			return true;
-		}
-
 		return $feed_id > 0 && in_array( (int) $participant->id, $subscriber_ids, true );
 	}
 }

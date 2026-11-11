@@ -1,9 +1,10 @@
 /**
  * State of the email preferences form on the manage-subscription page.
  *
- * The chosen email profile, the weekly summary switch and the weekly feed
- * mode live here; every related control is rendered from the view derived
- * from them and never read back.
+ * The chosen email profile and the weekly summary switch live here; every
+ * related control is rendered from the view derived from them and never
+ * read back. The email profile and the weekly preferences are independent:
+ * changing one never hides or disables the other.
  *
  * @package FairAudience
  */
@@ -12,26 +13,17 @@
  * Which controls are shown and usable for a state.
  *
  * Disabled controls are not submitted, so the server keeps what they hold:
- * the weekly preferences while the profile is not "marketing", the feed
- * mode while the weekly summary is off, and the chosen feeds while every
- * weekly email is chosen.
+ * the chosen feeds while the weekly summary is paused.
  *
  * @param {Object}  state               Form state.
  * @param {string}  state.profile       'marketing' or 'minimal'.
  * @param {boolean} state.weeklySummary Whether the weekly summary is on.
- * @param {string}  state.feedMode      'all' or 'selected'.
  * @return {Object} View.
  */
-export function derivePreferencesView( { profile, weeklySummary, feedMode } ) {
-	const weeklyOffered = 'marketing' === profile;
-	const feedsUsable = weeklyOffered && weeklySummary;
-
+export function derivePreferencesView( { profile, weeklySummary } ) {
 	return {
 		selectedProfile: profile,
-		weeklyHidden: ! weeklyOffered,
-		weeklyDisabled: ! weeklyOffered,
-		feedsDisabled: ! feedsUsable,
-		feedListDisabled: ! feedsUsable || 'selected' !== feedMode,
+		feedsDisabled: ! weeklySummary,
 	};
 }
 

@@ -1901,7 +1901,7 @@ describe( 'Notification list', () => {
 			mail.getByText( /paused because Fair Audience is not active/ )
 		).toBeInTheDocument();
 		expect(
-			mail.getByText( /Subscribers who agreed to marketing emails/ )
+			mail.getByText( /Subscribers of this event feed/ )
 		).toBeInTheDocument();
 		expect( mail.getByText( 'Nothing sent yet' ) ).toBeInTheDocument();
 		expect( mail.getByText( 'Not scheduled' ) ).toBeInTheDocument();

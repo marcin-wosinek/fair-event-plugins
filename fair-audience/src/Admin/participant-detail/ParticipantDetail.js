@@ -48,12 +48,12 @@ const STATUS_DISPLAY = {
 	confirmed: __( 'Confirmed', 'fair-audience' ),
 };
 
-// The weekly event feeds a participant chose. A saved choice says nothing
-// about delivery, so the opt-out and consent stay spelled out next to it.
+// The weekly event feeds a participant subscribed to. A saved choice says
+// nothing about delivery, so the opt-out and confirmation stay spelled out
+// next to it. Feeds do not depend on the email profile.
 function WeeklyFeeds( { participant } ) {
 	const feedIds = participant.weekly_feed_ids || [];
 	const summary = participant.weekly_feed_summary;
-	const isAll = participant.weekly_feed_mode !== 'selected';
 
 	let deliveryNote = null;
 	if ( participant.weekly_summary_opt_out ) {
@@ -61,30 +61,15 @@ function WeeklyFeeds( { participant } ) {
 			'Saved preference only: this participant opted out of weekly summaries.',
 			'fair-audience'
 		);
-	} else if (
-		participant.email_profile !== 'marketing' ||
-		participant.status !== 'confirmed'
-	) {
+	} else if ( participant.status !== 'confirmed' ) {
 		deliveryNote = __(
-			'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.',
+			'Saved preference only: weekly summaries go to participants who confirmed their email address.',
 			'fair-audience'
 		);
 	}
 
 	let content;
-	if ( isAll ) {
-		content = (
-			<>
-				<strong>{ __( 'All event feeds', 'fair-audience' ) }</strong>
-				<p className="fair-audience-participant-detail__note">
-					{ __(
-						'Includes event feeds added later.',
-						'fair-audience'
-					) }
-				</p>
-			</>
-		);
-	} else if ( feedIds.length === 0 ) {
+	if ( feedIds.length === 0 ) {
 		content = <strong>{ __( 'No event feeds', 'fair-audience' ) }</strong>;
 	} else if ( ! summary?.available ) {
 		content = (

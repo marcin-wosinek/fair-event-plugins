@@ -138,6 +138,12 @@ class MailingSignupController extends WP_REST_Controller {
 								'type' => 'integer',
 							),
 						),
+						// General marketing consent, independent of the weekly
+						// feeds. Omitted (older forms): the signup grants it, as
+						// before.
+						'marketing'       => array(
+							'type' => 'boolean',
+						),
 						// Omitted: the weekly opt-out is left as it is.
 						'weekly_summary'  => array(
 							'type' => 'boolean',
@@ -231,15 +237,34 @@ class MailingSignupController extends WP_REST_Controller {
 			$weekly_preferences['feed_ids'] = $checked;
 		}
 
+		// Feeds never imply marketing consent, so a signup that declines
+		// marketing must at least subscribe to a feed.
+		$marketing = null === $request->get_param( 'marketing' ) ? null : (bool) $request->get_param( 'marketing' );
+		if ( false === $marketing && empty( $weekly_preferences['feed_ids'] ) ) {
+			return new WP_Error(
+				'nothing_to_subscribe',
+				__( 'Please choose marketing emails or at least one event feed.', 'fair-audience' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// What the confirmation link applies: the weekly preferences and,
+		// when the form said, the marketing choice. A token without the
+		// `marketing` key grants marketing consent, as signups always did.
+		$pending = $weekly_preferences;
+		if ( null !== $marketing ) {
+			$pending['marketing'] = $marketing;
+		}
+
 		// Logged-in WP users with a linked participant skip the email
-		// confirmation dance: we already trust their identity, so just flip
-		// the email_profile to marketing and apply category selections. They
-		// can only ever change their own linked participant.
+		// confirmation dance: we already trust their identity, so just apply
+		// the marketing choice, weekly preferences and category selections.
+		// They can only ever change their own linked participant.
 		$wp_user_id = get_current_user_id();
 		if ( $wp_user_id ) {
 			$wp_participant = $this->participant_repository->get_by_user_id( $wp_user_id );
 			if ( $wp_participant ) {
-				return $this->subscribe_wp_user( $wp_participant, $category_ids, $weekly_preferences );
+				return $this->subscribe_wp_user( $wp_participant, $category_ids, $weekly_preferences, $marketing );
 			}
 		}
 
@@ -260,7 +285,9 @@ class MailingSignupController extends WP_REST_Controller {
 
 		if ( $existing ) {
 			// Email exists.
-			if ( 'confirmed' === $existing->status && ! empty( $weekly_preferences ) ) {
+			$is_marketing      = 'marketing' === $existing->email_profile;
+			$changes_marketing = null !== $marketing && $is_marketing !== $marketing;
+			if ( 'confirmed' === $existing->status && ( ! empty( $weekly_preferences ) || $changes_marketing ) ) {
 				// Only the address's owner may change its preferences, so
 				// nothing submitted here is applied or kept for later: the
 				// owner chooses on the page the emailed link opens.
@@ -287,7 +314,7 @@ class MailingSignupController extends WP_REST_Controller {
 			} else {
 				// Pending - resend confirmation email. Weekly preferences wait
 				// on the new token and apply only when it confirms.
-				$token = $this->token_repository->create_token( $existing->id, $weekly_preferences ? $weekly_preferences : null );
+				$token = $this->token_repository->create_token( $existing->id, $pending ? $pending : null );
 
 				// Update pending category selections.
 				if ( ! empty( $category_ids ) ) {
@@ -333,7 +360,7 @@ class MailingSignupController extends WP_REST_Controller {
 
 		// Create confirmation token. Weekly preferences wait on it and apply
 		// only when it confirms.
-		$token = $this->token_repository->create_token( $participant->id, $weekly_preferences ? $weekly_preferences : null );
+		$token = $this->token_repository->create_token( $participant->id, $pending ? $pending : null );
 
 		if ( ! $token ) {
 			return new WP_Error(
@@ -402,16 +429,19 @@ class MailingSignupController extends WP_REST_Controller {
 
 	/**
 	 * Subscribe a logged-in WP user directly, bypassing the email-confirmation
-	 * dance. The user's identity is already trusted by WordPress, so we just
-	 * flip email_profile to 'marketing' and apply category selections.
+	 * dance. The user's identity is already trusted by WordPress, so we
+	 * apply the marketing choice, weekly preferences and category
+	 * selections. Declining marketing keeps the stored email profile.
 	 *
 	 * @param \FairAudience\Models\Participant $participant        Participant linked to the WP user.
 	 * @param array                            $category_ids       Selected category IDs.
 	 * @param array                            $weekly_preferences Checked weekly preferences; see {@see WeeklyFeeds::apply()}.
+	 * @param bool|null                        $marketing          Marketing choice; null grants it, as older forms did.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	private function subscribe_wp_user( $participant, $category_ids, array $weekly_preferences = array() ) {
-		$was_marketing = ( 'marketing' === $participant->email_profile && 'confirmed' === $participant->status );
+	private function subscribe_wp_user( $participant, $category_ids, array $weekly_preferences = array(), $marketing = null ) {
+		$was_marketing   = ( 'marketing' === $participant->email_profile && 'confirmed' === $participant->status );
+		$wants_marketing = false !== $marketing;
 
 		if ( $weekly_preferences ) {
 			$applied = $this->weekly_feeds->apply( $participant, $weekly_preferences );
@@ -420,9 +450,11 @@ class MailingSignupController extends WP_REST_Controller {
 			}
 		}
 
-		if ( ! $was_marketing ) {
-			$participant->email_profile = 'marketing';
-			$participant->status        = 'confirmed';
+		if ( ( $wants_marketing && ! $was_marketing ) || 'confirmed' !== $participant->status ) {
+			if ( $wants_marketing ) {
+				$participant->email_profile = 'marketing';
+			}
+			$participant->status = 'confirmed';
 			$participant->save();
 		}
 
@@ -433,7 +465,7 @@ class MailingSignupController extends WP_REST_Controller {
 			);
 		}
 
-		if ( $was_marketing && $weekly_preferences ) {
+		if ( ( $was_marketing || ! $wants_marketing ) && $weekly_preferences ) {
 			return rest_ensure_response(
 				array(
 					'success' => true,

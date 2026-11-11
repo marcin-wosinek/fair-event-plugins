@@ -582,7 +582,7 @@ class ParticipantsController extends WP_REST_Controller {
 		$item['groups'] = $groups_by_pid[ $participant->id ] ?? array();
 
 		$item['weekly_feed_ids']     = ( new ParticipantFeedRepository() )->get_feed_ids_by_participant( (int) $participant->id );
-		$item['weekly_feed_summary'] = ( new WeeklyFeeds() )->summary( $participant->weekly_feed_mode, $item['weekly_feed_ids'] );
+		$item['weekly_feed_summary'] = ( new WeeklyFeeds() )->summary( $item['weekly_feed_ids'] );
 
 		return rest_ensure_response( $item );
 	}
@@ -747,7 +747,7 @@ class ParticipantsController extends WP_REST_Controller {
 		$feed_choice     = null;
 		$feed_mode       = $request->get_param( 'weekly_feed_mode' );
 		$feed_ids        = $request->get_param( 'weekly_feed_ids' );
-		if ( null !== $feed_ids && 'selected' !== $feed_mode ) {
+		if ( null !== $feed_ids && WeeklyFeeds::MODE_SELECTED !== $feed_mode ) {
 			return new WP_Error(
 				'invalid_weekly_feeds',
 				__( 'Event feeds can only be chosen together with the selected event feeds option.', 'fair-audience' ),
@@ -998,9 +998,9 @@ class ParticipantsController extends WP_REST_Controller {
 				'type'        => 'boolean',
 			),
 			'weekly_feed_mode'       => array(
-				'description' => __( 'Which event feeds the weekly summary covers: all, selected or none.', 'fair-audience' ),
+				'description' => __( 'Which event feeds the participant subscribes to: the selected ones, or none.', 'fair-audience' ),
 				'type'        => 'string',
-				'enum'        => array( WeeklyFeeds::MODE_ALL, WeeklyFeeds::MODE_SELECTED, 'none' ),
+				'enum'        => array( WeeklyFeeds::MODE_SELECTED, WeeklyFeeds::CHOICE_NONE ),
 			),
 			'weekly_feed_ids'        => array(
 				'description' => __( 'Chosen event feed IDs, with the selected mode.', 'fair-audience' ),

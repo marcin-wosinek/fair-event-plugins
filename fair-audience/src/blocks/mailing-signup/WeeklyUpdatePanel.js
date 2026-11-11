@@ -144,7 +144,7 @@ export default function WeeklyUpdatePanel( { attributes, setAttributes } ) {
 					setAttributes( { weeklyUpdate: value } )
 				}
 				help={ __(
-					'Let subscribers sign up for a weekly email of upcoming events. When not shown, the form leaves weekly emails as they are.',
+					'Let subscribers sign up for a weekly email of upcoming events. When shown, the form also asks separately for other marketing emails, so subscribers can choose feeds only. When not shown, the form leaves weekly emails as they are.',
 					'fair-audience'
 				) }
 			/>

@@ -34,7 +34,7 @@ class Schema {
 			instagram VARCHAR(255) DEFAULT '' COMMENT 'Instagram handle without @',
 			email_profile ENUM('minimal', 'marketing', 'declined') NOT NULL DEFAULT 'minimal',
 			weekly_summary_opt_out TINYINT(1) NOT NULL DEFAULT 0,
-			weekly_feed_mode ENUM('all', 'selected') NOT NULL DEFAULT 'all' COMMENT 'all = every weekly email incl. later feeds, selected = only participant_feeds',
+			weekly_feed_mode ENUM('all', 'selected') NOT NULL DEFAULT 'selected' COMMENT 'selected = only participant_feeds, all = legacy awaiting FeedModeConversion',
 			status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'confirmed',
 			wp_user_id BIGINT UNSIGNED DEFAULT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

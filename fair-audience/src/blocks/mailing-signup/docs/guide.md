@@ -27,9 +27,21 @@ Top-level block without inner blocks. Inside a Fair Form use
   without showing a feed choice.
 - `feedId` — the event feed of the `hidden` feed selection.
 
-Weekly and category choices are independent. Chosen weekly preferences wait
-for the email confirmation and apply only when it is used; an address that is
-already subscribed is emailed a link to change its preferences instead.
+Weekly and category choices are independent. Feed subscriptions are always
+explicit: a subscriber receives only the feeds chosen (or the `hidden`
+feed), never feeds added later.
+
+While the weekly checkbox is shown and feeds can be offered, the form also
+shows a "Send me event invitations and other news" checkbox (checked at
+first) for general marketing consent, sent as `marketing`. Unchecking it
+subscribes to the chosen feeds only; the form then needs at least one feed.
+Feeds never imply marketing consent, and a signup never revokes consent
+given earlier. Forms without the weekly checkbox send no `marketing` field
+and grant marketing consent, as before.
+
+Chosen weekly preferences and the marketing choice wait for the email
+confirmation and apply only when it is used; an address that is already
+subscribed is emailed a link to change its preferences instead.
 
 ## Prerequisites
 

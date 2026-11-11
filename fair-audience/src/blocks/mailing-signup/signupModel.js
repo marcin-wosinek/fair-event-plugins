@@ -14,9 +14,17 @@ import { __ } from '@wordpress/i18n';
  * @param {string}  options.feedMode   'hidden' or 'multiselect'.
  * @param {boolean} options.offered    Whether the weekly checkbox is shown.
  * @param {boolean} options.checked    Whether the weekly checkbox starts checked.
+ * @param {boolean} options.marketing  Whether the marketing checkbox is shown and starts checked;
+ *                                     null when the form does not ask for marketing consent.
  * @return {Object|null} Weekly state, or null when the form offers no weekly update.
  */
-export function createWeeklyState( { config, feedMode, offered, checked } ) {
+export function createWeeklyState( {
+	config,
+	feedMode,
+	offered,
+	checked,
+	marketing = null,
+} ) {
 	if ( ! config ) {
 		return null;
 	}
@@ -27,7 +35,37 @@ export function createWeeklyState( { config, feedMode, offered, checked } ) {
 		offered: !! offered,
 		checked: !! offered && !! checked,
 		feedIds: [],
+		marketing:
+			!! offered && marketing !== null && marketing !== undefined
+				? !! marketing
+				: null,
 	};
+}
+
+/**
+ * Check or uncheck general marketing emails. Feeds do not depend on it.
+ *
+ * @param {Object}  weekly  Weekly state.
+ * @param {boolean} checked Whether marketing emails are wanted.
+ * @return {Object} New weekly state.
+ */
+export function setMarketingChecked( weekly, checked ) {
+	return weekly.marketing === null
+		? weekly
+		: { ...weekly, marketing: !! checked };
+}
+
+/**
+ * Whether the weekly choice subscribes to at least one feed.
+ *
+ * @param {Object} weekly Weekly state.
+ * @return {boolean}
+ */
+function subscribesToFeeds( weekly ) {
+	return (
+		weekly.checked &&
+		( weekly.feedMode === 'hidden' || weekly.feedIds.length > 0 )
+	);
 }
 
 /**
@@ -76,6 +114,17 @@ export function weeklyError( weekly ) {
 		);
 	}
 
+	if (
+		weekly &&
+		weekly.marketing === false &&
+		! subscribesToFeeds( weekly )
+	) {
+		return __(
+			'Please choose marketing emails or at least one event feed.',
+			'fair-audience'
+		);
+	}
+
 	return null;
 }
 
@@ -84,7 +133,8 @@ export function weeklyError( weekly ) {
  *
  * A hidden feed is resolved by the server from the signed configuration,
  * so no feed IDs are sent for it. Declining with no feeds selected sends
- * no feed IDs, leaving the feed choice unchanged.
+ * no feed IDs, leaving the feed choice unchanged. The marketing choice is
+ * sent only when the form asks for it.
  *
  * @param {Object|null} weekly Weekly state.
  * @return {Object} Request fields; empty when the form offers no weekly update.
@@ -100,6 +150,9 @@ export function weeklyRequestData( weekly ) {
 	};
 	if ( weekly.feedMode === 'multiselect' && weekly.feedIds.length > 0 ) {
 		data.weekly_feed_ids = [ ...weekly.feedIds ].sort( ( a, b ) => a - b );
+	}
+	if ( weekly.marketing !== null ) {
+		data.marketing = weekly.marketing;
 	}
 
 	return data;

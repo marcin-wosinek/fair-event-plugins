@@ -167,16 +167,14 @@ class EmailService {
 	 * @return string Skip reason.
 	 */
 	private function marketing_skip_reason( Participant $participant, string $email_type = EmailType::MARKETING ): string {
-		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
-			return __( 'Participant has not yet confirmed their marketing subscription.', 'fair-audience' );
+		if ( EmailType::WEEKLY_SUMMARY === $email_type ) {
+			return 'confirmed' === $participant->status
+				? __( 'Opted out of the weekly summary.', 'fair-audience' )
+				: __( 'Participant has not yet confirmed their email address.', 'fair-audience' );
 		}
 
-		if ( EmailType::WEEKLY_SUMMARY === $email_type
-			&& 'marketing' === $participant->email_profile
-			&& 'confirmed' === $participant->status
-			&& $participant->weekly_summary_opt_out
-		) {
-			return __( 'Opted out of the weekly summary.', 'fair-audience' );
+		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
+			return __( 'Participant has not yet confirmed their marketing subscription.', 'fair-audience' );
 		}
 
 		return __( 'Participant opted out of marketing emails.', 'fair-audience' );
@@ -190,16 +188,12 @@ class EmailService {
 	 * @return string
 	 */
 	private function marketing_skip_code( Participant $participant, string $email_type = EmailType::MARKETING ): string {
-		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
-			return 'consent_pending';
+		if ( EmailType::WEEKLY_SUMMARY === $email_type ) {
+			return 'confirmed' === $participant->status ? 'weekly_summary_opt_out' : 'consent_pending';
 		}
 
-		if ( EmailType::WEEKLY_SUMMARY === $email_type
-			&& 'marketing' === $participant->email_profile
-			&& 'confirmed' === $participant->status
-			&& $participant->weekly_summary_opt_out
-		) {
-			return 'weekly_summary_opt_out';
+		if ( 'marketing' === $participant->email_profile && 'pending' === $participant->status ) {
+			return 'consent_pending';
 		}
 
 		return 'marketing_opt_out';
@@ -1207,9 +1201,16 @@ class EmailService {
 			'skipped' => array(),
 		);
 
+		// A weekly feed email always goes to that feed's subscribers only,
+		// with the weekly checks: without a valid feed it reaches nobody.
+		if ( EmailType::WEEKLY_SUMMARY === $email_type ) {
+			$weekly_feed_id = max( 0, (int) $weekly_feed_id );
+			$is_marketing   = true;
+		}
+
 		$participants          = $this->participant_repository->get_all();
 		$group_participant_ids = $this->get_participant_ids_for_groups( $group_ids );
-		$feed_subscriber_ids   = null !== $weekly_feed_id ? $this->participant_feed_repository->get_participant_ids_by_feed( (int) $weekly_feed_id ) : array();
+		$feed_subscriber_ids   = null !== $weekly_feed_id && $weekly_feed_id > 0 ? $this->participant_feed_repository->get_participant_ids_by_feed( (int) $weekly_feed_id ) : array();
 		$deliver_email_type    = $is_marketing ? $email_type : EmailType::MINIMAL;
 		$report                = static function ( $event, $participant, $reason = '' ) use ( $observer ) {
 			if ( null === $observer ) {

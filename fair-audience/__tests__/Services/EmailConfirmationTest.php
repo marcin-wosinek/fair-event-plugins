@@ -133,7 +133,7 @@ class EmailConfirmationTest extends TestCase {
 		$participant->email_profile          = 'minimal';
 		$participant->status                 = 'pending';
 		$participant->weekly_summary_opt_out = 0;
-		$participant->weekly_feed_mode       = WeeklyFeeds::MODE_ALL;
+		$participant->weekly_feed_mode       = WeeklyFeeds::MODE_SELECTED;
 		return $participant;
 	}
 
@@ -253,15 +253,78 @@ class EmailConfirmationTest extends TestCase {
 		$this->assertSame( array( 7 ), $this->sessions );
 	}
 
-	/** A token without preferences, from before feeds existed, keeps every weekly email. */
-	public function test_token_without_preferences_keeps_weekly_defaults() {
+	/**
+	 * A legacy token without preferences keeps its original meaning: it
+	 * grants marketing consent, and subscribes to no feeds rather than
+	 * restoring "all weekly emails".
+	 */
+	public function test_legacy_token_grants_marketing_but_no_feeds() {
 		$this->token();
 
 		$this->assertSame( EmailConfirmation::CONFIRMED, $this->confirmation()->confirm( 'abc' ) );
 
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $this->participants[7]->weekly_feed_mode );
+		$this->assertSame( 'marketing', $this->participants[7]->email_profile );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $this->participants[7]->weekly_feed_mode );
 		$this->assertSame( 0, $this->participants[7]->weekly_summary_opt_out );
 		$this->assertArrayNotHasKey( 7, $this->feed_repository->feeds );
+	}
+
+	/** A legacy token with feeds but no marketing choice still grants marketing. */
+	public function test_legacy_token_with_feeds_grants_marketing() {
+		$this->token( array( 'feed_ids' => array( 1 ) ) );
+
+		$this->assertSame( EmailConfirmation::CONFIRMED, $this->confirmation()->confirm( 'abc' ) );
+
+		$this->assertSame( 'marketing', $this->participants[7]->email_profile );
+		$this->assertSame( array( 1 ), $this->feed_repository->feeds[7] );
+	}
+
+	/** Confirming a feeds-only signup verifies the address without granting marketing consent. */
+	public function test_feeds_only_signup_confirms_without_marketing_consent() {
+		$token = $this->token(
+			array(
+				'weekly_summary' => true,
+				'feed_ids'       => array( 2 ),
+				'marketing'      => false,
+			)
+		);
+
+		$this->assertSame( EmailConfirmation::CONFIRMED, $this->confirmation()->confirm( 'abc' ) );
+
+		$participant = $this->participants[7];
+		$this->assertSame( 'confirmed', $participant->status );
+		$this->assertSame( 'minimal', $participant->email_profile );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
+		$this->assertSame( array( 2 ), $this->feed_repository->feeds[7] );
+		$this->assertTrue( $token->deleted );
+	}
+
+	/** Declining marketing on a signup never revokes consent given earlier. */
+	public function test_declining_marketing_keeps_earlier_consent() {
+		$this->participants[7]->email_profile = 'marketing';
+		$this->token(
+			array(
+				'feed_ids'  => array( 1 ),
+				'marketing' => false,
+			)
+		);
+
+		$this->assertSame( EmailConfirmation::CONFIRMED, $this->confirmation()->confirm( 'abc' ) );
+		$this->assertSame( 'marketing', $this->participants[7]->email_profile );
+	}
+
+	/** An explicit marketing choice grants marketing consent. */
+	public function test_explicit_marketing_choice_grants_consent() {
+		$this->token(
+			array(
+				'feed_ids'  => array(),
+				'marketing' => true,
+			)
+		);
+
+		$this->assertSame( EmailConfirmation::CONFIRMED, $this->confirmation()->confirm( 'abc' ) );
+		$this->assertSame( 'marketing', $this->participants[7]->email_profile );
+		$this->assertSame( array(), $this->feed_repository->feeds[7] );
 	}
 
 	/** A feed no longer offered is dropped, and none is put in its place. */

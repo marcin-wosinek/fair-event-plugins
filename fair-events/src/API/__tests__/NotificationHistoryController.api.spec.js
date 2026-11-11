@@ -357,7 +357,9 @@ test.describe( 'NotificationHistoryController', () => {
 	} );
 
 	test( 'records each group email recipient reported by Fair Audience', async () => {
-		const participant = fixture( `participant ${ SUBSCRIBER_EMAIL }` );
+		const participant = fixture(
+			`participant ${ SUBSCRIBER_EMAIL } ${ sourceId }`
+		);
 		try {
 			const own = await createConfiguration( 'bulk_email', 'Members', {
 				enabled: true,

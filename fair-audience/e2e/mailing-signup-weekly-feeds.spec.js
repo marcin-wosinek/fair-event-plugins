@@ -187,6 +187,7 @@ test.describe( 'Mailing Signup block — weekly update and event feeds', () => {
 		expect( state.pending ).toEqual( {
 			weekly_summary: true,
 			feed_ids: [ feeds.a ],
+			marketing: true,
 		} );
 
 		// The visitor follows the link the confirmation email carries.
@@ -251,6 +252,70 @@ test.describe( 'Mailing Signup block — weekly update and event feeds', () => {
 		expect( ( await fixture( 'state', address ) ).pending ).toEqual( {
 			weekly_summary: true,
 			feed_ids: [ feeds.a ],
+			marketing: true,
+		} );
+	} );
+
+	test( 'a visitor subscribes to a feed without marketing emails, from the keyboard', async ( {
+		page,
+	} ) => {
+		const created = await createPage( {
+			weeklyUpdate: 'checked',
+			feedSelection: 'multiselect',
+		} );
+		await page.goto( created.link );
+		const form = page.locator( '.fair-audience-mailing-form' );
+		const marketing = form.getByRole( 'checkbox', {
+			name: 'Send me event invitations and other news',
+		} );
+		const feedB = form.getByRole( 'checkbox', {
+			name: `Feed B ${ suffix }`,
+		} );
+		await expect( marketing ).toBeChecked();
+
+		const address = email( 'feeds-only' );
+		await fillIdentity( form, address );
+		await marketing.focus();
+		await page.keyboard.press( 'Space' );
+		await expect( marketing ).not.toBeChecked();
+
+		// Neither marketing nor a feed: nothing to subscribe to.
+		await form
+			.getByRole( 'checkbox', {
+				name: 'Receive a weekly update of upcoming events',
+			} )
+			.uncheck();
+		await form.getByRole( 'button', { name: 'Subscribe' } ).click();
+		await expect( form.getByRole( 'status' ) ).toHaveText(
+			'Please choose marketing emails or at least one event feed.'
+		);
+
+		await form
+			.getByRole( 'checkbox', {
+				name: 'Receive a weekly update of upcoming events',
+			} )
+			.check();
+		await feedB.focus();
+		await page.keyboard.press( 'Space' );
+		await form.getByRole( 'button', { name: 'Subscribe' } ).click();
+		await expect( form.getByRole( 'status' ) ).toHaveText(
+			'Please check your email to confirm your subscription.'
+		);
+
+		const { token, pending } = await fixture( 'state', address );
+		expect( pending ).toEqual( {
+			weekly_summary: true,
+			feed_ids: [ feeds.b ],
+			marketing: false,
+		} );
+		await api.post( '/wp-json/fair-audience/v1/mailing-signup/confirm', {
+			data: { token },
+		} );
+		const { participant } = await fixture( 'state', address );
+		expect( participant ).toMatchObject( {
+			status: 'confirmed',
+			email_profile: 'minimal',
+			feed_ids: [ feeds.b ],
 		} );
 	} );
 
@@ -291,7 +356,7 @@ test.describe( 'Mailing Signup block — weekly update and event feeds', () => {
 		await expect( form.getByLabel( 'Email' ) ).toHaveValue( address );
 
 		const state = await fixture( 'state', address );
-		expect( state.participant.weekly_feed_mode ).toBe( 'all' );
+		expect( state.participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( state.participant.feed_ids ).toEqual( [] );
 	} );
 } );

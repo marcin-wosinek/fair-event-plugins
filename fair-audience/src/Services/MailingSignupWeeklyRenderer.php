@@ -16,6 +16,11 @@ defined( 'WPINC' ) || die;
  * When the form's feeds cannot be offered, the form says so and submits
  * the weekly update as declined, so a signup never falls back to every
  * weekly email.
+ *
+ * While feeds are offered, the form also asks for general marketing
+ * consent separately, so someone can subscribe to feeds only. A form
+ * without feeds asks nothing: its signup grants marketing consent, as it
+ * always did.
  */
 class MailingSignupWeeklyRenderer {
 
@@ -35,6 +40,14 @@ class MailingSignupWeeklyRenderer {
 		$offered = self::offered_feeds( $policy, $feeds ?? new WeeklyFeeds() );
 		$checked = MailingSignupWeeklyPolicy::WEEKLY_CHECKED === $policy['weekly'];
 		?>
+		<?php if ( $offered ) : ?>
+			<p class="fair-audience-mailing-marketing">
+				<label class="fair-audience-mailing-category-label">
+					<input type="checkbox" name="mailing_marketing" value="1" checked />
+					<?php echo esc_html__( 'Send me event invitations and other news', 'fair-audience' ); ?>
+				</label>
+			</p>
+		<?php endif; ?>
 		<fieldset
 			class="fair-audience-mailing-weekly"
 			data-weekly-config="<?php echo esc_attr( MailingSignupWeeklyPolicy::sign( $policy ) ); ?>"

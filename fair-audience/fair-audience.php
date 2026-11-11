@@ -868,11 +868,29 @@ function fair_audience_maybe_upgrade_db() {
 		$db_version = '1.48.0';
 	}
 
+	// Feed subscriptions are always explicit (#2239): new participants start
+	// with no feeds instead of the legacy 'all' mode.
+	if ( version_compare( $db_version, '1.48.0', '>=' ) && version_compare( $db_version, '1.49.0', '<' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( \FairAudience\Database\Schema::get_participants_table_sql() );
+		update_option( 'fair_audience_db_version', '1.49.0' );
+		$db_version = '1.49.0';
+	}
+
 	// The batch repairs below go through Fair Events and Fair Payments
 	// Connector models, which stay off when the shared library could not be
 	// selected; they resume on the next request that selects it.
 	if ( ! \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
 		return;
+	}
+
+	// Convert the legacy 'all' feed mode once into explicit subscriptions to
+	// the feeds eligible now, a batch per request. Recorded only when every
+	// participant is converted; while Fair Events cannot list its feeds the
+	// conversion waits, and legacy participants receive only explicit feeds.
+	if ( version_compare( $db_version, '1.49.0', '>=' ) && version_compare( $db_version, '1.50.0', '<' ) && \FairAudience\Database\FeedModeConversion::run() ) {
+		update_option( 'fair_audience_db_version', '1.50.0' );
+		$db_version = '1.50.0';
 	}
 
 	// Carry historical participant-level activities and attendance over to

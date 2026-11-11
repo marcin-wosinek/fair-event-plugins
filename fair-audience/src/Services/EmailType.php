@@ -16,10 +16,11 @@ defined( 'WPINC' ) || die;
  *   (poll invitations, confirmation emails, signup links)
  * - MARKETING: Promotional emails for events the participant hasn't signed up for
  *   (event invitations)
- * - WEEKLY_SUMMARY: The recurring weekly events digest. A subset of marketing
- *   sends: requires marketing consent like MARKETING, but is additionally
- *   gated by the participant's per-summary opt-out so they can stay on
- *   marketing mailings while skipping just the digest.
+ * - WEEKLY_SUMMARY: The recurring weekly email of an event feed. Independent
+ *   of general marketing consent: it goes to confirmed participants who
+ *   subscribed to that feed and did not pause the weekly summary, so they
+ *   can receive feeds without other marketing mailings and the other way
+ *   round.
  */
 class EmailType {
 	const MINIMAL        = 'minimal';

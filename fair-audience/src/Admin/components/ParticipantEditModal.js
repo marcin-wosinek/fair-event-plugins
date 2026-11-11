@@ -398,7 +398,6 @@ export default function ParticipantEditModal( {
 							saved={ saved }
 							catalog={ catalog }
 							edits={ weekly }
-							emailProfile={ formData.email_profile }
 							disabled={ isSaving }
 							onChange={ setWeekly }
 							onRetrySaved={ () => loadSaved( participant.id ) }

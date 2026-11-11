@@ -73,7 +73,7 @@ export const REASON_LABELS = {
 	send_failed: __( 'The mail system refused the message.', 'fair-events' ),
 	not_sendable: __( 'The address could not be sent to.', 'fair-events' ),
 	not_eligible: __(
-		'Not eligible, for example without consent to marketing emails.',
+		'Not eligible, for example an unconfirmed address or a paused weekly summary.',
 		'fair-events'
 	),
 	previous_part_not_sent: __(

@@ -74,9 +74,11 @@ class Participant {
 	public $weekly_summary_opt_out;
 
 	/**
-	 * Which weekly emails the participant receives: 'all' (every weekly
-	 * email, including feeds added later) or 'selected' (only the feeds in
-	 * ParticipantFeedRepository; none when it holds none).
+	 * Feed mode. 'selected' means the participant receives only the feeds
+	 * stored in ParticipantFeedRepository, none when it holds none. The
+	 * legacy 'all' value only marks a participant the one-time
+	 * FeedModeConversion has not converted yet; it never widens delivery and
+	 * is never written for a new participant.
 	 *
 	 * @var string
 	 */
@@ -135,7 +137,7 @@ class Participant {
 		$this->instagram              = isset( $data['instagram'] ) ? sanitize_text_field( $data['instagram'] ) : '';
 		$this->email_profile          = isset( $data['email_profile'] ) ? $data['email_profile'] : 'minimal';
 		$this->weekly_summary_opt_out = isset( $data['weekly_summary_opt_out'] ) ? (int) $data['weekly_summary_opt_out'] : 0;
-		$this->weekly_feed_mode       = isset( $data['weekly_feed_mode'] ) && 'selected' === $data['weekly_feed_mode'] ? 'selected' : 'all';
+		$this->weekly_feed_mode       = isset( $data['weekly_feed_mode'] ) && 'all' === $data['weekly_feed_mode'] ? 'all' : 'selected';
 		$this->status                 = isset( $data['status'] ) ? $data['status'] : 'confirmed';
 		$this->wp_user_id             = isset( $data['wp_user_id'] ) && $data['wp_user_id'] ? (int) $data['wp_user_id'] : null;
 		$this->created_at             = isset( $data['created_at'] ) ? $data['created_at'] : '';
@@ -167,8 +169,10 @@ class Participant {
 			$this->status = 'confirmed';
 		}
 
-		if ( 'selected' !== $this->weekly_feed_mode ) {
-			$this->weekly_feed_mode = 'all';
+		// The legacy 'all' value is kept only for a stored participant the
+		// conversion has not reached yet.
+		if ( 'all' !== $this->weekly_feed_mode || ! $this->id ) {
+			$this->weekly_feed_mode = 'selected';
 		}
 
 		// Convert empty email to null for database storage.
@@ -272,7 +276,7 @@ class Participant {
 		$this->instagram              = '';
 		$this->email_profile          = 'minimal';
 		$this->weekly_summary_opt_out = 0;
-		$this->weekly_feed_mode       = 'all';
+		$this->weekly_feed_mode       = 'selected';
 		$this->wp_user_id             = null;
 
 		return $this->save();
