@@ -357,7 +357,7 @@ class SettlementReconciliation {
 		if ( ! $account ) {
 			$bank_issues[] = __( 'The settlement’s payout account is missing.', 'fair-finance' );
 		}
-		if ( ! $bank || $bank['parent_entry_id'] || 'income' !== $bank['entry_type'] ) {
+		if ( ! $bank || $bank['parent_entry_id'] || 'income' !== $bank['entry_type'] || ! empty( $bank['payment_source'] ) ) {
 			$bank_issues[] = __( 'Select an eligible bank income entry.', 'fair-finance' );
 		}
 		if ( ! $currency || ! $account_id ) {
@@ -851,7 +851,7 @@ class SettlementReconciliation {
 			if ( ! $entry ) {
 				return self::error( 'entry_not_found', __( 'This bank entry was not found.', 'fair-finance' ), 404 );
 			}
-			if ( $entry['parent_entry_id'] || 'income' !== $entry['entry_type'] ) {
+			if ( $entry['parent_entry_id'] || 'income' !== $entry['entry_type'] || ! empty( $entry['payment_source'] ) ) {
 				return self::error( 'reconciliation_entry_ineligible', __( 'Only bank income entries can be matched to a settlement.', 'fair-finance' ) );
 			}
 			if ( $this->local->rows( 'decisions', 'entry_id', $entry_id ) ) {

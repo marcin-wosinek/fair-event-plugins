@@ -37,6 +37,8 @@ const EntryForm = ( {
 		event_url: '',
 		event_date_id: null,
 		tag: '',
+		payment_source: '',
+		payer_name: '',
 	} );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
@@ -54,6 +56,8 @@ const EntryForm = ( {
 				event_url: entry.event_url || '',
 				event_date_id: entry.event_date_id || null,
 				tag: entry.tag || '',
+				payment_source: entry.payment_source || '',
+				payer_name: entry.payer_name || '',
 			} );
 		}
 	}, [ entry ] );
@@ -73,6 +77,12 @@ const EntryForm = ( {
 				event_url: formData.event_url || null,
 				event_date_id: formData.event_date_id || null,
 				tag: formData.tag || null,
+				// '' is "Unspecified": a plain accounting entry.
+				payment_source: formData.payment_source || null,
+				payer_name:
+					'personal_funds' === formData.payment_source
+						? formData.payer_name.trim()
+						: null,
 			};
 
 			if ( entry ) {
@@ -182,6 +192,60 @@ const EntryForm = ( {
 							'fair-finance'
 						) }
 					/>
+
+					<SelectControl
+						label={ __( 'Paid from', 'fair-finance' ) }
+						value={ formData.payment_source }
+						options={ [
+							{
+								label: __( 'Unspecified', 'fair-finance' ),
+								value: '',
+							},
+							{
+								label: __( 'Event cash', 'fair-finance' ),
+								value: 'event_cash',
+							},
+							...( 'income' === formData.entry_type
+								? []
+								: [
+										{
+											label: __(
+												'Personal funds',
+												'fair-finance'
+											),
+											value: 'personal_funds',
+										},
+									] ),
+						] }
+						onChange={ ( value ) =>
+							setFormData( {
+								...formData,
+								payment_source: value,
+							} )
+						}
+						help={ __(
+							'Event cash and personal funds are recorded from the event’s Finance tab and must stay linked to an event.',
+							'fair-finance'
+						) }
+					/>
+
+					{ 'personal_funds' === formData.payment_source &&
+						'cost' === formData.entry_type && (
+							<TextControl
+								label={ __( 'Paid by', 'fair-finance' ) }
+								value={ formData.payer_name }
+								onChange={ ( value ) =>
+									setFormData( {
+										...formData,
+										payer_name: value,
+									} )
+								}
+								help={ __(
+									'Name of the person who paid.',
+									'fair-finance'
+								) }
+							/>
+						) }
 
 					<SelectControl
 						label={ __( 'Budget Category', 'fair-finance' ) }

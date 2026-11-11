@@ -54,7 +54,7 @@ class Plugin {
 					load_plugin_textdomain( 'fair-finance', false, 'fair-finance/languages' );
 				}
 
-				if ( '2' !== get_option( 'fair_finance_schema_version' ) ) {
+				if ( Schema::VERSION !== get_option( 'fair_finance_schema_version' ) ) {
 					Schema::create_tables();
 				}
 			}

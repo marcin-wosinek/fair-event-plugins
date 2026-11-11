@@ -22,6 +22,7 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import PurchasePayments from './PurchasePayments.js';
+import EventCashOperations from './EventCashOperations.js';
 
 const siteCurrency = window.fairPaymentsConnector?.currency || 'EUR';
 
@@ -97,11 +98,14 @@ const loadErrorMessage = ( err, summary ) =>
  * payment links.
  *
  * @param {Object}  props
- * @param {number}  props.eventDateId          Event date being managed.
- * @param {boolean} props.connectorActive      Fair Payments Connector is active.
- * @param {boolean} props.financeActive        Fair Finance is active.
- * @param {string}  props.entriesUrl           Fair Finance entries screen URL.
+ * @param {number}  props.eventDateId               Event date being managed.
+ * @param {boolean} props.connectorActive           Fair Payments Connector is active.
+ * @param {boolean} props.financeActive             Fair Finance is active.
+ * @param {string}  props.entriesUrl                Fair Finance entries screen URL.
  * @param {boolean} props.purchasePaymentsAvailable Purchase payments can be listed.
+ * @param {boolean} props.financeManageable         The user may read and change Fair
+ *                                                  Finance entries (administrators).
+ * @param {string}  props.defaultEntryDate          The event's date (Y-m-d), or ''.
  */
 export default function EventFinance( {
 	eventDateId,
@@ -109,7 +113,11 @@ export default function EventFinance( {
 	financeActive,
 	entriesUrl,
 	purchasePaymentsAvailable = false,
+	financeManageable = false,
+	defaultEntryDate = '',
 } ) {
+	const cashEnabled = !! ( financeActive && financeManageable );
+
 	// Payments (Fair Payments Connector). `null` until loaded.
 	const [ payments, setPayments ] = useState( null );
 	const [ paymentsLoading, setPaymentsLoading ] = useState(
@@ -137,6 +145,14 @@ export default function EventFinance( {
 	const [ budgetError, setBudgetError ] = useState( null );
 	const [ budgetSuccess, setBudgetSuccess ] = useState( null );
 
+	// Event cash and personally paid summary (Fair Finance). `null` until
+	// loaded.
+	const [ cashSummary, setCashSummary ] = useState( null );
+	const [ cashSummaryLoading, setCashSummaryLoading ] = useState(
+		!! ( cashEnabled && eventDateId )
+	);
+	const [ cashSummaryError, setCashSummaryError ] = useState( null );
+
 	useEffect( () => {
 		if ( ! eventDateId ) {
 			return;
@@ -148,7 +164,41 @@ export default function EventFinance( {
 			loadAccounting();
 			loadBudget();
 		}
-	}, [ eventDateId, connectorActive, financeActive ] );
+		if ( cashEnabled ) {
+			loadCashSummary();
+		}
+	}, [ eventDateId, connectorActive, financeActive, cashEnabled ] );
+
+	const loadCashSummary = async () => {
+		setCashSummaryLoading( true );
+		setCashSummaryError( null );
+		try {
+			const data = await apiFetch( {
+				path: `/fair-finance/v1/financial-entries/event-summary?event_date_id=${ eventDateId }`,
+			} );
+			setCashSummary( data );
+		} catch ( err ) {
+			setCashSummary( null );
+			setCashSummaryError(
+				loadErrorMessage(
+					err,
+					__(
+						'Income and expenses totals could not be loaded.',
+						'fair-events'
+					)
+				)
+			);
+		} finally {
+			setCashSummaryLoading( false );
+		}
+	};
+
+	// After an income or expense changes, both its own totals and the
+	// accounting costs change.
+	const handleCashChanged = () => {
+		loadAccounting();
+		loadCashSummary();
+	};
 
 	const loadPayments = async () => {
 		setPaymentsLoading( true );
@@ -296,7 +346,21 @@ export default function EventFinance( {
 	};
 
 	const loading = paymentsLoading || accountingLoading;
+
+	// Event income: online payments plus cash income recorded explicitly.
+	// The accounting income total is deliberately not used, as it can
+	// already hold reconciled online receipts. Shown only once every source
+	// this site has loaded, so a failed source never reads as zero.
+	const incomeReady =
+		( payments || cashSummary ) &&
+		( ! connectorActive || payments ) &&
+		( ! cashEnabled || cashSummary );
+	const totalIncome = incomeReady
+		? ( payments?.income || 0 ) + ( cashSummary?.cash_income || 0 )
+		: null;
+	const cashEmpty = ! cashSummary?.cash_income;
 	const paymentsEmpty =
+		cashEmpty &&
 		!! payments &&
 		payments.paid.length === 0 &&
 		payments.failed.length === 0;
@@ -316,7 +380,9 @@ export default function EventFinance( {
 	} else if ( connectorActive && paymentsEmpty ) {
 		emptyMessage = __( 'No payments for this event yet.', 'fair-events' );
 	} else if ( financeActive && costsEmpty ) {
-		emptyMessage = __( 'No costs for this event yet.', 'fair-events' );
+		emptyMessage = cashEmpty
+			? __( 'No costs for this event yet.', 'fair-events' )
+			: null;
 	}
 
 	const viewAllUrl = `${ entriesUrl }&event_date_id=${ eventDateId }`;
@@ -439,24 +505,37 @@ export default function EventFinance( {
 										color="#d63638"
 									/>
 								) }
-								{ payments && (
+								{ null !== totalIncome && (
 									<SummaryStat
 										label={ __(
 											'Total Income',
 											'fair-events'
 										) }
-										value={ formatAmount(
-											payments.income
-										) }
+										value={ formatAmount( totalIncome ) }
 										color="#007017"
+										title={
+											cashEnabled && connectorActive
+												? __(
+														'Online payments plus cash income recorded for this event.',
+														'fair-events'
+													)
+												: undefined
+										}
 									/>
 								) }
 								{ payments && (
 									<SummaryStat
-										label={ __(
-											'Total Net',
-											'fair-events'
-										) }
+										label={
+											cashEnabled
+												? __(
+														'Online net after fees',
+														'fair-events'
+													)
+												: __(
+														'Total Net',
+														'fair-events'
+													)
+										}
 										value={
 											formatAmount( payments.net ) +
 											( payments.netComplete ? '' : '*' )
@@ -475,15 +554,14 @@ export default function EventFinance( {
 										}
 									/>
 								) }
-								{ accounting && payments && (
+								{ accounting && null !== totalIncome && (
 									<SummaryStat
 										label={ __( 'Balance', 'fair-events' ) }
 										value={ formatAmount(
-											payments.income -
-												accounting.totalCost
+											totalIncome - accounting.totalCost
 										) }
 										color={
-											payments.income -
+											totalIncome -
 												accounting.totalCost >=
 											0
 												? '#007017'
@@ -822,6 +900,18 @@ export default function EventFinance( {
 					</VStack>
 				</CardBody>
 			</Card>
+
+			{ cashEnabled && eventDateId && (
+				<EventCashOperations
+					eventDateId={ eventDateId }
+					defaultDate={ defaultEntryDate }
+					summary={ cashSummary }
+					summaryLoading={ cashSummaryLoading }
+					summaryError={ cashSummaryError }
+					onRetrySummary={ loadCashSummary }
+					onChanged={ handleCashChanged }
+				/>
+			) }
 
 			{ purchasePaymentsAvailable && eventDateId && (
 				<PurchasePayments eventDateId={ eventDateId } />

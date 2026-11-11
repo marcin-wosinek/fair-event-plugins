@@ -540,6 +540,9 @@ class AdminPages {
 			if ( $finance_active ) {
 				$localized_data['paymentEntriesUrl'] = admin_url( 'admin.php?page=fair-finance-entries' );
 			}
+			// Fair Finance's entry routes, and the payer names they carry,
+			// are administrators only; the event cash section mirrors that.
+			$localized_data['financeManageable'] = $finance_active && current_user_can( 'manage_options' );
 
 			wp_localize_script(
 				'fair-events-manage-event',
@@ -593,6 +596,13 @@ class AdminPages {
 			wp_enqueue_style(
 				'fair-events-manage-event',
 				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-event/index.css',
+				array( 'wp-components' ),
+				$asset_file['version']
+			);
+			// The shared admin table (Finance tab's income and expenses list).
+			wp_enqueue_style(
+				'fair-events-manage-event-tables',
+				FAIR_EVENTS_PLUGIN_URL . 'build/admin/manage-event/style-index.css',
 				array( 'wp-components' ),
 				$asset_file['version']
 			);

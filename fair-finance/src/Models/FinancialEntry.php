@@ -21,6 +21,23 @@ defined( 'WPINC' ) || die;
 class FinancialEntry {
 
 	/**
+	 * Payment source: cash handled at the event.
+	 */
+	const SOURCE_EVENT_CASH = 'event_cash';
+
+	/**
+	 * Payment source: an organizer's own cash or card.
+	 */
+	const SOURCE_PERSONAL_FUNDS = 'personal_funds';
+
+	/**
+	 * Every supported payment source.
+	 *
+	 * @var string[]
+	 */
+	const PAYMENT_SOURCES = array( self::SOURCE_EVENT_CASH, self::SOURCE_PERSONAL_FUNDS );
+
+	/**
 	 * Entry ID
 	 *
 	 * @var int
@@ -117,6 +134,24 @@ class FinancialEntry {
 	 * @var int|null
 	 */
 	public $participant_id;
+
+	/**
+	 * Where the money for this operation came from or went to:
+	 * 'event_cash' or 'personal_funds'. NULL for entries recorded without a
+	 * source (all entries created before the field existed), shown as
+	 * "Unspecified" and never assumed to be cash.
+	 *
+	 * @var string|null
+	 */
+	public $payment_source;
+
+	/**
+	 * Name of the person who paid a personal-funds expense. Descriptive text
+	 * only: no participant or user account is linked.
+	 *
+	 * @var string|null
+	 */
+	public $payer_name;
 
 	/**
 	 * Import source filename
@@ -257,6 +292,7 @@ class FinancialEntry {
 			'tag'           => null,
 			'entry_type'    => null,
 			'unmatched'     => false,
+			'classified'    => false,
 			'entry_id'      => null,
 			'per_page'      => 50,
 			'page'          => 1,
@@ -330,6 +366,10 @@ class FinancialEntry {
 		if ( ! empty( $filters['entry_type'] ) && in_array( $filters['entry_type'], array( 'cost', 'income', 'transfer' ), true ) ) {
 			$where_clauses[] = 'entry_type = %s';
 			$where_values[]  = $filters['entry_type'];
+		}
+
+		if ( ! empty( $filters['classified'] ) ) {
+			$where_clauses[] = 'payment_source IS NOT NULL';
 		}
 
 		if ( ! empty( $filters['unmatched'] ) ) {
@@ -679,9 +719,12 @@ class FinancialEntry {
 	 * @param string|null $event_url      Event URL.
 	 * @param int|null    $event_date_id  Event date ID.
 	 * @param string|null $tag            Optional tag label.
+	 * @param array|null  $payment        Optional payment metadata with
+	 *                                    `payment_source` and `payer_name`;
+	 *                                    null leaves both unset.
 	 * @return int|false The entry ID on success, false on failure.
 	 */
-	public static function create( $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null, $tag = null ) {
+	public static function create( $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null, $tag = null, $payment = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -704,6 +747,15 @@ class FinancialEntry {
 		);
 
 		$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d', '%s' );
+
+		if ( is_array( $payment ) ) {
+			$data['payment_source'] = self::normalize_payment_source( $payment['payment_source'] ?? null );
+			$data['payer_name']     = self::SOURCE_PERSONAL_FUNDS === $data['payment_source'] && isset( $payment['payer_name'] )
+				? sanitize_text_field( $payment['payer_name'] )
+				: null;
+			$format[]               = '%s';
+			$format[]               = '%s';
+		}
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -727,9 +779,12 @@ class FinancialEntry {
 	 * @param string|null $event_url      Event URL.
 	 * @param int|null    $event_date_id  Event date ID.
 	 * @param string|null $tag            Optional tag label.
+	 * @param array|null  $payment        Optional payment metadata with
+	 *                                    `payment_source` and `payer_name`;
+	 *                                    null leaves the stored values alone.
 	 * @return bool True on success, false on failure.
 	 */
-	public static function update( $id, $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null, $tag = null ) {
+	public static function update( $id, $amount, $entry_type, $entry_date, $description = null, $budget_id = null, $transaction_id = null, $event_url = null, $event_date_id = null, $tag = null, $payment = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -752,6 +807,15 @@ class FinancialEntry {
 		);
 
 		$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%s', '%d', '%s' );
+
+		if ( is_array( $payment ) ) {
+			$data['payment_source'] = self::normalize_payment_source( $payment['payment_source'] ?? null );
+			$data['payer_name']     = self::SOURCE_PERSONAL_FUNDS === $data['payment_source'] && isset( $payment['payer_name'] )
+				? sanitize_text_field( $payment['payer_name'] )
+				: null;
+			$format[]               = '%s';
+			$format[]               = '%s';
+		}
 
 		$result = $wpdb->update(
 			$table_name,
@@ -1605,6 +1669,121 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Reduce a payment source to a supported value or null.
+	 *
+	 * @param mixed $source Candidate source.
+	 * @return string|null
+	 */
+	public static function normalize_payment_source( $source ) {
+		return in_array( $source, self::PAYMENT_SOURCES, true ) ? $source : null;
+	}
+
+	/**
+	 * Whether the entry carries a payment source (was recorded as an event
+	 * cash or personally paid operation).
+	 *
+	 * @return bool
+	 */
+	public function is_classified() {
+		return null !== $this->payment_source;
+	}
+
+	/**
+	 * Cash and personal-funds summary for one event date.
+	 *
+	 * Computed over every matching entry, independently of list pagination.
+	 * Split parents are excluded, so each operation is counted once, exactly
+	 * like get_totals(). Entries are matched with the same event filter as
+	 * the accounting list, so total_expenses equals get_totals()' total_cost
+	 * for the event date.
+	 *
+	 * - cash_income: income recorded as event cash.
+	 * - event_cash_expenses: costs paid from event cash.
+	 * - net_cash_movement: cash_income minus event_cash_expenses. Not a
+	 *   counted cash balance; no opening float is included.
+	 * - total_expenses: every cost, classified or not, counted once.
+	 * - personally_paid: costs paid from personal funds.
+	 * - personally_paid_by_payer: personal costs grouped by payer name.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return array|null Summary, or null when the query failed.
+	 */
+	public static function get_event_cash_summary( $event_date_id ) {
+		global $wpdb;
+
+		$table_name    = self::get_table_name();
+		$where_clauses = array( 'id NOT IN (SELECT DISTINCT parent_entry_id FROM %i WHERE parent_entry_id IS NOT NULL)' );
+		$where_values  = array( $table_name );
+		self::add_event_clauses( array( 'event_date_id' => (int) $event_date_id ), $where_clauses, $where_values );
+
+		// One prepare() over every placeholder, so values such as a
+		// percent-encoded event URL are never prepared twice.
+		$sql = 'SELECT entry_type, payment_source, payer_name, SUM(amount) AS total FROM %i WHERE '
+			. implode( ' AND ', $where_clauses )
+			. ' GROUP BY entry_type, payment_source, payer_name';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry); clauses are fixed strings.
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $table_name, ...$where_values ) );
+
+		if ( null === $rows || '' !== $wpdb->last_error ) {
+			return null;
+		}
+
+		$cash_income         = 0.0;
+		$event_cash_expenses = 0.0;
+		$total_expenses      = 0.0;
+		$personally_paid     = 0.0;
+		$by_payer            = array();
+
+		foreach ( $rows as $row ) {
+			$total = round( (float) $row->total, 2 );
+			if ( 'income' === $row->entry_type ) {
+				if ( self::SOURCE_EVENT_CASH === $row->payment_source ) {
+					$cash_income += $total;
+				}
+				continue;
+			}
+			if ( 'cost' !== $row->entry_type ) {
+				continue;
+			}
+			$total_expenses += $total;
+			if ( self::SOURCE_EVENT_CASH === $row->payment_source ) {
+				$event_cash_expenses += $total;
+			} elseif ( self::SOURCE_PERSONAL_FUNDS === $row->payment_source ) {
+				$personally_paid += $total;
+				$payer            = (string) $row->payer_name;
+				// Group case-insensitively and ignoring outer whitespace, so
+				// "Anna" and "anna " are one payer; keep the first spelling.
+				$key = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( $payer ) ) : strtolower( trim( $payer ) );
+				if ( ! isset( $by_payer[ $key ] ) ) {
+					$by_payer[ $key ] = array(
+						'payer_name' => trim( $payer ),
+						'amount'     => 0.0,
+					);
+				}
+				$by_payer[ $key ]['amount'] = round( $by_payer[ $key ]['amount'] + $total, 2 );
+			}
+		}
+
+		$by_payer = array_values( $by_payer );
+		usort(
+			$by_payer,
+			static function ( $a, $b ) {
+				return strcasecmp( $a['payer_name'], $b['payer_name'] );
+			}
+		);
+
+		return array(
+			'cash_income'              => round( $cash_income, 2 ),
+			'event_cash_expenses'      => round( $event_cash_expenses, 2 ),
+			'net_cash_movement'        => round( $cash_income - $event_cash_expenses, 2 ),
+			'total_expenses'           => round( $total_expenses, 2 ),
+			'personally_paid'          => round( $personally_paid, 2 ),
+			'personally_paid_by_payer' => $by_payer,
+		);
+	}
+
+	/**
 	 * Hydrate an entry object from a database row
 	 *
 	 * @param object $row Database row.
@@ -1625,6 +1804,8 @@ class FinancialEntry {
 		$entry->event_date_id      = isset( $row->event_date_id ) && $row->event_date_id ? (int) $row->event_date_id : null;
 		$entry->participant_id     = isset( $row->participant_id ) && $row->participant_id ? (int) $row->participant_id : null;
 		$entry->tag                = isset( $row->tag ) ? $row->tag : null;
+		$entry->payment_source     = isset( $row->payment_source ) ? self::normalize_payment_source( $row->payment_source ) : null;
+		$entry->payer_name         = isset( $row->payer_name ) ? $row->payer_name : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
 		$entry->created_at         = $row->created_at;
@@ -1659,6 +1840,8 @@ class FinancialEntry {
 			'event_date_id'      => $this->event_date_id,
 			'participant_id'     => $this->participant_id,
 			'tag'                => $this->tag,
+			'payment_source'     => $this->payment_source,
+			'payer_name'         => $this->payer_name,
 			'import_source'      => $this->import_source,
 			'imported_at'        => $this->imported_at,
 			'created_at'         => $this->created_at,
