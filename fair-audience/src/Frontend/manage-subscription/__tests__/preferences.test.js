@@ -7,64 +7,42 @@ import { derivePreferencesView } from '../preferencesModel.js';
 import { initPreferences } from '../preferences.js';
 
 describe( 'derivePreferencesView', () => {
-	it( 'offers every weekly control to a marketing subscriber choosing feeds', () => {
+	it( 'offers the feed choice while the weekly summary is on', () => {
 		expect(
 			derivePreferencesView( {
 				profile: 'marketing',
 				weeklySummary: true,
-				feedMode: 'selected',
 			} )
 		).toEqual( {
 			selectedProfile: 'marketing',
-			weeklyHidden: false,
-			weeklyDisabled: false,
 			feedsDisabled: false,
-			feedListDisabled: false,
 		} );
-	} );
-
-	it( 'keeps the chosen feeds while every weekly email is chosen', () => {
-		const view = derivePreferencesView( {
-			profile: 'marketing',
-			weeklySummary: true,
-			feedMode: 'all',
-		} );
-
-		expect( view.feedsDisabled ).toBe( false );
-		expect( view.feedListDisabled ).toBe( true );
 	} );
 
 	it( 'keeps the feed choice while the weekly summary is off', () => {
-		const view = derivePreferencesView( {
-			profile: 'marketing',
-			weeklySummary: false,
-			feedMode: 'selected',
-		} );
-
-		expect( view.weeklyDisabled ).toBe( false );
-		expect( view.feedsDisabled ).toBe( true );
-		expect( view.feedListDisabled ).toBe( true );
+		expect(
+			derivePreferencesView( {
+				profile: 'marketing',
+				weeklySummary: false,
+			} ).feedsDisabled
+		).toBe( true );
 	} );
 
-	it( 'hides and keeps every weekly preference for essential emails only', () => {
+	it( 'offers feeds without marketing emails', () => {
 		expect(
 			derivePreferencesView( {
 				profile: 'minimal',
 				weeklySummary: true,
-				feedMode: 'selected',
 			} )
 		).toEqual( {
 			selectedProfile: 'minimal',
-			weeklyHidden: true,
-			weeklyDisabled: true,
-			feedsDisabled: true,
-			feedListDisabled: true,
+			feedsDisabled: false,
 		} );
 	} );
 } );
 
 describe( 'initPreferences', () => {
-	function render( { profile = 'marketing', weekly = true, mode = 'all' } ) {
+	function render( { profile = 'marketing', weekly = true } ) {
 		document.body.innerHTML = `
 			<form data-fair-audience-preferences>
 				<label class="fair-audience-subscription-option">
@@ -82,15 +60,7 @@ describe( 'initPreferences', () => {
 						weekly ? 'checked' : ''
 					}>
 					<fieldset data-fair-audience-weekly-feeds>
-						<input type="radio" name="weekly_feed_mode" value="all" ${
-							'all' === mode ? 'checked' : ''
-						}>
-						<input type="radio" name="weekly_feed_mode" value="selected" ${
-							'selected' === mode ? 'checked' : ''
-						}>
-						<fieldset data-fair-audience-feed-list>
-							<input type="checkbox" name="weekly_feeds[]" value="3">
-						</fieldset>
+						<input type="checkbox" name="weekly_feeds[]" value="3" checked>
 					</fieldset>
 				</div>
 			</form>`;
@@ -113,9 +83,9 @@ describe( 'initPreferences', () => {
 	} );
 
 	it( 'starts from the rendered choices', () => {
-		const { input } = render( { mode: 'all' } );
+		const { input } = render( { weekly: false } );
 
-		expect( input( '[data-fair-audience-feed-list]' ).disabled ).toBe(
+		expect( input( '[data-fair-audience-weekly-feeds]' ).disabled ).toBe(
 			true
 		);
 		expect(
@@ -123,43 +93,44 @@ describe( 'initPreferences', () => {
 		).toContain( 'selected' );
 	} );
 
-	it( 'opens the feed list when choosing feeds', () => {
-		const { input } = render( { mode: 'all' } );
-
-		choose( input( 'input[value="selected"]' ) );
-
-		expect( input( '[data-fair-audience-feed-list]' ).disabled ).toBe(
-			false
-		);
-	} );
-
-	it( 'disables the feed choice when the weekly summary is turned off', () => {
-		const { input } = render( { mode: 'selected' } );
+	it( 'disables the feed choice, keeping it, when the weekly summary is turned off', () => {
+		const { input } = render( {} );
 
 		choose( input( '[data-fair-audience-weekly-summary]' ) );
 
 		expect( input( '[data-fair-audience-weekly-feeds]' ).disabled ).toBe(
 			true
 		);
-		expect( input( '[data-fair-audience-feed-list]' ).disabled ).toBe(
-			true
-		);
+		expect( input( 'input[name="weekly_feeds[]"]' ).checked ).toBe( true );
 	} );
 
-	it( 'hides the weekly preferences for essential emails only', () => {
+	it( 'keeps the weekly preferences usable for essential emails only', () => {
 		const { input } = render( {} );
 
 		choose( input( 'input[value="minimal"]' ) );
 
-		expect( input( '[data-fair-audience-weekly]' ).hidden ).toBe( true );
+		expect( input( '[data-fair-audience-weekly]' ).hidden ).toBe( false );
 		expect( input( '[data-fair-audience-weekly-summary]' ).disabled ).toBe(
-			true
+			false
 		);
+		expect( input( '[data-fair-audience-weekly-feeds]' ).disabled ).toBe(
+			false
+		);
+		expect( input( 'input[name="weekly_feeds[]"]' ).checked ).toBe( true );
 		expect(
 			input( 'input[value="minimal"]' ).closest( 'label' ).classList
 		).toContain( 'selected' );
 		expect(
 			input( 'input[value="marketing"]' ).closest( 'label' ).classList
 		).not.toContain( 'selected' );
+	} );
+
+	it( 'keeps the marketing choice when the weekly summary changes', () => {
+		const { input, model } = render( { profile: 'minimal' } );
+
+		choose( input( '[data-fair-audience-weekly-summary]' ) );
+
+		expect( model.getState().profile ).toBe( 'minimal' );
+		expect( input( 'input[value="minimal"]' ).checked ).toBe( true );
 	} );
 } );

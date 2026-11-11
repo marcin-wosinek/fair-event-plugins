@@ -18,8 +18,12 @@ defined( 'WPINC' ) || die;
  * carries, for both the REST endpoint and the emailed link's page.
  *
  * The weekly preferences and announcement categories submitted with the
- * signup apply here. The token is used up only once everything is stored,
- * so a failure leaves the link working for another try.
+ * signup apply here. Confirming proves the participant owns the address;
+ * it grants general marketing consent only when the signup asked for it.
+ * A token from an older signup, without a `marketing` choice, keeps its
+ * original meaning and grants it. The token is used up only once
+ * everything is stored, so a failure leaves the link working for another
+ * try.
  */
 class EmailConfirmation {
 
@@ -48,6 +52,21 @@ class EmailConfirmation {
 	 * @var callable
 	 */
 	private $find_participant;
+
+	/**
+	 * Whether confirming a token grants general marketing consent.
+	 *
+	 * Only an explicit `false` declines it: tokens from older signups, and
+	 * those of other confirmation flows, carry no choice and grant it as
+	 * they always did. Declining keeps the stored profile; it never revokes
+	 * consent given earlier.
+	 *
+	 * @param array|null $preferences Token's pending preferences.
+	 * @return bool
+	 */
+	public static function grants_marketing( $preferences ): bool {
+		return ! is_array( $preferences ) || ! array_key_exists( 'marketing', $preferences ) || false !== $preferences['marketing'];
+	}
 
 	/**
 	 * Weekly email feeds, created when first needed.
@@ -124,19 +143,24 @@ class EmailConfirmation {
 		$transient_key      = self::PENDING_CATEGORIES_PREFIX . $participant->id;
 		$pending_categories = get_transient( $transient_key );
 		$pending_categories = is_array( $pending_categories ) ? $pending_categories : array();
+		$preferences        = is_array( $confirmation->pending_preferences ) ? $confirmation->pending_preferences : null;
+		$grants_marketing   = self::grants_marketing( $preferences );
 		$was_subscribed     = 'confirmed' === $participant->status && 'marketing' === $participant->email_profile
-			&& ! is_array( $confirmation->pending_preferences ) && empty( $pending_categories );
+			&& null === $preferences && empty( $pending_categories );
 
 		// Feeds that cannot be chosen any more are left out; none is added.
-		if ( is_array( $confirmation->pending_preferences ) ) {
-			$applied = $this->weekly_feeds()->apply( $participant, $confirmation->pending_preferences, false );
+		if ( null !== $preferences ) {
+			unset( $preferences['marketing'] );
+			$applied = $this->weekly_feeds()->apply( $participant, $preferences, false );
 			if ( is_wp_error( $applied ) ) {
 				return self::UPDATE_FAILED;
 			}
 		}
 
-		$participant->status        = 'confirmed';
-		$participant->email_profile = 'marketing';
+		$participant->status = 'confirmed';
+		if ( $grants_marketing ) {
+			$participant->email_profile = 'marketing';
+		}
 
 		if ( ! $participant->save() ) {
 			return self::UPDATE_FAILED;

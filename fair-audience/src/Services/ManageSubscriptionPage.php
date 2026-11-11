@@ -34,6 +34,18 @@ class ManageSubscriptionPage {
 	const PROOF_LIFETIME = 86400;
 
 	/**
+	 * Hidden field the form's weekly section sends, so a save knows the
+	 * weekly summary switch was shown.
+	 */
+	const WEEKLY_FIELD = 'weekly_preferences';
+
+	/**
+	 * Hidden field inside the feed list, sent only while the list is usable,
+	 * so a save knows the feed checkboxes were shown.
+	 */
+	const FEEDS_FIELD = 'weekly_feeds_shown';
+
+	/**
 	 * Looks up a participant by ID.
 	 *
 	 * @var callable
@@ -105,8 +117,8 @@ class ManageSubscriptionPage {
 	 *     @type string      $message_type       'success' or 'error'.
 	 *     @type string      $confirmation_proof Proof the confirmed deletion must carry.
 	 *     @type array       $preferences        On the manage view: the email preferences to show
-	 *                                           (email_profile, weekly_summary, weekly_feed_mode,
-	 *                                           weekly_feeds), as submitted after a rejected save.
+	 *                                           (email_profile, weekly_summary, weekly_feeds), as
+	 *                                           submitted after a rejected save.
 	 *     @type array       $weekly             On the manage view: whether the weekly email is
 	 *                                           offered (`enabled`), whether feeds can be chosen
 	 *                                           (`feeds_available`), the feeds to offer (`feeds`),
@@ -180,10 +192,9 @@ class ManageSubscriptionPage {
 
 		if ( ! isset( $page['preferences'] ) ) {
 			$page['preferences'] = array(
-				'email_profile'    => (string) ( $participant->email_profile ?? 'minimal' ),
-				'weekly_summary'   => empty( $participant->weekly_summary_opt_out ),
-				'weekly_feed_mode' => WeeklyFeeds::MODE_SELECTED === ( $participant->weekly_feed_mode ?? '' ) ? WeeklyFeeds::MODE_SELECTED : WeeklyFeeds::MODE_ALL,
-				'weekly_feeds'     => array(),
+				'email_profile'  => (string) ( $participant->email_profile ?? 'minimal' ),
+				'weekly_summary' => empty( $participant->weekly_summary_opt_out ),
+				'weekly_feeds'   => array(),
 			);
 		}
 
@@ -243,9 +254,11 @@ class ManageSubscriptionPage {
 	/**
 	 * Save the email preferences form.
 	 *
-	 * Weekly preferences are read only while the weekly email is offered
-	 * and the participant chose marketing emails; the feed mode and feeds
-	 * only when the form sent them, so saving other preferences keeps them.
+	 * The marketing choice and the weekly preferences are independent:
+	 * changing one never changes the other. Weekly preferences are read only
+	 * while the weekly email is offered and the form sent its weekly
+	 * section; the feeds only when the form sent the feed list, so a paused
+	 * summary or a feed list that could not be shown keeps the stored feeds.
 	 * A feed that cannot be chosen rejects the whole save.
 	 *
 	 * @param array $page Page state so far.
@@ -261,27 +274,19 @@ class ManageSubscriptionPage {
 		}
 
 		$weekly = array();
-		$mode   = null;
-		if ( WeeklyDigestMailer::is_enabled() && 'marketing' === $new_profile ) {
+		if ( WeeklyDigestMailer::is_enabled() && isset( $post[ self::WEEKLY_FIELD ] ) ) {
 			$weekly['weekly_summary'] = isset( $post['weekly_summary'] );
 
-			$mode = isset( $post['weekly_feed_mode'] ) && is_string( $post['weekly_feed_mode'] ) ? $post['weekly_feed_mode'] : null;
-			if ( WeeklyFeeds::MODE_SELECTED === $mode ) {
+			if ( isset( $post[ self::FEEDS_FIELD ] ) ) {
 				$weekly['feed_ids'] = isset( $post['weekly_feeds'] ) ? (array) $post['weekly_feeds'] : array();
 				$checked            = $this->weekly_feeds()->resolve_selection( $weekly['feed_ids'], $this->weekly_feeds()->selected( (int) $participant->id ) );
 				if ( is_wp_error( $checked ) ) {
-					return $this->rejected( $page, $checked->get_error_message(), $new_profile, $weekly, $mode );
+					return $this->rejected( $page, $checked->get_error_message(), $new_profile, $weekly );
 				}
-			} elseif ( WeeklyFeeds::MODE_ALL !== $mode ) {
-				$mode = null;
 			}
 		}
 
 		$participant->email_profile = $new_profile;
-		if ( WeeklyFeeds::MODE_ALL === $mode ) {
-			// The chosen feeds stay stored, so choosing feeds again starts from them.
-			$participant->weekly_feed_mode = WeeklyFeeds::MODE_ALL;
-		}
 
 		$saved = $weekly
 			? true === $this->weekly_feeds()->apply( $participant, $weekly )
@@ -309,22 +314,20 @@ class ManageSubscriptionPage {
 	/**
 	 * A save that changed nothing, with the submitted choices kept on the form.
 	 *
-	 * @param array       $page    Page state so far.
-	 * @param string      $message Why the save was rejected.
-	 * @param string      $profile Submitted email profile.
-	 * @param array       $weekly  Submitted weekly preferences.
-	 * @param string|null $mode    Submitted feed mode.
+	 * @param array  $page    Page state so far.
+	 * @param string $message Why the save was rejected.
+	 * @param string $profile Submitted email profile.
+	 * @param array  $weekly  Submitted weekly preferences.
 	 * @return array Page state.
 	 */
-	private function rejected( array $page, string $message, string $profile, array $weekly, ?string $mode ): array {
+	private function rejected( array $page, string $message, string $profile, array $weekly ): array {
 		$page['status']                = 400;
 		$page['message']               = $message;
 		$page['preferences_submitted'] = true;
 		$page['preferences']           = array(
-			'email_profile'    => $profile,
-			'weekly_summary'   => ! empty( $weekly['weekly_summary'] ),
-			'weekly_feed_mode' => WeeklyFeeds::MODE_SELECTED === $mode ? WeeklyFeeds::MODE_SELECTED : WeeklyFeeds::MODE_ALL,
-			'weekly_feeds'     => array_values( array_filter( array_map( 'absint', (array) ( $weekly['feed_ids'] ?? array() ) ) ) ),
+			'email_profile'  => $profile,
+			'weekly_summary' => ! empty( $weekly['weekly_summary'] ),
+			'weekly_feeds'   => array_values( array_filter( array_map( 'absint', (array) ( $weekly['feed_ids'] ?? array() ) ) ) ),
 		);
 
 		return $page;

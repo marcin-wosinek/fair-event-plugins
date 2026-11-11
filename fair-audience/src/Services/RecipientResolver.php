@@ -248,14 +248,16 @@ class RecipientResolver {
 			return true;
 		}
 
-		$has_marketing_consent = 'marketing' === $participant->email_profile
-			&& 'confirmed' === $participant->status;
-
+		// Weekly feed emails need a confirmed address and no weekly opt-out,
+		// independently of general marketing consent; which feeds a
+		// participant receives is their explicit subscriptions
+		// ({@see WeeklyFeeds::in_scope()}).
 		if ( EmailType::WEEKLY_SUMMARY === $email_type ) {
-			return $has_marketing_consent && ! $participant->weekly_summary_opt_out;
+			return 'confirmed' === $participant->status && ! $participant->weekly_summary_opt_out;
 		}
 
-		return $has_marketing_consent;
+		return 'marketing' === $participant->email_profile
+			&& 'confirmed' === $participant->status;
 	}
 
 	/**

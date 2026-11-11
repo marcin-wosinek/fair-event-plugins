@@ -10,17 +10,15 @@ import {
 /**
  * The edits a participant's saved weekly preferences start from.
  *
- * A 'selected' mode without feeds is the explicit "No event feeds" choice.
+ * Feed subscriptions are always explicit: no saved feeds is the
+ * "No event feeds" choice.
  *
  * @param {Object} saved Participant detail response.
  * @return {{summary: boolean, choice: string, feedIds: number[]}} Edits.
  */
 export function weeklyEditsFrom( saved ) {
 	const feedIds = saved.weekly_feed_ids || [];
-	let choice = 'all';
-	if ( saved.weekly_feed_mode === 'selected' ) {
-		choice = feedIds.length > 0 ? 'selected' : 'none';
-	}
+	const choice = feedIds.length > 0 ? 'selected' : 'none';
 	return { summary: ! saved.weekly_summary_opt_out, choice, feedIds };
 }
 
@@ -86,13 +84,14 @@ export function weeklyChanges( saved, edits, offered ) {
 }
 
 /**
- * Weekly summary and event feed fields of the participant popup.
+ * Weekly summary and event feed fields of the participant popup. They are
+ * independent of the email profile: feeds go to confirmed participants
+ * whatever their marketing consent.
  *
  * @param {Object}                  props
  * @param {Object}                  props.saved        Saved preferences: `{ status, data }`.
  * @param {Object}                  props.catalog      Feed list: `{ status, available, feeds }`.
  * @param {Object}                  props.edits        Current edits, or null before loading.
- * @param {string}                  props.emailProfile Email profile chosen in the popup.
  * @param {boolean}                 props.disabled     Whether a save is running.
  * @param {(edits: Object) => void} props.onChange     Receives the new edits.
  * @param {() => void}              props.onRetrySaved Reloads the saved preferences.
@@ -102,7 +101,6 @@ export default function WeeklyPreferencesFields( {
 	saved,
 	catalog,
 	edits,
-	emailProfile,
 	disabled,
 	onChange,
 	onRetrySaved,
@@ -146,8 +144,7 @@ export default function WeeklyPreferencesFields( {
 		);
 	}
 
-	const isEligible =
-		emailProfile === 'marketing' && saved.data.status === 'confirmed';
+	const isEligible = saved.data.status === 'confirmed';
 
 	return (
 		<div style={ SECTION_STYLE }>
@@ -164,7 +161,7 @@ export default function WeeklyPreferencesFields( {
 					isEligible
 						? null
 						: __(
-								'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.',
+								'Saved preference only: weekly summaries go to participants who confirmed their email address.',
 								'fair-audience'
 							)
 				}
@@ -241,10 +238,6 @@ function FeedFields( { saved, catalog, edits, disabled, onChange, onRetry } ) {
 				disabled={ disabled }
 				options={ [
 					{
-						label: __( 'All event feeds', 'fair-audience' ),
-						value: 'all',
-					},
-					{
 						label: __( 'Selected event feeds', 'fair-audience' ),
 						value: 'selected',
 					},
@@ -254,14 +247,10 @@ function FeedFields( { saved, catalog, edits, disabled, onChange, onRetry } ) {
 					},
 				] }
 				onChange={ ( choice ) => onChange( { ...edits, choice } ) }
-				help={
-					edits.choice === 'all'
-						? __(
-								'Includes event feeds added later.',
-								'fair-audience'
-							)
-						: null
-				}
+				help={ __(
+					'Only the selected event feeds are sent. New event feeds are not added automatically.',
+					'fair-audience'
+				) }
 			/>
 			{ edits.choice === 'selected' && (
 				<>

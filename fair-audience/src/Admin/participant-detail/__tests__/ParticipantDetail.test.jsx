@@ -10,6 +10,7 @@
  */
 import '@testing-library/jest-dom';
 import {
+	cleanup,
 	render,
 	screen,
 	fireEvent,
@@ -233,16 +234,16 @@ describe( 'ParticipantDetail — weekly event feeds (#2125)', () => {
 		deleted: 0,
 	};
 
-	it( 'shows all feeds as a continuing preference without listing names', async () => {
+	it( 'never shows an “All event feeds” preference, even for an unconverted legacy participant', async () => {
 		const cell = await renderWith( {
 			weekly_feed_mode: 'all',
-			weekly_feed_ids: [ 1 ],
+			weekly_feed_ids: [],
 			weekly_feed_summary: AVAILABLE,
 		} );
 
-		expect( cell ).toHaveTextContent( 'All event feeds' );
-		expect( cell ).toHaveTextContent( 'Includes event feeds added later.' );
-		expect( within( cell ).queryByRole( 'list' ) ).not.toBeInTheDocument();
+		expect( cell ).not.toHaveTextContent( 'All event feeds' );
+		expect( cell ).not.toHaveTextContent( 'added later' );
+		expect( cell ).toHaveTextContent( 'No event feeds' );
 	} );
 
 	it( 'lists selected feeds by name, marking unavailable and deleted ones', async () => {
@@ -312,25 +313,29 @@ describe( 'ParticipantDetail — weekly event feeds (#2125)', () => {
 		);
 	} );
 
-	it( 'does not imply delivery without marketing consent', async () => {
+	it( 'does not imply delivery before the address is confirmed', async () => {
 		const cell = await renderWith( {
-			email_profile: 'minimal',
-			weekly_feed_mode: 'all',
+			status: 'pending',
+			weekly_feed_mode: 'selected',
 			weekly_feed_summary: AVAILABLE,
 		} );
 
 		expect( cell ).toHaveTextContent(
-			'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
+			'Saved preference only: weekly summaries go to participants who confirmed their email address.'
 		);
 	} );
 
-	it( 'mentions no delivery caveat for a confirmed marketing subscriber', async () => {
-		const cell = await renderWith( {
-			weekly_feed_mode: 'all',
-			weekly_feed_summary: AVAILABLE,
-		} );
+	it( 'mentions no delivery caveat for a confirmed subscriber, with or without marketing', async () => {
+		for ( const emailProfile of [ 'marketing', 'minimal' ] ) {
+			const cell = await renderWith( {
+				email_profile: emailProfile,
+				weekly_feed_mode: 'selected',
+				weekly_feed_summary: AVAILABLE,
+			} );
 
-		expect( cell ).not.toHaveTextContent( 'Saved preference only' );
+			expect( cell ).not.toHaveTextContent( 'Saved preference only' );
+			cleanup();
+		}
 	} );
 } );
 
@@ -339,7 +344,7 @@ describe( 'ParticipantDetail — editing weekly preferences (#2135)', () => {
 		let stored = {
 			...PARTICIPANT,
 			weekly_summary_opt_out: false,
-			weekly_feed_mode: 'all',
+			weekly_feed_mode: 'selected',
 			weekly_feed_ids: [ 1 ],
 			weekly_feed_summary: {
 				available: true,

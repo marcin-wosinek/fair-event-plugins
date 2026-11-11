@@ -186,22 +186,17 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 
 		await page.goto( subscriptionUrl );
 
-		const allEmails = page.getByRole( 'radio', {
-			name: /All weekly emails/,
-		} );
-		const chosenFeeds = page.getByRole( 'radio', {
-			name: 'Only the event feeds I choose',
-		} );
 		const feed = page.getByRole( 'checkbox', {
 			name: 'Weekly summary opt-out source',
 		} );
 
-		// An existing subscriber keeps every weekly email until choosing.
-		await expect( allEmails ).toBeChecked();
-		await expect( feed ).toBeDisabled();
-
-		await chosenFeeds.check();
+		// No "all weekly emails" choice: feeds are always chosen explicitly.
+		await expect(
+			page.getByRole( 'radio', { name: /All weekly emails/ } )
+		).toHaveCount( 0 );
 		await expect( feed ).toBeEnabled();
+		await expect( feed ).not.toBeChecked();
+
 		await feed.check();
 		await page.click( '.fair-audience-subscription-submit' );
 		await expect(
@@ -214,12 +209,11 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 
 		// The page shows the stored choice again.
 		await page.goto( subscriptionUrl );
-		await expect( chosenFeeds ).toBeChecked();
 		await expect( feed ).toBeChecked();
 
 		// Turning the weekly summary off keeps the feed choice.
 		await page.locator( '#fair-audience-weekly-summary' ).uncheck();
-		await expect( chosenFeeds ).toBeDisabled();
+		await expect( feed ).toBeDisabled();
 		await page.click( '.fair-audience-subscription-submit' );
 		await expect(
 			page.locator( '.fair-audience-subscription-message.success' )
@@ -227,12 +221,30 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 
 		stored = await participantState();
 		expect( stored.weekly_summary_opt_out ).toBe( true );
-		expect( stored.weekly_feed_mode ).toBe( 'selected' );
 		expect( stored.weekly_feed_ids ).toEqual( [ Number( sourceId ) ] );
 
-		// Choosing no feeds is kept as no feeds.
+		// Turning marketing off keeps the feeds.
 		await page.goto( subscriptionUrl );
 		await page.locator( '#fair-audience-weekly-summary' ).check();
+		await page
+			.locator( 'input[name="email_profile"][value="minimal"]' )
+			.check();
+		await expect( feed ).toBeEnabled();
+		await page.click( '.fair-audience-subscription-submit' );
+		await expect(
+			page.locator( '.fair-audience-subscription-message.success' )
+		).toBeVisible();
+
+		stored = await participantState();
+		expect( stored.email_profile ).toBe( 'minimal' );
+		expect( stored.weekly_summary_opt_out ).toBe( false );
+		expect( stored.weekly_feed_ids ).toEqual( [ Number( sourceId ) ] );
+
+		// Choosing no feeds is kept as no feeds, and keeps marketing as it is.
+		await page.goto( subscriptionUrl );
+		await page
+			.locator( 'input[name="email_profile"][value="marketing"]' )
+			.check();
 		await feed.uncheck();
 		await page.click( '.fair-audience-subscription-submit' );
 		await expect(
@@ -240,12 +252,12 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 		).toBeVisible();
 
 		stored = await participantState();
-		expect( stored.weekly_summary_opt_out ).toBe( false );
+		expect( stored.email_profile ).toBe( 'marketing' );
 		expect( stored.weekly_feed_mode ).toBe( 'selected' );
 		expect( stored.weekly_feed_ids ).toEqual( [] );
 	} );
 
-	test( 'preference is hidden for a minimal-profile subscriber', async ( {
+	test( 'preferences stay usable for a minimal-profile subscriber', async ( {
 		page,
 	} ) => {
 		const minimalRes = await api.post(
@@ -271,7 +283,15 @@ test.describe( 'Manage-subscription page — weekly summary opt-out', () => {
 		await page.goto( minimalUrl );
 		await expect(
 			page.locator( '#fair-audience-weekly-summary-wrap' )
-		).toBeHidden();
+		).toBeVisible();
+		await expect(
+			page.locator( '#fair-audience-weekly-summary' )
+		).toBeEnabled();
+		await expect(
+			page.getByRole( 'checkbox', {
+				name: 'Weekly summary opt-out source',
+			} )
+		).toBeEnabled();
 
 		await api.delete(
 			`/wp-json/fair-audience/v1/participants/${ minimalId }`,

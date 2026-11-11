@@ -57,6 +57,7 @@ test.describe( 'Participant detail — weekly event-feed summary', () => {
 	let api;
 	let feeds;
 	let configurations;
+	let laterFeeds;
 
 	const participant = async ( label, mode, feedIds ) => {
 		const email = `feed-summary-${ label }+${ suffix }@example.test`;
@@ -92,6 +93,14 @@ test.describe( 'Participant detail — weekly event-feed summary', () => {
 				Object.values( feeds ).join( ',' ),
 				Object.values( configurations ).join( ',' ),
 				emails.join( ',' )
+			);
+		}
+		if ( laterFeeds ) {
+			await fixture(
+				'cleanup',
+				Object.values( laterFeeds.feeds ).join( ',' ),
+				Object.values( laterFeeds.configurations ).join( ',' ),
+				''
 			);
 		}
 		await api.dispose();
@@ -136,28 +145,79 @@ test.describe( 'Participant detail — weekly event-feed summary', () => {
 		);
 	} );
 
-	test( 'lists no feeds for the all-feeds mode or an empty selection', async () => {
-		const empty = {
+	test( 'lists no feeds for an empty selection', async () => {
+		const { id } = await participant( 'none', 'selected', [] );
+		const body = await (
+			await api.get( `${ PARTICIPANTS }/${ id }`, {
+				headers: adminHeaders,
+			} )
+		).json();
+
+		expect( body.weekly_feed_summary ).toEqual( {
 			available: true,
 			selected: [],
 			unavailable: [],
 			deleted: 0,
-		};
+		} );
+	} );
 
-		for ( const [ label, mode, feedIds ] of [
-			[ 'all', 'all', [ feeds.a ] ],
-			[ 'none', 'selected', [] ],
-		] ) {
-			const { id } = await participant( label, mode, feedIds );
-			const body = await (
-				await api.get( `${ PARTICIPANTS }/${ id }`, {
-					headers: adminHeaders,
-				} )
-			).json();
+	test( 'an unconverted legacy participant shows only its explicit feeds', async () => {
+		const { id } = await participant( 'legacy', 'all', [ feeds.b ] );
+		const body = await (
+			await api.get( `${ PARTICIPANTS }/${ id }`, {
+				headers: adminHeaders,
+			} )
+		).json();
 
-			expect( body.weekly_feed_mode ).toBe( mode );
-			expect( body.weekly_feed_summary ).toEqual( empty );
-		}
+		expect( body.weekly_feed_summary.selected ).toEqual( [
+			{ id: feeds.b, name: `Feed B ${ suffix }` },
+		] );
+	} );
+
+	test( 'the same-site upgrade converts legacy "all" once to the feeds eligible then', async () => {
+		const receiving = await participant( 'convert', 'all', [ feeds.c ] );
+		const minimal = await participant( 'convert-minimal', 'all', [] );
+		await api.put( `${ PARTICIPANTS }/${ minimal.id }`, {
+			headers: adminHeaders,
+			data: {
+				name: 'Feed',
+				surname: 'Summary',
+				email: minimal.email,
+				email_profile: 'minimal',
+			},
+		} );
+
+		expect( ( await fixture( 'convert' ) ).done ).toBe( true );
+
+		let { participant: converted } = await fixture(
+			'state',
+			receiving.email
+		);
+		expect( converted.weekly_feed_mode ).toBe( 'selected' );
+		expect( converted.feed_ids ).toEqual(
+			expect.arrayContaining( [ feeds.a, feeds.b, feeds.c ] )
+		);
+		expect( converted.feed_ids ).not.toContain( feeds.d );
+		expect( converted.email_profile ).toBe( 'marketing' );
+
+		const { participant: notReceiving } = await fixture(
+			'state',
+			minimal.email
+		);
+		expect( notReceiving.weekly_feed_mode ).toBe( 'selected' );
+		expect( notReceiving.feed_ids ).toEqual( [] );
+		expect( notReceiving.email_profile ).toBe( 'minimal' );
+
+		// A feed created afterwards is not added by a repeated conversion.
+		const later = await fixture( 'seed', `${ suffix }-later` );
+		laterFeeds = later;
+		expect( ( await fixture( 'convert' ) ).done ).toBe( true );
+		( { participant: converted } = await fixture(
+			'state',
+			receiving.email
+		) );
+		expect( converted.feed_ids ).not.toContain( later.feeds.a );
+		expect( converted.feed_ids ).not.toContain( later.feeds.b );
 	} );
 
 	test( 'requires a logged-in user', async () => {

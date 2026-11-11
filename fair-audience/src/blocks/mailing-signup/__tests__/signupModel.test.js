@@ -6,6 +6,7 @@
 import {
 	createWeeklyState,
 	setWeeklyChecked,
+	setMarketingChecked,
 	setFeedSelected,
 	weeklyError,
 	weeklyRequestData,
@@ -116,6 +117,74 @@ describe( 'weeklyRequestData', () => {
 			weekly_config: 'signed',
 			weekly_summary: true,
 		} );
+	} );
+} );
+
+describe( 'marketing choice (#2239)', () => {
+	const withMarketing = ( marketing, { checked = true, feedMode } = {} ) =>
+		createWeeklyState( {
+			config: 'signed',
+			feedMode: feedMode || 'multiselect',
+			offered: true,
+			checked,
+			marketing,
+		} );
+
+	it( 'is not sent by forms that do not ask for it', () => {
+		expect( multiselect( true ).marketing ).toBe( null );
+		expect( weeklyRequestData( multiselect( true ) ) ).not.toHaveProperty(
+			'marketing'
+		);
+		expect(
+			setMarketingChecked( multiselect( true ), false ).marketing
+		).toBe( null );
+	} );
+
+	it( 'is not asked while the weekly feeds cannot be offered', () => {
+		expect(
+			createWeeklyState( {
+				config: 'signed',
+				offered: false,
+				marketing: true,
+			} ).marketing
+		).toBe( null );
+	} );
+
+	it( 'sends the marketing choice independently of the feeds', () => {
+		let weekly = setFeedSelected( withMarketing( true ), 2, true );
+		expect( weeklyRequestData( weekly ) ).toMatchObject( {
+			marketing: true,
+			weekly_summary: true,
+			weekly_feed_ids: [ 2 ],
+		} );
+
+		weekly = setMarketingChecked( weekly, false );
+		expect( weeklyRequestData( weekly ) ).toMatchObject( {
+			marketing: false,
+			weekly_summary: true,
+			weekly_feed_ids: [ 2 ],
+		} );
+		expect( weeklyError( weekly ) ).toBe( null );
+	} );
+
+	it( 'needs marketing or at least one feed', () => {
+		const message =
+			'Please choose marketing emails or at least one event feed.';
+
+		expect(
+			weeklyError( withMarketing( false, { checked: false } ) )
+		).toBe( message );
+		expect(
+			weeklyError(
+				withMarketing( false, { checked: false, feedMode: 'hidden' } )
+			)
+		).toBe( message );
+		expect(
+			weeklyError( withMarketing( false, { feedMode: 'hidden' } ) )
+		).toBe( null );
+		expect( weeklyError( withMarketing( true, { checked: false } ) ) ).toBe(
+			null
+		);
 	} );
 } );
 

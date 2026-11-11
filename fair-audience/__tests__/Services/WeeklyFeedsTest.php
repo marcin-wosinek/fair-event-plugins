@@ -18,8 +18,8 @@ require_once __DIR__ . '/fakes/FakeParticipantFeedRepository.php';
 
 /**
  * A chosen feed never widens to other feeds: invalid choices are refused,
- * unavailable ones are kept, and the 'all' mode keeps existing subscribers'
- * scope.
+ * unavailable ones are kept, and only explicit subscriptions are in scope,
+ * whatever the participant's (legacy) feed mode.
  */
 class WeeklyFeedsTest extends TestCase {
 
@@ -54,7 +54,7 @@ class WeeklyFeedsTest extends TestCase {
 	 * @param bool   $saves   Whether saving succeeds.
 	 * @return Participant
 	 */
-	private static function participant( $mode = WeeklyFeeds::MODE_ALL, $opt_out = false, $saves = true ) {
+	private static function participant( $mode = WeeklyFeeds::MODE_SELECTED, $opt_out = false, $saves = true ) {
 		$participant = new class( $saves ) extends Participant {
 			/**
 			 * Number of saves.
@@ -146,12 +146,12 @@ class WeeklyFeedsTest extends TestCase {
 				),
 				'deleted'     => 1,
 			),
-			$this->feeds()->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 3, 42 ) )
+			$this->feeds()->summary( array( 1, 3, 42 ) )
 		);
 	}
 
-	/** The 'all' mode and an empty choice list no feeds. */
-	public function test_summary_lists_no_feeds_for_all_or_none() {
+	/** An empty choice lists no feeds. */
+	public function test_summary_lists_no_feeds_for_none() {
 		$empty = array(
 			'available'   => true,
 			'selected'    => array(),
@@ -159,9 +159,7 @@ class WeeklyFeedsTest extends TestCase {
 			'deleted'     => 0,
 		);
 
-		$this->assertSame( $empty, $this->feeds()->summary( WeeklyFeeds::MODE_ALL, array( 1, 2 ) ) );
-		$this->assertSame( $empty, $this->feeds()->summary( WeeklyFeeds::MODE_SELECTED, array() ) );
-		$this->assertSame( $empty, $this->feeds()->summary( null, array( 1 ) ) );
+		$this->assertSame( $empty, $this->feeds()->summary( array() ) );
 	}
 
 	/** Without a working catalog, chosen feeds are never reported as deleted. */
@@ -173,7 +171,7 @@ class WeeklyFeedsTest extends TestCase {
 			'deleted'     => 0,
 		);
 
-		$this->assertSame( $unavailable, ( new WeeklyFeeds( false, $this->repository ) )->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 42 ) ) );
+		$this->assertSame( $unavailable, ( new WeeklyFeeds( false, $this->repository ) )->summary( array( 1, 42 ) ) );
 
 		$failing = new class() extends FakeWeeklyFeedCatalog {
 			/**
@@ -185,7 +183,7 @@ class WeeklyFeedsTest extends TestCase {
 				throw new \RuntimeException( 'Database unavailable' );
 			}
 		};
-		$this->assertSame( $unavailable, ( new WeeklyFeeds( $failing, $this->repository ) )->summary( WeeklyFeeds::MODE_SELECTED, array( 1, 42 ) ) );
+		$this->assertSame( $unavailable, ( new WeeklyFeeds( $failing, $this->repository ) )->summary( array( 1, 42 ) ) );
 	}
 
 	/** Stored feeds that cannot be chosen now are kept. */
@@ -209,20 +207,28 @@ class WeeklyFeedsTest extends TestCase {
 		);
 	}
 
-	/** The 'all' mode receives every feed; chosen feeds only their own. */
-	public function test_scope_follows_the_feed_mode() {
-		$this->assertTrue( WeeklyFeeds::in_scope( self::participant(), 1, array() ) );
-		$this->assertTrue( WeeklyFeeds::in_scope( self::participant(), 0, array() ) );
-
-		$chooser = self::participant( WeeklyFeeds::MODE_SELECTED );
+	/** Only an explicit subscription to the feed is in scope. */
+	public function test_scope_needs_an_explicit_subscription() {
+		$chooser = self::participant();
 		$this->assertTrue( WeeklyFeeds::in_scope( $chooser, 1, array( 7 ) ) );
-		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, 2, array( 8 ) ) );
-		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, 0, array( 7 ) ), 'An unknown feed never reaches participants who chose feeds.' );
+		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, 2, array( 8 ) ), 'A newly created feed has no subscribers yet.' );
+		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, 2, array() ), 'Zero selections never fall back to other feeds.' );
+		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, 0, array( 7 ) ), 'An unknown feed reaches nobody.' );
+		$this->assertFalse( WeeklyFeeds::in_scope( $chooser, -1, array( 7 ) ), 'An invalid feed reaches nobody.' );
+	}
+
+	/** A legacy participant not converted yet receives only explicit feeds. */
+	public function test_unconverted_legacy_mode_never_widens_delivery() {
+		$legacy = self::participant( WeeklyFeeds::LEGACY_MODE_ALL );
+
+		$this->assertFalse( WeeklyFeeds::in_scope( $legacy, 1, array() ) );
+		$this->assertFalse( WeeklyFeeds::in_scope( $legacy, 0, array() ) );
+		$this->assertTrue( WeeklyFeeds::in_scope( $legacy, 1, array( 7 ) ) );
 	}
 
 	/** Choosing feeds switches to the selected mode without clearing the opt-out. */
 	public function test_choosing_feeds_never_clears_the_weekly_opt_out() {
-		$participant = self::participant( WeeklyFeeds::MODE_ALL, true );
+		$participant = self::participant( WeeklyFeeds::LEGACY_MODE_ALL, true );
 
 		$this->assertTrue( $this->feeds()->apply( $participant, array( 'feed_ids' => array( 2 ) ) ) );
 
@@ -238,18 +244,36 @@ class WeeklyFeedsTest extends TestCase {
 		$this->assertTrue( $this->feeds()->apply( $participant, array() ) );
 
 		$this->assertSame( 0, $participant->saves );
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
 		$this->assertArrayNotHasKey( 7, $this->repository->feeds );
 	}
 
-	/** The weekly switch alone keeps the existing scope. */
-	public function test_weekly_switch_alone_keeps_the_scope() {
-		$participant = self::participant( WeeklyFeeds::MODE_ALL, true );
+	/** The weekly switch alone keeps the feeds and the marketing consent. */
+	public function test_weekly_switch_alone_keeps_the_feeds() {
+		$participant                = self::participant( WeeklyFeeds::MODE_SELECTED, true );
+		$participant->email_profile = 'minimal';
+		$this->repository->feeds[7] = array( 2 );
 
 		$this->assertTrue( $this->feeds()->apply( $participant, array( 'weekly_summary' => true ) ) );
-
 		$this->assertSame( 0, $participant->weekly_summary_opt_out );
-		$this->assertSame( WeeklyFeeds::MODE_ALL, $participant->weekly_feed_mode );
+		$this->assertSame( array( 2 ), $this->repository->feeds[7] );
+
+		$this->assertTrue( $this->feeds()->apply( $participant, array( 'weekly_summary' => false ) ) );
+		$this->assertSame( 1, $participant->weekly_summary_opt_out );
+		$this->assertSame( array( 2 ), $this->repository->feeds[7], 'Pausing keeps the selected feeds.' );
+		$this->assertSame( 'minimal', $participant->email_profile );
+	}
+
+	/** Clearing every feed keeps the weekly and marketing preferences. */
+	public function test_clearing_feeds_keeps_other_preferences() {
+		$participant                = self::participant();
+		$this->repository->feeds[7] = array( 1, 2 );
+
+		$this->assertTrue( $this->feeds()->apply( $participant, array( 'feed_ids' => array() ) ) );
+
+		$this->assertSame( array(), $this->repository->feeds[7] );
+		$this->assertSame( 'marketing', $participant->email_profile );
+		$this->assertSame( 0, $participant->weekly_summary_opt_out );
 	}
 
 	/** A strict apply refuses an invalid feed before changing anything. */
@@ -290,15 +314,14 @@ class WeeklyFeedsTest extends TestCase {
 		$this->assertSame( WeeklyFeeds::MODE_SELECTED, $participant->weekly_feed_mode );
 	}
 
-	/** The all-feeds choice keeps the stored feeds and needs no catalog. */
-	public function test_all_feeds_choice_keeps_stored_feeds() {
-		$expected = array(
-			'mode'     => WeeklyFeeds::MODE_ALL,
-			'feed_ids' => null,
-		);
+	/** The former all-feeds choice is refused, with or without a catalog. */
+	public function test_all_feeds_choice_is_refused() {
+		foreach ( array( $this->feeds(), new WeeklyFeeds( false, $this->repository ) ) as $feeds ) {
+			$result = $feeds->resolve_choice( WeeklyFeeds::LEGACY_MODE_ALL, null, array( 1, 3 ) );
 
-		$this->assertSame( $expected, $this->feeds()->resolve_choice( WeeklyFeeds::MODE_ALL, null, array( 1, 3 ) ) );
-		$this->assertSame( $expected, ( new WeeklyFeeds( false, $this->repository ) )->resolve_choice( WeeklyFeeds::MODE_ALL, null, array( 1 ) ) );
+			$this->assertInstanceOf( \WP_Error::class, $result );
+			$this->assertSame( 'invalid_weekly_feeds', $result->get_error_code() );
+		}
 	}
 
 	/** The no-feeds choice clears every stored feed, unavailable ones too. */
@@ -349,6 +372,6 @@ class WeeklyFeedsTest extends TestCase {
 		$this->assertInstanceOf( \WP_Error::class, $this->feeds()->apply( self::participant(), array( 'feed_ids' => array( 1 ) ) ) );
 
 		$this->repository->fails = false;
-		$this->assertInstanceOf( \WP_Error::class, $this->feeds()->apply( self::participant( WeeklyFeeds::MODE_ALL, false, false ), array( 'weekly_summary' => true ) ) );
+		$this->assertInstanceOf( \WP_Error::class, $this->feeds()->apply( self::participant( WeeklyFeeds::MODE_SELECTED, false, false ), array( 'weekly_summary' => true ) ) );
 	}
 }

@@ -340,11 +340,6 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 			{ weekly_feed_mode: 'selected', weekly_feed_ids: [ 1, 2 ] },
 		],
 		[
-			'all feeds',
-			() => fireEvent.click( screen.getByLabelText( 'All event feeds' ) ),
-			{ weekly_feed_mode: 'all' },
-		],
-		[
 			'no feeds',
 			() => fireEvent.click( screen.getByLabelText( 'No event feeds' ) ),
 			{ weekly_feed_mode: 'none' },
@@ -376,7 +371,7 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 		expect( onSaved ).toHaveBeenCalledWith( { id: 5 }, expect.anything() );
 	} );
 
-	it( 'keeps the feed choice when the summary or email profile changes, and explains delivery', async () => {
+	it( 'keeps the feed choice when the summary or email profile changes', async () => {
 		mockPreferences();
 		openFor();
 		await screen.findByLabelText( 'Workshops' );
@@ -392,11 +387,13 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 		expect( screen.getByLabelText( 'Selected event feeds' ) ).toBeChecked();
 		expect( screen.getByLabelText( 'Concerts' ) ).toBeChecked();
 		expect( screen.getByLabelText( 'Workshops' ) ).toBeChecked();
+		// Feeds do not depend on the email profile: no delivery caveat.
 		expect(
-			screen.getByText(
-				'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
-			)
-		).toBeInTheDocument();
+			screen.queryByText( /Saved preference only/ )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText( 'All event feeds' )
+		).not.toBeInTheDocument();
 
 		update();
 
@@ -417,7 +414,7 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 
 		expect(
 			await screen.findByText(
-				'Saved preference only: weekly summaries go to confirmed participants with the Marketing email profile.'
+				'Saved preference only: weekly summaries go to participants who confirmed their email address.'
 			)
 		).toBeInTheDocument();
 	} );
@@ -553,7 +550,7 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 							answerFirst = () =>
 								resolve( {
 									...SAVED,
-									weekly_feed_mode: 'all',
+									weekly_feed_ids: [],
 								} );
 						} )
 					: Promise.resolve( { ...SAVED, id: 6 } ),
@@ -581,7 +578,7 @@ describe( 'ParticipantEditModal — weekly preferences', () => {
 		} );
 
 		expect( screen.getByLabelText( 'Selected event feeds' ) ).toBeChecked();
-		expect( screen.getByLabelText( 'All event feeds' ) ).not.toBeChecked();
+		expect( screen.getByLabelText( 'No event feeds' ) ).not.toBeChecked();
 	} );
 
 	it( 'leaves preferences out when adding a participant', async () => {

@@ -38,7 +38,7 @@ export function audienceSummary( configuration ) {
 	}
 	if ( 'bulk_email' === configuration.type ) {
 		return __(
-			'Subscribers who agreed to marketing emails, chosen by Fair Audience',
+			'Subscribers of this event feed, chosen by Fair Audience',
 			'fair-events'
 		);
 	}

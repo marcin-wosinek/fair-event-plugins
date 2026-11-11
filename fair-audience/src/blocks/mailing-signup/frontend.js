@@ -12,6 +12,7 @@ import {
 import {
 	createWeeklyState,
 	setWeeklyChecked,
+	setMarketingChecked,
 	setFeedSelected,
 	weeklyError,
 	weeklyRequestData,
@@ -59,12 +60,16 @@ const CSS_PREFIX = 'fair-audience-mailing';
 		const checkbox = fieldset.querySelector(
 			'input[name="mailing_weekly"]'
 		);
+		const marketing = form.querySelector(
+			'input[name="mailing_marketing"]'
+		);
 
 		return createWeeklyState( {
 			config: fieldset.dataset.weeklyConfig,
 			feedMode: fieldset.dataset.weeklyFeeds,
 			offered: !! checkbox,
 			checked: checkbox ? checkbox.defaultChecked : false,
+			marketing: marketing ? marketing.defaultChecked : null,
 		} );
 	}
 
@@ -84,7 +89,12 @@ const CSS_PREFIX = 'fair-audience-mailing';
 			if ( ! state.weekly ) {
 				return;
 			}
-			if ( input.name === 'mailing_weekly' ) {
+			if ( input.name === 'mailing_marketing' ) {
+				state.weekly = setMarketingChecked(
+					state.weekly,
+					input.checked
+				);
+			} else if ( input.name === 'mailing_weekly' ) {
 				state.weekly = setWeeklyChecked( state.weekly, input.checked );
 			} else if ( input.name === 'mailing_weekly_feeds[]' ) {
 				state.weekly = setFeedSelected(

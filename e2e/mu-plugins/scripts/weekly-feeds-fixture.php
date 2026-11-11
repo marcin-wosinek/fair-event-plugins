@@ -9,6 +9,7 @@
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php choose <email> <mode> <feedIds>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php status <email> <status>
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php deliver <configId>
+ *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php convert
  *   wp eval-file wp-content/mu-plugins/scripts/weekly-feeds-fixture.php cleanup <sourceIds> <configIds> <emails>
  *
  * `seed` creates four event feeds: A and B with an enabled weekly email, C
@@ -20,7 +21,9 @@
  * so feeds that cannot be chosen or no longer exist can be set up. `status`
  * sets a participant's confirmation status. `deliver` runs
  * a weekly email configuration's send for the current week, exactly as
- * WP-Cron would, and reports who received it. `cleanup` takes
+ * WP-Cron would, and reports who received it. `convert` runs the same-site
+ * conversion of the legacy 'all' feed mode (#2239) until it finishes, as the
+ * upgrade would. `cleanup` takes
  * comma-separated lists and removes the participants (with their tokens,
  * feeds and signup rate limits), configurations and feeds.
  *
@@ -203,6 +206,16 @@ if ( 'seed' === $fixture_action ) {
 			)
 		),
 	);
+} elseif ( 'convert' === $fixture_action ) {
+	$fixture_runs = 0;
+	do {
+		$fixture_done = \FairAudience\Database\FeedModeConversion::run();
+		++$fixture_runs;
+	} while ( ! $fixture_done && $fixture_runs < 50 );
+	$fixture_out = array(
+		'done' => $fixture_done,
+		'runs' => $fixture_runs,
+	);
 } elseif ( 'cleanup' === $fixture_action ) {
 	$fixture_list = static function ( $value ) {
 		return array_values( array_filter( explode( ',', (string) $value ) ) );
@@ -241,7 +254,7 @@ if ( 'seed' === $fixture_action ) {
 	BulkEmailSettings::refresh_summary();
 	$fixture_out = array( 'cleaned' => true );
 } else {
-	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|confirmation-link|choose|status|deliver|cleanup …' );
+	WP_CLI::error( 'Usage: weekly-feeds-fixture.php seed|state|confirmation-link|choose|status|deliver|convert|cleanup …' );
 }
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

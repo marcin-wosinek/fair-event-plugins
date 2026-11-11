@@ -134,7 +134,7 @@ class ManageSubscriptionRenderer {
 			),
 			'minimal'   => array(
 				__( 'Essential emails only', 'fair-audience' ),
-				__( 'Only receive emails about events you signed up for (photos, polls, confirmations). No promotional emails.', 'fair-audience' ),
+				__( 'Only receive emails about events you signed up for (photos, polls, confirmations), plus the weekly event feeds you choose below. No other promotional emails.', 'fair-audience' ),
 			),
 		);
 		?>
@@ -166,22 +166,20 @@ class ManageSubscriptionRenderer {
 	}
 
 	/**
-	 * Print the weekly email preferences: the overall switch, then which
-	 * event feeds.
+	 * Print the weekly email preferences: the weekly summary switch, then
+	 * the event feeds. Both are independent of the email profile above.
 	 *
 	 * @param array $page Page state.
 	 * @return void
 	 */
 	private static function render_weekly( array $page ) {
-		$weekly       = $page['weekly'];
-		$preferences  = $page['preferences'];
-		$is_marketing = 'marketing' === $preferences['email_profile'];
-		$receives     = $preferences['weekly_summary'];
-		$mode         = $preferences['weekly_feed_mode'];
-		$selected     = $preferences['weekly_feeds'];
-		$show_feeds   = $weekly['feeds_available'] && ( $weekly['feeds'] || WeeklyFeeds::MODE_SELECTED === $mode );
+		$weekly     = $page['weekly'];
+		$receives   = $page['preferences']['weekly_summary'];
+		$selected   = $page['preferences']['weekly_feeds'];
+		$show_feeds = $weekly['feeds_available'] && ( $weekly['feeds'] || $selected );
 		?>
-		<div class="fair-audience-subscription-weekly-summary" id="fair-audience-weekly-summary-wrap" data-fair-audience-weekly <?php echo $is_marketing ? '' : 'hidden'; ?>>
+		<div class="fair-audience-subscription-weekly-summary" id="fair-audience-weekly-summary-wrap" data-fair-audience-weekly>
+			<input type="hidden" name="<?php echo esc_attr( ManageSubscriptionPage::WEEKLY_FIELD ); ?>" value="1">
 			<label class="fair-audience-subscription-category-label">
 				<input
 					type="checkbox"
@@ -189,49 +187,34 @@ class ManageSubscriptionRenderer {
 					id="fair-audience-weekly-summary"
 					data-fair-audience-weekly-summary
 					<?php checked( $receives ); ?>
-					<?php disabled( ! $is_marketing ); ?>
 				/>
 				<?php echo esc_html__( 'Weekly summary of upcoming events', 'fair-audience' ); ?>
 			</label>
 
 			<?php if ( $show_feeds ) : ?>
-				<fieldset class="fair-audience-subscription-feeds" data-fair-audience-weekly-feeds <?php disabled( ! $is_marketing || ! $receives ); ?>>
+				<fieldset class="fair-audience-subscription-feeds" data-fair-audience-weekly-feeds <?php disabled( ! $receives ); ?>>
 					<legend class="fair-audience-subscription-feeds-title">
-						<?php echo esc_html__( 'Which weekly emails do you want?', 'fair-audience' ); ?>
+						<?php echo esc_html__( 'Which event feeds do you want?', 'fair-audience' ); ?>
 					</legend>
-					<label class="fair-audience-subscription-category-label">
-						<input type="radio" name="weekly_feed_mode" value="<?php echo esc_attr( WeeklyFeeds::MODE_ALL ); ?>" <?php checked( $mode, WeeklyFeeds::MODE_ALL ); ?>>
-						<span>
-							<?php echo esc_html__( 'All weekly emails', 'fair-audience' ); ?>
-							<span class="fair-audience-subscription-hint"><?php echo esc_html__( 'Includes event feeds added later.', 'fair-audience' ); ?></span>
-						</span>
-					</label>
-					<label class="fair-audience-subscription-category-label">
-						<input type="radio" name="weekly_feed_mode" value="<?php echo esc_attr( WeeklyFeeds::MODE_SELECTED ); ?>" <?php checked( $mode, WeeklyFeeds::MODE_SELECTED ); ?>>
-						<span><?php echo esc_html__( 'Only the event feeds I choose', 'fair-audience' ); ?></span>
-					</label>
-
-					<fieldset class="fair-audience-subscription-feed-list" data-fair-audience-feed-list <?php disabled( WeeklyFeeds::MODE_SELECTED !== $mode ); ?>>
-						<legend class="screen-reader-text"><?php echo esc_html__( 'Event feeds', 'fair-audience' ); ?></legend>
-						<?php foreach ( $weekly['feeds'] as $feed ) : ?>
-							<label class="fair-audience-subscription-category-label">
-								<input
-									type="checkbox"
-									name="weekly_feeds[]"
-									value="<?php echo esc_attr( (string) $feed['id'] ); ?>"
-									<?php checked( in_array( (int) $feed['id'], $selected, true ) ); ?>
-								/>
-								<?php echo esc_html( $feed['name'] ); ?>
-							</label>
-						<?php endforeach; ?>
-						<p class="fair-audience-subscription-hint">
-							<?php echo esc_html__( 'If you choose no event feeds, you receive no weekly emails.', 'fair-audience' ); ?>
-						</p>
-					</fieldset>
+					<input type="hidden" name="<?php echo esc_attr( ManageSubscriptionPage::FEEDS_FIELD ); ?>" value="1">
+					<?php foreach ( $weekly['feeds'] as $feed ) : ?>
+						<label class="fair-audience-subscription-category-label">
+							<input
+								type="checkbox"
+								name="weekly_feeds[]"
+								value="<?php echo esc_attr( (string) $feed['id'] ); ?>"
+								<?php checked( in_array( (int) $feed['id'], $selected, true ) ); ?>
+							/>
+							<?php echo esc_html( $feed['name'] ); ?>
+						</label>
+					<?php endforeach; ?>
+					<p class="fair-audience-subscription-hint">
+						<?php echo esc_html__( 'You receive only the event feeds you choose here, also without the other emails above. New event feeds are not added for you. If you choose none, you receive no weekly emails.', 'fair-audience' ); ?>
+					</p>
 
 					<?php self::render_unavailable_feeds( $weekly ); ?>
 				</fieldset>
-			<?php elseif ( ! $weekly['feeds_available'] && WeeklyFeeds::MODE_SELECTED === $mode ) : ?>
+			<?php elseif ( ! $weekly['feeds_available'] && $selected ) : ?>
 				<p class="fair-audience-subscription-hint">
 					<?php echo esc_html__( 'Your choice of event feeds is kept, but it cannot be changed right now.', 'fair-audience' ); ?>
 				</p>

@@ -13,9 +13,10 @@ use FairAudience\Services\EmailType;
 use FairAudience\Models\Participant;
 
 /**
- * Validates the marketing-consent gate that decides whether a participant
- * receives a marketing email. A pending double-opt-in subscriber must not
- * be treated as consented until they confirm.
+ * Validates the consent gates that decide whether a participant receives a
+ * marketing or weekly feed email. A pending double-opt-in subscriber must
+ * not be treated as consented until they confirm; weekly feed emails do not
+ * depend on general marketing consent.
  */
 class RecipientResolverTest extends TestCase {
 
@@ -123,14 +124,28 @@ class RecipientResolverTest extends TestCase {
 	}
 
 	/**
-	 * A minimal-profile participant never receives the weekly summary,
-	 * regardless of the opt-out flag.
+	 * Weekly feed emails are independent of general marketing consent: a
+	 * confirmed participant without it still receives the feeds they chose.
 	 */
-	public function test_minimal_profile_cannot_receive_weekly_summary() {
+	public function test_weekly_summary_does_not_need_marketing_consent() {
 		$resolver = new RecipientResolver();
-		$this->assertFalse(
-			$resolver->can_receive_email( $this->participant( 'minimal', 'confirmed', false ), EmailType::WEEKLY_SUMMARY )
-		);
+		foreach ( array( 'minimal', 'declined' ) as $profile ) {
+			$participant = $this->participant( $profile, 'confirmed', false );
+			$this->assertTrue( $resolver->can_receive_email( $participant, EmailType::WEEKLY_SUMMARY ), $profile );
+			$this->assertFalse( $resolver->can_receive_email( $participant, EmailType::MARKETING ), $profile );
+		}
+	}
+
+	/**
+	 * The weekly summary still needs a confirmed address and no opt-out,
+	 * whatever the email profile.
+	 */
+	public function test_weekly_summary_needs_confirmation_and_no_opt_out() {
+		$resolver = new RecipientResolver();
+		foreach ( array( 'minimal', 'marketing' ) as $profile ) {
+			$this->assertFalse( $resolver->can_receive_email( $this->participant( $profile, 'pending', false ), EmailType::WEEKLY_SUMMARY ), $profile );
+			$this->assertFalse( $resolver->can_receive_email( $this->participant( $profile, 'confirmed', true ), EmailType::WEEKLY_SUMMARY ), $profile );
+		}
 	}
 
 	/**

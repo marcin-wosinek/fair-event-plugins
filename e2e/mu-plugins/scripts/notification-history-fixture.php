@@ -33,6 +33,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use FairAudience\Database\ParticipantFeedRepository;
 use FairAudience\Models\Participant;
 use FairEvents\Notifications\BulkEmailDispatcher;
 use FairEvents\Notifications\Configurations;
@@ -208,8 +209,13 @@ if ( 'schema' === $fixture_action ) {
 	if ( ! $fixture_participant->save() ) {
 		WP_CLI::error( 'Failed to create participant.' );
 	}
+	// Weekly feed emails reach only the feeds a participant subscribed to.
+	if ( ! empty( $args[2] ) && ! ( new ParticipantFeedRepository() )->set_feeds( (int) $fixture_participant->id, array( (int) $args[2] ) ) ) {
+		WP_CLI::error( 'Failed to subscribe participant to the feed.' );
+	}
 	$out = array( 'participantId' => (int) $fixture_participant->id );
 } elseif ( 'remove-participant' === $fixture_action ) {
+	( new ParticipantFeedRepository() )->delete_by_participant( (int) ( $args[1] ?? 0 ) );
 	$wpdb->delete( $wpdb->prefix . 'fair_audience_participants', array( 'id' => (int) ( $args[1] ?? 0 ) ), array( '%d' ) );
 	$out = array( 'removed' => (int) ( $args[1] ?? 0 ) );
 } else {

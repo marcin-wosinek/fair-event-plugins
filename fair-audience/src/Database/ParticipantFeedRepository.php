@@ -12,8 +12,9 @@ defined( 'WPINC' ) || die;
 /**
  * Repository for the weekly email feeds a participant chose.
  *
- * Feeds are Fair Events event sources, by numeric ID. The rows only count
- * while the participant's weekly_feed_mode is 'selected'.
+ * Feeds are Fair Events event sources, by numeric ID. These rows are the
+ * only source of feed membership: a participant receives exactly the feeds
+ * stored here.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */

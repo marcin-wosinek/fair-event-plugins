@@ -113,7 +113,7 @@ export default function BulkEmailChannel( { channel, sources, onSaved } ) {
 		>
 			<p>
 				{ __(
-					'Email the week’s events to your subscribers. Fair Audience decides who receives it: only participants who agreed to marketing emails and did not opt out of the weekly summary, each with their own unsubscribe link.',
+					'Email the week’s events to your subscribers. Fair Audience decides who receives it: only confirmed participants who subscribed to this event feed and did not pause the weekly summary, each with their own unsubscribe link. Feed subscriptions do not need consent to other marketing emails.',
 					'fair-events'
 				) }
 			</p>

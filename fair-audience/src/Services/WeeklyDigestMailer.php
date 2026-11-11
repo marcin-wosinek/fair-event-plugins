@@ -15,7 +15,7 @@ defined( 'WPINC' ) || die;
  * Fair Events owns the weekly email's settings and schedule (Fair Events →
  * Event notifications) and calls this class when a send is due. Fair Audience
  * stays responsible for everything about the recipients: who is eligible,
- * marketing consent, the weekly-summary opt-out, personalization, the
+ * feed subscriptions, the weekly-summary opt-out, personalization, the
  * unsubscribe link and the delivery itself.
  *
  * Fair Events checks for these methods before calling them. Never change
@@ -90,8 +90,9 @@ class WeeklyDigestMailer {
 	/**
 	 * Send the email to every participant who may receive the weekly summary.
 	 *
-	 * The sender does not say which feed the email lists, so participants
-	 * who chose their feeds do not receive it.
+	 * The sender does not say which feed the email lists, and only
+	 * explicit feed subscribers receive a weekly email, so nobody receives
+	 * it. Kept for older Fair Events versions.
 	 *
 	 * @param string $subject Email subject.
 	 * @param string $html    Email content (HTML).
@@ -111,8 +112,9 @@ class WeeklyDigestMailer {
 	 * Send the email to every participant who may receive the weekly
 	 * summary, reporting each one to an observer as it is processed.
 	 *
-	 * The sender does not say which feed the email lists, so participants
-	 * who chose their feeds do not receive it and are not reported.
+	 * The sender does not say which feed the email lists, and only
+	 * explicit feed subscribers receive a weekly email, so nobody receives
+	 * it or is reported. Kept for older Fair Events versions.
 	 *
 	 * The observer is called with an event and the recipient:
 	 * 'sending' before the email is handed to the mail system, then 'sent'
@@ -142,9 +144,9 @@ class WeeklyDigestMailer {
 	 * weekly summary and receive that feed, reporting each one to an
 	 * observer as it is processed.
 	 *
-	 * Participants who chose their feeds receive it only when they chose
-	 * this one; the others receive every feed's email. Participants it is not
-	 * meant for are not reported. Otherwise as
+	 * Only participants subscribed to this feed receive it, whatever their
+	 * general marketing consent; a feed added later needs its own
+	 * subscription. Participants it is not meant for are not reported. Otherwise as
 	 * {@see self::send_to_subscribers_reporting()}.
 	 *
 	 * @param int      $feed_id  Fair Events event source ID the email lists.

@@ -122,7 +122,7 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		}
 	} );
 
-	test( 'without weekly fields, a new subscriber keeps every weekly email', async () => {
+	test( 'without weekly fields, a new subscriber gets marketing and no feeds', async () => {
 		const address = email( 'omitted' );
 		const res = await signup( { email: address } );
 		expect( ( await res.json() ).status ).toBe( 'pending' );
@@ -130,9 +130,57 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 
 		const participant = await confirm( address );
 
-		expect( participant.weekly_feed_mode ).toBe( 'all' );
+		expect( participant.email_profile ).toBe( 'marketing' );
+		expect( participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( participant.feed_ids ).toEqual( [] );
 		expect( participant.weekly_summary_opt_out ).toBe( false );
+	} );
+
+	test( 'a feeds-only signup confirms the address without marketing consent', async () => {
+		const address = email( 'feeds-only' );
+		const res = await signup( {
+			email: address,
+			marketing: false,
+			weekly_summary: true,
+			weekly_feed_ids: [ feeds.a ],
+		} );
+		expect( ( await res.json() ).status ).toBe( 'pending' );
+		expect( ( await fixture( 'state', address ) ).pending ).toEqual( {
+			weekly_summary: true,
+			feed_ids: [ feeds.a ],
+			marketing: false,
+		} );
+
+		const participant = await confirm( address );
+
+		expect( participant.status ).toBe( 'confirmed' );
+		expect( participant.email_profile ).toBe( 'minimal' );
+		expect( participant.feed_ids ).toEqual( [ feeds.a ] );
+	} );
+
+	test( 'declining marketing needs at least one feed', async () => {
+		const address = email( 'nothing' );
+		for ( const data of [
+			{ marketing: false },
+			{ marketing: false, weekly_feed_ids: [] },
+		] ) {
+			const res = await signup( { email: address, ...data } );
+			expect( res.status(), JSON.stringify( data ) ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'nothing_to_subscribe' );
+		}
+		expect( ( await fixture( 'state', address ) ).participant ).toBe(
+			null
+		);
+	} );
+
+	test( 'an explicit marketing choice is granted on confirmation', async () => {
+		const address = email( 'marketing-explicit' );
+		await signup( { email: address, marketing: true } );
+
+		const participant = await confirm( address );
+
+		expect( participant.email_profile ).toBe( 'marketing' );
+		expect( participant.feed_ids ).toEqual( [] );
 	} );
 
 	test( 'chosen feeds wait on the confirmation token and apply when it confirms', async () => {
@@ -140,7 +188,7 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		await signup( { email: address, weekly_feed_ids: [ feeds.a ] } );
 
 		const pending = await fixture( 'state', address );
-		expect( pending.participant.weekly_feed_mode ).toBe( 'all' );
+		expect( pending.participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( pending.participant.feed_ids ).toEqual( [] );
 		expect( pending.pending ).toEqual( { feed_ids: [ feeds.a ] } );
 
@@ -207,7 +255,7 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		);
 	} );
 
-	test( 'the emailed link of a signup without weekly fields keeps every weekly email', async () => {
+	test( 'the emailed link of a signup without weekly fields grants marketing and no feeds', async () => {
 		const address = email( 'emailed-legacy' );
 		await signup( { email: address } );
 
@@ -215,7 +263,8 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 
 		expect( html ).toContain( 'Email Confirmed!' );
 		const { participant } = await fixture( 'state', address );
-		expect( participant.weekly_feed_mode ).toBe( 'all' );
+		expect( participant.email_profile ).toBe( 'marketing' );
+		expect( participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( participant.feed_ids ).toEqual( [] );
 		expect( participant.weekly_summary_opt_out ).toBe( false );
 	} );
@@ -274,10 +323,23 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		expect( body.status ).toBe( 'manage_link_sent' );
 
 		const state = await fixture( 'state', address );
-		expect( state.participant.weekly_feed_mode ).toBe( 'all' );
+		expect( state.participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( state.participant.feed_ids ).toEqual( [] );
 		expect( state.participant.weekly_summary_opt_out ).toBe( false );
 		expect( state.token ).toBe( null );
+
+		// Knowing the address is not enough to change marketing either.
+		const unsubscribe = await signup( {
+			email: address,
+			marketing: false,
+			weekly_feed_ids: [ feeds.a ],
+		} );
+		expect( ( await unsubscribe.json() ).status ).toBe(
+			'manage_link_sent'
+		);
+		const after = await fixture( 'state', address );
+		expect( after.participant.email_profile ).toBe( 'marketing' );
+		expect( after.participant.feed_ids ).toEqual( [] );
 	} );
 
 	test( 'a signed-in user changes only their own linked participant', async () => {
@@ -326,29 +388,58 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		expect( ownState.feed_ids ).toEqual( [ feeds.b ] );
 
 		const otherState = ( await fixture( 'state', other ) ).participant;
-		expect( otherState.weekly_feed_mode ).toBe( 'all' );
 		expect( otherState.feed_ids ).toEqual( [] );
+
+		// Declining marketing on a signup keeps consent given earlier.
+		const declined = await signup(
+			{ email: own, marketing: false, weekly_feed_ids: [ feeds.a ] },
+			basicAuth( user.slug, password )
+		);
+		expect( ( await declined.json() ).status ).toBe(
+			'preferences_updated'
+		);
+		const ownAfter = ( await fixture( 'state', own ) ).participant;
+		expect( ownAfter.email_profile ).toBe( 'marketing' );
+		expect( ownAfter.feed_ids ).toEqual( [ feeds.a ] );
 	} );
 
 	test( "each feed's weekly email reaches only its subscribers", async () => {
 		const onlyA = email( 'only-a' );
 		const both = email( 'both' );
 		const none = email( 'none' );
-		const everything = email( 'everything' );
+		const marketingOnly = email( 'marketing-only' );
 		const optedOut = email( 'opted-out' );
+		const feedsOnly = email( 'feeds-only-a' );
+		const legacy = email( 'legacy-all' );
 
 		await signup( { email: onlyA, weekly_feed_ids: [ feeds.a ] } );
 		await signup( { email: both, weekly_feed_ids: [ feeds.a, feeds.b ] } );
 		await signup( { email: none, weekly_feed_ids: [] } );
-		await signup( { email: everything } );
+		await signup( { email: marketingOnly } );
 		await signup( {
 			email: optedOut,
 			weekly_summary: false,
 			weekly_feed_ids: [ feeds.a ],
 		} );
-		for ( const address of [ onlyA, both, none, everything, optedOut ] ) {
+		await signup( {
+			email: feedsOnly,
+			marketing: false,
+			weekly_feed_ids: [ feeds.a ],
+		} );
+		await signup( { email: legacy } );
+		for ( const address of [
+			onlyA,
+			both,
+			none,
+			marketingOnly,
+			optedOut,
+			feedsOnly,
+			legacy,
+		] ) {
 			await confirm( address );
 		}
+		// A legacy "all" participant not converted yet gets no unrestricted feeds.
+		await fixture( 'choose', legacy, 'all', '' );
 		const pending = email( 'unconfirmed' );
 		await signup( { email: pending, weekly_feed_ids: [ feeds.a ] } );
 
@@ -356,17 +447,29 @@ test.describe( 'Mailing signup — weekly email feeds', () => {
 		// Other participants on the shared site may lack a valid address.
 		expect( [ 'sent', 'partial' ] ).toContain( a.run.status );
 		expect( a.recipients ).toEqual(
-			expect.arrayContaining( [ onlyA, both, everything ] )
+			expect.arrayContaining( [ onlyA, both, feedsOnly ] )
 		);
-		for ( const address of [ none, optedOut, pending ] ) {
+		for ( const address of [
+			none,
+			marketingOnly,
+			optedOut,
+			pending,
+			legacy,
+		] ) {
 			expect( a.recipients ).not.toContain( address );
 		}
 
 		const b = await fixture( 'deliver', configurations.b );
-		expect( b.recipients ).toEqual(
-			expect.arrayContaining( [ both, everything ] )
-		);
-		for ( const address of [ onlyA, none, optedOut, pending ] ) {
+		expect( b.recipients ).toEqual( expect.arrayContaining( [ both ] ) );
+		for ( const address of [
+			onlyA,
+			none,
+			marketingOnly,
+			optedOut,
+			pending,
+			feedsOnly,
+			legacy,
+		] ) {
 			expect( b.recipients ).not.toContain( address );
 		}
 	} );
@@ -414,6 +517,7 @@ test.describe( 'Mailing signup — Mailing Signup block feed policy', () => {
 			/<fieldset\s+class="fair-audience-mailing-weekly"[\s\S]*?<\/legend>[\s\S]*?(?:<\/fieldset>\s*){1,2}/
 		);
 		return {
+			page: html,
 			html: fieldset ? fieldset[ 0 ] : null,
 			config: fieldset
 				? fieldset[ 0 ].match( /data-weekly-config="([^"]+)"/ )[ 1 ]
@@ -467,6 +571,7 @@ test.describe( 'Mailing signup — Mailing Signup block feed policy', () => {
 	test( 'a block without the weekly checkbox renders and submits no weekly fields', async () => {
 		const form = await blockForm( { showCategories: false } );
 		expect( form.html ).toBe( null );
+		expect( form.page ).not.toContain( 'mailing_marketing' );
 	} );
 
 	test( 'a tampered form configuration is rejected before anything is stored', async () => {
@@ -672,8 +777,49 @@ test.describe( 'Mailing signup — Mailing Signup block feed policy', () => {
 		expect( ( await res.json() ).status ).toBe( 'manage_link_sent' );
 
 		const state = await fixture( 'state', address );
-		expect( state.participant.weekly_feed_mode ).toBe( 'all' );
+		expect( state.participant.weekly_feed_mode ).toBe( 'selected' );
 		expect( state.participant.feed_ids ).toEqual( [] );
 		expect( state.token ).toBe( null );
+	} );
+
+	test( 'a form with feeds asks for marketing separately and can subscribe to feeds only', async () => {
+		const form = await blockForm( {
+			weeklyUpdate: 'checked',
+			feedSelection: 'hidden',
+			feedId: feeds.a,
+		} );
+		expect( form.page ).toMatch(
+			/<input type="checkbox" name="mailing_marketing" value="1" checked/
+		);
+
+		const address = email( 'block-feeds-only' );
+		await signup( {
+			email: address,
+			weekly_config: form.config,
+			weekly_summary: true,
+			marketing: false,
+		} );
+		expect( await pending( address ) ).toEqual( {
+			weekly_summary: true,
+			feed_ids: [ feeds.a ],
+			marketing: false,
+		} );
+		const { token } = await fixture( 'state', address );
+		await api.post( `${ SIGNUP }/confirm`, { data: { token } } );
+		const participant = ( await fixture( 'state', address ) ).participant;
+		expect( participant.email_profile ).toBe( 'minimal' );
+		expect( participant.feed_ids ).toEqual( [ feeds.a ] );
+
+		const nothing = email( 'block-nothing' );
+		const rejected = await signup( {
+			email: nothing,
+			weekly_config: form.config,
+			weekly_summary: false,
+			marketing: false,
+		} );
+		expect( ( await rejected.json() ).code ).toBe( 'nothing_to_subscribe' );
+		expect( ( await fixture( 'state', nothing ) ).participant ).toBe(
+			null
+		);
 	} );
 } );
