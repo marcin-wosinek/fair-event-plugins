@@ -58,6 +58,11 @@ use FairAudience\Core\Plugin;
  * Activation hook.
  */
 function fair_audience_activate() {
+	// An unsupported upgrade writes nothing; Plugin::init() shows why.
+	if ( ! \FairAudience\Services\EventsUpgradeGate::allows_initialization() ) {
+		return;
+	}
+
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( \FairAudience\Database\Schema::get_participants_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_participants_table_sql() );
@@ -101,6 +106,11 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\fair_audience_activate' )
  * Check and upgrade database if needed.
  */
 function fair_audience_maybe_upgrade_db() {
+	// No table changes or repairs on an unsupported upgrade (§8.17).
+	if ( ! \FairAudience\Services\EventsUpgradeGate::allows_initialization() ) {
+		return;
+	}
+
 	$db_version = get_option( 'fair_audience_db_version', '0' );
 
 	if ( version_compare( $db_version, '1.0.0', '<' ) ) {

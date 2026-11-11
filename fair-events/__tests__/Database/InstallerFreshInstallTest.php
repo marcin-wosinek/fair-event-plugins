@@ -383,6 +383,26 @@ class InstallerFreshInstallTest extends TestCase {
 	}
 
 	/**
+	 * A fresh installation records its upgrade evidence (§8.17); an
+	 * existing site's upgrade never does.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_install_records_upgrade_evidence_and_upgrades_do_not() {
+		Installer::install();
+		$this->assertSame( 'fresh_install', get_option( 'fair_events_payment_history_completion' )['basis'] );
+
+		$this->db                      = new Installer_Fresh_Install_WPDB();
+		$GLOBALS['wpdb']               = $this->db;
+		$GLOBALS['_fair_test_options'] = array( 'fair_events_db_version' => '3.52.0' );
+		$this->db->tables              = array( 'wp_fair_event_dates' => true );
+		\FairEvents\Services\PaymentHistoryUpgrade::reset();
+
+		Installer::install();
+		$this->assertFalse( get_option( 'fair_events_payment_history_completion' ) );
+	}
+
+	/**
 	 * A missing version with existing tables still runs the migrations, the
 	 * 3.33.0 signup repair included.
 	 *

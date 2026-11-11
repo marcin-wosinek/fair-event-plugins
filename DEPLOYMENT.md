@@ -232,6 +232,11 @@ it had been switched off.
 
 ## Upgrade notes: payment history storage (#2138)
 
+> **Historical.** The stage 2–5 notes below (#2138–#2141) describe how to
+> run the migration on `build-2.2.0`, the last release that contains it.
+> Newer releases don't run on a site that hasn't finished it; see
+> [the supported upgrade path](#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+
 Stage 2 of the payment history migration
 ([PAYMENT_HISTORY_MIGRATION.md § 8.7](./PAYMENT_HISTORY_MIGRATION.md#87-stage-2-storage-and-capabilities)).
 Upgrading to fair-events DB version `3.49.0` adds, on the first request
@@ -604,6 +609,116 @@ plugin back below this release only removes the new cards and fields; the
 links and the ledger (still written since stage 4) stay intact. Source
 history (ledger, registrations, participant-scope activities) is kept;
 deleting it is out of scope and needs a separate follow-up issue.
+
+## Upgrade notes: supported upgrade path after the payment history migration (#2255)
+
+Releases after `build-2.2.0` no longer depend on the payment history
+migration (#2251) and later remove it (#2252–#2254). They start only on a
+site that **finished** the migration, or that was installed fresh by one of
+them ([PAYMENT_HISTORY_MIGRATION.md § 8.17](./PAYMENT_HISTORY_MIGRATION.md#817-supported-upgrade-path)).
+Everything below applies to every site, including client sites deployed
+with `workflow_dispatch`.
+
+**Prerequisite release: [`build-2.2.0`](https://github.com/marcin-wosinek/fair-event-plugins/releases/tag/build-2.2.0).**
+It is the last release with the complete migration workflow (stages 2–5) and
+the first with every step of it:
+
+| Plugin                  | Version | Archive                             |
+| ----------------------- | ------- | ----------------------------------- |
+| Fair Payments Connector | 2.8.0   | `fair-payments-connector.2.8.0.zip` |
+| Fair Events             | 2.2.0   | `fair-events.2.2.0.zip`             |
+| Fair Audience           | 2.0.0   | `fair-audience.2.0.0.zip`           |
+
+The archives were checked on 2026-11-11: the headers carry these versions,
+Fair Events records DB `3.52.0` and ships the backfill, verification,
+reconciliation, the stage 4 and stage 5 switches and the Payment history
+page, and its purchase lifecycle still waits for the stage 4 switch (it
+predates #2251). SHA-256 sums (`shasum -a 256`):
+
+```text
+31b22f1aca227df6a7b04c540d74aad6a9df8aed1a61532faaaf31f07d13dd16  fair-payments-connector.2.8.0.zip
+a6dd5e0c9558e3617bf064554a744e2a6142c9aea6e026bd4bff5bb6121235e4  fair-events.2.2.0.zip
+f4012f4fcb54fa8792e167117a04520964f195590314583d40163f2500e846d1  fair-audience.2.0.0.zip
+```
+
+**A site is ready to leave `build-2.2.0` when Payment history shows all of:**
+
+1. A clean verification (the migration's status is _verified_).
+2. Payment records switched to Fair Events (stage 4).
+3. Statistics switched to Fair Events records (stage 5). A site without Fair
+   Audience records gets this automatically, without the other steps.
+4. No payment records waiting to move: no failed or unresolved shadow work.
+   Queued work that hasn't been tried yet doesn't count.
+5. No open finding, apart from the informational ones (amount differs, more
+   than one paid attempt, refund records).
+
+Versions never decide this: only these records do. The first request on a
+newer Fair Events records them as the site's **completion evidence**
+(`fair_events_payment_history_completion`), which later releases keep after
+they remove the migration's own records. Payment history then shows
+**Upgrade readiness: Safe to upgrade**.
+
+**Procedure for an existing site.**
+
+1. Back up the database (the tables in the stage 4 notes above, plus
+   `{prefix}options`).
+2. Restore it on a staging copy. On staging, update to `build-2.2.0` if the
+   site runs anything older, in the order Connector → Events → Audience, and
+   finish the migration there first, following the stage 3–5 notes below.
+3. Run the § 8.15 final verification on staging: a paid single purchase, a
+   retried purchase, a payment shared by several dates and a series pass;
+   Statistics revenue against Purchase payments; a shared payment's shares
+   adding up; Finance against the purchaser's participant page; and
+   deactivating and reactivating Fair Audience. Update staging to the newer
+   release and record the date, the versions and each check under
+   **Payment history → Upgrade readiness → Staging verification**.
+4. Repeat the migration on production on `build-2.2.0`, back up again, then
+   update **Connector first, then Fair Events, then Fair Audience**.
+5. Check that Payment history shows **Safe to upgrade**.
+
+**Fresh installations** need none of this. A site where Fair Events was
+first installed by a release after `build-2.2.0` records
+`fresh_install` evidence before it creates its tables, has no migration to
+run and nothing to clean up.
+
+**Unsupported upgrades.** On an existing site without the completion
+evidence, Fair Events and Fair Audience start nothing but an administrator
+notice that names what is missing and links here. Neither installer runs,
+so no table, option or purchase changes, and no purchase or payment is
+recorded: checkout, signups and Statistics are unavailable until it is
+resolved. Fair Audience also stops when Fair Events is older than this
+check (update Fair Events first). The ungated experimental plugins keep
+their own routes.
+
+**Recovery from an unsupported upgrade.**
+
+1. Reinstall the `build-2.2.0` archives over the newer plugins, in the
+   order Connector → Events → Audience. Nothing needs restoring: the newer
+   code wrote nothing.
+2. Finish the migration on Payment history, as above.
+3. No checkout can start while the site is paused, but a payment started
+   before the update can still complete at the provider. Connector records
+   it; Fair Events doesn't apply it to its purchase. After returning to
+   `build-2.2.0`, verify the migration again and reconcile any new finding.
+4. Update again.
+
+Restore the backup only if something else went wrong. Restoring after a
+supported upgrade loses every purchase made since the backup.
+
+**Local test and development sites** installed before this release have no
+evidence either, and are refused like any other existing site. Recreate
+them (`npx wp-env clean all`), or, only on a throwaway site with no real
+payment history, record the evidence by hand:
+
+```bash
+npx wp-env run tests-cli wp eval "add_option( 'fair_events_payment_history_completion', array( 'basis' => 'fresh_install', 'recorded_at' => gmdate( 'Y-m-d H:i:s' ), 'plugin_versions' => array() ) );"
+```
+
+**Before the cleanup releases (#2252–#2254)** the same evidence is
+required; the cleanup of Fair Audience's old payment records (#2254) also
+needs a clean state at that time and every staging check recorded as
+passed. Payment history lists those separately as **Removing old records**;
+being safe to upgrade doesn't make a site ready for it.
 
 ## Publishing to WordPress.org SVN
 

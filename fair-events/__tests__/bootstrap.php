@@ -106,6 +106,20 @@ if ( ! function_exists( 'delete_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_userdata' ) ) {
+	/**
+	 * Stub of WordPress get_userdata(): users from $GLOBALS['_fair_test_users'],
+	 * keyed by ID.
+	 *
+	 * @param int $user_id User ID.
+	 * @return object|false
+	 */
+	function get_userdata( $user_id ) {
+		$users = isset( $GLOBALS['_fair_test_users'] ) ? $GLOBALS['_fair_test_users'] : array();
+		return isset( $users[ (int) $user_id ] ) ? $users[ (int) $user_id ] : false;
+	}
+}
+
 if ( ! function_exists( 'add_option' ) ) {
 	/**
 	 * Stub of WordPress add_option(): stores only an option that is not set yet.

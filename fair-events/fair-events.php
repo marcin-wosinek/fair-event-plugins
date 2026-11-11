@@ -76,6 +76,10 @@ namespace FairEvents {
 	 * @return void
 	 */
 	function fair_events_activate() {
+		// An unsupported upgrade writes nothing; Plugin::init() shows why.
+		if ( ! \FairEvents\Services\PaymentHistoryUpgrade::allows_initialization() ) {
+			return;
+		}
 		// Install database tables.
 		\FairEvents\Database\Installer::install();
 		// Trigger post type registration.

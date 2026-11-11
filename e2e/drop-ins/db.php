@@ -30,6 +30,7 @@ defined( 'ABSPATH' ) || exit;
 const FAIR_E2E_FRESH_SITES = array(
 	'events-only'      => 'e2efresh_events_',
 	'events-connector' => 'e2efresh_connector_',
+	'upgrade-path'     => 'e2efresh_upgrade_',
 );
 
 ( static function () {
