@@ -189,6 +189,25 @@ const UnbudgetedCount = ( { state, onRetry } ) => {
 	);
 };
 
+/**
+ * Source line under a classified entry's description: how it was paid and,
+ * for a personal expense, by whom. Personally paid amounts are a record of
+ * who paid, not a balance owed.
+ *
+ * @param {Object} props
+ * @param {Object} props.entry Financial entry with a payment source.
+ */
+const PaymentSourceNote = ( { entry } ) => (
+	<div style={ { fontSize: '12px', color: '#50575e', marginTop: '2px' } }>
+		{ 'personal_funds' === entry.payment_source
+			? sprintf(
+					/* translators: %s: name of the person who paid */
+					__( 'Personal funds, paid by %s', 'fair-finance' ),
+					entry.payer_name || __( '(unnamed)', 'fair-finance' )
+				)
+			: __( 'Event cash', 'fair-finance' ) }
+	</div>
+);
 const EntriesApp = () => {
 	// Focus is read before the first data request so a focused link never
 	// loads the full list first.
@@ -1306,6 +1325,11 @@ const EntriesApp = () => {
 															0;
 													const isChild =
 														!! entry.parent_entry_id;
+													// Recorded as event cash or
+													// personally paid: splitting or
+													// matching would change its meaning.
+													const isClassified =
+														!! entry.payment_source;
 													const isExpanded =
 														expandedEntries[
 															entry.id
@@ -1379,6 +1403,13 @@ const EntriesApp = () => {
 																		<em>
 																			-
 																		</em>
+																	) }
+																	{ isClassified && (
+																		<PaymentSourceNote
+																			entry={
+																				entry
+																			}
+																		/>
 																	) }
 																	{ entry.participant && (
 																		<div
@@ -1705,71 +1736,75 @@ const EntriesApp = () => {
 																					'fair-finance'
 																				) }
 																			</Button>
-																			{ isSplit ? (
-																				<Button
-																					variant="tertiary"
-																					size="small"
-																					onClick={ () =>
-																						handleSplit(
-																							entry
-																						)
-																					}
-																				>
-																					{ __(
-																						'Edit Split',
-																						'fair-finance'
+																			{ ! isClassified && (
+																				<>
+																					{ isSplit ? (
+																						<Button
+																							variant="tertiary"
+																							size="small"
+																							onClick={ () =>
+																								handleSplit(
+																									entry
+																								)
+																							}
+																						>
+																							{ __(
+																								'Edit Split',
+																								'fair-finance'
+																							) }
+																						</Button>
+																					) : (
+																						<Button
+																							variant="tertiary"
+																							size="small"
+																							onClick={ () =>
+																								handleSplit(
+																									entry
+																								)
+																							}
+																						>
+																							{ __(
+																								'Split',
+																								'fair-finance'
+																							) }
+																						</Button>
 																					) }
-																				</Button>
-																			) : (
-																				<Button
-																					variant="tertiary"
-																					size="small"
-																					onClick={ () =>
-																						handleSplit(
-																							entry
-																						)
-																					}
-																				>
-																					{ __(
-																						'Split',
-																						'fair-finance'
+																					{ entry.transaction_ids &&
+																					entry
+																						.transaction_ids
+																						.length >
+																						0 ? (
+																						<Button
+																							variant="tertiary"
+																							size="small"
+																							onClick={ () =>
+																								handleUnmatch(
+																									entry
+																								)
+																							}
+																						>
+																							{ __(
+																								'Unmatch',
+																								'fair-finance'
+																							) }
+																						</Button>
+																					) : (
+																						<Button
+																							variant="tertiary"
+																							size="small"
+																							onClick={ () =>
+																								handleMatch(
+																									entry
+																								)
+																							}
+																						>
+																							{ __(
+																								'Match',
+																								'fair-finance'
+																							) }
+																						</Button>
 																					) }
-																				</Button>
-																			) }
-																			{ entry.transaction_ids &&
-																			entry
-																				.transaction_ids
-																				.length >
-																				0 ? (
-																				<Button
-																					variant="tertiary"
-																					size="small"
-																					onClick={ () =>
-																						handleUnmatch(
-																							entry
-																						)
-																					}
-																				>
-																					{ __(
-																						'Unmatch',
-																						'fair-finance'
-																					) }
-																				</Button>
-																			) : (
-																				<Button
-																					variant="tertiary"
-																					size="small"
-																					onClick={ () =>
-																						handleMatch(
-																							entry
-																						)
-																					}
-																				>
-																					{ __(
-																						'Match',
-																						'fair-finance'
-																					) }
-																				</Button>
+																				</>
 																			) }
 																			<Button
 																				variant="tertiary"

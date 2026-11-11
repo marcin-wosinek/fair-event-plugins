@@ -16,6 +16,15 @@ defined( 'WPINC' ) || die;
  */
 class Schema {
 	/**
+	 * Current schema version. Bump it whenever a table definition changes so
+	 * existing installations run dbDelta() again.
+	 *
+	 * Version 3 adds the nullable payment_source and payer_name columns to
+	 * financial entries; existing rows keep NULL ("Unspecified").
+	 */
+	const VERSION = '3';
+
+	/**
 	 * Get the table name for budgets
 	 *
 	 * @return string Full table name with prefix.
@@ -44,7 +53,7 @@ class Schema {
 		self::create_budgets_table();
 		self::create_financial_entries_table();
 		self::create_reconciliation_tables();
-		update_option( 'fair_finance_schema_version', '2' );
+		update_option( 'fair_finance_schema_version', self::VERSION );
 	}
 
 	/**
@@ -97,6 +106,8 @@ class Schema {
 			event_date_id bigint(20) UNSIGNED DEFAULT NULL,
 			participant_id bigint(20) UNSIGNED DEFAULT NULL,
 			tag varchar(100) DEFAULT NULL,
+			payment_source varchar(20) DEFAULT NULL,
+			payer_name varchar(255) DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -109,7 +120,8 @@ class Schema {
 			KEY parent_entry_id (parent_entry_id),
 			KEY event_date_id (event_date_id),
 			KEY participant_id (participant_id),
-			KEY tag (tag)
+			KEY tag (tag),
+			KEY payment_source (payment_source)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';

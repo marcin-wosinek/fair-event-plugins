@@ -74,6 +74,31 @@ class FinancialEntryController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-finance/v1/financial-entries/event-summary - Cash and
+		// personally paid summary for one event date.
+		register_rest_route(
+			$this->namespace,
+			'/financial-entries/event-summary',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_event_summary' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'event_date_id' => array(
+							'description'       => __( 'Event date ID.', 'fair-finance' ),
+							'type'              => 'integer',
+							'required'          => true,
+							'minimum'           => 1,
+							// Hand-written args only run an explicit validate_callback.
+							'validate_callback' => 'rest_validate_request_arg',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /fair-finance/v1/financial-entries/unbudgeted-count - Count entries awaiting a budget.
 		register_rest_route(
 			$this->namespace,
@@ -516,6 +541,10 @@ class FinancialEntryController extends WP_REST_Controller {
 				'description' => __( 'Filter to only unmatched entries.', 'fair-finance' ),
 				'type'        => 'boolean',
 			),
+			'classified'    => array(
+				'description' => __( 'Filter to entries recorded as event cash or personally paid.', 'fair-finance' ),
+				'type'        => 'boolean',
+			),
 			'tag'           => array(
 				'description'       => __( 'Filter by tag, or "none" for untagged.', 'fair-finance' ),
 				'type'              => 'string',
@@ -634,6 +663,16 @@ class FinancialEntryController extends WP_REST_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
+			'payment_source' => array(
+				'description' => __( 'Payment source: event_cash or personal_funds; null for an unspecified source. Omit to keep the stored value.', 'fair-finance' ),
+				'type'        => array( 'string', 'null' ),
+				'required'    => false,
+			),
+			'payer_name'     => array(
+				'description' => __( 'Name of the person who paid a personal-funds expense. Omit to keep the stored value.', 'fair-finance' ),
+				'type'        => array( 'string', 'null' ),
+				'required'    => false,
+			),
 		);
 	}
 
@@ -693,6 +732,7 @@ class FinancialEntryController extends WP_REST_Controller {
 			'tag'           => $request->get_param( 'tag' ),
 			'entry_type'    => $request->get_param( 'entry_type' ),
 			'unmatched'     => $request->get_param( 'unmatched' ),
+			'classified'    => rest_sanitize_boolean( $request->get_param( 'classified' ) ),
 			'entry_id'      => $request->get_param( 'entry_id' ),
 			'per_page'      => $request->get_param( 'per_page' ),
 			'page'          => $request->get_param( 'page' ),
@@ -779,6 +819,223 @@ class FinancialEntryController extends WP_REST_Controller {
 		$totals = FinancialEntry::get_totals( $filters );
 
 		return new WP_REST_Response( $totals, 200 );
+	}
+
+	/**
+	 * Get the cash and personally paid summary for one event date
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error on failure.
+	 */
+	public function get_event_summary( $request ) {
+		$summary = FinancialEntry::get_event_cash_summary( (int) $request->get_param( 'event_date_id' ) );
+
+		if ( null === $summary ) {
+			return new WP_Error(
+				'event_summary_failed',
+				__( 'The event’s income and expenses summary could not be loaded.', 'fair-finance' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response( $summary, 200 );
+	}
+
+	/**
+	 * A field-level validation error.
+	 *
+	 * Shaped like core's rest_invalid_param, so clients can show the
+	 * message next to the field named in `params`.
+	 *
+	 * @param string $field   Request field.
+	 * @param string $message Actionable message.
+	 * @param string $code    Error code.
+	 * @return WP_Error
+	 */
+	private static function field_error( $field, $message, $code = 'rest_invalid_param' ) {
+		return new WP_Error(
+			$code,
+			$message,
+			array(
+				'status' => 400,
+				'params' => array( $field => $message ),
+			)
+		);
+	}
+
+	/**
+	 * Validate an entry's amount and date.
+	 *
+	 * Amounts are positive, finite, at most two decimals and within the
+	 * decimal(10,2) column. Dates are real calendar dates in Y-m-d form.
+	 *
+	 * @param mixed $amount     Requested amount.
+	 * @param mixed $entry_date Requested date.
+	 * @return WP_Error|null Error, or null when both are valid.
+	 */
+	private static function validate_amount_and_date( $amount, $entry_date ) {
+		if ( ! is_numeric( $amount ) || ! is_finite( (float) $amount ) || (float) $amount <= 0 ) {
+			return self::field_error( 'amount', __( 'Amount must be greater than zero.', 'fair-finance' ), 'rest_invalid_amount' );
+		}
+
+		if ( (float) $amount > 99999999.99 ) {
+			return self::field_error( 'amount', __( 'Amount must be at most 99,999,999.99.', 'fair-finance' ), 'rest_invalid_amount' );
+		}
+
+		if ( abs( round( (float) $amount, 2 ) - (float) $amount ) > 1e-9 ) {
+			return self::field_error( 'amount', __( 'Amount can have at most two decimal places.', 'fair-finance' ), 'rest_invalid_amount' );
+		}
+
+		if ( empty( $entry_date ) ) {
+			return self::field_error( 'entry_date', __( 'Entry date is required.', 'fair-finance' ), 'rest_invalid_entry_date' );
+		}
+
+		if ( ! is_string( $entry_date ) || ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $entry_date, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
+			return self::field_error( 'entry_date', __( 'Entry date must be a valid date (YYYY-MM-DD).', 'fair-finance' ), 'rest_invalid_entry_date' );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Resolve and validate the payment source and payer of an entry being
+	 * created or updated.
+	 *
+	 * A field the request omits keeps the existing entry's value (none on
+	 * create). The resulting record must be consistent:
+	 * - no source: payer is cleared; the entry is an ordinary accounting entry;
+	 * - income: the source can only be event cash;
+	 * - expense with a source: a nonblank note is required, and personal
+	 *   funds also require a nonblank payer name;
+	 * - any source: the entry belongs to an existing event date and is not a
+	 *   split or matched to online payments, whose meaning it would change.
+	 *
+	 * @param WP_REST_Request     $request  Request.
+	 * @param FinancialEntry|null $existing Entry being updated, or null.
+	 * @param array               $result   Resulting entry_type, description and event_date_id.
+	 * @return array|WP_Error Payment metadata for the model, or an error.
+	 */
+	private static function resolve_payment( $request, $existing, $result ) {
+		$source = $existing ? $existing->payment_source : null;
+		if ( $request->has_param( 'payment_source' ) ) {
+			$raw = $request->get_param( 'payment_source' );
+			if ( null !== $raw && '' !== $raw && ! in_array( $raw, FinancialEntry::PAYMENT_SOURCES, true ) ) {
+				return self::field_error( 'payment_source', __( 'Payment source must be “Event cash” or “Personal funds”.', 'fair-finance' ) );
+			}
+			$source = ( null === $raw || '' === $raw ) ? null : $raw;
+		}
+
+		$payer = $existing ? $existing->payer_name : null;
+		if ( $request->has_param( 'payer_name' ) ) {
+			$raw = $request->get_param( 'payer_name' );
+			if ( null !== $raw && ! is_string( $raw ) ) {
+				return self::field_error( 'payer_name', __( 'Payer name must be text.', 'fair-finance' ) );
+			}
+			$payer = null === $raw ? null : trim( sanitize_text_field( $raw ) );
+		}
+
+		if ( null === $source ) {
+			return array(
+				'payment_source' => null,
+				'payer_name'     => null,
+			);
+		}
+
+		if ( 'income' === $result['entry_type'] && FinancialEntry::SOURCE_EVENT_CASH !== $source ) {
+			return self::field_error( 'payment_source', __( 'Income can only be recorded as event cash.', 'fair-finance' ) );
+		}
+
+		if ( 'cost' === $result['entry_type'] && '' === trim( (string) $result['description'] ) ) {
+			return self::field_error( 'description', __( 'Enter a note explaining the expense.', 'fair-finance' ) );
+		}
+
+		if ( FinancialEntry::SOURCE_PERSONAL_FUNDS === $source ) {
+			if ( null === $payer || '' === $payer ) {
+				return self::field_error( 'payer_name', __( 'Enter the name of the person who paid.', 'fair-finance' ) );
+			}
+			if ( function_exists( 'mb_strlen' ) ? mb_strlen( $payer ) > 255 : strlen( $payer ) > 255 ) {
+				return self::field_error( 'payer_name', __( 'Payer name can be at most 255 characters.', 'fair-finance' ) );
+			}
+		} else {
+			$payer = null;
+		}
+
+		$event_date_id = $result['event_date_id'];
+		if ( ! $event_date_id ) {
+			return self::field_error( 'event_date_id', __( 'Event cash and personally paid entries must belong to an event.', 'fair-finance' ) );
+		}
+		$event_changed = ! $existing || (int) $existing->event_date_id !== $event_date_id;
+		if ( $event_changed && ! self::event_date_exists( $event_date_id ) ) {
+			return self::field_error( 'event_date_id', __( 'The selected event was not found.', 'fair-finance' ), 'rest_event_date_not_found' );
+		}
+
+		if ( $existing ) {
+			$conflict = self::classification_conflict( $existing );
+			if ( $conflict && $source !== $existing->payment_source ) {
+				return $conflict;
+			}
+		}
+
+		return array(
+			'payment_source' => $source,
+			'payer_name'     => $payer,
+		);
+	}
+
+	/**
+	 * Whether a Fair Events event date exists.
+	 *
+	 * @param int $event_date_id Event date ID.
+	 * @return bool
+	 */
+	private static function event_date_exists( $event_date_id ) {
+		return class_exists( '\\FairEvents\\Models\\EventDates' )
+			&& (bool) \FairEvents\Models\EventDates::get_by_id( (int) $event_date_id );
+	}
+
+	/**
+	 * Why an entry cannot carry a payment source, if it cannot.
+	 *
+	 * Split parents and allocations are counted through each other, and an
+	 * entry matched to online payments already stands for those payments, so
+	 * classifying either as cash would change what the totals mean.
+	 *
+	 * @param FinancialEntry $entry Entry.
+	 * @return WP_Error|null
+	 */
+	private static function classification_conflict( $entry ) {
+		if ( $entry->parent_entry_id || FinancialEntry::has_children( $entry->id ) ) {
+			return new WP_Error(
+				'rest_entry_split',
+				__( 'A split entry cannot be recorded as event cash or personally paid. Remove the split first.', 'fair-finance' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		if ( ! empty( $entry->transaction_ids ) || $entry->transaction_id ) {
+			return new WP_Error(
+				'rest_entry_matched',
+				__( 'An entry matched to online payments cannot be recorded as event cash or personally paid. Unmatch it first.', 'fair-finance' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Refuse an operation that would change what a classified entry means.
+	 *
+	 * @param FinancialEntry $entry   Entry.
+	 * @param string         $message Translated, actionable explanation.
+	 * @return WP_Error|null
+	 */
+	private static function classified_entry_guard( $entry, $message ) {
+		if ( ! $entry->is_classified() ) {
+			return null;
+		}
+
+		return new WP_Error( 'rest_entry_classified', $message, array( 'status' => 409 ) );
 	}
 
 	/**
@@ -937,12 +1194,9 @@ class FinancialEntryController extends WP_REST_Controller {
 		$event_date_id  = $request->get_param( 'event_date_id' );
 		$tag            = $request->get_param( 'tag' );
 
-		if ( empty( $amount ) || $amount <= 0 ) {
-			return new WP_Error(
-				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		$invalid = self::validate_amount_and_date( $amount, $entry_date );
+		if ( $invalid ) {
+			return $invalid;
 		}
 
 		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
@@ -953,12 +1207,17 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		if ( empty( $entry_date ) ) {
-			return new WP_Error(
-				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		$payment = self::resolve_payment(
+			$request,
+			null,
+			array(
+				'entry_type'    => $entry_type,
+				'description'   => $description,
+				'event_date_id' => ! empty( $event_date_id ) ? (int) $event_date_id : null,
+			)
+		);
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
 		}
 
 		$entry_id = FinancialEntry::create(
@@ -970,7 +1229,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			! empty( $transaction_id ) ? $transaction_id : null,
 			! empty( $event_url ) ? $event_url : null,
 			! empty( $event_date_id ) ? $event_date_id : null,
-			! empty( $tag ) ? $tag : null
+			! empty( $tag ) ? $tag : null,
+			$payment
 		);
 
 		if ( ! $entry_id ) {
@@ -1014,12 +1274,9 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		if ( empty( $amount ) || $amount <= 0 ) {
-			return new WP_Error(
-				'rest_invalid_amount',
-				__( 'Amount must be greater than zero.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		$invalid = self::validate_amount_and_date( $amount, $entry_date );
+		if ( $invalid ) {
+			return $invalid;
 		}
 
 		if ( ! in_array( $entry_type, array( 'cost', 'income' ), true ) ) {
@@ -1030,12 +1287,20 @@ class FinancialEntryController extends WP_REST_Controller {
 			);
 		}
 
-		if ( empty( $entry_date ) ) {
-			return new WP_Error(
-				'rest_invalid_entry_date',
-				__( 'Entry date is required.', 'fair-finance' ),
-				array( 'status' => 400 )
-			);
+		// The stored source and payer stay unless the request names them, and
+		// the resulting record is validated as a whole, so an edit from the
+		// general accounting editor cannot leave a classified entry invalid.
+		$payment = self::resolve_payment(
+			$request,
+			$existing,
+			array(
+				'entry_type'    => $entry_type,
+				'description'   => $description,
+				'event_date_id' => ! empty( $event_date_id ) ? (int) $event_date_id : null,
+			)
+		);
+		if ( is_wp_error( $payment ) ) {
+			return $payment;
 		}
 
 		$success = FinancialEntry::update(
@@ -1048,7 +1313,8 @@ class FinancialEntryController extends WP_REST_Controller {
 			! empty( $transaction_id ) ? $transaction_id : null,
 			! empty( $event_url ) ? $event_url : null,
 			! empty( $event_date_id ) ? $event_date_id : null,
-			! empty( $tag ) ? $tag : null
+			! empty( $tag ) ? $tag : null,
+			$payment
 		);
 
 		if ( ! $success ) {
@@ -1121,6 +1387,14 @@ class FinancialEntryController extends WP_REST_Controller {
 				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		$guard = self::classified_entry_guard(
+			$entry,
+			__( 'Event cash and personally paid entries cannot be matched to online payments.', 'fair-finance' )
+		);
+		if ( $guard ) {
+			return $guard;
 		}
 
 		// has_param(), not get_param(), so the administrator explicitly
@@ -1295,6 +1569,14 @@ class FinancialEntryController extends WP_REST_Controller {
 				__( 'Financial entry not found.', 'fair-finance' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		$guard = self::classified_entry_guard(
+			$entry,
+			__( 'Event cash and personally paid entries cannot be split. Edit the entry instead, or record each part as its own operation.', 'fair-finance' )
+		);
+		if ( $guard ) {
+			return $guard;
 		}
 
 		// Cannot split a child entry.

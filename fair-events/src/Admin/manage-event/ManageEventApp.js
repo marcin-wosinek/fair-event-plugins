@@ -1139,6 +1139,10 @@ export default function ManageEventApp() {
 						!! window.fairEventsManageEventData
 							?.purchasePaymentsAvailable
 					}
+					financeManageable={
+						!! window.fairEventsManageEventData?.financeManageable
+					}
+					defaultEntryDate={ eventDate?.start_date || '' }
 				/>
 			),
 		},
