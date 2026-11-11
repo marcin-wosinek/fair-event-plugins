@@ -172,6 +172,9 @@ class Plugin {
 		$participants_controller = new \FairAudience\API\ParticipantsController();
 		$participants_controller->register_routes();
 
+		$participant_migration_controller = new \FairAudience\API\ParticipantMigrationController();
+		$participant_migration_controller->register_routes();
+
 		$event_participants_controller = new \FairAudience\API\EventParticipantsController();
 		$event_participants_controller->register_routes();
 

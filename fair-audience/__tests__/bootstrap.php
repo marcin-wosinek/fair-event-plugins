@@ -253,6 +253,18 @@ if ( ! function_exists( 'is_email' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sanitize_email' ) ) {
+	/**
+	 * Stub of WordPress sanitize_email().
+	 *
+	 * @param string $email Address to clean.
+	 * @return string The address without characters an email cannot hold.
+	 */
+	function sanitize_email( $email ) {
+		return (string) filter_var( trim( (string) $email ), FILTER_SANITIZE_EMAIL );
+	}
+}
+
 if ( ! function_exists( 'absint' ) ) {
 	/**
 	 * Stub of WordPress absint().
