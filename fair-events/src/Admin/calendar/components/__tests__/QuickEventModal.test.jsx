@@ -107,40 +107,139 @@ const openMoreOptions = () => {
 	fireEvent.click( screen.getByRole( 'button', { name: 'More options' } ) );
 };
 
+const addCategory = ( name ) => {
+	const categoryField = screen.getByLabelText( 'Categories' );
+	fireEvent.change( categoryField, { target: { value: name } } );
+	fireEvent.keyDown( categoryField, { key: 'Enter', code: 'Enter' } );
+};
+
+const tokenNames = () =>
+	Array.from(
+		// The visible name; each token also carries a hidden "(n of m)" label.
+		document.querySelectorAll(
+			'.components-form-token-field__token-text [aria-hidden="true"]'
+		)
+	).map( ( node ) => node.textContent.trim() );
+
+const removeCategory = ( name ) => {
+	const token = Array.from(
+		document.querySelectorAll( '.components-form-token-field__token' )
+	).find( ( node ) => node.textContent.includes( name ) );
+	fireEvent.click(
+		within( token ).getByRole( 'button', { name: 'Remove item' } )
+	);
+};
+
+const createCallData = () =>
+	apiFetch.mock.calls.find(
+		( [ opts ] ) =>
+			opts.path === '/fair-events/v1/event-dates' &&
+			opts.method === 'POST'
+	)[ 0 ].data;
+
 describe( 'QuickEventModal', () => {
-	it( 'hides advanced fields behind "More options" by default', async () => {
+	it( 'shows Categories by default and keeps advanced fields collapsed (#2203)', async () => {
 		await renderModal();
-		expect( screen.queryByText( 'Categories' ) ).not.toBeInTheDocument();
+		expect( screen.getByLabelText( 'Categories' ) ).toBeInTheDocument();
 		expect( screen.queryByText( 'Link to' ) ).not.toBeInTheDocument();
 		expect(
 			screen.queryByText( 'Repeat this event' )
 		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole( 'button', { name: 'More options' } )
-		).toBeInTheDocument();
+		).toHaveAttribute( 'aria-expanded', 'false' );
 	} );
 
-	it( 'sends selected category IDs on create', async () => {
+	it( 'places Categories directly below Title (#2203)', async () => {
+		await renderModal();
+		const title = screen.getByLabelText( 'Title' );
+		const categoryField = screen.getByLabelText( 'Categories' );
+		const startDate = screen.getByLabelText( 'Start date' );
+		// Document order of the form's inputs.
+		const inputs = Array.from( document.querySelectorAll( 'input' ) );
+		expect( inputs.indexOf( categoryField ) ).toBeGreaterThan(
+			inputs.indexOf( title )
+		);
+		expect( inputs.indexOf( startDate ) ).toBeGreaterThan(
+			inputs.indexOf( categoryField )
+		);
+	} );
+
+	it( 'selects and removes categories without opening "More options" (#2203)', async () => {
 		const { onSuccess } = await renderModal();
 		fillTitle();
-		openMoreOptions();
 
-		const categoryField = await screen.findByLabelText( 'Categories' );
-		fireEvent.change( categoryField, { target: { value: 'Music' } } );
-		fireEvent.keyDown( categoryField, { key: 'Enter', code: 'Enter' } );
+		addCategory( 'Music' );
+		addCategory( 'Sports' );
+		expect( tokenNames() ).toEqual( [ 'Music', 'Sports' ] );
+
+		removeCategory( 'Music' );
+		expect( tokenNames() ).toEqual( [ 'Sports' ] );
+		expect(
+			screen.getByRole( 'button', { name: 'More options' } )
+		).toHaveAttribute( 'aria-expanded', 'false' );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Create Event' } )
 		);
-
 		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData().categories ).toEqual( [ 2 ] );
+	} );
 
-		const createCall = apiFetch.mock.calls.find(
-			( [ opts ] ) =>
-				opts.path === '/fair-events/v1/event-dates' &&
-				opts.method === 'POST'
+	it( 'creates an event without categories (#2203)', async () => {
+		const { onSuccess } = await renderModal();
+		fillTitle();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
 		);
-		expect( createCall[ 0 ].data.categories ).toEqual( [ 1 ] );
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData().categories ).toEqual( [] );
+	} );
+
+	it( 'keeps Categories visible and selected across tabs and a lookup (#2203)', async () => {
+		lookupResponse = {
+			title: 'Fetched Event',
+			start_date: '2026-07-01',
+			start_time: '18:00:00',
+			end_date: '2026-07-01',
+			end_time: '20:00:00',
+			all_day: false,
+			location: null,
+			source: 'schema',
+			found: [ 'title', 'start', 'end' ],
+		};
+		const { onSuccess } = await renderModal();
+		addCategory( 'Music' );
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		// The URL-entry screen stays focused on the lookup.
+		expect(
+			screen.queryByLabelText( 'Categories' )
+		).not.toBeInTheDocument();
+		fireEvent.click( screen.getByRole( 'radio', { name: 'Manual' } ) );
+		expect( tokenNames() ).toEqual( [ 'Music' ] );
+
+		fireEvent.click( screen.getByRole( 'radio', { name: 'From URL' } ) );
+		fireEvent.change( screen.getByLabelText( 'Event page URL' ), {
+			target: { value: 'https://example.com/event' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Look up' } ) );
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Fetched Event'
+			)
+		);
+
+		expect( screen.getByLabelText( 'Categories' ) ).toBeInTheDocument();
+		expect( tokenNames() ).toEqual( [ 'Music' ] );
+		addCategory( 'Sports' );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData().categories ).toEqual( [ 1, 2 ] );
 	} );
 
 	it( 'sends link_type external with the URL', async () => {
