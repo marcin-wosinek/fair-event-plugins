@@ -47,6 +47,33 @@ afterEach( () => {
 	jest.clearAllMocks();
 } );
 
+const deleteCalls = () =>
+	apiFetch.mock.calls.filter(
+		( [ options ] ) => options.method === 'DELETE'
+	);
+
+const NOTICE = { selector: '.components-notice__content' };
+
+const rowOf = ( name ) => screen.getByRole( 'link', { name } ).closest( 'tr' );
+
+/** Open a feed's overflow menu and choose one of its items. */
+async function chooseMenuItem( feed, item ) {
+	const toggle = screen.getByRole( 'button', {
+		name: `More actions for “${ feed }”`,
+	} );
+	act( () => toggle.focus() );
+	fireEvent.click( toggle );
+	const menu = await screen.findByRole( 'menu', {
+		name: `More actions for “${ feed }”`,
+	} );
+	await act( async () =>
+		fireEvent.click(
+			within( menu ).getByRole( 'menuitem', { name: item } )
+		)
+	);
+	return toggle;
+}
+
 describe( 'SourcesList', () => {
 	it( 'lists event feeds and keeps the existing view links', async () => {
 		render( <SourcesList /> );
@@ -116,7 +143,7 @@ describe( 'SourcesList', () => {
 		await screen.findByRole( 'link', { name: 'Club nights' } );
 
 		fireEvent.click(
-			screen.getAllByRole( 'button', { name: 'Edit' } )[ 0 ]
+			screen.getByRole( 'button', { name: 'Edit “Club nights”' } )
 		);
 
 		const dialog = screen.getByRole( 'dialog', {
@@ -137,6 +164,203 @@ describe( 'SourcesList', () => {
 				name: 'Update event feed',
 			} )
 		).toBeInTheDocument();
+	} );
+
+	describe( 'feed rows', () => {
+		it( 'combines name and slug, shows status text and keeps five columns', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+
+			expect(
+				screen
+					.getAllByRole( 'columnheader' )
+					.map( ( header ) => header.textContent )
+			).toEqual( [
+				'Feed',
+				'Feed inputs',
+				'WhatsApp',
+				'Status',
+				'Actions',
+			] );
+			const club = within( rowOf( 'Club nights' ) );
+			expect( club.getByText( 'club-nights' ) ).toHaveClass(
+				'fair-admin-table__identity-meta'
+			);
+			expect( club.getByText( 'Enabled' ) ).toHaveClass(
+				'fair-admin-table__status--success'
+			);
+			expect(
+				within( rowOf( 'Workshops' ) ).getByText( 'Disabled' )
+			).toHaveClass( 'fair-admin-table__status--neutral' );
+			expect(
+				screen.queryByRole( 'button', { name: 'View' } )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'names an unnamed feed with a fallback', async () => {
+			apiFetch.mockResolvedValue( [ { ...FEEDS[ 0 ], name: '' } ] );
+			render( <SourcesList /> );
+
+			expect(
+				await screen.findByRole( 'link', { name: '(untitled feed)' } )
+			).toHaveAttribute(
+				'href',
+				'admin.php?page=fair-events-source-view&source_id=3'
+			);
+			expect(
+				screen.getByRole( 'button', {
+					name: 'More actions for “(untitled feed)”',
+				} )
+			).toBeInTheDocument();
+		} );
+	} );
+
+	describe( 'copying feed URLs', () => {
+		let writeText;
+
+		beforeEach( () => {
+			window.fairEventsSourcesData = {
+				icalUrlTemplate:
+					'https://example.test/?rest_route=/fair-events/v1/sources/{slug}/ical',
+				jsonUrlTemplate:
+					'https://example.test/wp-json/fair-events/v1/sources/{slug}/json',
+			};
+			writeText = jest.fn().mockResolvedValue( undefined );
+			Object.defineProperty( window.navigator, 'clipboard', {
+				configurable: true,
+				value: { writeText },
+			} );
+		} );
+
+		afterEach( () => {
+			delete window.fairEventsSourcesData;
+			delete window.navigator.clipboard;
+		} );
+
+		it( 'copies the exact iCal and JSON URLs and confirms each', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+
+			const toggle = await chooseMenuItem(
+				'Club nights',
+				'Copy iCal feed URL'
+			);
+			expect( writeText ).toHaveBeenLastCalledWith(
+				'https://example.test/?rest_route=/fair-events/v1/sources/club-nights/ical'
+			);
+			expect(
+				await screen.findByText(
+					'iCal feed URL for “Club nights” copied.',
+					NOTICE
+				)
+			).toBeInTheDocument();
+			expect( toggle ).toHaveFocus();
+
+			await chooseMenuItem( 'Workshops', 'Copy JSON API URL' );
+			expect( writeText ).toHaveBeenLastCalledWith(
+				'https://example.test/wp-json/fair-events/v1/sources/workshops/json'
+			);
+			expect(
+				await screen.findByText(
+					'JSON API URL for “Workshops” copied.',
+					NOTICE
+				)
+			).toBeInTheDocument();
+		} );
+
+		it( 'shows the URL when the clipboard rejects the copy, and retries', async () => {
+			writeText.mockRejectedValueOnce( new Error( 'denied' ) );
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+
+			await chooseMenuItem( 'Club nights', 'Copy JSON API URL' );
+			expect(
+				await screen.findByText(
+					'The JSON API URL for “Club nights” could not be copied to the clipboard. Copy it here instead: https://example.test/wp-json/fair-events/v1/sources/club-nights/json',
+					NOTICE
+				)
+			).toBeInTheDocument();
+
+			await chooseMenuItem( 'Club nights', 'Copy JSON API URL' );
+			expect(
+				await screen.findByText(
+					'JSON API URL for “Club nights” copied.',
+					NOTICE
+				)
+			).toBeInTheDocument();
+		} );
+
+		it( 'explains a missing clipboard', async () => {
+			delete window.navigator.clipboard;
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+
+			await chooseMenuItem( 'Club nights', 'Copy iCal feed URL' );
+			expect(
+				await screen.findByText(
+					/could not be copied to the clipboard\. Copy it here instead: https:\/\/example\.test\/\?rest_route=\/fair-events\/v1\/sources\/club-nights\/ical$/,
+					NOTICE
+				)
+			).toBeInTheDocument();
+		} );
+	} );
+
+	describe( 'list states', () => {
+		it( 'reports an initial load failure and retries', async () => {
+			apiFetch.mockRejectedValueOnce( { message: 'Server down.' } );
+			render( <SourcesList /> );
+
+			expect(
+				await screen.findByText( 'Server down.', NOTICE )
+			).toBeInTheDocument();
+			expect(
+				screen.queryByText(
+					'No event feeds yet. Add your first event feed to get started.'
+				)
+			).not.toBeInTheDocument();
+
+			await act( async () =>
+				fireEvent.click(
+					screen.getByRole( 'button', { name: 'Try again' } )
+				)
+			);
+			expect(
+				await screen.findByRole( 'link', { name: 'Club nights' } )
+			).toBeInTheDocument();
+			expect(
+				screen.queryByText( 'Server down.', NOTICE )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'keeps the rows when a refresh fails', async () => {
+			render( <SourcesList /> );
+			await screen.findByRole( 'link', { name: 'Club nights' } );
+			apiFetch.mockImplementation( ( { method } ) =>
+				method === 'DELETE'
+					? Promise.resolve( { deleted: true } )
+					: Promise.reject( { message: 'Refresh failed.' } )
+			);
+
+			await chooseMenuItem( 'Club nights', 'Delete' );
+			await act( async () =>
+				fireEvent.click(
+					screen.getByRole( 'button', { name: 'Delete event feed' } )
+				)
+			);
+
+			expect(
+				await screen.findByText( 'Refresh failed.', NOTICE )
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole( 'link', { name: 'Club nights' } )
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole( 'link', { name: 'Workshops' } )
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole( 'button', { name: 'Try again' } )
+			).toBeInTheDocument();
+		} );
 	} );
 
 	describe( 'WhatsApp summary column', () => {
@@ -246,18 +470,11 @@ describe( 'SourcesList', () => {
 		const openDelete = async () => {
 			render( <SourcesList /> );
 			await screen.findByRole( 'link', { name: 'Club nights' } );
-			fireEvent.click(
-				screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
-			);
+			await chooseMenuItem( 'Club nights', 'Delete' );
 			return screen.getByRole( 'dialog', {
 				name: 'Delete event feed — Club nights',
 			} );
 		};
-		const deleteCalls = () =>
-			apiFetch.mock.calls.filter(
-				( [ options ] ) => options.method === 'DELETE'
-			);
-
 		it( 'names the feed and its URLs, and cancelling sends nothing', async () => {
 			const dialog = await openDelete();
 
@@ -276,6 +493,69 @@ describe( 'SourcesList', () => {
 
 			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 			expect( deleteCalls() ).toHaveLength( 0 );
+		} );
+
+		it( 'moves focus to the heading after deleting', async () => {
+			let remaining = FEEDS;
+			apiFetch.mockImplementation( ( { path, method } ) => {
+				if ( method === 'DELETE' ) {
+					remaining = FEEDS.slice( 1 );
+					return Promise.resolve( { deleted: true } );
+				}
+				return Promise.resolve(
+					path === '/fair-events/v1/sources' ? remaining : []
+				);
+			} );
+			const dialog = await openDelete();
+			await act( async () =>
+				fireEvent.click(
+					within( dialog ).getByRole( 'button', {
+						name: 'Delete event feed',
+					} )
+				)
+			);
+
+			expect(
+				screen.queryByRole( 'link', { name: 'Club nights' } )
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole( 'heading', { name: 'Event Feeds' } )
+			).toHaveFocus();
+		} );
+
+		it( 'blocks cancelling and a second submission while pending', async () => {
+			let finish;
+			apiFetch.mockImplementation( ( { path, method } ) => {
+				if ( method === 'DELETE' ) {
+					return new Promise( ( resolve ) => {
+						finish = resolve;
+					} );
+				}
+				return Promise.resolve(
+					path === '/fair-events/v1/sources' ? FEEDS : []
+				);
+			} );
+			const dialog = await openDelete();
+			const confirm = within( dialog ).getByRole( 'button', {
+				name: 'Delete event feed',
+			} );
+
+			act( () => {
+				fireEvent.click( confirm );
+				fireEvent.click( confirm );
+			} );
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Cancel' } )
+			);
+
+			expect( deleteCalls() ).toHaveLength( 1 );
+			expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+			expect(
+				within( dialog ).getByText( 'Deleting…' )
+			).toBeInTheDocument();
+
+			await act( async () => finish( { deleted: true } ) );
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		} );
 
 		it( 'keeps the dialog open on failure and retries', async () => {
