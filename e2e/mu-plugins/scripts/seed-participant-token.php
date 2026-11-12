@@ -37,6 +37,8 @@ echo 'E2E_TOKEN:' . wp_json_encode(
 	array(
 		'participantId' => (int) $participant->id,
 		'name'          => trim( $participant->name . ' ' . $participant->surname ),
+		'firstName'     => $participant->name,
+		'surname'       => $participant->surname,
 		'email'         => $participant->email,
 		'token'         => \FairAudience\Services\ParticipantToken::generate( (int) $participant->id, $event_date_id ),
 	)

@@ -195,7 +195,7 @@ test.describe.serial( 'Purchase recovery', () => {
 		);
 		expect( after ).toEqual(
 			expect.objectContaining( {
-				version: '3.55.0',
+				version: '3.56.0',
 				retired: false,
 				lifecycle: true,
 				relationship: true,

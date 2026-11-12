@@ -31,7 +31,10 @@ test.describe('unified signup participant-token identity', () => {
 		);
 		const form = page.locator('.fair-events-get-tickets-form');
 		await expect(form.locator('input[name="name"]')).toHaveValue(
-			participant.name
+			participant.firstName
+		);
+		await expect(form.locator('input[name="surname"]')).toHaveValue(
+			participant.surname
 		);
 		await expect(form.locator('input[name="email"]')).toHaveValue(
 			participant.email
