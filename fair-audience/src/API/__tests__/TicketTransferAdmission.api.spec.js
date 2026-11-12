@@ -611,15 +611,18 @@ test.describe.serial( 'Admission follows the ticket holder (#2133)', () => {
 	} );
 
 	test( 'an admission without tickets keeps its participant-level activities', async () => {
+		// Written directly, as one from before the payment history
+		// migration: the organizer routes now give a new signed_up
+		// relationship a Fair Events purchase and ticket at once (#2253).
 		const guestId = await createParticipant( 'Guest' );
-		const batch = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants/batch`,
+		const legacy = await api.post(
+			'/wp-json/fair-e2e/v1/participant-removal/legacy-relationship',
 			{
 				headers: adminHeaders,
-				data: { participant_ids: [ guestId ], label: 'signed_up' },
+				data: { participant_id: guestId, event_date_id: eventDateId },
 			}
 		);
-		expect( batch.ok(), await batch.text() ).toBeTruthy();
+		expect( legacy.ok(), await legacy.text() ).toBeTruthy();
 		const guest = await visitorFor( guestId );
 
 		const context = await viewerContext( guest );
