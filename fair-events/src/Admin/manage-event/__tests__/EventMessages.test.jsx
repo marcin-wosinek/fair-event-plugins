@@ -236,6 +236,38 @@ test( 'mounts the classic editor with link editing and saves what it holds', asy
 	);
 } );
 
+test( 'saves Code-view edits that fired no event', async () => {
+	const fakeEditor = {
+		isHidden: () => true,
+		getContent: () => '<p>Stale visual</p>',
+		setContent: jest.fn(),
+		setMode: jest.fn(),
+	};
+	window.tinymce = { get: () => fakeEditor };
+	window.wp = { editor: { initialize: jest.fn(), remove: jest.fn() } };
+	apiFetch
+		.mockResolvedValueOnce( {
+			message: '<p>Saved</p>',
+			series_event_date_id: null,
+		} )
+		.mockResolvedValueOnce( {
+			message: '<p>From <strong>Code</strong></p>',
+			series_event_date_id: null,
+		} );
+
+	renderTab();
+	( await editor() ).value = '<p>From <strong>Code</strong></p>';
+	await clickSave();
+
+	expect( apiFetch ).toHaveBeenLastCalledWith(
+		expect.objectContaining( {
+			method: 'PUT',
+			data: { message: '<p>From <strong>Code</strong></p>' },
+		} )
+	);
+	expect( await editor() ).toHaveValue( '<p>From <strong>Code</strong></p>' );
+} );
+
 test( 'a series date shows the series message read-only with a link to the series', async () => {
 	apiFetch.mockResolvedValueOnce( {
 		message: '<p>Series note</p>',
