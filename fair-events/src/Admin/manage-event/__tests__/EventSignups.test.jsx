@@ -3062,3 +3062,245 @@ describe( 'EventSignups — alphabetical order (#2217)', () => {
 		window.open.mockRestore();
 	} );
 } );
+
+describe( 'EventSignups — Print gate sheet (#2212)', () => {
+	const gateButton = () =>
+		screen.getByRole( 'button', { name: 'Print gate sheet' } );
+
+	const gateConfig = {
+		ticket_types: [
+			{ id: 3, name: 'General', disabled: false, disable_at: null },
+		],
+		sale_periods: [
+			{
+				id: 1,
+				name: 'Advance',
+				sale_start: '2036-01-01 00:00:00',
+				sale_end: '2036-06-20 00:00:00',
+			},
+			{
+				id: 2,
+				name: 'Day of event',
+				sale_start: '2036-06-20 00:00:00',
+				sale_end: null,
+			},
+		],
+		prices: [
+			{ ticket_type_id: 3, sale_period_id: 1, price: '20.00' },
+			{ ticket_type_id: 3, sale_period_id: 2, price: '25.00' },
+		],
+		options: [
+			{
+				id: 7,
+				name: 'Dinner buffet',
+				price: '12.00',
+				derive_price_from_sale_period: false,
+			},
+		],
+		created_date: '2035-12-01',
+	};
+
+	function captureWindow() {
+		const written = [];
+		const open = jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		return {
+			open,
+			doc: () =>
+				new window.DOMParser().parseFromString(
+					written.join( '' ),
+					'text/html'
+				),
+		};
+	}
+
+	async function renderGate( config = {}, props = {} ) {
+		mockApi( { ticketConfig: gateConfig, ...config } );
+		render(
+			<EventSignups
+				eventDateId={ 42 }
+				eventTitle="Summer Ball"
+				eventDateLabel="June 20, 2036 6:00 pm"
+				eventTiming={ {
+					start_date: '2036-06-20',
+					start_time: '18:00:00',
+				} }
+				finalOccurrenceDate="2036-06-20"
+				{ ...props }
+			/>
+		);
+		await waitFor( () => expect( gateButton() ).toBeEnabled() );
+	}
+
+	const visibleError = () =>
+		document.querySelector(
+			'.fair-events-signups .components-notice.is-error'
+		);
+
+	beforeEach( () => {
+		window.fairPaymentsConnector = { currency: 'PLN' };
+		window.fairEventsManageEventData = { siteToday: '2036-01-15' };
+	} );
+
+	afterEach( () => {
+		jest.restoreAllMocks();
+	} );
+
+	it( 'prints event-start prices and blank rows when nobody signed up, without changing anything', async () => {
+		await renderGate( { rows: [] } );
+		await screen.findByText( 'No confirmed registrations yet.' );
+		expect(
+			screen.getByRole( 'button', { name: 'Print list' } )
+		).toBeDisabled();
+		const preview = captureWindow();
+
+		fireEvent.click( gateButton() );
+
+		const doc = preview.doc();
+		expect( doc.querySelector( 'h1' ).textContent ).toBe( 'Summer Ball' );
+		expect( doc.body.textContent ).toContain( 'June 20, 2036 6:00 pm' );
+		const reference = doc.querySelector( 'table.reference' ).textContent;
+		expect( reference ).toContain( '25.00 PLN' );
+		expect( reference ).not.toContain( '20.00 PLN' );
+		expect( doc.body.textContent ).toContain( '12.00 PLN' );
+		expect( doc.querySelectorAll( 'table.sheet tbody tr' ) ).toHaveLength(
+			20
+		);
+		const methods = apiFetch.mock.calls.map(
+			( [ request ] ) => request.method || 'GET'
+		);
+		expect( methods.every( ( method ) => method === 'GET' ) ).toBe( true );
+	} );
+
+	it( 'leaves existing attendees and the mailing filter out of the sheet', async () => {
+		await renderGate();
+		await screen.findByText( 'Ada Lovelace' );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+		);
+		const preview = captureWindow();
+
+		fireEvent.click( gateButton() );
+
+		const text = preview.doc().body.textContent;
+		expect( preview.open ).toHaveBeenCalledTimes( 1 );
+		expect( text ).not.toContain( 'Ada Lovelace' );
+		expect( text ).not.toContain( 'ada@example.com' );
+		expect( text ).not.toContain( 'REF00101' );
+	} );
+
+	it( 'loads the series for a date of a series and prices the date’s own start', async () => {
+		mockApi( { ticketConfig: gateConfig, rows: [] } );
+		const base = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( request ) =>
+			request.path === '/fair-events/v1/event-dates/7'
+				? Promise.resolve( {
+						start_date: '2036-06-13',
+						generated_occurrences: [
+							{ start_date: '2036-06-20', status: 'active' },
+						],
+					} )
+				: base( request )
+		);
+		render(
+			<EventSignups
+				eventDateId={ 42 }
+				configEventDateId={ 7 }
+				eventTiming={ { start_date: '2036-06-13' } }
+			/>
+		);
+		await waitFor( () => expect( gateButton() ).toBeEnabled() );
+		const preview = captureWindow();
+
+		fireEvent.click( gateButton() );
+
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/event-dates/7/tickets',
+		} );
+		expect( preview.doc().body.textContent ).toContain( '20.00 PLN' );
+	} );
+
+	it( 'asks for a period when the event start is outside every period, and says so on paper', async () => {
+		await renderGate(
+			{ rows: [] },
+			{ eventTiming: { start_date: '2035-06-01' } }
+		);
+		const preview = captureWindow();
+
+		fireEvent.click( gateButton() );
+
+		expect( preview.open ).not.toHaveBeenCalled();
+		const dialog = screen.getByRole( 'dialog', {
+			name: 'Choose the prices for the gate sheet',
+		} );
+		fireEvent.click(
+			within( dialog ).getByRole( 'radio', { name: /^Day of event/ } )
+		);
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Print gate sheet' } )
+		);
+
+		expect( preview.open ).toHaveBeenCalledTimes( 1 );
+		const doc = preview.doc();
+		expect( doc.querySelector( '.period' ).textContent ).toContain(
+			'Day of event (chosen manually)'
+		);
+		expect( doc.body.textContent ).toContain( '25.00 PLN' );
+		expect( screen.queryByRole( 'dialog' ) ).toBeNull();
+	} );
+
+	it( 'keeps the period picker open when the window is blocked', async () => {
+		await renderGate(
+			{ rows: [] },
+			{ eventTiming: { start_date: '2035-06-01' } }
+		);
+		jest.spyOn( window, 'open' ).mockReturnValue( null );
+		fireEvent.click( gateButton() );
+		const dialog = screen.getByRole( 'dialog' );
+
+		fireEvent.click(
+			within( dialog ).getByRole( 'button', { name: 'Print gate sheet' } )
+		);
+
+		expect(
+			within( dialog ).getByText( /Could not open the print window/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'explains a blocked print window', async () => {
+		await renderGate( { rows: [] } );
+		jest.spyOn( window, 'open' ).mockReturnValue( null );
+
+		fireEvent.click( gateButton() );
+
+		expect( visibleError() ).toHaveTextContent(
+			'Could not open the print window. Allow pop-ups for this site and try again.'
+		);
+	} );
+
+	it( 'explains a configuration error and loads the prices again on request', async () => {
+		await renderGate( { rows: [], ticketConfig: new Error( 'nope' ) } );
+		const open = jest.spyOn( window, 'open' );
+
+		fireEvent.click( gateButton() );
+
+		expect( open ).not.toHaveBeenCalled();
+		expect( visibleError() ).toHaveTextContent(
+			'The gate sheet is unavailable because the prices of this event could not be loaded.'
+		);
+
+		mockApi( { rows: [], ticketConfig: gateConfig } );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Load prices again' } )
+		);
+		await waitFor( () => expect( gateButton() ).toBeEnabled() );
+		const preview = captureWindow();
+		fireEvent.click( gateButton() );
+		expect( preview.doc().body.textContent ).toContain( '25.00 PLN' );
+	} );
+} );

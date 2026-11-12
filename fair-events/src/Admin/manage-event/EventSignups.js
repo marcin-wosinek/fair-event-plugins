@@ -21,12 +21,21 @@ import {
 	ToggleControl,
 	Flex,
 	FlexItem,
+	Modal,
+	RadioControl,
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
 import { sortSignupsByName } from './signup-order.js';
 import { buildSignupPrintHtml, openPrintWindow } from './signup-print.js';
+import { buildGateSheetHtml, gatePricingWarnings } from './gate-sheet-print.js';
+import {
+	resolveGatePricing,
+	GATE_PRICING_NEEDS_PERIOD,
+} from './gate-sheet-pricing.js';
+import { resolveFinalOccurrenceDate } from './salePeriodBoundaries.js';
+import { exclusiveEndToInclusiveDate } from './EventTickets.js';
 import {
 	buildSignupSummary,
 	formatSignupSummary,
@@ -42,6 +51,18 @@ import SignupEditModal, {
 	ACTION_CHANGE_TYPE,
 } from './SignupEditModal.js';
 import ConfirmActionModal from '../components/ConfirmActionModal.js';
+import { formatSiteLocalDate } from 'fair-events-shared/src/dateTime.js';
+
+// Ticket configuration before it loads: `status` is 'loading', 'ready' or
+// 'error'.
+const EMPTY_TICKET_CONFIG = {
+	status: 'loading',
+	ticketTypes: [],
+	options: [],
+	salePeriods: [],
+	prices: [],
+	createdDate: null,
+};
 
 // Override recorded when an administrator added an activity to a ticket
 // past its limit (fair-audience's Audience tab).
@@ -686,13 +707,54 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 }
 
 /**
+ * Choices of the gate sheet's pricing-period picker: each configured period
+ * with its saved dates.
+ *
+ * @param {Object[]} salePeriods Saved sale periods, in order.
+ * @return {Array<{label: string, value: string}>} Radio options
+ */
+export function gatePeriodOptions( salePeriods ) {
+	return ( salePeriods || [] ).map( ( period ) => {
+		const day = ( value ) =>
+			value ? formatSiteLocalDate( String( value ).slice( 0, 10 ) ) : '';
+		const start = day( period.sale_start );
+		// Saved ends are the first day off sale; show the last day on sale.
+		const end = day(
+			period.sale_end
+				? exclusiveEndToInclusiveDate( String( period.sale_end ) )
+				: ''
+		);
+		let label = period.name || __( 'Unnamed period', 'fair-events' );
+		if ( start || end ) {
+			label = sprintf(
+				/* translators: 1: pricing period name, 2: first day on sale, 3: last day on sale */
+				__( '%1$s (%2$s – %3$s)', 'fair-events' ),
+				label,
+				start || __( 'automatic', 'fair-events' ),
+				end || __( 'automatic', 'fair-events' )
+			);
+		}
+		return { label, value: String( period.id ) };
+	} );
+}
+
+/**
  * @param {Object} props
- * @param {number} props.eventDateId       Date the List is showing.
- * @param {number} props.configEventDateId Date holding the ticket types and
- *                                         extras: the series for one of its
- *                                         dates, otherwise the date itself.
- * @param {string} props.eventTitle        Event title, for the printout.
- * @param {string} props.eventDateLabel    Event date, for the printout.
+ * @param {number} props.eventDateId         Date the List is showing.
+ * @param {number} props.configEventDateId   Date holding the ticket types and
+ *                                           extras: the series for one of its
+ *                                           dates, otherwise the date itself.
+ * @param {string} props.eventTitle          Event title, for the printout.
+ * @param {string} props.eventDateLabel      Event date, for the printout.
+ * @param {Object} props.eventTiming         Timing of the date shown
+ *                                           (`start_date`, `start_time`,
+ *                                           `all_day`): the gate sheet prices
+ *                                           its start.
+ * @param {string} props.finalOccurrenceDate End day of the final occurrence
+ *                                           of the event or series holding the
+ *                                           ticket configuration; undefined
+ *                                           when only that event knows it (a
+ *                                           date of a series), so it is loaded.
  * @return {Element} List
  */
 export default function EventSignups( {
@@ -700,16 +762,31 @@ export default function EventSignups( {
 	configEventDateId = eventDateId,
 	eventTitle = '',
 	eventDateLabel = '',
+	eventTiming = null,
+	finalOccurrenceDate,
 } ) {
 	const audienceActive = !! window.fairEventsManageEventData?.audienceUrl;
 	const [ signups, setSignups ] = useState( [] );
 	// Ticket types and extras of the date; `status` is 'loading', 'ready' or
 	// 'error'.
-	const [ ticketConfig, setTicketConfig ] = useState( {
+	const [ ticketConfig, setTicketConfig ] = useState( EMPTY_TICKET_CONFIG );
+	// Bumped to load the ticket configuration again after a failure.
+	const [ configAttempt, setConfigAttempt ] = useState( 0 );
+	// Gate sheet: the pricing-period picker (null = closed, otherwise the
+	// chosen period ID) and the last problem printing it.
+	const [ gatePeriodPicker, setGatePeriodPicker ] = useState( null );
+	const [ gateNotice, setGateNotice ] = useState( null );
+	// The series' last date, when this date belongs to a series.
+	const [ seriesFinalDate, setSeriesFinalDate ] = useState( {
 		status: 'loading',
-		ticketTypes: [],
-		options: [],
+		date: null,
 	} );
+	const gateBoundary =
+		finalOccurrenceDate !== undefined
+			? { status: 'ready', date: finalOccurrenceDate }
+			: seriesFinalDate;
+	const gateLoading =
+		ticketConfig.status === 'loading' || gateBoundary.status === 'loading';
 	const ticketOptions = ticketConfig.options;
 	const [ summaryFeedback, setSummaryFeedback ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
@@ -772,7 +849,7 @@ export default function EventSignups( {
 	};
 
 	useEffect( () => {
-		setTicketConfig( { status: 'loading', ticketTypes: [], options: [] } );
+		setTicketConfig( EMPTY_TICKET_CONFIG );
 		setSummaryFeedback( null );
 		if ( ! configEventDateId ) {
 			return;
@@ -785,30 +862,60 @@ export default function EventSignups( {
 		} )
 			.then( ( data ) => {
 				if ( current ) {
+					const list = ( value ) =>
+						Array.isArray( value ) ? value : [];
 					setTicketConfig( {
 						status: 'ready',
-						ticketTypes: Array.isArray( data?.ticket_types )
-							? data.ticket_types
-							: [],
-						options: Array.isArray( data?.options )
-							? data.options
-							: [],
+						ticketTypes: list( data?.ticket_types ),
+						options: list( data?.options ),
+						salePeriods: list( data?.sale_periods ),
+						prices: list( data?.prices ),
+						createdDate: data?.created_date || null,
 					} );
 				}
 			} )
 			.catch( () => {
 				if ( current ) {
 					setTicketConfig( {
+						...EMPTY_TICKET_CONFIG,
 						status: 'error',
-						ticketTypes: [],
-						options: [],
 					} );
 				}
 			} );
 		return () => {
 			current = false;
 		};
-	}, [ configEventDateId ] );
+	}, [ configEventDateId, configAttempt ] );
+
+	// A date of a series prices its own start, but the series' last date
+	// bounds the last pricing period. Only the series knows it, so it is
+	// loaded for the gate sheet alone.
+	useEffect( () => {
+		if ( finalOccurrenceDate !== undefined || ! configEventDateId ) {
+			return;
+		}
+		setSeriesFinalDate( { status: 'loading', date: null } );
+		let current = true;
+		apiFetch( {
+			path: `/fair-events/v1/event-dates/${ configEventDateId }`,
+		} )
+			.then( ( data ) => {
+				if ( current ) {
+					setSeriesFinalDate( {
+						status: 'ready',
+						date: resolveFinalOccurrenceDate( data ),
+					} );
+				}
+			} )
+			.catch( () => {
+				if ( current ) {
+					setSeriesFinalDate( { status: 'error', date: null } );
+				}
+			} );
+		return () => {
+			current = false;
+		};
+	}, [ configEventDateId, finalOccurrenceDate, configAttempt ] );
 
 	if ( loading ) {
 		return <Spinner />;
@@ -867,6 +974,64 @@ export default function EventSignups( {
 						'fair-events'
 					)
 		);
+	};
+
+	const printGateSheet = ( selectedPeriodId = null ) => {
+		const pricing = resolveGatePricing( {
+			config: ticketConfig,
+			eventTiming,
+			siteToday: window.fairEventsManageEventData?.siteToday || '',
+			finalOccurrenceDate: gateBoundary.date,
+			selectedPeriodId,
+		} );
+		if ( pricing.status === GATE_PRICING_NEEDS_PERIOD ) {
+			setGateNotice( null );
+			setGatePeriodPicker( pricing.periods[ 0 ]?.id ?? null );
+			return;
+		}
+		const html = buildGateSheetHtml( {
+			title: getEventDisplayTitle( eventTitle ),
+			dateLabel: eventDateLabel,
+			currency: window.fairPaymentsConnector?.currency || 'EUR',
+			pricing,
+			warnings: gatePricingWarnings( pricing ),
+			lang: document.documentElement.lang || 'en',
+		} );
+		// Opened from the click itself, or browsers block the window. A
+		// blocked window keeps the period picker open for a retry.
+		if ( ! openPrintWindow( html ) ) {
+			setGateNotice( {
+				message: __(
+					'Could not open the print window. Allow pop-ups for this site and try again.',
+					'fair-events'
+				),
+			} );
+			return;
+		}
+		setGateNotice( null );
+		setGatePeriodPicker( null );
+	};
+
+	const handleGateSheet = () => {
+		if (
+			ticketConfig.status !== 'ready' ||
+			gateBoundary.status !== 'ready'
+		) {
+			setGateNotice( {
+				message: __(
+					'The gate sheet is unavailable because the prices of this event could not be loaded.',
+					'fair-events'
+				),
+				canRetry: true,
+			} );
+			return;
+		}
+		printGateSheet();
+	};
+
+	const retryGateSheetConfig = () => {
+		setGateNotice( null );
+		setConfigAttempt( ( attempt ) => attempt + 1 );
 	};
 
 	// Copies from the click itself: browsers grant clipboard access only
@@ -1181,6 +1346,21 @@ export default function EventSignups( {
 							{ __( 'Print list', 'fair-events' ) }
 						</Button>
 					</FlexItem>
+					<FlexItem>
+						<Button
+							variant="secondary"
+							onClick={ handleGateSheet }
+							isBusy={ gateLoading }
+							disabled={ gateLoading }
+							accessibleWhenDisabled
+							description={ __(
+								'Print the prices and blank rows for people who register and pay at the event, without existing registrations',
+								'fair-events'
+							) }
+						>
+							{ __( 'Print gate sheet', 'fair-events' ) }
+						</Button>
+					</FlexItem>
 				</Flex>
 			</CardHeader>
 			<CardBody>
@@ -1198,6 +1378,27 @@ export default function EventSignups( {
 						onRemove={ () => setPrintError( null ) }
 					>
 						{ printError }
+					</Notice>
+				) }
+				{ gateNotice && gatePeriodPicker === null && (
+					<Notice
+						status="error"
+						onRemove={ () => setGateNotice( null ) }
+						actions={
+							gateNotice.canRetry
+								? [
+										{
+											label: __(
+												'Load prices again',
+												'fair-events'
+											),
+											onClick: retryGateSheetConfig,
+										},
+									]
+								: []
+						}
+					>
+						{ gateNotice.message }
 					</Notice>
 				) }
 				{ deleteNotice && (
@@ -1383,6 +1584,58 @@ export default function EventSignups( {
 						loadSignups();
 					} }
 				/>
+			) }
+			{ gatePeriodPicker !== null && (
+				<Modal
+					title={ __(
+						'Choose the prices for the gate sheet',
+						'fair-events'
+					) }
+					onRequestClose={ () => {
+						setGatePeriodPicker( null );
+						setGateNotice( null );
+					} }
+					style={ { maxWidth: '560px', width: '100%' } }
+				>
+					<p style={ { overflowWrap: 'anywhere' } }>
+						{ __(
+							'The event start is not within exactly one pricing period, so the gate sheet cannot pick its prices. Choose the pricing period to print; the sheet will say it was chosen manually.',
+							'fair-events'
+						) }
+					</p>
+					<RadioControl
+						label={ __( 'Pricing period', 'fair-events' ) }
+						selected={ String( gatePeriodPicker ) }
+						options={ gatePeriodOptions(
+							ticketConfig.salePeriods
+						) }
+						onChange={ ( value ) =>
+							setGatePeriodPicker( Number( value ) )
+						}
+					/>
+					<Flex justify="flex-end" gap={ 2 } wrap>
+						<Button
+							variant="tertiary"
+							onClick={ () => {
+								setGatePeriodPicker( null );
+								setGateNotice( null );
+							} }
+						>
+							{ __( 'Cancel', 'fair-events' ) }
+						</Button>
+						<Button
+							variant="primary"
+							onClick={ () => printGateSheet( gatePeriodPicker ) }
+						>
+							{ __( 'Print gate sheet', 'fair-events' ) }
+						</Button>
+					</Flex>
+					{ gateNotice && (
+						<Notice status="error" isDismissible={ false }>
+							{ gateNotice.message }
+						</Notice>
+					) }
+				</Modal>
 			) }
 			{ isExportModalOpen && (
 				<SignupExportModal

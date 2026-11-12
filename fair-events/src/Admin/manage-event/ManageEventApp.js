@@ -1089,6 +1089,12 @@ export default function ManageEventApp() {
 					}
 					eventTitle={ getEventDisplayTitle( title ) }
 					eventDateLabel={ formatTimingStart( eventDate ) }
+					// The gate sheet prices this date's own start; a date
+					// of a series loads the series' last date itself.
+					eventTiming={ eventDate }
+					finalOccurrenceDate={
+						isGeneratedOccurrence ? undefined : lastOccurrenceDate
+					}
 				/>
 			),
 		},
