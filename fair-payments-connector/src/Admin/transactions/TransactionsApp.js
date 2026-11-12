@@ -14,13 +14,21 @@ import {
 	Card,
 	CardHeader,
 	CardBody,
-	Spinner,
 	Notice,
 	SelectControl,
 	TextControl,
 	Button,
+	CheckboxControl,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
+import {
+	AdminTable,
+	AdminTableCell,
+	ItemIdentity,
+	StatusLabel,
+	RowActions,
+	TableMessage,
+} from 'fair-events-shared/src/admin-table/index.js';
 
 /**
  * Internal dependencies
@@ -69,7 +77,12 @@ const DEFAULT_QUERY = {
 	order: 'desc',
 };
 
-const EMPTY_RESULT = { transactions: [], total: 0, pages: 0 };
+// `query` is the query object these rows answer, so rows from a previous
+// query are never presented as matching a newer one.
+const EMPTY_RESULT = { transactions: [], total: 0, pages: 0, query: null };
+
+// Every criterion off: nothing is hidden, so no rows means no transactions.
+const UNFILTERED_CRITERIA = { ...DEFAULT_CRITERIA, status: '', mode: '' };
 
 const AMOUNT_PATTERN = /^\d{1,9}(\.\d{1,2})?$/;
 
@@ -233,28 +246,83 @@ const FILTER_FIELD_STYLE = { flex: '1 1 150px', minWidth: '140px' };
 const FILTER_SEARCH_STYLE = { flex: '2 1 260px', minWidth: '200px' };
 const FIELD_ERROR_STYLE = { color: '#d63638' };
 
-const getStatusStyle = ( status ) => {
-	switch ( status ) {
-		case 'paid':
-			return { color: '#007017', fontWeight: 'bold' };
-		case 'failed':
-		case 'canceled':
-		case 'expired':
-			return { color: '#d63638', fontWeight: 'bold' };
-		case 'open':
-		case 'pending':
-		case 'pending_payment':
-			return { color: '#996800', fontWeight: 'bold' };
-		default:
-			return {};
-	}
+const STATUS_TONES = {
+	paid: 'success',
+	failed: 'error',
+	canceled: 'error',
+	expired: 'error',
+	open: 'warning',
+	pending: 'warning',
+	pending_payment: 'warning',
 };
 
-const getModeStyle = ( testmode ) => {
-	return testmode
-		? { color: '#996800', fontWeight: 'bold' }
-		: { color: '#007017', fontWeight: 'bold' };
+/**
+ * Translated sentence-case status text; an unknown stored value is shown
+ * as recorded, capitalized.
+ *
+ * @param {string} status Stored status.
+ * @return {string} Label.
+ */
+const statusLabel = ( status ) => {
+	const known = STATUS_OPTIONS.find(
+		( option ) => option.value !== '' && option.value === status
+	);
+	if ( known ) {
+		return known.label;
+	}
+	return status ? status.charAt( 0 ).toUpperCase() + status.slice( 1 ) : '—';
 };
+
+/**
+ * Amount with two decimals and its currency, or a dash when missing. Zero
+ * stays "0.00", so a recorded zero fee is told apart from a missing one.
+ *
+ * @param {number|null} amount   Amount.
+ * @param {string}      currency Currency code.
+ * @return {string} Formatted amount.
+ */
+const formatMoney = ( amount, currency ) =>
+	amount === null || amount === undefined || Number.isNaN( Number( amount ) )
+		? '—'
+		: `${ Number( amount ).toFixed( 2 ) } ${ currency }`;
+
+const transactionUrl = ( id ) =>
+	`admin.php?page=fair-payments-connector-transaction&transaction_id=${ id }`;
+
+const SORT_OPTIONS = [
+	{
+		label: __( 'Date, newest first', 'fair-payments-connector' ),
+		value: 'created_at:desc',
+	},
+	{
+		label: __( 'Date, oldest first', 'fair-payments-connector' ),
+		value: 'created_at:asc',
+	},
+	{
+		label: __( 'Amount, highest first', 'fair-payments-connector' ),
+		value: 'amount:desc',
+	},
+	{
+		label: __( 'Amount, lowest first', 'fair-payments-connector' ),
+		value: 'amount:asc',
+	},
+	{
+		label: __( 'Transaction ID, highest first', 'fair-payments-connector' ),
+		value: 'id:desc',
+	},
+	{
+		label: __( 'Transaction ID, lowest first', 'fair-payments-connector' ),
+		value: 'id:asc',
+	},
+	{
+		label: __( 'Status, descending', 'fair-payments-connector' ),
+		value: 'status:desc',
+	},
+	{
+		label: __( 'Status, ascending', 'fair-payments-connector' ),
+		value: 'status:asc',
+	},
+];
 
 const TransactionsApp = () => {
 	// Present only while Fair Finance is active; entry references stay plain
@@ -282,7 +350,11 @@ const TransactionsApp = () => {
 	// can't replace newer results.
 	const requestRef = useRef( 0 );
 
-	const { transactions } = result;
+	// Rows are shown only for the query that produced them. A refresh of the
+	// same query (retry, fee load, import) keeps them on screen; a new
+	// filter, sort or page hides them until its own response arrives.
+	const isCurrent = result.query === query;
+	const transactions = isCurrent ? result.transactions : [];
 	const { criteria } = query;
 	const draftErrors = getCriteriaErrors( draft );
 	const canApply = Object.keys( draftErrors ).length === 0;
@@ -320,12 +392,13 @@ const TransactionsApp = () => {
 
 	const loadTransactions = useCallback( async () => {
 		const requestId = ++requestRef.current;
+		const requested = queryRef.current;
 		setLoading( true );
 		setLoadError( null );
 
 		try {
 			const data = await apiFetch( {
-				path: buildListPath( queryRef.current ),
+				path: buildListPath( requested ),
 			} );
 			if ( requestId !== requestRef.current ) {
 				return;
@@ -335,6 +408,7 @@ const TransactionsApp = () => {
 				transactions: data.transactions,
 				total: data.total,
 				pages: data.pages,
+				query: requested,
 			} );
 			// A refresh keeps only the selected rows that are still shown.
 			const visibleIds = new Set(
@@ -351,8 +425,8 @@ const TransactionsApp = () => {
 				return;
 			}
 
-			setResult( EMPTY_RESULT );
-			setSelectedTransactions( new Set() );
+			// Keep the rows and selection already shown; a failure of a new
+			// query has none of its own, since they belong to the old one.
 			setLoadError(
 				err.message ||
 					__(
@@ -433,9 +507,9 @@ const TransactionsApp = () => {
 		} );
 	};
 
-	const getSortIndicator = ( column ) => {
-		if ( query.orderby !== column ) return '';
-		return query.order === 'asc' ? ' \u25B2' : ' \u25BC';
+	const handleSortSelect = ( value ) => {
+		const [ orderby, order ] = value.split( ':' );
+		changeQuery( { orderby, order } );
 	};
 
 	const toggleTransactionSelection = ( id ) => {
@@ -509,18 +583,368 @@ const TransactionsApp = () => {
 		loadTransactions();
 	};
 
-	const sortableHeader = ( column, label ) => (
-		<th
-			style={ { cursor: 'pointer' } }
-			onClick={ () => handleSort( column ) }
-		>
-			{ label }
-			{ getSortIndicator( column ) }
-		</th>
+	const columns = {
+		select: __( 'Select', 'fair-payments-connector' ),
+		transaction: __( 'Transaction', 'fair-payments-connector' ),
+		person: __( 'Person', 'fair-payments-connector' ),
+		date: __( 'Date', 'fair-payments-connector' ),
+		amount: __( 'Amount', 'fair-payments-connector' ),
+		status: __( 'Status', 'fair-payments-connector' ),
+		entry: __( 'Entry', 'fair-payments-connector' ),
+		actions: __( 'Actions', 'fair-payments-connector' ),
+	};
+	const selectAllLabel = __(
+		'Select all transactions on this page',
+		'fair-payments-connector'
 	);
 
+	/**
+	 * Column header. Sortable columns hold a button, so sorting works from
+	 * the keyboard, and announce their order with `aria-sort`. Called as a
+	 * function, not rendered as a component, so the button keeps its DOM
+	 * node (and focus) across re-renders.
+	 *
+	 * @param {string} label   Header text.
+	 * @param {string} column  Sort key, or empty for a plain header.
+	 * @param {string} variant Shared table cell variant.
+	 * @return {Element} The header cell.
+	 */
+	const headerCell = ( label, column = '', variant = '' ) => {
+		const isActive = column && query.orderby === column;
+		let ariaSort;
+		if ( isActive ) {
+			ariaSort = query.order === 'asc' ? 'ascending' : 'descending';
+		}
+		const variantClass = variant
+			? ` fair-admin-table__header--${ variant }`
+			: '';
+		return (
+			<th
+				key={ label }
+				scope="col"
+				aria-sort={ ariaSort }
+				className={ `fair-admin-table__header${ variantClass }` }
+			>
+				{ column ? (
+					<button
+						type="button"
+						className="fair-payments-transactions__sort"
+						onClick={ () => handleSort( column ) }
+					>
+						{ label }
+						{ isActive && (
+							<span aria-hidden="true">
+								{ query.order === 'asc' ? ' ▲' : ' ▼' }
+							</span>
+						) }
+					</button>
+				) : (
+					label
+				) }
+			</th>
+		);
+	};
+
+	const renderPerson = ( t ) => {
+		if ( t.participant ) {
+			return (
+				<a href={ t.participant.admin_url }>
+					{ t.participant.name ||
+						t.participant.email ||
+						`#${ t.participant.id }` }
+				</a>
+			);
+		}
+		return t.user_name || '—';
+	};
+
+	const renderEntries = ( t ) => {
+		if ( ! t.entry_ids || t.entry_ids.length === 0 ) {
+			return '—';
+		}
+		return (
+			<span>
+				{ t.entry_ids.map( ( entryId, index ) => (
+					<Fragment key={ entryId }>
+						{ index > 0 && ', ' }
+						{ financeEntriesUrl ? (
+							<a
+								href={ `${ financeEntriesUrl }&entry_id=${ entryId }` }
+							>
+								{ `#${ entryId }` }
+							</a>
+						) : (
+							`#${ entryId }`
+						) }
+					</Fragment>
+				) ) }
+			</span>
+		);
+	};
+
+	const renderRow = ( t ) => {
+		const reference = `#${ t.id }`;
+		const url = transactionUrl( t.id );
+		return (
+			<tr key={ t.id }>
+				<td
+					className="fair-admin-table__cell fair-payments-transactions__select"
+					data-label={ columns.select }
+				>
+					<input
+						type="checkbox"
+						aria-label={ sprintf(
+							// translators: %d is the transaction ID.
+							__(
+								'Select transaction #%d',
+								'fair-payments-connector'
+							),
+							t.id
+						) }
+						checked={ selectedTransactions.has( t.id ) }
+						onChange={ () => toggleTransactionSelection( t.id ) }
+					/>
+				</td>
+				<AdminTableCell variant="identity">
+					<ItemIdentity
+						title={ reference }
+						href={ url }
+						meta={
+							t.description ||
+							__( '(no description)', 'fair-payments-connector' )
+						}
+					/>
+				</AdminTableCell>
+				<AdminTableCell label={ columns.person }>
+					<span className="fair-payments-transactions__person">
+						{ renderPerson( t ) }
+					</span>
+				</AdminTableCell>
+				<AdminTableCell label={ columns.date }>
+					<span className="fair-payments-transactions__date">
+						{ t.created_at }
+					</span>
+				</AdminTableCell>
+				<AdminTableCell label={ columns.amount } variant="amount">
+					<div className="fair-payments-transactions__amount">
+						<span className="fair-payments-transactions__amount-main">
+							{ formatMoney( t.amount, t.currency ) }
+						</span>
+						<span className="fair-payments-transactions__fee">
+							{ sprintf(
+								// translators: %s is the Mollie fee with its currency, e.g. "0.54 EUR", or "—" when not recorded.
+								__(
+									'Mollie fee: %s',
+									'fair-payments-connector'
+								),
+								formatMoney( t.mollie_fee, t.currency )
+							) }
+						</span>
+						<span className="fair-payments-transactions__fee">
+							{ sprintf(
+								// translators: %s is the integration fee with its currency, e.g. "0.90 EUR", or "—" when not recorded.
+								__(
+									'Integration fee: %s',
+									'fair-payments-connector'
+								),
+								formatMoney( t.application_fee, t.currency )
+							) }
+						</span>
+					</div>
+				</AdminTableCell>
+				<AdminTableCell label={ columns.status } variant="status">
+					<div className="fair-payments-transactions__status">
+						<StatusLabel tone={ STATUS_TONES[ t.status ] }>
+							{ statusLabel( t.status ) }
+						</StatusLabel>
+						<span
+							className={ `fair-payments-transactions__mode fair-payments-transactions__mode--${
+								t.testmode ? 'test' : 'live'
+							}` }
+						>
+							{ t.testmode
+								? __( 'Test mode', 'fair-payments-connector' )
+								: __( 'Live mode', 'fair-payments-connector' ) }
+						</span>
+					</div>
+				</AdminTableCell>
+				<AdminTableCell label={ columns.entry }>
+					{ renderEntries( t ) }
+				</AdminTableCell>
+				<AdminTableCell label={ columns.actions } variant="actions">
+					<RowActions
+						primary={ {
+							label: __(
+								'View details',
+								'fair-payments-connector'
+							),
+							accessibleLabel: sprintf(
+								// translators: %d is the transaction ID.
+								__(
+									'View details for transaction #%d',
+									'fair-payments-connector'
+								),
+								t.id
+							),
+							href: url,
+						} }
+					/>
+				</AdminTableCell>
+			</tr>
+		);
+	};
+
+	const loadErrorMessage = loadError && (
+		<TableMessage
+			status="error"
+			onRetry={ loadTransactions }
+			retryLabel={ __( 'Try again', 'fair-payments-connector' ) }
+		>
+			{ loadError }
+		</TableMessage>
+	);
+
+	let emptyMessage;
+	if ( sameCriteria( criteria, UNFILTERED_CRITERIA ) ) {
+		emptyMessage = (
+			<TableMessage status="empty">
+				{ __(
+					'No transactions yet. Payments appear here once someone pays or after an import.',
+					'fair-payments-connector'
+				) }
+			</TableMessage>
+		);
+	} else if ( isDefaultCriteria ) {
+		emptyMessage = (
+			<TableMessage status="no-results">
+				{ __(
+					'No paid live transactions. Change the Status or Mode filter to see other transactions.',
+					'fair-payments-connector'
+				) }
+			</TableMessage>
+		);
+	} else {
+		emptyMessage = (
+			<TableMessage status="no-results">
+				{ __(
+					'No transactions match these filters. Change them or select “Reset filters”.',
+					'fair-payments-connector'
+				) }
+			</TableMessage>
+		);
+	}
+
+	const loadingMessage = (
+		<TableMessage status="loading">
+			{ __( 'Loading transactions…', 'fair-payments-connector' ) }
+		</TableMessage>
+	);
+
+	let listBody;
+	if ( transactions.length > 0 ) {
+		listBody = (
+			<>
+				{ loadErrorMessage }
+				{ loading && loadingMessage }
+				<div className="fair-payments-transactions__narrow-controls">
+					<SelectControl
+						label={ __( 'Sort by', 'fair-payments-connector' ) }
+						value={ `${ query.orderby }:${ query.order }` }
+						options={ SORT_OPTIONS }
+						onChange={ handleSortSelect }
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+					/>
+					<CheckboxControl
+						label={ selectAllLabel }
+						checked={ allVisibleSelected }
+						onChange={ toggleAllTransactions }
+						__nextHasNoMarginBottom
+					/>
+				</div>
+				<AdminTable
+					caption={ __(
+						'Payment transactions',
+						'fair-payments-connector'
+					) }
+				>
+					<thead>
+						<tr>
+							<th
+								scope="col"
+								className="fair-admin-table__header fair-payments-transactions__select"
+							>
+								<input
+									type="checkbox"
+									aria-label={ selectAllLabel }
+									checked={ allVisibleSelected }
+									onChange={ toggleAllTransactions }
+								/>
+							</th>
+							{ headerCell(
+								columns.transaction,
+								'id',
+								'identity'
+							) }
+							{ headerCell( columns.person ) }
+							{ headerCell( columns.date, 'created_at' ) }
+							{ headerCell( columns.amount, 'amount', 'amount' ) }
+							{ headerCell( columns.status, 'status', 'status' ) }
+							{ headerCell( columns.entry ) }
+							{ headerCell( columns.actions, '', 'actions' ) }
+						</tr>
+					</thead>
+					<tbody aria-busy={ loading || undefined }>
+						{ transactions.map( renderRow ) }
+					</tbody>
+				</AdminTable>
+
+				{ result.pages > 1 && (
+					<HStack
+						style={ {
+							marginTop: '16px',
+							justifyContent: 'center',
+						} }
+					>
+						<Button
+							variant="secondary"
+							disabled={ query.page <= 1 }
+							onClick={ () =>
+								changeQuery( {
+									page: query.page - 1,
+								} )
+							}
+						>
+							{ __( 'Previous', 'fair-payments-connector' ) }
+						</Button>
+						<span>
+							{ query.page } / { result.pages }
+						</span>
+						<Button
+							variant="secondary"
+							disabled={ query.page >= result.pages }
+							onClick={ () =>
+								changeQuery( {
+									page: query.page + 1,
+								} )
+							}
+						>
+							{ __( 'Next', 'fair-payments-connector' ) }
+						</Button>
+					</HStack>
+				) }
+			</>
+		);
+	} else if ( loading ) {
+		listBody = loadingMessage;
+	} else if ( loadError ) {
+		listBody = loadErrorMessage;
+	} else {
+		listBody = emptyMessage;
+	}
+
 	return (
-		<div className="wrap">
+		<div className="wrap fair-payments-transactions">
 			<h1>{ __( 'Payment Transactions', 'fair-payments-connector' ) }</h1>
 
 			<Card>
@@ -762,24 +1186,6 @@ const TransactionsApp = () => {
 						clearResult={ feeLoad.clearResult }
 					/>
 
-					{ loadError && (
-						<Notice
-							status="error"
-							isDismissible={ false }
-							actions={ [
-								{
-									label: __(
-										'Try again',
-										'fair-payments-connector'
-									),
-									onClick: loadTransactions,
-								},
-							] }
-						>
-							{ loadError }
-						</Notice>
-					) }
-
 					<div style={ { margin: '8px 0 12px' } }>
 						<span>
 							{ __(
@@ -811,7 +1217,7 @@ const TransactionsApp = () => {
 								</li>
 							) ) }
 						</ul>
-						{ ! loading && ! loadError && (
+						{ isCurrent && (
 							<p style={ { margin: '8px 0 0' } }>
 								<strong>
 									{ sprintf(
@@ -829,285 +1235,7 @@ const TransactionsApp = () => {
 						) }
 					</div>
 
-					{ loading && <Spinner /> }
-
-					{ ! loading && ! loadError && transactions.length === 0 && (
-						<p>
-							{ isDefaultCriteria
-								? __(
-										'No transactions found.',
-										'fair-payments-connector'
-									)
-								: __(
-										'No transactions match these filters. Change them or select “Reset filters”.',
-										'fair-payments-connector'
-									) }
-						</p>
-					) }
-
-					{ ! loading && transactions.length > 0 && (
-						<>
-							<table
-								className="wp-list-table widefat striped"
-								style={ { whiteSpace: 'nowrap' } }
-							>
-								<thead>
-									<tr>
-										<td className="check-column">
-											<input
-												type="checkbox"
-												checked={ allVisibleSelected }
-												onChange={
-													toggleAllTransactions
-												}
-											/>
-										</td>
-										{ sortableHeader(
-											'id',
-											__(
-												'ID',
-												'fair-payments-connector'
-											)
-										) }
-										{ sortableHeader(
-											'amount',
-											__(
-												'Amount',
-												'fair-payments-connector'
-											)
-										) }
-										<th>
-											{ __(
-												'Mollie Fee',
-												'fair-payments-connector'
-											) }
-										</th>
-										<th>
-											{ __(
-												'Integration Fee',
-												'fair-payments-connector'
-											) }
-										</th>
-										{ sortableHeader(
-											'status',
-											__(
-												'Status',
-												'fair-payments-connector'
-											)
-										) }
-										<th>
-											{ __(
-												'Mode',
-												'fair-payments-connector'
-											) }
-										</th>
-										<th
-											style={ {
-												maxWidth: '200px',
-												whiteSpace: 'normal',
-											} }
-										>
-											{ __(
-												'Description',
-												'fair-payments-connector'
-											) }
-										</th>
-										<th>
-											{ __(
-												'Person',
-												'fair-payments-connector'
-											) }
-										</th>
-										<th>
-											{ __(
-												'Entry',
-												'fair-payments-connector'
-											) }
-										</th>
-										{ sortableHeader(
-											'created_at',
-											__(
-												'Date',
-												'fair-payments-connector'
-											)
-										) }
-									</tr>
-								</thead>
-								<tbody>
-									{ transactions.map( ( t ) => (
-										<tr key={ t.id }>
-											<th className="check-column">
-												<input
-													type="checkbox"
-													checked={ selectedTransactions.has(
-														t.id
-													) }
-													onChange={ () =>
-														toggleTransactionSelection(
-															t.id
-														)
-													}
-												/>
-											</th>
-											<td>
-												<a
-													href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ t.id }` }
-												>
-													{ t.id }
-												</a>
-											</td>
-											<td>
-												<strong>
-													{ t.amount.toFixed( 2 ) }
-												</strong>{ ' ' }
-												{ t.currency }
-											</td>
-											<td>
-												{ t.mollie_fee !== null
-													? `${ t.mollie_fee.toFixed(
-															2
-														) } ${ t.currency }`
-													: '-' }
-											</td>
-											<td>
-												{ t.application_fee !== null
-													? `${ t.application_fee.toFixed(
-															2
-														) } ${ t.currency }`
-													: '-' }
-											</td>
-											<td>
-												<span
-													style={ getStatusStyle(
-														t.status
-													) }
-												>
-													{ t.status
-														.charAt( 0 )
-														.toUpperCase() +
-														t.status.slice( 1 ) }
-												</span>
-											</td>
-											<td>
-												<span
-													style={ getModeStyle(
-														t.testmode
-													) }
-												>
-													{ t.testmode
-														? __(
-																'Test',
-																'fair-payments-connector'
-															)
-														: __(
-																'Live',
-																'fair-payments-connector'
-															) }
-												</span>
-											</td>
-											<td
-												style={ {
-													maxWidth: '200px',
-													whiteSpace: 'normal',
-												} }
-											>
-												{ t.description }
-											</td>
-											<td>
-												{ t.participant ? (
-													<a
-														href={
-															t.participant
-																.admin_url
-														}
-													>
-														{ t.participant.name ||
-															t.participant
-																.email ||
-															`#${ t.participant.id }` }
-													</a>
-												) : (
-													t.user_name || '-'
-												) }
-											</td>
-											<td>
-												{ t.entry_ids &&
-												t.entry_ids.length > 0
-													? t.entry_ids.map(
-															(
-																entryId,
-																index
-															) => (
-																<Fragment
-																	key={
-																		entryId
-																	}
-																>
-																	{ index >
-																		0 &&
-																		', ' }
-																	{ financeEntriesUrl ? (
-																		<a
-																			href={ `${ financeEntriesUrl }&entry_id=${ entryId }` }
-																		>
-																			{ `#${ entryId }` }
-																		</a>
-																	) : (
-																		`#${ entryId }`
-																	) }
-																</Fragment>
-															)
-														)
-													: '-' }
-											</td>
-											<td>{ t.created_at }</td>
-										</tr>
-									) ) }
-								</tbody>
-							</table>
-
-							{ result.pages > 1 && (
-								<HStack
-									style={ {
-										marginTop: '16px',
-										justifyContent: 'center',
-									} }
-								>
-									<Button
-										variant="secondary"
-										disabled={ query.page <= 1 }
-										onClick={ () =>
-											changeQuery( {
-												page: query.page - 1,
-											} )
-										}
-									>
-										{ __(
-											'Previous',
-											'fair-payments-connector'
-										) }
-									</Button>
-									<span>
-										{ query.page } / { result.pages }
-									</span>
-									<Button
-										variant="secondary"
-										disabled={ query.page >= result.pages }
-										onClick={ () =>
-											changeQuery( {
-												page: query.page + 1,
-											} )
-										}
-									>
-										{ __(
-											'Next',
-											'fair-payments-connector'
-										) }
-									</Button>
-								</HStack>
-							) }
-						</>
-					) }
+					{ listBody }
 				</CardBody>
 			</Card>
 
