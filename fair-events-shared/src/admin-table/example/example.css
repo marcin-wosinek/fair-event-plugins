@@ -13,27 +13,6 @@
 	outline-offset: 2px;
 }
 
-.fair-admin-table-example__toolbar {
-	align-items: flex-end;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px 16px;
-	margin: 16px 0;
-}
-
-.fair-admin-table-example__toolbar .components-base-control {
-	flex: 1 1 200px;
-}
-
-.fair-admin-table-example__toolbar .components-base-control__field {
-	margin-bottom: 0;
-}
-
-.fair-admin-table-example__count {
-	color: #50575e;
-	margin: 0 0 8px auto;
-}
-
 .fair-admin-table-example .components-notice {
 	margin: 0 0 16px;
 }

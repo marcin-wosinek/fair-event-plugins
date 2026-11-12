@@ -4,17 +4,20 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
-import { ExternalLink, Notice } from '@wordpress/components';
+import { Button, ExternalLink, Notice } from '@wordpress/components';
 
 /**
  * Shared dependencies
  */
-import { TableMessage } from 'fair-events-shared/src/admin-table/index.js';
+import {
+	ListHeader,
+	TableMessage,
+} from 'fair-events-shared/src/admin-table/index.js';
 
 /**
  * Internal dependencies
  */
-import AddNotification from './AddNotification.js';
+import AddNotification, { ADD_KIND_ID } from './AddNotification.js';
 import ConfigurationView from './ConfigurationView.js';
 import HistoryView from './HistoryView.js';
 import NotificationList from './NotificationList.js';
@@ -282,6 +285,16 @@ export default function EventNotifications( { sourcesUrl } ) {
 		}
 	}, [ view ] );
 
+	// The add form stays below the list; the header and an empty list
+	// lead to it.
+	const goToAdd = useCallback( () => {
+		const field = document.getElementById( ADD_KIND_ID );
+		if ( field ) {
+			field.scrollIntoView?.( { block: 'center' } );
+			field.focus();
+		}
+	}, [] );
+
 	const noFeed = data && 0 === data.sources.length && (
 		<Notice status="warning" isDismissible={ false }>
 			{ __(
@@ -370,6 +383,7 @@ export default function EventNotifications( { sourcesUrl } ) {
 					onDeleted={ onDeleted }
 					deleted={ deleted }
 					onDismissDeleted={ () => setDeleted( null ) }
+					onAdd={ goToAdd }
 				/>
 				<AddNotification types={ data.types } onAdded={ onAdded } />
 				<p className="description">
@@ -388,7 +402,17 @@ export default function EventNotifications( { sourcesUrl } ) {
 	return (
 		<DraftsContext.Provider value={ store }>
 			<div className="wrap fair-events-notifications">
-				<h1>{ __( 'Event notifications', 'fair-events' ) }</h1>
+				<ListHeader
+					title={ __( 'Event notifications', 'fair-events' ) }
+					actions={
+						data &&
+						'list' === view && (
+							<Button variant="primary" onClick={ goToAdd }>
+								{ __( 'Add a notification', 'fair-events' ) }
+							</Button>
+						)
+					}
+				/>
 
 				{ loadError && (
 					<TableMessage

@@ -279,3 +279,215 @@
 		text-align: left;
 	}
 }
+
+/*
+ * Header, toolbar, applied filters and pagination around the table
+ * (ListLayout.js). Scoped to their own `.fair-admin-list-*` classes.
+ */
+.fair-admin-list-header {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	margin: 0 0 8px;
+}
+
+/* WordPress places admin notices after this marker; it takes no room. */
+.fair-admin-list-header + .wp-header-end {
+	border: 0;
+	height: 0;
+	margin: 0;
+}
+
+.wrap .fair-admin-list-header__title,
+.fair-admin-list-header__title {
+	margin: 0;
+	padding: 9px 0 4px;
+}
+
+.fair-admin-list-header__title:focus {
+	border-radius: 2px;
+	box-shadow: 0 0 0 2px var(--wp-admin-theme-color, #3858e9);
+	outline: 2px solid transparent;
+}
+
+.fair-admin-list-header__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.fair-admin-list-toolbar {
+	margin: 0 0 12px;
+}
+
+/*
+ * Fields line up by their labels, so a help line under one field does not
+ * shift the others; unlabeled items start at the inputs' line.
+ */
+.fair-admin-list-toolbar__row {
+	--fair-admin-list-label-offset: 24px;
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 16px;
+}
+
+/* Without labeled fields there is nothing to line up with. */
+.fair-admin-list-toolbar__row:not(:has(.fair-admin-list-toolbar__field)) {
+	--fair-admin-list-label-offset: 0;
+}
+
+.fair-admin-list-toolbar__field {
+	flex: 1 1 160px;
+	max-width: 280px;
+	min-width: 0;
+}
+
+.fair-admin-list-toolbar__field--wide {
+	flex: 2 1 260px;
+	max-width: 400px;
+}
+
+.fair-admin-list-toolbar__field .components-base-control__field,
+.fair-admin-list-toolbar__panel .components-base-control__field {
+	margin-bottom: 0;
+}
+
+.fair-admin-list-toolbar__field .components-base-control__help,
+.fair-admin-list-toolbar__panel .components-base-control__help {
+	margin-bottom: 0;
+}
+
+.fair-admin-list-toolbar__actions,
+.fair-admin-list-toolbar__selection {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	min-height: 40px;
+}
+
+.fair-admin-list-toolbar__selection {
+	margin-top: var(--fair-admin-list-label-offset);
+}
+
+.fair-admin-list-toolbar__actions {
+	margin-top: var(--fair-admin-list-label-offset);
+}
+
+.fair-admin-list-toolbar__selection {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	box-sizing: border-box;
+	padding: 0 8px 0 12px;
+}
+
+.fair-admin-list-toolbar__count {
+	color: #50575e;
+	line-height: 40px;
+	margin: var(--fair-admin-list-label-offset) 0 0 auto;
+	white-space: nowrap;
+}
+
+.fair-admin-list-toolbar__panel {
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 16px;
+	margin-top: 12px;
+}
+
+.fair-admin-list-toolbar__panel[hidden] {
+	display: none;
+}
+
+.fair-admin-list-toolbar__panel > * {
+	flex: 1 1 160px;
+	max-width: 280px;
+	min-width: 0;
+}
+
+.fair-admin-list-toolbar__panel > .fair-admin-list-toolbar__panel-note {
+	flex-basis: 100%;
+	margin: 0;
+	max-width: none;
+}
+
+.fair-admin-list-applied {
+	align-items: baseline;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	margin: 0 0 12px;
+}
+
+.fair-admin-list-applied__items {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.fair-admin-list-applied__item {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	margin: 0;
+	overflow-wrap: anywhere;
+	padding: 0 8px;
+}
+
+.fair-admin-list-pagination {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: flex-end;
+	margin: 12px 0 16px;
+}
+
+.fair-admin-list-pagination__position {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Narrow screens: every toolbar control full width, in the same order. */
+@media (max-width: 782px) {
+	.fair-admin-list-toolbar__row,
+	.fair-admin-list-toolbar__panel {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.fair-admin-list-toolbar__field,
+	.fair-admin-list-toolbar__field--wide,
+	.fair-admin-list-toolbar__panel > * {
+		flex: none;
+		max-width: none;
+		width: 100%;
+	}
+
+	.fair-admin-list-toolbar__row {
+		--fair-admin-list-label-offset: 0;
+	}
+
+	.fair-admin-list-toolbar__count {
+		line-height: inherit;
+		margin: 0;
+		white-space: normal;
+	}
+
+	.fair-admin-list-pagination .components-button {
+		flex: 1 1 auto;
+		justify-content: center;
+	}
+
+	.fair-admin-list-pagination__position {
+		flex-basis: 100%;
+		order: -1;
+		text-align: center;
+	}
+}

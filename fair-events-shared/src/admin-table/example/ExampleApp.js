@@ -28,6 +28,16 @@ import {
 	RowActions,
 	StatusLabel,
 	TableMessage,
+	ListHeader,
+	ListToolbar,
+	ListToolbarField,
+	MoreFiltersToggle,
+	MoreFiltersPanel,
+	ResultCount,
+	AppliedFilters,
+	SelectionSummary,
+	ListPagination,
+	pageRange,
 } from '../index.js';
 import { EXAMPLE_ROWS, SCENARIOS } from './fixtures.js';
 
@@ -114,6 +124,9 @@ export default function ExampleApp() {
 		: 'rows';
 
 	const [ scenario, setScenario ] = useState( initialScenario );
+	const [ moreOpen, setMoreOpen ] = useState( false );
+	const [ selected, setSelected ] = useState( 0 );
+	const [ listPage, setListPage ] = useState( 1 );
 	const [ rows, setRows ] = useState(
 		'empty' === initialScenario ? [] : EXAMPLE_ROWS
 	);
@@ -271,6 +284,18 @@ export default function ExampleApp() {
 			`${ nameOf( row ) } ${ row.meta }`.toLowerCase().includes( term )
 	);
 	const failed = 'error' === scenario;
+	// `&per_page=N` pages the rows, to review pagination.
+	const perPage = Math.max( 0, parseInt( readParam( 'per_page' ), 10 ) || 0 );
+	const totalPages = perPage ? Math.ceil( shown.length / perPage ) : 1;
+	const currentPage = Math.min( Math.max( 1, listPage ), totalPages || 1 );
+	const pageRows = perPage
+		? shown.slice( ( currentPage - 1 ) * perPage, currentPage * perPage )
+		: shown;
+	const { first, last } = pageRange(
+		currentPage,
+		perPage || shown.length,
+		shown.length
+	);
 
 	let body;
 	if ( 'loading' === scenario || reloading ) {
@@ -314,7 +339,7 @@ export default function ExampleApp() {
 					</tr>
 				</thead>
 				<tbody>
-					{ shown.map( ( row ) => (
+					{ pageRows.map( ( row ) => (
 						<tr key={ row.id }>
 							<AdminTableCell
 								label={ COLUMNS.item }
@@ -371,34 +396,100 @@ export default function ExampleApp() {
 
 	return (
 		<div className="wrap fair-admin-table-example">
-			<h1 ref={ headingRef } tabIndex={ -1 }>
-				Admin table example
-			</h1>
+			<ListHeader
+				ref={ headingRef }
+				title="Admin table example"
+				actions={
+					<Button variant="primary" onClick={ () => {} }>
+						Add entry
+					</Button>
+				}
+			/>
 			<p>
-				Foundation example (#2205) with synthetic data. Actions only
-				change this page’s local state; this is not a page migration.
+				Foundation example (#2205, #2210) with synthetic data. Actions
+				only change this page’s local state; this is not a page
+				migration.
 			</p>
-			<div className="fair-admin-table-example__toolbar">
-				<TextControl
-					label="Search entries"
-					value={ search }
-					onChange={ setSearch }
-				/>
-				<SelectControl
-					label="Scenario"
-					value={ scenario }
-					options={ SCENARIOS }
-					onChange={ chooseScenario }
-				/>
-				{ ! reloading && 'loading' !== scenario && (
-					<p
-						className="fair-admin-table-example__count"
-						role="status"
+			<ListToolbar
+				selection={
+					selected > 0 && (
+						<SelectionSummary label={ `${ selected } selected` }>
+							<Button
+								variant="secondary"
+								size="compact"
+								onClick={ () => setSelected( 0 ) }
+							>
+								Clear selection
+							</Button>
+						</SelectionSummary>
+					)
+				}
+				actions={
+					<>
+						<MoreFiltersToggle
+							panelId="fair-admin-table-example-more"
+							isOpen={ moreOpen }
+							onToggle={ () => setMoreOpen( ! moreOpen ) }
+							label="More filters"
+						/>
+						{ search && (
+							<Button
+								variant="tertiary"
+								onClick={ () => setSearch( '' ) }
+							>
+								Clear filters
+							</Button>
+						) }
+						<Button
+							variant="tertiary"
+							onClick={ () => setSelected( selected ? 0 : 2 ) }
+						>
+							Toggle selection
+						</Button>
+					</>
+				}
+				count={
+					! reloading &&
+					'loading' !== scenario &&
+					0 < shown.length && (
+						<ResultCount>
+							{ perPage
+								? `${ first }–${ last } of ${ shown.length } entries`
+								: `${ shown.length } of ${ rows.length } entries` }
+						</ResultCount>
+					)
+				}
+				panel={
+					<MoreFiltersPanel
+						id="fair-admin-table-example-more"
+						isOpen={ moreOpen }
+						label="More filters"
 					>
-						{ `${ shown.length } of ${ rows.length } entries` }
-					</p>
-				) }
-			</div>
+						<SelectControl
+							label="Scenario"
+							value={ scenario }
+							options={ SCENARIOS }
+							onChange={ chooseScenario }
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+					</MoreFiltersPanel>
+				}
+			>
+				<ListToolbarField wide>
+					<TextControl
+						label="Search entries"
+						value={ search }
+						onChange={ setSearch }
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+					/>
+				</ListToolbarField>
+			</ListToolbar>
+			<AppliedFilters
+				label="Applied filters:"
+				items={ search ? [ `Search: ${ search }` ] : [] }
+			/>
 			{ notice && (
 				<Notice status="success" onRemove={ () => setNotice( '' ) }>
 					{ notice }
@@ -415,6 +506,17 @@ export default function ExampleApp() {
 				</TableMessage>
 			) }
 			{ body }
+			{ 0 < shown.length && (
+				<ListPagination
+					page={ currentPage }
+					totalPages={ totalPages }
+					label="Entry pages"
+					positionLabel={ `Page ${ currentPage } of ${ totalPages }` }
+					previousLabel="Previous page"
+					nextLabel="Next page"
+					onChange={ setListPage }
+				/>
+			) }
 			{ deleting && (
 				<Modal
 					title={ `Delete entry — ${ nameOf( deleting.row ) }` }

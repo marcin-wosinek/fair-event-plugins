@@ -83,6 +83,9 @@ test.describe('Payment Transactions filters', () => {
 		const exportButton = page.getByRole('button', {
 			name: 'Export Selected',
 		});
+		const count = page.locator('.fair-admin-list-toolbar__count');
+		// Dates and amounts are under More filters.
+		const more = form.getByRole('button', { name: /^More filters/ });
 
 		await expect(page.getByText('Status: Paid')).toBeVisible();
 		await expect(page.getByText('Mode: Live')).toBeVisible();
@@ -93,18 +96,20 @@ test.describe('Payment Transactions filters', () => {
 			page.getByText('Filters changed. Select “Apply filters”')
 		).toBeVisible();
 		await search.press('Enter');
-		await expect(page.getByText('3 transactions found.')).toBeVisible();
+		await expect(count).toHaveText('3 transactions');
 		await expect(page.getByText(`Search: ${KEY}`)).toBeVisible();
 		await expect(page.getByText(`${KEY} failed hoodie`)).toHaveCount(0);
 
 		// The person shown on a row is searchable.
 		await search.fill(`Ines Buyer${KEY}`);
 		await apply.click();
-		await expect(page.getByText('1 transaction found.')).toBeVisible();
+		await expect(page.locator('.fair-admin-list-toolbar__count')).toHaveText('1 transaction');
 		await expect(page.getByText(`${KEY} poster`)).toBeVisible();
 
 		// A reversed range is explained and cannot be applied.
 		await search.fill(KEY);
+		await expect(more).toHaveAttribute('aria-expanded', 'false');
+		await more.click();
 		await form.getByLabel('Minimum amount').fill('50');
 		await form.getByLabel('Maximum amount').fill('10');
 		await expect(
@@ -112,12 +117,12 @@ test.describe('Payment Transactions filters', () => {
 				'The maximum amount must not be less than the minimum amount.'
 			)
 		).toBeVisible();
-		await expect(apply).toBeDisabled();
+		await expect(apply).toHaveAttribute('aria-disabled', 'true');
 
 		await form.getByLabel('Minimum amount').fill('10');
 		await form.getByLabel('Maximum amount').fill('');
 		await apply.click();
-		await expect(page.getByText('2 transactions found.')).toBeVisible();
+		await expect(count).toHaveText('2 transactions');
 		await expect(page.getByText('Amount at least 10')).toBeVisible();
 
 		// Select both displayed rows, then narrow the list: the selection is
@@ -127,7 +132,7 @@ test.describe('Payment Transactions filters', () => {
 
 		await form.getByLabel('Maximum amount').fill('20');
 		await apply.click();
-		await expect(page.getByText('1 transaction found.')).toBeVisible();
+		await expect(page.locator('.fair-admin-list-toolbar__count')).toHaveText('1 transaction');
 		await expect(exportButton).toHaveCount(0);
 
 		await page.locator('tbody input[type="checkbox"]').check();
@@ -151,7 +156,7 @@ test.describe('Payment Transactions filters', () => {
 		await expect(
 			page.getByText('No transactions match these filters.')
 		).toBeVisible();
-		await expect(page.getByText('0 transactions found.')).toBeVisible();
+		await expect(count).toHaveCount(0);
 		await expect(page.locator('.components-notice.is-error')).toHaveCount(
 			0
 		);
@@ -162,7 +167,8 @@ test.describe('Payment Transactions filters', () => {
 		await expect(form.getByLabel('Status')).toHaveValue('paid');
 		await expect(form.getByLabel('Mode')).toHaveValue('live');
 		await expect(page.getByText(`Search: ${KEY}`)).toHaveCount(0);
-		await expect(page.getByText(/transactions? found\./)).toBeVisible();
+		await expect(page.getByText('Status: Paid')).toBeVisible();
+		await expect(page.getByText('Mode: Live')).toBeVisible();
 	});
 
 	test('rows sort from the keyboard and View details opens the transaction', async ({
@@ -174,7 +180,9 @@ test.describe('Payment Transactions filters', () => {
 		const form = page.getByRole('form', { name: 'Filter transactions' });
 		await form.getByLabel('Search').fill(KEY);
 		await form.getByLabel('Search').press('Enter');
-		await expect(page.getByText('3 transactions found.')).toBeVisible();
+		await expect(
+			page.locator('.fair-admin-list-toolbar__count')
+		).toHaveText('3 transactions');
 
 		const table = page.getByRole('table', {
 			name: 'Payment transactions',
@@ -241,7 +249,7 @@ test.describe('Payment Transactions filters', () => {
 		const form = page.getByRole('form', { name: 'Filter transactions' });
 		await form.getByLabel('Search').fill(`Ines Buyer${KEY}`);
 		await form.getByLabel('Search').press('Enter');
-		await expect(page.getByText('1 transaction found.')).toBeVisible();
+		await expect(page.locator('.fair-admin-list-toolbar__count')).toHaveText('1 transaction');
 
 		const row = page.locator('.fair-admin-table tbody tr').first();
 		for (const text of [
@@ -270,7 +278,7 @@ test.describe('Payment Transactions filters', () => {
 		const sortBy = page.getByLabel('Sort by');
 		await expect(sortBy).toBeVisible();
 		await sortBy.selectOption('amount:asc');
-		await expect(page.getByText('1 transaction found.')).toBeVisible();
+		await expect(page.locator('.fair-admin-list-toolbar__count')).toHaveText('1 transaction');
 		await expect(
 			page.getByRole('checkbox', {
 				name: 'Select all transactions on this page',
@@ -294,6 +302,7 @@ test.describe('Payment Transactions filters', () => {
 				form.getByRole('button', { name: 'Apply filters' })
 			).toBeVisible();
 
+			await form.getByRole('button', { name: /^More filters/ }).click();
 			const formBox = await form.boundingBox();
 			expect(formBox.x).toBeGreaterThanOrEqual(0);
 			expect(formBox.x + formBox.width).toBeLessThanOrEqual(

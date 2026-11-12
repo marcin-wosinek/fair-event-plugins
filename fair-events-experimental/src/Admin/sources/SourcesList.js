@@ -4,16 +4,7 @@
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import {
-	Card,
-	CardHeader,
-	CardBody,
-	Button,
-	Notice,
-	Modal,
-	__experimentalVStack as VStack,
-	__experimentalHStack as HStack,
-} from '@wordpress/components';
+import { Button, Notice, Modal } from '@wordpress/components';
 
 /**
  * Shared dependencies
@@ -26,6 +17,9 @@ import {
 	StatusLabel,
 	RowActions,
 	TableMessage,
+	ListHeader,
+	ListToolbar,
+	ResultCount,
 } from 'fair-events-shared/src/admin-table/index.js';
 
 /**
@@ -366,6 +360,12 @@ const SourcesList = () => {
 		</TableMessage>
 	);
 
+	const addFirstButton = (
+		<Button variant="secondary" onClick={ handleCreate }>
+			{ __( 'Add your first event feed', 'fair-events-experimental' ) }
+		</Button>
+	);
+
 	let body;
 	if ( ! hasLoaded ) {
 		body =
@@ -381,81 +381,87 @@ const SourcesList = () => {
 			<>
 				{ loadErrorMessage }
 				{ sources.length === 0 ? (
-					<TableMessage status="empty">
+					<TableMessage status="empty" actions={ addFirstButton }>
 						{ __(
 							'No event feeds yet. Add your first event feed to get started.',
 							'fair-events-experimental'
 						) }
 					</TableMessage>
 				) : (
-					<AdminTable
-						caption={ __(
-							'Event feeds',
-							'fair-events-experimental'
-						) }
-					>
-						<thead>
-							<tr>
-								<AdminTableHeaderCell variant="identity">
-									{ columns.feed }
-								</AdminTableHeaderCell>
-								<AdminTableHeaderCell>
-									{ columns.inputs }
-								</AdminTableHeaderCell>
-								<AdminTableHeaderCell>
-									{ columns.whatsapp }
-								</AdminTableHeaderCell>
-								<AdminTableHeaderCell variant="status">
-									{ columns.status }
-								</AdminTableHeaderCell>
-								<AdminTableHeaderCell variant="actions">
-									{ columns.actions }
-								</AdminTableHeaderCell>
-							</tr>
-						</thead>
-						<tbody>{ sources.map( renderRow ) }</tbody>
-					</AdminTable>
+					<>
+						{ /* The complete list, unpaginated and unfiltered. */ }
+						<ListToolbar
+							count={
+								<ResultCount>
+									{ sprintf(
+										/* translators: %d: number of event feeds */
+										_n(
+											'%d event feed',
+											'%d event feeds',
+											sources.length,
+											'fair-events-experimental'
+										),
+										sources.length
+									) }
+								</ResultCount>
+							}
+						/>
+						<AdminTable
+							caption={ __(
+								'Event feeds',
+								'fair-events-experimental'
+							) }
+						>
+							<thead>
+								<tr>
+									<AdminTableHeaderCell variant="identity">
+										{ columns.feed }
+									</AdminTableHeaderCell>
+									<AdminTableHeaderCell>
+										{ columns.inputs }
+									</AdminTableHeaderCell>
+									<AdminTableHeaderCell>
+										{ columns.whatsapp }
+									</AdminTableHeaderCell>
+									<AdminTableHeaderCell variant="status">
+										{ columns.status }
+									</AdminTableHeaderCell>
+									<AdminTableHeaderCell variant="actions">
+										{ columns.actions }
+									</AdminTableHeaderCell>
+								</tr>
+							</thead>
+							<tbody>{ sources.map( renderRow ) }</tbody>
+						</AdminTable>
+					</>
 				) }
 			</>
 		);
 	}
 
 	return (
-		<div className="fair-events-sources-page">
-			<Card>
-				<CardHeader>
-					<HStack justify="space-between" wrap>
-						<h1
-							ref={ headingRef }
-							tabIndex={ -1 }
-							className="fair-events-sources-page__heading"
-						>
-							{ __( 'Event Feeds', 'fair-events-experimental' ) }
-						</h1>
-						<Button variant="primary" onClick={ handleCreate }>
-							{ __(
-								'Add Event Feed',
-								'fair-events-experimental'
-							) }
-						</Button>
-					</HStack>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={ 4 }>
-						{ notice && (
-							<Notice
-								key={ notice.key }
-								status={ notice.status }
-								isDismissible
-								onRemove={ () => setNotice( null ) }
-							>
-								{ notice.message }
-							</Notice>
-						) }
-						{ body }
-					</VStack>
-				</CardBody>
-			</Card>
+		<div className="wrap fair-events-sources-page">
+			<ListHeader
+				ref={ headingRef }
+				title={ __( 'Event Feeds', 'fair-events-experimental' ) }
+				actions={
+					<Button variant="primary" onClick={ handleCreate }>
+						{ __( 'Add Event Feed', 'fair-events-experimental' ) }
+					</Button>
+				}
+			/>
+			{ notice && (
+				<Notice
+					key={ notice.key }
+					status={ notice.status }
+					isDismissible
+					onRemove={ () => setNotice( null ) }
+					className="fair-events-sources-page__notice"
+				>
+					{ notice.message }
+				</Notice>
+			) }
+			{ body }
 
 			{ deleteFeed.target && (
 				<ConfirmActionModal

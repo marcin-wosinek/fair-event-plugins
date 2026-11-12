@@ -15,6 +15,7 @@ import { Button, Notice, Spinner } from '@wordpress/components';
  * @param {string}      props.retryLabel Error only: retry button text.
  * @param {Function}    props.onClear    No-results only: clear filters handler.
  * @param {string}      props.clearLabel No-results only: clear button text.
+ * @param {JSX.Element} props.actions    Empty only: next steps, e.g. a create button.
  * @return {JSX.Element} The message.
  */
 export default function TableMessage( {
@@ -24,6 +25,7 @@ export default function TableMessage( {
 	retryLabel,
 	onClear,
 	clearLabel,
+	actions,
 } ) {
 	if ( 'error' === status ) {
 		return (
@@ -72,6 +74,7 @@ export default function TableMessage( {
 					{ clearLabel }
 				</Button>
 			) }
+			{ 'empty' === status && actions }
 		</div>
 	);
 }

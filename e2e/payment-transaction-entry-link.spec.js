@@ -116,7 +116,7 @@ test.describe('Transaction entry link', () => {
 		await expect(notice).toBeVisible();
 		await expect(page.getByText(`${KEY} ticket share`)).toBeVisible();
 		await expect(page.getByText(`${KEY} donation share`)).toHaveCount(0);
-		await expect(page.getByLabel('From Date')).toHaveCount(0);
+		await expect(page.getByLabel('Budget', { exact: true })).toHaveCount(0);
 		// Totals reflect the focused child only.
 		await expect(
 			page.locator('.fair-finance-entries-summary')
@@ -126,7 +126,7 @@ test.describe('Transaction entry link', () => {
 
 		await expect(notice).toHaveCount(0);
 		await expect(page).not.toHaveURL(/entry_id=/);
-		await expect(page.getByLabel('From Date')).toBeVisible();
+		await expect(page.getByLabel('Budget', { exact: true })).toBeVisible();
 		// The full list hides split children under their parent again.
 		await expect(page.getByText(`${KEY} bank deposit`)).toBeVisible();
 		await expect(page.getByText(`${KEY} ticket share`)).toHaveCount(0);

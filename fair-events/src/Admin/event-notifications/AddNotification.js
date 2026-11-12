@@ -20,6 +20,12 @@ import {
 import { PATH, TYPE_LABELS, errorMessage } from './shared.js';
 
 /**
+ * ID of the Kind selection, the form's first field. The page header's
+ * “Add a notification” moves focus here.
+ */
+export const ADD_KIND_ID = 'fair-events-notifications-add-kind';
+
+/**
  * Add a notification of any kind. It starts paused with the kind's defaults;
  * `onAdded` opens its editor, where it is set up and turned on.
  *
@@ -107,6 +113,7 @@ export default function AddNotification( { types, onAdded } ) {
 
 				<div className="fair-events-notifications__fields">
 					<SelectControl
+						id={ ADD_KIND_ID }
 						label={ __( 'Kind', 'fair-events' ) }
 						value={ type }
 						options={ kinds.map( ( kind ) => ( {
