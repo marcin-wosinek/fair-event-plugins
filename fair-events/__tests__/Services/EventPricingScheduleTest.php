@@ -7,6 +7,7 @@
 
 namespace FairEvents\Tests\Services;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use FairEvents\Services\EventPricingSchedule;
 use FairEvents\Services\TicketAvailability;
@@ -164,12 +165,14 @@ class EventPricingScheduleTest extends TestCase {
 					'name'           => '2 workshops',
 					'state'          => 'priced',
 					'price'          => 60.0,
+					'disable_at'     => null,
 				),
 				array(
 					'ticket_type_id' => 2,
 					'name'           => 'Fusion pass',
 					'state'          => 'priced',
 					'price'          => 120.0,
+					'disable_at'     => null,
 				),
 			),
 			$result['periods'][0]['entries']
@@ -245,22 +248,119 @@ class EventPricingScheduleTest extends TestCase {
 	}
 
 	/**
-	 * A scheduled disable boundary already reached is dropped just like
-	 * manual disabling.
+	 * Provide moments before, at, and after a ticket type's deadline.
+	 *
+	 * @return array<string, array{string}>
 	 */
-	public function test_scheduled_disabled_type_is_omitted() {
-		$type             = $this->ticket_type( 1, 'Lapsed' );
+	public static function deadline_moments() {
+		return array(
+			'before deadline' => array( '2026-01-01 11:59:59' ),
+			'at deadline'     => array( '2026-01-01 12:00:00' ),
+			'after deadline'  => array( '2026-06-01 00:00:00' ),
+		);
+	}
+
+	/**
+	 * A passed "Stop selling on" deadline keeps the price row visible and
+	 * carries the deadline for display (#2187), while purchase eligibility
+	 * (TicketAvailability) still treats the type as unavailable once the
+	 * deadline is reached.
+	 *
+	 * @param string $now Current site datetime.
+	 */
+	#[DataProvider( 'deadline_moments' )]
+	public function test_deadline_type_is_retained_with_deadline( $now ) {
+		$type             = $this->ticket_type( 1, 'Early bird' );
 		$type->disable_at = '2026-01-01 12:00:00';
 
 		$result = EventPricingSchedule::build_schedule(
 			array( $type ),
+			array( $this->period( 10, null, '2025-12-01 00:00:00', '2026-12-01 00:00:00' ) ),
+			array( $this->price( 1, 10, 15.0 ) )
+		);
+
+		$this->assertTrue( $result['has_prices'] );
+		$this->assertCount( 1, $result['periods'][0]['entries'] );
+		$entry = $result['periods'][0]['entries'][0];
+		$this->assertSame( 1, $entry['ticket_type_id'] );
+		$this->assertSame( 'priced', $entry['state'] );
+		$this->assertSame( 15.0, $entry['price'] );
+		$this->assertSame( '2026-01-01 12:00:00', $entry['disable_at'] );
+
+		// Display retention leaves purchase eligibility untouched.
+		$this->assertSame(
+			$now < '2026-01-01 12:00:00',
+			TicketAvailability::is_ticket_type_enabled( $type, $now )
+		);
+	}
+
+	/**
+	 * The deadline repeats on every period row of the type, unchanged, and
+	 * free rows carry it too. Types with no deadline carry null.
+	 */
+	public function test_deadline_repeats_across_periods_and_free_rows() {
+		$early             = $this->ticket_type( 1, 'Early bird' );
+		$early->disable_at = '2026-01-15 18:30:00';
+
+		$result = EventPricingSchedule::build_schedule(
+			array( $early, $this->ticket_type( 2, 'Regular' ) ),
+			array(
+				$this->period( 10, 'First', '2026-01-01 00:00:00', '2026-02-01 00:00:00' ),
+				$this->period( 11, 'Second', '2026-02-01 00:00:00', '2026-03-01 00:00:00' ),
+			),
+			array(
+				$this->price( 1, 10, 0.0 ),
+				$this->price( 1, 11, 10.0 ),
+				$this->price( 2, 11, 20.0 ),
+			)
+		);
+
+		$first  = $result['periods'][0]['entries'];
+		$second = $result['periods'][1]['entries'];
+
+		$this->assertSame( 'free', $first[0]['state'] );
+		$this->assertSame( '2026-01-15 18:30:00', $first[0]['disable_at'] );
+		$this->assertSame( '2026-01-15 18:30:00', $second[0]['disable_at'] );
+		$this->assertSame( 2, $second[1]['ticket_type_id'] );
+		$this->assertNull( $second[1]['disable_at'] );
+	}
+
+	/**
+	 * Manual disabling still hides a type even when it also has a deadline.
+	 */
+	public function test_manually_disabled_type_with_deadline_is_omitted() {
+		$type             = $this->ticket_type( 1, 'Disabled', true );
+		$type->disable_at = '2030-01-01 00:00:00';
+
+		$result = EventPricingSchedule::build_schedule(
+			array( $type ),
 			array( $this->period( 10, null, '2026-01-01 00:00:00', '2026-12-01 00:00:00' ) ),
-			array( $this->price( 1, 10, 15.0 ) ),
-			'2026-01-01 12:00:00'
+			array( $this->price( 1, 10, 15.0 ) )
 		);
 
 		$this->assertSame( array(), $result['periods'] );
 		$this->assertFalse( $result['has_prices'] );
+	}
+
+	/**
+	 * Block visibility settings still hide an expired type's rows.
+	 */
+	public function test_filter_hides_expired_type() {
+		$expired             = $this->ticket_type( 1, 'Expired' );
+		$expired->disable_at = '2026-01-01 12:00:00';
+
+		$schedule = EventPricingSchedule::build_schedule(
+			array( $expired, $this->ticket_type( 2, 'Current' ) ),
+			array( $this->period( 10, null, '2026-01-01 00:00:00', '2026-12-01 00:00:00' ) ),
+			array(
+				$this->price( 1, 10, 15.0 ),
+				$this->price( 2, 10, 20.0 ),
+			)
+		);
+
+		$result = EventPricingSchedule::filter_schedule( $schedule, array( 1 ), array() );
+
+		$this->assertSame( array( 10 => array( 2 ) ), $this->shape( $result ) );
 	}
 
 	/**

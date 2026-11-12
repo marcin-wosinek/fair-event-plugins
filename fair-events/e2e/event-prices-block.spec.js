@@ -10,7 +10,9 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  * period only the ticket types available in it (#2165) —
  * and must follow the visitor's selected recurring-event occurrence.
  * Each block instance can also hide ticket types and sale periods from its
- * own display without affecting other blocks or signup.
+ * own display without affecting other blocks or signup. Ticket types keep
+ * their price rows after their "Stop selling on" deadline passes and show an
+ * "Until: …" label in the site's date/time format (#2187).
  */
 
 async function apiFetch( page, options ) {
@@ -765,6 +767,191 @@ test.describe( 'Event Prices block', () => {
 					Regular: [ 'Full Pass' ],
 				} );
 				await occurrenceContext.close();
+			} finally {
+				await cleanUp( adminPage, resources );
+			}
+		} );
+	} );
+
+	test.describe( 'sales deadlines', () => {
+		let originalFormats;
+
+		test.beforeAll( async () => {
+			const settings = await apiFetch( adminPage, {
+				path: '/wp/v2/settings',
+			} );
+			originalFormats = {
+				date_format: settings.date_format,
+				time_format: settings.time_format,
+			};
+			// Fixed, unambiguous formats so the label is predictable; the
+			// deadline is stored and shown in site-local time, so the site
+			// timezone doesn't shift it.
+			await apiFetch( adminPage, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { date_format: 'd/m/Y', time_format: 'H:i' },
+			} );
+		} );
+
+		test.afterAll( async () => {
+			await apiFetch( adminPage, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: originalFormats,
+			} );
+		} );
+
+		const deadlineTickets = () => {
+			const type = ( name, disableAt ) => ( {
+				name,
+				recurrence_scope: 'single_instance',
+				capacity: null,
+				minimum_activities: 0,
+				disable_at: disableAt,
+				group_ids: [],
+			} );
+			return {
+				ticket_types: [
+					type( 'Expired tier', '2020-01-15 18:30:00' ),
+					type( 'Upcoming tier', '2099-03-02 09:05:00' ),
+					type( 'Open tier', null ),
+				],
+				sale_periods: [
+					{
+						name: 'Always on',
+						sale_start: '2020-01-01 00:00:00',
+						sale_end: '2099-06-01 00:00:00',
+					},
+				],
+				prices: [
+					{ ticket_type_index: 0, sale_period_index: 0, price: 0 },
+					{ ticket_type_index: 1, sale_period_index: 0, price: 25 },
+					{ ticket_type_index: 2, sale_period_index: 0, price: 40 },
+				],
+				settings: {},
+			};
+		};
+
+		/**
+		 * Map each rendered row's ticket name to its deadline label ('' when
+		 * the row has none).
+		 *
+		 * @param {import('@playwright/test').Locator} block Block locator.
+		 * @return {Promise<Object>} Ticket name → deadline label.
+		 */
+		async function deadlinesOf( block ) {
+			return block.evaluate( ( el ) =>
+				Object.fromEntries(
+					[
+						...el.querySelectorAll(
+							'.wp-block-fair-events-event-prices__name'
+						),
+					].map( ( name ) => {
+						const label = name.querySelector(
+							'.wp-block-fair-events-event-prices__deadline'
+						);
+						const text = [ ...name.childNodes ]
+							.filter( ( n ) => n.nodeType === n.TEXT_NODE )
+							.map( ( n ) => n.textContent )
+							.join( '' )
+							.trim();
+						return [ text, label ? label.textContent.trim() : '' ];
+					} )
+				)
+			);
+		}
+
+		const expectedDeadlines = {
+			'Expired tier': 'Until: 15/01/2020 18:30',
+			'Upcoming tier': 'Until: 02/03/2099 09:05',
+			'Open tier': '',
+		};
+
+		test( 'expired and upcoming deadlines are shown and expired rows stay listed', async ( {
+			browser,
+		} ) => {
+			const resources = await setUpPricesPage(
+				adminPage,
+				browser,
+				'Deadline display e2e',
+				deadlineTickets()
+			);
+
+			try {
+				const block = resources.visitorPage.locator(
+					'.wp-block-fair-events-event-prices'
+				);
+				expect( await deadlinesOf( block ) ).toEqual(
+					expectedDeadlines
+				);
+				// The expired row keeps its configured price.
+				await expect(
+					block.locator( '.wp-block-fair-events-event-prices__row', {
+						hasText: 'Expired tier',
+					} )
+				).toContainText( 'Free' );
+
+				// The editor preview renders the same labels.
+				await adminPage.goto(
+					`/wp-admin/post.php?post=${ resources.pricesPageId }&action=edit`
+				);
+				const editorFrame = adminPage.frameLocator(
+					'[name="editor-canvas"]'
+				);
+				const editorBlock = editorFrame.locator(
+					'[data-type="fair-events/event-prices"]'
+				);
+				await editorBlock
+					.locator( '.wp-block-fair-events-event-prices__deadline' )
+					.first()
+					.waitFor();
+				expect( await deadlinesOf( editorBlock ) ).toEqual(
+					expectedDeadlines
+				);
+			} finally {
+				await cleanUp( adminPage, resources );
+			}
+		} );
+
+		test( 'block settings still hide an expired ticket type', async ( {
+			browser,
+		} ) => {
+			const resources = await setUpPricesPage(
+				adminPage,
+				browser,
+				'Deadline hidden e2e',
+				deadlineTickets()
+			);
+
+			try {
+				const data = await apiFetch( adminPage, {
+					path: `/fair-events/v1/event-dates/${ resources.eventDateId }/tickets`,
+				} );
+				const expiredId = data.ticket_types.find(
+					( t ) => t.name === 'Expired tier'
+				).id;
+				await apiFetch( adminPage, {
+					path: `/wp/v2/pages/${ resources.pricesPageId }`,
+					method: 'POST',
+					data: {
+						content: `<!-- wp:fair-events/event-prices ${ JSON.stringify(
+							{ hiddenTicketTypeIds: [ expiredId ] }
+						) } /-->`,
+					},
+				} );
+
+				await resources.visitorPage.reload();
+				expect(
+					await deadlinesOf(
+						resources.visitorPage.locator(
+							'.wp-block-fair-events-event-prices'
+						)
+					)
+				).toEqual( {
+					'Upcoming tier': 'Until: 02/03/2099 09:05',
+					'Open tier': '',
+				} );
 			} finally {
 				await cleanUp( adminPage, resources );
 			}

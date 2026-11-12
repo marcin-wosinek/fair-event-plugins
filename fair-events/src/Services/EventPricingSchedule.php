@@ -16,8 +16,10 @@ defined( 'WPINC' ) || die;
 
 /**
  * Builds the display-ready pricing schedule the event-prices block renders:
- * one section per sale period, each listing the enabled ticket types
- * available in that period (free or priced). Presentation-only —
+ * one section per sale period, each listing the ticket types available in
+ * that period (free or priced). A ticket type whose "Stop selling on"
+ * deadline has passed stays listed, carrying its deadline so visitors can
+ * see earlier offers (#2187); only manual disabling hides it. Presentation-only —
  * it never decides purchasability for the signup flow, which stays owned by
  * {@see TicketPricing} and {@see TicketAvailability}.
  *
@@ -51,14 +53,14 @@ class EventPricingSchedule {
 			TicketAvailability::resolve_default_sale_start( $event_date_id, $now )
 		);
 
-		return self::build_schedule( $ticket_types, $periods, $price_rows, $now );
+		return self::build_schedule( $ticket_types, $periods, $price_rows );
 	}
 
 	/**
 	 * Pure, DB-free schedule assembly, split out from build_for_event_date()
 	 * for unit testing without a database.
 	 *
-	 * Each period lists only the enabled ticket types available in it — those
+	 * Each period lists only the shown ticket types available in it — those
 	 * with an explicit price row there — in their configured order (#2165).
 	 * A type with no price row for a period is omitted from that period
 	 * rather than shown as "not available", keeping each card to what a
@@ -66,13 +68,16 @@ class EventPricingSchedule {
 	 * "free" or "priced" (issue #1624): a missing row is never guessed as
 	 * free, and an explicit zero price stays visible as "free".
 	 *
+	 * Only manually disabled ticket types are hidden. A passed
+	 * `disable_at` deadline no longer removes a type (#2187): display
+	 * visibility is separate from purchase eligibility, which
+	 * TicketAvailability::is_ticket_type_enabled() still enforces at signup.
+	 *
 	 * @param object[] $ticket_types     TicketType objects.
 	 * @param object[] $resolved_periods TicketSalePeriod objects, already run
 	 *                                   through TicketAvailability::resolve_periods()
 	 *                                   so lazy first/last boundaries are filled in.
 	 * @param object[] $price_rows       TicketPrice objects for these ticket types.
-	 * @param string   $now              Current site datetime for scheduled
-	 *                                   disabling. Defaults to current_time( 'mysql' ).
 	 * @return array{
 	 *     periods: array<int, array{
 	 *         id: int,
@@ -83,23 +88,23 @@ class EventPricingSchedule {
 	 *             ticket_type_id: int,
 	 *             name: string,
 	 *             state: 'free'|'priced',
-	 *             price: float|null
+	 *             price: float|null,
+	 *             disable_at: string|null
 	 *         }>
 	 *     }>,
 	 *     has_prices: bool
 	 * } `periods` lists only sections with at least one entry, in their
-	 *   configured order. `has_prices` is false when
-	 *   no enabled ticket type has an explicit price in any period — the
+	 *   configured order. `disable_at` is the ticket type's configured
+	 *   "Stop selling on" datetime (site-local 'Y-m-d H:i:s'), or null. `has_prices` is false when
+	 *   no shown ticket type has an explicit price in any period — the
 	 *   caller's signal to render nothing publicly.
 	 */
-	public static function build_schedule( array $ticket_types, array $resolved_periods, array $price_rows, $now = null ) {
-		$now = $now ?? current_time( 'mysql' );
-
+	public static function build_schedule( array $ticket_types, array $resolved_periods, array $price_rows ) {
 		$enabled_types = array_values(
 			array_filter(
 				$ticket_types,
-				function ( $ticket_type ) use ( $now ) {
-					return TicketAvailability::is_ticket_type_enabled( $ticket_type, $now );
+				function ( $ticket_type ) {
+					return empty( $ticket_type->disabled );
 				}
 			)
 		);
@@ -146,6 +151,7 @@ class EventPricingSchedule {
 					'name'           => $ticket_type->name,
 					'state'          => $price > 0.0 ? 'priced' : 'free',
 					'price'          => $price > 0.0 ? $price : null,
+					'disable_at'     => ! empty( $ticket_type->disable_at ) ? (string) $ticket_type->disable_at : null,
 				);
 			}
 

@@ -39,8 +39,17 @@
 }
 
 .wp-block-fair-events-event-prices__name {
+	min-width: 0;
 	margin: 0;
 	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.wp-block-fair-events-event-prices__deadline {
+	display: block;
+	color: #555;
+	font-size: 0.85em;
+	font-weight: 400;
 }
 
 .wp-block-fair-events-event-prices__price {
