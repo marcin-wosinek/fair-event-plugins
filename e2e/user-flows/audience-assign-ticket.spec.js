@@ -13,10 +13,15 @@
  * Audience tab, the List, after a reload, its printout and its CSV export
  * name the new holder of the given ticket, with its purchaser beside, while
  * the purchaser's other ticket stays theirs.
+ *
+ * The event page follows the holder too (#2133 follow-up): a purchaser who
+ * gave away their only ticket is offered the form as a first purchase, with
+ * no signed-up card, while the new holder is shown as signed up with the
+ * ticket, both after a reload.
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { loginAsAdmin } from '../support/wp-cli.js';
+import { loginAsAdmin, runScript } from '../support/wp-cli.js';
 import { readFile } from 'node:fs/promises';
 
 const escapeRegExp = (text) => text.replace(/[.+]/g, '\\$&');
@@ -299,5 +304,102 @@ test.describe('Change a ticket holder from the Audience tab', () => {
 			[buyerEmail, 'Lena Purchaser', 'Lena Purchaser', buyerEmail],
 			[guestEmail, 'Theo Holder', 'Lena Purchaser', buyerEmail],
 		]);
+	});
+	test('the event page admits the new holder and no longer the purchaser', async ({
+		page,
+		browser,
+		seedEvent,
+	}) => {
+		const event = seedEvent('free');
+		const stamp = Date.now();
+		const buyerEmail = `page-buyer-${stamp}@example.test`;
+		// An existing participant, recognised on the page by a token link.
+		const holder = runScript(
+			'seed-participant-token.php',
+			'E2E_TOKEN',
+			String(event.eventDateId)
+		);
+
+		// The purchaser's own browser, recognised by its audience session.
+		const buyerContext = await browser.newContext();
+		const buyerPage = await buyerContext.newPage();
+		try {
+			await buyerPage.goto(event.pageUrl);
+			const form = buyerPage.locator('.fair-events-get-tickets-form');
+			await form.locator('input[name="name"]').fill('Petra Purchaser');
+			await form.locator('input[name="email"]').fill(buyerEmail);
+			await form.locator('button[type="submit"]').click();
+			await expect(
+				buyerPage.locator('.fair-events-get-tickets-message-success')
+			).toBeVisible();
+			await buyerPage.reload();
+			const buyerCard = buyerPage.locator('.fair-events-signed-up-card');
+			await expect(buyerCard).toContainText(
+				'You are signed up for this date.'
+			);
+
+			await loginAsAdmin(page);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${event.eventDateId}`
+			);
+			await page.getByRole('tab', { name: 'Audience' }).click();
+			await page
+				.getByRole('button', { name: /^Change holder of Ticket 1/ })
+				.click();
+			const dialog = page.getByRole('dialog', {
+				name: /^Change ticket holder — Ticket 1/,
+			});
+			await dialog
+				.getByLabel('Search by name or email')
+				.fill(holder.email);
+			await dialog
+				.getByRole('radio', {
+					name: new RegExp(escapeRegExp(holder.email)),
+				})
+				.check();
+			await dialog.getByRole('button', { name: 'Review change' }).click();
+			await dialog
+				.getByRole('button', { name: 'Change ticket holder' })
+				.click();
+			await expect(
+				page.getByText(`Ticket holder changed to ${holder.name}.`)
+			).toBeVisible();
+
+			// The purchaser: no card, and the form as a first purchase.
+			for (let visit = 0; visit < 2; visit++) {
+				await buyerPage.reload();
+				await expect(
+					buyerPage.locator('.fair-events-get-tickets-form')
+				).toBeVisible();
+				await expect(
+					buyerPage.locator('input[name="email"]')
+				).toHaveValue(buyerEmail);
+				await expect(buyerCard).toHaveCount(0);
+				await expect(
+					buyerPage.getByText('Buy another ticket for yourself')
+				).toHaveCount(0);
+			}
+
+			// The new holder, in a browser of their own: signed up, holding
+			// the ticket.
+			const holderPage = await browser.newPage();
+			for (let visit = 0; visit < 2; visit++) {
+				await holderPage.goto(
+					`${event.pageUrl}?participant_token=${holder.token}`
+				);
+				const holderCard = holderPage.locator(
+					'.fair-events-signed-up-card'
+				);
+				await expect(holderCard).toContainText(
+					'You are signed up for this date.'
+				);
+				await expect(
+					holderCard.locator('.fair-events-signed-up-tickets li')
+				).toHaveCount(1);
+			}
+			await holderPage.close();
+		} finally {
+			await buyerContext.close();
+		}
 	});
 });

@@ -451,6 +451,21 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
+		// A purchaser who gave all their tickets here to someone else keeps
+		// the relationship as the record of that purchase, but it no longer
+		// admits them. Neither re-registering over it nor upgrading the
+		// purchase other people now hold tickets of is done through this
+		// route; a new ticket is bought from the event page (#2133).
+		if ( $existing && 'signed_up' === $existing->label
+			&& TicketActivities::transferred_away( (int) $existing->event_date_id, (int) $participant->id )
+		) {
+			return new WP_Error(
+				'tickets_transferred',
+				__( 'Your tickets for this date now belong to someone else. Buy a new ticket from the event page.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		if ( $existing && 'signed_up' === $existing->label ) {
 			// A whole-series purchase over an existing single-instance signup is
 			// an upgrade, not a duplicate: proceed (charging only the difference)
@@ -890,8 +905,9 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		// The subscription must already exist and be signed up — adding
-		// activities to a non-existent or pending signup is out of scope.
+		// The participant must already be admitted: signed up, or holding a
+		// ticket given to them. A purchaser whose tickets were all given to
+		// someone else is not, whatever their relationship says (#2133).
 		if ( $event_date_id ) {
 			$existing = $this->event_participant_repository->get_by_event_date_and_participant(
 				$event_date_id,
@@ -904,7 +920,7 @@ class EventSignupController extends WP_REST_Controller {
 			);
 		}
 
-		if ( ! $existing || 'signed_up' !== $existing->label ) {
+		if ( ! $existing || ! TicketActivities::admitted( (int) $existing->event_date_id, (int) $participant->id, $existing ) ) {
 			return new WP_Error(
 				'not_signed_up',
 				__( 'You need an active signup before you can add activities.', 'fair-audience' ),
@@ -1513,17 +1529,28 @@ class EventSignupController extends WP_REST_Controller {
 	 * an earlier attempt already has its place, so it is not counted again
 	 * — even when that hold fills the activity's last place.
 	 *
+	 * The target is checked again in the same transaction, after it was
+	 * resolved from what the page or the earlier attempt named: a ticket
+	 * given to someone else, no longer confirmed or moved meanwhile, or a
+	 * participant-scope target whose admission now rests on tickets, gets
+	 * nothing written (see addon_target_refusal()).
+	 *
 	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
 	 * @param object|null                           $ticket            Target ticket, or null for participant scope.
 	 * @param array                                 $options           TicketOption objects that need a place.
 	 * @param callable                              $write             Writes the activities; false or WP_Error rolls back.
-	 * @return mixed|\WP_Error The write's result, or a 409 error naming the full activity.
+	 * @return mixed|\WP_Error The write's result, or a 409 error naming the full activity or the target that changed.
 	 */
 	private function reserve_addon_places( $event_participant, $ticket, array $options, callable $write ) {
+		$guarded_write = function () use ( $event_participant, $ticket, $write ) {
+			$refusal = $this->addon_target_refusal( $event_participant, $ticket );
+			return $refusal ? $refusal : $write();
+		};
+
 		if ( ! class_exists( \FairEvents\Services\TicketCapacity::class )
 			|| ! method_exists( \FairEvents\Services\TicketCapacity::class, 'count_ticket_option' )
 		) {
-			return $write();
+			return $this->in_transaction( $guarded_write );
 		}
 
 		$still_held_ids = $ticket
@@ -1546,9 +1573,9 @@ class EventSignupController extends WP_REST_Controller {
 						'option_ids'     => $needed_ids,
 					),
 				),
-				$write
+				$guarded_write
 			)
-			: $write();
+			: $this->in_transaction( $guarded_write );
 
 		if ( false === $result ) {
 			return new WP_Error(
@@ -1556,6 +1583,81 @@ class EventSignupController extends WP_REST_Controller {
 				__( 'Your activities could not be saved. Please try again.', 'fair-audience' ),
 				array( 'status' => 500 )
 			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Why added activities can no longer be written to their target, read
+	 * under a row lock so a holder change waits for, or is seen by, this
+	 * write. A ticket must still be held by the relationship's participant,
+	 * confirmed, not deleted and on the date it was resolved on. A
+	 * participant-scope target must still be an admission without tickets.
+	 * Runs inside the caller's transaction.
+	 *
+	 * @param \FairAudience\Models\EventParticipant $event_participant Relationship.
+	 * @param object|null                           $ticket            Target ticket as resolved, or null for participant scope.
+	 * @return WP_Error|null Error to roll back with, or null when the target still stands.
+	 */
+	private function addon_target_refusal( $event_participant, $ticket ) {
+		$participant_id = (int) $event_participant->participant_id;
+
+		if ( ! $ticket ) {
+			return TicketActivities::backs_admission( (int) $event_participant->event_date_id, $participant_id )
+				? new WP_Error(
+					'no_ticket',
+					__( 'You no longer hold a ticket that can receive activities.', 'fair-audience' ),
+					array( 'status' => 409 )
+				)
+				: null;
+		}
+
+		$locked = \FairEvents\Models\EventTicket::get_for_update( (int) $ticket->id );
+		if ( $locked
+			&& (int) $locked->holder_participant_id === $participant_id
+			&& 'confirmed' === (string) $locked->status
+			&& ! \FairEvents\Models\EventTicket::is_deleted( $locked )
+			&& (int) $locked->event_date_id === (int) $ticket->event_date_id
+		) {
+			return null;
+		}
+
+		return new WP_Error(
+			'ticket_unavailable',
+			__( 'This ticket can no longer receive activities. Reload the page to see your current tickets.', 'fair-audience' ),
+			array( 'status' => 409 )
+		);
+	}
+
+	/**
+	 * Run a write in its own transaction, rolled back when it returns false
+	 * or an error.
+	 *
+	 * @param callable $write Write to run.
+	 * @return mixed The write's result.
+	 * @throws \Throwable Re-thrown after rolling back.
+	 */
+	private function in_transaction( callable $write ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( 'START TRANSACTION' );
+
+		try {
+			$result = $write();
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			throw $e;
+		}
+
+		if ( false === $result || is_wp_error( $result ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'COMMIT' );
 		}
 
 		return $result;
@@ -2545,7 +2647,10 @@ class EventSignupController extends WP_REST_Controller {
 		}
 
 		$event_participant = $this->event_participant_repository->get_by_id( $event_participant_id );
-		if ( ! $event_participant || 'signed_up' !== $event_participant->label ) {
+		if ( ! $event_participant
+			|| (int) $event_participant->participant_id !== $participant_id
+			|| ! TicketActivities::admitted( (int) $event_participant->event_date_id, $participant_id, $event_participant )
+		) {
 			return new WP_Error(
 				'not_signed_up',
 				__( 'Your signup is no longer active.', 'fair-audience' ),

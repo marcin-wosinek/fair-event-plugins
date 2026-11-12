@@ -293,8 +293,10 @@ class SignupHookBridge {
 			$event_date_id                = (int) $context['event_date_id'];
 			$event_participant_repository = new EventParticipantRepository();
 
+			// A ticket the viewer holds admits them; a relationship whose
+			// tickets were all given to someone else does not (#2133).
 			$existing     = $event_participant_repository->get_by_event_date_and_participant( $event_date_id, $participant_id );
-			$is_signed_up = ( $existing && 'signed_up' === $existing->label );
+			$is_signed_up = TicketActivities::admitted( $event_date_id, $participant_id, $existing );
 
 			// Resolve a whole-series pass on the master once, so it can also
 			// cover this occurrence (a pass covers occurrences starting on or
@@ -311,7 +313,7 @@ class SignupHookBridge {
 				}
 			}
 			if ( $master_id_for_pass && class_exists( \FairEvents\Models\TicketType::class ) ) {
-				$candidate_pass = $event_participant_repository->get_series_pass_for_participant( $master_id_for_pass, $participant_id );
+				$candidate_pass = self::series_pass( $event_participant_repository, $master_id_for_pass, $participant_id );
 				if ( $candidate_pass && $candidate_pass->ticket_type_id ) {
 					$pass_tt = \FairEvents\Models\TicketType::get_by_id( (int) $candidate_pass->ticket_type_id );
 					if ( $pass_tt && $pass_tt->is_whole_series() ) {
@@ -359,9 +361,13 @@ class SignupHookBridge {
 			// Populate per-occurrence signup state for the pickers, mirroring
 			// the legacy render — including the whole-series pass check above.
 			if ( ! empty( $context['occurrences_for_picker'] ) ) {
+				$ticketed_occurrence_ids = TicketActivities::admitting_event_date_ids(
+					$participant_id,
+					array_map( 'intval', wp_list_pluck( $context['occurrences_for_picker'], 'id' ) )
+				);
 				foreach ( $context['occurrences_for_picker'] as $idx => $occ_row ) {
 					$rel           = $event_participant_repository->get_by_event_date_and_participant( (int) $occ_row['id'], $participant_id );
-					$occ_signed_up = ( $rel && 'signed_up' === $rel->label );
+					$occ_signed_up = TicketActivities::admitted( (int) $occ_row['id'], $participant_id, $rel, in_array( (int) $occ_row['id'], $ticketed_occurrence_ids, true ) );
 					$occ_cutoff    = self::series_pass_cutoff( $occ_row['timing'] ?? null );
 					if ( ! $occ_signed_up && $series_pass && $occ_cutoff ) {
 						$occ_signed_up = strtotime( $occ_cutoff ) >= strtotime( $series_pass->created_at );
@@ -372,6 +378,40 @@ class SignupHookBridge {
 		}
 
 		return $context;
+	}
+
+	/**
+	 * The whole-series pass that admits a participant on a series master:
+	 * their signed-up relationship there, unless the pass tickets behind
+	 * it were all given to someone else, else a confirmed pass ticket they
+	 * hold there, such as one given to them. Either carries the pass's
+	 * ticket type and the time it was bought (created_at), which decides
+	 * the occurrences it covers. The caller checks that the ticket type is
+	 * a whole-series one.
+	 *
+	 * @param EventParticipantRepository $repository     Relationship repository.
+	 * @param int                        $master_id      Series master event date ID.
+	 * @param int                        $participant_id Participant ID.
+	 * @return object|null Relationship or ticket row.
+	 */
+	private static function series_pass( EventParticipantRepository $repository, $master_id, $participant_id ) {
+		$relationship = $repository->get_series_pass_for_participant( $master_id, $participant_id );
+		if ( $relationship && ! TicketActivities::transferred_away( $master_id, $participant_id ) ) {
+			return $relationship;
+		}
+
+		if ( ! TicketActivities::available() ) {
+			return null;
+		}
+
+		foreach ( \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $master_id, (int) $participant_id, array( 'confirmed' ) ) as $ticket ) {
+			$ticket_type = $ticket->ticket_type_id ? \FairEvents\Models\TicketType::get_by_id( (int) $ticket->ticket_type_id ) : null;
+			if ( $ticket_type && $ticket_type->is_whole_series() ) {
+				return $ticket;
+			}
+		}
+
+		return null;
 	}
 
 	/**
