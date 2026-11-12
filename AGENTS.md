@@ -6,7 +6,7 @@ list in the root `package.json` is authoritative.
 
 ## Agent Workflows
 
-The eight agent workflows have one canonical definition under
+The nine agent workflows have one canonical definition under
 `.agents/skills/<name>/SKILL.md`. Codex discovers those skills directly and
 invokes them with `$<name>`. Claude Code preserves the matching `/<name>` slash
 commands through thin files in `.claude/commands/`; each adapter passes
@@ -25,6 +25,9 @@ focused fixtures.
 output. Each skill's SKILL.md holds its part of the contract. Never rename the
 stable headings (`## Implementation plan`, `## Decisions`, `## Read first`) or
 drop the `responsive-ui` label: the unattended chain depends on them.
+
+Use `reopen-ticket` for testing findings on an existing implementation: post
+a new corrective plan after approval and return the issue to Ready.
 
 ## Reference Docs
 

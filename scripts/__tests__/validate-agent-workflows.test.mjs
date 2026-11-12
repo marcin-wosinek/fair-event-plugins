@@ -35,7 +35,7 @@ function withFixture(callback) {
 	}
 }
 
-test('accepts all eight valid workflow pairs and hook configurations', () => {
+test('accepts all valid workflow pairs and hook configurations', () => {
 	withFixture((root) => assert.deepEqual(validateAgentWorkflows(root), []));
 });
 
@@ -121,6 +121,7 @@ test('detects a missing iteration configuration safety guard', () => {
 test('detects a missing status transition in each ticket workflow', () => {
 	for (const [workflow, status] of [
 		['plan-ticket', 'Ready'],
+		['reopen-ticket', 'Ready'],
 		['make-pr', 'Implementation'],
 	]) {
 		withFixture((root) => {

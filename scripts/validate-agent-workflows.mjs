@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const WORKFLOWS = [
 	'write-ticket',
 	'plan-ticket',
+	'reopen-ticket',
 	'make-pr',
 	'pr',
 	'release',
@@ -28,6 +29,7 @@ const STATUS_TRANSITION_PROCEDURE = '## Project status transitions';
 
 const STATUS_TRANSITIONS = {
 	'plan-ticket': 'Ready',
+	'reopen-ticket': 'Ready',
 	'make-pr': 'Implementation',
 };
 

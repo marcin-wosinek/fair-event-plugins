@@ -111,6 +111,13 @@ work: `/plan-ticket` sets **Ready** after posting the approved plan, and
 `/make-pr` sets **Implementation** before implementation begins. The status
 order is Backlog → Planning → Ready → Implementation → Testing → Done.
 
+`/reopen-ticket` handles corrections found while testing an existing
+implementation. After approval, it posts a new follow-up plan, reopens the
+issue if closed, and returns Status to **Ready**. For this workflow only,
+approval authorizes moving Implementation, Testing, or Done back to Ready;
+this is the exception to the forward-only rule below. Earlier plans remain
+unchanged, and the sprint is preserved.
+
 1. **Read the current state.** Resolve the `Status` field and the target
    option ID from the project, and read the issue's existing project items:
 
@@ -127,7 +134,8 @@ order is Backlog → Planning → Ready → Implementation → Testing → Done.
    - Status already equals the target: skip the write; the readback is the
      verification.
    - Status is later than the target: skip the write and report that the
-     transition was skipped for review. Never move a ticket backward.
+     transition was skipped for review. Never move a ticket backward except
+     for the approved `/reopen-ticket` transition described above.
 
 3. **Update only that item's Status field**, then re-read it:
 
