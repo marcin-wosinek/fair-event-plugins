@@ -10,8 +10,9 @@ administrators (`manage_options`) can use them.
 
 ## Steps
 
-1. On the source site, choose **Export audience CSV**. The file holds every
-   participant, whatever the table is filtered to.
+1. On the source site, choose **Export audience CSV…**. A popup asks who to
+   export (see [Export scope](#export-scope)); nothing is downloaded until you
+   select **Download CSV**. The scope never follows the table filters.
 2. Keep the file private: it contains names, email addresses and phone
    numbers. It is downloaded directly and never stored on the server.
 3. On the destination site, choose **Import audience CSV…**, pick the file
@@ -26,6 +27,28 @@ administrators (`manage_options`) can use them.
 Importing the same file again is safe. Members added the first time are
 reported as already present, and nobody is added twice.
 
+## Export scope
+
+| Choice                         | Who is in the file                                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| **All participants** (default) | Every participant                                                                                                       |
+| **Mailing subscribers only**   | Confirmed participants whose mailing choice is `marketing`: the members counted as **In the mailing** in the statistics |
+
+The weekly summary opt-out and feed choices do not change who counts as a
+mailing subscriber, so a subscriber who opted out of the weekly summary is
+exported with `weekly_summary_opt_out` set to `1`. Pending, `minimal` and
+`declined` members are left out of the subscriber-only file. Both choices
+produce the same CSV format; a subscriber-only file is named
+`fair-audience-subscribers-<date>.csv`.
+
+If a download fails, the popup keeps your choice and shows the error, so you
+can try again. An export with nobody in it holds only the header row, and the
+import refuses it as having no audience members.
+
+Over the REST API, `GET /fair-audience/v1/participants/export` takes an
+optional `scope` of `all` (the default) or `subscribers`; any other value
+returns `400`.
+
 ## CSV format (version 1)
 
 UTF-8 text, comma separated, with a header row. Exports start with a byte order
@@ -33,17 +56,17 @@ mark so spreadsheets detect the encoding; a byte order mark is optional on
 import. Fields that contain a comma, quote or line break are quoted, and quotes
 inside them are doubled (RFC 4180).
 
-| Column                   | Required | Values                                                          |
-| ------------------------ | -------- | --------------------------------------------------------------- |
-| `format_version`         | yes      | `1`                                                             |
-| `name`                   | yes      | First name, not empty, up to 255 characters                     |
-| `surname`                | yes      | Up to 255 characters, may be empty                              |
-| `email`                  | yes      | Valid address; rows with an empty value are skipped             |
-| `phone`                  | yes      | Up to 50 characters, may be empty                               |
-| `instagram`              | yes      | Up to 255 characters, may be empty                              |
-| `email_profile`          | yes      | `minimal`, `marketing` or `declined` (the **Mailing** column)   |
-| `weekly_summary_opt_out` | yes      | `1` or `0` (`true`/`false` and `yes`/`no` are accepted)         |
-| `weekly_feed_mode`       | no       | Legacy: `all`, `selected` or empty. Accepted and ignored        |
+| Column                   | Required | Values                                                        |
+| ------------------------ | -------- | ------------------------------------------------------------- |
+| `format_version`         | yes      | `1`                                                           |
+| `name`                   | yes      | First name, not empty, up to 255 characters                   |
+| `surname`                | yes      | Up to 255 characters, may be empty                            |
+| `email`                  | yes      | Valid address; rows with an empty value are skipped           |
+| `phone`                  | yes      | Up to 50 characters, may be empty                             |
+| `instagram`              | yes      | Up to 255 characters, may be empty                            |
+| `email_profile`          | yes      | `minimal`, `marketing` or `declined` (the **Mailing** column) |
+| `weekly_summary_opt_out` | yes      | `1` or `0` (`true`/`false` and `yes`/`no` are accepted)       |
+| `weekly_feed_mode`       | no       | Legacy: `all`, `selected` or empty. Accepted and ignored      |
 
 Every required column must be present, in any order. Any other column, or a
 column that appears twice, rejects the file.
@@ -76,14 +99,14 @@ signups, tickets, payments, consent history and **feed subscriptions**.
 
 ## What the import does with each row
 
-| Row                                                       | Result                                                  |
-| --------------------------------------------------------- | ------------------------------------------------------- |
-| Invalid value                                             | Rejected, with the reason per field                     |
-| No email                                                  | Skipped                                                 |
-| New email                                                 | Added (see below)                                       |
-| Existing email, every field below identical               | Skipped as **already present**                          |
-| Existing email, any field below different                 | Skipped as a **conflict**, with the differing fields    |
-| Could not be saved                                        | Reported; import the file again to retry                |
+| Row                                         | Result                                               |
+| ------------------------------------------- | ---------------------------------------------------- |
+| Invalid value                               | Rejected, with the reason per field                  |
+| No email                                    | Skipped                                              |
+| New email                                   | Added (see below)                                    |
+| Existing email, every field below identical | Skipped as **already present**                       |
+| Existing email, any field below different   | Skipped as a **conflict**, with the differing fields |
+| Could not be saved                          | Reported; import the file again to retry             |
 
 Compared fields: first name, surname, phone, Instagram, mailing choice
 (`email_profile`) and weekly summary opt-out. The legacy `weekly_feed_mode` is

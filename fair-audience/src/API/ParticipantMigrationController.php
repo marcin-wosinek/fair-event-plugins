@@ -42,6 +42,16 @@ class ParticipantMigrationController extends WP_REST_Controller {
 	protected $rest_base = 'participants';
 
 	/**
+	 * Export scope: every participant.
+	 */
+	const SCOPE_ALL = 'all';
+
+	/**
+	 * Export scope: confirmed marketing subscribers only.
+	 */
+	const SCOPE_SUBSCRIBERS = 'subscribers';
+
+	/**
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
@@ -54,6 +64,14 @@ class ParticipantMigrationController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'export' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'scope' => array(
+							'description' => __( 'Who to export: every participant, or only confirmed marketing subscribers.', 'fair-audience' ),
+							'type'        => 'string',
+							'enum'        => array( self::SCOPE_ALL, self::SCOPE_SUBSCRIBERS ),
+							'default'     => self::SCOPE_ALL,
+						),
+					),
 				),
 			)
 		);
@@ -91,17 +109,24 @@ class ParticipantMigrationController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Export every participant, whatever the admin table shows.
+	 * Export the chosen scope, whatever the admin table shows: every
+	 * participant (the default), or only the mailing subscribers.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
 	 */
-	public function export( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- WP_REST_Controller signature.
-		$participants = ( new ParticipantRepository() )->get_all( 'id', 'ASC' );
+	public function export( $request ) {
+		$repository  = new ParticipantRepository();
+		$subscribers = self::SCOPE_SUBSCRIBERS === $request->get_param( 'scope' );
+
+		$participants = $subscribers
+			? $repository->get_mailing_subscribers()
+			: $repository->get_all( 'id', 'ASC' );
 
 		return $this->private_response(
 			array(
-				'filename' => 'fair-audience-' . gmdate( 'Y-m-d' ) . '.csv',
+				'filename' => 'fair-audience-' . ( $subscribers ? 'subscribers-' : '' ) . gmdate( 'Y-m-d' ) . '.csv',
+				'scope'    => $subscribers ? self::SCOPE_SUBSCRIBERS : self::SCOPE_ALL,
 				'count'    => count( $participants ),
 				'content'  => AudienceMigration::export_csv( $participants ),
 			)

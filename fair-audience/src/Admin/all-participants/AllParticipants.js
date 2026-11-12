@@ -631,7 +631,6 @@ export default function AllParticipants() {
 			</button>
 			<AudienceMigrationMenu
 				onMessage={ setSnackbar }
-				onError={ setErrorMessage }
 				onImported={ refresh }
 			/>
 			<hr className="wp-header-end" />
