@@ -96,6 +96,41 @@ const openAt = ( search ) => {
 // Notices are also announced in an a11y live region; match the visible one.
 const IN_NOTICE = { selector: '.components-notice__content' };
 
+/**
+ * Open an entry's overflow menu.
+ *
+ * @param {string} entry Entry description.
+ * @return {Promise<{toggle: HTMLElement, menu: HTMLElement}>} Trigger and menu.
+ */
+const openRowMenu = async ( entry ) => {
+	const toggle = await screen.findByRole( 'button', {
+		name: `More actions for “${ entry }”`,
+	} );
+	act( () => toggle.focus() );
+	fireEvent.click( toggle );
+	const menu = await screen.findByRole( 'menu', {
+		name: `More actions for “${ entry }”`,
+	} );
+	return { toggle, menu };
+};
+
+/**
+ * Open an entry's overflow menu and choose one of its items.
+ *
+ * @param {string} entry Entry description.
+ * @param {string} item  Menu item label.
+ * @return {Promise<HTMLElement>} The menu trigger, focused by the menu.
+ */
+const chooseMenuItem = async ( entry, item ) => {
+	const { toggle, menu } = await openRowMenu( entry );
+	await act( async () =>
+		fireEvent.click(
+			within( menu ).getByRole( 'menuitem', { name: item } )
+		)
+	);
+	return toggle;
+};
+
 afterEach( () => {
 	jest.clearAllMocks();
 	openAt( '' );
@@ -177,9 +212,18 @@ describe( 'EntriesApp — focused entry view (#1291)', () => {
 		render( <EntriesApp /> );
 
 		expect( await screen.findByText( 'Child A' ) ).toBeInTheDocument();
+		// The allocation names its split entry and edits it through the parent.
 		expect(
-			screen.getByRole( 'button', { name: 'Edit Split' } )
+			screen.getByText( 'Part of split entry “Split parent”' )
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Edit split “Split parent”' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'More actions for “Child A”',
+			} )
+		).not.toBeInTheDocument();
 		expect( screen.queryByText( 'Child B' ) ).not.toBeInTheDocument();
 		expect( screen.queryByText( 'Split parent' ) ).not.toBeInTheDocument();
 	} );
@@ -213,9 +257,13 @@ describe( 'EntriesApp — focused entry view (#1291)', () => {
 
 		render( <EntriesApp /> );
 
-		fireEvent.click(
-			await screen.findByRole( 'button', { name: /Split ▸/ } )
-		);
+		const toggle = await screen.findByRole( 'button', {
+			name: 'Show 2 allocations',
+		} );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+		fireEvent.click( toggle );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'true' );
+		expect( toggle ).toHaveTextContent( 'Hide 2 allocations' );
 		expect( screen.getByText( 'Child A' ) ).toBeInTheDocument();
 		expect( screen.getByText( 'Child B' ) ).toBeInTheDocument();
 		expect( screen.getByText( '-€100.00' ) ).toBeInTheDocument();
@@ -463,12 +511,7 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 
 	const openDialog = async () => {
 		render( <EntriesApp /> );
-		const trigger = await screen.findByRole( 'button', {
-			name: 'Unmatch',
-		} );
-		await act( async () => {
-			fireEvent.click( trigger );
-		} );
+		const trigger = await chooseMenuItem( 'Mollie payout', 'Unmatch' );
 		const dialog = await screen.findByRole( 'dialog', {
 			name: 'Unmatch entry — Mollie payout',
 		} );
@@ -515,15 +558,24 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 		).toBeInTheDocument();
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		expect( deleteRequests() ).toHaveLength( 1 );
-		// The refreshed row now offers Match instead.
+		// Focus returns to the row's menu, which now offers Match instead.
 		expect(
-			await screen.findByRole( 'button', { name: 'Match' } )
+			screen.getByRole( 'button', {
+				name: 'More actions for “Mollie payout”',
+			} )
+		).toHaveFocus();
+		await waitFor( () =>
+			expect( screen.getByText( 'No' ) ).toBeInTheDocument()
+		);
+		const { menu } = await openRowMenu( 'Mollie payout' );
+		expect(
+			within( menu ).getByRole( 'menuitem', { name: 'Match' } )
 		).toBeInTheDocument();
 	} );
 
 	it( 'leaves the associations unchanged on cancel', async () => {
 		mockUnmatchApi();
-		const { dialog } = await openDialog();
+		const { trigger, dialog } = await openDialog();
 		await within( dialog ).findByText( /This removes the links/ );
 
 		await act( async () => {
@@ -534,9 +586,8 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		expect( deleteRequests() ).toHaveLength( 0 );
-		expect(
-			screen.getByRole( 'button', { name: 'Unmatch' } )
-		).toBeInTheDocument();
+		expect( trigger ).toHaveFocus();
+		expect( screen.getByText( 'Yes (2)' ) ).toBeInTheDocument();
 	} );
 
 	it( 'withholds Unmatch until details load, and offers a retry when they fail', async () => {
@@ -671,9 +722,7 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 			} )
 		).toBeVisible();
 		expect( confirmButton() ).toBeDisabled();
-		expect(
-			screen.getByRole( 'button', { name: 'Unmatch' } )
-		).toBeInTheDocument();
+		expect( screen.getByText( 'Yes (2)' ) ).toBeInTheDocument();
 	} );
 
 	it( 'reports a failed refresh separately from the unmatch', async () => {
@@ -703,13 +752,27 @@ describe( 'EntriesApp — unmatching an entry (#1986)', () => {
 
 		expect(
 			await screen.findByText(
-				'The list could not be refreshed. Reload the page to see the current entries.',
+				'The list could not be refreshed. Try again to see the current entries.',
 				IN_NOTICE
 			)
 		).toBeInTheDocument();
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		// The rows stay rather than emptying the table.
 		expect( screen.getByText( 'Mollie payout' ) ).toBeInTheDocument();
+
+		// Retrying refreshes the list in place.
+		refreshFails = false;
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Try again' } )
+			);
+		} );
+		await waitFor( () =>
+			expect(
+				screen.queryByText( /could not be refreshed/, IN_NOTICE )
+			).not.toBeInTheDocument()
+		);
+		expect( screen.getByText( 'No' ) ).toBeInTheDocument();
 	} );
 } );
 
@@ -786,9 +849,7 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 		render( <EntriesApp /> );
 		await screen.findByText( 'Projector rental' );
 
-		fireEvent.click(
-			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
-		);
+		const toggle = await chooseMenuItem( 'Projector rental', 'Delete' );
 		const dialog = screen.getByRole( 'dialog', {
 			name: 'Delete entry — Projector rental',
 		} );
@@ -808,6 +869,7 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		expect( deleteRequests() ).toHaveLength( 0 );
+		expect( toggle ).toHaveFocus();
 	} );
 
 	it( 'keeps the delete dialog open on failure and retries', async () => {
@@ -820,9 +882,7 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 		} );
 		render( <EntriesApp /> );
 		await screen.findByText( 'Projector rental' );
-		fireEvent.click(
-			screen.getAllByRole( 'button', { name: 'Delete' } )[ 0 ]
-		);
+		await chooseMenuItem( 'Projector rental', 'Delete' );
 		const dialog = screen.getByRole( 'dialog' );
 		const confirm = within( dialog ).getByRole( 'button', {
 			name: 'Delete entry',
@@ -855,6 +915,10 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 				IN_NOTICE
 			)
 		).toBeInTheDocument();
+		// The row's controls are gone, so focus moves to the page heading.
+		expect(
+			screen.getByRole( 'heading', { name: 'Financial Entries' } )
+		).toHaveFocus();
 	} );
 
 	it( 'confirms unsplitting over the split editor, listing its allocations', async () => {
@@ -863,7 +927,7 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 		await screen.findByText( 'Projector rental' );
 
 		fireEvent.click(
-			screen.getAllByRole( 'button', { name: 'Edit Split' } )[ 0 ]
+			screen.getByRole( 'button', { name: 'Edit split “Bulk purchase”' } )
 		);
 		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
 
@@ -916,7 +980,7 @@ describe( 'EntriesApp — deleting and unsplitting entries (#1936)', () => {
 		render( <EntriesApp /> );
 		await screen.findByText( 'Projector rental' );
 		fireEvent.click(
-			screen.getAllByRole( 'button', { name: 'Edit Split' } )[ 0 ]
+			screen.getByRole( 'button', { name: 'Edit split “Bulk purchase”' } )
 		);
 		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
 		await act( async () => {
@@ -1019,7 +1083,7 @@ describe( 'EntriesApp — entries awaiting a budget (#2088)', () => {
 		document.querySelector( '.fair-finance-unbudgeted-count' );
 
 	const deleteEntry = async () => {
-		fireEvent.click( screen.getByRole( 'button', { name: 'Delete' } ) );
+		await chooseMenuItem( 'Printing flyers', 'Delete' );
 		const dialog = screen.getByRole( 'dialog' );
 		await act( async () => {
 			fireEvent.click(
