@@ -29,7 +29,8 @@ import {
 import ContentEditor from './ContentEditor.js';
 import RecipientPreview, { isEligible } from './RecipientPreview.js';
 import SendResult from './SendResult.js';
-import MailHistory, { subjectOf } from './MailHistory.js';
+import MailHistory from './MailHistory.js';
+import { subjectOf } from './mail-format.js';
 import DeleteMailRecordModal from './DeleteMailRecordModal.js';
 import {
 	hasVisibleContent,
@@ -59,9 +60,14 @@ const IDLE_PREVIEW = { status: 'idle', recipients: [], error: null };
  * Sending to the whole audience and group filters come from the experimental
  * companion; the page works without them.
  *
+ * @param {Object}   props               Component props.
+ * @param {Function} [props.onOpenMail]  Called with a history record whose
+ *                                       subject link was followed in this tab.
+ * @param {number}   [props.focusMailId] History record whose subject link takes
+ *                                       focus, e.g. after returning from it.
  * @return {JSX.Element} The custom mail page
  */
-export default function CustomMail() {
+export default function CustomMail( { onOpenMail, focusMailId = null } = {} ) {
 	const features = window.fairAudienceCustomMailData || {};
 	const allAudience = !! features.allAudience;
 	const groupsEnabled = !! features.groups;
@@ -689,6 +695,8 @@ export default function CustomMail() {
 				notice={ historyNotice }
 				onDismissNotice={ () => setHistoryNotice( null ) }
 				headingRef={ historyHeadingRef }
+				onOpen={ onOpenMail }
+				focusMailId={ focusMailId }
 			/>
 
 			{ mailToDelete && (

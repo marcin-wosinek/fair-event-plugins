@@ -13,6 +13,16 @@ export function loadCustomMails() {
 }
 
 /**
+ * Load one recorded custom mail message
+ *
+ * @param {number} id Message ID
+ * @return {Promise<Object>} Promise resolving to the saved message
+ */
+export function loadCustomMail( id ) {
+	return apiFetch( { path: `/fair-audience/v1/custom-mail/${ id }` } );
+}
+
+/**
  * Send a custom mail
  *
  * @param {Object}  data               Mail data

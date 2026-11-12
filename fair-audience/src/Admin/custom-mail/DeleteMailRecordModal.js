@@ -13,7 +13,7 @@ import {
 /**
  * Internal dependencies
  */
-import { formatSentAt, subjectOf } from './MailHistory.js';
+import { formatSentAt, subjectOf } from './mail-format.js';
 
 // A long subject wraps inside the popup instead of widening it.
 const MODAL_STYLE = {
