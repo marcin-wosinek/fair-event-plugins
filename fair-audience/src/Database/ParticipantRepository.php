@@ -64,6 +64,35 @@ class ParticipantRepository {
 	}
 
 	/**
+	 * Get the mailing subscribers: confirmed participants with the marketing
+	 * email profile, the same definition as `mailing` in get_stats().
+	 *
+	 * The weekly summary opt-out and feed subscriptions do not affect it.
+	 *
+	 * @return Participant[] Subscribers, oldest first.
+	 */
+	public function get_mailing_subscribers() {
+		global $wpdb;
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE email_profile = %s AND status = %s ORDER BY id ASC',
+				$this->get_table_name(),
+				'marketing',
+				'confirmed'
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			function ( $row ) {
+				return new Participant( $row );
+			},
+			$results
+		);
+	}
+
+	/**
 	 * Get participant by ID.
 	 *
 	 * @param int $id Participant ID.

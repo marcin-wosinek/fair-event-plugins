@@ -2,14 +2,16 @@
  * @jest-environment jsdom
  *
  * Component tests for the audience CSV export and import (#2218): the
- * overflow menu's export download and the import popup's upload, pending
- * and error states and result report.
+ * overflow menu, the export popup's scope choice, pending and error states
+ * and download, and the import popup's upload, pending and error states and
+ * result report.
  */
 import '@testing-library/jest-dom';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import AudienceMigrationMenu from '../AudienceMigrationMenu.js';
 import ImportAudienceModal from '../ImportAudienceModal.js';
+import ExportAudienceModal from '../ExportAudienceModal.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -252,74 +254,32 @@ describe( 'AudienceMigrationMenu', () => {
 			} )
 		);
 
-	it( 'downloads the whole audience and reports the count', async () => {
-		apiFetch.mockResolvedValue( {
-			filename: 'fair-audience-2026-11-11.csv',
-			count: 2,
-			content: '﻿format_version\r\n',
-		} );
-		URL.createObjectURL = jest.fn( () => 'blob:audience' );
-		URL.revokeObjectURL = jest.fn();
-		const click = jest
-			.spyOn( window.HTMLAnchorElement.prototype, 'click' )
-			.mockImplementation( () => {} );
-		const onMessage = jest.fn();
+	it( 'opens the export popup without downloading', () => {
 		render(
 			<AudienceMigrationMenu
-				onMessage={ onMessage }
-				onError={ jest.fn() }
+				onMessage={ jest.fn() }
 				onImported={ jest.fn() }
 			/>
 		);
 
 		openMenu();
 		expect(
-			screen.getByText( 'Every participant, whatever the table shows' )
+			screen.getByText( 'All participants or mailing subscribers only' )
 		).toBeInTheDocument();
-		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'menuitem', { name: /Export audience CSV/ } )
-			);
-		} );
-
-		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-audience/v1/participants/export',
-		} );
-		expect( click ).toHaveBeenCalledTimes( 1 );
-		expect( onMessage ).toHaveBeenCalledWith(
-			'Exported 2 audience members.'
-		);
-		click.mockRestore();
-	} );
-
-	it( 'reports a failed export', async () => {
-		apiFetch.mockRejectedValue( {} );
-		const onError = jest.fn();
-		render(
-			<AudienceMigrationMenu
-				onMessage={ jest.fn() }
-				onError={ onError }
-				onImported={ jest.fn() }
-			/>
+		fireEvent.click(
+			screen.getByRole( 'menuitem', { name: /Export audience CSV/ } )
 		);
 
-		openMenu();
-		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'menuitem', { name: /Export audience CSV/ } )
-			);
-		} );
-
-		expect( onError ).toHaveBeenLastCalledWith(
-			'The audience could not be exported. Please try again.'
-		);
+		expect(
+			screen.getByRole( 'dialog', { name: 'Export audience CSV' } )
+		).toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalled();
 	} );
 
 	it( 'opens the import popup', () => {
 		render(
 			<AudienceMigrationMenu
 				onMessage={ jest.fn() }
-				onError={ jest.fn() }
 				onImported={ jest.fn() }
 			/>
 		);
@@ -332,5 +292,173 @@ describe( 'AudienceMigrationMenu', () => {
 		expect(
 			screen.getByRole( 'dialog', { name: 'Import audience CSV' } )
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'ExportAudienceModal', () => {
+	let click;
+
+	beforeEach( () => {
+		URL.createObjectURL = jest.fn( () => 'blob:audience' );
+		URL.revokeObjectURL = jest.fn();
+		click = jest
+			.spyOn( window.HTMLAnchorElement.prototype, 'click' )
+			.mockImplementation( () => {} );
+	} );
+
+	afterEach( () => {
+		click.mockRestore();
+	} );
+
+	const EXPORT = {
+		filename: 'fair-audience-2026-11-12.csv',
+		scope: 'all',
+		count: 2,
+		content: '\uFEFFformat_version\r\n',
+	};
+
+	it( 'defaults to all participants and explains the subscriber scope', () => {
+		render(
+			<ExportAudienceModal
+				onClose={ jest.fn() }
+				onExported={ jest.fn() }
+			/>
+		);
+
+		expect(
+			screen.getByRole( 'radio', { name: 'All participants' } )
+		).toBeChecked();
+		expect(
+			screen.getByRole( 'radio', { name: 'Mailing subscribers only' } )
+		).not.toBeChecked();
+		expect(
+			screen.getByText(
+				/confirmed their email address and chose to receive marketing mail/
+			)
+		).toBeInTheDocument();
+		expect( apiFetch ).not.toHaveBeenCalled();
+	} );
+
+	it( 'cancels without downloading', () => {
+		const onClose = jest.fn();
+		render(
+			<ExportAudienceModal onClose={ onClose } onExported={ jest.fn() } />
+		);
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( onClose ).toHaveBeenCalledTimes( 1 );
+		expect( apiFetch ).not.toHaveBeenCalled();
+		expect( click ).not.toHaveBeenCalled();
+	} );
+
+	it( 'downloads everyone by default and reports the count', async () => {
+		apiFetch.mockResolvedValue( EXPORT );
+		const onClose = jest.fn();
+		const onExported = jest.fn();
+		render(
+			<ExportAudienceModal
+				onClose={ onClose }
+				onExported={ onExported }
+			/>
+		);
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Download CSV' } )
+			);
+		} );
+
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-audience/v1/participants/export?scope=all',
+		} );
+		expect( click ).toHaveBeenCalledTimes( 1 );
+		expect( onExported ).toHaveBeenCalledWith(
+			'Exported 2 audience members.'
+		);
+		expect( onClose ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'downloads subscribers only once chosen, blocking repeats and closing while pending', async () => {
+		const request = deferred();
+		apiFetch.mockReturnValue( request.promise );
+		const onClose = jest.fn();
+		const onExported = jest.fn();
+		render(
+			<ExportAudienceModal
+				onClose={ onClose }
+				onExported={ onExported }
+			/>
+		);
+
+		fireEvent.click(
+			screen.getByRole( 'radio', { name: 'Mailing subscribers only' } )
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Download CSV' } )
+		);
+
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-audience/v1/participants/export?scope=subscribers',
+		} );
+		const pending = screen.getByRole( 'button', { name: 'Downloading…' } );
+		expect( pending ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect(
+			screen.getByRole( 'button', { name: 'Cancel' } )
+		).toBeDisabled();
+		fireEvent.click( pending );
+		fireEvent.keyDown( screen.getByRole( 'dialog' ), { key: 'Escape' } );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect( onClose ).not.toHaveBeenCalled();
+
+		await act( async () => {
+			request.resolve( { ...EXPORT, scope: 'subscribers', count: 1 } );
+		} );
+
+		expect( click ).toHaveBeenCalledTimes( 1 );
+		expect( onExported ).toHaveBeenCalledWith(
+			'Exported 1 mailing subscriber.'
+		);
+		expect( onClose ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'keeps the popup open with the error so the download can be retried', async () => {
+		apiFetch.mockRejectedValueOnce( {} );
+		const onClose = jest.fn();
+		const onExported = jest.fn();
+		render(
+			<ExportAudienceModal
+				onClose={ onClose }
+				onExported={ onExported }
+			/>
+		);
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Download CSV' } )
+			);
+		} );
+
+		expect(
+			screen.getByText(
+				'The audience could not be exported. Please try again.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeInTheDocument();
+		expect( click ).not.toHaveBeenCalled();
+		expect( onClose ).not.toHaveBeenCalled();
+		const retry = screen.getByRole( 'button', { name: 'Download CSV' } );
+		expect( retry ).toBeEnabled();
+
+		apiFetch.mockResolvedValueOnce( EXPORT );
+		await act( async () => {
+			fireEvent.click( retry );
+		} );
+
+		expect( apiFetch ).toHaveBeenCalledTimes( 2 );
+		expect( click ).toHaveBeenCalledTimes( 1 );
+		expect( onExported ).toHaveBeenCalledWith(
+			'Exported 2 audience members.'
+		);
 	} );
 } );

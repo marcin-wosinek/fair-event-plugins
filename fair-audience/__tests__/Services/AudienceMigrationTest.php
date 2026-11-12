@@ -141,6 +141,24 @@ class AudienceMigrationTest extends TestCase {
 	}
 
 	/**
+	 * An empty export, such as a subscriber-only export with no subscribers,
+	 * is the header row alone. Importing it is refused as having no members
+	 * and writes nothing.
+	 */
+	public function test_empty_export_is_header_only() {
+		$csv = AudienceMigration::export_csv( array() );
+
+		$this->assertSame( 1, substr_count( $csv, "\r\n" ) );
+		$this->assertStringContainsString( 'format_version,name,surname,email', $csv );
+
+		$outcome = $this->importer()->import( $csv );
+
+		$this->assertSame( 'empty_file', $outcome['error']['code'] );
+		$this->assertSame( 'The file has no audience members.', $outcome['error']['message'] );
+		$this->assertSame( array(), $this->inserted );
+	}
+
+	/**
 	 * Importing the same file twice creates nothing the second time.
 	 */
 	public function test_reimport_is_already_present() {

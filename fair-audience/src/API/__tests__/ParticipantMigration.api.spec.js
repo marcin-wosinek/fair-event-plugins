@@ -1,6 +1,6 @@
 /**
  * Playwright API tests for the audience CSV export and import (#2218):
- * GET /fair-audience/v1/participants/export and
+ * GET /fair-audience/v1/participants/export (optionally ?scope=subscribers) and
  * POST /fair-audience/v1/participants/import.
  *
  * Destination members are stored with
@@ -122,6 +122,9 @@ test.describe( 'Audience CSV export and import', () => {
 
 	test( 'only administrators can export or import', async () => {
 		expect( ( await api.get( EXPORT ) ).status() ).toBe( 401 );
+		expect(
+			( await api.get( `${ EXPORT }?scope=subscribers` ) ).status()
+		).toBe( 401 );
 		expect( ( await upload( csv( [] ), {} ) ).status() ).toBe( 401 );
 
 		const username = `migration-subscriber-${ suffix }`;
@@ -143,6 +146,13 @@ test.describe( 'Audience CSV export and import', () => {
 		try {
 			expect(
 				( await api.get( EXPORT, { headers: editor } ) ).status()
+			).toBe( 403 );
+			expect(
+				(
+					await api.get( `${ EXPORT }?scope=subscribers`, {
+						headers: editor,
+					} )
+				).status()
 			).toBe( 403 );
 			expect(
 				(
@@ -227,6 +237,81 @@ test.describe( 'Audience CSV export and import', () => {
 			status: 'confirmed',
 			feed_ids: [ feeds.a ],
 		} );
+	} );
+
+	test( 'subscriber-only export holds confirmed marketing members only', async () => {
+		const subscriber = email( 'scope-subscriber' );
+		const optedOut = email( 'scope-subscriber-opted-out' );
+		const pending = email( 'scope-pending' );
+		const minimal = email( 'scope-minimal' );
+		const declined = email( 'scope-declined' );
+		await member( subscriber, 'marketing', false );
+		await member( optedOut, 'marketing', true );
+		await member( pending, 'marketing', false, 'pending' );
+		await member( minimal, 'minimal', false );
+		await member( declined, 'declined', false );
+
+		const exportScope = async ( query ) => {
+			const res = await api.get( `${ EXPORT }${ query }`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status(), await res.text() ).toBe( 200 );
+			expect( res.headers()[ 'cache-control' ] ).toContain( 'no-store' );
+			const body = await res.json();
+			const rows = body.content.split( '\r\n' ).filter( Boolean );
+			// The header row plus one row per exported member.
+			expect( rows ).toHaveLength( body.count + 1 );
+			return body;
+		};
+
+		// Omitting the scope and asking for all both export everyone.
+		for ( const query of [ '', '?scope=all' ] ) {
+			const everyone = await exportScope( query );
+			expect( everyone.scope ).toBe( 'all' );
+			expect( everyone.filename ).toMatch(
+				/^fair-audience-\d{4}-\d{2}-\d{2}\.csv$/
+			);
+			for ( const address of [
+				subscriber,
+				optedOut,
+				pending,
+				minimal,
+				declined,
+			] ) {
+				expect( everyone.content ).toContain( address );
+			}
+		}
+
+		const subscribers = await exportScope( '?scope=subscribers' );
+		expect( subscribers.scope ).toBe( 'subscribers' );
+		expect( subscribers.filename ).toMatch(
+			/^fair-audience-subscribers-\d{4}-\d{2}-\d{2}\.csv$/
+		);
+		expect( subscribers.content.startsWith( '\uFEFF' + HEADER ) ).toBe(
+			true
+		);
+		// The weekly summary opt-out does not decide who is a subscriber.
+		expect( subscribers.content ).toContain(
+			`1,Ana,Ruiz,${ subscriber },,,marketing,0`
+		);
+		expect( subscribers.content ).toContain(
+			`1,Ana,Ruiz,${ optedOut },,,marketing,1`
+		);
+		for ( const address of [ pending, minimal, declined ] ) {
+			expect( subscribers.content ).not.toContain( address );
+		}
+		expect( subscribers.count ).toBeLessThan(
+			( await exportScope( '' ) ).count
+		);
+
+		for ( const scope of [ 'mailing', 'SUBSCRIBERS', '' ] ) {
+			const res = await api.get(
+				`${ EXPORT }?scope=${ encodeURIComponent( scope ) }`,
+				{ headers: adminHeaders }
+			);
+			expect( res.status(), scope ).toBe( 400 );
+			expect( ( await res.json() ).code ).toBe( 'rest_invalid_param' );
+		}
 	} );
 
 	test( 'legacy feed modes create no subscriptions and grant no consent', async () => {
