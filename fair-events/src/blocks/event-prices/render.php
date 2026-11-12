@@ -137,6 +137,35 @@ if ( ! function_exists( 'fair_events_format_price_entry' ) ) {
 			: (string) $entry['price'];
 	}
 }
+
+if ( ! function_exists( 'fair_events_format_ticket_deadline' ) ) {
+	/**
+	 * Localized "Until: …" label for a ticket type's "Stop selling on"
+	 * deadline, in the site's timezone and date/time formats. Shown unchanged
+	 * in every sale period (#2187) — unlike period ranges, the deadline is an
+	 * exact instant, so no half-open end-date adjustment applies.
+	 *
+	 * @param string|null $disable_at Site-local 'Y-m-d H:i:s' deadline, or null.
+	 * @return string Label text, or '' when no valid deadline is configured.
+	 */
+	function fair_events_format_ticket_deadline( $disable_at ) {
+		if ( empty( $disable_at ) ) {
+			return '';
+		}
+
+		$formatted = \FairEvents\Helpers\DateHelper::format_local_datetime(
+			$disable_at,
+			get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+		);
+
+		if ( '' === $formatted ) {
+			return '';
+		}
+
+		/* translators: %s: localized date and time after which this ticket type is no longer sold */
+		return sprintf( __( 'Until: %s', 'fair-events' ), $formatted );
+	}
+}
 ?>
 <div <?php echo wp_kses_post( get_block_wrapper_attributes( array( 'class' => 'wp-block-fair-events-event-prices' ) ) ); ?>>
 	<?php foreach ( $schedule['periods'] as $period ) : ?>
@@ -153,6 +182,10 @@ if ( ! function_exists( 'fair_events_format_price_entry' ) ) {
 					<div class="wp-block-fair-events-event-prices__row wp-block-fair-events-event-prices__row--<?php echo esc_attr( $entry['state'] ); ?>">
 						<dt class="wp-block-fair-events-event-prices__name">
 							<?php echo esc_html( '' !== (string) $entry['name'] ? $entry['name'] : __( '(untitled ticket type)', 'fair-events' ) ); ?>
+							<?php $deadline = fair_events_format_ticket_deadline( $entry['disable_at'] ?? null ); ?>
+							<?php if ( '' !== $deadline ) : ?>
+								<span class="wp-block-fair-events-event-prices__deadline"><?php echo esc_html( $deadline ); ?></span>
+							<?php endif; ?>
 						</dt>
 						<dd class="wp-block-fair-events-event-prices__price">
 							<?php echo esc_html( fair_events_format_price_entry( $entry, $currency ) ); ?>
