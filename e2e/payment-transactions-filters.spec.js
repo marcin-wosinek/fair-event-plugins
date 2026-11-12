@@ -165,6 +165,119 @@ test.describe('Payment Transactions filters', () => {
 		await expect(page.getByText(/transactions? found\./)).toBeVisible();
 	});
 
+	test('rows sort from the keyboard and View details opens the transaction', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto(PAGE_PATH);
+
+		const form = page.getByRole('form', { name: 'Filter transactions' });
+		await form.getByLabel('Search').fill(KEY);
+		await form.getByLabel('Search').press('Enter');
+		await expect(page.getByText('3 transactions found.')).toBeVisible();
+
+		const table = page.getByRole('table', {
+			name: 'Payment transactions',
+		});
+		const amountSort = table.getByRole('button', { name: /^Amount/ });
+		const amountHeader = table.locator('th', {
+			has: page.getByRole('button', { name: /^Amount/ }),
+		});
+		const descriptions = table.locator('.fair-admin-table__identity-meta');
+
+		// Enter on the focused header button sorts, and the order is announced.
+		await amountSort.focus();
+		await page.keyboard.press('Enter');
+		await expect(amountHeader).toHaveAttribute('aria-sort', 'descending');
+		await expect(descriptions.first()).toHaveText(`${KEY} hoodie`);
+		await table.getByRole('button', { name: /^Amount/ }).focus();
+		await page.keyboard.press('Space');
+		await expect(amountHeader).toHaveAttribute('aria-sort', 'ascending');
+		await expect(descriptions.first()).toHaveText(`${KEY} sticker`);
+
+		// Select-all and per-row checkboxes are named.
+		await table
+			.getByRole('checkbox', {
+				name: 'Select all transactions on this page',
+			})
+			.check();
+		await expect(
+			table.getByRole('checkbox', { name: /^Select transaction #/ })
+		).toHaveCount(3);
+		for (const box of await table
+			.getByRole('checkbox', { name: /^Select transaction #/ })
+			.all()) {
+			await expect(box).toBeChecked();
+		}
+		await expect(
+			page.getByRole('button', { name: 'Export Selected' })
+		).toBeVisible();
+
+		// View details points at the same transaction as the reference link.
+		const row = table.locator('tbody tr', {
+			hasText: `${KEY} sticker`,
+		});
+		const reference = row.locator('.fair-admin-table__identity-name a');
+		const href = await reference.getAttribute('href');
+		const view = row.getByRole('link', {
+			name: /^View details for transaction #\d+$/,
+		});
+		await expect(view).toHaveAttribute('href', href);
+		// A clicked in-page link can stall headless Chromium; follow the href.
+		await page.goto(`/wp-admin/${href}`);
+		await expect(page).toHaveURL(
+			/page=fair-payments-connector-transaction&/
+		);
+		await expect(page.getByText(`${KEY} sticker`).first()).toBeVisible();
+	});
+
+	test('stacked rows keep every value and sort on a phone', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 375, height: 812 });
+		await loginAsAdmin(page);
+		await page.goto(PAGE_PATH);
+
+		const form = page.getByRole('form', { name: 'Filter transactions' });
+		await form.getByLabel('Search').fill(`Ines Buyer${KEY}`);
+		await form.getByLabel('Search').press('Enter');
+		await expect(page.getByText('1 transaction found.')).toBeVisible();
+
+		const row = page.locator('.fair-admin-table tbody tr').first();
+		for (const text of [
+			`${KEY} poster`,
+			'15.00',
+			'Mollie fee:',
+			'Integration fee:',
+			'Paid',
+			'Live mode',
+			`Ines Buyer${KEY}`,
+			'View details',
+		]) {
+			await expect(row.getByText(text).first(), text).toBeVisible();
+		}
+		await expect(row.getByRole('checkbox')).toBeVisible();
+
+		// No horizontal page scroll.
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth -
+				document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+
+		// Headers are hidden, so a labeled control sorts instead.
+		const sortBy = page.getByLabel('Sort by');
+		await expect(sortBy).toBeVisible();
+		await sortBy.selectOption('amount:asc');
+		await expect(page.getByText('1 transaction found.')).toBeVisible();
+		await expect(
+			page.getByRole('checkbox', {
+				name: 'Select all transactions on this page',
+			})
+		).toBeVisible();
+	});
+
 	for (const [name, viewport] of [
 		['tablet', { width: 768, height: 1024 }],
 		['mobile', { width: 375, height: 812 }],

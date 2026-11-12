@@ -8,7 +8,13 @@
  * `fair-payments-connector-entries` slug.
  */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import TransactionsApp from '../TransactionsApp.js';
 
@@ -145,7 +151,9 @@ describe( 'TransactionsApp — load missing Mollie fees (#1695)', () => {
 		render( <TransactionsApp /> );
 
 		expect(
-			await screen.findByText( 'No transactions found.' )
+			await screen.findByText(
+				'No paid live transactions. Change the Status or Mode filter to see other transactions.'
+			)
 		).toBeInTheDocument();
 		const button = screen.getByRole( 'button', {
 			name: 'Load missing Mollie fees',
@@ -429,10 +437,12 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 		screen.getByRole( 'button', { name: 'Apply filters' } );
 
 	const rowCheckbox = ( id ) =>
-		screen
-			.getByRole( 'link', { name: String( id ) } )
-			.closest( 'tr' )
-			.querySelector( 'input[type="checkbox"]' );
+		screen.getByRole( 'checkbox', { name: `Select transaction #${ id }` } );
+
+	const sortButton = ( label ) =>
+		within( screen.getByRole( 'table' ) ).getByRole( 'button', {
+			name: new RegExp( `^${ label }` ),
+		} );
 
 	it( 'loads the Paid / Live defaults and shows them as applied filters with a count', async () => {
 		apiFetch.mockImplementation( () => respond( [ row( 1 ) ], 73, 2 ) );
@@ -458,7 +468,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 		render( <TransactionsApp /> );
 		await screen.findByText( '120 transactions found.' );
 
-		fireEvent.click( screen.getByText( /^Amount/, { selector: 'th' } ) );
+		fireEvent.click( sortButton( 'Amount' ) );
 		await waitFor( () => expect( listCalls() ).toHaveLength( 2 ) );
 		await screen.findByText( '120 transactions found.' );
 		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
@@ -526,7 +536,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 		render( <TransactionsApp /> );
 		await screen.findByText( '120 transactions found.' );
 
-		fireEvent.click( screen.getByText( /^ID/, { selector: 'th' } ) );
+		fireEvent.click( sortButton( 'Transaction' ) );
 		type( 'Search', 'workshop' );
 		type( 'Mode', '' );
 		fireEvent.click( applyButton() );
@@ -596,7 +606,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 	it( 'tells a valid query with no matches apart from a failed request', async () => {
 		apiFetch.mockImplementation( () => respond( [] ) );
 		render( <TransactionsApp /> );
-		await screen.findByText( 'No transactions found.' );
+		await screen.findByText( /^No paid live transactions\./ );
 
 		type( 'Search', 'nobody' );
 		fireEvent.click( applyButton() );
@@ -623,7 +633,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 			).toBeGreaterThan( 0 )
 		);
 		expect(
-			screen.queryByText( /No transactions (found|match)/ )
+			screen.queryByText( /No transactions match/ )
 		).not.toBeInTheDocument();
 		expect(
 			screen.queryByText( /transactions? found\./ )
@@ -710,10 +720,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 					fireEvent.click(
 						screen.getByRole( 'button', { name: 'Next' } )
 					),
-				() =>
-					fireEvent.click(
-						screen.getByText( /^Amount/, { selector: 'th' } )
-					),
+				() => fireEvent.click( sortButton( 'Amount' ) ),
 				() =>
 					fireEvent.click(
 						screen.getByRole( 'button', { name: 'Reset filters' } )
@@ -824,5 +831,312 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				'tr_row2',
 			] );
 		} );
+	} );
+} );
+
+describe( 'TransactionsApp — shared table (#2209)', () => {
+	const LIST = '/fair-payments-connector/v1/transactions?';
+
+	const row = ( id, overrides = {} ) => ( {
+		...TRANSACTION,
+		id,
+		mollie_payment_id: `tr_row${ id }`,
+		description: `Row ${ id }`,
+		entry_ids: [],
+		...overrides,
+	} );
+
+	const respond = ( transactions, total = transactions.length, pages = 1 ) =>
+		Promise.resolve( { transactions, total, pages } );
+
+	const listCalls = () =>
+		apiFetch.mock.calls
+			.map( ( [ options ] ) => options.path )
+			.filter( ( path ) => path.startsWith( LIST ) );
+
+	const lastParams = () =>
+		Object.fromEntries(
+			new URLSearchParams( listCalls().at( -1 ).slice( LIST.length ) )
+		);
+
+	const rowOf = ( id ) =>
+		screen.getByRole( 'link', { name: `#${ id }` } ).closest( 'tr' );
+
+	it( 'links the reference and View details to the same transaction, with the description underneath', async () => {
+		apiFetch.mockImplementation( () =>
+			respond( [ row( 7 ), row( 8, { description: '' } ) ] )
+		);
+		render( <TransactionsApp /> );
+
+		const identity = await screen.findByRole( 'link', { name: '#7' } );
+		const url =
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=7';
+		expect( identity ).toHaveAttribute( 'href', url );
+		const view = screen.getByRole( 'link', {
+			name: 'View details for transaction #7',
+		} );
+		expect( view ).toHaveAttribute( 'href', url );
+		expect( view ).toHaveTextContent( 'View details' );
+		expect(
+			within( identity.closest( 'td' ) ).getByText( 'Row 7' )
+		).toBeInTheDocument();
+		expect(
+			within( rowOf( 8 ) ).getByText( '(no description)' )
+		).toBeInTheDocument();
+		// No row menu: there are no secondary row actions.
+		expect(
+			screen.queryByRole( 'button', { name: /More actions/ } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps currency and two decimals for the amount and both fees, telling zero from missing', async () => {
+		apiFetch.mockImplementation( () =>
+			respond( [
+				row( 1, {
+					amount: 45,
+					currency: 'PLN',
+					mollie_fee: 0,
+					application_fee: null,
+				} ),
+				row( 2, {
+					amount: 12.5,
+					mollie_fee: 0.5,
+					application_fee: 0.9,
+				} ),
+			] )
+		);
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+
+		const first = within( rowOf( 1 ) );
+		expect( first.getByText( '45.00 PLN' ) ).toBeInTheDocument();
+		expect( first.getByText( 'Mollie fee: 0.00 PLN' ) ).toBeInTheDocument();
+		expect( first.getByText( 'Integration fee: —' ) ).toBeInTheDocument();
+
+		const second = within( rowOf( 2 ) );
+		expect( second.getByText( '12.50 EUR' ) ).toBeInTheDocument();
+		expect(
+			second.getByText( 'Mollie fee: 0.50 EUR' )
+		).toBeInTheDocument();
+		expect(
+			second.getByText( 'Integration fee: 0.90 EUR' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows status and mode as text, and keeps person fallbacks', async () => {
+		apiFetch.mockImplementation( () =>
+			respond( [
+				row( 1, {
+					status: 'pending_payment',
+					testmode: true,
+					participant: {
+						id: 5,
+						name: '',
+						email: 'ada@example.test',
+						admin_url: 'admin.php?participant=5',
+					},
+				} ),
+				row( 2, { status: 'refunded', user_name: '' } ),
+				row( 3, {
+					participant: {
+						id: 9,
+						name: '',
+						email: '',
+						admin_url: 'admin.php?participant=9',
+					},
+				} ),
+			] )
+		);
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+
+		const first = within( rowOf( 1 ) );
+		expect( first.getByText( 'Pending payment' ) ).toHaveClass(
+			'fair-admin-table__status--warning'
+		);
+		expect( first.getByText( 'Test mode' ) ).toBeInTheDocument();
+		expect(
+			first.getByRole( 'link', { name: 'ada@example.test' } )
+		).toHaveAttribute( 'href', 'admin.php?participant=5' );
+
+		const second = within( rowOf( 2 ) );
+		expect( second.getByText( 'Refunded' ) ).toBeInTheDocument();
+		expect( second.getByText( 'Live mode' ) ).toBeInTheDocument();
+		expect(
+			rowOf( 2 ).querySelector( '[data-label="Person"]' )
+		).toHaveTextContent( '—' );
+
+		expect(
+			within( rowOf( 3 ) ).getByRole( 'link', { name: '#9' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'sorts from header buttons that announce the order, and from the narrow-screen control', async () => {
+		apiFetch.mockImplementation( () => respond( [ row( 1 ) ] ) );
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+
+		const header = ( label ) =>
+			within( screen.getByRole( 'table' ) )
+				.getByRole( 'button', { name: new RegExp( `^${ label }` ) } )
+				.closest( 'th' );
+		expect( header( 'Date' ) ).toHaveAttribute( 'aria-sort', 'descending' );
+		expect( header( 'Amount' ) ).not.toHaveAttribute( 'aria-sort' );
+
+		fireEvent.click( within( header( 'Amount' ) ).getByRole( 'button' ) );
+		await waitFor( () => expect( lastParams().orderby ).toBe( 'amount' ) );
+		expect( lastParams().order ).toBe( 'desc' );
+		await screen.findByRole( 'link', { name: '#1' } );
+		expect( header( 'Amount' ) ).toHaveAttribute(
+			'aria-sort',
+			'descending'
+		);
+
+		fireEvent.click( within( header( 'Amount' ) ).getByRole( 'button' ) );
+		await waitFor( () => expect( lastParams().order ).toBe( 'asc' ) );
+		await screen.findByRole( 'link', { name: '#1' } );
+		expect( header( 'Amount' ) ).toHaveAttribute(
+			'aria-sort',
+			'ascending'
+		);
+		expect( screen.getByLabelText( 'Sort by' ) ).toHaveValue(
+			'amount:asc'
+		);
+
+		fireEvent.change( screen.getByLabelText( 'Sort by' ), {
+			target: { value: 'status:asc' },
+		} );
+		await waitFor( () =>
+			expect( lastParams() ).toMatchObject( {
+				orderby: 'status',
+				order: 'asc',
+			} )
+		);
+		await screen.findByRole( 'link', { name: '#1' } );
+		expect( header( 'Status' ) ).toHaveAttribute(
+			'aria-sort',
+			'ascending'
+		);
+	} );
+
+	it( 'labels selection checkboxes and selects every shown row', async () => {
+		apiFetch.mockImplementation( () => respond( [ row( 1 ), row( 2 ) ] ) );
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+
+		const [ headerSelectAll ] = screen.getAllByRole( 'checkbox', {
+			name: 'Select all transactions on this page',
+		} );
+		fireEvent.click( headerSelectAll );
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #1' } )
+		).toBeChecked();
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
+		).toBeChecked();
+		expect(
+			screen.getByRole( 'button', { name: 'Export Selected' } )
+		).toBeEnabled();
+	} );
+
+	it( 'keeps rows and selection when a refresh fails, then retries', async () => {
+		const RUNS = '/fair-payments-connector/v1/external-updates/runs';
+		let fail = false;
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.path === RUNS ) {
+				return Promise.resolve( {
+					run: { id: 3, status: 'succeeded' },
+					ids: [],
+				} );
+			}
+			return fail
+				? Promise.reject( new Error( 'Server unavailable.' ) )
+				: respond( [ row( 1 ), row( 2 ) ] );
+		} );
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
+		);
+
+		fail = true;
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Load missing Mollie fees' } )
+		);
+		await screen.findByRole( 'button', { name: 'Try again' } );
+
+		expect(
+			screen.getByRole( 'link', { name: '#1' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
+		).toBeChecked();
+		expect(
+			screen.getByText( '2 transactions found.' )
+		).toBeInTheDocument();
+
+		fail = false;
+		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
+		await waitFor( () =>
+			expect(
+				screen.queryByRole( 'button', { name: 'Try again' } )
+			).not.toBeInTheDocument()
+		);
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
+		).toBeChecked();
+	} );
+
+	it( 'does not show the previous rows under a new query that is loading or failed', async () => {
+		let next;
+		apiFetch.mockImplementation( () => respond( [ row( 1 ) ], 1, 2 ) );
+		render( <TransactionsApp /> );
+		await screen.findByRole( 'link', { name: '#1' } );
+
+		apiFetch.mockImplementation(
+			() =>
+				new Promise( ( resolve, reject ) => {
+					next = { resolve, reject };
+				} )
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
+		await waitFor( () => expect( next ).toBeDefined() );
+
+		expect(
+			screen.queryByRole( 'link', { name: '#1' } )
+		).not.toBeInTheDocument();
+		expect( screen.queryByText( /transactions? found\./ ) ).toBeNull();
+		expect(
+			screen.getByText( 'Loading transactions…' )
+		).toBeInTheDocument();
+
+		next.reject( new Error( 'Server unavailable.' ) );
+		await screen.findByRole( 'button', { name: 'Try again' } );
+		expect(
+			screen.queryByRole( 'link', { name: '#1' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Export Selected' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'says there are no transactions only when no filter hides any', async () => {
+		apiFetch.mockImplementation( () => respond( [] ) );
+		render( <TransactionsApp /> );
+		await screen.findByText( /^No paid live transactions\./ );
+
+		fireEvent.change( screen.getByLabelText( 'Status' ), {
+			target: { value: '' },
+		} );
+		fireEvent.change( screen.getByLabelText( 'Mode' ), {
+			target: { value: '' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Apply filters' } )
+		);
+
+		expect(
+			await screen.findByText( /^No transactions yet\./ )
+		).toBeInTheDocument();
 	} );
 } );

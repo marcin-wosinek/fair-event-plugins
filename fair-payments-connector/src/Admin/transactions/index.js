@@ -8,6 +8,8 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies
  */
 import TransactionsApp from './TransactionsApp.js';
+import 'fair-events-shared/src/admin-table/style.css';
+import './style.scss';
 
 /**
  * Initialize the transactions page
