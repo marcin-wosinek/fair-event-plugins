@@ -3,17 +3,18 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 /**
- * E2E: the Payment history page (#2139, stage 3 of #2111). After the
- * migration ran over synthetic history, an administrator splits a shared
- * payment between two purchases, removes one of those links again, and,
- * on a phone-sized screen, marks an orphaned payment as reviewed. Every
- * decision names the payment and purchases, needs a note, and is
+ * E2E: the Payment history page (#2139, stage 3 of #2111; migration
+ * controls retired in #2252). With synthetic records to review, the page
+ * shows only ongoing payment history management; an administrator splits a
+ * shared payment between two purchases, removes one of those links again,
+ * and, on a phone-sized screen, marks an orphaned payment as reviewed.
+ * Every decision names the payment and purchases, needs a note, and is
  * confirmed next to what it changed.
  *
- * The history comes from the payment-history-backfill.php fixture shared
- * with PaymentHistoryBackfill.api.spec.js: T13b is a €24 payment for two
- * sessions recorded as one line (example 21), T10 a €15 payment naming a
- * purchase that no longer exists (example 14).
+ * The records come from the payment-history-findings.php fixture shared
+ * with PaymentHistoryReconciliation.api.spec.js: T13b is a €24 payment for
+ * two sessions recorded as one line, T10 a €15 payment naming a purchase
+ * that no longer exists.
  */
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
@@ -29,7 +30,7 @@ const adminHeaders = {
 		),
 };
 
-async function backfill( action, data = {} ) {
+async function findings( action, data = {} ) {
 	const { stdout } = await promisify( execFile )(
 		'npx',
 		[
@@ -38,7 +39,7 @@ async function backfill( action, data = {} ) {
 			'tests-cli',
 			'wp',
 			'eval-file',
-			'wp-content/mu-plugins/scripts/payment-history-backfill.php',
+			'wp-content/mu-plugins/scripts/payment-history-findings.php',
 			action,
 			JSON.stringify( data ),
 		],
@@ -48,10 +49,10 @@ async function backfill( action, data = {} ) {
 			maxBuffer: 16 * 1024 * 1024,
 		}
 	);
-	const match = stdout.match( /E2E_PAYMENT_BACKFILL:(\{.*\})/ );
+	const match = stdout.match( /E2E_PAYMENT_FINDINGS:(\{.*\})/ );
 	if ( ! match ) {
 		throw new Error(
-			`Expected E2E_PAYMENT_BACKFILL output, got:\n${ stdout }`
+			`Expected E2E_PAYMENT_FINDINGS output, got:\n${ stdout }`
 		);
 	}
 	return JSON.parse( match[ 1 ] );
@@ -125,34 +126,17 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			dates[ letter ] = body.id;
 		}
 
-		seed = await backfill( 'seed', {
-			eventId,
+		seed = await findings( 'seed', {
 			dateA: dates.A,
 			dateB: dates.B,
 			dateC: dates.C,
 		} );
-		expect( seed.blockers ).toEqual( [] );
-		await backfill( 'dry-run' );
-		await backfill( 'start', { backupConfirmed: true } );
-		expect(
-			( await backfill( 'run', { batchSize: 50 } ) ).run.last_error
-		).toBeNull();
-
-		const current = await backfill( 'state', {
-			relationshipIds: [
-				seed.relationships.R21A,
-				seed.relationships.R21B,
-			],
-		} );
-		purchases = {
-			a: Number( current.purchases[ seed.relationships.R21A ][ 0 ].id ),
-			b: Number( current.purchases[ seed.relationships.R21B ][ 0 ].id ),
-		};
+		purchases = { a: seed.signups.S21A, b: seed.signups.S21B };
 	} );
 
 	test.afterAll( async () => {
 		if ( seed ) {
-			await backfill( 'cleanup', { seed } );
+			await findings( 'cleanup', { seed } );
 		}
 		for ( const id of Object.values( dates ) ) {
 			await api.delete( `/wp-json/fair-events/v1/event-dates/${ id }`, {
@@ -172,7 +156,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		page,
 	} ) => {
 		const t10 = seed.transactions.T10;
-		const { previous } = await backfill( 'set-transactions', {
+		const { previous } = await findings( 'set-transactions', {
 			transactions: { [ t10 ]: { status: 'canceled' } },
 		} );
 		try {
@@ -219,7 +203,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 				page.getByText( 'No records match these filters.' )
 			).toHaveCount( 0 );
 		} finally {
-			await backfill( 'set-transactions', { transactions: previous } );
+			await findings( 'set-transactions', { transactions: previous } );
 		}
 	} );
 
@@ -234,6 +218,20 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		await expect(
 			page.getByRole( 'heading', { name: 'Records to review' } )
 		).toBeVisible();
+		// The one-time migration's controls are gone; findings show without
+		// a migration run.
+		for ( const name of [
+			'Run a dry run',
+			'Start the migration',
+			'Switch payment records to Fair Events',
+		] ) {
+			await expect( page.getByRole( 'button', { name } ) ).toHaveCount(
+				0
+			);
+		}
+		await expect( page.getByLabel( 'Run', { exact: true } ) ).toHaveCount(
+			0
+		);
 
 		await page
 			.getByLabel( 'Event', { exact: true } )

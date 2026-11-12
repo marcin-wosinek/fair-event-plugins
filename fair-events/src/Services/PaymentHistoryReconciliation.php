@@ -16,8 +16,8 @@ use FairEventsShared\LineItemTotals;
 defined( 'WPINC' ) || die;
 
 /**
- * What an administrator does with the records the backfill couldn't
- * attribute (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10):
+ * What an administrator does with the payment history records reported
+ * for review (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10):
  *
  * - link a reported transaction to one purchase, or set the allocations of
  *   a shared transaction across several, as `reconciled` links;
@@ -33,8 +33,9 @@ defined( 'WPINC' ) || die;
  * was decided by someone else, it is refused as stale instead of
  * overwriting the other decision.
  *
- * Only backfill findings are reconciled: a dry run's findings are replaced
- * by the next dry run. Backfilled and live links are never changed.
+ * Only findings of the completed migration (`backfill` mode) are
+ * reconciled; dry-run findings remain readable as evidence only.
+ * Backfilled and live links are never changed.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  * phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- generated %d lists.
@@ -184,8 +185,7 @@ class PaymentHistoryReconciliation {
 					'links'      => $written['links'],
 					'signup_ids' => array_column( $requested, 'signup_id' ),
 				);
-			},
-			array( (int) $finding['event_date_id'] )
+			}
 		);
 	}
 
@@ -273,8 +273,7 @@ class PaymentHistoryReconciliation {
 					'links'      => $after_links,
 					'signup_ids' => array( (int) $link['signup_id'] ),
 				);
-			},
-			array( $finding_id ? (int) ( PaymentHistoryFinding::get( $finding_id )['event_date_id'] ?? 0 ) : 0 )
+			}
 		);
 	}
 
@@ -335,7 +334,7 @@ class PaymentHistoryReconciliation {
 		// A transaction's finding is decided under its writer lock, so it
 		// can't race a link being written for it.
 		$lock_id = PaymentHistoryFinding::SOURCE_TRANSACTION === $finding['source_type'] ? (int) $finding['source_id'] : 0;
-		return self::locked( $lock_id, $apply, array( (int) $finding['event_date_id'] ) );
+		return self::locked( $lock_id, $apply );
 	}
 
 	/**
@@ -507,14 +506,13 @@ class PaymentHistoryReconciliation {
 	/**
 	 * Run a change under the transaction's writer lock and in one database
 	 * transaction; roll back on an error. Then bring the affected purchases'
-	 * amounts and the verification report up to date.
+	 * amounts up to date.
 	 *
 	 * @param int      $transaction_id Transaction whose lock to take; 0 for none.
 	 * @param callable $change         Returns a result array or a WP_Error.
-	 * @param int[]    $event_dates    Event dates the change concerns.
 	 * @return array|\WP_Error
 	 */
-	private static function locked( $transaction_id, callable $change, array $event_dates ) {
+	private static function locked( $transaction_id, callable $change ) {
 		global $wpdb;
 
 		if ( $transaction_id && ! PaymentLinks::acquire_lock( $transaction_id ) ) {
@@ -541,33 +539,10 @@ class PaymentHistoryReconciliation {
 
 		foreach ( array_unique( array_map( 'intval', $result['signup_ids'] ) ) as $signup_id ) {
 			ShadowPurchases::refresh_amount( $signup_id );
-			$event_dates[] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT event_date_id FROM %i WHERE id = %d', $wpdb->prefix . 'fair_events_signups', $signup_id ) );
 		}
-		self::refresh_verification( $event_dates );
 
 		unset( $result['signup_ids'] );
 		return $result;
-	}
-
-	/**
-	 * Compare the affected event dates again and, once the backfill has
-	 * finished, verify the whole history again: a decision can clear a
-	 * blocker or explain a difference.
-	 *
-	 * @param int[] $event_dates Event date IDs.
-	 * @return void
-	 */
-	private static function refresh_verification( array $event_dates ) {
-		$run = PaymentHistoryBackfill::get_run( PaymentHistoryBackfill::MODE_BACKFILL );
-		if ( ! $run ) {
-			return;
-		}
-		foreach ( array_unique( array_filter( array_map( 'intval', $event_dates ) ) ) as $event_date_id ) {
-			PaymentHistoryVerification::check_event_date( $event_date_id );
-		}
-		if ( in_array( $run['status'], array( PaymentHistoryBackfill::STATUS_VERIFIED, PaymentHistoryBackfill::STATUS_VERIFICATION_FAILED ), true ) ) {
-			PaymentHistoryBackfill::verify();
-		}
 	}
 
 	/**

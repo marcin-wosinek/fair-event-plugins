@@ -10,9 +10,6 @@
  * purchase, whatever a purchase's latest-attempt pointer says. Results stay
  * the same through a Fair Audience deactivation, and payment information
  * missing without Connector is said as such.
- *
- * The payment-readers.php fixture stashes any recorded reader activation
- * and puts it back afterwards, so these tests run without one.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -81,7 +78,6 @@ test.describe.serial( 'Purchase payments from Fair Events records', () => {
 	let api;
 	let anonymous;
 	let adminHeaders;
-	let prepared;
 	let audienceDeactivated = false;
 	let connectorDeactivated = false;
 	const today = new Date().toISOString().slice( 0, 10 );
@@ -192,8 +188,6 @@ test.describe.serial( 'Purchase payments from Fair Events records', () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 		anonymous = await request.newContext( { baseURL: BASE_URL } );
 		adminHeaders = await login( api, ADMIN_USER, ADMIN_PASSWORD );
-
-		prepared = await readers( 'prepare' );
 
 		const a = await createOccurrence( 'A', 10 );
 		const b = await createOccurrence( 'B', 11 );
@@ -320,9 +314,6 @@ test.describe.serial( 'Purchase payments from Fair Events records', () => {
 			eventDateIds,
 			configuredEventDateIds: eventDateIds.slice( 0, 1 ),
 		} );
-		if ( prepared ) {
-			await readers( 'restore' );
-		}
 		for ( const id of eventIds ) {
 			await api.delete( `/wp-json/wp/v2/fair_event/${ id }?force=true`, {
 				headers: adminHeaders,
@@ -341,8 +332,6 @@ test.describe.serial( 'Purchase payments from Fair Events records', () => {
 	} );
 
 	test( 'never resolves an attempt without links from a latest-attempt pointer', async () => {
-		expect( ( await readers( 'facts' ) ).activation ).toBeNull();
-
 		const s4 = ( await listed( signups.dateB ) )[ signups.s4 ];
 		expect( Number( s4.transaction_id ) ).toBe( tx.unlinked );
 		expect( s4.payment_history ).toMatchObject( {

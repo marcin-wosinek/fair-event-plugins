@@ -2,14 +2,14 @@
  * Live coverage for payment history reconciliation (#2139, stage 3 of
  * #2111): the administrator-only `/fair-events/v1/payment-history` routes,
  * linking and splitting reported payments, removing a reconciled link,
- * marking a record as reviewed, the append-only audit, stale and
- * concurrent decisions, and a backfill re-run keeping every decision
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10).
+ * marking a record as reviewed, the append-only audit, and stale and
+ * concurrent decisions (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10). The
+ * one-time migration's routes are retired (#2252).
  *
- * The history is the backfill spec's synthetic one (payment-history-backfill.php):
- * after the backfill, example 11's add-on (T7), example 14's orphaned
- * payment (T10) and example 21's unsplittable shared payment (T13b) are
- * reported, and example 9's purchase is paid twice.
+ * The records are the payment-history-findings.php fixture's: T7 is an
+ * add-on charge for one of two purchases, T10 a payment naming a purchase
+ * that no longer exists, T13b one line for two sessions, and S9 a purchase
+ * paid twice.
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -29,7 +29,7 @@ const adminHeaders = {
 		),
 };
 
-async function backfill( action, data = {} ) {
+async function findings( action, data = {} ) {
 	const { stdout } = await promisify( execFile )(
 		'npx',
 		[
@@ -38,7 +38,7 @@ async function backfill( action, data = {} ) {
 			'tests-cli',
 			'wp',
 			'eval-file',
-			'wp-content/mu-plugins/scripts/payment-history-backfill.php',
+			'wp-content/mu-plugins/scripts/payment-history-findings.php',
 			action,
 			JSON.stringify( data ),
 		],
@@ -48,10 +48,10 @@ async function backfill( action, data = {} ) {
 			maxBuffer: 16 * 1024 * 1024,
 		}
 	);
-	const match = stdout.match( /E2E_PAYMENT_BACKFILL:(\{.*\})/ );
+	const match = stdout.match( /E2E_PAYMENT_FINDINGS:(\{.*\})/ );
 	if ( ! match ) {
 		throw new Error(
-			`Expected E2E_PAYMENT_BACKFILL output, got:\n${ stdout }`
+			`Expected E2E_PAYMENT_FINDINGS output, got:\n${ stdout }`
 		);
 	}
 	return JSON.parse( match[ 1 ] );
@@ -79,12 +79,8 @@ test.describe.serial( 'Payment history reconciliation', () => {
 	let seed;
 
 	async function state() {
-		return backfill( 'state', {
-			relationshipIds: Object.values( seed.relationships ),
+		return findings( 'state', {
 			transactionIds: Object.values( seed.transactions ),
-			signupIds: Object.values( seed.signups ),
-			ledgerIds: seed.ledger,
-			eventDateIds: Object.values( dates ),
 		} );
 	}
 
@@ -117,10 +113,6 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			headers: adminHeaders,
 			data,
 		} );
-	}
-
-	function purchaseOf( current, key ) {
-		return Number( current.purchases[ seed.relationships[ key ] ][ 0 ].id );
 	}
 
 	test.beforeAll( async () => {
@@ -159,19 +151,11 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			dates[ letter ] = body.id;
 		}
 
-		seed = await backfill( 'seed', {
-			eventId,
+		seed = await findings( 'seed', {
 			dateA: dates.A,
 			dateB: dates.B,
 			dateC: dates.C,
 		} );
-		expect( seed.blockers ).toEqual( [] );
-		expect( ( await backfill( 'dry-run' ) ).run.status ).toBe( 'complete' );
-		expect(
-			( await backfill( 'start', { backupConfirmed: true } ) ).run.status
-		).toBe( 'running' );
-		const { run } = await backfill( 'run', { batchSize: 50 } );
-		expect( run.last_error ).toBeNull();
 
 		const username = `payment-history-subscriber-${ Date.now() }`;
 		const password = `pw-${ Date.now() }-x`;
@@ -192,7 +176,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 
 	test.afterAll( async () => {
 		if ( seed ) {
-			await backfill( 'cleanup', { seed } );
+			await findings( 'cleanup', { seed } );
 		}
 		for ( const id of Object.values( dates ) ) {
 			await api.delete( `/wp-json/fair-events/v1/event-dates/${ id }`, {
@@ -222,10 +206,8 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			[ 'get', ROUTE ],
 			[ 'get', `${ ROUTE }/findings` ],
 			[ 'get', `${ ROUTE }/findings/${ t7.id }` ],
-			[ 'get', `${ ROUTE }/comparisons` ],
 			[ 'get', `${ ROUTE }/audit` ],
 			[ 'get', `${ ROUTE }/purchases` ],
-			[ 'post', `${ ROUTE }/dry-run` ],
 			[ 'post', `${ ROUTE }/findings/${ t7.id }/review` ],
 			[ 'post', `${ ROUTE }/findings/${ t7.id }/links` ],
 			[ 'delete', `${ ROUTE }/links/1` ],
@@ -260,15 +242,19 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		).toBe( 'open' );
 	} );
 
-	test( 'the status and findings describe the finished backfill', async () => {
+	test( 'the status and findings describe the records to review', async () => {
 		const status = await (
 			await api.get( ROUTE, { headers: adminHeaders } )
 		).json();
-		expect( [ 'verified', 'verification_failed' ] ).toContain(
-			status.backfill.status
-		);
+		// Ongoing management only: no migration run, verification or switch.
+		expect( Object.keys( status ).sort() ).toEqual( [
+			'finding_statuses',
+			'payment_information',
+			'reconciliation_available',
+		] );
 		expect( status.reconciliation_available ).toBe( true );
-		expect( status.finding_statuses.backfill.open ).toBeGreaterThan( 0 );
+		expect( status.payment_information ).toBe( 'available' );
+		expect( status.finding_statuses.open ).toBeGreaterThan( 0 );
 
 		const response = await api.get( `${ ROUTE }/findings`, {
 			headers: adminHeaders,
@@ -311,7 +297,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		const T13b = seed.transactions.T13b;
 		// T10 canceled, T7 expired, T13b live; every other seeded payment
 		// stays a paid test one.
-		const { previous } = await backfill( 'set-transactions', {
+		const { previous } = await findings( 'set-transactions', {
 			transactions: {
 				[ T7 ]: { status: 'expired' },
 				[ T10 ]: { status: 'canceled' },
@@ -464,7 +450,7 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			// Filtering is read-only.
 			expect( await state() ).toEqual( before );
 		} finally {
-			await backfill( 'set-transactions', { transactions: previous } );
+			await findings( 'set-transactions', { transactions: previous } );
 		}
 	} );
 	test( 'a decision needs a note and a valid allocation', async () => {
@@ -599,10 +585,21 @@ test.describe.serial( 'Payment history reconciliation', () => {
 			decision( seed.signups.S11a ),
 			decision( seed.signups.S11b ),
 		] );
-		const statuses = responses
-			.map( ( response ) => response.status() )
-			.sort();
-		expect( statuses ).toEqual( [ 200, 409 ] );
+		const winners = responses.filter(
+			( response ) => response.status() === 200
+		);
+		expect( winners ).toHaveLength( 1 );
+		// The loser is refused without overwriting: as stale when it took
+		// the lock behind the winner, or as already decided when it arrived
+		// after the winner committed.
+		const loser = responses.find(
+			( response ) => response !== winners[ 0 ]
+		);
+		const refusal = [ loser.status(), ( await loser.json() ).code ];
+		expect( [
+			[ 409, 'reconciliation_stale' ],
+			[ 400, 'finding_decided' ],
+		] ).toContainEqual( refusal );
 
 		const current = await state();
 		const links = current.links[ seed.transactions.T7 ];
@@ -649,9 +646,8 @@ test.describe.serial( 'Payment history reconciliation', () => {
 	} );
 
 	test( 'a shared payment is split across purchases', async () => {
-		const current = await state();
-		const a = purchaseOf( current, 'R21A' );
-		const b = purchaseOf( current, 'R21B' );
+		const a = seed.signups.S21A;
+		const b = seed.signups.S21B;
 		const t13b = await findingOf( 'transaction', seed.transactions.T13b );
 		expect( t13b.reason ).toBe( 'allocation_mismatch' );
 
@@ -724,56 +720,6 @@ test.describe.serial( 'Payment history reconciliation', () => {
 
 		const links = ( await state() ).links[ seed.transactions.T10 ];
 		expect( links ).toEqual( [] );
-	} );
-
-	test( 'a re-run and verification keep every decision', async () => {
-		// Each decision queued verification again; let it finish first.
-		expect(
-			( await backfill( 'run', { batchSize: 50 } ) ).run.status
-		).not.toBe( 'running' );
-		const before = await state();
-
-		const started = await backfill( 'start', { backupConfirmed: true } );
-		expect( started.run.status ).toBe( 'running' );
-		const { run } = await backfill( 'run', { batchSize: 50 } );
-		expect( run.last_error ).toBeNull();
-
-		const after = await state();
-		const t = seed.transactions;
-		for ( const key of [ 'T7', 'T10', 'T13b' ] ) {
-			expect( after.links[ t[ key ] ], key ).toEqual(
-				before.links[ t[ key ] ]
-			);
-		}
-		expect( ( await findingOf( 'transaction', t.T7 ) ).status ).toBe(
-			'reconciled'
-		);
-		expect( ( await findingOf( 'transaction', t.T13b ) ).status ).toBe(
-			'reconciled'
-		);
-		expect( ( await findingOf( 'transaction', t.T10 ) ).status ).toBe(
-			'reviewed'
-		);
-		expect( ( await findingOf( 'signup', seed.signups.S9 ) ).status ).toBe(
-			'reviewed'
-		);
-
-		// The administrator's split explains the difference to the ledger.
-		const causes = Object.fromEntries(
-			after.comparisons[ dates.A ].revenue.currencies.EUR.differences.map(
-				( difference ) => [
-					difference.transaction_id,
-					difference.cause,
-				]
-			)
-		);
-		expect( causes[ t.T13b ] ).toBe( 'reconciled' );
-		expect( after.comparisons[ dates.A ].blocking ).toBe( false );
-		for ( const key of [ 'T7', 'T10', 'T13b' ] ) {
-			expect(
-				run.verification.blockers.unlisted_paid_transactions || []
-			).not.toContain( t[ key ] );
-		}
 	} );
 
 	test( 'only reconciled links can be removed, and removing them reopens the record', async () => {
@@ -851,5 +797,27 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		expect( audit[ 0 ].after ).toMatchObject( { links: [] } );
 		expect( audit[ 0 ].after.reopened_findings ).toHaveLength( 1 );
 		expect( audit[ 1 ].after.reopened_findings ).toEqual( [] );
+	} );
+
+	test( 'the retired migration routes are gone, even for administrators', async () => {
+		const retired = [
+			[ 'post', `${ ROUTE }/dry-run` ],
+			[ 'post', `${ ROUTE }/backfill` ],
+			[ 'post', `${ ROUTE }/backfill/resume` ],
+			[ 'post', `${ ROUTE }/verify` ],
+			[ 'post', `${ ROUTE }/cutover` ],
+			[ 'post', `${ ROUTE }/readers` ],
+			[ 'get', `${ ROUTE }/comparisons` ],
+		];
+		const before = await state();
+		for ( const [ method, path ] of retired ) {
+			const response = await api[ method ]( path, {
+				headers: adminHeaders,
+				data: { backup_confirmed: true },
+			} );
+			expect( response.status(), `${ method } ${ path }` ).toBe( 404 );
+			expect( ( await response.json() ).code ).toBe( 'rest_no_route' );
+		}
+		expect( await state() ).toEqual( before );
 	} );
 } );

@@ -40,7 +40,6 @@
 defined( 'ABSPATH' ) || exit;
 
 use FairEvents\Models\SignupPaymentLink;
-use FairEvents\Services\PaymentHistoryReaders;
 
 global $wpdb;
 
@@ -92,7 +91,6 @@ switch ( $fixture_action ) {
 			'audienceOptions'  => $option_names( 'fair_audience' ),
 			'connectorTables'  => $tables_like( $wpdb->prefix . 'fair_payment' ),
 			'connectorOptions' => $option_names( 'fair_payment' ),
-			'readers'          => PaymentHistoryReaders::get_activation(),
 		);
 		break;
 

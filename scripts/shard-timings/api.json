@@ -506,16 +506,6 @@
 			"samples": 6,
 			"excluded": 0
 		},
-		"fair-events/src/API/__tests__/PaymentHistoryBackfill.api.spec.js": {
-			"seconds": 24,
-			"samples": 6,
-			"excluded": 0
-		},
-		"fair-events/src/API/__tests__/PaymentHistoryCutover.api.spec.js": {
-			"seconds": 24.8,
-			"samples": 5,
-			"excluded": 0
-		},
 		"fair-events/src/API/__tests__/PaymentHistoryFoundation.api.spec.js": {
 			"seconds": 37.3,
 			"samples": 6,

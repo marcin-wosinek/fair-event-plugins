@@ -305,10 +305,7 @@ class ShadowPurchases {
 	/**
 	 * Create the purchase and its single unit. The relationship's creation
 	 * time (database clock, UTC) becomes the purchase time in site time, as
-	 * Events stores it. Shared with the historical backfill
-	 * (PaymentHistoryBackfill), which calls it inside its own lock and
-	 * database transaction, so both give a relationship the same purchase
-	 * (§4.2).
+	 * Events stores it (§4.2).
 	 *
 	 * @param object $relationship Relationship row.
 	 * @return int|\WP_Error Signup ID.

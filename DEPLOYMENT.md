@@ -720,6 +720,30 @@ needs a clean state at that time and every staging check recorded as
 passed. Payment history lists those separately as **Removing old records**;
 being safe to upgrade doesn't make a site ready for it.
 
+## Upgrade notes: payment history migration tooling removal (#2252)
+
+Retires the one-time payment history migration
+([PAYMENT_HISTORY_MIGRATION.md § 8.18](./PAYMENT_HISTORY_MIGRATION.md#818-migration-tooling-retired)).
+A site that hasn't finished the migration can't run it after this release:
+follow the supported upgrade path above (#2255), which refuses to start such
+a site.
+
+**Before upgrading**, check that **Fair Events → Payment history** shows
+**Upgrade readiness: Safe to upgrade**. Take a database backup as usual.
+
+**What changes.** The Payment history page keeps its menu entry and
+permission but shows only the records to review and their reconciliation.
+The dry run, migration, verification and switch controls are gone, and their
+REST routes (`…/dry-run`, `…/backfill`, `…/backfill/resume`, `…/verify`,
+`…/cutover`, `…/readers`, `…/comparisons` under
+`fair-events/v1/payment-history`) return 404 `rest_no_route`. The database
+upgrade to 3.54.0 only unschedules
+`fair_events_payment_history_backfill_batch`; no table, column or option is
+removed, and the shadow work cron stays scheduled.
+
+**Recovery.** Rolling back restores the migration controls over the same
+data: nothing this release removed held state.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

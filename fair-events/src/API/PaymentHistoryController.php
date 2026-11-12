@@ -9,12 +9,8 @@ namespace FairEvents\API;
 
 use FairEvents\Models\PaymentHistoryAudit;
 use FairEvents\Models\PaymentHistoryFinding;
-use FairEvents\Services\PaymentHistoryBackfill;
 use FairEvents\Services\PaymentHistoryCompatibility;
-use FairEvents\Services\PaymentHistoryCutover;
-use FairEvents\Services\PaymentHistoryReaders;
 use FairEvents\Services\PaymentHistoryReconciliation;
-use FairEvents\Services\PaymentHistoryVerification;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -24,12 +20,11 @@ use WP_REST_Server;
 defined( 'WPINC' ) || die;
 
 /**
- * The payment history migration for administrators
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13): its progress and
- * blockers, the dry run and backfill controls, the verification report,
- * the findings, their reconciliation with its audit trail, and the stage 4
- * activation. Every route
- * needs `manage_options`: 401 when logged out, 403 without it.
+ * Ongoing payment history management for administrators
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10): availability and finding
+ * counts, the findings with their reconciliation and its audit trail. The
+ * one-time migration's controls are retired (#2252). Every route needs
+ * `manage_options`: 401 when logged out, 403 without it.
  */
 class PaymentHistoryController extends WP_REST_Controller {
 
@@ -81,99 +76,6 @@ class PaymentHistoryController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_status' ),
 				'permission_callback' => $permission,
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/dry-run',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'start_dry_run' ),
-				'permission_callback' => $permission,
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/backfill',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'start_backfill' ),
-				'permission_callback' => $permission,
-				'args'                => array(
-					'backup_confirmed' => array(
-						'type'              => 'boolean',
-						'default'           => false,
-						'validate_callback' => 'rest_validate_request_arg',
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/backfill/resume',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'resume_backfill' ),
-				'permission_callback' => $permission,
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/verify',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'verify' ),
-				'permission_callback' => $permission,
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/cutover',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'activate_cutover' ),
-				'permission_callback' => $permission,
-				'args'                => array(
-					'backup_confirmed' => array(
-						'type'              => 'boolean',
-						'default'           => false,
-						'validate_callback' => 'rest_validate_request_arg',
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/readers',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'activate_readers' ),
-				'permission_callback' => $permission,
-			)
-		);
-
-		register_rest_route(
-			$this->namespace,
-			$base . '/comparisons',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_comparisons' ),
-				'permission_callback' => $permission,
-				'args'                => array(
-					'blocking' => array(
-						'type'              => 'boolean',
-						'default'           => false,
-						'validate_callback' => 'rest_validate_request_arg',
-					),
-					'page'     => $this->page_arg(),
-					'per_page' => $this->per_page_arg(),
-				),
 			)
 		);
 
@@ -377,7 +279,7 @@ class PaymentHistoryController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Only administrators see and change the payment history migration.
+	 * Only administrators see and change payment history.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return true|WP_Error
@@ -394,185 +296,21 @@ class PaymentHistoryController extends WP_REST_Controller {
 	}
 
 	/**
-	 * The migration's progress, blockers and verification summary.
+	 * Whether payment history can be managed on this site, and how many
+	 * findings there are per status.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
 	 */
 	public function get_status( $request ) {
 		unset( $request );
-		$status = PaymentHistoryBackfill::status();
-		$tables = PaymentHistoryCompatibility::storage_available()
-			&& version_compare( \FairEvents\Database\Schema::get_db_version(), PaymentHistoryCompatibility::BACKFILL_DB_VERSION, '>=' );
-
-		$status['reconciliation_available'] = PaymentHistoryCompatibility::reconciliation_available();
-		$status['payment_information']      = PaymentHistoryCompatibility::payment_information_available() ? 'available' : 'unavailable';
-		$status['finding_statuses']         = array(
-			PaymentHistoryFinding::MODE_DRY_RUN  => $tables ? PaymentHistoryFinding::count_by_status( PaymentHistoryFinding::MODE_DRY_RUN ) : array(),
-			PaymentHistoryFinding::MODE_BACKFILL => $tables ? PaymentHistoryFinding::count_by_status( PaymentHistoryFinding::MODE_BACKFILL ) : array(),
-		);
-		return rest_ensure_response( $status );
-	}
-
-	/**
-	 * Start a dry run.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function start_dry_run( $request ) {
-		unset( $request );
-		return $this->run_result( PaymentHistoryBackfill::start_dry_run(), 202 );
-	}
-
-	/**
-	 * Start the backfill.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function start_backfill( $request ) {
-		return $this->run_result(
-			PaymentHistoryBackfill::start(
-				array(
-					'backup_confirmed' => (bool) $request['backup_confirmed'],
-					'user_id'          => get_current_user_id(),
-				)
-			),
-			202
-		);
-	}
-
-	/**
-	 * Continue a paused backfill.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function resume_backfill( $request ) {
-		unset( $request );
-		return $this->run_result( PaymentHistoryBackfill::resume(), 202 );
-	}
-
-	/**
-	 * Verify a finished backfill again.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function verify( $request ) {
-		unset( $request );
-		return $this->run_result( PaymentHistoryBackfill::verify(), 202 );
-	}
-
-	/**
-	 * Switch purchase payment authority to Fair Events (stage 4). Refused
-	 * while anything blocks it, without a confirmed backup, or when it is
-	 * already active; the outcome is audited.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function activate_cutover( $request ) {
-		$result = PaymentHistoryCutover::activate(
+		return rest_ensure_response(
 			array(
-				'backup_confirmed' => (bool) $request['backup_confirmed'],
-				'user_id'          => get_current_user_id(),
+				'reconciliation_available' => PaymentHistoryCompatibility::reconciliation_available(),
+				'payment_information'      => PaymentHistoryCompatibility::payment_information_available() ? 'available' : 'unavailable',
+				'finding_statuses'         => null === $this->require_tables() ? PaymentHistoryFinding::count_by_status( PaymentHistoryFinding::MODE_BACKFILL ) : array(),
 			)
 		);
-		if ( ! is_wp_error( $result ) ) {
-			return rest_ensure_response( PaymentHistoryBackfill::status() );
-		}
-
-		$code     = $result->get_error_code();
-		$messages = array(
-			'backup_required'    => __( 'Confirm that a fresh database backup was taken before switching payment records.', 'fair-events' ),
-			'cutover_active'     => __( 'Payment records already use Fair Events.', 'fair-events' ),
-			'cutover_blocked'    => __( 'Payment records can\'t be switched to Fair Events on this site yet.', 'fair-events' ),
-			'cutover_busy'       => __( 'The payment history migration is busy. Try again in a moment.', 'fair-events' ),
-			'verification_stale' => __( 'The verification no longer passes. Verify the migration again before switching payment records.', 'fair-events' ),
-			'cutover_failed'     => __( 'The switch couldn\'t be recorded. Nothing changed; try again.', 'fair-events' ),
-		);
-		$statuses = array(
-			'backup_required' => 400,
-			'cutover_failed'  => 500,
-		);
-		$data     = $result->get_error_data();
-		return new WP_Error(
-			$code,
-			$messages[ $code ] ?? $result->get_error_message(),
-			array( 'status' => $statuses[ $code ] ?? 409 ) + ( is_array( $data ) ? $data : array() )
-		);
-	}
-
-	/**
-	 * Switch Statistics, ticket counts and capacity to the records Fair
-	 * Events owns (stage 5). Refused while anything blocks it, the
-	 * verification's recheck fails, or it is already active; the outcome is
-	 * audited.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function activate_readers( $request ) {
-		unset( $request );
-		$result = PaymentHistoryReaders::activate( array( 'user_id' => get_current_user_id() ) );
-		if ( ! is_wp_error( $result ) ) {
-			return rest_ensure_response( PaymentHistoryBackfill::status() );
-		}
-
-		$code     = $result->get_error_code();
-		$messages = array(
-			'readers_active'     => __( 'Statistics already use Fair Events records.', 'fair-events' ),
-			'readers_blocked'    => __( 'Statistics can\'t switch to Fair Events records on this site yet.', 'fair-events' ),
-			'readers_busy'       => __( 'The payment history migration is busy. Try again in a moment.', 'fair-events' ),
-			'verification_stale' => __( 'The verification no longer passes. Verify the migration again before switching statistics.', 'fair-events' ),
-			'readers_failed'     => __( 'The switch couldn\'t be recorded. Nothing changed; try again.', 'fair-events' ),
-		);
-		$data     = $result->get_error_data();
-		return new WP_Error(
-			$code,
-			$messages[ $code ] ?? $result->get_error_message(),
-			array( 'status' => 'readers_failed' === $code ? 500 : 409 ) + ( is_array( $data ) ? $data : array() )
-		);
-	}
-
-	/**
-	 * Verification report per event date.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function get_comparisons( $request ) {
-		$unavailable = $this->require_tables();
-		if ( $unavailable ) {
-			return $unavailable;
-		}
-
-		$page     = (int) $request['page'];
-		$per_page = (int) $request['per_page'];
-		$all      = PaymentHistoryVerification::get_comparisons(
-			array(
-				'blocking' => (bool) $request['blocking'],
-				'limit'    => 500,
-			)
-		);
-		// Blocking dates first, then incomplete revenue, then the rest.
-		usort(
-			$all,
-			static function ( $a, $b ) {
-				return array( ! $a['blocking'], 'incomplete' !== $a['revenue_state'], $a['event_date_id'] )
-					<=> array( ! $b['blocking'], 'incomplete' !== $b['revenue_state'], $b['event_date_id'] );
-			}
-		);
-		$items  = array_slice( $all, ( $page - 1 ) * $per_page, $per_page );
-		$labels = PaymentHistoryReconciliation::event_date_labels( array_column( $items, 'event_date_id' ) );
-		foreach ( $items as &$item ) {
-			$item['event_date'] = $labels[ $item['event_date_id'] ] ?? null;
-		}
-		unset( $item );
-
-		return $this->paged( $items, count( $all ), $per_page );
 	}
 
 	/**
@@ -762,39 +500,6 @@ class PaymentHistoryController extends WP_REST_Controller {
 	}
 
 	/**
-	 * A run control's outcome; the backfill's refusals become HTTP errors.
-	 *
-	 * @param array|WP_Error $run    Run or refusal.
-	 * @param int            $status Status on success.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function run_result( $run, $status ) {
-		if ( ! is_wp_error( $run ) ) {
-			$response = rest_ensure_response( PaymentHistoryBackfill::status() );
-			$response->set_status( $status );
-			return $response;
-		}
-
-		$code     = $run->get_error_code();
-		$messages = array(
-			'backfill_blocked'      => __( 'The payment history migration can\'t start on this site yet.', 'fair-events' ),
-			'backfill_running'      => __( 'The migration is already running.', 'fair-events' ),
-			'dry_run_running'       => __( 'A dry run is already running.', 'fair-events' ),
-			'dry_run_required'      => __( 'Run a dry run and review it before starting the migration.', 'fair-events' ),
-			'dry_run_stale'         => __( 'The dry run covered different records. Run it again before starting the migration.', 'fair-events' ),
-			'backup_required'       => __( 'Confirm that a database backup was taken before starting the migration.', 'fair-events' ),
-			'backfill_not_paused'   => __( 'The migration is not paused.', 'fair-events' ),
-			'backfill_not_finished' => __( 'The migration has not finished.', 'fair-events' ),
-		);
-		$data     = $run->get_error_data();
-		return new WP_Error(
-			$code,
-			$messages[ $code ] ?? $run->get_error_message(),
-			array( 'status' => 'backup_required' === $code ? 400 : 409 ) + ( is_array( $data ) ? $data : array() )
-		);
-	}
-
-	/**
 	 * Finding statuses a filter value stands for.
 	 *
 	 * @param string $status Filter value.
@@ -808,7 +513,7 @@ class PaymentHistoryController extends WP_REST_Controller {
 	}
 
 	/**
-	 * An error when the backfill's tables aren't installed yet.
+	 * An error when the findings tables aren't installed yet.
 	 *
 	 * @return WP_Error|null
 	 */

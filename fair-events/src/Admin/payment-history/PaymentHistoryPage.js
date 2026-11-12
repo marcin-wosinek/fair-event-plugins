@@ -1,16 +1,15 @@
 /**
- * Payment history page: the migration of historical registrations and
- * payments into Fair Events, its verification, the reconciliation of what
- * it couldn't link, the switch of payment records to Fair Events, and the
- * switch of statistics to Fair Events records, and whether the site is
- * ready for the releases after the migration
- * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.9, §8.10, §8.13, §8.14, §8.17).
+ * Payment history page: the payment records that need an administrator's
+ * decision, their reconciliation and its audit trail, and whether the site
+ * is ready for the releases after the migration
+ * (PAYMENT_HISTORY_MIGRATION.md §6.3, §8.10, §8.17). The one-time
+ * migration's controls are retired (#2252).
  *
  * @package FairEvents
  */
 
 import { __ } from '@wordpress/i18n';
-import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -18,33 +17,13 @@ import {
 	Spinner,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import MigrationPanel from './MigrationPanel.js';
-import CutoverPanel from './CutoverPanel.js';
-import ReadersPanel from './ReadersPanel.js';
-import VerificationPanel from './VerificationPanel.js';
 import FindingsPanel from './FindingsPanel.js';
 import UpgradePanel from './UpgradePanel.js';
-
-const POLL_MS = 5000;
-
-/**
- * Whether a run is in progress, so the page keeps polling.
- *
- * @param {Object|null} status Status.
- * @return {boolean} Running.
- */
-export function isRunning( status ) {
-	return (
-		status?.dry_run?.status === 'running' ||
-		status?.backfill?.status === 'running'
-	);
-}
 
 export default function PaymentHistoryPage() {
 	const [ status, setStatus ] = useState( null );
 	const [ error, setError ] = useState( null );
 	const [ refreshKey, setRefreshKey ] = useState( 0 );
-	const wasRunning = useRef( false );
 
 	const loadStatus = useCallback(
 		() =>
@@ -52,11 +31,6 @@ export default function PaymentHistoryPage() {
 				.then( ( data ) => {
 					setStatus( data );
 					setError( null );
-					// Reload the lists when a run finishes.
-					if ( wasRunning.current && ! isRunning( data ) ) {
-						setRefreshKey( ( key ) => key + 1 );
-					}
-					wasRunning.current = isRunning( data );
 				} )
 				.catch( ( e ) =>
 					setError(
@@ -74,24 +48,6 @@ export default function PaymentHistoryPage() {
 		loadStatus();
 	}, [ loadStatus ] );
 
-	useEffect( () => {
-		if ( ! isRunning( status ) ) {
-			return undefined;
-		}
-		const timer = setTimeout( loadStatus, POLL_MS );
-		return () => clearTimeout( timer );
-	}, [ status, loadStatus ] );
-
-	const runAction = async ( path, data ) => {
-		await apiFetch( {
-			path: `/fair-events/v1/payment-history${ path }`,
-			method: 'POST',
-			data,
-		} );
-		await loadStatus();
-		setRefreshKey( ( key ) => key + 1 );
-	};
-
 	const changed = () => {
 		loadStatus();
 		setRefreshKey( ( key ) => key + 1 );
@@ -102,7 +58,7 @@ export default function PaymentHistoryPage() {
 			<h1>{ __( 'Payment history', 'fair-events' ) }</h1>
 			<p className="fair-events-payment-history__intro">
 				{ __(
-					'Moves past registrations and payments recorded by Fair Audience into Fair Events, so every purchase keeps its own payment history. Old records are kept; nothing is charged, refunded or emailed.',
+					'Payment records that need a decision: link a payment to its purchase, split a shared one, or mark it as reviewed. Nothing is charged, refunded or emailed.',
 					'fair-events'
 				) }
 			</p>
@@ -118,35 +74,11 @@ export default function PaymentHistoryPage() {
 			{ status && (
 				<VStack spacing={ 6 }>
 					<UpgradePanel refreshKey={ refreshKey } />
-					<MigrationPanel status={ status } onAction={ runAction } />
-					{ status.cutover &&
-						( status.backfill || status.cutover.activation ) && (
-							<CutoverPanel
-								cutover={ status.cutover }
-								onAction={ runAction }
-							/>
-						) }
-					{ status.readers &&
-						( status.cutover?.activation ||
-							status.readers.activation ) && (
-							<ReadersPanel
-								readers={ status.readers }
-								onAction={ runAction }
-							/>
-						) }
-					{ status.backfill && (
-						<VerificationPanel
-							summary={ status.comparisons }
-							refreshKey={ refreshKey }
-						/>
-					) }
-					{ ( status.dry_run || status.backfill ) && (
-						<FindingsPanel
-							status={ status }
-							refreshKey={ refreshKey }
-							onChanged={ changed }
-						/>
-					) }
+					<FindingsPanel
+						status={ status }
+						refreshKey={ refreshKey }
+						onChanged={ changed }
+					/>
 				</VStack>
 			) }
 		</div>

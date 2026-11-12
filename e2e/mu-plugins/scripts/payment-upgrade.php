@@ -39,7 +39,6 @@ defined( 'ABSPATH' ) || exit;
 use FairEvents\Models\PaymentHistoryFinding;
 use FairEvents\Models\PaymentShadowWork;
 use FairEvents\Services\PaymentHistoryCompatibility;
-use FairEvents\Services\PaymentHistoryReaders;
 use FairEvents\Services\PaymentHistoryUpgrade;
 
 global $wpdb;
@@ -68,14 +67,14 @@ switch ( $fixture_action ) {
 			'eventsDbVersion'   => $raw_option( 'fair_events_db_version' ),
 			'audienceDbVersion' => $raw_option( 'fair_audience_db_version' ),
 			'cutover'           => $raw_option( PaymentHistoryCompatibility::CUTOVER_OPTION ),
-			'readers'           => $raw_option( PaymentHistoryReaders::OPTION ),
+			'readers'           => $raw_option( PaymentHistoryCompatibility::READERS_OPTION ),
 		);
 		break;
 
 	case 'unmigrated':
 		delete_option( PaymentHistoryUpgrade::EVIDENCE_OPTION );
 		delete_option( PaymentHistoryCompatibility::CUTOVER_OPTION );
-		delete_option( PaymentHistoryReaders::OPTION );
+		delete_option( PaymentHistoryCompatibility::READERS_OPTION );
 		delete_option( PaymentHistoryCompatibility::STATE_OPTION );
 		update_option( 'fair_events_db_version', (string) ( $data['dbVersion'] ?? '3.52.0' ) );
 		$result = array( 'ok' => true );
@@ -109,10 +108,10 @@ switch ( $fixture_action ) {
 			true
 		);
 		update_option(
-			PaymentHistoryReaders::OPTION,
+			PaymentHistoryCompatibility::READERS_OPTION,
 			array(
 				'activated_at' => gmdate( 'Y-m-d H:i:s', time() - 30 ),
-				'reason'       => PaymentHistoryReaders::REASON_VERIFIED,
+				'reason'       => PaymentHistoryCompatibility::READERS_REASON_VERIFIED,
 				'user_id'      => 1,
 				'reference'    => 'backfill-verification:' . $checked_at,
 				'audit_id'     => 2,
@@ -141,7 +140,7 @@ switch ( $fixture_action ) {
 
 	case 'retire':
 		delete_option( PaymentHistoryCompatibility::CUTOVER_OPTION );
-		delete_option( PaymentHistoryReaders::OPTION );
+		delete_option( PaymentHistoryCompatibility::READERS_OPTION );
 		delete_option( PaymentHistoryCompatibility::STATE_OPTION );
 		$result = array( 'ok' => true );
 		break;

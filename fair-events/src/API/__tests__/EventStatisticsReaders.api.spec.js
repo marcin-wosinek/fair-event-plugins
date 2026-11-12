@@ -6,11 +6,7 @@
  * counts and capacity ignore Fair Audience relationships, and results stay
  * the same through a Fair Audience deactivation and reactivation. Without
  * Fair Payments Connector revenue is unavailable, never 0. The migration
- * page's reader switch keeps its permissions and blockers until #2252
- * removes it.
- *
- * The payment-readers.php fixture stashes any recorded reader activation
- * and puts it back afterwards, so these tests run without one.
+ * page's reader switch is retired (#2252).
  */
 
 import { test, expect, request } from '@playwright/test';
@@ -80,14 +76,11 @@ test.describe.serial( 'Statistics from Fair Events records', () => {
 	test.describe.configure( { timeout: 240 * 1000 } );
 
 	let api;
-	let anonymous;
-	let subscriberApi;
 	let adminHeaders;
-	let subscriberHeaders;
-	let subscriberId;
-	let prepared;
 	let audienceDeactivated = false;
 	let connectorDeactivated = false;
+	let currencyPinned = false;
+	let originalCurrency;
 	const today = new Date().toISOString().slice( 0, 10 );
 	const eventIds = [];
 	const eventDateIds = [];
@@ -196,26 +189,13 @@ test.describe.serial( 'Statistics from Fair Events records', () => {
 		// A dozen sequential fixture calls overrun the default hook budget.
 		test.setTimeout( 240 * 1000 );
 		api = await request.newContext( { baseURL: BASE_URL } );
-		anonymous = await request.newContext( { baseURL: BASE_URL } );
 		adminHeaders = await login( api, ADMIN_USER, ADMIN_PASSWORD );
 
-		const username = `readers-subscriber-${ Date.now() }`;
-		const password = 'Readers-test-2141!';
-		const user = await api.post( '/wp-json/wp/v2/users', {
-			headers: adminHeaders,
-			data: {
-				username,
-				password,
-				email: `${ username }@example.test`,
-				roles: [ 'subscriber' ],
-			},
-		} );
-		expect( user.ok() ).toBeTruthy();
-		subscriberId = ( await user.json() ).id;
-		subscriberApi = await request.newContext( { baseURL: BASE_URL } );
-		subscriberHeaders = await login( subscriberApi, username, password );
-
-		prepared = await readers( 'prepare' );
+		// Revenue sums only the site currency, and the rows here are EUR:
+		// pin it, whatever an earlier spec in the shard left behind.
+		originalCurrency = ( await readers( 'currency', { currency: 'EUR' } ) )
+			.previous;
+		currencyPinned = true;
 
 		dates.a = await createOccurrence( 'A', 10 );
 		dates.b = await createOccurrence( 'B', 11 );
@@ -278,6 +258,11 @@ test.describe.serial( 'Statistics from Fair Events records', () => {
 	} );
 
 	test.afterAll( async () => {
+		// First, over WP-CLI: a failing step below must not leave the site
+		// currency pinned for the rest of the shard.
+		if ( currencyPinned ) {
+			await readers( 'currency', { currency: originalCurrency } );
+		}
 		if ( audienceDeactivated ) {
 			await wpEnv( [ 'wp', 'plugin', 'activate', 'fair-audience' ] );
 		}
@@ -296,58 +281,15 @@ test.describe.serial( 'Statistics from Fair Events records', () => {
 				...( series?.occurrenceIds || [] ),
 			],
 		} );
-		if ( prepared ) {
-			await readers( 'restore' );
-		}
 		for ( const id of eventIds ) {
 			await api.delete( `/wp-json/wp/v2/fair_event/${ id }?force=true`, {
 				headers: adminHeaders,
 			} );
 		}
-		if ( subscriberId ) {
-			await api.delete(
-				`/wp-json/wp/v2/users/${ subscriberId }?force=true&reassign=1`,
-				{ headers: adminHeaders }
-			);
-		}
 		await api?.dispose();
-		await anonymous?.dispose();
-		await subscriberApi?.dispose();
-	} );
-
-	test( 'only administrators can switch, and never while it is blocked', async () => {
-		const path = '/wp-json/fair-events/v1/payment-history/readers';
-		expect( ( await anonymous.post( path ) ).status() ).toBe( 401 );
-		expect(
-			(
-				await subscriberApi.post( path, { headers: subscriberHeaders } )
-			).status()
-		).toBe( 403 );
-
-		const facts = await readers( 'facts' );
-		expect( facts.blockers.length ).toBeGreaterThan( 0 );
-		const refused = await api.post( path, { headers: adminHeaders } );
-		expect( refused.status() ).toBe( 409 );
-		const body = await refused.json();
-		expect( body.code ).toBe( 'readers_blocked' );
-		expect( body.data.blockers ).toEqual( facts.blockers );
-
-		const status = await api.get(
-			'/wp-json/fair-events/v1/payment-history',
-			{ headers: adminHeaders }
-		);
-		expect( status.ok() ).toBeTruthy();
-		expect( ( await status.json() ).readers ).toMatchObject( {
-			active: false,
-			activation: null,
-			blockers: facts.blockers,
-		} );
-		expect( ( await readers( 'facts' ) ).active ).toBe( false );
 	} );
 
 	test( 'reads revenue from paid allocations without any activation', async () => {
-		expect( ( await readers( 'facts' ) ).activation ).toBeNull();
-
 		const a = await statistics( dates.a );
 		expect( a ).not.toHaveProperty( 'payment_readers' );
 		// Only Events purchases admit: the relationship never counts.

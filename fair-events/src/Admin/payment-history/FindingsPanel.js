@@ -1,7 +1,8 @@
 /**
- * Records the migration reported, filtered by run, status, reason, event
- * and their payment's status and test/live mode, each opening its
- * reconciliation dialog.
+ * Payment records to review, filtered by status, reason, event and their
+ * payment's status and test/live mode, each opening its reconciliation
+ * dialog. Only the completed migration's records are listed; dry-run
+ * records stay readable through the API.
  *
  * @package FairEvents
  */
@@ -38,6 +39,9 @@ import {
 } from './format.js';
 
 const PER_PAGE = 20;
+
+// Records an administrator decides on; a dry run's are evidence only.
+const MODE = 'backfill';
 
 /**
  * Payment status filter options: one per label, so statuses shown the same
@@ -190,8 +194,6 @@ export function SourceDescription( { finding, linkable } ) {
  * @return {JSX.Element} Card.
  */
 export default function FindingsPanel( { status, refreshKey, onChanged } ) {
-	const hasBackfill = !! status.backfill;
-	const [ mode, setMode ] = useState( hasBackfill ? 'backfill' : 'dry_run' );
 	const [ findingStatus, setFindingStatus ] = useState( 'open' );
 	const [ reason, setReason ] = useState( '' );
 	const [ eventDate, setEventDate ] = useState( '-1' );
@@ -210,13 +212,6 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 		error: null,
 	} );
 
-	// Follow the migration once it starts: its findings replace the dry run's.
-	useEffect( () => {
-		if ( hasBackfill ) {
-			setMode( 'backfill' );
-		}
-	}, [ hasBackfill ] );
-
 	useEffect( () => {
 		let active = true;
 		setData( ( previous ) => ( {
@@ -225,7 +220,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 			error: null,
 		} ) );
 		const query = new URLSearchParams( {
-			mode,
+			mode: MODE,
 			status: findingStatus,
 			reason,
 			event_date_id: eventDate,
@@ -274,7 +269,6 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 			active = false;
 		};
 	}, [
-		mode,
 		findingStatus,
 		reason,
 		eventDate,
@@ -340,7 +334,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 			<CardBody>
 				<p>
 					{ __(
-						'These are the records the migration couldn’t link automatically, or linked with a note. Nothing is guessed: open a record to link its payment, split a shared one, or mark it as reviewed.',
+						'These are payment records that couldn’t be linked to a purchase automatically, or were linked with a note. Nothing is guessed: open a record to link its payment, split a shared one, or mark it as reviewed.',
 						'fair-events'
 					) }
 				</p>
@@ -353,26 +347,6 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 					</Notice>
 				) }
 				<div className="fair-events-payment-history__filters">
-					<SelectControl
-						__nextHasNoMarginBottom
-						__next40pxDefaultSize
-						label={ __( 'Run', 'fair-events' ) }
-						value={ mode }
-						options={ [
-							{
-								value: 'backfill',
-								label: __( 'Migration', 'fair-events' ),
-							},
-							{
-								value: 'dry_run',
-								label: __(
-									'Dry run (preview only)',
-									'fair-events'
-								),
-							},
-						] }
-						onChange={ filter( setMode ) }
-					/>
 					<SelectControl
 						__nextHasNoMarginBottom
 						__next40pxDefaultSize
@@ -442,14 +416,6 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 					/>
 				</div>
 
-				{ mode === 'dry_run' && (
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'Dry run records show what the migration would report. They’re replaced by the next dry run and can’t be reconciled; decide on them once the migration has run.',
-							'fair-events'
-						) }
-					</Notice>
-				) }
 				{ data.error && (
 					<Notice status="error" isDismissible={ false }>
 						{ data.error }
@@ -470,6 +436,22 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 						) }
 					</p>
 				) }
+				{ ! data.loading &&
+					! data.error &&
+					data.total === 0 &&
+					! narrowed && (
+						<p className="fair-events-payment-history__empty">
+							{ findingStatus === 'open'
+								? __(
+										'Nothing needs a decision. Payments are linked to their purchases as they come in.',
+										'fair-events'
+									)
+								: __(
+										'No records with this status.',
+										'fair-events'
+									) }
+						</p>
+					) }
 				{ ! data.loading &&
 					! data.error &&
 					data.total === 0 &&
@@ -532,8 +514,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 							</div>
 							<Button
 								variant={
-									finding.status === 'open' &&
-									mode === 'backfill'
+									finding.status === 'open'
 										? 'primary'
 										: 'secondary'
 								}
@@ -545,8 +526,7 @@ export default function FindingsPanel( { status, refreshKey, onChanged } ) {
 									describeSource( finding )
 								) }
 							>
-								{ finding.status === 'open' &&
-								mode === 'backfill'
+								{ finding.status === 'open'
 									? __( 'Decide', 'fair-events' )
 									: __( 'View', 'fair-events' ) }
 							</Button>

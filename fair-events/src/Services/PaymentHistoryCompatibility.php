@@ -8,6 +8,7 @@
 namespace FairEvents\Services;
 
 use FairEvents\Database\Schema;
+use FairEvents\Models\PaymentHistoryFinding;
 
 defined( 'WPINC' ) || die;
 
@@ -24,14 +25,14 @@ defined( 'WPINC' ) || die;
  *   (PaymentHistoryShadowWrites). On once the site supports it and the
  *   coverage floors are recorded.
  * - migration_verified(): the backfill finished and its verification
- *   report was clean (§8.4). Set by stage 3; false until then.
- * - ownership_cutover(): whether the stage 4 activation was recorded
- *   (PaymentHistoryCutover). Reported on the Payment history page only:
- *   payment links are authoritative for purchases unconditionally (#2251),
- *   so no runtime path reads it.
+ *   report was clean (§8.4), as the retired migration recorded it.
+ * - ownership_cutover(): whether the retired stage 4 activation was
+ *   recorded. Payment links are authoritative for purchases
+ *   unconditionally (#2251), so no runtime path reads it.
  *
- * backfill_blockers() lists what stops the stage 3 backfill from starting;
- * PaymentHistoryCutover::blockers() what stops the stage 4 activation.
+ * The one-time migration's controls are retired (#2252); these readers of
+ * its recorded state remain until its storage and options are removed
+ * (#2254). backfill_blockers() still reports the shadow writes' coverage.
  * Fair Audience calls into this class only after checking it and the method
  * exist, so newer Audience keeps working with older Events.
  *
@@ -65,11 +66,26 @@ class PaymentHistoryCompatibility {
 	const STATE_OPTION = 'fair_events_payment_history_migration';
 
 	/**
-	 * Option holding the stage 4 activation (PaymentHistoryCutover). Kept
-	 * apart from STATE_OPTION, which the backfill and shadow writes rewrite
-	 * as they go, so no writer of the migration's state can drop it.
+	 * Option holding the retired stage 4 activation. Kept apart from
+	 * STATE_OPTION, which the shadow writes rewrite as they go, so no
+	 * writer of the migration's state can drop it.
 	 */
 	const CUTOVER_OPTION = 'fair_events_payment_history_cutover';
+
+	/**
+	 * Option holding the retired stage 5 (Statistics readers) activation.
+	 */
+	const READERS_OPTION = 'fair_events_payment_history_readers';
+
+	/**
+	 * Stage 5 activation reason: switched after a clean verification.
+	 */
+	const READERS_REASON_VERIFIED = 'reader_cutover';
+
+	/**
+	 * Stage 5 activation reason: the site had no Fair Audience history.
+	 */
+	const READERS_REASON_NO_HISTORY = 'no_source_history';
 
 	/**
 	 * Whether the links table was found, cached per request.
@@ -157,16 +173,13 @@ class PaymentHistoryCompatibility {
 	}
 
 	/**
-	 * Whether the stage 4 activation (§8.1) was recorded, for the Payment
-	 * history page. The purchase lifecycle doesn't read it: it is
-	 * authoritative unconditionally (PurchaseLifecycle, #2251).
+	 * Whether the retired stage 4 activation (§8.1) was recorded. The
+	 * purchase lifecycle doesn't read it: it is authoritative
+	 * unconditionally (PurchaseLifecycle, #2251).
 	 *
-	 * True once an administrator's activation is recorded in
+	 * True when an administrator's activation is recorded in
 	 * CUTOVER_OPTION and the storage it relies on (links and the work
-	 * queue) exists. The activation is kept apart from the backfill's
-	 * mutable `status`: a later verification failure never clears it, so
-	 * ledger authority is never silently restored and recovery is forward
-	 * repair (§8.5). Only PaymentHistoryCutover::activate() writes it.
+	 * queue) exists. Nothing writes it since #2252.
 	 *
 	 * @return bool
 	 */
@@ -185,6 +198,29 @@ class PaymentHistoryCompatibility {
 	public static function get_cutover() {
 		$cutover = get_option( self::CUTOVER_OPTION, null );
 		return is_array( $cutover ) && ! empty( $cutover['activated_at'] ) ? $cutover : null;
+	}
+
+	/**
+	 * The recorded stage 5 (Statistics readers) activation, or null when
+	 * there is none. Nothing writes it since #2252; the upgrade gate reads
+	 * it as completion evidence.
+	 *
+	 * @return array|null activated_at, reason, and the activation details.
+	 */
+	public static function get_readers_activation() {
+		$activation = get_option( self::READERS_OPTION, null );
+		return is_array( $activation ) && ! empty( $activation['activated_at'] ) ? $activation : null;
+	}
+
+	/**
+	 * The backfill run recorded in the migration's state, or null.
+	 *
+	 * @return array|null
+	 */
+	public static function get_backfill_run() {
+		$state = self::get_state();
+		$mode  = PaymentHistoryFinding::MODE_BACKFILL;
+		return is_array( $state[ $mode ] ?? null ) ? $state[ $mode ] : null;
 	}
 
 	/**

@@ -24,7 +24,7 @@ Each section is marked as one of:
 > **Historical since #2251.** Stages 2–5 below describe the migration as
 > shipped up to `build-2.2.0`, the last release that runs it. Newer releases
 > start only on a site that finished it or was installed fresh: see §8.16
-> and §8.17.
+> and §8.17. Its tooling is retired (§8.18).
 
 Anything this contract doesn't state is not yet decided. A later stage that
 needs to decide it records a timestamped `## Decision` comment on its issue
@@ -1574,14 +1574,11 @@ is what every site does, whether or not an activation is recorded.
   mode), and the retry cron runs the lifecycle's queued work whenever the
   work queue exists.
 
-The stage 4 and stage 5 activations remain recorded and shown on the Payment
-history page until the migration tooling is removed (#2252);
-`PaymentHistoryCompatibility::ownership_cutover()` and
-`PaymentHistoryReaders::active()` only report them there. Historical
-synchronization (#2253), storage removal (#2254) and the supported upgrade
-path (#2255) are separate. A site that never completed the migration can't
-upgrade directly to this release: Fair Events and Fair Audience refuse to
-start there (§8.17).
+The stage 4 and stage 5 activations stay recorded but are no longer shown or
+read: the migration tooling is retired (§8.18). Historical synchronization
+(#2253) and storage removal (#2254) are separate. A site that never
+completed the migration can't upgrade directly to this release: Fair Events
+and Fair Audience refuse to start there (§8.17).
 
 ### 8.17 Supported upgrade path
 
@@ -1666,6 +1663,43 @@ must keep meaning "refuse", and `decide()` may then only refuse.
 #2255: the fresh, eligible and ineligible upgrade matrix against the
 resulting code, the evidence surviving the cleanup, and the final operator
 guidance.
+
+### 8.18 Migration tooling retired
+
+**Implemented** (#2252; DB 3.54.0). The one-time backfill, its verification
+and the stage 4 and 5 activations are removed; what remains is ongoing
+payment history management.
+
+- **Payment history page.** Same menu, URL and `manage_options` permission.
+  It shows only the records to review (findings of mode `backfill`), with
+  their filters, reconciliation dialog and audit trail. The migration,
+  verification, payment-records and statistics panels, the dry-run/migration
+  selector and the status polling are gone. Findings load without any
+  recorded run, and a site with none says there is nothing to decide.
+- **REST.** `POST …/dry-run`, `…/backfill`, `…/backfill/resume`, `…/verify`,
+  `…/cutover`, `…/readers` and `GET …/comparisons` are unregistered, so they
+  answer WordPress's `rest_no_route` (404) for everyone. `GET
+  fair-events/v1/payment-history` returns only `reconciliation_available`,
+  `payment_information` and `finding_statuses` (counts of the `backfill`
+  findings). Findings, finding detail, link, review, unlink, purchase search
+  and audit keep their arguments, validation and 401/403 checks; dry-run
+  findings stay readable with `mode=dry_run` and are never reconcilable.
+- **Services.** `PaymentHistoryBackfill`, `PaymentHistoryVerification`,
+  `PaymentHistoryCutover`, `PaymentHistoryReaders`,
+  `PaymentHistoryPlannedSources`, `PaymentHistoryPurchasePlanner` and
+  `PaymentHistoryAdmissions` are removed. Reconciliation no longer refreshes
+  a verification report after a decision; locking, rollback, stale checks,
+  allocation rules, audit writes and the purchase-amount refresh are
+  unchanged.
+- **Upgrade.** 3.54.0 clears the `fair_events_payment_history_backfill_batch`
+  cron event. The shadow work cron and its queue are untouched (#2253).
+- **Kept.** Payment links (including `backfill` ones), findings, the audit
+  (including recorded activations), the comparisons table, the migration,
+  cutover and readers options, and purchase provenance. Their removal is
+  #2254. `PaymentHistoryCompatibility`'s readers of that recorded state
+  remain until then; `PaymentHistoryUpgrade` (§8.17) reads the backfill run
+  and the stage 5 activation through them (`get_backfill_run()`,
+  `get_readers_activation()`).
 
 ## 9. Worked examples
 

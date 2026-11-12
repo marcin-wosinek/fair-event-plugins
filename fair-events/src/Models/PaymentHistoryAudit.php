@@ -27,8 +27,9 @@ class PaymentHistoryAudit {
 	const ACTION_REVIEW = 'review';
 
 	/**
-	 * The stage 4 activation (PaymentHistoryCutover): no finding or
-	 * transaction; the state holds the activation recorded.
+	 * The retired stage 4 activation: no finding or transaction; the state
+	 * holds the activation recorded. Kept so its audit history stays
+	 * readable.
 	 */
 	const ACTION_ACTIVATE = 'activate';
 
