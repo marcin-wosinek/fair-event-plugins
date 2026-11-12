@@ -335,6 +335,64 @@ function leavingIsGuarded() {
 	return event.defaultPrevented;
 }
 
+/**
+ * Open a list row's action menu.
+ *
+ * @param {HTMLElement} row  The row.
+ * @param {string}      name The notification's name, as the menu names it.
+ * @return {Promise<Object>} Queries within the open menu.
+ */
+async function rowMenu( row, name ) {
+	fireEvent.click(
+		within( row ).getByRole( 'button', {
+			name: `More actions for “${ name }”`,
+			hidden: true,
+		} )
+	);
+	return within( await screen.findByRole( 'menu' ) );
+}
+
+/**
+ * Click a link and tell whether the page left the click to the browser,
+ * without letting jsdom try to follow it.
+ *
+ * @param {HTMLElement} link The link.
+ * @param {Object}      init Event properties, e.g. `{ ctrlKey: true }`.
+ * @return {boolean} Whether the browser would follow the link.
+ */
+function clickLeftToBrowser( link, init ) {
+	let left = null;
+	const listener = ( event ) => {
+		left = ! event.defaultPrevented;
+		event.preventDefault();
+	};
+	document.addEventListener( 'click', listener );
+	fireEvent.click( link, init );
+	document.removeEventListener( 'click', listener );
+	return left;
+}
+
+async function waitForMenuToClose() {
+	await waitFor( () =>
+		expect( screen.queryByRole( 'menu' ) ).not.toBeInTheDocument()
+	);
+}
+
+/**
+ * Choose an action from a list row's menu.
+ *
+ * @param {HTMLElement} row    The row.
+ * @param {string}      name   The notification's name.
+ * @param {string}      action Menu item label.
+ */
+async function chooseAction( row, name, action ) {
+	const menu = await rowMenu( row, name );
+	// The action's request may settle at once; let it inside act().
+	await act( async () => {
+		fireEvent.click( menu.getByRole( 'menuitem', { name: action } ) );
+	} );
+}
+
 afterEach( () => {
 	jest.resetAllMocks();
 	visit();
@@ -1914,6 +1972,122 @@ describe( 'Notification list', () => {
 		expect( own.getByText( 'Accepted' ) ).toBeInTheDocument();
 	} );
 
+	it( 'gives every kind Edit and a menu of History, Duplicate and Delete', async () => {
+		await renderPage( payload(), {}, null );
+
+		for ( const name of [ 'Telegram', 'Bulk email', 'Individual email' ] ) {
+			const row = rowOf( name );
+			const edit = within( row ).getByRole( 'link', {
+				name: `Edit “${ name }”`,
+			} );
+			expect( edit ).toHaveTextContent( /^Edit$/ );
+			expect( edit ).toHaveAttribute(
+				'href',
+				within( row )
+					.getByRole( 'link', { name } )
+					.getAttribute( 'href' )
+			);
+			const menu = await rowMenu( row, name );
+			expect(
+				menu
+					.getAllByRole( 'menuitem' )
+					.map( ( item ) => item.firstChild.textContent )
+			).toEqual( [ 'History', 'Duplicate', 'Delete' ] );
+			fireEvent.keyDown( screen.getByRole( 'menu' ), { key: 'Escape' } );
+			await waitForMenuToClose();
+		}
+	} );
+
+	it( 'opens History in place, and leaves a modified click to the browser', async () => {
+		await renderPage( payload(), {}, null );
+
+		let menu = await rowMenu( rowOf( 'Telegram' ), 'Telegram' );
+		const history = menu.getByRole( 'menuitem', { name: 'History' } );
+		expect( history ).toHaveAttribute(
+			'href',
+			expect.stringContaining( 'configuration=telegram&tab=history' )
+		);
+		// A new tab opens; this one stays on the list.
+		expect( clickLeftToBrowser( history, { ctrlKey: true } ) ).toBe( true );
+		expect( currentSearch() ).not.toHaveProperty( 'configuration' );
+		await waitForMenuToClose();
+
+		menu = await rowMenu( rowOf( 'Telegram' ), 'Telegram' );
+		const item = menu.getByRole( 'menuitem', { name: 'History' } );
+		await act( async () => {
+			expect( clickLeftToBrowser( item ) ).toBe( false );
+		} );
+		expect( currentSearch() ).toMatchObject( {
+			configuration: 'telegram',
+			tab: 'history',
+		} );
+	} );
+
+	it( 'opens the editor in place from the name and from Edit', async () => {
+		await renderPage( payload(), {}, null );
+
+		const edit = within( rowOf( 'Telegram' ) ).getByRole( 'link', {
+			name: 'Edit “Telegram”',
+		} );
+		expect( clickLeftToBrowser( edit, { metaKey: true } ) ).toBe( true );
+		expect( currentSearch() ).not.toHaveProperty( 'configuration' );
+		fireEvent.click( edit );
+		await screen.findByRole( 'navigation', {
+			name: 'Notification sections',
+		} );
+		expect( currentSearch() ).toMatchObject( {
+			configuration: 'telegram',
+		} );
+	} );
+
+	it( 'keeps the rows when a refresh fails and offers to try again', async () => {
+		let fail = false;
+		await renderPage(
+			payload( {}, [] ),
+			{
+				[ `GET ${ PATH }` ]: () =>
+					fail
+						? Promise.reject( { message: 'Server unreachable.' } )
+						: Promise.resolve( payload() ),
+			},
+			null
+		);
+
+		fail = true;
+		await returnToPage();
+		expect(
+			await screen.findByText(
+				/could not be refreshed, so what is shown may be out of date\. Your unsaved changes are kept\. Server unreachable\./
+			)
+		).toBeInTheDocument();
+		expect( rowOf( 'Telegram' ) ).toBeDefined();
+
+		fail = false;
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Try again' } )
+			);
+		} );
+		expect(
+			screen.queryByText( /could not be refreshed/ )
+		).not.toBeInTheDocument();
+		expect( rowOf( 'Telegram' ) ).toBeDefined();
+	} );
+
+	it( 'clears a search that matches nothing', async () => {
+		await renderPage( payload(), {}, null );
+
+		fireEvent.change(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
+			{ target: { value: 'nothing like it' } }
+		);
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Clear search' } )
+		);
+		expect( screen.getAllByRole( 'row' ) ).toHaveLength( 4 );
+		expect( currentSearch() ).not.toHaveProperty( 's' );
+	} );
+
 	it( 'reports a missing bot token as a problem of the notification', async () => {
 		await renderPage(
 			payload( {
@@ -2801,11 +2975,19 @@ describe( 'Duplicating a notification', () => {
 			null
 		);
 
-		const row = within( rowOf( 'Telegram' ) );
-		fireEvent.click( row.getByRole( 'button', { name: 'Duplicate' } ) );
-		const pending = row.getByRole( 'button', { name: 'Duplicating…' } );
+		await chooseAction( rowOf( 'Telegram' ), 'Telegram', 'Duplicate' );
+		await waitForMenuToClose();
+		// The progress stays in the row once the menu has closed.
+		expect(
+			within( rowOf( 'Telegram' ) ).getByRole( 'status' )
+		).toHaveTextContent( 'Duplicating “Telegram”…' );
+		const menu = await rowMenu( rowOf( 'Telegram' ), 'Telegram' );
+		const pending = menu.getByRole( 'menuitem', {
+			name: /^Duplicating…/,
+		} );
 		// Stays focusable while pending, but cannot be used.
 		expect( pending ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( pending ).toHaveTextContent( 'A copy is being made.' );
 		fireEvent.click( pending );
 		expect( calls( 'POST', DUPLICATE ) ).toHaveLength( 1 );
 		expect( calls( 'POST', DUPLICATE )[ 0 ][ 0 ] ).not.toHaveProperty(
@@ -2861,21 +3043,18 @@ describe( 'Duplicating a notification', () => {
 			null
 		);
 
-		fireEvent.click(
-			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
-			} )
-		);
+		await chooseAction( rowOf( 'Telegram' ), 'Telegram', 'Duplicate' );
 		expect(
 			await within( rowOf( 'Telegram' ) ).findByText(
-				'The notification could not be duplicated. Please try again.'
+				'“Telegram” was not duplicated: The notification could not be duplicated. Please try again.'
 			)
 		).toBeInTheDocument();
 		expect( screen.getByRole( 'table' ) ).toBeInTheDocument();
 
+		// Retried from the error, next to the row.
 		fireEvent.click(
 			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
+				name: 'Try again',
 			} )
 		);
 		expect(
@@ -2893,15 +3072,11 @@ describe( 'Duplicating a notification', () => {
 			null
 		);
 
-		fireEvent.click(
-			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
-			} )
-		);
+		await chooseAction( rowOf( 'Telegram' ), 'Telegram', 'Duplicate' );
 
 		expect(
 			await screen.findByText(
-				'Failed to duplicate the notification. Please try again.'
+				'“Telegram” was not duplicated: Failed to duplicate the notification. Please try again.'
 			)
 		).toBeInTheDocument();
 	} );
@@ -2917,21 +3092,27 @@ describe( 'Duplicating a notification', () => {
 			null
 		);
 
-		const row = within( rowOf( 'Bulk email' ) );
-		const button = row.getByRole( 'button', { name: 'Duplicate' } );
-		expect( button ).toHaveAttribute( 'aria-disabled', 'true' );
-		expect( button ).toHaveAccessibleDescription( message );
+		// The reason stays visible next to the name, outside the menu.
 		expect(
-			row.getByText( 'Cannot be duplicated now, see its status.' )
-		).toBeInTheDocument();
-		fireEvent.click( button );
+			within( rowOf( 'Bulk email' ) ).getByText( message )
+		).toBeVisible();
+		const menu = await rowMenu( rowOf( 'Bulk email' ), 'Bulk email' );
+		const item = menu.getByRole( 'menuitem', { name: /^Duplicate/ } );
+		expect( item ).toHaveAttribute( 'aria-disabled', 'true' );
+		expect( item ).toHaveTextContent(
+			'Cannot be duplicated now, see the warning next to its name.'
+		);
+		fireEvent.click( item );
 		expect(
 			calls( 'POST', `${ PATH }/configurations/bulk_email/duplicate` )
 		).toHaveLength( 0 );
+		fireEvent.keyDown( screen.getByRole( 'menu' ), { key: 'Escape' } );
+		await waitForMenuToClose();
 		expect(
-			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
-			} )
+			( await rowMenu( rowOf( 'Telegram' ), 'Telegram' ) ).getByRole(
+				'menuitem',
+				{ name: 'Duplicate' }
+			)
 		).toBeEnabled();
 	} );
 
@@ -2948,11 +3129,7 @@ describe( 'Duplicating a notification', () => {
 			screen.getByRole( 'link', { name: '← All notifications' } )
 		);
 		await screen.findByRole( 'table' );
-		fireEvent.click(
-			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
-			} )
-		);
+		await chooseAction( rowOf( 'Telegram' ), 'Telegram', 'Duplicate' );
 
 		const named = within(
 			( await screen.findByRole( 'heading', {
@@ -2986,11 +3163,7 @@ describe( 'Duplicating a notification', () => {
 
 		// Coming back to the tab issues a read that is still pending.
 		await returnToPage();
-		fireEvent.click(
-			within( rowOf( 'Telegram' ) ).getByRole( 'button', {
-				name: 'Duplicate',
-			} )
-		);
+		await chooseAction( rowOf( 'Telegram' ), 'Telegram', 'Duplicate' );
 		await screen.findByRole( 'heading', { name: /^Copy of Telegram/ } );
 		await act( async () => read.resolve( payload() ) );
 		expect(
@@ -3031,11 +3204,9 @@ describe( 'Deleting a notification', () => {
 			);
 	}
 
-	function openDialog( name = 'Team digest' ) {
-		fireEvent.click(
-			within( rowOf( name ) ).getByRole( 'button', { name: 'Delete' } )
-		);
-		return within( screen.getByRole( 'dialog' ) );
+	async function openDialog( name = 'Team digest' ) {
+		await chooseAction( rowOf( name ), name, 'Delete' );
+		return within( await screen.findByRole( 'dialog' ) );
 	}
 
 	const deletedMessage =
@@ -3044,7 +3215,7 @@ describe( 'Deleting a notification', () => {
 	it( 'names the notification and its consequences, and cancelling changes nothing', async () => {
 		await renderPage( payload( {}, [ digest() ] ), {}, null );
 
-		const dialog = openDialog();
+		const dialog = await openDialog();
 
 		expect(
 			screen.getByRole( 'dialog', {
@@ -3077,9 +3248,15 @@ describe( 'Deleting a notification', () => {
 
 		fireEvent.click( dialog.getByRole( 'button', { name: 'Cancel' } ) );
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		// Focus goes back to the menu the dialog was opened from.
+		expect(
+			within( rowOf( 'Team digest' ) ).getByRole( 'button', {
+				name: 'More actions for “Team digest”',
+			} )
+		).toHaveFocus();
 
 		// Escape cancels too; the dialog closes once its animation ends.
-		openDialog();
+		await openDialog();
 		fireEvent.keyDown( screen.getByRole( 'dialog' ), {
 			key: 'Escape',
 			code: 'Escape',
@@ -3095,7 +3272,7 @@ describe( 'Deleting a notification', () => {
 	it( 'names an unnamed notification by its kind', async () => {
 		await renderPage( payload(), {}, null );
 
-		const dialog = openDialog( 'Telegram' );
+		const dialog = await openDialog( 'Telegram' );
 
 		expect(
 			screen.getByRole( 'dialog', {
@@ -3124,7 +3301,7 @@ describe( 'Deleting a notification', () => {
 			null
 		);
 
-		const dialog = openDialog();
+		const dialog = await openDialog();
 		fireEvent.click(
 			dialog.getByRole( 'button', { name: 'Delete notification' } )
 		);
@@ -3186,7 +3363,7 @@ describe( 'Deleting a notification', () => {
 			null
 		);
 
-		const dialog = openDialog();
+		const dialog = await openDialog();
 		fireEvent.click(
 			dialog.getByRole( 'button', { name: 'Delete notification' } )
 		);
@@ -3213,7 +3390,7 @@ describe( 'Deleting a notification', () => {
 			null
 		);
 
-		const dialog = openDialog();
+		const dialog = await openDialog();
 		fireEvent.click(
 			dialog.getByRole( 'button', { name: 'Delete notification' } )
 		);
@@ -3243,7 +3420,9 @@ describe( 'Deleting a notification', () => {
 		);
 
 		fireEvent.click(
-			openDialog().getByRole( 'button', { name: 'Delete notification' } )
+			( await openDialog() ).getByRole( 'button', {
+				name: 'Delete notification',
+			} )
 		);
 
 		expect( await screen.findByText( deletedMessage ) ).toBeInTheDocument();
@@ -3263,10 +3442,9 @@ describe( 'Deleting a notification', () => {
 			null
 		);
 
+		const menu = await rowMenu( rowOf( 'Bulk email' ), 'Bulk email' );
 		expect(
-			within( rowOf( 'Bulk email' ) ).getByRole( 'button', {
-				name: 'Delete',
-			} )
+			menu.getByRole( 'menuitem', { name: 'Delete' } )
 		).toBeEnabled();
 	} );
 
@@ -3294,7 +3472,9 @@ describe( 'Deleting a notification', () => {
 		// Coming back to the tab issues a read that is still pending.
 		await returnToPage();
 		fireEvent.click(
-			openDialog().getByRole( 'button', { name: 'Delete notification' } )
+			( await openDialog() ).getByRole( 'button', {
+				name: 'Delete notification',
+			} )
 		);
 		await screen.findByText( deletedMessage );
 		await act( async () => read.resolve( payload( {}, [ digest() ] ) ) );
@@ -3325,7 +3505,7 @@ describe( 'Deleting a notification', () => {
 		).toBeInTheDocument();
 		expect( leavingIsGuarded() ).toBe( true );
 
-		const dialog = openDialog();
+		const dialog = await openDialog();
 		expect(
 			dialog.getByText( 'Its unsaved changes are discarded.' )
 		).toBeInTheDocument();

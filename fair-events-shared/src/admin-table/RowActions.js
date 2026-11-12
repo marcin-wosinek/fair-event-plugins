@@ -25,6 +25,10 @@ import { moreVertical } from '@wordpress/icons';
  *                                      "Edit “Spring feed”".
  * @property {Function} onClick        Called with { restoreFocus } (see README).
  * @property {string}   href           Link target instead of onClick.
+ * @property {Function} onLinkClick    With `href`: receives the click event,
+ *                                      e.g. to change the view in place on a
+ *                                      plain click; call `preventDefault()`
+ *                                      to keep the browser from following it.
  * @property {boolean}  disabled       Action unavailable.
  * @property {string}   disabledReason Why it is unavailable; shown with it.
  * @property {boolean}  isBusy         Primary only: request running.
@@ -61,11 +65,15 @@ export default function RowActions( { primary, secondary = [], moreLabel } ) {
 								? undefined
 								: primary.href
 						}
-						onClick={
-							primary.disabled || primary.isBusy || primary.href
-								? undefined
-								: () => primary.onClick?.( { restoreFocus } )
-						}
+						onClick={ ( () => {
+							if ( primary.disabled || primary.isBusy ) {
+								return undefined;
+							}
+							if ( primary.href ) {
+								return primary.onLinkClick;
+							}
+							return () => primary.onClick?.( { restoreFocus } );
+						} )() }
 						disabled={ primary.disabled || primary.isBusy }
 						accessibleWhenDisabled
 						isBusy={ primary.isBusy }
@@ -114,12 +122,17 @@ export default function RowActions( { primary, secondary = [], moreLabel } ) {
 													? action.disabledReason
 													: undefined
 											}
-											onClick={ () => {
+											onClick={ ( event ) => {
 												if ( action.disabled ) {
 													return;
 												}
 												onClose();
 												restoreFocus();
+												if ( action.href ) {
+													action.onLinkClick?.(
+														event
+													);
+												}
 												action.onClick?.( {
 													restoreFocus,
 												} );
