@@ -30,6 +30,80 @@
 		}
 	}
 
+	/* Sortable column headers: a button that looks like the header text. */
+	.fair-finance-entries__sort {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: inherit;
+		font: inherit;
+		text-align: inherit;
+		cursor: pointer;
+
+		&:focus-visible {
+			border-radius: 2px;
+			box-shadow: 0 0 0 2px var(--wp-admin-theme-color, #3858e9);
+			outline: 2px solid transparent;
+		}
+	}
+
+	.fair-finance-entries__type {
+		font-weight: 600;
+	}
+
+	.fair-finance-entries__date,
+	.fair-finance-entries__type {
+		white-space: nowrap;
+	}
+
+	.fair-finance-entries__type--cost {
+		color: #b32d2e;
+	}
+
+	.fair-finance-entries__type--income {
+		color: #007017;
+	}
+
+	.fair-finance-entries__type--transfer {
+		color: #0a4b78;
+	}
+
+	.fair-finance-entries__toggle {
+		align-self: flex-start;
+		height: auto;
+		padding: 0;
+	}
+
+	/* Allocations of an expanded split or transfer, under their entry. */
+	.fair-finance-entries__allocation {
+		background: #f6f7f7;
+
+		.fair-admin-table__cell--identity {
+			padding-left: 32px;
+		}
+
+		.fair-admin-table__identity-name {
+			font-size: 13px;
+			font-weight: 400;
+		}
+	}
+
+	@media screen and (max-width: 782px) {
+		/* Empty desktop cells have nothing to label on a stacked row. */
+		.fair-finance-entries__empty-cell {
+			display: none;
+		}
+
+		/* The parent context line says which entry an allocation belongs to. */
+		.fair-finance-entries__allocation {
+			border-left: 4px solid #c3c4c7;
+
+			.fair-admin-table__cell--identity {
+				padding-left: 0;
+			}
+		}
+	}
+
 	@media screen and (max-width: 600px) {
 		.fair-finance-entries-summary {
 			flex-direction: column;

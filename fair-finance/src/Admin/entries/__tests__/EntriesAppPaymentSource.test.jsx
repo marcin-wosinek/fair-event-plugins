@@ -80,21 +80,38 @@ describe( 'EntriesApp — payment source', () => {
 		const note = await screen.findByText( 'Personal funds, paid by Anna' );
 		const row = note.closest( 'tr' );
 		expect(
-			within( row ).getByRole( 'button', { name: 'Edit' } )
+			within( row ).getByRole( 'button', { name: 'Edit “Decorations”' } )
 		).toBeInTheDocument();
-		expect(
-			within( row ).queryByRole( 'button', { name: 'Split' } )
-		).toBeNull();
-		expect(
-			within( row ).queryByRole( 'button', { name: 'Match' } )
-		).toBeNull();
+
+		const menuItems = async ( entry ) => {
+			fireEvent.click(
+				screen.getByRole( 'button', {
+					name: `More actions for “${ entry }”`,
+				} )
+			);
+			const menu = await screen.findByRole( 'menu', {
+				name: `More actions for “${ entry }”`,
+			} );
+			const labels = within( menu )
+				.getAllByRole( 'menuitem' )
+				.map( ( item ) => item.textContent );
+			await act( async () => {
+				fireEvent.keyDown( menu, { key: 'Escape' } );
+			} );
+			return labels;
+		};
+
+		// Event cash and personally paid entries are neither split nor matched.
+		expect( await menuItems( 'Decorations' ) ).toEqual( [ 'Delete' ] );
 
 		const legacyRow = screen.getByText( 'Old cost' ).closest( 'tr' );
 		expect( legacyRow ).not.toHaveTextContent( 'Event cash' );
 		expect( legacyRow ).not.toHaveTextContent( 'Personal funds' );
-		expect(
-			within( legacyRow ).getByRole( 'button', { name: 'Split' } )
-		).toBeInTheDocument();
+		expect( await menuItems( 'Old cost' ) ).toEqual( [
+			'Split',
+			'Match',
+			'Delete',
+		] );
 	} );
 } );
 

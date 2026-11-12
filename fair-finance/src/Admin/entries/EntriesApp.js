@@ -37,6 +37,14 @@ import ConfirmActionModal, {
 	useConfirmAction,
 } from '../components/ConfirmActionModal.js';
 import { buildEntriesCsv, downloadCsv } from './exportEntriesCsv.js';
+import {
+	AdminTable,
+	AdminTableCell,
+	ItemIdentity,
+	RowActions,
+	StatusLabel,
+	TableMessage,
+} from 'fair-events-shared/src/admin-table/index.js';
 
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
 
@@ -198,7 +206,7 @@ const UnbudgetedCount = ( { state, onRetry } ) => {
  * @param {Object} props.entry Financial entry with a payment source.
  */
 const PaymentSourceNote = ( { entry } ) => (
-	<div style={ { fontSize: '12px', color: '#50575e', marginTop: '2px' } }>
+	<span className="fair-admin-table__identity-meta">
 		{ 'personal_funds' === entry.payment_source
 			? sprintf(
 					/* translators: %s: name of the person who paid */
@@ -206,7 +214,7 @@ const PaymentSourceNote = ( { entry } ) => (
 					entry.payer_name || __( '(unnamed)', 'fair-finance' )
 				)
 			: __( 'Event cash', 'fair-finance' ) }
-	</div>
+	</span>
 );
 const EntriesApp = () => {
 	// Focus is read before the first data request so a focused link never
@@ -244,6 +252,12 @@ const EntriesApp = () => {
 		order: 'desc',
 	} );
 	const [ loading, setLoading ] = useState( true );
+	// Rows stay mounted after the first successful load, so dialogs can
+	// return focus to the row that opened them.
+	const [ hasLoaded, setHasLoaded ] = useState( false );
+	const [ loadError, setLoadError ] = useState( null );
+	const [ focusHeading, setFocusHeading ] = useState( false );
+	const headingRef = useRef( null );
 	const [ exportLoading, setExportLoading ] = useState( false );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
@@ -260,6 +274,15 @@ const EntriesApp = () => {
 	const [ isTransferOpen, setIsTransferOpen ] = useState( false );
 	const [ transferEntry, setTransferEntry ] = useState( null );
 	const [ expandedEntries, setExpandedEntries ] = useState( {} );
+
+	// After a deletion the row and its menu trigger are gone. Focus the
+	// heading once the confirmation has unmounted and returned focus.
+	useEffect( () => {
+		if ( focusHeading && ! deleteEntry.target ) {
+			headingRef.current?.focus();
+			setFocusHeading( false );
+		}
+	}, [ focusHeading, deleteEntry.target ] );
 
 	useEffect( () => {
 		loadBudgets();
@@ -333,6 +356,7 @@ const EntriesApp = () => {
 		window.history.replaceState( null, '', url.toString() );
 
 		setError( null );
+		setLoadError( null );
 		setFilters( DEFAULT_FILTERS );
 		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 		setFocus( { id: null, invalid: false } );
@@ -436,7 +460,7 @@ const EntriesApp = () => {
 		if ( ! quiet ) {
 			setLoading( true );
 		}
-		setError( null );
+		setLoadError( null );
 
 		try {
 			const params = new URLSearchParams();
@@ -454,6 +478,7 @@ const EntriesApp = () => {
 			}
 
 			setEntries( data.entries );
+			setHasLoaded( true );
 			setPagination( ( prev ) => ( {
 				...prev,
 				total: data.total,
@@ -463,17 +488,19 @@ const EntriesApp = () => {
 			if ( requestId !== entriesRequestRef.current ) {
 				return;
 			}
+			// A quiet refresh keeps the rows already shown, so the
+			// organizer keeps their place; retry from the message.
 			if ( quiet ) {
-				setError(
+				setLoadError(
 					__(
-						'The list could not be refreshed. Reload the page to see the current entries.',
+						'The list could not be refreshed. Try again to see the current entries.',
 						'fair-finance'
 					)
 				);
 				return;
 			}
 			setEntries( [] );
-			setError(
+			setLoadError(
 				err.message || __( 'Failed to load entries.', 'fair-finance' )
 			);
 		} finally {
@@ -576,8 +603,10 @@ const EntriesApp = () => {
 		setIsFormOpen( true );
 	};
 
+	// Mutations refresh in place: the rows stay mounted, so a dialog can
+	// return focus to the control that opened it.
 	const reloadAfterRemoval = () => {
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadTotals();
 		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
@@ -601,6 +630,8 @@ const EntriesApp = () => {
 						entryLabel( entry )
 					)
 				);
+				// The row and its menu are gone; move focus to the heading.
+				setFocusHeading( true );
 				reloadAfterRemoval();
 			},
 			__( 'The entry could not be deleted. Try again.', 'fair-finance' )
@@ -614,7 +645,7 @@ const EntriesApp = () => {
 				? __( 'Entry updated successfully.', 'fair-finance' )
 				: __( 'Entry created successfully.', 'fair-finance' )
 		);
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadTotals();
 		loadTags();
 		loadUnbudgetedCount();
@@ -652,7 +683,7 @@ const EntriesApp = () => {
 	const handleMatchComplete = () => {
 		setMatchingEntry( null );
 		setSuccess( __( 'Entry matched to transaction.', 'fair-finance' ) );
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadUnbudgetedCount();
 	};
 
@@ -667,7 +698,7 @@ const EntriesApp = () => {
 	const handleImportComplete = () => {
 		setIsImportOpen( false );
 		setSuccess( __( 'Entries imported successfully.', 'fair-finance' ) );
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadTotals();
 		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
@@ -693,7 +724,7 @@ const EntriesApp = () => {
 				? __( 'Split updated successfully.', 'fair-finance' )
 				: __( 'Entry split successfully.', 'fair-finance' )
 		);
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadTotals();
 		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
@@ -745,7 +776,7 @@ const EntriesApp = () => {
 				? __( 'Transfer updated successfully.', 'fair-finance' )
 				: __( 'Transfer created successfully.', 'fair-finance' )
 		);
-		loadEntries();
+		loadEntries( { quiet: true } );
 		loadTotals();
 		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
@@ -807,20 +838,49 @@ const EntriesApp = () => {
 		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 	};
 
-	const SortableHeader = ( { column, children } ) => {
-		const isActive = sort.orderby === column;
-		const arrow = isActive
-			? sort.order === 'asc'
-				? ' \u25B2'
-				: ' \u25BC'
+	/**
+	 * Column header. Sortable columns hold a button, so sorting works from
+	 * the keyboard, and announce their order with `aria-sort`. Called as a
+	 * function, not rendered as a component, so the button keeps its DOM
+	 * node (and focus) across re-renders.
+	 *
+	 * @param {string} label   Header text.
+	 * @param {string} column  Sort key, or empty for a plain header.
+	 * @param {string} variant Shared table cell variant.
+	 * @return {Element} The header cell.
+	 */
+	const headerCell = ( label, column = '', variant = '' ) => {
+		const isActive = column && sort.orderby === column;
+		let ariaSort;
+		if ( isActive ) {
+			ariaSort = sort.order === 'asc' ? 'ascending' : 'descending';
+		}
+		const variantClass = variant
+			? ` fair-admin-table__header--${ variant }`
 			: '';
 		return (
 			<th
-				style={ { cursor: 'pointer', userSelect: 'none' } }
-				onClick={ () => handleSort( column ) }
+				key={ label }
+				scope="col"
+				aria-sort={ ariaSort }
+				className={ `fair-admin-table__header${ variantClass }` }
 			>
-				{ children }
-				{ arrow }
+				{ column ? (
+					<button
+						type="button"
+						className="fair-finance-entries__sort"
+						onClick={ () => handleSort( column ) }
+					>
+						{ label }
+						{ isActive && (
+							<span aria-hidden="true">
+								{ sort.order === 'asc' ? ' \u25B2' : ' \u25BC' }
+							</span>
+						) }
+					</button>
+				) : (
+					label
+				) }
 			</th>
 		);
 	};
@@ -834,7 +894,7 @@ const EntriesApp = () => {
 
 	const getBudgetName = ( budgetId ) => {
 		const budget = budgets.find( ( b ) => b.id === budgetId );
-		return budget ? budget.name : '-';
+		return budget ? budget.name : '—';
 	};
 
 	const entryLabel = ( entry ) =>
@@ -861,6 +921,522 @@ const EntriesApp = () => {
 	];
 
 	const eventFilterOptions = buildEventFilterOptions( eventDates, eventUrls );
+
+	const hasActiveFilters = Object.keys( DEFAULT_FILTERS ).some(
+		( key ) => filters[ key ] !== DEFAULT_FILTERS[ key ]
+	);
+
+	const clearFilters = () => {
+		setFilters( DEFAULT_FILTERS );
+		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
+	};
+
+	const retryLoad = () => {
+		loadEntries( { quiet: hasLoaded && entries.length > 0 } );
+		loadTotals();
+	};
+
+	const columns = {
+		description: __( 'Description', 'fair-finance' ),
+		date: __( 'Date', 'fair-finance' ),
+		type: __( 'Type', 'fair-finance' ),
+		amount: __( 'Amount', 'fair-finance' ),
+		budget: __( 'Budget', 'fair-finance' ),
+		link: __( 'Link', 'fair-finance' ),
+		matched: __( 'Matched', 'fair-finance' ),
+		imported: __( 'Imported', 'fair-finance' ),
+		actions: __( 'Actions', 'fair-finance' ),
+	};
+
+	const noValue = '—';
+
+	const typeLabel = ( type ) => {
+		if ( 'transfer' === type ) {
+			return __( 'Transfer', 'fair-finance' );
+		}
+		return 'cost' === type
+			? __( 'Cost', 'fair-finance' )
+			: __( 'Income', 'fair-finance' );
+	};
+
+	const renderType = ( type ) => (
+		<span
+			className={ `fair-finance-entries__type fair-finance-entries__type--${ type }` }
+		>
+			{ typeLabel( type ) }
+		</span>
+	);
+
+	const renderLink = ( url ) =>
+		url ? (
+			<a
+				href={ url }
+				target="_blank"
+				rel="noopener noreferrer"
+				title={ url }
+			>
+				{ getEventUrlLabel( url ) }
+			</a>
+		) : (
+			noValue
+		);
+
+	// Keeps desktop columns aligned without an empty labeled block on
+	// narrow screens, where it is hidden.
+	const emptyCell = ( key ) => (
+		<td
+			key={ key }
+			className="fair-admin-table__cell fair-finance-entries__empty-cell"
+		/>
+	);
+
+	const renderBudget = ( entry, isTransfer, isSplit ) => {
+		if ( isTransfer ) {
+			const costChild = entry.children?.find(
+				( c ) => c.entry_type === 'cost'
+			);
+			const incomeChild = entry.children?.find(
+				( c ) => c.entry_type === 'income'
+			);
+			return sprintf(
+				/* translators: 1: source budget name, 2: target budget name */
+				__( '%1$s → %2$s', 'fair-finance' ),
+				getBudgetName( costChild?.budget_id ),
+				getBudgetName( incomeChild?.budget_id )
+			);
+		}
+		if ( isSplit ) {
+			return sprintf(
+				/* translators: %d: number of split allocations */
+				_n(
+					'Split into %d allocation',
+					'Split into %d allocations',
+					entry.children.length,
+					'fair-finance'
+				),
+				entry.children.length
+			);
+		}
+		return getBudgetName( entry.budget_id );
+	};
+
+	const renderMatched = ( entry ) => {
+		const count = entry.transaction_ids?.length || 0;
+		if ( count === 0 ) {
+			return (
+				<StatusLabel tone="warning">
+					{ __( 'No', 'fair-finance' ) }
+				</StatusLabel>
+			);
+		}
+		return (
+			<StatusLabel tone="success">
+				{ count > 1
+					? sprintf(
+							/* translators: %d: number of matched transactions */
+							__( 'Yes (%d)', 'fair-finance' ),
+							count
+						)
+					: __( 'Yes', 'fair-finance' ) }
+			</StatusLabel>
+		);
+	};
+
+	/**
+	 * The row's visible action and its overflow menu. Eligibility follows
+	 * the entry kind: transfers open the transfer editor, split entries and
+	 * their allocations open the split editor, and entries recorded as event
+	 * cash or personally paid are neither split nor matched.
+	 *
+	 * @param {Object} entry Financial entry.
+	 * @return {Object} RowActions props.
+	 */
+	const getRowActions = ( entry ) => {
+		const name = entryLabel( entry );
+		const isTransfer = entry.entry_type === 'transfer';
+		const isSplit = ! isTransfer && entry.children?.length > 0;
+		const isClassified = !! entry.payment_source;
+		const isMatched = entry.transaction_ids?.length > 0;
+		const moreLabel = sprintf(
+			/* translators: %s: financial entry description */
+			__( 'More actions for “%s”', 'fair-finance' ),
+			name
+		);
+		const editAction = ( onClick ) => ( {
+			label: __( 'Edit', 'fair-finance' ),
+			accessibleLabel: sprintf(
+				/* translators: %s: financial entry description */
+				__( 'Edit “%s”', 'fair-finance' ),
+				name
+			),
+			onClick,
+		} );
+		const editSplitAction = ( target ) => ( {
+			label: __( 'Edit split', 'fair-finance' ),
+			accessibleLabel: sprintf(
+				/* translators: %s: description of the split financial entry */
+				__( 'Edit split “%s”', 'fair-finance' ),
+				entryLabel( target )
+			),
+			onClick: () => handleSplit( target ),
+		} );
+		const matchAction = isMatched
+			? {
+					label: __( 'Unmatch', 'fair-finance' ),
+					onClick: () => handleUnmatch( entry ),
+				}
+			: {
+					label: __( 'Match', 'fair-finance' ),
+					onClick: () => handleMatch( entry ),
+				};
+		const deleteAction = {
+			label: __( 'Delete', 'fair-finance' ),
+			isDestructive: true,
+			onClick: () => deleteEntry.open( entry ),
+		};
+
+		if ( entry.parent_entry_id ) {
+			return {
+				primary: editSplitAction( entry.parent || entry ),
+				secondary: [],
+				moreLabel,
+			};
+		}
+		if ( isTransfer ) {
+			return {
+				primary: editAction( () => handleEditTransfer( entry ) ),
+				secondary: [ deleteAction ],
+				moreLabel,
+			};
+		}
+		if ( isSplit ) {
+			return {
+				primary: editSplitAction( entry ),
+				secondary: [
+					...( isClassified ? [] : [ matchAction ] ),
+					{
+						...deleteAction,
+						disabled: true,
+						disabledReason: __(
+							'Unsplit this entry before deleting it.',
+							'fair-finance'
+						),
+					},
+				],
+				moreLabel,
+			};
+		}
+		return {
+			primary: editAction( () => handleEdit( entry ) ),
+			secondary: isClassified
+				? [ deleteAction ]
+				: [
+						{
+							label: __( 'Split', 'fair-finance' ),
+							onClick: () => handleSplit( entry ),
+						},
+						matchAction,
+						deleteAction,
+					],
+			moreLabel,
+		};
+	};
+
+	const renderAllocationRow = ( child, parent, isTransfer ) => (
+		<tr
+			key={ `child-${ child.id }` }
+			className="fair-finance-entries__allocation"
+		>
+			<AdminTableCell variant="identity">
+				<ItemIdentity
+					title={ child.description }
+					fallback={ __( '(no description)', 'fair-finance' ) }
+					meta={
+						isTransfer
+							? sprintf(
+									/* translators: %s: transfer description */
+									__(
+										'Part of transfer “%s”',
+										'fair-finance'
+									),
+									entryLabel( parent )
+								)
+							: sprintf(
+									/* translators: %s: split entry description */
+									__(
+										'Part of split entry “%s”',
+										'fair-finance'
+									),
+									entryLabel( parent )
+								)
+					}
+				/>
+			</AdminTableCell>
+			{ emptyCell( 'date' ) }
+			{ isTransfer ? (
+				<AdminTableCell label={ columns.type }>
+					{ renderType( child.entry_type ) }
+				</AdminTableCell>
+			) : (
+				emptyCell( 'type' )
+			) }
+			<AdminTableCell label={ columns.amount } variant="amount">
+				{ formatAmount( child.amount ) }
+			</AdminTableCell>
+			<AdminTableCell label={ columns.budget }>
+				{ getBudgetName( child.budget_id ) }
+			</AdminTableCell>
+			{ eventsEnabled &&
+				( child.event_url ? (
+					<AdminTableCell label={ columns.link }>
+						{ renderLink( child.event_url ) }
+					</AdminTableCell>
+				) : (
+					emptyCell( 'link' )
+				) ) }
+			{ emptyCell( 'matched' ) }
+			{ emptyCell( 'imported' ) }
+			{ emptyCell( 'actions' ) }
+		</tr>
+	);
+
+	const renderEntryRow = ( entry ) => {
+		const isTransfer = entry.entry_type === 'transfer';
+		const isSplit = ! isTransfer && entry.children?.length > 0;
+		const hasAllocations = isTransfer
+			? entry.children?.length > 0
+			: isSplit;
+		const isChild = !! entry.parent_entry_id;
+		const isExpanded = !! expandedEntries[ entry.id ];
+		const allocationCount = entry.children?.length || 0;
+
+		return (
+			<Fragment key={ entry.id }>
+				<tr
+					className={
+						hasAllocations && isExpanded
+							? 'fair-finance-entries__group is-expanded'
+							: undefined
+					}
+				>
+					<AdminTableCell variant="identity">
+						<ItemIdentity
+							title={ entry.description }
+							fallback={ __(
+								'(no description)',
+								'fair-finance'
+							) }
+							meta={
+								entry.tag
+									? sprintf(
+											/* translators: %s: tag label */
+											__( 'Tag: %s', 'fair-finance' ),
+											entry.tag
+										)
+									: undefined
+							}
+						>
+							{ isChild && (
+								<span className="fair-admin-table__identity-meta">
+									{ entry.parent
+										? sprintf(
+												/* translators: %s: split entry description */
+												__(
+													'Part of split entry “%s”',
+													'fair-finance'
+												),
+												entryLabel( entry.parent )
+											)
+										: __(
+												'Part of a split entry',
+												'fair-finance'
+											) }
+								</span>
+							) }
+							{ !! entry.payment_source && (
+								<PaymentSourceNote entry={ entry } />
+							) }
+							{ entry.participant && (
+								<span className="fair-admin-table__identity-meta">
+									{ entry.participant.admin_url ? (
+										<a href={ entry.participant.admin_url }>
+											{ entry.participant.name }
+										</a>
+									) : (
+										entry.participant.name
+									) }
+								</span>
+							) }
+							{ hasAllocations && (
+								<Button
+									variant="link"
+									className="fair-finance-entries__toggle"
+									aria-expanded={ isExpanded }
+									onClick={ () => toggleExpanded( entry.id ) }
+								>
+									{ isExpanded
+										? sprintf(
+												/* translators: %d: number of allocations */
+												_n(
+													'Hide %d allocation',
+													'Hide %d allocations',
+													allocationCount,
+													'fair-finance'
+												),
+												allocationCount
+											)
+										: sprintf(
+												/* translators: %d: number of allocations */
+												_n(
+													'Show %d allocation',
+													'Show %d allocations',
+													allocationCount,
+													'fair-finance'
+												),
+												allocationCount
+											) }
+								</Button>
+							) }
+						</ItemIdentity>
+					</AdminTableCell>
+					<AdminTableCell label={ columns.date }>
+						<span className="fair-finance-entries__date">
+							{ entry.entry_date }
+						</span>
+					</AdminTableCell>
+					<AdminTableCell label={ columns.type }>
+						{ renderType( entry.entry_type ) }
+					</AdminTableCell>
+					<AdminTableCell label={ columns.amount } variant="amount">
+						<strong>{ formatAmount( entry.amount ) }</strong>
+					</AdminTableCell>
+					<AdminTableCell label={ columns.budget }>
+						{ renderBudget( entry, isTransfer, isSplit ) }
+					</AdminTableCell>
+					{ eventsEnabled && (
+						<AdminTableCell label={ columns.link }>
+							{ renderLink( entry.event_url ) }
+						</AdminTableCell>
+					) }
+					<AdminTableCell label={ columns.matched } variant="status">
+						{ renderMatched( entry ) }
+					</AdminTableCell>
+					<AdminTableCell label={ columns.imported }>
+						{ entry.imported_at ? (
+							<span title={ entry.import_source || undefined }>
+								{ entry.imported_at }
+							</span>
+						) : (
+							noValue
+						) }
+					</AdminTableCell>
+					<AdminTableCell label={ columns.actions } variant="actions">
+						<RowActions { ...getRowActions( entry ) } />
+					</AdminTableCell>
+				</tr>
+				{ hasAllocations &&
+					isExpanded &&
+					entry.children.map( ( child ) =>
+						renderAllocationRow( child, entry, isTransfer )
+					) }
+			</Fragment>
+		);
+	};
+
+	const loadErrorMessage = loadError && (
+		<TableMessage
+			status="error"
+			onRetry={ retryLoad }
+			retryLabel={ __( 'Try again', 'fair-finance' ) }
+		>
+			{ loadError }
+		</TableMessage>
+	);
+
+	let listBody = null;
+	if ( focus.invalid ) {
+		listBody = null;
+	} else if ( entries.length > 0 ) {
+		listBody = (
+			<>
+				{ loadErrorMessage }
+				{ loading && (
+					<TableMessage status="loading">
+						{ __( 'Loading entries…', 'fair-finance' ) }
+					</TableMessage>
+				) }
+				<AdminTable
+					caption={ __( 'Financial entries', 'fair-finance' ) }
+					className="fair-finance-entries-table"
+				>
+					<thead>
+						<tr>
+							{ headerCell(
+								columns.description,
+								'',
+								'identity'
+							) }
+							{ headerCell( columns.date, 'entry_date' ) }
+							{ headerCell( columns.type ) }
+							{ headerCell( columns.amount, 'amount', 'amount' ) }
+							{ headerCell( columns.budget, 'budget_id' ) }
+							{ eventsEnabled &&
+								headerCell( columns.link, 'event_date_id' ) }
+							{ headerCell( columns.matched, '', 'status' ) }
+							{ headerCell( columns.imported, 'imported_at' ) }
+							{ headerCell( columns.actions, '', 'actions' ) }
+						</tr>
+					</thead>
+					<tbody aria-busy={ loading || undefined }>
+						{ entries.map( renderEntryRow ) }
+					</tbody>
+				</AdminTable>
+			</>
+		);
+	} else if ( loading ) {
+		listBody = (
+			<TableMessage status="loading">
+				{ __( 'Loading entries…', 'fair-finance' ) }
+			</TableMessage>
+		);
+	} else if ( loadError ) {
+		listBody = loadErrorMessage;
+	} else if ( hasLoaded && focus.id !== null ) {
+		listBody = (
+			<TableMessage status="empty">
+				{ sprintf(
+					/* translators: %d: financial entry ID. */
+					__(
+						'Entry #%d was not found. It may have been deleted.',
+						'fair-finance'
+					),
+					focus.id
+				) }
+			</TableMessage>
+		);
+	} else if ( hasLoaded && hasActiveFilters ) {
+		listBody = (
+			<TableMessage
+				status="no-results"
+				onClear={ clearFilters }
+				clearLabel={ __( 'Clear filters', 'fair-finance' ) }
+			>
+				{ __(
+					'No entries match the selected filters.',
+					'fair-finance'
+				) }
+			</TableMessage>
+		);
+	} else if ( hasLoaded ) {
+		listBody = (
+			<TableMessage status="empty">
+				{ __(
+					'No entries found. Add your first entry to start tracking costs and income.',
+					'fair-finance'
+				) }
+			</TableMessage>
+		);
+	}
 
 	return (
 		<div className="wrap fair-finance-entries-page">
@@ -935,11 +1511,17 @@ const EntriesApp = () => {
 				{ /* Main Entries Card */ }
 				<Card>
 					<CardHeader>
-						<HStack justify="space-between">
-							<h1>
+						<HStack justify="space-between" wrap>
+							<h1 ref={ headingRef } tabIndex={ -1 }>
 								{ __( 'Financial Entries', 'fair-finance' ) }
 							</h1>
-							<div style={ { display: 'flex', gap: '8px' } }>
+							<div
+								style={ {
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: '8px',
+								} }
+							>
 								<Button
 									variant="primary"
 									onClick={ handleCreate }
@@ -1201,875 +1783,54 @@ const EntriesApp = () => {
 								</Notice>
 							) }
 
-							{ /* Loading */ }
-							{ loading && (
-								<div
-									style={ {
-										textAlign: 'center',
-										padding: '20px',
-									} }
-								>
-									<Spinner />
-									<p>
-										{ __(
-											'Loading entries...',
-											'fair-finance'
-										) }
-									</p>
-								</div>
-							) }
+							{ listBody }
 
-							{ /* Empty State */ }
-							{ ! loading &&
-								! error &&
-								! focus.invalid &&
-								entries.length === 0 && (
-									<div
-										style={ {
-											textAlign: 'center',
-											padding: '20px',
-										} }
-									>
-										<p>
-											{ focus.id !== null
-												? sprintf(
-														/* translators: %d: financial entry ID. */
-														__(
-															'Entry #%d was not found. It may have been deleted.',
-															'fair-finance'
-														),
-														focus.id
-													)
-												: __(
-														'No entries found. Add your first entry to start tracking costs and income.',
-														'fair-finance'
-													) }
-										</p>
-									</div>
-								) }
-
-							{ /* Entries Table */ }
-							{ ! loading && entries.length > 0 && (
-								<>
-									<div style={ { overflowX: 'auto' } }>
-										<table className="wp-list-table widefat striped">
-											<thead>
-												<tr>
-													<SortableHeader column="entry_date">
-														{ __(
-															'Date',
-															'fair-finance'
-														) }
-													</SortableHeader>
-													<th>
-														{ __(
-															'Type',
-															'fair-finance'
-														) }
-													</th>
-													<SortableHeader column="amount">
-														{ __(
-															'Amount',
-															'fair-finance'
-														) }
-													</SortableHeader>
-													<th>
-														{ __(
-															'Description',
-															'fair-finance'
-														) }
-													</th>
-													<SortableHeader column="budget_id">
-														{ __(
-															'Budget',
-															'fair-finance'
-														) }
-													</SortableHeader>
-													{ eventsEnabled && (
-														<SortableHeader column="event_date_id">
-															{ __(
-																'Link',
-																'fair-finance'
-															) }
-														</SortableHeader>
-													) }
-													<th>
-														{ __(
-															'Matched',
-															'fair-finance'
-														) }
-													</th>
-													<SortableHeader column="imported_at">
-														{ __(
-															'Imported',
-															'fair-finance'
-														) }
-													</SortableHeader>
-													<th>
-														{ __(
-															'Actions',
-															'fair-finance'
-														) }
-													</th>
-												</tr>
-											</thead>
-											<tbody>
-												{ entries.map( ( entry ) => {
-													const isTransfer =
-														entry.entry_type ===
-														'transfer';
-													const isSplit =
-														! isTransfer &&
-														entry.children &&
-														entry.children.length >
-															0;
-													const isChild =
-														!! entry.parent_entry_id;
-													// Recorded as event cash or
-													// personally paid: splitting or
-													// matching would change its meaning.
-													const isClassified =
-														!! entry.payment_source;
-													const isExpanded =
-														expandedEntries[
-															entry.id
-														];
-
-													return (
-														<Fragment
-															key={ entry.id }
-														>
-															<tr>
-																<td>
-																	{
-																		entry.entry_date
-																	}
-																</td>
-																<td>
-																	<span
-																		style={ {
-																			color: isTransfer
-																				? '#2271b1'
-																				: entry.entry_type ===
-																					  'cost'
-																					? '#d63638'
-																					: '#007017',
-																			fontWeight:
-																				'bold',
-																		} }
-																	>
-																		{ isTransfer
-																			? __(
-																					'Transfer',
-																					'fair-finance'
-																				)
-																			: entry.entry_type ===
-																				  'cost'
-																				? __(
-																						'Cost',
-																						'fair-finance'
-																					)
-																				: __(
-																						'Income',
-																						'fair-finance'
-																					) }
-																	</span>
-																</td>
-																<td>
-																	<strong>
-																		{ formatAmount(
-																			entry.amount
-																		) }
-																	</strong>
-																	{ isChild && (
-																		<span
-																			style={ {
-																				marginLeft:
-																					'4px',
-																				color: '#2271b1',
-																				fontSize:
-																					'12px',
-																			} }
-																		>
-																			{ __(
-																				'(split)',
-																				'fair-finance'
-																			) }
-																		</span>
-																	) }
-																</td>
-																<td>
-																	{ entry.description || (
-																		<em>
-																			-
-																		</em>
-																	) }
-																	{ isClassified && (
-																		<PaymentSourceNote
-																			entry={
-																				entry
-																			}
-																		/>
-																	) }
-																	{ entry.participant && (
-																		<div
-																			style={ {
-																				fontSize:
-																					'12px',
-																				color: '#757575',
-																				marginTop:
-																					'2px',
-																			} }
-																		>
-																			{ entry
-																				.participant
-																				.admin_url ? (
-																				<a
-																					href={
-																						entry
-																							.participant
-																							.admin_url
-																					}
-																					style={ {
-																						color: '#2271b1',
-																						textDecoration:
-																							'none',
-																					} }
-																				>
-																					{
-																						entry
-																							.participant
-																							.name
-																					}
-																				</a>
-																			) : (
-																				entry
-																					.participant
-																					.name
-																			) }
-																		</div>
-																	) }
-																</td>
-																<td>
-																	{ isTransfer ? (
-																		( () => {
-																			const costChild =
-																				entry.children?.find(
-																					(
-																						c
-																					) =>
-																						c.entry_type ===
-																						'cost'
-																				);
-																			const incomeChild =
-																				entry.children?.find(
-																					(
-																						c
-																					) =>
-																						c.entry_type ===
-																						'income'
-																				);
-																			return (
-																				<span
-																					style={ {
-																						fontSize:
-																							'12px',
-																						lineHeight:
-																							'1.4',
-																					} }
-																				>
-																					{ getBudgetName(
-																						costChild?.budget_id
-																					) }
-																					<br />
-																					→
-																					<br />
-																					{ getBudgetName(
-																						incomeChild?.budget_id
-																					) }
-																				</span>
-																			);
-																		} )()
-																	) : isSplit ? (
-																		<Button
-																			variant="link"
-																			size="small"
-																			onClick={ () =>
-																				toggleExpanded(
-																					entry.id
-																				)
-																			}
-																			style={ {
-																				color: '#2271b1',
-																				fontWeight:
-																					'bold',
-																			} }
-																		>
-																			{ isExpanded
-																				? __(
-																						'Split \u25BE',
-																						'fair-finance'
-																					)
-																				: __(
-																						'Split \u25B8',
-																						'fair-finance'
-																					) }
-																		</Button>
-																	) : (
-																		getBudgetName(
-																			entry.budget_id
-																		)
-																	) }
-																</td>
-
-																{ eventsEnabled && (
-																	<td>
-																		{ entry.event_url ? (
-																			<a
-																				href={
-																					entry.event_url
-																				}
-																				target="_blank"
-																				rel="noopener noreferrer"
-																				title={
-																					entry.event_url
-																				}
-																				style={ {
-																					fontSize:
-																						'13px',
-																				} }
-																			>
-																				{ getEventUrlLabel(
-																					entry.event_url
-																				) }
-																			</a>
-																		) : isTransfer ? (
-																			<Button
-																				variant="link"
-																				size="small"
-																				onClick={ () =>
-																					toggleExpanded(
-																						entry.id
-																					)
-																				}
-																				style={ {
-																					color: '#2271b1',
-																					fontWeight:
-																						'bold',
-																				} }
-																			>
-																				{ isExpanded
-																					? __(
-																							'Transfer \u25BE',
-																							'fair-finance'
-																						)
-																					: __(
-																							'Transfer \u25B8',
-																							'fair-finance'
-																						) }
-																			</Button>
-																		) : isSplit ? (
-																			<Button
-																				variant="link"
-																				size="small"
-																				onClick={ () =>
-																					toggleExpanded(
-																						entry.id
-																					)
-																				}
-																				style={ {
-																					color: '#2271b1',
-																					fontWeight:
-																						'bold',
-																				} }
-																			>
-																				{ isExpanded
-																					? __(
-																							'Split \u25BE',
-																							'fair-finance'
-																						)
-																					: __(
-																							'Split \u25B8',
-																							'fair-finance'
-																						) }
-																			</Button>
-																		) : (
-																			<em>
-																				-
-																			</em>
-																		) }
-																	</td>
-																) }
-																<td>
-																	{ entry.transaction_ids &&
-																	entry
-																		.transaction_ids
-																		.length >
-																		0 ? (
-																		<span
-																			style={ {
-																				color: '#007017',
-																			} }
-																		>
-																			{ entry
-																				.transaction_ids
-																				.length >
-																			1
-																				? /* translators: %d: number of matched transactions */
-																					sprintf(
-																						__(
-																							'Yes (%d)',
-																							'fair-finance'
-																						),
-																						entry
-																							.transaction_ids
-																							.length
-																					)
-																				: __(
-																						'Yes',
-																						'fair-finance'
-																					) }
-																		</span>
-																	) : (
-																		<span
-																			style={ {
-																				color: '#996800',
-																			} }
-																		>
-																			{ __(
-																				'No',
-																				'fair-finance'
-																			) }
-																		</span>
-																	) }
-																</td>
-																<td
-																	title={
-																		entry.import_source ||
-																		''
-																	}
-																>
-																	{ entry.imported_at || (
-																		<em>
-																			-
-																		</em>
-																	) }
-																</td>
-																<td>
-																	{ isChild ? (
-																		<HStack
-																			spacing={
-																				1
-																			}
-																		>
-																			<Button
-																				variant="secondary"
-																				size="small"
-																				onClick={ () =>
-																					handleSplit(
-																						entry.parent
-																					)
-																				}
-																			>
-																				{ __(
-																					'Edit Split',
-																					'fair-finance'
-																				) }
-																			</Button>
-																		</HStack>
-																	) : isTransfer ? (
-																		<HStack
-																			spacing={
-																				1
-																			}
-																		>
-																			<Button
-																				variant="secondary"
-																				size="small"
-																				onClick={ () =>
-																					handleEditTransfer(
-																						entry
-																					)
-																				}
-																			>
-																				{ __(
-																					'Edit',
-																					'fair-finance'
-																				) }
-																			</Button>
-																			<Button
-																				variant="tertiary"
-																				size="small"
-																				isDestructive
-																				onClick={ () =>
-																					deleteEntry.open(
-																						entry
-																					)
-																				}
-																			>
-																				{ __(
-																					'Delete',
-																					'fair-finance'
-																				) }
-																			</Button>
-																		</HStack>
-																	) : (
-																		<HStack
-																			spacing={
-																				1
-																			}
-																		>
-																			<Button
-																				variant="secondary"
-																				size="small"
-																				onClick={ () =>
-																					handleEdit(
-																						entry
-																					)
-																				}
-																				disabled={
-																					isSplit
-																				}
-																			>
-																				{ __(
-																					'Edit',
-																					'fair-finance'
-																				) }
-																			</Button>
-																			{ ! isClassified && (
-																				<>
-																					{ isSplit ? (
-																						<Button
-																							variant="tertiary"
-																							size="small"
-																							onClick={ () =>
-																								handleSplit(
-																									entry
-																								)
-																							}
-																						>
-																							{ __(
-																								'Edit Split',
-																								'fair-finance'
-																							) }
-																						</Button>
-																					) : (
-																						<Button
-																							variant="tertiary"
-																							size="small"
-																							onClick={ () =>
-																								handleSplit(
-																									entry
-																								)
-																							}
-																						>
-																							{ __(
-																								'Split',
-																								'fair-finance'
-																							) }
-																						</Button>
-																					) }
-																					{ entry.transaction_ids &&
-																					entry
-																						.transaction_ids
-																						.length >
-																						0 ? (
-																						<Button
-																							variant="tertiary"
-																							size="small"
-																							onClick={ () =>
-																								handleUnmatch(
-																									entry
-																								)
-																							}
-																						>
-																							{ __(
-																								'Unmatch',
-																								'fair-finance'
-																							) }
-																						</Button>
-																					) : (
-																						<Button
-																							variant="tertiary"
-																							size="small"
-																							onClick={ () =>
-																								handleMatch(
-																									entry
-																								)
-																							}
-																						>
-																							{ __(
-																								'Match',
-																								'fair-finance'
-																							) }
-																						</Button>
-																					) }
-																				</>
-																			) }
-																			<Button
-																				variant="tertiary"
-																				size="small"
-																				isDestructive
-																				onClick={ () =>
-																					deleteEntry.open(
-																						entry
-																					)
-																				}
-																				disabled={
-																					isSplit
-																				}
-																			>
-																				{ __(
-																					'Delete',
-																					'fair-finance'
-																				) }
-																			</Button>
-																		</HStack>
-																	) }
-																</td>
-															</tr>
-															{ isTransfer &&
-																isExpanded &&
-																entry.children &&
-																entry.children.map(
-																	(
-																		child
-																	) => (
-																		<tr
-																			key={ `child-${ child.id }` }
-																			style={ {
-																				backgroundColor:
-																					'#f6f7f7',
-																			} }
-																		>
-																			<td></td>
-																			<td>
-																				<span
-																					style={ {
-																						color:
-																							child.entry_type ===
-																							'cost'
-																								? '#d63638'
-																								: '#007017',
-																						fontSize:
-																							'13px',
-																					} }
-																				>
-																					{ child.entry_type ===
-																					'cost'
-																						? __(
-																								'Cost',
-																								'fair-finance'
-																							)
-																						: __(
-																								'Income',
-																								'fair-finance'
-																							) }
-																				</span>
-																			</td>
-																			<td
-																				style={ {
-																					paddingLeft:
-																						'20px',
-																				} }
-																			>
-																				{ formatAmount(
-																					child.amount
-																				) }
-																			</td>
-																			<td
-																				style={ {
-																					color: '#666',
-																					fontSize:
-																						'13px',
-																				} }
-																			>
-																				{ child.description || (
-																					<em>
-																						-
-																					</em>
-																				) }
-																			</td>
-																			<td>
-																				{ getBudgetName(
-																					child.budget_id
-																				) }
-																			</td>
-
-																			{ eventsEnabled && (
-																				<td>
-																					{ child.event_url ? (
-																						<a
-																							href={
-																								child.event_url
-																							}
-																							target="_blank"
-																							rel="noopener noreferrer"
-																							title={
-																								child.event_url
-																							}
-																							style={ {
-																								fontSize:
-																									'12px',
-																							} }
-																						>
-																							{ getEventUrlLabel(
-																								child.event_url
-																							) }
-																						</a>
-																					) : (
-																						<em>
-																							-
-																						</em>
-																					) }
-																				</td>
-																			) }
-																			<td
-																				colSpan={
-																					3
-																				}
-																			></td>
-																		</tr>
-																	)
-																) }
-															{ isSplit &&
-																isExpanded &&
-																entry.children.map(
-																	(
-																		child
-																	) => (
-																		<tr
-																			key={ `child-${ child.id }` }
-																			style={ {
-																				backgroundColor:
-																					'#f6f7f7',
-																			} }
-																		>
-																			<td></td>
-																			<td></td>
-																			<td
-																				style={ {
-																					paddingLeft:
-																						'20px',
-																				} }
-																			>
-																				{ formatAmount(
-																					child.amount
-																				) }
-																			</td>
-																			<td
-																				style={ {
-																					color: '#666',
-																					fontSize:
-																						'13px',
-																				} }
-																			>
-																				{ child.description || (
-																					<em>
-																						-
-																					</em>
-																				) }
-																			</td>
-																			<td>
-																				{ getBudgetName(
-																					child.budget_id
-																				) }
-																			</td>
-
-																			{ eventsEnabled && (
-																				<td>
-																					{ child.event_url ? (
-																						<a
-																							href={
-																								child.event_url
-																							}
-																							target="_blank"
-																							rel="noopener noreferrer"
-																							title={
-																								child.event_url
-																							}
-																							style={ {
-																								fontSize:
-																									'12px',
-																							} }
-																						>
-																							{ getEventUrlLabel(
-																								child.event_url
-																							) }
-																						</a>
-																					) : (
-																						<em>
-																							-
-																						</em>
-																					) }
-																				</td>
-																			) }
-																			<td
-																				colSpan={
-																					3
-																				}
-																			></td>
-																		</tr>
-																	)
-																) }
-														</Fragment>
-													);
-												} ) }
-											</tbody>
-										</table>
-									</div>
-
-									{ /* Pagination */ }
-									{ pagination.pages > 1 && (
-										<HStack justify="center" spacing={ 2 }>
-											<Button
-												variant="secondary"
-												disabled={
-													pagination.page === 1
-												}
-												onClick={ () =>
-													handlePageChange(
-														pagination.page - 1
-													)
-												}
-											>
-												{ __(
-													'Previous',
-													'fair-finance'
-												) }
-											</Button>
-											<span>
-												{ __(
-													'Page %1$d of %2$d',
-													'fair-finance'
+							{ /* Pagination */ }
+							{ ! focus.invalid &&
+								entries.length > 0 &&
+								pagination.pages > 1 && (
+									<HStack justify="center" spacing={ 2 }>
+										<Button
+											variant="secondary"
+											disabled={ pagination.page === 1 }
+											onClick={ () =>
+												handlePageChange(
+													pagination.page - 1
 												)
-													.replace(
-														'%1$d',
-														pagination.page
-													)
-													.replace(
-														'%2$d',
-														pagination.pages
-													) }
-											</span>
-											<Button
-												variant="secondary"
-												disabled={
-													pagination.page ===
+											}
+										>
+											{ __( 'Previous', 'fair-finance' ) }
+										</Button>
+										<span>
+											{ __(
+												'Page %1$d of %2$d',
+												'fair-finance'
+											)
+												.replace(
+													'%1$d',
+													pagination.page
+												)
+												.replace(
+													'%2$d',
 													pagination.pages
-												}
-												onClick={ () =>
-													handlePageChange(
-														pagination.page + 1
-													)
-												}
-											>
-												{ __( 'Next', 'fair-finance' ) }
-											</Button>
-										</HStack>
-									) }
-								</>
-							) }
+												) }
+										</span>
+										<Button
+											variant="secondary"
+											disabled={
+												pagination.page ===
+												pagination.pages
+											}
+											onClick={ () =>
+												handlePageChange(
+													pagination.page + 1
+												)
+											}
+										>
+											{ __( 'Next', 'fair-finance' ) }
+										</Button>
+									</HStack>
+								) }
 						</VStack>
 					</CardBody>
 				</Card>

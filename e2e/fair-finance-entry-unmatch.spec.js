@@ -77,12 +77,23 @@ test.describe( 'Fair Finance entry unmatching', () => {
 		const row = page.getByRole( 'row', {
 			name: new RegExp( DESCRIPTION ),
 		} );
-		const trigger = row.getByRole( 'button', { name: 'Unmatch' } );
+		const trigger = row.getByRole( 'button', {
+			name: `More actions for “${ DESCRIPTION }”`,
+		} );
+		const unmatchItem = page.getByRole( 'menuitem', { name: 'Unmatch' } );
 		await expect( row ).toContainText( 'Yes (2)' );
 
+		// Open the row menu and choose Unmatch from the keyboard.
+		const chooseUnmatch = async () => {
+			await trigger.focus();
+			await page.keyboard.press( 'Enter' );
+			await expect( unmatchItem ).toBeVisible();
+			await unmatchItem.focus();
+			await page.keyboard.press( 'Enter' );
+		};
+
 		// Cancel with Escape: nothing changes and focus returns to the row.
-		await trigger.focus();
-		await page.keyboard.press( 'Enter' );
+		await chooseUnmatch();
 		const dialog = page.getByRole( 'dialog', {
 			name: `Unmatch entry — ${ DESCRIPTION }`,
 		} );
@@ -96,7 +107,7 @@ test.describe( 'Fair Finance entry unmatching', () => {
 		await expect( row ).toContainText( 'Yes (2)' );
 
 		// Confirm from the keyboard.
-		await page.keyboard.press( 'Enter' );
+		await chooseUnmatch();
 		const confirm = dialog.getByRole( 'button', {
 			name: 'Unmatch',
 			exact: true,
@@ -110,15 +121,16 @@ test.describe( 'Fair Finance entry unmatching', () => {
 				.locator( '.components-notice__content' )
 				.getByText( 'Entry unmatched successfully.' )
 		).toBeVisible();
-		await expect(
-			row.getByRole( 'button', { name: 'Match' } )
-		).toBeFocused();
+		// The row stays, so focus returns to its menu, which now offers Match.
+		await expect( trigger ).toBeFocused();
+		await expect( row ).toContainText( 'No' );
 
 		// The change persists after a reload.
 		await page.reload();
 		await expect( row ).toContainText( 'No' );
+		await trigger.click();
 		await expect(
-			row.getByRole( 'button', { name: 'Match' } )
+			page.getByRole( 'menuitem', { name: 'Match', exact: true } )
 		).toBeVisible();
 	} );
 } );
