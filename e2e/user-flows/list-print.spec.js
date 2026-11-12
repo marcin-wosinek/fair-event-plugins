@@ -157,7 +157,7 @@ test.describe('Print the List of an event date', () => {
 
 		// The mailing filter narrows the screen, not the printout. It follows
 		// the opt-in each registration recorded, as the screen's Yes/No does.
-		await page.getByLabel('Mailing opt-ins only').check();
+		await page.getByLabel('Registration mailing opt-ins only').check();
 		await expect(listRows).toHaveCount(3);
 		await expect(listRows.filter({ hasText: 'Nico Nomail' })).toHaveCount(
 			0
@@ -211,7 +211,7 @@ test.describe('Print the List of an event date', () => {
 		await popup.close();
 
 		// A filter matching nobody still leaves the complete List to print.
-		await page.getByLabel('Mailing opt-ins only').uncheck();
+		await page.getByLabel('Registration mailing opt-ins only').uncheck();
 		await expect(listRows).toHaveCount(4);
 		for (const [name, remaining] of [
 			['Olga Optin', 2],
@@ -227,7 +227,7 @@ test.describe('Print the List of an event date', () => {
 				.click();
 			await expect(listRows).toHaveCount(remaining);
 		}
-		await page.getByLabel('Mailing opt-ins only').check();
+		await page.getByLabel('Registration mailing opt-ins only').check();
 		await expect(listRows).toHaveCount(0);
 		await expect(
 			page.getByRole('button', { name: 'Export' })

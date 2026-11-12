@@ -388,7 +388,7 @@ test.describe( 'Manage Event — List tab', () => {
 			.split( '\r\n' );
 
 		expect( csv[ 0 ] ).toBe(
-			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing,Date'
+			'Ticket holder email,Ticket holder,Purchased by,Purchaser email,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing opt-in at registration,Date'
 		);
 		const groupLines = csv.filter( ( line ) =>
 			line.startsWith( `${ group.email },` )
@@ -415,7 +415,9 @@ test.describe( 'Manage Event — List tab', () => {
 		// The footer button, not the header's close icon.
 		await dialog.getByText( 'Close', { exact: true } ).click();
 		await adminPage
-			.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 			.check();
 		await expect(
 			adminPage.getByText(
@@ -448,7 +450,9 @@ test.describe( 'Manage Event — List tab', () => {
 			// The summary counts every confirmed ticket, even those the
 			// mailing filter hides.
 			await list
-				.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+				.getByRole( 'checkbox', {
+					name: 'Registration mailing opt-ins only',
+				} )
 				.check();
 			await expect(
 				list.getByText(
@@ -706,7 +710,9 @@ test.describe( 'Manage Event — List tab alphabetical order (#2217)', () => {
 		expect( await listedNames() ).toEqual( alphabetical );
 
 		await adminPage
-			.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 			.check();
 		await expect(
 			adminPage.locator( '.fair-events-signups tbody tr' )

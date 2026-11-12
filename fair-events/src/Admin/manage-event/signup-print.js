@@ -138,9 +138,15 @@ function sectionTable( columns, rows ) {
 								cell.warning
 							) }</span>`
 						: '';
-					const note = cell.note
-						? `<div class="note">${ escapeHtml( cell.note ) }</div>`
-						: '';
+					const note = []
+						.concat( cell.note || [] )
+						.map(
+							( text ) =>
+								`<div class="note">${ escapeHtml(
+									text
+								) }</div>`
+						)
+						.join( '' );
 					return `<td class="${ columnClass(
 						column
 					) }">${ escapeHtml(
@@ -163,7 +169,7 @@ function sectionTable( columns, rows ) {
  * @param {string}  args.title      Event name.
  * @param {string}  args.dateLabel  Event date, already formatted.
  * @param {Array}   args.columns    Column descriptors: `{ key, label, isExtra }`.
- * @param {Array}   args.rows       Rows: `{ cells: { [key]: { text, warning, note } }, isGroupStart }`.
+ * @param {Array}   args.rows       Rows: `{ cells: { [key]: { text, warning, note } }, isGroupStart }`; `note` is a string or a list of strings.
  * @param {Array}   args.legend     Extra-state legend entries: `{ symbol, label }`.
  * @param {string}  args.warning    Notice printed above the table, if any.
  * @param {string}  args.lang       Language of the document.

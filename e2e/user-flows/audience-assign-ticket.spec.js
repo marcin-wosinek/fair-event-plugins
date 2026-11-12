@@ -8,10 +8,16 @@
  * the first, and the ticket details list the change. Giving it back to the
  * purchaser, found by search, returns it, leaves the other person listed
  * without a ticket, and keeps both changes in the history.
+ *
+ * The List follows the holder (#2133 follow-up): after a change on the
+ * Audience tab, the List, after a reload, its printout and its CSV export
+ * name the new holder of the given ticket, with its purchaser beside, while
+ * the purchaser's other ticket stays theirs.
  */
 
 import { test, expect } from '../support/fixtures.js';
 import { loginAsAdmin } from '../support/wp-cli.js';
+import { readFile } from 'node:fs/promises';
 
 const escapeRegExp = (text) => text.replace(/[.+]/g, '\\$&');
 
@@ -198,5 +204,100 @@ test.describe('Change a ticket holder from the Audience tab', () => {
 		await expect(
 			details.locator('.fair-events-ticket-edit__transfers li')
 		).toHaveText([/to Gil Guest/, /from Gil Guest .* to Paula Purchaser/]);
+	});
+
+	test('the List, its printout and its export name the new holder', async ({
+		page,
+		request,
+		seedEvent,
+	}) => {
+		const event = seedEvent('free', { block: 'get-tickets' });
+		const stamp = Date.now();
+		const buyerEmail = `list-buyer-${stamp}@example.test`;
+		const guestEmail = `list-guest-${stamp}@example.test`;
+
+		const purchase = await request.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: event.eventDateId,
+					ticket_type_id: event.ticketTypeId,
+					name: 'Lena Purchaser',
+					email: buyerEmail,
+					quantity: 2,
+					_honeypot: '',
+				},
+			}
+		);
+		expect(purchase.ok(), await purchase.text()).toBeTruthy();
+
+		await loginAsAdmin(page);
+		const manageEvent = `/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${event.eventDateId}`;
+		await page.goto(manageEvent);
+		await page.getByRole('tab', { name: 'Audience' }).click();
+		await page
+			.getByRole('button', { name: /^Change holder of Ticket 2/ })
+			.click();
+		const dialog = page.getByRole('dialog', {
+			name: /^Change ticket holder — Ticket 2/,
+		});
+		await dialog.getByRole('radio', { name: 'A new participant' }).check();
+		await dialog.getByLabel('Name', { exact: true }).fill('Theo');
+		await dialog.getByLabel('Surname').fill('Holder');
+		await dialog.getByLabel('Email', { exact: true }).fill(guestEmail);
+		await dialog.getByRole('button', { name: 'Review change' }).click();
+		await dialog
+			.getByRole('button', { name: 'Change ticket holder' })
+			.click();
+		await expect(
+			page.getByText('Ticket holder changed to Theo Holder.')
+		).toBeVisible();
+
+		await page.goto(`${manageEvent}&tab=list`);
+		const listRows = page.locator('tr.fair-events-signups__ticket');
+		const names = (rows) =>
+			rows.evaluateAll((trs) =>
+				trs.map((tr) => tr.cells[1].innerText.trim().split('\n'))
+			);
+		const expected = [
+			['Lena Purchaser'],
+			['Theo Holder', 'Purchased by Lena Purchaser'],
+		];
+		await expect(listRows).toHaveCount(2);
+		expect(await names(listRows)).toEqual(expected);
+
+		await page.reload();
+		await expect(listRows).toHaveCount(2);
+		expect(await names(listRows)).toEqual(expected);
+
+		const [popup] = await Promise.all([
+			page.waitForEvent('popup'),
+			page.getByRole('button', { name: 'Print list' }).click(),
+		]);
+		await expect(popup.locator('tbody tr')).toHaveCount(2);
+		expect(await names(popup.locator('tbody tr'))).toEqual(expected);
+		await popup.close();
+
+		await page.getByRole('button', { name: 'Export' }).click();
+		const exportDialog = page.getByRole('dialog', { name: 'Export' });
+		await exportDialog.getByRole('radio', { name: 'CSV' }).check();
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			exportDialog.getByRole('button', { name: 'Download CSV' }).click(),
+		]);
+		const csv = (await readFile(await download.path(), 'utf8'))
+			.replace(/^\uFEFF/, '')
+			.split('\r\n')
+			.map((line) => line.split(',').slice(0, 4));
+		expect(csv).toEqual([
+			[
+				'Ticket holder email',
+				'Ticket holder',
+				'Purchased by',
+				'Purchaser email',
+			],
+			[buyerEmail, 'Lena Purchaser', 'Lena Purchaser', buyerEmail],
+			[guestEmail, 'Theo Holder', 'Lena Purchaser', buyerEmail],
+		]);
 	});
 });

@@ -298,7 +298,9 @@ describe( 'EventSignups — list and Export button (#1568)', () => {
 		await renderSignups();
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect( screen.getByText( 'Ada Lovelace' ) ).toBeInTheDocument();
@@ -334,7 +336,9 @@ describe( 'EventSignups — list and Export button (#1568)', () => {
 		await renderSignups( { rows: [ signups[ 1 ] ] } );
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect(
@@ -402,7 +406,9 @@ describe( 'EventSignups — confirmed registrations only (#1683)', () => {
 		] );
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect(
@@ -444,7 +450,7 @@ describe( 'EventSignups — confirmed registrations only (#1683)', () => {
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		const lines = writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' );
-		expect( lines[ 0 ] ).toContain( 'Email' );
+		expect( lines[ 0 ] ).toContain( 'Ticket holder email' );
 		expect( lines[ 0 ] ).toContain(
 			'Purchase total (once per registration)'
 		);
@@ -775,7 +781,9 @@ describe( 'EventSignups — mailing consent normalization (#1492)', () => {
 		await renderSignups( { rows } );
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		consentCases.forEach( ( consent, index ) => {
@@ -1803,7 +1811,9 @@ describe( 'EventSignups — tickets listed under their own date (#1791)', () => 
 		await renderSignups( { rows: [ stayed, movedIn ] } );
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect(
@@ -1975,7 +1985,9 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		await renderForPrint();
 		await screen.findByText( 'Ada Lovelace' );
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 		expect( bodyRows() ).toHaveLength( 1 );
 
@@ -1994,7 +2006,9 @@ describe( 'EventSignups — Print list (#1842)', () => {
 		await renderForPrint( { rows: [ signups[ 1 ] ] } );
 		await screen.findAllByText( 'Bob, Jr.' );
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect(
@@ -2709,7 +2723,9 @@ describe( 'EventSignups — Summary (#1839)', () => {
 			ticketTypes,
 		} );
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 		await waitFor( () => expect( summaryButton() ).toBeEnabled() );
 
@@ -2997,7 +3013,9 @@ describe( 'EventSignups — alphabetical order (#2217)', () => {
 		await renderSignups( { rows: shuffled } );
 
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		expect( references() ).toEqual(
@@ -3037,7 +3055,9 @@ describe( 'EventSignups — alphabetical order (#2217)', () => {
 		render( <EventSignups eventDateId={ 42 } eventTitle="Ball" /> );
 		await screen.findByText( 'Bob' );
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 
 		const written = [];
@@ -3181,7 +3201,9 @@ describe( 'EventSignups — Print gate sheet (#2212)', () => {
 		await renderGate();
 		await screen.findByText( 'Ada Lovelace' );
 		fireEvent.click(
-			screen.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			screen.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 		);
 		const preview = captureWindow();
 
@@ -3302,5 +3324,147 @@ describe( 'EventSignups — Print gate sheet (#2212)', () => {
 		const preview = captureWindow();
 		fireEvent.click( gateButton() );
 		expect( preview.doc().body.textContent ).toContain( '25.00 PLN' );
+	} );
+} );
+
+describe( 'EventSignups — transferred tickets (#2133)', () => {
+	const purchaser = {
+		participant_id: 11,
+		name: 'Ada Lovelace',
+		email: 'ada@example.com',
+		available: true,
+		newsletter_consent: 'granted',
+	};
+	const holder = {
+		participant_id: 31,
+		name: 'Sayil Johansson',
+		email: 'sayil@example.com',
+		available: true,
+		newsletter_consent: 'unspecified',
+	};
+	const transferred = {
+		...signups[ 1 ],
+		name: 'Ada Lovelace',
+		email: 'ada@example.com',
+		mailing_opt_in: true,
+		newsletter_consent: 'granted',
+		tickets: [
+			ticket( 201, 1, {
+				purchaser,
+				holder: purchaser,
+				holder_is_purchaser: true,
+			} ),
+			ticket( 202, 2, {
+				purchaser,
+				holder,
+				holder_is_purchaser: false,
+			} ),
+		],
+	};
+
+	function print() {
+		const written = [];
+		jest.spyOn( window, 'open' ).mockReturnValue( {
+			document: {
+				open: jest.fn(),
+				write: ( html ) => written.push( html ),
+				close: jest.fn(),
+			},
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Print list' } ) );
+		const doc = new window.DOMParser().parseFromString(
+			written.join( '' ),
+			'text/html'
+		);
+		return Array.from( doc.querySelectorAll( 'tbody tr' ) ).map( ( row ) =>
+			Array.from( row.querySelectorAll( 'td' ) ).map(
+				( cell ) => cell.textContent
+			)
+		);
+	}
+
+	afterEach( () => {
+		jest.restoreAllMocks();
+	} );
+
+	it( 'names the holder of a transferred ticket first, with its purchaser beneath, and leaves its sibling with the purchaser', async () => {
+		await renderSignups( { rows: [ transferred ] } );
+
+		const [ sibling, given ] = bodyRows();
+		expect(
+			within( sibling ).getAllByRole( 'cell' )[ 1 ]
+		).toHaveTextContent( /^Ada Lovelace$/ );
+		expect(
+			within( sibling ).queryByText( /Purchased by/ )
+		).not.toBeInTheDocument();
+		const givenName = within( given ).getAllByRole( 'cell' )[ 1 ];
+		expect( givenName ).toHaveTextContent( 'Sayil Johansson' );
+		expect(
+			within( givenName ).getByText( 'Purchased by Ada Lovelace' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps purchase-wide actions on the purchase', async () => {
+		await renderSignups( { rows: [ transferred ] } );
+
+		const [ sibling, given ] = bodyRows();
+		expect(
+			within( sibling ).getByRole( 'button', { name: /Delete/ } )
+		).toBeInTheDocument();
+		expect(
+			within( given ).queryByRole( 'button', { name: /Delete/ } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'prints the holder with the purchaser note, and the holder’s own current consent', async () => {
+		await renderSignups( { rows: [ transferred ] } );
+
+		const rows = print();
+
+		expect( rows[ 0 ][ 1 ] ).toBe( 'Ada Lovelace' );
+		expect( rows[ 1 ][ 1 ] ).toBe(
+			'Sayil JohanssonPurchased by Ada Lovelace'
+		);
+		// The registration opt-in and consent are the purchaser's.
+		expect( rows[ 0 ][ rows[ 0 ].length - 1 ] ).toBe( '✓' );
+		expect( rows[ 1 ][ rows[ 1 ].length - 1 ] ).toBe( '' );
+	} );
+
+	it( 'says when a transferred ticket’s holder can no longer be read', async () => {
+		await renderSignups( {
+			rows: [
+				{
+					...transferred,
+					tickets: [
+						transferred.tickets[ 0 ],
+						ticket( 202, 2, {
+							purchaser,
+							holder: {
+								participant_id: 31,
+								name: null,
+								email: null,
+								available: false,
+								newsletter_consent: null,
+							},
+							holder_is_purchaser: false,
+						} ),
+					],
+				},
+			],
+		} );
+
+		const given = bodyRows()[ 1 ];
+		expect( given ).toHaveTextContent( 'Ticket holder unavailable' );
+		expect( given ).toHaveTextContent( 'Purchased by Ada Lovelace' );
+	} );
+
+	it( 'falls back to the purchaser’s profile name when the purchase lost its name', async () => {
+		mockApi( { rows: [ { ...transferred, name: '' } ] } );
+		render( <EventSignups eventDateId={ 42 } /> );
+
+		await screen.findByText( 'Sayil Johansson' );
+		const [ sibling, given ] = bodyRows();
+		expect( sibling ).toHaveTextContent( 'Ada Lovelace' );
+		expect( given ).toHaveTextContent( 'Purchased by Ada Lovelace' );
 	} );
 } );

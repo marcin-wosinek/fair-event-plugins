@@ -186,11 +186,11 @@ describe( 'SignupExportModal — ticket rows (#1708)', () => {
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
-			'Email,Name,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing,Date',
-			'ada@example.com,Ada Lovelace,Ticket 1 (REF00101),General,Dinner buffet,20.00,1,confirmed,501,yes,2026-07-20 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 1 (REF00201),General,Dinner buffet,60.00,2,confirmed,502,no,2026-07-21 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 2 (REF00202),Reduced,"Dinner buffet, Afterparty",,2,confirmed,502,no,2026-07-21 10:00:00',
-			'bob@example.com,Bob Smith,Ticket 3 (REF00203),General,,,2,confirmed,502,no,2026-07-21 10:00:00',
+			'Ticket holder email,Ticket holder,Purchased by,Purchaser email,Ticket,Ticket Type,Extras,Purchase total (once per registration),Purchase reference,Status,Transaction,Mailing opt-in at registration,Date',
+			'ada@example.com,Ada Lovelace,Ada Lovelace,ada@example.com,Ticket 1 (REF00101),General,Dinner buffet,20.00,1,confirmed,501,yes,2026-07-20 10:00:00',
+			'bob@example.com,Bob Smith,Bob Smith,bob@example.com,Ticket 1 (REF00201),General,Dinner buffet,60.00,2,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Bob Smith,bob@example.com,Ticket 2 (REF00202),Reduced,"Dinner buffet, Afterparty",,2,confirmed,502,no,2026-07-21 10:00:00',
+			'bob@example.com,Bob Smith,Bob Smith,bob@example.com,Ticket 3 (REF00203),General,,,2,confirmed,502,no,2026-07-21 10:00:00',
 		] );
 	} );
 
@@ -204,7 +204,7 @@ describe( 'SignupExportModal — ticket rows (#1708)', () => {
 		fireEvent.click(
 			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
 		);
-		uncheckAllExcept( [ 'Email', 'Ticket' ] );
+		uncheckAllExcept( [ 'Ticket holder email', 'Ticket' ] );
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
@@ -212,7 +212,7 @@ describe( 'SignupExportModal — ticket rows (#1708)', () => {
 
 		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
 		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
-			'Email,Ticket',
+			'Ticket holder email,Ticket',
 			'ada@example.com,Ticket 1 (REF00101)',
 			'bob@example.com,Ticket 1 (REF00201)',
 			'bob@example.com,Ticket 2 (REF00202)',
@@ -242,7 +242,7 @@ describe( 'SignupExportModal — ticket rows (#1708)', () => {
 		fireEvent.click(
 			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
 		);
-		uncheckAllExcept( [ 'Name', 'Ticket' ] );
+		uncheckAllExcept( [ 'Ticket holder', 'Ticket' ] );
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
 		);
@@ -563,5 +563,84 @@ describe( 'SignupExportModal — purchases split over dates (#1791)', () => {
 				/Each purchase total appears once.*not the revenue from its attendance/
 			)
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'SignupExportModal — transferred tickets (#2133)', () => {
+	const purchaser = {
+		participant_id: 21,
+		name: 'Bob Smith',
+		email: 'bob@example.com',
+		available: true,
+	};
+	const transferredRows = expandTicketRows( [
+		{
+			...signups[ 1 ],
+			tickets: [
+				ticket( 201, 1, {
+					purchaser,
+					holder: purchaser,
+					holder_is_purchaser: true,
+				} ),
+				ticket( 202, 2, {
+					purchaser,
+					holder: {
+						participant_id: 31,
+						name: 'Sayil Johansson',
+						email: 'sayil@example.com',
+						available: true,
+					},
+					holder_is_purchaser: false,
+				} ),
+			],
+		},
+	] );
+
+	it( 'identifies the holder in the ticket columns and the purchaser separately', async () => {
+		apiFetch.mockResolvedValue( [] );
+		const writeText = mockClipboard();
+		renderModal( transferredRows );
+
+		await screen.findByRole( 'radio', { name: 'Markdown' } );
+		fireEvent.click( screen.getByRole( 'radio', { name: 'CSV' } ) );
+		fireEvent.click(
+			screen.getByRole( 'radio', { name: 'Handpicked columns' } )
+		);
+		uncheckAllExcept( [
+			'Ticket holder email',
+			'Ticket holder',
+			'Purchased by',
+			'Purchaser email',
+			'Ticket',
+		] );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		expect( writeText.mock.calls[ 0 ][ 0 ].split( '\r\n' ) ).toEqual( [
+			'Ticket holder email,Ticket holder,Purchased by,Purchaser email,Ticket',
+			'bob@example.com,Bob Smith,Bob Smith,bob@example.com,Ticket 1 (REF00201)',
+			'sayil@example.com,Sayil Johansson,Bob Smith,bob@example.com,Ticket 2 (REF00202)',
+		] );
+	} );
+
+	it( 'heads a transferred ticket’s Markdown section with its holder', async () => {
+		apiFetch.mockResolvedValue( [] );
+		const writeText = mockClipboard();
+		renderModal( transferredRows );
+
+		await screen.findByRole( 'radio', { name: 'Markdown' } );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Copy to clipboard' } )
+		);
+
+		await waitFor( () => expect( writeText ).toHaveBeenCalled() );
+		const markdown = writeText.mock.calls[ 0 ][ 0 ];
+		expect( markdown ).toContain( '## Bob Smith — Ticket 1 (REF00201)' );
+		expect( markdown ).toContain(
+			'## Sayil Johansson — Ticket 2 (REF00202)'
+		);
+		expect( markdown ).toContain( '**Purchased by:** Bob Smith' );
 	} );
 } );

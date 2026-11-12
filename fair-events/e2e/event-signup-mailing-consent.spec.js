@@ -155,7 +155,9 @@ test( 'mailing consent survives signup, display, and filtering', async ( {
 		await expect( checkedRow ).toContainText( 'Yes' );
 
 		await page
-			.getByRole( 'checkbox', { name: 'Mailing opt-ins only' } )
+			.getByRole( 'checkbox', {
+				name: 'Registration mailing opt-ins only',
+			} )
 			.check();
 		await expect( uncheckedRow ).toHaveCount( 0 );
 		await expect( checkedRow ).toBeVisible();
