@@ -34,7 +34,10 @@ import 'fair-events-shared/src/admin-table/style.css';
 ```
 
 Import the module directly, not the package root, and import `style.css`
-from the page's own entry point. Every rule is scoped to `.fair-admin-table`,
+from the page's own entry point. When two entries of one plugin import it,
+wp-scripts puts it in the first entry's `style-index.css` only; give the
+other entry its own copy with a query, e.g.
+`import 'fair-events-shared/src/admin-table/style.css?event-notifications';`. Every rule is scoped to `.fair-admin-table`,
 so the stylesheet changes no table that doesn't use the wrapper.
 
 Components read no plugin globals and call no `__()`. Pass every string
@@ -48,7 +51,7 @@ already translated in the consuming plugin's text domain, as the
 | `AdminTable`           | `caption` (accessible table name, visually hidden), `className`, `children` (`thead`, `tbody`) |
 | `AdminTableHeaderCell` | `variant`, `children` — renders `<th scope="col">`                                          |
 | `AdminTableCell`       | `label` (column header text, shown on mobile), `variant`, `children`                         |
-| `ItemIdentity`         | `title`, `fallback`, `href`, `meta`, `children`                                             |
+| `ItemIdentity`         | `title`, `fallback`, `href`, `onClick`, `meta`, `children`                                  |
 | `StatusLabel`          | `tone` (`success`, `warning`, `error`, `info`, `neutral`), `children`                       |
 | `RowActions`           | `primary`, `secondary`, `moreLabel`                                                         |
 | `TableMessage`         | `status` (`loading`, `empty`, `no-results`, `error`), `children`, `onRetry`/`retryLabel`, `onClear`/`clearLabel` |
@@ -91,6 +94,11 @@ meets 4.5:1 contrast on white.
   ("Edit", "Retry"). Give `href` for navigation or `onClick` for an
   in-page action, and `accessibleLabel` to name it after the item
   ("Edit “Spring feed”").
+- A link action (`href`, primary or in the menu) can also take
+  `onLinkClick`, which receives the click event. A page that changes its
+  view in place passes its own handler here and calls `preventDefault()` on
+  a plain click, leaving modified clicks (new tab or window) to the browser.
+  `ItemIdentity`'s `onClick` does the same for the identity link.
 - `secondary` lists the other actions in an always-visible "⋮" menu.
   Destructive ones go last with `isDestructive`. With no secondary actions
   the menu is omitted entirely — never render an empty menu.

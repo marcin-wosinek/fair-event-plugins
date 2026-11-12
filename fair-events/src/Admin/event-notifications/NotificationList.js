@@ -6,20 +6,22 @@ import { useEffect, useRef } from '@wordpress/element';
 import { Notice, SelectControl, TextControl } from '@wordpress/components';
 
 /**
+ * Shared dependencies
+ */
+import {
+	AdminTable,
+	AdminTableHeaderCell,
+	TableMessage,
+} from 'fair-events-shared/src/admin-table/index.js';
+
+/**
  * Internal dependencies
  */
-import DeleteAction from './DeleteAction.js';
-import DuplicateAction from './DuplicateAction.js';
+import NotificationRow from './NotificationRow.js';
 import Pagination from './Pagination.js';
 import { tokenStatus } from './TelegramChannel.js';
-import {
-	ORIGIN_LABELS,
-	OUTCOME_STATES,
-	formatTime,
-	outcomeLabel,
-} from './historyFormat.js';
 import { linkTo } from './navigation.js';
-import { StatusText, TYPE_LABELS } from './shared.js';
+import { TYPE_LABELS } from './shared.js';
 
 const PER_PAGE = 20;
 
@@ -176,12 +178,12 @@ function emptyMessage( { total, inFeed, feedName, search } ) {
 
 /**
  * Every notification in a searchable list of pages, which can be narrowed
- * to one event feed. Each row links to its editor and its own history, and
+ * to one event feed. Each row (see NotificationRow) links to its editor and
  * shows whether it is on, where it sends, its next send and its latest send
- * or test. Each row can also be duplicated into a paused copy, or deleted
- * after a confirmation. Once one is deleted, focus moves to the search, the
- * list's first control, and the result is reported above the list. On
- * narrow screens each row stacks into labeled lines.
+ * or test, with Edit and a menu of History, Duplicate and Delete. Once one
+ * is deleted, focus moves to the search, the list's first control, and the
+ * result is reported above the list. On narrow screens each row stacks into
+ * labeled lines.
  *
  * Membership follows saved settings: a draft that changes a notification's
  * feed moves it only once it is saved.
@@ -235,15 +237,6 @@ export default function NotificationList( {
 	const totalPages = Math.max( 1, Math.ceil( matching.length / PER_PAGE ) );
 	const page = Math.min( location.listPage, totalPages );
 	const shown = matching.slice( ( page - 1 ) * PER_PAGE, page * PER_PAGE );
-	const open = ( configuration, tab, extra = {} ) =>
-		linkTo( navigate, {
-			view: 'configuration',
-			configuration: configuration.id,
-			tab,
-			filters: {},
-			...extra,
-		} );
-
 	return (
 		<div className="fair-events-notifications__list">
 			{ deleted && (
@@ -309,7 +302,22 @@ export default function NotificationList( {
 			) }
 
 			{ ! unavailable && 0 === matching.length && (
-				<p>
+				<TableMessage
+					status={
+						0 === configurations.length ? 'empty' : 'no-results'
+					}
+					onClear={
+						location.search
+							? () =>
+									navigate( {
+										...location,
+										search: '',
+										listPage: 1,
+									} )
+							: undefined
+					}
+					clearLabel={ __( 'Clear search', 'fair-events' ) }
+				>
 					{ emptyMessage( {
 						total: configurations.length,
 						inFeed: inFeed.length,
@@ -318,223 +326,51 @@ export default function NotificationList( {
 							: '',
 						search: location.search,
 					} ) }
-				</p>
+				</TableMessage>
 			) }
 
 			{ 0 < matching.length && (
-				<table className="widefat striped fair-events-notifications__table">
+				<AdminTable
+					caption={ __( 'Notifications', 'fair-events' ) }
+					className="fair-events-notifications__list-table"
+				>
 					<thead>
 						<tr>
-							<th scope="col">
+							<AdminTableHeaderCell variant="identity">
 								{ __( 'Notification', 'fair-events' ) }
-							</th>
-							<th scope="col">
+							</AdminTableHeaderCell>
+							<AdminTableHeaderCell>
 								{ __( 'Sends to', 'fair-events' ) }
-							</th>
-							<th scope="col">
+							</AdminTableHeaderCell>
+							<AdminTableHeaderCell variant="status">
 								{ __( 'Status', 'fair-events' ) }
-							</th>
-							<th scope="col">
+							</AdminTableHeaderCell>
+							<AdminTableHeaderCell>
 								{ __( 'Next send', 'fair-events' ) }
-							</th>
-							<th scope="col">
+							</AdminTableHeaderCell>
+							<AdminTableHeaderCell>
 								{ __( 'Latest send or test', 'fair-events' ) }
-							</th>
+							</AdminTableHeaderCell>
+							<AdminTableHeaderCell variant="actions">
+								{ __( 'Actions', 'fair-events' ) }
+							</AdminTableHeaderCell>
 						</tr>
 					</thead>
 					<tbody>
-						{ shown.map( ( configuration ) => {
-							const problem = integrationProblem( configuration );
-							const latest = configuration.latest_execution;
-							const problemId = `fair-events-notification-problem-${ configuration.id }`;
-							return (
-								<tr key={ configuration.id }>
-									<td
-										data-label={ __(
-											'Notification',
-											'fair-events'
-										) }
-										className="fair-events-notifications__primary"
-									>
-										<strong>
-											<a
-												{ ...open(
-													configuration,
-													'editor'
-												) }
-											>
-												{ configuration.name ||
-													TYPE_LABELS[
-														configuration.type
-													] }
-											</a>
-										</strong>{ ' ' }
-										{ configuration.name && (
-											<span className="fair-events-notifications__kind">
-												{
-													TYPE_LABELS[
-														configuration.type
-													]
-												}
-											</span>
-										) }
-										{ dirty.includes(
-											configuration.id
-										) && (
-											<span className="fair-events-notifications__unsaved">
-												{ __(
-													'Unsaved changes',
-													'fair-events'
-												) }
-											</span>
-										) }
-										<div className="fair-events-notifications__row-actions">
-											<a
-												{ ...open(
-													configuration,
-													'editor'
-												) }
-											>
-												{ __( 'Edit', 'fair-events' ) }
-											</a>
-											<a
-												{ ...open(
-													configuration,
-													'history'
-												) }
-											>
-												{ __(
-													'History',
-													'fair-events'
-												) }
-											</a>
-											<DuplicateAction
-												configuration={ configuration }
-												reasonId={
-													problem ? problemId : null
-												}
-												onDuplicated={ onDuplicated }
-											/>
-											<DeleteAction
-												configuration={ configuration }
-												audience={ audienceSummary(
-													configuration
-												) }
-												isDirty={ dirty.includes(
-													configuration.id
-												) }
-												onDeleted={ onDeleted }
-											/>
-										</div>
-									</td>
-									<td
-										data-label={ __(
-											'Sends to',
-											'fair-events'
-										) }
-									>
-										{ audienceSummary( configuration ) }
-									</td>
-									<td
-										data-label={ __(
-											'Status',
-											'fair-events'
-										) }
-									>
-										{ configuration.enabled ? (
-											<StatusText
-												state="sent"
-												label={ __(
-													'On',
-													'fair-events'
-												) }
-											/>
-										) : (
-											<StatusText
-												label={ __(
-													'Paused',
-													'fair-events'
-												) }
-											/>
-										) }
-										{ problem && (
-											<span
-												id={ problemId }
-												className="fair-events-notifications__problem"
-											>
-												{ problem }
-											</span>
-										) }
-									</td>
-									<td
-										data-label={ __(
-											'Next send',
-											'fair-events'
-										) }
-									>
-										{ configuration.next_run
-											? configuration.next_run.time_local
-											: __(
-													'Not scheduled',
-													'fair-events'
-												) }
-									</td>
-									<td
-										data-label={ __(
-											'Latest send or test',
-											'fair-events'
-										) }
-									>
-										{ latest ? (
-											<a
-												{ ...open(
-													configuration,
-													'history',
-													{
-														execution: latest.id,
-													}
-												) }
-											>
-												{ sprintf(
-													/* translators: 1: "Scheduled" or "Test", 2: date and time it started */
-													__(
-														'%1$s, %2$s',
-														'fair-events'
-													),
-													ORIGIN_LABELS[
-														latest.origin
-													] || latest.origin,
-													formatTime(
-														latest.started_at
-													)
-												) }
-											</a>
-										) : (
-											__(
-												'Nothing sent yet',
-												'fair-events'
-											)
-										) }
-										{ latest && (
-											<span className="fair-events-notifications__reason">
-												<StatusText
-													state={
-														OUTCOME_STATES[
-															latest.outcome
-														]
-													}
-													label={ outcomeLabel(
-														latest
-													) }
-												/>
-											</span>
-										) }
-									</td>
-								</tr>
-							);
-						} ) }
+						{ shown.map( ( configuration ) => (
+							<NotificationRow
+								key={ configuration.id }
+								configuration={ configuration }
+								audience={ audienceSummary( configuration ) }
+								problem={ integrationProblem( configuration ) }
+								isDirty={ dirty.includes( configuration.id ) }
+								navigate={ navigate }
+								onDuplicated={ onDuplicated }
+								onDeleted={ onDeleted }
+							/>
+						) ) }
 					</tbody>
-				</table>
+				</AdminTable>
 			) }
 
 			<Pagination

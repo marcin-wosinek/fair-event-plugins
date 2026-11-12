@@ -200,3 +200,79 @@ it( 'lets a consumer return focus to the trigger after its own dialog', async ()
 	act( () => handoff() );
 	expect( toggle ).toHaveFocus();
 } );
+
+describe( 'link click handlers', () => {
+	function inPlace( onNavigate ) {
+		return ( event ) => {
+			if ( event.metaKey || event.ctrlKey || event.shiftKey ) {
+				return;
+			}
+			event.preventDefault();
+			onNavigate();
+		};
+	}
+
+	it( 'passes a primary link’s click to its handler and keeps the href', () => {
+		const onNavigate = jest.fn();
+		renderActions( {
+			primary: {
+				label: 'Edit',
+				href: '/edit?id=3',
+				onLinkClick: inPlace( onNavigate ),
+			},
+		} );
+		const link = screen.getByRole( 'link', { name: 'Edit' } );
+		expect( link ).toHaveAttribute( 'href', '/edit?id=3' );
+
+		// A modified click is left to the browser.
+		expect( fireEvent.click( link, { metaKey: true } ) ).toBe( true );
+		expect( onNavigate ).not.toHaveBeenCalled();
+
+		expect( fireEvent.click( link ) ).toBe( false );
+		expect( onNavigate ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'passes a menu link’s click to its handler and closes the menu', async () => {
+		const onNavigate = jest.fn();
+		renderActions( {
+			secondary: [
+				{
+					label: 'History',
+					href: '/history?id=3',
+					onLinkClick: inPlace( onNavigate ),
+				},
+			],
+		} );
+
+		const { toggle } = await openMenu();
+		const item = screen.getByRole( 'menuitem', { name: 'History' } );
+		expect( item ).toHaveAttribute( 'href', '/history?id=3' );
+		expect( fireEvent.click( item, { ctrlKey: true } ) ).toBe( true );
+		expect( onNavigate ).not.toHaveBeenCalled();
+		await waitForMenuToClose();
+		expect( toggle ).toHaveFocus();
+
+		await openMenu();
+		expect(
+			fireEvent.click(
+				screen.getByRole( 'menuitem', { name: 'History' } )
+			)
+		).toBe( false );
+		expect( onNavigate ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'ignores the handler of a disabled primary link', () => {
+		const onLinkClick = jest.fn();
+		renderActions( {
+			primary: {
+				label: 'Edit',
+				href: '/edit?id=3',
+				onLinkClick,
+				disabled: true,
+				disabledReason: 'Locked.',
+			},
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Edit' } ) );
+		expect( onLinkClick ).not.toHaveBeenCalled();
+	} );
+} );

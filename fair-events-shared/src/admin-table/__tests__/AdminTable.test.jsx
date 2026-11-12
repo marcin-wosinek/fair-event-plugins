@@ -78,6 +78,19 @@ it( 'links the identity and shows supporting text', () => {
 	expect( screen.getByText( 'spring-feed' ) ).toBeVisible();
 } );
 
+it( 'passes the identity link’s click to its handler', () => {
+	const onClick = jest.fn( ( event ) => event.preventDefault() );
+	render(
+		<ItemIdentity title="Spring feed" href="/feed/1" onClick={ onClick } />
+	);
+	const link = screen.getByRole( 'link', { name: 'Spring feed' } );
+	expect( fireEvent.click( link, { metaKey: true } ) ).toBe( false );
+	expect( onClick ).toHaveBeenCalledWith(
+		expect.objectContaining( { metaKey: true } )
+	);
+	expect( link ).toHaveAttribute( 'href', '/feed/1' );
+} );
+
 it( 'falls back for an empty identity', () => {
 	render( <ItemIdentity title="" fallback="(untitled feed)" /> );
 	expect( screen.getByText( '(untitled feed)' ) ).toBeVisible();

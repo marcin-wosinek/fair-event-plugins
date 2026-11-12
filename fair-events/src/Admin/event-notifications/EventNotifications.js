@@ -4,7 +4,12 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
-import { ExternalLink, Notice, Spinner } from '@wordpress/components';
+import { ExternalLink, Notice } from '@wordpress/components';
+
+/**
+ * Shared dependencies
+ */
+import { TableMessage } from 'fair-events-shared/src/admin-table/index.js';
 
 /**
  * Internal dependencies
@@ -108,21 +113,31 @@ export default function EventNotifications( { sourcesUrl } ) {
 
 	const load = useCallback( () => {
 		const requested = ++requests.current.issued;
-		return apiFetch( { path: PATH } ).then( ( next ) => {
-			if ( requested < requests.current.applied ) {
-				return;
+		return apiFetch( { path: PATH } ).then(
+			( next ) => {
+				if ( requested < requests.current.applied ) {
+					return;
+				}
+				requests.current.applied = requested;
+				const { saved, deleted: removed } = requests.current;
+				setLoadError( null );
+				setData( ( current ) =>
+					mergeRead( current, next, requested, saved, removed )
+				);
+			},
+			( error ) => {
+				// A newer read answered already; this failure is out of date.
+				if ( requested < requests.current.applied ) {
+					return;
+				}
+				throw error;
 			}
-			requests.current.applied = requested;
-			const { saved, deleted: removed } = requests.current;
-			setLoadError( null );
-			setData( ( current ) =>
-				mergeRead( current, next, requested, saved, removed )
-			);
-		} );
+		);
 	}, [] );
 
-	const initialLoad = useCallback( () => {
-		setLoadError( null );
+	// A failed read is reported with a retry. The shown list and every
+	// draft stay as they are until a read succeeds.
+	const reload = useCallback( () => {
 		load().catch( ( error ) =>
 			setLoadError(
 				errorMessage(
@@ -132,6 +147,11 @@ export default function EventNotifications( { sourcesUrl } ) {
 			)
 		);
 	}, [ load ] );
+
+	const initialLoad = useCallback( () => {
+		setLoadError( null );
+		reload();
+	}, [ reload ] );
 
 	useEffect( () => {
 		initialLoad();
@@ -143,10 +163,10 @@ export default function EventNotifications( { sourcesUrl } ) {
 	const previousView = useRef( view );
 	useEffect( () => {
 		if ( 'list' === view && 'list' !== previousView.current ) {
-			load().catch( () => {} );
+			reload();
 		}
 		previousView.current = view;
-	}, [ view, load ] );
+	}, [ view, reload ] );
 
 	// Credentials and plugins are changed on other screens, usually in
 	// another tab. Coming back re-reads availability and status; each
@@ -155,8 +175,8 @@ export default function EventNotifications( { sourcesUrl } ) {
 		if ( 'hidden' === document.visibilityState ) {
 			return;
 		}
-		load().catch( () => {} );
-	}, [ load ] );
+		reload();
+	}, [ reload ] );
 
 	useEffect( () => {
 		window.addEventListener( 'focus', refresh );
@@ -250,9 +270,9 @@ export default function EventNotifications( { sourcesUrl } ) {
 					configuration.name || TYPE_LABELS[ configuration.type ]
 				),
 			} );
-			load().catch( () => {} );
+			reload();
 		},
-		[ remove, load ]
+		[ remove, reload ]
 	);
 
 	// The report belongs to the list it was made in.
@@ -371,27 +391,28 @@ export default function EventNotifications( { sourcesUrl } ) {
 				<h1>{ __( 'Event notifications', 'fair-events' ) }</h1>
 
 				{ loadError && (
-					<Notice
+					<TableMessage
 						status="error"
-						isDismissible={ false }
-						actions={
-							data
-								? []
-								: [
-										{
-											label: __(
-												'Try again',
-												'fair-events'
-											),
-											onClick: initialLoad,
-										},
-									]
-						}
+						onRetry={ initialLoad }
+						retryLabel={ __( 'Try again', 'fair-events' ) }
 					>
-						{ loadError }
-					</Notice>
+						{ data
+							? sprintf(
+									/* translators: %s: error message */
+									__(
+										'The notifications could not be refreshed, so what is shown may be out of date. Your unsaved changes are kept. %s',
+										'fair-events'
+									),
+									loadError
+								)
+							: loadError }
+					</TableMessage>
 				) }
-				{ ! data && ! loadError && <Spinner /> }
+				{ ! data && ! loadError && (
+					<TableMessage status="loading">
+						{ __( 'Loading notifications…', 'fair-events' ) }
+					</TableMessage>
+				) }
 
 				{ content }
 			</div>
