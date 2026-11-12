@@ -64,6 +64,7 @@ class Cron {
 		\FairEvents\Notifications\Notifications::deactivate();
 		\FairEvents\Hooks\PaymentHooks::unschedule();
 		\FairEvents\Services\TicketBackfill::unschedule();
+		\FairEvents\Services\PurchaseRecovery::unschedule();
 	}
 
 	/**

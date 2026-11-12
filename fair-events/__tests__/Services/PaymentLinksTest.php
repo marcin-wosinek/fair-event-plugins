@@ -441,8 +441,7 @@ class PaymentLinksTest extends TestCase {
 	}
 
 	/**
-	 * Storage exists but authority stays unchanged, and until shadow writes
-	 * record their coverage floors the backfill can't start.
+	 * Storage exists but authority stays unchanged.
 	 *
 	 * @return void
 	 */
@@ -454,11 +453,9 @@ class PaymentLinksTest extends TestCase {
 		$this->assertTrue( PaymentHistoryCompatibility::storage_available() );
 		$this->assertTrue( PaymentHistoryCompatibility::purchase_provenance_available() );
 		$this->assertTrue( PaymentHistoryCompatibility::payment_information_available() );
-		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
 		$this->assertFalse( PaymentHistoryCompatibility::migration_verified() );
 		$this->assertFalse( PaymentHistoryCompatibility::ownership_cutover() );
 		$this->assertTrue( PaymentHistoryCompatibility::audience_compatible() );
-		$this->assertSame( array( 'shadow_writes_incomplete' ), PaymentHistoryCompatibility::backfill_blockers() );
 
 		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array( 'status' => 'verified' );
 		$this->assertTrue( PaymentHistoryCompatibility::migration_verified() );
@@ -501,87 +498,49 @@ class PaymentLinksTest extends TestCase {
 	}
 
 	/**
-	 * Shadow writes are supported from the shadow work schema on, and cover
-	 * the live writers once their floors are recorded; the backfill is then
-	 * no longer blocked by them.
+	 * Reconciliation needs the 3.52.0 audit on top of the backfill's tables.
 	 *
 	 * @return void
 	 */
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
-	public function test_shadow_write_coverage_needs_schema_and_floors() {
+	public function test_reconciliation_needs_its_audit_schema() {
 		self::activate_connector();
 
-		$this->assertTrue( PaymentHistoryCompatibility::shadow_writes_supported() );
-		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
-
-		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array(
-			'shadow_writes' => array(
-				'enabled_at'         => '2026-11-05 10:00:00',
-				'transaction_floor'  => 40,
-				'relationship_floor' => 12,
-			),
-		);
-		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
-		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
 		$this->assertTrue( PaymentHistoryCompatibility::reconciliation_available() );
 
-		// The backfill runs from 3.51.0; reconciliation needs the 3.52.0 audit.
 		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.51.0';
 		PaymentHistoryCompatibility::reset_cache();
-		$this->assertSame( array(), PaymentHistoryCompatibility::backfill_blockers() );
 		$this->assertFalse( PaymentHistoryCompatibility::reconciliation_available() );
-
-		// Shadow writes run from 3.50.0; the backfill needs its 3.51.0 tables.
-		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.50.0';
-		PaymentHistoryCompatibility::reset_cache();
-		$this->assertTrue( PaymentHistoryCompatibility::shadow_write_coverage() );
-		$this->assertSame( array( 'storage_unavailable' ), PaymentHistoryCompatibility::backfill_blockers() );
-
-		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.49.0';
-		PaymentHistoryCompatibility::reset_cache();
-		$this->assertFalse( PaymentHistoryCompatibility::shadow_writes_supported() );
-		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
-		$this->assertSame( array( 'storage_unavailable', 'shadow_writes_incomplete' ), PaymentHistoryCompatibility::backfill_blockers() );
 	}
 
 	/**
 	 * A Fair Audience that skips provenance admissions but still counts their
 	 * participant-scope activities would count a shadow purchase's
-	 * activities twice, so shadow writes stay off with it.
+	 * activities twice, so it isn't compatible.
 	 *
 	 * @return void
 	 */
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
-	public function test_stage_two_audience_keeps_shadow_writes_off() {
+	public function test_stage_two_audience_is_incompatible() {
 		require_once __DIR__ . '/fakes/fair-audience/repository-provenance-admissions-only.php';
-		self::activate_connector();
-		$GLOBALS['_fair_test_options'][ PaymentHistoryCompatibility::STATE_OPTION ] = array(
-			'shadow_writes' => array( 'enabled_at' => '2026-11-05 10:00:00' ),
-		);
 
 		$this->assertFalse( PaymentHistoryCompatibility::audience_compatible() );
-		$this->assertFalse( PaymentHistoryCompatibility::shadow_write_coverage() );
-		$this->assertSame( array( 'shadow_writes_incomplete', 'audience_incompatible' ), PaymentHistoryCompatibility::backfill_blockers() );
 	}
 
 	/**
-	 * An older Fair Audience, without the provenance-aware filter, blocks
-	 * the backfill; a newer one doesn't.
+	 * An older Fair Audience, without the provenance-aware filter, isn't
+	 * compatible.
 	 *
 	 * @return void
 	 */
 	#[RunInSeparateProcess]
 	#[PreserveGlobalState( false )]
-	public function test_older_audience_blocks_backfill() {
+	public function test_older_audience_is_incompatible() {
 		require_once __DIR__ . '/fakes/fair-audience/repository-without-provenance.php';
 
 		$this->assertFalse( PaymentHistoryCompatibility::audience_compatible() );
-		$this->assertSame(
-			array( 'shadow_writes_incomplete', 'payment_information_unavailable', 'audience_incompatible' ),
-			PaymentHistoryCompatibility::backfill_blockers()
-		);
 	}
 
 	/**
@@ -595,20 +554,5 @@ class PaymentLinksTest extends TestCase {
 		require_once __DIR__ . '/fakes/fair-audience/repository-with-provenance.php';
 
 		$this->assertTrue( PaymentHistoryCompatibility::audience_compatible() );
-	}
-
-	/**
-	 * An incomplete migration (storage missing) blocks everything that needs
-	 * it.
-	 *
-	 * @return void
-	 */
-	public function test_incomplete_upgrade_blocks_backfill() {
-		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.48.0';
-
-		$this->assertSame(
-			array( 'storage_unavailable', 'shadow_writes_incomplete', 'payment_information_unavailable' ),
-			PaymentHistoryCompatibility::backfill_blockers()
-		);
 	}
 }

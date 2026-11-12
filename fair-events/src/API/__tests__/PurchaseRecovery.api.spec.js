@@ -1,14 +1,15 @@
 /**
- * Live coverage for payment history shadow writes (#2139, stage 3 of
- * #2111): while the existing flows stay authoritative, every attempt is
- * linked to its purchase, and Audience-only admissions get a shadow
- * purchase that follows their relationship (PAYMENT_HISTORY_MIGRATION.md
- * §8.8).
+ * Live coverage for purchase recovery once the payment history shadow
+ * writes are retired (#2253, PAYMENT_HISTORY_MIGRATION.md §8.19): every
+ * checkout links its own attempt, an organizer's change to a Fair Audience
+ * registration reaches its Fair Events purchase at the end of the request
+ * with no periodic sweep, and work a request left behind is finished by the
+ * recovery cron without duplicating a purchase, a link or an announcement.
  *
  * Get-tickets purchases go through the public route against the Mollie
- * double. Fair Audience's own purchase route, payment notifications and the
- * shadow work cron run through the payment-shadow-writes.php WP-CLI fixture,
- * which finishes each request's shadow work as a web request would.
+ * double. Fair Audience's own purchase route, payment notifications, the
+ * upgrade and the recovery cron run through the payment-recovery.php WP-CLI
+ * fixture, which finishes each request's queued work as a web request would.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -30,7 +31,7 @@ const adminHeaders = {
 
 // Fixtures run without blocking the event loop, so idle keep-alive
 // connections aren't closed unnoticed between requests.
-async function shadow( action, data = {} ) {
+async function recovery( action, data = {} ) {
 	const { stdout } = await promisify( execFile )(
 		'npx',
 		[
@@ -39,22 +40,22 @@ async function shadow( action, data = {} ) {
 			'tests-cli',
 			'wp',
 			'eval-file',
-			'wp-content/mu-plugins/scripts/payment-shadow-writes.php',
+			'wp-content/mu-plugins/scripts/payment-recovery.php',
 			action,
 			JSON.stringify( data ),
 		],
 		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
 	);
-	const match = stdout.match( /E2E_PAYMENT_SHADOW:(\{.*\})/ );
+	const match = stdout.match( /E2E_PURCHASE_RECOVERY:(\{.*\})/ );
 	if ( ! match ) {
 		throw new Error(
-			`Expected E2E_PAYMENT_SHADOW output, got:\n${ stdout }`
+			`Expected E2E_PURCHASE_RECOVERY output, got:\n${ stdout }`
 		);
 	}
 	return JSON.parse( match[ 1 ] );
 }
 
-test.describe.serial( 'Payment history shadow writes', () => {
+test.describe.serial( 'Purchase recovery', () => {
 	// Every check drives the site through WP-CLI calls that take seconds.
 	test.describe.configure( { timeout: 120 * 1000 } );
 
@@ -66,10 +67,10 @@ test.describe.serial( 'Payment history shadow writes', () => {
 	const relationshipIds = [];
 	const userIds = [];
 	const participantIds = [];
-	const email = `shadow-checkout-${ Date.now() }@example.test`;
+	const email = `recovery-checkout-${ Date.now() }@example.test`;
 
 	async function state() {
-		return shadow( 'state', { transactionIds, relationshipIds } );
+		return recovery( 'state', { transactionIds, relationshipIds } );
 	}
 
 	async function signups() {
@@ -84,7 +85,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 
-		const title = `Shadow writes ${ Date.now() }`;
+		const title = `Purchase recovery ${ Date.now() }`;
 		const post = await api.post( '/wp-json/wp/v2/fair_event', {
 			headers: adminHeaders,
 			data: { title, status: 'publish' },
@@ -155,7 +156,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 	} );
 
 	test.afterAll( async () => {
-		await shadow( 'cleanup', {
+		await recovery( 'cleanup', {
 			transactionIds,
 			relationshipIds,
 			userIds,
@@ -181,19 +182,26 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		await api.dispose();
 	} );
 
-	test( 'shadow writes are on, with their coverage floors, and no longer block the backfill', async () => {
-		const coverage = await shadow( 'coverage' );
+	test( 'the upgrade retires the shadow sweep and keeps queued recovery work', async () => {
+		const { before, after } = await recovery( 'upgrade' );
 
-		expect( coverage.supported ).toBe( true );
-		expect( coverage.covered ).toBe( true );
-		expect( coverage.scheduled ).toBe( true );
-		expect( coverage.coverage.enabled_at ).toMatch(
-			/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+		expect( before ).toEqual(
+			expect.objectContaining( {
+				version: '3.54.0',
+				retired: true,
+				lifecycle: true,
+				relationship: true,
+			} )
 		);
-		expect( coverage.coverage.transaction_floor ).toBeGreaterThanOrEqual(
-			0
+		expect( after ).toEqual(
+			expect.objectContaining( {
+				version: '3.55.0',
+				retired: false,
+				lifecycle: true,
+				relationship: true,
+				recoveryAfterInit: true,
+			} )
 		);
-		expect( coverage.blockers ).not.toContain( 'shadow_writes_incomplete' );
 	} );
 
 	test( 'every get-tickets attempt is linked to its purchase, the failed one included', async () => {
@@ -205,7 +213,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 					event_date_id: eventDateId,
 					ticket_type_id: ticketTypeId,
 					quantity: 1,
-					name: 'Shadow Buyer',
+					name: 'Recovery Buyer',
 					email,
 					idempotency_key: randomUUID(),
 					_honeypot: '',
@@ -224,8 +232,12 @@ test.describe.serial( 'Payment history shadow writes', () => {
 			participantIds.push( Number( signup.participant_id ) );
 		}
 
-		let links = ( await state() ).transactions[ firstBody.transaction_id ]
-			.links;
+		const recorded = ( await state() ).transactions[
+			firstBody.transaction_id
+		];
+		// Linked by the checkout itself: nothing is left for a shadow writer.
+		expect( recorded.work ).toBeNull();
+		let links = recorded.links;
 		expect( links ).toEqual( [
 			expect.objectContaining( {
 				signup_id: String( signup.id ),
@@ -239,7 +251,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 			} ),
 		] );
 
-		await shadow( 'settle', {
+		await recovery( 'settle', {
 			transactionId: firstBody.transaction_id,
 			status: 'failed',
 		} );
@@ -284,11 +296,11 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		);
 	} );
 
-	test( 'an Audience purchase gets a shadow purchase that follows its relationship', async () => {
-		const takenBefore = ( await shadow( 'capacity', { eventDateId } ) )
+	test( 'an Audience purchase records its own purchase and links before the buyer pays', async () => {
+		const takenBefore = ( await recovery( 'capacity', { eventDateId } ) )
 			.taken;
 
-		const signup = await shadow( 'audience-signup', {
+		const signup = await recovery( 'audience-signup', {
 			eventId,
 			eventDateId,
 			ticketTypeId,
@@ -317,6 +329,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		);
 		expect( shadowPurchase.units ).toHaveLength( 1 );
 		expect( shadowPurchase.units[ 0 ].status ).toBe( 'pending_payment' );
+		expect( current.transactions[ signup.transactionId ].work ).toBeNull();
 		expect( current.transactions[ signup.transactionId ].links ).toEqual( [
 			expect.objectContaining( {
 				signup_id: shadowPurchase.purchase.id,
@@ -331,11 +344,11 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		] );
 
 		// The hold counts once: the unit, not the relationship as well.
-		expect( ( await shadow( 'capacity', { eventDateId } ) ).taken ).toBe(
+		expect( ( await recovery( 'capacity', { eventDateId } ) ).taken ).toBe(
 			takenBefore + 1
 		);
 
-		await shadow( 'settle', {
+		await recovery( 'settle', {
 			transactionId: signup.transactionId,
 			status: 'paid',
 		} );
@@ -350,19 +363,19 @@ test.describe.serial( 'Payment history shadow writes', () => {
 			} )
 		);
 		expect( shadowPurchase.units[ 0 ].status ).toBe( 'confirmed' );
-		expect( ( await shadow( 'capacity', { eventDateId } ) ).taken ).toBe(
+		expect( ( await recovery( 'capacity', { eventDateId } ) ).taken ).toBe(
 			takenBefore + 1
 		);
 	} );
 
-	test( 'an organizer-added participant gets a shadow purchase that ends with the relationship', async () => {
+	test( 'an organizer-added participant gets a purchase in the same request, which follows the relationship', async () => {
 		const participant = await api.post(
 			'/wp-json/fair-audience/v1/participants',
 			{
 				headers: adminHeaders,
 				data: {
-					name: 'Shadow Guest',
-					email: `shadow-guest-${ Date.now() }@example.test`,
+					name: 'Recovery Guest',
+					email: `recovery-guest-${ Date.now() }@example.test`,
 				},
 			}
 		);
@@ -370,7 +383,7 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		const participantId = ( await participant.json() ).id;
 		participantIds.push( participantId );
 
-		const takenBefore = ( await shadow( 'capacity', { eventDateId } ) )
+		const takenBefore = ( await recovery( 'capacity', { eventDateId } ) )
 			.taken;
 		const added = await api.post(
 			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
@@ -383,17 +396,20 @@ test.describe.serial( 'Payment history shadow writes', () => {
 		const relationshipId = ( await added.json() ).id;
 		relationshipIds.push( relationshipId );
 
-		await shadow( 'sweep' );
+		// No sweep: the request that added the participant did it.
 		let current = ( await state() ).relationships[ relationshipId ];
 		expect( current.purchase ).toEqual(
 			expect.objectContaining( {
 				status: 'confirmed',
 				amount: '0.00',
-				name: 'Shadow Guest',
+				name: 'Recovery Guest',
+				transaction_id: null,
 			} )
 		);
+		expect( current.purchases ).toBe( 1 );
 		expect( current.units ).toHaveLength( 1 );
-		expect( ( await shadow( 'capacity', { eventDateId } ) ).taken ).toBe(
+		expect( current.work ).toBeNull();
+		expect( ( await recovery( 'capacity', { eventDateId } ) ).taken ).toBe(
 			takenBefore + 1
 		);
 
@@ -402,20 +418,78 @@ test.describe.serial( 'Payment history shadow writes', () => {
 			{ headers: adminHeaders, data: { label: 'interested' } }
 		);
 		expect( relabelled.ok(), await relabelled.text() ).toBeTruthy();
-		await shadow( 'sweep' );
 		current = ( await state() ).relationships[ relationshipId ];
 		expect( current.purchase.status ).toBe( 'cancelled' );
 		expect( current.units[ 0 ].status ).toBe( 'cancelled' );
-		expect( ( await shadow( 'capacity', { eventDateId } ) ).taken ).toBe(
+		expect( current.work ).toBeNull();
+		expect( ( await recovery( 'capacity', { eventDateId } ) ).taken ).toBe(
 			takenBefore
 		);
 	} );
 
-	test( 'shadow work that cannot complete stays queued with its reason for a retry', async () => {
+	test( 'an organizer change interrupted before the end of its request is finished once by the recovery cron', async () => {
+		const relationshipId = relationshipIds[ relationshipIds.length - 1 ];
+		const takenBefore = ( await recovery( 'capacity', { eventDateId } ) )
+			.taken;
+
+		const interrupted = await recovery( 'interrupt', {
+			relationshipId,
+			label: 'signed_up',
+		} );
+		expect( interrupted.row ).toEqual(
+			expect.objectContaining( { status: 'pending' } )
+		);
+		let current = ( await state() ).relationships[ relationshipId ];
+		expect( current.purchase.status ).toBe( 'cancelled' );
+		const purchaseId = current.purchase.id;
+
+		const first = await recovery( 'due' );
+		expect( first.processed ).toBeGreaterThanOrEqual( 1 );
+		current = ( await state() ).relationships[ relationshipId ];
+		expect( current.purchase ).toEqual(
+			expect.objectContaining( { id: purchaseId, status: 'confirmed' } )
+		);
+		expect( current.units[ 0 ].status ).toBe( 'confirmed' );
+		expect( current.work ).toBeNull();
+
+		// Recovering again changes nothing and announces nothing.
+		const again = await recovery( 'queue', {
+			kind: 'relationship',
+			sourceId: relationshipId,
+		} );
+		expect( again ).toEqual( { outcome: 'done', row: null } );
+		const second = await recovery( 'due' );
+		expect( second.confirmed ).toBe( 0 );
+		expect( first.confirmed ).toBe( 0 );
+		current = ( await state() ).relationships[ relationshipId ];
+		expect( current.purchases ).toBe( 1 );
+		expect( current.purchase.id ).toBe( purchaseId );
+		expect( current.units ).toHaveLength( 1 );
+		expect( ( await recovery( 'capacity', { eventDateId } ) ).taken ).toBe(
+			takenBefore + 1
+		);
+	} );
+
+	test( 'a transaction left queued by the shadow writer is finished without duplicating its links', async () => {
+		const [ transactionId ] = transactionIds;
+		const before = ( await state() ).transactions[ transactionId ].links;
+		expect( before ).toHaveLength( 1 );
+
+		const outcome = await recovery( 'queue', {
+			kind: 'transaction',
+			sourceId: transactionId,
+		} );
+		expect( outcome ).toEqual( { outcome: 'done', row: null } );
+		expect( ( await state() ).transactions[ transactionId ].links ).toEqual(
+			before
+		);
+	} );
+
+	test( 'work that cannot complete stays queued with its reason for a retry', async () => {
 		const missing = 2_000_000_000;
 		transactionIds.push( missing );
 
-		const outcome = await shadow( 'queue', {
+		const outcome = await recovery( 'queue', {
 			kind: 'transaction',
 			sourceId: missing,
 		} );

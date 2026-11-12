@@ -280,18 +280,15 @@ test.describe( 'EventStatisticsController', () => {
 		if ( ! eventDateId ) {
 			return { participantId };
 		}
-		const relationship = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-			{
-				headers: adminHeaders,
-				data: { participant_id: participantId, label },
-			}
-		);
-		expect( relationship.ok() ).toBeTruthy();
-		return {
+		// Written directly, as a registration from before the migration: the
+		// organizer route would give it a Fair Events purchase (#2253).
+		const { relationshipId } = await ticketFixtureAsync( 'relationship', {
+			eventDateId,
 			participantId,
-			relationshipId: ( await relationship.json() ).id,
-		};
+			label,
+		} );
+		expect( relationshipId ).toBeGreaterThan( 0 );
+		return { participantId, relationshipId };
 	}
 
 	// Every assertion runs against the canonical route; the compatibility

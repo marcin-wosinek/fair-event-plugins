@@ -134,14 +134,13 @@ test.describe.serial( 'Statistics from Fair Events records', () => {
 		);
 		expect( participant.ok() ).toBeTruthy();
 		const participantId = ( await participant.json() ).id;
-		const relationship = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-			{
-				headers: adminHeaders,
-				data: { participant_id: participantId, label: 'signed_up' },
-			}
-		);
-		expect( relationship.ok() ).toBeTruthy();
+		// Written directly, as a registration from before the migration: the
+		// organizer route would give it a Fair Events purchase (#2253).
+		const { relationshipId } = await tickets( 'relationship', {
+			eventDateId,
+			participantId,
+		} );
+		expect( relationshipId ).toBeGreaterThan( 0 );
 		return participantId;
 	}
 

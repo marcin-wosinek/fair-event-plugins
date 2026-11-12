@@ -26,10 +26,11 @@ defined( 'WPINC' ) || die;
  * carries a transaction_id and fires no Events or Audience hook, so no
  * confirmation email, payment handler or bridge acts on it.
  *
- * A purchase is created only for a relationship newer than the coverage
- * floor (older ones are the historical backfill's) and only when it would
- * be an admission by the contract's rule (§4.1), or a pending Audience
- * checkout whose latest ledger charge comes from Audience's purchase route.
+ * A purchase is created only when the relationship would be an admission
+ * by the contract's rule (§4.1), or for a pending Audience checkout whose
+ * latest ledger charge comes from Audience's purchase route. Syncs run when
+ * Audience records an attempt or a free signup, and at the end of a request
+ * in which an organizer changed the relationship (PurchaseRecovery, §8.19).
  *
  * After the stage 4 cutover the purchase lifecycle owns payments
  * (PurchaseLifecycle, §8.12): a paid notification confirms the purchase and
@@ -53,10 +54,9 @@ class ShadowPurchases {
 	 * relationship is a new Audience-only admission.
 	 *
 	 * @param int $relationship_id Relationship ID.
-	 * @param int $floor           Highest relationship ID left to the historical backfill.
 	 * @return array{action: string, signup_id: int|null}|\WP_Error What happened: none, created or updated.
 	 */
-	public static function sync( $relationship_id, $floor ) {
+	public static function sync( $relationship_id ) {
 		global $wpdb;
 
 		$relationship_id = (int) $relationship_id;
@@ -76,7 +76,7 @@ class ShadowPurchases {
 
 		try {
 			$wpdb->query( 'START TRANSACTION' );
-			$result = self::sync_locked( $relationship_id, (int) $floor );
+			$result = self::sync_locked( $relationship_id );
 			if ( is_wp_error( $result ) ) {
 				$wpdb->query( 'ROLLBACK' );
 			} else {
@@ -90,7 +90,7 @@ class ShadowPurchases {
 
 	/**
 	 * Take the named lock that serializes writers of one relationship's
-	 * purchase: these syncs and the historical backfill. A writer that also
+	 * purchase: these syncs and reconciliation. A writer that also
 	 * needs payment link locks takes this one first.
 	 *
 	 * @param int $relationship_id Relationship ID.
@@ -127,15 +127,14 @@ class ShadowPurchases {
 	 * Body of sync(), inside its lock and database transaction.
 	 *
 	 * @param int $relationship_id Relationship ID.
-	 * @param int $floor           Coverage floor.
 	 * @return array|\WP_Error
 	 */
-	private static function sync_locked( $relationship_id, $floor ) {
+	private static function sync_locked( $relationship_id ) {
 		$relationship = self::relationship( $relationship_id );
 		$signup       = self::purchase_for( $relationship_id );
 
 		if ( ! $signup ) {
-			if ( ! $relationship || $relationship_id <= $floor || ! self::qualifies( $relationship ) ) {
+			if ( ! $relationship || ! self::qualifies( $relationship ) ) {
 				return array(
 					'action'    => 'none',
 					'signup_id' => null,

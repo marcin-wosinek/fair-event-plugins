@@ -20,10 +20,6 @@ defined( 'WPINC' ) || die;
  * - storage_available(): the payment links table and the purchase
  *   provenance column exist. Both legacy admission filters skip
  *   relationships named by provenance from then on.
- * - shadow_write_coverage(): every live payment writer also writes links
- *   and Audience-only admissions have shadow purchases
- *   (PaymentHistoryShadowWrites). On once the site supports it and the
- *   coverage floors are recorded.
  * - migration_verified(): the backfill finished and its verification
  *   report was clean (§8.4), as the retired migration recorded it.
  * - ownership_cutover(): whether the retired stage 4 activation was
@@ -32,7 +28,7 @@ defined( 'WPINC' ) || die;
  *
  * The one-time migration's controls are retired (#2252); these readers of
  * its recorded state remain until its storage and options are removed
- * (#2254). backfill_blockers() still reports the shadow writes' coverage.
+ * (#2254). The shadow writes and their coverage floors are retired (#2253).
  * Fair Audience calls into this class only after checking it and the method
  * exist, so newer Audience keeps working with older Events.
  *
@@ -122,35 +118,6 @@ class PaymentHistoryCompatibility {
 	 */
 	public static function purchase_provenance_available() {
 		return self::storage_available();
-	}
-
-	/**
-	 * Whether this site can run shadow writes: the links storage and the
-	 * shadow work queue exist, and an active Fair Audience skips the
-	 * relationships and activities that shadow purchases stand for.
-	 *
-	 * @return bool
-	 */
-	public static function shadow_writes_supported() {
-		return self::storage_available()
-			&& version_compare( Schema::get_db_version(), self::SHADOW_DB_VERSION, '>=' )
-			&& self::audience_compatible();
-	}
-
-	/**
-	 * Whether every live payment writer also records payment links (shadow
-	 * writes, §8.1, §8.8): supported, and turned on with its coverage floors
-	 * recorded by PaymentHistoryShadowWrites::maybe_enable(), before the
-	 * backfill takes its cutoff.
-	 *
-	 * @return bool
-	 */
-	public static function shadow_write_coverage() {
-		if ( ! self::shadow_writes_supported() ) {
-			return false;
-		}
-		$state = self::get_state();
-		return is_array( $state['shadow_writes'] ?? null ) && ! empty( $state['shadow_writes']['enabled_at'] );
 	}
 
 	/**
@@ -251,8 +218,8 @@ class PaymentHistoryCompatibility {
 	 * Whether the active Fair Audience, if any, skips relationships named by
 	 * purchase provenance in its capacity filters: both their admissions and
 	 * their participant-scope activities, which the purchase's unit carries
-	 * instead. An older Audience would count them a second time (§8.5), so
-	 * neither shadow writes nor the backfill run with it.
+	 * instead. An older Audience would count them a second time (§8.5); the
+	 * retired migration refused to run with it.
 	 *
 	 * @return bool
 	 */
@@ -286,31 +253,6 @@ class PaymentHistoryCompatibility {
 		return class_exists( $lifecycle )
 			&& method_exists( $lifecycle, 'supports_purchase_lifecycle' )
 			&& true === $lifecycle::supports_purchase_lifecycle();
-	}
-
-	/**
-	 * Reasons the stage 3 backfill can't start on this site; empty when it
-	 * can. Stage 3 must refuse to start while any is listed. Storage counts
-	 * as unavailable until the backfill's own tables (DB 3.51.0) exist too.
-	 *
-	 * @return string[] Codes: storage_unavailable, shadow_writes_incomplete,
-	 *                  payment_information_unavailable, audience_incompatible.
-	 */
-	public static function backfill_blockers() {
-		$blockers = array();
-		if ( ! self::storage_available() || version_compare( Schema::get_db_version(), self::BACKFILL_DB_VERSION, '<' ) ) {
-			$blockers[] = 'storage_unavailable';
-		}
-		if ( ! self::shadow_write_coverage() ) {
-			$blockers[] = 'shadow_writes_incomplete';
-		}
-		if ( ! self::payment_information_available() ) {
-			$blockers[] = 'payment_information_unavailable';
-		}
-		if ( ! self::audience_compatible() ) {
-			$blockers[] = 'audience_incompatible';
-		}
-		return $blockers;
 	}
 
 	/**

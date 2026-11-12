@@ -11,6 +11,7 @@ use FairAudience\Database\EventParticipantRepository;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Models\EmailConsentLog;
 use FairAudience\Services\EmailService;
+use FairAudience\Services\EventsLifecycle;
 use FairAudience\Services\ParticipantRemoval;
 use FairAudience\Services\TicketActivities;
 use FairAudience\Services\TicketOperations;
@@ -1089,6 +1090,8 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		EventsLifecycle::relationship_changed( (int) $id );
+
 		return rest_ensure_response(
 			array(
 				'id'      => $id,
@@ -1285,6 +1288,9 @@ class EventParticipantsController extends WP_REST_Controller {
 		}
 
 		$updated = $this->event_participant_repo->get_by_event_date_and_participant( $event_date_id, $participant_id );
+		if ( $updated ) {
+			EventsLifecycle::relationship_changed( (int) $updated->id );
+		}
 
 		$updated_ticket_type_name = null;
 		if ( $updated && $updated->ticket_type_id && class_exists( \FairEvents\Models\TicketType::class ) ) {
@@ -2436,6 +2442,11 @@ class EventParticipantsController extends WP_REST_Controller {
 			);
 		}
 
+		$moved = $this->event_participant_repo->get_by_event_date_and_participant( $target_event_date_id, $participant_id );
+		if ( $moved ) {
+			EventsLifecycle::relationship_changed( (int) $moved->id );
+		}
+
 		return rest_ensure_response(
 			array(
 				'message'              => __( 'Signup moved successfully.', 'fair-audience' ),
@@ -2582,6 +2593,7 @@ class EventParticipantsController extends WP_REST_Controller {
 				++$results['skipped'];
 			} else {
 				++$results['added'];
+				EventsLifecycle::relationship_changed( (int) $id );
 			}
 		}
 

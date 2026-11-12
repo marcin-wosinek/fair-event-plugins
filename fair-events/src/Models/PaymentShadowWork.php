@@ -10,24 +10,28 @@ namespace FairEvents\Models;
 defined( 'WPINC' ) || die;
 
 /**
- * Rows of fair_events_payment_shadow_work: shadow writes the payment
- * history migration still owes (PAYMENT_HISTORY_MIGRATION.md §8.8). A row
- * is queued when a live writer records something, processed later in the
- * same request, and removed once the work succeeds. A row that failed, or
- * whose evidence named no purchase yet, stays with its reason and is
- * retried with a growing delay.
+ * Rows of fair_events_payment_shadow_work: purchase work a request still
+ * owes (PurchaseRecovery, PAYMENT_HISTORY_MIGRATION.md §8.19). A row is
+ * queued when a writer starts the work, processed later in the same
+ * request, and removed once the work succeeds. A row that failed, or whose
+ * evidence named no purchase yet, stays with its reason and is retried
+ * with a growing delay. The table keeps its name from the retired shadow
+ * writes (§8.8).
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class PaymentShadowWork {
 
 	/**
-	 * Work on one Connector transaction: write its payment links.
+	 * Work on one Connector transaction: write its payment links. Only
+	 * queued by the retired shadow writes (#2253); rows they left are
+	 * finished by PurchaseLifecycle::record_attempt().
 	 */
 	const KIND_TRANSACTION = 'transaction';
 
 	/**
-	 * Work on one Fair Audience relationship: bring its shadow purchase in step.
+	 * Work on one Fair Audience relationship: bring its shadow purchase in
+	 * step after an organizer changed it.
 	 */
 	const KIND_RELATIONSHIP = 'relationship';
 

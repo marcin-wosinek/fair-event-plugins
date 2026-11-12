@@ -3,7 +3,8 @@
  * Plugin Name: Fair Events E2E Participant Removal
  * Description: Test-only fixtures for removing a participant from an event
  *              date: read what a removal left behind, add a registration
- *              awaiting payment, and make the next removal fail after its
+ *              awaiting payment, add a relationship from before the payment
+ *              history migration, and make the next removal fail after its
  *              writes. Loaded ONLY inside the Playwright wp-env instance
  *              (mounted via the `mappings` entry in .wp-env.json). Never
  *              shipped to production and never mounted by the dev
@@ -92,6 +93,51 @@ add_action(
 					);
 
 					return rest_ensure_response( array( 'signup_id' => (int) $wpdb->insert_id ) );
+				},
+			)
+		);
+
+		// A signed-up relationship, and optionally its participant-scope
+		// activity, written directly as one from before the payment history
+		// migration: the organizer routes would give it a Fair Events
+		// purchase at once (#2253), which blocks its removal.
+		register_rest_route(
+			'fair-e2e/v1',
+			'/participant-removal/legacy-relationship',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => $admin_only,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					global $wpdb;
+
+					$event_date_id = absint( $request->get_param( 'event_date_id' ) );
+					$wpdb->insert(
+						$wpdb->prefix . 'fair_audience_event_participants',
+						array(
+							'event_id'       => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT event_id FROM %i WHERE id = %d', $wpdb->prefix . 'fair_event_dates', $event_date_id ) ),
+							'event_date_id'  => $event_date_id,
+							'participant_id' => absint( $request->get_param( 'participant_id' ) ),
+							'label'          => 'signed_up',
+						),
+						array( '%d', '%d', '%d', '%s' )
+					);
+					$relationship_id = (int) $wpdb->insert_id;
+
+					$option_id = absint( $request->get_param( 'option_id' ) );
+					if ( $relationship_id && $option_id ) {
+						$wpdb->insert(
+							$wpdb->prefix . 'fair_audience_event_participant_options',
+							array(
+								'event_participant_id' => $relationship_id,
+								'ticket_option_id'     => $option_id,
+								'ticket_option_name'   => 'Legacy activity',
+								'status'               => 'confirmed',
+							),
+							array( '%d', '%d', '%s', '%s' )
+						);
+					}
+
+					return rest_ensure_response( array( 'relationship_id' => $relationship_id ) );
 				},
 			)
 		);

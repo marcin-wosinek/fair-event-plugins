@@ -131,18 +131,14 @@ test.describe( 'Payment history foundation', () => {
 		expect( participant.ok() ).toBeTruthy();
 		const participantId = ( await participant.json() ).id;
 		participantIds.push( participantId );
-		const relationship = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
-			{
-				headers: adminHeaders,
-				data: { participant_id: participantId, label: 'signed_up' },
-			}
-		);
-		expect( relationship.ok() ).toBeTruthy();
-		return {
+		// Written directly, as a registration from before the migration: the
+		// organizer route would give it a purchase at once (#2253).
+		const { relationshipId } = await tickets( 'relationship', {
+			eventDateId,
 			participantId,
-			relationshipId: ( await relationship.json() ).id,
-		};
+		} );
+		expect( relationshipId ).toBeGreaterThan( 0 );
+		return { participantId, relationshipId };
 	}
 
 	async function statistics( eventDateId ) {
@@ -205,7 +201,7 @@ test.describe( 'Payment history foundation', () => {
 
 	test( 'storage is installed with its keys and survives repeated installs', async () => {
 		const expectSchema = ( schema ) => {
-			expect( schema.version ).toBe( '3.54.0' );
+			expect( schema.version ).toBe( '3.55.0' );
 			expect( schema.linksTable ).toBe( true );
 			expect( schema.engine ).toBe( 'InnoDB' );
 			expect( schema.indexes.idx_signup_transaction_role ).toEqual( {
@@ -234,7 +230,7 @@ test.describe( 'Payment history foundation', () => {
 		expect( upgrade.before.provenanceColumn ).toBeNull();
 		expect( upgrade.before.storageAvailable ).toBe( false );
 		for ( const run of [ upgrade.first, upgrade.second ] ) {
-			expect( run.version ).toBe( '3.54.0' );
+			expect( run.version ).toBe( '3.55.0' );
 			expect( run.linksTable ).toBe( true );
 			expect( run.provenanceUnique ).toBe( true );
 			expect( run.storageAvailable ).toBe( true );

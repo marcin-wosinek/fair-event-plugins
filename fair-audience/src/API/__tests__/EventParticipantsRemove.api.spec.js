@@ -145,6 +145,19 @@ test.describe( 'Remove a participant from an event date (#1820)', () => {
 		return { participantId: body.id, email };
 	}
 
+	// A participant signed up by hand before the payment history migration,
+	// with a participant-scope activity and no purchase. Written directly:
+	// the organizer routes give a new one its purchase at once (#2253).
+	async function addLegacySignup( eventDateId, optionId ) {
+		const { participantId, email } = await addByHand( [] );
+		await fixture( 'legacy-relationship', {
+			event_date_id: eventDateId,
+			participant_id: participantId,
+			option_id: optionId,
+		} );
+		return { participantId, email };
+	}
+
 	// Each purchase is a separate visitor: fair-audience's session cookie
 	// would otherwise make later buyers resolve to the first participant.
 	async function purchase( event, quantity = 1 ) {
@@ -357,20 +370,15 @@ test.describe( 'Remove a participant from an event date (#1820)', () => {
 			{ name: 'Workshop', price: 0, capacity: null },
 		] );
 		const other = await createEvent();
-		const { participantId, email } = await addByHand(
-			[ event.eventDateId, other.eventDateId ],
-			'signed_up'
+		// With an activity recorded for the participant on this date.
+		const { participantId, email } = await addLegacySignup(
+			event.eventDateId,
+			event.optionIds[ 0 ]
 		);
-
-		// An activity recorded for the participant on this date.
-		const edited = await api.put(
-			participantsUrl( event.eventDateId, participantId ),
-			{
-				headers: adminHeaders,
-				data: { ticket_option_ids: [ event.optionIds[ 0 ] ] },
-			}
-		);
-		expect( edited.ok(), await edited.text() ).toBeTruthy();
+		await fixture( 'legacy-relationship', {
+			event_date_id: other.eventDateId,
+			participant_id: participantId,
+		} );
 
 		const row = await audienceRow( event.eventDateId, email );
 		expect( row.removal_blockers ).toEqual( [] );
@@ -565,14 +573,10 @@ test.describe( 'Remove a participant from an event date (#1820)', () => {
 		const event = await createEvent( [
 			{ name: 'Workshop', price: 0, capacity: null },
 		] );
-		const { participantId, email } = await addByHand(
-			[ event.eventDateId ],
-			'signed_up'
+		const { participantId, email } = await addLegacySignup(
+			event.eventDateId,
+			event.optionIds[ 0 ]
 		);
-		await api.put( participantsUrl( event.eventDateId, participantId ), {
-			headers: adminHeaders,
-			data: { ticket_option_ids: [ event.optionIds[ 0 ] ] },
-		} );
 		const row = await audienceRow( event.eventDateId, email );
 
 		await fixture( 'fail', { enabled: true } );

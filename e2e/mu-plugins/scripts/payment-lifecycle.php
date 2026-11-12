@@ -46,7 +46,7 @@ defined( 'ABSPATH' ) || exit;
 use FairEvents\Models\PaymentHistoryFinding;
 use FairEvents\Models\PaymentShadowWork;
 use FairEvents\Services\PaymentHistoryCompatibility;
-use FairEvents\Services\PaymentHistoryShadowWrites;
+use FairEvents\Services\PurchaseRecovery;
 
 global $wpdb;
 
@@ -145,7 +145,7 @@ switch ( $fixture_action ) {
 		} catch ( RuntimeException $error ) {
 			$threw = true;
 		}
-		PaymentHistoryShadowWrites::process_queued();
+		PurchaseRecovery::process_queued();
 		$result = array(
 			'threw'         => $threw,
 			'announcements' => $announcements,
@@ -179,7 +179,7 @@ switch ( $fixture_action ) {
 			)
 		);
 		$result = array(
-			'processed'     => PaymentHistoryShadowWrites::process_due( 50 ),
+			'processed'     => PurchaseRecovery::process_due( 50 ),
 			'announcements' => $announcements,
 		);
 		break;
