@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -20,6 +20,38 @@ import {
 import EventUrlField from './EventUrlField.js';
 import TagField from './TagField.js';
 
+const today = () => new Date().toISOString().split( 'T' )[ 0 ];
+
+const getInitialFormData = ( entry ) => {
+	if ( ! entry ) {
+		return {
+			amount: '',
+			entry_type: 'cost',
+			entry_date: today(),
+			description: '',
+			budget_id: '',
+			event_url: '',
+			event_date_id: null,
+			tag: '',
+			payment_source: '',
+			payer_name: '',
+		};
+	}
+
+	return {
+		amount: entry.amount?.toString() || '',
+		entry_type: entry.entry_type || 'cost',
+		entry_date: entry.entry_date || today(),
+		description: entry.description || '',
+		budget_id: entry.budget_id?.toString() || '',
+		event_url: entry.event_url || '',
+		event_date_id: entry.event_date_id || null,
+		tag: entry.tag || '',
+		payment_source: entry.payment_source || '',
+		payer_name: entry.payer_name || '',
+	};
+};
+
 const EntryForm = ( {
 	entry,
 	budgets,
@@ -28,39 +60,17 @@ const EntryForm = ( {
 	onSave,
 	onCancel,
 } ) => {
-	const [ formData, setFormData ] = useState( {
-		amount: '',
-		entry_type: 'cost',
-		entry_date: new Date().toISOString().split( 'T' )[ 0 ],
-		description: '',
-		budget_id: '',
-		event_url: '',
-		event_date_id: null,
-		tag: '',
-		payment_source: '',
-		payer_name: '',
-	} );
+	// Initialize from the entry before the first render, so the dialog never
+	// shows blank defaults that an early change could write back over it.
+	const [ formData, setFormData ] = useState( () =>
+		getInitialFormData( entry )
+	);
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
 
-	useEffect( () => {
-		if ( entry ) {
-			setFormData( {
-				amount: entry.amount?.toString() || '',
-				entry_type: entry.entry_type || 'cost',
-				entry_date:
-					entry.entry_date ||
-					new Date().toISOString().split( 'T' )[ 0 ],
-				description: entry.description || '',
-				budget_id: entry.budget_id?.toString() || '',
-				event_url: entry.event_url || '',
-				event_date_id: entry.event_date_id || null,
-				tag: entry.tag || '',
-				payment_source: entry.payment_source || '',
-				payer_name: entry.payer_name || '',
-			} );
-		}
-	}, [ entry ] );
+	// Merge into the latest state rather than a render-time snapshot.
+	const updateFormData = ( changes ) =>
+		setFormData( ( current ) => ( { ...current, ...changes } ) );
 
 	const handleSubmit = async ( e ) => {
 		e.preventDefault();
@@ -154,7 +164,7 @@ const EntryForm = ( {
 							},
 						] }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, entry_type: value } )
+							updateFormData( { entry_type: value } )
 						}
 					/>
 
@@ -162,7 +172,7 @@ const EntryForm = ( {
 						label={ __( 'Amount', 'fair-finance' ) }
 						value={ formData.amount }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, amount: value } )
+							updateFormData( { amount: value } )
 						}
 						type="number"
 						step="0.01"
@@ -175,7 +185,7 @@ const EntryForm = ( {
 						label={ __( 'Date', 'fair-finance' ) }
 						value={ formData.entry_date }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, entry_date: value } )
+							updateFormData( { entry_date: value } )
 						}
 						type="date"
 						required
@@ -185,7 +195,7 @@ const EntryForm = ( {
 						label={ __( 'Description', 'fair-finance' ) }
 						value={ formData.description }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, description: value } )
+							updateFormData( { description: value } )
 						}
 						help={ __(
 							'Optional description for this entry',
@@ -218,10 +228,7 @@ const EntryForm = ( {
 									] ),
 						] }
 						onChange={ ( value ) =>
-							setFormData( {
-								...formData,
-								payment_source: value,
-							} )
+							updateFormData( { payment_source: value } )
 						}
 						help={ __(
 							'Event cash and personal funds are recorded from the event’s Finance tab and must stay linked to an event.',
@@ -235,10 +242,7 @@ const EntryForm = ( {
 								label={ __( 'Paid by', 'fair-finance' ) }
 								value={ formData.payer_name }
 								onChange={ ( value ) =>
-									setFormData( {
-										...formData,
-										payer_name: value,
-									} )
+									updateFormData( { payer_name: value } )
 								}
 								help={ __(
 									'Name of the person who paid.',
@@ -252,7 +256,7 @@ const EntryForm = ( {
 						value={ formData.budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, budget_id: value } )
+							updateFormData( { budget_id: value } )
 						}
 					/>
 
@@ -261,8 +265,7 @@ const EntryForm = ( {
 							value={ formData.event_url }
 							eventDateId={ formData.event_date_id }
 							onChange={ ( url, dateId ) =>
-								setFormData( {
-									...formData,
+								updateFormData( {
 									event_url: url,
 									event_date_id: dateId,
 								} )
@@ -274,7 +277,7 @@ const EntryForm = ( {
 						value={ formData.tag }
 						tags={ tags }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, tag: value } )
+							updateFormData( { tag: value } )
 						}
 					/>
 

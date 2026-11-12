@@ -59,6 +59,10 @@ const TransferModal = ( {
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
 
+	// Merge into the latest state rather than a render-time snapshot.
+	const updateFormData = ( changes ) =>
+		setFormData( ( current ) => ( { ...current, ...changes } ) );
+
 	const budgetOptions = [
 		{
 			label: __( '-- Select Budget --', 'fair-finance' ),
@@ -140,7 +144,7 @@ const TransferModal = ( {
 						label={ __( 'Amount', 'fair-finance' ) }
 						value={ formData.amount }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, amount: value } )
+							updateFormData( { amount: value } )
 						}
 						type="number"
 						step="0.01"
@@ -153,7 +157,7 @@ const TransferModal = ( {
 						label={ __( 'Date', 'fair-finance' ) }
 						value={ formData.entry_date }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, entry_date: value } )
+							updateFormData( { entry_date: value } )
 						}
 						type="date"
 						required
@@ -163,7 +167,7 @@ const TransferModal = ( {
 						label={ __( 'Description', 'fair-finance' ) }
 						value={ formData.description }
 						onChange={ ( value ) =>
-							setFormData( { ...formData, description: value } )
+							updateFormData( { description: value } )
 						}
 						help={ __(
 							'Optional description for this transfer',
@@ -176,10 +180,7 @@ const TransferModal = ( {
 						value={ formData.source_budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
-							setFormData( {
-								...formData,
-								source_budget_id: value,
-							} )
+							updateFormData( { source_budget_id: value } )
 						}
 					/>
 
@@ -188,10 +189,7 @@ const TransferModal = ( {
 						value={ formData.target_budget_id }
 						options={ budgetOptions }
 						onChange={ ( value ) =>
-							setFormData( {
-								...formData,
-								target_budget_id: value,
-							} )
+							updateFormData( { target_budget_id: value } )
 						}
 					/>
 
@@ -212,8 +210,7 @@ const TransferModal = ( {
 							value={ formData.event_url }
 							eventDateId={ formData.event_date_id }
 							onChange={ ( url, dateId ) =>
-								setFormData( {
-									...formData,
+								updateFormData( {
 									event_url: url,
 									event_date_id: dateId,
 								} )
@@ -225,10 +222,7 @@ const TransferModal = ( {
 						participantId={ formData.participant_id }
 						participant={ participant }
 						onChange={ ( id, p ) => {
-							setFormData( {
-								...formData,
-								participant_id: id,
-							} );
+							updateFormData( { participant_id: id } );
 							setParticipant( p );
 						} }
 					/>
