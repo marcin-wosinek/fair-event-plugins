@@ -6,20 +6,21 @@ import {
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
-	useRef,
 	useState,
 } from '@wordpress/element';
 import { Button, TextControl, Spinner } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
+import useClassicEmailEditor from 'fair-events-shared/src/useClassicEmailEditor.js';
 
 /**
  * Email body editor.
  *
- * Wraps the classic WordPress editor (TinyMCE, with a plain textarea when it
- * is unavailable) and reports every edit through `onChange`, so the draft
- * lives in the page's React state rather than in the editor. A `value` the
- * editor did not produce itself (cleared draft, duplicated message) is written
- * back into it.
+ * The classic editor lifecycle (TinyMCE, with a plain textarea when it is
+ * unavailable) comes from the shared `useClassicEmailEditor`: every edit is
+ * reported through `onChange`, so the draft lives in the page's React state,
+ * and a `value` the editor did not produce itself (cleared draft, duplicated
+ * message) is written back into it. The page and event link insertion stays
+ * here.
  *
  * The ref exposes `read()`, the editor's current content, for the moment of
  * sending: the editor's Code view can change the textarea without an event.
@@ -36,85 +37,16 @@ const ContentEditor = forwardRef( function ContentEditor(
 	{ id, value, onChange, disabled, eventSelected },
 	ref
 ) {
-	const textareaRef = useRef( null );
-	const lastEmitted = useRef( value );
-	const onChangeRef = useRef( onChange );
-	onChangeRef.current = onChange;
+	const { textareaRef, read, emit, getVisualEditor } = useClassicEmailEditor(
+		{ id, value, onChange, disabled }
+	);
 
 	const [ pageSearch, setPageSearch ] = useState( '' );
 	const [ pageResults, setPageResults ] = useState( [] );
 	const [ selectedPage, setSelectedPage ] = useState( null );
 	const [ isSearchingPages, setIsSearchingPages ] = useState( false );
 
-	const getVisualEditor = () => {
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		return editor && ! editor.isHidden() ? editor : null;
-	};
-
-	const read = () => {
-		const editor = getVisualEditor();
-		if ( editor ) {
-			return editor.getContent();
-		}
-		return textareaRef.current ? textareaRef.current.value : '';
-	};
-
-	const emit = () => {
-		const next = read();
-		lastEmitted.current = next;
-		onChangeRef.current( next );
-	};
-
-	useImperativeHandle( ref, () => ( { read } ) );
-
-	// Mount the classic editor on the textarea.
-	useEffect( () => {
-		if ( ! window.wp || ! window.wp.editor ) {
-			return undefined;
-		}
-
-		window.wp.editor.initialize( id, {
-			tinymce: {
-				toolbar1:
-					'bold,italic,bullist,numlist,link,unlink,removeformat',
-				plugins: 'lists,link',
-				branding: false,
-				menubar: false,
-				statusbar: false,
-				setup: ( editor ) => {
-					editor.on( 'change keyup input undo redo', emit );
-				},
-			},
-			quicktags: true,
-			mediaButtons: false,
-		} );
-
-		return () => window.wp.editor.remove( id );
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ id ] );
-
-	// Write a draft the editor did not produce itself back into it.
-	useEffect( () => {
-		if ( value === lastEmitted.current ) {
-			return;
-		}
-		lastEmitted.current = value;
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		if ( editor ) {
-			editor.setContent( value );
-		}
-		if ( textareaRef.current ) {
-			textareaRef.current.value = value;
-		}
-	}, [ id, value ] );
-
-	// Lock the visual editor while a send is in flight.
-	useEffect( () => {
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		if ( editor && editor.setMode ) {
-			editor.setMode( disabled ? 'readonly' : 'design' );
-		}
-	}, [ id, disabled ] );
+	useImperativeHandle( ref, () => ( { read } ), [ read ] );
 
 	// Search pages for the personal-link picker.
 	useEffect( () => {

@@ -321,4 +321,58 @@ test.describe('Email the participants of an event occurrence', () => {
 
 		expect(await deliveredTo(request, subject)).toEqual([attendee.email]);
 	});
+
+	test('sends Code-view edits and inserted event links', async ({ page }) => {
+		const subject = `Mail flow code view ${stamp}`;
+		created.subjects.push(subject);
+		const code = page.locator('#custom-mail-content');
+
+		await loginAsAdmin(page);
+		await page.goto(PAGE_URL);
+		await page
+			.getByRole('combobox', { name: 'Event' })
+			.selectOption(String(created.occurrenceId));
+		await expect(
+			page.locator('.fair-audience-custom-mail__preview')
+		).toContainText('1 person will receive this email.');
+		await page.getByRole('textbox', { name: 'Subject' }).fill(subject);
+
+		// The event page link wraps the selected visual text.
+		const visual = page
+			.frameLocator('#custom-mail-content_ifr')
+			.locator('body');
+		await visual.click();
+		await page.keyboard.type('Details here');
+		await page.keyboard.press('Shift+Home');
+		await page
+			.getByRole('button', { name: 'Insert event page link' })
+			.click();
+		await expect(
+			visual.getByRole('link', { name: 'Details here' })
+		).toHaveAttribute('href', '{event_page_url}');
+
+		// A quicktag edit in the Code view fires no input event.
+		await page.locator('#custom-mail-content-html').click();
+		await code.evaluate((el) => {
+			el.value += '<p>Bring water.</p>';
+			el.setSelectionRange(el.value.length - 10, el.value.length - 5);
+		});
+		await page.locator('#qt_custom-mail-content_strong').click();
+
+		const sendRequest = page.waitForRequest(
+			(req) =>
+				req.method() === 'POST' &&
+				/custom-mail(\?|$|&)/.test(decodeURIComponent(req.url())) &&
+				!decodeURIComponent(req.url()).includes('preview')
+		);
+		await page.getByRole('button', { name: 'Send email' }).click();
+		const content = (await sendRequest).postDataJSON().content;
+
+		expect(content).toContain('href="{event_page_url}"');
+		expect(content).toContain('Details here</a>');
+		expect(content).toContain('<strong>water</strong>');
+		await expect(
+			page.locator('.fair-audience-custom-mail__result')
+		).toContainText('1 email was sent.');
+	});
 });

@@ -762,3 +762,117 @@ describe( 'mail history', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'content editor', () => {
+	afterEach( () => {
+		delete window.wp;
+		delete window.tinymce;
+	} );
+
+	/**
+	 * Install a fake classic editor whose visual instance can be hidden to
+	 * stand in for the Code view.
+	 *
+	 * @return {Object} The fake TinyMCE instance.
+	 */
+	function installClassicEditor() {
+		let content = '';
+		const handlers = [];
+		const editor = {
+			hidden: false,
+			isHidden: () => editor.hidden,
+			getContent: () => content,
+			setContent: ( next ) => {
+				content = next;
+			},
+			setMode: jest.fn(),
+			on: ( names, handler ) => handlers.push( handler ),
+			fire: () => handlers.forEach( ( handler ) => handler() ),
+			selection: { getContent: () => 'the venue' },
+			execCommand: jest.fn( ( command, ui, html ) => {
+				content += html;
+			} ),
+		};
+		window.tinymce = { get: () => editor };
+		window.wp = {
+			editor: {
+				initialize: jest.fn( ( id, settings ) =>
+					settings.tinymce.setup( editor )
+				),
+				remove: jest.fn(),
+			},
+		};
+		return editor;
+	}
+
+	async function readyToWrite() {
+		mockApi();
+		await renderPage();
+		selectEvent( 16 );
+		await findText( '2 people will receive this email.' );
+		fireEvent.change( screen.getByRole( 'textbox', { name: 'Subject' } ), {
+			target: { value: 'Hello' },
+		} );
+	}
+
+	const sentContent = async () => {
+		await findText( '2 emails were sent.' );
+		const [ sendCall ] = callsTo( '/fair-audience/v1/custom-mail', 'POST' );
+		return sendCall.data.content;
+	};
+
+	it( 'sends Code-view edits that fired no event', async () => {
+		const editor = installClassicEditor();
+		await readyToWrite();
+
+		act( () => {
+			editor.setContent( '<p>Visual.</p>' );
+			editor.fire();
+		} );
+		editor.hidden = true;
+		screen.getByLabelText( 'Content' ).value = '<p>From Code view.</p>';
+		fireEvent.click( sendButton() );
+
+		expect( await sentContent() ).toBe( '<p>From Code view.</p>' );
+	} );
+
+	it( 'inserts the event page link around the visual selection', async () => {
+		const editor = installClassicEditor();
+		await readyToWrite();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Insert event page link' } )
+		);
+		expect( editor.execCommand ).toHaveBeenCalledWith(
+			'mceInsertContent',
+			false,
+			'<a href="{event_page_url}">the venue</a>'
+		);
+		fireEvent.click( sendButton() );
+
+		expect( await sentContent() ).toBe(
+			'<a href="{event_page_url}">the venue</a>'
+		);
+	} );
+
+	it( 'inserts the event page link into the plain textarea', async () => {
+		await readyToWrite();
+		fireEvent.change( screen.getByLabelText( 'Content' ), {
+			target: { value: '<p>Details: </p>' },
+		} );
+		const field = screen.getByLabelText( 'Content' );
+		field.setSelectionRange( 12, 12 );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Insert event page link' } )
+		);
+		expect( field ).toHaveValue(
+			'<p>Details: <a href="{event_page_url}">Open event page</a></p>'
+		);
+		fireEvent.click( sendButton() );
+
+		expect( await sentContent() ).toBe(
+			'<p>Details: <a href="{event_page_url}">Open event page</a></p>'
+		);
+	} );
+} );

@@ -2,6 +2,9 @@
  * E2E: the Manage Event Messages tab (#2126). An organizer writes a booking
  * confirmation message with a link in the classic editor, sees the tab
  * marked as unsaved, saves it, and finds it again after reloading the page.
+ * Saving from the Code view captures quicktag edits that fire no input event,
+ * and the editor keeps working after switching to another tab and back
+ * (#2232).
  */
 
 import { test, expect } from '@playwright/test';
@@ -136,5 +139,64 @@ test.describe( 'Manage Event Messages tab', () => {
 			'<a href="https://example.com/venue">Venue details</a>'
 		);
 		expect( saved.message ).toContain( '<p>See you there.</p>' );
+	} );
+
+	test( 'saves Code-view edits and keeps editing after a tab switch', async ( {
+		page,
+	} ) => {
+		const id = `fair-events-booking-message-${ eventDateId }`;
+		const code = page.locator( `#${ id }` );
+		const visual = page.frameLocator( `#${ id }_ifr` ).locator( 'body' );
+		const saveButton = page.getByRole( 'button', { name: 'Save message' } );
+		const savedNotice = page.locator( '.components-notice__content', {
+			hasText:
+				'Message saved. It will be added to confirmation emails for new bookings.',
+		} );
+		const readSaved = async () =>
+			(
+				await apiFetch( page, {
+					path: `/fair-events/v1/event-dates/${ eventDateId }/booking-message`,
+				} )
+			).message;
+
+		await page.goto( messagesUrl( eventDateId ) );
+		await expect( visual ).toBeVisible();
+
+		// Write in the Code view, then bold a word with the quicktag, which
+		// changes the textarea without an input event, and save from there.
+		await page.locator( `#${ id }-html` ).click();
+		await code.fill( '<p>Bring water.</p>' );
+		await code.evaluate( ( el ) => el.setSelectionRange( 9, 14 ) );
+		await page.locator( `#qt_${ id }_strong` ).click();
+		await expect( code ).toHaveValue(
+			'<p>Bring <strong>water</strong>.</p>'
+		);
+		await saveButton.click();
+		await expect( savedNotice ).toBeVisible();
+		expect( await readSaved() ).toContain( '<strong>water</strong>' );
+
+		// The saved message comes back after reloading.
+		await page.reload();
+		await page.locator( `#${ id }-tmce` ).click();
+		await expect( visual.locator( 'strong' ) ).toHaveText( 'water' );
+
+		// Another tab unmounts the editor; returning mounts a working one.
+		await page.getByRole( 'tab', { name: /^Statistics/ } ).click();
+		await expect( page.locator( `#${ id }` ) ).toHaveCount( 0 );
+		await page.getByRole( 'tab', { name: /^Messages/ } ).click();
+		await expect( visual.locator( 'strong' ) ).toHaveText( 'water' );
+		await visual.click();
+		await page.keyboard.press( 'Control+End' );
+		await page.keyboard.press( 'Enter' );
+		await page.keyboard.type( 'And a hat.' );
+		await expect(
+			page.getByRole( 'tab', { name: /^Messages/ } )
+		).toHaveText( 'Messages •' );
+		await saveButton.click();
+		await expect( savedNotice ).toBeVisible();
+
+		const saved = await readSaved();
+		expect( saved ).toContain( '<strong>water</strong>' );
+		expect( saved ).toContain( '<p>And a hat.</p>' );
 	} );
 } );

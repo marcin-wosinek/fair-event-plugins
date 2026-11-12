@@ -29,6 +29,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { isLinkOnlyEvent } from 'fair-events-shared/src/event-utils.js';
+import useClassicEmailEditor from 'fair-events-shared/src/useClassicEmailEditor.js';
 
 const TAB_NAME = 'messages';
 
@@ -41,8 +42,9 @@ const TAB_NAME = 'messages';
  * The ref exposes `read()`: the Code view can change the textarea without
  * an event, so saving reads the editor directly.
  *
- * Follows fair-audience's custom-mail ContentEditor lifecycle, without its
- * mailing-specific link placeholders.
+ * The lifecycle is shared with fair-audience's custom-mail ContentEditor
+ * through `useClassicEmailEditor`; the mailing-specific link placeholders
+ * stay there.
  *
  * @param {Object}   props          Component props.
  * @param {string}   props.id       Textarea ID.
@@ -56,75 +58,14 @@ const MessageEditor = forwardRef( function MessageEditor(
 	{ id, value, onChange, disabled, helpId },
 	ref
 ) {
-	const textareaRef = useRef( null );
-	const lastEmitted = useRef( value );
-	const onChangeRef = useRef( onChange );
-	onChangeRef.current = onChange;
+	const { textareaRef, read, emit } = useClassicEmailEditor( {
+		id,
+		value,
+		onChange,
+		disabled,
+	} );
 
-	const read = () => {
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		if ( editor && ! editor.isHidden() ) {
-			return editor.getContent();
-		}
-		return textareaRef.current ? textareaRef.current.value : '';
-	};
-
-	const emit = () => {
-		const next = read();
-		lastEmitted.current = next;
-		onChangeRef.current( next );
-	};
-
-	useImperativeHandle( ref, () => ( { read } ) );
-
-	// Mount the classic editor on the textarea.
-	useEffect( () => {
-		if ( ! window.wp || ! window.wp.editor ) {
-			return undefined;
-		}
-
-		window.wp.editor.initialize( id, {
-			tinymce: {
-				toolbar1:
-					'bold,italic,bullist,numlist,link,unlink,removeformat',
-				plugins: 'lists,link',
-				branding: false,
-				menubar: false,
-				statusbar: false,
-				setup: ( editor ) => {
-					editor.on( 'change keyup input undo redo', emit );
-				},
-			},
-			quicktags: true,
-			mediaButtons: false,
-		} );
-
-		return () => window.wp.editor.remove( id );
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ id ] );
-
-	// Write a value the editor did not produce itself back into it.
-	useEffect( () => {
-		if ( value === lastEmitted.current ) {
-			return;
-		}
-		lastEmitted.current = value;
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		if ( editor ) {
-			editor.setContent( value );
-		}
-		if ( textareaRef.current ) {
-			textareaRef.current.value = value;
-		}
-	}, [ id, value ] );
-
-	// Lock the visual editor while a save is in flight.
-	useEffect( () => {
-		const editor = window.tinymce ? window.tinymce.get( id ) : null;
-		if ( editor && editor.setMode ) {
-			editor.setMode( disabled ? 'readonly' : 'design' );
-		}
-	}, [ id, disabled ] );
+	useImperativeHandle( ref, () => ( { read } ), [ read ] );
 
 	return (
 		<div className="fair-events-booking-message__editor">
