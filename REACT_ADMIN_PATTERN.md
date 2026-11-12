@@ -766,11 +766,17 @@ CI on any `confirm()`, `alert()` or `prompt()` in the scanned plugins' `src/`
 
 Core's `ConfirmDialog` closes as soon as Confirm is clicked and has no
 pending or error state, so an API failure can only be reported after the
-dialog is gone. For a request that can fail, follow
-`fair-events/src/Admin/components/ConfirmActionModal.js` (title, named and
-optionally destructive button, `isBusy` blocking every dismissal, inline
-error that keeps the dialog open). It is a plugin-local component — copy the
-pattern into your plugin rather than importing across plugins.
+dialog is gone. For a request that can fail, use
+`fair-events-shared/src/ConfirmActionModal.js` (title, named and optionally
+destructive button, `isBusy` blocking every dismissal, inline error that
+keeps the dialog open) with its `useConfirmAction` hook. Import the module
+directly, not the package root, and wrap it in a plugin-local
+`src/Admin/components/ConfirmActionModal.js` adapter that passes the
+translated `cancelLabel` and the plugin's own `className`, so strings stay in
+the plugin's text domain — see
+`fair-finance/src/Admin/components/ConfirmActionModal.js`. Fair Events still
+has its own copy (#2228 left it for separate work); never import one plugin's
+component from another.
 
 **State ownership**
 
