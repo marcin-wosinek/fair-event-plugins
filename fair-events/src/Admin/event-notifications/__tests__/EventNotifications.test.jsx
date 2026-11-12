@@ -2081,11 +2081,54 @@ describe( 'Notification list', () => {
 			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
 			{ target: { value: 'nothing like it' } }
 		);
-		fireEvent.click(
-			screen.getByRole( 'button', { name: 'Clear search' } )
-		);
+		// Offered both in the toolbar and in the no-results message.
+		const [ inToolbar, inMessage ] = screen.getAllByRole( 'button', {
+			name: 'Clear filters',
+		} );
+		expect(
+			inToolbar.closest( '.fair-admin-list-toolbar' )
+		).not.toBeNull();
+		fireEvent.click( inMessage );
 		expect( screen.getAllByRole( 'row' ) ).toHaveLength( 4 );
 		expect( currentSearch() ).not.toHaveProperty( 's' );
+		expect(
+			screen.queryByRole( 'button', { name: 'Clear filters' } )
+		).not.toBeInTheDocument();
+		// Focus stays in the list, on its first control.
+		expect(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } )
+		).toHaveFocus();
+	} );
+
+	it( 'summarizes the applied search and counts the matches', async () => {
+		await renderPage( payload(), {}, null );
+
+		expect( screen.getByText( '3 notifications' ) ).toHaveAttribute(
+			'role',
+			'status'
+		);
+		expect(
+			screen.queryByText( 'Applied filters:' )
+		).not.toBeInTheDocument();
+
+		fireEvent.change(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
+			{ target: { value: 'organizer@' } }
+		);
+		expect( screen.getByText( 'Applied filters:' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Search: organizer@' ) ).toBeInTheDocument();
+		expect( screen.getByText( '1 notification' ) ).toBeInTheDocument();
+	} );
+
+	it( 'moves from the header’s Add a notification to the add form', async () => {
+		await renderPage( payload(), {}, null );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Add a notification' } )
+		);
+		expect(
+			screen.getByRole( 'combobox', { name: 'Kind' } )
+		).toHaveFocus();
 	} );
 
 	it( 'reports a missing bot token as a problem of the notification', async () => {
@@ -2133,10 +2176,22 @@ describe( 'Notification list', () => {
 		// 25 notifications: 20 rows and a header on the first page.
 		expect( screen.getAllByRole( 'row' ) ).toHaveLength( 21 );
 		expect( screen.getByText( 'Page 1 of 2' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( '1–20 of 25 notifications' )
+		).toBeInTheDocument();
+		const pages = screen.getByRole( 'navigation', {
+			name: 'Notification pages',
+		} );
+		expect(
+			within( pages ).getByRole( 'button', { name: 'Previous page' } )
+		).toHaveAttribute( 'aria-disabled', 'true' );
 		fireEvent.click( screen.getByRole( 'link', { name: 'Next page' } ) );
 		expect( screen.getAllByRole( 'row' ) ).toHaveLength( 6 );
 		expect( rowOf( 'Digest 22' ) ).toBeDefined();
 		expect( currentSearch() ).toMatchObject( { list_page: '2' } );
+		expect(
+			screen.getByText( '21–25 of 25 notifications' )
+		).toBeInTheDocument();
 	} );
 } );
 
@@ -2252,6 +2307,30 @@ describe( 'Notification list by event feed', () => {
 		expect( listed() ).toEqual( [ 'Individual email' ] );
 		expect( currentSearch() ).not.toHaveProperty( 'feed' );
 		expect( currentSearch() ).toMatchObject( { s: 'organizer@' } );
+	} );
+
+	it( 'summarizes the feed and search, and clears both at once', async () => {
+		await renderList();
+
+		chooseFeed( 'city' );
+		fireEvent.change(
+			screen.getByRole( 'textbox', { name: 'Search notifications' } ),
+			{ target: { value: 'city-team' } }
+		);
+		expect( screen.getByText( 'Search: city-team' ) ).toBeInTheDocument();
+		expect(
+			screen.getByText( 'Event feed: City events' )
+		).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Clear filters' } )
+		);
+		expect( currentSearch() ).not.toHaveProperty( 'feed' );
+		expect( currentSearch() ).not.toHaveProperty( 's' );
+		expect( feedSelect() ).toHaveValue( '' );
+		expect(
+			screen.queryByText( 'Applied filters:' )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'leaves out notifications of all local events and without a feed once a feed is chosen', async () => {

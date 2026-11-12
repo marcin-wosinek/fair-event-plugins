@@ -122,6 +122,8 @@ test.describe( 'Fair Finance entries Link filter', () => {
 		const link = page.getByRole( 'combobox', { name: 'Link' } );
 
 		await expect( row( 'unrelated' ) ).toBeVisible();
+		// The Link filter is under More filters.
+		await page.getByRole( 'button', { name: /^More filters/ } ).click();
 
 		// The event and the URL-only link share one dropdown.
 		await expect(

@@ -212,7 +212,9 @@ describe( 'TransactionsApp — load missing Mollie fees (#1695)', () => {
 				},
 			} )
 		);
-		await waitFor( () => expect( feeButton() ).toBeDisabled() );
+		await waitFor( () =>
+			expect( feeButton() ).toHaveAttribute( 'aria-disabled', 'true' )
+		);
 		expect( feeButton() ).toHaveTextContent( 'Loading fees…' );
 
 		resolveStart( {
@@ -449,7 +451,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 		render( <TransactionsApp /> );
 
 		expect(
-			await screen.findByText( '73 transactions found.' )
+			await screen.findByText( '1–50 of 73 transactions' )
 		).toBeInTheDocument();
 		expect( lastParams() ).toEqual( {
 			page: '1',
@@ -466,14 +468,14 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 	it( 'keeps drafts out of the list until Apply, then sends every criterion, returns to page 1 and keeps the sort', async () => {
 		apiFetch.mockImplementation( () => respond( [ row( 1 ) ], 120, 3 ) );
 		render( <TransactionsApp /> );
-		await screen.findByText( '120 transactions found.' );
+		await screen.findByText( / of 120 transactions$/ );
 
 		fireEvent.click( sortButton( 'Amount' ) );
 		await waitFor( () => expect( listCalls() ).toHaveLength( 2 ) );
-		await screen.findByText( '120 transactions found.' );
-		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
+		await screen.findByText( / of 120 transactions$/ );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Next page' } ) );
 		await waitFor( () => expect( lastParams().page ).toBe( '2' ) );
-		await screen.findByText( '120 transactions found.' );
+		await screen.findByText( / of 120 transactions$/ );
 		const before = listCalls().length;
 
 		type( 'Search', '  jane@example.com ' );
@@ -521,7 +523,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 
 	it( 'applies the filters when Enter submits the form', async () => {
 		render( <TransactionsApp /> );
-		await screen.findByText( '1 transaction found.' );
+		await screen.findByText( '1 transaction' );
 
 		type( 'Search', 'tr_abc' );
 		fireEvent.submit(
@@ -534,15 +536,15 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 	it( 'resets to the Paid / Live defaults on page 1 and keeps the sort', async () => {
 		apiFetch.mockImplementation( () => respond( [ row( 1 ) ], 120, 3 ) );
 		render( <TransactionsApp /> );
-		await screen.findByText( '120 transactions found.' );
+		await screen.findByText( / of 120 transactions$/ );
 
 		fireEvent.click( sortButton( 'Transaction' ) );
 		type( 'Search', 'workshop' );
 		type( 'Mode', '' );
 		fireEvent.click( applyButton() );
 		await waitFor( () => expect( lastParams().search ).toBe( 'workshop' ) );
-		await screen.findByText( '120 transactions found.' );
-		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
+		await screen.findByText( / of 120 transactions$/ );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Next page' } ) );
 		await waitFor( () => expect( lastParams().page ).toBe( '2' ) );
 
 		fireEvent.click(
@@ -565,7 +567,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 
 	it( 'explains invalid ranges inline and does not request them', async () => {
 		render( <TransactionsApp /> );
-		await screen.findByText( '1 transaction found.' );
+		await screen.findByText( '1 transaction' );
 		const before = listCalls().length;
 
 		type( 'From date', '2026-04-02' );
@@ -575,7 +577,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				'The end date must be on or after the start date.'
 			)
 		).toBeInTheDocument();
-		expect( applyButton() ).toBeDisabled();
+		expect( applyButton() ).toHaveAttribute( 'aria-disabled', 'true' );
 
 		type( 'To date', '2026-04-02' );
 		type( 'Minimum amount', '10' );
@@ -592,7 +594,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				'Enter an amount of zero or more with at most two decimal places.'
 			)
 		).toBeInTheDocument();
-		expect( applyButton() ).toBeDisabled();
+		expect( applyButton() ).toHaveAttribute( 'aria-disabled', 'true' );
 
 		fireEvent.submit(
 			screen.getByRole( 'form', { name: 'Filter transactions' } )
@@ -615,9 +617,10 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				'No transactions match these filters. Change them or select “Reset filters”.'
 			)
 		).toBeInTheDocument();
+		// No count without results; the message explains why.
 		expect(
-			screen.getByText( '0 transactions found.' )
-		).toBeInTheDocument();
+			document.querySelector( '.fair-admin-list-toolbar__count' )
+		).toBeNull();
 		expect(
 			screen.getByRole( 'button', { name: 'Reset filters' } )
 		).toBeEnabled();
@@ -642,7 +645,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 		apiFetch.mockImplementation( () => respond( [ row( 7 ) ] ) );
 		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		expect(
-			await screen.findByText( '1 transaction found.' )
+			await screen.findByText( '1 transaction' )
 		).toBeInTheDocument();
 	} );
 
@@ -674,9 +677,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 
 		expect( screen.queryByText( 'Older result' ) ).not.toBeInTheDocument();
 		expect( screen.getByText( 'Newer result' ) ).toBeInTheDocument();
-		expect(
-			screen.getByText( '1 transaction found.' )
-		).toBeInTheDocument();
+		expect( screen.getByText( '1 transaction' ) ).toBeInTheDocument();
 	} );
 
 	describe( 'selection and export', () => {
@@ -718,7 +719,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				},
 				() =>
 					fireEvent.click(
-						screen.getByRole( 'button', { name: 'Next' } )
+						screen.getByRole( 'button', { name: 'Next page' } )
 					),
 				() => fireEvent.click( sortButton( 'Amount' ) ),
 				() =>
@@ -769,7 +770,7 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 			);
 			await waitFor( () => expect( release ).toBeDefined() );
 			release();
-			await screen.findByText( '2 transactions found.' );
+			await screen.findByText( '2 transactions' );
 
 			expect( rowCheckbox( 1 ) ).not.toBeChecked();
 			expect( exportButton() ).not.toBeInTheDocument();
@@ -820,10 +821,10 @@ describe( 'TransactionsApp — search and filters (#1753)', () => {
 				} )
 			);
 			await waitFor( () => expect( releaseList ).toBeDefined() );
-			expect( exportButton() ).toBeDisabled();
+			expect( exportButton() ).toHaveAttribute( 'aria-disabled', 'true' );
 
 			releaseList();
-			await screen.findByText( '1 transaction found.' );
+			await screen.findByText( '1 transaction' );
 			expect( rowCheckbox( 2 ) ).toBeChecked();
 
 			fireEvent.click( exportButton() );
@@ -1071,9 +1072,7 @@ describe( 'TransactionsApp — shared table (#2209)', () => {
 		expect(
 			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
 		).toBeChecked();
-		expect(
-			screen.getByText( '2 transactions found.' )
-		).toBeInTheDocument();
+		expect( screen.getByText( '2 transactions' ) ).toBeInTheDocument();
 
 		fail = false;
 		fireEvent.click( screen.getByRole( 'button', { name: 'Try again' } ) );
@@ -1099,7 +1098,7 @@ describe( 'TransactionsApp — shared table (#2209)', () => {
 					next = { resolve, reject };
 				} )
 		);
-		fireEvent.click( screen.getByRole( 'button', { name: 'Next' } ) );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Next page' } ) );
 		await waitFor( () => expect( next ).toBeDefined() );
 
 		expect(
@@ -1138,5 +1137,200 @@ describe( 'TransactionsApp — shared table (#2209)', () => {
 		expect(
 			await screen.findByText( /^No transactions yet\./ )
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'TransactionsApp — toolbar and pagination (#2210)', () => {
+	const LIST = '/fair-payments-connector/v1/transactions?';
+
+	const row = ( id ) => ( {
+		...TRANSACTION,
+		id,
+		mollie_payment_id: `tr_row${ id }`,
+		description: `Row ${ id }`,
+		entry_ids: [],
+	} );
+
+	const respond = ( transactions, total = transactions.length, pages = 1 ) =>
+		Promise.resolve( { transactions, total, pages } );
+
+	const lastParams = () =>
+		Object.fromEntries(
+			new URLSearchParams(
+				apiFetch.mock.calls
+					.map( ( [ options ] ) => options.path )
+					.filter( ( path ) => path.startsWith( LIST ) )
+					.at( -1 )
+					.slice( LIST.length )
+			)
+		);
+
+	const moreToggle = () =>
+		screen.getByRole( 'button', { name: /^More filters/ } );
+
+	it( 'puts Import and fee loading beside the title', async () => {
+		render( <TransactionsApp /> );
+		await screen.findByText( '1 transaction' );
+
+		const header = screen
+			.getByRole( 'heading', { name: 'Payment Transactions' } )
+			.closest( '.fair-admin-list-header' );
+		expect(
+			within( header ).getByRole( 'button', { name: 'Import' } )
+		).toBeInTheDocument();
+		expect(
+			within( header ).getByRole( 'button', {
+				name: 'Load missing Mollie fees',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps dates and amounts under More filters, counting the filled ones', async () => {
+		render( <TransactionsApp /> );
+		await screen.findByText( '1 transaction' );
+
+		expect( moreToggle() ).toHaveAttribute( 'aria-expanded', 'false' );
+		expect(
+			screen.queryByRole( 'textbox', { name: 'Minimum amount' } )
+		).not.toBeInTheDocument();
+
+		fireEvent.click( moreToggle() );
+		fireEvent.change( screen.getByLabelText( 'Minimum amount' ), {
+			target: { value: '10' },
+		} );
+		fireEvent.click( moreToggle() );
+		expect( moreToggle() ).toHaveTextContent( 'More filters (1 active)' );
+		expect( moreToggle() ).toHaveAttribute( 'aria-expanded', 'false' );
+
+		// Draft only: the applied summary still names the shown rows' criteria.
+		expect(
+			screen.queryByText( 'Amount at least 10' )
+		).not.toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Apply filters' } )
+		);
+		expect(
+			await screen.findByText( 'Amount at least 10' )
+		).toBeInTheDocument();
+		expect( lastParams().amount_min ).toBe( '10' );
+	} );
+
+	it( 'keeps More filters open while one of its fields is invalid', async () => {
+		render( <TransactionsApp /> );
+		await screen.findByText( '1 transaction' );
+
+		fireEvent.click( moreToggle() );
+		fireEvent.change( screen.getByLabelText( 'Maximum amount' ), {
+			target: { value: '1.234' },
+		} );
+		fireEvent.click( moreToggle() );
+		expect( moreToggle() ).toHaveAttribute( 'aria-expanded', 'true' );
+		expect(
+			screen.getByText(
+				'Enter an amount of zero or more with at most two decimal places.'
+			)
+		).toBeVisible();
+	} );
+
+	it( 'clears every criterion, while Reset returns to Paid and Live', async () => {
+		render( <TransactionsApp /> );
+		await screen.findByText( '1 transaction' );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Clear filters' } )
+		);
+		await waitFor( () =>
+			expect( lastParams() ).not.toHaveProperty( 'status' )
+		);
+		expect( lastParams() ).not.toHaveProperty( 'mode' );
+		expect(
+			await screen.findByText( 'Status: All statuses' )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Clear filters' } )
+		).not.toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Reset filters' } )
+		);
+		await waitFor( () =>
+			expect( lastParams() ).toMatchObject( {
+				status: 'paid',
+				mode: 'live',
+			} )
+		);
+	} );
+
+	it( 'reports the selected count with the actions for the selection', async () => {
+		apiFetch.mockImplementation( () => respond( [ row( 1 ), row( 2 ) ] ) );
+		render( <TransactionsApp /> );
+		await screen.findByText( '2 transactions' );
+
+		expect(
+			screen.queryByRole( 'button', { name: 'Export Selected' } )
+		).not.toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #1' } )
+		);
+		const selection = screen.getByRole( 'group', {
+			name: '1 transaction selected',
+		} );
+		expect(
+			within( selection ).getByRole( 'button', {
+				name: 'Export Selected',
+			} )
+		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'checkbox', { name: 'Select transaction #2' } )
+		);
+		expect(
+			screen.getByRole( 'group', { name: '2 transactions selected' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows the range and keeps pagination and its focus while a page loads', async () => {
+		apiFetch.mockImplementation( ( { path } ) => {
+			const page = new URLSearchParams( path.split( '?' )[ 1 ] ).get(
+				'page'
+			);
+			return respond( [ row( Number( page ) ) ], 120, 3 );
+		} );
+		render( <TransactionsApp /> );
+		await screen.findByText( '1–50 of 120 transactions' );
+
+		const pages = screen.getByRole( 'navigation', {
+			name: 'Transaction pages',
+		} );
+		expect( within( pages ).getByText( 'Page 1 of 3' ) ).toBeVisible();
+		const next = within( pages ).getByRole( 'button', {
+			name: 'Next page',
+		} );
+		next.focus();
+		fireEvent.click( next );
+		await screen.findByText( '51–100 of 120 transactions' );
+		fireEvent.click( next );
+		await screen.findByText( '101–120 of 120 transactions' );
+		expect( next ).toBeInTheDocument();
+		expect( next ).toHaveFocus();
+		expect( next ).toHaveAttribute( 'aria-disabled', 'true' );
+	} );
+
+	it( 'offers an import for an empty dataset and clearing for no results', async () => {
+		apiFetch.mockImplementation( () => respond( [] ) );
+		render( <TransactionsApp /> );
+		await screen.findByText( /^No paid live transactions\./ );
+		const [ inToolbar, inMessage ] = screen.getAllByRole( 'button', {
+			name: 'Clear filters',
+		} );
+		expect( inToolbar ).toBeInTheDocument();
+		fireEvent.click( inMessage );
+
+		expect(
+			await screen.findByText( /^No transactions yet\./ )
+		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Import transactions' } )
+		);
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
 	} );
 } );

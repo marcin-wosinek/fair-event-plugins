@@ -11,15 +11,11 @@ import {
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
-	Card,
-	CardHeader,
-	CardBody,
 	Notice,
 	SelectControl,
 	TextControl,
 	Button,
 	CheckboxControl,
-	__experimentalHStack as HStack,
 } from '@wordpress/components';
 import {
 	AdminTable,
@@ -28,6 +24,16 @@ import {
 	StatusLabel,
 	RowActions,
 	TableMessage,
+	ListHeader,
+	ListToolbar,
+	ListToolbarField,
+	MoreFiltersToggle,
+	MoreFiltersPanel,
+	ResultCount,
+	AppliedFilters,
+	SelectionSummary,
+	ListPagination,
+	pageRange,
 } from 'fair-events-shared/src/admin-table/index.js';
 
 /**
@@ -83,6 +89,14 @@ const EMPTY_RESULT = { transactions: [], total: 0, pages: 0, query: null };
 
 // Every criterion off: nothing is hidden, so no rows means no transactions.
 const UNFILTERED_CRITERIA = { ...DEFAULT_CRITERIA, status: '', mode: '' };
+
+// Transactions per page, as requested from the server.
+const PER_PAGE = 50;
+
+const MORE_FILTERS_ID = 'fair-payments-transactions-more-filters';
+
+// Criteria kept under More filters; Search, Status and Mode stay visible.
+const MORE_CRITERIA = [ 'dateFrom', 'dateTo', 'amountMin', 'amountMax' ];
 
 const AMOUNT_PATTERN = /^\d{1,9}(\.\d{1,2})?$/;
 
@@ -216,7 +230,7 @@ const describeCriteria = ( criteria ) => {
 const buildListPath = ( { criteria, page, orderby, order } ) => {
 	const params = new URLSearchParams();
 	params.append( 'page', page );
-	params.append( 'per_page', 50 );
+	params.append( 'per_page', PER_PAGE );
 	[
 		[ 'status', criteria.status ],
 		[ 'mode', criteria.mode ],
@@ -236,14 +250,6 @@ const buildListPath = ( { criteria, page, orderby, order } ) => {
 	return `/fair-payments-connector/v1/transactions?${ params.toString() }`;
 };
 
-const FILTER_ROW_STYLE = {
-	display: 'flex',
-	flexWrap: 'wrap',
-	gap: '12px',
-	alignItems: 'flex-start',
-};
-const FILTER_FIELD_STYLE = { flex: '1 1 150px', minWidth: '140px' };
-const FILTER_SEARCH_STYLE = { flex: '2 1 260px', minWidth: '200px' };
 const FIELD_ERROR_STYLE = { color: '#d63638' };
 
 const STATUS_TONES = {
@@ -342,6 +348,7 @@ const TransactionsApp = () => {
 	);
 	const [ isImportModalOpen, setIsImportModalOpen ] = useState( false );
 	const [ loadingFees, setLoadingFees ] = useState( false );
+	const [ moreFiltersOpen, setMoreFiltersOpen ] = useState( false );
 	// A ref closes the gap before re-render, so a double click can't start
 	// two fee runs.
 	const feesBusyRef = useRef( false );
@@ -468,6 +475,13 @@ const TransactionsApp = () => {
 		setDraft( DEFAULT_CRITERIA );
 		changeQuery( { criteria: DEFAULT_CRITERIA, page: 1 } );
 	};
+
+	// Every criterion off, including the default Paid and Live.
+	const handleClear = () => {
+		setDraft( UNFILTERED_CRITERIA );
+		changeQuery( { criteria: UNFILTERED_CRITERIA, page: 1 } );
+	};
+	const isUnfiltered = sameCriteria( criteria, UNFILTERED_CRITERIA );
 
 	const setDraftField = ( field ) => ( value ) =>
 		setDraft( ( prev ) => ( { ...prev, [ field ]: value } ) );
@@ -807,7 +821,20 @@ const TransactionsApp = () => {
 	let emptyMessage;
 	if ( sameCriteria( criteria, UNFILTERED_CRITERIA ) ) {
 		emptyMessage = (
-			<TableMessage status="empty">
+			<TableMessage
+				status="empty"
+				actions={
+					<Button
+						variant="secondary"
+						onClick={ () => setIsImportModalOpen( true ) }
+					>
+						{ __(
+							'Import transactions',
+							'fair-payments-connector'
+						) }
+					</Button>
+				}
+			>
 				{ __(
 					'No transactions yet. Payments appear here once someone pays or after an import.',
 					'fair-payments-connector'
@@ -816,7 +843,11 @@ const TransactionsApp = () => {
 		);
 	} else if ( isDefaultCriteria ) {
 		emptyMessage = (
-			<TableMessage status="no-results">
+			<TableMessage
+				status="no-results"
+				onClear={ handleClear }
+				clearLabel={ __( 'Clear filters', 'fair-payments-connector' ) }
+			>
 				{ __(
 					'No paid live transactions. Change the Status or Mode filter to see other transactions.',
 					'fair-payments-connector'
@@ -825,7 +856,11 @@ const TransactionsApp = () => {
 		);
 	} else {
 		emptyMessage = (
-			<TableMessage status="no-results">
+			<TableMessage
+				status="no-results"
+				onClear={ handleClear }
+				clearLabel={ __( 'Clear filters', 'fair-payments-connector' ) }
+			>
 				{ __(
 					'No transactions match these filters. Change them or select “Reset filters”.',
 					'fair-payments-connector'
@@ -839,6 +874,59 @@ const TransactionsApp = () => {
 			{ __( 'Loading transactions…', 'fair-payments-connector' ) }
 		</TableMessage>
 	);
+
+	// A draft error under More filters keeps the panel open, so the reason
+	// Apply is unavailable stays visible.
+	const moreHasError = MORE_CRITERIA.some( ( key ) => draftErrors[ key ] );
+	const isMoreOpen = moreFiltersOpen || moreHasError;
+	const moreActive = MORE_CRITERIA.filter(
+		( key ) => draft[ key ].trim() !== ''
+	).length;
+	const moreFiltersLabel = moreActive
+		? sprintf(
+				// translators: %d is the number of filled-in filters under More filters.
+				_n(
+					'More filters (%d active)',
+					'More filters (%d active)',
+					moreActive,
+					'fair-payments-connector'
+				),
+				moreActive
+			)
+		: __( 'More filters', 'fair-payments-connector' );
+
+	const { first, last } = pageRange( query.page, PER_PAGE, result.total );
+	let resultCountText = null;
+	if ( isCurrent && result.total > 0 ) {
+		resultCountText =
+			result.pages > 1
+				? sprintf(
+						// translators: 1: first shown position, 2: last shown position, 3: number of transactions matching the applied filters.
+						_n(
+							'%1$d–%2$d of %3$d transaction',
+							'%1$d–%2$d of %3$d transactions',
+							result.total,
+							'fair-payments-connector'
+						),
+						first,
+						last,
+						result.total
+					)
+				: sprintf(
+						// translators: %d is the number of transactions matching the applied filters.
+						_n(
+							'%d transaction',
+							'%d transactions',
+							result.total,
+							'fair-payments-connector'
+						),
+						result.total
+					);
+	}
+
+	const selectedOnPage = transactions.filter( ( t ) =>
+		selectedTransactions.has( t.id )
+	).length;
 
 	let listBody;
 	if ( transactions.length > 0 ) {
@@ -867,6 +955,7 @@ const TransactionsApp = () => {
 						'Payment transactions',
 						'fair-payments-connector'
 					) }
+					className="fair-payments-transactions__table"
 				>
 					<thead>
 						<tr>
@@ -898,41 +987,6 @@ const TransactionsApp = () => {
 						{ transactions.map( renderRow ) }
 					</tbody>
 				</AdminTable>
-
-				{ result.pages > 1 && (
-					<HStack
-						style={ {
-							marginTop: '16px',
-							justifyContent: 'center',
-						} }
-					>
-						<Button
-							variant="secondary"
-							disabled={ query.page <= 1 }
-							onClick={ () =>
-								changeQuery( {
-									page: query.page - 1,
-								} )
-							}
-						>
-							{ __( 'Previous', 'fair-payments-connector' ) }
-						</Button>
-						<span>
-							{ query.page } / { result.pages }
-						</span>
-						<Button
-							variant="secondary"
-							disabled={ query.page >= result.pages }
-							onClick={ () =>
-								changeQuery( {
-									page: query.page + 1,
-								} )
-							}
-						>
-							{ __( 'Next', 'fair-payments-connector' ) }
-						</Button>
-					</HStack>
-				) }
 			</>
 		);
 	} else if ( loading ) {
@@ -945,200 +999,25 @@ const TransactionsApp = () => {
 
 	return (
 		<div className="wrap fair-payments-transactions">
-			<h1>{ __( 'Payment Transactions', 'fair-payments-connector' ) }</h1>
-
-			<Card>
-				<CardHeader
-					style={ {
-						flexDirection: 'column',
-						alignItems: 'stretch',
-						gap: '16px',
-					} }
-				>
-					<form
-						onSubmit={ handleApply }
-						noValidate
-						aria-label={ __(
-							'Filter transactions',
-							'fair-payments-connector'
-						) }
-					>
-						<div style={ FILTER_ROW_STYLE }>
-							<div style={ FILTER_SEARCH_STYLE }>
-								<TextControl
-									type="search"
-									label={ __(
-										'Search',
-										'fair-payments-connector'
-									) }
-									help={ __(
-										'Transaction ID, Mollie payment ID, description, or person name or email.',
-										'fair-payments-connector'
-									) }
-									value={ draft.search }
-									onChange={ setDraftField( 'search' ) }
-									maxLength={ 200 }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<SelectControl
-									label={ __(
-										'Status',
-										'fair-payments-connector'
-									) }
-									value={ draft.status }
-									options={ STATUS_OPTIONS }
-									onChange={ setDraftField( 'status' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<SelectControl
-									label={ __(
-										'Mode',
-										'fair-payments-connector'
-									) }
-									value={ draft.mode }
-									options={ MODE_OPTIONS }
-									onChange={ setDraftField( 'mode' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<TextControl
-									type="date"
-									label={ __(
-										'From date',
-										'fair-payments-connector'
-									) }
-									value={ draft.dateFrom }
-									onChange={ setDraftField( 'dateFrom' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<TextControl
-									type="date"
-									label={ __(
-										'To date',
-										'fair-payments-connector'
-									) }
-									help={ fieldHelp( 'dateTo' ) }
-									value={ draft.dateTo }
-									onChange={ setDraftField( 'dateTo' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<TextControl
-									type="number"
-									min={ 0 }
-									step="0.01"
-									label={ __(
-										'Minimum amount',
-										'fair-payments-connector'
-									) }
-									help={ fieldHelp( 'amountMin' ) }
-									value={ draft.amountMin }
-									onChange={ setDraftField( 'amountMin' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-							<div style={ FILTER_FIELD_STYLE }>
-								<TextControl
-									type="number"
-									min={ 0 }
-									step="0.01"
-									label={ __(
-										'Maximum amount',
-										'fair-payments-connector'
-									) }
-									help={ fieldHelp( 'amountMax' ) }
-									value={ draft.amountMax }
-									onChange={ setDraftField( 'amountMax' ) }
-									__nextHasNoMarginBottom
-									__next40pxDefaultSize
-								/>
-							</div>
-						</div>
-						<p className="description">
-							{ __(
-								'Dates include the whole day in the site timezone. Amounts are compared as recorded, in each transaction’s own currency, without conversion.',
-								'fair-payments-connector'
-							) }
-						</p>
-						<HStack
-							justify="flex-start"
-							wrap
-							style={ { rowGap: '8px' } }
+			<ListHeader
+				title={ __(
+					'Payment Transactions',
+					'fair-payments-connector'
+				) }
+				actions={
+					<>
+						<Button
+							variant="secondary"
+							onClick={ () => setIsImportModalOpen( true ) }
 						>
-							<Button
-								variant="primary"
-								type="submit"
-								disabled={ ! canApply }
-								style={ { flexShrink: 0, width: 'auto' } }
-							>
-								{ __(
-									'Apply filters',
-									'fair-payments-connector'
-								) }
-							</Button>
-							<Button
-								variant="tertiary"
-								onClick={ handleReset }
-								style={ { flexShrink: 0, width: 'auto' } }
-							>
-								{ __(
-									'Reset filters',
-									'fair-payments-connector'
-								) }
-							</Button>
-							{ canApply && hasUnappliedChanges && (
-								<span>
-									{ __(
-										'Filters changed. Select “Apply filters” to update the list.',
-										'fair-payments-connector'
-									) }
-								</span>
-							) }
-						</HStack>
-					</form>
-					<HStack
-						spacing={ 2 }
-						justify="flex-start"
-						wrap
-						style={ { rowGap: '8px' } }
-					>
-						{ selectedTransactions.size > 0 && (
-							<Button
-								variant="secondary"
-								onClick={ handleExport }
-								disabled={ loading }
-								style={ { flexShrink: 0, width: 'auto' } }
-							>
-								{ __(
-									'Export Selected',
-									'fair-payments-connector'
-								) }
-							</Button>
-						) }
+							{ __( 'Import', 'fair-payments-connector' ) }
+						</Button>
 						<Button
 							variant="secondary"
 							onClick={ () => feeLoad.load( criteria.mode ) }
 							isBusy={ loadingFees }
 							disabled={ loadingFees }
-							style={ {
-								whiteSpace: 'nowrap',
-								flexShrink: 0,
-								width: 'auto',
-							} }
+							accessibleWhenDisabled
 						>
 							{ loadingFees
 								? __(
@@ -1150,94 +1029,268 @@ const TransactionsApp = () => {
 										'fair-payments-connector'
 									) }
 						</Button>
-						<Button
-							variant="secondary"
-							onClick={ () => setIsImportModalOpen( true ) }
-							style={ { flexShrink: 0, width: 'auto' } }
-						>
-							{ __( 'Import', 'fair-payments-connector' ) }
-						</Button>
-					</HStack>
-				</CardHeader>
-				<CardBody style={ { overflowX: 'auto' } }>
-					{ error && (
-						<Notice
-							status="error"
-							isDismissible
-							onRemove={ () => setError( null ) }
-						>
-							{ error }
-						</Notice>
-					) }
+					</>
+				}
+			/>
 
-					{ success && (
-						<Notice
-							status="success"
-							isDismissible
-							onRemove={ () => setSuccess( null ) }
-						>
-							{ success }
-						</Notice>
-					) }
-
-					<MollieFeeFeedback
-						progress={ feeLoad.progress }
-						result={ feeLoad.result }
-						clearResult={ feeLoad.clearResult }
-					/>
-
-					<div style={ { margin: '8px 0 12px' } }>
-						<span>
-							{ __(
-								'Applied filters:',
+			<form
+				onSubmit={ handleApply }
+				noValidate
+				aria-label={ __(
+					'Filter transactions',
+					'fair-payments-connector'
+				) }
+			>
+				<ListToolbar
+					selection={
+						selectedOnPage > 0 && (
+							<SelectionSummary
+								label={ sprintf(
+									// translators: %d is the number of selected transactions.
+									_n(
+										'%d transaction selected',
+										'%d transactions selected',
+										selectedOnPage,
+										'fair-payments-connector'
+									),
+									selectedOnPage
+								) }
+							>
+								<Button
+									variant="secondary"
+									size="compact"
+									onClick={ handleExport }
+									disabled={ loading }
+									accessibleWhenDisabled
+								>
+									{ __(
+										'Export Selected',
+										'fair-payments-connector'
+									) }
+								</Button>
+							</SelectionSummary>
+						)
+					}
+					actions={
+						<>
+							<MoreFiltersToggle
+								panelId={ MORE_FILTERS_ID }
+								isOpen={ isMoreOpen }
+								onToggle={ () =>
+									setMoreFiltersOpen( ! isMoreOpen )
+								}
+								label={ moreFiltersLabel }
+							/>
+							<Button
+								variant="primary"
+								type="submit"
+								disabled={ ! canApply }
+								accessibleWhenDisabled
+							>
+								{ __(
+									'Apply filters',
+									'fair-payments-connector'
+								) }
+							</Button>
+							<Button variant="tertiary" onClick={ handleReset }>
+								{ __(
+									'Reset filters',
+									'fair-payments-connector'
+								) }
+							</Button>
+							{ ! isUnfiltered && (
+								<Button
+									variant="tertiary"
+									onClick={ handleClear }
+								>
+									{ __(
+										'Clear filters',
+										'fair-payments-connector'
+									) }
+								</Button>
+							) }
+						</>
+					}
+					count={
+						resultCountText && (
+							<ResultCount>{ resultCountText }</ResultCount>
+						)
+					}
+					panel={
+						<MoreFiltersPanel
+							id={ MORE_FILTERS_ID }
+							isOpen={ isMoreOpen }
+							label={ __(
+								'More filters',
 								'fair-payments-connector'
 							) }
-						</span>
-						<ul
-							style={ {
-								display: 'inline-flex',
-								flexWrap: 'wrap',
-								gap: '4px 8px',
-								margin: '0 0 0 8px',
-								verticalAlign: 'top',
-							} }
 						>
-							{ describeCriteria( criteria ).map( ( label ) => (
-								<li
-									key={ label }
-									style={ {
-										margin: 0,
-										padding: '0 8px',
-										background: '#f0f0f1',
-										borderRadius: '2px',
-										overflowWrap: 'anywhere',
-									} }
-								>
-									{ label }
-								</li>
-							) ) }
-						</ul>
-						{ isCurrent && (
-							<p style={ { margin: '8px 0 0' } }>
-								<strong>
-									{ sprintf(
-										// translators: %d is the number of transactions matching the applied filters.
-										_n(
-											'%d transaction found.',
-											'%d transactions found.',
-											result.total,
-											'fair-payments-connector'
-										),
-										result.total
-									) }
-								</strong>
+							<TextControl
+								type="date"
+								label={ __(
+									'From date',
+									'fair-payments-connector'
+								) }
+								value={ draft.dateFrom }
+								onChange={ setDraftField( 'dateFrom' ) }
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+							/>
+							<TextControl
+								type="date"
+								label={ __(
+									'To date',
+									'fair-payments-connector'
+								) }
+								help={ fieldHelp( 'dateTo' ) }
+								value={ draft.dateTo }
+								onChange={ setDraftField( 'dateTo' ) }
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+							/>
+							<TextControl
+								type="number"
+								min={ 0 }
+								step="0.01"
+								label={ __(
+									'Minimum amount',
+									'fair-payments-connector'
+								) }
+								help={ fieldHelp( 'amountMin' ) }
+								value={ draft.amountMin }
+								onChange={ setDraftField( 'amountMin' ) }
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+							/>
+							<TextControl
+								type="number"
+								min={ 0 }
+								step="0.01"
+								label={ __(
+									'Maximum amount',
+									'fair-payments-connector'
+								) }
+								help={ fieldHelp( 'amountMax' ) }
+								value={ draft.amountMax }
+								onChange={ setDraftField( 'amountMax' ) }
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+							/>
+							<p className="description fair-admin-list-toolbar__panel-note">
+								{ __(
+									'Dates include the whole day in the site timezone. Amounts are compared as recorded, in each transaction’s own currency, without conversion.',
+									'fair-payments-connector'
+								) }
 							</p>
+						</MoreFiltersPanel>
+					}
+				>
+					<ListToolbarField wide>
+						<TextControl
+							type="search"
+							label={ __( 'Search', 'fair-payments-connector' ) }
+							help={ __(
+								'Transaction ID, Mollie payment ID, description, or person name or email.',
+								'fair-payments-connector'
+							) }
+							value={ draft.search }
+							onChange={ setDraftField( 'search' ) }
+							maxLength={ 200 }
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+					</ListToolbarField>
+					<ListToolbarField>
+						<SelectControl
+							label={ __( 'Status', 'fair-payments-connector' ) }
+							value={ draft.status }
+							options={ STATUS_OPTIONS }
+							onChange={ setDraftField( 'status' ) }
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+					</ListToolbarField>
+					<ListToolbarField>
+						<SelectControl
+							label={ __( 'Mode', 'fair-payments-connector' ) }
+							value={ draft.mode }
+							options={ MODE_OPTIONS }
+							onChange={ setDraftField( 'mode' ) }
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+					</ListToolbarField>
+				</ListToolbar>
+				{ canApply && hasUnappliedChanges && (
+					<p className="fair-payments-transactions__unapplied">
+						{ __(
+							'Filters changed. Select “Apply filters” to update the list.',
+							'fair-payments-connector'
 						) }
-					</div>
+					</p>
+				) }
+			</form>
 
-					{ listBody }
-				</CardBody>
-			</Card>
+			{ error && (
+				<Notice
+					status="error"
+					isDismissible
+					onRemove={ () => setError( null ) }
+				>
+					{ error }
+				</Notice>
+			) }
+
+			{ success && (
+				<Notice
+					status="success"
+					isDismissible
+					onRemove={ () => setSuccess( null ) }
+				>
+					{ success }
+				</Notice>
+			) }
+
+			<MollieFeeFeedback
+				progress={ feeLoad.progress }
+				result={ feeLoad.result }
+				clearResult={ feeLoad.clearResult }
+			/>
+
+			{ /* The criteria that produced the shown rows, not the draft. */ }
+			<AppliedFilters
+				label={ __( 'Applied filters:', 'fair-payments-connector' ) }
+				items={ describeCriteria( criteria ) }
+			/>
+
+			{ listBody }
+
+			{ /*
+			 * Stays mounted while another page loads, so the button that
+			 * was used keeps focus; hidden when that load fails.
+			 */ }
+			{ result.pages > 1 && ( isCurrent || ! loadError ) && (
+				<ListPagination
+					page={ query.page }
+					totalPages={ result.pages }
+					label={ __(
+						'Transaction pages',
+						'fair-payments-connector'
+					) }
+					positionLabel={ sprintf(
+						// translators: 1: current page number, 2: number of pages.
+						__( 'Page %1$d of %2$d', 'fair-payments-connector' ),
+						query.page,
+						result.pages
+					) }
+					previousLabel={ __(
+						'Previous page',
+						'fair-payments-connector'
+					) }
+					nextLabel={ __( 'Next page', 'fair-payments-connector' ) }
+					onChange={ ( page ) => changeQuery( { page } ) }
+				/>
+			) }
 
 			{ isImportModalOpen && (
 				<ImportTransactionsModal

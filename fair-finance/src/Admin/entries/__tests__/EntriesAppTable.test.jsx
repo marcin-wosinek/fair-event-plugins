@@ -379,10 +379,14 @@ describe( 'EntriesApp — shared table (#2208)', () => {
 		expect(
 			await screen.findByText( 'No entries match the selected filters.' )
 		).toBeInTheDocument();
+		expect( screen.getByText( 'Type: Income' ) ).toBeInTheDocument();
+		// Offered both in the toolbar and in the no-results message.
+		const clearButtons = screen.getAllByRole( 'button', {
+			name: 'Clear filters',
+		} );
+		expect( clearButtons ).toHaveLength( 2 );
 		await act( async () => {
-			fireEvent.click(
-				screen.getByRole( 'button', { name: 'Clear filters' } )
-			);
+			fireEvent.click( clearButtons[ 1 ] );
 		} );
 		await waitFor( () =>
 			expect( screen.getByLabelText( 'Type' ) ).toHaveValue( '' )
@@ -390,5 +394,15 @@ describe( 'EntriesApp — shared table (#2208)', () => {
 		expect(
 			await screen.findByText( /No entries found/ )
 		).toBeInTheDocument();
+		// An empty ledger offers its first steps instead of clearing.
+		expect(
+			screen.getByRole( 'button', { name: 'Add your first entry' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Import entries' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Clear filters' } )
+		).not.toBeInTheDocument();
 	} );
 } );

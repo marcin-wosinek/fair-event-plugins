@@ -113,7 +113,16 @@ const lastRequestTo = ( route ) => requestsTo( route ).at( -1 );
 const LIST = '/fair-finance/v1/financial-entries';
 const TOTALS = '/fair-finance/v1/financial-entries/totals';
 
-const linkSelect = () => screen.findByRole( 'combobox', { name: 'Link' } );
+// The Link filter is under More filters.
+const linkSelect = async () => {
+	const toggle = await screen.findByRole( 'button', {
+		name: /^More filters/,
+	} );
+	if ( 'false' === toggle.getAttribute( 'aria-expanded' ) ) {
+		fireEvent.click( toggle );
+	}
+	return screen.findByRole( 'combobox', { name: 'Link' } );
+};
 
 const optionLabels = ( select ) =>
 	within( select )

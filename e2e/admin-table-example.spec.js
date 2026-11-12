@@ -174,4 +174,75 @@ test.describe('admin table example', () => {
 			page.getByRole('table', { name: 'Example entries' })
 		).toBeVisible();
 	});
+
+	test('toolbar and pagination: one row on desktop, stacked and operable at 375px (#2210)', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await page.goto(`${PAGE}&per_page=2`);
+
+		const search = page.getByRole('textbox', { name: 'Search entries' });
+		const count = page.getByRole('status').filter({ hasText: /entries$/ });
+		await expect(count).toHaveText('1–2 of 5 entries');
+		// Desktop: search and count share the toolbar row; count at the end.
+		const searchBox = await search.boundingBox();
+		const countBox = await count.boundingBox();
+		expect(countBox.x).toBeGreaterThan(searchBox.x + searchBox.width);
+
+		const pages = page.getByRole('navigation', { name: 'Entry pages' });
+		const tableBox = await page
+			.getByRole('table', { name: 'Example entries' })
+			.boundingBox();
+		const pagesBox = await pages.boundingBox();
+		// Below the table, aligned right.
+		expect(pagesBox.y).toBeGreaterThan(tableBox.y + tableBox.height);
+		const next = pages.getByRole('button', { name: 'Next page' });
+		const nextBox = await next.boundingBox();
+		expect(
+			Math.abs(tableBox.x + tableBox.width - (nextBox.x + nextBox.width))
+		).toBeLessThan(2);
+
+		// Keyboard: paging keeps focus on the button, even on the last page.
+		await next.focus();
+		await page.keyboard.press('Enter');
+		await expect(count).toHaveText('3–4 of 5 entries');
+		await page.keyboard.press('Enter');
+		await expect(count).toHaveText('5–5 of 5 entries');
+		await expect(next).toBeFocused();
+		await expect(next).toHaveAttribute('aria-disabled', 'true');
+
+		// More filters discloses the less-used controls.
+		const more = page.getByRole('button', { name: 'More filters' });
+		await expect(more).toHaveAttribute('aria-expanded', 'false');
+		await more.click();
+		await expect(
+			page.getByRole('combobox', { name: 'Scenario' })
+		).toBeVisible();
+
+		await search.fill('spring');
+		await expect(page.getByText('Search: spring')).toBeVisible();
+		await page.getByRole('button', { name: 'Clear filters' }).click();
+		await expect(page.getByText('Search: spring')).toBeHidden();
+
+		await page
+			.getByRole('button', { name: 'Toggle selection' })
+			.click();
+		await expect(
+			page.getByRole('group', { name: '2 selected' })
+		).toBeVisible();
+
+		// Narrow: controls stack full width, nothing scrolls sideways.
+		await page.setViewportSize({ width: 375, height: 812 });
+		const narrowSearch = await search.boundingBox();
+		const narrowMore = await more.boundingBox();
+		expect(narrowMore.y).toBeGreaterThan(narrowSearch.y);
+		await expect(pages.getByRole('button', { name: 'Previous page' }))
+			.toBeVisible();
+		const overflow = await page.evaluate(
+			() =>
+				document.documentElement.scrollWidth -
+				document.documentElement.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	});
 });

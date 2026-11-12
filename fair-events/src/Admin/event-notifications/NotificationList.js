@@ -1,9 +1,14 @@
 /**
  * WordPress dependencies
  */
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useEffect, useRef } from '@wordpress/element';
-import { Notice, SelectControl, TextControl } from '@wordpress/components';
+import {
+	Button,
+	Notice,
+	SelectControl,
+	TextControl,
+} from '@wordpress/components';
 
 /**
  * Shared dependencies
@@ -12,18 +17,53 @@ import {
 	AdminTable,
 	AdminTableHeaderCell,
 	TableMessage,
+	ListToolbar,
+	ListToolbarField,
+	ResultCount,
+	AppliedFilters,
+	ListPagination,
+	pageRange,
 } from 'fair-events-shared/src/admin-table/index.js';
 
 /**
  * Internal dependencies
  */
 import NotificationRow from './NotificationRow.js';
-import Pagination from './Pagination.js';
 import { tokenStatus } from './TelegramChannel.js';
 import { linkTo } from './navigation.js';
 import { TYPE_LABELS } from './shared.js';
 
 const PER_PAGE = 20;
+
+/**
+ * How many notifications match, with the shown range when there are pages.
+ *
+ * @param {number} page  Current page.
+ * @param {number} total Number of matching notifications.
+ * @return {string} Count text.
+ */
+function countText( page, total ) {
+	if ( total <= PER_PAGE ) {
+		return sprintf(
+			/* translators: %d: number of notifications */
+			_n( '%d notification', '%d notifications', total, 'fair-events' ),
+			total
+		);
+	}
+	const { first, last } = pageRange( page, PER_PAGE, total );
+	return sprintf(
+		/* translators: 1: first shown position, 2: last shown position, 3: number of notifications */
+		_n(
+			'%1$d–%2$d of %3$d notification',
+			'%1$d–%2$d of %3$d notifications',
+			total,
+			'fair-events'
+		),
+		first,
+		last,
+		total
+	);
+}
 
 /**
  * Who or where a notification sends to, without loading any recipient list.
@@ -198,6 +238,7 @@ function emptyMessage( { total, inFeed, feedName, search } ) {
  * @param {Function} props.onDeleted          Receives the payload of a deleted notification.
  * @param {Object}   [props.deleted]          The last deletion's report, `{ message }`, or null.
  * @param {Function} [props.onDismissDeleted] Hides the deletion report.
+ * @param {Function} [props.onAdd]            Moves to the Add a notification form.
  * @return {JSX.Element} The list.
  */
 export default function NotificationList( {
@@ -210,6 +251,7 @@ export default function NotificationList( {
 	onDeleted,
 	deleted = null,
 	onDismissDeleted,
+	onAdd,
 } ) {
 	const searchField = useRef();
 	// The deleted row and its dialog are gone; keep focus in the list.
@@ -237,6 +279,34 @@ export default function NotificationList( {
 	const totalPages = Math.max( 1, Math.ceil( matching.length / PER_PAGE ) );
 	const page = Math.min( location.listPage, totalPages );
 	const shown = matching.slice( ( page - 1 ) * PER_PAGE, page * PER_PAGE );
+	const feedLabel = selectedFeed
+		? selectedFeed.name || selectedFeed.slug
+		: feed;
+	const hasCriteria = !! location.search.trim() || !! feed;
+	// Clearing removes the control that had focus; keep it in the list.
+	const clearFilters = () => {
+		navigate( { ...location, search: '', feed: '', listPage: 1 } );
+		searchField.current?.focus();
+	};
+	const applied = [];
+	if ( location.search.trim() ) {
+		applied.push(
+			sprintf(
+				/* translators: %s: the typed search */
+				__( 'Search: %s', 'fair-events' ),
+				location.search.trim()
+			)
+		);
+	}
+	if ( feed ) {
+		applied.push(
+			sprintf(
+				/* translators: %s: event feed name */
+				__( 'Event feed: %s', 'fair-events' ),
+				feedLabel
+			)
+		);
+	}
 	return (
 		<div className="fair-events-notifications__list">
 			{ deleted && (
@@ -248,35 +318,59 @@ export default function NotificationList( {
 					{ deleted.message }
 				</Notice>
 			) }
-			<div className="fair-events-notifications__list-controls">
-				<TextControl
-					ref={ searchField }
-					className="fair-events-notifications__search"
-					label={ __( 'Search notifications', 'fair-events' ) }
-					help={ __(
-						'By name, kind, address or chat.',
-						'fair-events'
-					) }
-					value={ location.search }
-					onChange={ ( search ) =>
-						navigate(
-							{ ...location, search, listPage: 1 },
-							{ replace: true }
-						)
-					}
-				/>
-				<SelectControl
-					className="fair-events-notifications__feed"
-					label={ __( 'Event feed', 'fair-events' ) }
-					help={ __(
-						'Shows the notifications that send events from this feed.',
-						'fair-events'
-					) }
-					value={ feed }
-					options={ feedOptions( sources, feed ) }
-					onChange={ selectFeed }
-				/>
-			</div>
+			<ListToolbar
+				actions={
+					hasCriteria && (
+						<Button variant="tertiary" onClick={ clearFilters }>
+							{ __( 'Clear filters', 'fair-events' ) }
+						</Button>
+					)
+				}
+				count={
+					! unavailable &&
+					0 < matching.length && (
+						<ResultCount>
+							{ countText( page, matching.length ) }
+						</ResultCount>
+					)
+				}
+			>
+				<ListToolbarField wide>
+					<TextControl
+						ref={ searchField }
+						className="fair-events-notifications__search"
+						label={ __( 'Search notifications', 'fair-events' ) }
+						help={ __(
+							'By name, kind, address or chat.',
+							'fair-events'
+						) }
+						value={ location.search }
+						onChange={ ( search ) =>
+							navigate(
+								{ ...location, search, listPage: 1 },
+								{ replace: true }
+							)
+						}
+					/>
+				</ListToolbarField>
+				<ListToolbarField>
+					<SelectControl
+						className="fair-events-notifications__feed"
+						label={ __( 'Event feed', 'fair-events' ) }
+						help={ __(
+							'Shows the notifications that send events from this feed.',
+							'fair-events'
+						) }
+						value={ feed }
+						options={ feedOptions( sources, feed ) }
+						onChange={ selectFeed }
+					/>
+				</ListToolbarField>
+			</ListToolbar>
+			<AppliedFilters
+				label={ __( 'Applied filters:', 'fair-events' ) }
+				items={ applied }
+			/>
 
 			{ unavailable && (
 				<Notice
@@ -306,17 +400,18 @@ export default function NotificationList( {
 					status={
 						0 === configurations.length ? 'empty' : 'no-results'
 					}
-					onClear={
-						location.search
-							? () =>
-									navigate( {
-										...location,
-										search: '',
-										listPage: 1,
-									} )
-							: undefined
+					onClear={ hasCriteria ? clearFilters : undefined }
+					clearLabel={ __( 'Clear filters', 'fair-events' ) }
+					actions={
+						onAdd && (
+							<Button variant="secondary" onClick={ onAdd }>
+								{ __(
+									'Add your first notification',
+									'fair-events'
+								) }
+							</Button>
+						)
 					}
-					clearLabel={ __( 'Clear search', 'fair-events' ) }
 				>
 					{ emptyMessage( {
 						total: configurations.length,
@@ -373,11 +468,19 @@ export default function NotificationList( {
 				</AdminTable>
 			) }
 
-			<Pagination
+			<ListPagination
 				page={ page }
 				totalPages={ totalPages }
 				label={ __( 'Notification pages', 'fair-events' ) }
-				link={ ( number ) =>
+				positionLabel={ sprintf(
+					/* translators: 1: current page number, 2: number of pages */
+					__( 'Page %1$d of %2$d', 'fair-events' ),
+					page,
+					totalPages
+				) }
+				previousLabel={ __( 'Previous page', 'fair-events' ) }
+				nextLabel={ __( 'Next page', 'fair-events' ) }
+				pageProps={ ( number ) =>
 					linkTo( navigate, { ...location, listPage: number } )
 				}
 			/>

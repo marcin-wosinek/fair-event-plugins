@@ -5,6 +5,19 @@
  */
 
 .fair-payments-transactions {
+	/* Wide tables scroll inside their surface, never the page. */
+	.fair-payments-transactions__table {
+		overflow-x: auto;
+	}
+
+	/* Draft criteria not yet applied, under the toolbar. */
+	.fair-payments-transactions__unapplied {
+		margin: -4px 0 12px;
+	}
+
+	> .components-notice {
+		margin: 0 0 12px;
+	}
 	/* Sortable column headers: a button that looks like the header text. */
 	.fair-payments-transactions__sort {
 		padding: 0;

@@ -12,7 +12,6 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
-	CardHeader,
 	CardBody,
 	Button,
 	Spinner,
@@ -44,6 +43,15 @@ import {
 	RowActions,
 	StatusLabel,
 	TableMessage,
+	ListHeader,
+	ListToolbar,
+	ListToolbarField,
+	MoreFiltersToggle,
+	MoreFiltersPanel,
+	ResultCount,
+	AppliedFilters,
+	ListPagination,
+	pageRange,
 } from 'fair-events-shared/src/admin-table/index.js';
 
 const eventsEnabled = window.fairPaymentSettings?.eventsEnabled === '1';
@@ -105,6 +113,20 @@ const getEventFilterValue = ( filters ) => {
 	}
 	return '';
 };
+
+// Entries per page, as requested from the server.
+const PER_PAGE = 50;
+
+const MORE_FILTERS_ID = 'fair-finance-entries-more-filters';
+
+// Filters kept under More filters; the others stay visible.
+const MORE_FILTER_KEYS = [
+	'date_from',
+	'date_to',
+	'event_date_id',
+	'event_url',
+	'tag',
+];
 
 const DEFAULT_FILTERS = {
 	date_from: '',
@@ -274,6 +296,7 @@ const EntriesApp = () => {
 	const [ isTransferOpen, setIsTransferOpen ] = useState( false );
 	const [ transferEntry, setTransferEntry ] = useState( null );
 	const [ expandedEntries, setExpandedEntries ] = useState( {} );
+	const [ moreFiltersOpen, setMoreFiltersOpen ] = useState( false );
 
 	// After a deletion the row and its menu trigger are gone. Focus the
 	// heading once the confirmation has unmounted and returned focus.
@@ -465,7 +488,7 @@ const EntriesApp = () => {
 		try {
 			const params = new URLSearchParams();
 			params.append( 'page', pagination.page );
-			params.append( 'per_page', 50 );
+			params.append( 'per_page', PER_PAGE );
 			appendFilterParams( params, { includeEntryType: true } );
 			params.append( 'orderby', sort.orderby );
 			params.append( 'order', sort.order );
@@ -930,6 +953,220 @@ const EntriesApp = () => {
 		setFilters( DEFAULT_FILTERS );
 		setPagination( ( prev ) => ( { ...prev, page: 1 } ) );
 	};
+
+	const TYPE_OPTIONS = [
+		{ label: __( 'All Types', 'fair-finance' ), value: '' },
+		{ label: __( 'Cost', 'fair-finance' ), value: 'cost' },
+		{ label: __( 'Income', 'fair-finance' ), value: 'income' },
+		{ label: __( 'Transfer', 'fair-finance' ), value: 'transfer' },
+	];
+	const optionLabel = ( options, value ) =>
+		options.find( ( option ) => option.value === value )?.label ?? value;
+
+	const budgetControl = (
+		<SelectControl
+			label={ __( 'Budget', 'fair-finance' ) }
+			value={ filters.budget_id }
+			options={ budgetOptions }
+			onChange={ ( value ) => handleFilterChange( 'budget_id', value ) }
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const typeControl = (
+		<SelectControl
+			label={ __( 'Type', 'fair-finance' ) }
+			value={ filters.entry_type }
+			options={ TYPE_OPTIONS }
+			onChange={ ( value ) => handleFilterChange( 'entry_type', value ) }
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const matchingControl = (
+		<SelectControl
+			label={ __( 'Matching', 'fair-finance' ) }
+			value={ filters.unmatched ? 'unmatched' : '' }
+			options={ [
+				{ label: __( 'All', 'fair-finance' ), value: '' },
+				{
+					label: __( 'Unmatched Only', 'fair-finance' ),
+					value: 'unmatched',
+				},
+			] }
+			onChange={ ( value ) =>
+				handleFilterChange( 'unmatched', value === 'unmatched' )
+			}
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const dateFromControl = (
+		<TextControl
+			label={ __( 'From Date', 'fair-finance' ) }
+			value={ filters.date_from }
+			onChange={ ( value ) => handleFilterChange( 'date_from', value ) }
+			type="date"
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const dateToControl = (
+		<TextControl
+			label={ __( 'To Date', 'fair-finance' ) }
+			value={ filters.date_to }
+			onChange={ ( value ) => handleFilterChange( 'date_to', value ) }
+			type="date"
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const linkOptions = [
+		{ label: __( 'All Links', 'fair-finance' ), value: '' },
+		...eventFilterOptions,
+	];
+	const linkControl = eventsEnabled && eventFilterOptions.length > 0 && (
+		<SelectControl
+			label={ __( 'Link', 'fair-finance' ) }
+			value={ getEventFilterValue( filters ) }
+			options={ linkOptions }
+			onChange={ handleEventFilterChange }
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+	const tagControl = tags.length > 0 && (
+		<SelectControl
+			label={ __( 'Tag', 'fair-finance' ) }
+			value={ filters.tag }
+			options={ [
+				{ label: __( 'All Tags', 'fair-finance' ), value: '' },
+				...tags.map( ( tag ) => ( { label: tag, value: tag } ) ),
+			] }
+			onChange={ ( value ) => handleFilterChange( 'tag', value ) }
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
+	);
+
+	// A link from another screen (e.g. an event date) may set a filter
+	// before its options load; it is still named, by its stored value.
+	const linkValue = getEventFilterValue( filters );
+	const linkLabel =
+		linkOptions.find( ( option ) => option.value === linkValue )?.label ??
+		( filters.event_url ||
+			sprintf(
+				/* translators: %s: event date ID */
+				__( 'Event date #%s', 'fair-finance' ),
+				filters.event_date_id
+			) );
+
+	const appliedFilters = [];
+	if ( filters.budget_id ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: budget name */
+				__( 'Budget: %s', 'fair-finance' ),
+				optionLabel( budgetOptions, filters.budget_id )
+			)
+		);
+	}
+	if ( filters.entry_type ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: entry type, e.g. "Cost" */
+				__( 'Type: %s', 'fair-finance' ),
+				optionLabel( TYPE_OPTIONS, filters.entry_type )
+			)
+		);
+	}
+	if ( filters.unmatched ) {
+		appliedFilters.push( __( 'Unmatched only', 'fair-finance' ) );
+	}
+	if ( filters.date_from ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: a date, e.g. 2026-03-01 */
+				__( 'From %s', 'fair-finance' ),
+				filters.date_from
+			)
+		);
+	}
+	if ( filters.date_to ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: a date, e.g. 2026-03-31 */
+				__( 'Until %s', 'fair-finance' ),
+				filters.date_to
+			)
+		);
+	}
+	if ( filters.event_date_id || filters.event_url ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: event or link name */
+				__( 'Link: %s', 'fair-finance' ),
+				linkLabel
+			)
+		);
+	}
+	if ( filters.tag ) {
+		appliedFilters.push(
+			sprintf(
+				/* translators: %s: tag */
+				__( 'Tag: %s', 'fair-finance' ),
+				filters.tag
+			)
+		);
+	}
+
+	const moreActive = MORE_FILTER_KEYS.filter(
+		( key ) => filters[ key ] !== DEFAULT_FILTERS[ key ]
+	).length;
+	const moreFiltersLabel = moreActive
+		? sprintf(
+				/* translators: %d: number of active filters under More filters */
+				_n(
+					'More filters (%d active)',
+					'More filters (%d active)',
+					moreActive,
+					'fair-finance'
+				),
+				moreActive
+			)
+		: __( 'More filters', 'fair-finance' );
+
+	// The server pages top-level entries; split allocations shown under
+	// them are not counted separately.
+	const { first, last } = pageRange(
+		pagination.page,
+		PER_PAGE,
+		pagination.total
+	);
+	const resultCountText =
+		pagination.pages > 1
+			? sprintf(
+					/* translators: 1: first shown position, 2: last shown position, 3: number of entries */
+					_n(
+						'%1$d–%2$d of %3$d entry',
+						'%1$d–%2$d of %3$d entries',
+						pagination.total,
+						'fair-finance'
+					),
+					first,
+					last,
+					pagination.total
+				)
+			: sprintf(
+					/* translators: %d: number of entries */
+					_n(
+						'%d entry',
+						'%d entries',
+						pagination.total,
+						'fair-finance'
+					),
+					pagination.total
+				);
 
 	const retryLoad = () => {
 		loadEntries( { quiet: hasLoaded && entries.length > 0 } );
@@ -1429,7 +1666,19 @@ const EntriesApp = () => {
 		);
 	} else if ( hasLoaded ) {
 		listBody = (
-			<TableMessage status="empty">
+			<TableMessage
+				status="empty"
+				actions={
+					<>
+						<Button variant="secondary" onClick={ handleCreate }>
+							{ __( 'Add your first entry', 'fair-finance' ) }
+						</Button>
+						<Button variant="tertiary" onClick={ handleImport }>
+							{ __( 'Import entries', 'fair-finance' ) }
+						</Button>
+					</>
+				}
+			>
 				{ __(
 					'No entries found. Add your first entry to start tracking costs and income.',
 					'fair-finance'
@@ -1441,6 +1690,39 @@ const EntriesApp = () => {
 	return (
 		<div className="wrap fair-finance-entries-page">
 			<VStack spacing={ 4 }>
+				<ListHeader
+					ref={ headingRef }
+					title={ __( 'Financial Entries', 'fair-finance' ) }
+					actions={
+						<>
+							<Button variant="primary" onClick={ handleCreate }>
+								{ __( 'Add Entry', 'fair-finance' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={ handleTransfer }
+							>
+								{ __( 'Transfer', 'fair-finance' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={ handleImport }
+							>
+								{ __( 'Import', 'fair-finance' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								onClick={ exportCsv }
+								disabled={
+									exportLoading || entries.length === 0
+								}
+								isBusy={ exportLoading }
+							>
+								{ __( 'Export CSV', 'fair-finance' ) }
+							</Button>
+						</>
+					}
+				/>
 				{ /* Totals Summary */ }
 				{ ! focus.invalid && (
 					<Card>
@@ -1508,332 +1790,156 @@ const EntriesApp = () => {
 					</Card>
 				) }
 
-				{ /* Main Entries Card */ }
-				<Card>
-					<CardHeader>
-						<HStack justify="space-between" wrap>
-							<h1 ref={ headingRef } tabIndex={ -1 }>
-								{ __( 'Financial Entries', 'fair-finance' ) }
-							</h1>
-							<div
-								style={ {
-									display: 'flex',
-									flexWrap: 'wrap',
-									gap: '8px',
-								} }
-							>
-								<Button
-									variant="primary"
-									onClick={ handleCreate }
-								>
-									{ __( 'Add Entry', 'fair-finance' ) }
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={ handleTransfer }
-								>
-									{ __( 'Transfer', 'fair-finance' ) }
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={ handleImport }
-								>
-									{ __( 'Import', 'fair-finance' ) }
-								</Button>
-								<Button
-									variant="secondary"
-									onClick={ exportCsv }
-									disabled={
-										exportLoading || entries.length === 0
-									}
-									isBusy={ exportLoading }
-								>
-									{ __( 'Export CSV', 'fair-finance' ) }
-								</Button>
-							</div>
-						</HStack>
-					</CardHeader>
-					<CardBody>
-						<VStack spacing={ 4 }>
-							{ /* Entries awaiting a budget (whole ledger) */ }
-							<UnbudgetedCount
-								state={ unbudgeted }
-								onRetry={ loadUnbudgetedCount }
-							/>
+				{ /* Entries awaiting a budget (whole ledger) */ }
+				<UnbudgetedCount
+					state={ unbudgeted }
+					onRetry={ loadUnbudgetedCount }
+				/>
 
-							{ /* Focused entry: replaces the filters */ }
-							{ isFocused && (
-								<Notice
-									status={ focus.invalid ? 'error' : 'info' }
-									isDismissible={ false }
-									actions={ [
-										{
-											label: __(
-												'Show all entries',
-												'fair-finance'
-											),
-											onClick: clearFocus,
-											variant: 'secondary',
-										},
-									] }
-								>
-									{ focus.invalid
-										? __(
-												'This entry link is not valid.',
-												'fair-finance'
-											)
-										: sprintf(
-												/* translators: %d: financial entry ID. */
-												__(
-													'Showing entry #%d',
-													'fair-finance'
-												),
-												focus.id
-											) }
-								</Notice>
-							) }
-
-							{ /* Filters */ }
-							{ ! isFocused && (
-								<HStack spacing={ 3 } wrap>
-									<TextControl
-										label={ __(
-											'From Date',
-											'fair-finance'
-										) }
-										value={ filters.date_from }
-										onChange={ ( value ) =>
-											handleFilterChange(
-												'date_from',
-												value
-											)
-										}
-										type="date"
-									/>
-									<TextControl
-										label={ __(
-											'To Date',
-											'fair-finance'
-										) }
-										value={ filters.date_to }
-										onChange={ ( value ) =>
-											handleFilterChange(
-												'date_to',
-												value
-											)
-										}
-										type="date"
-									/>
-									<SelectControl
-										label={ __( 'Budget', 'fair-finance' ) }
-										value={ filters.budget_id }
-										options={ budgetOptions }
-										onChange={ ( value ) =>
-											handleFilterChange(
-												'budget_id',
-												value
-											)
-										}
-									/>
-									{ eventsEnabled &&
-										eventFilterOptions.length > 0 && (
-											<SelectControl
-												label={ __(
-													'Link',
-													'fair-finance'
-												) }
-												value={ getEventFilterValue(
-													filters
-												) }
-												options={ [
-													{
-														label: __(
-															'All Links',
-															'fair-finance'
-														),
-														value: '',
-													},
-													...eventFilterOptions,
-												] }
-												onChange={
-													handleEventFilterChange
-												}
-											/>
-										) }
-									{ tags.length > 0 && (
-										<SelectControl
-											label={ __(
-												'Tag',
-												'fair-finance'
-											) }
-											value={ filters.tag }
-											options={ [
-												{
-													label: __(
-														'All Tags',
-														'fair-finance'
-													),
-													value: '',
-												},
-												...tags.map( ( tag ) => ( {
-													label: tag,
-													value: tag,
-												} ) ),
-											] }
-											onChange={ ( value ) =>
-												handleFilterChange(
-													'tag',
-													value
-												)
-											}
-										/>
-									) }
-									<SelectControl
-										label={ __( 'Type', 'fair-finance' ) }
-										value={ filters.entry_type }
-										options={ [
-											{
-												label: __(
-													'All Types',
-													'fair-finance'
-												),
-												value: '',
-											},
-											{
-												label: __(
-													'Cost',
-													'fair-finance'
-												),
-												value: 'cost',
-											},
-											{
-												label: __(
-													'Income',
-													'fair-finance'
-												),
-												value: 'income',
-											},
-											{
-												label: __(
-													'Transfer',
-													'fair-finance'
-												),
-												value: 'transfer',
-											},
-										] }
-										onChange={ ( value ) =>
-											handleFilterChange(
-												'entry_type',
-												value
-											)
-										}
-									/>
-									<SelectControl
-										label={ __(
-											'Matching',
-											'fair-finance'
-										) }
-										value={
-											filters.unmatched ? 'unmatched' : ''
-										}
-										options={ [
-											{
-												label: __(
-													'All',
-													'fair-finance'
-												),
-												value: '',
-											},
-											{
-												label: __(
-													'Unmatched Only',
-													'fair-finance'
-												),
-												value: 'unmatched',
-											},
-										] }
-										onChange={ ( value ) =>
-											handleFilterChange(
-												'unmatched',
-												value === 'unmatched'
-											)
-										}
-									/>
-								</HStack>
-							) }
-
-							{ /* Notices */ }
-							{ error && (
-								<Notice
-									status="error"
-									isDismissible
-									onRemove={ () => setError( null ) }
-								>
-									{ error }
-								</Notice>
-							) }
-
-							{ success && (
-								<Notice
-									status="success"
-									isDismissible
-									onRemove={ () => setSuccess( null ) }
-								>
-									{ success }
-								</Notice>
-							) }
-
-							{ listBody }
-
-							{ /* Pagination */ }
-							{ ! focus.invalid &&
-								entries.length > 0 &&
-								pagination.pages > 1 && (
-									<HStack justify="center" spacing={ 2 }>
-										<Button
-											variant="secondary"
-											disabled={ pagination.page === 1 }
-											onClick={ () =>
-												handlePageChange(
-													pagination.page - 1
-												)
-											}
-										>
-											{ __( 'Previous', 'fair-finance' ) }
-										</Button>
-										<span>
-											{ __(
-												'Page %1$d of %2$d',
-												'fair-finance'
-											)
-												.replace(
-													'%1$d',
-													pagination.page
-												)
-												.replace(
-													'%2$d',
-													pagination.pages
-												) }
-										</span>
-										<Button
-											variant="secondary"
-											disabled={
-												pagination.page ===
-												pagination.pages
-											}
-											onClick={ () =>
-												handlePageChange(
-													pagination.page + 1
-												)
-											}
-										>
-											{ __( 'Next', 'fair-finance' ) }
-										</Button>
-									</HStack>
+				{ /* Focused entry: replaces the filters */ }
+				{ isFocused && (
+					<Notice
+						status={ focus.invalid ? 'error' : 'info' }
+						isDismissible={ false }
+						actions={ [
+							{
+								label: __( 'Show all entries', 'fair-finance' ),
+								onClick: clearFocus,
+								variant: 'secondary',
+							},
+						] }
+					>
+						{ focus.invalid
+							? __(
+									'This entry link is not valid.',
+									'fair-finance'
+								)
+							: sprintf(
+									/* translators: %d: financial entry ID. */
+									__( 'Showing entry #%d', 'fair-finance' ),
+									focus.id
 								) }
-						</VStack>
-					</CardBody>
-				</Card>
+					</Notice>
+				) }
+
+				{ /* Filters: frequent ones visible, the rest under More filters */ }
+				{ ! isFocused && (
+					<div>
+						<ListToolbar
+							actions={
+								<>
+									<MoreFiltersToggle
+										panelId={ MORE_FILTERS_ID }
+										isOpen={ moreFiltersOpen }
+										onToggle={ () =>
+											setMoreFiltersOpen(
+												( open ) => ! open
+											)
+										}
+										label={ moreFiltersLabel }
+									/>
+									{ hasActiveFilters && (
+										<Button
+											variant="tertiary"
+											onClick={ () => {
+												clearFilters();
+												// This button goes away; keep
+												// focus in the toolbar.
+												document
+													.querySelector(
+														`[aria-controls="${ MORE_FILTERS_ID }"]`
+													)
+													?.focus();
+											} }
+										>
+											{ __(
+												'Clear filters',
+												'fair-finance'
+											) }
+										</Button>
+									) }
+								</>
+							}
+							count={
+								hasLoaded &&
+								! loadError &&
+								entries.length > 0 && (
+									<ResultCount>
+										{ resultCountText }
+									</ResultCount>
+								)
+							}
+							panel={
+								<MoreFiltersPanel
+									id={ MORE_FILTERS_ID }
+									isOpen={ moreFiltersOpen }
+									label={ __(
+										'More filters',
+										'fair-finance'
+									) }
+								>
+									{ dateFromControl }
+									{ dateToControl }
+									{ linkControl }
+									{ tagControl }
+								</MoreFiltersPanel>
+							}
+						>
+							<ListToolbarField>
+								{ budgetControl }
+							</ListToolbarField>
+							<ListToolbarField>{ typeControl }</ListToolbarField>
+							<ListToolbarField>
+								{ matchingControl }
+							</ListToolbarField>
+						</ListToolbar>
+						<AppliedFilters
+							label={ __( 'Applied filters:', 'fair-finance' ) }
+							items={ appliedFilters }
+						/>
+					</div>
+				) }
+
+				{ /* Notices */ }
+				{ error && (
+					<Notice
+						status="error"
+						isDismissible
+						onRemove={ () => setError( null ) }
+					>
+						{ error }
+					</Notice>
+				) }
+
+				{ success && (
+					<Notice
+						status="success"
+						isDismissible
+						onRemove={ () => setSuccess( null ) }
+					>
+						{ success }
+					</Notice>
+				) }
+
+				{ listBody }
+
+				{ /* Pagination */ }
+				{ ! focus.invalid && entries.length > 0 && (
+					<ListPagination
+						page={ pagination.page }
+						totalPages={ pagination.pages }
+						label={ __( 'Entry pages', 'fair-finance' ) }
+						positionLabel={ sprintf(
+							/* translators: 1: current page number, 2: number of pages */
+							__( 'Page %1$d of %2$d', 'fair-finance' ),
+							pagination.page,
+							pagination.pages
+						) }
+						previousLabel={ __( 'Previous page', 'fair-finance' ) }
+						nextLabel={ __( 'Next page', 'fair-finance' ) }
+						onChange={ handlePageChange }
+					/>
+				) }
 			</VStack>
 
 			{ /* Entry Form Modal */ }

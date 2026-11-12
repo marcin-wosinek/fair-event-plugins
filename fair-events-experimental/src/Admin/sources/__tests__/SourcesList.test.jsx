@@ -94,6 +94,25 @@ describe( 'SourcesList', () => {
 		expect( screen.getByText( '1 feed input' ) ).toBeInTheDocument();
 	} );
 
+	it( 'puts Add Event Feed beside the title and counts every feed', async () => {
+		render( <SourcesList /> );
+		await screen.findByRole( 'link', { name: 'Club nights' } );
+
+		const header = screen
+			.getByRole( 'heading', { name: 'Event Feeds' } )
+			.closest( '.fair-admin-list-header' );
+		expect(
+			within( header ).getByRole( 'button', { name: 'Add Event Feed' } )
+		).toBeInTheDocument();
+		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
+			'2 event feeds'
+		);
+		// The complete list: no search, filters, selection or pagination.
+		expect( screen.queryByRole( 'searchbox' ) ).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'checkbox' ) ).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'navigation' ) ).not.toBeInTheDocument();
+	} );
+
 	it( 'explains the empty state in event feed terms', async () => {
 		apiFetch.mockResolvedValue( [] );
 
@@ -104,6 +123,13 @@ describe( 'SourcesList', () => {
 				'No event feeds yet. Add your first event feed to get started.'
 			)
 		).toBeInTheDocument();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Add your first event feed' } )
+		);
+		const dialog = screen.getByRole( 'dialog', { name: 'Add Event Feed' } );
+		await within( dialog ).findByText(
+			'No categories found. Create categories first.'
+		);
 	} );
 
 	it( 'opens the add form with feed input controls', async () => {

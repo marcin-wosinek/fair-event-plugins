@@ -7,11 +7,9 @@ One presentation pattern for the admin lists that show items with actions:
 - **Finance Entries** — `fair-finance/src/Admin/entries/EntriesApp.js`
 - **Transactions** — `fair-payments-connector/src/Admin/transactions/TransactionsApp.js`
 
-Today these place actions differently: Notifications puts text links under
-the name, Feeds and Entries use button groups, and Transactions relies on
-linked references. This folder holds the shared look and a few small
-components. Rolling it out to each page happens in #2206–#2209; toolbar
-integration in #2210.
+This folder holds the shared look and a few small components: the table
+(#2205, rolled out in #2206–#2209) and the header, toolbar and pagination
+around it (#2210).
 
 The shared code only renders. Each page keeps its own requests, filters,
 pagination state, permissions, confirmations and mutations. There is no
@@ -29,6 +27,16 @@ import {
 	StatusLabel,
 	RowActions,
 	TableMessage,
+	ListHeader,
+	ListToolbar,
+	ListToolbarField,
+	MoreFiltersToggle,
+	MoreFiltersPanel,
+	ResultCount,
+	AppliedFilters,
+	SelectionSummary,
+	ListPagination,
+	pageRange,
 } from 'fair-events-shared/src/admin-table/index.js';
 import 'fair-events-shared/src/admin-table/style.css';
 ```
@@ -37,8 +45,9 @@ Import the module directly, not the package root, and import `style.css`
 from the page's own entry point. When two entries of one plugin import it,
 wp-scripts puts it in the first entry's `style-index.css` only; give the
 other entry its own copy with a query, e.g.
-`import 'fair-events-shared/src/admin-table/style.css?event-notifications';`. Every rule is scoped to `.fair-admin-table`,
-so the stylesheet changes no table that doesn't use the wrapper.
+`import 'fair-events-shared/src/admin-table/style.css?event-notifications';`. Every rule is scoped to `.fair-admin-table` or
+`.fair-admin-list-*`, so the stylesheet changes no screen that doesn't use
+these components.
 
 Components read no plugin globals and call no `__()`. Pass every string
 already translated in the consuming plugin's text domain, as the
@@ -54,7 +63,17 @@ already translated in the consuming plugin's text domain, as the
 | `ItemIdentity`         | `title`, `fallback`, `href`, `onClick`, `meta`, `children`                                  |
 | `StatusLabel`          | `tone` (`success`, `warning`, `error`, `info`, `neutral`), `children`                       |
 | `RowActions`           | `primary`, `secondary`, `moreLabel`                                                         |
-| `TableMessage`         | `status` (`loading`, `empty`, `no-results`, `error`), `children`, `onRetry`/`retryLabel`, `onClear`/`clearLabel` |
+| `TableMessage`         | `status` (`loading`, `empty`, `no-results`, `error`), `children`, `onRetry`/`retryLabel`, `onClear`/`clearLabel`, `actions` (empty only) |
+| `ListHeader`           | `title`, `actions`, `ref` (to the heading, `tabIndex={ -1 }`)                                 |
+| `ListToolbar`          | `selection`, `children` (fields), `actions`, `count`, `panel`                                 |
+| `ListToolbarField`     | `wide` (search), `children`                                                                   |
+| `MoreFiltersToggle`    | `panelId`, `isOpen`, `onToggle`, `label`                                                      |
+| `MoreFiltersPanel`     | `id`, `isOpen`, `label`, `children`                                                           |
+| `ResultCount`          | `children` — `role="status"`                                                                  |
+| `AppliedFilters`       | `label`, `items` (one string per applied criterion; renders nothing without any)              |
+| `SelectionSummary`     | `label` (selected count), `children` (actions for the selection)                              |
+| `ListPagination`       | `page`, `totalPages`, `label`, `positionLabel`, `previousLabel`, `nextLabel`, `onChange` or `pageProps` |
+| `pageRange( page, perPage, total )` | Returns `{ first, last }` shown positions for the count text                     |
 
 `variant` is `identity`, `amount`, `status` or `actions`; leave it out for
 plain columns.
@@ -161,23 +180,68 @@ included) each row stacks into a labeled block:
 The page must not scroll sideways at 375px. Column widths beyond the identity
 and actions columns are each page's choice.
 
-## Toolbar and pagination (for #2210)
+## Header, toolbar and pagination
 
-Not built here; this is the agreed anatomy for the integration ticket.
+Every list page uses the same arrangement, top to bottom. Each piece appears
+only where the page already has the capability: a page never gains search,
+server pagination, selection or bulk actions just to fill the layout.
 
-- **Above the table, one toolbar row:** search first (widest, labeled), then
-  filters (`SelectControl`s with visible labels), then the result count
-  ("12 of 40 entries", `role="status"`) pushed to the end. A clear-filters
-  button appears only while a filter is active.
-- **Page-level primary action** ("Add event feed") stays in the page header,
-  not in the toolbar.
-- **Bulk actions**, where a page has them, sit at the start of the toolbar
-  and appear only when rows are selected, following
-  [UI guidelines § Bulk actions](../../../UI_GUIDELINES.md#bulk-actions).
-- **Below the table:** pagination as a `nav` with an accessible name,
-  "Previous page" / "Page N of M" / "Next page", hidden for a single page.
-  The page owns the page state and keeps it in the URL where it does today.
-- **Narrow screens:** toolbar controls wrap to full width, in the same order.
+1. **`ListHeader`**: the page title (`h1`) with the page's existing creation
+   and import actions beside it ("Add Event Feed", "Add Entry", "Import").
+   The title is the stable focus target when the focused control goes away.
+2. Page-level summaries and notices (totals, warnings).
+3. **`ListToolbar`**, one row, in this order:
+   - `selection`: a `SelectionSummary` with the selected count ("2
+     transactions selected") and the actions that apply to the selection,
+     only while items are selected, only on pages with bulk actions.
+   - Search first (`ListToolbarField wide`), then the frequent filters, each
+     with a visible label.
+   - `actions`: `MoreFiltersToggle` when there are less-used filters, a
+     page's Apply/Reset buttons where filters are applied explicitly, and
+     "Clear filters" only while a criterion is active.
+   - `count`: `ResultCount` at the end, the range and total of the
+     matching results, using the server's pagination units ("51–100 of 236
+     transactions", or "12 entries" on a single page). Omit it while there
+     is nothing to count; the list message explains why.
+   - `panel`: `MoreFiltersPanel` with the less-used filters, under the row.
+     The page keeps the open state; the panel is hidden, not unmounted, so
+     its fields keep their values. Keep it open while one of its fields
+     shows a validation error.
+4. **`AppliedFilters`**: the criteria that produced the shown rows,
+   including those inside a collapsed More filters panel. Where drafts are
+   applied explicitly (Transactions), list the applied criteria, not the
+   draft.
+5. The table, or a `TableMessage`. An empty dataset offers its first steps
+   through `actions` ("Add your first event feed", "Import transactions");
+   no results offers `onClear`. Clear-filters labels may repeat the
+   toolbar's: both do the same thing.
+6. **`ListPagination`** below the table, aligned right: "Previous page",
+   "Page N of M", "Next page", in a `nav` named by `label`. Hidden for a
+   single page. The boundary buttons stay focusable (`aria-disabled`), so
+   reaching the last page keeps focus on Next. Keep it mounted while the
+   next page loads. Pass `pageProps` for link navigation (URL-backed pages)
+   or `onChange` for in-place page changes. The page owns the page number,
+   resets it to 1 on a filter or sort change, and keeps it in the URL only
+   where it already does.
+
+After "Clear filters" removes itself, move focus to a stable toolbar
+control (the search field or the More filters toggle).
+
+**Narrow screens** (782px and below): toolbar fields, actions and the count
+stack full width in the same order, and the pagination buttons share the
+row under the position.
+
+### Per page
+
+| Page          | Header actions                                 | Visible filters        | More filters                  | Selection     | Pagination              |
+| ------------- | ---------------------------------------------- | ---------------------- | ----------------------------- | ------------- | ----------------------- |
+| Notifications | Add a notification (moves to the add form)     | Search, Event feed     | —                             | —             | Client-side, URL-backed |
+| Event Feeds   | Add Event Feed                                 | —                      | —                             | —             | — (complete list)       |
+| Entries       | Add Entry, Transfer, Import, Export CSV        | Budget, Type, Matching | Dates, Link, Tag              | —             | Server, in place        |
+| Transactions  | Import, Load missing Mollie fees               | Search, Status, Mode   | Dates, amounts                | Export Selected | Server, in place      |
+
+Transactions keeps "Reset filters" (back to Paid + Live) next to "Clear
+filters" (every criterion off).
 
 ## Review example
 
@@ -192,8 +256,10 @@ tone, disabled actions with reasons and a row without secondary actions.
   only on the wp-env tests site:
   `/wp-admin/admin.php?page=fair-e2e-admin-table-example`.
 - `&scenario=` selects `loading`, `empty`, `no-results`, `pending` or
-  `error`; `&layout=baseline` shows the same rows in today's table
-  conventions for before/after screenshots.
+  `error`; `&layout=baseline` shows the same rows in the pre-#2205 table
+  conventions; `&per_page=N` pages the rows to review pagination. The
+  toolbar shows search, More filters (holding the scenario), a selection
+  toggle and the count.
 
 Tests: `src/admin-table/__tests__/` (Jest) and
 `e2e/admin-table-example.spec.js` (layout, keyboard and focus in a browser).
