@@ -463,6 +463,10 @@ class Installer {
 			self::migrate_to_3_54_0();
 		}
 
+		if ( version_compare( $current_version, '3.55.0', '<' ) ) {
+			self::migrate_to_3_55_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled, $overrides_detected, $legacy_timing_retired ) );
 	}
@@ -2457,6 +2461,22 @@ class Installer {
 	 */
 	private static function migrate_to_3_54_0() {
 		wp_clear_scheduled_hook( 'fair_events_payment_history_backfill_batch' );
+	}
+
+	/**
+	 * Migrate to version 3.55.0 - Retire the payment history shadow writes (#2253).
+	 *
+	 * Their fifteen-minute sweep ran under the shadow work hook, which also
+	 * retried the purchase lifecycle's queued work. That retry now runs
+	 * under its own hook (PurchaseRecovery::CRON_HOOK), which every request
+	 * schedules on `init` once the queue exists; the old event is removed
+	 * so nothing sweeps any more. Queued work stays in its table and is
+	 * finished by the new cron.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_55_0() {
+		wp_clear_scheduled_hook( 'fair_events_payment_history_shadow_work' );
 	}
 
 	/**

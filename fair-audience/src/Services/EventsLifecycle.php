@@ -88,8 +88,9 @@ class EventsLifecycle {
 
 	/**
 	 * Give a free registration its Fair Events purchase now, so it takes
-	 * its places at once. Best effort: when it can't be recorded, Fair
-	 * Events' shadow writer catches up on its next sweep.
+	 * its places at once. Best effort: when it can't be recorded now, it is
+	 * queued like an organizer's change and finished by Fair Events'
+	 * recovery cron.
 	 *
 	 * @param int $event_participant_id Registration just signed up.
 	 * @return void
@@ -99,7 +100,28 @@ class EventsLifecycle {
 		if ( (int) $event_participant_id <= 0 || ! self::active() || ! method_exists( $lifecycle, 'record_relationship' ) ) {
 			return;
 		}
-		$lifecycle::record_relationship( (int) $event_participant_id );
+		if ( is_wp_error( $lifecycle::record_relationship( (int) $event_participant_id ) ) ) {
+			self::relationship_changed( (int) $event_participant_id );
+		}
+	}
+
+	/**
+	 * An organizer added, relabelled, moved, retyped or removed a
+	 * registration, or changed its activities: Fair Events brings the
+	 * purchase behind it in step at the end of the request, after any
+	 * database transaction the writer is in, and retries from its recovery
+	 * cron when that fails. A removal calls it with the deleted row's ID:
+	 * the purchase follows a removal too.
+	 *
+	 * @param int $event_participant_id Registration that changed.
+	 * @return void
+	 */
+	public static function relationship_changed( $event_participant_id ) {
+		$lifecycle = 'FairEvents\\Services\\PurchaseLifecycle';
+		if ( (int) $event_participant_id <= 0 || ! self::active() || ! method_exists( $lifecycle, 'relationship_changed' ) ) {
+			return;
+		}
+		$lifecycle::relationship_changed( (int) $event_participant_id );
 	}
 
 	/**

@@ -181,6 +181,9 @@ class ParticipantRemoval {
 		 */
 		do_action( 'fair_audience_event_participant_removed', $relationship );
 
+		// Queued inside the removal's transaction, so a rollback drops it too.
+		EventsLifecycle::relationship_changed( (int) $relationship->id );
+
 		return true;
 	}
 

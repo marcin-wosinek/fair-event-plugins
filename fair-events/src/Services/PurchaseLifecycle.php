@@ -89,7 +89,7 @@ class PurchaseLifecycle {
 	 * Write an attempt's links: the purchases its evidence names, with the
 	 * allocation each gets (PaymentAttribution, §8.8). Repeating it is a
 	 * no-op, so a checkout continued after an interruption can call it
-	 * again. On success the shadow writer's queued work for the transaction
+	 * again. On success any recovery work still queued for the transaction
 	 * is done too.
 	 *
 	 * @param int $transaction_id Connector transaction ID.
@@ -107,10 +107,10 @@ class PurchaseLifecycle {
 		// A Fair Audience attempt pays for the purchases its relationships
 		// stand for. A new Audience checkout has none until its shadow
 		// purchase is created, so the relationships it names are brought in
-		// step first. The backfill is over by now, so no floor applies.
+		// step first.
 		if ( in_array( (string) ( $transaction['metadata']['source'] ?? '' ), self::audience_sources(), true ) ) {
 			foreach ( self::named_relationships( $transaction['metadata'] ) as $relationship_id ) {
-				$synced = ShadowPurchases::sync( $relationship_id, 0 );
+				$synced = ShadowPurchases::sync( $relationship_id );
 				if ( is_wp_error( $synced ) ) {
 					return $synced;
 				}
@@ -150,18 +150,33 @@ class PurchaseLifecycle {
 	/**
 	 * Bring the purchase of a Fair Audience registration in step now: a
 	 * free signup, which records no attempt, gets its purchase (and so its
-	 * places) at once instead of on the shadow writer's next sweep. Repeating
-	 * it is a no-op. A registration that doesn't qualify (§4.1) gets none.
+	 * places) at once. Repeating it is a no-op. A registration that doesn't
+	 * qualify (§4.1) gets none. It opens its own database transaction, so a
+	 * writer inside one calls relationship_changed() instead.
 	 *
 	 * @param int $relationship_id Fair Audience relationship ID.
 	 * @return int|null|\WP_Error The purchase ID, null when there is none, or why it failed.
 	 */
 	public static function record_relationship( $relationship_id ) {
-		$synced = ShadowPurchases::sync( (int) $relationship_id, 0 );
+		$synced = ShadowPurchases::sync( (int) $relationship_id );
 		if ( is_wp_error( $synced ) ) {
 			return $synced;
 		}
 		return empty( $synced['signup_id'] ) ? null : (int) $synced['signup_id'];
+	}
+
+	/**
+	 * A Fair Audience organizer added, relabelled, moved, retyped or removed
+	 * a registration, or changed its activities: bring its purchase in step
+	 * at the end of the request, after the writer's own database transaction
+	 * (PurchaseRecovery::queue_relationship()). A sync that fails there is
+	 * retried by the recovery cron.
+	 *
+	 * @param int $relationship_id Fair Audience relationship ID.
+	 * @return void
+	 */
+	public static function relationship_changed( $relationship_id ) {
+		PurchaseRecovery::queue_relationship( (int) $relationship_id );
 	}
 
 	/**

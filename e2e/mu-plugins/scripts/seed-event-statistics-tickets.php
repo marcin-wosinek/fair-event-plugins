@@ -21,6 +21,9 @@
  *   ticket-type-limit   {ticketTypeId, capacity}
  *   ticket-status       {ticketId, status}
  *   transfer            {ticketId, holderParticipantId}
+ *   relationship        {eventDateId, participantId, label?}  A Fair Audience
+ *                       registration written directly, as one from before the
+ *                       migration: no Fair Events purchase follows it.
  *   participant-option  {relationshipId, optionId, name}
  *   relationship-ticket-type {relationshipId, ticketTypeId}
  *   cleanup             {eventDateIds: [], configuredEventDateIds?: []}
@@ -144,6 +147,19 @@ switch ( $fixture_action ) {
 
 	case 'transfer':
 		$result['updated'] = $wpdb->update( $tickets_table, array( 'holder_participant_id' => (int) $data['holderParticipantId'] ), array( 'id' => (int) $data['ticketId'] ) );
+		break;
+
+	case 'relationship':
+		$wpdb->insert(
+			$wpdb->prefix . 'fair_audience_event_participants',
+			array(
+				'event_id'       => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT event_id FROM %i WHERE id = %d', $wpdb->prefix . 'fair_event_dates', (int) $data['eventDateId'] ) ),
+				'event_date_id'  => (int) $data['eventDateId'],
+				'participant_id' => (int) $data['participantId'],
+				'label'          => sanitize_key( (string) ( $data['label'] ?? 'signed_up' ) ),
+			)
+		);
+		$result['relationshipId'] = (int) $wpdb->insert_id;
 		break;
 
 	case 'participant-option':

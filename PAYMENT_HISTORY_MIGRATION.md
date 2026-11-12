@@ -24,7 +24,8 @@ Each section is marked as one of:
 > **Historical since #2251.** Stages 2–5 below describe the migration as
 > shipped up to `build-2.2.0`, the last release that runs it. Newer releases
 > start only on a site that finished it or was installed fresh: see §8.16
-> and §8.17. Its tooling is retired (§8.18).
+> and §8.17. Its tooling is retired (§8.18), and so are its shadow writes
+> (§8.19).
 
 Anything this contract doesn't state is not yet decided. A later stage that
 needs to decide it records a timestamped `## Decision` comment on its issue
@@ -745,6 +746,9 @@ on it is listed until shadow writes record their coverage floors.
 | Events upgrade incomplete     | `storage_available()` is false until DB `3.49.0` is recorded and the table exists; both filters keep their previous queries.                                |
 
 ### 8.8 Stage 3 shadow writes
+
+**Retired** (#2253, §8.19): what follows describes them as they ran up to
+`build-2.2.0`.
 
 **Implemented** (#2139, first of three pull requests; Fair Events DB
 `3.50.0`). Every live payment writer records payment links, and Fair
@@ -1549,8 +1553,8 @@ is what every site does, whether or not an activation is recorded.
   (`EventsLifecycle::record_signup()` → `PurchaseLifecycle::record_relationship()`),
   and so does the registration a series upgrade resolves, so neither waits
   for the shadow writer's sweep. An organizer-added relationship still
-  reaches Fair Events through that sweep, as on reader-activated sites since
-  §8.14; its retirement is #2253. A pending relationship of a
+  reached Fair Events through that sweep, as on reader-activated sites since
+  §8.14; since #2253 it is queued by the change itself (§8.19). A pending relationship of a
   `multiple_instances` checkout now qualifies for its own purchase even
   though the participant's other occurrences hold purchases of the same
   ticket type (`ShadowPurchases::qualifies()`); before, the attempt of a
@@ -1692,7 +1696,8 @@ payment history management.
   allocation rules, audit writes and the purchase-amount refresh are
   unchanged.
 - **Upgrade.** 3.54.0 clears the `fair_events_payment_history_backfill_batch`
-  cron event. The shadow work cron and its queue are untouched (#2253).
+  cron event. The shadow work cron and its queue were left to #2253
+  (§8.19).
 - **Kept.** Payment links (including `backfill` ones), findings, the audit
   (including recorded activations), the comparisons table, the migration,
   cutover and readers options, and purchase provenance. Their removal is
@@ -1700,6 +1705,57 @@ payment history management.
   remain until then; `PaymentHistoryUpgrade` (§8.17) reads the backfill run
   and the stage 5 activation through them (`get_backfill_run()`,
   `get_readers_activation()`).
+
+### 8.19 Shadow writes retired
+
+**Implemented** (#2253; DB 3.55.0). Nothing synchronizes old purchase
+history any more, and nothing records an attempt a second time: every
+checkout links its own attempt before the buyer pays
+(`PurchaseLifecycle::record_attempt()`, §8.16). What the shadow writes still
+did for current purchases moved to `Services\PurchaseRecovery`.
+
+- **Removed.** `PaymentHistoryShadowWrites`: its listeners on
+  `fair_payment_transaction_created`, `fair_payment_status_changed` and
+  `fair_audience_cleanup_expired_signups`, its fifteen-minute sweep for
+  relationships out of step, and the recording of coverage floors.
+  `PaymentHistoryCompatibility::shadow_writes_supported()`,
+  `shadow_write_coverage()` and `backfill_blockers()` are gone, and
+  `ShadowPurchases::sync()` lost its floor argument.
+- **Organizer changes.** Fair Audience calls
+  `EventsLifecycle::relationship_changed()` after an organizer adds a
+  participant (alone or in bulk), changes a registration's label, ticket
+  type, activities or attendance, moves it to another occurrence, or removes
+  it. Fair Events queues the relationship
+  (`PurchaseLifecycle::relationship_changed()` →
+  `PurchaseRecovery::queue_relationship()`) and brings its purchase in step
+  at the end of the request, after the writer's own database transaction: a
+  removal rolled back drops its row with it. As before, a participant whose
+  registration has a purchase can't be removed in Fair Audience until the
+  purchase is deleted; an organizer-added one now has it at once rather
+  than after the next sweep. A free signup's
+  `EventsLifecycle::record_signup()` still syncs at once and queues the same
+  work when that fails. An older Fair Audience doesn't make these calls, so
+  update both plugins together.
+- **Recovery cron.** `fair_events_purchase_recovery` runs every fifteen
+  minutes once the work queue exists, and is removed on deactivation. It
+  retries every due row of `fair_events_payment_shadow_work` (the table keeps
+  its name): the lifecycle's own work (payment, confirmation, projection),
+  relationships, and transaction rows the shadow writer left, which
+  `record_attempt()` finishes. Each step is idempotent: a sync finds the
+  purchase by provenance, links are written per (purchase, transaction,
+  role), and a confirmation or projection is announced only by the row that
+  is still queued, so repeating work never adds a purchase, a link or an
+  email.
+- **Upgrade.** 3.55.0 clears `fair_events_payment_history_shadow_work`, the
+  event that ran both the sweep and the retries; the next request schedules
+  the recovery cron. Queued rows stay and are finished by it. The
+  `shadow_writes` entry of the migration's state option stays until #2254
+  removes the option; nothing reads it.
+- **Kept.** `ShadowPurchases` (Fair Audience's purchase route and organizer
+  changes still need a purchase to link), its amount refresh used by
+  reconciliation, `PaymentAttribution`, the queue and its rows, and
+  `PaymentHistoryUpgrade`'s check of failed or unresolved transaction and
+  relationship work.
 
 ## 9. Worked examples
 

@@ -744,6 +744,27 @@ removed, and the shadow work cron stays scheduled.
 **Recovery.** Rolling back restores the migration controls over the same
 data: nothing this release removed held state.
 
+## Upgrade notes: payment history shadow writes retired (#2253)
+
+Retires the migration's shadow synchronization
+([PAYMENT_HISTORY_MIGRATION.md § 8.19](./PAYMENT_HISTORY_MIGRATION.md#819-shadow-writes-retired)).
+Update **Fair Events and Fair Audience together**: an older Fair Audience
+doesn't report organizer changes, so participants it adds or relabels
+wouldn't reach Fair Events' capacity and Statistics until it is updated.
+
+**What changes.** The database upgrade to 3.55.0 unschedules
+`fair_events_payment_history_shadow_work`; the next request schedules
+`fair_events_purchase_recovery`, which retries interrupted payment,
+confirmation and organizer-change work every fifteen minutes. No table,
+column or option is removed: work still queued in
+`{prefix}fair_events_payment_shadow_work` is finished by the new cron.
+
+**Check after deploy.** `wp cron event list` shows
+`fair_events_purchase_recovery` and no `fair_events_payment_history_shadow_work`.
+
+**Recovery.** Rolling back reschedules the old event on the next request,
+over the same queue; nothing this release removed held state.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

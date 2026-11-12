@@ -75,11 +75,17 @@ test.describe( 'ParticipantsController activity — payments', () => {
 		expect( match, 'event-date row for the test event' ).toBeTruthy();
 		eventDateId = match.event_date_id;
 
+		// Written directly, as a registration from before the payment
+		// history migration: the organizer route would give it a Fair
+		// Events purchase at once (#2253).
 		const linkRes = await api.post(
-			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+			'/wp-json/fair-e2e/v1/participant-removal/legacy-relationship',
 			{
 				headers: authHeaders,
-				data: { participant_id: participantId, label: 'signed_up' },
+				data: {
+					event_date_id: eventDateId,
+					participant_id: participantId,
+				},
 			}
 		);
 		// #1410 — publishing a fair_event doesn't auto-create its event-date;
