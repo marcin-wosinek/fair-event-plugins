@@ -78,14 +78,19 @@ test.describe( 'Fair Finance entries awaiting a budget', () => {
 		} );
 		const dialog = page.getByRole( 'dialog' );
 
-		const saveBudget = async ( label ) => {
+		const saveBudget = async ( label, expectedBudgetId ) => {
 			await row.getByRole( 'button', { name: 'Edit' } ).click();
-			// EntryForm loads the entry in an effect after mounting; a change
-			// before that render would be applied to the empty defaults.
-			await expect( dialog.getByLabel( 'Amount' ) ).toHaveValue( '18.9' );
+			// Change the budget straight away: the other loaded values stay.
 			await dialog
 				.getByLabel( 'Budget Category' )
 				.selectOption( { label } );
+			await expect( dialog.getByLabel( 'Amount' ) ).toHaveValue( '18.9' );
+			await expect( dialog.getByLabel( 'Date' ) ).toHaveValue(
+				'2026-05-04'
+			);
+			await expect( dialog.getByLabel( 'Description' ) ).toHaveValue(
+				DESCRIPTION
+			);
 			await dialog
 				.getByRole( 'button', { name: 'Update Entry' } )
 				.click();
@@ -95,16 +100,28 @@ test.describe( 'Fair Finance entries awaiting a budget', () => {
 					.locator( '.components-notice__content' )
 					.getByText( 'Entry updated successfully.' )
 			).toBeVisible();
+
+			const saved = await api.get( `${ ENTRIES_API }/${ entryId }`, {
+				headers: adminHeaders,
+			} );
+			expect( saved.ok(), await saved.text() ).toBeTruthy();
+			expect( await saved.json() ).toMatchObject( {
+				amount: 18.9,
+				entry_type: 'cost',
+				entry_date: '2026-05-04',
+				description: DESCRIPTION,
+				budget_id: expectedBudgetId,
+			} );
 		};
 
-		await saveBudget( BUDGET_NAME );
+		await saveBudget( BUDGET_NAME, budgetId );
 		await expect( count ).toHaveText(
 			initial - 1 === 1
 				? '1 entry is waiting for a budget.'
 				: `${ initial - 1 } entries are waiting for a budget.`
 		);
 
-		await saveBudget( '-- No Budget --' );
+		await saveBudget( '-- No Budget --', null );
 		await expect( count ).toHaveText(
 			initial === 1
 				? '1 entry is waiting for a budget.'
