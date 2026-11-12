@@ -1,3 +1,25 @@
+/* Statistics lays its sections out against its own width, so the same view
+   works beside the WordPress sidebar (Manage Event) and on the standalone
+   page. Sections are spaced by the gap, not by their own margins. */
+.fair-event-statistics {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	container: fair-event-statistics / inline-size;
+}
+
+.fair-event-statistics > *,
+.fair-event-statistics > .components-notice {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* Manage Event caps card content at 600px for its form tabs; charts and
+   capacity bars use the whole card instead. */
+.fair-events-manage-event .fair-event-statistics .components-card__body > * {
+	max-width: none;
+}
+
 .fair-event-statistics__summary {
 	display: flex;
 	flex-wrap: wrap;
@@ -5,16 +27,36 @@
 	align-items: baseline;
 }
 
-.fair-event-statistics__history {
-	max-width: 320px;
-	margin-top: 16px;
+.fair-event-statistics__section-intro {
+	color: #50575e;
 }
 
-.fair-event-statistics__sales-charts {
+.fair-event-statistics__history {
+	max-width: 320px;
+}
+
+/* Two charts side by side when both stay readable; one column otherwise. The
+   sales and activity pairs share this grid, so their columns line up. */
+.fair-event-statistics__chart-pair {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 1fr);
 	gap: 16px;
-	margin-top: 16px;
+}
+
+@container fair-event-statistics (min-width: 800px) {
+	.fair-event-statistics__chart-pair {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@container fair-event-statistics (max-width: 599px) {
+	.fair-event-statistics__history {
+		max-width: none;
+	}
+
+	.fair-event-statistics__summary {
+		gap: 12px 20px;
+	}
 }
 
 .fair-event-statistics__chart-placeholder {
@@ -26,11 +68,16 @@
 
 .fair-event-statistics__chart-card {
 	min-width: 0;
-	margin-top: 16px;
+	margin: 0;
 }
 
-.fair-event-statistics__sales-charts .fair-event-statistics__chart-card {
-	margin-top: 0;
+.fair-event-statistics__chart-title {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-event-statistics__activity-chart {
+	min-width: 0;
 }
 
 /* Title + event subtitle on the left, download action on the right. The action
@@ -54,11 +101,6 @@
 
 .fair-event-statistics__download {
 	flex: 0 0 auto;
-}
-
-.fair-event-statistics__capacity-intro {
-	margin: 16px 0 0;
-	color: #50575e;
 }
 
 .fair-event-statistics__capacity-note {
@@ -149,20 +191,7 @@
 .fair-event-statistics__capacity-figures dd {
 	margin: 0;
 	font-weight: 600;
-}
-
-@media (max-width: 782px) {
-	.fair-event-statistics__history {
-		max-width: none;
-	}
-
-	.fair-event-statistics__sales-charts {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.fair-event-statistics__summary {
-		gap: 12px 20px;
-	}
+	font-variant-numeric: tabular-nums;
 }
 
 .fair-event-statistics__revenue-flag {
@@ -186,7 +215,7 @@
 }
 
 .fair-event-statistics__event-heading {
-	margin: 0 0 16px;
+	margin: 0;
 	font-size: 15px;
 	font-weight: 600;
 	overflow-wrap: anywhere;
