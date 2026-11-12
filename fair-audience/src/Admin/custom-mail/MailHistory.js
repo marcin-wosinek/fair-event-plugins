@@ -9,59 +9,29 @@ import {
 	CardHeader,
 	Notice,
 } from '@wordpress/components';
-import { dateI18n, getSettings } from '@wordpress/date';
+import { useEffect, useRef } from '@wordpress/element';
 
 /**
- * Format a history timestamp in the site's timezone and date format.
- *
- * `created_at` is written by the database in UTC; marking it as such keeps
- * `dateI18n` from reading it as browser-local time.
- *
- * @param {string} createdAt 'YYYY-MM-DD HH:MM:SS' in UTC.
- * @return {string} Formatted date, or a dash when missing.
+ * Internal dependencies
  */
-export function formatSentAt( createdAt ) {
-	if ( ! createdAt ) {
-		return '—';
-	}
-	const { formats } = getSettings();
-	return dateI18n( formats.datetime, `${ createdAt.replace( ' ', 'T' ) }Z` );
-}
-
-/**
- * A recorded message's subject, or a placeholder when it had none.
- *
- * @param {Object} mail History record.
- * @return {string} Subject.
- */
-export function subjectOf( mail ) {
-	return mail.subject || __( '(no subject)', 'fair-audience' );
-}
-
-/**
- * Who a recorded message was addressed to.
- *
- * @param {Object} mail History record.
- * @return {string} Event title or a fallback.
- */
-function audienceOf( mail ) {
-	if ( ! mail.event_date_id && ! mail.event_id ) {
-		return __( 'All audience', 'fair-audience' );
-	}
-	return mail.event_title || __( '(deleted event)', 'fair-audience' );
-}
+import { audienceOf, formatSentAt, subjectOf } from './mail-format.js';
+import { isModifiedClick, viewUrl } from './mail-route.js';
 
 /**
  * Messages sent so far, with reuse and removal of a record.
  *
- * @param {Object}   props             Component props.
- * @param {Array}    props.mails       History records.
- * @param {Function} props.onDuplicate Called with a record to reuse.
- * @param {Function} props.onDelete    Called with a record to delete.
- * @param {boolean}  props.disabled    Whether actions are locked.
- * @param {Object}   [props.notice]    Result of the last deletion: { status, message }.
+ * @param {Object}   props                   Component props.
+ * @param {Array}    props.mails             History records.
+ * @param {Function} props.onDuplicate       Called with a record to reuse.
+ * @param {Function} props.onDelete          Called with a record to delete.
+ * @param {boolean}  props.disabled          Whether actions are locked.
+ * @param {Object}   [props.notice]          Result of the last deletion: { status, message }.
  * @param {Function} [props.onDismissNotice] Called when the notice is dismissed.
- * @param {Object}   [props.headingRef]  Ref for the heading, which takes focus after a deletion.
+ * @param {Object}   [props.headingRef]      Ref for the heading, which takes focus after a deletion.
+ * @param {Function} [props.onOpen]          Called with a record when its subject link is
+ *                                           followed in this tab; the link works without it.
+ * @param {number}   [props.focusMailId]     Record whose subject link takes focus, e.g.
+ *                                           after returning from its detail view.
  * @return {JSX.Element} The history card.
  */
 export default function MailHistory( {
@@ -72,7 +42,40 @@ export default function MailHistory( {
 	notice = null,
 	onDismissNotice,
 	headingRef,
+	onOpen,
+	focusMailId = null,
 } ) {
+	const linkRefs = useRef( new Map() );
+	// Focus is restored once per request, after the records are rendered.
+	const pendingFocus = useRef( null );
+
+	useEffect( () => {
+		pendingFocus.current = focusMailId;
+	}, [ focusMailId ] );
+
+	useEffect( () => {
+		const id = pendingFocus.current;
+		if ( ! id ) {
+			return;
+		}
+		pendingFocus.current = null;
+		const link = linkRefs.current.get( id );
+		if ( link ) {
+			link.focus();
+		} else {
+			// The record is gone (deleted elsewhere): land on the history.
+			headingRef?.current?.focus();
+		}
+	}, [ focusMailId, mails, headingRef ] );
+
+	const handleOpen = ( event, mail ) => {
+		if ( ! onOpen || isModifiedClick( event ) ) {
+			return;
+		}
+		event.preventDefault();
+		onOpen( mail );
+	};
+
 	return (
 		<Card>
 			<CardHeader>
@@ -133,7 +136,26 @@ export default function MailHistory( {
 											'fair-audience'
 										) }
 									>
-										{ subjectOf( mail ) }
+										<a
+											href={ viewUrl( mail.id ) }
+											ref={ ( node ) => {
+												if ( node ) {
+													linkRefs.current.set(
+														mail.id,
+														node
+													);
+												} else {
+													linkRefs.current.delete(
+														mail.id
+													);
+												}
+											} }
+											onClick={ ( event ) =>
+												handleOpen( event, mail )
+											}
+										>
+											{ subjectOf( mail ) }
+										</a>
 									</td>
 									<td
 										data-label={ __(

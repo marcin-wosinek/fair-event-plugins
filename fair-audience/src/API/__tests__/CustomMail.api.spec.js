@@ -12,6 +12,8 @@
  */
 
 import { test, expect, request } from '@playwright/test';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const BASE_URL = process.env.WP_BASE_URL || 'http://localhost:8080';
 const ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
@@ -29,6 +31,22 @@ const RUN = `${ Date.now() }-${ Math.floor( Math.random() * 1e6 ) }`;
 const FEATURES_OPTION = 'fair_audience_experimental_features';
 
 test.describe.configure( { mode: 'serial' } );
+
+/**
+ * Run PHP on the tests site. Asynchronous, so the request context's
+ * keep-alive sockets are not left dead while WP-CLI runs.
+ *
+ * @param {string} php Code for `wp eval`.
+ * @return {Promise<string>} Standard output.
+ */
+async function wpEval( php ) {
+	const { stdout } = await promisify( execFile )(
+		'npx',
+		[ 'wp-env', 'run', 'tests-cli', 'wp', 'eval', php ],
+		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
+	);
+	return stdout;
+}
 
 test.describe( 'CustomMailController', () => {
 	let api;
@@ -240,6 +258,10 @@ test.describe( 'CustomMailController', () => {
 			'/wp-json/fair-audience/v1/custom-mail/1',
 			{ headers: subscriber }
 		);
+		const forbiddenGet = await api.get(
+			'/wp-json/fair-audience/v1/custom-mail/1',
+			{ headers: subscriber }
+		);
 		await api.delete(
 			`/wp-json/wp/v2/users/${ user.id }?force=true&reassign=1`,
 			{ headers: adminHeaders }
@@ -248,6 +270,12 @@ test.describe( 'CustomMailController', () => {
 		expect( forbiddenSend.status ).toBe( 403 );
 		expect( forbiddenPreview.status ).toBe( 403 );
 		expect( forbiddenDelete.status() ).toBe( 403 );
+		expect( forbiddenGet.status() ).toBe( 403 );
+		const anonymousGet = await api.get(
+			'/wp-json/fair-audience/v1/custom-mail/1',
+			{ headers: {} }
+		);
+		expect( anonymousGet.status() ).toBe( 401 );
 		expect( await deliveredTo( subject ) ).toHaveLength( 0 );
 	} );
 
@@ -468,6 +496,73 @@ test.describe( 'CustomMailController', () => {
 		expect(
 			( await history() ).some( ( mail ) => mail.id === record.id )
 		).toBe( false );
+	} );
+
+	test( 'one recorded message is returned as saved and safe to show', async () => {
+		const subject = subjectFor( 'detail' );
+		const content =
+			'<p>Hi {name}, see <a href="https://example.com/map">the map</a>.</p>';
+		await send( {
+			subject,
+			content,
+			event_date_id: occurrenceA,
+			labels: [ 'signed_up' ],
+		} );
+		const record = ( await history() ).find(
+			( mail ) => mail.subject === subject
+		);
+		expect( record ).toBeTruthy();
+		const before = await deliveredTo( subject );
+
+		const get = async ( id ) => {
+			const res = await api.get(
+				`/wp-json/fair-audience/v1/custom-mail/${ id }`,
+				{ headers: adminHeaders }
+			);
+			return { status: res.status(), body: await res.json() };
+		};
+
+		// The saved template, placeholders unresolved, with the same fields
+		// as the history list.
+		const shown = await get( record.id );
+		expect( shown.status ).toBe( 200 );
+		expect( shown.body ).toEqual( record );
+		expect( shown.body.content ).toBe( content );
+		expect( shown.body ).toMatchObject( {
+			id: record.id,
+			subject,
+			event_date_id: occurrenceA,
+			event_title: `Custom mail event ${ RUN }`,
+		} );
+
+		// Viewing sends nothing.
+		expect( await deliveredTo( subject ) ).toEqual( before );
+
+		// A body saved before sanitizing (or edited in the database) is
+		// sanitized on the way out.
+		await wpEval(
+			`global $wpdb; $wpdb->update( $wpdb->prefix . 'fair_audience_custom_mail_messages', array( 'content' => '<p onclick="alert(1)">Hi</p><script>alert(2)</script><img src="x.png" onerror="alert(3)">' ), array( 'id' => ${ Number(
+				record.id
+			) } ) );`
+		);
+		const unsafe = await get( record.id );
+		expect( unsafe.status ).toBe( 200 );
+		expect( unsafe.body.content ).toContain( '<p>Hi</p>' );
+		expect( unsafe.body.content ).toContain( 'x.png' );
+		expect( unsafe.body.content ).not.toMatch( /<script|onclick|onerror/ );
+
+		// Missing and invalid IDs.
+		expect( ( await get( 999999999 ) ).status ).toBe( 404 );
+		expect( ( await get( 0 ) ).status ).toBe( 400 );
+
+		// A deleted record is gone.
+		await api.delete(
+			`/wp-json/fair-audience/v1/custom-mail/${ record.id }`,
+			{ headers: adminHeaders }
+		);
+		const deleted = await get( record.id );
+		expect( deleted.status ).toBe( 404 );
+		expect( deleted.body.code ).toBe( 'not_found' );
 	} );
 
 	test( 'the event list offers each occurrence of a published event', async () => {

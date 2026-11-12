@@ -153,3 +153,64 @@
 	line-height: 1.3;
 	overflow-wrap: anywhere;
 }
+
+/* Recorded message view (#2164). */
+.fair-audience-custom-mail__back {
+	margin: 8px 0 0;
+}
+
+.fair-audience-custom-mail__detail-title {
+	overflow-wrap: anywhere;
+}
+
+.fair-audience-custom-mail__detail {
+	margin-bottom: 24px;
+}
+
+.fair-audience-custom-mail__meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 16px 24px;
+	margin: 0;
+}
+
+.fair-audience-custom-mail__meta dt {
+	margin-bottom: 4px;
+	color: #50575e;
+	font-weight: 600;
+}
+
+.fair-audience-custom-mail__meta dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.fair-audience-custom-mail__content {
+	max-width: 720px;
+	overflow-wrap: anywhere;
+}
+
+.fair-audience-custom-mail__content img {
+	max-width: 100%;
+	height: auto;
+}
+
+.fair-audience-custom-mail__content table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+/* wp-admin removes list markers; an email's lists keep them. */
+.fair-audience-custom-mail__content ul,
+.fair-audience-custom-mail__content ol {
+	margin-left: 2em;
+}
+
+.fair-audience-custom-mail__content ul {
+	list-style: disc;
+}
+
+.fair-audience-custom-mail__content ol {
+	list-style: decimal;
+}

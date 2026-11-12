@@ -7,7 +7,7 @@ import { createRoot } from '@wordpress/element';
 /**
  * Internal dependencies
  */
-import CustomMail from './CustomMail.js';
+import CustomMailApp from './CustomMailApp.js';
 import './style.css';
 
 /**
@@ -19,6 +19,6 @@ domReady( () => {
 	);
 	if ( container ) {
 		const root = createRoot( container );
-		root.render( <CustomMail /> );
+		root.render( <CustomMailApp /> );
 	}
 } );

@@ -151,11 +151,27 @@ class CustomMailController extends WP_REST_Controller {
 			)
 		);
 
+		// GET /fair-audience/v1/custom-mail/{id} - One recorded message.
 		// DELETE /fair-audience/v1/custom-mail/{id} - Delete a record.
 		register_rest_route(
 			$this->namespace,
 			'/custom-mail/(?P<id>[\d]+)',
 			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'minimum'           => 1,
+							// Core skips schema bounds without an explicit callback.
+							'validate_callback' => 'rest_validate_request_arg',
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
@@ -537,6 +553,32 @@ class CustomMailController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $recipients );
+	}
+
+	/**
+	 * Get one recorded custom mail message.
+	 *
+	 * Returns the message as it was saved: the authored body before recipient
+	 * substitutions, never regenerated from current data. The body is
+	 * sanitized again here because the admin page renders it as HTML.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error Response object.
+	 */
+	public function get_item( $request ) {
+		$message = $this->repository->get_by_id( $request->get_param( 'id' ) );
+		if ( ! $message ) {
+			return new WP_Error(
+				'not_found',
+				__( 'Custom mail message not found.', 'fair-audience' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$data            = $this->prepare_message( $message );
+		$data['content'] = wp_kses_post( (string) $data['content'] );
+
+		return rest_ensure_response( $data );
 	}
 
 	/**
