@@ -95,8 +95,8 @@ class SignupActivities {
 	 * Apply the viewer's discounts to the `price` of the base-resolved
 	 * `ticket_options` render-context entries (fair-events already resolved
 	 * each one's availability and `is_full`), and add `addable_options` /
-	 * `current_activity_names` when the viewer is already signed up for this
-	 * event date, plus `addon_tickets` (id, label) when they hold several
+	 * `current_activity_names` when the viewer is admitted to this event
+	 * date (see TicketActivities::admitted()), plus `addon_tickets` (id, label) when they hold several
 	 * tickets there and must choose which one receives added activities. Called from SignupHookBridge::enrich_render_context().
 	 *
 	 * Only confirmed activities count as owned: one still awaiting payment
@@ -126,7 +126,10 @@ class SignupActivities {
 				(int) $context['event_date_id'],
 				$participant_id
 			);
-			if ( $candidate && 'signed_up' === $candidate->label ) {
+			// The relationship of an admitted viewer: signed up, or listed
+			// as the holder of a ticket given to them. One whose tickets were
+			// all given to someone else no longer admits them (#2133).
+			if ( $candidate && TicketActivities::admitted( (int) $context['event_date_id'], $participant_id, $candidate ) ) {
 				$signed_row = $candidate;
 			}
 		}

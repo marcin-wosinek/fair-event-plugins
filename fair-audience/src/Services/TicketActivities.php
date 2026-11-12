@@ -72,6 +72,104 @@ class TicketActivities {
 	}
 
 	/**
+	 * Whether a participant holds a confirmed ticket on an event date: the
+	 * ticket admits them, whoever bought it and whatever their relationship
+	 * there says.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool
+	 */
+	public static function holds_admission_ticket( $event_date_id, $participant_id ) {
+		return self::available()
+			&& (bool) \FairEvents\Models\EventTicket::get_held_on_event_date( (int) $event_date_id, (int) $participant_id, array( 'confirmed' ) );
+	}
+
+	/**
+	 * Of several event dates, those on which a participant holds a
+	 * confirmed ticket, in one query: for the occurrence picker of a long
+	 * series.
+	 *
+	 * @param int   $participant_id Participant ID.
+	 * @param int[] $event_date_ids Event date IDs.
+	 * @return int[] The event date IDs among them with such a ticket.
+	 */
+	public static function admitting_event_date_ids( $participant_id, array $event_date_ids ) {
+		global $wpdb;
+
+		$event_date_ids = array_values( array_unique( array_filter( array_map( 'intval', $event_date_ids ) ) ) );
+		if ( ! self::available() || ! $event_date_ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $event_date_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- placeholder list built above.
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT event_date_id FROM %i WHERE holder_participant_id = %d AND status = %s AND deleted_at IS NULL AND event_date_id IN ( $placeholders )",
+				array_merge( array( \FairEvents\Models\EventTicket::table(), (int) $participant_id, 'confirmed' ), $event_date_ids )
+			)
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
+	 * Whether every ticket that still admits someone, among those a
+	 * participant holds or bought on an event date, is one they bought and
+	 * someone else now holds. Their relationship there stays, as the record
+	 * of the purchase, but no longer admits them.
+	 *
+	 * @param int $event_date_id  Event date ID.
+	 * @param int $participant_id Participant ID.
+	 * @return bool
+	 */
+	public static function transferred_away( $event_date_id, $participant_id ) {
+		if ( ! self::available()
+			|| ! method_exists( \FairEvents\Models\EventTicket::class, 'count_active_for_participant' )
+			|| ! method_exists( \FairEvents\Models\EventTicket::class, 'count_assigned_away' )
+		) {
+			return false;
+		}
+
+		$active = \FairEvents\Models\EventTicket::count_active_for_participant( (int) $event_date_id, (int) $participant_id );
+		if ( ! $active ) {
+			return false;
+		}
+
+		$assigned_away = \FairEvents\Models\EventTicket::count_assigned_away( (int) $event_date_id, array( (int) $participant_id ) );
+
+		return ( $assigned_away[ (int) $participant_id ] ?? 0 ) >= $active;
+	}
+
+	/**
+	 * Whether a participant is admitted to an event date. A ticket they
+	 * hold admits them. Otherwise their signed-up relationship does, unless
+	 * that admission rested on tickets they have all given away: buying a
+	 * ticket is not attending on it.
+	 *
+	 * @param int         $event_date_id  Event date ID.
+	 * @param int         $participant_id Participant ID.
+	 * @param object|null $relationship   Their relationship on the date, if any.
+	 * @param bool|null   $holds_ticket   Whether they hold a confirmed ticket there, when the caller already knows (see admitting_event_date_ids()).
+	 * @return bool
+	 */
+	public static function admitted( $event_date_id, $participant_id, $relationship, $holds_ticket = null ) {
+		if ( null === $holds_ticket ) {
+			$holds_ticket = self::holds_admission_ticket( $event_date_id, $participant_id );
+		}
+		if ( $holds_ticket ) {
+			return true;
+		}
+
+		return $relationship
+			&& 'signed_up' === $relationship->label
+			&& ! self::transferred_away( $event_date_id, $participant_id );
+	}
+
+	/**
 	 * Describe the confirmed tickets a participant holds for an event date,
 	 * each with the activities selected on it — for showing them what they
 	 * already have. A whole-series pass held on the series master is included
@@ -129,9 +227,12 @@ class TicketActivities {
 	}
 
 	/**
-	 * Resolve the ticket an add-on targets. With no eligible ticket the
-	 * add-on stays at participant scope (null); with one, that ticket is
-	 * used; with several, the request must name one of them.
+	 * Resolve the ticket an add-on targets. With one eligible ticket, that
+	 * ticket is used; with several, the request must name one of them.
+	 * Only an admission without tickets (no ticket they hold or bought
+	 * there still admits anyone) keeps added activities at participant
+	 * scope (null): a participant whose tickets were given away, or are
+	 * not confirmed yet, has nothing to add them to.
 	 *
 	 * @param int      $event_date_id  Event date ID.
 	 * @param int      $participant_id Participant ID.
@@ -163,7 +264,19 @@ class TicketActivities {
 			);
 		}
 
-		return $tickets ? $tickets[0] : null;
+		if ( $tickets ) {
+			return $tickets[0];
+		}
+
+		if ( self::backs_admission( $event_date_id, $participant_id ) ) {
+			return new \WP_Error(
+				'no_ticket',
+				__( 'You no longer hold a ticket that can receive activities.', 'fair-audience' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return null;
 	}
 
 	/**
