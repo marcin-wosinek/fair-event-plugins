@@ -78,7 +78,10 @@ function ChartCard( {
 		<Card ref={ cardRef } className="fair-event-statistics__chart-card">
 			<CardHeader className="fair-event-statistics__chart-header">
 				<div className="fair-event-statistics__chart-heading">
-					<h3 id={ headingId } style={ { margin: 0 } }>
+					<h3
+						id={ headingId }
+						className="fair-event-statistics__chart-title"
+					>
 						{ title }
 					</h3>
 					{ onDownload && eventName && (
@@ -170,6 +173,168 @@ function CumulativeChart( { series, dataKey, name, valueFormatter } ) {
 				) }
 			</AreaChart>
 		</ResponsiveContainer>
+	);
+}
+
+// Activity names on the "Tickets per activity" axis wrap onto as many lines as
+// they need. Lines are estimated from an average character width of the
+// 12px axis label, and every row is tall enough for the longest name.
+const ACTIVITY_LABEL_FONT_SIZE = 12;
+const ACTIVITY_LABEL_CHAR_WIDTH = 6.5;
+const ACTIVITY_LABEL_LINE_HEIGHT = 15;
+const ACTIVITY_ROW_MIN_HEIGHT = 36;
+const ACTIVITY_ROW_PADDING = 14;
+const ACTIVITY_X_AXIS_HEIGHT = 32;
+
+/**
+ * Split a label into lines of at most `maxChars` characters, breaking at
+ * spaces and splitting a word only when it is longer than a whole line.
+ *
+ * @param {string} text     Label.
+ * @param {number} maxChars Characters that fit on one line.
+ * @return {string[]} Lines, at least one.
+ */
+export function wrapLabel( text, maxChars ) {
+	const limit = Math.max( 1, maxChars );
+	const lines = [];
+	let current = '';
+	for ( const word of String( text ).split( /\s+/ ).filter( Boolean ) ) {
+		let rest = word;
+		if ( current && current.length + 1 + rest.length <= limit ) {
+			current = `${ current } ${ rest }`;
+			continue;
+		}
+		if ( current ) {
+			lines.push( current );
+		}
+		while ( rest.length > limit ) {
+			lines.push( rest.slice( 0, limit ) );
+			rest = rest.slice( limit );
+		}
+		current = rest;
+	}
+	lines.push( current );
+	return lines;
+}
+
+// Width of an element's content box, following resizes. Zero until measured
+// (and in environments without ResizeObserver).
+function useContentWidth() {
+	const ref = useRef( null );
+	const [ width, setWidth ] = useState( 0 );
+	useEffect( () => {
+		const element = ref.current;
+		if ( ! element || typeof window.ResizeObserver === 'undefined' ) {
+			return undefined;
+		}
+		const observer = new window.ResizeObserver( ( [ entry ] ) =>
+			setWidth( Math.round( entry.contentRect.width ) )
+		);
+		observer.observe( element );
+		return () => observer.disconnect();
+	}, [] );
+	return [ ref, width ];
+}
+
+// One wrapped, vertically centred activity name on the category axis.
+function ActivityAxisTick( { x, y, payload, labelLines } ) {
+	const lines = labelLines.get( payload?.value ) || [
+		String( payload?.value ?? '' ),
+	];
+	const firstLineOffset =
+		( -( lines.length - 1 ) * ACTIVITY_LABEL_LINE_HEIGHT ) / 2;
+	return (
+		<text
+			x={ x }
+			y={ y }
+			textAnchor="end"
+			dominantBaseline="central"
+			fill="#50575e"
+			fontSize={ ACTIVITY_LABEL_FONT_SIZE }
+		>
+			{ lines.map( ( line, index ) => (
+				<tspan
+					key={ index }
+					x={ x }
+					dy={
+						index === 0
+							? firstLineOffset
+							: ACTIVITY_LABEL_LINE_HEIGHT
+					}
+				>
+					{ line }
+				</tspan>
+			) ) }
+		</text>
+	);
+}
+
+// Confirmed tickets per activity, as horizontal bars with full, wrapped names.
+function TicketsPerActivityChart( { data } ) {
+	const [ containerRef, containerWidth ] = useContentWidth();
+	// The name column takes a share of the card, within readable bounds; a
+	// narrow card gives names half its width so they need fewer lines.
+	const axisShare = containerWidth && containerWidth < 400 ? 0.5 : 0.4;
+	const axisWidth = containerWidth
+		? Math.min(
+				240,
+				Math.max( 96, Math.round( containerWidth * axisShare ) )
+			)
+		: 160;
+	const charsPerLine = Math.floor(
+		( axisWidth - 12 ) / ACTIVITY_LABEL_CHAR_WIDTH
+	);
+	const labelLines = new Map(
+		data.map( ( { name } ) => [ name, wrapLabel( name, charsPerLine ) ] )
+	);
+	const maxLines = Math.max(
+		1,
+		...[ ...labelLines.values() ].map( ( lines ) => lines.length )
+	);
+	const rowHeight = Math.max(
+		ACTIVITY_ROW_MIN_HEIGHT,
+		maxLines * ACTIVITY_LABEL_LINE_HEIGHT + ACTIVITY_ROW_PADDING
+	);
+	return (
+		<div
+			ref={ containerRef }
+			className="fair-event-statistics__activity-chart"
+			data-label-lines={ maxLines }
+		>
+			<ResponsiveContainer
+				width="100%"
+				height={ data.length * rowHeight + ACTIVITY_X_AXIS_HEIGHT }
+			>
+				<BarChart
+					data={ data }
+					layout="vertical"
+					margin={ { left: 0, right: 24 } }
+					barCategoryGap="20%"
+				>
+					<CartesianGrid strokeDasharray="3 3" />
+					<XAxis type="number" allowDecimals={ false } />
+					<YAxis
+						type="category"
+						dataKey="name"
+						width={ axisWidth }
+						interval={ 0 }
+						tick={ ( tickProps ) => (
+							<ActivityAxisTick
+								{ ...tickProps }
+								labelLines={ labelLines }
+							/>
+						) }
+					/>
+					<Tooltip />
+					<Bar
+						dataKey="count"
+						name={ __( 'Tickets', 'fair-events' ) }
+						fill={ BAR_COLOR }
+						maxBarSize={ 32 }
+					/>
+				</BarChart>
+			</ResponsiveContainer>
+		</div>
 	);
 }
 
@@ -425,7 +590,7 @@ export default function EventStatistics( {
 		: '';
 
 	return (
-		<div>
+		<div className="fair-event-statistics">
 			{ showEventHeading && statistics && (
 				<p className="fair-event-statistics__event-heading">
 					{ eventStartDate
@@ -583,6 +748,27 @@ export default function EventStatistics( {
 						</CardBody>
 					</Card>
 
+					<p className="fair-event-statistics__section-intro">
+						{ __(
+							'Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included.',
+							'fair-events'
+						) }
+					</p>
+					{ incompleteBackfills > 0 && (
+						<Notice status="warning" isDismissible={ false }>
+							{ sprintf(
+								/* translators: %d: number of purchases with missing ticket records. */
+								_n(
+									'%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.',
+									'%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created.',
+									incompleteBackfills,
+									'fair-events'
+								),
+								incompleteBackfills
+							) }
+						</Notice>
+					) }
+
 					{ exportError && (
 						<Notice
 							status="error"
@@ -611,7 +797,7 @@ export default function EventStatistics( {
 					</div>
 					{ salesHistoryState !== 'error' && (
 						<div
-							className="fair-event-statistics__sales-charts"
+							className="fair-event-statistics__chart-pair fair-event-statistics__sales-charts"
 							aria-busy={ salesHistoryState === 'loading' }
 						>
 							<ChartCard
@@ -698,16 +884,85 @@ export default function EventStatistics( {
 						</div>
 					) }
 
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'Counts confirmed tickets only. Pending, failed, expired, cancelled, and refunded tickets are not included.',
-							'fair-events'
-						) }
-					</Notice>
+					<div className="fair-event-statistics__chart-pair fair-event-statistics__activity-charts">
+						<ChartCard
+							title={ __(
+								'Tickets per activity',
+								'fair-events'
+							) }
+						>
+							{ activityData.length === 0 ? (
+								<p>
+									{ __(
+										'No activities recorded for confirmed tickets.',
+										'fair-events'
+									) }
+								</p>
+							) : (
+								<TicketsPerActivityChart
+									data={ activityData }
+								/>
+							) }
+						</ChartCard>
+
+						<ChartCard
+							title={ __(
+								'Activities per ticket',
+								'fair-events'
+							) }
+						>
+							{ distributionData.length === 0 ? (
+								<p>
+									{ __(
+										'No confirmed tickets to chart.',
+										'fair-events'
+									) }
+								</p>
+							) : (
+								<ResponsiveContainer
+									width="100%"
+									height={ 280 }
+								>
+									<BarChart
+										data={ distributionData }
+										margin={ {
+											left: 8,
+											right: 24,
+											bottom: 16,
+										} }
+									>
+										<CartesianGrid strokeDasharray="3 3" />
+										<XAxis
+											dataKey="activities"
+											allowDecimals={ false }
+											label={ {
+												value: __(
+													'Activities per ticket',
+													'fair-events'
+												),
+												position: 'insideBottom',
+												offset: -4,
+											} }
+										/>
+										<YAxis allowDecimals={ false } />
+										<Tooltip />
+										<Bar
+											dataKey="tickets"
+											name={ __(
+												'Tickets',
+												'fair-events'
+											) }
+											fill={ BAR_COLOR }
+										/>
+									</BarChart>
+								</ResponsiveContainer>
+							) }
+						</ChartCard>
+					</div>
 
 					{ statistics.event_capacity && (
 						<>
-							<p className="fair-event-statistics__capacity-intro">
+							<p className="fair-event-statistics__section-intro fair-event-statistics__capacity-intro">
 								{ __(
 									'Capacity shows the places taken right now: confirmed tickets and tickets held while their payment is in progress. This can be more than the confirmed tickets sold.',
 									'fair-events'
@@ -772,110 +1027,6 @@ export default function EventStatistics( {
 							</ChartCard>
 						</>
 					) }
-
-					{ incompleteBackfills > 0 && (
-						<Notice status="warning" isDismissible={ false }>
-							{ sprintf(
-								/* translators: %d: number of purchases with missing ticket records. */
-								_n(
-									'%d purchase has fewer ticket records than tickets bought. Its missing tickets are not counted until their records are created.',
-									'%d purchases have fewer ticket records than tickets bought. Their missing tickets are not counted until their records are created.',
-									incompleteBackfills,
-									'fair-events'
-								),
-								incompleteBackfills
-							) }
-						</Notice>
-					) }
-
-					<ChartCard
-						title={ __( 'Tickets per activity', 'fair-events' ) }
-					>
-						{ activityData.length === 0 ? (
-							<p>
-								{ __(
-									'No activities recorded for confirmed tickets.',
-									'fair-events'
-								) }
-							</p>
-						) : (
-							<ResponsiveContainer
-								width="100%"
-								height={ Math.max(
-									120,
-									activityData.length * 44
-								) }
-							>
-								<BarChart
-									data={ activityData }
-									layout="vertical"
-									margin={ { left: 24, right: 24 } }
-								>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										type="number"
-										allowDecimals={ false }
-									/>
-									<YAxis
-										type="category"
-										dataKey="name"
-										width={ 160 }
-									/>
-									<Tooltip />
-									<Bar
-										dataKey="count"
-										name={ __( 'Tickets', 'fair-events' ) }
-										fill={ BAR_COLOR }
-									/>
-								</BarChart>
-							</ResponsiveContainer>
-						) }
-					</ChartCard>
-
-					<ChartCard
-						title={ __( 'Activities per ticket', 'fair-events' ) }
-					>
-						{ distributionData.length === 0 ? (
-							<p>
-								{ __(
-									'No confirmed tickets to chart.',
-									'fair-events'
-								) }
-							</p>
-						) : (
-							<ResponsiveContainer width="100%" height={ 280 }>
-								<BarChart
-									data={ distributionData }
-									margin={ {
-										left: 8,
-										right: 24,
-										bottom: 16,
-									} }
-								>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="activities"
-										allowDecimals={ false }
-										label={ {
-											value: __(
-												'Activities per ticket',
-												'fair-events'
-											),
-											position: 'insideBottom',
-											offset: -4,
-										} }
-									/>
-									<YAxis allowDecimals={ false } />
-									<Tooltip />
-									<Bar
-										dataKey="tickets"
-										name={ __( 'Tickets', 'fair-events' ) }
-										fill={ BAR_COLOR }
-									/>
-								</BarChart>
-							</ResponsiveContainer>
-						) }
-					</ChartCard>
 				</>
 			) }
 		</div>

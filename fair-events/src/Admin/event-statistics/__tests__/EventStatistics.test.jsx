@@ -4,6 +4,7 @@
 import '@testing-library/jest-dom';
 import {
 	act,
+	configure,
 	fireEvent,
 	render,
 	screen,
@@ -11,10 +12,14 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import EventStatistics from '../EventStatistics.js';
+import EventStatistics, { wrapLabel } from '../EventStatistics.js';
 import { downloadElementAsPng } from '../exportChartImage.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+// WordPress Notice speaks its text into a shared live region that outlives
+// each test; queries look at the rendered statistics only.
+configure( { defaultIgnore: 'script, style, .a11y-speak-region' } );
 
 // Image generation is covered in exportChartImage.test.js; here we only care
 // which card is captured and under which filename.
@@ -134,10 +139,9 @@ describe( 'EventStatistics component', () => {
 		expect( apiFetch ).toHaveBeenCalledWith( {
 			path: '/fair-events/v1/event-dates/42/statistics?history_days=30',
 		} );
-		// getAllByText: WordPress Notice mirrors its text into an a11y live region.
 		expect(
-			screen.getAllByText( /Counts confirmed tickets only/ ).length
-		).toBeGreaterThan( 0 );
+			screen.getByText( /Counts confirmed tickets only/ )
+		).toBeInTheDocument();
 
 		const [ activityChart, distributionChart ] =
 			screen.getAllByTestId( 'bar-chart' );
@@ -900,7 +904,7 @@ describe( 'EventStatistics capacity', () => {
 		await screen.findByText( 'Cumulative tickets sold' );
 	}
 
-	it( 'places the three capacity cards between the sales and activity charts', async () => {
+	it( 'orders sales, activity, then capacity, each with its explanation', async () => {
 		mockApi();
 		await renderStatistics();
 
@@ -911,22 +915,63 @@ describe( 'EventStatistics capacity', () => {
 		).toEqual( [
 			'Cumulative tickets sold',
 			'Cumulative sales amount',
+			'Tickets per activity',
+			'Activities per ticket',
 			'Event capacity',
 			'Capacity by ticket type',
 			'Capacity by activity',
-			'Tickets per activity',
-			'Activities per ticket',
 		] );
 		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+
+		// The confirmed-tickets note leads the sales and activity charts; the
+		// payment-hold note sits after them, leading the capacity cards.
+		const follows = ( first, second ) =>
+			first.compareDocumentPosition( second ) &
+			Node.DOCUMENT_POSITION_FOLLOWING;
+		const confirmedNote = screen.getByText(
+			/Counts confirmed tickets only/
+		);
+		const holdNote = screen.getByText(
+			/tickets held while their payment is in progress/
+		);
+		const heading = ( name ) => screen.getByRole( 'heading', { name } );
 		expect(
-			screen.getByText(
-				/tickets held while their payment is in progress/
-			)
-		).toBeInTheDocument();
+			follows( confirmedNote, heading( 'Cumulative tickets sold' ) )
+		).toBeTruthy();
+		expect(
+			follows( heading( 'Activities per ticket' ), holdNote )
+		).toBeTruthy();
+		expect( follows( holdNote, heading( 'Event capacity' ) ) ).toBeTruthy();
+
 		// Capacity cards are not exported as images.
 		expect(
 			screen.getAllByRole( 'button', { name: 'Download PNG' } )
 		).toHaveLength( 2 );
+	} );
+
+	it( 'pairs the sales charts and the activity charts in one grid pattern', async () => {
+		mockApi();
+		await renderStatistics();
+
+		const pairs = document.querySelectorAll(
+			'.fair-event-statistics__chart-pair'
+		);
+		expect(
+			[ ...pairs ].map( ( pair ) =>
+				[ ...pair.querySelectorAll( 'h3' ) ].map(
+					( heading ) => heading.textContent
+				)
+			)
+		).toEqual( [
+			[ 'Cumulative tickets sold', 'Cumulative sales amount' ],
+			[ 'Tickets per activity', 'Activities per ticket' ],
+		] );
+		// Capacity cards stay full width, outside any pair.
+		expect(
+			cardFor( 'Event capacity' ).closest(
+				'.fair-event-statistics__chart-pair'
+			)
+		).toBeNull();
 	} );
 
 	it( 'shows places taken, capacity and remaining for the event', async () => {
@@ -1348,5 +1393,62 @@ describe( 'EventStatistics sales history range', () => {
 		await act( async () => finishExport() );
 		expect( select() ).toBeEnabled();
 		expect( select() ).toHaveValue( '60' );
+	} );
+} );
+
+describe( 'EventStatistics activity labels', () => {
+	it( 'wraps a label at spaces within the line length', () => {
+		expect(
+			wrapLabel(
+				'Contemporary dance workshop with live percussion accompaniment',
+				22
+			)
+		).toEqual( [
+			'Contemporary dance',
+			'workshop with live',
+			'percussion',
+			'accompaniment',
+		] );
+	} );
+
+	it( 'keeps a short label on one line', () => {
+		expect( wrapLabel( 'Yoga', 22 ) ).toEqual( [ 'Yoga' ] );
+	} );
+
+	it( 'splits a word longer than a whole line', () => {
+		expect( wrapLabel( 'Ab Supercalifragilistic', 8 ) ).toEqual( [
+			'Ab',
+			'Supercal',
+			'ifragili',
+			'stic',
+		] );
+	} );
+
+	it( 'sizes activity rows for the longest wrapped name', async () => {
+		apiFetch.mockImplementation( () =>
+			Promise.resolve( {
+				total_tickets: 2,
+				series: [],
+				amount_series: [],
+				total_sales_amount: 0,
+				tickets_per_activity: [
+					{ id: 1, name: 'Yoga', count: 1 },
+					{
+						id: 2,
+						name: 'Contemporary dance workshop with live percussion accompaniment',
+						count: 1,
+					},
+				],
+				activities_per_ticket: [ { activities: 1, tickets: 2 } ],
+			} )
+		);
+		render( <EventStatistics eventDateId={ 42 } /> );
+		await screen.findByText( 'Tickets per activity' );
+
+		// Without a measured width the name column is 160px: 22 characters.
+		expect(
+			document.querySelector( '.fair-event-statistics__activity-chart' )
+				.dataset.labelLines
+		).toBe( '4' );
 	} );
 } );

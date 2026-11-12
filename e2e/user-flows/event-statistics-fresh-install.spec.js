@@ -12,13 +12,20 @@
  * figures, and downloads the ticket chart as a real PNG. Without Fair
  * Payments Connector revenue is unavailable (no amount, no revenue
  * download); with it the revenue chart downloads too. An empty event says
- * so.
+ * so. Both combinations keep the Statistics layout (#2114) at every viewport.
  */
 
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
 import { installFreshSite, dropFreshSite } from '../support/fresh-site.js';
 import { ADMIN_USER, ADMIN_PASSWORD } from '../support/wp-cli.js';
+import {
+	STATISTICS_VIEWPORTS,
+	expectStatisticsLayout,
+} from '../support/statistics-layout.js';
+
+const LONG_ACTIVITY =
+	'Contemporary dance workshop with live percussion accompaniment for intermediate and advanced dancers';
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 
@@ -98,7 +105,11 @@ for (const combination of [
 				eventDateId: populated.eventDateId,
 				ticketTypeId: populated.ticketTypeId,
 				eventCapacity: 10,
-				activities: [{ name: 'Yoga', capacity: 5 }, { name: 'Dance' }],
+				activities: [
+					{ name: 'Yoga', capacity: 5 },
+					{ name: 'Dance' },
+					{ name: LONG_ACTIVITY, capacity: 1 },
+				],
 				purchases: [
 					{
 						quantity: 2,
@@ -109,7 +120,7 @@ for (const combination of [
 					{
 						quantity: 1,
 						createdAt: siteLocal(2),
-						activities: [0],
+						activities: [2],
 					},
 				],
 			});
@@ -147,7 +158,9 @@ for (const combination of [
 				).toBeVisible();
 				await expect(summary.getByText(/€/)).toHaveCount(0);
 				await expect(
-					page.getByText(/Activate Fair Payments Connector/)
+					page
+						.locator('.components-notice')
+						.getByText(/Activate Fair Payments Connector/)
 				).toBeVisible();
 			}
 
@@ -174,6 +187,31 @@ for (const combination of [
 					'aria-disabled',
 					'true'
 				);
+			}
+		});
+
+		test('lays Statistics out at every viewport', async ({ page }) => {
+			await login(page);
+			for (const viewport of STATISTICS_VIEWPORTS) {
+				await page.setViewportSize({
+					width: viewport.width,
+					height: viewport.height,
+				});
+				for (const url of [
+					`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${populated.eventDateId}&tab=statistics`,
+					`/wp-admin/admin.php?page=fair-events-event-statistics&event_date_id=${populated.eventDateId}`,
+				]) {
+					await page.goto(url);
+					await expect(
+						page
+							.locator('.fair-event-statistics__summary')
+							.getByText('3 tickets')
+					).toBeVisible();
+					const layout = await expectStatisticsLayout(page, viewport);
+					expect(layout.labels.map((label) => label.text)).toContain(
+						LONG_ACTIVITY
+					);
+				}
 			}
 		});
 
