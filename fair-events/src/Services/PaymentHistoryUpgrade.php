@@ -207,12 +207,12 @@ class PaymentHistoryUpgrade {
 	 */
 	public static function facts() {
 		$storage  = PaymentHistoryCompatibility::reconciliation_available();
-		$backfill = $storage ? PaymentHistoryBackfill::get_run( PaymentHistoryBackfill::MODE_BACKFILL ) : null;
+		$backfill = $storage ? PaymentHistoryCompatibility::get_backfill_run() : null;
 
 		return array(
 			'storage'                 => $storage,
 			'cutover'                 => PaymentHistoryCompatibility::get_cutover(),
-			'readers'                 => PaymentHistoryReaders::get_activation(),
+			'readers'                 => PaymentHistoryCompatibility::get_readers_activation(),
 			'verified'                => PaymentHistoryCompatibility::migration_verified(),
 			'verification_checked_at' => $backfill ? (string) ( $backfill['verification']['checked_at'] ?? '' ) : null,
 			'audience_tables'         => ShadowPurchases::audience_tables_exist(),
@@ -244,7 +244,7 @@ class PaymentHistoryUpgrade {
 
 		// The intermediate release recorded that this site had no Fair
 		// Audience history; still true only while Audience has no tables.
-		if ( PaymentHistoryReaders::REASON_NO_HISTORY === $readers_reason && empty( $facts['audience_tables'] ) && 0 === $work ) {
+		if ( PaymentHistoryCompatibility::READERS_REASON_NO_HISTORY === $readers_reason && empty( $facts['audience_tables'] ) && 0 === $work ) {
 			return array(
 				'basis'    => self::BASIS_NO_SOURCE_HISTORY,
 				'blockers' => array(),
@@ -255,7 +255,7 @@ class PaymentHistoryUpgrade {
 		if ( empty( $facts['cutover'] ) ) {
 			$blockers[] = 'ownership_cutover_missing';
 		}
-		if ( PaymentHistoryReaders::REASON_VERIFIED !== $readers_reason ) {
+		if ( PaymentHistoryCompatibility::READERS_REASON_VERIFIED !== $readers_reason ) {
 			$blockers[] = 'readers_missing';
 		}
 		if ( empty( $facts['verified'] ) ) {

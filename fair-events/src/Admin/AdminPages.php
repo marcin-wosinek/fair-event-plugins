@@ -169,9 +169,9 @@ class AdminPages {
 			array( $this, 'render_event_notifications_page' )
 		);
 
-		// Payment history page: the migration of historical admissions and
-		// payments, its verification and reconciliation. Listed once the
-		// payment link storage exists.
+		// Payment history page: payment records to review, their
+		// reconciliation and audit trail. Listed once the payment link
+		// storage exists.
 		if ( \FairEvents\Services\PaymentHistoryCompatibility::storage_available() ) {
 			$this->page_hooks['fair-events-payment-history'] = add_submenu_page(
 				$parent,

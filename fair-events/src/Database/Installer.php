@@ -459,6 +459,10 @@ class Installer {
 			$legacy_timing_retired = $timing_backfilled && $overrides_detected && self::migrate_to_3_47_0();
 		}
 
+		if ( version_compare( $current_version, '3.54.0', '<' ) ) {
+			self::migrate_to_3_54_0();
+		}
+
 		// Update database version.
 		Schema::update_db_version( self::version_to_record( $gallery_removed, $addon_collaborators_removed, $timing_backfilled, $overrides_detected, $legacy_timing_retired ) );
 	}
@@ -2440,6 +2444,19 @@ class Installer {
 				$table_name
 			)
 		);
+	}
+
+	/**
+	 * Migrate to version 3.54.0 - Retire the payment history backfill (#2252).
+	 *
+	 * The one-time migration no longer runs, so its batch event would only
+	 * fire into nothing. Shadow work and other recovery jobs keep their own
+	 * hooks and stay scheduled; migration storage and options are kept.
+	 *
+	 * @return void
+	 */
+	private static function migrate_to_3_54_0() {
+		wp_clear_scheduled_hook( 'fair_events_payment_history_backfill_batch' );
 	}
 
 	/**

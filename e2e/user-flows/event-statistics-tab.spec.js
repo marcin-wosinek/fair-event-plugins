@@ -15,10 +15,7 @@
  */
 
 import { test, expect } from '../support/fixtures.js';
-import { loginAsAdmin, runScript, wpCli } from '../support/wp-cli.js';
-
-const readers = (action) =>
-	runScript('payment-readers.php', 'E2E_PAYMENT_READERS', `${action} '{}'`);
+import { loginAsAdmin, wpCli } from '../support/wp-cli.js';
 
 test.describe('Event Statistics without Experimental', () => {
 	test.beforeAll(() => {
@@ -127,11 +124,6 @@ test.describe('Event Statistics on Fair Events records', () => {
 	let audienceDeactivated = false;
 	let connectorDeactivated = false;
 
-	test.beforeAll(() => {
-		// Stash any recorded activation: none is needed.
-		readers('prepare');
-	});
-
 	test.afterAll(() => {
 		if (audienceDeactivated) {
 			wpCli('plugin activate fair-audience');
@@ -139,7 +131,6 @@ test.describe('Event Statistics on Fair Events records', () => {
 		if (connectorDeactivated) {
 			wpCli('plugin activate fair-payments-connector');
 		}
-		readers('restore');
 	});
 
 	test('works without Fair Audience and says when revenue is unavailable', async ({

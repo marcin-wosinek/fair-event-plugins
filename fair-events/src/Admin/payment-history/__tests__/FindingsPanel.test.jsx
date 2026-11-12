@@ -37,6 +37,13 @@ function finding( overrides = {} ) {
 	};
 }
 
+// The page's status: ongoing management, no migration run.
+const STATUS = {
+	reconciliation_available: true,
+	payment_information: 'available',
+	finding_statuses: { open: 1 },
+};
+
 function respond( items, extra = {}, total = items.length, totalPages = 1 ) {
 	return Promise.resolve( {
 		json: () =>
@@ -158,11 +165,11 @@ describe( 'FindingsPanel', () => {
 		jest.resetAllMocks();
 	} );
 
-	it( 'lists the migration’s open records and filters them', async () => {
+	it( 'lists the open records and filters them', async () => {
 		apiFetch.mockImplementation( () => respond( [ finding() ] ) );
 		render(
 			<FindingsPanel
-				status={ { dry_run: {}, backfill: { status: 'verified' } } }
+				status={ STATUS }
 				refreshKey={ 0 }
 				onChanged={ jest.fn() }
 			/>
@@ -171,8 +178,9 @@ describe( 'FindingsPanel', () => {
 		expect(
 			await screen.findByText( 'Payment without a purchase' )
 		).toBeInTheDocument();
+		// Payment information is available: the number opens the payment.
 		expect(
-			screen.getByText( 'Payment #900, 15.00 EUR' )
+			screen.getByRole( 'link', { name: 'Payment #900' } )
 		).toBeInTheDocument();
 		expect( screen.getByText( '1 record' ) ).toBeInTheDocument();
 		expect(
@@ -194,26 +202,45 @@ describe( 'FindingsPanel', () => {
 		);
 	} );
 
-	it( 'shows dry run records as a preview that can’t be decided', async () => {
-		apiFetch.mockImplementation( () =>
-			respond( [ finding( { mode: 'dry_run' } ) ] )
-		);
+	it( 'lists records without a migration run or a run selector', async () => {
+		apiFetch.mockImplementation( () => respond( [ finding() ] ) );
 		render(
 			<FindingsPanel
-				status={ { dry_run: { status: 'complete' }, backfill: null } }
+				status={ STATUS }
+				refreshKey={ 0 }
+				onChanged={ jest.fn() }
+			/>
+		);
+
+		expect( await screen.findByText( '1 record' ) ).toBeInTheDocument();
+		expect( screen.queryByLabelText( 'Run' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( /Dry run/ ) ).not.toBeInTheDocument();
+		// Always the records an administrator decides on.
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+		expect( apiFetch.mock.calls[ 0 ][ 0 ].path ).toContain(
+			'mode=backfill'
+		);
+	} );
+
+	it( 'says there is nothing to decide on a fresh site', async () => {
+		apiFetch.mockImplementation( () => respond( [] ) );
+		render(
+			<FindingsPanel
+				status={ { ...STATUS, finding_statuses: {} } }
 				refreshKey={ 0 }
 				onChanged={ jest.fn() }
 			/>
 		);
 
 		expect(
-			await screen.findAllByText(
-				/Dry run records show what the migration would report/
+			await screen.findByText(
+				'Nothing needs a decision. Payments are linked to their purchases as they come in.'
 			)
-		).not.toHaveLength( 0 );
+		).toBeInTheDocument();
+		expect( screen.getByText( '0 records' ) ).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', { name: /^Open / } )
-		).toHaveTextContent( 'View' );
+			screen.queryByRole( 'button', { name: 'Clear filters' } )
+		).not.toBeInTheDocument();
 	} );
 
 	function lastQuery() {
@@ -228,7 +255,7 @@ describe( 'FindingsPanel', () => {
 		);
 		render(
 			<FindingsPanel
-				status={ { dry_run: {}, backfill: { status: 'verified' } } }
+				status={ STATUS }
 				refreshKey={ 0 }
 				onChanged={ jest.fn() }
 			/>
@@ -297,7 +324,7 @@ describe( 'FindingsPanel', () => {
 		);
 		render(
 			<FindingsPanel
-				status={ { dry_run: {}, backfill: { status: 'verified' } } }
+				status={ STATUS }
 				refreshKey={ 0 }
 				onChanged={ jest.fn() }
 			/>
