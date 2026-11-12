@@ -28,6 +28,7 @@ import {
 	WrappingModalStyle,
 	WRAPPING_MODAL_CLASS,
 } from 'fair-events-shared';
+import { signupFullName } from './signup-name.js';
 
 export const ACTION_MOVE = 'move';
 export const ACTION_CHANGE_TYPE = 'change_type';
@@ -236,12 +237,12 @@ export default function SignupEditModal( {
 		? sprintf(
 				/* translators: %s: participant name */
 				__( 'Move %s to another date', 'fair-events' ),
-				signup.name
+				signupFullName( signup )
 			)
 		: sprintf(
 				/* translators: %s: participant name */
 				__( 'Change ticket type for %s', 'fair-events' ),
-				signup.name
+				signupFullName( signup )
 			);
 
 	const notes = scopeNotes( { isMove, signup, counts } );

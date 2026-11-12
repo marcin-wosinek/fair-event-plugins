@@ -322,6 +322,7 @@ class ShadowPurchases {
 				'event_date_id'               => (int) $relationship->event_date_id,
 				'ticket_type_id'              => $relationship->ticket_type_id ? (int) $relationship->ticket_type_id : null,
 				'name'                        => $profile['name'],
+				'surname'                     => $profile['surname'],
 				'email'                       => $profile['email'],
 				'quantity'                    => 1,
 				'mailing_opt_in'              => 0,
@@ -332,7 +333,7 @@ class ShadowPurchases {
 				'legacy_event_participant_id' => (int) $relationship->id,
 				'created_at'                  => $created_at,
 			),
-			array( '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s', '%d', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s', '%d', '%s' )
 		);
 		if ( ! $inserted ) {
 			return new \WP_Error( 'shadow_purchase_write_failed', 'The shadow purchase could not be stored.', array( 'event_participant_id' => (int) $relationship->id ) );
@@ -529,11 +530,12 @@ class ShadowPurchases {
 	}
 
 	/**
-	 * Name and email from the participant profile; empty when it is gone or
-	 * anonymized.
+	 * Name, surname and email from the participant profile, kept as
+	 * separate components as Audience holds them (#2215); empty when it is
+	 * gone or anonymized.
 	 *
 	 * @param int $participant_id Participant ID.
-	 * @return array{name: string, email: string}
+	 * @return array{name: string, surname: string, email: string}
 	 */
 	private static function participant_profile( $participant_id ) {
 		global $wpdb;
@@ -543,8 +545,9 @@ class ShadowPurchases {
 		);
 
 		return array(
-			'name'  => $row ? trim( (string) $row->name . ' ' . (string) $row->surname ) : '',
-			'email' => $row ? (string) $row->email : '',
+			'name'    => $row ? trim( (string) $row->name ) : '',
+			'surname' => $row ? trim( (string) $row->surname ) : '',
+			'email'   => $row ? (string) $row->email : '',
 		);
 	}
 

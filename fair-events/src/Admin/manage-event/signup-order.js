@@ -1,14 +1,17 @@
 /**
  * Alphabetical order of the List tab's registrations (#2217).
  *
- * Registrations are ordered by their complete stored name, the way the
- * registrant typed it: the name is never split into a first name and a
- * surname, nor completed from the Audience profile. A fixed English
+ * Registrations are ordered by their complete stored name — the name, then
+ * the surname when one was given (#2215), the way the registrant typed them:
+ * an older name is never split into a first name and a surname, nor
+ * completed from the Audience profile. A fixed English
  * collation, ignoring case and accents, keeps the order the same in every
  * organizer's browser; equal names keep a stable order by registration ID.
  *
  * @package FairEvents
  */
+
+import { signupFullName } from './signup-name.js';
 
 const nameCollator = new Intl.Collator( 'en', { sensitivity: 'base' } );
 
@@ -21,8 +24,8 @@ const nameCollator = new Intl.Collator( 'en', { sensitivity: 'base' } );
  */
 export function compareSignupsByName( a, b ) {
 	const byName = nameCollator.compare(
-		String( a?.name ?? '' ),
-		String( b?.name ?? '' )
+		signupFullName( a ),
+		signupFullName( b )
 	);
 	if ( byName !== 0 ) {
 		return byName;

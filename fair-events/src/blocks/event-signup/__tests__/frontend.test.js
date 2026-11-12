@@ -71,6 +71,10 @@ function buildBlock( { eventDateId = 42 } = {} ) {
 					<input type="text" name="name" />
 				</div>
 				<div class="form-row">
+					<label>Surname (optional)</label>
+					<input type="text" name="surname" />
+				</div>
+				<div class="form-row">
 					<label>Your Email</label>
 					<input type="email" name="email" />
 				</div>
@@ -2789,6 +2793,162 @@ describe( 'Event Signup frontend.js — series date coverage (#1768)', () => {
 		);
 		expect( first.querySelector( 'select' ).options[ 0 ].disabled ).toBe(
 			false
+		);
+	} );
+} );
+
+describe( 'Event Signup frontend.js — name and surname (#2215)', () => {
+	const settle = () => new Promise( ( resolve ) => setTimeout( resolve ) );
+	const submit = ( form ) =>
+		form.dispatchEvent(
+			new window.Event( 'submit', { cancelable: true } )
+		);
+	const sent = ( call ) => initiatePayment.mock.calls[ call ][ 0 ].data;
+
+	function buildForm( response = noopResponse() ) {
+		const block = buildBlock();
+		apiFetch.mockReturnValue( Promise.resolve( response ) );
+		initialize();
+		return block.querySelector( 'form' );
+	}
+
+	afterEach( () => {
+		window.history.replaceState( {}, '', '/' );
+	} );
+
+	test( 'sends a compound, accented name and surname as typed', async () => {
+		const form = buildForm();
+		form.querySelector( 'input[name="name"]' ).value = 'María José';
+		form.querySelector( 'input[name="surname"]' ).value =
+			'García de la Vega';
+		form.querySelector( 'input[name="email"]' ).value = 'mj@example.test';
+
+		submit( form );
+		await settle();
+
+		expect( sent( 0 ) ).toMatchObject( {
+			name: 'María José',
+			surname: 'García de la Vega',
+		} );
+	} );
+
+	test( 'allows an empty surname', async () => {
+		const form = buildForm();
+		form.querySelector( 'input[name="name"]' ).value = 'Prince';
+		form.querySelector( 'input[name="email"]' ).value = 'p@example.test';
+
+		submit( form );
+		await settle();
+
+		expect( sent( 0 ) ).toMatchObject( { name: 'Prince', surname: '' } );
+	} );
+
+	test( 'keeps both values and changes the checkout key when the surname changes after a failure', async () => {
+		const form = buildForm();
+		form.querySelector( 'input[name="name"]' ).value = 'Ana';
+		form.querySelector( 'input[name="surname"]' ).value = 'López';
+		form.querySelector( 'input[name="email"]' ).value = 'ana@example.test';
+		initiatePayment.mockImplementationOnce( ( { onError } ) => {
+			const error = { code: 'fetch_error' };
+			onError( 'Failed', error );
+			return Promise.reject( error );
+		} );
+
+		submit( form );
+		await settle();
+
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ana'
+		);
+		expect( form.querySelector( 'input[name="surname"]' ).value ).toBe(
+			'López'
+		);
+
+		form.querySelector( 'input[name="surname"]' ).value = 'Lopes';
+		submit( form );
+		await settle();
+
+		expect( sent( 1 ).surname ).toBe( 'Lopes' );
+		expect( sent( 1 ).idempotency_key ).not.toBe(
+			sent( 0 ).idempotency_key
+		);
+	} );
+
+	test( 'fills the surname apart when the companion sends it', async () => {
+		const form = buildForm( {
+			...noopResponse(),
+			viewer_resolved: true,
+			prefill_name: 'Ada',
+			prefill_surname: 'Lovelace',
+			prefill_email: 'ada@example.test',
+		} );
+		await settle();
+
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada'
+		);
+		expect( form.querySelector( 'input[name="surname"]' ).value ).toBe(
+			'Lovelace'
+		);
+	} );
+
+	test( 'leaves the surname empty when an older companion sends the whole name', async () => {
+		const form = buildForm( {
+			...noopResponse(),
+			viewer_resolved: true,
+			prefill_name: 'Ada Lovelace',
+			prefill_email: 'ada@example.test',
+		} );
+		await settle();
+
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Ada Lovelace'
+		);
+		expect( form.querySelector( 'input[name="surname"]' ).value ).toBe(
+			''
+		);
+	} );
+
+	test( 'restores the surname of a resumed submission, and none for an older stash', async () => {
+		const resumeResponse = {
+			...noopResponse(),
+			viewer_resolved: true,
+			token_identity_validated: true,
+			prefill_name: 'Ada',
+			prefill_surname: 'Lovelace',
+			prefill_email: 'ada@example.test',
+			before_form_html:
+				'<div hidden data-resume-route="/fair-audience/v1/event-signup/resume"></div>',
+		};
+		const resume = async ( payload ) => {
+			window.history.replaceState(
+				{},
+				'',
+				'/?participant_token=signed-token&resume=stash-token'
+			);
+			const block = buildBlock();
+			apiFetch
+				.mockResolvedValueOnce( resumeResponse )
+				.mockResolvedValueOnce( { success: true, payload } );
+			initialize();
+			await settle();
+			return block.querySelector( 'form' );
+		};
+
+		let form = await resume( { name: 'Zoë', surname: 'Álvarez' } );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Zoë'
+		);
+		expect( form.querySelector( 'input[name="surname"]' ).value ).toBe(
+			'Álvarez'
+		);
+
+		form = await resume( { name: 'Zoë Álvarez' } );
+		expect( form.querySelector( 'input[name="name"]' ).value ).toBe(
+			'Zoë Álvarez'
+		);
+		expect( form.querySelector( 'input[name="surname"]' ).value ).toBe(
+			''
 		);
 	} );
 } );

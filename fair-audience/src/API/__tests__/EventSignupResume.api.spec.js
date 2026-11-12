@@ -161,6 +161,7 @@ test.describe( 'Resume a signup on a recognised email — create route', () => {
 				data: {
 					event_date_id: event.eventDateId,
 					name: 'Resume Tester',
+					surname: 'Núñez de Arce',
 					email,
 					mailing_opt_in: true,
 					questionnaire_answers: ANSWERS,
@@ -218,6 +219,7 @@ test.describe( 'Resume a signup on a recognised email — create route', () => {
 		expect( payload.participant_id ).toBeUndefined();
 		expect( payload.event_date_id ).toBe( event.eventDateId );
 		expect( payload.name ).toBe( 'Resume Tester' );
+		expect( payload.surname ).toBe( 'Núñez de Arce' );
 		expect( payload.quantity ).toBe( 1 );
 		expect( payload.keep_informed ).toBe( true );
 		expect( payload.questionnaire_answers ).toHaveLength( 1 );

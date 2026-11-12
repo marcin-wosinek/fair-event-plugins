@@ -457,6 +457,15 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const nameField = form.querySelector( 'input[name="name"]' );
 		if ( nameField && response.prefill_name ) {
 			nameField.value = response.prefill_name;
+			// A companion that knows the form's surname field sends the
+			// surname apart (#2215); an older one sends the whole name above.
+			const surnameField = form.querySelector( 'input[name="surname"]' );
+			if (
+				surnameField &&
+				typeof response.prefill_surname === 'string'
+			) {
+				surnameField.value = response.prefill_surname;
+			}
 		}
 		const emailField = form.querySelector( 'input[name="email"]' );
 		if ( emailField && response.prefill_email ) {
@@ -572,6 +581,12 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 			const nameField = form.querySelector( 'input[name="name"]' );
 			if ( nameField ) {
 				nameField.value = payload.name;
+			}
+			// A submission stashed before surnames existed has none.
+			const surnameField = form.querySelector( 'input[name="surname"]' );
+			if ( surnameField ) {
+				surnameField.value =
+					typeof payload.surname === 'string' ? payload.surname : '';
 			}
 		}
 
@@ -2860,6 +2875,11 @@ const VIEWER_CONTEXT_TIMEOUT = 3000;
 		const nameField = form.querySelector( 'input[name="name"]' );
 		if ( nameField ) {
 			data.name = nameField.value;
+		}
+
+		const surnameField = form.querySelector( 'input[name="surname"]' );
+		if ( surnameField ) {
+			data.surname = surnameField.value;
 		}
 
 		const emailField = form.querySelector( 'input[name="email"]' );
