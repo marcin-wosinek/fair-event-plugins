@@ -575,3 +575,265 @@ test.describe( 'GetTicketsController — tickets listed under their own date (#1
 		).toBe( false );
 	} );
 } );
+
+test.describe
+	.serial( 'GetTicketsController — ticket holders and purchasers (#2133)', () => {
+	let api;
+	let postId;
+	let eventDateId;
+	let signupId;
+	let buyerId;
+	let buyerEmail;
+	let ticketIds;
+	const participantIds = [];
+	const stamp = `${ Date.now() }-${ Math.random().toString( 36 ).slice( 2 ) }`;
+	const emailOf = ( label ) =>
+		`list-holder-${ label }-${ stamp }@example.test`;
+
+	async function createParticipant( name, surname ) {
+		const res = await api.post( '/wp-json/fair-audience/v1/participants', {
+			headers: adminHeaders,
+			data: { name, surname, email: emailOf( name.toLowerCase() ) },
+		} );
+		const body = await res.json();
+		expect( res.ok(), JSON.stringify( body ) ).toBeTruthy();
+		participantIds.push( body.id );
+		return body.id;
+	}
+
+	async function assign( ticketId, participantId ) {
+		const res = await api.post(
+			`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/tickets/${ ticketId }/assign`,
+			{ headers: adminHeaders, data: { participant_id: participantId } }
+		);
+		expect( res.status(), await res.text() ).toBe( 200 );
+	}
+
+	async function listed() {
+		const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: eventDateId },
+		} );
+		expect( res.ok() ).toBeTruthy();
+		const row = ( await res.json() ).find(
+			( signup ) => signup.id === signupId
+		);
+		expect( row ).toBeTruthy();
+		return row;
+	}
+
+	const tickets = ( row ) =>
+		Object.fromEntries( row.tickets.map( ( t ) => [ t.id, t ] ) );
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+		const title = `List holders ${ stamp }`;
+
+		const postRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title, status: 'publish' },
+		} );
+		expect( postRes.ok() ).toBeTruthy();
+		postId = ( await postRes.json() ).id;
+
+		const edRes = await api.post( '/wp-json/fair-events/v1/event-dates', {
+			headers: adminHeaders,
+			data: {
+				title,
+				link_type: 'post',
+				start_date: '2035-07-01',
+				start_time: '10:00:00',
+				end_date: '2035-07-01',
+				end_time: '12:00:00',
+			},
+		} );
+		expect( edRes.ok() ).toBeTruthy();
+		eventDateId = ( await edRes.json() ).id;
+		await api.put( `/wp-json/fair-events/v1/event-dates/${ eventDateId }`, {
+			headers: adminHeaders,
+			data: { event_id: postId },
+		} );
+
+		const ticketsRes = await api.put(
+			`/wp-json/fair-events/v1/event-dates/${ eventDateId }/tickets`,
+			{
+				headers: adminHeaders,
+				data: {
+					ticket_types: [
+						{
+							name: 'General',
+							capacity: null,
+							minimum_activities: 0,
+							disable_at: null,
+							recurrence_scope: 'single_instance',
+							group_ids: [],
+						},
+					],
+					sale_periods: [
+						{
+							name: 'Always',
+							sale_start: '2020-01-01 00:00:00',
+							sale_end: '2099-01-01 00:00:00',
+						},
+					],
+					prices: [
+						{
+							ticket_type_index: 0,
+							sale_period_index: 0,
+							price: 0,
+						},
+					],
+					settings: {},
+				},
+			}
+		);
+		expect( ticketsRes.ok() ).toBeTruthy();
+		const ticketTypeId = ( await ticketsRes.json() ).ticket_types[ 0 ].id;
+
+		// A separate visitor, so no audience session carries over.
+		buyerEmail = emailOf( 'buyer' );
+		const visitor = await request.newContext( { baseURL: BASE_URL } );
+		const buyRes = await visitor.post(
+			'/wp-json/fair-events/v1/get-tickets',
+			{
+				data: {
+					event_date_id: eventDateId,
+					name: 'Marcia Purchaser',
+					email: buyerEmail,
+					ticket_type_id: ticketTypeId,
+					quantity: 3,
+					mailing_opt_in: true,
+					_honeypot: '',
+				},
+			}
+		);
+		expect( buyRes.status(), await buyRes.text() ).toBe( 200 );
+		await visitor.dispose();
+
+		const listRes = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+			headers: adminHeaders,
+			params: { event_date: eventDateId },
+		} );
+		const signup = ( await listRes.json() ).find(
+			( row ) => row.email === buyerEmail
+		);
+		signupId = signup.id;
+		buyerId = Number( signup.participant_id );
+		ticketIds = signup.tickets.map( ( t ) => t.id );
+		expect( ticketIds ).toHaveLength( 3 );
+		expect( buyerId ).toBeTruthy();
+	} );
+
+	test.afterAll( async () => {
+		if ( signupId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/get-tickets/${ signupId }`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		for ( const id of participantIds ) {
+			await api.delete(
+				`/wp-json/fair-audience/v1/participants/${ id }`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		if ( eventDateId ) {
+			await api.delete(
+				`/wp-json/fair-events/v1/event-dates/${ eventDateId }`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		if ( postId ) {
+			await api.delete(
+				`/wp-json/wp/v2/fair_event/${ postId }?force=true`,
+				{
+					headers: adminHeaders,
+				}
+			);
+		}
+		await api.dispose();
+	} );
+
+	test( 'an untransferred ticket names its purchaser as its holder', async () => {
+		const row = await listed();
+		for ( const ticket of row.tickets ) {
+			expect( ticket.purchaser ).toMatchObject( {
+				participant_id: buyerId,
+				name: 'Marcia Purchaser',
+				email: buyerEmail,
+				available: true,
+			} );
+			expect( ticket.holder ).toEqual( ticket.purchaser );
+			expect( ticket.holder_is_purchaser ).toBe( true );
+		}
+	} );
+
+	test( 'repeated transfers move only the selected ticket and keep the purchaser and purchase', async () => {
+		const before = await listed();
+		const sayilId = await createParticipant( 'Sayil', 'Johansson' );
+		const robinId = await createParticipant( 'Robin', 'Second' );
+		const [ first, given, third ] = ticketIds;
+
+		await assign( given, sayilId );
+		let row = await listed();
+		let byId = tickets( row );
+		expect( byId[ given ].holder ).toMatchObject( {
+			participant_id: sayilId,
+			name: 'Sayil Johansson',
+			email: emailOf( 'sayil' ),
+			available: true,
+			newsletter_consent: 'unspecified',
+		} );
+		expect( byId[ given ].holder_is_purchaser ).toBe( false );
+		expect( byId[ given ].purchaser.participant_id ).toBe( buyerId );
+
+		await assign( given, robinId );
+		row = await listed();
+		byId = tickets( row );
+		expect( byId[ given ].holder ).toMatchObject( {
+			participant_id: robinId,
+			name: 'Robin Second',
+		} );
+		expect( byId[ given ].purchaser ).toMatchObject( {
+			participant_id: buyerId,
+			name: 'Marcia Purchaser',
+		} );
+
+		// Siblings and the purchase-wide fields are untouched.
+		for ( const id of [ first, third ] ) {
+			expect( byId[ id ].holder_is_purchaser ).toBe( true );
+			expect( byId[ id ].holder.participant_id ).toBe( buyerId );
+		}
+		for ( const field of [
+			'name',
+			'email',
+			'participant_id',
+			'mailing_opt_in',
+			'transaction_id',
+			'listed_ticket_ids',
+			'accounting_anchor_ticket_id',
+			'ticket_counts',
+		] ) {
+			expect( row[ field ] ).toEqual( before[ field ] );
+		}
+	} );
+
+	test( 'a transferred ticket whose holder is anonymized goes back to its purchaser', async () => {
+		const robinId = participantIds[ 1 ];
+		const res = await api.post(
+			'/wp-json/fair-e2e/v1/ticket-transfers/anonymize',
+			{ headers: adminHeaders, data: { participant_id: robinId } }
+		);
+		expect( res.ok(), await res.text() ).toBeTruthy();
+
+		const given = tickets( await listed() )[ ticketIds[ 1 ] ];
+		expect( given.holder_is_purchaser ).toBe( true );
+		expect( given.holder.participant_id ).toBe( buyerId );
+	} );
+} );

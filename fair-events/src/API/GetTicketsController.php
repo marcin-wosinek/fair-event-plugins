@@ -2496,6 +2496,7 @@ class GetTicketsController extends WP_REST_Controller {
 			array_map( static fn( $ticket ) => (int) $ticket->id, $all_tickets )
 		);
 		$user_names        = array();
+		$people            = array();
 		$date_labels       = array();
 		$consents          = array();
 		$test_payments     = array();
@@ -2591,7 +2592,7 @@ class GetTicketsController extends WP_REST_Controller {
 			// Each ticket's own type is authoritative: an administrator may
 			// have given one ticket of the purchase another type.
 			$signup->tickets = array_map(
-				static function ( $ticket ) use ( $ticket_type_names, $ticket_activities ) {
+				function ( $ticket ) use ( $ticket_type_names, $ticket_activities, $signup, &$people ) {
 					$activity_ids           = array();
 					$confirmed_activity_ids = array();
 					foreach ( $ticket_activities[ (int) $ticket->id ] ?? array() as $row ) {
@@ -2604,6 +2605,8 @@ class GetTicketsController extends WP_REST_Controller {
 							$confirmed_activity_ids[] = (int) $row->ticket_option_id;
 						}
 					}
+					$purchaser = $this->ticket_purchaser( $ticket, $signup, $people );
+					$holder    = $this->ticket_holder( $ticket, $purchaser, $people );
 					return array(
 						'id'                     => (int) $ticket->id,
 						'position'               => (int) $ticket->unit_position,
@@ -2615,6 +2618,9 @@ class GetTicketsController extends WP_REST_Controller {
 						'attended_at'            => $ticket->attended_at,
 						'activity_ids'           => $activity_ids,
 						'confirmed_activity_ids' => $confirmed_activity_ids,
+						'purchaser'              => $purchaser,
+						'holder'                 => $holder,
+						'holder_is_purchaser'    => $holder === $purchaser,
 					);
 				},
 				$signup_tickets
@@ -2632,6 +2638,102 @@ class GetTicketsController extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response( $signups );
+	}
+
+	/**
+	 * Who bought a ticket, as the Audience tab resolves it: the participant
+	 * its purchaser link names, else the one its purchase names, else the
+	 * name and email the purchase was made with (a purchase without a
+	 * participant, an anonymized one, or Fair Audience inactive).
+	 *
+	 * @param object $ticket Ticket row.
+	 * @param object $signup Purchase row.
+	 * @param array  $people Identities by participant ID, filled as they are looked up.
+	 * @return array{participant_id: int|null, name: string, email: string, available: bool, newsletter_consent: string|null}
+	 */
+	private function ticket_purchaser( $ticket, $signup, array &$people ) {
+		$purchaser = $this->ticket_person( $ticket->purchaser_participant_id ?? 0, $people )
+			?? $this->ticket_person( $signup->participant_id ?? 0, $people );
+		if ( $purchaser ) {
+			return $purchaser;
+		}
+
+		return array(
+			'participant_id'     => null,
+			'name'               => (string) ( $signup->name ?? '' ),
+			'email'              => (string) ( $signup->email ?? '' ),
+			'available'          => true,
+			'newsletter_consent' => null,
+		);
+	}
+
+	/**
+	 * Who holds a ticket now. A ticket never given to anyone else, or whose
+	 * holder link was dropped with an anonymized participant, is its
+	 * purchaser's, as on the Audience tab. A ticket given to someone whose
+	 * profile can't be read (Fair Audience inactive, or the profile gone)
+	 * names nobody rather than its purchaser.
+	 *
+	 * @param object $ticket    Ticket row.
+	 * @param array  $purchaser Result of ticket_purchaser().
+	 * @param array  $people    Identities by participant ID, filled as they are looked up.
+	 * @return array{participant_id: int|null, name: string|null, email: string|null, available: bool, newsletter_consent: string|null}
+	 */
+	private function ticket_holder( $ticket, array $purchaser, array &$people ) {
+		$holder_id     = (int) ( $ticket->holder_participant_id ?? 0 );
+		$purchaser_ids = array(
+			(int) ( $ticket->purchaser_participant_id ?? 0 ),
+			(int) ( $purchaser['participant_id'] ?? 0 ),
+		);
+		if ( ! $holder_id || in_array( $holder_id, $purchaser_ids, true ) ) {
+			return $purchaser;
+		}
+
+		return $this->ticket_person( $holder_id, $people ) ?? array(
+			'participant_id'     => $holder_id,
+			'name'               => null,
+			'email'              => null,
+			'available'          => false,
+			'newsletter_consent' => null,
+		);
+	}
+
+	/**
+	 * A participant's current name, email and newsletter consent, as Fair
+	 * Audience holds them.
+	 *
+	 * @param int|string|null $participant_id Participant ID.
+	 * @param array           $people         Identities by participant ID, filled as they are looked up.
+	 * @return array|null Null for no participant, one that no longer exists,
+	 *                    or Fair Audience inactive.
+	 */
+	private function ticket_person( $participant_id, array &$people ) {
+		$participant_id = (int) $participant_id;
+		if ( ! $participant_id || ! class_exists( \FairAudience\Database\ParticipantRepository::class ) ) {
+			return null;
+		}
+
+		if ( ! array_key_exists( $participant_id, $people ) ) {
+			$participant               = ( new \FairAudience\Database\ParticipantRepository() )->get_by_id( $participant_id );
+			$people[ $participant_id ] = null;
+			if ( $participant ) {
+				$consent = 'unspecified';
+				if ( 'marketing' === $participant->email_profile ) {
+					$consent = 'granted';
+				} elseif ( 'declined' === $participant->email_profile ) {
+					$consent = 'declined';
+				}
+				$people[ $participant_id ] = array(
+					'participant_id'     => (int) $participant->id,
+					'name'               => trim( $participant->name . ' ' . $participant->surname ),
+					'email'              => (string) $participant->email,
+					'available'          => true,
+					'newsletter_consent' => $consent,
+				);
+			}
+		}
+
+		return $people[ $participant_id ];
 	}
 
 	/**

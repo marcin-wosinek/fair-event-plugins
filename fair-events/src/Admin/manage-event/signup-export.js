@@ -68,8 +68,9 @@ export function buildSignupExportText( { rows, columns, format } ) {
 	// Markdown.
 	return rows
 		.map( ( item ) => {
-			const person = item.name || item.email || `#${ item.id }`;
-			// Tickets of the same purchaser are told apart by their label.
+			const person =
+				item.holderName || item.name || item.email || `#${ item.id }`;
+			// Tickets of the same holder are told apart by their label.
 			const heading = item.ticketLabel
 				? `${ person } — ${ item.ticketLabel }`
 				: person;

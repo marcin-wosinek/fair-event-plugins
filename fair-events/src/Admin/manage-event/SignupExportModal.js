@@ -24,9 +24,33 @@ import apiFetch from '@wordpress/api-fetch';
 import { buildSignupExportText, downloadCsvFile } from './signup-export.js';
 import {
 	isMailingOptIn,
+	isTransferredTicket,
+	ticketHolderName,
+	ticketPurchaserName,
 	ticketRowLabel,
 	ticketRowTypeName,
 } from './EventSignups.js';
+
+/**
+ * Who an export row is about: the ticket's current holder, and separately
+ * whoever bought it. A ticket still with its purchaser names the purchase's
+ * registrant for both.
+ *
+ * @param {Object} row List row from expandTicketRows().
+ * @return {{holderName: string, holderEmail: string, purchaserName: string, purchaserEmail: string}} Identities
+ */
+export function exportIdentity( row ) {
+	const { signup, ticket } = row;
+	const purchaserEmail = signup.email || ticket?.purchaser?.email || '';
+	return {
+		holderName: ticketHolderName( row ),
+		holderEmail: isTransferredTicket( ticket )
+			? ticket.holder?.email || ''
+			: purchaserEmail,
+		purchaserName: ticketPurchaserName( row ),
+		purchaserEmail,
+	};
+}
 
 /**
  * Names of the extras a ticket holds with a confirmed payment, in the
@@ -58,13 +82,23 @@ function buildBaseColumns( ticketOptions ) {
 	return [
 		{
 			id: 'email',
-			label: __( 'Email', 'fair-events' ),
-			getValue: ( { item } ) => item.email,
+			label: __( 'Ticket holder email', 'fair-events' ),
+			getValue: ( { item } ) => item.holderEmail,
 		},
 		{
 			id: 'name',
-			label: __( 'Name', 'fair-events' ),
-			getValue: ( { item } ) => item.name,
+			label: __( 'Ticket holder', 'fair-events' ),
+			getValue: ( { item } ) => item.holderName,
+		},
+		{
+			id: 'purchaser_name',
+			label: __( 'Purchased by', 'fair-events' ),
+			getValue: ( { item } ) => item.purchaserName,
+		},
+		{
+			id: 'purchaser_email',
+			label: __( 'Purchaser email', 'fair-events' ),
+			getValue: ( { item } ) => item.purchaserEmail,
 		},
 		{
 			id: 'ticket',
@@ -109,7 +143,7 @@ function buildBaseColumns( ticketOptions ) {
 		},
 		{
 			id: 'mailing_opt_in',
-			label: __( 'Mailing', 'fair-events' ),
+			label: __( 'Mailing opt-in at registration', 'fair-events' ),
 			getValue: ( { item } ) =>
 				isMailingOptIn( item.mailing_opt_in ) ? 'yes' : 'no',
 		},
@@ -302,6 +336,7 @@ export default function SignupExportModal( {
 				isAccountingAnchor: row.isAccountingAnchor ?? row.isFirstTicket,
 				signup: row.signup,
 				ticketLabel: ticketRowLabel( row.ticket ),
+				...exportIdentity( row ),
 				...ticketRowAnswers( row, indexedAnswers ),
 			} ) ),
 		[ rows, indexedAnswers ]

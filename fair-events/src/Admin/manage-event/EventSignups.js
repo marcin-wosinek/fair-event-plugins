@@ -637,6 +637,70 @@ export function registeredForNote( signup, eventDateId ) {
 }
 
 /**
+ * Whether a List row's ticket is held by someone other than its purchaser.
+ *
+ * @param {Object|null} ticket Ticket of the row.
+ * @return {boolean} Whether the ticket was given to someone else
+ */
+export function isTransferredTicket( ticket ) {
+	return !! ticket && ticket.holder_is_purchaser === false;
+}
+
+/**
+ * Name of whoever bought a row's ticket: the name the purchase was made
+ * with, else the purchaser's current profile.
+ *
+ * @param {Object} row List row from expandTicketRows().
+ * @return {string} Purchaser name, or a fallback when none is known
+ */
+export function ticketPurchaserName( { signup, ticket } ) {
+	return (
+		signup.name ||
+		ticket?.purchaser?.name ||
+		__( '(name unavailable)', 'fair-events' )
+	);
+}
+
+/**
+ * The name a List row shows first: the ticket's current holder. A ticket
+ * still with its purchaser shows the name the purchase was made with.
+ *
+ * @param {Object} row List row from expandTicketRows().
+ * @return {string} Holder name, or a fallback when it can't be read
+ */
+export function ticketHolderName( row ) {
+	const { ticket } = row;
+	if ( ! isTransferredTicket( ticket ) ) {
+		return ticketPurchaserName( row );
+	}
+	if ( ticket.holder?.available === false ) {
+		return __( 'Ticket holder unavailable', 'fair-events' );
+	}
+	return (
+		ticket.holder?.name ||
+		ticket.holder?.email ||
+		__( '(name unavailable)', 'fair-events' )
+	);
+}
+
+/**
+ * Note under the holder's name naming the purchaser, when they differ.
+ *
+ * @param {Object} row List row from expandTicketRows().
+ * @return {string} Note, empty when the holder bought the ticket
+ */
+export function purchasedByNote( row ) {
+	if ( ! isTransferredTicket( row.ticket ) ) {
+		return '';
+	}
+	return sprintf(
+		/* translators: %s: name of the person who bought the ticket */
+		__( 'Purchased by %s', 'fair-events' ),
+		ticketPurchaserName( row )
+	);
+}
+
+/**
  * Mailing consent of a signup, as the List words it.
  *
  * @param {Object} signup Signup row returned by the API.
@@ -653,18 +717,25 @@ export function mailingLabel( signup ) {
  * current consent decides, as on the Audience printout; without one, only an
  * explicit opt-in at registration counts, and nothing is read as a refusal.
  *
- * @param {Object} signup Signup row returned by the API.
+ * A ticket given to someone else prints its holder's current consent only:
+ * the registration's opt-in is its purchaser's.
+ *
+ * @param {Object}      signup Signup row returned by the API.
+ * @param {Object|null} ticket Ticket of the printed row.
  * @return {string} "✓" consented, "✗" declined, empty when unspecified
  */
-export function printedMailingSymbol( signup ) {
-	const consent = signup.newsletter_consent;
+export function printedMailingSymbol( signup, ticket = null ) {
+	const transferred = isTransferredTicket( ticket );
+	const consent = transferred
+		? ticket.holder?.newsletter_consent
+		: signup.newsletter_consent;
 	if ( consent === 'granted' ) {
 		return '✓';
 	}
 	if ( consent === 'declined' ) {
 		return '✗';
 	}
-	if ( consent ) {
+	if ( consent || transferred ) {
 		return '';
 	}
 	return isMailingOptIn( signup.mailing_opt_in ) ? '✓' : '';
@@ -686,8 +757,11 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 		const cells = {
 			number: { text: index + 1 },
 			name: {
-				text: signup.name,
-				note: registeredForNote( signup, eventDateId ),
+				text: ticketHolderName( row ),
+				note: [
+					purchasedByNote( row ),
+					registeredForNote( signup, eventDateId ),
+				].filter( Boolean ),
 			},
 			ticket: {
 				text: ticketRowReference( ticket ),
@@ -695,7 +769,7 @@ export function printableListRows( rows, ticketOptions, eventDateId ) {
 			},
 			ticket_type: { text: ticketRowTypeName( row ) },
 			status: { text: signupStatusLabel( signup ) },
-			mailing: { text: printedMailingSymbol( signup ) },
+			mailing: { text: printedMailingSymbol( signup, ticket ) },
 		};
 		ticketOptions.forEach( ( opt ) => {
 			cells[ `option-${ opt.id }` ] = {
@@ -1156,6 +1230,7 @@ export default function EventSignups( {
 	const renderRow = ( row, index ) => {
 		const { signup, ticket, isFirstTicket } = row;
 		const registeredNote = registeredForNote( signup, eventDateId );
+		const purchaserNote = purchasedByNote( row );
 		return (
 			<tr
 				key={ `${ signup.id }-${ ticket ? ticket.id : 'pending' }` }
@@ -1172,7 +1247,19 @@ export default function EventSignups( {
 					{ index + 1 }
 				</td>
 				<td style={ cellStyle }>
-					{ signup.name }
+					{ ticketHolderName( row ) }
+					{ purchaserNote && (
+						<div
+							className="fair-events-signups__purchased-by"
+							style={ {
+								color: '#757575',
+								fontSize: '12px',
+								overflowWrap: 'anywhere',
+							} }
+						>
+							{ purchaserNote }
+						</div>
+					) }
 					{ registeredNote && (
 						<div
 							className="fair-events-signups__registered-for"
@@ -1306,7 +1393,7 @@ export default function EventSignups( {
 						<ToggleControl
 							__nextHasNoMarginBottom
 							label={ __(
-								'Mailing opt-ins only',
+								'Registration mailing opt-ins only',
 								'fair-events'
 							) }
 							checked={ mailingOnly }
