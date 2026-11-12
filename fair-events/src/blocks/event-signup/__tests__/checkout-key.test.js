@@ -86,6 +86,19 @@ describe( 'purchaseSignature', () => {
 	} );
 } );
 
+describe( 'surname (#2215)', () => {
+	test( 'a changed surname starts another purchase', () => {
+		const store = createCheckoutKeyStore();
+		const purchase = { name: 'Ana', surname: 'López', email: 'a@x.test' };
+
+		const first = store.keyFor( purchase );
+		expect( store.keyFor( { ...purchase } ) ).toBe( first );
+		expect( store.keyFor( { ...purchase, surname: 'Lopes' } ) ).not.toBe(
+			first
+		);
+	} );
+} );
+
 describe( 'purchases for another person', () => {
 	test( 'never share a key with the viewer’s own purchase of the same details', () => {
 		const store = createCheckoutKeyStore();

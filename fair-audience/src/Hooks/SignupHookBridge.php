@@ -204,7 +204,15 @@ class SignupHookBridge {
 		$context['token_identity_validated'] = $participant && 'participant_token' === $identity['source'];
 
 		if ( $participant ) {
-			$context['prefill_name']  = trim( $participant->name . ' ' . $participant->surname );
+			// A form with its own surname field gets the two apart, so the
+			// surname is not repeated in the name (#2215); an older
+			// fair-events gets the whole name in prefill_name.
+			if ( ! empty( $context['separate_surname'] ) ) {
+				$context['prefill_name']    = trim( (string) $participant->name );
+				$context['prefill_surname'] = trim( (string) $participant->surname );
+			} else {
+				$context['prefill_name'] = trim( $participant->name . ' ' . $participant->surname );
+			}
 			$context['prefill_email'] = (string) $participant->email;
 		}
 
@@ -629,7 +637,7 @@ class SignupHookBridge {
 			return;
 		}
 
-		$name  = trim( (string) ( $context['prefill_name'] ?? '' ) );
+		$name  = trim( trim( (string) ( $context['prefill_name'] ?? '' ) ) . ' ' . trim( (string) ( $context['prefill_surname'] ?? '' ) ) );
 		$email = trim( (string) ( $context['prefill_email'] ?? '' ) );
 
 		echo '<div class="fair-events-buy-another">';
@@ -995,6 +1003,7 @@ class SignupHookBridge {
 				'event_id'              => $event_id,
 				'event_date_id'         => $event_date_id,
 				'name'                  => (string) ( $submission['name'] ?? '' ),
+				'surname'               => (string) ( $submission['surname'] ?? '' ),
 				'ticket_type_id'        => $ticket_type_id ? $ticket_type_id : null,
 				'ticket_option_ids'     => array_map( 'absint', (array) ( $submission['ticket_option_ids'] ?? array() ) ),
 				'ticket_activities'     => array_map(
@@ -1042,13 +1051,14 @@ class SignupHookBridge {
 	 *
 	 * @param int      $signup_id        The fair_events_signups row just created.
 	 * @param int      $event_date_id    Event-date ID the signup targets.
-	 * @param string   $name             Buyer name.
+	 * @param string   $name             Buyer name as stored, without the surname.
 	 * @param string   $email            Buyer email.
 	 * @param array    $ticket_selection Ticket selection ('ticket_type_id', 'quantity',
 	 *                                   'ticket_option_ids'/'event_date_ids', 'mailing_opt_in').
 	 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 	 * @param string   $participant_token Optional request token.
-	 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool).
+	 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool),
+	 *                                   'surname' (string) — the buyer's surname, absent before #2215.
 	 * @return void
 	 */
 	public static function link_participant( $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token = '', $request_context = array() ) {
@@ -1080,6 +1090,7 @@ class SignupHookBridge {
 			$participant->populate(
 				array(
 					'name'          => $name,
+					'surname'       => (string) ( $request_context['surname'] ?? '' ),
 					'email'         => $email,
 					// Mirrors EventSignupController::register()'s new-participant
 					// branch: only a brand-new participant's consent is recorded

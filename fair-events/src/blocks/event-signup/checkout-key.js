@@ -16,6 +16,7 @@
 const PURCHASE_FIELDS = [
 	'event_date_id',
 	'name',
+	'surname',
 	'email',
 	'ticket_type_id',
 	'quantity',

@@ -12,6 +12,7 @@
 
 namespace FairEvents\Hooks;
 
+use FairEvents\Helpers\PersonName;
 use FairEvents\Models\EventSignup;
 use FairEvents\Services\EmailService;
 
@@ -95,7 +96,7 @@ class SignupEmailHooks {
 		$ticket_type_id = isset( $signup->ticket_type_id ) ? (int) $signup->ticket_type_id : 0;
 		$amount         = isset( $signup->amount ) ? (float) $signup->amount : 0.0;
 
-		( new EmailService() )->send_signup_payment_failed( (int) $signup->id, (int) $signup->event_date_id, $signup->name, $signup->email, $ticket_type_id, $amount );
+		( new EmailService() )->send_signup_payment_failed( (int) $signup->id, (int) $signup->event_date_id, PersonName::of_signup( $signup ), $signup->email, $ticket_type_id, $amount );
 	}
 
 	/**
@@ -117,6 +118,8 @@ class SignupEmailHooks {
 		$signup         = EventSignup::get_by_id( $signup_id );
 		$ticket_type_id = $signup ? (int) $signup->ticket_type_id : 0;
 		$amount         = $signup ? (float) $signup->amount : 0.0;
+		// The complete stored name: name and surname (#2215).
+		$name = $signup ? PersonName::of_signup( $signup ) : (string) $name;
 
 		( new EmailService() )->send_signup_confirmation( $signup_id, $event_date_id, $name, $email, $ticket_type_id, $amount );
 	}

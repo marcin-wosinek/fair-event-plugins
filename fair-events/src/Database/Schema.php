@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.55.0';
+	const DB_VERSION = '3.56.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -418,7 +418,9 @@ class Schema {
 	 * backfill created it from (PAYMENT_HISTORY_MIGRATION.md §4.2). It is
 	 * null for ordinary purchases, and unique, so one relationship never
 	 * yields two purchases. It is a plain integer, not a foreign key, and
-	 * outlives Fair Audience being deactivated.
+	 * outlives Fair Audience being deactivated. surname is optional and
+	 * separate from name (#2215); signups made before it existed keep their
+	 * whole name in name, with an empty surname.
 	 *
 	 * @return string SQL statement for creating the table.
 	 */
@@ -433,6 +435,7 @@ class Schema {
 			event_date_id BIGINT UNSIGNED NOT NULL,
 			ticket_type_id BIGINT UNSIGNED DEFAULT NULL,
 			name VARCHAR(255) NOT NULL,
+			surname VARCHAR(255) NOT NULL DEFAULT '',
 			email VARCHAR(255) NOT NULL,
 			quantity INT UNSIGNED NOT NULL DEFAULT 1,
 			mailing_opt_in TINYINT(1) NOT NULL DEFAULT 0,

@@ -28,6 +28,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import SignupExportModal from './SignupExportModal.js';
 import { sortSignupsByName } from './signup-order.js';
+import { signupFullName } from './signup-name.js';
 import { buildSignupPrintHtml, openPrintWindow } from './signup-print.js';
 import { buildGateSheetHtml, gatePricingWarnings } from './gate-sheet-print.js';
 import {
@@ -50,6 +51,7 @@ import SignupEditModal, {
 	ACTION_MOVE,
 	ACTION_CHANGE_TYPE,
 } from './SignupEditModal.js';
+import SignupNameModal from './SignupNameModal.js';
 import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import { formatSiteLocalDate } from 'fair-events-shared/src/dateTime.js';
 
@@ -79,12 +81,12 @@ const ACTION_ACTIVITY = 'activity';
 export function signupIdentity( signup ) {
 	const reference = listedTickets( signup )[ 0 ]?.reference;
 	if ( ! reference ) {
-		return signup.name;
+		return signupFullName( signup );
 	}
 	return sprintf(
 		/* translators: 1: registrant name, 2: short ticket reference */
 		__( '%1$s (%2$s)', 'fair-events' ),
-		signup.name,
+		signupFullName( signup ),
 		reference
 	);
 }
@@ -655,7 +657,7 @@ export function isTransferredTicket( ticket ) {
  */
 export function ticketPurchaserName( { signup, ticket } ) {
 	return (
-		signup.name ||
+		signupFullName( signup ) ||
 		ticket?.purchaser?.name ||
 		__( '(name unavailable)', 'fair-events' )
 	);
@@ -880,6 +882,7 @@ export default function EventSignups( {
 	const [ printError, setPrintError ] = useState( null );
 	// { signup, action } while the move / change-type modal is open.
 	const [ editing, setEditing ] = useState( null );
+	const [ editingName, setEditingName ] = useState( null );
 	// Ticket ID while the ticket editor is open.
 	const [ editingTicketId, setEditingTicketId ] = useState( null );
 	// The last move, type change or ticket edit that went through:
@@ -1192,6 +1195,12 @@ export default function EventSignups( {
 					</div>
 				) }
 				<Flex justify="flex-start" gap={ 3 } wrap>
+					<Button
+						variant="link"
+						onClick={ () => setEditingName( signup ) }
+					>
+						{ __( 'Edit name', 'fair-events' ) }
+					</Button>
 					{ signup.can_move && (
 						<Button
 							variant="link"
@@ -1583,7 +1592,7 @@ export default function EventSignups( {
 									Math.max( deleteCounts.confirmed, 1 ),
 									'fair-events'
 								),
-								selectedSignup.name,
+								signupFullName( selectedSignup ),
 								Math.max( deleteCounts.confirmed, 1 ),
 								selectedSignup.status
 							) }
@@ -1655,6 +1664,24 @@ export default function EventSignups( {
 										signupIdentity( signup )
 									),
 							action === ACTION_MOVE
+						);
+						loadSignups();
+					} }
+				/>
+			) }
+			{ editingName && (
+				<SignupNameModal
+					signup={ editingName }
+					onClose={ () => setEditingName( null ) }
+					onSaved={ ( updated ) => {
+						setEditingName( null );
+						showEditNotice(
+							sprintf(
+								/* translators: %s: registrant's new complete name */
+								__( 'Name changed to %s.', 'fair-events' ),
+								signupFullName( updated ) ||
+									signupFullName( editingName )
+							)
 						);
 						loadSignups();
 					} }

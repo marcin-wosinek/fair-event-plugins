@@ -36,6 +36,19 @@ describe( 'sortSignupsByName', () => {
 		] );
 	} );
 
+	it( 'orders by name and surname together, beside older name-only registrations (#2215)', () => {
+		const sorted = sortSignupsByName( [
+			{ id: 1, name: 'Ana', surname: 'Zubiri' },
+			{ id: 2, name: 'Ana María López', surname: '' },
+			{ id: 3, name: 'Ana', surname: 'Beltrán' },
+			{ id: 4, name: 'Ana', surname: 'López', full_name: 'Ana López' },
+		] );
+
+		expect( sorted.map( ( signup ) => signup.id ) ).toEqual( [
+			3, 4, 2, 1,
+		] );
+	} );
+
 	it( 'breaks ties between equal names by registration ID', () => {
 		const sorted = sortSignupsByName( [
 			{ id: 30, name: 'José Pérez' },

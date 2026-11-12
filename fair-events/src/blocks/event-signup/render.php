@@ -758,21 +758,40 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 		echo $ticket_options_fieldset_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fully escaped inside the renderer.
 		?>
 
-		<div class="form-row">
-			<label for="<?php echo esc_attr( $form_id ); ?>-name" class="form-label">
-				<?php esc_html_e( 'Your Name', 'fair-events' ); ?>
-				<span class="required-indicator" aria-hidden="true">*</span>
-			</label>
-			<input
-				type="text"
-				id="<?php echo esc_attr( $form_id ); ?>-name"
-				name="name"
-				class="form-input"
-				value="<?php echo esc_attr( $prefill_name ); ?>"
-				required
-				maxlength="255"
-				autocomplete="name"
-			/>
+		<?php // Name and optional surname, stored separately (#2215). ?>
+		<div class="fair-events-name-fields">
+			<div class="form-row">
+				<label for="<?php echo esc_attr( $form_id ); ?>-name" class="form-label">
+					<?php esc_html_e( 'Your Name', 'fair-events' ); ?>
+					<span class="required-indicator" aria-hidden="true">*</span>
+				</label>
+				<input
+					type="text"
+					id="<?php echo esc_attr( $form_id ); ?>-name"
+					name="name"
+					class="form-input"
+					value="<?php echo esc_attr( $prefill_name ); ?>"
+					required
+					maxlength="255"
+					autocomplete="given-name"
+				/>
+			</div>
+
+			<div class="form-row">
+				<label for="<?php echo esc_attr( $form_id ); ?>-surname" class="form-label">
+					<?php esc_html_e( 'Surname', 'fair-events' ); ?>
+					<span class="optional-indicator"><?php esc_html_e( '(optional)', 'fair-events' ); ?></span>
+				</label>
+				<input
+					type="text"
+					id="<?php echo esc_attr( $form_id ); ?>-surname"
+					name="surname"
+					class="form-input"
+					value=""
+					maxlength="255"
+					autocomplete="family-name"
+				/>
+			</div>
 		</div>
 
 		<div class="form-row">

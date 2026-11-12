@@ -99,6 +99,14 @@ class GetTicketsController extends WP_REST_Controller {
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						// Optional and stored apart from the name (#2215).
+						// A client that sends only a name keeps working.
+						'surname'                 => array(
+							'type'              => 'string',
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 						'email'                   => array(
 							'type'              => 'string',
 							'required'          => true,
@@ -277,6 +285,8 @@ class GetTicketsController extends WP_REST_Controller {
 				// Move a signup to another occurrence, or give it another
 				// ticket type (#1532). Send exactly one of event_date_id or
 				// ticket_type_id; override_reason confirms going past a limit.
+				// Or change the registration's name (#2215): send name, and
+				// surname to change it too — '' clears it, omitted keeps it.
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
@@ -298,6 +308,14 @@ class GetTicketsController extends WP_REST_Controller {
 						'override_reason' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+						'name'            => array(
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'surname'         => array(
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
 						),
 					),
 				),
@@ -497,6 +515,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		$event_date_id     = $request->get_param( 'event_date_id' );
 		$name              = $request->get_param( 'name' );
+		$surname           = $this->request_surname( $request );
 		$email             = $request->get_param( 'email' );
 		$ticket_type_id    = $request->get_param( 'ticket_type_id' );
 		$quantity          = max( 1, min( 100, (int) $request->get_param( 'quantity' ) ) );
@@ -583,6 +602,7 @@ class GetTicketsController extends WP_REST_Controller {
 			array(
 				'event_date_id'         => (int) $event_date_id,
 				'name'                  => $name,
+				'surname'               => $surname,
 				'email'                 => $email,
 				'ticket_type_id'        => (int) $ticket_type_id,
 				'quantity'              => $quantity,
@@ -797,12 +817,13 @@ class GetTicketsController extends WP_REST_Controller {
 					'option_ids'     => array_merge( array(), ...$unit_option_ids ),
 				),
 			),
-			static function () use ( $event_date_id, $ticket_type_id, $name, $email, $quantity, $mailing_opt_in, $amount, $unit_options ) {
+			static function () use ( $event_date_id, $ticket_type_id, $name, $surname, $email, $quantity, $mailing_opt_in, $amount, $unit_options ) {
 				$signup_id = \FairEvents\Models\EventSignup::save_in_transaction(
 					array(
 						'event_date_id'  => $event_date_id,
 						'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
 						'name'           => $name,
+						'surname'        => $surname,
 						'email'          => $email,
 						'quantity'       => $quantity,
 						'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
@@ -893,7 +914,25 @@ class GetTicketsController extends WP_REST_Controller {
 			$details['register_another_person'] = true;
 		}
 
+		// The surname is part of who buys (#2215). Likewise added only when
+		// given, so keys stored before it existed, and name-only clients,
+		// keep the fingerprint they had.
+		$surname = $this->request_surname( $request );
+		if ( '' !== $surname ) {
+			$details['surname'] = $surname;
+		}
+
 		return hash( 'sha256', (string) wp_json_encode( $details ) );
+	}
+
+	/**
+	 * The surname a signup request was sent with: trimmed, empty when none.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string
+	 */
+	private function request_surname( $request ) {
+		return trim( (string) $request->get_param( 'surname' ) );
 	}
 
 	/**
@@ -1369,7 +1408,12 @@ class GetTicketsController extends WP_REST_Controller {
 		$signup_ids = array();
 		foreach ( $signups as $signup ) {
 			$signup_ids[] = (int) $signup->id;
-			$this->fire_signup_created( (int) $signup->id, (int) $signup->event_date_id, (string) $signup->name, (string) $signup->email, $ticket_selection, $transaction_id, $participant_token, $request_context );
+			// The positional name stays the stored name; the surname is added
+			// to the context so listeners written for a single name keep
+			// working (#2215).
+			$signup_context            = $request_context;
+			$signup_context['surname'] = (string) ( $signup->surname ?? '' );
+			$this->fire_signup_created( (int) $signup->id, (int) $signup->event_date_id, (string) $signup->name, (string) $signup->email, $ticket_selection, $transaction_id, $participant_token, $signup_context );
 			$this->persist_questionnaire_answers( (int) $signup->id, (int) $signup->event_date_id, $answers );
 		}
 
@@ -1737,7 +1781,14 @@ class GetTicketsController extends WP_REST_Controller {
 				'ticket_options'               => $ticket_options,
 				'minimum_activities'           => $minimum_activities,
 				'prefill_name'                 => '',
+				'prefill_surname'              => '',
 				'prefill_email'                => '',
+				// Tells a companion plugin the form has its own surname
+				// field (#2215), so it fills prefill_name and
+				// prefill_surname separately. Without it — an older
+				// fair-events — the companion sends the whole name in
+				// prefill_name.
+				'separate_surname'             => true,
 				'suppress_form'                => false,
 				// Tells a companion plugin that what the viewer already holds
 				// is rendered in its own slot beside the form (the response's
@@ -1779,6 +1830,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'after_form_html'              => null,
 				'occurrences_signed_up'        => array(),
 				'prefill_name'                 => '',
+				'prefill_surname'              => '',
 				'prefill_email'                => '',
 				'series_coverage'              => $series_coverage,
 			);
@@ -1830,6 +1882,7 @@ class GetTicketsController extends WP_REST_Controller {
 			'after_form_html'              => null,
 			'occurrences_signed_up'        => $occurrences_signed_up,
 			'prefill_name'                 => (string) ( $context['prefill_name'] ?? '' ),
+			'prefill_surname'              => (string) ( $context['prefill_surname'] ?? '' ),
 			'prefill_email'                => (string) ( $context['prefill_email'] ?? '' ),
 			'series_coverage'              => $series_coverage,
 		);
@@ -1917,12 +1970,13 @@ class GetTicketsController extends WP_REST_Controller {
 		 *
 		 * @param int      $signup_id        The fair_events_signups row just created.
 		 * @param int      $event_date_id    Event-date ID the signup targets.
-		 * @param string   $name             Buyer name.
+		 * @param string   $name             Buyer name as stored (without the surname).
 		 * @param string   $email            Buyer email.
 		 * @param array    $ticket_selection Ticket selection details.
 		 * @param int|null $transaction_id   fair-payments-connector transaction ID, or null on the free path.
 		 * @param string   $participant_token Optional companion credential.
-		 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool).
+		 * @param array    $request_context  What the request says about itself: 'register_another_person' (bool),
+		 *                                   and 'surname' (string, empty when none) — the buyer's surname.
 		 */
 		do_action( 'fair_events_signup_created', $signup_id, $event_date_id, $name, $email, $ticket_selection, $transaction_id, $participant_token, $request_context );
 	}
@@ -2142,6 +2196,7 @@ class GetTicketsController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function create_multi_instance_signup( $request, $ticket_type, $series_page_id, $name, $email, $mailing_opt_in, $idempotency_key = '', $fingerprint = '' ) {
+		$surname = $this->request_surname( $request );
 		$raw_ids = $request->get_param( 'event_date_ids' ) ?? array();
 		$raw_ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $raw_ids ) ) ), 0, 50 );
 		$raw_ids = array_filter( $raw_ids );
@@ -2303,7 +2358,7 @@ class GetTicketsController extends WP_REST_Controller {
 				'shared'           => true,
 			),
 			$demands,
-			static function () use ( $occurrences, $ticket_type, $name, $email, $mailing_opt_in, $occurrence_amount, $total_amount ) {
+			static function () use ( $occurrences, $ticket_type, $name, $surname, $email, $mailing_opt_in, $occurrence_amount, $total_amount ) {
 				$saved_ids = array();
 				foreach ( $occurrences as $occ ) {
 					$signup_id = \FairEvents\Models\EventSignup::save_in_transaction(
@@ -2311,6 +2366,7 @@ class GetTicketsController extends WP_REST_Controller {
 							'event_date_id'  => (int) $occ->id,
 							'ticket_type_id' => $ticket_type->id,
 							'name'           => $name,
+							'surname'        => $surname,
 							'email'          => $email,
 							'quantity'       => 1,
 							'mailing_opt_in' => $mailing_opt_in ? 1 : 0,
@@ -2554,6 +2610,8 @@ class GetTicketsController extends WP_REST_Controller {
 				}
 			}
 
+			$signup->surname                     = (string) ( $signup->surname ?? '' );
+			$signup->full_name                   = \FairEvents\Helpers\PersonName::of_signup( $signup );
 			$signup->event_date_label            = $date_labels[ $own_date_id ];
 			$signup->listed_ticket_ids           = $listed_ticket_ids;
 			$signup->accounting_anchor_ticket_id = $anchor_ticket_id;
@@ -2660,7 +2718,7 @@ class GetTicketsController extends WP_REST_Controller {
 
 		return array(
 			'participant_id'     => null,
-			'name'               => (string) ( $signup->name ?? '' ),
+			'name'               => \FairEvents\Helpers\PersonName::of_signup( $signup ),
 			'email'              => (string) ( $signup->email ?? '' ),
 			'available'          => true,
 			'newsletter_consent' => null,
@@ -3016,6 +3074,57 @@ class GetTicketsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Change the name and surname stored with a registration (#2215).
+	 *
+	 * Changes the registration only, never a linked Fair Audience profile.
+	 * Allowed whatever the registration's status, since it changes no
+	 * ticket, place or payment.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @param object          $signup  Signup row.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function update_signup_name( $request, $signup ) {
+		if ( $request->has_param( 'event_date_id' ) || $request->has_param( 'ticket_type_id' ) ) {
+			return new WP_Error(
+				'rest_invalid_signup_edit',
+				__( 'Change the name separately from the date or ticket type.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$name = trim( (string) $request->get_param( 'name' ) );
+		if ( '' === $name ) {
+			return new WP_Error(
+				'rest_signup_name_required',
+				__( 'Enter a name.', 'fair-events' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$surname = $request->has_param( 'surname' ) ? trim( (string) $request->get_param( 'surname' ) ) : null;
+
+		if ( ! \FairEvents\Models\EventSignup::update_name( (int) $signup->id, $name, $surname ) ) {
+			return new WP_Error(
+				'rest_signup_update_failed',
+				__( 'Failed to update signup.', 'fair-events' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$updated = \FairEvents\Models\EventSignup::get_by_id( (int) $signup->id );
+
+		return rest_ensure_response(
+			array(
+				'id'        => (int) $updated->id,
+				'name'      => (string) $updated->name,
+				'surname'   => (string) ( $updated->surname ?? '' ),
+				'full_name' => \FairEvents\Helpers\PersonName::of_signup( $updated ),
+			)
+		);
+	}
+
+	/**
 	 * Move a signup to another occurrence of its series, or give it another
 	 * ticket type (admin). The signup and every unit not cancelled or
 	 * refunded on its own change together, under the capacity lock. Going
@@ -3035,6 +3144,10 @@ class GetTicketsController extends WP_REST_Controller {
 				__( 'Signup not found.', 'fair-events' ),
 				array( 'status' => 404 )
 			);
+		}
+
+		if ( $request->has_param( 'name' ) || $request->has_param( 'surname' ) ) {
+			return $this->update_signup_name( $request, $signup );
 		}
 
 		if ( 'confirmed' !== $signup->status ) {

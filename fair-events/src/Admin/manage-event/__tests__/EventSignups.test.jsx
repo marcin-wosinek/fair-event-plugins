@@ -204,7 +204,9 @@ async function renderSignups( config = {} ) {
 	render( <EventSignups eventDateId={ 42 } /> );
 	const firstConfirmed = rows.find( ( row ) => row.status === 'confirmed' );
 	if ( firstConfirmed ) {
-		await screen.findAllByText( firstConfirmed.name );
+		await screen.findAllByText(
+			firstConfirmed.full_name ?? firstConfirmed.name
+		);
 	} else {
 		await screen.findByText( 'No confirmed registrations yet.' );
 	}
@@ -1077,15 +1079,21 @@ describe( 'EventSignups — move and change ticket type (#1532)', () => {
 		await renderSignups( { rows: [ movable, wholeSeries, noType ] } );
 
 		expect( actionsOf( 'Ada Lovelace' ) ).toEqual( [
+			'Edit name',
 			'Move',
 			'Change ticket type',
 			'Delete',
 		] );
 		expect( actionsOf( 'Bob, Jr.' ) ).toEqual( [
+			'Edit name',
 			'Change ticket type',
 			'Delete',
 		] );
-		expect( actionsOf( 'Dora Free' ) ).toEqual( [ 'Move', 'Delete' ] );
+		expect( actionsOf( 'Dora Free' ) ).toEqual( [
+			'Edit name',
+			'Move',
+			'Delete',
+		] );
 	} );
 
 	it( 'labels each target with the places it has left', async () => {
@@ -3466,5 +3474,130 @@ describe( 'EventSignups — transferred tickets (#2133)', () => {
 		const [ sibling, given ] = bodyRows();
 		expect( sibling ).toHaveTextContent( 'Ada Lovelace' );
 		expect( given ).toHaveTextContent( 'Purchased by Ada Lovelace' );
+	} );
+} );
+
+describe( 'EventSignups — name and surname (#2215)', () => {
+	const withSurname = {
+		...signups[ 0 ],
+		name: 'María José',
+		surname: 'García de la Vega',
+		full_name: 'María José García de la Vega',
+	};
+	const nameOnly = {
+		...signups[ 1 ],
+		name: 'Prince',
+		surname: '',
+		full_name: 'Prince',
+	};
+
+	it( 'shows the complete name, and older name-only registrations unchanged', async () => {
+		await renderSignups( { rows: [ withSurname, nameOnly ] } );
+
+		expect(
+			await screen.findByText( 'María José García de la Vega' )
+		).toBeInTheDocument();
+		expect( screen.getAllByText( 'Prince' ).length ).toBeGreaterThan( 0 );
+		expect(
+			screen.queryByText( 'García de la Vega García de la Vega' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'edits the name and surname separately and sends both', async () => {
+		await renderSignups( {
+			rows: [ withSurname ],
+			putResults: [
+				{
+					id: 1,
+					name: 'Marie',
+					surname: '',
+					full_name: 'Marie',
+				},
+			],
+		} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Edit name' } ) );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Edit name — María José García de la Vega',
+		} );
+		expect( within( dialog ).getByLabelText( 'Name' ) ).toHaveValue(
+			'María José'
+		);
+		expect(
+			within( dialog ).getByLabelText( 'Surname (optional)' )
+		).toHaveValue( 'García de la Vega' );
+
+		fireEvent.change( within( dialog ).getByLabelText( 'Name' ), {
+			target: { value: ' Marie ' },
+		} );
+		fireEvent.change(
+			within( dialog ).getByLabelText( 'Surname (optional)' ),
+			{ target: { value: '' } }
+		);
+		await act( async () => {
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Save name' } )
+			);
+		} );
+
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets/1',
+			method: 'PUT',
+			data: { name: 'Marie', surname: '' },
+		} );
+		expect(
+			( await screen.findAllByText( 'Name changed to Marie.' ) ).length
+		).toBeGreaterThan( 0 );
+	} );
+
+	it( 'keeps the dialog and what was typed when saving fails', async () => {
+		const failure = new Error( 'Database unavailable.' );
+		await renderSignups( {
+			rows: [ withSurname ],
+			putResults: [ failure ],
+		} );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Edit name' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		fireEvent.change(
+			within( dialog ).getByLabelText( 'Surname (optional)' ),
+			{ target: { value: 'Ñúñez' } }
+		);
+		await act( async () => {
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Save name' } )
+			);
+		} );
+
+		expect(
+			await within( dialog ).findByText( 'Database unavailable.' )
+		).toBeInTheDocument();
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect(
+			within( dialog ).getByLabelText( 'Surname (optional)' )
+		).toHaveValue( 'Ñúñez' );
+	} );
+
+	it( 'requires a name before saving', async () => {
+		await renderSignups( { rows: [ withSurname ] } );
+
+		fireEvent.click( screen.getByRole( 'button', { name: 'Edit name' } ) );
+		const dialog = await screen.findByRole( 'dialog' );
+		fireEvent.change( within( dialog ).getByLabelText( 'Name' ), {
+			target: { value: '   ' },
+		} );
+
+		expect(
+			within( dialog ).getByText( 'Name is required.' )
+		).toBeVisible();
+		expect(
+			within( dialog ).getByRole( 'button', { name: 'Save name' } )
+		).toBeDisabled();
+		expect( apiFetch ).not.toHaveBeenCalledWith(
+			expect.objectContaining( { method: 'PUT' } )
+		);
 	} );
 } );

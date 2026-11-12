@@ -47,6 +47,28 @@ class EventSignupTest extends TestCase {
 	}
 
 	/**
+	 * A name edit writes the name and, when given, the surname (#2215).
+	 */
+	public function test_update_name_writes_surname_only_when_given(): void {
+		EventSignup::update_name( 10, 'María José', 'García de la Vega' );
+		$this->assertSame(
+			array(
+				'name'    => 'María José',
+				'surname' => 'García de la Vega',
+			),
+			$GLOBALS['wpdb']->last_update['data']
+		);
+		$this->assertSame( array( '%s', '%s' ), $GLOBALS['wpdb']->last_update['formats'] );
+
+		EventSignup::update_name( 10, 'Prince', '' );
+		$this->assertSame( '', $GLOBALS['wpdb']->last_update['data']['surname'] );
+
+		EventSignup::update_name( 10, 'Ana' );
+		$this->assertSame( array( 'name' => 'Ana' ), $GLOBALS['wpdb']->last_update['data'] );
+		$this->assertSame( array( '%s' ), $GLOBALS['wpdb']->last_update['formats'] );
+	}
+
+	/**
 	 * A retry reopens the signup hold while assigning the replacement transaction.
 	 */
 	public function test_retry_transaction_resets_signup_to_pending_payment(): void {

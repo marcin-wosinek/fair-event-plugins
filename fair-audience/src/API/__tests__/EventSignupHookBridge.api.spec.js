@@ -386,6 +386,52 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		expect( relationships[ 0 ].label ).toBe( 'signed_up' );
 	} );
 
+	test( 'a new buyer’s name and surname reach the participant apart, and the form is pre-filled apart (#2215)', async ( {
+		request: visitor,
+	} ) => {
+		test.skip( ! fairAudienceActive, 'fair-audience not active' );
+		const email = `signup-hook-bridge-surname-${ Date.now() }@example.test`;
+
+		const res = await visitor.post( '/wp-json/fair-events/v1/get-tickets', {
+			data: {
+				event_date_id: eventDateId,
+				name: 'María José',
+				surname: 'García de la Vega',
+				email,
+				quantity: 1,
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+
+		const participantsRes = await api.get(
+			'/wp-json/fair-audience/v1/participants',
+			{ headers: adminHeaders, params: { search: email } }
+		);
+		expect( participantsRes.ok() ).toBeTruthy();
+		const participant = ( await participantsRes.json() ).find(
+			( p ) => p.email === email
+		);
+		expect( participant ).toMatchObject( {
+			name: 'María José',
+			surname: 'García de la Vega',
+		} );
+
+		// The same browser comes back: its form is filled without the
+		// surname repeated in the name.
+		const contextRes = await visitor.get(
+			'/wp-json/fair-events/v1/get-tickets/viewer-context',
+			{ params: { event_date_id: eventDateId } }
+		);
+		expect( contextRes.ok() ).toBeTruthy();
+		const context = await contextRes.json();
+		expect( context.viewer_resolved ).toBe( true );
+		expect( context.prefill_name ).toBe( 'María José' );
+		expect( context.prefill_surname ).toBe( 'García de la Vega' );
+		expect( context.before_form_html ).toContain(
+			'María José García de la Vega'
+		);
+	} );
+
 	test.describe( 'registering another person (#1528)', () => {
 		const VIEWER_CONTEXT_PATH =
 			'/wp-json/fair-events/v1/get-tickets/viewer-context';

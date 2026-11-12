@@ -11,6 +11,8 @@
  * @package FairEvents
  */
 
+import { signupFullName } from './signup-name.js';
+
 /**
  * Escape a single CSV field per RFC 4180: quote fields containing a comma,
  * double quote, or line break, doubling interior quotes.
@@ -69,7 +71,10 @@ export function buildSignupExportText( { rows, columns, format } ) {
 	return rows
 		.map( ( item ) => {
 			const person =
-				item.holderName || item.name || item.email || `#${ item.id }`;
+				item.holderName ||
+				signupFullName( item ) ||
+				item.email ||
+				`#${ item.id }`;
 			// Tickets of the same holder are told apart by their label.
 			const heading = item.ticketLabel
 				? `${ person } — ${ item.ticketLabel }`

@@ -25,7 +25,7 @@ class EventSignup {
 	 * Save a signup row together with one ticket unit per admission and
 	 * return its ID. The signup and its units are written atomically.
 	 *
-	 * @param array $data Keys: event_date_id, ticket_type_id, name, email, quantity, mailing_opt_in, amount, status, participant_id.
+	 * @param array $data Keys: event_date_id, ticket_type_id, name, surname (optional), email, quantity, mailing_opt_in, amount, status, participant_id.
 	 * @return int|false Inserted ID or false on failure.
 	 */
 	public static function save( array $data ) {
@@ -67,6 +67,7 @@ class EventSignup {
 				'event_date_id'      => (int) ( $data['event_date_id'] ?? 0 ),
 				'ticket_type_id'     => isset( $data['ticket_type_id'] ) && $data['ticket_type_id'] ? (int) $data['ticket_type_id'] : null,
 				'name'               => $data['name'] ?? '',
+				'surname'            => (string) ( $data['surname'] ?? '' ),
 				'email'              => $data['email'] ?? '',
 				'quantity'           => max( 1, (int) ( $data['quantity'] ?? 1 ) ),
 				'mailing_opt_in'     => (int) ( $data['mailing_opt_in'] ?? 0 ),
@@ -76,7 +77,7 @@ class EventSignup {
 				'payment_expires_at' => 'pending_payment' === $status ? self::new_hold_expiry() : null,
 				'created_at'         => current_time( 'mysql' ),
 			),
-			array( '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%f', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {
@@ -100,6 +101,35 @@ class EventSignup {
 	 */
 	private static function new_hold_expiry() {
 		return gmdate( 'Y-m-d H:i:s', time() + self::PAYMENT_HOLD_SECONDS );
+	}
+
+	/**
+	 * Change the name stored with a registration (#2215). Only the
+	 * registration changes: a linked Fair Audience profile keeps its own
+	 * name.
+	 *
+	 * @param int         $signup_id Signup row ID.
+	 * @param string      $name      New name; never empty.
+	 * @param string|null $surname   New surname; null keeps the current one, '' clears it.
+	 * @return bool True when the row exists and was written.
+	 */
+	public static function update_name( int $signup_id, string $name, ?string $surname = null ) {
+		global $wpdb;
+
+		$data   = array( 'name' => $name );
+		$format = array( '%s' );
+		if ( null !== $surname ) {
+			$data['surname'] = $surname;
+			$format[]        = '%s';
+		}
+
+		return false !== $wpdb->update(
+			$wpdb->prefix . 'fair_events_signups',
+			$data,
+			array( 'id' => $signup_id ),
+			$format,
+			array( '%d' )
+		);
 	}
 
 	/**
@@ -758,12 +788,13 @@ class EventSignup {
 			$wpdb->prefix . 'fair_events_signups',
 			array(
 				'name'           => '',
+				'surname'        => '',
 				'email'          => '',
 				'mailing_opt_in' => 0,
 				'participant_id' => null,
 			),
 			array( 'participant_id' => $participant_id ),
-			array( '%s', '%s', '%d', '%d' ),
+			array( '%s', '%s', '%s', '%d', '%d' ),
 			array( '%d' )
 		);
 	}

@@ -1341,7 +1341,7 @@ class EventParticipantsController extends WP_REST_Controller {
 			$payload['participant_name'] = trim( $participant->name . ' ' . $participant->surname );
 		} else {
 			$signup                      = \FairEvents\Models\EventSignup::get_by_id( (int) $ticket->signup_id );
-			$payload['participant_name'] = $signup ? (string) $signup->name : '';
+			$payload['participant_name'] = $signup ? trim( (string) $signup->name . ' ' . (string) ( $signup->surname ?? '' ) ) : '';
 		}
 		$payload['editable']  = 'confirmed' === $payload['status'];
 		$payload['transfers'] = $this->ticket_transfers( (int) $ticket->id );
@@ -2345,7 +2345,7 @@ class EventParticipantsController extends WP_REST_Controller {
 
 		return array(
 			'participant_id' => null,
-			'name'           => $signup ? (string) $signup->name : '',
+			'name'           => $signup ? trim( (string) $signup->name . ' ' . (string) ( $signup->surname ?? '' ) ) : '',
 			'email'          => $signup ? (string) $signup->email : '',
 		);
 	}

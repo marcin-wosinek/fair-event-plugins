@@ -21,6 +21,7 @@ import {
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { signupFullName } from './signup-name.js';
 
 /**
  * What a payment link pays for.
@@ -254,7 +255,7 @@ export default function PurchasePayments( { eventDateId } ) {
 											key={ `${ signup.id }-${ payment.transaction_id }-${ payment.role }` }
 										>
 											<td>
-												{ signup.name ||
+												{ signupFullName( signup ) ||
 													sprintf(
 														/* translators: %d: purchase ID */
 														__(

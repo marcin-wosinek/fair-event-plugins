@@ -112,7 +112,9 @@ class Installer {
 	 * backfill fills them once an administrator starts it. So does the
 	 * 3.52.0 reconciliation audit, written by administrators' actions, and
 	 * the 3.53.0 ticket transfer history, which starts with the first
-	 * holder change made after the upgrade.
+	 * holder change made after the upgrade. The 3.56.0 signup surname
+	 * column defaults to an empty string: existing names stay as they are
+	 * and are never split into a name and a surname (#2215).
 	 *
 	 * @return string[] Statements for dbDelta().
 	 */

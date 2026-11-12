@@ -612,6 +612,10 @@ sub-route) expose:
     hooked to this filter instead) and overrides `ticket_types`/
     `price_by_type_id` (participant-filtered/discounted), `prefill_name`/
     `prefill_email`, and each `occurrences_for_picker` row's `signed_up`.
+    The context also carries `separate_surname` (`true`): the form has its
+    own surname field (#2215), so a companion fills `prefill_name` and
+    `prefill_surname` apart. Without the key — an older fair-events — it
+    sends the whole name in `prefill_name`.
     The context also carries `existing_signup_slot` (`true`): fair-events
     renders what the viewer already holds in a slot of its own (below), so
     a viewer who holds a ticket keeps the form and `suppress_form` stays
@@ -630,8 +634,8 @@ sub-route) expose:
     `existing_signup_html` (what the viewer already holds, HTML or `null`),
     `before_form_html` / `before_submit_html` / `after_form_html` (the three
     in-form render-slot actions' captured output, HTML or `null`),
-    `occurrences_signed_up` (event_date_ids), `prefill_name`, `prefill_email`,
-    and the non-secret `token_identity_validated` boolean. The token itself and
+    `occurrences_signed_up` (event_date_ids), `prefill_name`,
+    `prefill_surname`, `prefill_email`, and the non-secret `token_identity_validated` boolean. The token itself and
     participant ID are never returned. Every response — anonymous and
     register-another-person ones included — also carries `series_coverage`
     (`SeriesCoverage::for_event_date()`, `null` outside a series): each
@@ -810,7 +814,7 @@ sub-route) expose:
     link or payment exists:
     `apply_filters( 'fair_events_signup_deferred_response', null, $submission, $participant_token, $request_context )`.
     `$submission` holds only sanitized values: `event_date_id`, `name`,
-    `email`, `ticket_type_id`, `quantity`, `mailing_opt_in`,
+    `surname` (empty when none, #2215), `email`, `ticket_type_id`, `quantity`, `mailing_opt_in`,
     `ticket_option_ids`, `ticket_activities` (one list per ticket),
     `event_date_ids` and `questionnaire_answers`. Returning an array sends it
     as the response instead of saving anything, and counts as an attempt
@@ -914,7 +918,10 @@ sub-route) expose:
     `'ticket_activities'` (one list per ticket), or `'event_date_ids'` for
     `'multiple_instances'` types, plus `'mailing_opt_in'` (bool) and
     `'activities_stored'` (true: fair-events already wrote the activities on
-    the tickets, so a listener must not attach them again). A companion plugin hooks this to
+    the tickets, so a listener must not attach them again). `$name` is the
+    stored name without the surname; `$request_context['surname']` carries
+    the surname (empty when none, absent before #2215), so listeners written
+    for one name keep working. A companion plugin hooks this to
     create/link its own participant record, set a session cookie, or send its
     own confirmation email — instead of owning a competing create route.
 -   **`fair_events_signup_transaction_participant_id` filter** — runs just

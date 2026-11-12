@@ -280,7 +280,7 @@ class PurchasePaymentHistory {
 		$signups    = array();
 		foreach ( (array) $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT id, name, status FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' )',
+				'SELECT id, name, surname, status FROM %i WHERE id IN ( ' . implode( ', ', array_fill( 0, count( $signup_ids ), '%d' ) ) . ' )',
 				array_merge( array( $wpdb->prefix . 'fair_events_signups' ), $signup_ids )
 			),
 			OBJECT_K
@@ -305,7 +305,7 @@ class PurchasePaymentHistory {
 			$signup      = $signups[ (int) $link['signup_id'] ] ?? null;
 			$purchases[] = array(
 				'signup_id'        => (int) $link['signup_id'],
-				'name'             => $signup ? (string) $signup->name : '',
+				'name'             => $signup ? \FairEvents\Helpers\PersonName::of_signup( $signup ) : '',
 				'status'           => $signup ? (string) $signup->status : '',
 				'event_date_id'    => $event_date_id,
 				'event'            => $events[ $event_date_id ],
