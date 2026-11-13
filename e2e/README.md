@@ -213,6 +213,11 @@ Each prints a single `MARKER:{json}` line (`E2E_SEED`, `E2E_STATE`,
   which is generic (page id → submissions/answers) and serves both fair-form
   seeds; the participant the email answer auto-creates needs
   `cleanup-participant.php` on top.
+- **`seed-fair-form-input-questions-page.php [legacy]`** — creates a
+  published page carrying a Fair Form block with one required Date, Date &
+  Time, Email and Short Text question each. Pass `legacy` to save them under
+  the pre-#1161 `fair-audience/fair-form*` names. Tear down with
+  `cleanup-fair-form-notification-page.php`.
 - **`fair-form-submission-state.php <postId>`** — reports the most recent
   questionnaire submission stored for a page (`submissionId`,
   `participantId`, `title`, `formId`/`formTitle`, answer count). The public

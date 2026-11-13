@@ -21,7 +21,7 @@ import { PanelBody, TextControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useSelect } from '@wordpress/data';
 import { autosizeTextarea } from 'fair-events-shared/src/questionnaire.js';
-import { generateQuestionKey } from 'fair-events-shared/src/question-utils.js';
+import { questionTextUpdates } from './question-text.js';
 import { isCategorySource, useCategories } from './category-options.js';
 import {
 	OptionSourcePanel,
@@ -29,27 +29,6 @@ import {
 } from './OptionSourceControls.js';
 
 const ALLOWED_BLOCKS = [ 'fair-form/fair-form-option' ];
-
-/**
- * Attribute updates for a new question text. The key follows the text while
- * it is empty or still the one generated from the previous text; a key the
- * author customized is kept.
- *
- * @param {Object} attributes Current question attributes.
- * @param {string} value      New question text.
- * @return {Object} Attributes to set.
- */
-export function questionTextUpdates( attributes, value ) {
-	const { questionText, questionKey } = attributes;
-	const updates = { questionText: value };
-	if (
-		! questionKey ||
-		questionKey === generateQuestionKey( questionText )
-	) {
-		updates.questionKey = generateQuestionKey( value );
-	}
-	return updates;
-}
 
 /**
  * Manual choice-question editor.
