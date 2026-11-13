@@ -432,6 +432,273 @@ test.describe( 'SignupHookBridge — base get-tickets route links a Participant'
 		);
 	} );
 
+	test.describe( 'names between registration and the Audience profile (#2216)', () => {
+		const VIEWER_CONTEXT_PATH =
+			'/wp-json/fair-events/v1/get-tickets/viewer-context';
+		const createdParticipantIds = [];
+
+		const participantByEmail = async ( email ) => {
+			const res = await api.get(
+				'/wp-json/fair-audience/v1/participants',
+				{ headers: adminHeaders, params: { search: email } }
+			);
+			expect( res.ok() ).toBeTruthy();
+			return ( await res.json() ).find( ( p ) => p.email === email );
+		};
+		const signupsFor = async ( email ) => {
+			const res = await api.get( '/wp-json/fair-events/v1/get-tickets', {
+				headers: adminHeaders,
+				params: { event_date: eventDateId },
+			} );
+			expect( res.ok() ).toBeTruthy();
+			return ( await res.json() )
+				.filter( ( row ) => row.email === email )
+				.sort( ( a, b ) => Number( a.id ) - Number( b.id ) );
+		};
+		const audienceRow = async ( participantId ) => {
+			const res = await api.get(
+				`/wp-json/fair-audience/v1/event-dates/${ eventDateId }/participants`,
+				{ headers: adminHeaders }
+			);
+			expect( res.ok() ).toBeTruthy();
+			return ( await res.json() ).find(
+				( row ) =>
+					Number( row.participant_id ) === Number( participantId )
+			);
+		};
+		const register = ( visitor, data ) =>
+			visitor.post( '/wp-json/fair-events/v1/get-tickets', {
+				data: {
+					event_date_id: eventDateId,
+					ticket_type_id: ticketTypeId,
+					quantity: 1,
+					...data,
+				},
+			} );
+
+		test.afterAll( async () => {
+			for ( const id of createdParticipantIds ) {
+				await api.delete(
+					`/wp-json/fair-audience/v1/participants/${ id }`,
+					{ headers: adminHeaders }
+				);
+			}
+		} );
+
+		test( 'a returning participant’s new registration keeps its own names and leaves the shared profile alone', async ( {
+			request: visitor,
+		} ) => {
+			test.skip( ! fairAudienceActive, 'fair-audience not active' );
+			const email = `names-returning-${ Date.now() }@example.test`;
+
+			const first = await register( visitor, {
+				name: 'Ana',
+				surname: 'López',
+				email,
+			} );
+			expect( first.ok(), await first.text() ).toBeTruthy();
+			const participant = await participantByEmail( email );
+			createdParticipantIds.push( participant.id );
+
+			// The same browser, recognised by its session, registers again
+			// under different names.
+			const second = await register( visitor, {
+				name: 'Anita',
+				surname: 'López Ruiz',
+				email,
+			} );
+			expect( second.ok(), await second.text() ).toBeTruthy();
+
+			expect( await participantByEmail( email ) ).toMatchObject( {
+				id: participant.id,
+				name: 'Ana',
+				surname: 'López',
+			} );
+
+			const rows = await signupsFor( email );
+			expect( rows ).toHaveLength( 2 );
+			expect( rows[ 0 ] ).toMatchObject( {
+				name: 'Ana',
+				surname: 'López',
+				full_name: 'Ana López',
+			} );
+			expect( rows[ 1 ] ).toMatchObject( {
+				name: 'Anita',
+				surname: 'López Ruiz',
+				full_name: 'Anita López Ruiz',
+			} );
+			for ( const row of rows ) {
+				expect( Number( row.participant_id ) ).toBe( participant.id );
+			}
+
+			// The form is still filled from the profile, field by field.
+			const contextRes = await visitor.get( VIEWER_CONTEXT_PATH, {
+				params: { event_date_id: eventDateId },
+			} );
+			const context = await contextRes.json();
+			expect( context.prefill_name ).toBe( 'Ana' );
+			expect( context.prefill_surname ).toBe( 'López' );
+
+			// The Audience list shows the participant's own complete name.
+			expect(
+				( await audienceRow( participant.id ) ).participant_name
+			).toBe( 'Ana López' );
+		} );
+
+		test( 'a link-recognised participant with a historical combined name is pre-filled unsplit, and keeps it', async ( {
+			request: visitor,
+		} ) => {
+			test.skip( ! fairAudienceActive, 'fair-audience not active' );
+			const email = `names-historical-${ Date.now() }@example.test`;
+			const createRes = await api.post(
+				'/wp-json/fair-audience/v1/participants',
+				{
+					headers: adminHeaders,
+					data: { name: 'Ana María López Ruiz', email },
+				}
+			);
+			expect( createRes.ok(), await createRes.text() ).toBeTruthy();
+			const participantId = ( await createRes.json() ).id;
+			createdParticipantIds.push( participantId );
+
+			const tokenRes = await api.post(
+				'/wp-json/fair-e2e/v1/event-signup/participant-token',
+				{
+					headers: adminHeaders,
+					data: {
+						participant_id: participantId,
+						event_date_id: eventDateId,
+					},
+				}
+			);
+			expect( tokenRes.ok(), await tokenRes.text() ).toBeTruthy();
+			const participantToken = ( await tokenRes.json() ).token;
+
+			const contextRes = await visitor.get( VIEWER_CONTEXT_PATH, {
+				params: {
+					event_date_id: eventDateId,
+					participant_token: participantToken,
+				},
+			} );
+			expect( contextRes.ok() ).toBeTruthy();
+			const context = await contextRes.json();
+			expect( context.viewer_resolved ).toBe( true );
+			expect( context.prefill_name ).toBe( 'Ana María López Ruiz' );
+			expect( context.prefill_surname ).toBe( '' );
+
+			// The visitor now gives the two apart: the registration takes
+			// them, the profile stays as it was.
+			const res = await register( visitor, {
+				name: 'Ana María',
+				surname: 'López Ruiz',
+				email,
+				participant_token: participantToken,
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+
+			expect( await participantByEmail( email ) ).toMatchObject( {
+				id: participantId,
+				name: 'Ana María López Ruiz',
+				surname: '',
+			} );
+			const [ row ] = await signupsFor( email );
+			expect( row ).toMatchObject( {
+				name: 'Ana María',
+				surname: 'López Ruiz',
+				full_name: 'Ana María López Ruiz',
+			} );
+			expect( Number( row.participant_id ) ).toBe( participantId );
+			expect(
+				( await audienceRow( participantId ) ).participant_name
+			).toBe( 'Ana María López Ruiz' );
+		} );
+
+		test( 'a new participant without a surname is stored, pre-filled and listed without one', async ( {
+			request: visitor,
+		} ) => {
+			test.skip( ! fairAudienceActive, 'fair-audience not active' );
+			const email = `names-no-surname-${ Date.now() }@example.test`;
+
+			const res = await register( visitor, {
+				name: 'Prince',
+				surname: '',
+				email,
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+
+			const participant = await participantByEmail( email );
+			createdParticipantIds.push( participant.id );
+			expect( participant ).toMatchObject( {
+				name: 'Prince',
+				surname: '',
+			} );
+
+			const context = await (
+				await visitor.get( VIEWER_CONTEXT_PATH, {
+					params: { event_date_id: eventDateId },
+				} )
+			).json();
+			expect( context.prefill_name ).toBe( 'Prince' );
+			expect( context.prefill_surname ).toBe( '' );
+
+			expect( ( await signupsFor( email ) )[ 0 ].full_name ).toBe(
+				'Prince'
+			);
+			expect(
+				( await audienceRow( participant.id ) ).participant_name
+			).toBe( 'Prince' );
+		} );
+
+		test( 'confirming the mailing subscription keeps both names', async ( {
+			request: visitor,
+		} ) => {
+			test.skip( ! fairAudienceActive, 'fair-audience not active' );
+			const email = `names-mailing-${ Date.now() }@example.test`;
+
+			const res = await register( visitor, {
+				name: 'Zoë',
+				surname: 'Álvarez',
+				email,
+				mailing_opt_in: true,
+			} );
+			expect( res.ok(), await res.text() ).toBeTruthy();
+			const participant = await participantByEmail( email );
+			createdParticipantIds.push( participant.id );
+			expect( participant ).toMatchObject( {
+				name: 'Zoë',
+				surname: 'Álvarez',
+				status: 'pending',
+			} );
+
+			const mailRes = await api.get(
+				'/wp-json/fair-e2e/v1/checkout-keys/mail',
+				{ headers: adminHeaders, params: { email } }
+			);
+			expect( mailRes.ok() ).toBeTruthy();
+			const token = ( await mailRes.json() )
+				.map( ( mail ) =>
+					mail.body.match( /confirm_email_key=([^"&#\s]+)/ )
+				)
+				.find( Boolean )?.[ 1 ];
+			expect(
+				token,
+				'confirmation link in the captured mail'
+			).toBeTruthy();
+
+			const confirmRes = await visitor.post(
+				'/wp-json/fair-audience/v1/mailing-signup/confirm',
+				{ data: { token } }
+			);
+			expect( confirmRes.ok(), await confirmRes.text() ).toBeTruthy();
+
+			expect( await participantByEmail( email ) ).toMatchObject( {
+				name: 'Zoë',
+				surname: 'Álvarez',
+				status: 'confirmed',
+			} );
+		} );
+	} );
+
 	test.describe( 'registering another person (#1528)', () => {
 		const VIEWER_CONTEXT_PATH =
 			'/wp-json/fair-events/v1/get-tickets/viewer-context';

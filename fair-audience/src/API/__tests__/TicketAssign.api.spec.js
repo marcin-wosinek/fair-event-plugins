@@ -409,8 +409,11 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 		const single = ( await res.json() ).ticket;
 		expect( single.purchaser ).toEqual( buyer );
 		expect( single.assignee ).toEqual( buyer );
+		expect( single.participant_name ).toBe( 'Assign Buyer' );
 
 		const row = ( await audience() )[ buyerId ];
+		// A participant without a surname is named without trailing space.
+		expect( row.participant_name ).toBe( 'Assign Buyer' );
 		expect( row.ticketIds ).toEqual( [
 			ticketOne,
 			ticketTwo,
@@ -510,6 +513,63 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 		const rows = await audience();
 		expect( rows[ newcomerId ].ticketIds ).toEqual( [ ticketThree ] );
 		expect( rows[ newcomerId ].label ).toBe( 'signed_up' );
+	} );
+
+	test( 'a purchase registered with a surname names its purchaser and new holder in full (#2216)', async () => {
+		const event = await createEvent( {
+			ticketTypes: [ { name: 'Named' } ],
+		} );
+		const email = uniqueEmail( 'named-buyer' );
+		await buy( {
+			event_date_id: event.eventDateId,
+			name: 'Lucía',
+			surname: 'Ortega Díaz',
+			email,
+			ticket_type_id: event.typeIds[ 0 ],
+			quantity: 2,
+		} );
+		const signup = await signupOf( event.eventDateId, email );
+		expect( signup ).toMatchObject( {
+			name: 'Lucía',
+			surname: 'Ortega Díaz',
+			full_name: 'Lucía Ortega Díaz',
+		} );
+		const purchaserId = Number( signup.participant_id );
+		createdParticipantIds.push( purchaserId );
+		const purchaser = {
+			participant_id: purchaserId,
+			name: 'Lucía Ortega Díaz',
+			email,
+		};
+
+		const holderEmail = uniqueEmail( 'named-holder' );
+		const assigned = await assign(
+			signup.tickets[ 1 ].id,
+			{
+				participant: {
+					name: 'Jean-Luc',
+					surname: 'Ó Briain',
+					email: holderEmail,
+				},
+			},
+			event.eventDateId
+		);
+		expect( assigned.status, JSON.stringify( assigned.body ) ).toBe( 200 );
+		const holderId = assigned.body.assignee.participant_id;
+		createdParticipantIds.push( holderId );
+		expect( assigned.body.purchaser ).toEqual( purchaser );
+		expect( assigned.body.assignee ).toEqual( {
+			participant_id: holderId,
+			name: 'Jean-Luc Ó Briain',
+			email: holderEmail,
+		} );
+
+		const rows = await audience( event.eventDateId );
+		expect( rows[ purchaserId ].participant_name ).toBe(
+			'Lucía Ortega Díaz'
+		);
+		expect( rows[ holderId ].participant_name ).toBe( 'Jean-Luc Ó Briain' );
+		expect( rows[ holderId ].tickets[ 0 ].purchaser ).toEqual( purchaser );
 	} );
 
 	test( 'refuses unusable new-participant details and creates nothing', async () => {
