@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.2
+
+### Patch Changes
+
+- 157fb06: The Date, Date & Time, Email and Short Text questions now share one editor and one public renderer. Saved forms open and submit exactly as before: question keys, required settings, placeholders, labels and each input's own validation are unchanged.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
+- 8d78e04: Questionnaire answers in Fair Form and Fair Audience emails, and the admin notification for a new form submission, now render through one shared implementation. The emails look and read exactly as before: selections stay comma-separated, uploaded files link to their attachment, and an upload that can no longer be found is still left out.
+- Updated dependencies [ec28559]
+- Updated dependencies [f483b31]
+- Updated dependencies [8d78e04]
+- Updated dependencies [3a06a5b]
+    - fair-events-shared@0.9.0
+
 ## 1.8.1
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # fair-events-shared
 
+## 0.9.0
+
+### Minor Changes
+
+- f483b31: Confirmation dialogs in Audience Experimental, Events Experimental, Payments Connector Experimental, Finance, and Platform now come from one shared implementation. Their wording, pending state, inline errors, retry, keyboard focus, and wrapping titles work exactly as before.
+
+### Patch Changes
+
+- ec28559: Event Notifications, Event Feeds, Financial Entries and Payment Transactions now share one list layout: the page title with its add and import actions beside it, then a toolbar with search and the frequent filters, More filters for the less-used ones, Clear filters while a filter is active, and the result count ("51–100 of 236 transactions"). A summary lists the filters behind the shown rows, including those inside a collapsed More filters, and pagination sits below the table on the right. Selected transactions show their count next to Export Selected. Empty lists offer their first step (add or import), and lists with no matches offer to clear the filters. Each page keeps its existing search, filters, sorting, pagination and actions.
+- 8d78e04: Questionnaire answers in Fair Form and Fair Audience emails, and the admin notification for a new form submission, now render through one shared implementation. The emails look and read exactly as before: selections stay comma-separated, uploaded files link to their attachment, and an upload that can no longer be found is still left out.
+- 3a06a5b: Changing a ticket's holder from the Audience tab is now a reviewed, recorded step. "Change ticket holder" (formerly "Assign ticket") lets you pick an existing participant or add a new one. A new participant needs a name and an email address. When the email already belongs to someone, that person's stored details are shown for you to select, and their profile is left unchanged. Before saving, a review step names the ticket, its current and new holder and its purchaser, and explains that the payment stays with the purchaser. If another administrator changed the holder in the meantime, the change is refused and the review shows the ticket's current holder.
+
+    Each change is recorded with the previous and new holder, the time and the administrator, and is listed under "Holder changes" in the ticket details. The details now also show "Ticket holder" and "Purchased by". Repeated changes keep the original purchaser. Anonymizing a participant removes them from this history, and deleting a purchase deletes its history. Changes made before this update aren't in the history. Fair Events adds the history table (database version 3.53.0) on the first request after the update. Update Fair Events before Fair Audience: until then, Fair Audience refuses holder changes and asks for the update.
+
 ## 0.8.0
 
 ### Minor Changes
