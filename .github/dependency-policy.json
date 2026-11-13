@@ -309,12 +309,20 @@
 			"composer/installers",
 			"repository:composer:https://wpackagist.org"
 		],
+		"fair-events-experimental/composer.json": [
+			"path:fair-events/shared",
+			"repository:path:../fair-events-shared/php"
+		],
 		"fair-events/composer.json": [
 			"composer/installers",
 			"path:fair-events/shared",
 			"repository:composer:https://wpackagist.org",
 			"repository:path:../fair-events-shared/php",
 			"sabre/vobject"
+		],
+		"fair-finance/composer.json": [
+			"path:fair-events/shared",
+			"repository:path:../fair-events-shared/php"
 		],
 		"fair-form/composer.json": [
 			"path:fair-events/shared",
