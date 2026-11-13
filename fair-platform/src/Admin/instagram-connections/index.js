@@ -4,13 +4,18 @@
 import { createRoot } from '@wordpress/element';
 import InstagramConnectionsPage from './InstagramConnectionsPage.js';
 
-document.addEventListener( 'DOMContentLoaded', () => {
+function initializeApp() {
 	const rootElement = document.getElementById(
 		'fair-platform-instagram-connections-root'
 	);
 
 	if ( rootElement ) {
-		const root = createRoot( rootElement );
-		root.render( <InstagramConnectionsPage /> );
+		createRoot( rootElement ).render( <InstagramConnectionsPage /> );
 	}
-} );
+}
+
+if ( document.readyState === 'loading' ) {
+	document.addEventListener( 'DOMContentLoaded', initializeApp );
+} else {
+	initializeApp();
+}

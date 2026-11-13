@@ -4,13 +4,18 @@
 import { createRoot } from '@wordpress/element';
 import ConnectionsPage from './ConnectionsPage.js';
 
-document.addEventListener( 'DOMContentLoaded', () => {
+function initializeApp() {
 	const rootElement = document.getElementById(
 		'fair-platform-connections-root'
 	);
 
 	if ( rootElement ) {
-		const root = createRoot( rootElement );
-		root.render( <ConnectionsPage /> );
+		createRoot( rootElement ).render( <ConnectionsPage /> );
 	}
-} );
+}
+
+if ( document.readyState === 'loading' ) {
+	document.addEventListener( 'DOMContentLoaded', initializeApp );
+} else {
+	initializeApp();
+}
