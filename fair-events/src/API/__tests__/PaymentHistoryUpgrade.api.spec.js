@@ -19,6 +19,12 @@
  * 4. Migration finished: the evidence is recorded, the installer finishes
  *    the upgrade, events, tickets and settings are unchanged, and the
  *    checklist separates "safe to upgrade" from "ready for cleanup".
+ * 5. Source-history cleanup (#2254, §8.21): refused without a backup, for
+ *    non-administrators and while blocked, with nothing deleted; then it
+ *    removes exactly the ledger, the comparisons table, the migration
+ *    options and the dry-run findings, keeps everything else, and a repeat
+ *    changes nothing. The evidence alone keeps the site running, and a
+ *    site without it is still refused.
  *
  * The staging verification's permissions and validation run on the same
  * site.
@@ -37,6 +43,14 @@ const ADMIN_PASSWORD = process.env.WP_ADMIN_PASSWORD || 'password';
 const SUBSCRIBER_PASSWORD = 'upgrade-path-subscriber';
 const UPGRADE = '/wp-json/fair-events/v1/payment-history/upgrade';
 const STAGING = `${ UPGRADE }/staging-verification`;
+const CLEANUP = `${ UPGRADE }/cleanup`;
+const ALL_STAGING_CHECKS = {
+	representative_purchases: true,
+	statistics_revenue: true,
+	shared_allocations: true,
+	finance_participant_attempts: true,
+	audience_reactivation: true,
+};
 
 const basicAuth = ( user, password ) => ( {
 	Authorization: `Basic ${ Buffer.from( `${ user }:${ password }` ).toString(
@@ -54,6 +68,7 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 	let browserAdmin;
 	let event;
 	let currentDbVersion;
+	let legacy;
 
 	const fixture = ( action, data = {} ) =>
 		site.script(
@@ -171,8 +186,17 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( body.ready_for_cleanup ).toEqual( {
 			applicable: false,
 			ready: false,
+			completed: null,
 			blockers: [],
 		} );
+		const cleanup = await admin.post( CLEANUP, {
+			data: { backup_confirmed: true },
+		} );
+		expect( cleanup.status() ).toBe( 409 );
+		expect( ( await cleanup.json() ).code ).toBe(
+			'cleanup_not_applicable'
+		);
+		expect( ( await fixture( 'storage' ) ).cleanup ).toBeNull();
 		expect( body.intermediate_release.versions ).toEqual( {
 			'fair-payments-connector': '2.8.0',
 			'fair-events': '2.2.0',
@@ -243,7 +267,12 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 	} );
 
 	test( 'an unmigrated site starts neither plugin and writes nothing', async () => {
+		legacy = await fixture( 'legacy', {
+			eventId: event.eventId,
+			eventDateId: event.eventDateId,
+		} );
 		await fixture( 'unmigrated', { dbVersion: '3.52.0' } );
+		const before = await fixture( 'storage' );
 
 		for ( let attempt = 0; attempt < 2; attempt++ ) {
 			expect( await routesRegistered() ).toEqual( {
@@ -270,6 +299,14 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( html ).toContain(
 			'Fair Audience is paused until Fair Events can run on this site.'
 		);
+
+		// The cleanup isn't even registered, and nothing is removed.
+		const cleanup = await admin.post( CLEANUP, {
+			data: { backup_confirmed: true },
+		} );
+		expect( cleanup.status() ).toBe( 404 );
+		expect( await fixture( 'storage' ) ).toEqual( before );
+		expect( before.tables ).toEqual( { ledger: true, comparisons: true } );
 	} );
 
 	test( 'a finished migration with a blocking finding or failed work stays refused', async () => {
@@ -351,26 +388,204 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( body.ready_for_cleanup ).toEqual( {
 			applicable: true,
 			ready: false,
-			blockers: [
-				'staging_verification_incomplete',
-				'cleanup_unavailable',
-			],
+			completed: null,
+			blockers: [ 'staging_verification_incomplete' ],
+		} );
+	} );
+
+	test( 'the cleanup is refused without a backup, for non-administrators and while blocked', async () => {
+		// `migrated` replaced the findings: put the migration's leftovers back.
+		legacy = await fixture( 'legacy', {
+			eventId: event.eventId,
+			eventDateId: event.eventDateId,
+		} );
+		const before = await fixture( 'storage' );
+		expect( before.tables ).toEqual( { ledger: true, comparisons: true } );
+		expect( before.options ).toHaveLength( 3 );
+
+		const data = { backup_confirmed: true };
+		expect( ( await anonymous.post( CLEANUP, { data } ) ).status() ).toBe(
+			401
+		);
+		expect( ( await subscriber.post( CLEANUP, { data } ) ).status() ).toBe(
+			403
+		);
+
+		const noBackup = await admin.post( CLEANUP, {
+			data: { backup_confirmed: false },
+		} );
+		expect( noBackup.status() ).toBe( 400 );
+		expect( ( await noBackup.json() ).code ).toBe( 'backup_required' );
+
+		const unverified = await admin.post( CLEANUP, { data } );
+		expect( unverified.status() ).toBe( 409 );
+		expect( await unverified.json() ).toMatchObject( {
+			code: 'cleanup_blocked',
+			data: { blockers: [ 'staging_verification_incomplete' ] },
 		} );
 
-		// The evidence outlives the migration records it came from, as the
-		// cleanup (#2252–#2254) will remove them.
-		await fixture( 'retire' );
+		const staged = await admin.put( STAGING, {
+			data: {
+				verified_on: '2026-11-04',
+				versions: { 'fair-events': '2.2.0' },
+				checks: ALL_STAGING_CHECKS,
+			},
+		} );
+		expect( staged.status() ).toBe( 200 );
+		expect( ( await staged.json() ).ready_for_cleanup ).toMatchObject( {
+			ready: true,
+			blockers: [],
+		} );
+
+		expect( await fixture( 'storage' ) ).toMatchObject( {
+			tables: before.tables,
+			options: before.options,
+			findings: before.findings,
+			kept: before.kept,
+			cleanup: null,
+		} );
+	} );
+
+	test( 'the cleanup removes exactly the migration’s storage and keeps the rest', async () => {
+		const before = await fixture( 'storage' );
+
+		const response = await admin.post( CLEANUP, {
+			data: { backup_confirmed: true },
+		} );
+		expect( response.status() ).toBe( 200 );
+		const body = await response.json();
+		expect( body.performed ).toBe( true );
+		expect( body.ready_for_cleanup ).toMatchObject( {
+			applicable: true,
+			ready: false,
+			blockers: [],
+			completed: {
+				user_name: expect.any( String ),
+				snapshotted_findings: 3,
+			},
+		} );
+
+		const after = await fixture( 'storage' );
+		expect( after.tables ).toEqual( { ledger: false, comparisons: false } );
+		expect( after.options ).toEqual( [] );
+		expect( after.cleanup ).toMatchObject( {
+			removed: {
+				tables: expect.arrayContaining( [
+					expect.stringMatching(
+						/fair_audience_event_participant_transactions$/
+					),
+					expect.stringMatching(
+						/fair_events_payment_history_comparisons$/
+					),
+				] ),
+				options: [
+					'fair_events_payment_history_migration',
+					'fair_events_payment_history_cutover',
+					'fair_events_payment_history_readers',
+				],
+				dry_run_findings: 2,
+				ledger_rows: 2,
+			},
+		} );
+
+		// Relationships, purchases, links, recovery work and fee payments
+		// are untouched; the evidence and staging verification stay.
+		expect( after.kept ).toEqual( before.kept );
+		expect( after.evidence ).toEqual( before.evidence );
+		expect( after.staging ).toEqual( before.staging );
+
+		// Dry-run findings are gone; backfill ones keep their status and
+		// a copy of the ledger row they cite.
+		expect( after.findings.map( ( f ) => f.mode ) ).not.toContain(
+			'dry_run'
+		);
+		const strip = ( { detail, ...rest } ) => rest;
+		expect( after.findings.map( strip ) ).toEqual(
+			before.findings
+				.filter( ( f ) => f.mode === 'backfill' )
+				.map( strip )
+		);
+		const byId = Object.fromEntries(
+			after.findings.map( ( f ) => [ f.id, f ] )
+		);
+		expect( byId[ legacy.findings.refund ].detail.ledger_row ).toEqual( {
+			id: legacy.ledger.refund,
+			event_participant_id: legacy.relationshipId,
+			transaction_id: 7002,
+			kind: 'refund',
+			created_at: '2024-03-02 11:00:00',
+		} );
+		expect( byId[ legacy.findings.charge ] ).toMatchObject( {
+			status: 'reviewed',
+			detail: {
+				transaction_id: 7001,
+				ledger_row: { id: legacy.ledger.charge, kind: 'charge' },
+			},
+		} );
+		expect( byId[ legacy.findings.deleted ].detail ).toMatchObject( {
+			transaction_id: 7004,
+			ledger_row: null,
+		} );
+
+		// The audit records the cleanup once.
+		const audits = after.audit.filter( ( a ) => a.action === 'cleanup' );
+		expect( audits ).toHaveLength( 1 );
+		expect( audits[ 0 ].reason ).toBe( 'source_history_cleanup' );
+		expect( Number( after.cleanup.audit_id ) ).toBe(
+			Number( audits[ 0 ].id )
+		);
+
+		// The finding still renders from its stored detail.
+		const finding = await admin.get(
+			`/wp-json/fair-events/v1/payment-history/findings/${ legacy.findings.refund }`
+		);
+		expect( finding.status() ).toBe( 200 );
+		expect( ( await finding.json() ).finding ).toMatchObject( {
+			source_type: 'ledger_row',
+			detail: { ledger_row: { kind: 'refund' } },
+		} );
+		const list = await admin.get(
+			'/wp-json/fair-events/v1/payment-history/findings',
+			{ params: { status: 'all', source_type: 'ledger_row' } }
+		);
+		expect( list.status() ).toBe( 200 );
+		expect( ( await list.json() ).items ).toHaveLength( 3 );
+
+		// The evidence alone keeps the site running.
 		expect( await routesRegistered() ).toEqual( {
 			events: true,
 			audience: true,
 		} );
-		expect( ( await fixture( 'state' ) ).evidence.basis ).toBe(
-			'migrated'
-		);
-		const after = await ( await admin.get( UPGRADE ) ).json();
-		expect( after.safe_to_upgrade ).toBe( true );
-		expect( Object.values( after.checks ).every( ( met ) => met ) ).toBe(
+		const status = await ( await admin.get( UPGRADE ) ).json();
+		expect( status.safe_to_upgrade ).toBe( true );
+		expect( Object.values( status.checks ).every( ( met ) => met ) ).toBe(
 			true
+		);
+	} );
+
+	test( 'repeating the cleanup changes nothing', async () => {
+		const before = await fixture( 'storage' );
+		const repeat = await admin.post( CLEANUP, {
+			data: { backup_confirmed: true },
+		} );
+		expect( repeat.status() ).toBe( 200 );
+		const body = await repeat.json();
+		expect( body.performed ).toBe( false );
+		expect( body.ready_for_cleanup.completed.completed_at ).toBe(
+			before.cleanup.completed_at
+		);
+		expect( await fixture( 'storage' ) ).toEqual( before );
+	} );
+
+	test( 'after the cleanup, a site without the evidence is still refused', async () => {
+		await fixture( 'unmigrated', { dbVersion: currentDbVersion } );
+		expect( await routesRegistered() ).toEqual( {
+			events: false,
+			audience: false,
+		} );
+		const html = await dashboard();
+		expect( html ).toContain(
+			'Payment records were not switched to Fair Events.'
 		);
 	} );
 } );

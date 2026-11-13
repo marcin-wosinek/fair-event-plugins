@@ -33,7 +33,8 @@ function status( overrides = {} ) {
 		ready_for_cleanup: {
 			applicable: true,
 			ready: false,
-			blockers: [ 'upgrade_unsafe', 'cleanup_unavailable' ],
+			completed: null,
+			blockers: [ 'upgrade_unsafe', 'staging_verification_incomplete' ],
 		},
 		staging_verification: null,
 		intermediate_release: {
@@ -82,8 +83,13 @@ describe( 'UpgradePanel', () => {
 			screen.getByText( /Being safe to upgrade isn’t enough/ )
 		).toBeInTheDocument();
 		expect(
-			screen.getByText( /comes with a later release/ )
+			screen.getByText(
+				/isn’t safe to upgrade yet \(see the checklist\)/
+			)
 		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Remove old records…' } )
+		).not.toBeInTheDocument();
 	} );
 
 	it( 'shows a fresh installation as safe with nothing to clean up', async () => {
@@ -99,6 +105,7 @@ describe( 'UpgradePanel', () => {
 				ready_for_cleanup: {
 					applicable: false,
 					ready: false,
+					completed: null,
 					blockers: [],
 				},
 			} )
@@ -220,5 +227,144 @@ describe( 'UpgradePanel', () => {
 		expect( screen.getByLabelText( 'Verified on (staging)' ) ).toHaveValue(
 			'2026-11-04'
 		);
+	} );
+
+	describe( 'removing old records', () => {
+		const ready = () =>
+			status( {
+				evidence: {
+					basis: 'migrated',
+					recorded_at: '2026-11-10 09:00:00',
+				},
+				safe_to_upgrade: true,
+				blockers: [],
+				ready_for_cleanup: {
+					applicable: true,
+					ready: true,
+					completed: null,
+					blockers: [],
+				},
+			} );
+		const done = () =>
+			status( {
+				...ready(),
+				ready_for_cleanup: {
+					applicable: true,
+					ready: false,
+					completed: {
+						completed_at: '2026-11-13 10:00:00',
+						user_name: 'Ada Admin',
+					},
+					blockers: [],
+				},
+			} );
+
+		it( 'names what is removed, needs the backup confirmed and runs once', async () => {
+			let resolveCleanup;
+			apiFetch.mockImplementation( ( options ) =>
+				options.method === 'POST'
+					? new Promise( ( resolve ) => {
+							resolveCleanup = () =>
+								resolve( { ...done(), performed: true } );
+						} )
+					: Promise.resolve( ready() )
+			);
+			await act( async () => {
+				render( <UpgradePanel /> );
+			} );
+
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Remove old records…' } )
+			);
+			const dialog = screen.getByRole( 'dialog' );
+			expect( dialog ).toHaveTextContent(
+				'fair_audience_event_participant_transactions'
+			);
+			expect( dialog ).toHaveTextContent(
+				'fair_events_payment_history_comparisons'
+			);
+			expect( dialog ).toHaveTextContent(
+				'fair_events_payment_history_cutover'
+			);
+			expect( dialog ).toHaveTextContent( 'It can’t be undone.' );
+			expect( dialog ).toHaveTextContent(
+				'Nothing is charged, refunded or emailed.'
+			);
+
+			const confirm = screen.getByRole( 'button', {
+				name: 'Remove old records',
+			} );
+			expect( confirm ).toBeDisabled();
+			fireEvent.click(
+				screen.getByLabelText(
+					'I took a fresh database backup that includes these tables.'
+				)
+			);
+			expect( confirm ).toBeEnabled();
+
+			await act( async () => {
+				fireEvent.click( confirm );
+				fireEvent.click( confirm );
+			} );
+			const posts = apiFetch.mock.calls.filter(
+				( [ options ] ) => options.method === 'POST'
+			);
+			expect( posts ).toHaveLength( 1 );
+			expect( posts[ 0 ][ 0 ] ).toMatchObject( {
+				path: '/fair-events/v1/payment-history/upgrade/cleanup',
+				data: { backup_confirmed: true },
+			} );
+
+			await act( async () => resolveCleanup() );
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+			expect(
+				screen.getAllByText( 'Old payment records removed.' )[ 0 ]
+			).toBeInTheDocument();
+			expect(
+				screen.getAllByText( /by Ada Admin/ )[ 0 ]
+			).toBeInTheDocument();
+		} );
+
+		it( 'keeps the dialog open with the error when the removal fails', async () => {
+			apiFetch.mockImplementation( ( options ) =>
+				options.method === 'POST'
+					? Promise.reject( {
+							message:
+								'The old payment records can’t be removed yet.',
+						} )
+					: Promise.resolve( ready() )
+			);
+			await act( async () => {
+				render( <UpgradePanel /> );
+			} );
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Remove old records…' } )
+			);
+			fireEvent.click(
+				screen.getByLabelText(
+					'I took a fresh database backup that includes these tables.'
+				)
+			);
+			await act( async () => {
+				fireEvent.click(
+					screen.getByRole( 'button', { name: 'Remove old records' } )
+				);
+			} );
+			expect( screen.getByRole( 'dialog' ) ).toHaveTextContent(
+				'The old payment records can’t be removed yet.'
+			);
+		} );
+
+		it( 'shows who removed them once done, with no action left', async () => {
+			await renderPanel( done() );
+			expect(
+				screen.getAllByText(
+					/^The old payment records were removed on .+ by Ada Admin\.$/
+				)[ 0 ]
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole( 'button', { name: 'Remove old records…' } )
+			).not.toBeInTheDocument();
+		} );
 	} );
 } );

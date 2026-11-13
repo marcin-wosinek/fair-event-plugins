@@ -23,7 +23,7 @@ defined( 'WPINC' ) || die;
  *   removed: a fresh installation records it before its first tables, a
  *   site that finished the migration on the intermediate release records
  *   it the first time this release sees the finished state. The cleanup
- *   that removes the migration's own records (#2252–#2254) must keep it,
+ *   that removes the migration's own records (§8.21) keeps it,
  *   because afterwards nothing else can tell a migrated site from an
  *   unmigrated one.
  * - An existing site without that evidence is an unsupported upgrade:
@@ -35,7 +35,10 @@ defined( 'WPINC' ) || die;
  *
  * The operator's staging verification (STAGING_OPTION, the §8.15 checks)
  * is separate evidence. It doesn't make a site safe to upgrade; it is one
- * of the conditions for the source-history cleanup (#2254).
+ * of the conditions for the source-history cleanup (PaymentHistoryCleanup,
+ * §8.21), which removes the intermediate release's records this class
+ * reads in facts(). After it, the evidence alone allows a migrated site,
+ * and a site without it is still refused.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
@@ -406,7 +409,7 @@ class PaymentHistoryUpgrade {
 				'migration_work' => (int) $facts['migration_work'],
 				'open_findings'  => (int) $facts['open_findings'],
 			),
-			'ready_for_cleanup'    => self::cleanup_readiness( $evidence, $facts, $staging ),
+			'ready_for_cleanup'    => self::cleanup_readiness( $evidence, $facts, $staging, PaymentHistoryCleanup::get_record() ),
 			'staging_verification' => $staging,
 			'intermediate_release' => array(
 				'tag'      => self::INTERMEDIATE_RELEASE,
@@ -418,24 +421,47 @@ class PaymentHistoryUpgrade {
 	}
 
 	/**
-	 * Whether the source-history cleanup (#2254) could run. Never inferred
-	 * from versions: it needs the completion evidence, a clean state now,
-	 * every staging check recorded as passed, and the cleanup itself, which
-	 * a later release adds.
+	 * Whether the source-history cleanup (PaymentHistoryCleanup, §8.21)
+	 * can run, read from the site now.
+	 *
+	 * @return array See cleanup_readiness().
+	 */
+	public static function readiness_now() {
+		return self::cleanup_readiness( self::get_evidence(), self::facts(), self::get_staging_verification(), PaymentHistoryCleanup::get_record() );
+	}
+
+	/**
+	 * Whether the source-history cleanup (§8.21) can run. Never inferred
+	 * from versions: it needs the completion evidence, a clean state now
+	 * and every staging check recorded as passed. Once it ran, it reports
+	 * what it did instead.
 	 *
 	 * @param array|null $evidence From get_evidence().
 	 * @param array      $facts    From facts().
 	 * @param array|null $staging  From get_staging_verification().
-	 * @return array applicable, ready, blockers: upgrade_unsafe,
+	 * @param array|null $cleanup  From PaymentHistoryCleanup::get_record().
+	 * @return array applicable, ready, completed (the cleanup record, or
+	 *               null), blockers: upgrade_unsafe,
 	 *               migration_work_outstanding, findings_open,
-	 *               staging_verification_incomplete, cleanup_unavailable.
+	 *               staging_verification_incomplete.
 	 */
-	public static function cleanup_readiness( $evidence, array $facts, $staging ) {
+	public static function cleanup_readiness( $evidence, array $facts, $staging, $cleanup = null ) {
 		if ( $evidence && self::BASIS_FRESH_INSTALL === $evidence['basis'] ) {
 			// Never had source history: there is nothing to clean up.
 			return array(
 				'applicable' => false,
 				'ready'      => false,
+				'completed'  => null,
+				'blockers'   => array(),
+			);
+		}
+
+		if ( $evidence && is_array( $cleanup ) ) {
+			// Done: a repeat changes nothing.
+			return array(
+				'applicable' => true,
+				'ready'      => false,
+				'completed'  => $cleanup,
 				'blockers'   => array(),
 			);
 		}
@@ -453,12 +479,11 @@ class PaymentHistoryUpgrade {
 		if ( ! self::staging_complete( $staging ) ) {
 			$blockers[] = 'staging_verification_incomplete';
 		}
-		// The cleanup action itself ships with #2254.
-		$blockers[] = 'cleanup_unavailable';
 
 		return array(
 			'applicable' => true,
-			'ready'      => false,
+			'ready'      => ! $blockers,
+			'completed'  => null,
 			'blockers'   => $blockers,
 		);
 	}

@@ -519,11 +519,14 @@ test.describe.serial( 'Payment history reconciliation', () => {
 		expect( stale.status() ).toBe( 409 );
 		expect( ( await stale.json() ).code ).toBe( 'reconciliation_stale' );
 
-		// A dry run's findings and informational ones can't be linked.
-		const dryRun = await findingOf( 'transaction', seed.transactions.T7, {
-			mode: 'dry_run',
+		// A dry run's findings aren't listed any more (#2254), and neither
+		// they nor informational ones can be linked.
+		const dryRunList = await api.get( `${ ROUTE }/findings`, {
+			headers: adminHeaders,
+			params: { mode: 'dry_run' },
 		} );
-		const fromDryRun = await link( dryRun.id, {
+		expect( dryRunList.status() ).toBe( 400 );
+		const fromDryRun = await link( seed.dryRunFinding, {
 			note: 'Dry run',
 			expected_link_ids: [],
 			links: [

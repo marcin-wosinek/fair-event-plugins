@@ -1,8 +1,8 @@
 /**
  * Upgrade readiness after the payment history migration
  * (PAYMENT_HISTORY_MIGRATION.md §8.17): whether this site is safe to run
- * releases without the migration, what is still missing, whether the old
- * records could be removed, and the operator's staging verification.
+ * releases without the migration, what is still missing, the removal of
+ * the old records (§8.21), and the operator's staging verification.
  *
  * @package FairEvents
  */
@@ -28,8 +28,33 @@ import {
 	upgradeCheckLabels,
 } from './labels.js';
 import { formatUtcDateTime } from './format.js';
+import ConfirmActionModal from '../components/ConfirmActionModal.js';
 
 const PATH = '/fair-events/v1/payment-history/upgrade';
+
+/**
+ * What the cleanup removes (PaymentHistoryCleanup::TABLES and ::OPTIONS),
+ * without the table prefix.
+ */
+export const CLEANUP_TABLES = [
+	'fair_audience_event_participant_transactions',
+	'fair_events_payment_history_comparisons',
+];
+export const CLEANUP_OPTIONS = [
+	'fair_events_payment_history_migration',
+	'fair_events_payment_history_cutover',
+	'fair_events_payment_history_readers',
+];
+
+/**
+ * What a backup taken before the cleanup must include.
+ */
+export const CLEANUP_BACKUP_TABLES = [
+	...CLEANUP_TABLES,
+	'fair_events_payment_history_findings',
+	'fair_events_payment_history_audit',
+	'options',
+];
 
 const PLUGIN_NAMES = {
 	'fair-payments-connector': 'Fair Payments Connector',
@@ -119,6 +144,12 @@ export default function UpgradePanel( { refreshKey = 0 } ) {
 	const [ saved, setSaved ] = useState( false );
 	const busy = useRef( false );
 	const dirtyRef = useRef( false );
+	const [ confirming, setConfirming ] = useState( false );
+	const [ backupConfirmed, setBackupConfirmed ] = useState( false );
+	const [ cleaning, setCleaning ] = useState( false );
+	const [ cleanupError, setCleanupError ] = useState( null );
+	const [ cleanedUp, setCleanedUp ] = useState( false );
+	const cleanupBusy = useRef( false );
 
 	const load = useCallback(
 		() =>
@@ -193,6 +224,42 @@ export default function UpgradePanel( { refreshKey = 0 } ) {
 		} finally {
 			busy.current = false;
 			setSaving( false );
+		}
+	};
+
+	const closeCleanup = () => {
+		setConfirming( false );
+		setBackupConfirmed( false );
+		setCleanupError( null );
+	};
+
+	const runCleanup = async () => {
+		if ( cleanupBusy.current ) {
+			return;
+		}
+		cleanupBusy.current = true;
+		setCleaning( true );
+		setCleanupError( null );
+		try {
+			const data = await apiFetch( {
+				path: `${ PATH }/cleanup`,
+				method: 'POST',
+				data: { backup_confirmed: true },
+			} );
+			setStatus( data );
+			setCleanedUp( true );
+			closeCleanup();
+		} catch ( e ) {
+			setCleanupError(
+				e?.message ||
+					__(
+						'The old payment records couldn’t be removed. Check your connection and try again.',
+						'fair-events'
+					)
+			);
+		} finally {
+			cleanupBusy.current = false;
+			setCleaning( false );
 		}
 	};
 
@@ -283,30 +350,12 @@ export default function UpgradePanel( { refreshKey = 0 } ) {
 
 					<div>
 						<h3>{ __( 'Removing old records', 'fair-events' ) }</h3>
-						{ cleanup.applicable ? (
-							<>
-								<p className="fair-events-payment-history__hint">
-									{ __(
-										'Not ready to remove Fair Audience’s old payment records. Being safe to upgrade isn’t enough:',
-										'fair-events'
-									) }
-								</p>
-								<ul className="fair-events-payment-history__list">
-									{ cleanup.blockers.map( ( code ) => (
-										<li key={ code }>
-											{ cleanupLabels[ code ] ?? code }
-										</li>
-									) ) }
-								</ul>
-							</>
-						) : (
-							<p className="fair-events-payment-history__hint">
-								{ __(
-									'This site has no old payment records to remove.',
-									'fair-events'
-								) }
-							</p>
-						) }
+						<CleanupSection
+							cleanup={ cleanup }
+							labels={ cleanupLabels }
+							justDone={ cleanedUp }
+							onStart={ () => setConfirming( true ) }
+						/>
 					</div>
 
 					{ cleanup.applicable && (
@@ -483,6 +532,171 @@ export default function UpgradePanel( { refreshKey = 0 } ) {
 					) }
 				</VStack>
 			</CardBody>
+
+			{ confirming && (
+				<ConfirmActionModal
+					title={ __( 'Remove old payment records', 'fair-events' ) }
+					confirmLabel={ __( 'Remove old records', 'fair-events' ) }
+					busyLabel={ __( 'Removing…', 'fair-events' ) }
+					isDestructive
+					isBusy={ cleaning }
+					confirmDisabled={ ! backupConfirmed }
+					error={ cleanupError }
+					onCancel={ closeCleanup }
+					onConfirm={ runCleanup }
+				>
+					<p>
+						{ __(
+							'This permanently deletes what only the payment history migration used. Nothing reads it any more:',
+							'fair-events'
+						) }
+					</p>
+					<ul className="fair-events-payment-history__tables">
+						{ CLEANUP_TABLES.map( ( table ) => (
+							<li key={ table }>
+								<code>{ table }</code>{ ' ' }
+								{ __( '(table)', 'fair-events' ) }
+							</li>
+						) ) }
+						{ CLEANUP_OPTIONS.map( ( option ) => (
+							<li key={ option }>
+								<code>{ option }</code>{ ' ' }
+								{ __( '(option)', 'fair-events' ) }
+							</li>
+						) ) }
+						<li>
+							{ __(
+								'Findings recorded by dry runs',
+								'fair-events'
+							) }
+						</li>
+					</ul>
+					<p>
+						{ __(
+							'Findings about Fair Audience payment records keep a copy of the record. Purchases, payment links, findings to review, the decisions made on them, registrations, fee payments and the upgrade evidence stay as they are. Nothing is charged, refunded or emailed.',
+							'fair-events'
+						) }
+					</p>
+					<p>
+						{ __(
+							'It can’t be undone. Take a fresh database backup that includes these tables first:',
+							'fair-events'
+						) }
+					</p>
+					<ul className="fair-events-payment-history__tables">
+						{ CLEANUP_BACKUP_TABLES.map( ( table ) => (
+							<li key={ table }>
+								<code>{ table }</code>
+							</li>
+						) ) }
+					</ul>
+					<CheckboxControl
+						__nextHasNoMarginBottom
+						label={ __(
+							'I took a fresh database backup that includes these tables.',
+							'fair-events'
+						) }
+						checked={ backupConfirmed }
+						onChange={ setBackupConfirmed }
+						disabled={ cleaning }
+					/>
+				</ConfirmActionModal>
+			) }
 		</Card>
+	);
+}
+
+/**
+ * The cleanup's state: done, ready to run, blocked or not applicable.
+ *
+ * @param {Object}   props
+ * @param {Object}   props.cleanup  `ready_for_cleanup` from the API.
+ * @param {Object}   props.labels   Blocker labels.
+ * @param {boolean}  props.justDone Whether this page just ran it.
+ * @param {Function} props.onStart  Opens the confirmation.
+ * @return {JSX.Element} Section content.
+ */
+function CleanupSection( { cleanup, labels, justDone, onStart } ) {
+	if ( ! cleanup.applicable ) {
+		return (
+			<p className="fair-events-payment-history__hint">
+				{ __(
+					'This site has no old payment records to remove.',
+					'fair-events'
+				) }
+			</p>
+		);
+	}
+
+	const completed = cleanup.completed;
+	if ( completed ) {
+		const when = formatUtcDateTime( completed.completed_at );
+		return (
+			<Notice status="success" isDismissible={ false }>
+				{ justDone && (
+					<p>
+						{ __( 'Old payment records removed.', 'fair-events' ) }
+					</p>
+				) }
+				<p>
+					{ completed.user_name
+						? sprintf(
+								/* translators: 1: date and time, 2: administrator's name */
+								__(
+									'The old payment records were removed on %1$s by %2$s.',
+									'fair-events'
+								),
+								when,
+								completed.user_name
+							)
+						: sprintf(
+								/* translators: %s: date and time */
+								__(
+									'The old payment records were removed on %s.',
+									'fair-events'
+								),
+								when
+							) }
+				</p>
+			</Notice>
+		);
+	}
+
+	if ( cleanup.ready ) {
+		return (
+			<>
+				<p className="fair-events-payment-history__hint">
+					{ __(
+						'Fair Audience’s old payment records and the migration’s own records are no longer used. You can remove them once you have a backup.',
+						'fair-events'
+					) }
+				</p>
+				<div>
+					<Button
+						variant="secondary"
+						isDestructive
+						onClick={ onStart }
+					>
+						{ __( 'Remove old records…', 'fair-events' ) }
+					</Button>
+				</div>
+			</>
+		);
+	}
+
+	return (
+		<>
+			<p className="fair-events-payment-history__hint">
+				{ __(
+					'Not ready to remove Fair Audience’s old payment records. Being safe to upgrade isn’t enough:',
+					'fair-events'
+				) }
+			</p>
+			<ul className="fair-events-payment-history__list">
+				{ cleanup.blockers.map( ( code ) => (
+					<li key={ code }>{ labels[ code ] ?? code }</li>
+				) ) }
+			</ul>
+		</>
 	);
 }

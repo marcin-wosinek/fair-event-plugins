@@ -15,7 +15,7 @@
  *                    - T2, a paid 20.00 payment already linked to purchase
  *                      S3 by the migration (attribution `backfill`);
  *                    - T7, an 8.00 add-on charge (ambiguous_activity_charge,
- *                      also reported by a dry run) for one of P11's two
+ *                      also reported by a dry run: dryRunFinding) for one of P11's two
  *                      purchases S11a and S11b on date C;
  *                    - T10, a 15.00 payment naming a purchase that no
  *                      longer exists (no_evidence, date A);
@@ -150,6 +150,7 @@ switch ( $fixture_action ) {
 					$source_id
 				)
 			);
+			return end( $seed['findings'] );
 		};
 		$summary     = static function ( $amount, $source ) {
 			return array(
@@ -196,9 +197,9 @@ switch ( $fixture_action ) {
 				'event_date_id' => $dates['C'],
 			)
 		);
-		foreach ( array( PaymentHistoryFinding::MODE_BACKFILL, PaymentHistoryFinding::MODE_DRY_RUN ) as $finding_mode ) {
-			$finding( $finding_mode, 'ambiguous_activity_charge', PaymentHistoryFinding::SOURCE_TRANSACTION, $t7, $dates['C'], $summary( 8, 'fair-audience-activity-addon' ) );
-		}
+		$finding( PaymentHistoryFinding::MODE_BACKFILL, 'ambiguous_activity_charge', PaymentHistoryFinding::SOURCE_TRANSACTION, $t7, $dates['C'], $summary( 8, 'fair-audience-activity-addon' ) );
+		// Left by a retired dry run: not listed, never reconcilable.
+		$seed['dryRunFinding'] = $finding( PaymentHistoryFinding::MODE_DRY_RUN, 'ambiguous_activity_charge', PaymentHistoryFinding::SOURCE_TRANSACTION, $t7, $dates['C'], $summary( 8, 'fair-audience-activity-addon' ) );
 
 		// A payment naming a purchase that no longer exists.
 		$t10 = $transaction(

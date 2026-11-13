@@ -33,6 +33,12 @@
 	list-style: disc;
 }
 
+.fair-events-payment-history__tables {
+	margin: 0 0 12px 20px;
+	list-style: disc;
+	overflow-wrap: anywhere;
+}
+
 .fair-events-payment-history__hint {
 	color: #50575e;
 	margin: 4px 0;
