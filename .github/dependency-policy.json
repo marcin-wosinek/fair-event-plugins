@@ -233,11 +233,20 @@
 			"workspace:fair-events-shared"
 		],
 		"fair-platform/package.json": [
+			"@babel/core",
+			"@babel/preset-env",
+			"@babel/preset-react",
+			"@testing-library/jest-dom",
+			"@testing-library/react",
 			"@wordpress/api-fetch",
 			"@wordpress/components",
 			"@wordpress/element",
 			"@wordpress/i18n",
+			"@wordpress/jest-preset-default",
 			"@wordpress/scripts",
+			"babel-jest",
+			"jest",
+			"jest-environment-jsdom",
 			"webpack-bundle-output",
 			"workspace:fair-events-shared"
 		],
