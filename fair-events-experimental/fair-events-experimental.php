@@ -23,6 +23,18 @@ defined( 'ABSPATH' ) || die;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Every Fair plugin bundles the shared library. Each copy registers here,
+// the newest is selected on plugins_loaded, and this plugin uses shared
+// classes only after that (see PHP_PATTERNS.md § Shared Package).
+require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
+\Fair_Events_Shared_Loader::register(
+	array(
+		'plugin_file' => __FILE__,
+		'package_dir' => __DIR__ . '/vendor/fair-events/shared',
+		'messages'    => array( \FairEventsExperimental\Core\SharedLibraryMessages::class, 'message' ),
+	)
+);
+
 // Weekly Telegram notifications moved to Fair Events (Event notifications).
 // The constant tells FairEvents\Notifications\Ownership to take them over;
 // this plugin no longer has a sender of its own.
@@ -77,9 +89,10 @@ add_action(
 			}
 		}
 
-		// An updated Fair Events stays off when the shared library could not
-		// be selected; this add-on builds on it, so it stays off too.
-		if ( class_exists( 'Fair_Events_Shared_Loader', false ) && ! \Fair_Events_Shared_Loader::is_ready() ) {
+		// Shared classes are safe only once the newest copy is selected. When
+		// selection conflicts, Fair Events stays off too, and so does this
+		// add-on that builds on it.
+		if ( ! \Fair_Events_Shared_Loader::is_ready( __FILE__ ) ) {
 			return;
 		}
 

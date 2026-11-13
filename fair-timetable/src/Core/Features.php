@@ -7,18 +7,24 @@
 
 namespace FairTimetable\Core;
 
+use FairEventsShared\FeatureFlags;
+
 defined( 'WPINC' ) || die;
 
 /**
  * Feature flag registry.
  *
- * Resolution order for is_enabled() (first match wins):
+ * Resolution for is_enabled(), implemented by
+ * {@see \FairEventsShared\FeatureFlags}:
  *
- *   1. Per-feature constant `FAIR_TIMETABLE_FEATURE_<UPPER>` (true/false).
- *   2. Master switch `FAIR_TIMETABLE_INTERNAL` (true → every bundle on).
- *   3. `fair_timetable_feature_enabled` filter (programmatic / tests).
- *   4. Stored option `fair_timetable_features` ([ key => bool ]) from Settings UI.
- *   5. Hardcoded default in the registry below.
+ *   1. Per-feature constant `FAIR_TIMETABLE_FEATURE_<UPPER>` (true/false) wins outright;
+ *      the filter is not applied.
+ *   2. Master switch `FAIR_TIMETABLE_INTERNAL` (strictly true) → enabled; otherwise
+ *      the stored option `fair_timetable_features` ([ key => bool ]) from the
+ *      Settings UI, then the hardcoded default in the registry below.
+ *   3. `fair_timetable_feature_enabled` filter receives the step-2 result and has the
+ *      last word — it can override the master switch, although
+ *      is_forced() still reports the key as forced.
  */
 class Features {
 
@@ -55,53 +61,20 @@ class Features {
 	 * @return bool
 	 */
 	public static function is_enabled( $key ) {
-		$registry = self::registry();
-		if ( ! isset( $registry[ $key ] ) ) {
-			return false;
-		}
-
-		if ( ! empty( $registry[ $key ]['always_on'] ) ) {
-			return true;
-		}
-
-		$constant = self::feature_constant_name( $key );
-		if ( defined( $constant ) ) {
-			return (bool) constant( $constant );
-		}
-
-		if ( defined( self::MASTER_CONSTANT ) && true === constant( self::MASTER_CONSTANT ) ) {
-			$enabled = true;
-		} else {
-			$stored  = get_option( self::OPTION, array() );
-			$enabled = is_array( $stored ) && array_key_exists( $key, $stored )
-				? (bool) $stored[ $key ]
-				: (bool) $registry[ $key ]['default'];
-		}
-
-		return (bool) apply_filters( 'fair_timetable_feature_enabled', $enabled, $key );
+		return self::flags()->is_enabled( $key );
 	}
 
 	/**
-	 * Whether the resolved value is forced by a constant.
+	 * Whether the resolved value is forced (always-on, a per-feature
+	 * constant, or the master switch) — used by the Settings UI to render the
+	 * toggle disabled and by the option sanitizer so a UI write cannot
+	 * override wp-config.
 	 *
 	 * @param string $key Bundle key.
 	 * @return bool
 	 */
 	public static function is_forced( $key ) {
-		$registry = self::registry();
-		if ( ! isset( $registry[ $key ] ) ) {
-			return false;
-		}
-
-		if ( ! empty( $registry[ $key ]['always_on'] ) ) {
-			return true;
-		}
-
-		if ( defined( self::feature_constant_name( $key ) ) ) {
-			return true;
-		}
-
-		return defined( self::MASTER_CONSTANT ) && true === constant( self::MASTER_CONSTANT );
+		return self::flags()->is_forced( $key );
 	}
 
 	/**
@@ -136,41 +109,15 @@ class Features {
 	}
 
 	/**
-	 * Sanitize an option payload to the known key set, dropping forced keys.
+	 * Sanitize an option payload to the known key set. Forced keys keep their
+	 * stored value (so a UI write cannot contradict a wp-config decision) and
+	 * known keys omitted from the payload keep their existing value.
 	 *
 	 * @param mixed $value Raw option value.
 	 * @return array<string,bool>
 	 */
 	public static function sanitize_option( $value ) {
-		if ( ! is_array( $value ) ) {
-			return array();
-		}
-
-		$existing = get_option( self::OPTION, array() );
-		if ( ! is_array( $existing ) ) {
-			$existing = array();
-		}
-
-		$out = array();
-		foreach ( self::registry() as $key => $entry ) {
-			if ( ! empty( $entry['always_on'] ) ) {
-				continue;
-			}
-
-			if ( self::is_forced( $key ) ) {
-				if ( array_key_exists( $key, $existing ) ) {
-					$out[ $key ] = (bool) $existing[ $key ];
-				}
-				continue;
-			}
-
-			if ( array_key_exists( $key, $value ) ) {
-				$out[ $key ] = (bool) $value[ $key ];
-			} elseif ( array_key_exists( $key, $existing ) ) {
-				$out[ $key ] = (bool) $existing[ $key ];
-			}
-		}
-		return $out;
+		return self::flags()->sanitize_option( $value );
 	}
 
 	/**
@@ -186,12 +133,18 @@ class Features {
 	}
 
 	/**
-	 * Per-feature constant name.
+	 * Shared resolver configured with this plugin's registry, option,
+	 * constants, and filter. Built per call so nothing is cached.
 	 *
-	 * @param string $key Bundle key.
-	 * @return string
+	 * @return FeatureFlags
 	 */
-	private static function feature_constant_name( $key ) {
-		return 'FAIR_TIMETABLE_FEATURE_' . strtoupper( str_replace( '-', '_', $key ) );
+	private static function flags() {
+		return new FeatureFlags(
+			self::registry(),
+			self::OPTION,
+			'FAIR_TIMETABLE_FEATURE_',
+			self::MASTER_CONSTANT,
+			'fair_timetable_feature_enabled'
+		);
 	}
 }

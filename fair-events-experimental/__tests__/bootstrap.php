@@ -555,4 +555,20 @@ if ( ! function_exists( 'wp_unschedule_hook' ) ) {
 	}
 }
 
+if ( ! function_exists( 'apply_filters' ) ) {
+	/**
+	 * Stub of WordPress apply_filters(): runs the callback registered in
+	 * $GLOBALS['_fair_test_filters'][ $hook_name ], if any.
+	 *
+	 * @param string $hook_name Filter name.
+	 * @param mixed  $value     Value to filter.
+	 * @param mixed  ...$args   Extra arguments.
+	 * @return mixed
+	 */
+	function apply_filters( $hook_name, $value, ...$args ) {
+		$filters = isset( $GLOBALS['_fair_test_filters'] ) ? $GLOBALS['_fair_test_filters'] : array();
+		return isset( $filters[ $hook_name ] ) ? $filters[ $hook_name ]( $value, ...$args ) : $value;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WP_Error.php';
