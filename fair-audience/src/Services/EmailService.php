@@ -26,6 +26,8 @@ use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
 use FairEventsShared\Money;
 use FairEventsShared\Notifications\BookingConfirmationEmail;
+use FairEventsShared\Notifications\FormSubmissionEmail;
+use FairEventsShared\Notifications\QuestionnaireAnswerRows;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 defined( 'WPINC' ) || die;
@@ -557,7 +559,7 @@ class EmailService {
 			$site_name
 		);
 
-		$answers_html = $this->render_answer_rows( $answers );
+		$answers_html = QuestionnaireAnswerRows::html( $answers );
 
 		// Build HTML message body.
 		$message = '<!DOCTYPE html>
@@ -1653,16 +1655,16 @@ class EmailService {
 		);
 
 		// Build submitter info rows.
-		$submitter_html = '<tr>
-			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html__( 'Name', 'fair-audience' ) . '</td>
-			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( trim( $submitter_name . ' ' . $submitter_surname ) ) . '</td>
-		</tr>
-		<tr>
-			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html__( 'Email', 'fair-audience' ) . '</td>
-			<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;"><a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a></td>
-		</tr>';
+		$submitter_html = QuestionnaireAnswerRows::row(
+			esc_html__( 'Name', 'fair-audience' ),
+			esc_html( trim( $submitter_name . ' ' . $submitter_surname ) )
+		)
+			. QuestionnaireAnswerRows::row(
+				esc_html__( 'Email', 'fair-audience' ),
+				'<a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a>'
+			);
 
-		$answers_html = $this->render_answer_rows( $answers );
+		$answers_html = QuestionnaireAnswerRows::html( $answers );
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
@@ -1675,53 +1677,15 @@ class EmailService {
 				. '</p>';
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'A new form submission has been received.', 'fair-audience' ) . '
-							</p>
-
-							' . $context_html . '
-
-							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">
-								' . $submitter_html . $answers_html . '
-							</table>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = FormSubmissionEmail::html(
+			array(
+				'site_name'      => esc_html( $site_name ),
+				'intro'          => esc_html__( 'A new form submission has been received.', 'fair-audience' ),
+				'context_html'   => $context_html,
+				'submitter_html' => $submitter_html,
+				'answers_html'   => $answers_html,
+			)
+		);
 
 		return 'sent' === $this->deliver( $to_email, $subject, $message, EmailType::MINIMAL );
 	}
@@ -1794,66 +1758,6 @@ class EmailService {
 	}
 
 	/**
-	 * Render questionnaire answers as `<tr>` rows for the email tables.
-	 *
-	 * Shared by signup-answers, form-confirmation, form-notification and signup
-	 * confirmation emails so the formatting stays in one place.
-	 *
-	 * Accepts both array-shaped answers (as produced by the REST request) and
-	 * QuestionnaireAnswer model objects (as returned by the repository).
-	 * `multiselect` values arrive JSON-encoded — those are decoded to a
-	 * comma-joined list. `file_upload` values are the attachment ID; resolve
-	 * to a clickable link when possible, otherwise render the raw value.
-	 *
-	 * @param array $answers Array of answer arrays or QuestionnaireAnswer objects.
-	 * @return string `<tr>...</tr>` markup, or '' when nothing renderable.
-	 */
-	private function render_answer_rows( array $answers ): string {
-		$rows = '';
-		foreach ( $answers as $answer ) {
-			$question_text = is_object( $answer ) ? ( $answer->question_text ?? '' ) : ( $answer['question_text'] ?? '' );
-			$question_type = is_object( $answer ) ? ( $answer->question_type ?? '' ) : ( $answer['question_type'] ?? '' );
-			$answer_value  = is_object( $answer ) ? ( $answer->answer_value ?? '' ) : ( $answer['answer_value'] ?? '' );
-
-			if ( 'file_upload' === $question_type ) {
-				$value_html = '';
-				if ( is_numeric( $answer_value ) ) {
-					$attachment_id  = (int) $answer_value;
-					$attachment_url = wp_get_attachment_url( $attachment_id );
-					if ( $attachment_url ) {
-						$label      = get_the_title( $attachment_id );
-						$value_html = '<a href="' . esc_url( $attachment_url ) . '" style="color: #0073aa;">'
-							. esc_html( $label ? $label : basename( $attachment_url ) )
-							. '</a>';
-					}
-				}
-				if ( '' === $value_html ) {
-					// No resolvable attachment — skip rather than show a stray ID.
-					continue;
-				}
-
-				$rows .= '<tr>
-					<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html( $question_text ) . '</td>
-					<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . $value_html . '</td>
-				</tr>';
-				continue;
-			}
-
-			$decoded = json_decode( (string) $answer_value, true );
-			if ( is_array( $decoded ) ) {
-				$answer_value = implode( ', ', $decoded );
-			}
-
-			$rows .= '<tr>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee; font-weight: bold; vertical-align: top; width: 40%;">' . esc_html( $question_text ) . '</td>
-				<td style="padding: 8px 12px; border-bottom: 1px solid #eeeeee;">' . esc_html( $answer_value ) . '</td>
-			</tr>';
-		}
-
-		return $rows;
-	}
-
-	/**
 	 * Send form submission confirmation email to the submitter.
 	 *
 	 * @param Participant $participant Participant who submitted the form.
@@ -1882,7 +1786,7 @@ class EmailService {
 			$site_name
 		);
 
-		$answers_html = $this->render_answer_rows( $answers );
+		$answers_html = QuestionnaireAnswerRows::html( $answers );
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
@@ -2044,7 +1948,7 @@ class EmailService {
 
 			if ( ! empty( $submissions ) ) {
 				$answer_repo  = new \FairForm\Database\QuestionnaireAnswerRepository();
-				$answers_html = $this->render_answer_rows( $answer_repo->get_by_submission( $submissions[0]->id ) );
+				$answers_html = QuestionnaireAnswerRows::html( $answer_repo->get_by_submission( $submissions[0]->id ) );
 			}
 		}
 
