@@ -7,8 +7,6 @@
 
 namespace FairAudience\Services;
 
-use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Database\ParticipantRepository;
 
 defined( 'WPINC' ) || die;
@@ -16,22 +14,20 @@ defined( 'WPINC' ) || die;
 /**
  * Links a get-tickets transaction to the participant its signups record.
  *
- * The payment list reads the transaction's own participant_id; participant
- * activity reads the event-participant transaction ledger. Both are filled
+ * The payment list reads the transaction's own participant_id. It is filled
  * from the persisted signup rows the transaction pays for, and only when
  * every one of them names the same participant — never from an email match.
- * A transaction already linked to another participant, or recorded against
- * another participant's registration, is left as it is.
+ * A transaction already linked to another participant is left as it is.
+ * Participant activity reads Fair Events' payment links, not this link.
  *
- * Safe to repeat: the participant link is only written while empty, and
- * ledger rows are unique per registration and transaction.
+ * Safe to repeat: the participant link is only written while empty.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery
  */
 class TransactionParticipantLink {
 
 	/**
-	 * The transaction and ledger now name the signups' participant.
+	 * The transaction now names the signups' participant.
 	 */
 	const LINKED = 'linked';
 
@@ -104,8 +100,7 @@ class TransactionParticipantLink {
 	}
 
 	/**
-	 * Link a transaction to the participant its signups record, and record
-	 * it against that participant's registration on each signup's date.
+	 * Link a transaction to the participant its signups record.
 	 *
 	 * @param int   $transaction_id fair-payments-connector transaction ID.
 	 * @param int[] $signup_ids     Signup rows the transaction pays for.
@@ -120,13 +115,6 @@ class TransactionParticipantLink {
 
 		if ( ! $transaction_id || ! $participant_id || ! ( new ParticipantRepository() )->get_by_id( $participant_id ) ) {
 			return self::AMBIGUOUS;
-		}
-
-		$ledger = new EventParticipantTransactionRepository();
-		foreach ( $ledger->get_participant_ids_for_transaction( $transaction_id ) as $ledger_participant_id ) {
-			if ( $ledger_participant_id !== $participant_id ) {
-				return self::CONFLICT;
-			}
 		}
 
 		$table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
@@ -150,14 +138,6 @@ class TransactionParticipantLink {
 		}
 		if ( (int) $linked_participant_id !== $participant_id ) {
 			return self::CONFLICT;
-		}
-
-		$relationships = new EventParticipantRepository();
-		foreach ( $signups as $signup ) {
-			$relationship = $relationships->get_by_event_date_and_participant( (int) $signup->event_date_id, $participant_id );
-			if ( $relationship ) {
-				$ledger->record( (int) $relationship->id, $transaction_id, 'charge' );
-			}
 		}
 
 		return self::LINKED;

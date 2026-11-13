@@ -40,7 +40,7 @@ defined( 'WPINC' ) || die;
  * purchases (confirmation, the add-on's activities, the upgraded ticket
  * type) and then announces what it committed
  * (`fair_events_purchase_payment_applied`), which Audience projects onto
- * its relationships, activities and ledger. Only an Audience that says it
+ * its relationships and activities. Only an Audience that says it
  * does this (PaymentHistoryCompatibility::audience_lifecycle_available())
  * gets those notifications handled here.
  *
@@ -107,10 +107,11 @@ class PurchaseLifecycle {
 		// A Fair Audience attempt pays for the purchases its relationships
 		// stand for. A new Audience checkout has none until its shadow
 		// purchase is created, so the relationships it names are brought in
-		// step first.
-		if ( in_array( (string) ( $transaction['metadata']['source'] ?? '' ), self::audience_sources(), true ) ) {
+		// step first; a pending one is this checkout's (§8.20).
+		$source = (string) ( $transaction['metadata']['source'] ?? '' );
+		if ( in_array( $source, self::audience_sources(), true ) ) {
 			foreach ( self::named_relationships( $transaction['metadata'] ) as $relationship_id ) {
-				$synced = ShadowPurchases::sync( $relationship_id );
+				$synced = ShadowPurchases::sync( $relationship_id, PaymentAttribution::SOURCE_AUDIENCE === $source );
 				if ( is_wp_error( $synced ) ) {
 					return $synced;
 				}
@@ -867,7 +868,7 @@ class PurchaseLifecycle {
 		 * add-on or series upgrade) changed its purchases, once the change
 		 * committed: confirmed them, confirmed the add-on's activities or
 		 * gave them the whole-series ticket type. Fair Audience projects it
-		 * onto its relationships, activities and ledger and sends its
+		 * onto its relationships and activities and sends its
 		 * emails. Fired once per change, or again by the retry cron when the
 		 * request stopped before it finished.
 		 *

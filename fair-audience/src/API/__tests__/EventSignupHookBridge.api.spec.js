@@ -9,7 +9,7 @@
  * The paid-confirmation half of PR 3 — a webhook flipping a base-route
  * signup to 'confirmed' via fair_events_signup_confirmed, which
  * SignupHookBridge::handle_signup_confirmed() then uses to flip the matching
- * EventParticipant to signed_up and record a ledger entry — needs a real
+ * EventParticipant to signed_up — needs a real
  * Mollie payment; the dev stack has no Mollie double for API-spec tests
  * (only e2e does, per TESTING.md). That path was verified via the WP-CLI
  * eval-file manual check (TESTING.md) alongside this change, following the

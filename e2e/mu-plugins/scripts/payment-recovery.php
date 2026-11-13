@@ -62,7 +62,6 @@ $links_table        = $wpdb->prefix . 'fair_events_signup_payment_links';
 $signups_table      = $wpdb->prefix . 'fair_events_signups';
 $tickets_table      = $wpdb->prefix . 'fair_events_tickets';
 $relationship_table = $wpdb->prefix . 'fair_audience_event_participants';
-$ledger_table       = $wpdb->prefix . 'fair_audience_event_participant_transactions';
 $transactions_table = \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 $result             = array();
 
@@ -145,9 +144,11 @@ switch ( $fixture_action ) {
 		$response = rest_do_request( $request );
 		PurchaseRecovery::process_queued();
 
-		$body            = $response->get_data();
-		$transaction_id  = (int) ( $body['transaction_id'] ?? 0 );
-		$relationship_id = $transaction_id ? (int) $wpdb->get_var( $wpdb->prepare( 'SELECT event_participant_id FROM %i WHERE transaction_id = %d', $ledger_table, $transaction_id ) ) : 0;
+		$body           = $response->get_data();
+		$transaction_id = (int) ( $body['transaction_id'] ?? 0 );
+		// The registration the checkout names in its own metadata.
+		$metadata        = $transaction_id ? json_decode( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT metadata FROM %i WHERE id = %d', $transactions_table, $transaction_id ) ), true ) : array();
+		$relationship_id = (int) ( $metadata['event_participant_id'] ?? ( $metadata['event_participant_ids'][0] ?? 0 ) );
 		$result          = array(
 			'status'         => $response->get_status(),
 			'body'           => $body,

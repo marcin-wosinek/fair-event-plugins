@@ -211,17 +211,11 @@ class PaymentAttributionTest extends TestCase {
 	}
 
 	/**
-	 * Example 3: an Audience purchase resolves through its relationship's
-	 * ledger row to the purchase made from that relationship.
+	 * Example 3: an Audience purchase resolves through the relationship its
+	 * metadata names to the purchase made from that relationship.
 	 */
 	public function test_audience_purchase_resolves_through_provenance(): void {
 		$this->sources->relationship( 10, 500 );
-		$this->sources->ledger[100]    = array(
-			array(
-				'event_participant_id' => 10,
-				'kind'                 => 'charge',
-			),
-		);
 		$this->sources->provenance[10] = 7;
 		$this->sources->signup( 7, '0.00' );
 
@@ -238,23 +232,17 @@ class PaymentAttributionTest extends TestCase {
 	}
 
 	/**
-	 * §6.1: the ledger row must confirm the relationship the metadata names,
-	 * and a relationship without a purchase leaves the transaction unresolved.
+	 * §6.1: an Audience purchase needs a relationship in its metadata, and
+	 * a relationship without a purchase leaves the transaction unresolved.
 	 */
-	public function test_audience_purchase_needs_ledger_row_and_purchase(): void {
+	public function test_audience_purchase_needs_named_relationship_and_purchase(): void {
 		$this->sources->relationship( 10, 500 );
+
+		$this->assertSame( 'no_evidence', $this->attribute( array( 'source' => 'fair-audience-signup' ), '20.00' )['reason'] );
+
 		$metadata = array(
 			'source'               => 'fair-audience-signup',
 			'event_participant_id' => 10,
-		);
-
-		$this->assertSame( 'no_evidence', $this->attribute( $metadata, '20.00' )['reason'] );
-
-		$this->sources->ledger[100] = array(
-			array(
-				'event_participant_id' => 10,
-				'kind'                 => 'charge',
-			),
 		);
 		$this->assertSame( 'no_evidence', $this->attribute( $metadata, '20.00' )['reason'] );
 	}
@@ -270,10 +258,6 @@ class PaymentAttributionTest extends TestCase {
 		) as $relationship_id => $signup_id ) {
 			$this->sources->relationship( $relationship_id, 500, $relationship_id );
 			$this->sources->provenance[ $relationship_id ] = $signup_id;
-			$this->sources->ledger[100][]                  = array(
-				'event_participant_id' => $relationship_id,
-				'kind'                 => 'charge',
-			);
 		}
 		$metadata = array(
 			'source'                => 'fair-audience-signup',
@@ -300,12 +284,6 @@ class PaymentAttributionTest extends TestCase {
 	public function test_audience_retry_of_multi_occurrence_is_unresolved(): void {
 		$this->sources->relationship( 10, 500 );
 		$this->sources->provenance[10] = 7;
-		$this->sources->ledger[100]    = array(
-			array(
-				'event_participant_id' => 10,
-				'kind'                 => 'charge',
-			),
-		);
 		$this->sources->metadata[90]   = array( 'event_participant_ids' => array( 10, 11 ) );
 
 		$result = $this->attribute(
@@ -379,58 +357,27 @@ class PaymentAttributionTest extends TestCase {
 	}
 
 	/**
-	 * §6.1: an unrecognised source resolves only through a single ledger row
-	 * whose relationship has one purchase.
-	 */
-	public function test_ledger_only_transaction(): void {
-		$this->sources->relationship( 10, 500 );
-		$this->sources->ledger[100]    = array(
-			array(
-				'event_participant_id' => 10,
-				'kind'                 => 'charge',
-			),
-		);
-		$this->sources->provenance[10] = 9;
-		$this->sources->signup( 9, '20.00' );
-
-		$result = $this->attribute( array(), '20.00' );
-		$this->assertSame( 'ledger_only', $result['links'][0]['evidence']['type'] );
-
-		$this->sources->relationship( 11, 500 );
-		$this->sources->ledger[100][] = array(
-			'event_participant_id' => 11,
-			'kind'                 => 'charge',
-		);
-		$this->assertSame( 'no_evidence', $this->attribute( array(), '20.00' )['reason'] );
-	}
-
-	/**
-	 * §6.2: a transaction recorded against relationships of different
-	 * participants is never attributed.
+	 * §6.2: a transaction naming relationships of different participants is
+	 * never attributed.
 	 */
 	public function test_participant_relationship_conflict(): void {
 		$this->sources->relationship( 10, 500 );
 		$this->sources->relationship( 11, 501 );
-		$this->sources->ledger[100] = array(
-			array(
-				'event_participant_id' => 10,
-				'kind'                 => 'charge',
-			),
-			array(
-				'event_participant_id' => 11,
-				'kind'                 => 'charge',
-			),
+		$metadata = array(
+			'source'                => 'fair-audience-signup',
+			'event_participant_ids' => array( 10, 11 ),
 		);
 
-		$this->assertSame( 'participant_relationship_conflict', $this->attribute( array( 'source' => 'fair-audience-signup' ), '20.00' )['reason'] );
+		$this->assertSame( 'participant_relationship_conflict', $this->attribute( $metadata, '20.00' )['reason'] );
 	}
 
 	/**
-	 * §11: participant fee payments, and payments with no event source and
-	 * no ledger row, are not event payments.
+	 * §11: participant fee payments, and payments with no event source, are
+	 * not event payments, whatever the old Fair Audience ledger recorded.
 	 */
 	public function test_out_of_scope(): void {
 		$this->assertSame( 'out_of_scope', $this->attribute( array( 'fee_payment_id' => 4 ), '10.00' )['outcome'] );
 		$this->assertSame( 'out_of_scope', $this->attribute( array( 'source' => 'something-else' ), '10.00' )['outcome'] );
+		$this->assertSame( 'out_of_scope', $this->attribute( array(), '10.00' )['outcome'] );
 	}
 }

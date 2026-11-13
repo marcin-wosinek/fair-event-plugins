@@ -37,11 +37,11 @@ if ( ! $participant ) {
 	return;
 }
 
-$label        = null;
-$option_ids   = array();
-$confirmed    = array();
-$signup       = null;
-$ledger_count = 0;
+$label              = null;
+$option_ids         = array();
+$confirmed          = array();
+$signup             = null;
+$payment_link_count = 0;
 if ( $event_date_id ) {
 	$event_participant_repository = new EventParticipantRepository();
 	$event_participant            = $event_participant_repository->get_by_event_date_and_participant(
@@ -52,14 +52,6 @@ if ( $event_date_id ) {
 	if ( $event_participant ) {
 		$option_ids = $event_participant_repository->get_option_ids_for_event_participant( (int) $event_participant->id );
 		$confirmed  = $event_participant_repository->get_confirmed_option_ids_for_event_participant( (int) $event_participant->id );
-		global $wpdb;
-		$ledger_count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM %i WHERE event_participant_id = %d',
-				$wpdb->prefix . 'fair_audience_event_participant_transactions',
-				(int) $event_participant->id
-			)
-		);
 	}
 	global $wpdb;
 	$signup = $wpdb->get_row(
@@ -70,6 +62,16 @@ if ( $event_date_id ) {
 			(int) $participant->id
 		)
 	);
+	if ( $signup ) {
+		// The purchase's payment history: one link per attempt and role.
+		$payment_link_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE signup_id = %d',
+				$wpdb->prefix . 'fair_events_signup_payment_links',
+				(int) $signup->id
+			)
+		);
+	}
 }
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off state dump for the spec, no cache to honour.
@@ -105,7 +107,7 @@ echo 'E2E_STATE:' . wp_json_encode(
 		'confirmed_option_ids' => $confirmed,
 		'over_capacity'        => $signup ? (int) $signup->over_capacity : null,
 		'transaction_id'       => $signup && $signup->transaction_id ? (int) $signup->transaction_id : null,
-		'ledger_count'         => $ledger_count,
+		'payment_link_count'   => $payment_link_count,
 		'mail'                 => $mail,
 	)
 ) . "\n";

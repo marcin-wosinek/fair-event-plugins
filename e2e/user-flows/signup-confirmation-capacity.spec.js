@@ -74,7 +74,7 @@ test.describe('paid signup confirmation capacity reconciliation', () => {
 			expect(state.label).toBe('signed_up');
 			expect(state.over_capacity).toBe(0);
 			expect(state.option_ids).toEqual([event.optionIds[0]]);
-			expect(state.ledger_count).toBe(1);
+			expect(state.payment_link_count).toBe(1);
 		});
 	}
 });

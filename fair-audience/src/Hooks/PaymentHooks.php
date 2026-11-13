@@ -15,7 +15,6 @@ use FairAudienceExperimental\Database\FeeRepository;
 use FairAudience\Core\Cron;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EmailService;
 use FairAudience\Services\EventsLifecycle;
 use FairAudience\Services\TicketActivities;
@@ -474,20 +473,26 @@ class PaymentHooks {
 	}
 
 	/**
-	 * Resolve the event_participant row(s) a transaction was charged
-	 * against, via the ledger — the sole source of truth since every
-	 * creation site records to it (#1112).
+	 * The event_participant row(s) an Audience checkout or retry was made
+	 * for, as its immutable metadata names them (PAYMENT_HISTORY_MIGRATION.md
+	 * §6.1): every occurrence of a multiple_instances checkout, or the one
+	 * registration of a single checkout or retry.
 	 *
-	 * @param EventParticipantRepository            $repo           Event participant repository.
-	 * @param EventParticipantTransactionRepository $ledger         Ledger repository.
-	 * @param int                                   $transaction_id fair-payments-connector transaction ID.
-	 * @return object[] EventParticipant rows.
+	 * @param EventParticipantRepository $repo     Event participant repository.
+	 * @param array                      $metadata Transaction metadata.
+	 * @return object[] EventParticipant rows, in the order the metadata names them.
 	 */
-	private static function resolve_event_participants_for_transaction( $repo, $ledger, $transaction_id ) {
-		$event_participant_ids = $ledger->get_event_participant_ids_by_transaction_id( $transaction_id );
+	private static function resolve_event_participants_for_transaction( $repo, array $metadata ) {
+		if ( isset( $metadata['event_participant_ids'] ) && is_array( $metadata['event_participant_ids'] ) ) {
+			$event_participant_ids = $metadata['event_participant_ids'];
+		} elseif ( ! empty( $metadata['event_participant_id'] ) ) {
+			$event_participant_ids = array( $metadata['event_participant_id'] );
+		} else {
+			$event_participant_ids = array();
+		}
 
 		$event_participants = array();
-		foreach ( $event_participant_ids as $event_participant_id ) {
+		foreach ( array_unique( array_filter( array_map( 'intval', $event_participant_ids ) ) ) as $event_participant_id ) {
 			$event_participant = $repo->get_by_id( $event_participant_id );
 			if ( $event_participant ) {
 				$event_participants[] = $event_participant;
@@ -505,8 +510,8 @@ class PaymentHooks {
 	 * still holds capacity for the remainder of the original 15-minute window,
 	 * and the cleanup cron releases the slot when that hold expires (capacity
 	 * counts already filter out expired holds, so over-booking can't happen).
-	 * retry_payment records a fresh ledger charge, so keeping the failed
-	 * transaction's ledger entry here doesn't block subsequent retries.
+	 * retry_payment records a fresh attempt with Fair Events, so the failed
+	 * one doesn't block subsequent retries.
 	 *
 	 * @param object $payment     Mollie payment object.
 	 * @param object $transaction Transaction row from fair-payments-connector.
@@ -517,14 +522,13 @@ class PaymentHooks {
 			return;
 		}
 
-		$repo   = new EventParticipantRepository();
-		$ledger = new EventParticipantTransactionRepository();
+		$repo = new EventParticipantRepository();
 
 		// A 'multiple_instances' purchase shares one
 		// transaction across several rows. Fire the action once, using the
 		// first still-pending row, so the resume-link email is sent a single
 		// time regardless of how many occurrences were selected.
-		$event_participants = self::resolve_event_participants_for_transaction( $repo, $ledger, (int) $transaction->id );
+		$event_participants = self::resolve_event_participants_for_transaction( $repo, is_array( $metadata ) ? $metadata : array() );
 		foreach ( $event_participants as $event_participant ) {
 			if ( 'pending_payment' !== $event_participant->label ) {
 				continue;
@@ -580,9 +584,9 @@ class PaymentHooks {
 	/**
 	 * Follow what Fair Events committed for a paid attempt of this plugin's
 	 * routes after the payment history cutover (PAYMENT_HISTORY_MIGRATION.md
-	 * §8.12): the relationships, participant-scope activities and ledger
-	 * are compatibility projections of the Events purchases, and the emails
-	 * go out from here as before.
+	 * §8.12): the relationships and participant-scope activities are
+	 * compatibility projections of the Events purchases (the ledger no longer
+	 * is, §8.20), and the emails go out from here as before.
 	 *
 	 * Fair Events fires this once per change, or again from its retry cron
 	 * when the request stopped before finishing, so every write here is
@@ -597,7 +601,6 @@ class PaymentHooks {
 		$metadata = is_array( $metadata ) ? $metadata : array();
 		$source   = (string) ( $applied['source'] ?? '' );
 		$repo     = new EventParticipantRepository();
-		$ledger   = new EventParticipantTransactionRepository();
 
 		if ( 'fair-audience-signup' === $source ) {
 			$confirmation_participant = null;
@@ -612,7 +615,6 @@ class PaymentHooks {
 					$event_participant->payment_expires_at = null;
 					$event_participant->save();
 				}
-				$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
 
 				if ( null === $confirmation_participant ) {
 					$confirmation_participant = $event_participant;
@@ -642,7 +644,6 @@ class PaymentHooks {
 					$repo->add_options( $event_participant_id, $options );
 				}
 			}
-			$ledger->record( $event_participant_id, (int) $transaction->id, 'charge' );
 			do_action( 'fair_audience_event_activities_added', $event_participant, $transaction, $option_ids );
 			return;
 		}
@@ -653,7 +654,6 @@ class PaymentHooks {
 				$event_participant->ticket_type_id = $ticket_type_id;
 				$event_participant->save();
 			}
-			$ledger->record( $event_participant_id, (int) $transaction->id, 'charge' );
 			do_action( 'fair_audience_event_signup_paid', $event_participant, $transaction );
 		}
 	}

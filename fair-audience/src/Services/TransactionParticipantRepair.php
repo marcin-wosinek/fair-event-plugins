@@ -19,9 +19,9 @@ defined( 'WPINC' ) || die;
  * oldest ones, the signup still pointing at it) must all carry the same
  * participant. Retries are included, since their metadata still names the
  * signups after those moved on to a newer transaction. The empty participant
- * link and missing ledger rows are then filled; a transaction linked or
- * recorded to another participant, or whose signups name none or several,
- * is skipped and counted. Email addresses are never consulted.
+ * link is then filled; a transaction linked to another participant, or
+ * whose signups name none or several, is skipped and counted. Email
+ * addresses are never consulted.
  *
  * Restartable and idempotent: progress is the last examined transaction
  * ID, saved after every batch, and linking never overwrites a link.

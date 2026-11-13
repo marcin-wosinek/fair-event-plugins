@@ -3,7 +3,7 @@
  * Plugin Name: Fair Events E2E Transaction Participants
  * Description: Test-only routes for the transaction-participant link API
  *              specs, loaded ONLY inside the Playwright wp-env instance.
- *              Reads a transaction's participant link and ledger rows,
+ *              Reads a transaction's participant link and payment links,
  *              reproduces the history and conflicts production data can
  *              hold, replays the post-signup transaction hook, runs the
  *              repair, and simulates Fair Audience being inactive.
@@ -61,8 +61,8 @@ add_action(
 			return \FairPaymentsConnector\Database\Schema::get_payments_table_name();
 		};
 
-		// A transaction's participant link, and the participants of the
-		// registrations its ledger rows point at.
+		// A transaction's participant link, and the purchases its payment
+		// links point at.
 		register_rest_route(
 			'fair-e2e/v1',
 			'/transaction-participants/state',
@@ -76,16 +76,15 @@ add_action(
 					$participant_id = $wpdb->get_var(
 						$wpdb->prepare( 'SELECT participant_id FROM %i WHERE id = %d', $transactions_table(), $transaction_id )
 					);
-					$ledger         = $wpdb->get_results(
+					$links          = $wpdb->get_results(
 						$wpdb->prepare(
-							'SELECT l.event_participant_id, ep.participant_id, ep.event_date_id FROM %i l
-							 INNER JOIN %i ep ON ep.id = l.event_participant_id
-							 WHERE l.transaction_id = %d AND l.kind = %s
-							 ORDER BY l.event_participant_id',
-							$wpdb->prefix . 'fair_audience_event_participant_transactions',
-							$wpdb->prefix . 'fair_audience_event_participants',
-							$transaction_id,
-							'charge'
+							'SELECT l.signup_id, s.participant_id, s.event_date_id, l.role FROM %i l
+							 INNER JOIN %i s ON s.id = l.signup_id
+							 WHERE l.transaction_id = %d
+							 ORDER BY l.signup_id, l.role',
+							$wpdb->prefix . 'fair_events_signup_payment_links',
+							$wpdb->prefix . 'fair_events_signups',
+							$transaction_id
 						),
 						ARRAY_A
 					);
@@ -106,11 +105,16 @@ add_action(
 					return rest_ensure_response(
 						array(
 							'participant_id' => null === $participant_id ? null : (int) $participant_id,
-							'ledger'         => array_map(
+							'links'          => array_map(
 								static function ( $row ) {
-									return array_map( 'intval', $row );
+									return array(
+										'signup_id'      => (int) $row['signup_id'],
+										'participant_id' => null === $row['participant_id'] ? null : (int) $row['participant_id'],
+										'event_date_id'  => (int) $row['event_date_id'],
+										'role'           => (string) $row['role'],
+									);
 								},
-								$ledger
+								$links
 							),
 							'signups'        => $signups,
 						)
@@ -120,8 +124,8 @@ add_action(
 		);
 
 		// Put a transaction back into a state production history can hold:
-		// a given (or no) participant link, optionally without ledger rows,
-		// and optionally a failed payment status.
+		// a given (or no) participant link, and optionally a failed payment
+		// status.
 		register_rest_route(
 			'fair-e2e/v1',
 			'/transaction-participants/transaction',
@@ -142,14 +146,6 @@ add_action(
 								$participant_id,
 								$transaction_id
 							)
-						);
-					}
-
-					if ( $request->get_param( 'clear_ledger' ) ) {
-						$wpdb->delete(
-							$wpdb->prefix . 'fair_audience_event_participant_transactions',
-							array( 'transaction_id' => $transaction_id ),
-							array( '%d' )
 						);
 					}
 

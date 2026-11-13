@@ -280,7 +280,7 @@ test.describe.serial( 'A participant buys again for the same date', () => {
 		} );
 	} );
 
-	test( 'each transaction is linked to the participant and recorded in their ledger', async () => {
+	test( 'each transaction is linked to the participant and recorded on its purchase', async () => {
 		const states = [];
 		for ( const purchase of purchases ) {
 			states.push(
@@ -295,16 +295,19 @@ test.describe.serial( 'A participant buys again for the same date', () => {
 				transaction_id: purchases[ index ].transactionId,
 				event_date_id: eventDateId,
 			} );
-			// Recorded once, also for the purchase made while the
-			// relationship was already signed up.
-			expect( linked.ledger ).toHaveLength( 1 );
-			expect( linked.ledger[ 0 ].participant_id ).toBe( participantId );
+			// Recorded once, on its own purchase, also for the purchase
+			// made while the relationship was already signed up.
+			expect( linked.links ).toEqual( [
+				{
+					signup_id: Number( purchases[ index ].signupId ),
+					participant_id: participantId,
+					event_date_id: eventDateId,
+					role: 'charge',
+				},
+			] );
 		}
 
-		// Both are recorded against the participant's one relationship.
-		expect( states[ 1 ].ledger[ 0 ].event_participant_id ).toBe(
-			states[ 0 ].ledger[ 0 ].event_participant_id
-		);
+		// Both purchases belong to the participant's one relationship.
 		expect( await relationships() ).toHaveLength( 1 );
 	} );
 
@@ -339,11 +342,11 @@ test.describe.serial( 'A participant buys again for the same date', () => {
 		expect( mails[ 1 ].body ).toContain( 'Supporter' );
 		expect( mails[ 1 ].body ).not.toContain( 'Standard' );
 
-		const ledger = await linkState(
+		const paid = await linkState(
 			purchases[ 1 ].transactionId,
 			purchases[ 1 ].signupId
 		);
-		expect( ledger.ledger ).toHaveLength( 1 );
+		expect( paid.links ).toHaveLength( 1 );
 	} );
 
 	test( 'a later purchase that fails leaves the participant signed up', async () => {

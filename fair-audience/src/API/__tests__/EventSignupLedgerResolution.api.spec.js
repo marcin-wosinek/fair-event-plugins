@@ -1,19 +1,10 @@
 /**
- * Playwright API tests for the transaction-ledger webhook resolution fix
- * (#1112): payment webhooks now resolve which registration(s) a transaction
- * belongs to via the fair_audience_event_participant_transactions ledger
- * (populated at transaction-creation time) instead of the mutable
- * event_participants.transaction_id column, which a retry/upgrade attempt
- * can re-point away from an in-flight payment.
- *
- * Reproducing the full incident (create tx A, retry to tx B re-pointing the
- * row, pay tx A, assert the row flips to signed_up and the ledger contains
- * A) needs a real Mollie payment to reach PaymentHooks::handle_signup_paid()
- * — the dev stack has no Mollie double for API-spec tests (only e2e does,
- * per TESTING.md). That end-to-end scenario, including calling
- * PaymentHooks::handle_signup_paid()/handle_signup_failed() directly against
- * seeded transactions, was verified via the WP-CLI eval-file manual check
- * (TESTING.md) alongside this change.
+ * Playwright API tests for the retry-payment route of Fair Audience's
+ * purchase route. Payment webhooks first resolved the registration(s) a
+ * transaction belongs to through the Fair Audience ledger (#1112) instead of
+ * the mutable event_participants.transaction_id column. Fair Events' payment
+ * links replaced that ledger (#2251), and it is no longer written (#2254);
+ * the paid and failed paths are covered by the payment lifecycle specs.
  *
  * This suite covers what is reachable over HTTP without Mollie: the
  * retry-payment endpoint's permission boundary, mirroring the pattern in

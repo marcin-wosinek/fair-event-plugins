@@ -218,7 +218,6 @@ switch ( $fixture_action ) {
 				'transaction_work' => PaymentShadowWork::get( PaymentShadowWork::KIND_TRANSACTION, $transaction_id ),
 				'payment_work'     => PaymentShadowWork::get( PaymentShadowWork::KIND_PAYMENT, $transaction_id ),
 				'projection_work'  => PaymentShadowWork::get( PaymentShadowWork::KIND_PROJECTION, $transaction_id ),
-				'ledger'           => array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT event_participant_id FROM %i WHERE transaction_id = %d ORDER BY event_participant_id', $wpdb->prefix . 'fair_audience_event_participant_transactions', $transaction_id ) ) ),
 			);
 			foreach ( $links as $link_row ) {
 				$signup_id = (int) $link_row['signup_id'];

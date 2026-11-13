@@ -25,7 +25,7 @@ Each section is marked as one of:
 > shipped up to `build-2.2.0`, the last release that runs it. Newer releases
 > start only on a site that finished it or was installed fresh: see §8.16
 > and §8.17. Its tooling is retired (§8.18), and so are its shadow writes
-> (§8.19).
+> (§8.19) and the Audience ledger (§8.20).
 
 Anything this contract doesn't state is not yet decided. A later stage that
 needs to decide it records a timestamped `## Decision` comment on its issue
@@ -1580,7 +1580,8 @@ is what every site does, whether or not an activation is recorded.
 
 The stage 4 and stage 5 activations stay recorded but are no longer shown or
 read: the migration tooling is retired (§8.18). Historical synchronization
-(#2253) and storage removal (#2254) are separate. A site that never
+(#2253, §8.19), the Audience ledger (#2254, §8.20) and the storage removal
+(#2254) are separate. A site that never
 completed the migration can't upgrade directly to this release: Fair Events
 and Fair Audience refuse to start there (§8.17).
 
@@ -1683,7 +1684,7 @@ payment history management.
 - **REST.** `POST …/dry-run`, `…/backfill`, `…/backfill/resume`, `…/verify`,
   `…/cutover`, `…/readers` and `GET …/comparisons` are unregistered, so they
   answer WordPress's `rest_no_route` (404) for everyone. `GET
-  fair-events/v1/payment-history` returns only `reconciliation_available`,
+fair-events/v1/payment-history` returns only `reconciliation_available`,
   `payment_information` and `finding_statuses` (counts of the `backfill`
   findings). Findings, finding detail, link, review, unlink, purchase search
   and audit keep their arguments, validation and 401/403 checks; dry-run
@@ -1756,6 +1757,49 @@ did for current purchases moved to `Services\PurchaseRecovery`.
   reconciliation, `PaymentAttribution`, the queue and its rows, and
   `PaymentHistoryUpgrade`'s check of failed or unresolved transaction and
   relationship work.
+
+### 8.20 Audience ledger retired
+
+**Implemented** (#2254, first of two pull requests; no schema change).
+Nothing writes or reads `fair_audience_event_participant_transactions` any
+more. Payment links (§5.1) are the only record of which purchase an
+attempt pays for; the table and its rows stay on existing sites, untouched,
+until the cleanup (the second pull request) removes them.
+
+- **Writers removed.** Fair Audience's purchase route, multi-occurrence
+  checkout, retries, activity add-on and series upgrade no longer record a
+  ledger charge before `EventsLifecycle::record_attempt()`; nor do
+  `SignupHookBridge` (a get-tickets checkout and its confirmation),
+  `TransactionParticipantLink` (it still fills an empty Connector
+  `participant_id`, and its repair) or `PaymentHooks::project_payment_applied()`.
+  `EventParticipantTransactionRepository` is removed.
+- **Attribution** (`PaymentAttribution`, §6.1). An Audience checkout or
+  retry is attributed from the relationships its metadata names
+  (`event_participant_ids`, else `event_participant_id`), no longer
+  confirmed by ledger rows; metadata without either is `no_evidence`.
+  Relationships of different participants named by one transaction stay
+  `participant_relationship_conflict`. A transaction with no recognised
+  source is `out_of_scope`: the `ledger_only` evidence is gone, since only
+  historical transactions could have it and the backfill already decided
+  them. `PaymentAttributionSources::ledger_rows()` is removed.
+- **Pending checkouts** (`ShadowPurchases::qualifies()`). A pending
+  relationship without a purchase gets one only while the Audience checkout
+  naming it is recorded: `record_attempt()` passes `sync( $id, true )` for a
+  `fair-audience-signup` attempt. It no longer looks up the relationship's
+  latest ledger charge. Recovery retries the attempt itself (transaction
+  work), so an interrupted checkout still gets its purchase; a pending
+  relationship synced for any other reason (an organizer change) never
+  does, as it may be a get-tickets purchase in flight.
+- **Failed payments.** Fair Audience's failed-payment email resolves the
+  registrations from the transaction's metadata, as attribution does,
+  instead of the ledger.
+- **Installation.** A fresh Fair Audience no longer creates the table, and
+  the 1.38.0 upgrade step only records its version.
+
+**Update order.** Fair Events, then Fair Audience, in the same release. An
+older Fair Events still needs the ledger to attribute an Audience checkout,
+but a newer Fair Audience refuses to start beside Fair Events 2.2.0 or older
+(`events_outdated`, §8.17).
 
 ## 9. Worked examples
 
