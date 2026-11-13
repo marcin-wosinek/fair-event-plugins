@@ -239,7 +239,13 @@ it( 'reports a failed events request instead of an empty month', async () => {
 	eventsResponder = () => Promise.reject( new Error( 'Feed unavailable' ) );
 	render( <SourceViewApp /> );
 
-	expect( await screen.findByText( 'Feed unavailable' ) ).toBeInTheDocument();
+	// Notice also announces its text through the a11y-speak live region, so
+	// match the visible notice only.
+	expect(
+		await screen.findByText( 'Feed unavailable', {
+			selector: '.components-notice__content',
+		} )
+	).toBeInTheDocument();
 	expect(
 		document.querySelector( '.fair-events-calendar-grid' )
 	).toBeInTheDocument();
