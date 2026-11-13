@@ -7,17 +7,24 @@
  * manage-event-ext. All default to true — installing this plugin signals
  * intent to use the full internal feature set.
  *
- * Resolution order (first match wins):
- *   1. Per-feature constant `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_<UPPER>`
- *   2. Master switch `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL` (true → all bundles on)
- *   3. `fair_audience_experimental_feature_enabled` filter
- *   4. Stored option `fair_audience_experimental_features`
- *   5. Hardcoded default (true for all bundles)
+ * Resolution for is_enabled(), implemented by
+ * {@see \FairEventsShared\FeatureFlags}:
+ *
+ *   1. Per-feature constant `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_<UPPER>` (true/false) wins outright;
+ *      the filter is not applied.
+ *   2. Master switch `FAIR_AUDIENCE_EXPERIMENTAL_INTERNAL` (strictly true) → enabled; otherwise
+ *      the stored option `fair_audience_experimental_features` ([ key => bool ]) from the
+ *      Settings UI, then the hardcoded default in the registry below.
+ *   3. `fair_audience_experimental_feature_enabled` filter receives the step-2 result and has the
+ *      last word — it can override the master switch, although
+ *      is_forced() still reports the key as forced.
  *
  * @package FairAudienceExperimental
  */
 
 namespace FairAudienceExperimental\Core;
+
+use FairEventsShared\FeatureFlags;
 
 defined( 'WPINC' ) || die;
 
@@ -101,49 +108,20 @@ class Features {
 	 * @return bool
 	 */
 	public static function is_enabled( $key ) {
-		$registry = self::registry();
-		if ( ! isset( $registry[ $key ] ) ) {
-			return false;
-		}
-
-		// 1. Per-feature constant always wins.
-		$constant = self::feature_constant_name( $key );
-		if ( defined( $constant ) ) {
-			return (bool) constant( $constant );
-		}
-
-		// 2. Master switch flips every bundle on.
-		if ( defined( self::MASTER_CONSTANT ) && true === constant( self::MASTER_CONSTANT ) ) {
-			$enabled = true;
-		} else {
-			// 4. Stored option, then 5. hardcoded default.
-			$stored  = get_option( self::OPTION, array() );
-			$enabled = is_array( $stored ) && array_key_exists( $key, $stored )
-				? (bool) $stored[ $key ]
-				: (bool) $registry[ $key ]['default'];
-		}
-
-		// 3. Filter runs after constants.
-		return (bool) apply_filters( 'fair_audience_experimental_feature_enabled', $enabled, $key );
+		return self::flags()->is_enabled( $key );
 	}
 
 	/**
-	 * Whether the resolved value is forced by a constant.
+	 * Whether the resolved value is forced (always-on, a per-feature
+	 * constant, or the master switch) — used by the Settings UI to render the
+	 * toggle disabled and by the option sanitizer so a UI write cannot
+	 * override wp-config.
 	 *
 	 * @param string $key Bundle key.
 	 * @return bool
 	 */
 	public static function is_forced( $key ) {
-		$registry = self::registry();
-		if ( ! isset( $registry[ $key ] ) ) {
-			return false;
-		}
-
-		if ( defined( self::feature_constant_name( $key ) ) ) {
-			return true;
-		}
-
-		return defined( self::MASTER_CONSTANT ) && true === constant( self::MASTER_CONSTANT );
+		return self::flags()->is_forced( $key );
 	}
 
 	/**
@@ -206,52 +184,15 @@ class Features {
 	}
 
 	/**
-	 * Sanitize an option payload for the known key set, dropping forced keys.
+	 * Sanitize an option payload to the known key set. Forced keys keep their
+	 * stored value (so a UI write cannot contradict a wp-config decision) and
+	 * known keys omitted from the payload keep their existing value.
 	 *
 	 * @param mixed $value Raw option value.
 	 * @return array<string,bool>
 	 */
 	public static function sanitize_option( $value ) {
-		if ( ! is_array( $value ) ) {
-			return array();
-		}
-
-		$existing = get_option( self::OPTION, array() );
-		if ( ! is_array( $existing ) ) {
-			$existing = array();
-		}
-
-		$registry = self::registry();
-		$out      = array();
-		foreach ( $registry as $key => $entry ) {
-			if ( ! empty( $entry['always_on'] ) ) {
-				continue;
-			}
-
-			if ( self::is_forced( $key ) ) {
-				if ( array_key_exists( $key, $existing ) ) {
-					$out[ $key ] = (bool) $existing[ $key ];
-				}
-				continue;
-			}
-
-			if ( array_key_exists( $key, $value ) ) {
-				$out[ $key ] = (bool) $value[ $key ];
-			} elseif ( array_key_exists( $key, $existing ) ) {
-				$out[ $key ] = (bool) $existing[ $key ];
-			}
-		}
-		return $out;
-	}
-
-	/**
-	 * Per-feature constant name (e.g. `fees` → `FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_FEES`).
-	 *
-	 * @param string $key Bundle key.
-	 * @return string
-	 */
-	private static function feature_constant_name( $key ) {
-		return 'FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_' . strtoupper( str_replace( '-', '_', $key ) );
+		return self::flags()->sanitize_option( $value );
 	}
 
 	/**
@@ -263,5 +204,21 @@ class Features {
 	 */
 	public static function script_translations_path() {
 		return FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'build/languages';
+	}
+
+	/**
+	 * Shared resolver configured with this plugin's registry, option,
+	 * constants, and filter. Built per call so nothing is cached.
+	 *
+	 * @return FeatureFlags
+	 */
+	private static function flags() {
+		return new FeatureFlags(
+			self::registry(),
+			self::OPTION,
+			'FAIR_AUDIENCE_EXPERIMENTAL_FEATURE_',
+			self::MASTER_CONSTANT,
+			'fair_audience_experimental_feature_enabled'
+		);
 	}
 }

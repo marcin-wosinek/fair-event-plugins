@@ -535,16 +535,18 @@ the only source:
    priority 0, or immediately on an activation request) or check
    `\Fair_Events_Shared_Loader::is_ready( __FILE__ )` in their own
    `plugins_loaded` callback (Fair Payments Connector and its Experimental
-   plugin keep priority 10). Nothing may touch a shared class before that:
+   plugin keep priority 10; the Audience and Events Experimental plugins
+   keep priority 5 behind their missing-parent guard). Nothing may touch a shared class before that:
    not the main file, constructors, activation callbacks or upgrade
    routines. Ownership constants and activation/deactivation registrations
    stay in the main file. Fair Events' notification boot still runs at
    `plugins_loaded` 20.
 
-Plugins that don't bundle the package follow the same rule: Fair Finance
-boots the shared settings screen on `plugins_loaded` 0 and only when
-`is_ready()`; Fair Events Experimental stays off when Fair Events is
-paused. Fair Calendar Button doesn't use it.
+Fair Calendar Button is the only plugin that doesn't bundle the package,
+and it doesn't use it. Fair Finance and Fair Events Experimental bundle it
+since #2229 (their feature flags delegate to `FeatureFlags`); Finance still
+runs on its own, and Events Experimental still stays off when Fair Events is
+missing or paused.
 
 **Early-loaded classes.** PHP can't replace a loaded class. If a shared
 class, interface or trait already loaded from a copy other than the

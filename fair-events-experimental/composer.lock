@@ -4,8 +4,35 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "18774f35e89e5198268401485f56e1f5",
-    "packages": [],
+    "content-hash": "8fdba10d07a8f560080f8115ee1c4339",
+    "packages": [
+        {
+            "name": "fair-events/shared",
+            "version": "0.2.18",
+            "dist": {
+                "type": "path",
+                "url": "../fair-events-shared/php",
+                "reference": "ffdfc7feb8ceb5902a3e3c15652122e227072f71"
+            },
+            "require": {
+                "php": ">=7.4 <9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FairEventsShared\\": "src/"
+                }
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "description": "Shared PHP utilities for Fair Event plugins",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        }
+    ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
