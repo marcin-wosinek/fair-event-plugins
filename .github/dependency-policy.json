@@ -206,7 +206,8 @@
 			"babel-jest",
 			"jest",
 			"jest-environment-jsdom",
-			"webpack-bundle-output"
+			"webpack-bundle-output",
+			"workspace:fair-events-shared"
 		],
 		"fair-payments-connector/package.json": [
 			"@babel/core",
@@ -237,7 +238,8 @@
 			"@wordpress/element",
 			"@wordpress/i18n",
 			"@wordpress/scripts",
-			"webpack-bundle-output"
+			"webpack-bundle-output",
+			"workspace:fair-events-shared"
 		],
 		"fair-timetable/package.json": [
 			"@babel/core",
