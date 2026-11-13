@@ -765,6 +765,29 @@ column or option is removed: work still queued in
 **Recovery.** Rolling back reschedules the old event on the next request,
 over the same queue; nothing this release removed held state.
 
+## Upgrade notes: Audience ledger retired (#2254)
+
+Stops writing and reading the Fair Audience transaction ledger
+([PAYMENT_HISTORY_MIGRATION.md § 8.20](./PAYMENT_HISTORY_MIGRATION.md#820-audience-ledger-retired)).
+Update **Fair Events first, then Fair Audience**, in the same release.
+
+**What changes.** Fair Events' payment links are the only record of which
+purchase a payment belongs to. A fresh Fair Audience no longer creates
+`{prefix}fair_audience_event_participant_transactions`. On an existing site
+the table and its rows are left as they were: nothing reads or writes them,
+and the source-history cleanup removes them later. No schema version
+changes.
+
+**Check after deploy.** Make one paid Fair Audience signup on staging: no
+new row appears in the ledger table, and the purchase's payment shows in
+Manage Event → Finance → Purchase payments.
+
+**Recovery.** Rolling back is safe with a matching pair of versions: the
+older code writes the ledger again for new payments. Payments started
+while this release ran have links but no ledger rows: they stay correct,
+but if one of them fails after the rollback, the older Fair Audience
+doesn't send its resume-payment email.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

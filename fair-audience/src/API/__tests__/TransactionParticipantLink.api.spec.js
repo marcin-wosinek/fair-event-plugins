@@ -5,7 +5,9 @@
  * Purchases go through the public fair-events/v1/get-tickets route against
  * the Mollie double from e2e/mu-plugins. The payment administration view is
  * read through fair-payments-connector/v1/transactions/{id} and participant
- * activity through fair-audience/v1/participants/{id}/activity. History and
+ * activity through fair-audience/v1/participants/{id}/activity; the
+ * purchases each transaction pays for come from Fair Events' payment links
+ * (the Fair Audience ledger is retired, #2254). History and
  * conflicts production data can hold, a repeated callback, the repair and
  * Fair Audience being inactive are driven through the test-only
  * fair-e2e/v1/transaction-participants routes.
@@ -314,8 +316,11 @@ test.describe
 		const participantId = after.signups[ 0 ].participant_id;
 		expect( participantId ).toBeTruthy();
 		expect( after.participant_id ).toBe( participantId );
-		expect( after.ledger ).toEqual( [
-			expect.objectContaining( { participant_id: participantId } ),
+		expect( after.links ).toEqual( [
+			expect.objectContaining( {
+				participant_id: participantId,
+				role: 'charge',
+			} ),
 		] );
 
 		const person = await paymentAdminPerson( firstTime.transactionId );
@@ -361,10 +366,11 @@ test.describe
 
 		const after = await state( signedUp.transactionId, signedUp.signupIds );
 		expect( after.participant_id ).toBe( participantId );
-		expect( after.ledger ).toEqual( [
+		expect( after.links ).toEqual( [
 			expect.objectContaining( {
 				participant_id: participantId,
 				event_date_id: single.eventDateId,
+				role: 'charge',
 			} ),
 		] );
 	} );
@@ -406,13 +412,13 @@ test.describe
 			body.transaction_id
 		);
 		expect( retried.participant_id ).toBe( participantId );
-		expect( retried.ledger ).toEqual( [
+		expect( retried.links ).toEqual( [
 			expect.objectContaining( { participant_id: participantId } ),
 		] );
 
 		const original = await state( purchase.transactionId );
 		expect( original.participant_id ).toBe( participantId );
-		expect( original.ledger ).toHaveLength( 1 );
+		expect( original.links ).toHaveLength( 1 );
 
 		expect( await activityTransactionIds( participantId ) ).toContain(
 			body.transaction_id
@@ -448,9 +454,9 @@ test.describe
 		expect( after.signups[ 1 ].participant_id ).toBe( participantId );
 		expect( after.participant_id ).toBe( participantId );
 		expect(
-			after.ledger.map( ( row ) => row.event_date_id ).sort()
+			after.links.map( ( row ) => row.event_date_id ).sort()
 		).toEqual( [ ...chosen ].sort() );
-		for ( const row of after.ledger ) {
+		for ( const row of after.links ) {
 			expect( row.participant_id ).toBe( participantId );
 		}
 	} );
@@ -469,7 +475,7 @@ test.describe
 			seriesPurchase.signupIds
 		);
 		expect( after.participant_id ).toBe( before.participant_id );
-		expect( after.ledger ).toEqual( before.ledger );
+		expect( after.links ).toEqual( before.links );
 	} );
 
 	test( 'an existing link to another participant is never replaced', async () => {
@@ -490,7 +496,7 @@ test.describe
 			returning.signupIds
 		);
 		expect( after.participant_id ).toBe( other );
-		expect( after.ledger ).toEqual( before.ledger );
+		expect( after.links ).toEqual( before.links );
 
 		await setTransaction( {
 			transaction_id: returning.transactionId,
@@ -506,12 +512,15 @@ test.describe
 		const after = await state( purchase.transactionId, purchase.signupIds );
 		expect( after.signups[ 0 ].participant_id ).toBeNull();
 		expect( after.participant_id ).toBeNull();
-		expect( after.ledger ).toEqual( [] );
+		// Fair Events still records the purchase's payment.
+		expect( after.links ).toEqual( [
+			expect.objectContaining( { participant_id: null, role: 'charge' } ),
+		] );
 		expect( await paymentAdminPerson( purchase.transactionId ) ).toBeNull();
 	} );
 
 	test( 'the repair links unambiguous history and leaves ambiguous or conflicting records unchanged', async () => {
-		// Unambiguous: the link and ledger rows were never written.
+		// Unambiguous: the link was never written.
 		const unlinked = await state(
 			returning.transactionId,
 			returning.signupIds
@@ -519,7 +528,6 @@ test.describe
 		await setTransaction( {
 			transaction_id: returning.transactionId,
 			participant_id: 0,
-			clear_ledger: true,
 		} );
 
 		// Ambiguous: the series purchase's signups name different people.
@@ -538,7 +546,6 @@ test.describe
 		await setTransaction( {
 			transaction_id: seriesPurchase.transactionId,
 			participant_id: 0,
-			clear_ledger: true,
 		} );
 
 		// Conflicting: linked to someone other than its signup's participant.
@@ -549,7 +556,6 @@ test.describe
 		await setTransaction( {
 			transaction_id: signedUp.transactionId,
 			participant_id: other,
-			clear_ledger: true,
 		} );
 
 		const repairRes = await api.post(
@@ -564,15 +570,13 @@ test.describe
 
 		const repaired = await state( returning.transactionId );
 		expect( repaired.participant_id ).toBe( unlinked.participant_id );
-		expect( repaired.ledger ).toEqual( unlinked.ledger );
+		expect( repaired.links ).toEqual( unlinked.links );
 
 		const ambiguous = await state( seriesPurchase.transactionId );
 		expect( ambiguous.participant_id ).toBeNull();
-		expect( ambiguous.ledger ).toEqual( [] );
 
 		const conflict = await state( signedUp.transactionId );
 		expect( conflict.participant_id ).toBe( other );
-		expect( conflict.ledger ).toEqual( [] );
 		expect( conflicting.participant_id ).not.toBe( other );
 	} );
 } );

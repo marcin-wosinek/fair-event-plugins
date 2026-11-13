@@ -15,10 +15,11 @@ defined( 'WPINC' ) || die;
 /**
  * Decides which purchases a Connector transaction belongs to, and with what
  * role and allocation, from the evidence PAYMENT_HISTORY_MIGRATION.md §6.1
- * allows: the transaction's immutable metadata, the signup's latest attempt
- * for the oldest get-tickets transactions, and the Audience ledger. Never
- * from participant, email, date, amount or time alone, and never from the
- * transaction columns an administrator can edit.
+ * allows: the transaction's immutable metadata and the signup's latest
+ * attempt for the oldest get-tickets transactions. Never from participant,
+ * email, date, amount or time alone, never from the transaction columns an
+ * administrator can edit, and no longer from the Fair Audience ledger,
+ * which nothing writes since #2254.
  *
  * The live shadow writers and the historical backfill share these rules, so
  * both reach the same conclusion for the same transaction. The result
@@ -55,50 +56,30 @@ class PaymentAttribution {
 	 *                           line_items (each with total_amount).
 	 * @return array{outcome: string, links: array[], reason: string|null, detail: array, notes: array[]}
 	 *               outcome is `attributed` (links set), `unresolved` (reason set) or `out_of_scope`
-	 *               (not an event payment: a participant fee, or no event source and no ledger row).
+	 *               (not an event payment: a participant fee, or no event source).
 	 *               notes are informational findings for an attributed transaction, such as
 	 *               `amount_mismatch`.
 	 */
 	public function attribute( array $transaction ) {
-		$transaction_id = (int) ( $transaction['id'] ?? 0 );
-		$metadata       = is_array( $transaction['metadata'] ?? null ) ? $transaction['metadata'] : array();
-		$source         = is_string( $metadata['source'] ?? null ) ? $metadata['source'] : '';
+		$metadata = is_array( $transaction['metadata'] ?? null ) ? $transaction['metadata'] : array();
+		$source   = is_string( $metadata['source'] ?? null ) ? $metadata['source'] : '';
 
 		if ( ! empty( $metadata['fee_payment_id'] ) ) {
 			return self::out_of_scope();
-		}
-
-		$ledger = $this->sources->ledger_rows( $transaction_id );
-		$charge = array_values(
-			array_filter(
-				$ledger,
-				static function ( $row ) {
-					return 'refund' !== ( $row['kind'] ?? 'charge' );
-				}
-			)
-		);
-
-		$conflict = $this->participant_conflict( $charge );
-		if ( $conflict ) {
-			return self::unresolved( 'participant_relationship_conflict', array( 'event_participant_ids' => $conflict ) );
 		}
 
 		switch ( $source ) {
 			case self::SOURCE_GET_TICKETS:
 				return $this->attribute_get_tickets( $transaction, $metadata );
 			case self::SOURCE_AUDIENCE:
-				return $this->attribute_audience_signup( $transaction, $metadata, $charge );
+				return $this->attribute_audience_signup( $transaction, $metadata );
 			case self::SOURCE_ADDON:
 				return $this->attribute_addon( $transaction, $metadata );
 			case self::SOURCE_UPGRADE:
 				return $this->attribute_upgrade( $transaction, $metadata );
 		}
 
-		if ( ! $charge ) {
-			return self::out_of_scope();
-		}
-
-		return $this->attribute_ledger_only( $transaction, $charge );
+		return self::out_of_scope();
 	}
 
 	/**
@@ -151,32 +132,29 @@ class PaymentAttribution {
 
 	/**
 	 * An Audience purchase or its retry: the relationships its metadata
-	 * names, each confirmed by the ledger row for that relationship and
-	 * transaction, then each relationship's purchase (§4, §6.1). Shared
+	 * names, then each relationship's purchase (§4, §6.1). Shared
 	 * transactions split only along identical line items (§5.4).
 	 *
-	 * @param array   $transaction Transaction.
-	 * @param array   $metadata    Metadata.
-	 * @param array[] $ledger      Charge ledger rows of the transaction.
+	 * @param array $transaction Transaction.
+	 * @param array $metadata    Metadata.
 	 * @return array Result.
 	 */
-	private function attribute_audience_signup( array $transaction, array $metadata, array $ledger ) {
+	private function attribute_audience_signup( array $transaction, array $metadata ) {
 		if ( isset( $metadata['event_participant_ids'] ) && is_array( $metadata['event_participant_ids'] ) ) {
 			$relationship_ids = self::ids( $metadata['event_participant_ids'] );
 		} elseif ( ! empty( $metadata['event_participant_id'] ) ) {
 			$relationship_ids = self::ids( array( $metadata['event_participant_id'] ) );
 		} else {
-			$relationship_ids = self::ids( array_column( $ledger, 'event_participant_id' ) );
+			$relationship_ids = array();
 		}
 
 		if ( ! $relationship_ids ) {
 			return self::unresolved( 'no_evidence', array() );
 		}
 
-		$recorded = self::ids( array_column( $ledger, 'event_participant_id' ) );
-		$missing  = array_values( array_diff( $relationship_ids, $recorded ) );
-		if ( $missing ) {
-			return self::unresolved( 'no_evidence', array( 'unrecorded_event_participant_ids' => $missing ) );
+		$conflict = $this->participant_conflict( $relationship_ids );
+		if ( $conflict ) {
+			return self::unresolved( 'participant_relationship_conflict', array( 'event_participant_ids' => $conflict ) );
 		}
 
 		$evidence = array(
@@ -292,39 +270,6 @@ class PaymentAttribution {
 	}
 
 	/**
-	 * A transaction without a recognised source: only when one ledger row
-	 * names it and that relationship maps to one purchase (§6.1).
-	 *
-	 * @param array   $transaction Transaction.
-	 * @param array[] $ledger      Charge ledger rows.
-	 * @return array Result.
-	 */
-	private function attribute_ledger_only( array $transaction, array $ledger ) {
-		$relationship_ids = self::ids( array_column( $ledger, 'event_participant_id' ) );
-		if ( 1 !== count( $relationship_ids ) ) {
-			return self::unresolved( 'no_evidence', array( 'event_participant_ids' => $relationship_ids ) );
-		}
-
-		$signup_id = $this->sources->purchase_for_relationship( $relationship_ids[0] );
-		if ( ! $signup_id ) {
-			return self::unresolved( 'no_evidence', array( 'event_participant_id' => $relationship_ids[0] ) );
-		}
-
-		$signups = $this->sources->signups( array( (int) $signup_id ) );
-		return $this->single(
-			$transaction,
-			(int) $signup_id,
-			SignupPaymentLink::ROLE_CHARGE,
-			array(
-				'type'                 => 'ledger_only',
-				'event_participant_id' => $relationship_ids[0],
-				'signup_ids'           => array( (int) $signup_id ),
-			),
-			$signups[ (int) $signup_id ]['amount'] ?? null
-		);
-	}
-
-	/**
 	 * The purchase a relationship represents: the one naming it as its
 	 * provenance, else the participant's single active purchase on its date.
 	 *
@@ -351,14 +296,13 @@ class PaymentAttribution {
 	}
 
 	/**
-	 * Relationships of different participants recorded against one
-	 * transaction, if any.
+	 * Relationships of different participants named by one transaction,
+	 * if any.
 	 *
-	 * @param array[] $ledger Charge ledger rows.
+	 * @param int[] $relationship_ids Relationships the metadata names.
 	 * @return int[] The relationship IDs, or none when there is no conflict.
 	 */
-	private function participant_conflict( array $ledger ) {
-		$relationship_ids = self::ids( array_column( $ledger, 'event_participant_id' ) );
+	private function participant_conflict( array $relationship_ids ) {
 		if ( count( $relationship_ids ) < 2 ) {
 			return array();
 		}

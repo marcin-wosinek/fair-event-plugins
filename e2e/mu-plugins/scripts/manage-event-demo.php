@@ -165,34 +165,33 @@ function fair_e2e_demo_cleanup() {
 	$option_ids            = fair_e2e_demo_ids_in( 'id', 'fair_events_ticket_options', 'event_date_id', $date_ids );
 
 	$deleted = array(
-		'ticketActivities'    => fair_e2e_demo_delete_in( 'fair_events_ticket_activities', 'ticket_id', $ticket_ids ),
-		'tickets'             => fair_e2e_demo_delete_in( 'fair_events_tickets', 'event_date_id', $date_ids ),
-		'signups'             => fair_e2e_demo_delete_in( 'fair_events_signups', 'event_date_id', $date_ids ),
-		'participantOptions'  => fair_e2e_demo_delete_in( 'fair_audience_event_participant_options', 'event_participant_id', $event_participant_ids ),
-		'participantPayments' => fair_e2e_demo_delete_in( 'fair_audience_event_participant_transactions', 'event_participant_id', $event_participant_ids ),
-		'eventParticipants'   => fair_e2e_demo_delete_in( 'fair_audience_event_participants', 'event_date_id', $date_ids ),
-		'groupMembers'        => fair_e2e_demo_delete_in( 'fair_audience_group_participants', 'group_id', $group_ids ),
-		'groups'              => fair_e2e_demo_delete_in( 'fair_audience_groups', 'id', $group_ids ),
-		'participants'        => fair_e2e_demo_delete_in( 'fair_audience_participants', 'id', $participant_ids ),
-		'scheduledMessages'   => fair_e2e_demo_delete_in( 'fair_audience_event_scheduled_messages', 'event_date_id', $date_ids ),
-		'groupPricingRules'   => fair_e2e_demo_delete_in( 'fair_events_group_pricing_rules', 'event_date_id', $date_ids ),
-		'groupPermissions'    => fair_e2e_demo_delete_in( 'fair_events_group_permission_rules', 'event_date_id', $date_ids ),
-		'scheduleItems'       => fair_e2e_demo_delete_in( 'fair_events_schedule_items', 'event_date_id', $date_ids ),
-		'optionPrices'        => fair_e2e_demo_delete_in( 'fair_events_ticket_option_prices', 'ticket_option_id', $option_ids ),
-		'ticketOptions'       => fair_e2e_demo_delete_in( 'fair_events_ticket_options', 'event_date_id', $date_ids ),
-		'ticketPrices'        => fair_e2e_demo_delete_in( 'fair_events_ticket_prices', 'ticket_type_id', $type_ids ),
-		'ticketTypes'         => fair_e2e_demo_delete_in( 'fair_events_ticket_types', 'event_date_id', $date_ids ),
-		'salePeriods'         => fair_e2e_demo_delete_in( 'fair_events_ticket_sale_periods', 'event_date_id', $date_ids ),
-		'dateSettings'        => fair_e2e_demo_delete_in( 'fair_events_event_date_settings', 'event_date_id', $date_ids ),
-		'financialEntries'    => fair_e2e_demo_delete_in( 'fair_payment_financial_entries', 'event_date_id', $date_ids )
+		'ticketActivities'   => fair_e2e_demo_delete_in( 'fair_events_ticket_activities', 'ticket_id', $ticket_ids ),
+		'tickets'            => fair_e2e_demo_delete_in( 'fair_events_tickets', 'event_date_id', $date_ids ),
+		'signups'            => fair_e2e_demo_delete_in( 'fair_events_signups', 'event_date_id', $date_ids ),
+		'participantOptions' => fair_e2e_demo_delete_in( 'fair_audience_event_participant_options', 'event_participant_id', $event_participant_ids ),
+		'eventParticipants'  => fair_e2e_demo_delete_in( 'fair_audience_event_participants', 'event_date_id', $date_ids ),
+		'groupMembers'       => fair_e2e_demo_delete_in( 'fair_audience_group_participants', 'group_id', $group_ids ),
+		'groups'             => fair_e2e_demo_delete_in( 'fair_audience_groups', 'id', $group_ids ),
+		'participants'       => fair_e2e_demo_delete_in( 'fair_audience_participants', 'id', $participant_ids ),
+		'scheduledMessages'  => fair_e2e_demo_delete_in( 'fair_audience_event_scheduled_messages', 'event_date_id', $date_ids ),
+		'groupPricingRules'  => fair_e2e_demo_delete_in( 'fair_events_group_pricing_rules', 'event_date_id', $date_ids ),
+		'groupPermissions'   => fair_e2e_demo_delete_in( 'fair_events_group_permission_rules', 'event_date_id', $date_ids ),
+		'scheduleItems'      => fair_e2e_demo_delete_in( 'fair_events_schedule_items', 'event_date_id', $date_ids ),
+		'optionPrices'       => fair_e2e_demo_delete_in( 'fair_events_ticket_option_prices', 'ticket_option_id', $option_ids ),
+		'ticketOptions'      => fair_e2e_demo_delete_in( 'fair_events_ticket_options', 'event_date_id', $date_ids ),
+		'ticketPrices'       => fair_e2e_demo_delete_in( 'fair_events_ticket_prices', 'ticket_type_id', $type_ids ),
+		'ticketTypes'        => fair_e2e_demo_delete_in( 'fair_events_ticket_types', 'event_date_id', $date_ids ),
+		'salePeriods'        => fair_e2e_demo_delete_in( 'fair_events_ticket_sale_periods', 'event_date_id', $date_ids ),
+		'dateSettings'       => fair_e2e_demo_delete_in( 'fair_events_event_date_settings', 'event_date_id', $date_ids ),
+		'financialEntries'   => fair_e2e_demo_delete_in( 'fair_payment_financial_entries', 'event_date_id', $date_ids )
 			+ fair_e2e_demo_delete_in( 'fair_payment_financial_entries', 'budget_id', $budget_ids ),
-		'budgets'             => fair_e2e_demo_delete_in( 'fair_payment_budgets', 'id', $budget_ids ),
-		'lineItems'           => fair_e2e_demo_delete_in( 'fair_payment_line_items', 'transaction_id', $transaction_ids ),
-		'transactions'        => fair_e2e_demo_delete_in( 'fair_payment_transactions', 'id', $transaction_ids ),
-		'datePosts'           => fair_e2e_demo_delete_in( 'fair_event_date_posts', 'event_date_id', $date_ids ),
-		'eventDates'          => fair_e2e_demo_delete_in( 'fair_event_dates', 'event_id', $event_ids ),
-		'venues'              => fair_e2e_demo_delete_in( 'fair_event_venues', 'id', $venue_ids ),
-		'events'              => 0,
+		'budgets'            => fair_e2e_demo_delete_in( 'fair_payment_budgets', 'id', $budget_ids ),
+		'lineItems'          => fair_e2e_demo_delete_in( 'fair_payment_line_items', 'transaction_id', $transaction_ids ),
+		'transactions'       => fair_e2e_demo_delete_in( 'fair_payment_transactions', 'id', $transaction_ids ),
+		'datePosts'          => fair_e2e_demo_delete_in( 'fair_event_date_posts', 'event_date_id', $date_ids ),
+		'eventDates'         => fair_e2e_demo_delete_in( 'fair_event_dates', 'event_id', $event_ids ),
+		'venues'             => fair_e2e_demo_delete_in( 'fair_event_venues', 'id', $venue_ids ),
+		'events'             => 0,
 	);
 
 	foreach ( $event_ids as $event_id ) {
@@ -481,16 +480,6 @@ function fair_e2e_demo_seed() {
 				)
 			);
 		}
-
-		( new \FairAudience\Database\EventParticipantTransactionRepository() )->record( $relationship_id, $transaction_id, 'charge' );
-		$wpdb->update(
-			$wpdb->prefix . 'fair_audience_event_participant_transactions',
-			array( 'created_at' => $created_at ),
-			array(
-				'event_participant_id' => $relationship_id,
-				'transaction_id'       => $transaction_id,
-			)
-		);
 
 		$net_income += $amount - $mollie_fee;
 		$people[]    = $name . ' ' . $surname;

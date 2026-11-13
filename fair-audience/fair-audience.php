@@ -90,7 +90,6 @@ function fair_audience_activate() {
 	dbDelta( \FairAudience\Database\Schema::get_event_participant_options_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_email_consent_log_table_sql() );
 	dbDelta( \FairAudience\Database\Schema::get_event_scheduled_messages_table_sql() );
-	dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
 
 	// Update database version.
 	update_option( 'fair_audience_db_version', '1.42.0' );
@@ -722,14 +721,10 @@ function fair_audience_maybe_upgrade_db() {
 	}
 
 	if ( version_compare( $db_version, '1.38.0', '<' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		// Ledger linking event_participant rows to every payment (and, later,
-		// refund) transaction they accumulate — a single registration can hold
-		// more than one transaction once single-instance signups can be upgraded
-		// to whole-series passes.
-		dbDelta( \FairAudience\Database\Schema::get_event_participant_transactions_table_sql() );
-
+		// 1.38.0 created the event-participant transaction ledger. Fair Events
+		// owns purchase payments now, and the ledger is retired
+		// (PAYMENT_HISTORY_MIGRATION.md §8.20): an install that reaches this
+		// step never needs the table.
 		update_option( 'fair_audience_db_version', '1.38.0' );
 	}
 

@@ -29,13 +29,6 @@ class Fake_Attribution_Sources implements PaymentAttributionSources {
 	public $latest = array();
 
 	/**
-	 * Ledger rows by transaction ID.
-	 *
-	 * @var array
-	 */
-	public $ledger = array();
-
-	/**
 	 * Relationships by ID.
 	 *
 	 * @var array
@@ -122,16 +115,6 @@ class Fake_Attribution_Sources implements PaymentAttributionSources {
 	 */
 	public function signup_ids_with_latest_transaction( $transaction_id ) {
 		return $this->latest[ $transaction_id ] ?? array();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @param int $transaction_id ID.
-	 * @return array[]
-	 */
-	public function ledger_rows( $transaction_id ) {
-		return $this->ledger[ $transaction_id ] ?? array();
 	}
 
 	/**

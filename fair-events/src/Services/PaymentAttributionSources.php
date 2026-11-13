@@ -33,14 +33,6 @@ interface PaymentAttributionSources {
 	public function signup_ids_with_latest_transaction( $transaction_id );
 
 	/**
-	 * Audience ledger rows naming the transaction.
-	 *
-	 * @param int $transaction_id Connector transaction ID.
-	 * @return array[] Each: event_participant_id, kind.
-	 */
-	public function ledger_rows( $transaction_id );
-
-	/**
 	 * Audience relationships by ID. Missing IDs are left out.
 	 *
 	 * @param int[] $relationship_ids Relationship IDs.

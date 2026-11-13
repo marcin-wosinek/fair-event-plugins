@@ -21,7 +21,7 @@ defined( 'WPINC' ) || die;
  *   503 and nothing is charged.
  * - Paid notifications of these routes are applied by Fair Events, which
  *   then fires `fair_events_purchase_payment_applied`; Fair Audience
- *   projects that onto its relationships, activities and ledger
+ *   projects that onto its relationships and activities
  *   (PaymentHooks::project_payment_applied()) instead of confirming them
  *   itself.
  * - A series upgrade is priced from the purchase's own paid allocations.

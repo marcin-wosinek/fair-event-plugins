@@ -755,7 +755,7 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 		expect( await payment() ).toEqual( paymentBefore );
 
 		// The payment confirms both tickets; each stays with its holder,
-		// and the transaction and its ledger stay with the purchaser.
+		// and the transaction and its payment link stay with the purchaser.
 		await fixture( 'pay', { signup_id: signup.id } );
 		state = await purchase( signup.id );
 		expect( state.tickets[ paidOne ] ).toMatchObject( {
@@ -771,7 +771,7 @@ test.describe.serial( 'Assign one ticket (#1535)', () => {
 		expect( paymentAfter.participant_id ).toBe( payerId );
 		expect( paymentAfter.signups ).toEqual( paymentBefore.signups );
 		expect(
-			paymentAfter.ledger.map( ( row ) => row.participant_id )
+			paymentAfter.links.map( ( row ) => row.participant_id )
 		).toEqual( [ payerId ] );
 
 		const rows = await audience();

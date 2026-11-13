@@ -142,34 +142,6 @@ class PaymentAttributionDatabase implements PaymentAttributionSources {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @param int $transaction_id Connector transaction ID.
-	 * @return array[]
-	 */
-	public function ledger_rows( $transaction_id ) {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'fair_audience_event_participant_transactions';
-		if ( ! $this->table_exists( $table ) ) {
-			return array();
-		}
-
-		return array_map(
-			static function ( $row ) {
-				return array(
-					'event_participant_id' => (int) $row['event_participant_id'],
-					'kind'                 => (string) $row['kind'],
-				);
-			},
-			(array) $wpdb->get_results(
-				$wpdb->prepare( 'SELECT event_participant_id, kind FROM %i WHERE transaction_id = %d ORDER BY id ASC', $table, (int) $transaction_id ),
-				ARRAY_A
-			)
-		);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
 	 * @param int[] $relationship_ids Relationship IDs.
 	 * @return array
 	 */

@@ -154,6 +154,15 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( state.readers ).toBeNull();
 		currentDbVersion = state.eventsDbVersion;
 
+		// A fresh Fair Audience doesn't create the retired ledger (#2254).
+		const storage = await site.state();
+		expect( storage.audienceTables ).toContain(
+			`${ storage.prefix }fair_audience_event_participants`
+		);
+		expect( storage.audienceTables ).not.toContain(
+			`${ storage.prefix }fair_audience_event_participant_transactions`
+		);
+
 		const response = await admin.get( UPGRADE );
 		expect( response.status() ).toBe( 200 );
 		const body = await response.json();

@@ -27,8 +27,8 @@ defined( 'WPINC' ) || die;
  * confirmation email, payment handler or bridge acts on it.
  *
  * A purchase is created only when the relationship would be an admission
- * by the contract's rule (§4.1), or for a pending Audience checkout whose
- * latest ledger charge comes from Audience's purchase route. Syncs run when
+ * by the contract's rule (§4.1), or for a pending relationship while the
+ * Audience checkout attempt naming it is recorded (§8.20). Syncs run when
  * Audience records an attempt or a free signup, and at the end of a request
  * in which an organizer changed the relationship (PurchaseRecovery, §8.19).
  *
@@ -53,10 +53,14 @@ class ShadowPurchases {
 	 * Bring a relationship's shadow purchase in step, creating it when the
 	 * relationship is a new Audience-only admission.
 	 *
-	 * @param int $relationship_id Relationship ID.
+	 * @param int  $relationship_id Relationship ID.
+	 * @param bool $checkout        Whether a Fair Audience checkout attempt
+	 *                              naming this relationship is being recorded
+	 *                              (PurchaseLifecycle::record_attempt()), so a
+	 *                              pending relationship is that checkout's.
 	 * @return array{action: string, signup_id: int|null}|\WP_Error What happened: none, created or updated.
 	 */
-	public static function sync( $relationship_id ) {
+	public static function sync( $relationship_id, $checkout = false ) {
 		global $wpdb;
 
 		$relationship_id = (int) $relationship_id;
@@ -76,7 +80,7 @@ class ShadowPurchases {
 
 		try {
 			$wpdb->query( 'START TRANSACTION' );
-			$result = self::sync_locked( $relationship_id );
+			$result = self::sync_locked( $relationship_id, (bool) $checkout );
 			if ( is_wp_error( $result ) ) {
 				$wpdb->query( 'ROLLBACK' );
 			} else {
@@ -126,15 +130,16 @@ class ShadowPurchases {
 	/**
 	 * Body of sync(), inside its lock and database transaction.
 	 *
-	 * @param int $relationship_id Relationship ID.
+	 * @param int  $relationship_id Relationship ID.
+	 * @param bool $checkout        See sync().
 	 * @return array|\WP_Error
 	 */
-	private static function sync_locked( $relationship_id ) {
+	private static function sync_locked( $relationship_id, $checkout ) {
 		$relationship = self::relationship( $relationship_id );
 		$signup       = self::purchase_for( $relationship_id );
 
 		if ( ! $signup ) {
-			if ( ! $relationship || ! self::qualifies( $relationship ) ) {
+			if ( ! $relationship || ! self::qualifies( $relationship, $checkout ) ) {
 				return array(
 					'action'    => 'none',
 					'signup_id' => null,
@@ -170,14 +175,17 @@ class ShadowPurchases {
 
 	/**
 	 * Whether a relationship without a purchase is a new admission to mirror:
-	 * signed up, or a pending Audience checkout within its hold; the
-	 * participant has no active Events purchase on the date (or of its
-	 * ticket type) and holds no active ticket there (§4.1).
+	 * signed up, or pending within its hold while the Audience checkout
+	 * naming it is recorded; the participant has no active Events purchase
+	 * on the date (or of its ticket type) and holds no active ticket there
+	 * (§4.1). A pending relationship outside such a checkout may be a
+	 * get-tickets purchase in flight, whose purchase Fair Events already has.
 	 *
 	 * @param object $relationship Relationship row.
+	 * @param bool   $checkout     Whether the Audience checkout attempt naming it is being recorded.
 	 * @return bool
 	 */
-	public static function qualifies( $relationship ) {
+	public static function qualifies( $relationship, $checkout = false ) {
 		global $wpdb;
 
 		$now = gmdate( 'Y-m-d H:i:s' );
@@ -185,7 +193,7 @@ class ShadowPurchases {
 			if ( 'pending_payment' !== $relationship->label
 				|| empty( $relationship->payment_expires_at )
 				|| (string) $relationship->payment_expires_at <= $now
-				|| ! self::latest_charge_is_audience_checkout( (int) $relationship->id )
+				|| ! $checkout
 			) {
 				return false;
 			}
@@ -217,32 +225,6 @@ class ShadowPurchases {
 		}
 
 		return ! EventTicket::get_held_on_event_date( (int) $relationship->event_date_id, (int) $relationship->participant_id );
-	}
-
-	/**
-	 * Whether the relationship's most recent ledger charge is a transaction
-	 * from Audience's own purchase route, so its pending state belongs to an
-	 * Audience checkout rather than to an Events purchase in flight.
-	 *
-	 * @param int $relationship_id Relationship ID.
-	 * @return bool
-	 */
-	private static function latest_charge_is_audience_checkout( $relationship_id ) {
-		global $wpdb;
-
-		$transaction_id = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT transaction_id FROM %i WHERE event_participant_id = %d AND kind = 'charge' ORDER BY transaction_id DESC LIMIT 1",
-				$wpdb->prefix . 'fair_audience_event_participant_transactions',
-				$relationship_id
-			)
-		);
-		if ( ! $transaction_id ) {
-			return false;
-		}
-
-		$transaction = PaymentAttributionDatabase::transaction( $transaction_id );
-		return $transaction && PaymentAttribution::SOURCE_AUDIENCE === ( $transaction['metadata']['source'] ?? '' );
 	}
 
 	/**
@@ -552,8 +534,7 @@ class ShadowPurchases {
 	}
 
 	/**
-	 * Whether Fair Audience's relationship, options, ledger and participant
-	 * tables exist.
+	 * Whether Fair Audience's relationships table exists.
 	 *
 	 * @return bool
 	 */

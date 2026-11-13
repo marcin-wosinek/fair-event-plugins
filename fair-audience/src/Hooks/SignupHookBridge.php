@@ -14,7 +14,6 @@ namespace FairAudience\Hooks;
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EmailConfirmationTokenRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Models\Participant;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
@@ -1157,13 +1156,6 @@ class SignupHookBridge {
 					$relationship->payment_expires_at = gmdate( 'Y-m-d H:i:s', time() + 15 * MINUTE_IN_SECONDS );
 				}
 				$relationship->save();
-
-				// Record the ledger link at creation time, not just on webhook
-				// confirmation — mirrors EventSignupController's own creation
-				// sites (see #1112).
-				if ( $transaction_id ) {
-					( new EventParticipantTransactionRepository() )->record( (int) $relationship->id, (int) $transaction_id, 'charge' );
-				}
 			}
 		}
 
@@ -1302,9 +1294,8 @@ class SignupHookBridge {
 
 	/**
 	 * Flip the matching EventParticipant row from pending_payment to
-	 * signed_up when a base-route signup's payment is confirmed, and record
-	 * the charge in the ledger — mirroring PaymentHooks::handle_signup_paid()
-	 * for fair-audience's own signup routes.
+	 * signed_up when a base-route signup's payment is confirmed. Fair Events
+	 * keeps the payment itself in its payment links.
 	 *
 	 * @param object $signup      The fair_events_signups row (status already 'confirmed').
 	 * @param object $transaction Transaction object from fair-payments-connector.
@@ -1378,7 +1369,7 @@ class SignupHookBridge {
 	}
 
 	/**
-	 * Persist the participant, activities, ledger link, and notification.
+	 * Persist the participant, activities and notification.
 	 *
 	 * @param object                     $signup            Confirmed signup row.
 	 * @param object                     $transaction       Payment transaction.
@@ -1410,9 +1401,6 @@ class SignupHookBridge {
 			}
 			self::attach_purchase_activities( (int) $signup->id, (int) $signup->event_date_id, (int) $signup->participant_id, $options, $repository );
 		}
-
-		$ledger = new EventParticipantTransactionRepository();
-		$ledger->record( (int) $event_participant->id, (int) $transaction->id, 'charge' );
 
 		// The free path emails its confirmation inline in link_participant();
 		// a paid signup only reaches "confirmed" here, so this is the sole

@@ -9,7 +9,6 @@ namespace FairAudience\API;
 
 use FairAudience\Database\ParticipantRepository;
 use FairAudience\Database\EventParticipantRepository;
-use FairAudience\Database\EventParticipantTransactionRepository;
 use FairAudience\Services\EventsLifecycle;
 use FairAudience\Services\AudienceSession;
 use FairAudience\Services\EmailService;
@@ -803,12 +802,6 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		$ledger = new EventParticipantTransactionRepository();
-		foreach ( $event_participant_ids as $ep_id ) {
-			// One ledger row per occurrence row, all sharing this transaction.
-			$ledger->record( $ep_id, (int) $transaction_id, 'charge' );
-		}
-
 		// After the payment history cutover Fair Events records the purchases
 		// and the attempt's links before the buyer is sent to pay.
 		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
@@ -1127,10 +1120,6 @@ class EventSignupController extends WP_REST_Controller {
 			$this->release_addon_holds( (int) $event_participant->id, $ticket ? (int) $ticket->id : 0, $new_option_ids );
 			return $transaction_id;
 		}
-
-		// Also closes a secondary gap: add-on charges never recorded to the
-		// ledger, so payment history for the registration was missing them.
-		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
 
 		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
 		if ( is_wp_error( $recorded ) ) {
@@ -1924,11 +1913,6 @@ class EventSignupController extends WP_REST_Controller {
 			return $transaction_id;
 		}
 
-		// Record the ledger link at creation time, not just on webhook
-		// confirmation — a later attempt on this registration must not orphan
-		// this charge (see #1112).
-		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $transaction_id, 'charge' );
-
 		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
 		if ( is_wp_error( $recorded ) ) {
 			return $recorded;
@@ -1978,11 +1962,12 @@ class EventSignupController extends WP_REST_Controller {
 	 * whole-series. The seat and prior payment stay put: like
 	 * maybe_start_addon_payment, this never mutates the existing row on the paid
 	 * path — an abandoned upgrade leaves the original single-instance signup
-	 * intact. On payment success PaymentHooks::handle_series_upgrade_paid()
-	 * flips the row's ticket_type to the series pass.
+	 * intact. On payment success Fair Events changes the purchase's ticket type
+	 * and PaymentHooks::project_payment_applied() flips the row's to the series
+	 * pass.
 	 *
 	 * The buyer is charged only the difference between the series price and what
-	 * they have already paid on this registration (per the transaction ledger).
+	 * the purchase has already paid (Fair Events' payment links, §5.6).
 	 *
 	 * @param int                              $event_id       Event post ID.
 	 * @param int                              $event_date_id  Event date ID (already retargeted to the master).
@@ -2095,8 +2080,6 @@ class EventSignupController extends WP_REST_Controller {
 		if ( is_wp_error( $transaction_id ) ) {
 			return $transaction_id;
 		}
-
-		( new EventParticipantTransactionRepository() )->record( (int) $existing->id, (int) $transaction_id, 'charge' );
 
 		$recorded = EventsLifecycle::record_attempt( (int) $transaction_id );
 		if ( is_wp_error( $recorded ) ) {
@@ -2415,11 +2398,6 @@ class EventSignupController extends WP_REST_Controller {
 			return $new_transaction_id;
 		}
 
-		// Record the ledger link at creation time: this retry accumulates a
-		// new charge alongside the prior attempt's, so the ledger is the only
-		// place that remembers each attempt (see #1112).
-		( new EventParticipantTransactionRepository() )->record( (int) $event_participant->id, (int) $new_transaction_id, 'charge' );
-
 		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );
 		if ( is_wp_error( $recorded ) ) {
 			return $recorded;
@@ -2561,11 +2539,6 @@ class EventSignupController extends WP_REST_Controller {
 
 		if ( is_wp_error( $new_transaction_id ) ) {
 			return $new_transaction_id;
-		}
-
-		$ledger = new EventParticipantTransactionRepository();
-		foreach ( $event_participant_ids as $event_participant_id ) {
-			$ledger->record( $event_participant_id, (int) $new_transaction_id, 'charge' );
 		}
 
 		$recorded = EventsLifecycle::record_attempt( (int) $new_transaction_id );

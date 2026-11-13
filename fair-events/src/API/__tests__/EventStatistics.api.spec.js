@@ -43,35 +43,6 @@ function addDays( date, days ) {
 	return value.toISOString().slice( 0, 10 );
 }
 
-// A Fair Audience ledger row for a relationship. Statistics never read it.
-function addLedgerTransaction( relationshipId, amount, date ) {
-	const output = execFileSync(
-		'npx',
-		[
-			'wp-env',
-			'run',
-			'tests-cli',
-			'wp',
-			'eval-file',
-			'wp-content/mu-plugins/scripts/seed-event-statistics-transaction.php',
-			String( relationshipId ),
-			String( amount ),
-			'EUR',
-			'paid',
-			'charge',
-			`${ date } 12:00:00`,
-			'0',
-		],
-		{ cwd: new URL( '../../../../', import.meta.url ), encoding: 'utf8' }
-	);
-	const match = output.match( /E2E_EVENT_STATISTICS_TRANSACTION:(\{.*\})/ );
-	if ( ! match )
-		throw new Error(
-			`Expected transaction fixture output, got:\n${ output }`
-		);
-	return JSON.parse( match[ 1 ] ).transactionId;
-}
-
 function runFixture( script, args, marker ) {
 	const output = execFileSync(
 		'npx',
@@ -602,14 +573,13 @@ test.describe( 'EventStatisticsController', () => {
 		signup( null, at( -1, '23:30:00' ), [ confirmed(), confirmed() ], {
 			quantity: 3,
 		} );
-		// A relationship with no purchase behind it, its activity and its
-		// ledger payment are not an admission, an activity or revenue.
+		// A relationship with no purchase behind it and its activity are
+		// not an admission or an activity.
 		const legacy = await addRelationship( eventDateId );
 		ticketFixture( 'participant-option', {
 			relationshipId: legacy.relationshipId,
 			...thai,
 		} );
-		addLedgerTransaction( legacy.relationshipId, 20, addDays( today, -3 ) );
 
 		let body = await getStatistics( eventDateId );
 		expect( body.total_tickets ).toBe( 12 );
