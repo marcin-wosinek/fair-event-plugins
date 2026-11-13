@@ -248,90 +248,24 @@ class EmailService {
 			$event->post_title
 		);
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( "We'd love to hear from you about %s!", 'fair-audience' ),
-								'<strong>' . esc_html( $event->post_title ) . '</strong>'
-							) . '
-							</p>';
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: event title */
+					esc_html__( "We'd love to hear from you about %s!", 'fair-audience' ),
+					'<strong>' . esc_html( $event->post_title ) . '</strong>'
+				)
+			);
 
 		if ( ! empty( $custom_message ) ) {
-			$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . nl2br( esc_html( $custom_message ) ) . '
-							</p>';
+			$content .= EmailLayout::paragraph( nl2br( esc_html( $custom_message ) ) );
 		}
 
-		$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Please take a moment to answer our quick poll:', 'fair-audience' ) . '
-							</p>
+		$content .= EmailLayout::paragraph( esc_html__( 'Please take a moment to answer our quick poll:', 'fair-audience' ) )
+			. EmailLayout::button( esc_url( $poll_url ), esc_html__( 'Answer Poll', 'fair-audience' ) )
+			. $this->thanks_html( $site_name, EmailLayout::NOTE );
 
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $poll_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Answer Poll', 'fair-audience' ) . '
-								</a>
-							</p>
-
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-										esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-										'<br>',
-										esc_html( $site_name )
-									) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( 'If the button above doesn\'t work, copy and paste this link:', 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0; word-break: break-all;">
-								<a href="' . esc_url( $poll_url ) . '" style="color: #0073aa;">' . esc_url( $poll_url ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $this->button_fallback_html( $poll_url ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -453,82 +387,14 @@ class EmailService {
 			$site_name
 		);
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph( esc_html__( 'Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below.', 'fair-audience' ) )
+			. EmailLayout::button( esc_url( $confirm_url ), esc_html__( 'Confirm Email', 'fair-audience' ) )
+			. EmailLayout::paragraph( esc_html__( 'This link will expire in 48 hours.', 'fair-audience' ), EmailLayout::NOTE )
+			. EmailLayout::paragraph( esc_html__( "If you didn't sign up for this mailing list, you can safely ignore this email.", 'fair-audience' ), EmailLayout::NOTE )
+			. $this->thanks_html( $site_name );
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Thank you for signing up for our mailing list! Please confirm your email address by clicking the button below.', 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $confirm_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Confirm Email', 'fair-audience' ) . '
-								</a>
-							</p>
-
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . esc_html__( 'This link will expire in 48 hours.', 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . esc_html__( "If you didn't sign up for this mailing list, you can safely ignore this email.", 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0; word-break: break-all;">
-								<a href="' . esc_url( $confirm_url ) . '" style="color: #0073aa;">' . esc_url( $confirm_url ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $this->button_fallback_html( $confirm_url ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -561,78 +427,13 @@ class EmailService {
 
 		$answers_html = QuestionnaireAnswerRows::html( $answers );
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph( esc_html__( 'Thank you for signing up! Here are the answers you submitted:', 'fair-audience' ) )
+			. EmailLayout::answers_table( $answers_html, '0 0 30px 0' )
+			. EmailLayout::button( esc_url( $edit_url ), esc_html__( 'Edit Your Answers', 'fair-audience' ) )
+			. $this->thanks_html( $site_name );
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Thank you for signing up! Here are the answers you submitted:', 'fair-audience' ) . '
-							</p>
-
-							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 30px 0; border: 1px solid #eeeeee; border-radius: 4px;">
-								' . $answers_html . '
-							</table>
-
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $edit_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Edit Your Answers', 'fair-audience' ) . '
-								</a>
-							</p>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-										esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-										'<br>',
-										esc_html( $site_name )
-									) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0; word-break: break-all;">
-								<a href="' . esc_url( $edit_url ) . '" style="color: #0073aa;">' . esc_url( $edit_url ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $this->button_fallback_html( $edit_url ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -671,90 +472,23 @@ class EmailService {
 			? __( 'Continue to payment', 'fair-audience' )
 			: __( 'Continue to sign up', 'fair-audience' );
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: event title */
+					esc_html__( "You're registering for %s.", 'fair-audience' ),
+					'<strong>' . esc_html( $event->post_title ) . '</strong>'
+				)
+			)
+			. EmailLayout::paragraph( esc_html__( "We've saved your answers — click below to continue where you left off:", 'fair-audience' ) )
+			. EmailLayout::button( esc_url( $resume_url ), esc_html( $button_text ) )
+			. EmailLayout::paragraph( esc_html__( "If you didn't try to register, you can safely ignore this email.", 'fair-audience' ), EmailLayout::NOTE )
+			. $this->thanks_html( $site_name );
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
+		$footer = $this->button_fallback_html( $resume_url, true )
+			. $this->invitation_preferences_html( $manage_subscription_url );
 
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( "You're registering for %s.", 'fair-audience' ),
-								'<strong>' . esc_html( $event->post_title ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( "We've saved your answers — click below to continue where you left off:", 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $resume_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html( $button_text ) . '
-								</a>
-							</p>
-
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . esc_html__( "If you didn't try to register, you can safely ignore this email.", 'fair-audience' ) . '
-							</p>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0 0 15px 0; word-break: break-all;">
-								<a href="' . esc_url( $resume_url ) . '" style="color: #0073aa;">' . esc_url( $resume_url ) . '</a>
-							</p>
-							<p style="margin: 0; border-top: 1px solid #e0e0e0; padding-top: 15px;">
-								' . esc_html__( "Don't want to receive event invitations?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $footer );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -831,58 +565,143 @@ class EmailService {
 		$site_name               = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
 
-		return '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
+		$body = $this->greeting_html( $participant->name ) . '
 							<div style="margin: 0 0 20px 0; font-size: 16px;">
 								' . wp_kses_post( $content ) . '
-							</div>
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+							</div>'
+			. $this->thanks_html( $site_name );
+
+		$footer = $this->manage_preferences_html(
+			esc_html__( "Don't want to receive these emails?", 'fair-audience' ),
+			$manage_subscription_url,
+			'margin: 0;'
+		);
+
+		return EmailLayout::document( esc_html( $site_name ), $body, $footer );
+	}
+
+	/**
+	 * Render the standard "Hi <name>," greeting paragraph.
+	 *
+	 * @param string $name Unescaped recipient name.
+	 * @return string Paragraph HTML.
+	 */
+	private function greeting_html( $name ) {
+		return EmailLayout::paragraph(
+			sprintf(
+				/* translators: %s: participant first name */
+				esc_html__( 'Hi %s,', 'fair-audience' ),
+				'<strong>' . esc_html( $name ) . '</strong>'
+			)
+		);
+	}
+
+	/**
+	 * Render the "Thanks, The <site> Team" sign-off.
+	 *
+	 * @param string $site_name Unescaped site name.
+	 * @param string $style     Paragraph style.
+	 * @return string Paragraph HTML.
+	 */
+	private function thanks_html( $site_name, $style = EmailLayout::SIGN_OFF ) {
+		return EmailLayout::paragraph(
+			sprintf(
+				/* translators: 1: line break, 2: site name */
+				esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
+				'<br>',
+				esc_html( $site_name )
+			),
+			$style
+		);
+	}
+
+	/**
+	 * Render the "See you there! The <site> Team" sign-off.
+	 *
+	 * @param string $site_name Unescaped site name.
+	 * @return string Paragraph HTML.
+	 */
+	private function see_you_there_html( $site_name ) {
+		return EmailLayout::paragraph(
+			sprintf(
+				/* translators: 1: line break, 2: site name */
+				esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
+				'<br>',
+				esc_html( $site_name )
+			),
+			EmailLayout::SIGN_OFF
+		);
+	}
+
+	/**
+	 * Render the copy-this-link fallback for a message's main button.
+	 *
+	 * @param string $url          Unescaped button destination.
+	 * @param bool   $more_follows Whether more footer content follows.
+	 * @return string Footer HTML.
+	 */
+	private function button_fallback_html( $url, $more_follows = false ) {
+		return EmailLayout::link_fallback(
+			esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ),
+			esc_url( $url ),
+			$more_follows
+		);
+	}
+
+	/**
+	 * Render a question followed by the "Manage your preferences" link.
+	 *
+	 * @param string $question_html Escaped lead-in question.
+	 * @param string $url           Unescaped manage-subscription URL.
+	 * @param string $style         Paragraph style.
+	 * @return string Paragraph HTML.
+	 */
+	private function manage_preferences_html( $question_html, $url, $style ) {
+		return EmailLayout::paragraph(
+			$question_html . '
+								<a href="' . esc_url( $url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>',
+			$style
+		);
+	}
+
+	/**
+	 * Render the event-invitation opt-out line, set off by a divider.
+	 *
+	 * @param string $url Unescaped manage-subscription URL.
+	 * @return string Paragraph HTML.
+	 */
+	private function invitation_preferences_html( $url ) {
+		return $this->manage_preferences_html(
+			esc_html__( "Don't want to receive event invitations?", 'fair-audience' ),
+			$url,
+			'margin: 0; border-top: 1px solid #e0e0e0; padding-top: 15px;'
+		);
+	}
+
+	/**
+	 * Render the site-name footer line.
+	 *
+	 * @param string $site_name Unescaped site name.
+	 * @return string Paragraph HTML.
+	 */
+	private function site_name_footer_html( $site_name ) {
+		return EmailLayout::paragraph( esc_html( $site_name ), 'margin: 0;' );
+	}
+
+	/**
+	 * Render the compact "Hi <name>," greeting used by short notices.
+	 *
+	 * Unlike {@see greeting_html()} it sets no font size of its own.
+	 *
+	 * @param string $name Unescaped recipient name.
+	 * @return string Paragraph HTML.
+	 */
+	private function compact_greeting_html( $name ) {
+		return '<p style="margin: 0 0 20px 0;">' . sprintf(
+			/* translators: %s: participant first name */
+			esc_html__( 'Hi %s,', 'fair-audience' ),
+			'<strong>' . esc_html( $name ) . '</strong>'
+		) . '</p>';
 	}
 
 	/**
@@ -996,72 +815,7 @@ class EmailService {
 
 		// Replace participant-specific placeholders.
 		$content = $this->replace_placeholders( $content, $participant, $event_date_id );
-
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		// Build manage subscription URL for unsubscribe link.
-		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
-
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<div style="margin: 0 0 20px 0; font-size: 16px;">
-								' . wp_kses_post( $content ) . '
-							</div>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = $this->build_custom_mail_html( $participant, $content );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, $email_type );
 	}
@@ -1307,72 +1061,7 @@ class EmailService {
 
 		// Replace participant-specific placeholders.
 		$content = $this->replace_placeholders( $content, $participant );
-
-		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		// Build manage subscription URL for unsubscribe link.
-		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
-
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<div style="margin: 0 0 20px 0; font-size: 16px;">
-								' . wp_kses_post( $content ) . '
-							</div>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html__( "Don't want to receive these emails?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = $this->build_custom_mail_html( $participant, $content );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, $email_type );
 	}
@@ -1424,110 +1113,30 @@ class EmailService {
 			$fee->name
 		);
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'This is a friendly reminder about a pending payment:', 'fair-audience' ) . '
-							</p>
-
-							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Fee:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( $fee->name ) . '</td>
-								</tr>
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( (float) $fee_payment->amount, $fee->currency ) ) . '</td>
-								</tr>';
-
+		$rows = array(
+			array( esc_html__( 'Fee:', 'fair-audience' ), esc_html( $fee->name ) ),
+			array( esc_html__( 'Amount:', 'fair-audience' ), esc_html( Money::format_display( (float) $fee_payment->amount, $fee->currency ) ) ),
+		);
 		if ( ! empty( $fee->due_date ) ) {
-			$message .= '
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Due Date:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( $fee->due_date ) . '</td>
-								</tr>';
+			$rows[] = array( esc_html__( 'Due Date:', 'fair-audience' ), esc_html( $fee->due_date ) );
 		}
 
-		$message .= '
-							</table>';
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph( esc_html__( 'This is a friendly reminder about a pending payment:', 'fair-audience' ) )
+			. EmailLayout::details_table( $rows );
+		$footer  = '';
 
 		// Add "Pay Now" button if fair-payments-connector plugin is active.
 		if ( function_exists( 'fair_payment_create_transaction' ) ) {
 			$payment_url = FeePaymentToken::get_url( $fee_payment->id );
-			$message    .= '
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $payment_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Pay Now', 'fair-audience' ) . '
-								</a>
-							</p>';
+			$content    .= EmailLayout::button( esc_url( $payment_url ), esc_html__( 'Pay Now', 'fair-audience' ) );
+			$footer      = $this->button_fallback_html( $payment_url, true );
 		}
 
-		$message .= '
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-			esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-			'<br>',
-			esc_html( $site_name )
-		) . '
-							</p>
-						</td>
-					</tr>
+		$content .= $this->thanks_html( $site_name, EmailLayout::NOTE );
+		$footer  .= $this->site_name_footer_html( $site_name );
 
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">';
-
-		if ( function_exists( 'fair_payment_create_transaction' ) ) {
-			$message .= '
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( 'If the button above doesn\'t work, copy and paste this link:', 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0 0 15px 0; word-break: break-all;">
-								<a href="' . esc_url( $payment_url ) . '" style="color: #0073aa;">' . esc_url( $payment_url ) . '</a>
-							</p>';
-		}
-
-		$message .= '
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $footer );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -1709,50 +1318,17 @@ class EmailService {
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<div style="margin: 0; font-size: 16px;">
+		$content = '<div style="margin: 0; font-size: 16px;">
 								' . wp_kses_post( $content ) . '
-							</div>
-						</td>
-					</tr>
+							</div>';
 
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-							<p style="margin: 10px 0 0 0; font-style: italic;">
-								' . esc_html__( '[Test email — real sends to subscribers include a "Manage your preferences" unsubscribe link here.]', 'fair-audience' ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$footer = $this->site_name_footer_html( $site_name )
+			. EmailLayout::paragraph(
+				esc_html__( '[Test email — real sends to subscribers include a "Manage your preferences" unsubscribe link here.]', 'fair-audience' ),
+				'margin: 10px 0 0 0; font-style: italic;'
+			);
+
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $footer );
 
 		return 'sent' === $this->deliver( $to_email, $subject, $message, EmailType::MINIMAL );
 	}
@@ -1799,80 +1375,18 @@ class EmailService {
 				. '</p>';
 		}
 
-		$answers_table = '';
-		if ( ! empty( $answers_html ) ) {
-			$answers_table = '
-							<p style="margin: 0 0 10px 0; font-size: 16px;">
-								' . esc_html__( 'Here are the answers you submitted:', 'fair-audience' ) . '
-							</p>
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph( esc_html__( 'Thank you for your submission! We have received your response.', 'fair-audience' ) )
+			. $context_html;
 
-							<table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border: 1px solid #eeeeee; border-radius: 4px;">
-								' . $answers_html . '
-							</table>';
+		if ( ! empty( $answers_html ) ) {
+			$content .= EmailLayout::paragraph( esc_html__( 'Here are the answers you submitted:', 'fair-audience' ), 'margin: 0 0 10px 0; font-size: 16px;' )
+				. EmailLayout::answers_table( $answers_html );
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
+		$content .= $this->thanks_html( $site_name );
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Thank you for your submission! We have received your response.', 'fair-audience' ) . '
-							</p>
-
-							' . $context_html . '
-
-							' . $answers_table . '
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-								esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-audience' ),
-								'<br>',
-								esc_html( $site_name )
-							) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $this->site_name_footer_html( $site_name ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -2037,94 +1551,36 @@ class EmailService {
 		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
 		$currency = ! empty( $transaction->currency ) ? $transaction->currency : 'EUR';
 
-		$payment_html = '';
-		if ( $amount > 0 ) {
-			$payment_html = '
-							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount paid:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
-								</tr>
-							</table>';
-		}
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: event title */
+					esc_html__( 'The following activities have been added to your signup for %s.', 'fair-audience' ),
+					SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
+				)
+			);
 
-		$options_html = '';
 		if ( ! empty( $added_option_names ) ) {
 			$options_list = '';
 			foreach ( $added_option_names as $name ) {
 				$options_list .= '<li style="padding: 4px 0;">' . esc_html( $name ) . '</li>';
 			}
-			$options_html = '
+			$content .= '
 							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Activities added:', 'fair-audience' ) . '</p>
 							<ul style="margin: 0 0 20px 20px; padding: 0;">' . $options_list . '</ul>';
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
-						</td>
-					</tr>
+		if ( $amount > 0 ) {
+			$content .= EmailLayout::details_table(
+				array(
+					array( esc_html__( 'Amount paid:', 'fair-audience' ), esc_html( Money::format_display( $amount, $currency ) ) ),
+				)
+			);
+		}
 
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
+		$content .= $this->see_you_there_html( $site_name );
 
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( 'The following activities have been added to your signup for %s.', 'fair-audience' ),
-								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
-							) . '
-							</p>
-
-							' . $options_html . '
-
-							' . $payment_html . '
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-								esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
-								'<br>',
-								esc_html( $site_name )
-							) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $event_title ), $content, $this->site_name_footer_html( $site_name ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -2170,89 +1626,46 @@ class EmailService {
 		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
 		$currency = ! empty( $transaction->currency ) ? $transaction->currency : 'EUR';
 
-		$amount_html = '';
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: event title */
+					esc_html__( 'Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below.', 'fair-audience' ),
+					SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
+				)
+			);
+
 		if ( $amount > 0 ) {
-			$amount_html = '
-							<table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0;">
-								<tr>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">' . esc_html__( 'Amount:', 'fair-audience' ) . '</td>
-									<td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . esc_html( Money::format_display( $amount, $currency ) ) . '</td>
-								</tr>
-							</table>';
+			$content .= EmailLayout::details_table(
+				array(
+					array( esc_html__( 'Amount:', 'fair-audience' ), esc_html( Money::format_display( $amount, $currency ) ) ),
+				)
+			);
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #b32d2e; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
-						</td>
-					</tr>
-
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( 'Your payment for %s didn’t go through. Your spot is still held for a short while — pick up where you left off using the link below.', 'fair-audience' ),
-								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
-							) . '
-							</p>
-
-							' . $amount_html . '
-
+		// This notice keeps its own larger button and inline link fallback.
+		$content .= '
 							<p style="margin: 30px 0; text-align: center;">
 								<a href="' . esc_url( $resume_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; font-size: 16px;">
 									' . esc_html__( 'Resume payment', 'fair-audience' ) . '
 								</a>
-							</p>
+							</p>'
+			. EmailLayout::paragraph(
+				esc_html__( 'If the button doesn’t work, copy and paste this link into your browser:', 'fair-audience' ) . '<br>
+								<a href="' . esc_url( $resume_url ) . '" style="color: #0073aa; word-break: break-all;">' . esc_html( $resume_url ) . '</a>',
+				EmailLayout::SIGN_OFF
+			)
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: site name */
+					esc_html__( 'See you soon,%1$sThe %2$s Team', 'fair-audience' ),
+					'<br>',
+					esc_html( $site_name )
+				),
+				EmailLayout::SIGN_OFF
+			);
 
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . esc_html__( 'If the button doesn’t work, copy and paste this link into your browser:', 'fair-audience' ) . '<br>
-								<a href="' . esc_url( $resume_url ) . '" style="color: #0073aa; word-break: break-all;">' . esc_html( $resume_url ) . '</a>
-							</p>
-
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: %s: site name */
-									esc_html__( 'See you soon,%1$sThe %2$s Team', 'fair-audience' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">
-								' . esc_html( $site_name ) . '
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $event_title ), $content, $this->site_name_footer_html( $site_name ), EmailLayout::HEADER_COLOR_ALERT );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -2302,94 +1715,27 @@ class EmailService {
 			$event->post_title
 		);
 
-		// Build HTML message body.
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event->post_title ) . '</h1>
-						</td>
-					</tr>
-
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $participant->name ) . '</strong>'
-							) . '
-							</p>
-
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . sprintf(
-									/* translators: %s: event title */
-								esc_html__( 'We have a new event coming up: %s.', 'fair-audience' ),
-								'<strong>' . esc_html( $event->post_title ) . '</strong>'
-							) . '
-							</p>';
+		$content = $this->greeting_html( $participant->name )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: %s: event title */
+					esc_html__( 'We have a new event coming up: %s.', 'fair-audience' ),
+					'<strong>' . esc_html( $event->post_title ) . '</strong>'
+				)
+			);
 
 		if ( ! empty( $custom_message ) ) {
-			$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . nl2br( esc_html( $custom_message ) ) . '
-							</p>';
+			$content .= EmailLayout::paragraph( nl2br( esc_html( $custom_message ) ) );
 		}
 
-		$message .= '
-							<p style="margin: 0 0 20px 0; font-size: 16px;">
-								' . esc_html__( 'Would you like to join? Click the button below to sign up:', 'fair-audience' ) . '
-							</p>
+		$content .= EmailLayout::paragraph( esc_html__( 'Would you like to join? Click the button below to sign up:', 'fair-audience' ) )
+			. EmailLayout::button( esc_url( $signup_url ), esc_html__( 'Sign Up Now', 'fair-audience' ) )
+			. $this->see_you_there_html( $site_name );
 
-							<p style="margin: 0 0 30px 0; text-align: center;">
-								<a href="' . esc_url( $signup_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Sign Up Now', 'fair-audience' ) . '
-								</a>
-							</p>
+		$footer = $this->button_fallback_html( $signup_url, true )
+			. $this->invitation_preferences_html( $manage_subscription_url );
 
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-										esc_html__( 'See you there!%1$sThe %2$s Team', 'fair-audience' ),
-										'<br>',
-										esc_html( $site_name )
-									) . '
-							</p>
-						</td>
-					</tr>
-
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">
-								' . esc_html__( "If the button above doesn't work, copy and paste this link:", 'fair-audience' ) . '
-							</p>
-							<p style="margin: 0 0 15px 0; word-break: break-all;">
-								<a href="' . esc_url( $signup_url ) . '" style="color: #0073aa;">' . esc_url( $signup_url ) . '</a>
-							</p>
-							<p style="margin: 0; border-top: 1px solid #e0e0e0; padding-top: 15px;">
-								' . esc_html__( "Don't want to receive event invitations?", 'fair-audience' ) . '
-								<a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>
-							</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$message = EmailLayout::document( esc_html( $event->post_title ), $content, $footer );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MARKETING );
 	}
@@ -2670,49 +2016,23 @@ class EmailService {
 
 		$greeting_name = ! empty( $participant->name ) ? $participant->name : __( 'there', 'fair-audience' );
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $event_title ) . '</h1>
-						</td>
-					</tr>
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $greeting_name ) . '</strong>'
-							) . '</p>
-							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: event title */
-								esc_html__( 'Thanks for registering your interest in %s. We will let you know when there are updates.', 'fair-audience' ),
-								SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
-							) . '</p>
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">' . esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ) . '</p>
-						</td>
-					</tr>
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">' . esc_html__( 'No longer interested?', 'fair-audience' ) . '</p>
-							<p style="margin: 0;"><a href="' . esc_url( $unsubscribe_url ) . '" style="color: #0073aa;">' . esc_html__( 'Unsubscribe from updates about this event', 'fair-audience' ) . '</a></p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$intro = sprintf(
+			/* translators: %s: event title */
+			esc_html__( 'Thanks for registering your interest in %s. We will let you know when there are updates.', 'fair-audience' ),
+			SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
+		);
+
+		$content = $this->compact_greeting_html( $greeting_name ) . '
+							<p style="margin: 0 0 20px 0;">' . $intro . '</p>
+							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">' . esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ) . '</p>';
+
+		$footer = EmailLayout::footer_link(
+			esc_html__( 'No longer interested?', 'fair-audience' ),
+			esc_url( $unsubscribe_url ),
+			esc_html__( 'Unsubscribe from updates about this event', 'fair-audience' )
+		);
+
+		$message = EmailLayout::document( esc_html( $event_title ), $content, $footer );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -2764,44 +2084,16 @@ class EmailService {
 			);
 		}
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $greeting_name ) . '</strong>'
-							) . '</p>
-							<p style="margin: 0 0 20px 0;">' . $intro . '</p>
-						</td>
-					</tr>
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px 30px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0 0 5px 0;">' . esc_html__( 'Changed your mind?', 'fair-audience' ) . '</p>
-							<p style="margin: 0;"><a href="' . esc_url( $manage_subscription_url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your subscription or unsubscribe', 'fair-audience' ) . '</a></p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$content = $this->compact_greeting_html( $greeting_name ) . '
+							<p style="margin: 0 0 20px 0;">' . $intro . '</p>';
+
+		$footer = EmailLayout::footer_link(
+			esc_html__( 'Changed your mind?', 'fair-audience' ),
+			esc_url( $manage_subscription_url ),
+			esc_html__( 'Manage your subscription or unsubscribe', 'fair-audience' )
+		);
+
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $footer );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
@@ -2831,40 +2123,12 @@ class EmailService {
 			$site_name
 		);
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 0;">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-					<tr>
-						<td style="padding: 40px 30px;">
-							<p style="margin: 0 0 20px 0;">' . sprintf(
-								/* translators: %s: participant first name */
-								esc_html__( 'Hi %s,', 'fair-audience' ),
-								'<strong>' . esc_html( $greeting_name ) . '</strong>'
-							) . '</p>
+		$content = $this->compact_greeting_html( $greeting_name ) . '
 							<p style="margin: 0 0 20px 0;">' . esc_html__( 'Someone asked to subscribe this address, which is already subscribed. Nothing was changed. To review or change which emails you receive, open your subscription page.', 'fair-audience' ) . '</p>
 							<p style="margin: 0 0 20px 0; text-align: center;"><a href="' . esc_url( $manage_subscription_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none;">' . esc_html__( 'Manage your subscription', 'fair-audience' ) . '</a></p>
-							<p style="margin: 0; font-size: 14px; color: #666666;">' . esc_html__( 'If you did not ask for this, you can ignore this email.', 'fair-audience' ) . '</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+							<p style="margin: 0; font-size: 14px; color: #666666;">' . esc_html__( 'If you did not ask for this, you can ignore this email.', 'fair-audience' ) . '</p>';
+
+		$message = EmailLayout::document( esc_html( $site_name ), $content );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}
