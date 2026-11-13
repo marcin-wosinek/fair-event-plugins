@@ -22,6 +22,7 @@
 		"updatepo": "wp i18n update-po languages/fair-platform.pot languages/",
 		"test": "npm run test:php",
 		"test:php": "node ../scripts/php-test-runner.mjs",
+		"test:api": "playwright test src/API/__tests__/",
 		"svn:checkout": "svn co https://plugins.svn.wordpress.org/fair-platform svn",
 		"svn:copy": "cp -r readme.txt fair-platform.php composer* languages CHANGELOG.md svn/trunk"
 	},
