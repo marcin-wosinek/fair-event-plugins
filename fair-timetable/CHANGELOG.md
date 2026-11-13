@@ -1,5 +1,14 @@
 # fair-timetable
 
+## 0.8.1
+
+### Patch Changes
+
+- 1308cee: Feature flags now resolve through the shared Fair Event Plugins library, with no change to existing settings, defaults, wp-config constants or filters. Fair Finance and Fair Events Experimental now bundle the shared library, so Fair Finance shows the shared settings screen even when it is the only active Fair plugin.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
 ## 0.8.0
 
 ### Minor Changes

@@ -1,5 +1,45 @@
 # fair-events-experimental
 
+## 2.2.1
+
+### Patch Changes
+
+- ec28559: Event Notifications, Event Feeds, Financial Entries and Payment Transactions now share one list layout: the page title with its add and import actions beside it, then a toolbar with search and the frequent filters, More filters for the less-used ones, Clear filters while a filter is active, and the result count ("51–100 of 236 transactions"). A summary lists the filters behind the shown rows, including those inside a collapsed More filters, and pagination sits below the table on the right. Selected transactions show their count next to Export Selected. Empty lists offer their first step (add or import), and lists with no matches offer to clear the filters. Each page keeps its existing search, filters, sorting, pagination and actions.
+- f116f6e: The Event Feeds list is more compact. Each feed's name and slug now share one column, the status reads "Enabled" or "Disabled" with a marker instead of a colored badge, and Edit is the only button shown on each row. Copy iCal feed URL, Copy JSON API URL and Delete are in each row's "⋮" menu. Copying confirms which feed's URL was copied, and if the browser blocks the clipboard the message shows the URL to copy by hand. On tablets and phones each feed is shown as a labeled block instead of a wide table.
+- f483b31: Confirmation dialogs in Audience Experimental, Events Experimental, Payments Connector Experimental, Finance, and Platform now come from one shared implementation. Their wording, pending state, inline errors, retry, keyboard focus, and wrapping titles work exactly as before.
+- 1308cee: Feature flags now resolve through the shared Fair Event Plugins library, with no change to existing settings, defaults, wp-config constants or filters. Fair Finance and Fair Events Experimental now bundle the shared library, so Fair Finance shows the shared settings screen even when it is the only active Fair plugin.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
+- Updated dependencies [ec28559]
+- Updated dependencies [d90a6fc]
+- Updated dependencies [c9da514]
+- Updated dependencies [7c4f113]
+- Updated dependencies [1511cd5]
+- Updated dependencies [d706962]
+- Updated dependencies [5ad8804]
+- Updated dependencies [f533f2c]
+- Updated dependencies [0e02653]
+- Updated dependencies [78d1628]
+- Updated dependencies [b6db44c]
+- Updated dependencies [d49f370]
+- Updated dependencies [ec04667]
+- Updated dependencies [0db2028]
+- Updated dependencies [c9412c0]
+- Updated dependencies [c1a2422]
+- Updated dependencies [aba2834]
+- Updated dependencies [5af7bd1]
+- Updated dependencies [8a1a5ed]
+- Updated dependencies [f483b31]
+- Updated dependencies [c49a950]
+- Updated dependencies [8d78e04]
+- Updated dependencies [5799795]
+- Updated dependencies [e487450]
+- Updated dependencies [3a06a5b]
+    - fair-events@2.3.0
+    - fair-events-shared@0.9.0
+
 ## 2.2.0
 
 ### Minor Changes
