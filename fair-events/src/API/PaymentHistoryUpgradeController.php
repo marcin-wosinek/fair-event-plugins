@@ -7,6 +7,7 @@
 
 namespace FairEvents\API;
 
+use FairEvents\Services\PaymentHistoryCleanup;
 use FairEvents\Services\PaymentHistoryUpgrade;
 use WP_Error;
 use WP_REST_Controller;
@@ -19,7 +20,8 @@ defined( 'WPINC' ) || die;
 /**
  * Upgrade readiness after the payment history migration
  * (PAYMENT_HISTORY_MIGRATION.md §8.17): the completion evidence and the
- * checklist behind it, and the operator's staging verification. Kept apart
+ * checklist behind it, the operator's staging verification, and the
+ * source-history cleanup (§8.21). Kept apart
  * from PaymentHistoryController, whose migration routes are retired by
  * #2252 while these stay. Every route needs `manage_options`: 401 when
  * logged out, 403 without it.
@@ -103,6 +105,23 @@ class PaymentHistoryUpgradeController extends WP_REST_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/cleanup',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'run_cleanup' ),
+				'permission_callback' => $permission,
+				'args'                => array(
+					'backup_confirmed' => array(
+						'type'              => 'boolean',
+						'default'           => false,
+						'validate_callback' => 'rest_validate_request_arg',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -154,5 +173,38 @@ class PaymentHistoryUpgradeController extends WP_REST_Controller {
 			return $result;
 		}
 		return rest_ensure_response( PaymentHistoryUpgrade::status() );
+	}
+
+	/**
+	 * Remove the migration's own storage (PAYMENT_HISTORY_MIGRATION.md
+	 * §8.21). A repeat after it ran changes nothing.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error The upgrade status with `performed`.
+	 */
+	public function run_cleanup( $request ) {
+		$result = PaymentHistoryCleanup::run(
+			array(
+				'backup_confirmed' => (bool) $request->get_param( 'backup_confirmed' ),
+				'user_id'          => get_current_user_id(),
+			)
+		);
+		if ( is_wp_error( $result ) ) {
+			$messages = array(
+				'backup_required'        => __( 'Confirm that you took a fresh database backup before removing the old payment records.', 'fair-events' ),
+				'cleanup_not_applicable' => __( 'This site has no old payment records to remove.', 'fair-events' ),
+				'cleanup_blocked'        => __( 'The old payment records can’t be removed yet. Reload the page to see why.', 'fair-events' ),
+				'cleanup_busy'           => __( 'The old payment records are being removed already. Try again in a moment.', 'fair-events' ),
+				'cleanup_failed'         => __( 'Not all the old payment records could be removed. Nothing still in use was changed; try again to finish.', 'fair-events' ),
+			);
+			$code     = $result->get_error_code();
+			return new WP_Error( $code, $messages[ $code ] ?? $result->get_error_message(), $result->get_error_data() );
+		}
+		return rest_ensure_response(
+			array_merge(
+				PaymentHistoryUpgrade::status(),
+				array( 'performed' => (bool) $result['performed'] )
+			)
+		);
 	}
 }

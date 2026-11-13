@@ -307,6 +307,42 @@ function TransactionSummary( { context } ) {
 }
 
 /**
+ * The Fair Audience payment record a finding cites, as copied into its
+ * detail before the old records were removed
+ * (PAYMENT_HISTORY_MIGRATION.md §8.21).
+ *
+ * @param {Object|null} row Copied ledger row, or null when it was already gone.
+ * @return {string} Text.
+ */
+export function describeLedgerRow( row ) {
+	if ( ! row ) {
+		return __(
+			'The record no longer existed when the old records were removed.',
+			'fair-events'
+		);
+	}
+	return row.kind === 'refund'
+		? sprintf(
+				/* translators: 1: registration number, 2: payment number */
+				__(
+					'Refund for registration #%1$d, payment #%2$d. Kept here after the old records were removed.',
+					'fair-events'
+				),
+				row.event_participant_id,
+				row.transaction_id
+			)
+		: sprintf(
+				/* translators: 1: registration number, 2: payment number */
+				__(
+					'Charge for registration #%1$d, payment #%2$d. Kept here after the old records were removed.',
+					'fair-events'
+				),
+				row.event_participant_id,
+				row.transaction_id
+			);
+}
+
+/**
  * Dialog for one finding.
  *
  * @param {Object}   props
@@ -562,6 +598,23 @@ export default function FindingModal( { findingId, onClose, onDecided } ) {
 					<dd>{ formatEventDate( finding.event_date ) }</dd>
 					<dt>{ __( 'Status', 'fair-events' ) }</dt>
 					<dd>{ statuses[ finding.status ] ?? finding.status }</dd>
+					{ finding.source_type === 'ledger_row' &&
+						finding.detail &&
+						'ledger_row' in finding.detail && (
+							<>
+								<dt>
+									{ __(
+										'Fair Audience payment record',
+										'fair-events'
+									) }
+								</dt>
+								<dd>
+									{ describeLedgerRow(
+										finding.detail.ledger_row
+									) }
+								</dd>
+							</>
+						) }
 				</dl>
 
 				<TransactionSummary context={ context } />

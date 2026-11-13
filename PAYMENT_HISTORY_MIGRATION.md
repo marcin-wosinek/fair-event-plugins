@@ -25,7 +25,8 @@ Each section is marked as one of:
 > shipped up to `build-2.2.0`, the last release that runs it. Newer releases
 > start only on a site that finished it or was installed fresh: see §8.16
 > and §8.17. Its tooling is retired (§8.18), and so are its shadow writes
-> (§8.19) and the Audience ledger (§8.20).
+> (§8.19) and the Audience ledger (§8.20). An administrator can then remove
+> the migration's own storage (§8.21).
 
 Anything this contract doesn't state is not yet decided. A later stage that
 needs to decide it records a timestamped `## Decision` comment on its issue
@@ -1581,7 +1582,7 @@ is what every site does, whether or not an activation is recorded.
 The stage 4 and stage 5 activations stay recorded but are no longer shown or
 read: the migration tooling is retired (§8.18). Historical synchronization
 (#2253, §8.19), the Audience ledger (#2254, §8.20) and the storage removal
-(#2254) are separate. A site that never
+(#2254, §8.21) are separate. A site that never
 completed the migration can't upgrade directly to this release: Fair Events
 and Fair Audience refuse to start there (§8.17).
 
@@ -1640,12 +1641,12 @@ The experimental plugins aren't gated and keep their own routes.
 - `safe_to_upgrade`: completion evidence is recorded. This is what the
   releases without the migration tooling require.
 - `checks`: each condition and whether it holds now, with what to do next.
-- `ready_for_cleanup` (`applicable`, `ready`, `blockers`): whether the
-  source-history removal of #2254 could run. Never inferred from versions or
-  from `safe_to_upgrade`: it also needs no failed migration work and no
-  blocking finding now, and every staging check recorded as passed
-  (`staging_verification_incomplete`). `cleanup_unavailable` stays listed
-  until #2254 adds the cleanup. Not applicable to a `fresh_install` site.
+- `ready_for_cleanup` (`applicable`, `ready`, `completed`, `blockers`):
+  whether the source-history cleanup (§8.21) can run. Never inferred from
+  versions or from `safe_to_upgrade`: it also needs no failed migration work
+  and no blocking finding now, and every staging check recorded as passed
+  (`staging_verification_incomplete`). Once it ran, `completed` holds its
+  record. Not applicable to a `fresh_install` site.
 
 **Staging verification** (`PUT fair-events/v1/payment-history/upgrade/staging-verification`,
 option `fair_events_payment_history_staging_verification`): the date the
@@ -1660,9 +1661,10 @@ never makes a site safe to upgrade.
 
 **For the cleanup (#2252–#2254).** Keep `PaymentHistoryUpgrade`, both
 options, the upgrade routes and the two entry-point checks. Once the
-migration's own records are gone (#2254), the evidence is the only thing
+migration's own records are gone (§8.21), the evidence is the only thing
 that tells a migrated site from an unmigrated one, so a missing evidence
-must keep meaning "refuse", and `decide()` may then only refuse.
+must keep meaning "refuse", and `decide()` may then only refuse: without
+the options it reads, it finds no stage 4 or stage 5 activation.
 
 **Final verification** (after #2252–#2254, before release) remains open on
 #2255: the fresh, eligible and ineligible upgrade matrix against the
@@ -1688,7 +1690,8 @@ fair-events/v1/payment-history` returns only `reconciliation_available`,
   `payment_information` and `finding_statuses` (counts of the `backfill`
   findings). Findings, finding detail, link, review, unlink, purchase search
   and audit keep their arguments, validation and 401/403 checks; dry-run
-  findings stay readable with `mode=dry_run` and are never reconcilable.
+  findings stay readable with `mode=dry_run` and are never reconcilable
+  (until §8.21, which drops that mode).
 - **Services.** `PaymentHistoryBackfill`, `PaymentHistoryVerification`,
   `PaymentHistoryCutover`, `PaymentHistoryReaders`,
   `PaymentHistoryPlannedSources`, `PaymentHistoryPurchasePlanner` and
@@ -1701,8 +1704,9 @@ fair-events/v1/payment-history` returns only `reconciliation_available`,
   (§8.19).
 - **Kept.** Payment links (including `backfill` ones), findings, the audit
   (including recorded activations), the comparisons table, the migration,
-  cutover and readers options, and purchase provenance. Their removal is
-  #2254. `PaymentHistoryCompatibility`'s readers of that recorded state
+  cutover and readers options, and purchase provenance. The cleanup
+  (§8.21) later removes the comparisons table, those three options and the
+  dry-run findings. `PaymentHistoryCompatibility`'s readers of that recorded state
   remain until then; `PaymentHistoryUpgrade` (§8.17) reads the backfill run
   and the stage 5 activation through them (`get_backfill_run()`,
   `get_readers_activation()`).
@@ -1764,7 +1768,7 @@ did for current purchases moved to `Services\PurchaseRecovery`.
 Nothing writes or reads `fair_audience_event_participant_transactions` any
 more. Payment links (§5.1) are the only record of which purchase an
 attempt pays for; the table and its rows stay on existing sites, untouched,
-until the cleanup (the second pull request) removes them.
+until the cleanup (§8.21) removes them.
 
 - **Writers removed.** Fair Audience's purchase route, multi-occurrence
   checkout, retries, activity add-on and series upgrade no longer record a
@@ -1800,6 +1804,78 @@ until the cleanup (the second pull request) removes them.
 older Fair Events still needs the ledger to attribute an Audience checkout,
 but a newer Fair Audience refuses to start beside Fair Events 2.2.0 or older
 (`events_outdated`, §8.17).
+
+### 8.21 Source-history cleanup
+
+**Implemented** (#2254, second of two pull requests; no schema change).
+`Services\PaymentHistoryCleanup` removes the storage only the migration
+used, once an administrator asks for it. Nothing runs it on upgrade.
+Operator steps: [DEPLOYMENT.md](./DEPLOYMENT.md#upgrade-notes-removing-old-payment-records-2254).
+
+**Removed**:
+
+| Storage                                                        | Why it can go                                                           |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `{prefix}fair_audience_event_participant_transactions`         | Nothing reads or writes the ledger since §8.20                          |
+| `{prefix}fair_events_payment_history_comparisons`              | The verification report of the retired backfill (§8.18)                 |
+| `fair_events_payment_history_migration` (with `shadow_writes`) | The backfill's state; read only by `decide()` on sites without evidence |
+| `fair_events_payment_history_cutover`                          | The stage 4 activation; the evidence and the audit keep what it said    |
+| `fair_events_payment_history_readers`                          | The stage 5 activation; same                                            |
+| Findings with mode `dry_run`                                   | Never reconcilable; the findings list no longer accepts `mode=dry_run`  |
+
+**Kept.** Payment links (including `backfill` ones), backfill findings and
+their decisions, the audit (including the old activations), the recovery
+queue (§8.19), purchase provenance (`legacy_event_participant_id`), Fair
+Audience's relationships, participant-scope options and fee payments, the
+completion evidence (§8.17) and the staging verification.
+
+**Fresh installations** no longer create the comparisons table (nor the
+ledger, §8.20). The cleanup isn't applicable to them
+(`cleanup_not_applicable`, 409): they never had either.
+
+**Readiness** (`ready_for_cleanup` in `GET …/upgrade`, §8.17) is ready when
+the completion evidence is recorded and none of `upgrade_unsafe`,
+`migration_work_outstanding`, `findings_open` and
+`staging_verification_incomplete` holds.
+
+**Action** (`POST fair-events/v1/payment-history/upgrade/cleanup` with
+`backup_confirmed`, behind `manage_options`: 401/403 otherwise):
+
+- Without `backup_confirmed` it is refused (400 `backup_required`); while
+  readiness lists a blocker, 409 `cleanup_blocked` with the `blockers`.
+- It takes a named lock (`cleanup_busy`, 409, after five seconds), forgets
+  the cached options and decides again from the database, as the stage 4
+  activation did (§8.13). A blocker found then is the same 409.
+- **Evidence snapshot.** Each backfill finding with source type
+  `ledger_row` gets its ledger row copied into `detail.ledger_row` (`id`,
+  `event_participant_id`, `transaction_id`, `kind`, `created_at`), or
+  `null` when the row was already gone. A finding that has the key keeps it.
+  The finding dialog shows it; the list already described the finding from
+  its detail.
+- **Order.** MySQL commits implicitly before `DROP TABLE`, so the snapshot,
+  the dry-run findings' deletion and the options' deletion commit together
+  first; the tables are dropped next (`DROP TABLE IF EXISTS`); then the
+  audit record (`action = cleanup`, `reason = source_history_cleanup`, the
+  storage found before in `before_state`) and the cleanup record commit
+  together. The ledger is never dropped before the findings hold its rows.
+  A failure at any step is 500 `cleanup_failed` and leaves the rest for a
+  repeat, which finishes it.
+- **Record** (option `fair_events_payment_history_cleanup`, never removed):
+  `completed_at`, `user_id`, `backup_confirmed_at`, what was `removed`
+  (tables, options, the dry-run findings and ledger rows counted),
+  `snapshotted_findings`, `plugin_versions` and `audit_id`. Once it exists,
+  the action answers 200 with `performed: false` and changes nothing, and
+  readiness reports it in `completed`.
+
+**Upgrade gate afterwards.** The site keeps starting on its evidence alone.
+A site without evidence is still refused: `decide()` finds no activation
+and only refuses (§8.17).
+
+**Page.** The Upgrade readiness card's **Removing old records** shows the
+blockers, or a **Remove old records…** button once ready. Its confirmation
+names the tables, options and dry-run findings removed, what stays, that
+nothing is charged, refunded or emailed and that it can't be undone, and
+needs the backup confirmed. Afterwards the card says when and by whom.
 
 ## 9. Worked examples
 

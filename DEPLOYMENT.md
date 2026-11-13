@@ -718,7 +718,8 @@ npx wp-env run tests-cli wp eval "add_option( 'fair_events_payment_history_compl
 required; the cleanup of Fair Audience's old payment records (#2254) also
 needs a clean state at that time and every staging check recorded as
 passed. Payment history lists those separately as **Removing old records**;
-being safe to upgrade doesn't make a site ready for it.
+being safe to upgrade doesn't make a site ready for it. See
+[the cleanup's notes](#upgrade-notes-removing-old-payment-records-2254).
 
 ## Upgrade notes: payment history migration tooling removal (#2252)
 
@@ -787,6 +788,58 @@ older code writes the ledger again for new payments. Payments started
 while this release ran have links but no ledger rows: they stay correct,
 but if one of them fails after the rollback, the older Fair Audience
 doesn't send its resume-payment email.
+
+## Upgrade notes: removing old payment records (#2254)
+
+Adds the one-time **Remove old records** action on **Fair Events → Payment
+history → Upgrade readiness**
+([PAYMENT_HISTORY_MIGRATION.md § 8.21](./PAYMENT_HISTORY_MIGRATION.md#821-source-history-cleanup)).
+Updating doesn't remove anything: an administrator runs it when ready, and
+it can't be undone.
+
+**What changes on update.** A fresh installation no longer creates
+`{prefix}fair_events_payment_history_comparisons`. The findings list no
+longer accepts `mode=dry_run` (400 `rest_invalid_param`). No schema version
+changes; existing tables and options stay until the action runs.
+
+**When it can run.** Only on a site that is **safe to upgrade** with basis
+`migrated` or `no_source_history` (never on a fresh installation), with no
+failed or unresolved migration work, no open blocking finding, and the
+staging verification recorded with every check passed. All of it is
+checked again when it runs.
+
+**Back up first**, in one database backup:
+
+- `{prefix}fair_audience_event_participant_transactions`
+- `{prefix}fair_events_payment_history_comparisons`
+- `{prefix}fair_events_payment_history_findings`
+- `{prefix}fair_events_payment_history_audit`
+- `{prefix}options`, which holds `fair_events_payment_history_migration`,
+  `fair_events_payment_history_cutover` and
+  `fair_events_payment_history_readers`
+
+**What it removes.** The two tables above, the three options, and every
+finding with `mode = 'dry_run'`. Before the ledger goes, each `ledger_row`
+finding gets a copy of its row in `detail.ledger_row` (null when the row
+was already gone), so reconciliation still shows it.
+
+**What it keeps.** Purchases, payment links (including `backfill` ones),
+backfill findings and their decisions, the reconciliation audit (including
+the old activations), the purchase recovery queue, purchase provenance
+(`legacy_event_participant_id`), Fair Audience's registrations and fee
+payments, `fair_events_payment_history_completion` and
+`fair_events_payment_history_staging_verification`. It records itself in
+`fair_events_payment_history_cleanup` and in the audit (`action = cleanup`),
+so running it again changes nothing.
+
+**Check after.** The card says when and by whom the old records were
+removed; `wp db query "SHOW TABLES LIKE '%participant_transactions'"`
+returns nothing; Statistics, Finance and the payment history findings look
+as before.
+
+**If it stops halfway** (a 500 `cleanup_failed`), run it again: every step
+is safe to repeat, and it finishes what is left. **Recovery** is restoring
+the backup of the listed tables and options; nothing else was changed.
 
 ## Publishing to WordPress.org SVN
 
