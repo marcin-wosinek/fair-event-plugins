@@ -114,6 +114,7 @@ test('discovers the repository PHP suites in workspace order', () => {
 		'fair-events-experimental',
 		'fair-payments-connector-experimental',
 		'fair-form',
+		'fair-audience-experimental',
 	]);
 });
 
