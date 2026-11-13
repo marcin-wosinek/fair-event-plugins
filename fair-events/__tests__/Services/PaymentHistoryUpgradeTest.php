@@ -235,7 +235,9 @@ class PaymentHistoryUpgradeTest extends TestCase {
 
 	/**
 	 * Cleanup readiness is never implied by being safe to upgrade: it also
-	 * needs a clean state now, the staging checks, and the cleanup itself.
+	 * needs a clean state now and the staging checks. Once the cleanup ran
+	 * it reports that instead, and a fresh installation has nothing to
+	 * clean up.
 	 *
 	 * @return void
 	 */
@@ -247,21 +249,50 @@ class PaymentHistoryUpgradeTest extends TestCase {
 		);
 
 		$this->assertSame(
-			array( 'cleanup_unavailable' ),
-			PaymentHistoryUpgrade::cleanup_readiness( $evidence, self::migrated(), $staging )['blockers']
+			array(
+				'applicable' => true,
+				'ready'      => true,
+				'completed'  => null,
+				'blockers'   => array(),
+			),
+			PaymentHistoryUpgrade::cleanup_readiness( $evidence, self::migrated(), $staging )
 		);
 
 		$facts                                      = self::migrated();
 		$facts['open_findings']                     = 3;
+		$facts['migration_work']                    = 1;
 		$staging['checks']['audience_reactivation'] = false;
+		$blocked                                    = PaymentHistoryUpgrade::cleanup_readiness( null, $facts, $staging );
+		$this->assertFalse( $blocked['ready'] );
 		$this->assertSame(
-			array( 'upgrade_unsafe', 'findings_open', 'staging_verification_incomplete', 'cleanup_unavailable' ),
-			PaymentHistoryUpgrade::cleanup_readiness( null, $facts, $staging )['blockers']
+			array( 'upgrade_unsafe', 'migration_work_outstanding', 'findings_open', 'staging_verification_incomplete' ),
+			$blocked['blockers']
 		);
 
 		$fresh = PaymentHistoryUpgrade::cleanup_readiness( array( 'basis' => 'fresh_install' ), self::migrated(), null );
 		$this->assertFalse( $fresh['applicable'] );
 		$this->assertFalse( $fresh['ready'] );
+	}
+
+	/**
+	 * A recorded cleanup reports what was done, whatever the site looks
+	 * like now, so a repeat is a no-op; it never counts without evidence.
+	 *
+	 * @return void
+	 */
+	public function test_recorded_cleanup_is_reported_as_done(): void {
+		$record = array( 'completed_at' => '2026-11-13 10:00:00' );
+		$facts  = self::migrated();
+		// A finding opened after the cleanup doesn't make it pending again.
+		$facts['open_findings'] = 2;
+
+		$done = PaymentHistoryUpgrade::cleanup_readiness( array( 'basis' => 'migrated' ), $facts, null, $record );
+		$this->assertTrue( $done['applicable'] );
+		$this->assertFalse( $done['ready'] );
+		$this->assertSame( $record, $done['completed'] );
+		$this->assertSame( array(), $done['blockers'] );
+
+		$this->assertNull( PaymentHistoryUpgrade::cleanup_readiness( null, $facts, null, $record )['completed'] );
 	}
 
 	/**

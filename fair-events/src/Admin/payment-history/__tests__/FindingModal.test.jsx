@@ -12,6 +12,7 @@ import {
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import FindingModal, {
+	describeLedgerRow,
 	allocationProblem,
 	initialRows,
 } from '../FindingModal.js';
@@ -432,5 +433,31 @@ describe( 'FindingModal', () => {
 			data: { note: 'Wrong purchase', expected_link_ids: [ 301, 302 ] },
 		} );
 		expect( onDecided ).toHaveBeenCalledWith( null );
+	} );
+} );
+
+describe( 'describeLedgerRow', () => {
+	it( 'describes the copied Fair Audience record, or its absence', () => {
+		expect(
+			describeLedgerRow( {
+				id: 16,
+				event_participant_id: 4,
+				transaction_id: 11,
+				kind: 'charge',
+				created_at: '2024-03-01 11:00:00',
+			} )
+		).toBe(
+			'Charge for registration #4, payment #11. Kept here after the old records were removed.'
+		);
+		expect(
+			describeLedgerRow( {
+				event_participant_id: 4,
+				transaction_id: 12,
+				kind: 'refund',
+			} )
+		).toMatch( /^Refund for registration #4, payment #12\./ );
+		expect( describeLedgerRow( null ) ).toBe(
+			'The record no longer existed when the old records were removed.'
+		);
 	} );
 } );

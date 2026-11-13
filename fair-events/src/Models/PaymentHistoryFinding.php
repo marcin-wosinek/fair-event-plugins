@@ -24,6 +24,10 @@ defined( 'WPINC' ) || die;
  */
 class PaymentHistoryFinding {
 
+	/**
+	 * Rows left by the retired dry runs: never listed or reconciled, and
+	 * removed by the source-history cleanup (§8.21).
+	 */
 	const MODE_DRY_RUN  = 'dry_run';
 	const MODE_BACKFILL = 'backfill';
 

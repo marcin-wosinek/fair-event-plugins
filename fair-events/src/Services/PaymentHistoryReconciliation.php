@@ -34,7 +34,8 @@ defined( 'WPINC' ) || die;
  * overwriting the other decision.
  *
  * Only findings of the completed migration (`backfill` mode) are
- * reconciled; dry-run findings remain readable as evidence only.
+ * reconciled. The findings list no longer offers dry-run ones, which the
+ * source-history cleanup removes (§8.21).
  * Backfilled and live links are never changed.
  *
  * phpcs:disable WordPress.DB.DirectDatabaseQuery

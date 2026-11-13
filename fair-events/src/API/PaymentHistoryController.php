@@ -89,7 +89,7 @@ class PaymentHistoryController extends WP_REST_Controller {
 				'args'                => array(
 					'mode'               => array(
 						'type'              => 'string',
-						'enum'              => array( PaymentHistoryFinding::MODE_BACKFILL, PaymentHistoryFinding::MODE_DRY_RUN ),
+						'enum'              => array( PaymentHistoryFinding::MODE_BACKFILL ),
 						'default'           => PaymentHistoryFinding::MODE_BACKFILL,
 						'validate_callback' => 'rest_validate_request_arg',
 					),

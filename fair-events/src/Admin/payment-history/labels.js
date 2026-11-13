@@ -275,10 +275,6 @@ export function cleanupBlockerLabels() {
 			'The staging verification isn’t recorded with every check passed.',
 			'fair-events'
 		),
-		cleanup_unavailable: __(
-			'Removing the old records comes with a later release.',
-			'fair-events'
-		),
 	};
 }
 

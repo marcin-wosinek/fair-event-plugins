@@ -26,9 +26,12 @@ defined( 'WPINC' ) || die;
  *   recorded. Payment links are authoritative for purchases
  *   unconditionally (#2251), so no runtime path reads it.
  *
- * The one-time migration's controls are retired (#2252); these readers of
- * its recorded state remain until its storage and options are removed
- * (#2254). The shadow writes and their coverage floors are retired (#2253).
+ * The one-time migration's controls are retired (#2252). These readers of
+ * its recorded state stay: on a site without completion evidence the
+ * upgrade gate still decides from them (§8.17). The source-history cleanup
+ * removes their options on a site with evidence (§8.21), where they then
+ * read nothing. The shadow writes and their coverage floors are retired
+ * (#2253).
  * Fair Audience calls into this class only after checking it and the method
  * exist, so newer Audience keeps working with older Events.
  *
