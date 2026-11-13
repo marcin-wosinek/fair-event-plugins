@@ -385,6 +385,32 @@ if ( ! function_exists( 'esc_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_attr' ) ) {
+	/**
+	 * Stub of WordPress esc_attr().
+	 *
+	 * @param string $value Raw value.
+	 * @return string Attribute-escaped value.
+	 */
+	function esc_attr( $value ) {
+		return htmlspecialchars( (string) $value, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'wp_get_attachment_url' ) ) {
+	/**
+	 * Stub of WordPress wp_get_attachment_url() backed by
+	 * $GLOBALS['_fair_test_attachment_urls'] (a map of attachment ID => URL).
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string|false URL, or false when not seeded.
+	 */
+	function wp_get_attachment_url( $attachment_id ) {
+		$urls = isset( $GLOBALS['_fair_test_attachment_urls'] ) ? $GLOBALS['_fair_test_attachment_urls'] : array();
+		return isset( $urls[ $attachment_id ] ) ? $urls[ $attachment_id ] : false;
+	}
+}
+
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	/**
 	 * Stub of WordPress wp_parse_url() — delegates to PHP's parse_url().
