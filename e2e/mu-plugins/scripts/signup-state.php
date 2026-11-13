@@ -5,8 +5,8 @@
  * Run via WP-CLI against the wp-env tests instance:
  *   wp eval-file wp-content/mu-plugins/scripts/signup-state.php <email> <event_date_id>
  *
- * Prints a single `E2E_STATE:{json}` line with the participant's marketing
- * profile, the number of mailing-confirmation (double opt-in) tokens issued
+ * Prints a single `E2E_STATE:{json}` line with the participant's name and
+ * surname, the latest signup's own name and surname, the marketing profile, the number of mailing-confirmation (double opt-in) tokens issued
  * to them, the event-participant label, the attached activity (ticket option)
  * ids (all, and the confirmed ones), and the mail captured for this buyer
  * (including the HTML body, so a spec can pull a link out of it, e.g. a
@@ -64,7 +64,7 @@ if ( $event_date_id ) {
 	global $wpdb;
 	$signup = $wpdb->get_row(
 		$wpdb->prepare(
-			'SELECT id, over_capacity, transaction_id FROM %i WHERE event_date_id = %d AND participant_id = %d ORDER BY id DESC LIMIT 1',
+			'SELECT id, name, surname, over_capacity, transaction_id FROM %i WHERE event_date_id = %d AND participant_id = %d ORDER BY id DESC LIMIT 1',
 			$wpdb->prefix . 'fair_events_signups',
 			$event_date_id,
 			(int) $participant->id
@@ -97,6 +97,10 @@ foreach ( get_option( 'fair_e2e_captured_mail', array() ) as $entry ) {
 echo 'E2E_STATE:' . wp_json_encode(
 	array(
 		'found'                => true,
+		'name'                 => (string) $participant->name,
+		'surname'              => (string) $participant->surname,
+		'signup_name'          => $signup ? (string) $signup->name : null,
+		'signup_surname'       => $signup ? (string) $signup->surname : null,
 		'email_profile'        => $participant->email_profile,
 		'status'               => $participant->status,
 		'confirmation_tokens'  => $confirmation_tokens,

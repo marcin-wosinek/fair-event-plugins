@@ -18,7 +18,8 @@
  *      a guessed email can't be taken over through an unrelated session.
  *   3. The link (extracted from the captured mail, since the dev stack has no
  *      real inbox) is visited for real; the form must come back with the
- *      answers the visitor gave and let them complete the (paid) signup —
+ *      answers the visitor gave — name and surname apart — and let them
+ *      complete the (paid) signup, storing both on the registration —
  *      through the real Mollie-double checkout/callback round trip, same as
  *      ticket-purchase-confirmation.spec.js.
  *   4. Opening the link again restores nothing.
@@ -83,6 +84,7 @@ test.describe('event-signup block: resume a signup on a recognised email', () =>
 			await form
 				.locator('input[name="name"]')
 				.fill('Resume Recognised Visitor');
+			await form.locator('input[name="surname"]').fill('Núñez de Arce');
 			await form.locator('input[name="email"]').fill(recognisedEmail);
 			await form
 				.locator('[data-question-key="dietary"] input[type="text"]')
@@ -151,6 +153,9 @@ test.describe('event-signup block: resume a signup on a recognised email', () =>
 					ownerForm.locator('input[name="name"]')
 				).toHaveValue('Resume Recognised Visitor');
 				await expect(
+					ownerForm.locator('input[name="surname"]')
+				).toHaveValue('Núñez de Arce');
+				await expect(
 					ownerForm.locator(
 						'[data-question-key="dietary"] input[type="text"]'
 					)
@@ -174,6 +179,12 @@ test.describe('event-signup block: resume a signup on a recognised email', () =>
 				`${recognisedEmail} ${event.eventDateId}`
 			);
 			expect(finalState.label).toBe('signed_up');
+			// The registration keeps the two names it was given apart; the
+			// recognised participant's shared profile is left as it was.
+			expect(finalState.signup_name).toBe('Resume Recognised Visitor');
+			expect(finalState.signup_surname).toBe('Núñez de Arce');
+			expect(finalState.name).toBe(`Resume Recognised ${stamp}`);
+			expect(finalState.surname).toBe('');
 
 			// Opening the link again offers nothing to restore: the participant
 			// now holds this signup, so their registration is shown instead.

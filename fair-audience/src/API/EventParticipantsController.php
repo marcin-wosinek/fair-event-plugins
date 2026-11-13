@@ -671,7 +671,7 @@ class EventParticipantsController extends WP_REST_Controller {
 					// A row whose event_date_id differs from the requested occurrence
 					// is a whole-series pass surfaced from the master event-date.
 					'is_series_pass'                    => (int) $ep->event_date_id !== (int) $event_date_id,
-					'participant_name'                  => $participant ? $participant->name . ' ' . $participant->surname : '',
+					'participant_name'                  => $participant ? trim( $participant->name . ' ' . $participant->surname ) : '',
 					'name'                              => $participant ? $participant->name : '',
 					'surname'                           => $participant ? $participant->surname : '',
 					'participant_email'                 => $participant ? $participant->email : '',

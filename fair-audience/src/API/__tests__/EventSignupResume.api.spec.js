@@ -238,7 +238,8 @@ test.describe( 'Resume a signup on a recognised email — create route', () => {
 			const res = await owner.post( CREATE_ROUTE, {
 				data: {
 					event_date_id: event.eventDateId,
-					name: 'Resume Tester',
+					name: payload.name,
+					surname: payload.surname,
 					email,
 					participant_token: link.participant_token,
 					questionnaire_answers: ANSWERS,
@@ -256,6 +257,27 @@ test.describe( 'Resume a signup on a recognised email — create route', () => {
 			participantId
 		);
 		expect( row?.label ).toBe( 'signed_up' );
+
+		// The completed registration keeps both names it was given; the
+		// participant's shared profile, created without a surname, is left
+		// alone (#2216).
+		const signupsRes = await api.get( CREATE_ROUTE, {
+			headers: authHeaders,
+			params: { event_date: event.eventDateId },
+		} );
+		expect( signupsRes.ok() ).toBeTruthy();
+		const signup = ( await signupsRes.json() ).find(
+			( candidate ) => candidate.email === email
+		);
+		expect( signup ).toMatchObject( {
+			name: 'Resume Tester',
+			surname: 'Núñez de Arce',
+			full_name: 'Resume Tester Núñez de Arce',
+		} );
+		expect( Number( signup.participant_id ) ).toBe( participantId );
+		expect( row.name ).toBe( 'Resume Tester' );
+		expect( row.surname ).toBe( '' );
+		expect( row.participant_name ).toBe( 'Resume Tester' );
 	} );
 
 	test( 'an unknown email is signed up directly, with no "recognised" answer', async () => {
