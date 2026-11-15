@@ -120,7 +120,10 @@ test( 'a registrant’s name and surname survive a rejected checkout and the org
 		const form = visitor.locator( '.fair-events-get-tickets-form' );
 		const submit = form.locator( 'button[type="submit"]' );
 		const nameField = form.getByLabel( 'Your Name' );
-		const surnameField = form.getByLabel( /Surname/ );
+		const surnameField = form.getByLabel( 'Surname', { exact: true } );
+		await expect( form.locator( 'label[for$="-surname"]' ) ).toHaveText(
+			'Surname'
+		);
 		await expect( surnameField ).toHaveAttribute(
 			'autocomplete',
 			'family-name'
@@ -186,7 +189,7 @@ test( 'a registrant’s name and surname survive a rejected checkout and the org
 		await expect(
 			dialog.getByLabel( 'Name', { exact: true } )
 		).toHaveValue( 'María José' );
-		await dialog.getByLabel( 'Surname (optional)' ).fill( 'García' );
+		await dialog.getByLabel( 'Surname', { exact: true } ).fill( 'García' );
 		await dialog.getByRole( 'button', { name: 'Save name' } ).click();
 		await expect( dialog ).toBeHidden();
 

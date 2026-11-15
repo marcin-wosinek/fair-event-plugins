@@ -132,7 +132,7 @@ export default function SignupNameModal( { signup, onClose, onSaved } ) {
 					<TextControl
 						__nextHasNoMarginBottom
 						__next40pxDefaultSize
-						label={ __( 'Surname (optional)', 'fair-events' ) }
+						label={ __( 'Surname', 'fair-events' ) }
 						value={ surname }
 						onChange={ setSurname }
 						disabled={ saving }

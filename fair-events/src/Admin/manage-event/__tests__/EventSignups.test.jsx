@@ -3523,17 +3523,16 @@ describe( 'EventSignups — name and surname (#2215)', () => {
 		expect( within( dialog ).getByLabelText( 'Name' ) ).toHaveValue(
 			'María José'
 		);
-		expect(
-			within( dialog ).getByLabelText( 'Surname (optional)' )
-		).toHaveValue( 'García de la Vega' );
+		expect( within( dialog ).getByLabelText( 'Surname' ) ).toHaveValue(
+			'García de la Vega'
+		);
 
 		fireEvent.change( within( dialog ).getByLabelText( 'Name' ), {
 			target: { value: ' Marie ' },
 		} );
-		fireEvent.change(
-			within( dialog ).getByLabelText( 'Surname (optional)' ),
-			{ target: { value: '' } }
-		);
+		fireEvent.change( within( dialog ).getByLabelText( 'Surname' ), {
+			target: { value: '' },
+		} );
 		await act( async () => {
 			fireEvent.click(
 				within( dialog ).getByRole( 'button', { name: 'Save name' } )
@@ -3562,10 +3561,9 @@ describe( 'EventSignups — name and surname (#2215)', () => {
 
 		fireEvent.click( screen.getByRole( 'button', { name: 'Edit name' } ) );
 		const dialog = await screen.findByRole( 'dialog' );
-		fireEvent.change(
-			within( dialog ).getByLabelText( 'Surname (optional)' ),
-			{ target: { value: 'Ñúñez' } }
-		);
+		fireEvent.change( within( dialog ).getByLabelText( 'Surname' ), {
+			target: { value: 'Ñúñez' },
+		} );
 		await act( async () => {
 			fireEvent.click(
 				within( dialog ).getByRole( 'button', { name: 'Save name' } )
@@ -3576,9 +3574,9 @@ describe( 'EventSignups — name and surname (#2215)', () => {
 			await within( dialog ).findByText( 'Database unavailable.' )
 		).toBeInTheDocument();
 		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
-		expect(
-			within( dialog ).getByLabelText( 'Surname (optional)' )
-		).toHaveValue( 'Ñúñez' );
+		expect( within( dialog ).getByLabelText( 'Surname' ) ).toHaveValue(
+			'Ñúñez'
+		);
 	} );
 
 	it( 'requires a name before saving', async () => {

@@ -780,7 +780,6 @@ if ( ! empty( $attributes['isEditorPreview'] ) ) {
 			<div class="form-row">
 				<label for="<?php echo esc_attr( $form_id ); ?>-surname" class="form-label">
 					<?php esc_html_e( 'Surname', 'fair-events' ); ?>
-					<span class="optional-indicator"><?php esc_html_e( '(optional)', 'fair-events' ); ?></span>
 				</label>
 				<input
 					type="text"

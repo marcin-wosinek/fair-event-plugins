@@ -71,7 +71,7 @@ function buildBlock( { eventDateId = 42 } = {} ) {
 					<input type="text" name="name" />
 				</div>
 				<div class="form-row">
-					<label>Surname (optional)</label>
+					<label>Surname</label>
 					<input type="text" name="surname" />
 				</div>
 				<div class="form-row">
