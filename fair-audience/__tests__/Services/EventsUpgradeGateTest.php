@@ -84,4 +84,42 @@ class EventsUpgradeGateTest extends TestCase {
 		$this->assertTrue( EventsUpgradeGate::allows_initialization() );
 		$this->assertNull( EventsUpgradeGate::refusal_reason() );
 	}
+
+	/**
+	 * Fair Audience may ask before Fair Events is loaded (plugins load
+	 * alphabetically; a bulk activation runs Audience's hook first). That
+	 * answer isn't kept: once Fair Events is loaded, its decision applies.
+	 *
+	 * @return void
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_follows_fair_events_loaded_after_audience(): void {
+		$this->assertTrue( EventsUpgradeGate::allows_initialization() );
+
+		define( 'FAIR_EVENTS_VERSION', '2.3.0' );
+		self::define_events_gate( false );
+		$this->assertFalse( EventsUpgradeGate::allows_initialization() );
+		$this->assertSame( EventsUpgradeGate::REASON_UPGRADE_UNSUPPORTED, EventsUpgradeGate::refusal_reason() );
+	}
+
+	/**
+	 * Fair Events' decision is asked once per request, whichever plugin
+	 * asks first, so a site Fair Events finds without history to migrate
+	 * starts both plugins on the same evidence.
+	 *
+	 * @return void
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_asks_fair_events_once_per_request(): void {
+		define( 'FAIR_EVENTS_VERSION', '2.3.0' );
+		$GLOBALS['_fair_test_events_gate_calls'] = 0;
+		// phpcs:ignore Squiz.PHP.Eval.Discouraged -- a class can be defined only once per process.
+		eval( 'namespace FairEvents\\Services; class PaymentHistoryUpgrade { public static function allows_initialization() { ++$GLOBALS["_fair_test_events_gate_calls"]; return true; } }' );
+
+		$this->assertTrue( EventsUpgradeGate::allows_initialization() );
+		$this->assertTrue( EventsUpgradeGate::allows_initialization() );
+		$this->assertSame( 1, $GLOBALS['_fair_test_events_gate_calls'] );
+	}
 }

@@ -117,6 +117,16 @@ function evidenceText( evidence ) {
 			when
 		);
 	}
+	if ( evidence.basis === 'verified_no_history' ) {
+		return sprintf(
+			/* translators: %s: date and time */
+			__(
+				'Safe to upgrade. Fair Events checked this site’s records and found no earlier payments, registrations or activity choices to migrate (recorded %s).',
+				'fair-events'
+			),
+			when
+		);
+	}
 	return sprintf(
 		/* translators: %s: date and time */
 		__(

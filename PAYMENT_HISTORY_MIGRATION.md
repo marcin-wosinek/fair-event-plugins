@@ -1609,11 +1609,43 @@ the activations it relied on (`ownership_cutover`: `activated_at`,
 `reference`, `audit_id`; `readers`: `activated_at`, `reason`, `audit_id`;
 `verification_checked_at`). Bases:
 
-| Basis               | Recorded when                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fresh_install`     | `Installer::install()` classifies the site as fresh (`Installer::is_fresh_install()`: no version option, no Fair Events table, no legacy event), before it creates the first table, so a failed run is still known as fresh on retry. Fresh installations never run the migration and never manufacture its records.                                                                                                                                                          |
-| `migrated`          | The first request after the update sees all of: the reconciliation storage (DB ≥ `3.52.0`), the stage 4 activation, the stage 5 activation with reason `reader_cutover`, the migration `verified`, no `transaction` or `relationship` shadow work with status `failed` or `unresolved`, and no open backfill finding outside `PaymentHistoryFinding::INFORMATIONAL`. Pending work isn't counted: it runs in the request that queued it, and a refused site couldn't drain it. |
-| `no_source_history` | As `migrated`, but the intermediate release recorded the stage 5 activation with reason `no_source_history`, Fair Audience still has no tables and no shadow work failed.                                                                                                                                                                                                                                                                                                     |
+| Basis                 | Recorded when                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fresh_install`       | `Installer::install()` classifies the site as fresh (`Installer::is_fresh_install()`: no version option, no Fair Events table, no legacy event), before it creates the first table, so a failed run is still known as fresh on retry. Fresh installations never run the migration and never manufacture its records.                                                                                                                                                          |
+| `migrated`            | The first request after the update sees all of: the reconciliation storage (DB ≥ `3.52.0`), the stage 4 activation, the stage 5 activation with reason `reader_cutover`, the migration `verified`, no `transaction` or `relationship` shadow work with status `failed` or `unresolved`, and no open backfill finding outside `PaymentHistoryFinding::INFORMATIONAL`. Pending work isn't counted: it runs in the request that queued it, and a refused site couldn't drain it. |
+| `no_source_history`   | As `migrated`, but the intermediate release recorded the stage 5 activation with reason `no_source_history`, Fair Audience still has no tables and no shadow work failed.                                                                                                                                                                                                                                                                                                     |
+| `verified_no_history` | No other basis applies, and `PaymentHistoryUpgrade::source_history()` reads every source of history below as empty. Records `sources_checked` and `connector_active` instead of activations.                                                                                                                                                                                                                                                                                  |
+
+**Existing sites without history** (#2255 follow-up, superseding the rule
+that every existing site without evidence needs the intermediate release).
+An existing site whose stored data proves no migration is required starts
+without Connector and without `build-2.2.0`. `source_history()` is
+read-only and reads the tables directly, whether Connector or Audience is
+installed or active. Each source must count zero:
+
+| Code                        | Counted                                                                                                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `payment_transactions`      | Connector transactions whose metadata has no `fee_payment_id` (§3.2), or no metadata                                                                                                                                            |
+| `signup_payment_references` | Signups with a `transaction_id` (including a deleted transaction) or `amount > 0`                                                                                                                                               |
+| `payment_links`             | Payment links                                                                                                                                                                                                                   |
+| `backfilled_purchases`      | Signups with `legacy_event_participant_id` (a started backfill)                                                                                                                                                                 |
+| `audience_ledger`           | Ledger rows                                                                                                                                                                                                                     |
+| `legacy_admissions`         | A superset of §4.1: every `pending_payment` relationship, and every `signed_up` one without a `confirmed` signup of that participant on that date (of its ticket type, if any) or a `confirmed`, undeleted unit they hold there |
+| `participant_activities`    | Participant-scope options with no `ticket_id`, or `pending_payment`                                                                                                                                                             |
+| `migration_work`            | Any shadow work row                                                                                                                                                                                                             |
+| `migration_findings`        | Any finding, in any mode or status                                                                                                                                                                                              |
+
+Ordinary events, occurrences, ticket types, free signups and participant
+profiles (`interested`, `collaborator`) never count. An absent table counts
+zero; when the coverage tables of `legacy_admissions` are absent, every
+`signed_up` relationship counts. A failed `SHOW TABLES`, `SHOW COLUMNS` or
+count (`wpdb::last_error`, a non-numeric result, a table without the
+columns a count needs) makes the result `unverifiable`, which refuses like
+found history. The check runs only when no evidence is recorded and
+`decide()` blocks; evidence written once makes later requests read
+nothing. Absence of payments alone is not enough: a free registration made
+through Fair Audience alone is a legacy admission, so that site still uses
+the intermediate release.
 
 **Refusal.** An existing site without evidence whose records don't qualify
 is an unsupported upgrade. `Plugin::init()` and the activation hook of both
@@ -1623,14 +1655,15 @@ route, block and cron handler. Nothing is written, so reinstalling
 `build-2.2.0` is the recovery. Administrators see a notice naming each
 missing condition (codes `storage_unavailable`, `ownership_cutover_missing`,
 `readers_missing`, `migration_unverified`, `migration_work_outstanding`,
-`findings_open`), the prerequisite versions and the steps.
+`findings_open`, plus `source_history_found` or
+`source_history_unverifiable`), the prerequisite versions and the steps.
 Fair Audience asks Fair Events (`FairAudience\Services\EventsUpgradeGate`):
 
-| Fair Events                                       | Fair Audience                                                                      |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Inactive                                          | Starts; its purchase routes refuse without Fair Events (§8.16)                     |
-| Active, without `PaymentHistoryUpgrade` (≤ 2.2.0) | Refuses (`events_outdated`) until Fair Events is updated, as the update order says |
-| Active                                            | Follows Fair Events' decision                                                      |
+| Fair Events                                       | Fair Audience                                                                                                                                                     |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inactive or not loaded yet                        | Starts; its purchase routes refuse without Fair Events (§8.16). Not cached, so a later call in the same request follows Fair Events once it loads or is activated |
+| Active, without `PaymentHistoryUpgrade` (≤ 2.2.0) | Refuses (`events_outdated`) until Fair Events is updated, as the update order says                                                                                |
+| Active                                            | Follows Fair Events' decision                                                                                                                                     |
 
 The experimental plugins aren't gated and keep their own routes.
 
@@ -1646,7 +1679,7 @@ The experimental plugins aren't gated and keep their own routes.
   versions or from `safe_to_upgrade`: it also needs no failed migration work
   and no blocking finding now, and every staging check recorded as passed
   (`staging_verification_incomplete`). Once it ran, `completed` holds its
-  record. Not applicable to a `fresh_install` site.
+  record. Not applicable to a `fresh_install` or `verified_no_history` site.
 
 **Staging verification** (`PUT fair-events/v1/payment-history/upgrade/staging-verification`,
 option `fair_events_payment_history_staging_verification`): the date the
@@ -1669,7 +1702,11 @@ the options it reads, it finds no stage 4 or stage 5 activation.
 **Final verification** (after #2252–#2254, before release) remains open on
 #2255: the fresh, eligible and ineligible upgrade matrix against the
 resulting code, the evidence surviving the cleanup, and the final operator
-guidance.
+guidance. `PaymentHistoryUpgrade.api.spec.js` covers the existing site
+without history (Connector inactive, ordinary profiles and a free signup:
+both plugins start, `verified_no_history` is recorded, no activation is
+manufactured, the installer runs; a free Audience-only registration refuses
+until removed).
 
 ### 8.18 Migration tooling retired
 
@@ -1832,6 +1869,8 @@ completion evidence (§8.17) and the staging verification.
 **Fresh installations** no longer create the comparisons table (nor the
 ledger, §8.20). The cleanup isn't applicable to them
 (`cleanup_not_applicable`, 409): they never had either.
+Nor is it to a site recorded as `verified_no_history` (§8.17): an empty
+ledger or comparisons table it may still hold is left in place.
 
 **Readiness** (`ready_for_cleanup` in `GET …/upgrade`, §8.17) is ready when
 the completion evidence is recorded and none of `upgrade_unsafe`,

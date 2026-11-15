@@ -300,6 +300,73 @@ class Installer_Overrides_WPDB {
 }
 
 /**
+ * Scripted SHOW TABLES / legacy event lookups for Installer::is_fresh_install().
+ */
+class Installer_Fresh_WPDB {
+	/**
+	 * WordPress table prefix.
+	 *
+	 * @var string
+	 */
+	public $prefix = 'wp_';
+
+	/**
+	 * Posts table.
+	 *
+	 * @var string
+	 */
+	public $posts = 'wp_posts';
+
+	/**
+	 * First matching Fair Events table, or null.
+	 *
+	 * @var string|null
+	 */
+	public $table = null;
+
+	/**
+	 * ID of a legacy fair_event post, or null.
+	 *
+	 * @var string|null
+	 */
+	public $legacy_event = null;
+
+	/**
+	 * Capture a prepared query.
+	 *
+	 * @param string $query Query template.
+	 * @param mixed  ...$args Arguments.
+	 * @return array
+	 */
+	public function prepare( $query, ...$args ) {
+		return array(
+			'query' => $query,
+			'args'  => $args,
+		);
+	}
+
+	/**
+	 * LIKE escaping is irrelevant here.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	public function esc_like( $text ) {
+		return $text;
+	}
+
+	/**
+	 * Answer the table or legacy event lookup.
+	 *
+	 * @param array $prepared From prepare().
+	 * @return string|null
+	 */
+	public function get_var( $prepared ) {
+		return str_starts_with( $prepared['query'], 'SHOW TABLES' ) ? $this->table : $this->legacy_event;
+	}
+}
+
+/**
  * Covers the 3.33.0 historical warning repair.
  */
 class InstallerMigrationTest extends TestCase {
@@ -310,8 +377,36 @@ class InstallerMigrationTest extends TestCase {
 	 * @return void
 	 */
 	protected function tearDown(): void {
-		$GLOBALS['wpdb'] = new \Fair_Test_WPDB();
+		$GLOBALS['wpdb']               = new \Fair_Test_WPDB();
+		$GLOBALS['_fair_test_options'] = array();
 		parent::tearDown();
+	}
+
+	/**
+	 * Only a site with no version, no Fair Events table and no legacy event
+	 * is fresh. Every other site, including one with ordinary events and no
+	 * payment history, is existing: install() never records fresh
+	 * installation evidence for it, and PaymentHistoryUpgrade's check of
+	 * the stored data decides instead (§8.17).
+	 *
+	 * @return void
+	 */
+	public function test_only_a_site_without_any_trace_is_fresh() {
+		$wpdb                          = new Installer_Fresh_WPDB();
+		$GLOBALS['wpdb']               = $wpdb;
+		$GLOBALS['_fair_test_options'] = array();
+		$this->assertTrue( Installer::is_fresh_install() );
+
+		$wpdb->table = 'wp_fair_events_signups';
+		$this->assertFalse( Installer::is_fresh_install() );
+
+		$wpdb->table        = null;
+		$wpdb->legacy_event = '12';
+		$this->assertFalse( Installer::is_fresh_install() );
+
+		$wpdb->legacy_event                                      = null;
+		$GLOBALS['_fair_test_options']['fair_events_db_version'] = '3.47.0';
+		$this->assertFalse( Installer::is_fresh_install() );
 	}
 
 	/**
