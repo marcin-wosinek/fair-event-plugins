@@ -34,7 +34,7 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: fair-audience-experimental.php:40
+#: fair-audience-experimental.php:52
 msgid "Fair Audience Experimental requires the Fair Audience plugin to be active."
 msgstr "Fair Audience Experimental nécessite que le plugin Fair Audience soit actif."
 
@@ -59,7 +59,7 @@ msgstr "Collaborateurs"
 #: src/Admin/AdminPages.php:83
 #: src/Admin/AdminPages.php:84
 #: src/Admin/fee-detail/FeeDetail.js:880
-#: src/Admin/fees-list/FeesList.js:480
+#: src/Admin/fees-list/FeesList.js:483
 msgid "Membership Fees"
 msgstr "Frais d'adhésion"
 
@@ -71,7 +71,7 @@ msgstr "Détail des frais"
 
 #: src/Admin/AdminPages.php:106
 #: src/Admin/AdminPages.php:107
-#: src/Core/Features.php:181
+#: src/Core/Features.php:159
 #: src/Admin/import/Import.js:317
 #: src/Admin/import/KitImport.js:186
 msgid "Import"
@@ -79,7 +79,7 @@ msgstr "Importation"
 
 #: src/Admin/AdminPages.php:118
 #: src/Admin/AdminPages.php:119
-#: src/Core/Features.php:161
+#: src/Core/Features.php:139
 #: src/Admin/polls-list/PollsList.js:74
 #: src/Admin/polls-list/PollsList.js:83
 #: src/Admin/polls-list/PollsList.js:94
@@ -102,7 +102,7 @@ msgstr "Publications Instagram"
 
 #: src/Admin/AdminPages.php:153
 #: src/Admin/AdminPages.php:154
-#: src/Core/Features.php:169
+#: src/Core/Features.php:147
 #: src/Admin/groups/Groups.js:331
 #: src/Admin/manage-event-ext/index.js:35
 msgid "Groups"
@@ -130,7 +130,7 @@ msgstr "Messages supplémentaires"
 msgid "Edit Extra Message"
 msgstr "Modifier le message supplémentaire"
 
-#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/edit-extra-message/EditExtraMessage.js:287
 #: src/Admin/edit-poll/EditPoll.js:773
 #: src/Admin/fee-detail/FeeDetail.js:800
@@ -138,8 +138,8 @@ msgstr "Modifier le message supplémentaire"
 #: src/Admin/fee-detail/FeeDetail.js:1464
 #: src/Admin/fee-detail/FeeDetail.js:1562
 #: src/Admin/fee-detail/FeeDetail.js:1878
-#: src/Admin/fees-list/FeesList.js:684
-#: src/Admin/fees-list/FeesList.js:828
+#: src/Admin/fees-list/FeesList.js:687
+#: src/Admin/fees-list/FeesList.js:831
 #: src/Admin/group-detail/GroupDetail.js:636
 #: src/Admin/groups/Groups.js:458
 #: src/Admin/groups/Groups.js:515
@@ -367,7 +367,7 @@ msgstr "Groupe supprimé avec succès."
 #. translators: %s: original group name
 #: src/API/GroupsController.php:385
 #: src/Admin/groups/Groups.js:215
-#, php-format,js-format
+#, php-format, js-format
 msgid "%s (copy)"
 msgstr "%s (copie)"
 
@@ -733,59 +733,59 @@ msgid_plural "%1$d ticket sales on %2$s"
 msgstr[0] "%1$d vente de billet le %2$s"
 msgstr[1] "%1$d ventes de billets le %2$s"
 
-#: src/Core/Features.php:157
+#: src/Core/Features.php:135
 msgid "Fees"
 msgstr "Frais"
 
-#: src/Core/Features.php:158
+#: src/Core/Features.php:136
 msgid "Event fees, fee payments, fee audit log."
 msgstr "Frais d'événement, paiements de frais, journal d'audit des frais."
 
-#: src/Core/Features.php:162
+#: src/Core/Features.php:140
 msgid "Attendee polls and responses."
 msgstr "Sondages et réponses des participants."
 
-#: src/Core/Features.php:165
+#: src/Core/Features.php:143
 msgid "Instagram"
 msgstr "Instagram"
 
-#: src/Core/Features.php:166
+#: src/Core/Features.php:144
 msgid "Instagram post import and scheduled posting."
 msgstr "Importation de publications Instagram et publication programmée."
 
-#: src/Core/Features.php:170
+#: src/Core/Features.php:148
 msgid "Participant groups."
 msgstr "Groupes de participants."
 
-#: src/Core/Features.php:173
+#: src/Core/Features.php:151
 msgid "Messaging"
 msgstr "Messagerie"
 
-#: src/Core/Features.php:177
+#: src/Core/Features.php:155
 msgid "Timeline"
 msgstr "Chronologie"
 
-#: src/Core/Features.php:178
+#: src/Core/Features.php:156
 msgid "Participant activity timeline."
 msgstr "Chronologie d'activité des participants."
 
-#: src/Core/Features.php:182
+#: src/Core/Features.php:160
 msgid "Bulk participant import."
 msgstr "Importation en masse de participants."
 
-#: src/Core/Features.php:185
+#: src/Core/Features.php:163
 msgid "Invitations"
 msgstr "Invitations"
 
-#: src/Core/Features.php:186
+#: src/Core/Features.php:164
 msgid "Event invitations, consumed by fair-events-experimental ticketing."
 msgstr "Invitations aux événements, utilisées par la billetterie fair-events-experimental."
 
-#: src/Core/Features.php:189
+#: src/Core/Features.php:167
 msgid "Manage-event extensions"
 msgstr "Extensions Manage-event"
 
-#: src/Core/Features.php:190
+#: src/Core/Features.php:168
 msgid "The Mailings tab in the manage-event admin UI."
 msgstr "L'onglet Mailings dans l'interface d'administration manage-event."
 
@@ -862,8 +862,8 @@ msgstr "Retour à la page d'accueil"
 #: src/Admin/edit-poll/EditPoll.js:268
 #: src/Admin/fee-detail/FeeDetail.js:181
 #: src/Admin/fees-list/FeesList.js:86
-#: src/Admin/fees-list/FeesList.js:587
-#: src/Admin/fees-list/FeesList.js:714
+#: src/Admin/fees-list/FeesList.js:590
+#: src/Admin/fees-list/FeesList.js:717
 #: src/Admin/group-detail/GroupDetail.js:367
 #: src/Admin/group-detail/GroupDetail.js:596
 #: src/Admin/groups/Groups.js:72
@@ -1017,8 +1017,8 @@ msgstr "Intéressés"
 #: src/Admin/edit-poll/EditPoll.js:711
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:208
 #: src/Admin/fee-detail/FeeDetail.js:208
-#: src/Admin/fees-list/FeesList.js:147
-#: src/Admin/fees-list/FeesList.js:736
+#: src/Admin/fees-list/FeesList.js:150
+#: src/Admin/fees-list/FeesList.js:739
 #: src/Admin/import/WordPressUsersImport.js:277
 #: src/Admin/instagram-posts/InstagramPosts.js:527
 #: src/Admin/polls-list/PollsList.js:166
@@ -1040,7 +1040,7 @@ msgid "Duplicate"
 msgstr "Dupliquer"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:280
-#: src/Admin/fees-list/FeesList.js:404
+#: src/Admin/fees-list/FeesList.js:407
 #: src/Admin/groups/Groups.js:309
 #: src/Admin/instagram-posts/InstagramPosts.js:618
 #: src/Admin/polls-list/PollsList.js:240
@@ -1072,7 +1072,7 @@ msgstr "Limitez ce message aux événements d'une catégorie spécifique, ou lai
 #: src/Admin/edit-extra-message/EditExtraMessage.js:245
 #: src/Admin/edit-poll/EditPoll.js:725
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:249
-#: src/Admin/fees-list/FeesList.js:747
+#: src/Admin/fees-list/FeesList.js:750
 msgid "Active"
 msgstr "Actif"
 
@@ -1107,7 +1107,7 @@ msgid "Inactive"
 msgstr "Inactif"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:264
-#: src/Admin/fees-list/FeesList.js:397
+#: src/Admin/fees-list/FeesList.js:400
 #: src/Admin/group-detail/GroupDetail.js:330
 #: src/Admin/groups/Groups.js:295
 #: src/Admin/manage-event-ext/EventMailings.js:686
@@ -1180,8 +1180,8 @@ msgid "Enter group name..."
 msgstr "Entrez le nom du groupe..."
 
 #: src/Admin/fee-detail/FeeDetail.js:1764
-#: src/Admin/fees-list/FeesList.js:597
-#: src/Admin/fees-list/FeesList.js:720
+#: src/Admin/fees-list/FeesList.js:600
+#: src/Admin/fees-list/FeesList.js:723
 #: src/Admin/group-detail/GroupDetail.js:606
 #: src/Admin/groups/Groups.js:83
 #: src/Admin/groups/Groups.js:428
@@ -1193,7 +1193,7 @@ msgstr "Description"
 msgid "Enter group description (optional)..."
 msgstr "Entrez la description du groupe (facultatif)..."
 
-#: src/Admin/fees-list/FeesList.js:836
+#: src/Admin/fees-list/FeesList.js:839
 #: src/Admin/group-detail/GroupDetail.js:644
 #: src/Admin/groups/Groups.js:467
 msgid "Update"
@@ -1209,7 +1209,7 @@ msgstr "Afficher"
 msgid "Create Group"
 msgstr "Créer un groupe"
 
-#: src/Admin/fees-list/FeesList.js:697
+#: src/Admin/fees-list/FeesList.js:700
 #: src/Admin/groups/Groups.js:468
 msgid "Create"
 msgstr "Créer"
@@ -1503,12 +1503,12 @@ msgid "Add Group"
 msgstr "Ajouter un groupe"
 
 #: src/Admin/fees-list/FeesList.js:99
-#: src/Admin/fees-list/FeesList.js:610
+#: src/Admin/fees-list/FeesList.js:613
 #: src/Admin/manage-event-ext/GroupRules.js:784
 msgid "Group"
 msgstr "Groupe"
 
-#: src/Admin/fees-list/FeesList.js:426
+#: src/Admin/fees-list/FeesList.js:429
 #: src/Admin/manage-event-ext/GroupRules.js:791
 msgid "Select a group..."
 msgstr "Sélectionner un groupe..."
@@ -1669,7 +1669,7 @@ msgstr "Ce membre n'a pas d'adresse e-mail, donc un rappel ne peut pas être env
 msgid "Reminders are being sent to all members with pending payments. Wait for that to finish before sending this one."
 msgstr "Des rappels sont en cours d'envoi à tous les membres ayant des paiements en attente. Attendez que cela se termine avant d'envoyer celui-ci."
 
-#: src/Core/Features.php:174
+#: src/Core/Features.php:152
 msgid "Custom mail to the whole audience, extra messages, scheduled messages."
 msgstr "E-mail personnalisé pour l'ensemble du public, messages supplémentaires, messages programmés."
 
@@ -1697,12 +1697,12 @@ msgstr "Un transfert nécessite un budget source et un budget cible."
 msgid "There are no budgets yet. Add budgets in Fair Finance to create a transfer."
 msgstr "Il n’y a pas encore de budgets. Ajoutez des budgets dans Fair Finance pour créer un transfert."
 
-#: src/Admin/fees-list/FeesList.js:654
+#: src/Admin/fees-list/FeesList.js:657
 msgid "You can still create this fee without a budget."
 msgstr "Vous pouvez tout de même créer ces frais sans budget."
 
-#: src/Admin/fees-list/FeesList.js:658
-#: src/Admin/fees-list/FeesList.js:799
+#: src/Admin/fees-list/FeesList.js:661
+#: src/Admin/fees-list/FeesList.js:802
 msgid "There are no budgets yet. Add one in Fair Finance to link fees to it."
 msgstr "Il n’y a pas encore de budgets. Ajoutez-en un dans Fair Finance pour y rattacher des frais."
 
@@ -1719,27 +1719,27 @@ msgid "Fair Finance budget the fee is linked to, or null for none."
 msgstr "Budget Fair Finance auquel les frais sont rattachés, ou null s’il n’y en a pas."
 
 #. translators: %d: budget ID
-#: src/Admin/fees-list/FeesList.js:463
+#: src/Admin/fees-list/FeesList.js:466
 #, js-format
 msgid "Budget #%d"
 msgstr "Budget nº %d"
 
 #: src/Admin/fees-list/FeesList.js:105
-#: src/Admin/fees-list/FeesList.js:636
-#: src/Admin/fees-list/FeesList.js:769
+#: src/Admin/fees-list/FeesList.js:639
+#: src/Admin/fees-list/FeesList.js:772
 msgid "Budget"
 msgstr "Budget"
 
-#: src/Admin/fees-list/FeesList.js:780
+#: src/Admin/fees-list/FeesList.js:783
 msgid "The budget this fee is linked to is not in the list. The fee stays linked to it unless you choose another."
 msgstr "Le budget auquel ces frais sont rattachés ne figure pas dans la liste. Les frais y restent rattachés tant que vous n’en choisissez pas un autre."
 
-#: src/Admin/fees-list/FeesList.js:644
-#: src/Admin/fees-list/FeesList.js:784
+#: src/Admin/fees-list/FeesList.js:647
+#: src/Admin/fees-list/FeesList.js:787
 msgid "Optionally link to a budget for financial tracking."
 msgstr "Vous pouvez les rattacher à un budget pour le suivi financier."
 
-#: src/Admin/fees-list/FeesList.js:795
+#: src/Admin/fees-list/FeesList.js:798
 msgid "The fee keeps its current budget unless you choose another."
 msgstr "Les frais conservent leur budget actuel tant que vous n’en choisissez pas un autre."
 
@@ -1866,12 +1866,12 @@ msgid "Add Option"
 msgstr "Ajouter une option"
 
 #: src/Admin/edit-poll/EditPoll.js:718
-#: src/Admin/fees-list/FeesList.js:740
+#: src/Admin/fees-list/FeesList.js:743
 msgid "Draft"
 msgstr "Brouillon"
 
 #: src/Admin/edit-poll/EditPoll.js:732
-#: src/Admin/fees-list/FeesList.js:754
+#: src/Admin/fees-list/FeesList.js:757
 msgid "Closed"
 msgstr "Fermé"
 
@@ -1891,7 +1891,7 @@ msgstr "Créer un sondage"
 #: src/Admin/fee-detail/FeeDetail.js:1431
 #: src/Admin/fee-detail/FeeDetail.js:1738
 #: src/Admin/fees-list/FeesList.js:111
-#: src/Admin/fees-list/FeesList.js:617
+#: src/Admin/fees-list/FeesList.js:620
 msgid "Amount"
 msgstr "Montant"
 
@@ -2072,43 +2072,43 @@ msgstr "Aucune entrée de journal d'audit trouvée."
 msgid "By:"
 msgstr "Par :"
 
-#: src/Admin/fees-list/FeesList.js:141
-#: src/Admin/fees-list/FeesList.js:627
-#: src/Admin/fees-list/FeesList.js:729
+#: src/Admin/fees-list/FeesList.js:144
+#: src/Admin/fees-list/FeesList.js:630
+#: src/Admin/fees-list/FeesList.js:732
 msgid "Due Date"
 msgstr "Date d'échéance"
 
-#: src/Admin/fees-list/FeesList.js:166
+#: src/Admin/fees-list/FeesList.js:169
 #: src/Admin/instagram-posts/InstagramPosts.js:57
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/fees-list/FeesList.js:177
+#: src/Admin/fees-list/FeesList.js:180
 msgid "Paid"
 msgstr "Payé"
 
-#: src/Admin/fees-list/FeesList.js:388
+#: src/Admin/fees-list/FeesList.js:391
 msgid "View Details"
 msgstr "Voir les détails"
 
-#: src/Admin/fees-list/FeesList.js:434
+#: src/Admin/fees-list/FeesList.js:437
 msgid "-- No Budget --"
 msgstr "-- Aucun budget --"
 
-#: src/Admin/fees-list/FeesList.js:561
-#: src/Admin/fees-list/FeesList.js:582
+#: src/Admin/fees-list/FeesList.js:564
+#: src/Admin/fees-list/FeesList.js:585
 msgid "Create Fee"
 msgstr "Créer des frais"
 
-#: src/Admin/fees-list/FeesList.js:590
+#: src/Admin/fees-list/FeesList.js:593
 msgid "Enter fee name..."
 msgstr "Entrez le nom des frais..."
 
-#: src/Admin/fees-list/FeesList.js:603
+#: src/Admin/fees-list/FeesList.js:606
 msgid "Enter description (optional)..."
 msgstr "Entrez une description (facultatif)..."
 
-#: src/Admin/fees-list/FeesList.js:706
+#: src/Admin/fees-list/FeesList.js:709
 msgid "Edit Fee"
 msgstr "Modifier les frais"
 
@@ -2671,7 +2671,7 @@ msgid "Delete message"
 msgstr "Supprimer le message"
 
 #: src/Admin/extra-messages-list/ExtraMessagesList.js:152
-#: src/Admin/fees-list/FeesList.js:499
+#: src/Admin/fees-list/FeesList.js:502
 #: src/Admin/groups/Groups.js:350
 #: src/Admin/instagram-posts/InstagramPosts.js:330
 #: src/Admin/polls-list/PollsList.js:120
@@ -2736,7 +2736,6 @@ msgid_plural "%d reminders were not sent:"
 msgstr[0] "%d rappel n'a pas été envoyé :"
 msgstr[1] "%d rappels n'ont pas été envoyés :"
 
-#. translators: 1: member name or email, 2: reason
 #. translators: 1: participant name, 2: reason
 #: src/Admin/fee-detail/FeeDetail.js:751
 #: src/Admin/group-detail/GroupDetail.js:518
@@ -2820,42 +2819,42 @@ msgstr "pas d'adresse e-mail ; il sera signalé comme non envoyé"
 msgid "Sent emails cannot be recalled."
 msgstr "Les e-mails envoyés ne peuvent pas être rappelés."
 
-#: src/Admin/fees-list/FeesList.js:291
+#: src/Admin/fees-list/FeesList.js:294
 msgid "The fee could not be created. Try again."
 msgstr "La cotisation n'a pas pu être créée. Réessayez."
 
-#: src/Admin/fees-list/FeesList.js:349
+#: src/Admin/fees-list/FeesList.js:352
 msgid "The fee could not be updated. Try again."
 msgstr "Les frais n'ont pas pu être mis à jour. Réessayez."
 
 #. translators: %s: fee name
-#: src/Admin/fees-list/FeesList.js:371
+#: src/Admin/fees-list/FeesList.js:374
 #, js-format
 msgid "Fee “%s” deleted."
 msgstr "Frais « %s » supprimés."
 
-#: src/Admin/fees-list/FeesList.js:377
+#: src/Admin/fees-list/FeesList.js:380
 msgid "The fee could not be deleted. Try again."
 msgstr "Les frais n'ont pas pu être supprimés. Réessayez."
 
 #. translators: %s: fee name
-#: src/Admin/fees-list/FeesList.js:492
+#: src/Admin/fees-list/FeesList.js:495
 #, js-format
 msgid "Delete fee — %s"
 msgstr "Supprimer les frais — %s"
 
-#: src/Admin/fees-list/FeesList.js:495
+#: src/Admin/fees-list/FeesList.js:498
 msgid "Delete fee"
 msgstr "Supprimer les frais"
 
 #. translators: 1: amount with currency, 2: group name
-#: src/Admin/fees-list/FeesList.js:512
+#: src/Admin/fees-list/FeesList.js:515
 #, js-format
 msgid "%1$s per member of %2$s."
 msgstr "%1$s par membre de %2$s."
 
 #. translators: %d: number of members with a payment record
-#: src/Admin/fees-list/FeesList.js:525
+#: src/Admin/fees-list/FeesList.js:528
 #, js-format
 msgid "This also deletes the payment record of its %d member, including its paid status and change history."
 msgid_plural "This also deletes the payment records of its %d members, including their paid status and change history."
@@ -2863,14 +2862,14 @@ msgstr[0] "Cela supprime également le dossier de paiement de son %d membre, y c
 msgstr[1] "Cela supprime également les dossiers de paiement de ses %d membres, y compris leur statut de paiement et l'historique des modifications."
 
 #. translators: %d: number of payment records marked paid
-#: src/Admin/fees-list/FeesList.js:538
+#: src/Admin/fees-list/FeesList.js:541
 #, js-format
 msgid "%d of them is marked paid."
 msgid_plural "%d of them are marked paid."
 msgstr[0] "%d d'entre eux est marqué comme payé."
 msgstr[1] "%d d'entre eux sont marqués comme payés."
 
-#: src/Admin/fees-list/FeesList.js:549
+#: src/Admin/fees-list/FeesList.js:552
 msgid "Payments already received are not refunded, and their transactions stay in Payments. This cannot be undone."
 msgstr "Les paiements déjà reçus ne sont pas remboursés, et leurs transactions restent dans Paiements. Cette action ne peut pas être annulée."
 
@@ -3047,3 +3046,28 @@ msgstr "Supprimer le sondage"
 #: src/Admin/polls-list/PollsList.js:132
 msgid "Invitation links already sent stop working, and its responses are no longer shown. This cannot be undone."
 msgstr "Les liens d'invitation déjà envoyés cesseront de fonctionner, et ses réponses ne seront plus affichées. Cela ne peut pas être annulé."
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s est en pause sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+msgstr[1] "%1$s sont en pause sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s est en pause sur cette page car une autre extension a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour toutes les extensions Fair, puis rechargez cette page."
+msgstr[1] "%1$s sont en pause sur cette page car une autre extension a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour toutes les extensions Fair, puis rechargez cette page."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s inclut une copie obsolète de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
+msgstr[1] "%1$s incluent des copies obsolètes de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
+

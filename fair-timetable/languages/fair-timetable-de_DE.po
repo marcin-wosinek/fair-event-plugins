@@ -39,19 +39,19 @@ msgstr ""
 msgid "https://github.com/marcin-wosinek"
 msgstr ""
 
-#: src/Core/Features.php:115
+#: src/Core/Features.php:88
 msgid "Core"
 msgstr "Kern"
 
-#: src/Core/Features.php:116
+#: src/Core/Features.php:89
 msgid "Timetable blocks. Always on."
 msgstr "Timetable-Blöcke. Immer aktiv."
 
-#: src/Core/Features.php:119
+#: src/Core/Features.php:92
 msgid "Bundled translations"
 msgstr "Gebündelte Übersetzungen"
 
-#: src/Core/Features.php:120
+#: src/Core/Features.php:93
 #: src/Core/Plugin.php:104
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstatt sich auf WordPress.org-Sprachpakete zu verlassen. Nützlich, wenn ein Gebietsschema unter der 90%-Schwelle auf translate.wordpress.org liegt oder für laufende Strings."
@@ -182,3 +182,28 @@ msgstr "Ein Zeitplantabellen-Block zur Anzeige geplanter Ereignisse"
 #: src/Core/Plugin.php:98
 msgid "Translations"
 msgstr "Übersetzungen"
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s ist auf dieser Seite pausiert, weil %2$s zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie %2$s und laden Sie diese Seite dann neu."
+msgstr[1] "%1$s sind auf dieser Seite pausiert, weil %2$s zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie %2$s und laden Sie diese Seite dann neu."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s ist auf dieser Seite pausiert, weil ein anderes Plugin zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie alle Fair-Plugins und laden Sie diese Seite dann neu."
+msgstr[1] "%1$s sind auf dieser Seite pausiert, weil ein anderes Plugin zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie alle Fair-Plugins und laden Sie diese Seite dann neu."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s enthält eine veraltete Kopie der Fair Event Plugins-Bibliothek. Aktualisieren Sie %1$s, um alle Fair-Plugins ordnungsgemäß zu halten."
+msgstr[1] "%1$s enthalten veraltete Kopien der Fair Event Plugins-Bibliothek. Aktualisieren Sie %1$s, um alle Fair-Plugins ordnungsgemäß zu halten."
+

@@ -39,7 +39,7 @@ msgstr "Marcin Wosinek"
 msgid "https://github.com/marcin-wosinek"
 msgstr "https://github.com/marcin-wosinek"
 
-#: fair-events-experimental.php:52
+#: fair-events-experimental.php:64
 msgid "Fair Events Experimental requires the Fair Events plugin to be active."
 msgstr "Fair Events Experimental requiere que el complemento Fair Events esté activo."
 
@@ -56,7 +56,7 @@ msgstr "Comparar eventos"
 
 #: src/Admin/AdminPages.php:86
 #: src/Admin/AdminPages.php:87
-#: src/Admin/sources/SourcesList.js:168
+#: src/Admin/sources/SourcesList.js:446
 msgid "Event Feeds"
 msgstr "Feeds de eventos"
 
@@ -326,7 +326,7 @@ msgstr "Meta respondió, pero no confirmó la recepción del evento de prueba %s
 #. translators: %s: Meta event name, such as PageView or FairEventCalendarClick
 #: src/API/MetaConversionsController.php:314
 #: src/Admin/meta/MetaConversions.js:570
-#, php-format,js-format
+#, php-format, js-format
 msgid "Meta rejected the %s test event. Check the configuration and try again."
 msgstr "Meta rechazó el evento de prueba %s. Comprueba la configuración e intenta de nuevo."
 
@@ -352,31 +352,32 @@ msgstr "Demasiadas solicitudes. Inténtalo más tarde."
 msgid "Event not found."
 msgstr "Evento no encontrado."
 
-#: src/Core/Features.php:133
+#: src/Core/Features.php:111
+#: src/Admin/sources/SourcesList.js:410
 msgid "Event feeds"
 msgstr "Feeds de eventos"
 
-#: src/Core/Features.php:134
+#: src/Core/Features.php:112
 msgid "Event feeds with iCal/JSON output, external calendar imports, Facebook import, event proposals."
 msgstr "Feeds de eventos con salida iCal/JSON, importación de calendarios externos, importación de Facebook y propuestas de eventos."
 
-#: src/Core/Features.php:137
+#: src/Core/Features.php:115
 msgid "Ticketing extensions"
 msgstr "Extensiones de venta de entradas"
 
-#: src/Core/Features.php:138
+#: src/Core/Features.php:116
 msgid "Group pricing and group permission rules for tickets. Requires Ticketing in the Fair Events features and Fair Audience. Turning this off keeps base ticketing and stored rules."
 msgstr "Precios y reglas de permisos por grupo para las entradas. Requiere Venta de entradas en las funciones de Fair Events y Fair Audience. Al desactivarlo se mantienen la venta de entradas básica y las reglas guardadas."
 
-#: src/Core/Features.php:141
+#: src/Core/Features.php:119
 msgid "Mailings"
 msgstr "Envíos de correo"
 
-#: src/Core/Features.php:142
+#: src/Core/Features.php:120
 msgid "Scheduled email mailings for event attendees. Requires fair-audience."
 msgstr "Envíos de correo electrónico programados para asistentes al evento. Requiere fair-audience."
 
-#: src/Core/Features.php:145
+#: src/Core/Features.php:123
 #: src/Admin/meta/MetaConversions.js:606
 #: src/Admin/settings/MetaMoved.js:17
 msgid "Meta Conversions"
@@ -483,6 +484,7 @@ msgstr "Las estadísticas de ventas del evento no se pudieron cargar."
 #: src/Admin/compare-events/CompareEventsPage.js:154
 #: src/Admin/compare-events/CompareEventsPage.js:558
 #: src/Admin/meta/MetaCalendarTest.js:229
+#: src/Admin/sources/SourcesList.js:357
 msgid "Try again"
 msgstr "Intentar de nuevo"
 
@@ -786,7 +788,7 @@ msgstr "Descripción"
 msgid "Remove from schedule"
 msgstr "Quitar del programa"
 
-#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/manage-event-schedule/EventSchedule.js:763
 #: src/Admin/sources/components/SourceForm.js:251
 msgid "Cancel"
@@ -1059,7 +1061,6 @@ msgstr "Eventos recibidos: no reportado"
 msgid "Events received: %d"
 msgstr "Eventos recibidos: %d"
 
-#. translators: %s: Meta trace ID for support requests
 #. translators: %s: Meta trace ID
 #: src/Admin/meta/TestDiagnostics.js:53
 #: src/Admin/whatsapp/WhatsAppConnection.js:110
@@ -1235,37 +1236,36 @@ msgstr "Volver a Feeds de eventos"
 #. translators: %s: event feed name
 #: src/Frontend/WeeklySummaryPage.php:190
 #: src/Admin/source-view/FeedHeader.js:44
-#, js-format,php-format
+#, js-format, php-format
 msgid "Event feed: %s"
 msgstr "Feed de eventos: %s"
 
 #: src/Admin/source-view/IntegrationsSection.js:39
 #: src/Admin/sources/components/SourceForm.js:149
-#: src/Admin/sources/SourcesList.js:234
 msgid "Slug"
 msgstr "Slug"
 
-#: src/Admin/sources/SourcesList.js:264
+#: src/Admin/sources/SourcesList.js:258
 msgid "Status"
 msgstr "Estado"
 
 #: src/Admin/source-view/FeedHeader.js:57
-#: src/Admin/sources/SourcesList.js:119
+#: src/Admin/sources/SourcesList.js:296
 msgid "Enabled"
 msgstr "Activa"
 
 #: src/Admin/source-view/FeedHeader.js:58
-#: src/Admin/sources/SourcesList.js:123
+#: src/Admin/sources/SourcesList.js:300
 msgid "Disabled"
 msgstr "Desactivado"
 
 #: src/Admin/sources/components/SourceForm.js:192
-#: src/Admin/sources/SourcesList.js:240
+#: src/Admin/sources/SourcesList.js:256
 msgid "Feed inputs"
 msgstr "Entradas del feed"
 
 #. translators: %d: number of feed inputs
-#: src/Admin/sources/SourcesList.js:295
+#: src/Admin/sources/SourcesList.js:281
 #, js-format
 msgid "%d feed input"
 msgid_plural "%d feed inputs"
@@ -1281,7 +1281,7 @@ msgid "iCal"
 msgstr "iCal"
 
 #: src/Admin/source-view/IntegrationsSection.js:48
-#: src/Admin/sources/SourcesList.js:311
+#: src/Admin/sources/SourcesList.js:317
 msgid "Copy iCal feed URL"
 msgstr "Copiar URL del feed iCal"
 
@@ -1290,7 +1290,7 @@ msgid "JSON"
 msgstr "JSON"
 
 #: src/Admin/source-view/IntegrationsSection.js:56
-#: src/Admin/sources/SourcesList.js:322
+#: src/Admin/sources/SourcesList.js:324
 msgid "Copy JSON API URL"
 msgstr "Copiar URL de la API JSON"
 
@@ -1299,7 +1299,7 @@ msgid "Edit event feed"
 msgstr "Editar feed de eventos"
 
 #: src/Admin/source-view/SourceViewApp.js:304
-#: src/Admin/sources/SourcesList.js:434
+#: src/Admin/sources/SourcesList.js:510
 msgid "Edit Event Feed"
 msgstr "Editar feed de eventos"
 
@@ -1435,56 +1435,40 @@ msgstr "Actualizar feed de eventos"
 msgid "Create event feed"
 msgstr "Crear feed de eventos"
 
-#: src/Admin/sources/SourcesList.js:54
+#: src/Admin/sources/SourcesList.js:93
 msgid "Failed to load event feeds."
 msgstr "No se han podido cargar los feeds de eventos."
 
-#: src/Admin/sources/SourcesList.js:105
+#: src/Admin/sources/SourcesList.js:223
 msgid "Event feed updated."
 msgstr "Feed de eventos actualizado."
 
-#: src/Admin/sources/SourcesList.js:106
+#: src/Admin/sources/SourcesList.js:224
 msgid "Event feed created."
 msgstr "Feed de eventos creado."
 
-#: src/Admin/sources/SourcesList.js:171
-#: src/Admin/sources/SourcesList.js:438
+#: src/Admin/sources/SourcesList.js:449
+#: src/Admin/sources/SourcesList.js:514
 msgid "Add Event Feed"
 msgstr "Añadir feed de eventos"
 
-#: src/Admin/sources/SourcesList.js:204
+#: src/Admin/sources/SourcesList.js:374
 msgid "Loading event feeds…"
 msgstr "Cargando feeds de eventos…"
 
-#: src/Admin/sources/SourcesList.js:215
+#: src/Admin/sources/SourcesList.js:385
 msgid "No event feeds yet. Add your first event feed to get started."
 msgstr "Todavía no hay feeds de eventos. Añade tu primer feed de eventos para empezar."
 
-#: src/Admin/sources/SourcesList.js:228
-msgid "Name"
-msgstr "Nombre"
-
-#: src/Admin/sources/SourcesList.js:246
-msgid "iCal Feed"
-msgstr "Feed iCal"
-
-#: src/Admin/sources/SourcesList.js:252
-msgid "JSON API"
-msgstr "API JSON"
-
-#: src/Admin/sources/SourcesList.js:270
+#: src/Admin/sources/SourcesList.js:259
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/Admin/sources/SourcesList.js:347
-msgid "View"
-msgstr "Ver"
-
-#: src/Admin/sources/SourcesList.js:359
+#: src/Admin/sources/SourcesList.js:307
 msgid "Edit"
 msgstr "Editar"
 
-#: src/Admin/sources/SourcesList.js:374
+#: src/Admin/sources/SourcesList.js:331
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1502,7 +1486,7 @@ msgstr "Error al cargar los eventos."
 msgid "Meta"
 msgstr "Meta"
 
-#: src/Core/Features.php:146
+#: src/Core/Features.php:124
 msgid "Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector."
 msgstr "Medición en el servidor de Meta, con consentimiento, de clics en botones de eventos, pagos y compras. Requiere credenciales explícitas; la medición de pagos y compras también requiere Fair Payments Connector."
 
@@ -1928,36 +1912,36 @@ msgid "This event feed has no page, which gives the summary its title and link. 
 msgstr "Este feed de eventos no tiene página, que es la que da al resumen su título y enlace. Elige la página del feed en Feeds de eventos para usar este enlace."
 
 #. translators: %s: event feed name
-#: src/Admin/sources/SourcesList.js:85
+#: src/Admin/sources/SourcesList.js:201
 #, js-format
 msgid "Event feed “%s” deleted."
 msgstr "Fuente de eventos «%s» eliminada."
 
-#: src/Admin/sources/SourcesList.js:94
+#: src/Admin/sources/SourcesList.js:211
 msgid "The event feed could not be deleted. Try again."
 msgstr "No se pudo eliminar la fuente de eventos. Inténtalo de nuevo."
 
 #. translators: %s: event feed name
-#: src/Admin/sources/SourcesList.js:394
+#: src/Admin/sources/SourcesList.js:470
 #, js-format
 msgid "Delete event feed — %s"
 msgstr "Eliminar fuente de eventos — %s"
 
-#: src/Admin/sources/SourcesList.js:400
+#: src/Admin/sources/SourcesList.js:476
 msgid "Delete event feed"
 msgstr "Eliminar fuente de eventos"
 
-#: src/Admin/sources/SourcesList.js:404
+#: src/Admin/sources/SourcesList.js:480
 msgid "Deleting…"
 msgstr "Eliminando…"
 
 #. translators: %s: event feed slug
-#: src/Admin/sources/SourcesList.js:414
+#: src/Admin/sources/SourcesList.js:490
 #, js-format
 msgid "Its iCal and JSON feed URLs (slug “%s”) stop working for every calendar or site that reads them."
 msgstr "Sus URLs de fuente iCal y JSON (slug «%s») dejan de funcionar para cada calendario o sitio que las lee."
 
-#: src/Admin/sources/SourcesList.js:422
+#: src/Admin/sources/SourcesList.js:498
 msgid "Events and categories included in the feed are not changed. Deleting the feed cannot be undone."
 msgstr "Los eventos y categorías incluidos en la fuente no se modifican. La eliminación de la fuente no se puede deshacer."
 
@@ -1989,22 +1973,22 @@ msgstr "Copia este mensaje y pégalo en tu grupo o comunidad de WhatsApp. No se 
 msgid "Copy WhatsApp message"
 msgstr "Copiar mensaje de WhatsApp"
 
-#: src/Admin/sources/SourcesList.js:130
+#: src/Admin/sources/SourcesList.js:236
 msgid "Choose a page to enable the WhatsApp summary."
 msgstr "Elige una página para activar el resumen de WhatsApp."
 
-#: src/Admin/sources/SourcesList.js:136
+#: src/Admin/sources/SourcesList.js:242
 msgid "Enable this feed to use its WhatsApp summary."
 msgstr "Activa este feed para usar su resumen de WhatsApp."
 
-#: src/Admin/sources/SourcesList.js:143
+#: src/Admin/sources/SourcesList.js:249
 msgid "Open WhatsApp summary"
 msgstr "Abrir resumen de WhatsApp"
 
 #: src/Admin/AdminPages.php:121
 #: src/Admin/AdminPages.php:122
 #: src/WhatsApp/Connector.php:69
-#: src/Admin/sources/SourcesList.js:258
+#: src/Admin/sources/SourcesList.js:257
 #: src/Admin/whatsapp/WhatsAppPage.js:24
 msgid "WhatsApp"
 msgstr "WhatsApp"
@@ -2706,3 +2690,85 @@ msgstr "En el panel de aplicaciones, abre la configuración del webhook: Casos d
 #: src/Admin/whatsapp/WebhookSetup.js:293
 msgid "Open webhook configuration"
 msgstr "Abrir la configuración del webhook"
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s está pausado en esta página porque %2$s cargó una copia obsoleta de la biblioteca compartida de Fair Event Plugins primero. Actualiza %2$s y luego recarga esta página."
+msgstr[1] "%1$s están pausados en esta página porque %2$s cargó una copia obsoleta de la biblioteca compartida de Fair Event Plugins primero. Actualiza %2$s y luego recarga esta página."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s está pausado en esta página porque otro plugin cargó una copia obsoleta de la biblioteca compartida de Fair Event Plugins primero. Actualiza todos los plugins Fair y luego recarga esta página."
+msgstr[1] "%1$s están pausados en esta página porque otro plugin cargó una copia obsoleta de la biblioteca compartida de Fair Event Plugins primero. Actualiza todos los plugins Fair y luego recarga esta página."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s incluye una copia obsoleta de la biblioteca compartida de Fair Event Plugins. Actualiza %1$s para mantener todos los plugins Fair funcionando correctamente."
+msgstr[1] "%1$s incluyen copias obsoletas de la biblioteca compartida de Fair Event Plugins. Actualiza %1$s para mantener todos los plugins Fair funcionando correctamente."
+
+#: src/Admin/sources/SourcesList.js:38
+#: src/Admin/sources/SourcesList.js:270
+msgid "(untitled feed)"
+msgstr "(entrada sin título)"
+
+#. translators: 1: event feed name, 2: iCal feed URL
+#: src/Admin/sources/SourcesList.js:146
+#, js-format
+msgid "The iCal feed URL for “%1$s” could not be copied to the clipboard. Copy it here instead: %2$s"
+msgstr "No se pudo copiar la URL del feed iCal para «%1$s» al portapapeles. Cópiala aquí en su lugar: %2$s"
+
+#. translators: 1: event feed name, 2: JSON API URL
+#: src/Admin/sources/SourcesList.js:155
+#, js-format
+msgid "The JSON API URL for “%1$s” could not be copied to the clipboard. Copy it here instead: %2$s"
+msgstr "No se pudo copiar la URL de la API JSON para «%1$s» al portapapeles. Cópiala aquí en su lugar: %2$s"
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:170
+#, js-format
+msgid "iCal feed URL for “%s” copied."
+msgstr "URL del feed iCal para «%s» copiada."
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:178
+#, js-format
+msgid "JSON API URL for “%s” copied."
+msgstr "URL de la API JSON para «%s» copiada."
+
+#: src/Admin/sources/SourcesList.js:255
+msgid "Feed"
+msgstr "Feed"
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:310
+#, js-format
+msgid "Edit “%s”"
+msgstr "Editar «%s»"
+
+#. translators: %s: event feed name
+#: src/Admin/sources/SourcesList.js:341
+#, js-format
+msgid "More actions for “%s”"
+msgstr "Más acciones para «%s»"
+
+#: src/Admin/sources/SourcesList.js:365
+msgid "Add your first event feed"
+msgstr "Añade tu primer feed de eventos"
+
+#. translators: %d: number of event feeds
+#: src/Admin/sources/SourcesList.js:398
+#, js-format
+msgid "%d event feed"
+msgid_plural "%d event feeds"
+msgstr[0] "%d fuente de eventos"
+msgstr[1] "%d fuentes de eventos"
+

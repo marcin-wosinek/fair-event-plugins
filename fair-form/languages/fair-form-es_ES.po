@@ -84,11 +84,10 @@ msgstr "Entrada #%d"
 msgid "No page"
 msgstr "Sin página"
 
-#. translators: %d: event date ID.
 #. translators: %d: event date ID
 #: src/API/QuestionnaireResponsesController.php:347
 #: src/Admin/form-answers/FormAnswers.js:249
-#, php-format,js-format
+#, php-format, js-format
 msgid "Event date #%d"
 msgstr "Fecha del evento #%d"
 
@@ -169,12 +168,12 @@ msgid "Forced by a wp-config constant — change it there."
 msgstr "Forzado por una constante wp-config — cámbialo allí."
 
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:212
+#: src/Services/FormNotificationService.php:214
 #, php-format
 msgid "New form submission — %s"
 msgstr "Nuevo envío de formulario — %s"
 
-#: src/Services/FormNotificationService.php:219
+#: src/Services/FormNotificationService.php:221
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
 #: src/Admin/submission-detail/SubmissionDetail.js:430
@@ -182,12 +181,12 @@ msgid "Email"
 msgstr "Correo electrónico"
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:231
+#: src/Services/FormNotificationService.php:233
 #, php-format
 msgid "Page: %s"
 msgstr "Página: %s"
 
-#: src/Services/FormNotificationService.php:259
+#: src/Services/FormNotificationService.php:242
 msgid "A new form submission has been received."
 msgstr "Se ha recibido un nuevo envío de formulario."
 
@@ -723,46 +722,37 @@ msgid "The value to compare against."
 msgstr "El valor a comparar."
 
 #: src/blocks/fair-form-consent/editor.js:32
-#: src/blocks/fair-form-date/editor.js:31
-#: src/blocks/fair-form-datetime/editor.js:31
-#: src/blocks/fair-form-email/editor.js:31
 #: src/blocks/fair-form-file-upload/editor.js:43
 #: src/blocks/fair-form-long-text/editor.js:53
 #: src/blocks/fair-form-phone/editor.js:54
-#: src/blocks/fair-form-short-text/editor.js:64
 #: src/blocks/fair-form-url/editor.js:52
-#: src/blocks/shared/ChoiceQuestionEdit.js:89
+#: src/blocks/shared/ChoiceQuestionEdit.js:68
+#: src/blocks/shared/InputQuestionEdit.js:57
 msgid "Question Settings"
 msgstr "Configuración de la pregunta"
 
 #: src/blocks/fair-form-consent/editor.js:34
-#: src/blocks/fair-form-date/editor.js:33
-#: src/blocks/fair-form-datetime/editor.js:33
-#: src/blocks/fair-form-email/editor.js:33
 #: src/blocks/fair-form-file-upload/editor.js:45
 #: src/blocks/fair-form-long-text/editor.js:55
 #: src/blocks/fair-form-phone/editor.js:56
-#: src/blocks/fair-form-short-text/editor.js:66
 #: src/blocks/fair-form-url/editor.js:54
-#: src/blocks/shared/ChoiceQuestionEdit.js:91
+#: src/blocks/shared/ChoiceQuestionEdit.js:70
+#: src/blocks/shared/InputQuestionEdit.js:59
 msgid "Question Key"
 msgstr "Clave de la pregunta"
 
 #: src/blocks/fair-form-consent/editor.js:39
-#: src/blocks/fair-form-short-text/editor.js:71
+#: src/blocks/fair-form-short-text/editor.js:46
 msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"favorite_color\"). Se utiliza internamente."
 
 #: src/blocks/fair-form-consent/editor.js:45
-#: src/blocks/fair-form-date/editor.js:44
-#: src/blocks/fair-form-datetime/editor.js:44
-#: src/blocks/fair-form-email/editor.js:44
 #: src/blocks/fair-form-file-upload/editor.js:56
 #: src/blocks/fair-form-long-text/editor.js:66
 #: src/blocks/fair-form-phone/editor.js:67
-#: src/blocks/fair-form-short-text/editor.js:77
 #: src/blocks/fair-form-url/editor.js:65
-#: src/blocks/shared/ChoiceQuestionEdit.js:102
+#: src/blocks/shared/ChoiceQuestionEdit.js:81
+#: src/blocks/shared/InputQuestionEdit.js:67
 msgid "Required"
 msgstr "Requerido"
 
@@ -770,41 +760,35 @@ msgstr "Requerido"
 msgid "I have read and accept the terms and conditions"
 msgstr "He leído y acepto los términos y condiciones"
 
-#: src/blocks/fair-form-date/editor.js:38
+#: src/blocks/fair-form-date/editor.js:14
 msgid "A unique identifier for this question (e.g. \"birthdate\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"birthdate\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-date/editor.js:51
-#: src/blocks/fair-form-datetime/editor.js:51
-#: src/blocks/fair-form-email/editor.js:51
 #: src/blocks/fair-form-long-text/editor.js:73
 #: src/blocks/fair-form-phone/editor.js:74
-#: src/blocks/fair-form-short-text/editor.js:84
 #: src/blocks/fair-form-url/editor.js:72
+#: src/blocks/shared/InputQuestionEdit.js:74
 msgid "Placeholder"
 msgstr "Marcador de posición"
 
-#: src/blocks/fair-form-date/editor.js:68
-#: src/blocks/fair-form-datetime/editor.js:68
-#: src/blocks/fair-form-email/editor.js:68
 #: src/blocks/fair-form-file-upload/editor.js:98
 #: src/blocks/fair-form-long-text/editor.js:102
 #: src/blocks/fair-form-phone/editor.js:99
-#: src/blocks/fair-form-short-text/editor.js:104
 #: src/blocks/fair-form-url/editor.js:103
-#: src/blocks/shared/ChoiceQuestionEdit.js:128
+#: src/blocks/shared/ChoiceQuestionEdit.js:107
+#: src/blocks/shared/InputQuestionEdit.js:47
 msgid "Enter your question..."
 msgstr "Ingresa tu pregunta..."
 
-#: src/blocks/fair-form-datetime/editor.js:38
+#: src/blocks/fair-form-datetime/editor.js:14
 msgid "A unique identifier for this question (e.g. \"appointment_slot\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"appointment_slot\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-email/editor.js:38
+#: src/blocks/fair-form-email/editor.js:14
 msgid "A unique identifier for this question (e.g. \"email\"). Used internally."
 msgstr "Un identificador único para esta pregunta (p. ej. \"email\"). Se utiliza internamente."
 
-#: src/blocks/fair-form-email/editor.js:81
+#: src/blocks/fair-form-email/editor.js:18
 msgid "your@email.com"
 msgstr "tu@correo.com"
 
@@ -837,7 +821,7 @@ msgid "Rows"
 msgstr "Filas"
 
 #: src/blocks/fair-form-long-text/editor.js:116
-#: src/blocks/fair-form-short-text/editor.js:118
+#: src/blocks/fair-form-short-text/editor.js:50
 msgid "Type your answer..."
 msgstr "Escribe tu respuesta..."
 
@@ -873,7 +857,7 @@ msgstr "Categorías marcadas por defecto cuando se carga el formulario."
 msgid "Category preferences will be shown here"
 msgstr "Las preferencias de categoría se mostrarán aquí"
 
-#: src/blocks/shared/ChoiceQuestionEdit.js:96
+#: src/blocks/shared/ChoiceQuestionEdit.js:75
 msgid "A unique identifier for this question. Used internally."
 msgstr "Un identificador único para esta pregunta. Se utiliza internamente."
 
@@ -1617,3 +1601,28 @@ msgstr[1] "…y %d más."
 msgctxt "block keyword"
 msgid "category"
 msgstr "categoría"
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s está pausado en esta página porque %2$s cargó una copia desactualizada de la biblioteca compartida de Fair Event Plugins primero. Actualiza %2$s y luego recarga esta página."
+msgstr[1] "%1$s están pausados en esta página porque %2$s cargó una copia desactualizada de la biblioteca compartida de Fair Event Plugins primero. Actualiza %2$s y luego recarga esta página."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s está pausado en esta página porque otro plugin cargó una copia desactualizada de la biblioteca compartida de Fair Event Plugins primero. Actualiza todos los plugins Fair y luego recarga esta página."
+msgstr[1] "%1$s están pausados en esta página porque otro plugin cargó una copia desactualizada de la biblioteca compartida de Fair Event Plugins primero. Actualiza todos los plugins Fair y luego recarga esta página."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s incluye una copia desactualizada de la biblioteca compartida de Fair Event Plugins. Actualiza %1$s para mantener todos los plugins Fair funcionando correctamente."
+msgstr[1] "%1$s incluyen copias desactualizadas de la biblioteca compartida de Fair Event Plugins. Actualiza %1$s para mantener todos los plugins Fair funcionando correctamente."
+

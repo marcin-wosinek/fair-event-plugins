@@ -216,7 +216,7 @@ msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr "Un nom pour identifier à qui ce jeton est destiné, par exemple lamutable.es"
 
 #: src/Admin/api-tokens/ApiTokensApp.js:512
-#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/connected-sites/ConnectedSitesApp.js:791
 msgid "Cancel"
 msgstr "Annuler"
@@ -500,3 +500,28 @@ msgstr "Ce site arrête de lire les données de %s, et le jeton stocké pour cel
 #: src/Admin/connected-sites/ConnectedSitesApp.js:676
 msgid "Transactions already imported from it are kept. The token is not revoked on the other site; revoke it there if it should stop working."
 msgstr "Les transactions déjà importées de celui-ci sont conservées. Le jeton n'est pas révoqué sur l'autre site ; révoquez-le là-bas s'il doit cesser de fonctionner."
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s est suspendu sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+msgstr[1] "%1$s sont suspendus sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s est suspendu sur cette page car un autre plugin a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour tous les plugins Fair, puis rechargez cette page."
+msgstr[1] "%1$s sont suspendus sur cette page car un autre plugin a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour tous les plugins Fair, puis rechargez cette page."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s inclut une copie obsolète de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que tous les plugins Fair fonctionnent correctement."
+msgstr[1] "%1$s incluent des copies obsolètes de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que tous les plugins Fair fonctionnent correctement."
+
