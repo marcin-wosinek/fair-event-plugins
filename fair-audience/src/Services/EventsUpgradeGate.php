@@ -20,11 +20,17 @@ defined( 'WPINC' ) || die;
  *
  * - Fair Events inactive: allowed. Audience's purchase routes refuse
  *   without Fair Events (503 `payment_not_recorded`), and Fair Events
- *   checks again when it is activated.
+ *   checks again when it is activated. This answer is never kept for the
+ *   request: Fair Events may still be loaded or activated after Fair
+ *   Audience (plugins load alphabetically, and a bulk activation runs
+ *   Audience's hook first), and the next call must then follow it.
  * - Fair Events active without the check (older than this release):
  *   refused until Fair Events is updated first, as the update order
  *   requires (Connector, Events, Audience).
- * - Otherwise: Fair Events' decision.
+ * - Otherwise: Fair Events' decision, the same one Fair Events' own
+ *   bootstrap and activation follow, whichever plugin asks first. That
+ *   includes a site Fair Events finds without any payment history to
+ *   migrate, which both plugins then start on.
  */
 class EventsUpgradeGate {
 
@@ -69,8 +75,10 @@ class EventsUpgradeGate {
 
 		self::$reason = null;
 		if ( ! defined( 'FAIR_EVENTS_VERSION' ) ) {
-			self::$allowed = true;
-		} elseif ( ! class_exists( self::EVENTS_GATE ) || ! method_exists( self::EVENTS_GATE, 'allows_initialization' ) ) {
+			// Not cached: Fair Events may load or activate later in this request.
+			return true;
+		}
+		if ( ! class_exists( self::EVENTS_GATE ) || ! method_exists( self::EVENTS_GATE, 'allows_initialization' ) ) {
 			self::$reason  = self::REASON_EVENTS_OUTDATED;
 			self::$allowed = false;
 		} else {

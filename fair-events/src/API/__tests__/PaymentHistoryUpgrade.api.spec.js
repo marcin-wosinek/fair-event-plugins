@@ -8,18 +8,23 @@
  *
  * 1. Fresh installation: the evidence is recorded on activation and the
  *    site is safe to upgrade, with nothing to clean up.
- * 2. Existing site that never finished the migration (the evidence and the
+ * 2. Existing site with no payment history (ordinary events, profiles and
+ *    free signups only), Connector inactive, no evidence: both plugins
+ *    start, the stored data is recorded as the evidence and the installer
+ *    finishes the upgrade. A free Audience-only registration is history the
+ *    migration would still move, so it refuses until it is gone.
+ * 3. Existing site that never finished the migration (the evidence and the
  *    intermediate release's activations removed, its database version
  *    stored): neither plugin starts, neither installer runs, the
  *    administrator sees why and what to do, and repeated requests stay
  *    refused.
- * 3. Migration finished but a blocking finding or failed migration work is
+ * 4. Migration finished but a blocking finding or failed migration work is
  *    left: still refused. Informational findings and pending work don't
  *    block.
- * 4. Migration finished: the evidence is recorded, the installer finishes
+ * 5. Migration finished: the evidence is recorded, the installer finishes
  *    the upgrade, events, tickets and settings are unchanged, and the
  *    checklist separates "safe to upgrade" from "ready for cleanup".
- * 5. Source-history cleanup (#2254, §8.21): refused without a backup, for
+ * 6. Source-history cleanup (#2254, §8.21): refused without a backup, for
  *    non-administrators and while blocked, with nothing deleted; then it
  *    removes exactly the ledger, the comparisons table, the migration
  *    options and the dry-run findings, keeps everything else, and a repeat
@@ -264,6 +269,78 @@ test.describe( 'Supported upgrade path after the payment history migration', () 
 		expect( ( await fixture( 'state' ) ).staging.user_id ).toBeGreaterThan(
 			0
 		);
+	} );
+
+	test( 'an existing site without payment history starts without Connector or the migration', async () => {
+		await site.wp( [ 'plugin', 'deactivate', 'fair-payments-connector' ] );
+		try {
+			await fixture( 'ordinary', {
+				eventId: event.eventId,
+				eventDateId: event.eventDateId,
+			} );
+			await fixture( 'unmigrated' );
+
+			for ( let attempt = 0; attempt < 2; attempt++ ) {
+				expect( await routesRegistered() ).toEqual( {
+					events: true,
+					audience: true,
+				} );
+			}
+			const state = await fixture( 'state' );
+			expect( state.evidence ).toMatchObject( {
+				basis: 'verified_no_history',
+				connector_active: false,
+			} );
+			// No migration verification or activation is manufactured.
+			expect( state.cutover ).toBeNull();
+			expect( state.readers ).toBeNull();
+			// The installer ran from the stored version.
+			expect( state.eventsDbVersion ).toBe( currentDbVersion );
+
+			// Non-payment features work.
+			const statistics = await admin.get(
+				`/wp-json/fair-events/v1/event-dates/${ event.eventDateId }/statistics`
+			);
+			expect( statistics.status() ).toBe( 200 );
+			const participants = await admin.get(
+				'/wp-json/fair-audience/v1/participants'
+			);
+			expect( participants.status() ).toBe( 200 );
+			expect( await dashboard() ).not.toContain(
+				'Fair Events is paused'
+			);
+
+			// A free registration with no Fair Events signup still needs the migration.
+			const admission = await fixture( 'free-admission', {
+				eventId: event.eventId,
+				eventDateId: event.eventDateId,
+			} );
+			await fixture( 'unmigrated' );
+			expect( await routesRegistered() ).toEqual( {
+				events: false,
+				audience: false,
+			} );
+			expect( await dashboard() ).toContain(
+				'This site has earlier payments, registrations or activity choices that need the migration.'
+			);
+			expect( ( await fixture( 'state' ) ).evidence ).toBeNull();
+
+			// Once it is gone, the next request finds nothing to migrate.
+			await fixture( 'remove-relationship', admission );
+			expect( await routesRegistered() ).toEqual( {
+				events: true,
+				audience: true,
+			} );
+			expect( ( await fixture( 'state' ) ).evidence.basis ).toBe(
+				'verified_no_history'
+			);
+		} finally {
+			await site.wp( [
+				'plugin',
+				'activate',
+				'fair-payments-connector',
+			] );
+		}
 	} );
 
 	test( 'an unmigrated site starts neither plugin and writes nothing', async () => {

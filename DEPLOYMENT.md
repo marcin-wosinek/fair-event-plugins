@@ -614,8 +614,9 @@ deleting it is out of scope and needs a separate follow-up issue.
 
 Releases after `build-2.2.0` no longer depend on the payment history
 migration (#2251) and later remove it (#2252–#2254). They start only on a
-site that **finished** the migration, or that was installed fresh by one of
-them ([PAYMENT_HISTORY_MIGRATION.md § 8.17](./PAYMENT_HISTORY_MIGRATION.md#817-supported-upgrade-path)).
+site that **finished** the migration, that was installed fresh by one of
+them, or whose stored data shows there was never anything to migrate
+([PAYMENT_HISTORY_MIGRATION.md § 8.17](./PAYMENT_HISTORY_MIGRATION.md#817-supported-upgrade-path)).
 Everything below applies to every site, including client sites deployed
 with `workflow_dispatch`.
 
@@ -681,9 +682,41 @@ first installed by a release after `build-2.2.0` records
 `fresh_install` evidence before it creates its tables, has no migration to
 run and nothing to clean up.
 
+**Existing sites without payment history** need none of it either, with
+or without Fair Payments Connector. On the first request without completion
+evidence, Fair Events reads the stored data (read-only, whether Connector or
+Fair Audience is active or not; their tables stay after deactivation) and
+starts when every one of these is empty:
+
+| Source                       | What counts                                                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connector transactions       | Any row in `{prefix}fair_payment_transactions` except Fair Audience fee payments                                                                      |
+| Signup payment references    | Fair Events signups with a `transaction_id` (even one naming a deleted transaction) or an amount above zero                                           |
+| Payment links                | Any row in `{prefix}fair_events_signup_payment_links`                                                                                                 |
+| Migrated purchases           | Signups with `legacy_event_participant_id`: a migration was started                                                                                   |
+| Audience ledger              | Any row in `{prefix}fair_audience_event_participant_transactions`                                                                                     |
+| Legacy admissions            | Fair Audience `pending_payment` registrations, and `signed_up` ones without a confirmed Fair Events signup or ticket of that participant on that date |
+| Participant-scope activities | Fair Audience activity choices not carried over to a ticket, or held for a payment                                                                    |
+| Migration work and findings  | Any row in `{prefix}fair_events_payment_shadow_work` or `{prefix}fair_events_payment_history_findings`                                                |
+
+Events, occurrences, ticket types, venues, free Fair Events signups and
+participant profiles (including `interested` and `collaborator`
+registrations) are never history. A missing table is an empty source. The
+site then records `verified_no_history` evidence (which sources were read
+and whether Connector was active) and both plugins start; no migration
+verification or activation is recorded, and there is nothing to clean up.
+Free registrations made through Fair Audience alone still need the
+migration, because it turns them into Fair Events purchases: such a site
+follows the procedure above. If any source can't be read (a failed query,
+or a table without the expected columns), the site is refused as if it had
+history: uncertainty never starts it.
+
 **Unsupported upgrades.** On an existing site without the completion
-evidence, Fair Events and Fair Audience start nothing but an administrator
-notice that names what is missing and links here. Neither installer runs,
+evidence whose stored data holds history (or can't be read), Fair Events
+and Fair Audience start nothing but an administrator notice that names what
+is missing and links here. The notice says whether history was found
+(`source_history_found`) or couldn't be read
+(`source_history_unverifiable`). Neither installer runs,
 so no table, option or purchase changes, and no purchase or payment is
 recorded: checkout, signups and Statistics are unavailable until it is
 resolved. Fair Audience also stops when Fair Events is older than this
@@ -694,7 +727,10 @@ their own routes.
 
 1. Reinstall the `build-2.2.0` archives over the newer plugins, in the
    order Connector → Events → Audience. Nothing needs restoring: the newer
-   code wrote nothing.
+   code wrote nothing. A site refused only because a source couldn't be
+   read can instead fix the database error (check the PHP error log for
+   the failed query, repair or restore the table) and reload: the next
+   request decides again.
 2. Finish the migration on Payment history, as above.
 3. No checkout can start while the site is paused, but a payment started
    before the update can still complete at the provider. Connector records

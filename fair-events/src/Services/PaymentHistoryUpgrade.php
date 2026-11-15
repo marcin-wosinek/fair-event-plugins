@@ -26,7 +26,13 @@ defined( 'WPINC' ) || die;
  *   that removes the migration's own records (§8.21) keeps it,
  *   because afterwards nothing else can tell a migrated site from an
  *   unmigrated one.
- * - An existing site without that evidence is an unsupported upgrade:
+ * - An existing site whose stored data proves there is nothing to migrate
+ *   (source_history(): no payment reference, Audience ledger row, legacy
+ *   admission or participant-scope activity, migration work or finding,
+ *   whether Fair Payments Connector is installed or not) records it as
+ *   evidence too, and initializes without the intermediate release.
+ * - Any other existing site without that evidence, including one whose
+ *   data can't be read with certainty, is an unsupported upgrade:
  *   allows_initialization() is false, Fair Events (and Fair Audience,
  *   which asks the same) start nothing but an administrator notice, and
  *   neither runs its installer, so nothing is written until the
@@ -68,6 +74,42 @@ class PaymentHistoryUpgrade {
 	 * Evidence basis: the intermediate release recorded that there was nothing to migrate.
 	 */
 	const BASIS_NO_SOURCE_HISTORY = 'no_source_history';
+
+	/**
+	 * Evidence basis: this release read the stored data and found nothing
+	 * the migration would have to move (source_history()).
+	 */
+	const BASIS_VERIFIED_NO_HISTORY = 'verified_no_history';
+
+	/**
+	 * State of source_history(): every source was read and is empty.
+	 */
+	const HISTORY_ABSENT = 'absent';
+
+	/**
+	 * State of source_history(): at least one source holds records.
+	 */
+	const HISTORY_PRESENT = 'present';
+
+	/**
+	 * State of source_history(): a source couldn't be read.
+	 */
+	const HISTORY_UNVERIFIABLE = 'unverifiable';
+
+	/**
+	 * The sources source_history() reads, in order.
+	 */
+	const HISTORY_SOURCES = array(
+		'payment_transactions',
+		'signup_payment_references',
+		'payment_links',
+		'backfilled_purchases',
+		'audience_ledger',
+		'legacy_admissions',
+		'participant_activities',
+		'migration_work',
+		'migration_findings',
+	);
 
 	/**
 	 * The last release with the complete migration workflow (stage 5),
@@ -130,9 +172,17 @@ class PaymentHistoryUpgrade {
 	private static $blockers = array();
 
 	/**
+	 * What the last refused decision read from source_history(), if it did.
+	 *
+	 * @var array|null
+	 */
+	private static $history = null;
+
+	/**
 	 * Whether Fair Events (and Fair Audience) may initialize: completion
-	 * evidence is recorded, the site is a fresh installation, or the
-	 * intermediate release's records show a finished migration, which is
+	 * evidence is recorded, the site is a fresh installation, the
+	 * intermediate release's records show a finished migration, or the
+	 * stored data proves there is nothing to migrate. The last two are
 	 * then recorded as evidence. Made once per request.
 	 *
 	 * @return bool
@@ -149,15 +199,334 @@ class PaymentHistoryUpgrade {
 
 		$facts    = self::facts();
 		$decision = self::decide( $facts );
-		if ( $decision['blockers'] ) {
-			self::$blockers = $decision['blockers'];
-			self::$allowed  = false;
-			return false;
+		if ( ! $decision['blockers'] ) {
+			self::record_evidence( self::evidence_record( $decision['basis'], $facts ) );
+			self::$allowed = true;
+			return true;
 		}
 
-		self::record_evidence( self::evidence_record( $decision['basis'], $facts ) );
-		self::$allowed = true;
-		return true;
+		// No finished migration: allowed only when nothing needs one.
+		$history = self::source_history();
+		if ( self::HISTORY_ABSENT === $history['state'] ) {
+			self::record_evidence( self::evidence_record( self::BASIS_VERIFIED_NO_HISTORY, $history ) );
+			self::$allowed = true;
+			return true;
+		}
+
+		self::$history  = $history;
+		self::$blockers = self::with_history_blocker( $decision['blockers'], $history );
+		self::$allowed  = false;
+		return false;
+	}
+
+	/**
+	 * The decision's blockers, plus why the stored data didn't qualify.
+	 *
+	 * @param string[] $blockers From decide().
+	 * @param array    $history  From source_history().
+	 * @return string[]
+	 */
+	private static function with_history_blocker( array $blockers, array $history ) {
+		if ( self::HISTORY_PRESENT === $history['state'] ) {
+			$blockers[] = 'source_history_found';
+		} elseif ( self::HISTORY_UNVERIFIABLE === $history['state'] ) {
+			$blockers[] = 'source_history_unverifiable';
+		}
+		return $blockers;
+	}
+
+	/**
+	 * Whether the stored data holds anything the payment history migration
+	 * would have to move. Read-only, and read whether or not Fair Payments
+	 * Connector or Fair Audience is installed or active: their tables stay
+	 * after either is deactivated or deleted.
+	 *
+	 * Ordinary events, occurrences, ticket types, free Fair Events signups
+	 * and participant profiles are never source history. A source whose
+	 * table is absent is empty; a failed read, or a table without the
+	 * columns the read needs, makes the whole answer unverifiable, so
+	 * uncertainty never allows initialization.
+	 *
+	 * @return array state (HISTORY_*), sources (code => count, or null when
+	 *               unreadable), connector_active.
+	 */
+	public static function source_history() {
+		$sources = array();
+		foreach ( self::HISTORY_SOURCES as $code ) {
+			$sources[ $code ] = self::count_source( $code );
+		}
+
+		return array(
+			'state'            => self::history_state( $sources ),
+			'sources'          => $sources,
+			'connector_active' => defined( 'FAIR_PAYMENTS_CONNECTOR_VERSION' ),
+		);
+	}
+
+	/**
+	 * The state the source counts amount to.
+	 *
+	 * @param array<string, int|null> $sources From source_history().
+	 * @return string HISTORY_*.
+	 */
+	public static function history_state( array $sources ) {
+		$state = self::HISTORY_ABSENT;
+		foreach ( self::HISTORY_SOURCES as $code ) {
+			if ( ! array_key_exists( $code, $sources ) || null === $sources[ $code ] ) {
+				return self::HISTORY_UNVERIFIABLE;
+			}
+			if ( (int) $sources[ $code ] > 0 ) {
+				$state = self::HISTORY_PRESENT;
+			}
+		}
+		return $state;
+	}
+
+	/**
+	 * Records of one source of history.
+	 *
+	 * @param string $code One of HISTORY_SOURCES.
+	 * @return int|null Count, 0 when its table is absent, null when unreadable.
+	 */
+	private static function count_source( $code ) {
+		global $wpdb;
+
+		$signups = $wpdb->prefix . 'fair_events_signups';
+		switch ( $code ) {
+			case 'payment_transactions':
+				// Every Connector transaction except participant fees,
+				// which the migration never covered (§3.2).
+				$table = $wpdb->prefix . 'fair_payment_transactions';
+				return self::count_in(
+					$table,
+					static function () use ( $wpdb, $table ) {
+						return $wpdb->prepare(
+							'SELECT COUNT(*) FROM %i WHERE metadata IS NULL OR metadata NOT LIKE %s',
+							$table,
+							'%' . $wpdb->esc_like( '"fee_payment_id"' ) . '%'
+						);
+					}
+				);
+
+			case 'signup_payment_references':
+				// Paid or payable signups, including those naming a deleted transaction.
+				return self::count_in(
+					$signups,
+					static function () use ( $wpdb, $signups ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE transaction_id IS NOT NULL OR amount > 0', $signups );
+					}
+				);
+
+			case 'payment_links':
+				$table = $wpdb->prefix . 'fair_events_signup_payment_links';
+				return self::count_in(
+					$table,
+					static function () use ( $wpdb, $table ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table );
+					}
+				);
+
+			case 'backfilled_purchases':
+				// Purchases a started migration created from relationships.
+				$column = self::column_exists( $signups, 'legacy_event_participant_id' );
+				if ( null === $column ) {
+					return null;
+				}
+				if ( ! $column ) {
+					return 0;
+				}
+				return self::count_in(
+					$signups,
+					static function () use ( $wpdb, $signups ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE legacy_event_participant_id IS NOT NULL', $signups );
+					}
+				);
+
+			case 'audience_ledger':
+				$table = $wpdb->prefix . 'fair_audience_event_participant_transactions';
+				return self::count_in(
+					$table,
+					static function () use ( $wpdb, $table ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table );
+					}
+				);
+
+			case 'legacy_admissions':
+				return self::count_legacy_admissions();
+
+			case 'participant_activities':
+				return self::count_participant_activities();
+
+			case 'migration_work':
+				$table = PaymentShadowWork::table();
+				return self::count_in(
+					$table,
+					static function () use ( $wpdb, $table ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table );
+					}
+				);
+
+			case 'migration_findings':
+				// Any finding, decided or not: each names a historical record.
+				$table = PaymentHistoryFinding::table();
+				return self::count_in(
+					$table,
+					static function () use ( $wpdb, $table ) {
+						return $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table );
+					}
+				);
+		}
+		return null;
+	}
+
+	/**
+	 * Fair Audience relationships the migration would turn into purchases
+	 * (§4.1), counted conservatively: every `pending_payment` relationship
+	 * (a payment in flight), and every `signed_up` one without a confirmed
+	 * Fair Events signup of that participant on that date (of its ticket
+	 * type, when it has one) or a confirmed ticket they hold there.
+	 *
+	 * @return int|null
+	 */
+	private static function count_legacy_admissions() {
+		global $wpdb;
+
+		$relationships = $wpdb->prefix . 'fair_audience_event_participants';
+		$signups       = $wpdb->prefix . 'fair_events_signups';
+		$tickets       = $wpdb->prefix . 'fair_events_tickets';
+
+		$relationships_exist = self::table_exists( $relationships );
+		if ( null === $relationships_exist ) {
+			return null;
+		}
+		if ( ! $relationships_exist ) {
+			return 0;
+		}
+
+		$sql    = 'SELECT COUNT(*) FROM %i AS ep WHERE ep.label = %s';
+		$args   = array( $relationships, 'pending_payment' );
+		$sql   .= ' OR ( ep.label = %s';
+		$args[] = 'signed_up';
+
+		$signup_coverage = self::table_exists( $signups ) ? self::column_exists( $signups, 'participant_id' ) : false;
+		if ( null === $signup_coverage ) {
+			return null;
+		}
+		if ( $signup_coverage ) {
+			$sql   .= ' AND NOT EXISTS ( SELECT 1 FROM %i AS s WHERE s.participant_id = ep.participant_id AND s.event_date_id = ep.event_date_id AND s.status = %s AND ( ep.ticket_type_id IS NULL OR s.ticket_type_id = ep.ticket_type_id ) )';
+			$args[] = $signups;
+			$args[] = 'confirmed';
+		}
+
+		$ticket_coverage = self::table_exists( $tickets );
+		if ( null === $ticket_coverage ) {
+			return null;
+		}
+		if ( $ticket_coverage ) {
+			$sql   .= ' AND NOT EXISTS ( SELECT 1 FROM %i AS t WHERE t.holder_participant_id = ep.participant_id AND t.event_date_id = ep.event_date_id AND t.status = %s AND t.deleted_at IS NULL )';
+			$args[] = $tickets;
+			$args[] = 'confirmed';
+		}
+		$sql .= ' )';
+
+		return self::read_count( $wpdb->prepare( $sql, ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only; built above.
+	}
+
+	/**
+	 * Participant-scope activity selections the migration would still have
+	 * to place on a ticket: any not carried over to one, and any held for a
+	 * payment in flight.
+	 *
+	 * @return int|null
+	 */
+	private static function count_participant_activities() {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'fair_audience_event_participant_options';
+		$exists = self::table_exists( $table );
+		if ( null === $exists ) {
+			return null;
+		}
+		if ( ! $exists ) {
+			return 0;
+		}
+
+		$carried = self::column_exists( $table, 'ticket_id' );
+		if ( null === $carried ) {
+			return null;
+		}
+		if ( ! $carried ) {
+			return self::read_count( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
+		}
+		return self::read_count( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE ticket_id IS NULL OR status = %s', $table, 'pending_payment' ) );
+	}
+
+	/**
+	 * Count with a query built only once its table is known to exist.
+	 *
+	 * @param string   $table Table name.
+	 * @param callable $query Returns the prepared COUNT query.
+	 * @return int|null 0 when the table is absent, null when unreadable.
+	 */
+	private static function count_in( $table, callable $query ) {
+		$exists = self::table_exists( $table );
+		if ( null === $exists ) {
+			return null;
+		}
+		return $exists ? self::read_count( $query() ) : 0;
+	}
+
+	/**
+	 * Run a prepared COUNT query.
+	 *
+	 * @param string $sql Prepared query.
+	 * @return int|null Null when the query failed.
+	 */
+	private static function read_count( $sql ) {
+		global $wpdb;
+
+		$count = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared by the caller.
+		if ( '' !== (string) $wpdb->last_error || null === $count || ! is_numeric( $count ) ) {
+			return null;
+		}
+		return (int) $count;
+	}
+
+	/**
+	 * Whether a table exists.
+	 *
+	 * @param string $table Table name.
+	 * @return bool|null Null when the check itself failed.
+	 */
+	private static function table_exists( $table ) {
+		global $wpdb;
+
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+		if ( '' !== (string) $wpdb->last_error ) {
+			return null;
+		}
+		return $table === $found;
+	}
+
+	/**
+	 * Whether a table has a column; false when the table is absent.
+	 *
+	 * @param string $table  Table name.
+	 * @param string $column Column name.
+	 * @return bool|null Null when the check failed.
+	 */
+	private static function column_exists( $table, $column ) {
+		global $wpdb;
+
+		$exists = self::table_exists( $table );
+		if ( ! $exists ) {
+			return $exists;
+		}
+		$found = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $wpdb->esc_like( $column ) ) );
+		if ( '' !== (string) $wpdb->last_error ) {
+			return null;
+		}
+		return ! empty( $found );
 	}
 
 	/**
@@ -167,6 +536,15 @@ class PaymentHistoryUpgrade {
 	 */
 	public static function refusal_blockers() {
 		return self::$blockers;
+	}
+
+	/**
+	 * What the last refused decision read from the stored data, or null.
+	 *
+	 * @return array|null From source_history().
+	 */
+	public static function refusal_history() {
+		return self::$history;
 	}
 
 	/**
@@ -281,7 +659,9 @@ class PaymentHistoryUpgrade {
 	 * The evidence stored for a basis.
 	 *
 	 * @param string $basis One of the BASIS_* constants.
-	 * @param array  $facts From facts(); empty for a fresh installation.
+	 * @param array  $facts From facts(); from source_history() for
+	 *                      BASIS_VERIFIED_NO_HISTORY; empty for a fresh
+	 *                      installation.
 	 * @return array
 	 */
 	public static function evidence_record( $basis, array $facts ) {
@@ -291,6 +671,12 @@ class PaymentHistoryUpgrade {
 			'plugin_versions' => self::plugin_versions(),
 		);
 		if ( self::BASIS_FRESH_INSTALL === $basis ) {
+			return $record;
+		}
+		if ( self::BASIS_VERIFIED_NO_HISTORY === $basis ) {
+			// What was read, not a migration: no activation is implied.
+			$record['sources_checked']  = array_keys( (array) ( $facts['sources'] ?? array() ) );
+			$record['connector_active'] = ! empty( $facts['connector_active'] );
 			return $record;
 		}
 
@@ -389,7 +775,7 @@ class PaymentHistoryUpgrade {
 		$staging  = self::get_staging_verification();
 
 		$checks = array( 'completion_recorded' => null !== $evidence );
-		if ( self::BASIS_FRESH_INSTALL !== $basis ) {
+		if ( ! self::without_source_history( $basis ) ) {
 			// Recorded evidence answers the historical steps: the cleanup
 			// (#2252–#2254) removes the records they were read from.
 			$recorded                      = null !== $evidence;
@@ -404,7 +790,7 @@ class PaymentHistoryUpgrade {
 			'evidence'             => $evidence,
 			'safe_to_upgrade'      => null !== $evidence,
 			'checks'               => $checks,
-			'blockers'             => $evidence ? array() : $decision['blockers'],
+			'blockers'             => $evidence ? array() : self::with_history_blocker( $decision['blockers'], self::source_history() ),
 			'counts'               => array(
 				'migration_work' => (int) $facts['migration_work'],
 				'open_findings'  => (int) $facts['open_findings'],
@@ -446,7 +832,7 @@ class PaymentHistoryUpgrade {
 	 *               staging_verification_incomplete.
 	 */
 	public static function cleanup_readiness( $evidence, array $facts, $staging, $cleanup = null ) {
-		if ( $evidence && self::BASIS_FRESH_INSTALL === $evidence['basis'] ) {
+		if ( $evidence && self::without_source_history( (string) $evidence['basis'] ) ) {
 			// Never had source history: there is nothing to clean up.
 			return array(
 				'applicable' => false,
@@ -486,6 +872,16 @@ class PaymentHistoryUpgrade {
 			'completed'  => null,
 			'blockers'   => $blockers,
 		);
+	}
+
+	/**
+	 * Whether an evidence basis means the site never had source history.
+	 *
+	 * @param string|null $basis Evidence basis.
+	 * @return bool
+	 */
+	private static function without_source_history( $basis ) {
+		return in_array( $basis, array( self::BASIS_FRESH_INSTALL, self::BASIS_VERIFIED_NO_HISTORY ), true );
 	}
 
 	/**
@@ -603,12 +999,14 @@ class PaymentHistoryUpgrade {
 		}
 
 		$labels = array(
-			'storage_unavailable'        => __( 'The payment history migration’s records are missing: Fair Events 2.2.0 hasn’t run on this site.', 'fair-events' ),
-			'ownership_cutover_missing'  => __( 'Payment records were not switched to Fair Events.', 'fair-events' ),
-			'readers_missing'            => __( 'Statistics were not switched to Fair Events records.', 'fair-events' ),
-			'migration_unverified'       => __( 'The migration has no clean verification.', 'fair-events' ),
-			'migration_work_outstanding' => __( 'Some payment records still wait to be moved.', 'fair-events' ),
-			'findings_open'              => __( 'Some migration findings are still open.', 'fair-events' ),
+			'storage_unavailable'         => __( 'The payment history migration’s records are missing: Fair Events 2.2.0 hasn’t run on this site.', 'fair-events' ),
+			'ownership_cutover_missing'   => __( 'Payment records were not switched to Fair Events.', 'fair-events' ),
+			'readers_missing'             => __( 'Statistics were not switched to Fair Events records.', 'fair-events' ),
+			'migration_unverified'        => __( 'The migration has no clean verification.', 'fair-events' ),
+			'migration_work_outstanding'  => __( 'Some payment records still wait to be moved.', 'fair-events' ),
+			'findings_open'               => __( 'Some migration findings are still open.', 'fair-events' ),
+			'source_history_found'        => __( 'This site has earlier payments, registrations or activity choices that need the migration.', 'fair-events' ),
+			'source_history_unverifiable' => __( 'Fair Events couldn’t read every earlier payment or registration record, so it can’t confirm that nothing needs migrating.', 'fair-events' ),
 		);
 
 		$versions = self::INTERMEDIATE_VERSIONS;
@@ -652,5 +1050,6 @@ class PaymentHistoryUpgrade {
 	public static function reset() {
 		self::$allowed  = null;
 		self::$blockers = array();
+		self::$history  = null;
 	}
 }

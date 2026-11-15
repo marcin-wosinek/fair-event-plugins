@@ -31,7 +31,7 @@ Fair Audience is a WordPress plugin that helps you manage event participants. It
 
 = Upgrading a site with earlier payment history =
 
-Update Fair Payments Connector first, then Fair Events, then Fair Audience. Versions after 2.0.0 start only where Fair Events has recorded that the payment history migration finished (or was never needed). Follow the [upgrade guide](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+Update Fair Payments Connector first, then Fair Events, then Fair Audience. Versions after 2.0.0 start only where Fair Events has recorded that the payment history migration finished or was never needed, including an existing site whose records Fair Events finds without payments or registrations to move, with or without Fair Payments Connector. Follow the [upgrade guide](https://github.com/marcin-wosinek/fair-event-plugins/blob/main/DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
 
 == Frequently Asked Questions ==
 

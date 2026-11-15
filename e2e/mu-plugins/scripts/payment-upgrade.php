@@ -31,6 +31,15 @@
  *                   what the cleanup must keep: a relationship, a purchase
  *                   naming it as provenance with a backfill payment link,
  *                   and a paid fee payment. Prints their IDs.
+ *   ordinary    {eventId, eventDateId}  Records that are never payment
+ *                   history: a participant profile with an `interested`
+ *                   relationship, and a free confirmed signup with the
+ *                   `signed_up` relationship it covers.
+ *   free-admission {eventId, eventDateId}  A `signed_up` relationship with
+ *                   no Fair Events signup or ticket: a free registration
+ *                   the migration would still turn into a purchase.
+ *                   Prints its ID.
+ *   remove-relationship {relationshipId}  Delete that relationship.
  *   storage     {}  What the cleanup removes and keeps: the tables and
  *                   options still present, the findings by mode, the
  *                   `ledger_row` findings' detail, a checksum of every kept
@@ -147,6 +156,59 @@ switch ( $fixture_action ) {
 				PaymentShadowWork::defer( (string) $work['kind'], (int) $work['sourceId'], (string) $work['status'], 'e2e_fixture' );
 			}
 		}
+		$result = array( 'ok' => true );
+		break;
+
+	case 'ordinary':
+	case 'free-admission':
+		$event_id      = (int) ( $data['eventId'] ?? 0 );
+		$event_date_id = (int) ( $data['eventDateId'] ?? 0 );
+		$relate        = static function ( $name, $label ) use ( $wpdb, $event_id, $event_date_id ) {
+			$wpdb->insert(
+				$wpdb->prefix . 'fair_audience_participants',
+				array(
+					'name'  => $name,
+					'email' => sanitize_title( $name ) . '-' . wp_generate_password( 6, false ) . '@example.test',
+				)
+			);
+			$participant_id = (int) $wpdb->insert_id;
+			$wpdb->insert(
+				$wpdb->prefix . 'fair_audience_event_participants',
+				array(
+					'event_id'       => $event_id,
+					'event_date_id'  => $event_date_id,
+					'participant_id' => $participant_id,
+					'label'          => $label,
+				)
+			);
+			return array( $participant_id, (int) $wpdb->insert_id );
+		};
+
+		if ( 'free-admission' === $fixture_action ) {
+			list( , $relationship_id ) = $relate( 'Free Registration', 'signed_up' );
+			$result                    = array( 'relationshipId' => $relationship_id );
+			break;
+		}
+
+		$relate( 'Interested Profile', 'interested' );
+		list( $participant_id ) = $relate( 'Free Signup', 'signed_up' );
+		$wpdb->insert(
+			$wpdb->prefix . 'fair_events_signups',
+			array(
+				'event_date_id'  => $event_date_id,
+				'name'           => 'Free Signup',
+				'email'          => 'free-signup@example.test',
+				'quantity'       => 1,
+				'amount'         => '0.00',
+				'status'         => 'confirmed',
+				'participant_id' => $participant_id,
+			)
+		);
+		$result = array( 'ok' => true );
+		break;
+
+	case 'remove-relationship':
+		$wpdb->delete( $wpdb->prefix . 'fair_audience_event_participants', array( 'id' => (int) ( $data['relationshipId'] ?? 0 ) ) );
 		$result = array( 'ok' => true );
 		break;
 

@@ -126,6 +126,39 @@ describe( 'UpgradePanel', () => {
 		).not.toBeInTheDocument();
 	} );
 
+	it( 'shows a site verified without payment history as safe with nothing to clean up', async () => {
+		await renderPanel(
+			status( {
+				evidence: {
+					basis: 'verified_no_history',
+					recorded_at: '2026-11-15 09:00:00',
+					sources_checked: [ 'payment_transactions' ],
+					connector_active: false,
+				},
+				safe_to_upgrade: true,
+				checks: { completion_recorded: true },
+				blockers: [],
+				ready_for_cleanup: {
+					applicable: false,
+					ready: false,
+					completed: null,
+					blockers: [],
+				},
+			} )
+		);
+
+		expect(
+			screen.getAllByText(
+				/found no earlier payments, registrations or activity choices to migrate/
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'This site has no old payment records to remove.'
+			)
+		).toBeInTheDocument();
+	} );
+
 	it( 'needs a date before saving, then saves the staging verification once', async () => {
 		const saved = status( {
 			staging_verification: {
