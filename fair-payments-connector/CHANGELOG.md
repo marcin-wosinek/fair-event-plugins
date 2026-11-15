@@ -1,5 +1,21 @@
 # fair-payments-connector
 
+## 2.8.1
+
+### Patch Changes
+
+- ec28559: Event Notifications, Event Feeds, Financial Entries and Payment Transactions now share one list layout: the page title with its add and import actions beside it, then a toolbar with search and the frequent filters, More filters for the less-used ones, Clear filters while a filter is active, and the result count ("51–100 of 236 transactions"). A summary lists the filters behind the shown rows, including those inside a collapsed More filters, and pagination sits below the table on the right. Selected transactions show their count next to Export Selected. Empty lists offer their first step (add or import), and lists with no matches offer to clear the filters. Each page keeps its existing search, filters, sorting, pagination and actions.
+- 0b2af6f: The Payment Transactions list is easier to scan. Each row starts with the transaction reference and its description, followed by the person, date, amount, status and matched entry. Both fees appear under the amount with their currency, the status is labeled text such as "Paid" or "Pending payment" with Test mode or Live mode underneath, and each row has a View details link. Column headers sort from the keyboard. On tablets and phones each transaction is shown as a labeled block, with Sort by and Select all controls above the list. If a refresh fails, the rows already shown and your selection stay in place with a Try again button. Changing filters, sorting or the page no longer shows the previous results while the new ones load.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
+- Updated dependencies [ec28559]
+- Updated dependencies [f483b31]
+- Updated dependencies [8d78e04]
+- Updated dependencies [3a06a5b]
+    - fair-events-shared@0.9.0
+
 ## 2.8.0
 
 ### Minor Changes

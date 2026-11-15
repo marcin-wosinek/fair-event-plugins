@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.6.0
+
+### Minor Changes
+
+- 7c4f113: The event's Finance tab has a new "Income and expenses" section for administrators. Record cash received at the event, such as a day's gate sales, and expenses paid from event cash or from an organizer's personal funds, with the payer's name. The section shows cash income, cash expenses, net cash movement, total expenses and personally paid amounts by payer, and the event's Total Income now adds recorded cash income to online payments. The operations are ordinary Fair Finance accounting entries, work without Fair Payments Connector, and existing entries keep their meaning. Fair Finance's entry list and editor show and keep each entry's payment source, and entries recorded as event cash or personally paid cannot be split, matched to online payments or reconciled with a settlement.
+
+### Patch Changes
+
+- ec28559: Event Notifications, Event Feeds, Financial Entries and Payment Transactions now share one list layout: the page title with its add and import actions beside it, then a toolbar with search and the frequent filters, More filters for the less-used ones, Clear filters while a filter is active, and the result count ("51–100 of 236 transactions"). A summary lists the filters behind the shown rows, including those inside a collapsed More filters, and pagination sits below the table on the right. Selected transactions show their count next to Export Selected. Empty lists offer their first step (add or import), and lists with no matches offer to clear the filters. Each page keeps its existing search, filters, sorting, pagination and actions.
+- 879fb37: The Edit Financial Entry dialog shows the entry's values as soon as it opens. Changing a field right away, such as picking a budget, no longer resets the other fields to blank defaults and leaves Update Entry available.
+- 10cef12: The Finance Entries list is easier to scan. Each entry's description comes first, with its tag, payment source, participant and, for split and transfer entries, a "Show allocations" toggle underneath. Amounts are right-aligned, and the Matched column reads "Yes" or "No" with a marker. Each row now shows one action: Edit, or Edit split for split entries and their allocations. Split, Match or Unmatch, and Delete are in each row's "⋮" menu, and a split entry's Delete explains that it must be unsplit first. Expanded allocations name the entry they belong to. If the list fails to load or refresh, a Try again button reloads it without losing the rows already shown, and filters that match nothing offer Clear filters. On tablets and phones each entry is shown as a labeled block instead of a wide table.
+- f483b31: Confirmation dialogs in Audience Experimental, Events Experimental, Payments Connector Experimental, Finance, and Platform now come from one shared implementation. Their wording, pending state, inline errors, retry, keyboard focus, and wrapping titles work exactly as before.
+- 1308cee: Feature flags now resolve through the shared Fair Event Plugins library, with no change to existing settings, defaults, wp-config constants or filters. Fair Finance and Fair Events Experimental now bundle the shared library, so Fair Finance shows the shared settings screen even when it is the only active Fair plugin.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
+- Updated dependencies [ec28559]
+- Updated dependencies [0b2af6f]
+- Updated dependencies [f483b31]
+- Updated dependencies [c49a950]
+- Updated dependencies [8d78e04]
+- Updated dependencies [3a06a5b]
+    - fair-payments-connector@2.8.1
+    - fair-events-shared@0.9.0
+
 ## 1.5.0
 
 ### Minor Changes

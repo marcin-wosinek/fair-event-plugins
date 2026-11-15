@@ -3,7 +3,7 @@ Contributors: marcinwosinek
 Tags: audience, experimental
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 Requires PHP: 8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -27,6 +27,22 @@ This plugin is a companion to Fair Audience. It carries the advanced feature bun
 Requires Fair Audience to be active.
 
 == Changelog ==
+
+## 1.6.2
+
+### Patch Changes
+
+- f483b31: Confirmation dialogs in Audience Experimental, Events Experimental, Payments Connector Experimental, Finance, and Platform now come from one shared implementation. Their wording, pending state, inline errors, retry, keyboard focus, and wrapping titles work exactly as before.
+- 1308cee: Feature flags now resolve through the shared Fair Event Plugins library, with no change to existing settings, defaults, wp-config constants or filters. Fair Finance and Fair Events Experimental now bundle the shared library, so Fair Finance shows the shared settings screen even when it is the only active Fair plugin.
+- c49a950: Fair plugins now always use the newest copy of the Fair Event Plugins shared library that any active Fair plugin bundles, whatever order the plugins load in. Before, one outdated Fair plugin could quietly break features of the others. An example is Meetup "From URL" imports in Fair Events that filled in no date or time.
+
+    Administrators who can update plugins now see a warning on the Plugins screen and on Fair plugin screens. It names every active Fair plugin that bundles an outdated copy, and it clears once those plugins are updated or deactivated. Fair Timetable 0.8.0 and earlier load their copy early on admin screens, before the newest copy can be chosen. While such a release is active, the updated Fair plugins pause on admin screens instead of running with mismatched code, and an error notice names the plugin to update.
+
+- Updated dependencies [ec28559]
+- Updated dependencies [f483b31]
+- Updated dependencies [8d78e04]
+- Updated dependencies [3a06a5b]
+    - fair-events-shared@0.9.0
 
 ## 1.6.1
 
