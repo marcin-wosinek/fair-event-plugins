@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-09T08:17:36+00:00\n"
+"POT-Creation-Date: 2026-11-15T07:22:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-payments-connector-experimental\n"
@@ -146,6 +146,30 @@ msgstr ""
 #: src/API/ExternalTransactionsController.php:60
 msgid "Filter by transaction date (created_at) up to this date, e.g. 2026-12-31."
 msgstr ""
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:31
 msgid "Read transactions"
@@ -286,7 +310,7 @@ msgid "A name to identify who this token is for, e.g. lamutable.es"
 msgstr ""
 
 #: src/Admin/api-tokens/ApiTokensApp.js:512
-#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/components/ConfirmActionModal.js:24
 #: src/Admin/connected-sites/ConnectedSitesApp.js:791
 msgid "Cancel"
 msgstr ""

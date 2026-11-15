@@ -2,14 +2,14 @@
 # This file is distributed under the Private.
 msgid ""
 msgstr ""
-"Project-Id-Version: Fair Form 1.8.0\n"
+"Project-Id-Version: Fair Form 1.8.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/fair-form\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-09T08:17:31+00:00\n"
+"POT-Creation-Date: 2026-11-15T07:22:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: fair-form\n"
@@ -174,13 +174,37 @@ msgstr ""
 msgid "Forced by a wp-config constant — change it there."
 msgstr ""
 
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %s: site name
-#: src/Services/FormNotificationService.php:212
+#: src/Services/FormNotificationService.php:214
 #, php-format
 msgid "New form submission — %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:219
+#: src/Services/FormNotificationService.php:221
 #: src/Admin/form-answers/FormAnswers.js:165
 #: src/Admin/questionnaire-responses/QuestionnaireResponses.js:158
 #: src/Admin/submission-detail/SubmissionDetail.js:430
@@ -188,12 +212,12 @@ msgid "Email"
 msgstr ""
 
 #. translators: %s: page title
-#: src/Services/FormNotificationService.php:231
+#: src/Services/FormNotificationService.php:233
 #, php-format
 msgid "Page: %s"
 msgstr ""
 
-#: src/Services/FormNotificationService.php:259
+#: src/Services/FormNotificationService.php:242
 msgid "A new form submission has been received."
 msgstr ""
 
@@ -911,46 +935,37 @@ msgid "The categories could not be loaded. Check your connection and try again."
 msgstr ""
 
 #: src/blocks/fair-form-consent/editor.js:32
-#: src/blocks/fair-form-date/editor.js:31
-#: src/blocks/fair-form-datetime/editor.js:31
-#: src/blocks/fair-form-email/editor.js:31
 #: src/blocks/fair-form-file-upload/editor.js:43
 #: src/blocks/fair-form-long-text/editor.js:53
 #: src/blocks/fair-form-phone/editor.js:54
-#: src/blocks/fair-form-short-text/editor.js:64
 #: src/blocks/fair-form-url/editor.js:52
-#: src/blocks/shared/ChoiceQuestionEdit.js:89
+#: src/blocks/shared/ChoiceQuestionEdit.js:68
+#: src/blocks/shared/InputQuestionEdit.js:57
 msgid "Question Settings"
 msgstr ""
 
 #: src/blocks/fair-form-consent/editor.js:34
-#: src/blocks/fair-form-date/editor.js:33
-#: src/blocks/fair-form-datetime/editor.js:33
-#: src/blocks/fair-form-email/editor.js:33
 #: src/blocks/fair-form-file-upload/editor.js:45
 #: src/blocks/fair-form-long-text/editor.js:55
 #: src/blocks/fair-form-phone/editor.js:56
-#: src/blocks/fair-form-short-text/editor.js:66
 #: src/blocks/fair-form-url/editor.js:54
-#: src/blocks/shared/ChoiceQuestionEdit.js:91
+#: src/blocks/shared/ChoiceQuestionEdit.js:70
+#: src/blocks/shared/InputQuestionEdit.js:59
 msgid "Question Key"
 msgstr ""
 
 #: src/blocks/fair-form-consent/editor.js:39
-#: src/blocks/fair-form-short-text/editor.js:71
+#: src/blocks/fair-form-short-text/editor.js:46
 msgid "A unique identifier for this question (e.g. \"favorite_color\"). Used internally."
 msgstr ""
 
 #: src/blocks/fair-form-consent/editor.js:45
-#: src/blocks/fair-form-date/editor.js:44
-#: src/blocks/fair-form-datetime/editor.js:44
-#: src/blocks/fair-form-email/editor.js:44
 #: src/blocks/fair-form-file-upload/editor.js:56
 #: src/blocks/fair-form-long-text/editor.js:66
 #: src/blocks/fair-form-phone/editor.js:67
-#: src/blocks/fair-form-short-text/editor.js:77
 #: src/blocks/fair-form-url/editor.js:65
-#: src/blocks/shared/ChoiceQuestionEdit.js:102
+#: src/blocks/shared/ChoiceQuestionEdit.js:81
+#: src/blocks/shared/InputQuestionEdit.js:67
 msgid "Required"
 msgstr ""
 
@@ -958,41 +973,19 @@ msgstr ""
 msgid "I have read and accept the terms and conditions"
 msgstr ""
 
-#: src/blocks/fair-form-date/editor.js:38
+#: src/blocks/fair-form-date/editor.js:14
 msgid "A unique identifier for this question (e.g. \"birthdate\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-date/editor.js:51
-#: src/blocks/fair-form-datetime/editor.js:51
-#: src/blocks/fair-form-email/editor.js:51
-#: src/blocks/fair-form-long-text/editor.js:73
-#: src/blocks/fair-form-phone/editor.js:74
-#: src/blocks/fair-form-short-text/editor.js:84
-#: src/blocks/fair-form-url/editor.js:72
-msgid "Placeholder"
-msgstr ""
-
-#: src/blocks/fair-form-date/editor.js:68
-#: src/blocks/fair-form-datetime/editor.js:68
-#: src/blocks/fair-form-email/editor.js:68
-#: src/blocks/fair-form-file-upload/editor.js:98
-#: src/blocks/fair-form-long-text/editor.js:102
-#: src/blocks/fair-form-phone/editor.js:99
-#: src/blocks/fair-form-short-text/editor.js:104
-#: src/blocks/fair-form-url/editor.js:103
-#: src/blocks/shared/ChoiceQuestionEdit.js:128
-msgid "Enter your question..."
-msgstr ""
-
-#: src/blocks/fair-form-datetime/editor.js:38
+#: src/blocks/fair-form-datetime/editor.js:14
 msgid "A unique identifier for this question (e.g. \"appointment_slot\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-email/editor.js:38
+#: src/blocks/fair-form-email/editor.js:14
 msgid "A unique identifier for this question (e.g. \"email\"). Used internally."
 msgstr ""
 
-#: src/blocks/fair-form-email/editor.js:81
+#: src/blocks/fair-form-email/editor.js:18
 msgid "your@email.com"
 msgstr ""
 
@@ -1012,6 +1005,15 @@ msgstr ""
 msgid "Max File Size (MB)"
 msgstr ""
 
+#: src/blocks/fair-form-file-upload/editor.js:98
+#: src/blocks/fair-form-long-text/editor.js:102
+#: src/blocks/fair-form-phone/editor.js:99
+#: src/blocks/fair-form-url/editor.js:103
+#: src/blocks/shared/ChoiceQuestionEdit.js:107
+#: src/blocks/shared/InputQuestionEdit.js:47
+msgid "Enter your question..."
+msgstr ""
+
 #: src/blocks/fair-form-file-upload/editor.js:109
 msgid "Max file size:"
 msgstr ""
@@ -1020,12 +1022,19 @@ msgstr ""
 msgid "A unique identifier for this question (e.g. \"comments\"). Used internally."
 msgstr ""
 
+#: src/blocks/fair-form-long-text/editor.js:73
+#: src/blocks/fair-form-phone/editor.js:74
+#: src/blocks/fair-form-url/editor.js:72
+#: src/blocks/shared/InputQuestionEdit.js:74
+msgid "Placeholder"
+msgstr ""
+
 #: src/blocks/fair-form-long-text/editor.js:80
 msgid "Rows"
 msgstr ""
 
 #: src/blocks/fair-form-long-text/editor.js:116
-#: src/blocks/fair-form-short-text/editor.js:118
+#: src/blocks/fair-form-short-text/editor.js:50
 msgid "Type your answer..."
 msgstr ""
 
@@ -1137,7 +1146,7 @@ msgstr ""
 msgid "An error occurred. Please try again."
 msgstr ""
 
-#: src/blocks/shared/ChoiceQuestionEdit.js:96
+#: src/blocks/shared/ChoiceQuestionEdit.js:75
 msgid "A unique identifier for this question. Used internally."
 msgstr ""
 

@@ -44,7 +44,7 @@ msgid "Fair Platform"
 msgstr ""
 
 #: src/Admin/AdminHooks.php:47
-#: src/Admin/connections/ConnectionsPage.js:162
+#: src/Admin/connections/ConnectionsPage.js:55
 msgid "Connection Logs"
 msgstr "Verbindungsprotokolle"
 
@@ -237,53 +237,47 @@ msgstr "Plugin tauscht Autorisierungscode gegen Zugriffstokens aus"
 msgid "Tokens are sent back to the WordPress site"
 msgstr "Tokens werden an die WordPress-Website zurückgesendet"
 
-#: src/API/ConnectionsController.php:69
-#: src/API/InstagramConnectionsController.php:69
+#: src/API/AbstractConnectionsController.php:93
 msgid "Page number."
 msgstr "Seitennummer."
 
-#: src/API/ConnectionsController.php:75
-#: src/API/InstagramConnectionsController.php:75
+#: src/API/AbstractConnectionsController.php:99
 msgid "Items per page."
 msgstr "Elemente pro Seite."
 
-#: src/API/ConnectionsController.php:81
-#: src/API/InstagramConnectionsController.php:81
+#: src/API/AbstractConnectionsController.php:105
 msgid "Filter by status."
 msgstr "Nach Status filtern."
 
-#: src/API/ConnectionsController.php:87
-#: src/API/InstagramConnectionsController.php:87
+#: src/API/AbstractConnectionsController.php:111
 msgid "Order by field."
 msgstr "Nach Feld sortieren."
 
-#: src/API/ConnectionsController.php:94
-#: src/API/InstagramConnectionsController.php:94
+#: src/API/AbstractConnectionsController.php:118
 msgid "Order direction."
 msgstr "Sortierrichtung."
 
-#: src/API/ConnectionsController.php:129
-#: src/API/InstagramConnectionsController.php:129
+#: src/API/AbstractConnectionsController.php:153
 msgid "Delete logs older than X days."
 msgstr "Logs löschen, die älter als X Tage sind."
 
 #. translators: %d: number of deleted records
-#: src/API/ConnectionsController.php:188
+#: src/API/ConnectionsController.php:53
 #, php-format
 msgid "Deleted %d old connection logs."
 msgstr "%d alte Verbindungsprotokolle gelöscht."
 
-#: src/API/ConnectionsController.php:206
+#: src/API/ConnectionsController.php:64
 msgid "You do not have permission to view connection logs."
 msgstr "Sie haben keine Berechtigung, Verbindungsprotokolle anzuzeigen."
 
 #. translators: %d: number of deleted records
-#: src/API/InstagramConnectionsController.php:188
+#: src/API/InstagramConnectionsController.php:53
 #, php-format
 msgid "Deleted %d old Instagram connection logs."
 msgstr "%d alte Instagram-Verbindungsprotokolle gelöscht."
 
-#: src/API/InstagramConnectionsController.php:206
+#: src/API/InstagramConnectionsController.php:64
 msgid "You do not have permission to view Instagram connection logs."
 msgstr "Sie haben keine Berechtigung, Instagram-Verbindungsprotokolle anzuzeigen."
 
@@ -305,192 +299,167 @@ msgstr "Mollie OAuth-Anmeldedaten nicht konfiguriert. Bitte fügen Sie MOLLIE_CL
 msgid "Mollie PHP library not installed. Please run: composer require mollie/mollie-api-php"
 msgstr "Mollie PHP-Bibliothek nicht installiert. Bitte führen Sie aus: composer require mollie/mollie-api-php"
 
-#: src/Admin/connections/ConnectionsPage.js:78
+#: src/Admin/connections/ConnectionsPage.js:60
 msgid "Failed to load connections"
 msgstr "Verbindungen konnten nicht geladen werden"
 
-#: src/Admin/connections/ConnectionsPage.js:105
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:108
+#: src/Admin/components/connection-management/useConnectionManagement.js:127
 msgid "Old logs cleaned up successfully"
 msgstr "Alte Protokolle erfolgreich bereinigt"
 
-#: src/Admin/connections/ConnectionsPage.js:128
-#: src/Admin/connections/ConnectionsPage.js:266
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:131
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:268
+#: src/Admin/connections/ConnectionsPage.js:82
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:84
 msgid "Connected"
 msgstr "Verbunden"
 
-#: src/Admin/connections/ConnectionsPage.js:130
-#: src/Admin/connections/ConnectionsPage.js:225
-#: src/Admin/connections/ConnectionsPage.js:270
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:133
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:224
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:272
+#: src/Admin/connections/ConnectionsPage.js:87
+#: src/Admin/connections/ConnectionsPage.js:108
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:89
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:105
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
-#: src/Admin/connections/ConnectionsPage.js:133
-#: src/Admin/connections/ConnectionsPage.js:274
+#: src/Admin/connections/ConnectionsPage.js:92
 msgid "Disconnected"
 msgstr "Getrennt"
 
-#: src/Admin/connections/ConnectionsPage.js:164
+#: src/Admin/connections/ConnectionsPage.js:56
 msgid "Monitor OAuth connections from WordPress sites."
 msgstr "Überwachen Sie OAuth-Verbindungen von WordPress-Websites."
 
-#: src/Admin/connections/ConnectionsPage.js:186
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:185
+#: src/Admin/connections/ConnectionsPage.js:99
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:96
 msgid "Total Connections"
 msgstr "Gesamtverbindungen"
 
-#: src/Admin/connections/ConnectionsPage.js:207
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:206
+#: src/Admin/connections/ConnectionsPage.js:103
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:100
 msgid "Successful"
 msgstr "Erfolgreich"
 
-#: src/Admin/connections/ConnectionsPage.js:242
+#: src/Admin/connections/ConnectionsPage.js:113
 msgid "Unique Sites"
 msgstr "Eindeutige Websites"
 
-#: src/Admin/connections/ConnectionsPage.js:255
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:257
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:197
 msgid "Status Filter"
 msgstr "Statusfilter"
 
-#: src/Admin/connections/ConnectionsPage.js:259
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:261
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:201
 msgid "All Statuses"
 msgstr "Alle Status"
 
-#: src/Admin/connections/ConnectionsPage.js:284
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:279
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:215
 msgid "Sort By"
 msgstr "Sortieren nach"
 
-#: src/Admin/connections/ConnectionsPage.js:288
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:283
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:219
 msgid "Connection Date"
 msgstr "Verbindungsdatum"
 
-#: src/Admin/connections/ConnectionsPage.js:295
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:290
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:226
 msgid "Site Name"
 msgstr "Website-Name"
 
-#: src/Admin/connections/ConnectionsPage.js:299
-#: src/Admin/connections/ConnectionsPage.js:436
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:294
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:446
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:173
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:230
 msgid "Status"
 msgstr "Status"
 
-#: src/Admin/connections/ConnectionsPage.js:303
-#: src/Admin/connections/ConnectionsPage.js:430
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:298
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:440
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:171
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:234
 msgid "ID"
 msgstr "ID"
 
-#: src/Admin/connections/ConnectionsPage.js:310
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:305
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:241
 msgid "Order"
 msgstr "Reihenfolge"
 
-#: src/Admin/connections/ConnectionsPage.js:314
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:309
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:245
 msgid "Descending"
 msgstr "Absteigend"
 
-#: src/Admin/connections/ConnectionsPage.js:318
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:313
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:249
 msgid "Ascending"
 msgstr "Aufsteigend"
 
-#: src/Admin/connections/ConnectionsPage.js:326
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:321
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:257
 msgid "Cleanup Days"
 msgstr "Bereinigungstage"
 
-#: src/Admin/connections/ConnectionsPage.js:344
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:339
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:275
 msgid "Cleanup Old Logs"
 msgstr "Alte Protokolle bereinigen"
 
-#: src/Admin/connections/ConnectionsPage.js:405
+#: src/Admin/connections/ConnectionsPage.js:62
 msgid "Connection History"
 msgstr "Verbindungsverlauf"
 
-#: src/Admin/connections/ConnectionsPage.js:415
+#: src/Admin/connections/ConnectionsPage.js:61
 msgid "No connections found."
 msgstr "Keine Verbindungen gefunden."
 
-#: src/Admin/connections/ConnectionsPage.js:433
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:443
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:172
 msgid "Site"
 msgstr "Website"
 
-#: src/Admin/connections/ConnectionsPage.js:439
+#: src/Admin/connections/ConnectionsPage.js:26
 msgid "Organization"
 msgstr "Organisation"
 
-#: src/Admin/connections/ConnectionsPage.js:445
+#: src/Admin/connections/ConnectionsPage.js:33
 msgid "Profile"
 msgstr "Profil"
 
-#: src/Admin/connections/ConnectionsPage.js:448
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:461
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:175
 msgid "Connected At"
 msgstr "Verbunden am"
 
-#: src/Admin/connections/ConnectionsPage.js:454
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:467
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:176
 msgid "Last Refresh"
 msgstr "Letzte Aktualisierung"
 
-#: src/Admin/connections/ConnectionsPage.js:532
+#: src/Admin/connections/ConnectionsPage.js:43
 msgid "✓ Profile created"
 msgstr "✓ Profil erstellt"
 
-#: src/Admin/connections/ConnectionsPage.js:591
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:596
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:435
 msgid "Previous"
 msgstr "Zurück"
 
-#: src/Admin/connections/ConnectionsPage.js:598
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:603
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:442
 msgid "Next"
 msgstr "Weiter"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:78
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:59
 msgid "Failed to load Instagram connections"
 msgstr "Fehler beim Laden der Instagram-Verbindungen"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:161
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:54
 msgid "Instagram Connection Logs"
 msgstr "Instagram-Verbindungsprotokolle"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:163
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:55
 msgid "Monitor Instagram OAuth connections from WordPress sites."
 msgstr "Überwachen Sie Instagram OAuth-Verbindungen von WordPress-Websites."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:241
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:110
 msgid "Unique Usernames"
 msgstr "Eindeutige Benutzernamen"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:401
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:64
 msgid "Instagram Connection History"
 msgstr "Instagram-Verbindungsverlauf"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:425
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:63
 msgid "No Instagram connections found."
 msgstr "Keine Instagram-Verbindungen gefunden."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:449
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:29
 msgid "IG Username"
 msgstr "IG-Benutzername"
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:455
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:39
 msgid "IG User ID"
 msgstr "IG-Benutzer-ID"
 
@@ -503,19 +472,19 @@ msgstr ""
 msgid "Forced by a wp-config constant — change it there."
 msgstr "Erzwungen durch eine wp-config-Konstante — ändern Sie sie dort."
 
-#: src/Core/Features.php:115
+#: src/Core/Features.php:88
 msgid "Core"
 msgstr "Kern"
 
-#: src/Core/Features.php:116
+#: src/Core/Features.php:89
 msgid "OAuth proxy endpoints and connection logging. Always on."
 msgstr "OAuth-Proxy-Endpunkte und Verbindungsprotokollierung. Immer aktiviert."
 
-#: src/Core/Features.php:119
+#: src/Core/Features.php:92
 msgid "Bundled translations"
 msgstr "Gebündelte Übersetzungen"
 
-#: src/Core/Features.php:120
+#: src/Core/Features.php:93
 #: src/Core/Plugin.php:159
 msgid "Load .mo/.json files shipped with the plugin instead of relying on WordPress.org language packs. Useful while a locale is below the 90% threshold on translate.wordpress.org or for in-progress strings."
 msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstatt sich auf WordPress.org-Sprachpakete zu verlassen. Nützlich, wenn eine Sprache unter der 90%-Schwelle auf translate.wordpress.org liegt oder für laufende Zeichenketten."
@@ -524,50 +493,77 @@ msgstr "Laden Sie .mo/.json-Dateien, die mit dem Plugin geliefert werden, anstat
 msgid "Translations"
 msgstr "Übersetzungen"
 
-#: src/Admin/components/ConfirmActionModal.js:158
+#: src/Admin/components/ConfirmActionModal.js:24
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/Admin/connections/ConnectionsPage.js:113
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:116
+#: src/Admin/components/connection-management/useConnectionManagement.js:135
 msgid "The old logs could not be deleted. Try again."
 msgstr "Die alten Protokolle konnten nicht gelöscht werden. Versuchen Sie es erneut."
 
-#: src/Admin/connections/ConnectionsPage.js:362
+#: src/Admin/connections/ConnectionsPage.js:63
 msgid "Delete old connection logs"
 msgstr "Alte Verbindungsprotokolle löschen"
 
-#: src/Admin/connections/ConnectionsPage.js:366
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:361
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:294
 msgid "Delete old logs"
 msgstr "Alte Protokolle löschen"
 
-#: src/Admin/connections/ConnectionsPage.js:367
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:362
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:295
 msgid "Deleting…"
 msgstr "Wird gelöscht…"
 
 #. translators: %d: number of days
-#: src/Admin/connections/ConnectionsPage.js:377
+#: src/Admin/connections/ConnectionsPage.js:70
 #, js-format
 msgid "This deletes every connection log entry older than %d day."
 msgid_plural "This deletes every connection log entry older than %d days."
 msgstr[0] "Dies löscht jeden Verbindungsprotokoll-Eintrag älter als %d Tag."
 msgstr[1] "Dies löscht jeden Verbindungsprotokoll-Eintrag älter als %d Tage."
 
-#: src/Admin/connections/ConnectionsPage.js:387
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:382
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:304
 msgid "Only the log history is deleted; existing connections keep working. This cannot be undone."
 msgstr "Nur der Protokollverlauf wird gelöscht; bestehende Verbindungen funktionieren weiterhin. Dies kann nicht rückgängig gemacht werden."
 
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:357
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:65
 msgid "Delete old Instagram connection logs"
 msgstr "Alte Instagram-Verbindungsprotokolle löschen"
 
 #. translators: %d: number of days
-#: src/Admin/instagram-connections/InstagramConnectionsPage.js:372
+#: src/Admin/instagram-connections/InstagramConnectionsPage.js:72
 #, js-format
 msgid "This deletes every Instagram connection log entry older than %d day."
 msgid_plural "This deletes every Instagram connection log entry older than %d days."
 msgstr[0] "Dies löscht jeden Instagram-Verbindungsprotokoll-Eintrag älter als %d Tag."
 msgstr[1] "Dies löscht jeden Instagram-Verbindungsprotokoll-Eintrag älter als %d Tage."
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s ist auf dieser Seite pausiert, weil %2$s zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie %2$s und laden Sie diese Seite dann neu."
+msgstr[1] "%1$s sind auf dieser Seite pausiert, weil %2$s zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie %2$s und laden Sie diese Seite dann neu."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s ist auf dieser Seite pausiert, weil ein anderes Plugin zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie alle Fair-Plugins und laden Sie diese Seite dann neu."
+msgstr[1] "%1$s sind auf dieser Seite pausiert, weil ein anderes Plugin zuerst eine veraltete Kopie der Fair Event Plugins-Bibliothek geladen hat. Aktualisieren Sie alle Fair-Plugins und laden Sie diese Seite dann neu."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s enthält eine veraltete Kopie der Fair Event Plugins-Bibliothek. Aktualisieren Sie %1$s, um sicherzustellen, dass alle Fair-Plugins ordnungsgemäß funktionieren."
+msgstr[1] "%1$s enthalten veraltete Kopien der Fair Event Plugins-Bibliothek. Aktualisieren Sie %1$s, um sicherzustellen, dass alle Fair-Plugins ordnungsgemäß funktionieren."
+
+#. translators: 1: current page number, 2: total number of pages
+#: src/Admin/components/connection-management/ConnectionManagementScreen.js:424
+#, js-format
+msgid "Page %1$d of %2$d"
+msgstr "Seite %1$d von %2$d"
+

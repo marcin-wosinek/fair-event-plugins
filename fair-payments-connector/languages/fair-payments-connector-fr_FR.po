@@ -232,7 +232,6 @@ msgstr "Nom"
 
 #: src/Admin/transaction/TransactionPage.js:1270
 #: src/Admin/transaction/TransactionPage.js:1336
-#: src/Admin/transactions/TransactionsApp.js:910
 msgid "Description"
 msgstr "Description"
 
@@ -266,20 +265,20 @@ msgid "Event"
 msgstr "Événement"
 
 #: src/Admin/transaction/TransactionPage.js:1147
-#: src/Admin/transactions/TransactionsApp.js:874
+#: src/Admin/transactions/TransactionsApp.js:605
 #: src/blocks/simple-payment/index.js:118
 msgid "Amount"
 msgstr "Montant"
 
-#: src/Admin/transactions/TransactionsApp.js:929
+#: src/Admin/transactions/TransactionsApp.js:604
 msgid "Date"
 msgstr "Date"
 
-#: src/Admin/transactions/TransactionsApp.js:734
+#: src/Admin/transactions/TransactionsApp.js:1013
 msgid "Import"
 msgstr "Importer"
 
-#: src/Admin/transactions/TransactionsApp.js:358
+#: src/Admin/transactions/TransactionsApp.js:439
 msgid "Failed to load transactions."
 msgstr "Impossible de charger les transactions."
 
@@ -290,12 +289,10 @@ msgid "Remove"
 msgstr "Supprimer"
 
 #: src/Admin/settings/AuditLogTab.js:182
-#: src/Admin/transactions/TransactionsApp.js:1085
 msgid "Previous"
 msgstr "Précédent"
 
 #: src/Admin/settings/AuditLogTab.js:200
-#: src/Admin/transactions/TransactionsApp.js:1102
 msgid "Next"
 msgstr "Suivant"
 
@@ -322,8 +319,7 @@ msgstr "Passage en mode %s."
 #: src/Admin/external-updates/components/MollieImportPanel.js:301
 #: src/Admin/settings/ConnectionTab.js:367
 #: src/Admin/transaction/TransactionPage.js:1199
-#: src/Admin/transactions/TransactionsApp.js:49
-#: src/Admin/transactions/TransactionsApp.js:998
+#: src/Admin/transactions/TransactionsApp.js:63
 msgid "Test"
 msgstr "Test"
 
@@ -331,8 +327,7 @@ msgstr "Test"
 #: src/Admin/external-updates/components/MollieImportPanel.js:308
 #: src/Admin/settings/ConnectionTab.js:368
 #: src/Admin/transaction/TransactionPage.js:1203
-#: src/Admin/transactions/TransactionsApp.js:48
-#: src/Admin/transactions/TransactionsApp.js:1002
+#: src/Admin/transactions/TransactionsApp.js:62
 msgid "Live"
 msgstr "En direct"
 
@@ -395,8 +390,7 @@ msgstr "Le jeton expire : %s"
 #: src/Admin/external-updates/components/MollieImportPanel.js:294
 #: src/Admin/settings/ConnectionTab.js:1160
 #: src/Admin/transaction/TransactionPage.js:1180
-#: src/Admin/transactions/TransactionsApp.js:576
-#: src/Admin/transactions/TransactionsApp.js:899
+#: src/Admin/transactions/TransactionsApp.js:1215
 msgid "Mode"
 msgstr "Mode"
 
@@ -452,6 +446,7 @@ msgid "Back to Transactions"
 msgstr "Retour aux Transactions"
 
 #: src/Admin/transaction/TransactionPage.js:1062
+#: src/Admin/transactions/TransactionsApp.js:602
 msgid "Transaction"
 msgstr "Transaction"
 
@@ -460,12 +455,10 @@ msgid "Payment Details"
 msgstr "Détails du Paiement"
 
 #: src/Admin/transaction/TransactionPage.js:1156
-#: src/Admin/transactions/TransactionsApp.js:880
 msgid "Mollie Fee"
 msgstr "Frais Mollie"
 
 #: src/Admin/transaction/TransactionPage.js:1168
-#: src/Admin/transactions/TransactionsApp.js:886
 msgid "Integration Fee"
 msgstr "Frais d'Intégration"
 
@@ -476,8 +469,8 @@ msgstr "Statut et Timing"
 #: src/Admin/settings/ApiTokensTab.js:289
 #: src/Admin/settings/ApiTokensTab.js:350
 #: src/Admin/transaction/TransactionPage.js:1227
-#: src/Admin/transactions/TransactionsApp.js:563
-#: src/Admin/transactions/TransactionsApp.js:893
+#: src/Admin/transactions/TransactionsApp.js:606
+#: src/Admin/transactions/TransactionsApp.js:1205
 msgid "Status"
 msgstr "Statut"
 
@@ -535,59 +528,51 @@ msgstr "URL du webhook"
 msgid "Checkout URL"
 msgstr "URL de paiement"
 
-#: src/Admin/transactions/TransactionsApp.js:33
+#: src/Admin/transactions/TransactionsApp.js:47
 msgid "All statuses"
 msgstr "Tous les statuts"
 
-#: src/Admin/transactions/TransactionsApp.js:34
+#: src/Admin/transactions/TransactionsApp.js:48
 msgid "Paid"
 msgstr "Payé"
 
-#: src/Admin/transactions/TransactionsApp.js:35
+#: src/Admin/transactions/TransactionsApp.js:49
 msgid "Pending"
 msgstr "En attente"
 
-#: src/Admin/transactions/TransactionsApp.js:36
+#: src/Admin/transactions/TransactionsApp.js:50
 msgid "Open"
 msgstr "Ouvert"
 
 #: src/Admin/external-updates/format.js:95
-#: src/Admin/transactions/TransactionsApp.js:37
+#: src/Admin/transactions/TransactionsApp.js:51
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/Admin/transactions/TransactionsApp.js:38
+#: src/Admin/transactions/TransactionsApp.js:52
 msgid "Canceled"
 msgstr "Annulé"
 
-#: src/Admin/transactions/TransactionsApp.js:39
+#: src/Admin/transactions/TransactionsApp.js:53
 msgid "Expired"
 msgstr "Expiré"
 
-#: src/Admin/transactions/TransactionsApp.js:40
+#: src/Admin/transactions/TransactionsApp.js:54
 msgid "Draft"
 msgstr "Brouillon"
 
-#: src/Admin/transactions/TransactionsApp.js:42
+#: src/Admin/transactions/TransactionsApp.js:56
 msgid "Pending payment"
 msgstr "Paiement en attente"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:83
-#: src/Admin/transactions/TransactionsApp.js:50
+#: src/Admin/transactions/TransactionsApp.js:64
 msgid "All modes"
 msgstr "Tous les modes"
 
-#: src/Admin/transactions/TransactionsApp.js:524
+#: src/Admin/transactions/TransactionsApp.js:1003
 msgid "Payment Transactions"
 msgstr "Transactions de paiement"
-
-#: src/Admin/transactions/TransactionsApp.js:837
-msgid "No transactions found."
-msgstr "Aucune transaction trouvée."
-
-#: src/Admin/transactions/TransactionsApp.js:867
-msgid "ID"
-msgstr "ID"
 
 #: src/blocks/simple-payment/index.js:96
 msgid "Simple Payment Block"
@@ -617,7 +602,7 @@ msgid "Simple payment block for WordPress"
 msgstr "Bloc de paiement simple pour WordPress"
 
 #. translators: %d is the number of exported transactions
-#: src/Admin/transactions/TransactionsApp.js:498
+#: src/Admin/transactions/TransactionsApp.js:586
 #, js-format
 msgid "%d transaction(s) exported."
 msgstr "%d transaction(s) exportée(s)."
@@ -630,7 +615,7 @@ msgstr "Format de fichier invalide. Un tableau JSON est attendu."
 msgid "No valid transactions found in the file."
 msgstr "Aucune transaction valide trouvée dans le fichier."
 
-#: src/Admin/transactions/TransactionsApp.js:702
+#: src/Admin/transactions/TransactionsApp.js:1066
 msgid "Export Selected"
 msgstr "Exporter la sélection"
 
@@ -683,7 +668,7 @@ msgstr "Voir la réponse Mollie"
 msgid "Participant"
 msgstr "Participant"
 
-#: src/Admin/transactions/TransactionsApp.js:916
+#: src/Admin/transactions/TransactionsApp.js:603
 msgid "Person"
 msgstr "Personne"
 
@@ -793,7 +778,7 @@ msgstr "Ajouter"
 msgid "Failed to update."
 msgstr "Échec de la mise à jour."
 
-#: src/Admin/transactions/TransactionsApp.js:922
+#: src/Admin/transactions/TransactionsApp.js:607
 msgid "Entry"
 msgstr "Entrée"
 
@@ -1228,7 +1213,7 @@ msgstr "Suppression en cours…"
 msgid "Only the local transaction record and its exclusively owned local data are removed. The payment in Mollie or any other external service is not cancelled, refunded, or deleted."
 msgstr "Seul l'enregistrement de transaction local et ses données locales exclusivement détenues sont supprimés. Le paiement dans Mollie ou tout autre service externe n'est pas annulé, remboursé ou supprimé."
 
-#: src/Admin/transactions/TransactionsApp.js:304
+#: src/Admin/transactions/TransactionsApp.js:383
 msgid "Transaction deleted. The payment in Mollie or any other external service was not changed."
 msgstr "Transaction supprimée. Le paiement dans Mollie ou tout autre service externe n'a pas été modifié."
 
@@ -1425,9 +1410,10 @@ msgstr "Modification"
 msgid "Reason"
 msgstr "Raison"
 
-#. translators: 1: current page, 2: total pages
+#. translators: 1: current page number, 2: number of pages.
 #: src/Admin/external-updates/components/OperationLog.js:206
 #: src/Admin/settings/AuditLogTab.js:187
+#: src/Admin/transactions/TransactionsApp.js:1282
 #, js-format
 msgid "Page %1$d of %2$d"
 msgstr "Page %1$d sur %2$d"
@@ -1512,7 +1498,7 @@ msgstr "Seules les transactions payées sont comptées, dans le mois de leur cr�
 
 #: src/Admin/fee-dashboard/FeeDashboardApp.js:344
 #: src/Admin/settings/PrivacyTab.js:119
-#: src/Admin/transactions/TransactionsApp.js:771
+#: src/Admin/transactions/TransactionsApp.js:815
 msgid "Try again"
 msgstr "Réessayer"
 
@@ -1679,6 +1665,7 @@ msgstr "Charger les frais manquants"
 
 #: src/Services/ExternalUpdateRuns.php:412
 #: src/Admin/external-updates/components/ConnectedSitesPanel.js:205
+#: src/Admin/transactions/TransactionsApp.js:831
 msgid "Import transactions"
 msgstr "Importer les transactions"
 
@@ -1773,21 +1760,23 @@ msgid "Fetch the Mollie processing fee for paid transactions that do not have on
 msgstr "Récupérez les frais de traitement Mollie pour les transactions payées qui n'en ont pas encore."
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:69
+#: src/Admin/transactions/TransactionsApp.js:781
 msgid "Live mode"
 msgstr "Mode en direct"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:76
+#: src/Admin/transactions/TransactionsApp.js:780
 #: src/payment-callback.js:151
 msgid "Test mode"
 msgstr "Mode test"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:103
-#: src/Admin/transactions/TransactionsApp.js:720
+#: src/Admin/transactions/TransactionsApp.js:1023
 msgid "Loading fees…"
 msgstr "Chargement des frais…"
 
 #: src/Admin/external-updates/components/MollieFeesPanel.js:107
-#: src/Admin/transactions/TransactionsApp.js:724
+#: src/Admin/transactions/TransactionsApp.js:1027
 msgid "Load missing Mollie fees"
 msgstr "Charger les frais Mollie manquants"
 
@@ -2170,6 +2159,7 @@ msgid "Last used"
 msgstr "Dernière utilisation"
 
 #: src/Admin/settings/ApiTokensTab.js:295
+#: src/Admin/transactions/TransactionsApp.js:608
 msgid "Actions"
 msgstr "Actions"
 
@@ -2288,7 +2278,7 @@ msgid "Enter a valid date as YYYY-MM-DD."
 msgstr "Saisissez une date valide au format AAAA-MM-JJ."
 
 #: src/API/TransactionsController.php:1185
-#: src/Admin/transactions/TransactionsApp.js:104
+#: src/Admin/transactions/TransactionsApp.js:131
 msgid "Enter an amount of zero or more with at most two decimal places."
 msgstr "Saisissez un montant supérieur ou égal à zéro avec au plus deux décimales."
 
@@ -2296,113 +2286,105 @@ msgstr "Saisissez un montant supérieur ou égal à zéro avec au plus deux déc
 msgid "Enter a search of at most 200 characters."
 msgstr "Saisissez une recherche de 200 caractères au maximum."
 
-#: src/Admin/transactions/TransactionsApp.js:118
+#: src/Admin/transactions/TransactionsApp.js:145
 msgid "The maximum amount must not be less than the minimum amount."
 msgstr "Le montant maximum ne doit pas être inférieur au montant minimum."
 
-#: src/Admin/transactions/TransactionsApp.js:125
+#: src/Admin/transactions/TransactionsApp.js:152
 msgid "The end date must be on or after the start date."
 msgstr "La date de fin doit être postérieure ou égale à la date de début."
 
 #. translators: %s is the selected transaction status, e.g. "Paid".
-#: src/Admin/transactions/TransactionsApp.js:144
+#: src/Admin/transactions/TransactionsApp.js:171
 #, js-format
 msgid "Status: %s"
 msgstr "Statut : %s"
 
 #. translators: %s is the selected payment mode, e.g. "Live".
-#: src/Admin/transactions/TransactionsApp.js:149
+#: src/Admin/transactions/TransactionsApp.js:176
 #, js-format
 msgid "Mode: %s"
 msgstr "Mode : %s"
 
 #. translators: %s is the text the organizer searched for.
-#: src/Admin/transactions/TransactionsApp.js:158
+#: src/Admin/transactions/TransactionsApp.js:185
 #, js-format
 msgid "Search: %s"
 msgstr "Recherche : %s"
 
 #. translators: %s is a date, e.g. 2026-03-01.
-#: src/Admin/transactions/TransactionsApp.js:167
+#: src/Admin/transactions/TransactionsApp.js:194
 #, js-format
 msgid "From %s"
 msgstr "À partir du %s"
 
 #. translators: %s is a date, e.g. 2026-03-31.
-#: src/Admin/transactions/TransactionsApp.js:176
+#: src/Admin/transactions/TransactionsApp.js:203
 #, js-format
 msgid "Until %s"
 msgstr "Jusqu’au %s"
 
 #. translators: %s is an amount, e.g. 10.00.
-#: src/Admin/transactions/TransactionsApp.js:185
+#: src/Admin/transactions/TransactionsApp.js:212
 #, js-format
 msgid "Amount at least %s"
 msgstr "Montant d’au moins %s"
 
 #. translators: %s is an amount, e.g. 50.00.
-#: src/Admin/transactions/TransactionsApp.js:194
+#: src/Admin/transactions/TransactionsApp.js:221
 #, js-format
 msgid "Amount at most %s"
 msgstr "Montant d’au plus %s"
 
-#: src/Admin/transactions/TransactionsApp.js:537
+#: src/Admin/transactions/TransactionsApp.js:1039
 msgid "Filter transactions"
 msgstr "Filtrer les transactions"
 
-#: src/Admin/transactions/TransactionsApp.js:546
+#: src/Admin/transactions/TransactionsApp.js:1191
 msgid "Search"
 msgstr "Rechercher"
 
-#: src/Admin/transactions/TransactionsApp.js:550
+#: src/Admin/transactions/TransactionsApp.js:1192
 msgid "Transaction ID, Mollie payment ID, description, or person name or email."
 msgstr "ID de transaction, ID de paiement Mollie, description, ou nom ou e-mail de la personne."
 
-#: src/Admin/transactions/TransactionsApp.js:590
+#: src/Admin/transactions/TransactionsApp.js:1130
 msgid "From date"
 msgstr "Date de début"
 
-#: src/Admin/transactions/TransactionsApp.js:603
+#: src/Admin/transactions/TransactionsApp.js:1141
 msgid "To date"
 msgstr "Date de fin"
 
-#: src/Admin/transactions/TransactionsApp.js:619
+#: src/Admin/transactions/TransactionsApp.js:1155
 msgid "Minimum amount"
 msgstr "Montant minimum"
 
-#: src/Admin/transactions/TransactionsApp.js:635
+#: src/Admin/transactions/TransactionsApp.js:1169
 msgid "Maximum amount"
 msgstr "Montant maximum"
 
-#: src/Admin/transactions/TransactionsApp.js:648
+#: src/Admin/transactions/TransactionsApp.js:1180
 msgid "Dates include the whole day in the site timezone. Amounts are compared as recorded, in each transaction’s own currency, without conversion."
 msgstr "Les dates incluent la journée entière dans le fuseau horaire du site. Les montants sont comparés tels qu’enregistrés, dans la devise de chaque transaction, sans conversion."
 
-#: src/Admin/transactions/TransactionsApp.js:664
+#: src/Admin/transactions/TransactionsApp.js:1090
 msgid "Apply filters"
 msgstr "Appliquer les filtres"
 
-#: src/Admin/transactions/TransactionsApp.js:674
+#: src/Admin/transactions/TransactionsApp.js:1096
 msgid "Reset filters"
 msgstr "Réinitialiser les filtres"
 
-#: src/Admin/transactions/TransactionsApp.js:681
+#: src/Admin/transactions/TransactionsApp.js:1226
 msgid "Filters changed. Select “Apply filters” to update the list."
 msgstr "Les filtres ont changé. Sélectionnez « Appliquer les filtres » pour mettre à jour la liste."
 
-#: src/Admin/transactions/TransactionsApp.js:785
+#: src/Admin/transactions/TransactionsApp.js:1262
 msgid "Applied filters:"
 msgstr "Filtres appliqués :"
 
-#. translators: %d is the number of transactions matching the applied filters.
-#: src/Admin/transactions/TransactionsApp.js:819
-#, js-format
-msgid "%d transaction found."
-msgid_plural "%d transactions found."
-msgstr[0] "%d transaction trouvée."
-msgstr[1] "%d transactions trouvées."
-
-#: src/Admin/transactions/TransactionsApp.js:841
+#: src/Admin/transactions/TransactionsApp.js:864
 msgid "No transactions match these filters. Change them or select “Reset filters”."
 msgstr "Aucune transaction ne correspond à ces filtres. Modifiez-les ou sélectionnez « Réinitialiser les filtres »."
 
@@ -3131,4 +3113,175 @@ msgstr "Achat n°%d"
 #, js-format
 msgid "Event date #%d"
 msgstr "Date de l'événement n°%d"
+
+#. translators: 1: paused plugin names, e.g. "Fair Events", 2: names of the plugins whose outdated copy loaded first, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:33
+#, php-format
+msgid "%1$s is paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgid_plural "%1$s are paused on this page because %2$s loaded an outdated copy of the Fair Event Plugins shared library first. Update %2$s, then reload this page."
+msgstr[0] "%1$s est en pause sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+msgstr[1] "%1$s sont en pause sur cette page car %2$s a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour %2$s, puis rechargez cette page."
+
+#. translators: %1$s: paused plugin names, e.g. "Fair Events".
+#: src/Core/SharedLibraryMessages.php:41
+#, php-format
+msgid "%1$s is paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgid_plural "%1$s are paused on this page because another plugin loaded an outdated copy of the Fair Event Plugins shared library first. Update all Fair plugins, then reload this page."
+msgstr[0] "%1$s est en pause sur cette page car une autre extension a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour toutes les extensions Fair, puis rechargez cette page."
+msgstr[1] "%1$s sont en pause sur cette page car une autre extension a chargé une copie obsolète de la bibliothèque partagée Fair Event Plugins en premier. Mettez à jour toutes les extensions Fair, puis rechargez cette page."
+
+#. translators: %1$s: plugin name, e.g. "Fair Timetable".
+#: src/Core/SharedLibraryMessages.php:49
+#, php-format
+msgid "%1$s includes an outdated copy of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgid_plural "%1$s include outdated copies of the Fair Event Plugins shared library. Update %1$s to keep all Fair plugins working correctly."
+msgstr[0] "%1$s inclut une copie obsolète de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
+msgstr[1] "%1$s incluent des copies obsolètes de la bibliothèque partagée Fair Event Plugins. Mettez à jour %1$s pour que toutes les extensions Fair fonctionnent correctement."
+
+#: src/Admin/transactions/TransactionsApp.js:300
+msgid "Date, newest first"
+msgstr "Date, plus récente en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:304
+msgid "Date, oldest first"
+msgstr "Date, plus ancienne en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:308
+msgid "Amount, highest first"
+msgstr "Montant, le plus élevé en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:312
+msgid "Amount, lowest first"
+msgstr "Montant, le plus bas en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:316
+msgid "Transaction ID, highest first"
+msgstr "ID de transaction, le plus élevé en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:320
+msgid "Transaction ID, lowest first"
+msgstr "ID de transaction, le plus bas en premier"
+
+#: src/Admin/transactions/TransactionsApp.js:324
+msgid "Status, descending"
+msgstr "Statut, décroissant"
+
+#: src/Admin/transactions/TransactionsApp.js:328
+msgid "Status, ascending"
+msgstr "Statut, croissant"
+
+#: src/Admin/transactions/TransactionsApp.js:601
+msgid "Select"
+msgstr "Sélectionner"
+
+#: src/Admin/transactions/TransactionsApp.js:610
+msgid "Select all transactions on this page"
+msgstr "Sélectionner toutes les transactions de cette page"
+
+#. translators: %d is the transaction ID.
+#: src/Admin/transactions/TransactionsApp.js:712
+#, js-format
+msgid "Select transaction #%d"
+msgstr "Sélectionner la transaction n°%d"
+
+#: src/Admin/transactions/TransactionsApp.js:728
+msgid "(no description)"
+msgstr "(aucune description)"
+
+#. translators: %s is the Mollie fee with its currency, e.g. "0.54 EUR", or "—" when not recorded.
+#: src/Admin/transactions/TransactionsApp.js:750
+#, js-format
+msgid "Mollie fee: %s"
+msgstr "Frais Mollie : %s"
+
+#. translators: %s is the integration fee with its currency, e.g. "0.90 EUR", or "—" when not recorded.
+#: src/Admin/transactions/TransactionsApp.js:760
+#, js-format
+msgid "Integration fee: %s"
+msgstr "Frais d'intégration : %s"
+
+#: src/Admin/transactions/TransactionsApp.js:791
+msgid "View details"
+msgstr "Voir les détails"
+
+#. translators: %d is the transaction ID.
+#: src/Admin/transactions/TransactionsApp.js:797
+#, js-format
+msgid "View details for transaction #%d"
+msgstr "Voir les détails de la transaction n°%d"
+
+#: src/Admin/transactions/TransactionsApp.js:838
+msgid "No transactions yet. Payments appear here once someone pays or after an import."
+msgstr "Aucune transaction pour le moment. Les paiements apparaîtront ici une fois que quelqu'un paiera ou après une importation."
+
+#: src/Admin/transactions/TransactionsApp.js:849
+#: src/Admin/transactions/TransactionsApp.js:862
+#: src/Admin/transactions/TransactionsApp.js:1106
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
+#: src/Admin/transactions/TransactionsApp.js:851
+msgid "No paid live transactions. Change the Status or Mode filter to see other transactions."
+msgstr "Aucune transaction en direct payée. Modifiez le filtre Statut ou Mode pour voir d'autres transactions."
+
+#: src/Admin/transactions/TransactionsApp.js:874
+msgid "Loading transactions…"
+msgstr "Chargement des transactions…"
+
+#. translators: %d is the number of filled-in filters under More filters.
+#: src/Admin/transactions/TransactionsApp.js:888
+#, js-format
+msgid "More filters (%d active)"
+msgid_plural "More filters (%d active)"
+msgstr[0] "Plus de filtres (%d actif)"
+msgstr[1] "Plus de filtres (%d actifs)"
+
+#: src/Admin/transactions/TransactionsApp.js:896
+#: src/Admin/transactions/TransactionsApp.js:1123
+msgid "More filters"
+msgstr "Plus de filtres"
+
+#. translators: 1: first shown position, 2: last shown position, 3: number of transactions matching the applied filters.
+#: src/Admin/transactions/TransactionsApp.js:905
+#, js-format
+msgid "%1$d–%2$d of %3$d transaction"
+msgid_plural "%1$d–%2$d of %3$d transactions"
+msgstr[0] "%1$d–%2$d sur %3$d transaction"
+msgstr[1] "%1$d–%2$d sur %3$d transactions"
+
+#. translators: %d is the number of transactions matching the applied filters.
+#: src/Admin/transactions/TransactionsApp.js:917
+#, js-format
+msgid "%d transaction"
+msgid_plural "%d transactions"
+msgstr[0] "%d transaction"
+msgstr[1] "%d transactions"
+
+#: src/Admin/transactions/TransactionsApp.js:939
+msgid "Sort by"
+msgstr "Trier par"
+
+#: src/Admin/transactions/TransactionsApp.js:954
+msgid "Payment transactions"
+msgstr "Transactions de paiement"
+
+#. translators: %d is the number of selected transactions.
+#: src/Admin/transactions/TransactionsApp.js:1050
+#, js-format
+msgid "%d transaction selected"
+msgid_plural "%d transactions selected"
+msgstr[0] "%d transaction sélectionnée"
+msgstr[1] "%d transactions sélectionnées"
+
+#: src/Admin/transactions/TransactionsApp.js:1276
+msgid "Transaction pages"
+msgstr "Pages de transactions"
+
+#: src/Admin/transactions/TransactionsApp.js:1286
+msgid "Previous page"
+msgstr "Page précédente"
+
+#: src/Admin/transactions/TransactionsApp.js:1290
+msgid "Next page"
+msgstr "Page suivante"
 
