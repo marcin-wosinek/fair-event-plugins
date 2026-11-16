@@ -8,6 +8,7 @@
 namespace FairEvents\Notifications;
 
 use FairEvents\Services\EventsWeekSummary;
+use FairEventsShared\Helpers\DisplayText;
 
 defined( 'WPINC' ) || die;
 
@@ -145,18 +146,17 @@ class WeeklyEmailRenderer {
 			$html .= '<strong>' . esc_html( $event['start_time'] ) . '</strong> — ';
 		}
 
-		$title = trim( html_entity_decode( (string) ( $event['title'] ?? '' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
-		if ( '' === $title ) {
-			$title = __( '(untitled event)', 'fair-events' );
-		}
+		// Decoded once, then escaped with DisplayText::html(): esc_html()
+		// would not re-encode literal entity text such as `&lt;` (#2300).
+		$title = DisplayText::event_title( $event['title'] ?? '', __( '(untitled event)', 'fair-events' ) );
 
 		$url = (string) ( $event['url'] ?? '' );
 		// Only web links: an imported event could carry any scheme.
 		if ( ! preg_match( '#^https?://#i', $url ) ) {
-			return $html . esc_html( $title );
+			return $html . DisplayText::html( $title );
 		}
 
-		$html       .= '<a href="' . esc_url( $url ) . '">' . esc_html( $title ) . '</a>';
+		$html       .= '<a href="' . esc_url( $url ) . '">' . DisplayText::html( $title ) . '</a>';
 		$attribution = self::source_attribution( $url );
 		if ( '' !== $attribution ) {
 			$html .= ' <span style="color: #666666;">' . esc_html( $attribution ) . '</span>';

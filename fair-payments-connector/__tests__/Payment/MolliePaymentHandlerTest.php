@@ -178,6 +178,31 @@ class MolliePaymentHandlerTest extends TestCase {
 	}
 
 	/**
+	 * The description reaches Mollie as plain text, decoded once (#2300).
+	 */
+	public function test_create_payment_sends_decoded_description() {
+		$mollie = MollieApiClient::fake(
+			array(
+				CreatePaymentRequest::class => $this->payment_response( 'tr_test_desc', 'open' ),
+			)
+		);
+
+		$handler = new MolliePaymentHandler( $mollie );
+		$handler->create_payment(
+			array(
+				'amount'      => '10.00',
+				'description' => 'Entrada para Minifesti "La&nbsp;Mutable" &amp;amp; &lt;b&gt;',
+			)
+		);
+
+		$request = $this->sent_request( $mollie, CreatePaymentRequest::class );
+		$this->assertSame(
+			"Entrada para Minifesti \"La\u{00A0}Mutable\" &amp; <b>",
+			$request->payload()->get( 'description' )
+		);
+	}
+
+	/**
 	 * `fair_payment_mode = live` must set `testmode = false` on the create request.
 	 */
 	public function test_create_payment_in_live_mode_sets_testmode_false() {

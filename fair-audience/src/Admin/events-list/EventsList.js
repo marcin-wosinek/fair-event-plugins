@@ -1,6 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { Card, CardBody } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import { dateI18n, getSettings } from '@wordpress/date';
@@ -39,12 +40,13 @@ export default function EventsList() {
 					<a
 						href={ `admin.php?page=fair-audience-event-participants&event_date_id=${ item.event_date_id }` }
 					>
-						{ item.title }
+						{ decodeEntityText( item.title ) }
 					</a>
 				),
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ( { item } ) => item.title.toLowerCase(),
+				getValue: ( { item } ) =>
+					decodeEntityText( item.title ).toLowerCase(),
 			},
 			{
 				id: 'event_date',

@@ -12,6 +12,7 @@ import {
 	getLinkTypeIcon,
 	getEventUrl,
 } from './eventLinks.js';
+import { decodeEntityText } from '../event-utils.js';
 
 /**
  * Grid mode shows this many event rows per day, then "+N more". The clamp
@@ -22,14 +23,16 @@ export const MAX_VISIBLE_EVENTS = 3;
 
 /**
  * Title shown for an event, falling back to the consumer's translated label
- * so an untitled event never renders as a blank pill.
+ * so an untitled event never renders as a blank pill. Stored entities are
+ * decoded once (#2300); the result renders as text and in `title`.
  *
  * @param {string|undefined} title    Event title.
  * @param {string}           untitled Fallback label.
  * @return {string} Display title.
  */
 function getDisplayTitle( title, untitled ) {
-	return title && title.trim() ? title.trim() : untitled;
+	const decoded = decodeEntityText( title ).trim();
+	return decoded ? decoded : untitled;
 }
 
 export default function DayCell( {

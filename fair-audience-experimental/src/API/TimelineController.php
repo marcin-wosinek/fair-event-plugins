@@ -12,6 +12,7 @@ use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
+use FairEventsShared\Helpers\DisplayText;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -112,9 +113,10 @@ class TimelineController extends WP_REST_Controller {
 		}
 
 		foreach ( $signup_groups as $group ) {
-			$first       = $group['row'];
-			$count       = count( $group['rows'] );
-			$event_title = $first['event_id'] ? get_the_title( (int) $first['event_id'] ) : '';
+			$first = $group['row'];
+			$count = count( $group['rows'] );
+			// The summary is shown as text: decode the stored title once (#2300).
+			$event_title = $first['event_id'] ? DisplayText::decode( get_the_title( (int) $first['event_id'] ) ) : '';
 
 			if ( $count > 1 ) {
 				$summary = sprintf(

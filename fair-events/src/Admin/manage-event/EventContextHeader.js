@@ -15,7 +15,11 @@ import { Button, __experimentalHStack as HStack } from '@wordpress/components';
 import { createInterpolateElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { dateI18n, getSettings } from '@wordpress/date';
-import { formatTimingStart, getEventDisplayTitle } from 'fair-events-shared';
+import {
+	decodeEntityText,
+	formatTimingStart,
+	getEventDisplayTitle,
+} from 'fair-events-shared';
 import { formatEventTiming } from '../components/eventTiming.js';
 
 /**
@@ -73,7 +77,7 @@ export default function EventContextHeader( {
 			label: sprintf(
 				/* translators: %s: title of the linked post/page */
 				__( 'Public page: %s', 'fair-events' ),
-				primaryPost.title
+				decodeEntityText( primaryPost.title )
 			),
 			className: 'fair-events-context-badge is-linked',
 		};
@@ -247,7 +251,7 @@ export default function EventContextHeader( {
 						{ sprintf(
 							/* translators: 1: master event title, 2: occurrence date */
 							__( 'Occurrence of %1$s on %2$s —', 'fair-events' ),
-							eventDate.master.title,
+							getEventDisplayTitle( eventDate.master.title ),
 							formatTimingStart( eventDate )
 						) }{ ' ' }
 						<a href={ masterUrl }>

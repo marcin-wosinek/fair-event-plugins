@@ -10,7 +10,7 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { formatDateOnly } from 'fair-events-shared';
+import { decodeEntityText, formatDateOnly } from 'fair-events-shared';
 
 /**
  * LinkOptions component
@@ -111,10 +111,11 @@ export default function LinkOptions( {
 		...allEvents.map( ( event ) => {
 			const date = formatDateOnly( event.start_date, 'numeric' );
 			const linkedCount = event.linked_posts?.length || 0;
-			let label = event.title ? `${ event.title } - ${ date }` : date;
+			const eventName = decodeEntityText( event.title ).trim();
+			let label = eventName ? `${ eventName } - ${ date }` : date;
 			if ( linkedCount > 0 ) {
 				const postTitles = event.linked_posts
-					.map( ( p ) => p.title )
+					.map( ( p ) => decodeEntityText( p.title ) )
 					.join( ', ' );
 				label += ` [${ postTitles }]`;
 			}

@@ -176,6 +176,23 @@ class WeeklyEmailRendererTest extends TestCase {
 		$this->assertStringNotContainsString( 'href', $email['html'] );
 	}
 
+	/** Entities decode once: spaces, numeric entities and literal entity text (#2300). */
+	public function test_event_title_entities_decode_once() {
+		$email = self::compose(
+			array(
+				self::occurrence( array( 'title' => 'La&nbsp;Mutable &#8220;Caf&eacute;&#8221;' ) ),
+				self::occurrence( array( 'title' => 'Use &amp;lt;b&amp;gt; tags' ) ),
+				self::occurrence( array( 'title' => '&nbsp;' ) ),
+			)
+		);
+
+		$this->assertStringContainsString( "La\u{00A0}Mutable “Café”", $email['html'] );
+		$this->assertStringNotContainsString( '&nbsp;', $email['html'] );
+		// Literal "&lt;b&gt;" text stays visible as written, not as a tag.
+		$this->assertStringContainsString( 'Use &amp;lt;b&amp;gt; tags', $email['html'] );
+		$this->assertStringContainsString( '(untitled event)', $email['html'] );
+	}
+
 	/** An event without a title still gets a visible label. */
 	public function test_untitled_event_has_a_fallback() {
 		$email = self::compose( array( self::occurrence( array( 'title' => '' ) ) ) );

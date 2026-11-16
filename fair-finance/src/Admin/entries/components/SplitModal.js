@@ -3,6 +3,7 @@
  */
 import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Modal,
@@ -147,7 +148,7 @@ const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
 							role="button"
 							tabIndex={ 0 }
 						>
-							<strong>{ event.title }</strong>
+							<strong>{ decodeEntityText( event.title ) }</strong>
 							<span
 								style={ {
 									marginLeft: '8px',

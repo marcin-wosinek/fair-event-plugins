@@ -354,6 +354,58 @@ async function openDeleteDialog() {
 	return screen.findByRole( 'dialog' );
 }
 
+describe( 'TransactionPage — stored text with entities (#2300)', () => {
+	it( 'decodes the description, line items, event title and post title once', async () => {
+		const transaction = {
+			...BASE_TRANSACTION,
+			post_id: 5,
+			post_title: 'Rock &amp; Roll',
+			description:
+				'Entrada para Minifesti "La&nbsp;Mutable", 22 de noviembre',
+			line_items: [
+				{
+					id: 1,
+					name: 'Ticket for La&nbsp;Mutable',
+					description: '&lt;i&gt;Early&lt;/i&gt; &amp;amp;',
+					quantity: 1,
+					unit_amount: 12.5,
+					total_amount: 12.5,
+				},
+			],
+			event_date_id: 7,
+			event: {
+				id: 7,
+				title: '&#8220;Caf&eacute;&#8221; night',
+				start_date: '',
+				manage_url:
+					'admin.php?page=fair-events-manage-event&event_date_id=7',
+			},
+		};
+		mockApiFetch( { transaction } );
+
+		const { container } = render( <TransactionPage /> );
+
+		await screen.findByRole( 'link', { name: 'Rock & Roll' } );
+		// textContent, not *ByText: their whitespace normalization would hide
+		// whether &nbsp; became a non-breaking space.
+		expect( container.textContent ).toContain(
+			'Entrada para Minifesti "La\u00a0Mutable", 22 de noviembre'
+		);
+		expect( container.textContent ).toContain(
+			'Ticket for La\u00a0Mutable'
+		);
+		expect( screen.getByText( '<i>Early</i> &amp;' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: /“Café” night/ } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Rock & Roll' } )
+		).toBeInTheDocument();
+		expect( container ).not.toHaveTextContent( '&nbsp;' );
+		expect( container.querySelector( 'i' ) ).toBeNull();
+	} );
+} );
+
 describe( 'TransactionPage — delete transaction (#1618, #1773)', () => {
 	it( 'names the transaction, amount, and description and states the local-only blast radius', async () => {
 		mockApiFetch( {

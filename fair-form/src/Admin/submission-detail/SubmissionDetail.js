@@ -1,4 +1,5 @@
 import { __, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -229,7 +230,7 @@ function EventField( { submission, onUpdate } ) {
 		...eventDates
 			.filter( ( ed ) => ed.event_date_id )
 			.map( ( ed ) => ( {
-				label: `${ ed.label } (${ ed.count })`,
+				label: `${ decodeEntityText( ed.label ) } (${ ed.count })`,
 				value: String( ed.event_date_id ),
 			} ) ),
 	];
@@ -237,7 +238,7 @@ function EventField( { submission, onUpdate } ) {
 	if ( ! isEditing ) {
 		return (
 			<td>
-				{ submission.event_name || '—' }
+				{ decodeEntityText( submission.event_name ) || '—' }
 				<Button
 					variant="link"
 					onClick={ handleEdit }

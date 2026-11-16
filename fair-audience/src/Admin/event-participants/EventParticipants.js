@@ -1,6 +1,7 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import {
 	Button,
 	Modal,
@@ -813,7 +814,7 @@ export default function EventParticipants() {
 					>
 						<div>
 							<h2 style={ { margin: 0 } }>
-								{ eventInfo?.title ||
+								{ decodeEntityText( eventInfo?.title ) ||
 									__(
 										'Event Participants',
 										'fair-audience'
@@ -1463,7 +1464,9 @@ export default function EventParticipants() {
 					{ invitationPreview.status !== 'idle' && (
 						<div style={ { marginBottom: '16px' } }>
 							<InvitationSummary
-								eventTitle={ eventInfo?.title }
+								eventTitle={ decodeEntityText(
+									eventInfo?.title
+								) }
 								dateLabel={ eventDateLabel }
 								groups={ invitedGroupsSummary }
 								people={ invitedPeopleSummary }
@@ -1544,7 +1547,8 @@ export default function EventParticipants() {
 					eventDateId={ resolvedEventDateId }
 					participants={ removing }
 					eventTitle={
-						eventInfo?.title || __( 'this event', 'fair-audience' )
+						decodeEntityText( eventInfo?.title ) ||
+						__( 'this event', 'fair-audience' )
 					}
 					dateLabel={ eventDateLabel }
 					listUrl={

@@ -35,6 +35,7 @@ import {
 	ListPagination,
 	pageRange,
 } from 'fair-events-shared/src/admin-table/index.js';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 
 /**
  * Internal dependencies
@@ -724,7 +725,7 @@ const TransactionsApp = () => {
 						title={ reference }
 						href={ url }
 						meta={
-							t.description ||
+							decodeEntityText( t.description ) ||
 							__( '(no description)', 'fair-payments-connector' )
 						}
 					/>

@@ -41,6 +41,7 @@ import {
 	hasUsableSalePeriodRange,
 } from './salePeriodBoundaries.js';
 import { findUnavailableSaleDates } from './salePeriodAvailability.js';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import './event-tickets.css';
 
 const shiftCalendarDate = ( dateStr, days ) => {
@@ -131,6 +132,9 @@ export default function EventTickets( {
 	onDirtyChange,
 	onSavedSettingsChange,
 } ) {
+	// The editable title is stored with entities; decode it once for the
+	// dialogs below (#2300).
+	const eventName = decodeEntityText( eventTitle ).trim();
 	const [ capacity, setCapacity ] = useState( '' );
 	const [ eventEndDate, setEventEndDate ] = useState( endDate || '' );
 	const [ ticketTypes, setTicketTypes ] = useState( [] );
@@ -2963,7 +2967,7 @@ export default function EventTickets( {
 					onCancel={ closeImportDialog }
 				>
 					<p style={ { margin: 0 } }>
-						{ eventTitle && eventDateLabel
+						{ eventName && eventDateLabel
 							? sprintf(
 									/* translators: 1: file name, 2: event title, 3: event date */
 									__(
@@ -2971,7 +2975,7 @@ export default function EventTickets( {
 										'fair-events'
 									),
 									importFile.name,
-									eventTitle,
+									eventName,
 									eventDateLabel
 								)
 							: sprintf(
@@ -3014,7 +3018,7 @@ export default function EventTickets( {
 					onCancel={ () => setMergePeriodsDialogOpen( false ) }
 				>
 					<p style={ { margin: 0 } }>
-						{ eventTitle
+						{ eventName
 							? sprintf(
 									/* translators: 1: number of sale periods, 2: event title */
 									_n(
@@ -3024,7 +3028,7 @@ export default function EventTickets( {
 										'fair-events'
 									),
 									salePeriods.length,
-									eventTitle
+									eventName
 								)
 							: sprintf(
 									/* translators: %d: number of sale periods */

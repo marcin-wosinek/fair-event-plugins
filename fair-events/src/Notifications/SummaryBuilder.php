@@ -116,6 +116,6 @@ class SummaryBuilder {
 	 * @return string
 	 */
 	private static function plain( $title ) {
-		return trim( html_entity_decode( (string) $title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+		return \FairEventsShared\Helpers\DisplayText::event_title( $title );
 	}
 }

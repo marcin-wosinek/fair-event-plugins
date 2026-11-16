@@ -424,7 +424,7 @@ class EventSourceController extends WP_REST_Controller {
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 			$ical .= 'DTSTART:' . $dtstart . "\r\n";
 			$ical .= 'DTEND:' . $dtend . "\r\n";
-			$ical .= 'SUMMARY:' . $this->escape_ical( $event->post_title ) . "\r\n";
+			$ical .= 'SUMMARY:' . $this->escape_ical( \FairEventsShared\Helpers\DisplayText::decode( $event->post_title ) ) . "\r\n";
 
 			if ( $event->post_content ) {
 				$description = wp_strip_all_tags( $event->post_content );
