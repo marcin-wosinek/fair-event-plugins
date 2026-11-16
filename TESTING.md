@@ -297,7 +297,7 @@ refuses an already-running instance, then starts, provisions, tests, and
 stops its own, exactly like a default run.
 
 ```bash
-npm run test:api:local -- --prepared --workspace=fair-events -- GetTickets.api.spec.js
+npm run test:api:local -- --prepared --workspace=fair-events -- --grep "returns tickets"
 npm run test:e2e:local -- --prepared e2e/smoke.spec.js
 ```
 
