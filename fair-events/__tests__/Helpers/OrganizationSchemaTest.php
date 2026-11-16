@@ -272,4 +272,25 @@ class OrganizationSchemaTest extends TestCase {
 
 		$this->assertArrayNotHasKey( 'contactPoint', OrganizationSchema::organizer_ref() );
 	}
+
+	/**
+	 * Private notification recipients never reach the sitewide Organization
+	 * node or the event organizer reference; the public contact email does.
+	 *
+	 * @return void
+	 */
+	public function test_notification_emails_excluded_from_public_output() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'                => 'Acme Club',
+			'contact_email'       => 'info@example.com',
+			'notification_emails' => array( 'private-team@example.com' ),
+		);
+
+		$organization = wp_json_encode( OrganizationSchema::organization_to_jsonld() );
+		$reference    = wp_json_encode( OrganizationSchema::organizer_ref() );
+
+		$this->assertStringContainsString( 'info@example.com', $organization );
+		$this->assertStringNotContainsString( 'private-team@example.com', $organization );
+		$this->assertStringNotContainsString( 'private-team@example.com', $reference );
+	}
 }

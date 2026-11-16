@@ -10,7 +10,7 @@ namespace FairEvents\Settings;
 defined( 'WPINC' ) || die;
 
 /**
- * Pure option logic for the `fair_events_organizer` setting: read accessor +
+ * Pure option logic for the `fair_events_organizer` setting: read accessors +
  * sanitizer, modeled on {@see \FairEvents\Core\Features}. No WP hooks here,
  * so it unit-tests against the stub bootstrap.
  *
@@ -65,6 +65,25 @@ class Organizer {
 	}
 
 	/**
+	 * Read the private notification recipients configured for the organizer.
+	 *
+	 * Kept out of {@see self::get()} on purpose: get() feeds public output
+	 * (Organization JSON-LD, event organizer references), and these addresses
+	 * must never appear there. An empty list means "no recipients" — callers
+	 * own any fallback policy.
+	 *
+	 * @return string[] Normalized, de-duplicated email addresses.
+	 */
+	public static function get_notification_emails(): array {
+		$stored = get_option( self::OPTION, array() );
+		if ( ! is_array( $stored ) || ! isset( $stored['notification_emails'] ) ) {
+			return array();
+		}
+
+		return self::sanitize_notification_emails( $stored['notification_emails'] );
+	}
+
+	/**
 	 * Sanitize a raw organizer option payload.
 	 *
 	 * @param mixed $value Raw option value.
@@ -103,6 +122,10 @@ class Organizer {
 			}
 		}
 		$out['same_as'] = array_values( array_unique( $same_as ) );
+
+		$out['notification_emails'] = isset( $value['notification_emails'] )
+			? self::sanitize_notification_emails( $value['notification_emails'] )
+			: array();
 
 		foreach (
 			array(
@@ -159,6 +182,46 @@ class Organizer {
 		$email = sanitize_email( (string) $raw_value );
 
 		return ( '' !== $email && is_email( $email ) ) ? $email : null;
+	}
+
+	/**
+	 * Normalize a raw list of notification recipients: trim, drop invalid or
+	 * empty entries, and remove case-insensitive duplicates keeping the first
+	 * entry's spelling and position.
+	 *
+	 * REST writes are rejected upstream by the schema's `format: email`; this
+	 * is the backstop for non-REST writes (`update_option()`, WP-CLI).
+	 *
+	 * @param mixed $raw_value Raw list of addresses.
+	 * @return string[] Normalized addresses.
+	 */
+	private static function sanitize_notification_emails( $raw_value ): array {
+		if ( ! is_array( $raw_value ) ) {
+			return array();
+		}
+
+		$emails = array();
+		$seen   = array();
+		foreach ( $raw_value as $raw_email ) {
+			if ( ! is_scalar( $raw_email ) ) {
+				continue;
+			}
+
+			$email = sanitize_email( trim( (string) $raw_email ) );
+			if ( '' === $email || ! is_email( $email ) ) {
+				continue;
+			}
+
+			$key = strtolower( $email );
+			if ( isset( $seen[ $key ] ) ) {
+				continue;
+			}
+
+			$seen[ $key ] = true;
+			$emails[]     = $email;
+		}
+
+		return $emails;
 	}
 
 	/**

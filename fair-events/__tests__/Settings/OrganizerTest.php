@@ -280,4 +280,106 @@ class OrganizerTest extends TestCase {
 			Organizer::sanitize_option( array( 'contact_phone' => '  +34 600 000 000  ' ) )['contact_phone']
 		);
 	}
+
+	/**
+	 * Notification recipients are trimmed, validated, and de-duplicated
+	 * case-insensitively, keeping the first entry's spelling and position.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_normalizes_notification_emails() {
+		$this->assertSame(
+			array( 'Team@Example.com', 'board@example.com' ),
+			Organizer::sanitize_option(
+				array(
+					'notification_emails' => array(
+						'  Team@Example.com ',
+						'',
+						'not an email',
+						'board@example.com',
+						'team@example.com',
+						array( 'nested@example.com' ),
+					),
+				)
+			)['notification_emails']
+		);
+	}
+
+	/**
+	 * A missing or non-array recipient list sanitizes to an empty list.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_defaults_notification_emails_to_empty() {
+		$this->assertSame( array(), Organizer::sanitize_option( array( 'name' => 'Acme' ) )['notification_emails'] );
+		$this->assertSame(
+			array(),
+			Organizer::sanitize_option( array( 'notification_emails' => 'team@example.com' ) )['notification_emails']
+		);
+	}
+
+	/**
+	 * Editing recipients leaves the identity and public contact untouched.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_keeps_identity_alongside_notification_emails() {
+		$out = Organizer::sanitize_option(
+			array(
+				'name'                => 'Acme Club',
+				'contact_email'       => 'info@example.com',
+				'notification_emails' => array( 'team@example.com' ),
+			)
+		);
+
+		$this->assertSame( 'Acme Club', $out['name'] );
+		$this->assertSame( 'info@example.com', $out['contact_email'] );
+		$this->assertSame( array( 'team@example.com' ), $out['notification_emails'] );
+	}
+
+	/**
+	 * Legacy options without the key read back as no recipients, without
+	 * falling back to the public contact email.
+	 *
+	 * @return void
+	 */
+	public function test_get_notification_emails_legacy_default() {
+		$this->assertSame( array(), Organizer::get_notification_emails() );
+
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'          => 'Acme Club',
+			'contact_email' => 'info@example.com',
+		);
+		$this->assertSame( array(), Organizer::get_notification_emails() );
+
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = 'corrupt';
+		$this->assertSame( array(), Organizer::get_notification_emails() );
+	}
+
+	/**
+	 * The private accessor returns stored recipients, normalized defensively.
+	 *
+	 * @return void
+	 */
+	public function test_get_notification_emails_returns_stored_recipients() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'notification_emails' => array( 'team@example.com', 'TEAM@example.com', 'bad' ),
+		);
+
+		$this->assertSame( array( 'team@example.com' ), Organizer::get_notification_emails() );
+	}
+
+	/**
+	 * The public identity accessor never exposes notification recipients.
+	 *
+	 * @return void
+	 */
+	public function test_get_excludes_notification_emails() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'                => 'Acme Club',
+			'notification_emails' => array( 'team@example.com' ),
+		);
+
+		$this->assertArrayNotHasKey( 'notification_emails', Organizer::get() );
+	}
 }

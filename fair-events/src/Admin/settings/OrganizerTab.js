@@ -68,11 +68,66 @@ function isValidLink( value ) {
 }
 
 /**
+ * Whether a notification recipient row is either empty (ignored on save) or
+ * a plausible email address. The server's `format: email` check is the
+ * authority; this mirrors it closely enough to block obvious mistakes.
+ *
+ * @param {string} value Entry value.
+ * @return {boolean} True when the entry doesn't block saving.
+ */
+function isValidEmail( value ) {
+	const trimmed = value.trim();
+	if ( '' === trimmed ) {
+		return true;
+	}
+
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( trimmed );
+}
+
+/**
+ * Build the save payload: trim notification recipients and drop empty rows.
+ * The server normalizes the rest (duplicates), and the reload shows it.
+ *
+ * @param {Object} organizer Organizer form state.
+ * @return {Object} Organizer payload for `fair_events_organizer`.
+ */
+function toSavePayload( organizer ) {
+	return {
+		...organizer,
+		notification_emails: organizer.notification_emails
+			.map( ( email ) => email.trim() )
+			.filter( ( email ) => '' !== email ),
+	};
+}
+
+/**
+ * Turn a failed settings save into a notice message, preferring the server's
+ * per-field validation detail over its generic "Invalid parameter(s)" text.
+ *
+ * @param {Object} error apiFetch rejection.
+ * @return {string} Message to show.
+ */
+function saveErrorMessage( error ) {
+	const params = error?.data?.params;
+	const detail = params ? Object.values( params ).filter( Boolean ) : [];
+	const serverMessage = detail.length ? detail.join( ' ' ) : error?.message;
+
+	return serverMessage
+		? sprintf(
+				/* translators: %s: error message returned by the server */
+				__( 'Failed to save organizer settings: %s', 'fair-events' ),
+				serverMessage
+			)
+		: __( 'Failed to save organizer settings.', 'fair-events' );
+}
+
+/**
  * Organizer Tab Component
  *
  * Sitewide organizer identity (name, address, type, social/profile links)
- * used to build the sitewide Organization JSON-LD block and the single-event
- * `organizer` reference.
+ * plus private notification recipients. The identity is used to build the
+ * sitewide Organization JSON-LD block and the single-event `organizer`
+ * reference; the recipients are never part of public output.
  *
  * @param {Object}   props          Props
  * @param {Function} props.onNotice Handler for displaying notices
@@ -145,14 +200,39 @@ export default function OrganizerTab( { onNotice } ) {
 		);
 	};
 
+	const updateEmail = ( index, value ) => {
+		const emails = [ ...organizer.notification_emails ];
+		emails[ index ] = value;
+		updateField( 'notification_emails', emails );
+	};
+
+	const addEmail = () => {
+		updateField( 'notification_emails', [
+			...organizer.notification_emails,
+			'',
+		] );
+	};
+
+	const removeEmail = ( index ) => {
+		updateField(
+			'notification_emails',
+			organizer.notification_emails.filter( ( _, i ) => i !== index )
+		);
+	};
+
 	const hasInvalidLink =
 		organizer && organizer.same_as.some( ( url ) => ! isValidLink( url ) );
 	const hasInvalidWebsite = organizer && ! isValidLink( organizer.website );
+	const hasInvalidEmail =
+		organizer &&
+		organizer.notification_emails.some(
+			( email ) => ! isValidEmail( email )
+		);
 
 	const handleSave = () => {
 		setIsSaving( true );
 
-		saveSettings( { fair_events_organizer: organizer } )
+		saveSettings( { fair_events_organizer: toSavePayload( organizer ) } )
 			.then( () => loadOrganizerSettings() )
 			.then( ( settings ) => {
 				applySettings( settings );
@@ -165,13 +245,11 @@ export default function OrganizerTab( { onNotice } ) {
 				} );
 				setIsSaving( false );
 			} )
-			.catch( () => {
+			.catch( ( error ) => {
+				// Keep the form state as entered so the user can fix and retry.
 				onNotice( {
 					status: 'error',
-					message: __(
-						'Failed to save organizer settings.',
-						'fair-events'
-					),
+					message: saveErrorMessage( error ),
 				} );
 				setIsSaving( false );
 			} );
@@ -486,13 +564,99 @@ export default function OrganizerTab( { onNotice } ) {
 					</CardBody>
 				</Card>
 
+				<Card>
+					<CardHeader>
+						<h2>
+							{ __(
+								'Notification email addresses',
+								'fair-events'
+							) }
+						</h2>
+					</CardHeader>
+					<CardBody>
+						<p className="description">
+							{ __(
+								'Private addresses for notifications sent to the organizer. Unlike the public contact email, they are never shown on the site or in its structured data.',
+								'fair-events'
+							) }
+						</p>
+
+						<VStack spacing={ 2 }>
+							{ organizer.notification_emails.map(
+								( email, index ) => {
+									const invalid = ! isValidEmail( email );
+									return (
+										<HStack key={ index } alignment="top">
+											<TextControl
+												type="email"
+												label={ __(
+													'Notification email address',
+													'fair-events'
+												) }
+												hideLabelFromVision
+												value={ email }
+												onChange={ ( value ) =>
+													updateEmail( index, value )
+												}
+												disabled={ isSaving }
+												help={
+													invalid
+														? __(
+																'Enter a valid email address, e.g. team@example.com.',
+																'fair-events'
+															)
+														: undefined
+												}
+												className={
+													invalid
+														? 'has-error'
+														: undefined
+												}
+											/>
+											<Button
+												variant="tertiary"
+												isDestructive
+												label={ __(
+													'Remove email address',
+													'fair-events'
+												) }
+												onClick={ () =>
+													removeEmail( index )
+												}
+												disabled={ isSaving }
+											>
+												{ __(
+													'Remove',
+													'fair-events'
+												) }
+											</Button>
+										</HStack>
+									);
+								}
+							) }
+						</VStack>
+
+						<Button
+							variant="secondary"
+							onClick={ addEmail }
+							disabled={ isSaving }
+							style={ { marginTop: '0.5rem' } }
+						>
+							{ __( 'Add email address', 'fair-events' ) }
+						</Button>
+					</CardBody>
+				</Card>
+
 				<div>
 					<Button
 						variant="primary"
 						type="submit"
 						isBusy={ isSaving }
 						disabled={
-							isSaving || hasInvalidLink || hasInvalidWebsite
+							isSaving ||
+							hasInvalidLink ||
+							hasInvalidWebsite ||
+							hasInvalidEmail
 						}
 					>
 						{ isSaving
@@ -503,6 +667,14 @@ export default function OrganizerTab( { onNotice } ) {
 						<p className="description">
 							{ __(
 								'Fix the invalid link(s) above before saving.',
+								'fair-events'
+							) }
+						</p>
+					) }
+					{ hasInvalidEmail && (
+						<p className="description">
+							{ __(
+								'Fix the invalid notification email address(es) above before saving.',
 								'fair-events'
 							) }
 						</p>
