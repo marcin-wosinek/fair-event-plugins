@@ -950,6 +950,135 @@ test.describe('Fair Finance settlements', () => {
 		}
 	});
 
+	test('recalculates an existing gross split to net payments plus compensation, keeping tags', async ({
+		page,
+	}) => {
+		const fixtureCall = async (data) => {
+			const res = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data,
+			});
+			expect(res.ok(), await res.text()).toBeTruthy();
+			return res.json();
+		};
+		const ROOT = '/wp-json/fair-finance/v1/reconciliation/settlements';
+		const children = async (entryId) => {
+			const res = await api.get(
+				'/wp-json/fair-finance/v1/financial-entries?per_page=100',
+				{ headers: adminHeaders }
+			);
+			const parent = (await res.json()).entries.find(
+				(entry) => entry.id === entryId
+			);
+			return parent.children || [];
+		};
+		try {
+			await fixtureCall({ action: 'cleanup' });
+			// Split from gross payments before the fees were recorded (#2344).
+			const fixture = await fixtureCall({
+				origin: 'api',
+				variant: 'compensation',
+			});
+			const selection = {
+				entry_id: fixture.entry_id,
+				currency: 'EUR',
+				account_id: fixture.account_id,
+			};
+			const preview = await (
+				await api.post(`${ROOT}/${fixture.settlement_id}/preview`, {
+					headers: adminHeaders,
+					data: selection,
+				})
+			).json();
+			const confirmed = await api.post(
+				`${ROOT}/${fixture.settlement_id}/confirm`,
+				{
+					headers: adminHeaders,
+					data: {
+						...selection,
+						fingerprint: preview.fingerprint,
+						state: 'full',
+					},
+				}
+			);
+			expect(confirmed.ok(), await confirmed.text()).toBeTruthy();
+			const before = await children(fixture.entry_id);
+			expect(before.map((child) => child.amount)).toEqual([
+				25, 15, -1.43,
+			]);
+			await fixtureCall({
+				action: 'categorize',
+				entry_id: before[2].id,
+				tag: 'fees',
+			});
+			await fixtureCall({ action: 'record_fees' });
+
+			await loginAsAdmin(page);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}`
+			);
+			const section = page.locator('.fair-finance-recalculation');
+			await section
+				.getByRole('button', { name: 'Preview recalculation' })
+				.click();
+			const rows = section.locator('tbody tr');
+			await expect(rows).toHaveCount(3);
+			await expect(rows.nth(0)).toContainText('25.00 EUR');
+			await expect(rows.nth(0)).toContainText('24.10 EUR');
+			await expect(rows.nth(0)).toContainText('Tag: Untagged');
+			await expect(rows.nth(1)).toContainText('14.45 EUR');
+			await expect(rows.nth(2)).toContainText('0.02 EUR');
+			await expect(rows.nth(2)).toContainText('Tag: fees');
+			await expect(rows.nth(2)).toContainText(
+				'Reconcile fixture invoice compensation'
+			);
+			// Nothing changes before confirmation.
+			expect(
+				(await children(fixture.entry_id)).map((child) => child.amount)
+			).toEqual([25, 15, -1.43]);
+			for (const width of [375, 768]) {
+				await page.setViewportSize({ width, height: 900 });
+				expect(
+					await page.evaluate(
+						() =>
+							document.documentElement.scrollWidth <=
+							document.documentElement.clientWidth
+					)
+				).toBe(true);
+			}
+			await page.setViewportSize({ width: 1280, height: 900 });
+			await section
+				.getByRole('button', { name: 'Apply recalculation' })
+				.click();
+			const dialog = page.getByRole('dialog');
+			await expect(dialog).toContainText(
+				`Apply the previewed changes to 3 allocations of bank entry #${fixture.entry_id}?`
+			);
+			await dialog
+				.getByRole('button', { name: 'Recalculate split' })
+				.click();
+			await expect(dialog).toHaveCount(0);
+			await expect(
+				section
+					.locator('.components-notice__content')
+					.getByText(/The split was recalculated/)
+			).toBeVisible();
+			await expect(
+				page.getByText(/Split recalculated · Administrator/)
+			).toBeVisible();
+			const after = await children(fixture.entry_id);
+			expect(
+				after.map((child) => [child.id, child.amount, child.tag])
+			).toEqual([
+				[before[0].id, 24.1, before[0].tag],
+				[before[1].id, 14.45, before[1].tag],
+				[before[2].id, 0.02, 'fees'],
+			]);
+		} finally {
+			await fixtureCall({ action: 'cleanup' });
+		}
+	});
+
 	test('suggests a saved settlement for a bank entry, reviews it with that entry, and shows the association', async ({
 		page,
 	}) => {

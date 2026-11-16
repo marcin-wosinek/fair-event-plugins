@@ -504,3 +504,43 @@ test( 'links each local transaction to its own Payments Connector detail page', 
 		);
 	}
 } );
+
+test( 'offers a previewed recalculation only for a fully reconciled split', async () => {
+	apiFetch.mockImplementation( ( { path } ) => {
+		if ( path.endsWith( '/recalculate-preview' ) )
+			return Promise.resolve( {
+				status: 'unchanged',
+				fingerprint: 'f'.repeat( 64 ),
+				currency: 'EUR',
+				entry_id: 8,
+				explanation: null,
+				reasons: [],
+				warnings: [],
+				changes: [],
+			} );
+		if ( path.endsWith( '/preview' ) )
+			return Promise.resolve( {
+				...base,
+				decision: { state: 'full', current_state: 'full', entry_id: 8 },
+				allocation: { ...base.allocation, status: 'allocated' },
+			} );
+		if ( path.endsWith( '/candidates' ) ) return Promise.resolve( [] );
+		if ( path === '/fair-finance/v1/budgets' ) return Promise.resolve( [] );
+		throw new Error( `Unexpected path ${ path }` );
+	} );
+	await open();
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Preview recalculation' } )
+	);
+	expect(
+		( await screen.findAllByText( /already matches the current evidence/ ) )
+			.length
+	).toBeGreaterThan( 0 );
+} );
+
+test( 'does not offer recalculation before a split exists', async () => {
+	await open();
+	expect(
+		screen.queryByRole( 'button', { name: 'Preview recalculation' } )
+	).not.toBeInTheDocument();
+} );

@@ -273,9 +273,10 @@ class SettlementReconciliation {
 	 * @param int   $id Settlement ID.
 	 * @param array $proposal Proposal.
 	 * @param bool  $lock Lock records.
+	 * @param bool  $resplit Also propose a split for an existing one, ignoring its children.
 	 * @return array|WP_Error
 	 */
-	private function build_preview( $id, array $proposal, $lock ) {
+	private function build_preview( $id, array $proposal, $lock, $resplit = false ) {
 		$settlement = $this->provider->get_settlement( $id, $lock );
 		if ( ! $settlement ) {
 			return self::error( 'settlement_not_found', __( 'This settlement is not saved on this site.', 'fair-finance' ), 404 );
@@ -453,6 +454,9 @@ class SettlementReconciliation {
 		$bank_issues = array_values( array_unique( $bank_issues ) );
 		$source      = isset( $explanations['api'] ) ? 'api' : 'csv';
 		$allocation  = $this->allocation( $merged, $transactions, $bank_rows, $bank, $items[ $source ], $explanations[ $source ] ?? null, $settlement['currency'] );
+		// What the evidence supports now for an existing split, compared only
+		// by an explicit recalculation.
+		$resplit = $resplit && $bank && AllocationPlanner::ALLOCATED === $allocation['status'] ? $this->propose( $merged, $transactions, $bank, $items[ $source ], $explanations[ $source ] ?? null, $settlement['currency'] ) : null;
 		// Material fingerprints exclude source IDs and refresh timestamps. History
 		// retains those IDs separately, so refreshing identical facts is harmless.
 		$material_revisions = array();
@@ -504,6 +508,7 @@ class SettlementReconciliation {
 			'history'               => $history,
 			'material_hash'         => $material_hash,
 			'fingerprint'           => $fingerprint,
+			'resplit'               => $resplit,
 		);
 	}
 
@@ -557,10 +562,31 @@ class SettlementReconciliation {
 				}
 			)
 		);
-		$planner  = new AllocationPlanner();
 		if ( $children ) {
-			return $planner->plan( $bank, $children, array(), null );
+			return ( new AllocationPlanner() )->plan( $bank, $children, array(), null );
 		}
+		return $this->propose( $movements, $transactions, $bank, $items, $explanation, $currency );
+	}
+
+	/**
+	 * The split this settlement's evidence supports, ignoring any existing
+	 * children, so an existing split can be compared with it.
+	 *
+	 * Recorded net amounts are tried first, alone and then with settlement
+	 * adjustments that the evidence lists separately from payment fees. Gross
+	 * amounts with settlement costs remain the fallback, with the reason why
+	 * net attribution is unavailable.
+	 *
+	 * @param array      $movements Merged movements with resolved transactions.
+	 * @param array      $transactions Local payments.
+	 * @param array      $bank Selected bank entry.
+	 * @param array      $items Movements of the source that explains the payout.
+	 * @param array|null $explanation That source's explanation.
+	 * @param string     $currency Settlement currency.
+	 * @return array
+	 */
+	private function propose( array $movements, array $transactions, array $bank, array $items, $explanation, $currency ) {
+		$planner  = new AllocationPlanner();
 		$by_id    = array_column( $transactions, null, 'id' );
 		$captured = array();
 		foreach ( $movements as $item ) {
@@ -568,16 +594,17 @@ class SettlementReconciliation {
 				$captured[ (string) $item['payment_reference'] ] = true;
 			}
 		}
-		$gross   = array();
-		$net     = array();
-		$net_ok  = true;
-		$labels  = array(
+		$gross    = array();
+		$net      = array();
+		$payments = array();
+		$net_ok   = true;
+		$labels   = array(
 			/* translators: %s: transaction description. */
 			Movements::TYPE_REFUND     => __( 'Refund: %s', 'fair-finance' ),
 			/* translators: %s: transaction description. */
 			Movements::TYPE_CHARGEBACK => __( 'Chargeback: %s', 'fair-finance' ),
 		);
-		$reasons = array(
+		$reasons  = array(
 			'aggregate' => __( 'Payments are only reported as totals, so they cannot be allocated per transaction.', 'fair-finance' ),
 			'reference' => __( 'A movement has no single matching local transaction, so it cannot be allocated yet.', 'fair-finance' ),
 			'amount'    => __( 'A movement has an unknown settlement amount or a different currency, so it cannot be allocated.', 'fair-finance' ),
@@ -613,6 +640,11 @@ class SettlementReconciliation {
 				$net_ok = $net_ok && self::equal( $item['settlement_amount'], $transaction['amount'] ) && $transaction['currency'] === $currency;
 				if ( $net_ok ) {
 					$row['amount'] = AllocationPlanner::net( $transaction ) ?? $item['settlement_amount'];
+					$payments[]    = array(
+						'gross'    => $item['settlement_amount'],
+						'net'      => AllocationPlanner::net( $transaction ),
+						'recorded' => null !== ( $transaction['mollie_fee'] ?? null ) && '' !== $transaction['mollie_fee'],
+					);
 				}
 			}
 			$net[] = $row;
@@ -620,17 +652,150 @@ class SettlementReconciliation {
 		if ( ! $gross ) {
 			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, __( 'There are no payment movements to allocate.', 'fair-finance' ) );
 		}
+		$unavailable = __( 'A payment was settled partially, through captures or in another currency, so its recorded whole-payment fee cannot be applied.', 'fair-finance' );
 		if ( $net_ok ) {
 			$plan = $planner->plan( $bank, array(), $net, 'transaction_net' );
 			if ( in_array( $plan['status'], array( AllocationPlanner::PROPOSED, AllocationPlanner::SINGLE ), true ) ) {
 				return $plan;
 			}
+			$adjustments = self::net_adjustments( $payments, $items, $explanation, $currency );
+			if ( is_string( $adjustments ) ) {
+				$unavailable = $adjustments;
+			} else {
+				$plan = $planner->plan( $bank, array(), array_merge( $net, $adjustments ), 'transaction_net_adjustments' );
+				if ( AllocationPlanner::PROPOSED === $plan['status'] ) {
+					return array_merge( $plan, array( 'reason' => __( 'Each payment is allocated at its recorded net amount, and each settlement adjustment listed separately in the evidence gets its own allocation. Recorded payment fees are not deducted again. The amounts sum exactly to this bank entry.', 'fair-finance' ) ) );
+				}
+				$unavailable = $plan['reason'];
+			}
 		}
 		$deductions = self::deductions( $items, $explanation, $currency );
 		if ( is_string( $deductions ) ) {
-			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $deductions );
+			return AllocationPlanner::outcome( AllocationPlanner::UNSUPPORTED, $unavailable . ' ' . $deductions );
 		}
-		return $planner->plan( $bank, array(), array_merge( $gross, $deductions ), 'settlement_deductions' );
+		$plan = $planner->plan( $bank, array(), array_merge( $gross, $deductions ), 'settlement_deductions' );
+		// Say why recorded net amounts were not used, whatever the outcome.
+		return array_merge(
+			$plan,
+			array(
+				'reason'          => sprintf(
+					/* translators: 1: why recorded net payment amounts cannot be used, 2: the outcome of the gross-amount proposal. */
+					__( 'Net payment amounts were not used: %1$s %2$s', 'fair-finance' ),
+					$unavailable,
+					$plan['reason']
+				),
+				'net_unavailable' => $unavailable,
+			)
+		);
+	}
+
+	/**
+	 * Settlement adjustments to add to recorded net payment amounts.
+	 *
+	 * Payment fees and settlement adjustments are told apart by structured
+	 * evidence only: a report cost line with a payment method is a payment
+	 * fee, and any other cost line (no method, or Mollie's refund method) an
+	 * adjustment; without a report, the movement type decides. The payment
+	 * fees in the evidence must equal the fees already deducted from the
+	 * payments exactly, so nothing is deducted twice. Neither a description
+	 * nor the remaining difference ever establishes an adjustment.
+	 *
+	 * @param array      $payments Whole payments: `gross`, `net` (or null) and whether a fee was `recorded`.
+	 * @param array      $items Movements of the explaining source.
+	 * @param array|null $explanation Its explanation.
+	 * @param string     $currency Settlement currency.
+	 * @return array|string Adjustment rows, or why net amounts cannot be used.
+	 */
+	public static function net_adjustments( array $payments, array $items, $explanation, $currency ) {
+		if ( ! $payments ) {
+			return __( 'No payment was settled whole, so recorded payment fees cannot be used.', 'fair-finance' );
+		}
+		$deducted = array();
+		foreach ( $payments as $payment ) {
+			if ( ! $payment['recorded'] ) {
+				return __( 'A payment has no recorded Mollie fee, so its net amount cannot be confirmed. Load the missing fees, then preview again.', 'fair-finance' );
+			}
+			if ( null === $payment['net'] ) {
+				return __( 'A recorded payment fee has fractions of a cent, so its net amount cannot be stored exactly.', 'fair-finance' );
+			}
+			$deducted[] = Exact::subtract( $payment['gross'], $payment['net'] );
+		}
+		$fees        = array();
+		$adjustments = array();
+		if ( ! empty( $explanation['report'] ) ) {
+			foreach ( $items as $item ) {
+				if ( empty( $item['report'] ) || Report::GROUP_COSTS !== $item['report']['group'] ) {
+					continue;
+				}
+				if ( null === $item['settlement_amount'] || $currency !== $item['settlement_currency'] ) {
+					return __( 'The report costs are incomplete, so recorded payment fees cannot be compared with them.', 'fair-finance' );
+				}
+				$method = $item['report']['method'];
+				if ( null !== $method && Report::METHOD_REFUND !== $method ) {
+					$fees[] = $item['settlement_amount'];
+				} else {
+					$adjustments[] = $item;
+				}
+			}
+		} else {
+			$by_type = array();
+			foreach ( $items as $item ) {
+				if ( ! $item['report'] && in_array( $item['type'], array( Movements::TYPE_FEE, Movements::TYPE_ADJUSTMENT ), true ) ) {
+					$by_type[ $item['type'] ][ $item['is_aggregate'] ? 'aggregate' : 'detail' ][] = $item;
+				}
+			}
+			foreach ( $by_type as $type => $groups ) {
+				// Detail rows are preferred over the aggregate that sums them.
+				foreach ( $groups['detail'] ?? $groups['aggregate'] as $item ) {
+					if ( null === $item['settlement_amount'] || $currency !== $item['settlement_currency'] ) {
+						return __( 'A fee or adjustment has an unknown amount or a different currency, so recorded payment fees cannot be compared with it.', 'fair-finance' );
+					}
+					if ( Movements::TYPE_FEE === $type ) {
+						$fees[] = $item['settlement_amount'];
+					} else {
+						$adjustments[] = $item;
+					}
+				}
+			}
+		}
+		$recorded = Exact::sum( $deducted );
+		$listed   = $fees ? Exact::negate( Exact::sum( $fees ) ) : '0';
+		if ( ! self::equal( $recorded, $listed ) ) {
+			return sprintf(
+				/* translators: 1: exact total of fees recorded on the payments, 2: exact total of payment fees in the settlement evidence. */
+				__( 'The fees recorded on the payments total %1$s, but the settlement evidence lists %2$s in payment fees. Correct the recorded fees, then preview again.', 'fair-finance' ),
+				Exact::canonical( $recorded ),
+				Exact::canonical( $listed )
+			);
+		}
+		if ( ! $adjustments ) {
+			return __( 'The recorded payment fees agree with the settlement fees, but no settlement adjustment in the evidence explains the remaining difference.', 'fair-finance' );
+		}
+		$rows = array();
+		foreach ( $adjustments as $item ) {
+			$rows[] = array(
+				'kind'         => 'settlement',
+				'amount'       => $item['settlement_amount'],
+				'description'  => '' !== (string) $item['description'] ? $item['description'] : __( 'Settlement adjustment', 'fair-finance' ),
+				'movement_key' => $item['identity_key'],
+			);
+		}
+		foreach ( $rows as $row ) {
+			if ( null === AllocationPlanner::cents( $row['amount'] ) ) {
+				$total = Exact::sum( array_column( $rows, 'amount' ) );
+				if ( null === AllocationPlanner::cents( $total ) ) {
+					return __( 'Settlement adjustments have fractions of a cent, so they cannot be stored exactly.', 'fair-finance' );
+				}
+				return array(
+					array(
+						'kind'        => 'settlement',
+						'amount'      => $total,
+						'description' => __( 'Settlement adjustments', 'fair-finance' ),
+					),
+				);
+			}
+		}
+		return $rows;
 	}
 
 	/**
@@ -949,6 +1114,300 @@ class SettlementReconciliation {
 	}
 
 	/**
+	 * Preview recalculating an existing settlement split. Preview never writes.
+	 *
+	 * @param int  $id Settlement ID.
+	 * @param bool $lock Use locking reads within the recalculation.
+	 * @return array|WP_Error
+	 */
+	public function recalculation( $id, $lock = false ) {
+		try {
+			return $this->build_recalculation( $id, $lock );
+		} catch ( \Throwable $error ) {
+			return self::error( 'reconciliation_read_failed', __( 'The local reconciliation evidence could not be read. Try again.', 'fair-finance' ), 500 );
+		}
+	}
+
+	/**
+	 * Build the recalculation preview.
+	 *
+	 * @param int  $id Settlement ID.
+	 * @param bool $lock Lock records.
+	 * @return array|WP_Error
+	 */
+	private function build_recalculation( $id, $lock ) {
+		$decision = $this->local->decision( $id, $lock );
+		if ( ! $decision || 'full' !== $decision['state'] ) {
+			return self::error( 'reconciliation_not_split', __( 'Only a fully reconciled settlement’s split can be recalculated.', 'fair-finance' ), 409 );
+		}
+		$preview = $this->build_preview( $id, array( 'entry_id' => (int) $decision['entry_id'] ), $lock, true );
+		if ( is_wp_error( $preview ) ) {
+			return $preview;
+		}
+		$children = array_values(
+			array_filter(
+				$preview['bank_rows'],
+				static function ( $row ) use ( $decision ) {
+					return (int) $row['id'] !== (int) $decision['entry_id'];
+				}
+			)
+		);
+		$plan     = $preview['resplit'];
+		$reasons  = array();
+		if ( ! $children ) {
+			$reasons[] = __( 'This bank entry is not split, so there is nothing to recalculate.', 'fair-finance' );
+		}
+		if ( ! $preview['can_full'] ) {
+			$reasons[] = __( 'Resolve the reconciliation issues shown above before recalculating the split.', 'fair-finance' );
+		}
+		if ( $children && ( ! $plan || AllocationPlanner::PROPOSED !== $plan['status'] ) ) {
+			$reasons[] = $plan ? $plan['reason'] : __( 'There is no supported evidence to allocate.', 'fair-finance' );
+		}
+		$generated = SplitRecalculation::generated( $preview['history'] );
+		$diff      = $reasons ? array(
+			'status'   => SplitRecalculation::BLOCKED,
+			'changes'  => array(),
+			'reasons'  => $reasons,
+			'warnings' => array(),
+		) : SplitRecalculation::diff( $children, $generated, $plan['rows'] );
+		$result    = array(
+			'status'      => $diff['status'],
+			'changes'     => $diff['changes'],
+			'reasons'     => $diff['reasons'],
+			'warnings'    => $diff['warnings'],
+			'method'      => $plan['method'] ?? null,
+			'explanation' => $plan['reason'] ?? null,
+			'currency'    => $preview['settlement']['currency'],
+			'entry_id'    => (int) $decision['entry_id'],
+		);
+		// Every allocation field and the evidence are part of what was reviewed.
+		$result['fingerprint'] = self::hash( array( 'recalculate', $preview['fingerprint'], $children, $generated['history_id'] ?? null, $result ) );
+		$result['preview']     = $preview;
+		$result['rows']        = $plan['rows'] ?? array();
+		return $result;
+	}
+
+	/**
+	 * Apply a reviewed recalculation atomically, recorded in history.
+	 *
+	 * @param int    $id Settlement ID.
+	 * @param string $fingerprint Reviewed recalculation fingerprint.
+	 * @return array|WP_Error Fresh recalculation preview.
+	 * @throws \RuntimeException Internally caught to roll back every failed write.
+	 */
+	public function recalculate( $id, $fingerprint ) {
+		global $wpdb;
+		if ( ! $this->provider->lock( SettlementStore::WRITE_LOCK, 15 ) ) {
+			return self::error( 'reconciliation_busy', __( 'Another settlement operation is running. Try again.', 'fair-finance' ), 409 );
+		}
+		$this->provider->begin();
+		try {
+			$review = $this->recalculation( $id, true );
+			if ( is_wp_error( $review ) ) {
+				$this->provider->rollback();
+				return $review;
+			}
+			$request_hash = self::hash( array( 'recalculate', $id, $fingerprint ) );
+			$prior        = $wpdb->get_row( $wpdb->prepare( 'SELECT id FROM %i WHERE request_hash = %s', Schema::reconciliation_table( 'history' ), $request_hash ), ARRAY_A );
+			if ( $prior ) {
+				// A retry of an applied request changes nothing.
+				$this->provider->rollback();
+				return $this->public_recalculation( $review );
+			}
+			if ( ! hash_equals( $review['fingerprint'], (string) $fingerprint ) ) {
+				$this->provider->rollback();
+				return self::error( 'reconciliation_stale', __( 'The split or its evidence changed. Preview the recalculation again before applying it.', 'fair-finance' ), 409 );
+			}
+			if ( SplitRecalculation::BLOCKED === $review['status'] ) {
+				$this->provider->rollback();
+				return self::error( 'reconciliation_recalculation_blocked', __( 'This split cannot be recalculated automatically. Review the reasons shown in the preview.', 'fair-finance' ), 409 );
+			}
+			if ( SplitRecalculation::UNCHANGED === $review['status'] ) {
+				$this->provider->rollback();
+				return $this->public_recalculation( $review );
+			}
+			$preview  = $review['preview'];
+			$entry_id = $review['entry_id'];
+			$table    = \FairFinance\Database\Schema::get_financial_entries_table_name();
+			$parent   = null;
+			$before   = array();
+			foreach ( $preview['bank_rows'] as $row ) {
+				if ( (int) $row['id'] === $entry_id ) {
+					$parent = $row;
+				} else {
+					$before[] = $row;
+				}
+			}
+			$ids  = array();
+			$rows = array();
+			foreach ( $review['changes'] as $change ) {
+				if ( SplitRecalculation::REMOVE === $change['action'] ) {
+					if ( 1 !== $wpdb->delete(
+						$table,
+						array(
+							'id'              => $change['id'],
+							'parent_entry_id' => $entry_id,
+						),
+						array( '%d', '%d' )
+					) ) {
+						throw new \RuntimeException( 'Allocation removal failed.' );
+					}
+					continue;
+				}
+				if ( SplitRecalculation::ADD === $change['action'] ) {
+					// Inserted directly so an unclassified adjustment stays untagged
+					// instead of inheriting the bank entry's tag.
+					$inserted = $wpdb->insert(
+						$table,
+						array(
+							'amount'          => $change['proposed_amount'],
+							'entry_type'      => $parent['entry_type'],
+							'entry_date'      => $parent['entry_date'],
+							'description'     => $change['description'],
+							'transaction_id'  => $parent['transaction_id'],
+							'parent_entry_id' => $entry_id,
+						),
+						array( '%s', '%s', '%s', '%s', '%d', '%d' )
+					);
+					if ( ! $inserted ) {
+						throw new \RuntimeException( 'Allocation insert failed.' );
+					}
+					$change['id'] = (int) $wpdb->insert_id;
+				} elseif ( SplitRecalculation::UPDATE === $change['action'] ) {
+					// Only the amount, and a generated description, change.
+					$data = array( 'amount' => $change['proposed_amount'] );
+					if ( null !== $change['new_description'] ) {
+						$data['description'] = $change['new_description'];
+					}
+					if ( false === $wpdb->update(
+						$table,
+						$data,
+						array(
+							'id'              => $change['id'],
+							'parent_entry_id' => $entry_id,
+						),
+						null,
+						array( '%d', '%d' )
+					) ) {
+						throw new \RuntimeException( 'Allocation update failed.' );
+					}
+				}
+				$ids[]  = (int) $change['id'];
+				$rows[] = array(
+					'kind'           => $change['kind'],
+					'amount'         => $change['proposed_amount'],
+					'description'    => $change['new_description'] ?? $change['description'],
+					'movement_key'   => $change['movement_key'],
+					'transaction_id' => $change['transaction_id'],
+				);
+			}
+			$after_rows = ( new ReconciliationRepository() )->bank( $entry_id, true );
+			$decision   = $preview['decision'];
+			unset( $preview['history'], $preview['resplit'] );
+			$history_id = $this->local->save(
+				'history',
+				array(
+					'settlement_id' => $id,
+					'decision_id'   => (int) $decision['id'],
+					'request_hash'  => $request_hash,
+					'state'         => 'recalculated',
+					'actor_id'      => get_current_user_id(),
+					'confirmed_at'  => current_time( 'mysql', true ),
+					'reviewed'      => wp_json_encode(
+						array(
+							'preview'         => $preview,
+							'allocation_ids'  => $ids,
+							'allocation_rows' => $rows,
+							'allocation'      => array(
+								'status'    => AllocationPlanner::PROPOSED,
+								'method'    => $review['method'],
+								'repair'    => false,
+								'revisions' => array_map(
+									static function ( $revision ) {
+										return (int) $revision['id'];
+									},
+									$preview['revisions']
+								),
+							),
+							'recalculation'   => array(
+								'changes'  => $review['changes'],
+								'warnings' => $review['warnings'],
+								'before'   => self::material_rows( $before ),
+								'after'    => self::material_rows(
+									array_values(
+										array_filter(
+											$after_rows,
+											static function ( $row ) use ( $entry_id ) {
+												return (int) $row['id'] !== $entry_id;
+											}
+										)
+									)
+								),
+							),
+						)
+					),
+				)
+			);
+			$this->record_evidence( $history_id, $preview );
+			$after = $this->preview( $id, array( 'entry_id' => $entry_id ), true );
+			if ( is_wp_error( $after ) ) {
+				throw new \RuntimeException( 'Unable to verify committed evidence.' );
+			}
+			$this->local->save(
+				'decisions',
+				array(
+					'history_id'    => $history_id,
+					'material_hash' => $after['material_hash'],
+				),
+				array( 'id' => (int) $decision['id'] )
+			);
+			$this->provider->commit();
+			$fresh = $this->recalculation( $id );
+			return is_wp_error( $fresh ) ? $fresh : $this->public_recalculation( $fresh );
+		} catch ( \Throwable $error ) {
+			$this->provider->rollback();
+			return self::error( 'reconciliation_save_failed', __( 'The split could not be recalculated. Nothing was changed.', 'fair-finance' ), 500 );
+		} finally {
+			$this->provider->unlock( SettlementStore::WRITE_LOCK );
+		}
+	}
+
+	/**
+	 * Recalculation preview as returned to the screen.
+	 *
+	 * @param array $review Recalculation.
+	 * @return array
+	 */
+	public function public_recalculation( array $review ) {
+		unset( $review['preview']['resplit'] );
+		return $review;
+	}
+
+	/**
+	 * Save the reviewed movement evidence of one history row.
+	 *
+	 * @param int   $history_id History row.
+	 * @param array $preview Reviewed preview.
+	 * @return void
+	 */
+	private function record_evidence( $history_id, array $preview ) {
+		foreach ( $preview['movements'] as $movement ) {
+			foreach ( $movement['sources'] as $source ) {
+				$this->local->save(
+					'evidence',
+					array(
+						'history_id'     => $history_id,
+						'revision_id'    => $preview['revisions'][ $source ]['id'],
+						'movement_key'   => $movement['identity_key'],
+						'transaction_id' => $movement['transaction_id'],
+						'evidence'       => wp_json_encode( $movement ),
+					)
+				);
+			}
+		}
+	}
+
+	/**
 	 * Confirm under the provider write lock and SQL row/range locks.
 	 *
 	 * @param int   $id Settlement ID.
@@ -1065,20 +1524,7 @@ class SettlementReconciliation {
 					'reviewed'      => wp_json_encode( $reviewed ),
 				)
 			);
-			foreach ( $preview['movements'] as $movement ) {
-				foreach ( $movement['sources'] as $source ) {
-					$this->local->save(
-						'evidence',
-						array(
-							'history_id'     => $history_id,
-							'revision_id'    => $preview['revisions'][ $source ]['id'],
-							'movement_key'   => $movement['identity_key'],
-							'transaction_id' => $movement['transaction_id'],
-							'evidence'       => wp_json_encode( $movement ),
-						)
-					);
-				}
-			}
+			$this->record_evidence( $history_id, $preview );
 			$after = $this->preview( $id, $proposal, true );
 			if ( is_wp_error( $after ) ) {
 				throw new \RuntimeException( 'Unable to verify committed evidence.' );

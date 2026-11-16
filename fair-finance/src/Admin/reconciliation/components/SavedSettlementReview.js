@@ -16,6 +16,7 @@ import {
 	TextControl,
 } from '@wordpress/components';
 import AllocationProposal from './AllocationProposal.js';
+import SplitRecalculation from './SplitRecalculation.js';
 
 export const stateLabel = ( state ) =>
 	( {
@@ -23,6 +24,7 @@ export const stateLabel = ( state ) =>
 		full: __( 'Fully reconciled', 'fair-finance' ),
 		needs_review: __( 'Needs review', 'fair-finance' ),
 		released: __( 'Released', 'fair-finance' ),
+		recalculated: __( 'Split recalculated', 'fair-finance' ),
 	} )[ state ] || __( 'Not reconciled', 'fair-finance' );
 const money = ( amount, currency ) =>
 	amount === null || amount === undefined
@@ -883,6 +885,17 @@ export default function SavedSettlementReview( {
 					) ) }
 				</ul>
 			) }
+			{ data.decision?.state === 'full' &&
+				data.allocation.status === 'allocated' && (
+					<SplitRecalculation
+						settlementId={ settlementId }
+						name={ name }
+						budgets={ budgets }
+						onApplied={ ( fresh ) => {
+							if ( fresh ) setData( fresh );
+						} }
+					/>
+				) }
 			{ data.adoption_required && (
 				<CheckboxControl
 					label={ __(

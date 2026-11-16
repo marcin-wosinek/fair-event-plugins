@@ -129,6 +129,162 @@ class SettlementReconciliationTest extends TestCase {
 	}
 
 	/**
+	 * A report line movement as the Mollie provider stores it.
+	 *
+	 * @param string      $group Report group.
+	 * @param string      $gross Gross amount as Mollie states it.
+	 * @param string|null $method Payment method.
+	 * @param string      $description Line description.
+	 * @return array
+	 */
+	private function report_line( $group, $gross, $method, $description = '' ) {
+		$report = Report::line(
+			'2026',
+			'05',
+			$group,
+			array(
+				'method'      => $method,
+				'amountGross' => array(
+					'value'    => $gross,
+					'currency' => 'EUR',
+				),
+			)
+		);
+		return $this->movement(
+			'costs' === $group ? 'fee' : 'summary',
+			Report::contribution( $report )['value'],
+			array(
+				'is_aggregate' => true,
+				'description'  => $description,
+				'identity_key' => 'report:' . $group . ':' . $gross,
+				'report'       => $report,
+			)
+		);
+	}
+
+	/**
+	 * The reported settlement: €825.00 in payments, €15.35 in payment fees and
+	 * a €0.02 invoice compensation, paid out as €809.67.
+	 *
+	 * @return array
+	 */
+	private function compensated_items() {
+		return array(
+			$this->movement( 'payment', '500.00', array( 'external_id' => 'tr_a' ) ),
+			$this->movement( 'payment', '325.00', array( 'external_id' => 'tr_b' ) ),
+			$this->report_line( 'revenue', '825.00', 'ideal' ),
+			$this->report_line( 'costs', '15.35', 'ideal', 'iDEAL' ),
+			$this->report_line( 'costs', '-0.02', null, 'Invoice compensation' ),
+		);
+	}
+
+	/**
+	 * Whole payments with recorded fees.
+	 *
+	 * @param array $fees Recorded fee per payment, null when missing.
+	 * @return array
+	 */
+	private function payments( array $fees = array( '10.00', '5.35' ) ) {
+		$rows = array();
+		foreach ( array( '500.00', '325.00' ) as $index => $gross ) {
+			$fee    = $fees[ $index ];
+			$rows[] = array(
+				'gross'    => $gross,
+				'net'      => null === $fee ? $gross : \FairPaymentsConnector\Settlements\ReportDecimal::subtract( $gross, $fee ),
+				'recorded' => null !== $fee,
+			);
+		}
+		return $rows;
+	}
+
+	/** Compensation is its own row; recorded payment fees are not deducted again. */
+	public function test_compensation_keeps_net_payments() {
+		$items       = $this->compensated_items();
+		$explanation = Reconciliation::explain( $items, 'EUR' );
+		$this->assertSame( array(), $explanation['issues'] );
+		$this->assertSame( '809.67', $explanation['net'] );
+		$rows = Reconciliation::net_adjustments( $this->payments(), $items, $explanation, 'EUR' );
+		$this->assertSame(
+			array(
+				array(
+					'kind'         => 'settlement',
+					'amount'       => '0.02',
+					'description'  => 'Invoice compensation',
+					'movement_key' => 'report:costs:-0.02',
+				),
+			),
+			$rows
+		);
+		// 490.00 + 319.65 net payments plus the compensation equal the payout.
+		$this->assertSame( '809.67', \FairPaymentsConnector\Settlements\ReportDecimal::sum( array( '490.00', '319.65', $rows[0]['amount'] ) ) );
+	}
+
+	/** Fees that disagree with the settlement evidence are explained, never deducted twice. */
+	public function test_disagreeing_fees_are_not_charged_twice() {
+		$items       = $this->compensated_items();
+		$explanation = Reconciliation::explain( $items, 'EUR' );
+		$reason      = Reconciliation::net_adjustments( $this->payments( array( '10.00', '5.33' ) ), $items, $explanation, 'EUR' );
+		$this->assertIsString( $reason );
+		$this->assertStringContainsString( '15.33', $reason );
+		$this->assertStringContainsString( '15.35', $reason );
+	}
+
+	/** A missing recorded fee is explained instead of guessed. */
+	public function test_missing_fee_is_explained() {
+		$items  = $this->compensated_items();
+		$reason = Reconciliation::net_adjustments( $this->payments( array( '10.00', null ) ), $items, Reconciliation::explain( $items, 'EUR' ), 'EUR' );
+		$this->assertIsString( $reason );
+		$this->assertStringContainsString( 'no recorded Mollie fee', $reason );
+	}
+
+	/** Without an evidenced adjustment, a remaining difference is never balanced. */
+	public function test_unexplained_difference_invents_nothing() {
+		$items = $this->compensated_items();
+		array_pop( $items );
+		$reason = Reconciliation::net_adjustments( $this->payments(), $items, Reconciliation::explain( $items, 'EUR' ), 'EUR' );
+		$this->assertIsString( $reason );
+		$this->assertStringContainsString( 'no settlement adjustment', $reason );
+	}
+
+	/** Mollie's refund cost line is a settlement cost, not a payment fee. */
+	public function test_refund_cost_line_is_an_adjustment() {
+		$items   = $this->compensated_items();
+		$items[] = $this->report_line( 'costs', '0.25', 'refund', 'Refunds iDEAL' );
+		$rows    = Reconciliation::net_adjustments( $this->payments(), $items, Reconciliation::explain( $items, 'EUR' ), 'EUR' );
+		$this->assertSame( array( '0.02', '-0.25' ), array_column( $rows, 'amount' ) );
+	}
+
+	/** Without a report, the movement type separates fees from adjustments. */
+	public function test_movement_fees_and_adjustments() {
+		$items = array(
+			$this->movement( 'fee', '-15.35', array( 'is_aggregate' => true ) ),
+			$this->movement(
+				'adjustment',
+				'0.02',
+				array(
+					'description'  => 'Compensation',
+					'identity_key' => 'adjustment#1',
+				)
+			),
+		);
+		$rows  = Reconciliation::net_adjustments( $this->payments(), $items, array( 'report' => null ), 'EUR' );
+		$this->assertSame( array( '0.02' ), array_column( $rows, 'amount' ) );
+		$items[0]['settlement_amount'] = '-15.00';
+		$this->assertIsString( Reconciliation::net_adjustments( $this->payments(), $items, array( 'report' => null ), 'EUR' ) );
+	}
+
+	/** Fractional-cent adjustments are combined only into whole cents. */
+	public function test_fractional_adjustments() {
+		$items   = $this->compensated_items();
+		$items[] = $this->report_line( 'costs', '-0.0045', null, 'Rounding difference' );
+		$this->assertIsString( Reconciliation::net_adjustments( $this->payments(), $items, Reconciliation::explain( $items, 'EUR' ), 'EUR' ) );
+		$items[] = $this->report_line( 'costs', '0.0045', null, 'Rounding difference' );
+		$rows    = Reconciliation::net_adjustments( $this->payments(), $items, Reconciliation::explain( $items, 'EUR' ), 'EUR' );
+		$this->assertCount( 1, $rows );
+		$this->assertSame( '0.02', \FairFinance\Services\AllocationPlanner::cents( $rows[0]['amount'] ) );
+	}
+
+	/**
 	 * A saved settlement row for scoring.
 	 *
 	 * @param array $extra Overrides.
