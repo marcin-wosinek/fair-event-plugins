@@ -346,7 +346,8 @@
 		"fair-platform/composer.json": [
 			"mollie/mollie-api-php",
 			"path:fair-events/shared",
-			"repository:path:../fair-events-shared/php"
+			"repository:path:../fair-events-shared/php",
+			"sentry/sentry"
 		],
 		"fair-timetable/composer.json": [
 			"composer/installers",
