@@ -14,6 +14,12 @@ jest.mock( '../ExperimentalTab.js', () => {
 	};
 } );
 
+jest.mock( '../organizers/OrganizersTab.js', () => {
+	return function OrganizersTabMock() {
+		return <p>Organizers manager</p>;
+	};
+} );
+
 // The tab is registered as a module side effect. Use a fresh module registry
 // (including `@wordpress/hooks`) so each scenario has its own filter store.
 function loadModule() {
@@ -53,5 +59,50 @@ describe( 'experimental settings tab registration', () => {
 			.getByRole( 'button', { name: 'Experimental tab content' } )
 			.click();
 		expect( onNotice ).toHaveBeenCalledWith( 'hi' );
+	} );
+
+	describe( 'Organizer tab', () => {
+		const hostTabs = [
+			{ name: 'general', title: 'General', order: 10 },
+			{
+				name: 'organizer',
+				title: 'Organizer',
+				order: 30,
+				render: () => <p>Single organizer form</p>,
+			},
+		];
+
+		afterEach( () => {
+			delete window.fairEventsExperimentalSettingsData;
+		} );
+
+		it( 'becomes the Organizers manager at the same URL while enabled', () => {
+			window.fairEventsExperimentalSettingsData = {
+				organizersEnabled: true,
+			};
+			const { applyFilters } = loadModule();
+
+			const tabs = applyFilters( 'fairEvents.settings.tabs', hostTabs );
+			const organizer = tabs.find( ( tab ) => 'organizer' === tab.name );
+
+			expect( organizer.title ).toBe( 'Organizers' );
+			expect( organizer.order ).toBe( 30 );
+			render( organizer.render( { onNotice: jest.fn() } ) );
+			expect( screen.getByText( 'Organizers manager' ) ).toBeVisible();
+		} );
+
+		it( 'stays the single organizer tab while disabled', () => {
+			window.fairEventsExperimentalSettingsData = {
+				organizersEnabled: false,
+			};
+			const { applyFilters } = loadModule();
+
+			const tabs = applyFilters( 'fairEvents.settings.tabs', hostTabs );
+			const organizer = tabs.find( ( tab ) => 'organizer' === tab.name );
+
+			expect( organizer.title ).toBe( 'Organizer' );
+			render( organizer.render( { onNotice: jest.fn() } ) );
+			expect( screen.getByText( 'Single organizer form' ) ).toBeVisible();
+		} );
 	} );
 } );
