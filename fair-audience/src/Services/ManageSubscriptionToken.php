@@ -9,6 +9,8 @@
 
 namespace FairAudience\Services;
 
+use FairEventsShared\Security\SignedLinkToken;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -20,21 +22,18 @@ defined( 'WPINC' ) || die;
 class ManageSubscriptionToken {
 
 	/**
+	 * Signing context; keeps these tokens valid for this feature only.
+	 */
+	private const CONTEXT = 'fair_audience_subscription_';
+
+	/**
 	 * Generate a manage subscription token for a participant.
 	 *
 	 * @param int $participant_id Participant ID.
 	 * @return string URL-safe token.
 	 */
 	public static function generate( int $participant_id ): string {
-		$data      = (string) $participant_id;
-		$signature = self::sign( $data );
-
-		// Format: base64(participant_id:signature)
-		$token = base64_encode( $data . ':' . $signature );
-
-		// Make URL-safe: replace +/ with -_, and remove = padding.
-		// Padding can be reconstructed during decode.
-		return rtrim( strtr( $token, '+/', '-_' ), '=' );
+		return SignedLinkToken::encode( self::CONTEXT, array( $participant_id ) );
 	}
 
 	/**
@@ -44,42 +43,10 @@ class ManageSubscriptionToken {
 	 * @return int|false Participant ID if valid, false otherwise.
 	 */
 	public static function verify( string $token ) {
-		// Restore URL-safe base64: replace -_ with +/, and restore = padding.
-		$base64 = strtr( $token, '-_', '+/' );
-		// Add padding: base64 length must be multiple of 4.
-		$padding = ( 4 - strlen( $base64 ) % 4 ) % 4;
-		$base64 .= str_repeat( '=', $padding );
+		$fields = SignedLinkToken::decode( self::CONTEXT, $token, 1 );
+		$id     = null === $fields ? null : SignedLinkToken::parse_id( $fields[0] );
 
-		$decoded = base64_decode( $base64, true );
-
-		if ( false === $decoded ) {
-			return false;
-		}
-
-		// Split into data and signature.
-		$parts = explode( ':', $decoded, 2 );
-
-		if ( 2 !== count( $parts ) ) {
-			return false;
-		}
-
-		list( $data, $signature ) = $parts;
-
-		// Verify signature using timing-safe comparison.
-		$expected_signature = self::sign( $data );
-
-		if ( ! hash_equals( $expected_signature, $signature ) ) {
-			return false;
-		}
-
-		// Validate participant ID.
-		$participant_id = (int) $data;
-
-		if ( $participant_id <= 0 ) {
-			return false;
-		}
-
-		return $participant_id;
+		return null === $id ? false : $id;
 	}
 
 	/**
@@ -91,17 +58,5 @@ class ManageSubscriptionToken {
 	public static function get_url( int $participant_id ): string {
 		$token = self::generate( $participant_id );
 		return add_query_arg( 'manage_subscription', $token, home_url( '/' ) );
-	}
-
-	/**
-	 * Sign data with HMAC-SHA256.
-	 *
-	 * @param string $data Data to sign.
-	 * @return string Hex-encoded signature.
-	 */
-	private static function sign( string $data ): string {
-		// Use WordPress AUTH_KEY as the secret, with a plugin-specific prefix.
-		$secret = 'fair_audience_subscription_' . wp_salt( 'auth' );
-		return hash_hmac( 'sha256', $data, $secret );
 	}
 }

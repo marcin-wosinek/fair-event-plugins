@@ -56,3 +56,44 @@ if ( ! function_exists( '__' ) ) {
 		return $text;
 	}
 }
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt(): a fixed value for deterministic HMAC
+	 * signing. $GLOBALS['_fair_test_salt'] stands in for changed security keys.
+	 *
+	 * @param string $scheme Salt scheme (ignored).
+	 * @return string
+	 */
+	function wp_salt( $scheme = 'auth' ) {
+		unset( $scheme );
+		return isset( $GLOBALS['_fair_test_salt'] ) ? $GLOBALS['_fair_test_salt'] : 'test-salt';
+	}
+}
+
+if ( ! function_exists( 'home_url' ) ) {
+	/**
+	 * Stub of WordPress home_url().
+	 *
+	 * @param string $path Path to append.
+	 * @return string
+	 */
+	function home_url( $path = '' ) {
+		return 'https://example.com' . $path;
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Stub of WordPress add_query_arg() for a single key/value pair.
+	 *
+	 * @param string $key   Query arg key.
+	 * @param string $value Query arg value.
+	 * @param string $url   Base URL.
+	 * @return string
+	 */
+	function add_query_arg( $key, $value, $url ) {
+		$separator = false === strpos( $url, '?' ) ? '?' : '&';
+		return $url . $separator . http_build_query( array( $key => $value ) );
+	}
+}
