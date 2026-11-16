@@ -305,7 +305,9 @@ Before starting WordPress, `--prepared` checks every plugin workspace the
 test site loads, not only the one under test: each needs a `build/` with
 JavaScript (when it has a `build` script) and `vendor/autoload.php` (when it
 has a `composer:install:prod` script). Library workspaces without a plugin
-header, such as `fair-events-shared`, are skipped. Missing outputs fail the
+header, such as `fair-events-shared`, are skipped, except for builds they
+write into the test site: `e2e/mu-plugins/admin-table-example/build/` from
+`fair-events-shared` (`TEST_SITE_BUILDS` in `scripts/prepared-outputs.mjs`). Missing outputs fail the
 run with exit status 2, listing each path and the command that prepares it;
 nothing is built or installed automatically. The check covers presence
 only, not freshness or dependency integrity, so rebuild after changing
@@ -451,7 +453,8 @@ entry point for the API and E2E suites in CI (#2326). It runs on every push to
    nothing else.
 2. **`Prepare integration build`** runs `npm run build` and then
    `npm run composer:install:prod` once, and packages every runtime plugin's
-   `build/`, generated `block-docs/` and production `vendor/` with
+   `build/`, generated `block-docs/` and production `vendor/`, plus the
+   admin table example the tests site's mu-plugin serves, with
    `scripts/integration-build.mjs pack`. The tar archive keeps file modes;
    `integration-build.json` next to it records the commit, workflow run,
    preparation attempt, archive checksum and included paths. It uploads the

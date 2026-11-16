@@ -6,9 +6,9 @@
  * The test site loads every plugin workspace together, so all of them are
  * checked, not only the workspace under test. A runtime plugin is a root
  * workspace with a `<workspace>/<workspace>.php` file carrying a WordPress
- * `Plugin Name:` header; library workspaces such as fair-events-shared (whose
- * build only produces an example bundle) are not loaded by WordPress and are
- * skipped.
+ * `Plugin Name:` header. Library workspaces such as fair-events-shared are not
+ * loaded by WordPress as plugins and are skipped, but a few library builds
+ * write test-site fixtures instead (TEST_SITE_BUILDS); those are checked too.
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -48,6 +48,19 @@ async function containsJavaScript(directory) {
 	}
 	return entries.some((entry) => entry.endsWith('.js'));
 }
+
+/**
+ * Builds that library workspaces write into the test site rather than into
+ * their own `build/`: fair-events-shared's admin table example, which the
+ * `fair-e2e-admin-table-example.php` mu-plugin serves
+ * (fair-events-shared/webpack.example.config.cjs).
+ */
+export const TEST_SITE_BUILDS = [
+	{
+		workspace: 'fair-events-shared',
+		path: 'e2e/mu-plugins/admin-table-example/build',
+	},
+];
 
 /**
  * The runtime plugin workspaces, in root workspace order.
@@ -117,6 +130,22 @@ export async function findMissingOutputs(rootDirectory) {
 		}
 		if (missing.length) {
 			problems.push({ workspace, missing, commands });
+		}
+	}
+
+	const { workspaces } = JSON.parse(
+		await readFile(join(rootDirectory, 'package.json'), 'utf8')
+	);
+	for (const { workspace, path } of TEST_SITE_BUILDS) {
+		if (
+			workspaces.includes(workspace) &&
+			!(await containsJavaScript(join(rootDirectory, path)))
+		) {
+			problems.push({
+				workspace,
+				missing: [`${path}/ (no JavaScript build output)`],
+				commands: [`npm run build --workspace=${workspace}`],
+			});
 		}
 	}
 

@@ -11,7 +11,8 @@
  *
  * `pack` requires every runtime plugin workspace (see prepared-outputs.mjs)
  * to have its outputs, then writes `integration-build.tar` with each one's
- * `build/`, `block-docs/` (when generated) and `vendor/`, and a manifest,
+ * `build/`, `block-docs/` (when generated) and `vendor/`, the test-site
+ * fixture builds of library workspaces (TEST_SITE_BUILDS), and a manifest,
  * `integration-build.json`, recording the checked-out commit, the workflow
  * run and attempt, the archive checksum and the included paths. A tar archive
  * keeps file modes, which the artifact service's zip would drop.
@@ -42,6 +43,7 @@ import {
 	findMissingOutputs,
 	formatMissingOutputs,
 	runtimePluginWorkspaces,
+	TEST_SITE_BUILDS,
 } from './prepared-outputs.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -77,7 +79,8 @@ export async function sha256(path) {
 
 /**
  * The paths the archive holds: the required outputs of every runtime plugin
- * (`build/` and `vendor/`) plus generated `block-docs/` where present.
+ * (`build/` and `vendor/`), library builds written into the test site
+ * (TEST_SITE_BUILDS), and generated `block-docs/` where present.
  *
  * @param {string} root Repository root.
  * @return {Promise<{required: string[], optional: string[]}>} Repository-relative paths.
@@ -96,6 +99,14 @@ export async function buildPaths(root) {
 		}
 		if (installsComposer) {
 			required.push(`${workspace}/vendor`);
+		}
+	}
+	const { workspaces } = JSON.parse(
+		await readFile(join(root, 'package.json'), 'utf8')
+	);
+	for (const { workspace, path } of TEST_SITE_BUILDS) {
+		if (workspaces.includes(workspace)) {
+			required.push(path);
 		}
 	}
 	return { required, optional };
