@@ -77,6 +77,15 @@ Repository-level Node utilities use the built-in Node test runner under
 `scripts/__tests__/*.test.mjs`; `npm test` includes them through
 `test:tooling`.
 
+In CI the two suites run as separate jobs with their own statuses:
+**JavaScript tests** (`js-tests`, `npm run test:js`) and **Tooling tests**
+(`tooling-tests`, `npm run test:tooling`). Neither waits for the build, so
+a test failure doesn't stop the build from uploading the `plugins`
+artifact. Both release jobs still require them; see
+[DEPLOYMENT.md](./DEPLOYMENT.md). Neither suite may depend on compiled
+`build/` output or Composer dependencies, because their jobs install only
+npm dependencies.
+
 ## PHP unit tests
 
 Use PHPUnit for pure PHP logic that needs neither a WordPress bootstrap nor a
