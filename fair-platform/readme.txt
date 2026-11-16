@@ -21,6 +21,7 @@ This plugin provides OAuth proxy endpoints for Mollie Connect integration, enabl
 * OAuth authorization flow (`/oauth/authorize`)
 * OAuth callback handling (`/oauth/callback`)
 * Token refresh endpoint (`/oauth/refresh`)
+* Health check endpoint (`/wp-json/fair-platform/v1/health`) for deploy checks and uptime monitoring
 * Stateless architecture (no token storage)
 * CSRF protection with state tokens
 * HTTPS-only security
