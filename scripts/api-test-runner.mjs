@@ -24,6 +24,10 @@ import {
 	verifyLogging,
 } from './php-diagnostics.mjs';
 import {
+	findMissingOutputs,
+	formatMissingOutputs,
+} from './prepared-outputs.mjs';
+import {
 	describeAssignment,
 	parseShard,
 	planSuite,
@@ -40,6 +44,7 @@ const ROOT_DIRECTORY = fileURLToPath(new URL('..', import.meta.url)).replace(
 
 export function parseArguments(args) {
 	let reuse = false;
+	let prepared = false;
 	let phpDiagnostics = false;
 	let suite = 'api';
 	let workspace;
@@ -50,6 +55,8 @@ export function parseArguments(args) {
 		const argument = args[index];
 		if (argument === '--reuse') {
 			reuse = true;
+		} else if (argument === '--prepared') {
+			prepared = true;
 		} else if (argument === '--php-diagnostics') {
 			phpDiagnostics = true;
 		} else if (argument.startsWith('--suite=')) {
@@ -79,6 +86,14 @@ export function parseArguments(args) {
 	}
 	if (resultsDir !== undefined && suite !== 'api') {
 		throw new Error('The --results-dir option applies to the API suite.');
+	}
+	if (prepared && reuse) {
+		// --prepared still starts, provisions and stops its own instance; it
+		// only skips building and installing. --reuse hands all of that to
+		// the caller, so the two describe incompatible environment owners.
+		throw new Error(
+			'The --prepared and --reuse options cannot be combined: --prepared starts, provisions and stops its own test environment from existing build outputs, while --reuse runs against an environment you manage. Pick one.'
+		);
 	}
 	if (phpDiagnostics && reuse) {
 		// The sweep edits the tests site's wp-config.php; it only does that to
@@ -120,6 +135,7 @@ export function parseArguments(args) {
 
 	return {
 		reuse,
+		prepared,
 		suite,
 		workspace,
 		forwarded,
@@ -310,6 +326,7 @@ export async function runTests({
 	shardPlanner = planShard,
 	testListWriter = writeTestLists,
 	diagnostics = {},
+	outputChecker = () => findMissingOutputs(ROOT_DIRECTORY),
 }) {
 	const {
 		baseUrl,
@@ -440,17 +457,34 @@ export async function runTests({
 				return 2;
 			}
 
-			phase(
-				'Preparing builds and production Composer dependencies',
-				logger
-			);
-			for (const [name, args] of [
-				['Build', ['run', 'build']],
-				['Composer install', ['run', 'composer:install:prod']],
-			]) {
-				const result = await timedStep(name, 'npm', args);
-				if (result.code !== 0) {
-					return result.code;
+			if (options.prepared) {
+				phase(
+					'Checking prepared builds and production Composer dependencies',
+					logger
+				);
+				const missing = await outputChecker();
+				if (missing.length) {
+					formatMissingOutputs(missing).forEach((line) =>
+						logger(line)
+					);
+					return 2;
+				}
+				logger(
+					'Prepared outputs are present (presence only; freshness is not checked).'
+				);
+			} else {
+				phase(
+					'Preparing builds and production Composer dependencies',
+					logger
+				);
+				for (const [name, args] of [
+					['Build', ['run', 'build']],
+					['Composer install', ['run', 'composer:install:prod']],
+				]) {
+					const result = await timedStep(name, 'npm', args);
+					if (result.code !== 0) {
+						return result.code;
+					}
 				}
 			}
 

@@ -290,6 +290,28 @@ npm run test:e2e:local -- --reuse e2e/smoke.spec.js
 npm run test:wp-env:stop
 ```
 
+When builds and production Composer dependencies are already in place (for
+example, prepared by an earlier step or a previous run), pass `--prepared`
+to skip compiling and installing. The run still owns the environment: it
+refuses an already-running instance, then starts, provisions, tests, and
+stops its own, exactly like a default run.
+
+```bash
+npm run test:api:local -- --prepared --workspace=fair-events -- GetTickets.api.spec.js
+npm run test:e2e:local -- --prepared e2e/smoke.spec.js
+```
+
+Before starting WordPress, `--prepared` checks every plugin workspace the
+test site loads, not only the one under test: each needs a `build/` with
+JavaScript (when it has a `build` script) and `vendor/autoload.php` (when it
+has a `composer:install:prod` script). Library workspaces without a plugin
+header, such as `fair-events-shared`, are skipped. Missing outputs fail the
+run with exit status 2, listing each path and the command that prepares it;
+nothing is built or installed automatically. The check covers presence
+only, not freshness or dependency integrity, so rebuild after changing
+sources. `--prepared` and `--reuse` cannot be combined: `--reuse` leaves
+starting, provisioning, and stopping to you.
+
 Use `test:e2e:setup` only when the isolated instance also needs a full
 workspace build, production Composer install, and permalink provisioning.
 For an already-built tree, `test:wp-env:start` avoids repeating that work.
