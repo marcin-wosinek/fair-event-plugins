@@ -6,18 +6,9 @@ list in the root `package.json` is authoritative.
 
 ## Agent Workflows
 
-The nine agent workflows have one canonical definition under
-`.agents/skills/<name>/SKILL.md`. Codex discovers those skills directly and
-invokes them with `$<name>`. Claude Code preserves the matching `/<name>` slash
-commands through thin files in `.claude/commands/`; each adapter passes
-`$ARGUMENTS` to the canonical skill and contains no workflow policy of its own.
-
-The repository uses `scripts/agent-hook.mjs` for generated-file protection and
-per-file formatting. Hook registration and payload parsing remain specific to
-each platform in `.claude/settings.json` and `.codex/hooks.json`; the guard and
-formatting rules are shared. Run `npm run validate:agent-workflows` locally to
-check workflow parity, adapters, hook wiring, portable configuration, and the
-focused fixtures.
+Workflows live in `.agents/skills/<name>/SKILL.md`; `.claude/commands/` files
+are thin adapters with no policy. Run `npm run validate:agent-workflows` after
+changing either.
 
 ### Ticket workflow
 
@@ -67,12 +58,6 @@ guessing which ones matter.
   `scripts/agent-hook.mjs` runner, which runs `wp-scripts format`
   (JS/CSS/JSON) or `phpcbf` (PHP) on each file you edit.
   Do **not** run `npm run format` manually after edits.
-- **Before committing**, run `npm run format` in the affected plugin to catch
-  any files touched outside the hook (manual shell edits, generated files, or
-  cross-session edits). Only stage clean, formatted files.
-- **Build is not automatic** (it is slow). After changing JS/CSS, run
-  `npm run build` in the affected plugin so generated assets land before
-  committing.
 
 ## Definition of Done
 
@@ -183,12 +168,9 @@ value, but later changes must flow from the model to the DOM.
 deferred loading because the event may already have fired. Example:
 `fair-events/src/blocks/calendar-button/frontend.js`.
 
-Keep public `viewScript` dependency graphs small. When using `fair-events-shared`
-browser utilities, import the specific module (for example,
-`fair-events-shared/src/form-utils.js`) instead of its root entry, which also
-exports editor components. After building, inspect the frontend `.asset.php`
-dependencies and check public-page requests; see [BLOCK_CREATION.md](./BLOCK_CREATION.md)
-and [WEBPACK_CONFIG.md](./WEBPACK_CONFIG.md).
+Keep public `viewScript` dependency graphs small: import specific
+`fair-events-shared` modules, never its root entry (see
+[BLOCK_CREATION.md](./BLOCK_CREATION.md)).
 
 ### i18n — see [I18N_SETUP.md](./I18N_SETUP.md)
 
