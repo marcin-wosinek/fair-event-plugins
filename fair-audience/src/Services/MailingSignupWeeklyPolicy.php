@@ -7,6 +7,8 @@
 
 namespace FairAudience\Services;
 
+use FairEventsShared\Security\SignedLinkToken;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -25,6 +27,11 @@ class MailingSignupWeeklyPolicy {
 
 	const FEEDS_HIDDEN      = 'hidden';
 	const FEEDS_MULTISELECT = 'multiselect';
+
+	/**
+	 * Signing context; keeps these tokens valid for this feature only.
+	 */
+	private const CONTEXT = 'fair_audience_mailing_signup_';
 
 	/**
 	 * The block's weekly-update policy.
@@ -55,10 +62,7 @@ class MailingSignupWeeklyPolicy {
 	 * @return string URL-safe token.
 	 */
 	public static function sign( array $policy ): string {
-		$data  = $policy['feeds'] . ':' . (int) $policy['feed_id'];
-		$token = base64_encode( $data . ':' . self::signature( $data ) );
-
-		return rtrim( strtr( $token, '+/', '-_' ), '=' );
+		return SignedLinkToken::encode( self::CONTEXT, array( $policy['feeds'], (int) $policy['feed_id'] ) );
 	}
 
 	/**
@@ -68,40 +72,20 @@ class MailingSignupWeeklyPolicy {
 	 * @return array|null `feeds` and `feed_id`, or null when the token is not valid.
 	 */
 	public static function verify( string $token ) {
-		$base64  = strtr( $token, '-_', '+/' );
-		$base64 .= str_repeat( '=', ( 4 - strlen( $base64 ) % 4 ) % 4 );
-		$decoded = base64_decode( $base64, true );
-		if ( false === $decoded ) {
+		$fields = SignedLinkToken::decode( self::CONTEXT, $token, 2 );
+		if ( null === $fields ) {
 			return null;
 		}
 
-		$parts = explode( ':', $decoded );
-		if ( 3 !== count( $parts ) ) {
-			return null;
-		}
-
-		list( $feeds, $feed_id, $signature ) = $parts;
-		if ( ! hash_equals( self::signature( $feeds . ':' . $feed_id ), $signature ) ) {
-			return null;
-		}
-
-		if ( ! in_array( $feeds, array( self::FEEDS_HIDDEN, self::FEEDS_MULTISELECT ), true ) ) {
+		list( $feeds, $feed_id ) = $fields;
+		$feed_id                 = SignedLinkToken::parse_id( $feed_id, 0 );
+		if ( null === $feed_id || ! in_array( $feeds, array( self::FEEDS_HIDDEN, self::FEEDS_MULTISELECT ), true ) ) {
 			return null;
 		}
 
 		return array(
 			'feeds'   => $feeds,
-			'feed_id' => (int) $feed_id,
+			'feed_id' => $feed_id,
 		);
-	}
-
-	/**
-	 * HMAC signature of the configuration data.
-	 *
-	 * @param string $data Data to sign.
-	 * @return string
-	 */
-	private static function signature( string $data ): string {
-		return hash_hmac( 'sha256', $data, 'fair_audience_mailing_signup_' . wp_salt( 'auth' ) );
 	}
 }
