@@ -367,7 +367,18 @@ class FinancialEntry {
 
 		if ( ! empty( $filters['budget_id'] ) ) {
 			if ( 'none' === $filters['budget_id'] ) {
-				$where_clauses[] = 'budget_id IS NULL';
+				// A split parent is awaiting a budget when any of its
+				// allocations is, whatever the parent's own budget; other
+				// entries (unsplit entries and allocation rows) only when
+				// they have none themselves. EXISTS keeps one row per parent.
+				$where_clauses[] = $wpdb->prepare(
+					'( EXISTS (SELECT 1 FROM %i c WHERE c.parent_entry_id = %i.id AND c.budget_id IS NULL)'
+					. ' OR ( budget_id IS NULL AND NOT EXISTS (SELECT 1 FROM %i c WHERE c.parent_entry_id = %i.id) ) )',
+					$table_name,
+					$table_name,
+					$table_name,
+					$table_name
+				);
 			} else {
 				$where_clauses[] = 'budget_id = %d';
 				$where_values[]  = (int) $filters['budget_id'];
