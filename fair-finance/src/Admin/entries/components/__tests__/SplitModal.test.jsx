@@ -62,4 +62,43 @@ describe( 'SplitModal', () => {
 			'Snacks',
 		] );
 	} );
+
+	const renderSplit = ( entry ) =>
+		render(
+			<SplitModal
+				entry={ entry }
+				budgets={ BUDGETS }
+				eventsEnabled={ false }
+				onSplit={ jest.fn() }
+				onCancel={ jest.fn() }
+				onUnsplit={ jest.fn() }
+			/>
+		);
+
+	it( 'shows the bank origin every allocation inherits', () => {
+		renderSplit( {
+			...SPLIT_ENTRY,
+			bank_origin: { account: { id: 4, name: 'Main account' } },
+		} );
+
+		expect(
+			screen.getByText( /Bank import — Main account/ )
+		).toHaveTextContent(
+			'Paid from: Bank import — Main account Every allocation keeps this bank origin.'
+		);
+	} );
+
+	it( 'shows an unknown account for an import without one', () => {
+		renderSplit( { ...SPLIT_ENTRY, bank_origin: { account: null } } );
+
+		expect(
+			screen.getByText( /Bank import — account unknown/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows no bank origin for a manual entry', () => {
+		renderSplit( SPLIT_ENTRY );
+
+		expect( screen.queryByText( /Bank import/ ) ).not.toBeInTheDocument();
+	} );
 } );

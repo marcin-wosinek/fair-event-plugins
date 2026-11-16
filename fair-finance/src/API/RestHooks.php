@@ -28,6 +28,7 @@ class RestHooks {
 	 */
 	public function register_routes() {
 		( new BudgetController() )->register_routes();
+		( new BankAccountController() )->register_routes();
 		( new FinancialEntryController() )->register_routes();
 		( new SettlementController() )->register_routes();
 	}

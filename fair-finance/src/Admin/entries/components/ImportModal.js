@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState, useRef } from '@wordpress/element';
+import { useState, useRef, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -9,6 +9,8 @@ import {
 	Button,
 	Notice,
 	Spinner,
+	SelectControl,
+	TextControl,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -28,6 +30,88 @@ const ImportModal = ( { onImport, onCancel } ) => {
 	const [ result, setResult ] = useState( null );
 	const fileInputRef = useRef( null );
 	const selectionRef = useRef( 0 );
+
+	// The bank account is optional: "Account unknown" ('') stays valid.
+	const [ accounts, setAccounts ] = useState( [] );
+	const [ accountsError, setAccountsError ] = useState( null );
+	const [ accountId, setAccountId ] = useState( '' );
+	const [ isAddingAccount, setIsAddingAccount ] = useState( false );
+	const [ newAccountName, setNewAccountName ] = useState( '' );
+	const [ isCreatingAccount, setIsCreatingAccount ] = useState( false );
+	const [ accountError, setAccountError ] = useState( null );
+	const creatingAccountRef = useRef( false );
+
+	useEffect( () => {
+		let active = true;
+		apiFetch( { path: '/fair-finance/v1/bank-accounts' } )
+			.then( ( data ) => {
+				if ( active ) {
+					setAccounts( Array.isArray( data ) ? data : [] );
+				}
+			} )
+			.catch( () => {
+				if ( active ) {
+					setAccountsError(
+						__(
+							'Bank accounts could not be loaded. You can still import with the account unknown.',
+							'fair-finance'
+						)
+					);
+				}
+			} );
+		return () => {
+			active = false;
+		};
+	}, [] );
+
+	const handleCreateAccount = async () => {
+		if ( creatingAccountRef.current ) {
+			return;
+		}
+		const name = newAccountName.trim();
+		if ( ! name ) {
+			setAccountError(
+				__( 'Enter a name for the bank account.', 'fair-finance' )
+			);
+			return;
+		}
+
+		creatingAccountRef.current = true;
+		setIsCreatingAccount( true );
+		setAccountError( null );
+		try {
+			const account = await apiFetch( {
+				path: '/fair-finance/v1/bank-accounts',
+				method: 'POST',
+				data: { name },
+			} );
+			setAccounts( ( current ) =>
+				[ ...current, account ].sort( ( a, b ) =>
+					a.name.localeCompare( b.name )
+				)
+			);
+			setAccountId( account.id.toString() );
+			setNewAccountName( '' );
+			setIsAddingAccount( false );
+		} catch ( err ) {
+			setAccountError(
+				err.message ||
+					__(
+						'The bank account could not be created.',
+						'fair-finance'
+					)
+			);
+		} finally {
+			creatingAccountRef.current = false;
+			setIsCreatingAccount( false );
+		}
+	};
+
+	const cancelAddAccount = () => {
+		setIsAddingAccount( false );
+		setNewAccountName( '' );
+		setAccountError( null );
+	};
 
 	const handleFileChange = async ( e ) => {
 		const selectedFile = e.target.files[ 0 ];
@@ -80,6 +164,9 @@ const ImportModal = ( { onImport, onCancel } ) => {
 				data: {
 					entries: parsedEntries,
 					import_source: file?.name || null,
+					bank_account_id: accountId
+						? parseInt( accountId, 10 )
+						: null,
 				},
 			} );
 
@@ -153,6 +240,81 @@ const ImportModal = ( { onImport, onCancel } ) => {
 							) }
 						</strong>
 					</p>
+				</div>
+
+				<div>
+					<SelectControl
+						label={ __( 'Bank account', 'fair-finance' ) }
+						value={ accountId }
+						options={ [
+							{
+								label: __( 'Account unknown', 'fair-finance' ),
+								value: '',
+							},
+							...accounts.map( ( account ) => ( {
+								label: account.name,
+								value: account.id.toString(),
+							} ) ),
+						] }
+						onChange={ setAccountId }
+						disabled={ !! result }
+						help={ __(
+							'Recorded with every imported entry as its origin. It cannot be changed after the import.',
+							'fair-finance'
+						) }
+					/>
+					{ accountsError && (
+						<Notice status="warning" isDismissible={ false }>
+							{ accountsError }
+						</Notice>
+					) }
+					{ ! isAddingAccount && ! result && (
+						<Button
+							variant="link"
+							onClick={ () => setIsAddingAccount( true ) }
+						>
+							{ __( 'Add bank account', 'fair-finance' ) }
+						</Button>
+					) }
+					{ isAddingAccount && ! result && (
+						<VStack spacing={ 2 }>
+							<TextControl
+								label={ __(
+									'New bank account name',
+									'fair-finance'
+								) }
+								value={ newAccountName }
+								onChange={ setNewAccountName }
+								disabled={ isCreatingAccount }
+								help={ __(
+									'A name to recognize the account by, such as the bank and account nickname. Do not enter credentials.',
+									'fair-finance'
+								) }
+							/>
+							{ accountError && (
+								<Notice status="error" isDismissible={ false }>
+									{ accountError }
+								</Notice>
+							) }
+							<HStack justify="flex-start" spacing={ 2 } wrap>
+								<Button
+									variant="secondary"
+									onClick={ handleCreateAccount }
+									isBusy={ isCreatingAccount }
+									disabled={ isCreatingAccount }
+								>
+									{ __( 'Add account', 'fair-finance' ) }
+								</Button>
+								<Button
+									variant="tertiary"
+									onClick={ cancelAddAccount }
+									disabled={ isCreatingAccount }
+								>
+									{ __( 'Cancel', 'fair-finance' ) }
+								</Button>
+							</HStack>
+						</VStack>
+					) }
 				</div>
 
 				<div>

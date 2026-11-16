@@ -233,4 +233,101 @@ describe( 'EntryForm', () => {
 			budget_id: 1,
 		} );
 	} );
+
+	describe( 'bank imports', () => {
+		const IMPORTED = {
+			...OTHER_ENTRY,
+			id: 77,
+			external_reference: 'import_2026-04-02_7_-30',
+			imported_at: '2026-04-03 10:00:00',
+			bank_account_id: 4,
+			bank_origin: { account: { id: 4, name: 'Main account' } },
+		};
+
+		const renderImported = ( entry, onSave = jest.fn() ) =>
+			renderForm( { entry, onSave, eventsEnabled: false } );
+
+		it( 'shows the bank origin read-only instead of the payment source', () => {
+			renderImported( IMPORTED );
+
+			expect(
+				screen.getByText( 'Bank import — Main account' )
+			).toBeInTheDocument();
+			expect( screen.queryByLabelText( 'Paid from' ) ).toBeNull();
+			expect( screen.queryByLabelText( 'Paid by' ) ).toBeNull();
+			expect(
+				screen.queryByRole( 'option', { name: 'Event cash' } )
+			).toBeNull();
+			expect(
+				screen.queryByRole( 'option', { name: 'Personal funds' } )
+			).toBeNull();
+		} );
+
+		it( 'says the account is unknown when the import has none', () => {
+			renderImported( {
+				...IMPORTED,
+				bank_account_id: null,
+				bank_origin: { account: null },
+			} );
+
+			expect(
+				screen.getByText( 'Bank import — account unknown' )
+			).toBeInTheDocument();
+		} );
+
+		it( 'saves accounting edits without sending a payment source', async () => {
+			const onSave = jest.fn();
+			renderImported( IMPORTED, onSave );
+
+			fireEvent.change( field( 'Description' ), {
+				target: { value: 'Room hire' },
+			} );
+			fireEvent.change( field( 'Budget Category' ), {
+				target: { value: '1' },
+			} );
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Update Entry' } )
+			);
+
+			await waitFor( () => expect( onSave ).toHaveBeenCalled() );
+			expect( apiFetch ).toHaveBeenCalledWith( {
+				path: '/fair-finance/v1/financial-entries/77',
+				method: 'PUT',
+				data: {
+					amount: 30,
+					entry_type: 'cost',
+					entry_date: '2026-04-02',
+					description: 'Room hire',
+					budget_id: 1,
+					event_url: null,
+					event_date_id: null,
+					tag: 'catering',
+				},
+			} );
+		} );
+
+		it( 'explains a classification recorded before protection', () => {
+			renderImported( {
+				...IMPORTED,
+				payment_source: 'personal_funds',
+				payer_name: 'Ana',
+			} );
+
+			expect(
+				document.querySelector( '.components-notice' )
+			).toHaveTextContent(
+				'This bank import was recorded as paid from personal funds by Ana before bank imports were protected. That record is kept as it is and cannot be changed here.'
+			);
+			expect( screen.queryByLabelText( 'Paid from' ) ).toBeNull();
+		} );
+
+		it( 'keeps the payment-source selector for manual entries', () => {
+			renderForm( { entry: OTHER_ENTRY, eventsEnabled: false } );
+
+			expect( field( 'Paid from' ) ).toHaveValue( '' );
+			expect(
+				screen.queryByText( /^Bank import —/ )
+			).not.toBeInTheDocument();
+		} );
+	} );
 } );

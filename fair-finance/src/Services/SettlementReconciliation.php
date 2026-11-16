@@ -515,7 +515,9 @@ class SettlementReconciliation {
 	 */
 	private static function material_rows( array $rows ) {
 		foreach ( $rows as &$row ) {
-			unset( $row['created_at'], $row['updated_at'], $row['imported_at'] );
+			// The bank account is fixed at import, and existing decisions were
+			// hashed before the column existed.
+			unset( $row['created_at'], $row['updated_at'], $row['imported_at'], $row['bank_account_id'] );
 			if ( isset( $row['mollie_payment_id'] ) ) {
 				unset( $row['description'] );
 				$metadata        = (array) json_decode( (string) $row['metadata'], true );

@@ -16,6 +16,11 @@ import {
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
 
+/**
+ * Internal dependencies
+ */
+import { bankOriginLabel } from './bankOrigin.js';
+
 const isUrl = ( text ) => /^https?:\/\//i.test( text.trim() );
 
 const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
@@ -340,6 +345,23 @@ const SplitModal = ( {
 									{ __( 'Description:', 'fair-finance' ) }
 								</strong>{ ' ' }
 								{ entry.description }
+							</div>
+						) }
+						{ entry.bank_origin && (
+							<div
+								style={ {
+									marginTop: '4px',
+									overflowWrap: 'anywhere',
+								} }
+							>
+								<strong>
+									{ __( 'Paid from:', 'fair-finance' ) }
+								</strong>{ ' ' }
+								{ bankOriginLabel( entry.bank_origin ) }{ ' ' }
+								{ __(
+									'Every allocation keeps this bank origin.',
+									'fair-finance'
+								) }
 							</div>
 						) }
 					</div>

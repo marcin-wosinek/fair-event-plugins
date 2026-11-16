@@ -8,6 +8,7 @@ import {
 	fireEvent,
 	waitFor,
 	within,
+	act,
 } from '@testing-library/react';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -61,6 +62,17 @@ const chooseFile = ( file ) =>
 
 const importButton = () => dialog().getByRole( 'button', { name: 'Import' } );
 
+const ACCOUNTS_PATH = '/fair-finance/v1/bank-accounts';
+const IMPORT_PATH = '/fair-finance/v1/financial-entries/import';
+
+// Responses by request; each test sets what it needs.
+let api;
+
+const importCalls = () =>
+	apiFetch.mock.calls.filter(
+		( [ options ] ) => options.path === IMPORT_PATH
+	);
+
 const expectNoPreview = () => {
 	expect( dialog().queryByText( 'Preview' ) ).not.toBeInTheDocument();
 	expect( dialog().queryByText( 'Parsing file...' ) ).not.toBeInTheDocument();
@@ -68,9 +80,24 @@ const expectNoPreview = () => {
 };
 
 describe( 'ImportModal', () => {
-	beforeEach( () => {
+	beforeEach( async () => {
+		api = {
+			accounts: () => Promise.resolve( [] ),
+			createAccount: () => new Promise( () => {} ),
+			import: () => new Promise( () => {} ),
+		};
 		apiFetch.mockReset();
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.path === ACCOUNTS_PATH ) {
+				return 'POST' === options.method
+					? api.createAccount( options )
+					: api.accounts();
+			}
+			return api.import( options );
+		} );
 		render( <ImportModal onImport={ jest.fn() } onCancel={ jest.fn() } /> );
+		// Let the bank-account list settle before each test acts.
+		await act( async () => {} );
 	} );
 
 	afterEach( () => {
@@ -80,11 +107,12 @@ describe( 'ImportModal', () => {
 	it.each( [ 'bank-entries.xlsx', 'bank-entries.xls' ] )(
 		'previews %s and imports its entries',
 		async ( name ) => {
-			apiFetch.mockResolvedValue( {
-				imported: 0,
-				skipped: 3,
-				message: 'Imported 0 entries, skipped 3.',
-			} );
+			api.import = () =>
+				Promise.resolve( {
+					imported: 0,
+					skipped: 3,
+					message: 'Imported 0 entries, skipped 3.',
+				} );
 
 			expect( importButton() ).toBeDisabled();
 			chooseFile( workbook( name ) );
@@ -94,19 +122,26 @@ describe( 'ImportModal', () => {
 			).toBeInTheDocument();
 			expect( dialog().getByText( 'ALQUILER SALA' ) ).toBeInTheDocument();
 			expect( dialog().getByText( 'CUOTA SOCIO' ) ).toBeInTheDocument();
-			expect( apiFetch ).not.toHaveBeenCalled();
+			expect( importCalls() ).toHaveLength( 0 );
 
 			fireEvent.click( importButton() );
 
 			expect(
 				await dialog().findByText( 'Imported 0 entries, skipped 3.' )
 			).toBeInTheDocument();
-			expect( apiFetch ).toHaveBeenCalledTimes( 1 );
-			expect( apiFetch ).toHaveBeenCalledWith( {
-				path: '/fair-finance/v1/financial-entries/import',
-				method: 'POST',
-				data: { entries: ENTRIES, import_source: name },
-			} );
+			expect( importCalls() ).toEqual( [
+				[
+					{
+						path: IMPORT_PATH,
+						method: 'POST',
+						data: {
+							entries: ENTRIES,
+							import_source: name,
+							bank_account_id: null,
+						},
+					},
+				],
+			] );
 		}
 	);
 
@@ -145,7 +180,7 @@ describe( 'ImportModal', () => {
 			expectNoPreview();
 
 			fireEvent.click( importButton() );
-			expect( apiFetch ).not.toHaveBeenCalled();
+			expect( importCalls() ).toHaveLength( 0 );
 		}
 	);
 
@@ -163,15 +198,16 @@ describe( 'ImportModal', () => {
 			await dialog().findByText( 'Failed to read file.' )
 		).toBeInTheDocument();
 		expectNoPreview();
-		expect( apiFetch ).not.toHaveBeenCalled();
+		expect( importCalls() ).toHaveLength( 0 );
 	} );
 
 	it( 'drops the preview for a broken file and recovers with a valid one', async () => {
-		apiFetch.mockResolvedValue( {
-			imported: 0,
-			skipped: 3,
-			message: 'Imported 0 entries, skipped 3.',
-		} );
+		api.import = () =>
+			Promise.resolve( {
+				imported: 0,
+				skipped: 3,
+				message: 'Imported 0 entries, skipped 3.',
+			} );
 
 		chooseFile( workbook() );
 		expect( await dialog().findByText( 'Preview' ) ).toBeInTheDocument();
@@ -189,10 +225,160 @@ describe( 'ImportModal', () => {
 		).not.toBeInTheDocument();
 
 		fireEvent.click( importButton() );
-		await waitFor( () => expect( apiFetch ).toHaveBeenCalledTimes( 1 ) );
-		expect( apiFetch.mock.calls[ 0 ][ 0 ].data ).toEqual( {
+		await waitFor( () => expect( importCalls() ).toHaveLength( 1 ) );
+		expect( importCalls()[ 0 ][ 0 ].data ).toEqual( {
 			entries: ENTRIES,
 			import_source: 'bank-entries.xls',
+			bank_account_id: null,
 		} );
+		expect(
+			await dialog().findByText( 'Imported 0 entries, skipped 3.' )
+		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'ImportModal bank account', () => {
+	const ACCOUNTS = [
+		{ id: 3, name: 'Savings' },
+		{ id: 2, name: 'Main account' },
+	];
+
+	let importRequests;
+	let createRequests;
+
+	const renderModal = ( { accounts, createAccount } = {} ) => {
+		importRequests = [];
+		createRequests = [];
+		apiFetch.mockReset();
+		apiFetch.mockImplementation( ( options ) => {
+			if ( options.path === ACCOUNTS_PATH ) {
+				if ( 'POST' === options.method ) {
+					createRequests.push( options.data );
+					return createAccount( options );
+				}
+				return accounts ? accounts() : Promise.resolve( ACCOUNTS );
+			}
+			importRequests.push( options.data );
+			return Promise.resolve( {
+				imported: 3,
+				skipped: 0,
+				message: 'Imported 3 entries, skipped 0.',
+			} );
+		} );
+		render( <ImportModal onImport={ jest.fn() } onCancel={ jest.fn() } /> );
+	};
+
+	const accountSelect = () => dialog().getByLabelText( 'Bank account' );
+
+	it( 'imports with the selected account', async () => {
+		renderModal();
+		expect(
+			await dialog().findByRole( 'option', { name: 'Main account' } )
+		).toBeInTheDocument();
+		expect( accountSelect() ).toHaveValue( '' );
+		expect(
+			dialog().getByRole( 'option', { name: 'Account unknown' } )
+		).toBeInTheDocument();
+
+		fireEvent.change( accountSelect(), { target: { value: '2' } } );
+		chooseFile( workbook() );
+		expect( await dialog().findByText( 'Preview' ) ).toBeInTheDocument();
+		fireEvent.click( importButton() );
+
+		expect(
+			await dialog().findByText( 'Imported 3 entries, skipped 0.' )
+		).toBeInTheDocument();
+		expect( importRequests ).toEqual( [
+			{
+				entries: ENTRIES,
+				import_source: 'bank-entries.xlsx',
+				bank_account_id: 2,
+			},
+		] );
+	} );
+
+	it( 'creates an account inline and selects it', async () => {
+		renderModal( {
+			createAccount: ( { data } ) =>
+				Promise.resolve( { id: 9, name: data.name } ),
+		} );
+		await dialog().findByRole( 'option', { name: 'Main account' } );
+
+		fireEvent.click(
+			dialog().getByRole( 'button', { name: 'Add bank account' } )
+		);
+		fireEvent.click(
+			dialog().getByRole( 'button', { name: 'Add account' } )
+		);
+		expect(
+			dialog().getByText( 'Enter a name for the bank account.' )
+		).toBeInTheDocument();
+		expect( createRequests ).toHaveLength( 0 );
+
+		fireEvent.change( dialog().getByLabelText( 'New bank account name' ), {
+			target: { value: '  Business current  ' },
+		} );
+		fireEvent.click(
+			dialog().getByRole( 'button', { name: 'Add account' } )
+		);
+
+		await waitFor( () => expect( accountSelect() ).toHaveValue( '9' ) );
+		expect( createRequests ).toEqual( [ { name: 'Business current' } ] );
+		expect(
+			dialog().queryByLabelText( 'New bank account name' )
+		).not.toBeInTheDocument();
+
+		chooseFile( workbook() );
+		expect( await dialog().findByText( 'Preview' ) ).toBeInTheDocument();
+		fireEvent.click( importButton() );
+		await waitFor( () => expect( importRequests ).toHaveLength( 1 ) );
+		expect( importRequests[ 0 ].bank_account_id ).toBe( 9 );
+		expect(
+			await dialog().findByText( 'Imported 3 entries, skipped 0.' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'keeps the typed name and shows the error when creation fails', async () => {
+		renderModal( {
+			createAccount: () =>
+				Promise.reject( { message: 'Name is too long.' } ),
+		} );
+		await dialog().findByRole( 'option', { name: 'Main account' } );
+
+		fireEvent.click(
+			dialog().getByRole( 'button', { name: 'Add bank account' } )
+		);
+		fireEvent.change( dialog().getByLabelText( 'New bank account name' ), {
+			target: { value: 'Shared' },
+		} );
+		fireEvent.click(
+			dialog().getByRole( 'button', { name: 'Add account' } )
+		);
+
+		expect(
+			await dialog().findByText( 'Name is too long.' )
+		).toBeInTheDocument();
+		expect(
+			dialog().getByLabelText( 'New bank account name' )
+		).toHaveValue( 'Shared' );
+		expect( accountSelect() ).toHaveValue( '' );
+	} );
+
+	it( 'still imports with the account unknown when accounts fail to load', async () => {
+		renderModal( { accounts: () => Promise.reject( new Error( 'x' ) ) } );
+
+		expect(
+			await dialog().findByText(
+				'Bank accounts could not be loaded. You can still import with the account unknown.'
+			)
+		).toBeInTheDocument();
+		chooseFile( workbook() );
+		expect( await dialog().findByText( 'Preview' ) ).toBeInTheDocument();
+		fireEvent.click( importButton() );
+		await waitFor( () => expect( importRequests ).toHaveLength( 1 ) );
+		expect( importRequests[ 0 ].bank_account_id ).toBeNull();
+		expect(
+			await dialog().findByText( 'Imported 3 entries, skipped 0.' )
+		).toBeInTheDocument();
 	} );
 } );

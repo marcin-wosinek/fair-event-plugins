@@ -21,8 +21,12 @@ class Schema {
 	 *
 	 * Version 3 adds the nullable payment_source and payer_name columns to
 	 * financial entries; existing rows keep NULL ("Unspecified").
+	 *
+	 * Version 4 adds the bank accounts table and the nullable
+	 * bank_account_id column on financial entries; existing imports keep
+	 * NULL ("account unknown").
 	 */
-	const VERSION = '3';
+	const VERSION = '4';
 
 	/**
 	 * Get the table name for budgets
@@ -45,12 +49,23 @@ class Schema {
 	}
 
 	/**
+	 * Get the table name for bank accounts
+	 *
+	 * @return string Full table name with prefix.
+	 */
+	public static function get_bank_accounts_table_name() {
+		global $wpdb;
+		return $wpdb->prefix . 'fair_finance_bank_accounts';
+	}
+
+	/**
 	 * Create database tables
 	 *
 	 * @return void
 	 */
 	public static function create_tables() {
 		self::create_budgets_table();
+		self::create_bank_accounts_table();
 		self::create_financial_entries_table();
 		self::create_reconciliation_tables();
 		update_option( 'fair_finance_schema_version', self::VERSION );
@@ -71,6 +86,32 @@ class Schema {
 			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			name varchar(255) NOT NULL,
 			description text DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create bank accounts table
+	 *
+	 * A bank account is only an identity that imports reference: a stable ID
+	 * and a display name. No credentials or provider details are stored.
+	 *
+	 * @return void
+	 */
+	public static function create_bank_accounts_table() {
+		global $wpdb;
+
+		$table_name      = self::get_bank_accounts_table_name();
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			name varchar(255) NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id)
@@ -109,6 +150,7 @@ class Schema {
 			payment_source varchar(20) DEFAULT NULL,
 			payer_name varchar(255) DEFAULT NULL,
 			imported_at datetime DEFAULT NULL,
+			bank_account_id bigint(20) UNSIGNED DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -121,7 +163,8 @@ class Schema {
 			KEY event_date_id (event_date_id),
 			KEY participant_id (participant_id),
 			KEY tag (tag),
-			KEY payment_source (payment_source)
+			KEY payment_source (payment_source),
+			KEY bank_account_id (bank_account_id)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
