@@ -164,4 +164,113 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 			method: 'DELETE',
 		} ).catch( () => {} );
 	} );
+
+	test( 'saves private notification recipients from the Organizer tab and keeps them out of public output', async ( {
+		page,
+	} ) => {
+		test.setTimeout( 120_000 );
+
+		const privateEmail = 'private-recipient-2303@acme.example';
+
+		await page.setViewportSize( { width: 1200, height: 900 } );
+		await login( page );
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+
+		await apiFetch( page, {
+			path: '/wp/v2/settings',
+			method: 'POST',
+			data: {
+				fair_events_organizer: {
+					name: 'Acme Private Recipients',
+					contact_email: 'info@acme.example',
+				},
+			},
+		} );
+
+		const now = new Date();
+		const start = new Date( now.getTime() + 24 * 60 * 60 * 1000 );
+		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+		const eventDate = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'Organizer Recipients Test Event',
+				...timingFields(
+					iso( start ),
+					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
+				),
+				all_day: false,
+			},
+		} );
+		const post = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
+			method: 'POST',
+			data: { post_status: 'publish' },
+		} );
+		const postId = post.event_id || post.post_id;
+		const permalink = post.link || `/?p=${ postId }`;
+
+		try {
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-events-settings&tab=organizer'
+			);
+			await page
+				.getByRole( 'button', { name: 'Add email address' } )
+				.click();
+			await page
+				.getByLabel( 'Notification email address' )
+				.fill( privateEmail );
+			await page
+				.getByRole( 'button', { name: 'Save organizer' } )
+				.click();
+			await expect(
+				page
+					.locator( '.components-notice__content' )
+					.getByText( 'Organizer settings saved successfully.' )
+			).toBeVisible();
+
+			// Reload: the saved address comes back from the server, and the
+			// public identity is untouched.
+			await page.reload();
+			await expect(
+				page.getByLabel( 'Notification email address' )
+			).toHaveValue( privateEmail );
+			await expect( page.getByLabel( 'Name' ) ).toHaveValue(
+				'Acme Private Recipients'
+			);
+			await expect( page.getByLabel( 'Contact email' ) ).toHaveValue(
+				'info@acme.example'
+			);
+
+			// Public pages: the contact email is published, the private
+			// recipient never is (JSON-LD or anywhere else in the markup).
+			for ( const url of [ '/', permalink ] ) {
+				const response = await page.request.get( url );
+				const html = await response.text();
+				expect( html ).not.toContain( privateEmail );
+			}
+			const org = await getJsonLdByType( page, '/', 'Organization' );
+			expect( org.contactPoint.email ).toBe( 'info@acme.example' );
+			expect( JSON.stringify( org ) ).not.toContain( privateEmail );
+		} finally {
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-events-all-events'
+			);
+			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			await apiFetch( page, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { fair_events_organizer: {} },
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/fair_event/${ postId }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+		}
+	} );
 } );

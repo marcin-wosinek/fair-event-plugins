@@ -25,6 +25,7 @@ const baseOrganizer = {
 	website: '',
 	contact_email: '',
 	contact_phone: '',
+	notification_emails: [],
 	defaults: { name: 'Test Site', website: 'https://example.com', logoId: 0 },
 };
 
@@ -330,5 +331,175 @@ describe( 'remove-logo confirmation (#1772)', () => {
 			screen.getByRole( 'button', { name: /^Remove$/i } )
 		).toBeInTheDocument();
 		expect( saveSettings ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'notification email addresses (#2303)', () => {
+	const emailFields = () =>
+		screen.queryAllByLabelText( 'Notification email address' );
+	const addEmailButton = () =>
+		screen.getByRole( 'button', { name: 'Add email address' } );
+
+	test( 'explains that the addresses are private', async () => {
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+
+		expect(
+			await screen.findByText( /never shown on the site/i )
+		).toBeInTheDocument();
+	} );
+
+	test( 'adding and removing rows', async () => {
+		loadOrganizerSettings.mockResolvedValue( {
+			...baseOrganizer,
+			notification_emails: [ 'team@example.com' ],
+		} );
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+
+		await waitFor( () => expect( emailFields() ).toHaveLength( 1 ) );
+		expect( emailFields()[ 0 ] ).toHaveValue( 'team@example.com' );
+
+		fireEvent.click( addEmailButton() );
+		expect( emailFields() ).toHaveLength( 2 );
+
+		fireEvent.click(
+			screen.getAllByRole( 'button', {
+				name: 'Remove email address',
+			} )[ 0 ]
+		);
+		expect( emailFields() ).toHaveLength( 1 );
+		expect( emailFields()[ 0 ] ).toHaveValue( '' );
+	} );
+
+	test( 'an invalid address blocks save and says why', async () => {
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+		await waitFor( () => expect( nameField() ).toBeInTheDocument() );
+
+		fireEvent.click( addEmailButton() );
+		fireEvent.change( emailFields()[ 0 ], {
+			target: { value: 'not an email' },
+		} );
+
+		expect(
+			screen.getByText( /Enter a valid email address/i )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Fix the invalid notification email address(es) above before saving.'
+			)
+		).toBeInTheDocument();
+		expect( saveButton() ).toBeDisabled();
+	} );
+
+	test( 'save trims addresses, ignores empty rows and keeps identity fields', async () => {
+		loadOrganizerSettings.mockResolvedValue( {
+			...baseOrganizer,
+			name: 'Acme Club',
+			contact_email: 'info@example.com',
+		} );
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+		await waitFor( () => expect( nameField() ).toHaveValue( 'Acme Club' ) );
+
+		fireEvent.click( addEmailButton() );
+		fireEvent.click( addEmailButton() );
+		fireEvent.change( emailFields()[ 0 ], {
+			target: { value: '  team@example.com ' },
+		} );
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( saveSettings ).toHaveBeenCalledTimes( 1 )
+		);
+		expect( saveSettings ).toHaveBeenCalledWith( {
+			fair_events_organizer: expect.objectContaining( {
+				name: 'Acme Club',
+				contact_email: 'info@example.com',
+				notification_emails: [ 'team@example.com' ],
+			} ),
+		} );
+	} );
+
+	test( 'removing every row clears the list on save', async () => {
+		loadOrganizerSettings.mockResolvedValue( {
+			...baseOrganizer,
+			notification_emails: [ 'team@example.com' ],
+		} );
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+		await waitFor( () => expect( emailFields() ).toHaveLength( 1 ) );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Remove email address' } )
+		);
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( saveSettings ).toHaveBeenCalledTimes( 1 )
+		);
+		expect( saveSettings ).toHaveBeenCalledWith( {
+			fair_events_organizer: expect.objectContaining( {
+				notification_emails: [],
+			} ),
+		} );
+	} );
+
+	test( 'reloads the normalized list after saving', async () => {
+		loadOrganizerSettings
+			.mockResolvedValueOnce( { ...baseOrganizer } )
+			.mockResolvedValueOnce( {
+				...baseOrganizer,
+				notification_emails: [ 'Team@example.com' ],
+			} );
+		const onNotice = jest.fn();
+		render( <OrganizerTab onNotice={ onNotice } /> );
+		await waitFor( () => expect( nameField() ).toBeInTheDocument() );
+
+		fireEvent.click( addEmailButton() );
+		fireEvent.click( addEmailButton() );
+		fireEvent.change( emailFields()[ 0 ], {
+			target: { value: 'Team@example.com' },
+		} );
+		fireEvent.change( emailFields()[ 1 ], {
+			target: { value: 'team@example.com' },
+		} );
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith(
+				expect.objectContaining( { status: 'success' } )
+			)
+		);
+		expect( emailFields() ).toHaveLength( 1 );
+		expect( emailFields()[ 0 ] ).toHaveValue( 'Team@example.com' );
+	} );
+
+	test( 'a server error keeps the entered values and shows its message', async () => {
+		saveSettings.mockRejectedValue( {
+			code: 'rest_invalid_param',
+			message: 'Invalid parameter(s): fair_events_organizer',
+			data: {
+				params: {
+					fair_events_organizer: 'Invalid email address.',
+				},
+			},
+		} );
+		const onNotice = jest.fn();
+		render( <OrganizerTab onNotice={ onNotice } /> );
+		await waitFor( () => expect( nameField() ).toBeInTheDocument() );
+
+		fireEvent.click( addEmailButton() );
+		fireEvent.change( emailFields()[ 0 ], {
+			target: { value: 'team@example.com' },
+		} );
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( onNotice ).toHaveBeenCalledWith( {
+				status: 'error',
+				message:
+					'Failed to save organizer settings: Invalid email address.',
+			} )
+		);
+		expect( emailFields()[ 0 ] ).toHaveValue( 'team@example.com' );
+		expect( saveButton() ).toBeEnabled();
+		expect( loadOrganizerSettings ).toHaveBeenCalledTimes( 1 );
 	} );
 } );

@@ -42,6 +42,7 @@ export function loadOrganizerSettings() {
 			website: '',
 			contact_email: '',
 			contact_phone: '',
+			notification_emails: [],
 			...settings.fair_events_organizer,
 			defaults: {
 				name: settings.title || '',

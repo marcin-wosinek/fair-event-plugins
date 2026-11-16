@@ -120,7 +120,8 @@ class Settings {
 		);
 
 		// Sitewide organizer identity, used to build the sitewide Organization
-		// JSON-LD block and the single-event `organizer` reference. Explicit
+		// JSON-LD block and the single-event `organizer` reference, plus the
+		// private notification recipients. Explicit
 		// `properties` (not `additionalProperties`) so core validates shape
 		// before Organizer::sanitize_option() runs.
 		register_setting(
@@ -134,21 +135,32 @@ class Settings {
 					'schema' => array(
 						'type'       => 'object',
 						'properties' => array(
-							'name'             => array( 'type' => 'string' ),
-							'type'             => array( 'type' => 'string' ),
-							'street_address'   => array( 'type' => 'string' ),
-							'address_locality' => array( 'type' => 'string' ),
-							'address_region'   => array( 'type' => 'string' ),
-							'postal_code'      => array( 'type' => 'string' ),
-							'address_country'  => array( 'type' => 'string' ),
-							'same_as'          => array(
+							'name'                => array( 'type' => 'string' ),
+							'type'                => array( 'type' => 'string' ),
+							'street_address'      => array( 'type' => 'string' ),
+							'address_locality'    => array( 'type' => 'string' ),
+							'address_region'      => array( 'type' => 'string' ),
+							'postal_code'         => array( 'type' => 'string' ),
+							'address_country'     => array( 'type' => 'string' ),
+							'same_as'             => array(
 								'type'  => 'array',
 								'items' => array( 'type' => 'string' ),
 							),
-							'logo_id'          => array( 'type' => 'integer' ),
-							'website'          => array( 'type' => 'string' ),
-							'contact_email'    => array( 'type' => 'string' ),
-							'contact_phone'    => array( 'type' => 'string' ),
+							'logo_id'             => array( 'type' => 'integer' ),
+							'website'             => array( 'type' => 'string' ),
+							'contact_email'       => array( 'type' => 'string' ),
+							'contact_phone'       => array( 'type' => 'string' ),
+							// Private: never part of Organizer::get() or
+							// any public output. `format: email` makes core
+							// reject a malformed address with a 400 before
+							// the option changes.
+							'notification_emails' => array(
+								'type'  => 'array',
+								'items' => array(
+									'type'   => 'string',
+									'format' => 'email',
+								),
+							),
 						),
 					),
 				),

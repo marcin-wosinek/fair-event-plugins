@@ -113,4 +113,153 @@ test.describe( 'fair_events_organizer setting', () => {
 		expect( res.status() ).toBe( 401 );
 		await anonymousApi.dispose();
 	} );
+
+	test.describe( 'notification_emails', () => {
+		const writeOrganizer = ( data, headers = authHeader ) =>
+			api.post( '/wp-json/wp/v2/settings', {
+				headers,
+				data: { fair_events_organizer: data },
+			} );
+
+		const readOrganizer = async () => {
+			const res = await api.get( '/wp-json/wp/v2/settings', {
+				headers: authHeader,
+			} );
+			return ( await res.json() ).fair_events_organizer;
+		};
+
+		test( 'saves recipients, dropping case-insensitive duplicates in first-entry order', async () => {
+			const res = await writeOrganizer( {
+				name: 'Acme Club',
+				contact_email: 'info@example.com',
+				notification_emails: [
+					'Team@Example.com',
+					'board@example.com',
+					'team@example.com',
+				],
+			} );
+
+			expect( res.status() ).toBe( 200 );
+			const saved = await readOrganizer();
+			expect( saved.notification_emails ).toEqual( [
+				'Team@Example.com',
+				'board@example.com',
+			] );
+			expect( saved.name ).toBe( 'Acme Club' );
+			expect( saved.contact_email ).toBe( 'info@example.com' );
+		} );
+
+		test( 'clearing recipients keeps the identity and public contact', async () => {
+			await writeOrganizer( {
+				name: 'Acme Club',
+				contact_email: 'info@example.com',
+				notification_emails: [ 'team@example.com' ],
+			} );
+
+			const res = await writeOrganizer( {
+				name: 'Acme Club',
+				contact_email: 'info@example.com',
+				notification_emails: [],
+			} );
+
+			expect( res.status() ).toBe( 200 );
+			const saved = await readOrganizer();
+			expect( saved.notification_emails ).toEqual( [] );
+			expect( saved.name ).toBe( 'Acme Club' );
+			expect( saved.contact_email ).toBe( 'info@example.com' );
+		} );
+
+		test( 'rejects a malformed address and keeps the saved organizer', async () => {
+			await writeOrganizer( {
+				name: 'Acme Club',
+				notification_emails: [ 'team@example.com' ],
+			} );
+
+			for ( const malformed of [
+				[ 'team@example.com', 'not an email' ],
+				[ '' ],
+				[ 42 ],
+				// Core parses a string as a comma-separated list, so each
+				// listed address is still validated.
+				'team@example.com, not an email',
+			] ) {
+				const res = await writeOrganizer( {
+					name: 'Changed Name',
+					notification_emails: malformed,
+				} );
+
+				expect( res.status() ).toBe( 400 );
+				const body = await res.json();
+				expect( body.code ).toBe( 'rest_invalid_param' );
+				expect( body.data.params.fair_events_organizer ).toBeTruthy();
+			}
+
+			const saved = await readOrganizer();
+			expect( saved.name ).toBe( 'Acme Club' );
+			expect( saved.notification_emails ).toEqual( [
+				'team@example.com',
+			] );
+		} );
+
+		test( 'anonymous and non-administrator users can neither read nor write recipients', async () => {
+			await writeOrganizer( {
+				name: 'Acme Club',
+				notification_emails: [ 'private-team@example.com' ],
+			} );
+
+			const anonymous = await request.newContext( { baseURL: BASE_URL } );
+			const anonRead = await anonymous.get( '/wp-json/wp/v2/settings' );
+			expect( anonRead.status() ).toBe( 401 );
+			expect( await anonRead.text() ).not.toContain(
+				'private-team@example.com'
+			);
+			await anonymous.dispose();
+
+			const username = `organizer-editor-${ Date.now() }`;
+			const password = 'Organizer-editor-test-2303!';
+			const userRes = await api.post( '/wp-json/wp/v2/users', {
+				headers: authHeader,
+				data: {
+					username,
+					password,
+					email: `${ username }@example.test`,
+					roles: [ 'editor' ],
+				},
+			} );
+			expect( userRes.ok() ).toBeTruthy();
+			const userId = ( await userRes.json() ).id;
+			const editorHeader = {
+				Authorization:
+					'Basic ' +
+					Buffer.from( `${ username }:${ password }` ).toString(
+						'base64'
+					),
+			};
+
+			try {
+				const editorRead = await api.get( '/wp-json/wp/v2/settings', {
+					headers: editorHeader,
+				} );
+				expect( editorRead.status() ).toBe( 403 );
+				expect( await editorRead.text() ).not.toContain(
+					'private-team@example.com'
+				);
+
+				const editorWrite = await writeOrganizer(
+					{ notification_emails: [ 'editor@example.com' ] },
+					editorHeader
+				);
+				expect( editorWrite.status() ).toBe( 403 );
+			} finally {
+				await api.delete(
+					`/wp-json/wp/v2/users/${ userId }?force=true&reassign=1`,
+					{ headers: authHeader }
+				);
+			}
+
+			expect( ( await readOrganizer() ).notification_emails ).toEqual( [
+				'private-team@example.com',
+			] );
+		} );
+	} );
 } );
