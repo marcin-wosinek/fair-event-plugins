@@ -22,7 +22,6 @@ import {
 	Notice,
 	TextControl,
 	SelectControl,
-	FormTokenField,
 	TabPanel,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
@@ -54,6 +53,7 @@ import EventContextHeader from './EventContextHeader.js';
 import ConfirmActionModal from '../components/ConfirmActionModal.js';
 import EventStatistics from '../event-statistics/EventStatistics.js';
 import EventTimingFields from '../components/EventTimingFields.js';
+import CategoryInput, { mergeCategories } from '../components/CategoryInput.js';
 import { getTimingError } from '../components/eventTiming.js';
 import EventTimingStatus from './EventTimingStatus.js';
 import InlineVenueCreator, {
@@ -107,7 +107,6 @@ export default function ManageEventApp() {
 	const [ externalUrl, setExternalUrl ] = useState( '' );
 	const [ categories, setCategories ] = useState( [] );
 	const [ availableCategories, setAvailableCategories ] = useState( [] );
-	const [ creatingCategories, setCreatingCategories ] = useState( [] );
 
 	const [ togglingExdate, setTogglingExdate ] = useState( null );
 	const [ recurrenceImpact, setRecurrenceImpact ] = useState( null );
@@ -219,53 +218,26 @@ export default function ManageEventApp() {
 		}
 	};
 
-	// Request every configured Polylang language (as the calendar category
-	// picker does, see CategorySelector.js) so an organizer can select
-	// same-named categories from different languages, and merge by ID rather
-	// than replace so a category the event already carries never disappears
-	// from the option list just because a later fetch omitted it.
-	//
-	// The saved event's own `categories` field never carries language (only
-	// the all-languages options response does), and the two requests race —
-	// so never let a language-less record overwrite one that already has a
-	// language, regardless of which request lands last (#1636).
-	const mergeCategories = ( incoming ) =>
-		setAvailableCategories( ( prev ) => {
-			const byId = new Map( prev.map( ( c ) => [ c.id, c ] ) );
-			incoming.forEach( ( c ) => {
-				const existing = byId.get( c.id );
-				if ( existing?.language && ! c.language ) {
-					return;
-				}
-				byId.set( c.id, c );
-			} );
-			return Array.from( byId.values() );
-		} );
+	// Request every configured Polylang language so an organizer can select
+	// same-named categories from different languages, and merge by ID (see
+	// mergeCategories) so a category the event already carries never
+	// disappears or loses its language label, whichever request lands last.
+	const addCategories = ( incoming ) =>
+		setAvailableCategories( ( prev ) => mergeCategories( prev, incoming ) );
 
 	const loadCategories = async () => {
 		try {
 			const data = await apiFetch( {
 				path: '/fair-events/v1/sources/categories?all_languages=true',
 			} );
-			mergeCategories( data );
+			addCategories( data );
 		} catch {
 			// Categories are optional, ignore errors.
 		}
 	};
 
-	// Distinguishes same-named categories from different languages (#1636).
-	// Categories without language metadata (non-Polylang sites, or a term
-	// Polylang has no language for) fall back to the plain name.
-	const getCategoryLabel = ( category ) =>
-		category.language
-			? sprintf(
-					/* translators: 1: category name, 2: language name */
-					__( '%1$s — %2$s', 'fair-events' ),
-					category.name,
-					category.language
-				)
-			: category.name;
-
+	// Creates a typed category; CategoryInput selects the returned ID unless
+	// its token was removed meanwhile. Resolves null on failure.
 	const createCategory = async ( name ) => {
 		try {
 			const newCategory = await apiFetch( {
@@ -273,16 +245,13 @@ export default function ManageEventApp() {
 				method: 'POST',
 				data: { name },
 			} );
-			mergeCategories( [ newCategory ] );
-			setCategories( ( prev ) => [ ...prev, newCategory.id ] );
+			addCategories( [ newCategory ] );
+			return newCategory;
 		} catch ( err ) {
 			setError(
 				err.message || __( 'Failed to create category.', 'fair-events' )
 			);
-		} finally {
-			setCreatingCategories( ( prev ) =>
-				prev.filter( ( pending ) => pending !== name )
-			);
+			return null;
 		}
 	};
 
@@ -297,7 +266,7 @@ export default function ManageEventApp() {
 		setAttendanceMode( data.attendance_mode || 'in_person' );
 		setJoiningLink( data.joining_link || '' );
 		setCategories( data.categories?.map( ( c ) => c.id ) || [] );
-		mergeCategories( data.categories || [] );
+		addCategories( data.categories || [] );
 
 		setStartDate( data.start_date || '' );
 		setStartTime(
@@ -1327,59 +1296,11 @@ export default function ManageEventApp() {
 							</VStack>
 
 							<VStack spacing={ 4 }>
-								<FormTokenField
-									label={ __( 'Categories', 'fair-events' ) }
-									value={ [
-										...categories
-											.map( ( id ) => {
-												const cat =
-													availableCategories.find(
-														( c ) => c.id === id
-													);
-												return cat
-													? getCategoryLabel( cat )
-													: '';
-											} )
-											.filter( Boolean ),
-										...creatingCategories,
-									] }
-									suggestions={ availableCategories.map(
-										getCategoryLabel
-									) }
-									onChange={ ( tokens ) => {
-										const ids = [];
-										const pending = [];
-
-										tokens.forEach( ( token ) => {
-											const cat =
-												availableCategories.find(
-													( c ) =>
-														getCategoryLabel(
-															c
-														) === token
-												);
-											if ( cat ) {
-												ids.push( cat.id );
-											} else {
-												pending.push( token );
-											}
-										} );
-
-										setCategories( ids );
-										setCreatingCategories( pending );
-
-										pending
-											.filter(
-												( name ) =>
-													! creatingCategories.includes(
-														name
-													)
-											)
-											.forEach( ( name ) =>
-												createCategory( name )
-											);
-									} }
-									__experimentalExpandOnFocus
+								<CategoryInput
+									value={ categories }
+									categories={ availableCategories }
+									onChange={ setCategories }
+									onCreate={ createCategory }
 								/>
 
 								{ attendanceMode !== 'online' && (

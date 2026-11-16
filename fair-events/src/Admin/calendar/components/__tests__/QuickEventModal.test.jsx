@@ -51,7 +51,7 @@ beforeEach( () => {
 		if ( path === '/fair-events/v1/venues' ) {
 			return Promise.resolve( venues );
 		}
-		if ( path === '/fair-events/v1/sources/categories' ) {
+		if ( path.startsWith( '/fair-events/v1/sources/categories' ) ) {
 			return Promise.resolve( availableCategories );
 		}
 		if ( path.startsWith( '/wp/v2/search' ) ) {
@@ -91,7 +91,7 @@ const renderModal = async ( props = {} ) => {
 	// Let the venues/categories useEffect fetches resolve before interacting.
 	await waitFor( () =>
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-events/v1/sources/categories',
+			path: '/fair-events/v1/sources/categories?all_languages=true',
 		} )
 	);
 	return { onClose, onSuccess };
@@ -184,6 +184,44 @@ describe( 'QuickEventModal', () => {
 		);
 		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
 		expect( createCallData().categories ).toEqual( [ 2 ] );
+	} );
+
+	it( 'saves the chosen one of two same-named categories by language (#2292)', async () => {
+		const original = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( options ) =>
+			options.path.startsWith( '/fair-events/v1/sources/categories' )
+				? Promise.resolve( [
+						{ id: 11, name: 'Arancha', language: 'English' },
+						{ id: 12, name: 'Arancha', language: 'Español' },
+					] )
+				: original( options )
+		);
+		const { onSuccess } = await renderModal();
+		fillTitle();
+
+		await waitFor( () => {
+			fireEvent.focus( screen.getByLabelText( 'Categories' ) );
+			fireEvent.change( screen.getByLabelText( 'Categories' ), {
+				target: { value: 'ara' },
+			} );
+			expect(
+				screen.getByRole( 'option', { name: 'Arancha — Español' } )
+			).toBeInTheDocument();
+		} );
+		expect(
+			screen.getByRole( 'option', { name: 'Arancha — English' } )
+		).toBeInTheDocument();
+
+		addCategory( 'Arancha — Español' );
+		addCategory( 'Arancha — English' );
+		removeCategory( 'Arancha — English' );
+		expect( tokenNames() ).toEqual( [ 'Arancha — Español' ] );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData().categories ).toEqual( [ 12 ] );
 	} );
 
 	it( 'creates an event without categories (#2203)', async () => {

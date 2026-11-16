@@ -827,6 +827,54 @@ describe( 'create-on-the-fly categories (#992)', () => {
 		);
 
 		expect( await screen.findByText( 'Workshops' ) ).toBeInTheDocument();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Save event details' } )
+		);
+		await waitFor( () =>
+			expect( apiFetch ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					method: 'PUT',
+					data: expect.objectContaining( { categories: [ 5 ] } ),
+				} )
+			)
+		);
+	} );
+
+	it( 'reports a failed creation and drops its pending token (#2292)', async () => {
+		apiFetch.mockImplementation( ( opts ) => {
+			if ( opts.path && opts.path.includes( '/event-dates/' ) ) {
+				return Promise.resolve( mockEventDate );
+			}
+			if (
+				opts.path &&
+				opts.path.startsWith( '/fair-events/v1/sources/categories' )
+			) {
+				if ( opts.method === 'POST' ) {
+					return Promise.reject(
+						new Error( 'Sorry, you cannot create categories.' )
+					);
+				}
+				return Promise.resolve( [
+					{ id: 1, name: 'Music', slug: 'music' },
+				] );
+			}
+			return Promise.resolve( [] );
+		} );
+
+		render( <ManageEventApp /> );
+		const input = await screen.findByLabelText( 'Categories' );
+		fireEvent.change( input, { target: { value: 'Workshops' } } );
+		fireEvent.keyDown( input, { key: 'Enter', code: 'Enter' } );
+
+		await waitFor( () =>
+			expect(
+				document.querySelector( '.components-notice' )
+			).toHaveTextContent( 'Sorry, you cannot create categories.' )
+		);
+		expect(
+			document.querySelectorAll( '.components-form-token-field__token' )
+		).toHaveLength( 0 );
 	} );
 } );
 
@@ -1017,11 +1065,14 @@ describe( 'multilingual categories (#1636)', () => {
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Save event details' } )
 		);
-		expect(
-			await screen.findByText(
+		// The notice text is mirrored in the a11y-speak region.
+		await waitFor( () =>
+			expect(
+				document.querySelector( '.components-notice' )
+			).toHaveTextContent(
 				'Some selected categories were not saved. Please try again.'
 			)
-		).toBeInTheDocument();
+		);
 	} );
 
 	it( 'removing one category persists only the remaining selection', async () => {

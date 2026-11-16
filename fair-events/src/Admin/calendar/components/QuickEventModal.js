@@ -12,7 +12,6 @@ import {
 	TextControl,
 	SelectControl,
 	RadioControl,
-	FormTokenField,
 	PanelBody,
 	Button,
 	Notice,
@@ -31,6 +30,9 @@ import {
 import EventTimingFields from '../../components/EventTimingFields.js';
 import { getTimingError } from '../../components/eventTiming.js';
 import { getLookupTiming } from '../../components/lookupTiming.js';
+import CategoryInput, {
+	mergeCategories,
+} from '../../components/CategoryInput.js';
 import InlineVenueCreator, {
 	ADD_NEW_VENUE_VALUE,
 } from '../../components/InlineVenueCreator.js';
@@ -90,8 +92,15 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				// Venues are optional, ignore errors.
 			} );
 
-		apiFetch( { path: '/fair-events/v1/sources/categories' } )
-			.then( ( data ) => setAvailableCategories( data ) )
+		// Every configured language, as in Manage Event (#2292).
+		apiFetch( {
+			path: '/fair-events/v1/sources/categories?all_languages=true',
+		} )
+			.then( ( data ) =>
+				setAvailableCategories( ( prev ) =>
+					mergeCategories( prev, data )
+				)
+			)
 			.catch( () => {
 				// Categories are optional, ignore errors.
 			} );
@@ -430,31 +439,10 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								autoFocus
 							/>
 
-							<FormTokenField
-								label={ __( 'Categories', 'fair-events' ) }
-								value={ categories
-									.map( ( id ) => {
-										const cat = availableCategories.find(
-											( c ) => c.id === id
-										);
-										return cat ? cat.name : '';
-									} )
-									.filter( Boolean ) }
-								suggestions={ availableCategories.map(
-									( c ) => c.name
-								) }
-								onChange={ ( tokens ) => {
-									const ids = tokens
-										.map( ( token ) => {
-											const cat =
-												availableCategories.find(
-													( c ) => c.name === token
-												);
-											return cat ? cat.id : null;
-										} )
-										.filter( ( id ) => id !== null );
-									setCategories( ids );
-								} }
+							<CategoryInput
+								value={ categories }
+								categories={ availableCategories }
+								onChange={ setCategories }
 							/>
 
 							<EventTimingFields
