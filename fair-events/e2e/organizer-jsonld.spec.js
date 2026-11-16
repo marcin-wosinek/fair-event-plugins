@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { timingFields } from '../../e2e/support/event-timing.js';
+import { setExperimentalFeature } from '../../e2e/support/experimental-features.js';
+
+// The tests site runs fair-events-experimental, whose `organizers` bundle
+// replaces the Organizer tab covered here; test the core tab on its own.
+let previousOrganizersFeature;
+test.beforeAll( () => {
+	previousOrganizersFeature = setExperimentalFeature( 'organizers', false );
+} );
+test.afterAll( () => {
+	setExperimentalFeature( 'organizers', previousOrganizersFeature );
+} );
 
 const WP_ADMIN_USER = process.env.WP_ADMIN_USER || 'admin';
 const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';

@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { startOf } from '../../e2e/support/event-timing.js';
+import { setExperimentalFeature } from '../../e2e/support/experimental-features.js';
+
+// The tests site runs fair-events-experimental, whose `organizers` bundle
+// replaces the Organizer tab covered here; test the core tab on its own.
+let previousOrganizersFeature;
+test.beforeAll( () => {
+	previousOrganizersFeature = setExperimentalFeature( 'organizers', false );
+} );
+test.afterAll( () => {
+	setExperimentalFeature( 'organizers', previousOrganizersFeature );
+} );
 
 /**
  * E2E: the confirmations for deleting a venue, importing ticket settings,

@@ -1,0 +1,242 @@
+<?php
+/**
+ * Organizer repository: the sitewide default plus additional organizers.
+ *
+ * @package FairEventsExperimental
+ */
+
+namespace FairEventsExperimental\Models;
+
+use FairEvents\Settings\Organizer;
+
+defined( 'WPINC' ) || die;
+
+/**
+ * Reads and writes organizer records.
+ *
+ * The sitewide default stays in Fair Events' own `fair_events_organizer`
+ * option and is never copied: it is exposed here under the reserved
+ * {@see self::DEFAULT_ID}. Each additional organizer lives in a separate,
+ * non-autoloaded option keyed by a stable UUID, listed in creation order by
+ * an index option. Nothing here deletes data, so turning the `organizers`
+ * bundle off (or deactivating this plugin) keeps every record.
+ *
+ * Identity fields and their sanitization come from
+ * {@see \FairEvents\Settings\Organizer}; the private notification recipients
+ * are part of a record but only ever leave through the administrator-only
+ * management API.
+ */
+class OrganizerRepository {
+
+	/**
+	 * Reserved identifier of the sitewide default organizer.
+	 */
+	public const DEFAULT_ID = 'default';
+
+	/**
+	 * Option listing the additional organizers' IDs in creation order.
+	 */
+	public const INDEX_OPTION = 'fair_events_experimental_organizer_ids';
+
+	/**
+	 * Prefix of each additional organizer's own option.
+	 */
+	public const OPTION_PREFIX = 'fair_events_experimental_organizer_';
+
+	/**
+	 * Identity fields stored as plain strings.
+	 */
+	private const TEXT_FIELDS = array(
+		'name',
+		'street_address',
+		'address_locality',
+		'address_region',
+		'postal_code',
+		'address_country',
+		'website',
+		'contact_email',
+		'contact_phone',
+	);
+
+	/**
+	 * Whether the Fair Events organizer this repository builds on is available.
+	 *
+	 * @return bool
+	 */
+	public static function is_available() {
+		return class_exists( Organizer::class )
+			&& method_exists( Organizer::class, 'get_notification_emails' );
+	}
+
+	/**
+	 * All organizers: the default first, then additional ones in creation order.
+	 *
+	 * @return array[] Normalized organizer records.
+	 */
+	public function all() {
+		$organizers = array( $this->find( self::DEFAULT_ID ) );
+
+		foreach ( $this->additional_ids() as $id ) {
+			$organizer = $this->find( $id );
+			if ( null !== $organizer ) {
+				$organizers[] = $organizer;
+			}
+		}
+
+		return $organizers;
+	}
+
+	/**
+	 * Find one organizer by ID.
+	 *
+	 * @param string $id Organizer ID ({@see self::DEFAULT_ID} or a UUID).
+	 * @return array|null Normalized record, or null when it doesn't exist.
+	 */
+	public function find( $id ) {
+		$id = (string) $id;
+
+		if ( self::DEFAULT_ID === $id ) {
+			return self::normalize( self::DEFAULT_ID, get_option( Organizer::OPTION, array() ) );
+		}
+
+		if ( ! self::is_valid_uuid( $id ) || ! in_array( $id, $this->additional_ids(), true ) ) {
+			return null;
+		}
+
+		$stored = get_option( self::OPTION_PREFIX . $id, null );
+		if ( ! is_array( $stored ) ) {
+			return null;
+		}
+
+		return self::normalize( $id, $stored );
+	}
+
+	/**
+	 * Create an additional organizer from already validated data.
+	 *
+	 * @param array $data Organizer fields.
+	 * @return array|null The created record, or null when it couldn't be stored.
+	 */
+	public function create( array $data ) {
+		$id = wp_generate_uuid4();
+
+		if ( ! add_option( self::OPTION_PREFIX . $id, Organizer::sanitize_option( $data ), '', false ) ) {
+			return null;
+		}
+
+		$ids   = $this->additional_ids();
+		$ids[] = $id;
+		$this->save_index( $ids );
+
+		return $this->find( $id );
+	}
+
+	/**
+	 * Replace an existing organizer's fields with already validated data.
+	 *
+	 * @param string $id   Organizer ID.
+	 * @param array  $data Complete organizer fields.
+	 * @return array|null The updated record, or null when it doesn't exist.
+	 */
+	public function update( $id, array $data ) {
+		if ( null === $this->find( $id ) ) {
+			return null;
+		}
+
+		$sanitized = Organizer::sanitize_option( $data );
+
+		if ( self::DEFAULT_ID === $id ) {
+			// Fair Events' registered sanitizer runs again here; it is
+			// idempotent on already sanitized input.
+			update_option( Organizer::OPTION, $sanitized );
+		} else {
+			update_option( self::OPTION_PREFIX . $id, $sanitized, false );
+		}
+
+		return $this->find( $id );
+	}
+
+	/**
+	 * IDs of the additional organizers, in creation order.
+	 *
+	 * @return string[]
+	 */
+	private function additional_ids() {
+		$ids = get_option( self::INDEX_OPTION, array() );
+		if ( ! is_array( $ids ) ) {
+			return array();
+		}
+
+		return array_values( array_filter( array_map( 'strval', $ids ), array( self::class, 'is_valid_uuid' ) ) );
+	}
+
+	/**
+	 * Store the index of additional organizers, never autoloaded.
+	 *
+	 * @param string[] $ids Organizer IDs.
+	 * @return void
+	 */
+	private function save_index( array $ids ) {
+		$ids = array_values( array_unique( $ids ) );
+
+		if ( false === get_option( self::INDEX_OPTION, false ) ) {
+			add_option( self::INDEX_OPTION, $ids, '', false );
+			return;
+		}
+
+		update_option( self::INDEX_OPTION, $ids, false );
+	}
+
+	/**
+	 * Whether a string is a UUID as generated by wp_generate_uuid4().
+	 *
+	 * @param string $id Candidate ID.
+	 * @return bool
+	 */
+	public static function is_valid_uuid( $id ) {
+		return 1 === preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', (string) $id );
+	}
+
+	/**
+	 * Normalize a stored record so every field is always present.
+	 *
+	 * Mirrors {@see Organizer::get()} for the identity and
+	 * {@see Organizer::get_notification_emails()} for the recipients, which
+	 * only read the default option.
+	 *
+	 * @param string $id     Organizer ID.
+	 * @param mixed  $stored Stored option value.
+	 * @return array Normalized record.
+	 */
+	private static function normalize( $id, $stored ) {
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+
+		$record = array(
+			'id'         => $id,
+			'is_default' => self::DEFAULT_ID === $id,
+		);
+
+		foreach ( self::TEXT_FIELDS as $field ) {
+			$record[ $field ] = isset( $stored[ $field ] ) && is_scalar( $stored[ $field ] ) ? (string) $stored[ $field ] : '';
+		}
+
+		$record['type'] = isset( $stored['type'] ) && in_array( $stored['type'], Organizer::TYPES, true )
+			? $stored['type']
+			: 'Organization';
+
+		$record['same_as'] = isset( $stored['same_as'] ) && is_array( $stored['same_as'] )
+			? array_values( array_map( 'strval', $stored['same_as'] ) )
+			: array();
+
+		$record['logo_id'] = isset( $stored['logo_id'] ) ? absint( $stored['logo_id'] ) : 0;
+
+		// Re-run Fair Events' recipient normalization (trim, drop invalid,
+		// remove case-insensitive duplicates) on the stored list.
+		$recipients                    = Organizer::sanitize_option( array( 'notification_emails' => $stored['notification_emails'] ?? array() ) );
+		$record['notification_emails'] = $recipients['notification_emails'];
+
+		return $record;
+	}
+}

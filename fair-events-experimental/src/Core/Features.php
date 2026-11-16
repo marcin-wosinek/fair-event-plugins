@@ -3,7 +3,7 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * sources, ticketing extensions, mailings, and Meta conversions.
+ * sources, ticketing extensions, mailings, Meta conversions and organizers.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials default off.
  *
@@ -73,6 +73,11 @@ class Features {
 				'description' => 'Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector.',
 				'default'     => false,
 			),
+			'organizers'       => array(
+				'label'       => 'Organizers',
+				'description' => 'Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer.',
+				'default'     => true,
+			),
 		);
 	}
 
@@ -122,6 +127,10 @@ class Features {
 			'meta-conversions' => array(
 				'label'       => __( 'Meta Conversions', 'fair-events-experimental' ),
 				'description' => __( 'Consent-gated server-side Meta measurement of event-button clicks, checkouts and purchases. Requires explicit credentials; checkout and purchase measurement also requires Fair Payments Connector.', 'fair-events-experimental' ),
+			),
+			'organizers'       => array(
+				'label'       => __( 'Organizers', 'fair-events-experimental' ),
+				'description' => __( 'Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer.', 'fair-events-experimental' ),
 			),
 		);
 

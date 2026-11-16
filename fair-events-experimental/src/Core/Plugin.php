@@ -126,6 +126,19 @@ class Plugin {
 	}
 
 	/**
+	 * Whether organizer management is available: the `organizers` bundle is
+	 * on and the active Fair Events has the organizer with private
+	 * notification recipients it builds on. Turning the bundle off only hides
+	 * management; every stored organizer is kept.
+	 *
+	 * @return bool
+	 */
+	public static function organizers_available() {
+		return Features::is_enabled( 'organizers' )
+			&& \FairEventsExperimental\Models\OrganizerRepository::is_available();
+	}
+
+	/**
 	 * Whether the active Fair Events stores and serves event schedules.
 	 *
 	 * @return bool
@@ -201,6 +214,15 @@ class Plugin {
 				function () {
 					$controller = new \FairEventsExperimental\API\EventProposalController();
 					$controller->register_routes();
+				}
+			);
+		}
+
+		if ( self::organizers_available() ) {
+			add_action(
+				'rest_api_init',
+				static function () {
+					( new \FairEventsExperimental\API\OrganizersController() )->register_routes();
 				}
 			);
 		}

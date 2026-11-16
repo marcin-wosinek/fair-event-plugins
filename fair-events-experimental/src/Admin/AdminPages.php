@@ -340,7 +340,17 @@ class AdminPages {
 				'metaUrl'               => \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' )
 					? admin_url( 'admin.php?page=fair-events-meta' )
 					: null,
+				// Replaces the single Organizer tab with the Organizers
+				// manager; false restores Fair Events' own tab.
+				'organizersEnabled'     => \FairEventsExperimental\Core\Plugin::organizers_available(),
 			)
+		);
+
+		wp_enqueue_style(
+			'fair-events-experimental-settings',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/style-index.css',
+			array( 'wp-components' ),
+			$asset_file['version']
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
