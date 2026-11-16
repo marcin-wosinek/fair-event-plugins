@@ -1411,8 +1411,13 @@ class EmailService {
 			return false;
 		}
 
-		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$event_title = $event ? $event->post_title : __( 'Event', 'fair-audience' );
+		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		// Decode the stored title once (#2291, rules from #2300): the plain
+		// subject uses it as is, the HTML body escapes it with
+		// DisplayText::html(), never esc_html(), which would let literal
+		// entity text such as `&lt;` render as `<`.
+		$event_title      = DisplayText::event_title( $event ? $event->post_title : '', __( 'Event', 'fair-audience' ) );
+		$event_title_html = DisplayText::html( $event_title );
 
 		$subject_template =
 			/* translators: %s: event title */
@@ -1473,7 +1478,7 @@ class EmailService {
 				? esc_html__( 'Your signup for %s has been confirmed and your payment has been received.', 'fair-audience' )
 				/* translators: %s: event title */
 				: esc_html__( 'Your signup for %s has been confirmed.', 'fair-audience' ),
-			SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
+			SignupConfirmationEmail::linked_event_title( $event_title_html, esc_url( $event_url ) )
 		);
 
 		// The organizer's own message for this event, resolved and sanitized
@@ -1487,7 +1492,7 @@ class EmailService {
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
 		$message = BookingConfirmationEmail::html(
 			array(
-				'event_title'                  => esc_html( $event_title ),
+				'event_title'                  => $event_title_html,
 				'participant_name'             => esc_html( $participant->name ),
 				'site_name'                    => esc_html( $site_name ),
 				'event_date_display'           => esc_html( $event_date_display ),
