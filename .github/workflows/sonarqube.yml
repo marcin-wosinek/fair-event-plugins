@@ -1,0 +1,129 @@
+name: SonarQube
+
+# Report-only SonarQube Cloud analysis (SONARQUBE.md). Not a required check
+# and not a release dependency: findings never block merges, but scanner and
+# configuration failures fail this job visibly.
+#
+# The job installs nothing, builds nothing and runs no repository code; the
+# scanner only reads sources. `pull_request` (never `pull_request_target`)
+# keeps the token away from fork and Dependabot PRs, which are skipped with
+# an explanation in the job summary.
+
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+concurrency:
+    group: sonarqube-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    sonarqube:
+        name: SonarQube analysis
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            # Untrusted values go through env, never into the script text.
+            - name: Check eligibility and configuration
+              id: eligibility
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  REF: ${{ github.ref }}
+                  REPOSITORY: ${{ github.repository }}
+                  HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+                  PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+                  ACTOR: ${{ github.actor }}
+                  HAS_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
+                  ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+                  PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+              run: |
+                  skip() {
+                      echo "eligible=false" >> "$GITHUB_OUTPUT"
+                      echo "reason=$1" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=SonarQube analysis skipped::$1"
+                  }
+                  if [ "$EVENT_NAME" = "pull_request" ]; then
+                      if [ "$HEAD_REPOSITORY" != "$REPOSITORY" ]; then
+                          skip "Pull requests from forks are not analyzed: the analysis token is not available to them."
+                          exit 0
+                      fi
+                      if [ "$PR_AUTHOR" = "dependabot[bot]" ] || [ "$ACTOR" = "dependabot[bot]" ]; then
+                          skip "Dependabot pull requests are not analyzed: the analysis token is not available to them."
+                          exit 0
+                      fi
+                  elif [ "$REF" != "refs/heads/main" ]; then
+                      skip "Only main is analyzed; this run is on $REF."
+                      exit 0
+                  fi
+                  missing=""
+                  [ "$HAS_TOKEN" = "true" ] || missing="$missing SONAR_TOKEN (secret)"
+                  [ -n "$ORGANIZATION" ] || missing="$missing SONAR_ORGANIZATION (variable)"
+                  [ -n "$PROJECT_KEY" ] || missing="$missing SONAR_PROJECT_KEY (variable)"
+                  if [ -n "$missing" ]; then
+                      echo "eligible=false" >> "$GITHUB_OUTPUT"
+                      echo "reason=Missing SonarQube configuration:$missing. See SONARQUBE.md." >> "$GITHUB_OUTPUT"
+                      echo "::error title=SonarQube configuration missing::Missing:$missing. See SONARQUBE.md."
+                      exit 1
+                  fi
+                  echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+            - uses: actions/checkout@v7
+              if: steps.eligibility.outputs.eligible == 'true'
+              with:
+                  # Full history for blame and new-code detection.
+                  fetch-depth: 0
+                  persist-credentials: false
+
+            - name: SonarQube Cloud scan
+              id: scan
+              if: steps.eligibility.outputs.eligible == 'true'
+              uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                  args: >
+                      -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+                      -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+                      ${{ vars.SONAR_REGION && format('-Dsonar.region={0}', vars.SONAR_REGION) || '' }}
+
+            - name: Job summary
+              if: always()
+              env:
+                  ELIGIBLE: ${{ steps.eligibility.outputs.eligible }}
+                  REASON: ${{ steps.eligibility.outputs.reason }}
+                  SCAN_OUTCOME: ${{ steps.scan.outcome }}
+                  PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+                  REGION: ${{ vars.SONAR_REGION }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: |
+                  host="https://sonarcloud.io"
+                  [ "$REGION" = "us" ] && host="https://sonarqube.us"
+                  if [ -n "$PR_NUMBER" ]; then
+                      url="$host/summary/new_code?id=$PROJECT_KEY&pullRequest=$PR_NUMBER"
+                  else
+                      url="$host/summary/overall?id=$PROJECT_KEY&branch=main"
+                  fi
+                  {
+                      echo "## SonarQube analysis"
+                      echo
+                      if [ "$ELIGIBLE" != "true" ]; then
+                          if [ -n "$REASON" ]; then
+                              echo "**Not run.** $REASON"
+                          else
+                              echo "**Failed** before analysis; see the job log."
+                          fi
+                      elif [ "$SCAN_OUTCOME" = "success" ]; then
+                          echo "**Succeeded.** Results: [$url]($url)"
+                          echo
+                          echo "Findings are report-only and do not block merging."
+                      else
+                          echo "**Scan $SCAN_OUTCOME.** See the job log. Dashboard: [$url]($url)"
+                      fi
+                  } >> "$GITHUB_STEP_SUMMARY"

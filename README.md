@@ -125,6 +125,12 @@ so one cleanup can clear many findings. The command only reports: findings exit 
 or report errors exit 1. A source file above 5 MB stops the scan instead of
 being skipped.
 
+### SonarQube analysis
+
+SonarQube Cloud analyzes each workspace's production PHP and JavaScript on
+`main` and on same-repository pull requests. Results are report-only. See
+**[SONARQUBE.md](./SONARQUBE.md)** for setup, scope and policy.
+
 ### For Developers
 
 -   **[CLAUDE.md](./CLAUDE.md)** - Project overview, coding standards, and AI assistant instructions

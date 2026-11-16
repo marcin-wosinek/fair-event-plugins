@@ -92,7 +92,8 @@ The **Repository validation** CI job (`validation`) runs the source-level
 documentation and policy checks, each as its own step:
 `composer:validate`, `node scripts/block-docs.mjs check`, `lint:docs`,
 `node scripts/validate-agent-workflows.mjs`, `validate:native-popups`,
-`validate:text-domains`, `validate:php-compat` and `validate:shared-version`.
+`validate:text-domains`, `validate:php-compat`, `validate:shared-version`
+and `validate:sonarqube`.
 Like the test jobs it doesn't wait for the build, and both release jobs
 require it; see [DEPLOYMENT.md](./DEPLOYMENT.md). It installs only npm
 dependencies and PHP (for `composer validate`), so these checks may not

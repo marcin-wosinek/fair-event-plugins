@@ -219,6 +219,9 @@ jobs:
             - name: Check the shared PHP version and consumer locks
               run: npm run validate:shared-version
 
+            - name: Check the SonarQube analysis scope
+              run: npm run validate:sonarqube
+
     js-tests:
         name: JavaScript tests
         # Independent of build: a failing suite must not stop the plugins
