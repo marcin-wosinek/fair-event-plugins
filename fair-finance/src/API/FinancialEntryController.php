@@ -10,6 +10,7 @@ namespace FairFinance\API;
 defined( 'WPINC' ) || die;
 
 use FairPaymentsConnector\Models\EntryTransaction;
+use FairFinance\Models\BankAccount;
 use FairFinance\Models\Budget;
 use FairFinance\Models\FinancialEntry;
 use FairFinance\Services\ConnectedSiteBudgetResolver;
@@ -454,7 +455,7 @@ class FinancialEntryController extends WP_REST_Controller {
 					'callback'            => array( $this, 'import_entries' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'entries'       => array(
+						'entries'         => array(
 							'description' => __( 'Array of entries to import.', 'fair-finance' ),
 							'type'        => 'array',
 							'required'    => true,
@@ -483,11 +484,16 @@ class FinancialEntryController extends WP_REST_Controller {
 								),
 							),
 						),
-						'import_source' => array(
+						'import_source'   => array(
 							'description'       => __( 'Source filename of the import.', 'fair-finance' ),
 							'type'              => 'string',
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_file_name',
+						),
+						'bank_account_id' => array(
+							'description' => __( 'Bank account the entries come from; omit or null when unknown.', 'fair-finance' ),
+							'type'        => array( 'integer', 'null' ),
+							'default'     => null,
 						),
 					),
 				),
@@ -983,6 +989,48 @@ class FinancialEntryController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Refuse a payment-source change on a bank import.
+	 *
+	 * A bank import's origin is the bank: it can never be recorded as event
+	 * cash or personal funds. A legacy import that already stores such a
+	 * classification keeps it as recorded, and it cannot be changed or
+	 * cleared here either; correcting it is a separate process. Sending the
+	 * stored values back unchanged is allowed, so unrelated edits work.
+	 *
+	 * @param WP_REST_Request $request  Request.
+	 * @param FinancialEntry  $existing Bank-imported entry being updated.
+	 * @return null|WP_Error Null to leave the stored classification alone.
+	 */
+	private static function bank_import_payment_guard( $request, $existing ) {
+		$changed = false;
+
+		if ( $request->has_param( 'payment_source' ) ) {
+			$raw     = $request->get_param( 'payment_source' );
+			$source  = ( null === $raw || '' === $raw ) ? null : $raw;
+			$changed = $source !== $existing->payment_source;
+		}
+
+		if ( ! $changed && $request->has_param( 'payer_name' ) ) {
+			$raw     = $request->get_param( 'payer_name' );
+			$payer   = is_string( $raw ) ? trim( sanitize_text_field( $raw ) ) : $raw;
+			$stored  = FinancialEntry::SOURCE_PERSONAL_FUNDS === $existing->payment_source ? (string) $existing->payer_name : '';
+			$changed = ( null === $payer ? '' : $payer ) !== $stored;
+		}
+
+		if ( ! $changed ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'rest_entry_bank_import',
+			$existing->is_classified()
+				? __( 'This bank import was recorded with a payment source before bank imports were protected. That record is kept as it is and cannot be changed here.', 'fair-finance' )
+				: __( 'A bank import cannot be recorded as event cash or personal funds. Its origin stays the bank.', 'fair-finance' ),
+			array( 'status' => 409 )
+		);
+	}
+
+	/**
 	 * Whether a Fair Events event date exists.
 	 *
 	 * @param int $event_date_id Event date ID.
@@ -1290,15 +1338,18 @@ class FinancialEntryController extends WP_REST_Controller {
 		// The stored source and payer stay unless the request names them, and
 		// the resulting record is validated as a whole, so an edit from the
 		// general accounting editor cannot leave a classified entry invalid.
-		$payment = self::resolve_payment(
-			$request,
-			$existing,
-			array(
-				'entry_type'    => $entry_type,
-				'description'   => $description,
-				'event_date_id' => ! empty( $event_date_id ) ? (int) $event_date_id : null,
-			)
-		);
+		// A bank import keeps whatever it stores, unvalidated: null leaves it.
+		$payment = $existing->is_bank_import()
+			? self::bank_import_payment_guard( $request, $existing )
+			: self::resolve_payment(
+				$request,
+				$existing,
+				array(
+					'entry_type'    => $entry_type,
+					'description'   => $description,
+					'event_date_id' => ! empty( $event_date_id ) ? (int) $event_date_id : null,
+				)
+			);
 		if ( is_wp_error( $payment ) ) {
 			return $payment;
 		}
@@ -2135,6 +2186,7 @@ class FinancialEntryController extends WP_REST_Controller {
 	public function import_entries( $request ) {
 		$entries       = $request->get_param( 'entries' );
 		$import_source = $request->get_param( 'import_source' );
+		$account_id    = $request->get_param( 'bank_account_id' );
 
 		if ( empty( $entries ) || ! is_array( $entries ) ) {
 			return new WP_Error(
@@ -2142,6 +2194,10 @@ class FinancialEntryController extends WP_REST_Controller {
 				__( 'No entries provided for import.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		if ( null !== $account_id && ! BankAccount::get_by_id( (int) $account_id ) ) {
+			return self::field_error( 'bank_account_id', __( 'The selected bank account was not found.', 'fair-finance' ), 'rest_bank_account_not_found' );
 		}
 
 		$imported = 0;
@@ -2180,7 +2236,8 @@ class FinancialEntryController extends WP_REST_Controller {
 				sanitize_text_field( $entry_data['external_reference'] ),
 				isset( $entry_data['description'] ) ? sanitize_textarea_field( $entry_data['description'] ) : null,
 				null, // No budget_id for imports.
-				$import_source
+				$import_source,
+				null !== $account_id ? (int) $account_id : null
 			);
 
 			if ( $entry_id ) {

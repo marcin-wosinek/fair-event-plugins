@@ -192,6 +192,79 @@ test.describe('Fair Finance spreadsheet imports', () => {
 		}
 	});
 
+	test('imports into a new bank account and keeps the origin read-only', async ({
+		page,
+	}) => {
+		// Start from a clean slate so the fixture rows import again.
+		await removeEntries(await importedEntries());
+		const accountName = `E2E bank ${KEY}`;
+
+		await loginAsAdmin(page);
+		await page.goto(ENTRIES_PAGE);
+		await page.getByRole('button', { name: 'Import', exact: true }).click();
+		const dialog = page.getByRole('dialog', {
+			name: 'Import Financial Entries',
+		});
+		await expect(dialog.getByLabel('Bank account')).toHaveValue('');
+
+		await dialog.getByRole('button', { name: 'Add bank account' }).click();
+		await dialog.getByLabel('New bank account name').fill(accountName);
+		await dialog.getByRole('button', { name: 'Add account' }).click();
+		await expect(
+			dialog.getByLabel('Bank account').locator('option:checked')
+		).toHaveText(accountName);
+
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: `bank-${KEY}.xlsx`,
+			mimeType:
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			buffer: WORKBOOK,
+		});
+		await expect(dialog.getByText('Preview')).toBeVisible();
+		await dialog
+			.getByRole('button', { name: 'Import', exact: true })
+			.click();
+		await expect(
+			dialog.getByText(
+				'Imported 3 entries, skipped 0 (duplicates or errors).'
+			)
+		).toBeVisible();
+
+		const saved = await importedEntries();
+		expect(saved).toHaveLength(3);
+		for (const entry of saved) {
+			expect(entry.bank_origin.account.name).toBe(accountName);
+		}
+
+		// The editor shows the origin instead of the payment-source fields
+		// and saves an ordinary accounting edit.
+		const cost = saved.find((entry) => entry.entry_type === 'cost');
+		await page.goto(`${ENTRIES_PAGE}&entry_id=${cost.id}`);
+		await page.getByRole('button', { name: /^Edit/ }).first().click();
+		const editor = page.getByRole('dialog', {
+			name: 'Edit Financial Entry',
+		});
+		await expect(
+			editor.getByText(`Bank import — ${accountName}`)
+		).toBeVisible();
+		await expect(editor.getByLabel('Paid from')).toHaveCount(0);
+		await expect(
+			editor.getByRole('option', { name: 'Event cash' })
+		).toHaveCount(0);
+
+		await editor.getByLabel('Description').fill('ALQUILER SALA marzo');
+		await editor.getByRole('button', { name: 'Update Entry' }).click();
+		await expect(editor).toHaveCount(0);
+
+		const res = await api.get(`${ENTRIES_API}/${cost.id}`, {
+			headers: adminHeaders,
+		});
+		const updated = await res.json();
+		expect(updated.description).toBe('ALQUILER SALA marzo');
+		expect(updated.payment_source).toBeNull();
+		expect(updated.bank_origin).toEqual(cost.bank_origin);
+	});
+
 	test('previews a settlement CSV and matches it to a bank entry after a broken file', async ({
 		page,
 	}) => {

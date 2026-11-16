@@ -168,6 +168,28 @@ class FinancialEntry {
 	public $imported_at;
 
 	/**
+	 * Bank account the entry was imported from, when known
+	 *
+	 * @var int|null
+	 */
+	public $bank_account_id;
+
+	/**
+	 * Per-request cache of split parents' provenance, keyed by entry ID.
+	 * Provenance is written once, at import, and never changes afterwards.
+	 *
+	 * @var array<int, array>
+	 */
+	private static $provenance_cache = array();
+
+	/**
+	 * Per-request cache of bank account summaries, keyed by account ID.
+	 *
+	 * @var array<int, array|null>
+	 */
+	private static $account_cache = array();
+
+	/**
 	 * Created at timestamp
 	 *
 	 * @var string
@@ -815,6 +837,15 @@ class FinancialEntry {
 				: null;
 			$format[]               = '%s';
 			$format[]               = '%s';
+
+			// A bank import keeps its stored classification: it can never
+			// become event cash or personal funds, and a legacy one is not
+			// rewritten here. Callers pass null to leave it alone.
+			$existing = self::get_by_id( $id );
+			if ( $existing && $existing->is_bank_import()
+				&& ( $data['payment_source'] !== $existing->payment_source || $data['payer_name'] !== $existing->payer_name ) ) {
+				return false;
+			}
 		}
 
 		$result = $wpdb->update(
@@ -1022,9 +1053,10 @@ class FinancialEntry {
 	 * @param string|null $description        Entry description.
 	 * @param int|null    $budget_id          Budget ID.
 	 * @param string|null $import_source      Import source filename.
+	 * @param int|null    $bank_account_id    Bank account the entry comes from, already validated; null when unknown.
 	 * @return int|false The entry ID on success, false on failure.
 	 */
-	public static function create_with_external_reference( $amount, $entry_type, $entry_date, $external_reference, $description = null, $budget_id = null, $import_source = null ) {
+	public static function create_with_external_reference( $amount, $entry_type, $entry_date, $external_reference, $description = null, $budget_id = null, $import_source = null, $bank_account_id = null ) {
 		global $wpdb;
 
 		$table_name = self::get_table_name();
@@ -1048,9 +1080,10 @@ class FinancialEntry {
 			'external_reference' => $external_reference,
 			'import_source'      => $import_source,
 			'imported_at'        => current_time( 'mysql' ),
+			'bank_account_id'    => $bank_account_id ? (int) $bank_account_id : null,
 		);
 
-		$format = array( '%f', '%s', '%s', '%s', '%d', '%s', '%s', '%s' );
+		$format = array( '%f', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' );
 
 		$result = $wpdb->insert( $table_name, $data, $format );
 
@@ -1689,6 +1722,85 @@ class FinancialEntry {
 	}
 
 	/**
+	 * Whether this row itself carries persisted import evidence: an import
+	 * timestamp, external reference, import source or bank account.
+	 *
+	 * @return bool
+	 */
+	public function has_own_bank_provenance() {
+		return ! empty( $this->imported_at )
+			|| ! empty( $this->external_reference )
+			|| ! empty( $this->import_source )
+			|| ! empty( $this->bank_account_id );
+	}
+
+	/**
+	 * Provenance this entry carries: its own for a standalone entry or split
+	 * parent, its parent's for a split allocation.
+	 *
+	 * @return array `import` (bool) and `account_id` (int, 0 when unknown).
+	 */
+	private function provenance() {
+		if ( ! $this->parent_entry_id ) {
+			return array(
+				'import'     => $this->has_own_bank_provenance(),
+				'account_id' => (int) $this->bank_account_id,
+			);
+		}
+
+		$parent_id = (int) $this->parent_entry_id;
+		if ( ! array_key_exists( $parent_id, self::$provenance_cache ) ) {
+			$parent                               = self::get_by_id( $parent_id );
+			self::$provenance_cache[ $parent_id ] = array(
+				'import'     => $parent && $parent->has_own_bank_provenance(),
+				'account_id' => $parent ? (int) $parent->bank_account_id : 0,
+			);
+		}
+
+		return self::$provenance_cache[ $parent_id ];
+	}
+
+	/**
+	 * Whether the entry is a bank import. Split allocations inherit their
+	 * parent's origin. Only persisted evidence counts: nothing is inferred
+	 * from descriptions, filenames or matched payments.
+	 *
+	 * @return bool
+	 */
+	public function is_bank_import() {
+		return $this->provenance()['import'];
+	}
+
+	/**
+	 * Read-only bank origin of the entry, for display.
+	 *
+	 * @return array|null Null for an entry that is not a bank import;
+	 *                    otherwise `account` is the originating account's
+	 *                    `id` and `name`, or null when it is unknown.
+	 */
+	public function bank_origin() {
+		$provenance = $this->provenance();
+		if ( ! $provenance['import'] ) {
+			return null;
+		}
+
+		$account_id = $provenance['account_id'];
+		if ( $account_id && ! array_key_exists( $account_id, self::$account_cache ) ) {
+			$account                            = BankAccount::get_by_id( $account_id );
+			self::$account_cache[ $account_id ] = $account
+				? array(
+					'id'   => $account->id,
+					'name' => $account->name,
+				)
+				: null;
+		}
+
+		return array(
+			'account' => $account_id ? self::$account_cache[ $account_id ] : null,
+		);
+	}
+
+	/**
 	 * Cash and personal-funds summary for one event date.
 	 *
 	 * Computed over every matching entry, independently of list pagination.
@@ -1808,6 +1920,7 @@ class FinancialEntry {
 		$entry->payer_name         = isset( $row->payer_name ) ? $row->payer_name : null;
 		$entry->import_source      = isset( $row->import_source ) ? $row->import_source : null;
 		$entry->imported_at        = isset( $row->imported_at ) ? $row->imported_at : null;
+		$entry->bank_account_id    = isset( $row->bank_account_id ) && $row->bank_account_id ? (int) $row->bank_account_id : null;
 		$entry->created_at         = $row->created_at;
 		$entry->updated_at         = $row->updated_at;
 
@@ -1844,6 +1957,8 @@ class FinancialEntry {
 			'payer_name'         => $this->payer_name,
 			'import_source'      => $this->import_source,
 			'imported_at'        => $this->imported_at,
+			'bank_account_id'    => $this->bank_account_id,
+			'bank_origin'        => $this->bank_origin(),
 			'created_at'         => $this->created_at,
 			'updated_at'         => $this->updated_at,
 		);

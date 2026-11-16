@@ -10,6 +10,8 @@ import {
 	TextareaControl,
 	SelectControl,
 	Button,
+	BaseControl,
+	Notice,
 	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
 } from '@wordpress/components';
@@ -19,6 +21,7 @@ import {
  */
 import EventUrlField from './EventUrlField.js';
 import TagField from './TagField.js';
+import { bankOriginLabel, legacyClassificationNotice } from './bankOrigin.js';
 
 const today = () => new Date().toISOString().split( 'T' )[ 0 ];
 
@@ -68,6 +71,10 @@ const EntryForm = ( {
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
 
+	// A bank import's origin is the bank: it is shown, never edited.
+	const originLabel = bankOriginLabel( entry?.bank_origin );
+	const legacyNotice = legacyClassificationNotice( entry );
+
 	// Merge into the latest state rather than a render-time snapshot.
 	const updateFormData = ( changes ) =>
 		setFormData( ( current ) => ( { ...current, ...changes } ) );
@@ -94,6 +101,12 @@ const EntryForm = ( {
 						? formData.payer_name.trim()
 						: null,
 			};
+
+			// Leave a bank import's stored classification alone.
+			if ( originLabel ) {
+				delete data.payment_source;
+				delete data.payer_name;
+			}
 
 			if ( entry ) {
 				await apiFetch( {
@@ -203,40 +216,74 @@ const EntryForm = ( {
 						) }
 					/>
 
-					<SelectControl
-						label={ __( 'Paid from', 'fair-finance' ) }
-						value={ formData.payment_source }
-						options={ [
-							{
-								label: __( 'Unspecified', 'fair-finance' ),
-								value: '',
-							},
-							{
-								label: __( 'Event cash', 'fair-finance' ),
-								value: 'event_cash',
-							},
-							...( 'income' === formData.entry_type
-								? []
-								: [
-										{
-											label: __(
-												'Personal funds',
-												'fair-finance'
-											),
-											value: 'personal_funds',
-										},
-									] ),
-						] }
-						onChange={ ( value ) =>
-							updateFormData( { payment_source: value } )
-						}
-						help={ __(
-							'Event cash and personal funds are recorded from the event’s Finance tab and must stay linked to an event.',
-							'fair-finance'
-						) }
-					/>
+					{ originLabel && (
+						<div className="fair-finance-entry-origin">
+							<BaseControl.VisualLabel>
+								{ __( 'Paid from', 'fair-finance' ) }
+							</BaseControl.VisualLabel>
+							<p
+								style={ {
+									margin: '4px 0',
+									overflowWrap: 'anywhere',
+								} }
+							>
+								{ originLabel }
+							</p>
+							<p
+								className="components-base-control__help"
+								style={ { margin: 0 } }
+							>
+								{ __(
+									'Bank imports keep their bank origin and cannot be recorded as event cash or personal funds.',
+									'fair-finance'
+								) }
+							</p>
+						</div>
+					) }
 
-					{ 'personal_funds' === formData.payment_source &&
+					{ legacyNotice && (
+						<Notice status="warning" isDismissible={ false }>
+							{ legacyNotice }
+						</Notice>
+					) }
+
+					{ ! originLabel && (
+						<SelectControl
+							label={ __( 'Paid from', 'fair-finance' ) }
+							value={ formData.payment_source }
+							options={ [
+								{
+									label: __( 'Unspecified', 'fair-finance' ),
+									value: '',
+								},
+								{
+									label: __( 'Event cash', 'fair-finance' ),
+									value: 'event_cash',
+								},
+								...( 'income' === formData.entry_type
+									? []
+									: [
+											{
+												label: __(
+													'Personal funds',
+													'fair-finance'
+												),
+												value: 'personal_funds',
+											},
+										] ),
+							] }
+							onChange={ ( value ) =>
+								updateFormData( { payment_source: value } )
+							}
+							help={ __(
+								'Event cash and personal funds are recorded from the event’s Finance tab and must stay linked to an event.',
+								'fair-finance'
+							) }
+						/>
+					) }
+
+					{ ! originLabel &&
+						'personal_funds' === formData.payment_source &&
 						'cost' === formData.entry_type && (
 							<TextControl
 								label={ __( 'Paid by', 'fair-finance' ) }
