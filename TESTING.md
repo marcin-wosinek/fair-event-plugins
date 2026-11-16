@@ -379,8 +379,9 @@ Use the last phase heading in the output:
 
 ### Long runs: durations and one run at a time
 
-**Full API and E2E suites run in CI, not locally.** `api-tests.yml` and
-`e2e.yml` run them on every PR; together they take about 70 minutes, which is
+**Full API and E2E suites run in CI, not locally.**
+[`integration-tests.yml`](#integration-test-workflow) runs them on every PR
+that touches them; together they take about 70 minutes, which is
 no use as a local feedback loop. Locally, run individual tests (`--grep`) or at
 most one whole spec file, then push and let CI cover the rest. Don't block
 on, or wait for, a local full-suite run.
@@ -434,6 +435,58 @@ broken environment but are not: counts off by one (`Expected: 2, Received:
   `WP_BASE_URL` to this worktree's tests port, or the specs fall back to
   another site:
   `CI=1 WP_BASE_URL=http://localhost:8891 WP_ADMIN_USER=admin WP_ADMIN_PASS=password WP_ADMIN_PASSWORD=password npx playwright test …`
+
+### Integration test workflow
+
+`.github/workflows/integration-tests.yml` (**Integration Tests**) is the only
+entry point for the API and E2E suites in CI (#2326). It runs on every push to
+`main` and every pull request:
+
+1. **`Select suites`** applies each suite's path filters, kept in
+   `scripts/integration-suites.mjs`, to the change (`git diff` against the
+   pull request's base, or the pushed range). Lockfiles, workspace
+   `package.json`, `composer.json`/`composer.lock` and webpack configuration,
+   and the preparation tooling select both suites. If the changed files
+   can't be listed, both suites run. A change that selects neither runs
+   nothing else.
+2. **`Prepare integration build`** runs `npm run build` and then
+   `npm run composer:install:prod` once, and packages every runtime plugin's
+   `build/`, generated `block-docs/` and production `vendor/` with
+   `scripts/integration-build.mjs pack`. The tar archive keeps file modes;
+   `integration-build.json` next to it records the commit, workflow run,
+   preparation attempt, archive checksum and included paths. It uploads the
+   pair as `integration-build-attempt-A` (retained 30 days) and outputs the
+   artifact's exact id. Databases, uploads, wp-env state, `node_modules`,
+   browsers and release ZIPs are never included. The release `plugins`
+   artifact from `continuous-integration.yml` is separate packaging output.
+3. **`API / …`** and **`E2E / …`** call the reusable `api-tests.yml` and
+   `e2e.yml` with that id. Each inventory job and each of the eight shards
+   runs as before, except that a shard installs only npm dependencies (plus
+   the browser and Docker images it needs), downloads the build by id, and
+   runs `scripts/integration-build.mjs restore` before starting WordPress.
+   Restore fails, and the shard never rebuilds, if the artifact is missing
+   (expired or deleted), the manifest names another commit, run or attempt,
+   the checksum differs, the archive holds anything outside its declared
+   paths, or a runtime plugin is left without its outputs. The shard then
+   runs `test:api:local`/`test:e2e:local` with `--prepared`, so every shard
+   still starts, provisions and stops its own wp-env database, uploads and
+   settings.
+4. **`API Tests`** and **`E2E`** are the single statuses, as before. Each
+   fails when suite selection or preparation failed, and is skipped when the
+   change doesn't select its suite.
+
+**Manual runs.** Actions → _Integration Tests_ → _Run workflow_, or
+`gh workflow run integration-tests.yml --ref <branch> -f suites=api|e2e|both`
+(add `-f php_diagnostics=true` for the
+[PHP diagnostics sweep](#php-diagnostics-sweep)). `api-tests.yml` and
+`e2e.yml` can no longer be dispatched on their own.
+
+**Reruns.** _Re-run failed jobs_ keeps the preparation job's outputs, so the
+rerun shards restore the same build of the same attempt; reports and API
+coverage verification read every attempt's artifacts as before. _Re-run all
+jobs_ prepares a new `integration-build-attempt-A` and passes its id to every
+shard. When the build has expired or was deleted, a rerun shard fails with
+that message: use _Re-run all jobs_ or start a new run.
 
 ### REST API tests
 
@@ -505,11 +558,13 @@ pattern:
   reports the holder's output, exit code and signal with `ok: false` instead
   of failing the WP-CLI run, so the spec can attach them to the report.
 
-`.github/workflows/api-tests.yml` uses the same lifecycle command and test-only
-authentication as local development, split into four isolated shards:
+`.github/workflows/api-tests.yml`, called by the
+[integration test workflow](#integration-test-workflow), uses the same
+lifecycle command and test-only authentication as local development, split
+into four isolated shards:
 
-- **`API shard N/4`** jobs each run
-  `npm run test:api:local -- --shard=N/4 --results-dir=api-results` on their
+- **`API shard N/4`** jobs each restore the run's prepared build and run
+  `npm run test:api:local -- --prepared --shard=N/4 --results-dir=api-results` on their
   own runner, so every shard has its own wp-env containers, database, uploads,
   captured emails and settings. Inside a shard the suite stays sequential
   (`workers: 1`, `fullyParallel: false`, two CI retries), because specs share
@@ -531,8 +586,8 @@ Every shard uploads `api-report-shard-N-of-4-attempt-A` (`api-results/` with
 timings and JSON results, plus each workspace's HTML report and
 `test-results/` traces) on success as well as failure. Open the failing shard's
 job: its log ends with the failing workspaces, and its step summary has the
-phase timings. Reports are not merged. The workflow also has a manual trigger
-(`gh workflow run api-tests.yml --ref <branch>`) for benchmark runs.
+phase timings. Reports are not merged. For benchmark runs, dispatch
+`gh workflow run integration-tests.yml --ref <branch> -f suites=api`.
 
 Shards hold whole spec files, balanced by recorded duration across all
 workspaces ([Rebalancing shards](#rebalancing-shards)). Change the shard count
@@ -638,10 +693,12 @@ fails with the stage, URL, request and what it found instead of a client. It
 sends each request exactly once. `e2e/block-docs-api-fetch.spec.js` covers it
 without a WordPress site.
 
-`.github/workflows/e2e.yml` runs the same managed lifecycle on relevant pull
-requests, split into four Playwright shards:
+`.github/workflows/e2e.yml`, called by the
+[integration test workflow](#integration-test-workflow), runs the same managed
+lifecycle on relevant pull requests, split into four Playwright shards:
 
-- **`E2E shard N/4`** jobs each run `npm run test:e2e:local -- --shard=N/4` on
+- **`E2E shard N/4`** jobs each restore the run's prepared build and run
+  `npm run test:e2e:local -- --prepared --shard=N/4` on
   their own runner, so every shard has its own wp-env containers, database,
   uploads, captured emails and settings. The runner assigns whole spec files
   by recorded duration and runs its shard's files through `--test-list`
@@ -698,8 +755,8 @@ npm run test:api:local -- --php-diagnostics --workspace=fair-events -- GetTicket
 npm run test:e2e:local -- --php-diagnostics e2e/smoke.spec.js
 ```
 
-**In CI**, open the API Tests or E2E workflow under Actions, choose
-_Run workflow_, and tick _PHP diagnostics sweep_. Every shard runs its usual
+**In CI**, open the Integration Tests workflow under Actions, choose
+_Run workflow_, pick the suites, and tick _PHP diagnostics sweep_. Every shard runs its usual
 files. Each shard's job summary shows the grouped results, and its
 `php-diagnostics-<suite>-shard-N-of-4-attempt-M` artifact holds the raw logs
 and the report.
@@ -792,7 +849,7 @@ shard's test time drifts more than a few minutes from the others in the
 `workflow_dispatch` runs) whose artifacts haven't expired (seven days):
 
 ```bash
-gh run list --workflow=e2e.yml --branch=main --status=success --limit=5
+gh run list --workflow=integration-tests.yml --branch=main --status=success --limit=5
 node scripts/shard-timings.mjs refresh --suite=e2e --run=<id> --run=<id> --run=<id>
 node scripts/shard-timings.mjs refresh --suite=api --run=<id> --run=<id> --run=<id>
 node scripts/check-e2e-shards.mjs --total=4
@@ -813,7 +870,7 @@ in alternation, at least three of each per suite, so both see the same runner
 image and caches. Then compare them:
 
 ```bash
-gh workflow run e2e.yml --ref <baseline-branch>; gh workflow run e2e.yml --ref <candidate-branch>
+gh workflow run integration-tests.yml --ref <baseline-branch> -f suites=e2e; gh workflow run integration-tests.yml --ref <candidate-branch> -f suites=e2e
 node scripts/shard-timings.mjs report --suite=e2e --label=Before --run=<id> …
 node scripts/shard-timings.mjs report --suite=e2e --label=After --run=<id> …
 ```
@@ -822,8 +879,10 @@ node scripts/shard-timings.mjs report --suite=e2e --label=After --run=<id> …
 time from first job start to last job end (queue delay excluded), each
 shard's test time (Playwright's duration for E2E, the sum of the workspace
 test phases for API), the fastest-to-slowest gap, runner minutes over all
-jobs, and flaky and failed tests. Keep failed runs in the table and say why
-any run is excluded.
+jobs, and flaky and failed tests. In an Integration Tests run holding both
+suites, the figures for one suite leave out the other suite's jobs but keep
+the shared `Select suites` and `Prepare integration build` jobs. Keep failed
+runs in the table and say why any run is excluded.
 
 **Results (#2224).** Measured on 2026-11-09 with interleaved
 `workflow_dispatch` runs of a baseline branch (`main` plus a manual trigger)

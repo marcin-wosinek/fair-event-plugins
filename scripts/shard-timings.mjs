@@ -271,13 +271,28 @@ async function runMetadata(run) {
 }
 
 /**
+ * Whether a job belongs to the other suite. Since #2326 one integration-tests
+ * run holds both suites (job names like "API / API shard 1/4" and
+ * "E2E / E2E shard 1/4") plus shared jobs such as "Prepare integration
+ * build", which count towards both. Older runs hold one suite only.
+ *
+ * @param {Object} job   `gh run view` job.
+ * @param {string} suite "e2e" or "api".
+ * @return {boolean} True when the job is the other suite's.
+ */
+export function otherSuiteJob(job, suite) {
+	const name = job.name.split(' / ').pop();
+	return suite === 'e2e' ? /^API\b/.test(name) : /^E2E\b/.test(name);
+}
+
+/**
  * Benchmark figures of one run.
  *
  * Elapsed time runs from the first job start to the last job end, so queue
  * delay before the first job is excluded, but waits for a free runner between
  * jobs are not. The critical path adds the inventory job, the slowest shard
  * job and the status job, so it ignores runner queueing altogether. Runner
- * minutes add up every job.
+ * minutes add up every job of the suite, including shared preparation.
  * A shard's test time is Playwright's own duration (E2E) or the sum of its
  * workspace test phases (API).
  *
@@ -288,7 +303,7 @@ async function runMetadata(run) {
  */
 export function runFigures(metadata, shards, suite) {
 	const jobs = metadata.jobs.filter(
-		(job) => job.startedAt && job.completedAt
+		(job) => job.startedAt && job.completedAt && !otherSuiteJob(job, suite)
 	);
 	const started = jobs.map((job) => Date.parse(job.startedAt));
 	const completed = jobs.map((job) => Date.parse(job.completedAt));

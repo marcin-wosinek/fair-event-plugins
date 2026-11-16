@@ -8,6 +8,7 @@ import {
 	latestShardFolders,
 	median,
 	parseOptions,
+	otherSuiteJob,
 	runFigures,
 } from '../shard-timings.mjs';
 
@@ -149,6 +150,50 @@ test('only the latest attempt of each shard artifact is read', () => {
 		],
 		[[3, 'playwright-report-shard-3-of-4-attempt-1']]
 	);
+});
+
+test('a combined run keeps one suite and the shared preparation', () => {
+	const metadata = {
+		conclusion: 'success',
+		attempt: 1,
+		jobs: [
+			{ name: 'Select suites', startedAt: at(0), completedAt: at(60) },
+			{
+				name: 'Prepare integration build',
+				startedAt: at(60),
+				completedAt: at(300),
+			},
+			{
+				name: 'API / API shard 1/2',
+				startedAt: at(300),
+				completedAt: at(900),
+			},
+			{
+				name: 'E2E / E2E shard 1/2',
+				startedAt: at(300),
+				completedAt: at(1500),
+			},
+			{ name: 'API Tests', startedAt: at(900), completedAt: at(960) },
+			{ name: 'E2E', startedAt: at(1500), completedAt: at(1560) },
+		],
+	};
+	assert.equal(otherSuiteJob({ name: 'E2E / E2E shard 1/2' }, 'api'), true);
+	assert.equal(otherSuiteJob({ name: 'API Tests' }, 'e2e'), true);
+	assert.equal(
+		otherSuiteJob({ name: 'Prepare integration build' }, 'e2e'),
+		false
+	);
+
+	const api = runFigures(metadata, [{ reports: [] }], 'api');
+	// From the suite selection to the API status job.
+	assert.equal(api.elapsed, 16);
+	// Selection 1 + preparation 4 + shard 10 + status 1.
+	assert.equal(api.runnerMinutes, 16);
+
+	const e2e = runFigures(metadata, [{ reports: [] }], 'e2e');
+	assert.equal(e2e.elapsed, 26);
+	// Selection 1 + preparation 4 + shard 20 + status 1.
+	assert.equal(e2e.criticalPath, 26);
 });
 
 test('run figures exclude queue time and use per-shard test time', () => {
