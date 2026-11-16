@@ -178,6 +178,144 @@ test.describe( 'Calendar client-side navigation', () => {
 	}
 } );
 
+test.describe( 'Calendar navigation guards and fallback', () => {
+	for ( const fixture of cases ) {
+		test( `${ fixture.name } view guards pending clicks per instance and falls back on failure`, async ( {
+			page,
+		} ) => {
+			test.setTimeout( 90_000 );
+			await login( page );
+			await page.goto(
+				'/wp-admin/admin.php?page=fair-events-all-events'
+			);
+			await page.waitForFunction( () => window.wp?.apiFetch );
+			const firstId = `${ fixture.id }-guard-first`;
+			const secondId = `${ fixture.id }-guard-second`;
+			const blockMarkup = ( anchor ) =>
+				`<!-- wp:fair-events/${ fixture.block } {"anchor":"${ anchor }","categories":[1],"eventSources":["fixture-source"],"showDrafts":true} /-->`;
+			const testPage = await apiFetch( page, {
+				path: '/wp/v2/pages',
+				method: 'POST',
+				data: {
+					title: `Navigation Guards ${ fixture.name }`,
+					status: 'publish',
+					content:
+						blockMarkup( firstId ) +
+						FILLER +
+						blockMarkup( secondId ),
+				},
+			} );
+			const pageUrl = testPage.link || `/?page_id=${ testPage.id }`;
+			await page.goto( pageUrl );
+
+			const first = page.locator( `#${ firstId }` );
+			const second = page.locator( `#${ secondId }` );
+			const firstNext = first.locator( '.nav-next' );
+			const secondNext = second.locator( '.nav-next' );
+			const firstNextHref = await firstNext.getAttribute( 'href' );
+			await page.evaluate( () => {
+				window.__fairNavigationDocument = document;
+			} );
+
+			// Hold each period response until the test releases it, so the
+			// pending phase can be exercised deterministically.
+			const periodRequests = [];
+			const releases = [];
+			await page.route( '**/*', async ( route ) => {
+				if ( ! route.request().url().includes( fixture.param ) ) {
+					return route.continue();
+				}
+				periodRequests.push( route.request().url() );
+				await new Promise( ( resolve ) => releases.push( resolve ) );
+				return route.continue();
+			} );
+
+			// Modified clicks stay with the browser while idle: a new tab
+			// opens and the instance never enters its loading phase.
+			const [ newTab ] = await Promise.all( [
+				page.context().waitForEvent( 'page' ),
+				firstNext.click( { modifiers: [ 'ControlOrMeta' ] } ),
+			] );
+			await newTab.close();
+			await expect( first ).not.toHaveAttribute( 'aria-busy', 'true' );
+
+			await firstNext.click();
+			await expect( first ).toHaveAttribute( 'aria-busy', 'true' );
+			await expect( second ).not.toHaveAttribute( 'aria-busy', 'true' );
+			await expect(
+				second.locator( '.fair-events-navigation-loading' )
+			).toBeHidden();
+
+			// The link no longer takes pointer clicks while loading; dispatch
+			// plain and modified clicks to exercise the action's own guard.
+			await firstNext.dispatchEvent( 'click', { button: 0 } );
+			await firstNext.dispatchEvent( 'click', {
+				button: 0,
+				ctrlKey: true,
+				metaKey: true,
+			} );
+			await firstNext.focus();
+			await page.keyboard.press( 'Enter' );
+
+			// The other instance navigates independently meanwhile. Both
+			// links point at the same period, so the router reuses the one
+			// pending page request for it.
+			await secondNext.click();
+			await expect( second ).toHaveAttribute( 'aria-busy', 'true' );
+			expect( periodRequests ).toHaveLength( 1 );
+
+			releases.splice( 0 ).forEach( ( release ) => release() );
+			await expect( first ).not.toHaveAttribute( 'aria-busy', 'true' );
+			await expect( second ).not.toHaveAttribute( 'aria-busy', 'true' );
+			expect( periodRequests ).toHaveLength( 1 );
+			expect(
+				new URL( periodRequests[ 0 ] ).searchParams.get( fixture.param )
+			).toBe(
+				new URL( firstNextHref, page.url() ).searchParams.get(
+					fixture.param
+				)
+			);
+			expect(
+				await page.evaluate(
+					() => window.__fairNavigationDocument === document
+				)
+			).toBe( true );
+			expect( page.context().pages() ).toHaveLength( 1 );
+
+			// A failed enhancement (the router module can't be loaded) falls
+			// back to a full load of the link, hash included.
+			await page.unroute( '**/*' );
+			await page.route( /interactivity-router/, ( route ) =>
+				route.abort()
+			);
+			await page.goto( pageUrl );
+			await page.evaluate( () => {
+				window.__fairNavigationDocument = document;
+			} );
+			const fallbackHref = new URL(
+				await firstNext.getAttribute( 'href' ),
+				page.url()
+			).href;
+			expect( new URL( fallbackHref ).hash ).toBe( `#${ firstId }` );
+			await firstNext.click();
+			await page.waitForURL( fallbackHref );
+			expect(
+				await page.evaluate(
+					() => window.__fairNavigationDocument === undefined
+				)
+			).toBe( true );
+			await expect( first ).not.toHaveAttribute( 'aria-busy', 'true' );
+			await expect( first.locator( '.nav-next' ) ).toBeVisible();
+
+			await page.unroute( '**/*' );
+			await apiFetch( page, {
+				path: `/wp/v2/pages/${ testPage.id }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+		} );
+	}
+} );
+
 function pad2( n ) {
 	return String( n ).padStart( 2, '0' );
 }

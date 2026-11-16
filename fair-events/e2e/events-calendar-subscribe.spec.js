@@ -94,6 +94,11 @@ test.describe( 'Events Calendar — Subscribe dropdown', () => {
 		await page.goto(
 			calendarPage.link || `/?page_id=${ calendarPage.id }`
 		);
+		// Mark the document so the checks below prove the controls work
+		// after client-side period navigation, not after a full reload.
+		await page.evaluate( () => {
+			window.__fairNavigationDocument = document;
+		} );
 		const initialHeading = await page
 			.locator( '.navigation-title' )
 			.textContent();
@@ -101,6 +106,11 @@ test.describe( 'Events Calendar — Subscribe dropdown', () => {
 		await expect( page.locator( '.navigation-title' ) ).not.toHaveText(
 			initialHeading.trim()
 		);
+		expect(
+			await page.evaluate(
+				() => window.__fairNavigationDocument === document
+			)
+		).toBe( true );
 
 		const trigger = page.locator( '.fair-events-subscribe-trigger' );
 		await expect( trigger ).toBeVisible();
