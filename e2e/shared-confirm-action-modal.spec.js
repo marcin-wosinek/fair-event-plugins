@@ -89,10 +89,14 @@ async function interceptWrites( page, { match, list, success } ) {
  * Check that the open dialog fits the viewport: its title wraps inside the
  * header, nothing scrolls sideways and the buttons stay inside the frame.
  *
- * @param {import('@playwright/test').Page}    page   Playwright page.
- * @param {import('@playwright/test').Locator} dialog The dialog.
+ * With `pageFits`, the admin page behind must not scroll sideways either.
+ *
+ * @param {import('@playwright/test').Page}    page               Playwright page.
+ * @param {import('@playwright/test').Locator} dialog             The dialog.
+ * @param {Object}                             [options]          Options.
+ * @param {boolean}                            [options.pageFits] Also check the page.
  */
-async function expectWrappedLayout( page, dialog ) {
+async function expectWrappedLayout( page, dialog, { pageFits = false } = {} ) {
 	for ( const viewport of VIEWPORTS ) {
 		await page.setViewportSize( viewport );
 		const metrics = await dialog.evaluate( ( frame ) => {
@@ -126,11 +130,17 @@ async function expectWrappedLayout( page, dialog ) {
 				hasSharedClass: frame.classList.contains(
 					'fair-confirm-action-modal'
 				),
+				pageOverflow:
+					document.documentElement.scrollWidth -
+					document.documentElement.clientWidth,
 			};
 		} );
 		const where = `at ${ viewport.name } (${ viewport.width }px)`;
 		expect( metrics.hasSharedClass, where ).toBe( true );
 		expect( metrics.frameOverflow, where ).toBeLessThanOrEqual( 0 );
+		if ( pageFits ) {
+			expect( metrics.pageOverflow, `page ${ where }` ).toBe( 0 );
+		}
 		expect( metrics.headingClipped, where ).toBeLessThanOrEqual( 1 );
 		expect( metrics.headingBottom, where ).toBeLessThanOrEqual(
 			metrics.headerBottom + 1
@@ -158,10 +168,19 @@ async function expectWrappedLayout( page, dialog ) {
  * @param {string}                          options.busy        Its label while pending.
  * @param {Object}                          options.writes      State from interceptWrites.
  * @param {string}                          options.cancelLabel Cancel label.
+ * @param {boolean}                         options.pageFits    The page behind fits every width too.
  */
 async function exerciseConfirmation(
 	page,
-	{ open, title, confirm, busy, writes, cancelLabel = 'Cancel' }
+	{
+		open,
+		title,
+		confirm,
+		busy,
+		writes,
+		cancelLabel = 'Cancel',
+		pageFits = false,
+	}
 ) {
 	const dialog = page.getByRole( 'dialog', { name: title } );
 
@@ -171,7 +190,7 @@ async function exerciseConfirmation(
 	await expect(
 		dialog.getByRole( 'button', { name: 'Close' } )
 	).toBeVisible();
-	await expectWrappedLayout( page, dialog );
+	await expectWrappedLayout( page, dialog, { pageFits } );
 	await page.keyboard.press( 'Escape' );
 	await expect( dialog ).toBeHidden();
 	await expect( trigger ).toBeFocused();
@@ -377,6 +396,8 @@ test.describe( 'Shared confirmation dialog (#2228)', () => {
 			confirm: 'Delete old logs',
 			busy: 'Deleting…',
 			writes,
+			// The connection log page fits a phone since #2315.
+			pageFits: true,
 		} );
 	} );
 

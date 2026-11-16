@@ -13,9 +13,6 @@ import {
 	TextControl,
 	Spinner,
 	Notice,
-	FlexBlock,
-	FlexItem,
-	Flex,
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
@@ -27,6 +24,7 @@ import ConfirmActionModal from '../ConfirmActionModal.js';
 import useConnectionManagement, {
 	DEFAULT_CLEANUP_DAYS,
 } from './useConnectionManagement.js';
+import './connection-management.css';
 
 const CELL_STYLE = { padding: '12px' };
 const MESSAGE_STYLE = { padding: '40px', textAlign: 'center' };
@@ -62,9 +60,12 @@ function StatusBadge( { status, statuses } ) {
 
 function StatisticsCards( { statistics, definitions } ) {
 	return (
-		<Flex gap={ 4 } wrap>
+		<div className="fair-platform-connection-logs__stats">
 			{ definitions.map( ( { key, label, color } ) => (
-				<FlexBlock key={ key }>
+				<div
+					key={ key }
+					className="fair-platform-connection-logs__stat"
+				>
 					<Card>
 						<CardBody>
 							<div
@@ -74,16 +75,20 @@ function StatisticsCards( { statistics, definitions } ) {
 									...( color ? { color } : {} ),
 								} }
 							>
-								{ statistics[ key ] }
+								{ /* SUM() over no rows is null; show it as 0. */ }
+								{ statistics[ key ] ?? 0 }
 							</div>
-							<div style={ { color: MUTED_COLOR } }>
+							<div
+								className="fair-platform-connection-logs__stat-label"
+								style={ { color: MUTED_COLOR } }
+							>
 								{ label }
 							</div>
 						</CardBody>
 					</Card>
-				</FlexBlock>
+				</div>
 			) ) }
-		</Flex>
+		</div>
 	);
 }
 
@@ -177,7 +182,7 @@ export default function ConnectionManagementScreen( {
 	];
 
 	return (
-		<VStack spacing={ 4 }>
+		<VStack spacing={ 4 } className="fair-platform-connection-logs">
 			<div>
 				<h1>{ labels.title }</h1>
 				<p>{ labels.description }</p>
@@ -192,67 +197,82 @@ export default function ConnectionManagementScreen( {
 
 			<Card>
 				<CardBody>
-					<HStack spacing={ 3 } alignment="bottom">
-						<SelectControl
-							label={ __( 'Status Filter', 'fair-platform' ) }
-							value={ statusFilter }
-							options={ [
-								{
-									label: __(
-										'All Statuses',
-										'fair-platform'
-									),
-									value: '',
-								},
-								...statuses.map( ( { value, label } ) => ( {
-									label,
-									value,
-								} ) ),
-							] }
-							onChange={ setStatusFilter }
-						/>
-						<SelectControl
-							label={ __( 'Sort By', 'fair-platform' ) }
-							value={ orderBy }
-							options={ [
-								{
-									label: __(
-										'Connection Date',
-										'fair-platform'
-									),
-									value: 'connected_at',
-								},
-								{
-									label: __( 'Site Name', 'fair-platform' ),
-									value: 'site_name',
-								},
-								{
-									label: __( 'Status', 'fair-platform' ),
-									value: 'status',
-								},
-								{
-									label: __( 'ID', 'fair-platform' ),
-									value: 'id',
-								},
-							] }
-							onChange={ setOrderBy }
-						/>
-						<SelectControl
-							label={ __( 'Order', 'fair-platform' ) }
-							value={ order }
-							options={ [
-								{
-									label: __( 'Descending', 'fair-platform' ),
-									value: 'DESC',
-								},
-								{
-									label: __( 'Ascending', 'fair-platform' ),
-									value: 'ASC',
-								},
-							] }
-							onChange={ setOrder }
-						/>
-						<FlexItem style={ { marginLeft: 'auto' } }>
+					<div className="fair-platform-connection-logs__toolbar">
+						<div className="fair-platform-connection-logs__control">
+							<SelectControl
+								label={ __( 'Status Filter', 'fair-platform' ) }
+								value={ statusFilter }
+								options={ [
+									{
+										label: __(
+											'All Statuses',
+											'fair-platform'
+										),
+										value: '',
+									},
+									...statuses.map( ( { value, label } ) => ( {
+										label,
+										value,
+									} ) ),
+								] }
+								onChange={ setStatusFilter }
+							/>
+						</div>
+						<div className="fair-platform-connection-logs__control">
+							<SelectControl
+								label={ __( 'Sort By', 'fair-platform' ) }
+								value={ orderBy }
+								options={ [
+									{
+										label: __(
+											'Connection Date',
+											'fair-platform'
+										),
+										value: 'connected_at',
+									},
+									{
+										label: __(
+											'Site Name',
+											'fair-platform'
+										),
+										value: 'site_name',
+									},
+									{
+										label: __( 'Status', 'fair-platform' ),
+										value: 'status',
+									},
+									{
+										label: __( 'ID', 'fair-platform' ),
+										value: 'id',
+									},
+								] }
+								onChange={ setOrderBy }
+							/>
+						</div>
+						<div className="fair-platform-connection-logs__control">
+							<SelectControl
+								label={ __( 'Order', 'fair-platform' ) }
+								value={ order }
+								options={ [
+									{
+										label: __(
+											'Descending',
+											'fair-platform'
+										),
+										value: 'DESC',
+									},
+									{
+										label: __(
+											'Ascending',
+											'fair-platform'
+										),
+										value: 'ASC',
+									},
+								] }
+								onChange={ setOrder }
+							/>
+						</div>
+						<div className="fair-platform-connection-logs__control fair-platform-connection-logs__cleanup">
 							<TextControl
 								label={ __( 'Cleanup Days', 'fair-platform' ) }
 								type="number"
@@ -265,17 +285,13 @@ export default function ConnectionManagementScreen( {
 								}
 								style={ { width: '100px' } }
 							/>
-						</FlexItem>
-						<FlexItem>
-							<Button
-								variant="secondary"
-								onClick={ openCleanup }
-								style={ { marginTop: '22px' } }
-							>
+						</div>
+						<div className="fair-platform-connection-logs__control">
+							<Button variant="secondary" onClick={ openCleanup }>
 								{ __( 'Cleanup Old Logs', 'fair-platform' ) }
 							</Button>
-						</FlexItem>
-					</HStack>
+						</div>
+					</div>
 				</CardBody>
 			</Card>
 
@@ -331,7 +347,7 @@ export default function ConnectionManagementScreen( {
 							</p>
 						</div>
 					) : (
-						<div style={ { overflowX: 'auto' } }>
+						<div className="fair-platform-connection-logs__history">
 							<table
 								className="wp-list-table widefat fixed striped"
 								style={ { borderSpacing: 0 } }
@@ -409,15 +425,7 @@ export default function ConnectionManagementScreen( {
 					) }
 
 					{ totalPages > 1 && (
-						<div
-							style={ {
-								padding: '12px',
-								borderTop: '1px solid #dcdcde',
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-							} }
-						>
+						<div className="fair-platform-connection-logs__pagination">
 							<div>
 								{ sprintf(
 									/* translators: 1: current page number, 2: total number of pages */
