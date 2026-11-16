@@ -414,6 +414,185 @@ test('cleanup failure wins only after a successful E2E run', async () => {
 	assert.equal(await run(failure, makeOptions({ suite: 'e2e' })), 29);
 });
 
+function commandLines(executor) {
+	return executor.calls.map((call) => [call.command, ...call.args].join(' '));
+}
+
+async function runPrepared(
+	executor,
+	{ options = {}, missing = [], signalSource, logger = () => {} } = {}
+) {
+	let checks = 0;
+	const status = await runApiTests({
+		options: makeOptions({ prepared: true, ...options }),
+		executor,
+		workspaceConfig,
+		logger,
+		signalSource: signalSource ?? new EventEmitter(),
+		browserValidator: async () => {},
+		shardPlanner: stubPlanner(),
+		testListWriter: stubListWriter,
+		outputChecker: async () => {
+			checks++;
+			return missing;
+		},
+	});
+	return { status, checks };
+}
+
+test('--prepared is parsed and refuses to combine with --reuse', () => {
+	assert.equal(parseArguments(['--prepared']).prepared, true);
+	assert.equal(parseArguments([]).prepared, false);
+	assert.equal(
+		parseArguments(['--suite=e2e', '--prepared', 'e2e/smoke.spec.js'])
+			.prepared,
+		true
+	);
+	assert.throws(
+		() => parseArguments(['--prepared', '--reuse']),
+		/--prepared and --reuse options cannot be combined/
+	);
+});
+
+test('prepared API run checks outputs instead of building, and still owns the environment', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const { status, checks } = await runPrepared(executor);
+	assert.equal(status, 0);
+	assert.equal(checks, 1);
+	assert.deepEqual(commandLines(executor), [
+		'npx wp-env status --json',
+		'npx wp-env start',
+		'npx wp-env run tests-cli wp rewrite structure /%postname%/ --hard',
+		'npx wp-env run tests-cli wp core is-installed',
+		'npm run test:api --workspace=fair-events',
+		'npx wp-env stop',
+	]);
+});
+
+test('prepared E2E run skips build and install and cleans up', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const { status } = await runPrepared(executor, {
+		options: { suite: 'e2e', forwarded: ['e2e/smoke.spec.js'] },
+	});
+	assert.equal(status, 0);
+	assert.deepEqual(commandLines(executor), [
+		'npx wp-env status --json',
+		'npx wp-env start',
+		'npx wp-env run tests-cli wp rewrite structure /%postname%/ --hard',
+		'npx wp-env run tests-cli wp core is-installed',
+		'npm run test:e2e -- e2e/smoke.spec.js',
+		'npx wp-env stop',
+	]);
+});
+
+test('missing prepared outputs fail clearly before startup', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const logs = [];
+	const { status } = await runPrepared(executor, {
+		missing: [
+			{
+				workspace: 'fair-form',
+				missing: ['fair-form/vendor/autoload.php'],
+				commands: [
+					'npm run composer:install:prod --workspace=fair-form',
+				],
+			},
+		],
+		logger: (line) => logs.push(line),
+	});
+	assert.equal(status, 2);
+	assert.deepEqual(commandLines(executor), ['npx wp-env status --json']);
+	assert.ok(logs.includes('  - fair-form/vendor/autoload.php'));
+	assert.ok(
+		logs.includes('  npm run composer:install:prod --workspace=fair-form')
+	);
+});
+
+test('prepared run refuses a running instance without checking or stopping it', async () => {
+	const executor = createExecutor({
+		'npx wp-env status --json': {
+			code: 0,
+			stdout: JSON.stringify({ status: 'running' }),
+		},
+	});
+	const { status, checks } = await runPrepared(executor);
+	assert.equal(status, 2);
+	assert.equal(checks, 0);
+	assert.deepEqual(commandLines(executor), ['npx wp-env status --json']);
+});
+
+test('prepared run cleans up after failed startup, provisioning and tests', async () => {
+	for (const [failing, code] of [
+		['npx wp-env start', 19],
+		[
+			'npx wp-env run tests-cli wp rewrite structure /%postname%/ --hard',
+			21,
+		],
+		['npx wp-env run tests-cli wp core is-installed', 17],
+		['npm run test:api --workspace=fair-events', 23],
+	]) {
+		const executor = createExecutor({
+			...stoppedStatus(),
+			[failing]: { code },
+		});
+		const { status } = await runPrepared(executor);
+		assert.equal(status, code, failing);
+		assert.equal(commandLines(executor).at(-1), 'npx wp-env stop', failing);
+		assert.ok(
+			!commandLines(executor).some((line) =>
+				/run build|composer:install/.test(line)
+			),
+			failing
+		);
+	}
+});
+
+test('interrupted prepared run cleans up and returns signal status', async () => {
+	const signalSource = new EventEmitter();
+	const executor = createExecutor(stoppedStatus(), (call) => {
+		if (call.args.join(' ') === 'run test:api --workspace=fair-events') {
+			signalSource.emit('SIGTERM');
+		}
+	});
+	const { status } = await runPrepared(executor, { signalSource });
+	assert.equal(status, 143);
+	assert.equal(commandLines(executor).at(-1), 'npx wp-env stop');
+});
+
+test('prepared run keeps exit-code precedence over a failed cleanup', async () => {
+	const failed = createExecutor({
+		...stoppedStatus(),
+		'npm run test:api --workspace=fair-events': { code: 23 },
+		'npx wp-env stop': { code: 31 },
+	});
+	assert.equal((await runPrepared(failed)).status, 23);
+
+	const passed = createExecutor({
+		...stoppedStatus(),
+		'npx wp-env stop': { code: 31 },
+	});
+	assert.equal((await runPrepared(passed)).status, 31);
+});
+
+test('default runs never consult the prepared-output check', async () => {
+	for (const options of [makeOptions(), makeOptions({ reuse: true })]) {
+		let checks = 0;
+		const executor = createExecutor(stoppedStatus());
+		await runApiTests({
+			options,
+			executor,
+			workspaceConfig,
+			logger() {},
+			signalSource: new EventEmitter(),
+			outputChecker: async () => {
+				checks++;
+				return [];
+			},
+		});
+		assert.equal(checks, 0);
+	}
+});
+
 async function withConfig(files, callback) {
 	const directory = await mkdtemp(join(tmpdir(), 'wp-env-port-'));
 	try {
