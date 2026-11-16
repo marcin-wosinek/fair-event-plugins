@@ -183,3 +183,38 @@ jobs:
                       echo "⚠ Failed to reactivate $plugin (plugin may not have been active)"
                     fi
                   done
+
+            # The Mollie OAuth proxy (#2290). Runs after every deploy to
+            # fair-event-plugins.com, whichever plugins it shipped: another
+            # Fair plugin's older shared library can pause Fair Platform
+            # without any PHP error. The script comes from the deployed
+            # release tag, not from the branch that started the run.
+            - name: Check out the OAuth proxy check
+              if: inputs.environment == 'fair-event-plugins.com'
+              uses: actions/checkout@v7
+              with:
+                  ref: ${{ inputs.release_tag }}
+                  path: release-source
+                  sparse-checkout: scripts
+                  persist-credentials: false
+
+            - name: Verify the OAuth proxy is answering
+              if: inputs.environment == 'fair-event-plugins.com'
+              env:
+                  PROXY_URL: https://fair-event-plugins.com
+              run: |
+                  SCRIPT=release-source/scripts/verify-oauth-proxy.mjs
+                  if [ ! -f "$SCRIPT" ]; then
+                    echo "::warning title=OAuth proxy not checked::Release ${{ inputs.release_tag }} predates the OAuth proxy check (#2290). Check $PROXY_URL/wp-json/fair-platform/v1/health by hand."
+                    exit 0
+                  fi
+
+                  if ! node "$SCRIPT" --url="$PROXY_URL" --attempts=5 --delay=15000 --timeout=15000; then
+                    {
+                      echo "## OAuth proxy is not answering"
+                      echo ""
+                      echo "The deploy of \`${{ inputs.release_tag }}\` finished, but $PROXY_URL is not serving the Mollie OAuth proxy, so connected sites can't refresh their Mollie tokens."
+                      echo "See DEPLOYMENT.md § OAuth proxy monitoring for the likely causes and fixes."
+                    } >> "$GITHUB_STEP_SUMMARY"
+                    exit 1
+                  fi

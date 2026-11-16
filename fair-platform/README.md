@@ -10,6 +10,8 @@ This plugin runs **exclusively on fair-event-plugins.com** and provides three si
 2. **`/oauth/callback`** - Handles OAuth callback and token exchange
 3. **`/oauth/refresh`** - Refreshes expired access tokens
 
+A public health route, `GET /wp-json/fair-platform/v1/health`, reports whether the proxy is running and configured. It is used by the post-deploy check and the uptime monitor; see [DEPLOYMENT.md § OAuth proxy monitoring](../DEPLOYMENT.md#oauth-proxy-monitoring-fair-event-pluginscom).
+
 The plugin does NOT store customer tokens or payment data. It only facilitates the OAuth connection.
 
 ## Installation

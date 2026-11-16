@@ -127,6 +127,99 @@ Each deployed plugin gets a `.deploy-version` file (written into the extracted p
 
 The CI deploy path remains the canonical/recommended flow — local deploy is an additional, opt-in escape hatch.
 
+## OAuth proxy monitoring (fair-event-plugins.com)
+
+Every connected site refreshes its Mollie access token, which expires
+hourly, through the Mollie OAuth proxy that Fair Platform runs on
+fair-event-plugins.com. If the proxy stops answering, online payments stop
+on every connected site at once, while those sites still show Mollie as
+connected. On 2026-11-11 this happened without any PHP error: Fair
+Platform was paused because another Fair plugin bundled an older shared
+library, and the proxy URLs fell through to the homepage (#2290).
+
+### Health signal
+
+`GET https://fair-event-plugins.com/wp-json/fair-platform/v1/health` is
+public and needs no authentication. It is read-only, makes no outbound
+request, and sends `Cache-Control: no-store`.
+
+| Answer                                                               | Meaning                                                                                    |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `200` `{"service":"fair-platform-oauth-proxy","status":"ok"}`        | Fair Platform started, Mollie credentials are set, and the Mollie library is loaded.       |
+| `503` `{"service":"fair-platform-oauth-proxy","status":"unhealthy"}` | Fair Platform is running, but credentials are missing or empty, or the library is missing. |
+| `404` `rest_no_route`, a redirect, or HTML                           | Fair Platform is paused or inactive, or the REST API isn't reachable. Treat it as down.    |
+
+The answer never includes a cause, credentials, versions or connected-site
+details. It also doesn't check that Mollie itself is reachable.
+
+**Caching:** exclude `/wp-json/fair-platform/v1/health` and `/oauth/*` from
+any page cache or CDN on fair-event-plugins.com. A cached `200` would hide
+an outage from the deploy check and the monitor.
+
+### Post-deploy check
+
+After every deploy to the `fair-event-plugins.com` environment (automatic on
+release and manual dispatch, whichever plugins were deployed),
+`deploy-to-environment.yml` checks out `scripts/` from the deployed release
+tag and runs `scripts/verify-oauth-proxy.mjs`. The script:
+
+1. requires the healthy `200` answer above from the health route, and
+2. sends an empty `POST /oauth/refresh` and requires the proxy's own `400`
+   JSON `Missing refresh_token`. It never sends a token, real or dummy, so
+   the proxy answers before contacting Mollie.
+
+It never follows redirects. It retries up to 5 times, 15 s apart, with a
+15 s timeout per request. If the last attempt still fails, the deploy job
+fails, with the reason in the log and the job summary. The plugins are
+already on the server at that point. The failure means the proxy is down,
+not that the files weren't deployed. Releases older than the check have no
+script; for those the job only warns, so check the health URL by hand.
+
+Run it by hand against any site:
+
+```bash
+node scripts/verify-oauth-proxy.mjs --url=https://fair-event-plugins.com
+# Options: --attempts=5 --delay=10000 --timeout=15000 (milliseconds)
+```
+
+| Failure says                                 | Likely cause and fix                                                                                                                                                                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| health route is missing, redirected, or HTML | Fair Platform is paused by an outdated shared library in another Fair plugin (update every Fair plugin on the site; see [PHP_PATTERNS.md § Shared Package](./PHP_PATTERNS.md#shared-package-fair-events-shared)), or it is inactive (`wp plugin list`). |
+| health reports unhealthy (HTTP 503)          | Set `MOLLIE_CLIENT_ID` and `MOLLIE_CLIENT_SECRET` in `wp-config.php`, and check that the deployed plugin has its `vendor/` directory.                                                                                                                   |
+| refresh answered HTML or a redirect          | Health passed but `/oauth/*` doesn't reach the plugin: flush rewrite rules (`wp rewrite flush`) and check the permalink settings.                                                                                                                       |
+| timed out / request failed                   | The site or its host is down or blocking the GitHub runner.                                                                                                                                                                                             |
+
+### External uptime monitor
+
+**Status:** set up by the maintainer once the health route is deployed;
+tracked in #2290.
+
+A hosted Better Stack monitor watches the health URL, independent of GitHub
+Actions schedules:
+
+- URL: `https://fair-event-plugins.com/wp-json/fair-platform/v1/health`
+- Check every minute; HTTP status must be `200` and the body must contain
+  `"status":"ok"`; don't follow redirects.
+- Alert after about 3 minutes of consecutive failures, so a sustained
+  outage is reported within about 5 minutes. Send a recovery notice too.
+- Alerts go by email to the maintainer (@marcin-wosinek). The address is
+  confirmed in the Better Stack account during setup and isn't recorded
+  here.
+
+Before treating the monitor as operational, confirm delivery once: point a
+temporary second monitor at a URL that fails the same way (for example the
+health URL with a body check that can't match), wait for the alert and the
+recovery email after fixing it, then delete it. Don't take the production
+proxy down to test.
+
+### Error tracking
+
+Reporting of unexpected errors in the proxy's OAuth flows (authorize,
+callback, profile selection, refresh) to Sentry follows in a separate PR,
+after `sentry/sentry` is approved in the dependency policy
+([DEPENDENCY_SECURITY.md](./DEPENDENCY_SECURITY.md)). That PR documents its
+scrubbing, configuration and alerts here.
+
 ## Upgrade notes: event gallery removal (#1675)
 
 Upgrading to fair-events DB version `3.36.0` and fair-audience DB version

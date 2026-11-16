@@ -11,6 +11,7 @@ use FairPlatform\Database\Schema;
 use FairPlatform\Database\ConnectionRepository;
 use FairPlatform\Database\InstagramConnectionRepository;
 use FairPlatform\API\ConnectionsController;
+use FairPlatform\API\HealthController;
 use FairPlatform\API\InstagramConnectionsController;
 use FairPlatform\OAuth\MollieOAuth;
 
@@ -175,6 +176,9 @@ class Plugin {
 
 		$instagram_connections_controller = new InstagramConnectionsController();
 		$instagram_connections_controller->register_routes();
+
+		$health_controller = new HealthController();
+		$health_controller->register_routes();
 	}
 
 	/**
