@@ -771,7 +771,7 @@ export default function SavedSettlementReview( {
 												( transaction ) => (
 													<p key={ transaction.id }>
 														<a
-															href={ `admin.php?page=fair-payments-connector-transaction&id=${ transaction.id }` }
+															href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ transaction.id }` }
 														>
 															#{ transaction.id }
 														</a>{ ' ' }
