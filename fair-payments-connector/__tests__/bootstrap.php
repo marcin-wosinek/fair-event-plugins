@@ -758,6 +758,61 @@ if ( ! function_exists( 'rest_sanitize_boolean' ) ) {
 	}
 }
 
+if ( ! function_exists( 'remove_filter' ) ) {
+	/**
+	 * Stub of WordPress remove_filter() — hooks are not run in unit tests.
+	 *
+	 * @return bool
+	 */
+	function remove_filter() {
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_specialchars_decode' ) ) {
+	/**
+	 * Stub of WordPress wp_specialchars_decode().
+	 *
+	 * @param string $text Text to decode.
+	 * @return string
+	 */
+	function wp_specialchars_decode( $text ) {
+		return htmlspecialchars_decode( (string) $text, ENT_QUOTES );
+	}
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	/**
+	 * Stub of WordPress wp_kses_post() that drops script elements.
+	 *
+	 * @param string $html HTML.
+	 * @return string
+	 */
+	function wp_kses_post( $html ) {
+		return (string) preg_replace( '@<script[^>]*?>.*?</script>@si', '', (string) $html );
+	}
+}
+
+if ( ! function_exists( 'wp_mail' ) ) {
+	/**
+	 * Stub of WordPress wp_mail() that records each call in
+	 * $GLOBALS['_fair_test_sent_emails'].
+	 *
+	 * @param string $to      Recipient email address.
+	 * @param string $subject Email subject.
+	 * @param string $message Email body.
+	 * @return bool Always true.
+	 */
+	function wp_mail( $to, $subject, $message ) {
+		$GLOBALS['_fair_test_sent_emails'][] = array(
+			'to'      => $to,
+			'subject' => $subject,
+			'message' => $message,
+		);
+		return true;
+	}
+}
+
 require_once __DIR__ . '/Fair_Test_WPDB.php';
 
 // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test-only fake, no real $wpdb exists here.

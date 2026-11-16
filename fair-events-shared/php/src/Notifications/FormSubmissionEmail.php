@@ -19,6 +19,10 @@ defined( 'WPINC' ) || die;
  * functions, so each plugin keeps its literal calls against its own text
  * domain. Recipients, subjects, submitter extraction and delivery stay with
  * the calling services.
+ *
+ * Legacy layout, kept unchanged for plugins that still call it. Current
+ * callers use FormSubmissionDocument, which takes the same arguments and
+ * renders the common email design (#2322).
  */
 class FormSubmissionEmail {
 

@@ -9,7 +9,8 @@ namespace FairEvents\Services;
 
 use FairEvents\Helpers\DateHelper;
 use FairEventsShared\Money;
-use FairEventsShared\Notifications\BookingConfirmationEmail;
+use FairEventsShared\Notifications\BookingConfirmationDocument;
+use FairEventsShared\Notifications\EmailLayout;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
 defined( 'WPINC' ) || die;
@@ -67,7 +68,7 @@ class EmailService {
 			__( 'Your registration for %s is confirmed', 'fair-events' );
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
-		$message = BookingConfirmationEmail::html(
+		$message = BookingConfirmationDocument::html(
 			array(
 				'event_title'                  => esc_html( $event_title ),
 				'participant_name'             => esc_html( $name ),
@@ -154,8 +155,9 @@ class EmailService {
 			__( 'Payment didn’t go through — %s', 'fair-events' );
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
-		$message = SignupConfirmationEmail::html(
+		$message = BookingConfirmationDocument::html(
 			array(
+				'alert'                        => true,
 				'event_title'                  => esc_html( $event_title ),
 				'participant_name'             => esc_html( $name ),
 				'site_name'                    => esc_html( $site_name ),
@@ -204,48 +206,22 @@ class EmailService {
 	public function send_notification( $to, $subject, $html ) {
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
-		$message = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-		<tr>
-			<td align="center" style="padding: 20px 10px;">
-				<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<tr>
-						<td style="background-color: #0073aa; color: #ffffff; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center;">
-							<h1 style="margin: 0; font-size: 24px; font-weight: bold;">' . esc_html( $site_name ) . '</h1>
-						</td>
-					</tr>
-					<tr>
-						<td style="padding: 30px 20px;">
-							<div style="margin: 0 0 20px 0; font-size: 16px;">
-								' . wp_kses_post( $html ) . '
-							</div>
-							<p style="margin: 20px 0 0 0; font-size: 14px; color: #666666;">
-								' . sprintf(
-									/* translators: 1: line break, 2: site name */
-									esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-events' ),
-									'<br>',
-									esc_html( $site_name )
-								) . '
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<td style="background-color: #f8f8f8; padding: 20px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #666666;">
-							<p style="margin: 0;">' . esc_html( $site_name ) . '</p>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
+		$content = EmailLayout::content_block( wp_kses_post( $html ) )
+			. EmailLayout::paragraph(
+				sprintf(
+					/* translators: 1: line break, 2: site name */
+					esc_html__( 'Thanks,%1$sThe %2$s Team', 'fair-events' ),
+					'<br>',
+					esc_html( $site_name )
+				),
+				EmailLayout::SIGN_OFF
+			);
+
+		$message = EmailLayout::document(
+			esc_html( $site_name ),
+			$content,
+			EmailLayout::paragraph( esc_html( $site_name ), EmailLayout::FOOTER_TEXT )
+		);
 
 		return $this->deliver( $to, $subject, $message );
 	}
