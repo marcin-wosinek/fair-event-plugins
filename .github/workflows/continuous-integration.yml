@@ -165,13 +165,6 @@ jobs:
             - name: Check the shared PHP version and consumer locks
               run: npm run validate:shared-version
 
-            # PHPUnit runs in the php-tests matrix, so the JavaScript suites
-            # and artifacts are produced only once.
-            - name: Run JavaScript and tooling tests
-              run: |
-                  npm run test:js
-                  npm run test:tooling
-
             - name: Upload plugins
               uses: actions/upload-artifact@v7
               with:
@@ -179,6 +172,85 @@ jobs:
                   path: ./dist/*.zip
                   retention-days: 7
                   if-no-files-found: error
+
+    js-tests:
+        name: JavaScript tests
+        # Independent of build: a failing suite must not stop the plugins
+        # artifact from uploading. Both release jobs need this job.
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-timetable/node_modules
+                      ./fair-finance/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-events-shared/node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: npm ci --prefer-offline
+
+            - name: Run JavaScript tests
+              run: npm run test:js
+
+    tooling-tests:
+        name: Tooling tests
+        # Independent of build, like js-tests. Both release jobs need this job.
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-timetable/node_modules
+                      ./fair-finance/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-events-shared/node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: npm ci --prefer-offline
+
+            - name: Run tooling tests
+              run: npm run test:tooling
 
     php-tests:
         name: PHP tests (PHP ${{ matrix.php }})
@@ -275,7 +347,7 @@ jobs:
     release:
         name: Create Release PR
         runs-on: ubuntu-latest
-        needs: [build, php-tests, php-runtime]
+        needs: [build, js-tests, tooling-tests, php-tests, php-runtime]
         if: github.ref == 'refs/heads/main'
         permissions:
             contents: write
@@ -327,7 +399,7 @@ jobs:
     general-release:
         name: General release
         runs-on: ubuntu-latest
-        needs: [build, php-tests, php-runtime]
+        needs: [build, js-tests, tooling-tests, php-tests, php-runtime]
         if: github.ref == 'refs/heads/main'
         permissions:
             contents: write
