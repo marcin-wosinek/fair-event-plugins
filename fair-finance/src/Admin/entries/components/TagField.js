@@ -1,12 +1,14 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { TextControl } from '@wordpress/components';
 
 const TagField = ( { value, tags, onChange } ) => {
 	const [ showSuggestions, setShowSuggestions ] = useState( false );
+	const containerRef = useRef( null );
+	const reopenOnFocus = useRef( true );
 
 	const filtered =
 		value && tags
@@ -17,8 +19,38 @@ const TagField = ( { value, tags, onChange } ) => {
 				)
 			: [];
 
+	const select = ( tag ) => {
+		onChange( tag );
+		setShowSuggestions( false );
+		// The chosen suggestion disappears; keep focus in the field without
+		// reopening the list it was just picked from.
+		reopenOnFocus.current = false;
+		containerRef.current?.querySelector( 'input' )?.focus();
+		reopenOnFocus.current = true;
+	};
+
 	return (
-		<div style={ { position: 'relative' } }>
+		// The wrapper only observes focus and Escape from the input and the
+		// suggestion buttons inside it; it is not a control itself.
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
+		<div
+			ref={ containerRef }
+			style={ { position: 'relative' } }
+			// Keep the suggestions open while focus moves between the input
+			// and a suggestion, so they can be reached with Tab.
+			onBlur={ ( e ) => {
+				if ( ! e.currentTarget.contains( e.relatedTarget ) ) {
+					setShowSuggestions( false );
+				}
+			} }
+			onKeyDown={ ( e ) => {
+				if ( e.key === 'Escape' && showSuggestions ) {
+					// Close the list without dismissing the surrounding modal.
+					e.stopPropagation();
+					setShowSuggestions( false );
+				}
+			} }
+		>
 			<TextControl
 				label={ __( 'Tag', 'fair-finance' ) }
 				value={ value || '' }
@@ -26,10 +58,11 @@ const TagField = ( { value, tags, onChange } ) => {
 					onChange( v );
 					setShowSuggestions( true );
 				} }
-				onFocus={ () => setShowSuggestions( true ) }
-				onBlur={ () =>
-					setTimeout( () => setShowSuggestions( false ), 150 )
-				}
+				onFocus={ () => {
+					if ( reopenOnFocus.current ) {
+						setShowSuggestions( true );
+					}
+				} }
 				placeholder={ __(
 					'e.g. venue, catering, travel',
 					'fair-finance'
@@ -59,16 +92,17 @@ const TagField = ( { value, tags, onChange } ) => {
 								cursor: 'pointer',
 								borderBottom: '1px solid #eee',
 							} }
-							onMouseDown={ () => {
-								onChange( tag );
-								setShowSuggestions( false );
+							onMouseDown={ ( e ) => {
+								// Select before the input loses focus.
+								e.preventDefault();
+								select( tag );
 							} }
 							role="button"
 							tabIndex={ 0 }
 							onKeyDown={ ( e ) => {
-								if ( e.key === 'Enter' ) {
-									onChange( tag );
-									setShowSuggestions( false );
+								if ( e.key === 'Enter' || e.key === ' ' ) {
+									e.preventDefault();
+									select( tag );
 								}
 							} }
 						>

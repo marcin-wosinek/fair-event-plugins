@@ -750,6 +750,12 @@ const EntriesApp = () => {
 		);
 		loadEntries( { quiet: true } );
 		loadTotals();
+		// Allocation tags feed the suggestions and the tag chart, which is
+		// hidden (and not loaded) while an entry is focused.
+		loadTags();
+		if ( focus.id === null ) {
+			loadTagTotals();
+		}
 		loadUnbudgetedCount();
 		if ( eventsEnabled ) {
 			loadEventUrls();
@@ -1986,6 +1992,7 @@ const EntriesApp = () => {
 				<SplitModal
 					entry={ splittingEntry }
 					budgets={ budgets }
+					tags={ tags }
 					eventsEnabled={ eventsEnabled }
 					onSplit={ handleSplitComplete }
 					onCancel={ handleSplitCancel }

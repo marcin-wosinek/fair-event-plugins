@@ -1299,3 +1299,120 @@ describe( 'EntriesApp — entries awaiting a budget (#2088)', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'EntriesApp — allocation tags (#2341)', () => {
+	const ENTRY = makeEntry( {
+		id: 40,
+		description: 'Festival invoice',
+		amount: 100,
+		tag: 'venue',
+	} );
+
+	const mockSplitApi = () => {
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			const route = path.split( '?' )[ 0 ];
+			if ( method === 'POST' ) {
+				return Promise.resolve( {} );
+			}
+			if ( route === '/fair-finance/v1/financial-entries' ) {
+				return Promise.resolve( {
+					entries: [ ENTRY ],
+					total: 1,
+					pages: 1,
+				} );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/tags' ) {
+				return Promise.resolve( [ 'catering', 'venue' ] );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/totals' ) {
+				return Promise.resolve( {
+					total_cost: 100,
+					total_income: 0,
+					balance: -100,
+				} );
+			}
+			if (
+				route === '/fair-finance/v1/financial-entries/totals-by-tag'
+			) {
+				return Promise.resolve( {} );
+			}
+			return Promise.resolve( [] );
+		} );
+	};
+
+	const tagRequests = () =>
+		requestsTo( '/fair-finance/v1/financial-entries/tags' );
+	const tagTotalsRequests = () =>
+		requestsTo( '/fair-finance/v1/financial-entries/totals-by-tag' );
+
+	const splitWithSuggestedTag = async () => {
+		await chooseMenuItem( 'Festival invoice', 'Split' );
+		const dialog = screen.getByRole( 'dialog', { name: 'Split Entry' } );
+		const tags = within( dialog ).getAllByRole( 'textbox', {
+			name: 'Tag',
+		} );
+		expect( tags.map( ( el ) => el.value ) ).toEqual( [
+			'venue',
+			'venue',
+		] );
+
+		// Suggestions come from the page's existing tags.
+		fireEvent.focus( tags[ 1 ] );
+		fireEvent.change( tags[ 1 ], { target: { value: 'cat' } } );
+		fireEvent.mouseDown(
+			within( dialog ).getByRole( 'button', { name: 'catering' } )
+		);
+		within( dialog )
+			.getAllByLabelText( 'Amount' )
+			.forEach( ( el, i ) =>
+				fireEvent.change( el, {
+					target: { value: [ '70', '30' ][ i ] },
+				} )
+			);
+
+		const before = {
+			tags: tagRequests().length,
+			totals: tagTotalsRequests().length,
+		};
+		await act( async () => {
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Split Entry' } )
+			);
+		} );
+		const post = apiFetch.mock.calls.find(
+			( [ { method } ] ) => method === 'POST'
+		)[ 0 ];
+		expect( post.data.allocations.map( ( a ) => a.tag ) ).toEqual( [
+			'venue',
+			'catering',
+		] );
+		return before;
+	};
+
+	it( 'offers existing tags per allocation and refreshes tag data after saving', async () => {
+		mockSplitApi();
+		render( <EntriesApp /> );
+		await screen.findByText( 'Festival invoice' );
+
+		const before = await splitWithSuggestedTag();
+
+		expect(
+			await screen.findByText( 'Entry split successfully.', IN_NOTICE )
+		).toBeInTheDocument();
+		expect( tagRequests().length ).toBe( before.tags + 1 );
+		expect( tagTotalsRequests().length ).toBe( before.totals + 1 );
+	} );
+
+	it( 'leaves the hidden tag chart unloaded in a focused view', async () => {
+		openAt( '&entry_id=40' );
+		mockSplitApi();
+		render( <EntriesApp /> );
+		await screen.findByText( 'Festival invoice' );
+
+		const before = await splitWithSuggestedTag();
+
+		await screen.findByText( 'Entry split successfully.', IN_NOTICE );
+		expect( tagRequests().length ).toBe( before.tags + 1 );
+		expect( tagTotalsRequests() ).toHaveLength( 0 );
+	} );
+} );

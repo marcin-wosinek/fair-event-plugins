@@ -202,6 +202,30 @@ describe( 'EntryForm', () => {
 		} );
 	} );
 
+	it( 'picks an existing tag from the keyboard and saves it', async () => {
+		const onSave = jest.fn();
+		renderForm( { onSave } );
+		const tag = field( 'Tag' );
+
+		fireEvent.focus( tag );
+		fireEvent.change( tag, { target: { value: 'cat' } } );
+		const suggestion = screen.getByRole( 'button', { name: 'catering' } );
+		// Tabbing to the suggestion must not close the list under it.
+		fireEvent.blur( tag, { relatedTarget: suggestion } );
+		suggestion.focus();
+		fireEvent.keyDown( suggestion, { key: 'Enter' } );
+
+		expect( tag ).toHaveValue( 'catering' );
+		expect( tag ).toHaveFocus();
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Update Entry' } )
+		);
+
+		await waitFor( () => expect( onSave ).toHaveBeenCalled() );
+		expect( apiFetch.mock.calls[ 0 ][ 0 ].data.tag ).toBe( 'catering' );
+	} );
+
 	it( 'shows the next entry when reopened for a different entry', () => {
 		const { unmount } = renderForm();
 		expectEntryValues( ENTRY );

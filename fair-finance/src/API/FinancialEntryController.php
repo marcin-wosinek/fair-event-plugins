@@ -694,10 +694,13 @@ class FinancialEntryController extends WP_REST_Controller {
 				'type'        => 'integer',
 			),
 			'allocations' => array(
-				'description' => __( 'Array of budget allocations.', 'fair-finance' ),
-				'type'        => 'array',
-				'required'    => true,
-				'items'       => array(
+				'description'       => __( 'Array of budget allocations.', 'fair-finance' ),
+				'type'              => 'array',
+				'required'          => true,
+				// Hand-written args only run an explicit validate_callback, so
+				// the item schema below is enforced through it.
+				'validate_callback' => 'rest_validate_request_arg',
+				'items'             => array(
 					'type'       => 'object',
 					'properties' => array(
 						'budget_id'     => array(
@@ -715,6 +718,12 @@ class FinancialEntryController extends WP_REST_Controller {
 						),
 						'event_date_id' => array(
 							'type' => array( 'integer', 'null' ),
+						),
+						// Omit to inherit the original entry's tag; null or
+						// an empty string leaves the allocation untagged.
+						'tag'           => array(
+							'type'      => array( 'string', 'null' ),
+							'maxLength' => 100,
 						),
 					),
 				),
