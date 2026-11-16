@@ -379,6 +379,79 @@ Use the last phase heading in the output:
 - **Cleanup**: the runner reports stop failures separately. A cleanup error
   becomes the command status only when no earlier phase failed.
 
+### CI environment images
+
+The E2E, API and performance workflows prepare wp-env's Docker images in a
+shared step, `.github/actions/prepare-wp-env`, before the runner starts
+WordPress (#2359). Without it, each `wp-env start` on a fresh runner builds
+four images, and that build downloads Alpine and Debian packages, the
+Composer installer and its signature, and PHPUnit on every run. A single
+TLS error there failed a whole shard before any test ran.
+
+**How it works.**
+
+1. `node scripts/wp-env-images.mjs key` asks the installed wp-env for the
+   exact Dockerfiles and build arguments `wp-env start` would generate
+   (`scripts/wp-env-image-adapter.cjs`) and hashes them into the cache key,
+   with the upstream images, the runner OS, architecture and image version,
+   `.wp-env.json` (and `.wp-env.override.json`), the root `package.json` and
+   `package-lock.json`, the preparation scripts and action, a schema version
+   and the ISO week.
+2. The archive for that exact key is restored. There are no `restore-keys`:
+   a prefix match would be a build from other inputs.
+3. `prepare` loads the archive and checks that every image is there and
+   carries the key in its label (**hit**). If the archive is missing
+   (**miss**), or can't be loaded or lacks an image (**fallback**), it pulls
+   current upstream images, writes the generated Dockerfiles and runs
+   `docker compose build`, then saves the archive. The cache entry is saved
+   right after preparation, so a later test failure doesn't lose it.
+4. The runner starts wp-env with the adapter preloaded. It rewrites the
+   generated Compose file so the built services use the prepared images
+   with no `build:` section, and every archived image gets
+   `pull_policy: never`. A reused start builds and pulls nothing. The
+   adapter refuses an image whose Dockerfile hash differs from what this
+   start generates, or a manifest made for another wp-env version.
+
+Only images are cached: never databases, volumes, credentials or installed
+WordPress. The ISO week in the key rebuilds from current upstream images at
+least weekly, which bounds how old their security fixes can get.
+
+**Retries.** Image pulls and the build get three attempts, 15 s and 45 s
+apart, only when the output matches a known transient network error (TLS,
+DNS, connection resets, registry 5xx and rate limits, apk/apt/curl/Composer
+download errors). Each retry is logged as a `Transient network error`
+warning. BuildKit keeps finished layers, so a retry resumes at the failed
+step. Any other failure fails at once, and tests are never retried by this
+mechanism. To check both paths in CI, dispatch `Integration Tests` with
+`simulate_preparation_failure`: `transient` ignores the cache and fails the
+first build attempt with the getcomposer.org error, and `persistent` fails
+every attempt.
+
+**When it fails.** The step emits an `Environment preparation failed` error
+annotation and job summary naming the phase (`configuration`, `pull`,
+`build`, `validate`), the attempts and the error. Its result and log are
+uploaded as `wp-env-prepare-<job>-attempt-<n>`. No test runs: the workflow
+skips the test step, and a runner handed a failed result refuses to start
+(exit status 2). The `E2E` and `API Tests` status jobs read those artifacts
+and say which shards failed in preparation rather than in tests. The status
+still fails, so rerun the failed jobs.
+
+**Troubleshooting.**
+
+- `UnsupportedWpEnvError`: a wp-env upgrade changed the generator the
+  adapter wraps (module paths, exported functions, Dockerfile names). Update
+  `scripts/wp-env-image-adapter.cjs` and its supported major versions.
+- `StaleImageError` during `wp-env start`: the Dockerfiles changed between
+  preparation and start. Rerun the job. If it repeats, an input that
+  affects the Dockerfiles is missing from the key.
+- Each run's summary shows the cache outcome, attempts, timings and archive
+  size. Use it to compare restore and load against a fresh build.
+
+Locally nothing changes: without `FAIR_WP_ENV_PREPARED`, `wp-env start`
+builds as usual. To try the CI path, run
+`node scripts/wp-env-images.mjs prepare --archive=<tar> --results-dir=<dir>`
+and pass `FAIR_WP_ENV_PREPARED=<dir>/result.json` to a `:local` run.
+
 ### Long runs: durations and one run at a time
 
 **Full API and E2E suites run in CI, not locally.**

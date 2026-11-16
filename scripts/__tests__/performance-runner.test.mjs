@@ -1400,3 +1400,59 @@ test('sweepSizes caps the recurring sweep at the occurrences one series can hold
 		[0, 100]
 	);
 });
+
+function ownedAudit(executor, startEnvironment, logger = () => {}) {
+	return runPerformanceAudit({
+		options: baseOptions({ reuse: false }),
+		executor,
+		plugins: TEST_PLUGINS,
+		matrix: TEST_MATRIX,
+		fixtures: TEST_FIXTURES,
+		baseUrl: 'http://localhost:8889',
+		measureBackend: async () => ({
+			durationMs: 1,
+			memoryBytes: 1,
+			queryCount: 1,
+		}),
+		measureFrontend: async () => ({ requestCount: 1, transferBytes: 1 }),
+		logger,
+		signalSource: new EventEmitter(),
+		startEnvironment,
+	});
+}
+
+test('a prepared environment starts wp-env from the prepared images', async () => {
+	const executor = createExecutor({
+		...stoppedStatus(),
+		[PLUGIN_LIST_KEY]: { code: 0, stdout: '' },
+		[PLAIN_CREATE_KEY]: { code: 0, stdout: '1\n' },
+	});
+	const env = { FAIR_WP_ENV_IMAGE_MANIFEST: '/r.json' };
+	const outcome = await ownedAudit(executor, async () => ({ env }));
+	assert.equal(outcome.code, 0);
+	const start = executor.calls.find(
+		(call) => call.args.join(' ') === 'wp-env start'
+	);
+	assert.deepEqual(start.options, { env });
+});
+
+test('a failed environment preparation starts nothing and measures nothing', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const logs = [];
+	const outcome = await ownedAudit(
+		executor,
+		async () => ({
+			error: 'Environment preparation failed during pull: TLS.',
+		}),
+		(line) => logs.push(line)
+	);
+	assert.equal(outcome.code, 2);
+	const commands = executor.calls.map((c) => c.args.join(' '));
+	assert.ok(!commands.includes('wp-env start'));
+	assert.ok(!commands.some((command) => command.includes('post create')));
+	assert.ok(
+		logs.includes(
+			'Environment preparation failed during pull: TLS. No measurements were taken.'
+		)
+	);
+});

@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 import { createProcessExecutor, resolveTestsPort } from './api-test-runner.mjs';
+import { preparedStartEnvironment } from './wp-env-images.mjs';
 
 const SIGNAL_EXIT_CODES = { SIGINT: 130, SIGTERM: 143 };
 
@@ -622,6 +623,8 @@ export async function withAuditEnvironment(
 		plugins,
 		logger = console.log,
 		signalSource = process,
+		// See runTests() in scripts/api-test-runner.mjs.
+		startEnvironment = async () => ({}),
 	},
 	run
 ) {
@@ -688,11 +691,21 @@ export async function withAuditEnvironment(
 				}
 			}
 
+			const prepared = await startEnvironment();
+			if (prepared.error) {
+				logger(`${prepared.error} No measurements were taken.`);
+				return { code: 2 };
+			}
+
 			phase('Starting isolated WordPress test environment');
 			// The instance was not running, so anything a failed or interrupted
 			// start leaves behind belongs to this run and is stopped too.
 			ownsEnvironment = true;
-			const start = await executor.run('npx', ['wp-env', 'start']);
+			const start = await executor.run(
+				'npx',
+				['wp-env', 'start'],
+				prepared.env ? { env: prepared.env } : undefined
+			);
 			if (start.code !== 0) {
 				return { code: start.code };
 			}
@@ -821,6 +834,7 @@ export async function runPerformanceAudit({
 	measureFrontend,
 	logger = console.log,
 	signalSource = process,
+	startEnvironment,
 }) {
 	const results = [];
 	const skipped = [];
@@ -841,7 +855,7 @@ export async function runPerformanceAudit({
 	}
 
 	return withAuditEnvironment(
-		{ options, executor, plugins, logger, signalSource },
+		{ options, executor, plugins, logger, signalSource, startEnvironment },
 		async ({ wpCli, activateOnly, phase, interrupted }) => {
 			phase('Creating synthetic fixture pages');
 			const createdPages = {};
@@ -998,6 +1012,7 @@ export async function runEventsListScaling({
 	measureBackend,
 	logger = console.log,
 	signalSource = process,
+	startEnvironment,
 }) {
 	const sizes = Object.fromEntries(
 		scaling.sweeps.map((sweep) => [
@@ -1008,7 +1023,7 @@ export async function runEventsListScaling({
 	const results = [];
 
 	return withAuditEnvironment(
-		{ options, executor, plugins, logger, signalSource },
+		{ options, executor, plugins, logger, signalSource, startEnvironment },
 		async ({ wpCli, activateOnly, phase, interrupted }) => {
 			phase(`Activating ${scaling.requiredPlugin} alone`);
 			const activateCode = await activateOnly([scaling.requiredPlugin]);
@@ -1393,6 +1408,7 @@ async function main() {
 		cwd: rootDirectory,
 		env: { ...process.env, CI: '1' },
 	});
+	const startEnvironment = () => preparedStartEnvironment(process.env);
 
 	if (options.eventsListScaling) {
 		const outcome = await runEventsListScaling({
@@ -1401,6 +1417,7 @@ async function main() {
 			plugins,
 			baseUrl,
 			measureBackend: realMeasureBackend,
+			startEnvironment,
 		});
 		if (outcome.scaling) {
 			const report = formatScalingReport({
@@ -1449,6 +1466,7 @@ async function main() {
 			baseUrl,
 			measureBackend: realMeasureBackend,
 			measureFrontend: frontendMeasurer.measure,
+			startEnvironment,
 		});
 	} finally {
 		await frontendMeasurer.close();

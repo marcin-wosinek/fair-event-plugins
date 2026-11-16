@@ -111,39 +111,21 @@ jobs:
                       npx playwright install --with-deps chromium
                   fi
 
-            - name: Read PHP version from wp-env config
-              id: wp-env-config
-              run: echo "php_version=$(jq -r '.phpVersion' .wp-env.json)" >> $GITHUB_OUTPUT
-
-            - name: Cache Docker images
-              id: docker-cache
-              uses: actions/cache@v6
+            # Restores or builds every image wp-env needs, retrying transient
+            # download errors; the lifecycle runner then starts wp-env from
+            # them without building or pulling (TESTING.md § CI environment
+            # images). A failure here is an environment problem: no test ran.
+            - name: Prepare WordPress environment images
+              uses: ./.github/actions/prepare-wp-env
               with:
-                  path: /tmp/docker-images.tar
-                  key: ${{ runner.os }}-docker-v2-php${{ steps.wp-env-config.outputs.php_version }}-${{ hashFiles('.wp-env.json') }}
-                  restore-keys: ${{ runner.os }}-docker-v2-php${{ steps.wp-env-config.outputs.php_version }}-
-
-            - name: Load cached Docker images
-              if: steps.docker-cache.outputs.cache-hit == 'true'
-              run: docker load -i /tmp/docker-images.tar
-
-            - name: Pull Docker images
-              if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: |
-                  docker pull wordpress:php${{ steps.wp-env-config.outputs.php_version }}
-                  docker pull wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }}
-                  docker pull mariadb:lts
-                  docker pull phpmyadmin
-
-            - name: Save Docker images to cache
-              if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
+                  artifact-name: wp-env-prepare-performance-attempt-${{ github.run_attempt }}
 
             - name: Test performance tooling
               run: |
                   node --test scripts/__tests__/performance-runner.test.mjs
                   node --test scripts/__tests__/performance-history.test.mjs
                   node --test scripts/__tests__/pr-assets.test.mjs
+                  node --test scripts/__tests__/wp-env-images.test.mjs
 
             - name: Run performance audit
               run: |

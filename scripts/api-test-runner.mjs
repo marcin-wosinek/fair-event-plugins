@@ -33,6 +33,7 @@ import {
 	planSuite,
 	writeTestLists,
 } from './shard-assignment.mjs';
+import { preparedStartEnvironment } from './wp-env-images.mjs';
 
 export { parseShard };
 
@@ -327,6 +328,9 @@ export async function runTests({
 	testListWriter = writeTestLists,
 	diagnostics = {},
 	outputChecker = () => findMissingOutputs(ROOT_DIRECTORY),
+	// CI prepares the wp-env images first (scripts/wp-env-images.mjs); the
+	// result decides how `wp-env start` runs. Local runs prepare nothing.
+	startEnvironment = async () => ({}),
 }) {
 	const {
 		baseUrl,
@@ -488,14 +492,22 @@ export async function runTests({
 				}
 			}
 
+			const prepared = await startEnvironment();
+			if (prepared.error) {
+				logger(`${prepared.error} No tests were run.`);
+				return 2;
+			}
+
 			phase('Starting isolated WordPress test environment', logger);
 			// The instance was not running, so anything a failed or interrupted
 			// start leaves behind belongs to this run and is stopped too.
 			ownsEnvironment = true;
-			const start = await timedStep('wp-env start', 'npx', [
-				'wp-env',
-				'start',
-			]);
+			const start = await timedStep(
+				'wp-env start',
+				'npx',
+				['wp-env', 'start'],
+				prepared.env ? { env: prepared.env } : undefined
+			);
 			if (start.code !== 0) {
 				primaryResult = start.code;
 				return primaryResult;
@@ -869,6 +881,7 @@ async function main() {
 		options,
 		executor: createProcessExecutor({ cwd: rootDirectory, env }),
 		workspaceConfig,
+		startEnvironment: () => preparedStartEnvironment(process.env),
 		diagnostics: {
 			baseUrl: env.WP_BASE_URL,
 			writeReport: async ({ report, summary, logs }) => {
