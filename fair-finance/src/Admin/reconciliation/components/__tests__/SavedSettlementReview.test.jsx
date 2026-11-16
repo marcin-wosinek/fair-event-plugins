@@ -467,3 +467,40 @@ test( 'complete evidence with an unsupported allocation says no split is created
 		screen.queryByRole( 'button', { name: 'Apply the proposed split' } )
 	).not.toBeInTheDocument();
 } );
+
+test( 'links each local transaction to its own Payments Connector detail page', async () => {
+	const movement = ( key, transactions ) => ( {
+		type: 'payment',
+		sources: [ 'csv' ],
+		identity_key: key,
+		external_id: key,
+		description: `Payment ${ key }`,
+		payment_reference: `ref-${ key }`,
+		amount: '10.00',
+		currency: 'EUR',
+		settlement_amount: '10.00',
+		settlement_currency: 'EUR',
+		transactions,
+		conflict: null,
+	} );
+	serve( {
+		movements: [
+			movement( 'tr_1', [
+				{ id: 643, amount: '10.00', currency: 'EUR' },
+				{ id: 644, amount: '5.00', currency: 'EUR' },
+			] ),
+			movement( 'tr_2', [
+				{ id: 700, amount: '10.00', currency: 'EUR' },
+			] ),
+		],
+	} );
+	await open();
+	for ( const id of [ 643, 644, 700 ] ) {
+		expect(
+			screen.getByRole( 'link', { name: `#${ id }` } )
+		).toHaveAttribute(
+			'href',
+			`admin.php?page=fair-payments-connector-transaction&transaction_id=${ id }`
+		);
+	}
+} );

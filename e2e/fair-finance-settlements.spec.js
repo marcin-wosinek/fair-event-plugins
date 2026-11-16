@@ -771,6 +771,50 @@ test.describe('Fair Finance settlements', () => {
 		});
 	}
 
+	test('opens the selected local transaction from settlement review', async ({
+		page,
+	}) => {
+		await api.post(`${HELPERS}/reconciliation`, {
+			headers: adminHeaders,
+			data: { action: 'cleanup' },
+		});
+		try {
+			const response = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { origin: 'csv' },
+			});
+			expect(response.ok(), await response.text()).toBeTruthy();
+			const fixture = await response.json();
+			const [, second] = fixture.transaction_ids;
+			await loginAsAdmin(page);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}`
+			);
+			const link = page.getByRole('link', {
+				name: `#${second}`,
+				exact: true,
+			});
+			const href = `admin.php?page=fair-payments-connector-transaction&transaction_id=${second}`;
+			await expect(link).toHaveAttribute('href', href);
+			// Clicking stalls headless rendering here; open the address directly.
+			await page.goto(`/wp-admin/${href}`);
+			await expect(
+				page.getByRole('heading', {
+					level: 1,
+					name: new RegExp(`^Transaction #\\s*${second}\\b`),
+				})
+			).toBeVisible();
+			await expect(
+				page.getByText('Reconcile fixture payment 2')
+			).toBeVisible();
+		} finally {
+			await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data: { action: 'cleanup' },
+			});
+		}
+	});
+
 	test('splits a fee-bearing payout alike from settlement review and from the bank-transfer screen', async ({
 		page,
 	}) => {
