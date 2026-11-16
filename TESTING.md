@@ -86,6 +86,28 @@ artifact. Both release jobs still require them; see
 `build/` output or Composer dependencies, because their jobs install only
 npm dependencies.
 
+### Repository validation
+
+The **Repository validation** CI job (`validation`) runs the source-level
+documentation and policy checks, each as its own step:
+`composer:validate`, `node scripts/block-docs.mjs check`, `lint:docs`,
+`node scripts/validate-agent-workflows.mjs`, `validate:native-popups`,
+`validate:text-domains`, `validate:php-compat` and `validate:shared-version`.
+Like the test jobs it doesn't wait for the build, and both release jobs
+require it; see [DEPLOYMENT.md](./DEPLOYMENT.md). It installs only npm
+dependencies and PHP (for `composer validate`), so these checks may not
+depend on `build/` output or Composer dependencies.
+
+CI calls the agent workflow validator directly: its fixture tests are part of
+`test:tooling` and run in `tooling-tests`. Locally,
+`npm run validate:agent-workflows` still runs the validator and those fixtures
+together.
+
+Checks of the generated packages stay in the build job:
+`scripts/verify-dist-archive.cjs` verifies the ZIPs before the `plugins`
+artifact uploads, and each plugin build still fails on invalid block
+documentation while generating `block-docs/`.
+
 ## PHP unit tests
 
 Use PHPUnit for pure PHP logic that needs neither a WordPress bootstrap nor a
@@ -183,7 +205,8 @@ them:
   PHPCompatibility 10 alpha, the only line that knows PHP 8.x, which needs
   PHPCS 4. That is why it lives in `tools/php-tests/` and not beside the
   root PHPCS 3 install.
-- `npm run validate:php-compat` (build job) checks the declarations.
+- `npm run validate:php-compat` (Repository validation job) checks the
+  declarations.
 
 Run the runtime check locally against an older PHP with Docker, for example
 `docker run --rm -v "$PWD":/app -w /app/fair-events php:7.4-cli php -l fair-events.php`.
@@ -223,7 +246,7 @@ the same name don't count; `__tests__/`, `*.test.*`/`*.spec.*` and `build/`
 are skipped. It reports `file:line:column`, fails on a parse error, and has
 no allowlist or baseline — replace the popup per
 [UI_GUIDELINES.md](./UI_GUIDELINES.md#popups-and-confirmations). CI runs it
-in the build job; its fixtures live in
+in the Repository validation job; its fixtures live in
 `scripts/__tests__/validate-native-popups.test.mjs` (part of `test:tooling`).
 
 ## Isolated WordPress test lifecycle

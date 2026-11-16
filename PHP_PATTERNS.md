@@ -635,7 +635,7 @@ package, make sure its `package.json` gets a `composer:update:shared` script
 too (see [ADDING_NEW_PLUGIN.md](./ADDING_NEW_PLUGIN.md)) — two plugins were
 found missing it. The bump is load-bearing: selection compares declared
 versions, so a forgotten bump lets an older copy with the same number win.
-`npm run validate:shared-version` (CI build job) fails when shipped shared
+`npm run validate:shared-version` (CI Repository validation job) fails when shipped shared
 PHP changed without a higher version, or when a consumer's tracked
 `composer.lock` names another version. A new consumer also needs the
 registration and deferred start described above, and a
