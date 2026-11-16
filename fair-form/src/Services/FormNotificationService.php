@@ -15,7 +15,8 @@ namespace FairForm\Services;
 use FairForm\Database\QuestionnaireSubmissionRepository;
 use FairForm\Database\QuestionnaireAnswerRepository;
 use FairForm\Hooks\BlockHooks;
-use FairEventsShared\Notifications\FormSubmissionEmail;
+use FairEventsShared\Notifications\EmailLayout;
+use FairEventsShared\Notifications\FormSubmissionDocument;
 use FairEventsShared\Notifications\QuestionnaireAnswerRows;
 
 defined( 'WPINC' ) || die;
@@ -219,7 +220,7 @@ class FormNotificationService {
 		if ( '' !== $submitter_email ) {
 			$submitter_html = QuestionnaireAnswerRows::row(
 				esc_html__( 'Email', 'fair-form' ),
-				'<a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a>'
+				EmailLayout::text_link( esc_attr( 'mailto:' . $submitter_email ), esc_html( $submitter_email ) )
 			);
 		}
 
@@ -227,16 +228,16 @@ class FormNotificationService {
 
 		$context_html = '';
 		if ( '' !== $page_title ) {
-			$context_html = '<p style="margin: 0 0 20px 0; font-size: 16px;">'
-				. sprintf(
+			$context_html = EmailLayout::paragraph(
+				sprintf(
 					/* translators: %s: page title */
 					esc_html__( 'Page: %s', 'fair-form' ),
 					'<strong>' . esc_html( $page_title ) . '</strong>'
 				)
-				. '</p>';
+			);
 		}
 
-		$message = FormSubmissionEmail::html(
+		$message = FormSubmissionDocument::html(
 			array(
 				'site_name'      => esc_html( $site_name ),
 				'intro'          => esc_html__( 'A new form submission has been received.', 'fair-form' ),

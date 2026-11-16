@@ -26,8 +26,9 @@ use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
 use FairEventsShared\Helpers\DisplayText;
 use FairEventsShared\Money;
-use FairEventsShared\Notifications\BookingConfirmationEmail;
-use FairEventsShared\Notifications\FormSubmissionEmail;
+use FairEventsShared\Notifications\BookingConfirmationDocument;
+use FairEventsShared\Notifications\EmailLayout;
+use FairEventsShared\Notifications\FormSubmissionDocument;
 use FairEventsShared\Notifications\QuestionnaireAnswerRows;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 
@@ -566,10 +567,8 @@ class EmailService {
 		$site_name               = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$manage_subscription_url = ManageSubscriptionToken::get_url( $participant->id );
 
-		$body = $this->greeting_html( $participant->name ) . '
-							<div style="margin: 0 0 20px 0; font-size: 16px;">
-								' . wp_kses_post( $content ) . '
-							</div>'
+		$body = $this->greeting_html( $participant->name )
+			. EmailLayout::content_block( wp_kses_post( $content ) )
 			. $this->thanks_html( $site_name );
 
 		$footer = $this->manage_preferences_html(
@@ -660,7 +659,7 @@ class EmailService {
 	private function manage_preferences_html( $question_html, $url, $style ) {
 		return EmailLayout::paragraph(
 			$question_html . '
-								<a href="' . esc_url( $url ) . '" style="color: #0073aa;">' . esc_html__( 'Manage your preferences', 'fair-audience' ) . '</a>',
+								' . EmailLayout::text_link( esc_url( $url ), esc_html__( 'Manage your preferences', 'fair-audience' ) ),
 			$style
 		);
 	}
@@ -686,23 +685,7 @@ class EmailService {
 	 * @return string Paragraph HTML.
 	 */
 	private function site_name_footer_html( $site_name ) {
-		return EmailLayout::paragraph( esc_html( $site_name ), 'margin: 0;' );
-	}
-
-	/**
-	 * Render the compact "Hi <name>," greeting used by short notices.
-	 *
-	 * Unlike {@see greeting_html()} it sets no font size of its own.
-	 *
-	 * @param string $name Unescaped recipient name.
-	 * @return string Paragraph HTML.
-	 */
-	private function compact_greeting_html( $name ) {
-		return '<p style="margin: 0 0 20px 0;">' . sprintf(
-			/* translators: %s: participant first name */
-			esc_html__( 'Hi %s,', 'fair-audience' ),
-			'<strong>' . esc_html( $name ) . '</strong>'
-		) . '</p>';
+		return EmailLayout::paragraph( esc_html( $site_name ), EmailLayout::FOOTER_TEXT );
 	}
 
 	/**
@@ -1271,23 +1254,23 @@ class EmailService {
 		)
 			. QuestionnaireAnswerRows::row(
 				esc_html__( 'Email', 'fair-audience' ),
-				'<a href="mailto:' . esc_attr( $submitter_email ) . '" style="color: #0073aa;">' . esc_html( $submitter_email ) . '</a>'
+				EmailLayout::text_link( esc_attr( 'mailto:' . $submitter_email ), esc_html( $submitter_email ) )
 			);
 
 		$answers_html = QuestionnaireAnswerRows::html( $answers );
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
-			$context_html = '<p style="margin: 0 0 20px 0; font-size: 16px;">'
-				. sprintf(
+			$context_html = EmailLayout::paragraph(
+				sprintf(
 					/* translators: %s: page title */
 					esc_html__( 'Page: %s', 'fair-audience' ),
 					'<strong>' . esc_html( $page_title ) . '</strong>'
 				)
-				. '</p>';
+			);
 		}
 
-		$message = FormSubmissionEmail::html(
+		$message = FormSubmissionDocument::html(
 			array(
 				'site_name'      => esc_html( $site_name ),
 				'intro'          => esc_html__( 'A new form submission has been received.', 'fair-audience' ),
@@ -1319,9 +1302,7 @@ class EmailService {
 
 		$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
-		$content = '<div style="margin: 0; font-size: 16px;">
-								' . wp_kses_post( $content ) . '
-							</div>';
+		$content = EmailLayout::content_block( wp_kses_post( $content ) );
 
 		$footer = $this->site_name_footer_html( $site_name )
 			. EmailLayout::paragraph(
@@ -1367,13 +1348,13 @@ class EmailService {
 
 		$context_html = '';
 		if ( ! empty( $page_title ) ) {
-			$context_html = '<p style="margin: 0 0 20px 0; font-size: 16px;">'
-				. sprintf(
+			$context_html = EmailLayout::paragraph(
+				sprintf(
 					/* translators: %s: page title */
 					esc_html__( 'Form: %s', 'fair-audience' ),
 					'<strong>' . esc_html( $page_title ) . '</strong>'
 				)
-				. '</p>';
+			);
 		}
 
 		$content = $this->greeting_html( $participant->name )
@@ -1490,7 +1471,7 @@ class EmailService {
 		}
 
 		$subject = SignupConfirmationEmail::subject( $subject_template, $event_title );
-		$message = BookingConfirmationEmail::html(
+		$message = BookingConfirmationDocument::html(
 			array(
 				'event_title'                  => $event_title_html,
 				'participant_name'             => esc_html( $participant->name ),
@@ -1567,13 +1548,8 @@ class EmailService {
 			);
 
 		if ( ! empty( $added_option_names ) ) {
-			$options_list = '';
-			foreach ( $added_option_names as $name ) {
-				$options_list .= '<li style="padding: 4px 0;">' . esc_html( $name ) . '</li>';
-			}
-			$content .= '
-							<p style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">' . esc_html__( 'Activities added:', 'fair-audience' ) . '</p>
-							<ul style="margin: 0 0 20px 20px; padding: 0;">' . $options_list . '</ul>';
+			$content .= EmailLayout::paragraph( esc_html__( 'Activities added:', 'fair-audience' ), EmailLayout::SECTION_LABEL )
+				. EmailLayout::item_list( array_map( 'esc_html', array_values( $added_option_names ) ) );
 		}
 
 		if ( $amount > 0 ) {
@@ -1649,16 +1625,10 @@ class EmailService {
 			);
 		}
 
-		// This notice keeps its own larger button and inline link fallback.
-		$content .= '
-							<p style="margin: 30px 0; text-align: center;">
-								<a href="' . esc_url( $resume_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 4px; font-weight: bold; font-size: 16px;">
-									' . esc_html__( 'Resume payment', 'fair-audience' ) . '
-								</a>
-							</p>'
+		$content .= EmailLayout::button( esc_url( $resume_url ), esc_html__( 'Resume payment', 'fair-audience' ) )
 			. EmailLayout::paragraph(
 				esc_html__( 'If the button doesn’t work, copy and paste this link into your browser:', 'fair-audience' ) . '<br>
-								<a href="' . esc_url( $resume_url ) . '" style="color: #0073aa; word-break: break-all;">' . esc_html( $resume_url ) . '</a>',
+								<a href="' . esc_url( $resume_url ) . '" style="color: ' . EmailLayout::HEADER_COLOR . '; word-break: break-all;">' . esc_html( $resume_url ) . '</a>',
 				EmailLayout::SIGN_OFF
 			)
 			. EmailLayout::paragraph(
@@ -2032,9 +2002,9 @@ class EmailService {
 			SignupConfirmationEmail::linked_event_title( esc_html( $event_title ), esc_url( $event_url ) )
 		);
 
-		$content = $this->compact_greeting_html( $greeting_name ) . '
-							<p style="margin: 0 0 20px 0;">' . $intro . '</p>
-							<p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">' . esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ) . '</p>';
+		$content = $this->greeting_html( $greeting_name )
+			. EmailLayout::paragraph( $intro )
+			. EmailLayout::paragraph( esc_html__( "If you didn't register your interest, you can safely ignore this email.", 'fair-audience' ), EmailLayout::NOTE );
 
 		$footer = EmailLayout::footer_link(
 			esc_html__( 'No longer interested?', 'fair-audience' ),
@@ -2094,8 +2064,8 @@ class EmailService {
 			);
 		}
 
-		$content = $this->compact_greeting_html( $greeting_name ) . '
-							<p style="margin: 0 0 20px 0;">' . $intro . '</p>';
+		$content = $this->greeting_html( $greeting_name )
+			. EmailLayout::paragraph( $intro );
 
 		$footer = EmailLayout::footer_link(
 			esc_html__( 'Changed your mind?', 'fair-audience' ),
@@ -2133,12 +2103,12 @@ class EmailService {
 			$site_name
 		);
 
-		$content = $this->compact_greeting_html( $greeting_name ) . '
-							<p style="margin: 0 0 20px 0;">' . esc_html__( 'Someone asked to subscribe this address, which is already subscribed. Nothing was changed. To review or change which emails you receive, open your subscription page.', 'fair-audience' ) . '</p>
-							<p style="margin: 0 0 20px 0; text-align: center;"><a href="' . esc_url( $manage_subscription_url ) . '" style="display: inline-block; background-color: #0073aa; color: #ffffff; padding: 12px 24px; border-radius: 4px; text-decoration: none;">' . esc_html__( 'Manage your subscription', 'fair-audience' ) . '</a></p>
-							<p style="margin: 0; font-size: 14px; color: #666666;">' . esc_html__( 'If you did not ask for this, you can ignore this email.', 'fair-audience' ) . '</p>';
+		$content = $this->greeting_html( $greeting_name )
+			. EmailLayout::paragraph( esc_html__( 'Someone asked to subscribe this address, which is already subscribed. Nothing was changed. To review or change which emails you receive, open your subscription page.', 'fair-audience' ) )
+			. EmailLayout::button( esc_url( $manage_subscription_url ), esc_html__( 'Manage your subscription', 'fair-audience' ) )
+			. EmailLayout::paragraph( esc_html__( 'If you did not ask for this, you can ignore this email.', 'fair-audience' ), EmailLayout::NOTE );
 
-		$message = EmailLayout::document( esc_html( $site_name ), $content );
+		$message = EmailLayout::document( esc_html( $site_name ), $content, $this->site_name_footer_html( $site_name ) );
 
 		return 'sent' === $this->deliver( $participant, $subject, $message, EmailType::MINIMAL );
 	}

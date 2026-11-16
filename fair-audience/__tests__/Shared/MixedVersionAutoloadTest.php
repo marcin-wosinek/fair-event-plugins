@@ -8,7 +8,9 @@
 namespace FairAudience\Tests\Shared;
 
 use Composer\Autoload\ClassLoader;
+use FairEventsShared\Notifications\BookingConfirmationDocument;
 use FairEventsShared\Notifications\BookingConfirmationEmail;
+use FairEventsShared\Notifications\EmailLayout;
 use FairEventsShared\Notifications\SignupConfirmationEmail;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -109,5 +111,66 @@ class MixedVersionAutoloadTest extends TestCase {
 		$this->register_sibling( $this->updated_dir() );
 
 		$this->assertSame( 1, substr_count( $this->render(), self::MESSAGE ) );
+	}
+
+	/**
+	 * Render a confirmation in the common design (#2322).
+	 *
+	 * @return string HTML body.
+	 */
+	private function render_document(): string {
+		return BookingConfirmationDocument::html(
+			array(
+				'event_title'         => 'Test Event',
+				'participant_name'    => 'Jane Doe',
+				'site_name'           => 'Test Site',
+				'custom_message_html' => self::MESSAGE,
+				'greeting_template'   => 'Hi %s,',
+				'sign_off_template'   => 'Thanks,%1$sThe %2$s Team',
+			)
+		);
+	}
+
+	/**
+	 * Assert the common-design classes came from the updated copy and
+	 * rendered the fluid layout with the message once.
+	 */
+	private function assert_document_from_updated_copy(): void {
+		$html = $this->render_document();
+
+		foreach ( array( BookingConfirmationDocument::class, EmailLayout::class ) as $class ) {
+			$this->assertStringStartsWith(
+				$this->updated_dir(),
+				( new \ReflectionClass( $class ) )->getFileName()
+			);
+		}
+		$this->assertSame( 1, substr_count( $html, self::MESSAGE ) );
+		$this->assertStringContainsString( 'max-width: 600px', $html );
+	}
+
+	/**
+	 * A stale sibling that loads last and has no common-design classes can't
+	 * shadow them: they resolve from the updated copy.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_common_design_renders_when_stale_sibling_loads_last(): void {
+		$this->register_sibling( $this->updated_dir() );
+		$this->register_sibling( $this->stale_dir() );
+
+		$this->assert_document_from_updated_copy();
+	}
+
+	/**
+	 * With the stale sibling registered first, the common design still
+	 * renders from the updated copy.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_common_design_renders_when_stale_sibling_loads_first(): void {
+		$this->register_sibling( $this->stale_dir() );
+		$this->register_sibling( $this->updated_dir() );
+
+		$this->assert_document_from_updated_copy();
 	}
 }

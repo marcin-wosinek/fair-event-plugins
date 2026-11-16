@@ -9,6 +9,7 @@ namespace FairEvents\Notifications;
 
 use FairEvents\Services\EventsWeekSummary;
 use FairEventsShared\Helpers\DisplayText;
+use FairEventsShared\Notifications\EmailLayout;
 
 defined( 'WPINC' ) || die;
 
@@ -99,15 +100,17 @@ class WeeklyEmailRenderer {
 				continue;
 			}
 
-			$html .= '<h3 style="margin: 20px 0 10px 0; font-size: 16px;">' . esc_html(
-				sprintf(
-					/* translators: 1: weekday, e.g. "Wednesday", 2: month, e.g. "October", 3: day of the month */
-					__( '%1$s, %2$s %3$s', 'fair-events' ),
-					$day['weekday'],
-					$day['month_name'],
-					$day['day_num']
+			$html .= EmailLayout::heading(
+				esc_html(
+					sprintf(
+						/* translators: 1: weekday, e.g. "Wednesday", 2: month, e.g. "October", 3: day of the month */
+						__( '%1$s, %2$s %3$s', 'fair-events' ),
+						$day['weekday'],
+						$day['month_name'],
+						$day['day_num']
+					)
 				)
-			) . '</h3>';
+			);
 			$html .= '<ul style="margin: 0 0 10px 0; padding-left: 20px;">';
 			foreach ( $day['events'] as $event ) {
 				$html .= '<li style="margin-bottom: 6px;">' . self::event( $event ) . '</li>';

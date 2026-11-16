@@ -252,6 +252,24 @@ class EmailServiceTest extends TestCase {
 	}
 
 	/**
+	 * Booking emails use the common fluid layout (#2322); a failed payment
+	 * gets the failure header, like Fair Audience's.
+	 */
+	public function test_booking_emails_use_the_common_layout(): void {
+		$email_service = new EmailService();
+		$email_service->send_signup_confirmation( 42, 0, 'Jane Doe', 'jane@example.test' );
+		$email_service->send_signup_payment_failed( 42, 0, 'Jane Doe', 'jane@example.test' );
+
+		list( $confirmation, $failure ) = $GLOBALS['_fair_test_sent_emails'];
+		foreach ( array( $confirmation, $failure ) as $sent ) {
+			$this->assertStringContainsString( 'max-width: 600px', $sent['message'] );
+			$this->assertStringContainsString( 'Registration reference:', $sent['message'] );
+		}
+		$this->assertStringNotContainsString( '#b32d2e', $confirmation['message'] );
+		$this->assertStringContainsString( 'background-color: #b32d2e;', $failure['message'] );
+	}
+
+	/**
 	 * A weekly notification goes to the one given address as an HTML document.
 	 */
 	public function test_notification_is_sent_to_the_given_address(): void {
@@ -279,11 +297,12 @@ class EmailServiceTest extends TestCase {
 		}
 
 		$message = $GLOBALS['_fair_test_sent_emails'][0]['message'];
-		$this->assertStringContainsString( '<h1 style="margin: 0; font-size: 24px; font-weight: bold;">Dance Club</h1>', $message );
+		$this->assertMatchesRegularExpression( '#<h1 [^>]*>Dance Club</h1>#', $message );
 		$this->assertStringContainsString( 'max-width: 600px', $message );
 		$this->assertStringContainsString( 'name="viewport"', $message );
 		$this->assertStringContainsString( 'Thanks,<br>The Dance Club Team', $message );
-		$this->assertStringContainsString( '<p style="margin: 0;">Dance Club</p>', $message );
+		$this->assertMatchesRegularExpression( '#<p style="margin: 0;">\s*Dance Club\s*</p>#', $message );
+		$this->assertSame( 1, substr_count( $message, '<!DOCTYPE html>' ) );
 		$this->assertStringNotContainsString( 'Hi ', $message );
 		$this->assertStringNotContainsString( 'Manage your preferences', $message );
 	}

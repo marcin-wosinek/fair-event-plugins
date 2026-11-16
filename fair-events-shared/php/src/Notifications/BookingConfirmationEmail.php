@@ -22,6 +22,10 @@ namespace FairEventsShared\Notifications;
  * Takes only pre-translated, pre-escaped strings. It never calls
  * translation functions itself, so each plugin keeps its own literal calls
  * against its own text domain.
+ *
+ * Legacy layout, kept unchanged for plugins that still call it. Current
+ * callers use BookingConfirmationDocument, which takes the same arguments
+ * and renders the common email design (#2322).
  */
 class BookingConfirmationEmail {
 

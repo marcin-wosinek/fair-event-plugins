@@ -84,7 +84,7 @@ class WeeklyEmailRendererTest extends TestCase {
 		);
 
 		$html = $email['html'];
-		$this->assertStringContainsString( '<h3 style="margin: 20px 0 10px 0; font-size: 16px;">Wednesday, October 14</h3>', $html );
+		$this->assertStringContainsString( \FairEventsShared\Notifications\EmailLayout::heading( 'Wednesday, October 14' ), $html );
 		$this->assertStringContainsString( '<strong>18:30</strong> — <a href="https://example.com/concert/">Concert night</a>', $html );
 		$this->assertLessThan( strpos( $html, 'Late show' ), strpos( $html, 'Concert night' ) );
 		$this->assertSame( 1, substr_count( $html, '<h3' ) );
