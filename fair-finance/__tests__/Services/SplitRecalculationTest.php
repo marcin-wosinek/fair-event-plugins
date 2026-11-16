@@ -243,4 +243,121 @@ class SplitRecalculationTest extends TestCase {
 		$this->assertNull( $added[0]['tag'] );
 		$this->assertNull( $added[0]['budget_id'] );
 	}
+
+	/**
+	 * Allocations as an old split save left them: every row recreated with
+	 * a new ID and the editor's fields, keeping amount and description.
+	 *
+	 * @return array
+	 */
+	private function recreated() {
+		$children = $this->children();
+		foreach ( $children as $index => $child ) {
+			$children[ $index ]['id'] = 44 + $index;
+		}
+		return $children;
+	}
+
+	/** Rows recreated by an old split save are identified by unique evidence. */
+	public function test_recovers_rows_recreated_by_a_split_save() {
+		$diff = Recalculation::diff( array_reverse( $this->recreated() ), Recalculation::generated( $this->history( $this->gross() ) ), $this->net() );
+		$this->assertSame( Recalculation::PROPOSED, $diff['status'], implode( ' ', $diff['reasons'] ) );
+		$this->assertSame( array(), $diff['warnings'] );
+		$recovered = array_column( $diff['recovered'], 'history_id', 'id' );
+		ksort( $recovered );
+		$this->assertSame(
+			array(
+				44 => 11,
+				45 => 12,
+				46 => 13,
+			),
+			$recovered
+		);
+		$by_id = array_column( $diff['changes'], null, 'id' );
+		// Changes address the current rows, keeping their categorization.
+		$this->assertSame( '490.00', $by_id[44]['proposed_amount'] );
+		$this->assertSame( 11, $by_id[44]['recovered_from'] );
+		$this->assertSame( 'workshop', $by_id[44]['tag'] );
+		$this->assertSame( 4, $by_id[44]['budget_id'] );
+		$this->assertSame( '319.65', $by_id[45]['proposed_amount'] );
+		$this->assertNull( $by_id[45]['tag'] );
+		$this->assertSame( '0.02', $by_id[46]['proposed_amount'] );
+		$this->assertSame( 'fees', $by_id[46]['tag'] );
+		$this->assertSame( 46, $by_id[46]['transferred_from'] );
+	}
+
+	/** Rows that keep their IDs need no recovery. */
+	public function test_kept_ids_are_not_recovered() {
+		$diff = Recalculation::diff( $this->children(), Recalculation::generated( $this->history( $this->gross() ) ), $this->net() );
+		$this->assertSame( array(), $diff['recovered'] );
+		$this->assertNull( $diff['changes'][0]['recovered_from'] );
+	}
+
+	/** A recreated row is recovered alongside rows that kept their IDs. */
+	public function test_recovers_a_single_recreated_row() {
+		$children          = $this->children();
+		$children[1]['id'] = 50;
+		$diff              = Recalculation::diff( $children, Recalculation::generated( $this->history( $this->gross() ) ), $this->net() );
+		$this->assertSame( Recalculation::PROPOSED, $diff['status'] );
+		$this->assertSame(
+			array(
+				array(
+					'history_id' => 12,
+					'id'         => 50,
+				),
+			),
+			$diff['recovered']
+		);
+	}
+
+	/** Identical rows cannot be told apart, so nothing is matched by order or count. */
+	public function test_ambiguous_recreated_rows_block() {
+		$gross       = $this->gross();
+		$gross[1]    = $this->row( 'transaction', '500.00', 'payment:tr_b#1', 2, 'Ticket A' );
+		$net         = $this->net();
+		$net[1]      = $this->row( 'transaction', '490.00', 'payment:tr_b#1', 2, 'Ticket A' );
+		$children    = $this->recreated();
+		$children[1] = array_merge(
+			$children[1],
+			array(
+				'amount'      => '500.00',
+				'description' => 'Ticket A',
+			)
+		);
+		$diff        = Recalculation::diff( $children, Recalculation::generated( $this->history( $gross ) ), $net );
+		$this->assertSame( Recalculation::BLOCKED, $diff['status'] );
+		$this->assertSame( array(), $diff['changes'] );
+		$this->assertSame( array(), $diff['recovered'] );
+		$this->assertCount( 2, $diff['reasons'] );
+		$this->assertStringContainsString( 'cannot be told apart', $diff['reasons'][0] );
+	}
+
+	/** Recreated rows whose amount or description changed are not recovered. */
+	public function test_edited_recreated_rows_block() {
+		$generated = Recalculation::generated( $this->history( $this->gross() ) );
+		$amount    = $this->recreated();
+		// The old save also changed the amounts.
+		$amount[0]['amount'] = '480.00';
+		$amount[1]['amount'] = '345.00';
+		$diff                = Recalculation::diff( $amount, $generated, $this->net() );
+		$this->assertSame( Recalculation::BLOCKED, $diff['status'] );
+		$this->assertStringContainsString( 'added after reconciliation', implode( ' ', $diff['reasons'] ) );
+		$this->assertStringContainsString( 'no longer exists', implode( ' ', $diff['reasons'] ) );
+		$text                   = $this->recreated();
+		$text[2]['description'] = 'Bank fees';
+		$this->assertSame( Recalculation::BLOCKED, Recalculation::diff( $text, $generated, $this->net() )['status'] );
+		// A genuinely added row is still blocked, even when the others are recovered.
+		$added   = $this->recreated();
+		$added[] = array_merge(
+			$added[0],
+			array(
+				'id'          => 60,
+				'amount'      => '1.00',
+				'description' => 'Extra',
+			)
+		);
+		$this->assertSame( Recalculation::BLOCKED, Recalculation::diff( $added, $generated, $this->net() )['status'] );
+		// A genuinely removed row is still blocked.
+		$this->assertSame( Recalculation::BLOCKED, Recalculation::diff( array_slice( $this->recreated(), 0, 2 ), $generated, $this->net() )['status'] );
+	}
 }

@@ -1165,16 +1165,20 @@ class SettlementReconciliation {
 		}
 		$generated = SplitRecalculation::generated( $preview['history'] );
 		$diff      = $reasons ? array(
-			'status'   => SplitRecalculation::BLOCKED,
-			'changes'  => array(),
-			'reasons'  => $reasons,
-			'warnings' => array(),
+			'status'    => SplitRecalculation::BLOCKED,
+			'changes'   => array(),
+			'reasons'   => $reasons,
+			'warnings'  => array(),
+			'recovered' => array(),
 		) : SplitRecalculation::diff( $children, $generated, $plan['rows'] );
 		$result    = array(
 			'status'      => $diff['status'],
 			'changes'     => $diff['changes'],
 			'reasons'     => $diff['reasons'],
 			'warnings'    => $diff['warnings'],
+			// Allocations an earlier split save recreated, identified by unique evidence.
+			'recovered'   => $diff['recovered'],
+			'history_id'  => $generated['history_id'] ?? null,
 			'method'      => $plan['method'] ?? null,
 			'explanation' => $plan['reason'] ?? null,
 			'currency'    => $preview['settlement']['currency'],
@@ -1330,10 +1334,13 @@ class SettlementReconciliation {
 								),
 							),
 							'recalculation'   => array(
-								'changes'  => $review['changes'],
-								'warnings' => $review['warnings'],
-								'before'   => self::material_rows( $before ),
-								'after'    => self::material_rows(
+								'changes'   => $review['changes'],
+								'warnings'  => $review['warnings'],
+								// Earlier history stays as written; recovered rows are recorded here.
+								'source'    => $review['history_id'],
+								'recovered' => $review['recovered'],
+								'before'    => self::material_rows( $before ),
+								'after'     => self::material_rows(
 									array_values(
 										array_filter(
 											$after_rows,

@@ -21,8 +21,8 @@ const SPLIT_ENTRY = {
 	entry_date: '2026-06-01',
 	description: 'Shared invoice',
 	children: [
-		{ budget_id: 1, amount: 60, description: 'Room' },
-		{ budget_id: 2, amount: 40, description: 'Snacks' },
+		{ id: 21, budget_id: 1, amount: 60, description: 'Room', tag: 'venue' },
+		{ id: 22, budget_id: 2, amount: 40, description: 'Snacks', tag: null },
 	],
 };
 
@@ -308,5 +308,49 @@ describe( 'SplitModal', () => {
 			expect( sentTags( 1 ) ).toEqual( [ 'venue', 'travel' ] );
 			expect( onSplit ).toHaveBeenCalled();
 		} );
+	} );
+
+	it( 'updates existing allocations by ID and adds new rows without one', async () => {
+		apiFetch.mockResolvedValue( {} );
+		const onSplit = jest.fn();
+		render(
+			<SplitModal
+				entry={ SPLIT_ENTRY }
+				budgets={ BUDGETS }
+				eventsEnabled={ false }
+				onSplit={ onSplit }
+				onCancel={ jest.fn() }
+				onUnsplit={ jest.fn() }
+			/>
+		);
+		fireEvent.change( screen.getAllByLabelText( 'Amount' )[ 1 ], {
+			target: { value: '30' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: '+ Add Row' } ) );
+		fireEvent.change( screen.getAllByLabelText( 'Amount' )[ 2 ], {
+			target: { value: '10' },
+		} );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Update Split' } )
+			);
+		} );
+
+		expect( apiFetch ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				path: '/fair-finance/v1/financial-entries/5/split',
+				method: 'PUT',
+			} )
+		);
+		const sent = apiFetch.mock.calls[ 0 ][ 0 ].data.allocations;
+		expect( sent.map( ( a ) => [ a.id, a.amount ] ) ).toEqual( [
+			[ 21, 60 ],
+			[ 22, 30 ],
+			[ undefined, 10 ],
+		] );
+		// Saved tags go back unchanged; the new row of an untagged entry
+		// stays untagged.
+		expect( sent.map( ( a ) => a.tag ) ).toEqual( [ 'venue', null, null ] );
+		expect( onSplit ).toHaveBeenCalled();
 	} );
 } );

@@ -232,3 +232,32 @@ test( 'a failed apply keeps the dialog open; a stale one requires a new preview'
 		screen.queryByRole( 'button', { name: 'Apply recalculation' } )
 	).not.toBeInTheDocument();
 } );
+
+test( 'shows allocations recovered after an earlier split save', async () => {
+	apiFetch.mockImplementation( () =>
+		Promise.resolve( {
+			...review,
+			warnings: [],
+			recovered: [ { id: 44, history_id: 11 } ],
+			changes: [
+				change( { id: 44, recovered_from: 11 } ),
+				...review.changes.slice( 1 ),
+			],
+		} )
+	);
+	render( <SplitRecalculation settlementId={ 4 } name="REF.2605.01" /> );
+	fireEvent.click(
+		screen.getByRole( 'button', { name: 'Preview recalculation' } )
+	);
+	expect(
+		await screen.findByText(
+			'Allocation #44 was created by reconciliation as #11.'
+		)
+	).toBeInTheDocument();
+	expect(
+		screen.getAllByText( /gave these allocations new IDs/ )[ 0 ]
+	).toHaveTextContent( 'keeps its current tag, event and budget' );
+	const rows = screen.getAllByRole( 'row' ).slice( 1 );
+	expect( rows[ 0 ] ).toHaveTextContent( 'Allocation #44 (recorded as #11)' );
+	expect( rows[ 1 ] ).not.toHaveTextContent( 'recorded as' );
+} );

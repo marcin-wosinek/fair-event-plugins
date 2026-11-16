@@ -1242,7 +1242,21 @@ class FinancialEntry {
 			return false;
 		}
 
-		$child_ids = array();
+		return self::write_children( $entry, $allocations );
+	}
+
+	/**
+	 * Insert allocations under a parent inside the caller's transaction.
+	 *
+	 * @param FinancialEntry $entry       Parent entry.
+	 * @param array          $allocations Allocations, each with amount, description, budget_id, event_url, event_date_id and tag.
+	 * @return int[]|false New child entry IDs, or false when any write failed.
+	 */
+	private static function write_children( $entry, $allocations ) {
+		global $wpdb;
+
+		$table_name = self::get_table_name();
+		$child_ids  = array();
 
 		foreach ( $allocations as $allocation ) {
 			$data = array(
@@ -1292,11 +1306,57 @@ class FinancialEntry {
 	}
 
 	/**
-	 * Update an existing split by replacing all children atomically
+	 * Why the allocation IDs of a split update cannot be applied, if they cannot.
+	 *
+	 * An allocation that carries an `id` updates that existing allocation; one
+	 * without an `id` is new. Each ID may appear once and must belong to this
+	 * parent.
 	 *
 	 * @param int   $id          Parent entry ID.
-	 * @param array $allocations Array of allocations, each with budget_id, amount, description.
-	 * @return int[]|false Array of new child entry IDs on success, false on failure.
+	 * @param array $allocations Submitted allocations.
+	 * @param bool  $lock        Lock the existing allocations.
+	 * @return string|null 'duplicate' or 'foreign', or null when the IDs are valid.
+	 */
+	public static function split_id_error( $id, $allocations, $lock = false ) {
+		global $wpdb;
+
+		$query = $lock
+			? $wpdb->prepare( 'SELECT id FROM %i WHERE parent_entry_id = %d FOR UPDATE', self::get_table_name(), $id )
+			: $wpdb->prepare( 'SELECT id FROM %i WHERE parent_entry_id = %d', self::get_table_name(), $id );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- $query is prepared above.
+		$existing = array_map( 'intval', $wpdb->get_col( $query ) );
+
+		$seen = array();
+		foreach ( $allocations as $allocation ) {
+			if ( ! isset( $allocation['id'] ) || null === $allocation['id'] ) {
+				continue;
+			}
+			$child_id = (int) $allocation['id'];
+			if ( isset( $seen[ $child_id ] ) ) {
+				return 'duplicate';
+			}
+			if ( ! in_array( $child_id, $existing, true ) ) {
+				return 'foreign';
+			}
+			$seen[ $child_id ] = true;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Update an existing split atomically, keeping each allocation's identity.
+	 *
+	 * An allocation with an `id` updates that allocation in place: only the
+	 * fields it carries change, so its tag (including an intentional absence
+	 * of one), participant and any other field the editor does not show are
+	 * kept. Allocations without an `id` are inserted, and existing allocations
+	 * the update no longer lists are deleted. Keeping IDs keeps the
+	 * allocations identifiable to settlement reconciliation.
+	 *
+	 * @param int   $id          Parent entry ID.
+	 * @param array $allocations Allocations, each with an optional id, amount, and optional description, budget_id, event_url, event_date_id and tag.
+	 * @return int[]|false Child entry IDs in submission order on success, false on failure or invalid IDs.
 	 */
 	public static function update_split( $id, $allocations ) {
 		global $wpdb;
@@ -1314,12 +1374,18 @@ class FinancialEntry {
 			return false;
 		}
 
-		// Start transaction.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( 'START TRANSACTION' );
 
+		// Revalidate the submitted IDs against the locked allocations.
+		if ( null !== self::split_id_error( $id, $allocations, true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
 		// Ensure parent has no budget, event_url, event_date_id, or tag — they are on the children.
-		$wpdb->update(
+		$cleared = $wpdb->update(
 			$table_name,
 			array(
 				'budget_id'     => null,
@@ -1332,47 +1398,103 @@ class FinancialEntry {
 			array( '%d' )
 		);
 
-		// Delete existing children.
-		$delete_result = $wpdb->delete(
-			$table_name,
-			array( 'parent_entry_id' => $id ),
-			array( '%d' )
-		);
-
-		if ( false === $delete_result ) {
+		if ( false === $cleared ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
 
-		// Create new children.
+		$kept = array();
+		foreach ( $allocations as $allocation ) {
+			if ( isset( $allocation['id'] ) && null !== $allocation['id'] ) {
+				$kept[] = (int) $allocation['id'];
+			}
+		}
+
+		// Delete only the allocations the update no longer lists.
+		foreach ( self::get_children( $id ) as $child ) {
+			if ( in_array( (int) $child->id, $kept, true ) ) {
+				continue;
+			}
+			$deleted = $wpdb->delete(
+				$table_name,
+				array(
+					'id'              => (int) $child->id,
+					'parent_entry_id' => $id,
+				),
+				array( '%d', '%d' )
+			);
+			if ( 1 !== $deleted ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query( 'ROLLBACK' );
+				return false;
+			}
+		}
+
 		$child_ids = array();
+		$formats   = array(
+			'amount'        => '%f',
+			'description'   => '%s',
+			'budget_id'     => '%d',
+			'event_url'     => '%s',
+			'event_date_id' => '%d',
+			'tag'           => '%s',
+		);
 
 		foreach ( $allocations as $allocation ) {
-			$data = array(
-				'amount'          => (float) $allocation['amount'],
-				'entry_type'      => $entry->entry_type,
-				'entry_date'      => $entry->entry_date,
-				'description'     => isset( $allocation['description'] ) ? $allocation['description'] : $entry->description,
-				'budget_id'       => ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null,
-				'transaction_id'  => $entry->transaction_id,
-				'parent_entry_id' => $id,
-				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
-				'event_date_id'   => ! empty( $allocation['event_date_id'] ) ? (int) $allocation['event_date_id'] : null,
-				'tag'             => self::allocation_tag( $allocation, $entry->tag ),
+			if ( ! isset( $allocation['id'] ) || null === $allocation['id'] ) {
+				$inserted = self::write_children( $entry, array( $allocation ) );
+				if ( false === $inserted ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->query( 'ROLLBACK' );
+					return false;
+				}
+				$child_ids[] = $inserted[0];
+				continue;
+			}
+
+			// Update only the fields this allocation carries.
+			$data = array( 'amount' => (float) $allocation['amount'] );
+			if ( array_key_exists( 'description', $allocation ) ) {
+				$data['description'] = $allocation['description'];
+			}
+			if ( array_key_exists( 'budget_id', $allocation ) ) {
+				$data['budget_id'] = ! empty( $allocation['budget_id'] ) ? (int) $allocation['budget_id'] : null;
+			}
+			if ( array_key_exists( 'event_url', $allocation ) ) {
+				$data['event_url'] = ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null;
+			}
+			if ( array_key_exists( 'event_date_id', $allocation ) ) {
+				$data['event_date_id'] = ! empty( $allocation['event_date_id'] ) ? (int) $allocation['event_date_id'] : null;
+			}
+			if ( array_key_exists( 'tag', $allocation ) ) {
+				// An explicit empty tag clears it; it never falls back to another tag.
+				$data['tag'] = self::allocation_tag( $allocation, null );
+			}
+
+			$updated = $wpdb->update(
+				$table_name,
+				$data,
+				array(
+					'id'              => (int) $allocation['id'],
+					'parent_entry_id' => $id,
+				),
+				array_map(
+					static function ( $field ) use ( $formats ) {
+						return $formats[ $field ];
+					},
+					array_keys( $data )
+				),
+				array( '%d', '%d' )
 			);
 
-			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%d', '%s' );
-
-			$result = $wpdb->insert( $table_name, $data, $format );
-
-			if ( ! $result ) {
+			if ( false === $updated ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query( 'ROLLBACK' );
 				return false;
 			}
 
-			$child_ids[] = $wpdb->insert_id;
+			$child_ids[] = (int) $allocation['id'];
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
