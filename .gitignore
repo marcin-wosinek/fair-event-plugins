@@ -30,6 +30,8 @@ e2e/screenshots/output/
 e2e-results/
 api-results/
 php-diagnostics/
+wp-env-prepare/
+wp-env-prepare-artifacts/
 api-inventory.json
 */.env
 

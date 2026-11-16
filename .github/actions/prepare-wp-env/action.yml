@@ -1,0 +1,62 @@
+name: Prepare wp-env images
+description: >
+    Restore or build the Docker images `wp-env start` needs, so a reused start
+    downloads nothing (#2359). Run after `npm ci`; the runners then start wp-env
+    from the prepared images. See TESTING.md § CI environment images.
+
+inputs:
+    artifact-name:
+        description: Name of the uploaded preparation result and log artifact.
+        required: true
+
+outputs:
+    status:
+        description: '`ready` or `failed`.'
+        value: ${{ steps.prepare.outputs.status }}
+
+runs:
+    using: composite
+    steps:
+        - name: Compute wp-env image cache key
+          id: key
+          shell: bash
+          run: node scripts/wp-env-images.mjs key
+
+        # Exact key only: a prefix match could restore images built from other
+        # inputs, so there are deliberately no restore-keys.
+        - name: Restore wp-env images
+          id: restore
+          uses: actions/cache/restore@v6
+          with:
+              path: ${{ runner.temp }}/wp-env-images.tar
+              key: ${{ steps.key.outputs.key }}
+
+        - name: Prepare wp-env images
+          id: prepare
+          shell: bash
+          run: >
+              node scripts/wp-env-images.mjs prepare
+              --archive="$RUNNER_TEMP/wp-env-images.tar"
+              --key="${{ steps.key.outputs.key }}"
+              --results-dir=wp-env-prepare
+
+        # Saved as soon as the images are built, so a later test failure
+        # doesn't throw the build away. Shards that built concurrently race
+        # for the same key; the losers only log a warning.
+        - name: Save wp-env images
+          if: ${{ steps.prepare.outputs.save == 'true' }}
+          uses: actions/cache/save@v6
+          with:
+              path: ${{ runner.temp }}/wp-env-images.tar
+              key: ${{ steps.key.outputs.key }}
+
+        - name: Upload environment preparation result
+          if: ${{ always() }}
+          uses: actions/upload-artifact@v7
+          with:
+              name: ${{ inputs.artifact-name }}
+              path: |
+                  wp-env-prepare/result.json
+                  wp-env-prepare/prepare.log
+              retention-days: 7
+              if-no-files-found: ignore

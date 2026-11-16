@@ -926,3 +926,50 @@ test('an interrupt during one workspace starts no further workspaces', async () 
 	]);
 	assert.equal(executor.calls.at(-1).args.join(' '), 'wp-env stop');
 });
+
+test('a prepared environment starts wp-env from the prepared images', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const env = { FAIR_WP_ENV_IMAGE_MANIFEST: '/r.json', NODE_OPTIONS: '-r x' };
+	const code = await runApiTests({
+		options: makeOptions(),
+		executor,
+		workspaceConfig,
+		logger() {},
+		signalSource: new EventEmitter(),
+		shardPlanner: stubPlanner(),
+		testListWriter: stubListWriter,
+		startEnvironment: async () => ({ env }),
+	});
+	assert.equal(code, 0);
+	const start = executor.calls.find(
+		(call) => call.args.join(' ') === 'wp-env start'
+	);
+	assert.deepEqual(start.options, { env });
+});
+
+test('a failed environment preparation starts nothing and runs no tests', async () => {
+	const executor = createExecutor(stoppedStatus());
+	const logs = [];
+	const code = await runApiTests({
+		options: makeOptions(),
+		executor,
+		workspaceConfig,
+		logger: (line) => logs.push(line),
+		signalSource: new EventEmitter(),
+		shardPlanner: stubPlanner(),
+		testListWriter: stubListWriter,
+		startEnvironment: async () => ({
+			error: 'Environment preparation failed during build: curl: (55).',
+		}),
+	});
+	assert.equal(code, 2);
+	const commands = executor.calls.map((call) => call.args.join(' '));
+	assert.ok(!commands.includes('wp-env start'));
+	assert.ok(!commands.some((command) => command.startsWith('run test:')));
+	assert.ok(!commands.includes('wp-env stop'), 'owns nothing to stop');
+	assert.ok(
+		logs.includes(
+			'Environment preparation failed during build: curl: (55). No tests were run.'
+		)
+	);
+});

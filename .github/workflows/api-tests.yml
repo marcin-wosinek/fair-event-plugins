@@ -21,6 +21,10 @@ on:
                 description: 'PHP diagnostics sweep'
                 type: boolean
                 default: false
+            simulate_preparation_failure:
+                description: 'Environment preparation check: none, transient or persistent'
+                type: string
+                default: none
 
 jobs:
     # Lists every API workspace's suite without WordPress, through each
@@ -64,7 +68,7 @@ jobs:
               run: HUSKY=0 npm ci --prefer-offline
 
             - name: Test shard inventory check and lifecycle runner
-              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs scripts/__tests__/php-diagnostics.test.mjs
+              run: node --test scripts/__tests__/shard-assignment.test.mjs scripts/__tests__/shard-timings.test.mjs scripts/__tests__/check-api-shards.test.mjs scripts/__tests__/api-test-runner.test.mjs scripts/__tests__/php-diagnostics.test.mjs scripts/__tests__/wp-env-images.test.mjs
 
             - name: Check every API test runs in exactly one shard
               run: node scripts/check-api-shards.mjs --total=4 --output=api-inventory.json
@@ -146,33 +150,16 @@ jobs:
                   fi
                   node scripts/integration-build.mjs restore --dir=integration-build --run-id=${{ github.run_id }} --run-attempt="$PREPARED_ATTEMPT"
 
-            - name: Read PHP version from wp-env config
-              id: wp-env-config
-              run: echo "php_version=$(jq -r '.phpVersion' .wp-env.json)" >> $GITHUB_OUTPUT
-
-            - name: Cache Docker images
-              id: docker-cache
-              uses: actions/cache@v6
+            # Restores or builds every image wp-env needs, retrying transient
+            # download errors; the lifecycle runner then starts wp-env from
+            # them without building or pulling (TESTING.md § CI environment
+            # images). A failure here is an environment problem: no test ran.
+            - name: Prepare WordPress environment images
+              uses: ./.github/actions/prepare-wp-env
+              env:
+                  WP_ENV_IMAGES_SIMULATE_FAILURE: ${{ inputs.simulate_preparation_failure || 'none' }}
               with:
-                  path: /tmp/docker-images.tar
-                  key: ${{ runner.os }}-docker-v2-php${{ steps.wp-env-config.outputs.php_version }}-${{ hashFiles('.wp-env.json') }}
-                  restore-keys: ${{ runner.os }}-docker-v2-php${{ steps.wp-env-config.outputs.php_version }}-
-
-            - name: Load cached Docker images
-              if: steps.docker-cache.outputs.cache-hit == 'true'
-              run: docker load -i /tmp/docker-images.tar
-
-            - name: Pull Docker images
-              if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: |
-                  docker pull wordpress:php${{ steps.wp-env-config.outputs.php_version }}
-                  docker pull wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }}
-                  docker pull mariadb:lts
-                  docker pull phpmyadmin
-
-            - name: Save Docker images to cache
-              if: steps.docker-cache.outputs.cache-hit != 'true'
-              run: docker save wordpress:php${{ steps.wp-env-config.outputs.php_version }} wordpress:cli-php${{ steps.wp-env-config.outputs.php_version }} mariadb:lts phpmyadmin -o /tmp/docker-images.tar
+                  artifact-name: wp-env-prepare-api-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
 
             # PHP_DIAGNOSTICS is empty unless a manual dispatch opts in.
             - name: Prepare environment and run API tests

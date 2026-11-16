@@ -25,6 +25,11 @@ on:
                 description: 'PHP diagnostics sweep: log warnings, notices and deprecations on the tests site and publish a grouped summary'
                 type: boolean
                 default: false
+            simulate_preparation_failure:
+                description: 'Environment preparation check (TESTING.md § CI environment images): fail the image build once (transient) or on every attempt (persistent)'
+                type: choice
+                options: [none, transient, persistent]
+                default: none
 
 jobs:
     # Applies the suites' path filters (scripts/integration-suites.mjs) to the
@@ -184,6 +189,7 @@ jobs:
             artifact_id: ${{ needs.prepare.outputs.artifact-id }}
             prepared_attempt: ${{ needs.prepare.outputs.attempt }}
             php_diagnostics: ${{ inputs.php_diagnostics == true }}
+            simulate_preparation_failure: ${{ inputs.simulate_preparation_failure || 'none' }}
 
     e2e-suite:
         name: E2E
@@ -194,6 +200,7 @@ jobs:
             artifact_id: ${{ needs.prepare.outputs.artifact-id }}
             prepared_attempt: ${{ needs.prepare.outputs.attempt }}
             php_diagnostics: ${{ inputs.php_diagnostics == true }}
+            simulate_preparation_failure: ${{ inputs.simulate_preparation_failure || 'none' }}
 
     # Single status for the API suite, kept here so the check stays named
     # "API Tests": fails unless suite selection, preparation, the inventory
@@ -222,6 +229,22 @@ jobs:
                   pattern: api-*
                   path: api-artifacts
 
+            # All attempts: the latest attempt of each shard wins. Not named
+            # api-*, so check-api-shards never reads them as shard results.
+            - name: Download environment preparation results
+              # A run cancelled before any shard prepared has none to read.
+              continue-on-error: true
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: wp-env-prepare-api-*
+                  path: wp-env-prepare-artifacts
+
+            # Names shards that failed before any test ran, so they read as
+            # environment problems rather than test failures.
+            - name: Report environment preparation failures
+              id: environment
+              run: node scripts/wp-env-images.mjs report --results=wp-env-prepare-artifacts
+
             - name: Check every planned test ran
               id: coverage
               if: ${{ !cancelled() && (needs.api-suite.result == 'success' || needs.api-suite.result == 'failure') }}
@@ -234,17 +257,23 @@ jobs:
                   PREPARE_RESULT: ${{ needs.prepare.result }}
                   SHARDS_RESULT: ${{ needs.api-suite.result }}
                   COVERAGE_RESULT: ${{ steps.coverage.outcome }}
+                  ENVIRONMENT_FAILURES: ${{ steps.environment.outputs.environment_failures }}
               run: |
                   echo "Suite selection: $SUITES_RESULT"
                   echo "Prepared build: $PREPARE_RESULT"
                   echo "API inventory and shards: $SHARDS_RESULT"
                   echo "Executed coverage: $COVERAGE_RESULT"
+                  echo "Shards whose environment preparation failed: ${ENVIRONMENT_FAILURES:-unknown}"
                   if [ "$SUITES_RESULT" != success ] || [ "$PREPARE_RESULT" != success ]; then
                       echo "::error::API tests did not run: open the failing 'Select suites' or 'Prepare integration build' job, then use Re-run all jobs."
                       exit 1
                   fi
                   if [ "$SHARDS_RESULT" != success ] || [ "$COVERAGE_RESULT" != success ]; then
-                      echo "::error::API tests failed; open the failing 'API shard N/4' job (its log names the failing workspace) and its api-report-shard-N-of-4 artifact."
+                      if [ "${ENVIRONMENT_FAILURES:-0}" != 0 ]; then
+                          echo "::error::API tests failed: $ENVIRONMENT_FAILURES shard(s) could not prepare the WordPress environment (see the errors above); rerun them. Any other failing shard failed in its tests."
+                      else
+                          echo "::error::API tests failed; open the failing 'API shard N/4' job (its log names the failing workspace) and its api-report-shard-N-of-4 artifact."
+                      fi
                       exit 1
                   fi
 
@@ -257,20 +286,49 @@ jobs:
         if: ${{ always() && (needs.suites.result != 'success' || needs.suites.outputs.e2e == 'true') }}
 
         steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            # All attempts: the latest attempt of each shard wins.
+            - name: Download environment preparation results
+              # A run cancelled before any shard prepared has none to read.
+              continue-on-error: true
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: wp-env-prepare-e2e-*
+                  path: wp-env-prepare-artifacts
+
+            # Names shards that failed before any test ran, so they read as
+            # environment problems rather than test failures.
+            - name: Report environment preparation failures
+              id: environment
+              run: node scripts/wp-env-images.mjs report --results=wp-env-prepare-artifacts
+
             - name: Check preparation and shard results
+              if: ${{ always() }}
               env:
                   SUITES_RESULT: ${{ needs.suites.result }}
                   PREPARE_RESULT: ${{ needs.prepare.result }}
                   SHARDS_RESULT: ${{ needs.e2e-suite.result }}
+                  ENVIRONMENT_FAILURES: ${{ steps.environment.outputs.environment_failures }}
               run: |
                   echo "Suite selection: $SUITES_RESULT"
                   echo "Prepared build: $PREPARE_RESULT"
                   echo "E2E inventory and shards: $SHARDS_RESULT"
+                  echo "Shards whose environment preparation failed: ${ENVIRONMENT_FAILURES:-unknown}"
                   if [ "$SUITES_RESULT" != success ] || [ "$PREPARE_RESULT" != success ]; then
                       echo "::error::E2E did not run: open the failing 'Select suites' or 'Prepare integration build' job, then use Re-run all jobs."
                       exit 1
                   fi
                   if [ "$SHARDS_RESULT" != success ]; then
-                      echo "::error::E2E failed; open the failing 'E2E shard N/4' job and its playwright-report-shard-N-of-4 artifact."
+                      if [ "${ENVIRONMENT_FAILURES:-0}" != 0 ]; then
+                          echo "::error::E2E failed: $ENVIRONMENT_FAILURES shard(s) could not prepare the WordPress environment (see the errors above); rerun them. Any other failing shard failed in its tests."
+                      else
+                          echo "::error::E2E failed; open the failing 'E2E shard N/4' job and its playwright-report-shard-N-of-4 artifact."
+                      fi
                       exit 1
                   fi
