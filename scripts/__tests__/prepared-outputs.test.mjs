@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
 	findMissingOutputs,
 	formatMissingOutputs,
+	TEST_SITE_BUILDS,
 } from '../prepared-outputs.mjs';
 
 const pluginHeader = '<?php\n/**\n * Plugin Name: Example\n */\n';
@@ -151,4 +152,45 @@ test('the failure message names each path and its preparation command', () => {
 		lines.includes('  npm run composer:install:prod --workspace=gamma')
 	);
 	assert.match(lines.at(-1), /drop --prepared/);
+});
+
+test('a library build written into the test site is required', async () => {
+	const files = {
+		'package.json': { workspaces: ['fair-events-shared'] },
+		'fair-events-shared/package.json': {
+			scripts: { build: 'wp-scripts build' },
+		},
+	};
+	await withTree(files, async (root) => {
+		const [problem] = await findMissingOutputs(root);
+		assert.equal(problem.workspace, 'fair-events-shared');
+		assert.match(
+			problem.missing[0],
+			/e2e\/mu-plugins\/admin-table-example\/build/
+		);
+		assert.deepEqual(problem.commands, [
+			'npm run build --workspace=fair-events-shared',
+		]);
+	});
+	await withTree(
+		{
+			...files,
+			'e2e/mu-plugins/admin-table-example/build/index.js': '',
+		},
+		async (root) => {
+			assert.deepEqual(await findMissingOutputs(root), []);
+		}
+	);
+});
+
+test('TEST_SITE_BUILDS match where the library build writes', async () => {
+	const { readFile } = await import('node:fs/promises');
+	const repository = new URL('../../', import.meta.url);
+	for (const { workspace, path } of TEST_SITE_BUILDS) {
+		const config = await readFile(
+			new URL(`${workspace}/webpack.example.config.cjs`, repository),
+			'utf8'
+		);
+		assert.ok(config.includes(`'../${path}'`), `${workspace} → ${path}`);
+	}
 });

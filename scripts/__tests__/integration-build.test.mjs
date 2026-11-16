@@ -114,6 +114,44 @@ test('pack records the revision, run, checksum and every plugin output', async (
 	});
 });
 
+test('pack and restore carry library builds written into the test site', async () => {
+	const directory = await mkdtemp(join(tmpdir(), 'integration-build-'));
+	try {
+		const tree = {
+			'package.json': { workspaces: ['fair-events-shared'] },
+			'fair-events-shared/package.json': {
+				scripts: { build: 'wp-scripts build' },
+			},
+		};
+		const fixture = 'e2e/mu-plugins/admin-table-example/build/index.js';
+		await writeTree(join(directory, 'producer'), {
+			...tree,
+			[fixture]: 'example();',
+		});
+		await writeTree(join(directory, 'consumer'), tree);
+		const dir = join(directory, 'artifact');
+		const manifest = await pack({
+			root: join(directory, 'producer'),
+			dir,
+			...runOptions,
+		});
+		assert.deepEqual(manifest.paths, [
+			'e2e/mu-plugins/admin-table-example/build',
+		]);
+		await restore({
+			root: join(directory, 'consumer'),
+			dir,
+			...runOptions,
+		});
+		assert.equal(
+			await readFile(join(directory, 'consumer', fixture), 'utf8'),
+			'example();'
+		);
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+});
+
 test('pack refuses a tree with missing outputs', async () => {
 	const { 'beta/vendor/autoload.php': _, ...partial } = outputs;
 	await withCheckouts(
