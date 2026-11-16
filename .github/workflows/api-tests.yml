@@ -3,67 +3,22 @@ name: API Tests
 permissions:
     contents: read
 
+# Reusable suite workflow, called by integration-tests.yml with the exact id
+# of the run's prepared build (#2326). Its status check, "API Tests", lives in
+# the caller. Run it manually through Integration Tests (suites: api).
 on:
-    push:
-        branches: [main]
-        paths:
-            - '**/src/API/**'
-            - '**/src/blocks/**'
-            - '**/src/Hooks/BlockHooks.php'
-            - 'scripts/block-docs.mjs'
-            - '**/playwright.config.js'
-            - '.wp-env.json'
-            - 'package.json'
-            - 'scripts/api-test-runner.mjs'
-            - 'scripts/__tests__/api-test-runner.test.mjs'
-            - 'scripts/php-diagnostics.mjs'
-            - 'scripts/__tests__/php-diagnostics.test.mjs'
-            - 'scripts/check-api-shards.mjs'
-            - 'scripts/check-e2e-shards.mjs'
-            - 'scripts/__tests__/check-api-shards.test.mjs'
-            - 'scripts/shard-assignment.mjs'
-            - 'scripts/shard-timings.mjs'
-            - 'scripts/shard-timings/**'
-            - 'scripts/__tests__/shard-assignment.test.mjs'
-            - 'scripts/__tests__/shard-timings.test.mjs'
-            - 'scripts/__tests__/fixtures/test-list/**'
-            - 'e2e/mu-plugins/**'
-            - 'e2e/drop-ins/**'
-            - 'e2e/support/fresh-site.js'
-            - '.github/workflows/api-tests.yml'
-    pull_request:
-        branches: [main]
-        paths:
-            - '**/src/API/**'
-            - '**/src/blocks/**'
-            - '**/src/Hooks/BlockHooks.php'
-            - 'scripts/block-docs.mjs'
-            - '**/playwright.config.js'
-            - '.wp-env.json'
-            - 'package.json'
-            - 'scripts/api-test-runner.mjs'
-            - 'scripts/__tests__/api-test-runner.test.mjs'
-            - 'scripts/php-diagnostics.mjs'
-            - 'scripts/__tests__/php-diagnostics.test.mjs'
-            - 'scripts/check-api-shards.mjs'
-            - 'scripts/check-e2e-shards.mjs'
-            - 'scripts/__tests__/check-api-shards.test.mjs'
-            - 'scripts/shard-assignment.mjs'
-            - 'scripts/shard-timings.mjs'
-            - 'scripts/shard-timings/**'
-            - 'scripts/__tests__/shard-assignment.test.mjs'
-            - 'scripts/__tests__/shard-timings.test.mjs'
-            - 'scripts/__tests__/fixtures/test-list/**'
-            - 'e2e/mu-plugins/**'
-            - 'e2e/drop-ins/**'
-            - 'e2e/support/fresh-site.js'
-            - '.github/workflows/api-tests.yml'
-    # Manual runs for CI benchmarks (TESTING.md § REST API tests) and the
-    # opt-in PHP diagnostics sweep (TESTING.md § PHP diagnostics sweep).
-    workflow_dispatch:
+    workflow_call:
         inputs:
+            artifact_id:
+                description: 'Artifact id of the prepared integration build of this run'
+                type: string
+                required: true
+            prepared_attempt:
+                description: 'Run attempt that prepared the build'
+                type: string
+                required: true
             php_diagnostics:
-                description: 'PHP diagnostics sweep: log warnings, notices and deprecations on the tests site and publish a grouped summary'
+                description: 'PHP diagnostics sweep'
                 type: boolean
                 default: false
 
@@ -139,31 +94,6 @@ jobs:
         steps:
             - uses: actions/checkout@v7
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
-              with:
-                  php-version: '8.5'
-                  extensions: mbstring, intl, zip
-                  coverage: none
-
-            - name: Cache Composer packages
-              uses: actions/cache@v6
-              with:
-                  path: |
-                      ./fair-payments-connector/vendor
-                      ./fair-events/vendor
-                      ./fair-events-experimental/vendor
-                      ./fair-platform/vendor
-                      ./fair-audience/vendor
-                      ./fair-audience-experimental/vendor
-                      ./fair-form/vendor
-                      ./fair-finance/vendor
-                      ./fair-payments-connector-experimental/vendor
-                      ./vendor
-                  key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-php-
-
             - name: Setup Node.js
               uses: actions/setup-node@v7
               with:
@@ -192,17 +122,29 @@ jobs:
               if: steps.npm-cache.outputs.cache-hit != 'true'
               run: HUSKY=0 npm ci --prefer-offline
 
-            - name: Install WP-CLI
+            # The exact build of this run's preparation job; never rebuilt,
+            # and never another run's. A missing (expired or deleted) artifact
+            # fails here, before WordPress starts.
+            - name: Download prepared integration build
+              id: prepared-download
+              continue-on-error: true
+              uses: actions/download-artifact@v8
+              with:
+                  artifact-ids: ${{ inputs.artifact_id }}
+                  path: integration-build
+                  merge-multiple: true
+
+            - name: Restore prepared integration build
+              env:
+                  DOWNLOAD_OUTCOME: ${{ steps.prepared-download.outcome }}
+                  ARTIFACT_ID: ${{ inputs.artifact_id }}
+                  PREPARED_ATTEMPT: ${{ inputs.prepared_attempt }}
               run: |
-                  curl --fail --location --show-error \
-                      --retry 5 --retry-all-errors --retry-delay 3 \
-                      --connect-timeout 20 --max-time 180 \
-                      --output wp-cli.phar \
-                      https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
-                  echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
-                  chmod +x wp-cli.phar
-                  sudo mv wp-cli.phar /usr/local/bin/wp
-                  wp --info
+                  if [ "$DOWNLOAD_OUTCOME" != success ]; then
+                      echo "::error::Could not download prepared build artifact $ARTIFACT_ID (integration-build-attempt-$PREPARED_ATTEMPT); it may have expired after 30 days or been deleted. Re-run all jobs to prepare a new build; shards never rebuild or use another run's build."
+                      exit 1
+                  fi
+                  node scripts/integration-build.mjs restore --dir=integration-build --run-id=${{ github.run_id }} --run-attempt="$PREPARED_ATTEMPT"
 
             - name: Read PHP version from wp-env config
               id: wp-env-config
@@ -235,8 +177,8 @@ jobs:
             # PHP_DIAGNOSTICS is empty unless a manual dispatch opts in.
             - name: Prepare environment and run API tests
               env:
-                  PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics == true && '--php-diagnostics' || '' }}
-              run: npm run test:api:local -- --shard=${{ matrix.shard }}/4 --results-dir=api-results $PHP_DIAGNOSTICS
+                  PHP_DIAGNOSTICS: ${{ inputs.php_diagnostics && '--php-diagnostics' || '' }}
+              run: npm run test:api:local -- --prepared --shard=${{ matrix.shard }}/4 --results-dir=api-results $PHP_DIAGNOSTICS
 
             # Uploaded on success too, so phase timings (api-results/timings.json),
             # per-workspace results and flaky retries stay available for
@@ -257,56 +199,10 @@ jobs:
             # Not named api-*, so the API status job never mistakes it for
             # shard results. The summary is also in this job's summary.
             - name: Upload PHP diagnostics
-              if: ${{ !cancelled() && inputs.php_diagnostics == true }}
+              if: ${{ !cancelled() && inputs.php_diagnostics }}
               uses: actions/upload-artifact@v7
               with:
                   name: php-diagnostics-api-shard-${{ matrix.shard }}-of-4-attempt-${{ github.run_attempt }}
                   path: php-diagnostics/
                   retention-days: 14
                   if-no-files-found: warn
-
-    # Single status for the whole suite: fails unless the inventory check and
-    # every shard succeeded (a failed, cancelled or skipped shard fails it), or
-    # if any planned test did not run in its shard.
-    api:
-        name: API Tests
-        runs-on: ubuntu-latest
-        needs: [api-inventory, api-shard]
-        if: ${{ always() }}
-
-        steps:
-            - uses: actions/checkout@v7
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v7
-              with:
-                  node-version: '24'
-
-            # All attempts: after "Re-run failed jobs" the shards that passed
-            # earlier keep their artifacts, and the latest attempt wins.
-            - name: Download inventory and shard results
-              if: ${{ needs.api-inventory.result == 'success' }}
-              uses: actions/download-artifact@v8
-              with:
-                  pattern: api-*
-                  path: api-artifacts
-
-            - name: Check every planned test ran
-              id: coverage
-              if: ${{ needs.api-inventory.result == 'success' }}
-              run: node scripts/check-api-shards.mjs --verify --results=api-artifacts
-
-            - name: Check inventory and shard results
-              if: ${{ always() }}
-              env:
-                  INVENTORY_RESULT: ${{ needs.api-inventory.result }}
-                  SHARDS_RESULT: ${{ needs.api-shard.result }}
-                  COVERAGE_RESULT: ${{ steps.coverage.outcome }}
-              run: |
-                  echo "Shard inventory: $INVENTORY_RESULT"
-                  echo "API shards: $SHARDS_RESULT"
-                  echo "Executed coverage: $COVERAGE_RESULT"
-                  if [ "$INVENTORY_RESULT" != success ] || [ "$SHARDS_RESULT" != success ] || [ "$COVERAGE_RESULT" != success ]; then
-                      echo "::error::API tests failed; open the failing 'API shard N/4' job (its log names the failing workspace) and its api-report-shard-N-of-4 artifact."
-                      exit 1
-                  fi

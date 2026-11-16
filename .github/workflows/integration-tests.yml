@@ -1,0 +1,276 @@
+name: Integration Tests
+
+permissions:
+    contents: read
+
+# The single entry point for the API and E2E suites (#2326). One job compiles
+# the plugins and installs production Composer dependencies once; every shard
+# of both suites restores exactly that build, then starts its own isolated
+# WordPress. See TESTING.md § Integration test workflow.
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    # Manual runs for CI benchmarks (TESTING.md § Rebalancing shards) and the
+    # opt-in PHP diagnostics sweep (TESTING.md § PHP diagnostics sweep).
+    workflow_dispatch:
+        inputs:
+            suites:
+                description: 'Suites to run'
+                type: choice
+                options: [both, api, e2e]
+                default: both
+            php_diagnostics:
+                description: 'PHP diagnostics sweep: log warnings, notices and deprecations on the tests site and publish a grouped summary'
+                type: boolean
+                default: false
+
+jobs:
+    # Applies the suites' path filters (scripts/integration-suites.mjs) to the
+    # change, or the manual selection. If the changed files cannot be listed,
+    # both suites run.
+    suites:
+        name: Select suites
+        runs-on: ubuntu-latest
+        outputs:
+            api: ${{ steps.select.outputs.api }}
+            e2e: ${{ steps.select.outputs.e2e }}
+
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Select suites
+              id: select
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  SUITES: ${{ inputs.suites }}
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  if [ "$EVENT_NAME" = workflow_dispatch ]; then
+                      api=false; e2e=false
+                      if [ "$SUITES" != e2e ]; then api=true; fi
+                      if [ "$SUITES" != api ]; then e2e=true; fi
+                      printf 'api=%s\ne2e=%s\n' "$api" "$e2e" | tee -a "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  # A pull request checks out its merge commit, whose first
+                  # parent is the base branch.
+                  base=HEAD^1
+                  if [ "$EVENT_NAME" = push ]; then
+                      base="$BEFORE"
+                      git cat-file -e "$base^{commit}" 2>/dev/null || git fetch --depth=1 origin "$base" || base=
+                  fi
+                  if [ -n "$base" ] && files=$(git diff --no-renames --name-only "$base" HEAD); then
+                      printf '%s\n' "$files" | node scripts/integration-suites.mjs | tee -a "$GITHUB_OUTPUT"
+                  else
+                      echo "::warning::Could not list the changed files; running both suites."
+                      node scripts/integration-suites.mjs --all | tee -a "$GITHUB_OUTPUT"
+                  fi
+
+    # Builds once for every shard of this run. The artifact name carries the
+    # attempt, and the shards download it by the exact id this job outputs:
+    # "Re-run failed jobs" keeps this job's original outputs, so rerun shards
+    # restore the same build; "Re-run all jobs" prepares a new one.
+    prepare:
+        name: Prepare integration build
+        needs: suites
+        if: ${{ needs.suites.outputs.api == 'true' || needs.suites.outputs.e2e == 'true' }}
+        runs-on: ubuntu-latest
+        outputs:
+            artifact-id: ${{ steps.upload.outputs.artifact-id }}
+            attempt: ${{ github.run_attempt }}
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+              with:
+                  php-version: '8.5'
+                  extensions: mbstring, intl, zip
+                  coverage: none
+
+            # Downloads only: vendor/ is always installed fresh from the
+            # lockfiles, so a stale cached copy of fair-events-shared can't
+            # reach the tests.
+            - name: Get Composer cache directory
+              id: composer-cache-dir
+              run: echo "dir=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache Composer downloads
+              uses: actions/cache@v6
+              with:
+                  path: ${{ steps.composer-cache-dir.outputs.dir }}
+                  key: ${{ runner.os }}-composer-integration-${{ hashFiles('*/composer.lock', '*/composer.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-composer-integration-
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            - name: Cache node_modules
+              id: npm-cache
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ./node_modules
+                      ./fair-events/node_modules
+                      ./fair-events-experimental/node_modules
+                      ./fair-payments-connector/node_modules
+                      ./fair-platform/node_modules
+                      ./fair-audience/node_modules
+                      ./fair-audience-experimental/node_modules
+                      ./fair-form/node_modules
+                      ./fair-finance/node_modules
+                      ./fair-payments-connector-experimental/node_modules
+                      ./fair-events-shared/node_modules
+                      ./fair-timetable/node_modules
+                  key: ${{ runner.os }}-node-v2-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: HUSKY=0 npm ci --prefer-offline
+
+            # The plugin builds generate script translations with `wp i18n`.
+            - name: Install WP-CLI
+              run: |
+                  curl --fail --location --show-error \
+                      --retry 5 --retry-all-errors --retry-delay 3 \
+                      --connect-timeout 20 --max-time 180 \
+                      --output wp-cli.phar \
+                      https://github.com/wp-cli/wp-cli/releases/download/v2.12.0/wp-cli-2.12.0.phar
+                  echo "be928f6b8ca1e8dfb9d2f4b75a13aa4aee0896f8a9a0a1c45cd5d2c98605e6172e6d014dda2e27f88c98befc16c040cbb2bd1bfa121510ea5cdf5f6a30fe8832  wp-cli.phar" | sha512sum -c -
+                  chmod +x wp-cli.phar
+                  sudo mv wp-cli.phar /usr/local/bin/wp
+                  wp --info
+
+            - name: Test prepared build tooling
+              run: node --test scripts/__tests__/prepared-outputs.test.mjs scripts/__tests__/integration-build.test.mjs scripts/__tests__/integration-suites.test.mjs
+
+            - name: Build JavaScript for all plugins
+              run: npm run build
+
+            - name: Install production Composer dependencies in all plugins
+              run: npm run composer:install:prod
+
+            - name: Package prepared build
+              run: node scripts/integration-build.mjs pack --dir=integration-build --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }}
+
+            - name: Upload prepared build
+              id: upload
+              uses: actions/upload-artifact@v7
+              with:
+                  name: integration-build-attempt-${{ github.run_attempt }}
+                  path: integration-build/
+                  retention-days: 30
+                  if-no-files-found: error
+
+    api-suite:
+        name: API
+        needs: [suites, prepare]
+        if: ${{ needs.suites.outputs.api == 'true' && needs.prepare.result == 'success' }}
+        uses: ./.github/workflows/api-tests.yml
+        with:
+            artifact_id: ${{ needs.prepare.outputs.artifact-id }}
+            prepared_attempt: ${{ needs.prepare.outputs.attempt }}
+            php_diagnostics: ${{ inputs.php_diagnostics == true }}
+
+    e2e-suite:
+        name: E2E
+        needs: [suites, prepare]
+        if: ${{ needs.suites.outputs.e2e == 'true' && needs.prepare.result == 'success' }}
+        uses: ./.github/workflows/e2e.yml
+        with:
+            artifact_id: ${{ needs.prepare.outputs.artifact-id }}
+            prepared_attempt: ${{ needs.prepare.outputs.attempt }}
+            php_diagnostics: ${{ inputs.php_diagnostics == true }}
+
+    # Single status for the API suite, kept here so the check stays named
+    # "API Tests": fails unless suite selection, preparation, the inventory
+    # check and every shard succeeded, or if any planned test did not run in
+    # its shard. Skipped when the change doesn't touch the API suite.
+    api:
+        name: API Tests
+        runs-on: ubuntu-latest
+        needs: [suites, prepare, api-suite]
+        if: ${{ always() && (needs.suites.result != 'success' || needs.suites.outputs.api == 'true') }}
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+
+            # All attempts: after "Re-run failed jobs" the shards that passed
+            # earlier keep their artifacts, and the latest attempt wins.
+            - name: Download inventory and shard results
+              if: ${{ !cancelled() && (needs.api-suite.result == 'success' || needs.api-suite.result == 'failure') }}
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: api-*
+                  path: api-artifacts
+
+            - name: Check every planned test ran
+              id: coverage
+              if: ${{ !cancelled() && (needs.api-suite.result == 'success' || needs.api-suite.result == 'failure') }}
+              run: node scripts/check-api-shards.mjs --verify --results=api-artifacts
+
+            - name: Check preparation and shard results
+              if: ${{ always() }}
+              env:
+                  SUITES_RESULT: ${{ needs.suites.result }}
+                  PREPARE_RESULT: ${{ needs.prepare.result }}
+                  SHARDS_RESULT: ${{ needs.api-suite.result }}
+                  COVERAGE_RESULT: ${{ steps.coverage.outcome }}
+              run: |
+                  echo "Suite selection: $SUITES_RESULT"
+                  echo "Prepared build: $PREPARE_RESULT"
+                  echo "API inventory and shards: $SHARDS_RESULT"
+                  echo "Executed coverage: $COVERAGE_RESULT"
+                  if [ "$SUITES_RESULT" != success ] || [ "$PREPARE_RESULT" != success ]; then
+                      echo "::error::API tests did not run: open the failing 'Select suites' or 'Prepare integration build' job, then use Re-run all jobs."
+                      exit 1
+                  fi
+                  if [ "$SHARDS_RESULT" != success ] || [ "$COVERAGE_RESULT" != success ]; then
+                      echo "::error::API tests failed; open the failing 'API shard N/4' job (its log names the failing workspace) and its api-report-shard-N-of-4 artifact."
+                      exit 1
+                  fi
+
+    # Single status for the E2E suite, kept here so the check stays named
+    # "E2E". Skipped when the change doesn't touch the E2E suite.
+    e2e:
+        name: E2E
+        runs-on: ubuntu-latest
+        needs: [suites, prepare, e2e-suite]
+        if: ${{ always() && (needs.suites.result != 'success' || needs.suites.outputs.e2e == 'true') }}
+
+        steps:
+            - name: Check preparation and shard results
+              env:
+                  SUITES_RESULT: ${{ needs.suites.result }}
+                  PREPARE_RESULT: ${{ needs.prepare.result }}
+                  SHARDS_RESULT: ${{ needs.e2e-suite.result }}
+              run: |
+                  echo "Suite selection: $SUITES_RESULT"
+                  echo "Prepared build: $PREPARE_RESULT"
+                  echo "E2E inventory and shards: $SHARDS_RESULT"
+                  if [ "$SUITES_RESULT" != success ] || [ "$PREPARE_RESULT" != success ]; then
+                      echo "::error::E2E did not run: open the failing 'Select suites' or 'Prepare integration build' job, then use Re-run all jobs."
+                      exit 1
+                  fi
+                  if [ "$SHARDS_RESULT" != success ]; then
+                      echo "::error::E2E failed; open the failing 'E2E shard N/4' job and its playwright-report-shard-N-of-4 artifact."
+                      exit 1
+                  fi

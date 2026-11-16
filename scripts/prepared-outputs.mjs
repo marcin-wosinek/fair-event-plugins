@@ -50,17 +50,17 @@ async function containsJavaScript(directory) {
 }
 
 /**
- * List the outputs each runtime plugin workspace is missing.
+ * The runtime plugin workspaces, in root workspace order.
  *
  * @param {string} rootDirectory Repository root.
- * @return {Promise<Array<{workspace: string, missing: string[], commands: string[]}>>}
- *   One entry per workspace with missing outputs, in root workspace order.
+ * @return {Promise<Array<{workspace: string, builds: boolean, installsComposer: boolean}>>}
+ *   Whether each has a `build` and a `composer:install:prod` script.
  */
-export async function findMissingOutputs(rootDirectory) {
+export async function runtimePluginWorkspaces(rootDirectory) {
 	const rootPackage = JSON.parse(
 		await readFile(join(rootDirectory, 'package.json'), 'utf8')
 	);
-	const problems = [];
+	const plugins = [];
 
 	for (const workspace of rootPackage.workspaces) {
 		const directory = join(rootDirectory, workspace);
@@ -73,18 +73,41 @@ export async function findMissingOutputs(rootDirectory) {
 		const scripts =
 			JSON.parse(await readFile(join(directory, 'package.json'), 'utf8'))
 				.scripts ?? {};
+		plugins.push({
+			workspace,
+			builds: Boolean(scripts.build),
+			installsComposer: Boolean(scripts['composer:install:prod']),
+		});
+	}
+
+	return plugins;
+}
+
+/**
+ * List the outputs each runtime plugin workspace is missing.
+ *
+ * @param {string} rootDirectory Repository root.
+ * @return {Promise<Array<{workspace: string, missing: string[], commands: string[]}>>}
+ *   One entry per workspace with missing outputs, in root workspace order.
+ */
+export async function findMissingOutputs(rootDirectory) {
+	const problems = [];
+
+	for (const {
+		workspace,
+		builds,
+		installsComposer,
+	} of await runtimePluginWorkspaces(rootDirectory)) {
+		const directory = join(rootDirectory, workspace);
 		const missing = [];
 		const commands = [];
 
-		if (
-			scripts.build &&
-			!(await containsJavaScript(join(directory, 'build')))
-		) {
+		if (builds && !(await containsJavaScript(join(directory, 'build')))) {
 			missing.push(`${workspace}/build/ (no JavaScript build output)`);
 			commands.push(`npm run build --workspace=${workspace}`);
 		}
 		if (
-			scripts['composer:install:prod'] &&
+			installsComposer &&
 			!(await isFile(join(directory, 'vendor', 'autoload.php')))
 		) {
 			missing.push(`${workspace}/vendor/autoload.php`);
