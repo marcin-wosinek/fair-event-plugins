@@ -1,0 +1,64 @@
+/**
+ * Connection-log screens (Mollie and Instagram): let the statistics, toolbar
+ * and pagination wrap so the page never scrolls sideways (#2315). Every rule
+ * is scoped to `.fair-platform-connection-logs`.
+ */
+
+.fair-platform-connection-logs {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.fair-platform-connection-logs__stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+/* Equal widths on one row when there's room, two per row on a phone. */
+.fair-platform-connection-logs__stat {
+	flex: 1 1 140px;
+	min-width: 0;
+}
+
+.fair-platform-connection-logs__stat-label {
+	overflow-wrap: break-word;
+}
+
+.fair-platform-connection-logs__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px;
+}
+
+/* Each control keeps its natural width so its whole value stays readable. */
+.fair-platform-connection-logs__control {
+	flex: 0 0 auto;
+	max-width: 100%;
+}
+
+.fair-platform-connection-logs__cleanup {
+	margin-left: auto;
+}
+
+.fair-platform-connection-logs__history {
+	overflow-x: auto;
+	max-width: 100%;
+}
+
+.fair-platform-connection-logs__pagination {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	border-top: 1px solid #dcdcde;
+}
+
+@media screen and (max-width: 782px) {
+	.fair-platform-connection-logs__cleanup {
+		margin-left: 0;
+	}
+}

@@ -184,6 +184,20 @@ test( 'a statistics failure hides the cards but keeps the list', async () => {
 	expect( screen.queryByText( 'Total' ) ).not.toBeInTheDocument();
 } );
 
+test( 'null or missing statistics show 0 (#2315)', async () => {
+	const api = makeApi( {
+		// SUM() over an empty log returns null; a key may also be absent.
+		stats: jest.fn( () => Promise.resolve( { total: null } ) ),
+	} );
+	renderScreen( api );
+
+	const total = ( await screen.findByText( 'Total' ) ).previousSibling;
+	expect( total ).toHaveTextContent( /^0$/ );
+	expect( screen.getByText( 'Unique' ).previousSibling ).toHaveTextContent(
+		/^0$/
+	);
+} );
+
 test( 'filters, sorting and pages are sent as request parameters', async () => {
 	const api = makeApi( {
 		list: jest.fn( () =>
