@@ -1,4 +1,5 @@
 import { __, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { useState, useEffect, useMemo, useRef } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -176,7 +177,7 @@ export default function FormAnswers() {
 				id: 'event_name',
 				label: __( 'Event', 'fair-form' ),
 				enableSorting: true,
-				getValue: ( { item } ) => item.event_name || '',
+				getValue: ( { item } ) => decodeEntityText( item.event_name ),
 			},
 			{
 				id: 'created_at',
@@ -231,7 +232,7 @@ export default function FormAnswers() {
 		const options = eventDates
 			.filter( ( ed ) => ed.event_date_id )
 			.map( ( ed ) => ( {
-				label: `${ ed.label } (${ ed.count })`,
+				label: `${ decodeEntityText( ed.label ) } (${ ed.count })`,
 				value: String( ed.event_date_id ),
 			} ) );
 
@@ -243,7 +244,7 @@ export default function FormAnswers() {
 		if ( currentId && ! options.some( ( o ) => o.value === currentId ) ) {
 			options.unshift( {
 				label:
-					editingItem.event_name ||
+					decodeEntityText( editingItem.event_name ) ||
 					sprintf(
 						/* translators: %d: event date ID */
 						__( 'Event date #%d', 'fair-form' ),

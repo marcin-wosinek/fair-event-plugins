@@ -1,4 +1,5 @@
 import { __, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import {
 	Button,
@@ -82,7 +83,8 @@ function formatStart( eventDate ) {
 
 function eventLabel( eventDate ) {
 	const title =
-		eventDate.title || __( '(untitled event)', 'fair-events-experimental' );
+		decodeEntityText( eventDate.title ).trim() ||
+		__( '(untitled event)', 'fair-events-experimental' );
 	const start = formatStart( eventDate );
 	return start ? `${ title } — ${ start }` : title;
 }

@@ -323,7 +323,7 @@ class CalendarFeedController extends WP_REST_Controller {
 	 * @return string Decoded title.
 	 */
 	private function decode_title( $title ) {
-		return html_entity_decode( (string) $title, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		return \FairEventsShared\Helpers\DisplayText::decode( $title );
 	}
 
 	/**

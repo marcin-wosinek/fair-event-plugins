@@ -17,7 +17,7 @@ import {
 	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
-import { formatTimingStart } from 'fair-events-shared';
+import { decodeEntityText, formatTimingStart } from 'fair-events-shared';
 import TransactionLog from './TransactionLog.js';
 
 // A recurring master never appears as a selectable result on its own — only
@@ -577,7 +577,9 @@ const EventField = ( { event, eventDateId, onSave } ) => {
 												'transparent';
 									} }
 								>
-									<strong>{ occurrence.title }</strong>
+									<strong>
+										{ decodeEntityText( occurrence.title ) }
+									</strong>
 									{ occurrence.start_date && (
 										<span
 											style={ {
@@ -603,7 +605,7 @@ const EventField = ( { event, eventDateId, onSave } ) => {
 				<span>
 					{ event ? (
 						<a href={ event.manage_url }>
-							{ event.title }
+							{ decodeEntityText( event.title ) }
 							{ event.start_date && (
 								<>
 									{ ' — ' }
@@ -705,7 +707,8 @@ const PersonPostCard = ( { transaction: t, onUpdate, transactionId } ) => {
 									<a
 										href={ `post.php?post=${ t.post_id }&action=edit` }
 									>
-										{ t.post_title || `#${ t.post_id }` }
+										{ decodeEntityText( t.post_title ) ||
+											`#${ t.post_id }` }
 									</a>
 								) : (
 									'-'
@@ -845,7 +848,9 @@ export const PurchasesCard = ( { purchases } ) => {
 															.manage_url
 													}
 												>
-													{ purchase.event.title }
+													{ decodeEntityText(
+														purchase.event.title
+													) }
 													{ purchase.event
 														.start_date && (
 														<>
@@ -1273,7 +1278,9 @@ const TransactionPage = () => {
 								) }
 							</Heading>
 						</CardHeader>
-						<CardBody>{ t.description }</CardBody>
+						<CardBody>
+							{ decodeEntityText( t.description ) }
+						</CardBody>
 					</Card>
 				) }
 
@@ -1361,8 +1368,16 @@ const TransactionPage = () => {
 								<tbody>
 									{ t.line_items.map( ( item ) => (
 										<tr key={ item.id }>
-											<td>{ item.name }</td>
-											<td>{ item.description || '-' }</td>
+											<td>
+												{ decodeEntityText(
+													item.name
+												) }
+											</td>
+											<td>
+												{ decodeEntityText(
+													item.description
+												) || '-' }
+											</td>
 											<td>{ item.quantity }</td>
 											<td>
 												{ item.unit_amount.toFixed(
@@ -1556,7 +1571,7 @@ const TransactionPage = () => {
 										'Description: %s',
 										'fair-payments-connector'
 									),
-									t.description
+									decodeEntityText( t.description )
 								)
 							: __(
 									'This transaction has no description.',

@@ -16,6 +16,7 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { formatLocalDate } from 'fair-events-shared/src/calendarUtils.js';
+import { getEventDisplayTitle } from 'fair-events-shared/src/event-utils.js';
 import {
 	CalendarHeader,
 	CalendarGrid,
@@ -303,7 +304,7 @@ export default function CalendarApp() {
 
 		const manageEventUrl = window.fairEventsCalendarData?.manageEventUrl;
 		setSuccessNotice( {
-			title: eventDate.title,
+			title: getEventDisplayTitle( eventDate.title ),
 			id: eventDate.id,
 			manageUrl: manageEventUrl
 				? `${ manageEventUrl }&event_date_id=${ eventDate.id }`

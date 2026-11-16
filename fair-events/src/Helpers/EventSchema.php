@@ -20,6 +20,7 @@ use FairEvents\Services\ActivitySelection;
 use FairEvents\Services\EventSchedule;
 use FairEvents\Services\OfferCapacity;
 use FairEvents\Services\TicketAvailability;
+use FairEventsShared\Helpers\DisplayText;
 use FairEventsShared\LineItemTotals;
 use FairEventsShared\Money;
 
@@ -49,7 +50,8 @@ class EventSchema {
 
 		$data = array(
 			'@type'       => 'Event',
-			'name'        => self::get_title( $post, $event_date ),
+			// JSON-LD is plain text: decode stored entities once (#2300).
+			'name'        => DisplayText::decode( self::get_title( $post, $event_date ) ),
 			'startDate'   => $dates['start'],
 			'url'         => $url ?? get_permalink( $post_id ),
 			'eventStatus' => 'cancelled' === $event_date->status
@@ -112,7 +114,7 @@ class EventSchema {
 
 		$event = array(
 			'@type'     => 'Event',
-			'name'      => $dto['title'],
+			'name'      => DisplayText::decode( $dto['title'] ?? '' ),
 			'startDate' => $dates['start'],
 			'url'       => $dto['url'],
 		);

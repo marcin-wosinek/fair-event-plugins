@@ -1,4 +1,5 @@
 import { __ } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -273,7 +274,9 @@ export default function Import() {
 													key={ event.event_id }
 													value={ event.event_id }
 												>
-													{ event.title }
+													{ decodeEntityText(
+														event.title
+													) }
 												</option>
 											) ) }
 										</SelectControl>

@@ -24,6 +24,7 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import {
+	decodeEntityText,
 	formatLocalDate,
 	RecurrenceControl,
 	buildRRule,
@@ -575,7 +576,9 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 														},
 														...searchResults.map(
 															( r ) => ( {
-																label: r.title,
+																label: decodeEntityText(
+																	r.title
+																),
 																value: String(
 																	r.id
 																),

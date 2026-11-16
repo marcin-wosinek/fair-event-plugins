@@ -890,6 +890,33 @@ describe( 'TransactionsApp — shared table (#2209)', () => {
 		).not.toBeInTheDocument();
 	} );
 
+	it( 'shows stored descriptions with entities as readable text, keeping HTML-like text literal (#2300)', async () => {
+		apiFetch.mockImplementation( () =>
+			respond( [
+				row( 630, {
+					description:
+						'Entrada para Minifesti "La&nbsp;Mutable", 22 de noviembre',
+				} ),
+				row( 631, {
+					description: 'Ticket for &lt;b&gt;Rock&lt;/b&gt; &amp;amp;',
+				} ),
+			] )
+		);
+		render( <TransactionsApp /> );
+
+		await screen.findByRole( 'link', { name: '#630' } );
+		// textContent, not toHaveTextContent: its whitespace normalization
+		// would hide whether &nbsp; became a non-breaking space.
+		expect( rowOf( 630 ).textContent ).toContain(
+			'Entrada para Minifesti "La\u00a0Mutable", 22 de noviembre'
+		);
+		expect( rowOf( 630 ).textContent ).not.toContain( '&nbsp;' );
+		expect( rowOf( 631 ) ).toHaveTextContent(
+			'Ticket for <b>Rock</b> &amp;'
+		);
+		expect( rowOf( 631 ).querySelector( 'b' ) ).toBeNull();
+	} );
+
 	it( 'keeps currency and two decimals for the amount and both fees, telling zero from missing', async () => {
 		apiFetch.mockImplementation( () =>
 			respond( [

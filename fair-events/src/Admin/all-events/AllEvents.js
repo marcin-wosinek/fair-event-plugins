@@ -7,6 +7,7 @@ import { chevronRight, chevronDown } from '@wordpress/icons';
 import {
 	formatTimingStart,
 	timingStartKey,
+	decodeEntityText,
 	getEventDisplayTitle,
 } from 'fair-events-shared';
 import { formatEventTiming } from '../components/eventTiming.js';
@@ -181,7 +182,8 @@ export default function AllEvents() {
 				},
 				enableSorting: true,
 				enableHiding: false,
-				getValue: ( { item } ) => ( item.title || '' ).toLowerCase(),
+				getValue: ( { item } ) =>
+					decodeEntityText( item.title ).toLowerCase(),
 			},
 			{
 				id: 'start_date',
@@ -239,7 +241,7 @@ export default function AllEvents() {
 					if ( item.post && item.post.edit_url ) {
 						return (
 							<a href={ item.post.edit_url }>
-								{ item.post.title }{ ' ' }
+								{ decodeEntityText( item.post.title ) }{ ' ' }
 								<small>({ item.post.status_label })</small>
 							</a>
 						);

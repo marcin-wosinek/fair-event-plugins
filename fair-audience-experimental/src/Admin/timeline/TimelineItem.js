@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { Card, CardBody, Icon } from '@wordpress/components';
 
 /**
@@ -369,10 +370,12 @@ function TicketSalesDayContent( { item } ) {
 									{ ' (' }
 									{ eventUrl ? (
 										<a href={ eventUrl }>
-											{ ticket.event_title }
+											{ decodeEntityText(
+												ticket.event_title
+											) }
 										</a>
 									) : (
-										ticket.event_title
+										decodeEntityText( ticket.event_title )
 									) }
 									{ ')' }
 								</>

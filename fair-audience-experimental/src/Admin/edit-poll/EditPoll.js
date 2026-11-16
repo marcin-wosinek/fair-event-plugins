@@ -1,4 +1,5 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import {
@@ -239,10 +240,11 @@ export default function EditPoll() {
 			)
 		);
 
-	const eventTitle =
+	const eventTitle = decodeEntityText(
 		events.find(
 			( event ) => event.event_id.toString() === formData.event_id
-		)?.title || '';
+		)?.title
+	);
 
 	const handleGeneratePDF = async () => {
 		setIsGeneratingPDF( true );
@@ -590,7 +592,7 @@ export default function EditPoll() {
 									'%1$s (%2$d participants)',
 									'fair-audience-experimental'
 								),
-								event.title,
+								decodeEntityText( event.title ),
 								event.participant_counts.signed_up || 0
 							),
 							value: event.event_id.toString(),

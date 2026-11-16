@@ -1,6 +1,7 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import {
 	Button,
 	Card,
@@ -386,14 +387,18 @@ export default function ParticipantDetail() {
 											<td>
 												{ manageUrl ? (
 													<a href={ manageUrl }>
-														{ ev.event_title ||
+														{ decodeEntityText(
+															ev.event_title
+														) ||
 															__(
 																'(untitled)',
 																'fair-audience'
 															) }
 													</a>
 												) : (
-													ev.event_title || '—'
+													decodeEntityText(
+														ev.event_title
+													) || '—'
 												) }
 											</td>
 											<td>{ formatEventDate( ev ) }</td>
@@ -467,7 +472,11 @@ export default function ParticipantDetail() {
 												</a>
 											</td>
 											<td>{ sub.page_title || '—' }</td>
-											<td>{ sub.event_title || '—' }</td>
+											<td>
+												{ decodeEntityText(
+													sub.event_title
+												) || '—' }
+											</td>
 											<td>
 												{ formatDateTime(
 													sub.created_at

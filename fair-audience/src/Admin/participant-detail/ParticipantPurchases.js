@@ -13,6 +13,7 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Card, CardBody, CardHeader, Notice } from '@wordpress/components';
 import { formatTimingStart } from 'fair-events-shared/src/dateTime.js';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 
 const PURCHASE_STATUS_DISPLAY = {
 	confirmed: __( 'Confirmed', 'fair-audience' ),
@@ -170,14 +171,18 @@ export default function ParticipantPurchases( {
 											<a
 												href={ `admin.php?page=fair-events-manage-event&event_date_id=${ purchase.event_date_id }&tab=finance` }
 											>
-												{ purchase.event_title ||
+												{ decodeEntityText(
+													purchase.event_title
+												) ||
 													__(
 														'(untitled)',
 														'fair-audience'
 													) }
 											</a>
 										) : (
-											purchase.event_title || '—'
+											decodeEntityText(
+												purchase.event_title
+											) || '—'
 										) }
 									</td>
 									<td>

@@ -10,6 +10,7 @@ namespace FairEventsExperimental\Frontend;
 defined( 'WPINC' ) || die;
 
 use FairEventsExperimental\Services\WeeklySummary;
+use FairEventsShared\Helpers\DisplayText;
 
 /**
  * Serves `/fair-events-weekly-summary/{feed-slug}/`: a read-only list of the
@@ -229,13 +230,18 @@ class WeeklySummaryPage {
 			<?php else : ?>
 				<ol class="fair-weekly-summary__events">
 					<?php foreach ( $summary['events'] as $event ) : ?>
-						<?php $event_title = '' !== $event['title'] ? $event['title'] : __( '(untitled event)', 'fair-events-experimental' ); ?>
+						<?php
+						// Titles arrive decoded and trimmed (SummaryBuilder); decoding
+						// again would collapse literal entity text. DisplayText::html()
+						// escapes them without esc_html()'s entity pass-through (#2300).
+						$event_title = '' !== $event['title'] ? $event['title'] : __( '(untitled event)', 'fair-events-experimental' );
+						?>
 						<li class="fair-weekly-summary__event">
 							<span class="fair-weekly-summary__when"><?php echo esc_html( $event['when'] ); ?></span>
 							<?php if ( '' !== $event['url'] ) : ?>
-								<a href="<?php echo esc_url( $event['url'] ); ?>"><?php echo esc_html( $event_title ); ?></a>
+								<a href="<?php echo esc_url( $event['url'] ); ?>"><?php echo DisplayText::html( $event_title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- DisplayText::html() escapes decoded text. ?></a>
 							<?php else : ?>
-								<span><?php echo esc_html( $event_title ); ?></span>
+								<span><?php echo DisplayText::html( $event_title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- DisplayText::html() escapes decoded text. ?></span>
 							<?php endif; ?>
 						</li>
 					<?php endforeach; ?>

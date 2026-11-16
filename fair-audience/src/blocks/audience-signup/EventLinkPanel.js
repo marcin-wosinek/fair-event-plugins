@@ -3,6 +3,7 @@ import { useSelect } from '@wordpress/data';
 import { Button, TextControl, Spinner, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { formatDateOnly } from 'fair-events-shared/src/dateTime.js';
 
 function EventLinkPanel( { eventDateId, onChange } ) {
@@ -118,7 +119,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 								'fair-audience'
 							) }
 					<br />
-					<strong>{ autoDetected.title }</strong>
+					<strong>{ decodeEntityText( autoDetected.title ) }</strong>
 					{ autoDetected.start_date && (
 						<> ({ formatDate( autoDetected.start_date ) })</>
 					) }
@@ -153,7 +154,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 									{ __( 'Linked event:', 'fair-audience' ) }
 								</strong>
 								<br />
-								{ linkedEvent.title }
+								{ decodeEntityText( linkedEvent.title ) }
 								{ linkedEvent.start_date && (
 									<>
 										{ ' ' }
@@ -217,7 +218,7 @@ function EventLinkPanel( { eventDateId, onChange } ) {
 									setResults( [] );
 								} }
 							>
-								{ event.title }
+								{ decodeEntityText( event.title ) }
 								{ event.start_date && (
 									<> ({ formatDate( event.start_date ) })</>
 								) }

@@ -22,6 +22,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 
 /**
  * @param {Object}   props
@@ -201,8 +202,10 @@ export default function EventLinkModal( {
 						{ linkedPosts.map( ( lp ) => (
 							<HStack key={ lp.id } spacing={ 3 } wrap>
 								<span>
-									<strong>{ lp.title }</strong> ({ lp.status }
-									)
+									<strong>
+										{ decodeEntityText( lp.title ) }
+									</strong>{ ' ' }
+									({ lp.status })
 									{ lp.is_primary && (
 										<span
 											style={ {
@@ -375,7 +378,7 @@ export default function EventLinkModal( {
 											value: '',
 										},
 										...searchResults.map( ( r ) => ( {
-											label: r.title,
+											label: decodeEntityText( r.title ),
 											value: String( r.id ),
 										} ) ),
 									] }

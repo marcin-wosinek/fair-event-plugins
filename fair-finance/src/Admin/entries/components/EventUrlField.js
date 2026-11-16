@@ -3,6 +3,7 @@
  */
 import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	TextControl,
@@ -158,7 +159,9 @@ const EventUrlField = ( { value, eventDateId, onChange } ) => {
 									role="button"
 									tabIndex={ 0 }
 								>
-									<strong>{ event.title }</strong>
+									<strong>
+										{ decodeEntityText( event.title ) }
+									</strong>
 									<div
 										style={ {
 											fontSize: '12px',

@@ -9,6 +9,7 @@ import {
 	Fragment,
 } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Card,
@@ -425,7 +426,7 @@ const EntriesApp = () => {
 				setEventDates(
 					events.map( ( event ) => ( {
 						label:
-							event.title ||
+							decodeEntityText( event.title ) ||
 							getEventUrlLabel( event.display_url || '' ),
 						id: event.id.toString(),
 						url: event.display_url || null,

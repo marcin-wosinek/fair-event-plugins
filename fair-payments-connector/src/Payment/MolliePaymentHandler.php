@@ -12,6 +12,7 @@ use Mollie\Api\Exceptions\MollieException;
 use FairPaymentsConnector\AuditLog\AuditLogger;
 use FairPaymentsConnector\Database\PaymentLogRepository;
 use FairPaymentsConnector\OAuth\GrantedScopes;
+use FairEventsShared\Helpers\DisplayText;
 use FairEventsShared\Money;
 
 defined( 'WPINC' ) || die;
@@ -338,7 +339,9 @@ class MolliePaymentHandler {
 					'currency' => $args['currency'],
 					'value'    => Money::format_value( (float) $args['amount'] ),
 				),
-				'description' => $args['description'],
+				// Mollie shows the description as plain text; descriptions
+				// built from event titles carry their entities (#2300).
+				'description' => DisplayText::decode( $args['description'] ),
 				'redirectUrl' => $args['redirect_url'],
 				'webhookUrl'  => $args['webhook_url'],
 				'metadata'    => $args['metadata'],

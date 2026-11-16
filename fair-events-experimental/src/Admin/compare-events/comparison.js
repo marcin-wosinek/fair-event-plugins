@@ -6,6 +6,7 @@
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import {
 	formatTimingStart,
 	timingStartKey,
@@ -94,7 +95,7 @@ export function formatEventStart( event ) {
  */
 export function getEventLabel( event ) {
 	const title =
-		event?.title?.trim() ||
+		decodeEntityText( event?.title ).trim() ||
 		__( '(untitled event)', 'fair-events-experimental' );
 	const start = formatEventStart( event );
 	if ( ! start ) {
@@ -261,7 +262,7 @@ export function getFutureHorizon( rows, slot ) {
 }
 
 function toEventFilenamePart( event, statistics ) {
-	return `${ toFilenamePart( event?.title, 'event' ) }-${
+	return `${ toFilenamePart( decodeEntityText( event?.title ), 'event' ) }-${
 		statistics?.start_date || 'date'
 	}`;
 }

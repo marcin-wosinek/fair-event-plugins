@@ -1774,7 +1774,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			static function ( $id ) {
 				return array(
 					'id'    => $id,
-					'title' => '' !== get_the_title( $id ) ? html_entity_decode( get_the_title( $id ), ENT_QUOTES ) : __( '(no title)', 'fair-events' ),
+					'title' => \FairEventsShared\Helpers\DisplayText::event_title( get_the_title( $id ), __( '(no title)', 'fair-events' ) ),
 				);
 			},
 			$ids

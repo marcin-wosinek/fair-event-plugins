@@ -1,6 +1,7 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import {
 	Button,
 	Card,
@@ -737,7 +738,7 @@ export default function AllParticipants() {
 										as="a"
 										href={ `${ window.fairAudienceAllParticipantsData?.participantsUrl }${ event.event_date_id }` }
 									>
-										{ event.title }
+										{ decodeEntityText( event.title ) }
 									</Item>
 								) ) }
 							</ItemGroup>

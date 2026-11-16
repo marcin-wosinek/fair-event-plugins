@@ -24,6 +24,7 @@ use FairAudience\Services\ManageSubscriptionToken;
 use FairAudience\Services\ParticipantToken;
 use FairAudienceExperimental\Services\FeePaymentToken;
 use FairAudience\Services\RecipientResolver;
+use FairEventsShared\Helpers\DisplayText;
 use FairEventsShared\Money;
 use FairEventsShared\Notifications\BookingConfirmationEmail;
 use FairEventsShared\Notifications\FormSubmissionEmail;
@@ -245,7 +246,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Quick question about %s', 'fair-audience' ),
-			$event->post_title
+			DisplayText::decode( $event->post_title )
 		);
 
 		$content = $this->greeting_html( $participant->name )
@@ -465,7 +466,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Continue registering for %s', 'fair-audience' ),
-			$event->post_title
+			DisplayText::decode( $event->post_title )
 		);
 
 		$button_text = $is_paid
@@ -1545,7 +1546,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Activities added — %s', 'fair-audience' ),
-			$event_title
+			DisplayText::decode( $event_title )
 		);
 
 		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
@@ -1620,7 +1621,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Payment didn’t go through — %s', 'fair-audience' ),
-			$event_title
+			DisplayText::decode( $event_title )
 		);
 
 		$amount   = isset( $transaction->amount ) ? (float) $transaction->amount : 0;
@@ -1712,7 +1713,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( "You're invited: %s", 'fair-audience' ),
-			$event->post_title
+			DisplayText::decode( $event->post_title )
 		);
 
 		$content = $this->greeting_html( $participant->name )
@@ -1983,8 +1984,12 @@ class EmailService {
 
 		$site_name   = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$event_title = get_the_title( $event_id );
+		// Plain-text subject: decode the stored title once (#2300); the site
+		// name fallback is decoded already.
+		$event_title_text = DisplayText::decode( $event_title );
 		if ( empty( $event_title ) ) {
-			$event_title = $site_name;
+			$event_title      = $site_name;
+			$event_title_text = $site_name;
 		}
 
 		$event_url = '';
@@ -2011,7 +2016,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %s: event title */
 			__( 'Thanks for your interest in %s', 'fair-audience' ),
-			$event_title
+			$event_title_text
 		);
 
 		$greeting_name = ! empty( $participant->name ) ? $participant->name : __( 'there', 'fair-audience' );

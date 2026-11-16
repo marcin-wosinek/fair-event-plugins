@@ -36,6 +36,7 @@ import {
 	formatDateOnly,
 	formatTimingStart,
 	timingStartKey,
+	decodeEntityText,
 	getEventDisplayTitle,
 	parseRRule,
 	RECURRENCE_FREQUENCIES,
@@ -1856,7 +1857,7 @@ export default function ManageEventApp() {
 							<ul className="fair-events-publication-posts">
 								{ publicationPosts.map( ( post ) => (
 									<li key={ post.id }>
-										{ post.title ||
+										{ decodeEntityText( post.title ) ||
 											__( '(no title)', 'fair-events' ) }
 									</li>
 								) ) }
