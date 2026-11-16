@@ -124,3 +124,208 @@ test.describe( 'FinancialEntry tag routes', () => {
 		expect( res.status() ).toBe( 401 );
 	} );
 } );
+
+test.describe( 'Split allocation tags (#2341)', () => {
+	let api;
+	const STAMP = Date.now().toString( 36 );
+	// A date no other spec uses keeps the untagged listing to our entries.
+	const DATE = '2033-05-05';
+	const PARENT_TAG = `split-parent-${ STAMP }`;
+	const TAG_A = `split-a-${ STAMP }`;
+	const TAG_B = `split-b-${ STAMP }`;
+	const TAG_FILTER = `split-filter-${ STAMP }`;
+	const headers = { Authorization: `Basic ${ adminAuth }` };
+	const API = '/wp-json/fair-finance/v1/financial-entries';
+	const created = [];
+
+	const createEntry = async ( data = {} ) => {
+		const res = await api.post( API, {
+			headers,
+			data: {
+				amount: 100,
+				entry_type: 'cost',
+				entry_date: DATE,
+				description: `Split tag entry ${ STAMP }`,
+				tag: PARENT_TAG,
+				...data,
+			},
+		} );
+		expect( res.ok(), await res.text() ).toBeTruthy();
+		const { id } = await res.json();
+		created.push( id );
+		return id;
+	};
+
+	const split = ( id, allocations, method = 'post' ) =>
+		api[ method ]( `${ API }/${ id }/split`, {
+			headers,
+			data: { allocations },
+		} );
+
+	// The focused list returns a split parent with its allocations.
+	const focused = async ( id ) => {
+		const res = await api.get( `${ API }?entry_id=${ id }`, { headers } );
+		expect( res.ok() ).toBeTruthy();
+		return ( await res.json() ).entries[ 0 ];
+	};
+
+	const childTags = async ( id ) => {
+		const entry = await focused( id );
+		return {
+			parentTag: entry.tag,
+			tags: ( entry.children || [] ).map( ( child ) => child.tag ),
+		};
+	};
+
+	const list = async ( query ) => {
+		const res = await api.get(
+			`${ API }?date_from=${ DATE }&date_to=${ DATE }&per_page=100&${ query }`,
+			{ headers }
+		);
+		expect( res.ok() ).toBeTruthy();
+		return res.json();
+	};
+
+	const totals = async ( query ) => {
+		const res = await api.get(
+			`${ API }/totals?date_from=${ DATE }&date_to=${ DATE }&${ query }`,
+			{ headers }
+		);
+		expect( res.ok() ).toBeTruthy();
+		return res.json();
+	};
+
+	test.beforeAll( async () => {
+		api = await request.newContext( { baseURL: BASE_URL } );
+	} );
+
+	test.afterAll( async () => {
+		for ( const id of created ) {
+			await api.delete( `${ API }/${ id }/split`, { headers } );
+			await api.delete( `${ API }/${ id }`, { headers } );
+		}
+		await api.dispose();
+	} );
+
+	test( 'creates allocations with explicit, cleared and inherited tags', async () => {
+		const id = await createEntry();
+
+		const res = await split( id, [
+			{ amount: 40, tag: TAG_A },
+			{ amount: 30, tag: null },
+			{ amount: 20, tag: '' },
+			// Omitting the tag keeps the original entry's tag.
+			{ amount: 10 },
+		] );
+		expect( res.status(), await res.text() ).toBe( 201 );
+
+		expect( await childTags( id ) ).toEqual( {
+			parentTag: null,
+			tags: [ TAG_A, null, null, PARENT_TAG ],
+		} );
+	} );
+
+	test( 'updates, clears and keeps allocation tags on edit', async () => {
+		const id = await createEntry();
+		expect(
+			(
+				await split( id, [
+					{ amount: 60, tag: TAG_A, description: 'Room' },
+					{ amount: 40, tag: TAG_B, description: 'Snacks' },
+				] )
+			).status()
+		).toBe( 201 );
+
+		// Changing only amounts and descriptions keeps the sent tags.
+		let res = await split(
+			id,
+			[
+				{ amount: 70, tag: TAG_A, description: 'Room and stage' },
+				{ amount: 30, tag: TAG_B, description: 'Coffee' },
+			],
+			'put'
+		);
+		expect( res.status(), await res.text() ).toBe( 200 );
+		expect( ( await childTags( id ) ).tags ).toEqual( [ TAG_A, TAG_B ] );
+
+		res = await split(
+			id,
+			[
+				{ amount: 70, tag: TAG_B },
+				{ amount: 30, tag: null },
+			],
+			'put'
+		);
+		expect( res.status(), await res.text() ).toBe( 200 );
+		expect( await childTags( id ) ).toEqual( {
+			parentTag: null,
+			tags: [ TAG_B, null ],
+		} );
+	} );
+
+	test( 'rejects a malformed allocation tag without changing the entry', async () => {
+		const id = await createEntry();
+
+		for ( const tag of [ 42, [ 'venue' ], 'x'.repeat( 101 ) ] ) {
+			const res = await split( id, [
+				{ amount: 50, tag },
+				{ amount: 50, tag: TAG_A },
+			] );
+			expect( res.status() ).toBe( 400 );
+		}
+
+		expect( await childTags( id ) ).toEqual( {
+			parentTag: PARENT_TAG,
+			tags: [],
+		} );
+	} );
+
+	test( 'filters and totals count allocations, not their split parent', async () => {
+		const id = await createEntry( { amount: 90 } );
+		const standalone = await createEntry( { amount: 5, tag: null } );
+		expect(
+			(
+				await split( id, [
+					{ amount: 50, tag: TAG_FILTER },
+					{ amount: 40, tag: null },
+				] )
+			).status()
+		).toBe( 201 );
+
+		const named = await list( `tag=${ encodeURIComponent( TAG_FILTER ) }` );
+		expect( named.entries.map( ( e ) => e.amount ) ).toEqual( [ 50 ] );
+		expect( named.entries[ 0 ].parent_entry_id ).toBe( id );
+		expect( named.total ).toBe( 1 );
+		expect(
+			( await totals( `tag=${ encodeURIComponent( TAG_FILTER ) }` ) )
+				.total_cost
+		).toBe( 50 );
+
+		// Untagged: the cleared allocation and the standalone entry, never
+		// the split parent (whose own tag is always cleared).
+		const untagged = await list( 'tag=none' );
+		const ours = untagged.entries.filter(
+			( e ) =>
+				e.id === standalone || e.parent_entry_id === id || e.id === id
+		);
+		expect( ours.map( ( e ) => [ e.id === id, e.amount ] ).sort() ).toEqual(
+			[
+				[ false, 40 ],
+				[ false, 5 ],
+			]
+		);
+		untagged.entries.forEach( ( e ) => {
+			expect( e.tag ).toBeNull();
+			expect( e.children || [] ).toHaveLength( 0 );
+		} );
+		expect( untagged.total ).toBe( untagged.entries.length );
+
+		const byTag = await (
+			await api.get( `${ API }/totals-by-tag`, { headers } )
+		).json();
+		expect( byTag[ TAG_FILTER ] ).toMatchObject( {
+			total_cost: 50,
+			cost_count: 1,
+		} );
+	} );
+} );

@@ -20,6 +20,7 @@ import {
  * Internal dependencies
  */
 import { bankOriginLabel } from './bankOrigin.js';
+import TagField from './TagField.js';
 
 const isUrl = ( text ) => /^https?:\/\//i.test( text.trim() );
 
@@ -173,6 +174,7 @@ const SplitEventUrlField = ( { value, eventDateId, onChange } ) => {
 const SplitModal = ( {
 	entry,
 	budgets,
+	tags = [],
 	eventsEnabled,
 	onSplit,
 	onCancel,
@@ -180,6 +182,16 @@ const SplitModal = ( {
 	confirmation = null,
 } ) => {
 	const isEditMode = entry.children && entry.children.length > 0;
+	// A new allocation starts with the original entry's tag; each one can
+	// then be changed or cleared on its own.
+	const newAllocation = () => ( {
+		budget_id: '',
+		amount: '',
+		description: entry.description || '',
+		event_url: '',
+		event_date_id: null,
+		tag: entry.tag || '',
+	} );
 	const [ allocations, setAllocations ] = useState(
 		isEditMode
 			? entry.children.map( ( child ) => ( {
@@ -190,23 +202,9 @@ const SplitModal = ( {
 					description: child.description || '',
 					event_url: child.event_url || '',
 					event_date_id: child.event_date_id || null,
+					tag: child.tag || '',
 				} ) )
-			: [
-					{
-						budget_id: '',
-						amount: '',
-						description: entry.description || '',
-						event_url: '',
-						event_date_id: null,
-					},
-					{
-						budget_id: '',
-						amount: '',
-						description: entry.description || '',
-						event_url: '',
-						event_date_id: null,
-					},
-				]
+			: [ newAllocation(), newAllocation() ]
 	);
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
@@ -231,16 +229,7 @@ const SplitModal = ( {
 	};
 
 	const addRow = () => {
-		setAllocations( ( prev ) => [
-			...prev,
-			{
-				budget_id: '',
-				amount: '',
-				description: entry.description || '',
-				event_url: '',
-				event_date_id: null,
-			},
-		] );
+		setAllocations( ( prev ) => [ ...prev, newAllocation() ] );
 	};
 
 	const removeRow = ( index ) => {
@@ -277,6 +266,8 @@ const SplitModal = ( {
 						description: a.description,
 						event_url: a.event_url || null,
 						event_date_id: a.event_date_id || null,
+						// Always sent, so a cleared tag stays cleared.
+						tag: a.tag.trim() || null,
 					} ) ),
 				},
 			} );
@@ -446,6 +437,15 @@ const SplitModal = ( {
 								}
 								rows={ 2 }
 							/>
+							<div style={ { marginTop: '8px' } }>
+								<TagField
+									value={ allocation.tag }
+									tags={ tags }
+									onChange={ ( value ) =>
+										updateAllocation( index, 'tag', value )
+									}
+								/>
+							</div>
 							{ eventsEnabled && (
 								<div style={ { marginTop: '8px' } }>
 									<div

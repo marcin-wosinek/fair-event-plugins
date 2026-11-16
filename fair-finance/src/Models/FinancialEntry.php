@@ -338,13 +338,13 @@ class FinancialEntry {
 		$where_clauses = array();
 		$where_values  = array();
 
-		// When filtering by a specific budget, event_url, event_date_id, or tag, include child entries matching that filter.
+		// When filtering by a specific budget, event_url, event_date_id, or any tag filter (untagged included), include child entries matching that filter.
 		// A focused entry is shown even when it is a split child.
 		// Otherwise, exclude child entries (they are shown under their parent).
 		$include_children = ( ! empty( $filters['budget_id'] ) && 'none' !== $filters['budget_id'] )
 			|| ! empty( $filters['event_url'] )
 			|| ! empty( $filters['event_date_id'] )
-			|| ( ! empty( $filters['tag'] ) && 'none' !== $filters['tag'] )
+			|| ! empty( $filters['tag'] )
 			|| ! empty( $filters['entry_id'] );
 		if ( ! $include_children ) {
 			$where_clauses[] = 'parent_entry_id IS NULL';
@@ -389,7 +389,14 @@ class FinancialEntry {
 
 		if ( ! empty( $filters['tag'] ) ) {
 			if ( 'none' === $filters['tag'] ) {
-				$where_clauses[] = 'tag IS NULL';
+				// Untagged standalone entries and allocations. A split parent's
+				// tag is always cleared, so it is excluded: its allocations
+				// carry the tags and are listed (and counted) themselves.
+				$where_clauses[] = $wpdb->prepare(
+					'( tag IS NULL AND NOT EXISTS (SELECT 1 FROM %i c WHERE c.parent_entry_id = %i.id) )',
+					$table_name,
+					$table_name
+				);
 			} else {
 				$where_clauses[] = 'tag = %s';
 				$where_values[]  = $filters['tag'];
@@ -1248,7 +1255,7 @@ class FinancialEntry {
 				'parent_entry_id' => $entry->id,
 				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
 				'event_date_id'   => ! empty( $allocation['event_date_id'] ) ? (int) $allocation['event_date_id'] : null,
-				'tag'             => ! empty( $allocation['tag'] ) ? sanitize_text_field( $allocation['tag'] ) : $entry->tag,
+				'tag'             => self::allocation_tag( $allocation, $entry->tag ),
 			);
 
 			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%d', '%s' );
@@ -1261,6 +1268,27 @@ class FinancialEntry {
 		}
 
 		return $child_ids;
+	}
+
+	/**
+	 * Resolve the tag stored on a split allocation.
+	 *
+	 * An allocation that omits `tag` falls back to the given tag (the
+	 * parent's), as callers that predate per-allocation tags expect. An
+	 * explicit null or empty tag leaves the allocation untagged.
+	 *
+	 * @param array       $allocation   Allocation data.
+	 * @param string|null $fallback_tag Tag used when the allocation omits one.
+	 * @return string|null Tag to store, or null for untagged.
+	 */
+	private static function allocation_tag( $allocation, $fallback_tag ) {
+		if ( ! array_key_exists( 'tag', $allocation ) ) {
+			return $fallback_tag ? $fallback_tag : null;
+		}
+
+		$tag = is_string( $allocation['tag'] ) ? sanitize_text_field( $allocation['tag'] ) : '';
+
+		return '' === $tag ? null : $tag;
 	}
 
 	/**
@@ -1331,7 +1359,7 @@ class FinancialEntry {
 				'parent_entry_id' => $id,
 				'event_url'       => ! empty( $allocation['event_url'] ) ? $allocation['event_url'] : null,
 				'event_date_id'   => ! empty( $allocation['event_date_id'] ) ? (int) $allocation['event_date_id'] : null,
-				'tag'             => ! empty( $allocation['tag'] ) ? sanitize_text_field( $allocation['tag'] ) : $entry->tag,
+				'tag'             => self::allocation_tag( $allocation, $entry->tag ),
 			);
 
 			$format = array( '%f', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%d', '%s' );
