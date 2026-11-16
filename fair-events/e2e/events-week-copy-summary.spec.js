@@ -86,6 +86,11 @@ test.describe( 'Events Week — Copy summary (Interactivity API)', () => {
 		} );
 
 		await page.goto( weekPage.link || `/?page_id=${ weekPage.id }` );
+		// Mark the document so the checks below prove the controls work
+		// after client-side period navigation, not after a full reload.
+		await page.evaluate( () => {
+			window.__fairNavigationDocument = document;
+		} );
 		const initialHeading = await page
 			.locator( '.navigation-title' )
 			.textContent();
@@ -93,6 +98,11 @@ test.describe( 'Events Week — Copy summary (Interactivity API)', () => {
 		await expect( page.locator( '.navigation-title' ) ).not.toHaveText(
 			initialHeading.trim()
 		);
+		expect(
+			await page.evaluate(
+				() => window.__fairNavigationDocument === document
+			)
+		).toBe( true );
 		const updatedHeading = (
 			await page.locator( '.navigation-title' ).textContent()
 		).trim();
