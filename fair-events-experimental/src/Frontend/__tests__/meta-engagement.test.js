@@ -167,6 +167,44 @@ describe( 'Meta engagement capture', () => {
 		expect( ids[ 0 ] ).not.toBe( ids[ 1 ] );
 	} );
 
+	describe( 'activation IDs', () => {
+		const originalRandomUUID = crypto.randomUUID;
+
+		afterEach( () => {
+			crypto.randomUUID = originalRandomUUID;
+			jest.restoreAllMocks();
+		} );
+
+		it( 'uses the native UUID when the browser provides one', () => {
+			const nativeId = '11111111-1111-4111-8111-111111111111';
+			crypto.randomUUID = jest.fn( () => nativeId );
+			grantConsent();
+			initialize( CONTEXT );
+			click( document.querySelector( '#wrapper a' ) );
+
+			expect( crypto.randomUUID ).toHaveBeenCalledTimes( 1 );
+			expect( sent()[ 0 ].data.activation_id ).toBe( nativeId );
+		} );
+
+		it( 'builds valid UUIDv4 IDs from random bytes without native UUID support', () => {
+			crypto.randomUUID = undefined;
+			const getRandomValues = jest.spyOn( crypto, 'getRandomValues' );
+			grantConsent();
+			initialize( CONTEXT );
+			const link = document.querySelector( '#wrapper a' );
+			click( link );
+			click( link );
+
+			expect( getRandomValues ).toHaveBeenCalledTimes( 2 );
+			const ids = sent().map( ( { data } ) => data.activation_id );
+			expect( ids ).toEqual( [
+				expect.stringMatching( UUID ),
+				expect.stringMatching( UUID ),
+			] );
+			expect( ids[ 0 ] ).not.toBe( ids[ 1 ] );
+		} );
+	} );
+
 	it( 'listens once when initialized repeatedly', () => {
 		grantConsent();
 		initialize( CONTEXT );

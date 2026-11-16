@@ -10,6 +10,7 @@
  */
 
 import apiFetch from '@wordpress/api-fetch';
+import { generateUuid } from 'fair-events-shared/src/uuid.js';
 import { identifiers } from './attribution.js';
 
 export const TICKET_BUTTON_CLASS = 'fair-events-ticket-button';
@@ -41,25 +42,6 @@ export function actionFor( target ) {
 	return control && designated.contains( control ) ? 'ticket' : null;
 }
 
-function activationId() {
-	if ( typeof window.crypto?.randomUUID === 'function' ) {
-		return window.crypto.randomUUID();
-	}
-	const bytes = window.crypto.getRandomValues( new Uint8Array( 16 ) );
-	bytes[ 6 ] = ( bytes[ 6 ] & 0x0f ) | 0x40;
-	bytes[ 8 ] = ( bytes[ 8 ] & 0x3f ) | 0x80;
-	const hex = Array.from( bytes, ( byte ) =>
-		byte.toString( 16 ).padStart( 2, '0' )
-	).join( '' );
-	return [
-		hex.slice( 0, 8 ),
-		hex.slice( 8, 12 ),
-		hex.slice( 12, 16 ),
-		hex.slice( 16, 20 ),
-		hex.slice( 20 ),
-	].join( '-' );
-}
-
 /**
  * Send one engagement event when marketing consent and a valid Meta
  * identifier exist at activation time.
@@ -81,7 +63,7 @@ export function capture( action, context ) {
 			keepalive: true,
 			data: {
 				action,
-				activation_id: activationId(),
+				activation_id: generateUuid(),
 				post_id: context.postId,
 				event_date_id: context.eventDateId,
 				...values,
