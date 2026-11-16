@@ -185,6 +185,40 @@ class SettlementController extends WP_REST_Controller {
 				)
 			);
 		}
+		// Explicit recalculation of an existing split: a read-only preview and
+		// its separate, fingerprinted confirmation.
+		$id_arg = array(
+			'id' => $selection['id'],
+		);
+		register_rest_route(
+			$this->namespace,
+			'/reconciliation/settlements/(?P<id>\\d+)/recalculate-preview',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'saved_recalculation' ),
+				'permission_callback' => array( $this, 'preview_permissions_check' ),
+				'args'                => $id_arg,
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/reconciliation/settlements/(?P<id>\\d+)/recalculate',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'saved_recalculate' ),
+				'permission_callback' => array( $this, 'preview_permissions_check' ),
+				'args'                => array_merge(
+					$id_arg,
+					array(
+						'fingerprint' => array(
+							'type'     => 'string',
+							'pattern'  => '^[a-f0-9]{64}$',
+							'required' => true,
+						),
+					)
+				),
+			)
+		);
 		register_rest_route(
 			$this->namespace,
 			'/reconciliation/entries/(?P<id>\\d+)/settlement-suggestions',
@@ -266,6 +300,32 @@ class SettlementController extends WP_REST_Controller {
 			return new WP_Error( 'invalid_budget', __( 'Budget not found.', 'fair-finance' ), array( 'status' => 400 ) );
 		}
 		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->confirm( (int) $request['id'], $proposal ) );
+	}
+
+	/**
+	 * Preview recalculating an existing split; never writes.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_recalculation( $request ) {
+		$service = $this->saved_service();
+		if ( is_wp_error( $service ) ) {
+			return $service;
+		}
+		$result = $service->recalculation( (int) $request['id'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $service->public_recalculation( $result ) );
+	}
+
+	/**
+	 * Apply a reviewed recalculation.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function saved_recalculate( $request ) {
+		$service = $this->saved_service();
+		return is_wp_error( $service ) ? $service : rest_ensure_response( $service->recalculate( (int) $request['id'], (string) $request['fingerprint'] ) );
 	}
 
 	/**

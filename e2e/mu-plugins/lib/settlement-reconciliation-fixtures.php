@@ -33,6 +33,8 @@ add_action(
 							$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $schema::reconciliation_table( $kind ) ) );
 						}
 						$wpdb->query( $wpdb->prepare( 'DELETE l FROM %i l LEFT JOIN %i e ON e.id = l.entry_id LEFT JOIN %i t ON t.id = l.transaction_id WHERE e.description LIKE %s OR t.description LIKE %s', \FairPaymentsConnector\Models\EntryTransaction::get_table_name(), $entries, $payments, 'Reconcile fixture%', 'Reconcile fixture%' ) );
+						// Generated allocations such as report costs carry no fixture description.
+						$wpdb->query( $wpdb->prepare( 'DELETE c FROM %i c INNER JOIN %i p ON p.id = c.parent_entry_id WHERE p.description LIKE %s', $entries, $entries, 'Reconcile fixture%' ) );
 						$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE description LIKE %s', $entries, 'Reconcile fixture%' ) );
 						$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE description LIKE %s', $payments, 'Reconcile fixture%' ) );
 						return array( 'cleaned' => true );
@@ -68,6 +70,40 @@ add_action(
 								$provider->update_settlement( $id, array( $source . '_revision_id' => $new ) );
 							}
 							return array( 'updated' => true );
+						}
+						if ( 'record_fees' === $action ) {
+							foreach ( array(
+								'tr_reconcile01' => '0.90',
+								'tr_reconcile02' => '0.55',
+							) as $reference => $fee ) {
+								$wpdb->update( $payments, array( 'mollie_fee' => $fee ), array( 'mollie_payment_id' => $reference ) );
+							}
+							return array( 'updated' => true );
+						}
+						if ( 'categorize' === $action ) {
+							// Independent allocation edits, including an explicit untagged row.
+							$data = array();
+							foreach ( array( 'tag', 'budget_id', 'amount', 'description' ) as $field ) {
+								if ( $request->has_param( $field ) ) {
+									$data[ $field ] = $request->get_param( $field );
+								}
+							}
+							$wpdb->update( $entries, $data, array( 'id' => (int) $request['entry_id'] ) );
+							return array( 'updated' => true );
+						}
+						if ( 'add_child' === $action ) {
+							$parent = \FairFinance\Models\FinancialEntry::get_by_id( (int) $request['entry_id'] );
+							$wpdb->insert(
+								$entries,
+								array(
+									'amount'          => '0.00',
+									'entry_type'      => $parent->entry_type,
+									'entry_date'      => $parent->entry_date,
+									'description'     => 'Reconcile fixture manual allocation',
+									'parent_entry_id' => $parent->id,
+								)
+							);
+							return array( 'entry_id' => (int) $wpdb->insert_id );
 						}
 						if ( 'delete_transaction' === $action ) {
 							$wpdb->delete( $payments, array( 'id' => (int) $request['transaction_id'] ) );
@@ -140,6 +176,39 @@ add_action(
 								)
 							);
 						}
+					}
+					if ( 'compensation' === $variant ) {
+						// A Mollie report: payment fees by method, and an invoice
+						// compensation line without a payment method (#2344).
+						$payout = '38.57';
+						$line   = static function ( $group, $gross, $method, $description ) {
+							$report = \FairPaymentsConnector\Settlements\Report::line(
+								'2026',
+								'05',
+								$group,
+								array(
+									'method'      => $method,
+									'amountGross' => array(
+										'value'    => $gross,
+										'currency' => 'EUR',
+									),
+								)
+							);
+							return \FairPaymentsConnector\Settlements\Movements::make(
+								array(
+									'type'                => 'costs' === $group ? 'fee' : 'summary',
+									'is_aggregate'        => true,
+									'settlement_amount'   => \FairPaymentsConnector\Settlements\Report::contribution( $report )['value'],
+									'settlement_currency' => 'EUR',
+									'description'         => $description,
+									'raw_type'            => '2026-05|' . (string) $method,
+									'report'              => $report,
+								)
+							);
+						};
+						$items[] = $line( 'revenue', '40.00', 'ideal', 'iDEAL' );
+						$items[] = $line( 'costs', '1.45', 'ideal', 'iDEAL' );
+						$items[] = $line( 'costs', '-0.02', null, 'Reconcile fixture invoice compensation' );
 					}
 					if ( 'unknown' === $variant ) {
 						$items[] = \FairPaymentsConnector\Settlements\Movements::make(

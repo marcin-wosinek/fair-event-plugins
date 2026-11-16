@@ -4,7 +4,8 @@
 import apiFetch from '@wordpress/api-fetch';
 
 /**
- * Saved settlements live in Fair Payments Connector; these are its routes.
+ * Saved settlements live in Fair Payments Connector; these are its routes,
+ * followed by Fair Finance's split recalculation routes.
  */
 
 /**
@@ -112,3 +113,30 @@ export const importCsv = ( file, account ) =>
  * @return {boolean} True when the route does not exist.
  */
 export const isConnectorMissing = ( error ) => error?.code === 'rest_no_route';
+
+/**
+ * Preview recalculating a fully reconciled settlement's existing split.
+ * Never changes anything.
+ *
+ * @param {number} id Settlement ID.
+ * @return {Promise<Object>} Recalculation with its `fingerprint` and fresh `preview`.
+ */
+export const previewRecalculation = ( id ) =>
+	apiFetch( {
+		path: `/fair-finance/v1/reconciliation/settlements/${ id }/recalculate-preview`,
+		method: 'POST',
+	} );
+
+/**
+ * Apply a reviewed recalculation.
+ *
+ * @param {number} id          Settlement ID.
+ * @param {string} fingerprint Fingerprint of the reviewed recalculation.
+ * @return {Promise<Object>} Fresh recalculation after applying it.
+ */
+export const applyRecalculation = ( id, fingerprint ) =>
+	apiFetch( {
+		path: `/fair-finance/v1/reconciliation/settlements/${ id }/recalculate`,
+		method: 'POST',
+		data: { fingerprint },
+	} );
