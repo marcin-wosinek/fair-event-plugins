@@ -119,48 +119,38 @@ class SplitRecalculation {
 	 * @param array      $children Existing allocations (financial entry rows).
 	 * @param array|null $generated Output of generated().
 	 * @param array      $rows Proposed rows from the allocation planner.
-	 * @return array{status:string,changes:array,reasons:string[],warnings:string[]}
+	 * @return array{status:string,changes:array,reasons:string[],warnings:string[],recovered:array}
 	 */
 	public static function diff( array $children, $generated, array $rows ) {
 		$blocked = static function ( $reason ) {
 			return array(
-				'status'   => self::BLOCKED,
-				'changes'  => array(),
-				'reasons'  => array( $reason ),
-				'warnings' => array(),
+				'status'    => self::BLOCKED,
+				'changes'   => array(),
+				'reasons'   => array( $reason ),
+				'warnings'  => array(),
+				'recovered' => array(),
 			);
 		};
 		if ( ! $generated ) {
 			return $blocked( __( 'This split has no saved reconciliation record of the allocations it created, so they cannot be identified safely. Adjust it manually.', 'fair-finance' ) );
 		}
-		$known   = $generated['rows'];
-		$reasons = array();
-		$by_id   = array();
+		$known     = $generated['rows'];
+		$recovery  = self::recover( $children, $known );
+		$reasons   = $recovery['reasons'];
+		$recovered = $recovery['recovered'];
+		$alias     = array_flip( $recovered );
+		$by_id     = array();
 		foreach ( $children as $child ) {
-			$by_id[ (int) $child['id'] ] = $child;
-			if ( ! isset( $known[ (int) $child['id'] ] ) ) {
-				$reasons[] = sprintf(
-					/* translators: %d: allocation ID. */
-					__( 'Allocation #%d was added after reconciliation, so this split cannot be recalculated automatically.', 'fair-finance' ),
-					(int) $child['id']
-				);
-			}
-		}
-		foreach ( array_keys( $known ) as $id ) {
-			if ( ! isset( $by_id[ $id ] ) ) {
-				$reasons[] = sprintf(
-					/* translators: %d: allocation ID. */
-					__( 'Allocation #%d created by reconciliation no longer exists, so this split cannot be recalculated automatically.', 'fair-finance' ),
-					$id
-				);
-			}
+			// Address every allocation by the ID reconciliation recorded for it.
+			$by_id[ $alias[ (int) $child['id'] ] ?? (int) $child['id'] ] = $child;
 		}
 		if ( $reasons ) {
 			return array(
-				'status'   => self::BLOCKED,
-				'changes'  => array(),
-				'reasons'  => $reasons,
-				'warnings' => array(),
+				'status'    => self::BLOCKED,
+				'changes'   => array(),
+				'reasons'   => $reasons,
+				'warnings'  => array(),
+				'recovered' => array(),
 			);
 		}
 		// Existing allocations by movement identity.
@@ -245,11 +235,109 @@ class SplitRecalculation {
 				return self::KEEP !== $change['action'];
 			}
 		);
+		foreach ( $changes as &$change ) {
+			$change['recovered_from'] = null !== $change['id'] && isset( $alias[ $change['id'] ] ) ? (int) $alias[ $change['id'] ] : null;
+		}
+		unset( $change );
 		return array(
-			'status'   => $changed ? self::PROPOSED : self::UNCHANGED,
-			'changes'  => $changes,
-			'reasons'  => array(),
-			'warnings' => array_values( array_unique( $warnings ) ),
+			'status'    => $changed ? self::PROPOSED : self::UNCHANGED,
+			'changes'   => $changes,
+			'reasons'   => array(),
+			'warnings'  => array_values( array_unique( $warnings ) ),
+			'recovered' => self::recovered_list( $recovered ),
+		);
+	}
+
+	/**
+	 * Recovered identities as a list, for the preview and history.
+	 *
+	 * @param array $recovered Current allocation IDs keyed by the IDs reconciliation recorded.
+	 * @return array[] Each with `history_id` and `id`.
+	 */
+	private static function recovered_list( array $recovered ) {
+		$list = array();
+		foreach ( $recovered as $history_id => $id ) {
+			$list[] = array(
+				'history_id' => (int) $history_id,
+				'id'         => (int) $id,
+			);
+		}
+		return $list;
+	}
+
+	/**
+	 * Identify allocations an earlier split save recreated under new IDs.
+	 *
+	 * Splits saved before allocation IDs were kept had every allocation
+	 * deleted and inserted again, unchanged except for its ID. Such a row is
+	 * identified as the allocation reconciliation recorded only when exactly
+	 * one recorded row is missing with exactly its amount and description, and
+	 * no other current row matches that recorded row. Row order and row counts
+	 * are never evidence; anything else stays blocked.
+	 *
+	 * @param array $children Existing allocations.
+	 * @param array $known Rows reconciliation recorded, keyed by allocation ID.
+	 * @return array{recovered:array,reasons:string[]} Current IDs keyed by recorded ID, and why rows stay unidentified.
+	 */
+	private static function recover( array $children, array $known ) {
+		$present = array();
+		$unknown = array();
+		foreach ( $children as $child ) {
+			$present[ (int) $child['id'] ] = true;
+			if ( ! isset( $known[ (int) $child['id'] ] ) ) {
+				$unknown[ (int) $child['id'] ] = $child;
+			}
+		}
+		$missing = array_diff_key( $known, $present );
+		$for_old = array();
+		$for_new = array();
+		foreach ( $missing as $old_id => $old ) {
+			$for_old[ $old_id ] = array();
+			foreach ( $unknown as $new_id => $child ) {
+				if ( self::same( $child['amount'], $old['amount'] ) && (string) $child['description'] === $old['description'] ) {
+					$for_old[ $old_id ][] = $new_id;
+					$for_new[ $new_id ][] = $old_id;
+				}
+			}
+		}
+		$recovered = array();
+		foreach ( $for_old as $old_id => $candidates ) {
+			if ( 1 === count( $candidates ) && 1 === count( $for_new[ $candidates[0] ] ) ) {
+				$recovered[ $old_id ] = $candidates[0];
+			}
+		}
+		$reasons = array();
+		foreach ( array_keys( $unknown ) as $new_id ) {
+			if ( in_array( $new_id, $recovered, true ) ) {
+				continue;
+			}
+			// A row with candidates that was not recovered matches ambiguously.
+			$reasons[] = ! empty( $for_new[ $new_id ] )
+				? sprintf(
+					/* translators: %d: allocation ID. */
+					__( 'Allocation #%d has the same amount and description as another allocation, so it cannot be told apart from it after an earlier split save. Adjust this split manually.', 'fair-finance' ),
+					$new_id
+				)
+				: sprintf(
+					/* translators: %d: allocation ID. */
+					__( 'Allocation #%d was added after reconciliation, so this split cannot be recalculated automatically.', 'fair-finance' ),
+					$new_id
+				);
+		}
+		foreach ( array_keys( $missing ) as $old_id ) {
+			if ( isset( $recovered[ $old_id ] ) || $for_old[ $old_id ] ) {
+				// Recovered, or already explained by an ambiguous current row.
+				continue;
+			}
+			$reasons[] = sprintf(
+				/* translators: %d: allocation ID. */
+				__( 'Allocation #%d created by reconciliation no longer exists with its recorded amount and description, so this split cannot be recalculated automatically.', 'fair-finance' ),
+				$old_id
+			);
+		}
+		return array(
+			'recovered' => $recovered,
+			'reasons'   => $reasons,
 		);
 	}
 

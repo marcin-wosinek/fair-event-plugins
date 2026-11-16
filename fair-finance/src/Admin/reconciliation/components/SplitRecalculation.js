@@ -189,6 +189,31 @@ export default function SplitRecalculation( {
 							</ul>
 						</Notice>
 					) }
+					{ review.recovered?.length > 0 && (
+						<Notice status="info" isDismissible={ false }>
+							<p>
+								{ __(
+									'An earlier split save gave these allocations new IDs. Each is identified by its unchanged amount and description, and keeps its current tag, event and budget:',
+									'fair-finance'
+								) }
+							</p>
+							<ul>
+								{ review.recovered.map( ( item ) => (
+									<li key={ item.id }>
+										{ sprintf(
+											/* translators: 1: current allocation ID, 2: allocation ID recorded by reconciliation. */
+											__(
+												'Allocation #%1$d was created by reconciliation as #%2$d.',
+												'fair-finance'
+											),
+											Number( item.id ),
+											Number( item.history_id )
+										) }
+									</li>
+								) ) }
+							</ul>
+						</Notice>
+					) }
 					{ review.warnings.length > 0 && (
 						<Notice status="warning" isDismissible={ false }>
 							<p>
@@ -265,6 +290,21 @@ export default function SplitRecalculation( {
 															'New allocation',
 															'fair-finance'
 														) }
+												{ change.recovered_from && (
+													<>
+														{ ' ' }
+														{ sprintf(
+															/* translators: %d: allocation ID recorded by reconciliation. */
+															__(
+																'(recorded as #%d)',
+																'fair-finance'
+															),
+															Number(
+																change.recovered_from
+															)
+														) }
+													</>
+												) }
 												<br />
 												{ change.new_description
 													? sprintf(

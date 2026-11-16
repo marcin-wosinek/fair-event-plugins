@@ -874,6 +874,207 @@ test.describe( 'Saved settlement reconciliation', () => {
 		expect( await children() ).toHaveLength( 4 );
 	} );
 
+	const saveSplit = ( rows ) =>
+		api.put( `${ ENTRIES }/${ fixture.entry_id }/split`, {
+			headers,
+			data: { allocations: rows },
+		} );
+	const editorRows = ( rows, keepIds ) =>
+		rows.map( ( row ) => ( {
+			...( keepIds ? { id: Number( row.id ) } : {} ),
+			amount: Number( row.amount ),
+			description: row.description,
+			budget_id: row.budget_id ? Number( row.budget_id ) : null,
+			event_url: row.event_url,
+			event_date_id: row.event_date_id
+				? Number( row.event_date_id )
+				: null,
+		} ) );
+	const categorize = async ( rows, tags ) => {
+		for ( const [ index, tag ] of tags.entries() )
+			await post( FIXTURE, {
+				action: 'categorize',
+				entry_id: Number( rows[ index ].id ),
+				tag,
+			} );
+	};
+
+	test( 'ordinary split saves keep allocation IDs, tags and reconciliation identity', async () => {
+		const before = await grossSplit();
+		// Intentionally untagged second allocation, as #2341 allows.
+		await categorize( before, [ 'workshop', null, 'fees' ] );
+		const edited = editorRows( before, true );
+		edited[ 0 ].event_url = 'https://example.test/workshop';
+		const saved = await saveSplit( edited );
+		expect( saved.ok(), await saved.text() ).toBeTruthy();
+		const after = await children();
+		expect(
+			after.map( ( row ) => [
+				row.id,
+				row.amount,
+				row.tag,
+				row.event_url,
+			] )
+		).toEqual( [
+			[
+				before[ 0 ].id,
+				'25.00',
+				'workshop',
+				'https://example.test/workshop',
+			],
+			[ before[ 1 ].id, '15.00', null, before[ 1 ].event_url ],
+			[ before[ 2 ].id, '-1.43', 'fees', before[ 2 ].event_url ],
+		] );
+		// Invalid IDs are rejected without changing anything.
+		const duplicate = await saveSplit( [
+			edited[ 0 ],
+			{ ...edited[ 1 ], id: edited[ 0 ].id },
+			edited[ 2 ],
+		] );
+		expect( duplicate.status() ).toBe( 400 );
+		expect( ( await duplicate.json() ).code ).toBe(
+			'rest_duplicate_allocation_id'
+		);
+		const foreign = await saveSplit( [
+			edited[ 0 ],
+			{ ...edited[ 1 ], id: fixture.entry_id },
+			edited[ 2 ],
+		] );
+		expect( foreign.status() ).toBe( 400 );
+		expect( ( await foreign.json() ).code ).toBe(
+			'rest_invalid_allocation_id'
+		);
+		expect( await children() ).toEqual( after );
+		// Reconciliation still identifies every allocation directly.
+		const data = await recalculation();
+		expect( data.status, JSON.stringify( data.reasons ) ).toBe(
+			'proposed'
+		);
+		expect( data.recovered ).toEqual( [] );
+		expect( ( await recalculate( data ) ).ok() ).toBeTruthy();
+		expect(
+			( await children() ).map( ( row ) => [
+				row.id,
+				row.amount,
+				row.tag,
+			] )
+		).toEqual( [
+			[ before[ 0 ].id, '24.10', 'workshop' ],
+			[ before[ 1 ].id, '14.45', null ],
+			[ before[ 2 ].id, '0.02', 'fees' ],
+		] );
+		// A later ordinary save keeps the recalculated identity.
+		expect(
+			( await saveSplit( editorRows( await children(), true ) ) ).ok()
+		).toBeTruthy();
+		expect( ( await recalculation() ).status ).toBe( 'unchanged' );
+	} );
+
+	test( 'recalculation recovers allocations recreated by a legacy split save', async () => {
+		const before = await grossSplit();
+		const original = ( await preview() ).history.map(
+			( entry ) => entry.reviewed
+		);
+		// The editor used to send no IDs, so every allocation was recreated.
+		const legacy = await saveSplit( editorRows( before, false ) );
+		expect( legacy.ok(), await legacy.text() ).toBeTruthy();
+		const recreated = await children();
+		expect( recreated.map( ( row ) => row.id ) ).not.toEqual(
+			before.map( ( row ) => row.id )
+		);
+		await categorize( recreated, [ 'workshop', null, 'fees' ] );
+		const untouched = await children();
+		const data = await recalculation();
+		expect( data.status, JSON.stringify( data.reasons ) ).toBe(
+			'proposed'
+		);
+		expect(
+			data.recovered.map( ( item ) => [ item.id, item.history_id ] )
+		).toEqual(
+			recreated.map( ( row, index ) => [
+				Number( row.id ),
+				Number( before[ index ].id ),
+			] )
+		);
+		expect(
+			data.changes.map( ( change ) => [
+				Number( change.id ),
+				change.recovered_from,
+				change.proposed_amount,
+				change.tag,
+			] )
+		).toEqual( [
+			[
+				Number( recreated[ 0 ].id ),
+				Number( before[ 0 ].id ),
+				'24.10',
+				'workshop',
+			],
+			[
+				Number( recreated[ 1 ].id ),
+				Number( before[ 1 ].id ),
+				'14.45',
+				null,
+			],
+			[
+				Number( recreated[ 2 ].id ),
+				Number( before[ 2 ].id ),
+				'0.02',
+				'fees',
+			],
+		] );
+		// Preview never writes.
+		expect( await children() ).toEqual( untouched );
+		expect( ( await recalculate( data ) ).ok() ).toBeTruthy();
+		expect(
+			( await children() ).map( ( row ) => [
+				row.id,
+				row.amount,
+				row.tag,
+			] )
+		).toEqual( [
+			[ recreated[ 0 ].id, '24.10', 'workshop' ],
+			[ recreated[ 1 ].id, '14.45', null ],
+			[ recreated[ 2 ].id, '0.02', 'fees' ],
+		] );
+		const history = ( await preview() ).history;
+		// Earlier history is never rewritten.
+		expect(
+			history
+				.filter( ( entry ) => entry.state !== 'recalculated' )
+				.map( ( entry ) => entry.reviewed )
+		).toEqual( original );
+		const recalculated = history.filter(
+			( entry ) => entry.state === 'recalculated'
+		);
+		expect( recalculated ).toHaveLength( 1 );
+		const reviewed = JSON.parse( recalculated[ 0 ].reviewed );
+		expect( reviewed.recalculation.recovered ).toEqual( data.recovered );
+		expect( reviewed.allocation_ids ).toEqual(
+			recreated.map( ( row ) => Number( row.id ) )
+		);
+		// Repeating needs no recovery and changes nothing.
+		const repeat = await recalculation();
+		expect( repeat.status ).toBe( 'unchanged' );
+		expect( repeat.recovered ).toEqual( [] );
+	} );
+
+	test( 'recreated allocations whose amounts changed stay blocked', async () => {
+		const before = await grossSplit();
+		const rows = editorRows( before, false );
+		rows[ 0 ].amount = 24;
+		rows[ 1 ].amount = 16;
+		expect( ( await saveSplit( rows ) ).ok() ).toBeTruthy();
+		const blocked = await recalculation();
+		expect( blocked.status ).toBe( 'blocked' );
+		expect( blocked.recovered ).toEqual( [] );
+		expect( blocked.reasons.join( ' ' ) ).toContain( 'added after' );
+		expect( blocked.reasons.join( ' ' ) ).toContain( 'no longer exists' );
+		const untouched = await children();
+		expect( ( await recalculate( blocked ) ).status() ).toBe( 409 );
+		expect( await children() ).toEqual( untouched );
+	} );
+
 	test( 'requires administrator access and validates input', async () => {
 		await seed();
 		const anonymous = await api.post(

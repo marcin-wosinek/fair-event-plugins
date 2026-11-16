@@ -1079,6 +1079,135 @@ test.describe('Fair Finance settlements', () => {
 		}
 	});
 
+	test('saving a reconciled split in the split editor keeps it recalculable and keeps its tags', async ({
+		page,
+	}) => {
+		const fixtureCall = async (data) => {
+			const res = await api.post(`${HELPERS}/reconciliation`, {
+				headers: adminHeaders,
+				data,
+			});
+			expect(res.ok(), await res.text()).toBeTruthy();
+			return res.json();
+		};
+		const ROOT = '/wp-json/fair-finance/v1/reconciliation/settlements';
+		const children = async (entryId) => {
+			const res = await api.get(
+				'/wp-json/fair-finance/v1/financial-entries?per_page=100',
+				{ headers: adminHeaders }
+			);
+			const parent = (await res.json()).entries.find(
+				(entry) => entry.id === entryId
+			);
+			return parent.children || [];
+		};
+		try {
+			await fixtureCall({ action: 'cleanup' });
+			const fixture = await fixtureCall({
+				origin: 'api',
+				variant: 'compensation',
+			});
+			const selection = {
+				entry_id: fixture.entry_id,
+				currency: 'EUR',
+				account_id: fixture.account_id,
+			};
+			const preview = await (
+				await api.post(`${ROOT}/${fixture.settlement_id}/preview`, {
+					headers: adminHeaders,
+					data: selection,
+				})
+			).json();
+			const confirmed = await api.post(
+				`${ROOT}/${fixture.settlement_id}/confirm`,
+				{
+					headers: adminHeaders,
+					data: {
+						...selection,
+						fingerprint: preview.fingerprint,
+						state: 'full',
+					},
+				}
+			);
+			expect(confirmed.ok(), await confirmed.text()).toBeTruthy();
+			const before = await children(fixture.entry_id);
+			await fixtureCall({
+				action: 'categorize',
+				entry_id: before[0].id,
+				tag: 'workshop',
+			});
+			await fixtureCall({
+				action: 'categorize',
+				entry_id: before[2].id,
+				tag: 'fees',
+			});
+			await fixtureCall({ action: 'record_fees' });
+
+			// An ordinary edit in the split editor (#2344).
+			await loginAsAdmin(page);
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-entries&entry_id=${fixture.entry_id}`
+			);
+			await page.getByRole('button', { name: /^Edit split/ }).click();
+			const editor = page.getByRole('dialog', { name: 'Edit Split' });
+			await editor
+				.getByLabel('Description')
+				.first()
+				.fill('Workshop ticket');
+			await editor.getByRole('button', { name: 'Update Split' }).click();
+			await expect(editor).toHaveCount(0);
+			const saved = await children(fixture.entry_id);
+			expect(
+				saved.map((child) => [
+					child.id,
+					child.amount,
+					child.tag,
+					child.description,
+				])
+			).toEqual([
+				[before[0].id, 25, 'workshop', 'Workshop ticket'],
+				[before[1].id, 15, before[1].tag, before[1].description],
+				[before[2].id, -1.43, 'fees', before[2].description],
+			]);
+
+			await page.goto(
+				`/wp-admin/admin.php?page=fair-finance-reconciliation&settlement=${fixture.settlement_id}`
+			);
+			const section = page.locator('.fair-finance-recalculation');
+			await section
+				.getByRole('button', { name: 'Preview recalculation' })
+				.click();
+			const rows = section.locator('tbody tr');
+			await expect(rows).toHaveCount(3);
+			await expect(rows.nth(0)).toContainText(
+				`Allocation #${before[0].id}`
+			);
+			await expect(rows.nth(0)).toContainText('Tag: workshop');
+			await expect(rows.nth(2)).toContainText('Tag: fees');
+			await expect(
+				section.getByText(/cannot be recalculated automatically/)
+			).toHaveCount(0);
+			await section
+				.getByRole('button', { name: 'Apply recalculation' })
+				.click();
+			const dialog = page.getByRole('dialog');
+			await dialog
+				.getByRole('button', { name: 'Recalculate split' })
+				.click();
+			await expect(dialog).toHaveCount(0);
+			const after = await children(fixture.entry_id);
+			expect(
+				after.map((child) => [child.id, child.amount, child.tag])
+			).toEqual([
+				[before[0].id, 24.1, 'workshop'],
+				[before[1].id, 14.45, before[1].tag],
+				[before[2].id, 0.02, 'fees'],
+			]);
+		} finally {
+			await fixtureCall({ action: 'cleanup' });
+		}
+	});
+
 	test('suggests a saved settlement for a bank entry, reviews it with that entry, and shows the association', async ({
 		page,
 	}) => {

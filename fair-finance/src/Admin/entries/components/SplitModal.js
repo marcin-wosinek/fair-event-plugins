@@ -195,6 +195,10 @@ const SplitModal = ( {
 	const [ allocations, setAllocations ] = useState(
 		isEditMode
 			? entry.children.map( ( child ) => ( {
+					// The ID keeps the allocation, and everything the editor
+					// does not show (its payment link and reconciliation
+					// identity), when the split is saved.
+					id: child.id,
 					budget_id: child.budget_id
 						? child.budget_id.toString()
 						: '',
@@ -259,6 +263,7 @@ const SplitModal = ( {
 				method: isEditMode ? 'PUT' : 'POST',
 				data: {
 					allocations: allocations.map( ( a ) => ( {
+						...( isEditMode && a.id ? { id: a.id } : {} ),
 						budget_id: a.budget_id
 							? parseInt( a.budget_id, 10 )
 							: null,
@@ -369,7 +374,9 @@ const SplitModal = ( {
 					{ /* Allocation rows */ }
 					{ allocations.map( ( allocation, index ) => (
 						<div
-							key={ index }
+							key={
+								allocation.id ? `id:${ allocation.id }` : index
+							}
 							style={ {
 								padding: '12px',
 								border: '1px solid #ddd',

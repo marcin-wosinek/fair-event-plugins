@@ -703,6 +703,10 @@ class FinancialEntryController extends WP_REST_Controller {
 				'items'             => array(
 					'type'       => 'object',
 					'properties' => array(
+						'id'            => array(
+							'description' => __( 'Existing allocation ID to update in place (PUT only). Omit for a new allocation.', 'fair-finance' ),
+							'type'        => array( 'integer', 'null' ),
+						),
 						'budget_id'     => array(
 							'type' => array( 'integer', 'null' ),
 						),
@@ -719,11 +723,13 @@ class FinancialEntryController extends WP_REST_Controller {
 						'event_date_id' => array(
 							'type' => array( 'integer', 'null' ),
 						),
-						// Omit to inherit the original entry's tag; null or
-						// an empty string leaves the allocation untagged.
+						// Omit to keep an existing allocation's tag, or for a
+						// new allocation to inherit the original entry's tag;
+						// null or an empty string leaves it untagged.
 						'tag'           => array(
-							'type'      => array( 'string', 'null' ),
-							'maxLength' => 100,
+							'description' => __( 'Allocation tag. Omit to keep an existing allocation’s tag, or to inherit the entry’s tag for a new one; send an empty value to clear it.', 'fair-finance' ),
+							'type'        => array( 'string', 'null' ),
+							'maxLength'   => 100,
 						),
 					),
 				),
@@ -1779,6 +1785,22 @@ class FinancialEntryController extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_allocation_mismatch',
 				__( 'Total allocations must match the original entry amount.', 'fair-finance' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$id_error = FinancialEntry::split_id_error( $id, $allocations );
+		if ( 'duplicate' === $id_error ) {
+			return new WP_Error(
+				'rest_duplicate_allocation_id',
+				__( 'Each existing allocation can be listed only once.', 'fair-finance' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( 'foreign' === $id_error ) {
+			return new WP_Error(
+				'rest_invalid_allocation_id',
+				__( 'An allocation does not belong to this entry. Reload the entry and edit its split again.', 'fair-finance' ),
 				array( 'status' => 400 )
 			);
 		}
