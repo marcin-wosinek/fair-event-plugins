@@ -183,6 +183,19 @@ test.describe( 'Audience CSV export and import', () => {
 			'confirmed'
 		);
 		await feedsFixture( 'choose', source, 'selected', `${ feeds.a }` );
+		// Other tests on the shared site leave participants whose names and
+		// emails contain status words, so the privacy checks below look only
+		// at the header and at this test's own rows.
+		const decoy = email( 'pending-decoy' );
+		await migration(
+			'member',
+			decoy,
+			'Confirmed',
+			'Member',
+			'minimal',
+			'0',
+			'confirmed'
+		);
 
 		const res = await api.get( EXPORT, { headers: adminHeaders } );
 		expect( res.status() ).toBe( 200 );
@@ -198,7 +211,10 @@ test.describe( 'Audience CSV export and import', () => {
 		expect( line ).toBe(
 			`1,Zoë,"O'Neil, ""Jr""",${ source },,,marketing,1`
 		);
-		expect( body.content ).not.toMatch( /confirmed|pending/ );
+		expect( line ).not.toMatch( /confirmed|pending/ );
+		expect( body.content ).toContain(
+			`1,Confirmed,Member,${ decoy },,,minimal,0`
+		);
 
 		// The same row on another site: a different address stands in for an
 		// empty destination.
@@ -228,9 +244,17 @@ test.describe( 'Audience CSV export and import', () => {
 		const reexport = await (
 			await api.get( EXPORT, { headers: adminHeaders } )
 		).json();
-		expect( reexport.content ).toContain(
+		expect( reexport.content.startsWith( '﻿' + HEADER + '\r\n' ) ).toBe(
+			true
+		);
+		const destinationLine = reexport.content
+			.split( '\r\n' )
+			.find( ( row ) => row.includes( destination ) );
+		expect( destinationLine ).toBe(
 			`1,Zoë,"O'Neil, ""Jr""",${ destination },'+34 600 111 222,'@zoe,marketing,1`
 		);
+		// The imported member is pending; that status stays out of its row.
+		expect( destinationLine ).not.toMatch( /confirmed|pending/ );
 
 		// The source member is untouched.
 		expect( ( await state( source ) ).participant ).toMatchObject( {
