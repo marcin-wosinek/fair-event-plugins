@@ -292,12 +292,27 @@ export default function OrganizerForm( {
 						/>
 						<SelectControl
 							__next40pxDefaultSize
-							label={ __( 'Organization type', 'fair-events' ) }
+							label={ __( 'Organizer type', 'fair-events' ) }
 							value={ organizer.type }
 							options={ [
 								{
 									label: __( 'Organization', 'fair-events' ),
 									value: 'Organization',
+								},
+								{
+									label: __(
+										'Individual person',
+										'fair-events'
+									),
+									value: 'Person',
+								},
+								{
+									label: __( 'Company', 'fair-events' ),
+									value: 'Corporation',
+								},
+								{
+									label: __( 'NGO', 'fair-events' ),
+									value: 'NGO',
 								},
 								{
 									label: __( 'Sports club', 'fair-events' ),

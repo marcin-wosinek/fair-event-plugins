@@ -262,6 +262,40 @@ test.describe( 'OrganizersController', () => {
 		expect( settings.fair_events_organizer.name ).toBeUndefined();
 	} );
 
+	test( 'person, company and NGO types save and reload for every organizer', async () => {
+		for ( const type of [ 'Person', 'Corporation', 'NGO' ] ) {
+			const organizer = await createOk( {
+				name: `${ type } organizer`,
+				type,
+			} );
+			expect( organizer.type ).toBe( type );
+			expect( ( await ( await read( organizer.id ) ).json() ).type ).toBe(
+				type
+			);
+
+			const res = await update( 'default', { type } );
+			expect( res.status() ).toBe( 200 );
+			expect( ( await ( await read( 'default' ) ).json() ).type ).toBe(
+				type
+			);
+		}
+
+		// The existing types stay selectable.
+		const [ north ] = created;
+		const sportsClub = await update( north, {
+			name: 'North Club Renamed',
+			type: 'SportsClub',
+		} );
+		expect( ( await sportsClub.json() ).type ).toBe( 'SportsClub' );
+		const organization = await update( north, {
+			name: 'North Club Renamed',
+			type: 'Organization',
+		} );
+		expect( ( await organization.json() ).type ).toBe( 'Organization' );
+
+		await update( 'default', { type: 'Organization' } );
+	} );
+
 	test( 'invalid submissions are rejected and keep the saved data', async () => {
 		const [ north ] = created;
 		const before = await ( await read( north ) ).json();

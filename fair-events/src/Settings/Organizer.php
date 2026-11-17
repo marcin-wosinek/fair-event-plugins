@@ -27,9 +27,10 @@ class Organizer {
 	public const OPTION = 'fair_events_organizer';
 
 	/**
-	 * Allowed Schema.org `@type` values for the organizer.
+	 * Allowed Schema.org `@type` values for the organizer. `Organization` is
+	 * the default; `Person` describes an individual rather than a group.
 	 */
-	public const TYPES = array( 'Organization', 'SportsClub' );
+	public const TYPES = array( 'Organization', 'SportsClub', 'Person', 'Corporation', 'NGO' );
 
 	/**
 	 * Read the stored organizer identity, normalized so every key is always

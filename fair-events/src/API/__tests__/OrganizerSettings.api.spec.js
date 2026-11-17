@@ -104,6 +104,48 @@ test.describe( 'fair_events_organizer setting', () => {
 		expect( body.fair_events_organizer.contact_email ).toBeUndefined();
 	} );
 
+	test( 'saves and reloads the person, company and NGO types', async () => {
+		for ( const type of [
+			'Person',
+			'Corporation',
+			'NGO',
+			'Organization',
+		] ) {
+			const res = await api.post( '/wp-json/wp/v2/settings', {
+				headers: authHeader,
+				data: { fair_events_organizer: { name: 'Acme', type } },
+			} );
+			expect( res.status(), type ).toBe( 200 );
+
+			const read = await api.get( '/wp-json/wp/v2/settings', {
+				headers: authHeader,
+			} );
+			expect( ( await read.json() ).fair_events_organizer.type ).toBe(
+				type
+			);
+		}
+	} );
+
+	test( 'rejects an unknown type and keeps the saved one', async () => {
+		await api.post( '/wp-json/wp/v2/settings', {
+			headers: authHeader,
+			data: { fair_events_organizer: { name: 'Acme', type: 'NGO' } },
+		} );
+
+		const res = await api.post( '/wp-json/wp/v2/settings', {
+			headers: authHeader,
+			data: { fair_events_organizer: { name: 'Acme', type: 'Club' } },
+		} );
+		expect( res.status() ).toBe( 400 );
+
+		const read = await api.get( '/wp-json/wp/v2/settings', {
+			headers: authHeader,
+		} );
+		expect( ( await read.json() ).fair_events_organizer.type ).toBe(
+			'NGO'
+		);
+	} );
+
 	test( 'rejects an unauthenticated write', async () => {
 		const anonymousApi = await request.newContext( { baseURL: BASE_URL } );
 		const res = await anonymousApi.post( '/wp-json/wp/v2/settings', {

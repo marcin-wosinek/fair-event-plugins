@@ -53,10 +53,52 @@ test( 'renders and populates fields from loaded settings', async () => {
 	render( <OrganizerTab onNotice={ jest.fn() } /> );
 
 	await waitFor( () => expect( nameField() ).toHaveValue( 'Acme Club' ) );
-	expect( screen.getByLabelText( 'Organization type' ) ).toHaveValue(
+	expect( screen.getByLabelText( 'Organizer type' ) ).toHaveValue(
 		'SportsClub'
 	);
 } );
+
+test( 'offers every organizer type, keeping the existing ones', async () => {
+	render( <OrganizerTab onNotice={ jest.fn() } /> );
+
+	await waitFor( () => expect( nameField() ).toBeInTheDocument() );
+
+	const select = screen.getByLabelText( 'Organizer type' );
+	expect( select ).toHaveValue( 'Organization' );
+	expect(
+		Array.from( select.options ).map( ( option ) => [
+			option.value,
+			option.textContent,
+		] )
+	).toEqual( [
+		[ 'Organization', 'Organization' ],
+		[ 'Person', 'Individual person' ],
+		[ 'Corporation', 'Company' ],
+		[ 'NGO', 'NGO' ],
+		[ 'SportsClub', 'Sports club' ],
+	] );
+} );
+
+test.each( [ 'Person', 'Corporation', 'NGO' ] )(
+	'save sends the chosen %s type',
+	async ( type ) => {
+		render( <OrganizerTab onNotice={ jest.fn() } /> );
+
+		await waitFor( () => expect( nameField() ).toBeInTheDocument() );
+
+		fireEvent.change( screen.getByLabelText( 'Organizer type' ), {
+			target: { value: type },
+		} );
+		fireEvent.click( saveButton() );
+
+		await waitFor( () =>
+			expect( saveSettings ).toHaveBeenCalledTimes( 1 )
+		);
+		expect( saveSettings ).toHaveBeenCalledWith( {
+			fair_events_organizer: expect.objectContaining( { type } ),
+		} );
+	}
+);
 
 test( 'adding a link renders a new row, removing it takes it away', async () => {
 	render( <OrganizerTab onNotice={ jest.fn() } /> );
