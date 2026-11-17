@@ -1145,3 +1145,26 @@ if ( ! function_exists( 'get_the_terms' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'is_ssl' ) ) {
+	/**
+	 * Stub of WordPress is_ssl().
+	 *
+	 * @return bool
+	 */
+	function is_ssl() {
+		return ! empty( $GLOBALS['_fair_test_is_ssl'] );
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt() returning a fixed value.
+	 *
+	 * @param string $scheme Salt scheme (ignored).
+	 * @return string
+	 */
+	function wp_salt( $scheme = 'auth' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- signature matches WordPress.
+		return 'test-salt';
+	}
+}
