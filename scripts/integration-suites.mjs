@@ -12,20 +12,34 @@
  * `--all` then), both suites run.
  */
 
+import { readFileSync } from 'node:fs';
 import { matchesGlob } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Shared by both suites: lockfiles and build configuration change what the
-// prepared build holds, and the coordinator, preparation and lifecycle
-// tooling change how every shard runs.
+/**
+ * Every workspace in the root package.json, matched in full (#2327). Business
+ * logic, hooks, bootstrap files, shared PHP and JavaScript, manifests,
+ * lockfiles, build configuration and the workspace's own docs can all change
+ * what a suite exercises, so a workspace is covered as soon as it is listed.
+ */
+export const WORKSPACES = JSON.parse(
+	readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+).workspaces;
+
+// Shared by both suites: every workspace, the root manifests and lockfiles,
+// the test environment (wp-env config, mu-plugins, the db.php drop-in and the
+// support helpers API specs import too), and the coordinator, preparation and
+// lifecycle tooling with the local scripts they import or the builds run.
 const SHARED = [
+	...WORKSPACES.map((workspace) => `${workspace}/**`),
 	'package.json',
 	'package-lock.json',
-	'*/package.json',
-	'*/composer.json',
-	'*/composer.lock',
-	'*/webpack.config.cjs',
+	'composer.json',
+	'composer.lock',
 	'.wp-env.json',
+	'e2e/mu-plugins/**',
+	'e2e/drop-ins/**',
+	'e2e/support/**',
 	'scripts/api-test-runner.mjs',
 	'scripts/__tests__/api-test-runner.test.mjs',
 	'scripts/prepared-outputs.mjs',
@@ -41,48 +55,30 @@ const SHARED = [
 	'scripts/php-diagnostics.mjs',
 	'scripts/__tests__/php-diagnostics.test.mjs',
 	'scripts/block-docs.mjs',
+	'scripts/__tests__/block-docs.test.mjs',
 	'scripts/shard-assignment.mjs',
 	'scripts/shard-timings.mjs',
 	'scripts/shard-timings/**',
 	'scripts/__tests__/shard-assignment.test.mjs',
 	'scripts/__tests__/shard-timings.test.mjs',
 	'scripts/__tests__/fixtures/test-list/**',
+	// check-api-shards.mjs imports the E2E inventory helpers.
+	'scripts/check-e2e-shards.mjs',
 	'.github/workflows/integration-tests.yml',
 ];
 
 export const SUITE_PATHS = {
 	api: [
 		...SHARED,
-		'**/src/API/**',
-		'**/src/blocks/**',
-		'**/src/Hooks/BlockHooks.php',
-		'fair-events-shared/php/**',
-		'**/playwright.config.js',
 		'scripts/check-api-shards.mjs',
-		'scripts/check-e2e-shards.mjs',
 		'scripts/__tests__/check-api-shards.test.mjs',
-		'e2e/mu-plugins/**',
-		'e2e/drop-ins/**',
-		'e2e/support/fresh-site.js',
 		'.github/workflows/api-tests.yml',
 	],
 	e2e: [
 		...SHARED,
-		'fair-payments-connector/**',
-		'fair-events/**',
-		'fair-events-experimental/**',
-		'fair-finance/**',
-		'fair-audience/**',
-		'fair-audience-experimental/**',
-		'fair-form/**',
-		'fair-platform/**',
-		'fair-events-shared/**',
-		'fair-timetable/**',
-		'fair-calendar-button/**',
 		'e2e/**',
 		'playwright.config.js',
 		'scripts/workspace-e2e-runner.mjs',
-		'scripts/check-e2e-shards.mjs',
 		'scripts/__tests__/check-e2e-shards.test.mjs',
 		'.github/workflows/e2e.yml',
 	],
