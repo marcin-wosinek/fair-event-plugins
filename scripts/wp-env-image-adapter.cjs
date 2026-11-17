@@ -186,7 +186,7 @@ function upstreamImages(composeConfig, builds) {
 		}
 		images.add(from[1]);
 	}
-	return [...images].sort();
+	return [...images].sort((a, b) => a.localeCompare(b));
 }
 
 /**
