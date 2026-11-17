@@ -64,8 +64,16 @@ class GroupPermissionRule {
 	 * @return string Table name with prefix.
 	 */
 	private static function get_table_name() {
-		global $wpdb;
-		return $wpdb->prefix . 'fair_events_group_permission_rules';
+		return self::persistence()->table_name();
+	}
+
+	/**
+	 * Shared lookup and deletion queries bound to this model's table.
+	 *
+	 * @return GroupRulePersistence
+	 */
+	private static function persistence() {
+		return GroupRulePersistence::permission_rules();
 	}
 
 	/**
@@ -75,23 +83,9 @@ class GroupPermissionRule {
 	 * @return GroupPermissionRule|null Rule object or null if not found.
 	 */
 	public static function get_by_id( $id ) {
-		global $wpdb;
+		$row = self::persistence()->get_row_by_id( $id );
 
-		$table_name = self::get_table_name();
-
-		$result = $wpdb->get_row(
-			$wpdb->prepare(
-				'SELECT * FROM %i WHERE id = %d LIMIT 1',
-				$table_name,
-				$id
-			)
-		);
-
-		if ( ! $result ) {
-			return null;
-		}
-
-		return self::hydrate( $result );
+		return $row ? self::hydrate( $row ) : null;
 	}
 
 	/**
@@ -101,28 +95,7 @@ class GroupPermissionRule {
 	 * @return GroupPermissionRule[] Array of GroupPermissionRule objects.
 	 */
 	public static function get_all_by_event_date_id( $event_date_id ) {
-		global $wpdb;
-
-		$table_name = self::get_table_name();
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT * FROM %i WHERE event_date_id = %d ORDER BY id ASC',
-				$table_name,
-				$event_date_id
-			)
-		);
-
-		if ( ! $results ) {
-			return array();
-		}
-
-		$rules = array();
-		foreach ( $results as $result ) {
-			$rules[] = self::hydrate( $result );
-		}
-
-		return $rules;
+		return self::hydrate_all( self::persistence()->get_rows_by_event_date_id( $event_date_id ) );
 	}
 
 	/**
@@ -146,16 +119,7 @@ class GroupPermissionRule {
 			)
 		);
 
-		if ( ! $results ) {
-			return array();
-		}
-
-		$rules = array();
-		foreach ( $results as $result ) {
-			$rules[] = self::hydrate( $result );
-		}
-
-		return $rules;
+		return $results ? self::hydrate_all( $results ) : array();
 	}
 
 	/**
@@ -195,17 +159,7 @@ class GroupPermissionRule {
 	 * @return bool True on success, false on failure.
 	 */
 	public static function delete( $id ) {
-		global $wpdb;
-
-		$table_name = self::get_table_name();
-
-		$result = $wpdb->delete(
-			$table_name,
-			array( 'id' => $id ),
-			array( '%d' )
-		);
-
-		return false !== $result;
+		return self::persistence()->delete_by_id( $id );
 	}
 
 	/**
@@ -215,17 +169,17 @@ class GroupPermissionRule {
 	 * @return bool True on success, false on failure.
 	 */
 	public static function delete_by_event_date_id( $event_date_id ) {
-		global $wpdb;
+		return self::persistence()->delete_by_event_date_id( $event_date_id );
+	}
 
-		$table_name = self::get_table_name();
-
-		$result = $wpdb->delete(
-			$table_name,
-			array( 'event_date_id' => $event_date_id ),
-			array( '%d' )
-		);
-
-		return false !== $result;
+	/**
+	 * Hydrate rule objects from database rows
+	 *
+	 * @param object[] $rows Database rows.
+	 * @return GroupPermissionRule[] Rule objects, in row order.
+	 */
+	private static function hydrate_all( array $rows ) {
+		return array_map( array( self::class, 'hydrate' ), $rows );
 	}
 
 	/**
