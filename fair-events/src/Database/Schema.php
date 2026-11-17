@@ -17,7 +17,7 @@ class Schema {
 	/**
 	 * Database version
 	 */
-	const DB_VERSION = '3.56.0';
+	const DB_VERSION = '3.57.0';
 
 	/**
 	 * Get the SQL for creating the fair_event_dates table
@@ -60,6 +60,7 @@ class Schema {
 			publication_status ENUM('publish','draft') NOT NULL DEFAULT 'publish',
 			recurrence_mode ENUM('none','rule','manual') NOT NULL DEFAULT 'none',
 			booking_message LONGTEXT DEFAULT NULL,
+			organizer_id CHAR(36) DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

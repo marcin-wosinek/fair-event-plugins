@@ -178,6 +178,14 @@ class EventCopyService {
 				throw new \RuntimeException( 'event-fields' );
 			}
 
+			// The raw assignment, whether or not Fair Events Experimental is
+			// active to interpret it, so it survives turning organizers off
+			// and on again (#2305).
+			$organizer_id = EventDates::get_organizer_id( $master->id );
+			if ( null !== $organizer_id && ! EventDates::save_organizer_id( $new_event_date_id, $organizer_id ) ) {
+				throw new \RuntimeException( 'event-organizer' );
+			}
+
 			if ( $new_post_id && ! EventDates::add_linked_post( $new_event_date_id, $new_post_id ) ) {
 				throw new \RuntimeException( 'post-link' );
 			}

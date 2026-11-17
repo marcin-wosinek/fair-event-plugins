@@ -115,7 +115,9 @@ class Installer {
 	 * the 3.53.0 ticket transfer history, which starts with the first
 	 * holder change made after the upgrade. The 3.56.0 signup surname
 	 * column defaults to an empty string: existing names stay as they are
-	 * and are never split into a name and a surname (#2215).
+	 * and are never split into a name and a surname (#2215). The 3.57.0
+	 * event date organizer_id column starts NULL, which means the sitewide
+	 * organizer, so existing events need no update (#2305).
 	 *
 	 * @return string[] Statements for dbDelta().
 	 */

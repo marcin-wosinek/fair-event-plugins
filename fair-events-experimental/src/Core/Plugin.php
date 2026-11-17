@@ -103,6 +103,10 @@ class Plugin {
 			if ( self::schedule_available() ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_schedule_assets' ) );
 			}
+
+			if ( self::event_organizers_available() ) {
+				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_organizer_assets' ) );
+			}
 		}
 	}
 
@@ -136,6 +140,19 @@ class Plugin {
 	public static function organizers_available() {
 		return Features::is_enabled( 'organizers' )
 			&& \FairEventsExperimental\Models\OrganizerRepository::is_available();
+	}
+
+	/**
+	 * Whether organizers can be assigned to events: organizer management is
+	 * available and the active Fair Events stores the assignment. Turning
+	 * the bundle off restores the sitewide organizer everywhere and keeps
+	 * every saved assignment.
+	 *
+	 * @return bool
+	 */
+	public static function event_organizers_available() {
+		return self::organizers_available()
+			&& \FairEventsExperimental\Services\EventOrganizer::is_supported();
 	}
 
 	/**
@@ -174,6 +191,30 @@ class Plugin {
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-manage-event-schedule', 'fair-events-experimental', Features::script_translations_path() );
+	}
+
+	/**
+	 * Enqueue the Organizer tab on the fair-events manage-event page, for
+	 * administrators only: organizers are managed by administrators.
+	 *
+	 * @return void
+	 */
+	public function enqueue_manage_event_organizer_assets() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-organizer/index.asset.php';
+
+		wp_enqueue_script(
+			'fair-events-experimental-manage-event-organizer',
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-organizer/index.js',
+			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$asset_file['version'],
+			true
+		);
+
+		wp_set_script_translations( 'fair-events-experimental-manage-event-organizer', 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**
@@ -225,6 +266,17 @@ class Plugin {
 					( new \FairEventsExperimental\API\OrganizersController() )->register_routes();
 				}
 			);
+		}
+
+		if ( self::event_organizers_available() ) {
+			add_action(
+				'rest_api_init',
+				static function () {
+					( new \FairEventsExperimental\API\EventOrganizerController() )->register_routes();
+				}
+			);
+			// Public event JSON-LD names the event's organizer.
+			\FairEventsExperimental\Services\EventOrganizer::register_hooks();
 		}
 
 		if ( self::ticketing_extensions_available() ) {

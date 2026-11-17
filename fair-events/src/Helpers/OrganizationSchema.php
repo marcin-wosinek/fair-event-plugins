@@ -41,7 +41,28 @@ class OrganizationSchema {
 			return null;
 		}
 
-		$data = self::build_identity_node( $organizer );
+		return self::organizer_to_jsonld( $organizer, self::node_id(), true );
+	}
+
+	/**
+	 * Build a full Schema.org Organization/Person object for one organizer
+	 * identity: the identity block plus address, `sameAs`, logo and contact
+	 * point, each only when set.
+	 *
+	 * Reads only the public identity fields, so a record that also carries
+	 * private notification recipients (an additional organizer from Fair
+	 * Events Experimental) can be passed as it is.
+	 *
+	 * @param array  $organizer          Normalized organizer identity, shaped like Organizer::get().
+	 * @param string $node_id            The node's `@id`.
+	 * @param bool   $site_logo_fallback Whether to fall back to the site logo
+	 *                                   when the organizer has none; only the
+	 *                                   sitewide organizer stands for the site.
+	 * @return array Organizer object (without `@context`).
+	 */
+	public static function organizer_to_jsonld( array $organizer, string $node_id, bool $site_logo_fallback = false ): array {
+		$data        = self::build_identity_node( $organizer );
+		$data['@id'] = $node_id;
 
 		$address = self::build_address( $organizer );
 		if ( ! empty( $address ) ) {
@@ -52,7 +73,7 @@ class OrganizationSchema {
 			$data['sameAs'] = $organizer['same_as'];
 		}
 
-		$logo_url = self::get_logo_url( $organizer );
+		$logo_url = self::get_logo_url( $organizer, $site_logo_fallback );
 		if ( $logo_url ) {
 			// Schema.org `Person` has no `logo`; its picture is `image`.
 			$data[ 'Person' === $organizer['type'] ? 'image' : 'logo' ] = $logo_url;
@@ -140,11 +161,15 @@ class OrganizationSchema {
 	 * block writes to the same theme mod, so this covers classic and block
 	 * themes alike).
 	 *
-	 * @param array $organizer Normalized organizer identity, as returned by Organizer::get().
+	 * @param array $organizer          Normalized organizer identity, as returned by Organizer::get().
+	 * @param bool  $site_logo_fallback Whether to use the site logo when the organizer has none.
 	 * @return string|null Logo URL, or null when there is no logo set (or the attachment is gone).
 	 */
-	private static function get_logo_url( array $organizer ) {
-		$attachment_id = $organizer['logo_id'] ? $organizer['logo_id'] : get_theme_mod( 'custom_logo' );
+	private static function get_logo_url( array $organizer, bool $site_logo_fallback = true ) {
+		$attachment_id = ! empty( $organizer['logo_id'] ) ? (int) $organizer['logo_id'] : 0;
+		if ( ! $attachment_id && $site_logo_fallback ) {
+			$attachment_id = get_theme_mod( 'custom_logo' );
+		}
 		if ( ! $attachment_id ) {
 			return null;
 		}

@@ -1341,6 +1341,58 @@ class EventDates {
 	}
 
 	/**
+	 * Get the organizer assignment stored on an event date row.
+	 *
+	 * Like the booking message, the assignment is kept out of hydrate(), and
+	 * a series stores it on its master: callers resolve a generated
+	 * occurrence to its master first. Fair Events only stores the value; Fair
+	 * Events Experimental decides what it means (#2305).
+	 *
+	 * @param int $id Event date row ID.
+	 * @return string|null Organizer UUID, or null for the sitewide organizer
+	 *                     (also when the row is missing).
+	 */
+	public static function get_organizer_id( $id ) {
+		global $wpdb;
+
+		$value = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT organizer_id FROM %i WHERE id = %d LIMIT 1',
+				$wpdb->prefix . 'fair_event_dates',
+				$id
+			)
+		);
+
+		return null === $value || '' === $value ? null : (string) $value;
+	}
+
+	/**
+	 * Store (or clear) the organizer assignment of an event date row.
+	 *
+	 * @param int         $id           Event date row ID.
+	 * @param string|null $organizer_id Organizer UUID; null clears the
+	 *                                  assignment (sitewide organizer).
+	 * @return bool True on success, false on failure or a malformed ID.
+	 */
+	public static function save_organizer_id( $id, $organizer_id ) {
+		global $wpdb;
+
+		if ( null !== $organizer_id && 1 !== preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', (string) $organizer_id ) ) {
+			return false;
+		}
+
+		$result = $wpdb->update(
+			$wpdb->prefix . 'fair_event_dates',
+			array( 'organizer_id' => $organizer_id ),
+			array( 'id' => $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Delete event date by ID
 	 *
 	 * Cascades to generated occurrences (rows with master_id = $id) and
