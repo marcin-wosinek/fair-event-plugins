@@ -293,4 +293,58 @@ class OrganizationSchemaTest extends TestCase {
 		$this->assertStringNotContainsString( 'private-team@example.com', $organization );
 		$this->assertStringNotContainsString( 'private-team@example.com', $reference );
 	}
+
+	/**
+	 * Another organizer's node uses the given `@id`, carries its own public
+	 * identity and never the private recipients or the site logo (#2305).
+	 *
+	 * @return void
+	 */
+	public function test_organizer_to_jsonld_builds_another_identity() {
+		$GLOBALS['_fair_test_theme_mods']['custom_logo'] = 42;
+		$GLOBALS['_fair_test_attachment_urls'][42]       = 'https://example.com/site-logo.png';
+
+		$node = OrganizationSchema::organizer_to_jsonld(
+			array(
+				'id'                  => '11111111-1111-4111-8111-111111111111',
+				'is_default'          => false,
+				'type'                => 'SportsClub',
+				'name'                => 'North Club',
+				'website'             => 'https://north.example',
+				'address_locality'    => 'Bilbao',
+				'same_as'             => array( 'https://example.com/north' ),
+				'logo_id'             => 0,
+				'contact_email'       => 'hello@north.example',
+				'contact_phone'       => '',
+				'notification_emails' => array( 'north-team@example.com' ),
+			),
+			'https://example.com/#organizer-11111111-1111-4111-8111-111111111111'
+		);
+
+		$this->assertSame( 'SportsClub', $node['@type'] );
+		$this->assertSame( 'https://example.com/#organizer-11111111-1111-4111-8111-111111111111', $node['@id'] );
+		$this->assertSame( 'North Club', $node['name'] );
+		$this->assertSame( 'https://north.example', $node['url'] );
+		$this->assertSame( 'Bilbao', $node['address']['addressLocality'] );
+		$this->assertSame( array( 'https://example.com/north' ), $node['sameAs'] );
+		$this->assertSame( 'hello@north.example', $node['contactPoint']['email'] );
+		$this->assertArrayNotHasKey( 'logo', $node );
+		$this->assertStringNotContainsString( 'north-team@example.com', wp_json_encode( $node ) );
+	}
+
+	/**
+	 * The sitewide node keeps its `@id` and its site logo fallback.
+	 *
+	 * @return void
+	 */
+	public function test_organization_keeps_its_identity_and_site_logo() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array( 'name' => 'Acme Club' );
+		$GLOBALS['_fair_test_theme_mods']['custom_logo']    = 42;
+		$GLOBALS['_fair_test_attachment_urls'][42]          = 'https://example.com/site-logo.png';
+
+		$org = OrganizationSchema::organization_to_jsonld();
+
+		$this->assertSame( 'https://example.com/#organization', $org['@id'] );
+		$this->assertSame( 'https://example.com/site-logo.png', $org['logo'] );
+	}
 }

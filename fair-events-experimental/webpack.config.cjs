@@ -33,6 +33,10 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/manage-event-schedule/index.js'
 		),
+		'admin/manage-event-organizer/index': path.resolve(
+			process.cwd(),
+			'src/Admin/manage-event-organizer/index.js'
+		),
 		'frontend/meta-attribution': path.resolve(
 			process.cwd(),
 			'src/Frontend/meta-attribution.js'

@@ -86,7 +86,19 @@ class EventSchema {
 			}
 		}
 
-		$data['organizer'] = OrganizationSchema::organizer_ref();
+		/**
+		 * Filters the `organizer` of an event's JSON-LD.
+		 *
+		 * Defaults to the sitewide organizer reference. Fair Events
+		 * Experimental replaces it with the organizer assigned to the event
+		 * (#2305); a generated occurrence is passed as it is, so callbacks
+		 * resolve it to its series themselves.
+		 *
+		 * @param array      $organizer  Organizer object.
+		 * @param EventDates $event_date Event date the JSON-LD describes.
+		 * @param int        $post_id    Linked post ID.
+		 */
+		$data['organizer'] = apply_filters( 'fair_events_event_jsonld_organizer', OrganizationSchema::organizer_ref(), $event_date, $post_id );
 
 		return $data;
 	}
