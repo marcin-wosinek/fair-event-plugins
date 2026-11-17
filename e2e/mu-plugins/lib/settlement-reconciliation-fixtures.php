@@ -91,20 +91,6 @@ add_action(
 							$wpdb->update( $entries, $data, array( 'id' => (int) $request['entry_id'] ) );
 							return array( 'updated' => true );
 						}
-						if ( 'add_child' === $action ) {
-							$parent = \FairFinance\Models\FinancialEntry::get_by_id( (int) $request['entry_id'] );
-							$wpdb->insert(
-								$entries,
-								array(
-									'amount'          => '0.00',
-									'entry_type'      => $parent->entry_type,
-									'entry_date'      => $parent->entry_date,
-									'description'     => 'Reconcile fixture manual allocation',
-									'parent_entry_id' => $parent->id,
-								)
-							);
-							return array( 'entry_id' => (int) $wpdb->insert_id );
-						}
 						if ( 'delete_transaction' === $action ) {
 							$wpdb->delete( $payments, array( 'id' => (int) $request['transaction_id'] ) );
 							return array( 'deleted' => true );

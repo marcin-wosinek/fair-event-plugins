@@ -227,6 +227,9 @@ class SettlementReconciliationTest extends TestCase {
 		$this->assertIsString( $reason );
 		$this->assertStringContainsString( '15.33', $reason );
 		$this->assertStringContainsString( '15.35', $reason );
+		// A mismatch is explained neutrally; it does not claim the recorded fees are wrong.
+		$this->assertStringNotContainsString( 'Correct the recorded fees', $reason );
+		$this->assertStringContainsString( 'only when these totals agree exactly', $reason );
 	}
 
 	/** A missing recorded fee is explained instead of guessed. */

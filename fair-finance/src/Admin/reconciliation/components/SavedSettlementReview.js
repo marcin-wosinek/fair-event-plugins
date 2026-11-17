@@ -16,7 +16,6 @@ import {
 	TextControl,
 } from '@wordpress/components';
 import AllocationProposal from './AllocationProposal.js';
-import SplitRecalculation from './SplitRecalculation.js';
 
 export const stateLabel = ( state ) =>
 	( {
@@ -885,17 +884,6 @@ export default function SavedSettlementReview( {
 					) ) }
 				</ul>
 			) }
-			{ data.decision?.state === 'full' &&
-				data.allocation.status === 'allocated' && (
-					<SplitRecalculation
-						settlementId={ settlementId }
-						name={ name }
-						budgets={ budgets }
-						onApplied={ ( fresh ) => {
-							if ( fresh ) setData( fresh );
-						} }
-					/>
-				) }
 			{ data.adoption_required && (
 				<CheckboxControl
 					label={ __(

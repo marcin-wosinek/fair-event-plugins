@@ -273,10 +273,9 @@ class SettlementReconciliation {
 	 * @param int   $id Settlement ID.
 	 * @param array $proposal Proposal.
 	 * @param bool  $lock Lock records.
-	 * @param bool  $resplit Also propose a split for an existing one, ignoring its children.
 	 * @return array|WP_Error
 	 */
-	private function build_preview( $id, array $proposal, $lock, $resplit = false ) {
+	private function build_preview( $id, array $proposal, $lock ) {
 		$settlement = $this->provider->get_settlement( $id, $lock );
 		if ( ! $settlement ) {
 			return self::error( 'settlement_not_found', __( 'This settlement is not saved on this site.', 'fair-finance' ), 404 );
@@ -454,9 +453,6 @@ class SettlementReconciliation {
 		$bank_issues = array_values( array_unique( $bank_issues ) );
 		$source      = isset( $explanations['api'] ) ? 'api' : 'csv';
 		$allocation  = $this->allocation( $merged, $transactions, $bank_rows, $bank, $items[ $source ], $explanations[ $source ] ?? null, $settlement['currency'] );
-		// What the evidence supports now for an existing split, compared only
-		// by an explicit recalculation.
-		$resplit = $resplit && $bank && AllocationPlanner::ALLOCATED === $allocation['status'] ? $this->propose( $merged, $transactions, $bank, $items[ $source ], $explanations[ $source ] ?? null, $settlement['currency'] ) : null;
 		// Material fingerprints exclude source IDs and refresh timestamps. History
 		// retains those IDs separately, so refreshing identical facts is harmless.
 		$material_revisions = array();
@@ -508,7 +504,6 @@ class SettlementReconciliation {
 			'history'               => $history,
 			'material_hash'         => $material_hash,
 			'fingerprint'           => $fingerprint,
-			'resplit'               => $resplit,
 		);
 	}
 
@@ -569,8 +564,8 @@ class SettlementReconciliation {
 	}
 
 	/**
-	 * The split this settlement's evidence supports, ignoring any existing
-	 * children, so an existing split can be compared with it.
+	 * The initial split this settlement's evidence supports for a bank entry
+	 * that is not split yet. An existing split is never re-proposed.
 	 *
 	 * Recorded net amounts are tried first, alone and then with settlement
 	 * adjustments that the evidence lists separately from payment fees. Gross
@@ -763,7 +758,7 @@ class SettlementReconciliation {
 		if ( ! self::equal( $recorded, $listed ) ) {
 			return sprintf(
 				/* translators: 1: exact total of fees recorded on the payments, 2: exact total of payment fees in the settlement evidence. */
-				__( 'The fees recorded on the payments total %1$s, but the settlement evidence lists %2$s in payment fees. Correct the recorded fees, then preview again.', 'fair-finance' ),
+				__( 'The fees recorded on the payments total %1$s, but the settlement evidence lists %2$s in payment fees. Net payment amounts are used only when these totals agree exactly.', 'fair-finance' ),
 				Exact::canonical( $recorded ),
 				Exact::canonical( $listed )
 			);
@@ -1111,283 +1106,6 @@ class SettlementReconciliation {
 			);
 		}
 		return $associations;
-	}
-
-	/**
-	 * Preview recalculating an existing settlement split. Preview never writes.
-	 *
-	 * @param int  $id Settlement ID.
-	 * @param bool $lock Use locking reads within the recalculation.
-	 * @return array|WP_Error
-	 */
-	public function recalculation( $id, $lock = false ) {
-		try {
-			return $this->build_recalculation( $id, $lock );
-		} catch ( \Throwable $error ) {
-			return self::error( 'reconciliation_read_failed', __( 'The local reconciliation evidence could not be read. Try again.', 'fair-finance' ), 500 );
-		}
-	}
-
-	/**
-	 * Build the recalculation preview.
-	 *
-	 * @param int  $id Settlement ID.
-	 * @param bool $lock Lock records.
-	 * @return array|WP_Error
-	 */
-	private function build_recalculation( $id, $lock ) {
-		$decision = $this->local->decision( $id, $lock );
-		if ( ! $decision || 'full' !== $decision['state'] ) {
-			return self::error( 'reconciliation_not_split', __( 'Only a fully reconciled settlement’s split can be recalculated.', 'fair-finance' ), 409 );
-		}
-		$preview = $this->build_preview( $id, array( 'entry_id' => (int) $decision['entry_id'] ), $lock, true );
-		if ( is_wp_error( $preview ) ) {
-			return $preview;
-		}
-		$children = array_values(
-			array_filter(
-				$preview['bank_rows'],
-				static function ( $row ) use ( $decision ) {
-					return (int) $row['id'] !== (int) $decision['entry_id'];
-				}
-			)
-		);
-		$plan     = $preview['resplit'];
-		$reasons  = array();
-		if ( ! $children ) {
-			$reasons[] = __( 'This bank entry is not split, so there is nothing to recalculate.', 'fair-finance' );
-		}
-		if ( ! $preview['can_full'] ) {
-			$reasons[] = __( 'Resolve the reconciliation issues shown above before recalculating the split.', 'fair-finance' );
-		}
-		if ( $children && ( ! $plan || AllocationPlanner::PROPOSED !== $plan['status'] ) ) {
-			$reasons[] = $plan ? $plan['reason'] : __( 'There is no supported evidence to allocate.', 'fair-finance' );
-		}
-		$generated = SplitRecalculation::generated( $preview['history'] );
-		$diff      = $reasons ? array(
-			'status'    => SplitRecalculation::BLOCKED,
-			'changes'   => array(),
-			'reasons'   => $reasons,
-			'warnings'  => array(),
-			'recovered' => array(),
-		) : SplitRecalculation::diff( $children, $generated, $plan['rows'] );
-		$result    = array(
-			'status'      => $diff['status'],
-			'changes'     => $diff['changes'],
-			'reasons'     => $diff['reasons'],
-			'warnings'    => $diff['warnings'],
-			// Allocations an earlier split save recreated, identified by unique evidence.
-			'recovered'   => $diff['recovered'],
-			'history_id'  => $generated['history_id'] ?? null,
-			'method'      => $plan['method'] ?? null,
-			'explanation' => $plan['reason'] ?? null,
-			'currency'    => $preview['settlement']['currency'],
-			'entry_id'    => (int) $decision['entry_id'],
-		);
-		// Every allocation field and the evidence are part of what was reviewed.
-		$result['fingerprint'] = self::hash( array( 'recalculate', $preview['fingerprint'], $children, $generated['history_id'] ?? null, $result ) );
-		$result['preview']     = $preview;
-		$result['rows']        = $plan['rows'] ?? array();
-		return $result;
-	}
-
-	/**
-	 * Apply a reviewed recalculation atomically, recorded in history.
-	 *
-	 * @param int    $id Settlement ID.
-	 * @param string $fingerprint Reviewed recalculation fingerprint.
-	 * @return array|WP_Error Fresh recalculation preview.
-	 * @throws \RuntimeException Internally caught to roll back every failed write.
-	 */
-	public function recalculate( $id, $fingerprint ) {
-		global $wpdb;
-		if ( ! $this->provider->lock( SettlementStore::WRITE_LOCK, 15 ) ) {
-			return self::error( 'reconciliation_busy', __( 'Another settlement operation is running. Try again.', 'fair-finance' ), 409 );
-		}
-		$this->provider->begin();
-		try {
-			$review = $this->recalculation( $id, true );
-			if ( is_wp_error( $review ) ) {
-				$this->provider->rollback();
-				return $review;
-			}
-			$request_hash = self::hash( array( 'recalculate', $id, $fingerprint ) );
-			$prior        = $wpdb->get_row( $wpdb->prepare( 'SELECT id FROM %i WHERE request_hash = %s', Schema::reconciliation_table( 'history' ), $request_hash ), ARRAY_A );
-			if ( $prior ) {
-				// A retry of an applied request changes nothing.
-				$this->provider->rollback();
-				return $this->public_recalculation( $review );
-			}
-			if ( ! hash_equals( $review['fingerprint'], (string) $fingerprint ) ) {
-				$this->provider->rollback();
-				return self::error( 'reconciliation_stale', __( 'The split or its evidence changed. Preview the recalculation again before applying it.', 'fair-finance' ), 409 );
-			}
-			if ( SplitRecalculation::BLOCKED === $review['status'] ) {
-				$this->provider->rollback();
-				return self::error( 'reconciliation_recalculation_blocked', __( 'This split cannot be recalculated automatically. Review the reasons shown in the preview.', 'fair-finance' ), 409 );
-			}
-			if ( SplitRecalculation::UNCHANGED === $review['status'] ) {
-				$this->provider->rollback();
-				return $this->public_recalculation( $review );
-			}
-			$preview  = $review['preview'];
-			$entry_id = $review['entry_id'];
-			$table    = \FairFinance\Database\Schema::get_financial_entries_table_name();
-			$parent   = null;
-			$before   = array();
-			foreach ( $preview['bank_rows'] as $row ) {
-				if ( (int) $row['id'] === $entry_id ) {
-					$parent = $row;
-				} else {
-					$before[] = $row;
-				}
-			}
-			$ids  = array();
-			$rows = array();
-			foreach ( $review['changes'] as $change ) {
-				if ( SplitRecalculation::REMOVE === $change['action'] ) {
-					if ( 1 !== $wpdb->delete(
-						$table,
-						array(
-							'id'              => $change['id'],
-							'parent_entry_id' => $entry_id,
-						),
-						array( '%d', '%d' )
-					) ) {
-						throw new \RuntimeException( 'Allocation removal failed.' );
-					}
-					continue;
-				}
-				if ( SplitRecalculation::ADD === $change['action'] ) {
-					// Inserted directly so an unclassified adjustment stays untagged
-					// instead of inheriting the bank entry's tag.
-					$inserted = $wpdb->insert(
-						$table,
-						array(
-							'amount'          => $change['proposed_amount'],
-							'entry_type'      => $parent['entry_type'],
-							'entry_date'      => $parent['entry_date'],
-							'description'     => $change['description'],
-							'transaction_id'  => $parent['transaction_id'],
-							'parent_entry_id' => $entry_id,
-						),
-						array( '%s', '%s', '%s', '%s', '%d', '%d' )
-					);
-					if ( ! $inserted ) {
-						throw new \RuntimeException( 'Allocation insert failed.' );
-					}
-					$change['id'] = (int) $wpdb->insert_id;
-				} elseif ( SplitRecalculation::UPDATE === $change['action'] ) {
-					// Only the amount, and a generated description, change.
-					$data = array( 'amount' => $change['proposed_amount'] );
-					if ( null !== $change['new_description'] ) {
-						$data['description'] = $change['new_description'];
-					}
-					if ( false === $wpdb->update(
-						$table,
-						$data,
-						array(
-							'id'              => $change['id'],
-							'parent_entry_id' => $entry_id,
-						),
-						null,
-						array( '%d', '%d' )
-					) ) {
-						throw new \RuntimeException( 'Allocation update failed.' );
-					}
-				}
-				$ids[]  = (int) $change['id'];
-				$rows[] = array(
-					'kind'           => $change['kind'],
-					'amount'         => $change['proposed_amount'],
-					'description'    => $change['new_description'] ?? $change['description'],
-					'movement_key'   => $change['movement_key'],
-					'transaction_id' => $change['transaction_id'],
-				);
-			}
-			$after_rows = ( new ReconciliationRepository() )->bank( $entry_id, true );
-			$decision   = $preview['decision'];
-			unset( $preview['history'], $preview['resplit'] );
-			$history_id = $this->local->save(
-				'history',
-				array(
-					'settlement_id' => $id,
-					'decision_id'   => (int) $decision['id'],
-					'request_hash'  => $request_hash,
-					'state'         => 'recalculated',
-					'actor_id'      => get_current_user_id(),
-					'confirmed_at'  => current_time( 'mysql', true ),
-					'reviewed'      => wp_json_encode(
-						array(
-							'preview'         => $preview,
-							'allocation_ids'  => $ids,
-							'allocation_rows' => $rows,
-							'allocation'      => array(
-								'status'    => AllocationPlanner::PROPOSED,
-								'method'    => $review['method'],
-								'repair'    => false,
-								'revisions' => array_map(
-									static function ( $revision ) {
-										return (int) $revision['id'];
-									},
-									$preview['revisions']
-								),
-							),
-							'recalculation'   => array(
-								'changes'   => $review['changes'],
-								'warnings'  => $review['warnings'],
-								// Earlier history stays as written; recovered rows are recorded here.
-								'source'    => $review['history_id'],
-								'recovered' => $review['recovered'],
-								'before'    => self::material_rows( $before ),
-								'after'     => self::material_rows(
-									array_values(
-										array_filter(
-											$after_rows,
-											static function ( $row ) use ( $entry_id ) {
-												return (int) $row['id'] !== $entry_id;
-											}
-										)
-									)
-								),
-							),
-						)
-					),
-				)
-			);
-			$this->record_evidence( $history_id, $preview );
-			$after = $this->preview( $id, array( 'entry_id' => $entry_id ), true );
-			if ( is_wp_error( $after ) ) {
-				throw new \RuntimeException( 'Unable to verify committed evidence.' );
-			}
-			$this->local->save(
-				'decisions',
-				array(
-					'history_id'    => $history_id,
-					'material_hash' => $after['material_hash'],
-				),
-				array( 'id' => (int) $decision['id'] )
-			);
-			$this->provider->commit();
-			$fresh = $this->recalculation( $id );
-			return is_wp_error( $fresh ) ? $fresh : $this->public_recalculation( $fresh );
-		} catch ( \Throwable $error ) {
-			$this->provider->rollback();
-			return self::error( 'reconciliation_save_failed', __( 'The split could not be recalculated. Nothing was changed.', 'fair-finance' ), 500 );
-		} finally {
-			$this->provider->unlock( SettlementStore::WRITE_LOCK );
-		}
-	}
-
-	/**
-	 * Recalculation preview as returned to the screen.
-	 *
-	 * @param array $review Recalculation.
-	 * @return array
-	 */
-	public function public_recalculation( array $review ) {
-		unset( $review['preview']['resplit'] );
-		return $review;
 	}
 
 	/**
