@@ -13,6 +13,8 @@ use FairPlatform\Database\InstagramConnectionRepository;
 use FairPlatform\API\ConnectionsController;
 use FairPlatform\API\HealthController;
 use FairPlatform\API\InstagramConnectionsController;
+use FairPlatform\Monitoring\OAuthErrorReporter;
+use FairPlatform\Monitoring\SafeEvent;
 use FairPlatform\OAuth\MollieOAuth;
 
 defined( 'ABSPATH' ) || die;
@@ -27,6 +29,13 @@ class Plugin {
 	 * @var Plugin
 	 */
 	private static $instance = null;
+
+	/**
+	 * Error reporter for the Mollie OAuth flows, created on first use.
+	 *
+	 * @var OAuthErrorReporter|null
+	 */
+	private $error_reporter = null;
 
 	/**
 	 * Get singleton instance
@@ -259,6 +268,18 @@ class Plugin {
 	}
 
 	/**
+	 * Error reporter for the Mollie OAuth flows.
+	 *
+	 * @return OAuthErrorReporter
+	 */
+	private function error_reporter() {
+		if ( null === $this->error_reporter ) {
+			$this->error_reporter = OAuthErrorReporter::from_config();
+		}
+		return $this->error_reporter;
+	}
+
+	/**
 	 * Handle OAuth endpoint requests
 	 *
 	 * @return void
@@ -272,19 +293,39 @@ class Plugin {
 
 		switch ( $endpoint ) {
 			case 'authorize':
-				$this->handle_authorize();
+				$this->error_reporter()->watch(
+					'authorize',
+					function () {
+						$this->handle_authorize();
+					}
+				);
 				break;
 
 			case 'callback':
-				$this->handle_callback();
+				$this->error_reporter()->watch(
+					'callback',
+					function () {
+						$this->handle_callback();
+					}
+				);
 				break;
 
 			case 'select-profile':
-				$this->handle_select_profile();
+				$this->error_reporter()->watch(
+					'select_profile',
+					function () {
+						$this->handle_select_profile();
+					}
+				);
 				break;
 
 			case 'refresh':
-				$this->handle_refresh();
+				$this->error_reporter()->watch(
+					'refresh',
+					function () {
+						$this->handle_refresh();
+					}
+				);
 				break;
 
 			case 'instagram-authorize':
@@ -388,6 +429,12 @@ class Plugin {
 				delete_transient( "mollie_oauth_{$state}" );
 			}
 
+			// A cancellation is the user's choice; other errors for a known
+			// state are Mollie failures.
+			if ( $data && SafeEvent::is_reportable_authorization_error( $error ) ) {
+				$this->error_reporter()->report_failure( 'authorization_error', array( 'oauth_error' => $error ) );
+			}
+
 			// Log failed connection.
 			$this->log_connection_attempt(
 				is_array( $data ) ? $data : array(),
@@ -486,6 +533,7 @@ class Plugin {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->error_reporter()->report_failure( 'transport_failed', array( 'step' => 'token_exchange' ) );
 			error_log( 'Mollie token exchange failed: ' . $response->get_error_message() );
 			return $response;
 		}
@@ -494,12 +542,21 @@ class Plugin {
 		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( 200 !== $status_code ) {
+			$this->error_reporter()->report_failure(
+				'http_error',
+				array(
+					'step'        => 'token_exchange',
+					'http_status' => $status_code,
+					'oauth_error' => $body['error'] ?? '',
+				)
+			);
 			$error_message = $body['error_description'] ?? $body['error'] ?? 'Unknown error';
 			error_log( "Mollie token exchange failed with status {$status_code}: {$error_message}" );
 			return new \WP_Error( 'token_exchange_failed', $error_message );
 		}
 
 		if ( empty( $body['access_token'] ) || empty( $body['refresh_token'] ) ) {
+			$this->error_reporter()->report_failure( 'invalid_response', array( 'step' => 'token_exchange' ) );
 			error_log( 'Mollie token exchange returned invalid data' );
 			return new \WP_Error( 'invalid_token_response', 'Invalid token response from Mollie' );
 		}
@@ -530,8 +587,20 @@ class Plugin {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->error_reporter()->report_failure( 'transport_failed', array( 'step' => 'organization' ) );
 			error_log( 'Fair Platform: Failed to fetch organization: ' . $response->get_error_message() );
 			return array();
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			$this->error_reporter()->report_failure(
+				'http_error',
+				array(
+					'step'        => 'organization',
+					'http_status' => $status_code,
+				)
+			);
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -561,12 +630,20 @@ class Plugin {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->error_reporter()->report_failure( 'transport_failed', array( 'step' => 'profiles' ) );
 			error_log( 'Fair Platform: Failed to fetch profiles list: ' . $response->get_error_message() );
 			return array();
 		}
 
 		$status_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $status_code ) {
+			$this->error_reporter()->report_failure(
+				'http_error',
+				array(
+					'step'        => 'profiles',
+					'http_status' => $status_code,
+				)
+			);
 			error_log( "Fair Platform: Failed to fetch profiles with status {$status_code}" );
 			return array();
 		}
@@ -1064,6 +1141,7 @@ class Plugin {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->error_reporter()->report_failure( 'transport_failed', array( 'step' => 'token_refresh' ) );
 			error_log( 'Mollie token refresh failed: ' . $response->get_error_message() );
 			wp_send_json_error(
 				array( 'message' => 'Token refresh failed: ' . $response->get_error_message() ),
@@ -1075,6 +1153,14 @@ class Plugin {
 		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( 200 !== $status_code ) {
+			$this->error_reporter()->report_failure(
+				'http_error',
+				array(
+					'step'        => 'token_refresh',
+					'http_status' => $status_code,
+					'oauth_error' => $body['error'] ?? '',
+				)
+			);
 			$error_message = $body['error_description'] ?? $body['error'] ?? 'Unknown error';
 			error_log( "Mollie token refresh failed with status {$status_code}: {$error_message}" );
 			wp_send_json_error(
@@ -1084,6 +1170,7 @@ class Plugin {
 		}
 
 		if ( empty( $body['access_token'] ) ) {
+			$this->error_reporter()->report_failure( 'invalid_response', array( 'step' => 'token_refresh' ) );
 			error_log( 'Mollie token refresh returned invalid data' );
 			wp_send_json_error(
 				array( 'message' => 'Invalid token response from Mollie' ),

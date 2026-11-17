@@ -79,3 +79,32 @@ if ( ! function_exists( 'add_query_arg' ) ) {
 		return $url . $separator . implode( '&', $pairs );
 	}
 }
+
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Stub of WordPress get_transient() backed by $GLOBALS['_fair_test_transients'].
+	 *
+	 * @param string $name Transient name.
+	 * @return mixed
+	 */
+	function get_transient( $name ) {
+		$transients = isset( $GLOBALS['_fair_test_transients'] ) ? $GLOBALS['_fair_test_transients'] : array();
+		return array_key_exists( $name, $transients ) ? $transients[ $name ] : false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * Stub of WordPress set_transient(); the expiration is ignored.
+	 *
+	 * @param string $name       Transient name.
+	 * @param mixed  $value      Value.
+	 * @param int    $expiration Expiration in seconds.
+	 * @return bool
+	 */
+	function set_transient( $name, $value, $expiration = 0 ) {
+		unset( $expiration );
+		$GLOBALS['_fair_test_transients'][ $name ] = $value;
+		return true;
+	}
+}
