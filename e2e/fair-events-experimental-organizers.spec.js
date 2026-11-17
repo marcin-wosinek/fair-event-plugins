@@ -98,6 +98,62 @@ test.describe('Organizers manager', () => {
 		);
 	});
 
+	test('organizer types persist for additional and default organizers', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto(TAB_URL);
+
+		await page.getByRole('button', { name: 'Add organizer' }).click();
+		await expect(page.getByLabel('Organizer type')).toHaveValue(
+			'Organization'
+		);
+		await page.getByLabel('Name (required)').fill('Ana García');
+		await page.getByLabel('Organizer type').selectOption('Person');
+		await page.getByRole('button', { name: 'Save organizer' }).click();
+		await expect(
+			page
+				.locator('.components-notice__content')
+				.getByText('Organizer added.')
+		).toBeVisible();
+
+		await page.reload();
+		await page.getByRole('button', { name: 'Edit “Ana García”' }).click();
+		await expect(page.getByLabel('Organizer type')).toHaveValue('Person');
+		await page.getByLabel('Organizer type').selectOption('NGO');
+		await page.getByRole('button', { name: 'Save organizer' }).click();
+		await expect(
+			page
+				.locator('.components-notice__content')
+				.getByText('Organizer saved.')
+		).toBeVisible();
+		const [id] = optionJson(INDEX_OPTION);
+		expect(optionJson(OPTION_PREFIX + id)).toMatchObject({ type: 'NGO' });
+
+		await page.getByRole('button', { name: '← All organizers' }).click();
+		await row(page, 'Default — used for the whole site')
+			.getByRole('button', { name: /^Edit/ })
+			.click();
+		await page.getByLabel('Organizer type').selectOption('Corporation');
+		await page.getByRole('button', { name: 'Save organizer' }).click();
+		await expect(
+			page
+				.locator('.components-notice__content')
+				.getByText('Organizer saved.')
+		).toBeVisible();
+		expect(optionJson('fair_events_organizer')).toMatchObject({
+			type: 'Corporation',
+		});
+
+		await page.reload();
+		await row(page, 'Default — used for the whole site')
+			.getByRole('button', { name: /^Edit/ })
+			.click();
+		await expect(page.getByLabel('Organizer type')).toHaveValue(
+			'Corporation'
+		);
+	});
+
 	test('editing the default writes the sitewide organizer', async ({
 		page,
 	}) => {

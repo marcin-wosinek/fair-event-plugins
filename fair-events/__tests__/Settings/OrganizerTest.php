@@ -74,7 +74,7 @@ class OrganizerTest extends TestCase {
 	 * @return void
 	 */
 	public function test_get_clamps_invalid_type() {
-		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array( 'type' => 'Person' );
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array( 'type' => 'Club' );
 
 		$this->assertSame( 'Organization', Organizer::get()['type'] );
 	}
@@ -126,8 +126,22 @@ class OrganizerTest extends TestCase {
 	public function test_sanitize_clamps_unknown_type() {
 		$this->assertSame(
 			'Organization',
-			Organizer::sanitize_option( array( 'type' => 'Person' ) )['type']
+			Organizer::sanitize_option( array( 'type' => 'Club' ) )['type']
 		);
+	}
+
+	/**
+	 * Every allowed type survives sanitizing and reading back, including the
+	 * person, company and NGO types added after Organization/SportsClub.
+	 *
+	 * @return void
+	 */
+	public function test_every_type_round_trips() {
+		foreach ( array( 'Organization', 'SportsClub', 'Person', 'Corporation', 'NGO' ) as $type ) {
+			$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = Organizer::sanitize_option( array( 'type' => $type ) );
+
+			$this->assertSame( $type, Organizer::get()['type'], $type );
+		}
 	}
 
 	/**

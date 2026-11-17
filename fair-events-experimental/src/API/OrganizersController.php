@@ -267,8 +267,8 @@ class OrganizersController extends WP_REST_Controller {
 			$data['type'] = $type;
 		} else {
 			$errors['type'] = sprintf(
-				/* translators: %s: comma-separated list of allowed organization types */
-				__( 'Choose an organization type: %s.', 'fair-events-experimental' ),
+				/* translators: %s: comma-separated list of allowed organizer types */
+				__( 'Choose an organizer type: %s.', 'fair-events-experimental' ),
 				implode( ', ', Organizer::TYPES )
 			);
 		}

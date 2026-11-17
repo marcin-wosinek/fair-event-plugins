@@ -2,7 +2,7 @@
 /**
  * Schema.org Organization JSON-LD shaping
  *
- * Pure, static helpers for building the sitewide Organization/SportsClub
+ * Pure, static helpers for building the sitewide organizer
  * identity node and the `organizer` reference embedded in event JSON-LD,
  * from the `fair_events_organizer` setting.
  *
@@ -16,7 +16,7 @@ use FairEvents\Settings\Organizer;
 defined( 'WPINC' ) || die;
 
 /**
- * Builds Schema.org Organization/SportsClub JSON-LD structures.
+ * Builds Schema.org organizer JSON-LD structures.
  */
 class OrganizationSchema {
 
@@ -30,7 +30,7 @@ class OrganizationSchema {
 	}
 
 	/**
-	 * Build the sitewide Schema.org Organization/SportsClub object.
+	 * Build the sitewide Schema.org organizer object.
 	 *
 	 * @return array|null Organization object (without `@context`), or null when no name is configured.
 	 */
@@ -54,7 +54,8 @@ class OrganizationSchema {
 
 		$logo_url = self::get_logo_url( $organizer );
 		if ( $logo_url ) {
-			$data['logo'] = $logo_url;
+			// Schema.org `Person` has no `logo`; its picture is `image`.
+			$data[ 'Person' === $organizer['type'] ? 'image' : 'logo' ] = $logo_url;
 		}
 
 		$contact_point = self::build_contact_point( $organizer );

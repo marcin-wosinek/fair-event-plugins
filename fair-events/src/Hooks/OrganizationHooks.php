@@ -2,7 +2,7 @@
 /**
  * Sitewide Organization JSON-LD structured data for Fair Events
  *
- * Outputs a sitewide Schema.org Organization/SportsClub JSON-LD block on
+ * Outputs a sitewide Schema.org organizer JSON-LD block on
  * wp_head, built from the `fair_events_organizer` setting, so search engines
  * and AI systems can confirm who the organizer is and connect them to their
  * known social profiles.
@@ -31,7 +31,7 @@ class OrganizationHooks {
 	}
 
 	/**
-	 * Output the sitewide Organization/SportsClub JSON-LD block.
+	 * Output the sitewide organizer JSON-LD block.
 	 *
 	 * @return void
 	 */

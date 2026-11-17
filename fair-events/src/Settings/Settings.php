@@ -136,7 +136,12 @@ class Settings {
 						'type'       => 'object',
 						'properties' => array(
 							'name'                => array( 'type' => 'string' ),
-							'type'                => array( 'type' => 'string' ),
+							// `enum` makes core reject an unknown type
+							// with a 400 instead of silently clamping it.
+							'type'                => array(
+								'type' => 'string',
+								'enum' => \FairEvents\Settings\Organizer::TYPES,
+							),
 							'street_address'      => array( 'type' => 'string' ),
 							'address_locality'    => array( 'type' => 'string' ),
 							'address_region'      => array( 'type' => 'string' ),

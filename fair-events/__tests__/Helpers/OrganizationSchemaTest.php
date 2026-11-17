@@ -12,7 +12,7 @@ use FairEvents\Helpers\OrganizationSchema;
 use FairEvents\Settings\Organizer;
 
 /**
- * Unit tests for building the sitewide Organization/SportsClub node and the
+ * Unit tests for building the sitewide organizer node and the
  * event `organizer` reference.
  */
 class OrganizationSchemaTest extends TestCase {
@@ -70,6 +70,58 @@ class OrganizationSchemaTest extends TestCase {
 		);
 
 		$this->assertSame( 'SportsClub', OrganizationSchema::organization_to_jsonld()['@type'] );
+	}
+
+	/**
+	 * Company and NGO types are emitted as their Schema.org types and keep
+	 * the organization-only `logo` property.
+	 *
+	 * @return void
+	 */
+	public function test_organization_honours_company_and_ngo_types() {
+		$GLOBALS['_fair_test_theme_mods']['custom_logo'] = 42;
+		$GLOBALS['_fair_test_attachment_urls'][42]       = 'https://example.com/logo.png';
+
+		foreach ( array( 'Corporation', 'NGO' ) as $type ) {
+			$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+				'name' => 'Acme',
+				'type' => $type,
+			);
+
+			$org = OrganizationSchema::organization_to_jsonld();
+
+			$this->assertSame( $type, $org['@type'] );
+			$this->assertSame( 'https://example.com/logo.png', $org['logo'] );
+			$this->assertSame( $type, OrganizationSchema::organizer_ref()['@type'] );
+		}
+	}
+
+	/**
+	 * A person identity uses `image` (Person has no `logo`) and keeps its
+	 * address, links and contact point.
+	 *
+	 * @return void
+	 */
+	public function test_person_uses_image_instead_of_logo() {
+		$GLOBALS['_fair_test_options'][ Organizer::OPTION ] = array(
+			'name'             => 'Ana García',
+			'type'             => 'Person',
+			'address_locality' => 'Madrid',
+			'same_as'          => array( 'https://example.com/ana' ),
+			'contact_email'    => 'ana@example.com',
+		);
+		$GLOBALS['_fair_test_theme_mods']['custom_logo']    = 42;
+		$GLOBALS['_fair_test_attachment_urls'][42]          = 'https://example.com/ana.jpg';
+
+		$person = OrganizationSchema::organization_to_jsonld();
+
+		$this->assertSame( 'Person', $person['@type'] );
+		$this->assertSame( 'https://example.com/ana.jpg', $person['image'] );
+		$this->assertArrayNotHasKey( 'logo', $person );
+		$this->assertSame( 'Madrid', $person['address']['addressLocality'] );
+		$this->assertSame( array( 'https://example.com/ana' ), $person['sameAs'] );
+		$this->assertSame( 'ana@example.com', $person['contactPoint']['email'] );
+		$this->assertSame( 'Person', OrganizationSchema::organizer_ref()['@type'] );
 	}
 
 	/**

@@ -21,6 +21,15 @@ const WP_ADMIN_PASS = process.env.WP_ADMIN_PASS || 'password';
  */
 
 async function apiFetch( page, options ) {
+	// `wp.apiFetch` only loads on admin screens; after checking a public
+	// page's JSON-LD, return to one before calling the REST API.
+	const hasApiFetch = await page.evaluate(
+		() => typeof window.wp?.apiFetch === 'function'
+	);
+	if ( ! hasApiFetch ) {
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+	}
 	const result = await page.evaluate( async ( opts ) => {
 		try {
 			// eslint-disable-next-line no-undef
@@ -269,6 +278,111 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 				'/wp-admin/admin.php?page=fair-events-all-events'
 			);
 			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+			await apiFetch( page, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: { fair_events_organizer: {} },
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/wp/v2/fair_event/${ postId }?force=true`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+			await apiFetch( page, {
+				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
+				method: 'DELETE',
+			} ).catch( () => {} );
+		}
+	} );
+
+	test( 'emits person and company identities with the chosen Schema.org type and no private recipients', async ( {
+		page,
+	} ) => {
+		test.setTimeout( 120_000 );
+
+		const privateEmail = 'private-person-2304@acme.example';
+
+		await page.setViewportSize( { width: 1200, height: 900 } );
+		await login( page );
+		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+
+		const now = new Date();
+		const start = new Date( now.getTime() + 24 * 60 * 60 * 1000 );
+		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+		const eventDate = await apiFetch( page, {
+			path: '/fair-events/v1/event-dates',
+			method: 'POST',
+			data: {
+				title: 'Organizer Person Test Event',
+				...timingFields(
+					iso( start ),
+					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
+				),
+				all_day: false,
+			},
+		} );
+		const post = await apiFetch( page, {
+			path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
+			method: 'POST',
+			data: { post_status: 'publish' },
+		} );
+		const postId = post.event_id || post.post_id;
+		const permalink = post.link || `/?p=${ postId }`;
+
+		try {
+			await apiFetch( page, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: {
+					fair_events_organizer: {
+						name: 'Ana García',
+						type: 'Person',
+						address_locality: 'Madrid',
+						contact_email: 'ana@acme.example',
+						notification_emails: [ privateEmail ],
+					},
+				},
+			} );
+
+			const person = await getJsonLdByType( page, '/', 'Person' );
+			expect( person ).toMatchObject( {
+				name: 'Ana García',
+				address: { addressLocality: 'Madrid' },
+				contactPoint: { email: 'ana@acme.example' },
+			} );
+			expect( person.logo ).toBeUndefined();
+			expect( JSON.stringify( person ) ).not.toContain( privateEmail );
+
+			const event = await getJsonLdByType( page, permalink, 'Event' );
+			expect( event.organizer ).toMatchObject( {
+				'@type': 'Person',
+				'@id': person[ '@id' ],
+				name: 'Ana García',
+			} );
+			for ( const url of [ '/', permalink ] ) {
+				const html = await ( await page.request.get( url ) ).text();
+				expect( html ).not.toContain( privateEmail );
+			}
+
+			await apiFetch( page, {
+				path: '/wp/v2/settings',
+				method: 'POST',
+				data: {
+					fair_events_organizer: {
+						name: 'Acme Ltd',
+						type: 'Corporation',
+					},
+				},
+			} );
+			const company = await getJsonLdByType( page, '/', 'Corporation' );
+			expect( company.name ).toBe( 'Acme Ltd' );
+			const companyEvent = await getJsonLdByType(
+				page,
+				permalink,
+				'Event'
+			);
+			expect( companyEvent.organizer[ '@type' ] ).toBe( 'Corporation' );
+		} finally {
 			await apiFetch( page, {
 				path: '/wp/v2/settings',
 				method: 'POST',
