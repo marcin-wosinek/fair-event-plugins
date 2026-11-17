@@ -15,7 +15,8 @@
 	"require": {
 		"php": "^8.2",
 		"mollie/mollie-api-php": "^4.0",
-		"fair-events/shared": "^0.2"
+		"fair-events/shared": "^0.2",
+		"sentry/sentry": "^4.0"
 	},
 	"authors": [
 		{

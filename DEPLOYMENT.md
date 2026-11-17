@@ -215,11 +215,76 @@ proxy down to test.
 
 ### Error tracking
 
-Reporting of unexpected errors in the proxy's OAuth flows (authorize,
-callback, profile selection, refresh) to Sentry follows in a separate PR,
-after `sentry/sentry` is approved in the dependency policy
-([DEPENDENCY_SECURITY.md](./DEPENDENCY_SECURITY.md)). That PR documents its
-scrubbing, configuration and alerts here.
+**Status:** the code ships with Fair Platform; the maintainer creates the
+Sentry project, sets the DSN and confirms alert delivery. Tracked in #2290.
+
+Fair Platform reports failures in the proxy's Mollie OAuth flows
+(authorize, callback, profile selection and refresh) to Sentry, so a broken
+flow surfaces even while the health check passes. Reporting is off until
+`wp-config.php` on fair-event-plugins.com defines the project's DSN:
+
+```php
+define( 'FAIR_PLATFORM_SENTRY_DSN', 'https://<key>@<org>.ingest.sentry.io/<project>' );
+```
+
+Keep the DSN out of the repository. Events carry the release
+`fair-platform@<version>` and the site's `wp_get_environment_type()`.
+
+**What is reported** (`fair-platform/src/Monitoring/`):
+
+| Category              | When                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `exception`           | An exception or error escapes a flow. It is rethrown, so the request fails as before.                              |
+| `php_error`           | A PHP warning or notice during a flow, within the site's `error_reporting()`. Deprecations aren't.                 |
+| `fatal_error`         | A PHP fatal error ends a flow.                                                                                     |
+| `transport_failed`    | A request to Mollie fails without an answer (step: `token_exchange`, `organization`, `profiles`, `token_refresh`). |
+| `http_error`          | Mollie answers with an unexpected status, for example `invalid_grant` for a revoked refresh token.                 |
+| `invalid_response`    | Mollie answers `200` without the expected tokens.                                                                  |
+| `authorization_error` | Mollie returns an authorization error other than a cancellation, for a known state.                                |
+
+Not reported: missing or invalid parameters, an expired or unknown state or
+session, a cancelled authorization (`access_denied`), the post-deploy
+check's empty refresh `POST`, and the Instagram flows.
+
+**What an event contains:** fixed tags only (`flow`, `category`, `step`,
+`http_status`, an OAuth error code from RFC 6749 or `other`, and the PHP
+error type), exception class names, and stack locations as plugin- or
+WordPress-relative file, line and function name. Exception and PHP error
+messages are replaced, and request data, headers, cookies, users,
+breadcrumbs, stack arguments, variables, source lines and server names are
+never sent. Every event is rebuilt from that list just before it leaves
+(`before_send`), and `SafeEventTest`/`OAuthErrorReporterTest` prove that
+secret markers in each of those places don't reach the payload.
+
+The SDK only runs while one of these flows handles a request: it has no
+global hub, no default integrations and no error handlers of its own.
+Reporting never changes a flow's answer. A tracker that is down or slow
+costs at most about 2 s on a failing request: after one failed send, the
+request sends nothing more. A request sends at most 5 events, and each
+kind of event (flow, category, step) is sent at most 10 times an hour, so
+the public endpoints can't be used to flood the project.
+
+**Alerts:** in the Sentry project, add an issue alert for new issues and
+for regressions, sent by email to the maintainer (@marcin-wosinek). Confirm
+the address in the Sentry account during setup; it isn't recorded here.
+
+**Delivery test,** after setting the DSN: send one refresh with a dummy
+token, which Mollie rejects without effect on any connection:
+
+```bash
+curl -s -X POST -d refresh_token=delivery-test https://fair-event-plugins.com/oauth/refresh
+```
+
+The answer is Mollie's error (expect `400` with `invalid_grant`). Sentry
+then shows `Mollie OAuth refresh: http_error (token_refresh)` with the
+matching `http_status` and `oauth_error` tags, and the alert email
+arrives. Check that the event shows
+none of the request: no token, URL query, headers or caller IP address. Then
+resolve the issue.
+
+**Privacy:** Sentry processes these events for fair-event-plugins.com. They
+contain no personal or payment data, but list Sentry as a processor in the
+site's privacy policy before enabling the DSN.
 
 ## Upgrade notes: event gallery removal (#1675)
 
