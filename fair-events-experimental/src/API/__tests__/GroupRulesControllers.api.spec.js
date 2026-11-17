@@ -49,7 +49,10 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 	let coreTicketingWasEnabled = true;
 	let eventId;
 	let eventDateId;
+	let otherEventId;
+	let otherEventDateId;
 	let groupId;
+	let otherGroupId;
 	let subscriberId;
 	let subscriberHeaders;
 
@@ -57,6 +60,37 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		`/wp-json/fair-events/v1/event-dates/${ eventDateId }/group-pricing-rules`;
 	const permissionPath = () =>
 		`/wp-json/fair-events/v1/event-dates/${ eventDateId }/group-permission-rules`;
+
+	const pricingPathFor = ( dateId ) =>
+		`/wp-json/fair-events/v1/event-dates/${ dateId }/group-pricing-rules`;
+	const permissionPathFor = ( dateId ) =>
+		`/wp-json/fair-events/v1/event-dates/${ dateId }/group-permission-rules`;
+
+	const createEvent = async ( title ) => {
+		const eventRes = await api.post( '/wp-json/wp/v2/fair_event', {
+			headers: adminHeaders,
+			data: { title, status: 'publish' },
+		} );
+		expect( eventRes.ok() ).toBeTruthy();
+		const id = ( await eventRes.json() ).id;
+
+		const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
+			headers: adminHeaders,
+			params: { per_page: 100 },
+		} );
+		expect( eventsRes.ok() ).toBeTruthy();
+		const match = ( await eventsRes.json() ).find(
+			( event ) => event.event_id === id
+		);
+		expect( match, `event-date row for ${ title }` ).toBeTruthy();
+		return { id, dateId: match.event_date_id };
+	};
+
+	const createRule = async ( path, data ) => {
+		const res = await api.post( path, { headers: adminHeaders, data } );
+		expect( res.status(), await res.text() ).toBe( 201 );
+		return res.json();
+	};
 
 	const setTicketing = async ( enabled ) => {
 		const res = await api.post( '/wp-json/wp/v2/settings', {
@@ -132,23 +166,12 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		await setTicketing( true );
 		await setCoreTicketing( true );
 
-		const eventRes = await api.post( '/wp-json/wp/v2/fair_event', {
-			headers: adminHeaders,
-			data: { title: `Group rules ${ Date.now() }`, status: 'publish' },
-		} );
-		expect( eventRes.ok() ).toBeTruthy();
-		eventId = ( await eventRes.json() ).id;
-
-		const eventsRes = await api.get( '/wp-json/fair-audience/v1/events', {
-			headers: adminHeaders,
-			params: { per_page: 100 },
-		} );
-		expect( eventsRes.ok() ).toBeTruthy();
-		const match = ( await eventsRes.json() ).find(
-			( event ) => event.event_id === eventId
-		);
-		expect( match, 'event-date row for test event' ).toBeTruthy();
-		eventDateId = match.event_date_id;
+		( { id: eventId, dateId: eventDateId } = await createEvent(
+			`Group rules ${ Date.now() }`
+		) );
+		( { id: otherEventId, dateId: otherEventDateId } = await createEvent(
+			`Group rules other ${ Date.now() }`
+		) );
 
 		const groupRes = await api.post( '/wp-json/fair-audience/v1/groups', {
 			headers: adminHeaders,
@@ -156,6 +179,16 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 		} );
 		expect( groupRes.ok(), await groupRes.text() ).toBeTruthy();
 		groupId = ( await groupRes.json() ).id;
+
+		const otherGroupRes = await api.post(
+			'/wp-json/fair-audience/v1/groups',
+			{
+				headers: adminHeaders,
+				data: { name: `Group rules other ${ Date.now() }` },
+			}
+		);
+		expect( otherGroupRes.ok(), await otherGroupRes.text() ).toBeTruthy();
+		otherGroupId = ( await otherGroupRes.json() ).id;
 
 		const userLogin = `group-rules-${ Date.now() }`;
 		const userRes = await api.post( '/wp-json/wp/v2/users', {
@@ -181,7 +214,16 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 			await setTicketing( true );
 			await setCoreTicketing( true );
 
-			for ( const path of [ pricingPath(), permissionPath() ] ) {
+			for ( const path of [
+				pricingPath(),
+				permissionPath(),
+				...( otherEventDateId
+					? [
+							pricingPathFor( otherEventDateId ),
+							permissionPathFor( otherEventDateId ),
+						]
+					: [] ),
+			] ) {
 				const res = await api.get( path, { headers: adminHeaders } );
 				const rules = res.ok() ? await res.json() : [];
 				for ( const rule of rules ) {
@@ -190,14 +232,13 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 					} );
 				}
 			}
-			if ( groupId ) {
-				await api.delete(
-					`/wp-json/fair-audience/v1/groups/${ groupId }`,
-					{ headers: adminHeaders }
-				);
+			for ( const id of [ groupId, otherGroupId ].filter( Boolean ) ) {
+				await api.delete( `/wp-json/fair-audience/v1/groups/${ id }`, {
+					headers: adminHeaders,
+				} );
 			}
-			if ( eventId ) {
-				await api.delete( `/wp-json/wp/v2/fair_event/${ eventId }`, {
+			for ( const id of [ eventId, otherEventId ].filter( Boolean ) ) {
+				await api.delete( `/wp-json/wp/v2/fair_event/${ id }`, {
 					headers: adminHeaders,
 					params: { force: 'true' },
 				} );
@@ -298,6 +339,146 @@ test.describe( 'Group pricing and permission rule controllers', () => {
 			{ headers: adminHeaders }
 		);
 		expect( deleteRes.status() ).toBe( 204 );
+	} );
+
+	test( 'deleting a rule touches only its own type and event', async () => {
+		const otherPricingPath = pricingPathFor( otherEventDateId );
+		const otherPermissionPath = permissionPathFor( otherEventDateId );
+		const pricing = [];
+		const permissions = [];
+		// Pricing rules are unique per event and group.
+		for ( const [ group, value ] of [
+			[ groupId, 10 ],
+			[ otherGroupId, 25 ],
+		] ) {
+			pricing.push(
+				await createRule( pricingPath(), {
+					group_id: group,
+					discount_type: 'percentage',
+					discount_value: value,
+				} )
+			);
+		}
+		for ( const type of [ 'view_signups', 'invited' ] ) {
+			permissions.push(
+				await createRule( permissionPath(), {
+					group_id: groupId,
+					permission_type: type,
+				} )
+			);
+		}
+		const otherPricing = await createRule( otherPricingPath, {
+			group_id: groupId,
+			discount_type: 'amount',
+			discount_value: 3,
+		} );
+		const otherPermission = await createRule( otherPermissionPath, {
+			group_id: groupId,
+			permission_type: 'manage_signups',
+		} );
+
+		// Lists stay in ascending ID order with each type's own fields.
+		const pricingList = await (
+			await api.get( pricingPath(), { headers: adminHeaders } )
+		).json();
+		expect( pricingList.map( ( rule ) => rule.id ) ).toEqual(
+			pricing.map( ( rule ) => rule.id ).sort( ( a, b ) => a - b )
+		);
+		for ( const rule of pricingList ) {
+			expect( Object.keys( rule ).sort() ).toEqual(
+				[
+					'created_at',
+					'discount_type',
+					'discount_value',
+					'event_date_id',
+					'group_id',
+					'group_name',
+					'id',
+					'updated_at',
+				].sort()
+			);
+			expect( rule.event_date_id ).toBe( eventDateId );
+		}
+		const permissionList = await (
+			await api.get( permissionPath(), { headers: adminHeaders } )
+		).json();
+		expect( permissionList.map( ( rule ) => rule.id ) ).toEqual(
+			permissions.map( ( rule ) => rule.id ).sort( ( a, b ) => a - b )
+		);
+		for ( const rule of permissionList ) {
+			expect( Object.keys( rule ).sort() ).toEqual(
+				[
+					'created_at',
+					'event_date_id',
+					'group_id',
+					'id',
+					'permission_type',
+					'updated_at',
+				].sort()
+			);
+		}
+
+		const snapshot = async () => ( {
+			pricing: await ruleIds( pricingPath() ),
+			permissions: await ruleIds( permissionPath() ),
+			otherPricing: await ruleIds( otherPricingPath ),
+			otherPermissions: await ruleIds( otherPermissionPath ),
+		} );
+
+		// A rule addressed through the wrong event is a 404 and changes nothing.
+		const before = await snapshot();
+		for ( const [ path, id ] of [
+			[ otherPricingPath, pricing[ 0 ].id ],
+			[ otherPermissionPath, permissions[ 0 ].id ],
+			[ pricingPath(), otherPricing.id ],
+			[ permissionPath(), otherPermission.id ],
+		] ) {
+			const res = await api.delete( `${ path }/${ id }`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status(), `${ path }/${ id }` ).toBe( 404 );
+			expect( ( await res.json() ).code ).toBe( 'rest_rule_not_found' );
+		}
+		expect( await snapshot() ).toEqual( before );
+
+		// Deleting one pricing rule keeps the other type and the other event.
+		const pricingDelete = await api.delete(
+			`${ pricingPath() }/${ pricing[ 0 ].id }`,
+			{ headers: adminHeaders }
+		);
+		expect( pricingDelete.status() ).toBe( 204 );
+		expect( await snapshot() ).toEqual( {
+			...before,
+			pricing: [ pricing[ 1 ].id ],
+		} );
+
+		const permissionDelete = await api.delete(
+			`${ permissionPath() }/${ permissions[ 0 ].id }`,
+			{ headers: adminHeaders }
+		);
+		expect( permissionDelete.status() ).toBe( 204 );
+		expect( await snapshot() ).toEqual( {
+			...before,
+			pricing: [ pricing[ 1 ].id ],
+			permissions: [ permissions[ 1 ].id ],
+		} );
+
+		// Leave the main event empty for the cases that follow.
+		for ( const [ path, id ] of [
+			[ pricingPath(), pricing[ 1 ].id ],
+			[ permissionPath(), permissions[ 1 ].id ],
+		] ) {
+			const res = await api.delete( `${ path }/${ id }`, {
+				headers: adminHeaders,
+			} );
+			expect( res.status() ).toBe( 204 );
+		}
+		expect( await ruleIds( otherPricingPath ) ).toEqual( [
+			otherPricing.id,
+		] );
+		expect( await ruleIds( otherPermissionPath ) ).toEqual( [
+			otherPermission.id,
+		] );
 	} );
 
 	test( 'an unknown event date is a 404, not an empty list', async () => {
