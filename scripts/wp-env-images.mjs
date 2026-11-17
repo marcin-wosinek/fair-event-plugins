@@ -93,7 +93,7 @@ export function computeCacheKey({ plan, runner, files, epoch }) {
 		builds: plan.builds
 			.map(({ service, hash }) => ({ service, hash }))
 			.sort((a, b) => a.service.localeCompare(b.service)),
-		upstream: [...plan.upstream].sort(),
+		upstream: [...plan.upstream].sort((a, b) => a.localeCompare(b)),
 		files: Object.fromEntries(
 			Object.entries(files).sort(([a], [b]) => a.localeCompare(b))
 		),
@@ -232,12 +232,14 @@ export async function withRetries({
  */
 export function createDocker({ log }) {
 	const stream = createWriteStream(log, { flags: 'a' });
+	// Children inherit the environment; set BuildKit on it instead of copying
+	// process.env (including PATH) into an explicit env option.
+	process.env.DOCKER_BUILDKIT = '1';
 	return {
 		run(args, { quiet = false } = {}) {
 			stream.write(`\n$ docker ${args.join(' ')}\n`);
 			return new Promise((done) => {
 				const child = spawn('docker', args, {
-					env: { ...process.env, DOCKER_BUILDKIT: '1' },
 					stdio: ['ignore', 'pipe', 'pipe'],
 				});
 				let output = '';
