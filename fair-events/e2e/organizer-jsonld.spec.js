@@ -81,108 +81,171 @@ async function getJsonLdByType( page, url, type ) {
 	return null;
 }
 
+/**
+ * Log in and open an admin screen where `wp.apiFetch` is available.
+ *
+ * @param {import('@playwright/test').Page} page Playwright page.
+ */
+async function openAdmin( page ) {
+	await page.setViewportSize( { width: 1200, height: 900 } );
+	await login( page );
+	await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
+	await page.waitForFunction( () => window.wp && window.wp.apiFetch );
+}
+
+/**
+ * Replace the sitewide `fair_events_organizer` setting.
+ *
+ * @param {import('@playwright/test').Page} page      Playwright page.
+ * @param {Object}                          organizer Organizer setting value.
+ */
+function saveOrganizer( page, organizer ) {
+	return apiFetch( page, {
+		path: '/wp/v2/settings',
+		method: 'POST',
+		data: { fair_events_organizer: organizer },
+	} );
+}
+
+/**
+ * Create a published event starting tomorrow.
+ *
+ * @param {import('@playwright/test').Page} page  Playwright page.
+ * @param {string}                          title Event title.
+ * @return {Promise<{eventDateId: number, postId: number, permalink: string}>} Created event.
+ */
+async function createPublishedEvent( page, title ) {
+	const start = new Date( Date.now() + 24 * 60 * 60 * 1000 );
+	const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+	const eventDate = await apiFetch( page, {
+		path: '/fair-events/v1/event-dates',
+		method: 'POST',
+		data: {
+			title,
+			...timingFields(
+				iso( start ),
+				iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
+			),
+			all_day: false,
+		},
+	} );
+	const post = await apiFetch( page, {
+		path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
+		method: 'POST',
+		data: { post_status: 'publish' },
+	} );
+	const postId = post.event_id || post.post_id;
+
+	return {
+		eventDateId: eventDate.id,
+		postId,
+		permalink: post.link || `/?p=${ postId }`,
+	};
+}
+
+/**
+ * Clear the organizer setting and delete an event made by createPublishedEvent().
+ *
+ * @param {import('@playwright/test').Page} page  Playwright page.
+ * @param {Object}                          event Created event.
+ */
+async function cleanUp( page, event ) {
+	await saveOrganizer( page, {} ).catch( () => {} );
+	await apiFetch( page, {
+		path: `/wp/v2/fair_event/${ event.postId }?force=true`,
+		method: 'DELETE',
+	} ).catch( () => {} );
+	await apiFetch( page, {
+		path: `/fair-events/v1/event-dates/${ event.eventDateId }`,
+		method: 'DELETE',
+	} ).catch( () => {} );
+}
+
+/**
+ * Assert that no public page's markup contains a private value.
+ *
+ * @param {import('@playwright/test').Page} page  Playwright page.
+ * @param {string[]}                        urls  Public URLs.
+ * @param {string}                          value Private value.
+ */
+async function expectNotPublished( page, urls, value ) {
+	for ( const url of urls ) {
+		const html = await ( await page.request.get( url ) ).text();
+		expect( html ).not.toContain( value );
+	}
+}
+
 test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 	test( 'emits a configured Organization block and matching event organizer, and falls back once cleared', async ( {
 		page,
 	} ) => {
 		test.setTimeout( 120_000 );
 
-		await page.setViewportSize( { width: 1200, height: 900 } );
-		await login( page );
-		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
-		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
-
-		await apiFetch( page, {
-			path: '/wp/v2/settings',
-			method: 'POST',
-			data: {
-				fair_events_organizer: {
-					name: 'Acme Sports Club',
-					type: 'SportsClub',
-					street_address: 'Main St 1',
-					address_locality: 'Madrid',
-					address_country: 'ES',
-					same_as: [ 'https://example.com/acme' ],
-					website: 'https://acme.example',
-					contact_email: 'info@acme.example',
-					contact_phone: '+34 600 000 000',
-				},
-			},
+		await openAdmin( page );
+		await saveOrganizer( page, {
+			name: 'Acme Sports Club',
+			type: 'SportsClub',
+			street_address: 'Main St 1',
+			address_locality: 'Madrid',
+			address_country: 'ES',
+			same_as: [ 'https://example.com/acme' ],
+			website: 'https://acme.example',
+			contact_email: 'info@acme.example',
+			contact_phone: '+34 600 000 000',
 		} );
+		const created = await createPublishedEvent(
+			page,
+			'Organizer JSON-LD Test Event'
+		);
+		const { permalink } = created;
 
-		const now = new Date();
-		const start = new Date( now.getTime() + 24 * 60 * 60 * 1000 );
-		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+		try {
+			// Sitewide Organization block, present on any front-end page.
+			const org = await getJsonLdByType( page, '/', 'SportsClub' );
+			expect( org ).toBeTruthy();
+			expect( org.name ).toBe( 'Acme Sports Club' );
+			expect( org.address.addressLocality ).toBe( 'Madrid' );
+			expect( org.sameAs ).toEqual( [ 'https://example.com/acme' ] );
+			expect( org.url ).toBe( 'https://acme.example' );
+			expect( org.contactPoint ).toMatchObject( {
+				'@type': 'ContactPoint',
+				contactType: 'customer service',
+				email: 'info@acme.example',
+				telephone: '+34 600 000 000',
+			} );
+			const organizationId = org[ '@id' ];
+			expect( organizationId ).toBeTruthy();
 
-		const eventDate = await apiFetch( page, {
-			path: '/fair-events/v1/event-dates',
-			method: 'POST',
-			data: {
-				title: 'Organizer JSON-LD Test Event',
-				...timingFields(
-					iso( start ),
-					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
-				),
-				all_day: false,
-			},
-		} );
+			// The event's organizer references the same identity node, with
+			// the overridden website (not home_url()) and no repeated
+			// contactPoint.
+			const event = await getJsonLdByType( page, permalink, 'Event' );
+			expect( event.organizer[ '@id' ] ).toBe( organizationId );
+			expect( event.organizer.name ).toBe( 'Acme Sports Club' );
+			expect( event.organizer.url ).toBe( 'https://acme.example' );
+			expect( event.organizer.contactPoint ).toBeUndefined();
 
-		const post = await apiFetch( page, {
-			path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
-			method: 'POST',
-			data: { post_status: 'publish' },
-		} );
-		const postId = post.event_id || post.post_id;
-		const permalink = post.link || `/?p=${ postId }`;
+			// Clear the setting: the event organizer falls back to today's
+			// site-name/home-URL behaviour, unchanged.
+			await saveOrganizer( page, {} );
 
-		// Sitewide Organization block, present on any front-end page.
-		const org = await getJsonLdByType( page, '/', 'SportsClub' );
-		expect( org ).toBeTruthy();
-		expect( org.name ).toBe( 'Acme Sports Club' );
-		expect( org.address.addressLocality ).toBe( 'Madrid' );
-		expect( org.sameAs ).toEqual( [ 'https://example.com/acme' ] );
-		expect( org.url ).toBe( 'https://acme.example' );
-		expect( org.contactPoint ).toMatchObject( {
-			'@type': 'ContactPoint',
-			contactType: 'customer service',
-			email: 'info@acme.example',
-			telephone: '+34 600 000 000',
-		} );
-		const organizationId = org[ '@id' ];
-		expect( organizationId ).toBeTruthy();
+			const clearedEvent = await getJsonLdByType(
+				page,
+				permalink,
+				'Event'
+			);
+			expect( clearedEvent.organizer[ '@id' ] ).toBeUndefined();
+			expect( clearedEvent.organizer[ '@type' ] ).toBe( 'Organization' );
 
-		// The event's organizer references the same identity node, with the
-		// overridden website (not home_url()) and no repeated contactPoint.
-		const event = await getJsonLdByType( page, permalink, 'Event' );
-		expect( event.organizer[ '@id' ] ).toBe( organizationId );
-		expect( event.organizer.name ).toBe( 'Acme Sports Club' );
-		expect( event.organizer.url ).toBe( 'https://acme.example' );
-		expect( event.organizer.contactPoint ).toBeUndefined();
-
-		// Clear the setting: the event organizer falls back to today's
-		// site-name/home-URL behaviour, unchanged.
-		await apiFetch( page, {
-			path: '/wp/v2/settings',
-			method: 'POST',
-			data: { fair_events_organizer: {} },
-		} );
-
-		const clearedEvent = await getJsonLdByType( page, permalink, 'Event' );
-		expect( clearedEvent.organizer[ '@id' ] ).toBeUndefined();
-		expect( clearedEvent.organizer[ '@type' ] ).toBe( 'Organization' );
-
-		const clearedOrg = await getJsonLdByType( page, '/', 'Organization' );
-		expect( clearedOrg ).toBeFalsy();
-
-		// Cleanup.
-		await apiFetch( page, {
-			path: `/wp/v2/fair_event/${ postId }?force=true`,
-			method: 'DELETE',
-		} ).catch( () => {} );
-		await apiFetch( page, {
-			path: `/fair-events/v1/event-dates/${ eventDate.id }`,
-			method: 'DELETE',
-		} ).catch( () => {} );
+			const clearedOrg = await getJsonLdByType(
+				page,
+				'/',
+				'Organization'
+			);
+			expect( clearedOrg ).toBeFalsy();
+		} finally {
+			await cleanUp( page, created );
+		}
 	} );
 
 	test( 'saves private notification recipients from the Organizer tab and keeps them out of public output', async ( {
@@ -192,44 +255,15 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 
 		const privateEmail = 'private-recipient-2303@acme.example';
 
-		await page.setViewportSize( { width: 1200, height: 900 } );
-		await login( page );
-		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
-		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
-
-		await apiFetch( page, {
-			path: '/wp/v2/settings',
-			method: 'POST',
-			data: {
-				fair_events_organizer: {
-					name: 'Acme Private Recipients',
-					contact_email: 'info@acme.example',
-				},
-			},
+		await openAdmin( page );
+		await saveOrganizer( page, {
+			name: 'Acme Private Recipients',
+			contact_email: 'info@acme.example',
 		} );
-
-		const now = new Date();
-		const start = new Date( now.getTime() + 24 * 60 * 60 * 1000 );
-		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
-		const eventDate = await apiFetch( page, {
-			path: '/fair-events/v1/event-dates',
-			method: 'POST',
-			data: {
-				title: 'Organizer Recipients Test Event',
-				...timingFields(
-					iso( start ),
-					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
-				),
-				all_day: false,
-			},
-		} );
-		const post = await apiFetch( page, {
-			path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
-			method: 'POST',
-			data: { post_status: 'publish' },
-		} );
-		const postId = post.event_id || post.post_id;
-		const permalink = post.link || `/?p=${ postId }`;
+		const created = await createPublishedEvent(
+			page,
+			'Organizer Recipients Test Event'
+		);
 
 		try {
 			await page.goto(
@@ -265,32 +299,16 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 
 			// Public pages: the contact email is published, the private
 			// recipient never is (JSON-LD or anywhere else in the markup).
-			for ( const url of [ '/', permalink ] ) {
-				const response = await page.request.get( url );
-				const html = await response.text();
-				expect( html ).not.toContain( privateEmail );
-			}
+			await expectNotPublished(
+				page,
+				[ '/', created.permalink ],
+				privateEmail
+			);
 			const org = await getJsonLdByType( page, '/', 'Organization' );
 			expect( org.contactPoint.email ).toBe( 'info@acme.example' );
 			expect( JSON.stringify( org ) ).not.toContain( privateEmail );
 		} finally {
-			await page.goto(
-				'/wp-admin/admin.php?page=fair-events-all-events'
-			);
-			await page.waitForFunction( () => window.wp && window.wp.apiFetch );
-			await apiFetch( page, {
-				path: '/wp/v2/settings',
-				method: 'POST',
-				data: { fair_events_organizer: {} },
-			} ).catch( () => {} );
-			await apiFetch( page, {
-				path: `/wp/v2/fair_event/${ postId }?force=true`,
-				method: 'DELETE',
-			} ).catch( () => {} );
-			await apiFetch( page, {
-				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
-				method: 'DELETE',
-			} ).catch( () => {} );
+			await cleanUp( page, created );
 		}
 	} );
 
@@ -301,47 +319,20 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 
 		const privateEmail = 'private-person-2304@acme.example';
 
-		await page.setViewportSize( { width: 1200, height: 900 } );
-		await login( page );
-		await page.goto( '/wp-admin/admin.php?page=fair-events-all-events' );
-		await page.waitForFunction( () => window.wp && window.wp.apiFetch );
-
-		const now = new Date();
-		const start = new Date( now.getTime() + 24 * 60 * 60 * 1000 );
-		const iso = ( d ) => d.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
-		const eventDate = await apiFetch( page, {
-			path: '/fair-events/v1/event-dates',
-			method: 'POST',
-			data: {
-				title: 'Organizer Person Test Event',
-				...timingFields(
-					iso( start ),
-					iso( new Date( start.getTime() + 2 * 60 * 60 * 1000 ) )
-				),
-				all_day: false,
-			},
-		} );
-		const post = await apiFetch( page, {
-			path: `/fair-events/v1/event-dates/${ eventDate.id }/create-post`,
-			method: 'POST',
-			data: { post_status: 'publish' },
-		} );
-		const postId = post.event_id || post.post_id;
-		const permalink = post.link || `/?p=${ postId }`;
+		await openAdmin( page );
+		const created = await createPublishedEvent(
+			page,
+			'Organizer Person Test Event'
+		);
+		const { permalink } = created;
 
 		try {
-			await apiFetch( page, {
-				path: '/wp/v2/settings',
-				method: 'POST',
-				data: {
-					fair_events_organizer: {
-						name: 'Ana García',
-						type: 'Person',
-						address_locality: 'Madrid',
-						contact_email: 'ana@acme.example',
-						notification_emails: [ privateEmail ],
-					},
-				},
+			await saveOrganizer( page, {
+				name: 'Ana García',
+				type: 'Person',
+				address_locality: 'Madrid',
+				contact_email: 'ana@acme.example',
+				notification_emails: [ privateEmail ],
 			} );
 
 			const person = await getJsonLdByType( page, '/', 'Person' );
@@ -359,20 +350,11 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 				'@id': person[ '@id' ],
 				name: 'Ana García',
 			} );
-			for ( const url of [ '/', permalink ] ) {
-				const html = await ( await page.request.get( url ) ).text();
-				expect( html ).not.toContain( privateEmail );
-			}
+			await expectNotPublished( page, [ '/', permalink ], privateEmail );
 
-			await apiFetch( page, {
-				path: '/wp/v2/settings',
-				method: 'POST',
-				data: {
-					fair_events_organizer: {
-						name: 'Acme Ltd',
-						type: 'Corporation',
-					},
-				},
+			await saveOrganizer( page, {
+				name: 'Acme Ltd',
+				type: 'Corporation',
 			} );
 			const company = await getJsonLdByType( page, '/', 'Corporation' );
 			expect( company.name ).toBe( 'Acme Ltd' );
@@ -383,19 +365,7 @@ test.describe( 'Fair Events sitewide Organization JSON-LD', () => {
 			);
 			expect( companyEvent.organizer[ '@type' ] ).toBe( 'Corporation' );
 		} finally {
-			await apiFetch( page, {
-				path: '/wp/v2/settings',
-				method: 'POST',
-				data: { fair_events_organizer: {} },
-			} ).catch( () => {} );
-			await apiFetch( page, {
-				path: `/wp/v2/fair_event/${ postId }?force=true`,
-				method: 'DELETE',
-			} ).catch( () => {} );
-			await apiFetch( page, {
-				path: `/fair-events/v1/event-dates/${ eventDate.id }`,
-				method: 'DELETE',
-			} ).catch( () => {} );
+			await cleanUp( page, created );
 		}
 	} );
 } );
