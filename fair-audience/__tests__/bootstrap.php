@@ -703,3 +703,30 @@ if ( ! function_exists( 'wp_unschedule_hook' ) ) {
 		return $count;
 	}
 }
+
+if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+	define( 'HOUR_IN_SECONDS', 3600 );
+}
+
+if ( ! function_exists( 'is_ssl' ) ) {
+	/**
+	 * Stub of WordPress is_ssl().
+	 *
+	 * @return bool
+	 */
+	function is_ssl() {
+		return ! empty( $GLOBALS['_fair_test_is_ssl'] );
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	/**
+	 * Stub of WordPress wp_unslash().
+	 *
+	 * @param mixed $value Value to unslash.
+	 * @return mixed
+	 */
+	function wp_unslash( $value ) {
+		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}

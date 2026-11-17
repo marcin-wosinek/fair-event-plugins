@@ -16,6 +16,8 @@
 
 namespace FairAudience\Services;
 
+use FairEventsShared\Security\SessionCookie;
+
 defined( 'WPINC' ) || die;
 
 /**
@@ -46,15 +48,11 @@ class AudienceSession {
 		if ( $participant_id <= 0 ) {
 			return;
 		}
-		if ( headers_sent() ) {
-			return;
-		}
 
 		$expires_at = time() + self::LIFETIME;
 		$value      = self::build_value( $participant_id, $expires_at );
 
-		self::send_cookie( $value, $expires_at );
-		$_COOKIE[ self::COOKIE_NAME ] = $value;
+		SessionCookie::set( self::COOKIE_NAME, $value, $expires_at );
 	}
 
 	/**
@@ -69,7 +67,7 @@ class AudienceSession {
 			return null;
 		}
 
-		$raw = wp_unslash( $_COOKIE[ self::COOKIE_NAME ] );
+		$raw = wp_unslash( $_COOKIE[ self::COOKIE_NAME ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated below by strict parsing and an HMAC check.
 		if ( ! is_string( $raw ) ) {
 			return null;
 		}
@@ -122,12 +120,7 @@ class AudienceSession {
 	 * @return void
 	 */
 	public static function clear(): void {
-		if ( headers_sent() ) {
-			unset( $_COOKIE[ self::COOKIE_NAME ] );
-			return;
-		}
-		self::send_cookie( '', time() - HOUR_IN_SECONDS );
-		unset( $_COOKIE[ self::COOKIE_NAME ] );
+		SessionCookie::clear( self::COOKIE_NAME );
 	}
 
 	/**
@@ -141,28 +134,6 @@ class AudienceSession {
 		$data      = $participant_id . '.' . $expires_at;
 		$signature = self::sign( $data );
 		return $data . '.' . $signature;
-	}
-
-	/**
-	 * Send the Set-Cookie header.
-	 *
-	 * @param string $value      Cookie value (empty string clears).
-	 * @param int    $expires_at Unix timestamp.
-	 * @return void
-	 */
-	private static function send_cookie( string $value, int $expires_at ): void {
-		setcookie(
-			self::COOKIE_NAME,
-			$value,
-			array(
-				'expires'  => $expires_at,
-				'path'     => defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/',
-				'domain'   => defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '',
-				'secure'   => is_ssl(),
-				'httponly' => true,
-				'samesite' => 'Lax',
-			)
-		);
 	}
 
 	/**

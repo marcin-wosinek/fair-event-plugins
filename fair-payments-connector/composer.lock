@@ -80,11 +80,11 @@
         },
         {
             "name": "fair-events/shared",
-            "version": "0.2.22",
+            "version": "0.2.23",
             "dist": {
                 "type": "path",
                 "url": "../fair-events-shared/php",
-                "reference": "ae3e70827785f02281700c2116961b6b0896cdd4"
+                "reference": "e6d9ecdd7438c18de2c31ae4e79f55faa3f87834"
             },
             "require": {
                 "php": ">=7.4 <9.0"
