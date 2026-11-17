@@ -177,37 +177,21 @@ class SignupPaymentSessionTest extends TestCase {
 	}
 
 	/**
-	 * Clearing expires only the payment cookie.
+	 * Clearing ends the payment session and leaves the participant cookie alone.
+	 *
+	 * The cookie attributes and the headers-sent path belong to SessionCookie
+	 * and are covered by its own tests.
 	 *
 	 * @return void
 	 */
-	public function test_clear_leaves_audience_session_alone() {
+	public function test_clear_ends_only_the_payment_session() {
 		$_COOKIE['fair_events_signup_payment'] = self::signed( '5.7.' . ( time() + 60 ) );
 		$_COOKIE['fair_audience_session']      = 'keep';
 
 		SignupPaymentSession::clear();
 
-		$calls = $GLOBALS['_fair_test_setcookie_calls'];
-		$this->assertCount( 1, $calls );
-		$this->assertSame( 'fair_events_signup_payment', $calls[0]['name'] );
-		$this->assertSame( '', $calls[0]['value'] );
-		$this->assertLessThan( time(), $calls[0]['options']['expires'] );
-		$this->assertArrayNotHasKey( 'fair_events_signup_payment', $_COOKIE );
-		$this->assertSame( 'keep', $_COOKIE['fair_audience_session'] );
-	}
-
-	/**
-	 * Once headers are sent, clearing still ends the session for this request.
-	 *
-	 * @return void
-	 */
-	public function test_clear_after_headers_sent_removes_entry_only() {
-		$GLOBALS['_fair_test_headers_sent']    = true;
-		$_COOKIE['fair_events_signup_payment'] = self::signed( '5.7.' . ( time() + 60 ) );
-
-		SignupPaymentSession::clear();
-
-		$this->assertSame( array(), $GLOBALS['_fair_test_setcookie_calls'] );
+		$this->assertSame( array( 'fair_events_signup_payment' ), array_column( $GLOBALS['_fair_test_setcookie_calls'], 'name' ) );
 		$this->assertNull( SignupPaymentSession::get() );
+		$this->assertSame( 'keep', $_COOKIE['fair_audience_session'] );
 	}
 }
