@@ -222,24 +222,43 @@ export async function withRetries({
 	}
 }
 
+// Fixed, root-owned locations of the docker CLI. Running it from one of these
+// instead of searching PATH keeps a writable PATH entry from substituting
+// another binary (SonarCloud S4036). The script runs on GitHub's Ubuntu
+// runners, where docker is /usr/bin/docker.
+export const DOCKER_CANDIDATES = ['/usr/bin/docker', '/usr/local/bin/docker'];
+
+/**
+ * Finds the docker CLI among fixed, unwriteable locations.
+ *
+ * @param {string[]} candidates Absolute paths to try, in order.
+ * @return {string} The first existing path.
+ */
+export function resolveDocker(candidates = DOCKER_CANDIDATES) {
+	const docker = candidates.find((path) => existsSync(path));
+	if (!docker) {
+		throw new Error(`docker not found in ${candidates.join(', ')}`);
+	}
+	return docker;
+}
+
 /**
  * Spawns docker, teeing its output to the console and the preparation log and
  * keeping the tail for failure classification.
  *
- * @param {Object} options     Options.
- * @param {string} options.log Path of the preparation log.
+ * @param {Object} options        Options.
+ * @param {string} options.log    Path of the preparation log.
+ * @param {string} options.docker Absolute path of the docker CLI.
  * @return {Object} { run(args, { quiet }) }.
  */
-export function createDocker({ log }) {
+export function createDocker({ log, docker = resolveDocker() }) {
 	const stream = createWriteStream(log, { flags: 'a' });
-	// Children inherit the environment; set BuildKit on it instead of copying
-	// process.env (including PATH) into an explicit env option.
-	process.env.DOCKER_BUILDKIT = '1';
 	return {
 		run(args, { quiet = false } = {}) {
 			stream.write(`\n$ docker ${args.join(' ')}\n`);
 			return new Promise((done) => {
-				const child = spawn('docker', args, {
+				const child = spawn(docker, args, {
+					env: { ...process.env, DOCKER_BUILDKIT: '1' },
 					stdio: ['ignore', 'pipe', 'pipe'],
 				});
 				let output = '';

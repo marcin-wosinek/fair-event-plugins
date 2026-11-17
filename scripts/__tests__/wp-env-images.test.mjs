@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,12 +11,14 @@ import {
 	ADAPTER_PATH,
 	buildComposeConfig,
 	computeCacheKey,
+	createDocker,
 	findPreparationFailures,
 	formatSummary,
 	isTransientFailure,
 	isoWeek,
 	prepareImages,
 	preparedStartEnvironment,
+	resolveDocker,
 	withRetries,
 } from '../wp-env-images.mjs';
 
@@ -708,4 +710,32 @@ test('a simulated failure skips reuse and exercises the retry or failure path', 
 	assert.equal(persistent.status, 'failed');
 	assert.equal(persistent.failedAttempts, 3);
 	assert.match(persistent.error, /simulated/);
+});
+
+test('docker is resolved from fixed absolute paths, never from PATH', async () => {
+	await withDirectory(async (directory) => {
+		const missing = join(directory, 'missing-docker');
+		const present = join(directory, 'docker');
+		await writeFile(present, '');
+		assert.equal(resolveDocker([missing, present]), present);
+		assert.throws(
+			() => resolveDocker([missing]),
+			new RegExp(`docker not found in ${missing}`)
+		);
+	});
+});
+
+test('createDocker runs the resolved binary with BuildKit enabled', async () => {
+	await withDirectory(async (directory) => {
+		const docker = join(directory, 'docker');
+		await writeFile(docker, '#!/bin/sh\necho "$DOCKER_BUILDKIT $*"\n');
+		await chmod(docker, 0o755);
+		const log = join(directory, 'prepare.log');
+		const runner = createDocker({ log, docker });
+		const result = await runner.run(['image', 'ls'], { quiet: true });
+		await runner.close();
+		assert.equal(result.code, 0);
+		assert.equal(result.output.trim(), '1 image ls');
+		assert.match(await readFile(log, 'utf8'), /\$ docker image ls/);
+	});
 });
