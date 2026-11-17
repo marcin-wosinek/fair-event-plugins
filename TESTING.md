@@ -446,11 +446,10 @@ entry point for the API and E2E suites in CI (#2326). It runs on every push to
 
 1. **`Select suites`** applies each suite's path filters, kept in
    `scripts/integration-suites.mjs`, to the change (`git diff` against the
-   pull request's base, or the pushed range). Lockfiles, workspace
-   `package.json`, `composer.json`/`composer.lock` and webpack configuration,
-   and the preparation tooling select both suites. If the changed files
-   can't be listed, both suites run. A change that selects neither runs
-   nothing else.
+   pull request's base, or the pushed range). Pushes and pull requests use
+   the same filters. If the changed files can't be listed, both suites run.
+   A change that selects neither runs nothing else. See
+   [Trigger policy](#integration-trigger-policy) below.
 2. **`Prepare integration build`** runs `npm run build` and then
    `npm run composer:install:prod` once, and packages every runtime plugin's
    `build/`, generated `block-docs/` and production `vendor/`, plus the
@@ -477,6 +476,30 @@ entry point for the API and E2E suites in CI (#2326). It runs on every push to
 4. **`API Tests`** and **`E2E`** are the single statuses, as before. Each
    fails when suite selection or preparation failed, and is skipped when the
    change doesn't select its suite.
+
+<a id="integration-trigger-policy"></a>**Trigger policy (#2327).** The
+filters favor correctness over CI time, and each selected suite runs in full:
+
+- **Both suites:** any file in any workspace listed in the root
+  `package.json` (backend services, repositories, hooks, bootstrap PHP,
+  shared PHP and JavaScript, manifests, lockfiles, webpack configuration and
+  the workspace's own docs); root `package.json`, `package-lock.json`,
+  `composer.json` and `composer.lock`; `.wp-env.json`, `e2e/mu-plugins/`,
+  `e2e/drop-ins/` and `e2e/support/` (API specs import those helpers too);
+  and the preparation and lifecycle tooling, including the local scripts it
+  imports or the builds run (`block-docs.mjs`, `check-e2e-shards.mjs`), the
+  shard timings and their tests.
+- **API only:** `check-api-shards.mjs`, its test and `api-tests.yml`.
+- **E2E only:** the rest of `e2e/`, the root `playwright.config.js`,
+  `workspace-e2e-runner.mjs`, the E2E inventory test and `e2e.yml`.
+- **Neither:** root documentation (`*.md`, `docs/`) and unrelated tooling.
+
+A new workspace is covered as soon as it is added to the root
+`package.json`. When a preparation or lifecycle script gains a new local
+import, or a workspace build starts running another root script, add that
+file to `SHARED` in `scripts/integration-suites.mjs` and a case to
+`scripts/__tests__/integration-suites.test.mjs`
+(`node --test scripts/__tests__/integration-suites.test.mjs`).
 
 **Manual runs.** Actions → _Integration Tests_ → _Run workflow_, or
 `gh workflow run integration-tests.yml --ref <branch> -f suites=api|e2e|both`
