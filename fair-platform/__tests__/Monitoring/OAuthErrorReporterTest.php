@@ -165,7 +165,7 @@ class OAuthErrorReporterTest extends TestCase {
 		// Another plugin's Sentry usage on the global hub must not leak in.
 		SentrySdk::getCurrentHub()->configureScope(
 			static function ( Scope $scope ) {
-				$scope->addBreadcrumb( new Breadcrumb( Breadcrumb::LEVEL_INFO, Breadcrumb::TYPE_HTTP, 'http', 'POST refresh_token=marker_breadcrumb' ) );
+				$scope->addBreadcrumb( new Breadcrumb( Breadcrumb::LEVEL_INFO, Breadcrumb::TYPE_HTTP, 'http', 'POST /oauth/refresh marker_breadcrumb' ) );
 				$scope->setUser( array( 'email' => 'marker_user@example.test' ) );
 				$scope->setExtra( 'client_secret', 'marker_extra_secret' );
 				$scope->setTag( 'token', 'marker_scope_tag' );

@@ -207,7 +207,7 @@ class OAuthErrorReporter {
 	 * @return bool
 	 */
 	public static function transient_throttle( $kind ) {
-		$name   = 'fair_platform_report_' . md5( $kind );
+		$name   = 'fair_platform_report_' . hash( 'sha256', $kind );
 		$now    = time();
 		$window = get_transient( $name );
 		if ( ! is_array( $window ) || ! isset( $window['count'], $window['start'] ) || $now - (int) $window['start'] >= self::THROTTLE_WINDOW ) {
