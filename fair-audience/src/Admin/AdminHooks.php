@@ -353,6 +353,15 @@ class AdminHooks {
 		// Settings page.
 		if ( 'fair-audience_page_fair-audience-settings' === $hook ) {
 			$this->enqueue_page_script( 'settings', $plugin_dir );
+			wp_localize_script(
+				'fair-audience-settings',
+				'fairAudienceSettingsData',
+				array(
+					// Set while Fair Events Experimental manages the
+					// Instagram connection: the tab links there instead.
+					'instagramPageUrl' => \FairAudience\Settings\InstagramCredentials::managed_elsewhere_url(),
+				)
+			);
 		}
 	}
 

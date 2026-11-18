@@ -83,6 +83,30 @@ add_filter(
 		fair_e2e_record_credential_request( $is_refresh ? 'instagram_refresh' : 'instagram', (string) $token );
 
 		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+
+		// A revoked token (#2076): Instagram's error, echoing the token the
+		// way its messages can, so specs check it is redacted.
+		if ( ! $is_refresh && 0 === strpos( (string) $token, 'e2e-ig-revoked' ) ) {
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode(
+					array(
+						'error' => array(
+							'message' => 'Invalid OAuth access token - Cannot parse access token ' . $token,
+							'type'    => 'OAuthException',
+							'code'    => 190,
+						),
+					)
+				),
+				'response' => array(
+					'code'    => 400,
+					'message' => 'Bad Request',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		}
+
 		if ( $is_refresh ) {
 			$count = count( get_option( 'fair_e2e_credential_requests', array() ) );
 			$body  = array(

@@ -374,6 +374,12 @@ class Plugin {
 	 * @return void
 	 */
 	public function refresh_instagram_token() {
+		// Fair Events Experimental refreshes the token while it owns the
+		// connection.
+		if ( \FairAudienceExperimental\Services\InstagramConnection::managed_by_events() ) {
+			return;
+		}
+
 		$credentials = \FairAudience\Settings\InstagramCredentials::class;
 
 		// An unreadable stored token stays in place; the settings screen

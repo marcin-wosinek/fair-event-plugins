@@ -36,6 +36,21 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings() {
+		// While Fair Events Experimental owns the Instagram connection, it is
+		// managed through that plugin's own API, not /wp/v2/settings.
+		if ( InstagramCredentials::is_owner() ) {
+			$this->register_instagram_settings();
+		}
+
+		$this->register_mailing_settings();
+	}
+
+	/**
+	 * Register the Instagram connection settings.
+	 *
+	 * @return void
+	 */
+	private function register_instagram_settings() {
 		// Instagram OAuth Access Token.
 		register_setting(
 			'fair_audience_settings',
@@ -120,7 +135,14 @@ class Settings {
 				'default'           => 0,
 			)
 		);
+	}
 
+	/**
+	 * Register the mailing settings.
+	 *
+	 * @return void
+	 */
+	private function register_mailing_settings() {
 		// Mailing Category IDs.
 		register_setting(
 			'fair_audience_settings',

@@ -3,7 +3,7 @@
  * Admin Pages for Fair Events Experimental
  *
  * Registers the experimental admin pages (compare events, sources,
- * organizers, Meta and WhatsApp) as submenus under the fair-events-calendar
+ * organizers, Meta, Instagram and WhatsApp) as submenus under the fair-events-calendar
  * menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
@@ -114,6 +114,19 @@ class AdminPages {
 				'manage_options',
 				'fair-events-meta',
 				array( $this, 'render_meta_page' )
+			);
+		}
+
+		// Instagram page — `instagram` bundle, next to Meta. Not registered
+		// while the bundle is off: Fair Audience then manages the connection.
+		if ( \FairEventsExperimental\Core\Features::is_enabled( 'instagram' ) ) {
+			$this->page_hooks['fair-events-instagram'] = add_submenu_page(
+				$parent,
+				__( 'Instagram', 'fair-events-experimental' ),
+				__( 'Instagram', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-instagram',
+				array( $this, 'render_instagram_page' )
 			);
 		}
 
@@ -355,6 +368,22 @@ class AdminPages {
 				wp_enqueue_style( 'wp-components' );
 				break;
 
+			case 'fair-events-instagram':
+				$asset_file = include $exp_dir . 'build/admin/instagram/index.asset.php';
+				wp_enqueue_script( 'fair-events-instagram', $exp_url . 'build/admin/instagram/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_localize_script(
+					'fair-events-instagram',
+					'fairEventsInstagramData',
+					array(
+						// Where the OAuth proxy sends the administrator back.
+						'pageUrl'      => admin_url( 'admin.php?page=fair-events-instagram' ),
+						'authorizeUrl' => 'https://fair-event-plugins.com/oauth/instagram/authorize',
+					)
+				);
+				wp_set_script_translations( 'fair-events-instagram', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				wp_enqueue_style( 'wp-components' );
+				break;
+
 			case 'fair-events-organizers':
 				// The logo field picks from the media library.
 				wp_enqueue_media();
@@ -474,6 +503,17 @@ class AdminPages {
 	public function render_meta_page() {
 		?>
 		<div id="fair-events-meta-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render Instagram page
+	 *
+	 * @return void
+	 */
+	public function render_instagram_page() {
+		?>
+		<div id="fair-events-instagram-root"></div>
 		<?php
 	}
 

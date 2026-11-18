@@ -63,6 +63,10 @@ class Plugin {
 		\FairEventsExperimental\WhatsApp\Connector::init();
 		$this->load_whatsapp_deliveries();
 
+		// Instagram connection, taken over from Fair Audience; see
+		// Instagram\Ownership.
+		$this->load_instagram();
+
 		// Operator links to an event feed's weekly summary; see
 		// docs/weekly-summary.md.
 		\FairEventsExperimental\Frontend\WeeklySummaryPage::init();
@@ -321,6 +325,53 @@ class Plugin {
 				}
 			);
 		}
+	}
+
+	/**
+	 * Claim the Instagram connection when the `instagram` feature is on and
+	 * Fair Audience hands it over; then protect the token, refresh it daily
+	 * and serve the connection API. Off, nothing is scheduled and the stored
+	 * connection stays for Fair Audience.
+	 *
+	 * Runs on `plugins_loaded` (priority 5): Fair Audience asks for the
+	 * claim on a later priority.
+	 *
+	 * @return void
+	 */
+	private function load_instagram() {
+		\FairEventsExperimental\Instagram\Ownership::maybe_enable_for_existing_connection();
+
+		if ( ! Features::is_enabled( 'instagram' ) ) {
+			add_action(
+				'init',
+				static function () {
+					Cron::unschedule( array( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK ) );
+				},
+				11
+			);
+			return;
+		}
+
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\InstagramConnectionController() )->register_routes();
+			}
+		);
+
+		if ( ! \FairEventsExperimental\Instagram\Ownership::claim() ) {
+			return;
+		}
+
+		\FairEventsExperimental\Instagram\Connection::boot();
+		add_action( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK, array( \FairEventsExperimental\Instagram\Connection::class, 'refresh' ) );
+		add_action(
+			'init',
+			static function () {
+				Cron::ensure_recurring( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK, 'daily', time() + HOUR_IN_SECONDS );
+			},
+			11
+		);
 	}
 
 	/**

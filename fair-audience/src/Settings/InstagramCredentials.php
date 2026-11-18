@@ -23,6 +23,12 @@ defined( 'WPINC' ) || die;
  * value stays in storage, and Instagram is reported unavailable until
  * encryption support returns, or until the admin reconnects when the value
  * is unrecoverable. Disconnecting (saving an empty token) removes it.
+ *
+ * Fair Events Experimental can take the connection over, with the same
+ * stored options: it then defines OWNER_ELSEWHERE_CONSTANT on
+ * `plugins_loaded` (priority 5), and this plugin neither protects the token
+ * nor offers it in /wp/v2/settings on that request. The static status
+ * helpers keep working for older callers either way.
  */
 class InstagramCredentials {
 
@@ -57,6 +63,11 @@ class InstagramCredentials {
 	const UNRECOVERABLE = 'unrecoverable';
 
 	/**
+	 * Defined by Fair Events Experimental while it owns the connection.
+	 */
+	const OWNER_ELSEWHERE_CONSTANT = 'FAIR_EVENTS_EXPERIMENTAL_INSTAGRAM_OWNER';
+
+	/**
 	 * Protect the token option and guard its settings REST surface. Runs on
 	 * every request, before the token is read or written — the daily token
 	 * refresh rewrites it outside the admin.
@@ -64,7 +75,41 @@ class InstagramCredentials {
 	 * @return void
 	 */
 	public static function init() {
-		if ( ! class_exists( ProtectedOptions::class ) ) {
+		// Fair Events Experimental claims the connection on plugins_loaded
+		// (priority 5); decide after it.
+		if ( did_action( 'plugins_loaded' ) ) {
+			self::boot();
+			return;
+		}
+		add_action( 'plugins_loaded', array( self::class, 'boot' ), 6 );
+	}
+
+	/**
+	 * Whether this plugin owns the Instagram connection on this request.
+	 *
+	 * @return bool
+	 */
+	public static function is_owner() {
+		return ! defined( self::OWNER_ELSEWHERE_CONSTANT );
+	}
+
+	/**
+	 * Where the connection is managed while another plugin owns it.
+	 *
+	 * @return string|null Admin URL, or null while this plugin owns it.
+	 */
+	public static function managed_elsewhere_url() {
+		return self::is_owner() ? null : admin_url( 'admin.php?page=fair-events-instagram' );
+	}
+
+	/**
+	 * Protect the token and guard its settings REST surface while this
+	 * plugin owns the connection.
+	 *
+	 * @return void
+	 */
+	public static function boot() {
+		if ( ! class_exists( ProtectedOptions::class ) || ! self::is_owner() ) {
 			return;
 		}
 
