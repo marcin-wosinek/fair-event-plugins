@@ -162,14 +162,11 @@ export const MANAGE_EVENT_TABS = [
 		title: 'Finance',
 		plugin: 'fair-events',
 		prerequisites: [ 'Fair Finance active.', 'Not a link-only event.' ],
-		ready: ( panel, demo ) => [
-			panel.getByRole( 'cell', { name: demo.costEntry } ),
-			panel
-				.getByRole( 'cell', {
-					name: demo.firstParticipant,
-					exact: true,
-				} )
-				.first(),
+		// Details are collapsed on arrival (#2398): the event result is
+		// what the tab shows first.
+		ready: ( panel ) => [
+			panel.getByTestId( 'finance-headline' ),
+			panel.getByRole( 'button', { name: /^Expenses \(/ } ),
 		],
 	},
 	{

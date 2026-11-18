@@ -343,7 +343,7 @@ describe( 'Finance tab availability (#2110)', () => {
 		}
 	);
 
-	it( 'loads only payments when Fair Finance is inactive', async () => {
+	it( 'offers only payments when Fair Finance is inactive', async () => {
 		window.history.replaceState( {}, '', '?tab=finance' );
 		window.fairPaymentsConnector = {
 			connectorActive: '1',
@@ -354,13 +354,11 @@ describe( 'Finance tab availability (#2110)', () => {
 		render( <ManageEventApp /> );
 
 		expect(
-			await screen.findByText( 'No payments for this event yet.' )
+			await screen.findByRole( 'button', { name: 'Online payments' } )
 		).toBeInTheDocument();
 		const paths = apiFetch.mock.calls.map( ( call ) => call[ 0 ].path );
 		expect(
-			paths.some( ( path ) =>
-				path.startsWith( '/fair-payments-connector/v1/transactions' )
-			)
+			paths.some( ( path ) => path.endsWith( '/finance-summary' ) )
 		).toBe( true );
 		expect(
 			paths.some(

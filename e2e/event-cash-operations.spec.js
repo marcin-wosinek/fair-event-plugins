@@ -99,11 +99,22 @@ test.describe('Event Finance income and expenses', () => {
 		await api.dispose();
 	});
 
-	const figure = (page, label) =>
+	// An amount in the event result's costs breakdown.
+	const costRow = (page, label) =>
 		page
-			.getByTestId('event-cash-summary')
+			.getByRole('list', { name: 'Costs breakdown' })
 			.getByText(label, { exact: true })
-			.locator('xpath=preceding-sibling::div[1]');
+			.locator('xpath=following-sibling::span[1]');
+
+	const cashMovement = (page) => page.getByTestId('event-cash-movement');
+
+	// Open a collapsed list once; later calls leave it open.
+	const openList = async (page, name) => {
+		const toggle = page.getByRole('button', { name });
+		if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+			await toggle.click();
+		}
+	};
 
 	const addOperation = async (
 		page,
@@ -134,7 +145,7 @@ test.describe('Event Finance income and expenses', () => {
 			`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${eventDateId}&tab=finance`
 		);
 		await expect(
-			page.getByRole('heading', { name: 'Income and expenses' })
+			page.getByRole('heading', { name: 'Expenses and cash sales' })
 		).toBeVisible();
 
 		// The operation date defaults to the event's date.
@@ -164,19 +175,24 @@ test.describe('Event Finance income and expenses', () => {
 			payer: PAYER,
 		});
 
-		await expect(figure(page, 'Net cash movement')).toHaveText('€95.00');
-		await expect(figure(page, 'Total expenses')).toHaveText('€50.00');
-		await expect(figure(page, 'Personally paid')).toHaveText('€30.00');
+		await expect(cashMovement(page)).toContainText(
+			'€115.00 received, €20.00 paid out, €95.00 net cash movement'
+		);
+		await expect(costRow(page, 'Recorded expenses')).toHaveText('€50.00');
+		await expect(costRow(page, 'Paid personally')).toHaveText('€30.00');
+		await expect(costRow(page, 'Paid from event cash')).toHaveText(
+			'€20.00'
+		);
 		await expect(
 			page.getByRole('list', { name: 'Personally paid by payer' })
-		).toContainText(`${PAYER}: €30.00`);
+		).toContainText(PAYER);
 
-		const table = page.getByRole('table', {
-			name: 'Income and expenses',
-		});
+		// The lists are collapsed on arrival.
+		await openList(page, /^Cash sales/);
+		const sales = page.getByRole('table', { name: 'Cash sales' });
 
 		// Correct the income: €120.
-		await table
+		await sales
 			.getByRole('row')
 			.filter({ hasText: `Gate sales ${STAMP}` })
 			.getByRole('button', { name: 'Edit' })
@@ -185,10 +201,14 @@ test.describe('Event Finance income and expenses', () => {
 		await editDialog.getByLabel('Amount (EUR)').fill('120');
 		await editDialog.getByRole('button', { name: 'Save income' }).click();
 		await expect(editDialog).toBeHidden();
-		await expect(figure(page, 'Net cash movement')).toHaveText('€100.00');
+		await expect(cashMovement(page)).toContainText(
+			'€100.00 net cash movement'
+		);
 
 		// Delete the event-cash expense.
-		await table
+		await openList(page, /^Expenses/);
+		const expenses = page.getByRole('table', { name: 'Expenses' });
+		await expenses
 			.getByRole('row')
 			.filter({ hasText: `Ice ${STAMP}` })
 			.getByRole('button', { name: /^More actions for/ })
@@ -197,9 +217,11 @@ test.describe('Event Finance income and expenses', () => {
 		const confirm = page.getByRole('dialog', { name: 'Delete expense' });
 		await confirm.getByRole('button', { name: 'Delete expense' }).click();
 		await expect(confirm).toBeHidden();
-		await expect(figure(page, 'Net cash movement')).toHaveText('€120.00');
-		await expect(figure(page, 'Total expenses')).toHaveText('€30.00');
-		await expect(table.getByText(`Ice ${STAMP}`)).toHaveCount(0);
+		await expect(cashMovement(page)).toContainText(
+			'€120.00 net cash movement'
+		);
+		await expect(costRow(page, 'Recorded expenses')).toHaveText('€30.00');
+		await expect(expenses.getByText(`Ice ${STAMP}`)).toHaveCount(0);
 
 		// The operations are ordinary Fair Finance accounting entries.
 		await page.goto(

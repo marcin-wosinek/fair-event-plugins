@@ -1,20 +1,66 @@
 /**
  * @jest-environment jsdom
  *
- * Component tests for the redesigned Finance tab (#1337).
- *
- * The transaction table is the single source of truth for income — entries
- * never contribute to Total Income, which removes the double-count bug class
- * from the earlier `unmatched=true` approach (a matched-but-unlinked entry
- * could still be summed on top of its transaction). fair-finance entries are
- * reduced to a cost-only annotation table.
+ * Component tests for the Finance tab (#2398): the event result first,
+ * from one finance-summary request; payments, expenses, cash sales and
+ * purchase attempts collapsed on arrival; budget settings last.
  */
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import EventFinance from '../EventFinance.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+// The Valencia example of #2398.
+const VALENCIA = {
+	currency: 'EUR',
+	state: 'complete',
+	issues: [],
+	sales: {
+		total: 3950,
+		online: {
+			gross: 3615,
+			mollie_fees: 62.81,
+			application_fees: 0,
+			fees: 62.81,
+			net: 3552.19,
+			fees_complete: true,
+			payment_count: 80,
+			unallocated: 0,
+		},
+		cash: 335,
+	},
+	costs: {
+		total: 340.78,
+		expenses: {
+			total: 277.97,
+			event_cash: 0,
+			personal: 277.97,
+			bank: 0,
+			unclassified: 0,
+			personal_by_payer: [
+				{ payer_name: 'Ana', amount: 262.97 },
+				{ payer_name: 'Sayli', amount: 15 },
+			],
+		},
+		payment_fees: 62.81,
+	},
+	net_result: 3609.22,
+	payout: {
+		awaiting_payout: 0,
+		paid_out: 0,
+		received_in_bank: 0,
+		unknown: 3552.19,
+		unpriced_count: 0,
+	},
+};
 
 const paidTransactionWithEntry = {
 	id: 1,
@@ -26,37 +72,41 @@ const paidTransactionWithEntry = {
 	entry_ids: [ 5 ],
 };
 
-const paidTransactionWithoutEntry = {
-	id: 2,
-	amount: 50,
-	mollie_fee: 0.88,
-	application_fee: 0,
-	status: 'paid',
-	created_at: '2026-07-21 10:00:00',
-	entry_ids: [],
-};
-
-const costEntry = {
-	id: 9,
-	entry_type: 'cost',
-	entry_date: '2026-07-19',
-	amount: 12,
-	description: 'Venue rental',
-};
-
 const failedTransaction = {
 	id: 3,
 	amount: 20,
 	status: 'failed',
+	description: 'Failed attempt',
 	created_at: '2026-07-22 10:00:00',
+};
+
+const dinner = {
+	id: 9,
+	entry_type: 'cost',
+	entry_date: '2026-07-19',
+	amount: 15,
+	description: 'Dinner',
+	payment_source: 'personal_funds',
+	payer_name: 'Sayli',
+};
+
+const bankCost = {
+	id: 10,
+	entry_type: 'cost',
+	entry_date: '2026-07-18',
+	amount: 40,
+	description: 'Venue',
+	payment_source: null,
+	bank_origin: { account: { id: 1, name: 'Main account' } },
 };
 
 const budgetA = { id: 3, name: 'Summer camp' };
 const budgetB = { id: 7, name: 'General fund' };
 
 function mockApiFetchByPath( {
-	totals = { total_income: 0, total_cost: 0, balance: 0 },
+	summary = VALENCIA,
 	costEntries = [],
+	incomeEntries = [],
 	paidTransactions = [],
 	failedTransactions = [],
 	budgets = [],
@@ -67,11 +117,18 @@ function mockApiFetchByPath( {
 		if ( failing && path.startsWith( failing ) ) {
 			return Promise.reject( new Error( 'Server exploded.' ) );
 		}
-		if ( path.startsWith( '/fair-finance/v1/financial-entries/totals' ) ) {
-			return Promise.resolve( totals );
+		if ( /\/finance-summary$/.test( path ) ) {
+			return Promise.resolve( summary );
 		}
 		if ( path.startsWith( '/fair-finance/v1/financial-entries' ) ) {
-			return Promise.resolve( { entries: costEntries } );
+			const entries = path.includes( 'entry_type=cost' )
+				? costEntries
+				: incomeEntries;
+			return Promise.resolve( {
+				entries,
+				total: entries.length,
+				pages: 1,
+			} );
 		}
 		if ( path === '/fair-finance/v1/budgets' ) {
 			return Promise.resolve( budgets );
@@ -82,8 +139,14 @@ function mockApiFetchByPath( {
 			}
 			return Promise.resolve( { budget_id: eventBudgetId } );
 		}
+		if ( path.startsWith( '/fair-events/v1/get-tickets' ) ) {
+			return Promise.resolve( [] );
+		}
 		if ( path.includes( 'status=paid' ) ) {
-			return Promise.resolve( { transactions: paidTransactions } );
+			return Promise.resolve( {
+				transactions: paidTransactions,
+				total: paidTransactions.length,
+			} );
 		}
 		if ( path.includes( 'status=failed' ) ) {
 			return Promise.resolve( { transactions: failedTransactions } );
@@ -102,137 +165,339 @@ function calledPaths() {
 	return apiFetch.mock.calls.map( ( call ) => call[ 0 ].path );
 }
 
-function statValue( label ) {
-	return screen.getByText( label ).previousSibling.textContent;
+function headline( label ) {
+	const box = within( screen.getByTestId( 'finance-headline' ) );
+	return box.getByText( label ).nextSibling.textContent;
 }
 
-describe( 'EventFinance — transaction table is the income source of truth (#1337)', () => {
-	it( 'reports Total Income as the transaction gross sum, ignoring entries entirely', async () => {
-		mockApiFetchByPath( {
-			totals: { total_income: 999, total_cost: 0, balance: 999 },
-			paidTransactions: [ paidTransactionWithEntry ],
-		} );
+function row( list, label ) {
+	return within( screen.getByRole( 'list', { name: list } ) )
+		.getAllByText( label )[ 0 ]
+		.closest( 'div' ).lastChild.textContent;
+}
 
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
+function renderTab( props = {} ) {
+	return render(
+		<EventFinance
+			{ ...bothActive }
+			eventDateId={ 42 }
+			entriesUrl="admin.php?page=fair-finance-entries"
+			financeManageable
+			purchasePaymentsAvailable
+			{ ...props }
+		/>
+	);
+}
 
-		await waitFor( () =>
-			expect( screen.getByText( 'Total Income' ) ).toBeInTheDocument()
-		);
+describe( 'EventFinance — event result first (#2398)', () => {
+	it( 'shows the Valencia headline figures that reconcile', async () => {
+		mockApiFetchByPath();
+		renderTab();
 
-		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
+		await screen.findByTestId( 'finance-headline' );
+		expect( headline( 'Total sales' ) ).toBe( '€3,950.00' );
+		expect( headline( 'Total costs, including fees' ) ).toBe( '€340.78' );
+		expect( headline( 'Net event result' ) ).toBe( '€3,609.22' );
+		expect(
+			screen.queryByText( 'Incomplete: the net result isn’t final.' )
+		).not.toBeInTheDocument();
 	} );
 
-	it( 'links the entry id in the Budget entry column to the focused entry view', async () => {
+	it( 'breaks sales and costs down without opening any table', async () => {
+		mockApiFetchByPath();
+		renderTab();
+
+		await screen.findByTestId( 'finance-headline' );
+		expect( row( 'Sales breakdown', 'Online payments' ) ).toBe(
+			'€3,615.00'
+		);
+		expect( row( 'Sales breakdown', 'Cash sales' ) ).toBe( '€335.00' );
+		expect( row( 'Sales breakdown', 'Mollie fees' ) ).toBe( '€62.81' );
+		expect( row( 'Sales breakdown', 'Fair Events fees' ) ).toBe( '€0.00' );
+		expect( row( 'Sales breakdown', 'After fees' ) ).toBe( '€3,552.19' );
+		expect( row( 'Costs breakdown', 'Recorded expenses' ) ).toBe(
+			'€277.97'
+		);
+		expect( row( 'Costs breakdown', 'Payment fees' ) ).toBe( '€62.81' );
+		expect( row( 'Costs breakdown', 'Paid personally' ) ).toBe( '€277.97' );
+		expect( row( 'Costs breakdown', 'Paid from event cash' ) ).toBe(
+			'€0.00'
+		);
+		expect( row( 'Personally paid by payer', 'Sayli' ) ).toBe( '€15.00' );
+
+		// The summary needs no transaction or entry list.
+		expect(
+			calledPaths().some(
+				( path ) =>
+					path.startsWith( '/fair-payments-connector/' ) ||
+					path.startsWith( '/fair-finance/v1/financial-entries' ) ||
+					path.startsWith( '/fair-events/v1/get-tickets' )
+			)
+		).toBe( false );
+	} );
+
+	it( 'shows the bank payout status, never an unconfirmed bank receipt', async () => {
+		mockApiFetchByPath( {
+			summary: {
+				...VALENCIA,
+				payout: {
+					awaiting_payout: 100,
+					paid_out: 3000,
+					received_in_bank: 0,
+					unknown: 452.19,
+					unpriced_count: 0,
+				},
+			},
+		} );
+		renderTab();
+
+		const payout = within( await screen.findByTestId( 'payout-status' ) );
+		expect( payout.getByText( 'Awaiting payout' ) ).toBeInTheDocument();
+		expect( payout.getByText( 'Paid out by Mollie' ) ).toBeInTheDocument();
+		expect(
+			payout.getByText( 'Payout status unknown' )
+		).toBeInTheDocument();
+		expect(
+			payout.queryByText( 'Received in bank' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'marks an incomplete summary and says why', async () => {
+		mockApiFetchByPath( {
+			summary: {
+				...VALENCIA,
+				state: 'incomplete',
+				issues: [ 'fees_missing', 'online_unallocated' ],
+				sales: {
+					...VALENCIA.sales,
+					online: { ...VALENCIA.sales.online, unallocated: 2 },
+				},
+			},
+		} );
+		renderTab();
+
+		expect(
+			await screen.findByText( 'Incomplete: the net result isn’t final.' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Payment fees aren’t recorded yet for some online payments, so costs leave them out and the net result may be too high.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'2 paid payments for this event aren’t fully assigned to their purchases yet, so part of them may be missing from sales.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'shows a source that can’t be read as not available, not zero', async () => {
+		mockApiFetchByPath( {
+			summary: {
+				...VALENCIA,
+				state: 'incomplete',
+				issues: [ 'finance_inactive' ],
+				sales: { ...VALENCIA.sales, total: 3615, cash: null },
+				costs: {
+					total: 62.81,
+					expenses: null,
+					payment_fees: 62.81,
+				},
+				net_result: 3552.19,
+			},
+		} );
+		renderTab( { financeActive: false } );
+
+		await screen.findByTestId( 'finance-headline' );
+		expect( row( 'Costs breakdown', 'Recorded expenses' ) ).toBe(
+			'Not available'
+		);
+		expect( row( 'Sales breakdown', 'Cash sales' ) ).toBe(
+			'Not available'
+		);
+		expect(
+			screen.getByText(
+				'Expenses and cash sales are left out because Fair Finance is inactive.'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'reports a failed summary as an error with a retry', async () => {
+		mockApiFetchByPath( {
+			failing: '/fair-events/v1/event-dates/42/finance',
+		} );
+		renderTab();
+
+		expect(
+			await screen.findByText(
+				'The event result could not be loaded. Server exploded.'
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId( 'finance-headline' )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Try again' } )
+		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'EventFinance — details collapsed on arrival (#2398)', () => {
+	it( 'keeps every detail list closed until opened', async () => {
+		mockApiFetchByPath();
+		renderTab();
+
+		await screen.findByTestId( 'finance-headline' );
+		for ( const name of [
+			'Online payments',
+			/^Expenses/,
+			/^Cash sales/,
+			'Purchase attempt history',
+		] ) {
+			expect( screen.getByRole( 'button', { name } ) ).toHaveAttribute(
+				'aria-expanded',
+				'false'
+			);
+		}
+	} );
+
+	it( 'opens online payments with successful ones first and unsuccessful attempts still collapsed', async () => {
 		mockApiFetchByPath( {
 			paidTransactions: [ paidTransactionWithEntry ],
+			failedTransactions: [ failedTransaction ],
 		} );
+		renderTab();
 
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Online payments' } )
 		);
 
 		expect(
-			await screen.findByRole( 'link', { name: '#5' } )
-		).toHaveAttribute( 'href', 'admin.php&entry_id=5' );
-	} );
+			await screen.findByRole( 'link', { name: '€45.00' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-payments-connector-transaction&transaction_id=1'
+		);
+		expect( screen.getByRole( 'link', { name: '#5' } ) ).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-finance-entries&entry_id=5'
+		);
 
-	it( 'shows a dash in the Budget entry column when the transaction has no linked entry', async () => {
-		mockApiFetchByPath( {
-			paidTransactions: [ paidTransactionWithoutEntry ],
+		const failed = screen.getByRole( 'button', {
+			name: 'Failed, expired or canceled attempt (1)',
 		} );
+		expect( failed ).toHaveAttribute( 'aria-expanded', 'false' );
+		expect(
+			screen.queryByText( 'Failed attempt' )
+		).not.toBeInTheDocument();
 
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		await waitFor( () =>
-			expect( screen.getByText( 'Payments' ) ).toBeInTheDocument()
-		);
-
-		const row = screen
-			.getByRole( 'link', { name: '€50.00' } )
-			.closest( 'tr' );
-		expect( row ).toHaveTextContent( '-' );
+		fireEvent.click( failed );
+		expect(
+			await screen.findByText( 'Failed attempt' )
+		).toBeInTheDocument();
+		expect( screen.getByText( 'Failed' ) ).toBeInTheDocument();
 	} );
 
-	it( 'lists a cost entry in the Costs table and includes it in Total Costs', async () => {
-		mockApiFetchByPath( {
-			totals: { total_income: 0, total_cost: 12, balance: -12 },
-			costEntries: [ costEntry ],
-		} );
+	it( 'opens expenses with date, amount, how and by whom each was paid', async () => {
+		mockApiFetchByPath( { costEntries: [ dinner, bankCost ] } );
+		renderTab();
 
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
+		fireEvent.click(
+			await screen.findByRole( 'button', {
+				name: 'Expenses (€277.97)',
+			} )
 		);
 
-		await waitFor( () =>
-			expect( screen.getByText( 'Venue rental' ) ).toBeInTheDocument()
+		const table = within(
+			await screen.findByRole( 'table', { name: 'Expenses' } )
 		);
+		const dinnerRow = table.getByText( 'Dinner' ).closest( 'tr' );
+		expect( dinnerRow ).toHaveTextContent( '2026-07-19' );
+		expect( dinnerRow ).toHaveTextContent( '−€15.00' );
+		expect( dinnerRow ).toHaveTextContent( 'Personal funds' );
+		expect( dinnerRow ).toHaveTextContent( 'Sayli' );
 
-		expect( statValue( 'Total Costs' ) ).toBe( '€12.00' );
+		const bankRow = table.getByText( 'Venue' ).closest( 'tr' );
+		expect( bankRow ).toHaveTextContent( 'Bank (Main account)' );
+		expect(
+			within( bankRow ).getByRole( 'link', {
+				name: 'Open in Fair Finance',
+			} )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-finance-entries&entry_id=10'
+		);
+		expect(
+			within( bankRow ).queryByRole( 'button', { name: 'Edit' } )
+		).not.toBeInTheDocument();
+
+		expect(
+			calledPaths().filter( ( path ) =>
+				path.includes( 'entry_type=cost' )
+			)
+		).toHaveLength( 1 );
 	} );
+} );
 
-	it( 'requests only cost-type entries', async () => {
-		mockApiFetchByPath( {} );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
-
-		const calledPaths = apiFetch.mock.calls.map(
-			( call ) => call[ 0 ].path
-		);
-		const entriesCall = calledPaths.find(
-			( p ) =>
-				p.startsWith( '/fair-finance/v1/financial-entries?' ) &&
-				! p.includes( '/totals' )
-		);
-		expect( entriesCall ).toContain( 'entry_type=cost' );
-	} );
-
-	it( 'still computes Total Net from paid-transaction fee data', async () => {
+describe( 'EventFinance — plugin availability (#2110)', () => {
+	it( 'payments only: no Fair Finance request, section or link', async () => {
 		mockApiFetchByPath( {
 			paidTransactions: [ paidTransactionWithEntry ],
 		} );
+		renderTab( { financeActive: false, financeManageable: false } );
 
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
+		fireEvent.click(
+			await screen.findByRole( 'button', { name: 'Online payments' } )
 		);
+		await screen.findByRole( 'link', { name: '€45.00' } );
 
-		await waitFor( () =>
-			expect( screen.getByText( 'Total Net' ) ).toBeInTheDocument()
+		expect( screen.queryByText( 'Budget entry' ) ).not.toBeInTheDocument();
+		expect( screen.queryByLabelText( 'Budget' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: /^Expenses/ } )
+		).not.toBeInTheDocument();
+		expect(
+			calledPaths().some(
+				( path ) =>
+					path.startsWith( '/fair-finance/' ) ||
+					path.endsWith( '/budget' )
+			)
+		).toBe( false );
+	} );
+
+	it( 'Fair Finance only: no payment request or payments section', async () => {
+		mockApiFetchByPath( { budgets: [ budgetA ] } );
+		renderTab( { connectorActive: false } );
+
+		await screen.findByText( 'Summer camp' );
+		expect(
+			screen.queryByRole( 'button', { name: 'Online payments' } )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'View All Entries' } )
+		).toHaveAttribute(
+			'href',
+			'admin.php?page=fair-finance-entries&event_date_id=42'
 		);
+		expect(
+			calledPaths().some( ( path ) =>
+				path.startsWith( '/fair-payments-connector/' )
+			)
+		).toBe( false );
+	} );
 
-		// 45 - 0.79 mollie fee - 0 application fee = 44.21
-		expect( statValue( 'Total Net' ) ).toBe( '€44.21' );
+	it( 'disables the budget controls when budgets fail to load', async () => {
+		mockApiFetchByPath( { failing: '/fair-finance/v1/budgets' } );
+		renderTab();
+
+		expect(
+			await screen.findByText(
+				'Budgets could not be loaded. Server exploded.'
+			)
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Budget' ) ).toBeDisabled();
+		// The event result still shows.
+		expect( headline( 'Net event result' ) ).toBe( '€3,609.22' );
 	} );
 } );
 
@@ -382,296 +647,5 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 		expect(
 			screen.getByRole( 'button', { name: 'Save budget' } )
 		).toBeEnabled();
-	} );
-} );
-
-describe( 'EventFinance — links to the focused entry view (#1914)', () => {
-	it( 'links each of several entry ids on one transaction separately', async () => {
-		mockApiFetchByPath( {
-			paidTransactions: [
-				{ ...paidTransactionWithEntry, entry_ids: [ 5, 6 ] },
-			],
-		} );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByRole( 'link', { name: '#5' } )
-		).toHaveAttribute( 'href', 'admin.php&entry_id=5' );
-		expect( screen.getByRole( 'link', { name: '#6' } ) ).toHaveAttribute(
-			'href',
-			'admin.php&entry_id=6'
-		);
-		expect(
-			screen.getByRole( 'link', { name: '#5' } ).closest( 'td' )
-		).toHaveTextContent( '#5, #6' );
-	} );
-
-	it( 'links the cost entry date to the focused entry view', async () => {
-		mockApiFetchByPath( { costEntries: [ costEntry ] } );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		const link = await screen.findByRole( 'link', {
-			name: 'Entry #9, 2026-07-19',
-		} );
-		expect( link ).toHaveAttribute( 'href', 'admin.php&entry_id=9' );
-		expect( link ).toHaveTextContent( '2026-07-19' );
-	} );
-
-	it( 'renders plain-text references when the entries screen is unavailable', async () => {
-		mockApiFetchByPath( {
-			paidTransactions: [ paidTransactionWithEntry ],
-			costEntries: [ costEntry ],
-		} );
-
-		render(
-			<EventFinance { ...bothActive } eventDateId={ 42 } entriesUrl="" />
-		);
-
-		await screen.findByText( 'Venue rental' );
-		expect( screen.getByText( '#5' ) ).toBeInTheDocument();
-		expect( screen.getByText( '2026-07-19' ) ).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: '#5' } )
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: /^Entry #/ } )
-		).not.toBeInTheDocument();
-		screen.getAllByRole( 'link' ).forEach( ( link ) => {
-			expect( link.getAttribute( 'href' ) ).not.toContain( 'entry_id=' );
-		} );
-	} );
-} );
-
-describe( 'EventFinance — plugin availability (#2110)', () => {
-	it( 'payments only: shows payment figures and tables without any Fair Finance request', async () => {
-		mockApiFetchByPath( {
-			paidTransactions: [ paidTransactionWithEntry ],
-			failedTransactions: [ failedTransaction ],
-		} );
-
-		render(
-			<EventFinance
-				connectorActive
-				financeActive={ false }
-				eventDateId={ 42 }
-				entriesUrl=""
-			/>
-		);
-
-		await screen.findByText( 'Payments' );
-		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
-		expect( statValue( 'Total Net' ) ).toBe( '€44.21' );
-		expect( screen.getByText( 'Failed Payments' ) ).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: '€45.00' } )
-		).toHaveAttribute(
-			'href',
-			'admin.php?page=fair-payments-connector-transaction&transaction_id=1'
-		);
-
-		expect( screen.queryByText( 'Total Costs' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Budget entry' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( '#5' ) ).not.toBeInTheDocument();
-		expect( screen.queryByLabelText( 'Budget' ) ).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: 'View All Entries' } )
-		).not.toBeInTheDocument();
-
-		const paths = calledPaths();
-		expect(
-			paths.filter( ( path ) =>
-				path.startsWith( '/fair-payments-connector/v1/transactions' )
-			)
-		).toHaveLength( 4 );
-		expect(
-			paths.some(
-				( path ) =>
-					path.startsWith( '/fair-finance/' ) ||
-					path.endsWith( '/budget' )
-			)
-		).toBe( false );
-	} );
-
-	it( 'payments only: shows a payment-specific empty state', async () => {
-		mockApiFetchByPath( {} );
-
-		render(
-			<EventFinance
-				connectorActive
-				financeActive={ false }
-				eventDateId={ 42 }
-				entriesUrl=""
-			/>
-		);
-
-		expect(
-			await screen.findByText( 'No payments for this event yet.' )
-		).toBeInTheDocument();
-		expect( statValue( 'Total Income' ) ).toBe( '€0.00' );
-	} );
-
-	it( 'Fair Finance only: shows costs and budgets without income, net, balance or payment requests', async () => {
-		mockApiFetchByPath( {
-			totals: { total_cost: 12 },
-			costEntries: [ costEntry ],
-			budgets: [ budgetA ],
-		} );
-
-		render(
-			<EventFinance
-				connectorActive={ false }
-				financeActive
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		await screen.findByText( 'Venue rental' );
-		await screen.findByText( 'Summer camp' );
-		expect( statValue( 'Total Costs' ) ).toBe( '€12.00' );
-		expect( screen.queryByText( 'Total Income' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Total Net' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Payments' ) ).not.toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'View All Entries' } )
-		).toHaveAttribute( 'href', 'admin.php&event_date_id=42' );
-		expect(
-			calledPaths().some( ( path ) =>
-				path.startsWith( '/fair-payments-connector/' )
-			)
-		).toBe( false );
-	} );
-
-	it( 'Fair Finance only: shows a cost-specific empty state', async () => {
-		mockApiFetchByPath( {} );
-
-		render(
-			<EventFinance
-				connectorActive={ false }
-				financeActive
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByText( 'No costs for this event yet.' )
-		).toBeInTheDocument();
-	} );
-
-	it( 'both active: keeps the combined summary, balance and empty state', async () => {
-		mockApiFetchByPath( {} );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByText(
-				'No financial entries for this event yet.'
-			)
-		).toBeInTheDocument();
-		expect( statValue( 'Balance' ) ).toBe( '€0.00' );
-		expect( screen.getByLabelText( 'Budget' ) ).toBeInTheDocument();
-	} );
-
-	it( 'keeps payments visible when the Fair Finance requests fail', async () => {
-		mockApiFetchByPath( {
-			paidTransactions: [ paidTransactionWithEntry ],
-			failing: '/fair-finance/v1/financial-entries',
-		} );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByText(
-				'Costs could not be loaded. Server exploded.',
-				{ selector: '.components-notice__content' }
-			)
-		).toBeInTheDocument();
-		expect( statValue( 'Total Income' ) ).toBe( '€45.00' );
-		expect( screen.getByText( 'Payments' ) ).toBeInTheDocument();
-		// A failed source is never shown as a zero total.
-		expect( screen.queryByText( 'Total Costs' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
-		expect(
-			screen.queryByText( 'No financial entries for this event yet.' )
-		).not.toBeInTheDocument();
-	} );
-
-	it( 'keeps costs visible when the payment requests fail', async () => {
-		mockApiFetchByPath( {
-			totals: { total_cost: 12 },
-			costEntries: [ costEntry ],
-			failing: '/fair-payments-connector/v1/transactions',
-		} );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByText(
-				'Payments could not be loaded. Server exploded.',
-				{ selector: '.components-notice__content' }
-			)
-		).toBeInTheDocument();
-		expect( screen.getByText( 'Venue rental' ) ).toBeInTheDocument();
-		expect( statValue( 'Total Costs' ) ).toBe( '€12.00' );
-		expect( screen.queryByText( 'Total Income' ) ).not.toBeInTheDocument();
-		expect( screen.queryByText( 'Balance' ) ).not.toBeInTheDocument();
-	} );
-
-	it( 'disables the budget controls when budgets fail to load', async () => {
-		mockApiFetchByPath( { failing: '/fair-finance/v1/budgets' } );
-
-		render(
-			<EventFinance
-				{ ...bothActive }
-				eventDateId={ 42 }
-				entriesUrl="admin.php"
-			/>
-		);
-
-		expect(
-			await screen.findByText(
-				'Budgets could not be loaded. Server exploded.',
-				{ selector: '.components-notice__content' }
-			)
-		).toBeInTheDocument();
-		expect( screen.getByLabelText( 'Budget' ) ).toBeDisabled();
-		expect(
-			screen.getByRole( 'button', { name: 'Save budget' } )
-		).toBeDisabled();
 	} );
 } );

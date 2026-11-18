@@ -13,9 +13,10 @@
 import { useState, useEffect } from '@wordpress/element';
 import {
 	Card,
-	CardHeader,
 	CardBody,
 	Notice,
+	Panel,
+	PanelBody,
 	Spinner,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
@@ -122,17 +123,22 @@ export function purchasePaymentRows( signups ) {
 }
 
 /**
- * Purchase payments of one date.
+ * Purchase payments of one date: purchase-attempt history, collapsed on
+ * arrival and loaded when first opened (#2398).
  *
  * @param {Object} props
  * @param {number} props.eventDateId Event date being managed.
  */
 export default function PurchasePayments( { eventDateId } ) {
+	const [ opened, setOpened ] = useState( false );
 	const [ signups, setSignups ] = useState( null );
-	const [ loading, setLoading ] = useState( true );
+	const [ loading, setLoading ] = useState( false );
 	const [ error, setError ] = useState( null );
 
 	useEffect( () => {
+		if ( ! opened ) {
+			return;
+		}
 		let cancelled = false;
 		setLoading( true );
 		setError( null );
@@ -172,7 +178,7 @@ export default function PurchasePayments( { eventDateId } ) {
 		return () => {
 			cancelled = true;
 		};
-	}, [ eventDateId ] );
+	}, [ eventDateId, opened ] );
 
 	const rows = purchasePaymentRows( signups );
 	const unavailable = ( signups || [] ).some(
@@ -182,169 +188,208 @@ export default function PurchasePayments( { eventDateId } ) {
 
 	return (
 		<Card style={ { marginTop: '16px' } }>
-			<CardHeader>
-				<h2>{ __( 'Purchase payments', 'fair-events' ) }</h2>
-			</CardHeader>
-			<CardBody>
-				<VStack spacing={ 4 }>
-					<p style={ { margin: 0 } }>
-						{ __(
-							'Every payment attempt of the purchases listed for this date, from Fair Events records. A payment shared by several purchases shows only this purchase’s share.',
+			<CardBody style={ { padding: 0 } }>
+				<Panel>
+					<PanelBody
+						title={ __(
+							'Purchase attempt history',
 							'fair-events'
 						) }
-					</p>
+						initialOpen={ false }
+						onToggle={ ( next ) => next && setOpened( true ) }
+					>
+						<VStack spacing={ 4 }>
+							<p style={ { margin: 0 } }>
+								{ __(
+									'Every payment attempt of the purchases listed for this date, from Fair Events records. A payment shared by several purchases shows only this purchase’s share.',
+									'fair-events'
+								) }
+							</p>
 
-					{ loading && <Spinner /> }
+							{ loading && <Spinner /> }
 
-					{ error && (
-						<Notice status="error" isDismissible={ false }>
-							{ error }
-						</Notice>
-					) }
-
-					{ ! loading && unavailable && (
-						<Notice status="warning" isDismissible={ false }>
-							{ __(
-								'Payment statuses and totals aren’t available because payment information can’t be read.',
-								'fair-events'
+							{ error && (
+								<Notice status="error" isDismissible={ false }>
+									{ error }
+								</Notice>
 							) }
-						</Notice>
-					) }
 
-					{ ! loading && ! error && rows.length === 0 && (
-						<p style={ { margin: 0, color: '#666' } }>
-							{ __(
-								'No purchase on this date has a payment.',
-								'fair-events'
+							{ ! loading && unavailable && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+								>
+									{ __(
+										'Payment statuses and totals aren’t available because payment information can’t be read.',
+										'fair-events'
+									) }
+								</Notice>
 							) }
-						</p>
-					) }
 
-					{ rows.length > 0 && (
-						<div style={ { overflowX: 'auto' } }>
-							<table className="wp-list-table widefat striped">
-								<thead>
-									<tr>
-										<th>
-											{ __( 'Purchase', 'fair-events' ) }
-										</th>
-										<th>
-											{ __( 'Payment', 'fair-events' ) }
-										</th>
-										<th>{ __( 'For', 'fair-events' ) }</th>
-										<th>
-											{ __( 'Started', 'fair-events' ) }
-										</th>
-										<th>
-											{ __( 'Status', 'fair-events' ) }
-										</th>
-										<th>
-											{ __(
-												'This purchase’s share',
-												'fair-events'
+							{ signups &&
+								! loading &&
+								! error &&
+								rows.length === 0 && (
+									<p style={ { margin: 0, color: '#666' } }>
+										{ __(
+											'No purchase on this date has a payment.',
+											'fair-events'
+										) }
+									</p>
+								) }
+
+							{ rows.length > 0 && (
+								<div style={ { overflowX: 'auto' } }>
+									<table className="wp-list-table widefat striped">
+										<thead>
+											<tr>
+												<th>
+													{ __(
+														'Purchase',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Payment',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'For',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Started',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Status',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'This purchase’s share',
+														'fair-events'
+													) }
+												</th>
+												<th>
+													{ __(
+														'Revenue',
+														'fair-events'
+													) }
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											{ rows.map(
+												( { signup, payment } ) => (
+													<tr
+														key={ `${ signup.id }-${ payment.transaction_id }-${ payment.role }` }
+													>
+														<td>
+															{ signupFullName(
+																signup
+															) ||
+																sprintf(
+																	/* translators: %d: purchase ID */
+																	__(
+																		'Purchase #%d',
+																		'fair-events'
+																	),
+																	signup.id
+																) }
+														</td>
+														<td>
+															<a
+																href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ payment.transaction_id }` }
+															>
+																{ `#${ payment.transaction_id }` }
+															</a>
+															{ payment.latest && (
+																<>
+																	{ ' ' }
+																	<em>
+																		{ __(
+																			'(latest attempt)',
+																			'fair-events'
+																		) }
+																	</em>
+																</>
+															) }
+														</td>
+														<td>
+															{ paymentRoleLabel(
+																payment.role
+															) }
+														</td>
+														<td>
+															{ payment.created_at
+																? payment.created_at.slice(
+																		0,
+																		10
+																	)
+																: '—' }
+														</td>
+														<td>
+															{ paymentStatusLabel(
+																payment
+															) }
+														</td>
+														<td>
+															{ formatPaymentAmount(
+																payment.allocated_amount,
+																payment.currency
+															) }
+															{ payment.transaction &&
+																payment
+																	.transaction
+																	.amount !==
+																	payment.allocated_amount && (
+																	<div
+																		style={ {
+																			color: '#666',
+																		} }
+																	>
+																		{ sprintf(
+																			/* translators: %s: total amount of the payment */
+																			__(
+																				'of %s',
+																				'fair-events'
+																			),
+																			formatPaymentAmount(
+																				payment
+																					.transaction
+																					.amount,
+																				payment
+																					.transaction
+																					.currency
+																			)
+																		) }
+																	</div>
+																) }
+														</td>
+														<td>
+															{ paymentCountsLabel(
+																payment
+															) }
+														</td>
+													</tr>
+												)
 											) }
-										</th>
-										<th>
-											{ __( 'Revenue', 'fair-events' ) }
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									{ rows.map( ( { signup, payment } ) => (
-										<tr
-											key={ `${ signup.id }-${ payment.transaction_id }-${ payment.role }` }
-										>
-											<td>
-												{ signupFullName( signup ) ||
-													sprintf(
-														/* translators: %d: purchase ID */
-														__(
-															'Purchase #%d',
-															'fair-events'
-														),
-														signup.id
-													) }
-											</td>
-											<td>
-												<a
-													href={ `admin.php?page=fair-payments-connector-transaction&transaction_id=${ payment.transaction_id }` }
-												>
-													{ `#${ payment.transaction_id }` }
-												</a>
-												{ payment.latest && (
-													<>
-														{ ' ' }
-														<em>
-															{ __(
-																'(latest attempt)',
-																'fair-events'
-															) }
-														</em>
-													</>
-												) }
-											</td>
-											<td>
-												{ paymentRoleLabel(
-													payment.role
-												) }
-											</td>
-											<td>
-												{ payment.created_at
-													? payment.created_at.slice(
-															0,
-															10
-														)
-													: '—' }
-											</td>
-											<td>
-												{ paymentStatusLabel(
-													payment
-												) }
-											</td>
-											<td>
-												{ formatPaymentAmount(
-													payment.allocated_amount,
-													payment.currency
-												) }
-												{ payment.transaction &&
-													payment.transaction
-														.amount !==
-														payment.allocated_amount && (
-														<div
-															style={ {
-																color: '#666',
-															} }
-														>
-															{ sprintf(
-																/* translators: %s: total amount of the payment */
-																__(
-																	'of %s',
-																	'fair-events'
-																),
-																formatPaymentAmount(
-																	payment
-																		.transaction
-																		.amount,
-																	payment
-																		.transaction
-																		.currency
-																)
-															) }
-														</div>
-													) }
-											</td>
-											<td>
-												{ paymentCountsLabel(
-													payment
-												) }
-											</td>
-										</tr>
-									) ) }
-								</tbody>
-							</table>
-						</div>
-					) }
-				</VStack>
+										</tbody>
+									</table>
+								</div>
+							) }
+						</VStack>
+					</PanelBody>
+				</Panel>
 			</CardBody>
 		</Card>
 	);

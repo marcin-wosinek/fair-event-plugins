@@ -1,9 +1,11 @@
 /**
  * E2E: the Manage Event Finance tab works with Fair Payments Connector alone
- * (#2110). With Fair Finance deactivated the tab still appears, lists the
- * event's synthetic payments and failed payments with their totals, shows a
- * payment-specific empty state for an event without payments, and neither
- * requests nor links to anything Fair Finance provides.
+ * (#2110, #2398). With Fair Finance deactivated the tab still appears, leads
+ * with the event result, marked incomplete with its reasons, lists the
+ * event's synthetic payments in a collapsed section with failed attempts in
+ * a nested collapsed one, shows a payment-specific empty state for an event
+ * without payments, and neither requests nor links to anything Fair Finance
+ * provides.
  *
  * Transactions are seeded through the fair-e2e transaction-filters fixture;
  * the seeded rows, events and Fair Finance's activation state are restored
@@ -196,7 +198,13 @@ test.describe( 'Manage Event — Finance tab without Fair Finance', () => {
 		await adminContext?.close();
 	} );
 
-	test( 'lists the event payments without Fair Finance requests or links', async () => {
+	const headline = ( page, label ) =>
+		page
+			.getByTestId( 'finance-headline' )
+			.getByText( label, { exact: true } )
+			.locator( 'xpath=following-sibling::div[1]' );
+
+	test( 'shows the event result first and payments on request, without Fair Finance', async () => {
 		const financeRequests = [];
 		adminPage.on( 'request', ( req ) => {
 			const url = decodeURIComponent( req.url() );
@@ -214,16 +222,38 @@ test.describe( 'Manage Event — Finance tab without Fair Finance', () => {
 			adminPage.getByRole( 'tab', { name: 'Finance' } )
 		).toHaveAttribute( 'aria-selected', 'true' );
 
-		const income = adminPage.getByText( 'Total Income', { exact: true } );
-		await expect( income ).toBeVisible();
-		await expect(
-			income.locator( 'xpath=preceding-sibling::div' )
-		).toHaveText( '€75.00' );
+		const warning = adminPage.locator( '.components-notice.is-warning' );
 
-		const payments = adminPage.locator( 'table', {
-			has: adminPage.getByRole( 'columnheader', {
-				name: 'Net received',
-			} ),
+		// The failed attempt contributes nothing to sales.
+		await expect( headline( adminPage, 'Total sales' ) ).toHaveText(
+			'€75.00'
+		);
+		await expect(
+			warning.getByText( 'Incomplete: the net result isn’t final.' )
+		).toBeVisible();
+		await expect(
+			warning.getByText(
+				'Expenses and cash sales are left out because Fair Finance is inactive.'
+			)
+		).toBeVisible();
+		await expect(
+			warning.getByText(
+				'Payment fees aren’t recorded yet for some online payments, so costs leave them out and the net result may be too high.'
+			)
+		).toBeVisible();
+
+		// Payments stay collapsed until opened.
+		const toggle = adminPage.getByRole( 'button', {
+			name: 'Online payments',
+		} );
+		await expect( toggle ).toHaveAttribute( 'aria-expanded', 'false' );
+		await expect(
+			adminPage.getByText( `Payments-only ticket ${ fixtureKey }` )
+		).toHaveCount( 0 );
+		await toggle.click();
+
+		const payments = adminPage.getByRole( 'table', {
+			name: 'Successful payments',
 		} );
 		await expect(
 			payments.getByRole( 'row', {
@@ -231,21 +261,25 @@ test.describe( 'Manage Event — Finance tab without Fair Finance', () => {
 			} )
 		).toHaveCount( 2 );
 		await expect(
-			adminPage.getByRole( 'heading', { name: 'Failed Payments' } )
-		).toBeVisible();
-		await expect(
-			adminPage.getByText( `Payments-only failed ${ fixtureKey }` )
-		).toBeVisible();
-
-		await expect(
 			adminPage.getByRole( 'link', { name: '€45.00' } )
 		).toHaveAttribute(
 			'href',
 			/page=fair-payments-connector-transaction&transaction_id=\d+/
 		);
 
-		await expect( adminPage.getByText( 'Total Costs' ) ).toHaveCount( 0 );
-		await expect( adminPage.getByText( 'Balance' ) ).toHaveCount( 0 );
+		// Unsuccessful attempts sit in their own collapsed section.
+		const failed = adminPage.getByRole( 'button', {
+			name: 'Failed, expired or canceled attempt (1)',
+		} );
+		await expect( failed ).toHaveAttribute( 'aria-expanded', 'false' );
+		await expect(
+			adminPage.getByText( `Payments-only failed ${ fixtureKey }` )
+		).toHaveCount( 0 );
+		await failed.click();
+		await expect(
+			adminPage.getByText( `Payments-only failed ${ fixtureKey }` )
+		).toBeVisible();
+
 		await expect(
 			adminPage.getByRole( 'columnheader', { name: 'Budget entry' } )
 		).toHaveCount( 0 );
@@ -267,12 +301,16 @@ test.describe( 'Manage Event — Finance tab without Fair Finance', () => {
 	test( 'shows a payment-specific empty state', async () => {
 		await adminPage.goto( financeUrl( emptyEvent.eventDateId ) );
 
+		await expect( headline( adminPage, 'Total sales' ) ).toHaveText(
+			'€0.00'
+		);
+		await adminPage
+			.getByRole( 'button', { name: 'Online payments' } )
+			.click();
 		await expect(
-			adminPage.getByText( 'No payments for this event yet.' )
+			adminPage.getByText(
+				'No successful online payments for this event yet.'
+			)
 		).toBeVisible();
-		await expect(
-			adminPage.getByText( 'Total Income', { exact: true } )
-		).toBeVisible();
-		await expect( adminPage.getByText( 'Total Costs' ) ).toHaveCount( 0 );
 	} );
 } );
