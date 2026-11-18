@@ -44,6 +44,8 @@ Leave this variable unset (or set it to any value other than `true`) on client s
 
 **`lamutable.es`**, **`fusion-dance.es`**, **`acro-agenda.es`**, **`fusion-circus.com`** — set `PLUGINS_TO_DEPLOY` as appropriate. No `AUTO_DEPLOY_ON_RELEASE` — deploys on manual dispatch only.
 
+**`circus-it.eu`** — `PLUGINS_TO_DEPLOY=fair-audience,fair-form`. No `AUTO_DEPLOY_ON_RELEASE` — deploys on manual dispatch only.
+
 ## How It Works
 
 ### 1. Automatic Deployment (on release publish)

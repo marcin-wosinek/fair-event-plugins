@@ -33,6 +33,10 @@ on:
                 description: 'fusion-circus.com'
                 type: boolean
                 default: false
+            circus-it-eu:
+                description: 'circus-it.eu'
+                type: boolean
+                default: false
 
 jobs:
     resolve:
@@ -144,6 +148,20 @@ jobs:
         uses: ./.github/workflows/deploy-to-environment.yml
         with:
             environment: fusion-circus.com
+            release_tag: ${{ needs.resolve.outputs.release_tag }}
+            is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
+            is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
+        secrets: inherit
+
+    deploy-circus-it:
+        name: Deploy to circus-it.eu
+        needs: [resolve]
+        if: |
+            needs.resolve.outputs.is_clean_version == 'true' ||
+            (github.event_name == 'workflow_dispatch' && inputs.circus-it-eu)
+        uses: ./.github/workflows/deploy-to-environment.yml
+        with:
+            environment: circus-it.eu
             release_tag: ${{ needs.resolve.outputs.release_tag }}
             is_clean_version: ${{ needs.resolve.outputs.is_clean_version }}
             is_manual_deploy: ${{ github.event_name == 'workflow_dispatch' }}
