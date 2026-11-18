@@ -149,7 +149,8 @@ export default function OnlinePayments( {
 
 	const handleToggle = ( opened ) => {
 		if ( opened && ! payments && ! loading ) {
-			load();
+			// load() reports its own errors, so it never rejects.
+			void load();
 		}
 	};
 
