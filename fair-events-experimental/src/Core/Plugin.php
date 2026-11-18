@@ -300,6 +300,8 @@ class Plugin {
 			);
 			// Public event JSON-LD names the event's organizer.
 			\FairEventsExperimental\Services\EventOrganizer::register_hooks();
+			// Fair Events' sales summaries route each event's sales to its organizer.
+			\FairEventsExperimental\Services\SalesSummaryRouting::register_hooks();
 		}
 
 		if ( self::ticketing_extensions_available() ) {

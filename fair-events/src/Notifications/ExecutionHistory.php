@@ -47,6 +47,7 @@ class ExecutionHistory {
 		Configurations::TELEGRAM         => 'message_parts',
 		Configurations::BULK_EMAIL       => 'recipients',
 		Configurations::INDIVIDUAL_EMAIL => 'recipients',
+		SalesSummaryDispatcher::CHANNEL  => 'recipients',
 	);
 
 	/**
@@ -133,7 +134,9 @@ class ExecutionHistory {
 	 * Start recording an execution.
 	 *
 	 * @param array $execution config_id, channel, origin, occurrence and,
-	 *                         when known, week_start and week_end.
+	 *                         when known, week_start and week_end. A sender
+	 *                         without a configuration record (the sales
+	 *                         summaries) passes its name as config_name.
 	 * @return array{id: int, created: bool} The execution, and whether this
 	 *     call created it rather than finding a scheduled one already there.
 	 *     ID 0 while the history tables are not installed.
@@ -158,7 +161,7 @@ class ExecutionHistory {
 			array(
 				'source_key'   => $key,
 				'config_id'    => $config_id,
-				'config_name'  => $record ? mb_substr( (string) $record['name'], 0, Configurations::MAX_NAME_LENGTH ) : '',
+				'config_name'  => mb_substr( $record ? (string) $record['name'] : (string) ( $execution['config_name'] ?? '' ), 0, Configurations::MAX_NAME_LENGTH ),
 				'name_source'  => 'snapshot',
 				'channel'      => (string) $execution['channel'],
 				'origin'       => (string) $execution['origin'],

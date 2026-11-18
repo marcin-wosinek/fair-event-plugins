@@ -57,6 +57,10 @@ export const REASON_LABELS = {
 	no_events: __( 'There were no events that week.', 'fair-events' ),
 	expired: __( 'The week ended before it could be sent.', 'fair-events' ),
 	suspended: __( 'The notification was paused.', 'fair-events' ),
+	organizers_unavailable: __(
+		'Paused while organizer management is off.',
+		'fair-events'
+	),
 	configuration_error: __(
 		'The settings could not be used, for example a missing event feed or bot token.',
 		'fair-events'

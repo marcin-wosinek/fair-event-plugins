@@ -58,6 +58,7 @@ class Notifications {
 			static function () {
 				( new \FairEvents\API\EventNotificationsController() )->register_routes();
 				( new \FairEvents\API\NotificationHistoryController() )->register_routes();
+				( new \FairEvents\API\SalesSummaryController() )->register_routes();
 			}
 		);
 
@@ -87,6 +88,10 @@ class Notifications {
 			IndividualEmailDispatcher::init();
 		}
 
+		// Sales summaries (#2306) are sent by this plugin alone and have no
+		// configuration records to migrate.
+		SalesSummaryDispatcher::init();
+
 		// Whatever channels are on: history is kept for every type.
 		add_action( self::HISTORY_CLEANUP_HOOK, array( self::class, 'clean_up_history' ) );
 		Cron::ensure_recurring( self::HISTORY_CLEANUP_HOOK, 'daily', time() + HOUR_IN_SECONDS );
@@ -115,6 +120,7 @@ class Notifications {
 		TelegramDispatcher::unschedule_all();
 		BulkEmailDispatcher::unschedule_all();
 		IndividualEmailDispatcher::unschedule_all();
+		SalesSummaryDispatcher::unschedule_all();
 		wp_unschedule_hook( self::HISTORY_CLEANUP_HOOK );
 	}
 }
