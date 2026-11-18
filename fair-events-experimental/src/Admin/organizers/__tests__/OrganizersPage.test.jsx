@@ -10,7 +10,7 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
-import OrganizersTab from '../OrganizersTab.js';
+import OrganizersPage from '../OrganizersPage.js';
 import {
 	createOrganizer,
 	loadOrganizers,
@@ -72,7 +72,7 @@ afterEach( () => {
 } );
 
 async function renderTab() {
-	render( <OrganizersTab /> );
+	render( <OrganizersPage /> );
 	await screen.findByRole( 'table' );
 }
 
@@ -104,7 +104,7 @@ test( 'lists the default first, marked, with each recipient count', async () => 
 
 test( 'a failed load is reported with a retry', async () => {
 	loadOrganizers.mockRejectedValueOnce( { message: 'Server down.' } );
-	render( <OrganizersTab /> );
+	render( <OrganizersPage /> );
 
 	expect(
 		await screen.findByText( 'Server down.', {
@@ -288,6 +288,6 @@ test( 'leaving without changes needs no confirmation', async () => {
 		screen.queryByRole( 'button', { name: 'Discard changes' } )
 	).not.toBeInTheDocument();
 	expect(
-		screen.getByRole( 'heading', { name: 'Organizers' } )
+		screen.getByRole( 'heading', { level: 1, name: 'Organizers' } )
 	).toHaveFocus();
 } );

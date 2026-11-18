@@ -5,12 +5,8 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import {
 	Button,
-	Card,
-	CardBody,
-	CardHeader,
 	Notice,
 	__experimentalConfirmDialog as ConfirmDialog,
-	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 
@@ -26,6 +22,7 @@ import {
 	AdminTableCell,
 	AdminTableHeaderCell,
 	ItemIdentity,
+	ListHeader,
 	RowActions,
 	TableMessage,
 } from 'fair-events-shared/src/admin-table/index.js';
@@ -87,19 +84,20 @@ function saveErrorMessage( error ) {
 }
 
 /**
- * Organizers Tab Component
+ * Organizers Page Component
  *
- * Replaces the single Organizer settings tab while the `organizers` bundle is
- * on: lists the sitewide default and the additional organizers, and edits
- * one at a time with the shared organizer form. The default keeps the site
+ * The Fair Events → Organizers page, registered while the `organizers`
+ * bundle is on (Settings then has no Organizer tab): lists the sitewide
+ * default and the additional organizers, and edits one at a time with the
+ * shared organizer form. The default keeps the site
  * fallbacks it has always had; additional organizers start blank and never
  * inherit the default's identity, logo or recipients.
  *
  * Results are reported next to the editor, not as page-level notices.
  *
- * @return {JSX.Element} The Organizers tab
+ * @return {JSX.Element} The Organizers page
  */
-export default function OrganizersTab() {
+export default function OrganizersPage() {
 	const [ organizers, setOrganizers ] = useState( null );
 	const [ siteDefaults, setSiteDefaults ] = useState( {
 		name: '',
@@ -367,12 +365,11 @@ export default function OrganizersTab() {
 
 	if ( ! editor ) {
 		return (
-			<Card>
-				<CardHeader>
-					<HStack wrap justify="space-between">
-						<h2 ref={ listHeadingRef } tabIndex={ -1 }>
-							{ __( 'Organizers', 'fair-events-experimental' ) }
-						</h2>
+			<div className="wrap fair-events-organizers-page">
+				<ListHeader
+					ref={ listHeadingRef }
+					title={ __( 'Organizers', 'fair-events-experimental' ) }
+					actions={
 						<Button
 							variant="primary"
 							onClick={ () => openEditor( null ) }
@@ -383,25 +380,23 @@ export default function OrganizersTab() {
 								'fair-events-experimental'
 							) }
 						</Button>
-					</HStack>
-				</CardHeader>
-				<CardBody>
-					<VStack spacing={ 3 }>
-						<p className="description" style={ { margin: 0 } }>
-							{ __(
-								'The default organizer identifies the whole site in its structured data. Additional organizers have their own identity and private notification addresses.',
-								'fair-events-experimental'
-							) }
-						</p>
-						{ organizers && loadError && (
-							<Notice status="error" isDismissible={ false }>
-								{ loadError }
-							</Notice>
+					}
+				/>
+				<VStack spacing={ 3 }>
+					<p className="description" style={ { margin: 0 } }>
+						{ __(
+							'The default organizer identifies the whole site in its structured data. Additional organizers have their own identity and private notification addresses.',
+							'fair-events-experimental'
 						) }
-						{ renderList() }
-					</VStack>
-				</CardBody>
-			</Card>
+					</p>
+					{ organizers && loadError && (
+						<Notice status="error" isDismissible={ false }>
+							{ loadError }
+						</Notice>
+					) }
+					{ renderList() }
+				</VStack>
+			</div>
 		);
 	}
 
@@ -421,7 +416,7 @@ export default function OrganizersTab() {
 	}
 
 	return (
-		<div className="fair-events-experimental-organizer-editor">
+		<div className="wrap fair-events-organizers-page fair-events-experimental-organizer-editor">
 			<VStack spacing={ 3 }>
 				<div>
 					<Button
@@ -432,13 +427,14 @@ export default function OrganizersTab() {
 						{ __( '← All organizers', 'fair-events-experimental' ) }
 					</Button>
 				</div>
-				<h2
+				<h1
 					ref={ editorHeadingRef }
 					tabIndex={ -1 }
 					style={ { margin: 0, overflowWrap: 'anywhere' } }
 				>
 					{ heading }
-				</h2>
+				</h1>
+				<hr className="wp-header-end" />
 				{ isDirty && (
 					<p className="description" style={ { margin: 0 } }>
 						{ __( 'Unsaved changes', 'fair-events-experimental' ) }

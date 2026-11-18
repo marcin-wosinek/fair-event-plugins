@@ -72,7 +72,14 @@ test.describe( 'OrganizersController', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
-		await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
+		// The bundle is off by default; this suite manages organizers.
+		await wp(
+			'option',
+			'update',
+			FEATURES_OPTION,
+			'{"organizers":true}',
+			'--format=json'
+		);
 		await api.post( SETTINGS_PATH, {
 			headers: adminHeaders,
 			data: { fair_events_organizer: {} },
@@ -342,6 +349,22 @@ test.describe( 'OrganizersController', () => {
 			expect( ( await read( id ) ).status() ).toBe( 404 );
 			expect( ( await update( id, { name: 'Ghost' } ) ).status() ).toBe(
 				404
+			);
+		}
+	} );
+
+	test( 'the routes are unavailable while the bundle keeps its default', async () => {
+		await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
+		try {
+			expect( ( await list() ).status() ).toBe( 404 );
+			expect( ( await read( 'default' ) ).status() ).toBe( 404 );
+		} finally {
+			await wp(
+				'option',
+				'update',
+				FEATURES_OPTION,
+				'{"organizers":true}',
+				'--format=json'
 			);
 		}
 	} );

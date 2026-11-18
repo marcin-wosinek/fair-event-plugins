@@ -33,6 +33,10 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/manage-event-schedule/index.js'
 		),
+		'admin/organizers/index': path.resolve(
+			process.cwd(),
+			'src/Admin/organizers/index.js'
+		),
 		'admin/manage-event-organizer/index': path.resolve(
 			process.cwd(),
 			'src/Admin/manage-event-organizer/index.js'

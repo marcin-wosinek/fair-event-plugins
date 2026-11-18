@@ -2,9 +2,9 @@
 /**
  * Admin Pages for Fair Events Experimental
  *
- * Registers the experimental admin pages (compare events, sources, Meta and
- * WhatsApp)
- * as submenus under the fair-events-calendar menu. The experimental
+ * Registers the experimental admin pages (compare events, sources,
+ * organizers, Meta and WhatsApp) as submenus under the fair-events-calendar
+ * menu. The experimental
  * settings live in an Experimental tab of the fair-events Settings page; the
  * former standalone settings slug only redirects there.
  *
@@ -44,6 +44,8 @@ class AdminPages {
 		add_action( 'admin_menu', array( $this, 'register_admin_pages' ) );
 		// After Fair Events' own menu reorder (priority 999).
 		add_action( 'admin_menu', array( $this, 'place_compare_events_before_sources' ), 1000 );
+		add_action( 'admin_menu', array( $this, 'place_organizers_before_settings' ), 1000 );
+		add_action( 'admin_init', array( $this, 'redirect_legacy_organizer_tab' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'fair_events_settings_enqueue_assets', array( $this, 'enqueue_settings_tab_assets' ) );
 	}
@@ -115,6 +117,20 @@ class AdminPages {
 			);
 		}
 
+		// Organizers page — `organizers` bundle. While it is registered the
+		// Settings page has no Organizer tab; while it is not, its URL is
+		// refused like any unknown page and Settings keeps that tab.
+		if ( \FairEventsExperimental\Core\Plugin::organizers_available() ) {
+			$this->page_hooks['fair-events-organizers'] = add_submenu_page(
+				$parent,
+				__( 'Organizers', 'fair-events-experimental' ),
+				__( 'Organizers', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-organizers',
+				array( $this, 'render_organizers_page' )
+			);
+		}
+
 		// WhatsApp page. The access token lives in Settings → Connectors.
 		$this->page_hooks['fair-events-whatsapp'] = add_submenu_page(
 			$parent,
@@ -158,6 +174,64 @@ class AdminPages {
 
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
 		$submenu[ $parent ] = $items;
+	}
+
+	/**
+	 * Keep Organizers immediately before Settings in the Events menu.
+	 *
+	 * Runs after Fair Events' reorder_admin_menu(), which puts Settings last.
+	 * Without the Organizers page, or without Settings, nothing moves.
+	 *
+	 * @return void
+	 */
+	public function place_organizers_before_settings() {
+		global $submenu;
+
+		$parent = $this->get_menu_parent_slug();
+		if ( empty( $submenu[ $parent ] ) ) {
+			return;
+		}
+
+		$items      = array_values( $submenu[ $parent ] );
+		$slugs      = array_column( $items, 2 );
+		$organizers = array_search( 'fair-events-organizers', $slugs, true );
+		if ( false === $organizers || ! in_array( 'fair-events-settings', $slugs, true ) ) {
+			return;
+		}
+
+		$organizers_item = $items[ $organizers ];
+		unset( $items[ $organizers ] );
+		$items    = array_values( $items );
+		$settings = array_search( 'fair-events-settings', array_column( $items, 2 ), true );
+		array_splice( $items, $settings, 0, array( $organizers_item ) );
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reordering this WordPress menu requires replacing its submenu array.
+		$submenu[ $parent ] = $items;
+	}
+
+	/**
+	 * Send the former Settings → Organizer tab URL to the Organizers page
+	 * while organizer management is on. Off, the tab is Fair Events' own
+	 * single-organizer form again and the URL is left alone. Temporary
+	 * (302), as the target depends on the bundle setting.
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_organizer_tab() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only navigation check.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( 'fair-events-settings' !== $page || 'organizer' !== $tab
+			|| wp_doing_ajax()
+			|| ! current_user_can( 'manage_options' )
+			|| ! \FairEventsExperimental\Core\Plugin::organizers_available() ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=fair-events-organizers' ), 302 );
+		exit;
 	}
 
 	/**
@@ -281,6 +355,16 @@ class AdminPages {
 				wp_enqueue_style( 'wp-components' );
 				break;
 
+			case 'fair-events-organizers':
+				// The logo field picks from the media library.
+				wp_enqueue_media();
+				$asset_file = include $exp_dir . 'build/admin/organizers/index.asset.php';
+				wp_enqueue_script( 'fair-events-organizers', $exp_url . 'build/admin/organizers/index.js', $asset_file['dependencies'], $asset_file['version'], true );
+				wp_set_script_translations( 'fair-events-organizers', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
+				// The list and shared admin table styles are bundled from fair-events-shared.
+				wp_enqueue_style( 'fair-events-organizers', $exp_url . 'build/admin/organizers/style-index.css', array( 'wp-components' ), $asset_file['version'] );
+				break;
+
 			case 'fair-events-whatsapp':
 				$asset_file = include $exp_dir . 'build/admin/whatsapp/index.asset.php';
 				wp_enqueue_script( 'fair-events-whatsapp', $exp_url . 'build/admin/whatsapp/index.js', $asset_file['dependencies'], $asset_file['version'], true );
@@ -340,17 +424,10 @@ class AdminPages {
 				'metaUrl'               => \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' )
 					? admin_url( 'admin.php?page=fair-events-meta' )
 					: null,
-				// Replaces the single Organizer tab with the Organizers
-				// manager; false restores Fair Events' own tab.
+				// Removes the single Organizer tab (the Organizers page
+				// manages every organizer); false keeps Fair Events' own tab.
 				'organizersEnabled'     => \FairEventsExperimental\Core\Plugin::organizers_available(),
 			)
-		);
-
-		wp_enqueue_style(
-			'fair-events-experimental-settings',
-			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/settings/style-index.css',
-			array( 'wp-components' ),
-			$asset_file['version']
 		);
 
 		wp_set_script_translations( 'fair-events-experimental-settings', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
@@ -375,6 +452,17 @@ class AdminPages {
 	public function render_sources_page() {
 		?>
 		<div id="fair-events-sources-root"></div>
+		<?php
+	}
+
+	/**
+	 * Render organizers page
+	 *
+	 * @return void
+	 */
+	public function render_organizers_page() {
+		?>
+		<div id="fair-events-organizers-root"></div>
 		<?php
 	}
 

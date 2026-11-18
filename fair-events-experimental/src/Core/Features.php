@@ -5,7 +5,8 @@
  * Manages the advanced bundles moved out of fair-events:
  * sources, ticketing extensions, mailings, Meta conversions and organizers.
  * Existing internal bundles default on; processing integrations that
- * require explicit consent and credentials default off.
+ * require explicit consent and credentials, and multiple organizers, default
+ * off.
  *
  * Resolution for is_enabled(), implemented by
  * {@see \FairEventsShared\FeatureFlags}:
@@ -76,7 +77,7 @@ class Features {
 			'organizers'       => array(
 				'label'       => 'Organizers',
 				'description' => 'Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer.',
-				'default'     => true,
+				'default'     => false,
 			),
 		);
 	}

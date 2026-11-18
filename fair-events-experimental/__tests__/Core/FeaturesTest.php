@@ -74,7 +74,7 @@ class FeaturesTest extends TestCase {
 				'ticketing'        => true,
 				'mailings'         => true,
 				'meta-conversions' => false,
-				'organizers'       => true,
+				'organizers'       => false,
 			),
 			$this->resolved()
 		);
@@ -101,6 +101,25 @@ class FeaturesTest extends TestCase {
 
 		$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = 'malformed';
 		$this->assertSame( false, Features::is_enabled( 'meta-conversions' ) );
+	}
+
+	/**
+	 * Organizers stay off until explicitly enabled, and an explicitly saved
+	 * choice is kept in both directions.
+	 *
+	 * @return void
+	 */
+	public function test_organizers_default_off_and_keep_saved_choice() {
+		$this->assertFalse( Features::is_enabled( 'organizers' ) );
+		$this->assertFalse( Features::all()['organizers']['default'] );
+
+		$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = array( 'organizers' => true );
+		$this->assertTrue( Features::is_enabled( 'organizers' ) );
+		// Saving another toggle keeps the stored organizers choice.
+		$this->assertTrue( Features::sanitize_option( array( 'sources' => true ) )['organizers'] );
+
+		$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = array( 'organizers' => false );
+		$this->assertFalse( Features::is_enabled( 'organizers' ) );
 	}
 
 	/**
