@@ -1,56 +1,39 @@
 /**
- * Organizer tab of the Manage Event page (#2305).
+ * Organizer section of Manage Event's Event Details (#2305).
  *
  * Administrators choose which organizer an event belongs to: the sitewide
- * default or one of the additional organizers. A series has one organizer,
- * chosen on the series; its dates show it with a link there.
+ * default or one of the additional organizers. It sits above Categories and
+ * saves on its own. A series has one organizer, chosen on the series; its
+ * dates show it with a link there.
  *
  * @package FairEventsExperimental
  */
 
 import { useEffect, useRef, useState } from '@wordpress/element';
 import {
+	BaseControl,
 	Button,
-	Card,
-	CardBody,
-	CardHeader,
 	Notice,
-	SelectControl,
 	Spinner,
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import OrganizerSelect, {
+	DEFAULT_ORGANIZER_ID,
+	organizerLabel,
+} from '../components/OrganizerSelect.js';
 
-export const TAB_NAME = 'organizer';
+export { organizerLabel };
 
-const DEFAULT_ID = 'default';
+export const SECTION_NAME = 'organizer';
 
-/**
- * Display name of an organizer option.
- *
- * @param {Object} organizer Picker option `{ id, name, is_default }`.
- * @return {string} Label for the organizer.
- */
-export function organizerLabel( organizer ) {
-	if ( organizer.is_default ) {
-		return organizer.name
-			? sprintf(
-					/* translators: %s: sitewide organizer name. */
-					__( 'Sitewide default (%s)', 'fair-events-experimental' ),
-					organizer.name
-				)
-			: __( 'Sitewide default', 'fair-events-experimental' );
-	}
-
-	return (
-		organizer.name ||
-		__( '(unnamed organizer)', 'fair-events-experimental' )
-	);
-}
+// Key the section reports unsaved edits and parks drafts under, so the
+// host marks the Event Details tab.
+export const DIRTY_KEY = `event-details/${ SECTION_NAME }`;
 
 /**
- * URL of this page for another event date, opened on this tab.
+ * URL of this page for another event date, opened on Event Details.
  *
  * @param {number} eventDateId Event date to open.
  * @return {string} Manage Event URL.
@@ -58,19 +41,19 @@ export function organizerLabel( organizer ) {
 function manageEventUrl( eventDateId ) {
 	const url = new URL( window.location.href );
 	url.searchParams.set( 'event_date_id', String( eventDateId ) );
-	url.searchParams.set( 'tab', TAB_NAME );
+	url.searchParams.delete( 'tab' );
 	return url.toString();
 }
 
 /**
- * Organizer tab content.
+ * Organizer section content.
  *
  * @param {Object}   props             Component props.
  * @param {number}   props.eventDateId Event date ID.
- * @param {Function} props.setTabDirty Marks this tab as holding unsaved edits.
+ * @param {Function} props.setTabDirty Reports unsaved edits to the host page.
  * @param {Function} props.getTabDraft Reads edits parked while another tab was open.
  * @param {Function} props.setTabDraft Parks edits with the host page.
- * @return {JSX.Element} The tab content.
+ * @return {JSX.Element} The section.
  */
 export default function EventOrganizer( {
 	eventDateId,
@@ -83,7 +66,7 @@ export default function EventOrganizer( {
 	const [ reloadKey, setReloadKey ] = useState( 0 );
 	// Last loaded or saved response; null until loaded.
 	const [ saved, setSaved ] = useState( null );
-	const [ selected, setSelected ] = useState( DEFAULT_ID );
+	const [ selected, setSelected ] = useState( DEFAULT_ORGANIZER_ID );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState( null );
 	const [ success, setSuccess ] = useState( null );
@@ -104,7 +87,7 @@ export default function EventOrganizer( {
 				setSaved( data );
 				// A choice parked when the organizer switched tabs wins over
 				// what was just loaded.
-				const draft = getTabDraft?.( TAB_NAME );
+				const draft = getTabDraft?.( DIRTY_KEY );
 				setSelected(
 					draft && ! data.series_event_date_id
 						? draft.selected
@@ -137,7 +120,7 @@ export default function EventOrganizer( {
 	const dirty = !! saved && ! isSeriesDate && selected !== saved.organizer_id;
 
 	useEffect( () => {
-		setTabDirty?.( TAB_NAME, dirty );
+		setTabDirty?.( DIRTY_KEY, dirty );
 	}, [ dirty, setTabDirty ] );
 
 	// Park an unsaved choice with the host page, which outlives this tab.
@@ -145,7 +128,7 @@ export default function EventOrganizer( {
 		if ( ! saved ) {
 			return;
 		}
-		setTabDraft?.( TAB_NAME, dirty ? { selected } : undefined );
+		setTabDraft?.( DIRTY_KEY, dirty ? { selected } : undefined );
 	}, [ dirty, selected, saved, setTabDraft ] );
 
 	const handleSave = async () => {
@@ -166,7 +149,7 @@ export default function EventOrganizer( {
 			setSaved( data );
 			setSelected( data.organizer_id );
 			setSuccess(
-				DEFAULT_ID === data.organizer_id
+				DEFAULT_ORGANIZER_ID === data.organizer_id
 					? __(
 							'Organizer saved. This event uses the sitewide organizer.',
 							'fair-events-experimental'
@@ -187,21 +170,40 @@ export default function EventOrganizer( {
 		}
 	};
 
-	const organizers = saved?.organizers || [];
-	const findOrganizer = ( id ) => organizers.find( ( o ) => o.id === id );
-	const savedMissing = !! saved && ! findOrganizer( saved.organizer_id );
-
-	const options = organizers.map( ( organizer ) => ( {
-		value: organizer.id,
-		label: organizerLabel( organizer ),
-	} ) );
-	if ( savedMissing ) {
-		options.push( {
-			value: saved.organizer_id,
-			label: __( 'Unavailable organizer', 'fair-events-experimental' ),
-			disabled: true,
-		} );
+	if ( loading ) {
+		return (
+			<BaseControl
+				label={ __( 'Organizer', 'fair-events-experimental' ) }
+				__nextHasNoMarginBottom
+			>
+				<div>
+					<Spinner />
+				</div>
+			</BaseControl>
+		);
 	}
+
+	if ( loadError ) {
+		return (
+			<VStack spacing={ 2 }>
+				<Notice status="error" isDismissible={ false }>
+					{ loadError }
+				</Notice>
+				<div>
+					<Button
+						variant="secondary"
+						onClick={ () => setReloadKey( ( key ) => key + 1 ) }
+					>
+						{ __( 'Try again', 'fair-events-experimental' ) }
+					</Button>
+				</div>
+			</VStack>
+		);
+	}
+
+	const organizers = saved.organizers || [];
+	const findOrganizer = ( id ) => organizers.find( ( o ) => o.id === id );
+	const savedMissing = ! findOrganizer( saved.organizer_id );
 
 	const missingNotice = savedMissing && (
 		<Notice status="warning" isDismissible={ false }>
@@ -212,127 +214,84 @@ export default function EventOrganizer( {
 		</Notice>
 	);
 
-	const renderBody = () => {
-		if ( loading ) {
-			return <Spinner />;
-		}
-
-		if ( loadError ) {
-			return (
-				<VStack spacing={ 3 }>
-					<Notice status="error" isDismissible={ false }>
-						{ loadError }
-					</Notice>
-					<div>
-						<Button
-							variant="secondary"
-							onClick={ () => setReloadKey( ( key ) => key + 1 ) }
-						>
-							{ __( 'Try again', 'fair-events-experimental' ) }
-						</Button>
-					</div>
-				</VStack>
-			);
-		}
-
-		if ( isSeriesDate ) {
-			const effective = findOrganizer( saved.effective_organizer_id );
-			return (
-				<VStack spacing={ 4 }>
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'This date is part of a series. All its dates share the series’ organizer, which is chosen on the series.',
-							'fair-events-experimental'
-						) }
-					</Notice>
-					{ missingNotice }
-					<p style={ { margin: 0, overflowWrap: 'anywhere' } }>
-						{ sprintf(
-							/* translators: %s: organizer name. */
-							__( 'Organizer: %s', 'fair-events-experimental' ),
-							effective
-								? organizerLabel( effective )
-								: __(
-										'Sitewide default',
-										'fair-events-experimental'
-									)
-						) }
-					</p>
-					<div>
-						<Button
-							variant="secondary"
-							href={ manageEventUrl(
-								saved.series_event_date_id
-							) }
-						>
-							{ __(
-								'Choose the organizer on the series',
-								'fair-events-experimental'
-							) }
-						</Button>
-					</div>
-				</VStack>
-			);
-		}
-
+	if ( isSeriesDate ) {
+		const effective = findOrganizer( saved.effective_organizer_id );
 		return (
-			<VStack spacing={ 4 }>
+			<VStack spacing={ 2 }>
 				{ missingNotice }
-				<SelectControl
-					label={ __( 'Organizer', 'fair-events-experimental' ) }
-					help={ __(
-						'The organizer named for this event in search results and other public event information. All dates of a series share it.',
+				<p style={ { margin: 0, overflowWrap: 'anywhere' } }>
+					{ sprintf(
+						/* translators: %s: organizer name. */
+						__( 'Organizer: %s', 'fair-events-experimental' ),
+						effective
+							? organizerLabel( effective )
+							: __(
+									'Sitewide default',
+									'fair-events-experimental'
+								)
+					) }
+				</p>
+				<p style={ { margin: 0, color: '#757575' } }>
+					{ __(
+						'This date is part of a series. All its dates share the series’ organizer, which is chosen on the series.',
 						'fair-events-experimental'
 					) }
-					value={ selected }
-					options={ options }
-					onChange={ ( value ) => {
-						setSelected( value );
-						setSuccess( null );
-					} }
-					disabled={ saving }
-					__next40pxDefaultSize
-					__nextHasNoMarginBottom
-				/>
-				{ error && (
-					<Notice status="error" isDismissible={ false }>
-						{ error }
-					</Notice>
-				) }
-				{ success && (
-					<Notice
-						status="success"
-						onRemove={ () => setSuccess( null ) }
-					>
-						{ success }
-					</Notice>
-				) }
+				</p>
 				<div>
 					<Button
-						variant="primary"
-						onClick={ handleSave }
-						isBusy={ saving }
-						disabled={ saving }
-						__next40pxDefaultSize
+						variant="secondary"
+						href={ manageEventUrl( saved.series_event_date_id ) }
 					>
-						{ saving
-							? __( 'Saving…', 'fair-events-experimental' )
-							: __(
-									'Save organizer',
-									'fair-events-experimental'
-								) }
+						{ __(
+							'Choose the organizer on the series',
+							'fair-events-experimental'
+						) }
 					</Button>
 				</div>
 			</VStack>
 		);
-	};
+	}
 
 	return (
-		<Card style={ { marginTop: '16px' } }>
-			<CardHeader>
-				<h2>{ __( 'Organizer', 'fair-events-experimental' ) }</h2>
-			</CardHeader>
-			<CardBody>{ renderBody() }</CardBody>
-		</Card>
+		<VStack spacing={ 2 }>
+			{ missingNotice }
+			<OrganizerSelect
+				organizers={ organizers }
+				value={ selected }
+				unavailableId={ savedMissing ? saved.organizer_id : undefined }
+				onChange={ ( value ) => {
+					setSelected( value );
+					setSuccess( null );
+				} }
+				disabled={ saving }
+				help={ __(
+					'The organizer named for this event in search results and other public event information. All dates of a series share it. Saved separately from the other event details.',
+					'fair-events-experimental'
+				) }
+			/>
+			{ error && (
+				<Notice status="error" isDismissible={ false }>
+					{ error }
+				</Notice>
+			) }
+			{ success && (
+				<Notice status="success" onRemove={ () => setSuccess( null ) }>
+					{ success }
+				</Notice>
+			) }
+			<div>
+				<Button
+					variant="secondary"
+					onClick={ handleSave }
+					isBusy={ saving }
+					disabled={ saving }
+					__next40pxDefaultSize
+				>
+					{ saving
+						? __( 'Saving…', 'fair-events-experimental' )
+						: __( 'Save organizer', 'fair-events-experimental' ) }
+				</Button>
+			</div>
+		</VStack>
 	);
 }

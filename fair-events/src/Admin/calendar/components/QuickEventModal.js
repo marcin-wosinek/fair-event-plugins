@@ -6,7 +6,7 @@
  * @package FairEvents
  */
 
-import { useState, useEffect } from '@wordpress/element';
+import { Fragment, useState, useEffect } from '@wordpress/element';
 import {
 	Modal,
 	TextControl,
@@ -21,6 +21,7 @@ import {
 	__experimentalToggleGroupControlOption as ToggleGroupControlOption,
 } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
+import { applyFilters } from '@wordpress/hooks';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	decodeEntityText,
@@ -69,6 +70,9 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 
 	// Categories.
 	const [ categories, setCategories ] = useState( [] );
+
+	// Values of fields other plugins add, keyed by field name.
+	const [ extensionValues, setExtensionValues ] = useState( {} );
 	const [ availableCategories, setAvailableCategories ] = useState( [] );
 
 	// Link type: 'none' | 'external' | 'post'.
@@ -228,6 +232,30 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 		);
 	};
 
+	/*
+	 * Fields other plugins add above Categories. Each is
+	 * `{ name, render: ( { value, onChange, disabled } ) => ReactNode,
+	 * requestData: ( value ) => Object }`; the popup keeps each field's
+	 * value and merges its requestData() into the create request.
+	 */
+	const extensionFields = applyFilters(
+		'fairEvents.calendar.quickEventFields',
+		[]
+	);
+
+	const setExtensionValue = ( name, value ) =>
+		setExtensionValues( ( prev ) => ( { ...prev, [ name ]: value } ) );
+
+	const extensionRequestData = () =>
+		extensionFields.reduce(
+			( data, field ) => ( {
+				...data,
+				...( field.requestData?.( extensionValues[ field.name ] ) ||
+					{} ),
+			} ),
+			{}
+		);
+
 	const timingError = getTimingError(
 		{ startDate, endDate, startTime, endTime, allDay },
 		{ requireDate: true }
@@ -258,6 +286,7 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 				path: '/fair-events/v1/event-dates',
 				method: 'POST',
 				data: {
+					...extensionRequestData(),
 					title,
 					start_date: startDate,
 					end_date: endDate || startDate,
@@ -439,6 +468,20 @@ export default function QuickEventModal( { date, onClose, onSuccess } ) {
 								required
 								autoFocus
 							/>
+
+							{ extensionFields.map( ( field ) => (
+								<Fragment key={ field.name }>
+									{ field.render( {
+										value: extensionValues[ field.name ],
+										onChange: ( value ) =>
+											setExtensionValue(
+												field.name,
+												value
+											),
+										disabled: isSaving,
+									} ) }
+								</Fragment>
+							) ) }
 
 							<CategoryInput
 								value={ categories }

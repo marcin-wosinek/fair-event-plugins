@@ -1150,6 +1150,22 @@ class EventDatesController extends WP_REST_Controller {
 			)
 		);
 
+		/**
+		 * Filters the row data of an event date about to be created.
+		 *
+		 * Runs before anything is stored, so an extension can validate its
+		 * own request fields and refuse the whole creation with a WP_Error,
+		 * or add columns that are stored in the same insert (for example
+		 * `organizer_id`, #2305).
+		 *
+		 * @param array           $data    Row data for EventDates::create_standalone().
+		 * @param WP_REST_Request $request Create request.
+		 */
+		$data = apply_filters( 'fair_events_create_event_date_data', $data, $request );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
 		$id = EventDates::create_standalone( $data );
 
 		if ( ! $id ) {

@@ -12,6 +12,7 @@ import {
 	within,
 } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
+import { addFilter, removeFilter } from '@wordpress/hooks';
 import QuickEventModal from '../QuickEventModal.js';
 import { ADD_NEW_VENUE_VALUE } from '../../../components/InlineVenueCreator.js';
 
@@ -1330,5 +1331,140 @@ describe( 'optional times (#1851)', () => {
 		expect( screen.getByLabelText( 'Start date' ) ).toHaveValue(
 			'2026-11-02'
 		);
+	} );
+} );
+
+describe( 'QuickEventModal extension fields (#2305)', () => {
+	const NAMESPACE = 'test/quick-event-field-2305';
+
+	beforeEach( () => {
+		addFilter(
+			'fairEvents.calendar.quickEventFields',
+			NAMESPACE,
+			( fields ) => [
+				...fields,
+				{
+					name: 'organizer',
+					render: ( { value, onChange, disabled } ) => (
+						<label>
+							Test organizer
+							<input
+								value={ value || '' }
+								onChange={ ( e ) => onChange( e.target.value ) }
+								disabled={ disabled }
+							/>
+						</label>
+					),
+					requestData: ( value ) =>
+						value ? { organizer_id: value } : {},
+				},
+			]
+		);
+	} );
+
+	afterEach( () => {
+		removeFilter( 'fairEvents.calendar.quickEventFields', NAMESPACE );
+	} );
+
+	it( 'renders the field above Categories', async () => {
+		await renderModal();
+
+		const field = screen.getByLabelText( 'Test organizer' );
+		expect(
+			field.compareDocumentPosition(
+				screen.getByLabelText( 'Categories' )
+			) & Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+	} );
+
+	it( 'sends nothing extra while the field keeps its default', async () => {
+		const { onSuccess } = await renderModal();
+		fillTitle();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData() ).not.toHaveProperty( 'organizer_id' );
+	} );
+
+	it( 'sends the chosen value with the create request', async () => {
+		const { onSuccess } = await renderModal();
+		fillTitle();
+		fireEvent.change( screen.getByLabelText( 'Test organizer' ), {
+			target: { value: 'north' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData() ).toMatchObject( {
+			title: 'Test Event',
+			organizer_id: 'north',
+		} );
+	} );
+
+	it( 'keeps the choice and reports a failed creation', async () => {
+		const create = apiFetch.getMockImplementation();
+		apiFetch.mockImplementation( ( opts ) =>
+			opts.path === '/fair-events/v1/event-dates' &&
+			opts.method === 'POST'
+				? Promise.reject( {
+						message:
+							'Choose the sitewide organizer or one of the organizers in the list.',
+					} )
+				: create( opts )
+		);
+		const { onSuccess } = await renderModal();
+		fillTitle();
+		fireEvent.change( screen.getByLabelText( 'Test organizer' ), {
+			target: { value: 'gone' },
+		} );
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+
+		expect(
+			await screen.findByText(
+				'Choose the sitewide organizer or one of the organizers in the list.'
+			)
+		).toBeInTheDocument();
+		expect( onSuccess ).not.toHaveBeenCalled();
+		expect( screen.getByLabelText( 'Test organizer' ) ).toHaveValue(
+			'gone'
+		);
+		expect( screen.getByLabelText( 'Test organizer' ) ).toBeEnabled();
+	} );
+
+	it( 'closes on Cancel without creating', async () => {
+		const { onClose } = await renderModal();
+		fireEvent.change( screen.getByLabelText( 'Test organizer' ), {
+			target: { value: 'north' },
+		} );
+		fireEvent.click( screen.getByRole( 'button', { name: 'Cancel' } ) );
+
+		expect( onClose ).toHaveBeenCalled();
+		expect(
+			apiFetch.mock.calls.some(
+				( [ opts ] ) =>
+					opts.path === '/fair-events/v1/event-dates' &&
+					opts.method === 'POST'
+			)
+		).toBe( false );
+	} );
+} );
+
+describe( 'QuickEventModal without extension fields (#2305)', () => {
+	it( 'creates without an organizer field', async () => {
+		const { onSuccess } = await renderModal();
+		expect( screen.queryByLabelText( /organizer/i ) ).toBeNull();
+		fillTitle();
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Create Event' } )
+		);
+
+		await waitFor( () => expect( onSuccess ).toHaveBeenCalled() );
+		expect( createCallData() ).not.toHaveProperty( 'organizer_id' );
 	} );
 } );

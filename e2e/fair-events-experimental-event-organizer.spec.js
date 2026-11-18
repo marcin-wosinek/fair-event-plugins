@@ -1,12 +1,14 @@
 /**
  * Choosing an event's organizer in Fair Events Experimental (#2305).
  *
- * Covers selecting an organizer on Manage Event's Organizer tab, keeping it
- * across a reload and an unsaved choice across a tab switch, resetting to
- * the sitewide default, a series date showing its series' organizer,
- * copying a page-backed event and a calendar-only series (the latter while
- * organizers are turned off), and the tab disappearing while organizers are
- * off with every assignment kept.
+ * Covers selecting an organizer in Manage Event's Event Details (above
+ * Categories, no Organizer tab), keeping it across a reload and an unsaved
+ * choice across a tab switch, resetting to the sitewide default, an old
+ * Organizer tab link opening Event Details, a series date showing its
+ * series' organizer, choosing the organizer in the calendar's Create Event
+ * popup, copying a page-backed event and a calendar-only series (the latter
+ * while organizers are turned off), and the field disappearing from both
+ * places while organizers are off with every assignment kept.
  *
  * Run: `npm run test:e2e:local -- e2e/fair-events-experimental-event-organizer.spec.js`.
  */
@@ -18,11 +20,17 @@ import { setExperimentalFeature } from './support/experimental-features.js';
 const OPTION_PREFIX = 'fair_events_experimental_organizer_';
 const INDEX_OPTION = 'fair_events_experimental_organizer_ids';
 
-const manageUrl = (id, tab = 'organizer') =>
-	`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${id}&tab=${tab}`;
+const manageUrl = (id, tab) =>
+	`/wp-admin/admin.php?page=fair-events-manage-event&event_date_id=${id}${
+		tab ? `&tab=${tab}` : ''
+	}`;
 
 const organizerSelect = (page) =>
 	page.getByRole('combobox', { name: 'Organizer' });
+
+// The calendar toolbar's button; each day also has an "Add event" button.
+const addEventButton = (page) =>
+	page.getByRole('button', { name: 'Add event' }).first();
 
 /** Raw organizer_id column of an event date row, '' when NULL. */
 function storedOrganizerId(eventDateId) {
@@ -216,22 +224,42 @@ test.describe('Event organizer', () => {
 
 	test('selects, keeps, and resets an event organizer', async ({ page }) => {
 		await loginAsAdmin(page);
-		await page.goto(manageUrl(pageEvent.id));
+		// An old Organizer tab link opens Event Details.
+		await page.goto(manageUrl(pageEvent.id, 'organizer'));
 
 		await expect(
-			page.getByRole('tab', { name: 'Organizer', selected: true })
+			page.getByRole('tab', { name: 'Event Details', selected: true })
 		).toBeVisible();
+		expect(new URL(page.url()).searchParams.has('tab')).toBe(false);
+		await expect(
+			page.getByRole('tab', { name: /^Organizer/ })
+		).toHaveCount(0);
 		await expect(organizerSelect(page)).toHaveValue('default');
+
+		// Placed directly above Categories.
+		const followsOrganizer = await organizerSelect(page).evaluate(
+			(select) => {
+				const categories = document.querySelector(
+					'.components-form-token-field'
+				);
+				return Boolean(
+					categories &&
+						select.compareDocumentPosition(categories) &
+							Node.DOCUMENT_POSITION_FOLLOWING
+				);
+			}
+		);
+		expect(followsOrganizer).toBe(true);
 		await expect(
 			page.getByRole('option', {
 				name: 'Sitewide default (Sitewide Club)',
 			})
 		).toHaveCount(1);
 
-		// An unsaved choice survives switching tabs and marks the tab.
+		// An unsaved choice marks Event Details and survives switching tabs.
 		await organizerSelect(page).selectOption({ label: 'South Club' });
-		await page.getByRole('tab', { name: 'Event Details' }).click();
-		await page.getByRole('tab', { name: 'Organizer •' }).click();
+		await page.getByRole('tab', { name: 'Admin' }).click();
+		await page.getByRole('tab', { name: 'Event Details •' }).click();
 		await expect(organizerSelect(page)).toHaveValue(south.id);
 
 		await organizerSelect(page).selectOption({ label: 'North Club' });
@@ -290,9 +318,53 @@ test.describe('Event organizer', () => {
 		});
 		await expect(seriesLink).toHaveAttribute(
 			'href',
-			new RegExp(`event_date_id=${series.id}&tab=organizer`)
+			new RegExp(`event_date_id=${series.id}$`)
 		);
 		await seriesLink.click();
+		await expect(organizerSelect(page)).toHaveValue(south.id);
+	});
+
+	test('chooses the organizer when creating an event in the calendar', async ({
+		page,
+	}) => {
+		await loginAsAdmin(page);
+		await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
+		await page.waitForFunction(() => window.wp?.apiFetch);
+
+		// Cancelling creates nothing.
+		await addEventButton(page).click();
+		let modal = page.getByRole('dialog', { name: 'Quick Add Event' });
+		await expect(organizerSelect(modal)).toHaveValue('default');
+		await organizerSelect(modal).selectOption({ label: 'North Club' });
+		await modal.getByRole('button', { name: 'Cancel' }).click();
+		await expect(modal).toHaveCount(0);
+
+		await addEventButton(page).click();
+		modal = page.getByRole('dialog', { name: 'Quick Add Event' });
+		await expect(organizerSelect(modal)).toHaveValue('default');
+		const title = `Organizer calendar event ${Date.now()}`;
+		await modal.getByLabel('Title').fill(title);
+		await organizerSelect(modal).selectOption({ label: 'South Club' });
+		await modal.getByRole('button', { name: 'Create Event' }).click();
+		await expect(
+			page
+				.locator('#fair-events-calendar-root')
+				.getByText(`Event "${title}" created.`)
+		).toBeVisible();
+
+		const href = await page
+			.getByRole('link', { name: 'Manage Event' })
+			.getAttribute('href');
+		const createdId = Number(
+			new URL(href, 'http://example.test').searchParams.get(
+				'event_date_id'
+			)
+		);
+		eventDateIds.push(createdId);
+		expect(storedOrganizerId(createdId)).toBe(south.id);
+
+		// Persisted: Manage Event shows it after a fresh load.
+		await page.goto(manageUrl(createdId));
 		await expect(organizerSelect(page)).toHaveValue(south.id);
 	});
 
@@ -350,32 +422,29 @@ test.describe('Event organizer', () => {
 		expect(fromOccurrence.organizer_id).toBe(south.id);
 	});
 
-	test('turning organizers off hides the tab and keeps the assignment', async ({
+	test('turning organizers off hides the field and keeps the assignment', async ({
 		page,
 	}) => {
 		await loginAsAdmin(page);
 		setExperimentalFeature('organizers', false);
 		try {
 			await page.goto(manageUrl(pageEvent.id));
-			await expect(
-				page.getByRole('tab', {
-					name: 'Event Details',
-					selected: true,
-				})
-			).toBeVisible();
-			await expect(
-				page.getByRole('tab', { name: 'Organizer', exact: true })
-			).toHaveCount(0);
+			await expect(page.getByLabel('Categories')).toBeVisible();
+			await expect(organizerSelect(page)).toHaveCount(0);
 			expect(storedOrganizerId(pageEvent.id)).toBe(north.id);
+
+			await page.goto('/wp-admin/admin.php?page=fair-events-calendar');
+			await addEventButton(page).click();
+			const modal = page.getByRole('dialog', {
+				name: 'Quick Add Event',
+			});
+			await expect(modal.getByLabel('Categories')).toBeVisible();
+			await expect(organizerSelect(modal)).toHaveCount(0);
 		} finally {
 			setExperimentalFeature('organizers', true);
 		}
 
-		// The host page moved the URL to the first tab while this one was absent.
 		await page.goto(manageUrl(pageEvent.id));
-		await expect(
-			page.getByRole('tab', { name: 'Organizer', selected: true })
-		).toBeVisible();
 		await expect(organizerSelect(page)).toHaveValue(north.id);
 	});
 });

@@ -10,6 +10,8 @@ namespace FairEventsExperimental\Services;
 use FairEvents\Helpers\OrganizationSchema;
 use FairEvents\Models\EventDates;
 use FairEventsExperimental\Models\OrganizerRepository;
+use WP_Error;
+use WP_REST_Request;
 
 defined( 'WPINC' ) || die;
 
@@ -57,6 +59,7 @@ class EventOrganizer {
 	public static function register_hooks() {
 		$service = new self();
 		add_filter( 'fair_events_event_jsonld_organizer', array( $service, 'filter_jsonld_organizer' ), 10, 2 );
+		add_filter( 'fair_events_create_event_date_data', array( $service, 'filter_create_data' ), 10, 2 );
 	}
 
 	/**
@@ -165,6 +168,54 @@ class EventOrganizer {
 			},
 			$this->repository->all()
 		);
+	}
+
+	/**
+	 * Store the organizer chosen when an event is created.
+	 *
+	 * Reads the create request's optional `organizer_id`. It is checked
+	 * before anything is stored, and an additional organizer is written in
+	 * the same insert as the event, so a refused or failed creation leaves
+	 * nothing behind and a retry cannot duplicate it. A series stores it on
+	 * the created master, which every generated date uses. Omitted or
+	 * "default" keeps the sitewide organizer.
+	 *
+	 * @param array|WP_Error  $data    Row data for the new event date.
+	 * @param WP_REST_Request $request Create request.
+	 * @return array|WP_Error Row data, or an error refusing the creation.
+	 */
+	public function filter_create_data( $data, $request ) {
+		if ( is_wp_error( $data ) || ! $request instanceof WP_REST_Request ) {
+			return $data;
+		}
+
+		$organizer_id = $request->get_param( 'organizer_id' );
+		if ( null === $organizer_id ) {
+			return $data;
+		}
+
+		// Organizers are managed by administrators.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to choose an organizer for this event.', 'fair-events-experimental' ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		if ( ! $this->is_assignable( $organizer_id ) ) {
+			return new WP_Error(
+				'rest_invalid_organizer',
+				__( 'Choose the sitewide organizer or one of the organizers in the list.', 'fair-events-experimental' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( OrganizerRepository::DEFAULT_ID !== $organizer_id ) {
+			$data['organizer_id'] = $organizer_id;
+		}
+
+		return $data;
 	}
 
 	/**
