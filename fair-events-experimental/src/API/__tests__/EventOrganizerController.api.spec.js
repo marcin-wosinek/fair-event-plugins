@@ -176,7 +176,8 @@ test.describe( 'EventOrganizerController', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
-		await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
+		// The bundle is off by default; this suite assigns organizers.
+		await setOrganizersBundle( true );
 		await api.post( SETTINGS_PATH, {
 			headers: adminHeaders,
 			data: {
@@ -457,7 +458,7 @@ test.describe( 'EventOrganizerController', () => {
 			expect( off.html ).not.toContain( 'North Club' );
 			expect( await storedOrganizerId( event.id ) ).toBe( north.id );
 		} finally {
-			await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
+			await setOrganizersBundle( true );
 		}
 
 		expect( ( await ( await read( event.id ) ).json() ).organizer_id ).toBe(

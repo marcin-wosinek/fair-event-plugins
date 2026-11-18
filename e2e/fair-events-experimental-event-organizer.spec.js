@@ -109,7 +109,8 @@ test.describe('Event organizer', () => {
 	const postIds = [];
 
 	test.beforeAll(async ({ browser }) => {
-		setExperimentalFeature('organizers', undefined);
+		// The bundle is off by default; this suite assigns organizers.
+		setExperimentalFeature('organizers', true);
 
 		const page = await browser.newPage();
 		await loginAsAdmin(page);
@@ -327,7 +328,7 @@ test.describe('Event organizer', () => {
 			eventDateIds.push(copiedSeriesId);
 			expect(storedOrganizerId(copiedSeriesId)).toBe(south.id);
 		} finally {
-			setExperimentalFeature('organizers', undefined);
+			setExperimentalFeature('organizers', true);
 		}
 
 		const copied = await apiFetch(page, {
@@ -367,7 +368,7 @@ test.describe('Event organizer', () => {
 			).toHaveCount(0);
 			expect(storedOrganizerId(pageEvent.id)).toBe(north.id);
 		} finally {
-			setExperimentalFeature('organizers', undefined);
+			setExperimentalFeature('organizers', true);
 		}
 
 		// The host page moved the URL to the first tab while this one was absent.

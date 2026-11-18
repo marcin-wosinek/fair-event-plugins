@@ -2,8 +2,8 @@
  * Toggle one Fair Events Experimental bundle on the wp-env `tests` site.
  *
  * The tests site runs fair-events-experimental, whose bundles change some
- * core screens (e.g. `organizers` turns the Organizer settings tab into the
- * Organizers manager). Specs covering the core screen turn the bundle off
+ * core screens (e.g. `organizers`, off by default, moves the Organizer
+ * settings tab to its own Organizers page). Specs set the state they need
  * for their run and restore the previous value afterwards.
  */
 
