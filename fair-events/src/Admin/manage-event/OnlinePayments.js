@@ -21,6 +21,7 @@ import {
 } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 
 const PER_PAGE = 100;
 const siteCurrency = () => window.fairPaymentsConnector?.currency || 'EUR';
@@ -267,9 +268,9 @@ export default function OnlinePayments( {
 															) }
 														</td>
 														<td>
-															{ tx.description || (
-																<em>-</em>
-															) }
+															{ decodeEntityText(
+																tx.description
+															) || <em>-</em> }
 														</td>
 														<td>
 															{ renderParticipant(
@@ -427,7 +428,9 @@ export default function OnlinePayments( {
 																		) }
 																	</td>
 																	<td>
-																		{ tx.description || (
+																		{ decodeEntityText(
+																			tx.description
+																		) || (
 																			<em>
 																				-
 																			</em>
