@@ -32,7 +32,7 @@ class InstagramPostingService {
 	 * @return string|null Instagram user ID or null if not configured.
 	 */
 	private function get_user_id() {
-		return get_option( 'fair_audience_instagram_user_id', '' ) ?: null;
+		return InstagramConnection::user_id() ?: null;
 	}
 
 	/**
@@ -41,43 +41,19 @@ class InstagramPostingService {
 	 * @return string|null Access token or null if not configured.
 	 */
 	private function get_access_token() {
-		return get_option( 'fair_audience_instagram_access_token', '' ) ?: null;
+		return InstagramConnection::access_token() ?: null;
 	}
 
 	/**
-	 * Check if Instagram is properly configured.
+	 * Check if Instagram is properly configured, through the shared
+	 * connection (Fair Events Experimental or Fair Audience).
 	 *
 	 * @return bool|WP_Error True if configured, WP_Error otherwise.
 	 */
 	public function is_configured() {
-		$credentials = \FairAudience\Settings\InstagramCredentials::class;
+		$reason = InstagramConnection::unavailable_reason();
 
-		// Checked before the token itself, which reads as empty when unreadable.
-		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
-			return new WP_Error(
-				'instagram_credentials_unavailable',
-				$credentials::admin_message( $credentials::status() )
-			);
-		}
-
-		$user_id      = $this->get_user_id();
-		$access_token = $this->get_access_token();
-
-		if ( empty( $user_id ) ) {
-			return new WP_Error(
-				'instagram_not_configured',
-				__( 'Instagram user ID is not configured. Please connect your Instagram account in Settings.', 'fair-audience-experimental' )
-			);
-		}
-
-		if ( empty( $access_token ) ) {
-			return new WP_Error(
-				'instagram_not_configured',
-				__( 'Instagram access token is not configured. Please connect your Instagram account in Settings.', 'fair-audience-experimental' )
-			);
-		}
-
-		return true;
+		return null === $reason ? true : $reason;
 	}
 
 	/**

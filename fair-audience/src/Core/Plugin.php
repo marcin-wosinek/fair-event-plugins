@@ -88,7 +88,8 @@ class Plugin {
 
 		// Encrypt the Instagram access token at rest. Registered on every
 		// request, whatever the experimental companion's state: its daily
-		// token refresh rewrites the token outside the admin.
+		// token refresh rewrites the token outside the admin. Skipped on
+		// requests where Fair Events Experimental owns the connection.
 		\FairAudience\Settings\InstagramCredentials::init();
 
 		// Initialize settings.

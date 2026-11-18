@@ -3,7 +3,8 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * sources, ticketing extensions, mailings, Meta conversions and organizers.
+ * sources, ticketing extensions, mailings, Meta conversions, organizers and
+ * the Instagram connection.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials, and multiple organizers, default
  * off.
@@ -79,6 +80,11 @@ class Features {
 				'description' => 'Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer.',
 				'default'     => false,
 			),
+			'instagram'        => array(
+				'label'       => 'Instagram',
+				'description' => 'Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again.',
+				'default'     => false,
+			),
 		);
 	}
 
@@ -132,6 +138,10 @@ class Features {
 			'organizers'       => array(
 				'label'       => __( 'Organizers', 'fair-events-experimental' ),
 				'description' => __( 'Manage additional organizers, each with its own identity and private notification addresses, next to the sitewide organizer. Turning this off keeps every organizer.', 'fair-events-experimental' ),
+			),
+			'instagram'        => array(
+				'label'       => __( 'Instagram', 'fair-events-experimental' ),
+				'description' => __( 'Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again.', 'fair-events-experimental' ),
 			),
 		);
 

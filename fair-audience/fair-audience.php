@@ -30,6 +30,10 @@ define( 'FAIR_AUDIENCE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 // Services\WeeklyDigestMailer still sends it.
 define( 'FAIR_AUDIENCE_EVENT_NOTIFICATIONS_HANDOFF', true );
 
+// This release hands the Instagram connection to Fair Events Experimental
+// when that plugin claims it; see Settings\InstagramCredentials::is_owner().
+define( 'FAIR_AUDIENCE_INSTAGRAM_HANDOFF', true );
+
 // Composer autoloader.
 require_once __DIR__ . '/vendor/autoload.php';
 

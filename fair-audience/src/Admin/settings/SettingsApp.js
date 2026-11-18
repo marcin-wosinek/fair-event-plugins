@@ -8,6 +8,7 @@ import { Notice, TabPanel } from '@wordpress/components';
 /**
  * Internal dependencies
  */
+import InstagramMoved from './InstagramMoved.js';
 import InstagramTab from './InstagramTab.js';
 import MailingTab from './MailingTab.js';
 import { saveSettings } from './settings-api.js';
@@ -21,6 +22,9 @@ import { saveSettings } from './settings-api.js';
  * @return {JSX.Element} The settings app
  */
 export default function SettingsApp() {
+	// Set while Fair Events Experimental manages the Instagram connection.
+	const instagramPageUrl =
+		window.fairAudienceSettingsData?.instagramPageUrl || null;
 	const [ notice, setNotice ] = useState( null );
 	const [ shouldReloadInstagram, setShouldReloadInstagram ] =
 		useState( false );
@@ -30,6 +34,23 @@ export default function SettingsApp() {
 	 */
 	useEffect( () => {
 		const params = new URLSearchParams( window.location.search );
+
+		// An authorization started here before the connection moved returns
+		// here: hand it on to the page that now stores it.
+		if (
+			instagramPageUrl &&
+			( params.has( 'instagram_access_token' ) || params.has( 'error' ) )
+		) {
+			const target = new URL( instagramPageUrl, window.location.href );
+			params.forEach( ( value, key ) => {
+				if ( key !== 'page' ) {
+					target.searchParams.set( key, value );
+				}
+			} );
+			window.location.replace( target.toString() );
+			return;
+		}
+
 		const accessToken = params.get( 'instagram_access_token' );
 		const userId = params.get( 'instagram_user_id' );
 		const username = params.get( 'instagram_username' );
@@ -143,7 +164,10 @@ export default function SettingsApp() {
 			>
 				{ ( tab ) => (
 					<div style={ { marginTop: '1rem' } }>
-						{ tab.name === 'instagram' && (
+						{ tab.name === 'instagram' && instagramPageUrl && (
+							<InstagramMoved url={ instagramPageUrl } />
+						) }
+						{ tab.name === 'instagram' && ! instagramPageUrl && (
 							<InstagramTab
 								onNotice={ setNotice }
 								shouldReload={ shouldReloadInstagram }

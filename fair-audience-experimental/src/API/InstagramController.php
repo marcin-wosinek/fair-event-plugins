@@ -59,6 +59,15 @@ class InstagramController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object or error.
 	 */
 	public function test_connection( $request ) {
+		// Fair Events → Instagram tests the connection while it manages it.
+		if ( \FairAudienceExperimental\Services\InstagramConnection::managed_by_events() ) {
+			return new WP_Error(
+				'instagram_connection_moved',
+				__( 'The Instagram connection is managed in Fair Events → Instagram. Test it there.', 'fair-audience-experimental' ),
+				array( 'status' => 409 )
+			);
+		}
+
 		$credentials = \FairAudience\Settings\InstagramCredentials::class;
 
 		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
