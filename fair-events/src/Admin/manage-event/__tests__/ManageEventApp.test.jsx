@@ -184,6 +184,68 @@ it( 'renders extra admin actions registered via addFilter', async () => {
 	removeFilter( 'fairEvents.manageEvent.adminActions', NAMESPACE );
 } );
 
+describe( 'Event Details sections (#2305)', () => {
+	const NAMESPACE = 'test/details-section-2305';
+
+	beforeEach( () => {
+		addFilter(
+			'fairEvents.manageEvent.detailsSections',
+			NAMESPACE,
+			( sections, { eventDateId, setTabDirty } ) => [
+				...sections,
+				{
+					name: 'test',
+					render: () => (
+						<button
+							onClick={ () =>
+								setTabDirty( 'event-details/test', true )
+							}
+						>
+							Section for { eventDateId }
+						</button>
+					),
+				},
+			]
+		);
+	} );
+
+	afterEach( () => {
+		removeFilter( 'fairEvents.manageEvent.detailsSections', NAMESPACE );
+	} );
+
+	it( 'renders a section above Categories and marks Event Details dirty', async () => {
+		window.history.replaceState( {}, '', '?event_date_id=1' );
+		render( <ManageEventApp /> );
+
+		const section = await screen.findByRole( 'button', {
+			name: 'Section for 1',
+		} );
+		const categories = screen.getByLabelText( 'Categories' );
+		expect(
+			section.compareDocumentPosition( categories ) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+
+		fireEvent.click( section );
+		expect(
+			await screen.findByRole( 'tab', { name: 'Event Details •' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'opens an old Organizer tab link on Event Details', async () => {
+		window.history.replaceState( {}, '', '?event_date_id=1&tab=organizer' );
+		render( <ManageEventApp /> );
+
+		expect(
+			await screen.findByRole( 'button', { name: 'Section for 1' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'tab', { name: 'Event Details' } )
+		).toHaveAttribute( 'aria-selected', 'true' );
+		expect( window.location.search ).toBe( '?event_date_id=1' );
+	} );
+} );
+
 describe( 'copy event action (#1517)', () => {
 	it( 'links to the authorized copy URL and keeps delete separate', async () => {
 		window.fairEventsManageEventData.copyEventUrl =

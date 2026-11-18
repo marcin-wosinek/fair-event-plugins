@@ -10,6 +10,11 @@
  * missing organizer, and the `organizers` bundle restoring sitewide
  * behaviour while keeping every assignment.
  *
+ * Also covers choosing the organizer when creating an event
+ * (POST /fair-events/v1/event-dates with `organizer_id`) and the picker
+ * options a new event uses (GET /fair-events/v1/event-organizers):
+ * a refused choice creates nothing, and a series stores it on its master.
+ *
  * The suite removes the events, posts, organizers and user it creates.
  */
 
@@ -51,6 +56,17 @@ async function wp( ...args ) {
 		}
 	);
 	return stdout;
+}
+
+/** Number of event date rows with a title. */
+async function rowsTitled( title ) {
+	const out = await wp(
+		'eval',
+		`global $wpdb; echo 'ROWS:' . (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE title = %s', $wpdb->prefix . 'fair_event_dates', ${ JSON.stringify(
+			title
+		) } ) );`
+	);
+	return Number( out.match( /ROWS:(\d+)/ )[ 1 ] );
 }
 
 /** Raw organizer_id column of an event date row, '' when NULL. */
@@ -141,6 +157,36 @@ test.describe( 'EventOrganizerController', () => {
 		}
 
 		return { id: body.id, occurrenceIds, postId };
+	};
+
+	/**
+	 * POST a new event date, tracking whatever it creates for cleanup.
+	 *
+	 * @param {Object} extra     Extra request fields.
+	 * @param {Object} [headers] Request headers.
+	 * @return {Promise<Object>} `{ res, body, title }`.
+	 */
+	const postEvent = async ( extra, headers = adminHeaders ) => {
+		const title = `Created organizer event ${ Date.now() } ${ Math.random() }`;
+		const res = await api.post( EVENT_DATES_PATH, {
+			headers,
+			data: {
+				title,
+				start_date: '2035-10-01',
+				start_time: '18:00:00',
+				end_date: '2035-10-01',
+				end_time: '20:00:00',
+				...extra,
+			},
+		} );
+		const body = await res.json();
+		if ( res.ok() ) {
+			eventDateIds.push(
+				body.id,
+				...( body.generated_occurrences || [] ).map( ( o ) => o.id )
+			);
+		}
+		return { res, body, title };
 	};
 
 	/** The Event JSON-LD node on a post's public page. */
@@ -395,6 +441,105 @@ test.describe( 'EventOrganizerController', () => {
 		expect( last.organizer_id ).toBe( north.id );
 	} );
 
+	test( 'lists name-only organizer options for a new event to administrators', async () => {
+		const res = await api.get( '/wp-json/fair-events/v1/event-organizers', {
+			headers: adminHeaders,
+		} );
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.organizer_id ).toBe( 'default' );
+		expect( body.organizers[ 0 ] ).toEqual( {
+			id: 'default',
+			name: 'Sitewide Club',
+			is_default: true,
+		} );
+		expect( body.organizers ).toContainEqual( {
+			id: north.id,
+			name: 'North Club',
+			is_default: false,
+		} );
+		expect( JSON.stringify( body ) ).not.toContain( PRIVATE_EMAIL );
+
+		const anon = await request.newContext( { baseURL: BASE_URL } );
+		expect(
+			(
+				await anon.get( '/wp-json/fair-events/v1/event-organizers' )
+			).status()
+		).toBe( 401 );
+		await anon.dispose();
+		expect(
+			(
+				await api.get( '/wp-json/fair-events/v1/event-organizers', {
+					headers: editorHeaders,
+				} )
+			).status()
+		).toBe( 403 );
+	} );
+
+	test( 'stores the organizer chosen when creating an event', async () => {
+		const chosen = await postEvent( { organizer_id: north.id } );
+		expect( chosen.res.status(), JSON.stringify( chosen.body ) ).toBe(
+			201
+		);
+		expect( await storedOrganizerId( chosen.body.id ) ).toBe( north.id );
+		expect( await ( await read( chosen.body.id ) ).json() ).toMatchObject( {
+			organizer_id: north.id,
+			effective_organizer_id: north.id,
+		} );
+
+		const sitewide = await postEvent( { organizer_id: 'default' } );
+		expect( sitewide.res.status() ).toBe( 201 );
+		expect( await storedOrganizerId( sitewide.body.id ) ).toBe( '' );
+	} );
+
+	test( 'refuses an invalid organizer at creation without creating anything', async () => {
+		for ( const organizerId of [ MISSING_ID, 'not-a-uuid', '', 42 ] ) {
+			const { res, body, title } = await postEvent( {
+				organizer_id: organizerId,
+				rrule: 'FREQ=WEEKLY;COUNT=3',
+			} );
+			expect( res.status(), JSON.stringify( organizerId ) ).toBe( 400 );
+			expect( body.code ).toBe( 'rest_invalid_organizer' );
+			expect( await rowsTitled( title ) ).toBe( 0 );
+		}
+	} );
+
+	test( 'only administrators choose an organizer at creation', async () => {
+		const refused = await postEvent(
+			{ organizer_id: north.id },
+			editorHeaders
+		);
+		expect( refused.res.status() ).toBe( 403 );
+		expect( await rowsTitled( refused.title ) ).toBe( 0 );
+
+		// Editors still create events, with the sitewide organizer.
+		const plain = await postEvent( {}, editorHeaders );
+		expect( plain.res.status(), JSON.stringify( plain.body ) ).toBe( 201 );
+		expect( await storedOrganizerId( plain.body.id ) ).toBe( '' );
+	} );
+
+	test( 'a series created with an organizer shares it with its dates', async () => {
+		const { res, body } = await postEvent( {
+			organizer_id: south.id,
+			rrule: 'FREQ=WEEKLY;COUNT=3',
+		} );
+		expect( res.status(), JSON.stringify( body ) ).toBe( 201 );
+		const occurrenceIds = ( body.generated_occurrences || [] ).map(
+			( o ) => o.id
+		);
+		expect( occurrenceIds.length ).toBeGreaterThan( 0 );
+
+		expect( await storedOrganizerId( body.id ) ).toBe( south.id );
+		expect( await storedOrganizerId( occurrenceIds[ 0 ] ) ).toBe( '' );
+		expect(
+			await ( await read( occurrenceIds[ 0 ] ) ).json()
+		).toMatchObject( {
+			organizer_id: south.id,
+			effective_organizer_id: south.id,
+			series_event_date_id: body.id,
+		} );
+	} );
+
 	test( 'public JSON-LD names the assigned, default or fallback organizer', async () => {
 		const event = await createEvent( { linked: true } );
 
@@ -456,6 +601,11 @@ test.describe( 'EventOrganizerController', () => {
 			expect( off.event.organizer[ '@id' ] ).toMatch( /#organization$/ );
 			expect( off.html ).not.toContain( 'North Club' );
 			expect( await storedOrganizerId( event.id ) ).toBe( north.id );
+
+			// Creation ignores an organizer while the bundle is off.
+			const created = await postEvent( { organizer_id: north.id } );
+			expect( created.res.status() ).toBe( 201 );
+			expect( await storedOrganizerId( created.body.id ) ).toBe( '' );
 		} finally {
 			await wp( 'option', 'delete', FEATURES_OPTION ).catch( () => {} );
 		}

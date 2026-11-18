@@ -1,10 +1,11 @@
 /**
  * @jest-environment jsdom
  *
- * Tests for the Organizer tab of Manage Event (#2305): its registration with
- * the host page, loading, the sitewide default, saving and resetting, a
- * failed save that keeps the choice, drafts kept across a tab switch, an
- * unavailable saved organizer and the read-only view on a series date.
+ * Tests for the organizer section of Manage Event's Event Details (#2305):
+ * its registration with the host page (a Details section, no tab), loading,
+ * the sitewide default, saving and resetting, a failed save that keeps the
+ * choice, drafts kept across a tab switch, an unavailable saved organizer
+ * and the read-only view on a series date.
  */
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -46,17 +47,33 @@ beforeEach( () => {
 	apiFetch.mockReset();
 } );
 
-describe( 'Organizer tab registration', () => {
-	it( 'adds a visible Organizer tab after Messages', () => {
+describe( 'Organizer section registration', () => {
+	it( 'adds an Event Details section and no tab', () => {
+		const sections = applyFilters(
+			'fairEvents.manageEvent.detailsSections',
+			[],
+			{ eventDateId: 7 }
+		);
+		expect( sections.map( ( s ) => s.name ) ).toEqual( [ 'organizer' ] );
+
 		const tabs = applyFilters( 'fairEvents.manageEvent.tabs', [], {
 			eventDateId: 7,
 		} );
-		const tab = tabs.find( ( t ) => t.name === 'organizer' );
+		expect( tabs ).toEqual( [] );
+	} );
 
-		expect( tab ).toMatchObject( {
-			title: 'Organizer',
-			order: 35,
-			isVisible: true,
+	it( 'renders the section for the event date', async () => {
+		apiFetch.mockResolvedValueOnce( response() );
+		const [ section ] = applyFilters(
+			'fairEvents.manageEvent.detailsSections',
+			[],
+			{ eventDateId: 7 }
+		);
+		render( section.render() );
+
+		expect( await select() ).toHaveValue( 'default' );
+		expect( apiFetch ).toHaveBeenCalledWith( {
+			path: '/fair-events/v1/event-dates/7/organizer',
 		} );
 	} );
 } );
@@ -105,7 +122,10 @@ describe( 'EventOrganizer', () => {
 		renderTab( { setTabDirty } );
 
 		fireEvent.change( await select(), { target: { value: NORTH } } );
-		expect( setTabDirty ).toHaveBeenLastCalledWith( 'organizer', true );
+		expect( setTabDirty ).toHaveBeenLastCalledWith(
+			'event-details/organizer',
+			true
+		);
 
 		fireEvent.click(
 			screen.getByRole( 'button', { name: 'Save organizer' } )
@@ -118,7 +138,10 @@ describe( 'EventOrganizer', () => {
 			data: { organizer_id: NORTH },
 		} );
 		expect( screen.getByLabelText( 'Organizer' ) ).toHaveValue( NORTH );
-		expect( setTabDirty ).toHaveBeenLastCalledWith( 'organizer', false );
+		expect( setTabDirty ).toHaveBeenLastCalledWith(
+			'event-details/organizer',
+			false
+		);
 	} );
 
 	it( 'resets an assignment to the sitewide default', async () => {
@@ -166,7 +189,10 @@ describe( 'EventOrganizer', () => {
 			)
 		).toBeInTheDocument();
 		expect( screen.getByLabelText( 'Organizer' ) ).toHaveValue( SOUTH );
-		expect( setTabDirty ).toHaveBeenLastCalledWith( 'organizer', true );
+		expect( setTabDirty ).toHaveBeenLastCalledWith(
+			'event-details/organizer',
+			true
+		);
 		expect(
 			screen.getByRole( 'button', { name: 'Save organizer' } )
 		).toBeEnabled();
@@ -198,7 +224,9 @@ describe( 'EventOrganizer', () => {
 
 		const { unmount } = renderTab( { setTabDraft, getTabDraft } );
 		fireEvent.change( await select(), { target: { value: NORTH } } );
-		expect( drafts.organizer ).toEqual( { selected: NORTH } );
+		expect( drafts[ 'event-details/organizer' ] ).toEqual( {
+			selected: NORTH,
+		} );
 		unmount();
 
 		renderTab( { setTabDraft, getTabDraft } );
@@ -258,7 +286,11 @@ describe( 'EventOrganizer', () => {
 		} );
 		const url = new URL( link.getAttribute( 'href' ) );
 		expect( url.searchParams.get( 'event_date_id' ) ).toBe( '5' );
-		expect( url.searchParams.get( 'tab' ) ).toBe( 'organizer' );
-		expect( setTabDirty ).toHaveBeenLastCalledWith( 'organizer', false );
+		// Opens the series on Event Details, where the organizer is.
+		expect( url.searchParams.has( 'tab' ) ).toBe( false );
+		expect( setTabDirty ).toHaveBeenLastCalledWith(
+			'event-details/organizer',
+			false
+		);
 	} );
 } );

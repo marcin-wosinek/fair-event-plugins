@@ -7,6 +7,7 @@
  */
 
 import {
+	Fragment,
 	useState,
 	useEffect,
 	useMemo,
@@ -975,12 +976,19 @@ export default function ManageEventApp() {
 		const legacyTabAliases = {
 			tickets: 'prices',
 			signups: 'list',
+			// The organizer moved from its own tab into Event Details
+			// (#2305).
+			organizer: 'event-details',
 		};
 		const canonicalTab = legacyTabAliases[ requestedTab ] || requestedTab;
 
 		if ( canonicalTab !== requestedTab ) {
 			const url = new URL( window.location.href );
-			url.searchParams.set( 'tab', canonicalTab );
+			if ( canonicalTab === 'event-details' ) {
+				url.searchParams.delete( 'tab' );
+			} else {
+				url.searchParams.set( 'tab', canonicalTab );
+			}
 			window.history.replaceState( null, '', url.toString() );
 		}
 
@@ -1207,9 +1215,14 @@ export default function ManageEventApp() {
 		.sort( ( a, b ) => a.order - b.order );
 
 	// Tabs whose section currently holds unsaved edits get a " •" marker.
+	// Extension sections inside Event Details report under
+	// `event-details/<section>`.
+	const detailsSectionsDirty = Object.entries( extensionDirty ).some(
+		( [ name, isDirty ] ) => isDirty && name.startsWith( 'event-details/' )
+	);
 	const dirtyTabNames = {
 		...extensionDirty,
-		'event-details': detailsDirty,
+		'event-details': detailsDirty || detailsSectionsDirty,
 		prices: ticketsDirty,
 	};
 
@@ -1297,6 +1310,23 @@ export default function ManageEventApp() {
 							</VStack>
 
 							<VStack spacing={ 4 }>
+								{ /*
+								 * Sections other plugins add to Event Details,
+								 * above Categories. Each is
+								 * `{ name, render: ( ctx ) => ReactNode }`, saves
+								 * itself, and reports unsaved edits with
+								 * setTabDirty( 'event-details/<name>', … ).
+								 */ }
+								{ applyFilters(
+									'fairEvents.manageEvent.detailsSections',
+									[],
+									ctx
+								).map( ( section ) => (
+									<Fragment key={ section.name }>
+										{ section.render( ctx ) }
+									</Fragment>
+								) ) }
+
 								<CategoryInput
 									value={ categories }
 									categories={ availableCategories }

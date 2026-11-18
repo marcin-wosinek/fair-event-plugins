@@ -381,6 +381,9 @@ class AdminPages {
 				\FairEvents\Core\Features::script_translations_path()
 			);
 
+			// Lets extensions add fields to the calendar's Create Event popup.
+			do_action( 'fair_events_calendar_enqueue_assets', $hook );
+
 			return;
 		}
 

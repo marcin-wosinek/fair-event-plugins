@@ -106,6 +106,7 @@ class Plugin {
 
 			if ( self::event_organizers_available() ) {
 				add_action( 'fair_events_manage_event_enqueue_assets', array( $this, 'enqueue_manage_event_organizer_assets' ) );
+				add_action( 'fair_events_calendar_enqueue_assets', array( $this, 'enqueue_calendar_organizer_assets' ) );
 			}
 		}
 	}
@@ -194,27 +195,49 @@ class Plugin {
 	}
 
 	/**
-	 * Enqueue the Organizer tab on the fair-events manage-event page, for
+	 * Enqueue the organizer section of Manage Event's Event Details, for
 	 * administrators only: organizers are managed by administrators.
 	 *
 	 * @return void
 	 */
 	public function enqueue_manage_event_organizer_assets() {
+		$this->enqueue_organizer_script( 'manage-event-organizer', 'fair-events-manage-event' );
+	}
+
+	/**
+	 * Enqueue the organizer field of the calendar's Create Event popup,
+	 * for administrators only.
+	 *
+	 * @return void
+	 */
+	public function enqueue_calendar_organizer_assets() {
+		$this->enqueue_organizer_script( 'calendar-organizer', 'fair-events-calendar' );
+	}
+
+	/**
+	 * Enqueue an organizer script after the Fair Events page script it extends.
+	 *
+	 * @param string $entry       Build entry under build/admin/.
+	 * @param string $host_handle Fair Events script handle it extends.
+	 * @return void
+	 */
+	private function enqueue_organizer_script( $entry, $host_handle ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/manage-event-organizer/index.asset.php';
+		$asset_file = include FAIR_EVENTS_EXPERIMENTAL_PLUGIN_DIR . 'build/admin/' . $entry . '/index.asset.php';
+		$handle     = 'fair-events-experimental-' . $entry;
 
 		wp_enqueue_script(
-			'fair-events-experimental-manage-event-organizer',
-			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/manage-event-organizer/index.js',
-			array_merge( $asset_file['dependencies'], array( 'fair-events-manage-event' ) ),
+			$handle,
+			FAIR_EVENTS_EXPERIMENTAL_PLUGIN_URL . 'build/admin/' . $entry . '/index.js',
+			array_merge( $asset_file['dependencies'], array( $host_handle ) ),
 			$asset_file['version'],
 			true
 		);
 
-		wp_set_script_translations( 'fair-events-experimental-manage-event-organizer', 'fair-events-experimental', Features::script_translations_path() );
+		wp_set_script_translations( $handle, 'fair-events-experimental', Features::script_translations_path() );
 	}
 
 	/**

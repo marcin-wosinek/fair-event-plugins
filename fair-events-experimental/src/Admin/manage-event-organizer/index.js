@@ -1,30 +1,27 @@
 /**
- * Manage Event Organizer tab - Entry Point
+ * Manage Event organizer section - Entry Point
  *
- * Registers the Organizer tab with the fair-events Manage Event page via a
- * filter (#2305). PHP enqueues this script only for administrators while
- * organizers are available, so the tab is absent otherwise.
+ * Adds the organizer to the fair-events Manage Event page's Event Details,
+ * above Categories, via a filter (#2305). PHP enqueues this script only for
+ * administrators while organizers are available, so the section is absent
+ * otherwise.
  *
  * @package FairEventsExperimental
  */
 
-import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
-import EventOrganizer, { TAB_NAME } from './EventOrganizer.js';
+import EventOrganizer, { SECTION_NAME } from './EventOrganizer.js';
 
 addFilter(
-	'fairEvents.manageEvent.tabs',
-	'fair-events-experimental/organizer-tab',
-	( tabs, { eventDateId, setTabDirty, getTabDraft, setTabDraft } ) => [
-		...tabs,
+	'fairEvents.manageEvent.detailsSections',
+	'fair-events-experimental/organizer-section',
+	( sections, { eventDateId, setTabDirty, getTabDraft, setTabDraft } ) => [
+		...sections,
 		{
-			name: TAB_NAME,
-			title: __( 'Organizer', 'fair-events-experimental' ),
-			// Right after Messages.
-			order: 35,
-			isVisible: true,
+			name: SECTION_NAME,
 			render: () => (
 				<EventOrganizer
+					key={ eventDateId }
 					eventDateId={ eventDateId }
 					setTabDirty={ setTabDirty }
 					getTabDraft={ getTabDraft }

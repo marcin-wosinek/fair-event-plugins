@@ -37,6 +37,10 @@ module.exports = {
 			process.cwd(),
 			'src/Admin/manage-event-organizer/index.js'
 		),
+		'admin/calendar-organizer/index': path.resolve(
+			process.cwd(),
+			'src/Admin/calendar-organizer/index.js'
+		),
 		'frontend/meta-attribution': path.resolve(
 			process.cwd(),
 			'src/Frontend/meta-attribution.js'

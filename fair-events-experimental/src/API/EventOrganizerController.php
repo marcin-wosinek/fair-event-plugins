@@ -21,7 +21,8 @@ defined( 'WPINC' ) || die;
  * Administrator-only read and change of the organizer assigned to an event
  * (#2305).
  *
- * GET and PUT `/fair-events/v1/event-dates/{id}/organizer`. A series has one
+ * GET and PUT `/fair-events/v1/event-dates/{id}/organizer`, and GET
+ * `/fair-events/v1/event-organizers` for a new event's picker. A series has one
  * organizer, chosen on the series: a generated occurrence reads it and
  * names the series, and a write to the occurrence is refused. The picker
  * options carry only IDs and names, never the private notification
@@ -63,6 +64,19 @@ class EventOrganizerController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
+		// Picker options for a new event (the calendar's Create Event popup).
+		register_rest_route(
+			$this->namespace,
+			'/event-organizers',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_options' ),
+					'permission_callback' => array( $this, 'get_options_permissions_check' ),
+				),
+			)
+		);
+
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>\d+)/organizer',
@@ -91,6 +105,30 @@ class EventOrganizerController extends WP_REST_Controller {
 					),
 				),
 			)
+		);
+	}
+
+	/**
+	 * Check permission to list the organizers a new event can use.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function get_options_permissions_check() {
+		return current_user_can( 'manage_options' ) ? true : $this->forbidden();
+	}
+
+	/**
+	 * List the organizers a new event can use: IDs and names only.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_options() {
+		return new WP_REST_Response(
+			array(
+				'organizer_id' => \FairEventsExperimental\Models\OrganizerRepository::DEFAULT_ID,
+				'organizers'   => $this->service->options(),
+			),
+			200
 		);
 	}
 

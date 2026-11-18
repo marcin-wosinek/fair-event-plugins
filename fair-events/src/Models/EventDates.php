@@ -1158,11 +1158,20 @@ class EventDates {
 	 * Timing comes from the canonical keys (start_date, end_date, start_time,
 	 * end_time, all_day).
 	 *
-	 * @param array $data Event data with timing keys plus title, link_type, external_url, rrule.
+	 * An optional `organizer_id` (organizer UUID) is stored with the row in
+	 * the same insert, so an event is never created without the organizer
+	 * it was created with (#2305). A malformed one fails the insert.
+	 *
+	 * @param array $data Event data with timing keys plus title, link_type, external_url, rrule, organizer_id.
 	 * @return int|false The row ID on success, false on failure.
 	 */
 	public static function create_standalone( $data ) {
 		global $wpdb;
+
+		$organizer_id = $data['organizer_id'] ?? null;
+		if ( null !== $organizer_id && ! self::is_organizer_uuid( $organizer_id ) ) {
+			return false;
+		}
 
 		$table_name = $wpdb->prefix . 'fair_event_dates';
 
@@ -1182,6 +1191,11 @@ class EventDates {
 		);
 
 		$format = array_merge( array( '%d' ), EventTiming::column_formats(), array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' ) );
+
+		if ( null !== $organizer_id ) {
+			$insert_data['organizer_id'] = (string) $organizer_id;
+			$format[]                    = '%s';
+		}
 
 		$result = $wpdb->insert( $table_name, $insert_data, $format );
 
@@ -1377,7 +1391,7 @@ class EventDates {
 	public static function save_organizer_id( $id, $organizer_id ) {
 		global $wpdb;
 
-		if ( null !== $organizer_id && 1 !== preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', (string) $organizer_id ) ) {
+		if ( null !== $organizer_id && ! self::is_organizer_uuid( $organizer_id ) ) {
 			return false;
 		}
 
@@ -1390,6 +1404,17 @@ class EventDates {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Whether a value is a well-formed organizer UUID.
+	 *
+	 * @param mixed $organizer_id Candidate organizer ID.
+	 * @return bool
+	 */
+	private static function is_organizer_uuid( $organizer_id ) {
+		return is_string( $organizer_id )
+			&& 1 === preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $organizer_id );
 	}
 
 	/**
