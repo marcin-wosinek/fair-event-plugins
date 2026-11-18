@@ -137,7 +137,9 @@ test( 'saves only this report and shows the saved settings', async () => {
 		day_of_week: 3,
 		fallback_email: 'team@example.com',
 	} );
-	expect( await screen.findByText( 'Sales summary saved.', NOTICE ) ).toBeVisible();
+	expect(
+		await screen.findByText( 'Sales summary saved.', NOTICE )
+	).toBeVisible();
 	expect( screen.getByLabelText( 'Weekday' ) ).toHaveValue( '3' );
 	expect( save() ).toBeDisabled();
 } );
