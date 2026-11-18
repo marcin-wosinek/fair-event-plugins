@@ -1977,6 +1977,13 @@ class FinancialEntry {
 	 * - total_expenses: every cost, classified or not, counted once.
 	 * - personally_paid: costs paid from personal funds.
 	 * - personally_paid_by_payer: personal costs grouped by payer name.
+	 * - bank_paid_expenses: costs without a payment source that carry
+	 *   persisted bank import evidence, their own or, for a split
+	 *   allocation, their parent's (see is_bank_import()).
+	 * - unclassified_expenses: costs with neither a payment source nor
+	 *   bank evidence. Never assumed to be bank or cash.
+	 *
+	 * The expense parts always add up to total_expenses.
 	 *
 	 * @param int $event_date_id Event date ID.
 	 * @return array|null Summary, or null when the query failed.
@@ -1991,12 +1998,18 @@ class FinancialEntry {
 
 		// One prepare() over every placeholder, so values such as a
 		// percent-encoded event URL are never prepared twice.
-		$sql = 'SELECT entry_type, payment_source, payer_name, SUM(amount) AS total FROM %i WHERE '
+		// Bank provenance as is_bank_import() reads it: a standalone entry's
+		// own import evidence, a split allocation's parent's.
+		$own_evidence    = "( %s.imported_at IS NOT NULL OR COALESCE( %s.external_reference, '' ) <> '' OR COALESCE( %s.import_source, '' ) <> '' OR COALESCE( %s.bank_account_id, 0 ) <> 0 )";
+		$bank_provenance = 'CASE WHEN e.parent_entry_id IS NULL THEN ' . str_replace( '%s', 'e', $own_evidence )
+			. ' ELSE EXISTS ( SELECT 1 FROM %i AS p WHERE p.id = e.parent_entry_id AND ' . str_replace( '%s', 'p', $own_evidence ) . ' ) END';
+
+		$sql = 'SELECT entry_type, payment_source, payer_name, ' . $bank_provenance . ' AS bank_import, SUM(amount) AS total FROM %i AS e WHERE '
 			. implode( ' AND ', $where_clauses )
-			. ' GROUP BY entry_type, payment_source, payer_name';
+			. ' GROUP BY entry_type, payment_source, payer_name, bank_import';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder count is dynamic (one per $where_values entry); clauses are fixed strings.
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $table_name, ...$where_values ) );
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $table_name, $table_name, ...$where_values ) );
 
 		if ( null === $rows || '' !== $wpdb->last_error ) {
 			return null;
@@ -2006,6 +2019,8 @@ class FinancialEntry {
 		$event_cash_expenses = 0.0;
 		$total_expenses      = 0.0;
 		$personally_paid     = 0.0;
+		$bank_paid           = 0.0;
+		$unclassified        = 0.0;
 		$by_payer            = array();
 
 		foreach ( $rows as $row ) {
@@ -2035,6 +2050,10 @@ class FinancialEntry {
 					);
 				}
 				$by_payer[ $key ]['amount'] = round( $by_payer[ $key ]['amount'] + $total, 2 );
+			} elseif ( (int) $row->bank_import ) {
+				$bank_paid += $total;
+			} else {
+				$unclassified += $total;
 			}
 		}
 
@@ -2053,6 +2072,8 @@ class FinancialEntry {
 			'total_expenses'           => round( $total_expenses, 2 ),
 			'personally_paid'          => round( $personally_paid, 2 ),
 			'personally_paid_by_payer' => $by_payer,
+			'bank_paid_expenses'       => round( $bank_paid, 2 ),
+			'unclassified_expenses'    => round( $unclassified, 2 ),
 		);
 	}
 

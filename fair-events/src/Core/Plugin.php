@@ -276,6 +276,17 @@ class Plugin {
 			20
 		);
 
+		// Event finance summary — registers
+		// `/fair-events/v1/event-dates/{id}/finance-summary`: the Finance
+		// tab's sales, costs and net result, for administrators (#2398).
+		add_action(
+			'rest_api_init',
+			function () {
+				$controller = new \FairEvents\API\EventFinanceSummaryController();
+				$controller->register_routes();
+			}
+		);
+
 		// Payment history migration — registers `/fair-events/v1/payment-history`
 		// for administrators: progress, verification, findings and their
 		// reconciliation (PAYMENT_HISTORY_MIGRATION.md §8.10).

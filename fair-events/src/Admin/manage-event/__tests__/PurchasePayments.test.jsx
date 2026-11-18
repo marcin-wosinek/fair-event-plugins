@@ -6,7 +6,14 @@
  * information said as such.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+	render,
+	screen,
+	waitFor,
+	within,
+	fireEvent,
+	act,
+} from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
 import PurchasePayments, {
 	paymentCountsLabel,
@@ -17,6 +24,16 @@ import PurchasePayments, {
 import EventFinance from '../EventFinance.js';
 
 jest.mock( '@wordpress/api-fetch' );
+
+// The history is collapsed on arrival and loads when opened.
+async function renderOpen( eventDateId = 7 ) {
+	render( <PurchasePayments eventDateId={ eventDateId } /> );
+	await act( async () => {
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Purchase attempt history' } )
+		);
+	} );
+}
 
 const payment = ( overrides = {} ) => ( {
 	transaction_id: 11,
@@ -131,7 +148,7 @@ describe( 'PurchasePayments', () => {
 			] ),
 		] );
 
-		render( <PurchasePayments eventDateId={ 7 } /> );
+		await renderOpen();
 
 		expect( apiFetch ).toHaveBeenCalledWith( {
 			path: '/fair-events/v1/get-tickets?event_date=7',
@@ -164,7 +181,7 @@ describe( 'PurchasePayments', () => {
 			),
 		] );
 
-		render( <PurchasePayments eventDateId={ 7 } /> );
+		await renderOpen();
 
 		expect(
 			(
@@ -178,7 +195,7 @@ describe( 'PurchasePayments', () => {
 	it( 'says when no purchase has a payment', async () => {
 		apiFetch.mockResolvedValue( [ signup( 1, 'Free', [] ) ] );
 
-		render( <PurchasePayments eventDateId={ 7 } /> );
+		await renderOpen();
 
 		expect(
 			await screen.findByText( 'No purchase on this date has a payment.' )
@@ -188,7 +205,7 @@ describe( 'PurchasePayments', () => {
 	it( 'names the section that failed to load', async () => {
 		apiFetch.mockRejectedValue( { message: 'Server error.' } );
 
-		render( <PurchasePayments eventDateId={ 7 } /> );
+		await renderOpen();
 
 		expect(
 			(
@@ -212,7 +229,16 @@ describe( 'EventFinance purchase payments', () => {
 		);
 	} );
 
-	it( 'keeps the general payments list and adds the section once the readers are active', async () => {
+	it( 'loads nothing before the collapsed history is opened', async () => {
+		render( <PurchasePayments eventDateId={ 7 } /> );
+
+		expect(
+			screen.getByRole( 'button', { name: 'Purchase attempt history' } )
+		).toHaveAttribute( 'aria-expanded', 'false' );
+		expect( apiFetch ).not.toHaveBeenCalled();
+	} );
+
+	it( 'adds the collapsed history for administrators', async () => {
 		render(
 			<EventFinance
 				eventDateId={ 7 }
@@ -222,23 +248,23 @@ describe( 'EventFinance purchase payments', () => {
 			/>
 		);
 
-		expect(
-			await screen.findByRole( 'heading', { name: 'Purchase payments' } )
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'heading', { name: 'Finance' } )
-		).toBeInTheDocument();
-		await waitFor( () =>
-			expect( apiFetch ).toHaveBeenCalledWith( {
-				path: '/fair-events/v1/get-tickets?event_date=7',
-			} )
-		);
+		const toggle = await screen.findByRole( 'button', {
+			name: 'Purchase attempt history',
+		} );
+		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
+		expect( apiFetch ).not.toHaveBeenCalledWith( {
+			path: '/fair-events/v1/get-tickets?event_date=7',
+		} );
+
+		await act( async () => {
+			fireEvent.click( toggle );
+		} );
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-payments-connector/v1/transactions?event_date_id=7&status=paid&mode=live&per_page=100',
+			path: '/fair-events/v1/get-tickets?event_date=7',
 		} );
 	} );
 
-	it( 'has no section before the readers are active', async () => {
+	it( 'has no section without purchase payments access', async () => {
 		render(
 			<EventFinance
 				eventDateId={ 7 }
@@ -249,10 +275,9 @@ describe( 'EventFinance purchase payments', () => {
 
 		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
 		expect(
-			screen.queryByRole( 'heading', { name: 'Purchase payments' } )
+			screen.queryByRole( 'button', {
+				name: 'Purchase attempt history',
+			} )
 		).not.toBeInTheDocument();
-		expect( apiFetch ).not.toHaveBeenCalledWith( {
-			path: '/fair-events/v1/get-tickets?event_date=7',
-		} );
 	} );
 } );

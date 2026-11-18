@@ -180,6 +180,9 @@ test.describe( 'FinancialEntry event cash', () => {
 			total_expenses: 50,
 			personally_paid: 30,
 			personally_paid_by_payer: [ { payer_name: 'Anna', amount: 30 } ],
+			// Neither expense is a bank import or unclassified (#2398).
+			bank_paid_expenses: 0,
+			unclassified_expenses: 0,
 		} );
 
 		// Accounting counts every expense once.
@@ -215,6 +218,9 @@ test.describe( 'FinancialEntry event cash', () => {
 			expect( totals.event_cash_expenses ).toBe( 20 );
 			expect( totals.personally_paid ).toBe( 30 );
 			expect( totals.net_cash_movement ).toBe( 95 );
+			// Without bank evidence it is unclassified, never bank-paid.
+			expect( totals.unclassified_expenses ).toBe( 7 );
+			expect( totals.bank_paid_expenses ).toBe( 0 );
 			expect( legacy.payment_source ).toBeNull();
 			expect( legacy.payer_name ).toBeNull();
 		} finally {

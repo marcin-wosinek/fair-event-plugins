@@ -1,11 +1,11 @@
 /**
  * @jest-environment jsdom
  *
- * Event cash income and personally paid expenses on the Finance tab (#2272).
+ * Expenses and cash sales on the Finance tab (#2272, #2398).
  *
- * Total Income is online payments plus explicitly classified cash income —
- * never the accounting income total, which can already hold reconciled
- * online receipts.
+ * Every expense of the event is listed once, with how and by whom it was
+ * paid; cash sales are the income recorded as event cash. Both lists are
+ * collapsed on arrival, and their totals come from the finance summary.
  */
 import '@testing-library/jest-dom';
 import {
@@ -23,12 +23,24 @@ import CashOperationForm, { validateOperation } from '../CashOperationForm.js';
 jest.mock( '@wordpress/api-fetch' );
 
 const SUMMARY = {
-	cash_income: 115,
-	event_cash_expenses: 20,
-	net_cash_movement: 95,
-	total_expenses: 50,
-	personally_paid: 30,
-	personally_paid_by_payer: [ { payer_name: 'Anna', amount: 30 } ],
+	currency: 'EUR',
+	state: 'incomplete',
+	issues: [ 'online_unavailable' ],
+	sales: { total: 115, online: null, cash: 115 },
+	costs: {
+		total: 50,
+		expenses: {
+			total: 50,
+			event_cash: 20,
+			personal: 30,
+			bank: 0,
+			unclassified: 0,
+			personal_by_payer: [ { payer_name: 'Anna', amount: 30 } ],
+		},
+		payment_fees: null,
+	},
+	net_result: 65,
+	payout: null,
 };
 
 const INCOME = {
@@ -58,9 +70,9 @@ const PERSONAL = {
 
 function mockApi( {
 	summary = SUMMARY,
-	entries = [ INCOME, PERSONAL ],
+	costs = [ PERSONAL ],
+	incomes = [ INCOME ],
 	pages = 1,
-	paid = [],
 	failing = null,
 	onWrite = () => Promise.resolve( {} ),
 } = {} ) {
@@ -72,37 +84,24 @@ function mockApi( {
 		if ( method && 'GET' !== method ) {
 			return onWrite( options );
 		}
-		if (
-			path.startsWith(
-				'/fair-finance/v1/financial-entries/event-summary'
-			)
-		) {
+		if ( /\/finance-summary$/.test( path ) ) {
 			return Promise.resolve( summary );
 		}
-		if ( path.startsWith( '/fair-finance/v1/financial-entries/totals' ) ) {
-			return Promise.resolve( {
-				total_cost: summary.total_expenses,
-				total_income: 0,
-			} );
-		}
-		if ( path.includes( 'classified=1' ) ) {
+		if ( path.startsWith( '/fair-finance/v1/financial-entries' ) ) {
+			const entries = path.includes( 'entry_type=cost' )
+				? costs
+				: incomes;
 			return Promise.resolve( {
 				entries,
 				total: entries.length,
 				pages,
 			} );
 		}
-		if ( path.startsWith( '/fair-finance/v1/financial-entries' ) ) {
-			return Promise.resolve( { entries: [] } );
-		}
 		if ( path === '/fair-finance/v1/budgets' ) {
 			return Promise.resolve( [] );
 		}
 		if ( /\/budget$/.test( path ) ) {
 			return Promise.resolve( { budget_id: null } );
-		}
-		if ( path.includes( 'status=paid' ) ) {
-			return Promise.resolve( { transactions: paid } );
 		}
 		return Promise.resolve( { transactions: [] } );
 	} );
@@ -126,81 +125,46 @@ function renderTab( props = {} ) {
 	);
 }
 
-function figure( label ) {
-	const summary = screen.getByTestId( 'event-cash-summary' );
-	return within( summary ).getByText( label ).previousSibling.textContent;
+const summaryCalls = () =>
+	apiFetch.mock.calls.filter( ( [ { path } ] ) =>
+		path.includes( 'finance-summary' )
+	).length;
+
+async function openList( name ) {
+	const toggle = await screen.findByRole( 'button', { name } );
+	// Opening loads the list: let that load settle inside act.
+	await act( async () => {
+		fireEvent.click( toggle );
+	} );
 }
 
-function headline( label ) {
-	return screen.getByText( label ).previousSibling.textContent;
-}
-
-describe( 'Income and expenses summary', () => {
-	it( 'shows €95 net cash movement, €50 total expenses and €30 personally paid by payer', async () => {
+describe( 'Expenses and cash sales section', () => {
+	it( 'names each list with its total and keeps both closed', async () => {
 		mockApi();
 		renderTab();
 
-		await screen.findByTestId( 'event-cash-summary' );
-		expect( figure( 'Cash income' ) ).toBe( '€115.00' );
-		expect( figure( 'Cash expenses' ) ).toBe( '€20.00' );
-		expect( figure( 'Net cash movement' ) ).toBe( '€95.00' );
-		expect( figure( 'Total expenses' ) ).toBe( '€50.00' );
-		expect( figure( 'Personally paid' ) ).toBe( '€30.00' );
 		expect(
-			screen.getByRole( 'list', { name: 'Personally paid by payer' } )
-		).toHaveTextContent( 'Anna: €30.00' );
-		expect( screen.queryByText( /reimburse|outstanding/i ) ).toBeNull();
-	} );
-
-	it( 'adds cash income to online payments for Total Income, without the accounting income total', async () => {
-		mockApi( {
-			paid: [
-				{
-					id: 1,
-					amount: 45,
-					mollie_fee: 1,
-					application_fee: 0,
-					status: 'paid',
-				},
-			],
-		} );
-		renderTab( { connectorActive: true } );
-
-		await waitFor( () =>
-			expect( headline( 'Total Income' ) ).toBe( '€160.00' )
-		);
-		expect( headline( 'Online net after fees' ) ).toBe( '€44.00' );
-		expect( headline( 'Balance' ) ).toBe( '€110.00' );
-	} );
-
-	it( 'works without the payments connector', async () => {
-		mockApi();
-		renderTab( { connectorActive: false } );
-
-		await waitFor( () =>
-			expect( headline( 'Total Income' ) ).toBe( '€115.00' )
-		);
+			await screen.findByRole( 'button', { name: 'Expenses (€50.00)' } )
+		).toHaveAttribute( 'aria-expanded', 'false' );
+		expect(
+			screen.getByRole( 'button', { name: 'Cash sales (€115.00)' } )
+		).toHaveAttribute( 'aria-expanded', 'false' );
 		expect(
 			apiFetch.mock.calls.some( ( [ { path } ] ) =>
-				path.startsWith( '/fair-payments-connector' )
+				path.startsWith( '/fair-finance/v1/financial-entries' )
 			)
 		).toBe( false );
 	} );
 
-	it( 'reports a failed summary as an error, not as zero totals', async () => {
-		mockApi( {
-			failing: '/fair-finance/v1/financial-entries/event-summary',
-		} );
+	it( 'states the net event cash movement', async () => {
+		mockApi();
 		renderTab();
 
 		expect(
-			await screen.findByText(
-				/Income and expenses totals could not be loaded\. Server exploded\./,
-				{ selector: '.components-notice__content' }
-			)
-		).toBeInTheDocument();
-		expect( screen.queryByTestId( 'event-cash-summary' ) ).toBeNull();
-		expect( screen.queryByText( 'Total Income' ) ).toBeNull();
+			await screen.findByTestId( 'event-cash-movement' )
+		).toHaveTextContent(
+			'Event cash: €115.00 received, €20.00 paid out, €95.00 net cash movement.'
+		);
 	} );
 
 	it( 'is hidden from users who cannot manage finance entries', async () => {
@@ -208,41 +172,58 @@ describe( 'Income and expenses summary', () => {
 		renderTab( { financeManageable: false } );
 
 		await waitFor( () => expect( apiFetch ).toHaveBeenCalled() );
-		expect( screen.queryByText( 'Income and expenses' ) ).toBeNull();
+		expect( screen.queryByText( 'Expenses and cash sales' ) ).toBeNull();
 		expect(
-			apiFetch.mock.calls.some(
-				( [ { path } ] ) =>
-					path.includes( 'event-summary' ) ||
-					path.includes( 'classified=1' )
-			)
-		).toBe( false );
+			screen.queryByRole( 'button', { name: 'Add expense' } )
+		).toBeNull();
 	} );
 } );
 
-describe( 'Operation list', () => {
-	it( 'lists operations with source, payer, note and amount', async () => {
+describe( 'Operation lists', () => {
+	it( 'lists every expense with source, payer, note and amount', async () => {
 		mockApi();
 		renderTab();
+		await openList( 'Expenses (€50.00)' );
+
+		const table = await screen.findByRole( 'table', { name: 'Expenses' } );
+		const rows = within( table ).getAllByRole( 'row' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Expense, personal funds' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Decorations' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Personal funds' );
+		expect( rows[ 1 ] ).toHaveTextContent( 'Anna' );
+		expect( rows[ 1 ] ).toHaveTextContent( '−€30.00' );
+		const path = apiFetch.mock.calls
+			.map( ( [ options ] ) => options.path )
+			.find( ( p ) => p.includes( 'entry_type=cost' ) );
+		// Every expense, not only those recorded on this tab.
+		expect( path ).not.toContain( 'classified' );
+	} );
+
+	it( 'lists cash sales recorded as event cash', async () => {
+		mockApi();
+		renderTab();
+		await openList( 'Cash sales (€115.00)' );
 
 		const table = await screen.findByRole( 'table', {
-			name: 'Income and expenses',
+			name: 'Cash sales',
 		} );
-		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows[ 1 ] ).toHaveTextContent( 'Cash income' );
-		expect( rows[ 1 ] ).toHaveTextContent( 'Gate sales Friday' );
-		expect( rows[ 1 ] ).toHaveTextContent( '€115.00' );
-		expect( rows[ 2 ] ).toHaveTextContent( 'Expense, personal funds' );
-		expect( rows[ 2 ] ).toHaveTextContent( 'Anna' );
-		expect( rows[ 2 ] ).toHaveTextContent( '−€30.00' );
+		expect( table ).toHaveTextContent( 'Gate sales Friday' );
+		expect( table ).toHaveTextContent( '€115.00' );
+		expect(
+			apiFetch.mock.calls.some( ( [ { path } ] ) =>
+				path.includes( 'entry_type=income&classified=1' )
+			)
+		).toBe( true );
 	} );
 
 	it( 'shows pagination when there are several pages', async () => {
 		mockApi( { pages: 3 } );
 		renderTab();
+		await openList( 'Expenses (€50.00)' );
 
 		expect(
 			await screen.findByRole( 'navigation', {
-				name: 'Income and expenses pages',
+				name: 'Expenses pages',
 			} )
 		).toHaveTextContent( 'Page 1 of 3' );
 		fireEvent.click( screen.getByRole( 'button', { name: 'Next page' } ) );
@@ -250,19 +231,20 @@ describe( 'Operation list', () => {
 			expect(
 				apiFetch.mock.calls.some(
 					( [ { path } ] ) =>
-						path.includes( 'classified=1' ) &&
+						path.includes( 'entry_type=cost' ) &&
 						path.includes( 'page=2' )
 				)
 			).toBe( true )
 		);
 	} );
 
-	it( 'deletes an operation after confirmation and refreshes the totals', async () => {
+	it( 'deletes an operation after confirmation and refreshes the event result', async () => {
 		const onWrite = jest.fn( () => Promise.resolve( { deleted: true } ) );
 		mockApi( { onWrite } );
 		renderTab();
+		await openList( 'Expenses (€50.00)' );
 
-		await screen.findByRole( 'table', { name: 'Income and expenses' } );
+		await screen.findByRole( 'table', { name: 'Expenses' } );
 		fireEvent.click(
 			screen.getByRole( 'button', {
 				name: 'More actions for “Expense, personal funds of €30.00 on 2026-11-13”',
@@ -276,10 +258,6 @@ describe( 'Operation list', () => {
 			name: 'Delete expense',
 		} );
 		expect( dialog ).toHaveTextContent( 'Paid by Anna.' );
-		const summaryCalls = () =>
-			apiFetch.mock.calls.filter( ( [ { path } ] ) =>
-				path.includes( 'event-summary' )
-			).length;
 		const before = summaryCalls();
 
 		await act( async () => {
@@ -309,8 +287,9 @@ describe( 'Operation list', () => {
 			onWrite: () => Promise.reject( { message: 'Database is gone.' } ),
 		} );
 		renderTab();
+		await openList( 'Cash sales (€115.00)' );
 
-		await screen.findByRole( 'table', { name: 'Income and expenses' } );
+		await screen.findByRole( 'table', { name: 'Cash sales' } );
 		fireEvent.click(
 			screen.getByRole( 'button', {
 				name: 'More actions for “Cash income of €115.00 on 2026-11-13”',
