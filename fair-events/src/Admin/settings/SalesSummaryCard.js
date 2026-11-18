@@ -48,10 +48,29 @@ const RUN_STATUS = {
 	),
 };
 
-// The same check the server applies before saving, so obvious typos are
-// flagged before a save is attempted.
-const EMAIL_PATTERN =
-	/^[^\s@,;<>()"'\\]+@[^\s@,;<>()"'\\]+\.[^\s@,;<>()"'\\]+$/;
+// Characters the server never accepts in an address: whitespace, list
+// separators, display-name and quoting characters.
+const FORBIDDEN_EMAIL_CHARACTERS = /[\s,;<>()"'\\]/;
+
+/**
+ * Whether a value looks like one email address, as the server checks it
+ * before saving: one `@`, a local part, and a domain with an inner dot.
+ * Checked without a backtracking pattern.
+ *
+ * @param {string} value Trimmed value.
+ * @return {boolean} Whether it looks like an address.
+ */
+export function isEmailAddress( value ) {
+	if ( FORBIDDEN_EMAIL_CHARACTERS.test( value ) ) {
+		return false;
+	}
+	const parts = value.split( '@' );
+	if ( 2 !== parts.length || '' === parts[ 0 ] ) {
+		return false;
+	}
+	// A dot with at least one character on each side.
+	return parts[ 1 ].slice( 1, -1 ).includes( '.' );
+}
 
 /**
  * Form state from a report payload.
@@ -93,7 +112,7 @@ function errorMessage( error, fallback ) {
  */
 export function blockedReason( draft ) {
 	const email = draft.fallback_email.trim();
-	if ( '' !== email && ! EMAIL_PATTERN.test( email ) ) {
+	if ( '' !== email && ! isEmailAddress( email ) ) {
 		return __( 'Enter one valid fallback email address.', 'fair-events' );
 	}
 	if ( 'off' !== draft.frequency && '' === email ) {

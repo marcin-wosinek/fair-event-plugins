@@ -9,7 +9,10 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
-import SalesSummaryCard, { blockedReason } from '../SalesSummaryCard.js';
+import SalesSummaryCard, {
+	blockedReason,
+	isEmailAddress,
+} from '../SalesSummaryCard.js';
 import {
 	loadSalesSummary,
 	previewSalesSummary,
@@ -241,4 +244,24 @@ test( 'a load failure can be retried', async () => {
 	await waitFor( () =>
 		expect( screen.getByLabelText( 'How often' ) ).toBeInTheDocument()
 	);
+} );
+
+test( 'isEmailAddress accepts one address and refuses lists, names and partial domains', () => {
+	expect( isEmailAddress( 'team@example.com' ) ).toBe( true );
+	expect( isEmailAddress( 'team@mail.example.co.uk' ) ).toBe( true );
+	for ( const value of [
+		'team',
+		'@example.com',
+		'team@example',
+		'team@example.',
+		'team@.com',
+		'a@b@example.com',
+		'a@example.com, b@example.com',
+		'Team <team@example.com>',
+		'team @example.com',
+	] ) {
+		expect( isEmailAddress( value ) ).toBe( false );
+	}
+	// No backtracking blow-up on a long value without a domain dot.
+	expect( isEmailAddress( `a@${ 'b'.repeat( 50000 ) }` ) ).toBe( false );
 } );
