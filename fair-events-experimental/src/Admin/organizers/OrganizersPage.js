@@ -17,6 +17,7 @@ import OrganizerForm, {
 	EMPTY_ORGANIZER,
 	toSavePayload,
 } from 'fair-events/src/Admin/settings/OrganizerForm.js';
+import SalesSummaryCard from 'fair-events/src/Admin/settings/SalesSummaryCard.js';
 import {
 	AdminTable,
 	AdminTableCell,
@@ -395,6 +396,17 @@ export default function OrganizersPage() {
 						</Notice>
 					) }
 					{ renderList() }
+					<SalesSummaryCard
+						report="central"
+						title={ __(
+							'Central sales summary',
+							'fair-events-experimental'
+						) }
+						description={ __(
+							'One email with every organizer’s ticket sales and paid revenue, grouped by organizer and event. It goes to the default organizer’s notification addresses on its own schedule, whatever each organizer chose for its own summary.',
+							'fair-events-experimental'
+						) }
+					/>
 				</VStack>
 			</div>
 		);
@@ -474,6 +486,22 @@ export default function OrganizersPage() {
 					)
 				}
 			/>
+			{ editor.id && (
+				<div style={ { marginTop: '16px' } }>
+					<SalesSummaryCard
+						key={ editor.id }
+						report={ editor.id }
+						title={ __(
+							'Sales summary',
+							'fair-events-experimental'
+						) }
+						description={ __(
+							'An email with this organizer’s own events only: tickets sold and paid revenue per event in the previous day or week, with totals to date. It is off until you choose how often to send it, and it is saved separately from the organizer details above.',
+							'fair-events-experimental'
+						) }
+					/>
+				</div>
+			) }
 			<ConfirmDialog
 				isOpen={ null !== pendingLeave }
 				onConfirm={ () => {

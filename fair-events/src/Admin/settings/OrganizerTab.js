@@ -9,6 +9,7 @@ import { Card, CardBody } from '@wordpress/components';
  * Internal dependencies
  */
 import OrganizerForm, { toSavePayload } from './OrganizerForm.js';
+import SalesSummaryCard from './SalesSummaryCard.js';
 import { loadOrganizerSettings, saveSettings } from './settings-api.js';
 
 /**
@@ -117,12 +118,24 @@ export default function OrganizerTab( { onNotice } ) {
 	}
 
 	return (
-		<OrganizerForm
-			organizer={ organizer }
-			onChange={ setOrganizer }
-			onSubmit={ handleSave }
-			isSaving={ isSaving }
-			defaults={ defaults }
-		/>
+		<>
+			<OrganizerForm
+				organizer={ organizer }
+				onChange={ setOrganizer }
+				onSubmit={ handleSave }
+				isSaving={ isSaving }
+				defaults={ defaults }
+			/>
+			<div style={ { marginTop: '16px' } }>
+				<SalesSummaryCard
+					report="default"
+					title={ __( 'Sales summary', 'fair-events' ) }
+					description={ __(
+						'An email with the tickets sold and paid revenue per event in the previous day or week, with totals to date. It is off until you choose how often to send it.',
+						'fair-events'
+					) }
+				/>
+			</div>
+		</>
 	);
 }

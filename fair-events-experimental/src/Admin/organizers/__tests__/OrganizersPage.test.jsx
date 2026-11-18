@@ -18,6 +18,7 @@ import {
 	updateOrganizer,
 } from '../organizers-api.js';
 import { loadAttachmentUrl } from 'fair-events/src/Admin/settings/settings-api.js';
+import { loadSalesSummary } from 'fair-events/src/Admin/settings/sales-summary-api.js';
 
 jest.mock( '../organizers-api.js', () => ( {
 	...jest.requireActual( '../organizers-api.js' ),
@@ -27,6 +28,7 @@ jest.mock( '../organizers-api.js', () => ( {
 	updateOrganizer: jest.fn(),
 } ) );
 jest.mock( 'fair-events/src/Admin/settings/settings-api.js' );
+jest.mock( 'fair-events/src/Admin/settings/sales-summary-api.js' );
 
 const record = ( overrides ) => ( {
 	id: 'default',
@@ -65,6 +67,8 @@ beforeEach( () => {
 		logoId: 0,
 	} );
 	loadAttachmentUrl.mockResolvedValue( '' );
+	// The sales summary cards keep loading unless a test resolves them.
+	loadSalesSummary.mockReturnValue( new Promise( () => {} ) );
 } );
 
 afterEach( () => {
@@ -290,4 +294,33 @@ test( 'leaving without changes needs no confirmation', async () => {
 	expect(
 		screen.getByRole( 'heading', { level: 1, name: 'Organizers' } )
 	).toHaveFocus();
+} );
+
+test( 'the list offers the central sales summary, separate from each organizer', async () => {
+	await renderTab();
+
+	expect(
+		screen.getByRole( 'heading', { name: 'Central sales summary' } )
+	).toBeInTheDocument();
+	expect( loadSalesSummary ).toHaveBeenCalledWith( 'central' );
+} );
+
+test( 'each saved organizer has its own sales summary; a new one has none yet', async () => {
+	await renderTab();
+
+	await openEditor( 'Edit “North Club”' );
+	expect(
+		screen.getByRole( 'heading', { name: 'Sales summary' } )
+	).toBeInTheDocument();
+	expect( loadSalesSummary ).toHaveBeenLastCalledWith( NORTH_ID );
+
+	await act( async () => {
+		fireEvent.click(
+			screen.getByRole( 'button', { name: '← All organizers' } )
+		);
+	} );
+	await openEditor( 'Add organizer' );
+	expect(
+		screen.queryByRole( 'heading', { name: 'Sales summary' } )
+	).not.toBeInTheDocument();
 } );

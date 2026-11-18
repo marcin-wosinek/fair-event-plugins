@@ -369,6 +369,106 @@ class PurchasePaymentHistory {
 	}
 
 	/**
+	 * Revenue of a group of stored dates — an event or a whole series — in
+	 * a period and in total, with the same rules as event_date_revenue().
+	 *
+	 * Each paid link counts once, on the date its purchase is stored on, so
+	 * a whole-series pass counts once on its master and is never multiplied
+	 * across occurrences. A link belongs to the period by its `created_at`
+	 * (§7.3), compared as site-local wall-clock time. Unresolved money for
+	 * any of the dates marks both figures incomplete: it can't be dated.
+	 *
+	 * @param int[]  $event_date_ids Stored event date IDs.
+	 * @param string $from           Site-local 'Y-m-d H:i:s' period start, included.
+	 * @param string $to             Site-local 'Y-m-d H:i:s' period end, excluded.
+	 * @return array{period: array, total: array} Summaries as summarize() returns them.
+	 */
+	public static function event_dates_revenue( array $event_date_ids, $from, $to ) {
+		$currency = \FairEventsShared\Money::site_currency();
+		if ( ! PaymentHistoryCompatibility::storage_available() || ! PaymentHistoryCompatibility::payment_information_available() ) {
+			$unavailable = self::summarize( array(), array(), $currency, false );
+			return array(
+				'period' => $unavailable,
+				'total'  => $unavailable,
+			);
+		}
+
+		$event_date_ids = self::ids( $event_date_ids );
+		$rows           = self::paid_link_rows( $event_date_ids );
+		$period_rows    = array_values(
+			array_filter(
+				$rows,
+				static function ( $row ) use ( $from, $to ) {
+					return (string) $row['created_at'] >= $from && (string) $row['created_at'] < $to;
+				}
+			)
+		);
+
+		$unresolved = array();
+		foreach ( $event_date_ids as $event_date_id ) {
+			$unresolved = array_merge( $unresolved, self::open_finding_keys( $event_date_id ), self::unlinked_transaction_keys( $event_date_id ) );
+		}
+
+		return array(
+			'period' => self::summarize(
+				$period_rows,
+				array(
+					'remainder'  => self::with_remainder( array_column( $period_rows, 'transaction_id' ) ),
+					'unresolved' => $unresolved,
+					'series'     => null,
+				),
+				$currency,
+				true
+			),
+			'total'  => self::summarize(
+				$rows,
+				array(
+					'remainder'  => self::with_remainder( array_column( $rows, 'transaction_id' ) ),
+					'unresolved' => $unresolved,
+					'series'     => null,
+				),
+				$currency,
+				true
+			),
+		);
+	}
+
+	/**
+	 * Stored event dates whose purchases have a paid revenue link created
+	 * in a period.
+	 *
+	 * @param string $from Site-local 'Y-m-d H:i:s' period start, included.
+	 * @param string $to   Site-local 'Y-m-d H:i:s' period end, excluded.
+	 * @return int[] Event date IDs; none while payment information can't be read.
+	 */
+	public static function event_dates_with_revenue_between( $from, $to ) {
+		global $wpdb;
+
+		if ( ! PaymentHistoryCompatibility::storage_available() || ! PaymentHistoryCompatibility::payment_information_available() ) {
+			return array();
+		}
+
+		return array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT s.event_date_id
+					FROM %i AS lk
+					INNER JOIN %i AS s ON s.id = lk.signup_id
+					INNER JOIN %i AS t ON t.id = lk.transaction_id
+					WHERE t.status = 'paid' AND lk.role <> %s AND lk.created_at >= %s AND lk.created_at < %s",
+					SignupPaymentLink::table(),
+					$wpdb->prefix . 'fair_events_signups',
+					\FairPaymentsConnector\Database\Schema::get_payments_table_name(),
+					SignupPaymentLink::ROLE_LEGACY_REFUND_RECORD,
+					(string) $from,
+					(string) $to
+				)
+			)
+		);
+	}
+
+	/**
 	 * Sum paid allocations into a revenue summary. Pure: everything it
 	 * needs is passed in.
 	 *
