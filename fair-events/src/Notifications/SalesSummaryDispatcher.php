@@ -357,11 +357,16 @@ class SalesSummaryDispatcher {
 	/**
 	 * The delivery claim destination of an address: never the address itself.
 	 *
+	 * A SHA-256 digest of the lower-cased address fits the 100-character
+	 * column and keeps one claim per address however it is spelled. It is an
+	 * identifier, not a secret: the addresses themselves are stored with the
+	 * organizers.
+	 *
 	 * @param string $recipient Address.
 	 * @return string
 	 */
 	public static function destination( $recipient ) {
-		return 'email:' . md5( strtolower( (string) $recipient ) );
+		return 'email:' . hash( 'sha256', strtolower( (string) $recipient ) );
 	}
 
 	/**
