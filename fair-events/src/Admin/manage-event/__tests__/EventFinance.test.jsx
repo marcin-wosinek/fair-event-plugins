@@ -649,3 +649,83 @@ describe( 'EventFinance — event budget link (#1608)', () => {
 		).toBeEnabled();
 	} );
 } );
+
+describe( 'EventFinance — event-name entities in descriptions (#2399)', () => {
+	const NBSP = ' ';
+
+	const cases = [
+		'Entrada para Test&nbsp;event',
+		'Ticket for Rock &amp; Roll &#8220;Night&#8221;',
+		'Ticket for &amp;lt;b&amp;gt;literal&amp;lt;/b&amp;gt;',
+		'Ticket for &lt;img src=x onerror=alert(1)&gt;',
+		'',
+	];
+	const expected = [
+		`Entrada para Test${ NBSP }event`,
+		'Ticket for Rock & Roll “Night”',
+		'Ticket for &lt;b&gt;literal&lt;/b&gt;',
+		'Ticket for <img src=x onerror=alert(1)>',
+		'-',
+	];
+
+	function descriptionCells( table ) {
+		const headers = within( table ).getAllByRole( 'columnheader' );
+		const index = headers.findIndex(
+			( th ) => th.textContent === 'Description'
+		);
+		return within( table )
+			.getAllByRole( 'row' )
+			.slice( 1 )
+			.map( ( row ) => row.querySelectorAll( 'td' )[ index ] );
+	}
+
+	it.each( [
+		[ 'Successful payments', cases, [] ],
+		[ 'Unsuccessful payment attempts', [], cases ],
+	] )(
+		'decodes entities once as text in the %s table',
+		async ( tableName, paid, failed ) => {
+			mockApiFetchByPath( {
+				paidTransactions: paid.map( ( description, i ) => ( {
+					...paidTransactionWithEntry,
+					id: 100 + i,
+					description,
+				} ) ),
+				failedTransactions: failed.map( ( description, i ) => ( {
+					...failedTransaction,
+					id: 200 + i,
+					description,
+				} ) ),
+			} );
+			renderTab();
+
+			fireEvent.click(
+				await screen.findByRole( 'button', { name: 'Online payments' } )
+			);
+			if ( failed.length ) {
+				fireEvent.click(
+					await screen.findByRole( 'button', {
+						name: /^Failed, expired or canceled attempts/,
+					} )
+				);
+			}
+
+			const table = await screen.findByRole( 'table', {
+				name: tableName,
+			} );
+			const cells = descriptionCells( table );
+
+			expect( cells.map( ( cell ) => cell.textContent ) ).toEqual(
+				expected
+			);
+			cells.forEach( ( cell, i ) => {
+				// Decoded HTML-like text stays a text node; only the dash
+				// fallback renders an element.
+				expect( cell.querySelectorAll( '*' ) ).toHaveLength(
+					expected[ i ] === '-' ? 1 : 0
+				);
+			} );
+			expect( table.querySelector( 'img, b' ) ).toBeNull();
+		}
+	);
+} );
