@@ -366,13 +366,13 @@
 	},
 	"exceptions": [
 		{
-			"advisory": "GHSA-gcqx-w48m-w2h4",
-			"package": "deepmerge",
+			"advisory": "GHSA-fc5q-39xc-vjpf",
+			"package": "picomatch",
 			"dependencySet": "package-lock.json",
-			"rationale": "No fixed release; reaches the lockfile only through @wordpress/* packages externalized to WordPress core and through build/test tooling, so no shipped bundle includes it.",
+			"rationale": "No fixed release; reaches the lockfile only through build, test and release tooling (@wordpress/scripts, jest, @changesets/cli) that matches globs from our own config, so no shipped bundle includes it.",
 			"owner": "@marcin-wosinek",
-			"issue": "#2115",
-			"expires": "2027-01-31"
+			"issue": "#2401",
+			"expires": "2027-02-28"
 		}
 	]
 }
