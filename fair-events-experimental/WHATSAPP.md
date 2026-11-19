@@ -189,6 +189,15 @@ The connection itself:
   out once, and is reported as "accepted by WhatsApp", never as delivered. A
   timed-out send is reported as uncertain and is not retried. Only the masked
   recipient (last three digits) is stored, in the delivery history.
+- **Default test number (#2414):** each administrator can save one number
+  of their own, which fills in the recipient when they open Fair Events →
+  WhatsApp. It is stored as digits in the protected
+  `_fair_events_experimental_whatsapp_test_recipient` user meta, readable
+  and writable only by that user through
+  `/fair-events-experimental/v1/whatsapp/test-recipient` (a blank value
+  clears it), and is not exposed by the users REST API. Saving or
+  prefilling it never sends a message or ticks the consent box; a send to
+  another number leaves it unchanged.
 - **Errors** show a translated explanation, Meta's numeric error code and its
   trace ID. Meta's own messages, the token and recipient numbers are not
   logged or returned.

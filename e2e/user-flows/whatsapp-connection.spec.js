@@ -16,6 +16,9 @@
  * link to the App Dashboard pages resolved from the token (#2132); a token
  * the double refuses those lookups for leaves the written steps alone.
  *
+ * An administrator's saved default test number fills in the recipient on
+ * later visits, and a one-time override leaves it unchanged (#2414).
+ *
  * The connection is behind the default-off `whatsapp` bundle (#2076): the
  * suite turns it on and restores its previous state afterwards.
  *
@@ -36,6 +39,7 @@ const AUTHORIZED = 'The recipient agreed to receive this test message.';
 const APP_SECRET = 'abcdef0123456789abcdef0123456789';
 const VERIFY_TOKEN = 'e2e-browser-verify-token';
 const NO_APP_TOKEN = 'e2e-whatsapp-browser-noapp-token-0123456789';
+const DEFAULT_META = '_fair_events_experimental_whatsapp_test_recipient';
 const LINK_TRANSIENTS = [
 	'fair_events_experimental_whatsapp_app_id',
 	'fair_events_experimental_whatsapp_business_id',
@@ -168,6 +172,9 @@ test.describe('WhatsApp connection', () => {
 			wpCli(`transient delete ${name}`, { allowFailure: true });
 		}
 		emptyDeliveries();
+		wpCli(`user meta delete admin ${DEFAULT_META}`, {
+			allowFailure: true,
+		});
 	};
 
 	let previousFeature;
@@ -417,6 +424,81 @@ test.describe('WhatsApp connection', () => {
 				.getByRole('list', { name: 'Recent messages' })
 				.getByText('Delivered', { exact: true })
 		).toBeVisible();
+	});
+
+	test('an administrator reuses a saved default test number', async ({
+		page,
+	}) => {
+		wpCli(`option update ${TOKEN_OPTION} ${TOKEN}`);
+		wpCli(
+			'option update fair_events_experimental_whatsapp_waba_id 100000000000001'
+		);
+		wpCli(
+			'option update fair_events_experimental_whatsapp_phone_number_id 200000000000002'
+		);
+		wpCli('option delete fair_e2e_whatsapp_requests', {
+			allowFailure: true,
+		});
+		await loginAsAdmin(page);
+		await page.goto(PAGE_URL);
+		await page.getByRole('button', { name: 'Validate connection' }).click();
+		await expect(
+			page.getByText(/Connection validated/).first()
+		).toBeVisible();
+
+		// Without a saved number the recipient starts empty.
+		const recipient = page.getByLabel('Recipient number');
+		const defaultNumber = page.getByLabel('My default test number');
+		await expect(defaultNumber).toBeEnabled();
+		await expect(recipient).toHaveValue('');
+
+		// An invalid number is refused and nothing is saved.
+		await defaultNumber.fill('call me');
+		await page.getByRole('button', { name: 'Save default number' }).click();
+		await expect(
+			page.getByText(/Enter the recipient number in international format/)
+		).not.toHaveCount(0);
+
+		// Saving sends nothing and leaves the recipient as it is.
+		await defaultNumber.fill('+34 600 000 125');
+		await page.getByRole('button', { name: 'Save default number' }).click();
+		await expect(
+			page.getByText(/Default test number saved/).first()
+		).toBeVisible();
+		await expect(recipient).toHaveValue('');
+		expect(sentMessages()).toEqual([]);
+
+		// Reopening the page fills in the saved number, unconfirmed.
+		await page.goto(PAGE_URL);
+		await expect(recipient).toHaveValue('+34600000125');
+		await expect(page.getByLabel(AUTHORIZED)).not.toBeChecked();
+
+		// Send once to another number.
+		await page.getByLabel('Template').selectOption('hello_world|en_US');
+		await recipient.fill('+34 600 000 126');
+		await page.getByLabel(AUTHORIZED).check();
+		await page.getByRole('button', { name: 'Send test template' }).click();
+		await expect(
+			page.getByRole('heading', { name: 'Accepted by WhatsApp' })
+		).toBeVisible();
+		expect(sentMessages().map((r) => r.to)).toEqual(['34600000126']);
+
+		// The default is unchanged on the next visit.
+		await page.goto(PAGE_URL);
+		await expect(recipient).toHaveValue('+34600000125');
+		await expect(defaultNumber).toHaveValue('+34600000125');
+
+		// Clearing it keeps the shown recipient; the next visit starts empty.
+		await page
+			.getByRole('button', { name: 'Clear default number' })
+			.click();
+		await expect(
+			page.getByText('Default test number cleared.').first()
+		).toBeVisible();
+		await expect(recipient).toHaveValue('+34600000125');
+		await page.goto(PAGE_URL);
+		await expect(defaultNumber).toBeEnabled();
+		await expect(recipient).toHaveValue('');
 	});
 
 	test('the page works at a phone-sized viewport', async ({ page }) => {
