@@ -121,12 +121,12 @@ npm run deploy:local -- --env=staging --skip-reactivate
 
 Mirrors `.github/workflows/deploy-to-environment.yml`:
 
-1. Runs `npm run dist-archive` (unless `--skip-build`).
+1. Runs `npm run dist-archive` (unless `--skip-build`), with every selected plugin's `Version:` header temporarily stamped with the local version below. The plugins come from [plugin discovery](./RELEASES.md#-plugin-discovery), so a selected name that isn't a plugin workspace fails before building, and the headers are restored afterwards even when packaging fails. `--plugins=all` still means the fixed deployable set in `ALL_PLUGINS` (`scripts/deploy-local.js`).
 2. Extracts each plugin ZIP to `dist/extracted/`.
 3. rsyncs each plugin with `-avz --delete` over SSH (2-attempt retry, same SSH keep-alive options as CI).
 4. SSHes to the host and runs `wp plugin deactivate <plugin> && wp plugin activate <plugin>` for each deployed plugin (unless `--dry-run` or `--skip-reactivate`).
 
-Each deployed plugin gets a `.deploy-version` file (written into the extracted plugin before rsync) containing `git describe --always --tags --dirty` and a UTC timestamp. A trailing `-dirty` suffix means the deploy included uncommitted local changes — useful when troubleshooting "what's actually on the server right now".
+Each deployed plugin gets a `.deploy-version` file (written into the extracted plugin before rsync) containing `git describe --always --tags --dirty` (the same value stamped into the headers; unlike CI it is not per-plugin) and a UTC timestamp. A trailing `-dirty` suffix means the deploy included uncommitted local changes — useful when troubleshooting "what's actually on the server right now".
 
 The CI deploy path remains the canonical/recommended flow — local deploy is an additional, opt-in escape hatch.
 

@@ -219,6 +219,9 @@ jobs:
             - name: Check the shared PHP version and consumer locks
               run: npm run validate:shared-version
 
+            - name: Check release scripts cover every plugin workspace
+              run: npm run validate:plugin-coverage
+
     js-tests:
         name: JavaScript tests
         # Independent of build: a failing suite must not stop the plugins

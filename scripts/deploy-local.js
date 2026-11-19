@@ -27,11 +27,15 @@ import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync, spawnSync } from 'child_process';
 import dotenv from 'dotenv';
+import { discoverPlugins } from './plugin-workspaces.mjs';
+import { withStampedHeaders } from './version-stamp.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
+// Deployment eligibility for --plugins=all. Header stamping is not limited to
+// this list: every selected plugin is resolved through discoverPlugins().
 const ALL_PLUGINS = [
 	'fair-events',
 	'fair-payments-connector',
@@ -122,19 +126,9 @@ function resolvePlugins(override, configured) {
 		.filter(Boolean);
 }
 
-function run(cmd, args, opts = {}) {
-	const result = spawnSync(cmd, args, {
-		stdio: 'inherit',
-		cwd: rootDir,
-		...opts,
-	});
-	if (result.status !== 0) {
-		fail(`Command failed (${result.status}): ${cmd} ${args.join(' ')}`);
-	}
-}
-
 function gitDescribe() {
-	// Matches scripts/stamp-build-version.js, plus --dirty for local builds.
+	// Unlike CI (scripts/stamp-build-version.js, per-plugin `<plugin>@*`
+	// tags), local builds stamp one repo-wide description, plus --dirty.
 	const result = spawnSync(
 		'git',
 		['describe', '--tags', '--match=[0-9]*', '--dirty', '--always'],
@@ -149,37 +143,23 @@ function gitDescribe() {
 	return result.stdout.trim();
 }
 
-const PLUGIN_HEADER_FILES = {
-	'fair-events': 'fair-events/fair-events.php',
-	'fair-payments-connector':
-		'fair-payments-connector/fair-payments-connector.php',
-	'fair-platform': 'fair-platform/fair-platform.php',
-	'fair-audience': 'fair-audience/fair-audience.php',
-	'fair-timetable': 'fair-timetable/fair-timetable.php',
-};
-const VERSION_HEADER_RE = /(\*?\s*Version:\s*)([^\s\r\n*]+)/i;
-
-function stampPluginVersions(plugins, version) {
-	const originals = new Map();
-	for (const plugin of plugins) {
-		const rel = PLUGIN_HEADER_FILES[plugin];
-		if (!rel) continue;
-		const filePath = join(rootDir, rel);
-		if (!existsSync(filePath)) continue;
-		const original = readFileSync(filePath, 'utf8');
-		const updated = original.replace(VERSION_HEADER_RE, `$1${version}`);
-		if (updated !== original) {
-			writeFileSync(filePath, updated, 'utf8');
-			originals.set(filePath, original);
-		}
+/**
+ * Resolve the selected plugins to discovered plugin workspaces, failing on
+ * any name that isn't one, so no selected plugin ships unstamped.
+ */
+function resolveStampTargets(plugins) {
+	const discovered = new Map(
+		discoverPlugins(rootDir).map((plugin) => [plugin.name, plugin])
+	);
+	const unknown = plugins.filter((plugin) => !discovered.has(plugin));
+	if (unknown.length) {
+		throw new Error(
+			`Not a plugin workspace (see root package.json workspaces): ${unknown.join(
+				', '
+			)}`
+		);
 	}
-	return originals;
-}
-
-function restorePluginVersions(originals) {
-	for (const [filePath, content] of originals) {
-		writeFileSync(filePath, content, 'utf8');
-	}
+	return plugins.map((plugin) => discovered.get(plugin));
 }
 
 function writeVersionFile(plugin, extractDir, version) {
@@ -196,18 +176,35 @@ function build(plugins, version) {
 			if (f.endsWith('.zip')) rmSync(join(distDir, f));
 		}
 	}
-	console.log(`▶ Stamping plugin Version headers: ${version}`);
-	const originals = stampPluginVersions(plugins, version);
-	try {
-		console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
-		run('npm', ['run', 'dist-archive']);
-	} finally {
-		restorePluginVersions(originals);
-		if (originals.size) {
-			console.log(
-				`▶ Restored ${originals.size} plugin file(s) to pre-stamp state.`
-			);
-		}
+	const targets = resolveStampTargets(plugins);
+	console.log(
+		`▶ Stamping plugin Version headers (${targets
+			.map((plugin) => plugin.name)
+			.join(', ')}): ${version}`
+	);
+	// withStampedHeaders restores the headers even when dist-archive fails,
+	// so the failure is thrown here and reported by main() afterwards.
+	const restored = withStampedHeaders({
+		rootDir,
+		plugins: targets,
+		version,
+		callback: () => {
+			console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
+			const result = spawnSync('npm', ['run', 'dist-archive'], {
+				stdio: 'inherit',
+				cwd: rootDir,
+			});
+			if (result.status !== 0) {
+				throw new Error(
+					`Command failed (${result.status}): npm run dist-archive`
+				);
+			}
+		},
+	});
+	if (restored) {
+		console.log(
+			`▶ Restored ${restored} plugin file(s) to pre-stamp state.`
+		);
 	}
 }
 
@@ -339,8 +336,13 @@ function main() {
 	console.log('⚠  Local deploys skip CI checks (lint, tests).');
 	console.log('');
 
-	if (!args.skipBuild) build(plugins, version);
-	else console.log('▶ Skipping build (--skip-build).');
+	if (!args.skipBuild) {
+		try {
+			build(plugins, version);
+		} catch (error) {
+			fail(error.message);
+		}
+	} else console.log('▶ Skipping build (--skip-build).');
 
 	const extractDir = join(rootDir, 'dist', 'extracted');
 	extractZips(plugins, extractDir);
