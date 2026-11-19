@@ -58,7 +58,8 @@ export default function InstagramTab( { onNotice, setupUrl = null } ) {
 			);
 
 	useEffect( () => {
-		load();
+		// load() handles its own rejection.
+		void load();
 	}, [] );
 
 	// Closing mid-request would hide whether the account was disconnected.
