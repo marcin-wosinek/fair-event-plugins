@@ -82,6 +82,7 @@ function mockApi( routes ) {
 	const all = {
 		[ `GET ${ PATH }/deliveries` ]: NO_DELIVERIES,
 		[ `GET ${ PATH }/dashboard-links` ]: NO_LINKS,
+		[ `GET ${ PATH }/test-recipient` ]: { recipient: '' },
 		...routes,
 	};
 	apiFetch.mockImplementation( ( options ) => {
@@ -553,5 +554,253 @@ describe( 'WhatsAppConnection', () => {
 		expect(
 			screen.queryByRole( 'link', { name: /Open App settings/ } )
 		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'Default test number', () => {
+	const DEFAULT = `${ PATH }/test-recipient`;
+	const CONSENT = 'The recipient agreed to receive this test message.';
+
+	const validated = ( routes = {} ) =>
+		mockApi( {
+			[ `GET ${ PATH }` ]: config( { validation: VALIDATION } ),
+			[ `GET ${ PATH }/templates` ]: TEMPLATES,
+			[ `POST ${ PATH }/test` ]: {
+				outcome: 'accepted',
+				message_status: 'accepted',
+				recipient: '••••••••999',
+				template: { name: 'hello_world', language: 'en_US' },
+			},
+			...routes,
+		} );
+
+	const ready = async () => {
+		render( <WhatsAppConnection onNotice={ () => {} } /> );
+		await screen.findByRole( 'option', { name: 'hello_world (en_US)' } );
+		fireEvent.change( screen.getByLabelText( 'Template' ), {
+			target: { value: 'hello_world|en_US' },
+		} );
+	};
+
+	it( 'prefills the recipient with the saved number, leaving consent unchecked', async () => {
+		validated( { [ `GET ${ DEFAULT }` ]: { recipient: '+34600000123' } } );
+		await ready();
+
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue(
+			'+34600000123'
+		);
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			'+34600000123'
+		);
+		expect( screen.getByLabelText( CONSENT ) ).not.toBeChecked();
+		expect(
+			screen.getByRole( 'button', { name: 'Send test template' } )
+		).toBeDisabled();
+		expect( calls( 'POST', `${ PATH }/test` ) ).toHaveLength( 0 );
+	} );
+
+	it( 'leaves the recipient empty without a saved number', async () => {
+		validated();
+		await ready();
+
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue( '' );
+		expect(
+			screen.queryByRole( 'button', { name: 'Clear default number' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'sends once to another number without changing the default', async () => {
+		validated( { [ `GET ${ DEFAULT }` ]: { recipient: '+34600000123' } } );
+		await ready();
+
+		fireEvent.click( screen.getByLabelText( CONSENT ) );
+		fireEvent.change( screen.getByLabelText( 'Recipient number' ), {
+			target: { value: '+34 600 000 999' },
+		} );
+		// A changed recipient needs a new confirmation.
+		expect( screen.getByLabelText( CONSENT ) ).not.toBeChecked();
+
+		fireEvent.click( screen.getByLabelText( CONSENT ) );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Send test template' } )
+			);
+		} );
+
+		expect(
+			calls( 'POST', `${ PATH }/test` )[ 0 ][ 0 ].data.recipient
+		).toBe( '+34 600 000 999' );
+		expect( calls( 'POST', DEFAULT ) ).toHaveLength( 0 );
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			'+34600000123'
+		);
+		expect( screen.getByLabelText( CONSENT ) ).not.toBeChecked();
+	} );
+
+	it( 'saves a default without changing the recipient or sending', async () => {
+		validated( {
+			[ `POST ${ DEFAULT }` ]: { recipient: '+34600000456' },
+		} );
+		await ready();
+		fireEvent.change( screen.getByLabelText( 'Recipient number' ), {
+			target: { value: '+34 600 000 999' },
+		} );
+		const save = screen.getByRole( 'button', {
+			name: 'Save default number',
+		} );
+		expect( save ).toBeDisabled();
+
+		fireEvent.change( screen.getByLabelText( 'My default test number' ), {
+			target: { value: ' +34 600 000 456 ' },
+		} );
+		expect(
+			screen.getByText( 'Unsaved changes to your default test number.' )
+		).toBeInTheDocument();
+		await act( async () => {
+			fireEvent.click( save );
+		} );
+
+		expect( calls( 'POST', DEFAULT )[ 0 ][ 0 ].data ).toEqual( {
+			recipient: '+34 600 000 456',
+		} );
+		expect(
+			screen.getAllByText( /Default test number saved/ )[ 0 ]
+		).toBeVisible();
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			'+34600000456'
+		);
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue(
+			'+34 600 000 999'
+		);
+		expect( screen.getByLabelText( CONSENT ) ).not.toBeChecked();
+		expect( calls( 'POST', `${ PATH }/test` ) ).toHaveLength( 0 );
+		expect(
+			screen.queryByText( 'Unsaved changes to your default test number.' )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'keeps the typed number and the saved default when saving fails', async () => {
+		validated( {
+			[ `GET ${ DEFAULT }` ]: { recipient: '+34600000123' },
+			[ `POST ${ DEFAULT }` ]: () => {
+				throw apiError(
+					'rest_invalid_param',
+					'Invalid parameter(s): recipient',
+					{
+						status: 400,
+						params: {
+							recipient:
+								'Enter the recipient number in international format.',
+						},
+					}
+				);
+			},
+		} );
+		await ready();
+
+		fireEvent.change( screen.getByLabelText( 'My default test number' ), {
+			target: { value: 'call me' },
+		} );
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Save default number' } )
+			);
+		} );
+
+		expect(
+			screen.getAllByText(
+				'Enter the recipient number in international format.'
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			'call me'
+		);
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue(
+			'+34600000123'
+		);
+		expect(
+			screen.getByRole( 'button', { name: 'Clear default number' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'clears the default and keeps the recipient shown', async () => {
+		validated( {
+			[ `GET ${ DEFAULT }` ]: { recipient: '+34600000123' },
+			[ `POST ${ DEFAULT }` ]: { recipient: '' },
+		} );
+		await ready();
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Clear default number' } )
+			);
+		} );
+
+		expect( calls( 'POST', DEFAULT )[ 0 ][ 0 ].data ).toEqual( {
+			recipient: '',
+		} );
+		expect(
+			screen.getAllByText( 'Default test number cleared.' )[ 0 ]
+		).toBeVisible();
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			''
+		);
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue(
+			'+34600000123'
+		);
+		expect(
+			screen.queryByRole( 'button', { name: 'Clear default number' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'does not replace a recipient typed before the default loads', async () => {
+		let resolve;
+		validated( {
+			[ `GET ${ DEFAULT }` ]: () =>
+				new Promise( ( done ) => {
+					resolve = done;
+				} ),
+		} );
+		await ready();
+
+		fireEvent.change( screen.getByLabelText( 'Recipient number' ), {
+			target: { value: '+34 600 000 999' },
+		} );
+		fireEvent.click( screen.getByLabelText( CONSENT ) );
+		await act( async () => {
+			resolve( { recipient: '+34600000123' } );
+		} );
+
+		expect( screen.getByLabelText( 'Recipient number' ) ).toHaveValue(
+			'+34 600 000 999'
+		);
+		expect( screen.getByLabelText( CONSENT ) ).toBeChecked();
+		expect( screen.getByLabelText( 'My default test number' ) ).toHaveValue(
+			'+34600000123'
+		);
+	} );
+
+	it( 'still allows manual entry when the default cannot load', async () => {
+		validated( {
+			[ `GET ${ DEFAULT }` ]: () => {
+				throw new Error( 'offline' );
+			},
+		} );
+		await ready();
+
+		expect(
+			(
+				await screen.findAllByText(
+					/Your default test number could not be loaded/
+				)
+			)[ 0 ]
+		).toBeInTheDocument();
+		fireEvent.change( screen.getByLabelText( 'Recipient number' ), {
+			target: { value: '+34 600 000 999' },
+		} );
+		fireEvent.click( screen.getByLabelText( CONSENT ) );
+		expect(
+			screen.getByRole( 'button', { name: 'Send test template' } )
+		).toBeEnabled();
 	} );
 } );

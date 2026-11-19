@@ -12,6 +12,7 @@ use FairEventsExperimental\WhatsApp\Configuration;
 use FairEventsExperimental\WhatsApp\Connector;
 use FairEventsExperimental\WhatsApp\DashboardLinks;
 use FairEventsExperimental\WhatsApp\Deliveries;
+use FairEventsExperimental\WhatsApp\TestRecipient;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Server;
@@ -126,6 +127,29 @@ class WhatsAppController extends WP_REST_Controller {
 		);
 		register_rest_route(
 			$this->namespace,
+			'/' . $this->rest_base . '/test-recipient',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_test_recipient' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_test_recipient' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'recipient' => array(
+							'type'              => 'string',
+							'required'          => true,
+							'validate_callback' => array( $this, 'validate_default_recipient' ),
+						),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base . '/test',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -187,6 +211,58 @@ class WhatsAppController extends WP_REST_Controller {
 			__( 'Enter the recipient number in international format, with the country code, such as +34 600 123 456.', 'fair-events-experimental' ),
 			array( 'status' => 400 )
 		);
+	}
+
+	/**
+	 * A default test number: blank to clear it, otherwise a valid number.
+	 *
+	 * @param mixed $value Recipient number as typed.
+	 * @return true|WP_Error
+	 */
+	public function validate_default_recipient( $value ) {
+		if ( is_string( $value ) && '' === trim( $value ) ) {
+			return true;
+		}
+		return $this->validate_recipient( $value );
+	}
+
+	/**
+	 * The current user's default test number. Never contacts Meta.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_test_recipient() {
+		return rest_ensure_response( self::present_test_recipient( TestRecipient::get( get_current_user_id() ) ) );
+	}
+
+	/**
+	 * Save or clear the current user's default test number. Only the
+	 * authenticated user's own number can be changed; nothing is sent.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function update_test_recipient( $request ) {
+		$value  = (string) $request->get_param( 'recipient' );
+		$digits = '' === trim( $value ) ? '' : Client::normalize_recipient( $value );
+		if ( ! TestRecipient::save( get_current_user_id(), $digits ) ) {
+			return new WP_Error(
+				'test_recipient_not_saved',
+				__( 'The default test number could not be saved. Try again; if it keeps failing, check the site\'s database.', 'fair-events-experimental' ),
+				array( 'status' => 500 )
+			);
+		}
+		return rest_ensure_response( self::present_test_recipient( TestRecipient::get( get_current_user_id() ) ) );
+	}
+
+	/**
+	 * The REST shape of a default test number.
+	 *
+	 * @param string $digits Number, digits only, or ''.
+	 * @return array{recipient: string}
+	 */
+	private static function present_test_recipient( $digits ) {
+		return array( 'recipient' => '' === $digits ? '' : '+' . $digits );
 	}
 
 	/**

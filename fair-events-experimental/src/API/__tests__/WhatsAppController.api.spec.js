@@ -3,7 +3,8 @@
  * access, saving and removing the IDs, connection validation (pagination,
  * account mismatch, invalid tokens), invalidation when the IDs or token
  * change, template filtering, the explicit test send and the App Dashboard
- * links resolved from the token and account (#2132).
+ * links resolved from the token and account (#2132), and each
+ * administrator's private default test number (#2414).
  *
  * Nothing reaches Meta: e2e/mu-plugins/lib/whatsapp-http-double.php answers
  * graph.facebook.com for the synthetic account it documents and logs each
@@ -122,6 +123,17 @@ test.describe( 'WhatsAppController', () => {
 	let subscriberId;
 	let subscriberHeaders;
 	let previousFeature;
+	let otherAdminId;
+	let otherAdminHeaders;
+
+	const DEFAULT_PATH = `${ PATH }/test-recipient`;
+	const saveDefault = ( recipient, headers = adminHeaders ) =>
+		api.post( DEFAULT_PATH, { headers, data: { recipient } } );
+	const readDefault = async ( headers = adminHeaders ) => {
+		const res = await api.get( DEFAULT_PATH, { headers } );
+		expect( res.status() ).toBe( 200 );
+		return ( await res.json() ).recipient;
+	};
 
 	const saveToken = ( token ) =>
 		api.post( SETTINGS_PATH, {
@@ -170,12 +182,33 @@ test.describe( 'WhatsAppController', () => {
 					'base64'
 				),
 		};
+		const adminLogin = `whatsapp-admin-${ Date.now() }`;
+		const adminRes = await api.post( '/wp-json/wp/v2/users', {
+			headers: adminHeaders,
+			data: {
+				username: adminLogin,
+				email: `${ adminLogin }@example.com`,
+				password: 'Test-password-2414!',
+				roles: [ 'administrator' ],
+			},
+		} );
+		expect( adminRes.ok() ).toBeTruthy();
+		otherAdminId = ( await adminRes.json() ).id;
+		otherAdminHeaders = {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ adminLogin }:Test-password-2414!` ).toString(
+					'base64'
+				),
+		};
 		await saveToken( '' );
 		await saveIds( '', '' );
+		await saveDefault( '' );
 	} );
 
 	test.afterAll( async () => {
 		await setWhatsAppFeature( true );
+		await saveDefault( '' );
 		await saveToken( '' );
 		await saveIds( '', '' );
 		await wp(
@@ -188,11 +221,13 @@ test.describe( 'WhatsAppController', () => {
 			await wp( 'transient', 'delete', name ).catch( () => {} );
 		}
 		await clearDoubleRequests();
-		if ( subscriberId ) {
-			await api.delete(
-				`/wp-json/wp/v2/users/${ subscriberId }?force=true&reassign=1`,
-				{ headers: adminHeaders }
-			);
+		for ( const id of [ subscriberId, otherAdminId ] ) {
+			if ( id ) {
+				await api.delete(
+					`/wp-json/wp/v2/users/${ id }?force=true&reassign=1`,
+					{ headers: adminHeaders }
+				);
+			}
 		}
 		await setWhatsAppFeature( previousFeature );
 		await api.dispose();
@@ -206,6 +241,8 @@ test.describe( 'WhatsAppController', () => {
 			[ 'post', `${ PATH }/validate`, undefined ],
 			[ 'get', `${ PATH }/templates`, undefined ],
 			[ 'get', `${ PATH }/dashboard-links`, undefined ],
+			[ 'get', `${ PATH }/test-recipient`, undefined ],
+			[ 'post', `${ PATH }/test-recipient`, { recipient: RECIPIENT } ],
 			[
 				'post',
 				`${ PATH }/test`,
@@ -406,6 +443,34 @@ test.describe( 'WhatsAppController', () => {
 		] );
 	} );
 
+	test( 'a test send neither uses nor changes the default test number', async () => {
+		expect( ( await saveDefault( '+34 600 000 777' ) ).status() ).toBe(
+			200
+		);
+		await clearDoubleRequests();
+
+		// The send still needs its own recipient.
+		let res = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+			data: {
+				template_name: 'hello_world',
+				template_language: 'en_US',
+				authorized: true,
+			},
+		} );
+		expect( res.status() ).toBe( 400 );
+
+		res = await sendTest();
+		expect( res.status() ).toBe( 200 );
+		const sends = ( await doubleRequests() ).filter(
+			( r ) => 'POST' === r.method
+		);
+		expect( sends.map( ( r ) => r.to ) ).toEqual( [ '34600000123' ] );
+		expect( await readDefault() ).toBe( '+34600000777' );
+
+		await saveDefault( '' );
+	} );
+
 	test( 'a refused test send says why', async () => {
 		const res = await sendTest( { recipient: '+34 600 131030' } );
 		expect( res.status() ).toBe( 400 );
@@ -596,6 +661,107 @@ test.describe( 'WhatsAppController', () => {
 
 		await saveToken( '' );
 	} );
+	test( 'saves, changes and clears the default test number without contacting Meta', async () => {
+		await clearDoubleRequests();
+		expect( await readDefault() ).toBe( '' );
+
+		let res = await saveDefault( ' +34 (600) 000-123 ' );
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( { recipient: '+34600000123' } );
+		// Read back as a fresh request, as on reopening the page.
+		expect( await readDefault() ).toBe( '+34600000123' );
+
+		res = await saveDefault( '+34 600 000 456' );
+		expect( res.status() ).toBe( 200 );
+		expect( await readDefault() ).toBe( '+34600000456' );
+
+		// Saving the same number again is a success, not a storage failure.
+		res = await saveDefault( '34600000456' );
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( { recipient: '+34600000456' } );
+
+		res = await saveDefault( '   ' );
+		expect( res.status() ).toBe( 200 );
+		expect( await res.json() ).toEqual( { recipient: '' } );
+		expect( await readDefault() ).toBe( '' );
+
+		// Clearing what is already clear is a success too.
+		expect( ( await saveDefault( '' ) ).status() ).toBe( 200 );
+
+		expect( await doubleRequests() ).toEqual( [] );
+	} );
+
+	test( 'an invalid default test number is refused and the saved one kept', async () => {
+		await saveDefault( '+34 600 000 123' );
+		await clearDoubleRequests();
+
+		for ( const recipient of [ 'call me', '+99 12', '0034600000123x' ] ) {
+			const res = await saveDefault( recipient );
+			expect( res.status(), recipient ).toBe( 400 );
+			const text = await res.text();
+			expect( text ).not.toContain( recipient );
+			expect( JSON.parse( text ).code ).toBe( 'rest_invalid_param' );
+		}
+		// The recipient field is required; a non-string is refused.
+		let res = await api.post( DEFAULT_PATH, {
+			headers: adminHeaders,
+			data: {},
+		} );
+		expect( res.status() ).toBe( 400 );
+		res = await api.post( DEFAULT_PATH, {
+			headers: adminHeaders,
+			data: { recipient: [ '34600000123' ] },
+		} );
+		expect( res.status() ).toBe( 400 );
+
+		expect( await readDefault() ).toBe( '+34600000123' );
+		expect( await doubleRequests() ).toEqual( [] );
+		await saveDefault( '' );
+	} );
+
+	test( 'each administrator has a private default test number', async () => {
+		await saveDefault( '+34 600 000 123' );
+		await saveDefault( '+44 7700 900 456', otherAdminHeaders );
+
+		expect( await readDefault() ).toBe( '+34600000123' );
+		expect( await readDefault( otherAdminHeaders ) ).toBe(
+			'+447700900456'
+		);
+
+		// No target user can be chosen: a stray parameter is ignored.
+		const res = await api.post(
+			`${ DEFAULT_PATH }?user_id=${ otherAdminId }`,
+			{
+				headers: adminHeaders,
+				data: { recipient: '', user_id: otherAdminId },
+			}
+		);
+		expect( res.status() ).toBe( 200 );
+		expect( await readDefault() ).toBe( '' );
+		expect( await readDefault( otherAdminHeaders ) ).toBe(
+			'+447700900456'
+		);
+
+		// The number is not exposed through the users API, even to an
+		// administrator who can edit that user.
+		for ( const path of [
+			`/wp-json/wp/v2/users/${ otherAdminId }?context=edit`,
+			'/wp-json/wp/v2/users?context=edit&per_page=100',
+		] ) {
+			const users = await api.get( path, { headers: adminHeaders } );
+			expect( users.status(), path ).toBe( 200 );
+			expect( await users.text(), path ).not.toContain( '447700900456' );
+		}
+
+		// Recent messages keep showing only the last three digits.
+		const deliveries = await api.get( `${ PATH }/deliveries`, {
+			headers: otherAdminHeaders,
+		} );
+		expect( await deliveries.text() ).not.toContain( '447700900456' );
+
+		await saveDefault( '', otherAdminHeaders );
+	} );
+
 	test( 'stays off until enabled and keeps saved values while off', async () => {
 		// Saved while on.
 		expect( ( await saveToken( TOKEN ) ).ok() ).toBeTruthy();
@@ -609,6 +775,7 @@ test.describe( 'WhatsAppController', () => {
 				[ 'get', PATH ],
 				[ 'post', `${ PATH }/validate` ],
 				[ 'post', `${ PATH }/test` ],
+				[ 'get', `${ PATH }/test-recipient` ],
 				[ 'get', `${ PATH }/webhook` ],
 			] ) {
 				const res = await api[ method ]( path, {

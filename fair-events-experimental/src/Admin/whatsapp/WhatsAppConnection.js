@@ -17,6 +17,7 @@ import {
 
 import WebhookSetup from './WebhookSetup.js';
 import DeliveryHistory from './DeliveryHistory.js';
+import DefaultTestNumber from './DefaultTestNumber.js';
 
 const PATH = '/fair-events-experimental/v1/whatsapp';
 
@@ -227,6 +228,21 @@ export default function WhatsAppConnection( { onNotice } ) {
 	const [ sendCount, setSendCount ] = useState( 0 );
 	const [ links, setLinks ] = useState( null );
 	const linksRequest = useRef( 0 );
+	// Once the recipient is edited, a late default never replaces it.
+	const recipientEdited = useRef( false );
+
+	// A new recipient needs its own confirmation.
+	const changeRecipient = ( value ) => {
+		recipientEdited.current = true;
+		setRecipient( value );
+		setAuthorized( false );
+	};
+	const prefillRecipient = useCallback( ( number ) => {
+		if ( number && ! recipientEdited.current ) {
+			setRecipient( number );
+			setAuthorized( false );
+		}
+	}, [] );
 
 	const applyConfig = ( next ) => {
 		setConfig( next );
@@ -808,7 +824,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 							autoComplete="off"
 							value={ recipient }
 							disabled={ sending }
-							onChange={ setRecipient }
+							onChange={ changeRecipient }
 						/>
 						<CheckboxControl
 							__nextHasNoMarginBottom
@@ -869,6 +885,7 @@ export default function WhatsAppConnection( { onNotice } ) {
 						</p>
 					) }
 					{ result && <TestResult result={ result } /> }
+					<DefaultTestNumber onLoaded={ prefillRecipient } />
 				</CardBody>
 			</Card>
 
