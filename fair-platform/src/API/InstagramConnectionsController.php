@@ -38,7 +38,7 @@ class InstagramConnectionsController extends AbstractConnectionsController {
 	 * @return string[]
 	 */
 	protected function get_statuses() {
-		return array( 'connected', 'failed' );
+		return array( 'connected', 'choice_pending', 'failed' );
 	}
 
 	/**

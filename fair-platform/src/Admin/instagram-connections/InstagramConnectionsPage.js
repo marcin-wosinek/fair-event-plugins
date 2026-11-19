@@ -85,6 +85,11 @@ export default function InstagramConnectionsPage() {
 					color: '#00a32a',
 				},
 				{
+					value: 'choice_pending',
+					label: __( 'Account choice pending', 'fair-platform' ),
+					color: '#996800',
+				},
+				{
 					value: 'failed',
 					label: __( 'Failed', 'fair-platform' ),
 					color: '#d63638',

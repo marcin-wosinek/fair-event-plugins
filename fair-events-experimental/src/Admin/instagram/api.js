@@ -42,6 +42,35 @@ export function completeAuthorization( { state, handoff = '', error = '' } ) {
 }
 
 /**
+ * Connect the account the administrator chose from the pending choice.
+ *
+ * @param {Object} data           Choice.
+ * @param {string} data.choice    ID of the pending choice.
+ * @param {string} data.accountId Chosen Instagram account ID.
+ * @return {Promise<Object>} Connection details.
+ */
+export function confirmChoice( { choice, accountId } ) {
+	return apiFetch( {
+		path: `${ PATH }/choice`,
+		method: 'POST',
+		data: { choice, account_id: accountId },
+	} );
+}
+
+/**
+ * Cancel the pending choice. The current connection is kept.
+ *
+ * @param {string} choice ID of the pending choice.
+ * @return {Promise<Object>} Connection details.
+ */
+export function cancelChoice( choice ) {
+	return apiFetch( {
+		path: `${ PATH }/choice?choice=${ encodeURIComponent( choice ) }`,
+		method: 'DELETE',
+	} );
+}
+
+/**
  * Check the connection with Meta.
  *
  * @return {Promise<Object>} Result with connection details.

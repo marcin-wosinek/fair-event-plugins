@@ -26,10 +26,10 @@ class AuthorizationTest extends TestCase {
 		if ( ! function_exists( 'sodium_crypto_secretbox' ) ) {
 			$this->markTestSkipped( 'Sodium is not available.' );
 		}
-		$GLOBALS['_fair_test_options']               = array();
-		$GLOBALS['_fair_test_filters']               = array();
-		$GLOBALS['_fair_test_transients']            = array();
-		$GLOBALS['_fair_test_remote_post_requests']  = array();
+		$GLOBALS['_fair_test_options']              = array();
+		$GLOBALS['_fair_test_filters']              = array();
+		$GLOBALS['_fair_test_transients']           = array();
+		$GLOBALS['_fair_test_remote_post_requests'] = array();
 		unset( $GLOBALS['_fair_test_remote_post_response'] );
 	}
 
@@ -89,6 +89,7 @@ class AuthorizationTest extends TestCase {
 		$this->assertSame( 'Example & Events', $query['site_name'] );
 		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9_-]{43}$/', $query['code_challenge'] );
 		$this->assertArrayNotHasKey( 'code_verifier', $query );
+		$this->assertSame( '1', $query['account_choice'] );
 
 		$stored = $GLOBALS['_fair_test_transients'][ Authorization::ATTEMPT_TRANSIENT . '7' ];
 		$this->assertStringStartsWith( 'fes-enc:v1:', $stored['value'] );
@@ -102,7 +103,7 @@ class AuthorizationTest extends TestCase {
 	 * @return void
 	 */
 	public function test_complete_redeems_with_the_verifier() {
-		list( , $query )                           = $this->start();
+		list( , $query )                            = $this->start();
 		$GLOBALS['_fair_test_remote_post_response'] = array(
 			'response' => array( 'code' => 200 ),
 			'body'     => wp_json_encode( $this->redeemed() ),
@@ -180,7 +181,7 @@ class AuthorizationTest extends TestCase {
 				),
 			) as $response
 		) {
-			list( , $query )                           = $this->start();
+			list( , $query )                            = $this->start();
 			$GLOBALS['_fair_test_remote_post_response'] = $response;
 
 			$this->assertInstanceOf( \WP_Error::class, Authorization::complete( 7, $query['state'], str_repeat( 'h', 43 ), '' ) );
@@ -199,5 +200,124 @@ class AuthorizationTest extends TestCase {
 
 		$this->assertSame( 'instagram_handoff_failed', Authorization::complete( 7, $query['state'], 'short', '' )->get_error_code() );
 		$this->assertSame( array(), $GLOBALS['_fair_test_remote_post_requests'] );
+	}
+
+	/**
+	 * Return from the service with several candidates for an administrator.
+	 *
+	 * @param int $user_id Administrator.
+	 * @return array Pending choice.
+	 */
+	private function return_with_choice( $user_id = 7 ) {
+		list( , $query ) = $this->start( $user_id );
+		$redeemed        = $this->redeemed();
+		unset( $redeemed['account_id'], $redeemed['username'] );
+		$redeemed['accounts']                       = array(
+			array(
+				'id'       => '17841400000000001',
+				'username' => 'events_club',
+			),
+			array(
+				'id'       => '17841400000000002',
+				'username' => 'other_club',
+			),
+		);
+		$GLOBALS['_fair_test_remote_post_response'] = array(
+			'response' => array( 'code' => 200 ),
+			'body'     => wp_json_encode( $redeemed ),
+		);
+
+		$this->assertTrue( Authorization::complete( $user_id, $query['state'], str_repeat( 'h', 43 ), '' ) );
+
+		return Authorization::pending_choice( $user_id );
+	}
+
+	/**
+	 * Several candidates are kept as the administrator's choice; nothing is
+	 * connected and the browser-facing choice carries no token.
+	 *
+	 * @return void
+	 */
+	public function test_several_accounts_become_a_pending_choice() {
+		$choice = $this->return_with_choice();
+
+		$this->assertSame( array( '17841400000000001', '17841400000000002' ), array_column( $choice['accounts'], 'id' ) );
+		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9_-]{32}$/', $choice['id'] );
+		$this->assertStringNotContainsString( 'EAAGredeemed', (string) wp_json_encode( $choice ) );
+		$this->assertStringNotContainsString( 'EAAGredeemed', $GLOBALS['_fair_test_transients'][ Authorization::CHOICE_TRANSIENT . '7' ]['value'] );
+		$this->assertSame( '', (string) Connection::access_token() );
+		$this->assertNull( Authorization::pending_choice( 8 ) );
+	}
+
+	/**
+	 * Only a listed account confirmed with the current choice ID connects,
+	 * once; an unlisted account keeps the choice open.
+	 *
+	 * @return void
+	 */
+	public function test_confirming_a_choice() {
+		$choice = $this->return_with_choice();
+
+		$this->assertSame( 'instagram_choice_invalid', Authorization::confirm_choice( 7, $choice['id'], '17841400000000003' )->get_error_code() );
+		$this->assertSame( 'instagram_choice_unknown', Authorization::confirm_choice( 7, str_repeat( 'x', 32 ), '17841400000000002' )->get_error_code() );
+		$this->assertSame( 'instagram_choice_unknown', Authorization::confirm_choice( 8, $choice['id'], '17841400000000002' )->get_error_code() );
+		$this->assertSame( '', (string) Connection::access_token() );
+		$this->assertSame( $choice, Authorization::pending_choice( 7 ) );
+
+		$this->assertTrue( Authorization::confirm_choice( 7, $choice['id'], '17841400000000002' ) );
+		$this->assertSame( 'EAAGredeemed', Connection::access_token() );
+		$this->assertSame( '17841400000000002', Connection::user_id() );
+		$this->assertNull( Authorization::pending_choice( 7 ) );
+
+		$this->assertSame( 'instagram_choice_unknown', Authorization::confirm_choice( 7, $choice['id'], '17841400000000001' )->get_error_code() );
+		$this->assertSame( '17841400000000002', Connection::user_id() );
+	}
+
+	/**
+	 * Cancelling or starting again ends the choice.
+	 *
+	 * @return void
+	 */
+	public function test_cancelled_or_superseded_choice() {
+		$choice = $this->return_with_choice();
+		$this->assertSame( 'instagram_choice_unknown', Authorization::cancel_choice( 7, str_repeat( 'x', 32 ) )->get_error_code() );
+		$this->assertTrue( Authorization::cancel_choice( 7, $choice['id'] ) );
+		$this->assertNull( Authorization::pending_choice( 7 ) );
+		$this->assertSame( 'instagram_choice_unknown', Authorization::confirm_choice( 7, $choice['id'], '17841400000000001' )->get_error_code() );
+
+		$choice = $this->return_with_choice();
+		$this->start();
+		$this->assertNull( Authorization::pending_choice( 7 ) );
+		$this->assertSame( 'instagram_choice_unknown', Authorization::confirm_choice( 7, $choice['id'], '17841400000000001' )->get_error_code() );
+		$this->assertSame( '', (string) Connection::access_token() );
+	}
+
+	/**
+	 * Candidates that cannot be told apart are refused.
+	 *
+	 * @return void
+	 */
+	public function test_unidentified_candidates_are_refused() {
+		list( , $query ) = $this->start();
+		$redeemed        = $this->redeemed();
+		unset( $redeemed['account_id'], $redeemed['username'] );
+		$redeemed['accounts']                       = array(
+			array(
+				'id'       => '17841400000000001',
+				'username' => 'events_club',
+			),
+			array(
+				'id'       => '17841400000000002',
+				'username' => '',
+			),
+		);
+		$GLOBALS['_fair_test_remote_post_response'] = array(
+			'response' => array( 'code' => 200 ),
+			'body'     => wp_json_encode( $redeemed ),
+		);
+
+		$result = Authorization::complete( 7, $query['state'], str_repeat( 'h', 43 ), '' );
+		$this->assertSame( 'instagram_choice_unidentified', $result->get_error_code() );
+		$this->assertNull( Authorization::pending_choice( 7 ) );
 	}
 }

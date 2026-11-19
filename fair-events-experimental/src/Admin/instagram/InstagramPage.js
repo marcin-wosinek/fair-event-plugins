@@ -24,6 +24,7 @@ import {
 	disconnect,
 } from './api.js';
 import { navigate } from './navigate.js';
+import AccountChoice from './AccountChoice.js';
 
 const OAUTH_PARAMS = [ 'instagram_handoff', 'instagram_error', 'state' ];
 
@@ -58,6 +59,25 @@ export function takeOAuthReturn() {
 	OAUTH_PARAMS.forEach( ( key ) => params.delete( key ) );
 	window.history.replaceState( {}, '', url.toString() );
 	return result;
+}
+
+/**
+ * The "Connected to Instagram as \@name." sentence for connection details.
+ *
+ * @param {Object} details Connection details.
+ * @return {string} Sentence.
+ */
+function connectedText( details ) {
+	return details.username
+		? sprintf(
+				/* translators: %s: Instagram username */
+				__(
+					'Connected to Instagram as @%s.',
+					'fair-events-experimental'
+				),
+				details.username
+			)
+		: __( 'Connected to Instagram.', 'fair-events-experimental' );
 }
 
 /**
@@ -221,22 +241,14 @@ export default function InstagramPage() {
 		const initial = oauth
 			? completeAuthorization( oauth )
 					.then( ( details ) => {
-						setNotice( {
-							status: 'success',
-							message: details.username
-								? sprintf(
-										/* translators: %s: Instagram username */
-										__(
-											'Connected to Instagram as @%s.',
-											'fair-events-experimental'
-										),
-										details.username
-									)
-								: __(
-										'Connected to Instagram.',
-										'fair-events-experimental'
-									),
-						} );
+						// With several shared accounts, the choice card
+						// explains the next step; nothing is connected yet.
+						if ( ! details.pending_choice ) {
+							setNotice( {
+								status: 'success',
+								message: connectedText( details ),
+							} );
+						}
 						return details;
 					} )
 					.catch( ( error ) => {
@@ -453,6 +465,44 @@ export default function InstagramPage() {
 		);
 	}
 
+	const choice =
+		connection.pending_choice &&
+		Array.isArray( connection.pending_choice.accounts )
+			? connection.pending_choice
+			: null;
+
+	const choiceCard = choice && (
+		<AccountChoice
+			key={ choice.id }
+			choice={ choice }
+			connection={ connection }
+			onConnected={ ( details ) => {
+				apply( details );
+				setTestError( null );
+				setNotice( {
+					status: 'success',
+					message: connectedText( details ),
+				} );
+			} }
+			onCancelled={ ( details ) => {
+				apply( details );
+				setNotice( {
+					status: 'info',
+					message: __(
+						'The account choice was cancelled. Nothing was changed.',
+						'fair-events-experimental'
+					),
+				} );
+			} }
+			onGone={ ( message ) => {
+				setNotice( { status: 'error', message } );
+				loadConnection()
+					.then( apply )
+					.catch( () => {} );
+			} }
+		/>
+	);
+
 	const disconnectButton = (
 		<Button
 			variant="secondary"
@@ -474,6 +524,8 @@ export default function InstagramPage() {
 				) }
 			</p>
 
+			{ choiceCard }
+
 			{ showConnectForm ? (
 				<Card style={ { marginBottom: '16px' } }>
 					<CardHeader>
@@ -492,7 +544,7 @@ export default function InstagramPage() {
 						) }
 						<p style={ helpStyle }>
 							{ __(
-								'Connect with Instagram to sign in with Facebook, choose the business, and share the one Instagram professional account this site publishes to. This uses the Fair Event Plugins OAuth service.',
+								'Connect with Instagram to sign in with Facebook, choose the business, and share the Instagram professional account this site publishes to. This uses the Fair Event Plugins OAuth service.',
 								'fair-events-experimental'
 							) }
 						</p>
@@ -553,19 +605,7 @@ export default function InstagramPage() {
 									status="success"
 									isDismissible={ false }
 								>
-									{ connection.username
-										? sprintf(
-												/* translators: %s: Instagram username */
-												__(
-													'Connected to Instagram as @%s.',
-													'fair-events-experimental'
-												),
-												connection.username
-											)
-										: __(
-												'Connected to Instagram.',
-												'fair-events-experimental'
-											) }
+									{ connectedText( connection ) }
 								</Notice>
 							) }
 							{ connection.user_id && (

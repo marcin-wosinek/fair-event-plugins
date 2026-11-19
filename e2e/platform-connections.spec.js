@@ -47,7 +47,7 @@ const PROVIDERS = [
 		cleanupTitle: 'Delete old Instagram connection logs',
 		uniqueLabel: 'Unique Usernames',
 		stats: { unique_usernames: 7 },
-		statusValues: [ '', 'connected', 'failed' ],
+		statusValues: [ '', 'connected', 'choice_pending', 'failed' ],
 		row: {
 			instagram_username: 'e2e_handle',
 			instagram_user_id: '1784100000',

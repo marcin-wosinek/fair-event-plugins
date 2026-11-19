@@ -265,64 +265,304 @@ class InstagramUnifiedLoginTest extends TestCase {
 		}
 	}
 
-	/** Exactly one shared account is selected. */
-	public function test_single_account_is_selected() {
-		$account = InstagramUnifiedLogin::select_account(
-			array(
-				'data'   => array(
-					array(
-						'id'       => '17841400000000001',
-						'username' => 'events_club',
-					),
+	/**
+	 * Pages served by a fake Graph endpoint, keyed by the `after` cursor
+	 * that requests them ('' for the first page).
+	 *
+	 * @param array $pages     Responses by cursor.
+	 * @param array $requested Receives every cursor requested.
+	 * @return callable
+	 */
+	private function pages( array $pages, &$requested = array() ) {
+		return function ( $after ) use ( $pages, &$requested ) {
+			$requested[] = $after;
+			$key         = null === $after ? '' : $after;
+			if ( ! array_key_exists( $key, $pages ) ) {
+				throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_EXCHANGE_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- a fixed code in a test.
+			}
+			return $pages[ $key ];
+		};
+	}
+
+	/**
+	 * A page with accounts and an optional next cursor.
+	 *
+	 * @param array       $accounts Accounts.
+	 * @param string|null $after    Next cursor.
+	 * @return array
+	 */
+	private function page( array $accounts, $after = null ) {
+		$page = array( 'data' => $accounts );
+		if ( null !== $after ) {
+			$page['paging'] = array(
+				'cursors' => array(
+					'before' => 'b',
+					'after'  => $after,
 				),
-				'paging' => array( 'cursors' => array( 'before' => 'a' ) ),
+				'next'    => 'https://graph.facebook.com/v27.0/me/assigned_instagram_accounts?after=' . $after,
+			);
+		}
+		return $page;
+	}
+
+	/** One account on a single page is the connection. */
+	public function test_single_page_with_one_account() {
+		$accounts = InstagramUnifiedLogin::select_accounts(
+			InstagramUnifiedLogin::collect_accounts(
+				$this->pages(
+					array(
+						'' => array(
+							'data'   => array(
+								array(
+									'id'       => '17841400000000001',
+									'username' => 'events_club',
+								),
+							),
+							'paging' => array( 'cursors' => array( 'before' => 'a' ) ),
+						),
+					),
+					$requested
+				)
+			),
+			false
+		);
+
+		$this->assertSame(
+			array(
+				array(
+					'id'       => '17841400000000001',
+					'username' => 'events_club',
+				),
+			),
+			$accounts
+		);
+		$this->assertSame( array( null ), $requested );
+	}
+
+	/** Pages are followed by cursor, and an ID on several pages counts once. */
+	public function test_duplicate_account_across_pages_counts_once() {
+		$accounts = InstagramUnifiedLogin::collect_accounts(
+			$this->pages(
+				array(
+					''       => $this->page( array( array( 'id' => '1001' ) ), 'QVFIc1' ),
+					'QVFIc1' => $this->page(
+						array(
+							array(
+								'id'       => 1001,
+								'username' => 'events_club',
+							),
+						),
+						'QVFIc2'
+					),
+					'QVFIc2' => $this->page( array( array( 'id' => '1001' ) ) ),
+				),
+				$requested
 			)
 		);
 
 		$this->assertSame(
 			array(
-				'id'       => '17841400000000001',
-				'username' => 'events_club',
+				array(
+					'id'       => '1001',
+					'username' => 'events_club',
+				),
 			),
-			$account
+			$accounts
+		);
+		$this->assertSame( array( null, 'QVFIc1', 'QVFIc2' ), $requested );
+
+		// A site that cannot show a choice still connects it.
+		$this->assertCount( 1, InstagramUnifiedLogin::select_accounts( $accounts, false ) );
+	}
+
+	/** Distinct accounts across pages are candidates only for a site that can choose. */
+	public function test_distinct_accounts_across_pages() {
+		$accounts = InstagramUnifiedLogin::collect_accounts(
+			$this->pages(
+				array(
+					''       => $this->page(
+						array(
+							array(
+								'id'       => '1001',
+								'username' => 'first_club',
+							),
+						),
+						'QVFIc1'
+					),
+					'QVFIc1' => $this->page(
+						array(
+							array(
+								'id'       => '1002',
+								'username' => 'second_club',
+							),
+							array(
+								'id'       => '1001',
+								'username' => 'first_club',
+							),
+						)
+					),
+				)
+			)
+		);
+
+		$this->assertSame( array( '1001', '1002' ), array_column( $accounts, 'id' ) );
+		$this->assertSame( $accounts, InstagramUnifiedLogin::select_accounts( $accounts, true ) );
+		$this->assertFailsWith(
+			InstagramUnifiedLogin::ERROR_MULTIPLE_ACCOUNTS,
+			function () use ( $accounts ) {
+				InstagramUnifiedLogin::select_accounts( $accounts, false );
+			}
 		);
 	}
 
-	/** No account, several accounts, or a further page are refused. */
-	public function test_zero_or_several_accounts_are_refused() {
-		$this->assertFailsWith(
-			InstagramUnifiedLogin::ERROR_NO_ACCOUNT,
-			function () {
-				InstagramUnifiedLogin::select_account( array( 'data' => array() ) );
-			}
+	/** No valid account on any page is the no-account outcome. */
+	public function test_zero_accounts() {
+		$accounts = InstagramUnifiedLogin::collect_accounts(
+			$this->pages(
+				array(
+					''       => $this->page( array( array( 'id' => 'not-digits' ) ), 'QVFIc1' ),
+					'QVFIc1' => $this->page( array() ),
+				)
+			)
 		);
+
+		$this->assertSame( array(), $accounts );
+		foreach ( array( true, false ) as $can_choose ) {
+			$this->assertFailsWith(
+				InstagramUnifiedLogin::ERROR_NO_ACCOUNT,
+				function () use ( $accounts, $can_choose ) {
+					InstagramUnifiedLogin::select_accounts( $accounts, $can_choose );
+				}
+			);
+		}
+	}
+
+	/** A failed later page, a missing, malformed or repeated cursor, or endless pages stop the connection. */
+	public function test_incomplete_pagination_fails() {
+		$one = array( array( 'id' => '1001' ) );
+
+		$endless = array();
+		for ( $i = 0; $i <= InstagramUnifiedLogin::MAX_ACCOUNT_PAGES; $i++ ) {
+			$endless[ 0 === $i ? '' : 'c' . $i ] = $this->page( $one, 'c' . ( $i + 1 ) );
+		}
 
 		foreach (
 			array(
-				array(
-					'data' => array(
-						array( 'id' => '1001' ),
-						array( 'id' => '1002' ),
+				'failed later page' => array( '' => $this->page( $one, 'QVFIc1' ) ),
+				'missing cursor'    => array(
+					'' => array(
+						'data'   => $one,
+						'paging' => array( 'next' => 'https://graph.facebook.com/next' ),
 					),
 				),
-				array(
-					'data'   => array( array( 'id' => '1001' ) ),
-					'paging' => array( 'next' => 'https://graph.facebook.com/next' ),
+				'malformed cursor'  => array( '' => $this->page( $one, 'a b&c' ) ),
+				'repeated cursor'   => array(
+					''   => $this->page( $one, 'c1' ),
+					'c1' => $this->page( $one, 'c1' ),
 				),
-			) as $response
+				'malformed page'    => array(
+					''   => $this->page( $one, 'c1' ),
+					'c1' => array( 'error' => array() ),
+				),
+				'endless pages'     => $endless,
+			) as $label => $pages
 		) {
-			$this->assertFailsWith(
-				InstagramUnifiedLogin::ERROR_MULTIPLE_ACCOUNTS,
-				function () use ( $response ) {
-					InstagramUnifiedLogin::select_account( $response );
-				}
+			try {
+				InstagramUnifiedLogin::collect_accounts( $this->pages( $pages ) );
+				$this->fail( "Expected {$label} to fail." );
+			} catch ( InstagramOAuthException $e ) {
+				$this->assertSame( InstagramUnifiedLogin::ERROR_EXCHANGE_FAILED, $e->reason(), $label );
+			}
+		}
+	}
+
+	/** More candidates than a site can list keep the multiple-accounts outcome. */
+	public function test_too_many_candidates() {
+		$accounts = array();
+		for ( $i = 0; $i <= InstagramUnifiedLogin::MAX_ACCOUNTS; $i++ ) {
+			$accounts[] = array(
+				'id'       => (string) ( 1000 + $i ),
+				'username' => 'club' . $i,
 			);
 		}
 
 		$this->assertFailsWith(
+			InstagramUnifiedLogin::ERROR_MULTIPLE_ACCOUNTS,
+			function () use ( $accounts ) {
+				InstagramUnifiedLogin::select_accounts( $accounts, true );
+			}
+		);
+	}
+
+	/** Missing usernames are looked up; an account that stays unnamed stops the choice. */
+	public function test_candidates_are_identified_by_username() {
+		$looked_up  = array();
+		$identified = InstagramUnifiedLogin::identify_accounts(
+			array(
+				array(
+					'id'       => '1001',
+					'username' => 'first_club',
+				),
+				array(
+					'id'       => '1002',
+					'username' => '',
+				),
+			),
+			function ( $id ) use ( &$looked_up ) {
+				$looked_up[] = $id;
+				return '@second.club';
+			}
+		);
+
+		$this->assertSame( array( '1002' ), $looked_up );
+		$this->assertSame( array( 'first_club', 'second.club' ), array_column( $identified, 'username' ) );
+
+		foreach (
+			array(
+				'still empty'      => function () {
+					return '';
+				},
+				'lookup failed'    => function () {
+					throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_EXCHANGE_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- a fixed code in a test.
+				},
+				'same as an other' => function () {
+					return 'First_Club';
+				},
+			) as $label => $lookup
+		) {
+			try {
+				InstagramUnifiedLogin::identify_accounts(
+					array(
+						array(
+							'id'       => '1001',
+							'username' => 'first_club',
+						),
+						array(
+							'id'       => '1002',
+							'username' => '',
+						),
+					),
+					$lookup
+				);
+				$this->fail( "Expected {$label} to fail." );
+			} catch ( InstagramOAuthException $e ) {
+				$this->assertSame( InstagramUnifiedLogin::ERROR_ACCOUNT_UNIDENTIFIED, $e->reason(), $label );
+			}
+		}
+	}
+
+	/** Only a site that says so can be offered a choice. */
+	public function test_account_choice_capability() {
+		$this->assertFalse( InstagramUnifiedLogin::validate_authorize_request( $this->request() )['account_choice'] );
+		$this->assertTrue( InstagramUnifiedLogin::validate_authorize_request( $this->request( array( 'account_choice' => '1' ) ) )['account_choice'] );
+	}
+
+	/** A malformed accounts response fails the exchange. */
+	public function test_malformed_accounts_response() {
+		$this->assertFailsWith(
 			InstagramUnifiedLogin::ERROR_EXCHANGE_FAILED,
 			function () {
-				InstagramUnifiedLogin::select_account( array( 'error' => array() ) );
+				InstagramUnifiedLogin::account_page( array( 'error' => array() ) );
 			}
 		);
 	}
@@ -357,6 +597,42 @@ class InstagramUnifiedLoginTest extends TestCase {
 		$this->assertNull( $credentials['expires_at'] );
 		$this->assertArrayNotHasKey( 'code_challenge', $credentials );
 		$this->assertArrayNotHasKey( 'site_url', $credentials );
+	}
+
+	/** A choice handoff lists the candidates and names no account. */
+	public function test_choice_redemption_lists_candidates() {
+		$attempt    = InstagramUnifiedLogin::validate_authorize_request( $this->request( array( 'account_choice' => '1' ) ) );
+		$candidates = array(
+			array(
+				'id'       => '1001',
+				'username' => 'first_club',
+			),
+			array(
+				'id'       => '1002',
+				'username' => 'second_club',
+			),
+		);
+		$payload    = InstagramUnifiedLogin::choice_handoff_payload(
+			'EAAG-secret-token',
+			InstagramUnifiedLogin::evaluate_token( $this->debug_token(), '1234' ),
+			$candidates,
+			$attempt,
+			'v27.0'
+		);
+
+		$credentials = InstagramUnifiedLogin::redemption( $payload, self::VERIFIER, self::SITE );
+
+		$this->assertSame( $candidates, $credentials['accounts'] );
+		$this->assertArrayNotHasKey( 'account_id', $credentials );
+		$this->assertArrayNotHasKey( 'username', $credentials );
+		$this->assertSame( 'EAAG-secret-token', $credentials['access_token'] );
+
+		$this->assertFailsWith(
+			InstagramUnifiedLogin::ERROR_INVALID_REQUEST,
+			function () use ( $payload ) {
+				InstagramUnifiedLogin::redemption( $payload, self::VERIFIER, 'https://other.example' );
+			}
+		);
 	}
 
 	/** A wrong verifier, another site, or a missing handoff are refused. */

@@ -24,10 +24,14 @@ defined( 'ABSPATH' ) || die;
  *    sends the administrator to Meta's login dialog with the configuration.
  * 3. Meta returns a code to `/oauth/instagram/callback`. The platform
  *    consumes the state first, exchanges the code, checks the token with
- *    `debug_token`, and finds the one Instagram account the business shared
- *    through `/me/assigned_instagram_accounts`.
+ *    `debug_token`, and reads every page of `/me/assigned_instagram_accounts`,
+ *    counting each Instagram account ID once.
  * 4. The credentials are stored encrypted under a short-lived, single-use
  *    handoff code. Only that code goes back to the site, in the return URL.
+ *    With one account, the handoff names it. With several, and a site that
+ *    sent `account_choice=1` (#2429), the handoff lists the candidates by
+ *    username instead, and the site's administrator chooses one there.
+ *    Older sites keep the `multiple_accounts` failure.
  * 5. The site's server redeems the code with its verifier
  *    (`POST /wp-json/fair-platform/v1/instagram/redeem`). The access token
  *    never appears in a URL or a browser response.
@@ -73,6 +77,21 @@ class InstagramUnifiedLogin {
 	const HANDOFF_TTL = 300;
 
 	/**
+	 * Accounts requested per page of `/me/assigned_instagram_accounts`.
+	 */
+	const ACCOUNTS_PAGE_SIZE = 25;
+
+	/**
+	 * Pages read before the account list counts as incomplete.
+	 */
+	const MAX_ACCOUNT_PAGES = 20;
+
+	/**
+	 * Distinct accounts a site's administrator can choose between.
+	 */
+	const MAX_ACCOUNTS = 50;
+
+	/**
 	 * Admin page a return destination must point to.
 	 */
 	const RETURN_PAGE = 'fair-events-instagram';
@@ -86,6 +105,7 @@ class InstagramUnifiedLogin {
 	const ERROR_INSUFFICIENT_PERMISSIONS = 'insufficient_permissions';
 	const ERROR_NO_ACCOUNT               = 'no_account';
 	const ERROR_MULTIPLE_ACCOUNTS        = 'multiple_accounts';
+	const ERROR_ACCOUNT_UNIDENTIFIED     = 'account_unidentified';
 	const ERROR_SERVER                   = 'server_error';
 
 	/**
@@ -162,7 +182,7 @@ class InstagramUnifiedLogin {
 	 * Validate an authorize request from a site.
 	 *
 	 * @param array $params Unslashed query parameters.
-	 * @return array{site_url: string, return_url: string, code_challenge: string, client_state: string, site_name: string} Attempt to store.
+	 * @return array{site_url: string, return_url: string, code_challenge: string, client_state: string, site_name: string, account_choice: bool} Attempt to store.
 	 * @throws InstagramOAuthException ERROR_CLIENT_OUTDATED or ERROR_INVALID_REQUEST.
 	 */
 	public static function validate_authorize_request( array $params ) {
@@ -191,6 +211,8 @@ class InstagramUnifiedLogin {
 			'code_challenge' => $code_challenge,
 			'client_state'   => $client_state,
 			'site_name'      => function_exists( 'mb_substr' ) ? mb_substr( (string) $site_name, 0, 200 ) : substr( (string) $site_name, 0, 200 ),
+			// The site can let its administrator choose between accounts.
+			'account_choice' => '1' === self::string_param( $params, 'account_choice' ),
 		);
 	}
 
@@ -407,20 +429,21 @@ class InstagramUnifiedLogin {
 	}
 
 	/**
-	 * The one Instagram account the business shared.
+	 * The valid accounts of one `/me/assigned_instagram_accounts` page, and
+	 * the cursor of the next page.
 	 *
-	 * @param mixed $response Decoded `/me/assigned_instagram_accounts` response.
-	 * @return array{id: string, username: string}
-	 * @throws InstagramOAuthException ERROR_EXCHANGE_FAILED, ERROR_NO_ACCOUNT or ERROR_MULTIPLE_ACCOUNTS.
+	 * @param mixed $response Decoded response.
+	 * @return array{accounts: array<int, array{id: string, username: string}>, after: string|null} Null cursor on the last page.
+	 * @throws InstagramOAuthException ERROR_EXCHANGE_FAILED for a malformed page or continuation.
 	 */
-	public static function select_account( $response ) {
+	public static function account_page( $response ) {
 		if ( ! is_array( $response ) || ! isset( $response['data'] ) || ! is_array( $response['data'] ) ) {
 			throw new InstagramOAuthException( self::ERROR_EXCHANGE_FAILED );
 		}
 
 		$accounts = array();
 		foreach ( $response['data'] as $account ) {
-			if ( is_array( $account ) && isset( $account['id'] ) && preg_match( '/^\d{1,32}$/', (string) $account['id'] ) ) {
+			if ( is_array( $account ) && isset( $account['id'] ) && ( is_string( $account['id'] ) || is_int( $account['id'] ) ) && preg_match( '/^\d{1,32}$/', (string) $account['id'] ) ) {
 				$accounts[] = array(
 					'id'       => (string) $account['id'],
 					'username' => isset( $account['username'] ) && is_string( $account['username'] ) ? self::clean_username( $account['username'] ) : '',
@@ -428,17 +451,124 @@ class InstagramUnifiedLogin {
 			}
 		}
 
-		// A further page means more than the accounts listed here.
-		$more = ! empty( $response['paging']['next'] );
+		// Meta announces a further page with `paging.next`; it is read with
+		// the `after` cursor, which must then be present and well formed.
+		if ( empty( $response['paging']['next'] ) ) {
+			return array(
+				'accounts' => $accounts,
+				'after'    => null,
+			);
+		}
 
-		if ( 0 === count( $accounts ) && ! $more ) {
+		$after = $response['paging']['cursors']['after'] ?? null;
+		if ( ! is_string( $after ) || ! preg_match( '/^[A-Za-z0-9+\/=_-]{1,1024}$/', $after ) ) {
+			throw new InstagramOAuthException( self::ERROR_EXCHANGE_FAILED );
+		}
+
+		return array(
+			'accounts' => $accounts,
+			'after'    => $after,
+		);
+	}
+
+	/**
+	 * Every account the business shared, across all pages, each ID once.
+	 *
+	 * A failed page, a malformed or repeated cursor, or more pages than
+	 * MAX_ACCOUNT_PAGES stop the connection: an incomplete list is never
+	 * used.
+	 *
+	 * @param callable $fetch_page Reads one page: `function ( string|null $after ): array`.
+	 * @return array<int, array{id: string, username: string}> In Meta's order.
+	 * @throws InstagramOAuthException ERROR_EXCHANGE_FAILED.
+	 */
+	public static function collect_accounts( callable $fetch_page ) {
+		$accounts = array();
+		$seen     = array();
+		$after    = null;
+
+		for ( $page = 0; $page < self::MAX_ACCOUNT_PAGES; $page++ ) {
+			$result = self::account_page( $fetch_page( $after ) );
+
+			foreach ( $result['accounts'] as $account ) {
+				$id = $account['id'];
+				if ( ! isset( $accounts[ $id ] ) ) {
+					$accounts[ $id ] = $account;
+				} elseif ( '' === $accounts[ $id ]['username'] ) {
+					$accounts[ $id ]['username'] = $account['username'];
+				}
+			}
+
+			if ( null === $result['after'] ) {
+				return array_values( $accounts );
+			}
+			if ( isset( $seen[ $result['after'] ] ) ) {
+				throw new InstagramOAuthException( self::ERROR_EXCHANGE_FAILED );
+			}
+			$seen[ $result['after'] ] = true;
+			$after                    = $result['after'];
+		}
+
+		throw new InstagramOAuthException( self::ERROR_EXCHANGE_FAILED );
+	}
+
+	/**
+	 * Which of the collected accounts the site gets.
+	 *
+	 * @param array $accounts   From collect_accounts().
+	 * @param bool  $can_choose Whether the site lets its administrator choose.
+	 * @return array<int, array{id: string, username: string}> One account, or the candidates to choose from.
+	 * @throws InstagramOAuthException ERROR_NO_ACCOUNT or ERROR_MULTIPLE_ACCOUNTS.
+	 */
+	public static function select_accounts( array $accounts, $can_choose ) {
+		if ( 0 === count( $accounts ) ) {
 			throw new InstagramOAuthException( self::ERROR_NO_ACCOUNT );
 		}
-		if ( 1 !== count( $accounts ) || $more ) {
+		if ( count( $accounts ) > 1 && ( true !== $can_choose || count( $accounts ) > self::MAX_ACCOUNTS ) ) {
 			throw new InstagramOAuthException( self::ERROR_MULTIPLE_ACCOUNTS );
 		}
 
-		return $accounts[0];
+		return array_values( $accounts );
+	}
+
+	/**
+	 * Candidates with a username each, so the administrator can tell them
+	 * apart. A missing username is looked up; one still missing stops the
+	 * connection.
+	 *
+	 * @param array    $accounts Candidates.
+	 * @param callable $lookup   Username of an account ID: `function ( string $id ): string`.
+	 * @return array<int, array{id: string, username: string}>
+	 * @throws InstagramOAuthException ERROR_ACCOUNT_UNIDENTIFIED.
+	 */
+	public static function identify_accounts( array $accounts, callable $lookup ) {
+		$identified = array();
+		$usernames  = array();
+
+		foreach ( $accounts as $account ) {
+			$username = $account['username'];
+			if ( '' === $username ) {
+				try {
+					$username = self::clean_username( (string) $lookup( $account['id'] ) );
+				} catch ( InstagramOAuthException $e ) {
+					$username = '';
+				}
+			}
+
+			// Two candidates with one name cannot be told apart either.
+			$key = strtolower( $username );
+			if ( '' === $username || isset( $usernames[ $key ] ) ) {
+				throw new InstagramOAuthException( self::ERROR_ACCOUNT_UNIDENTIFIED );
+			}
+			$usernames[ $key ] = true;
+
+			$identified[] = array(
+				'id'       => $account['id'],
+				'username' => $username,
+			);
+		}
+
+		return $identified;
 	}
 
 	/**
@@ -446,7 +576,7 @@ class InstagramUnifiedLogin {
 	 *
 	 * @param string $access_token Access token.
 	 * @param array  $token        From evaluate_token().
-	 * @param array  $account      From select_account().
+	 * @param array  $account      The one account, from select_accounts().
 	 * @param array  $attempt      Stored attempt.
 	 * @param string $graph_version Graph API version the token was checked with.
 	 * @return array<string,mixed>
@@ -459,6 +589,31 @@ class InstagramUnifiedLogin {
 			'expires_at'     => $token['expires_at'],
 			'account_id'     => $account['id'],
 			'username'       => $account['username'],
+			'graph_version'  => $graph_version,
+			'site_url'       => $attempt['site_url'],
+			'code_challenge' => $attempt['code_challenge'],
+		);
+	}
+
+	/**
+	 * What is stored under the handoff code when the site's administrator
+	 * chooses between several accounts. No account is named: every
+	 * candidate is listed, and the token works for each.
+	 *
+	 * @param string $access_token  Access token.
+	 * @param array  $token         From evaluate_token().
+	 * @param array  $accounts      From identify_accounts().
+	 * @param array  $attempt       Stored attempt.
+	 * @param string $graph_version Graph API version the token was checked with.
+	 * @return array<string,mixed>
+	 */
+	public static function choice_handoff_payload( $access_token, array $token, array $accounts, array $attempt, $graph_version ) {
+		return array(
+			'access_token'   => (string) $access_token,
+			'token_type'     => $token['token_type'],
+			'scopes'         => $token['scopes'],
+			'expires_at'     => $token['expires_at'],
+			'accounts'       => array_values( $accounts ),
 			'graph_version'  => $graph_version,
 			'site_url'       => $attempt['site_url'],
 			'code_challenge' => $attempt['code_challenge'],
@@ -485,15 +640,22 @@ class InstagramUnifiedLogin {
 			throw new InstagramOAuthException( self::ERROR_INVALID_REQUEST );
 		}
 
-		return array(
+		$credentials = array(
 			'access_token'  => $payload['access_token'],
 			'token_type'    => $payload['token_type'],
 			'scopes'        => $payload['scopes'],
 			'expires_at'    => $payload['expires_at'],
-			'account_id'    => $payload['account_id'],
-			'username'      => $payload['username'],
 			'graph_version' => $payload['graph_version'],
 		);
+
+		if ( isset( $payload['accounts'] ) ) {
+			$credentials['accounts'] = $payload['accounts'];
+		} else {
+			$credentials['account_id'] = $payload['account_id'];
+			$credentials['username']   = $payload['username'];
+		}
+
+		return $credentials;
 	}
 
 	/**
