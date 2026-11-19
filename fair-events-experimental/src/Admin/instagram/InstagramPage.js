@@ -90,6 +90,91 @@ function formatTime( timestamp ) {
 }
 
 /**
+ * What to tell the administrator while this page does not manage the
+ * connection, from the API's `ownership_reason`. Only a reported missing
+ * handoff recommends updating Fair Audience; an absent or unknown reason is
+ * treated as an incomplete response, not as an old plugin.
+ *
+ * @param {Object} connection Connection response.
+ * @return {{status: string, messages: string[], showLegacyLink: boolean}} Notice.
+ */
+export function ownershipNotice( connection ) {
+	const unchanged = __(
+		'Nothing has to be re-entered: the stored connection moves here as it is.',
+		'fair-events-experimental'
+	);
+	const showLegacyLink =
+		connection?.managed_here === false &&
+		typeof connection.legacy_manage_url === 'string' &&
+		connection.legacy_manage_url !== '';
+
+	// A reason only counts alongside an explicit `managed_here: false`.
+	const reason =
+		connection?.managed_here === false ? connection.ownership_reason : null;
+
+	switch ( reason ) {
+		case 'audience_handoff_missing':
+			return {
+				status: 'warning',
+				messages: [
+					__(
+						'This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage the connection here.',
+						'fair-events-experimental'
+					),
+					unchanged,
+				],
+				showLegacyLink,
+			};
+		case 'audience_update_not_loaded':
+			return {
+				status: 'warning',
+				messages: [
+					__(
+						'Fair Audience is updated, but the site still runs its previous code, so Fair Audience still manages the Instagram connection. Clear the PHP opcode cache or restart PHP (your hosting control panel usually offers this), then reload this page.',
+						'fair-events-experimental'
+					),
+					unchanged,
+				],
+				showLegacyLink,
+			};
+		case 'feature_disabled':
+			return {
+				status: 'warning',
+				messages: [
+					__(
+						'Instagram is turned off in Fair Events → Settings → Experimental. Turn it on to manage the connection here.',
+						'fair-events-experimental'
+					),
+				],
+				showLegacyLink,
+			};
+		case 'not_claimed':
+			return {
+				status: 'warning',
+				messages: [
+					__(
+						'Fair Events Experimental did not take over the Instagram connection while this page loaded, so Fair Audience still manages it. Reload this page. Until it is taken over, keep managing it in Fair Audience → Settings → Instagram.',
+						'fair-events-experimental'
+					),
+					unchanged,
+				],
+				showLegacyLink,
+			};
+		default:
+			return {
+				status: 'error',
+				messages: [
+					__(
+						'The site did not say who manages the Instagram connection. Reload this page. If this keeps happening, make sure no cache serves outdated responses for the site’s REST API.',
+						'fair-events-experimental'
+					),
+				],
+				showLegacyLink,
+			};
+	}
+}
+
+/**
  * Fair Events → Instagram: the connected Instagram account, connecting by
  * OAuth or a manual token, the user ID, a connection test and disconnecting.
  *
@@ -356,18 +441,16 @@ export default function InstagramPage() {
 		);
 	}
 
-	if ( ! connection.managed_here ) {
+	if ( connection.managed_here !== true ) {
+		const ownership = ownershipNotice( connection );
 		return (
 			<div className="wrap fair-events-instagram">
 				{ header }
-				<Notice status="warning" isDismissible={ false }>
-					<p>
-						{ __(
-							'This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage the connection here. Nothing has to be re-entered: the stored connection moves here as it is.',
-							'fair-events-experimental'
-						) }
-					</p>
-					{ connection.legacy_manage_url && (
+				<Notice status={ ownership.status } isDismissible={ false }>
+					{ ownership.messages.map( ( message ) => (
+						<p key={ message }>{ message }</p>
+					) ) }
+					{ ownership.showLegacyLink && (
 						<p>
 							<a href={ connection.legacy_manage_url }>
 								{ __(

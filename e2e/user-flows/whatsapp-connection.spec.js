@@ -16,12 +16,16 @@
  * link to the App Dashboard pages resolved from the token (#2132); a token
  * the double refuses those lookups for leaves the written steps alone.
  *
+ * The connection is behind the default-off `whatsapp` bundle (#2076): the
+ * suite turns it on and restores its previous state afterwards.
+ *
  * Run: `npm run test:e2e:local -- e2e/user-flows/whatsapp-connection.spec.js`.
  */
 
 import { createHmac } from 'node:crypto';
 import { test, expect } from '../support/fixtures.js';
 import { wpCli, loginAsAdmin } from '../support/wp-cli.js';
+import { setExperimentalFeature } from '../support/experimental-features.js';
 
 const TOKEN = 'e2e-whatsapp-browser-token-0123456789';
 const REPLACEMENT = 'e2e-whatsapp-browser-replacement-9876543210';
@@ -166,9 +170,17 @@ test.describe('WhatsApp connection', () => {
 		emptyDeliveries();
 	};
 
-	test.beforeAll(reset);
+	let previousFeature;
 
-	test.afterAll(reset);
+	test.beforeAll(() => {
+		previousFeature = setExperimentalFeature('whatsapp', true);
+		reset();
+	});
+
+	test.afterAll(() => {
+		reset();
+		setExperimentalFeature('whatsapp', previousFeature);
+	});
 
 	test('an administrator connects, validates and sends a test template', async ({
 		page,

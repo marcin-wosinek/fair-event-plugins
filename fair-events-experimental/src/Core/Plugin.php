@@ -58,10 +58,9 @@ class Plugin {
 		\FairEventsExperimental\Meta\Connector::init();
 
 		// Manual WhatsApp connection: IDs, validation, one-off test sends and
-		// their delivery updates from Meta's webhook. No provider, schedule
-		// or queue is registered; see WHATSAPP.md.
-		\FairEventsExperimental\WhatsApp\Connector::init();
-		$this->load_whatsapp_deliveries();
+		// their delivery updates from Meta's webhook, behind the `whatsapp`
+		// bundle. No provider, schedule or queue is registered; see WHATSAPP.md.
+		$this->load_whatsapp();
 
 		// Instagram connection, taken over from Fair Audience; see
 		// Instagram\Ownership.
@@ -260,14 +259,6 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_rest_api() {
-		add_action(
-			'rest_api_init',
-			static function () {
-				( new \FairEventsExperimental\API\WhatsAppController() )->register_routes();
-				( new \FairEventsExperimental\API\WhatsAppWebhookController() )->register_routes();
-			}
-		);
-
 		if ( Features::is_enabled( 'sources' ) ) {
 			add_action(
 				'rest_api_init',
@@ -339,8 +330,6 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_instagram() {
-		\FairEventsExperimental\Instagram\Ownership::maybe_enable_for_existing_connection();
-
 		if ( ! Features::is_enabled( 'instagram' ) ) {
 			add_action(
 				'init',
@@ -375,14 +364,41 @@ class Plugin {
 	}
 
 	/**
-	 * Keep the WhatsApp delivery tables installed and pruned daily.
+	 * Load the WhatsApp connection while the `whatsapp` bundle is on: the
+	 * Settings → Connectors credential, the administrator and webhook REST
+	 * routes, and the delivery tables, installed and pruned daily.
+	 *
+	 * Off, none of it is registered and the cleanup is unscheduled. The saved
+	 * IDs, credentials and delivery history stay where they are, and the
+	 * credentials are not exposed anywhere, so turning the bundle back on
+	 * resumes without re-entering anything.
 	 *
 	 * The cleanup handler is registered at once; installing and scheduling
 	 * wait for `init`, after translations and the other plugins' bootstraps.
 	 *
 	 * @return void
 	 */
-	private function load_whatsapp_deliveries() {
+	private function load_whatsapp() {
+		if ( ! Features::is_enabled( 'whatsapp' ) ) {
+			add_action(
+				'init',
+				static function () {
+					Cron::unschedule( array( \FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK ) );
+				},
+				11
+			);
+			return;
+		}
+
+		\FairEventsExperimental\WhatsApp\Connector::init();
+		add_action(
+			'rest_api_init',
+			static function () {
+				( new \FairEventsExperimental\API\WhatsAppController() )->register_routes();
+				( new \FairEventsExperimental\API\WhatsAppWebhookController() )->register_routes();
+			}
+		);
+
 		add_action(
 			\FairEventsExperimental\WhatsApp\Deliveries::CLEANUP_HOOK,
 			static function () {

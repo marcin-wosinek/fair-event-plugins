@@ -197,7 +197,7 @@ function fair_e2e_notification_startup_expected_recurring() {
 		}
 	}
 	if ( defined( 'FAIR_EVENTS_EXPERIMENTAL_VERSION' ) ) {
-		$expected['fair_events_experimental_whatsapp_cleanup'] = 1;
+		$expected['fair_events_experimental_whatsapp_cleanup'] = \FairEventsExperimental\Core\Features::is_enabled( 'whatsapp' ) ? 1 : 0;
 		$expected['fair_events_experimental_meta_cleanup']     = \FairEventsExperimental\Core\Features::is_enabled( 'meta-conversions' ) ? 1 : 0;
 	}
 	if ( defined( 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION' ) ) {

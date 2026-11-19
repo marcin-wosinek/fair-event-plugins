@@ -4,7 +4,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import InstagramPage from '../InstagramPage.js';
+import InstagramPage, { ownershipNotice } from '../InstagramPage.js';
 
 jest.mock( '@wordpress/api-fetch' );
 
@@ -19,6 +19,7 @@ function details( overrides ) {
 		username: 'demo_events',
 		token_expires: 1900000000,
 		managed_here: true,
+		ownership_reason: 'managed_here',
 		legacy_manage_url: null,
 		...overrides,
 	};
@@ -143,11 +144,18 @@ describe( 'InstagramPage', () => {
 		apiFetch.mockResolvedValueOnce(
 			details( {
 				managed_here: false,
+				ownership_reason: 'audience_handoff_missing',
 				legacy_manage_url:
 					'/wp-admin/admin.php?page=fair-audience-settings',
 			} )
 		);
 		await renderPage();
+
+		expect(
+			screen.getAllByText(
+				/Fair Audience is older than this plugin/
+			)[ 0 ]
+		).toBeInTheDocument();
 
 		expect(
 			screen.getByRole( 'link', {
@@ -160,6 +168,111 @@ describe( 'InstagramPage', () => {
 		expect(
 			screen.queryByRole( 'button', { name: 'Disconnect' } )
 		).not.toBeInTheDocument();
+	} );
+
+	it( 'does not blame Fair Audience when its update has not loaded', async () => {
+		apiFetch.mockResolvedValueOnce(
+			details( {
+				managed_here: false,
+				ownership_reason: 'audience_update_not_loaded',
+				legacy_manage_url:
+					'/wp-admin/admin.php?page=fair-audience-settings',
+			} )
+		);
+		await renderPage();
+
+		expect(
+			screen.getAllByText(
+				/Clear the PHP opcode cache or restart PHP/
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /older than this plugin/ )
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', {
+				name: 'Open Fair Audience → Settings → Instagram',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'treats a response without managed_here as incomplete', async () => {
+		apiFetch.mockResolvedValueOnce( { connected: true } );
+		await renderPage();
+
+		expect(
+			screen.getAllByText(
+				/The site did not say who manages the Instagram connection/
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText( /older than this plugin/ )
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Disconnect' } )
+		).not.toBeInTheDocument();
+	} );
+
+	describe( 'ownershipNotice', () => {
+		const notOwned = ( overrides ) => ( {
+			managed_here: false,
+			legacy_manage_url:
+				'/wp-admin/admin.php?page=fair-audience-settings',
+			...overrides,
+		} );
+
+		it( 'recommends updating Fair Audience only for a missing handoff', () => {
+			const recommendsUpdate = ( connection ) =>
+				ownershipNotice( connection ).messages.some( ( message ) =>
+					message.includes( 'Update Fair Audience' )
+				);
+
+			expect(
+				recommendsUpdate(
+					notOwned( { ownership_reason: 'audience_handoff_missing' } )
+				)
+			).toBe( true );
+			for ( const connection of [
+				notOwned( { ownership_reason: 'audience_update_not_loaded' } ),
+				notOwned( { ownership_reason: 'not_claimed' } ),
+				notOwned( { ownership_reason: 'feature_disabled' } ),
+				notOwned( { ownership_reason: 'something_new' } ),
+				notOwned( {} ),
+				{ ownership_reason: 'audience_handoff_missing' },
+				{ managed_here: 'no' },
+				null,
+			] ) {
+				expect( recommendsUpdate( connection ) ).toBe( false );
+			}
+		} );
+
+		it( 'reports an absent or unknown reason as an error', () => {
+			expect( ownershipNotice( notOwned( {} ) ).status ).toBe( 'error' );
+			expect(
+				ownershipNotice( notOwned( { ownership_reason: 42 } ) ).status
+			).toBe( 'error' );
+			expect(
+				ownershipNotice(
+					notOwned( { ownership_reason: 'not_claimed' } )
+				).status
+			).toBe( 'warning' );
+		} );
+
+		it( 'links to Fair Audience only with a usable link', () => {
+			expect(
+				ownershipNotice(
+					notOwned( { ownership_reason: 'not_claimed' } )
+				).showLegacyLink
+			).toBe( true );
+			expect(
+				ownershipNotice(
+					notOwned( {
+						ownership_reason: 'not_claimed',
+						legacy_manage_url: null,
+					} )
+				).showLegacyLink
+			).toBe( false );
+		} );
 	} );
 
 	it( 'asks for reconnection when the token is unreadable', async () => {

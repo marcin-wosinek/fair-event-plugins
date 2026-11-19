@@ -76,6 +76,7 @@ class FeaturesTest extends TestCase {
 				'meta-conversions' => false,
 				'organizers'       => false,
 				'instagram'        => false,
+				'whatsapp'         => false,
 			),
 			$this->resolved()
 		);
@@ -121,6 +122,34 @@ class FeaturesTest extends TestCase {
 
 		$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = array( 'organizers' => false );
 		$this->assertFalse( Features::is_enabled( 'organizers' ) );
+	}
+
+	/**
+	 * Instagram and WhatsApp stay off until explicitly enabled — saved
+	 * credentials alone never turn them on — and an explicitly saved choice
+	 * is kept in both directions.
+	 *
+	 * @return void
+	 */
+	public function test_connections_default_off_and_keep_saved_choice() {
+		// Existing connections do not count as a choice.
+		$GLOBALS['_fair_test_options']['fair_audience_instagram_connected']              = true;
+		$GLOBALS['_fair_test_options']['fair_events_experimental_whatsapp_access_token'] = 'e2e-whatsapp-saved-token-0123456789';
+
+		foreach ( array( 'instagram', 'whatsapp' ) as $key ) {
+			$this->assertFalse( Features::is_enabled( $key ), $key );
+			$this->assertFalse( Features::all()[ $key ]['default'], $key );
+
+			$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = array( $key => true );
+			$this->assertTrue( Features::is_enabled( $key ), $key );
+			// Saving another toggle keeps the stored choice.
+			$this->assertTrue( Features::sanitize_option( array( 'sources' => true ) )[ $key ], $key );
+
+			$GLOBALS['_fair_test_options']['fair_events_experimental_features'] = array( $key => false );
+			$this->assertFalse( Features::is_enabled( $key ), $key );
+
+			unset( $GLOBALS['_fair_test_options']['fair_events_experimental_features'] );
+		}
 	}
 
 	/**
@@ -173,7 +202,7 @@ class FeaturesTest extends TestCase {
 	public function test_snapshot_keeps_keys_and_state() {
 		$all = Features::all();
 
-		$this->assertSame( array( 'sources', 'ticketing', 'mailings', 'meta-conversions', 'organizers', 'instagram' ), array_keys( $all ) );
+		$this->assertSame( array( 'sources', 'ticketing', 'mailings', 'meta-conversions', 'organizers', 'instagram', 'whatsapp' ), array_keys( $all ) );
 		$entry = $all['meta-conversions'];
 		$this->assertSame( Features::registry()['meta-conversions']['label'], $entry['label'] );
 		$this->assertSame( false, $entry['default'] );

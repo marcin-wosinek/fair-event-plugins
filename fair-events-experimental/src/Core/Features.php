@@ -3,8 +3,8 @@
  * Feature flag registry for Fair Events Experimental.
  *
  * Manages the advanced bundles moved out of fair-events:
- * sources, ticketing extensions, mailings, Meta conversions, organizers and
- * the Instagram connection.
+ * sources, ticketing extensions, mailings, Meta conversions, organizers,
+ * the Instagram connection and the WhatsApp connection.
  * Existing internal bundles default on; processing integrations that
  * require explicit consent and credentials, and multiple organizers, default
  * off.
@@ -85,6 +85,11 @@ class Features {
 				'description' => 'Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again.',
 				'default'     => false,
 			),
+			'whatsapp'         => array(
+				'label'       => 'WhatsApp',
+				'description' => 'Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history.',
+				'default'     => false,
+			),
 		);
 	}
 
@@ -142,6 +147,10 @@ class Features {
 			'instagram'        => array(
 				'label'       => __( 'Instagram', 'fair-events-experimental' ),
 				'description' => __( 'Connect an Instagram professional account in Fair Events → Instagram. Turning this off keeps the stored connection; Fair Audience then manages it again.', 'fair-events-experimental' ),
+			),
+			'whatsapp'         => array(
+				'label'       => __( 'WhatsApp', 'fair-events-experimental' ),
+				'description' => __( 'Connect a WhatsApp Business account in Fair Events → WhatsApp and send test templates. Turning this off keeps the saved connection, credentials and delivery history.', 'fair-events-experimental' ),
 			),
 		);
 
