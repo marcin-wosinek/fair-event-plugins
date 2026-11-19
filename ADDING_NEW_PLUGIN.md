@@ -168,7 +168,17 @@ When adding a new plugin, you must update these files in the monorepo root:
 3. `/.github/workflows/deploy-to-environment.yml` - Add to deployment plugin list (if applicable)
 4. `/compose.yml` - Add plugin volume mounts (wordpress and wpcli services)
 5. `/scripts/sync-wp-versions.js` - Add plugin configuration
-6. `/scripts/sync-changelog.js` - Add plugin configuration
+6. `/scripts/sync-changelog.js` - Add plugin configuration, or a `CHANGELOG_EXCLUSIONS` entry
+
+Build version stamping, local deploy stamping and release tagging need **no**
+script edits: they discover plugins from the root `workspaces` list (see
+[RELEASES.md § Plugin discovery](./RELEASES.md#-plugin-discovery)). Discovery
+expects exactly one top-level PHP file with a `Plugin Name:` header, a
+`Version:` header and a `readme.txt` with a `Stable tag:`; it fails loudly if
+any is missing. A workspace that is not a WordPress plugin (like
+`fair-events-shared`) must be added to `NON_PLUGIN_WORKSPACES` in
+`scripts/plugin-workspaces.mjs`. `npm run validate:plugin-coverage` (run in CI)
+fails, naming the plugin and script, until steps 5 and 6 are done.
 
 ### 1. Root package.json
 
@@ -216,17 +226,21 @@ Add plugin volume mount to **both** services:
 
 **Location**: `/scripts/sync-wp-versions.js`
 
-Add plugin configuration object to the `plugins` array (line ~20-81).
+Add a plugin configuration object to the exported `plugins` array. Set
+`versionConstant` when the main PHP file defines a version constant.
 
-**Example**: See `fair-audience` configuration (lines ~81-86).
+**Example**: See the `fair-audience` configuration.
 
 ### 6. Changelog Sync Script
 
 **Location**: `/scripts/sync-changelog.js`
 
-Add plugin configuration object to the `plugins` array (line ~20-56).
+Add a plugin configuration object to the exported `plugins` array when the
+readme inlines the changelog. If the readme links to `CHANGELOG.md` on GitHub
+or keeps a hand-written changelog, add the plugin to `CHANGELOG_EXCLUSIONS`
+with that reason instead.
 
-**Example**: See `fair-audience` configuration (lines ~51-55).
+**Example**: See the `fair-audience` configuration.
 
 ## Build and Verification
 
@@ -392,7 +406,8 @@ Use this checklist when adding a new plugin:
 - [ ] Add to `/compose.yml` wordpress service volumes
 - [ ] Add to `/compose.yml` wpcli service volumes
 - [ ] Add to `/scripts/sync-wp-versions.js` plugins array
-- [ ] Add to `/scripts/sync-changelog.js` plugins array
+- [ ] Add to `/scripts/sync-changelog.js` plugins array, or to `CHANGELOG_EXCLUSIONS` with a reason
+- [ ] Run `npm run validate:plugin-coverage`
 
 ### Build and Translation
 

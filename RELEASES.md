@@ -115,18 +115,49 @@ Version: 1.2.0  // ← Automatically updated!
 
 ### Files Updated:
 
-- `fair-payments-connector/fair-payments-connector.php`
-- `fair-events/fair-events.php`
-- `fair-audience/fair-audience.php`
+Each plugin's main PHP file (`Version:` header and, where configured, its
+version constant) and `readme.txt` (`Stable tag:`), as listed in
+`scripts/sync-wp-versions.js`. `scripts/sync-changelog.js` then copies each
+configured `CHANGELOG.md` into the readme.
 
 The sync runs automatically when you use `npm run version-packages`.
+
+## 🧭 Plugin discovery
+
+The root `package.json` `workspaces` list decides which plugins exist.
+`scripts/plugin-workspaces.mjs` reads it, skips the non-plugin workspaces in
+`NON_PLUGIN_WORKSPACES` (`fair-events-shared`), and finds each plugin's main
+PHP file by its `Plugin Name:` header. A workspace without exactly one such
+file, a `Version:` header or a readme `Stable tag:` fails loudly.
+
+- **Derived, no edits needed:** CI build stamping
+  (`scripts/stamp-build-version.js`), local deploy stamping and release
+  tagging (`scripts/tag-release.js`).
+- **Explicit, validated:** `scripts/sync-wp-versions.js` (paths and the
+  optional PHP version constant) and `scripts/sync-changelog.js`, where each
+  plugin is either configured or listed in `CHANGELOG_EXCLUSIONS` with a
+  reason (changelog linked on GitHub, or maintained by hand).
+  `npm run validate:plugin-coverage` runs in CI's Repository validation job
+  and names each plugin and script that is missing an entry.
+- **Unchanged, manual:** WordPress.org publication (`svn:*` scripts) and the
+  deployment lists.
+
+### Build version stamping
+
+CI runs `scripts/stamp-build-version.js` after `npm run build`. It rewrites
+every discovered plugin's `Version:` header, readme `Stable tag:` and
+generated `block-docs/index.json` with
+`git describe --tags --match="<plugin>@*"` minus the prefix, e.g.
+`2.1.0-54-g3b6c98ff`, so a site shows which build it runs. A plugin with no
+release tag yet keeps its `package.json` version. A missing header or a failed
+write fails the build.
 
 ## ⚙️ Configuration
 
 Changesets is configured in `.changeset/config.json`:
 
 - **Independent versioning**: Each plugin versions separately
-- **Automatic tagging**: Git tags created on release by `scripts/tag-release.js`
+- **Automatic tagging**: Git tags created on release by `scripts/tag-release.js`, for every discovered plugin workspace (see [Plugin discovery](#-plugin-discovery))
 - **Changelog generation**: Automatic changelog per plugin, formatted with the root `prettier` devDependency (`"format": "prettier"`)
 - **WordPress sync**: Automatic plugin header version updates
 - **Shared package**: `fair-events-shared` is private. It is versioned and gets a changelog (`privatePackages.version`), so the plugins that depend on it stay consistent, but it is never tagged or published (`privatePackages.tag: false`)

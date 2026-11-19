@@ -11,22 +11,20 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 
-// Plugin configurations
-const plugins = [
-	// fair-events intentionally omitted: its readme.txt links to the
-	// CHANGELOG.md on GitHub instead of inlining the changelog.
+// Plugin configurations. Every plugin workspace must be listed here or in
+// CHANGELOG_EXCLUSIONS; validate:plugin-coverage enforces it.
+export const plugins = [
 	{
 		name: 'fair-audience',
 		changelogPath: 'fair-audience/CHANGELOG.md',
 		readmeFiles: ['fair-audience/readme.txt'],
 	},
-	// fair-timetable intentionally omitted: its readme.txt links to the
-	// CHANGELOG.md on GitHub instead of inlining the changelog.
 	{
 		name: 'fair-finance',
 		changelogPath: 'fair-finance/CHANGELOG.md',
@@ -53,6 +51,22 @@ const plugins = [
 		readmeFiles: ['fair-calendar-button/readme.txt'],
 	},
 ];
+
+const LINKED =
+	'readme.txt links to CHANGELOG.md on GitHub instead of inlining the changelog';
+const MANUAL = 'readme.txt changelog is maintained by hand';
+
+/**
+ * Plugin workspaces whose readme.txt changelog this script must not touch,
+ * with the reason.
+ */
+export const CHANGELOG_EXCLUSIONS = {
+	'fair-events': LINKED,
+	'fair-payments-connector': LINKED,
+	'fair-timetable': LINKED,
+	'fair-platform': MANUAL,
+	'fair-events-experimental': MANUAL,
+};
 
 /**
  * Extract changelog content from CHANGELOG.md
@@ -208,5 +222,11 @@ function syncChangelogs() {
 	console.log(`🎉 Sync complete! Updated ${updatedCount} file(s).`);
 }
 
-// Run the sync
-syncChangelogs();
+// Run the sync when executed directly (the config is also imported by
+// scripts/validate-plugin-coverage.mjs).
+if (
+	process.argv[1] &&
+	import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+	syncChangelogs();
+}

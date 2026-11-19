@@ -14,25 +14,16 @@ import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execSync } from 'child_process';
+import { discoverPlugins } from './plugin-workspaces.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 const shouldPush = process.argv.includes('--push');
 
-const ALL_PLUGINS = [
-	'fair-events',
-	'fair-audience',
-	'fair-payments-connector',
-	'fair-platform',
-	'fair-timetable',
-	'fair-finance',
-	'fair-events-experimental',
-	'fair-audience-experimental',
-	'fair-payments-connector-experimental',
-	'fair-form',
-	'fair-calendar-button',
-];
+// Every plugin workspace from the root package.json; non-plugin workspaces
+// such as fair-events-shared are excluded (scripts/plugin-workspaces.mjs).
+const ALL_PLUGINS = discoverPlugins(rootDir).map((plugin) => plugin.name);
 
 function getVersion(pluginName) {
 	const packagePath = join(rootDir, pluginName, 'package.json');

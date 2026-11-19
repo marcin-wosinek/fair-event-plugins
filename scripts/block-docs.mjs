@@ -1019,20 +1019,21 @@ export function generate(rootDir, pluginName) {
 }
 
 /**
- * Rewrite `pluginVersion` in a generated index from the plugin's PHP header.
- * A plugin without a generated index is skipped.
+ * Rewrite `pluginVersion` in a generated index, by default from the plugin's
+ * PHP header. A plugin without a generated index is skipped.
  *
  * @param {string} rootDir    Repository root.
  * @param {string} pluginName Workspace name.
+ * @param {string} [version]  Version to record instead of the header's.
  * @return {string|null} The recorded version, or null when skipped.
  */
-export function refreshVersion(rootDir, pluginName) {
+export function refreshVersion(rootDir, pluginName, version) {
 	const indexPath = join(rootDir, pluginName, OUTPUT_DIR, 'index.json');
 	if (!existsSync(indexPath)) {
 		return null;
 	}
 	const index = JSON.parse(readFileSync(indexPath, 'utf8'));
-	index.pluginVersion = readVersion(rootDir, pluginName);
+	index.pluginVersion = version ?? readVersion(rootDir, pluginName);
 	writeFileSync(indexPath, `${JSON.stringify(index, null, '\t')}\n`);
 	return index.pluginVersion;
 }
