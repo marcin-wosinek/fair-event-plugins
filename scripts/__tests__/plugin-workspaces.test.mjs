@@ -19,6 +19,7 @@ import {
 } from '../plugin-workspaces.mjs';
 import {
 	describePluginTag,
+	resolveGit,
 	stampBuildVersions,
 	withStampedHeaders,
 } from '../version-stamp.mjs';
@@ -303,6 +304,17 @@ test('describePluginTag reads per-plugin tags and returns null without one', () 
 		git('tag', 'alpha-experimental@9.0.0');
 		assert.equal(describePluginTag(root, 'alpha'), '1.0.0');
 		assert.equal(describePluginTag(root, 'beta'), null);
+	});
+});
+
+test('resolveGit picks the first existing fixed location', () => {
+	withTree({ 'bin/git': '' }, (root) => {
+		const git = join(root, 'bin/git');
+		assert.equal(resolveGit([join(root, 'missing/git'), git]), git);
+		assert.throws(
+			() => resolveGit([join(root, 'missing/git')]),
+			/git not found in /
+		);
 	});
 });
 

@@ -7,11 +7,35 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { refreshVersion } from './block-docs.mjs';
 import { STABLE_TAG_RE, VERSION_HEADER_RE } from './plugin-workspaces.mjs';
+
+// Fixed, root-owned locations of the git CLI. Running it from one of these
+// instead of searching PATH keeps a writable PATH entry from substituting
+// another binary (SonarCloud S4036; same approach as resolveDocker() in
+// scripts/wp-env-images.mjs). CI runners and macOS have /usr/bin/git.
+export const GIT_CANDIDATES = [
+	'/usr/bin/git',
+	'/usr/local/bin/git',
+	'/opt/homebrew/bin/git',
+];
+
+/**
+ * Finds the git CLI among fixed locations.
+ *
+ * @param {string[]} candidates Absolute paths to try, in order.
+ * @return {string} The first existing path.
+ */
+export function resolveGit(candidates = GIT_CANDIDATES) {
+	const git = candidates.find((path) => existsSync(path));
+	if (!git) {
+		throw new Error(`git not found in ${candidates.join(', ')}`);
+	}
+	return git;
+}
 
 /**
  * The build version from the plugin's own release tags, e.g. "1.0.0-2-g8f0bec2".
@@ -20,10 +44,12 @@ import { STABLE_TAG_RE, VERSION_HEADER_RE } from './plugin-workspaces.mjs';
  * @param {string} pluginName Workspace name.
  * @return {string|null} Null when the plugin has no release tag yet.
  */
-export function describePluginTag(rootDir, pluginName) {
+export function describePluginTag(rootDir, pluginName, git = resolveGit()) {
+	// Resolved outside the try: a missing git must fail the stamp, not be
+	// mistaken for "no release tag".
 	try {
 		const raw = execFileSync(
-			'git',
+			git,
 			['describe', '--tags', `--match=${pluginName}@*`],
 			{ cwd: rootDir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
 		).trim();
@@ -105,7 +131,7 @@ export function stampBuildVersions({
 }
 
 // Local deploys keep their own version format (any non-space value).
-const LOCAL_VERSION_HEADER_RE = /(\*?\s*Version:\s*)([^\s\r\n*]+)/i;
+const LOCAL_VERSION_HEADER_RE = /(Version:\s*)([^\s*]+)/i;
 
 /**
  * Temporarily stamp the `Version:` header of each plugin with `version`,
