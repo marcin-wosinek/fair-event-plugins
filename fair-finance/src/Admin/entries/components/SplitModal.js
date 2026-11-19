@@ -340,7 +340,7 @@ const SplitModal = ( {
 								<strong>
 									{ __( 'Description:', 'fair-finance' ) }
 								</strong>{ ' ' }
-								{ entry.description }
+								{ decodeEntityText( entry.description ) }
 							</div>
 						) }
 						{ entry.bank_origin && (

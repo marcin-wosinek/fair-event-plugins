@@ -355,3 +355,26 @@ describe( 'EntryForm', () => {
 		} );
 	} );
 } );
+
+describe( 'EntryForm — entity-encoded descriptions (#2412)', () => {
+	// Earlier suites leave their calls recorded.
+	beforeEach( () => {
+		jest.clearAllMocks();
+	} );
+
+	it( 'edits and saves the stored description source unchanged', async () => {
+		const source = 'Entrada "La&nbsp;Mutable" &amp; &lt;b&gt;';
+		apiFetch.mockResolvedValue( {} );
+		const onSave = jest.fn();
+		renderForm( { entry: { ...ENTRY, description: source }, onSave } );
+
+		expect( field( 'Description' ) ).toHaveValue( source );
+
+		fireEvent.click(
+			screen.getByRole( 'button', { name: 'Update Entry' } )
+		);
+
+		await waitFor( () => expect( onSave ).toHaveBeenCalled() );
+		expect( apiFetch.mock.calls[ 0 ][ 0 ].data.description ).toBe( source );
+	} );
+} );

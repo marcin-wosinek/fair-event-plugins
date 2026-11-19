@@ -927,8 +927,9 @@ const EntriesApp = () => {
 		return budget ? budget.name : '—';
 	};
 
+	// Display text only: descriptions stay raw in state, forms and payloads.
 	const entryLabel = ( entry ) =>
-		entry.description ||
+		decodeEntityText( entry.description ) ||
 		/* translators: %d: financial entry ID */
 		sprintf( __( 'Entry #%d', 'fair-finance' ), entry.id );
 
@@ -1393,7 +1394,7 @@ const EntriesApp = () => {
 		>
 			<AdminTableCell variant="identity">
 				<ItemIdentity
-					title={ child.description }
+					title={ decodeEntityText( child.description ) }
 					fallback={ __( '(no description)', 'fair-finance' ) }
 					meta={
 						isTransfer
@@ -1465,7 +1466,7 @@ const EntriesApp = () => {
 				>
 					<AdminTableCell variant="identity">
 						<ItemIdentity
-							title={ entry.description }
+							title={ decodeEntityText( entry.description ) }
 							fallback={ __(
 								'(no description)',
 								'fair-finance'

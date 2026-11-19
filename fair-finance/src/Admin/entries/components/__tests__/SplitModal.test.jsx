@@ -354,3 +354,64 @@ describe( 'SplitModal', () => {
 		expect( onSplit ).toHaveBeenCalled();
 	} );
 } );
+
+describe( 'SplitModal — entity-encoded descriptions (#2412)', () => {
+	const ENCODED_SPLIT = {
+		...SPLIT_ENTRY,
+		description:
+			'Entrada "La&nbsp;Mutable" &lt;b&gt;VIP&lt;/b&gt; &amp;amp;',
+		children: [
+			{
+				id: 21,
+				budget_id: 1,
+				amount: 60,
+				description: 'Caf&eacute; &amp; bar',
+				tag: null,
+			},
+			{ id: 22, budget_id: 2, amount: 40, description: '', tag: null },
+		],
+	};
+
+	// Earlier suites leave their calls recorded.
+	beforeEach( () => {
+		jest.clearAllMocks();
+	} );
+
+	it( 'shows the parent decoded once while allocation inputs keep their source', async () => {
+		apiFetch.mockResolvedValue( {} );
+		const { container } = render(
+			<SplitModal
+				entry={ ENCODED_SPLIT }
+				budgets={ BUDGETS }
+				eventsEnabled={ false }
+				onSplit={ jest.fn() }
+				onCancel={ jest.fn() }
+				onUnsplit={ jest.fn() }
+			/>
+		);
+
+		const summary = screen.getByText( 'Description:' ).parentElement;
+		expect( summary.textContent ).toBe(
+			'Description: Entrada "La Mutable" <b>VIP</b> &amp;'
+		);
+		// HTML-like text stays text.
+		expect( summary.querySelector( 'b' ) ).toBeNull();
+		expect( container.ownerDocument.querySelector( 'b' ) ).toBeNull();
+
+		expect(
+			screen.getAllByLabelText( 'Description' ).map( ( el ) => el.value )
+		).toEqual( [ 'Caf&eacute; &amp; bar', '' ] );
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Update Split' } )
+			);
+		} );
+
+		expect(
+			apiFetch.mock.calls[ 0 ][ 0 ].data.allocations.map(
+				( a ) => a.description
+			)
+		).toEqual( [ 'Caf&eacute; &amp; bar', '' ] );
+	} );
+} );
