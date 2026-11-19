@@ -265,11 +265,23 @@ test.describe( 'InstagramConnectionController', () => {
 		} );
 		expect( response.status() ).toBe( 200 );
 		const body = await response.json();
+		// The page replaces its connection state with this response, so it
+		// carries the ownership fields too (#2425).
 		expect( body ).toMatchObject( {
 			success: true,
+			message:
+				'The connection works: Instagram confirmed the account @e2e_demo_account.',
+			connected: true,
+			usable: true,
+			credential_status: 'available',
+			credentials_encrypted: true,
 			user_id: '17840000000000001',
 			username: 'e2e_demo_account',
+			managed_here: true,
+			ownership_reason: 'managed_here',
+			legacy_manage_url: null,
 		} );
+		expect( body ).not.toHaveProperty( 'access_token' );
 		expect( JSON.stringify( body ) ).not.toContain( LEGACY_TOKEN );
 	} );
 
