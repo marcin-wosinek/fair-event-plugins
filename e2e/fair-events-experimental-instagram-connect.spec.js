@@ -10,8 +10,9 @@
  *
  * Covers the reconnect notice for a connection from before Unified Login,
  * the return carrying only a single-use handoff code that leaves the
- * address bar, no access token in any URL or browser response, and a
- * cancelled authorization keeping the current connection.
+ * address bar, no access token in any URL or browser response, a
+ * cancelled authorization keeping the current connection, and choosing
+ * between two shared accounts in WordPress after returning from Meta (#2429).
  *
  * Run: `npm run test:e2e -- fair-events-experimental-instagram-connect`.
  */
@@ -234,5 +235,59 @@ test.describe('Fair Events → Instagram: Unified Login', () => {
 		expect(
 			php('echo get_option( "fair_audience_instagram_username" );')
 		).toBe('e2e_unified_club');
+	});
+
+	test('chooses between two shared accounts in WordPress after returning from Meta', async ({
+		page,
+	}) => {
+		const seen = watchBrowser(page);
+		await answerMetaDialog(page, { code: 'e2e-code-multiple' });
+		await page.goto(PAGE);
+
+		await page
+			.getByRole('button', { name: 'Connect with Instagram' })
+			.click();
+
+		const card = page.locator('.fair-events-instagram-choice');
+		await expect(
+			card.getByRole('heading', { name: 'Choose the Instagram account' })
+		).toBeVisible();
+		await expect(card.getByRole('radio')).toHaveCount(2);
+		const current = card.getByLabel(
+			'@e2e_unified_club (currently connected)'
+		);
+		const other = card.getByLabel('@e2e_other_club');
+		await expect(current).not.toBeChecked();
+		await expect(other).not.toBeChecked();
+		const confirm = card.getByRole('button', {
+			name: 'Connect selected account',
+		});
+		await expect(confirm).toBeDisabled();
+		// Nothing is saved before the confirmation.
+		expect(
+			php('echo get_option( "fair_audience_instagram_username" );')
+		).toBe('e2e_unified_club');
+
+		await other.check();
+		await confirm.click();
+
+		await expect(
+			page.getByText('Connected to Instagram as @e2e_other_club.').first()
+		).toBeVisible();
+		await expect(card).toHaveCount(0);
+		expect(
+			php(
+				'echo get_option( "fair_audience_instagram_user_id" ) . " " . get_option( "fair_audience_instagram_username" );'
+			)
+		).toBe('17841400000000002 e2e_other_club');
+
+		// The handoff code left the address bar, and no token reached the
+		// browser.
+		expect(new URL(page.url()).searchParams.has('instagram_handoff')).toBe(
+			false
+		);
+		for (const text of [...seen.urls, ...seen.bodies]) {
+			expect(text).not.toContain('e2e-ig-unified-multiple');
+		}
 	});
 });

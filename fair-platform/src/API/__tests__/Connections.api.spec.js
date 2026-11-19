@@ -79,7 +79,7 @@ const TYPES = {
 	},
 	instagram: {
 		route: '/wp-json/fair-platform/v1/instagram-connections',
-		statuses: [ 'connected', 'failed' ],
+		statuses: [ 'connected', 'choice_pending', 'failed' ],
 		fields: [ ...SHARED_FIELDS, 'instagram_user_id', 'instagram_username' ],
 		forbidden:
 			'You do not have permission to view Instagram connection logs.',

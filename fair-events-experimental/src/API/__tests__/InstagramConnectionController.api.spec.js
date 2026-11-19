@@ -14,7 +14,8 @@
  * Covers administrator-only access, the mandatory reconnection of a
  * connection stored before Unified Login, authorization parameters, state
  * and handoff validation and single use, cancellation and every failure,
- * the token lifecycle, publishing, disconnecting, and Fair Audience's
+ * paged account lists and the administrator's choice between several shared
+ * accounts (#2429), the token lifecycle, publishing, disconnecting, and Fair Audience's
  * /wp/v2/settings surface stepping aside while the connection is managed
  * here. The feature stays off until an administrator turns it on.
  *
@@ -111,6 +112,8 @@ test.describe( 'InstagramConnectionController', () => {
 	let previousFeatures;
 	let subscriberId;
 	let subscriberHeaders;
+	let otherAdminId;
+	let otherAdminHeaders;
 
 	/** The tokens sent to graph.facebook.com since the last reset. */
 	async function graphRequests() {
@@ -144,15 +147,22 @@ test.describe( 'InstagramConnectionController', () => {
 	 * Start connecting here and follow the platform until it returns to
 	 * Fair Events → Instagram, answering Meta's dialog with `meta`.
 	 *
-	 * @param {Object} meta Query Meta's dialog sends back (code or error).
+	 * @param {Object}  meta                Query Meta's dialog sends back (code or error).
+	 * @param {Object}  [options]           Options.
+	 * @param {boolean} [options.olderSite] Leave out `account_choice`, as a site from before #2429 does.
+	 * @param {Object}  [options.headers]   Who starts the attempt.
 	 * @return {Promise<Object>} The URLs and the return parameters.
 	 */
-	async function authorize( meta ) {
-		const start = await api.post( `${ PATH }/authorize`, {
-			headers: adminHeaders,
-		} );
+	async function authorize(
+		meta,
+		{ olderSite = false, headers = adminHeaders } = {}
+	) {
+		const start = await api.post( `${ PATH }/authorize`, { headers } );
 		expect( start.status(), await start.text() ).toBe( 200 );
 		const authorizeUrl = new URL( ( await start.json() ).authorize_url );
+		if ( olderSite ) {
+			authorizeUrl.searchParams.delete( 'account_choice' );
+		}
 
 		const toMeta = await platformGet( authorizeUrl.toString() );
 		expect( toMeta.status(), await toMeta.text() ).toBe( 302 );
@@ -182,11 +192,44 @@ test.describe( 'InstagramConnectionController', () => {
 	}
 
 	/** Complete a return the way the page does. */
-	function complete( { state, handoff = '', error = '' } ) {
+	function complete(
+		{ state, handoff = '', error = '' },
+		headers = adminHeaders
+	) {
 		return api.post( `${ PATH }/complete`, {
-			headers: adminHeaders,
+			headers,
 			data: { state, handoff, error },
 		} );
+	}
+
+	/** Confirm an account of a pending choice. */
+	function confirmChoice( choice, accountId, headers = adminHeaders ) {
+		return api.post( `${ PATH }/choice`, {
+			headers,
+			data: { choice, account_id: accountId },
+		} );
+	}
+
+	/** Cancel a pending choice. */
+	function cancelChoice( choice, headers = adminHeaders ) {
+		return api.delete(
+			`${ PATH }/choice?choice=${ encodeURIComponent( choice ) }`,
+			{ headers }
+		);
+	}
+
+	/** Return from Meta with several accounts and get the pending choice. */
+	async function startChoice( code = 'e2e-code-multiple' ) {
+		const response = await complete( await authorize( { code } ) );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		const body = await response.json();
+		expect( body.pending_choice, code ).toBeTruthy();
+		return body;
+	}
+
+	/** The connection as the administrator sees it. */
+	async function current( headers = adminHeaders ) {
+		return ( await api.get( PATH, { headers } ) ).json();
 	}
 
 	/** Connect with an authorization code scenario. */
@@ -231,6 +274,24 @@ test.describe( 'InstagramConnectionController', () => {
 				Buffer.from( `${ login }:password` ).toString( 'base64' ),
 		};
 
+		const otherLogin = `e2e_ig_admin_${ Date.now() }`;
+		otherAdminId = (
+			await wp(
+				'user',
+				'create',
+				otherLogin,
+				`${ otherLogin }@example.test`,
+				'--role=administrator',
+				'--user_pass=password',
+				'--porcelain'
+			)
+		).trim();
+		otherAdminHeaders = {
+			Authorization:
+				'Basic ' +
+				Buffer.from( `${ otherLogin }:password` ).toString( 'base64' ),
+		};
+
 		// A connection as Fair Audience stored it, before the move and
 		// before Unified Login.
 		await setFeature( false );
@@ -260,6 +321,9 @@ test.describe( 'InstagramConnectionController', () => {
 		}
 		if ( subscriberId ) {
 			await wp( 'user', 'delete', subscriberId, '--yes' );
+		}
+		if ( otherAdminId ) {
+			await wp( 'user', 'delete', otherAdminId, '--yes' );
 		}
 		await api.dispose();
 	} );
@@ -308,8 +372,27 @@ test.describe( 'InstagramConnectionController', () => {
 				} ),
 			() => api.delete( PATH, { headers: subscriberHeaders } ),
 			() => api.post( `${ PATH }/test`, { headers: subscriberHeaders } ),
+			() =>
+				confirmChoice(
+					'c'.repeat( 32 ),
+					'17841400000000001',
+					subscriberHeaders
+				),
+			() => cancelChoice( 'c'.repeat( 32 ), subscriberHeaders ),
 		] ) {
 			expect( ( await call() ).status() ).toBe( 403 );
+		}
+		for ( const call of [
+			() =>
+				api.post( `${ PATH }/choice`, {
+					data: {
+						choice: 'c'.repeat( 32 ),
+						account_id: '17841400000000001',
+					},
+				} ),
+			() => api.delete( `${ PATH }/choice?choice=${ 'c'.repeat( 32 ) }` ),
+		] ) {
+			expect( ( await call() ).status() ).toBe( 401 );
 		}
 	} );
 
@@ -497,7 +580,7 @@ test.describe( 'InstagramConnectionController', () => {
 		expect( body.username ).toBe( 'e2e_legacy' );
 	} );
 
-	test( 'failed exchanges, missing permission, and zero or several accounts store nothing', async () => {
+	test( 'failed exchanges, a failed later page of accounts, missing permission, and zero accounts store nothing', async () => {
 		const raw = await rawToken();
 		for ( const [ code, reason, message ] of [
 			[ 'e2e-code-bad', 'failed', 'Instagram authorization failed' ],
@@ -511,11 +594,7 @@ test.describe( 'InstagramConnectionController', () => {
 				'no_account',
 				'No Instagram professional account',
 			],
-			[
-				'e2e-code-multiple',
-				'multiple_accounts',
-				'More than one Instagram account',
-			],
+			[ 'e2e-code-pagefail', 'failed', 'Instagram authorization failed' ],
 		] ) {
 			const result = await authorize( { code } );
 			expect( result.handoff, code ).toBe( '' );
@@ -616,6 +695,200 @@ test.describe( 'InstagramConnectionController', () => {
 			},
 		} );
 		expect( again.status() ).toBe( 400 );
+	} );
+
+	test( 'an account listed on several pages connects automatically', async () => {
+		const body = await connect( 'e2e-code-paged' );
+		expect( body ).toMatchObject( {
+			connected: true,
+			user_id: '17841400000000001',
+			username: 'e2e_unified_club',
+			pending_choice: null,
+		} );
+	} );
+
+	test( 'a site from before account choice keeps the several-accounts outcome', async () => {
+		const raw = await rawToken();
+		const result = await authorize(
+			{ code: 'e2e-code-multiple' },
+			{ olderSite: true }
+		);
+		expect( result.handoff ).toBe( '' );
+		expect( result.error ).toBe( 'multiple_accounts' );
+
+		const response = await complete( result );
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).data.reason ).toBe(
+			'multiple_accounts'
+		);
+		expect( await rawToken() ).toBe( raw );
+	} );
+
+	test( 'several accounts over several pages become this administrator’s choice, with the token kept on the server', async () => {
+		const raw = await rawToken();
+		const body = await startChoice();
+
+		// Each account once, in Meta's order, by ID and username only.
+		expect( body.pending_choice.accounts ).toEqual( [
+			{ id: '17841400000000001', username: 'e2e_unified_club' },
+			{ id: '17841400000000002', username: 'e2e_other_club' },
+		] );
+		expect( body.pending_choice.id ).toMatch( /^[A-Za-z0-9_-]{32}$/ );
+		expect( JSON.stringify( body ) ).not.toContain(
+			'e2e-ig-unified-multiple'
+		);
+		// Nothing is connected until the administrator confirms.
+		expect( body ).toMatchObject( {
+			connected: true,
+			user_id: '17841400000000001',
+		} );
+		expect( await rawToken() ).toBe( raw );
+		expect(
+			await php(
+				"global $wpdb; echo (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE option_value LIKE %s', $wpdb->options, '%e2e-ig-unified-multiple%' ) );"
+			)
+		).toBe( '0' );
+
+		// The choice is the administrator's own, and survives a reload.
+		expect( ( await current() ).pending_choice ).toEqual(
+			body.pending_choice
+		);
+		expect( ( await current( otherAdminHeaders ) ).pending_choice ).toBe(
+			null
+		);
+
+		// The platform did not record a candidate as the connected account.
+		expect(
+			await php(
+				"global $wpdb; $row = $wpdb->get_row( $wpdb->prepare( 'SELECT status, instagram_user_id FROM %i ORDER BY id DESC LIMIT 1', $wpdb->prefix . 'fair_platform_instagram_connections' ), ARRAY_A ); echo wp_json_encode( $row );"
+			)
+		).toBe( '{"status":"choice_pending","instagram_user_id":""}' );
+
+		await cancelChoice( body.pending_choice.id );
+	} );
+
+	test( 'only the administrator’s current choice and one of its accounts can be confirmed', async () => {
+		const raw = await rawToken();
+		const { pending_choice: choice } = await startChoice();
+
+		for ( const [ label, call, status, code ] of [
+			[
+				'unlisted account',
+				() => confirmChoice( choice.id, '17841400000000003' ),
+				400,
+				'instagram_choice_invalid',
+			],
+			[
+				'malformed account',
+				() => confirmChoice( choice.id, '1784 or 1=1' ),
+				400,
+				'rest_invalid_param',
+			],
+			[
+				'stale choice ID',
+				() => confirmChoice( 'stale'.repeat( 7 ), '17841400000000002' ),
+				409,
+				'instagram_choice_unknown',
+			],
+			[
+				'another administrator',
+				() =>
+					confirmChoice(
+						choice.id,
+						'17841400000000002',
+						otherAdminHeaders
+					),
+				409,
+				'instagram_choice_unknown',
+			],
+			[
+				'stale cancel',
+				() => cancelChoice( 'stale'.repeat( 7 ) ),
+				409,
+				'instagram_choice_unknown',
+			],
+		] ) {
+			const response = await call();
+			expect( response.status(), label ).toBe( status );
+			expect( ( await response.json() ).code, label ).toBe( code );
+		}
+
+		// None of those changed the connection or used up the choice.
+		expect( await rawToken() ).toBe( raw );
+		expect( ( await current() ).pending_choice ).toEqual( choice );
+
+		const confirmed = await confirmChoice( choice.id, '17841400000000002' );
+		expect( confirmed.status(), await confirmed.text() ).toBe( 200 );
+		const body = await confirmed.json();
+		expect( body ).toMatchObject( {
+			connected: true,
+			usable: true,
+			credential_status: 'available',
+			user_id: '17841400000000002',
+			username: 'e2e_other_club',
+			pending_choice: null,
+		} );
+		expect( JSON.stringify( body ) ).not.toContain(
+			'e2e-ig-unified-multiple'
+		);
+		expect( await rawToken() ).not.toBe( raw );
+		expect( await rawToken() ).not.toContain( 'e2e-ig-unified-multiple' );
+
+		// A repeat, as from a second tab, finds nothing to confirm.
+		const raw2 = await rawToken();
+		const again = await confirmChoice( choice.id, '17841400000000001' );
+		expect( again.status() ).toBe( 409 );
+		expect( ( await again.json() ).code ).toBe(
+			'instagram_choice_unknown'
+		);
+		expect( await rawToken() ).toBe( raw2 );
+		expect( ( await current() ).user_id ).toBe( '17841400000000002' );
+	} );
+
+	test( 'a cancelled or superseded choice cannot replace the connection', async () => {
+		const raw = await rawToken();
+
+		const { pending_choice: cancelled } = await startChoice();
+		const cancel = await cancelChoice( cancelled.id );
+		expect( cancel.status(), await cancel.text() ).toBe( 200 );
+		expect( ( await cancel.json() ).pending_choice ).toBe( null );
+		expect(
+			(
+				await confirmChoice( cancelled.id, '17841400000000001' )
+			).status()
+		).toBe( 409 );
+
+		// A new attempt replaces a choice still open in another tab.
+		const { pending_choice: superseded } = await startChoice();
+		const start = await api.post( `${ PATH }/authorize`, {
+			headers: adminHeaders,
+		} );
+		expect( start.status() ).toBe( 200 );
+		expect( ( await current() ).pending_choice ).toBe( null );
+		expect(
+			(
+				await confirmChoice( superseded.id, '17841400000000001' )
+			).status()
+		).toBe( 409 );
+
+		// Cancelling when nothing is pending changes nothing.
+		expect( ( await cancelChoice( superseded.id ) ).status() ).toBe( 200 );
+
+		expect( await rawToken() ).toBe( raw );
+		expect( ( await current() ).user_id ).toBe( '17841400000000002' );
+	} );
+
+	test( 'an account without a username in the list is identified before the choice', async () => {
+		const { pending_choice: choice } =
+			await startChoice( 'e2e-code-unnamed' );
+		expect( choice.accounts ).toEqual( [
+			{ id: '17841400000000001', username: 'e2e_unified_club' },
+			{ id: '17841400000000002', username: 'e2e_other_club' },
+		] );
+		await cancelChoice( choice.id );
+
+		// Back to the connection the following tests use.
+		await connect( 'e2e-code-ok' );
 	} );
 
 	test( 'tests the connection on graph.facebook.com', async () => {

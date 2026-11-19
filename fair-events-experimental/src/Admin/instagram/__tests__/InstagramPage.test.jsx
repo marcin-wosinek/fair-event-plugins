@@ -492,4 +492,179 @@ describe( 'InstagramPage', () => {
 			screen.getByText( 'Invalid OAuth access token' )
 		).toBeInTheDocument();
 	} );
+
+	describe( 'choosing between shared accounts', () => {
+		const CHOICE = {
+			id: 'choice-id-0123456789abcdef',
+			expires_at: 2000000000,
+			accounts: [
+				{ id: '17841400000000001', username: 'first_club' },
+				{ id: '17841400000000002', username: 'second_club' },
+			],
+		};
+
+		async function returnWithChoice( current ) {
+			window.history.replaceState(
+				{},
+				'',
+				'/wp-admin/admin.php?page=fair-events-instagram&instagram_handoff=hand-off_code&state=client-state'
+			);
+			apiFetch.mockResolvedValueOnce(
+				details( { ...current, pending_choice: CHOICE } )
+			);
+			await renderPage();
+		}
+
+		async function click( name ) {
+			await act( async () => {
+				fireEvent.click( screen.getByRole( 'button', { name } ) );
+			} );
+		}
+
+		it( 'lists each account once with nothing selected and no connected notice', async () => {
+			await returnWithChoice( {
+				connected: false,
+				usable: false,
+				username: '',
+				user_id: '',
+			} );
+
+			const radios = screen.getAllByRole( 'radio' );
+			expect( radios ).toHaveLength( 2 );
+			expect( screen.getByLabelText( '@first_club' ) ).not.toBeChecked();
+			expect( screen.getByLabelText( '@second_club' ) ).not.toBeChecked();
+			expect(
+				screen.getByRole( 'button', {
+					name: 'Connect selected account',
+				} )
+			).toBeDisabled();
+			expect(
+				screen.getByText( 'Choose an account to connect it.' )
+			).toBeInTheDocument();
+			expect(
+				screen.queryByText( /^Connected to Instagram/ )
+			).not.toBeInTheDocument();
+		} );
+
+		it( 'connects only the account confirmed by the administrator', async () => {
+			await returnWithChoice( {} );
+			expect(
+				screen.getByText(
+					'This site stays connected to @demo_events until you connect the selected account.'
+				)
+			).toBeInTheDocument();
+
+			await act( async () => {
+				fireEvent.click( screen.getByLabelText( '@second_club' ) );
+			} );
+			expect( apiFetch ).toHaveBeenCalledTimes( 1 );
+
+			apiFetch.mockResolvedValueOnce(
+				details( {
+					user_id: '17841400000000002',
+					username: 'second_club',
+					pending_choice: null,
+				} )
+			);
+			await click( 'Connect selected account' );
+
+			expect( apiFetch ).toHaveBeenLastCalledWith( {
+				path: '/fair-events-experimental/v1/instagram/connection/choice',
+				method: 'POST',
+				data: {
+					choice: CHOICE.id,
+					account_id: '17841400000000002',
+				},
+			} );
+			expect(
+				screen.getAllByText( 'Connected to Instagram as @second_club.' )
+					.length
+			).toBeGreaterThan( 0 );
+			expect( screen.queryAllByRole( 'radio' ) ).toHaveLength( 0 );
+		} );
+
+		it( 'marks the currently connected account among the choices', async () => {
+			await returnWithChoice( {
+				user_id: '17841400000000001',
+				username: 'first_club',
+			} );
+
+			expect(
+				screen.getByLabelText( '@first_club (currently connected)' )
+			).not.toBeChecked();
+		} );
+
+		it( 'keeps the choice and the selection when confirming fails', async () => {
+			await returnWithChoice( {} );
+			await act( async () => {
+				fireEvent.click( screen.getByLabelText( '@first_club' ) );
+			} );
+
+			apiFetch.mockRejectedValueOnce( {
+				code: 'instagram_choice_invalid',
+				message:
+					'Choose one of the Instagram accounts listed. Nothing was changed.',
+			} );
+			await click( 'Connect selected account' );
+
+			expect(
+				screen.getAllByText(
+					'Choose one of the Instagram accounts listed. Nothing was changed.'
+				)[ 0 ]
+			).toBeInTheDocument();
+			expect( screen.getByLabelText( '@first_club' ) ).toBeChecked();
+			expect(
+				screen.getByRole( 'button', {
+					name: 'Connect selected account',
+				} )
+			).toBeEnabled();
+		} );
+
+		it( 'reloads the connection when the choice is gone', async () => {
+			await returnWithChoice( {} );
+			await act( async () => {
+				fireEvent.click( screen.getByLabelText( '@first_club' ) );
+			} );
+
+			const gone =
+				'This Instagram account choice expired, was cancelled, or was replaced by a newer connection attempt. Nothing was changed; connect again.';
+			apiFetch
+				.mockRejectedValueOnce( {
+					code: 'instagram_choice_unknown',
+					message: gone,
+				} )
+				.mockResolvedValueOnce( details( { pending_choice: null } ) );
+			await click( 'Connect selected account' );
+
+			expect( apiFetch ).toHaveBeenLastCalledWith( {
+				path: '/fair-events-experimental/v1/instagram/connection',
+			} );
+			expect( screen.getAllByText( gone )[ 0 ] ).toBeInTheDocument();
+			expect( screen.queryAllByRole( 'radio' ) ).toHaveLength( 0 );
+			expect(
+				screen.getAllByText( 'Connected to Instagram as @demo_events.' )
+					.length
+			).toBeGreaterThan( 0 );
+		} );
+
+		it( 'cancels the choice and keeps the connection', async () => {
+			await returnWithChoice( {} );
+
+			apiFetch.mockResolvedValueOnce(
+				details( { pending_choice: null } )
+			);
+			await click( 'Cancel' );
+
+			expect( apiFetch ).toHaveBeenLastCalledWith( {
+				path: `/fair-events-experimental/v1/instagram/connection/choice?choice=${ CHOICE.id }`,
+				method: 'DELETE',
+			} );
+			expect(
+				screen.getAllByText(
+					'The account choice was cancelled. Nothing was changed.'
+				)[ 0 ]
+			).toBeInTheDocument();
+			expect( screen.queryAllByRole( 'radio' ) ).toHaveLength( 0 );
+		} );
+	} );
 } );

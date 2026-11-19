@@ -21,8 +21,9 @@ automatically.
   via the Fair Event Plugins OAuth service
   (`fair-event-plugins.com/oauth/instagram/…`, run by Fair Platform). The
   administrator signs in with Facebook, chooses the business, and shares
-  exactly one Instagram account. The site must be served over HTTPS; plain
-  HTTP is accepted only on `localhost`.
+  the Instagram account this site publishes to. When Meta shares more than
+  one, the administrator chooses one on this page (see below). The site
+  must be served over HTTPS; plain HTTP is accepted only on `localhost`.
 - While the Fair Event Plugins Meta app is in development mode, only people
   with a role on that app can connect.
 - PHP Sodium support (the default in PHP 7.2+), so the token and the
@@ -36,21 +37,54 @@ identifies the account Meta shared.
 1. **Connect with Instagram** asks this site's server to start. It creates a
    state and a verifier for the administrator, keeps them encrypted for 15
    minutes, and sends the browser to the OAuth service with the verifier's
-   challenge, the site address and this page as the only return
-   destination.
+   challenge, the site address, this page as the only return destination,
+   and `account_choice=1` (this site can let the administrator choose).
 2. After Meta's dialog, the service returns to Fair Events → Instagram with
    the state and a single-use handoff code (or `instagram_error`). The page
    removes them from the address bar and sends them to this site's server.
+   Before returning, the service reads every page of the accounts Meta
+   shared and counts each account ID once.
 3. The server checks the state against the administrator's attempt (used up
    either way), redeems the handoff code with the verifier, server to server,
    and checks the credentials: a token, its type, `instagram_basic` and
    `instagram_content_publish`, the account ID and the Graph API version.
+   With one distinct account, the connection completes right away.
 4. The token is stored first. If it cannot be stored encrypted, the previous
    connection is kept as it was. Then the account and the metadata are
    written, and the connection-format marker last.
 
+## Choosing between several accounts
+
+When Meta shares more than one distinct account (#2429), the service hands
+off every candidate, each with its username, instead of one account. Nothing
+is connected yet:
+
+- This site's server keeps the token and the candidates encrypted for 15
+  minutes as that administrator's pending choice. The browser gets only a
+  random choice ID and each account's ID and username.
+- The page lists the accounts by `@username`, with none selected, and marks
+  the account that is connected now. **Connect selected account** connects
+  the chosen one; until then the current connection stays as it was.
+  **Cancel** ends the choice and keeps the connection.
+- Confirming needs the administrator's current choice ID and one of its
+  listed accounts. Another administrator, a different account ID, or a choice
+  that expired, was cancelled, was already confirmed, or was replaced by a
+  new **Connect with Instagram** is refused, and nothing changes. A refused
+  account ID keeps the choice open, so the administrator can choose again.
+- If Meta does not say an account's username, the service looks it up. If it
+  still cannot tell the accounts apart, the connection stops with an error
+  and nothing changes.
+
+The Fair Platform connection log records such an authorization as
+`choice_pending`, without naming any of the candidates as the connected
+account.
+
+A site with an older Fair Events Experimental, which does not send
+`account_choice`, still gets the "more than one Instagram account" error.
+
 A cancelled or failed authorization changes nothing. The page explains what
-to do: allow every permission, share an account, or share only one. If Meta
+to do: allow every permission or share an account. A failure to read a
+later page of accounts also stops the connection; connect again. If Meta
 keeps sharing accounts chosen earlier, remove the app under Meta Business
 Settings → Integrations → Connected apps first.
 

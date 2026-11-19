@@ -10,10 +10,16 @@
  * - Fair Events Experimental uses this site as its OAuth service.
  * - The service's redemption endpoint, which the site calls over HTTP, is
  *   dispatched in-process: the container cannot reach its own published port.
- * - graph.facebook.com code exchange, `debug_token` and
- *   `/me/assigned_instagram_accounts` answer by the authorization code:
+ * - graph.facebook.com code exchange, `debug_token`,
+ *   `/me/assigned_instagram_accounts` (paged with the `after` cursor) and the
+ *   username lookup of one account answer by the authorization code:
  *     e2e-code-ok         one account, publish permission, never expires
- *     e2e-code-multiple   two shared accounts
+ *     e2e-code-multiple   two shared accounts over two pages; the first
+ *                         account is listed on both
+ *     e2e-code-paged      one account, listed on two pages
+ *     e2e-code-pagefail   the second page of accounts fails
+ *     e2e-code-unnamed    two accounts; the second has no username in the
+ *                         list and is looked up by ID
  *     e2e-code-none       no shared account
  *     e2e-code-noperm     no publish permission
  *     e2e-code-expiring   one account, a token expiring in 30 days
@@ -41,6 +47,35 @@ const FAIR_E2E_IG_ACCOUNT = array(
 	'id'       => '17841400000000001',
 	'username' => 'e2e_unified_club',
 );
+
+/**
+ * Second account, shared in the several-account scenarios.
+ */
+const FAIR_E2E_IG_OTHER_ACCOUNT = array(
+	'id'       => '17841400000000002',
+	'username' => 'e2e_other_club',
+);
+
+/**
+ * A page of `/me/assigned_instagram_accounts`, with a next cursor or none.
+ *
+ * @param array       $accounts Accounts.
+ * @param string|null $after    Cursor of the next page.
+ * @return array
+ */
+function fair_e2e_unified_accounts_page( array $accounts, $after = null ) {
+	$page = array( 'data' => $accounts );
+	if ( null !== $after ) {
+		$page['paging'] = array(
+			'cursors' => array(
+				'before' => 'e2e-page-before',
+				'after'  => $after,
+			),
+			'next'    => 'https://graph.facebook.com/v27.0/me/assigned_instagram_accounts?after=' . $after,
+		);
+	}
+	return $page;
+}
 
 add_filter(
 	'fair_events_experimental_instagram_oauth_service_url',
@@ -89,7 +124,7 @@ add_filter(
 		wp_parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
 
 		if ( preg_match( '#/oauth/access_token$#', $path ) ) {
-			$scenario = preg_match( '/^e2e-code-(ok|multiple|none|noperm|expiring)$/', $query['code'] ?? '', $m ) ? $m[1] : '';
+			$scenario = preg_match( '/^e2e-code-(ok|multiple|paged|pagefail|unnamed|none|noperm|expiring)$/', $query['code'] ?? '', $m ) ? $m[1] : '';
 			if (
 				'' === $scenario
 				|| META_APP_SECRET !== ( $query['client_secret'] ?? '' )
@@ -134,16 +169,43 @@ add_filter(
 
 		if ( preg_match( '#/me/assigned_instagram_accounts$#', $path ) ) {
 			$scenario = substr( (string) ( $query['access_token'] ?? '' ), strlen( 'e2e-ig-unified-' ) );
-			$accounts = array( FAIR_E2E_IG_ACCOUNT );
-			if ( 'multiple' === $scenario ) {
-				$accounts[] = array(
-					'id'       => '17841400000000002',
-					'username' => 'e2e_other_club',
-				);
-			} elseif ( 'none' === $scenario ) {
-				$accounts = array();
+			$second   = 'e2e-page-2' === ( $query['after'] ?? null );
+			switch ( $scenario ) {
+				case 'multiple':
+					return fair_e2e_unified_json(
+						200,
+						$second
+							? fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_OTHER_ACCOUNT, FAIR_E2E_IG_ACCOUNT ) )
+							: fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_ACCOUNT ), 'e2e-page-2' )
+					);
+				case 'paged':
+					return fair_e2e_unified_json(
+						200,
+						fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_ACCOUNT ), $second ? null : 'e2e-page-2' )
+					);
+				case 'pagefail':
+					return $second
+						? fair_e2e_unified_json( 500, array( 'error' => array( 'message' => 'An unexpected error has occurred.' ) ) )
+						: fair_e2e_unified_json( 200, fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_ACCOUNT ), 'e2e-page-2' ) );
+				case 'unnamed':
+					return fair_e2e_unified_json(
+						200,
+						fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_ACCOUNT, array( 'id' => FAIR_E2E_IG_OTHER_ACCOUNT['id'] ) ) )
+					);
+				case 'none':
+					return fair_e2e_unified_json( 200, fair_e2e_unified_accounts_page( array() ) );
+				default:
+					return fair_e2e_unified_json( 200, fair_e2e_unified_accounts_page( array( FAIR_E2E_IG_ACCOUNT ) ) );
 			}
-			return fair_e2e_unified_json( 200, array( 'data' => $accounts ) );
+		}
+
+		// The username of the account the `unnamed` list leaves unnamed.
+		if (
+			'e2e-ig-unified-unnamed' === ( $query['access_token'] ?? '' )
+			&& 'username' === ( $query['fields'] ?? '' )
+			&& preg_match( '#^/v\d+\.\d+/' . FAIR_E2E_IG_OTHER_ACCOUNT['id'] . '$#', $path )
+		) {
+			return fair_e2e_unified_json( 200, FAIR_E2E_IG_OTHER_ACCOUNT );
 		}
 
 		return $preempt;

@@ -93,7 +93,7 @@ test( 'renders the Instagram wording, statistics, statuses and columns', async (
 		within( screen.getByLabelText( 'Status Filter' ) )
 			.getAllByRole( 'option' )
 			.map( ( option ) => option.value )
-	).toEqual( [ '', 'connected', 'failed' ] );
+	).toEqual( [ '', 'connected', 'choice_pending', 'failed' ] );
 	expect( apiFetch ).toHaveBeenCalledWith( {
 		path: '/fair-platform/v1/instagram-connections?page=1&per_page=50&orderby=connected_at&order=DESC',
 	} );

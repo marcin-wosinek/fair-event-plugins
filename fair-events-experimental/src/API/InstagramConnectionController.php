@@ -19,7 +19,8 @@ defined( 'WPINC' ) || die;
 
 /**
  * Connection status, connecting through Meta's Unified Login (start, then
- * complete from the OAuth service's return), a connection test and
+ * complete from the OAuth service's return, then confirm or cancel the
+ * account choice when Meta shared several accounts), a connection test and
  * disconnecting, for Fair Events → Instagram.
  *
  * Registered while the `instagram` feature is on. Changes are refused while
@@ -106,6 +107,36 @@ class InstagramConnectionController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
+			'/' . $this->rest_base . '/choice',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'confirm_choice' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'choice'     => array_merge( $code_arg( 64 ), array( 'required' => true ) ),
+						'account_id' => array(
+							'type'              => 'string',
+							'required'          => true,
+							'validate_callback' => static function ( $value ) {
+								return is_string( $value ) && (bool) preg_match( '/^\d{1,32}$/', $value );
+							},
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'cancel_choice' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+					'args'                => array(
+						'choice' => array_merge( $code_arg( 64 ), array( 'required' => true ) ),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base . '/test',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -168,6 +199,46 @@ class InstagramConnectionController extends WP_REST_Controller {
 		}
 
 		$result = Authorization::complete( get_current_user_id(), $request['state'], $request['handoff'], $request['error'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $this->response_data() );
+	}
+
+	/**
+	 * Connect the account the administrator chose from the pending choice.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function confirm_choice( $request ) {
+		$refused = $this->refuse_unless_owner();
+		if ( $refused ) {
+			return $refused;
+		}
+
+		$result = Authorization::confirm_choice( get_current_user_id(), $request['choice'], $request['account_id'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $this->response_data() );
+	}
+
+	/**
+	 * Cancel the pending choice; the connection is kept.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function cancel_choice( $request ) {
+		$refused = $this->refuse_unless_owner();
+		if ( $refused ) {
+			return $refused;
+		}
+
+		$result = Authorization::cancel_choice( get_current_user_id(), $request['choice'] );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -257,17 +328,21 @@ class InstagramConnectionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Details plus who manages the connection.
+	 * Details plus who manages the connection, and the current
+	 * administrator's pending account choice (IDs and usernames only).
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function response_data() {
+		$owns = Ownership::owns();
+
 		return array_merge(
 			Connection::details(),
 			array(
-				'managed_here'      => Ownership::owns(),
+				'managed_here'      => $owns,
 				'ownership_reason'  => Ownership::reason(),
-				'legacy_manage_url' => Ownership::owns() ? null : admin_url( 'admin.php?page=fair-audience-settings' ),
+				'legacy_manage_url' => $owns ? null : admin_url( 'admin.php?page=fair-audience-settings' ),
+				'pending_choice'    => $owns ? Authorization::pending_choice( get_current_user_id() ) : null,
 			)
 		);
 	}

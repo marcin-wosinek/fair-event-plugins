@@ -34,6 +34,12 @@ class Plugin {
 	const INSTAGRAM_STATE_STORE = 'ig_state';
 
 	/**
+	 * Connection log status of an authorization handed to the site with
+	 * several accounts for its administrator to choose from.
+	 */
+	const INSTAGRAM_STATUS_CHOICE_PENDING = 'choice_pending';
+
+	/**
 	 * Singleton instance
 	 *
 	 * @var Plugin
@@ -1268,7 +1274,7 @@ class Plugin {
 		}
 
 		try {
-			list( $handoff, $account, $details ) = $this->complete_instagram_authorization( $attempt, $code, $error, $error_reason );
+			list( $handoff, $accounts, $details ) = $this->complete_instagram_authorization( $attempt, $code, $error, $error_reason );
 		} catch ( InstagramOAuthException $e ) {
 			$this->log_instagram_connection( $attempt, array(), 'failed', $e->reason() );
 			// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the return destination checked and stored with the attempt.
@@ -1276,14 +1282,17 @@ class Plugin {
 			exit;
 		}
 
+		// With several candidates the site's administrator has not chosen
+		// yet, so no account is recorded as the one the site publishes to.
+		$single = 1 === count( $accounts );
 		$this->log_instagram_connection(
 			$attempt,
 			array(
-				'instagram_user_id'  => $account['id'],
-				'instagram_username' => $account['username'],
+				'instagram_user_id'  => $single ? $accounts[0]['id'] : '',
+				'instagram_username' => $single ? $accounts[0]['username'] : '',
 				'scope'              => implode( ',', $details['scopes'] ),
 			),
-			'connected'
+			$single ? 'connected' : self::INSTAGRAM_STATUS_CHOICE_PENDING
 		);
 
 		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the return destination checked and stored with the attempt.
@@ -1293,14 +1302,16 @@ class Plugin {
 
 	/**
 	 * Finish an Instagram authorization whose state was consumed: exchange
-	 * the code, check the token and the shared account, and store them
-	 * under a handoff code.
+	 * the code, check the token, read every shared account, and store them
+	 * under a handoff code. One account is handed off as the connection;
+	 * several are handed off as candidates when the site can let its
+	 * administrator choose.
 	 *
 	 * @param array  $attempt      Stored attempt.
 	 * @param string $code         Authorization code, '' when none.
 	 * @param string $error        Meta `error`, '' when none.
 	 * @param string $error_reason Meta `error_reason`.
-	 * @return array{0: string, 1: array, 2: array} Handoff code, account and token details.
+	 * @return array{0: string, 1: array, 2: array} Handoff code, accounts handed off and token details.
 	 * @throws InstagramOAuthException With the code to return to the site.
 	 */
 	private function complete_instagram_authorization( array $attempt, $code, $error, $error_reason ) {
@@ -1317,22 +1328,38 @@ class Plugin {
 			throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_AUTHORIZATION_FAILED );
 		}
 
-		$meta    = new InstagramMetaClient( $config );
-		$token   = $meta->exchange_code( $code, home_url( '/oauth/instagram/callback' ) );
-		$details = InstagramUnifiedLogin::evaluate_token( $meta->debug_token( $token ), $config['app_id'] );
-		$account = InstagramUnifiedLogin::select_account( $meta->assigned_instagram_accounts( $token ) );
-
-		$handoff = ( new OneTimeStore( InstagramHandoffController::STORE ) )->put(
-			InstagramUnifiedLogin::handoff_payload( $token, $details, $account, $attempt, $config['graph_version'] ),
-			InstagramUnifiedLogin::HANDOFF_TTL
+		$meta     = new InstagramMetaClient( $config );
+		$token    = $meta->exchange_code( $code, home_url( '/oauth/instagram/callback' ) );
+		$details  = InstagramUnifiedLogin::evaluate_token( $meta->debug_token( $token ), $config['app_id'] );
+		$accounts = InstagramUnifiedLogin::select_accounts(
+			InstagramUnifiedLogin::collect_accounts(
+				static function ( $after ) use ( $meta, $token ) {
+					return $meta->assigned_instagram_accounts( $token, $after );
+				}
+			),
+			! empty( $attempt['account_choice'] )
 		);
+
+		if ( 1 === count( $accounts ) ) {
+			$payload = InstagramUnifiedLogin::handoff_payload( $token, $details, $accounts[0], $attempt, $config['graph_version'] );
+		} else {
+			$accounts = InstagramUnifiedLogin::identify_accounts(
+				$accounts,
+				static function ( $id ) use ( $meta, $token ) {
+					return $meta->account_username( $token, $id );
+				}
+			);
+			$payload  = InstagramUnifiedLogin::choice_handoff_payload( $token, $details, $accounts, $attempt, $config['graph_version'] );
+		}
+
+		$handoff = ( new OneTimeStore( InstagramHandoffController::STORE ) )->put( $payload, InstagramUnifiedLogin::HANDOFF_TTL );
 		if ( null === $handoff ) {
 			throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_SERVER );
 		}
 
 		// phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
-		return array( $handoff, $account, $details );
+		return array( $handoff, $accounts, $details );
 	}
 
 	/**
