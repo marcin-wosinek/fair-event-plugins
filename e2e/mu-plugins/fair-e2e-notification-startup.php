@@ -206,7 +206,7 @@ function fair_e2e_notification_startup_expected_recurring() {
 
 		$expected['fair_audience_send_scheduled_messages']            = $messaging;
 		$expected['fair_audience_cleanup_instagram_temp_attachments'] = $instagram;
-		$expected['fair_audience_refresh_instagram_token']            = $instagram;
+		$expected['fair_audience_refresh_instagram_token']            = 0; // Retired with Instagram Login (#2427).
 	}
 	return $expected;
 }
