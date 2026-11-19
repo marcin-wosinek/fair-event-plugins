@@ -217,8 +217,14 @@ class InstagramConnectionController extends WP_REST_Controller {
 		}
 
 		$result = Connection::test();
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
-		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+		// The page replaces its whole connection state with this response,
+		// so add who manages the connection; the test's own keys (its
+		// success message and refreshed details) take precedence.
+		return rest_ensure_response( $result + $this->response_data() );
 	}
 
 	/**

@@ -325,6 +325,53 @@ describe( 'InstagramPage', () => {
 		).toBeEnabled();
 	} );
 
+	it( 'keeps the controls after repeated successful tests', async () => {
+		const testResult = ( username ) => ( {
+			success: true,
+			...details( { username } ),
+			message: `The connection works: Instagram confirmed the account @${ username }.`,
+		} );
+		apiFetch
+			.mockResolvedValueOnce( details() )
+			.mockResolvedValueOnce( testResult( 'renamed_events' ) )
+			.mockResolvedValueOnce( testResult( 'renamed_again' ) );
+		await renderPage();
+
+		for ( const username of [ 'renamed_events', 'renamed_again' ] ) {
+			await act( async () => {
+				fireEvent.click(
+					screen.getByRole( 'button', { name: 'Test connection' } )
+				);
+			} );
+
+			expect( apiFetch ).toHaveBeenLastCalledWith( {
+				path: '/fair-events-experimental/v1/instagram/connection/test',
+				method: 'POST',
+			} );
+			expect(
+				screen.getByText(
+					`The connection works: Instagram confirmed the account @${ username }.`
+				)
+			).toBeInTheDocument();
+			expect(
+				screen.getAllByText(
+					`Connected to Instagram as @${ username }.`
+				)[ 0 ]
+			).toBeInTheDocument();
+			expect(
+				screen.queryByText(
+					/The site did not say who manages the Instagram connection/
+				)
+			).not.toBeInTheDocument();
+			expect(
+				screen.getByRole( 'button', { name: 'Test connection' } )
+			).toBeEnabled();
+			expect(
+				screen.getByRole( 'button', { name: 'Disconnect' } )
+			).toBeEnabled();
+		}
+	} );
+
 	it( 'shows a failed test with Instagram’s details', async () => {
 		apiFetch.mockResolvedValueOnce( details() ).mockRejectedValueOnce( {
 			message: 'Instagram refused the access token.',
