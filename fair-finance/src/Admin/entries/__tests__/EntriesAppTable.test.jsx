@@ -406,3 +406,174 @@ describe( 'EntriesApp — shared table (#2208)', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+describe( 'EntriesApp — entity-encoded descriptions (#2412)', () => {
+	const NBSP = ' ';
+	const REPORTED =
+		'Entrada para Minifesti "La&nbsp;Mutable", 22 de noviembre';
+	const REPORTED_TEXT = `Entrada para Minifesti "La${ NBSP }Mutable", 22 de noviembre`;
+	const ENCODED = makeEntry( {
+		id: 61,
+		description: 'Rock &amp; Roll &#8220;Live&#8221; &#x2013; Bar',
+	} );
+	const HTML_LIKE = makeEntry( {
+		id: 62,
+		description: '&lt;img src=x onerror=alert(1)&gt; <b>bold</b>',
+	} );
+	const DOUBLE = makeEntry( {
+		id: 63,
+		description: 'Tickets &amp;lt;VIP&amp;gt;',
+	} );
+	const SPLIT_ENCODED = makeEntry( {
+		id: 64,
+		description: REPORTED,
+		amount: 30,
+		children: [
+			makeEntry( {
+				id: 641,
+				parent_entry_id: 64,
+				description: 'Caf&eacute; &amp; drinks',
+				amount: 20,
+			} ),
+			makeEntry( {
+				id: 642,
+				parent_entry_id: 64,
+				description: '',
+				amount: 10,
+			} ),
+		],
+	} );
+	const TRANSFER_ENCODED = makeEntry( {
+		id: 65,
+		entry_type: 'transfer',
+		description: 'Cash &rarr; bank',
+		amount: 50,
+		children: [
+			makeEntry( {
+				id: 651,
+				parent_entry_id: 65,
+				entry_type: 'cost',
+				description: 'Cash &rarr; bank',
+				amount: 50,
+				budget_id: 5,
+			} ),
+			makeEntry( {
+				id: 652,
+				parent_entry_id: 65,
+				entry_type: 'income',
+				description: 'Cash &rarr; bank',
+				amount: 50,
+				budget_id: 2,
+			} ),
+		],
+	} );
+	// Listed on its own (e.g. by a budget filter), with its parent attached.
+	const LONE_CHILD = makeEntry( {
+		id: 71,
+		parent_entry_id: 70,
+		description: 'Door &amp; bar',
+		amount: 15,
+		parent: makeEntry( {
+			id: 70,
+			description: 'Night &#8211; split',
+			amount: 40,
+		} ),
+	} );
+
+	const identityNames = () =>
+		Array.from(
+			document.querySelectorAll( '.fair-admin-table__identity-name' )
+		).map( ( node ) => node.textContent );
+
+	const metaTexts = () =>
+		Array.from(
+			document.querySelectorAll( '.fair-admin-table__identity-meta' )
+		).map( ( node ) => node.textContent );
+
+	beforeEach( () => {
+		mockApi( {
+			list: () =>
+				Promise.resolve( {
+					entries: [
+						makeEntry( { id: 60, description: REPORTED } ),
+						ENCODED,
+						HTML_LIKE,
+						DOUBLE,
+						SPLIT_ENCODED,
+						TRANSFER_ENCODED,
+						LONE_CHILD,
+					],
+					total: 7,
+					pages: 1,
+				} ),
+		} );
+	} );
+
+	it( 'decodes ordinary entry descriptions once, keeping markup as text', async () => {
+		const { container } = render( <EntriesApp /> );
+		await screen.findByText( /Rock & Roll/ );
+
+		const names = identityNames();
+		// The reported description: a real U+00A0, not a literal `&nbsp;`.
+		expect( names ).toContain( REPORTED_TEXT );
+		expect( names ).toContain( 'Rock & Roll “Live” – Bar' );
+		expect( names ).toContain( '<img src=x onerror=alert(1)> <b>bold</b>' );
+		// Intentionally encoded entity text stays literal after one decode.
+		expect( names ).toContain( 'Tickets &lt;VIP&gt;' );
+		expect( names.join( '' ) ).not.toContain( '&nbsp;' );
+		expect( names.join( '' ) ).not.toContain( '&amp;' );
+
+		// HTML-like text creates no elements.
+		expect( container.querySelector( 'tbody img' ) ).toBeNull();
+		expect( container.querySelector( 'tbody b' ) ).toBeNull();
+	} );
+
+	it( 'decodes split allocations, transfers and their parent context', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( /Rock & Roll/ );
+
+		screen
+			.getAllByRole( 'button', { name: 'Show 2 allocations' } )
+			.forEach( ( toggle ) => fireEvent.click( toggle ) );
+
+		const names = identityNames();
+		expect( names ).toContain( 'Café & drinks' );
+		expect( names ).toContain( 'Cash → bank' );
+		expect( names ).toContain( 'Door & bar' );
+		// An empty allocation keeps its fallback.
+		expect( names ).toContain( '(no description)' );
+
+		const meta = metaTexts();
+		expect( meta ).toContain( `Part of split entry “${ REPORTED_TEXT }”` );
+		expect(
+			meta.filter( ( text ) => text === 'Part of transfer “Cash → bank”' )
+		).toHaveLength( 2 );
+		// An independently listed allocation names its parent decoded.
+		expect( meta ).toContain( 'Part of split entry “Night – split”' );
+		expect( meta.join( '' ) ).not.toMatch( /&[a-z#0-9]+;/i );
+	} );
+
+	it( 'names entries decoded in their action labels', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( /Rock & Roll/ );
+
+		expect(
+			screen.getByRole( 'button', {
+				name: 'Edit “Rock & Roll “Live” – Bar”',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', {
+				name: 'More actions for “Tickets &lt;VIP&gt;”',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Edit split “Night – split”' } )
+		).toBeInTheDocument();
+		// Accessible names keep the exact U+00A0.
+		const edits = screen
+			.getAllByRole( 'button', { name: /^Edit split/ } )
+			.map( ( button ) => button.getAttribute( 'aria-label' ) );
+		expect( edits ).toContain( `Edit split “${ REPORTED_TEXT }”` );
+	} );
+} );

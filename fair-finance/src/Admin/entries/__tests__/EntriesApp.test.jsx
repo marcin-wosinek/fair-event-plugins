@@ -1416,3 +1416,109 @@ describe( 'EntriesApp — allocation tags (#2341)', () => {
 		expect( tagTotalsRequests() ).toHaveLength( 0 );
 	} );
 } );
+
+describe( 'EntriesApp — entity-encoded descriptions in confirmations (#2412)', () => {
+	const ENTRY = makeEntry( {
+		id: 41,
+		description: 'Entrada &quot;La&nbsp;Mutable&quot; &amp;amp; bar',
+		amount: 25,
+	} );
+	const SPLIT = makeEntry( {
+		id: 42,
+		description: 'Caf&eacute; &#8211; split',
+		amount: 10,
+		children: [
+			makeEntry( {
+				id: 421,
+				parent_entry_id: 42,
+				description: 'Caf&eacute; &#8211; split',
+				amount: 10,
+			} ),
+		],
+	} );
+	const ENTRY_TEXT = 'Entrada "La Mutable" &amp; bar';
+	const SPLIT_TEXT = 'Café – split';
+
+	beforeEach( () => {
+		apiFetch.mockImplementation( ( { path, method } ) => {
+			const route = path.split( '?' )[ 0 ];
+			if ( method === 'DELETE' ) {
+				return Promise.resolve( { deleted: true } );
+			}
+			if ( route === '/fair-finance/v1/financial-entries' ) {
+				return Promise.resolve( {
+					entries: [ ENTRY, SPLIT ],
+					total: 2,
+					pages: 1,
+				} );
+			}
+			if ( route === '/fair-finance/v1/financial-entries/totals' ) {
+				return Promise.resolve( {
+					total_cost: 35,
+					total_income: 0,
+					balance: -35,
+				} );
+			}
+			return Promise.resolve(
+				route.endsWith( 'totals-by-tag' ) ? {} : []
+			);
+		} );
+	} );
+
+	it( 'names a deleted entry decoded once in the dialog and notice', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( SPLIT_TEXT );
+
+		await chooseMenuItem( ENTRY_TEXT, 'Delete' );
+		const dialog = screen.getByRole( 'dialog' );
+		expect( dialog ).toHaveAccessibleName(
+			`Delete entry — ${ ENTRY_TEXT }`
+		);
+		// The exact U+00A0, not a collapsed space or a literal `&nbsp;`.
+		expect( dialog.textContent ).toContain( ENTRY_TEXT );
+
+		await act( async () => {
+			fireEvent.click(
+				within( dialog ).getByRole( 'button', { name: 'Delete entry' } )
+			);
+		} );
+
+		// Match without whitespace normalization, which would fold U+00A0.
+		const notice = await screen.findByText(
+			( _, node ) =>
+				node.textContent === `Entry “${ ENTRY_TEXT }” deleted.`,
+			{ ...IN_NOTICE, normalizer: ( text ) => text }
+		);
+		expect( notice ).toBeInTheDocument();
+	} );
+
+	it( 'names an unsplit entry decoded in the confirmation and notice', async () => {
+		render( <EntriesApp /> );
+		await screen.findByText( SPLIT_TEXT );
+
+		fireEvent.click(
+			screen.getByRole( 'button', {
+				name: `Edit split “${ SPLIT_TEXT }”`,
+			} )
+		);
+		fireEvent.click( screen.getByRole( 'button', { name: 'Unsplit' } ) );
+		expect(
+			screen.getByRole( 'dialog', {
+				name: `Unsplit entry — ${ SPLIT_TEXT }`,
+			} )
+		).toBeInTheDocument();
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Unsplit entry' } )
+			);
+		} );
+
+		expect(
+			await screen.findByText(
+				`Entry “${ SPLIT_TEXT }” unsplit.`,
+				IN_NOTICE
+			)
+		).toBeInTheDocument();
+	} );
+} );
