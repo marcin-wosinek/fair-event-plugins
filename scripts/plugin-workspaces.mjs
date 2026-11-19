@@ -30,9 +30,12 @@ export const NON_PLUGIN_WORKSPACES = {
 // (get_file_data()): optional `<?php`, then spaces, `*`, `/`, `#` or `@`.
 const PLUGIN_NAME_RE = /^(?:[ \t]*<\?php)?[ \t/*#@]*Plugin Name:(.*)$/im;
 
-/** Matches the plugin header `Version:` value; group 2 is the version. */
+/**
+ * Matches the plugin header `Version:` value; group 2 is the version. Only the
+ * label is captured: text before it (` * `) is left in place by the replace.
+ */
 export const VERSION_HEADER_RE =
-	/(\*?\s*Version:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s*]*)/gi;
+	/(Version:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s*]*)/gi;
 
 /** Matches the readme `Stable tag:` value; group 2 is the version. */
 export const STABLE_TAG_RE = /(Stable tag:\s*)([0-9]+\.[0-9]+\.[0-9]+[^\s]*)/gi;

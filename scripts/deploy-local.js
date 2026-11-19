@@ -190,10 +190,20 @@ function build(plugins, version) {
 		version,
 		callback: () => {
 			console.log('▶ Building plugin ZIPs (npm run dist-archive)...');
-			const result = spawnSync('npm', ['run', 'dist-archive'], {
-				stdio: 'inherit',
-				cwd: rootDir,
-			});
+			// Run npm's own CLI with this Node binary instead of searching PATH
+			// for `npm` (SonarCloud S4036). npm sets npm_execpath for
+			// `npm run deploy:local`.
+			const npmCli = process.env.npm_execpath;
+			if (!npmCli) {
+				throw new Error(
+					'npm_execpath is not set; run this through `npm run deploy:local`.'
+				);
+			}
+			const result = spawnSync(
+				process.execPath,
+				[npmCli, 'run', 'dist-archive'],
+				{ stdio: 'inherit', cwd: rootDir }
+			);
 			if (result.status !== 0) {
 				throw new Error(
 					`Command failed (${result.status}): npm run dist-archive`
