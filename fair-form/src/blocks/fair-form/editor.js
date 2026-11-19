@@ -20,6 +20,7 @@ import { useState, useEffect, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
 import { generateUuid } from 'fair-events-shared/src/uuid.js';
+import { decodeEntityText } from 'fair-events-shared/src/event-utils.js';
 import { FAIR_FORM_QUESTION_BLOCK_NAMES } from 'fair-events-shared/src/question-utils.js';
 import { registerFormBlockType } from '../shared/register-form-block.js';
 
@@ -81,8 +82,10 @@ function EventDateSelect( { eventDateId, onChange } ) {
 
 	const options = [
 		{ label: __( '— None —', 'fair-form' ), value: '' },
+		// `display_label` is built from the stored, HTML-encoded title
+		// (#2408). Decode it once; SelectControl renders it as plain text.
 		...eventDates.map( ( ed ) => ( {
-			label: ed.display_label,
+			label: decodeEntityText( ed.display_label ),
 			value: String( ed.id ),
 		} ) ),
 	];
