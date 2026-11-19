@@ -2,7 +2,8 @@
 /**
  * Instagram Posting Service
  *
- * Handles posting images to Instagram via Graph API.
+ * Handles posting images to Instagram through the Instagram API with Unified
+ * Login (graph.facebook.com), with the token in an Authorization header.
  *
  * @package FairAudienceExperimental
  */
@@ -20,11 +21,14 @@ defined( 'WPINC' ) || die;
 class InstagramPostingService {
 
 	/**
-	 * Instagram Graph API version.
+	 * Request headers carrying the token, so it never appears in a URL.
 	 *
-	 * @var string
+	 * @param string $access_token Access token.
+	 * @return array<string,string>
 	 */
-	private const API_VERSION = 'v24.0';
+	private static function auth_headers( $access_token ) {
+		return array( 'Authorization' => 'Bearer ' . $access_token );
+	}
 
 	/**
 	 * Get the Instagram user ID.
@@ -32,7 +36,8 @@ class InstagramPostingService {
 	 * @return string|null Instagram user ID or null if not configured.
 	 */
 	private function get_user_id() {
-		return InstagramConnection::user_id() ?: null;
+		$user_id = InstagramConnection::user_id();
+		return '' !== $user_id ? $user_id : null;
 	}
 
 	/**
@@ -41,7 +46,8 @@ class InstagramPostingService {
 	 * @return string|null Access token or null if not configured.
 	 */
 	private function get_access_token() {
-		return InstagramConnection::access_token() ?: null;
+		$token = InstagramConnection::access_token();
+		return '' !== $token ? $token : null;
 	}
 
 	/**
@@ -139,20 +145,16 @@ class InstagramPostingService {
 	 * @return array|WP_Error Response data or error.
 	 */
 	private function create_media_container( $user_id, $access_token, $image_url, $caption ) {
-		$url = sprintf(
-			'https://graph.instagram.com/%s/%s/media',
-			self::API_VERSION,
-			$user_id
-		);
+		$url = InstagramConnection::graph_base() . '/' . rawurlencode( $user_id ) . '/media';
 
 		$response = wp_remote_post(
 			$url,
 			array(
 				'timeout' => 60,
+				'headers' => self::auth_headers( $access_token ),
 				'body'    => array(
-					'image_url'    => $image_url,
-					'caption'      => $caption,
-					'access_token' => $access_token,
+					'image_url' => $image_url,
+					'caption'   => $caption,
 				),
 			)
 		);
@@ -215,14 +217,15 @@ class InstagramPostingService {
 		for ( $i = 0; $i < $max_attempts; $i++ ) {
 			sleep( $delay );
 
-			$url = sprintf(
-				'https://graph.instagram.com/%s/%s?fields=status_code&access_token=%s',
-				self::API_VERSION,
-				$container_id,
-				$access_token
-			);
+			$url = InstagramConnection::graph_base() . '/' . rawurlencode( $container_id ) . '?fields=status_code';
 
-			$response = wp_remote_get( $url, array( 'timeout' => 30 ) );
+			$response = wp_remote_get(
+				$url,
+				array(
+					'timeout' => 30,
+					'headers' => self::auth_headers( $access_token ),
+				)
+			);
 
 			if ( is_wp_error( $response ) ) {
 				continue;
@@ -261,16 +264,14 @@ class InstagramPostingService {
 	 * @return string|null Permalink URL or null on failure.
 	 */
 	private function fetch_permalink( $access_token, $media_id ) {
-		$url = sprintf(
-			'https://graph.instagram.com/%s/%s?fields=permalink&access_token=%s',
-			self::API_VERSION,
-			$media_id,
-			$access_token
-		);
+		$url = InstagramConnection::graph_base() . '/' . rawurlencode( $media_id ) . '?fields=permalink';
 
 		$response = wp_remote_get(
 			$url,
-			array( 'timeout' => 30 )
+			array(
+				'timeout' => 30,
+				'headers' => self::auth_headers( $access_token ),
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -296,19 +297,15 @@ class InstagramPostingService {
 	 * @return array|WP_Error Response data or error.
 	 */
 	private function publish_container( $user_id, $access_token, $container_id ) {
-		$url = sprintf(
-			'https://graph.instagram.com/%s/%s/media_publish',
-			self::API_VERSION,
-			$user_id
-		);
+		$url = InstagramConnection::graph_base() . '/' . rawurlencode( $user_id ) . '/media_publish';
 
 		$response = wp_remote_post(
 			$url,
 			array(
 				'timeout' => 60,
+				'headers' => self::auth_headers( $access_token ),
 				'body'    => array(
-					'creation_id'  => $container_id,
-					'access_token' => $access_token,
+					'creation_id' => $container_id,
 				),
 			)
 		);

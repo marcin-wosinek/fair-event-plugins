@@ -374,15 +374,6 @@ class AdminPages {
 			case 'fair-events-instagram':
 				$asset_file = include $exp_dir . 'build/admin/instagram/index.asset.php';
 				wp_enqueue_script( 'fair-events-instagram', $exp_url . 'build/admin/instagram/index.js', $asset_file['dependencies'], $asset_file['version'], true );
-				wp_localize_script(
-					'fair-events-instagram',
-					'fairEventsInstagramData',
-					array(
-						// Where the OAuth proxy sends the administrator back.
-						'pageUrl'      => admin_url( 'admin.php?page=fair-events-instagram' ),
-						'authorizeUrl' => 'https://fair-event-plugins.com/oauth/instagram/authorize',
-					)
-				);
 				wp_set_script_translations( 'fair-events-instagram', 'fair-events-experimental', \FairEventsExperimental\Core\Features::script_translations_path() );
 				wp_enqueue_style( 'wp-components' );
 				break;

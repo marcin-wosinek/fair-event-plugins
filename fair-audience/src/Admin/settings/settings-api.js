@@ -9,8 +9,9 @@ import apiFetch from '@wordpress/api-fetch';
  * `connected` is the stored connection flag. `credentialStatus` says whether
  * the stored access token can be used: 'available', 'encryption_unavailable'
  * (temporarily, until the server's encryption support is restored) or
- * 'unrecoverable' (reconnect needed), explained by `credentialMessage`. The
- * access token itself is never returned.
+ * 'unrecoverable' (reconnect needed), explained by `credentialMessage`.
+ * `reconnectRequired` marks a connection made before Meta's Unified Login.
+ * The access token itself is never returned.
  *
  * @return {Promise<Object>} Promise resolving to connection settings
  */
@@ -23,6 +24,8 @@ export function loadInstagramSettings() {
 			connected: settings.fair_audience_instagram_connected || false,
 			credentialStatus: credentials.credential_status || 'available',
 			credentialMessage: credentials.message || '',
+			// Stored before Meta's Unified Login: connect again in Fair Events.
+			reconnectRequired: credentials.reconnect_required === true,
 			username: settings.fair_audience_instagram_username || '',
 			userId: settings.fair_audience_instagram_user_id || '',
 			tokenExpires:
@@ -42,17 +45,5 @@ export function saveSettings( data ) {
 		path: '/wp/v2/settings',
 		method: 'POST',
 		data,
-	} );
-}
-
-/**
- * Test Instagram connection
- *
- * @return {Promise<Object>} Promise resolving to connection test result
- */
-export function testInstagramConnection() {
-	return apiFetch( {
-		path: '/fair-audience/v1/instagram/test-connection',
-		method: 'POST',
 	} );
 }

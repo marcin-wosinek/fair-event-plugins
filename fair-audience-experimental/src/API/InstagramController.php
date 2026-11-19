@@ -68,31 +68,23 @@ class InstagramController extends WP_REST_Controller {
 			);
 		}
 
-		$credentials = \FairAudience\Settings\InstagramCredentials::class;
-
-		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
-			$status = $credentials::status();
+		$reason = \FairAudienceExperimental\Services\InstagramConnection::unavailable_reason();
+		if ( $reason ) {
+			$credentials = \FairAudience\Settings\InstagramCredentials::class;
 			return new WP_Error(
-				'instagram_credentials_unavailable',
-				$credentials::admin_message( $status ),
+				$reason->get_error_code(),
+				$reason->get_error_message(),
 				array(
 					'status'            => 409,
-					'credential_status' => $status,
+					'credential_status' => class_exists( $credentials ) ? $credentials::status() : null,
 				)
 			);
 		}
 
-		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
-
-		if ( empty( $access_token ) ) {
-			return new WP_Error(
-				'no_token',
-				__( 'No Instagram access token configured.', 'fair-audience-experimental' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$result = $this->test_instagram_token( $access_token );
+		$result = $this->test_instagram_account(
+			\FairAudienceExperimental\Services\InstagramConnection::access_token(),
+			\FairAudienceExperimental\Services\InstagramConnection::user_id()
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -102,72 +94,57 @@ class InstagramController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Test Instagram token validity via graph.instagram.com/me.
+	 * Check that the connected account can be read with the token, on
+	 * graph.facebook.com (Instagram API with Unified Login).
 	 *
 	 * @param string $access_token The access token.
+	 * @param string $account_id   Instagram account ID.
 	 * @return array|WP_Error Result or error.
 	 */
-	private function test_instagram_token( $access_token ) {
-		$url = 'https://graph.instagram.com/me?' . http_build_query(
-			array(
-				'fields'       => 'user_id,username',
-				'access_token' => $access_token,
-			)
-		);
-
+	private function test_instagram_account( $access_token, $account_id ) {
 		$response = wp_remote_get(
-			$url,
-			array( 'timeout' => 30 )
+			\FairAudienceExperimental\Services\InstagramConnection::graph_base() . '/' . rawurlencode( $account_id ) . '?fields=id,username',
+			array(
+				'timeout'     => 30,
+				'redirection' => 0,
+				'headers'     => array( 'Authorization' => 'Bearer ' . $access_token ),
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error(
 				'connection_failed',
 				__( 'Failed to connect to Instagram API.', 'fair-audience-experimental' ),
-				array(
-					'status'  => 500,
-					'details' => $response->get_error_message(),
-				)
+				array( 'status' => 502 )
 			);
 		}
 
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
+		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$data = is_array( $data ) ? $data : array();
 
-		if ( isset( $data['error'] ) ) {
+		if ( isset( $data['error'] ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) || (string) ( $data['id'] ?? '' ) !== (string) $account_id ) {
+			$message = isset( $data['error']['message'] ) && is_string( $data['error']['message'] ) ? $data['error']['message'] : '';
 			return new WP_Error(
 				'token_invalid',
-				__( 'The access token is invalid or expired.', 'fair-audience-experimental' ),
+				__( 'Meta refused the access token or the connected account. Connect again in Fair Events → Instagram.', 'fair-audience-experimental' ),
 				array(
 					'status'  => 401,
-					'details' => $data['error']['message'] ?? '',
+					'details' => '' !== $access_token ? str_replace( $access_token, '[redacted]', $message ) : $message,
 				)
 			);
 		}
 
-		$user_id  = $data['user_id'] ?? $data['id'] ?? '';
-		$username = $data['username'] ?? '';
-
-		// Update stored account info.
-		if ( ! empty( $user_id ) ) {
-			update_option( 'fair_audience_instagram_user_id', $user_id );
-		}
-		if ( ! empty( $username ) ) {
+		$username = isset( $data['username'] ) && is_string( $data['username'] ) ? sanitize_text_field( $data['username'] ) : '';
+		if ( '' !== $username ) {
 			update_option( 'fair_audience_instagram_username', $username );
 		}
 
-		$expires_at = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
-
 		return array(
 			'success'            => true,
-			'message'            => __( 'Token is valid!', 'fair-audience-experimental' ),
-			'token_info'         => array(
-				'expires_at' => $expires_at,
-				'expires_in' => $expires_at > 0 ? $expires_at - time() : null,
-			),
+			'message'            => __( 'The connection works.', 'fair-audience-experimental' ),
 			'instagram_accounts' => array(
 				array(
-					'id'       => $user_id,
+					'id'       => (string) $account_id,
 					'username' => $username,
 					'page'     => __( 'Instagram Account', 'fair-audience-experimental' ),
 				),

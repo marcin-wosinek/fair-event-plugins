@@ -320,9 +320,11 @@ class Plugin {
 
 	/**
 	 * Claim the Instagram connection when the `instagram` feature is on and
-	 * Fair Audience hands it over; then protect the token, refresh it daily
-	 * and serve the connection API. Off, nothing is scheduled and the stored
-	 * connection stays for Fair Audience.
+	 * Fair Audience hands it over; then protect the token and serve the
+	 * connection API. Off, the stored connection stays for Fair Audience.
+	 *
+	 * Unified Login tokens do not expire, so nothing renews them: the daily
+	 * renewal of earlier releases is removed on every request.
 	 *
 	 * Runs on `plugins_loaded` (priority 5): Fair Audience asks for the
 	 * claim on a later priority.
@@ -330,14 +332,15 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_instagram() {
+		add_action(
+			'init',
+			static function () {
+				Cron::unschedule( array( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK ) );
+			},
+			11
+		);
+
 		if ( ! Features::is_enabled( 'instagram' ) ) {
-			add_action(
-				'init',
-				static function () {
-					Cron::unschedule( array( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK ) );
-				},
-				11
-			);
 			return;
 		}
 
@@ -353,14 +356,6 @@ class Plugin {
 		}
 
 		\FairEventsExperimental\Instagram\Connection::boot();
-		add_action( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK, array( \FairEventsExperimental\Instagram\Connection::class, 'refresh' ) );
-		add_action(
-			'init',
-			static function () {
-				Cron::ensure_recurring( \FairEventsExperimental\Instagram\Connection::REFRESH_HOOK, 'daily', time() + HOUR_IN_SECONDS );
-			},
-			11
-		);
 	}
 
 	/**

@@ -359,7 +359,10 @@ class AdminHooks {
 				array(
 					// Set while Fair Events Experimental manages the
 					// Instagram connection: the tab links there instead.
-					'instagramPageUrl' => \FairAudience\Settings\InstagramCredentials::managed_elsewhere_url(),
+					'instagramPageUrl'  => \FairAudience\Settings\InstagramCredentials::managed_elsewhere_url(),
+					// Where to turn Instagram on, when Fair Events
+					// Experimental is active: connecting happens there.
+					'instagramSetupUrl' => class_exists( '\FairEventsExperimental\Instagram\Connection' ) ? admin_url( 'admin.php?page=fair-events-settings&tab=experimental' ) : null,
 				)
 			);
 		}

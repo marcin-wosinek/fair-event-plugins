@@ -238,11 +238,22 @@ test.describe('Review event invitations before sending', () => {
 });
 
 test.describe('Disconnect Instagram', () => {
-	const CONNECTED = {
-		fair_audience_instagram_access_token: 'e2e-synthetic-token',
-		fair_audience_instagram_user_id: '17840000000000001',
-		fair_audience_instagram_username: 'e2e_demo_account',
-		fair_audience_instagram_connected: true,
+	// A Unified Login connection held by Fair Audience (#2427): seeded by
+	// e2e/mu-plugins/fair-e2e-protected-credentials.php, because the
+	// settings no longer accept a token.
+	const connect = async (request) => {
+		const res = await request.post(
+			'/wp-json/fair-e2e/v1/protected-credentials',
+			{
+				headers: adminHeaders,
+				data: {
+					events_instagram_feature: false,
+					instagram: { token: 'e2e-synthetic-token' },
+					instagram_unified: true,
+				},
+			}
+		);
+		expect(res.ok(), await res.text()).toBeTruthy();
 	};
 
 	const settings = async (request, data) => {
@@ -272,7 +283,7 @@ test.describe('Disconnect Instagram', () => {
 		page,
 		request,
 	}) => {
-		await settings(request, CONNECTED);
+		await connect(request);
 		let nativeDialog = false;
 		page.on('dialog', (native) => {
 			nativeDialog = true;
@@ -303,14 +314,16 @@ test.describe('Disconnect Instagram', () => {
 			.click();
 		await expect(dialog).toBeHidden();
 		await expect(
-			page.getByRole('button', { name: 'Connect with Instagram' })
+			page.getByText('No Instagram account is connected.')
 		).toBeVisible();
 
 		const after = await settings(request);
 		expect(after.fair_audience_instagram_connected).toBeFalsy();
 		// The token is write-only over REST (#1319); the status endpoint
 		// reports the connection as gone.
-		expect(after).not.toHaveProperty('fair_audience_instagram_access_token');
+		expect(after).not.toHaveProperty(
+			'fair_audience_instagram_access_token'
+		);
 		const status = await request.get(
 			'/wp-json/fair-audience/v1/instagram/credentials',
 			{ headers: adminHeaders }

@@ -39,7 +39,7 @@ describe( 'SettingsApp Instagram tab', () => {
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'keeps the connection form while Fair Audience manages it', async () => {
+	it( 'shows the connection status while Fair Audience holds it', async () => {
 		window.fairAudienceSettingsData = { instagramPageUrl: null };
 		loadInstagramSettings.mockReturnValue( new Promise( () => {} ) );
 

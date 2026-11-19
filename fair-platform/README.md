@@ -4,7 +4,7 @@ A minimal WordPress plugin that provides OAuth proxy endpoints for Mollie Connec
 
 ## Purpose
 
-This plugin runs **exclusively on fair-event-plugins.com** and provides three simple endpoints:
+This plugin runs **exclusively on fair-event-plugins.com** and provides three simple Mollie endpoints, plus the Instagram connection endpoints described in [Instagram connections](#instagram-connections-meta-unified-login):
 
 1. **`/oauth/authorize`** - Initiates Mollie OAuth flow
 2. **`/oauth/callback`** - Handles OAuth callback and token exchange
@@ -122,6 +122,75 @@ https://example.com/wp-admin/admin.php?page=mollie&
     mollie_organization_id=org_xxxxx&
     mollie_test_mode=0
 ```
+
+## Instagram connections (Meta Unified Login)
+
+Fair Events Experimental connects a site's Instagram professional account
+through this plugin, with Meta's Instagram API with Unified Login (Facebook
+Login for Business with a configuration ID, #2427). The older Instagram Login
+flow is retired: requests from older client plugins are refused with an
+"update" page, and `/oauth/instagram/refresh` answers `410 Gone`.
+
+### Endpoints
+
+1. **`/oauth/instagram/authorize`**: a site's server starts an attempt with
+   `protocol=2`, its `site_url`, the exact return destination (its
+   `wp-admin/admin.php?page=fair-events-instagram`), an S256
+   `code_challenge` of a verifier only that server knows, and its own
+   `state`. The attempt is stored encrypted under a single-use state for 10
+   minutes, and the administrator goes to Meta's login dialog with
+   `config_id`, `response_type=code` and `override_default_response_type=true`.
+2. **`/oauth/instagram/callback`**: consumes the state first, then exchanges
+   the code server side, checks the token with `debug_token` (valid, this
+   app, `instagram_basic` and `instagram_content_publish` granted) and
+   requires exactly one account in `/me/assigned_instagram_accounts`. The
+   credentials are stored encrypted under a single-use handoff code for 5
+   minutes, and only that code returns to the site
+   (`instagram_handoff`, `state`). Any failure returns `instagram_error`
+   (`cancelled`, `insufficient_permissions`, `no_account`,
+   `multiple_accounts`, `exchange_failed`, `authorization_failed`,
+   `server_error`) and stores nothing.
+3. **`POST /wp-json/fair-platform/v1/instagram/redeem`**: the site's server
+   redeems the handoff code with its verifier and `site_url`. Each code works
+   once, whatever the outcome; the access token is never in a URL or a
+   browser response.
+
+Attempts and handoffs live in `{prefix}options` as
+`fair_platform_once_ig_state_*` and `fair_platform_once_ig_handoff_*` rows
+(SHA-256 of the key as the name, the value encrypted with the site's salts).
+Expired rows are removed as new ones are written. Each attempt is logged in
+Fair Platform → Instagram Connections without any credential.
+
+### Configuration
+
+```php
+define( 'META_APP_ID', '1234567890' );            // Meta app ID (not the Instagram app ID).
+define( 'META_APP_SECRET', 'xxxxxxxxxxxxx' );
+define( 'META_INSTAGRAM_CONFIG_ID', '1234567890' ); // Unified Login configuration ID.
+define( 'META_GRAPH_VERSION', 'v27.0' );          // Optional; v27.0 by default.
+```
+
+`INSTAGRAM_APP_ID` and `INSTAGRAM_APP_SECRET` are no longer read.
+
+In the Meta app (Use cases → Instagram API → **API setup with Unified login**):
+
+- Create or edit the configuration: login variation **General**, access
+  token **System-user access token**, expiration **Never**.
+- Assets: **Instagram accounts**, with **Asset Required**. No Pages and no ad
+  accounts are needed.
+- Permissions: `instagram_basic` and `instagram_content_publish` (the preset
+  always includes `instagram_manage_messages` as well).
+  `business_management` and the ads permissions are not needed.
+- Valid OAuth redirect URI: `https://fair-event-plugins.com/oauth/instagram/callback`.
+- In development mode only people with a role on the app can connect, with
+  Standard Access. Other businesses need Advanced Access through App Review
+  and Business Verification, with the app in Live mode.
+
+The token is a business integration system-user token that does not expire.
+Nothing renews it. It stops working when the business removes the app under
+Meta Business Settings → Integrations → Connected apps; removing it there is
+also how a business revokes access. Removing it resets which accounts the
+business shares, so it helps when Meta keeps offering accounts shared before.
 
 ## Platform Fees
 

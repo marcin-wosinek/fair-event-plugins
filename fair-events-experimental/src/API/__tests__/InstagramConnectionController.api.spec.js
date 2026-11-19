@@ -1,15 +1,22 @@
 /**
- * Playwright API tests for InstagramConnectionController (#2076): the
- * Instagram connection moves from Fair Audience to Fair Events → Instagram
- * without re-entering credentials.
+ * Playwright API tests for InstagramConnectionController: the connection
+ * managed in Fair Events → Instagram (#2076), connected through Meta's
+ * Unified Login (#2427).
  *
- * Covers administrator-only access, reading a connection Fair Audience
- * stored, the token never appearing in a response, encryption at rest,
- * validation, the connection test (e2e/mu-plugins/fair-e2e-protected-credentials.php
- * answers graph.instagram.com), disconnecting, and Fair Audience's
+ * The tests site is its own Fair Platform OAuth service
+ * (e2e/mu-plugins/fair-e2e-instagram-unified-login.php answers Meta's OAuth
+ * calls by authorization code), so each connection runs the real flow:
+ * start here, the platform's authorize and callback endpoints, the return
+ * with a handoff code, and server-side redemption with the verifier.
+ * e2e/mu-plugins/fair-e2e-protected-credentials.php answers the connection
+ * test and publishing on graph.facebook.com and records each token sent.
+ *
+ * Covers administrator-only access, the mandatory reconnection of a
+ * connection stored before Unified Login, authorization parameters, state
+ * and handoff validation and single use, cancellation and every failure,
+ * the token lifecycle, publishing, disconnecting, and Fair Audience's
  * /wp/v2/settings surface stepping aside while the connection is managed
- * here and coming back when the feature is off. The feature stays off until
- * an administrator turns it on: a stored connection alone never does.
+ * here. The feature stays off until an administrator turns it on.
  *
  * The suite restores the feature option and removes every Instagram option
  * it wrote afterwards.
@@ -27,8 +34,9 @@ const PATH = '/wp-json/fair-events-experimental/v1/instagram/connection';
 const SETTINGS_PATH = '/wp-json/wp/v2/settings';
 const CREDENTIALS_PATH = '/wp-json/fair-audience/v1/instagram/credentials';
 const LEGACY_TOKEN = 'e2e-ig-legacy-token-0123456789';
-const NEW_TOKEN = 'e2e-ig-new-token-9876543210';
+const UNIFIED_TOKEN = 'e2e-ig-unified-ok';
 const REVOKED_TOKEN = 'e2e-ig-revoked-token-555';
+const REDEEM_PATH = '/wp-json/fair-platform/v1/instagram/redeem';
 const POSTS_PATH = '/wp-json/fair-audience/v1/instagram/posts';
 const INSTAGRAM_OPTIONS = [
 	'fair_audience_instagram_access_token',
@@ -36,7 +44,13 @@ const INSTAGRAM_OPTIONS = [
 	'fair_audience_instagram_username',
 	'fair_audience_instagram_connected',
 	'fair_audience_instagram_token_expires',
+	'fair_audience_instagram_connection_format',
+	'fair_audience_instagram_token_type',
+	'fair_audience_instagram_scopes',
+	'fair_audience_instagram_token_expiry',
+	'fair_audience_instagram_graph_version',
 ];
+const METADATA_OPTIONS = INSTAGRAM_OPTIONS.slice( 5 );
 
 const adminHeaders = {
 	Authorization:
@@ -98,6 +112,101 @@ test.describe( 'InstagramConnectionController', () => {
 	let subscriberId;
 	let subscriberHeaders;
 
+	/** The tokens sent to graph.facebook.com since the last reset. */
+	async function graphRequests() {
+		return JSON.parse(
+			await php(
+				"echo wp_json_encode( get_option( 'fair_e2e_credential_requests', array() ) );"
+			)
+		);
+	}
+
+	/**
+	 * GET a platform URL without following its own redirect. WordPress's
+	 * canonical 301 (adding the permalink's trailing slash) is followed, as
+	 * a browser would.
+	 *
+	 * @param {string} url URL.
+	 * @return {Promise<import('@playwright/test').APIResponse>} Response.
+	 */
+	async function platformGet( url ) {
+		let response = await api.get( url, { maxRedirects: 0 } );
+		for ( let i = 0; i < 2 && response.status() === 301; i++ ) {
+			response = await api.get(
+				new URL( response.headers().location, BASE_URL ).toString(),
+				{ maxRedirects: 0 }
+			);
+		}
+		return response;
+	}
+
+	/**
+	 * Start connecting here and follow the platform until it returns to
+	 * Fair Events → Instagram, answering Meta's dialog with `meta`.
+	 *
+	 * @param {Object} meta Query Meta's dialog sends back (code or error).
+	 * @return {Promise<Object>} The URLs and the return parameters.
+	 */
+	async function authorize( meta ) {
+		const start = await api.post( `${ PATH }/authorize`, {
+			headers: adminHeaders,
+		} );
+		expect( start.status(), await start.text() ).toBe( 200 );
+		const authorizeUrl = new URL( ( await start.json() ).authorize_url );
+
+		const toMeta = await platformGet( authorizeUrl.toString() );
+		expect( toMeta.status(), await toMeta.text() ).toBe( 302 );
+		const dialog = new URL( toMeta.headers().location );
+
+		const callback = new URL( '/oauth/instagram/callback', BASE_URL );
+		callback.searchParams.set(
+			'state',
+			dialog.searchParams.get( 'state' )
+		);
+		for ( const [ key, value ] of Object.entries( meta ) ) {
+			callback.searchParams.set( key, value );
+		}
+		const back = await platformGet( callback.toString() );
+		expect( back.status(), await back.text() ).toBe( 302 );
+		const returned = new URL( back.headers().location );
+
+		return {
+			authorizeUrl,
+			dialog,
+			callback,
+			returned,
+			state: returned.searchParams.get( 'state' ),
+			handoff: returned.searchParams.get( 'instagram_handoff' ) || '',
+			error: returned.searchParams.get( 'instagram_error' ) || '',
+		};
+	}
+
+	/** Complete a return the way the page does. */
+	function complete( { state, handoff = '', error = '' } ) {
+		return api.post( `${ PATH }/complete`, {
+			headers: adminHeaders,
+			data: { state, handoff, error },
+		} );
+	}
+
+	/** Connect with an authorization code scenario. */
+	async function connect( code ) {
+		const result = await authorize( { code } );
+		const response = await complete( result );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		return response.json();
+	}
+
+	/** Seed a connection stored before Unified Login (Instagram Login). */
+	async function seedLegacy() {
+		await php(
+			METADATA_OPTIONS.map( ( o ) => `delete_option( '${ o }' );` ).join(
+				' '
+			) +
+				` update_option( 'fair_audience_instagram_access_token', '${ LEGACY_TOKEN }' ); update_option( 'fair_audience_instagram_user_id', '17841400000000009' ); update_option( 'fair_audience_instagram_username', 'e2e_legacy' ); update_option( 'fair_audience_instagram_connected', true ); update_option( 'fair_audience_instagram_token_expires', 1900000000 );`
+		);
+	}
+
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
 		previousFeatures = await php(
@@ -122,11 +231,10 @@ test.describe( 'InstagramConnectionController', () => {
 				Buffer.from( `${ login }:password` ).toString( 'base64' ),
 		};
 
-		// A connection as Fair Audience stored it, before the move.
+		// A connection as Fair Audience stored it, before the move and
+		// before Unified Login.
 		await setFeature( false );
-		await php(
-			`update_option( 'fair_audience_instagram_access_token', '${ LEGACY_TOKEN }' ); update_option( 'fair_audience_instagram_user_id', '17841400000000009' ); update_option( 'fair_audience_instagram_username', 'e2e_legacy' ); update_option( 'fair_audience_instagram_connected', true ); update_option( 'fair_audience_instagram_token_expires', 1900000000 );`
-		);
+		await seedLegacy();
 		await setFeature( true );
 	} );
 
@@ -170,7 +278,7 @@ test.describe( 'InstagramConnectionController', () => {
 				"$f = get_option( 'fair_events_experimental_features', array() ); echo is_array( $f ) && array_key_exists( 'instagram', $f ) ? 'stored' : 'unset';"
 			)
 		).toBe( 'unset' );
-		// Fair Audience keeps managing the connection meanwhile.
+		// Fair Audience keeps holding the connection meanwhile.
 		const settings = await (
 			await api.get( SETTINGS_PATH, { headers: adminHeaders } )
 		).json();
@@ -190,9 +298,13 @@ test.describe( 'InstagramConnectionController', () => {
 		for ( const call of [
 			() => api.get( PATH, { headers: subscriberHeaders } ),
 			() =>
-				api.post( PATH, {
+				api.post( `${ PATH }/authorize`, {
 					headers: subscriberHeaders,
-					data: { access_token: NEW_TOKEN },
+				} ),
+			() =>
+				api.post( `${ PATH }/complete`, {
+					headers: subscriberHeaders,
+					data: { state: 'x'.repeat( 32 ) },
 				} ),
 			() => api.delete( PATH, { headers: subscriberHeaders } ),
 			() => api.post( `${ PATH }/test`, { headers: subscriberHeaders } ),
@@ -201,7 +313,24 @@ test.describe( 'InstagramConnectionController', () => {
 		}
 	} );
 
-	test( 'reads the connection Fair Audience stored, without the token', async () => {
+	test( 'manual token entry is gone', async () => {
+		for ( const call of [
+			() =>
+				api.post( PATH, {
+					headers: adminHeaders,
+					data: { access_token: 'e2e-ig-typed' },
+				} ),
+			() =>
+				api.post( `${ PATH }/user-id`, {
+					headers: adminHeaders,
+					data: { user_id: '17841400000000003' },
+				} ),
+		] ) {
+			expect( ( await call() ).status() ).toBe( 404 );
+		}
+	} );
+
+	test( 'a connection from before Unified Login must be reconnected, and is never used', async () => {
 		const response = await api.get( PATH, { headers: adminHeaders } );
 		expect( response.status() ).toBe( 200 );
 		const body = await response.json();
@@ -209,21 +338,42 @@ test.describe( 'InstagramConnectionController', () => {
 		expect( body ).toMatchObject( {
 			managed_here: true,
 			ownership_reason: 'managed_here',
-			legacy_manage_url: null,
 			connected: true,
-			usable: true,
-			credential_status: 'available',
+			usable: false,
+			credential_status: 'reconnect_required',
+			connection_format: null,
 			user_id: '17841400000000009',
 			username: 'e2e_legacy',
-			token_expires: 1900000000,
 		} );
+		expect( body.message ).toContain( 'Instagram needs to be reconnected' );
 		expect( JSON.stringify( body ) ).not.toContain( LEGACY_TOKEN );
 
-		// Encrypted at rest once this plugin protects it.
+		// Still stored, and encrypted at rest once this plugin protects it.
 		const raw = await rawToken();
 		expect( raw ).not.toBe( '' );
 		expect( raw ).not.toContain( LEGACY_TOKEN );
 		expect( body.credentials_encrypted ).toBe( true );
+
+		await php( "delete_option( 'fair_e2e_credential_requests' );" );
+		const tested = await api.post( `${ PATH }/test`, {
+			headers: adminHeaders,
+		} );
+		expect( tested.status() ).toBe( 409 );
+		const posted = await api.post( POSTS_PATH, {
+			headers: adminHeaders,
+			data: {
+				image_url: 'https://example.com/e2e-2427.png',
+				caption: 'E2E legacy connection',
+			},
+		} );
+		expect( posted.status() ).toBe( 400 );
+		expect( await graphRequests() ).toEqual( [] );
+
+		// Nothing renews it: the retired renewal endpoint is gone.
+		const refresh = await api.post( '/oauth/instagram/refresh/', {
+			form: { access_token: 'e2e-ig-anything' },
+		} );
+		expect( refresh.status() ).toBe( 410 );
 	} );
 
 	test( 'Fair Audience no longer offers the connection in /wp/v2/settings', async () => {
@@ -240,104 +390,280 @@ test.describe( 'InstagramConnectionController', () => {
 		} );
 		expect( credentials.status() ).toBe( 200 );
 		expect( await credentials.json() ).toMatchObject( {
-			usable: true,
+			usable: false,
+			reconnect_required: true,
 		} );
 	} );
 
-	test( 'rejects malformed tokens and user IDs', async () => {
-		for ( const accessToken of [ '', '   ', 'has space' ] ) {
-			const response = await api.post( PATH, {
-				headers: adminHeaders,
-				data: { access_token: accessToken },
-			} );
-			expect( response.status() ).toBe( 400 );
-		}
-		const userId = await api.post( `${ PATH }/user-id`, {
+	test( 'starts Unified Login with the configuration, the code grant and only a challenge', async () => {
+		const { authorizeUrl, dialog } = await authorize( {
+			error: 'access_denied',
+			error_reason: 'user_denied',
+		} );
+
+		expect( authorizeUrl.pathname ).toBe( '/oauth/instagram/authorize' );
+		expect( authorizeUrl.searchParams.get( 'protocol' ) ).toBe( '2' );
+		expect( authorizeUrl.searchParams.get( 'return_url' ) ).toBe(
+			`${ BASE_URL }/wp-admin/admin.php?page=fair-events-instagram`
+		);
+		expect( authorizeUrl.searchParams.get( 'code_challenge' ) ).toMatch(
+			/^[A-Za-z0-9_-]{43}$/
+		);
+		expect( authorizeUrl.searchParams.has( 'code_verifier' ) ).toBe(
+			false
+		);
+
+		expect( dialog.origin ).toBe( 'https://www.facebook.com' );
+		expect( dialog.pathname ).toBe( '/v27.0/dialog/oauth' );
+		expect( Object.fromEntries( dialog.searchParams ) ).toMatchObject( {
+			client_id: '880000000000001',
+			config_id: '880000000000002',
+			redirect_uri: `${ BASE_URL }/oauth/instagram/callback`,
+			response_type: 'code',
+			override_default_response_type: 'true',
+		} );
+		expect( dialog.searchParams.has( 'scope' ) ).toBe( false );
+		expect( dialog.toString() ).not.toContain( 'e2e-meta-app-secret' );
+	} );
+
+	test( 'the platform refuses outdated clients and unapproved return destinations', async () => {
+		const outdated = await platformGet(
+			`/oauth/instagram/authorize?site_id=ZTJl&return_url=${ encodeURIComponent(
+				`${ BASE_URL }/wp-admin/admin.php?page=fair-events-instagram`
+			) }`
+		);
+		expect( outdated.status() ).toBe( 400 );
+		expect( await outdated.text() ).toContain(
+			'Update Fair Events Experimental'
+		);
+
+		const start = await api.post( `${ PATH }/authorize`, {
 			headers: adminHeaders,
-			data: { user_id: '12ab' },
 		} );
-		expect( userId.status() ).toBe( 400 );
+		const tampered = new URL( ( await start.json() ).authorize_url );
+		for ( const returnUrl of [
+			'https://evil.example/wp-admin/admin.php?page=fair-events-instagram',
+			`${ BASE_URL }/wp-admin/admin.php?page=fair-events-instagram&next=https://evil.example`,
+			`${ BASE_URL }/wp-admin/admin.php?page=other`,
+		] ) {
+			tampered.searchParams.set( 'return_url', returnUrl );
+			const refused = await platformGet( tampered.toString() );
+			expect( refused.status(), returnUrl ).toBe( 400 );
+		}
 	} );
 
-	test( 'tests the connection and stores the account Instagram names', async () => {
+	test( 'the callback consumes its state before anything else', async () => {
+		const unknown = await platformGet(
+			`/oauth/instagram/callback?code=e2e-code-ok&state=${ 'u'.repeat(
+				43
+			) }`
+		);
+		expect( unknown.status() ).toBe( 400 );
+
+		const { callback } = await authorize( {
+			error: 'access_denied',
+			error_reason: 'user_denied',
+		} );
+		// The same state again, now with a code: already used.
+		callback.searchParams.delete( 'error' );
+		callback.searchParams.delete( 'error_reason' );
+		callback.searchParams.set( 'code', 'e2e-code-ok' );
+		const replayed = await platformGet( callback.toString() );
+		expect( replayed.status() ).toBe( 400 );
+	} );
+
+	test( 'a cancelled authorization changes nothing', async () => {
+		const result = await authorize( {
+			error: 'access_denied',
+			error_reason: 'user_denied',
+		} );
+		expect( result.error ).toBe( 'cancelled' );
+		expect( result.handoff ).toBe( '' );
+
+		const response = await complete( result );
+		expect( response.status() ).toBe( 400 );
+		expect( await response.json() ).toMatchObject( {
+			code: 'instagram_authorization_failed',
+			message:
+				'Instagram authorization was cancelled. Nothing was changed.',
+			data: { reason: 'cancelled' },
+		} );
+
+		// The earlier connection is kept, and still not usable.
+		const body = await (
+			await api.get( PATH, { headers: adminHeaders } )
+		).json();
+		expect( body.credential_status ).toBe( 'reconnect_required' );
+		expect( body.username ).toBe( 'e2e_legacy' );
+	} );
+
+	test( 'failed exchanges, missing permission, and zero or several accounts store nothing', async () => {
+		const raw = await rawToken();
+		for ( const [ code, reason, message ] of [
+			[ 'e2e-code-bad', 'failed', 'Instagram authorization failed' ],
+			[
+				'e2e-code-noperm',
+				'insufficient_permissions',
+				'permission to publish',
+			],
+			[
+				'e2e-code-none',
+				'no_account',
+				'No Instagram professional account',
+			],
+			[
+				'e2e-code-multiple',
+				'multiple_accounts',
+				'More than one Instagram account',
+			],
+		] ) {
+			const result = await authorize( { code } );
+			expect( result.handoff, code ).toBe( '' );
+
+			const response = await complete( result );
+			expect( response.status(), code ).toBe( 400 );
+			const error = await response.json();
+			expect( error.data.reason, code ).toBe( reason );
+			expect( error.message, code ).toContain( message );
+		}
+		expect( await rawToken() ).toBe( raw );
+	} );
+
+	test( 'a return that does not belong to this administrator’s attempt is refused', async () => {
+		const result = await authorize( { code: 'e2e-code-ok' } );
+
+		const response = await complete( {
+			...result,
+			state: 's'.repeat( 32 ),
+		} );
+		expect( response.status() ).toBe( 400 );
+		expect( ( await response.json() ).code ).toBe(
+			'instagram_authorization_unknown'
+		);
+
+		// The mismatch used the attempt up, and the earlier connection stays.
+		const retried = await complete( result );
+		expect( retried.status() ).toBe( 400 );
+		expect(
+			(
+				await (
+					await api.get( PATH, { headers: adminHeaders } )
+				).json()
+			).credential_status
+		).toBe( 'reconnect_required' );
+	} );
+
+	test( 'a handoff code works once, and only with the verifier', async () => {
+		const result = await authorize( { code: 'e2e-code-ok' } );
+
+		// Anyone holding the return URL but not the verifier gets nothing,
+		// and the attempt burns the code.
+		const guessed = await api.post( REDEEM_PATH, {
+			form: {
+				handoff: result.handoff,
+				code_verifier: 'v'.repeat( 64 ),
+				site_url: BASE_URL,
+			},
+		} );
+		expect( guessed.status() ).toBe( 400 );
+		expect( await guessed.text() ).not.toContain( UNIFIED_TOKEN );
+
+		const response = await complete( result );
+		expect( response.status() ).toBe( 502 );
+		expect( ( await response.json() ).code ).toBe(
+			'instagram_handoff_failed'
+		);
+		expect(
+			(
+				await (
+					await api.get( PATH, { headers: adminHeaders } )
+				).json()
+			).credential_status
+		).toBe( 'reconnect_required' );
+	} );
+
+	test( 'connects through Unified Login, replacing the earlier connection, without the token in any URL or response', async () => {
+		const result = await authorize( { code: 'e2e-code-ok' } );
+		expect( result.returned.toString() ).not.toContain( UNIFIED_TOKEN );
+		expect( result.returned.pathname ).toBe( '/wp-admin/admin.php' );
+		expect( result.handoff ).toMatch( /^[A-Za-z0-9_-]{43}$/ );
+
+		const response = await complete( result );
+		expect( response.status(), await response.text() ).toBe( 200 );
+		const body = await response.json();
+		expect( body ).toMatchObject( {
+			managed_here: true,
+			connected: true,
+			usable: true,
+			credential_status: 'available',
+			credentials_encrypted: true,
+			connection_format: 'unified_login',
+			token_type: 'system_user',
+			token_expiry: 'never',
+			token_expires: null,
+			user_id: '17841400000000001',
+			username: 'e2e_unified_club',
+		} );
+		expect( JSON.stringify( body ) ).not.toContain( UNIFIED_TOKEN );
+		expect( await rawToken() ).not.toContain( UNIFIED_TOKEN );
+
+		// The redeemed handoff cannot be redeemed again.
+		const again = await api.post( REDEEM_PATH, {
+			form: {
+				handoff: result.handoff,
+				code_verifier: 'v'.repeat( 64 ),
+				site_url: BASE_URL,
+			},
+		} );
+		expect( again.status() ).toBe( 400 );
+	} );
+
+	test( 'tests the connection on graph.facebook.com', async () => {
+		await php( "delete_option( 'fair_e2e_credential_requests' );" );
 		const response = await api.post( `${ PATH }/test`, {
 			headers: adminHeaders,
 		} );
-		expect( response.status() ).toBe( 200 );
+		expect( response.status(), await response.text() ).toBe( 200 );
 		const body = await response.json();
 		// The page replaces its connection state with this response, so it
 		// carries the ownership fields too (#2425).
 		expect( body ).toMatchObject( {
 			success: true,
 			message:
-				'The connection works: Instagram confirmed the account @e2e_demo_account.',
-			connected: true,
+				'The connection works: Meta confirmed the account @e2e_demo_account.',
 			usable: true,
-			credential_status: 'available',
-			credentials_encrypted: true,
-			user_id: '17840000000000001',
+			user_id: '17841400000000001',
 			username: 'e2e_demo_account',
 			managed_here: true,
 			ownership_reason: 'managed_here',
-			legacy_manage_url: null,
 		} );
-		expect( body ).not.toHaveProperty( 'access_token' );
-		expect( JSON.stringify( body ) ).not.toContain( LEGACY_TOKEN );
+		expect( JSON.stringify( body ) ).not.toContain( UNIFIED_TOKEN );
+		expect( await graphRequests() ).toEqual( [
+			{ service: 'instagram_graph', token: UNIFIED_TOKEN },
+		] );
 	} );
 
-	test( 'connects a new token, stored encrypted, replacing the account', async () => {
-		const response = await api.post( PATH, {
-			headers: adminHeaders,
-			data: {
-				access_token: NEW_TOKEN,
-				user_id: '17841400000000002',
-				username: '@e2e_new',
-				expires_in: 5184000,
-			},
-		} );
-		expect( response.status() ).toBe( 200 );
-		const body = await response.json();
-		expect( body ).toMatchObject( {
-			connected: true,
-			usable: true,
-			user_id: '17841400000000002',
-			username: 'e2e_new',
-		} );
-		expect( body.token_expires ).toBeGreaterThan( Date.now() / 1000 );
-		expect( JSON.stringify( body ) ).not.toContain( NEW_TOKEN );
-		expect( await rawToken() ).not.toContain( NEW_TOKEN );
-
-		const userId = await api.post( `${ PATH }/user-id`, {
-			headers: adminHeaders,
-			data: { user_id: '17841400000000003' },
-		} );
-		expect( ( await userId.json() ).user_id ).toBe( '17841400000000003' );
-	} );
-
-	test( 'manual posting in Fair Audience publishes with the shared connection', async () => {
+	test( 'manual posting in Fair Audience publishes on graph.facebook.com with the new connection', async () => {
+		test.setTimeout( 90_000 );
 		await php( "delete_option( 'fair_e2e_credential_requests' );" );
 		const response = await api.post( POSTS_PATH, {
 			headers: adminHeaders,
 			data: {
-				image_url: 'https://example.com/e2e-2076.png',
-				caption: 'E2E manual post through the shared connection',
+				image_url: 'https://example.com/e2e-2427.png',
+				caption: 'E2E manual post through Unified Login',
 			},
 		} );
-		expect( response.status() ).toBe( 200 );
+		expect( response.status(), await response.text() ).toBe( 200 );
 		const { post } = await response.json();
 		expect( post.status ).toBe( 'published' );
 
-		// The decrypted token this plugin stores was the one sent.
-		const sent = JSON.parse(
-			await php(
-				"echo wp_json_encode( get_option( 'fair_e2e_credential_requests', array() ) );"
-			)
-		);
+		const sent = await graphRequests();
 		expect( sent.length ).toBeGreaterThan( 0 );
 		expect(
 			sent.every(
 				( entry ) =>
-					entry.service === 'instagram' && entry.token === NEW_TOKEN
+					entry.service === 'instagram_graph' &&
+					entry.token === UNIFIED_TOKEN
 			)
 		).toBe( true );
 
@@ -346,11 +672,23 @@ test.describe( 'InstagramConnectionController', () => {
 		} );
 	} );
 
-	test( 'reports a refused token without echoing it', async () => {
-		await api.post( PATH, {
-			headers: adminHeaders,
-			data: { access_token: REVOKED_TOKEN },
-		} );
+	test( 'a token with a finite expiry is stored with it, and not renewed', async () => {
+		const body = await connect( 'e2e-code-expiring' );
+		expect( body.token_expiry ).toBe( 'expires' );
+		expect( body.token_expires ).toBeGreaterThan(
+			Date.now() / 1000 + 29 * 86400
+		);
+		expect(
+			await php(
+				"echo (int) wp_next_scheduled( 'fair_events_experimental_instagram_token_refresh' );"
+			)
+		).toBe( '0' );
+	} );
+
+	test( 'reports a revoked token without echoing it', async () => {
+		await php(
+			`update_option( 'fair_audience_instagram_access_token', '${ REVOKED_TOKEN }' );`
+		);
 		const response = await api.post( `${ PATH }/test`, {
 			headers: adminHeaders,
 		} );
@@ -360,7 +698,7 @@ test.describe( 'InstagramConnectionController', () => {
 		expect( text ).not.toContain( REVOKED_TOKEN );
 	} );
 
-	test( 'disconnects and removes the token', async () => {
+	test( 'disconnects locally and removes the token and its metadata', async () => {
 		const response = await api.delete( PATH, { headers: adminHeaders } );
 		expect( response.status() ).toBe( 200 );
 		expect( await response.json() ).toMatchObject( {
@@ -368,15 +706,24 @@ test.describe( 'InstagramConnectionController', () => {
 			usable: false,
 			user_id: '',
 			username: '',
+			connection_format: null,
 		} );
 		expect( await rawToken() ).toBe( '' );
+		const metadata = await php(
+			`$names = explode( ',', '${ METADATA_OPTIONS.join(
+				','
+			) }' ); echo wp_json_encode( array_map( function ( $o ) { return get_option( $o, null ); }, $names ) );`
+		);
+		expect( JSON.parse( metadata ) ).toEqual(
+			METADATA_OPTIONS.map( () => null )
+		);
 	} );
 
 	test( 'manual posting says where to reconnect once disconnected', async () => {
 		const response = await api.post( POSTS_PATH, {
 			headers: adminHeaders,
 			data: {
-				image_url: 'https://example.com/e2e-2076.png',
+				image_url: 'https://example.com/e2e-2427.png',
 				caption: 'E2E manual post without a connection',
 			},
 		} );
@@ -386,7 +733,7 @@ test.describe( 'InstagramConnectionController', () => {
 		expect( body.message ).toContain( 'Fair Events → Instagram' );
 	} );
 
-	test( 'with the feature off, the routes are gone and Fair Audience manages the connection again', async () => {
+	test( 'with the feature off, the routes are gone and Fair Audience holds the connection again', async () => {
 		await setFeature( false );
 
 		expect(

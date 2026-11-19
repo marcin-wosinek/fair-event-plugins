@@ -572,3 +572,90 @@ if ( ! function_exists( 'apply_filters' ) ) {
 }
 
 require_once __DIR__ . '/Fair_Test_WP_Error.php';
+
+if ( ! function_exists( 'delete_transient' ) ) {
+	/**
+	 * Stub of WordPress delete_transient().
+	 *
+	 * @param string $name Transient name.
+	 * @return bool
+	 */
+	function delete_transient( $name ) {
+		unset( $GLOBALS['_fair_test_transients'][ $name ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'site_url' ) ) {
+	/**
+	 * Stub of WordPress site_url().
+	 *
+	 * @param string $path Path.
+	 * @return string
+	 */
+	function site_url( $path = '' ) {
+		return 'https://example.test' . ( '' !== $path ? '/' . ltrim( (string) $path, '/' ) : '' );
+	}
+}
+
+if ( ! function_exists( 'admin_url' ) ) {
+	/**
+	 * Stub of WordPress admin_url().
+	 *
+	 * @param string $path Path.
+	 * @return string
+	 */
+	function admin_url( $path = '' ) {
+		return 'https://example.test/wp-admin/' . ltrim( (string) $path, '/' );
+	}
+}
+
+if ( ! function_exists( 'get_bloginfo' ) ) {
+	/**
+	 * Stub of WordPress get_bloginfo().
+	 *
+	 * @param string $show Field.
+	 * @return string
+	 */
+	function get_bloginfo( $show = '' ) {
+		unset( $show );
+		return 'Example &amp; Events';
+	}
+}
+
+if ( ! function_exists( 'wp_specialchars_decode' ) ) {
+	/**
+	 * Stub of WordPress wp_specialchars_decode().
+	 *
+	 * @param string $text  Text.
+	 * @param int    $quote Quote style.
+	 * @return string
+	 */
+	function wp_specialchars_decode( $text, $quote = ENT_NOQUOTES ) {
+		return htmlspecialchars_decode( (string) $text, $quote );
+	}
+}
+
+if ( ! function_exists( 'untrailingslashit' ) ) {
+	/**
+	 * Stub of WordPress untrailingslashit().
+	 *
+	 * @param string $value Value.
+	 * @return string
+	 */
+	function untrailingslashit( $value ) {
+		return rtrim( (string) $value, '/\\' );
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt().
+	 *
+	 * @param string $scheme Scheme.
+	 * @return string
+	 */
+	function wp_salt( $scheme = 'auth' ) {
+		return 'fee-test-salt-' . $scheme;
+	}
+}

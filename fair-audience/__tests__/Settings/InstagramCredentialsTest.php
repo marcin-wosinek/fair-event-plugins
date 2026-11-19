@@ -160,6 +160,31 @@ class InstagramCredentialsTest extends TestCase {
 		$this->assertArrayNotHasKey( InstagramCredentials::OPTION, $GLOBALS['_fair_test_options'] );
 	}
 
+	/** Disconnecting also removes the Unified Login metadata (#2427). */
+	public function test_disconnect_removes_connection_metadata(): void {
+		foreach ( InstagramCredentials::METADATA_OPTIONS as $option ) {
+			$GLOBALS['_fair_test_options'][ $option ] = 'x';
+		}
+
+		InstagramCredentials::clear_unreadable_token( false, InstagramCredentials::OPTION, '' );
+
+		foreach ( InstagramCredentials::METADATA_OPTIONS as $option ) {
+			$this->assertArrayNotHasKey( $option, $GLOBALS['_fair_test_options'], $option );
+		}
+	}
+
+	/** A token without the Unified Login marker must be reconnected (#2427). */
+	public function test_reconnect_required_without_the_format_marker(): void {
+		$GLOBALS['_fair_test_options'][ InstagramCredentials::OPTION ] = 'instagram_old';
+		$this->assertTrue( InstagramCredentials::reconnect_required() );
+
+		$GLOBALS['_fair_test_options'][ InstagramCredentials::FORMAT_OPTION ] = InstagramCredentials::FORMAT_UNIFIED_LOGIN;
+		$this->assertFalse( InstagramCredentials::reconnect_required() );
+
+		unset( $GLOBALS['_fair_test_options'][ InstagramCredentials::OPTION ], $GLOBALS['_fair_test_options'][ InstagramCredentials::FORMAT_OPTION ] );
+		$this->assertFalse( InstagramCredentials::reconnect_required() );
+	}
+
 	/** Other writes go through the ordinary settings update. */
 	public function test_other_writes_are_not_intercepted(): void {
 		$this->encrypt_token();

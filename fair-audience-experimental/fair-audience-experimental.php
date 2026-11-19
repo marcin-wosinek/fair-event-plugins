@@ -35,8 +35,9 @@ require_once __DIR__ . '/vendor/fair-events/shared/bootstrap.php';
 	)
 );
 
-// This release leaves the Instagram token refresh to Fair Events
-// Experimental while that plugin owns the connection.
+// Releases since the Fair Events Experimental handoff never refresh the
+// Instagram token while that plugin owns the connection; since #2427 they
+// never refresh it at all. Kept for older Fair Events Experimental releases.
 define( 'FAIR_AUDIENCE_EXPERIMENTAL_INSTAGRAM_HANDOFF', true );
 
 // Defer bootstrap to plugins_loaded so fair-audience (loaded alphabetically before

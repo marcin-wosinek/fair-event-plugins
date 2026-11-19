@@ -13,9 +13,14 @@ use FairPlatform\Database\InstagramConnectionRepository;
 use FairPlatform\API\ConnectionsController;
 use FairPlatform\API\HealthController;
 use FairPlatform\API\InstagramConnectionsController;
+use FairPlatform\API\InstagramHandoffController;
 use FairPlatform\Monitoring\OAuthErrorReporter;
 use FairPlatform\Monitoring\SafeEvent;
+use FairPlatform\OAuth\InstagramMetaClient;
+use FairPlatform\OAuth\InstagramOAuthException;
+use FairPlatform\OAuth\InstagramUnifiedLogin;
 use FairPlatform\OAuth\MollieOAuth;
+use FairPlatform\OAuth\OneTimeStore;
 
 defined( 'ABSPATH' ) || die;
 
@@ -23,6 +28,11 @@ defined( 'ABSPATH' ) || die;
  * Main plugin class
  */
 class Plugin {
+	/**
+	 * Store of Instagram authorization attempts, keyed by their state.
+	 */
+	const INSTAGRAM_STATE_STORE = 'ig_state';
+
 	/**
 	 * Singleton instance
 	 *
@@ -76,7 +86,7 @@ class Plugin {
 		}
 
 		// Check for Instagram credentials (non-blocking - Instagram is additive).
-		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
+		if ( null === InstagramUnifiedLogin::config() ) {
 			add_action( 'admin_notices', array( $this, 'missing_instagram_credentials_notice' ) );
 		}
 	}
@@ -185,6 +195,9 @@ class Plugin {
 
 		$instagram_connections_controller = new InstagramConnectionsController();
 		$instagram_connections_controller->register_routes();
+
+		$instagram_handoff_controller = new InstagramHandoffController();
+		$instagram_handoff_controller->register_routes();
 
 		$health_controller = new HealthController();
 		$health_controller->register_routes();
@@ -1188,382 +1201,154 @@ class Plugin {
 	}
 
 	/**
-	 * Handle /oauth/instagram/authorize endpoint
+	 * Handle /oauth/instagram/authorize: check the site's request, store the
+	 * attempt under a single-use state, and open Meta's login dialog.
+	 *
+	 * Nothing is returned to the site from here: until the request is
+	 * checked, its return destination is not trusted.
 	 *
 	 * @return void
 	 */
 	private function handle_instagram_authorize() {
-		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
-			wp_die( 'Instagram OAuth credentials not configured' );
+		$config = InstagramUnifiedLogin::config();
+		if ( null === $config ) {
+			wp_die( esc_html__( 'Instagram connections are not configured on this service yet. Try again later.', 'fair-platform' ), '', array( 'response' => 503 ) );
 		}
 
-		// Get and validate parameters.
-		$site_id    = sanitize_text_field( $_GET['site_id'] ?? '' );
-		$return_url = esc_url_raw( $_GET['return_url'] ?? '' );
-		$site_name  = sanitize_text_field( $_GET['site_name'] ?? '' );
-		$site_url   = esc_url_raw( $_GET['site_url'] ?? '' );
-
-		if ( empty( $site_id ) || empty( $return_url ) ) {
-			wp_die( 'Missing required parameters: site_id and return_url' );
+		try {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a cross-site OAuth entry point, checked in validate_authorize_request().
+			$attempt = InstagramUnifiedLogin::validate_authorize_request( wp_unslash( $_GET ) );
+		} catch ( InstagramOAuthException $e ) {
+			$this->log_instagram_connection( array(), array(), 'failed', $e->reason() );
+			wp_die(
+				InstagramUnifiedLogin::ERROR_CLIENT_OUTDATED === $e->reason()
+					? esc_html__( 'This site uses the retired Instagram connection. Update Fair Events Experimental, then connect again from Fair Events → Instagram.', 'fair-platform' )
+					: esc_html__( 'This Instagram connection request is not valid. Start again from Fair Events → Instagram on your site.', 'fair-platform' ),
+				'',
+				array( 'response' => 400 )
+			);
 		}
 
-		// Verify return URL is HTTPS (allow localhost for development).
-		$return_host  = wp_parse_url( $return_url, PHP_URL_HOST );
-		$is_localhost = in_array( $return_host, array( 'localhost', '127.0.0.1' ), true );
-		if ( ! $is_localhost && 'https' !== wp_parse_url( $return_url, PHP_URL_SCHEME ) ) {
-			wp_die( 'Return URL must use HTTPS' );
+		$state = ( new OneTimeStore( self::INSTAGRAM_STATE_STORE ) )->put( $attempt, InstagramUnifiedLogin::STATE_TTL );
+		if ( null === $state ) {
+			wp_die( esc_html__( 'The Instagram connection could not be started. Try again.', 'fair-platform' ), '', array( 'response' => 500 ) );
 		}
 
-		// Generate secure state token.
-		$state = hash( 'sha256', $site_id . bin2hex( random_bytes( 32 ) ) );
-
-		// Store state data in transient (10 minutes).
-		set_transient(
-			"instagram_oauth_{$state}",
-			array(
-				'site_id'    => $site_id,
-				'return_url' => $return_url,
-				'site_name'  => $site_name,
-				'site_url'   => $site_url,
-				'timestamp'  => time(),
-			),
-			600
-		);
-
-		// Build Instagram authorization URL.
-		$authorize_url = 'https://api.instagram.com/oauth/authorize?' . http_build_query(
-			array(
-				'client_id'     => INSTAGRAM_APP_ID,
-				'redirect_uri'  => home_url( '/oauth/instagram/callback' ),
-				'scope'         => 'instagram_business_basic,instagram_business_content_publish',
-				'response_type' => 'code',
-				'state'         => $state,
-			)
-		);
-
-		// Redirect to Instagram.
-		wp_redirect( $authorize_url );
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Meta's login dialog.
+		wp_redirect( InstagramUnifiedLogin::authorize_url( $config, home_url( '/oauth/instagram/callback' ), $state ) );
 		exit;
 	}
 
 	/**
-	 * Handle /oauth/instagram/callback endpoint
+	 * Handle /oauth/instagram/callback: consume the state first, then finish
+	 * the authorization and send the site a single-use handoff code. Every
+	 * failure goes back to the site as a fixed code, and no credentials are
+	 * stored for it.
 	 *
 	 * @return void
 	 */
 	private function handle_instagram_callback() {
-		if ( ! defined( 'INSTAGRAM_APP_ID' ) || ! defined( 'INSTAGRAM_APP_SECRET' ) ) {
-			wp_die( 'Instagram OAuth credentials not configured' );
+		// Meta's redirect; the single-use state is the CSRF check. WordPress
+		// removes `error` from $_GET while parsing the request, so the raw
+		// query string is read instead.
+		$query = array();
+		wp_parse_str( isset( $_SERVER['QUERY_STRING'] ) ? (string) wp_unslash( $_SERVER['QUERY_STRING'] ) : '', $query ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value is sanitized below.
+
+		$state        = sanitize_text_field( is_string( $query['state'] ?? null ) ? $query['state'] : '' );
+		$code         = sanitize_text_field( is_string( $query['code'] ?? null ) ? $query['code'] : '' );
+		$error        = sanitize_key( is_string( $query['error'] ?? null ) ? $query['error'] : '' );
+		$error_reason = sanitize_key( is_string( $query['error_reason'] ?? null ) ? $query['error_reason'] : '' );
+		if ( '' === $error && '' !== $error_reason ) {
+			$error = 'unknown';
 		}
 
-		// Get parameters.
-		$code  = sanitize_text_field( $_GET['code'] ?? '' );
-		$state = sanitize_text_field( $_GET['state'] ?? '' );
-		$error = sanitize_text_field( $_GET['error'] ?? '' );
-
-		// Check for authorization error.
-		if ( ! empty( $error ) ) {
-			$error_description = sanitize_text_field( $_GET['error_description'] ?? 'Unknown error' );
-
-			$this->log_instagram_connection(
-				array(),
-				array(),
-				'failed',
-				$error,
-				$error_description
-			);
-
-			$this->redirect_with_error( '', $error, $error_description );
+		$attempt = ( new OneTimeStore( self::INSTAGRAM_STATE_STORE ) )->take( $state );
+		if ( ! is_array( $attempt ) || empty( $attempt['return_url'] ) ) {
+			wp_die( esc_html__( 'This Instagram authorization expired or was already used. Start again from Fair Events → Instagram on your site.', 'fair-platform' ), '', array( 'response' => 400 ) );
 		}
 
-		if ( empty( $code ) || empty( $state ) ) {
-			wp_die( 'Missing required parameters: code and state' );
+		try {
+			list( $handoff, $account, $details ) = $this->complete_instagram_authorization( $attempt, $code, $error, $error_reason );
+		} catch ( InstagramOAuthException $e ) {
+			$this->log_instagram_connection( $attempt, array(), 'failed', $e->reason() );
+			// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the return destination checked and stored with the attempt.
+			wp_redirect( InstagramUnifiedLogin::error_redirect_url( $attempt, $e->reason() ) );
+			exit;
 		}
 
-		// Verify state token.
-		$data = get_transient( "instagram_oauth_{$state}" );
-		if ( ! $data ) {
-			wp_die( 'Invalid or expired state token' );
-		}
-
-		// Clean up state transient.
-		delete_transient( "instagram_oauth_{$state}" );
-
-		// Step 1: Exchange code for short-lived token.
-		$short_lived = $this->exchange_instagram_code( $code );
-		if ( is_wp_error( $short_lived ) ) {
-			$this->log_instagram_connection(
-				$data,
-				array(),
-				'failed',
-				'token_exchange_failed',
-				$short_lived->get_error_message()
-			);
-
-			$this->redirect_with_error(
-				$data['return_url'],
-				'token_exchange_failed',
-				$short_lived->get_error_message()
-			);
-		}
-
-		// Step 2: Exchange short-lived token for long-lived token.
-		$long_lived = $this->exchange_instagram_long_lived_token( $short_lived['access_token'] );
-		if ( is_wp_error( $long_lived ) ) {
-			$this->log_instagram_connection(
-				$data,
-				array(),
-				'failed',
-				'long_lived_token_failed',
-				$long_lived->get_error_message()
-			);
-
-			$this->redirect_with_error(
-				$data['return_url'],
-				'long_lived_token_failed',
-				$long_lived->get_error_message()
-			);
-		}
-
-		// Step 3: Get user info.
-		$user_info = $this->get_instagram_user_info( $long_lived['access_token'] );
-		if ( is_wp_error( $user_info ) ) {
-			$this->log_instagram_connection(
-				$data,
-				array(),
-				'failed',
-				'user_info_failed',
-				$user_info->get_error_message()
-			);
-
-			$this->redirect_with_error(
-				$data['return_url'],
-				'user_info_failed',
-				$user_info->get_error_message()
-			);
-		}
-
-		// Log successful connection.
 		$this->log_instagram_connection(
-			$data,
+			$attempt,
 			array(
-				'instagram_user_id'  => $user_info['user_id'],
-				'instagram_username' => $user_info['username'],
-				'scope'              => 'instagram_business_basic,instagram_business_content_publish',
+				'instagram_user_id'  => $account['id'],
+				'instagram_username' => $account['username'],
+				'scope'              => implode( ',', $details['scopes'] ),
 			),
 			'connected'
 		);
 
-		// Redirect back with token params.
-		$redirect_url = add_query_arg(
-			array(
-				'instagram_access_token' => $long_lived['access_token'],
-				'instagram_user_id'      => $user_info['user_id'],
-				'instagram_username'     => $user_info['username'],
-				'instagram_expires_in'   => $long_lived['expires_in'],
-			),
-			$data['return_url']
-		);
-
-		wp_redirect( $redirect_url );
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the return destination checked and stored with the attempt.
+		wp_redirect( InstagramUnifiedLogin::success_redirect_url( $attempt, $handoff ) );
 		exit;
 	}
 
 	/**
-	 * Exchange authorization code for short-lived Instagram token
+	 * Finish an Instagram authorization whose state was consumed: exchange
+	 * the code, check the token and the shared account, and store them
+	 * under a handoff code.
 	 *
-	 * @param string $code Authorization code from Instagram.
-	 * @return array|\WP_Error Token data or error.
+	 * @param array  $attempt      Stored attempt.
+	 * @param string $code         Authorization code, '' when none.
+	 * @param string $error        Meta `error`, '' when none.
+	 * @param string $error_reason Meta `error_reason`.
+	 * @return array{0: string, 1: array, 2: array} Handoff code, account and token details.
+	 * @throws InstagramOAuthException With the code to return to the site.
 	 */
-	private function exchange_instagram_code( $code ) {
-		$response = wp_remote_post(
-			'https://api.instagram.com/oauth/access_token',
-			array(
-				'timeout' => 30,
-				'body'    => array(
-					'client_id'     => INSTAGRAM_APP_ID,
-					'client_secret' => INSTAGRAM_APP_SECRET,
-					'grant_type'    => 'authorization_code',
-					'redirect_uri'  => home_url( '/oauth/instagram/callback' ),
-					'code'          => $code,
-				),
-			)
+	private function complete_instagram_authorization( array $attempt, $code, $error, $error_reason ) {
+		// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- fixed InstagramUnifiedLogin::ERROR_* codes, never printed.
+		if ( '' !== $error ) {
+			throw new InstagramOAuthException( InstagramUnifiedLogin::callback_error( $error, $error_reason ) );
+		}
+
+		$config = InstagramUnifiedLogin::config();
+		if ( null === $config ) {
+			throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_SERVER );
+		}
+		if ( '' === $code ) {
+			throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_AUTHORIZATION_FAILED );
+		}
+
+		$meta    = new InstagramMetaClient( $config );
+		$token   = $meta->exchange_code( $code, home_url( '/oauth/instagram/callback' ) );
+		$details = InstagramUnifiedLogin::evaluate_token( $meta->debug_token( $token ), $config['app_id'] );
+		$account = InstagramUnifiedLogin::select_account( $meta->assigned_instagram_accounts( $token ) );
+
+		$handoff = ( new OneTimeStore( InstagramHandoffController::STORE ) )->put(
+			InstagramUnifiedLogin::handoff_payload( $token, $details, $account, $attempt, $config['graph_version'] ),
+			InstagramUnifiedLogin::HANDOFF_TTL
 		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Instagram token exchange failed: ' . $response->get_error_message() );
-			return $response;
+		if ( null === $handoff ) {
+			throw new InstagramOAuthException( InstagramUnifiedLogin::ERROR_SERVER );
 		}
 
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+		// phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
-		if ( 200 !== $status_code ) {
-			$error_message = $body['error_message'] ?? $body['error'] ?? 'Unknown error';
-			error_log( "Instagram token exchange failed with status {$status_code}: {$error_message}" );
-			return new \WP_Error( 'token_exchange_failed', $error_message );
-		}
-
-		if ( empty( $body['access_token'] ) || empty( $body['user_id'] ) ) {
-			error_log( 'Instagram token exchange returned invalid data' );
-			return new \WP_Error( 'invalid_token_response', 'Invalid token response from Instagram' );
-		}
-
-		return array(
-			'access_token' => $body['access_token'],
-			'user_id'      => $body['user_id'],
-		);
+		return array( $handoff, $account, $details );
 	}
 
 	/**
-	 * Exchange short-lived token for long-lived Instagram token
-	 *
-	 * @param string $short_lived_token Short-lived access token.
-	 * @return array|\WP_Error Long-lived token data or error.
-	 */
-	private function exchange_instagram_long_lived_token( $short_lived_token ) {
-		$url = 'https://graph.instagram.com/access_token?' . http_build_query(
-			array(
-				'grant_type'    => 'ig_exchange_token',
-				'client_secret' => INSTAGRAM_APP_SECRET,
-				'access_token'  => $short_lived_token,
-			)
-		);
-
-		$response = wp_remote_get(
-			$url,
-			array( 'timeout' => 30 )
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Instagram long-lived token exchange failed: ' . $response->get_error_message() );
-			return $response;
-		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $status_code ) {
-			$error_message = $body['error']['message'] ?? 'Unknown error';
-			error_log( "Instagram long-lived token exchange failed with status {$status_code}: {$error_message}" );
-			return new \WP_Error( 'long_lived_token_failed', $error_message );
-		}
-
-		if ( empty( $body['access_token'] ) ) {
-			error_log( 'Instagram long-lived token exchange returned invalid data' );
-			return new \WP_Error( 'invalid_token_response', 'Invalid long-lived token response from Instagram' );
-		}
-
-		return array(
-			'access_token' => $body['access_token'],
-			'expires_in'   => $body['expires_in'] ?? 5184000,
-		);
-	}
-
-	/**
-	 * Get Instagram user info
-	 *
-	 * @param string $access_token Long-lived access token.
-	 * @return array|\WP_Error User info or error.
-	 */
-	private function get_instagram_user_info( $access_token ) {
-		$url = 'https://graph.instagram.com/me?' . http_build_query(
-			array(
-				'fields'       => 'user_id,username',
-				'access_token' => $access_token,
-			)
-		);
-
-		$response = wp_remote_get(
-			$url,
-			array( 'timeout' => 30 )
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Instagram user info fetch failed: ' . $response->get_error_message() );
-			return $response;
-		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $status_code ) {
-			$error_message = $body['error']['message'] ?? 'Unknown error';
-			error_log( "Instagram user info fetch failed with status {$status_code}: {$error_message}" );
-			return new \WP_Error( 'user_info_failed', $error_message );
-		}
-
-		return array(
-			'user_id'  => $body['user_id'] ?? $body['id'] ?? '',
-			'username' => $body['username'] ?? '',
-		);
-	}
-
-	/**
-	 * Handle /oauth/instagram/refresh endpoint
+	 * Handle /oauth/instagram/refresh, retired with the Instagram Login flow.
+	 * Unified Login tokens are never sent here: they do not expire, and
+	 * Instagram's refresh endpoint does not accept them.
 	 *
 	 * @return void
 	 */
 	private function handle_instagram_refresh() {
-		// Only accept POST requests.
-		if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
-			wp_send_json_error( array( 'message' => 'Method not allowed' ), 405 );
-		}
-
-		// Get access token from request body.
-		$access_token = sanitize_text_field( $_POST['access_token'] ?? '' );
-
-		if ( empty( $access_token ) ) {
-			wp_send_json_error( array( 'message' => 'Missing access_token' ), 400 );
-		}
-
-		// Instagram refresh uses GET, doesn't need client_secret.
-		$url = 'https://graph.instagram.com/refresh_access_token?' . http_build_query(
+		wp_send_json_error(
 			array(
-				'grant_type'   => 'ig_refresh_token',
-				'access_token' => $access_token,
-			)
-		);
-
-		$response = wp_remote_get(
-			$url,
-			array( 'timeout' => 30 )
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Instagram token refresh failed: ' . $response->get_error_message() );
-			wp_send_json_error(
-				array( 'message' => 'Token refresh failed: ' . $response->get_error_message() ),
-				500
-			);
-		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $status_code ) {
-			$error_message = $body['error']['message'] ?? 'Unknown error';
-			error_log( "Instagram token refresh failed with status {$status_code}: {$error_message}" );
-			wp_send_json_error(
-				array( 'message' => $error_message ),
-				$status_code
-			);
-		}
-
-		if ( empty( $body['access_token'] ) ) {
-			error_log( 'Instagram token refresh returned invalid data' );
-			wp_send_json_error(
-				array( 'message' => 'Invalid token response from Instagram' ),
-				500
-			);
-		}
-
-		// Return new access token.
-		wp_send_json_success(
-			array(
-				'access_token' => $body['access_token'],
-				'expires_in'   => $body['expires_in'] ?? 5184000,
-			)
+				'code'    => 'instagram_refresh_retired',
+				'message' => 'Instagram token renewal was retired. Update Fair Events Experimental and Fair Audience Experimental, then connect again from Fair Events → Instagram.',
+			),
+			410
 		);
 	}
 
@@ -1580,8 +1365,9 @@ class Plugin {
 	private function log_instagram_connection( $site_data, $instagram_data, $status, $error_code = null, $error_message = null ) {
 		$repository = new InstagramConnectionRepository();
 
+		$site_url = isset( $site_data['site_url'] ) ? (string) $site_data['site_url'] : '';
 		$log_data = array(
-			'site_id'            => $site_data['site_id'] ?? '',
+			'site_id'            => '' !== $site_url ? (string) wp_parse_url( $site_url, PHP_URL_HOST ) : '',
 			'site_name'          => $site_data['site_name'] ?? '',
 			'site_url'           => $site_data['site_url'] ?? '',
 			'instagram_user_id'  => $instagram_data['instagram_user_id'] ?? '',
@@ -1605,7 +1391,7 @@ class Plugin {
 			'<strong>%1$s</strong> %2$s',
 			esc_html__( 'Fair Platform:', 'fair-platform' ),
 			esc_html__(
-				'Instagram OAuth credentials not configured. Please add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to wp-config.php for Instagram integration.',
+				'Instagram connections are not configured. Add META_APP_ID, META_APP_SECRET and META_INSTAGRAM_CONFIG_ID (the Unified Login configuration ID) to wp-config.php; META_GRAPH_VERSION is optional.',
 				'fair-platform'
 			)
 		);

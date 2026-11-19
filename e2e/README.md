@@ -119,10 +119,22 @@ the one-time conversion still to run), as a `token` written through the option
 API, encrypted under another site's keys (`foreign_key`), or `delete`s it;
 `supported: false` switches encryption support off (through the filter
 registered by `fair-e2e-mollie-credentials.php`), `instagram_feature` toggles
-the experimental Instagram bundle, and `refresh_instagram: true` runs the
-daily token refresh. The plugin answers `graph.instagram.com` and the
-Instagram token refresh service, and records the token every Instagram and
-Telegram request carried (the tokens are synthetic). `GET` returns the raw
+the experimental Instagram bundle, `events_instagram_feature` Fair Events
+Experimental's, `instagram_unified: true` stores Unified Login metadata with
+the token (`false` makes it a connection from before #2427), and
+`refresh_instagram: true` fires the retired daily refresh hooks. The plugin
+answers Instagram test tokens on `graph.facebook.com` (before the WhatsApp
+double), `graph.instagram.com` and the retired refresh service, and records
+the token every Instagram and Telegram request carried (the tokens are
+synthetic).
+
+`fair-e2e-instagram-unified-login.php` makes the tests site its own Fair
+Platform OAuth service for Instagram (#2427): it defines the `META_*`
+configuration, points Fair Events Experimental at this site, dispatches the
+handoff redemption in-process, and answers Meta's code exchange,
+`debug_token` and `/me/assigned_instagram_accounts` by authorization code
+(`e2e-code-ok`, `-multiple`, `-none`, `-noperm`, `-expiring`; anything else
+fails the exchange). `GET` returns the raw
 stored values, their read status, the conversion flags and those requests.
 
 ### How a test purchase flows end to end

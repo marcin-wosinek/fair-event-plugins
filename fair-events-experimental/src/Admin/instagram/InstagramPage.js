@@ -11,7 +11,6 @@ import {
 	Modal,
 	Notice,
 	Spinner,
-	TextControl,
 } from '@wordpress/components';
 
 /**
@@ -19,20 +18,14 @@ import {
  */
 import {
 	loadConnection,
-	connect,
-	saveUserId,
+	startAuthorization,
+	completeAuthorization,
 	testConnection,
 	disconnect,
 } from './api.js';
+import { navigate } from './navigate.js';
 
-const OAUTH_PARAMS = [
-	'instagram_access_token',
-	'instagram_user_id',
-	'instagram_username',
-	'instagram_expires_in',
-	'error',
-	'error_description',
-];
+const OAUTH_PARAMS = [ 'instagram_handoff', 'instagram_error', 'state' ];
 
 const helpStyle = { color: '#50575e', marginTop: 0 };
 const rowStyle = {
@@ -43,25 +36,24 @@ const rowStyle = {
 };
 
 /**
- * Read and remove the OAuth proxy's return parameters, so the token does
- * not stay in the address bar or the browser history.
+ * Read and remove the OAuth service's return parameters, so the single-use
+ * handoff code does not stay in the address bar or the browser history.
  *
  * @return {Object|null} Return parameters, or null when this is no return.
  */
-function takeOAuthReturn() {
+export function takeOAuthReturn() {
 	const url = new URL( window.location.href );
 	const params = url.searchParams;
-	if ( ! params.has( 'instagram_access_token' ) && ! params.has( 'error' ) ) {
+	if (
+		! params.has( 'instagram_handoff' ) &&
+		! params.has( 'instagram_error' )
+	) {
 		return null;
 	}
 	const result = {
-		accessToken: params.get( 'instagram_access_token' ) || '',
-		userId: params.get( 'instagram_user_id' ) || '',
-		username: params.get( 'instagram_username' ) || '',
-		expiresIn: params.has( 'instagram_expires_in' )
-			? parseInt( params.get( 'instagram_expires_in' ), 10 ) || null
-			: null,
-		error: params.get( 'error' ) || '',
+		state: params.get( 'state' ) || '',
+		handoff: params.get( 'instagram_handoff' ) || '',
+		error: params.get( 'instagram_error' ) || '',
 	};
 	OAUTH_PARAMS.forEach( ( key ) => params.delete( key ) );
 	window.history.replaceState( {}, '', url.toString() );
@@ -77,6 +69,35 @@ function takeOAuthReturn() {
  */
 function errorMessage( error, fallback ) {
 	return error?.message || fallback;
+}
+
+/**
+ * How long the stored token works.
+ *
+ * @param {Object} connection Connection details.
+ * @return {string} Sentence.
+ */
+export function expiryText( connection ) {
+	if ( connection.token_expiry === 'never' ) {
+		return __(
+			'The access token does not expire. It stops working if the business removes the app in Meta Business Settings.',
+			'fair-events-experimental'
+		);
+	}
+	if ( connection.token_expiry === 'expires' && connection.token_expires ) {
+		return sprintf(
+			/* translators: %s: date and time */
+			__(
+				'The access token expires on %s. Connect again before then; it is not renewed automatically.',
+				'fair-events-experimental'
+			),
+			formatTime( connection.token_expires )
+		);
+	}
+	return __(
+		'The access token’s expiry is not known.',
+		'fair-events-experimental'
+	);
 }
 
 /**
@@ -175,20 +196,17 @@ export function ownershipNotice( connection ) {
 }
 
 /**
- * Fair Events → Instagram: the connected Instagram account, connecting by
- * OAuth or a manual token, the user ID, a connection test and disconnecting.
+ * Fair Events → Instagram: the connected Instagram account, connecting
+ * through Meta's Unified Login, a connection test and disconnecting.
  *
  * @return {JSX.Element} The page.
  */
 export default function InstagramPage() {
-	const data = window.fairEventsInstagramData || {};
 	const [ connection, setConnection ] = useState( null );
 	const [ loadError, setLoadError ] = useState( null );
 	const [ notice, setNotice ] = useState( null );
-	const [ manualToken, setManualToken ] = useState( '' );
-	const [ isSavingToken, setIsSavingToken ] = useState( false );
-	const [ userId, setUserId ] = useState( '' );
-	const [ isSavingUserId, setIsSavingUserId ] = useState( false );
+	const [ isStarting, setIsStarting ] = useState( false );
+	const [ startError, setStartError ] = useState( null );
 	const [ isTesting, setIsTesting ] = useState( false );
 	const [ testError, setTestError ] = useState( null );
 	const [ confirmingDisconnect, setConfirmingDisconnect ] = useState( false );
@@ -196,22 +214,28 @@ export default function InstagramPage() {
 	const [ disconnectError, setDisconnectError ] = useState( null );
 	const disconnectInFlight = useRef( false );
 
-	const apply = ( details ) => {
-		setConnection( details );
-		setUserId( details.user_id || '' );
-	};
+	const apply = ( details ) => setConnection( details );
 
 	useEffect( () => {
 		const oauth = takeOAuthReturn();
-		const initial = oauth?.accessToken
-			? connect( oauth )
+		const initial = oauth
+			? completeAuthorization( oauth )
 					.then( ( details ) => {
 						setNotice( {
 							status: 'success',
-							message: __(
-								'Connected to Instagram.',
-								'fair-events-experimental'
-							),
+							message: details.username
+								? sprintf(
+										/* translators: %s: Instagram username */
+										__(
+											'Connected to Instagram as @%s.',
+											'fair-events-experimental'
+										),
+										details.username
+									)
+								: __(
+										'Connected to Instagram.',
+										'fair-events-experimental'
+									),
 						} );
 						return details;
 					} )
@@ -221,7 +245,7 @@ export default function InstagramPage() {
 							message: errorMessage(
 								error,
 								__(
-									'The Instagram connection could not be saved. Try connecting again.',
+									'Instagram authorization failed. Nothing was changed; try connecting again.',
 									'fair-events-experimental'
 								)
 							),
@@ -229,22 +253,6 @@ export default function InstagramPage() {
 						return loadConnection();
 					} )
 			: loadConnection();
-
-		if ( oauth?.error ) {
-			setNotice( {
-				status: 'error',
-				message:
-					oauth.error === 'access_denied'
-						? __(
-								'Instagram authorization was cancelled. Nothing was changed.',
-								'fair-events-experimental'
-							)
-						: __(
-								'Instagram authorization failed. Nothing was changed; try connecting again.',
-								'fair-events-experimental'
-							),
-			} );
-		}
 
 		initial
 			.then( apply )
@@ -262,78 +270,27 @@ export default function InstagramPage() {
 	}, [] );
 
 	const handleConnect = () => {
-		const authorizeUrl = new URL( data.authorizeUrl );
-		authorizeUrl.searchParams.set(
-			'site_id',
-			window.btoa( window.location.hostname )
-		);
-		authorizeUrl.searchParams.set( 'return_url', data.pageUrl );
-		authorizeUrl.searchParams.set( 'site_name', document.title );
-		authorizeUrl.searchParams.set( 'site_url', window.location.origin );
-		window.location.assign( authorizeUrl.toString() );
-	};
-
-	const handleSaveToken = () => {
-		if ( isSavingToken || ! manualToken.trim() ) {
+		if ( isStarting ) {
 			return;
 		}
-		setIsSavingToken( true );
-		connect( { accessToken: manualToken.trim() } )
-			.then( ( details ) => {
-				apply( details );
-				setManualToken( '' );
-				setNotice( {
-					status: 'success',
-					message: __(
-						'Access token saved. Test the connection to load the account details.',
-						'fair-events-experimental'
-					),
-				} );
+		setIsStarting( true );
+		setStartError( null );
+		startAuthorization()
+			.then( ( result ) => {
+				navigate( result.authorize_url );
 			} )
-			.catch( ( error ) =>
-				setNotice( {
-					status: 'error',
-					message: errorMessage(
+			.catch( ( error ) => {
+				setIsStarting( false );
+				setStartError(
+					errorMessage(
 						error,
 						__(
-							'The access token could not be saved. Try again.',
+							'The Instagram connection could not be started. Try again.',
 							'fair-events-experimental'
 						)
-					),
-				} )
-			)
-			.finally( () => setIsSavingToken( false ) );
-	};
-
-	const handleSaveUserId = () => {
-		if ( isSavingUserId ) {
-			return;
-		}
-		setIsSavingUserId( true );
-		saveUserId( userId.trim() )
-			.then( ( details ) => {
-				apply( details );
-				setNotice( {
-					status: 'success',
-					message: __(
-						'Instagram user ID saved.',
-						'fair-events-experimental'
-					),
-				} );
-			} )
-			.catch( ( error ) =>
-				setNotice( {
-					status: 'error',
-					message: errorMessage(
-						error,
-						__(
-							'The user ID could not be saved. Try again.',
-							'fair-events-experimental'
-						)
-					),
-				} )
-			)
-			.finally( () => setIsSavingUserId( false ) );
+					)
+				);
+			} );
 	};
 
 	const handleTest = () => {
@@ -466,7 +423,9 @@ export default function InstagramPage() {
 	}
 
 	const status = connection.credential_status;
-	const needsReconnect = connection.connected && status === 'unrecoverable';
+	const needsReconnect =
+		connection.connected &&
+		[ 'unrecoverable', 'reconnect_required', 'expired' ].includes( status );
 	const isPaused =
 		connection.connected && status === 'encryption_unavailable';
 	const showConnectForm = ! connection.connected || needsReconnect;
@@ -480,16 +439,16 @@ export default function InstagramPage() {
 		);
 	} else if ( connection.user_id ) {
 		accountName = sprintf(
-			/* translators: %s: Instagram user ID */
+			/* translators: %s: Instagram account ID */
 			__(
-				'Disconnect the Instagram account with user ID %s from this site?',
+				'Disconnect the Instagram account with ID %s from this site?',
 				'fair-events-experimental'
 			),
 			connection.user_id
 		);
 	} else {
 		accountName = __(
-			'Disconnect the Instagram account connected to this site? Its username and user ID are not known.',
+			'Disconnect the Instagram account connected to this site? Its username and ID are not known.',
 			'fair-events-experimental'
 		);
 	}
@@ -533,66 +492,27 @@ export default function InstagramPage() {
 						) }
 						<p style={ helpStyle }>
 							{ __(
-								'Connect with Instagram to sign in and authorize this site. This needs the Fair Event Plugins OAuth service.',
+								'Connect with Instagram to sign in with Facebook, choose the business, and share the one Instagram professional account this site publishes to. This uses the Fair Event Plugins OAuth service.',
 								'fair-events-experimental'
 							) }
 						</p>
+						{ startError && (
+							<Notice status="error" isDismissible={ false }>
+								{ startError }
+							</Notice>
+						) }
 						<div style={ rowStyle }>
-							<Button variant="primary" onClick={ handleConnect }>
+							<Button
+								variant="primary"
+								onClick={ handleConnect }
+								isBusy={ isStarting }
+								disabled={ isStarting }
+							>
 								{ __(
 									'Connect with Instagram',
 									'fair-events-experimental'
 								) }
 							</Button>
-						</div>
-
-						<h3>
-							{ __(
-								'Or enter an access token',
-								'fair-events-experimental'
-							) }
-						</h3>
-						<p style={ helpStyle }>
-							{ __(
-								'An Instagram API access token from the Meta Developer Portal, with permission to publish content.',
-								'fair-events-experimental'
-							) }
-						</p>
-						<TextControl
-							__next40pxDefaultSize
-							__nextHasNoMarginBottom
-							type="password"
-							autoComplete="off"
-							label={ __(
-								'Access token',
-								'fair-events-experimental'
-							) }
-							value={ manualToken }
-							onChange={ setManualToken }
-							disabled={ isSavingToken }
-						/>
-						<div style={ { ...rowStyle, marginTop: '8px' } }>
-							<Button
-								variant="secondary"
-								onClick={ handleSaveToken }
-								disabled={
-									isSavingToken || ! manualToken.trim()
-								}
-								isBusy={ isSavingToken }
-							>
-								{ __(
-									'Save access token',
-									'fair-events-experimental'
-								) }
-							</Button>
-							{ ! manualToken.trim() && (
-								<span style={ helpStyle }>
-									{ __(
-										'Enter a token to save it.',
-										'fair-events-experimental'
-									) }
-								</span>
-							) }
 						</div>
 						{ needsReconnect && (
 							<>
@@ -603,7 +523,7 @@ export default function InstagramPage() {
 									} }
 								>
 									{ __(
-										'Or disconnect to remove the unreadable token from this site.',
+										'Or disconnect to remove the stored token from this site.',
 										'fair-events-experimental'
 									) }
 								</p>
@@ -648,23 +568,19 @@ export default function InstagramPage() {
 											) }
 								</Notice>
 							) }
-							<p>
-								{ connection.token_expires
-									? sprintf(
-											/* translators: %s: date and time */
-											__(
-												'The access token expires on %s. It is renewed automatically during its last week.',
-												'fair-events-experimental'
-											),
-											formatTime(
-												connection.token_expires
-											)
-										)
-									: __(
-											'The access token’s expiry is not known yet. It is renewed automatically.',
+							{ connection.user_id && (
+								<p>
+									{ sprintf(
+										/* translators: %s: Instagram account ID */
+										__(
+											'Instagram account ID: %s',
 											'fair-events-experimental'
-										) }
-							</p>
+										),
+										connection.user_id
+									) }
+								</p>
+							) }
+							<p>{ expiryText( connection ) }</p>
 							{ ! connection.credentials_encrypted && (
 								<p style={ helpStyle }>
 									{ __(
@@ -673,39 +589,6 @@ export default function InstagramPage() {
 									) }
 								</p>
 							) }
-							<TextControl
-								__next40pxDefaultSize
-								__nextHasNoMarginBottom
-								label={ __(
-									'Instagram user ID',
-									'fair-events-experimental'
-								) }
-								help={ __(
-									'The numeric ID of the account, needed to publish. Testing the connection fills it in.',
-									'fair-events-experimental'
-								) }
-								inputMode="numeric"
-								value={ userId }
-								onChange={ setUserId }
-								disabled={ isSavingUserId }
-							/>
-							<div style={ { ...rowStyle, marginTop: '8px' } }>
-								<Button
-									variant="secondary"
-									onClick={ handleSaveUserId }
-									disabled={
-										isSavingUserId ||
-										userId.trim() ===
-											( connection.user_id || '' )
-									}
-									isBusy={ isSavingUserId }
-								>
-									{ __(
-										'Save user ID',
-										'fair-events-experimental'
-									) }
-								</Button>
-							</div>
 						</CardBody>
 					</Card>
 
@@ -721,7 +604,7 @@ export default function InstagramPage() {
 						<CardBody>
 							<p style={ helpStyle }>
 								{ __(
-									'Asks Instagram which account the token belongs to. Nothing is published.',
+									'Asks Meta whether the connected account can still be reached with the stored token. Nothing is published.',
 									'fair-events-experimental'
 								) }
 							</p>
@@ -732,7 +615,7 @@ export default function InstagramPage() {
 										<details>
 											<summary>
 												{ __(
-													'Details from Instagram',
+													'Details from Meta',
 													'fair-events-experimental'
 												) }
 											</summary>
@@ -783,7 +666,7 @@ export default function InstagramPage() {
 						<CardBody>
 							<p style={ helpStyle }>
 								{ __(
-									'Removes the access token and account details from this site.',
+									'Removes the access token and account details from this site. To also revoke the app’s access in Meta, remove it under Meta Business Settings → Integrations → Connected apps.',
 									'fair-events-experimental'
 								) }
 							</p>
