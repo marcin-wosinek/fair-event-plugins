@@ -15,10 +15,9 @@ defined( 'WPINC' ) || die;
  * Decides whether this plugin owns the Instagram connection on this request.
  *
  * The connection used to belong to Fair Audience (encrypted token storage and
- * the settings tab) and Fair Audience Experimental (connection test and the
- * daily token refresh). The stored options keep their names, so moving
+ * the settings tab). The stored options keep their names, so moving
  * ownership needs no credential re-entry. Exactly one plugin protects the
- * token and exactly one refreshes it:
+ * token. Nothing renews it: Unified Login tokens do not expire (#2427).
  *
  * - Updated releases of the former owners define a handoff constant when
  *   their main file loads.
@@ -48,12 +47,6 @@ class Ownership {
 	 */
 	const AUDIENCE_ACTIVE  = 'FAIR_AUDIENCE_VERSION';
 	const AUDIENCE_HANDOFF = 'FAIR_AUDIENCE_INSTAGRAM_HANDOFF';
-
-	/**
-	 * Fair Audience Experimental: the same pair, for the token refresh.
-	 */
-	const AUDIENCE_EXPERIMENTAL_ACTIVE  = 'FAIR_AUDIENCE_EXPERIMENTAL_VERSION';
-	const AUDIENCE_EXPERIMENTAL_HANDOFF = 'FAIR_AUDIENCE_EXPERIMENTAL_INSTAGRAM_HANDOFF';
 
 	/**
 	 * Why this plugin does or does not own the connection on this request;
@@ -125,39 +118,6 @@ class Ownership {
 	 */
 	public static function owns() {
 		return defined( self::OWNER_CONSTANT );
-	}
-
-	/**
-	 * Whether the token refresh of a Fair Audience Experimental release
-	 * older than the handoff still runs, given its state.
-	 *
-	 * @param bool $active           Whether Fair Audience Experimental is active.
-	 * @param bool $hands_off        Whether it hands the refresh over.
-	 * @param bool $instagram_on     Whether its own `instagram` feature is on.
-	 * @return bool
-	 */
-	public static function legacy_refresh_runs( $active, $hands_off, $instagram_on ) {
-		return $active && ! $hands_off && $instagram_on;
-	}
-
-	/**
-	 * Whether this plugin refreshes the token on this request: it owns the
-	 * connection and no older Fair Audience Experimental refreshes it too.
-	 *
-	 * @return bool
-	 */
-	public static function refreshes() {
-		if ( ! self::owns() ) {
-			return false;
-		}
-
-		$features = '\FairAudienceExperimental\Core\Features';
-
-		return ! self::legacy_refresh_runs(
-			defined( self::AUDIENCE_EXPERIMENTAL_ACTIVE ),
-			defined( self::AUDIENCE_EXPERIMENTAL_HANDOFF ),
-			class_exists( $features ) && $features::is_enabled( 'instagram' )
-		);
 	}
 
 	/**

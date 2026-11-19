@@ -44,6 +44,7 @@ describe( 'loadInstagramSettings', () => {
 			connected: true,
 			credentialStatus: 'unrecoverable',
 			credentialMessage: 'Instagram needs to be reconnected.',
+			reconnectRequired: false,
 			username: 'fair_demo_studio',
 			userId: '17840000000000000',
 			tokenExpires: null,

@@ -5,8 +5,9 @@
  *              encryption specs (#1319), loaded ONLY inside the Playwright
  *              wp-env instance. Seeds the stored tokens raw (plaintext, or
  *              encrypted under another site's keys), reads them back raw,
- *              and stands in for the Instagram APIs, recording the token
- *              each request carried.
+ *              seeds Unified Login connection metadata (#2427), and stands
+ *              in for the Instagram APIs, recording the token each request
+ *              carried.
  *
  * @package FairEventsE2E
  */
@@ -68,25 +69,62 @@ add_filter(
 	3
 );
 
-// Stand in for graph.instagram.com and the Instagram token refresh service.
+// Stand in for the Instagram API with Unified Login (graph.facebook.com,
+// #2427), the retired Instagram Login host, and the retired token refresh
+// service. fair-e2e-instagram-unified-login.php answers the OAuth calls first.
 add_filter(
 	'pre_http_request',
 	static function ( $preempt, $args, $url ) {
+		if ( false !== $preempt ) {
+			return $preempt;
+		}
+
 		$is_refresh = 0 === strpos( $url, 'https://fair-event-plugins.com/oauth/instagram/refresh' );
-		if ( ! $is_refresh && 0 !== strpos( $url, 'https://graph.instagram.com/' ) ) {
+		$is_graph   = 0 === strpos( $url, 'https://graph.facebook.com/' );
+		if ( ! $is_refresh && ! $is_graph && 0 !== strpos( $url, 'https://graph.instagram.com/' ) ) {
 			return $preempt;
 		}
 
 		$query = array();
 		wp_parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
-		$token = isset( $args['body']['access_token'] ) ? $args['body']['access_token'] : ( $query['access_token'] ?? '' );
-		fair_e2e_record_credential_request( $is_refresh ? 'instagram_refresh' : 'instagram', (string) $token );
+		$header = (string) ( $args['headers']['Authorization'] ?? '' );
+		if ( 0 === strpos( $header, 'Bearer ' ) ) {
+			$token = substr( $header, 7 );
+		} else {
+			$token = isset( $args['body']['access_token'] ) ? $args['body']['access_token'] : ( $query['access_token'] ?? '' );
+		}
+		// graph.facebook.com also serves WhatsApp and the Conversions API:
+		// claim only the Instagram test tokens.
+		if ( $is_graph && ! preg_match( '/^(instagram_e2e|e2e-ig-)/', (string) $token ) ) {
+			return $preempt;
+		}
+
+		fair_e2e_record_credential_request( $is_refresh ? 'instagram_refresh' : ( $is_graph ? 'instagram_graph' : 'instagram' ), (string) $token );
 
 		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
 
+		// The platform retired token renewal (#2427).
+		if ( $is_refresh ) {
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode(
+					array(
+						'success' => false,
+						'data'    => array( 'code' => 'instagram_refresh_retired' ),
+					)
+				),
+				'response' => array(
+					'code'    => 410,
+					'message' => 'Gone',
+				),
+				'cookies'  => array(),
+				'filename' => null,
+			);
+		}
+
 		// A revoked token (#2076): Instagram's error, echoing the token the
 		// way its messages can, so specs check it is redacted.
-		if ( ! $is_refresh && 0 === strpos( (string) $token, 'e2e-ig-revoked' ) ) {
+		if ( 0 === strpos( (string) $token, 'e2e-ig-revoked' ) ) {
 			return array(
 				'headers'  => array(),
 				'body'     => wp_json_encode(
@@ -107,14 +145,11 @@ add_filter(
 			);
 		}
 
-		if ( $is_refresh ) {
-			$count = count( get_option( 'fair_e2e_credential_requests', array() ) );
-			$body  = array(
-				'success' => true,
-				'data'    => array(
-					'access_token' => 'instagram_e2e_refreshed_' . $count,
-					'expires_in'   => 5184000,
-				),
+		if ( $is_graph && isset( $query['fields'] ) && 'id,username' === $query['fields'] && preg_match( '#^/v\d+\.\d+/(\d+)$#', $path, $account ) ) {
+			// The connection test reads the connected account.
+			$body = array(
+				'id'       => $account[1],
+				'username' => 'e2e_demo_account',
 			);
 		} elseif ( '/me' === $path ) {
 			$body = array(
@@ -142,7 +177,8 @@ add_filter(
 			'filename' => null,
 		);
 	},
-	10,
+	// Before lib/whatsapp-http-double.php, which answers every Bearer request.
+	9,
 	3
 );
 
@@ -219,6 +255,15 @@ add_action(
 							update_option( 'fair_audience_experimental_features', $features );
 						}
 
+						// Fair Events Experimental's Instagram feature: on, it
+						// takes the connection over from Fair Audience.
+						if ( null !== $request->get_param( 'events_instagram_feature' ) ) {
+							$features              = get_option( 'fair_events_experimental_features', array() );
+							$features              = is_array( $features ) ? $features : array();
+							$features['instagram'] = (bool) $request->get_param( 'events_instagram_feature' );
+							update_option( 'fair_events_experimental_features', $features );
+						}
+
 						foreach ( fair_e2e_protected_credentials() as $key => $credential ) {
 							$seed = $request->get_param( $key );
 							if ( ! is_array( $seed ) ) {
@@ -251,6 +296,28 @@ add_action(
 							}
 						}
 
+						// The metadata of a Unified Login connection (#2427),
+						// as Fair Events Experimental stores it, or none for
+						// a connection from before.
+						$unified = $request->get_param( 'instagram_unified' );
+						if ( true === $unified ) {
+							update_option( 'fair_audience_instagram_user_id', '17840000000000001' );
+							update_option( 'fair_audience_instagram_username', 'e2e_demo_account' );
+							update_option( 'fair_audience_instagram_token_type', 'system_user' );
+							update_option( 'fair_audience_instagram_scopes', array( 'instagram_basic', 'instagram_content_publish' ) );
+							update_option( 'fair_audience_instagram_graph_version', 'v27.0' );
+							update_option( 'fair_audience_instagram_token_expiry', 'never' );
+							update_option( 'fair_audience_instagram_token_expires', 4102444800 );
+							update_option( 'fair_audience_instagram_connected', true );
+							update_option( 'fair_audience_instagram_connection_format', 'unified_login' );
+						} elseif ( false === $unified ) {
+							foreach ( array( 'fair_audience_instagram_connection_format', 'fair_audience_instagram_token_type', 'fair_audience_instagram_scopes', 'fair_audience_instagram_graph_version', 'fair_audience_instagram_token_expiry' ) as $option ) {
+								delete_option( $option );
+							}
+							update_option( 'fair_audience_instagram_user_id', '17840000000000001' );
+							update_option( 'fair_audience_instagram_connected', true );
+						}
+
 						if ( null !== $request->get_param( 'instagram_expires' ) ) {
 							update_option( 'fair_audience_instagram_token_expires', (int) $request->get_param( 'instagram_expires' ) );
 						}
@@ -259,9 +326,11 @@ add_action(
 							delete_option( 'fair_e2e_credential_requests' );
 						}
 
-						// Run the daily Instagram token refresh now.
+						// Run the retired daily Instagram token refreshes now:
+						// nothing is hooked to them any more (#2427).
 						if ( $request->get_param( 'refresh_instagram' ) ) {
-							\FairAudienceExperimental\Core\Plugin::instance()->refresh_instagram_token();
+							do_action( 'fair_audience_refresh_instagram_token' );
+							do_action( 'fair_events_experimental_instagram_token_refresh' );
 						}
 
 						$response = array();

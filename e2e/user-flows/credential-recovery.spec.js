@@ -36,15 +36,12 @@ const stored = async (request) => {
 	return res.json();
 };
 
-// A connected Instagram account, as the settings screen saves it.
+// A Unified Login connection held by Fair Audience (#2427): the settings
+// screen no longer saves one.
 const connectInstagram = (request) =>
-	request.post(SETTINGS, {
-		headers: adminHeaders,
-		data: {
-			fair_audience_instagram_user_id: '17840000000000001',
-			fair_audience_instagram_username: 'e2e_demo_account',
-			fair_audience_instagram_connected: true,
-		},
+	control(request, {
+		events_instagram_feature: false,
+		instagram_unified: true,
 	});
 
 test.describe('Recovering unreadable credentials', () => {
@@ -79,12 +76,12 @@ test.describe('Recovering unreadable credentials', () => {
 		});
 	});
 
-	test('Instagram asks for reconnection and accepts a new access token', async ({
+	test('Instagram asks for reconnection in Fair Events and keeps the unreadable token', async ({
 		page,
 		request,
 	}) => {
 		await connectInstagram(request);
-		await control(request, {
+		const { instagram: envelope } = await control(request, {
 			instagram: { foreign_key: 'instagram_e2e_foreign' },
 		});
 
@@ -97,22 +94,14 @@ test.describe('Recovering unreadable credentials', () => {
 		);
 		await expect(page.getByText('Connected to Instagram')).toHaveCount(0);
 		await expect(
-			page.getByRole('button', { name: 'Connect with Instagram' })
+			page.getByText(/Instagram is connected in Fair Events → Instagram/)
 		).toBeVisible();
-
-		await page.getByLabel('Access Token').fill('instagram_e2e_reentered');
-		await page.getByRole('button', { name: 'Save Token' }).click();
-
+		await expect(page.getByLabel('Access Token')).toHaveCount(0);
 		await expect(
-			page.locator('.components-notice.is-success', {
-				hasText: 'Connected to Instagram',
-			})
+			page.getByRole('button', { name: 'Disconnect' })
 		).toBeVisible();
-		await expect(notice).toHaveCount(0);
 
-		const after = await stored(request);
-		expect(after.instagram).toMatch(ENVELOPE);
-		expect(after.instagram_decrypted).toBe('instagram_e2e_reentered');
+		expect((await stored(request)).instagram).toBe(envelope);
 	});
 
 	test('Instagram explains a temporary encryption outage', async ({
@@ -133,10 +122,10 @@ test.describe('Recovering unreadable credentials', () => {
 		).toContainText(
 			'Instagram is paused: the access token is stored encrypted'
 		);
-		await expect(page.getByText('@e2e_demo_account')).toBeVisible();
 		await expect(
-			page.getByRole('button', { name: 'Save Token' })
-		).toHaveCount(0);
+			page.getByText('Stored account: @e2e_demo_account')
+		).toBeVisible();
+		await expect(page.getByLabel('Access Token')).toHaveCount(0);
 	});
 
 	test('Telegram keeps an unreadable token through unrelated saves and accepts it re-entered', async ({

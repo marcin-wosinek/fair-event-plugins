@@ -108,3 +108,27 @@ if ( ! function_exists( 'set_transient' ) ) {
 		return true;
 	}
 }
+
+if ( ! function_exists( 'wp_json_encode' ) ) {
+	/**
+	 * Stub of WordPress wp_json_encode().
+	 *
+	 * @param mixed $value Value.
+	 * @return string|false
+	 */
+	function wp_json_encode( $value ) {
+		return json_encode( $value );
+	}
+}
+
+if ( ! function_exists( 'wp_salt' ) ) {
+	/**
+	 * Stub of WordPress wp_salt(): fixed per $GLOBALS['_fair_test_salt'].
+	 *
+	 * @param string $scheme Salt scheme.
+	 * @return string
+	 */
+	function wp_salt( $scheme = 'auth' ) {
+		return 'test-salt-' . $scheme . '-' . ( $GLOBALS['_fair_test_salt'] ?? 'one' );
+	}
+}

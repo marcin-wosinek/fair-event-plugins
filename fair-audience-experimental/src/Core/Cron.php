@@ -25,7 +25,8 @@ class Cron {
 	public const CODE_LENGTH = 40;
 
 	/**
-	 * Daily Instagram access-token refresh.
+	 * Daily Instagram access-token refresh of earlier releases, retired with
+	 * Instagram Login (#2427): Unified Login tokens do not expire.
 	 */
 	public const INSTAGRAM_TOKEN_HOOK = 'fair_audience_refresh_instagram_token';
 
@@ -34,8 +35,13 @@ class Cron {
 	 */
 	public const BUNDLE_HOOKS = array(
 		'messaging' => array( ScheduledMessageHooks::CRON_HOOK ),
-		'instagram' => array( InstagramCleanupHooks::CRON_HOOK, self::INSTAGRAM_TOKEN_HOOK ),
+		'instagram' => array( InstagramCleanupHooks::CRON_HOOK ),
 	);
+
+	/**
+	 * Events of earlier releases, removed on every reconcile.
+	 */
+	public const RETIRED_HOOKS = array( self::INSTAGRAM_TOKEN_HOOK );
 
 	/**
 	 * Reconcile on `init`, after translations, so the five-minute interval
@@ -53,6 +59,7 @@ class Cron {
 	 * @return bool Whether every enabled bundle's events are scheduled.
 	 */
 	public static function reconcile() {
+		self::unschedule( self::RETIRED_HOOKS );
 		$scheduled = true;
 		foreach ( self::BUNDLE_HOOKS as $bundle => $hooks ) {
 			if ( ! Features::is_enabled( $bundle ) ) {
@@ -112,6 +119,7 @@ class Cron {
 		foreach ( self::BUNDLE_HOOKS as $hooks ) {
 			self::unschedule( $hooks );
 		}
+		self::unschedule( self::RETIRED_HOOKS );
 	}
 
 	/**
@@ -127,11 +135,6 @@ class Cron {
 			case InstagramCleanupHooks::CRON_HOOK:
 				return array( 'hourly', time() + HOUR_IN_SECONDS );
 			default:
-				// Restoring the event (reactivation, bundle switched back on)
-				// must not refresh the token on the spot: a token without a
-				// known expiry would be swapped during that request. The
-				// refresh only acts within 7 days of expiry, so a day's
-				// delay is safe.
 				return array( 'daily', time() + DAY_IN_SECONDS );
 		}
 	}

@@ -330,10 +330,6 @@ class Plugin {
 		if ( Features::is_enabled( 'fees' ) ) {
 			add_action( 'template_redirect', array( $this, 'handle_fee_payment' ) );
 		}
-
-		if ( Features::is_enabled( 'instagram' ) ) {
-			add_action( Cron::INSTAGRAM_TOKEN_HOOK, array( $this, 'refresh_instagram_token' ) );
-		}
 	}
 
 	/**
@@ -366,82 +362,6 @@ class Plugin {
 
 		include FAIR_AUDIENCE_EXPERIMENTAL_PLUGIN_DIR . 'templates/fee-payment.php';
 		exit;
-	}
-
-	/**
-	 * Refresh Instagram access token via fair-platform OAuth endpoint.
-	 *
-	 * @return void
-	 */
-	public function refresh_instagram_token() {
-		// Fair Events Experimental refreshes the token while it owns the
-		// connection.
-		if ( \FairAudienceExperimental\Services\InstagramConnection::managed_by_events() ) {
-			return;
-		}
-
-		$credentials = \FairAudience\Settings\InstagramCredentials::class;
-
-		// An unreadable stored token stays in place; the settings screen
-		// explains how to recover it.
-		if ( class_exists( $credentials ) && ! $credentials::is_available() ) {
-			error_log( 'Fair Audience Experimental: Instagram token refresh skipped: the stored access token cannot be read.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			return;
-		}
-
-		$access_token = get_option( 'fair_audience_instagram_access_token', '' );
-		$expires      = (int) get_option( 'fair_audience_instagram_token_expires', 0 );
-
-		// Skip if no token configured.
-		if ( empty( $access_token ) ) {
-			return;
-		}
-
-		// Skip if token expiry is more than 7 days away.
-		if ( $expires > 0 && ( $expires - time() ) > 7 * DAY_IN_SECONDS ) {
-			return;
-		}
-
-		$response = wp_remote_post(
-			'https://fair-event-plugins.com/oauth/instagram/refresh',
-			array(
-				'timeout' => 30,
-				'body'    => array(
-					'access_token' => $access_token,
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Fair Audience Experimental: Instagram token refresh failed: ' . $response->get_error_message() );
-			return;
-		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $status_code || empty( $body['success'] ) ) {
-			$error_message = $body['data']['message'] ?? 'Unknown error';
-			error_log( "Fair Audience Experimental: Instagram token refresh failed with status {$status_code}: {$error_message}" );
-			return;
-		}
-
-		$new_token  = $body['data']['access_token'] ?? '';
-		$expires_in = $body['data']['expires_in'] ?? 5184000;
-
-		if ( ! empty( $new_token ) ) {
-			update_option( 'fair_audience_instagram_access_token', $new_token );
-
-			// The previous token was kept: leave its expiry as it was, so the
-			// refresh is tried again.
-			if ( class_exists( $credentials ) && $credentials::last_write_failed() ) {
-				error_log( 'Fair Audience Experimental: Instagram token refresh could not store the new token encrypted; the previous token was kept.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				return;
-			}
-
-			update_option( 'fair_audience_instagram_token_expires', time() + $expires_in );
-			error_log( 'Fair Audience Experimental: Instagram token refreshed successfully.' );
-		}
 	}
 
 	/**

@@ -1038,6 +1038,63 @@ as before.
 is safe to repeat, and it finishes what is left. **Recovery** is restoring
 the backup of the listed tables and options; nothing else was changed.
 
+## Upgrade notes: Instagram Unified Login (#2427)
+
+Fair Platform switches every site to Meta's Instagram API with Unified Login
+at once. It no longer starts the Instagram Login flow and no longer renews
+tokens, so older client releases cannot connect, and their stored Instagram
+Login tokens stop being renewed. Every site must reconnect, by design: there
+is no compatibility path for the old tokens.
+
+fair-event-plugins.com deploys automatically on release
+(`AUTO_DEPLOY_ON_RELEASE=true`), so the platform changes as soon as the
+release is published. Client sites deploy on manual dispatch, after it.
+
+**Before publishing the release:**
+
+1. Set up the Meta app's Unified Login configuration and add `META_APP_ID`,
+   `META_APP_SECRET` and `META_INSTAGRAM_CONFIG_ID` (optionally
+   `META_GRAPH_VERSION`) to fair-event-plugins.com's `wp-config.php`; see
+   [fair-platform/README.md § Instagram connections](./fair-platform/README.md#instagram-connections-meta-unified-login).
+   Without them, Connect with Instagram stops with "not configured" (503),
+   and Fair Platform shows an admin notice. `INSTAGRAM_APP_ID` and
+   `INSTAGRAM_APP_SECRET` can be removed afterwards.
+2. In development mode, give each administrator who will connect a role on
+   the Meta app. Connecting businesses outside the app's roles needs Advanced
+   Access (App Review and Business Verification) with the app in Live mode.
+
+**After the platform deploys,** for each client site that publishes to
+Instagram:
+
+1. Deploy the release's Fair Events Experimental, Fair Audience and Fair
+   Audience Experimental together. Until then, that site's Connect with
+   Instagram ends on an "update" page, and its old renewal gets `410 Gone`.
+2. Turn on Instagram in Fair Events → Settings → Experimental if it is off.
+3. In Fair Events → Instagram, **Connect with Instagram**, choose the
+   business and share exactly one Instagram professional account.
+4. **Test connection**, then publish a test post from Fair Audience →
+   Instagram Posts.
+
+Until a site reconnects, its stored connection stays encrypted and untouched,
+but connection tests and publishing are refused with a reconnect message.
+Published posts and post records are kept.
+
+**Recovery:**
+
+- "More than one Instagram account was shared": the business shared, or Meta
+  remembered, several accounts. Remove the app under Meta Business Settings →
+  Integrations → Connected apps, then connect again sharing one account.
+- "Meta refused the access token": the business removed the app or the token
+  was revoked. Connect again.
+- To revoke a site's access at Meta, remove the app in the business's
+  Connected apps. Disconnect on the site only removes its local copy.
+
+**To roll back** the platform, redeploy the previous Fair Platform. Updated
+client sites then cannot connect (the previous platform does not speak the
+new protocol), and the previous Instagram Login flow fails with "Invalid
+platform app" for apps that only offer Unified Login, which is why this
+change was made.
+
 ## Publishing to WordPress.org SVN
 
 The `.github/workflows/publish-to-svn.yml` workflow publishes a tagged release of a plugin to its [WordPress.org SVN repository](https://plugins.svn.wordpress.org/). It replaces the previous laptop-only flow that ran `npm run svn:checkout` / `svn:tag:*` / `svn:copy` by hand.

@@ -7,6 +7,7 @@
 
 namespace FairEventsExperimental\API;
 
+use FairEventsExperimental\Instagram\Authorization;
 use FairEventsExperimental\Instagram\Connection;
 use FairEventsExperimental\Instagram\Ownership;
 use WP_Error;
@@ -17,8 +18,9 @@ use WP_REST_Server;
 defined( 'WPINC' ) || die;
 
 /**
- * Connection status, connecting (manual token or OAuth return), the user ID,
- * a connection test and disconnecting, for Fair Events → Instagram.
+ * Connection status, connecting through Meta's Unified Login (start, then
+ * complete from the OAuth service's return), a connection test and
+ * disconnecting, for Fair Events → Instagram.
  *
  * Registered while the `instagram` feature is on. Changes are refused while
  * this plugin does not own the connection; `ownership_reason` says why (see
@@ -46,15 +48,6 @@ class InstagramConnectionController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes() {
-		$user_id_arg = array(
-			'type'              => 'string',
-			'default'           => '',
-			'validate_callback' => array( $this, 'validate_user_id' ),
-			'sanitize_callback' => static function ( $value ) {
-				return trim( (string) $value );
-			},
-		);
-
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -63,35 +56,6 @@ class InstagramConnectionController extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
-					'args'                => array(
-						'access_token' => array(
-							'type'              => 'string',
-							'required'          => true,
-							'validate_callback' => array( $this, 'validate_token' ),
-							'sanitize_callback' => static function ( $value ) {
-								return trim( (string) $value );
-							},
-						),
-						'user_id'      => $user_id_arg,
-						'username'     => array(
-							'type'              => 'string',
-							'default'           => '',
-							'sanitize_callback' => static function ( $value ) {
-								return ltrim( sanitize_text_field( (string) $value ), '@' );
-							},
-						),
-						'expires_in'   => array(
-							'type'              => array( 'integer', 'null' ),
-							'default'           => null,
-							'minimum'           => 0,
-							'validate_callback' => 'rest_validate_request_arg',
-						),
-					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -103,13 +67,39 @@ class InstagramConnectionController extends WP_REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/user-id',
+			'/' . $this->rest_base . '/authorize',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_user_id' ),
+				'callback'            => array( $this, 'start_authorization' ),
+				'permission_callback' => array( $this, 'permissions_check' ),
+			)
+		);
+
+		$code_arg = static function ( $max ) {
+			return array(
+				'type'              => 'string',
+				'default'           => '',
+				'validate_callback' => static function ( $value ) use ( $max ) {
+					return is_string( $value ) && strlen( $value ) <= $max && (bool) preg_match( '/^[A-Za-z0-9_-]*$/', $value );
+				},
+			);
+		};
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/complete',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'complete_authorization' ),
 				'permission_callback' => array( $this, 'permissions_check' ),
 				'args'                => array(
-					'user_id' => array_merge( $user_id_arg, array( 'required' => true ) ),
+					'state'   => array_merge( $code_arg( 128 ), array( 'required' => true ) ),
+					'handoff' => $code_arg( 64 ),
+					'error'   => array(
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_key',
+					),
 				),
 			)
 		);
@@ -145,24 +135,39 @@ class InstagramConnectionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Store a token, from manual entry or the OAuth return.
+	 * Start connecting: the authorize URL of the OAuth service, for this
+	 * administrator only.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|WP_Error
 	 */
-	public function create_item( $request ) {
+	public function start_authorization( $request ) {
 		$refused = $this->refuse_unless_owner();
 		if ( $refused ) {
 			return $refused;
 		}
 
-		$result = Connection::connect(
-			$request['access_token'],
-			$request['user_id'],
-			$request['username'],
-			null === $request['expires_in'] ? null : (int) $request['expires_in']
-		);
+		$url = Authorization::start( get_current_user_id() );
+		if ( is_wp_error( $url ) ) {
+			return $url;
+		}
 
+		return rest_ensure_response( array( 'authorize_url' => $url ) );
+	}
+
+	/**
+	 * Complete connecting from the OAuth service's return parameters.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	public function complete_authorization( $request ) {
+		$refused = $this->refuse_unless_owner();
+		if ( $refused ) {
+			return $refused;
+		}
+
+		$result = Authorization::complete( get_current_user_id(), $request['state'], $request['handoff'], $request['error'] );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -188,24 +193,7 @@ class InstagramConnectionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Set the user ID by hand.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|WP_Error
-	 */
-	public function update_user_id( $request ) {
-		$refused = $this->refuse_unless_owner();
-		if ( $refused ) {
-			return $refused;
-		}
-
-		Connection::set_user_id( $request['user_id'] );
-
-		return rest_ensure_response( $this->response_data() );
-	}
-
-	/**
-	 * Check the token with Instagram.
+	 * Check the token with Meta.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|WP_Error
@@ -225,26 +213,6 @@ class InstagramConnectionController extends WP_REST_Controller {
 		// so add who manages the connection; the test's own keys (its
 		// success message and refreshed details) take precedence.
 		return rest_ensure_response( $result + $this->response_data() );
-	}
-
-	/**
-	 * A token is a non-empty string without whitespace.
-	 *
-	 * @param mixed $value Value.
-	 * @return bool
-	 */
-	public function validate_token( $value ) {
-		return is_string( $value ) && '' !== trim( $value ) && ! preg_match( '/\s/', trim( $value ) ) && strlen( trim( $value ) ) <= 2048;
-	}
-
-	/**
-	 * A user ID is numeric, or '' when unknown.
-	 *
-	 * @param mixed $value Value.
-	 * @return bool
-	 */
-	public function validate_user_id( $value ) {
-		return is_string( $value ) && ( '' === trim( $value ) || (bool) preg_match( '/^\d{1,32}$/', trim( $value ) ) );
 	}
 
 	/**

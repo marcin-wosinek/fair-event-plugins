@@ -66,19 +66,6 @@ class OwnershipTest extends TestCase {
 	}
 
 	/**
-	 * Only an older Fair Audience Experimental with its own Instagram bundle
-	 * on still refreshes the token; then this plugin does not.
-	 *
-	 * @return void
-	 */
-	public function test_legacy_refresh_runs_only_for_an_older_enabled_release() {
-		$this->assertTrue( Ownership::legacy_refresh_runs( true, false, true ) );
-		$this->assertFalse( Ownership::legacy_refresh_runs( true, false, false ) );
-		$this->assertFalse( Ownership::legacy_refresh_runs( true, true, true ) );
-		$this->assertFalse( Ownership::legacy_refresh_runs( false, false, true ) );
-	}
-
-	/**
 	 * An existing connection does not turn the feature on: only an
 	 * administrator does, and nothing is claimed until then.
 	 *

@@ -15,49 +15,34 @@ export function loadConnection() {
 }
 
 /**
- * Store an access token, entered by hand or returned by the OAuth proxy.
+ * Start connecting: where to send the administrator to authorize.
  *
- * @param {Object}      data             Token and account.
- * @param {string}      data.accessToken Access token.
- * @param {string}      data.userId      Instagram user ID, '' when unknown.
- * @param {string}      data.username    Instagram username, '' when unknown.
- * @param {number|null} data.expiresIn   Seconds until expiry, null when unknown.
+ * @return {Promise<{authorize_url: string}>} Authorize URL.
+ */
+export function startAuthorization() {
+	return apiFetch( { path: `${ PATH }/authorize`, method: 'POST' } );
+}
+
+/**
+ * Complete connecting from the OAuth service's return parameters. The
+ * server redeems the handoff code; no credential reaches the browser.
+ *
+ * @param {Object} data         Return parameters.
+ * @param {string} data.state   Returned state.
+ * @param {string} data.handoff Handoff code, '' on failure.
+ * @param {string} data.error   Failure code, '' on success.
  * @return {Promise<Object>} Connection details.
  */
-export function connect( {
-	accessToken,
-	userId = '',
-	username = '',
-	expiresIn = null,
-} ) {
+export function completeAuthorization( { state, handoff = '', error = '' } ) {
 	return apiFetch( {
-		path: PATH,
+		path: `${ PATH }/complete`,
 		method: 'POST',
-		data: {
-			access_token: accessToken,
-			user_id: userId,
-			username,
-			expires_in: expiresIn,
-		},
+		data: { state, handoff, error },
 	} );
 }
 
 /**
- * Set the Instagram user ID.
- *
- * @param {string} userId Numeric user ID, or '' to clear it.
- * @return {Promise<Object>} Connection details.
- */
-export function saveUserId( userId ) {
-	return apiFetch( {
-		path: `${ PATH }/user-id`,
-		method: 'POST',
-		data: { user_id: userId },
-	} );
-}
-
-/**
- * Check the connection with Instagram.
+ * Check the connection with Meta.
  *
  * @return {Promise<Object>} Result with connection details.
  */

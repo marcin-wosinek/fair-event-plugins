@@ -65,10 +65,12 @@ class InstagramCredentialsController extends WP_REST_Controller {
 		return rest_ensure_response(
 			array(
 				'connected'             => (bool) get_option( InstagramCredentials::CONNECTED_OPTION, false ),
-				'usable'                => InstagramCredentials::is_connected(),
+				'usable'                => InstagramCredentials::is_connected() && ! InstagramCredentials::reconnect_required(),
 				'credential_status'     => $status,
 				'credentials_encrypted' => InstagramCredentials::is_encrypted(),
 				'message'               => InstagramCredentials::admin_message( $status ),
+				// A connection made before Meta's Unified Login (#2427).
+				'reconnect_required'    => InstagramCredentials::reconnect_required(),
 			)
 		);
 	}

@@ -68,6 +68,26 @@ class InstagramCredentials {
 	const OWNER_ELSEWHERE_CONSTANT = 'FAIR_EVENTS_EXPERIMENTAL_INSTAGRAM_OWNER';
 
 	/**
+	 * Connection metadata Fair Events Experimental writes with a Unified
+	 * Login connection (#2427); removed with the connection.
+	 */
+	const FORMAT_OPTION        = 'fair_audience_instagram_connection_format';
+	const FORMAT_UNIFIED_LOGIN = 'unified_login';
+	const METADATA_OPTIONS     = array(
+		'fair_audience_instagram_connection_format',
+		'fair_audience_instagram_token_type',
+		'fair_audience_instagram_scopes',
+		'fair_audience_instagram_token_expiry',
+		'fair_audience_instagram_graph_version',
+	);
+
+	/**
+	 * Settings the retired connection flow wrote. Only clearing them is
+	 * accepted through /wp/v2/settings.
+	 */
+	const RETIRED_WRITES = array( 'fair_audience_instagram_access_token', 'fair_audience_instagram_user_id' );
+
+	/**
 	 * Protect the token option and guard its settings REST surface. Runs on
 	 * every request, before the token is read or written — the daily token
 	 * refresh rewrites it outside the admin.
@@ -179,6 +199,19 @@ class InstagramCredentials {
 	}
 
 	/**
+	 * Whether a stored token predates Meta's Unified Login (#2427) and
+	 * cannot be used until the administrator connects again.
+	 *
+	 * @return bool
+	 */
+	public static function reconnect_required() {
+		$token = get_option( self::OPTION, '' );
+		$known = ( is_string( $token ) && '' !== $token ) || ( self::is_owner() && ! self::is_available() );
+
+		return $known && self::FORMAT_UNIFIED_LOGIN !== get_option( self::FORMAT_OPTION, '' );
+	}
+
+	/**
 	 * Whether the stored token is encrypted.
 	 *
 	 * @return bool False when the token is stored as plaintext, or not stored.
@@ -226,15 +259,16 @@ class InstagramCredentials {
 		}
 
 		if ( self::UNRECOVERABLE === $status ) {
-			return __( 'Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect with Instagram or enter a new access token.', 'fair-audience' );
+			return __( 'Instagram needs to be reconnected: the stored access token can no longer be read. This happens when the site’s security keys change or the database is moved to another site. Connect again in Fair Events → Instagram, or disconnect to remove it.', 'fair-audience' );
 		}
 
 		return '';
 	}
 
 	/**
-	 * `rest_pre_dispatch` callback: refuse a settings write that would replace
-	 * the token while it cannot be stored, before any setting is written.
+	 * `rest_pre_dispatch` callback, before any setting is written: refuse a
+	 * new token or account. Connecting moved to Fair Events → Instagram, so
+	 * only clearing them (disconnecting) is accepted here.
 	 *
 	 * @param mixed            $result  Response to replace the requested one with.
 	 * @param \WP_REST_Server  $server  Server instance.
@@ -246,22 +280,27 @@ class InstagramCredentials {
 			return $result;
 		}
 
-		$token = $request->get_param( self::OPTION );
-		if ( ! is_string( $token ) || '' === $token || self::can_store() ) {
-			return $result;
+		// Connecting moved to Fair Events → Instagram (#2427): a token or
+		// account entered here would bypass Unified Login.
+		foreach ( self::RETIRED_WRITES as $name ) {
+			$value = $request->get_param( $name );
+			if ( null !== $value && '' !== $value ) {
+				return new \WP_Error(
+					'fair_audience_instagram_connect_moved',
+					__( 'Instagram can no longer be connected here. Turn on Instagram in Fair Events → Settings → Experimental, then connect in Fair Events → Instagram.', 'fair-audience' ),
+					array( 'status' => 400 )
+				);
+			}
 		}
 
-		return new \WP_Error(
-			'fair_audience_instagram_token_not_stored',
-			self::admin_message( self::ENCRYPTION_UNAVAILABLE ),
-			array( 'status' => 409 )
-		);
+		return $result;
 	}
 
 	/**
-	 * `rest_pre_update_setting` callback: an empty token disconnects, and must
-	 * remove an unreadable stored token too. update_option() would skip that
-	 * write, since the unreadable value already reads as empty.
+	 * `rest_pre_update_setting` callback: an empty token disconnects. It
+	 * removes the connection metadata, and an unreadable stored token too:
+	 * update_option() would skip that write, since the unreadable value
+	 * already reads as empty.
 	 *
 	 * @param bool   $handled Whether the setting was already updated.
 	 * @param string $name    Setting name in the REST API.
@@ -269,7 +308,16 @@ class InstagramCredentials {
 	 * @return bool
 	 */
 	public static function clear_unreadable_token( $handled, $name, $value ) {
-		if ( $handled || self::OPTION !== $name || '' !== $value || self::is_available() ) {
+		if ( $handled || self::OPTION !== $name || '' !== $value ) {
+			return $handled;
+		}
+
+		// Disconnecting removes what is known about the connection too.
+		foreach ( self::METADATA_OPTIONS as $option ) {
+			delete_option( $option );
+		}
+
+		if ( self::is_available() ) {
 			return $handled;
 		}
 

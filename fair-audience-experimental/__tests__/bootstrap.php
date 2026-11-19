@@ -97,3 +97,54 @@ if ( ! function_exists( 'add_query_arg' ) ) {
 		return $url . $separator . http_build_query( array( $key => $value ) );
 	}
 }
+
+if ( ! class_exists( 'WP_Error' ) ) {
+	/**
+	 * Minimal stand-in for WordPress WP_Error.
+	 */
+	// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound, Universal.Files.SeparateFunctionsFromOO.Mixed -- test bootstrap.
+	class WP_Error {
+		/**
+		 * Error code.
+		 *
+		 * @var string
+		 */
+		private $code;
+
+		/**
+		 * Error message.
+		 *
+		 * @var string
+		 */
+		private $message;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param string $code    Code.
+		 * @param string $message Message.
+		 */
+		public function __construct( $code = '', $message = '' ) {
+			$this->code    = $code;
+			$this->message = $message;
+		}
+
+		/**
+		 * Error code.
+		 *
+		 * @return string
+		 */
+		public function get_error_code() {
+			return $this->code;
+		}
+
+		/**
+		 * Error message.
+		 *
+		 * @return string
+		 */
+		public function get_error_message() {
+			return $this->message;
+		}
+	}
+}

@@ -15,44 +15,110 @@ automatically.
 
 ## Requirements
 
-- An Instagram **professional** (business or creator) account.
-- One of two ways to connect:
-    - **Connect with Instagram** signs in through the Fair Event Plugins OAuth
-      service (`fair-event-plugins.com/oauth/instagram/…`, run by Fair
-      Platform). The site must be served over HTTPS, because the service only
-      returns to an `https` URL.
-    - **Enter an access token**: an Instagram API (Instagram Login) token with
-      `instagram_business_basic` and `instagram_business_content_publish`.
-- The **user ID** of the account, which Instagram needs for publishing.
-  **Test connection** fills it in.
-- PHP Sodium support (the default in PHP 7.2+), so the token can be stored
-  encrypted.
+- An Instagram **professional** (business or creator) account, in a Meta
+  business portfolio.
+- **Connect with Instagram** signs in through Meta's Unified Login (#2427)
+  via the Fair Event Plugins OAuth service
+  (`fair-event-plugins.com/oauth/instagram/…`, run by Fair Platform). The
+  administrator signs in with Facebook, chooses the business, and shares
+  exactly one Instagram account. The site must be served over HTTPS; plain
+  HTTP is accepted only on `localhost`.
+- While the Fair Event Plugins Meta app is in development mode, only people
+  with a role on that app can connect.
+- PHP Sodium support (the default in PHP 7.2+), so the token and the
+  connection attempt are stored encrypted.
 
-The token is stored encrypted (`ProtectedOptions` in fair-events-shared) and
-is never returned to the browser. The page shows the username, user ID and
-token expiry only.
+There is no manual token entry and no editable account ID: the OAuth service
+identifies the account Meta shared.
 
-## Token renewal
+## How connecting works
 
-A daily cron event (`fair_events_experimental_instagram_token_refresh`)
-renews the token through the OAuth service during its last 7 days, or when
-its expiry is not known. Failures are written to the PHP error log without
-the token, and the next daily run tries again. When a token has expired,
-connect again.
+1. **Connect with Instagram** asks this site's server to start. It creates a
+   state and a verifier for the administrator, keeps them encrypted for 15
+   minutes, and sends the browser to the OAuth service with the verifier's
+   challenge, the site address and this page as the only return
+   destination.
+2. After Meta's dialog, the service returns to Fair Events → Instagram with
+   the state and a single-use handoff code (or `instagram_error`). The page
+   removes them from the address bar and sends them to this site's server.
+3. The server checks the state against the administrator's attempt (used up
+   either way), redeems the handoff code with the verifier, server to server,
+   and checks the credentials: a token, its type, `instagram_basic` and
+   `instagram_content_publish`, the account ID and the Graph API version.
+4. The token is stored first. If it cannot be stored encrypted, the previous
+   connection is kept as it was. Then the account and the metadata are
+   written, and the connection-format marker last.
+
+A cancelled or failed authorization changes nothing. The page explains what
+to do: allow every permission, share an account, or share only one. If Meta
+keeps sharing accounts chosen earlier, remove the app under Meta Business
+Settings → Integrations → Connected apps first.
+
+The token, the verifier and the handoff code are never returned in a
+response or written to a log.
+
+## Token lifetime
+
+The token is a business integration system-user token that does not expire,
+and nothing renews it: the daily renewal of earlier releases
+(`fair_events_experimental_instagram_token_refresh`) is removed on every
+request. A token Meta reports with a finite expiry is stored with it and
+stops being used once it passes; connect again before then.
+
+Stored with the token (all names kept from Fair Audience):
+
+| Option                                      | Value                                         |
+| ------------------------------------------- | --------------------------------------------- |
+| `fair_audience_instagram_connection_format` | `unified_login`, written last                 |
+| `fair_audience_instagram_token_type`        | `system_user` (or `user`)                     |
+| `fair_audience_instagram_scopes`            | Granted permissions                           |
+| `fair_audience_instagram_token_expiry`      | `never` or `expires`                          |
+| `fair_audience_instagram_token_expires`     | Expiry; 2100-01-01 for `never`, so releases older than #2427 never try to renew it |
+| `fair_audience_instagram_graph_version`     | Graph API version, such as `v27.0`            |
+
+Publishing, the connection test and Fair Audience → Instagram Posts call
+`graph.facebook.com/{version}/{account ID}` with the token in an
+`Authorization` header.
+
+## Connections from before Unified Login
+
+Every connection stored before #2427 has no format marker and must be
+reconnected. It stays stored and encrypted, but it is never used to test,
+publish or renew. The page asks to reconnect, and manual posts in Fair
+Audience say where. Posts already published, and their records, are kept.
+
+Older client plugins can no longer connect: the OAuth service refuses their
+requests with an "update" page, and their token renewal gets `410 Gone`.
+Update Fair Events Experimental, Fair Audience and Fair Audience
+Experimental before reconnecting; see
+[DEPLOYMENT.md § Upgrade notes: Instagram Unified Login](../../DEPLOYMENT.md#upgrade-notes-instagram-unified-login-2427).
+
+## Disconnecting and revoking
+
+**Disconnect** removes the token and every connection detail from this site.
+It does not revoke anything at Meta, since the business may share the same
+integration with other sites. To revoke access, the business removes the app
+under Meta Business Settings → Integrations → Connected apps; the stored
+token then stops working, and the connection test says to connect again.
 
 ## Who owns the connection
 
 The stored options keep their Fair Audience names
 (`fair_audience_instagram_*`), so moving the connection needs no re-entry.
-Exactly one plugin protects the token and exactly one renews it on each
-request. `FairEventsExperimental\Instagram\Ownership` decides:
+Exactly one plugin protects the token on each request.
+`FairEventsExperimental\Instagram\Ownership` decides:
 
-| State                                                          | Token storage and settings             | Renewal                                                    |
-| -------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| Instagram feature off                                          | Fair Audience                          | Fair Audience Experimental                                 |
-| Feature on, Fair Audience updated or inactive                  | Fair Events Experimental               | Fair Events Experimental                                   |
-| Feature on, Fair Audience older than this release              | Fair Audience (page says to update it) | Fair Audience Experimental                                 |
-| Feature on, Fair Audience Experimental older than this release | Fair Events Experimental               | Fair Audience Experimental (if its Instagram bundle is on) |
+| State                                             | Token storage and settings             |
+| ------------------------------------------------- | -------------------------------------- |
+| Instagram feature off                             | Fair Audience                          |
+| Feature on, Fair Audience updated or inactive     | Fair Events Experimental               |
+| Feature on, Fair Audience older than this release | Fair Audience (page says to update it) |
+
+Connecting always happens here. While Fair Audience holds the connection
+(the feature is off), Fair Audience → Settings → Instagram shows its status
+and can disconnect it, but accepts no token or account: it says to turn
+Instagram on in Fair Events → Settings → Experimental and connect here. A
+Unified Login connection keeps publishing while Fair Audience holds it.
 
 The connection API (`GET /fair-events-experimental/v1/instagram/connection`)
 reports `managed_here` and, without any credential, an `ownership_reason`:
@@ -79,11 +145,17 @@ off hands the connection back to Fair Audience on the next request.
 
 - **"Instagram is paused"**: the server lost Sodium support. Restore it; the
   connection resumes without reconnecting.
-- **"Instagram needs to be reconnected"**: the stored token can no longer be
-  decrypted. This happens when the site's security keys change or the
-  database moved to another site. Connect again, or disconnect to remove it.
-- **"Instagram refused the access token"**: the token is invalid, expired or
-  revoked. Connect again.
+- **"Instagram needs to be reconnected: the stored access token can no longer
+  be read"**: the site's security keys changed or the database moved to
+  another site. Connect again, or disconnect to remove it.
+- **"Instagram needs to be reconnected: Meta replaced the way sites connect"**:
+  the connection predates Unified Login. Connect again.
+- **"Instagram needs to be reconnected: the access token has expired"**:
+  connect again.
+- **"Meta refused the access token"**: the business removed the app in Meta
+  Business Settings, or the token was revoked. Connect again.
+- **"Meta did not let this site read the connected Instagram account"**: the
+  business no longer shares that account. Connect again and share it.
 - **"This site’s Fair Audience is older than this plugin"**
   (`audience_handoff_missing`): update Fair Audience. Until then, manage the
   connection in Fair Audience → Settings → Instagram.

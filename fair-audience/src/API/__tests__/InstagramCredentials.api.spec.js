@@ -1,9 +1,16 @@
 /**
- * Instagram access token encrypted at rest (#1319), against a live WordPress.
+ * Instagram access token encrypted at rest (#1319), against a live WordPress,
+ * while Fair Audience holds the connection.
+ *
+ * Since #2427 connections are made through Meta's Unified Login in Fair
+ * Events → Instagram: this tab's settings only accept clearing the token,
+ * connections stored before then must be reconnected, and nothing renews
+ * the token.
  *
  * e2e/mu-plugins/fair-e2e-protected-credentials.php seeds the stored token
- * raw, toggles encryption support and the experimental Instagram bundle,
- * stands in for the Instagram APIs and records the token each request sent.
+ * raw or through the option API with Unified Login metadata, toggles
+ * encryption support and the experimental Instagram bundle, stands in for
+ * the Instagram APIs and records the token each request sent.
  */
 import { test, expect, request } from '@playwright/test';
 
@@ -58,15 +65,9 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		return api.post( SETTINGS, { headers: adminAuth(), data } );
 	}
 
+	// A Unified Login connection, as Fair Events → Instagram stores it.
 	async function connect( token ) {
-		const res = await saveSettings( {
-			[ TOKEN_KEY ]: token,
-			fair_audience_instagram_user_id: '17840000000000001',
-			fair_audience_instagram_username: 'e2e_demo_account',
-			fair_audience_instagram_connected: true,
-		} );
-		expect( res.status(), await res.text() ).toBe( 200 );
-		return res;
+		return control( { instagram: { token }, instagram_unified: true } );
 	}
 
 	function instagramRequests( after ) {
@@ -77,7 +78,13 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
-		await control( { supported: true, reset_requests: true } );
+		// Fair Audience holds the connection while Fair Events
+		// Experimental's Instagram feature is off (its default).
+		await control( {
+			supported: true,
+			reset_requests: true,
+			events_instagram_feature: false,
+		} );
 	} );
 
 	test.afterAll( async () => {
@@ -121,15 +128,28 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 			credential_status: 'available',
 			credentials_encrypted: true,
 			message: '',
+			reconnect_required: false,
 		} );
 
 		await control( { instagram_feature: true } );
 	} );
 
-	test( 'settings responses never carry the token, and new tokens are stored encrypted', async () => {
-		const saved = await connect( 'instagram_e2e_manual' );
-		expect( await saved.json() ).not.toHaveProperty( TOKEN_KEY );
-		expect( await saved.text() ).not.toContain( 'instagram_e2e_manual' );
+	test( 'settings no longer accept a token or account, and never return the token', async () => {
+		await connect( 'instagram_e2e_manual' );
+
+		for ( const data of [
+			{
+				[ TOKEN_KEY ]: 'instagram_e2e_typed',
+				fair_audience_instagram_username: 'e2e_typed',
+			},
+			{ fair_audience_instagram_user_id: '17849999999999999' },
+		] ) {
+			const refused = await saveSettings( data );
+			expect( refused.status() ).toBe( 400 );
+			expect( ( await refused.json() ).code ).toBe(
+				'fair_audience_instagram_connect_moved'
+			);
+		}
 
 		const read = await api.get( SETTINGS, { headers: adminAuth() } );
 		expect( read.status() ).toBe( 200 );
@@ -137,8 +157,11 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		expect( JSON.parse( text ) ).not.toHaveProperty( TOKEN_KEY );
 		expect( text ).not.toContain( 'instagram_e2e_manual' );
 		expect( text ).not.toContain( 'fes-enc:' );
-		expect( JSON.parse( text ).fair_audience_instagram_connected ).toBe(
-			true
+		expect( JSON.parse( text ).fair_audience_instagram_username ).toBe(
+			'e2e_demo_account'
+		);
+		expect( JSON.parse( text ).fair_audience_instagram_user_id ).toBe(
+			'17840000000000001'
 		);
 
 		const status = await api.get( CREDENTIALS, { headers: adminAuth() } );
@@ -149,7 +172,47 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		expect( after.instagram_decrypted ).toBe( 'instagram_e2e_manual' );
 	} );
 
-	test( 'testing the connection sends the decrypted token to Instagram', async () => {
+	test( 'a connection from before Unified Login must be reconnected', async () => {
+		await control( {
+			instagram: { token: 'instagram_e2e_legacy' },
+			instagram_unified: false,
+			reset_requests: true,
+		} );
+
+		expect( await credentials() ).toMatchObject( {
+			connected: true,
+			reconnect_required: true,
+		} );
+
+		const tested = await api.post( TEST_CONNECTION, {
+			headers: adminAuth(),
+		} );
+		expect( tested.status() ).toBe( 409 );
+		expect( ( await tested.json() ).code ).toBe(
+			'instagram_reconnect_required'
+		);
+
+		const posted = await api.post( POSTS, {
+			headers: adminAuth(),
+			data: {
+				image_url: 'https://example.org/e2e-2427.jpg',
+				caption: 'E2E legacy connection',
+			},
+		} );
+		expect( posted.status() ).toBe( 400 );
+		expect( ( await posted.json() ).code ).toBe(
+			'instagram_reconnect_required'
+		);
+
+		const after = await stored();
+		expect( instagramRequests( after ) ).toEqual( [] );
+		// Kept until the administrator reconnects or disconnects.
+		expect( after.instagram_decrypted ).toBe( 'instagram_e2e_legacy' );
+
+		await connect( 'instagram_e2e_manual' );
+	} );
+
+	test( 'testing the connection sends the decrypted token to graph.facebook.com', async () => {
 		await control( { reset_requests: true } );
 
 		const res = await api.post( TEST_CONNECTION, { headers: adminAuth() } );
@@ -157,7 +220,7 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		expect( ( await res.json() ).success ).toBe( true );
 
 		expect( instagramRequests( await stored() ) ).toEqual( [
-			{ service: 'instagram', token: 'instagram_e2e_manual' },
+			{ service: 'instagram_graph', token: 'instagram_e2e_manual' },
 		] );
 	} );
 
@@ -180,11 +243,14 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		const requests = instagramRequests( await stored() );
 		expect( requests.length ).toBeGreaterThan( 0 );
 		for ( const sent of requests ) {
-			expect( sent.token ).toBe( 'instagram_e2e_manual' );
+			expect( sent ).toEqual( {
+				service: 'instagram_graph',
+				token: 'instagram_e2e_manual',
+			} );
 		}
 	} );
 
-	test( 'the daily refresh sends the decrypted token and stores the new one encrypted', async () => {
+	test( 'nothing renews the token: the retired daily refresh sends nothing', async () => {
 		const soon = Math.floor( Date.now() / 1000 ) + DAY;
 		await control( {
 			reset_requests: true,
@@ -193,12 +259,10 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		} );
 
 		const after = await stored();
-		expect( instagramRequests( after ) ).toEqual( [
-			{ service: 'instagram_refresh', token: 'instagram_e2e_manual' },
-		] );
-		expect( after.instagram ).toMatch( ENVELOPE );
-		expect( after.instagram_decrypted ).toBe( 'instagram_e2e_refreshed_1' );
-		expect( after.instagram_expires ).toBeGreaterThan( soon + 30 * DAY );
+		expect( instagramRequests( after ) ).toEqual( [] );
+		expect( after.instagram_decrypted ).toBe( 'instagram_e2e_manual' );
+
+		await connect( 'instagram_e2e_manual' );
 	} );
 
 	test( 'a token from changed security keys asks for reconnection and is left in place', async () => {
@@ -248,15 +312,6 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 		expect( after.instagram_expires ).toBe( soon );
 	} );
 
-	test( 'entering a new token replaces an unrecoverable one', async () => {
-		await connect( 'instagram_e2e_reconnected' );
-
-		const after = await stored();
-		expect( after.instagram ).toMatch( ENVELOPE );
-		expect( after.instagram_decrypted ).toBe( 'instagram_e2e_reconnected' );
-		expect( ( await credentials() ).credential_status ).toBe( 'available' );
-	} );
-
 	test( 'disconnecting removes an unreadable token', async () => {
 		await control( {
 			instagram: { foreign_key: 'instagram_e2e_foreign' },
@@ -277,6 +332,7 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 			connected: false,
 			usable: false,
 			credential_status: 'available',
+			reconnect_required: false,
 		} );
 	} );
 
@@ -291,15 +347,14 @@ test.describe( 'Instagram access token encrypted at rest (#1319)', () => {
 			message: expect.stringContaining( 'Instagram is paused' ),
 		} );
 
-		// A replacement would have to be stored as plaintext: refused, and
-		// nothing else in the request is written.
+		// A replacement is refused, and nothing else in the request is written.
 		const replaced = await saveSettings( {
 			[ TOKEN_KEY ]: 'instagram_e2e_plain_replacement',
 			fair_audience_instagram_username: 'e2e_replaced',
 		} );
-		expect( replaced.status() ).toBe( 409 );
+		expect( replaced.status() ).toBe( 400 );
 		expect( ( await replaced.json() ).code ).toBe(
-			'fair_audience_instagram_token_not_stored'
+			'fair_audience_instagram_connect_moved'
 		);
 
 		const after = await stored();

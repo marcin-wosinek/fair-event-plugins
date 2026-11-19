@@ -4,9 +4,14 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import apiFetch from '@wordpress/api-fetch';
-import InstagramPage, { ownershipNotice } from '../InstagramPage.js';
+import { navigate } from '../navigate.js';
+import InstagramPage, {
+	expiryText,
+	ownershipNotice,
+} from '../InstagramPage.js';
 
 jest.mock( '@wordpress/api-fetch' );
+jest.mock( '../navigate.js', () => ( { navigate: jest.fn() } ) );
 
 function details( overrides ) {
 	return {
@@ -17,7 +22,11 @@ function details( overrides ) {
 		message: '',
 		user_id: '17841400123456789',
 		username: 'demo_events',
-		token_expires: 1900000000,
+		connection_format: 'unified_login',
+		token_type: 'system_user',
+		scopes: [ 'instagram_basic', 'instagram_content_publish' ],
+		token_expiry: 'never',
+		token_expires: null,
 		managed_here: true,
 		ownership_reason: 'managed_here',
 		legacy_manage_url: null,
@@ -33,12 +42,6 @@ async function renderPage() {
 
 describe( 'InstagramPage', () => {
 	beforeEach( () => {
-		window.fairEventsInstagramData = {
-			pageUrl:
-				'http://localhost/wp-admin/admin.php?page=fair-events-instagram',
-			authorizeUrl:
-				'https://fair-event-plugins.com/oauth/instagram/authorize',
-		};
 		window.history.replaceState(
 			{},
 			'',
@@ -56,15 +59,21 @@ describe( 'InstagramPage', () => {
 				'Connected to Instagram as @demo_events.'
 			)[ 0 ]
 		).toBeInTheDocument();
-		expect( screen.getByLabelText( 'Instagram user ID' ) ).toHaveValue(
-			'17841400123456789'
-		);
+		expect(
+			screen.getByText( 'Instagram account ID: 17841400123456789' )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'The access token does not expire. It stops working if the business removes the app in Meta Business Settings.'
+			)
+		).toBeInTheDocument();
+		expect( screen.queryByRole( 'textbox' ) ).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'button', { name: 'Connect with Instagram' } )
 		).not.toBeInTheDocument();
 	} );
 
-	it( 'offers OAuth and a manual token when not connected', async () => {
+	it( 'offers only the Unified Login connection when not connected', async () => {
 		apiFetch.mockResolvedValueOnce(
 			details( { connected: false, usable: false, username: '' } )
 		);
@@ -74,70 +83,161 @@ describe( 'InstagramPage', () => {
 			screen.getByRole( 'button', { name: 'Connect with Instagram' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'button', { name: 'Save access token' } )
-		).toBeDisabled();
-		expect(
-			screen.getByText( 'Enter a token to save it.' )
-		).toBeInTheDocument();
+			screen.queryByRole( 'button', { name: 'Save access token' } )
+		).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'textbox' ) ).not.toBeInTheDocument();
 	} );
 
-	it( 'saves a manual token through the connection API', async () => {
+	it( 'starts connecting through the server and leaves for the authorize URL', async () => {
 		apiFetch
 			.mockResolvedValueOnce(
 				details( { connected: false, usable: false } )
 			)
-			.mockResolvedValueOnce( details( { username: '' } ) );
+			.mockResolvedValueOnce( {
+				authorize_url:
+					'https://fair-event-plugins.com/oauth/instagram/authorize?protocol=2',
+			} );
 		await renderPage();
 
-		fireEvent.change( screen.getByLabelText( 'Access token' ), {
-			target: { value: ' IGtoken ' },
-		} );
 		await act( async () => {
 			fireEvent.click(
-				screen.getByRole( 'button', { name: 'Save access token' } )
+				screen.getByRole( 'button', { name: 'Connect with Instagram' } )
 			);
 		} );
 
 		expect( apiFetch ).toHaveBeenLastCalledWith( {
-			path: '/fair-events-experimental/v1/instagram/connection',
+			path: '/fair-events-experimental/v1/instagram/connection/authorize',
 			method: 'POST',
-			data: {
-				access_token: 'IGtoken',
-				user_id: '',
-				username: '',
-				expires_in: null,
-			},
 		} );
-		expect(
-			screen.getByText(
-				'Access token saved. Test the connection to load the account details.'
-			)
-		).toBeInTheDocument();
+		expect( navigate ).toHaveBeenCalledWith(
+			'https://fair-event-plugins.com/oauth/instagram/authorize?protocol=2'
+		);
 	} );
 
-	it( 'stores an OAuth return and removes the token from the address bar', async () => {
+	it( 'shows why connecting could not start and allows a retry', async () => {
+		apiFetch
+			.mockResolvedValueOnce(
+				details( { connected: false, usable: false } )
+			)
+			.mockRejectedValueOnce( {
+				message: 'Fair Events Experimental did not take over.',
+			} );
+		await renderPage();
+
+		await act( async () => {
+			fireEvent.click(
+				screen.getByRole( 'button', { name: 'Connect with Instagram' } )
+			);
+		} );
+
+		expect(
+			screen.getAllByText(
+				'Fair Events Experimental did not take over.'
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Connect with Instagram' } )
+		).toBeEnabled();
+	} );
+
+	it( 'completes a return on the server and removes the handoff code from the address bar', async () => {
 		window.history.replaceState(
 			{},
 			'',
-			'/wp-admin/admin.php?page=fair-events-instagram&instagram_access_token=IGoauth&instagram_user_id=178&instagram_username=demo_events&instagram_expires_in=5184000'
+			'/wp-admin/admin.php?page=fair-events-instagram&instagram_handoff=hand-off_code&state=client-state'
 		);
 		apiFetch.mockResolvedValueOnce( details() );
 		await renderPage();
 
 		expect( window.location.search ).toBe( '?page=fair-events-instagram' );
+		expect( apiFetch ).toHaveBeenCalledTimes( 1 );
 		expect( apiFetch ).toHaveBeenCalledWith( {
-			path: '/fair-events-experimental/v1/instagram/connection',
+			path: '/fair-events-experimental/v1/instagram/connection/complete',
 			method: 'POST',
 			data: {
-				access_token: 'IGoauth',
-				user_id: '178',
-				username: 'demo_events',
-				expires_in: 5184000,
+				state: 'client-state',
+				handoff: 'hand-off_code',
+				error: '',
 			},
 		} );
 		expect(
-			screen.getByText( 'Connected to Instagram.' )
+			screen.getAllByText( 'Connected to Instagram as @demo_events.' )
+				.length
+		).toBeGreaterThan( 0 );
+	} );
+
+	it( 'reports a cancelled authorization from the server and keeps the page usable', async () => {
+		window.history.replaceState(
+			{},
+			'',
+			'/wp-admin/admin.php?page=fair-events-instagram&instagram_error=cancelled&state=client-state'
+		);
+		apiFetch
+			.mockRejectedValueOnce( {
+				code: 'instagram_authorization_failed',
+				message:
+					'Instagram authorization was cancelled. Nothing was changed.',
+			} )
+			.mockResolvedValueOnce(
+				details( { connected: false, usable: false } )
+			);
+		await renderPage();
+
+		expect( window.location.search ).toBe( '?page=fair-events-instagram' );
+		expect( apiFetch ).toHaveBeenNthCalledWith( 1, {
+			path: '/fair-events-experimental/v1/instagram/connection/complete',
+			method: 'POST',
+			data: { state: 'client-state', handoff: '', error: 'cancelled' },
+		} );
+		expect(
+			screen.getAllByText(
+				'Instagram authorization was cancelled. Nothing was changed.'
+			)[ 0 ]
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Connect with Instagram' } )
+		).toBeInTheDocument();
+	} );
+
+	it( 'asks a pre-upgrade connection to reconnect', async () => {
+		apiFetch.mockResolvedValueOnce(
+			details( {
+				usable: false,
+				credential_status: 'reconnect_required',
+				connection_format: null,
+				token_expiry: null,
+				message:
+					'Instagram needs to be reconnected: Meta replaced the way sites connect to Instagram.',
+			} )
+		);
+		await renderPage();
+
+		expect(
+			screen.getAllByText(
+				'Instagram needs to be reconnected: Meta replaced the way sites connect to Instagram.'
+			)[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'button', { name: 'Connect with Instagram' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Test connection' } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'describes each token lifetime', () => {
+		expect( expiryText( { token_expiry: 'never' } ) ).toMatch(
+			/does not expire/
+		);
+		expect(
+			expiryText( {
+				token_expiry: 'expires',
+				token_expires: 1900000000,
+			} )
+		).toMatch( /not renewed automatically/ );
+		expect( expiryText( { token_expiry: null } ) ).toBe(
+			'The access token’s expiry is not known.'
+		);
 	} );
 
 	it( 'explains an older Fair Audience still manages the connection', async () => {
@@ -329,7 +429,7 @@ describe( 'InstagramPage', () => {
 		const testResult = ( username ) => ( {
 			success: true,
 			...details( { username } ),
-			message: `The connection works: Instagram confirmed the account @${ username }.`,
+			message: `The connection works: Meta confirmed the account @${ username }.`,
 		} );
 		apiFetch
 			.mockResolvedValueOnce( details() )
@@ -350,7 +450,7 @@ describe( 'InstagramPage', () => {
 			} );
 			expect(
 				screen.getByText(
-					`The connection works: Instagram confirmed the account @${ username }.`
+					`The connection works: Meta confirmed the account @${ username }.`
 				)
 			).toBeInTheDocument();
 			expect(
@@ -372,7 +472,7 @@ describe( 'InstagramPage', () => {
 		}
 	} );
 
-	it( 'shows a failed test with Instagram’s details', async () => {
+	it( 'shows a failed test with Meta’s details', async () => {
 		apiFetch.mockResolvedValueOnce( details() ).mockRejectedValueOnce( {
 			message: 'Instagram refused the access token.',
 			data: { details: 'Invalid OAuth access token' },
