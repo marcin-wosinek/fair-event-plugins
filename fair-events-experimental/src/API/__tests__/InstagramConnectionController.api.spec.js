@@ -8,7 +8,8 @@
  * validation, the connection test (e2e/mu-plugins/fair-e2e-protected-credentials.php
  * answers graph.instagram.com), disconnecting, and Fair Audience's
  * /wp/v2/settings surface stepping aside while the connection is managed
- * here and coming back when the feature is off.
+ * here and coming back when the feature is off. The feature stays off until
+ * an administrator turns it on: a stored connection alone never does.
  *
  * The suite restores the feature option and removes every Instagram option
  * it wrote afterwards.
@@ -69,6 +70,16 @@ async function setFeature( enabled ) {
 		`$f = get_option( 'fair_events_experimental_features', array() ); $f = is_array( $f ) ? $f : array(); $f['instagram'] = ${
 			enabled ? 'true' : 'false'
 		}; update_option( 'fair_events_experimental_features', $f );`
+	);
+}
+
+/**
+ * Remove this plugin's stored Instagram choice, so its default applies. The
+ * option is rewritten because its sanitizer keeps keys a write leaves out.
+ */
+async function unsetFeature() {
+	await php(
+		"$f = get_option( 'fair_events_experimental_features', array() ); $f = is_array( $f ) ? $f : array(); unset( $f['instagram'] ); delete_option( 'fair_events_experimental_features' ); if ( $f ) { add_option( 'fair_events_experimental_features', $f ); }"
 	);
 }
 
@@ -145,6 +156,35 @@ test.describe( 'InstagramConnectionController', () => {
 		await api.dispose();
 	} );
 
+	test( 'a stored connection does not turn the feature on', async () => {
+		await unsetFeature();
+
+		// Several requests: nothing turns the feature on along the way.
+		for ( let i = 0; i < 2; i++ ) {
+			expect(
+				( await api.get( PATH, { headers: adminHeaders } ) ).status()
+			).toBe( 404 );
+		}
+		expect(
+			await php(
+				"$f = get_option( 'fair_events_experimental_features', array() ); echo is_array( $f ) && array_key_exists( 'instagram', $f ) ? 'stored' : 'unset';"
+			)
+		).toBe( 'unset' );
+		// Fair Audience keeps managing the connection meanwhile.
+		const settings = await (
+			await api.get( SETTINGS_PATH, { headers: adminHeaders } )
+		).json();
+		expect( settings ).toHaveProperty(
+			'fair_audience_instagram_connected'
+		);
+
+		// An explicit choice turns it on.
+		await setFeature( true );
+		expect(
+			( await api.get( PATH, { headers: adminHeaders } ) ).status()
+		).toBe( 200 );
+	} );
+
 	test( 'refuses anonymous visitors and non-administrators', async () => {
 		expect( ( await api.get( PATH ) ).status() ).toBe( 401 );
 		for ( const call of [
@@ -168,6 +208,8 @@ test.describe( 'InstagramConnectionController', () => {
 
 		expect( body ).toMatchObject( {
 			managed_here: true,
+			ownership_reason: 'managed_here',
+			legacy_manage_url: null,
 			connected: true,
 			usable: true,
 			credential_status: 'available',

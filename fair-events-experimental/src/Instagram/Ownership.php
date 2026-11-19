@@ -29,9 +29,11 @@ defined( 'WPINC' ) || die;
  * - A former owner older than the handoff defines no handoff constant and
  *   keeps its part, so this plugin leaves that part alone until it is updated.
  *
- * Nothing is recorded permanently: turning the feature off, or deactivating
- * this plugin, gives the connection back to Fair Audience on the next request
- * with the same stored, encrypted values.
+ * The feature is off by default and only an administrator turns it on: an
+ * existing connection alone never does. Nothing is recorded permanently:
+ * turning the feature off, or deactivating this plugin, gives the connection
+ * back to Fair Audience on the next request with the same stored, encrypted
+ * values.
  */
 class Ownership {
 
@@ -54,9 +56,20 @@ class Ownership {
 	const AUDIENCE_EXPERIMENTAL_HANDOFF = 'FAIR_AUDIENCE_EXPERIMENTAL_INSTAGRAM_HANDOFF';
 
 	/**
-	 * Set once the feature default was decided for an existing connection.
+	 * Why this plugin does or does not own the connection on this request;
+	 * see {@see self::reason()}. Credential-free, safe to show administrators.
 	 */
-	const FEATURE_MIGRATION_OPTION = 'fair_events_experimental_instagram_feature_migrated';
+	const REASON_MANAGED_HERE = 'managed_here';
+	const REASON_FEATURE_OFF  = 'feature_disabled';
+	// The active Fair Audience is a release without the handoff.
+	const REASON_AUDIENCE_HANDOFF_MISSING = 'audience_handoff_missing';
+	// Fair Audience's files on disk hand over, but the code that ran did not:
+	// the update has not taken effect (a PHP opcode cache, or an update
+	// still being copied).
+	const REASON_AUDIENCE_UPDATE_NOT_LOADED = 'audience_update_not_loaded';
+	// Nothing blocks the handoff now, but the claim did not happen while the
+	// plugins loaded.
+	const REASON_NOT_CLAIMED = 'not_claimed';
 
 	/**
 	 * Whether a part of the connection can be taken over.
@@ -148,27 +161,70 @@ class Ownership {
 	}
 
 	/**
-	 * The feature is off by default, but a site that is already connected
-	 * keeps its connection: decided once, the first time this release runs.
-	 * An explicit setting, a constant or the master switch is left alone.
+	 * Why this plugin does or does not own the connection on this request.
 	 *
-	 * @return void
+	 * @return string One of the REASON_* constants.
 	 */
-	public static function maybe_enable_for_existing_connection() {
-		if ( get_option( self::FEATURE_MIGRATION_OPTION ) ) {
-			return;
+	public static function reason() {
+		$audience_active = defined( self::AUDIENCE_ACTIVE );
+		$hands_off       = defined( self::AUDIENCE_HANDOFF );
+
+		return self::resolve_reason(
+			self::owns(),
+			Features::is_enabled( 'instagram' ),
+			$audience_active,
+			$hands_off,
+			// Read only when it decides the answer.
+			$audience_active && ! $hands_off && ! self::owns() && self::audience_files_hand_off()
+		);
+	}
+
+	/**
+	 * Decide the ownership reason from the request's state.
+	 *
+	 * A missing handoff is blamed on an old Fair Audience only when its files
+	 * on disk lack it too; otherwise the update simply has not taken effect.
+	 *
+	 * @param bool $owns                 Whether this plugin claimed the connection.
+	 * @param bool $feature_on           Whether the `instagram` feature is on.
+	 * @param bool $audience_active      Whether any Fair Audience release is active.
+	 * @param bool $audience_hands_off   Whether the running Fair Audience hands over.
+	 * @param bool $audience_files_hand_off Whether its main file on disk hands over.
+	 * @return string One of the REASON_* constants.
+	 */
+	public static function resolve_reason( $owns, $feature_on, $audience_active, $audience_hands_off, $audience_files_hand_off ) {
+		if ( $owns ) {
+			return self::REASON_MANAGED_HERE;
 		}
-
-		$stored = get_option( Features::OPTION, array() );
-		$stored = is_array( $stored ) ? $stored : array();
-
-		if ( ! array_key_exists( 'instagram', $stored )
-			&& ! Features::is_forced( 'instagram' )
-			&& get_option( Connection::CONNECTED_OPTION, false ) ) {
-			$stored['instagram'] = true;
-			update_option( Features::OPTION, $stored );
+		if ( ! $feature_on ) {
+			return self::REASON_FEATURE_OFF;
 		}
+		if ( $audience_active && ! $audience_hands_off ) {
+			return $audience_files_hand_off
+				? self::REASON_AUDIENCE_UPDATE_NOT_LOADED
+				: self::REASON_AUDIENCE_HANDOFF_MISSING;
+		}
+		return self::REASON_NOT_CLAIMED;
+	}
 
-		update_option( self::FEATURE_MIGRATION_OPTION, 1 );
+	/**
+	 * Whether the active Fair Audience's main file on disk defines the
+	 * handoff constant. A capability check, not a version comparison: it
+	 * tells an old release apart from an update that has not loaded yet.
+	 *
+	 * @return bool
+	 */
+	private static function audience_files_hand_off() {
+		if ( ! defined( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) {
+			return false;
+		}
+		$file = trailingslashit( (string) constant( 'FAIR_AUDIENCE_PLUGIN_DIR' ) ) . 'fair-audience.php';
+		if ( ! is_readable( $file ) ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local plugin file, read only while the handoff is missing.
+		$source = file_get_contents( $file );
+
+		return is_string( $source ) && false !== strpos( $source, "'" . self::AUDIENCE_HANDOFF . "'" );
 	}
 }

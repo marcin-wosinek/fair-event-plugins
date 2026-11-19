@@ -79,54 +79,64 @@ class OwnershipTest extends TestCase {
 	}
 
 	/**
-	 * Off by default on a site without a connection.
+	 * An existing connection does not turn the feature on: only an
+	 * administrator does, and nothing is claimed until then.
 	 *
 	 * @return void
 	 */
-	public function test_feature_stays_off_without_a_connection() {
-		Ownership::maybe_enable_for_existing_connection();
-
-		$this->assertFalse( Features::is_enabled( 'instagram' ) );
-		$this->assertSame( 1, get_option( Ownership::FEATURE_MIGRATION_OPTION ) );
-	}
-
-	/**
-	 * An existing connection keeps working: the feature is turned on once.
-	 *
-	 * @return void
-	 */
-	public function test_existing_connection_turns_the_feature_on() {
+	public function test_existing_connection_leaves_the_feature_off() {
 		$GLOBALS['_fair_test_options'][ Connection::CONNECTED_OPTION ] = true;
 		$GLOBALS['_fair_test_options'][ Features::OPTION ]             = array( 'sources' => false );
 
-		Ownership::maybe_enable_for_existing_connection();
+		$this->assertFalse( method_exists( Ownership::class, 'maybe_enable_for_existing_connection' ) );
+		$this->assertFalse( Features::is_enabled( 'instagram' ) );
+		$this->assertFalse( Ownership::claims() );
+		$this->assertSame( array( 'sources' => false ), get_option( Features::OPTION ) );
+	}
 
-		$this->assertTrue( Features::is_enabled( 'instagram' ) );
-		$this->assertSame(
-			array(
-				'sources'   => false,
-				'instagram' => true,
-			),
-			get_option( Features::OPTION )
+	/**
+	 * Ownership states and the reason each reports: owns?, feature on?,
+	 * Fair Audience active?, it hands off at runtime?, its files hand off?,
+	 * expected reason.
+	 *
+	 * @return array<string,array{bool,bool,bool,bool,bool,string}>
+	 */
+	public static function reason_states() {
+		return array(
+			'claimed'                              => array( true, true, true, true, true, Ownership::REASON_MANAGED_HERE ),
+			'claimed with Fair Audience inactive'  => array( true, true, false, false, false, Ownership::REASON_MANAGED_HERE ),
+			'feature off'                          => array( false, false, true, true, true, Ownership::REASON_FEATURE_OFF ),
+			'genuinely older Fair Audience'        => array( false, true, true, false, false, Ownership::REASON_AUDIENCE_HANDOFF_MISSING ),
+			'updated Fair Audience not loaded'     => array( false, true, true, false, true, Ownership::REASON_AUDIENCE_UPDATE_NOT_LOADED ),
+			'updated Fair Audience, claim missed'  => array( false, true, true, true, true, Ownership::REASON_NOT_CLAIMED ),
+			'Fair Audience inactive, claim missed' => array( false, true, false, false, false, Ownership::REASON_NOT_CLAIMED ),
 		);
 	}
 
 	/**
-	 * An administrator's explicit choice is kept, and the decision is made
-	 * only once.
+	 * Updating Fair Audience is recommended only when its handoff is
+	 * actually absent, in the code that ran and on disk.
+	 *
+	 * @param bool   $owns       Claimed.
+	 * @param bool   $feature_on Feature on.
+	 * @param bool   $active     Fair Audience active.
+	 * @param bool   $hands_off  Runtime handoff.
+	 * @param bool   $files      Handoff on disk.
+	 * @param string $expected   Reason.
+	 * @return void
+	 */
+	#[DataProvider( 'reason_states' )]
+	public function test_resolve_reason( $owns, $feature_on, $active, $hands_off, $files, $expected ) {
+		$this->assertSame( $expected, Ownership::resolve_reason( $owns, $feature_on, $active, $hands_off, $files ) );
+	}
+
+	/**
+	 * Without the feature, the request reports it as the reason.
 	 *
 	 * @return void
 	 */
-	public function test_explicit_setting_and_later_runs_are_left_alone() {
-		$GLOBALS['_fair_test_options'][ Connection::CONNECTED_OPTION ] = true;
-		$GLOBALS['_fair_test_options'][ Features::OPTION ]             = array( 'instagram' => false );
-
-		Ownership::maybe_enable_for_existing_connection();
-		$this->assertFalse( Features::is_enabled( 'instagram' ) );
-
-		$GLOBALS['_fair_test_options'][ Features::OPTION ] = array();
-		Ownership::maybe_enable_for_existing_connection();
-		$this->assertFalse( Features::is_enabled( 'instagram' ) );
+	public function test_reason_reports_the_feature_off() {
+		$this->assertSame( Ownership::REASON_FEATURE_OFF, Ownership::reason() );
 	}
 
 	/**

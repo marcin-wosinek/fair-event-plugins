@@ -71,6 +71,33 @@ async function wp( ...args ) {
 	return stdout;
 }
 
+const FEATURES_OPTION = 'fair_events_experimental_features';
+
+/** The `whatsapp` bundle's stored state: true, false or null (unset). */
+async function storedWhatsAppFeature() {
+	const out = await wp(
+		'eval',
+		`$f = get_option( '${ FEATURES_OPTION }', array() ); echo wp_json_encode( is_array( $f ) && array_key_exists( 'whatsapp', $f ) ? (bool) $f['whatsapp'] : null );`
+	);
+	return JSON.parse( out.trim().split( '\n' ).pop() );
+}
+
+/**
+ * Store the default-off `whatsapp` bundle's state (#2076); null removes it.
+ *
+ * @param {boolean|null} value New state.
+ */
+async function setWhatsAppFeature( value ) {
+	const assign =
+		null === value
+			? "unset( $f['whatsapp'] );"
+			: `$f['whatsapp'] = ${ value ? 'true' : 'false' };`;
+	await wp(
+		'eval',
+		`$f = get_option( '${ FEATURES_OPTION }', array() ); $f = is_array( $f ) ? $f : array(); ${ assign } delete_option( '${ FEATURES_OPTION }' ); if ( $f ) { add_option( '${ FEATURES_OPTION }', $f ); }`
+	);
+}
+
 /**
  * A JSON option of the tests site, or a fallback.
  *
@@ -163,6 +190,7 @@ test.describe( 'WhatsApp webhook', () => {
 
 	let api;
 	let subscriberId;
+	let previousFeature;
 	let subscriberHeaders;
 
 	const post = ( raw, signature = sign( raw ) ) =>
@@ -205,6 +233,8 @@ test.describe( 'WhatsApp webhook', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
+		previousFeature = await storedWhatsAppFeature();
+		await setWhatsAppFeature( true );
 		const userLogin = `whatsapp-webhook-${ Date.now() }`;
 		const userRes = await api.post( '/wp-json/wp/v2/users', {
 			headers: adminHeaders,
@@ -261,6 +291,7 @@ test.describe( 'WhatsApp webhook', () => {
 				{ headers: adminHeaders }
 			);
 		}
+		await setWhatsAppFeature( previousFeature );
 		await api.dispose();
 	} );
 

@@ -144,15 +144,18 @@ class AdminPages {
 			);
 		}
 
-		// WhatsApp page. The access token lives in Settings → Connectors.
-		$this->page_hooks['fair-events-whatsapp'] = add_submenu_page(
-			$parent,
-			__( 'WhatsApp', 'fair-events-experimental' ),
-			__( 'WhatsApp', 'fair-events-experimental' ),
-			'manage_options',
-			'fair-events-whatsapp',
-			array( $this, 'render_whatsapp_page' )
-		);
+		// WhatsApp page — `whatsapp` bundle. The access token lives in
+		// Settings → Connectors. Not registered while the bundle is off.
+		if ( \FairEventsExperimental\Core\Features::is_enabled( 'whatsapp' ) ) {
+			$this->page_hooks['fair-events-whatsapp'] = add_submenu_page(
+				$parent,
+				__( 'WhatsApp', 'fair-events-experimental' ),
+				__( 'WhatsApp', 'fair-events-experimental' ),
+				'manage_options',
+				'fair-events-whatsapp',
+				array( $this, 'render_whatsapp_page' )
+			);
+		}
 	}
 
 	/**

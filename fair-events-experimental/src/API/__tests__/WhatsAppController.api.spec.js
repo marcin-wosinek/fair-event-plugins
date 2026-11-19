@@ -9,6 +9,11 @@
  * graph.facebook.com for the synthetic account it documents and logs each
  * request (without the token) to the `fair_e2e_whatsapp_requests` option.
  *
+ * The connection is behind the default-off `whatsapp` bundle (#2076): the
+ * suite turns it on, checks that turning it off removes the routes and the
+ * Connectors setting while keeping the saved values, and restores the
+ * bundle's previous state afterwards.
+ *
  * The suite saves its own token through the Connectors setting and removes
  * it, the IDs and the double's log afterwards.
  */
@@ -75,6 +80,35 @@ async function doubleRequests() {
 	return start < 0 ? [] : JSON.parse( out.slice( start ) );
 }
 
+const FEATURES_OPTION = 'fair_events_experimental_features';
+
+/** The `whatsapp` bundle's stored state: true, false or null (unset). */
+async function storedWhatsAppFeature() {
+	const out = await wp(
+		'eval',
+		`$f = get_option( '${ FEATURES_OPTION }', array() ); echo wp_json_encode( is_array( $f ) && array_key_exists( 'whatsapp', $f ) ? (bool) $f['whatsapp'] : null );`
+	);
+	return JSON.parse( out.trim().split( '\n' ).pop() );
+}
+
+/**
+ * Store the `whatsapp` bundle's state; null removes it so the default
+ * applies. The option is rewritten because its sanitizer keeps keys a write
+ * leaves out.
+ *
+ * @param {boolean|null} value New state.
+ */
+async function setWhatsAppFeature( value ) {
+	const assign =
+		null === value
+			? "unset( $f['whatsapp'] );"
+			: `$f['whatsapp'] = ${ value ? 'true' : 'false' };`;
+	await wp(
+		'eval',
+		`$f = get_option( '${ FEATURES_OPTION }', array() ); $f = is_array( $f ) ? $f : array(); ${ assign } delete_option( '${ FEATURES_OPTION }' ); if ( $f ) { add_option( '${ FEATURES_OPTION }', $f ); }`
+	);
+}
+
 async function clearDoubleRequests() {
 	await wp( 'option', 'delete', 'fair_e2e_whatsapp_requests' ).catch(
 		() => {}
@@ -87,6 +121,7 @@ test.describe( 'WhatsAppController', () => {
 	let api;
 	let subscriberId;
 	let subscriberHeaders;
+	let previousFeature;
 
 	const saveToken = ( token ) =>
 		api.post( SETTINGS_PATH, {
@@ -114,6 +149,8 @@ test.describe( 'WhatsAppController', () => {
 
 	test.beforeAll( async () => {
 		api = await request.newContext( { baseURL: BASE_URL } );
+		previousFeature = await storedWhatsAppFeature();
+		await setWhatsAppFeature( true );
 		const userLogin = `whatsapp-${ Date.now() }`;
 		const userRes = await api.post( '/wp-json/wp/v2/users', {
 			headers: adminHeaders,
@@ -138,6 +175,7 @@ test.describe( 'WhatsAppController', () => {
 	} );
 
 	test.afterAll( async () => {
+		await setWhatsAppFeature( true );
 		await saveToken( '' );
 		await saveIds( '', '' );
 		await wp(
@@ -156,6 +194,7 @@ test.describe( 'WhatsAppController', () => {
 				{ headers: adminHeaders }
 			);
 		}
+		await setWhatsAppFeature( previousFeature );
 		await api.dispose();
 	} );
 
@@ -556,5 +595,58 @@ test.describe( 'WhatsAppController', () => {
 		} );
 
 		await saveToken( '' );
+	} );
+	test( 'stays off until enabled and keeps saved values while off', async () => {
+		// Saved while on.
+		expect( ( await saveToken( TOKEN ) ).ok() ).toBeTruthy();
+		expect( ( await saveIds( WABA, PHONE ) ).status() ).toBe( 200 );
+
+		for ( const state of [ null, false ] ) {
+			// Unset is the default (off); an explicit false is off too.
+			await setWhatsAppFeature( state );
+
+			for ( const [ method, path ] of [
+				[ 'get', PATH ],
+				[ 'post', `${ PATH }/validate` ],
+				[ 'post', `${ PATH }/test` ],
+				[ 'get', `${ PATH }/webhook` ],
+			] ) {
+				const res = await api[ method ]( path, {
+					headers: adminHeaders,
+				} );
+				expect( res.status(), `${ method } ${ path }` ).toBe( 404 );
+			}
+
+			// The Connectors setting is not exposed while off.
+			const settings = await api.get( SETTINGS_PATH, {
+				headers: adminHeaders,
+			} );
+			expect( settings.status() ).toBe( 200 );
+			const body = await settings.text();
+			expect( JSON.parse( body ) ).not.toHaveProperty( TOKEN_OPTION );
+			expect( body ).not.toContain( TOKEN );
+
+			// The saved values stay.
+			const kept = await wp(
+				'eval',
+				"echo wp_json_encode( array( (string) get_option( 'fair_events_experimental_whatsapp_access_token' ), (string) get_option( 'fair_events_experimental_whatsapp_waba_id' ), (string) get_option( 'fair_events_experimental_whatsapp_phone_number_id' ) ) );"
+			);
+			expect( JSON.parse( kept.trim().split( '\n' ).pop() ) ).toEqual( [
+				TOKEN,
+				WABA,
+				PHONE,
+			] );
+		}
+
+		// Turning it back on resumes with the same values.
+		await setWhatsAppFeature( true );
+		const res = await api.get( PATH, { headers: adminHeaders } );
+		expect( res.status() ).toBe( 200 );
+		const body = await res.json();
+		expect( body.waba_id ).toBe( WABA );
+		expect( body.token_configured ).toBe( true );
+
+		await saveToken( '' );
+		await saveIds( '', '' );
 	} );
 } );

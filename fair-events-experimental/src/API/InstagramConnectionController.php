@@ -21,8 +21,8 @@ defined( 'WPINC' ) || die;
  * a connection test and disconnecting, for Fair Events → Instagram.
  *
  * Registered while the `instagram` feature is on. Changes are refused while
- * an older Fair Audience still owns the connection (see {@see Ownership}).
- * No response contains the access token.
+ * this plugin does not own the connection; `ownership_reason` says why (see
+ * {@see Ownership::reason()}). No response contains the access token.
  */
 class InstagramConnectionController extends WP_REST_Controller {
 
@@ -251,11 +251,35 @@ class InstagramConnectionController extends WP_REST_Controller {
 			return null;
 		}
 
+		$reason = Ownership::reason();
+
 		return new WP_Error(
 			'instagram_connection_not_owned',
-			__( 'This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage it here; until then, use Fair Audience → Settings → Instagram.', 'fair-events-experimental' ),
-			array( 'status' => 409 )
+			self::not_owned_message( $reason ),
+			array(
+				'status'           => 409,
+				'ownership_reason' => $reason,
+			)
 		);
+	}
+
+	/**
+	 * What to do while this plugin does not own the connection.
+	 *
+	 * @param string $reason Ownership reason.
+	 * @return string
+	 */
+	private static function not_owned_message( $reason ) {
+		switch ( $reason ) {
+			case Ownership::REASON_AUDIENCE_HANDOFF_MISSING:
+				return __( 'This site’s Fair Audience is older than this plugin and still manages the Instagram connection. Update Fair Audience to manage it here; until then, use Fair Audience → Settings → Instagram.', 'fair-events-experimental' );
+			case Ownership::REASON_AUDIENCE_UPDATE_NOT_LOADED:
+				return __( 'Fair Audience is updated, but the site still runs its previous code, so Fair Audience still manages the Instagram connection. Clear the PHP opcode cache or restart PHP, then try again.', 'fair-events-experimental' );
+			case Ownership::REASON_FEATURE_OFF:
+				return __( 'Instagram is turned off in Fair Events → Settings → Experimental. Turn it on to manage the connection here.', 'fair-events-experimental' );
+			default:
+				return __( 'Fair Events Experimental did not take over the Instagram connection on this request. Reload the page and try again.', 'fair-events-experimental' );
+		}
 	}
 
 	/**
@@ -268,6 +292,7 @@ class InstagramConnectionController extends WP_REST_Controller {
 			Connection::details(),
 			array(
 				'managed_here'      => Ownership::owns(),
+				'ownership_reason'  => Ownership::reason(),
 				'legacy_manage_url' => Ownership::owns() ? null : admin_url( 'admin.php?page=fair-audience-settings' ),
 			)
 		);

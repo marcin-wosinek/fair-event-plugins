@@ -152,7 +152,25 @@ for La Mutable's own setup.
 
 ## Manual connection
 
-Built in #1923, in fair-events-experimental:
+Built in #1923, in fair-events-experimental.
+
+**Activation (#2076).** The connection is off by default. Turn it on in Fair
+Events → Settings → Experimental (**WhatsApp**), or with the
+`FAIR_EVENTS_EXPERIMENTAL_FEATURE_WHATSAPP` constant. Saved credentials alone
+never turn it on. While it is off:
+
+- Fair Events → WhatsApp, the WhatsApp entry in Settings → Connectors, the
+  administrator REST routes and the delivery webhook
+  (`/wp-json/fair-events-experimental/v1/whatsapp/webhook`, which then
+  answers 404) are not registered. Meta retries undelivered callbacks for a
+  limited time, so updates for sends made before turning it off may be lost.
+- The daily delivery cleanup is unscheduled.
+- The saved token, IDs, validation result, webhook credentials and delivery
+  history stay in the database untouched, and none of them is exposed by any
+  route. Turning the connection back on resumes with them, without
+  re-entering anything.
+
+The connection itself:
 
 - **Token:** Settings → Connectors → WhatsApp (`fair-events-whatsapp`). It is
   separate from the Meta Conversions API token. An environment variable or
