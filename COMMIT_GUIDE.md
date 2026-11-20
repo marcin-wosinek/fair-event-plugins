@@ -8,7 +8,7 @@ The default loop while working a ticket:
    work directly to `main`.
 2. **Open a PR when the code is ready.** Once the change satisfies the ticket
    and the relevant builds/tests pass, push the branch and open a PR by default
-   (no need to ask first). Link the issue with `Closes #NNN` per
+   (no need to ask first). Link the issue with `Closes #NNN` or `Refs #NNN` per
    [Referencing & closing issues](#referencing--closing-issues).
 3. **Clean up after merge.** When the PR is merged, delete the source branch
    both remotely and locally:
@@ -49,7 +49,9 @@ link it so the history and the tracker stay connected:
 
 -   **`Closes #NNN`** when the commit/PR fully resolves the issue — GitHub
     auto-closes it on merge to the default branch. Use this for the change that
-    completes the ticket's acceptance criteria.
+    completes the ticket's acceptance criteria. If required acceptance checks
+    remain pending, use `Refs #NNN` and follow
+    [TICKETS.md § Acceptance after merge](./TICKETS.md#acceptance-after-merge).
 -   **`Refs #NNN`** when the change relates to but does not finish the issue
     (partial work, one of several PRs, or a follow-up). It links without closing.
 -   Put the keyword on its own line at the bottom of the commit body. In PRs,
@@ -79,8 +81,11 @@ Closes #557
 -   Add a **Notes** section for trade-offs, deferred work, or follow-ups worth
     flagging to a reviewer.
 -   Add a **Test plan** as a markdown checklist of manual / automated checks.
--   Link the issue with `Closes #NNN` in the Summary so GitHub auto-closes it
-    on merge.
+-   Link the issue with `Closes #NNN` in the Summary when its acceptance
+    criteria are verified; use `Refs #NNN` when acceptance remains pending.
+-   Include the testing handoff from
+    [TESTING.md § Verification planning and handoff](./TESTING.md#verification-planning-and-handoff)
+    in the Test plan, scaling the detail to the change.
 -   No emoji footer, no tool attribution.
 
 ## Responsive-UI tickets (`responsive-ui` label)

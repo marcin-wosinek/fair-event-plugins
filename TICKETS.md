@@ -134,8 +134,9 @@ unchanged, and the sprint is preserved.
    - Status already equals the target: skip the write; the readback is the
      verification.
    - Status is later than the target: skip the write and report that the
-     transition was skipped for review. Never move a ticket backward except
-     for the approved `/reopen-ticket` transition described above.
+     transition was skipped for review. The only backward transitions are
+     the approved `/reopen-ticket` transition described above and the
+     premature-closure correction under Acceptance after merge below.
 
 3. **Update only that item's Status field**, then re-read it:
 
@@ -152,6 +153,29 @@ unchanged, and the sprint is preserved.
    unverified transition never undoes or hides the workflow's other outcome
    (a posted plan, a started implementation); name the exact remaining
    action, e.g. "set #123 Status to Ready in Project 5".
+
+## Acceptance after merge
+
+When required acceptance checks remain unverified, record them with their
+owner and reason on the linked ticket and in the PR testing handoff (see
+`TESTING.md` § Verification planning and handoff). Use `Refs #N` rather than
+an auto-closing reference until the ticket's acceptance criteria are verified.
+Optional manual checks that add no evidence do not hold up closure.
+
+After merge, when handling a ticket with pending acceptance, set its project
+status to Testing using the verified item-level procedure above. Do not move
+it to Testing merely because a PR was opened. The recorded acceptance owner
+checks the intended deployed build, records the outcome, and closes the
+issue and sets Status to Done only when its criteria are satisfied. Report
+any unverified transition separately; do not imply that an agent will keep
+monitoring after its session ends.
+
+If merge automation prematurely closes a ticket with recorded pending
+acceptance, the workflow handling that ticket may reopen it and return it
+from Done to Testing after verifying the state. This is a narrow exception
+to the forward-only status rule, not permission to reopen unrelated issues.
+If verification reveals a defect requiring changes, use `reopen-ticket`
+and its approved corrective plan before returning the ticket to Ready.
 
 ## Ticket structure
 

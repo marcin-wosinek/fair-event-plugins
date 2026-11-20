@@ -27,6 +27,77 @@ supporting workflows rather than additional test types.
   keeps Playwright discovery unambiguous.
 - Shared helpers may live in a nearby `__tests__/helpers/` directory.
 
+## Verification planning and handoff
+
+### External integration discovery
+
+When a design depends on an unfamiliar provider, authentication flow,
+permission model, or external page format, check current official
+documentation and attempt the smallest representative operation before
+finalizing the implementation plan. Examples include reading the required
+data with the intended account or extracting event data from the supplied URL.
+Reuse recent evidence when it still applies to the account, permissions, and
+API or page format; routine changes do not need a new discovery exercise.
+
+Record the documentation links and date checked, the operation and relevant
+environment, its result, and remaining constraints. Distinguish documented
+behavior, behavior observed working, and unverified assumptions. Keep secrets
+and personal data out of published evidence.
+
+Timebox the initial investigation to about 30–60 minutes, proportional to the
+uncertainty. A timeout, unavailable account, or missing permission is a
+recorded blocker, not evidence of feasibility. Plan discovery separately if
+necessary; dependent implementation stays blocked until the assumption is
+resolved. Continue independent work where possible. Discovery does not
+authorize production writes, sending messages, or account changes; use a
+read-only operation or an authorized test environment where appropriate.
+
+### Representative site scenarios
+
+For changes involving persisted data, migrations, sessions, or plugin
+boundaries, name the relevant existing-site scenarios during planning. Select
+only conditions affected by the change: older records, an absent optional
+plugin, a disabled feature, manual edits, or a previous owner returning after
+an ownership transfer. Include fresh-install behavior when installation or
+upgrade behavior changes.
+
+Describe the initial state, action, and observable expected result. Reproduce
+realistic conditions with synthetic fixtures, without copying production
+personal data. Add focused API/E2E regression coverage where lasting coverage
+matters; use the temporary WP-CLI recipe below for a one-off integration
+check. Follow the local test scope limits in `AGENTS.md`.
+
+The implementation report maps these scenarios to evidence and names any
+unverified cases. When a testing follow-up exposes a missed scenario, reproduce
+it before changing code and add regression coverage where appropriate.
+
+### Testing handoff
+
+Include a concise testing handoff in the PR description and final completion
+report. Link to detailed evidence rather than repeating long logs:
+
+- **Where:** page URL or exact navigation to the affected behavior.
+- **Build:** tested commit SHA and environment; deployed version only if
+  verified. Before diagnosing a failed manual check, confirm that the site is
+  running the intended build and required companion plugin versions.
+- **Setup:** required plugins, feature flags, account permissions, and
+  synthetic sample data.
+- **Check:** a few concrete actions, each with its expected outcome.
+- **Evidence:** automated and WordPress/browser checks already performed,
+  including the planned representative scenarios.
+- **Remaining:** unverified checks, the reason, and the owner responsible for
+  acceptance. Name the requester for checks needing their account or judgment
+  unless another owner has accepted the handoff.
+
+Scale this to the change. For an internal refactor, explain when automated
+coverage is sufficient and no additional manual check adds value. Do not ask
+the maintainer to repeat checks already completed without a specific reason.
+Do not claim deployment or acceptance based solely on passing local tests.
+
+PR creation or merge does not complete pending acceptance checks. Record
+pending checks durably on the PR and linked ticket, and follow `TICKETS.md`
+§ Acceptance after merge for project status and closure.
+
 ## Unit and component tests
 
 Use `.test.js` for JavaScript logic that does not need a DOM. Use `.test.jsx`

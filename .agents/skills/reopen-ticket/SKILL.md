@@ -9,6 +9,8 @@ Read `TICKETS.md`, the issue and all discussion, and the relevant implementation
 
 Inspect the current code and read the applicable reference documents listed in `AGENTS.md`. Distinguish observed behavior from inferred causes. Ask only for missing information that materially affects the correction.
 
+Follow `TESTING.md` § Verification planning and handoff: verify the deployed build and required companion plugin versions before diagnosing a site failure, reproduce the missed representative scenario, and plan focused regression coverage where appropriate. Revisit external discovery evidence if the failure challenges a provider, permission, or page-format assumption. Include `TESTING.md` in Read first when these procedures apply.
+
 Plan changes to the existing implementation. Identify what already works, the remaining discrepancy, concrete affected paths, and focused regression coverage. Do not repeat completed implementation work as new tasks.
 
 Present the full proposed plan in chat, opening with the issue number, link, title, and a short summary of the testing findings. Resolve genuine decisions with the user, recommending an option for each fork.
