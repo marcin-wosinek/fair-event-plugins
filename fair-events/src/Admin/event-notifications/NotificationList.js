@@ -78,6 +78,11 @@ export function audienceSummary( configuration ) {
 			? chats.join( ', ' )
 			: __( 'No chat or channel yet', 'fair-events' );
 	}
+	if ( 'instagram' === configuration.type ) {
+		return configuration.account?.username
+			? `@${ configuration.account.username }`
+			: __( 'The connected Instagram account', 'fair-events' );
+	}
 	if ( 'bulk_email' === configuration.type ) {
 		return __(
 			'Subscribers of this event feed, chosen by Fair Audience',
@@ -105,6 +110,19 @@ export function integrationProblem( configuration ) {
 		! ( configuration.token_configured && configuration.token_valid )
 	) {
 		return tokenStatus( configuration ).message;
+	}
+	if (
+		'instagram' === configuration.type &&
+		configuration.account &&
+		! configuration.account.usable
+	) {
+		return (
+			configuration.account.message ||
+			__(
+				'Instagram is not connected. Connect an account in Fair Events → Instagram.',
+				'fair-events'
+			)
+		);
 	}
 	return null;
 }

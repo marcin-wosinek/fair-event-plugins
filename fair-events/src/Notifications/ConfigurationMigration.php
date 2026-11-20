@@ -55,7 +55,7 @@ class ConfigurationMigration {
 	 * @return void
 	 */
 	public static function run() {
-		foreach ( Configurations::TYPES as $type ) {
+		foreach ( Configurations::LEGACY_TYPES as $type ) {
 			if ( ! self::is_migrated( $type ) && self::ready( $type ) ) {
 				$details = self::migrate( $type );
 				if ( null !== $details ) {
@@ -71,7 +71,7 @@ class ConfigurationMigration {
 	 * @return bool
 	 */
 	public static function is_complete() {
-		foreach ( Configurations::TYPES as $type ) {
+		foreach ( Configurations::LEGACY_TYPES as $type ) {
 			if ( ! self::is_migrated( $type ) ) {
 				return false;
 			}

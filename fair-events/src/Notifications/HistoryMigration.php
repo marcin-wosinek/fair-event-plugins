@@ -73,7 +73,7 @@ class HistoryMigration {
 		if ( ! HistoryTables::is_current() ) {
 			return;
 		}
-		foreach ( Configurations::TYPES as $type ) {
+		foreach ( Configurations::LEGACY_TYPES as $type ) {
 			if ( ! self::is_migrated( $type ) && ConfigurationMigration::is_migrated( $type ) ) {
 				$details = self::migrate( $type );
 				if ( null !== $details ) {
@@ -89,7 +89,7 @@ class HistoryMigration {
 	 * @return bool
 	 */
 	public static function is_complete() {
-		foreach ( Configurations::TYPES as $type ) {
+		foreach ( Configurations::LEGACY_TYPES as $type ) {
 			if ( ! self::is_migrated( $type ) ) {
 				return false;
 			}

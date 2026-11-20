@@ -25,7 +25,7 @@ import {
  * @param {string|null} props.unavailableMessage Why the channel cannot be edited now, if it cannot.
  * @param {string}      props.saveLabel          Save button label.
  * @param {string}      props.previewLabel       Preview button label.
- * @param {string}      props.testLabel          Test button label.
+ * @param {string}      [props.testLabel]        Test button label; without one there is no test, e.g. when every send is public.
  * @param {boolean}     props.testBlocked        Whether the test cannot be sent, besides unsaved changes.
  * @param {Array}       props.notes              Explanations shown below the buttons.
  * @param {*}           props.children           Description, notices and controls above the buttons.
@@ -124,16 +124,21 @@ export default function NotificationEditor( {
 					>
 						{ previewLabel }
 					</Button>
-					<Button
-						variant="secondary"
-						onClick={ editor.sendTest }
-						isBusy={ pending.test }
-						disabled={
-							pending.save || pending.test || dirty || testBlocked
-						}
-					>
-						{ testLabel }
-					</Button>
+					{ testLabel && (
+						<Button
+							variant="secondary"
+							onClick={ editor.sendTest }
+							isBusy={ pending.test }
+							disabled={
+								pending.save ||
+								pending.test ||
+								dirty ||
+								testBlocked
+							}
+						>
+							{ testLabel }
+						</Button>
+					) }
 				</div>
 				{ editor.problem && (
 					<p className="description">{ editor.problem }</p>

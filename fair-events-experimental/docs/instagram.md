@@ -175,6 +175,74 @@ While Fair Events Experimental owns the connection, Fair Audience → Settings
 location and records, and publish with the same account. Turning the feature
 off hands the connection back to Fair Audience on the next request.
 
+## Scheduled event-list posts
+
+Fair Events → Event notifications can publish the week's events to the
+connected account (#2076). Add a notification of the **Instagram** kind,
+choose the event feed, the page whose title heads the image and whose link
+ends the caption, and the weekday, time and week, like a Telegram summary.
+Each Instagram notification has its own schedule and history.
+
+- **Turning it on authorizes public posts.** Once on, the site publishes a
+  public post every week at the chosen time without asking. There is no test
+  post; **Preview next Instagram post** draws the image and caption for the
+  selected week and publishes nothing, stores nothing and contacts no one.
+- **One post per notification and week**: one 1080 × 1350 JPEG (DM Sans,
+  SIL Open Font License, bundled in `assets/fonts`) listing each event's day,
+  time and name, and a caption with the same list and the page's link.
+  Emoji are left out of the image; the caption keeps them. Weeks without
+  events are skipped.
+- **The whole list or nothing.** Text shrinks down to a readable minimum. If
+  the events still do not fit, or the caption exceeds Instagram's limits
+  (2,200 characters, 30 hashtags, 20 @mentions), nothing is published and
+  the history says why. Choose an event feed with fewer events. Carousels
+  are not supported yet.
+- **Requirements**: this page's Instagram feature on and connected, WP-Cron
+  running (on a low-traffic site, a real cron calling `wp-cron.php` keeps
+  posts on time), PHP GD with FreeType, a writable uploads folder, and the
+  site served over HTTPS, since Instagram downloads the image from it.
+- **The image is public only while Instagram processes it**: it is stored
+  under a random name in `uploads/fair-events-instagram/`, and removed once
+  the post is published or has failed. Previews are never stored.
+
+### How publishing avoids duplicates
+
+Fair Events keeps the settings, schedule and history; this plugin draws the
+post and calls Instagram (`FairEventsExperimental\Instagram\EventListPosts`).
+Each scheduled send claims its notification and week once, renders the post
+once, and saves a publishing job before every call to Instagram:
+
+1. Create the media container (nothing is public yet).
+2. Background steps (`fair_events_notification_instagram_step`) poll its
+   processing every 30 seconds, at most 20 times.
+3. Just before publishing, the step checks that the notification still
+   exists and is on and that the connected account is the one the post was
+   prepared for, saves the intent to publish, then publishes.
+4. If Instagram's answer is unclear (a timeout, a server error) or the step
+   stopped after saving the intent, later steps read the container's status
+   every two minutes, at most six times: published, not published, or
+   unknown. The container is never published again and no replacement post
+   is created.
+
+### Reading the history
+
+Each run is one execution under the notification's **History**, with the
+account as the recipient and, once published, a **View the post** link.
+
+| Shown as                                   | What to do                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Instagram posting was unavailable          | Turn on Instagram here and make sure this plugin is active; the next week posts.   |
+| Instagram was not connected                | Connect again on this page.                                                        |
+| The events did not fit / caption too long  | Use a feed with fewer events; nothing was published.                               |
+| Could not be stored / needs HTTPS          | Make uploads writable and serve the site over HTTPS.                               |
+| Did not accept / could not process         | Check the image URL is reachable from the internet; nothing was published.         |
+| Turned off / deleted / account changed     | The post was stopped before it went public, as asked.                              |
+| Not published                              | Instagram reports the container unpublished. It is not retried.                    |
+| Outcome unknown                            | Check the account. If the post is missing, publish it by hand; it is never retried. |
+
+A missed week is never posted later: turning the feature back on resumes
+with the next scheduled week.
+
 ## Recovering
 
 - **"Instagram is paused"**: the server lost Sodium support. Restore it; the

@@ -88,6 +88,11 @@ class Notifications {
 			IndividualEmailDispatcher::init();
 		}
 
+		// Instagram posts (#2076) started with configurations, so there is
+		// nothing to migrate. They are paused, settings kept, while Fair
+		// Events Experimental's Instagram posting is unavailable.
+		InstagramDispatcher::init();
+
 		// Sales summaries (#2306) are sent by this plugin alone and have no
 		// configuration records to migrate.
 		SalesSummaryDispatcher::init();
@@ -120,6 +125,7 @@ class Notifications {
 		TelegramDispatcher::unschedule_all();
 		BulkEmailDispatcher::unschedule_all();
 		IndividualEmailDispatcher::unschedule_all();
+		InstagramDispatcher::unschedule_all();
 		SalesSummaryDispatcher::unschedule_all();
 		wp_unschedule_hook( self::HISTORY_CLEANUP_HOOK );
 	}

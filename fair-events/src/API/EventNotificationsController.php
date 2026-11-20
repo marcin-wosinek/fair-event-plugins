@@ -21,6 +21,9 @@ use FairEvents\Notifications\IndividualEmailDispatcher;
 use FairEvents\Notifications\IndividualEmailEvents;
 use FairEvents\Notifications\IndividualEmailRenderer;
 use FairEvents\Notifications\IndividualEmailSettings;
+use FairEvents\Notifications\InstagramAdapter;
+use FairEvents\Notifications\InstagramDispatcher;
+use FairEvents\Notifications\InstagramSettings;
 use FairEvents\Notifications\Ownership;
 use FairEvents\Notifications\ScheduledSends;
 use FairEvents\Notifications\SummaryBuilder;
@@ -60,6 +63,11 @@ defined( 'WPINC' ) || die;
  * The Telegram bot token is managed in Settings → Connectors. Responses report
  * only whether one is configured and where it comes from, and provider errors
  * are returned with the token removed.
+ *
+ * Instagram posts use Fair Events Experimental's Instagram connection, which
+ * these routes never return; they report the connected account's name only.
+ * An Instagram configuration has a preview of its image and caption and no
+ * test: every Instagram post is public.
  */
 class EventNotificationsController extends WP_REST_Controller {
 
@@ -425,7 +433,7 @@ class EventNotificationsController extends WP_REST_Controller {
 		$page_ids       = array();
 		foreach ( $this->summarized( Configurations::all() ) as $payload ) {
 			$configurations[ $payload['id'] ] = $payload;
-			if ( Configurations::TELEGRAM === $payload['type'] && $payload['page_id'] ) {
+			if ( in_array( $payload['type'], array( Configurations::TELEGRAM, Configurations::INSTAGRAM ), true ) && $payload['page_id'] ) {
 				$page_ids[] = $payload['page_id'];
 			}
 		}
@@ -511,6 +519,9 @@ class EventNotificationsController extends WP_REST_Controller {
 				$settings                                     = TelegramSettings::get( $source['id'] );
 				$settings['providers']['telegram']['enabled'] = false;
 				break;
+			case Configurations::INSTAGRAM:
+				$settings = InstagramSettings::get( $source['id'] );
+				break;
 			case Configurations::BULK_EMAIL:
 				// `stored()` keeps an unsaved subject empty, so the copy keeps the dynamic default.
 				$settings = BulkEmailSettings::stored( $source['id'] );
@@ -550,6 +561,7 @@ class EventNotificationsController extends WP_REST_Controller {
 			Configurations::TELEGRAM         => __( 'Telegram', 'fair-events' ),
 			Configurations::BULK_EMAIL       => __( 'Bulk email', 'fair-events' ),
 			Configurations::INDIVIDUAL_EMAIL => __( 'Individual email', 'fair-events' ),
+			Configurations::INSTAGRAM        => __( 'Instagram', 'fair-events' ),
 		);
 		$name   = '' === $source['name'] ? $labels[ $source['type'] ] : $source['name'];
 		/* translators: %s: name of the notification that was copied */
@@ -682,6 +694,8 @@ class EventNotificationsController extends WP_REST_Controller {
 				return TelegramDispatcher::HOOK;
 			case Configurations::BULK_EMAIL:
 				return BulkEmailDispatcher::HOOK;
+			case Configurations::INSTAGRAM:
+				return InstagramDispatcher::HOOK;
 			default:
 				return IndividualEmailDispatcher::HOOK;
 		}
@@ -727,6 +741,8 @@ class EventNotificationsController extends WP_REST_Controller {
 				return $this->preview_telegram_configuration( $record['id'] );
 			case Configurations::BULK_EMAIL:
 				return $this->preview_bulk_email_configuration( $record['id'] );
+			case Configurations::INSTAGRAM:
+				return $this->preview_instagram_configuration( $record['id'] );
 			default:
 				return $this->preview_individual_email_configuration( $record['id'] );
 		}
@@ -749,6 +765,13 @@ class EventNotificationsController extends WP_REST_Controller {
 				return $this->test_telegram_configuration( $record['id'] );
 			case Configurations::BULK_EMAIL:
 				return $this->test_bulk_email_configuration( $record['id'] );
+			case Configurations::INSTAGRAM:
+				// Every Instagram post is public, so there is no test post.
+				return new WP_Error(
+					'instagram_no_test',
+					__( 'Instagram notifications have no test post: every post is public. Use the preview to check the image and caption.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
 			default:
 				return $this->test_individual_email_configuration( $record['id'] );
 		}
@@ -897,6 +920,8 @@ class EventNotificationsController extends WP_REST_Controller {
 				return $this->save_telegram( $id, $request );
 			case Configurations::BULK_EMAIL:
 				return $this->save_bulk_email( $id, $request );
+			case Configurations::INSTAGRAM:
+				return $this->save_instagram( $id, $request );
 			default:
 				return $this->save_individual_email( $id, $request );
 		}
@@ -996,6 +1021,57 @@ class EventNotificationsController extends WP_REST_Controller {
 		}
 		// Never leave a send queued for a configuration deleted meanwhile.
 		ScheduledSends::drop_if_deleted( TelegramDispatcher::HOOK, $id, Configurations::TELEGRAM );
+
+		return null;
+	}
+
+	/**
+	 * Save one Instagram configuration.
+	 *
+	 * Turning it on needs a public heading page, an event feed and a usable
+	 * Instagram connection; the account is checked again before each post.
+	 *
+	 * @param string          $id      Configuration ID.
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_Error|null
+	 */
+	private function save_instagram( $id, $request ) {
+		$settings = InstagramSettings::get( $id );
+		$previous = $settings;
+		foreach ( array_keys( InstagramSettings::defaults() ) as $field ) {
+			if ( $request->has_param( $field ) ) {
+				$settings[ $field ] = $request->get_param( $field );
+			}
+		}
+		$settings = InstagramSettings::normalize( $settings );
+
+		if ( $settings['enabled'] ) {
+			$check = ( new SummaryBuilder() )->check( $settings['source_slug'], $settings['page_id'] );
+			if ( is_wp_error( $check ) ) {
+				return new WP_Error( $check->get_error_code(), $check->get_error_message(), array( 'status' => 400 ) );
+			}
+			$account = $this->instagram_account();
+			if ( ! $account['usable'] ) {
+				return new WP_Error(
+					'instagram_not_connected',
+					'' !== $account['message']
+						? $account['message']
+						: __( 'Connect an Instagram account in Fair Events → Instagram before turning on Instagram posts.', 'fair-events' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		if ( ! InstagramSettings::save( $id, $settings ) ) {
+			return $this->not_saved( $id, Configurations::INSTAGRAM );
+		}
+
+		if ( self::schedule_changed( array( 'enabled', 'day_of_week', 'time_of_day', 'week_scope' ), $previous, $settings )
+			|| ( $settings['enabled'] && ! InstagramDispatcher::next_run( $id ) ) ) {
+			InstagramDispatcher::reschedule( $id, $settings );
+		}
+		// Never leave a send queued for a configuration deleted meanwhile.
+		ScheduledSends::drop_if_deleted( InstagramDispatcher::HOOK, $id, Configurations::INSTAGRAM );
 
 		return null;
 	}
@@ -1218,6 +1294,61 @@ class EventNotificationsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Preview an Instagram configuration's post for the week relative to today:
+	 * the image and caption a scheduled post would publish. Nothing is stored
+	 * and Instagram is not contacted.
+	 *
+	 * @param string $id Configuration ID.
+	 * @return \WP_REST_Response|WP_Error
+	 */
+	private function preview_instagram_configuration( $id ) {
+		$adapter = new InstagramAdapter();
+		$posts   = $adapter->posts();
+		if ( ! $posts ) {
+			return new WP_Error( 'instagram_unavailable', $adapter->message( $adapter->availability() ), array( 'status' => 409 ) );
+		}
+
+		$settings = InstagramSettings::get( $id );
+		$week     = WeekSchedule::target_week( InstagramDispatcher::now(), $settings['week_scope'], TelegramDispatcher::start_of_week() );
+		$summary  = ( new SummaryBuilder() )->build( $settings, $week );
+		if ( is_wp_error( $summary ) ) {
+			return new WP_Error( $summary->get_error_code(), $summary->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		$response = array(
+			'week_start'       => $week['start'],
+			'week_end'         => $week['end'],
+			'week_title'       => EventsWeekSummary::range_title( $week['start'], $week['end'] ),
+			'occurrence_count' => $summary['occurrence_count'],
+			'caption'          => '',
+			'image'            => '',
+			'width'            => 0,
+			'height'           => 0,
+		);
+		if ( 0 === $summary['occurrence_count'] ) {
+			return rest_ensure_response( $response );
+		}
+
+		$post = $posts->compose( $summary );
+		if ( is_wp_error( $post ) ) {
+			return new WP_Error( $post->get_error_code(), $post->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		return rest_ensure_response(
+			array_merge(
+				$response,
+				array(
+					'caption' => $post['caption'],
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- an inline preview image.
+					'image'   => 'data:image/jpeg;base64,' . base64_encode( $post['jpeg'] ),
+					'width'   => $post['width'],
+					'height'  => $post['height'],
+				)
+			)
+		);
+	}
+
+	/**
 	 * Preview the weekly email a bulk email configuration's next send would deliver.
 	 *
 	 * @param string $id Configuration ID.
@@ -1391,6 +1522,8 @@ class EventNotificationsController extends WP_REST_Controller {
 				return TelegramSettings::defaults();
 			case Configurations::BULK_EMAIL:
 				return BulkEmailSettings::defaults();
+			case Configurations::INSTAGRAM:
+				return InstagramSettings::defaults();
 			default:
 				return IndividualEmailSettings::defaults();
 		}
@@ -1409,6 +1542,9 @@ class EventNotificationsController extends WP_REST_Controller {
 				break;
 			case Configurations::BULK_EMAIL:
 				$payload = $this->bulk_email_channel( $record['id'] );
+				break;
+			case Configurations::INSTAGRAM:
+				$payload = $this->instagram_channel( $record['id'] );
 				break;
 			default:
 				$payload = $this->individual_email_channel( $record['id'] );
@@ -1489,9 +1625,79 @@ class EventNotificationsController extends WP_REST_Controller {
 			);
 		}
 
+		if ( Configurations::INSTAGRAM === $type ) {
+			$adapter      = new InstagramAdapter();
+			$availability = $adapter->availability();
+			return array(
+				'state'   => InstagramAdapter::ACTIVE === $availability ? 'active' : $availability,
+				'message' => $adapter->message( $availability ),
+			);
+		}
+
 		return array(
 			'state'   => 'active',
 			'message' => '',
+		);
+	}
+
+	/**
+	 * The connected Instagram account, without any credential.
+	 *
+	 * @return array{usable: bool, user_id: string, username: string, message: string, settings_url: string}
+	 */
+	private function instagram_account() {
+		$posts   = ( new InstagramAdapter() )->posts();
+		$account = $posts ? (array) $posts->account() : array();
+
+		return array(
+			'usable'       => ! empty( $account['usable'] ),
+			'user_id'      => (string) ( $account['user_id'] ?? '' ),
+			'username'     => (string) ( $account['username'] ?? '' ),
+			'message'      => (string) ( $account['message'] ?? '' ),
+			'settings_url' => (string) ( $account['settings_url'] ?? admin_url( 'admin.php?page=fair-events-instagram' ) ),
+		);
+	}
+
+	/**
+	 * Instagram configuration payload.
+	 *
+	 * `publishing` lists posts being published now, with their phase.
+	 *
+	 * @param string $id Configuration ID.
+	 * @return array
+	 */
+	private function instagram_channel( $id ) {
+		$settings = InstagramSettings::get( $id );
+		$state    = $this->type_state( Configurations::INSTAGRAM );
+		$active   = 'active' === $state['state'];
+		$check    = '' !== $settings['source_slug'] || $settings['page_id']
+			? ( new SummaryBuilder() )->check( $settings['source_slug'], $settings['page_id'] )
+			: true;
+		$next     = $active ? InstagramDispatcher::next_run( $id ) : null;
+		$account  = $active ? $this->instagram_account() : null;
+
+		return array(
+			'state'               => $state['state'],
+			'state_message'       => $state['message'],
+			'enabled'             => $settings['enabled'],
+			'source_slug'         => $settings['source_slug'],
+			'page_id'             => $settings['page_id'],
+			'day_of_week'         => $settings['day_of_week'],
+			'time_of_day'         => $settings['time_of_day'],
+			'week_scope'          => $settings['week_scope'],
+			'account'             => $account,
+			'configuration_error' => is_wp_error( $check ) ? $check->get_error_message() : null,
+			'next_run'            => $next ? $this->telegram_next_run( $next ) : null,
+			'publishing'          => array_map(
+				static function ( $job ) {
+					return array(
+						'week_start' => $job['week_start'],
+						'phase'      => $job['phase'],
+					);
+				},
+				InstagramDispatcher::jobs( $id )
+			),
+			'runs'                => array_map( array( $this, 'with_local_time' ), InstagramDispatcher::runs( $id ) ),
 		);
 	}
 
@@ -1615,6 +1821,18 @@ class EventNotificationsController extends WP_REST_Controller {
 				: new WP_Error(
 					'channel_update_required',
 					__( 'Update Fair Events Experimental to manage Telegram summaries here. Nothing was changed.', 'fair-events' ),
+					array( 'status' => 409 )
+				);
+		}
+
+		if ( Configurations::INSTAGRAM === $type ) {
+			$adapter      = new InstagramAdapter();
+			$availability = $adapter->availability();
+			return InstagramAdapter::ACTIVE === $availability
+				? null
+				: new WP_Error(
+					'instagram_unavailable',
+					$adapter->message( $availability ) . ' ' . __( 'Nothing was changed.', 'fair-events' ),
 					array( 'status' => 409 )
 				);
 		}

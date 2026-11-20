@@ -64,8 +64,32 @@
 	padding: 12px;
 }
 
-.fair-events-notifications__preview.is-telegram {
+.fair-events-notifications__preview.is-telegram,
+.fair-events-notifications__preview.is-instagram {
 	white-space: pre-wrap;
+}
+
+.fair-events-notifications__instagram-post {
+	align-items: start;
+	display: grid;
+	gap: 16px;
+	grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+}
+
+.fair-events-notifications__instagram-post img {
+	border: 1px solid #dcdcde;
+	display: block;
+	height: auto;
+	max-width: 100%;
+}
+
+.fair-events-notifications__instagram-post .fair-events-notifications__preview {
+	max-height: 450px;
+}
+
+.fair-events-notifications__instagram-status h3 {
+	font-size: 14px;
+	margin: 16px 0 8px;
 }
 
 .fair-events-notifications__preview img,
@@ -74,7 +98,8 @@
 }
 
 @media (max-width: 782px) {
-	.fair-events-notifications__fields {
+	.fair-events-notifications__fields,
+	.fair-events-notifications__instagram-post {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
