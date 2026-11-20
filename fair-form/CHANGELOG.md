@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.3
+
+### Patch Changes
+
+- de9bbda: The Fair Form block's Event selector shows event names as readable text, instead of HTML codes such as `&nbsp;`, `&amp;` or `&quot;`. Dates, times, the selected event and saved forms are unchanged, and event names that look like HTML are shown as text.
+- 0a38f40: Event names show readable text wherever they appear, instead of HTML codes such as `&nbsp;`, `&amp;` or `&#8220;`. This covers transaction descriptions on the Payments Connector Transactions list and detail screens, including existing transactions, which are not rewritten. It also covers event names in the admin lists, calendars, selectors and dialogs of every Fair plugin, Fair Audience email subjects, the payment description shown at Mollie checkout, structured event data (JSON-LD), the experimental iCal source export and timeline, and the weekly summary page and email. Event names that look like HTML are shown as text and are never interpreted as markup.
+- d97b732: Give every plugin email the same design. Booking confirmations, payment failures, invitations, form notifications, weekly event emails and payment notifications now share one layout that fits phone screens: long event names, links and answers wrap instead of making the email wider than the screen. Standalone Fair Events payment-failure emails now use the red failure header. Message content, subjects, recipients and links are unchanged.
+- Updated dependencies [0a38f40]
+    - fair-events-shared@0.9.1
+
 ## 1.8.2
 
 ### Patch Changes

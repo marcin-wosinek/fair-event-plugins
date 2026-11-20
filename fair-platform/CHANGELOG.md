@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0
+
+### Minor Changes
+
+- 94b6605: Instagram: when Meta shares more than one Instagram account, Fair Events → Instagram now lists them by @username so an administrator can choose the one this site publishes to, instead of asking to connect again. A single account still connects right away, also when Meta lists it on several pages, and Fair Platform reads every page of shared accounts.
+- 0e4c35d: Instagram connects through Meta's Unified Login. Fair Events → Instagram signs in with Facebook, and the administrator shares exactly one Instagram professional account. Only a single-use code returns to the site, and the site's server exchanges it for the access token, so the token never appears in a URL or the browser. The token does not expire and is no longer renewed. Publishing, the connection test and Fair Audience → Instagram Posts use graph.facebook.com. Every existing Instagram connection must be reconnected: until then it stays stored but is not used, and posts and their records are kept. Manual token entry and the account ID field are gone, and Fair Audience → Settings → Instagram now shows the connection's status and points to Fair Events → Instagram to connect. Fair Platform needs the `META_APP_ID`, `META_APP_SECRET` and `META_INSTAGRAM_CONFIG_ID` constants, refuses older clients with an update message, and answers the retired token renewal with 410. Cancelling at Meta is now reported as cancelled.
+- dda6b8e: Report failures in the Mollie OAuth proxy's authorize, callback, profile selection and refresh flows to Sentry when `FAIR_PLATFORM_SENTRY_DSN` is set in `wp-config.php`. Reports carry only fixed categories, OAuth error codes, HTTP statuses and code locations: no tokens, codes, secrets, state values, request data or error messages. They are rate-limited and never change what the proxy answers.
+- a9dbdc8: Add a public health check for the Mollie OAuth proxy at `/wp-json/fair-platform/v1/health`. It answers `200` with `{"service":"fair-platform-oauth-proxy","status":"ok"}` when Fair Platform has started and its Mollie credentials and library are present. It answers `503` with `"status":"unhealthy"` otherwise, and has no route while the plugin is paused or inactive. It never contacts Mollie and never reveals configuration, and its answer is never cached. Deploys to fair-event-plugins.com now fail when the proxy isn't answering.
+
+### Patch Changes
+
+- 7054e60: Fit the Mollie and Instagram connection log pages on phone-width screens: the filter toolbar and summary cards wrap instead of squeezing or running off the edge, and the Successful and Failed cards show 0 instead of nothing when there are no connections.
+- Updated dependencies [0a38f40]
+    - fair-events-shared@0.9.1
+
 ## 1.5.2
 
 ### Patch Changes

@@ -1,5 +1,39 @@
 # fair-events-experimental
 
+## 2.3.0
+
+### Minor Changes
+
+- c717873: Administrators can choose an organizer for each event. With Fair Events Experimental's Organizers bundle on, Manage Event's Event Details shows an Organizer field above Categories, offering the sitewide organizer or any additional organizer and saved with its own button, and the calendar's Quick Add Event popup lets you pick the organizer while creating an event or series. A series has one organizer, chosen on the series, which all its dates use. Copying an event keeps its organizer. The event's public structured data names the chosen organizer with its own identity, never its private notification addresses. Existing events keep the sitewide organizer with no change needed. Turning the bundle off, or deactivating Fair Events Experimental, brings back the sitewide organizer everywhere and keeps every choice for when it is turned on again. Fair Events stores the choice in a new event date column (database version 3.57.0) and gives other plugins filters for the event's structured-data organizer, extra Event Details sections, extra Quick Add Event fields and the data of a newly created event.
+- 94b6605: Instagram: when Meta shares more than one Instagram account, Fair Events → Instagram now lists them by @username so an administrator can choose the one this site publishes to, instead of asking to connect again. A single account still connects right away, also when Meta lists it on several pages, and Fair Platform reads every page of shared accounts.
+- 8458f83: Manage the Instagram connection in Fair Events → Instagram. Connecting, the account details, testing and disconnecting move there from Fair Audience → Settings → Instagram, which now links to the new page. An existing connection keeps working without re-entering it, and manual posts in Fair Audience → Instagram Posts keep publishing with the same account. Turn the page on with the new Instagram setting in Fair Events → Settings → Experimental. It is off by default, including on sites that are already connected, where Fair Audience keeps managing the connection until it is turned on.
+- 7f63257: Event notifications can now publish the week's events to Instagram. Add an Instagram notification, choose the event feed, heading page and schedule, and preview the image and caption without publishing. Once turned on, each week is posted once as one image with the list in its caption. Weeks without events are skipped, and failures (no connection, too many events to fit, Instagram errors) appear in the notification's history. Requires the Instagram feature of Fair Events Experimental.
+- 0e4c35d: Instagram connects through Meta's Unified Login. Fair Events → Instagram signs in with Facebook, and the administrator shares exactly one Instagram professional account. Only a single-use code returns to the site, and the site's server exchanges it for the access token, so the token never appears in a URL or the browser. The token does not expire and is no longer renewed. Publishing, the connection test and Fair Audience → Instagram Posts use graph.facebook.com. Every existing Instagram connection must be reconnected: until then it stays stored but is not used, and posts and their records are kept. Manual token entry and the account ID field are gone, and Fair Audience → Settings → Instagram now shows the connection's status and points to Fair Events → Instagram to connect. Fair Platform needs the `META_APP_ID`, `META_APP_SECRET` and `META_INSTAGRAM_CONFIG_ID` constants, refuses older clients with an update message, and answers the retired token renewal with 410. Cancelling at Meta is now reported as cancelled.
+- d70aa47: Instagram and WhatsApp now stay off until an administrator turns them on in Fair Events → Settings → Experimental. A connection already stored in Fair Audience no longer turns Instagram on by itself; Fair Audience keeps managing it until then. WhatsApp gets its own default-off toggle: while it is off, Fair Events → WhatsApp, its Connectors entry, its REST routes, its webhook and its daily cleanup are not registered, and the saved IDs, credentials and delivery history are kept. Choices already saved stay as they are. Fair Events → Instagram now says why it cannot manage the connection. It recommends updating Fair Audience only when the installed Fair Audience lacks the handoff, and gives separate steps when an update has not taken effect yet or the site's response was incomplete.
+- f241912: Administrators can manage several organizers. With Fair Events Experimental active and its new "Organizers" bundle turned on in the Experimental settings tab, an Organizers page appears in the Fair Events menu just above Settings and replaces the Organizer settings tab; links to the old tab open the new page. The sitewide organizer stays the default, and additional organizers can be added and edited, each with its own name, identity details and private notification email addresses. Additional organizers start blank and copy nothing from the default. The bundle is off by default, so activating the plugin changes nothing on its own; a saved choice is kept. Turning it off brings back the single Organizer tab and keeps every organizer for when it is turned on again. Fair Events on its own still shows one sitewide organizer, with its form unchanged.
+- 8d2a00e: Add opt-in sales summary emails. Each organizer can get a daily or weekly email with the tickets sold and paid revenue for its own events, plus totals to date. A separate central summary groups every organizer. All summaries are off by default and need a fallback address before they can be turned on.
+- 234698a: Fair Events → WhatsApp: each administrator can save their own default test number, which fills in the recipient each time they open the page. A test can still go to another number without changing the default, and every send still needs the consent confirmation.
+
+### Patch Changes
+
+- df2af87: Fair Events → Instagram: a successful connection test no longer shows “The site did not say who manages the Instagram connection” or hides the connection controls. The confirmed account details appear right away, and repeated tests keep working.
+- 07764b4: Organizers can now be an individual person, a company or an NGO, alongside an organization or a sports club. The Organization type field is now called Organizer type, and the choice applies to the sitewide organizer and to additional organizers alike. Saved organizers keep their type, and new ones still start as an organization. A person's structured data uses the Schema.org Person type, with the logo published as the person's image.
+- 0a38f40: Event names show readable text wherever they appear, instead of HTML codes such as `&nbsp;`, `&amp;` or `&#8220;`. This covers transaction descriptions on the Payments Connector Transactions list and detail screens, including existing transactions, which are not rewritten. It also covers event names in the admin lists, calendars, selectors and dialogs of every Fair plugin, Fair Audience email subjects, the payment description shown at Mollie checkout, structured event data (JSON-LD), the experimental iCal source export and timeline, and the weekly summary page and email. Event names that look like HTML are shown as text and are never interpreted as markup.
+- 360cffd: Guide direct WhatsApp Cloud API setup in an existing Meta app and distinguish account validation, callback receipt, and confirmed message delivery.
+- Updated dependencies [e21c59d]
+- Updated dependencies [a985a6d]
+- Updated dependencies [c717873]
+- Updated dependencies [270c36c]
+- Updated dependencies [7f63257]
+- Updated dependencies [f241912]
+- Updated dependencies [aea3e6d]
+- Updated dependencies [8d2a00e]
+- Updated dependencies [07764b4]
+- Updated dependencies [0a38f40]
+- Updated dependencies [d97b732]
+    - fair-events@2.4.0
+    - fair-events-shared@0.9.1
+
 ## 2.2.1
 
 ### Patch Changes

@@ -1,3 +1,17 @@
+## 1.7.0
+
+### Minor Changes
+
+- 8458f83: Manage the Instagram connection in Fair Events → Instagram. Connecting, the account details, testing and disconnecting move there from Fair Audience → Settings → Instagram, which now links to the new page. An existing connection keeps working without re-entering it, and manual posts in Fair Audience → Instagram Posts keep publishing with the same account. Turn the page on with the new Instagram setting in Fair Events → Settings → Experimental. It is off by default, including on sites that are already connected, where Fair Audience keeps managing the connection until it is turned on.
+- 0e4c35d: Instagram connects through Meta's Unified Login. Fair Events → Instagram signs in with Facebook, and the administrator shares exactly one Instagram professional account. Only a single-use code returns to the site, and the site's server exchanges it for the access token, so the token never appears in a URL or the browser. The token does not expire and is no longer renewed. Publishing, the connection test and Fair Audience → Instagram Posts use graph.facebook.com. Every existing Instagram connection must be reconnected: until then it stays stored but is not used, and posts and their records are kept. Manual token entry and the account ID field are gone, and Fair Audience → Settings → Instagram now shows the connection's status and points to Fair Events → Instagram to connect. Fair Platform needs the `META_APP_ID`, `META_APP_SECRET` and `META_INSTAGRAM_CONFIG_ID` constants, refuses older clients with an update message, and answers the retired token renewal with 410. Cancelling at Meta is now reported as cancelled.
+
+### Patch Changes
+
+- 0a38f40: Event names show readable text wherever they appear, instead of HTML codes such as `&nbsp;`, `&amp;` or `&#8220;`. This covers transaction descriptions on the Payments Connector Transactions list and detail screens, including existing transactions, which are not rewritten. It also covers event names in the admin lists, calendars, selectors and dialogs of every Fair plugin, Fair Audience email subjects, the payment description shown at Mollie checkout, structured event data (JSON-LD), the experimental iCal source export and timeline, and the weekly summary page and email. Event names that look like HTML are shown as text and are never interpreted as markup.
+- 264766c: Check signup-edit, subscription-management, participant, mailing-signup and fee-payment links with one shared signed-link check. Links sent before this update keep working, and new links are identical. Links whose signed IDs are not plain positive numbers are now refused instead of being read leniently.
+- Updated dependencies [0a38f40]
+    - fair-events-shared@0.9.1
+
 ## 1.6.2
 
 ### Patch Changes

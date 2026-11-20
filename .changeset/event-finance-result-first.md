@@ -1,6 +1,0 @@
----
-'fair-events': minor
-'fair-finance': minor
----
-
-The event Finance tab now leads with the event result: total sales, total costs including payment fees, and the net event result. Below them it shows how each total was reached: online payments with Mollie and Fair Events fees and the amount after fees, cash sales, and expenses by how they were paid (bank, event cash, personally per payer, or not recorded). A bank payout line shows how much of the online money is awaiting payout, paid out by Mollie or received in the bank, according to saved settlements and confirmed reconciliations. Amounts without evidence show as status unknown, never as received. Totals now cover every payment, not only the first 100. A payment shared with other dates counts only this date's share, with a proportional part of its fees. The fees used to be left out of the balance. When a source can't be read, or fees aren't recorded yet, the result is marked incomplete and says why. Online payments, expenses, cash sales and purchase-attempt history are collapsed until opened, with failed, expired and canceled attempts in their own collapsed section. Each expense now appears once. Budget settings move to the bottom. Fair Finance's event summary also returns bank-paid and unclassified expense totals.

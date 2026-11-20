@@ -4,7 +4,7 @@ Tags: finance, budgeting, events
 Requires at least: 6.7
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,27 @@ Fair Finance provides budgeting, financial entries, and reconciliation features 
 2. Activate the plugin through the **Plugins** screen in WordPress.
 
 == Changelog ==
+
+## 1.7.0
+
+### Minor Changes
+
+- eac8612: Bank-imported entries keep their bank origin. The entry editor shows "Bank import" with the originating account, or "account unknown", instead of the "Paid from" selector, and the API refuses to record a bank import, or any of its split allocations, as event cash or personal funds. Descriptions, budgets, event links and tags stay editable. The import dialog can record which bank account the file comes from, and an account can be added there by name; existing imports stay without an account. Imports that were already recorded as event cash or personal funds keep that record, show a notice, and can still be edited otherwise.
+- a985a6d: The event Finance tab now leads with the event result: total sales, total costs including payment fees, and the net event result. Below them it shows how each total was reached: online payments with Mollie and Fair Events fees and the amount after fees, cash sales, and expenses by how they were paid (bank, event cash, personally per payer, or not recorded). A bank payout line shows how much of the online money is awaiting payout, paid out by Mollie or received in the bank, according to saved settlements and confirmed reconciliations. Amounts without evidence show as status unknown, never as received. Totals now cover every payment, not only the first 100. A payment shared with other dates counts only this date's share, with a proportional part of its fees. The fees used to be left out of the balance. When a source can't be read, or fees aren't recorded yet, the result is marked incomplete and says why. Online payments, expenses, cash sales and purchase-attempt history are collapsed until opened, with failed, expired and canceled attempts in their own collapsed section. Each expense now appears once. Budget settings move to the bottom. Fair Finance's event summary also returns bank-paid and unclassified expense totals.
+- 8dc4722: Keep net payment allocations when a Mollie settlement includes adjustments such as invoice compensation. When the fees recorded on each payment match the payment fees in the settlement evidence, every payment is allocated at its net amount, and each separately listed adjustment gets its own allocation. Fees are not deducted twice. Missing or disagreeing fees, and unexplained differences, are explained instead of balanced. Settlements that are already split keep their existing allocations.
+- 1076a76: Set a tag on each allocation in the Split Entry popup. New allocations start with the entry's tag and can be changed or cleared one by one; editing a split shows and keeps the saved tags. The "untagged" entries filter now lists untagged allocations instead of their split entry, and tag suggestions can be chosen with the keyboard.
+
+### Patch Changes
+
+- 15bb1fa: The Financial Entries screen shows entry descriptions as readable text, instead of HTML codes such as `&nbsp;`, `&amp;` or `&quot;`. This covers ordinary entries, split and transfer allocations, the split entry they belong to, action labels, confirmations and notices, and the split editor's entry summary. Existing entries display correctly; stored descriptions and the values shown in edit fields are unchanged.
+- baa8674: Transaction links in saved-settlement reconciliation now open the selected transaction's Payments Connector detail page.
+- 0a38f40: Event names show readable text wherever they appear, instead of HTML codes such as `&nbsp;`, `&amp;` or `&#8220;`. This covers transaction descriptions on the Payments Connector Transactions list and detail screens, including existing transactions, which are not rewritten. It also covers event names in the admin lists, calendars, selectors and dialogs of every Fair plugin, Fair Audience email subjects, the payment description shown at Mollie checkout, structured event data (JSON-LD), the experimental iCal source export and timeline, and the weekly summary page and email. Event names that look like HTML are shown as text and are never interpreted as markup.
+- 846b58c: Saving a split in the split editor now updates its existing allocations in place instead of recreating them, so each allocation keeps its ID, tag (including an intentionally untagged one) and payment links.
+- 0635ddf: The Unbudgeted entries filter lists a split entry only when at least one of its allocations has no budget, so fully budgeted splits no longer clutter it. Unsplit entries still appear only when they have no budget, eligible splits still expand to show every allocation and can be edited, and the result count and pages count each listed entry once.
+- Updated dependencies [0a38f40]
+- Updated dependencies [d97b732]
+    - fair-events-shared@0.9.1
+    - fair-payments-connector@2.8.2
 
 ## 1.6.0
 
