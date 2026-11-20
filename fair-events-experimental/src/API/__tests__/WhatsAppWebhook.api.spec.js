@@ -428,6 +428,13 @@ test.describe( 'WhatsApp webhook', () => {
 		expect( ( await settings() ).webhook.received_at_local ).toBeNull();
 	} );
 
+	test( 'a matching signed callback without a corresponding status does not confirm delivery', async () => {
+		const response = await post( callback( { statuses: [] } ) );
+		expect( response.status() ).toBe( 200 );
+		expect( ( await settings() ).webhook.received_at_local ).toBeTruthy();
+		expect( ( await outcomeOf() ).outcome ).toBe( 'accepted' );
+	} );
+
 	test( 'delivery updates advance and never regress', async () => {
 		const id = await lastMessageId();
 

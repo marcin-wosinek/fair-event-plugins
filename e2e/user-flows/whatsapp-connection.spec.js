@@ -248,7 +248,7 @@ test.describe('WhatsApp connection', () => {
 		await expect(
 			page
 				.getByText(
-					/Connection validated: messages are sent as Fair Events E2E \(\+34 600 000 002\)\./
+					/Connection validated: the token can read this account and its selected number, Fair Events E2E \(\+34 600 000 002\)\./
 				)
 				.first()
 		).toBeVisible();
@@ -413,7 +413,9 @@ test.describe('WhatsApp connection', () => {
 		).toBeVisible({ timeout: 20000 });
 		await expect(
 			page
-				.getByText(/^Receiving updates: the last authenticated update/)
+				.getByText(
+					/^Authenticated callback received: the last matching signed callback/
+				)
 				.first()
 		).toBeVisible();
 
@@ -501,40 +503,68 @@ test.describe('WhatsApp connection', () => {
 		await expect(recipient).toHaveValue('');
 	});
 
-	test('the page works at a phone-sized viewport', async ({ page }) => {
-		wpCli(`option update ${TOKEN_OPTION} ${TOKEN}`);
-		wpCli(
-			'option update fair_events_experimental_whatsapp_waba_id 100000000000001'
-		);
-		wpCli(
-			'option update fair_events_experimental_whatsapp_phone_number_id 200000000000002'
-		);
-		await page.setViewportSize({ width: 375, height: 812 });
-		await loginAsAdmin(page);
-		await page.goto(PAGE_URL);
+	for (const [viewport, width, height] of [
+		['desktop', 1280, 900],
+		['tablet', 768, 1024],
+		['mobile', 375, 812],
+	]) {
+		test(`the setup page works at ${viewport} size`, async ({ page }) => {
+			wpCli(`option update ${TOKEN_OPTION} ${TOKEN}`);
+			wpCli(
+				'option update fair_events_experimental_whatsapp_waba_id 100000000000001'
+			);
+			wpCli(
+				'option update fair_events_experimental_whatsapp_phone_number_id 200000000000002'
+			);
+			await page.setViewportSize({ width, height });
+			await loginAsAdmin(page);
+			await page.goto(PAGE_URL);
 
-		await page.getByRole('button', { name: 'Validate connection' }).click();
-		await expect(
-			page.getByText(/Connection validated/).first()
-		).toBeVisible();
-		await page.getByLabel('Template').selectOption('hello_world|en_US');
-		await page.getByLabel('Recipient number').fill('+34 600 000 124');
-		await page.getByLabel(AUTHORIZED).check();
-		const send = page.getByRole('button', { name: 'Send test template' });
-		await send.scrollIntoViewIfNeeded();
-		await expect(send).toBeInViewport();
-		await send.click();
-		await expect(
-			page.getByRole('heading', { name: 'Accepted by WhatsApp' })
-		).toBeVisible();
+			await expect(
+				page.getByRole('heading', {
+					name: 'Set up direct Cloud API access',
+				})
+			).toBeVisible();
+			await expect(
+				page.getByText(/test senders can message only those recipients/)
+			).toBeVisible();
+			await expect(
+				page.getByText(/dashboard-generated test webhooks/)
+			).toBeVisible();
+			await expect(
+				page.getByRole('link', { name: /Setup, credential rotation/ })
+			).toHaveAttribute('href', /whatsapp-cloud-api-setup.md$/);
+			await page
+				.getByRole('button', { name: 'Validate connection' })
+				.click();
+			await expect(
+				page
+					.getByText(
+						/Sending and production readiness have not been established/
+					)
+					.first()
+			).toBeVisible();
+			await page.getByLabel('Template').selectOption('hello_world|en_US');
+			await page.getByLabel('Recipient number').fill('+34 600 000 124');
+			await page.getByLabel(AUTHORIZED).check();
+			const send = page.getByRole('button', {
+				name: 'Send test template',
+			});
+			await send.scrollIntoViewIfNeeded();
+			await expect(send).toBeInViewport();
+			await send.click();
+			await expect(
+				page.getByRole('heading', { name: 'Accepted by WhatsApp' })
+			).toBeVisible();
 
-		const overflow = await page.evaluate(
-			() =>
-				document.documentElement.scrollWidth -
-				document.documentElement.clientWidth
-		);
-		expect(overflow).toBeLessThanOrEqual(0);
-	});
+			const overflow = await page.evaluate(
+				() =>
+					document.documentElement.scrollWidth -
+					document.documentElement.clientWidth
+			);
+			expect(overflow).toBeLessThanOrEqual(0);
+		});
+	}
 
 	test('without resolved links the steps still read and webhook settings save', async ({
 		page,

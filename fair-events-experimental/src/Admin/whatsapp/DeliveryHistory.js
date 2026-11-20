@@ -38,7 +38,7 @@ export function outcomeText( item ) {
 			return {
 				title: __( 'Sent', 'fair-events-experimental' ),
 				message: __(
-					'WhatsApp sent the message. It has not reached the phone yet.',
+					'WhatsApp reported sending the message. Delivery has not been confirmed.',
 					'fair-events-experimental'
 				),
 			};

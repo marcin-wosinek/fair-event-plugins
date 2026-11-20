@@ -144,7 +144,7 @@ function SenderSummary( { validation } ) {
 				{ sprintf(
 					/* translators: 1: sender's verified business name, 2: sender's telephone number, 3: date and time of the validation */
 					__(
-						'Connection validated: messages are sent as %1$s (%2$s). Checked on %3$s.',
+						'Connection validated: the token can read this account and its selected number, %1$s (%2$s). Checked on %3$s. Sending and production readiness have not been established.',
 						'fair-events-experimental'
 					),
 					sender.verified_name ||

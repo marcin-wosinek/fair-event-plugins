@@ -251,7 +251,7 @@ describe( 'WhatsAppConnection', () => {
 
 		expect(
 			screen.getByText(
-				'Connection validated: messages are sent as Fair Events (+34 600 000 002). Checked on October 28, 2026 11:00 am.'
+				'Connection validated: the token can read this account and its selected number, Fair Events (+34 600 000 002). Checked on October 28, 2026 11:00 am. Sending and production readiness have not been established.'
 			)
 		).toBeInTheDocument();
 		expect(
