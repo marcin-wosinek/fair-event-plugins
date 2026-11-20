@@ -10,6 +10,7 @@ import { Notice } from '@wordpress/components';
 import BulkEmailChannel from './BulkEmailChannel.js';
 import HistoryView from './HistoryView.js';
 import IndividualEmailChannel from './IndividualEmailChannel.js';
+import InstagramChannel from './InstagramChannel.js';
 import TelegramChannel from './TelegramChannel.js';
 import { linkTo } from './navigation.js';
 import { TYPE_LABELS } from './shared.js';
@@ -22,6 +23,7 @@ const EDITORS = {
 	telegram: TelegramChannel,
 	bulk_email: BulkEmailChannel,
 	individual_email: IndividualEmailChannel,
+	instagram: InstagramChannel,
 };
 
 /**

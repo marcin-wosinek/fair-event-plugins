@@ -15,6 +15,7 @@ export const TYPE_LABELS = {
 	telegram: __( 'Telegram', 'fair-events' ),
 	bulk_email: __( 'Bulk email', 'fair-events' ),
 	individual_email: __( 'Individual email', 'fair-events' ),
+	instagram: __( 'Instagram', 'fair-events' ),
 };
 
 export const DAYS = [
@@ -35,6 +36,8 @@ export const WEEK_SCOPES = [
 export const RUN_STATUS_LABELS = {
 	sent: __( 'Sent', 'fair-events' ),
 	partial: __( 'Partly sent', 'fair-events' ),
+	processing: __( 'Publishing', 'fair-events' ),
+	uncertain: __( 'Outcome unknown', 'fair-events' ),
 	failed: __( 'Failed', 'fair-events' ),
 	skipped: __( 'Skipped — no events', 'fair-events' ),
 	skipped_empty: __( 'Skipped — no events', 'fair-events' ),
@@ -45,6 +48,7 @@ export const RUN_STATUS_LABELS = {
 
 const STATE_COLORS = {
 	sent: '#00a32a',
+	processing: '#50575e',
 	partial: '#b26200',
 	uncertain: '#b26200',
 	suspended: '#b26200',

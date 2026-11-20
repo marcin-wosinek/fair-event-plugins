@@ -118,6 +118,28 @@ class FakeExecutionHistory extends ExecutionHistory {
 	}
 
 	/**
+	 * Name a delivery's recipient.
+	 *
+	 * @param int    $id          Execution.
+	 * @param int    $delivery_id Delivery.
+	 * @param string $name        Name.
+	 * @return void
+	 */
+	public function name_delivery( $id, $delivery_id, $name ) {
+		$this->deliveries[ $delivery_id ]['recipient_name'] = $name;
+	}
+
+	/**
+	 * Renew an execution's lease.
+	 *
+	 * @param int $id Execution.
+	 * @return void
+	 */
+	public function renew( $id ) {
+		$this->executions[ $id ]['renewed'] = ( $this->executions[ $id ]['renewed'] ?? 0 ) + 1;
+	}
+
+	/**
 	 * Note.
 	 *
 	 * @param int   $id       Execution.

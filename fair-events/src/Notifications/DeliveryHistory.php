@@ -121,6 +121,24 @@ class DeliveryHistory {
 	}
 
 	/**
+	 * Name what a delivery reached, once it is known, e.g. a published post's link.
+	 *
+	 * @param int    $id   Row ID.
+	 * @param string $name Recipient name.
+	 * @return void
+	 */
+	public function name( $id, $name ) {
+		global $wpdb;
+		$wpdb->update(
+			self::table_name(),
+			array( 'recipient_name' => mb_substr( (string) $name, 0, 190 ) ),
+			array( 'id' => (int) $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
 	 * Number of deliveries of an execution per outcome.
 	 *
 	 * @param int $execution_id Execution ID.

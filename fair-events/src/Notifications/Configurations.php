@@ -28,7 +28,15 @@ class Configurations {
 	public const TELEGRAM         = 'telegram';
 	public const BULK_EMAIL       = 'bulk_email';
 	public const INDIVIDUAL_EMAIL = 'individual_email';
-	public const TYPES            = array( self::TELEGRAM, self::BULK_EMAIL, self::INDIVIDUAL_EMAIL );
+	public const INSTAGRAM        = 'instagram';
+	public const TYPES            = array( self::TELEGRAM, self::BULK_EMAIL, self::INDIVIDUAL_EMAIL, self::INSTAGRAM );
+
+	/**
+	 * Types that kept single settings before configurations had IDs, and
+	 * are migrated from them ({@see ConfigurationMigration}). Instagram
+	 * started with configurations.
+	 */
+	public const LEGACY_TYPES = array( self::TELEGRAM, self::BULK_EMAIL, self::INDIVIDUAL_EMAIL );
 
 	/**
 	 * Option listing every configuration's ID and type, in creation order.

@@ -80,6 +80,22 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( '_n' ) ) {
+	/**
+	 * Stub of WordPress _n(): the singular for one, the plural otherwise.
+	 *
+	 * @param string $single Singular.
+	 * @param string $plural Plural.
+	 * @param int    $number Number.
+	 * @param string $domain Text domain, unused.
+	 * @return string
+	 */
+	function _n( $single, $plural, $number, $domain = 'default' ) {
+		unset( $domain );
+		return 1 === (int) $number ? $single : $plural;
+	}
+}
+
 if ( ! function_exists( 'esc_url_raw' ) ) {
 	/**
 	 * Stub of WordPress esc_url_raw() — a no-op pass-through for test input.

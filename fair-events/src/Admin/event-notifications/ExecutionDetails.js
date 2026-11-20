@@ -3,7 +3,7 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { dateI18n, getSettings } from '@wordpress/date';
-import { Notice, Spinner } from '@wordpress/components';
+import { ExternalLink, Notice, Spinner } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -23,6 +23,17 @@ import {
 import { linkTo } from './navigation.js';
 import { NameWithKind, RUN_STATUS_LABELS, StatusText } from './shared.js';
 import useHistoryRequest from './useHistoryRequest.js';
+
+/**
+ * Whether a delivery's recipient name is the link to a published Instagram
+ * post, recorded once the post was published.
+ *
+ * @param {string} value Recipient name.
+ * @return {boolean} Whether it is.
+ */
+export function isPostLink( value ) {
+	return /^https:\/\/(www\.)?instagram\.com\/\S+$/.test( value || '' );
+}
 
 const DELIVERIES_PER_PAGE = 50;
 
@@ -301,11 +312,27 @@ export default function ExecutionDetails( {
 												'Not recorded',
 												'fair-events'
 											) }
-										{ delivery.recipient_name && (
-											<span className="fair-events-notifications__reason">
-												{ delivery.recipient_name }
-											</span>
-										) }
+										{ delivery.recipient_name &&
+											( isPostLink(
+												delivery.recipient_name
+											) ? (
+												<span className="fair-events-notifications__reason">
+													<ExternalLink
+														href={
+															delivery.recipient_name
+														}
+													>
+														{ __(
+															'View the post',
+															'fair-events'
+														) }
+													</ExternalLink>
+												</span>
+											) : (
+												<span className="fair-events-notifications__reason">
+													{ delivery.recipient_name }
+												</span>
+											) ) }
 										{ delivery.part_count > 1 && (
 											<span className="fair-events-notifications__reason">
 												{ sprintf(

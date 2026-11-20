@@ -84,6 +84,90 @@ export const REASON_LABELS = {
 		'An earlier part of the message was not sent.',
 		'fair-events'
 	),
+	already_claimed: __(
+		'Another run was already handling this week.',
+		'fair-events'
+	),
+	instagram_unavailable: __(
+		'Instagram posting was unavailable: Fair Events Experimental or its Instagram feature is off. Turn it on; the next scheduled week is posted.',
+		'fair-events'
+	),
+	instagram_not_connected: __(
+		'Instagram was not connected or the connection could not be used. Connect again in Fair Events → Instagram.',
+		'fair-events'
+	),
+	instagram_list_too_long: __(
+		'The events did not fit readably in one image. Nothing was published. Choose an event feed with fewer events.',
+		'fair-events'
+	),
+	instagram_caption_too_long: __(
+		'The caption was longer than Instagram allows. Nothing was published. Choose an event feed with fewer events.',
+		'fair-events'
+	),
+	instagram_caption_hashtags: __(
+		'The event names had more hashtags than Instagram allows. Nothing was published.',
+		'fair-events'
+	),
+	instagram_caption_mentions: __(
+		'The event names had more @mentions than Instagram allows. Nothing was published.',
+		'fair-events'
+	),
+	instagram_image_unsupported: __(
+		'This server cannot draw the image (GD with FreeType is missing). Nothing was published.',
+		'fair-events'
+	),
+	instagram_image_failed: __(
+		'The image could not be drawn. Nothing was published.',
+		'fair-events'
+	),
+	instagram_render_failed: __(
+		'The post could not be prepared. Nothing was published.',
+		'fair-events'
+	),
+	instagram_asset_failed: __(
+		'The image could not be stored for Instagram to download. Check that the uploads folder is writable. Nothing was published.',
+		'fair-events'
+	),
+	instagram_asset_not_public: __(
+		'Instagram downloads the image from this site, which needs an HTTPS address. Nothing was published.',
+		'fair-events'
+	),
+	instagram_container_failed: __(
+		'Instagram did not accept the image and caption. Nothing was published.',
+		'fair-events'
+	),
+	instagram_processing_failed: __(
+		'Instagram could not process the image. Nothing was published.',
+		'fair-events'
+	),
+	instagram_processing_timeout: __(
+		'Instagram did not finish processing the image in time. Nothing was published.',
+		'fair-events'
+	),
+	instagram_notification_deleted: __(
+		'The notification was deleted before the post was ready. Nothing was published.',
+		'fair-events'
+	),
+	instagram_turned_off: __(
+		'The notification was turned off before the post was ready. Nothing was published.',
+		'fair-events'
+	),
+	instagram_account_changed: __(
+		'A different Instagram account was connected after the post was prepared. Nothing was published.',
+		'fair-events'
+	),
+	instagram_publish_failed: __(
+		'Instagram refused to publish the post. Nothing was published.',
+		'fair-events'
+	),
+	instagram_not_published: __(
+		'Instagram reports the post was not published. It is not retried automatically.',
+		'fair-events'
+	),
+	instagram_publish_uncertain: __(
+		'Instagram did not confirm whether the post was published. Check the account; it is never posted twice automatically.',
+		'fair-events'
+	),
 	legacy_unmatched: __(
 		'Recorded before this history existed; the details were not kept.',
 		'fair-events'
@@ -148,6 +232,18 @@ export function countsText( counts ) {
 				/* translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count */
 				__(
 					'Message parts: %1$s accepted, %2$s failed, %3$s skipped, %4$s unknown.',
+					'fair-events'
+				),
+				accepted,
+				failed,
+				skipped,
+				unknown
+			);
+		case 'posts':
+			return sprintf(
+				/* translators: 1: accepted count, 2: failed count, 3: skipped count, 4: unknown count */
+				__(
+					'Posts: %1$s published, %2$s failed, %3$s skipped, %4$s unknown.',
 					'fair-events'
 				),
 				accepted,

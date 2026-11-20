@@ -47,6 +47,7 @@ class ExecutionHistory {
 		Configurations::TELEGRAM         => 'message_parts',
 		Configurations::BULK_EMAIL       => 'recipients',
 		Configurations::INDIVIDUAL_EMAIL => 'recipients',
+		Configurations::INSTAGRAM        => 'posts',
 		SalesSummaryDispatcher::CHANNEL  => 'recipients',
 	);
 
@@ -258,6 +259,34 @@ class ExecutionHistory {
 		}
 		$this->deliveries->settle( $delivery_id, $outcome, $reason );
 		$this->heartbeat( $id );
+	}
+
+	/**
+	 * Name what an attempted delivery reached, e.g. a published post's link.
+	 *
+	 * @param int    $id          Execution ID.
+	 * @param int    $delivery_id Delivery ID.
+	 * @param string $name        Recipient name.
+	 * @return void
+	 */
+	public function name_delivery( $id, $delivery_id, $name ) {
+		if ( ! $id || ! $delivery_id ) {
+			return;
+		}
+		$this->deliveries->name( $delivery_id, $name );
+	}
+
+	/**
+	 * Keep a running execution from being taken for abandoned while it waits
+	 * between requests, e.g. for Instagram to process an image.
+	 *
+	 * @param int $id Execution ID.
+	 * @return void
+	 */
+	public function renew( $id ) {
+		if ( $id ) {
+			$this->heartbeat( $id );
+		}
 	}
 
 	/**
