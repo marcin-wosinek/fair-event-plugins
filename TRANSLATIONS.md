@@ -112,6 +112,11 @@ npm run translation:export-for-wporg
 npm run translation:export-for-wporg -- --plugin=fair-events --locale=es_ES
 ```
 
+Only plugins listed in `scripts/translation/published-plugins.json` are
+exported, using the registered WordPress.org slugs. Update that registry when
+a plugin is published. An explicit `--plugin=` naming an unpublished or unknown
+workspace fails before any network requests.
+
 Output lands in `<plugin>/languages/wporg-import/<plugin>-<locale>.po`
 (git-ignored — it's a throwaway artifact, regenerate anytime).
 

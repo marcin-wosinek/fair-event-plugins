@@ -35,6 +35,7 @@ import { config } from './config.js';
 import { parsePOFile } from './lib/po-parser.js';
 import { writePOFile } from './lib/po-writer.js';
 import { entryKey, isTranslated, fetchCommunity } from './lib/wporg.js';
+import { loadPublishedPlugins, selectPlugins } from './lib/wporg-status.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -72,16 +73,6 @@ function parseArgs() {
 function validateArgs(options) {
 	const errors = [];
 
-	if (
-		options.plugin &&
-		!config.plugins.find((p) => p.name === options.plugin)
-	) {
-		errors.push(`Invalid plugin: ${options.plugin}`);
-		errors.push(
-			`Available plugins: ${config.plugins.map((p) => p.name).join(', ')}`
-		);
-	}
-
 	if (options.locale && !config.locales.includes(options.locale)) {
 		errors.push(`Invalid locale: ${options.locale}`);
 		errors.push(`Available locales: ${config.locales.join(', ')}`);
@@ -109,7 +100,7 @@ async function fileExists(filePath) {
  */
 async function exportOne(plugin, locale, options) {
 	const wpLocale = config.wpOrgLocales[locale];
-	const slug = plugin.wpOrgSlug || plugin.name;
+	const slug = plugin.slug;
 	const relPath = config.paths.poFile(plugin.name, locale);
 	const poPath = join(rootDir, relPath);
 
@@ -169,7 +160,7 @@ async function main() {
 		);
 		console.error('Options:');
 		console.error(
-			'  --plugin=PLUGIN      Process specific plugin (default: all)'
+			'  --plugin=PLUGIN      Process published plugin (default: all published)'
 		);
 		console.error(
 			'  --locale=LOCALE      Process specific locale (default: all)'
@@ -186,9 +177,18 @@ async function main() {
 		process.exit(1);
 	}
 
-	const plugins = options.plugin
-		? [config.plugins.find((p) => p.name === options.plugin)]
-		: config.plugins;
+	let plugins;
+	try {
+		const registry = await loadPublishedPlugins(rootDir);
+		plugins = selectPlugins(
+			registry.plugins,
+			registry.workspaces,
+			options.plugin
+		);
+	} catch (error) {
+		console.error(`❌ ${error.message}`);
+		process.exit(1);
+	}
 	const locales = options.locale ? [options.locale] : config.locales;
 
 	console.error(
