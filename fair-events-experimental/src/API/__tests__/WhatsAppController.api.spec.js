@@ -374,6 +374,10 @@ test.describe( 'WhatsAppController', () => {
 			`${ WABA }/phone_numbers`,
 			`${ WABA }/phone_numbers`,
 		] );
+		expect(
+			requests.every( ( request ) => request.method === 'GET' )
+		).toBe( true );
+		expect( body.webhook.received_at_local ).toBeFalsy();
 		expect( requests[ 0 ].token_suffix ).toBe( TOKEN.slice( -4 ) );
 
 		const read = await (

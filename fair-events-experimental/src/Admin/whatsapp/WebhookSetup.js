@@ -87,13 +87,13 @@ export function webhookProgress( webhook ) {
 				? sprintf(
 						/* translators: %s: date and time */
 						__(
-							'Receiving updates: the last authenticated update for this account arrived on %s.',
+							'Authenticated callback received: the last matching signed callback arrived on %s. It could be a dashboard test; only a corresponding delivered or read update confirms delivery of a message.',
 							'fair-events-experimental'
 						),
 						webhook.received_at_local
 					)
 				: __(
-						'No updates received yet: no authenticated update for this account has arrived. Verification alone does not show that updates arrive; subscribe to the messages field and send a test template.',
+						'No updates received yet: no authenticated update for this account has arrived. Verification alone does not show that updates arrive; check messages-field and WABA subscriptions and the app’s publication requirements before an authorized test send.',
 						'fair-events-experimental'
 					),
 		},
@@ -305,6 +305,30 @@ export default function WebhookSetup( {
 						) }
 					</li>
 				</ol>
+				<p>
+					{ __(
+						'Use an externally reachable HTTPS callback URL. Callback verification, the messages-field subscription, and subscribing this app to the WhatsApp Business Account (WABA) are separate prerequisites.',
+						'fair-events-experimental'
+					) }
+				</p>
+				<p>
+					{ __(
+						'In Meta’s Graph API Explorer, inspect GET /{WABA-ID}/subscribed_apps. If this app is missing, use POST /{WABA-ID}/subscribed_apps with a token for this app and account, following Meta’s current instructions. Validation here does not inspect or change that subscription.',
+						'fair-events-experimental'
+					) }{ ' ' }
+					<ExternalLink href="https://developers.facebook.com/documentation/business-messaging/whatsapp/reference/whatsapp-business-account/subscribed-apps-api">
+						{ __(
+							'Inspect and configure WABA app subscriptions',
+							'fair-events-experimental'
+						) }
+					</ExternalLink>
+				</p>
+				<p>
+					{ __(
+						'Check your app dashboard’s current publication requirements. The dashboard reported for this setup says unpublished apps receive only dashboard-generated test webhooks, even for administrators and testers. This restriction may depend on the app configuration. A verified callback or dashboard test does not establish real delivery updates or production readiness.',
+						'fair-events-experimental'
+					) }
+				</p>
 				<div style={ { display: 'grid', gap: '16px' } }>
 					<TextControl
 						__nextHasNoMarginBottom

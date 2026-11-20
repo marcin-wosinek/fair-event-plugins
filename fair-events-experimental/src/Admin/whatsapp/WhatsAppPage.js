@@ -9,6 +9,7 @@ import { Notice } from '@wordpress/components';
  * Internal dependencies
  */
 import WhatsAppConnection from './WhatsAppConnection.js';
+import SetupGuide from './SetupGuide.js';
 
 /**
  * Fair Events → WhatsApp: the sender's IDs, connection validation and a
@@ -39,6 +40,7 @@ export default function WhatsAppPage() {
 				</Notice>
 			) }
 
+			<SetupGuide />
 			<WhatsAppConnection onNotice={ setNotice } />
 		</div>
 	);

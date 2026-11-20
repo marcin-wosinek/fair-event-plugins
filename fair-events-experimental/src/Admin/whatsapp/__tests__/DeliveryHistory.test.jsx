@@ -59,6 +59,9 @@ describe( 'outcomeText', () => {
 			'Sent'
 		);
 		expect(
+			outcomeText( delivery( { outcome: 'sent' } ) ).message
+		).toContain( 'Delivery has not been confirmed' );
+		expect(
 			outcomeText( delivery( { outcome: 'delivered' } ) ).title
 		).toBe( 'Delivered' );
 		expect( outcomeText( delivery( { outcome: 'read' } ) ).title ).toBe(
@@ -100,6 +103,26 @@ describe( 'outcomeText', () => {
 } );
 
 describe( 'DeliveryHistory', () => {
+	it( 'keeps a send accepted when a callback arrived without its delivery update', async () => {
+		apiFetch.mockResolvedValue( {
+			...answer( [ delivery() ] ),
+			webhook: {
+				...WEBHOOK,
+				received_at_local: 'November 20, 2026 9:00 am',
+			},
+		} );
+		const onWebhook = jest.fn();
+		render( <DeliveryHistory refreshKey={ 0 } onWebhook={ onWebhook } /> );
+		await flush();
+		expect( screen.getByText( 'Accepted' ) ).toBeInTheDocument();
+		expect( screen.queryByText( 'Delivered' ) ).not.toBeInTheDocument();
+		expect( onWebhook ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				received_at_local: expect.any( String ),
+			} )
+		);
+	} );
+
 	it( 'lists sends with the masked recipient and the outcome', async () => {
 		const onWebhook = jest.fn();
 		apiFetch.mockResolvedValue(

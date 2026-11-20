@@ -76,8 +76,9 @@ describe( 'webhookProgress', () => {
 				received_at_local: 'October 29, 2026 9:05 am',
 			} )
 		);
+		expect( both[ 1 ].message ).toContain( 'It could be a dashboard test' );
 		expect( both[ 1 ].message ).toContain(
-			'the last authenticated update for this account arrived on October 29, 2026 9:05 am'
+			'the last matching signed callback arrived on October 29, 2026 9:05 am'
 		);
 	} );
 } );
@@ -246,12 +247,23 @@ describe( 'WebhookSetup', () => {
 				onNotice={ () => {} }
 			/>
 		);
-		expect( screen.queryByRole( 'link' ) ).not.toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: /Inspect and configure WABA/ } )
+		).toBeInTheDocument();
 		expect(
 			screen.getByText( /Use cases → Customize → Configuration/ )
 		).toBeInTheDocument();
 		expect(
 			screen.getByText( /Copy the App Secret from App settings → Basic/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /GET \/\{WABA-ID\}\/subscribed_apps/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /dashboard-generated test webhooks/ )
+		).toBeInTheDocument();
+		expect(
+			screen.getByText( /externally reachable HTTPS/ )
 		).toBeInTheDocument();
 
 		// Only the Basic settings link when the business was not resolved.
@@ -267,7 +279,7 @@ describe( 'WebhookSetup', () => {
 				onNotice={ () => {} }
 			/>
 		);
-		expect( screen.getAllByRole( 'link' ) ).toHaveLength( 1 );
+		expect( screen.getAllByRole( 'link' ) ).toHaveLength( 2 );
 		expect(
 			screen.queryByRole( 'link', {
 				name: /Open webhook configuration/,
