@@ -1592,7 +1592,7 @@ and Fair Audience refuse to start there (§8.17).
 `Services\PaymentHistoryUpgrade` decides, once per request and before
 anything else, whether this site may run a release whose purchases no longer
 depend on the migration (§8.16 onward). Versions never decide (§8.6); only
-recorded state does. Operator steps: [DEPLOYMENT.md](./DEPLOYMENT.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
+recorded state does. Operator steps: [DEPLOYMENT_HISTORY.md](./DEPLOYMENT_HISTORY.md#upgrade-notes-supported-upgrade-path-after-the-payment-history-migration-2255).
 
 **Prerequisite release.** `build-2.2.0` (Fair Payments Connector 2.8.0, Fair
 Events 2.2.0, Fair Audience 2.0.0) is the last release with the complete
@@ -1847,7 +1847,7 @@ but a newer Fair Audience refuses to start beside Fair Events 2.2.0 or older
 **Implemented** (#2254, second of two pull requests; no schema change).
 `Services\PaymentHistoryCleanup` removes the storage only the migration
 used, once an administrator asks for it. Nothing runs it on upgrade.
-Operator steps: [DEPLOYMENT.md](./DEPLOYMENT.md#upgrade-notes-removing-old-payment-records-2254).
+Operator steps: [DEPLOYMENT_HISTORY.md](./DEPLOYMENT_HISTORY.md#upgrade-notes-removing-old-payment-records-2254).
 
 **Removed**:
 

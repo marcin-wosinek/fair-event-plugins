@@ -125,7 +125,7 @@ Older client plugins can no longer connect: the OAuth service refuses their
 requests with an "update" page, and their token renewal gets `410 Gone`.
 Update Fair Events Experimental, Fair Audience and Fair Audience
 Experimental before reconnecting; see
-[DEPLOYMENT.md § Upgrade notes: Instagram Unified Login](../../DEPLOYMENT.md#upgrade-notes-instagram-unified-login-2427).
+[DEPLOYMENT_HISTORY.md § Upgrade notes: Instagram Unified Login](../../DEPLOYMENT_HISTORY.md#upgrade-notes-instagram-unified-login-2427).
 
 ## Disconnecting and revoking
 
